@@ -1,4 +1,4 @@
-import { Component, ElementCreator } from 'xinjs';
+import { Component, ElementCreator } from 'tosijs';
 export declare class SideNav extends Component {
     minSize: number;
     navSize: number;

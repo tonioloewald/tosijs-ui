@@ -42,7 +42,7 @@ built in `<select>` element that addresses its various shortcomings.
 …to check for focus stealing</pre>
 ```
 ```js
-const { icons } = xinjsui
+const { icons } = tosijsui
 
 const captions = preview.querySelector('.captions')
 
@@ -168,7 +168,7 @@ import {
   elements,
   vars,
   throttle,
-} from 'xinjs'
+} from 'tosijs'
 import { icons } from './icons'
 import { popMenu, MenuItem, SubMenu, removeLastMenu } from './menu'
 import { localize, XinLocalized } from './localize'

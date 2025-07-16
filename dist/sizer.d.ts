@@ -1,4 +1,4 @@
-import { Component as XinComponent, ElementCreator } from 'xinjs';
+import { Component as XinComponent, ElementCreator } from 'tosijs';
 export declare class XinSizer extends XinComponent {
     target?: HTMLElement | null;
     static styleSpec: {

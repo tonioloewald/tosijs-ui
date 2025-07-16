@@ -24,7 +24,7 @@ from the bottom-right.
 <xin-css-var-editor element-selector="xin-sizer"></xin-css-var-editor>
 */
 
-import { Component as XinComponent, ElementCreator, vars } from 'xinjs'
+import { Component as XinComponent, ElementCreator, vars } from 'tosijs'
 import { icons } from './icons'
 import { trackDrag } from './track-drag'
 

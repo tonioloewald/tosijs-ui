@@ -5,7 +5,7 @@
   <xin-icon icon="blueprint" class="logo" size=256></xin-icon>
 </center>
 
-`<xin-loader>` and `<xin-blueprint>` are simple elements provided by `xinjs` for the dynamic loading
+`<xin-loader>` and `<xin-blueprint>` are simple elements provided by `tosijs` for the dynamic loading
 of component **blueprints**.
 
 ```html

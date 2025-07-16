@@ -9,7 +9,7 @@
   div.style.color = `hsl(${(Math.random() * 360).toFixed(0)} 50% 50%)`
 })
 
-const { div, button } = xinjs.elements
+const { div, button } = tosijs.elements
 const tabSelector = preview.querySelector('xin-tabs')
 
 tabSelector.onCloseTab = body => {
@@ -114,7 +114,7 @@ import {
   elements,
   vars,
   PartsMap,
-} from 'xinjs'
+} from 'tosijs'
 
 import { xinLocalized, XinLocalized } from './localize'
 

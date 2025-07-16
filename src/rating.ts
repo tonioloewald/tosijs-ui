@@ -40,7 +40,7 @@ as the behavior of `<input type="number">`, [Shoelace's rating widget](https://s
 and (in my opinion) common sense, but  not like [MUI's rating widget](https://mui.com/material-ui/react-rating/).
 */
 
-import { Component, elements, ElementCreator, vars, PartsMap } from 'xinjs'
+import { Component, elements, ElementCreator, vars, PartsMap } from 'tosijs'
 import { icons } from './icons'
 
 const { span } = elements

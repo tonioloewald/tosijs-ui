@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'xinjs';
+import { Component as WebComponent, ElementCreator } from 'tosijs';
 type ObjectTest = (obj: any) => boolean;
 type ArrayFilter = (array: any[]) => any[];
 interface FilterMaker {

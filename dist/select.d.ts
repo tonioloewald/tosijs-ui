@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'xinjs';
+import { Component as WebComponent, ElementCreator } from 'tosijs';
 import { MenuItem } from './menu';
 type OptionRequest = () => Promise<string | undefined>;
 export interface SelectOption {

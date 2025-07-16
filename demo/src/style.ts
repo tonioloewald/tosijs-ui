@@ -5,7 +5,7 @@
 
 This is a simple utility for converting CSS into a xinjs `XinStyleSheet` object.
 Having all of your CSS start as Javascript (or Typescript) has many
-benefits, such as being able to do color math using `xinjs`'s `Color` class,
+benefits, such as being able to do color math using `tosijs`'s `Color` class,
 and use the same values that are in your CSS for inline code when needed.
 
 > ### Caution
@@ -79,7 +79,7 @@ function css2js () {
     }
   })
 
-  js.value = `import { vars, varDefault } from 'xinjs'\n\nexport const styleSpec = ${code}`
+  js.value = `import { vars, varDefault } from 'tosijs'\n\nexport const styleSpec = ${code}`
 }
 
 convertButton.addEventListener('click', () => {
@@ -137,7 +137,7 @@ header xin-locale-picker xin-select button svg {
 
 ## Using the Output
 
-You can turn the output of this utility using `xinjs`'s `StyleSheet` utility function:
+You can turn the output of this utility using `tosijs`'s `StyleSheet` utility function:
 
 ```
 import { styleSpec } from './my-style'
@@ -146,21 +146,19 @@ StyleSheet('base-style', styleSpec) // creates a `<style id="base-style>` elemen
   the `<head>` of the page.
 ```
 
-You can convert the output to Typescript by importing the `XinStyleSheet` from `xinjs`:
+You can convert the output to Typescript by importing the `XinStyleSheet` from `tosijs`:
 
 ```
-import { XinStyleSheet, vars } from 'xinjs'
+import { XinStyleSheet, vars } from 'tosijs'
 
 export const styleSpec: XinStyleSheet = ...
 ```
 */
 
-import { XinStyleSheet, vars, Color, invertLuminance, MoreMath } from 'xinjs'
+import { XinStyleSheet, vars, Color, invertLuminance, MoreMath } from 'tosijs'
 import { icons, svg2DataUrl } from '../../src'
 
 const brandColor = Color.fromCss('#EE257B')
-window.brandColor = brandColor
-brandColor.swatch()
 
 const colors = {
   _textColor: '#222',

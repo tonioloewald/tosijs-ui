@@ -7,7 +7,7 @@
   <xin-icon icon="rgb" style="--xin-icon-size: 128px"></xin-icon>
 </div>
 
-A library that provides `ElementCreator` functions that produce SVG icons. It leverages `xinjs`'s
+A library that provides `ElementCreator` functions that produce SVG icons. It leverages `tosijs`'s
 `svgElements` proxy and is intended to address all the key use-cases for SVG icons in web
 applications along with being very easy to extend and maintain.
 
@@ -26,8 +26,8 @@ e.g. `icons.chevronDown()` produces an `<svg>` element containing a downward-poi
 icon with the class `icon-chevron-down`.
 
 ```js
-const { icons, svgIcon } = xinjsui
-const { div } = xinjs.elements
+const { icons, svgIcon } = tosijsui
+const { div } = tosijs.elements
 
 preview.append(...Object.keys(icons).sort().map(iconName => div(
   { class: 'tile' },
@@ -118,8 +118,8 @@ how it's styled.
 ## SVGs as data-urls
 
 ```js
-const { elements } = xinjs
-const { icons, svg2DataUrl } = xinjsui
+const { elements } = tosijs
+const { icons, svg2DataUrl } = tosijsui
 
 preview.append(
   elements.span({
@@ -279,7 +279,7 @@ import {
   Color,
   varDefault,
   StyleSheet,
-} from 'xinjs'
+} from 'tosijs'
 import { SVGIconMap } from './icon-types'
 import iconData from './icon-data'
 

@@ -44,7 +44,7 @@ async function build() {
     sourcemap: 'linked',
     format: 'esm',
     minify: true,
-    external: ['xinjs', 'marked'],
+    external: ['tosijs', 'marked'],
   })
   if (!result.success) {
     console.error('dist build failed')

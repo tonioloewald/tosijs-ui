@@ -1,4 +1,4 @@
-import { elements } from 'xinjs'
+import { elements } from 'tosijs'
 
 type TrackerCallback = (
   dx: number,
@@ -46,7 +46,7 @@ For mouse events, a "tracker" element is thrown up in front of everything for th
 }
 ```
 ```js
-const { trackDrag } = xinjsui
+const { trackDrag } = tosijsui
 
 function dragItem(event) {
   const draggable = event.target

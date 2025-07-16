@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'xinjs';
+import { Component as WebComponent, ElementCreator } from 'tosijs';
 export declare class SizeBreak extends WebComponent {
     minWidth: number;
     minHeight: number;

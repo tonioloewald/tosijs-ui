@@ -1,4 +1,4 @@
-import { Component, ElementCreator } from 'xinjs';
+import { Component, ElementCreator } from 'tosijs';
 export declare class XinRating extends Component {
     iconSize: number;
     min: 0 | 1;

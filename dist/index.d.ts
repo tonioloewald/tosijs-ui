@@ -34,4 +34,4 @@ export * from './tag-list';
 export { trackDrag, bringToFront, findHighestZ } from './track-drag';
 export { version } from './version';
 export { scriptTag, styleSheet } from './via-tag';
-export * as xinjs from 'xinjs';
+export * as xinjs from 'tosijs';

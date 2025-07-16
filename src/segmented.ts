@@ -114,7 +114,7 @@ import {
   ElementCreator,
   elements,
   varDefault,
-} from 'xinjs'
+} from 'tosijs'
 import { icons } from './icons'
 import { xinLocalized } from './localize'
 

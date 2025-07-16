@@ -59,7 +59,7 @@ import {
   ElementCreator,
   elements,
   vars,
-} from 'xinjs'
+} from 'tosijs'
 import { icons } from './icons'
 
 const { button, slot, div } = elements

@@ -1,7 +1,7 @@
 /*#
 # localize
 
-`xinjs-ui` provides support for localization via the `localize` method and the `<xin-locale-picker>`
+`tosijs-ui` provides support for localization via the `localize` method and the `<xin-locale-picker>`
 and `<xin-localized>` custom-elements.
 
 > ### Important Note
@@ -48,8 +48,8 @@ localize the string, and then append the ellipsis.
 ## `setLocale(language: string)`
 
 ```js
-const { button, p } = xinjs.elements
-const { setLocale } = xinjsui
+const { button, p } = tosijs.elements
+const { setLocale } = tosijsui
 
 preview.append(
   p(
@@ -117,7 +117,7 @@ xin-localized {
 }
 ```
 ```js
-const { xinLocalized, localize } = xinjsui
+const { xinLocalized, localize } = tosijsui
 
 preview.append(xinLocalized({
   refString: 'localized placeholder',
@@ -231,7 +231,7 @@ class MyLocalizedComponent extends Component {
 ```
 */
 
-import { Component, boxedProxy, elements, bindings, observe, BoxedProxy } from 'xinjs'
+import { Component, boxedProxy, elements, bindings, observe, BoxedProxy } from 'tosijs'
 import { makeSorter } from './make-sorter'
 import { xinSelect, XinSelect } from './select'
 

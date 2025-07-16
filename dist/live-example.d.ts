@@ -1,4 +1,4 @@
-import { Component, ElementCreator, PartsMap } from 'xinjs';
+import { Component, ElementCreator, PartsMap } from 'tosijs';
 import { TabSelector } from './tab-selector';
 interface ExampleContext {
     [key: string]: any;

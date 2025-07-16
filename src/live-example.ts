@@ -10,8 +10,8 @@ is, by far, the master. And it's still super lightweight.
 
 ```js
 // this code executes in an async function body
-// it has xinjs, xinjsui, and preview (the preview div) available as local variables
-const { div } = xinjs.elements
+// it has tosijs, tosijsui, and preview (the preview div) available as local variables
+const { div } = tosijs.elements
 preview.append(div({class: 'example'}, 'fiddle de dee!'))
 preview.append('Try editing some code and hitting refresh…')
 ```
@@ -79,8 +79,8 @@ example itself lighter-weight.
 A `<xin-example>` can be given a `context` object {[key: string]: any}, which is the
 set of values available in the javascript's execution context (it is wrapped in an
 async function and passed those values). By default, that context comprises `preview`
-(the `<div>` in which the example is rendered), `xinjs` (`* from xinjs`),
-and `xinjsui` (`* from xinjsui`).
+(the `<div>` in which the example is rendered), `tosijs` (`* from 'tosijs'`),
+and `tosijsui` (`* from 'tosijs-ui'`).
 
 The `LiveExample` class provides the static `insertExamples(element: HTMLElement)`
 function that will replace any sequence of
@@ -88,7 +88,7 @@ function that will replace any sequence of
 elements with a `<xin-example>` instance.
 */
 
-import { Component, ElementCreator, PartsMap, elements } from 'xinjs'
+import { Component, ElementCreator, PartsMap, elements } from 'tosijs'
 import { codeEditor, CodeEditor } from './code-editor'
 import { tabSelector, TabSelector } from './tab-selector'
 import { icons } from './icons'

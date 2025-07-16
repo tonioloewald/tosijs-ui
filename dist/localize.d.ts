@@ -1,4 +1,4 @@
-import { Component } from 'xinjs';
+import { Component } from 'tosijs';
 import { XinSelect } from './select';
 interface TranslationMap {
     [key: string]: string[];
@@ -26,7 +26,7 @@ export declare class LocalePicker extends Component {
     constructor();
     render(): void;
 }
-export declare const localePicker: import("xinjs").ElementCreator<Component<import("xinjs").PartsMap<Element>>>;
+export declare const localePicker: import("tosijs").ElementCreator<Component<import("tosijs").PartsMap>>;
 interface AbstractLocalized {
     localeChanged: () => void;
     connectedCallback: () => void;
@@ -42,5 +42,5 @@ export declare class XinLocalized extends Component {
     localeChanged(): void;
     render(): void;
 }
-export declare const xinLocalized: import("xinjs").ElementCreator<Component<import("xinjs").PartsMap<Element>>>;
+export declare const xinLocalized: import("tosijs").ElementCreator<Component<import("tosijs").PartsMap>>;
 export {};

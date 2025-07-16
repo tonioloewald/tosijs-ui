@@ -17,7 +17,7 @@ body {
 ```
 */
 
-import { Component as WebComponent, ElementCreator } from 'xinjs'
+import { Component as WebComponent, ElementCreator } from 'tosijs'
 import { scriptTag } from './via-tag'
 
 const ACE_BASE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.2/'

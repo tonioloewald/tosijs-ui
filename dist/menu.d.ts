@@ -1,4 +1,4 @@
-import { Component, PartsMap } from 'xinjs';
+import { Component, PartsMap } from 'tosijs';
 import { FloatPosition } from './pop-float';
 import { SvgIcon } from './icons';
 export type ActionCallback = () => void | Promise<void>;
@@ -56,5 +56,5 @@ export declare class XinMenu extends Component<XinMenuParts> {
     connectedCallback(): void;
     disconnectedCallback(): void;
 }
-export declare const xinMenu: import("xinjs").ElementCreator<Component<PartsMap<Element>>>;
+export declare const xinMenu: import("tosijs").ElementCreator<Component<PartsMap>>;
 export {};

@@ -1,4 +1,4 @@
-import { Component as XinComponent, ElementCreator } from 'xinjs';
+import { Component as XinComponent, ElementCreator } from 'tosijs';
 export declare class XinField extends XinComponent {
     caption: string;
     key: string;

@@ -5,8 +5,8 @@ Automatically creates `ArrayFilter` functions `(a: any[]) => any[]` based on the
 macOS Finder-inspired interface, using an easily customizable / extensible collection of `Filter` objects.
 
 ```js
-const { elements } = xinjs
-const { dataTable, filterBuilder, availableFilters } = xinjsui
+const { elements } = tosijs
+const { dataTable, filterBuilder, availableFilters } = tosijsui
 
 const sourceWords = ['acorn', 'bubblegum', 'copper', 'daisy', 'ellipse', 'fabulous', 'gerund', 'hopscotch', 'idiom', 'joke']
 function randomWords () {
@@ -144,7 +144,7 @@ interface FilterMaker {
 ```
 */
 
-import { Component as WebComponent, ElementCreator, elements } from 'xinjs'
+import { Component as WebComponent, ElementCreator, elements } from 'tosijs'
 import { icons } from '../src/'
 
 const { div, input, select, option, button, span } = elements
