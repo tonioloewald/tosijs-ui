@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'xinjs';
+import { Component as WebComponent, ElementCreator } from 'tosijs';
 export declare class XinCarousel extends WebComponent {
     arrows: boolean;
     dots: boolean;
@@ -22,21 +22,21 @@ export declare class XinCarousel extends WebComponent {
             position: string;
         };
         ':host svg': {
-            height: any;
+            height: string;
         };
         ':host button': {
             outline: string;
             border: string;
             boxShadow: string;
             background: string;
-            fill: any;
+            color: string;
             padding: number;
         };
         ':host::part(back), :host::part(forward)': {
             position: string;
             top: number;
             bottom: number;
-            width: any;
+            width: string;
             zIndex: number;
         };
         ':host::part(back)': {
@@ -50,10 +50,10 @@ export declare class XinCarousel extends WebComponent {
             pointerEvents: string;
         };
         ':host button:hover': {
-            fill: any;
+            color: string;
         };
         ':host button:active': {
-            fill: any;
+            color: string;
         };
         ':host::part(pager)': {
             position: string;
@@ -70,29 +70,29 @@ export declare class XinCarousel extends WebComponent {
             display: string;
         };
         ':host .dot': {
-            background: any;
-            borderRadius: any;
-            height: any;
-            width: any;
-            transition: any;
+            background: string;
+            borderRadius: string;
+            height: string;
+            width: string;
+            transition: string;
         };
         ':host .dot:not(.current):hover': {
-            background: any;
-            height: any;
-            width: any;
-            margin: any;
+            background: string;
+            height: string;
+            width: string;
+            margin: string;
         };
         ':host .dot:not(.current):active': {
-            background: any;
+            background: string;
         };
         ':host .dot.current': {
-            background: any;
+            background: string;
         };
         ':host::part(progress)': {
             display: string;
-            gap: any;
+            gap: string;
             justifyContent: string;
-            padding: any;
+            padding: string;
         };
     };
     easing: (t: number) => number;
@@ -104,7 +104,7 @@ export declare class XinCarousel extends WebComponent {
     private snapTimer;
     private animationFrame;
     animateScroll(position: number, startingPosition?: number, timestamp?: number): void;
-    content: () => any[];
+    content: () => HTMLDivElement[];
     constructor();
     connectedCallback(): void;
     disconnectedCallback(): void;

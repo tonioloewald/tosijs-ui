@@ -10,8 +10,8 @@ is, by far, the master. And it's still super lightweight.
 
 ```js
 // this code executes in an async function body
-// it has xinjs, xinjsui, and preview (the preview div) available as local variables
-const { div } = xinjs.elements
+// it has tosijs, tosijsui, and preview (the preview div) available as local variables
+const { div } = tosijs.elements
 preview.append(div({class: 'example'}, 'fiddle de dee!'))
 preview.append('Try editing some code and hitting refresh…')
 ```
@@ -79,8 +79,8 @@ example itself lighter-weight.
 A `<xin-example>` can be given a `context` object {[key: string]: any}, which is the
 set of values available in the javascript's execution context (it is wrapped in an
 async function and passed those values). By default, that context comprises `preview`
-(the `<div>` in which the example is rendered), `xinjs` (`* from xinjs`),
-and `xinjsui` (`* from xinjsui`).
+(the `<div>` in which the example is rendered), `tosijs` (`* from 'tosijs'`),
+and `tosijsui` (`* from 'tosijs-ui'`).
 
 The `LiveExample` class provides the static `insertExamples(element: HTMLElement)`
 function that will replace any sequence of
@@ -88,7 +88,7 @@ function that will replace any sequence of
 elements with a `<xin-example>` instance.
 */
 
-import { Component, ElementCreator, elements } from 'xinjs'
+import { Component, ElementCreator, PartsMap, elements } from 'tosijs'
 import { codeEditor, CodeEditor } from './code-editor'
 import { tabSelector, TabSelector } from './tab-selector'
 import { icons } from './icons'
@@ -104,7 +104,19 @@ interface ExampleContext {
   [key: string]: any
 }
 
-export class LiveExample extends Component {
+interface ExampleParts extends PartsMap {
+  codeEditors: HTMLElement
+  undo: HTMLButtonElement
+  redo: HTMLButtonElement
+  exampleWidgets: HTMLButtonElement
+  editors: TabSelector
+  code: HTMLElement
+  sources: HTMLElement
+  style: HTMLStyleElement
+  example: HTMLElement
+}
+
+export class LiveExample extends Component<ExampleParts> {
   persistToDom = false
   prettier = false
   prefix = 'lx'
@@ -210,10 +222,7 @@ export class LiveExample extends Component {
 
   updateUndo = () => {
     const { activeTab } = this
-    const { undo, redo } = this.parts as {
-      undo: HTMLButtonElement
-      redo: HTMLButtonElement
-    }
+    const { undo, redo } = this.parts
     if (activeTab instanceof CodeEditor && activeTab.editor !== undefined) {
       const undoManager = activeTab.editor.session.getUndoManager()
       undo.disabled = !undoManager.hasUndo()
@@ -248,16 +257,16 @@ export class LiveExample extends Component {
 
   exampleMenu = () => {
     popMenu({
-      target: this.parts.exampleWidgets as HTMLElement,
+      target: this.parts.exampleWidgets,
       width: 'auto',
       menuItems: [
         {
-          icon: 'edit',
+          icon: 'edit2',
           caption: 'view/edit code',
           action: this.showCode,
         },
         {
-          icon: 'editDoc',
+          icon: 'edit',
           caption: 'view/edit code in a new window',
           action: this.openEditorWindow,
         },
@@ -323,7 +332,7 @@ export class LiveExample extends Component {
               class: 'transparent',
               onClick: this.undo,
             },
-            icons.undo()
+            icons.cornerUpLeft()
           ),
           button(
             {
@@ -332,7 +341,7 @@ export class LiveExample extends Component {
               class: 'transparent',
               onClick: this.redo,
             },
-            icons.redo()
+            icons.cornerUpRight()
           ),
           button(
             {
@@ -340,7 +349,7 @@ export class LiveExample extends Component {
               class: 'transparent',
               onClick: this.flipLayout,
             },
-            icons.sidebar()
+            icons.columns({ class: 'layout-indicator' })
           ),
           button(
             {
@@ -356,7 +365,7 @@ export class LiveExample extends Component {
               class: 'transparent',
               onClick: this.refreshRemote,
             },
-            icons.refresh()
+            icons.refreshCw()
           )
         )
       )
@@ -508,10 +517,7 @@ export class LiveExample extends Component {
       return
     }
 
-    const { example, style } = this.parts as {
-      style: HTMLStyleElement
-      example: HTMLElement
-    }
+    const { example, style } = this.parts
 
     const preview = div({ class: 'preview' })
     preview.innerHTML = this.html
@@ -563,7 +569,7 @@ export class LiveExample extends Component {
   }
 
   showDefaultTab() {
-    const { editors } = this.parts as { editors: TabSelector }
+    const { editors } = this.parts
     if (this.js !== '') {
       editors.value = 0
     } else if (this.html !== '') {
@@ -631,12 +637,13 @@ export const liveExample = LiveExample.elementCreator({
       flexDirection: 'column',
     },
 
-    ':host .icon-sidebar': {
-      transform: 'rotateZ(180deg)',
+    ':host .layout-indicator': {
+      transition: '0.5s ease-out',
+      transform: 'rotateZ(270deg)',
     },
 
-    ':host.-vertical .icon-sidebar': {
-      transform: 'rotateZ(270deg)',
+    ':host.-vertical .layout-indicator': {
+      transform: 'rotateZ(180deg)',
     },
 
     ':host.-maximize .hide-if-maximized, :host:not(.-maximize) .show-if-maximized':
@@ -677,7 +684,7 @@ export const liveExample = LiveExample.elementCreator({
     },
 
     ':host [part="exampleWidgets"] svg': {
-      fill: 'var(--widget-color)',
+      stroke: 'var(--widget-color)',
     },
 
     ':host .code-editors': {

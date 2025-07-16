@@ -5,8 +5,8 @@ A virtual data-table, configurable via a `columns` array (which will automatical
 that displays gigantic tables with fixed headers (and live column-resizing) using a minimum of resources and cpu.
 
 ```js
-const { dataTable } = xinjsui
-const { input } = xinjs.elements
+const { dataTable } = tosijsui
+const { input } = tosijs.elements
 
 const emojiRequest = await fetch('https://raw.githubusercontent.com/tonioloewald/emoji-metadata/master/emoji-metadata.json')
 const emojiData = await emojiRequest.json()
@@ -187,7 +187,7 @@ import {
   getListItem,
   boxedProxy,
   touch,
-} from 'xinjs'
+} from 'tosijs'
 import { trackDrag } from './track-drag'
 import { SortCallback } from './make-sorter'
 import { icons } from './icons'

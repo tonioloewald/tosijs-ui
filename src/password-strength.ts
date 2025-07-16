@@ -6,7 +6,7 @@ and it will gauge its content strength as a password. It will also
 let you **securely verify** that the password hasn't been breached.
 
 ```js
-const { xinLocalized, localize } = xinjsui
+const { xinLocalized, localize } = tosijsui
 
 const toggle = preview.querySelector('.toggle')
 const icon = preview.querySelector('xin-icon')
@@ -157,7 +157,7 @@ found in Weakpass's database (and spit out extra info to the console).
 `digest(s: string, method="sha-1"): Promise<string>` is just a nice wrapper for `crypto.digest`.
 */
 
-import { Component, elements, vars, varDefault } from 'xinjs'
+import { Component, elements, vars, varDefault } from 'tosijs'
 
 export const digest = async (s: string, method = 'SHA-1'): Promise<string> => {
   // Convert password to an ArrayBuffer

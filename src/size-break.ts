@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator, elements } from 'xinjs'
+import { Component as WebComponent, ElementCreator, elements } from 'tosijs'
 
 const { slot } = elements
 

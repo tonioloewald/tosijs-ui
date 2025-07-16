@@ -5,7 +5,7 @@
 
 This is a simple utility for converting CSS into a xinjs `XinStyleSheet` object.
 Having all of your CSS start as Javascript (or Typescript) has many
-benefits, such as being able to do color math using `xinjs`'s `Color` class,
+benefits, such as being able to do color math using `tosijs`'s `Color` class,
 and use the same values that are in your CSS for inline code when needed.
 
 > ### Caution
@@ -79,7 +79,7 @@ function css2js () {
     }
   })
 
-  js.value = `import { vars, varDefault } from 'xinjs'\n\nexport const styleSpec = ${code}`
+  js.value = `import { vars, varDefault } from 'tosijs'\n\nexport const styleSpec = ${code}`
 }
 
 convertButton.addEventListener('click', () => {
@@ -118,7 +118,7 @@ header xin-locale-picker xin-select button {
 }
 
 header xin-locale-picker xin-select button svg {
-  fill: var(--brand-text-color) !important;
+  stroke: var(--brand-text-color) !important;
 }
 </xin-code>
 <xin-code mode="javascript" name="js"></xin-code>
@@ -137,7 +137,7 @@ header xin-locale-picker xin-select button svg {
 
 ## Using the Output
 
-You can turn the output of this utility using `xinjs`'s `StyleSheet` utility function:
+You can turn the output of this utility using `tosijs`'s `StyleSheet` utility function:
 
 ```
 import { styleSpec } from './my-style'
@@ -146,29 +146,33 @@ StyleSheet('base-style', styleSpec) // creates a `<style id="base-style>` elemen
   the `<head>` of the page.
 ```
 
-You can convert the output to Typescript by importing the `XinStyleSheet` from `xinjs`:
+You can convert the output to Typescript by importing the `XinStyleSheet` from `tosijs`:
 
 ```
-import { XinStyleSheet, vars } from 'xinjs'
+import { XinStyleSheet, vars } from 'tosijs'
 
 export const styleSpec: XinStyleSheet = ...
 ```
 */
 
-import { XinStyleSheet, vars, invertLuminance } from 'xinjs'
+import { XinStyleSheet, vars, Color, invertLuminance, MoreMath } from 'tosijs'
+import { icons, svg2DataUrl } from '../../src'
+
+const brandColor = Color.fromCss('#EE257B')
 
 const colors = {
   _textColor: '#222',
-  _brandColor: '#295546',
+  _brandColor: brandColor,
   _background: '#fafafa',
   _inputBg: '#fdfdfd',
   _backgroundShaded: '#f5f5f5',
-  _navBg: '#ddede8',
+  _navBg: brandColor.rotate(30).desaturate(0.5).brighten(0.9),
   _barColor: '#dae3df',
-  _focusColor: '#148960ad',
-  _brandTextColor: '#ecf3dd',
-  _insetBg: '#eee',
-  _codeBg: '#f8ffe9',
+  _focusColor: brandColor.opacity(0.7),
+  _brandTextColor: brandColor.rotate(30).brighten(0.9),
+  _insetBg: brandColor.rotate(45).brighten(0.8),
+  _codeBg: brandColor.rotate(-15).desaturate(0.5).brighten(0.9),
+  _linkColor: brandColor.rotate(-30).darken(0.5),
   _shadowColor: '#0004',
   _menuBg: '#fafafa',
   _menuItemActiveColor: '#000',
@@ -223,11 +227,15 @@ export const styleSpec: XinStyleSheet = {
     margin: '0',
     lineHeight: vars.lineHeight,
     background: vars.background,
-    _linkColor: vars.brandColor,
     _xinTabsSelectedColor: vars.brandColor,
     _xinTabsBarColor: vars.brandTextColor,
     _menuItemIconColor: vars.brandColor,
     color: vars.textColor,
+  },
+  '.center': {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   'input, button, select, textarea': {
     fontFamily: vars.fontFamily,
@@ -252,7 +260,7 @@ export const styleSpec: XinStyleSheet = {
     whiteSpace: 'nowrap',
   },
   h1: {
-    _textColor: vars.brandColor,
+    color: vars.brandColor,
     fontSize: 'calc(var(--font-size) * var(--h1-scale))',
     lineHeight: 'calc(var(--line-height) * var(--h1-scale))',
     fontWeight: '400',
@@ -295,13 +303,27 @@ export const styleSpec: XinStyleSheet = {
   blockquote: {
     background: vars.insetBg,
     margin: '0',
+    borderRadius: vars.spacing50,
     padding: 'var(--spacing) calc(var(--spacing) * 2)',
   },
   'blockquote > :first-child': {
     marginTop: '0',
   },
   'blockquote > :last-child': {
+    position: 'relative',
+    width: '100%',
+    paddingBottom: 48,
     marginBottom: '0',
+  },
+  'blockquote > :last-child::after': {
+    content: '" "',
+    width: 48,
+    height: 48,
+    display: 'block',
+    bottom: 0,
+    right: 0,
+    position: 'absolute',
+    background: svg2DataUrl(icons.tosi()),
   },
   '.bar': {
     display: 'flex',
@@ -399,7 +421,6 @@ export const styleSpec: XinStyleSheet = {
     pointerEvents: 'none',
     fontSize: '16px',
     fontWeight: 'bold',
-    fill: '#000',
     stroke: '#fff8',
     strokeWidth: '0.5',
     opacity: '0',
@@ -525,9 +546,6 @@ export const styleSpec: XinStyleSheet = {
     color: 'currentcolor',
     background: 'transparent',
     gap: '2px',
-  },
-  svg: {
-    fill: 'currentcolor',
   },
   'img.logo, xin-icon.logo': {
     animation: '2s ease-in-out 0s infinite alternate logo-swing',

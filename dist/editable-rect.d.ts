@@ -1,4 +1,4 @@
-import { Component } from 'xinjs';
+import { Component } from 'tosijs';
 interface Locks {
     left: boolean;
     right: boolean;
@@ -27,11 +27,11 @@ export declare class EditableRect extends Component {
             content: string;
             position: string;
             display: string;
-            height: any;
-            width: any;
-            padding: any;
-            '--text-color': any;
-            background: any;
+            height: string;
+            width: string;
+            padding: string;
+            '--text-color': string;
+            background: string;
         };
         ':host > .drag-size': {
             top: number;
@@ -56,8 +56,8 @@ export declare class EditableRect extends Component {
             pointerEvents: string;
         };
         ':host > *:hover': {
-            '--text-color': any;
-            background: any;
+            '--text-color': string;
+            background: string;
         };
     };
     static snappedCoords(event: PointerEvent, coords: number[]): number[];
@@ -88,10 +88,10 @@ export declare class EditableRect extends Component {
     get element(): HTMLElement;
     adjustRotation: (event: Event) => void;
     toggleLock: (event: Event) => void;
-    content: () => any[];
+    content: () => (HTMLDivElement | HTMLSlotElement)[];
     constructor();
     connectedCallback(): void;
     render(): void;
 }
-export declare const editableRect: any;
+export declare const editableRect: import("tosijs").ElementCreator<Component<import("tosijs").PartsMap>>;
 export {};

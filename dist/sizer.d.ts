@@ -1,4 +1,4 @@
-import { Component as XinComponent, ElementCreator } from 'xinjs';
+import { Component as XinComponent, ElementCreator } from 'tosijs';
 export declare class XinSizer extends XinComponent {
     target?: HTMLElement | null;
     static styleSpec: {
@@ -20,10 +20,10 @@ export declare class XinSizer extends XinComponent {
         ':host svg': {
             width: number;
             height: number;
-            fill: any;
+            stroke: string;
         };
     };
-    content: any;
+    content: SVGElement;
     get minSize(): {
         width: number;
         height: number;

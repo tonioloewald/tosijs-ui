@@ -1,5 +1,5 @@
-import { Component, ElementCreator, xin } from 'xinjs'
-import { marked } from 'marked'
+import { Component, ElementCreator, xin } from 'tosijs'
+import { marked, MarkedOptions } from 'marked'
 
 /*#
 # markdown
@@ -112,6 +112,7 @@ export class MarkdownViewer extends Component {
   content = null
   elements = false
   context: { [key: string]: any } = {}
+  options = {} as MarkedOptions 
 
   constructor() {
     super()
@@ -162,14 +163,11 @@ export class MarkdownViewer extends Component {
         .map((chunk) =>
           chunk.startsWith('<') && chunk.endsWith('>')
             ? chunk
-            : marked(chunk, { mangle: false, headerIds: false })
+            : marked(chunk, this.options)
         )
         .join('')
     } else {
-      this.innerHTML = marked(source, {
-        mangle: false,
-        headerIds: false,
-      })
+      this.innerHTML = marked(source, this.options) as string
     }
     this.didRender()
   }

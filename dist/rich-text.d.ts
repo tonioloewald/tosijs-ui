@@ -1,13 +1,19 @@
-import { Component as WebComponent, ElementCreator } from 'xinjs';
+import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
+import { XinSelect } from './select';
 export declare function blockStyle(options?: {
     caption: string;
     tagType: string;
-}[]): any;
-export declare function spacer(width?: string): any;
-export declare function elastic(width?: string): any;
-export declare function commandButton(title: string, dataCommand: string, icon: SVGElement): any;
-export declare const richTextWidgets: () => any[];
-export declare class RichText extends WebComponent {
+}[]): XinSelect;
+export declare function spacer(width?: string): HTMLSpanElement;
+export declare function elastic(width?: string): HTMLSpanElement;
+export declare function commandButton(title: string, dataCommand: string, icon: SVGElement): HTMLButtonElement;
+export declare const richTextWidgets: () => HTMLSpanElement[];
+interface EditorParts extends PartsMap {
+    toolbar: HTMLElement;
+    doc: HTMLElement;
+    content: HTMLElement;
+}
+export declare class RichText extends WebComponent<EditorParts> {
     widgets: 'none' | 'minimal' | 'default';
     private isInitialized;
     get value(): string;
@@ -26,3 +32,4 @@ export declare class RichText extends WebComponent {
     render(): void;
 }
 export declare const richText: ElementCreator<RichText>;
+export {};

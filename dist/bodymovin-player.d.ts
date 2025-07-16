@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'xinjs';
+import { Component as WebComponent, ElementCreator } from 'tosijs';
 export interface LottieConfig {
     container?: HTMLElement | ShadowRoot;
     renderer: 'svg' | 'canvas' | 'html';
@@ -9,7 +9,7 @@ export interface LottieConfig {
     [key: string]: any;
 }
 export declare class BodymovinPlayer extends WebComponent {
-    content: any;
+    content: null;
     src: string;
     json: string;
     config: LottieConfig;

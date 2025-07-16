@@ -89,7 +89,7 @@ To prevent dragging for an interior element (e.g. if you want a floating palette
 just add the `no-drag` class to an element or its container.
 */
 
-import { Component as WebComponent, elements, ElementCreator } from 'xinjs'
+import { Component as WebComponent, elements, ElementCreator } from 'tosijs'
 import { trackDrag, bringToFront } from './track-drag'
 
 const { slot } = elements

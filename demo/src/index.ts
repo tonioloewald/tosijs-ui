@@ -1,8 +1,7 @@
 import {
   elements,
-  xinProxy,
+  boxedProxy as tosi,
   vars,
-  xin,
   bindings,
   touch,
   getListItem,
@@ -11,7 +10,7 @@ import {
   bind,
   hotReload,
   debounce,
-} from 'xinjs'
+} from 'tosijs'
 
 import {
   icons,
@@ -35,8 +34,10 @@ StyleSheet('demo-style', styleSpec)
 import localizedStrings from './localized-strings'
 initLocalization(localizedStrings)
 
-import * as xinjs from 'xinjs'
-import * as xinjsui from '../../src/'
+import * as tosijs from 'tosijs'
+import * as tosijsui from '../../src/'
+
+Object.assign(window, { tosijs, tosijsui })
 
 import './css-var-editor'
 import docs from '../docs.json'
@@ -52,7 +53,7 @@ setTimeout(() => {
   )
 }, 100)
 
-const PROJECT = 'xinjs-ui'
+const PROJECT = 'tosi-ui'
 
 const docName =
   document.location.search !== ''
@@ -60,7 +61,7 @@ const docName =
     : 'README.md'
 const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0]
 
-const { app, prefs } = xinProxy({
+const { app, prefs } = tosi({
   app: {
     title: PROJECT,
     blogUrl: `https://loewald.com`,
@@ -111,7 +112,7 @@ bindings.current = {
 
 setTimeout(() => {
   // provide globals for experimentation, but prevent them from masking compile bugs
-  Object.assign(globalThis, { app, xin, bindings, elements, vars, touch })
+  Object.assign(globalThis, { app, tosi, bindings, elements, vars, touch })
 }, 1000)
 
 const main = document.querySelector('main') as HTMLElement | null
@@ -177,10 +178,10 @@ if (main)
             alignItems: 'center',
             borderBottom: 'none',
           },
-          title: `xinjs ${version}, xinjs-ui ${uiVersion}`,
+          title: `tosijs ${version}, tosijs-ui ${uiVersion}`,
         },
-        icons.xinjsUiColor({
-          style: { _fontSize: 40, marginRight: 10 },
+        icons.tosiUi({
+          style: { _xinIconSize: 40, marginRight: 10 },
         }),
         h2({ bindText: 'app.title' })
       ),
@@ -234,6 +235,7 @@ if (main)
         {
           class: 'iconic',
           style: { color: vars.linkColor },
+          title: 'links and settings',
           onClick(event) {
             popMenu({
               target: event.target as HTMLButtonElement,
@@ -241,7 +243,7 @@ if (main)
               menuItems: [
                 {
                   caption: 'Language',
-                  icon: 'web',
+                  icon: 'globe',
                   menuItems: i18n.localeOptions.map((locale) => ({
                     caption: locale.caption,
                     icon: locale.icon,
@@ -386,7 +388,7 @@ if (main)
           },
           bindValue: 'app.currentDoc.text',
           didRender(this: MarkdownViewer) {
-            LiveExample.insertExamples(this, { xinjs, xinjsui })
+            LiveExample.insertExamples(this, { tosijs, tosijsui })
           },
         })
       )

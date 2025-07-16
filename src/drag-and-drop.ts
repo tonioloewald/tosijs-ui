@@ -159,7 +159,7 @@ the drop zone node) simply using data-event="drop:path.to.drop_handler" as usual
 }
 ```
 ```js
-const { dragAndDrop } = xinjsui
+const { dragAndDrop } = tosijsui
 
 dragAndDrop.init()
 ```
@@ -170,8 +170,8 @@ dragAndDrop.init()
 ### Reorderable List Example
 
 ```js
-const { elements, boxedProxy, getListItem } = xinjs
-const { dragAndDrop } = xinjsui
+const { elements, boxedProxy, getListItem } = tosijs
+const { dragAndDrop } = tosijsui
 
 dragAndDrop.init()
 

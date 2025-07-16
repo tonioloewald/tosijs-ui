@@ -9,7 +9,7 @@
   div.style.color = `hsl(${(Math.random() * 360).toFixed(0)} 50% 50%)`
 })
 
-const { div, button } = xinjs.elements
+const { div, button } = tosijs.elements
 const tabSelector = preview.querySelector('xin-tabs')
 
 tabSelector.onCloseTab = body => {
@@ -40,7 +40,7 @@ preview.querySelector('.add').addEventListener('click', () => {
           height: 16px;
           transform: translateY(2px);
           margin-right: 4px;
-          fill: var(--brand-color);
+          stroke: var(--brand-color);
         "
         icon="eye"
       ></xin-icon>
@@ -114,7 +114,7 @@ import {
   elements,
   vars,
   PartsMap,
-} from 'xinjs'
+} from 'tosijs'
 
 import { xinLocalized, XinLocalized } from './localize'
 
@@ -142,7 +142,8 @@ export class TabSelector extends WebComponent {
     const tabContent =
       (
         tabBody.querySelector('template[role="tab"]') as HTMLTemplateElement
-      )?.content.cloneNode(true) || (this.localized ? xinLocalized(tabName) : span(tabName))
+      )?.content.cloneNode(true) ||
+      (this.localized ? xinLocalized(tabName) : span(tabName))
     const tab = div(
       tabContent,
       {
@@ -222,7 +223,6 @@ export class TabSelector extends WebComponent {
       transition: 'ease-out 0.2s',
     },
     ':host button.close': {
-      fill: vars.textColor,
       border: 0,
       background: 'transparent',
       textAlign: 'center',
@@ -344,14 +344,14 @@ export class TabSelector extends WebComponent {
     tabs.addEventListener('click', this.pickTab)
     tabs.addEventListener('keydown', this.keyTab)
     this.setupTabs()
-    XinLocalized.allInstances.add(this);
+    XinLocalized.allInstances.add(this)
   }
-  
+
   disconnectedCallback(): void {
     super.disconnectedCallback()
-    XinLocalized.allInstances.delete(this);
+    XinLocalized.allInstances.delete(this)
   }
-  
+
   localeChanged = () => {
     this.queueRender()
   }

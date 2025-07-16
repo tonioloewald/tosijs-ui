@@ -11,8 +11,8 @@ purpose admirably, turn out to have some annoying limitation that prevents them
 handling the specific case at hand.
 
 ```js
-const { popFloat, positionFloat } = xinjsui
-const { button } = xinjs.elements
+const { popFloat, positionFloat } = tosijsui
+const { button } = tosijs.elements
 const grid = preview.querySelector('.grid')
 
 grid.addEventListener('click', (event) => {
@@ -137,7 +137,7 @@ export type FloatPosition =
 
 */
 
-import { ElementPart } from 'xinjs'
+import { ElementPart } from 'tosijs'
 import { xinFloat, XinFloat } from './float'
 import { bringToFront } from './track-drag'
 

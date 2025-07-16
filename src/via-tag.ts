@@ -5,7 +5,7 @@
 
 If you need to load an old school (cjs) javascript or css library via cdn then use these two functions.
 
-`xinjs-ui` uses this library to implement the `<xin-code>`, `<xin-lottie>`, and `<xin-map>`
+`tosijs-ui` uses this library to implement the `<xin-code>`, `<xin-lottie>`, and `<xin-map>`
 elements.
 
 `scriptTag()` and `styleSheet()` return promises that resolve `globalThis` when the module in question
@@ -14,8 +14,8 @@ has loaded and otherwise behave as much like `import()` as possible.
 This example uses `scriptTag` and `styleSheet` to load [quilljs](https://quilljs.com) on-the-fly.
 
 ```js
-const { elements } = xinjs
-const { scriptTag, styleSheet } = xinjsui
+const { elements } = tosijs
+const { scriptTag, styleSheet } = tosijsui
 
 const toolbarOptions = [
   [{ header: [1, 2, 3, 4, false] }],
@@ -70,7 +70,7 @@ Using `styleSheet`:
 This is awaitable, if you care. The stylesheet `<link>` will only be inserted _once_.
 */
 
-import { elements } from 'xinjs'
+import { elements } from 'tosijs'
 
 interface PromiseMap {
   [key: string]: Promise<any>
@@ -83,6 +83,7 @@ export function scriptTag(
 ): Promise<any> {
   if (loadedScripts[src] === undefined) {
     if (existingSymbolName !== undefined) {
+      // @ts-ignore-error aaaargh
       const existing = globalThis[existingSymbolName]
       loadedScripts[src] = Promise.resolve({ [existingSymbolName]: existing })
     }

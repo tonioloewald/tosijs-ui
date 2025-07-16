@@ -1,4 +1,4 @@
-import { Component } from 'xinjs';
+import { Component } from 'tosijs';
 export declare const digest: (s: string, method?: string) => Promise<string>;
 export declare const isBreached: (password: string) => Promise<boolean>;
 export declare class XinPasswordStrength extends Component {
@@ -32,4 +32,4 @@ export declare class XinPasswordStrength extends Component {
     content: () => any[];
     render(): void;
 }
-export declare const xinPasswordStrength: any;
+export declare const xinPasswordStrength: import("tosijs").ElementCreator<Component<import("tosijs").PartsMap>>;

@@ -1,7 +1,7 @@
 /*#
 # menu
 
-Being able to pop a menu up anywhere is just so nice, and `xinjs-ui` allows menus
+Being able to pop a menu up anywhere is just so nice, and `tosijs-ui` allows menus
 to be generated on-the-fly, and even supports hierarchical menus.
 
 ## popMenu and `<xin-menu>`
@@ -13,8 +13,8 @@ menuItems, and (because it persists in the DOM) supports keyboard
 shortcuts.
 
 ```js
-const { popMenu, localize, xinMenu, postNotification, xinLocalized, icons } = xinjsui
-const { elements } = xinjs
+const { popMenu, localize, xinMenu, postNotification, xinLocalized, icons } = tosijsui
+const { elements } = tosijs
 
 let picked = ''
 let testingEnabled = false
@@ -176,8 +176,8 @@ preview.append(
 ## Overflow test
 
 ```js
-const { popMenu, icons, postNotification } = xinjsui
-const { elements } = xinjs
+const { popMenu, icons, postNotification } = tosijsui
+const { elements } = tosijs
 
 preview.querySelector('button').addEventListener('click', (event) => {
   popMenu({
@@ -278,8 +278,8 @@ To see this in action, see the example below, or look at the
 to render column names when you show hidden columns.
 
 ```js
-const { elements } = xinjs
-const { xinLocalized, localize, icons, popMenu, postNotification } = xinjsui
+const { elements } = tosijs
+const { xinLocalized, localize, icons, popMenu, postNotification } = tosijsui
 const { button } = elements
 const makeItem = s => ({
   caption: s,
@@ -328,7 +328,7 @@ or you have to painfully swap out components on-the-fly.
 
 And, finally, submenus are darn useful for any serious app.
 
-For this reason, `xinjs-ui` has its own menu implementation.
+For this reason, `tosijs-ui` has its own menu implementation.
 */
 
 import {
@@ -338,7 +338,7 @@ import {
   StyleSheet,
   Component,
   PartsMap,
-} from 'xinjs'
+} from 'tosijs'
 import { popFloat, FloatPosition } from './pop-float'
 import { icons, svgIcon, SvgIcon } from './icons'
 import { localize, xinLocalized } from './localize'
@@ -418,7 +418,7 @@ StyleSheet('xin-menu-helper', {
     gridTemplateColumns: '30px 1fr 30px',
   },
   '.xin-menu-item svg': {
-    fill: varDefault.menuItemIconColor('#222'),
+    stroke: varDefault.menuItemIconColor('#222'),
   },
   '.xin-menu-item.xin-menu-item-checked': {
     background: varDefault.menuItemHoverBg('#eee'),
@@ -441,7 +441,7 @@ StyleSheet('xin-menu-helper', {
     color: varDefault.menuItemActiveColor('#000'),
   },
   '.xin-menu-item:active svg': {
-    fill: varDefault.menuItemIconActiveColor('#000'),
+    stroke: varDefault.menuItemIconActiveColor('#000'),
   },
 })
 

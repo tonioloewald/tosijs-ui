@@ -1,12 +1,12 @@
-import { Component, ElementCreator, PartsMap } from 'xinjs';
+import { Component, ElementCreator, Color, PartsMap } from 'tosijs';
 interface ColorParts extends PartsMap {
     rgb: HTMLInputElement;
     alpha: HTMLInputElement;
     css: HTMLInputElement;
 }
 declare class ColorInput extends Component<ColorParts> {
-    value: any;
-    color: any;
+    value: string;
+    color: Color;
     static styleSpec: {
         ':host': {
             _gap: number;
@@ -14,24 +14,24 @@ declare class ColorInput extends Component<ColorParts> {
             _cssWidth: number;
             _alphaWidth: number;
             display: string;
-            gap: any;
+            gap: string;
             alignItems: string;
         };
         ':host input[type="color"]': {
             border: number;
-            width: any;
-            height: any;
+            width: string;
+            height: string;
             background: string;
         };
         ':host::part(alpha)': {
-            width: any;
+            width: string;
         };
         ':host::part(css)': {
-            width: any;
+            width: string;
             fontFamily: string;
         };
     };
-    content: any[];
+    content: HTMLInputElement[];
     private valueChanged;
     update: (event: Event) => void;
     connectedCallback(): void;

@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'xinjs';
+import { Component as WebComponent, ElementCreator } from 'tosijs';
 type TabCloseHandler = (tabBody: Element) => boolean | undefined | void;
 export declare class TabSelector extends WebComponent {
     value: number;
@@ -45,8 +45,8 @@ export declare class TabSelector extends WebComponent {
             alignItems: string;
         };
         ':host .tabs > [aria-selected="true"]': {
-            '--text-color': any;
-            color: any;
+            '--text-color': string;
+            color: string;
         };
         ':host .elastic': {
             flex: string;
@@ -58,15 +58,14 @@ export declare class TabSelector extends WebComponent {
             content: string;
             width: number;
             height: string;
-            background: any;
+            background: string;
             transition: string;
         };
         ':host button.close': {
-            fill: any;
             border: number;
             background: string;
             textAlign: string;
-            marginLeft: any;
+            marginLeft: string;
             padding: number;
         };
         ':host button.close > svg': {
@@ -74,7 +73,7 @@ export declare class TabSelector extends WebComponent {
         };
     };
     onCloseTab: TabCloseHandler | null;
-    content: any[];
+    content: (HTMLDivElement | HTMLSlotElement)[];
     constructor();
     addTabBody(body: HTMLElement, selectTab?: boolean): void;
     removeTabBody(body: HTMLElement): void;

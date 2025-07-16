@@ -4,7 +4,7 @@
 `<xin-ab>` provides a simple method for implementing A|B-testing.
 
 ```js
-const { AbTest } = xinjsui
+const { AbTest } = tosijsui
 
 function randomize() {
   const conditions = {
@@ -23,26 +23,30 @@ preview.querySelector('.randomize-conditions').addEventListener('click', randomi
 randomize()
 ```
 ```html
-<xin-ab class="a" condition="testA">
-  <p>testA</p>
-</xin-ab>
-<xin-ab class="not-a" not condition="testA">
-  <p>not testA</p>
-</xin-ab>
-<xin-ab class="b" condition="testB">
-  <p>testB</p>
-</xin-ab>
-<xin-ab class="not-b" not condition="testB">
-  <p>not testB</p>
-</xin-ab>
-<xin-ab class="c" condition="testC">
-  <p>testC</p>
-</xin-ab>
-<xin-ab class="not-c" not condition="testC">
-  <p>not testC</p>
-</xin-ab>
-<pre>
-</pre>
+<div style="display: flex; gap: 10px; align-items: center;">
+  <div style="display: flex; flex-direction: column; gap: 10px;">
+    <xin-ab class="a" condition="testA">
+      <p>testA</p>
+    </xin-ab>
+    <xin-ab class="not-a" not condition="testA">
+      <p>not testA</p>
+    </xin-ab>
+    <xin-ab class="b" condition="testB">
+      <p>testB</p>
+    </xin-ab>
+    <xin-ab class="not-b" not condition="testB">
+      <p>not testB</p>
+    </xin-ab>
+    <xin-ab class="c" condition="testC">
+      <p>testC</p>
+    </xin-ab>
+    <xin-ab class="not-c" not condition="testC">
+      <p>not testC</p>
+    </xin-ab>
+  </div>
+  <pre>
+  </pre>
+</div>
 <button class="randomize-conditions">Randomize</button>
 ```
 ```css
@@ -72,11 +76,9 @@ randomize()
 - `not` reverses the condition (so `<xin-ab not condition="foo">` will be visible if `conditions.foo` is `false`)
 */
 
-import { Component, xinProxy } from 'xinjs'
+import { Component } from 'tosijs'
 
-const { abTestConditions } = xinProxy({
-  abTestConditions: {} as { [key: string]: any },
-})
+const abTestConditions = {} as { [key: string]: any }
 
 export class AbTest extends Component {
   static set conditions(context: { [key: string]: any }) {
@@ -112,8 +114,8 @@ export class AbTest extends Component {
     if (
       this.condition !== '' &&
       (this.not
-        ? abTestConditions[this.condition] !== true
-        : abTestConditions[this.condition] === true)
+        ? (abTestConditions[this.condition]) !== true
+        : (abTestConditions[this.condition]) === true)
     ) {
       this.toggleAttribute('hidden', false)
     } else {

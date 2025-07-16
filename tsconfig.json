@@ -1,25 +1,24 @@
 {
   "compilerOptions": {
-    "lib": ["ES2020", "DOM"],
-    "module": "es2020",
-    "target": "es2020",
-    "moduleResolution": "node",
+    "lib": ["ES2022", "DOM"],
+    "module": "es2022",
+    "target": "es2022",
+    "moduleResolution": "bundler",
     "moduleDetection": "force",
-    "allowImportingTsExtensions": true,
     "strict": true,
     "downlevelIteration": true,
-    "skipLibCheck": true,
+    "skipLibCheck": false,
     "jsx": "preserve",
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
-    "noEmit": true,
     "types": [
       "bun-types", // add Bun global
       "@types/jsdom"
     ]
   },
   "allowJs": true,
-  "include": ["src/**/*"],
-  "exclude": ["node_nodules", "**.*.spec.ts,*.test.ts"]
+  "files": ["./node_modules/@types/react/index.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.json"],
+  "exclude": ["node_modules", "src/**/*.spec.ts", "src/**/*.test.ts"]
 }

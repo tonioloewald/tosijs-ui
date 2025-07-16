@@ -1,12 +1,5 @@
-import { ElementCreator } from 'xinjs'
+import { ElementCreator } from 'tosijs'
 
-export interface IconSpec {
-  w?: number
-  h?: number
-  p: string[]
-  c?: string[]
-}
-
-export type IconData = { [key: string]: string | IconSpec }
+export type IconData = { [key: string]: string }
 
 export type SVGIconMap = { [key: string]: ElementCreator<SVGElement> }

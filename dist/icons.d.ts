@@ -1,15 +1,17 @@
-import { Component as WebComponent } from 'xinjs';
-import { IconSpec, SVGIconMap } from './icon-types';
-export declare const defineIcon: (name: string, icon: IconSpec | string) => void;
-export declare const svg2DataUrl: (svg: SVGElement, fill?: string, stroke?: string, strokeWidth?: number | string) => string;
+import { ElementCreator, Component as WebComponent } from 'tosijs';
+import { SVGIconMap } from './icon-types';
+export declare const defineIcons: (newIcons: {
+    [key: string]: string;
+}) => void;
+export declare const svg2DataUrl: (svg: SVGElement, fill?: string | false, stroke?: string | false, strokeWidth?: number | string) => string;
 export declare const icons: SVGIconMap;
 export declare class SvgIcon extends WebComponent {
     icon: string;
     size: number;
-    color: string;
+    fill: string;
     stroke: string;
     strokeWidth: number;
     constructor();
     render(): void;
 }
-export declare const svgIcon: any;
+export declare const svgIcon: ElementCreator<WebComponent<import("tosijs").PartsMap>>;

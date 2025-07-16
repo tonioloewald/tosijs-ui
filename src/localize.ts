@@ -1,7 +1,7 @@
 /*#
 # localize
 
-`xinjs-ui` provides support for localization via the `localize` method and the `<xin-locale-picker>`
+`tosijs-ui` provides support for localization via the `localize` method and the `<xin-locale-picker>`
 and `<xin-localized>` custom-elements.
 
 > ### Important Note
@@ -48,8 +48,8 @@ localize the string, and then append the ellipsis.
 ## `setLocale(language: string)`
 
 ```js
-const { button, p } = xinjs.elements
-const { setLocale } = xinjsui
+const { button, p } = tosijs.elements
+const { setLocale } = tosijsui
 
 preview.append(
   p(
@@ -117,7 +117,7 @@ xin-localized {
 }
 ```
 ```js
-const { xinLocalized, localize } = xinjsui
+const { xinLocalized, localize } = tosijsui
 
 preview.append(xinLocalized({
   refString: 'localized placeholder',
@@ -231,12 +231,25 @@ class MyLocalizedComponent extends Component {
 ```
 */
 
-import { Component, boxedProxy, elements, bindings, observe } from 'xinjs'
+import { Component, boxedProxy, elements, bindings, observe, BoxedProxy } from 'tosijs'
 import { makeSorter } from './make-sorter'
 import { xinSelect, XinSelect } from './select'
 
 interface TranslationMap {
   [key: string]: string[]
+}
+
+interface I18nConfig {
+  locale: string;
+  locales: string[];
+  languages: string[];
+  emoji: string[];
+  stringMap: TranslationMap;
+  localeOptions: Array<{ // Or HTMLElement[], since span() returns an HTMLElement
+    icon: HTMLElement; // Use HTMLElement as the type for span() result
+    caption: string;
+    value: string;
+  }>;
 }
 
 const { span } = elements
@@ -256,7 +269,7 @@ export const { i18n } = boxedProxy({
       },
     ],
   },
-})
+}) as {i18n: I18nConfig}
 
 bindings.localeOptions = {
   toDOM(select, options) {
@@ -281,6 +294,7 @@ export const updateLocalized = () => {
   }
 }
 
+// @ts-ignore-error it's a proxy
 observe(i18n.locale.xinPath, updateLocalized)
 
 const captionSort = makeSorter((locale: { caption: string }) => [
@@ -314,7 +328,7 @@ export function initLocalization(localizedStrings: string) {
     if (!i18n.locales.includes(i18n.locale.valueOf())) {
       const language = i18n.locale.substring(0, 2)
       i18n.locale =
-        i18n.locales.find((locale) => locale.substring(0, 2) === language) ||
+        i18n.locales.find((locale: string) => locale.substring(0, 2) === language) ||
         i18n.locales[0]
     }
     updateLocalized()
@@ -370,9 +384,9 @@ export const localePicker = LocalePicker.elementCreator({
 })
 
 interface AbstractLocalized {
-  localeChanged: () => {}
-  connectedCallback: () => {}
-  disconnectedCallback: () => {}
+  localeChanged: () => void
+  connectedCallback: () => void
+  disconnectedCallback: () => void
 }
 
 export class XinLocalized extends Component {

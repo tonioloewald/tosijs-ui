@@ -54,7 +54,7 @@ simply passes through document `selectionchange` events, but also passes a refer
 the `<xin-word>` component).
 */
 
-import { Component as WebComponent, ElementCreator, elements } from 'xinjs'
+import { Component as WebComponent, ElementCreator, PartsMap, elements } from 'tosijs'
 import { icons } from './icons'
 
 import { xinSelect, XinSelect } from './select'
@@ -154,7 +154,13 @@ export const richTextWidgets = () => [
   ...characterStyleWidgets(),
 ]
 
-export class RichText extends WebComponent {
+interface EditorParts extends PartsMap {
+  toolbar: HTMLElement
+  doc: HTMLElement
+  content: HTMLElement
+}
+
+export class RichText extends WebComponent<EditorParts> {
   widgets: 'none' | 'minimal' | 'default' = 'default'
 
   private isInitialized = false

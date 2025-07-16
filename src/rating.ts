@@ -24,8 +24,10 @@ that renders a rating using <xin-icon icon="star" color="red"></xin-icon>s.
 - `min` (1 by default) can be 0 or 1 (allowing ratings of 0 to max or 1 to max)
 - `step` (0.5 by default) granularity of rating
 - `icon` ('star' by default) determines the icon used
-- `fill` (#f91 by default) is the color of rating icons
-- `empty-color` (#ccc by default) is the color of background icons
+- `rating-stroke` (#f91 by default) is the stroke of rating icons
+- `rating-fill` (#e81 by default) is the color of rating icons
+- `empty-stroke` (none by default) is the color of background icons
+- `empty-fill` (#ccc by default) is the color of background icons
 - `readonly` (false by default) prevents the user from changing the rating
 - `hollow` (false by default) makes the empty rating icons hollow.
 
@@ -38,7 +40,7 @@ as the behavior of `<input type="number">`, [Shoelace's rating widget](https://s
 and (in my opinion) common sense, but  not like [MUI's rating widget](https://mui.com/material-ui/react-rating/).
 */
 
-import { Component, elements, ElementCreator, vars, PartsMap } from 'xinjs'
+import { Component, elements, ElementCreator, vars, PartsMap } from 'tosijs'
 import { icons } from './icons'
 
 const { span } = elements
@@ -56,9 +58,10 @@ export class XinRating extends Component {
   step = 1
   value: number | null = null
   icon = 'star'
-  color = '#f91'
-  emptyColor = '#8888'
-  emptyStrokeWidth = 2
+  ratingFill = '#f91'
+  ratingStroke = '#e81'
+  emptyFill = '#ccc'
+  emptyStroke = 'none'
   readonly = false
   hollow = false
 
@@ -79,33 +82,25 @@ export class XinRating extends Component {
     },
     ':host::part(empty)': {
       pointerEvents: 'none',
-      _textColor: 'transparent',
-    },
-    ':host [part="empty"]:not(.hollow)': {
-      fill: vars.ratingEmptyColor,
-    },
-    ':host .hollow': {
-      fill: 'none',
-      stroke: vars.ratingEmptyColor,
-      strokeWidth: vars.ratingEmptyStrokeWidth,
+      _xinIconFill: vars.emptyFill,
+      _xinIconStroke: vars.emptyStroke,
     },
     ':host::part(filled)': {
       position: 'absolute',
       left: 0,
-      fill: vars.ratingColor,
-      stroke: vars.ratingColor,
-      strokeWidth: vars.ratingEmptyStrokeWidth,
+      _xinIconFill: vars.ratingFill,
+      _xinIconStroke: vars.ratingStroke,
     },
     ':host svg': {
-      transform: 'scale(0.7)',
+      transform: 'scale(0.9)',
       pointerEvents: 'all !important',
       transition: '0.25s ease-in-out',
     },
     ':host svg:hover': {
-      transform: 'scale(0.9)',
+      transform: 'scale(1)',
     },
     ':host svg:active': {
-      transform: 'scale(1)',
+      transform: 'scale(1.1)',
     },
   }
 
@@ -117,7 +112,9 @@ export class XinRating extends Component {
       'min',
       'icon',
       'step',
-      'color',
+      'ratingStroke',
+      'ratingColor',
+      'emptyStroke',
       'emptyColor',
       'readonly',
       'iconSize',
@@ -211,12 +208,12 @@ export class XinRating extends Component {
   render() {
     super.render()
 
-    this.style.setProperty('--rating-color', this.color)
-    this.style.setProperty('--rating-empty-color', this.emptyColor)
-    this.style.setProperty(
-      '--rating-empty-stroke-width',
-      String(this.emptyStrokeWidth * 32)
-    )
+    const height = this.iconSize + 'px'
+    this.style.setProperty('--rating-fill', this.ratingFill)
+    this.style.setProperty('--rating-stroke', this.ratingStroke)
+    this.style.setProperty('--empty-fill', this.emptyFill)
+    this.style.setProperty('--empty-stroke', this.emptyStroke)
+    this.style.setProperty('--xin-icon-size', height)
 
     if (this.readonly) {
       this.role = 'image'
@@ -229,17 +226,15 @@ export class XinRating extends Component {
     this.ariaValueNow = this.value === null ? String(-1) : String(this.value)
 
     const { empty, filled } = this.parts
-    const height = this.iconSize + 'px'
     empty.classList.toggle('hollow', this.hollow)
 
     if (this._renderedIcon !== this.icon) {
       this._renderedIcon = this.icon
       for (let i = 0; i < this.max; i++) {
-        empty.append(icons[this.icon]({ height }))
-        filled.append(icons[this.icon]({ height }))
+        empty.append(icons[this.icon]())
+        filled.append(icons[this.icon]())
       }
     }
-    this.style.height = height
 
     this.displayValue(this.value)
   }

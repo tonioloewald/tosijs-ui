@@ -9,375 +9,381 @@ var __export = (target, all) => {
     });
 };
 
-// node_modules/xinjs/dist/module.js
+// node_modules/tosijs/dist/module.js
 var exports_module = {};
 __export(exports_module, {
-  xinValue: () => M,
-  xinProxy: () => Rn,
-  xinPath: () => u,
-  xin: () => T,
-  version: () => Kn,
-  vars: () => qn,
-  varDefault: () => wn,
-  updates: () => jn,
-  unobserve: () => a,
-  touch: () => _,
-  throttle: () => Zn,
-  svgElements: () => Un,
-  settings: () => Q,
-  on: () => Wn,
-  observerShouldBeRemoved: () => l,
-  observe: () => N,
-  mathML: () => Qn,
-  makeComponent: () => Xn,
-  invertLuminance: () => Ro,
-  initVars: () => Bo,
-  hotReload: () => Io,
-  getListItem: () => Tn,
-  elements: () => S,
-  debounce: () => On,
-  darkMode: () => Ko,
-  css: () => P,
-  boxedProxy: () => fn,
-  boxed: () => I,
-  blueprintLoader: () => Ff,
-  blueprint: () => Tf,
-  bindings: () => on,
-  bind: () => nn,
-  StyleSheet: () => qo,
-  MoreMath: () => Go,
-  Component: () => G,
-  Color: () => $,
-  BlueprintLoader: () => Eo,
-  Blueprint: () => Blueprint
+  xinValue: () => x,
+  xinProxy: () => Pn,
+  xinPath: () => C,
+  xin: () => d,
+  version: () => An,
+  vars: () => Hn,
+  varDefault: () => sn,
+  updates: () => Jn,
+  unobserve: () => J,
+  touchElement: () => Cn,
+  touch: () => j,
+  tosi: () => xe,
+  throttle: () => en,
+  svgElements: () => Ln,
+  settings: () => F,
+  on: () => z,
+  observe: () => U,
+  mathML: () => On,
+  makeComponent: () => ln,
+  invertLuminance: () => Ge,
+  initVars: () => Ue,
+  hotReload: () => Re,
+  getListItem: () => mn,
+  getCssVar: () => Mn,
+  elements: () => p,
+  debounce: () => vn,
+  css: () => V,
+  boxedProxy: () => cn,
+  boxed: () => Y,
+  blueprintLoader: () => oo,
+  blueprint: () => eo,
+  bindings: () => tn,
+  bind: () => h,
+  StyleSheet: () => Ve,
+  MoreMath: () => Ae,
+  Component: () => M,
+  Color: () => a,
+  BlueprintLoader: () => Wn,
+  Blueprint: () => an
 });
-var Q = { debug: false, perf: false };
-function O(n) {
+var F = { debug: false, perf: false };
+function T(n) {
   if (n == null || typeof n !== "object")
     return n;
-  if (Array.isArray(n))
-    return n.map(O);
-  let o = {};
-  for (let c in n) {
-    let f = n[c];
+  if (n instanceof Set)
+    return new Set(n);
+  else if (Array.isArray(n))
+    return n.map(T);
+  let e = {};
+  for (let o in n) {
+    let t = n[o];
     if (n != null && typeof n === "object")
-      o[c] = O(f);
+      e[o] = T(t);
     else
-      o[c] = f;
+      e[o] = t;
   }
-  return o;
+  return e;
 }
-var rn = "-xin-data";
-var i = `.${rn}`;
-var En = "-xin-event";
-var $n = `.${En}`;
-var C = "xinPath";
-var q = "xinValue";
-var u = (n) => {
-  return n[C];
+var un = "-xin-data";
+var v = `.${un}`;
+var pn = "-xin-event";
+var yn = `.${pn}`;
+var m = "xinPath";
+var O = "xinValue";
+var In = "xinObserve";
+var Yn = "xinBind";
+var _n = "xinOn";
+var C = (n) => {
+  return n && n[m] || undefined;
 };
-function M(n) {
-  return typeof n === "object" && n !== null ? n[q] || n : n;
+function x(n) {
+  return typeof n === "object" && n !== null ? n[O] || n : n;
 }
-var Y = new WeakMap;
-var Z = new WeakMap;
-var w = (n) => {
-  let o = n.cloneNode();
-  if (o instanceof Element) {
-    let c = Z.get(n), f = Y.get(n);
-    if (c != null)
-      Z.set(o, O(c));
-    if (f != null)
-      Y.set(o, O(f));
+var L = new WeakMap;
+var E = new WeakMap;
+var B = (n) => {
+  let e = n.cloneNode();
+  if (e instanceof Element) {
+    let o = E.get(n), t = L.get(n);
+    if (o != null)
+      E.set(e, T(o));
+    if (t != null)
+      L.set(e, T(t));
   }
-  for (let c of n instanceof HTMLTemplateElement ? n.content.childNodes : n.childNodes)
-    if (c instanceof Element || c instanceof DocumentFragment)
-      o.appendChild(w(c));
+  for (let o of Array.from(n instanceof HTMLTemplateElement ? n.content.childNodes : n.childNodes))
+    if (o instanceof Element || o instanceof DocumentFragment)
+      e.appendChild(B(o));
     else
-      o.appendChild(c.cloneNode());
-  return o;
+      e.appendChild(o.cloneNode());
+  return e;
 };
-var m = new WeakMap;
-var Tn = (n) => {
-  let o = document.body.parentElement;
-  while (n.parentElement != null && n.parentElement !== o) {
-    let c = m.get(n);
-    if (c != null)
-      return c;
+var q = new WeakMap;
+var mn = (n) => {
+  let e = document.body.parentElement;
+  while (n.parentElement != null && n.parentElement !== e) {
+    let o = q.get(n);
+    if (o != null)
+      return o;
     n = n.parentElement;
   }
   return false;
 };
-var l = Symbol("observer should be removed");
-var e = [];
-var t = [];
-var Fn = false;
-var kn;
-var Sn;
+var Vn = Symbol("observer should be removed");
+var N = [];
+var nn = [];
+var xn = false;
+var hn;
+var bn;
 
-class _n {
+class qn {
   description;
   test;
   callback;
-  constructor(n, o) {
-    let c = typeof o === "string" ? `"${o}"` : `function ${o.name}`, f;
+  constructor(n, e) {
+    let o = typeof e === "string" ? `"${e}"` : `function ${e.name}`, t;
     if (typeof n === "string")
-      this.test = (X) => typeof X === "string" && X !== "" && (n.startsWith(X) || X.startsWith(n)), f = `test = "${n}"`;
+      this.test = (i) => typeof i === "string" && i !== "" && (n.startsWith(i) || i.startsWith(n)), t = `test = "${n}"`;
     else if (n instanceof RegExp)
-      this.test = n.test.bind(n), f = `test = "${n.toString()}"`;
+      this.test = n.test.bind(n), t = `test = "${n.toString()}"`;
     else if (n instanceof Function)
-      this.test = n, f = `test = function ${n.name}`;
+      this.test = n, t = `test = function ${n.name}`;
     else
       throw new Error("expect listener test to be a string, RegExp, or test function");
-    if (this.description = `${f}, ${c}`, typeof o === "function")
-      this.callback = o;
+    if (this.description = `${t}, ${o}`, typeof e === "function")
+      this.callback = e;
     else
       throw new Error("expect callback to be a path or function");
-    e.push(this);
+    N.push(this);
   }
 }
-var jn = async () => {
-  if (kn === undefined)
+var Jn = async () => {
+  if (hn === undefined)
     return;
-  await kn;
+  await hn;
 };
-var To = () => {
-  if (Q.perf)
+var be = () => {
+  if (F.perf)
     console.time("xin async update");
-  let n = [...t];
-  for (let o of n)
-    e.filter((c) => {
-      let f;
+  let n = Array.from(nn);
+  for (let e of n)
+    N.filter((o) => {
+      let t;
       try {
-        f = c.test(o);
-      } catch (X) {
-        throw new Error(`Listener ${c.description} threw "${X}" at "${o}"`);
+        t = o.test(e);
+      } catch (i) {
+        throw new Error(`Listener ${o.description} threw "${i}" at "${e}"`);
       }
-      if (f === l)
-        return a(c), false;
-      return f;
-    }).forEach((c) => {
-      let f;
+      if (t === Vn)
+        return J(o), false;
+      return t;
+    }).forEach((o) => {
+      let t;
       try {
-        f = c.callback(o);
-      } catch (X) {
-        console.error(`Listener ${c.description} threw "${X}" handling "${o}"`);
+        t = o.callback(e);
+      } catch (i) {
+        console.error(`Listener ${o.description} threw "${i}" handling "${e}"`);
       }
-      if (f === l)
-        a(c);
+      if (t === Vn)
+        J(o);
     });
-  if (t.splice(0), Fn = false, typeof Sn === "function")
-    Sn();
-  if (Q.perf)
+  if (nn.splice(0), xn = false, typeof bn === "function")
+    bn();
+  if (F.perf)
     console.timeEnd("xin async update");
 };
-var _ = (n) => {
-  let o = typeof n === "string" ? n : u(n);
-  if (o === undefined)
+var j = (n) => {
+  let e = typeof n === "string" ? n : C(n);
+  if (e === undefined)
     throw console.error("touch was called on an invalid target", n), new Error("touch was called on an invalid target");
-  if (Fn === false)
-    kn = new Promise((c) => {
-      Sn = c;
-    }), Fn = setTimeout(To);
-  if (t.find((c) => o.startsWith(c)) == null)
-    t.push(o);
+  if (xn === false)
+    hn = new Promise((o) => {
+      bn = o;
+    }), xn = setTimeout(be);
+  if (nn.find((o) => e.startsWith(o)) == null)
+    nn.push(e);
 };
-var Vn = (n, o) => {
-  return new _n(n, o);
+var gn = (n, e) => {
+  return new qn(n, e);
 };
-var a = (n) => {
-  let o = e.indexOf(n);
-  if (o > -1)
-    e.splice(o, 1);
+var J = (n) => {
+  let e = N.indexOf(n);
+  if (e > -1)
+    N.splice(e, 1);
   else
     throw new Error("unobserve failed, listener not found");
 };
-var Fo = (n) => {
+var ge = (n) => {
   try {
     return JSON.stringify(n);
-  } catch (o) {
+  } catch (e) {
     return "{has circular references}";
   }
 };
-var Ln = (...n) => new Error(n.map(Fo).join(" "));
-var ko = () => new Date(parseInt("1000000000", 36) + Date.now()).valueOf().toString(36).slice(1);
-var So = 0;
-var Lo = () => (parseInt("10000", 36) + ++So).toString(36).slice(-5);
-var Co = () => ko() + Lo();
-var Cn = {};
-var un = {};
-function mn(n) {
+var wn = (...n) => new Error(n.map(ge).join(" "));
+var we = () => new Date(parseInt("1000000000", 36) + Date.now()).valueOf().toString(36).slice(1);
+var Xe = 0;
+var Te = () => (parseInt("10000", 36) + ++Xe).toString(36).slice(-5);
+var Ee = () => we() + Te();
+var Xn = {};
+var Zn = {};
+function Qn(n) {
   if (n === "")
     return [];
   if (Array.isArray(n))
     return n;
   else {
-    let o = [];
+    let e = [];
     while (n.length > 0) {
-      let c = n.search(/\[[^\]]+\]/);
-      if (c === -1) {
-        o.push(n.split("."));
+      let o = n.search(/\[[^\]]+\]/);
+      if (o === -1) {
+        e.push(n.split("."));
         break;
       } else {
-        let f = n.slice(0, c);
-        if (n = n.slice(c), f !== "")
-          o.push(f.split("."));
-        if (c = n.indexOf("]") + 1, o.push(n.slice(1, c - 1)), n.slice(c, c + 1) === ".")
-          c += 1;
-        n = n.slice(c);
+        let t = n.slice(0, o);
+        if (n = n.slice(o), t !== "")
+          e.push(t.split("."));
+        if (o = n.indexOf("]") + 1, e.push(n.slice(1, o - 1)), n.slice(o, o + 1) === ".")
+          o += 1;
+        n = n.slice(o);
       }
     }
-    return o;
+    return e;
   }
 }
-var J = new WeakMap;
-function Nn(n, o) {
-  if (J.get(n) === undefined)
-    J.set(n, {});
-  if (J.get(n)[o] === undefined)
-    J.get(n)[o] = {};
-  let c = J.get(n)[o];
-  if (o === "_auto_")
-    n.forEach((f, X) => {
-      if (f._auto_ === undefined)
-        f._auto_ = Co();
-      c[f._auto_ + ""] = X;
+var S = new WeakMap;
+function Kn(n, e) {
+  if (S.get(n) === undefined)
+    S.set(n, {});
+  if (S.get(n)[e] === undefined)
+    S.get(n)[e] = {};
+  let o = S.get(n)[e];
+  if (e === "_auto_")
+    n.forEach((t, i) => {
+      if (t._auto_ === undefined)
+        t._auto_ = Ee();
+      o[t._auto_ + ""] = i;
     });
   else
-    n.forEach((f, X) => {
-      c[j(f, o) + ""] = X;
+    n.forEach((t, i) => {
+      o[W(t, e) + ""] = i;
     });
-  return c;
+  return o;
 }
-function Mo(n, o) {
-  if (J.get(n) === undefined || J.get(n)[o] === undefined)
-    return Nn(n, o);
+function Se(n, e) {
+  if (S.get(n) === undefined || S.get(n)[e] === undefined)
+    return Kn(n, e);
   else
-    return J.get(n)[o];
+    return S.get(n)[e];
 }
-function Ao(n, o, c) {
-  c = c + "";
-  let f = Mo(n, o)[c];
-  if (f === undefined || j(n[f], o) + "" !== c)
-    f = Nn(n, o)[c];
-  return f;
+function ke(n, e, o) {
+  o = o + "";
+  let t = Se(n, e)[o];
+  if (t === undefined || W(n[t], e) + "" !== o)
+    t = Kn(n, e)[o];
+  return t;
 }
-function Wo(n, o, c) {
-  if (n[o] === undefined && c !== undefined)
-    n[o] = c;
-  return n[o];
+function ve(n, e, o) {
+  if (n[e] === undefined && o !== undefined)
+    n[e] = o;
+  return n[e];
 }
-function pn(n, o, c, f) {
-  let X = o !== "" ? Ao(n, o, c) : c;
-  if (f === Cn)
-    return n.splice(X, 1), J.delete(n), Symbol("deleted");
-  else if (f === un) {
-    if (o === "" && n[X] === undefined)
-      n[X] = {};
-  } else if (f !== undefined)
-    if (X !== undefined)
-      n[X] = f;
-    else if (o !== "" && j(f, o) + "" === c + "")
-      n.push(f), X = n.length - 1;
+function Rn(n, e, o, t) {
+  let i = e !== "" ? ke(n, e, o) : o;
+  if (t === Xn)
+    return n.splice(i, 1), S.delete(n), Symbol("deleted");
+  else if (t === Zn) {
+    if (e === "" && n[i] === undefined)
+      n[i] = {};
+  } else if (t !== undefined)
+    if (i !== undefined)
+      n[i] = t;
+    else if (e !== "" && W(t, e) + "" === o + "")
+      n.push(t), i = n.length - 1;
     else
-      throw new Error(`byIdPath insert failed at [${o}=${c}]`);
-  return n[X];
+      throw new Error(`byIdPath insert failed at [${e}=${o}]`);
+  return n[i];
 }
-function In(n) {
+function Un(n) {
   if (!Array.isArray(n))
-    throw Ln("setByPath failed: expected array, found", n);
+    throw wn("setByPath failed: expected array, found", n);
 }
-function Pn(n) {
+function Gn(n) {
   if (n == null || !(n instanceof Object))
-    throw Ln("setByPath failed: expected Object, found", n);
+    throw wn("setByPath failed: expected Object, found", n);
 }
-function j(n, o) {
-  let c = mn(o), f = n, X, y, x, r;
-  for (X = 0, y = c.length;f !== undefined && X < y; X++) {
-    let E = c[X];
-    if (Array.isArray(E))
-      for (x = 0, r = E.length;f !== undefined && x < r; x++) {
-        let F = E[x];
-        f = f[F];
+function W(n, e) {
+  let o = Qn(e), t = n, i, s, r, c;
+  for (i = 0, s = o.length;t !== undefined && i < s; i++) {
+    let l = o[i];
+    if (Array.isArray(l))
+      for (r = 0, c = l.length;t !== undefined && r < c; r++) {
+        let f = l[r];
+        t = t[f];
       }
-    else if (f.length === 0) {
-      if (f = f[E.slice(1)], E[0] !== "=")
+    else if (t.length === 0) {
+      if (t = t[Number(l.slice(1))], l[0] !== "=")
         return;
-    } else if (E.includes("=")) {
-      let [F, ...W] = E.split("=");
-      f = pn(f, F, W.join("="));
+    } else if (l.includes("=")) {
+      let [f, ...w] = l.split("=");
+      t = Rn(t, f, w.join("="));
     } else
-      x = parseInt(E, 10), f = f[x];
+      r = parseInt(l, 10), t = t[r];
   }
-  return f;
+  return t;
 }
-function bn(n, o, c) {
-  let f = n, X = mn(o);
-  while (f != null && X.length > 0) {
-    let y = X.shift();
-    if (typeof y === "string") {
-      let x = y.indexOf("=");
-      if (x > -1) {
-        if (x === 0)
-          Pn(f);
+function Nn(n, e, o) {
+  let t = n, i = Qn(e);
+  while (t != null && i.length > 0) {
+    let s = i.shift();
+    if (typeof s === "string") {
+      let r = s.indexOf("=");
+      if (r > -1) {
+        if (r === 0)
+          Gn(t);
         else
-          In(f);
-        let r = y.slice(0, x), E = y.slice(x + 1);
-        if (f = pn(f, r, E, X.length > 0 ? un : c), X.length === 0)
+          Un(t);
+        let c = s.slice(0, r), l = s.slice(r + 1);
+        if (t = Rn(t, c, l, i.length > 0 ? Zn : o), i.length === 0)
           return true;
       } else {
-        In(f);
-        let r = parseInt(y, 10);
-        if (X.length > 0)
-          f = f[r];
+        Un(t);
+        let c = parseInt(s, 10);
+        if (i.length > 0)
+          t = t[c];
         else {
-          if (c !== Cn) {
-            if (f[r] === c)
+          if (o !== Xn) {
+            if (t[c] === o)
               return false;
-            f[r] = c;
+            t[c] = o;
           } else
-            f.splice(r, 1);
+            t.splice(c, 1);
           return true;
         }
       }
-    } else if (Array.isArray(y) && y.length > 0) {
-      Pn(f);
-      while (y.length > 0) {
-        let x = y.shift();
-        if (y.length > 0 || X.length > 0)
-          f = Wo(f, x, y.length > 0 ? {} : []);
+    } else if (Array.isArray(s) && s.length > 0) {
+      Gn(t);
+      while (s.length > 0) {
+        let r = s.shift();
+        if (s.length > 0 || i.length > 0)
+          t = ve(t, r, s.length > 0 ? {} : []);
         else {
-          if (c !== Cn) {
-            if (f[x] === c)
+          if (o !== Xn) {
+            if (t[r] === o)
               return false;
-            f[x] = c;
+            t[r] = o;
           } else {
-            if (!Object.prototype.hasOwnProperty.call(f, x))
+            if (!Object.prototype.hasOwnProperty.call(t, r))
               return false;
-            delete f[x];
+            delete t[r];
           }
           return true;
         }
       }
     } else
-      throw new Error(`setByPath failed, bad path ${o}`);
+      throw new Error(`setByPath failed, bad path ${e}`);
   }
-  throw new Error(`setByPath(${n}, ${o}, ${c}) failed`);
+  throw new Error(`setByPath(${n}, ${e}, ${o}) failed`);
 }
-var Do = ["sort", "splice", "copyWithin", "fill", "pop", "push", "reverse", "shift", "unshift"];
-var An = {};
-var Ho = true;
-var zo = /^\.?([^.[\](),])+(\.[^.[\](),]+|\[\d+\]|\[[^=[\](),]*=[^[\]()]+\])*$/;
-var Oo = (n) => zo.test(n);
-var s = (n = "", o = "") => {
+var Ce = ["sort", "splice", "copyWithin", "fill", "pop", "push", "reverse", "shift", "unshift"];
+var En = {};
+var Me = true;
+var De = /^\.?([^.[\](),])+(\.[^.[\](),]+|\[\d+\]|\[[^=[\](),]*=[^[\]()]+\])*$/;
+var Fe = (n) => De.test(n);
+var H = (n = "", e = "") => {
   if (n === "")
-    return o;
-  else if (o.match(/^\d+$/) !== null || o.includes("="))
-    return `${n}[${o}]`;
+    return e;
+  else if (e.match(/^\d+$/) !== null || e.includes("="))
+    return `${n}[${e}]`;
   else
-    return `${n}.${o}`;
+    return `${n}.${e}`;
 };
-var Zo = { string(n) {
+var Le = { string(n) {
   return new String(n);
 }, boolean(n) {
   return new Boolean(n);
@@ -388,200 +394,84 @@ var Zo = { string(n) {
 }, number(n) {
   return new Number(n);
 } };
-function Mn(n, o) {
-  let c = typeof n;
-  if (n === undefined || c === "object" || c === "function")
+function Tn(n, e) {
+  let o = typeof n;
+  if (n === undefined || o === "object" || o === "function")
     return n;
   else
-    return new Proxy(Zo[typeof n](n), V(o, true));
+    return new Proxy(Le[typeof n](n), I(e, true));
 }
-var V = (n, o) => ({ get(c, f) {
-  switch (f) {
-    case C:
+var I = (n, e) => ({ get(o, t) {
+  switch (t) {
+    case m:
       return n;
-    case q:
-      return M(c);
+    case O:
+      return o.valueOf ? o.valueOf() : o;
+    case In:
+      return (r) => {
+        let c = gn(n, r);
+        return () => J(c);
+      };
+    case _n:
+      return (r, c) => z(r, c, x(o));
+    case Yn:
+      return (r, c, l) => {
+        h(r, n, c, l);
+      };
   }
-  if (typeof f === "symbol")
-    return c[f];
-  let X = f, y = X.match(/^([^.[]+)\.(.+)$/) ?? X.match(/^([^\]]+)(\[.+)/) ?? X.match(/^(\[[^\]]+\])\.(.+)$/) ?? X.match(/^(\[[^\]]+\])\[(.+)$/);
-  if (y !== null) {
-    let [, x, r] = y, E = s(n, x), F = j(c, x);
-    return F !== null && typeof F === "object" ? new Proxy(F, V(E, o))[r] : F;
+  if (typeof t === "symbol")
+    return o[t];
+  let i = t, s = i.match(/^([^.[]+)\.(.+)$/) ?? i.match(/^([^\]]+)(\[.+)/) ?? i.match(/^(\[[^\]]+\])\.(.+)$/) ?? i.match(/^(\[[^\]]+\])\[(.+)$/);
+  if (s !== null) {
+    let [, r, c] = s, l = H(n, r), f = W(o, r);
+    return f !== null && typeof f === "object" ? new Proxy(f, I(l, e))[c] : f;
   }
-  if (X.startsWith("[") && X.endsWith("]"))
-    X = X.substring(1, X.length - 1);
-  if (!Array.isArray(c) && c[X] !== undefined || Array.isArray(c) && X.includes("=")) {
-    let x;
-    if (X.includes("=")) {
-      let [r, E] = X.split("=");
-      x = c.find((F) => `${j(F, r)}` === E);
+  if (i.startsWith("[") && i.endsWith("]"))
+    i = i.substring(1, i.length - 1);
+  if (!Array.isArray(o) && o[i] !== undefined || Array.isArray(o) && i.includes("=")) {
+    let r;
+    if (i.includes("=")) {
+      let [c, l] = i.split("=");
+      r = o.find((f) => `${W(f, c)}` === l);
     } else
-      x = c[X];
-    if (x !== null && typeof x === "object") {
-      let r = s(n, X);
-      return new Proxy(x, V(r, o));
-    } else if (typeof x === "function")
-      return x.bind(c);
-    else
-      return o ? Mn(x, s(n, X)) : x;
-  } else if (Array.isArray(c)) {
-    let x = c[X];
-    return typeof x === "function" ? (...r) => {
-      let E = Array.prototype[X].apply(c, r);
-      if (Do.includes(X))
-        _(n);
-      return E;
-    } : typeof x === "object" ? new Proxy(x, V(s(n, X), o)) : o ? Mn(x, s(n, X)) : x;
+      r = o[i];
+    if (r instanceof Object) {
+      let c = H(n, i);
+      return new Proxy(r instanceof Function ? r.bind(o) : r, I(c, e));
+    } else
+      return e ? Tn(r, H(n, i)) : r;
+  } else if (Array.isArray(o)) {
+    let r = o[i];
+    return typeof r === "function" ? (...c) => {
+      let l = r.apply(o, c);
+      if (Ce.includes(i))
+        j(n);
+      return l;
+    } : typeof r === "object" ? new Proxy(r, I(H(n, i), e)) : e ? Tn(r, H(n, i)) : r;
   } else
-    return o ? Mn(c[X], s(n, X)) : c[X];
-}, set(c, f, X) {
-  X = M(X);
-  let y = f !== q ? s(n, f) : n;
-  if (Ho && !Oo(y))
-    throw new Error(`setting invalid path ${y}`);
-  if (M(T[y]) !== X && bn(An, y, X))
-    _(y);
+    return e ? Tn(o[i], H(n, i)) : o[i];
+}, set(o, t, i) {
+  i = x(i);
+  let s = t !== O ? H(n, t) : n;
+  if (Me && !Fe(s))
+    throw new Error(`setting invalid path ${s}`);
+  if (x(d[s]) !== i && Nn(En, s, i))
+    j(s);
   return true;
 } });
-var N = (n, o) => {
-  let c = typeof o === "function" ? o : T[o];
-  if (typeof c !== "function")
-    throw new Error(`observe expects a function or path to a function, ${o} is neither`);
-  return Vn(n, c);
+var U = (n, e) => {
+  let o = typeof e === "function" ? e : d[e];
+  if (typeof o !== "function")
+    throw new Error(`observe expects a function or path to a function, ${e} is neither`);
+  return gn(n, o);
 };
-var T = new Proxy(An, V("", false));
-var I = new Proxy(An, V("", true));
-var { document: p, MutationObserver: dn } = globalThis;
-var hn = (n, o) => {
-  let c = Z.get(n);
-  if (c == null)
-    return;
-  for (let f of c) {
-    let { binding: X, options: y } = f, { path: x } = f, { toDOM: r } = X;
-    if (r != null) {
-      if (x.startsWith("^")) {
-        let E = Tn(n);
-        if (E != null && E[C] != null)
-          x = f.path = `${E[C]}${x.substring(1)}`;
-        else
-          throw console.error(`Cannot resolve relative binding ${x}`, n, "is not part of a list"), new Error(`Cannot resolve relative binding ${x}`);
-      }
-      if (o == null || x.startsWith(o))
-        r(n, T[x], y);
-    }
-  }
+var d = new Proxy(En, I("", false));
+var Y = new Proxy(En, I("", true));
+var Sn = (n, e) => {
+  let o = new Event(e);
+  n.dispatchEvent(o);
 };
-if (dn != null)
-  new dn((o) => {
-    o.forEach((c) => {
-      [...c.addedNodes].forEach((f) => {
-        if (f instanceof Element)
-          [...f.querySelectorAll(i)].forEach((X) => hn(X));
-      });
-    });
-  }).observe(p.body, { subtree: true, childList: true });
-N(() => true, (n) => {
-  let o = p.querySelectorAll(i);
-  for (let c of o)
-    hn(c, n);
-});
-var gn = (n) => {
-  let o = n.target.closest(i);
-  while (o != null) {
-    let c = Z.get(o);
-    for (let f of c) {
-      let { binding: X, path: y } = f, { fromDOM: x } = X;
-      if (x != null) {
-        let r;
-        try {
-          r = x(o, f.options);
-        } catch (E) {
-          throw console.error("Cannot get value from", o, "via", f), new Error("Cannot obtain value fromDOM");
-        }
-        if (r != null) {
-          let E = T[y];
-          if (E == null)
-            T[y] = r;
-          else {
-            let F = E[C] != null ? E[q] : E, W = r[C] != null ? r[q] : r;
-            if (F !== W)
-              T[y] = W;
-          }
-        }
-      }
-    }
-    o = o.parentElement.closest(i);
-  }
-};
-if (globalThis.document != null)
-  p.body.addEventListener("change", gn, true), p.body.addEventListener("input", gn, true);
-function nn(n, o, c, f) {
-  if (n instanceof DocumentFragment)
-    throw new Error("bind cannot bind to a DocumentFragment");
-  let X;
-  if (typeof o === "object" && o[C] === undefined && f === undefined) {
-    let { value: r } = o;
-    X = typeof r === "string" ? r : r[C], f = o, delete f.value;
-  } else
-    X = typeof o === "string" ? o : o[C];
-  if (X == null)
-    throw new Error("bind requires a path or object with xin Proxy");
-  let { toDOM: y } = c;
-  n.classList?.add(rn);
-  let x = Z.get(n);
-  if (x == null)
-    x = [], Z.set(n, x);
-  if (x.push({ path: X, binding: c, options: f }), y != null && !X.startsWith("^"))
-    _(X);
-  return n;
-}
-var vn = new Set;
-var Jo = (n) => {
-  let o = n?.target.closest($n), c = false, f = new Proxy(n, { get(X, y) {
-    if (y === "stopPropagation")
-      return () => {
-        n.stopPropagation(), c = true;
-      };
-    else {
-      let x = X[y];
-      return typeof x === "function" ? x.bind(X) : x;
-    }
-  } });
-  while (!c && o != null) {
-    let y = Y.get(o)[n.type] || [];
-    for (let x of y) {
-      if (typeof x === "function")
-        x(f);
-      else {
-        let r = T[x];
-        if (typeof r === "function")
-          r(f);
-        else
-          throw new Error(`no event handler found at path ${x}`);
-      }
-      if (c)
-        continue;
-    }
-    o = o.parentElement != null ? o.parentElement.closest($n) : null;
-  }
-};
-var Wn = (n, o, c) => {
-  let f = Y.get(n);
-  if (n.classList.add(En), f == null)
-    f = {}, Y.set(n, f);
-  if (!f[o])
-    f[o] = [];
-  if (!f[o].includes(c))
-    f[o].push(c);
-  if (!vn.has(o))
-    vn.add(o), p.body.addEventListener(o, Jo, true);
-};
-var Dn = (n, o) => {
-  let c = new Event(o);
-  n.dispatchEvent(c);
-};
-var en = (n) => {
+var ee = (n) => {
   if (n instanceof HTMLInputElement)
     return n.type;
   else if (n instanceof HTMLSelectElement && n.hasAttribute("multiple"))
@@ -589,106 +479,107 @@ var en = (n) => {
   else
     return "other";
 };
-var Hn = (n, o) => {
-  switch (en(n)) {
+var oe = (n, e) => {
+  switch (ee(n)) {
     case "radio":
-      n.checked = n.value === o;
+      n.checked = n.value === e;
       break;
     case "checkbox":
-      n.checked = !!o;
+      n.checked = !!e;
       break;
     case "date":
-      n.valueAsDate = new Date(o);
+      n.valueAsDate = new Date(e);
       break;
     case "multi-select":
-      for (let c of [...n.querySelectorAll("option")])
-        c.selected = o[c.value];
+      for (let o of Array.from(n.querySelectorAll("option")))
+        o.selected = e[o.value];
       break;
     default:
-      n.value = o;
+      n.value = e;
   }
 };
-var tn = (n) => {
-  switch (en(n)) {
+var te = (n) => {
+  switch (ee(n)) {
     case "radio": {
-      let o = n.parentElement?.querySelector(`[name="${n.name}"]:checked`);
-      return o != null ? o.value : null;
+      let e = n.parentElement?.querySelector(`[name="${n.name}"]:checked`);
+      return e != null ? e.value : null;
     }
     case "checkbox":
       return n.checked;
     case "date":
       return n.valueAsDate?.toISOString();
     case "multi-select":
-      return [...n.querySelectorAll("option")].reduce((o, c) => {
-        return o[c.value] = c.selected, o;
+      return Array.from(n.querySelectorAll("option")).reduce((e, o) => {
+        return e[o.value] = o.selected, e;
       }, {});
     default:
       return n.value;
   }
 };
-var { ResizeObserver: ln } = globalThis;
-var b = ln != null ? new ln((n) => {
-  for (let o of n) {
-    let c = o.target;
-    Dn(c, "resize");
+var { ResizeObserver: ne } = globalThis;
+var G = ne != null ? new ne((n) => {
+  for (let e of n) {
+    let o = e.target;
+    Sn(o, "resize");
   }
 }) : { observe() {}, unobserve() {} };
-var zn = (n, o, c = true) => {
-  if (n != null && o != null)
-    if (typeof o === "string")
-      n.textContent = o;
-    else if (Array.isArray(o))
-      o.forEach((f) => {
-        n.append(f instanceof Node && c ? w(f) : f);
+var kn = (n, e, o = true) => {
+  if (n != null && e != null)
+    if (typeof e === "string")
+      n.textContent = e;
+    else if (Array.isArray(e))
+      e.forEach((t) => {
+        n.append(t instanceof Node && o ? B(t) : t);
       });
-    else if (o instanceof Node)
-      n.append(c ? w(o) : o);
+    else if (e instanceof Node)
+      n.append(o ? B(e) : e);
     else
       throw new Error("expect text content or document node");
 };
-var On = (n, o = 250) => {
-  let c;
-  return (...f) => {
-    if (c !== undefined)
-      clearTimeout(c);
-    c = setTimeout(() => {
-      n(...f);
-    }, o);
+var vn = (n, e = 250) => {
+  let o;
+  return (...t) => {
+    if (o !== undefined)
+      clearTimeout(o);
+    o = setTimeout(() => {
+      n(...t);
+    }, e);
   };
 };
-var Zn = (n, o = 250) => {
-  let c, f = Date.now() - o, X = false;
-  return (...y) => {
-    if (clearTimeout(c), c = setTimeout(async () => {
-      n(...y), f = Date.now();
-    }, o), !X && Date.now() - f >= o) {
-      X = true;
+var en = (n, e = 250) => {
+  let o, t = Date.now() - e, i = false;
+  return (...s) => {
+    if (clearTimeout(o), o = setTimeout(async () => {
+      n(...s), t = Date.now();
+    }, e), !i && Date.now() - t >= e) {
+      i = true;
       try {
-        n(...y), f = Date.now();
+        n(...s), t = Date.now();
       } finally {
-        X = false;
+        i = false;
       }
     }
   };
 };
-var an = Symbol("list-binding");
-var io = 16;
-function no(n, o) {
-  let c = [...n.querySelectorAll(i)];
-  if (n.matches(i))
-    c.unshift(n);
-  for (let f of c) {
-    let X = Z.get(f);
-    for (let y of X) {
-      if (y.path.startsWith("^"))
-        y.path = `${o}${y.path.substring(1)}`;
-      if (y.binding.toDOM != null)
-        y.binding.toDOM(f, T[y.path]);
+var on = Symbol("list-binding");
+var Oe = 16;
+var Be = 100;
+function ie(n, e) {
+  let o = Array.from(n.querySelectorAll(v));
+  if (n.matches(v))
+    o.unshift(n);
+  for (let t of o) {
+    let i = E.get(t);
+    for (let s of i) {
+      if (s.path.startsWith("^"))
+        s.path = `${e}${s.path.substring(1)}`;
+      if (s.binding.toDOM != null)
+        s.binding.toDOM(t, d[s.path]);
     }
   }
 }
 
-class oo {
+class re {
   boundElement;
   listTop;
   listBottom;
@@ -698,175 +589,322 @@ class oo {
   _array = [];
   _update;
   _previousSlice;
-  constructor(n, o = {}) {
+  static filterBoundObservers = new WeakMap;
+  constructor(n, e, o = {}) {
     if (this.boundElement = n, this.itemToElement = new WeakMap, n.children.length !== 1)
       throw new Error("ListBinding expects an element with exactly one child element");
     if (n.children[0] instanceof HTMLTemplateElement) {
-      let c = n.children[0];
-      if (c.content.children.length !== 1)
+      let t = n.children[0];
+      if (t.content.children.length !== 1)
         throw new Error("ListBinding expects a template with exactly one child element");
-      this.template = w(c.content.children[0]);
+      this.template = B(t.content.children[0]);
     } else
       this.template = n.children[0], this.template.remove();
     if (this.listTop = document.createElement("div"), this.listBottom = document.createElement("div"), this.boundElement.append(this.listTop), this.boundElement.append(this.listBottom), this.options = o, o.virtual != null)
-      b.observe(this.boundElement), this._update = Zn(() => {
+      G.observe(this.boundElement), this._update = en(() => {
         this.update(this._array, true);
-      }, io), this.boundElement.addEventListener("scroll", this._update), this.boundElement.addEventListener("resize", this._update);
+      }, Oe), this.boundElement.addEventListener("scroll", this._update), this.boundElement.addEventListener("resize", this._update);
   }
   visibleSlice() {
-    let { virtual: n, hiddenProp: o, visibleProp: c } = this.options, f = this._array;
+    let { virtual: n, hiddenProp: e, visibleProp: o } = this.options, t = this._array;
+    if (e !== undefined)
+      t = t.filter((l) => l[e] !== true);
     if (o !== undefined)
-      f = f.filter((E) => E[o] !== true);
-    if (c !== undefined)
-      f = f.filter((E) => E[c] === true);
-    let X = 0, y = f.length - 1, x = 0, r = 0;
+      t = t.filter((l) => l[o] === true);
+    if (this.options.filter && this.needle !== undefined)
+      t = this.options.filter(t, this.needle);
+    let i = 0, s = t.length - 1, r = 0, c = 0;
     if (n != null && this.boundElement instanceof HTMLElement) {
-      let E = this.boundElement.offsetWidth, F = this.boundElement.offsetHeight, W = n.width != null ? Math.max(1, Math.floor(E / n.width)) : 1, K = Math.ceil(F / n.height) + 1, R = Math.ceil(f.length / W), v = W * K, U = Math.floor(this.boundElement.scrollTop / n.height);
-      if (U > R - K + 1)
-        U = Math.max(0, R - K + 1);
-      X = U * W, y = X + v - 1, x = U * n.height, r = Math.max(R * n.height - F - x, 0);
+      let l = this.boundElement.offsetWidth, f = this.boundElement.offsetHeight, w = n.width != null ? Math.max(1, Math.floor(l / n.width)) : 1, A = Math.ceil(f / n.height) + 1, P = Math.ceil(t.length / w), K = w * A, D = Math.floor(this.boundElement.scrollTop / n.height);
+      if (D > P - A + 1)
+        D = Math.max(0, P - A + 1);
+      i = D * w, s = i + K - 1, r = D * n.height, c = Math.max(P * n.height - f - r, 0);
     }
-    return { items: f, firstItem: X, lastItem: y, topBuffer: x, bottomBuffer: r };
+    return { items: t, firstItem: i, lastItem: s, topBuffer: r, bottomBuffer: c };
   }
-  update(n, o) {
+  needle;
+  filter = en((n) => {
+    if (this.needle !== n)
+      this.needle = n, this.update(this._array);
+  }, Be);
+  update(n, e) {
     if (n == null)
       n = [];
     this._array = n;
-    let { hiddenProp: c, visibleProp: f } = this.options, X = u(n), y = this.visibleSlice();
-    this.boundElement.classList.toggle("-xin-empty-list", y.items.length === 0);
-    let x = this._previousSlice, { firstItem: r, lastItem: E, topBuffer: F, bottomBuffer: W } = y;
-    if (c === undefined && f === undefined && o === true && x != null && r === x.firstItem && E === x.lastItem)
+    let { hiddenProp: o, visibleProp: t } = this.options, i = C(n), s = this.visibleSlice();
+    this.boundElement.classList.toggle("-xin-empty-list", s.items.length === 0);
+    let r = this._previousSlice, { firstItem: c, lastItem: l, topBuffer: f, bottomBuffer: w } = s;
+    if (o === undefined && t === undefined && e === true && r != null && c === r.firstItem && l === r.lastItem)
       return;
-    this._previousSlice = y;
-    let K = 0, R = 0, v = 0;
-    for (let k of [...this.boundElement.children]) {
-      if (k === this.listTop || k === this.listBottom)
+    this._previousSlice = s;
+    let A = 0, P = 0, K = 0;
+    for (let u of Array.from(this.boundElement.children)) {
+      if (u === this.listTop || u === this.listBottom)
         continue;
-      let D = m.get(k);
-      if (D == null)
-        k.remove();
+      let X = q.get(u);
+      if (X == null)
+        u.remove();
       else {
-        let L = y.items.indexOf(D);
-        if (L < r || L > E)
-          k.remove(), this.itemToElement.delete(D), m.delete(k), K++;
+        let y = s.items.indexOf(X);
+        if (y < c || y > l)
+          u.remove(), this.itemToElement.delete(X), q.delete(u), A++;
       }
     }
-    this.listTop.style.height = String(F) + "px", this.listBottom.style.height = String(W) + "px";
-    let U = [], { idPath: xn } = this.options;
-    for (let k = r;k <= E; k++) {
-      let D = y.items[k];
-      if (D === undefined)
+    this.listTop.style.height = String(f) + "px", this.listBottom.style.height = String(w) + "px";
+    let D = [], { idPath: dn } = this.options;
+    for (let u = c;u <= l; u++) {
+      let X = s.items[u];
+      if (X === undefined)
         continue;
-      let L = this.itemToElement.get(M(D));
-      if (L == null) {
-        if (v++, L = w(this.template), typeof D === "object")
-          this.itemToElement.set(M(D), L), m.set(L, M(D));
-        if (this.boundElement.insertBefore(L, this.listBottom), xn != null) {
-          let yn = D[xn], $o = `${X}[${xn}=${yn}]`;
-          no(L, $o);
+      let y = this.itemToElement.get(x(X));
+      if (y == null) {
+        if (K++, y = B(this.template), typeof X === "object")
+          this.itemToElement.set(x(X), y), q.set(y, x(X));
+        if (this.boundElement.insertBefore(y, this.listBottom), dn != null) {
+          let fn = X[dn], he = `${i}[${dn}=${fn}]`;
+          ie(y, he);
         } else {
-          let yn = `${X}[${k}]`;
-          no(L, yn);
+          let fn = `${i}[${u}]`;
+          ie(y, fn);
         }
       }
-      U.push(L);
+      D.push(y);
     }
-    let h = null;
-    for (let k of U) {
-      if (k.previousElementSibling !== h)
-        if (R++, h?.nextElementSibling != null)
-          this.boundElement.insertBefore(k, h.nextElementSibling);
+    let R = null;
+    for (let u of D) {
+      if (u.previousElementSibling !== R)
+        if (P++, R?.nextElementSibling != null)
+          this.boundElement.insertBefore(u, R.nextElementSibling);
         else
-          this.boundElement.insertBefore(k, this.listBottom);
-      h = k;
+          this.boundElement.insertBefore(u, this.listBottom);
+      R = u;
     }
-    if (Q.perf)
-      console.log(X, "updated", { removed: K, created: v, moved: R });
+    if (F.perf)
+      console.log(i, "updated", { removed: A, created: K, moved: P });
   }
 }
-var co = (n, o) => {
-  let c = n[an];
-  if (c === undefined)
-    c = new oo(n, o), n[an] = c;
-  return c;
+var se = (n, e, o) => {
+  let t = n[on];
+  if (t === undefined)
+    t = new re(n, e, o), n[on] = t;
+  return t;
 };
-var on = { value: { toDOM: Hn, fromDOM(n) {
-  return tn(n);
-} }, set: { toDOM: Hn }, text: { toDOM(n, o) {
-  n.textContent = o;
-} }, enabled: { toDOM(n, o) {
-  n.disabled = !o;
-} }, disabled: { toDOM(n, o) {
-  n.disabled = Boolean(o);
-} }, style: { toDOM(n, o) {
-  if (typeof o === "object")
-    for (let c of Object.keys(o))
-      n.style[c] = o[c];
-  else if (typeof o === "string")
-    n.setAttribute("style", o);
-  else
-    throw new Error("style binding expects either a string or object");
-} }, list: { toDOM(n, o, c) {
-  co(n, c).update(o);
+var { document: Z, MutationObserver: ce } = globalThis;
+var Cn = (n, e) => {
+  let o = E.get(n);
+  if (o == null)
+    return;
+  for (let t of o) {
+    let { binding: i, options: s } = t, { path: r } = t, { toDOM: c } = i;
+    if (c != null) {
+      if (r.startsWith("^")) {
+        let l = mn(n);
+        if (l != null && l[m] != null)
+          r = t.path = `${l[m]}${r.substring(1)}`;
+        else
+          throw console.error(`Cannot resolve relative binding ${r}`, n, "is not part of a list"), new Error(`Cannot resolve relative binding ${r}`);
+      }
+      if (e == null || r.startsWith(e))
+        c(n, d[r], s);
+    }
+  }
+};
+if (ce != null)
+  new ce((e) => {
+    e.forEach((o) => {
+      Array.from(o.addedNodes).forEach((t) => {
+        if (t instanceof Element)
+          Array.from(t.querySelectorAll(v)).forEach((i) => Cn(i));
+      });
+    });
+  }).observe(Z.body, { subtree: true, childList: true });
+U(() => true, (n) => {
+  let e = Array.from(Z.querySelectorAll(v));
+  for (let o of e)
+    Cn(o, n);
+});
+var le = (n) => {
+  let e = n.target.closest(v);
+  while (e != null) {
+    let o = E.get(e);
+    for (let t of o) {
+      let { binding: i, path: s } = t, { fromDOM: r } = i;
+      if (r != null) {
+        let c;
+        try {
+          c = r(e, t.options);
+        } catch (l) {
+          throw console.error("Cannot get value from", e, "via", t), new Error("Cannot obtain value fromDOM");
+        }
+        if (c != null) {
+          let l = d[s];
+          if (l == null)
+            d[s] = c;
+          else {
+            let f = l[m] != null ? l[O] : l, w = c[m] != null ? c[O] : c;
+            if (f !== w)
+              d[s] = w;
+          }
+        }
+      }
+    }
+    e = e.parentElement.closest(v);
+  }
+};
+if (globalThis.document != null)
+  Z.body.addEventListener("change", le, true), Z.body.addEventListener("input", le, true);
+function h(n, e, o, t) {
+  if (n instanceof DocumentFragment)
+    throw new Error("bind cannot bind to a DocumentFragment");
+  let i;
+  if (typeof e === "object" && e[m] === undefined && t === undefined) {
+    let { value: c } = e;
+    i = typeof c === "string" ? c : c[m], t = e, delete t.value;
+  } else
+    i = typeof e === "string" ? e : e[m];
+  if (i == null)
+    throw new Error("bind requires a path or object with xin Proxy");
+  let { toDOM: s } = o;
+  n.classList?.add(un);
+  let r = E.get(n);
+  if (r == null)
+    r = [], E.set(n, r);
+  if (r.push({ path: i, binding: o, options: t }), s != null && !i.startsWith("^"))
+    j(i);
+  if (t?.filter && t?.needle)
+    h(n, t.needle, { toDOM(c, l) {
+      console.log({ needle: l }), c[on]?.filter(l);
+    } });
+  return n;
+}
+var ae = new Set;
+var He = (n) => {
+  let e = n?.target.closest(yn), o = false, t = new Proxy(n, { get(s, r) {
+    if (r === "stopPropagation")
+      return () => {
+        n.stopPropagation(), o = true;
+      };
+    else {
+      let c = s[r];
+      return typeof c === "function" ? c.bind(s) : c;
+    }
+  } }), i = new Set;
+  while (!o && e != null) {
+    let r = L.get(e)[n.type] || i;
+    for (let c of r) {
+      if (typeof c === "function")
+        c(t);
+      else {
+        let l = d[c];
+        if (typeof l === "function")
+          l(t);
+        else
+          throw new Error(`no event handler found at path ${c}`);
+      }
+      if (o)
+        continue;
+    }
+    e = e.parentElement != null ? e.parentElement.closest(yn) : null;
+  }
+};
+function z(n, e, o) {
+  let t = L.get(n);
+  if (n.classList.add(pn), t == null)
+    t = {}, L.set(n, t);
+  if (!t[e])
+    t[e] = new Set;
+  if (t[e].add(o), !ae.has(e))
+    ae.add(e), Z.body.addEventListener(e, He, true);
+  return () => {
+    t[e].delete(o);
+  };
+}
+var tn = { value: { toDOM: oe, fromDOM(n) {
+  return te(n);
+} }, text: { toDOM(n, e) {
+  n.textContent = e;
+} }, enabled: { toDOM(n, e) {
+  n.disabled = !e;
+} }, disabled: { toDOM(n, e) {
+  n.disabled = Boolean(e);
+} }, list: { toDOM(n, e, o) {
+  se(n, e, o).update(e);
 } } };
-var Oc = 180 / Math.PI;
-var Zc = Math.PI / 180;
-function A(n, o, c) {
-  return o < n ? n : o > c ? c : o;
+var ze = 180 / Math.PI;
+var $e = Math.PI / 180;
+function b(n, e, o) {
+  return o < n ? NaN : e < n ? n : e > o ? o : e;
 }
-function H(n, o, c) {
-  return c = A(0, c, 1), c * (o - n) + n;
+function k(n, e, o, t = true) {
+  if (t)
+    o = b(0, o, 1);
+  return o * (e - n) + n;
 }
-var Go = { clamp: A, lerp: H };
-var Uo = (n, o, c) => {
-  return (0.299 * n + 0.587 * o + 0.114 * c) / 255;
+var Ae = { RADIANS_TO_DEGREES: ze, DEGREES_TO_RADIANS: $e, clamp: b, lerp: k };
+function Mn(n, e = document.body) {
+  let o = getComputedStyle(e);
+  if (n.endsWith(")") && n.startsWith("var("))
+    n = n.slice(4, -1);
+  return o.getPropertyValue(n).trim();
+}
+var Pe = (n, e, o) => {
+  return (0.299 * n + 0.587 * e + 0.114 * o) / 255;
 };
-var B = (n) => ("00" + Math.round(Number(n)).toString(16)).slice(-2);
+var $ = (n) => ("00" + Math.round(Number(n)).toString(16)).slice(-2);
 
-class fo {
+class de {
   h;
   s;
   l;
-  constructor(n, o, c) {
-    n /= 255, o /= 255, c /= 255;
-    let f = Math.max(n, o, c), X = f - Math.min(n, o, c), y = X !== 0 ? f === n ? (o - c) / X : f === o ? 2 + (c - n) / X : 4 + (n - o) / X : 0;
-    this.h = 60 * y < 0 ? 60 * y + 360 : 60 * y, this.s = X !== 0 ? f <= 0.5 ? X / (2 * f - X) : X / (2 - (2 * f - X)) : 0, this.l = (2 * f - X) / 2;
+  constructor(n, e, o) {
+    n /= 255, e /= 255, o /= 255;
+    let t = Math.max(n, e, o), i = t - Math.min(n, e, o), s = i !== 0 ? t === n ? (e - o) / i : t === e ? 2 + (o - n) / i : 4 + (n - e) / i : 0;
+    this.h = 60 * s < 0 ? 60 * s + 360 : 60 * s, this.s = i !== 0 ? t <= 0.5 ? i / (2 * t - i) : i / (2 - (2 * t - i)) : 0, this.l = (2 * t - i) / 2;
   }
 }
-var d = globalThis.document !== undefined ? globalThis.document.createElement("span") : undefined;
+var _ = globalThis.document !== undefined ? globalThis.document.createElement("span") : undefined;
 
-class $ {
+class a {
   r;
   g;
   b;
   a;
+  static fromVar(n, e = document.body) {
+    return a.fromCss(Mn(n, e));
+  }
   static fromCss(n) {
-    let o = n;
-    if (d instanceof HTMLSpanElement)
-      d.style.color = n, document.body.appendChild(d), o = getComputedStyle(d).color, d.remove();
-    let [c, f, X, y] = o.match(/[\d.]+/g);
-    return new $(Number(c), Number(f), Number(X), y == null ? 1 : Number(y));
+    let e = n;
+    if (_ instanceof HTMLSpanElement)
+      _.style.color = "black", _.style.color = n, document.body.appendChild(_), e = getComputedStyle(_).color, _.remove();
+    let [o, t, i, s] = e.match(/[\d.]+/g), r = e.startsWith("color(srgb") ? 255 : 1;
+    return new a(Number(o) * r, Number(t) * r, Number(i) * r, s == null ? 1 : Number(s));
   }
-  static fromHsl(n, o, c, f = 1) {
-    return $.fromCss(`hsla(${n.toFixed(0)}, ${(o * 100).toFixed(0)}%, ${(c * 100).toFixed(0)}%, ${f.toFixed(2)})`);
+  static fromHsl(n, e, o, t = 1) {
+    return a.fromCss(`hsl(${n.toFixed(0)}deg ${(e * 100).toFixed(0)}% ${(o * 100).toFixed(0)}% / ${(t * 100).toFixed(0)}%)`);
   }
-  constructor(n, o, c, f = 1) {
-    this.r = A(0, n, 255), this.g = A(0, o, 255), this.b = A(0, c, 255), this.a = f !== undefined ? A(0, f, 1) : f = 1;
+  static black = new a(0, 0, 0);
+  static white = new a(255, 255, 255);
+  constructor(n, e, o, t = 1) {
+    this.r = b(0, n, 255), this.g = b(0, e, 255), this.b = b(0, o, 255), this.a = t !== undefined ? b(0, t, 1) : t = 1;
   }
   get inverse() {
-    return new $(255 - this.r, 255 - this.g, 255 - this.b, this.a);
+    return new a(255 - this.r, 255 - this.g, 255 - this.b, this.a);
   }
   get inverseLuminance() {
-    let { h: n, s: o, l: c } = this._hsl;
-    return $.fromHsl(n, o, 1 - c, this.a);
+    let { h: n, s: e, l: o } = this._hsl;
+    return a.fromHsl(n, e, 1 - o, this.a);
+  }
+  contrasting(n = 1) {
+    let { h: e, s: o, l: t } = this._hsl;
+    return this.blend(this.brightness > 0.5 ? a.black : a.white, n);
   }
   get rgb() {
-    let { r: n, g: o, b: c } = this;
-    return `rgb(${n.toFixed(0)},${o.toFixed(0)},${c.toFixed(0)})`;
+    let { r: n, g: e, b: o } = this;
+    return `rgb(${n.toFixed(0)},${e.toFixed(0)},${o.toFixed(0)})`;
   }
   get rgba() {
-    let { r: n, g: o, b: c, a: f } = this;
-    return `rgba(${n.toFixed(0)},${o.toFixed(0)},${c.toFixed(0)},${f.toFixed(2)})`;
+    let { r: n, g: e, b: o, a: t } = this;
+    return `rgba(${n.toFixed(0)},${e.toFixed(0)},${o.toFixed(0)},${t.toFixed(2)})`;
   }
   get RGBA() {
     return [this.r / 255, this.g / 255, this.b / 255, this.a];
@@ -877,396 +915,423 @@ class $ {
   hslCached;
   get _hsl() {
     if (this.hslCached == null)
-      this.hslCached = new fo(this.r, this.g, this.b);
+      this.hslCached = new de(this.r, this.g, this.b);
     return this.hslCached;
   }
   get hsl() {
-    let { h: n, s: o, l: c } = this._hsl;
-    return `hsl(${n.toFixed(0)}, ${(o * 100).toFixed(0)}%, ${(c * 100).toFixed(0)}%)`;
+    let { h: n, s: e, l: o } = this._hsl;
+    return `hsl(${n.toFixed(0)}deg ${(e * 100).toFixed(0)}% ${(o * 100).toFixed(0)}%)`;
   }
   get hsla() {
-    let { h: n, s: o, l: c } = this._hsl;
-    return `hsla(${n.toFixed(0)}, ${(o * 100).toFixed(0)}%, ${(c * 100).toFixed(0)}%, ${this.a.toFixed(2)})`;
+    let { h: n, s: e, l: o } = this._hsl;
+    return `hsl(${n.toFixed(0)}deg ${(e * 100).toFixed(0)}% ${(o * 100).toFixed(0)}% / ${(this.a * 100).toFixed(0)}%)`;
   }
   get mono() {
     let n = this.brightness * 255;
-    return new $(n, n, n);
+    return new a(n, n, n);
   }
   get brightness() {
-    return Uo(this.r, this.g, this.b);
+    return Pe(this.r, this.g, this.b);
   }
   get html() {
     return this.toString();
   }
   toString() {
-    return this.a === 1 ? "#" + B(this.r) + B(this.g) + B(this.b) : "#" + B(this.r) + B(this.g) + B(this.b) + B(Math.floor(255 * this.a));
+    return this.a === 1 ? "#" + $(this.r) + $(this.g) + $(this.b) : "#" + $(this.r) + $(this.g) + $(this.b) + $(Math.floor(255 * this.a));
   }
   brighten(n) {
-    let { h: o, s: c, l: f } = this._hsl, X = A(0, f + n * (1 - f), 1);
-    return $.fromHsl(o, c, X, this.a);
+    let { h: e, s: o, l: t } = this._hsl, i = b(0, t + n * (1 - t), 1);
+    return a.fromHsl(e, o, i, this.a);
   }
   darken(n) {
-    let { h: o, s: c, l: f } = this._hsl, X = A(0, f * (1 - n), 1);
-    return $.fromHsl(o, c, X, this.a);
+    let { h: e, s: o, l: t } = this._hsl, i = b(0, t * (1 - n), 1);
+    return a.fromHsl(e, o, i, this.a);
   }
   saturate(n) {
-    let { h: o, s: c, l: f } = this._hsl, X = A(0, c + n * (1 - c), 1);
-    return $.fromHsl(o, X, f, this.a);
+    let { h: e, s: o, l: t } = this._hsl, i = b(0, o + n * (1 - o), 1);
+    return a.fromHsl(e, i, t, this.a);
   }
   desaturate(n) {
-    let { h: o, s: c, l: f } = this._hsl, X = A(0, c * (1 - n), 1);
-    return $.fromHsl(o, X, f, this.a);
+    let { h: e, s: o, l: t } = this._hsl, i = b(0, o * (1 - n), 1);
+    return a.fromHsl(e, i, t, this.a);
   }
   rotate(n) {
-    let { h: o, s: c, l: f } = this._hsl, X = (o + 360 + n) % 360;
-    return $.fromHsl(X, c, f, this.a);
+    let { h: e, s: o, l: t } = this._hsl, i = (e + 360 + n) % 360;
+    return a.fromHsl(i, o, t, this.a);
   }
   opacity(n) {
-    let { h: o, s: c, l: f } = this._hsl;
-    return $.fromHsl(o, c, f, n);
+    let { h: e, s: o, l: t } = this._hsl;
+    return a.fromHsl(e, o, t, n);
   }
   swatch() {
-    let { r: n, g: o, b: c, a: f } = this;
-    return console.log(`%c      %c ${this.html}, rgba(${n}, ${o}, ${c}, ${f}), ${this.hsla}`, `background-color: rgba(${n}, ${o}, ${c}, ${f})`, "background-color: transparent"), this;
+    return console.log(`%c      %c ${this.html}, ${this.rgba}`, `background-color: ${this.html}`, "background-color: transparent"), this;
   }
-  blend(n, o) {
-    return new $(H(this.r, n.r, o), H(this.g, n.g, o), H(this.b, n.b, o), H(this.a, n.a, o));
+  blend(n, e) {
+    return new a(k(this.r, n.r, e), k(this.g, n.g, e), k(this.b, n.b, e), k(this.a, n.a, e));
   }
-  mix(n, o) {
-    let c = this._hsl, f = n._hsl;
-    return $.fromHsl(H(c.h, f.h, o), H(c.s, f.s, o), H(c.l, f.l, o), H(this.a, n.a, o));
+  static blendHue(n, e, o) {
+    let t = (e - n + 720) % 360;
+    if (t < 180)
+      return n + o * t;
+    else
+      return n - (360 - t) * o;
+  }
+  mix(n, e) {
+    let o = this._hsl, t = n._hsl;
+    return a.fromHsl(o.s === 0 ? t.h : t.s === 0 ? o.h : a.blendHue(o.h, t.h, e), k(o.s, t.s, e), k(o.l, t.l, e), k(this.a, n.a, e));
+  }
+  colorMix(n, e) {
+    return a.fromCss(`color-mix(in hsl, ${this.html}, ${n.html} ${(e * 100).toFixed(0)}%)`);
   }
 }
-function z(n) {
-  return n.replace(/[A-Z]/g, (o) => {
-    return `-${o.toLocaleLowerCase()}`;
+function g(n) {
+  return n.replace(/[A-Z]/g, (e) => {
+    return `-${e.toLocaleLowerCase()}`;
   });
 }
-function Xo(n) {
-  return n.replace(/-([a-z])/g, (o, c) => {
-    return c.toLocaleUpperCase();
+function fe(n) {
+  return n.replace(/-([a-z])/g, (e, o) => {
+    return o.toLocaleUpperCase();
   });
 }
-var Qo = "http://www.w3.org/1998/Math/MathML";
-var Yo = "http://www.w3.org/2000/svg";
-var cn = {};
-var Jn = (n, ...o) => {
-  if (cn[n] === undefined) {
-    let [X, y] = n.split("|");
-    if (y === undefined)
-      cn[n] = globalThis.document.createElement(X);
-    else
-      cn[n] = globalThis.document.createElementNS(y, X);
-  }
-  let c = cn[n].cloneNode(), f = {};
-  for (let X of o)
-    if (X instanceof Element || X instanceof DocumentFragment || typeof X === "string" || typeof X === "number")
-      if (c instanceof HTMLTemplateElement)
-        c.content.append(X);
-      else
-        c.append(X);
-    else
-      Object.assign(f, X);
-  for (let X of Object.keys(f)) {
-    let y = f[X];
-    if (X === "apply")
-      y(c);
-    else if (X === "style")
-      if (typeof y === "object")
-        for (let x of Object.keys(y)) {
-          let r = Yn(z(x), y[x]);
-          if (r.prop.startsWith("--"))
-            c.style.setProperty(r.prop, r.value);
-          else
-            c.style[x] = r.value;
-        }
-      else
-        c.setAttribute("style", y);
-    else if (X.match(/^on[A-Z]/) != null) {
-      let x = X.substring(2).toLowerCase();
-      Wn(c, x, y);
-    } else if (X === "bind")
-      if ((typeof y.binding === "string" ? on[y.binding] : y.binding) !== undefined && y.value !== undefined)
-        nn(c, y.value, y.binding instanceof Function ? { toDOM: y.binding } : y.binding);
-      else
-        throw new Error("bad binding");
-    else if (X.match(/^bind[A-Z]/) != null) {
-      let x = X.substring(4, 5).toLowerCase() + X.substring(5), r = on[x];
-      if (r !== undefined)
-        nn(c, y, r);
-      else
-        throw new Error(`${X} is not allowed, bindings.${x} is not defined`);
-    } else if (c[X] !== undefined) {
-      let { MathMLElement: x } = globalThis;
-      if (c instanceof SVGElement || x !== undefined && c instanceof x)
-        c.setAttribute(X, y);
-      else
-        c[X] = y;
-    } else {
-      let x = z(X);
-      if (x === "class")
-        y.split(" ").forEach((r) => {
-          c.classList.add(r);
-        });
-      else if (c[x] !== undefined)
-        c[x] = y;
-      else if (typeof y === "boolean")
-        y ? c.setAttribute(x, "") : c.removeAttribute(x);
-      else
-        c.setAttribute(x, y);
-    }
-  }
-  return c;
+var je = "http://www.w3.org/1998/Math/MathML";
+var We = "http://www.w3.org/2000/svg";
+var rn = {};
+var ue = (n, e, o) => {
+  let t = Bn(g(e), o);
+  if (t.prop.startsWith("--"))
+    n.style.setProperty(t.prop, t.value);
+  else
+    n.style[e] = t.value;
 };
-var Gn = (...n) => {
-  let o = globalThis.document.createDocumentFragment();
-  for (let c of n)
-    o.append(c);
+var Ie = (n) => {
+  return { toDOM(e, o) {
+    ue(e, n, o);
+  } };
+};
+var pe = (n, e, o) => {
+  if (e === "style")
+    if (typeof o === "object")
+      for (let t of Object.keys(o))
+        if (C(o[t]))
+          h(n, o[t], Ie(t));
+        else
+          ue(n, t, o[t]);
+    else
+      n.setAttribute("style", o);
+  else if (n[e] !== undefined) {
+    let { MathMLElement: t } = globalThis;
+    if (n instanceof SVGElement || t !== undefined && n instanceof t)
+      n.setAttribute(e, o);
+    else
+      n[e] = o;
+  } else {
+    let t = g(e);
+    if (t === "class")
+      o.split(" ").forEach((i) => {
+        n.classList.add(i);
+      });
+    else if (n[t] !== undefined)
+      n[t] = o;
+    else if (typeof o === "boolean")
+      o ? n.setAttribute(t, "") : n.removeAttribute(t);
+    else
+      n.setAttribute(t, o);
+  }
+};
+var Ye = (n) => {
+  return { toDOM(e, o) {
+    pe(e, n, o);
+  } };
+};
+var _e = (n, e, o) => {
+  if (e === "apply")
+    o(n);
+  else if (e.match(/^on[A-Z]/) != null) {
+    let t = e.substring(2).toLowerCase();
+    z(n, t, o);
+  } else if (e === "bind")
+    if ((typeof o.binding === "string" ? tn[o.binding] : o.binding) !== undefined && o.value !== undefined)
+      h(n, o.value, o.binding instanceof Function ? { toDOM: o.binding } : o.binding);
+    else
+      throw new Error("bad binding");
+  else if (e.match(/^bind[A-Z]/) != null) {
+    let t = e.substring(4, 5).toLowerCase() + e.substring(5), i = tn[t];
+    if (i !== undefined)
+      h(n, o, i);
+    else
+      throw new Error(`${e} is not allowed, bindings.${t} is not defined`);
+  } else if (C(o))
+    h(n, o, Ye(e));
+  else
+    pe(n, e, o);
+};
+var Dn = (n, ...e) => {
+  if (rn[n] === undefined) {
+    let [i, s] = n.split("|");
+    if (s === undefined)
+      rn[n] = globalThis.document.createElement(i);
+    else
+      rn[n] = globalThis.document.createElementNS(s, i);
+  }
+  let o = rn[n].cloneNode(), t = {};
+  for (let i of e)
+    if (i instanceof Element || i instanceof DocumentFragment || typeof i === "string" || typeof i === "number")
+      if (o instanceof HTMLTemplateElement)
+        o.content.append(i);
+      else
+        o.append(i);
+    else if (i.xinPath)
+      o.append(p.span({ bindText: i }));
+    else
+      Object.assign(t, i);
+  for (let i of Object.keys(t)) {
+    let s = t[i];
+    _e(o, i, s);
+  }
   return o;
 };
-var S = new Proxy({ fragment: Gn }, { get(n, o) {
-  if (o = o.replace(/[A-Z]/g, (c) => `-${c.toLocaleLowerCase()}`), n[o] === undefined)
-    n[o] = (...c) => Jn(o, ...c);
-  return n[o];
+var Fn = (...n) => {
+  let e = globalThis.document.createDocumentFragment();
+  for (let o of n)
+    e.append(o);
+  return e;
+};
+var p = new Proxy({ fragment: Fn }, { get(n, e) {
+  if (e = e.replace(/[A-Z]/g, (o) => `-${o.toLocaleLowerCase()}`), n[e] === undefined)
+    n[e] = (...o) => Dn(e, ...o);
+  return n[e];
 }, set() {
   throw new Error("You may not add new properties to elements");
 } });
-var Un = new Proxy({ fragment: Gn }, { get(n, o) {
-  if (n[o] === undefined)
-    n[o] = (...c) => Jn(`${o}|${Yo}`, ...c);
-  return n[o];
+var Ln = new Proxy({ fragment: Fn }, { get(n, e) {
+  if (n[e] === undefined)
+    n[e] = (...o) => Dn(`${e}|${We}`, ...o);
+  return n[e];
 }, set() {
   throw new Error("You may not add new properties to elements");
 } });
-var Qn = new Proxy({ fragment: Gn }, { get(n, o) {
-  if (n[o] === undefined)
-    n[o] = (...c) => Jn(`${o}|${Qo}`, ...c);
-  return n[o];
+var On = new Proxy({ fragment: Fn }, { get(n, e) {
+  if (n[e] === undefined)
+    n[e] = (...o) => Dn(`${e}|${je}`, ...o);
+  return n[e];
 }, set() {
   throw new Error("You may not add new properties to elements");
 } });
-function qo(n, o) {
-  let c = S.style(P(o));
-  c.id = n, document.head.append(c);
+function Ve(n, e) {
+  let o = p.style(V(e));
+  o.id = n, document.head.append(o);
 }
-var wo = ["animation-iteration-count", "flex", "flex-base", "flex-grow", "flex-shrink", "opacity", "order", "tab-size", "widows", "z-index", "zoom"];
-var Yn = (n, o) => {
-  if (typeof o === "number" && !wo.includes(n))
-    o = `${o}px`;
+var qe = ["animation-iteration-count", "flex", "flex-base", "flex-grow", "flex-shrink", "opacity", "order", "tab-size", "widows", "z-index", "zoom"];
+var Bn = (n, e) => {
+  if (typeof e === "number" && !qe.includes(n))
+    e = `${e}px`;
   if (n.startsWith("_"))
     if (n.startsWith("__"))
-      n = "--" + n.substring(2), o = `var(${n}-default, ${o})`;
+      n = "--" + n.substring(2), e = `var(${n}-default, ${e})`;
     else
       n = "--" + n.substring(1);
-  return { prop: n, value: String(o) };
+  return { prop: n, value: String(e) };
 };
-var so = (n, o, c) => {
-  if (c === undefined)
+var Je = (n, e, o) => {
+  if (o === undefined)
     return "";
-  if (c instanceof $)
-    c = c.html;
-  let f = Yn(o, c);
-  return `${n}  ${f.prop}: ${f.value};`;
+  if (o instanceof a)
+    o = o.html;
+  let t = Bn(e, o);
+  return `${n}  ${t.prop}: ${t.value};`;
 };
-var xo = (n, o, c = "") => {
-  let f = z(n);
-  if (typeof o === "object" && !(o instanceof $)) {
-    let X = Object.keys(o).map((y) => xo(y, o[y], `${c}  `)).join(`
+var ye = (n, e, o = "") => {
+  let t = g(n);
+  if (typeof e === "object" && !(e instanceof a)) {
+    let i = Object.keys(e).map((s) => ye(s, e[s], `${o}  `)).join(`
 `);
-    return `${c}  ${n} {
-${X}
-${c}  }`;
+    return `${o}  ${n} {
+${i}
+${o}  }`;
   } else
-    return so(c, f, o);
+    return Je(o, t, e);
 };
-var P = (n, o = "") => {
-  return Object.keys(n).map((f) => {
-    let X = n[f];
-    if (typeof X === "string") {
-      if (f === "@import")
-        return `@import url('${X}');`;
+var V = (n, e = "") => {
+  return Object.keys(n).map((t) => {
+    let i = n[t];
+    if (typeof i === "string") {
+      if (t === "@import")
+        return `@import url('${i}');`;
       throw new Error("top-level string value only allowed for `@import`");
     }
-    let y = Object.keys(X).map((x) => xo(x, X[x])).join(`
+    let s = Object.keys(i).map((r) => ye(r, i[r])).join(`
 `);
-    return `${o}${f} {
-${y}
+    return `${e}${t} {
+${s}
 }`;
   }).join(`
 
 `);
 };
-var Bo = (n) => {
+var Ue = (n) => {
   console.warn("initVars is deprecated. Just use _ and __ prefixes instead.");
-  let o = {};
-  for (let c of Object.keys(n)) {
-    let f = n[c], X = z(c);
-    o[`--${X}`] = typeof f === "number" && f !== 0 ? String(f) + "px" : f;
+  let e = {};
+  for (let o of Object.keys(n)) {
+    let t = n[o], i = g(o);
+    e[`--${i}`] = typeof t === "number" && t !== 0 ? String(t) + "px" : t;
   }
-  return o;
+  return e;
 };
-var Ko = (n) => {
-  console.warn("darkMode is deprecated. Use inverseLuminance instead.");
-  let o = {};
-  for (let c of Object.keys(n)) {
-    let f = n[c];
-    if (typeof f === "string" && f.match(/^(#|rgb[a]?\(|hsl[a]?\()/) != null)
-      f = $.fromCss(f).inverseLuminance.html, o[`--${z(c)}`] = f;
+var Ge = (n) => {
+  let e = {};
+  for (let o of Object.keys(n)) {
+    let t = n[o];
+    if (t instanceof a)
+      e[o] = t.inverseLuminance;
+    else if (typeof t === "string" && t.match(/^(#[0-9a-fA-F]{3}|rgba?\(|hsla?\()/))
+      e[o] = a.fromCss(t).inverseLuminance;
   }
-  return o;
+  return e;
 };
-var Ro = (n) => {
-  let o = {};
-  for (let c of Object.keys(n)) {
-    let f = n[c];
-    if (f instanceof $)
-      o[c] = f.inverseLuminance;
-    else if (typeof f === "string" && f.match(/^(#[0-9a-fA-F]{3}|rgba?\(|hsla?\()/))
-      o[c] = $.fromCss(f).inverseLuminance;
+var sn = new Proxy({}, { get(n, e) {
+  if (n[e] === undefined) {
+    let o = "--" + g(e);
+    n[e] = (t) => `var(${o}, ${t})`;
   }
-  return o;
-};
-var qn = new Proxy({}, { get(n, o) {
-  if (n[o] == null) {
-    o = o.replace(/[A-Z]/g, (r) => `-${r.toLocaleLowerCase()}`);
-    let [, c, , f, X, y] = o.match(/^([^\d_]*)((_)?(\d+)(\w*))?$/), x = `--${c}`;
-    if (X != null) {
-      let r = f == null ? Number(X) / 100 : -Number(X) / 100;
-      switch (y) {
+  return n[e];
+} });
+var Hn = new Proxy({}, { get(n, e) {
+  if (e === "default")
+    return sn;
+  if (n[e] == null) {
+    e = g(e);
+    let [, o, , t, i, s] = e.match(/^([-\w]*?)((_)?(\d+)(\w?))?$/) || ["", e], r = `--${o}`;
+    if (i != null) {
+      let c = t == null ? Number(i) / 100 : -Number(i) / 100;
+      switch (s) {
         case "b":
           {
-            let E = getComputedStyle(document.body).getPropertyValue(x);
-            n[o] = r > 0 ? $.fromCss(E).brighten(r).rgba : $.fromCss(E).darken(-r).rgba;
+            let l = a.fromVar(r);
+            n[e] = c > 0 ? l.brighten(c).rgba : l.darken(-c).rgba;
           }
           break;
         case "s":
           {
-            let E = getComputedStyle(document.body).getPropertyValue(x);
-            n[o] = r > 0 ? $.fromCss(E).saturate(r).rgba : $.fromCss(E).desaturate(-r).rgba;
+            let l = a.fromVar(r);
+            n[e] = c > 0 ? l.saturate(c).rgba : l.desaturate(-c).rgba;
           }
           break;
         case "h":
           {
-            let E = getComputedStyle(document.body).getPropertyValue(x);
-            n[o] = $.fromCss(E).rotate(r * 100).rgba, console.log($.fromCss(E).hsla, $.fromCss(E).rotate(r).hsla);
+            let l = a.fromVar(r);
+            n[e] = l.rotate(c * 100).rgba;
           }
           break;
         case "o":
           {
-            let E = getComputedStyle(document.body).getPropertyValue(x);
-            n[o] = $.fromCss(E).opacity(r).rgba;
+            let l = a.fromVar(r);
+            n[e] = l.opacity(c).rgba;
           }
           break;
         case "":
-          n[o] = `calc(var(${x}) * ${r})`;
+          n[e] = `calc(var(${r}) * ${c})`;
           break;
         default:
-          throw console.error(y), new Error(`Unrecognized method ${y} for css variable ${x}`);
+          throw console.error(s), new Error(`Unrecognized method ${s} for css variable ${r}`);
       }
     } else
-      n[o] = `var(${x})`;
+      n[e] = `var(${r})`;
   }
-  return n[o];
+  return n[e];
 } });
-var wn = new Proxy({}, { get(n, o) {
-  if (n[o] === undefined) {
-    let c = `--${o.replace(/[A-Z]/g, (f) => `-${f.toLocaleLowerCase()}`)}`;
-    n[o] = (f) => `var(${c}, ${f})`;
-  }
-  return n[o];
-} });
-var _o = 0;
-function sn() {
-  return `custom-elt${(_o++).toString(36)}`;
+var Ze = 0;
+function zn() {
+  return `custom-elt${(Ze++).toString(36)}`;
 }
-var yo = 0;
-var g = {};
-function jo(n, o) {
-  let c = g[n], f = P(o).replace(/:host\b/g, n);
-  g[n] = c ? c + `
-` + f : f;
+var me = 0;
+var Q = {};
+function Qe(n, e) {
+  let o = Q[n], t = V(e).replace(/:host\b/g, n);
+  Q[n] = o ? o + `
+` + t : t;
 }
-function Vo(n) {
-  if (g[n])
-    document.head.append(S.style({ id: n + "-component" }, g[n]));
-  delete g[n];
+function Ke(n) {
+  if (Q[n])
+    document.head.append(p.style({ id: n + "-component" }, Q[n]));
+  delete Q[n];
 }
 
-class G extends HTMLElement {
-  static elements = S;
+class M extends HTMLElement {
+  static elements = p;
   static _elementCreator;
   instanceId;
   styleNode;
   static styleSpec;
   static styleNode;
-  content = S.slot();
+  content = p.slot();
   isSlotted;
   static _tagName = null;
   static get tagName() {
     return this._tagName;
   }
   static StyleNode(n) {
-    return console.warn("StyleNode is deprecated, just assign static styleSpec: XinStyleSheet to the class directly"), S.style(P(n));
+    return console.warn("StyleNode is deprecated, just assign static styleSpec: XinStyleSheet to the class directly"), p.style(V(n));
   }
   static elementCreator(n = {}) {
     if (this._elementCreator == null) {
-      let { tag: o, styleSpec: c } = n, f = n != null ? o : null;
-      if (f == null)
+      let { tag: e, styleSpec: o } = n, t = n != null ? e : null;
+      if (t == null)
         if (typeof this.name === "string" && this.name !== "") {
-          if (f = z(this.name), f.startsWith("-"))
-            f = f.slice(1);
+          if (t = g(this.name), t.startsWith("-"))
+            t = t.slice(1);
         } else
-          f = sn();
-      if (customElements.get(f) != null)
-        console.warn(`${f} is already defined`);
-      if (f.match(/\w+(-\w+)+/) == null)
-        console.warn(`${f} is not a legal tag for a custom-element`), f = sn();
-      while (customElements.get(f) !== undefined)
-        f = sn();
-      if (this._tagName = f, c !== undefined)
-        jo(f, c);
-      window.customElements.define(f, this, n), this._elementCreator = S[f];
+          t = zn();
+      if (customElements.get(t) != null)
+        console.warn(`${t} is already defined`);
+      if (t.match(/\w+(-\w+)+/) == null)
+        console.warn(`${t} is not a legal tag for a custom-element`), t = zn();
+      while (customElements.get(t) !== undefined)
+        t = zn();
+      if (this._tagName = t, o !== undefined)
+        Qe(t, o);
+      window.customElements.define(t, this, n), this._elementCreator = p[t];
     }
     return this._elementCreator;
   }
   initAttributes(...n) {
-    let o = {}, c = {};
-    new MutationObserver((X) => {
-      let y = false;
-      if (X.forEach((x) => {
-        y = !!(x.attributeName && n.includes(Xo(x.attributeName)));
-      }), y && this.queueRender !== undefined)
+    let e = {}, o = {};
+    new MutationObserver((i) => {
+      let s = false;
+      if (i.forEach((r) => {
+        s = !!(r.attributeName && n.includes(fe(r.attributeName)));
+      }), s && this.queueRender !== undefined)
         this.queueRender(false);
-    }).observe(this, { attributes: true }), n.forEach((X) => {
-      o[X] = O(this[X]);
-      let y = z(X);
-      Object.defineProperty(this, X, { enumerable: false, get() {
-        if (typeof o[X] === "boolean")
-          return this.hasAttribute(y);
-        else if (this.hasAttribute(y))
-          return typeof o[X] === "number" ? parseFloat(this.getAttribute(y)) : this.getAttribute(y);
-        else if (c[X] !== undefined)
-          return c[X];
+    }).observe(this, { attributes: true }), n.forEach((i) => {
+      e[i] = T(this[i]);
+      let s = g(i);
+      Object.defineProperty(this, i, { enumerable: false, get() {
+        if (typeof e[i] === "boolean")
+          return this.hasAttribute(s);
+        else if (this.hasAttribute(s))
+          return typeof e[i] === "number" ? parseFloat(this.getAttribute(s)) : this.getAttribute(s);
+        else if (o[i] !== undefined)
+          return o[i];
         else
-          return o[X];
-      }, set(x) {
-        if (typeof o[X] === "boolean") {
-          if (x !== this[X]) {
-            if (x)
-              this.setAttribute(y, "");
+          return e[i];
+      }, set(r) {
+        if (typeof e[i] === "boolean") {
+          if (r !== this[i]) {
+            if (r)
+              this.setAttribute(s, "");
             else
-              this.removeAttribute(y);
+              this.removeAttribute(s);
             this.queueRender();
           }
-        } else if (typeof o[X] === "number") {
-          if (x !== parseFloat(this[X]))
-            this.setAttribute(y, x), this.queueRender();
-        } else if (typeof x === "object" || `${x}` !== `${this[X]}`) {
-          if (x === null || x === undefined || typeof x === "object")
-            this.removeAttribute(y);
+        } else if (typeof e[i] === "number") {
+          if (r !== parseFloat(this[i]))
+            this.setAttribute(s, r), this.queueRender();
+        } else if (typeof r === "object" || `${r}` !== `${this[i]}`) {
+          if (r === null || r === undefined || typeof r === "object")
+            this.removeAttribute(s);
           else
-            this.setAttribute(y, x);
-          this.queueRender(), c[X] = x;
+            this.setAttribute(s, r);
+          this.queueRender(), o[i] = r;
         }
       } });
     });
@@ -1275,40 +1340,40 @@ class G extends HTMLElement {
     let n = Object.getOwnPropertyDescriptor(this, "value");
     if (n === undefined || n.get !== undefined || n.set !== undefined)
       return;
-    let o = this.hasAttribute("value") ? this.getAttribute("value") : O(this.value);
+    let e = this.hasAttribute("value") ? this.getAttribute("value") : T(this.value);
     delete this.value, Object.defineProperty(this, "value", { enumerable: false, get() {
-      return o;
-    }, set(c) {
-      if (o !== c)
-        o = c, this.queueRender(true);
+      return e;
+    }, set(o) {
+      if (e !== o)
+        e = o, this.queueRender(true);
     } });
   }
   _parts;
   get parts() {
     let n = this.shadowRoot != null ? this.shadowRoot : this;
     if (this._parts == null)
-      this._parts = new Proxy({}, { get(o, c) {
-        if (o[c] === undefined) {
-          let f = n.querySelector(`[part="${c}"]`);
-          if (f == null)
-            f = n.querySelector(c);
-          if (f == null)
-            throw new Error(`elementRef "${c}" does not exist!`);
-          f.removeAttribute("data-ref"), o[c] = f;
+      this._parts = new Proxy({}, { get(e, o) {
+        if (e[o] === undefined) {
+          let t = n.querySelector(`[part="${o}"]`);
+          if (t == null)
+            t = n.querySelector(o);
+          if (t == null)
+            throw new Error(`elementRef "${o}" does not exist!`);
+          t.removeAttribute("data-ref"), e[o] = t;
         }
-        return o[c];
+        return e[o];
       } });
     return this._parts;
   }
   constructor() {
     super();
-    yo += 1, this.initAttributes("hidden"), this.instanceId = `${this.tagName.toLocaleLowerCase()}-${yo}`, this._value = O(this.defaultValue);
+    me += 1, this.initAttributes("hidden"), this.instanceId = `${this.tagName.toLocaleLowerCase()}-${me}`, this._value = T(this.defaultValue);
   }
   connectedCallback() {
-    if (Vo(this.constructor.tagName), this.hydrate(), this.role != null)
+    if (Ke(this.constructor.tagName), this.hydrate(), this.role != null)
       this.setAttribute("role", this.role);
     if (this.onResize !== undefined) {
-      if (b.observe(this), this._onResize == null)
+      if (G.observe(this), this._onResize == null)
         this._onResize = this.onResize.bind(this);
       this.addEventListener("resize", this._onResize);
     }
@@ -1317,7 +1382,7 @@ class G extends HTMLElement {
     this.queueRender();
   }
   disconnectedCallback() {
-    b.unobserve(this);
+    G.unobserve(this);
   }
   _changeQueued = false;
   _renderQueued = false;
@@ -1329,7 +1394,7 @@ class G extends HTMLElement {
     if (!this._renderQueued)
       this._renderQueued = true, requestAnimationFrame(() => {
         if (this._changeQueued)
-          Dn(this, "change");
+          Sn(this, "change");
         this._changeQueued = false, this._renderQueued = false, this.render();
       });
   }
@@ -1337,27 +1402,27 @@ class G extends HTMLElement {
   hydrate() {
     if (!this._hydrated) {
       this.initValue();
-      let n = typeof this.content !== "function", o = typeof this.content === "function" ? this.content() : this.content, { styleSpec: c } = this.constructor, { styleNode: f } = this.constructor;
-      if (c)
-        f = this.constructor.styleNode = S.style(P(c)), delete this.constructor.styleNode;
+      let n = typeof this.content !== "function", e = typeof this.content === "function" ? this.content() : this.content, { styleSpec: o } = this.constructor, { styleNode: t } = this.constructor;
+      if (o)
+        t = this.constructor.styleNode = p.style(V(o)), delete this.constructor.styleNode;
       if (this.styleNode)
-        console.warn(this, "styleNode is deprecrated, use static styleNode or statc styleSpec instead"), f = this.styleNode;
-      if (f) {
-        let X = this.attachShadow({ mode: "open" });
-        X.appendChild(f.cloneNode(true)), zn(X, o, n);
-      } else if (o !== null) {
-        let X = [...this.childNodes];
-        zn(this, o, n), this.isSlotted = this.querySelector("slot,xin-slot") !== undefined;
-        let y = [...this.querySelectorAll("slot")];
-        if (y.length > 0)
-          y.forEach(Bn.replaceSlot);
-        if (X.length > 0) {
-          let x = { "": this };
-          [...this.querySelectorAll("xin-slot")].forEach((r) => {
-            x[r.name] = r;
-          }), X.forEach((r) => {
-            let E = x[""], F = r instanceof Element ? x[r.slot] : E;
-            (F !== undefined ? F : E).append(r);
+        console.warn(this, "styleNode is deprecrated, use static styleNode or statc styleSpec instead"), t = this.styleNode;
+      if (t) {
+        let i = this.attachShadow({ mode: "open" });
+        i.appendChild(t.cloneNode(true)), kn(i, e, n);
+      } else if (e !== null) {
+        let i = Array.from(this.childNodes);
+        kn(this, e, n), this.isSlotted = this.querySelector("slot,xin-slot") !== undefined;
+        let s = Array.from(this.querySelectorAll("slot"));
+        if (s.length > 0)
+          s.forEach($n.replaceSlot);
+        if (i.length > 0) {
+          let r = { "": this };
+          Array.from(this.querySelectorAll("xin-slot")).forEach((c) => {
+            r[c.name] = c;
+          }), i.forEach((c) => {
+            let l = r[""], f = c instanceof Element ? r[c.slot] : l;
+            (f !== undefined ? f : l).append(c);
           });
         }
       }
@@ -1367,69 +1432,78 @@ class G extends HTMLElement {
   render() {}
 }
 
-class Bn extends G {
+class $n extends M {
   name = "";
   content = null;
   static replaceSlot(n) {
-    let o = document.createElement("xin-slot");
+    let e = document.createElement("xin-slot");
     if (n.name !== "")
-      o.setAttribute("name", n.name);
-    n.replaceWith(o);
+      e.setAttribute("name", n.name);
+    n.replaceWith(e);
   }
   constructor() {
     super();
     this.initAttributes("name");
   }
 }
-var Nc = Bn.elementCreator({ tag: "xin-slot" });
-var Io = (n = () => true) => {
-  let o = localStorage.getItem("xin-state");
-  if (o != null) {
-    let f = JSON.parse(o);
-    for (let X of Object.keys(f).filter(n))
-      if (T[X] !== undefined)
-        Object.assign(T[X], f[X]);
+var at = $n.elementCreator({ tag: "xin-slot" });
+var Re = (n = () => true) => {
+  let e = localStorage.getItem("xin-state");
+  if (e != null) {
+    let t = JSON.parse(e);
+    for (let i of Object.keys(t).filter(n))
+      if (d[i] !== undefined)
+        Object.assign(d[i], t[i]);
       else
-        T[X] = f[X];
+        d[i] = t[i];
   }
-  let c = On(() => {
-    let f = {}, X = M(T);
-    for (let y of Object.keys(X).filter(n))
-      f[y] = X[y];
-    localStorage.setItem("xin-state", JSON.stringify(f)), console.log("xin state saved to localStorage");
+  let o = vn(() => {
+    let t = {}, i = x(d);
+    for (let s of Object.keys(i).filter(n))
+      t[s] = i[s];
+    localStorage.setItem("xin-state", JSON.stringify(t)), console.log("xin state saved to localStorage");
   }, 500);
-  N(n, c);
+  U(n, o);
 };
-var Kn = "0.8.8";
-function fn(n) {
-  return Object.assign(I, n), I;
+var An = "1.0.3";
+function xe(n) {
+  return Object.assign(Y, n), Y;
 }
-var ro = false;
-function Rn(n, o = false) {
-  if (o) {
-    if (!ro)
-      console.warn("xinProxy(..., true) is deprecated; use boxedProxy(...) instead"), ro = true;
-    return fn(n);
-  }
-  return Object.keys(n).forEach((c) => {
-    T[c] = n[c];
-  }), T;
+function cn(n) {
+  return console.warn("boxedProxy is deprecated, please use tosi() instead"), xe(n);
 }
-var Po = {};
-async function Xn(n, o) {
-  let { type: c, styleSpec: f } = await o(n, { Color: $, Component: G, elements: S, svgElements: Un, mathML: Qn, varDefault: wn, vars: qn, xin: T, boxed: I, xinProxy: Rn, boxedProxy: fn, makeComponent: Xn, version: Kn }), X = { type: c, creator: c.elementCreator({ tag: n, styleSpec: f }) };
-  return Po[n] = X, X;
+function Pn(n, e = false) {
+  if (e)
+    return console.warn("xinProxy(..., true) is deprecated; use tosi(...) instead"), cn(n);
+  return Object.keys(n).forEach((o) => {
+    d[o] = n[o];
+  }), d;
 }
+var Ne = {};
+async function ln(n, e) {
+  let { type: o, styleSpec: t } = await e(n, { Color: a, Component: M, elements: p, svgElements: Ln, mathML: On, varDefault: sn, vars: Hn, xin: d, boxed: Y, xinProxy: Pn, boxedProxy: cn, makeComponent: ln, bind: h, on: z, version: An }), i = { type: o, creator: o.elementCreator({ tag: n, styleSpec: t }) };
+  return Ne[n] = i, i;
+}
+var jn = {};
+var no = (n) => import(n);
 
-class Blueprint extends G {
+class an extends M {
   tag = "anon-elt";
   src = "";
   property = "default";
   loaded;
+  blueprintLoaded = (n) => {};
   async packaged() {
+    let { tag: n, src: e, property: o } = this, t = `${n}.${o}:${e}`;
     if (!this.loaded) {
-      let { tag, src } = this, imported = await eval(`import('${src}')`), blueprint = imported[this.property];
-      this.loaded = await Xn(tag, blueprint);
+      if (jn[t] === undefined)
+        jn[t] = no(e).then((i) => {
+          let s = i[o];
+          return ln(n, s);
+        });
+      else
+        console.log(`using cached ${n}`);
+      this.loaded = await jn[t], this.blueprintLoaded(this.loaded);
     }
     return this.loaded;
   }
@@ -1438,28 +1512,28 @@ class Blueprint extends G {
     this.initAttributes("tag", "src", "property");
   }
 }
-var Tf = Blueprint.elementCreator({ tag: "xin-blueprint", styleSpec: { ":host": { display: "none" } } });
+var eo = an.elementCreator({ tag: "xin-blueprint", styleSpec: { ":host": { display: "none" } } });
 
-class Eo extends G {
+class Wn extends M {
+  allLoaded = () => {};
   constructor() {
     super();
   }
   async load() {
-    let o = [...this.querySelectorAll(Blueprint.tagName)].filter((c) => c.src).map((c) => c.packaged());
-    await Promise.all(o);
+    let e = Array.from(this.querySelectorAll(an.tagName)).filter((o) => o.src).map((o) => o.packaged());
+    await Promise.all(e), this.allLoaded();
   }
   connectedCallback() {
     super.connectedCallback(), this.load();
   }
 }
-var Ff = Eo.elementCreator({ tag: "xin-loader", styleSpec: { ":host": { display: "none" } } });
+var oo = Wn.elementCreator({ tag: "xin-loader", styleSpec: { ":host": { display: "none" } } });
 
 // src/index.ts
 var exports_src = {};
 __export(exports_src, {
   xrControllersText: () => xrControllersText,
   xrControllers: () => xrControllers,
-  xinjs: () => exports_module,
   xinTagList: () => xinTagList,
   xinTag: () => xinTag,
   xinSizer: () => xinSizer,
@@ -1477,6 +1551,7 @@ __export(exports_src, {
   version: () => version,
   updateLocalized: () => updateLocalized,
   trackDrag: () => trackDrag,
+  tosijs: () => exports_module,
   tabSelector: () => tabSelector,
   svgIcon: () => svgIcon,
   svg2DataUrl: () => svg2DataUrl,
@@ -1514,7 +1589,7 @@ __export(exports_src, {
   editableRect: () => editableRect,
   dragAndDrop: () => exports_drag_and_drop,
   digest: () => digest,
-  defineIcon: () => defineIcon,
+  defineIcons: () => defineIcons,
   dataTable: () => dataTable,
   createSubMenu: () => createSubMenu,
   createMenuItem: () => createMenuItem,
@@ -1562,11 +1637,9 @@ __export(exports_src, {
 });
 
 // src/ab-test.ts
-var { abTestConditions } = Rn({
-  abTestConditions: {}
-});
+var abTestConditions = {};
 
-class AbTest extends G {
+class AbTest extends M {
   static set conditions(context) {
     Object.assign(abTestConditions, context);
     for (const abTest of [...AbTest.instances]) {
@@ -1599,24 +1672,24 @@ class AbTest extends G {
 var abTest = AbTest.elementCreator({ tag: "xin-ab" });
 // src/via-tag.ts
 var loadedScripts = {};
-function scriptTag(src2, existingSymbolName) {
-  if (loadedScripts[src2] === undefined) {
+function scriptTag(src, existingSymbolName) {
+  if (loadedScripts[src] === undefined) {
     if (existingSymbolName !== undefined) {
       const existing = globalThis[existingSymbolName];
-      loadedScripts[src2] = Promise.resolve({ [existingSymbolName]: existing });
+      loadedScripts[src] = Promise.resolve({ [existingSymbolName]: existing });
     }
-    const scriptElt = S.script({ src: src2 });
+    const scriptElt = p.script({ src });
     document.head.append(scriptElt);
-    loadedScripts[src2] = new Promise((resolve) => {
+    loadedScripts[src] = new Promise((resolve) => {
       scriptElt.onload = () => resolve(globalThis);
     });
   }
-  return loadedScripts[src2];
+  return loadedScripts[src];
 }
 var loadedStyleSheets = {};
 function styleSheet(href) {
   if (loadedStyleSheets[href] === undefined) {
-    const linkElement = S.link({
+    const linkElement = p.link({
       rel: "stylesheet",
       type: "text/css",
       href
@@ -1631,498 +1704,390 @@ function styleSheet(href) {
 
 // src/icon-data.ts
 var icon_data_default = {
-  earth: "M705 107c-58-28-124-43-193-43-54 0-107 10-155 27 0 0-28 63-28 63-1 2-1 5-1 7 0 0 10 112 10 112 0 5-2 10-6 13 0 0-25 17-25 17-8 5-19 1-21-8 0 0-14-50-14-50-2-8-11-12-19-9 0 0-40 17-40 17-4 2-6 5-8 8 0 0-34 99-34 99-3 9 3 18 13 19 0 0 109 5 109 5 3 0 6 1 8 3 0 0 115 96 115 96 2 1 3 2 6 3 0 0 138 35 138 35 6 1 10 6 10 12 0 0 9 105 9 105 0 4-1 8-3 10 0 0-240 274-240 274 54 23 114 36 177 36 138 0 261-62 344-160 0 0 25-151 25-151 0-2 0-3-0-5 0 0-33-190-33-190-1-6-5-10-11-11 0 0-141-31-141-31-5-1-9-5-11-10 0 0-51-183-51-183-1-4-0-8 2-12 0 0 68-101 68-101zM102 332c-24 55-38 116-38 180 0 151 75 284 189 365 0 0 6-179 6-179 0-5-3-10-8-13 0 0-111-57-111-57-5-2-7-7-8-12 0 0-6-223-6-223-0-2-0-3-1-5 0 0-23-56-23-56zM512 0c283 0 512 229 512 512s-229 512-512 512c-283 0-512-229-512-512s229-512 512-512z",
-  bluesky: "M830 0c137 0 194 57 194 194v635c0 137-57 194-194 194h-635c-137 0-194-57-194-194v-635c0-137 57-194 194-194h635zM855 171c-44-0-83 22-117 47-91 69-190 208-226 282-36-75-134-214-226-282h-0c-66-49-173-88-173 34 0 24 14 204 22 234 28 102 132 128 224 112-161 27-202 118-114 209 168 172 242-43 260-99 3-10 5-15 5-11 0-4 2 1 5 11 19 55 92 271 260 99 89-91 48-182-114-209 92 16 196-10 224-112 8-29 22-209 22-234-0-25-4-54-24-70-9-7-19-9-31-11z",
-  tool: "M657 298l161-160c3-3 6-8 9-13 10-22 0-47-21-56-11-5-23-9-34-13-67-21-143-18-212 13-75 34-129 95-156 167-24 63-26 133-4 200l-275 275c-26 26-39 60-39 94s13 68 39 94 60 39 94 39 68-13 94-39l275-275c2 1 4 1 6 2 67 21 143 18 212-13 75-34 129-95 156-167s27-153-7-228c-2-4-5-9-9-13-17-17-44-17-60 0l-160 161zM597 239c-16 17-24 38-24 60 0 21 8 43 24 59l69 69c17 17 39 25 60 25 21-0 43-8 59-24l110-110c4 34-1 68-12 99-19 51-58 95-112 119-49 22-103 24-151 9-8-3-17-6-25-9-17-7-35-3-48 9l-295 295c-9 9-22 14-34 14s-24-5-34-14-14-22-14-34 5-24 14-34l295-295c13-13 16-32 9-48-24-54-25-112-5-163s58-95 112-119c36-16 75-22 112-18z",
-  sidebar: "M213 85c-35 0-67 14-90 38s-38 55-38 90v597c0 35 14 67 38 90s55 38 90 38h597c35 0 67-14 90-38s38-55 38-90v-597c0-35-14-67-38-90s-55-38-90-38zM427 853v-683h384c12 0 22 5 30 13s13 18 13 30v597c0 12-5 22-13 30s-18 13-30 13zM341 171v683h-128c-12 0-22-5-30-13s-13-18-13-30v-597c0-12 5-22 13-30s18-13 30-13z",
-  calendar: "M299 85v43h-85c-35 0-67 14-90 38s-38 55-38 90v597c0 35 14 67 38 90s55 38 90 38h597c35 0 67-14 90-38s38-55 38-90v-597c0-35-14-67-38-90s-55-38-90-38h-85v-43c0-24-19-43-43-43s-43 19-43 43v43h-256v-43c0-24-19-43-43-43s-43 19-43 43zM853 384h-683v-128c0-12 5-22 13-30s18-13 30-13h85v43c0 24 19 43 43 43s43-19 43-43v-43h256v43c0 24 19 43 43 43s43-19 43-43v-43h85c12 0 22 5 30 13s13 18 13 30zM171 469h683v384c0 12-5 22-13 30s-18 13-30 13h-597c-12 0-22-5-30-13s-13-18-13-30z",
-  editDoc: "M469 128h-299c-35 0-67 14-90 38s-38 55-38 90v597c0 35 14 67 38 90s55 38 90 38h597c35 0 67-14 90-38s38-55 38-90v-299c0-24-19-43-43-43s-43 19-43 43v299c0 12-5 22-13 30s-18 13-30 13h-597c-12 0-22-5-30-13s-13-18-13-30v-597c0-12 5-22 13-30s18-13 30-13h299c24 0 43-19 43-43s-19-43-43-43zM759 77l-405 405c-5 5-9 12-11 20l-43 171c-2 6-2 14 0 21 6 23 29 37 52 31l171-43c7-2 14-6 20-11l405-405c26-26 39-60 39-94s-13-68-39-94-60-39-94-39-68 13-94 39zM819 137c9-9 22-14 34-14s24 5 34 14 14 22 14 34-5 24-14 34l-397 397-90 23 23-90z",
-  edit: "M695 98l-576 576c-5 5-9 11-11 19l-64 235c-2 7-2 15 0 22 6 23 30 36 52 30l235-64c7-2 13-6 19-11l576-576c32-32 48-74 48-115s-16-84-48-115-74-48-115-48-84 16-115 48zM755 158c15-15 35-23 55-23s40 8 55 23 23 35 23 55-8 40-23 55l-568 568-152 41 41-152z",
-  web: "M723 469c-9-115-47-228-114-329 67 17 127 53 174 100 60 60 100 140 110 229zM609 884c63-95 104-207 114-329h171c-10 89-50 169-110 229-47 47-107 83-174 100zM301 555c9 115 47 228 114 329-67-17-127-53-174-100-60-60-100-140-110-229zM415 140c-63 95-104 207-114 329h-171c10-89 50-169 110-229 48-47 107-83 174-100zM512 43c0 0 0 0 0 0-130 0-247 53-332 137-85 85-137 202-137 332s53 247 137 332c85 85 202 137 332 137 0 0 0 0 0 0 130-0 247-53 332-137 85-85 137-202 137-332s-53-247-137-332c-85-85-202-137-332-137zM638 555c-11 119-56 229-126 318-74-95-115-206-126-318zM512 151c74 95 115 206 126 318h-251c11-119 56-229 126-318z",
-  info: "M981 512c0-130-53-247-137-332s-202-137-332-137-247 53-332 137-137 202-137 332 53 247 137 332 202 137 332 137 247-53 332-137 137-202 137-332zM896 512c0 106-43 202-112 272s-165 112-272 112-202-43-272-112-112-165-112-272 43-202 112-272 165-112 272-112 202 43 272 112 112 165 112 272zM555 683v-171c0-24-19-43-43-43s-43 19-43 43v171c0 24 19 43 43 43s43-19 43-43zM512 384c24 0 43-19 43-43s-19-43-43-43-43 19-43 43 19 43 43 43z",
-  loading: "M469 85v171c0 24 19 43 43 43s43-19 43-43v-171c0-24-19-43-43-43s-43 19-43 43zM469 768v171c0 24 19 43 43 43s43-19 43-43v-171c0-24-19-43-43-43s-43 19-43 43zM180 241l121 121c17 17 44 17 60 0s17-44 0-60l-121-121c-17-17-44-17-60 0s-17 44 0 60zM663 723l121 121c17 17 44 17 60 0s17-44 0-60l-121-121c-17-17-44-17-60 0s-17 44 0 60zM85 555h171c24 0 43-19 43-43s-19-43-43-43h-171c-24 0-43 19-43 43s19 43 43 43zM768 555h171c24 0 43-19 43-43s-19-43-43-43h-171c-24 0-43 19-43 43s19 43 43 43zM241 844l121-121c17-17 17-44 0-60s-44-17-60 0l-121 121c-17 17-17 44 0 60s44 17 60 0zM723 361l121-121c17-17 17-44 0-60s-44-17-60 0l-121 121c-17 17-17 44 0 60s44 17 60 0z",
-  mail: "M128 338l360 252c15 10 34 10 49 0l360-252v430c0 12-5 22-13 30s-18 13-30 13h-683c-12 0-22-5-30-13s-13-18-13-30zM43 255c0 0 0 1 0 1v511c0 35 15 67 38 90s55 38 90 38h683c35 0 67-15 90-38s38-55 38-90v-511c0-0 0-1 0-1-0-35-15-67-38-90-23-23-55-38-90-38h-683c-35 0-67 15-90 38-23 23-37 55-38 90zM891 237l-379 266-379-266c2-4 5-8 8-11 8-8 19-13 30-13h683c12 0 22 5 30 13 3 3 6 7 8 11z",
-  resize: "M175 102l271 271c20 20 20 52 0 72s-52 20-72 0l-271-271v184c0 28-23 51-51 51s-51-23-51-51v-307c0-7 1-14 4-20s6-12 11-17c0-0 0-0 0-0 5-5 10-8 17-11 6-3 13-4 20-4h307c28 0 51 23 51 51s-23 51-51 51h-184zM849 922l-271-271c-20-20-20-52 0-72s52-20 72 0l271 271v-184c0-28 23-51 51-51s51 23 51 51v307c0 28-23 51-51 51h-307c-28 0-51-23-51-51s23-51 51-51h184z",
-  menu: "M128 555h768c24 0 43-19 43-43s-19-43-43-43h-768c-24 0-43 19-43 43s19 43 43 43zM128 299h768c24 0 43-19 43-43s-19-43-43-43h-768c-24 0-43 19-43 43s19 43 43 43zM128 811h768c24 0 43-19 43-43s-19-43-43-43h-768c-24 0-43 19-43 43s19 43 43 43z",
-  message: "M939 640v-427c0-35-14-67-38-90s-55-38-90-38h-597c-35 0-67 14-90 38s-38 55-38 90v683c0 11 4 22 13 30 17 17 44 17 60 0l158-158h494c35 0 67-14 90-38s38-55 38-90zM853 640c0 12-5 22-13 30s-18 13-30 13h-512c-12 0-22 5-30 13l-98 98v-580c0-12 5-22 13-30s18-13 30-13h597c12 0 22 5 30 13s13 18 13 30z",
-  blog: {
-    p: [
-      "M848 517c0-23 19-42 42-43l1-0c23 0 42 19 43 42l0 1v128c0 35-14 67-37 90l-1 1c-23 23-55 37-89 38l-1 0h-494l-158 158c-17 17-44 17-60 0-8-8-12-19-12-29l-0-1v-683c0-35 14-67 38-90 23-23 55-37 89-38l1-0h299c24 0 43 19 43 43 0 23-19 42-42 43l-1 0h-299c-12 0-22 5-30 12l-0 0c-8 8-12 18-12 29l-0 1v580l98-98c8-8 18-12 29-12l1-0h512c12 0 22-5 30-13 8-8 12-18 12-29l0-1v-128zM797 39l-352 352c-5 5-9 12-11 20l-43 171c-2 6-2 14 0 21 6 23 29 37 52 31l171-43c7-2 14-6 20-11l352-352c26-26 39-60 39-94s-13-68-39-94c-26-26-60-39-94-39s-68 13-94 39zM857 99c9-9 22-14 34-14s24 5 34 14c9 9 14 22 14 34s-5 24-14 34l-344 344-90 23 23-90 344-344z",
-      "M292 251h163c24 0 43 19 43 43s-19 43-43 43h-163c-24 0-43-19-43-43s19-43 43-43z",
-      "M292 407h67c24 0 43 19 43 43s-19 43-43 43h-67c-24 0-43-19-43-43s19-43 43-43z"
-    ]
-  },
-  phone: "M981 722c1-30-10-60-29-83-20-24-48-41-82-46-34-4-72-13-110-28-18-7-38-9-57-7-28 3-56 15-78 36l-31 31c-76-48-143-114-196-196l31-31c14-14 24-31 30-49 9-27 9-57-2-86-12-32-22-70-27-111-4-30-19-57-41-77-23-21-54-33-86-33h-128c-4 0-8 0-12 1-35 3-66 20-87 45s-32 58-29 94c13 131 58 266 137 388 64 103 156 197 269 269 110 72 243 122 388 138 4 0 8 1 12 1 35-0 67-15 90-38s37-55 37-90zM896 722v128c0 12-5 23-12 30s-18 13-30 13c-134-14-254-59-353-124-104-66-186-151-243-243-72-112-113-234-125-351-1-11 3-22 10-31s17-14 29-15l132-0c12-0 22 4 29 11 7 7 12 16 14 26 6 46 17 90 32 129 3 9 3 19 0 28-2 6-6 12-10 17l-54 54c-14 14-16 35-7 51 68 119 164 211 272 272 17 9 38 6 51-7l54-54c7-7 16-11 26-12 6-1 13 0 20 3 44 16 88 27 129 32 10 1 20 7 26 15 6 8 10 18 10 29z",
-  pieChart: "M866 661c-41 98-118 169-209 206s-196 39-294-2-169-118-206-209-39-196 2-294c40-94 113-165 200-202 22-9 31-35 22-56s-35-31-56-22c-106 46-196 132-245 247-50 119-48 248-3 359s133 205 252 256 248 48 359 3 205-133 256-252c9-22-1-47-23-56s-47 1-56 23zM894 469h-339v-339c89 10 169 50 229 110s100 140 110 229zM981 512c0-130-53-247-137-332s-202-137-332-137c-24 0-43 19-43 43v427c0 24 19 43 43 43h427c24 0 43-19 43-43z",
-  search: "M684 677c-1 1-3 2-4 4s-3 3-4 4c-54 52-127 84-207 84-82 0-157-33-211-87s-87-129-87-211 33-157 87-211 129-87 211-87 157 33 211 87 87 129 87 211c0 80-32 153-84 207zM926 866l-157-157c53-66 84-149 84-240 0-106-43-202-112-272s-166-112-272-112-202 43-272 112-112 166-112 272 43 202 112 272 166 112 272 112c91 0 174-31 240-84l157 157c17 17 44 17 60 0s17-44 0-60z",
-  send: "M980 97c2-6 2-13 1-20-1-5-3-10-6-14-3-4-6-8-10-11-5-4-11-6-16-8s-12-1-18-0c-2 0-4 1-5 1l-1 0-852 298c-11 4-20 12-25 23-10 22 0 47 22 56l369 164 164 369c5 10 13 19 25 23 22 8 47-4 54-26l298-852c0-1 1-2 1-3zM460 504l-259-115 575-201zM837 248l-201 575-115-259z",
-  server: "M171 43c-35 0-67 14-90 38s-38 55-38 90v171c0 35 14 67 38 90s55 38 90 38h683c35 0 67-14 90-38s38-55 38-90v-171c0-35-14-67-38-90s-55-38-90-38zM171 128h683c12 0 22 5 30 13s13 18 13 30v171c0 12-5 22-13 30s-18 13-30 13h-683c-12 0-22-5-30-13s-13-18-13-30v-171c0-12 5-22 13-30s18-13 30-13zM171 555c-35 0-67 14-90 38s-38 55-38 90v171c0 35 14 67 38 90s55 38 90 38h683c35 0 67-14 90-38s38-55 38-90v-171c0-35-14-67-38-90s-55-38-90-38zM171 640h683c12 0 22 5 30 13s13 18 13 30v171c0 12-5 22-13 30s-18 13-30 13h-683c-12 0-22-5-30-13s-13-18-13-30v-171c0-12 5-22 13-30s18-13 30-13zM256 299c24 0 43-19 43-43s-19-43-43-43-43 19-43 43 19 43 43 43zM256 811c24 0 43-19 43-43s-19-43-43-43-43 19-43 43 19 43 43 43z",
-  graphUp: "M725 299h153l-302 302-183-183c-17-17-44-17-60 0l-320 320c-17 17-17 44 0 60s44 17 60 0l290-290 183 183c17 17 44 17 60 0l333-333v153c0 24 19 43 43 43s43-19 43-43v-256c0-6-1-11-3-16s-5-10-9-14c-0-0-0-0-0-0-4-4-9-7-14-9-5-2-11-3-16-3h-256c-24 0-43 19-43 43s19 43 43 43z",
-  copy: "M469 341c-35 0-67 14-90 38s-38 55-38 90v384c0 35 14 67 38 90s55 38 90 38h384c35 0 67-14 90-38s38-55 38-90v-384c0-35-14-67-38-90s-55-38-90-38zM469 427h384c12 0 22 5 30 13s13 18 13 30v384c0 12-5 22-13 30s-18 13-30 13h-384c-12 0-22-5-30-13s-13-18-13-30v-384c0-12 5-22 13-30s18-13 30-13zM213 597h-43c-12 0-22-5-30-13s-13-18-13-30v-384c0-12 5-22 13-30s18-13 30-13h384c12 0 22 5 30 13s13 18 13 30v43c0 24 19 43 43 43s43-19 43-43v-43c0-35-14-67-38-90s-55-38-90-38h-384c-35 0-67 14-90 38s-38 55-38 90v384c0 35 14 67 38 90s55 38 90 38h43c24 0 43-19 43-43s-19-43-43-43z",
-  alignCenter: "M128 128h768v86h-768v-86zM298 298h428v86h-428v-86zM128 554v-84h768v84h-768zM128 896v-86h768v86h-768zM298 640h428v86h-428v-86z",
-  alignLeft: "M128 128h768v86h-768v-86zM128 896v-86h768v86h-768zM128 554v-84h768v84h-768zM640 298v86h-512v-86h512zM640 640v86h-512v-86h512z",
-  alignRight: "M128 128h768v86h-768v-86zM384 384v-86h512v86h-512zM128 554v-84h768v84h-768zM384 726v-86h512v86h-512zM128 896v-86h768v86h-768z",
-  fontBold: "M576 662q28 0 46-19t18-45-18-45-46-19h-150v128h150zM426 278v128h128q26 0 45-19t19-45-19-45-45-19h-128zM666 460q92 42 92 146 0 68-45 115t-113 47h-302v-598h268q72 0 121 50t49 122-70 118z",
-  blockOutdent: "M470 554v-84h426v84h-426zM470 384v-86h426v86h-426zM128 128h768v86h-768v-86zM128 896v-86h768v86h-768zM128 512l170-170v340zM470 726v-86h426v86h-426z",
-  blockIndent: "M470 554v-84h426v84h-426zM470 384v-86h426v86h-426zM128 128h768v86h-768v-86zM470 726v-86h426v86h-426zM128 342l170 170-170 170v-340zM128 896v-86h768v86h-768z",
-  fontItalic: "M426 170h342v128h-120l-144 342h94v128h-342v-128h120l144-342h-94v-128z",
-  listBullet: "M298 214h598v84h-598v-84zM298 554v-84h598v84h-598zM298 810v-84h598v84h-598zM170 704q26 0 45 19t19 45-19 45-45 19-45-19-19-45 19-45 45-19zM170 192q26 0 45 18t19 46-19 46-45 18-45-18-19-46 19-46 45-18zM170 448q26 0 45 18t19 46-19 46-45 18-45-18-19-46 19-46 45-18z",
-  listNumber: "M298 554v-84h598v84h-598zM298 810v-84h598v84h-598zM298 214h598v84h-598v-84zM86 470v-44h128v40l-78 88h78v44h-128v-40l76-88h-76zM128 342v-128h-42v-44h84v172h-42zM86 726v-44h128v172h-128v-44h84v-20h-42v-44h42v-20h-84z",
-  fontUnderline: "M214 810h596v86h-596v-86zM512 726q-106 0-181-75t-75-181v-342h106v342q0 62 44 105t106 43 106-43 44-105v-342h106v342q0 106-75 181t-181 75z",
-  airplay: "M213 683h-43c-12 0-22-5-30-13s-13-18-13-30v-427c0-12 5-22 13-30s18-13 30-13h683c12 0 22 5 30 13s13 18 13 30v427c0 12-5 22-13 30s-18 13-30 13h-43c-24 0-43 19-43 43s19 43 43 43h43c35 0 67-14 90-38s38-55 38-90v-427c0-35-14-67-38-90s-55-38-90-38h-683c-35 0-67 14-90 38s-38 55-38 90v427c0 35 14 67 38 90s55 38 90 38h43c24 0 43-19 43-43s-19-43-43-43zM545 613c-1-2-3-4-5-5-18-15-45-13-60 5l-213 256c-6 7-10 17-10 27 0 24 19 43 43 43h427c10 0 19-3 27-10 18-15 21-42 5-60zM512 707l122 147h-244z",
-  bell: "M725 341c0 171 40 278 79 341h-585c39-63 79-170 79-341 0-59 24-112 62-151s92-62 151-62 112 24 151 62 62 92 62 151zM811 341c0-82-33-157-87-211s-129-87-211-87-157 33-211 87-87 129-87 211c0 261-102 343-109 349-19 13-24 39-11 59 8 12 22 19 35 19h768c24 0 43-19 43-43 0-14-7-27-18-35-8-6-110-87-110-349zM549 875c-6 10-15 17-26 20s-22 2-32-4c-7-4-12-9-15-15-12-20-38-28-58-16s-28 38-16 58c11 19 27 35 47 47 31 18 65 21 97 13s60-29 78-59c12-20 5-47-15-58s-47-5-58 15z",
-  bellOff: "M549 875c-6 10-15 17-26 20s-22 2-32-4c-7-4-12-9-15-15-12-20-38-28-58-16s-28 38-16 58c11 19 27 35 47 47 31 18 65 21 97 13s60-29 78-59c12-20 5-47-15-58s-47-5-58 15zM811 340c-0-82-33-156-87-210-54-54-129-88-211-88-62-0-119 19-166 50-19 13-25 40-11 59s40 25 59 11c33-22 73-35 116-36 62 0 115 24 153 63 38 39 62 92 62 150-2 71 7 148 28 225 6 23 30 36 52 30s36-30 30-52c-19-69-27-139-25-201 0-0 0-0 0-1 0-0 0-0 0-0zM298 359l324 324h-403c37-61 76-163 79-324zM13 73l207 207c-5 21-7 42-6 62 0 261-102 343-109 348-19 13-24 39-11 59 8 12 22 19 35 19h580l243 243c17 17 44 17 60 0s17-44 0-60l-939-939c-17-17-44-17-60 0s-17 44 0 60z",
-  bookmark: "M786 931c7 5 15 8 25 8 24 0 43-19 43-43v-683c0-35-14-67-38-90s-55-38-90-38h-427c-35 0-67 14-90 38s-38 55-38 90v683c-0 8 3 17 8 25 14 19 40 24 60 10l274-196zM768 813l-231-165c-15-11-35-10-50 0l-231 165v-600c0-12 5-22 13-30s18-13 30-13h427c12 0 22 5 30 13s13 18 13 30z",
-  camera: "M1024 811v-469c0-35-14-67-38-90s-55-38-90-38h-148l-73-109c-8-12-21-19-35-19h-256c-14 0-27 7-35 19l-73 109h-148c-35 0-67 14-90 38s-38 55-38 90v469c0 35 14 67 38 90s55 38 90 38h768c35 0 67-14 90-38s38-55 38-90zM939 811c0 12-5 22-13 30s-18 13-30 13h-768c-12 0-22-5-30-13s-13-18-13-30v-469c0-12 5-22 13-30s18-13 30-13h171c15 0 28-7 35-19l73-109h210l73 109c8 12 22 19 35 19h171c12 0 22 5 30 13s13 18 13 30zM725 555c0-59-24-112-62-151s-92-62-151-62-112 24-151 62-62 92-62 151 24 112 62 151 92 62 151 62 112-24 151-62 62-92 62-151zM640 555c0 35-14 67-38 90s-55 38-90 38-67-14-90-38-38-55-38-90 14-67 38-90 55-38 90-38 67 14 90 38 38 55 38 90z",
-  check: "M823 226l-439 439-183-183c-17-17-44-17-60 0s-17 44 0 60l213 213c17 17 44 17 60 0l469-469c17-17 17-44 0-60s-44-17-60 0z",
-  chevronDown: "M226 414l256 256c17 17 44 17 60 0l256-256c17-17 17-44 0-60s-44-17-60 0l-226 226-226-226c-17-17-44-17-60 0s-17 44 0 60z",
-  chevronLeft: "M670 738l-226-226 226-226c17-17 17-44 0-60s-44-17-60 0l-256 256c-17 17-17 44 0 60l256 256c17 17 44 17 60 0s17-44 0-60z",
-  chevronRight: "M414 798l256-256c17-17 17-44 0-60l-256-256c-17-17-44-17-60 0s-17 44 0 60l226 226-226 226c-17 17-17 44 0 60s44 17 60 0z",
-  chevronUp: "M798 610l-256-256c-17-17-44-17-60 0l-256 256c-17 17-17 44 0 60s44 17 60 0l226-226 226 226c17 17 44 17 60 0s17-44 0-60z",
-  code: "M713 798l256-256c17-17 17-44 0-60l-256-256c-17-17-44-17-60 0s-17 44 0 60l226 226-226 226c-17 17-17 44 0 60s44 17 60 0zM311 226l-256 256c-17 17-17 44 0 60l256 256c17 17 44 17 60 0s17-44 0-60l-226-226 226-226c17-17 17-44 0-60s-44-17-60 0z",
-  undo: "M896 853v-299c0-59-24-112-62-151s-92-62-151-62h-409l141-141c17-17 17-44 0-60s-44-17-60 0l-213 213c-4 4-7 9-9 14s-3 11-3 16 1 11 3 16c2 5 5 10 9 14l213 213c17 17 44 17 60 0s17-44 0-60l-141-141h409c35 0 67 14 90 38s38 55 38 90v299c0 24 19 43 43 43s43-19 43-43z",
-  redo: "M213 853v-299c0-35 14-67 38-90s55-38 90-38h409l-141 141c-17 17-17 44 0 60s44 17 60 0l213-213c4-4 7-9 9-14 4-10 4-22 0-33-2-5-5-10-9-14l-213-213c-17-17-44-17-60 0s-17 44 0 60l141 141h-409c-59 0-112 24-151 62s-62 92-62 151v299c0 24 19 43 43 43s43-19 43-43z",
-  crop: "M302 302l381-3c11 0 22 5 30 13s13 18 13 30v384h-384c-12 0-22-5-30-13s-13-18-13-30zM43 304l174-1-3 380c0 36 14 68 38 91s55 38 90 38h384v171c0 24 19 43 43 43s43-19 43-43v-171h171c24 0 43-19 43-43s-19-43-43-43h-171v-384c0-35-14-67-38-90s-55-38-91-38l-380 3 1-174c0-24-19-43-42-43s-43 19-43 42l-2 175-175 2c-24 0-42 19-42 43s19 42 43 42z",
-  database: "M171 213c0 0 0-4 9-12 10-10 29-21 56-31 64-25 163-42 277-42s213 17 277 42c27 11 45 22 56 31 9 8 9 12 9 12 0 0-0 4-9 12-10 10-29 21-56 31-64 25-163 42-277 42s-213-17-277-42c-27-11-45-22-56-31-9-8-9-12-9-12zM853 620v191c-2 4-4 8-9 12-10 10-29 21-56 31-64 25-163 42-276 42s-213-17-276-42c-27-10-45-21-56-31-5-5-8-8-8-10l-0-193c11 5 22 10 33 15 77 30 187 48 307 48s231-18 307-48c12-5 23-10 34-15zM853 321v190c0 0 0 0 0 1-2 4-4 8-9 12-10 10-29 21-56 31-64 25-163 42-276 42s-213-17-276-42c-27-10-45-21-56-31-5-5-8-8-8-10-0-2-0-3-0-5l-0-188c11 5 22 10 34 15 77 30 187 48 308 48s231-18 308-48c12-5 23-10 34-15zM85 213v597c0 2 0 5 0 7 2 28 18 51 37 68 21 19 50 35 82 48 77 30 187 48 307 48s231-18 307-48c32-13 61-28 82-48 18-17 34-40 37-68 0-2 0-5 0-7v-597c0-2-0-5-0-7-2-28-18-51-36-68-21-20-50-35-82-48-77-30-187-48-308-48s-231 18-308 48c-32 13-61 28-82 48-18 17-34 40-36 68-0 2-0 5-0 7z",
-  download: "M853 640v171c0 12-5 22-13 30s-18 13-30 13h-597c-12 0-22-5-30-13s-13-18-13-30v-171c0-24-19-43-43-43s-43 19-43 43v171c0 35 14 67 38 90s55 38 90 38h597c35 0 67-14 90-38s38-55 38-90v-171c0-24-19-43-43-43s-43 19-43 43zM555 537v-409c0-24-19-43-43-43s-43 19-43 43v409l-141-141c-17-17-44-17-60 0s-17 44 0 60l213 213c4 4 9 7 14 9s11 3 16 3c11 0 22-4 30-13l213-213c17-17 17-44 0-60s-44-17-60 0z",
-  downloadCloud: "M469 512v281l-98-98c-17-17-44-17-60 0s-17 44 0 60l171 171c4 4 9 7 14 9 10 4 22 4 33 0 5-2 10-5 14-9l171-171c17-17 17-44 0-60s-44-17-60 0l-98 98v-281c0-24-19-43-43-43s-43 19-43 43zM915 807c58-41 94-101 105-165s-2-133-43-191c-35-50-85-84-140-99-22-6-46-10-69-10h-22c-31-88-91-158-167-203-85-50-188-68-291-41s-185 92-235 176-68 188-41 291c16 62 46 116 85 159 16 17 43 19 60 3s19-43 3-60c-30-33-53-75-65-123-21-80-7-160 32-226s103-117 183-137 160-7 226 32 117 103 137 183c5 19 22 32 41 32h54c16 0 31 2 47 6 37 10 70 33 93 66 27 39 36 84 29 127s-31 83-70 110c-19 14-24 40-10 59s40 24 59 10z",
-  externalLink: "M725 555v256c0 12-5 22-13 30s-18 13-30 13h-469c-12 0-22-5-30-13s-13-18-13-30v-469c0-12 5-22 13-30s18-13 30-13h256c24 0 43-19 43-43s-19-43-43-43h-256c-35 0-67 14-90 38s-38 55-38 90v469c0 35 14 67 38 90s55 38 90 38h469c35 0 67-14 90-38s38-55 38-90v-256c0-24-19-43-43-43s-43 19-43 43zM457 627l397-397v153c0 24 19 43 43 43s43-19 43-43v-256c0-6-1-11-3-16s-5-10-9-14c-0-0-0-0-0-0-4-4-9-7-14-9-5-2-11-3-16-3h-256c-24 0-43 19-43 43s19 43 43 43h153l-397 397c-17 17-17 44 0 60s44 17 60 0z",
-  eye: "M5 493c-6 12-6 26 0 38 0 0 17 34 48 79 19 28 44 61 75 95 38 42 86 85 142 119 68 42 150 72 243 72s175-30 243-72c56-35 103-78 142-119 31-34 56-67 75-95 31-45 48-79 48-79 6-12 6-26 0-38 0 0-17-34-48-79-19-28-44-61-75-95-38-42-86-85-142-119-68-42-150-72-243-72s-175 30-243 72c-56 35-103 78-142 119-31 34-56 67-75 95-31 45-48 79-48 79zM91 512c7-12 17-29 31-49 17-25 40-55 68-85 34-38 76-75 123-104 58-36 124-59 198-59s141 24 198 59c48 30 89 67 123 104 27 30 50 60 68 85 14 20 24 37 31 49-7 12-17 29-31 49-17 25-40 55-68 85-34 38-76 75-123 104-58 36-124 59-198 59s-141-24-198-59c-48-30-89-67-123-104-27-30-50-60-68-85-14-20-24-37-31-49zM683 512c0-47-19-90-50-121s-74-50-121-50-90 19-121 50-50 74-50 121 19 90 50 121 74 50 121 50 90-19 121-50 50-74 50-121zM597 512c0 24-10 45-25 60s-37 25-60 25-45-10-60-25-25-37-25-60 10-45 25-60 37-25 60-25 45 10 60 25 25 37 25 60z",
-  eyeOff: "M432 222c28-6 55-9 79-9 75 0 141 24 199 59 48 30 89 67 123 104 27 30 50 60 68 85 14 20 24 37 31 49-23 41-49 78-76 108-15 18-13 45 5 60s45 13 60-5c35-41 69-90 97-144 6-12 7-26 1-39 0 0-17-34-48-79-19-28-44-61-75-95-38-42-86-85-142-119-68-42-150-72-243-72-31-0-66 3-100 11-23 5-37 28-32 51s28 37 51 32zM428 488l108 108c-8 3-16 4-24 4-22 1-44-7-61-23s-26-38-27-59c-0-10 1-20 4-30zM255 316l109 109c-19 29-27 63-26 97 2 44 20 87 54 119s79 47 122 46c30-1 59-10 85-26l99 99c-59 34-124 51-187 52-74 0-140-24-198-59-48-30-89-67-123-104-27-30-50-60-68-85-14-20-24-37-31-49 45-78 101-144 164-197zM13 73l182 182c-74 63-139 143-190 237-6 12-7 26-1 39 0 0 17 34 48 79 19 28 44 61 75 95 38 42 86 85 142 119 68 42 150 72 244 72 85-1 171-26 248-75l191 191c17 17 44 17 60 0s17-44 0-60l-379-379c-0-0-0-0-0-0l-180-180c-0-0-1-1-1-1l-379-379c-17-17-44-17-60 0s-17 44 0 60z",
-  fastForward: "M597 723v-423l272 211zM128 723v-423l272 211zM112 844l384-299c11-8 16-21 16-33v298c0 24 19 43 43 43 10 0 19-3 26-9l384-299c19-14 22-41 7-60-2-3-5-6-7-7l-384-299c-19-14-45-11-60 7-6 8-9 17-9 26v298c-0-9-3-18-9-26-2-3-5-6-7-7l-384-299c-19-14-45-11-60 7-6 8-9 17-9 26v597c0 24 19 43 43 43 10 0 19-3 26-9z",
-  file: "M750 341h-153v-153zM883 354l-299-299c-4-4-9-7-14-9s-11-3-16-3h-299c-35 0-67 14-90 38s-38 55-38 90v683c0 35 14 67 38 90s55 38 90 38h512c35 0 67-14 90-38s38-55 38-90v-469c0-12-5-22-13-30zM512 128v256c0 24 19 43 43 43h256v427c0 12-5 22-13 30s-18 13-30 13h-512c-12 0-22-5-30-13s-13-18-13-30v-683c0-12 5-22 13-30s18-13 30-13z",
-  fileMinus: "M750 299h-110v-110zM883 311l-256-256c-4-4-9-7-14-9s-11-3-16-3h-341c-35 0-67 14-90 38s-38 55-38 90v683c0 35 14 67 38 90s55 38 90 38h512c35 0 67-14 90-38s38-55 38-90v-512c0-12-5-22-13-30zM555 128v213c0 24 19 43 43 43h213v469c0 12-5 22-13 30s-18 13-30 13h-512c-12 0-22-5-30-13s-13-18-13-30v-683c0-12 5-22 13-30s18-13 30-13zM384 683h256c24 0 43-19 43-43s-19-43-43-43h-256c-24 0-43 19-43 43s19 43 43 43z",
-  filePlus: "M750 299h-110v-110zM883 311l-256-256c-4-4-9-7-14-9s-11-3-16-3h-341c-35 0-67 14-90 38s-38 55-38 90v683c0 35 14 67 38 90s55 38 90 38h512c35 0 67-14 90-38s38-55 38-90v-512c0-12-5-22-13-30zM555 128v213c0 24 19 43 43 43h213v469c0 12-5 22-13 30s-18 13-30 13h-512c-12 0-22-5-30-13s-13-18-13-30v-683c0-12 5-22 13-30s18-13 30-13zM384 683h85v85c0 24 19 43 43 43s43-19 43-43v-85h85c24 0 43-19 43-43s-19-43-43-43h-85v-85c0-24-19-43-43-43s-43 19-43 43v85h-85c-24 0-43 19-43 43s19 43 43 43z",
-  fileText: "M750 299h-110v-110zM883 311l-256-256c-4-4-9-7-14-9s-11-3-16-3h-341c-35 0-67 14-90 38s-38 55-38 90v683c0 35 14 67 38 90s55 38 90 38h512c35 0 67-14 90-38s38-55 38-90v-512c0-12-5-22-13-30zM555 128v213c0 24 19 43 43 43h213v469c0 12-5 22-13 30s-18 13-30 13h-512c-12 0-22-5-30-13s-13-18-13-30v-683c0-12 5-22 13-30s18-13 30-13zM683 512h-341c-24 0-43 19-43 43s19 43 43 43h341c24 0 43-19 43-43s-19-43-43-43zM683 683h-341c-24 0-43 19-43 43s19 43 43 43h341c24 0 43-19 43-43s-19-43-43-43zM427 341h-85c-24 0-43 19-43 43s19 43 43 43h85c24 0 43-19 43-43s-19-43-43-43z",
-  filter: "M847 171l-282 333c-6 7-10 17-10 28v295l-85-43v-253c0-10-3-19-10-28l-282-333zM939 85h-853c-24 0-43 19-43 43 0 11 4 20 10 28l331 392v263c0 17 9 31 24 38l171 85c21 11 47 2 57-19 3-6 5-13 4-19v-349l331-392c15-18 13-45-5-60-8-7-18-10-28-10z",
-  flag: "M213 572v-421c19-9 58-23 128-23 55 0 101 18 155 40 53 21 113 46 186 46 55 0 97-7 128-17v421c-19 9-58 23-128 23-55 0-101-18-155-40-53-21-113-46-186-46-55 0-97 7-128 17zM213 939v-276c19-9 58-23 128-23 55 0 101 18 155 40 53 21 113 46 186 46 139 0 192-47 201-55 8-8 13-19 13-30v-512c0-24-19-43-43-43-11 0-22 4-29 12-4 3-42 31-141 31-55 0-101-18-155-40-53-21-113-46-186-46-139 0-192 47-201 55-8 8-13 19-13 30v811c0 24 19 43 43 43s43-19 43-43z",
-  folder: "M981 811v-469c0-35-14-67-38-90s-55-38-90-38h-361l-73-109c-8-12-21-19-35-19h-213c-35 0-67 14-90 38s-38 55-38 90v597c0 35 14 67 38 90s55 38 90 38h683c35 0 67-14 90-38s38-55 38-90zM896 811c0 12-5 22-13 30s-18 13-30 13h-683c-12 0-22-5-30-13s-13-18-13-30v-597c0-12 5-22 13-30s18-13 30-13h191l73 109c8 12 22 19 35 19h384c12 0 22 5 30 13s13 18 13 30z",
-  folderMinus: "M981 811v-469c0-35-14-67-38-90s-55-38-90-38h-361l-73-109c-8-12-21-19-35-19h-213c-35 0-67 14-90 38s-38 55-38 90v597c0 35 14 67 38 90s55 38 90 38h683c35 0 67-14 90-38s38-55 38-90zM896 811c0 12-5 22-13 30s-18 13-30 13h-683c-12 0-22-5-30-13s-13-18-13-30v-597c0-12 5-22 13-30s18-13 30-13h191l73 109c8 12 22 19 35 19h384c12 0 22 5 30 13s13 18 13 30zM384 640h256c24 0 43-19 43-43s-19-43-43-43h-256c-24 0-43 19-43 43s19 43 43 43z",
-  folderPlus: "M981 811v-469c0-35-14-67-38-90s-55-38-90-38h-361l-73-109c-8-12-21-19-35-19h-213c-35 0-67 14-90 38s-38 55-38 90v597c0 35 14 67 38 90s55 38 90 38h683c35 0 67-14 90-38s38-55 38-90zM896 811c0 12-5 22-13 30s-18 13-30 13h-683c-12 0-22-5-30-13s-13-18-13-30v-597c0-12 5-22 13-30s18-13 30-13h191l73 109c8 12 22 19 35 19h384c12 0 22 5 30 13s13 18 13 30zM384 640h85v85c0 24 19 43 43 43s43-19 43-43v-85h85c24 0 43-19 43-43s-19-43-43-43h-85v-85c0-24-19-43-43-43s-43 19-43 43v85h-85c-24 0-43 19-43 43s19 43 43 43z",
-  help: "M981 512c0-130-53-247-137-332s-202-137-332-137-247 53-332 137-137 202-137 332 53 247 137 332 202 137 332 137 247-53 332-137 137-202 137-332zM896 512c0 106-43 202-112 272s-165 112-272 112-202-43-272-112-112-165-112-272 43-202 112-272 165-112 272-112 202 43 272 112 112 165 112 272zM428 398c8-22 24-39 44-49s43-11 65-4c20 7 35 20 45 37 8 13 12 28 12 44 0 7-2 13-5 20-3 7-9 14-16 21-30 30-78 47-78 47-22 7-34 32-27 54s32 34 54 27c0 0 66-22 111-67 12-12 23-26 32-43 9-17 14-37 14-58-0-31-9-61-24-87-20-33-51-60-90-74-44-16-91-12-130 7s-72 53-87 97c-8 22 4 47 26 54s47-4 54-26zM512 768c24 0 43-19 43-43s-19-43-43-43-43 19-43 43 19 43 43 43z",
-  home: "M102 350c-10 8-16 20-16 34v469c0 35 14 67 38 90s55 38 90 38h597c35 0 67-14 90-38s38-55 38-90v-469c-0-13-6-25-16-34l-384-299c-15-12-37-12-52 0zM683 896v-384c0-24-19-43-43-43h-256c-24 0-43 19-43 43v384h-128c-12 0-22-5-30-13s-13-18-13-30v-448l341-265 341 265v448c0 12-5 22-13 30s-18 13-30 13zM427 896v-341h171v341z",
-  image: "M213 85c-35 0-67 14-90 38s-38 55-38 90v597c0 35 14 67 38 90s55 38 90 38h597c35 0 67-14 90-38s38-55 38-90v-597c0-35-14-67-38-90s-55-38-90-38zM469 363c0-29-12-56-31-75s-46-31-75-31-56 12-75 31-31 46-31 75 12 56 31 75 46 31 75 31 56-12 75-31 31-46 31-75zM384 363c0 6-2 11-6 15s-9 6-15 6-11-2-15-6-6-9-6-15 2-11 6-15 9-6 15-6 11 2 15 6 6 9 6 15zM316 853l366-366 171 171v153c0 12-5 22-13 30s-18 13-30 13zM853 537l-141-141c-17-17-44-17-60 0l-454 454c-6-2-11-6-15-10-8-8-13-18-13-30v-597c0-12 5-22 13-30s18-13 30-13h597c12 0 22 5 30 13s13 18 13 30z",
-  layers: "M512 133l331 166-331 166-331-166zM493 47l-427 213c-21 11-30 36-19 57 4 9 11 15 19 19l427 213c12 6 26 6 38 0l427-213c21-11 30-36 19-57-4-9-11-15-19-19l-427-213c-12-6-26-6-38 0zM66 763l427 213c12 6 26 6 38 0l427-213c21-11 30-36 19-57s-36-30-57-19l-408 204-408-204c-21-11-47-2-57 19s-2 47 19 57zM66 550l427 213c12 6 26 6 38 0l427-213c21-11 30-36 19-57s-36-30-57-19l-408 204-408-204c-21-11-47-2-57 19s-2 47 19 57z",
-  link: "M392 580c42 57 104 91 168 100s133-6 190-48c10-8 20-16 28-24l128-128c50-51 73-117 72-183s-27-131-78-180c-50-48-115-72-179-72-64 0-127 24-177 72l-74 73c-17 17-17 44-0 60s44 17 60 0l73-72c33-32 75-48 118-48 43-0 86 16 119 48 34 33 51 76 52 120s-15 88-47 121l-128 128c-5 5-11 11-18 16-38 28-83 38-127 32s-84-29-112-67c-14-19-41-23-60-9s-23 41-9 60zM632 444c-42-57-104-91-168-100s-133 6-190 48c-10 8-20 16-28 24l-128 128c-50 51-73 117-72 183s27 131 78 180c50 48 115 72 179 72 64-0 127-24 177-72l74-74c17-17 17-44 0-60s-44-17-60 0l-72 72c-33 32-75 48-118 48-43 0-86-16-119-48-34-33-51-76-52-120s15-88 47-121l128-128c5-5 11-11 18-16 38-28 83-38 127-32s84 29 112 67c14 19 41 23 60 9s23-41 9-60z",
-  lock: "M213 512h597c12 0 22 5 30 13s13 18 13 30v299c0 12-5 22-13 30s-18 13-30 13h-597c-12 0-22-5-30-13s-13-18-13-30v-299c0-12 5-22 13-30s18-13 30-13zM768 427v-128c0-71-29-135-75-181s-110-75-181-75-135 29-181 75-75 110-75 181v128h-43c-35 0-67 14-90 38s-38 55-38 90v299c0 35 14 67 38 90s55 38 90 38h597c35 0 67-14 90-38s38-55 38-90v-299c0-35-14-67-38-90s-55-38-90-38zM341 427v-128c0-47 19-90 50-121s74-50 121-50 90 19 121 50 50 74 50 121v128z",
-  logIn: "M640 171h171c12 0 22 5 30 13s13 18 13 30v597c0 12-5 22-13 30s-18 13-30 13h-171c-24 0-43 19-43 43s19 43 43 43h171c35 0 67-14 90-38s38-55 38-90v-597c0-35-14-67-38-90s-55-38-90-38h-171c-24 0-43 19-43 43s19 43 43 43zM537 469h-409c-24 0-43 19-43 43s19 43 43 43h409l-141 141c-17 17-17 44 0 60s44 17 60 0l213-213c4-4 7-9 9-14s3-11 3-16c0-6-1-11-3-16-2-5-5-10-9-14l-213-213c-17-17-44-17-60 0s-17 44 0 60z",
-  logOut: "M384 853h-171c-12 0-22-5-30-13s-13-18-13-30v-597c0-12 5-22 13-30s18-13 30-13h171c24 0 43-19 43-43s-19-43-43-43h-171c-35 0-67 14-90 38s-38 55-38 90v597c0 35 14 67 38 90s55 38 90 38h171c24 0 43-19 43-43s-19-43-43-43zM793 469h-409c-24 0-43 19-43 43s19 43 43 43h409l-141 141c-17 17-17 44 0 60s44 17 60 0l213-213c4-4 7-9 9-14 6-15 3-34-9-47l-213-213c-17-17-44-17-60 0s-17 44 0 60z",
-  map: "M299 159v584l-213 122v-584zM725 865v-584l213-122v584zM663 976c3 2 7 3 11 4 1 0 3 1 4 1s3 0 4 0c-0 0-0 0-0 0s0 0 0 0c7 0 15-2 21-6l1-0 298-170c14-8 21-22 21-37v-683c0-24-19-43-43-43-8 0-15 2-21 6l-279 159-320-160c-4-2-7-3-11-4-1-0-3-1-4-1s-3-0-4-0c0 0 0 0 0 0s0 0-0 0c-7 0-15 2-21 6l-1 0-298 170c-14 8-21 22-22 37v683c0 24 19 43 43 43 8 0 15-2 21-6l279-159zM640 282v587l-256-128v-587z",
-  mapPin: "M939 427c0-118-48-225-125-302s-184-125-302-125-225 48-302 125-125 184-125 302c0 24 2 48 6 72 12 66 38 128 72 184 117 196 325 334 325 334 14 9 33 10 47 0 0 0 208-138 325-334 33-56 60-118 72-184 4-23 6-47 6-72zM853 427c0 19-2 38-5 57-9 53-31 106-61 156-82 137-215 245-272 288-60-39-196-148-279-288-30-50-52-102-61-156-3-19-5-38-5-57 0-94 38-180 100-241s147-100 241-100 180 38 241 100 100 147 100 241zM683 427c0-47-19-90-50-121s-74-50-121-50-90 19-121 50-50 74-50 121 19 90 50 121 74 50 121 50 90-19 121-50 50-74 50-121zM597 427c0 24-10 45-25 60s-37 25-60 25-45-10-60-25-25-37-25-60 10-45 25-60 37-25 60-25 45 10 60 25 25 37 25 60z",
-  maximize: "M341 85h-128c-35 0-67 14-90 38s-38 55-38 90v128c0 24 19 43 43 43s43-19 43-43v-128c0-12 5-22 13-30s18-13 30-13h128c24 0 43-19 43-43s-19-43-43-43zM939 341v-128c0-35-14-67-38-90s-55-38-90-38h-128c-24 0-43 19-43 43s19 43 43 43h128c12 0 22 5 30 13s13 18 13 30v128c0 24 19 43 43 43s43-19 43-43zM683 939h128c35 0 67-14 90-38s38-55 38-90v-128c0-24-19-43-43-43s-43 19-43 43v128c0 12-5 22-13 30s-18 13-30 13h-128c-24 0-43 19-43 43s19 43 43 43zM85 683v128c0 35 14 67 38 90s55 38 90 38h128c24 0 43-19 43-43s-19-43-43-43h-128c-12 0-22-5-30-13s-13-18-13-30v-128c0-24-19-43-43-43s-43 19-43 43z",
-  messageCircle: "M939 491v-21c0-1-0-2-0-2-6-100-47-190-113-258-68-71-163-117-269-123-1-0-2-0-2-0h-21c-60-1-123 13-182 43-52 26-98 63-134 108-56 70-90 158-90 254-1 54 11 111 35 165l-76 227c-3 8-3 18 0 27 7 22 32 34 54 27l227-76c49 22 106 35 165 35 59-0 116-13 168-37 82-37 151-101 194-187 27-53 43-116 43-182zM853 491c0 52-12 101-34 142-34 68-89 119-153 148-41 19-87 29-133 29-52 0-101-12-142-34-11-6-23-6-33-3l-162 54 54-162c4-11 3-23-2-33-24-47-34-96-34-142 0-76 26-146 71-201 29-35 65-65 106-86 47-24 96-34 142-34h19c84 5 158 41 212 97 51 53 84 124 89 203z",
-  mic: "M512 85c24 0 45 10 60 25s25 37 25 60v341c0 24-10 45-25 60s-37 25-60 25-45-10-60-25-25-37-25-60v-341c0-24 10-45 25-60s37-25 60-25zM512 0c-47 0-90 19-121 50s-50 74-50 121v341c0 47 19 90 50 121s74 50 121 50 90-19 121-50 50-74 50-121v-341c0-47-19-90-50-121s-74-50-121-50zM341 1024h341c24 0 43-19 43-43s-19-43-43-43h-128v-88c77-10 146-45 199-97 62-62 100-147 100-241v-85c0-24-19-43-43-43s-43 19-43 43v85c0 71-29 135-75 181s-110 75-181 75-135-29-181-75-75-110-75-181v-85c0-24-19-43-43-43s-43 19-43 43v85c0 94 38 180 100 241 52 52 121 88 199 97v88h-128c-24 0-43 19-43 43s19 43 43 43z",
-  micOff: "M534 594c-7 2-14 3-22 3-24-0-45-10-60-25-15-15-25-37-25-60v-25zM683 399v-228c0-47-19-90-50-121s-74-50-121-50c-43-0-83 16-113 43-27 24-47 57-54 94-5 23 10 46 33 50s46-10 50-33c4-19 14-35 27-47 15-13 34-21 56-21 24 0 45 10 61 25 15 16 25 37 25 60v228c0 24 19 43 43 43s43-19 43-43zM768 427v85c0 16-1 32-4 45-4 23 11 45 34 50s45-11 50-34c3-19 5-39 5-60v-85c0-24-19-43-43-43s-43 19-43 43zM341 1024h341c24 0 43-19 43-43s-19-43-43-43h-128v-86c62-8 119-31 168-69l229 229c17 17 44 17 60 0s17-44 0-60l-249-249c-2-3-4-7-7-9-3-3-6-5-9-7l-674-674c-17-17-44-17-60 0s-17 44 0 60l329 329v110c0 47 19 90 50 121s74 50 121 50c32-0 61-9 86-24l63 63c-41 30-89 46-137 48-4-1-8-2-13-2-4 0-9 1-13 2-60-3-120-27-167-73-49-48-75-111-77-175-0-5-0-10-0-10v-86c0-24-19-43-43-43s-43 19-43 43v85c0 6 0 13 0 13 3 85 37 169 102 234 55 54 125 86 196 95v86h-128c-24 0-43 19-43 43s19 43 43 43z",
-  minimize: "M299 128v128c0 12-5 22-13 30s-18 13-30 13h-128c-24 0-43 19-43 43s19 43 43 43h128c35 0 67-14 90-38s38-55 38-90v-128c0-24-19-43-43-43s-43 19-43 43zM896 299h-128c-12 0-22-5-30-13s-13-18-13-30v-128c0-24-19-43-43-43s-43 19-43 43v128c0 35 14 67 38 90s55 38 90 38h128c24 0 43-19 43-43s-19-43-43-43zM725 896v-128c0-12 5-22 13-30s18-13 30-13h128c24 0 43-19 43-43s-19-43-43-43h-128c-35 0-67 14-90 38s-38 55-38 90v128c0 24 19 43 43 43s43-19 43-43zM128 725h128c12 0 22 5 30 13s13 18 13 30v128c0 24 19 43 43 43s43-19 43-43v-128c0-35-14-67-38-90s-55-38-90-38h-128c-24 0-43 19-43 43s19 43 43 43z",
-  minus: "M213 555h597c24 0 43-19 43-43s-19-43-43-43h-597c-24 0-43 19-43 43s19 43 43 43z",
-  moon: "M938 550c1-10-2-20-8-29-14-19-41-23-60-9-41 30-88 46-136 50-58 4-118-12-169-49-57-42-91-103-101-168s5-133 47-190c6-8 9-19 8-29-2-23-23-41-47-38-96 9-184 50-252 113-74 69-124 164-134 272-11 117 27 228 97 312s172 141 289 152 228-27 312-97 141-172 152-289zM835 626c-21 58-57 109-103 147-67 56-156 86-250 77s-175-55-231-122-86-156-77-250c8-87 48-163 107-218 33-31 73-55 117-71-19 54-25 111-16 166 13 86 59 168 135 224 67 50 147 71 225 66 32-2 64-9 94-20z",
-  more: "M597 512c0-24-10-45-25-60s-37-25-60-25-45 10-60 25-25 37-25 60 10 45 25 60 37 25 60 25 45-10 60-25 25-37 25-60zM896 512c0-24-10-45-25-60s-37-25-60-25-45 10-60 25-25 37-25 60 10 45 25 60 37 25 60 25 45-10 60-25 25-37 25-60zM299 512c0-24-10-45-25-60s-37-25-60-25-45 10-60 25-25 37-25 60 10 45 25 60 37 25 60 25 45-10 60-25 25-37 25-60z",
-  moreVertical: "M597 512c0-24-10-45-25-60s-37-25-60-25-45 10-60 25-25 37-25 60 10 45 25 60 37 25 60 25 45-10 60-25 25-37 25-60zM597 213c0-24-10-45-25-60s-37-25-60-25-45 10-60 25-25 37-25 60 10 45 25 60 37 25 60 25 45-10 60-25 25-37 25-60zM597 811c0-24-10-45-25-60s-37-25-60-25-45 10-60 25-25 37-25 60 10 45 25 60 37 25 60 25 45-10 60-25 25-37 25-60z",
-  mousePointer: "M207 207l524 218-208 71c-12 4-22 14-27 27l-71 208zM555 615l225 225c17 17 44 17 60 0s17-44 0-60l-225-225 250-85c22-8 34-32 27-54-4-12-13-21-24-26l-724-302c-22-9-47 1-56 23-5 11-4 23 0 33l302 724c9 22 34 32 56 23 12-5 20-14 24-26z",
-  move: "M469 188v281h-281l55-55c17-17 17-44 0-60s-44-17-60 0l-128 128c-8 8-13 18-13 30 0 6 1 11 3 16s5 10 9 14l128 128c17 17 44 17 60 0s17-44 0-60l-55-55h281v281l-55-55c-17-17-44-17-60 0s-17 44 0 60l128 128c4 4 9 7 14 9s11 3 16 3c6 0 11-1 16-3 5-2 10-5 14-9l128-128c17-17 17-44 0-60s-44-17-60 0l-55 55v-281h281l-55 55c-17 17-17 44 0 60s44 17 60 0l128-128c4-4 7-9 9-14 6-15 3-34-9-47l-128-128c-17-17-44-17-60 0s-17 44 0 60l55 55h-281v-281l55 55c17 17 44 17 60 0s17-44 0-60l-128-128c-4-4-9-7-14-9-10-4-22-4-33 0-5 2-10 5-14 9l-128 128c-17 17-17 44 0 60s44 17 60 0z",
-  music: "M341 768c0 24-10 45-25 60s-37 25-60 25-45-10-60-25-25-37-25-60 10-45 25-60 37-25 60-25 45 10 60 25 25 37 25 60zM939 683v-555c0-2-0-5-1-7-4-23-26-39-49-35l-512 85c-20 3-36 21-36 42v407c-25-15-54-23-85-23-47 0-90 19-121 50s-50 74-50 121 19 90 50 121 74 50 121 50 90-19 121-50 50-74 50-121v-519l427-71v356c-25-15-54-23-85-23-47 0-90 19-121 50s-50 74-50 121 19 90 50 121 74 50 121 50 90-19 121-50 50-74 50-121zM853 683c0 24-10 45-25 60s-37 25-60 25-45-10-60-25-25-37-25-60 10-45 25-60 37-25 60-25 45 10 60 25 25 37 25 60z",
-  paperclip: "M885 441l-392 392c-42 42-96 63-151 63s-109-21-151-63-63-96-63-151 21-109 63-151l392-392c25-25 58-38 91-38s66 13 91 38 38 58 38 91-13 66-38 91l-393 392c-8 8-19 13-30 13s-22-4-30-13-13-19-13-30 4-22 13-30l362-362c17-17 17-44 0-60s-44-17-60-0l-362 362c-25 25-38 58-38 91s13 66 38 91 58 38 91 38 66-13 91-38l393-392c42-42 63-96 63-151s-21-109-63-151-96-63-151-63-109 21-151 63l-392 392c-58 58-88 135-88 211s29 153 88 211 135 88 211 88 153-29 211-88l392-392c17-17 17-44 0-60s-44-17-60 0z",
-  pause: "M256 128c-24 0-43 19-43 43v683c0 24 19 43 43 43h171c24 0 43-19 43-43v-683c0-24-19-43-43-43zM299 213h85v597h-85zM597 128c-24 0-43 19-43 43v683c0 24 19 43 43 43h171c24 0 43-19 43-43v-683c0-24-19-43-43-43zM640 213h85v597h-85z",
-  play: "M236 92c-7-4-15-7-23-7-24 0-43 19-43 43v768c-0 8 2 16 7 23 13 20 39 26 59 13l597-384c5-3 9-7 13-13 13-20 7-46-13-59zM256 206l476 306-476 306z",
-  plus: "M213 555h256v256c0 24 19 43 43 43s43-19 43-43v-256h256c24 0 43-19 43-43s-19-43-43-43h-256v-256c0-24-19-43-43-43s-43 19-43 43v256h-256c-24 0-43 19-43 43s19 43 43 43z",
-  refresh: "M190 398c31-89 96-157 175-194s172-45 261-14c51 18 94 46 127 80l121 113h-148c-24 0-43 19-43 43s19 43 43 43h256c0 0 0 0 1 0 6-0 11-1 16-3 5-2 10-5 14-10 1-1 1-1 2-2 3-4 6-8 7-12s3-9 3-14c0-1 0-1 0-2v-256c0-24-19-43-43-43s-43 19-43 43v157l-125-117c-42-43-97-79-160-101-111-39-228-30-326 17s-179 132-218 243c-8 22 4 47 26 54s47-4 54-26zM85 696l126 118c82 82 192 124 301 124s218-42 302-125c47-47 81-103 101-160 8-22-4-47-26-54s-47 4-54 26c-15 45-42 89-80 127-67 67-154 100-241 100s-175-33-242-101l-119-112h148c24 0 43-19 43-43s-19-43-43-43h-256c-0 0-0 0-1 0-6 0-11 1-16 3-5 2-10 5-14 10-1 1-1 1-2 2-3 4-6 8-7 12s-3 9-3 14c-0 1-0 1-0 2v256c0 24 19 43 43 43s43-19 43-43z",
-  rewind: "M427 723l-272-211 272-211zM912 844c7 6 16 9 26 9 24 0 43-19 43-43v-597c0-9-3-18-9-26-14-19-41-22-60-7l-384 299c-3 2-5 5-7 7-6 8-9 17-9 26v-298c0-9-3-18-9-26-14-19-41-22-60-7l-384 299c-3 2-5 5-7 7-14 19-11 45 7 60l384 299c7 6 16 9 26 9 24 0 43-19 43-43v-298c0 13 6 25 16 33zM896 723l-272-211 272-211z",
-  settings: "M683 512c0-47-19-90-50-121s-74-50-121-50-90 19-121 50-50 74-50 121 19 90 50 121 74 50 121 50 90-19 121-50 50-74 50-121zM597 512c0 24-10 45-25 60s-37 25-60 25-45-10-60-25-25-37-25-60 10-45 25-60 37-25 60-25 45 10 60 25 25 37 25 60zM867 657c2-4 5-8 8-11 5-4 11-6 17-6h4c35 0 67-14 90-38s38-55 38-90-14-67-38-90-55-38-90-38h-7c-5-0-9-1-13-3-5-3-10-7-12-13-0-1-0-3-0-4-1-2-2-5-2-7 1-14 3-19 7-23l3-3c25-25 37-58 37-91s-13-66-38-91c-25-25-58-37-91-37s-66 13-90 38l-2 2c-4 3-8 6-12 7-6 2-12 1-19-1-4-2-8-5-11-8-4-5-6-11-6-17v-4c0-35-14-67-38-90s-55-38-90-38-67 14-90 38-38 55-38 90v7c-0 5-1 9-3 13-3 5-7 10-13 12-1 0-3 0-4 0-2 1-5 2-7 2-14-1-19-3-23-7l-3-3c-25-25-58-37-91-37s-65 13-91 38c-25 25-37 58-37 91s13 66 38 90l2 2c3 4 6 8 7 12 2 6 1 12-1 19-0 1-1 1-1 2-2 5-5 9-8 12-5 4-11 7-16 7h-4c-35 0-67 14-90 38s-38 55-38 91 14 67 38 90 55 38 90 38h7c5 0 9 1 13 3 5 3 10 7 13 14 1 2 2 5 2 7-1 14-3 19-7 23l-3 3c-25 25-37 58-37 91s13 66 38 91c25 25 58 37 91 37s66-13 90-38l2-2c4-3 8-6 12-7 6-2 12-1 19 1 1 0 1 1 2 1 5 2 9 5 12 8 4 5 7 11 7 16v4c0 35 14 67 38 90s55 38 90 38 67-14 90-38 38-55 38-90v-7c0-5 1-9 3-13 3-5 7-10 14-13 2-1 5-2 7-2 14 1 19 3 23 7l3 3c25 25 58 37 91 37s66-13 91-38c25-25 37-58 37-91s-13-66-38-90l-2-2c-3-4-6-8-7-12-2-6-1-12 1-19zM785 397c-1-9-2-13-3-16v3c0 2 0 4 0 5 1 3 2 5 3 8 0 4 0 4 0 4 11 25 29 44 52 56 16 8 33 13 52 13h8c12 0 22 5 30 13s13 18 13 30-5 22-13 30-18 13-30 13h-4c-27 0-52 10-71 26-14 11-25 26-32 42-11 25-12 52-5 76 5 18 15 35 28 48l3 3c8 8 13 19 13 30s-4 22-12 30c-8 8-19 13-30 13s-22-4-30-12l-3-3c-20-19-44-30-70-32-19-2-38 1-55 9-25 11-44 29-55 51-8 16-13 33-13 52v8c0 12-5 22-13 30s-18 12-30 12-22-5-30-13-13-18-13-30v-4c-1-28-11-53-27-72-12-14-28-25-45-32-25-11-51-12-75-5-18 5-35 15-48 28l-3 3c-8 8-19 13-30 13s-22-4-30-12c-8-8-13-19-13-30s4-22 12-30l3-3c19-20 30-44 32-70 2-19-1-38-9-55-11-25-29-44-51-55-16-8-33-13-52-13l-8 0c-12 0-22-5-30-13s-13-18-13-30 5-22 13-30 18-13 30-13h4c28-1 53-11 72-27 14-12 25-28 32-45 11-25 12-51 5-75-5-18-15-35-28-48l-3-3c-8-8-13-19-13-30s4-22 12-30c8-8 19-13 30-13s22 4 30 12l3 3c20 19 44 30 70 32 16 1 32-1 47-6 4-1 8-2 11-3-1 0-3 0-4 0-9 1-13 2-16 3h3c2 0 4-0 5-0 3-1 5-2 8-3 4-0 4-0 4-0 25-11 44-29 56-52 8-16 13-33 13-52v-8c0-12 5-22 13-30s18-13 30-13 22 5 30 13 13 18 13 30v4c0 27 10 52 26 71 11 14 26 25 42 32 25 11 51 12 76 5 18-5 35-15 48-28l3-3c8-8 19-13 30-13s22 4 30 12c8 8 13 19 13 30s-4 22-12 30l-3 3c-19 20-30 44-32 70-1 16 1 32 6 47 1 4 2 8 3 11-0-1-0-3-0-4z",
-  share: "M128 512v341c0 35 14 67 38 90s55 38 90 38h512c35 0 67-14 90-38s38-55 38-90v-341c0-24-19-43-43-43s-43 19-43 43v341c0 12-5 22-13 30s-18 13-30 13h-512c-12 0-22-5-30-13s-13-18-13-30v-341c0-24-19-43-43-43s-43 19-43 43zM469 188v452c0 24 19 43 43 43s43-19 43-43v-452l98 98c17 17 44 17 60 0s17-44 0-60l-171-171c-4-4-9-7-14-9-10-4-22-4-33 0-5 2-10 5-14 9l-171 171c-17 17-17 44 0 60s44 17 60 0z",
-  start: "M784 887c7 6 17 9 27 9 24 0 43-19 43-43v-683c0-9-3-19-9-27-15-18-42-21-60-7l-427 341c-2 2-5 4-7 7-15 18-12 45 7 60zM768 765l-316-253 316-253zM256 811v-597c0-24-19-43-43-43s-43 19-43 43v597c0 24 19 43 43 43s43-19 43-43z",
-  end: "M240 137c-7-6-17-9-27-9-24 0-43 19-43 43v683c-0 9 3 19 9 27 15 18 42 21 60 7l427-341c2-2 5-4 7-7 15-18 12-45-7-60zM256 259l316 253-316 253zM768 213v597c0 24 19 43 43 43s43-19 43-43v-597c0-24-19-43-43-43s-43 19-43 43z",
-  forbidden: "M981 512c0-130-53-247-137-332s-202-137-332-137-247 53-332 137-137 202-137 332 53 247 137 332 202 137 332 137 247-53 332-137 137-202 137-332zM812 752l-540-540c66-53 149-84 240-84 106 0 202 43 272 112s112 165 112 272c0 91-31 174-84 240zM212 272l540 540c-66 53-149 84-240 84-106 0-202-43-272-112s-112-165-112-272c0-91 31-174 84-240z",
-  square: "M213 85c-35 0-67 14-90 38s-38 55-38 90v597c0 35 14 67 38 90s55 38 90 38h597c35 0 67-14 90-38s38-55 38-90v-597c0-35-14-67-38-90s-55-38-90-38zM213 171h597c12 0 22 5 30 13s13 18 13 30v597c0 12-5 22-13 30s-18 13-30 13h-597c-12 0-22-5-30-13s-13-18-13-30v-597c0-12 5-22 13-30s18-13 30-13z",
-  star: "M550 66c-4-8-11-15-19-19-21-10-47-2-57 19l-122 247-273 40c-9 1-18 5-24 12-16 17-16 44 1 60l197 192-47 271c-2 9-0 18 4 27 11 21 37 29 58 18l244-128 244 128c8 4 17 6 27 4 23-4 39-26 35-49l-47-271 197-192c6-6 11-15 12-24 3-23-13-45-36-48l-273-40-122-247z",
-  sun: "M768 512c0-71-29-135-75-181s-110-75-181-75-135 29-181 75-75 110-75 181 29 135 75 181 110 75 181 75 135-29 181-75 75-110 75-181zM683 512c0 47-19 90-50 121s-74 50-121 50-90-19-121-50-50-74-50-121 19-90 50-121 74-50 121-50 90 19 121 50 50 74 50 121zM469 43v85c0 24 19 43 43 43s43-19 43-43v-85c0-24-19-43-43-43s-43 19-43 43zM469 896v85c0 24 19 43 43 43s43-19 43-43v-85c0-24-19-43-43-43s-43 19-43 43zM150 210l61 61c17 17 44 17 60 0s17-44 0-60l-61-61c-17-17-44-17-60 0s-17 44 0 60zM753 814l61 61c17 17 44 17 60 0s17-44 0-60l-61-61c-17-17-44-17-60 0s-17 44 0 60zM43 555h85c24 0 43-19 43-43s-19-43-43-43h-85c-24 0-43 19-43 43s19 43 43 43zM896 555h85c24 0 43-19 43-43s-19-43-43-43h-85c-24 0-43 19-43 43s19 43 43 43zM210 874l61-61c17-17 17-44 0-60s-44-17-60 0l-61 61c-17 17-17 44 0 60s44 17 60 0zM814 271l61-61c17-17 17-44 0-60s-44-17-60 0l-61 61c-17 17-17 44 0 60s44 17 60 0z",
-  tag: "M909 602c25-25 37-58 37-90 0-33-12-65-37-90l-367-367c-8-8-18-12-30-12h-427c-24 0-43 19-43 43v427c0 11 4 22 13 30l367 366c25 25 58 37 91 37s66-13 90-38zM848 542l-306 306c-8 8-19 13-30 13s-22-4-30-12l-354-354v-366h366l354 354c8 8 12 19 12 30 0 11-4 22-12 30zM299 341c24 0 43-19 43-43s-19-43-43-43-43 19-43 43 19 43 43 43z",
-  terminal: "M201 755l256-256c17-17 17-44 0-60l-256-256c-17-17-44-17-60 0s-17 44 0 60l226 226-226 226c-17 17-17 44 0 60s44 17 60 0zM512 853h341c24 0 43-19 43-43s-19-43-43-43h-341c-24 0-43 19-43 43s19 43 43 43z",
-  thumbsDown: "M469 640c0-24-19-43-43-43h-242c-3-0-7-0-7-0-12-2-21-8-28-17s-10-20-8-32l59-384c2-10 7-19 14-26 8-7 18-11 29-11h439v418l-154 346c-13-4-25-11-34-21-15-15-25-37-25-60zM384 683v128c0 47 19 90 50 121s74 50 121 50c17 0 32-10 39-25l171-384c3-6 4-12 4-17v-469c0-24-19-43-43-43h-481c-33-0-63 12-86 33-22 19-37 46-41 76l-59 384c-5 35 4 69 23 95s49 45 84 51c7 1 14 2 21 1zM725 128h114c15-0 29 5 39 14 9 8 16 19 18 32v290c-2 15-9 27-19 36-10 8-23 13-37 13l-115 0c-24 0-43 19-43 43s19 43 43 43h113c35 1 67-12 92-32 27-22 45-53 50-90 0-2 0-4 0-6v-299c0-2-0-4-0-6-5-34-22-64-46-86-26-23-60-37-96-36h-114c-24 0-43 19-43 43s19 43 43 43z",
-  thumbsUp: "M555 384c0 24 19 43 43 43h242c3 0 7 0 7 0 12 2 21 8 28 17s10 20 8 32l-59 384c-2 10-7 19-14 26-8 7-18 11-29 11h-439v-418l154-346c13 4 25 11 34 21 15 15 25 37 25 60zM640 341v-128c0-47-19-90-50-121s-74-50-121-50c-17 0-32 10-39 25l-171 384c-3 6-4 12-4 17v469c0 24 19 43 43 43h481c33 0 63-12 86-33 22-19 37-46 41-76l59-384c5-35-4-69-23-95s-49-45-84-51c-7-1-14-2-21-1zM299 896h-128c-12 0-22-5-30-13s-13-18-13-30v-299c0-12 5-22 13-30s18-13 30-13h128c24 0 43-19 43-43s-19-43-43-43h-128c-35 0-67 14-90 38s-38 55-38 90v299c0 35 14 67 38 90s55 38 90 38h128c24 0 43-19 43-43s-19-43-43-43z",
-  trash: "M768 299v555c0 12-5 22-13 30s-18 13-30 13h-427c-12 0-22-5-30-13s-13-18-13-30v-555zM725 213v-43c0-35-14-67-38-90s-55-38-90-38h-171c-35 0-67 14-90 38s-38 55-38 90v43h-171c-24 0-43 19-43 43s19 43 43 43h43v555c0 35 14 67 38 90s55 38 90 38h427c35 0 67-14 90-38s38-55 38-90v-555h43c24 0 43-19 43-43s-19-43-43-43zM384 213v-43c0-12 5-22 13-30s18-13 30-13h171c12 0 22 5 30 13s13 18 13 30v43z",
-  unlock: "M213 512h597c12 0 22 5 30 13s13 18 13 30v299c0 12-5 22-13 30s-18 13-30 13h-597c-12 0-22-5-30-13s-13-18-13-30v-299c0-12 5-22 13-30s18-13 30-13zM341 427v-128c-0-47 19-90 50-121 31-31 73-50 120-50 44 0 83 16 113 43 27 24 47 57 55 94 5 23 27 38 50 33s38-27 33-50c-12-56-41-105-82-141-45-40-105-64-170-64-71 0-135 29-181 75s-75 110-75 181v128h-43c-35 0-67 14-90 38s-38 55-38 90v299c0 35 14 67 38 90s55 38 90 38h597c35 0 67-14 90-38s38-55 38-90v-299c0-35-14-67-38-90s-55-38-90-38z",
-  upload: "M853 640v171c0 12-5 22-13 30s-18 13-30 13h-597c-12 0-22-5-30-13s-13-18-13-30v-171c0-24-19-43-43-43s-43 19-43 43v171c0 35 14 67 38 90s55 38 90 38h597c35 0 67-14 90-38s38-55 38-90v-171c0-24-19-43-43-43s-43 19-43 43zM469 231v409c0 24 19 43 43 43s43-19 43-43v-409l141 141c17 17 44 17 60 0s17-44 0-60l-213-213c-4-4-9-7-14-9-10-4-22-4-33 0-5 2-10 5-14 9l-213 213c-17 17-17 44 0 60s44 17 60 0z",
-  uploadCloud: "M469 615v281c0 24 19 43 43 43s43-19 43-43v-281l98 98c17 17 44 17 60 0s17-44 0-60l-171-171c-4-4-9-7-14-9s-11-3-16-3c-11 0-22 4-30 13l-171 171c-17 17-17 44 0 60s44 17 60 0zM890 822c62-34 105-90 123-152s13-133-21-195c-29-53-74-92-126-114-31-13-64-20-98-20h-22c-31-88-91-158-167-203-85-50-188-67-291-41s-185 92-235 177-67 188-41 291c16 61 46 116 84 158 16 18 43 19 60 3s19-43 3-60c-29-33-53-75-65-123-21-80-7-160 32-226s103-117 183-138 160-7 226 32 117 103 138 183c5 19 22 32 41 32h53c23 0 45 5 66 13 35 14 65 40 84 76 23 41 26 88 14 130s-41 79-82 102c-21 11-28 37-17 58s37 28 58 17z",
-  user: "M896 896v-85c0-59-24-112-62-151s-92-62-151-62h-341c-59 0-112 24-151 62s-62 92-62 151v85c0 24 19 43 43 43s43-19 43-43v-85c0-35 14-67 38-90s55-38 90-38h341c35 0 67 14 90 38s38 55 38 90v85c0 24 19 43 43 43s43-19 43-43zM725 299c0-59-24-112-62-151s-92-62-151-62-112 24-151 62-62 92-62 151 24 112 62 151 92 62 151 62 112-24 151-62 62-92 62-151zM640 299c0 35-14 67-38 90s-55 38-90 38-67-14-90-38-38-55-38-90 14-67 38-90 55-38 90-38 67 14 90 38 38 55 38 90z",
-  userMinus: "M725 896v-85c0-59-24-112-62-151s-92-62-151-62h-299c-59 0-112 24-151 62s-62 92-62 151v85c0 24 19 43 43 43s43-19 43-43v-85c0-35 14-67 38-90s55-38 90-38h299c35 0 67 14 90 38s38 55 38 90v85c0 24 19 43 43 43s43-19 43-43zM576 299c0-59-24-112-62-151s-92-62-151-62-112 24-151 62-62 92-62 151 24 112 62 151 92 62 151 62 112-24 151-62 62-92 62-151zM491 299c0 35-14 67-38 90s-55 38-90 38-67-14-90-38-38-55-38-90 14-67 38-90 55-38 90-38 67 14 90 38 38 55 38 90zM981 427h-256c-24 0-43 19-43 43s19 43 43 43h256c24 0 43-19 43-43s-19-43-43-43z",
-  userPlus: "M725 896v-85c0-59-24-112-62-151s-92-62-151-62h-299c-59 0-112 24-151 62s-62 92-62 151v85c0 24 19 43 43 43s43-19 43-43v-85c0-35 14-67 38-90s55-38 90-38h299c35 0 67 14 90 38s38 55 38 90v85c0 24 19 43 43 43s43-19 43-43zM576 299c0-59-24-112-62-151s-92-62-151-62-112 24-151 62-62 92-62 151 24 112 62 151 92 62 151 62 112-24 151-62 62-92 62-151zM491 299c0 35-14 67-38 90s-55 38-90 38-67-14-90-38-38-55-38-90 14-67 38-90 55-38 90-38 67 14 90 38 38 55 38 90zM981 427h-85v-85c0-24-19-43-43-43s-43 19-43 43v85h-85c-24 0-43 19-43 43s19 43 43 43h85v85c0 24 19 43 43 43s43-19 43-43v-85h85c24 0 43-19 43-43s-19-43-43-43z",
-  userX: "M725 896v-85c0-59-24-112-62-151s-92-62-151-62h-299c-59 0-112 24-151 62s-62 92-62 151v85c0 24 19 43 43 43s43-19 43-43v-85c0-35 14-67 38-90s55-38 90-38h299c35 0 67 14 90 38s38 55 38 90v85c0 24 19 43 43 43s43-19 43-43zM576 299c0-59-24-112-62-151s-92-62-151-62-112 24-151 62-62 92-62 151 24 112 62 151 92 62 151 62 112-24 151-62 62-92 62-151zM491 299c0 35-14 67-38 90s-55 38-90 38-67-14-90-38-38-55-38-90 14-67 38-90 55-38 90-38 67 14 90 38 38 55 38 90zM951 311l-77 77-77-77c-17-17-44-17-60 0s-17 44 0 60l77 77-77 77c-17 17-17 44 0 60s44 17 60 0l77-77 77 77c17 17 44 17 60 0s17-44 0-60l-77-77 77-77c17-17 17-44 0-60s-44-17-60 0z",
-  users: "M768 896v-85c0-59-24-112-62-151s-92-62-151-62h-341c-59 0-112 24-151 62s-62 92-62 151v85c0 24 19 43 43 43s43-19 43-43v-85c0-35 14-67 38-90s55-38 90-38h341c35 0 67 14 90 38s38 55 38 90v85c0 24 19 43 43 43s43-19 43-43zM597 299c0-59-24-112-62-151s-92-62-151-62-112 24-151 62-62 92-62 151 24 112 62 151 92 62 151 62 112-24 151-62 62-92 62-151zM512 299c0 35-14 67-38 90s-55 38-90 38-67-14-90-38-38-55-38-90 14-67 38-90 55-38 90-38 67 14 90 38 38 55 38 90zM1024 896v-85c-0-53-19-102-52-139-28-32-65-56-108-67-23-6-46 8-52 30s8 46 30 52c26 7 48 21 65 41 19 22 31 51 31 83v85c0 24 19 43 43 43s43-19 43-43zM672 175c34 9 62 31 78 59s23 63 14 97c-8 29-25 54-47 70-13 10-29 17-45 22-23 6-36 29-30 52s29 36 52 30c27-7 53-19 75-36 38-28 66-69 79-118 15-57 5-115-23-162s-74-83-131-98c-23-6-46 8-52 31s8 46 31 52z",
-  video: "M939 382v261l-183-130zM128 171c-35 0-67 14-90 38s-38 55-38 90v427c0 35 14 67 38 90s55 38 90 38h469c35 0 67-14 90-38s38-55 38-90v-130l231 165c19 14 46 9 60-10 5-8 8-16 8-25v-427c0-24-19-43-43-43-9 0-18 3-25 8l-231 165v-130c0-35-14-67-38-90s-55-38-90-38zM128 256h469c12 0 22 5 30 13s13 18 13 30v427c0 12-5 22-13 30s-18 13-30 13h-469c-12 0-22-5-30-13s-13-18-13-30v-427c0-12 5-22 13-30s18-13 30-13z",
-  videoOff: "M455 256h143c12 0 22 5 30 13s13 18 13 30v143c0 12 5 22 13 30l43 43c15 15 38 17 55 4l188-136v343c0 24 19 43 43 43s43-19 43-43v-427c0-9-3-17-8-25-14-19-40-23-60-10l-227 164-4-4v-125c0-35-14-67-38-90s-55-38-90-38h-143c-24 0-43 19-43 43s19 43 43 43zM196 256l444 444v25c0 12-5 22-13 30s-18 13-30 13h-469c-12 0-22-5-30-13s-13-18-13-30v-427c0-12 5-22 13-30s18-13 30-13zM13 73l99 99c-29 4-54 17-74 36-23 23-38 55-38 90v427c0 35 14 67 38 90s55 38 90 38h469c35 0 67-14 90-38 11-11 21-25 27-40l236 236c17 17 44 17 60 0s17-44 0-60l-939-939c-17-17-44-17-60 0s-17 44 0 60z",
-  volume: "M427 302v420l-144-115c-7-6-17-9-27-9h-128v-171h128c9 0 19-3 27-9zM443 180l-202 161h-156c-24 0-43 19-43 43v256c0 24 19 43 43 43h156l202 161c18 15 45 12 60-7 6-8 9-17 9-27v-597c0-24-19-43-43-43-10 0-19 4-27 9z",
-  volumeLow: "M427 302v420l-144-115c-7-6-17-9-27-9h-128v-171h128c9 0 19-3 27-9zM443 180l-202 161h-156c-24 0-43 19-43 43v256c0 24 19 43 43 43h156l202 161c18 15 45 12 60-7 6-8 9-17 9-27v-597c0-24-19-43-43-43-10 0-19 4-27 9zM633 391c33 33 50 77 50 121s-17 87-50 121c-17 17-17 44 0 60s44 17 60 0c50-50 75-116 75-181s-25-131-75-181c-17-17-44-17-60 0s-17 44 0 60z",
-  volumeHigh: "M427 302v420l-144-115c-7-6-17-9-27-9h-128v-171h128c9 0 19-3 27-9zM443 180l-202 161h-156c-24 0-43 19-43 43v256c0 24 19 43 43 43h156l202 161c18 15 45 12 60-7 6-8 9-17 9-27v-597c0-24-19-43-43-43-10 0-19 4-27 9zM783 241c75 75 112 173 112 272 0 98-37 196-112 271-17 17-17 44 0 60s44 17 60 0c92-92 137-212 137-332 0-120-46-240-137-332-17-17-44-17-60 0s-17 44 0 60zM633 391c33 33 50 77 50 121s-17 87-50 121c-17 17-17 44 0 60s44 17 60 0c50-50 75-116 75-181s-25-131-75-181c-17-17-44-17-60 0s-17 44 0 60z",
-  volumeOff: "M427 302v420l-144-115c-7-6-17-9-27-9h-128v-171h128c9 0 19-3 27-9zM443 180l-202 161h-156c-24 0-43 19-43 43v256c0 24 19 43 43 43h156l202 161c18 15 45 12 60-7 6-8 9-17 9-27v-597c0-24-19-43-43-43-10 0-19 4-27 9zM695 414l98 98-98 98c-17 17-17 44 0 60s44 17 60 0l98-98 98 98c17 17 44 17 60 0s17-44 0-60l-98-98 98-98c17-17 17-44 0-60s-44-17-60 0l-98 98-98-98c-17-17-44-17-60 0s-17 44 0 60z",
-  wifi: "M241 568c84-70 186-102 287-98 92 3 184 36 259 98 18 15 45 12 60-6s12-45-6-60c-90-74-199-114-310-118-121-4-245 34-345 118-18 15-21 42-5 60s42 21 60 5zM89 416c125-110 282-163 437-159 147 3 293 57 410 160 18 16 45 14 60-4s14-45-4-60c-133-116-298-177-464-181-176-4-353 56-495 181-18 16-19 43-4 60s43 19 60 4zM389 722c42-30 92-42 140-39 38 3 75 16 108 39 19 14 46 9 59-10s9-46-10-59c-45-31-97-50-150-54-67-5-137 12-196 54-19 14-24 40-10 59s40 24 59 10zM512 896c24 0 43-19 43-43s-19-43-43-43-43 19-43 43 19 43 43 43z",
-  wifiOff: "M695 510c34 16 64 37 88 57 18 15 45 13 60-4s13-45-4-60c-30-26-67-50-106-70-21-10-47-2-57 20s-2 47 20 57zM460 258c172-14 333 41 456 142 6 5 12 10 18 16 18 16 45 14 60-4s14-45-4-60c-7-6-14-12-21-18-140-114-323-177-517-161-23 2-41 22-39 46s22 41 46 39zM389 722c42-30 92-42 140-39 38 3 75 16 108 39 10 7 22 9 33 7l282 282c17 17 44 17 60 0s17-44 0-60l-544-544c-2-3-5-5-7-7l-387-387c-17-17-44-17-60 0s-17 44 0 60l174 174c-54 27-106 62-155 105-18 16-19 43-4 60s43 19 60 4c51-45 107-80 162-105l99 99c-58 19-114 50-164 92-18 15-20 42-5 60s42 20 60 5c54-45 116-75 179-88l119 119c-1-0-2-0-3-0-67-5-137 12-196 54-19 14-24 40-10 59s40 24 59 10zM512 896c24 0 43-19 43-43s-19-43-43-43-43 19-43 43 19 43 43 43z",
-  x: "M226 286l226 226-226 226c-17 17-17 44 0 60s44 17 60 0l226-226 226 226c17 17 44 17 60 0s17-44 0-60l-226-226 226-226c17-17 17-44 0-60s-44-17-60 0l-226 226-226-226c-17-17-44-17-60 0s-17 44 0 60z",
-  zoomIn: "M684 677c-1 1-3 2-4 4s-3 3-4 4c-54 52-127 84-207 84-82 0-157-33-211-87s-87-129-87-211 33-157 87-211 129-87 211-87 157 33 211 87 87 129 87 211c0 80-32 153-84 207zM926 866l-157-157c53-66 84-149 84-240 0-106-43-202-112-272s-166-112-272-112-202 43-272 112-112 166-112 272 43 202 112 272 166 112 272 112c91 0 174-31 240-84l157 157c17 17 44 17 60 0s17-44 0-60zM341 512h85v85c0 24 19 43 43 43s43-19 43-43v-85h85c24 0 43-19 43-43s-19-43-43-43h-85v-85c0-24-19-43-43-43s-43 19-43 43v85h-85c-24 0-43 19-43 43s19 43 43 43z",
-  zoomOut: "M684 677c-1 1-3 2-4 4s-3 3-4 4c-54 52-127 84-207 84-82 0-157-33-211-87s-87-129-87-211 33-157 87-211 129-87 211-87 157 33 211 87 87 129 87 211c0 80-32 153-84 207zM926 866l-157-157c53-66 84-149 84-240 0-106-43-202-112-272s-166-112-272-112-202 43-272 112-112 166-112 272 43 202 112 272 166 112 272 112c91 0 174-31 240-84l157 157c17 17 44 17 60 0s17-44 0-60zM341 512h256c24 0 43-19 43-43s-19-43-43-43h-256c-24 0-43 19-43 43s19 43 43 43z",
-  discord: {
-    p: [
-      "M1145 86c-81-38-174-68-272-85l-7-1c-11 19-23 43-34 68l-2 5c-46-7-100-12-155-12s-108 4-160 12l6-1c-13-29-25-53-38-76l2 4c-105 18-198 48-286 89l7-3c-176 261-224 516-200 766v0c98 73 211 131 334 169l8 2c26-34 50-73 71-113l2-5c-45-17-83-35-119-57l3 2c10-7 19-14 28-21 100 48 218 76 342 76s242-28 347-78l-5 2c9 8 19 15 28 21-33 20-71 38-111 53l-5 2c23 45 47 84 75 120l-2-2c131-40 244-99 345-174l-3 2c28-291-48-543-201-767zM451 698c-67 0-122-60-122-135s53-135 121-135 123 61 122 135-54 135-122 135zM900 698c-67 0-122-60-122-135s53-135 122-135 123 61 121 135-54 135-121 135z"
-    ],
-    w: 1351
-  },
-  tiktok: "M535 1c56-1 111-0 167-1 3 65 27 132 75 178 48 47 115 69 181 76v172c-61-2-123-15-179-41-24-11-47-25-69-40-0 125 0 249-1 373-3 60-23 119-58 168-56 82-153 135-252 137-61 3-122-13-174-44-86-51-147-144-156-244-1-21-1-43-0-64 8-81 48-159 110-212 71-61 170-91 262-73 1 63-2 126-2 189-42-14-92-10-129 16-27 17-47 44-58 75-9 22-6 46-6 69 10 70 78 129 149 122 48-0 93-28 118-69 8-14 17-29 17-45 4-76 3-152 3-229 0-172-0-343 1-515z",
-  xrColor: {
-    p: [
-      "M801 116c-0-0-1-0-1-0-473 0-734 64-734 396 0 254 135 396 349 396s279-164 385-164c0 0 1-0 1-0 0 0 1 0 1 0 107 0 172 164 385 164s349-142 349-396c0-332-261-396-734-396-0 0-1 0-1 0 0 0-0 0-0 0z",
-      "M482 822c147-18 199-134 280-134 0 0 1-0 1-0 0 0 1 0 1 0 14 0 26 3 39 9 13-5 25-9 39-9 0 0 1-0 1-0 0 0 1 0 1 0 81 0 134 116 280 134 153-17 247-132 247-325 0-266-202-324-568-327-367 4-568 62-568 327 0 193 95 308 247 325z",
-      "M482 822c13 1 27 2 41 2 149-0 211-97 280-127-13-5-25-9-39-9-0 0-1-0-1-0-0 0-1 0-1 0-81 0-134 116-280 134z",
-      "M803 169c13-0 26-0 39-0 0 0 1 0 1 0 0 0 0 0 0 0 0-0 1-0 1-0 392 0 607 53 607 328 0 210-112 328-289 328-13-0-26-1-38-2 153-17 247-132 247-325 0-266-202-324-568-327 0 0 0 0 0 0z",
-      "M803 697c69 30 130 127 280 127 14 0 28-1 41-2-147-18-199-134-280-134-0 0-1-0-1-0-0 0-1 0-1 0-14 0-26 3-39 9z",
-      "M482 822c-12 1-25 2-38 2-177 0-289-118-289-328 0-275 216-328 607-328 0 0 1 0 1 0 0 0 0 0 0 0 0-0 1-0 1-0 13 0 26 0 39 0-367 4-568 62-568 327 0 193 95 308 247 325z",
-      "M929 246c0 0 6 0 6 0 18 7 11 3 22 12 3 3 3 3 14 14 0 0 308 308 308 308 12 12 12 12 14 14 16 16 16 43 0 60-16 16-43 16-60 0 0 0-337-337-337-337-16-16-16-43 0-60 10-10 18-11 32-12z",
-      "M801 245c23 0 42 19 42 42 0 336 0 223 0 337 0 23-19 42-42 42-23 0-42-19-42-42 0 0 0-337 0-337 0-23 19-42 42-42z",
-      "M346 246c18 7 11 3 22 12 0 0 139 139 139 139s124-124 124-124c12-12 12-12 14-14 10-10 18-11 32-12 0 0 6 0 6 0 18 7 11 3 22 12 16 16 16 43 0 60-3 3-3 3-14 14 0 0-124 124-124 124s139 139 139 139c16 16 16 43 0 60-16 16-43 16-60 0 0 0-139-139-139-139s-65 65-65 65c0 0-60 60-60 60-12 12-12 12-14 14-16 16-43 16-60 0-16-16-16-43 0-60 3-3 3-3 14-14 0 0 124-124 124-124s-139-139-139-139c-16-16-16-43 0-60 10-10 18-11 32-12 0 0 6 0 6 0z"
-    ],
-    c: [
-      "rgb(0, 0, 0)",
-      "rgb(251, 237, 33)",
-      "rgb(140, 198, 63)",
-      "rgb(140, 198, 63)",
-      "rgb(255, 28, 36)",
-      "rgb(255, 28, 36)",
-      "rgb(61, 168, 244)",
-      "rgb(140, 198, 63)",
-      "rgb(255, 28, 36)"
-    ],
-    w: 1600
-  },
-  blueprint: {
-    p: [
-      "M0 194c0-137 57-194 194-194 0 0 635 0 635 0 137 0 194 57 194 194 0 0 0 635 0 635 0 137-57 194-194 194 0 0-635 0-635 0-137 0-194-57-194-194 0 0 0-635 0-635z",
-      "M629 498c13 0 24 11 24 24 0 0 0 122 0 122 0 140-114 254-254 254-140 0-254-114-254-254 0 0 0-122 0-122 0-13 11-24 24-24 0 0 79 0 79 0 13 0 24 11 24 24 0 0 0 122 0 122 0 70 57 127 127 127 70 0 127-57 127-127 0 0 0-122 0-122 0-13 11-24 24-24 0 0 79 0 79 0z",
-      "M789 881c-13 0-24-11-24-24 0 0 0-335 0-335 0-13 11-24 24-24 0 0 79 0 79 0 13 0 24 11 24 24 0 0 0 335 0 335 0 13-11 24-24 24 0 0-79 0-79 0z",
-      "M182 131c13 5 8 2 16 9 0 0 102 102 102 102s91-91 91-91c9-9 9-9 11-11 8-7 13-8 23-9 0 0 4 0 4 0 13 5 8 2 16 9 12 12 12 32 0 44-2 2-2 2-11 11 0 0-91 91-91 91s102 102 102 102c12 12 12 32 0 44-12 12-32 12-44 0 0 0-102-102-102-102s-48 48-48 48c0 0-44 44-44 44-9 9-9 9-11 11-12 12-32 12-44 0-12-12-12-32 0-44 2-2 2-2 11-11 0 0 91-91 91-91s-102-102-102-102c-12-12-12-32 0-44 8-7 13-8 23-9 0 0 4 0 4 0z",
-      "M516 131c17 0 31 14 31 31 0 247 0 164 0 248 0 17-14 31-31 31-17 0-31-14-31-31 0 0 0-248 0-248 0-17 14-31 31-31z",
-      "M611 131c0 0 4 0 4 0 13 5 8 2 16 9 2 2 2 2 11 11 0 0 226 226 226 226 9 9 9 9 11 11 12 12 12 32 0 44-12 12-32 12-44 0 0 0-248-248-248-248-12-12-12-32 0-44 8-7 13-8 23-9z",
-      "M700 953c-22-45-26-53-46-94-2-4-8-5-12-2-21 20-42 40-63 60-5 4-12 1-12-5 0 0 0-323 0-323 0-6 7-9 12-6 84 65 169 129 253 194 5 4 3 12-3 13-28 5-57 10-85 15-5 1-7 6-5 10 21 43 42 86 63 130 2 4 0 8-3 10 0 0-72 37-72 37-4 2-8 0-10-3 0 0-17-35-17-35zM652 812c3-2 7-2 8 1 0 0 69 142 69 142 1 3 4 4 7 2 10-5 20-10 29-15 3-1 4-4 2-7-23-47-46-95-70-142-2-3 0-7 4-7 0 0 68-12 68-12 4-1 6-6 2-9-57-44-114-87-171-131-3-3-8-0-8 4 0 0 0 217 0 217 0 5 5 7 9 4 13-13 16-15 34-32 0 0 16-15 16-15z"
-    ],
-    c: [
-      "rgb(78, 143, 234)",
-      "rgb(199, 219, 246)",
-      "rgb(199, 219, 246)",
-      "rgb(199, 219, 246)",
-      "rgb(199, 219, 246)",
-      "rgb(199, 219, 246)",
-      "rgb(255, 255, 255)"
-    ]
-  },
-  xinie: {
-    p: [
-      "M0 194c0-137 57-194 194-194 0 0 635 0 635 0 137 0 194 57 194 194 0 0 0 635 0 635 0 137-57 194-194 194 0 0-635 0-635 0-137 0-194-57-194-194 0 0 0-635 0-635z",
-      "M927 741c0 12-10 22-22 22-174 0-116 0-175 0-12 0-22-10-22-22s10-22 22-22c0 0 175 0 175 0 12 0 22 10 22 22z",
-      "M927 916c0 12-10 22-22 22-174 0-116 0-175 0-12 0-22-10-22-22s10-22 22-22c0 0 175 0 175 0 12 0 22 10 22 22z",
-      "M927 828c0 12-10 22-22 22-174 0-116 0-175 0-12 0-22-10-22-22s10-22 22-22c0 0 175 0 175 0 12 0 22 10 22 22z",
-      "M664 719c12 0 22 10 22 22 0 174 0 116 0 175 0 12-10 22-22 22s-22-10-22-22c0 0 0-175 0-175 0-12 10-22 22-22z",
-      "M426 719c0 0 3 0 3 0 9 4 6 1 11 6 1 1 1 1 8 8 0 0 160 160 160 160 6 6 6 6 8 8 9 9 9 22 0 31-9 9-22 9-31 0 0 0-175-175-175-175-9-9-9-22 0-31 5-5 9-6 16-6z",
-      "M359 719c12 0 22 10 22 22 0 174 0 116 0 175 0 12-10 22-22 22-12 0-22-10-22-22 0 0 0-175 0-175 0-12 10-22 22-22z",
-      "M123 719c9 4 6 1 11 6 0 0 72 72 72 72s64-64 64-64c6-6 6-6 8-8 5-5 9-6 16-6 0 0 3 0 3 0 9 4 6 1 11 6 9 9 9 22 0 31-1 1-1 1-8 8 0 0-64 64-64 64s72 72 72 72c9 9 9 22 0 31-9 9-22 9-31 0 0 0-72-72-72-72s-34 34-34 34c0 0-31 31-31 31-6 6-6 6-8 8-9 9-22 9-31 0s-9-22 0-31c1-1 1-1 8-8 0 0 64-64 64-64s-72-72-72-72c-9-9-9-22 0-31 5-5 9-6 16-6 0 0 3 0 3 0z",
-      "M640 714c0 0-18-8-30-25-12-17-6-28-6-28s-22 18-9 36c13 18 46 17 46 17z",
-      "M621 636c0 0 64-20 64 4 0 14-11 27-29 27s-45-20-45-32c-0-12 9-24 9-24s-23 10-22 25c1 16 11 36 58 36 27 0 49-6 49-31 0-18-20-23-40-23-20 0-43 18-43 18z",
-      "M672 614z",
-      "M540 306c0 0 61-120 61-120s-3 31 1 77c1 12 3 21 6 28 0 0-68 15-68 15z",
-      "M624 85c0 0 12-19 57-20s80 36 81 74c1 38-15 56-15 86 0 30 54 39 54 39s-42 47-80 47c-26 0-53-44-54-81-0-37 29-60 33-94 6-49-76-52-76-52z",
-      "M593 63c29 14 35 61 14 105-21 44-62 68-91 54-29-14-35-61-14-105s62-68 91-54z",
-      "M477 335c0 0-42 137-123 139-81 2-58-118-66-125-8-8-40-26-40-26s71 26 93 19c22-7 26-16 26-16s-50 111 6 108c56-3 104-98 104-98z",
-      "M710 290c0 0 48 28 46 67-1 25-114 61-115 93-2 32 29 38 47 37 18-0 37-9 37-9s-63 10-64-18c-2-42 152-9 151-78s-101-92-101-92z",
-      "M624 81z",
-      "M493 324c0 0-40 150 7 210 83 106 205 40 205 40s-102 9-99-70c3-110 96-228 96-228s-209 47-209 47z",
-      "M716 568c0 0 63-31 26-55-42-27-86 29-86 29s39-27 60-12c21 15 0 38 0 38z",
-      "M267 238c16-7 39-8 59-3 0 0 107 30 107 30 21 6 23 14 7 21 0 0-83 38-83 38-16 7-39 8-59 3 0 0-107-30-107-30-21-6-23-14-7-21 0 0 83-38 83-38z",
-      "M267 198c16-7 39-8 59-3 0 0 107 30 107 30 21 6 23 14 7 21 0 0-83 38-83 38-16 7-39 8-59 3 0 0-107-30-107-30-21-6-23-14-7-21 0 0 83-38 83-38z",
-      "M267 159c16-7 39-8 59-3 0 0 107 30 107 30 21 6 23 14 7 21 0 0-83 38-83 38-16 7-39 8-59 3 0 0-107-30-107-30-21-6-23-14-7-21 0 0 83-38 83-38z"
-    ],
-    c: [
-      "rgb(63, 63, 63)",
-      "rgb(251, 237, 33)",
-      "rgb(251, 237, 33)",
-      "rgb(251, 237, 33)",
-      "rgb(255, 147, 28)",
-      "rgb(61, 168, 244)",
-      "rgb(140, 198, 63)",
-      "rgb(255, 28, 35)",
-      "rgb(255, 147, 28)",
-      "rgb(255, 147, 28)",
-      "rgb(170, 170, 170)",
-      "rgb(251, 237, 33)",
-      "rgb(255, 147, 28)",
-      "rgb(251, 237, 33)",
-      "rgb(251, 237, 33)",
-      "rgb(251, 237, 33)",
-      "rgb(0, 242, 35)",
-      "rgb(251, 237, 33)",
-      "rgb(255, 147, 28)",
-      "rgb(253, 28, 35)",
-      "rgb(138, 196, 63)",
-      "rgb(61, 167, 242)"
-    ]
-  },
-  xinjsUiColor: {
-    p: [
-      "M0 194c0-137 57-194 194-194 0 0 635 0 635 0 137 0 194 57 194 194 0 0 0 635 0 635 0 137-57 194-194 194 0 0-635 0-635 0-137 0-194-57-194-194 0 0 0-635 0-635z",
-      "M629 498c13 0 24 11 24 24 0 0 0 122 0 122 0 140-114 254-254 254-140 0-254-114-254-254 0 0 0-122 0-122 0-13 11-24 24-24 0 0 79 0 79 0 13 0 24 11 24 24 0 0 0 122 0 122 0 70 57 127 127 127 70 0 127-57 127-127 0 0 0-122 0-122 0-13 11-24 24-24 0 0 79 0 79 0z",
-      "M789 881c-13 0-24-11-24-24 0 0 0-335 0-335 0-13 11-24 24-24 0 0 79 0 79 0 13 0 24 11 24 24 0 0 0 335 0 335 0 13-11 24-24 24 0 0-79 0-79 0z",
-      "M182 131c13 5 8 2 16 9 0 0 102 102 102 102s91-91 91-91c9-9 9-9 11-11 8-7 13-8 23-9 0 0 4 0 4 0 13 5 8 2 16 9 12 12 12 32 0 44-2 2-2 2-11 11 0 0-91 91-91 91s102 102 102 102c12 12 12 32 0 44-12 12-32 12-44 0 0 0-102-102-102-102s-48 48-48 48c0 0-44 44-44 44-9 9-9 9-11 11-12 12-32 12-44 0-12-12-12-32 0-44 2-2 2-2 11-11 0 0 91-91 91-91s-102-102-102-102c-12-12-12-32 0-44 8-7 13-8 23-9 0 0 4 0 4 0z",
-      "M516 131c17 0 31 14 31 31 0 247 0 164 0 248 0 17-14 31-31 31-17 0-31-14-31-31 0 0 0-248 0-248 0-17 14-31 31-31z",
-      "M611 131c0 0 4 0 4 0 13 5 8 2 16 9 2 2 2 2 11 11 0 0 226 226 226 226 9 9 9 9 11 11 12 12 12 32 0 44-12 12-32 12-44 0 0 0-248-248-248-248-12-12-12-32 0-44 8-7 13-8 23-9z",
-      "M700 953c-22-45-26-53-46-94-2-4-8-5-12-2-21 20-42 40-63 60-5 4-12 1-12-5 0-108 0-215 0-323 0-6 7-9 12-6 84 65 169 129 253 194 5 4 3 12-3 13-28 5-57 10-85 15-5 1-7 6-5 10 21 43 42 86 63 130 2 4 0 8-3 10-24 12-48 25-72 37-4 2-8 0-10-3 0 0-17-35-17-35z",
-      "M652 812c3-2 7-2 8 1 23 47 46 95 69 142 1 3 4 4 7 2 10-5 20-10 29-15 3-1 4-4 2-7-23-47-46-95-70-142-2-3 0-7 4-7 23-4 45-8 68-12 4-1 6-6 2-9-57-44-114-87-171-131-3-3-8-0-8 4 0 72 0 145 0 217 0 5 5 7 9 4 13-13 16-15 34-32 0 0 16-15 16-15z"
-    ],
-    c: [
-      "rgb(80, 80, 80)",
-      "rgb(255, 147, 29)",
-      "rgb(251, 237, 33)",
-      "rgb(255, 28, 36)",
-      "rgb(140, 198, 63)",
-      "rgb(61, 168, 244)",
-      "rgb(255, 255, 255)",
-      "rgb(0, 0, 0)"
-    ]
-  },
-  xinjsUi: {
-    p: [
-      "M830 0c137 0 194 57 194 194 0 0 0 635 0 635 0 137-57 194-194 194 0 0-635 0-635 0-137 0-194-57-194-194v-635c0-137 57-194 194-194h635zM248 498h-79c-13 0-24 11-24 24v122c0 140 114 254 254 254 65 0 124-24 168-64v79c0 6 8 10 12 5l63-60c4-3 9-2 12 2 20 40 24 49 46 94 0 0 17 35 17 35 2 4 6 5 10 3 0 0 72-37 72-37 4-2 5-6 3-10-21-43-42-86-63-130-2-4 1-9 5-10 7-1 14-2 21-4v55c0 13 11 24 24 24h79c13 0 24-11 24-24v-335c0-13-11-24-24-24h-79c-13 0-24 11-24 24v204l-112-86v-118c0-13-11-24-24-24h-79c-13 0-24 11-24 24v122c0 70-57 127-127 127-70 0-127-57-127-127v-122c0-13-11-24-24-24zM516 131c-17 0-31 14-31 31v248c0 17 14 31 31 31 17 0 31-14 31-31 0-83 0-1 0-248 0-17-14-31-31-31zM425 131c-10 0-16 1-23 9-2 2-2 2-11 11 0 0-91 91-91 91s-102-102-102-102c-8-7-3-3-16-9 0 0-4-0-4-0-10 0-16 1-23 9-12 12-12 32 0 44 0 0 102 102 102 102-31 31-62 62-93 93-3 3-6 6-9 9-12 12-12 32 0 44 12 12 32 12 44 0 2-2 2-2 11-11 0 0 44-44 44-44s48-48 48-48c0 0 102 102 102 102 12 12 32 12 44 0 12-12 12-32 0-44 0 0-102-102-102-102s91-91 91-91c9-9 9-9 11-11 12-12 12-32 0-44-8-7-3-3-16-9 0 0-4-0-4-0zM611 131c-10 0-16 1-23 9-12 12-12 32 0 44 0 0 248 248 248 248 12 12 32 12 44 0 12-12 12-32 0-44-2-2-2-2-11-11 0 0-222-227-222-227-9-9-13-8-15-10-8-7-3-3-16-9 0 0-4-0-4-0z",
-      "M652 812c3-2 7-2 8 1 23 47 46 95 69 142 1 3 4 4 7 2 10-5 20-10 29-15 3-1 4-4 2-7-23-47-46-95-70-142-2-3 0-7 4-7 23-4 45-8 68-12 4-1 6-6 2-9-57-44-114-87-171-131-3-3-8-0-8 4 0 72 0 145 0 217 0 5 5 7 9 4 13-13 16-15 34-32 0 0 16-15 16-15z"
-    ]
-  },
-  cmy: {
-    p: [
-      "M302 442c-11-27-17-56-17-86 0-126 103-229 229-229s229 103 229 229c0 31-6 60-17 87-12-2-24-3-37-3-72 0-136 33-178 85-42-52-106-85-178-85-11 0-21 1-32 2z",
-      "M478 582c-80-13-146-67-175-140 10-1 21-2 32-2 72 0 136 33 178 85-14 17-26 37-34 58z",
-      "M512 813c-42 52-106 85-178 85-126 0-229-103-229-229 0-116 86-211 197-227 30 73 96 127 175 140-11 27-17 56-17 87 0 55 19 105 51 144z",
-      "M547 582c-10 1-21 2-32 2-13 0-25-1-37-3 9-21 20-40 34-58 14 18 26 37 35 58 0 0 0 0 0 0z",
-      "M478 582c-11 27-17 56-17 87 0 55 19 105 51 144 32-39 51-90 51-144 0-30-6-59-17-86-10 1-21 2-32 2-13 0-25-1-37-3z",
-      "M547 582c82-11 150-66 180-140-12-2-24-3-37-3-72 0-136 33-178 85 14 18 26 37 35 58 0 0 0 0 0 0z",
-      "M512 813c42 52 106 85 178 85 126 0 229-103 229-229 0-114-83-208-192-226-30 74-98 129-180 140 11 27 17 56 17 86 0 55-19 105-51 144 0 0 0 0 0 0z"
-    ],
-    c: [
-      "rgb(86, 206, 255)",
-      "rgb(20, 248, 0)",
-      "rgb(249, 255, 44)",
-      "rgb(0, 0, 0)",
-      "rgb(252, 0, 0)",
-      "rgb(1, 6, 255)",
-      "rgb(241, 76, 255)"
-    ]
-  },
-  rgb: {
-    p: [
-      "M302 442c-11-27-17-56-17-86 0-126 103-229 229-229s229 103 229 229c0 31-6 60-17 87-12-2-24-3-37-3-72 0-136 33-178 85-42-52-106-85-178-85-11 0-21 1-32 2z",
-      "M478 582c-80-13-146-67-175-140 10-1 21-2 32-2 72 0 136 33 178 85-14 17-26 37-34 58z",
-      "M512 813c-42 52-106 85-178 85-126 0-229-103-229-229 0-116 86-211 197-227 30 73 96 127 175 140-11 27-17 56-17 87 0 55 19 105 51 144z",
-      "M547 582c-10 1-21 2-32 2-13 0-25-1-37-3 9-21 20-40 34-58 14 18 26 37 35 58 0 0 0 0 0 0z",
-      "M478 582c-11 27-17 56-17 87 0 55 19 105 51 144 32-39 51-90 51-144 0-30-6-59-17-86-10 1-21 2-32 2-13 0-25-1-37-3z",
-      "M547 582c82-11 150-66 180-140-12-2-24-3-37-3-72 0-136 33-178 85 14 18 26 37 35 58 0 0 0 0 0 0z",
-      "M512 813c42 52 106 85 178 85 126 0 229-103 229-229 0-114-83-208-192-226-30 74-98 129-180 140 11 27 17 56 17 86 0 55-19 105-51 144 0 0 0 0 0 0z"
-    ],
-    c: [
-      "rgb(248, 14, 0)",
-      "rgb(253, 0, 255)",
-      "rgb(44, 131, 255)",
-      "rgb(255, 255, 255)",
-      "rgb(0, 219, 255)",
-      "rgb(250, 255, 0)",
-      "rgb(0, 204, 3)"
-    ]
-  },
-  xinjsColor: {
-    p: [
-      "M0 194c0-137 57-194 194-194 0 0 635 0 635 0 137 0 194 57 194 194 0 0 0 635 0 635 0 137-57 194-194 194 0 0-635 0-635 0-137 0-194-57-194-194 0 0 0-635 0-635z",
-      "M126 302c8 3 5 1 10 6 0 0 66 66 66 66s59-59 59-59c6-6 6-6 7-7 5-5 9-5 15-6 0 0 3 0 3 0 8 3 5 1 10 6 8 8 8 21 0 28-1 1-1 1-7 7 0 0-59 59-59 59s66 66 66 66c8 8 8 21 0 28-8 8-21 8-28 0 0 0-66-66-66-66s-31 31-31 31c0 0-28 28-28 28-6 6-6 6-7 7-8 8-21 8-28 0-8-8-8-21 0-28 1-1 1-1 7-7 0 0 59-59 59-59s-66-66-66-66c-8-8-8-21 0-28 5-5 9-5 15-6 0 0 3 0 3 0z",
-      "M404 302c0 0 3 0 3 0 8 3 5 1 10 6 1 1 1 1 7 7 0 0 147 147 147 147 6 6 6 6 7 7 8 8 8 21 0 28-8 8-21 8-28 0 0 0-161-161-161-161-8-8-8-21 0-28 5-5 9-5 15-6z",
-      "M343 301c11 0 20 9 20 20 0 160 0 106 0 161 0 11-9 20-20 20-11 0-20-9-20-20 0 0 0-161 0-161 0-11 9-20 20-20z",
-      "M674 462c11 0 20 9 20 20 0 0 0 221 0 221 0 11-9 20-20 20s-20-9-20-20c0 0 0-221 0-221 0-11 9-20 20-20zM674 472c-6 0-10 4-10 10 0 0 0 221 0 221 0 6 4 10 10 10 6 0 10-4 10-10 0 0 0-221 0-221-0-6-3-8-8-10 0 0-2-0-2-0z",
-      "M404 302c0 0 3 0 3 0 8 3 5 1 10 6 1 1 1 1 7 7 0 0 147 147 147 147 6 6 6 6 7 7 8 8 8 21 0 28-8 8-21 8-28 0 0 0-161-161-161-161-8-8-8-21 0-28 5-5 9-5 15-6z",
-      "M284 522c0 0 3 0 3 0 8 3 5 1 10 6 8 8 8 21 0 28-1 1-2 2-3 3 0 0-39 39-39 39s-1 1-1 1c0 0-22 22-22 22s-2 2-2 2c0 0 66 66 66 66 8 8 8 21 0 28-8 8-21 8-28 0-1-1-1-1-7-7 0 0-59-59-59-59s-27 27-27 27c-4 4-7 7-11 11 0 0-29 29-29 29-8 8-21 8-28 0-8-8-8-21 0-28 0 0 66-66 66-66s-59-59-59-59c-2-2-4-4-6-6 0 0-0-0-0-0-8-8-8-21 0-28 5-5 9-5 15-6 0 0 3 0 3 0 8 3 5 1 10 6 0 0 66 66 66 66 22-22 44-44 66-66 5-5 9-5 15-6zM284 532c-4 0-6 0-8 3-6 6-11 11-22 22 0 0-0 0-0 0-22 22-32 32-44 44-4 4-10 4-14-0 0 0-66-66-66-66-1-1-1-1-2-2-1-0-2-1-4-1 0 0-1-0-1-0-4 0-6 0-8 3-4 4-4 10 0 14 0 0 0 0 0 0s-0-0-0-0c2 2 5 5 6 6 0 0 59 59 59 59 4 4 4 10 0 14 0 0-66 66-66 66-4 4-4 10 0 14 4 4 10 4 14 0 0 0 29-29 29-29 1-1 3-3 5-5 3-3 4-4 6-6 0 0 27-27 27-27 4-4 10-4 14-0 0 0 59 59 59 59 5 5 3 3 6 6 1 1 0 0 1 1 4 4 10 4 14 0 4-4 4-10-0-14 0 0-66-66-66-66-4-4-4-10-0-14 0 0 2-2 2-2s22-22 22-22c0 0 1-1 1-1s39-39 39-39c1-1 1-1 3-3 4-4 4-10 0-14-1-0-1-1-2-1-1-0-2-1-4-1 0 0-1-0-1-0z",
-      "M343 522c11 0 20 9 20 20 0 0 0 161 0 161 0 11-9 20-20 20-11 0-20-9-20-20 0 0 0-161 0-161 0-11 9-20 20-20zM343 532c-6 0-10 4-10 10 0 0 0 161 0 161 0 6 4 10 10 10 6 0 10-4 10-10 0 0 0-161 0-161 0-6-4-10-10-10z",
-      "M564 522c0 0 3 0 3 0 8 3 5 1 10 6 8 8 8 21 0 28-1 1-1 1-7 7-51 51-102 102-154 154-8 8-21 8-28 0-8-8-8-21 0-28 1-1 2-2 3-3 52-53 105-105 158-158 5-5 9-5 15-6zM565 532c-4 0-6 0-8 3-0 0-0 0-1 1 0 0 0 0 0 0-1 1-1 1-6 6 0 0-147 147-147 147-5 5-6 6-6 6 0 0 0 0 0 0-0 0-0 0-1 1-4 4-4 10 0 14 4 4 10 4 14 0 0-0 0-0 1-1 2-2 4-4 6-6 0 0 147-147 147-147s2-2 2-2c0 0 5-5 5-5 4-4 4-10 0-14-1-0-1-1-2-1-1-0-2-1-4-1 0 0-1-0-1-0z",
-      "M343 522c11 0 20 9 20 20 0 0 0 161 0 161 0 11-9 20-20 20-11 0-20-9-20-20 0 0 0-161 0-161 0-11 9-20 20-20zM343 532c-6 0-10 4-10 10 0 0 0 161 0 161 0 6 4 10 10 10 6 0 10-4 10-10 0 0 0-161 0-161 0-6-4-10-10-10z",
-      "M564 522c0 0 3 0 3 0 8 3 5 1 10 6 8 8 8 21 0 28-1 1-1 1-7 7-51 51-102 102-154 154-8 8-21 8-28 0-8-8-8-21 0-28 1-1 2-2 3-3 52-53 105-105 158-158 5-5 9-5 15-6zM565 532c-4 0-6 0-8 3-0 0-0 0-1 1 0 0 0 0 0 0-1 1-1 1-6 6 0 0-147 147-147 147-5 5-6 6-6 6 0 0 0 0 0 0-0 0-0 0-1 1-4 4-4 10 0 14 4 4 10 4 14 0 0-0 0-0 1-1 2-2 4-4 6-6 0 0 147-147 147-147s2-2 2-2c0 0 5-5 5-5 4-4 4-10 0-14-1-0-1-1-2-1-1-0-2-1-4-1 0 0-1-0-1-0z",
-      "M704 301c11 0 20 9 20 20 0 0 0 140 0 140 0 5-2 10-6 14 0 0-20 20-20 20-4 4-9 6-14 6 0 0-60 0-60 0-11 0-20-9-20-20 0-11 9-20 20-20 0 0 52 0 52 0s8-8 8-8c0 0 0-132 0-132 0-11 9-20 20-20z",
-      "M902 462c11 0 20 9 20 20 0 11-9 20-20 20 0 0-138 0-138 0-11 0-20-9-20-20 0-11 9-20 20-20 0 0 138 0 138 0z",
-      "M902 532c11 0 20 9 20 20 0 11-9 20-20 20 0 0-138 0-138 0-11 0-20-9-20-20 0-11 9-20 20-20 0 0 138 0 138 0zM902 542c0 0-138 0-138 0-6 0-10 4-10 10s4 10 10 10c0 0 138 0 138 0 6 0 10-4 10-10s-4-10-10-10z",
-      "M902 392c11 0 20 9 20 20 0 11-9 20-20 20 0 0-138 0-138 0-11 0-20-9-20-20 0-11 9-20 20-20 0 0 138 0 138 0z",
-      "M903 302c0 0 3 0 3 0 8 3 5 1 10 6 8 8 8 21 0 28 0 0-20 20-20 20-4 4-9 6-14 6 0 0-118 0-118 0-11 0-20-9-20-20 0-11 9-20 20-20 0 0 109 0 109 0s14-14 14-14c5-5 9-5 15-6z",
-      "M902 602c11 0 20 9 20 20 0 0 0 60 0 60 0 5-2 10-6 14 0 0-20 20-20 20-4 4-9 6-14 6 0 0-118 0-118 0-11 0-20-9-20-20 0 0 0-80 0-80 0-11 9-20 20-20 0 0 138 0 138 0zM902 612c0 0-138 0-138 0-6 0-10 4-10 10 0 0 0 80 0 80 0 6 4 10 10 10 0 0 118 0 118 0 3 0 5-1 7-3 0 0 20-20 20-20 2-2 3-4 3-7 0 0 0-60 0-60 0-6-4-10-10-10zM882 632c6 0 10 4 10 10 0 0 0 32 0 32 0 3-1 5-3 7 0 0-8 8-8 8-2 2-4 3-7 3 0 0-89 0-89 0-6 0-10-4-10-10 0 0 0-40 0-40 0-6 4-10 10-10 0 0 98 0 98 0zM882 642c0 0-98 0-98 0s0 40 0 40c0 0 89 0 89 0s8-8 8-8c0 0 0-32 0-32z"
-    ],
-    c: [
-      "rgb(80, 80, 80)",
-      "rgb(255, 28, 36)",
-      "rgb(8, 131, 87)",
-      "rgb(140, 198, 63)",
-      "rgb(255, 147, 29)",
-      "rgb(61, 168, 244)",
-      "rgb(255, 28, 36)",
-      "rgb(8, 131, 87)",
-      "rgb(8, 131, 87)",
-      "rgb(140, 198, 63)",
-      "rgb(61, 168, 244)",
-      "rgb(255, 147, 29)",
-      "rgb(251, 237, 33)",
-      "rgb(251, 237, 33)",
-      "rgb(251, 237, 33)",
-      "rgb(251, 237, 33)",
-      "rgb(251, 237, 33)"
-    ]
-  },
-  xinColor: {
-    p: [
-      "M0 194c0-137 57-194 194-194 0 0 635 0 635 0 137 0 194 57 194 194 0 0 0 635 0 635 0 137-57 194-194 194 0 0-635 0-635 0-137 0-194-57-194-194 0 0 0-635 0-635z",
-      "M178 180c13 5 8 2 16 9 0 0 104 104 104 104s93-93 93-93c9-9 9-9 11-11 8-8 14-8 24-9 0 0 5 0 5 0 13 5 8 2 16 9 12 12 12 32 0 45-2 2-2 2-11 11 0 0-93 93-93 93s104 104 104 104c12 12 12 32 0 45-12 12-32 12-45 0 0 0-104-104-104-104s-49 49-49 49c0 0-45 45-45 45-9 9-9 9-11 11-12 12-32 12-45 0-12-12-12-32 0-45 2-2 2-2 11-11 0 0 93-93 93-93s-104-104-104-104c-12-12-12-32 0-45 8-8 14-8 24-9 0 0 5 0 5 0z",
-      "M617 180c0 0 5 0 5 0 13 5 8 2 16 9 2 2 2 2 11 11 0 0 232 232 232 232 9 9 9 9 11 11 12 12 12 32 0 45-12 12-32 12-45 0 0 0-253-253-253-253-12-12-12-32 0-45 8-8 14-8 24-9z",
-      "M520 179c17 0 32 14 32 32 0 253 0 168 0 253 0 17-14 32-32 32-17 0-32-14-32-32 0 0 0-253 0-253 0-17 14-32 32-32z",
-      "M617 180c0 0 5 0 5 0 13 5 8 2 16 9 2 2 2 2 11 11 0 0 232 232 232 232 9 9 9 9 11 11 12 12 12 32 0 45-12 12-32 12-45 0 0 0-253-253-253-253-12-12-12-32 0-45 8-8 14-8 24-9z",
-      "M426 528c0 0 5 0 5 0 13 5 8 2 16 9 12 12 12 32 0 45-1 1-3 3-4 4 0 0-62 62-62 62s-2 2-2 2c0 0-34 34-34 34s-3 3-3 3c0 0 104 104 104 104 12 12 12 32 0 45-12 12-32 12-45 0-2-2-2-2-11-11 0 0-94-94-94-94s-42 42-42 42c-6 6-11 11-17 17 0 0-45 45-45 45-12 12-32 12-45 0-12-12-12-32 0-45 0 0 104-104 104-104s-93-93-93-93c-3-3-7-7-10-10 0 0-1-1-1-1-12-12-12-32 0-45 8-8 14-8 24-9 0 0 5 0 5 0 13 5 8 2 16 9 0 0 104 104 104 104 35-35 70-70 104-104 8-8 14-8 24-9zM427 544c-6 0-9 0-13 4-10 10-17 17-35 35 0 0-0 0-0 0-35 35-50 50-69 69-6 6-16 6-22-0 0 0-104-104-104-104-1-1-2-2-3-2-2-1-4-1-6-2 0 0-1-0-1-0-6 0-9 0-13 4-6 6-6 16 0 22 0 0 1 1 1 1s-0-0-0-0c4 4 7 7 10 10 0 0 93 93 93 93 6 6 6 16 0 22 0 0-104 104-104 104-6 6-6 16 0 22 6 6 16 6 22 0 0 0 45-45 45-45 2-2 4-4 8-8 4-4 6-6 9-9 0 0 42-42 42-42 6-6 16-6 22-0 0 0 94 94 94 94 8 8 5 5 9 9 1 1 1 1 2 2 6 6 16 6 22 0 6-6 6-16-0-22 0 0-104-104-104-104-6-6-6-16-0-22 0 0 3-3 3-3s34-34 34-34c0 0 2-2 2-2s62-62 62-62c2-2 2-2 4-4 6-7 6-15 0-22-1-1-2-1-3-2-2-1-4-1-6-2 0 0-1-0-1-0z",
-      "M520 528c17 0 32 14 32 32 0 0 0 253 0 253 0 17-14 32-32 32-17 0-32-14-32-32 0 0 0-253 0-253 0-17 14-32 32-32zM520 544c-9 0-16 7-16 16 0 0 0 253 0 253 0 9 7 16 16 16s16-7 16-16c0 0 0-253 0-253 0-9-7-16-16-16z",
-      "M870 528c0 0 5 0 5 0 13 5 8 2 16 9 12 12 12 32 0 45-2 2-2 2-11 11-81 81-162 162-243 243-12 12-32 12-45 0-12-12-12-32 0-45 1-1 3-3 4-4 83-84 166-166 249-249 8-8 14-8 24-9zM870 544c-6 0-9 0-13 4-1 1-1 1-1 1 0 0 0 0 0 0-1 1-2 2-10 10 0 0-232 232-232 232-8 8-9 9-10 10 0 0 0 0 0 0-0 0-0 0-1 1-6 6-6 16 0 22 6 6 16 6 22 0 1-1 1-1 1-1 3-3 7-7 10-10 0 0 232-232 232-232s3-3 3-3c0 0 8-8 8-8 6-7 6-15 0-22-1-1-2-1-3-2-2-1-4-1-6-2 0 0-1-0-1-0z",
-      "M520 528c17 0 32 14 32 32 0 0 0 253 0 253 0 17-14 32-32 32-17 0-32-14-32-32 0 0 0-253 0-253 0-17 14-32 32-32zM520 544c-9 0-16 7-16 16 0 0 0 253 0 253 0 9 7 16 16 16s16-7 16-16c0 0 0-253 0-253 0-9-7-16-16-16z",
-      "M870 528c0 0 5 0 5 0 13 5 8 2 16 9 12 12 12 32 0 45-2 2-2 2-11 11-81 81-162 162-243 243-12 12-32 12-45 0-12-12-12-32 0-45 1-1 3-3 4-4 83-84 166-166 249-249 8-8 14-8 24-9zM870 544c-6 0-9 0-13 4-1 1-1 1-1 1 0 0 0 0 0 0-1 1-2 2-10 10 0 0-232 232-232 232-8 8-9 9-10 10 0 0 0 0 0 0-0 0-0 0-1 1-6 6-6 16 0 22 6 6 16 6 22 0 1-1 1-1 1-1 3-3 7-7 10-10 0 0 232-232 232-232s3-3 3-3c0 0 8-8 8-8 6-7 6-15 0-22-1-1-2-1-3-2-2-1-4-1-6-2 0 0-1-0-1-0z"
-    ],
-    c: [
-      "rgb(80, 80, 80)",
-      "rgb(255, 28, 36)",
-      "rgb(8, 131, 87)",
-      "rgb(140, 198, 63)",
-      "rgb(61, 168, 244)",
-      "rgb(255, 28, 36)",
-      "rgb(8, 131, 87)",
-      "rgb(8, 131, 87)",
-      "rgb(140, 198, 63)",
-      "rgb(61, 168, 244)"
-    ]
-  },
-  sortDescending: "M723 469c-256 0-179 0-435 0-24 0-43 19-43 43s19 43 43 43c256 0 179 0 435 0 24 0 43-19 43-43s-19-43-43-43zM603 725c-256 0 61 0-195 0-24 0-43 19-43 43s19 43 43 43c256 0-61 0 195 0 24 0 43-19 43-43s-19-43-43-43zM856 213c-256 0-432 0-688 0-24 0-43 19-43 43s19 43 43 43c256 0 432 0 688 0 24 0 43-19 43-43s-19-43-43-43z",
-  sortAscending: "M301 555c256 0 179 0 435 0 24 0 43-19 43-43s-19-43-43-43c-256 0-179 0-435 0-24 0-43 19-43 43s19 43 43 43zM421 299c256 0-61 0 195 0 24 0 43-19 43-43s-19-43-43-43c-256 0 61 0-195 0-24 0-43 19-43 43s19 43 43 43zM168 811c256 0 432 0 688 0 24 0 43-19 43-43s-19-43-43-43c-256 0-432 0-688 0-24 0-43 19-43 43s19 43 43 43z",
-  instagram: {
-    p: [
-      "M512 92c137 0 153 1 207 3 50 2 77 11 95 18 24 9 41 20 59 38 18 18 29 35 38 59 7 18 15 45 18 95 2 54 3 70 3 207s-1 153-3 207c-2 50-11 77-18 95-9 24-20 41-38 59-18 18-35 29-59 38-18 7-45 15-95 18-54 2-70 3-207 3s-153-1-207-3c-50-2-77-11-95-18-24-9-41-20-59-38-18-18-29-35-38-59-7-18-15-45-18-95-2-54-3-70-3-207s1-153 3-207c2-50 11-77 18-95 9-24 20-41 38-59 18-18 35-29 59-38 18-7 45-15 95-18 54-2 70-3 207-3zM512 0c-139 0-156 1-211 3-54 2-92 11-124 24-34 13-62 31-91 59-29 28-46 57-59 91-13 33-21 70-24 124-2 55-3 72-3 211s1 156 3 211c2 54 11 92 24 124 13 34 31 62 59 91 28 28 57 46 91 59 33 13 70 21 124 24 55 2 72 3 211 3s156-1 211-3c54-2 92-11 124-24 34-13 62-31 91-59s46-57 59-91c13-33 21-70 24-124 2-55 3-72 3-211s-1-156-3-211c-2-54-11-92-24-124-13-34-30-63-59-91-28-28-57-46-91-59-33-13-70-21-124-24-55-3-72-3-211-3v0z",
-      "M512 249c-145 0-263 118-263 263s118 263 263 263 263-118 263-263c0-145-118-263-263-263zM512 683c-94 0-171-76-171-171s76-171 171-171c94 0 171 76 171 171s-76 171-171 171z",
-      "M847 239c0 34-27 61-61 61s-61-27-61-61c0-34 27-61 61-61s61 27 61 61z"
-    ]
-  },
-  linkedin: "M928 0h-832c-53 0-96 43-96 96v832c0 53 43 96 96 96h832c53 0 96-43 96-96v-832c0-53-43-96-96-96zM384 832h-128v-448h128v448zM320 320c-35 0-64-29-64-64s29-64 64-64c35 0 64 29 64 64s-29 64-64 64zM832 832h-128v-256c0-35-29-64-64-64s-64 29-64 64v256h-128v-448h128v79c26-36 67-79 112-79 80 0 144 72 144 160v288z",
-  eyedropper: "M987 37c-50-50-131-50-181 0l-172 172-121-121-136 136 106 106-472 472c-8 8-11 19-10 29h-0v160c0 18 14 32 32 32h160c0 0 3 0 4 0 9 0 18-4 25-11l472-472 106 106 136-136-121-121 172-172c50-50 50-131 0-181zM173 960h-109v-109l470-470 109 109-470 470z",
-  heart: {
-    p: [
-      "M1088 358c0 86-37 164-96 218h0l-320 320c-32 32-64 64-96 64s-64-32-96-64l-320-320c-59-54-96-131-96-218 0-162 132-294 294-294 86 0 164 37 218 96 54-59 131-96 218-96 162 0 294 132 294 294z"
-    ],
-    w: 1152
-  },
-  facebook: "M928 0h-832c-53 0-96 43-96 96v832c0 53 43 96 96 96h416v-448h-128v-128h128v-64c0-106 86-192 192-192h128v128h-128c-35 0-64 29-64 64v64h192l-32 128h-160v448h288c53 0 96-43 96-96v-832c0-53-43-96-96-96z",
-  twitter: "M1024 226c-38 17-78 28-121 33 43-26 77-67 92-116-41 24-86 42-133 51-38-41-93-66-153-66-116 0-210 94-210 210 0 16 2 32 5 48-175-9-329-92-433-220-18 31-28 67-28 106 0 73 37 137 93 175-34-1-67-11-95-26 0 1 0 2 0 3 0 102 72 187 169 206-18 5-36 7-55 7-14 0-27-1-40-4 27 83 104 144 196 146-72 56-162 90-261 90-17 0-34-1-50-3 93 60 204 94 322 94 386 0 598-320 598-598 0-9-0-18-1-27 41-29 77-66 105-109z",
-  youtube: "M1014 307c0 0-10-71-41-102-39-41-83-41-103-43-143-10-358-10-358-10h-0c0 0-215 0-358 10-20 2-64 3-103 43-31 31-41 102-41 102s-10 83-10 166v78c0 83 10 166 10 166s10 71 41 102c39 41 90 39 113 44 82 8 348 10 348 10s215-0 358-11c20-2 64-3 103-43 31-31 41-102 41-102s10-83 10-166v-78c-0-83-10-166-10-166zM406 645v-288l277 144-277 143z",
-  game: {
-    p: [
-      "M1056 194v-2h-672c-177 0-320 143-320 320s143 320 320 320c105 0 198-50 256-128h128c58 78 151 128 256 128 177 0 320-143 320-320 0-166-126-302-288-318zM576 576h-128v128h-128v-128h-128v-128h128v-128h128v128h128v128zM960 576c-35 0-64-29-64-64s29-64 64-64 64 29 64 64-29 64-64 64zM1152 576c-35 0-64-29-64-64 0-35 29-64 64-64s64 29 64 64c0 35-29 64-64 64z"
-    ],
-    w: 1408
-  },
-  google: "M512 0c-283 0-512 229-512 512s229 512 512 512 512-229 512-512-229-512-512-512zM520 896c-212 0-384-172-384-384s172-384 384-384c104 0 190 38 257 100l-104 100c-29-27-78-59-153-59-131 0-238 109-238 242s107 242 238 242c152 0 209-109 218-166h-218v-132h363c3 19 6 38 6 64 0 219-147 375-369 375z",
-  github: "M512 13c-283 0-512 229-512 512 0 226 147 418 350 486 26 5 35-11 35-25 0-12-0-53-1-95-142 31-173-60-173-60-23-59-57-75-57-75-46-32 4-31 4-31 51 4 78 53 78 53 46 78 120 56 149 43 5-33 18-56 33-68-114-13-233-57-233-253 0-56 20-102 53-137-5-13-23-65 5-136 0 0 43-14 141 52 41-11 85-17 128-17 44 0 87 6 128 17 98-66 141-52 141-52 28 71 10 123 5 136 33 36 53 82 53 137 0 197-120 240-234 253 18 16 35 47 35 95 0 69-1 124-1 141 0 14 9 30 35 25 203-68 350-260 350-486 0-283-229-512-512-512z",
-  npm: "M0 0v1024h1024v-1024h-1024zM832 832h-128v-512h-192v512h-320v-640h640v640z",
-  xr: {
-    p: [
-      "M801 116c465 0 735 49 735 396 0 279-197 396-342 396-218 0-307-165-393-165-110 0-175 165-393 165-145 0-342-117-342-396 0-347 270-396 735-396zM949 285c-16-16-41-16-57 0-16 16-16 41-0 57v0l322 322c16 16 41 16 57 0 16-16 16-41 0-57-9-9-18-18-26-26l-4-4c-5-5-9-9-14-14l-4-4c-32-32-65-64-132-131l-8-8c-1-1-3-3-4-4l-18-18c-31-31-68-68-113-113zM801 272c-22 0-40 18-40 40v0 322c0 22 18 40 40 40 22 0 40-18 40-40 0-1 0-2 0-3l0-6c0-3 0-6 0-8l0-5c0-1 0-2 0-2l0-6c0-1 0-1 0-2l0-7c0-1 0-1 0-2l0-8c0-0 0-1 0-1l-0-20c-0-0-0-1-0-1l-0-12c-0-1-0-1-0-2l-0-15c-0-1-0-2-0-2l-0-14c-0-1-0-2-0-3l-0-22c-0-1-0-3-0-4l-0-28c-0-2-0-4-0-5l-0-50c-0-2-0-5-0-7l-0-84c0-22-18-40-40-40zM710 282c-16-16-41-16-57 0v0l-134 134-131-131c-16-16-41-16-57 0-16 16-16 41-0 57v0l131 131-132 132c-15 16-15 41 1 56 16 16 41 16 57 0v0l131-131 134 134c16 16 41 16 57 0 16-16 16-41 0-57v0l-134-133 134-133c16-16 16-41 0-57z"
-    ],
-    w: 1600
-  },
-  xinjs: {
-    p: [
-      "M830 0c137 0 194 57 194 194v635c0 137-57 194-194 194h-635c-137 0-194-57-194-194v-635c0-137 57-194 194-194h635zM520 528c-17 0-32 14-32 32v253c0 17 14 32 32 32 17 0 32-14 32-32v-253c0-17-14-32-32-32zM870 528c-10 0-16 1-24 9-83 83-167 166-249 249-1 1-3 3-4 4-12 12-12 32 0 45 12 12 32 12 45 0 81-81 161-162 243-243 9-9 9-9 11-11 12-12 12-32 0-45-8-7-3-3-16-9 0 0-5-0-5-0zM426 528c-10 0-16 1-24 9-35 35-70 70-104 104 0 0-104-104-104-104-8-7-3-3-16-9 0 0-5-0-5-0-10 0-16 1-24 9-12 12-12 32 0 45 0 0 1 1 1 1l10 10c0 0 93 93 93 93s-104 104-104 104c-12 12-12 32 0 45 12 12 32 12 45 0 0 0 45-45 45-45 6-6 11-11 17-17 0 0 42-42 42-42l100 100c2 2 3 3 5 5 12 12 32 12 45 0 12-12 12-32 0-45l-104-104c0 0 3-3 3-3s34-34 34-34c0 0 2-2 2-2s62-62 62-62c1-1 3-3 4-4 12-12 12-32 0-45-8-7-3-3-16-9 0 0-5-0-5-0zM520 179c-17 0-32 14-32 32v253c0 17 14 32 32 32 17 0 32-14 32-32 0-85 0-1 0-253 0-17-14-32-32-32zM617 180c-10 0-16 1-24 9-12 12-12 32 0 45 0 0 253 253 253 253 12 12 32 12 45 0 12-12 12-32 0-45-4-4-7-7-11-11-77-77-154-154-231-231-9-9-9-9-11-11-8-7-3-3-16-9 0 0-5-0-5-0zM426 180c-10 0-16 1-24 9-2 2-2 2-11 11 0 0-93 93-93 93s-104-104-104-104c-8-7-3-3-16-9 0 0-5-0-5-0-10 0-16 1-24 9-12 12-12 32 0 45 0 0 104 104 104 104-32 32-63 63-95 95l-9 9c-12 12-12 32 0 45 12 12 32 12 45 0 4-4 8-8 12-12 15-15 30-30 45-45 16-16 32-32 47-47 0 0 104 104 104 104 12 12 32 12 45 0 12-12 12-32 0-45 0 0-104-104-104-104s93-93 93-93c9-9 9-9 11-11 12-12 12-32 0-45-8-7-3-3-16-9 0 0-5-0-5-0z",
-      "M870 544c0 0 1 0 1 0 2 1 4 2 6 2 1 1 2 1 3 2 6 7 6 15-0 22 0 0-8 8-8 8s-3 3-3 3c0 0-232 232-232 232-3 3-7 7-10 10-0 0-0 0-1 1-6 6-16 6-22 0-6-6-6-16 0-22 0 0 1-1 1-1 1-1 2-2 10-10 0 0 232-232 232-232 8-8 9-9 10-10 0-0 0-0 1-1 4-4 7-4 13-4z",
-      "M520 544c9 0 16 7 16 16 0 0 0 253 0 253 0 9-7 16-16 16s-16-7-16-16c0 0 0-253 0-253 0-9 7-16 16-16z",
-      "M427 544c0 0 1 0 1 0 2 1 4 2 6 2 1 1 2 1 3 2 6 7 6 15-0 22-2 2-2 2-4 4 0 0-62 62-62 62s-2 2-2 2c0 0-34 34-34 34s-3 3-3 3c-6 6-6 16 0 22 0 0 104 104 104 104 6 6 6 16 0 22-6 6-16 6-22 0-1-1-0-0-2-2-4-4-1-1-9-9 0 0-94-94-94-94-6-6-16-6-22 0 0 0-42 42-42 42-2 2-4 4-9 9-4 4-6 6-8 8 0 0-45 45-45 45-6 6-16 6-22-0-6-6-6-16 0-22 0 0 104-104 104-104 6-6 6-16 0-22 0 0-93-93-93-93-3-3-6-6-10-10 0 0-1-1-1-1-6-6-6-16-0-22 4-4 7-4 13-4 0 0 1 0 1 0 2 1 4 2 6 2 1 1 2 2 3 2 0 0 104 104 104 104 6 6 16 6 22 0 19-19 35-35 69-69 17-17 25-25 35-35 4-4 7-4 13-4z"
-    ]
-  },
-  html5: "M61 0l82 922 369 102 370-103 82-921h-903zM785 301h-433l10 116h412l-31 347-232 64-232-64-16-178h113l8 90 126 34 0-0 126-34 13-147h-392l-30-342h566l-10 113z",
-  bug: {
-    p: [
-      "M933 549c0 20-17 37-37 37h-128c0 71-15 125-38 166l119 119c14 14 14 37 0 51-7 7-17 11-26 11s-19-3-26-11l-113-113s-75 69-172 69v-512h-73v512c-103 0-179-75-179-75l-105 118c-7 8-17 12-27 12-9 0-17-3-25-9-15-14-16-37-3-52l115-130c-20-39-33-90-33-157h-128c-20 0-37-17-37-37s17-37 37-37h128v-168l-99-99c-14-14-14-37 0-51s37-14 51 0l99 99h482l99-99c14-14 37-14 51 0s14 37 0 51l-99 99v168h128c20 0 37 17 37 37zM658 219h-366c0-101 82-183 183-183s183 82 183 183z"
-    ],
-    w: 951
-  }
+  earth: '<svg class="color" viewBox="0 0 48 48"><g><g><path style="fill:#006736;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M18.40,4.79 C18.40,4.79,17,9,17,9 C17,9,17,15,17,15 C17,15,15,15,15,15 C15,15,13,11,13,11 C13,11,11,13,11,13 C11,13,11,19,11,19 C11,19,15,19,15,19 C15,19,21,23,21,23 C21,23,27,25,27,25 C27,25,27,29,27,29 C27,29,15.69,42.20,15.69,42.20 C15.46,42.09,15.23,41.98,15,41.87 C15,41.87,15,31,15,31 C15,31,9,29,9,29 C9,29,9,19,9,19 C9,19,7,15,7,15 C7,15,7,13.46,7,13.46 C9.57,9.32,13.62,6.19,18.40,4.79 z"/><path style="fill:#3da8f4;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M7,13.46 C5.10,16.52,4,20.13,4,24 C4,31.81,8.47,38.57,15,41.87 C15,41.87,15,31,15,31 C15,31,9,29,9,29 C9,29,9,19,9,19 C9,19,7,15,7,15 C7,15,7,13.46,7,13.46 z"/><path style="fill:#3da8f4;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M18.40,4.79 C20.18,4.28,22.06,4,24,4 C27.57,4,30.92,4.93,33.82,6.57 C33.82,6.57,29,13,29,13 C29,13,31,19,31,19 C31,19,37,21,37,21 C37,21,39,29,39,29 C39,29,37.35,38.89,37.35,38.89 C33.81,42.07,29.13,44,24,44 C21.03,44,18.22,43.35,15.69,42.20 C15.69,42.20,27,29,27,29 C27,29,27,25,27,25 C27,25,21,23,21,23 C21,23,15,19,15,19 C15,19,11,19,11,19 C11,19,11,13,11,13 C11,13,13,11,13,11 C13,11,15,15,15,15 C15,15,17,15,17,15 C17,15,17,9,17,9 C17,9,18.40,4.79,18.40,4.79 z"/><path style="fill:#006736;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M33.82,6.57 C33.82,6.57,29,13,29,13 C29,13,31,19,31,19 C31,19,37,21,37,21 C37,21,39,29,39,29 C39,29,37.35,38.89,37.35,38.89 C41.43,35.23,44,29.91,44,24 C44,16.52,39.90,10.00,33.82,6.57 z"/></g></g></svg> ',
+  blueprint: '<svg class="color" viewBox="0 0 24 24"><g><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M10.5,14.5 C10.5,14.5,7.5,15.5,7.5,17.5 C7.5,19.5,10.5,19.5,10.5,19.5"/><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M18.50,14.5 C18.50,14.5,21.50,15.5,21.50,17.5 C21.50,19.5,18.50,19.5,18.50,19.5"/><path style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M7,5.09 C7,3.94,7.90,3,9,3 C9,3,20,3,20,3 C21.10,3,22,3.94,22,5.09 C22,5.09,22,12.41,22,12.41 C22,13.56,21.10,14.5,20,14.5 C20,14.5,9,14.5,9,14.5 C7.90,14.5,7,13.56,7,12.41 C7,12.41,7,5.09,7,5.09 z"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M14.5,5.5 C14.5,5.5,14.5,11.5,14.5,11.5"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M16.5,7.5 C16.5,7.5,16.5,8.5,16.5,8.5"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M12.5,7.5 C12.5,7.5,12.5,8.5,12.5,8.5"/><g/><path style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M18.5,21.5 C18.5,21.5,17.5,20.5,17.5,20.5 C17.5,20.5,16.5,21.5,16.5,21.5"/><path style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M12.5,21.5 C12.5,21.5,11.5,20.5,11.5,20.5 C11.5,20.5,10.5,21.5,10.5,21.5"/><path style="fill:#e4e4e4;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M10.5,14.5 C10.5,14.5,18.5,14.5,18.5,14.5 C18.5,14.5,18.5,19.5,18.5,19.5 C18.5,19.5,10.5,19.5,10.5,19.5 C10.5,19.5,10.5,14.5,10.5,14.5 z"/><g><g><path style="fill:#5e78ca;fill-rule:nonzero;stroke:#f2f2f2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M14,16.5 C14,16.5,16,16.5,16,16.5 C16,16.5,14.53,19.5,14.53,19.5"/><path style="fill:#5e78ca;fill-rule:evenodd;stroke:none;" d="M3.59,8.5 C3.59,8.5,12.59,8.5,12.59,8.5 C12.59,8.5,14.53,19.5,14.53,19.5 C14.53,19.5,5.53,19.5,5.53,19.5 C5.53,19.5,3.59,8.5,3.59,8.5 z"/><path style="fill:#5e78ca;fill-rule:nonzero;stroke:#f2f2f2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M12.59,8.5 C12.59,8.5,11.12,11.5,11.12,11.5 C11.12,11.5,2.12,11.5,2.12,11.5 C2.12,11.5,3.59,8.5,3.59,8.5"/><path style="fill:#5e78ca;fill-rule:nonzero;stroke:#f2f2f2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M12.59,8.5 C12.59,8.5,14.53,19.5,14.53,19.5"/><path style="fill:#5e78ca;fill-rule:nonzero;stroke:#f2f2f2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M4.12,11.5 C4.12,11.5,5.53,19.5,5.53,19.5"/></g><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M9.24,12.5 C10.75,12.5,12.20,13.73,12.46,15.24 C12.46,15.24,12.46,15.24,12.46,15.24 C12.68,16.49,11.85,17.5,10.60,17.5 C10.60,17.5,10.55,17.5,10.55,17.5 C10.17,17.5,9.92,17.81,9.98,18.19 C9.98,18.19,9.98,18.19,9.98,18.19 C10.21,19.47,9.36,20.5,8.08,20.5 C8.08,20.5,6.39,20.5,6.39,20.5 C5.10,20.5,3.87,19.45,3.64,18.16 C3.64,18.16,3.12,15.21,3.12,15.21 C2.86,13.71,3.86,12.5,5.35,12.5 C5.35,12.5,9.24,12.5,9.24,12.5 z"/></g></g></svg> ',
+  tosiXr: '<svg class="color" viewBox="0 0 24 24"><g><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M8.00,14.25 C8.00,14.25,5.00,15.25,5.00,17.25 C5.00,19.25,8.00,19.25,8.00,19.25"/><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M16.00,14.25 C16.00,14.25,19.00,15.25,19.00,17.25 C19.00,19.25,16.00,19.25,16.00,19.25"/><path style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M4.50,4.85 C4.50,3.69,5.40,2.75,6.50,2.75 C6.50,2.75,17.50,2.75,17.50,2.75 C18.61,2.75,19.50,3.69,19.50,4.85 C19.50,4.85,19.50,12.16,19.50,12.16 C19.50,13.32,18.61,14.25,17.50,14.25 C17.50,14.25,6.50,14.25,6.50,14.25 C5.40,14.25,4.50,13.32,4.50,12.16 C4.50,12.16,4.50,4.85,4.50,4.85 z"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M12.00,5.25 C12.00,5.25,12.00,11.25,12.00,11.25"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M14.00,7.25 C14.00,7.25,14.00,8.25,14.00,8.25"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M10.00,7.25 C10.00,7.25,10.00,8.25,10.00,8.25"/><path style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M16.00,21.25 C16.00,21.25,15.00,20.25,15.00,20.25 C15.00,20.25,14.00,21.25,14.00,21.25"/><path style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M10.00,21.25 C10.00,21.25,9.00,20.25,9.00,20.25 C9.00,20.25,8.00,21.25,8.00,21.25"/><path style="fill:#e4e4e4;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M8.00,14.25 C8.00,14.25,16.00,14.25,16.00,14.25 C16.00,14.25,16.00,19.25,16.00,19.25 C16.00,19.25,8.00,19.25,8.00,19.25 C8.00,19.25,8.00,14.25,8.00,14.25 z"/><path style="fill:#ff7bac;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-width:1;" d="M12.00,4.00 C12.00,4,11.99,4,11.99,4 C6.19,4,3,4.73,3,8.50 C3,11.39,4.66,13.00,7.27,13 C9.88,13.00,10.68,11.13,11.99,11.13 C11.99,11.13,12.00,11.13,12,11.13 C12.00,11.13,12.01,11.13,12.01,11.13 C13.32,11.13,14.12,13.00,16.73,13 C19.34,13.00,21,11.39,21,8.50 C21,4.73,17.81,4,12.01,4 C12.01,4,12.00,4,12.00,4.00 C12.00,4.00,12.00,4.00,12.00,4.00 z"/></g></svg> ',
+  cmy: '<svg class="color filled" viewBox="0 0 24 24"><g><g><path style="fill:#00ff00;fill-rule:evenodd;" d="M12.00,10.88 C10.90,10.01,9.51,9.5,8.00,9.5 C7.22,9.5,6.47,9.64,5.78,9.89 C6.37,11.85,7.87,13.42,9.78,14.11 C10.17,12.81,10.96,11.69,12.00,10.88 z"/><path style="fill:#0000ff;fill-rule:evenodd;" d="M12.00,10.88 C13.10,10.01,14.49,9.5,16,9.5 C16.78,9.5,17.53,9.64,18.22,9.89 C17.63,11.85,16.13,13.42,14.22,14.11 C13.83,12.81,13.04,11.69,12.00,10.88 C12.00,10.88,12.00,10.88,12.00,10.88 z"/><path style="fill:#000000;fill-rule:evenodd;" d="M9.78,14.11 C10.17,12.81,10.96,11.69,12.00,10.88 C13.04,11.69,13.83,12.81,14.22,14.11 C13.53,14.36,12.78,14.5,12,14.5 C11.22,14.5,10.47,14.36,9.78,14.11 C9.78,14.11,9.78,14.11,9.78,14.11 z"/><path style="fill:#ff0000;fill-rule:evenodd;" d="M9.78,14.11 C9.60,14.71,9.5,15.34,9.5,16 C9.5,18.08,10.48,19.93,12.00,21.12 C13.52,19.93,14.50,18.08,14.50,16 C14.50,15.34,14.40,14.71,14.22,14.11 C13.53,14.36,12.78,14.5,12,14.5 C11.22,14.5,10.47,14.36,9.78,14.11 C9.78,14.11,9.78,14.11,9.78,14.11 z"/><path style="fill:#02fefe;fill-rule:evenodd;" d="M5.78,9.89 C5.60,9.29,5.5,8.66,5.5,8 C5.5,4.41,8.41,1.5,12,1.5 C15.59,1.5,18.5,4.41,18.5,8 C18.5,8.66,18.40,9.29,18.22,9.89 C17.53,9.64,16.78,9.5,16,9.5 C14.49,9.5,13.10,10.01,12.00,10.88 C10.90,10.01,9.51,9.5,8.00,9.5 C7.22,9.5,6.47,9.64,5.78,9.89 C5.78,9.89,5.78,9.89,5.78,9.89 z"/><path style="fill:#fffe00;fill-rule:evenodd;" d="M5.78,9.89 C3.28,10.80,1.50,13.19,1.50,16 C1.50,19.59,4.41,22.5,8.00,22.5 C9.51,22.5,10.90,21.99,12.00,21.12 C10.48,19.93,9.5,18.08,9.5,16 C9.5,15.34,9.60,14.71,9.78,14.11 C7.87,13.42,6.37,11.85,5.78,9.89 C5.78,9.89,5.78,9.89,5.78,9.89 z"/><path style="fill:#ff00ff;fill-rule:evenodd;" d="M18.22,9.89 C20.72,10.80,22.5,13.19,22.5,16 C22.5,19.59,19.59,22.5,16,22.5 C14.49,22.5,13.10,21.99,12.00,21.12 C13.52,19.93,14.50,18.08,14.50,16 C14.50,15.34,14.40,14.71,14.22,14.11 C16.13,13.42,17.63,11.85,18.22,9.89 z"/></g></g></svg> ',
+  rgb: '<svg class="color filled" viewBox="0 0 24 24"><g><g><path style="fill:#ff00ff;fill-rule:evenodd;" d="M12.00,10.88 C10.90,10.01,9.51,9.5,8.00,9.5 C7.22,9.5,6.47,9.64,5.78,9.89 C6.37,11.85,7.87,13.42,9.78,14.11 C10.17,12.81,10.96,11.69,12.00,10.88 z"/><path style="fill:#ffff00;fill-rule:evenodd;" d="M12.00,10.88 C13.10,10.01,14.49,9.5,16,9.5 C16.78,9.5,17.53,9.64,18.22,9.89 C17.63,11.85,16.13,13.42,14.22,14.11 C13.83,12.81,13.04,11.69,12.00,10.88 C12.00,10.88,12.00,10.88,12.00,10.88 z"/><path style="fill:#ffffff;fill-rule:evenodd;" d="M9.78,14.11 C10.17,12.81,10.96,11.69,12.00,10.88 C13.04,11.69,13.83,12.81,14.22,14.11 C13.53,14.36,12.78,14.5,12,14.5 C11.22,14.5,10.47,14.36,9.78,14.11 C9.78,14.11,9.78,14.11,9.78,14.11 z"/><path style="fill:#00ffff;fill-rule:evenodd;" d="M9.78,14.11 C9.60,14.71,9.5,15.34,9.5,16 C9.5,18.08,10.48,19.93,12.00,21.12 C13.52,19.93,14.50,18.08,14.50,16 C14.50,15.34,14.40,14.71,14.22,14.11 C13.53,14.36,12.78,14.5,12,14.5 C11.22,14.5,10.47,14.36,9.78,14.11 C9.78,14.11,9.78,14.11,9.78,14.11 z"/><path style="fill:#ff0000;fill-rule:evenodd;" d="M5.78,9.89 C5.60,9.29,5.5,8.66,5.5,8 C5.5,4.41,8.41,1.5,12,1.5 C15.59,1.5,18.5,4.41,18.5,8 C18.5,8.66,18.40,9.29,18.22,9.89 C17.53,9.64,16.78,9.5,16,9.5 C14.49,9.5,13.10,10.01,12.00,10.88 C10.90,10.01,9.51,9.5,8.00,9.5 C7.22,9.5,6.47,9.64,5.78,9.89 C5.78,9.89,5.78,9.89,5.78,9.89 z"/><path style="fill:#0000ff;fill-rule:evenodd;" d="M5.78,9.89 C3.28,10.80,1.50,13.19,1.50,16 C1.50,19.59,4.41,22.5,8.00,22.5 C9.51,22.5,10.90,21.99,12.00,21.12 C10.48,19.93,9.5,18.08,9.5,16 C9.5,15.34,9.60,14.71,9.78,14.11 C7.87,13.42,6.37,11.85,5.78,9.89 C5.78,9.89,5.78,9.89,5.78,9.89 z"/><path style="fill:#00ff00;fill-rule:evenodd;" d="M18.22,9.89 C20.72,10.80,22.5,13.19,22.5,16 C22.5,19.59,19.59,22.5,16,22.5 C14.49,22.5,13.10,21.99,12.00,21.12 C13.52,19.93,14.50,18.08,14.50,16 C14.50,15.34,14.40,14.71,14.22,14.11 C16.13,13.42,17.63,11.85,18.22,9.89 z"/></g></g></svg> ',
+  xrColor: '<svg class="color filled" viewBox="0 0 40 24"><g><g><g><path style="fill:#000000;fill-rule:evenodd;" d="M20.00,2.00 C19.99,2.00,19.98,2,19.98,2 C8.39,2,2,3.61,2,12.00 C2,18.41,5.32,22.00,10.54,22 C15.77,22.00,17.37,17.85,19.98,17.85 C19.98,17.85,19.99,17.85,20,17.85 C20.01,17.85,20.02,17.85,20.02,17.85 C22.63,17.85,24.23,22.00,29.46,22 C34.68,22.00,38,18.41,38,12.00 C38,3.61,31.61,2,20.02,2 C20.02,2,20.01,2.00,20.00,2.00 C20.00,2.00,20.00,2.00,20.00,2.00 z"/></g><path style="fill:#fbed21;fill-rule:evenodd;" d="M12.20,19.84 C15.79,19.39,17.07,16.46,19.07,16.46 C19.07,16.46,19.08,16.46,19.09,16.46 C19.09,16.46,19.10,16.46,19.11,16.46 C19.44,16.46,19.75,16.54,20.06,16.68 C20.37,16.54,20.68,16.46,21.01,16.46 C21.02,16.46,21.02,16.46,21.03,16.46 C21.04,16.46,21.04,16.46,21.05,16.46 C23.05,16.46,24.33,19.39,27.92,19.84 C31.66,19.40,33.98,16.50,33.98,11.62 C33.98,4.91,29.04,3.44,20.06,3.35 C11.07,3.44,6.14,4.91,6.14,11.62 C6.14,16.50,8.46,19.40,12.20,19.84 z"/><path style="fill:#8cc63f;fill-rule:evenodd;" d="M12.20,19.84 C12.52,19.87,12.86,19.89,13.21,19.89 C16.86,19.89,18.37,17.43,20.06,16.68 C19.75,16.54,19.44,16.46,19.11,16.46 C19.10,16.46,19.09,16.46,19.09,16.46 C19.08,16.46,19.07,16.46,19.07,16.46 C17.07,16.46,15.79,19.39,12.20,19.84 z"/><path style="fill:#8cc63f;fill-rule:evenodd;" d="M20.06,3.35 C20.37,3.35,20.69,3.35,21.01,3.35 C21.02,3.35,21.02,3.35,21.03,3.35 C21.03,3.35,21.03,3.35,21.03,3.35 C21.04,3.35,21.04,3.35,21.05,3.35 C30.64,3.35,35.92,4.68,35.92,11.62 C35.92,16.92,33.18,19.89,28.86,19.89 C28.53,19.89,28.22,19.87,27.92,19.84 C31.66,19.40,33.98,16.50,33.98,11.62 C33.98,4.91,29.04,3.44,20.06,3.35 C20.06,3.35,20.06,3.35,20.06,3.35 z"/><path style="fill:#ff1c23;fill-rule:evenodd;" d="M20.06,16.68 C21.74,17.43,23.25,19.89,26.91,19.89 C27.26,19.89,27.59,19.87,27.92,19.84 C24.33,19.39,23.05,16.46,21.05,16.46 C21.04,16.46,21.04,16.46,21.03,16.46 C21.02,16.46,21.02,16.46,21.01,16.46 C20.68,16.46,20.37,16.54,20.06,16.68 z"/><path style="fill:#ff1c23;fill-rule:evenodd;" d="M12.20,19.84 C11.90,19.87,11.59,19.89,11.26,19.89 C6.94,19.89,4.19,16.92,4.19,11.62 C4.19,4.68,9.48,3.35,19.07,3.35 C19.07,3.35,19.08,3.35,19.09,3.35 C19.09,3.35,19.09,3.35,19.09,3.35 C19.09,3.35,19.1,3.35,19.11,3.35 C19.43,3.35,19.75,3.35,20.06,3.35 C11.07,3.44,6.14,4.91,6.14,11.62 C6.14,16.50,8.46,19.40,12.20,19.84 z"/></g><g><path style="fill:#8cc63e;fill-rule:nonzero;" d="M22.55,8.63 C22.55,9.05,22.55,9.46,22.55,9.88 C22.54,10.25,22.85,10.56,23.20,10.55 C23.54,10.56,23.85,10.25,23.85,9.88 C23.85,9.46,23.85,9.05,23.85,8.63 C23.85,8.26,23.54,7.95,23.20,7.96 C22.85,7.95,22.54,8.26,22.55,8.63 z"/><path style="fill:#8cc63e;fill-rule:nonzero;" d="M17.32,8.63 C17.32,9.05,17.32,9.46,17.32,9.88 C17.31,10.25,17.62,10.56,17.97,10.55 C18.31,10.56,18.62,10.25,18.62,9.88 C18.62,9.46,18.62,9.05,18.62,8.63 C18.62,8.26,18.31,7.95,17.97,7.96 C17.62,7.95,17.31,8.26,17.32,8.63 z"/><path style="fill:#8cc63e;fill-rule:nonzero;" d="M19.99,4.39 C19.99,8.09,19.99,11.80,19.99,15.50 C19.99,15.87,20.30,16.18,20.64,16.17 C20.99,16.18,21.30,15.87,21.29,15.50 C21.29,11.80,21.29,8.09,21.29,4.39 C21.30,4.02,20.99,3.71,20.64,3.72 C20.30,3.71,19.99,4.02,19.99,4.39 z"/><path style="fill:#fe1a22;fill-rule:nonzero;" d="M21.43,8.63 C21.43,9.05,21.43,9.46,21.43,9.88 C21.42,10.25,21.73,10.56,22.08,10.55 C22.42,10.56,22.73,10.25,22.73,9.88 C22.73,9.46,22.73,9.05,22.73,8.63 C22.73,8.26,22.42,7.95,22.08,7.96 C21.73,7.95,21.42,8.26,21.43,8.63 z"/><path style="fill:#fe1a22;fill-rule:nonzero;" d="M16.20,8.63 C16.20,9.05,16.20,9.46,16.20,9.88 C16.19,10.25,16.50,10.56,16.85,10.55 C17.19,10.56,17.50,10.25,17.50,9.88 C17.50,9.46,17.50,9.05,17.50,8.63 C17.50,8.26,17.19,7.95,16.85,7.96 C16.50,7.95,16.19,8.26,16.20,8.63 z"/><path style="fill:#fe1a22;fill-rule:nonzero;" d="M18.87,4.39 C18.87,8.09,18.87,11.80,18.87,15.50 C18.87,15.87,19.18,16.18,19.52,16.17 C19.86,16.18,20.18,15.87,20.17,15.50 C20.17,11.80,20.17,8.09,20.17,4.39 C20.18,4.02,19.86,3.71,19.52,3.72 C19.18,3.71,18.87,4.02,18.87,4.39 z"/><path style="fill:#000000;fill-rule:nonzero;" d="M21.97,8.63 C21.97,9.05,21.97,9.46,21.97,9.88 C21.97,10.25,22.28,10.56,22.62,10.55 C22.97,10.56,23.28,10.25,23.27,9.88 C23.27,9.46,23.27,9.05,23.27,8.63 C23.28,8.26,22.97,7.95,22.62,7.96 C22.28,7.95,21.97,8.26,21.97,8.63 z"/><path style="fill:#000000;fill-rule:nonzero;" d="M16.74,8.63 C16.74,9.05,16.74,9.46,16.74,9.88 C16.74,10.25,17.05,10.56,17.39,10.55 C17.74,10.56,18.05,10.25,18.04,9.88 C18.04,9.46,18.04,9.05,18.04,8.63 C18.05,8.26,17.74,7.95,17.39,7.96 C17.05,7.95,16.74,8.26,16.74,8.63 z"/><path style="fill:#000000;fill-rule:nonzero;" d="M19.41,4.39 C19.41,8.09,19.41,11.80,19.41,15.50 C19.41,15.87,19.72,16.18,20.07,16.17 C20.41,16.18,20.72,15.87,20.72,15.50 C20.72,11.80,20.72,8.09,20.72,4.39 C20.72,4.02,20.41,3.71,20.07,3.72 C19.72,3.71,19.41,4.02,19.41,4.39 z"/></g></g></svg> ',
+  tosiUi: '<svg class="color" viewBox="0 0 48 48"><g><g><g><path style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M3,33 C3,31.90,3.90,31,5,31 C5,31,43,31,43,31 C44.10,31,45,31.90,45,33 C45,33,45,43,45,43 C45,44.10,44.10,45,43,45 C43,45,5,45,5,45 C3.90,45,3,44.10,3,43 C3,43,3,33,3,33 z"/><g><path style="fill:#ffffff;fill-rule:evenodd;stroke:#ed247b;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M7,35 C7,35,7,36.34,7,38 C7,39.66,8.34,41,10,41 C11.66,41,13,39.66,13,38 C13,36.34,13,35,13,35"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#ed247b;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M17,35 C17,35,17,41,17,41"/></g><g><path style="fill:#ed247b;fill-rule:evenodd;stroke:none;" d="M38,33 C40.76,33,43,35.24,43,38 C43,40.76,40.76,43,38,43 C35.24,43,33,40.76,33,38 C33,35.24,35.24,33,38,33 z"/><path style="fill:#ed247b;fill-rule:nonzero;stroke:#ffffff;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M40,36 C40,36,36,40,36,40"/><path style="fill:#ed247b;fill-rule:nonzero;stroke:#ffffff;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M36,36 C36,36,40,40,40,40"/></g></g><g><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M15.97,21.01 C15.97,21.01,9.97,23.01,9.97,27.01 C9.97,31.01,15.97,31.01,15.97,31.01"/><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M31.97,21.01 C31.97,21.01,37.97,23.01,37.97,27.01 C37.97,31.01,31.97,31.01,31.97,31.01"/><path style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M31,33 C31,33,29.49,31,29.49,31 C29.49,31,27.97,33,27.97,33"/><path style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M19.97,33 C19.97,33,17.97,31,17.97,31 C17.97,31,15.97,33,15.97,33"/><path style="fill:#e4e4e4;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M15.97,21 C15.97,21,31.97,21,31.97,21 C31.97,21,31.97,31,31.97,31 C31.97,31,15.97,31,15.97,31 C15.97,31,15.97,21,15.97,21 z"/><path style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M9,7.18 C9,4.87,10.79,3,13.00,3 C13.00,3,35.02,3,35.02,3 C37.23,3,39.03,4.87,39.03,7.18 C39.03,7.18,39.03,21.82,39.03,21.82 C39.03,24.13,37.23,26,35.02,26 C35.02,26,13.00,26,13.00,26 C10.79,26,9,24.13,9,21.82 C9,21.82,9,7.18,9,7.18 z"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M24,11 C24,11,24,23,24,23"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M28,15 C28,15,28,17,28,17"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M20,15 C20,15,20,17,20,17"/></g></g></g></svg> ',
+  tosiFavicon: '<svg class="color" viewBox="0 0 48 48"><g><g><path style="fill:#ed247b;fill-rule:evenodd;stroke:none;" d="M1,9 C1,4.58,4.58,1,9,1 C9,1,39,1,39,1 C43.42,1,47,4.58,47,9 C47,9,47,39,47,39 C47,43.42,43.42,47,39,47 C39,47,9,47,9,47 C4.58,47,1,43.42,1,39 C1,39,1,9,1,9 z"/><g><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M16,29 C16,29,10,31,10,35 C10,39,16,39,16,39"/><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M32.00,29 C32.00,29,38.00,31,38.00,35 C38.00,39,32.00,39,32.00,39"/><path style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M9,10.18 C9,7.87,10.79,6,13,6 C13,6,35,6,35,6 C37.21,6,39,7.87,39,10.18 C39,10.18,39,24.82,39,24.82 C39,27.13,37.21,29,35,29 C35,29,13,29,13,29 C10.79,29,9,27.13,9,24.82 C9,24.82,9,10.18,9,10.18 z"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M24,11 C24,11,24,23,24,23"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M28,15 C28,15,28,17,28,17"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M20,15 C20,15,20,17,20,17"/><path style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M32,43 C32,43,30,41,30,41 C30,41,28,43,28,43"/><path style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M20,43 C20,43,18,41,18,41 C18,41,16,43,16,43"/><path style="fill:#e4e4e4;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M16,29 C16,29,32,29,32,29 C32,29,32,39,32,39 C32,39,16,39,16,39 C16,39,16,29,16,29 z"/></g></g></g></svg> ',
+  tosiPlatform: '<svg class="color" viewBox="0 0 48 48"><g><g><g><path style="fill:#3ea9f5;fill-rule:evenodd;stroke:none;" d="M23.97,47 C23.97,47,39,47,39,47 C43.42,47,47,43.42,47,39 C47,39,47,9,47,9 C47,4.58,43.42,1,39,1 C39,1,9,1,9,1 C4.58,1,1,4.58,1,9 C1,9,1,39,1,39 C1,41.64,2.28,43.98,4.25,45.44 C4.09,44.82,4,44.17,4,43.5 C4,39.36,7.36,36,11.5,36 C15.14,36,18.18,38.60,18.86,42.05 C19.07,42.02,19.28,42,19.5,42 C21.99,42,24,44.01,24,46.5 C24,46.67,23.99,46.84,23.97,47 z"/><path style="fill:#ffffff;fill-rule:evenodd;stroke:none;" d="M4.25,45.44 C4.09,44.82,4,44.17,4,43.5 C4,39.36,7.36,36,11.5,36 C15.14,36,18.18,38.60,18.86,42.05 C19.07,42.02,19.28,42,19.5,42 C21.99,42,24,44.01,24,46.5 C24,46.67,23.99,46.84,23.97,47 C23.97,47,9,47,9,47 C7.22,47,5.58,46.42,4.25,45.44 z"/></g><path style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M35,35 C35,35,32.17,35,32.17,35 C32.17,35,32.17,37.83,32.17,37.83"/><path style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M31,39 C31,39,28.17,39,28.17,39 C28.17,39,28.17,41.83,28.17,41.83"/><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M7.48,16 C4.45,16,2,18.45,2,21.48 C2,21.48,2,21.48,2,21.48 C2,23.98,4.02,26,6.52,26 C6.52,26,6.62,26,6.62,26 C7.38,26,8,26.62,8,27.38 C8,27.38,8,27.38,8,27.38 C8,29.93,10.07,32,12.62,32 C12.62,32,16,32,16,32 C18.58,32,20.68,29.91,20.68,27.32 C20.68,27.32,20.68,21.42,20.68,21.42 C20.68,18.43,18.25,16,15.26,16 C15.26,16,7.48,16,7.48,16 z"/><path style="fill:#e4e4e4;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M17,29 C17,29,33,29,33,29 C33,29,33,29,33,29 C33,34.52,28.52,39,23,39 C23,39,23,39,23,39 C19.69,39,17,36.31,17,33 C17,33,17,29,17,29 z"/><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M40.52,16 C43.55,16,46,18.45,46,21.48 C46,21.48,46,21.48,46,21.48 C46,23.98,43.98,26,41.48,26 C41.48,26,41.38,26,41.38,26 C40.62,26,40,26.62,40,27.38 C40,27.38,40,27.38,40,27.38 C40,29.93,37.93,32,35.38,32 C35.38,32,32,32,32,32 C29.42,32,27.32,29.91,27.32,27.32 C27.32,27.32,27.32,21.42,27.32,21.42 C27.32,18.43,29.75,16,32.74,16 C32.74,16,40.52,16,40.52,16 z"/><g><path style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M6,10.18 C6,7.87,7.79,6,10,6 C10,6,32,6,32,6 C34.21,6,36,7.87,36,10.18 C36,10.18,36,24.82,36,24.82 C36,27.13,34.21,29,32,29 C32,29,10,29,10,29 C7.79,29,6,27.13,6,24.82 C6,24.82,6,10.18,6,10.18 z"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M21,11 C21,11,21,23,21,23"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M25,15 C25,15,25,17,25,17"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:2;" d="M17,15 C17,15,17,17,17,17"/></g></g></g></svg> ',
+  tosi: '<svg class="color" viewBox="0 0 24 24"><g><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M8.00,14.25 C8.00,14.25,5.00,15.25,5.00,17.25 C5.00,19.25,8.00,19.25,8.00,19.25"/><path style="fill:#9e9e9e;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M16.00,14.25 C16.00,14.25,19.00,15.25,19.00,17.25 C19.00,19.25,16.00,19.25,16.00,19.25"/><path style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M4.50,4.85 C4.50,3.69,5.40,2.75,6.50,2.75 C6.50,2.75,17.50,2.75,17.50,2.75 C18.61,2.75,19.50,3.69,19.50,4.85 C19.50,4.85,19.50,12.16,19.50,12.16 C19.50,13.32,18.61,14.25,17.50,14.25 C17.50,14.25,6.50,14.25,6.50,14.25 C5.40,14.25,4.50,13.32,4.50,12.16 C4.50,12.16,4.50,4.85,4.50,4.85 z"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M12.00,5.25 C12.00,5.25,12.00,11.25,12.00,11.25"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M14.00,7.25 C14.00,7.25,14.00,8.25,14.00,8.25"/><path style="fill:#ffffff;fill-rule:nonzero;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M10.00,7.25 C10.00,7.25,10.00,8.25,10.00,8.25"/><path style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M16.00,21.25 C16.00,21.25,15.00,20.25,15.00,20.25 C15.00,20.25,14.00,21.25,14.00,21.25"/><path style="fill:none;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M10.00,21.25 C10.00,21.25,9.00,20.25,9.00,20.25 C9.00,20.25,8.00,21.25,8.00,21.25"/><path style="fill:#e4e4e4;fill-rule:evenodd;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-width:1;" d="M8.00,14.25 C8.00,14.25,16.00,14.25,16.00,14.25 C16.00,14.25,16.00,19.25,16.00,19.25 C16.00,19.25,8.00,19.25,8.00,19.25 C8.00,19.25,8.00,14.25,8.00,14.25 z"/></g></svg> ',
+  sortDescending: '<svg class="stroked" viewBox="0 0 24 24"><g><path d="M16.5,14.5 C16.5,14.5,7.5,14.5,7.5,14.5"/><path d="M14.5,18.5 C14.5,18.5,9.5,18.5,9.5,18.5"/><path d="M18.5,10.5 C18.5,10.5,5.5,10.5,5.5,10.5"/><path d="M20.5,6.5 C20.5,6.5,3.5,6.5,3.5,6.5"/></g></svg> ',
+  columns: '<svg class="stroked" viewBox="0 0 24 24"><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7m0-18H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7m0-18v18"></path></svg>',
+  underline: '<svg class="stroked" viewBox="0 0 24 24"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"></path><line x1="4" y1="21" x2="20" y2="21"></line></svg>',
+  grid: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
+  triangle: '<svg class="stroked" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>',
+  search: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+  volume2: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>',
+  arrowUpCircle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="16 12 12 8 8 12"></polyline><line x1="12" y1="16" x2="12" y2="8"></line></svg>',
+  pauseCircle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="10" y1="15" x2="10" y2="9"></line><line x1="14" y1="15" x2="14" y2="9"></line></svg>',
+  checkSquare: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>',
+  arrowDown: '<svg class="stroked" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>',
+  figma: '<svg class="stroked" viewBox="0 0 24 24"><path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H12v7H8.5A3.5 3.5 0 0 1 5 5.5z"></path><path d="M12 2h3.5a3.5 3.5 0 1 1 0 7H12V2z"></path><path d="M12 12.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 1 1-7 0z"></path><path d="M5 19.5A3.5 3.5 0 0 1 8.5 16H12v3.5a3.5 3.5 0 1 1-7 0z"></path><path d="M5 12.5A3.5 3.5 0 0 1 8.5 9H12v7H8.5A3.5 3.5 0 0 1 5 12.5z"></path></svg>',
+  cornerRightUp: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="10 9 15 4 20 9"></polyline><path d="M4 20h7a4 4 0 0 0 4-4V4"></path></svg>',
+  chevronsRight: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>',
+  list: '<svg class="stroked" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
+  chevronsDown: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="7 13 12 18 17 13"></polyline><polyline points="7 6 12 11 17 6"></polyline></svg>',
+  wind: '<svg class="stroked" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path></svg>',
+  cornerUpRight: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="15 14 20 9 15 4"></polyline><path d="M4 20v-7a4 4 0 0 1 4-4h12"></path></svg>',
+  target: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>',
+  scissors: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>',
+  minimize2: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>',
+  playCircle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>',
+  crosshair: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="22" y1="12" x2="18" y2="12"></line><line x1="6" y1="12" x2="2" y2="12"></line><line x1="12" y1="6" x2="12" y2="2"></line><line x1="12" y1="22" x2="12" y2="18"></line></svg>',
+  airplay: '<svg class="stroked" viewBox="0 0 24 24"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path><polygon points="12 15 17 21 7 21 12 15"></polygon></svg>',
+  xOctagon: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+  repeat: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>',
+  edit3: '<svg class="stroked" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>',
+  volume1: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>',
+  sunrise: '<svg class="stroked" viewBox="0 0 24 24"><path d="M17 18a5 5 0 0 0-10 0"></path><line x1="12" y1="2" x2="12" y2="9"></line><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line><line x1="1" y1="18" x2="3" y2="18"></line><line x1="21" y1="18" x2="23" y2="18"></line><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line><line x1="23" y1="22" x2="1" y2="22"></line><polyline points="8 6 12 2 16 6"></polyline></svg>',
+  toggleRight: '<svg class="stroked" viewBox="0 0 24 24"><rect x="1" y="5" width="22" height="14" rx="7" ry="7"></rect><circle cx="16" cy="12" r="3"></circle></svg>',
+  umbrella: '<svg class="stroked" viewBox="0 0 24 24"><path d="M23 12a11.05 11.05 0 0 0-22 0zm-5 7a3 3 0 0 1-6 0v-7"></path></svg>',
+  user: '<svg class="stroked" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+  fileMinus: '<svg class="stroked" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>',
+  xCircle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>',
+  circle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle></svg>',
+  phoneMissed: '<svg class="stroked" viewBox="0 0 24 24"><line x1="23" y1="1" x2="17" y2="7"></line><line x1="17" y1="1" x2="23" y2="7"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>',
+  edit2: '<svg class="stroked" viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>',
+  cornerLeftUp: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="14 9 9 4 4 9"></polyline><path d="M20 20h-7a4 4 0 0 1-4-4V4"></path></svg>',
+  home: '<svg class="stroked" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
+  gitlab: '<svg class="stroked" viewBox="0 0 24 24"><path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 0 1-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 0 1 4.82 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0 1 18.6 2a.43.43 0 0 1 .58 0 .42.42 0 0 1 .11.18l2.44 7.51L23 13.45a.84.84 0 0 1-.35.94z"></path></svg>',
+  music: '<svg class="stroked" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>',
+  smartphone: '<svg class="stroked" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>',
+  moreHorizontal: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>',
+  sliders: '<svg class="stroked" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>',
+  arrowUpLeft: '<svg class="stroked" viewBox="0 0 24 24"><line x1="17" y1="17" x2="7" y2="7"></line><polyline points="7 17 7 7 17 7"></polyline></svg>',
+  chevronDown: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>',
+  hexagon: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>',
+  github: '<svg class="stroked" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>',
+  crop: '<svg class="stroked" viewBox="0 0 24 24"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>',
+  tag: '<svg class="stroked" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>',
+  briefcase: '<svg class="stroked" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>',
+  rotateCw: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>',
+  map: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>',
+  inbox: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>',
+  alignJustify: '<svg class="stroked" viewBox="0 0 24 24"><line x1="21" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="3" y2="18"></line></svg>',
+  plusSquare: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>',
+  power: '<svg class="stroked" viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>',
+  database: '<svg class="stroked" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>',
+  cameraOff: '<svg class="stroked" viewBox="0 0 24 24"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34m-7.72-2.06a4 4 0 1 1-5.56-5.56"></path></svg>',
+  toggleLeft: '<svg class="stroked" viewBox="0 0 24 24"><rect x="1" y="5" width="22" height="14" rx="7" ry="7"></rect><circle cx="8" cy="12" r="3"></circle></svg>',
+  file: '<svg class="stroked" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>',
+  messageCircle: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>',
+  voicemail: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="5.5" cy="11.5" r="4.5"></circle><circle cx="18.5" cy="11.5" r="4.5"></circle><line x1="5.5" y1="16" x2="18.5" y2="16"></line></svg>',
+  terminal: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>',
+  move: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="5 9 2 12 5 15"></polyline><polyline points="9 5 12 2 15 5"></polyline><polyline points="15 19 12 22 9 19"></polyline><polyline points="19 9 22 12 19 15"></polyline><line x1="2" y1="12" x2="22" y2="12"></line><line x1="12" y1="2" x2="12" y2="22"></line></svg>',
+  maximize: '<svg class="stroked" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>',
+  chevronUp: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"></polyline></svg>',
+  arrowDownLeft: '<svg class="stroked" viewBox="0 0 24 24"><line x1="17" y1="7" x2="7" y2="17"></line><polyline points="17 17 7 17 7 7"></polyline></svg>',
+  fileText: '<svg class="stroked" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>',
+  droplet: '<svg class="stroked" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>',
+  zapOff: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="12.41 6.75 13 2 10.57 4.92"></polyline><polyline points="18.57 12.91 21 10 15.66 10"></polyline><polyline points="8 8 3 14 12 14 11 22 16 16"></polyline><line x1="1" y1="1" x2="23" y2="23"></line></svg>',
+  x: '<svg class="stroked" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
+  barChart: '<svg class="stroked" viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>',
+  lock: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
+  logIn: '<svg class="stroked" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>',
+  shoppingBag: '<svg class="stroked" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>',
+  divide: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="6" r="2"></circle><line x1="5" y1="12" x2="19" y2="12"></line><circle cx="12" cy="18" r="2"></circle></svg>',
+  cloudDrizzle: '<svg class="stroked" viewBox="0 0 24 24"><line x1="8" y1="19" x2="8" y2="21"></line><line x1="8" y1="13" x2="8" y2="15"></line><line x1="16" y1="19" x2="16" y2="21"></line><line x1="16" y1="13" x2="16" y2="15"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="12" y1="15" x2="12" y2="17"></line><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>',
+  refreshCw: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>',
+  chevronRight: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>',
+  clipboard: '<svg class="stroked" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>',
+  package: '<svg class="stroked" viewBox="0 0 24 24"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>',
+  instagram: '<svg class="stroked" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>',
+  link: '<svg class="stroked" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>',
+  videoOff: '<svg class="stroked" viewBox="0 0 24 24"><path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>',
+  key: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>',
+  meh: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="15" x2="16" y2="15"></line><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>',
+  cornerDownRight: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="15 10 20 15 15 20"></polyline><path d="M4 4v7a4 4 0 0 0 4 4h12"></path></svg>',
+  arrowRight: '<svg class="stroked" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>',
+  aperture: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="14.31" y1="8" x2="20.05" y2="17.94"></line><line x1="9.69" y1="8" x2="21.17" y2="8"></line><line x1="7.38" y1="12" x2="13.12" y2="2.06"></line><line x1="9.69" y1="16" x2="3.95" y2="6.06"></line><line x1="14.31" y1="16" x2="2.83" y2="16"></line><line x1="16.62" y1="12" x2="10.88" y2="21.94"></line></svg>',
+  stopCircle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><rect x="9" y="9" width="6" height="6"></rect></svg>',
+  logOut: '<svg class="stroked" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>',
+  arrowLeftCircle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 8 8 12 12 16"></polyline><line x1="16" y1="12" x2="8" y2="12"></line></svg>',
+  barChart2: '<svg class="stroked" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>',
+  gitPullRequest: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M13 6h3a2 2 0 0 1 2 2v7"></path><line x1="6" y1="9" x2="6" y2="21"></line></svg>',
+  minimize: '<svg class="stroked" viewBox="0 0 24 24"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>',
+  minusSquare: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="8" y1="12" x2="16" y2="12"></line></svg>',
+  settings: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
+  cloudSnow: '<svg class="stroked" viewBox="0 0 24 24"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"></path><line x1="8" y1="16" x2="8.01" y2="16"></line><line x1="8" y1="20" x2="8.01" y2="20"></line><line x1="12" y1="18" x2="12.01" y2="18"></line><line x1="12" y1="22" x2="12.01" y2="22"></line><line x1="16" y1="16" x2="16.01" y2="16"></line><line x1="16" y1="20" x2="16.01" y2="20"></line></svg>',
+  thumbsDown: '<svg class="stroked" viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>',
+  type: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>',
+  archive: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>',
+  phoneOutgoing: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="23 7 23 1 17 1"></polyline><line x1="16" y1="8" x2="23" y2="1"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>',
+  pocket: '<svg class="stroked" viewBox="0 0 24 24"><path d="M4 3h16a2 2 0 0 1 2 2v6a10 10 0 0 1-10 10A10 10 0 0 1 2 11V5a2 2 0 0 1 2-2z"></path><polyline points="8 10 12 14 16 10"></polyline></svg>',
+  mail: '<svg class="stroked" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>',
+  shield: '<svg class="stroked" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>',
+  download: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
+  phoneForwarded: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="19 1 23 5 19 9"></polyline><line x1="15" y1="5" x2="23" y2="5"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>',
+  cornerRightDown: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path></svg>',
+  bookOpen: '<svg class="stroked" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>',
+  divideSquare: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="8" y1="12" x2="16" y2="12"></line><line x1="12" y1="16" x2="12" y2="16"></line><line x1="12" y1="8" x2="12" y2="8"></line></svg>',
+  server: '<svg class="stroked" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>',
+  tv: '<svg class="stroked" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>',
+  skipForward: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>',
+  volume: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>',
+  userPlus: '<svg class="stroked" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>',
+  batteryCharging: '<svg class="stroked" viewBox="0 0 24 24"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"></path><line x1="23" y1="13" x2="23" y2="11"></line><polyline points="11 6 7 12 13 12 9 18"></polyline></svg>',
+  layers: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>',
+  slash: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>',
+  radio: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path></svg>',
+  book: '<svg class="stroked" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>',
+  userMinus: '<svg class="stroked" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="23" y1="11" x2="17" y2="11"></line></svg>',
+  bell: '<svg class="stroked" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>',
+  gitBranch: '<svg class="stroked" viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>',
+  coffee: '<svg class="stroked" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>',
+  code: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>',
+  thermometer: '<svg class="stroked" viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>',
+  cast: '<svg class="stroked" viewBox="0 0 24 24"><path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"></path><line x1="2" y1="20" x2="2.01" y2="20"></line></svg>',
+  flag: '<svg class="stroked" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>',
+  eyeOff: '<svg class="stroked" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>',
+  battery: '<svg class="stroked" viewBox="0 0 24 24"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line></svg>',
+  disc: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>',
+  frown: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M16 16s-1.5-2-4-2-4 2-4 2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>',
+  tool: '<svg class="stroked" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>',
+  cpu: '<svg class="stroked" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>',
+  bold: '<svg class="stroked" viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path></svg>',
+  hash: '<svg class="stroked" viewBox="0 0 24 24"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>',
+  share2: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>',
+  plus: '<svg class="stroked" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
+  check: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+  rotateCcw: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>',
+  hardDrive: '<svg class="stroked" viewBox="0 0 24 24"><line x1="22" y1="12" x2="2" y2="12"></line><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path><line x1="6" y1="16" x2="6.01" y2="16"></line><line x1="10" y1="16" x2="10.01" y2="16"></line></svg>',
+  bluetooth: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"></polyline></svg>',
+  pieChart: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>',
+  headphones: '<svg class="stroked" viewBox="0 0 24 24"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>',
+  rss: '<svg class="stroked" viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>',
+  wifi: '<svg class="stroked" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>',
+  cornerUpLeft: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg>',
+  watch: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle><polyline points="12 9 12 12 13.5 13.5"></polyline><path d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7l.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"></path></svg>',
+  info: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+  userX: '<svg class="stroked" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="18" y1="8" x2="23" y2="13"></line><line x1="23" y1="8" x2="18" y2="13"></line></svg>',
+  loader: '<svg class="stroked" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>',
+  refreshCcw: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>',
+  folderPlus: '<svg class="stroked" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>',
+  gitMerge: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M6 21V9a9 9 0 0 0 9 9"></path></svg>',
+  mic: '<svg class="stroked" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>',
+  copy: '<svg class="stroked" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
+  zoomIn: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>',
+  arrowRightCircle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg>',
+  alignRight: '<svg class="stroked" viewBox="0 0 24 24"><line x1="21" y1="10" x2="7" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="21" y1="18" x2="7" y2="18"></line></svg>',
+  image: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>',
+  maximize2: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>',
+  checkCircle: '<svg class="stroked" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+  sunset: '<svg class="stroked" viewBox="0 0 24 24"><path d="M17 18a5 5 0 0 0-10 0"></path><line x1="12" y1="9" x2="12" y2="2"></line><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"></line><line x1="1" y1="18" x2="3" y2="18"></line><line x1="21" y1="18" x2="23" y2="18"></line><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"></line><line x1="23" y1="22" x2="1" y2="22"></line><polyline points="16 5 12 9 8 5"></polyline></svg>',
+  save: '<svg class="stroked" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>',
+  smile: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>',
+  navigation: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>',
+  cloudLightning: '<svg class="stroked" viewBox="0 0 24 24"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path><polyline points="13 11 9 17 15 17 11 23"></polyline></svg>',
+  paperclip: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>',
+  fastForward: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>',
+  xSquare: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg>',
+  award: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>',
+  zoomOut: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>',
+  box: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>',
+  thumbsUp: '<svg class="stroked" viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>',
+  percent: '<svg class="stroked" viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>',
+  sidebar: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>',
+  square: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>',
+  play: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>',
+  gitCommit: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><line x1="1.05" y1="12" x2="7" y2="12"></line><line x1="17.01" y1="12" x2="22.96" y2="12"></line></svg>',
+  table: '<svg class="stroked" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"></path></svg>',
+  send: '<svg class="stroked" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>',
+  phoneCall: '<svg class="stroked" viewBox="0 0 24 24"><path d="M15.05 5A5 5 0 0 1 19 8.95M15.05 1A9 9 0 0 1 23 8.94m-1 7.98v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>',
+  speaker: '<svg class="stroked" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><circle cx="12" cy="14" r="4"></circle><line x1="12" y1="6" x2="12.01" y2="6"></line></svg>',
+  facebook: '<svg class="filled" version="1.1" viewBox="0 0 512 512"><g></g><path d="M464 0h-416c-26.4 0-48 21.6-48 48v416c0 26.4 21.6 48 48 48h208v-224h-64v-64h64v-32c0-52.9 43.1-96 96-96h64v64h-64c-17.6 0-32 14.4-32 32v32h96l-16 64h-80v224h144c26.4 0 48-21.6 48-48v-416c0-26.4-21.6-48-48-48z"></path></svg> ',
+  codesandbox: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline><polyline points="7.5 19.79 7.5 14.6 3 12"></polyline><polyline points="21 12 16.5 14.6 16.5 19.79"></polyline><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>',
+  camera: '<svg class="stroked" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>',
+  link2: '<svg class="stroked" viewBox="0 0 24 24"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg>',
+  printer: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>',
+  folderMinus: '<svg class="stroked" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="9" y1="14" x2="15" y2="14"></line></svg>',
+  arrowUpRight: '<svg class="stroked" viewBox="0 0 24 24"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>',
+  truck: '<svg class="stroked" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>',
+  lifeBuoy: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line><line x1="14.83" y1="9.17" x2="18.36" y2="5.64"></line><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line></svg>',
+  penTool: '<svg class="stroked" viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.59 7.59"></path><circle cx="11" cy="11" r="2"></circle></svg>',
+  atSign: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"></path></svg>',
+  feather: '<svg class="stroked" viewBox="0 0 24 24"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>',
+  trash: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>',
+  wifiOff: '<svg class="stroked" viewBox="0 0 24 24"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>',
+  cornerLeftDown: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="14 15 9 20 4 15"></polyline><path d="M20 4h-7a4 4 0 0 0-4 4v12"></path></svg>',
+  dollarSign: '<svg class="stroked" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>',
+  star: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
+  cloudOff: '<svg class="stroked" viewBox="0 0 24 24"><path d="M22.61 16.95A5 5 0 0 0 18 10h-1.26a8 8 0 0 0-7.05-6M5 5a8 8 0 0 0 4 15h9a5 5 0 0 0 1.7-.3"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>',
+  sun: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
+  messageSquare: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
+  edit: '<svg class="stroked" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>',
+  anchor: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"></circle><line x1="12" y1="22" x2="12" y2="8"></line><path d="M5 12H2a10 10 0 0 0 20 0h-3"></path></svg>',
+  alertCircle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
+  chevronsUp: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="17 11 12 6 7 11"></polyline><polyline points="17 18 12 13 7 18"></polyline></svg>',
+  uploadCloud: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path><polyline points="16 16 12 12 8 16"></polyline></svg>',
+  twitch: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21 2H3v16h5v4l4-4h5l4-4V2zm-10 9V7m5 4V7"></path></svg>',
+  youtube: '<svg class="filled" version="1.1" viewBox="0 0 512 512"><g></g><path d="M506.9 153.6c0 0-5-35.3-20.4-50.8-19.5-20.4-41.3-20.5-51.3-21.7-71.6-5.2-179.1-5.2-179.1-5.2h-0.2c0 0-107.5 0-179.1 5.2-10 1.2-31.8 1.3-51.3 21.7-15.4 15.5-20.3 50.8-20.3 50.8s-5.1 41.4-5.1 82.9v38.8c0 41.4 5.1 82.9 5.1 82.9s5 35.3 20.3 50.8c19.5 20.4 45.1 19.7 56.5 21.9 41 3.9 174.1 5.1 174.1 5.1s107.6-0.2 179.2-5.3c10-1.2 31.8-1.3 51.3-21.7 15.4-15.5 20.4-50.8 20.4-50.8s5.1-41.4 5.1-82.9v-38.8c-0.1-41.4-5.2-82.9-5.2-82.9zM203.1 322.4v-143.9l138.3 72.2-138.3 71.7z"></path></svg> ',
+  unlock: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>',
+  compass: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>',
+  plusCircle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>',
+  creditCard: '<svg class="stroked" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>',
+  cloudRain: '<svg class="stroked" viewBox="0 0 24 24"><line x1="16" y1="13" x2="16" y2="21"></line><line x1="8" y1="13" x2="8" y2="21"></line><line x1="12" y1="15" x2="12" y2="23"></line><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg>',
+  trash2: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>',
+  skipBack: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>',
+  filePlus: '<svg class="stroked" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>',
+  delete: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>',
+  command: '<svg class="stroked" viewBox="0 0 24 24"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"></path></svg>',
+  clock: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
+  octagon: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon></svg>',
+  phone: '<svg class="stroked" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>',
+  eye: '<svg class="stroked" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
+  phoneOff: '<svg class="stroked" viewBox="0 0 24 24"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"></path><line x1="23" y1="1" x2="1" y2="23"></line></svg>',
+  codepen: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon><line x1="12" y1="22" x2="12" y2="15.5"></line><polyline points="22 8.5 12 15.5 2 8.5"></polyline><polyline points="2 15.5 12 8.5 22 15.5"></polyline><line x1="12" y1="2" x2="12" y2="8.5"></line></svg>',
+  dribbble: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"></path></svg>',
+  gift: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>',
+  externalLink: '<svg class="stroked" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>',
+  zap: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
+  trello: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><rect x="7" y="7" width="3" height="9"></rect><rect x="14" y="7" width="3" height="5"></rect></svg>',
+  moreVertical: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>',
+  micOff: '<svg class="stroked" viewBox="0 0 24 24"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>',
+  share: '<svg class="stroked" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>',
+  arrowUp: '<svg class="stroked" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>',
+  bellOff: '<svg class="stroked" viewBox="0 0 24 24"><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><path d="M18.63 13A17.89 17.89 0 0 1 18 8"></path><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"></path><path d="M18 8a6 6 0 0 0-9.33-5"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>',
+  linkedin: '<svg class="stroked" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>',
+  video: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>',
+  divideCircle: '<svg class="stroked" viewBox="0 0 24 24"><line x1="8" y1="12" x2="16" y2="12"></line><line x1="12" y1="16" x2="12" y2="16"></line><line x1="12" y1="8" x2="12" y2="8"></line><circle cx="12" cy="12" r="10"></circle></svg>',
+  activity: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>',
+  twitter: '<svg class="stroked" viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>',
+  mapPin: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
+  filter: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>',
+  phoneIncoming: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="16 2 16 8 22 8"></polyline><line x1="23" y1="1" x2="16" y2="8"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>',
+  italic: '<svg class="stroked" viewBox="0 0 24 24"><line x1="19" y1="4" x2="10" y2="4"></line><line x1="14" y1="20" x2="5" y2="20"></line><line x1="15" y1="4" x2="9" y2="20"></line></svg>',
+  chevronsLeft: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg>',
+  calendar: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+  globe: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>',
+  arrowLeft: '<svg class="stroked" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>',
+  alignCenter: '<svg class="stroked" viewBox="0 0 24 24"><line x1="18" y1="10" x2="6" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="18" y1="18" x2="6" y2="18"></line></svg>',
+  minusCircle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>',
+  arrowDownRight: '<svg class="stroked" viewBox="0 0 24 24"><line x1="7" y1="7" x2="17" y2="17"></line><polyline points="17 7 17 17 7 17"></polyline></svg>',
+  framer: '<svg class="stroked" viewBox="0 0 24 24"><path d="M5 16V9h14V2H5l14 14h-7m-7 0l7 7v-7m-7 0h7"></path></svg>',
+  volumeX: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>',
+  slack: '<svg class="stroked" viewBox="0 0 24 24"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"></path><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"></path><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"></path><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"></path><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"></path><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"></path><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"></path><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"></path></svg>',
+  cloud: '<svg class="stroked" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>',
+  downloadCloud: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"></path></svg>',
+  shuffle: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>',
+  rewind: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>',
+  upload: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>',
+  trendingDown: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>',
+  pause: '<svg class="stroked" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>',
+  arrowDownCircle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg>',
+  bookmark: '<svg class="stroked" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>',
+  alertTriangle: '<svg class="stroked" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+  userCheck: '<svg class="stroked" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>',
+  tablet: '<svg class="stroked" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>',
+  alertOctagon: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
+  menu: '<svg class="stroked" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>',
+  chrome: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="21.17" y1="8" x2="12" y2="8"></line><line x1="3.95" y1="6.06" x2="8.54" y2="14"></line><line x1="10.88" y1="21.94" x2="15.46" y2="14"></line></svg>',
+  shoppingCart: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>',
+  folder: '<svg class="stroked" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>',
+  users: '<svg class="stroked" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
+  cornerDownLeft: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>',
+  monitor: '<svg class="stroked" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>',
+  minus: '<svg class="stroked" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line></svg>',
+  helpCircle: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+  navigation2: '<svg class="stroked" viewBox="0 0 24 24"><polygon points="12 2 19 21 12 17 5 21 12 2"></polygon></svg>',
+  chevronLeft: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>',
+  film: '<svg class="stroked" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>',
+  moon: '<svg class="stroked" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>',
+  shieldOff: '<svg class="stroked" viewBox="0 0 24 24"><path d="M19.69 14a6.9 6.9 0 0 0 .31-2V5l-8-3-3.16 1.18"></path><path d="M4.73 4.73L4 5v7c0 6 8 10 8 10a20.29 20.29 0 0 0 5.62-4.38"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>',
+  layout: '<svg class="stroked" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>',
+  mousePointer: '<svg class="stroked" viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path><path d="M13 13l6 6"></path></svg>',
+  alignLeft: '<svg class="stroked" viewBox="0 0 24 24"><line x1="17" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg>',
+  heart: '<svg class="stroked" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>',
+  trendingUp: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
+  fontBold: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M13.5,11 C15.71,11,17.5,12.68,17.5,14.75 C17.5,16.82,15.71,18.5,13.5,18.5 C13.5,18.5,8.5,18.5,8.5,18.5 C8.5,18.5,8.5,3.5,8.5,3.5 C8.5,3.5,13.5,3.5,13.5,3.5 C15.71,3.5,17.5,5.18,17.5,7.25 C17.5,9.32,15.71,11,13.5,11 C13.5,11,13.5,11,13.5,11 z"/><path style="" d="M13.5,11 C13.5,11,8.5,11,8.5,11"/><path style="" d="M12.5,11 C14.71,11,16.5,12.68,16.5,14.75 C16.5,16.82,14.71,18.5,12.5,18.5 C12.5,18.5,7.5,18.5,7.5,18.5 C7.5,18.5,7.5,3.5,7.5,3.5 C7.5,3.5,12.5,3.5,12.5,3.5 C14.71,3.5,16.5,5.18,16.5,7.25 C16.5,9.32,14.71,11,12.5,11 C12.5,11,12.5,11,12.5,11 z"/><path style="" d="M12.5,11 C12.5,11,7.5,11,7.5,11"/></g></svg> ',
+  fontItalic: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M17.00,4.50 C17.00,4.50,13.00,4.50,13.00,4.50"/><path style="" d="M11.00,19.50 C11.00,19.50,7.00,19.50,7.00,19.50"/><path style="" d="M15.00,4.50 C15.00,4.50,9.00,19.50,9.00,19.50"/></g></svg> ',
+  fontUnderline: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M7.5,3.5 C7.5,3.5,7.5,10.74,7.5,13.5 C7.5,16.26,9.74,18.5,12.5,18.5 C15.26,18.5,17.5,16.26,17.5,13.5 C17.5,10.74,17.5,3.5,17.5,3.5"/><path style="" d="M7.5,21.5 C7.5,21.5,17.5,21.5,17.5,21.5"/></g></svg> ',
+  resize: '<svg class="stroked" version="1.1" viewBox="0, 0, 24, 24"><g><path d="M9,3 L3,3 L3,9"/><path d="M15,21 L21,21 L21,15"/><path d="M3,3 L10,10"/><path d="M21,21 L14,14"/></g></svg> ',
+  bug: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M8,6 C8,3.79,9.79,2,12,2 C14.21,2,16,3.79,16,6 C16,6,8,6,8,6 z"/><path style="" d="M20,7 C20,7,18,9,18,9"/><path style="" d="M20,19 C20,19,18,17,18,17"/><path style="" d="M21,13 C21,13,18,13,18,13"/><path style="" d="M16.44,9 C17.30,9,18.00,9.70,18.00,10.56 C18.00,10.56,18.00,15.00,18.00,15.00 C18.00,18.31,15.31,21,12,21 C8.69,21,6,18.31,6,15.00 C6,15.00,6,10.56,6,10.56 C6,9.70,6.70,9,7.56,9 C7.56,9,16.44,9,16.44,9 z"/><path style="" d="M4,7 C4,7,6,9,6,9"/><path style="" d="M4,19 C4,19,6,17,6,17"/><path style="" d="M3,13 C3,13,6,13,6,13"/><path style="" d="M12,12 C12,12,12,17,12,17"/></g></svg> ',
+  blog: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M21,10.02 C21,10.02,21,15,21,15 C21,15.53,20.79,16.04,20.41,16.41 C20.04,16.79,19.53,17,19,17 C19,17,7,17,7,17 C5.67,18.33,4.33,19.67,3,21 C3,21,3,5,3,5 C3,4.47,3.21,3.96,3.59,3.59 C3.96,3.21,4.47,3,5,3 C8.53,3,10.49,3,14.02,3"/><path style="" d="M19,2 C19.54,1.46,20.32,1.25,21.05,1.45 C21.78,1.65,22.35,2.22,22.55,2.95 C22.75,3.68,22.54,4.46,22,5 C22,5,15.5,11.5,15.5,11.5 C14.17,11.83,12.83,12.17,11.5,12.5 C11.83,11.17,12.17,9.83,12.5,8.5 C15.67,5.33,15.83,5.17,19,2 z"/><path style="" d="M14.60,3"/><path style="" d="M21,8.77"/><path style="" d="M7,7 C7,7,10,7,10,7"/><path style="" d="M7,10 C7,10,9,10,9,10"/></g></svg> ',
+  sortAscending: '<svg class="stroked" viewBox="0 0 24 24"><g><path d="M16.5,10.5 C16.5,10.5,7.5,10.5,7.5,10.5"/><path d="M14.5,6.5 C14.5,6.5,9.5,6.5,9.5,6.5"/><path d="M18.5,14.5 C18.5,14.5,5.5,14.5,5.5,14.5"/><path d="M20.5,18.5 C20.5,18.5,3.5,18.5,3.5,18.5"/></g></svg> ',
+  npm: '<svg class="filled" version="1.1" viewBox="0 0 512 512"><g></g><path d="M0 0v512h512v-512h-512zM416 416h-64v-256h-96v256h-160v-320h320v320z"></path></svg> ',
+  game: '<svg class="filled" version="1.1" viewBox="0 0 704 512"><g></g><path d="M528 96.79v-0.79h-336c-88.36 0-160 71.64-160 160s71.64 160 160 160c52.34 0 98.82-25.14 128.01-64h63.98c29.19 38.86 75.66 64 128.01 64 88.37 0 160-71.63 160-160 0-82.97-63.15-151.18-144-159.21zM288 288h-64v64h-64v-64h-64v-64h64v-64h64v64h64v64zM480 288c-17.67 0-32-14.33-32-32s14.33-32 32-32 32 14.33 32 32-14.33 32-32 32zM576 288c-17.67 0-32-14.33-32-32 0-17.67 14.33-32 32-32s32 14.33 32 32c0 17.67-14.33 32-32 32z"></path></svg> ',
+  google: '<svg class="filled" version="1.1" viewBox="0 0 512 512"><g></g><path d="M256 0c-141.4 0-256 114.6-256 256s114.6 256 256 256 256-114.6 256-256-114.6-256-256-256zM259.8 448c-106.1 0-192-85.9-192-192s85.9-192 192-192c51.8 0 95.2 18.9 128.6 50.2l-52.1 50.2c-14.3-13.7-39.2-29.6-76.5-29.6-65.6 0-119 54.3-119 121.2s53.5 121.2 119 121.2c76 0 104.5-54.6 108.9-82.8h-108.9v-65.8h181.3c1.6 9.6 3 19.2 3 31.8 0.1 109.7-73.4 187.6-184.3 187.6z"></path></svg> ',
+  discord: '<svg class="filled" version="1.1" viewBox="0 0 1013 768"><g></g><path d="M858.38 64.32c-60.41-28.44-130.58-50.8-204.05-63.60l-5.01-0.72c-8.35 14.47-17.31 32.35-25.34 50.74l-1.44 3.7c-34.87-5.53-75.06-8.69-116.00-8.69s-81.14 3.16-120.37 9.25l4.37-0.56c-9.48-22.09-18.44-39.97-28.27-57.29l1.49 2.86c-78.56 13.64-148.78 36.05-214.41 66.65l5.19-2.17c-132.30 195.75-168.17 386.63-150.24 574.80v0c73.25 54.65 158.46 98.55 250.43 127.12l5.97 1.60c19.28-25.64 37.51-54.63 53.29-85.10l1.63-3.45c-33.48-12.62-61.98-26.51-88.96-42.66l2.48 1.38c7.25-5.26 14.35-10.68 21.2-15.94 75.07 36.14 163.23 57.26 256.32 57.26s181.25-21.12 259.94-58.83l-3.62 1.56c6.93 5.66 14.03 11.08 21.2 15.94-24.54 14.80-53.09 28.72-82.88 40.10l-3.75 1.26c17.37 33.87 35.61 62.84 56.05 90.05l-1.14-1.58c98.00-30.05 183.28-73.93 258.78-130.22l-2.22 1.58c21.04-218.22-35.95-407.35-150.63-575.04zM338.33 523.56c-49.97 0-91.26-45.35-91.26-101.14s39.85-101.54 91.10-101.54 92.21 45.75 91.34 101.54-40.25 101.14-91.18 101.14zM674.99 523.56c-50.05 0-91.18-45.35-91.18-101.14s39.85-101.54 91.18-101.54 91.97 45.75 91.10 101.54-40.17 101.14-91.10 101.14z"></path></svg> '
 };
 
 // src/icons.ts
-var { svg, path } = Un;
-function getIconSpec(name) {
-  let data = icon_data_default[name];
-  if (data === undefined) {
-    if (name) {
-      console.warn(`icon ${name} not found`);
-    }
-    data = icon_data_default.square;
-  }
-  return typeof data !== "string" ? data : {
-    w: 1024,
-    h: 1024,
-    p: [data]
-  };
-}
-var defineIcon = (name, icon) => {
-  icon_data_default[name] = icon;
+var defineIcons = (newIcons) => {
+  Object.assign(icon_data_default, newIcons);
 };
-var svg2DataUrl = (svg2, fill, stroke, strokeWidth = 1) => {
-  if (fill !== undefined) {
-    for (const path2 of [...svg2.querySelectorAll("path")]) {
-      path2.setAttribute("fill", fill);
-      if (stroke !== undefined) {
-        path2.setAttribute("stroke", stroke);
-        path2.setAttribute("stroke-width", String(Number(strokeWidth) * 32));
+var svg2DataUrl = (svg, fill, stroke, strokeWidth = 1) => {
+  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  if (fill || stroke) {
+    for (const path of [...svg.querySelectorAll("path, polygon")]) {
+      if (fill) {
+        path.setAttribute("fill", fill);
+      }
+      if (stroke) {
+        path.setAttribute("stroke", stroke);
+        path.setAttribute("stroke-width", String(strokeWidth));
       }
     }
   }
-  svg2.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  const styled = svg2.querySelectorAll("[style]");
-  svg2.removeAttribute("style");
+  const styled = svg.querySelectorAll("[style]");
+  svg.removeAttribute("style");
   for (const item of [...styled]) {
-    const [color] = item.getAttribute("style")?.match(/rgb\([^)]+\)/) || [];
+    const { fill: fill2, stroke: stroke2, strokeWidth: strokeWidth2, strokeLinecap, strokeLinejoin } = item.style;
+    if (fill2)
+      item.setAttribute("fill", a.fromCss(fill2).html);
+    if (stroke2)
+      item.setAttribute("stroke", a.fromCss(stroke2).html);
+    if (strokeWidth2)
+      item.setAttribute("strokeWidth", strokeWidth2);
+    if (strokeLinecap)
+      item.setAttribute("strokeLinecap", strokeLinecap);
+    if (strokeLinejoin)
+      item.setAttribute("strokeLinejoin", strokeLinejoin);
     item.removeAttribute("style");
-    if (color && !fill) {
-      item.setAttribute("fill", $.fromCss(color).html);
-    }
   }
-  const text = encodeURIComponent(svg2.outerHTML);
+  const text = encodeURIComponent(svg.outerHTML);
   return `url(data:image/svg+xml;charset=UTF-8,${text})`;
 };
 var icons = new Proxy(icon_data_default, {
   get(target, prop) {
-    const iconSpec = getIconSpec(prop);
-    return iconSpec === undefined ? undefined : (...parts) => {
-      const { w: w2, h } = Object.assign({ w: 1024, h: 1024 }, iconSpec);
-      return svg({
-        viewBox: `0 0 ${w2} ${h}`,
-        class: "icon-" + prop.replace(/([a-z])([A-Z])/g, (_2, a2, b2) => a2 + "-" + b2.toLocaleLowerCase()),
-        style: {
-          height: wn.xinIconSize("16px")
-        }
-      }, ...parts, ...iconSpec.p.map((d2, index) => {
-        const uniqueColors = Array.from(new Set(iconSpec.c));
-        const p2 = iconSpec.c ? path({
-          d: d2,
-          style: {
-            fill: `var(--icon-fill-${uniqueColors.indexOf(iconSpec.c[index])}, ${iconSpec.c[index]})`
-          }
-        }) : path({ d: d2 });
-        return p2;
-      }));
+    let iconSpec = icon_data_default[prop];
+    if (prop && !iconSpec) {
+      console.warn(`icon ${prop} does not exist`);
+    }
+    if (!iconSpec) {
+      iconSpec = icon_data_default.square;
+    }
+    return (...parts) => {
+      const div = p.div();
+      div.innerHTML = iconSpec;
+      const sourceSvg = div.querySelector("svg");
+      const classes = new Set(sourceSvg.classList);
+      classes.add("xin-icon");
+      const svg = Ln.svg({
+        class: Array.from(classes).join(" "),
+        viewBox: sourceSvg.getAttribute("viewBox")
+      }, ...parts, ...sourceSvg.children);
+      svg.style.strokeWidth = sn.xinIconStrokeWidth("2px");
+      svg.style.stroke = sn.xinIconStroke(classes.has("filled") ? "none" : "currentColor");
+      svg.style.fill = sn.xinIconFill(classes.has("stroked") ? "none" : "currentColor");
+      svg.style.height = sn.xinIconSize("16px");
+      return svg;
     };
   }
 });
 
-class SvgIcon extends G {
+class SvgIcon extends M {
   icon = "";
   size = 0;
-  color = "";
+  fill = "";
   stroke = "";
   strokeWidth = 1;
   constructor() {
     super();
-    this.initAttributes("icon", "size", "color", "stroke", "strokeWidth");
+    this.initAttributes("icon", "size", "fill", "stroke", "strokeWidth");
   }
   render() {
     this.textContent = "";
@@ -2133,44 +2098,25 @@ class SvgIcon extends G {
     }
     if (this.stroke) {
       style.stroke = this.stroke;
-      style.strokeWidth = this.strokeWidth * 32;
+      style.strokeWidth = this.strokeWidth;
     }
-    if (this.color.match(/linear-gradient/)) {
-      const type = this.color.split("-")[0];
-      const [, spec] = this.color.match(/[a-z-]+\((.*)\)/) || [];
-      const [, direction] = spec.match(/(\d+)deg/) || [];
-      const items = spec.match(/(#|rgb|hsl).*?%/g) || [];
-      const stops = items.map((item) => {
-        const [, color, position] = item.match(/^(.*)\s(\d+%)$/) || [
-          "black",
-          "100%"
-        ];
-        return `<stop offset="${position}" stop-color="${$.fromCss(color).html}" ></stop>`;
-      }).join("");
-      let transform = "";
-      if (direction) {
-        const angle = parseFloat(direction);
-        transform = ` gradientTransform="rotate(${angle.toFixed(0)})"`;
-      }
-      const defs = Un.defs();
-      const id = "g-" + Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
-      defs.innerHTML = `<${type}Gradient id="${id}" ${transform}>${stops}</${type}Gradient>`;
-      style.fill = `url(#${id})`;
-      this.append(icons[this.icon]({ style }, defs));
-    } else {
-      style.fill = this.color;
-      this.append(icons[this.icon]({ style }));
-    }
+    style.fill = this.fill;
+    this.append(icons[this.icon]({ style }));
   }
 }
 var svgIcon = SvgIcon.elementCreator({
   tag: "xin-icon",
   styleSpec: {
     ":host": {
-      display: "inline-flex"
+      display: "inline-flex",
+      stroke: "currentColor",
+      strokeWidth: sn.iconStrokeWidth("2px"),
+      strokeLinejoin: sn.iconStrokeLinejoin("round"),
+      strokeLinecap: sn.iconStrokeLinecap("round"),
+      fill: sn.iconFill("none")
     },
     ":host, :host svg": {
-      height: wn.xinIconSize("16px")
+      height: sn.xinIconSize("16px")
     }
   }
 });
@@ -2178,7 +2124,7 @@ var svgIcon = SvgIcon.elementCreator({
 // src/babylon-3d.ts
 var noop = () => {};
 
-class B3d extends G {
+class B3d extends M {
   babylonReady;
   BABYLON;
   static styleSpec = {
@@ -2208,7 +2154,7 @@ class B3d extends G {
       transform: "scale(1.1)"
     }
   };
-  content = S.canvas({ part: "canvas" });
+  content = p.canvas({ part: "canvas" });
   constructor() {
     super();
     this.babylonReady = (async () => {
@@ -2235,9 +2181,9 @@ class B3d extends G {
       this.engine.resize();
     }
   }
-  loadScene = async (path2, file, processCallback) => {
+  loadScene = async (path, file, processCallback) => {
     const { BABYLON } = await scriptTag("https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js", "BABYLON");
-    BABYLON.SceneLoader.Append(path2, file, this.scene, processCallback);
+    BABYLON.SceneLoader.Append(path, file, this.scene, processCallback);
   };
   loadUI = async (options) => {
     const { BABYLON } = await scriptTag("https://cdn.babylonjs.com/gui/babylon.gui.min.js", "BABYLON");
@@ -2284,7 +2230,7 @@ class B3d extends G {
 }
 var b3d = B3d.elementCreator({ tag: "xin-3d" });
 // src/bodymovin-player.ts
-class BodymovinPlayer extends G {
+class BodymovinPlayer extends M {
   content = null;
   src = "";
   json = "";
@@ -2340,8 +2286,8 @@ class BodymovinPlayer extends G {
   };
   render() {
     super.render();
-    BodymovinPlayer.bodymovinAvailable.then(this.load).catch((e2) => {
-      console.error(e2);
+    BodymovinPlayer.bodymovinAvailable.then(this.load).catch((e) => {
+      console.error(e);
     });
   }
 }
@@ -2349,9 +2295,9 @@ var bodymovinPlayer = BodymovinPlayer.elementCreator({
   tag: "xin-lottie"
 });
 // src/carousel.ts
-var { button, slot, div } = S;
+var { button, slot, div } = p;
 
-class XinCarousel extends G {
+class XinCarousel extends M {
   arrows = false;
   dots = false;
   loop = false;
@@ -2399,21 +2345,21 @@ class XinCarousel extends G {
       position: "relative"
     },
     ":host svg": {
-      height: qn.carouselIconSize
+      height: Hn.carouselIconSize
     },
     ":host button": {
       outline: "none",
       border: "none",
       boxShadow: "none",
       background: "transparent",
-      fill: qn.carouselButtonColor,
+      color: Hn.carouselButtonColor,
       padding: 0
     },
     ":host::part(back), :host::part(forward)": {
       position: "absolute",
       top: 0,
       bottom: 0,
-      width: qn.carouseButtonWidth,
+      width: Hn.carouseButtonWidth,
       zIndex: 2
     },
     ":host::part(back)": {
@@ -2427,10 +2373,10 @@ class XinCarousel extends G {
       pointerEvents: "none"
     },
     ":host button:hover": {
-      fill: qn.carouselButtonHoverColor
+      color: Hn.carouselButtonHoverColor
     },
     ":host button:active": {
-      fill: qn.carouselButtonActiveColor
+      color: Hn.carouselButtonActiveColor
     },
     ":host::part(pager)": {
       position: "relative"
@@ -2447,33 +2393,33 @@ class XinCarousel extends G {
       display: "none"
     },
     ":host .dot": {
-      background: qn.carouselButtonColor,
-      borderRadius: qn.carouselDotSize,
-      height: qn.carouselDotSize,
-      width: qn.carouselDotSize,
-      transition: qn.carouselDotTransition
+      background: Hn.carouselButtonColor,
+      borderRadius: Hn.carouselDotSize,
+      height: Hn.carouselDotSize,
+      width: Hn.carouselDotSize,
+      transition: Hn.carouselDotTransition
     },
     ":host .dot:not(.current):hover": {
-      background: qn.carouselButtonHoverColor,
-      height: qn.carouselDotSize150,
-      width: qn.carouselDotSize150,
-      margin: qn.carouselDotSize_25
+      background: Hn.carouselButtonHoverColor,
+      height: Hn.carouselDotSize150,
+      width: Hn.carouselDotSize150,
+      margin: Hn.carouselDotSize_25
     },
     ":host .dot:not(.current):active": {
-      background: qn.carouselButtonActiveColor
+      background: Hn.carouselButtonActiveColor
     },
     ":host .dot.current": {
-      background: qn.carouselDotCurrentColor
+      background: Hn.carouselDotCurrentColor
     },
     ":host::part(progress)": {
       display: "flex",
-      gap: qn.carouselDotSpacing,
+      gap: Hn.carouselDotSpacing,
       justifyContent: "center",
-      padding: qn.carouselProgressPadding
+      padding: Hn.carouselProgressPadding
     }
   };
-  easing = (t2) => {
-    return Math.sin(t2 * Math.PI * 0.5);
+  easing = (t) => {
+    return Math.sin(t * Math.PI * 0.5);
   };
   indicateCurrent = () => {
     const { scroller, progress } = this.parts;
@@ -2581,7 +2527,7 @@ var xinCarousel = XinCarousel.elementCreator({
       _carouseButtonWidth: 48,
       _carouselDotCurrentColor: "#0008",
       _carouselDotSize: 8,
-      _carouselDotSpacing: qn.carouselDotSize,
+      _carouselDotSpacing: Hn.carouselDotSize,
       _carouselProgressPadding: 12,
       _carouselDotTransition: "0.125s ease-in-out"
     },
@@ -2608,7 +2554,7 @@ var makeCodeEditor = async (codeElement, mode = "html", options = {}, theme = DE
   return editor;
 };
 
-class CodeEditor extends G {
+class CodeEditor extends M {
   source = "";
   get value() {
     return this.editor === undefined ? this.source : this.editor.getValue();
@@ -2675,10 +2621,10 @@ var codeEditor = CodeEditor.elementCreator({
   tag: "xin-code"
 });
 // src/color-input.ts
-var { input } = S;
-var defaultColor = $.fromCss("#8888");
+var { input } = p;
+var defaultColor = a.fromCss("#8888");
 
-class ColorInput extends G {
+class ColorInput extends M {
   value = defaultColor.rgba;
   color = defaultColor;
   static styleSpec = {
@@ -2688,20 +2634,20 @@ class ColorInput extends G {
       _cssWidth: 72,
       _alphaWidth: 72,
       display: "inline-flex",
-      gap: qn.gap,
+      gap: Hn.gap,
       alignItems: "center"
     },
     ':host input[type="color"]': {
       border: 0,
-      width: qn.swatchSize,
-      height: qn.swatchSize,
+      width: Hn.swatchSize,
+      height: Hn.swatchSize,
       background: "transparent"
     },
     ":host::part(alpha)": {
-      width: qn.alphaWidth
+      width: Hn.alphaWidth
     },
     ":host::part(css)": {
-      width: qn.cssWidth,
+      width: Hn.cssWidth,
       fontFamily: "monospace"
     }
   };
@@ -2721,11 +2667,11 @@ class ColorInput extends G {
   update = (event) => {
     const { rgb, alpha, css } = this.parts;
     if (event.type === "input") {
-      this.color = $.fromCss(rgb.value);
+      this.color = a.fromCss(rgb.value);
       this.color.a = Number(alpha.value);
       css.value = this.color.html;
     } else {
-      this.color = $.fromCss(css.value);
+      this.color = a.fromCss(css.value);
       rgb.value = this.color.html.substring(0, 7);
       alpha.value = String(this.color.a);
     }
@@ -2746,7 +2692,7 @@ class ColorInput extends G {
       return;
     }
     const { rgb, alpha, css } = this.parts;
-    this.color = $.fromCss(this.value);
+    this.color = a.fromCss(this.value);
     rgb.value = this.color.html.substring(0, 7);
     rgb.style.opacity = String(this.color.a);
     alpha.value = String(this.color.a);
@@ -2757,7 +2703,7 @@ var colorInput = ColorInput.elementCreator({
   tag: "xin-color"
 });
 // src/track-drag.ts
-var TRACKER = S.div({
+var TRACKER = p.div({
   style: {
     content: " ",
     position: "fixed",
@@ -2822,9 +2768,9 @@ var bringToFront = (element, selector = "body *") => {
 };
 
 // src/float.ts
-var { slot: slot2 } = S;
+var { slot: slot2 } = p;
 
-class XinFloat extends G {
+class XinFloat extends M {
   static floats = new Set;
   drag = false;
   remainOnResize = "remove";
@@ -2846,10 +2792,10 @@ class XinFloat extends G {
     }
     if (this.drag) {
       bringToFront(this);
-      const x = this.offsetLeft;
+      const x2 = this.offsetLeft;
       const y = this.offsetTop;
       trackDrag(event, (dx, dy, pointerEvent) => {
-        this.style.left = `${x + dx}px`;
+        this.style.left = `${x2 + dx}px`;
         this.style.top = `${y + dy}px`;
         this.style.right = "auto";
         this.style.bottom = "auto";
@@ -2916,19 +2862,19 @@ var positionFloat = (element, target, position) => {
   const { left, top, width, height } = target.getBoundingClientRect();
   const cx = left + width * 0.5;
   const cy = top + height * 0.5;
-  const w2 = window.innerWidth;
-  const h = window.innerHeight;
+  const w = window.innerWidth;
+  const h2 = window.innerHeight;
   if (position === "side") {
-    position = (cx < w2 * 0.5 ? "e" : "w") + (cy < h * 0.5 ? "s" : "n");
+    position = (cx < w * 0.5 ? "e" : "w") + (cy < h2 * 0.5 ? "s" : "n");
   } else if (position === "auto" || position === undefined) {
-    position = (cy < h * 0.5 ? "s" : "n") + (cx < w2 * 0.5 ? "e" : "w");
+    position = (cy < h2 * 0.5 ? "s" : "n") + (cx < w * 0.5 ? "e" : "w");
   }
   element.style.top = element.style.left = element.style.right = element.style.bottom = element.style.transform = "";
   if (position.length === 2) {
     const [first, second] = position;
     switch (first) {
       case "n":
-        element.style.bottom = (h - top).toFixed(2) + "px";
+        element.style.bottom = (h2 - top).toFixed(2) + "px";
         break;
       case "e":
         element.style.left = (left + width).toFixed(2) + "px";
@@ -2937,12 +2883,12 @@ var positionFloat = (element, target, position) => {
         element.style.top = (top + height).toFixed(2) + "px";
         break;
       case "w":
-        element.style.right = (w2 - left).toFixed(2) + "px";
+        element.style.right = (w - left).toFixed(2) + "px";
         break;
     }
     switch (second) {
       case "n":
-        element.style.bottom = (h - top - height).toFixed(2) + "px";
+        element.style.bottom = (h2 - top - height).toFixed(2) + "px";
         break;
       case "e":
         element.style.left = left.toFixed(2) + "px";
@@ -2951,12 +2897,12 @@ var positionFloat = (element, target, position) => {
         element.style.top = top.toFixed(2) + "px";
         break;
       case "w":
-        element.style.right = (w2 - left - width).toFixed(2) + "px";
+        element.style.right = (w - left - width).toFixed(2) + "px";
         break;
     }
     element.style.transform = "";
   } else if (position === "n") {
-    element.style.bottom = (h - top).toFixed(2) + "px";
+    element.style.bottom = (h2 - top).toFixed(2) + "px";
     element.style.left = cx.toFixed(2) + "px";
     element.style.transform = "translateX(-50%)";
   } else if (position === "s") {
@@ -2968,7 +2914,7 @@ var positionFloat = (element, target, position) => {
     element.style.top = cy.toFixed(2) + "px";
     element.style.transform = "translateY(-50%)";
   } else if (position === "w") {
-    element.style.right = (w2 - left).toFixed(2) + "px";
+    element.style.right = (w - left).toFixed(2) + "px";
     element.style.top = cy.toFixed(2) + "px";
     element.style.transform = "translateY(-50%)";
   }
@@ -2981,10 +2927,10 @@ function makeSorter(sortValuator, ascending = true) {
   return (p2, q2) => {
     const pSort = sortValuator(p2);
     const qSort = sortValuator(q2);
-    for (const i2 in pSort) {
-      if (pSort[i2] !== qSort[i2]) {
-        const isAscending = Array.isArray(ascending) ? ascending[i2] !== false : ascending;
-        return isAscending ? pSort[i2] > qSort[i2] ? 1 : -1 : pSort[i2] > qSort[i2] ? -1 : 1;
+    for (const i in pSort) {
+      if (pSort[i] !== qSort[i]) {
+        const isAscending = Array.isArray(ascending) ? ascending[i] !== false : ascending;
+        return isAscending ? pSort[i] > qSort[i] ? 1 : -1 : pSort[i] > qSort[i] ? -1 : 1;
       }
     }
     return 0;
@@ -2992,7 +2938,7 @@ function makeSorter(sortValuator, ascending = true) {
 }
 
 // src/select.ts
-var { button: button2, span, input: input2 } = S;
+var { button: button2, span, input: input2 } = p;
 var hasValue = (options, value) => {
   return !!options.find((option) => {
     if (option === null || value == null) {
@@ -3005,7 +2951,7 @@ var hasValue = (options, value) => {
   });
 };
 
-class XinSelect extends G {
+class XinSelect extends M {
   editable = false;
   showIcon = false;
   hideCaption = false;
@@ -3101,7 +3047,7 @@ class XinSelect extends G {
       event.preventDefault();
     }
   };
-  filterMenu = Zn(() => {
+  filterMenu = en(() => {
     this.filter = this.parts.value.value.toLocaleLowerCase();
     removeLastMenu(0);
     this.popOptions();
@@ -3203,18 +3149,18 @@ var xinSelect = XinSelect.elementCreator({
     ":host button": {
       display: "grid",
       alignItems: "center",
-      gap: qn.gap,
+      gap: Hn.gap,
       textAlign: "left",
-      height: qn.touchSize,
-      padding: qn.padding,
-      gridTemplateColumns: `auto ${qn.iconWidth}`,
+      height: Hn.touchSize,
+      padding: Hn.padding,
+      gridTemplateColumns: `auto ${Hn.iconWidth}`,
       position: "relative"
     },
     ":host[show-icon] button": {
-      gridTemplateColumns: `${qn.iconWidth} auto ${qn.iconWidth}`
+      gridTemplateColumns: `${Hn.iconWidth} auto ${Hn.iconWidth}`
     },
     ":host[hide-caption] button": {
-      gridTemplateColumns: `${qn.iconWidth} ${qn.iconWidth}`
+      gridTemplateColumns: `${Hn.iconWidth} ${Hn.iconWidth}`
     },
     ":host:not([show-icon]) button > :first-child": {
       display: "none"
@@ -3223,10 +3169,10 @@ var xinSelect = XinSelect.elementCreator({
       display: "none"
     },
     ':host [part="value"]': {
-      width: qn.fieldWidth,
-      padding: qn.valuePadding,
-      height: qn.touchSize,
-      lineHeight: qn.touchSize,
+      width: Hn.fieldWidth,
+      padding: Hn.valuePadding,
+      height: Hn.touchSize,
+      lineHeight: Hn.touchSize,
       boxShadow: "none",
       whiteSpace: "nowrap",
       outline: "none",
@@ -3241,8 +3187,8 @@ var xinSelect = XinSelect.elementCreator({
 });
 
 // src/localize.ts
-var { span: span2 } = S;
-var { i18n } = fn({
+var { span: span2 } = p;
+var { i18n } = cn({
   i18n: {
     locale: window.navigator.language,
     locales: [window.navigator.language],
@@ -3258,7 +3204,7 @@ var { i18n } = fn({
     ]
   }
 });
-on.localeOptions = {
+tn.localeOptions = {
   toDOM(select, options) {
     if (select instanceof XinSelect) {
       select.options = options;
@@ -3278,7 +3224,7 @@ var updateLocalized = () => {
     localized.localeChanged();
   }
 };
-N(i18n.locale.xinPath, updateLocalized);
+U(i18n.locale.xinPath, updateLocalized);
 var captionSort = makeSorter((locale) => [
   locale.caption.toLocaleLowerCase()
 ]);
@@ -3320,7 +3266,7 @@ function localize(ref) {
   return ref;
 }
 
-class LocalePicker extends G {
+class LocalePicker extends M {
   hideCaption = false;
   content = () => {
     return xinSelect({
@@ -3344,9 +3290,9 @@ var localePicker = LocalePicker.elementCreator({
   tag: "xin-locale-picker"
 });
 
-class XinLocalized extends G {
+class XinLocalized extends M {
   static allInstances = new Set;
-  contents = () => S.xinSlot();
+  contents = () => p.xinSlot();
   refString = "";
   constructor() {
     super();
@@ -3392,30 +3338,30 @@ var matchShortcut = (keystroke, shortcut) => {
 };
 
 // src/menu.ts
-var { div: div2, button: button3, span: span3, a: a2, xinSlot } = S;
-qo("xin-menu-helper", {
+var { div: div2, button: button3, span: span3, a: a2, xinSlot } = p;
+Ve("xin-menu-helper", {
   ".xin-menu": {
     overflow: "hidden auto",
-    maxHeight: `calc(${qn.maxHeight} - ${wn.menuInset("8px")})`,
-    borderRadius: qn.spacing50,
-    background: wn.menuBg("#fafafa"),
-    boxShadow: wn.menuShadow(`${qn.spacing13} ${qn.spacing50} ${qn.spacing} #0004`)
+    maxHeight: `calc(${Hn.maxHeight} - ${sn.menuInset("8px")})`,
+    borderRadius: Hn.spacing50,
+    background: sn.menuBg("#fafafa"),
+    boxShadow: sn.menuShadow(`${Hn.spacing13} ${Hn.spacing50} ${Hn.spacing} #0004`)
   },
   ".xin-menu > div": {
-    width: wn.menuWidth("auto")
+    width: sn.menuWidth("auto")
   },
   ".xin-menu-trigger": {
     paddingLeft: 0,
     paddingRight: 0,
-    minWidth: wn.touchSize("48px")
+    minWidth: sn.touchSize("48px")
   },
   ".xin-menu-separator": {
     display: "inline-block",
     content: " ",
     height: "1px",
     width: "100%",
-    background: wn.menuSeparatorColor("#2224"),
-    margin: wn.menuSeparatorMargin("8px 0")
+    background: sn.menuSeparatorColor("#2224"),
+    margin: sn.menuSeparatorMargin("8px 0")
   },
   ".xin-menu-item": {
     boxShadow: "none",
@@ -3428,22 +3374,22 @@ qo("xin-menu-helper", {
     width: "100%",
     gap: 0,
     background: "transparent",
-    padding: wn.menuItemPadding("0 16px"),
-    height: wn.menuItemHeight("48px"),
-    lineHeight: wn.menuItemHeight("48px"),
+    padding: sn.menuItemPadding("0 16px"),
+    height: sn.menuItemHeight("48px"),
+    lineHeight: sn.menuItemHeight("48px"),
     textAlign: "left"
   },
   ".xin-menu-item, .xin-menu-item > span": {
-    color: wn.menuItemColor("#222")
+    color: sn.menuItemColor("#222")
   },
   ".xin-menu-with-icons .xin-menu-item": {
     gridTemplateColumns: "30px 1fr 30px"
   },
   ".xin-menu-item svg": {
-    fill: wn.menuItemIconColor("#222")
+    stroke: sn.menuItemIconColor("#222")
   },
   ".xin-menu-item.xin-menu-item-checked": {
-    background: wn.menuItemHoverBg("#eee")
+    background: sn.menuItemHoverBg("#eee")
   },
   ".xin-menu-item > span:nth-child(2)": {
     whiteSpace: "nowrap",
@@ -3453,15 +3399,15 @@ qo("xin-menu-helper", {
   },
   ".xin-menu-item:hover": {
     boxShadow: "none !important",
-    background: wn.menuItemHoverBg("#eee")
+    background: sn.menuItemHoverBg("#eee")
   },
   ".xin-menu-item:active": {
     boxShadow: "none !important",
-    background: wn.menuItemActiveBg("#aaa"),
-    color: wn.menuItemActiveColor("#000")
+    background: sn.menuItemActiveBg("#aaa"),
+    color: sn.menuItemActiveColor("#000")
   },
   ".xin-menu-item:active svg": {
-    fill: wn.menuItemIconActiveColor("#000")
+    stroke: sn.menuItemIconActiveColor("#000")
   }
 });
 var createMenuAction = (item, options) => {
@@ -3611,7 +3557,7 @@ function findShortcutAction(items, event) {
   return;
 }
 
-class XinMenu extends G {
+class XinMenu extends M {
   menuItems = [];
   menuWidth = "auto";
   localized = false;
@@ -3659,7 +3605,7 @@ var xinMenu = XinMenu.elementCreator({
     ":host button > xin-slot": {
       display: "flex",
       alignItems: "center",
-      gap: wn.xinMenuTriggerGap("10px")
+      gap: sn.xinMenuTriggerGap("10px")
     }
   }
 });
@@ -3679,9 +3625,9 @@ var isTypeAllowed = (allowedTypes, type) => {
     if (allowedType === "special/any") {
       return true;
     } else if (allowedType.indexOf("*") > -1) {
-      const [A2, B2] = allowedType.split("/");
+      const [A, B2] = allowedType.split("/");
       const [a3, b2] = type.split("/");
-      if ((A2 === "*" || A2 === a3) && (B2 === "*" || B2 === b2)) {
+      if ((A === "*" || A === a3) && (B2 === "*" || B2 === b2)) {
         return true;
       }
     } else {
@@ -3701,8 +3647,8 @@ var end = () => {
   removeClass("drag-source");
   removeClass("drag-target");
 };
-var stringToTypes = (s2, delimiter = ";") => {
-  return (s2 || "").split(delimiter).map((t2) => t2.trim()).filter((i2) => i2 !== "");
+var stringToTypes = (s, delimiter = ";") => {
+  return (s || "").split(delimiter).map((t) => t.trim()).filter((i) => i !== "");
 };
 var markDroppable = (types) => {
   if (!types)
@@ -3808,10 +3754,10 @@ function defaultWidth(array, prop, charWidth) {
   }
   return false;
 }
-var { div: div3, span: span4, button: button4, template } = S;
+var { div: div3, span: span4, button: button4, template } = p;
 var passThru = (array) => array;
 
-class DataTable extends G {
+class DataTable extends M {
   select = false;
   multiple = false;
   nosort = false;
@@ -3834,7 +3780,7 @@ class DataTable extends G {
     };
   }
   set value(data) {
-    const { array, columns, filter } = M(data);
+    const { array, columns, filter } = x(data);
     if (this._array !== array || this._columns !== columns || this._filter !== filter) {
       this.queueRender();
     }
@@ -3858,7 +3804,7 @@ class DataTable extends G {
   }
   constructor() {
     super();
-    this.rowData = fn({
+    this.rowData = cn({
       [this.instanceId]: this.rowData
     })[this.instanceId];
     this.initAttributes("rowHeight", "charWidth", "minColumnWidth", "select", "multiple", "pinnedTop", "pinnedBottom", "nosort", "nohide", "noreorder", "localized");
@@ -3867,7 +3813,7 @@ class DataTable extends G {
     return this._array;
   }
   set array(newArray) {
-    this._array = M(newArray);
+    this._array = x(newArray);
     this.queueRender();
   }
   get filter() {
@@ -3921,7 +3867,7 @@ class DataTable extends G {
   }
   content = null;
   getColumn(event) {
-    const x = (event.touches !== undefined ? event.touches[0].clientX : event.clientX) - this.getBoundingClientRect().x;
+    const x2 = (event.touches !== undefined ? event.touches[0].clientX : event.clientX) - this.getBoundingClientRect().x;
     const epsilon = event.touches !== undefined ? 20 : 5;
     let boundaryX = 0;
     const log = [];
@@ -3929,7 +3875,7 @@ class DataTable extends G {
       if (options.visible !== false) {
         boundaryX += options.width;
         log.push(boundaryX);
-        return Math.abs(x - boundaryX) < epsilon;
+        return Math.abs(x2 - boundaryX) < epsilon;
       }
     });
     return column;
@@ -3990,7 +3936,7 @@ class DataTable extends G {
     if (!(tr instanceof HTMLElement)) {
       return;
     }
-    const pickedItem = Tn(tr);
+    const pickedItem = mn(tr);
     if (pickedItem === false) {
       return;
     }
@@ -4031,7 +3977,7 @@ class DataTable extends G {
     }
     this.selectionChanged(this.visibleSelectedRows);
     for (const row of Array.from(this.querySelectorAll(".tr"))) {
-      const item = Tn(row);
+      const item = mn(row);
       this.selectBinding(row, item);
     }
   };
@@ -4045,11 +3991,11 @@ class DataTable extends G {
   }
   setColumnWidths() {
     this.style.setProperty("--grid-columns", this.visibleColumns.map((c) => c.width + "px").join(" "));
-    this.style.setProperty("--grid-row-width", this.visibleColumns.reduce((w2, c) => w2 + c.width, 0) + "px");
+    this.style.setProperty("--grid-row-width", this.visibleColumns.reduce((w, c) => w + c.width, 0) + "px");
   }
   sortByColumn = (columnOptions, direction = "auto") => {
-    for (const column of this.columns.filter((c) => M(c.sort) !== false)) {
-      if (M(column) === columnOptions) {
+    for (const column of this.columns.filter((c) => x(c.sort) !== false)) {
+      if (x(column) === columnOptions) {
         if (direction === "auto") {
           column.sort = column.sort === "ascending" ? "descending" : "ascending";
         } else {
@@ -4166,7 +4112,7 @@ class DataTable extends G {
     });
   };
   get visibleRows() {
-    return M(this.rowData.visible);
+    return x(this.rowData.visible);
   }
   get visibleSelectedRows() {
     return this.visibleRows.filter((obj) => obj[this.selectedKey]);
@@ -4290,13 +4236,13 @@ var dataTable = DataTable.elementCreator({
       overflow: "auto hidden"
     },
     ":host .thead, :host .tbody": {
-      width: qn.gridRowWidth
+      width: Hn.gridRowWidth
     },
     ":host .tr": {
       display: "grid",
-      gridTemplateColumns: qn.gridColumns,
-      height: qn.rowHeight,
-      lineHeight: qn.rowHeight
+      gridTemplateColumns: Hn.gridColumns,
+      height: Hn.rowHeight,
+      lineHeight: Hn.rowHeight
     },
     ":host .td, :host .th": {
       overflow: "hidden",
@@ -4309,26 +4255,26 @@ var dataTable = DataTable.elementCreator({
       color: "currentColor",
       background: "none",
       padding: 0,
-      lineHeight: qn.touchSize,
-      height: qn.touchSize,
-      width: qn.touchSize
+      lineHeight: Hn.touchSize,
+      height: Hn.touchSize,
+      width: Hn.touchSize
     },
     ':host [draggable="true"]': {
       cursor: "ew-resize"
     },
     ':host [draggable="true"]:active': {
-      background: wn.draggedHeaderBg("#0004"),
-      color: wn.draggedHeaderColor("#fff")
+      background: sn.draggedHeaderBg("#0004"),
+      color: sn.draggedHeaderColor("#fff")
     },
     ":host .drag-over": {
-      background: wn.dropHeaderBg("#fff4")
+      background: sn.dropHeaderBg("#fff4")
     }
   }
 });
 // src/editable-rect.ts
-var { div: div4, slot: slot3 } = S;
+var { div: div4, slot: slot3 } = p;
 
-class EditableRect extends G {
+class EditableRect extends M {
   static angleSize = 15;
   static gridSize = 8;
   static snapAngle = false;
@@ -4350,11 +4296,11 @@ class EditableRect extends G {
       content: '" "',
       position: "absolute",
       display: "flex",
-      height: qn.handleSize,
-      width: qn.handleSize,
-      padding: qn.handlePadding,
-      "--text-color": qn.handleColor,
-      background: qn.handleBg
+      height: Hn.handleSize,
+      width: Hn.handleSize,
+      padding: Hn.handlePadding,
+      "--text-color": Hn.handleColor,
+      background: Hn.handleBg
     },
     ":host > .drag-size": {
       top: 0,
@@ -4367,7 +4313,7 @@ class EditableRect extends G {
       cursor: "ew-resize"
     },
     ':host > [part="rotate"]': {
-      transform: `translateY(${qn.handleSize_50})`
+      transform: `translateY(${Hn.handleSize_50})`
     },
     ":host > [locked] > svg:first-child, :host > :not([locked]) > svg+svg": {
       display: "none"
@@ -4379,13 +4325,13 @@ class EditableRect extends G {
       pointerEvents: "none"
     },
     ":host > *:hover": {
-      "--text-color": qn.handleHoverColor,
-      background: qn.handleHoverBg
+      "--text-color": Hn.handleHoverColor,
+      background: Hn.handleHoverBg
     }
   };
   static snappedCoords(event, coords) {
     const { gridSize } = EditableRect;
-    return EditableRect.snapToGrid || event.shiftKey ? coords.map((v) => Math.round(v / gridSize) * gridSize) : coords;
+    return EditableRect.snapToGrid || event.shiftKey ? coords.map((v2) => Math.round(v2 / gridSize) * gridSize) : coords;
   }
   static snappedAngle(event, a3) {
     const { angleSize } = EditableRect;
@@ -4406,12 +4352,12 @@ class EditableRect extends G {
     const { bottom, right } = locks;
     let { left, top } = locks;
     const element = this.parentElement;
-    const l2 = element.offsetLeft;
-    const t2 = element.offsetTop;
-    const w2 = element.offsetWidth;
-    const h = element.offsetHeight;
-    const r = element.offsetParent.offsetWidth - l2 - w2;
-    const b2 = element.offsetParent.offsetHeight - t2 - h;
+    const l = element.offsetLeft;
+    const t = element.offsetTop;
+    const w = element.offsetWidth;
+    const h2 = element.offsetHeight;
+    const r = element.offsetParent.offsetWidth - l - w;
+    const b2 = element.offsetParent.offsetHeight - t - h2;
     Object.assign(element.style, {
       left: "",
       right: "",
@@ -4425,22 +4371,22 @@ class EditableRect extends G {
     if (!bottom)
       top = true;
     if (left)
-      element.style.left = l2 + "px";
+      element.style.left = l + "px";
     if (right)
       element.style.right = r + "px";
     if (left && right) {
       element.style.width = "auto";
     } else {
-      element.style.width = w2 + "px";
+      element.style.width = w + "px";
     }
     if (top)
-      element.style.top = t2 + "px";
+      element.style.top = t + "px";
     if (bottom)
       element.style.bottom = b2 + "px";
     if (top && bottom) {
       element.style.height = "auto";
     } else {
-      element.style.height = h + "px";
+      element.style.height = h2 + "px";
     }
     this.queueRender();
   }
@@ -4569,11 +4515,11 @@ class EditableRect extends G {
     }
     trackDrag(event, (_dx, _dy, dragEvent) => {
       const { clientX, clientY } = dragEvent;
-      const x = clientX - center.x;
+      const x2 = clientX - center.x;
       const y = clientY - center.y;
       let alpha = y > 0 ? 90 : -90;
-      if (x !== 0) {
-        alpha = Math.atan2(y, x) * 180 / Math.PI;
+      if (x2 !== 0) {
+        alpha = Math.atan2(y, x2) * 180 / Math.PI;
       }
       alpha = EditableRect.snappedAngle(dragEvent, alpha);
       if (alpha === 0) {
@@ -4631,7 +4577,7 @@ class EditableRect extends G {
     div4({
       part: "rotate",
       style: { top: "50%", right: "0" }
-    }, icons.refresh()),
+    }, icons.refreshCw()),
     div4({
       part: "lockLeft",
       title: "lock left",
@@ -4705,7 +4651,7 @@ var editableRect = EditableRect.elementCreator({
   tag: "xin-editable"
 });
 // src/filter-builder.ts
-var { div: div5, input: input3, select, option, button: button5, span: span5 } = S;
+var { div: div5, input: input3, select, option, button: button5, span: span5 } = p;
 var passThru2 = (array) => array;
 var NULL_FILTER_DESCRIPTION = "null filter, everything matches";
 var availableFilters = {
@@ -4720,17 +4666,17 @@ var availableFilters = {
   hasTags: {
     caption: "has tags",
     makeTest: (value) => {
-      const tags = value.split(/[\s,]/).map((tag2) => tag2.trim().toLocaleLowerCase()).filter((tag2) => tag2 !== "");
+      const tags = value.split(/[\s,]/).map((tag) => tag.trim().toLocaleLowerCase()).filter((tag) => tag !== "");
       console.log(tags);
-      return (obj) => Array.isArray(obj) && tags.find((tag2) => !obj.includes(tag2)) === undefined;
+      return (obj) => Array.isArray(obj) && tags.find((tag) => !obj.includes(tag)) === undefined;
     }
   },
   doesNotHaveTags: {
     caption: "does not have tags",
     makeTest: (value) => {
-      const tags = value.split(/[\s,]/).map((tag2) => tag2.trim().toLocaleLowerCase()).filter((tag2) => tag2 !== "");
+      const tags = value.split(/[\s,]/).map((tag) => tag.trim().toLocaleLowerCase()).filter((tag) => tag !== "");
       console.log(tags);
-      return (obj) => Array.isArray(obj) && tags.find((tag2) => obj.includes(tag2)) === undefined;
+      return (obj) => Array.isArray(obj) && tags.find((tag) => obj.includes(tag)) === undefined;
     }
   },
   equals: {
@@ -4790,7 +4736,7 @@ function getSelectText(select2) {
   return select2.options[select2.selectedIndex].text;
 }
 
-class FilterPart extends G {
+class FilterPart extends M {
   fields = [];
   filters = availableFilters;
   haystack = "*";
@@ -4833,7 +4779,7 @@ class FilterPart extends G {
     if (field !== "*") {
       test = negative ? (obj) => !baseTest(obj[field]) : (obj) => baseTest(obj[field]);
     } else {
-      test = negative ? (obj) => Object.values(obj).find((v) => !baseTest(v)) !== undefined : (obj) => Object.values(obj).find((v) => baseTest(v)) !== undefined;
+      test = negative ? (obj) => Object.values(obj).find((v2) => !baseTest(v2)) !== undefined : (obj) => Object.values(obj).find((v2) => baseTest(v2)) !== undefined;
     }
     const matchValue = filter.needsValue !== false ? ` "${needle.value}"` : "";
     const description = `${getSelectText(haystack)} ${getSelectText(condition)}${matchValue}`;
@@ -4893,10 +4839,8 @@ var filterPart = FilterPart.elementCreator({
     ":host": {
       display: "flex"
     },
-    ':host svg[class^="icon-"]:': {
-      height: "var(--font-size, 16px)",
+    ":host .xin-icon:": {
       verticalAlign: "middle",
-      fill: "var(--text-color)",
       pointerEvents: "none"
     },
     ':host [part="haystack"], :host [part="condition"]': {
@@ -4913,7 +4857,7 @@ var filterPart = FilterPart.elementCreator({
   }
 });
 
-class FilterBuilder extends G {
+class FilterBuilder extends M {
   _fields = [];
   get fields() {
     return this._fields;
@@ -5012,7 +4956,7 @@ var filterBuilder = FilterBuilder.elementCreator({
   }
 });
 // src/form.ts
-var { form, slot: slot4, xinSlot: xinSlot2, label, input: input4, span: span6 } = S;
+var { form, slot: slot4, xinSlot: xinSlot2, label, input: input4, span: span6 } = p;
 function attr(element, name, value) {
   if (value !== "" && value !== false) {
     element.setAttribute(name, value);
@@ -5054,7 +4998,7 @@ function setElementValue(input5, value) {
   }
 }
 
-class XinField extends G {
+class XinField extends M {
   caption = "";
   key = "";
   type = "";
@@ -5129,7 +5073,7 @@ class XinField extends G {
     }
     if (this.type === "text") {
       input5.textContent = "";
-      const textarea = S.textarea({ value: this.value });
+      const textarea = p.textarea({ value: this.value });
       if (this.placeholder) {
         textarea.setAttribute("placeholder", this.placeholder);
       }
@@ -5160,7 +5104,7 @@ class XinField extends G {
   }
 }
 
-class XinForm extends G {
+class XinForm extends M {
   context = {};
   value = {};
   get isValid() {
@@ -5203,7 +5147,7 @@ class XinForm extends G {
     if (typeof this.value === "string") {
       try {
         this.value = JSON.parse(this.value);
-      } catch (e2) {
+      } catch (e) {
         console.log("<xin-form> could not use its value, expects valid JSON");
         this.value = {};
       }
@@ -5260,7 +5204,7 @@ var xinField = XinField.elementCreator({
       position: "relative",
       display: "flex",
       alignItems: "center",
-      gap: wn.prefixSuffixGap("8px")
+      gap: sn.prefixSuffixGap("8px")
     },
     ':host [part="field"][prefix]::before': {
       content: "attr(prefix)"
@@ -5357,9 +5301,9 @@ ${buttonText}`;
 `);
 }
 // src/tab-selector.ts
-var { div: div6, slot: slot5, span: span7, button: button6 } = S;
+var { div: div6, slot: slot5, span: span7, button: button6 } = p;
 
-class TabSelector extends G {
+class TabSelector extends M {
   value = 0;
   localized = false;
   makeTab(tabs, tabBody, bodyId) {
@@ -5411,14 +5355,14 @@ class TabSelector extends G {
       whiteSpace: "nowrap"
     },
     ":host .tabs > div": {
-      padding: `${qn.spacing50} ${qn.spacing}`,
+      padding: `${Hn.spacing50} ${Hn.spacing}`,
       cursor: "default",
       display: "flex",
       alignItems: "baseline"
     },
     ':host .tabs > [aria-selected="true"]': {
-      "--text-color": qn.xinTabsSelectedColor,
-      color: qn.textColor
+      "--text-color": Hn.xinTabsSelectedColor,
+      color: Hn.textColor
     },
     ":host .elastic": {
       flex: "1"
@@ -5430,15 +5374,14 @@ class TabSelector extends G {
       content: " ",
       width: 0,
       height: "var(--xin-tabs-bar-height, 2px)",
-      background: qn.xinTabsSelectedColor,
+      background: Hn.xinTabsSelectedColor,
       transition: "ease-out 0.2s"
     },
     ":host button.close": {
-      fill: qn.textColor,
       border: 0,
       background: "transparent",
       textAlign: "center",
-      marginLeft: qn.spacing50,
+      marginLeft: Hn.spacing50,
       padding: 0
     },
     ":host button.close > svg": {
@@ -5548,10 +5491,10 @@ class TabSelector extends G {
   render() {
     const { tabs, selected } = this.parts;
     const tabBodies = this.bodies;
-    for (let i2 = 0;i2 < tabBodies.length; i2++) {
-      const tabBody = tabBodies[i2];
-      const tab = tabs.children[i2];
-      if (this.value === Number(i2)) {
+    for (let i = 0;i < tabBodies.length; i++) {
+      const tabBody = tabBodies[i];
+      const tab = tabs.children[i];
+      if (this.value === Number(i)) {
         tab.setAttribute("aria-selected", "true");
         selected.style.marginLeft = `${tab.offsetLeft - tabs.offsetLeft}px`;
         selected.style.width = `${tab.offsetWidth}px`;
@@ -5568,10 +5511,10 @@ var tabSelector = TabSelector.elementCreator({
 });
 
 // src/live-example.ts
-var { div: div7, xinSlot: xinSlot3, style, button: button7, h4, pre } = S;
+var { div: div7, xinSlot: xinSlot3, style, button: button7, h4, pre } = p;
 var AsyncFunction = (async () => {}).constructor;
 
-class LiveExample extends G {
+class LiveExample extends M {
   persistToDom = false;
   prettier = false;
   prefix = "lx";
@@ -5683,12 +5626,12 @@ class LiveExample extends G {
       width: "auto",
       menuItems: [
         {
-          icon: "edit",
+          icon: "edit2",
           caption: "view/edit code",
           action: this.showCode
         },
         {
-          icon: "editDoc",
+          icon: "edit",
           caption: "view/edit code in a new window",
           action: this.openEditorWindow
         },
@@ -5730,16 +5673,16 @@ class LiveExample extends G {
       part: "undo",
       class: "transparent",
       onClick: this.undo
-    }, icons.undo()), button7({
+    }, icons.cornerUpLeft()), button7({
       title: "redo",
       part: "redo",
       class: "transparent",
       onClick: this.redo
-    }, icons.redo()), button7({
+    }, icons.cornerUpRight()), button7({
       title: "flip direction",
       class: "transparent",
       onClick: this.flipLayout
-    }, icons.sidebar()), button7({
+    }, icons.columns({ class: "layout-indicator" })), button7({
       title: "copy as markdown",
       class: "transparent",
       onClick: this.copy
@@ -5747,7 +5690,7 @@ class LiveExample extends G {
       title: "reload",
       class: "transparent",
       onClick: this.refreshRemote
-    }, icons.refresh())))),
+    }, icons.refreshCw())))),
     xinSlot3({ part: "sources", hidden: true })
   ];
   connectedCallback() {
@@ -5867,9 +5810,9 @@ class LiveExample extends G {
       if (this.persistToDom) {
         this.updateSources();
       }
-    } catch (e2) {
-      console.error(e2);
-      window.alert(`Error: ${e2}, the console may have more information…`);
+    } catch (e) {
+      console.error(e);
+      window.alert(`Error: ${e}, the console may have more information…`);
     }
   };
   initFromElements(elements) {
@@ -5952,11 +5895,12 @@ var liveExample = LiveExample.elementCreator({
     ":host.-vertical": {
       flexDirection: "column"
     },
-    ":host .icon-sidebar": {
-      transform: "rotateZ(180deg)"
-    },
-    ":host.-vertical .icon-sidebar": {
+    ":host .layout-indicator": {
+      transition: "0.5s ease-out",
       transform: "rotateZ(270deg)"
+    },
+    ":host.-vertical .layout-indicator": {
+      transform: "rotateZ(180deg)"
     },
     ":host.-maximize .hide-if-maximized, :host:not(.-maximize) .show-if-maximized": {
       display: "none"
@@ -5990,7 +5934,7 @@ var liveExample = LiveExample.elementCreator({
       zIndex: "100"
     },
     ':host [part="exampleWidgets"] svg': {
-      fill: "var(--widget-color)"
+      stroke: "var(--widget-color)"
     },
     ":host .code-editors": {
       overflow: "hidden",
@@ -6036,11 +5980,11 @@ var liveExample = LiveExample.elementCreator({
 function makeExamplesLive(element) {
   const preElements = [...element.querySelectorAll("pre")].filter((pre2) => ["js", "html", "css", "json"].includes(pre2.innerText.split(`
 `)[0]));
-  for (let i2 = 0;i2 < preElements.length; i2++) {
-    const parts = [preElements[i2]];
-    while (preElements[i2].nextElementSibling === preElements[i2 + 1]) {
-      parts.push(preElements[i2 + 1]);
-      i2 += 1;
+  for (let i = 0;i < preElements.length; i++) {
+    const parts = [preElements[i]];
+    while (preElements[i].nextElementSibling === preElements[i + 1]) {
+      parts.push(preElements[i + 1]);
+      i += 1;
     }
     const example = liveExample();
     element.insertBefore(example, parts[0]);
@@ -6055,9 +5999,9 @@ if (remoteId) {
   document.body.append(liveExample({ remoteId }));
 }
 // src/mapbox.ts
-var { div: div8 } = S;
+var { div: div8 } = p;
 
-class MapBox extends G {
+class MapBox extends M {
   coords = "65.01715565258993,25.48081004203459,12";
   content = div8({ style: { width: "100%", height: "100%" } });
   get map() {
@@ -6081,11 +6025,11 @@ class MapBox extends G {
     super();
     this.initAttributes("coords", "token", "mapStyle");
     if (MapBox.mapboxCSSAvailable === undefined) {
-      MapBox.mapboxCSSAvailable = styleSheet("https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.css").catch((e2) => {
-        console.error("failed to load mapbox-gl.css", e2);
+      MapBox.mapboxCSSAvailable = styleSheet("https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.css").catch((e) => {
+        console.error("failed to load mapbox-gl.css", e);
       });
-      MapBox.mapboxAvailable = scriptTag("https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.js").catch((e2) => {
-        console.error("failed to load mapbox-gl.js", e2);
+      MapBox.mapboxAvailable = scriptTag("https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.js").catch((e) => {
+        console.error("failed to load mapbox-gl.js", e);
       });
     }
   }
@@ -6101,7 +6045,7 @@ class MapBox extends G {
       return;
     }
     const { div: div9 } = this.parts;
-    const [long, lat, zoom] = this.coords.split(",").map((x) => Number(x));
+    const [long, lat, zoom] = this.coords.split(",").map((x2) => Number(x2));
     if (this.map) {
       this.map.remove();
     }
@@ -6122,2145 +6066,1214 @@ var mapBox = MapBox.elementCreator({
   tag: "xin-map"
 });
 // node_modules/marked/lib/marked.esm.js
-function getDefaults() {
-  return {
-    async: false,
-    baseUrl: null,
-    breaks: false,
-    extensions: null,
-    gfm: true,
-    headerIds: true,
-    headerPrefix: "",
-    highlight: null,
-    hooks: null,
-    langPrefix: "language-",
-    mangle: true,
-    pedantic: false,
-    renderer: null,
-    sanitize: false,
-    sanitizer: null,
-    silent: false,
-    smartypants: false,
-    tokenizer: null,
-    walkTokens: null,
-    xhtml: false
-  };
+function M2() {
+  return { async: false, breaks: false, extensions: null, gfm: true, hooks: null, pedantic: false, renderer: null, silent: false, tokenizer: null, walkTokens: null };
 }
-var defaults = getDefaults();
-function changeDefaults(newDefaults) {
-  defaults = newDefaults;
+var w = M2();
+function H2(a3) {
+  w = a3;
 }
-var escapeTest = /[&<>"']/;
-var escapeReplace = new RegExp(escapeTest.source, "g");
-var escapeTestNoEncode = /[<>"']|&(?!(#\d{1,7}|#[Xx][a-fA-F0-9]{1,6}|\w+);)/;
-var escapeReplaceNoEncode = new RegExp(escapeTestNoEncode.source, "g");
-var escapeReplacements = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;"
-};
-var getEscapeReplacement = (ch) => escapeReplacements[ch];
-function escape(html, encode) {
-  if (encode) {
-    if (escapeTest.test(html)) {
-      return html.replace(escapeReplace, getEscapeReplacement);
-    }
-  } else {
-    if (escapeTestNoEncode.test(html)) {
-      return html.replace(escapeReplaceNoEncode, getEscapeReplacement);
-    }
-  }
-  return html;
+var C2 = { exec: () => null };
+function h2(a3, e = "") {
+  let t = typeof a3 == "string" ? a3 : a3.source, n = { replace: (s, i) => {
+    let r = typeof i == "string" ? i : i.source;
+    return r = r.replace(m2.caret, "$1"), t = t.replace(s, r), n;
+  }, getRegex: () => new RegExp(t, e) };
+  return n;
 }
-var unescapeTest = /&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/ig;
-function unescape(html) {
-  return html.replace(unescapeTest, (_2, n) => {
-    n = n.toLowerCase();
-    if (n === "colon")
-      return ":";
-    if (n.charAt(0) === "#") {
-      return n.charAt(1) === "x" ? String.fromCharCode(parseInt(n.substring(2), 16)) : String.fromCharCode(+n.substring(1));
-    }
-    return "";
-  });
+var m2 = { codeRemoveIndent: /^(?: {1,4}| {0,3}\t)/gm, outputLinkReplace: /\\([\[\]])/g, indentCodeCompensation: /^(\s+)(?:```)/, beginningSpace: /^\s+/, endingHash: /#$/, startingSpaceChar: /^ /, endingSpaceChar: / $/, nonSpaceChar: /[^ ]/, newLineCharGlobal: /\n/g, tabCharGlobal: /\t/g, multipleSpaceGlobal: /\s+/g, blankLine: /^[ \t]*$/, doubleBlankLine: /\n[ \t]*\n[ \t]*$/, blockquoteStart: /^ {0,3}>/, blockquoteSetextReplace: /\n {0,3}((?:=+|-+) *)(?=\n|$)/g, blockquoteSetextReplace2: /^ {0,3}>[ \t]?/gm, listReplaceTabs: /^\t+/, listReplaceNesting: /^ {1,4}(?=( {4})*[^ ])/g, listIsTask: /^\[[ xX]\] /, listReplaceTask: /^\[[ xX]\] +/, anyLine: /\n.*\n/, hrefBrackets: /^<(.*)>$/, tableDelimiter: /[:|]/, tableAlignChars: /^\||\| *$/g, tableRowBlankLine: /\n[ \t]*$/, tableAlignRight: /^ *-+: *$/, tableAlignCenter: /^ *:-+: *$/, tableAlignLeft: /^ *:-+ *$/, startATag: /^<a /i, endATag: /^<\/a>/i, startPreScriptTag: /^<(pre|code|kbd|script)(\s|>)/i, endPreScriptTag: /^<\/(pre|code|kbd|script)(\s|>)/i, startAngleBracket: /^</, endAngleBracket: />$/, pedanticHrefTitle: /^([^'"]*[^\s])\s+(['"])(.*)\2/, unicodeAlphaNumeric: /[\p{L}\p{N}]/u, escapeTest: /[&<>"']/, escapeReplace: /[&<>"']/g, escapeTestNoEncode: /[<>"']|&(?!(#\d{1,7}|#[Xx][a-fA-F0-9]{1,6}|\w+);)/, escapeReplaceNoEncode: /[<>"']|&(?!(#\d{1,7}|#[Xx][a-fA-F0-9]{1,6}|\w+);)/g, unescapeTest: /&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/ig, caret: /(^|[^\[])\^/g, percentDecode: /%25/g, findPipe: /\|/g, splitPipe: / \|/, slashPipe: /\\\|/g, carriageReturn: /\r\n|\r/g, spaceLine: /^ +$/gm, notSpaceStart: /^\S*/, endingNewline: /\n$/, listItemRegex: (a3) => new RegExp(`^( {0,3}${a3})((?:[	 ][^\\n]*)?(?:\\n|$))`), nextBulletRegex: (a3) => new RegExp(`^ {0,${Math.min(3, a3 - 1)}}(?:[*+-]|\\d{1,9}[.)])((?:[ 	][^\\n]*)?(?:\\n|$))`), hrRegex: (a3) => new RegExp(`^ {0,${Math.min(3, a3 - 1)}}((?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$)`), fencesBeginRegex: (a3) => new RegExp(`^ {0,${Math.min(3, a3 - 1)}}(?:\`\`\`|~~~)`), headingBeginRegex: (a3) => new RegExp(`^ {0,${Math.min(3, a3 - 1)}}#`), htmlBeginRegex: (a3) => new RegExp(`^ {0,${Math.min(3, a3 - 1)}}<(?:[a-z].*>|!--)`, "i") };
+var xe2 = /^(?:[ \t]*(?:\n|$))+/;
+var be2 = /^((?: {4}| {0,3}\t)[^\n]+(?:\n(?:[ \t]*(?:\n|$))*)?)+/;
+var Te2 = /^ {0,3}(`{3,}(?=[^`\n]*(?:\n|$))|~{3,})([^\n]*)(?:\n|$)(?:|([\s\S]*?)(?:\n|$))(?: {0,3}\1[~`]* *(?=\n|$)|$)/;
+var I2 = /^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/;
+var we2 = /^ {0,3}(#{1,6})(?=\s|$)(.*)(?:\n+|$)/;
+var j2 = /(?:[*+-]|\d{1,9}[.)])/;
+var re2 = /^(?!bull |blockCode|fences|blockquote|heading|html|table)((?:.|\n(?!\s*?\n|bull |blockCode|fences|blockquote|heading|html|table))+?)\n {0,3}(=+|-+) *(?:\n+|$)/;
+var ie2 = h2(re2).replace(/bull/g, j2).replace(/blockCode/g, /(?: {4}| {0,3}\t)/).replace(/fences/g, / {0,3}(?:`{3,}|~{3,})/).replace(/blockquote/g, / {0,3}>/).replace(/heading/g, / {0,3}#{1,6}/).replace(/html/g, / {0,3}<[^\n>]+>\n/).replace(/\|table/g, "").getRegex();
+var ye2 = h2(re2).replace(/bull/g, j2).replace(/blockCode/g, /(?: {4}| {0,3}\t)/).replace(/fences/g, / {0,3}(?:`{3,}|~{3,})/).replace(/blockquote/g, / {0,3}>/).replace(/heading/g, / {0,3}#{1,6}/).replace(/html/g, / {0,3}<[^\n>]+>\n/).replace(/table/g, / {0,3}\|?(?:[:\- ]*\|)+[\:\- ]*\n/).getRegex();
+var F2 = /^([^\n]+(?:\n(?!hr|heading|lheading|blockquote|fences|list|html|table| +\n)[^\n]+)*)/;
+var Re2 = /^[^\n]+/;
+var Q2 = /(?!\s*\])(?:\\.|[^\[\]\\])+/;
+var Se2 = h2(/^ {0,3}\[(label)\]: *(?:\n[ \t]*)?([^<\s][^\s]*|<.*?>)(?:(?: +(?:\n[ \t]*)?| *\n[ \t]*)(title))? *(?:\n+|$)/).replace("label", Q2).replace("title", /(?:"(?:\\"?|[^"\\])*"|'[^'\n]*(?:\n[^'\n]+)*\n?'|\([^()]*\))/).getRegex();
+var $e2 = h2(/^( {0,3}bull)([ \t][^\n]+?)?(?:\n|$)/).replace(/bull/g, j2).getRegex();
+var v2 = "address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul";
+var U2 = /<!--(?:-?>|[\s\S]*?(?:-->|$))/;
+var _e2 = h2("^ {0,3}(?:<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)|comment[^\\n]*(\\n+|$)|<\\?[\\s\\S]*?(?:\\?>\\n*|$)|<![A-Z][\\s\\S]*?(?:>\\n*|$)|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ 	]*)+\\n|$))", "i").replace("comment", U2).replace("tag", v2).replace("attribute", / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
+var oe2 = h2(F2).replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("|table", "").replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex();
+var Le2 = h2(/^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/).replace("paragraph", oe2).getRegex();
+var K = { blockquote: Le2, code: be2, def: Se2, fences: Te2, heading: we2, hr: I2, html: _e2, lheading: ie2, list: $e2, newline: xe2, paragraph: oe2, table: C2, text: Re2 };
+var se2 = h2("^ *([^\\n ].*)\\n {0,3}((?:\\| *)?:?-+:? *(?:\\| *:?-+:? *)*(?:\\| *)?)(?:\\n((?:(?! *\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)").replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("blockquote", " {0,3}>").replace("code", "(?: {4}| {0,3}\t)[^\\n]").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex();
+var ze2 = { ...K, lheading: ye2, table: se2, paragraph: h2(F2).replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("table", se2).replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex() };
+var Me2 = { ...K, html: h2(`^ *(?:comment *(?:\\n|\\s*$)|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)|<tag(?:"[^"]*"|'[^']*'|\\s[^'"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))`).replace("comment", U2).replace(/tag/g, "(?!(?:a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)\\b)\\w+(?!:|[^\\w\\s@]*@)\\b").getRegex(), def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/, heading: /^(#{1,6})(.*)(?:\n+|$)/, fences: C2, lheading: /^(.+?)\n {0,3}(=+|-+) *(?:\n+|$)/, paragraph: h2(F2).replace("hr", I2).replace("heading", ` *#{1,6} *[^
+]`).replace("lheading", ie2).replace("|table", "").replace("blockquote", " {0,3}>").replace("|fences", "").replace("|list", "").replace("|html", "").replace("|tag", "").getRegex() };
+var Pe2 = /^\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/;
+var Ae2 = /^(`+)([^`]|[^`][\s\S]*?[^`])\1(?!`)/;
+var le2 = /^( {2,}|\\)\n(?!\s*$)/;
+var Ee2 = /^(`+|[^`])(?:(?= {2,}\n)|[\s\S]*?(?:(?=[\\<!\[`*_]|\b_|$)|[^ ](?= {2,}\n)))/;
+var D = /[\p{P}\p{S}]/u;
+var X = /[\s\p{P}\p{S}]/u;
+var ae2 = /[^\s\p{P}\p{S}]/u;
+var Ce2 = h2(/^((?![*_])punctSpace)/, "u").replace(/punctSpace/g, X).getRegex();
+var ce2 = /(?!~)[\p{P}\p{S}]/u;
+var Ie2 = /(?!~)[\s\p{P}\p{S}]/u;
+var Oe2 = /(?:[^\s\p{P}\p{S}]|~)/u;
+var Be2 = /\[[^[\]]*?\]\((?:\\.|[^\\\(\)]|\((?:\\.|[^\\\(\)])*\))*\)|`[^`]*?`|<[^<>]*?>/g;
+var pe2 = /^(?:\*+(?:((?!\*)punct)|[^\s*]))|^_+(?:((?!_)punct)|([^\s_]))/;
+var qe2 = h2(pe2, "u").replace(/punct/g, D).getRegex();
+var ve2 = h2(pe2, "u").replace(/punct/g, ce2).getRegex();
+var ue2 = "^[^_*]*?__[^_*]*?\\*[^_*]*?(?=__)|[^*]+(?=[^*])|(?!\\*)punct(\\*+)(?=[\\s]|$)|notPunctSpace(\\*+)(?!\\*)(?=punctSpace|$)|(?!\\*)punctSpace(\\*+)(?=notPunctSpace)|[\\s](\\*+)(?!\\*)(?=punct)|(?!\\*)punct(\\*+)(?!\\*)(?=punct)|notPunctSpace(\\*+)(?=notPunctSpace)";
+var De2 = h2(ue2, "gu").replace(/notPunctSpace/g, ae2).replace(/punctSpace/g, X).replace(/punct/g, D).getRegex();
+var Ze2 = h2(ue2, "gu").replace(/notPunctSpace/g, Oe2).replace(/punctSpace/g, Ie2).replace(/punct/g, ce2).getRegex();
+var Ge2 = h2("^[^_*]*?\\*\\*[^_*]*?_[^_*]*?(?=\\*\\*)|[^_]+(?=[^_])|(?!_)punct(_+)(?=[\\s]|$)|notPunctSpace(_+)(?!_)(?=punctSpace|$)|(?!_)punctSpace(_+)(?=notPunctSpace)|[\\s](_+)(?!_)(?=punct)|(?!_)punct(_+)(?!_)(?=punct)", "gu").replace(/notPunctSpace/g, ae2).replace(/punctSpace/g, X).replace(/punct/g, D).getRegex();
+var He2 = h2(/\\(punct)/, "gu").replace(/punct/g, D).getRegex();
+var Ne2 = h2(/^<(scheme:[^\s\x00-\x1f<>]*|email)>/).replace("scheme", /[a-zA-Z][a-zA-Z0-9+.-]{1,31}/).replace("email", /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(@)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?![-_])/).getRegex();
+var je2 = h2(U2).replace("(?:-->|$)", "-->").getRegex();
+var Fe2 = h2("^comment|^</[a-zA-Z][\\w:-]*\\s*>|^<[a-zA-Z][\\w-]*(?:attribute)*?\\s*/?>|^<\\?[\\s\\S]*?\\?>|^<![a-zA-Z]+\\s[\\s\\S]*?>|^<!\\[CDATA\\[[\\s\\S]*?\\]\\]>").replace("comment", je2).replace("attribute", /\s+[a-zA-Z:_][\w.:-]*(?:\s*=\s*"[^"]*"|\s*=\s*'[^']*'|\s*=\s*[^\s"'=<>`]+)?/).getRegex();
+var q2 = /(?:\[(?:\\.|[^\[\]\\])*\]|\\.|`[^`]*`|[^\[\]\\`])*?/;
+var Qe2 = h2(/^!?\[(label)\]\(\s*(href)(?:(?:[ \t]*(?:\n[ \t]*)?)(title))?\s*\)/).replace("label", q2).replace("href", /<(?:\\.|[^\n<>\\])+>|[^ \t\n\x00-\x1f]*/).replace("title", /"(?:\\"?|[^"\\])*"|'(?:\\'?|[^'\\])*'|\((?:\\\)?|[^)\\])*\)/).getRegex();
+var he = h2(/^!?\[(label)\]\[(ref)\]/).replace("label", q2).replace("ref", Q2).getRegex();
+var ke2 = h2(/^!?\[(ref)\](?:\[\])?/).replace("ref", Q2).getRegex();
+var Ue2 = h2("reflink|nolink(?!\\()", "g").replace("reflink", he).replace("nolink", ke2).getRegex();
+var W2 = { _backpedal: C2, anyPunctuation: He2, autolink: Ne2, blockSkip: Be2, br: le2, code: Ae2, del: C2, emStrongLDelim: qe2, emStrongRDelimAst: De2, emStrongRDelimUnd: Ge2, escape: Pe2, link: Qe2, nolink: ke2, punctuation: Ce2, reflink: he, reflinkSearch: Ue2, tag: Fe2, text: Ee2, url: C2 };
+var Ke2 = { ...W2, link: h2(/^!?\[(label)\]\((.*?)\)/).replace("label", q2).getRegex(), reflink: h2(/^!?\[(label)\]\s*\[([^\]]*)\]/).replace("label", q2).getRegex() };
+var N2 = { ...W2, emStrongRDelimAst: Ze2, emStrongLDelim: ve2, url: h2(/^((?:ftp|https?):\/\/|www\.)(?:[a-zA-Z0-9\-]+\.?)+[^\s<]*|^email/, "i").replace("email", /[A-Za-z0-9._+-]+(@)[a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]*[a-zA-Z0-9])+(?![-_])/).getRegex(), _backpedal: /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/, del: /^(~~?)(?=[^\s~])((?:\\.|[^\\])*?(?:\\.|[^\s~\\]))\1(?=[^~]|$)/, text: /^([`~]+|[^`~])(?:(?= {2,}\n)|(?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)|[\s\S]*?(?:(?=[\\<!\[`*~_]|\b_|https?:\/\/|ftp:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)))/ };
+var Xe2 = { ...N2, br: h2(le2).replace("{2,}", "*").getRegex(), text: h2(N2.text).replace("\\b_", "\\b_| {2,}\\n").replace(/\{2,\}/g, "*").getRegex() };
+var O2 = { normal: K, gfm: ze2, pedantic: Me2 };
+var P = { normal: W2, gfm: N2, breaks: Xe2, pedantic: Ke2 };
+var We2 = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+var ge2 = (a3) => We2[a3];
+function R(a3, e) {
+  if (e) {
+    if (m2.escapeTest.test(a3))
+      return a3.replace(m2.escapeReplace, ge2);
+  } else if (m2.escapeTestNoEncode.test(a3))
+    return a3.replace(m2.escapeReplaceNoEncode, ge2);
+  return a3;
 }
-var caret = /(^|[^\[])\^/g;
-function edit(regex, opt) {
-  regex = typeof regex === "string" ? regex : regex.source;
-  opt = opt || "";
-  const obj = {
-    replace: (name, val) => {
-      val = val.source || val;
-      val = val.replace(caret, "$1");
-      regex = regex.replace(name, val);
-      return obj;
-    },
-    getRegex: () => {
-      return new RegExp(regex, opt);
-    }
-  };
-  return obj;
-}
-var nonWordAndColonTest = /[^\w:]/g;
-var originIndependentUrl = /^$|^[a-z][a-z0-9+.-]*:|^[?#]/i;
-function cleanUrl(sanitize, base, href) {
-  if (sanitize) {
-    let prot;
-    try {
-      prot = decodeURIComponent(unescape(href)).replace(nonWordAndColonTest, "").toLowerCase();
-    } catch (e2) {
-      return null;
-    }
-    if (prot.indexOf("javascript:") === 0 || prot.indexOf("vbscript:") === 0 || prot.indexOf("data:") === 0) {
-      return null;
-    }
-  }
-  if (base && !originIndependentUrl.test(href)) {
-    href = resolveUrl(base, href);
-  }
+function J2(a3) {
   try {
-    href = encodeURI(href).replace(/%25/g, "%");
-  } catch (e2) {
+    a3 = encodeURI(a3).replace(m2.percentDecode, "%");
+  } catch {
     return null;
   }
-  return href;
+  return a3;
 }
-var baseUrls = {};
-var justDomain = /^[^:]+:\/*[^/]*$/;
-var protocol = /^([^:]+:)[\s\S]*$/;
-var domain = /^([^:]+:\/*[^/]*)[\s\S]*$/;
-function resolveUrl(base, href) {
-  if (!baseUrls[" " + base]) {
-    if (justDomain.test(base)) {
-      baseUrls[" " + base] = base + "/";
-    } else {
-      baseUrls[" " + base] = rtrim(base, "/", true);
-    }
-  }
-  base = baseUrls[" " + base];
-  const relativeBase = base.indexOf(":") === -1;
-  if (href.substring(0, 2) === "//") {
-    if (relativeBase) {
-      return href;
-    }
-    return base.replace(protocol, "$1") + href;
-  } else if (href.charAt(0) === "/") {
-    if (relativeBase) {
-      return href;
-    }
-    return base.replace(domain, "$1") + href;
-  } else {
-    return base + href;
-  }
+function V2(a3, e) {
+  let t = a3.replace(m2.findPipe, (i, r, o) => {
+    let l = false, c = r;
+    for (;--c >= 0 && o[c] === "\\"; )
+      l = !l;
+    return l ? "|" : " |";
+  }), n = t.split(m2.splitPipe), s = 0;
+  if (n[0].trim() || n.shift(), n.length > 0 && !n.at(-1)?.trim() && n.pop(), e)
+    if (n.length > e)
+      n.splice(e);
+    else
+      for (;n.length < e; )
+        n.push("");
+  for (;s < n.length; s++)
+    n[s] = n[s].trim().replace(m2.slashPipe, "|");
+  return n;
 }
-var noopTest = { exec: function noopTest2() {} };
-function splitCells(tableRow, count) {
-  const row = tableRow.replace(/\|/g, (match, offset, str) => {
-    let escaped = false, curr = offset;
-    while (--curr >= 0 && str[curr] === "\\")
-      escaped = !escaped;
-    if (escaped) {
-      return "|";
-    } else {
-      return " |";
-    }
-  }), cells = row.split(/ \|/);
-  let i2 = 0;
-  if (!cells[0].trim()) {
-    cells.shift();
-  }
-  if (cells.length > 0 && !cells[cells.length - 1].trim()) {
-    cells.pop();
-  }
-  if (cells.length > count) {
-    cells.splice(count);
-  } else {
-    while (cells.length < count)
-      cells.push("");
-  }
-  for (;i2 < cells.length; i2++) {
-    cells[i2] = cells[i2].trim().replace(/\\\|/g, "|");
-  }
-  return cells;
-}
-function rtrim(str, c, invert) {
-  const l2 = str.length;
-  if (l2 === 0) {
+function A(a3, e, t) {
+  let n = a3.length;
+  if (n === 0)
     return "";
-  }
-  let suffLen = 0;
-  while (suffLen < l2) {
-    const currChar = str.charAt(l2 - suffLen - 1);
-    if (currChar === c && !invert) {
-      suffLen++;
-    } else if (currChar !== c && invert) {
-      suffLen++;
-    } else {
+  let s = 0;
+  for (;s < n; ) {
+    let i = a3.charAt(n - s - 1);
+    if (i === e && !t)
+      s++;
+    else if (i !== e && t)
+      s++;
+    else
       break;
-    }
   }
-  return str.slice(0, l2 - suffLen);
+  return a3.slice(0, n - s);
 }
-function findClosingBracket(str, b2) {
-  if (str.indexOf(b2[1]) === -1) {
+function fe2(a3, e) {
+  if (a3.indexOf(e[1]) === -1)
     return -1;
-  }
-  const l2 = str.length;
-  let level = 0, i2 = 0;
-  for (;i2 < l2; i2++) {
-    if (str[i2] === "\\") {
-      i2++;
-    } else if (str[i2] === b2[0]) {
-      level++;
-    } else if (str[i2] === b2[1]) {
-      level--;
-      if (level < 0) {
-        return i2;
-      }
-    }
-  }
-  return -1;
+  let t = 0;
+  for (let n = 0;n < a3.length; n++)
+    if (a3[n] === "\\")
+      n++;
+    else if (a3[n] === e[0])
+      t++;
+    else if (a3[n] === e[1] && (t--, t < 0))
+      return n;
+  return t > 0 ? -2 : -1;
 }
-function checkDeprecations(opt, callback) {
-  if (!opt || opt.silent) {
-    return;
-  }
-  if (callback) {
-    console.warn("marked(): callback is deprecated since version 5.0.0, should not be used and will be removed in the future. Read more here: https://marked.js.org/using_pro#async");
-  }
-  if (opt.sanitize || opt.sanitizer) {
-    console.warn("marked(): sanitize and sanitizer parameters are deprecated since version 0.7.0, should not be used and will be removed in the future. Read more here: https://marked.js.org/#/USING_ADVANCED.md#options");
-  }
-  if (opt.highlight || opt.langPrefix !== "language-") {
-    console.warn("marked(): highlight and langPrefix parameters are deprecated since version 5.0.0, should not be used and will be removed in the future. Instead use https://www.npmjs.com/package/marked-highlight.");
-  }
-  if (opt.mangle) {
-    console.warn("marked(): mangle parameter is enabled by default, but is deprecated since version 5.0.0, and will be removed in the future. To clear this warning, install https://www.npmjs.com/package/marked-mangle, or disable by setting `{mangle: false}`.");
-  }
-  if (opt.baseUrl) {
-    console.warn("marked(): baseUrl parameter is deprecated since version 5.0.0, should not be used and will be removed in the future. Instead use https://www.npmjs.com/package/marked-base-url.");
-  }
-  if (opt.smartypants) {
-    console.warn("marked(): smartypants parameter is deprecated since version 5.0.0, should not be used and will be removed in the future. Instead use https://www.npmjs.com/package/marked-smartypants.");
-  }
-  if (opt.xhtml) {
-    console.warn("marked(): xhtml parameter is deprecated since version 5.0.0, should not be used and will be removed in the future. Instead use https://www.npmjs.com/package/marked-xhtml.");
-  }
-  if (opt.headerIds || opt.headerPrefix) {
-    console.warn("marked(): headerIds and headerPrefix parameters enabled by default, but are deprecated since version 5.0.0, and will be removed in the future. To clear this warning, install  https://www.npmjs.com/package/marked-gfm-heading-id, or disable by setting `{headerIds: false}`.");
-  }
+function de2(a3, e, t, n, s) {
+  let i = e.href, r = e.title || null, o = a3[1].replace(s.other.outputLinkReplace, "$1");
+  n.state.inLink = true;
+  let l = { type: a3[0].charAt(0) === "!" ? "image" : "link", raw: t, href: i, title: r, text: o, tokens: n.inlineTokens(o) };
+  return n.state.inLink = false, l;
 }
-function outputLink(cap, link, raw, lexer) {
-  const href = link.href;
-  const title = link.title ? escape(link.title) : null;
-  const text = cap[1].replace(/\\([\[\]])/g, "$1");
-  if (cap[0].charAt(0) !== "!") {
-    lexer.state.inLink = true;
-    const token = {
-      type: "link",
-      raw,
-      href,
-      title,
-      text,
-      tokens: lexer.inlineTokens(text)
-    };
-    lexer.state.inLink = false;
-    return token;
-  }
-  return {
-    type: "image",
-    raw,
-    href,
-    title,
-    text: escape(text)
-  };
-}
-function indentCodeCompensation(raw, text) {
-  const matchIndentToCode = raw.match(/^(\s+)(?:```)/);
-  if (matchIndentToCode === null) {
-    return text;
-  }
-  const indentToCode = matchIndentToCode[1];
-  return text.split(`
-`).map((node) => {
-    const matchIndentInNode = node.match(/^\s+/);
-    if (matchIndentInNode === null) {
-      return node;
-    }
-    const [indentInNode] = matchIndentInNode;
-    if (indentInNode.length >= indentToCode.length) {
-      return node.slice(indentToCode.length);
-    }
-    return node;
+function Je2(a3, e, t) {
+  let n = a3.match(t.other.indentCodeCompensation);
+  if (n === null)
+    return e;
+  let s = n[1];
+  return e.split(`
+`).map((i) => {
+    let r = i.match(t.other.beginningSpace);
+    if (r === null)
+      return i;
+    let [o] = r;
+    return o.length >= s.length ? i.slice(s.length) : i;
   }).join(`
 `);
 }
-
-class Tokenizer {
-  constructor(options) {
-    this.options = options || defaults;
+var S2 = class {
+  options;
+  rules;
+  lexer;
+  constructor(e) {
+    this.options = e || w;
   }
-  space(src2) {
-    const cap = this.rules.block.newline.exec(src2);
-    if (cap && cap[0].length > 0) {
-      return {
-        type: "space",
-        raw: cap[0]
-      };
+  space(e) {
+    let t = this.rules.block.newline.exec(e);
+    if (t && t[0].length > 0)
+      return { type: "space", raw: t[0] };
+  }
+  code(e) {
+    let t = this.rules.block.code.exec(e);
+    if (t) {
+      let n = t[0].replace(this.rules.other.codeRemoveIndent, "");
+      return { type: "code", raw: t[0], codeBlockStyle: "indented", text: this.options.pedantic ? n : A(n, `
+`) };
     }
   }
-  code(src2) {
-    const cap = this.rules.block.code.exec(src2);
-    if (cap) {
-      const text = cap[0].replace(/^ {1,4}/gm, "");
-      return {
-        type: "code",
-        raw: cap[0],
-        codeBlockStyle: "indented",
-        text: !this.options.pedantic ? rtrim(text, `
-`) : text
-      };
+  fences(e) {
+    let t = this.rules.block.fences.exec(e);
+    if (t) {
+      let n = t[0], s = Je2(n, t[3] || "", this.rules);
+      return { type: "code", raw: n, lang: t[2] ? t[2].trim().replace(this.rules.inline.anyPunctuation, "$1") : t[2], text: s };
     }
   }
-  fences(src2) {
-    const cap = this.rules.block.fences.exec(src2);
-    if (cap) {
-      const raw = cap[0];
-      const text = indentCodeCompensation(raw, cap[3] || "");
-      return {
-        type: "code",
-        raw,
-        lang: cap[2] ? cap[2].trim().replace(this.rules.inline._escapes, "$1") : cap[2],
-        text
-      };
-    }
-  }
-  heading(src2) {
-    const cap = this.rules.block.heading.exec(src2);
-    if (cap) {
-      let text = cap[2].trim();
-      if (/#$/.test(text)) {
-        const trimmed = rtrim(text, "#");
-        if (this.options.pedantic) {
-          text = trimmed.trim();
-        } else if (!trimmed || / $/.test(trimmed)) {
-          text = trimmed.trim();
-        }
+  heading(e) {
+    let t = this.rules.block.heading.exec(e);
+    if (t) {
+      let n = t[2].trim();
+      if (this.rules.other.endingHash.test(n)) {
+        let s = A(n, "#");
+        (this.options.pedantic || !s || this.rules.other.endingSpaceChar.test(s)) && (n = s.trim());
       }
-      return {
-        type: "heading",
-        raw: cap[0],
-        depth: cap[1].length,
-        text,
-        tokens: this.lexer.inline(text)
-      };
+      return { type: "heading", raw: t[0], depth: t[1].length, text: n, tokens: this.lexer.inline(n) };
     }
   }
-  hr(src2) {
-    const cap = this.rules.block.hr.exec(src2);
-    if (cap) {
-      return {
-        type: "hr",
-        raw: cap[0]
-      };
-    }
+  hr(e) {
+    let t = this.rules.block.hr.exec(e);
+    if (t)
+      return { type: "hr", raw: A(t[0], `
+`) };
   }
-  blockquote(src2) {
-    const cap = this.rules.block.blockquote.exec(src2);
-    if (cap) {
-      const text = cap[0].replace(/^ *>[ \t]?/gm, "");
-      const top = this.lexer.state.top;
-      this.lexer.state.top = true;
-      const tokens = this.lexer.blockTokens(text);
-      this.lexer.state.top = top;
-      return {
-        type: "blockquote",
-        raw: cap[0],
-        tokens,
-        text
-      };
-    }
-  }
-  list(src2) {
-    let cap = this.rules.block.list.exec(src2);
-    if (cap) {
-      let raw, istask, ischecked, indent, i2, blankLine, endsWithBlankLine, line, nextLine, rawLine, itemContents, endEarly;
-      let bull = cap[1].trim();
-      const isordered = bull.length > 1;
-      const list = {
-        type: "list",
-        raw: "",
-        ordered: isordered,
-        start: isordered ? +bull.slice(0, -1) : "",
-        loose: false,
-        items: []
-      };
-      bull = isordered ? `\\d{1,9}\\${bull.slice(-1)}` : `\\${bull}`;
-      if (this.options.pedantic) {
-        bull = isordered ? bull : "[*+-]";
-      }
-      const itemRegex = new RegExp(`^( {0,3}${bull})((?:[	 ][^\\n]*)?(?:\\n|$))`);
-      while (src2) {
-        endEarly = false;
-        if (!(cap = itemRegex.exec(src2))) {
+  blockquote(e) {
+    let t = this.rules.block.blockquote.exec(e);
+    if (t) {
+      let n = A(t[0], `
+`).split(`
+`), s = "", i = "", r = [];
+      for (;n.length > 0; ) {
+        let o = false, l = [], c;
+        for (c = 0;c < n.length; c++)
+          if (this.rules.other.blockquoteStart.test(n[c]))
+            l.push(n[c]), o = true;
+          else if (!o)
+            l.push(n[c]);
+          else
+            break;
+        n = n.slice(c);
+        let p2 = l.join(`
+`), u = p2.replace(this.rules.other.blockquoteSetextReplace, `
+    $1`).replace(this.rules.other.blockquoteSetextReplace2, "");
+        s = s ? `${s}
+${p2}` : p2, i = i ? `${i}
+${u}` : u;
+        let d2 = this.lexer.state.top;
+        if (this.lexer.state.top = true, this.lexer.blockTokens(u, r, true), this.lexer.state.top = d2, n.length === 0)
           break;
-        }
-        if (this.rules.block.hr.test(src2)) {
+        let g2 = r.at(-1);
+        if (g2?.type === "code")
           break;
+        if (g2?.type === "blockquote") {
+          let x2 = g2, f = x2.raw + `
+` + n.join(`
+`), y = this.blockquote(f);
+          r[r.length - 1] = y, s = s.substring(0, s.length - x2.raw.length) + y.raw, i = i.substring(0, i.length - x2.text.length) + y.text;
+          break;
+        } else if (g2?.type === "list") {
+          let x2 = g2, f = x2.raw + `
+` + n.join(`
+`), y = this.list(f);
+          r[r.length - 1] = y, s = s.substring(0, s.length - g2.raw.length) + y.raw, i = i.substring(0, i.length - x2.raw.length) + y.raw, n = f.substring(r.at(-1).raw.length).split(`
+`);
+          continue;
         }
-        raw = cap[0];
-        src2 = src2.substring(raw.length);
-        line = cap[2].split(`
-`, 1)[0].replace(/^\t+/, (t2) => " ".repeat(3 * t2.length));
-        nextLine = src2.split(`
-`, 1)[0];
-        if (this.options.pedantic) {
-          indent = 2;
-          itemContents = line.trimLeft();
-        } else {
-          indent = cap[2].search(/[^ ]/);
-          indent = indent > 4 ? 1 : indent;
-          itemContents = line.slice(indent);
-          indent += cap[1].length;
-        }
-        blankLine = false;
-        if (!line && /^ *$/.test(nextLine)) {
-          raw += nextLine + `
-`;
-          src2 = src2.substring(nextLine.length + 1);
-          endEarly = true;
-        }
-        if (!endEarly) {
-          const nextBulletRegex = new RegExp(`^ {0,${Math.min(3, indent - 1)}}(?:[*+-]|\\d{1,9}[.)])((?:[ 	][^\\n]*)?(?:\\n|$))`);
-          const hrRegex = new RegExp(`^ {0,${Math.min(3, indent - 1)}}((?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$)`);
-          const fencesBeginRegex = new RegExp(`^ {0,${Math.min(3, indent - 1)}}(?:\`\`\`|~~~)`);
-          const headingBeginRegex = new RegExp(`^ {0,${Math.min(3, indent - 1)}}#`);
-          while (src2) {
-            rawLine = src2.split(`
-`, 1)[0];
-            nextLine = rawLine;
-            if (this.options.pedantic) {
-              nextLine = nextLine.replace(/^ {1,4}(?=( {4})*[^ ])/g, "  ");
-            }
-            if (fencesBeginRegex.test(nextLine)) {
+      }
+      return { type: "blockquote", raw: s, tokens: r, text: i };
+    }
+  }
+  list(e) {
+    let t = this.rules.block.list.exec(e);
+    if (t) {
+      let n = t[1].trim(), s = n.length > 1, i = { type: "list", raw: "", ordered: s, start: s ? +n.slice(0, -1) : "", loose: false, items: [] };
+      n = s ? `\\d{1,9}\\${n.slice(-1)}` : `\\${n}`, this.options.pedantic && (n = s ? n : "[*+-]");
+      let r = this.rules.other.listItemRegex(n), o = false;
+      for (;e; ) {
+        let c = false, p2 = "", u = "";
+        if (!(t = r.exec(e)) || this.rules.block.hr.test(e))
+          break;
+        p2 = t[0], e = e.substring(p2.length);
+        let d2 = t[2].split(`
+`, 1)[0].replace(this.rules.other.listReplaceTabs, (Z2) => " ".repeat(3 * Z2.length)), g2 = e.split(`
+`, 1)[0], x2 = !d2.trim(), f = 0;
+        if (this.options.pedantic ? (f = 2, u = d2.trimStart()) : x2 ? f = t[1].length + 1 : (f = t[2].search(this.rules.other.nonSpaceChar), f = f > 4 ? 1 : f, u = d2.slice(f), f += t[1].length), x2 && this.rules.other.blankLine.test(g2) && (p2 += g2 + `
+`, e = e.substring(g2.length + 1), c = true), !c) {
+          let Z2 = this.rules.other.nextBulletRegex(f), ee2 = this.rules.other.hrRegex(f), te2 = this.rules.other.fencesBeginRegex(f), ne2 = this.rules.other.headingBeginRegex(f), me2 = this.rules.other.htmlBeginRegex(f);
+          for (;e; ) {
+            let G2 = e.split(`
+`, 1)[0], E2;
+            if (g2 = G2, this.options.pedantic ? (g2 = g2.replace(this.rules.other.listReplaceNesting, "  "), E2 = g2) : E2 = g2.replace(this.rules.other.tabCharGlobal, "    "), te2.test(g2) || ne2.test(g2) || me2.test(g2) || Z2.test(g2) || ee2.test(g2))
               break;
-            }
-            if (headingBeginRegex.test(nextLine)) {
-              break;
-            }
-            if (nextBulletRegex.test(nextLine)) {
-              break;
-            }
-            if (hrRegex.test(src2)) {
-              break;
-            }
-            if (nextLine.search(/[^ ]/) >= indent || !nextLine.trim()) {
-              itemContents += `
-` + nextLine.slice(indent);
-            } else {
-              if (blankLine) {
+            if (E2.search(this.rules.other.nonSpaceChar) >= f || !g2.trim())
+              u += `
+` + E2.slice(f);
+            else {
+              if (x2 || d2.replace(this.rules.other.tabCharGlobal, "    ").search(this.rules.other.nonSpaceChar) >= 4 || te2.test(d2) || ne2.test(d2) || ee2.test(d2))
                 break;
-              }
-              if (line.search(/[^ ]/) >= 4) {
-                break;
-              }
-              if (fencesBeginRegex.test(line)) {
-                break;
-              }
-              if (headingBeginRegex.test(line)) {
-                break;
-              }
-              if (hrRegex.test(line)) {
-                break;
-              }
-              itemContents += `
-` + nextLine;
+              u += `
+` + g2;
             }
-            if (!blankLine && !nextLine.trim()) {
-              blankLine = true;
-            }
-            raw += rawLine + `
-`;
-            src2 = src2.substring(rawLine.length + 1);
-            line = nextLine.slice(indent);
+            !x2 && !g2.trim() && (x2 = true), p2 += G2 + `
+`, e = e.substring(G2.length + 1), d2 = E2.slice(f);
           }
         }
-        if (!list.loose) {
-          if (endsWithBlankLine) {
-            list.loose = true;
-          } else if (/\n *\n *$/.test(raw)) {
-            endsWithBlankLine = true;
-          }
-        }
-        if (this.options.gfm) {
-          istask = /^\[[ xX]\] /.exec(itemContents);
-          if (istask) {
-            ischecked = istask[0] !== "[ ] ";
-            itemContents = itemContents.replace(/^\[[ xX]\] +/, "");
-          }
-        }
-        list.items.push({
-          type: "list_item",
-          raw,
-          task: !!istask,
-          checked: ischecked,
-          loose: false,
-          text: itemContents
-        });
-        list.raw += raw;
+        i.loose || (o ? i.loose = true : this.rules.other.doubleBlankLine.test(p2) && (o = true));
+        let y = null, Y2;
+        this.options.gfm && (y = this.rules.other.listIsTask.exec(u), y && (Y2 = y[0] !== "[ ] ", u = u.replace(this.rules.other.listReplaceTask, ""))), i.items.push({ type: "list_item", raw: p2, task: !!y, checked: Y2, loose: false, text: u, tokens: [] }), i.raw += p2;
       }
-      list.items[list.items.length - 1].raw = raw.trimRight();
-      list.items[list.items.length - 1].text = itemContents.trimRight();
-      list.raw = list.raw.trimRight();
-      const l2 = list.items.length;
-      for (i2 = 0;i2 < l2; i2++) {
-        this.lexer.state.top = false;
-        list.items[i2].tokens = this.lexer.blockTokens(list.items[i2].text, []);
-        if (!list.loose) {
-          const spacers = list.items[i2].tokens.filter((t2) => t2.type === "space");
-          const hasMultipleLineBreaks = spacers.length > 0 && spacers.some((t2) => /\n.*\n/.test(t2.raw));
-          list.loose = hasMultipleLineBreaks;
+      let l = i.items.at(-1);
+      if (l)
+        l.raw = l.raw.trimEnd(), l.text = l.text.trimEnd();
+      else
+        return;
+      i.raw = i.raw.trimEnd();
+      for (let c = 0;c < i.items.length; c++)
+        if (this.lexer.state.top = false, i.items[c].tokens = this.lexer.blockTokens(i.items[c].text, []), !i.loose) {
+          let p2 = i.items[c].tokens.filter((d2) => d2.type === "space"), u = p2.length > 0 && p2.some((d2) => this.rules.other.anyLine.test(d2.raw));
+          i.loose = u;
         }
-      }
-      if (list.loose) {
-        for (i2 = 0;i2 < l2; i2++) {
-          list.items[i2].loose = true;
-        }
-      }
-      return list;
+      if (i.loose)
+        for (let c = 0;c < i.items.length; c++)
+          i.items[c].loose = true;
+      return i;
     }
   }
-  html(src2) {
-    const cap = this.rules.block.html.exec(src2);
-    if (cap) {
-      const token = {
-        type: "html",
-        block: true,
-        raw: cap[0],
-        pre: !this.options.sanitizer && (cap[1] === "pre" || cap[1] === "script" || cap[1] === "style"),
-        text: cap[0]
-      };
-      if (this.options.sanitize) {
-        const text = this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape(cap[0]);
-        token.type = "paragraph";
-        token.text = text;
-        token.tokens = this.lexer.inline(text);
-      }
-      return token;
+  html(e) {
+    let t = this.rules.block.html.exec(e);
+    if (t)
+      return { type: "html", block: true, raw: t[0], pre: t[1] === "pre" || t[1] === "script" || t[1] === "style", text: t[0] };
+  }
+  def(e) {
+    let t = this.rules.block.def.exec(e);
+    if (t) {
+      let n = t[1].toLowerCase().replace(this.rules.other.multipleSpaceGlobal, " "), s = t[2] ? t[2].replace(this.rules.other.hrefBrackets, "$1").replace(this.rules.inline.anyPunctuation, "$1") : "", i = t[3] ? t[3].substring(1, t[3].length - 1).replace(this.rules.inline.anyPunctuation, "$1") : t[3];
+      return { type: "def", tag: n, raw: t[0], href: s, title: i };
     }
   }
-  def(src2) {
-    const cap = this.rules.block.def.exec(src2);
-    if (cap) {
-      const tag2 = cap[1].toLowerCase().replace(/\s+/g, " ");
-      const href = cap[2] ? cap[2].replace(/^<(.*)>$/, "$1").replace(this.rules.inline._escapes, "$1") : "";
-      const title = cap[3] ? cap[3].substring(1, cap[3].length - 1).replace(this.rules.inline._escapes, "$1") : cap[3];
-      return {
-        type: "def",
-        tag: tag2,
-        raw: cap[0],
-        href,
-        title
-      };
+  table(e) {
+    let t = this.rules.block.table.exec(e);
+    if (!t || !this.rules.other.tableDelimiter.test(t[2]))
+      return;
+    let n = V2(t[1]), s = t[2].replace(this.rules.other.tableAlignChars, "").split("|"), i = t[3]?.trim() ? t[3].replace(this.rules.other.tableRowBlankLine, "").split(`
+`) : [], r = { type: "table", raw: t[0], header: [], align: [], rows: [] };
+    if (n.length === s.length) {
+      for (let o of s)
+        this.rules.other.tableAlignRight.test(o) ? r.align.push("right") : this.rules.other.tableAlignCenter.test(o) ? r.align.push("center") : this.rules.other.tableAlignLeft.test(o) ? r.align.push("left") : r.align.push(null);
+      for (let o = 0;o < n.length; o++)
+        r.header.push({ text: n[o], tokens: this.lexer.inline(n[o]), header: true, align: r.align[o] });
+      for (let o of i)
+        r.rows.push(V2(o, r.header.length).map((l, c) => ({ text: l, tokens: this.lexer.inline(l), header: false, align: r.align[c] })));
+      return r;
     }
   }
-  table(src2) {
-    const cap = this.rules.block.table.exec(src2);
-    if (cap) {
-      const item = {
-        type: "table",
-        header: splitCells(cap[1]).map((c) => {
-          return { text: c };
-        }),
-        align: cap[2].replace(/^ *|\| *$/g, "").split(/ *\| */),
-        rows: cap[3] && cap[3].trim() ? cap[3].replace(/\n[ \t]*$/, "").split(`
-`) : []
-      };
-      if (item.header.length === item.align.length) {
-        item.raw = cap[0];
-        let l2 = item.align.length;
-        let i2, j2, k, row;
-        for (i2 = 0;i2 < l2; i2++) {
-          if (/^ *-+: *$/.test(item.align[i2])) {
-            item.align[i2] = "right";
-          } else if (/^ *:-+: *$/.test(item.align[i2])) {
-            item.align[i2] = "center";
-          } else if (/^ *:-+ *$/.test(item.align[i2])) {
-            item.align[i2] = "left";
-          } else {
-            item.align[i2] = null;
-          }
-        }
-        l2 = item.rows.length;
-        for (i2 = 0;i2 < l2; i2++) {
-          item.rows[i2] = splitCells(item.rows[i2], item.header.length).map((c) => {
-            return { text: c };
-          });
-        }
-        l2 = item.header.length;
-        for (j2 = 0;j2 < l2; j2++) {
-          item.header[j2].tokens = this.lexer.inline(item.header[j2].text);
-        }
-        l2 = item.rows.length;
-        for (j2 = 0;j2 < l2; j2++) {
-          row = item.rows[j2];
-          for (k = 0;k < row.length; k++) {
-            row[k].tokens = this.lexer.inline(row[k].text);
-          }
-        }
-        return item;
-      }
+  lheading(e) {
+    let t = this.rules.block.lheading.exec(e);
+    if (t)
+      return { type: "heading", raw: t[0], depth: t[2].charAt(0) === "=" ? 1 : 2, text: t[1], tokens: this.lexer.inline(t[1]) };
+  }
+  paragraph(e) {
+    let t = this.rules.block.paragraph.exec(e);
+    if (t) {
+      let n = t[1].charAt(t[1].length - 1) === `
+` ? t[1].slice(0, -1) : t[1];
+      return { type: "paragraph", raw: t[0], text: n, tokens: this.lexer.inline(n) };
     }
   }
-  lheading(src2) {
-    const cap = this.rules.block.lheading.exec(src2);
-    if (cap) {
-      return {
-        type: "heading",
-        raw: cap[0],
-        depth: cap[2].charAt(0) === "=" ? 1 : 2,
-        text: cap[1],
-        tokens: this.lexer.inline(cap[1])
-      };
-    }
+  text(e) {
+    let t = this.rules.block.text.exec(e);
+    if (t)
+      return { type: "text", raw: t[0], text: t[0], tokens: this.lexer.inline(t[0]) };
   }
-  paragraph(src2) {
-    const cap = this.rules.block.paragraph.exec(src2);
-    if (cap) {
-      const text = cap[1].charAt(cap[1].length - 1) === `
-` ? cap[1].slice(0, -1) : cap[1];
-      return {
-        type: "paragraph",
-        raw: cap[0],
-        text,
-        tokens: this.lexer.inline(text)
-      };
-    }
+  escape(e) {
+    let t = this.rules.inline.escape.exec(e);
+    if (t)
+      return { type: "escape", raw: t[0], text: t[1] };
   }
-  text(src2) {
-    const cap = this.rules.block.text.exec(src2);
-    if (cap) {
-      return {
-        type: "text",
-        raw: cap[0],
-        text: cap[0],
-        tokens: this.lexer.inline(cap[0])
-      };
-    }
+  tag(e) {
+    let t = this.rules.inline.tag.exec(e);
+    if (t)
+      return !this.lexer.state.inLink && this.rules.other.startATag.test(t[0]) ? this.lexer.state.inLink = true : this.lexer.state.inLink && this.rules.other.endATag.test(t[0]) && (this.lexer.state.inLink = false), !this.lexer.state.inRawBlock && this.rules.other.startPreScriptTag.test(t[0]) ? this.lexer.state.inRawBlock = true : this.lexer.state.inRawBlock && this.rules.other.endPreScriptTag.test(t[0]) && (this.lexer.state.inRawBlock = false), { type: "html", raw: t[0], inLink: this.lexer.state.inLink, inRawBlock: this.lexer.state.inRawBlock, block: false, text: t[0] };
   }
-  escape(src2) {
-    const cap = this.rules.inline.escape.exec(src2);
-    if (cap) {
-      return {
-        type: "escape",
-        raw: cap[0],
-        text: escape(cap[1])
-      };
-    }
-  }
-  tag(src2) {
-    const cap = this.rules.inline.tag.exec(src2);
-    if (cap) {
-      if (!this.lexer.state.inLink && /^<a /i.test(cap[0])) {
-        this.lexer.state.inLink = true;
-      } else if (this.lexer.state.inLink && /^<\/a>/i.test(cap[0])) {
-        this.lexer.state.inLink = false;
-      }
-      if (!this.lexer.state.inRawBlock && /^<(pre|code|kbd|script)(\s|>)/i.test(cap[0])) {
-        this.lexer.state.inRawBlock = true;
-      } else if (this.lexer.state.inRawBlock && /^<\/(pre|code|kbd|script)(\s|>)/i.test(cap[0])) {
-        this.lexer.state.inRawBlock = false;
-      }
-      return {
-        type: this.options.sanitize ? "text" : "html",
-        raw: cap[0],
-        inLink: this.lexer.state.inLink,
-        inRawBlock: this.lexer.state.inRawBlock,
-        block: false,
-        text: this.options.sanitize ? this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape(cap[0]) : cap[0]
-      };
-    }
-  }
-  link(src2) {
-    const cap = this.rules.inline.link.exec(src2);
-    if (cap) {
-      const trimmedUrl = cap[2].trim();
-      if (!this.options.pedantic && /^</.test(trimmedUrl)) {
-        if (!/>$/.test(trimmedUrl)) {
+  link(e) {
+    let t = this.rules.inline.link.exec(e);
+    if (t) {
+      let n = t[2].trim();
+      if (!this.options.pedantic && this.rules.other.startAngleBracket.test(n)) {
+        if (!this.rules.other.endAngleBracket.test(n))
           return;
-        }
-        const rtrimSlash = rtrim(trimmedUrl.slice(0, -1), "\\");
-        if ((trimmedUrl.length - rtrimSlash.length) % 2 === 0) {
+        let r = A(n.slice(0, -1), "\\");
+        if ((n.length - r.length) % 2 === 0)
           return;
-        }
       } else {
-        const lastParenIndex = findClosingBracket(cap[2], "()");
-        if (lastParenIndex > -1) {
-          const start2 = cap[0].indexOf("!") === 0 ? 5 : 4;
-          const linkLen = start2 + cap[1].length + lastParenIndex;
-          cap[2] = cap[2].substring(0, lastParenIndex);
-          cap[0] = cap[0].substring(0, linkLen).trim();
-          cap[3] = "";
+        let r = fe2(t[2], "()");
+        if (r === -2)
+          return;
+        if (r > -1) {
+          let l = (t[0].indexOf("!") === 0 ? 5 : 4) + t[1].length + r;
+          t[2] = t[2].substring(0, r), t[0] = t[0].substring(0, l).trim(), t[3] = "";
         }
       }
-      let href = cap[2];
-      let title = "";
+      let s = t[2], i = "";
       if (this.options.pedantic) {
-        const link = /^([^'"]*[^\s])\s+(['"])(.*)\2/.exec(href);
-        if (link) {
-          href = link[1];
-          title = link[3];
-        }
-      } else {
-        title = cap[3] ? cap[3].slice(1, -1) : "";
-      }
-      href = href.trim();
-      if (/^</.test(href)) {
-        if (this.options.pedantic && !/>$/.test(trimmedUrl)) {
-          href = href.slice(1);
-        } else {
-          href = href.slice(1, -1);
-        }
-      }
-      return outputLink(cap, {
-        href: href ? href.replace(this.rules.inline._escapes, "$1") : href,
-        title: title ? title.replace(this.rules.inline._escapes, "$1") : title
-      }, cap[0], this.lexer);
+        let r = this.rules.other.pedanticHrefTitle.exec(s);
+        r && (s = r[1], i = r[3]);
+      } else
+        i = t[3] ? t[3].slice(1, -1) : "";
+      return s = s.trim(), this.rules.other.startAngleBracket.test(s) && (this.options.pedantic && !this.rules.other.endAngleBracket.test(n) ? s = s.slice(1) : s = s.slice(1, -1)), de2(t, { href: s && s.replace(this.rules.inline.anyPunctuation, "$1"), title: i && i.replace(this.rules.inline.anyPunctuation, "$1") }, t[0], this.lexer, this.rules);
     }
   }
-  reflink(src2, links) {
-    let cap;
-    if ((cap = this.rules.inline.reflink.exec(src2)) || (cap = this.rules.inline.nolink.exec(src2))) {
-      let link = (cap[2] || cap[1]).replace(/\s+/g, " ");
-      link = links[link.toLowerCase()];
-      if (!link) {
-        const text = cap[0].charAt(0);
-        return {
-          type: "text",
-          raw: text,
-          text
-        };
+  reflink(e, t) {
+    let n;
+    if ((n = this.rules.inline.reflink.exec(e)) || (n = this.rules.inline.nolink.exec(e))) {
+      let s = (n[2] || n[1]).replace(this.rules.other.multipleSpaceGlobal, " "), i = t[s.toLowerCase()];
+      if (!i) {
+        let r = n[0].charAt(0);
+        return { type: "text", raw: r, text: r };
       }
-      return outputLink(cap, link, cap[0], this.lexer);
+      return de2(n, i, n[0], this.lexer, this.rules);
     }
   }
-  emStrong(src2, maskedSrc, prevChar = "") {
-    let match = this.rules.inline.emStrong.lDelim.exec(src2);
-    if (!match)
+  emStrong(e, t, n = "") {
+    let s = this.rules.inline.emStrongLDelim.exec(e);
+    if (!s || s[3] && n.match(this.rules.other.unicodeAlphaNumeric))
       return;
-    if (match[3] && prevChar.match(/[\p{L}\p{N}]/u))
-      return;
-    const nextChar = match[1] || match[2] || "";
-    if (!nextChar || !prevChar || this.rules.inline.punctuation.exec(prevChar)) {
-      const lLength = match[0].length - 1;
-      let rDelim, rLength, delimTotal = lLength, midDelimTotal = 0;
-      const endReg = match[0][0] === "*" ? this.rules.inline.emStrong.rDelimAst : this.rules.inline.emStrong.rDelimUnd;
-      endReg.lastIndex = 0;
-      maskedSrc = maskedSrc.slice(-1 * src2.length + lLength);
-      while ((match = endReg.exec(maskedSrc)) != null) {
-        rDelim = match[1] || match[2] || match[3] || match[4] || match[5] || match[6];
-        if (!rDelim)
+    if (!(s[1] || s[2] || "") || !n || this.rules.inline.punctuation.exec(n)) {
+      let r = [...s[0]].length - 1, o, l, c = r, p2 = 0, u = s[0][0] === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
+      for (u.lastIndex = 0, t = t.slice(-1 * e.length + r);(s = u.exec(t)) != null; ) {
+        if (o = s[1] || s[2] || s[3] || s[4] || s[5] || s[6], !o)
           continue;
-        rLength = rDelim.length;
-        if (match[3] || match[4]) {
-          delimTotal += rLength;
+        if (l = [...o].length, s[3] || s[4]) {
+          c += l;
           continue;
-        } else if (match[5] || match[6]) {
-          if (lLength % 3 && !((lLength + rLength) % 3)) {
-            midDelimTotal += rLength;
-            continue;
-          }
-        }
-        delimTotal -= rLength;
-        if (delimTotal > 0)
+        } else if ((s[5] || s[6]) && r % 3 && !((r + l) % 3)) {
+          p2 += l;
           continue;
-        rLength = Math.min(rLength, rLength + delimTotal + midDelimTotal);
-        const raw = src2.slice(0, lLength + match.index + rLength + 1);
-        if (Math.min(lLength, rLength) % 2) {
-          const text2 = raw.slice(1, -1);
-          return {
-            type: "em",
-            raw,
-            text: text2,
-            tokens: this.lexer.inlineTokens(text2)
-          };
         }
-        const text = raw.slice(2, -2);
-        return {
-          type: "strong",
-          raw,
-          text,
-          tokens: this.lexer.inlineTokens(text)
-        };
-      }
-    }
-  }
-  codespan(src2) {
-    const cap = this.rules.inline.code.exec(src2);
-    if (cap) {
-      let text = cap[2].replace(/\n/g, " ");
-      const hasNonSpaceChars = /[^ ]/.test(text);
-      const hasSpaceCharsOnBothEnds = /^ /.test(text) && / $/.test(text);
-      if (hasNonSpaceChars && hasSpaceCharsOnBothEnds) {
-        text = text.substring(1, text.length - 1);
-      }
-      text = escape(text, true);
-      return {
-        type: "codespan",
-        raw: cap[0],
-        text
-      };
-    }
-  }
-  br(src2) {
-    const cap = this.rules.inline.br.exec(src2);
-    if (cap) {
-      return {
-        type: "br",
-        raw: cap[0]
-      };
-    }
-  }
-  del(src2) {
-    const cap = this.rules.inline.del.exec(src2);
-    if (cap) {
-      return {
-        type: "del",
-        raw: cap[0],
-        text: cap[2],
-        tokens: this.lexer.inlineTokens(cap[2])
-      };
-    }
-  }
-  autolink(src2, mangle) {
-    const cap = this.rules.inline.autolink.exec(src2);
-    if (cap) {
-      let text, href;
-      if (cap[2] === "@") {
-        text = escape(this.options.mangle ? mangle(cap[1]) : cap[1]);
-        href = "mailto:" + text;
-      } else {
-        text = escape(cap[1]);
-        href = text;
-      }
-      return {
-        type: "link",
-        raw: cap[0],
-        text,
-        href,
-        tokens: [
-          {
-            type: "text",
-            raw: text,
-            text
-          }
-        ]
-      };
-    }
-  }
-  url(src2, mangle) {
-    let cap;
-    if (cap = this.rules.inline.url.exec(src2)) {
-      let text, href;
-      if (cap[2] === "@") {
-        text = escape(this.options.mangle ? mangle(cap[0]) : cap[0]);
-        href = "mailto:" + text;
-      } else {
-        let prevCapZero;
-        do {
-          prevCapZero = cap[0];
-          cap[0] = this.rules.inline._backpedal.exec(cap[0])[0];
-        } while (prevCapZero !== cap[0]);
-        text = escape(cap[0]);
-        if (cap[1] === "www.") {
-          href = "http://" + cap[0];
-        } else {
-          href = cap[0];
+        if (c -= l, c > 0)
+          continue;
+        l = Math.min(l, l + c + p2);
+        let d2 = [...s[0]][0].length, g2 = e.slice(0, r + s.index + d2 + l);
+        if (Math.min(r, l) % 2) {
+          let f = g2.slice(1, -1);
+          return { type: "em", raw: g2, text: f, tokens: this.lexer.inlineTokens(f) };
         }
-      }
-      return {
-        type: "link",
-        raw: cap[0],
-        text,
-        href,
-        tokens: [
-          {
-            type: "text",
-            raw: text,
-            text
-          }
-        ]
-      };
-    }
-  }
-  inlineText(src2, smartypants) {
-    const cap = this.rules.inline.text.exec(src2);
-    if (cap) {
-      let text;
-      if (this.lexer.state.inRawBlock) {
-        text = this.options.sanitize ? this.options.sanitizer ? this.options.sanitizer(cap[0]) : escape(cap[0]) : cap[0];
-      } else {
-        text = escape(this.options.smartypants ? smartypants(cap[0]) : cap[0]);
-      }
-      return {
-        type: "text",
-        raw: cap[0],
-        text
-      };
-    }
-  }
-}
-var block = {
-  newline: /^(?: *(?:\n|$))+/,
-  code: /^( {4}[^\n]+(?:\n(?: *(?:\n|$))*)?)+/,
-  fences: /^ {0,3}(`{3,}(?=[^`\n]*(?:\n|$))|~{3,})([^\n]*)(?:\n|$)(?:|([\s\S]*?)(?:\n|$))(?: {0,3}\1[~`]* *(?=\n|$)|$)/,
-  hr: /^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/,
-  heading: /^ {0,3}(#{1,6})(?=\s|$)(.*)(?:\n+|$)/,
-  blockquote: /^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/,
-  list: /^( {0,3}bull)([ \t][^\n]+?)?(?:\n|$)/,
-  html: "^ {0,3}(?:" + "<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)" + "|comment[^\\n]*(\\n+|$)" + "|<\\?[\\s\\S]*?(?:\\?>\\n*|$)" + "|<![A-Z][\\s\\S]*?(?:>\\n*|$)" + "|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)" + "|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n *)+\\n|$)" + "|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n *)+\\n|$)" + "|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n *)+\\n|$)" + ")",
-  def: /^ {0,3}\[(label)\]: *(?:\n *)?([^<\s][^\s]*|<.*?>)(?:(?: +(?:\n *)?| *\n *)(title))? *(?:\n+|$)/,
-  table: noopTest,
-  lheading: /^((?:(?!^bull ).|\n(?!\n|bull ))+?)\n {0,3}(=+|-+) *(?:\n+|$)/,
-  _paragraph: /^([^\n]+(?:\n(?!hr|heading|lheading|blockquote|fences|list|html|table| +\n)[^\n]+)*)/,
-  text: /^[^\n]+/
-};
-block._label = /(?!\s*\])(?:\\.|[^\[\]\\])+/;
-block._title = /(?:"(?:\\"?|[^"\\])*"|'[^'\n]*(?:\n[^'\n]+)*\n?'|\([^()]*\))/;
-block.def = edit(block.def).replace("label", block._label).replace("title", block._title).getRegex();
-block.bullet = /(?:[*+-]|\d{1,9}[.)])/;
-block.listItemStart = edit(/^( *)(bull) */).replace("bull", block.bullet).getRegex();
-block.list = edit(block.list).replace(/bull/g, block.bullet).replace("hr", "\\n+(?=\\1?(?:(?:- *){3,}|(?:_ *){3,}|(?:\\* *){3,})(?:\\n+|$))").replace("def", "\\n+(?=" + block.def.source + ")").getRegex();
-block._tag = "address|article|aside|base|basefont|blockquote|body|caption" + "|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption" + "|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe" + "|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option" + "|p|param|section|source|summary|table|tbody|td|tfoot|th|thead|title|tr" + "|track|ul";
-block._comment = /<!--(?!-?>)[\s\S]*?(?:-->|$)/;
-block.html = edit(block.html, "i").replace("comment", block._comment).replace("tag", block._tag).replace("attribute", / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
-block.lheading = edit(block.lheading).replace(/bull/g, block.bullet).getRegex();
-block.paragraph = edit(block._paragraph).replace("hr", block.hr).replace("heading", " {0,3}#{1,6} ").replace("|lheading", "").replace("|table", "").replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", block._tag).getRegex();
-block.blockquote = edit(block.blockquote).replace("paragraph", block.paragraph).getRegex();
-block.normal = { ...block };
-block.gfm = {
-  ...block.normal,
-  table: "^ *([^\\n ].*\\|.*)\\n" + " {0,3}(?:\\| *)?(:?-+:? *(?:\\| *:?-+:? *)*)(?:\\| *)?" + "(?:\\n((?:(?! *\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)"
-};
-block.gfm.table = edit(block.gfm.table).replace("hr", block.hr).replace("heading", " {0,3}#{1,6} ").replace("blockquote", " {0,3}>").replace("code", " {4}[^\\n]").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", block._tag).getRegex();
-block.gfm.paragraph = edit(block._paragraph).replace("hr", block.hr).replace("heading", " {0,3}#{1,6} ").replace("|lheading", "").replace("table", block.gfm.table).replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", block._tag).getRegex();
-block.pedantic = {
-  ...block.normal,
-  html: edit("^ *(?:comment *(?:\\n|\\s*$)" + "|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)" + `|<tag(?:"[^"]*"|'[^']*'|\\s[^'"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))`).replace("comment", block._comment).replace(/tag/g, "(?!(?:" + "a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub" + "|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)" + "\\b)\\w+(?!:|[^\\w\\s@]*@)\\b").getRegex(),
-  def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/,
-  heading: /^(#{1,6})(.*)(?:\n+|$)/,
-  fences: noopTest,
-  lheading: /^(.+?)\n {0,3}(=+|-+) *(?:\n+|$)/,
-  paragraph: edit(block.normal._paragraph).replace("hr", block.hr).replace("heading", ` *#{1,6} *[^
-]`).replace("lheading", block.lheading).replace("blockquote", " {0,3}>").replace("|fences", "").replace("|list", "").replace("|html", "").getRegex()
-};
-var inline = {
-  escape: /^\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/,
-  autolink: /^<(scheme:[^\s\x00-\x1f<>]*|email)>/,
-  url: noopTest,
-  tag: "^comment" + "|^</[a-zA-Z][\\w:-]*\\s*>" + "|^<[a-zA-Z][\\w-]*(?:attribute)*?\\s*/?>" + "|^<\\?[\\s\\S]*?\\?>" + "|^<![a-zA-Z]+\\s[\\s\\S]*?>" + "|^<!\\[CDATA\\[[\\s\\S]*?\\]\\]>",
-  link: /^!?\[(label)\]\(\s*(href)(?:\s+(title))?\s*\)/,
-  reflink: /^!?\[(label)\]\[(ref)\]/,
-  nolink: /^!?\[(ref)\](?:\[\])?/,
-  reflinkSearch: "reflink|nolink(?!\\()",
-  emStrong: {
-    lDelim: /^(?:\*+(?:((?!\*)[punct])|[^\s*]))|^_+(?:((?!_)[punct])|([^\s_]))/,
-    rDelimAst: /^[^_*]*?__[^_*]*?\*[^_*]*?(?=__)|[^*]+(?=[^*])|(?!\*)[punct](\*+)(?=[\s]|$)|[^punct\s](\*+)(?!\*)(?=[punct\s]|$)|(?!\*)[punct\s](\*+)(?=[^punct\s])|[\s](\*+)(?!\*)(?=[punct])|(?!\*)[punct](\*+)(?!\*)(?=[punct])|[^punct\s](\*+)(?=[^punct\s])/,
-    rDelimUnd: /^[^_*]*?\*\*[^_*]*?_[^_*]*?(?=\*\*)|[^_]+(?=[^_])|(?!_)[punct](_+)(?=[\s]|$)|[^punct\s](_+)(?!_)(?=[punct\s]|$)|(?!_)[punct\s](_+)(?=[^punct\s])|[\s](_+)(?!_)(?=[punct])|(?!_)[punct](_+)(?!_)(?=[punct])/
-  },
-  code: /^(`+)([^`]|[^`][\s\S]*?[^`])\1(?!`)/,
-  br: /^( {2,}|\\)\n(?!\s*$)/,
-  del: noopTest,
-  text: /^(`+|[^`])(?:(?= {2,}\n)|[\s\S]*?(?:(?=[\\<!\[`*_]|\b_|$)|[^ ](?= {2,}\n)))/,
-  punctuation: /^((?![*_])[\spunctuation])/
-};
-inline._punctuation = "\\p{P}$+<=>`^|~";
-inline.punctuation = edit(inline.punctuation, "u").replace(/punctuation/g, inline._punctuation).getRegex();
-inline.blockSkip = /\[[^[\]]*?\]\([^\(\)]*?\)|`[^`]*?`|<[^<>]*?>/g;
-inline.anyPunctuation = /\\[punct]/g;
-inline._escapes = /\\([punct])/g;
-inline._comment = edit(block._comment).replace("(?:-->|$)", "-->").getRegex();
-inline.emStrong.lDelim = edit(inline.emStrong.lDelim, "u").replace(/punct/g, inline._punctuation).getRegex();
-inline.emStrong.rDelimAst = edit(inline.emStrong.rDelimAst, "gu").replace(/punct/g, inline._punctuation).getRegex();
-inline.emStrong.rDelimUnd = edit(inline.emStrong.rDelimUnd, "gu").replace(/punct/g, inline._punctuation).getRegex();
-inline.anyPunctuation = edit(inline.anyPunctuation, "gu").replace(/punct/g, inline._punctuation).getRegex();
-inline._escapes = edit(inline._escapes, "gu").replace(/punct/g, inline._punctuation).getRegex();
-inline._scheme = /[a-zA-Z][a-zA-Z0-9+.-]{1,31}/;
-inline._email = /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(@)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?![-_])/;
-inline.autolink = edit(inline.autolink).replace("scheme", inline._scheme).replace("email", inline._email).getRegex();
-inline._attribute = /\s+[a-zA-Z:_][\w.:-]*(?:\s*=\s*"[^"]*"|\s*=\s*'[^']*'|\s*=\s*[^\s"'=<>`]+)?/;
-inline.tag = edit(inline.tag).replace("comment", inline._comment).replace("attribute", inline._attribute).getRegex();
-inline._label = /(?:\[(?:\\.|[^\[\]\\])*\]|\\.|`[^`]*`|[^\[\]\\`])*?/;
-inline._href = /<(?:\\.|[^\n<>\\])+>|[^\s\x00-\x1f]*/;
-inline._title = /"(?:\\"?|[^"\\])*"|'(?:\\'?|[^'\\])*'|\((?:\\\)?|[^)\\])*\)/;
-inline.link = edit(inline.link).replace("label", inline._label).replace("href", inline._href).replace("title", inline._title).getRegex();
-inline.reflink = edit(inline.reflink).replace("label", inline._label).replace("ref", block._label).getRegex();
-inline.nolink = edit(inline.nolink).replace("ref", block._label).getRegex();
-inline.reflinkSearch = edit(inline.reflinkSearch, "g").replace("reflink", inline.reflink).replace("nolink", inline.nolink).getRegex();
-inline.normal = { ...inline };
-inline.pedantic = {
-  ...inline.normal,
-  strong: {
-    start: /^__|\*\*/,
-    middle: /^__(?=\S)([\s\S]*?\S)__(?!_)|^\*\*(?=\S)([\s\S]*?\S)\*\*(?!\*)/,
-    endAst: /\*\*(?!\*)/g,
-    endUnd: /__(?!_)/g
-  },
-  em: {
-    start: /^_|\*/,
-    middle: /^()\*(?=\S)([\s\S]*?\S)\*(?!\*)|^_(?=\S)([\s\S]*?\S)_(?!_)/,
-    endAst: /\*(?!\*)/g,
-    endUnd: /_(?!_)/g
-  },
-  link: edit(/^!?\[(label)\]\((.*?)\)/).replace("label", inline._label).getRegex(),
-  reflink: edit(/^!?\[(label)\]\s*\[([^\]]*)\]/).replace("label", inline._label).getRegex()
-};
-inline.gfm = {
-  ...inline.normal,
-  escape: edit(inline.escape).replace("])", "~|])").getRegex(),
-  _extended_email: /[A-Za-z0-9._+-]+(@)[a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]*[a-zA-Z0-9])+(?![-_])/,
-  url: /^((?:ftp|https?):\/\/|www\.)(?:[a-zA-Z0-9\-]+\.?)+[^\s<]*|^email/,
-  _backpedal: /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/,
-  del: /^(~~?)(?=[^\s~])([\s\S]*?[^\s~])\1(?=[^~]|$)/,
-  text: /^([`~]+|[^`~])(?:(?= {2,}\n)|(?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)|[\s\S]*?(?:(?=[\\<!\[`*~_]|\b_|https?:\/\/|ftp:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)))/
-};
-inline.gfm.url = edit(inline.gfm.url, "i").replace("email", inline.gfm._extended_email).getRegex();
-inline.breaks = {
-  ...inline.gfm,
-  br: edit(inline.br).replace("{2,}", "*").getRegex(),
-  text: edit(inline.gfm.text).replace("\\b_", "\\b_| {2,}\\n").replace(/\{2,\}/g, "*").getRegex()
-};
-function smartypants(text) {
-  return text.replace(/---/g, "—").replace(/--/g, "–").replace(/(^|[-\u2014/(\[{"\s])'/g, "$1‘").replace(/'/g, "’").replace(/(^|[-\u2014/(\[{\u2018\s])"/g, "$1“").replace(/"/g, "”").replace(/\.{3}/g, "…");
-}
-function mangle(text) {
-  let out = "", i2, ch;
-  const l2 = text.length;
-  for (i2 = 0;i2 < l2; i2++) {
-    ch = text.charCodeAt(i2);
-    if (Math.random() > 0.5) {
-      ch = "x" + ch.toString(16);
-    }
-    out += "&#" + ch + ";";
-  }
-  return out;
-}
-
-class Lexer {
-  constructor(options) {
-    this.tokens = [];
-    this.tokens.links = Object.create(null);
-    this.options = options || defaults;
-    this.options.tokenizer = this.options.tokenizer || new Tokenizer;
-    this.tokenizer = this.options.tokenizer;
-    this.tokenizer.options = this.options;
-    this.tokenizer.lexer = this;
-    this.inlineQueue = [];
-    this.state = {
-      inLink: false,
-      inRawBlock: false,
-      top: true
-    };
-    const rules = {
-      block: block.normal,
-      inline: inline.normal
-    };
-    if (this.options.pedantic) {
-      rules.block = block.pedantic;
-      rules.inline = inline.pedantic;
-    } else if (this.options.gfm) {
-      rules.block = block.gfm;
-      if (this.options.breaks) {
-        rules.inline = inline.breaks;
-      } else {
-        rules.inline = inline.gfm;
+        let x2 = g2.slice(2, -2);
+        return { type: "strong", raw: g2, text: x2, tokens: this.lexer.inlineTokens(x2) };
       }
     }
-    this.tokenizer.rules = rules;
+  }
+  codespan(e) {
+    let t = this.rules.inline.code.exec(e);
+    if (t) {
+      let n = t[2].replace(this.rules.other.newLineCharGlobal, " "), s = this.rules.other.nonSpaceChar.test(n), i = this.rules.other.startingSpaceChar.test(n) && this.rules.other.endingSpaceChar.test(n);
+      return s && i && (n = n.substring(1, n.length - 1)), { type: "codespan", raw: t[0], text: n };
+    }
+  }
+  br(e) {
+    let t = this.rules.inline.br.exec(e);
+    if (t)
+      return { type: "br", raw: t[0] };
+  }
+  del(e) {
+    let t = this.rules.inline.del.exec(e);
+    if (t)
+      return { type: "del", raw: t[0], text: t[2], tokens: this.lexer.inlineTokens(t[2]) };
+  }
+  autolink(e) {
+    let t = this.rules.inline.autolink.exec(e);
+    if (t) {
+      let n, s;
+      return t[2] === "@" ? (n = t[1], s = "mailto:" + n) : (n = t[1], s = n), { type: "link", raw: t[0], text: n, href: s, tokens: [{ type: "text", raw: n, text: n }] };
+    }
+  }
+  url(e) {
+    let t;
+    if (t = this.rules.inline.url.exec(e)) {
+      let n, s;
+      if (t[2] === "@")
+        n = t[0], s = "mailto:" + n;
+      else {
+        let i;
+        do
+          i = t[0], t[0] = this.rules.inline._backpedal.exec(t[0])?.[0] ?? "";
+        while (i !== t[0]);
+        n = t[0], t[1] === "www." ? s = "http://" + t[0] : s = t[0];
+      }
+      return { type: "link", raw: t[0], text: n, href: s, tokens: [{ type: "text", raw: n, text: n }] };
+    }
+  }
+  inlineText(e) {
+    let t = this.rules.inline.text.exec(e);
+    if (t) {
+      let n = this.lexer.state.inRawBlock;
+      return { type: "text", raw: t[0], text: t[0], escaped: n };
+    }
+  }
+};
+var b2 = class a3 {
+  tokens;
+  options;
+  state;
+  tokenizer;
+  inlineQueue;
+  constructor(e) {
+    this.tokens = [], this.tokens.links = Object.create(null), this.options = e || w, this.options.tokenizer = this.options.tokenizer || new S2, this.tokenizer = this.options.tokenizer, this.tokenizer.options = this.options, this.tokenizer.lexer = this, this.inlineQueue = [], this.state = { inLink: false, inRawBlock: false, top: true };
+    let t = { other: m2, block: O2.normal, inline: P.normal };
+    this.options.pedantic ? (t.block = O2.pedantic, t.inline = P.pedantic) : this.options.gfm && (t.block = O2.gfm, this.options.breaks ? t.inline = P.breaks : t.inline = P.gfm), this.tokenizer.rules = t;
   }
   static get rules() {
-    return {
-      block,
-      inline
-    };
+    return { block: O2, inline: P };
   }
-  static lex(src2, options) {
-    const lexer = new Lexer(options);
-    return lexer.lex(src2);
+  static lex(e, t) {
+    return new a3(t).lex(e);
   }
-  static lexInline(src2, options) {
-    const lexer = new Lexer(options);
-    return lexer.inlineTokens(src2);
+  static lexInline(e, t) {
+    return new a3(t).inlineTokens(e);
   }
-  lex(src2) {
-    src2 = src2.replace(/\r\n|\r/g, `
-`);
-    this.blockTokens(src2, this.tokens);
-    let next;
-    while (next = this.inlineQueue.shift()) {
-      this.inlineTokens(next.src, next.tokens);
+  lex(e) {
+    e = e.replace(m2.carriageReturn, `
+`), this.blockTokens(e, this.tokens);
+    for (let t = 0;t < this.inlineQueue.length; t++) {
+      let n = this.inlineQueue[t];
+      this.inlineTokens(n.src, n.tokens);
     }
-    return this.tokens;
+    return this.inlineQueue = [], this.tokens;
   }
-  blockTokens(src2, tokens = []) {
-    if (this.options.pedantic) {
-      src2 = src2.replace(/\t/g, "    ").replace(/^ +$/gm, "");
-    } else {
-      src2 = src2.replace(/^( *)(\t+)/gm, (_2, leading, tabs) => {
-        return leading + "    ".repeat(tabs.length);
-      });
-    }
-    let token, lastToken, cutSrc, lastParagraphClipped;
-    while (src2) {
-      if (this.options.extensions && this.options.extensions.block && this.options.extensions.block.some((extTokenizer) => {
-        if (token = extTokenizer.call({ lexer: this }, src2, tokens)) {
-          src2 = src2.substring(token.raw.length);
-          tokens.push(token);
-          return true;
-        }
-        return false;
-      })) {
+  blockTokens(e, t = [], n = false) {
+    for (this.options.pedantic && (e = e.replace(m2.tabCharGlobal, "    ").replace(m2.spaceLine, ""));e; ) {
+      let s;
+      if (this.options.extensions?.block?.some((r) => (s = r.call({ lexer: this }, e, t)) ? (e = e.substring(s.raw.length), t.push(s), true) : false))
+        continue;
+      if (s = this.tokenizer.space(e)) {
+        e = e.substring(s.raw.length);
+        let r = t.at(-1);
+        s.raw.length === 1 && r !== undefined ? r.raw += `
+` : t.push(s);
         continue;
       }
-      if (token = this.tokenizer.space(src2)) {
-        src2 = src2.substring(token.raw.length);
-        if (token.raw.length === 1 && tokens.length > 0) {
-          tokens[tokens.length - 1].raw += `
-`;
-        } else {
-          tokens.push(token);
-        }
+      if (s = this.tokenizer.code(e)) {
+        e = e.substring(s.raw.length);
+        let r = t.at(-1);
+        r?.type === "paragraph" || r?.type === "text" ? (r.raw += `
+` + s.raw, r.text += `
+` + s.text, this.inlineQueue.at(-1).src = r.text) : t.push(s);
         continue;
       }
-      if (token = this.tokenizer.code(src2)) {
-        src2 = src2.substring(token.raw.length);
-        lastToken = tokens[tokens.length - 1];
-        if (lastToken && (lastToken.type === "paragraph" || lastToken.type === "text")) {
-          lastToken.raw += `
-` + token.raw;
-          lastToken.text += `
-` + token.text;
-          this.inlineQueue[this.inlineQueue.length - 1].src = lastToken.text;
-        } else {
-          tokens.push(token);
-        }
+      if (s = this.tokenizer.fences(e)) {
+        e = e.substring(s.raw.length), t.push(s);
         continue;
       }
-      if (token = this.tokenizer.fences(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (s = this.tokenizer.heading(e)) {
+        e = e.substring(s.raw.length), t.push(s);
         continue;
       }
-      if (token = this.tokenizer.heading(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (s = this.tokenizer.hr(e)) {
+        e = e.substring(s.raw.length), t.push(s);
         continue;
       }
-      if (token = this.tokenizer.hr(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (s = this.tokenizer.blockquote(e)) {
+        e = e.substring(s.raw.length), t.push(s);
         continue;
       }
-      if (token = this.tokenizer.blockquote(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (s = this.tokenizer.list(e)) {
+        e = e.substring(s.raw.length), t.push(s);
         continue;
       }
-      if (token = this.tokenizer.list(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (s = this.tokenizer.html(e)) {
+        e = e.substring(s.raw.length), t.push(s);
         continue;
       }
-      if (token = this.tokenizer.html(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (s = this.tokenizer.def(e)) {
+        e = e.substring(s.raw.length);
+        let r = t.at(-1);
+        r?.type === "paragraph" || r?.type === "text" ? (r.raw += `
+` + s.raw, r.text += `
+` + s.raw, this.inlineQueue.at(-1).src = r.text) : this.tokens.links[s.tag] || (this.tokens.links[s.tag] = { href: s.href, title: s.title });
         continue;
       }
-      if (token = this.tokenizer.def(src2)) {
-        src2 = src2.substring(token.raw.length);
-        lastToken = tokens[tokens.length - 1];
-        if (lastToken && (lastToken.type === "paragraph" || lastToken.type === "text")) {
-          lastToken.raw += `
-` + token.raw;
-          lastToken.text += `
-` + token.raw;
-          this.inlineQueue[this.inlineQueue.length - 1].src = lastToken.text;
-        } else if (!this.tokens.links[token.tag]) {
-          this.tokens.links[token.tag] = {
-            href: token.href,
-            title: token.title
-          };
-        }
+      if (s = this.tokenizer.table(e)) {
+        e = e.substring(s.raw.length), t.push(s);
         continue;
       }
-      if (token = this.tokenizer.table(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (s = this.tokenizer.lheading(e)) {
+        e = e.substring(s.raw.length), t.push(s);
         continue;
       }
-      if (token = this.tokenizer.lheading(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      let i = e;
+      if (this.options.extensions?.startBlock) {
+        let r = 1 / 0, o = e.slice(1), l;
+        this.options.extensions.startBlock.forEach((c) => {
+          l = c.call({ lexer: this }, o), typeof l == "number" && l >= 0 && (r = Math.min(r, l));
+        }), r < 1 / 0 && r >= 0 && (i = e.substring(0, r + 1));
+      }
+      if (this.state.top && (s = this.tokenizer.paragraph(i))) {
+        let r = t.at(-1);
+        n && r?.type === "paragraph" ? (r.raw += `
+` + s.raw, r.text += `
+` + s.text, this.inlineQueue.pop(), this.inlineQueue.at(-1).src = r.text) : t.push(s), n = i.length !== e.length, e = e.substring(s.raw.length);
         continue;
       }
-      cutSrc = src2;
-      if (this.options.extensions && this.options.extensions.startBlock) {
-        let startIndex = Infinity;
-        const tempSrc = src2.slice(1);
-        let tempStart;
-        this.options.extensions.startBlock.forEach(function(getStartIndex) {
-          tempStart = getStartIndex.call({ lexer: this }, tempSrc);
-          if (typeof tempStart === "number" && tempStart >= 0) {
-            startIndex = Math.min(startIndex, tempStart);
-          }
-        });
-        if (startIndex < Infinity && startIndex >= 0) {
-          cutSrc = src2.substring(0, startIndex + 1);
-        }
-      }
-      if (this.state.top && (token = this.tokenizer.paragraph(cutSrc))) {
-        lastToken = tokens[tokens.length - 1];
-        if (lastParagraphClipped && lastToken.type === "paragraph") {
-          lastToken.raw += `
-` + token.raw;
-          lastToken.text += `
-` + token.text;
-          this.inlineQueue.pop();
-          this.inlineQueue[this.inlineQueue.length - 1].src = lastToken.text;
-        } else {
-          tokens.push(token);
-        }
-        lastParagraphClipped = cutSrc.length !== src2.length;
-        src2 = src2.substring(token.raw.length);
+      if (s = this.tokenizer.text(e)) {
+        e = e.substring(s.raw.length);
+        let r = t.at(-1);
+        r?.type === "text" ? (r.raw += `
+` + s.raw, r.text += `
+` + s.text, this.inlineQueue.pop(), this.inlineQueue.at(-1).src = r.text) : t.push(s);
         continue;
       }
-      if (token = this.tokenizer.text(src2)) {
-        src2 = src2.substring(token.raw.length);
-        lastToken = tokens[tokens.length - 1];
-        if (lastToken && lastToken.type === "text") {
-          lastToken.raw += `
-` + token.raw;
-          lastToken.text += `
-` + token.text;
-          this.inlineQueue.pop();
-          this.inlineQueue[this.inlineQueue.length - 1].src = lastToken.text;
-        } else {
-          tokens.push(token);
-        }
-        continue;
-      }
-      if (src2) {
-        const errMsg = "Infinite loop on byte: " + src2.charCodeAt(0);
+      if (e) {
+        let r = "Infinite loop on byte: " + e.charCodeAt(0);
         if (this.options.silent) {
-          console.error(errMsg);
+          console.error(r);
           break;
-        } else {
-          throw new Error(errMsg);
-        }
+        } else
+          throw new Error(r);
       }
     }
-    this.state.top = true;
-    return tokens;
+    return this.state.top = true, t;
   }
-  inline(src2, tokens = []) {
-    this.inlineQueue.push({ src: src2, tokens });
-    return tokens;
+  inline(e, t = []) {
+    return this.inlineQueue.push({ src: e, tokens: t }), t;
   }
-  inlineTokens(src2, tokens = []) {
-    let token, lastToken, cutSrc;
-    let maskedSrc = src2;
-    let match;
-    let keepPrevChar, prevChar;
+  inlineTokens(e, t = []) {
+    let n = e, s = null;
     if (this.tokens.links) {
-      const links = Object.keys(this.tokens.links);
-      if (links.length > 0) {
-        while ((match = this.tokenizer.rules.inline.reflinkSearch.exec(maskedSrc)) != null) {
-          if (links.includes(match[0].slice(match[0].lastIndexOf("[") + 1, -1))) {
-            maskedSrc = maskedSrc.slice(0, match.index) + "[" + "a".repeat(match[0].length - 2) + "]" + maskedSrc.slice(this.tokenizer.rules.inline.reflinkSearch.lastIndex);
-          }
-        }
-      }
+      let o = Object.keys(this.tokens.links);
+      if (o.length > 0)
+        for (;(s = this.tokenizer.rules.inline.reflinkSearch.exec(n)) != null; )
+          o.includes(s[0].slice(s[0].lastIndexOf("[") + 1, -1)) && (n = n.slice(0, s.index) + "[" + "a".repeat(s[0].length - 2) + "]" + n.slice(this.tokenizer.rules.inline.reflinkSearch.lastIndex));
     }
-    while ((match = this.tokenizer.rules.inline.blockSkip.exec(maskedSrc)) != null) {
-      maskedSrc = maskedSrc.slice(0, match.index) + "[" + "a".repeat(match[0].length - 2) + "]" + maskedSrc.slice(this.tokenizer.rules.inline.blockSkip.lastIndex);
-    }
-    while ((match = this.tokenizer.rules.inline.anyPunctuation.exec(maskedSrc)) != null) {
-      maskedSrc = maskedSrc.slice(0, match.index) + "++" + maskedSrc.slice(this.tokenizer.rules.inline.anyPunctuation.lastIndex);
-    }
-    while (src2) {
-      if (!keepPrevChar) {
-        prevChar = "";
-      }
-      keepPrevChar = false;
-      if (this.options.extensions && this.options.extensions.inline && this.options.extensions.inline.some((extTokenizer) => {
-        if (token = extTokenizer.call({ lexer: this }, src2, tokens)) {
-          src2 = src2.substring(token.raw.length);
-          tokens.push(token);
-          return true;
-        }
-        return false;
-      })) {
+    for (;(s = this.tokenizer.rules.inline.anyPunctuation.exec(n)) != null; )
+      n = n.slice(0, s.index) + "++" + n.slice(this.tokenizer.rules.inline.anyPunctuation.lastIndex);
+    for (;(s = this.tokenizer.rules.inline.blockSkip.exec(n)) != null; )
+      n = n.slice(0, s.index) + "[" + "a".repeat(s[0].length - 2) + "]" + n.slice(this.tokenizer.rules.inline.blockSkip.lastIndex);
+    let i = false, r = "";
+    for (;e; ) {
+      i || (r = ""), i = false;
+      let o;
+      if (this.options.extensions?.inline?.some((c) => (o = c.call({ lexer: this }, e, t)) ? (e = e.substring(o.raw.length), t.push(o), true) : false))
+        continue;
+      if (o = this.tokenizer.escape(e)) {
+        e = e.substring(o.raw.length), t.push(o);
         continue;
       }
-      if (token = this.tokenizer.escape(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (o = this.tokenizer.tag(e)) {
+        e = e.substring(o.raw.length), t.push(o);
         continue;
       }
-      if (token = this.tokenizer.tag(src2)) {
-        src2 = src2.substring(token.raw.length);
-        lastToken = tokens[tokens.length - 1];
-        if (lastToken && token.type === "text" && lastToken.type === "text") {
-          lastToken.raw += token.raw;
-          lastToken.text += token.text;
-        } else {
-          tokens.push(token);
-        }
+      if (o = this.tokenizer.link(e)) {
+        e = e.substring(o.raw.length), t.push(o);
         continue;
       }
-      if (token = this.tokenizer.link(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (o = this.tokenizer.reflink(e, this.tokens.links)) {
+        e = e.substring(o.raw.length);
+        let c = t.at(-1);
+        o.type === "text" && c?.type === "text" ? (c.raw += o.raw, c.text += o.text) : t.push(o);
         continue;
       }
-      if (token = this.tokenizer.reflink(src2, this.tokens.links)) {
-        src2 = src2.substring(token.raw.length);
-        lastToken = tokens[tokens.length - 1];
-        if (lastToken && token.type === "text" && lastToken.type === "text") {
-          lastToken.raw += token.raw;
-          lastToken.text += token.text;
-        } else {
-          tokens.push(token);
-        }
+      if (o = this.tokenizer.emStrong(e, n, r)) {
+        e = e.substring(o.raw.length), t.push(o);
         continue;
       }
-      if (token = this.tokenizer.emStrong(src2, maskedSrc, prevChar)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (o = this.tokenizer.codespan(e)) {
+        e = e.substring(o.raw.length), t.push(o);
         continue;
       }
-      if (token = this.tokenizer.codespan(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (o = this.tokenizer.br(e)) {
+        e = e.substring(o.raw.length), t.push(o);
         continue;
       }
-      if (token = this.tokenizer.br(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (o = this.tokenizer.del(e)) {
+        e = e.substring(o.raw.length), t.push(o);
         continue;
       }
-      if (token = this.tokenizer.del(src2)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (o = this.tokenizer.autolink(e)) {
+        e = e.substring(o.raw.length), t.push(o);
         continue;
       }
-      if (token = this.tokenizer.autolink(src2, mangle)) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      if (!this.state.inLink && (o = this.tokenizer.url(e))) {
+        e = e.substring(o.raw.length), t.push(o);
         continue;
       }
-      if (!this.state.inLink && (token = this.tokenizer.url(src2, mangle))) {
-        src2 = src2.substring(token.raw.length);
-        tokens.push(token);
+      let l = e;
+      if (this.options.extensions?.startInline) {
+        let c = 1 / 0, p2 = e.slice(1), u;
+        this.options.extensions.startInline.forEach((d2) => {
+          u = d2.call({ lexer: this }, p2), typeof u == "number" && u >= 0 && (c = Math.min(c, u));
+        }), c < 1 / 0 && c >= 0 && (l = e.substring(0, c + 1));
+      }
+      if (o = this.tokenizer.inlineText(l)) {
+        e = e.substring(o.raw.length), o.raw.slice(-1) !== "_" && (r = o.raw.slice(-1)), i = true;
+        let c = t.at(-1);
+        c?.type === "text" ? (c.raw += o.raw, c.text += o.text) : t.push(o);
         continue;
       }
-      cutSrc = src2;
-      if (this.options.extensions && this.options.extensions.startInline) {
-        let startIndex = Infinity;
-        const tempSrc = src2.slice(1);
-        let tempStart;
-        this.options.extensions.startInline.forEach(function(getStartIndex) {
-          tempStart = getStartIndex.call({ lexer: this }, tempSrc);
-          if (typeof tempStart === "number" && tempStart >= 0) {
-            startIndex = Math.min(startIndex, tempStart);
-          }
-        });
-        if (startIndex < Infinity && startIndex >= 0) {
-          cutSrc = src2.substring(0, startIndex + 1);
-        }
-      }
-      if (token = this.tokenizer.inlineText(cutSrc, smartypants)) {
-        src2 = src2.substring(token.raw.length);
-        if (token.raw.slice(-1) !== "_") {
-          prevChar = token.raw.slice(-1);
-        }
-        keepPrevChar = true;
-        lastToken = tokens[tokens.length - 1];
-        if (lastToken && lastToken.type === "text") {
-          lastToken.raw += token.raw;
-          lastToken.text += token.text;
-        } else {
-          tokens.push(token);
-        }
-        continue;
-      }
-      if (src2) {
-        const errMsg = "Infinite loop on byte: " + src2.charCodeAt(0);
+      if (e) {
+        let c = "Infinite loop on byte: " + e.charCodeAt(0);
         if (this.options.silent) {
-          console.error(errMsg);
+          console.error(c);
           break;
-        } else {
-          throw new Error(errMsg);
-        }
+        } else
+          throw new Error(c);
       }
     }
-    return tokens;
+    return t;
   }
-}
-
-class Renderer {
-  constructor(options) {
-    this.options = options || defaults;
+};
+var $2 = class {
+  options;
+  parser;
+  constructor(e) {
+    this.options = e || w;
   }
-  code(code, infostring, escaped) {
-    const lang = (infostring || "").match(/\S*/)[0];
-    if (this.options.highlight) {
-      const out = this.options.highlight(code, lang);
-      if (out != null && out !== code) {
-        escaped = true;
-        code = out;
-      }
-    }
-    code = code.replace(/\n$/, "") + `
+  space(e) {
+    return "";
+  }
+  code({ text: e, lang: t, escaped: n }) {
+    let s = (t || "").match(m2.notSpaceStart)?.[0], i = e.replace(m2.endingNewline, "") + `
 `;
-    if (!lang) {
-      return "<pre><code>" + (escaped ? code : escape(code, true)) + `</code></pre>
-`;
-    }
-    return '<pre><code class="' + this.options.langPrefix + escape(lang) + '">' + (escaped ? code : escape(code, true)) + `</code></pre>
+    return s ? '<pre><code class="language-' + R(s) + '">' + (n ? i : R(i, true)) + `</code></pre>
+` : "<pre><code>" + (n ? i : R(i, true)) + `</code></pre>
 `;
   }
-  blockquote(quote) {
+  blockquote({ tokens: e }) {
     return `<blockquote>
-${quote}</blockquote>
+${this.parser.parse(e)}</blockquote>
 `;
   }
-  html(html, block2) {
-    return html;
+  html({ text: e }) {
+    return e;
   }
-  heading(text, level, raw, slugger) {
-    if (this.options.headerIds) {
-      const id = this.options.headerPrefix + slugger.slug(raw);
-      return `<h${level} id="${id}">${text}</h${level}>
+  heading({ tokens: e, depth: t }) {
+    return `<h${t}>${this.parser.parseInline(e)}</h${t}>
 `;
+  }
+  hr(e) {
+    return `<hr>
+`;
+  }
+  list(e) {
+    let { ordered: t, start: n } = e, s = "";
+    for (let o = 0;o < e.items.length; o++) {
+      let l = e.items[o];
+      s += this.listitem(l);
     }
-    return `<h${level}>${text}</h${level}>
+    let i = t ? "ol" : "ul", r = t && n !== 1 ? ' start="' + n + '"' : "";
+    return "<" + i + r + `>
+` + s + "</" + i + `>
 `;
   }
-  hr() {
-    return this.options.xhtml ? `<hr/>
-` : `<hr>
+  listitem(e) {
+    let t = "";
+    if (e.task) {
+      let n = this.checkbox({ checked: !!e.checked });
+      e.loose ? e.tokens[0]?.type === "paragraph" ? (e.tokens[0].text = n + " " + e.tokens[0].text, e.tokens[0].tokens && e.tokens[0].tokens.length > 0 && e.tokens[0].tokens[0].type === "text" && (e.tokens[0].tokens[0].text = n + " " + R(e.tokens[0].tokens[0].text), e.tokens[0].tokens[0].escaped = true)) : e.tokens.unshift({ type: "text", raw: n + " ", text: n + " ", escaped: true }) : t += n + " ";
+    }
+    return t += this.parser.parse(e.tokens, !!e.loose), `<li>${t}</li>
 `;
   }
-  list(body, ordered, start2) {
-    const type = ordered ? "ol" : "ul", startatt = ordered && start2 !== 1 ? ' start="' + start2 + '"' : "";
-    return "<" + type + startatt + `>
-` + body + "</" + type + `>
+  checkbox({ checked: e }) {
+    return "<input " + (e ? 'checked="" ' : "") + 'disabled="" type="checkbox">';
+  }
+  paragraph({ tokens: e }) {
+    return `<p>${this.parser.parseInline(e)}</p>
 `;
   }
-  listitem(text) {
-    return `<li>${text}</li>
+  table(e) {
+    let t = "", n = "";
+    for (let i = 0;i < e.header.length; i++)
+      n += this.tablecell(e.header[i]);
+    t += this.tablerow({ text: n });
+    let s = "";
+    for (let i = 0;i < e.rows.length; i++) {
+      let r = e.rows[i];
+      n = "";
+      for (let o = 0;o < r.length; o++)
+        n += this.tablecell(r[o]);
+      s += this.tablerow({ text: n });
+    }
+    return s && (s = `<tbody>${s}</tbody>`), `<table>
+<thead>
+` + t + `</thead>
+` + s + `</table>
 `;
   }
-  checkbox(checked) {
-    return "<input " + (checked ? 'checked="" ' : "") + 'disabled="" type="checkbox"' + (this.options.xhtml ? " /" : "") + "> ";
-  }
-  paragraph(text) {
-    return `<p>${text}</p>
-`;
-  }
-  table(header, body) {
-    if (body)
-      body = `<tbody>${body}</tbody>`;
-    return `<table>
-` + `<thead>
-` + header + `</thead>
-` + body + `</table>
-`;
-  }
-  tablerow(content) {
+  tablerow({ text: e }) {
     return `<tr>
-${content}</tr>
+${e}</tr>
 `;
   }
-  tablecell(content, flags) {
-    const type = flags.header ? "th" : "td";
-    const tag2 = flags.align ? `<${type} align="${flags.align}">` : `<${type}>`;
-    return tag2 + content + `</${type}>
+  tablecell(e) {
+    let t = this.parser.parseInline(e.tokens), n = e.header ? "th" : "td";
+    return (e.align ? `<${n} align="${e.align}">` : `<${n}>`) + t + `</${n}>
 `;
   }
-  strong(text) {
-    return `<strong>${text}</strong>`;
+  strong({ tokens: e }) {
+    return `<strong>${this.parser.parseInline(e)}</strong>`;
   }
-  em(text) {
-    return `<em>${text}</em>`;
+  em({ tokens: e }) {
+    return `<em>${this.parser.parseInline(e)}</em>`;
   }
-  codespan(text) {
-    return `<code>${text}</code>`;
+  codespan({ text: e }) {
+    return `<code>${R(e, true)}</code>`;
   }
-  br() {
-    return this.options.xhtml ? "<br/>" : "<br>";
+  br(e) {
+    return "<br>";
   }
-  del(text) {
-    return `<del>${text}</del>`;
+  del({ tokens: e }) {
+    return `<del>${this.parser.parseInline(e)}</del>`;
   }
-  link(href, title, text) {
-    href = cleanUrl(this.options.sanitize, this.options.baseUrl, href);
-    if (href === null) {
-      return text;
-    }
-    let out = '<a href="' + href + '"';
-    if (title) {
-      out += ' title="' + title + '"';
-    }
-    out += ">" + text + "</a>";
-    return out;
+  link({ href: e, title: t, tokens: n }) {
+    let s = this.parser.parseInline(n), i = J2(e);
+    if (i === null)
+      return s;
+    e = i;
+    let r = '<a href="' + e + '"';
+    return t && (r += ' title="' + R(t) + '"'), r += ">" + s + "</a>", r;
   }
-  image(href, title, text) {
-    href = cleanUrl(this.options.sanitize, this.options.baseUrl, href);
-    if (href === null) {
-      return text;
-    }
-    let out = `<img src="${href}" alt="${text}"`;
-    if (title) {
-      out += ` title="${title}"`;
-    }
-    out += this.options.xhtml ? "/>" : ">";
-    return out;
+  image({ href: e, title: t, text: n, tokens: s }) {
+    s && (n = this.parser.parseInline(s, this.parser.textRenderer));
+    let i = J2(e);
+    if (i === null)
+      return R(n);
+    e = i;
+    let r = `<img src="${e}" alt="${n}"`;
+    return t && (r += ` title="${R(t)}"`), r += ">", r;
   }
-  text(text) {
-    return text;
+  text(e) {
+    return "tokens" in e && e.tokens ? this.parser.parseInline(e.tokens) : ("escaped" in e) && e.escaped ? e.text : R(e.text);
   }
-}
-
-class TextRenderer {
-  strong(text) {
-    return text;
+};
+var _2 = class {
+  strong({ text: e }) {
+    return e;
   }
-  em(text) {
-    return text;
+  em({ text: e }) {
+    return e;
   }
-  codespan(text) {
-    return text;
+  codespan({ text: e }) {
+    return e;
   }
-  del(text) {
-    return text;
+  del({ text: e }) {
+    return e;
   }
-  html(text) {
-    return text;
+  html({ text: e }) {
+    return e;
   }
-  text(text) {
-    return text;
+  text({ text: e }) {
+    return e;
   }
-  link(href, title, text) {
-    return "" + text;
+  link({ text: e }) {
+    return "" + e;
   }
-  image(href, title, text) {
-    return "" + text;
+  image({ text: e }) {
+    return "" + e;
   }
   br() {
     return "";
   }
-}
-
-class Slugger {
-  constructor() {
-    this.seen = {};
+};
+var T2 = class a4 {
+  options;
+  renderer;
+  textRenderer;
+  constructor(e) {
+    this.options = e || w, this.options.renderer = this.options.renderer || new $2, this.renderer = this.options.renderer, this.renderer.options = this.options, this.renderer.parser = this, this.textRenderer = new _2;
   }
-  serialize(value) {
-    return value.toLowerCase().trim().replace(/<[!\/a-z].*?>/ig, "").replace(/[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g, "").replace(/\s/g, "-");
+  static parse(e, t) {
+    return new a4(t).parse(e);
   }
-  getNextSafeSlug(originalSlug, isDryRun) {
-    let slug = originalSlug;
-    let occurenceAccumulator = 0;
-    if (this.seen.hasOwnProperty(slug)) {
-      occurenceAccumulator = this.seen[originalSlug];
-      do {
-        occurenceAccumulator++;
-        slug = originalSlug + "-" + occurenceAccumulator;
-      } while (this.seen.hasOwnProperty(slug));
-    }
-    if (!isDryRun) {
-      this.seen[originalSlug] = occurenceAccumulator;
-      this.seen[slug] = 0;
-    }
-    return slug;
+  static parseInline(e, t) {
+    return new a4(t).parseInline(e);
   }
-  slug(value, options = {}) {
-    const slug = this.serialize(value);
-    return this.getNextSafeSlug(slug, options.dryrun);
-  }
-}
-
-class Parser {
-  constructor(options) {
-    this.options = options || defaults;
-    this.options.renderer = this.options.renderer || new Renderer;
-    this.renderer = this.options.renderer;
-    this.renderer.options = this.options;
-    this.textRenderer = new TextRenderer;
-    this.slugger = new Slugger;
-  }
-  static parse(tokens, options) {
-    const parser = new Parser(options);
-    return parser.parse(tokens);
-  }
-  static parseInline(tokens, options) {
-    const parser = new Parser(options);
-    return parser.parseInline(tokens);
-  }
-  parse(tokens, top = true) {
-    let out = "", i2, j2, k, l2, l3, row, cell, header, body, token, ordered, start2, loose, itemBody, item, checked, task, checkbox, ret;
-    const l4 = tokens.length;
-    for (i2 = 0;i2 < l4; i2++) {
-      token = tokens[i2];
-      if (this.options.extensions && this.options.extensions.renderers && this.options.extensions.renderers[token.type]) {
-        ret = this.options.extensions.renderers[token.type].call({ parser: this }, token);
-        if (ret !== false || !["space", "hr", "heading", "code", "table", "blockquote", "list", "html", "paragraph", "text"].includes(token.type)) {
-          out += ret || "";
+  parse(e, t = true) {
+    let n = "";
+    for (let s = 0;s < e.length; s++) {
+      let i = e[s];
+      if (this.options.extensions?.renderers?.[i.type]) {
+        let o = i, l = this.options.extensions.renderers[o.type].call({ parser: this }, o);
+        if (l !== false || !["space", "hr", "heading", "code", "table", "blockquote", "list", "html", "paragraph", "text"].includes(o.type)) {
+          n += l || "";
           continue;
         }
       }
-      switch (token.type) {
+      let r = i;
+      switch (r.type) {
         case "space": {
+          n += this.renderer.space(r);
           continue;
         }
         case "hr": {
-          out += this.renderer.hr();
+          n += this.renderer.hr(r);
           continue;
         }
         case "heading": {
-          out += this.renderer.heading(this.parseInline(token.tokens), token.depth, unescape(this.parseInline(token.tokens, this.textRenderer)), this.slugger);
+          n += this.renderer.heading(r);
           continue;
         }
         case "code": {
-          out += this.renderer.code(token.text, token.lang, token.escaped);
+          n += this.renderer.code(r);
           continue;
         }
         case "table": {
-          header = "";
-          cell = "";
-          l2 = token.header.length;
-          for (j2 = 0;j2 < l2; j2++) {
-            cell += this.renderer.tablecell(this.parseInline(token.header[j2].tokens), { header: true, align: token.align[j2] });
-          }
-          header += this.renderer.tablerow(cell);
-          body = "";
-          l2 = token.rows.length;
-          for (j2 = 0;j2 < l2; j2++) {
-            row = token.rows[j2];
-            cell = "";
-            l3 = row.length;
-            for (k = 0;k < l3; k++) {
-              cell += this.renderer.tablecell(this.parseInline(row[k].tokens), { header: false, align: token.align[k] });
-            }
-            body += this.renderer.tablerow(cell);
-          }
-          out += this.renderer.table(header, body);
+          n += this.renderer.table(r);
           continue;
         }
         case "blockquote": {
-          body = this.parse(token.tokens);
-          out += this.renderer.blockquote(body);
+          n += this.renderer.blockquote(r);
           continue;
         }
         case "list": {
-          ordered = token.ordered;
-          start2 = token.start;
-          loose = token.loose;
-          l2 = token.items.length;
-          body = "";
-          for (j2 = 0;j2 < l2; j2++) {
-            item = token.items[j2];
-            checked = item.checked;
-            task = item.task;
-            itemBody = "";
-            if (item.task) {
-              checkbox = this.renderer.checkbox(checked);
-              if (loose) {
-                if (item.tokens.length > 0 && item.tokens[0].type === "paragraph") {
-                  item.tokens[0].text = checkbox + " " + item.tokens[0].text;
-                  if (item.tokens[0].tokens && item.tokens[0].tokens.length > 0 && item.tokens[0].tokens[0].type === "text") {
-                    item.tokens[0].tokens[0].text = checkbox + " " + item.tokens[0].tokens[0].text;
-                  }
-                } else {
-                  item.tokens.unshift({
-                    type: "text",
-                    text: checkbox
-                  });
-                }
-              } else {
-                itemBody += checkbox;
-              }
-            }
-            itemBody += this.parse(item.tokens, loose);
-            body += this.renderer.listitem(itemBody, task, checked);
-          }
-          out += this.renderer.list(body, ordered, start2);
+          n += this.renderer.list(r);
           continue;
         }
         case "html": {
-          out += this.renderer.html(token.text, token.block);
+          n += this.renderer.html(r);
           continue;
         }
         case "paragraph": {
-          out += this.renderer.paragraph(this.parseInline(token.tokens));
+          n += this.renderer.paragraph(r);
           continue;
         }
         case "text": {
-          body = token.tokens ? this.parseInline(token.tokens) : token.text;
-          while (i2 + 1 < l4 && tokens[i2 + 1].type === "text") {
-            token = tokens[++i2];
-            body += `
-` + (token.tokens ? this.parseInline(token.tokens) : token.text);
-          }
-          out += top ? this.renderer.paragraph(body) : body;
+          let o = r, l = this.renderer.text(o);
+          for (;s + 1 < e.length && e[s + 1].type === "text"; )
+            o = e[++s], l += `
+` + this.renderer.text(o);
+          t ? n += this.renderer.paragraph({ type: "paragraph", raw: l, text: l, tokens: [{ type: "text", raw: l, text: l, escaped: true }] }) : n += l;
           continue;
         }
         default: {
-          const errMsg = 'Token with "' + token.type + '" type was not found.';
-          if (this.options.silent) {
-            console.error(errMsg);
-            return;
-          } else {
-            throw new Error(errMsg);
-          }
+          let o = 'Token with "' + r.type + '" type was not found.';
+          if (this.options.silent)
+            return console.error(o), "";
+          throw new Error(o);
         }
       }
     }
-    return out;
+    return n;
   }
-  parseInline(tokens, renderer) {
-    renderer = renderer || this.renderer;
-    let out = "", i2, token, ret;
-    const l2 = tokens.length;
-    for (i2 = 0;i2 < l2; i2++) {
-      token = tokens[i2];
-      if (this.options.extensions && this.options.extensions.renderers && this.options.extensions.renderers[token.type]) {
-        ret = this.options.extensions.renderers[token.type].call({ parser: this }, token);
-        if (ret !== false || !["escape", "html", "link", "image", "strong", "em", "codespan", "br", "del", "text"].includes(token.type)) {
-          out += ret || "";
+  parseInline(e, t = this.renderer) {
+    let n = "";
+    for (let s = 0;s < e.length; s++) {
+      let i = e[s];
+      if (this.options.extensions?.renderers?.[i.type]) {
+        let o = this.options.extensions.renderers[i.type].call({ parser: this }, i);
+        if (o !== false || !["escape", "html", "link", "image", "strong", "em", "codespan", "br", "del", "text"].includes(i.type)) {
+          n += o || "";
           continue;
         }
       }
-      switch (token.type) {
+      let r = i;
+      switch (r.type) {
         case "escape": {
-          out += renderer.text(token.text);
+          n += t.text(r);
           break;
         }
         case "html": {
-          out += renderer.html(token.text);
+          n += t.html(r);
           break;
         }
         case "link": {
-          out += renderer.link(token.href, token.title, this.parseInline(token.tokens, renderer));
+          n += t.link(r);
           break;
         }
         case "image": {
-          out += renderer.image(token.href, token.title, token.text);
+          n += t.image(r);
           break;
         }
         case "strong": {
-          out += renderer.strong(this.parseInline(token.tokens, renderer));
+          n += t.strong(r);
           break;
         }
         case "em": {
-          out += renderer.em(this.parseInline(token.tokens, renderer));
+          n += t.em(r);
           break;
         }
         case "codespan": {
-          out += renderer.codespan(token.text);
+          n += t.codespan(r);
           break;
         }
         case "br": {
-          out += renderer.br();
+          n += t.br(r);
           break;
         }
         case "del": {
-          out += renderer.del(this.parseInline(token.tokens, renderer));
+          n += t.del(r);
           break;
         }
         case "text": {
-          out += renderer.text(token.text);
+          n += t.text(r);
           break;
         }
         default: {
-          const errMsg = 'Token with "' + token.type + '" type was not found.';
-          if (this.options.silent) {
-            console.error(errMsg);
-            return;
-          } else {
-            throw new Error(errMsg);
-          }
+          let o = 'Token with "' + r.type + '" type was not found.';
+          if (this.options.silent)
+            return console.error(o), "";
+          throw new Error(o);
         }
       }
     }
-    return out;
+    return n;
   }
-}
-
-class Hooks {
-  constructor(options) {
-    this.options = options || defaults;
+};
+var L2 = class {
+  options;
+  block;
+  constructor(e) {
+    this.options = e || w;
   }
-  static passThroughHooks = new Set([
-    "preprocess",
-    "postprocess"
-  ]);
-  preprocess(markdown) {
-    return markdown;
+  static passThroughHooks = new Set(["preprocess", "postprocess", "processAllTokens"]);
+  preprocess(e) {
+    return e;
   }
-  postprocess(html) {
-    return html;
+  postprocess(e) {
+    return e;
   }
-}
-
-class Marked {
-  defaults = getDefaults();
+  processAllTokens(e) {
+    return e;
+  }
+  provideLexer() {
+    return this.block ? b2.lex : b2.lexInline;
+  }
+  provideParser() {
+    return this.block ? T2.parse : T2.parseInline;
+  }
+};
+var B2 = class {
+  defaults = M2();
   options = this.setOptions;
-  parse = this.#parseMarkdown(Lexer.lex, Parser.parse);
-  parseInline = this.#parseMarkdown(Lexer.lexInline, Parser.parseInline);
-  Parser = Parser;
-  parser = Parser.parse;
-  Renderer = Renderer;
-  TextRenderer = TextRenderer;
-  Lexer = Lexer;
-  lexer = Lexer.lex;
-  Tokenizer = Tokenizer;
-  Slugger = Slugger;
-  Hooks = Hooks;
-  constructor(...args) {
-    this.use(...args);
+  parse = this.parseMarkdown(true);
+  parseInline = this.parseMarkdown(false);
+  Parser = T2;
+  Renderer = $2;
+  TextRenderer = _2;
+  Lexer = b2;
+  Tokenizer = S2;
+  Hooks = L2;
+  constructor(...e) {
+    this.use(...e);
   }
-  walkTokens(tokens, callback) {
-    let values = [];
-    for (const token of tokens) {
-      values = values.concat(callback.call(this, token));
-      switch (token.type) {
+  walkTokens(e, t) {
+    let n = [];
+    for (let s of e)
+      switch (n = n.concat(t.call(this, s)), s.type) {
         case "table": {
-          for (const cell of token.header) {
-            values = values.concat(this.walkTokens(cell.tokens, callback));
-          }
-          for (const row of token.rows) {
-            for (const cell of row) {
-              values = values.concat(this.walkTokens(cell.tokens, callback));
-            }
-          }
+          let i = s;
+          for (let r of i.header)
+            n = n.concat(this.walkTokens(r.tokens, t));
+          for (let r of i.rows)
+            for (let o of r)
+              n = n.concat(this.walkTokens(o.tokens, t));
           break;
         }
         case "list": {
-          values = values.concat(this.walkTokens(token.items, callback));
+          let i = s;
+          n = n.concat(this.walkTokens(i.items, t));
           break;
         }
         default: {
-          if (this.defaults.extensions && this.defaults.extensions.childTokens && this.defaults.extensions.childTokens[token.type]) {
-            this.defaults.extensions.childTokens[token.type].forEach((childTokens) => {
-              values = values.concat(this.walkTokens(token[childTokens], callback));
-            });
-          } else if (token.tokens) {
-            values = values.concat(this.walkTokens(token.tokens, callback));
-          }
+          let i = s;
+          this.defaults.extensions?.childTokens?.[i.type] ? this.defaults.extensions.childTokens[i.type].forEach((r) => {
+            let o = i[r].flat(1 / 0);
+            n = n.concat(this.walkTokens(o, t));
+          }) : i.tokens && (n = n.concat(this.walkTokens(i.tokens, t)));
         }
       }
-    }
-    return values;
+    return n;
   }
-  use(...args) {
-    const extensions = this.defaults.extensions || { renderers: {}, childTokens: {} };
-    args.forEach((pack) => {
-      const opts = { ...pack };
-      opts.async = this.defaults.async || opts.async || false;
-      if (pack.extensions) {
-        pack.extensions.forEach((ext) => {
-          if (!ext.name) {
-            throw new Error("extension name required");
-          }
-          if (ext.renderer) {
-            const prevRenderer = extensions.renderers[ext.name];
-            if (prevRenderer) {
-              extensions.renderers[ext.name] = function(...args2) {
-                let ret = ext.renderer.apply(this, args2);
-                if (ret === false) {
-                  ret = prevRenderer.apply(this, args2);
-                }
-                return ret;
-              };
-            } else {
-              extensions.renderers[ext.name] = ext.renderer;
-            }
-          }
-          if (ext.tokenizer) {
-            if (!ext.level || ext.level !== "block" && ext.level !== "inline") {
-              throw new Error("extension level must be 'block' or 'inline'");
-            }
-            if (extensions[ext.level]) {
-              extensions[ext.level].unshift(ext.tokenizer);
-            } else {
-              extensions[ext.level] = [ext.tokenizer];
-            }
-            if (ext.start) {
-              if (ext.level === "block") {
-                if (extensions.startBlock) {
-                  extensions.startBlock.push(ext.start);
-                } else {
-                  extensions.startBlock = [ext.start];
-                }
-              } else if (ext.level === "inline") {
-                if (extensions.startInline) {
-                  extensions.startInline.push(ext.start);
-                } else {
-                  extensions.startInline = [ext.start];
-                }
-              }
-            }
-          }
-          if (ext.childTokens) {
-            extensions.childTokens[ext.name] = ext.childTokens;
-          }
-        });
-        opts.extensions = extensions;
-      }
-      if (pack.renderer) {
-        const renderer = this.defaults.renderer || new Renderer(this.defaults);
-        for (const prop in pack.renderer) {
-          const prevRenderer = renderer[prop];
-          renderer[prop] = (...args2) => {
-            let ret = pack.renderer[prop].apply(renderer, args2);
-            if (ret === false) {
-              ret = prevRenderer.apply(renderer, args2);
-            }
-            return ret;
+  use(...e) {
+    let t = this.defaults.extensions || { renderers: {}, childTokens: {} };
+    return e.forEach((n) => {
+      let s = { ...n };
+      if (s.async = this.defaults.async || s.async || false, n.extensions && (n.extensions.forEach((i) => {
+        if (!i.name)
+          throw new Error("extension name required");
+        if ("renderer" in i) {
+          let r = t.renderers[i.name];
+          r ? t.renderers[i.name] = function(...o) {
+            let l = i.renderer.apply(this, o);
+            return l === false && (l = r.apply(this, o)), l;
+          } : t.renderers[i.name] = i.renderer;
+        }
+        if ("tokenizer" in i) {
+          if (!i.level || i.level !== "block" && i.level !== "inline")
+            throw new Error("extension level must be 'block' or 'inline'");
+          let r = t[i.level];
+          r ? r.unshift(i.tokenizer) : t[i.level] = [i.tokenizer], i.start && (i.level === "block" ? t.startBlock ? t.startBlock.push(i.start) : t.startBlock = [i.start] : i.level === "inline" && (t.startInline ? t.startInline.push(i.start) : t.startInline = [i.start]));
+        }
+        "childTokens" in i && i.childTokens && (t.childTokens[i.name] = i.childTokens);
+      }), s.extensions = t), n.renderer) {
+        let i = this.defaults.renderer || new $2(this.defaults);
+        for (let r in n.renderer) {
+          if (!(r in i))
+            throw new Error(`renderer '${r}' does not exist`);
+          if (["options", "parser"].includes(r))
+            continue;
+          let o = r, l = n.renderer[o], c = i[o];
+          i[o] = (...p2) => {
+            let u = l.apply(i, p2);
+            return u === false && (u = c.apply(i, p2)), u || "";
           };
         }
-        opts.renderer = renderer;
+        s.renderer = i;
       }
-      if (pack.tokenizer) {
-        const tokenizer = this.defaults.tokenizer || new Tokenizer(this.defaults);
-        for (const prop in pack.tokenizer) {
-          const prevTokenizer = tokenizer[prop];
-          tokenizer[prop] = (...args2) => {
-            let ret = pack.tokenizer[prop].apply(tokenizer, args2);
-            if (ret === false) {
-              ret = prevTokenizer.apply(tokenizer, args2);
-            }
-            return ret;
+      if (n.tokenizer) {
+        let i = this.defaults.tokenizer || new S2(this.defaults);
+        for (let r in n.tokenizer) {
+          if (!(r in i))
+            throw new Error(`tokenizer '${r}' does not exist`);
+          if (["options", "rules", "lexer"].includes(r))
+            continue;
+          let o = r, l = n.tokenizer[o], c = i[o];
+          i[o] = (...p2) => {
+            let u = l.apply(i, p2);
+            return u === false && (u = c.apply(i, p2)), u;
           };
         }
-        opts.tokenizer = tokenizer;
+        s.tokenizer = i;
       }
-      if (pack.hooks) {
-        const hooks = this.defaults.hooks || new Hooks;
-        for (const prop in pack.hooks) {
-          const prevHook = hooks[prop];
-          if (Hooks.passThroughHooks.has(prop)) {
-            hooks[prop] = (arg) => {
-              if (this.defaults.async) {
-                return Promise.resolve(pack.hooks[prop].call(hooks, arg)).then((ret2) => {
-                  return prevHook.call(hooks, ret2);
-                });
-              }
-              const ret = pack.hooks[prop].call(hooks, arg);
-              return prevHook.call(hooks, ret);
-            };
-          } else {
-            hooks[prop] = (...args2) => {
-              let ret = pack.hooks[prop].apply(hooks, args2);
-              if (ret === false) {
-                ret = prevHook.apply(hooks, args2);
-              }
-              return ret;
-            };
-          }
+      if (n.hooks) {
+        let i = this.defaults.hooks || new L2;
+        for (let r in n.hooks) {
+          if (!(r in i))
+            throw new Error(`hook '${r}' does not exist`);
+          if (["options", "block"].includes(r))
+            continue;
+          let o = r, l = n.hooks[o], c = i[o];
+          L2.passThroughHooks.has(r) ? i[o] = (p2) => {
+            if (this.defaults.async)
+              return Promise.resolve(l.call(i, p2)).then((d2) => c.call(i, d2));
+            let u = l.call(i, p2);
+            return c.call(i, u);
+          } : i[o] = (...p2) => {
+            let u = l.apply(i, p2);
+            return u === false && (u = c.apply(i, p2)), u;
+          };
         }
-        opts.hooks = hooks;
+        s.hooks = i;
       }
-      if (pack.walkTokens) {
-        const walkTokens = this.defaults.walkTokens;
-        opts.walkTokens = function(token) {
-          let values = [];
-          values.push(pack.walkTokens.call(this, token));
-          if (walkTokens) {
-            values = values.concat(walkTokens.call(this, token));
-          }
-          return values;
+      if (n.walkTokens) {
+        let i = this.defaults.walkTokens, r = n.walkTokens;
+        s.walkTokens = function(o) {
+          let l = [];
+          return l.push(r.call(this, o)), i && (l = l.concat(i.call(this, o))), l;
         };
       }
-      this.defaults = { ...this.defaults, ...opts };
-    });
-    return this;
+      this.defaults = { ...this.defaults, ...s };
+    }), this;
   }
-  setOptions(opt) {
-    this.defaults = { ...this.defaults, ...opt };
-    return this;
+  setOptions(e) {
+    return this.defaults = { ...this.defaults, ...e }, this;
   }
-  #parseMarkdown(lexer, parser) {
-    return (src2, opt, callback) => {
-      if (typeof opt === "function") {
-        callback = opt;
-        opt = null;
-      }
-      const origOpt = { ...opt };
-      opt = { ...this.defaults, ...origOpt };
-      const throwError = this.#onError(opt.silent, opt.async, callback);
-      if (typeof src2 === "undefined" || src2 === null) {
-        return throwError(new Error("marked(): input parameter is undefined or null"));
-      }
-      if (typeof src2 !== "string") {
-        return throwError(new Error("marked(): input parameter is of type " + Object.prototype.toString.call(src2) + ", string expected"));
-      }
-      checkDeprecations(opt, callback);
-      if (opt.hooks) {
-        opt.hooks.options = opt;
-      }
-      if (callback) {
-        const highlight = opt.highlight;
-        let tokens;
-        try {
-          if (opt.hooks) {
-            src2 = opt.hooks.preprocess(src2);
-          }
-          tokens = lexer(src2, opt);
-        } catch (e2) {
-          return throwError(e2);
-        }
-        const done = (err) => {
-          let out;
-          if (!err) {
-            try {
-              if (opt.walkTokens) {
-                this.walkTokens(tokens, opt.walkTokens);
-              }
-              out = parser(tokens, opt);
-              if (opt.hooks) {
-                out = opt.hooks.postprocess(out);
-              }
-            } catch (e2) {
-              err = e2;
-            }
-          }
-          opt.highlight = highlight;
-          return err ? throwError(err) : callback(null, out);
-        };
-        if (!highlight || highlight.length < 3) {
-          return done();
-        }
-        delete opt.highlight;
-        if (!tokens.length)
-          return done();
-        let pending = 0;
-        this.walkTokens(tokens, (token) => {
-          if (token.type === "code") {
-            pending++;
-            setTimeout(() => {
-              highlight(token.text, token.lang, (err, code) => {
-                if (err) {
-                  return done(err);
-                }
-                if (code != null && code !== token.text) {
-                  token.text = code;
-                  token.escaped = true;
-                }
-                pending--;
-                if (pending === 0) {
-                  done();
-                }
-              });
-            }, 0);
-          }
-        });
-        if (pending === 0) {
-          done();
-        }
-        return;
-      }
-      if (opt.async) {
-        return Promise.resolve(opt.hooks ? opt.hooks.preprocess(src2) : src2).then((src3) => lexer(src3, opt)).then((tokens) => opt.walkTokens ? Promise.all(this.walkTokens(tokens, opt.walkTokens)).then(() => tokens) : tokens).then((tokens) => parser(tokens, opt)).then((html) => opt.hooks ? opt.hooks.postprocess(html) : html).catch(throwError);
-      }
+  lexer(e, t) {
+    return b2.lex(e, t ?? this.defaults);
+  }
+  parser(e, t) {
+    return T2.parse(e, t ?? this.defaults);
+  }
+  parseMarkdown(e) {
+    return (n, s) => {
+      let i = { ...s }, r = { ...this.defaults, ...i }, o = this.onError(!!r.silent, !!r.async);
+      if (this.defaults.async === true && i.async === false)
+        return o(new Error("marked(): The async option was set to true by an extension. Remove async: false from the parse options object to return a Promise."));
+      if (typeof n > "u" || n === null)
+        return o(new Error("marked(): input parameter is undefined or null"));
+      if (typeof n != "string")
+        return o(new Error("marked(): input parameter is of type " + Object.prototype.toString.call(n) + ", string expected"));
+      r.hooks && (r.hooks.options = r, r.hooks.block = e);
+      let l = r.hooks ? r.hooks.provideLexer() : e ? b2.lex : b2.lexInline, c = r.hooks ? r.hooks.provideParser() : e ? T2.parse : T2.parseInline;
+      if (r.async)
+        return Promise.resolve(r.hooks ? r.hooks.preprocess(n) : n).then((p2) => l(p2, r)).then((p2) => r.hooks ? r.hooks.processAllTokens(p2) : p2).then((p2) => r.walkTokens ? Promise.all(this.walkTokens(p2, r.walkTokens)).then(() => p2) : p2).then((p2) => c(p2, r)).then((p2) => r.hooks ? r.hooks.postprocess(p2) : p2).catch(o);
       try {
-        if (opt.hooks) {
-          src2 = opt.hooks.preprocess(src2);
-        }
-        const tokens = lexer(src2, opt);
-        if (opt.walkTokens) {
-          this.walkTokens(tokens, opt.walkTokens);
-        }
-        let html = parser(tokens, opt);
-        if (opt.hooks) {
-          html = opt.hooks.postprocess(html);
-        }
-        return html;
-      } catch (e2) {
-        return throwError(e2);
+        r.hooks && (n = r.hooks.preprocess(n));
+        let p2 = l(n, r);
+        r.hooks && (p2 = r.hooks.processAllTokens(p2)), r.walkTokens && this.walkTokens(p2, r.walkTokens);
+        let u = c(p2, r);
+        return r.hooks && (u = r.hooks.postprocess(u)), u;
+      } catch (p2) {
+        return o(p2);
       }
     };
   }
-  #onError(silent, async, callback) {
-    return (e2) => {
-      e2.message += `
-Please report this to https://github.com/markedjs/marked.`;
-      if (silent) {
-        const msg = "<p>An error occurred:</p><pre>" + escape(e2.message + "", true) + "</pre>";
-        if (async) {
-          return Promise.resolve(msg);
-        }
-        if (callback) {
-          callback(null, msg);
-          return;
-        }
-        return msg;
+  onError(e, t) {
+    return (n) => {
+      if (n.message += `
+Please report this to https://github.com/markedjs/marked.`, e) {
+        let s = "<p>An error occurred:</p><pre>" + R(n.message + "", true) + "</pre>";
+        return t ? Promise.resolve(s) : s;
       }
-      if (async) {
-        return Promise.reject(e2);
-      }
-      if (callback) {
-        callback(e2);
-        return;
-      }
-      throw e2;
+      if (t)
+        return Promise.reject(n);
+      throw n;
     };
   }
+};
+var z2 = new B2;
+function k2(a5, e) {
+  return z2.parse(a5, e);
 }
-var markedInstance = new Marked(defaults);
-function marked(src2, opt, callback) {
-  return markedInstance.parse(src2, opt, callback);
-}
-marked.options = marked.setOptions = function(opt) {
-  markedInstance.setOptions(opt);
-  marked.defaults = markedInstance.defaults;
-  changeDefaults(marked.defaults);
-  return marked;
+k2.options = k2.setOptions = function(a5) {
+  return z2.setOptions(a5), k2.defaults = z2.defaults, H2(k2.defaults), k2;
 };
-marked.getDefaults = getDefaults;
-marked.defaults = defaults;
-marked.use = function(...args) {
-  markedInstance.use(...args);
-  marked.defaults = markedInstance.defaults;
-  changeDefaults(marked.defaults);
-  return marked;
+k2.getDefaults = M2;
+k2.defaults = w;
+k2.use = function(...a5) {
+  return z2.use(...a5), k2.defaults = z2.defaults, H2(k2.defaults), k2;
 };
-marked.walkTokens = function(tokens, callback) {
-  return markedInstance.walkTokens(tokens, callback);
+k2.walkTokens = function(a5, e) {
+  return z2.walkTokens(a5, e);
 };
-marked.parseInline = markedInstance.parseInline;
-marked.Parser = Parser;
-marked.parser = Parser.parse;
-marked.Renderer = Renderer;
-marked.TextRenderer = TextRenderer;
-marked.Lexer = Lexer;
-marked.lexer = Lexer.lex;
-marked.Tokenizer = Tokenizer;
-marked.Slugger = Slugger;
-marked.Hooks = Hooks;
-marked.parse = marked;
-var options = marked.options;
-var setOptions = marked.setOptions;
-var use = marked.use;
-var walkTokens = marked.walkTokens;
-var parseInline = marked.parseInline;
-var parser = Parser.parse;
-var lexer = Lexer.lex;
+k2.parseInline = z2.parseInline;
+k2.Parser = T2;
+k2.parser = T2.parse;
+k2.Renderer = $2;
+k2.TextRenderer = _2;
+k2.Lexer = b2;
+k2.lexer = b2.lex;
+k2.Tokenizer = S2;
+k2.Hooks = L2;
+k2.parse = k2;
+var Dt = k2.options;
+var Zt = k2.setOptions;
+var Gt = k2.use;
+var Ht = k2.walkTokens;
+var Nt = k2.parseInline;
+var Ft = T2.parse;
+var Qt = b2.lex;
 
 // src/markdown-viewer.ts
 function populate(basePath, source) {
@@ -8270,17 +7283,18 @@ function populate(basePath, source) {
     source = String(source);
   }
   return source.replace(/\{\{([^}]+)\}\}/g, (original, prop) => {
-    const value = T[`${basePath}${prop.startsWith("[") ? prop : "." + prop}`];
+    const value = d[`${basePath}${prop.startsWith("[") ? prop : "." + prop}`];
     return value === undefined ? original : populate(basePath, String(value));
   });
 }
 
-class MarkdownViewer extends G {
+class MarkdownViewer extends M {
   src = "";
   value = "";
   content = null;
   elements = false;
   context = {};
+  options = {};
   constructor() {
     super();
     this.initAttributes("src", "elements", "context");
@@ -8303,7 +7317,7 @@ class MarkdownViewer extends G {
   didRender = () => {};
   render() {
     super.render();
-    T[this.instanceId] = typeof this.context === "string" ? JSON.parse(this.context) : this.context;
+    d[this.instanceId] = typeof this.context === "string" ? JSON.parse(this.context) : this.context;
     const source = populate(this.instanceId, this.value);
     if (this.elements) {
       const chunks = source.split(`
@@ -8321,12 +7335,9 @@ class MarkdownViewer extends G {
         }
         return chunks2;
       }, []);
-      this.innerHTML = chunks.map((chunk) => chunk.startsWith("<") && chunk.endsWith(">") ? chunk : marked(chunk, { mangle: false, headerIds: false })).join("");
+      this.innerHTML = chunks.map((chunk) => chunk.startsWith("<") && chunk.endsWith(">") ? chunk : k2(chunk, this.options)).join("");
     } else {
-      this.innerHTML = marked(source, {
-        mangle: false,
-        headerIds: false
-      });
+      this.innerHTML = k2(source, this.options);
     }
     this.didRender();
   }
@@ -8335,7 +7346,7 @@ var markdownViewer = MarkdownViewer.elementCreator({
   tag: "xin-md"
 });
 // src/notifications.ts
-var { div: div9, button: button8 } = S;
+var { div: div9, button: button8 } = p;
 var COLOR_MAP = {
   error: "red",
   warn: "orange",
@@ -8345,63 +7356,63 @@ var COLOR_MAP = {
   progress: "royalblue"
 };
 
-class XinNotification extends G {
+class XinNotification extends M {
   static singleton;
   static styleSpec = {
     ":host": {
       _notificationSpacing: 8,
       _notificationWidth: 360,
-      _notificationPadding: `${qn.notificationSpacing} ${qn.notificationSpacing50} ${qn.notificationSpacing} ${qn.notificationSpacing200}`,
+      _notificationPadding: `${Hn.notificationSpacing} ${Hn.notificationSpacing50} ${Hn.notificationSpacing} ${Hn.notificationSpacing200}`,
       _notificationBg: "#fafafa",
       _notificationAccentColor: "#aaa",
       _notificationTextColor: "#444",
-      _notificationIconSize: qn.notificationSpacing300,
+      _notificationIconSize: Hn.notificationSpacing300,
       _notificationButtonSize: 48,
       _notificationBorderWidth: "3px 0 0",
-      _notificationBorderRadius: qn.notificationSpacing50,
+      _notificationBorderRadius: Hn.notificationSpacing50,
       position: "fixed",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingBottom: qn.notificationSpacing,
-      width: qn.notificationWidth,
+      paddingBottom: Hn.notificationSpacing,
+      width: Hn.notificationWidth,
       display: "flex",
       flexDirection: "column-reverse",
       margin: "0 auto",
-      gap: qn.notificationSpacing,
+      gap: Hn.notificationSpacing,
       maxHeight: "50vh",
       overflow: "hidden auto",
       boxShadow: "none !important"
     },
     ":host *": {
-      color: qn.notificationTextColor
+      color: Hn.notificationTextColor
     },
     ":host .note": {
       display: "grid",
-      background: qn.notificationBg,
-      padding: qn.notificationPadding,
-      gridTemplateColumns: `${qn.notificationIconSize} 1fr ${qn.notificationButtonSize}`,
-      gap: qn.notificationSpacing,
+      background: Hn.notificationBg,
+      padding: Hn.notificationPadding,
+      gridTemplateColumns: `${Hn.notificationIconSize} 1fr ${Hn.notificationButtonSize}`,
+      gap: Hn.notificationSpacing,
       alignItems: "center",
-      borderRadius: qn.notificationBorderRadius,
-      boxShadow: `0 2px 8px #0006, inset 0 0 0 2px ${qn.notificationAccentColor}`,
-      borderColor: qn.notificationAccentColor,
-      borderWidth: qn.notificationBorderWidth,
+      borderRadius: Hn.notificationBorderRadius,
+      boxShadow: `0 2px 8px #0006, inset 0 0 0 2px ${Hn.notificationAccentColor}`,
+      borderColor: Hn.notificationAccentColor,
+      borderWidth: Hn.notificationBorderWidth,
       borderStyle: "solid",
       transition: "0.5s ease-in",
       transitionProperty: "margin, opacity",
       zIndex: 1
     },
     ":host .note .icon": {
-      fill: qn.notificationAccentColor
+      stroke: Hn.notificationAccentColor
     },
     ":host .note button": {
       display: "flex",
-      lineHeight: qn.notificationButtonSize,
+      lineHeight: Hn.notificationButtonSize,
       padding: 0,
       margin: 0,
-      height: qn.notificationButtonSize,
-      width: qn.notificationButtonSize,
+      height: Hn.notificationButtonSize,
+      width: Hn.notificationButtonSize,
       background: "transparent",
       alignItems: "center",
       justifyContent: "center",
@@ -8410,24 +7421,24 @@ class XinNotification extends G {
       position: "relative"
     },
     ":host .note button:hover svg": {
-      fill: qn.notificationAccentColor
+      stroke: Hn.notificationAccentColor
     },
     ":host .note button:active svg": {
       borderRadius: 99,
-      fill: qn.notificationBg,
-      background: qn.notificationAccentColor,
-      padding: qn.spacing50
+      stroke: Hn.notificationBg,
+      background: Hn.notificationAccentColor,
+      padding: Hn.spacing50
     },
     ":host .note svg": {
-      height: qn.notificationIconSize,
-      width: qn.notificationIconSize,
+      height: Hn.notificationIconSize,
+      width: Hn.notificationIconSize,
       pointerEvents: "none"
     },
     ":host .message": {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      gap: qn.notificationSpacing
+      gap: Hn.notificationSpacing
     },
     ":host .note.closing": {
       opacity: 0,
@@ -8452,7 +7463,7 @@ class XinNotification extends G {
     document.body.append(singleton);
     singleton.style.zIndex = String(findHighestZ() + 1);
     const _notificationAccentColor = COLOR_MAP[type];
-    const progressBar = progress || type === "progress" ? S.progress() : {};
+    const progressBar = progress || type === "progress" ? p.progress() : {};
     const closeCallback = () => {
       if (close) {
         close();
@@ -8505,12 +7516,12 @@ function postNotification(spec) {
   return XinNotification.post(spec);
 }
 // src/password-strength.ts
-var digest = async (s2, method = "SHA-1") => {
+var digest = async (s, method = "SHA-1") => {
   const encoder = new TextEncoder;
-  const data = encoder.encode(s2);
+  const data = encoder.encode(s);
   const hashBuffer = await crypto.subtle.digest(method, data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b2) => b2.toString(16).padStart(2, "0")).join("");
+  const hashHex = hashArray.map((b3) => b3.toString(16).padStart(2, "0")).join("");
   return hashHex;
 };
 var isBreached = async (password) => {
@@ -8522,9 +7533,9 @@ var isBreached = async (password) => {
   }
   return response.status !== 404;
 };
-var { span: span8, xinSlot: xinSlot4 } = S;
+var { span: span8, xinSlot: xinSlot4 } = p;
 
-class XinPasswordStrength extends G {
+class XinPasswordStrength extends M {
   minLength = 8;
   goodLength = 12;
   indicatorColors = "#f00,#f40,#f80,#ef0,#8f0,#0a2";
@@ -8567,7 +7578,7 @@ class XinPasswordStrength extends G {
       noNumber: !password.match(/[0-9]/),
       noSpecial: !password.match(/[^a-zA-Z0-9]/)
     };
-    return this.issues.tooShort ? 0 : Object.values(this.issues).filter((v) => !v).length - 1;
+    return this.issues.tooShort ? 0 : Object.values(this.issues).filter((v3) => !v3).length - 1;
   }
   async isBreached() {
     const password = this.querySelector("input")?.value;
@@ -8610,7 +7621,7 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
     ":host": {
       display: "inline-flex",
       flexDirection: "column",
-      gap: qn.spacing50,
+      gap: Hn.spacing50,
       position: "relative"
     },
     ":host xin-slot": {
@@ -8619,44 +7630,45 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
     ':host [part="meter"]': {
       display: "block",
       position: "relative",
-      height: wn.meterHeight("24px"),
-      background: wn.indicatorBg("white"),
-      borderRadius: wn.meterRadius("4px"),
-      boxShadow: wn.meterShadow(`inset 0 0 0 2px ${qn.indicatorColor}`)
+      height: sn.meterHeight("24px"),
+      background: sn.indicatorBg("white"),
+      borderRadius: sn.meterRadius("4px"),
+      boxShadow: sn.meterShadow(`inset 0 0 0 2px ${Hn.indicatorColor}`)
     },
     ':host [part="level"]': {
-      height: wn.levelHeight("20px"),
+      height: sn.levelHeight("20px"),
       content: '" "',
       display: "inline-block",
       width: 0,
       transition: "0.15s ease-out",
-      background: qn.indicatorColor,
-      margin: wn.levelMargin("2px"),
-      borderRadius: wn.levelRadius("2px")
+      background: Hn.indicatorColor,
+      margin: sn.levelMargin("2px"),
+      borderRadius: sn.levelRadius("2px")
     },
     ':host [part="description"]': {
       position: "absolute",
       inset: "0",
-      color: qn.descriptionColor,
-      height: wn.meterHeight("24px"),
-      lineHeight: wn.meterHeight("24px"),
+      color: Hn.descriptionColor,
+      height: sn.meterHeight("24px"),
+      lineHeight: sn.meterHeight("24px"),
       textAlign: "center"
     }
   }
 });
 // src/rating.ts
-var { span: span9 } = S;
+var { span: span9 } = p;
 
-class XinRating extends G {
+class XinRating extends M {
   iconSize = 24;
   min = 1;
   max = 5;
   step = 1;
   value = null;
   icon = "star";
-  color = "#f91";
-  emptyColor = "#8888";
-  emptyStrokeWidth = 2;
+  ratingFill = "#f91";
+  ratingStroke = "#e81";
+  emptyFill = "#ccc";
+  emptyStroke = "none";
   readonly = false;
   hollow = false;
   static styleSpec = {
@@ -8676,38 +7688,30 @@ class XinRating extends G {
     },
     ":host::part(empty)": {
       pointerEvents: "none",
-      _textColor: "transparent"
-    },
-    ':host [part="empty"]:not(.hollow)': {
-      fill: qn.ratingEmptyColor
-    },
-    ":host .hollow": {
-      fill: "none",
-      stroke: qn.ratingEmptyColor,
-      strokeWidth: qn.ratingEmptyStrokeWidth
+      _xinIconFill: Hn.emptyFill,
+      _xinIconStroke: Hn.emptyStroke
     },
     ":host::part(filled)": {
       position: "absolute",
       left: 0,
-      fill: qn.ratingColor,
-      stroke: qn.ratingColor,
-      strokeWidth: qn.ratingEmptyStrokeWidth
+      _xinIconFill: Hn.ratingFill,
+      _xinIconStroke: Hn.ratingStroke
     },
     ":host svg": {
-      transform: "scale(0.7)",
+      transform: "scale(0.9)",
       pointerEvents: "all !important",
       transition: "0.25s ease-in-out"
     },
     ":host svg:hover": {
-      transform: "scale(0.9)"
+      transform: "scale(1)"
     },
     ":host svg:active": {
-      transform: "scale(1)"
+      transform: "scale(1.1)"
     }
   };
   constructor() {
     super();
-    this.initAttributes("max", "min", "icon", "step", "color", "emptyColor", "readonly", "iconSize", "hollow");
+    this.initAttributes("max", "min", "icon", "step", "ratingStroke", "ratingColor", "emptyStroke", "emptyColor", "readonly", "iconSize", "hollow");
   }
   content = () => span9({ part: "container" }, span9({ part: "empty" }), span9({ part: "filled" }));
   displayValue(value) {
@@ -8720,8 +7724,8 @@ class XinRating extends G {
       return;
     }
     const { empty } = this.parts;
-    const x = event instanceof MouseEvent ? event.pageX - empty.getBoundingClientRect().x : 0;
-    const value = Math.min(Math.max(this.min, Math.round(x / empty.offsetWidth * this.max / this.step + this.step * 0.5) * this.step), this.max);
+    const x2 = event instanceof MouseEvent ? event.pageX - empty.getBoundingClientRect().x : 0;
+    const value = Math.min(Math.max(this.min, Math.round(x2 / empty.offsetWidth * this.max / this.step + this.step * 0.5) * this.step), this.max);
     if (event.type === "click") {
       this.value = value;
     } else if (event.type === "mousemove") {
@@ -8767,9 +7771,12 @@ class XinRating extends G {
   _renderedIcon = "";
   render() {
     super.render();
-    this.style.setProperty("--rating-color", this.color);
-    this.style.setProperty("--rating-empty-color", this.emptyColor);
-    this.style.setProperty("--rating-empty-stroke-width", String(this.emptyStrokeWidth * 32));
+    const height = this.iconSize + "px";
+    this.style.setProperty("--rating-fill", this.ratingFill);
+    this.style.setProperty("--rating-stroke", this.ratingStroke);
+    this.style.setProperty("--empty-fill", this.emptyFill);
+    this.style.setProperty("--empty-stroke", this.emptyStroke);
+    this.style.setProperty("--xin-icon-size", height);
     if (this.readonly) {
       this.role = "image";
     } else {
@@ -8780,16 +7787,14 @@ class XinRating extends G {
     this.ariaValueMin = String(this.min);
     this.ariaValueNow = this.value === null ? String(-1) : String(this.value);
     const { empty, filled } = this.parts;
-    const height = this.iconSize + "px";
     empty.classList.toggle("hollow", this.hollow);
     if (this._renderedIcon !== this.icon) {
       this._renderedIcon = this.icon;
-      for (let i2 = 0;i2 < this.max; i2++) {
-        empty.append(icons[this.icon]({ height }));
-        filled.append(icons[this.icon]({ height }));
+      for (let i = 0;i < this.max; i++) {
+        empty.append(icons[this.icon]());
+        filled.append(icons[this.icon]());
       }
     }
-    this.style.height = height;
     this.displayValue(this.value);
   }
 }
@@ -8797,7 +7802,7 @@ var xinRating = XinRating.elementCreator({
   tag: "xin-rating"
 });
 // src/rich-text.ts
-var { xinSlot: xinSlot5, div: div10, button: button9, span: span10 } = S;
+var { xinSlot: xinSlot5, div: div10, button: button9, span: span10 } = p;
 var blockStyles = [
   {
     caption: "Title",
@@ -8824,12 +7829,12 @@ var blockStyles = [
     tagType: "PRE"
   }
 ];
-function blockStyle(options2 = blockStyles) {
+function blockStyle(options = blockStyles) {
   return xinSelect({
     title: "paragraph style",
     slot: "toolbar",
     class: "block-style",
-    options: options2.map(({ caption, tagType }) => ({
+    options: options.map(({ caption, tagType }) => ({
       caption,
       value: `formatBlock,${tagType}`
     }))
@@ -8879,7 +7884,7 @@ var richTextWidgets = () => [
   ...characterStyleWidgets()
 ];
 
-class RichText extends G {
+class RichText extends M {
   widgets = "default";
   isInitialized = false;
   get value() {
@@ -8906,17 +7911,17 @@ class RichText extends G {
       return [];
     }
     const blocks = [];
-    for (let i2 = 0;i2 < selObject.rangeCount; i2++) {
-      const range = selObject.getRangeAt(i2);
+    for (let i = 0;i < selObject.rangeCount; i++) {
+      const range = selObject.getRangeAt(i);
       if (!doc.contains(range.commonAncestorContainer)) {
         continue;
       }
-      let block2 = this.blockElement(range.startContainer);
+      let block = this.blockElement(range.startContainer);
       const lastBlock = this.blockElement(range.endContainer);
-      blocks.push(block2);
-      while (block2 !== lastBlock && block2 !== null) {
-        block2 = block2.nextElementSibling;
-        blocks.push(block2);
+      blocks.push(block);
+      while (block !== lastBlock && block !== null) {
+        block = block.nextElementSibling;
+        blocks.push(block);
       }
     }
     return blocks;
@@ -8979,7 +7984,7 @@ class RichText extends G {
     if (select2 === null) {
       return;
     }
-    let blockTags = this.selectedBlocks.map((block2) => block2.tagName);
+    let blockTags = this.selectedBlocks.map((block) => block.tagName);
     blockTags = [...new Set(blockTags)];
     select2.value = blockTags.length === 1 ? `formatBlock,${blockTags[0]}` : "";
   }
@@ -9030,9 +8035,9 @@ var richText = RichText.elementCreator({
   }
 });
 // src/segmented.ts
-var { div: div11, slot: slot6, label: label2, span: span11, input: input5 } = S;
+var { div: div11, slot: slot6, label: label2, span: span11, input: input5 } = p;
 
-class XinSegmented extends G {
+class XinSegmented extends M {
   choices = "";
   other = "";
   multiple = false;
@@ -9041,7 +8046,7 @@ class XinSegmented extends G {
   localized = false;
   value = null;
   get values() {
-    return (this.value || "").split(",").map((v) => v.trim()).filter((v) => v !== "");
+    return (this.value || "").split(",").map((v3) => v3.trim()).filter((v3) => v3 !== "");
   }
   content = () => [
     slot6(),
@@ -9050,54 +8055,54 @@ class XinSegmented extends G {
   static styleSpec = {
     ":host": {
       display: "inline-flex",
-      gap: wn.segmentedOptionGap("8px"),
-      alignItems: wn.segmentedAlignItems("center")
+      gap: sn.segmentedOptionGap("8px"),
+      alignItems: sn.segmentedAlignItems("center")
     },
     ":host, :host::part(options)": {
-      flexDirection: wn.segmentedDirection("row")
+      flexDirection: sn.segmentedDirection("row")
     },
     ":host label": {
       display: "inline-grid",
       alignItems: "center",
-      gap: wn.segmentedOptionGap("8px"),
-      gridTemplateColumns: wn.segmentedOptionGridColumns("0px 24px 1fr"),
-      padding: wn.segmentedOptionPadding("4px 12px"),
-      font: wn.segmentedOptionFont("16px")
+      gap: sn.segmentedOptionGap("8px"),
+      gridTemplateColumns: sn.segmentedOptionGridColumns("0px 24px 1fr"),
+      padding: sn.segmentedOptionPadding("4px 12px"),
+      font: sn.segmentedOptionFont("16px")
     },
     ":host label:has(:checked)": {
-      color: wn.segmentedOptionCurrentColor("#eee"),
-      background: wn.segmentedOptionCurrentBackground("#44a")
+      color: sn.segmentedOptionCurrentColor("#eee"),
+      background: sn.segmentedOptionCurrentBackground("#44a")
     },
     ":host svg": {
-      height: wn.segmentOptionIconSize("16px"),
-      fill: wn.segmentedOptionIconColor("currentColor")
+      height: sn.segmentOptionIconSize("16px"),
+      stroke: sn.segmentedOptionIconColor("currentColor")
     },
     ":host label.no-icon": {
       gap: 0,
-      gridTemplateColumns: wn.segmentedOptionGridColumns("0px 1fr")
+      gridTemplateColumns: sn.segmentedOptionGridColumns("0px 1fr")
     },
     ':host input[type="radio"], :host input[type="checkbox"]': {
-      visibility: wn.segmentedInputVisibility("hidden")
+      visibility: sn.segmentedInputVisibility("hidden")
     },
     ":host::part(options)": {
       display: "flex",
-      borderRadius: wn.segmentedOptionsBorderRadius("8px"),
-      background: wn.segmentedOptionsBackground("#fff"),
-      color: wn.segmentedOptionColor("#222"),
+      borderRadius: sn.segmentedOptionsBorderRadius("8px"),
+      background: sn.segmentedOptionsBackground("#fff"),
+      color: sn.segmentedOptionColor("#222"),
       overflow: "hidden",
-      alignItems: wn.segmentedOptionAlignItems("stretch")
+      alignItems: sn.segmentedOptionAlignItems("stretch")
     },
     ":host::part(custom)": {
-      padding: wn.segmentedOptionPadding("4px 12px"),
-      color: wn.segmentedOptionCurrentColor("#eee"),
-      background: wn.segmentedOptionCurrentBackground("#44a"),
-      font: wn.segmentedOptionFont("16px"),
+      padding: sn.segmentedOptionPadding("4px 12px"),
+      color: sn.segmentedOptionCurrentColor("#eee"),
+      background: sn.segmentedOptionCurrentBackground("#44a"),
+      font: sn.segmentedOptionFont("16px"),
       border: "0",
       outline: "none"
     },
     ":host::part(custom)::placeholder": {
-      color: wn.segmentedOptionCurrentColor("#eee"),
-      opacity: wn.segmentedPlaceholderOpacity(0.75)
+      color: sn.segmentedOptionCurrentColor("#eee"),
+      opacity: sn.segmentedPlaceholderOpacity(0.75)
     }
   };
   constructor() {
@@ -9106,14 +8111,14 @@ class XinSegmented extends G {
   }
   valueChanged = false;
   handleChange = () => {
-    const { options: options2, custom } = this.parts;
+    const { options, custom } = this.parts;
     if (this.multiple) {
       const inputs = [
-        ...options2.querySelectorAll("input:checked")
+        ...options.querySelectorAll("input:checked")
       ];
       this.value = inputs.map((input6) => input6.value).join(",");
     } else {
-      const input6 = options2.querySelector("input:checked");
+      const input6 = options.querySelector("input:checked");
       if (!input6) {
         this.value = null;
       } else if (input6.value) {
@@ -9138,34 +8143,34 @@ class XinSegmented extends G {
   };
   connectedCallback() {
     super.connectedCallback();
-    const { options: options2 } = this.parts;
+    const { options } = this.parts;
     if (this.name === "") {
       this.name = this.instanceId;
     }
-    options2.addEventListener("change", this.handleChange);
-    options2.addEventListener("keydown", this.handleKey);
+    options.addEventListener("change", this.handleChange);
+    options.addEventListener("keydown", this.handleKey);
     if (this.other && this.multiple) {
       console.warn(this, "is set to [other] and [multiple]; [other] will be ignored");
       this.other = "";
     }
   }
   get _choices() {
-    const options2 = Array.isArray(this.choices) ? this.choices : this.choices.split(",").filter((c) => c.trim() !== "").map((c) => {
-      const [value, remains] = c.split("=").map((v) => v.trim());
-      const [caption, iconName] = (remains || value).split(":").map((v) => v.trim());
+    const options = Array.isArray(this.choices) ? this.choices : this.choices.split(",").filter((c) => c.trim() !== "").map((c) => {
+      const [value, remains] = c.split("=").map((v3) => v3.trim());
+      const [caption, iconName] = (remains || value).split(":").map((v3) => v3.trim());
       const icon = iconName ? icons[iconName]() : "";
       const choice = { value, icon, caption };
       return choice;
     });
     if (this.other && !this.multiple) {
       const [caption, icon] = this.other.split(":");
-      options2.push({
+      options.push({
         value: "",
         caption,
         icon
       });
     }
-    return options2;
+    return options;
   }
   get isOtherValue() {
     return Boolean(this.value === "" || this.value && !this._choices.find((choice) => choice.value === this.value));
@@ -9176,11 +8181,11 @@ class XinSegmented extends G {
       this.valueChanged = false;
       return;
     }
-    const { options: options2, custom } = this.parts;
-    options2.textContent = "";
+    const { options, custom } = this.parts;
+    options.textContent = "";
     const type = this.multiple ? "checkbox" : "radio";
     const { values, isOtherValue } = this;
-    options2.append(...this._choices.map((choice) => {
+    options.append(...this._choices.map((choice) => {
       return label2({ tabindex: 0 }, input5({
         type,
         name: this.name,
@@ -9193,7 +8198,7 @@ class XinSegmented extends G {
       custom.hidden = !isOtherValue;
       custom.value = isOtherValue ? this.value : "";
       custom.placeholder = this.placeholder;
-      options2.append(custom);
+      options.append(custom);
     }
   }
 }
@@ -9201,9 +8206,9 @@ var xinSegmented = XinSegmented.elementCreator({
   tag: "xin-segmented"
 });
 // src/side-nav.ts
-var { slot: slot7 } = S;
+var { slot: slot7 } = p;
 
-class SideNav extends G {
+class SideNav extends M {
   minSize = 800;
   navSize = 200;
   compact = false;
@@ -9219,11 +8224,11 @@ class SideNav extends G {
   static styleSpec = {
     ":host": {
       display: "grid",
-      gridTemplateColumns: `${wn.navWidth("50%")} ${wn.contentWidth("50%")}`,
+      gridTemplateColumns: `${sn.navWidth("50%")} ${sn.contentWidth("50%")}`,
       gridTemplateRows: "100%",
       position: "relative",
-      margin: wn.margin("0 0 0 -100%"),
-      transition: wn.sideNavTransition("0.25s ease-out")
+      margin: sn.margin("0 0 0 -100%"),
+      transition: sn.sideNavTransition("0.25s ease-out")
     },
     ":host slot": {
       position: "relative"
@@ -9293,9 +8298,9 @@ var sideNav = SideNav.elementCreator({
   tag: "xin-sidenav"
 });
 // src/size-break.ts
-var { slot: slot8 } = S;
+var { slot: slot8 } = p;
 
-class SizeBreak extends G {
+class SizeBreak extends M {
   minWidth = 0;
   minHeight = 0;
   value = "normal";
@@ -9338,7 +8343,7 @@ var sizeBreak = SizeBreak.elementCreator({
   tag: "xin-sizebreak"
 });
 // src/sizer.ts
-class XinSizer extends G {
+class XinSizer extends M {
   target = null;
   static styleSpec = {
     ":host": {
@@ -9359,7 +8364,7 @@ class XinSizer extends G {
     ":host svg": {
       width: 16,
       height: 16,
-      fill: qn.resizeIconFill
+      stroke: Hn.resizeIconFill
     }
   };
   content = icons.resize();
@@ -9375,7 +8380,7 @@ class XinSizer extends G {
     if (!target)
       return;
     const w2 = target.offsetWidth;
-    const h = target.offsetHeight;
+    const h3 = target.offsetHeight;
     target.style.left = target.offsetLeft + "px";
     target.style.top = target.offsetTop + "px";
     target.style.bottom = "";
@@ -9383,7 +8388,7 @@ class XinSizer extends G {
     const { minSize } = this;
     trackDrag(event, (dx, dy, event2) => {
       target.style.width = Math.max(minSize.width, w2 + dx) + "px";
-      target.style.height = Math.max(minSize.height, h + dy) + "px";
+      target.style.height = Math.max(minSize.height, h3 + dy) + "px";
       if (event2.type === "mouseup") {
         return true;
       }
@@ -9403,9 +8408,9 @@ var xinSizer = XinSizer.elementCreator({
   tag: "xin-sizer"
 });
 // src/tag-list.ts
-var { div: div12, input: input6, span: span12, button: button10 } = S;
+var { div: div12, input: input6, span: span12, button: button10 } = p;
 
-class XinTag extends G {
+class XinTag extends M {
   caption = "";
   removeable = false;
   removeCallback = () => {
@@ -9432,48 +8437,48 @@ var xinTag = XinTag.elementCreator({
       "--tag-close-button-bg": "#fffc",
       "--tag-button-opacity": "0.5",
       "--tag-button-hover-opacity": "0.75",
-      "--tag-bg": wn.brandColor("blue"),
-      "--tag-text-color": wn.brandTextColor("white"),
+      "--tag-bg": sn.brandColor("blue"),
+      "--tag-text-color": sn.brandTextColor("white"),
       display: "inline-flex",
-      borderRadius: wn.tagRoundedRadius(qn.spacing50),
-      color: qn.tagTextColor,
-      background: qn.tagBg,
-      padding: `0 ${qn.spacing75} 0 ${qn.spacing75}`,
-      height: `calc(${qn.lineHeight} + ${qn.spacing50})`,
-      lineHeight: `calc(${qn.lineHeight} + ${qn.spacing50})`
+      borderRadius: sn.tagRoundedRadius(Hn.spacing50),
+      color: Hn.tagTextColor,
+      background: Hn.tagBg,
+      padding: `0 ${Hn.spacing75} 0 ${Hn.spacing75}`,
+      height: `calc(${Hn.lineHeight} + ${Hn.spacing50})`,
+      lineHeight: `calc(${Hn.lineHeight} + ${Hn.spacing50})`
     },
     ':host > [part="caption"]': {
       position: "relative",
       whiteSpace: "nowrap",
       overflow: "hidden",
       flex: "1 1 auto",
-      fontSize: wn.fontSize("16px"),
-      color: qn.tagTextColor,
+      fontSize: sn.fontSize("16px"),
+      color: Hn.tagTextColor,
       textOverflow: "ellipsis"
     },
     ':host [part="remove"]': {
       boxShadow: "none",
-      margin: `0 ${qn.spacing_50} 0 ${qn.spacing25}`,
+      margin: `0 ${Hn.spacing_50} 0 ${Hn.spacing25}`,
       padding: 0,
       display: "inline-flex",
       alignItems: "center",
       alignSelf: "center",
       justifyContent: "center",
-      height: qn.spacing150,
-      width: qn.spacing150,
-      "--text-color": qn.tagCloseButtonColor,
-      background: qn.tagCloseButtonBg,
-      borderRadius: wn.tagCloseButtonRadius("99px"),
-      opacity: qn.tagButtonOpacity
+      height: Hn.spacing150,
+      width: Hn.spacing150,
+      "--text-color": Hn.tagCloseButtonColor,
+      background: Hn.tagCloseButtonBg,
+      borderRadius: sn.tagCloseButtonRadius("99px"),
+      opacity: Hn.tagButtonOpacity
     },
     ':host [part="remove"]:hover': {
-      background: qn.tagCloseButtonBg,
-      opacity: qn.tagButtonHoverOpacity
+      background: Hn.tagCloseButtonBg,
+      opacity: Hn.tagButtonHoverOpacity
     }
   }
 });
 
-class XinTagList extends G {
+class XinTagList extends M {
   disabled = false;
   name = "";
   availableTags = [];
@@ -9482,26 +8487,26 @@ class XinTagList extends G {
   editable = false;
   placeholder = "enter tags";
   get tags() {
-    return typeof this.value === "string" ? this.value.split(",").map((tag2) => tag2.trim()).filter((tag2) => tag2 !== "") : this.value;
+    return typeof this.value === "string" ? this.value.split(",").map((tag) => tag.trim()).filter((tag) => tag !== "") : this.value;
   }
   constructor() {
     super();
     this.initAttributes("name", "value", "textEntry", "availableTags", "editable", "placeholder", "disabled");
   }
-  addTag = (tag2) => {
-    if (tag2.trim() === "") {
+  addTag = (tag) => {
+    if (tag.trim() === "") {
       return;
     }
     const { tags } = this;
-    if (!tags.includes(tag2)) {
-      tags.push(tag2);
+    if (!tags.includes(tag)) {
+      tags.push(tag);
     }
     this.value = tags;
     this.queueRender(true);
   };
   toggleTag = (toggled) => {
     if (this.tags.includes(toggled)) {
-      this.value = this.tags.filter((tag2) => tag2 !== toggled);
+      this.value = this.tags.filter((tag) => tag !== toggled);
     } else {
       this.addTag(toggled);
     }
@@ -9512,14 +8517,14 @@ class XinTagList extends G {
     switch (event.key) {
       case ",":
         {
-          const tag2 = tagInput.value.split(",")[0];
-          this.addTag(tag2);
+          const tag = tagInput.value.split(",")[0];
+          this.addTag(tag);
         }
         break;
       case "Enter":
         {
-          const tag2 = tagInput.value.split(",")[0];
-          this.addTag(tag2);
+          const tag = tagInput.value.split(",")[0];
+          this.addTag(tag);
         }
         event.stopPropagation();
         event.preventDefault();
@@ -9531,27 +8536,27 @@ class XinTagList extends G {
     const { toggleTag } = this;
     const { tagMenu } = this.parts;
     const tags = typeof this.availableTags === "string" ? this.availableTags.split(",") : this.availableTags;
-    const extraTags = this.tags.filter((tag2) => !tags.includes(tag2));
+    const extraTags = this.tags.filter((tag) => !tags.includes(tag));
     if (extraTags.length) {
       tags.push(null, ...extraTags);
     }
-    const menuItems = tags.map((tag2) => {
-      if (tag2 === "" || tag2 === null) {
+    const menuItems = tags.map((tag) => {
+      if (tag === "" || tag === null) {
         return null;
-      } else if (typeof tag2 === "object") {
+      } else if (typeof tag === "object") {
         return {
-          checked: () => this.tags.includes(tag2.value),
-          caption: tag2.caption,
+          checked: () => this.tags.includes(tag.value),
+          caption: tag.caption,
           action() {
-            toggleTag(tag2.value);
+            toggleTag(tag.value);
           }
         };
       } else {
         return {
-          checked: () => this.tags.includes(tag2),
-          caption: tag2,
+          checked: () => this.tags.includes(tag),
+          caption: tag,
           action() {
-            toggleTag(tag2);
+            toggleTag(tag);
           }
         };
       }
@@ -9581,9 +8586,9 @@ class XinTagList extends G {
   ];
   removeTag = (event) => {
     if (this.editable && !this.disabled) {
-      const tag2 = event.target.closest(XinTag.tagName);
-      this.value = this.tags.filter((value) => value !== tag2.caption);
-      tag2.remove();
+      const tag = event.target.closest(XinTag.tagName);
+      this.value = this.tags.filter((value) => value !== tag.caption);
+      tag.remove();
       this.queueRender(true);
     }
     event.stopPropagation();
@@ -9604,9 +8609,9 @@ class XinTagList extends G {
     }
     tagContainer.textContent = "";
     const { tags } = this;
-    for (const tag2 of tags) {
+    for (const tag of tags) {
       tagContainer.append(xinTag({
-        caption: tag2,
+        caption: tag,
         removeable: this.editable && !this.disabled,
         removeCallback: this.removeTag
       }));
@@ -9623,34 +8628,34 @@ var xinTagList = XinTagList.elementCreator({
       display: "grid",
       gridTemplateColumns: "auto",
       alignItems: "center",
-      background: qn.tagListBg,
-      gap: qn.spacing25,
-      borderRadius: wn.taglistRoundedRadius(qn.spacing50),
+      background: Hn.tagListBg,
+      gap: Hn.spacing25,
+      borderRadius: sn.taglistRoundedRadius(Hn.spacing50),
       overflow: "hidden"
     },
     ":host[editable]": {
-      gridTemplateColumns: `0px auto ${qn.touchSize}`
+      gridTemplateColumns: `0px auto ${Hn.touchSize}`
     },
     ":host[editable][text-entry]": {
-      gridTemplateColumns: `0px 2fr 1fr ${qn.touchSize}`
+      gridTemplateColumns: `0px 2fr 1fr ${Hn.touchSize}`
     },
     ':host [part="tagContainer"]': {
       display: "flex",
       content: '" "',
       alignItems: "center",
-      background: qn.inputBg,
-      borderRadius: wn.tagContainerRadius(qn.spacing50),
-      boxShadow: qn.borderShadow,
+      background: Hn.inputBg,
+      borderRadius: sn.tagContainerRadius(Hn.spacing50),
+      boxShadow: Hn.borderShadow,
       flexWrap: "nowrap",
       overflow: "auto hidden",
-      gap: qn.spacing25,
-      minHeight: `calc(${qn.lineHeight} + ${qn.spacing})`,
-      padding: qn.spacing25
+      gap: Hn.spacing25,
+      minHeight: `calc(${Hn.lineHeight} + ${Hn.spacing})`,
+      padding: Hn.spacing25
     },
     ':host [part="tagMenu"]': {
-      width: qn.touchSize,
-      height: qn.touchSize,
-      lineHeight: qn.touchSize,
+      width: Hn.touchSize,
+      height: Hn.touchSize,
+      lineHeight: Hn.touchSize,
       textAlign: "center",
       padding: 0,
       margin: 0
@@ -9659,26 +8664,28 @@ var xinTagList = XinTagList.elementCreator({
       display: "none !important"
     },
     ':host button[part="tagMenu"]': {
-      background: qn.brandColor,
-      color: qn.brandTextColor
+      background: Hn.brandColor,
+      color: Hn.brandTextColor
     }
   }
 });
 // src/version.ts
-var version = "0.9.15";
+var version = "1.0.2";
 // demo/src/style.ts
+var brandColor = a.fromCss("#EE257B");
 var colors = {
   _textColor: "#222",
-  _brandColor: "#295546",
+  _brandColor: brandColor,
   _background: "#fafafa",
   _inputBg: "#fdfdfd",
   _backgroundShaded: "#f5f5f5",
-  _navBg: "#ddede8",
+  _navBg: brandColor.rotate(30).desaturate(0.5).brighten(0.9),
   _barColor: "#dae3df",
-  _focusColor: "#148960ad",
-  _brandTextColor: "#ecf3dd",
-  _insetBg: "#eee",
-  _codeBg: "#f8ffe9",
+  _focusColor: brandColor.opacity(0.7),
+  _brandTextColor: brandColor.rotate(30).brighten(0.9),
+  _insetBg: brandColor.rotate(45).brighten(0.8),
+  _codeBg: brandColor.rotate(-15).desaturate(0.5).brighten(0.9),
+  _linkColor: brandColor.rotate(-30).darken(0.5),
   _shadowColor: "#0004",
   _menuBg: "#fafafa",
   _menuItemActiveColor: "#000",
@@ -9712,7 +8719,7 @@ var styleSpec = {
     }
   },
   ".darkmode": {
-    ...Ro(colors),
+    ...Ge(colors),
     _menuShadow: "0 0 0 2px #a0f3d680",
     _menuSeparatorColor: "#a0f3d640"
   },
@@ -9721,58 +8728,62 @@ var styleSpec = {
   },
   "*": {
     boxSizing: "border-box",
-    scrollbarColor: `${qn.scrollThumbColor} ${qn.scrollBarColor}`,
+    scrollbarColor: `${Hn.scrollThumbColor} ${Hn.scrollBarColor}`,
     scrollbarWidth: "thin"
   },
   body: {
-    fontFamily: qn.fontFamily,
-    fontSize: qn.fontSize,
+    fontFamily: Hn.fontFamily,
+    fontSize: Hn.fontSize,
     margin: "0",
-    lineHeight: qn.lineHeight,
-    background: qn.background,
-    _linkColor: qn.brandColor,
-    _xinTabsSelectedColor: qn.brandColor,
-    _xinTabsBarColor: qn.brandTextColor,
-    _menuItemIconColor: qn.brandColor,
-    color: qn.textColor
+    lineHeight: Hn.lineHeight,
+    background: Hn.background,
+    _xinTabsSelectedColor: Hn.brandColor,
+    _xinTabsBarColor: Hn.brandTextColor,
+    _menuItemIconColor: Hn.brandColor,
+    color: Hn.textColor
+  },
+  ".center": {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
   },
   "input, button, select, textarea": {
-    fontFamily: qn.fontFamily,
-    fontSize: qn.fontSize,
+    fontFamily: Hn.fontFamily,
+    fontSize: Hn.fontSize,
     color: "currentColor",
-    background: qn.inputBg
+    background: Hn.inputBg
   },
   select: {
     WebkitAppearance: "none",
     appearance: "none"
   },
   header: {
-    background: qn.brandColor,
-    color: qn.brandTextColor,
-    _textColor: qn.brandTextColor,
-    _linkColor: qn.transTextColor,
+    background: Hn.brandColor,
+    color: Hn.brandTextColor,
+    _textColor: Hn.brandTextColor,
+    _linkColor: Hn.transTextColor,
     display: "flex",
     alignItems: "center",
     padding: "0 var(--spacing)",
     lineHeight: "calc(var(--line-height) * var(--h1-scale))",
-    height: qn.headerHeight,
+    height: Hn.headerHeight,
     whiteSpace: "nowrap"
   },
   h1: {
-    _textColor: qn.brandColor,
+    color: Hn.brandColor,
     fontSize: "calc(var(--font-size) * var(--h1-scale))",
     lineHeight: "calc(var(--line-height) * var(--h1-scale))",
     fontWeight: "400",
     margin: "0",
-    padding: qn.spacing,
+    padding: Hn.spacing,
     textAlign: "center"
   },
   "header h2": {
-    color: qn.brandTextColor,
+    color: Hn.brandTextColor,
     whiteSpace: "nowrap"
   },
   h2: {
-    color: qn.brandColor,
+    color: Hn.brandColor,
     fontSize: "calc(var(--font-size) * var(--h2-scale))",
     lineHeight: "calc(var(--line-height) * var(--h2-scale))",
     margin: "calc(var(--spacing) * var(--h2-scale)) 0"
@@ -9794,42 +8805,56 @@ var styleSpec = {
     height: "calc(100vh - var(--header-height))"
   },
   "main > xin-sidenav::part(nav)": {
-    background: qn.navBg
+    background: Hn.navBg
   },
   "input[type=search]": {
     borderRadius: 99
   },
   blockquote: {
-    background: qn.insetBg,
+    background: Hn.insetBg,
     margin: "0",
+    borderRadius: Hn.spacing50,
     padding: "var(--spacing) calc(var(--spacing) * 2)"
   },
   "blockquote > :first-child": {
     marginTop: "0"
   },
   "blockquote > :last-child": {
+    position: "relative",
+    width: "100%",
+    paddingBottom: 48,
     marginBottom: "0"
+  },
+  "blockquote > :last-child::after": {
+    content: '" "',
+    width: 48,
+    height: 48,
+    display: "block",
+    bottom: 0,
+    right: 0,
+    position: "absolute",
+    background: svg2DataUrl(icons.tosi())
   },
   ".bar": {
     display: "flex",
-    gap: qn.spacing,
+    gap: Hn.spacing,
     justifyContent: "center",
     alignItems: "center",
-    padding: qn.spacing,
+    padding: Hn.spacing,
     flexWrap: "wrap",
-    _textColor: qn.brandColor,
-    background: qn.barColor
+    _textColor: Hn.brandColor,
+    background: Hn.barColor
   },
   a: {
     textDecoration: "none",
-    color: qn.linkColor,
+    color: Hn.linkColor,
     opacity: "0.9",
     borderBottom: "1px solid var(--brand-color)"
   },
   "button, select, .clickable": {
     transition: "ease-out 0.2s",
-    background: qn.brandTextColor,
-    _textColor: qn.brandColor,
+    background: Hn.brandTextColor,
+    _textColor: Hn.brandColor,
     display: "inline-block",
     textDecoration: "none",
     padding: "0 calc(var(--spacing) * 1.25)",
@@ -9848,7 +8873,7 @@ var styleSpec = {
     alignSelf: "center",
     pointerEvents: "none",
     objectPosition: "left center",
-    _textColor: qn.brandColor
+    _textColor: Hn.brandColor
   },
   "label > select + .icon-chevron-down": {
     marginLeft: "calc(var(--spacing) * -3.5)"
@@ -9863,7 +8888,7 @@ var styleSpec = {
   },
   textarea: {
     padding: "var(--spacing) calc(var(--spacing) * 1.25)",
-    lineHeight: qn.lineHeight,
+    lineHeight: Hn.lineHeight,
     minHeight: "calc(var(--spacing) + var(--line-height) * 4)"
   },
   "input[type='number']": {
@@ -9877,10 +8902,10 @@ var styleSpec = {
     inset: 1
   },
   "input[type='checkbox'], input[type='radio']": {
-    maxWidth: qn.lineHeight
+    maxWidth: Hn.lineHeight
   },
   "::placeholder": {
-    color: qn.focusColor
+    color: Hn.focusColor
   },
   img: {
     verticalAlign: "middle"
@@ -9889,8 +8914,8 @@ var styleSpec = {
     boxShadow: "inset 0 0 0 2px var(--brand-color)"
   },
   "button:active, button:active, .clickable:active": {
-    background: qn.brandColor,
-    color: qn.brandTextColor
+    background: Hn.brandColor,
+    color: Hn.brandTextColor
   },
   label: {
     display: "inline-flex",
@@ -9906,7 +8931,6 @@ var styleSpec = {
     pointerEvents: "none",
     fontSize: "16px",
     fontWeight: "bold",
-    fill: "#000",
     stroke: "#fff8",
     strokeWidth: "0.5",
     opacity: "0"
@@ -9915,8 +8939,8 @@ var styleSpec = {
     opacity: "1"
   },
   ".thead": {
-    background: qn.brandColor,
-    color: qn.brandTextColor
+    background: Hn.brandColor,
+    color: Hn.brandTextColor
   },
   ".th + .th": {
     border: "1px solid #fff4",
@@ -9937,16 +8961,16 @@ var styleSpec = {
     pointerEvents: "none"
   },
   pre: {
-    background: qn.codeBg,
-    padding: qn.spacing,
+    background: Hn.codeBg,
+    padding: Hn.spacing,
     borderRadius: "calc(var(--spacing) * 0.25)",
     overflow: "auto",
-    fontSize: qn.codeFontSize,
+    fontSize: Hn.codeFontSize,
     lineHeight: "calc(var(--font-size) * 1.2)"
   },
   "pre, code": {
-    fontFamily: qn.codeFontFamily,
-    _textColor: qn.brandColor
+    fontFamily: Hn.codeFontFamily,
+    _textColor: Hn.brandColor
   },
   ".-xin-sidenav-visible .close-content": {
     display: "none"
@@ -9964,22 +8988,22 @@ var styleSpec = {
   ".transparent:hover, .iconic:hover": {
     background: "#0002",
     boxShadow: "none",
-    color: qn.textColor
+    color: Hn.textColor
   },
   ".transparent:active, .iconic:active": {
     background: "#0004",
     boxShadow: "none",
-    color: qn.textColor
+    color: Hn.textColor
   },
   "xin-sidenav:not([compact]) .show-within-compact": {
     display: "none"
   },
   ".on.on": {
-    background: qn.brandColor,
-    _textColor: qn.brandTextColor
+    background: Hn.brandColor,
+    _textColor: Hn.brandTextColor
   },
   ".current": {
-    background: qn.background
+    background: Hn.background
   },
   ".doc-link": {
     cursor: "pointer",
@@ -9989,7 +9013,7 @@ var styleSpec = {
     padding: "calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.5)"
   },
   ".doc-link:not(.current):hover": {
-    background: qn.background
+    background: Hn.background
   },
   ".doc-link:not(.current)": {
     opacity: "0.8",
@@ -9999,11 +9023,11 @@ var styleSpec = {
     margin: "var(--spacing) 0"
   },
   "xin-example [part=editors]": {
-    background: qn.insetBg
+    background: Hn.insetBg
   },
   "[class*='icon-'], xin-icon": {
     color: "currentcolor",
-    height: qn.fontSize,
+    height: Hn.fontSize,
     pointerEvents: "none"
   },
   "[class*='icon-']": {
@@ -10016,14 +9040,14 @@ var styleSpec = {
     borderCollapse: "collapse"
   },
   thead: {
-    background: qn.brandColor,
-    color: qn.brandTextColor
+    background: Hn.brandColor,
+    color: Hn.brandTextColor
   },
   tbody: {
-    background: qn.background
+    background: Hn.background
   },
   "tr:nth-child(2n)": {
-    background: qn.backgroundShaded
+    background: Hn.backgroundShaded
   },
   "th, td": {
     padding: "calc(var(--spacing) * 0.5) var(--spacing)"
@@ -10032,9 +9056,6 @@ var styleSpec = {
     color: "currentcolor",
     background: "transparent",
     gap: "2px"
-  },
-  svg: {
-    fill: "currentcolor"
   },
   "img.logo, xin-icon.logo": {
     animation: "2s ease-in-out 0s infinite alternate logo-swing"
@@ -10129,9 +9150,9 @@ Weak	Faible	Heikko	Svag	虚弱的	弱い	약한	Débil	Schwach	Debole
 Yes	Oui	Kyllä	Ja	是的	はい	예	Sí	Ja	Sì`;
 
 // demo/src/css-var-editor.ts
-var { h2, code } = S;
+var { h2: h22, code } = p;
 
-class XinCssVarEditor extends G {
+class XinCssVarEditor extends M {
   elementSelector = "";
   targetSelector = "";
   constructor() {
@@ -10139,7 +9160,7 @@ class XinCssVarEditor extends G {
     this.initAttributes("elementSelector", "targetSelector");
   }
   content = () => [
-    h2({ part: "title" }, "CSS variables"),
+    h22({ part: "title" }, "CSS variables"),
     xinForm({ part: "variables", changeCallback: this.update })
   ];
   loadVars = () => {
@@ -10162,7 +9183,7 @@ class XinCssVarEditor extends G {
           let value = computedStyle.getPropertyValue(cssVar);
           const type = value.match(/^(#|rgb|hsl)[\d()a-fA-F]+$/) ? "color" : "string";
           if (type === "color") {
-            value = $.fromCss(value).html;
+            value = a.fromCss(value).html;
           }
           variables.append(xinField(code(cssVar), { key: cssVar, value, type }));
         }
@@ -10196,17 +9217,21 @@ var xinCssVarEditor = XinCssVarEditor.elementCreator({
 // demo/docs.json
 var docs_default = [
   {
-    text: `# xinjs-ui
+    text: `# tosijs-ui
+
+> xinjs-ui is now tosijs-ui. This is work in progress.
 
 <!--{ "pin": "top" }-->
 
 [ui.xinjs.net live demo](https://ui.xinjs.net) | [xinjs](https://xinjs.net) | [discord](https://discord.gg/ramJ9rgky5) | [github](https://github.com/tonioloewald/xinjs-ui#readme) | [npm](https://www.npmjs.com/package/xinjs-ui)
 
-<img alt="xinjs-ui logo" class="logo" style="display: block; margin: auto; width: 50%" src="./favicon.svg">
+<center>
+  <xin-icon class="logo" icon="tosiUi" size=300></xin-icon>
+</center>
 
 Copyright ©2023-2025 Tonio Loewald
 
-## the xinjs ui library
+## the tosijs ui library
 
 A set of [web-components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)
 created with [xinjs](https://xinjs.net), designed to augment what the browser gives you
@@ -10225,7 +9250,7 @@ npm add xinjs-ui
 \`\`\`
 
 Then you can import the component \`elementCreator\` and create the element any way you
-like, the easiest way being to use the \`elementCreator\` itself. A \`xinjs\` \`elementCreator\`
+like, the easiest way being to use the \`elementCreator\` itself. A \`tosijs\` \`elementCreator\`
 is syntax sugar around \`document.createElement()\`.
 
 \`\`\`
@@ -10236,9 +9261,9 @@ document.body.append(dataTable())
 
 ### Using the iife via cdn
 
-The \`xinjs-ui\` iife build bundles \`xinjs\`, \`xinjs-ui\`, and \`marked\` into
-a single minified javascript source file. You can access \`xinjs\` and \`xinjsui\`
-as globals which contain all the things exported by \`xinjs\` and \`xinjs-ui\`.
+The \`tosijs-ui\` iife build bundles \`tosijs\`, \`tosijs-ui\`, and \`marked\` into
+a single minified javascript source file. You can access \`tosijs\` and \`xinjsui\`
+as globals which contain all the things exported by \`tosijs\` and \`tosijs-ui\`.
 
 > iife support is new so it may not have propagated to the cdn yet. This
 > example loads the library from ui.xinjs.net for now.
@@ -10247,8 +9272,8 @@ as globals which contain all the things exported by \`xinjs\` and \`xinjs-ui\`.
 <script src="https://ui.xinjs.net/iife.js"></script>
 <button id="menu">Menu <xin-icon icon="chevronDown"></xin-icon></button>
 <script>
-  const { elements } = xinjs
-  const { popMenu, icons } = xinjsui
+  const { elements } = tosijs
+  const { popMenu, icons } = tosijsui
 
   const button = { elements }
 
@@ -10302,7 +9327,7 @@ document.body.append(markdownViewer('# hello world\\nthis is a test'))
 \`\`\`
 
 \`\`\`js
-const { markdownViewer } = xinjsui
+const { markdownViewer } = tosijsui
 
 preview.append(
   markdownViewer(\`
@@ -10321,20 +9346,20 @@ here is some markdown
 </xin-md>
 \`\`\`
 
-The big difference with using the \`markdownViewer()\` function is that the \`xinjs\` \`Component\`
+The big difference with using the \`markdownViewer()\` function is that the \`tosijs\` \`Component\`
 class will automatically pick a new tag if the expected tag is taken (e.g. by a previously
 defined custom-element from another library). \`markdownViewer()\` will create an element of
 the correct type.
 
-The other thing is that \`xinjs\` \`ElementCreator\` functions are convenient and composable,
+The other thing is that \`tosijs\` \`ElementCreator\` functions are convenient and composable,
 allowing you to build DOM elements with less code than pretty much any other option, including
 JSX, TSX, or HTML.
 
 ## Philosophy
 
-In general, \`xinjs\` strives to work _with_ the browser rather than trying to _replace_ it.
+In general, \`tosijs\` strives to work _with_ the browser rather than trying to _replace_ it.
 
-In a similar vein, \`xinjs-ui\` comprises a collection of [web-components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)
+In a similar vein, \`tosijs-ui\` comprises a collection of [web-components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)
 with the goal of augmenting what _already_ works well, and the components are intended be interoperable as
 similar as possible to things that you already use, such as \`<input>\` or \`<select>\` elements.
 E.g. where appropriate, the \`value\` of an element is its malleable \`state\`, and when this changes,
@@ -10360,7 +9385,7 @@ for an \`<input>\` or \`<textarea>\` (while mitigating the historical pathologie
 race-condition between having its value set and being given an \`<option>\` with the intended value
 and you can differentiate between the user picking a value (\`action\`) and the value changing (\`change\`).
 `,
-    title: "xinjs-ui",
+    title: "tosijs-ui",
     filename: "README.md",
     path: "README.md",
     pin: "top"
@@ -10377,7 +9402,7 @@ If you view this example with an XR-enabled device, such as the
 as an AR scene.
 
 \`\`\`js
-const { b3d, gamepadText, xrControllers, xrControllersText } = xinjsui
+const { b3d, gamepadText, xrControllers, xrControllersText } = tosijsui
 
 preview.append(b3d({
   async sceneCreated(element, BABYLON) {
@@ -10463,8 +9488,8 @@ Here's a simple example of a terrain mesh comprising 125k triangles, 50% of whic
 takes an array of numbers that use a linear profile to change the landform.
 
 \`\`\`js
-const { b3d } = xinjsui
-const { MoreMath } = xinjs
+const { b3d } = tosijsui
+const { MoreMath } = tosijs
 
 const debugCutoff = 0.5
 const defaultProfile = [0, 1, 5, 8, 10].map(x => x/10)
@@ -10550,7 +9575,7 @@ be used to load \`.glb\` files.
 \`<xin-ab>\` provides a simple method for implementing A|B-testing.
 
 \`\`\`js
-const { AbTest } = xinjsui
+const { AbTest } = tosijsui
 
 function randomize() {
   const conditions = {
@@ -10569,26 +9594,30 @@ preview.querySelector('.randomize-conditions').addEventListener('click', randomi
 randomize()
 \`\`\`
 \`\`\`html
-<xin-ab class="a" condition="testA">
-  <p>testA</p>
-</xin-ab>
-<xin-ab class="not-a" not condition="testA">
-  <p>not testA</p>
-</xin-ab>
-<xin-ab class="b" condition="testB">
-  <p>testB</p>
-</xin-ab>
-<xin-ab class="not-b" not condition="testB">
-  <p>not testB</p>
-</xin-ab>
-<xin-ab class="c" condition="testC">
-  <p>testC</p>
-</xin-ab>
-<xin-ab class="not-c" not condition="testC">
-  <p>not testC</p>
-</xin-ab>
-<pre>
-</pre>
+<div style="display: flex; gap: 10px; align-items: center;">
+  <div style="display: flex; flex-direction: column; gap: 10px;">
+    <xin-ab class="a" condition="testA">
+      <p>testA</p>
+    </xin-ab>
+    <xin-ab class="not-a" not condition="testA">
+      <p>not testA</p>
+    </xin-ab>
+    <xin-ab class="b" condition="testB">
+      <p>testB</p>
+    </xin-ab>
+    <xin-ab class="not-b" not condition="testB">
+      <p>not testB</p>
+    </xin-ab>
+    <xin-ab class="c" condition="testC">
+      <p>testC</p>
+    </xin-ab>
+    <xin-ab class="not-c" not condition="testC">
+      <p>not testC</p>
+    </xin-ab>
+  </div>
+  <pre>
+  </pre>
+</div>
 <button class="randomize-conditions">Randomize</button>
 \`\`\`
 \`\`\`css
@@ -10627,7 +9656,7 @@ randomize()
   <xin-icon icon="blueprint" class="logo" size=256></xin-icon>
 </center>
 
-\`<xin-loader>\` and \`<xin-blueprint>\` are simple elements provided by \`xinjs\` for the dynamic loading
+\`<xin-loader>\` and \`<xin-blueprint>\` are simple elements provided by \`tosijs\` for the dynamic loading
 of component **blueprints**.
 
 \`\`\`html
@@ -10652,11 +9681,12 @@ of component **blueprints**.
     text: `# carousel
 
 \`\`\`html
-<xin-carousel arrows dots max-visible-items=2 auto=2 loop>
-  <xin-icon icon="xinColor" class="thing"></xin-icon>
-  <xin-icon icon="xinjsColor" class="thing"></xin-icon>
-  <xin-icon icon="xinjsUiColor" class="thing"></xin-icon>
-  <xin-icon icon="xinie" class="thing"></xin-icon>
+<xin-carousel arrows dots max-visible-items=2 auto=2 snap-delay=4 snap-duration=0.5 loop>
+  <xin-icon icon="tosiFavicon" class="thing"></xin-icon>
+  <xin-icon icon="tosi" class="thing"></xin-icon>
+  <xin-icon icon="tosiUi" class="thing"></xin-icon>
+  <xin-icon icon="tosiPlatform" class="thing"></xin-icon>
+  <xin-icon icon="tosiXr" class="thing"></xin-icon>
   <xin-icon icon="blueprint" class="thing"></xin-icon>
   <xin-icon icon="cmy" class="thing"></xin-icon>
   <xin-icon icon="rgb" class="thing"></xin-icon>
@@ -10664,8 +9694,9 @@ of component **blueprints**.
 \`\`\`
 \`\`\`css
 .thing {
-  --font-size: 160px;
+  --xin-icon-size: 160px;
   height: 160px;
+  margin: 30px 0 70px;
   position: relative;
 }
 
@@ -10673,11 +9704,11 @@ of component **blueprints**.
   content: attr(icon);
   color: white;
   position: absolute;
-  bottom: 5px;
+  bottom: -50px;
   left: 50%;
   padding: 5px 15px;
   transform: translateX(-50%);
-  filter: drop-shadow(0 1px 1px #000);
+  filter: drop-shadow(0 1px 1px #0008);
   background: #0004;
   border-radius: 5px;
 }
@@ -10918,7 +9949,7 @@ the drop zone node) simply using data-event="drop:path.to.drop_handler" as usual
 }
 \`\`\`
 \`\`\`js
-const { dragAndDrop } = xinjsui
+const { dragAndDrop } = tosijsui
 
 dragAndDrop.init()
 \`\`\`
@@ -10929,8 +9960,8 @@ dragAndDrop.init()
 ### Reorderable List Example
 
 \`\`\`js
-const { elements, boxedProxy, getListItem } = xinjs
-const { dragAndDrop } = xinjsui
+const { elements, boxedProxy, getListItem } = tosijs
+const { dragAndDrop } = tosijsui
 
 dragAndDrop.init()
 
@@ -11033,8 +10064,8 @@ or \`position: fixed\` element and you can directly adjust its CSS positioning, 
 Click on an element to adjust its position, dimensions, and rotation.
 
 \`\`\`js
-const { editableRect, icons } = xinjsui
-const { elements } = xinjs
+const { editableRect, icons } = tosijsui
+const { elements } = tosijs
 const { button } = elements
 
 function showTools(event) {
@@ -11107,8 +10138,8 @@ is, by far, the master. And it's still super lightweight.
 
 \`\`\`js
 // this code executes in an async function body
-// it has xinjs, xinjsui, and preview (the preview div) available as local variables
-const { div } = xinjs.elements
+// it has tosijs, tosijsui, and preview (the preview div) available as local variables
+const { div } = tosijs.elements
 preview.append(div({class: 'example'}, 'fiddle de dee!'))
 preview.append('Try editing some code and hitting refresh…')
 \`\`\`
@@ -11176,8 +10207,8 @@ example itself lighter-weight.
 A \`<xin-example>\` can be given a \`context\` object {[key: string]: any}, which is the
 set of values available in the javascript's execution context (it is wrapped in an
 async function and passed those values). By default, that context comprises \`preview\`
-(the \`<div>\` in which the example is rendered), \`xinjs\` (\`* from xinjs\`),
-and \`xinjsui\` (\`* from xinjsui\`).
+(the \`<div>\` in which the example is rendered), \`tosijs\` (\`* from 'tosijs'\`),
+and \`tosijsui\` (\`* from 'tosijs-ui'\`).
 
 The \`LiveExample\` class provides the static \`insertExamples(element: HTMLElement)\`
 function that will replace any sequence of
@@ -11194,8 +10225,8 @@ Automatically creates \`ArrayFilter\` functions \`(a: any[]) => any[]\` based on
 macOS Finder-inspired interface, using an easily customizable / extensible collection of \`Filter\` objects.
 
 \`\`\`js
-const { elements } = xinjs
-const { dataTable, filterBuilder, availableFilters } = xinjsui
+const { elements } = tosijs
+const { dataTable, filterBuilder, availableFilters } = tosijsui
 
 const sourceWords = ['acorn', 'bubblegum', 'copper', 'daisy', 'ellipse', 'fabulous', 'gerund', 'hopscotch', 'idiom', 'joke']
 function randomWords () {
@@ -11615,8 +10646,8 @@ A couple of utility functions for dealing with gamepads and XRInputs.
 \`gamepadText()\` provides the above in minimal text form for debugging
 
 \`\`\`js
-const { elements } = xinjs
-const { gamepadText } = xinjsui
+const { elements } = tosijs
+const { gamepadText } = tosijsui
 
 const pre = elements.pre()
 preview.append(pre)
@@ -11647,22 +10678,23 @@ which is useful when debugging.`,
   {
     text: `# icons
 
-<center>
-  <xin-icon icon="settings" style="--font-size: 128px"></xin-icon>
-  <xin-icon icon="xrColor" style="--font-size: 96px"></xin-icon>
-  <xin-icon icon="rgb" style="--font-size: 128px"></xin-icon>
-</center>
+<div class="center">
+  <xin-icon icon="settings" style="--xin-icon-size: 128px"></xin-icon>
+  <xin-icon icon="xrColor" style="--xin-icon-size: 96px"></xin-icon>
+  <xin-icon icon="rgb" style="--xin-icon-size: 128px"></xin-icon>
+</div>
 
-A library that provides \`ElementCreator\` functions that produce SVG icons. It leverages \`xinjs\`'s
+A library that provides \`ElementCreator\` functions that produce SVG icons. It leverages \`tosijs\`'s
 \`svgElements\` proxy and is intended to address all the key use-cases for SVG icons in web
 applications along with being very easy to extend and maintain.
 
 > ### Supported Use Cases
 > - inline SVGs that can be styled by CSS (for buttons, etc.)
+> - allows both stroked and filled icons (unlike font-based systems)
 > - No build process magic needed (it's "just javascript")
-> - icons can be rendered  as data urls, e.g. to insert into CSS
 > - highly optimized and compressible
-> - support for color icons (with overrides via CSS)
+> - support for color icons (without requiring multiple glyphs perfectly aligned)
+> - icons can be rendered  as data urls, e.g. to insert into CSS…
 
 ## icons
 
@@ -11671,8 +10703,8 @@ e.g. \`icons.chevronDown()\` produces an \`<svg>\` element containing a downward
 icon with the class \`icon-chevron-down\`.
 
 \`\`\`js
-const { icons, svgIcon } = xinjsui
-const { div } = xinjs.elements
+const { icons, svgIcon } = tosijsui
+const { div } = tosijs.elements
 
 preview.append(...Object.keys(icons).sort().map(iconName => div(
   { class: 'tile' },
@@ -11690,10 +10722,6 @@ preview.append(...Object.keys(icons).sort().map(iconName => div(
   overflow: hidden scroll !important;
 }
 
-.preview svg {
-  fill: var(--text-color);
-}
-
 .preview .tile {
   display: flex;
   text-align: center;
@@ -11706,7 +10734,7 @@ preview.append(...Object.keys(icons).sort().map(iconName => div(
 
 .preview .tile:hover {
   background: white;
-  --text-color: var(--brand-color);
+  color: var(--brand-color);
 }
 
 .preview .tile > div {
@@ -11730,161 +10758,21 @@ probably be broken out as a standalone library to allow the use of whatever icon
 
 ## Adding and redefining icons
 
-\`defineIcon(name: string, icon: IconSpec | string)\` adds or replaces your own icons
+Simply pass a map of icon names to svg source strings…
 
 \`\`\`
-interface IconSpec {
-  p: string[]  // paths
-  c?: string[] // colors of the paths in p
-  w: number    // width of icon
-  h: number    // height of icon
-}
-\`\`\`
-
-The simplest option is simply to pass the \`path\` attribute (if the icon has a single path) while more
-complex icons can be provide an \`IconSpec\` structure, specifying multiple paths (and colors if so
-desired).
-
-This utility loads SVG files (they should only contain paths with no strokes, transforms, or nesting)
-and generates an \`IconSpec\`. It renders the original icon side-by-side with the \`<xin-icon>\` version.
-**If the icon on the right appears garbled, it probably needs to be simplified**.
-
-\`\`\`js
-const { defineIcon, xinIcon } = xinjsui
-
-const fileInput = preview.querySelector('input')
-const icon = preview.querySelector('.icon')
-const svgContainer = preview.querySelector('.svg')
-const iconSpec = preview.querySelector('textarea')
-const rounded = preview.querySelector('.rounded')
-const scaled = preview.querySelector('.scaled')
-
-function jsObject(o) {
-  let json = JSON.stringify(o, null, 2)
-  return json.replace(/"(\\w+)":/g, '$1:')
-}
-
-fileInput.addEventListener('change', () => {
-  if (fileInput.files.length) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      svgContainer.innerHTML = e.target.result
-      const svg = svgContainer.querySelector('svg')
-      const paths = Array.from(svg.querySelectorAll('path')).map(path => ({
-        p: path.getAttribute('d'),
-        c: path.style.fill
-      }))
-      const isMulticolor = [...new Set(paths.map(path => path.c))].length > 1
-      let { width, height } = svg.viewBox.baseVal
-
-      let scale = 1
-      if (scaled.checked) {
-        scale = 1024 / height
-        height = 1024
-        width = width * scale
-      }
-
-      paths.forEach(path => {
-        path.p = path.p.replace(/\\d+\\.\\d+/g, x => rounded.checked ? (Number(x) * scale).toFixed(0) : (Number(x) * scale))
-      })
-
-      if (width === 1024 && height === 1024 && paths.length === 1) {
-        iconSpec.value = jsObject(paths[0])
-      } else {
-        const spec = {
-          p: paths.map(path => path.p),
-          w: width,
-          h: height
-        }
-        if (isMulticolor) {
-          spec.c = paths.map(path => path.c)
-        }
-        iconSpec.value = jsObject(spec)
-        defineIcon('svgLoader', spec)
-        icon.setAttribute('icon', '')
-        icon.setAttribute('icon', 'svgLoader')
-        fileInput.value = ''
-      }
-    };
-    reader.readAsText(fileInput.files[0]);
-  }
+defineIcons({
+  someIcon: '<svg ....',
+  otherIcon: '<svg ...',
 })
 \`\`\`
-\`\`\`html
-<div class="svg-loader">
-  <label>
-    <span>Load an SVG file</span>
-    <input accept="image/svg+xml" type="file">
-  </label>
-  <label style="flex-direction: row">
-    <input type="checkbox" class="rounded" checked>
-    <span>Round floats?</span>
-  </label>
-  <label style="flex-direction: row">
-    <input type="checkbox" class="scaled">
-    <span>Scale to 1024?</span>
-  </label>
-  <div class="side-by-side">
-    <label>
-      <span>IconSpec</span>
-      <textarea></textarea>
-    </label>
-    <label>
-      <span>Icons</span>
-      <div class="side-by-side">
-        <div class="svg"></div>
-        <xin-icon class="icon"></xin-icon>
-      </div>
-    </label>
-  </div>
-</div>
-\`\`\`
-\`\`\`css
-.preview .svg-loader,
-.preview .svg-loader label {
-  display: flex;
-  width: 100%;
-  align-items: stretch;
-  flex-direction: column;
-}
 
-.preview .svg-loader {
-  gap: 10px;
-  height: 100%;
-}
+### Icon Classes
 
-.preview .svg-loader textarea {
-  flex: 1;
-  resize: none;
-  font-family: Monaco, monospace;
-  font-size: 12px;
-  line-height: 15px;
-}
+Icons will be generated with the class \`xin-icon\`.
 
-.preview .side-by-side {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.preview .svg-loader .icon {
-  position: relative;
-}
-
-.preview .svg-loader svg {
-  height: 128px;
-  width: 128px;
-}
-
-.preview xin-icon:not([icon]) {
-  display: none;
-}
-
-.preview .svg-loader xin-icon {
-  --font-size: 128px;
-}
-\`\`\`
+You can also assign the classes \`filled\`, \`stroked\`, and \`color\` to icons to set default
+icon styling.
 
 ## \`<xin-icon>\`
 
@@ -11904,37 +10792,11 @@ how it's styled.
 > all coordinates to nearest integer on the assumption that this is plenty precise enough for icons and
 > makes everything smaller and easier to compress.
 
-\`\`\`html
-<xin-icon size="64" icon="game" color="var(--brand-color)"></xin-icon>
-<xin-icon size="96" icon="game" color="yellow" stroke="black"></xin-icon>
-<xin-icon size="64" icon="star"
- color="linear-gradient(0deg, rgba(34,193,195,1) 0%, rgba(253,187,45,1) 100%)"
-></xin-icon>
-<xin-icon size="64" icon="star"
- color="linear-gradient(345deg, rgba(34,193,195,1) 0%, rgba(253,187,45,1) 100%)"
-></xin-icon>
-<xin-icon size="64" icon="star"
- color="linear-gradient(180deg, rgba(34,193,195,1) 0%, rgba(253,187,45,1) 100%)"
-></xin-icon>
-<xin-icon size="64" icon="star"
- color="linear-gradient(90deg, rgba(34,193,195,1) 0%, rgba(253,187,45,1) 100%)"
-></xin-icon>
-\`\`\`
-\`\`\`css
-xin-icon.demo-2 > svg {
-  height: 96px;
-}
-\`\`\`
-
-**CSS-to-SVG Gradient** support is work-in-progress and experimental (there seem to be
-…issues… with how SVG  gradients behave). The goal is to be able to use CSS gradients
-to generate SVG gradients (which are kind of a pain) on-the-fly. Use at your own risk.
-
 ## SVGs as data-urls
 
 \`\`\`js
-const { elements } = xinjs
-const { icons, svg2DataUrl } = xinjsui
+const { elements } = tosijs
+const { icons, svg2DataUrl } = tosijsui
 
 preview.append(
   elements.span({
@@ -11961,7 +10823,7 @@ preview.append(
       width: '100px',
       height: '200px',
       content: '" "',
-      background: svg2DataUrl(icons.xinjsColor())
+      background: svg2DataUrl(icons.tosi())
     }
   }),
 )
@@ -11977,31 +10839,20 @@ If you're using \`SVGElement\`s created using the \`icons\` proxy, you'll want t
 ## Color Icons
 
 \`\`\`html
-<xin-icon icon="xinjsColor" class="demo-icon"></xin-icon>
-<xin-icon icon="xinjsColor" class="demo-icon recolored"></xin-icon>
+<xin-icon icon="tosiFavicon" class="demo-icon"></xin-icon>
+<xin-icon icon="tosiPlatform" class="demo-icon recolored"></xin-icon>
+<xin-icon icon="tosiXr" class="demo-icon animated"></xin-icon>
 \`\`\`
 \`\`\`css
 .demo-icon {
-  --font-size: 160px
+  --xin-icon-size: 160px
 }
 
 .recolored > svg {
-  pointer-events: all
-}
-
-.recolored > svg {
-  scale: 1;
-  position: relative;
-  transform-origin: center;
-  filter: grayscale(0.5);
-  opacity: 0.76;
+  pointer-events: all;
   transition: 0.25s ease-out;
-  --icon-fill-0: black;
-  --icon-fill-2: #f0f;
-  --icon-fill-3: #f4f;
-  --icon-fill-4: #fcf;
-  --icon-fill-5: #f8f;
-  --icon-fill-6: #fff;
+  transform: scale(1);
+  filter: grayscale(0.5)
 }
 
 .recolored:hover > svg {
@@ -12009,11 +10860,27 @@ If you're using \`SVGElement\`s created using the \`icons\` proxy, you'll want t
   transform: scale(1.1);
   filter: grayscale(0);
 }
+
+.animated > svg {
+  animation: 2s linear 0s infinite rainbow;
+}
+
+@keyframes rainbow {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
 \`\`\`
 
-Each path inside an icon can be individually colored. When the icon is hydrated,
-the colors will be assigned to a (minimal) set of CSS-variables (\`--icon-fill-0\`, etc.)
-and these can be overridden in the usual way.
+Colored icons have the \`color\` class added to them, so you can easily create css rules
+that, for example, treat all colored icons inside buttons the same way.
+
+> Earlier versions of this library replaced color specifications with CSS-variables in a
+> very convoluted way, but in practice this isn't terribly useful as SVG properties can't
+> be animated by CSS, so this functionality has been stripped out.
 
 ## Missing Icons
 
@@ -12022,39 +10889,46 @@ and render a \`square\` (in fact, \`icons.square()\`) as a fallback.
 
 ## Why?
 
-The motivation behind this is to avoid dealing with tooling issues that inevitably result from
-integrating custom icon fonts or stylesheets needed by code libraries (and an icon-font also needs
-a style-sheet. Importing code is simply easier (and as a bonus, more compact and flexible, and there's
-no question as to when the stuff is available).
+My evolution has been:
 
-Until I wrote this library, I had settled on icomoon.io's system for generating and maintaining
-custom icon fonts for managing icons within a project, but this makes exporting UI elements
-with icons in them fiddly, and I looked at other UI libraries and found similar issues.
+1. Using Icomoon.io, which I still think is a solid choice for managing custom icon fonts
+2. Processing Icomoon selection.json files into icon-data and then generating SVGs dynamically
+   from the data
+3. Ingesting SVGs directly, with a little cleanup
 
-Even when just using this approach for projects over which I had full control, there were issues
-with syncing icons with CSS (e.g. if you want to attach an element to a pseudo-element). \`icons\`
-in combination with \`svg2DataUrl\` solves all these problems.
+The goal is always to have a single source of truth for icons, no magic or convoluted tooling, and 
+be able to quickly and easily add and replace icons, distribute them with components, and
+have no mess or fuss.
 
-Basically, I wanted an icon solution that "just works" and this is it.
+1. Works well, but…
+   - color icons are flaky,
+   - doesn't play well with others, 
+   - can't really distribute the icons with your components. 
+   - difficult to use icons in CSS \`content\`
+   - impossible to use icons in CSS backgrounds
+2. This is \`icons.ts\` until just now! Solves all the above, but…
+   - no fancy SVG effects, like gradients (goodness knows I experimented with converting CSS gradients to SVG gradients) and, most 
+   - **strokes** need to be converted to outlines
+   - outlined strokes can't be styled the way strokes can
+   - blocks use of popular icon libraries
+3. This is how everyone else works, except…
+   - no build magic needed: \`defineIcons({ myIcon: '<svg....>', ... })\`
+   - if you want build magic, \`icons.js\` has no dependencies, finds icons and creates an \`icon-data.ts\` file.
+   - smaller icon files, even though I'm now including more icons (including *all the current* feathericons)
 
-Internally, icons are stored as javascript path data.
+## Icon Sources
 
 Many of these icons are sourced from [Feather Icons](https://github.com/feathericons/feather), but
 all the icons have been processed to have integer coordinates in a \`viewBox\` typically scaled to 1024  &times; 1024.
 
-## Is this efficient?
+The corporate logos (Google, etc.) are from a variety of sources, in many cases ultimately from the
+organizations themselves. It's up to you to use them correctly.
 
-I use [icomoon](https://icomoon.com/app) to manage my icon libraries. Its method of distributing icons
-is to create custom fonts and an accompanying stylesheet.
+The remaining icons I have created myself using the excellent but sometimes flawed
+[Amadine](https://apps.apple.com/us/app/amadine-vector-design-art/id1339198386?mt=12)
+and generally reliable [Graphic](https://apps.apple.com/us/app/graphic/id404705039?mt=12).
 
-- the iconData file, compressed is ~23kB
-- icomoon's equivalent CSS file is ~3kB and the font files are 21kB
-
-But these fonts are less flexible, harder to distribute as part of a library, you need to
-distribute three versions for compatibility, and the color icons are very flaky and cannot
-be styled.
-
-## Feather Icons Copyright Notice
+### Feather Icons Copyright Notice
 
 The MIT License (MIT)
 
@@ -12076,7 +10950,7 @@ copies or substantial portions of the Software.`,
   {
     text: `# localize
 
-\`xinjs-ui\` provides support for localization via the \`localize\` method and the \`<xin-locale-picker>\`
+\`tosijs-ui\` provides support for localization via the \`localize\` method and the \`<xin-locale-picker>\`
 and \`<xin-localized>\` custom-elements.
 
 > ### Important Note
@@ -12123,8 +10997,8 @@ localize the string, and then append the ellipsis.
 ## \`setLocale(language: string)\`
 
 \`\`\`js
-const { button, p } = xinjs.elements
-const { setLocale } = xinjsui
+const { button, p } = tosijs.elements
+const { setLocale } = tosijsui
 
 preview.append(
   p(
@@ -12192,7 +11066,7 @@ xin-localized {
 }
 \`\`\`
 \`\`\`js
-const { xinLocalized, localize } = xinjsui
+const { xinLocalized, localize } = tosijsui
 
 preview.append(xinLocalized({
   refString: 'localized placeholder',
@@ -12316,9 +11190,8 @@ A [lottie](https://airbnb.io/lottie/#/web) (a.k.a. **bodymovin**) player.
 It's designed to work like an \`<img>\` element (just set its \`src\` attribute).
 
 \`\`\`js
-const { xinProxy } = xinjs
-const { icons, popFloat } = xinjsui
-const { div, label, input, select, option, span } = xinjs.elements
+const { icons, popFloat } = tosijsui
+const { div, label, input, select, option, span } = tosijs.elements
 
 const rocket = preview.querySelector('xin-lottie')
 setTimeout(
@@ -12422,8 +11295,8 @@ insanely simple and just works™. It makes writing an array sort callback for a
 other than an array of numbers or strings easier.
 
 \`\`\`js
-const { select, option, div, span, ul, li } = xinjs.elements
-const { icons, makeSorter } = xinjsui
+const { select, option, div, span, ul, li } = tosijs.elements
+const { icons, makeSorter } = tosijsui
 
 const people = [
   { first: 'Frasier', last: 'Crane', age: 38 },
@@ -12621,7 +11494,7 @@ and [use the standard mapbox APIs directly](https://docs.mapbox.com/api/maps/sty
   {
     text: `# menu
 
-Being able to pop a menu up anywhere is just so nice, and \`xinjs-ui\` allows menus
+Being able to pop a menu up anywhere is just so nice, and \`tosijs-ui\` allows menus
 to be generated on-the-fly, and even supports hierarchical menus.
 
 ## popMenu and \`<xin-menu>\`
@@ -12633,8 +11506,8 @@ menuItems, and (because it persists in the DOM) supports keyboard
 shortcuts.
 
 \`\`\`js
-const { popMenu, localize, xinMenu, postNotification, xinLocalized, icons } = xinjsui
-const { elements } = xinjs
+const { popMenu, localize, xinMenu, postNotification, xinLocalized, icons } = tosijsui
+const { elements } = tosijs
 
 let picked = ''
 let testingEnabled = false
@@ -12796,8 +11669,8 @@ preview.append(
 ## Overflow test
 
 \`\`\`js
-const { popMenu, icons, postNotification } = xinjsui
-const { elements } = xinjs
+const { popMenu, icons, postNotification } = tosijsui
+const { elements } = tosijs
 
 preview.querySelector('button').addEventListener('click', (event) => {
   popMenu({
@@ -12898,8 +11771,8 @@ To see this in action, see the example below, or look at the
 to render column names when you show hidden columns.
 
 \`\`\`js
-const { elements } = xinjs
-const { xinLocalized, localize, icons, popMenu, postNotification } = xinjsui
+const { elements } = tosijs
+const { xinLocalized, localize, icons, popMenu, postNotification } = tosijsui
 const { button } = elements
 const makeItem = s => ({
   caption: s,
@@ -12948,7 +11821,7 @@ or you have to painfully swap out components on-the-fly.
 
 And, finally, submenus are darn useful for any serious app.
 
-For this reason, \`xinjs-ui\` has its own menu implementation.`,
+For this reason, \`tosijs-ui\` has its own menu implementation.`,
     title: "menu",
     filename: "menu.ts",
     path: "src/menu.ts"
@@ -12990,7 +11863,7 @@ when an operation completes). This will *also* call any \`close\` callback funct
 provided. (The progress demos in the example exercise this functionality.)
 
 \`\`\`js
-const { postNotification, icons } = xinjsui
+const { postNotification, icons } = tosijsui
 
 const form = preview.querySelector('xin-form')
 const submit = preview.querySelector('.submit')
@@ -13094,7 +11967,7 @@ and it will gauge its content strength as a password. It will also
 let you **securely verify** that the password hasn't been breached.
 
 \`\`\`js
-const { xinLocalized, localize } = xinjsui
+const { xinLocalized, localize } = tosijsui
 
 const toggle = preview.querySelector('.toggle')
 const icon = preview.querySelector('xin-icon')
@@ -13260,8 +12133,8 @@ purpose admirably, turn out to have some annoying limitation that prevents them
 handling the specific case at hand.
 
 \`\`\`js
-const { popFloat, positionFloat } = xinjsui
-const { button } = xinjs.elements
+const { popFloat, positionFloat } = tosijsui
+const { button } = tosijs.elements
 const grid = preview.querySelector('.grid')
 
 grid.addEventListener('click', (event) => {
@@ -13388,7 +12261,7 @@ export type FloatPosition =
     path: "src/pop-float.ts"
   },
   {
-    text: '# rating\n\n`XinRating` / `<xin-rating>` provides a drop-in replacement for an `<input>`\nthat renders a rating using <xin-icon icon="star" color="red"></xin-icon>s.\n\n```html\n<xin-rating value=3.4></xin-rating>\n<xin-rating min=0 value=3.4 step=0.5 hollow></xin-rating>\n<xin-rating value=3.4 color="deepskyblue"></xin-rating>\n<xin-rating value=3.1 max=10 color="hotpink" icon="heart" icon-size=32></xin-rating>\n```\n```css\n.preview {\n  display: flex;\n  flex-direction: column;\n}\n```\n\n## Attributes\n\n- `icon-size` (24 by default) determines the height of the control and along with `max` its width\n- `max` maximum rating\n- `min` (1 by default) can be 0 or 1 (allowing ratings of 0 to max or 1 to max)\n- `step` (0.5 by default) granularity of rating\n- `icon` (\'star\' by default) determines the icon used\n- `fill` (#f91 by default) is the color of rating icons\n- `empty-color` (#ccc by default) is the color of background icons\n- `readonly` (false by default) prevents the user from changing the rating\n- `hollow` (false by default) makes the empty rating icons hollow.\n\n## Keyboard\n\n`<xin-rating>` should be fully keyboard navigable (and, I hope, accessible).\n\nThe up key increases the rating, down descreases it. This is the same\nas the behavior of `<input type="number">`, [Shoelace\'s rating widget](https://shoelace.style/components/rating/),\nand (in my opinion) common sense, but  not like [MUI\'s rating widget](https://mui.com/material-ui/react-rating/).',
+    text: '# rating\n\n`XinRating` / `<xin-rating>` provides a drop-in replacement for an `<input>`\nthat renders a rating using <xin-icon icon="star" color="red"></xin-icon>s.\n\n```html\n<xin-rating value=3.4></xin-rating>\n<xin-rating min=0 value=3.4 step=0.5 hollow></xin-rating>\n<xin-rating value=3.4 color="deepskyblue"></xin-rating>\n<xin-rating value=3.1 max=10 color="hotpink" icon="heart" icon-size=32></xin-rating>\n```\n```css\n.preview {\n  display: flex;\n  flex-direction: column;\n}\n```\n\n## Attributes\n\n- `icon-size` (24 by default) determines the height of the control and along with `max` its width\n- `max` maximum rating\n- `min` (1 by default) can be 0 or 1 (allowing ratings of 0 to max or 1 to max)\n- `step` (0.5 by default) granularity of rating\n- `icon` (\'star\' by default) determines the icon used\n- `rating-stroke` (#f91 by default) is the stroke of rating icons\n- `rating-fill` (#e81 by default) is the color of rating icons\n- `empty-stroke` (none by default) is the color of background icons\n- `empty-fill` (#ccc by default) is the color of background icons\n- `readonly` (false by default) prevents the user from changing the rating\n- `hollow` (false by default) makes the empty rating icons hollow.\n\n## Keyboard\n\n`<xin-rating>` should be fully keyboard navigable (and, I hope, accessible).\n\nThe up key increases the rating, down descreases it. This is the same\nas the behavior of `<input type="number">`, [Shoelace\'s rating widget](https://shoelace.style/components/rating/),\nand (in my opinion) common sense, but  not like [MUI\'s rating widget](https://mui.com/material-ui/react-rating/).',
     title: "rating",
     filename: "rating.ts",
     path: "src/rating.ts"
@@ -13400,7 +12273,7 @@ export type FloatPosition =
 
 If you need to load an old school (cjs) javascript or css library via cdn then use these two functions.
 
-\`xinjs-ui\` uses this library to implement the \`<xin-code>\`, \`<xin-lottie>\`, and \`<xin-map>\`
+\`tosijs-ui\` uses this library to implement the \`<xin-code>\`, \`<xin-lottie>\`, and \`<xin-map>\`
 elements.
 
 \`scriptTag()\` and \`styleSheet()\` return promises that resolve \`globalThis\` when the module in question
@@ -13409,8 +12282,8 @@ has loaded and otherwise behave as much like \`import()\` as possible.
 This example uses \`scriptTag\` and \`styleSheet\` to load [quilljs](https://quilljs.com) on-the-fly.
 
 \`\`\`js
-const { elements } = xinjs
-const { scriptTag, styleSheet } = xinjsui
+const { elements } = tosijs
+const { scriptTag, styleSheet } = tosijsui
 
 const toolbarOptions = [
   [{ header: [1, 2, 3, 4, false] }],
@@ -13624,7 +12497,7 @@ built in \`<select>\` element that addresses its various shortcomings.
 …to check for focus stealing</pre>
 \`\`\`
 \`\`\`js
-const { icons } = xinjsui
+const { icons } = tosijsui
 
 const captions = preview.querySelector('.captions')
 
@@ -13859,7 +12732,7 @@ from the bottom-right.
 
 This is a simple utility for converting CSS into a xinjs \`XinStyleSheet\` object.
 Having all of your CSS start as Javascript (or Typescript) has many
-benefits, such as being able to do color math using \`xinjs\`'s \`Color\` class,
+benefits, such as being able to do color math using \`tosijs\`'s \`Color\` class,
 and use the same values that are in your CSS for inline code when needed.
 
 > ### Caution
@@ -13933,7 +12806,7 @@ function css2js () {
     }
   })
 
-  js.value = \`import { vars, varDefault } from 'xinjs'\\n\\nexport const styleSpec = \${code}\`
+  js.value = \`import { vars, varDefault } from 'tosijs'\\n\\nexport const styleSpec = \${code}\`
 }
 
 convertButton.addEventListener('click', () => {
@@ -13972,7 +12845,7 @@ header xin-locale-picker xin-select button {
 }
 
 header xin-locale-picker xin-select button svg {
-  fill: var(--brand-text-color) !important;
+  stroke: var(--brand-text-color) !important;
 }
 </xin-code>
 <xin-code mode="javascript" name="js"></xin-code>
@@ -13991,7 +12864,7 @@ header xin-locale-picker xin-select button svg {
 
 ## Using the Output
 
-You can turn the output of this utility using \`xinjs\`'s \`StyleSheet\` utility function:
+You can turn the output of this utility using \`tosijs\`'s \`StyleSheet\` utility function:
 
 \`\`\`
 import { styleSpec } from './my-style'
@@ -14000,10 +12873,10 @@ StyleSheet('base-style', styleSpec) // creates a \`<style id="base-style>\` elem
   the \`<head>\` of the page.
 \`\`\`
 
-You can convert the output to Typescript by importing the \`XinStyleSheet\` from \`xinjs\`:
+You can convert the output to Typescript by importing the \`XinStyleSheet\` from \`tosijs\`:
 
 \`\`\`
-import { XinStyleSheet, vars } from 'xinjs'
+import { XinStyleSheet, vars } from 'tosijs'
 
 export const styleSpec: XinStyleSheet = ...
 \`\`\``,
@@ -14018,8 +12891,8 @@ A virtual data-table, configurable via a \`columns\` array (which will automatic
 that displays gigantic tables with fixed headers (and live column-resizing) using a minimum of resources and cpu.
 
 \`\`\`js
-const { dataTable } = xinjsui
-const { input } = xinjs.elements
+const { dataTable } = tosijsui
+const { input } = tosijs.elements
 
 const emojiRequest = await fetch('https://raw.githubusercontent.com/tonioloewald/emoji-metadata/master/emoji-metadata.json')
 const emojiData = await emojiRequest.json()
@@ -14203,7 +13076,7 @@ As well as any column names you want localized.`,
   div.style.color = \`hsl(\${(Math.random() * 360).toFixed(0)} 50% 50%)\`
 })
 
-const { div, button } = xinjs.elements
+const { div, button } = tosijs.elements
 const tabSelector = preview.querySelector('xin-tabs')
 
 tabSelector.onCloseTab = body => {
@@ -14234,7 +13107,7 @@ preview.querySelector('.add').addEventListener('click', () => {
           height: 16px;
           transform: translateY(2px);
           margin-right: 4px;
-          fill: var(--brand-color);
+          stroke: var(--brand-color);
         "
         icon="eye"
       ></xin-icon>
@@ -14447,7 +13320,7 @@ For mouse events, a "tracker" element is thrown up in front of everything for th
 }
 \`\`\`
 \`\`\`js
-const { trackDrag } = xinjsui
+const { trackDrag } = tosijsui
 
 function dragItem(event) {
   const draggable = event.target
@@ -14547,7 +13420,7 @@ the \`<xin-word>\` component).`,
   {
     text: `# docs.js
 
-The \`xinjs-ui\` package includes \`docs.js\` which is used to build the documentation
+The \`tosijs-ui\` package includes \`docs.js\` which is used to build the documentation
 for the [ui.xinjs.net](https://ui.xinjs.net).
 
 This is a simple utility for finding all the markdown files in a directory and also all
@@ -14570,7 +13443,7 @@ This doc is pinned to the bottom. README is pinned to the top.
 > **Aside**: the original version of this code was written by ChatGPT.`,
     title: "docs.js",
     filename: "docs.js",
-    path: "docs.js",
+    path: "bin/docs.js",
     pin: "bottom"
   },
   {
@@ -14604,16 +13477,17 @@ This doc is pinned to the bottom. README is pinned to the top.
 ];
 
 // demo/src/index.ts
-qo("demo-style", styleSpec);
+Ve("demo-style", styleSpec);
 initLocalization(localized_strings_default);
+Object.assign(window, { tosijs: exports_module, tosijsui: exports_src });
 setTimeout(() => {
-  const brandColor = getComputedStyle(document.body).getPropertyValue("--brand-color");
-  console.log("welcome to %cui.xinjs.net", `color: ${brandColor}; padding: 0 5px;`);
+  const brandColor2 = getComputedStyle(document.body).getPropertyValue("--brand-color");
+  console.log("welcome to %cui.xinjs.net", `color: ${brandColor2}; padding: 0 5px;`);
 }, 100);
-var PROJECT = "xinjs-ui";
+var PROJECT = "tosi-ui";
 var docName = document.location.search !== "" ? document.location.search.substring(1).split("&")[0] : "README.md";
 var currentDoc = docs_default.find((doc) => doc.filename === docName) || docs_default[0];
-var { app, prefs } = Rn({
+var { app, prefs } = cn({
   app: {
     title: PROJECT,
     blogUrl: `https://loewald.com`,
@@ -14637,8 +13511,8 @@ var { app, prefs } = Rn({
     locale: ""
   }
 });
-Io((path2) => {
-  if (path2.startsWith("prefs")) {
+Re((path) => {
+  if (path.startsWith("prefs")) {
     return true;
   }
   return false;
@@ -14646,23 +13520,23 @@ Io((path2) => {
 if (prefs.locale) {
   setLocale(prefs.locale.valueOf());
 }
-on.docLink = {
+tn.docLink = {
   toDOM(elt, filename) {
     elt.setAttribute("href", `?${filename}`);
   }
 };
-on.current = {
+tn.current = {
   toDOM(elt, currentFile) {
     const boundFile = elt.getAttribute("href") || "";
     elt.classList.toggle("current", currentFile === boundFile.substring(1));
   }
 };
 setTimeout(() => {
-  Object.assign(globalThis, { app, xin: T, bindings: on, elements: S, vars: qn, touch: _ });
+  Object.assign(globalThis, { app, tosi: cn, bindings: tn, elements: p, vars: Hn, touch: j });
 }, 1000);
 var main = document.querySelector("main");
-var { h2: h22, div: div13, span: span13, a: a3, img, header, button: button11, template: template2, input: input7 } = S;
-nn(document.body, "prefs.theme", {
+var { h2: h23, div: div13, span: span13, a: a5, img, header, button: button11, template: template2, input: input7 } = p;
+h(document.body, "prefs.theme", {
   toDOM(element, theme) {
     if (theme === "system") {
       theme = getComputedStyle(document.body).getPropertyValue("--darkmode") === "true" ? "dark" : "light";
@@ -14670,7 +13544,7 @@ nn(document.body, "prefs.theme", {
     element.classList.toggle("darkmode", theme === "dark");
   }
 });
-nn(document.body, "prefs.highContrast", {
+h(document.body, "prefs.highContrast", {
   toDOM(element, highContrast) {
     element.classList.toggle("high-contrast", highContrast);
   }
@@ -14679,13 +13553,13 @@ window.addEventListener("popstate", () => {
   const filename = window.location.search.substring(1);
   app.currentDoc = app.docs.find((doc) => doc.filename === filename) || app.docs[0];
 });
-var filterDocs = On(() => {
+var filterDocs = vn(() => {
   console.time("filter");
   const needle = searchField.value.toLocaleLowerCase();
   app.docs.forEach((doc) => {
     doc.hidden = !doc.title.toLocaleLowerCase().includes(needle) && !doc.text.toLocaleLowerCase().includes(needle);
   });
-  _(app.docs);
+  j(app.docs);
   console.timeEnd("filter");
 });
 var searchField = input7({
@@ -14699,36 +13573,37 @@ var searchField = input7({
   onInput: filterDocs
 });
 if (main)
-  main.append(header(a3({
+  main.append(header(a5({
     href: "/",
     style: {
       display: "flex",
       alignItems: "center",
       borderBottom: "none"
     },
-    title: `xinjs ${Kn}, xinjs-ui ${version}`
-  }, icons.xinjsUiColor({
-    style: { _fontSize: 40, marginRight: 10 }
-  }), h22({ bindText: "app.title" })), span13({ class: "elastic" }), sizeBreak({
+    title: `tosijs ${An}, tosijs-ui ${version}`
+  }, icons.tosiUi({
+    style: { _xinIconSize: 40, marginRight: 10 }
+  }), h23({ bindText: "app.title" })), span13({ class: "elastic" }), sizeBreak({
     minWidth: 750
   }, span13({
     style: {
-      marginRight: qn.spacing,
+      marginRight: Hn.spacing,
       display: "flex",
       alignItems: "center",
-      gap: qn.spacing50
+      gap: Hn.spacing50
     }
-  }, a3({ href: app.bundleUrl }, img({ alt: "bundlejs size badge", src: app.bundleBadgeUrl })), a3({ href: app.cdnUrl }, img({ alt: "jsdelivr", src: app.cdnBadgeUrl }))), span13({ slot: "small" })), a3({ class: "iconic", title: "discord", target: "_blank" }, icons.discord(), {
+  }, a5({ href: app.bundleUrl }, img({ alt: "bundlejs size badge", src: app.bundleBadgeUrl })), a5({ href: app.cdnUrl }, img({ alt: "jsdelivr", src: app.cdnBadgeUrl }))), span13({ slot: "small" })), a5({ class: "iconic", title: "discord", target: "_blank" }, icons.discord(), {
     href: app.discordUrl
-  }), a3({ class: "iconic", title: "blog", target: "_blank" }, icons.blog(), {
+  }), a5({ class: "iconic", title: "blog", target: "_blank" }, icons.blog(), {
     href: app.blogUrl
-  }), a3({ class: "iconic", title: "github", target: "_blank" }, icons.github(), {
+  }), a5({ class: "iconic", title: "github", target: "_blank" }, icons.github(), {
     href: app.githubUrl
-  }), a3({ class: "iconic", title: "npmjs", target: "_blank" }, icons.npm(), {
+  }), a5({ class: "iconic", title: "npmjs", target: "_blank" }, icons.npm(), {
     href: app.npmUrl
   }), span13({ style: { flex: "0 0 10px" } }), button11({
     class: "iconic",
-    style: { color: qn.linkColor },
+    style: { color: Hn.linkColor },
+    title: "links and settings",
     onClick(event) {
       popMenu({
         target: event.target,
@@ -14736,7 +13611,7 @@ if (main)
         menuItems: [
           {
             caption: "Language",
-            icon: "web",
+            icon: "globe",
             menuItems: i18n.localeOptions.map((locale) => ({
               caption: locale.caption,
               icon: locale.icon,
@@ -14814,16 +13689,16 @@ if (main)
       hiddenProp: "hidden",
       value: app.docs
     }
-  }, template2(a3({
+  }, template2(a5({
     class: "doc-link",
     bindCurrent: "app.currentDoc.filename",
     bindDocLink: "^.filename",
     onClick(event) {
-      const a4 = event.target;
-      const doc = Tn(event.target);
+      const a6 = event.target;
+      const doc = mn(event.target);
       const nav = event.target.closest("xin-sidenav");
       nav.contentVisible = true;
-      const { href } = a4;
+      const { href } = a6;
       window.history.pushState({ href }, "", href);
       app.currentDoc = doc;
       event.preventDefault();
@@ -14854,6 +13729,6 @@ if (main)
     },
     bindValue: "app.currentDoc.text",
     didRender() {
-      LiveExample.insertExamples(this, { xinjs: exports_module, xinjsui: exports_src });
+      LiveExample.insertExamples(this, { tosijs: exports_module, tosijsui: exports_src });
     }
   }))));

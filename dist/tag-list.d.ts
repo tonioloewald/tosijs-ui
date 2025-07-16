@@ -1,9 +1,9 @@
-import { Component as WebComponent, ElementCreator } from 'xinjs';
+import { Component as WebComponent, ElementCreator } from 'tosijs';
 export declare class XinTag extends WebComponent {
     caption: string;
     removeable: boolean;
     removeCallback: (event: Event) => void;
-    content: () => any[];
+    content: () => HTMLSpanElement[];
     constructor();
 }
 export declare const xinTag: ElementCreator<XinTag>;
@@ -29,7 +29,7 @@ export declare class XinTagList extends WebComponent {
     toggleTag: (toggled: string) => void;
     enterTag: (event: KeyboardEvent) => void;
     popSelectMenu: () => void;
-    content: () => any[];
+    content: () => (HTMLButtonElement | HTMLDivElement)[];
     removeTag: (event: Event) => void;
     render(): void;
 }

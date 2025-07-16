@@ -1,4 +1,4 @@
-import { Component as XinComponent, ElementCreator } from 'xinjs';
+import { Component as XinComponent, ElementCreator } from 'tosijs';
 export declare class XinField extends XinComponent {
     caption: string;
     key: string;
@@ -11,7 +11,7 @@ export declare class XinField extends XinComponent {
     step: string;
     fixedPrecision: number;
     value: any;
-    content: any;
+    content: HTMLLabelElement;
     constructor();
     private valueChanged;
     handleChange: () => void;
@@ -51,7 +51,7 @@ export declare class XinForm extends XinComponent {
             overflow: string;
         };
     };
-    content: any[];
+    content: (HTMLFormElement | HTMLSlotElement)[];
     getField: (key: string) => XinField | null;
     get fields(): any;
     set fields(values: {

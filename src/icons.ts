@@ -1,22 +1,23 @@
 /*#
 # icons
 
-<center>
-  <xin-icon icon="settings" style="--font-size: 128px"></xin-icon>
-  <xin-icon icon="xrColor" style="--font-size: 96px"></xin-icon>
-  <xin-icon icon="rgb" style="--font-size: 128px"></xin-icon>
-</center>
+<div class="center">
+  <xin-icon icon="settings" style="--xin-icon-size: 128px"></xin-icon>
+  <xin-icon icon="xrColor" style="--xin-icon-size: 96px"></xin-icon>
+  <xin-icon icon="rgb" style="--xin-icon-size: 128px"></xin-icon>
+</div>
 
-A library that provides `ElementCreator` functions that produce SVG icons. It leverages `xinjs`'s
+A library that provides `ElementCreator` functions that produce SVG icons. It leverages `tosijs`'s
 `svgElements` proxy and is intended to address all the key use-cases for SVG icons in web
 applications along with being very easy to extend and maintain.
 
 > ### Supported Use Cases
 > - inline SVGs that can be styled by CSS (for buttons, etc.)
+> - allows both stroked and filled icons (unlike font-based systems)
 > - No build process magic needed (it's "just javascript")
-> - icons can be rendered  as data urls, e.g. to insert into CSS
 > - highly optimized and compressible
-> - support for color icons (with overrides via CSS)
+> - support for color icons (without requiring multiple glyphs perfectly aligned)
+> - icons can be rendered  as data urls, e.g. to insert into CSS…
 
 ## icons
 
@@ -25,8 +26,8 @@ e.g. `icons.chevronDown()` produces an `<svg>` element containing a downward-poi
 icon with the class `icon-chevron-down`.
 
 ```js
-const { icons, svgIcon } = xinjsui
-const { div } = xinjs.elements
+const { icons, svgIcon } = tosijsui
+const { div } = tosijs.elements
 
 preview.append(...Object.keys(icons).sort().map(iconName => div(
   { class: 'tile' },
@@ -44,10 +45,6 @@ preview.append(...Object.keys(icons).sort().map(iconName => div(
   overflow: hidden scroll !important;
 }
 
-.preview svg {
-  fill: var(--text-color);
-}
-
 .preview .tile {
   display: flex;
   text-align: center;
@@ -60,7 +57,7 @@ preview.append(...Object.keys(icons).sort().map(iconName => div(
 
 .preview .tile:hover {
   background: white;
-  --text-color: var(--brand-color);
+  color: var(--brand-color);
 }
 
 .preview .tile > div {
@@ -84,161 +81,21 @@ probably be broken out as a standalone library to allow the use of whatever icon
 
 ## Adding and redefining icons
 
-`defineIcon(name: string, icon: IconSpec | string)` adds or replaces your own icons
+Simply pass a map of icon names to svg source strings…
 
 ```
-interface IconSpec {
-  p: string[]  // paths
-  c?: string[] // colors of the paths in p
-  w: number    // width of icon
-  h: number    // height of icon
-}
-```
-
-The simplest option is simply to pass the `path` attribute (if the icon has a single path) while more
-complex icons can be provide an `IconSpec` structure, specifying multiple paths (and colors if so
-desired).
-
-This utility loads SVG files (they should only contain paths with no strokes, transforms, or nesting)
-and generates an `IconSpec`. It renders the original icon side-by-side with the `<xin-icon>` version.
-**If the icon on the right appears garbled, it probably needs to be simplified**.
-
-```js
-const { defineIcon, xinIcon } = xinjsui
-
-const fileInput = preview.querySelector('input')
-const icon = preview.querySelector('.icon')
-const svgContainer = preview.querySelector('.svg')
-const iconSpec = preview.querySelector('textarea')
-const rounded = preview.querySelector('.rounded')
-const scaled = preview.querySelector('.scaled')
-
-function jsObject(o) {
-  let json = JSON.stringify(o, null, 2)
-  return json.replace(/"(\w+)":/g, '$1:')
-}
-
-fileInput.addEventListener('change', () => {
-  if (fileInput.files.length) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      svgContainer.innerHTML = e.target.result
-      const svg = svgContainer.querySelector('svg')
-      const paths = Array.from(svg.querySelectorAll('path')).map(path => ({
-        p: path.getAttribute('d'),
-        c: path.style.fill
-      }))
-      const isMulticolor = [...new Set(paths.map(path => path.c))].length > 1
-      let { width, height } = svg.viewBox.baseVal
-
-      let scale = 1
-      if (scaled.checked) {
-        scale = 1024 / height
-        height = 1024
-        width = width * scale
-      }
-
-      paths.forEach(path => {
-        path.p = path.p.replace(/\d+\.\d+/g, x => rounded.checked ? (Number(x) * scale).toFixed(0) : (Number(x) * scale))
-      })
-
-      if (width === 1024 && height === 1024 && paths.length === 1) {
-        iconSpec.value = jsObject(paths[0])
-      } else {
-        const spec = {
-          p: paths.map(path => path.p),
-          w: width,
-          h: height
-        }
-        if (isMulticolor) {
-          spec.c = paths.map(path => path.c)
-        }
-        iconSpec.value = jsObject(spec)
-        defineIcon('svgLoader', spec)
-        icon.setAttribute('icon', '')
-        icon.setAttribute('icon', 'svgLoader')
-        fileInput.value = ''
-      }
-    };
-    reader.readAsText(fileInput.files[0]);
-  }
+defineIcons({
+  someIcon: '<svg ....',
+  otherIcon: '<svg ...',
 })
 ```
-```html
-<div class="svg-loader">
-  <label>
-    <span>Load an SVG file</span>
-    <input accept="image/svg+xml" type="file">
-  </label>
-  <label style="flex-direction: row">
-    <input type="checkbox" class="rounded" checked>
-    <span>Round floats?</span>
-  </label>
-  <label style="flex-direction: row">
-    <input type="checkbox" class="scaled">
-    <span>Scale to 1024?</span>
-  </label>
-  <div class="side-by-side">
-    <label>
-      <span>IconSpec</span>
-      <textarea></textarea>
-    </label>
-    <label>
-      <span>Icons</span>
-      <div class="side-by-side">
-        <div class="svg"></div>
-        <xin-icon class="icon"></xin-icon>
-      </div>
-    </label>
-  </div>
-</div>
-```
-```css
-.preview .svg-loader,
-.preview .svg-loader label {
-  display: flex;
-  width: 100%;
-  align-items: stretch;
-  flex-direction: column;
-}
 
-.preview .svg-loader {
-  gap: 10px;
-  height: 100%;
-}
+### Icon Classes
 
-.preview .svg-loader textarea {
-  flex: 1;
-  resize: none;
-  font-family: Monaco, monospace;
-  font-size: 12px;
-  line-height: 15px;
-}
+Icons will be generated with the class `xin-icon`.
 
-.preview .side-by-side {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.preview .svg-loader .icon {
-  position: relative;
-}
-
-.preview .svg-loader svg {
-  height: 128px;
-  width: 128px;
-}
-
-.preview xin-icon:not([icon]) {
-  display: none;
-}
-
-.preview .svg-loader xin-icon {
-  --font-size: 128px;
-}
-```
+You can also assign the classes `filled`, `stroked`, and `color` to icons to set default
+icon styling.
 
 ## `<xin-icon>`
 
@@ -258,37 +115,11 @@ how it's styled.
 > all coordinates to nearest integer on the assumption that this is plenty precise enough for icons and
 > makes everything smaller and easier to compress.
 
-```html
-<xin-icon size="64" icon="game" color="var(--brand-color)"></xin-icon>
-<xin-icon size="96" icon="game" color="yellow" stroke="black"></xin-icon>
-<xin-icon size="64" icon="star"
- color="linear-gradient(0deg, rgba(34,193,195,1) 0%, rgba(253,187,45,1) 100%)"
-></xin-icon>
-<xin-icon size="64" icon="star"
- color="linear-gradient(345deg, rgba(34,193,195,1) 0%, rgba(253,187,45,1) 100%)"
-></xin-icon>
-<xin-icon size="64" icon="star"
- color="linear-gradient(180deg, rgba(34,193,195,1) 0%, rgba(253,187,45,1) 100%)"
-></xin-icon>
-<xin-icon size="64" icon="star"
- color="linear-gradient(90deg, rgba(34,193,195,1) 0%, rgba(253,187,45,1) 100%)"
-></xin-icon>
-```
-```css
-xin-icon.demo-2 > svg {
-  height: 96px;
-}
-```
-
-**CSS-to-SVG Gradient** support is work-in-progress and experimental (there seem to be
-…issues… with how SVG  gradients behave). The goal is to be able to use CSS gradients
-to generate SVG gradients (which are kind of a pain) on-the-fly. Use at your own risk.
-
 ## SVGs as data-urls
 
 ```js
-const { elements } = xinjs
-const { icons, svg2DataUrl } = xinjsui
+const { elements } = tosijs
+const { icons, svg2DataUrl } = tosijsui
 
 preview.append(
   elements.span({
@@ -315,7 +146,7 @@ preview.append(
       width: '100px',
       height: '200px',
       content: '" "',
-      background: svg2DataUrl(icons.xinjsColor())
+      background: svg2DataUrl(icons.tosi())
     }
   }),
 )
@@ -331,31 +162,20 @@ If you're using `SVGElement`s created using the `icons` proxy, you'll want to pr
 ## Color Icons
 
 ```html
-<xin-icon icon="xinjsColor" class="demo-icon"></xin-icon>
-<xin-icon icon="xinjsColor" class="demo-icon recolored"></xin-icon>
+<xin-icon icon="tosiFavicon" class="demo-icon"></xin-icon>
+<xin-icon icon="tosiPlatform" class="demo-icon recolored"></xin-icon>
+<xin-icon icon="tosiXr" class="demo-icon animated"></xin-icon>
 ```
 ```css
 .demo-icon {
-  --font-size: 160px
+  --xin-icon-size: 160px
 }
 
 .recolored > svg {
-  pointer-events: all
-}
-
-.recolored > svg {
-  scale: 1;
-  position: relative;
-  transform-origin: center;
-  filter: grayscale(0.5);
-  opacity: 0.76;
+  pointer-events: all;
   transition: 0.25s ease-out;
-  --icon-fill-0: black;
-  --icon-fill-2: #f0f;
-  --icon-fill-3: #f4f;
-  --icon-fill-4: #fcf;
-  --icon-fill-5: #f8f;
-  --icon-fill-6: #fff;
+  transform: scale(1);
+  filter: grayscale(0.5)
 }
 
 .recolored:hover > svg {
@@ -363,11 +183,27 @@ If you're using `SVGElement`s created using the `icons` proxy, you'll want to pr
   transform: scale(1.1);
   filter: grayscale(0);
 }
+
+.animated > svg {
+  animation: 2s linear 0s infinite rainbow;
+}
+
+@keyframes rainbow {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
 ```
 
-Each path inside an icon can be individually colored. When the icon is hydrated,
-the colors will be assigned to a (minimal) set of CSS-variables (`--icon-fill-0`, etc.)
-and these can be overridden in the usual way.
+Colored icons have the `color` class added to them, so you can easily create css rules
+that, for example, treat all colored icons inside buttons the same way.
+
+> Earlier versions of this library replaced color specifications with CSS-variables in a
+> very convoluted way, but in practice this isn't terribly useful as SVG properties can't
+> be animated by CSS, so this functionality has been stripped out.
 
 ## Missing Icons
 
@@ -376,39 +212,46 @@ and render a `square` (in fact, `icons.square()`) as a fallback.
 
 ## Why?
 
-The motivation behind this is to avoid dealing with tooling issues that inevitably result from
-integrating custom icon fonts or stylesheets needed by code libraries (and an icon-font also needs
-a style-sheet. Importing code is simply easier (and as a bonus, more compact and flexible, and there's
-no question as to when the stuff is available).
+My evolution has been:
 
-Until I wrote this library, I had settled on icomoon.io's system for generating and maintaining
-custom icon fonts for managing icons within a project, but this makes exporting UI elements
-with icons in them fiddly, and I looked at other UI libraries and found similar issues.
+1. Using Icomoon.io, which I still think is a solid choice for managing custom icon fonts
+2. Processing Icomoon selection.json files into icon-data and then generating SVGs dynamically
+   from the data
+3. Ingesting SVGs directly, with a little cleanup
 
-Even when just using this approach for projects over which I had full control, there were issues
-with syncing icons with CSS (e.g. if you want to attach an element to a pseudo-element). `icons`
-in combination with `svg2DataUrl` solves all these problems.
+The goal is always to have a single source of truth for icons, no magic or convoluted tooling, and 
+be able to quickly and easily add and replace icons, distribute them with components, and
+have no mess or fuss.
 
-Basically, I wanted an icon solution that "just works" and this is it.
+1. Works well, but…
+   - color icons are flaky,
+   - doesn't play well with others, 
+   - can't really distribute the icons with your components. 
+   - difficult to use icons in CSS `content`
+   - impossible to use icons in CSS backgrounds
+2. This is `icons.ts` until just now! Solves all the above, but…
+   - no fancy SVG effects, like gradients (goodness knows I experimented with converting CSS gradients to SVG gradients) and, most 
+   - **strokes** need to be converted to outlines
+   - outlined strokes can't be styled the way strokes can
+   - blocks use of popular icon libraries
+3. This is how everyone else works, except…
+   - no build magic needed: `defineIcons({ myIcon: '<svg....>', ... })`
+   - if you want build magic, `icons.js` has no dependencies, finds icons and creates an `icon-data.ts` file.
+   - smaller icon files, even though I'm now including more icons (including *all the current* feathericons)
 
-Internally, icons are stored as javascript path data.
+## Icon Sources
 
 Many of these icons are sourced from [Feather Icons](https://github.com/feathericons/feather), but
 all the icons have been processed to have integer coordinates in a `viewBox` typically scaled to 1024  &times; 1024.
 
-## Is this efficient?
+The corporate logos (Google, etc.) are from a variety of sources, in many cases ultimately from the
+organizations themselves. It's up to you to use them correctly.
 
-I use [icomoon](https://icomoon.com/app) to manage my icon libraries. Its method of distributing icons
-is to create custom fonts and an accompanying stylesheet.
+The remaining icons I have created myself using the excellent but sometimes flawed
+[Amadine](https://apps.apple.com/us/app/amadine-vector-design-art/id1339198386?mt=12)
+and generally reliable [Graphic](https://apps.apple.com/us/app/graphic/id404705039?mt=12).
 
-- the iconData file, compressed is ~23kB
-- icomoon's equivalent CSS file is ~3kB and the font files are 21kB
-
-But these fonts are less flexible, harder to distribute as part of a library, you need to
-distribute three versions for compatibility, and the color icons are very flaky and cannot
-be styled.
-
-## Feather Icons Copyright Notice
+### Feather Icons Copyright Notice
 
 The MIT License (MIT)
 
@@ -426,6 +269,7 @@ copies or substantial portions of the Software.
 */
 
 import {
+  elements,
   svgElements,
   ElementCreator,
   ElementPart,
@@ -434,59 +278,49 @@ import {
   XinStyleRule,
   Color,
   varDefault,
-} from 'xinjs'
-import { IconSpec, SVGIconMap } from './icon-types'
+  StyleSheet,
+} from 'tosijs'
+import { SVGIconMap } from './icon-types'
 import iconData from './icon-data'
 
 const { svg, path } = svgElements
 
-function getIconSpec(name: string): IconSpec {
-  let data = iconData[name]
-  if (data === undefined) {
-    if (name) {
-      console.warn(`icon ${name} not found`)
-    }
-    data = iconData.square
-  }
-  return typeof data !== 'string'
-    ? (data as IconSpec)
-    : {
-        w: 1024,
-        h: 1024,
-        p: [data],
-      }
-}
-
-export const defineIcon = (name: string, icon: IconSpec | string): void => {
-  iconData[name] = icon
+export const defineIcons = (newIcons: { [key: string]: string }): void => {
+  Object.assign(iconData, newIcons)
 }
 
 export const svg2DataUrl = (
   svg: SVGElement,
-  fill?: string,
-  stroke?: string,
+  fill?: string | false,
+  stroke?: string | false,
   strokeWidth: number | string = 1
 ): string => {
-  if (fill !== undefined) {
-    for (const path of [...svg.querySelectorAll('path')]) {
-      path.setAttribute('fill', fill)
-      if (stroke !== undefined) {
+  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+  if (fill || stroke) {
+    for (const path of [...svg.querySelectorAll('path, polygon')]) {
+      if (fill) {
+        path.setAttribute('fill', fill)
+      }
+      if (stroke) {
         path.setAttribute('stroke', stroke)
-        path.setAttribute('stroke-width', String(Number(strokeWidth) * 32))
+        path.setAttribute('stroke-width', String(strokeWidth))
       }
     }
   }
 
-  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
   const styled = svg.querySelectorAll('[style]')
   svg.removeAttribute('style')
-  for (const item of [...styled]) {
-    const [color] = item.getAttribute('style')?.match(/rgb\([^)]+\)/) || []
+  for (const item of [...styled] as HTMLElement[]) {
+    const { fill, stroke, strokeWidth, strokeLinecap, strokeLinejoin } =
+      item.style
+    if (fill) item.setAttribute('fill', Color.fromCss(fill).html)
+    if (stroke) item.setAttribute('stroke', Color.fromCss(stroke).html)
+    if (strokeWidth) item.setAttribute('strokeWidth', strokeWidth)
+    if (strokeLinecap) item.setAttribute('strokeLinecap', strokeLinecap)
+    if (strokeLinejoin) item.setAttribute('strokeLinejoin', strokeLinejoin)
     item.removeAttribute('style')
-    if (color && !fill) {
-      item.setAttribute('fill', Color.fromCss(color).html)
-    }
   }
+
   const text = encodeURIComponent(svg.outerHTML)
   return `url(data:image/svg+xml;charset=UTF-8,${text})`
 }
@@ -495,56 +329,52 @@ export const icons = new Proxy(iconData, {
   get(
     target,
     prop: string
-  ): ElementCreator<SVGElement, ElementProps> | undefined {
-    const iconSpec = getIconSpec(prop)
-    return iconSpec === undefined
-      ? undefined
-      : (...parts: ElementPart[]) => {
-          const { w, h } = Object.assign({ w: 1024, h: 1024 }, iconSpec)
-          return svg(
-            {
-              viewBox: `0 0 ${w} ${h}`,
-              class:
-                'icon-' +
-                prop.replace(
-                  /([a-z])([A-Z])/g,
-                  (_, a, b) => a + '-' + b.toLocaleLowerCase()
-                ),
-              style: {
-                height: varDefault.xinIconSize('16px'),
-              },
-            },
-            ...parts,
-            ...iconSpec.p.map((d: string, index: number) => {
-              const uniqueColors = Array.from(new Set(iconSpec.c))
-              const p = iconSpec.c
-                ? path({
-                    d,
-                    style: {
-                      fill: `var(--icon-fill-${uniqueColors.indexOf(
-                        iconSpec.c[index]
-                      )}, ${iconSpec.c[index]})`,
-                    },
-                  })
-                : path({ d })
-              return p
-            })
-          )
-        }
+  ): ElementCreator {
+    let iconSpec = iconData[prop as keyof typeof iconData] as string
+    if (prop && !iconSpec) {
+      console.warn(`icon ${prop} does not exist`)
+    }
+    if (!iconSpec) {
+      iconSpec = iconData.square
+    }
+    return (...parts: ElementPart[]) => {
+      const div = elements.div()
+      div.innerHTML = iconSpec
+      const sourceSvg = div.querySelector('svg') as SVGElement
+      const classes = new Set(sourceSvg.classList)
+      classes.add('xin-icon')
+      const svg = svgElements.svg(
+        {
+          class: Array.from(classes).join(' '),
+          viewBox: sourceSvg.getAttribute('viewBox'),
+        },
+        ...parts,
+        ...sourceSvg.children
+      )
+      svg.style.strokeWidth = varDefault.xinIconStrokeWidth('2px')
+      svg.style.stroke = varDefault.xinIconStroke(
+        classes.has('filled') ? 'none' : 'currentColor'
+      )
+      svg.style.fill = varDefault.xinIconFill(
+        classes.has('stroked') ? 'none' : 'currentColor'
+      )
+      svg.style.height = varDefault.xinIconSize('16px')
+      return svg
+    }
   },
 }) as unknown as SVGIconMap
 
 export class SvgIcon extends WebComponent {
   icon = ''
   size = 0
-  color = ''
+  fill = ''
   stroke = ''
   strokeWidth = 1
 
   constructor() {
     super()
 
-    this.initAttributes('icon', 'size', 'color', 'stroke', 'strokeWidth')
+    this.initAttributes('icon', 'size', 'fill', 'stroke', 'strokeWidth')
   }
 
   render(): void {
@@ -556,38 +386,10 @@ export class SvgIcon extends WebComponent {
     }
     if (this.stroke) {
       style.stroke = this.stroke
-      style.strokeWidth = this.strokeWidth * 32
+      style.strokeWidth = this.strokeWidth
     }
-    if (this.color.match(/linear-gradient/)) {
-      const type = this.color.split('-')[0]
-      const [, spec] = this.color.match(/[a-z-]+\((.*)\)/) || []
-      const [, direction] = spec.match(/(\d+)deg/) || []
-      const items = spec.match(/(#|rgb|hsl).*?%/g) || []
-      const stops = items
-        .map((item) => {
-          const [, color, position] = item.match(/^(.*)\s(\d+%)$/) || [
-            'black',
-            '100%',
-          ]
-          return `<stop offset="${position}" stop-color="${
-            Color.fromCss(color).html
-          }" ></stop>`
-        })
-        .join('')
-      let transform = ''
-      if (direction) {
-        const angle = parseFloat(direction)
-        transform = ` gradientTransform="rotate(${angle.toFixed(0)})"`
-      }
-      const defs = svgElements.defs()
-      const id = 'g-' + Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
-      defs.innerHTML = `<${type}Gradient id="${id}" ${transform}>${stops}</${type}Gradient>`
-      style.fill = `url(#${id})`
-      this.append(icons[this.icon]({ style }, defs))
-    } else {
-      style.fill = this.color
-      this.append(icons[this.icon]({ style }))
-    }
+    style.fill = this.fill
+    this.append(icons[this.icon]({ style }))
   }
 }
 
@@ -596,6 +398,11 @@ export const svgIcon = SvgIcon.elementCreator({
   styleSpec: {
     ':host': {
       display: 'inline-flex',
+      stroke: 'currentColor',
+      strokeWidth: varDefault.iconStrokeWidth('2px'),
+      strokeLinejoin: varDefault.iconStrokeLinejoin('round'),
+      strokeLinecap: varDefault.iconStrokeLinecap('round'),
+      fill: varDefault.iconFill('none'),
     },
     ':host, :host svg': {
       height: varDefault.xinIconSize('16px'),

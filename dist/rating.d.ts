@@ -1,4 +1,4 @@
-import { Component, ElementCreator } from 'xinjs';
+import { Component, ElementCreator } from 'tosijs';
 export declare class XinRating extends Component {
     iconSize: number;
     min: 0 | 1;
@@ -6,9 +6,10 @@ export declare class XinRating extends Component {
     step: number;
     value: number | null;
     icon: string;
-    color: string;
-    emptyColor: string;
-    emptyStrokeWidth: number;
+    ratingFill: string;
+    ratingStroke: string;
+    emptyFill: string;
+    emptyStroke: string;
     readonly: boolean;
     hollow: boolean;
     static styleSpec: {
@@ -28,22 +29,14 @@ export declare class XinRating extends Component {
         };
         ':host::part(empty)': {
             pointerEvents: string;
-            _textColor: string;
-        };
-        ':host [part="empty"]:not(.hollow)': {
-            fill: any;
-        };
-        ':host .hollow': {
-            fill: string;
-            stroke: any;
-            strokeWidth: any;
+            _xinIconFill: string;
+            _xinIconStroke: string;
         };
         ':host::part(filled)': {
             position: string;
             left: number;
-            fill: any;
-            stroke: any;
-            strokeWidth: any;
+            _xinIconFill: string;
+            _xinIconStroke: string;
         };
         ':host svg': {
             transform: string;
@@ -58,7 +51,7 @@ export declare class XinRating extends Component {
         };
     };
     constructor();
-    content: () => any;
+    content: () => HTMLSpanElement;
     displayValue(value: number | null): void;
     update: (event: Event) => void;
     handleKey: (event: KeyboardEvent) => void;

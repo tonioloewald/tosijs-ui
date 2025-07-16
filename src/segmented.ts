@@ -114,7 +114,7 @@ import {
   ElementCreator,
   elements,
   varDefault,
-} from 'xinjs'
+} from 'tosijs'
 import { icons } from './icons'
 import { xinLocalized } from './localize'
 
@@ -177,7 +177,7 @@ export class XinSegmented extends WebComponent {
     },
     ':host svg': {
       height: varDefault.segmentOptionIconSize('16px'),
-      fill: varDefault.segmentedOptionIconColor('currentColor'),
+      stroke: varDefault.segmentedOptionIconColor('currentColor'),
     },
     ':host label.no-icon': {
       gap: 0,

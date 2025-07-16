@@ -36,7 +36,7 @@ when an operation completes). This will *also* call any `close` callback functio
 provided. (The progress demos in the example exercise this functionality.)
 
 ```js
-const { postNotification, icons } = xinjsui
+const { postNotification, icons } = tosijsui
 
 const form = preview.querySelector('xin-form')
 const submit = preview.querySelector('.submit')
@@ -130,7 +130,7 @@ xin-form label {
 This is simply a wrapper for `XinNotification.post()`.
 */
 
-import { Component, elements, vars, ElementCreator } from 'xinjs'
+import { Component, elements, vars, ElementCreator } from 'tosijs'
 import { icons } from './icons'
 import { findHighestZ } from './track-drag'
 const { div, button } = elements
@@ -204,7 +204,7 @@ export class XinNotification extends Component {
       zIndex: 1,
     },
     ':host .note .icon': {
-      fill: vars.notificationAccentColor,
+      stroke: vars.notificationAccentColor,
     },
     ':host .note button': {
       display: 'flex',
@@ -221,11 +221,11 @@ export class XinNotification extends Component {
       position: 'relative',
     },
     ':host .note button:hover svg': {
-      fill: vars.notificationAccentColor,
+      stroke: vars.notificationAccentColor,
     },
     ':host .note button:active svg': {
       borderRadius: 99,
-      fill: vars.notificationBg,
+      stroke: vars.notificationBg,
       background: vars.notificationAccentColor,
       padding: vars.spacing50,
     },

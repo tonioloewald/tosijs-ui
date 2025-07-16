@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'xinjs';
+import { Component as WebComponent, ElementCreator } from 'tosijs';
 type B3dCallback = ((element: B3d, BABYLON: any) => void) | ((element: B3d, BABYLON: any) => Promise<void>);
 interface B3dUIOptions {
     snippetId?: string;
@@ -37,7 +37,7 @@ export declare class B3d extends WebComponent {
             transform: string;
         };
     };
-    content: any;
+    content: HTMLCanvasElement;
     constructor();
     scene: any;
     engine: any;

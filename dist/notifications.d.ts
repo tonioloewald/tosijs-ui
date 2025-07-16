@@ -1,4 +1,4 @@
-import { Component, ElementCreator } from 'xinjs';
+import { Component, ElementCreator } from 'tosijs';
 interface NotificationSpec {
     message: string;
     type?: 'success' | 'info' | 'log' | 'warn' | 'error' | 'progress';
@@ -18,53 +18,53 @@ export declare class XinNotification extends Component {
             _notificationBg: string;
             _notificationAccentColor: string;
             _notificationTextColor: string;
-            _notificationIconSize: any;
+            _notificationIconSize: string;
             _notificationButtonSize: number;
             _notificationBorderWidth: string;
-            _notificationBorderRadius: any;
+            _notificationBorderRadius: string;
             position: string;
             left: number;
             right: number;
             bottom: number;
-            paddingBottom: any;
-            width: any;
+            paddingBottom: string;
+            width: string;
             display: string;
             flexDirection: string;
             margin: string;
-            gap: any;
+            gap: string;
             maxHeight: string;
             overflow: string;
             boxShadow: string;
         };
         ':host *': {
-            color: any;
+            color: string;
         };
         ':host .note': {
             display: string;
-            background: any;
-            padding: any;
+            background: string;
+            padding: string;
             gridTemplateColumns: string;
-            gap: any;
+            gap: string;
             alignItems: string;
-            borderRadius: any;
+            borderRadius: string;
             boxShadow: string;
-            borderColor: any;
-            borderWidth: any;
+            borderColor: string;
+            borderWidth: string;
             borderStyle: string;
             transition: string;
             transitionProperty: string;
             zIndex: number;
         };
         ':host .note .icon': {
-            fill: any;
+            stroke: string;
         };
         ':host .note button': {
             display: string;
-            lineHeight: any;
+            lineHeight: string;
             padding: number;
             margin: number;
-            height: any;
-            width: any;
+            height: string;
+            width: string;
             background: string;
             alignItems: string;
             justifyContent: string;
@@ -73,24 +73,24 @@ export declare class XinNotification extends Component {
             position: string;
         };
         ':host .note button:hover svg': {
-            fill: any;
+            stroke: string;
         };
         ':host .note button:active svg': {
             borderRadius: number;
-            fill: any;
-            background: any;
-            padding: any;
+            stroke: string;
+            background: string;
+            padding: string;
         };
         ':host .note svg': {
-            height: any;
-            width: any;
+            height: string;
+            width: string;
             pointerEvents: string;
         };
         ':host .message': {
             display: string;
             flexDirection: string;
             alignItems: string;
-            gap: any;
+            gap: string;
         };
         ':host .note.closing': {
             opacity: number;
@@ -99,7 +99,7 @@ export declare class XinNotification extends Component {
     };
     static removeNote(note: HTMLElement): void;
     static post(spec: NotificationSpec | string): callback;
-    content: any;
+    content: null;
 }
 export declare const xinNotification: ElementCreator<XinNotification>;
 export declare function postNotification(spec: NotificationSpec | string): callback;

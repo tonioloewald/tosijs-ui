@@ -1,8 +1,20 @@
-import { Component, ElementCreator } from 'xinjs';
+import { Component, ElementCreator, PartsMap } from 'tosijs';
+import { TabSelector } from './tab-selector';
 interface ExampleContext {
     [key: string]: any;
 }
-export declare class LiveExample extends Component {
+interface ExampleParts extends PartsMap {
+    codeEditors: HTMLElement;
+    undo: HTMLButtonElement;
+    redo: HTMLButtonElement;
+    exampleWidgets: HTMLButtonElement;
+    editors: TabSelector;
+    code: HTMLElement;
+    sources: HTMLElement;
+    style: HTMLStyleElement;
+    example: HTMLElement;
+}
+export declare class LiveExample extends Component<ExampleParts> {
     persistToDom: boolean;
     prettier: boolean;
     prefix: string;

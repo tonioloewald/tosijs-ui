@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'xinjs';
+import { Component as WebComponent, ElementCreator } from 'tosijs';
 interface Choice {
     icon?: string | SVGElement;
     value: string;
@@ -13,58 +13,58 @@ export declare class XinSegmented extends WebComponent {
     localized: boolean;
     value: null | string;
     get values(): string[];
-    content: () => any[];
+    content: () => (HTMLDivElement | HTMLSlotElement)[];
     static styleSpec: {
         ':host': {
             display: string;
-            gap: any;
-            alignItems: any;
+            gap: string;
+            alignItems: string;
         };
         ':host, :host::part(options)': {
-            flexDirection: any;
+            flexDirection: string;
         };
         ':host label': {
             display: string;
             alignItems: string;
-            gap: any;
-            gridTemplateColumns: any;
-            padding: any;
-            font: any;
+            gap: string;
+            gridTemplateColumns: string;
+            padding: string;
+            font: string;
         };
         ':host label:has(:checked)': {
-            color: any;
-            background: any;
+            color: string;
+            background: string;
         };
         ':host svg': {
-            height: any;
-            fill: any;
+            height: string;
+            stroke: string;
         };
         ':host label.no-icon': {
             gap: number;
-            gridTemplateColumns: any;
+            gridTemplateColumns: string;
         };
         ':host input[type="radio"], :host input[type="checkbox"]': {
-            visibility: any;
+            visibility: string;
         };
         ':host::part(options)': {
             display: string;
-            borderRadius: any;
-            background: any;
-            color: any;
+            borderRadius: string;
+            background: string;
+            color: string;
             overflow: string;
-            alignItems: any;
+            alignItems: string;
         };
         ':host::part(custom)': {
-            padding: any;
-            color: any;
-            background: any;
-            font: any;
+            padding: string;
+            color: string;
+            background: string;
+            font: string;
             border: string;
             outline: string;
         };
         ':host::part(custom)::placeholder': {
-            color: any;
-            opacity: any;
+            color: string;
+            opacity: string;
         };
     };
     constructor();

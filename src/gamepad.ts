@@ -8,8 +8,8 @@ A couple of utility functions for dealing with gamepads and XRInputs.
 `gamepadText()` provides the above in minimal text form for debugging
 
 ```js
-const { elements } = xinjs
-const { gamepadText } = xinjsui
+const { elements } = tosijs
+const { gamepadText } = tosijsui
 
 const pre = elements.pre()
 preview.append(pre)

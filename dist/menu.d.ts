@@ -1,4 +1,4 @@
-import { Component, PartsMap } from 'xinjs';
+import { Component, PartsMap } from 'tosijs';
 import { FloatPosition } from './pop-float';
 import { SvgIcon } from './icons';
 export type ActionCallback = () => void | Promise<void>;
@@ -50,11 +50,11 @@ export declare class XinMenu extends Component<XinMenuParts> {
     menuWidth: string;
     localized: boolean;
     showMenu: (event: Event) => void;
-    content: () => any;
+    content: () => HTMLButtonElement;
     handleShortcut: (event: KeyboardEvent) => Promise<void>;
     constructor();
     connectedCallback(): void;
     disconnectedCallback(): void;
 }
-export declare const xinMenu: any;
+export declare const xinMenu: import("tosijs").ElementCreator<Component<PartsMap>>;
 export {};

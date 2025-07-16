@@ -1,14 +1,18 @@
-# xinjs-ui
+# tosijs-ui
+
+> xinjs-ui is now tosijs-ui. This is work in progress.
 
 <!--{ "pin": "top" }-->
 
 [ui.xinjs.net live demo](https://ui.xinjs.net) | [xinjs](https://xinjs.net) | [discord](https://discord.gg/ramJ9rgky5) | [github](https://github.com/tonioloewald/xinjs-ui#readme) | [npm](https://www.npmjs.com/package/xinjs-ui)
 
-<img alt="xinjs-ui logo" class="logo" style="display: block; margin: auto; width: 50%" src="./favicon.svg">
+<center>
+  <xin-icon class="logo" icon="tosiUi" size=300></xin-icon>
+</center>
 
 Copyright ©2023-2025 Tonio Loewald
 
-## the xinjs ui library
+## the tosijs ui library
 
 A set of [web-components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)
 created with [xinjs](https://xinjs.net), designed to augment what the browser gives you
@@ -27,7 +31,7 @@ npm add xinjs-ui
 ```
 
 Then you can import the component `elementCreator` and create the element any way you
-like, the easiest way being to use the `elementCreator` itself. A `xinjs` `elementCreator`
+like, the easiest way being to use the `elementCreator` itself. A `tosijs` `elementCreator`
 is syntax sugar around `document.createElement()`.
 
 ```
@@ -38,9 +42,9 @@ document.body.append(dataTable())
 
 ### Using the iife via cdn
 
-The `xinjs-ui` iife build bundles `xinjs`, `xinjs-ui`, and `marked` into
-a single minified javascript source file. You can access `xinjs` and `xinjsui`
-as globals which contain all the things exported by `xinjs` and `xinjs-ui`.
+The `tosijs-ui` iife build bundles `tosijs`, `tosijs-ui`, and `marked` into
+a single minified javascript source file. You can access `tosijs` and `xinjsui`
+as globals which contain all the things exported by `tosijs` and `tosijs-ui`.
 
 > iife support is new so it may not have propagated to the cdn yet. This
 > example loads the library from ui.xinjs.net for now.
@@ -49,8 +53,8 @@ as globals which contain all the things exported by `xinjs` and `xinjs-ui`.
 <script src="https://ui.xinjs.net/iife.js"></script>
 <button id="menu">Menu <xin-icon icon="chevronDown"></xin-icon></button>
 <script>
-  const { elements } = xinjs
-  const { popMenu, icons } = xinjsui
+  const { elements } = tosijs
+  const { popMenu, icons } = tosijsui
 
   const button = { elements }
 
@@ -104,7 +108,7 @@ document.body.append(markdownViewer('# hello world\nthis is a test'))
 ```
 
 ```js
-const { markdownViewer } = xinjsui
+const { markdownViewer } = tosijsui
 
 preview.append(
   markdownViewer(`
@@ -123,20 +127,20 @@ here is some markdown
 </xin-md>
 ```
 
-The big difference with using the `markdownViewer()` function is that the `xinjs` `Component`
+The big difference with using the `markdownViewer()` function is that the `tosijs` `Component`
 class will automatically pick a new tag if the expected tag is taken (e.g. by a previously
 defined custom-element from another library). `markdownViewer()` will create an element of
 the correct type.
 
-The other thing is that `xinjs` `ElementCreator` functions are convenient and composable,
+The other thing is that `tosijs` `ElementCreator` functions are convenient and composable,
 allowing you to build DOM elements with less code than pretty much any other option, including
 JSX, TSX, or HTML.
 
 ## Philosophy
 
-In general, `xinjs` strives to work _with_ the browser rather than trying to _replace_ it.
+In general, `tosijs` strives to work _with_ the browser rather than trying to _replace_ it.
 
-In a similar vein, `xinjs-ui` comprises a collection of [web-components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)
+In a similar vein, `tosijs-ui` comprises a collection of [web-components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)
 with the goal of augmenting what _already_ works well, and the components are intended be interoperable as
 similar as possible to things that you already use, such as `<input>` or `<select>` elements.
 E.g. where appropriate, the `value` of an element is its malleable `state`, and when this changes,

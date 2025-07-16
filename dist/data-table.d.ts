@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'xinjs';
+import { Component as WebComponent, ElementCreator } from 'tosijs';
 import { SortCallback } from './make-sorter';
 export interface ColumnOptions {
     name?: string;
@@ -52,7 +52,7 @@ export declare class DataTable extends WebComponent {
     get columns(): ColumnOptions[];
     set columns(newColumns: ColumnOptions[]);
     get visibleColumns(): ColumnOptions[];
-    content: any;
+    content: null;
     getColumn(event: any): ColumnOptions | undefined;
     private setCursor;
     private resizeColumn;
@@ -66,8 +66,8 @@ export declare class DataTable extends WebComponent {
     sortByColumn: (columnOptions: ColumnOptions, direction?: "ascending" | "descending" | "auto") => void;
     popColumnMenu: (target: HTMLElement, options: ColumnOptions) => void;
     get captionSpan(): ElementCreator;
-    headerCell: (options: ColumnOptions) => any;
-    dataCell: (options: ColumnOptions) => any;
+    headerCell: (options: ColumnOptions) => HTMLElement;
+    dataCell: (options: ColumnOptions) => HTMLElement;
     get visibleRows(): any[];
     get visibleSelectedRows(): any[];
     get selectedRows(): any[];
