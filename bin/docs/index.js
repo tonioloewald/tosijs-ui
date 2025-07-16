@@ -1534,7 +1534,6 @@ var exports_src = {};
 __export(exports_src, {
   xrControllersText: () => xrControllersText,
   xrControllers: () => xrControllers,
-  xinjs: () => exports_module,
   xinTagList: () => xinTagList,
   xinTag: () => xinTag,
   xinSizer: () => xinSizer,
@@ -1552,6 +1551,7 @@ __export(exports_src, {
   version: () => version,
   updateLocalized: () => updateLocalized,
   trackDrag: () => trackDrag,
+  tosijs: () => exports_module,
   tabSelector: () => tabSelector,
   svgIcon: () => svgIcon,
   svg2DataUrl: () => svg2DataUrl,
