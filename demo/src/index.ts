@@ -53,7 +53,7 @@ setTimeout(() => {
   )
 }, 100)
 
-const PROJECT = 'tosi-ui'
+const PROJECT = 'tosijs-ui'
 
 const docName =
   document.location.search !== ''

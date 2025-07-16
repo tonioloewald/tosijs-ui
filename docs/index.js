@@ -13484,7 +13484,7 @@ setTimeout(() => {
   const brandColor2 = getComputedStyle(document.body).getPropertyValue("--brand-color");
   console.log("welcome to %cui.xinjs.net", `color: ${brandColor2}; padding: 0 5px;`);
 }, 100);
-var PROJECT = "tosi-ui";
+var PROJECT = "tosijs-ui";
 var docName = document.location.search !== "" ? document.location.search.substring(1).split("&")[0] : "README.md";
 var currentDoc = docs_default.find((doc) => doc.filename === docName) || docs_default[0];
 var { app, prefs } = cn({
