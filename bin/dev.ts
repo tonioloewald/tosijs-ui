@@ -4,7 +4,7 @@ import { watch } from 'chokidar'
 import { $ } from 'bun'
 
 const PORT = 8787
-const PROJECT_ROOT = import.meta.dir
+const PROJECT_ROOT = './'
 const PUBLIC = path.resolve(PROJECT_ROOT, 'docs')
 const DIST = path.resolve(PROJECT_ROOT, 'dist')
 const isSPA = true
