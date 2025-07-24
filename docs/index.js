@@ -5087,7 +5087,11 @@ class XinField extends M {
       attr(valueHolder, "pattern", this.pattern);
       attr(valueHolder, "min", this.min);
       attr(valueHolder, "max", this.max);
-      attr(valueHolder, "step", this.step);
+      if (this.step) {
+        attr(valueHolder, "step", this.step);
+      } else if (this.fixedPrecision > 0 && this.type === "number") {
+        attr(valueHolder, "step", Math.pow(10, -this.fixedPrecision));
+      }
     }
     setElementValue(valueHolder, this.value);
     setElementValue(input5.children[0], this.value);
