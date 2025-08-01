@@ -16,8 +16,9 @@ interface NotificationSpec {
   type?: 'success' | 'info' | 'log' | 'warn' | 'error' | 'progress' // default 'info'
   icon?: SVGElement | string // defaults to an info icon
   duration?: number
-  progress?: () => number // return percentage completion
+  progress?: () => number    // return percentage completion
   close?: () => void
+  color?: string             // specify color
 }
 ```
 
@@ -142,6 +143,7 @@ interface NotificationSpec {
   duration?: number
   progress?: () => number
   close?: () => void
+  color?: string
 }
 
 const COLOR_MAP = {
@@ -257,7 +259,7 @@ export class XinNotification extends Component {
   }
 
   static post(spec: NotificationSpec | string): callback {
-    const { message, duration, type, close, progress, icon } = Object.assign(
+    const { message, duration, type, close, progress, icon, color } = Object.assign(
       { type: 'info', duration: -1 },
       typeof spec === 'string' ? { message: spec } : spec
     )
@@ -271,7 +273,7 @@ export class XinNotification extends Component {
     document.body.append(singleton)
     singleton.style.zIndex = String(findHighestZ() + 1)
 
-    const _notificationAccentColor = COLOR_MAP[type]
+    const _notificationAccentColor = color || COLOR_MAP[type]
     const progressBar =
       progress || type === 'progress' ? elements.progress() : {}
     const closeCallback = () => {
