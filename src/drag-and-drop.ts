@@ -170,7 +170,7 @@ dragAndDrop.init()
 ### Reorderable List Example
 
 ```js
-const { elements, boxedProxy, getListItem } = tosijs
+const { elements, tosi, getListItem } = tosijs
 const { dragAndDrop } = tosijsui
 
 dragAndDrop.init()
@@ -192,7 +192,7 @@ const colors = [
   'indigo',
   'violet',
 ]
-const { spectrum } = boxedProxy({
+const { spectrum } = tosi({
   spectrum: shuffle(colors).map(color => ({color}))
 })
 

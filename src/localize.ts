@@ -231,7 +231,7 @@ class MyLocalizedComponent extends Component {
 ```
 */
 
-import { Component, boxedProxy, elements, bindings, observe, BoxedProxy } from 'tosijs'
+import { Component, tosi, elements, bindings, observe, BoxedProxy } from 'tosijs'
 import { makeSorter } from './make-sorter'
 import { xinSelect, XinSelect } from './select'
 
@@ -254,7 +254,7 @@ interface I18nConfig {
 
 const { span } = elements
 
-export const { i18n } = boxedProxy({
+export const { i18n } = tosi({
   i18n: {
     locale: window.navigator.language,
     locales: [window.navigator.language],

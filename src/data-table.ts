@@ -185,7 +185,7 @@ import {
   varDefault,
   xinValue,
   getListItem,
-  boxedProxy,
+  tosi,
   touch,
 } from 'tosijs'
 import { trackDrag } from './track-drag'
@@ -314,7 +314,7 @@ export class DataTable extends WebComponent {
   constructor() {
     super()
 
-    this.rowData = boxedProxy({
+    this.rowData = tosi({
       [this.instanceId]: this.rowData,
     })[this.instanceId]
 
