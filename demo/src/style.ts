@@ -342,16 +342,18 @@ export const styleSpec: XinStyleSheet = {
     borderBottom: '1px solid var(--brand-color)',
   },
   'button, select, .clickable': {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     transition: 'ease-out 0.2s',
     background: vars.brandTextColor,
     _textColor: vars.brandColor,
-    display: 'inline-block',
     textDecoration: 'none',
     padding: '0 calc(var(--spacing) * 1.25)',
     border: 'none',
     borderRadius: 'calc(var(--spacing) * 0.5)',
   },
-  'button, select, clickable, input': {
+  'button, select, .clickable, input': {
     lineHeight: 'calc(var(--line-height) + var(--spacing))',
   },
   'select:has(+ .icon-chevron-down)': {
@@ -471,6 +473,7 @@ export const styleSpec: XinStyleSheet = {
   '.iconic': {
     padding: '0',
     fontSize: '150%',
+    height: 'calc(var(--line-height) + var(--spacing))',
     lineHeight: 'calc(var(--line-height) + var(--spacing))',
     width: 'calc(var(--line-height) + var(--spacing))',
     textAlign: 'center',

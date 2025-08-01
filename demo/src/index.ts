@@ -1,6 +1,6 @@
 import {
   elements,
-  boxedProxy as tosi,
+  tosi,
   vars,
   bindings,
   touch,
