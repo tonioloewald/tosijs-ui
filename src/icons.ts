@@ -26,23 +26,65 @@ e.g. `icons.chevronDown()` produces an `<svg>` element containing a downward-poi
 icon with the class `icon-chevron-down`.
 
 ```js
-const { icons, svgIcon } = tosijsui
+const  { tosi } = tosijs
+const { icons, svgIcon, postNotification } = tosijsui
 const { div } = tosijs.elements
 
-preview.append(...Object.keys(icons).sort().map(iconName => div(
-  { class: 'tile' },
-  svgIcon({icon: iconName, size: 24}),
-  div(iconName)
-)))
+const { iconDemo } = tosi({
+  iconDemo: {
+    icon: ''
+  }
+})
+
+preview.append(
+  div(
+    {
+      class: 'scroller'
+    },
+    ...Object.keys(icons).sort().map(iconName => div(
+      { 
+        class: 'tile', 
+        onClick() {
+          iconDemo.icon = iconDemo.icon != iconName ? iconName : ''
+          postNotification({
+            icon: iconName,
+            message: `${iconName} clicked`,
+            duration: 2,
+            color: 'hotpink'
+          })
+        },
+        onMouseleave() {
+          iconDemo.icon = ''
+        }
+      },
+      svgIcon({icon: iconName, size: 24}),
+      div(iconName)
+    )),
+  ),
+  svgIcon({
+    class: 'icon-detail',
+    size: 256,
+    bind: {
+      binding: {
+        toDOM(element, value) {
+          element.style.opacity = value ? 1 : 0
+          if (value) element.icon = value
+        }
+      },
+      value: iconDemo.icon
+    }
+  })
+)
 ```
 ```css
-.preview {
+.preview .scroller {
   display: grid;
   grid-template-columns: calc(33% - 5px) calc(33% - 5px) calc(33% - 5px);
   flex-wrap: wrap;
   padding: var(--spacing);
   gap: var(--spacing);
   overflow: hidden scroll !important;
+  height: 100%;
 }
 
 .preview .tile {
@@ -71,6 +113,21 @@ preview.append(...Object.keys(icons).sort().map(iconName => div(
 
 .preview .tile xin-icon {
   font-size: 24px;
+}
+
+.preview .icon-detail {
+  position: absolute;
+  display: block;
+  height: 256px;
+  opacity: 0;
+  transition: 0.5s ease-out;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fffc;
+  padding: 10px;
+  borderRadius: 10px;
+  pointerEvents: none;
 }
 ```
 
