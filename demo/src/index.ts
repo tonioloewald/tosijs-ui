@@ -365,7 +365,7 @@ if (main)
         button(
           {
             title: 'show navigation',
-            class: 'transparent close-nav show-within-compact',
+            class: 'iconic transparent close-nav show-within-compact',
             style: {
               marginTop: '2px',
               position: 'fixed',
@@ -376,7 +376,7 @@ if (main)
               ).contentVisible = false
             },
           },
-          icons.chevronLeft()
+          icons.chevronLeft({ size: 32 })
         ),
         markdownViewer({
           style: {
