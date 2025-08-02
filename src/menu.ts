@@ -212,7 +212,8 @@ export interface PopMenuOptions {
   position?: FloatPosition
   submenuDepth?: number   // don't set this, it's set internally by popMenu
   submenuOffset?: { x: number; y: number }
-  localized?: boolean
+  localized?: boolean,
+  showChecked?: boolean,  // if true, scroll checked item(s) into view
 }
 ```
 
@@ -522,10 +523,16 @@ export const createMenuItem = (
 ): HTMLElement => {
   if (item === null) {
     return span({ class: 'xin-menu-separator' })
-  } else if ((item as MenuAction)?.action) {
-    return createMenuAction(item as MenuAction, options)
   } else {
-    return createSubMenu(item as SubMenu, options)
+    const createdItem = (item as MenuAction)?.action
+      ? createMenuAction(item as MenuAction, options)
+      : createSubMenu(item as SubMenu, options)
+    if (options.showChecked && item.checked && item.checked()) {
+      requestAnimationFrame(() => {
+        createdItem.scrollIntoView()
+      })
+    }
+    return createdItem
   }
 }
 
@@ -581,6 +588,7 @@ export interface PopMenuOptions {
   submenuDepth?: number
   submenuOffset?: { x: number; y: number }
   localized?: boolean
+  showChecked?: boolean
 }
 
 document.body.addEventListener('mousedown', (event: Event) => {

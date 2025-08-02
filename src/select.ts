@@ -334,6 +334,7 @@ export class XinSelect extends WebComponent {
     popMenu({
       target: this,
       menuItems: this.poppedOptions,
+      showChecked: true,
     })
   }
   content = () => [
@@ -389,22 +390,22 @@ export class XinSelect extends WebComponent {
     const found = this.allOptions.find((option) => option.value === this.value)
     return found || { caption: this.value, value: this.value }
   }
-  
+
   localeChanged = () => {
     this.queueRender()
   }
-  
+
   connectedCallback() {
     super.connectedCallback()
-    
+
     if (this.localized) {
       XinLocalized.allInstances.add(this)
     }
   }
-  
+
   disconnectedCallback() {
     super.disconnectedCallback()
-    
+
     if (this.localized) {
       XinLocalized.allInstances.delete(this)
     }
@@ -429,7 +430,10 @@ export class XinSelect extends WebComponent {
       }
     }
     icon.replaceWith(newIcon)
-    value.setAttribute('placeholder', this.localized ? localize(this.placeholder) : this.placeholder)
+    value.setAttribute(
+      'placeholder',
+      this.localized ? localize(this.placeholder) : this.placeholder
+    )
     value.style.pointerEvents = this.editable ? '' : 'none'
     value.readOnly = !this.editable
   }
