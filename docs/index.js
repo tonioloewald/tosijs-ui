@@ -2962,6 +2962,7 @@ class XinSelect extends M {
   placeholder = "";
   filter = "";
   localized = false;
+  disabled = false;
   setValue = (value, triggerAction = false) => {
     if (this.value !== value) {
       this.value = value;
@@ -3067,6 +3068,7 @@ class XinSelect extends M {
   };
   content = () => [
     button2({
+      part: "button",
       onClick: this.popOptions
     }, span(), input2({
       part: "value",
@@ -3079,7 +3081,7 @@ class XinSelect extends M {
   ];
   constructor() {
     super();
-    this.initAttributes("options", "editable", "placeholder", "showIcon", "hideCaption", "localized");
+    this.initAttributes("options", "editable", "placeholder", "showIcon", "hideCaption", "localized", "disabled");
   }
   get allOptions() {
     const all = [];
@@ -3118,7 +3120,8 @@ class XinSelect extends M {
   }
   render() {
     super.render();
-    const { value } = this.parts;
+    const { value, button: button3 } = this.parts;
+    button3.disabled = this.disabled;
     const icon = value.previousElementSibling;
     const option = this.findOption();
     let newIcon = span();
@@ -12135,7 +12138,7 @@ For this reason, \`tosijs-ui\` has its own menu implementation.`,
     path: "src/menu.ts"
   },
   {
-    text: "# month\n\nThis is a simple widget for displaying a month and selecting days within that month.\n\n```html\n<tosi-month></tosi-month>\n```\n```css\n.preview tosi-month {\n  margin: 10px;\n  border-radius: 5px;\n  box-shadow: 0 0 0 2px hotpink;\n}\n```\n\n## `range` allows you to select date ranges\n```html\n<tosi-month range></tosi-month>\n```\n\n## `selectable` allows you to pick individual dates\n```html\n<tosi-month selectable></tosi-month>\n```\n\n## `multiple` allows you to pick multiple individual dates\n```html\n<tosi-month multiple></tosi-month>\n```",
+    text: "# month\n\nThis is a component for displaying a month and selecting days within that month.\n\n```html\n<tosi-month></tosi-month>\n```\n```css\n.preview tosi-month {\n  margin: 10px;\n  border-radius: 5px;\n  box-shadow: 0 0 0 2px hotpink;\n}\n```\n\n## `readonly` and `disabled`\n\nThese prevent the user from changing the displayed month. This example is `readonly`.\n\n```html\n<tosi-month readonly></tosi-month>\n```\n\n## `range`\n\nThis allows the user to select date ranges.\n\n```html\n<tosi-month range></tosi-month>\n```\n\n## `selectable`\n\nThis allows the user to pick individual dates\n\n```html\n<tosi-month selectable></tosi-month>\n```\n\n## `multiple`\n\nThis allows the user to pick multiple individual dates\n\n```html\n<tosi-month multiple></tosi-month>\n```",
     title: "month",
     filename: "month.ts",
     path: "src/month.ts"

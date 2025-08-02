@@ -1,7 +1,7 @@
 /*#
 # month
 
-This is a simple widget for displaying a month and selecting days within that month.
+This is a component for displaying a month and selecting days within that month.
 
 ```html
 <tosi-month></tosi-month>
@@ -14,17 +14,34 @@ This is a simple widget for displaying a month and selecting days within that mo
 }
 ```
 
-## `range` allows you to select date ranges
+## `readonly` and `disabled`
+
+These prevent the user from changing the displayed month. This example is `readonly`.
+
+```html
+<tosi-month readonly></tosi-month>
+```
+
+## `range`
+
+This allows the user to select date ranges.
+
 ```html
 <tosi-month range></tosi-month>
 ```
 
-## `selectable` allows you to pick individual dates
+## `selectable`
+
+This allows the user to pick individual dates
+
 ```html
 <tosi-month selectable></tosi-month>
 ```
 
-## `multiple` allows you to pick multiple individual dates
+## `multiple`
+
+This allows the user to pick multiple individual dates
+
 ```html
 <tosi-month multiple></tosi-month>
 ```

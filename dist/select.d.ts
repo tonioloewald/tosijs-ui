@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { Component, ElementCreator, PartsMap } from 'tosijs';
 import { MenuItem } from './menu';
 type OptionRequest = () => Promise<string | undefined>;
 export interface SelectOption {
@@ -12,7 +12,11 @@ export interface SelectOptionSubmenu {
     options: SelectOptions;
 }
 export type SelectOptions = Array<string | null | SelectOption | SelectOptionSubmenu>;
-export declare class XinSelect extends WebComponent {
+interface SelectParts extends PartsMap {
+    button: HTMLButtonElement;
+    value: HTMLInputElement;
+}
+export declare class XinSelect extends Component<SelectParts> {
     editable: boolean;
     showIcon: boolean;
     hideCaption: boolean;
@@ -21,6 +25,7 @@ export declare class XinSelect extends WebComponent {
     placeholder: string;
     filter: string;
     localized: boolean;
+    disabled: boolean;
     private setValue;
     private getValue;
     get selectOptions(): SelectOptions;

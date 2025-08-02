@@ -163,8 +163,9 @@ options.
 */
 
 import {
-  Component as WebComponent,
+  Component,
   ElementCreator,
+  PartsMap,
   elements,
   vars,
   throttle,
@@ -205,7 +206,12 @@ const hasValue = (options: SelectOptions, value: string): boolean => {
   })
 }
 
-export class XinSelect extends WebComponent {
+interface SelectParts extends PartsMap {
+  button: HTMLButtonElement
+  value: HTMLInputElement
+}
+
+export class XinSelect extends Component<SelectParts> {
   editable = false
   showIcon = false
   hideCaption = false
@@ -214,6 +220,7 @@ export class XinSelect extends WebComponent {
   placeholder = ''
   filter = ''
   localized = false
+  disabled = false
 
   private setValue = (value: string, triggerAction = false) => {
     if (this.value !== value) {
@@ -301,7 +308,7 @@ export class XinSelect extends WebComponent {
   }
 
   handleChange = (event: Event) => {
-    const { value } = this.parts as { value: HTMLInputElement }
+    const { value } = this.parts
     const newValue = value.value || ''
     if (this.value !== String(newValue)) {
       this.value = newValue
@@ -340,6 +347,7 @@ export class XinSelect extends WebComponent {
   content = () => [
     button(
       {
+        part: 'button',
         onClick: this.popOptions,
       },
       span(),
@@ -364,7 +372,8 @@ export class XinSelect extends WebComponent {
       'placeholder',
       'showIcon',
       'hideCaption',
-      'localized'
+      'localized',
+      'disabled'
     )
   }
 
@@ -414,9 +423,8 @@ export class XinSelect extends WebComponent {
   render(): void {
     super.render()
 
-    const { value } = this.parts as {
-      value: HTMLInputElement
-    }
+    const { value, button } = this.parts
+    button.disabled = this.disabled
     const icon = value.previousElementSibling as HTMLElement
 
     const option = this.findOption()
