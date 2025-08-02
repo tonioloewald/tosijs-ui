@@ -529,7 +529,7 @@ export const createMenuItem = (
       : createSubMenu(item as SubMenu, options)
     if (options.showChecked && item.checked && item.checked()) {
       requestAnimationFrame(() => {
-        createdItem.scrollIntoView()
+        createdItem.scrollIntoView({ block: 'center' })
       })
     }
     return createdItem
