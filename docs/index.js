@@ -3466,7 +3466,7 @@ var createMenuItem = (item, options) => {
     const createdItem = item?.action ? createMenuAction(item, options) : createSubMenu(item, options);
     if (options.showChecked && item.checked && item.checked()) {
       requestAnimationFrame(() => {
-        createdItem.scrollIntoView();
+        createdItem.scrollIntoView({ block: "center" });
       });
     }
     return createdItem;
@@ -12135,7 +12135,7 @@ For this reason, \`tosijs-ui\` has its own menu implementation.`,
     path: "src/menu.ts"
   },
   {
-    text: "# month\n\nThis is a simple widget for displaying a month and selecting days within that month.\n\n```html\n<tosi-month></tosi-month>\n```\n```css\n.preview tosi-month {\n  margin: 10px;\n  padding: 10px;\n  border-radius: 5px;\n  box-shadow: 0 0 0 2px hotpink;\n}\n```\n\n## `range` allows you to select date ranges\n```html\n<tosi-month range></tosi-month>\n```\n\n## `selectable` allows you to pick individual dates\n```html\n<tosi-month selectable></tosi-month>\n```\n\n## `multiple` allows you to pick multiple individual dates\n```html\n<tosi-month multiple></tosi-month>\n```",
+    text: "# month\n\nThis is a simple widget for displaying a month and selecting days within that month.\n\n```html\n<tosi-month></tosi-month>\n```\n```css\n.preview tosi-month {\n  margin: 10px;\n  border-radius: 5px;\n  box-shadow: 0 0 0 2px hotpink;\n}\n```\n\n## `range` allows you to select date ranges\n```html\n<tosi-month range></tosi-month>\n```\n\n## `selectable` allows you to pick individual dates\n```html\n<tosi-month selectable></tosi-month>\n```\n\n## `multiple` allows you to pick multiple individual dates\n```html\n<tosi-month multiple></tosi-month>\n```",
     title: "month",
     filename: "month.ts",
     path: "src/month.ts"
