@@ -35,7 +35,9 @@
 }
 
 .preview xin-carousel {
+  background: #8883;
   margin: 10px;
+  border-radius: 10px;
 }
 ```
 
