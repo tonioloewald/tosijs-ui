@@ -6,6 +6,14 @@ This is a simple widget for displaying a month and selecting days within that mo
 ```html
 <tosi-month></tosi-month>
 ```
+```css
+.preview tosi-month {
+  margin: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 0 2px hotpink;
+}
+```
 
 ## `range` allows you to select date ranges
 ```html
@@ -316,6 +324,9 @@ export class TosiMonth extends Component<MonthParts> {
 export const tosiMonth = TosiMonth.elementCreator({
   tag: 'tosi-month',
   styleSpec: {
+    ':host': {
+      display: 'block',
+    },
     ':host [part=header]': {
       display: 'flex',
       alignItems: 'stretch',
@@ -326,7 +337,7 @@ export const tosiMonth = TosiMonth.elementCreator({
       opacity: varDefault.disabledOpacity(0.6),
     },
     ':host [part="month"], :host [part="year"]': {
-      _fieldWidth: '6em',
+      _fieldWidth: '5em',
       flex: '1',
     },
     ':host [part=week], :host [part=days]': {
