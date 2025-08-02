@@ -9,7 +9,6 @@ const colorInput = preview.querySelector('xin-color')
 const circle = preview.querySelector('div')
 
 colorInput.addEventListener('change', () => {
-  console.log(colorInput.value)
   circle.style.background = colorInput.value
 })
 ```
