@@ -210,8 +210,8 @@ export const styleSpec: XinStyleSheet = {
   },
   '.darkmode': {
     ...invertLuminance(colors),
-    _menuShadow: '0 0 0 2px #a0f3d680',
-    _menuSeparatorColor: '#a0f3d640',
+    _menuShadow: `0 0 0 2px ${brandColor.opacity(0.75)}`,
+    _menuSeparatorColor: brandColor.opacity(0.5),
   },
   '.high-contrast': {
     filter: 'contrast(2)',
