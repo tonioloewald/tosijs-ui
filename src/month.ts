@@ -9,7 +9,6 @@ This is a simple widget for displaying a month and selecting days within that mo
 ```css
 .preview tosi-month {
   margin: 10px;
-  padding: 10px;
   border-radius: 5px;
   box-shadow: 0 0 0 2px hotpink;
 }
