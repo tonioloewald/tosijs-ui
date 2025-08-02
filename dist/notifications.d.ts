@@ -6,6 +6,7 @@ interface NotificationSpec {
     duration?: number;
     progress?: () => number;
     close?: () => void;
+    color?: string;
 }
 type callback = () => void;
 export declare class XinNotification extends Component {

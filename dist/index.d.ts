@@ -19,6 +19,7 @@ export { makeSorter } from './make-sorter';
 export * from './mapbox';
 export * from './markdown-viewer';
 export * from './menu';
+export * from './month';
 export * from './notifications';
 export * from './password-strength';
 export * from './pop-float';

@@ -39,6 +39,7 @@ export interface PopMenuOptions {
         y: number;
     };
     localized?: boolean;
+    showChecked?: boolean;
 }
 export declare const popMenu: (options: PopMenuOptions) => void;
 interface XinMenuParts extends PartsMap {

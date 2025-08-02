@@ -1552,6 +1552,7 @@ __export(exports_src, {
   updateLocalized: () => updateLocalized,
   trackDrag: () => trackDrag,
   tosijs: () => exports_module,
+  tosiMonth: () => tosiMonth,
   tabSelector: () => tabSelector,
   svgIcon: () => svgIcon,
   svg2DataUrl: () => svg2DataUrl,
@@ -1617,6 +1618,7 @@ __export(exports_src, {
   XinFloat: () => XinFloat,
   XinField: () => XinField,
   XinCarousel: () => XinCarousel,
+  TosiMonth: () => TosiMonth,
   TabSelector: () => TabSelector,
   SvgIcon: () => SvgIcon,
   SizeBreak: () => SizeBreak,
@@ -3059,7 +3061,8 @@ class XinSelect extends M {
     this.poppedOptions = this.optionsMenu;
     popMenu({
       target: this,
-      menuItems: this.poppedOptions
+      menuItems: this.poppedOptions,
+      showChecked: true
     });
   };
   content = () => [
@@ -3188,7 +3191,7 @@ var xinSelect = XinSelect.elementCreator({
 
 // src/localize.ts
 var { span: span2 } = p;
-var { i18n } = cn({
+var { i18n } = xe({
   i18n: {
     locale: window.navigator.language,
     locales: [window.navigator.language],
@@ -3459,10 +3462,14 @@ var createSubMenu = (item, options) => {
 var createMenuItem = (item, options) => {
   if (item === null) {
     return span3({ class: "xin-menu-separator" });
-  } else if (item?.action) {
-    return createMenuAction(item, options);
   } else {
-    return createSubMenu(item, options);
+    const createdItem = item?.action ? createMenuAction(item, options) : createSubMenu(item, options);
+    if (options.showChecked && item.checked && item.checked()) {
+      requestAnimationFrame(() => {
+        createdItem.scrollIntoView();
+      });
+    }
+    return createdItem;
   }
 };
 var menu = (options) => {
@@ -3804,7 +3811,7 @@ class DataTable extends M {
   }
   constructor() {
     super();
-    this.rowData = cn({
+    this.rowData = xe({
       [this.instanceId]: this.rowData
     })[this.instanceId];
     this.initAttributes("rowHeight", "charWidth", "minColumnWidth", "select", "multiple", "pinnedTop", "pinnedBottom", "nosort", "nohide", "noreorder", "localized");
@@ -7349,8 +7356,240 @@ class MarkdownViewer extends M {
 var markdownViewer = MarkdownViewer.elementCreator({
   tag: "xin-md"
 });
+// src/month.ts
+var { div: div9, label: label2, input: input5, span: span8, button: button8 } = p;
+var DAY_MS = 24 * 3600 * 1000;
+var WEEK = [0, 1, 2, 3, 4, 5, 6];
+var MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+var padLeft = (value, length = 2, padding = "0") => String(value).padStart(length, padding);
+var dateFromYMD = (year, month, date) => new Date(`${year}-${padLeft(month)}-${padLeft(date)}`);
+
+class TosiMonth extends M {
+  month = new Date().getMonth() + 1;
+  year = new Date().getFullYear();
+  minDate = dateFromYMD(new Date().getFullYear() - 100, 1, 1).toISOString().split("T")[0];
+  maxDate = dateFromYMD(new Date().getFullYear() + 10, 12, 31).toISOString().split("T")[0];
+  startDay = 1;
+  selectable = false;
+  multiple = false;
+  range = false;
+  disabled = false;
+  readonly = false;
+  value = {
+    from: "",
+    to: "",
+    days: new Set
+  };
+  get endDay() {
+    return 1 - this.startDay;
+  }
+  get months() {
+    return MONTHS.map((value) => ({
+      caption: dateFromYMD(2025, value, 1).toString().split(" ")[1],
+      value: String(value)
+    }));
+  }
+  get years() {
+    const startYear = Number(this.minDate.split("-")[0]);
+    const endYear = Number(this.maxDate.split("-")[0]);
+    const years = [];
+    for (let year = startYear;year <= endYear; year++) {
+      years.push(String(year));
+    }
+    return years;
+  }
+  setMonth = () => {
+    this.month = Number(this.parts.month.value);
+  };
+  setYear = () => {
+    this.year = Number(this.parts.year.value);
+  };
+  selectDate = (event) => {
+    const dateString = event.target.closest("label").getAttribute("title");
+    if (this.range) {
+      event.stopPropagation();
+      event.preventDefault();
+      if (!this.value.from) {
+        this.value.from = dateString;
+        this.value.to = dateString;
+      } else if (this.value.from === dateString && this.value.to === dateString) {
+        this.value.from = this.value.to = "";
+      } else if (this.value.from === dateString) {
+        this.value.from = this.value.to;
+      } else if (this.value.to === dateString) {
+        this.value.to = this.value.from;
+      } else if (dateString < this.value.from) {
+        this.value.from = dateString;
+      } else if (dateString > this.value.to) {
+        this.value.to = dateString;
+      } else if (dateString < this.value.from) {
+        this.value.from = dateString;
+      } else {
+        this.value.to = dateString;
+      }
+      this.queueRender();
+    } else if (this.multiple) {
+      if (this.value.days.has(dateString)) {
+        this.value.days.delete(dateString);
+      } else {
+        this.value.days.add(dateString);
+      }
+      this.queueRender();
+    } else if (this.selectable) {
+      if (this.value.days.has(dateString)) {
+        this.value.days = new Set;
+      } else {
+        this.value.days = new Set([dateString]);
+      }
+      this.queueRender();
+    }
+  };
+  nextMonth = () => {
+    if (this.month < 12) {
+      this.month += 1;
+    } else {
+      this.year += 1;
+      this.month = 1;
+    }
+  };
+  previousMonth = () => {
+    if (this.month > 1) {
+      this.month -= 1;
+    } else {
+      this.year -= 1;
+      this.month = 12;
+    }
+  };
+  checkDay = (dateString) => {
+    if (this.selectable || this.multiple) {
+      return this.value.days.has(dateString);
+    } else if (this.range) {
+      return this.value.from && dateString >= this.value.from && dateString <= this.value.to;
+    }
+    return false;
+  };
+  content = () => [
+    div9({ part: "header" }, button8({
+      part: "previous",
+      onClick: this.previousMonth
+    }, icons.chevronLeft()), span8({ style: { flex: "1" } }), xinSelect({
+      part: "month",
+      options: this.months,
+      onChange: this.setMonth
+    }), xinSelect({
+      part: "year",
+      options: [this.year],
+      onChange: this.setYear
+    }), span8({ style: { flex: "1" } }), button8({
+      part: "next",
+      onClick: this.nextMonth
+    }, icons.chevronRight())),
+    div9({ part: "week" }),
+    div9({ part: "days" })
+  ];
+  constructor() {
+    super();
+    this.initAttributes("month", "year", "startDay", "minDate", "maxDate", "selectable", "multiple", "range", "disabled", "readonly");
+  }
+  days = [];
+  render() {
+    const { week, days, month, year, previous, next } = this.parts;
+    const firstOfMonth = dateFromYMD(this.year, this.month, 1);
+    const startDay = new Date(firstOfMonth.valueOf() - (7 + firstOfMonth.getDay() - this.startDay) % 7 * DAY_MS);
+    const nextMonth = this.month === 12 ? 1 : this.month + 1;
+    const lastOfMonth = new Date(dateFromYMD(this.year + (this.month === 12 ? 1 : 0), nextMonth, 1).valueOf() - DAY_MS);
+    const endDay = new Date(lastOfMonth.valueOf() + (7 + this.endDay - lastOfMonth.getDay()) % 7 * DAY_MS);
+    const weekDays = WEEK.map((day) => new Date(startDay.valueOf() + day * DAY_MS).toString().split(" ")[0]);
+    this.days = [];
+    const today = new Date().toISOString().split("T")[0];
+    for (let day = startDay.valueOf();day <= endDay.valueOf(); day += DAY_MS) {
+      const date = new Date(day);
+      const dateString = date.toISOString().split("T")[0];
+      this.days.push({
+        date,
+        selected: false,
+        inMonth: date.getMonth() + 1 === this.month,
+        isToday: dateString === today,
+        inRange: !!(this.value.from && dateString >= this.value.from && dateString <= this.value.to)
+      });
+    }
+    month.value = String(this.month);
+    year.value = String(this.year);
+    const isDisabled = month.disabled = year.disabled = previous.disabled = next.disabled = this.disabled || this.readonly;
+    const dateSelectDisabled = isDisabled || !this.selectable && !this.range && !this.multiple;
+    year.options = this.years;
+    week.textContent = "";
+    week.append(...weekDays.map((day) => span8({ class: "day" }, day)));
+    days.textContent = "";
+    days.append(...this.days.map((day) => {
+      const classes = ["date"];
+      if (day.inMonth) {
+        classes.push("in-month");
+      }
+      if (day.isToday) {
+        classes.push("today");
+      }
+      const dateString = day.date.toISOString().split("T")[0];
+      return label2({
+        class: classes.join(" "),
+        title: dateString
+      }, input5({
+        type: "checkbox",
+        checked: this.checkDay(dateString),
+        disabled: dateSelectDisabled,
+        onChange: this.selectDate
+      }), day.date.getDate());
+    }));
+  }
+}
+var tosiMonth = TosiMonth.elementCreator({
+  tag: "tosi-month",
+  styleSpec: {
+    ":host [part=header]": {
+      display: "flex",
+      alignItems: "stretch",
+      justifyContent: "stretch"
+    },
+    ":host[disabled]": {
+      pointerEvents: "none",
+      opacity: sn.disabledOpacity(0.6)
+    },
+    ':host [part="month"], :host [part="year"]': {
+      _fieldWidth: "6em",
+      flex: "1"
+    },
+    ":host [part=week], :host [part=days]": {
+      display: "grid",
+      gridTemplateColumns: "auto auto auto auto auto auto auto",
+      justifyItems: "stretch"
+    },
+    ":host .today": {
+      background: sn.todayBackground("transparent"),
+      boxShadow: sn.todayShadow(`inset 0 0 2px 1px currentcolor`)
+    },
+    ":host .day, :host .date": {
+      padding: 5,
+      display: "flex",
+      justifyContent: "center",
+      userSelect: "none"
+    },
+    ":host .day": {
+      color: "hotpink"
+    },
+    ":host .date:not(.in-month)": {
+      opacity: 0.5
+    },
+    ":host .date input": {
+      display: "none"
+    },
+    ":host .date:has(input:checked)": {
+      color: "white",
+      background: "hotpink"
+    }
+  }
+});
 // src/notifications.ts
-var { div: div9, button: button8 } = p;
+var { div: div10, button: button9 } = p;
 var COLOR_MAP = {
   error: "red",
   warn: "orange",
@@ -7459,14 +7698,14 @@ class XinNotification extends M {
     setTimeout(remove, 1000);
   }
   static post(spec) {
-    const { message, duration, type, close, progress, icon } = Object.assign({ type: "info", duration: -1 }, typeof spec === "string" ? { message: spec } : spec);
+    const { message, duration, type, close, progress, icon, color } = Object.assign({ type: "info", duration: -1 }, typeof spec === "string" ? { message: spec } : spec);
     if (!this.singleton) {
       this.singleton = xinNotification();
     }
     const singleton = this.singleton;
     document.body.append(singleton);
     singleton.style.zIndex = String(findHighestZ() + 1);
-    const _notificationAccentColor = COLOR_MAP[type];
+    const _notificationAccentColor = color || COLOR_MAP[type];
     const progressBar = progress || type === "progress" ? p.progress() : {};
     const closeCallback = () => {
       if (close) {
@@ -7475,12 +7714,12 @@ class XinNotification extends M {
       XinNotification.removeNote(note);
     };
     const iconElement = icon instanceof SVGElement ? icon : icon ? icons[icon]({ class: "icon" }) : icons.info({ class: "icon" });
-    const note = div9({
+    const note = div10({
       class: `note ${type}`,
       style: {
         _notificationAccentColor
       }
-    }, iconElement, div9({ class: "message" }, div9(message), progressBar), button8({
+    }, iconElement, div10({ class: "message" }, div10(message), progressBar), button9({
       class: "close",
       title: "close",
       apply(elt) {
@@ -7537,7 +7776,7 @@ var isBreached = async (password) => {
   }
   return response.status !== 404;
 };
-var { span: span8, xinSlot: xinSlot4 } = p;
+var { span: span9, xinSlot: xinSlot4 } = p;
 
 class XinPasswordStrength extends M {
   minLength = 8;
@@ -7606,17 +7845,17 @@ class XinPasswordStrength extends M {
     description.textContent = this.strengthDescriptions[strength];
   };
   update = (event) => {
-    const input5 = event.target.closest("input");
-    this.updateIndicator(input5?.value || "");
+    const input6 = event.target.closest("input");
+    this.updateIndicator(input6?.value || "");
   };
   content = () => [
     xinSlot4({ onInput: this.update }),
-    span8({ part: "meter" }, span8({ part: "level" }), span8({ part: "description" }))
+    span9({ part: "meter" }, span9({ part: "level" }), span9({ part: "description" }))
   ];
   render() {
     super.render();
-    const input5 = this.querySelector("input");
-    this.updateIndicator(input5?.value);
+    const input6 = this.querySelector("input");
+    this.updateIndicator(input6?.value);
   }
 }
 var xinPasswordStrength = XinPasswordStrength.elementCreator({
@@ -7660,7 +7899,7 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
   }
 });
 // src/rating.ts
-var { span: span9 } = p;
+var { span: span10 } = p;
 
 class XinRating extends M {
   iconSize = 24;
@@ -7717,7 +7956,7 @@ class XinRating extends M {
     super();
     this.initAttributes("max", "min", "icon", "step", "ratingStroke", "ratingColor", "emptyStroke", "emptyColor", "readonly", "iconSize", "hollow");
   }
-  content = () => span9({ part: "container" }, span9({ part: "empty" }), span9({ part: "filled" }));
+  content = () => span10({ part: "container" }, span10({ part: "empty" }), span10({ part: "filled" }));
   displayValue(value) {
     const { empty, filled } = this.parts;
     const roundedValue = Math.round((value || 0) / this.step) * this.step;
@@ -7806,7 +8045,7 @@ var xinRating = XinRating.elementCreator({
   tag: "xin-rating"
 });
 // src/rich-text.ts
-var { xinSlot: xinSlot5, div: div10, button: button9, span: span10 } = p;
+var { xinSlot: xinSlot5, div: div11, button: button10, span: span11 } = p;
 var blockStyles = [
   {
     caption: "Title",
@@ -7845,19 +8084,19 @@ function blockStyle(options = blockStyles) {
   });
 }
 function spacer(width = "10px") {
-  return span10({
+  return span11({
     slot: "toolbar",
     style: { flex: `0 0 ${width}`, content: " " }
   });
 }
 function elastic(width = "10px") {
-  return span10({
+  return span11({
     slot: "toolbar",
     style: { flex: `0 0 ${width}`, content: " " }
   });
 }
 function commandButton(title, dataCommand, icon) {
-  return button9({ slot: "toolbar", dataCommand, title }, icon);
+  return button10({ slot: "toolbar", dataCommand, title }, icon);
 }
 var paragraphStyleWidgets = () => [
   commandButton("left-justify", "justifyLeft", icons.alignLeft()),
@@ -7946,11 +8185,11 @@ class RichText extends M {
     this.doCommand(select2.value);
   };
   handleButtonClick = (event) => {
-    const button10 = event.target.closest("button");
-    if (button10 == null) {
+    const button11 = event.target.closest("button");
+    if (button11 == null) {
       return;
     }
-    this.doCommand(button10.dataset.command);
+    this.doCommand(button11.dataset.command);
   };
   content = [
     xinSlot5({
@@ -7959,7 +8198,7 @@ class RichText extends M {
       onClick: this.handleButtonClick,
       onChange: this.handleSelectChange
     }),
-    div10({
+    div11({
       part: "doc",
       contenteditable: true,
       style: {
@@ -8039,7 +8278,7 @@ var richText = RichText.elementCreator({
   }
 });
 // src/segmented.ts
-var { div: div11, slot: slot6, label: label2, span: span11, input: input5 } = p;
+var { div: div12, slot: slot6, label: label3, span: span12, input: input6 } = p;
 
 class XinSegmented extends M {
   choices = "";
@@ -8054,7 +8293,7 @@ class XinSegmented extends M {
   }
   content = () => [
     slot6(),
-    div11({ part: "options" }, input5({ part: "custom", hidden: true }))
+    div12({ part: "options" }, input6({ part: "custom", hidden: true }))
   ];
   static styleSpec = {
     ":host": {
@@ -8120,14 +8359,14 @@ class XinSegmented extends M {
       const inputs = [
         ...options.querySelectorAll("input:checked")
       ];
-      this.value = inputs.map((input6) => input6.value).join(",");
+      this.value = inputs.map((input7) => input7.value).join(",");
     } else {
-      const input6 = options.querySelector("input:checked");
-      if (!input6) {
+      const input7 = options.querySelector("input:checked");
+      if (!input7) {
         this.value = null;
-      } else if (input6.value) {
+      } else if (input7.value) {
         custom.setAttribute("hidden", "");
-        this.value = input6.value;
+        this.value = input7.value;
       } else {
         custom.removeAttribute("hidden");
         custom.focus();
@@ -8190,13 +8429,13 @@ class XinSegmented extends M {
     const type = this.multiple ? "checkbox" : "radio";
     const { values, isOtherValue } = this;
     options.append(...this._choices.map((choice) => {
-      return label2({ tabindex: 0 }, input5({
+      return label3({ tabindex: 0 }, input6({
         type,
         name: this.name,
         value: choice.value,
         checked: values.includes(choice.value) || choice.value === "" && isOtherValue,
         tabIndex: -1
-      }), choice.icon || { class: "no-icon" }, this.localized ? xinLocalized(choice.caption) : span11(choice.caption));
+      }), choice.icon || { class: "no-icon" }, this.localized ? xinLocalized(choice.caption) : span12(choice.caption));
     }));
     if (this.other && !this.multiple) {
       custom.hidden = !isOtherValue;
@@ -8412,7 +8651,7 @@ var xinSizer = XinSizer.elementCreator({
   tag: "xin-sizer"
 });
 // src/tag-list.ts
-var { div: div12, input: input6, span: span12, button: button10 } = p;
+var { div: div13, input: input7, span: span13, button: button11 } = p;
 
 class XinTag extends M {
   caption = "";
@@ -8421,8 +8660,8 @@ class XinTag extends M {
     this.remove();
   };
   content = () => [
-    span12({ part: "caption" }, this.caption),
-    button10(icons.x(), {
+    span13({ part: "caption" }, this.caption),
+    button11(icons.x(), {
       part: "remove",
       hidden: !this.removeable,
       onClick: this.removeCallback
@@ -8572,17 +8811,17 @@ class XinTagList extends M {
     });
   };
   content = () => [
-    button10({ style: { visibility: "hidden" }, tabindex: -1 }),
-    div12({
+    button11({ style: { visibility: "hidden" }, tabindex: -1 }),
+    div13({
       part: "tagContainer",
       class: "row"
     }),
-    input6({
+    input7({
       part: "tagInput",
       class: "elastic",
       onKeydown: this.enterTag
     }),
-    button10({
+    button11({
       title: "add tag",
       part: "tagMenu",
       onClick: this.popSelectMenu
@@ -8856,16 +9095,18 @@ var styleSpec = {
     borderBottom: "1px solid var(--brand-color)"
   },
   "button, select, .clickable": {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
     transition: "ease-out 0.2s",
     background: Hn.brandTextColor,
     _textColor: Hn.brandColor,
-    display: "inline-block",
     textDecoration: "none",
     padding: "0 calc(var(--spacing) * 1.25)",
     border: "none",
     borderRadius: "calc(var(--spacing) * 0.5)"
   },
-  "button, select, clickable, input": {
+  "button, select, .clickable, input": {
     lineHeight: "calc(var(--line-height) + var(--spacing))"
   },
   "select:has(+ .icon-chevron-down)": {
@@ -8985,6 +9226,7 @@ var styleSpec = {
   ".iconic": {
     padding: "0",
     fontSize: "150%",
+    height: "calc(var(--line-height) + var(--spacing))",
     lineHeight: "calc(var(--line-height) + var(--spacing))",
     width: "calc(var(--line-height) + var(--spacing))",
     textAlign: "center"
@@ -9964,7 +10206,7 @@ dragAndDrop.init()
 ### Reorderable List Example
 
 \`\`\`js
-const { elements, boxedProxy, getListItem } = tosijs
+const { elements, tosi, getListItem } = tosijs
 const { dragAndDrop } = tosijsui
 
 dragAndDrop.init()
@@ -9986,7 +10228,7 @@ const colors = [
   'indigo',
   'violet',
 ]
-const { spectrum } = boxedProxy({
+const { spectrum } = tosi({
   spectrum: shuffle(colors).map(color => ({color}))
 })
 
@@ -10707,23 +10949,65 @@ e.g. \`icons.chevronDown()\` produces an \`<svg>\` element containing a downward
 icon with the class \`icon-chevron-down\`.
 
 \`\`\`js
-const { icons, svgIcon } = tosijsui
+const  { tosi } = tosijs
+const { icons, svgIcon, postNotification } = tosijsui
 const { div } = tosijs.elements
 
-preview.append(...Object.keys(icons).sort().map(iconName => div(
-  { class: 'tile' },
-  svgIcon({icon: iconName, size: 24}),
-  div(iconName)
-)))
+const { iconDemo } = tosi({
+  iconDemo: {
+    icon: ''
+  }
+})
+
+preview.append(
+  div(
+    {
+      class: 'scroller'
+    },
+    ...Object.keys(icons).sort().map(iconName => div(
+      { 
+        class: 'tile', 
+        onClick() {
+          iconDemo.icon = iconDemo.icon != iconName ? iconName : ''
+          postNotification({
+            icon: iconName,
+            message: \`\${iconName} clicked\`,
+            duration: 2,
+            color: 'hotpink'
+          })
+        },
+        onMouseleave() {
+          iconDemo.icon = ''
+        }
+      },
+      svgIcon({icon: iconName, size: 24}),
+      div(iconName)
+    )),
+  ),
+  svgIcon({
+    class: 'icon-detail',
+    size: 256,
+    bind: {
+      binding: {
+        toDOM(element, value) {
+          element.style.opacity = value ? 1 : 0
+          if (value) element.icon = value
+        }
+      },
+      value: iconDemo.icon
+    }
+  })
+)
 \`\`\`
 \`\`\`css
-.preview {
+.preview .scroller {
   display: grid;
   grid-template-columns: calc(33% - 5px) calc(33% - 5px) calc(33% - 5px);
   flex-wrap: wrap;
   padding: var(--spacing);
   gap: var(--spacing);
   overflow: hidden scroll !important;
+  height: 100%;
 }
 
 .preview .tile {
@@ -10752,6 +11036,21 @@ preview.append(...Object.keys(icons).sort().map(iconName => div(
 
 .preview .tile xin-icon {
   font-size: 24px;
+}
+
+.preview .icon-detail {
+  position: absolute;
+  display: block;
+  height: 256px;
+  opacity: 0;
+  transition: 0.5s ease-out;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fffc;
+  padding: 10px;
+  borderRadius: 10px;
+  pointerEvents: none;
 }
 \`\`\`
 
@@ -11709,7 +12008,8 @@ export interface PopMenuOptions {
   position?: FloatPosition
   submenuDepth?: number   // don't set this, it's set internally by popMenu
   submenuOffset?: { x: number; y: number }
-  localized?: boolean
+  localized?: boolean,
+  showChecked?: boolean,  // if true, scroll checked item(s) into view
 }
 \`\`\`
 
@@ -11831,6 +12131,12 @@ For this reason, \`tosijs-ui\` has its own menu implementation.`,
     path: "src/menu.ts"
   },
   {
+    text: "# month\n\nThis is a simple widget for displaying a month and selecting days within that month.\n\n```html\n<tosi-month></tosi-month>\n```\n\n## `range` allows you to select date ranges\n```html\n<tosi-month range></tosi-month>\n```\n\n## `selectable` allows you to pick individual dates\n```html\n<tosi-month selectable></tosi-month>\n```\n\n## `multiple` allows you to pick multiple individual dates\n```html\n<tosi-month multiple></tosi-month>\n```",
+    title: "month",
+    filename: "month.ts",
+    path: "src/month.ts"
+  },
+  {
     text: `# notifications
 
 \`XinNotification\` provides a singleton custom \`<xin-notification>\` element that manages
@@ -11847,8 +12153,9 @@ interface NotificationSpec {
   type?: 'success' | 'info' | 'log' | 'warn' | 'error' | 'progress' // default 'info'
   icon?: SVGElement | string // defaults to an info icon
   duration?: number
-  progress?: () => number // return percentage completion
+  progress?: () => number    // return percentage completion
   close?: () => void
+  color?: string             // specify color
 }
 \`\`\`
 
@@ -13491,7 +13798,7 @@ setTimeout(() => {
 var PROJECT = "tosijs-ui";
 var docName = document.location.search !== "" ? document.location.search.substring(1).split("&")[0] : "README.md";
 var currentDoc = docs_default.find((doc) => doc.filename === docName) || docs_default[0];
-var { app, prefs } = cn({
+var { app, prefs } = xe({
   app: {
     title: PROJECT,
     blogUrl: `https://loewald.com`,
@@ -13536,10 +13843,10 @@ tn.current = {
   }
 };
 setTimeout(() => {
-  Object.assign(globalThis, { app, tosi: cn, bindings: tn, elements: p, vars: Hn, touch: j });
+  Object.assign(globalThis, { app, tosi: xe, bindings: tn, elements: p, vars: Hn, touch: j });
 }, 1000);
 var main = document.querySelector("main");
-var { h2: h23, div: div13, span: span13, a: a5, img, header, button: button11, template: template2, input: input7 } = p;
+var { h2: h23, div: div14, span: span14, a: a5, img, header, button: button12, template: template2, input: input8 } = p;
 h(document.body, "prefs.theme", {
   toDOM(element, theme) {
     if (theme === "system") {
@@ -13566,7 +13873,7 @@ var filterDocs = vn(() => {
   j(app.docs);
   console.timeEnd("filter");
 });
-var searchField = input7({
+var searchField = input8({
   slot: "nav",
   placeholder: "search",
   type: "search",
@@ -13587,16 +13894,16 @@ if (main)
     title: `tosijs ${An}, tosijs-ui ${version}`
   }, icons.tosiUi({
     style: { _xinIconSize: 40, marginRight: 10 }
-  }), h23({ bindText: "app.title" })), span13({ class: "elastic" }), sizeBreak({
+  }), h23({ bindText: "app.title" })), span14({ class: "elastic" }), sizeBreak({
     minWidth: 750
-  }, span13({
+  }, span14({
     style: {
       marginRight: Hn.spacing,
       display: "flex",
       alignItems: "center",
       gap: Hn.spacing50
     }
-  }, a5({ href: app.bundleUrl }, img({ alt: "bundlejs size badge", src: app.bundleBadgeUrl })), a5({ href: app.cdnUrl }, img({ alt: "jsdelivr", src: app.cdnBadgeUrl }))), span13({ slot: "small" })), a5({ class: "iconic", title: "discord", target: "_blank" }, icons.discord(), {
+  }, a5({ href: app.bundleUrl }, img({ alt: "bundlejs size badge", src: app.bundleBadgeUrl })), a5({ href: app.cdnUrl }, img({ alt: "jsdelivr", src: app.cdnBadgeUrl }))), span14({ slot: "small" })), a5({ class: "iconic", title: "discord", target: "_blank" }, icons.discord(), {
     href: app.discordUrl
   }), a5({ class: "iconic", title: "blog", target: "_blank" }, icons.blog(), {
     href: app.blogUrl
@@ -13604,7 +13911,7 @@ if (main)
     href: app.githubUrl
   }), a5({ class: "iconic", title: "npmjs", target: "_blank" }, icons.npm(), {
     href: app.npmUrl
-  }), span13({ style: { flex: "0 0 10px" } }), button11({
+  }), span14({ style: { flex: "0 0 10px" } }), button12({
     class: "iconic",
     style: { color: Hn.linkColor },
     title: "links and settings",
@@ -13680,7 +13987,7 @@ if (main)
       flex: "1 1 auto",
       overflow: "hidden"
     }
-  }, searchField, div13({
+  }, searchField, div14({
     slot: "nav",
     style: {
       display: "flex",
@@ -13707,13 +14014,13 @@ if (main)
       app.currentDoc = doc;
       event.preventDefault();
     }
-  }, xinLocalized({ bindText: "^.title" })))), div13({
+  }, xinLocalized({ bindText: "^.title" })))), div14({
     style: {
       position: "relative",
       overflowY: "scroll",
       height: "100%"
     }
-  }, button11({
+  }, button12({
     title: "show navigation",
     class: "transparent close-nav show-within-compact",
     style: {

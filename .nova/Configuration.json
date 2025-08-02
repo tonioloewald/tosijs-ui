@@ -1,15 +1,18 @@
 {
-  "apexskier.typescript.config.userPreferences.quotePreference": "single",
-  "editor.default_syntax": "typescript",
-  "index.ignored_file_patterns": ["dist/**", "docs/**"],
-  "prettier.default-config.bracketSpacing": "Enable",
-  "prettier.default-config.quoteProps": "as-needed",
-  "prettier.default-config.semi": "Disable",
-  "prettier.default-config.singleQuote": "Enable",
-  "prettier.default-config.tabWidth": 2,
-  "prettier.default-config.trailingComma": "all",
-  "prettier.default-config.useTabs": "Disable",
-  "workspace.color": 3,
-  "workspace.preview_type": "custom",
-  "workspace.preview_url": "https://localhost:8787"
+  "apexskier.typescript.config.userPreferences.quotePreference" : "single",
+  "editor.default_syntax" : "typescript",
+  "index.ignored_file_patterns" : [
+    "dist\/**",
+    "docs\/**"
+  ],
+  "prettier.default-config.bracketSpacing" : true,
+  "prettier.default-config.quoteProps" : "as-needed",
+  "prettier.default-config.semi" : false,
+  "prettier.default-config.singleQuote" : true,
+  "prettier.default-config.tabWidth" : 2,
+  "prettier.default-config.trailingComma" : "all",
+  "prettier.default-config.useTabs" : false,
+  "workspace.color" : 3,
+  "workspace.preview_type" : "custom",
+  "workspace.preview_url" : "https:\/\/localhost:8787"
 }
