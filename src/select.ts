@@ -468,6 +468,7 @@ export const xinSelect = XinSelect.elementCreator({
       padding: vars.padding,
       gridTemplateColumns: `auto ${vars.iconWidth}`,
       position: 'relative',
+      width: '100%'
     },
     ':host[show-icon] button': {
       gridTemplateColumns: `${vars.iconWidth} auto ${vars.iconWidth}`,
