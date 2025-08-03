@@ -397,6 +397,7 @@ export class TosiMonth extends Component<MonthParts> {
     week.append(...weekDays.map((day) => span({ class: 'day' }, day)))
     days.textContent = ''
     let focusElement: HTMLElement | null = null
+    const { to, from } = this
     days.append(
       ...this.days.map((day) => {
         const classes = ['date']
@@ -409,6 +410,14 @@ export class TosiMonth extends Component<MonthParts> {
         const dateString = day.date.toISOString().split('T')[0]
         if (this.checkDay(dateString)) {
           classes.push('checked')
+        }
+        if (this.range) {
+          if (to === dateString) {
+            classes.push('range-end')
+          }
+          if (from === dateString) {
+            classes.push('range-start')
+          }
         }
         const element = span(
           {
@@ -455,10 +464,10 @@ export const tosiMonth = TosiMonth.elementCreator({
       justifyItems: 'stretch',
     },
     ':host .today': {
-      background: varDefault.todayBackground('transparent'),
-      boxShadow: varDefault.todayShadow(`none`),
-      backdropFilter: varDefault.todayFilter('brightness(0.9)'),
-      fontWeight: varDefault.todayFontWeight('800'),
+      background: varDefault.monthTodayBackground('transparent'),
+      boxShadow: varDefault.monthTodayShadow(`none`),
+      backdropFilter: varDefault.monthTodayBackdropFilter('brightness(0.9)'),
+      fontWeight: varDefault.monthTodayFontWeight('800'),
     },
     ':host .day, :host .date': {
       padding: 5,
@@ -467,7 +476,9 @@ export const tosiMonth = TosiMonth.elementCreator({
       userSelect: 'none',
     },
     ':host .day': {
-      color: 'hotpink',
+      color: varDefault.monthDayColor('hotpink'),
+      background: varDefault.monthDayBackground('white'),
+      fontWeight: varDefault.monthDayFontWeight('800'),
     },
     ':host .date': {
       cursor: 'default',
@@ -476,8 +487,19 @@ export const tosiMonth = TosiMonth.elementCreator({
       opacity: 0.5,
     },
     ':host .date.checked': {
-      color: 'white',
-      background: 'hotpink',
+      color: varDefault.monthDateCheckedColor('white'),
+      background: varDefault.monthDateCheckedBackground('hotpink'),
+    },
+    ':host:not([range]) .date.checked': {
+      borderRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+    },
+    ':host .range-start': {
+      borderTopLeftRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+      borderBottomLeftRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+    },
+    ':host .range-end': {
+      borderTopRightRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+      borderBottomRightRadius: varDefault.monthDateCheckedBorderRadius('10px'),
     },
   },
 })
