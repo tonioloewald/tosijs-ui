@@ -7,6 +7,7 @@ interface MonthParts extends PartsMap {
     next: HTMLButtonElement;
 }
 export declare class TosiMonth extends Component<MonthParts> {
+    #private;
     month: number;
     year: number;
     minDate: string;
@@ -17,25 +18,31 @@ export declare class TosiMonth extends Component<MonthParts> {
     range: boolean;
     disabled: boolean;
     readonly: boolean;
-    value: {
-        from: string;
-        to: string;
-        days: Set<string>;
-    };
+    selectedDays: string[];
+    value: string;
     get endDay(): number;
     get months(): {
         caption: string;
         value: string;
     }[];
     get years(): string[];
+    monthChanged: (year: number, month: number) => void;
+    gotoMonth(year: number, month: number): void;
     setMonth: () => void;
-    setYear: () => void;
-    selectDate: (event: Event) => void;
+    get to(): string;
+    set to(dateString: string);
+    get from(): string;
+    set from(dateString: string);
+    clickDate: (event: Event) => void;
+    keyDate: (event: KeyboardEvent) => void;
+    selectDate: (dateString: string) => void;
     nextMonth: () => void;
     previousMonth: () => void;
     checkDay: (dateString: string) => boolean | "";
     content: () => HTMLDivElement[];
+    gotoDate(dateString: string): void;
     constructor();
+    connectedCallback(): void;
     days: Array<{
         date: Date;
         selected: boolean;

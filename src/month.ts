@@ -201,7 +201,9 @@ export class TosiMonth extends Component<MonthParts> {
     }
   }
 
+  #focusDate = ''
   selectDate = (dateString: string) => {
+    this.#focusDate = dateString
     if (this.range) {
       if (!this.to) {
         this.selectedDays = [dateString, dateString]
@@ -394,6 +396,7 @@ export class TosiMonth extends Component<MonthParts> {
     week.textContent = ''
     week.append(...weekDays.map((day) => span({ class: 'day' }, day)))
     days.textContent = ''
+    let focusElement: HTMLElement | null = null
     days.append(
       ...this.days.map((day) => {
         const classes = ['date']
@@ -407,7 +410,7 @@ export class TosiMonth extends Component<MonthParts> {
         if (this.checkDay(dateString)) {
           classes.push('checked')
         }
-        return span(
+        const element = span(
           {
             class: classes.join(' '),
             title: dateString,
@@ -417,8 +420,13 @@ export class TosiMonth extends Component<MonthParts> {
           },
           day.date.getDate()
         )
+        if (dateString === this.#focusDate) {
+          focusElement = element
+        }
+        return element
       })
     )
+    if (focusElement !== null) focusElement.focus()
   }
 }
 
@@ -448,7 +456,9 @@ export const tosiMonth = TosiMonth.elementCreator({
     },
     ':host .today': {
       background: varDefault.todayBackground('transparent'),
-      boxShadow: varDefault.todayShadow(`inset 0 0 2px 1px currentcolor`),
+      boxShadow: varDefault.todayShadow(`none`),
+      backdropFilter: varDefault.todayFilter('brightness(0.9)'),
+      fontWeight: varDefault.todayFontWeight('800'),
     },
     ':host .day, :host .date': {
       padding: 5,

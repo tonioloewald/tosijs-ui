@@ -2966,7 +2966,6 @@ class XinSelect extends M {
   setValue = (value, triggerAction = false) => {
     if (this.value !== value) {
       this.value = value;
-      this.queueRender(true);
     }
     if (triggerAction) {
       this.dispatchEvent(new Event("action"));
@@ -7360,7 +7359,7 @@ var markdownViewer = MarkdownViewer.elementCreator({
   tag: "xin-md"
 });
 // src/month.ts
-var { div: div9, label: label2, input: input5, span: span8, button: button8 } = p;
+var { div: div9, span: span8, button: button8 } = p;
 var DAY_MS = 24 * 3600 * 1000;
 var WEEK = [0, 1, 2, 3, 4, 5, 6];
 var MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -7368,8 +7367,8 @@ var padLeft = (value, length = 2, padding = "0") => String(value).padStart(lengt
 var dateFromYMD = (year, month, date) => new Date(`${year}-${padLeft(month)}-${padLeft(date)}`);
 
 class TosiMonth extends M {
-  month = new Date().getMonth() + 1;
-  year = new Date().getFullYear();
+  month = NaN;
+  year = NaN;
   minDate = dateFromYMD(new Date().getFullYear() - 100, 1, 1).toISOString().split("T")[0];
   maxDate = dateFromYMD(new Date().getFullYear() + 10, 12, 31).toISOString().split("T")[0];
   startDay = 1;
@@ -7378,11 +7377,8 @@ class TosiMonth extends M {
   range = false;
   disabled = false;
   readonly = false;
-  value = {
-    from: "",
-    to: "",
-    days: new Set
-  };
+  selectedDays = [];
+  value = "";
   get endDay() {
     return 1 - this.startDay;
   }
@@ -7401,73 +7397,112 @@ class TosiMonth extends M {
     }
     return years;
   }
+  monthChanged = (year, month) => {};
+  gotoMonth(year, month) {
+    if (this.month !== month || this.year !== year) {
+      this.month = month;
+      this.year = year;
+      this.monthChanged(year, month);
+    }
+  }
   setMonth = () => {
-    this.month = Number(this.parts.month.value);
+    this.gotoMonth(Number(this.parts.year.value), Number(this.parts.month.value));
   };
-  setYear = () => {
-    this.year = Number(this.parts.year.value);
+  get to() {
+    return this.selectedDays[1] || "";
+  }
+  set to(dateString) {
+    this.selectedDays[1] = dateString;
+    this.selectedDays.splice(2);
+  }
+  get from() {
+    return this.selectedDays[0] || "";
+  }
+  set from(dateString) {
+    this.selectedDays[0] = dateString;
+    this.selectedDays.splice(2);
+  }
+  clickDate = (event) => {
+    const dateString = event.target.getAttribute("title");
+    this.selectDate(dateString);
   };
-  selectDate = (event) => {
-    const dateString = event.target.closest("label").getAttribute("title");
-    if (this.range) {
-      event.stopPropagation();
+  keyDate = (event) => {
+    let stopEvent = false;
+    switch (event.code) {
+      case "Space":
+        const dateString = event.target.getAttribute("title");
+        this.selectDate(dateString);
+        stopEvent = true;
+        break;
+      case "Tab":
+        break;
+      default:
+        console.log(event);
+    }
+    if (stopEvent) {
       event.preventDefault();
-      if (!this.value.from) {
-        this.value.from = dateString;
-        this.value.to = dateString;
-      } else if (this.value.from === dateString && this.value.to === dateString) {
-        this.value.from = this.value.to = "";
-      } else if (this.value.from === dateString) {
-        this.value.from = this.value.to;
-      } else if (this.value.to === dateString) {
-        this.value.to = this.value.from;
-      } else if (dateString < this.value.from) {
-        this.value.from = dateString;
-      } else if (dateString > this.value.to) {
-        this.value.to = dateString;
-      } else if (dateString < this.value.from) {
-        this.value.from = dateString;
+      event.stopPropagation();
+    }
+  };
+  #focusDate = "";
+  selectDate = (dateString) => {
+    this.#focusDate = dateString;
+    if (this.range) {
+      if (!this.to) {
+        this.selectedDays = [dateString, dateString];
+      } else if (this.from === dateString && this.to === dateString) {
+        this.selectedDays = [];
+      } else if (this.from === dateString) {
+        this.from = this.to;
+      } else if (this.to === dateString) {
+        this.to = this.from;
+      } else if (dateString < this.from) {
+        this.from = dateString;
+      } else if (dateString > this.to) {
+        this.to = dateString;
+      } else if (dateString < this.from) {
+        this.from = dateString;
       } else {
-        this.value.to = dateString;
+        this.to = dateString;
       }
-      this.queueRender();
+      this.value = `${this.from},${this.to}`;
     } else if (this.multiple) {
-      if (this.value.days.has(dateString)) {
-        this.value.days.delete(dateString);
+      if (this.selectedDays.includes(dateString)) {
+        this.selectedDays.splice(this.selectedDays.indexOf(dateString), 1);
       } else {
-        this.value.days.add(dateString);
+        this.selectedDays.push(dateString);
+        this.selectedDays.sort();
       }
-      this.queueRender();
+      this.value = this.selectedDays.join(",");
     } else if (this.selectable) {
-      if (this.value.days.has(dateString)) {
-        this.value.days = new Set;
+      if (this.selectedDays.includes(dateString)) {
+        this.value = "";
+        this.selectedDays = [];
       } else {
-        this.value.days = new Set([dateString]);
+        this.value = dateString;
+        this.selectedDays = [dateString];
       }
-      this.queueRender();
     }
   };
   nextMonth = () => {
     if (this.month < 12) {
-      this.month += 1;
+      this.gotoMonth(this.year, this.month + 1);
     } else {
-      this.year += 1;
-      this.month = 1;
+      this.gotoMonth(this.year + 1, 1);
     }
   };
   previousMonth = () => {
     if (this.month > 1) {
-      this.month -= 1;
+      this.gotoMonth(this.year, this.month - 1);
     } else {
-      this.year -= 1;
-      this.month = 12;
+      this.gotoMonth(this.year - 1, 12);
     }
   };
   checkDay = (dateString) => {
-    if (this.selectable || this.multiple) {
-      return this.value.days.has(dateString);
+    if (!this.range) {
+      return this.selectedDays.includes(dateString);
     } else if (this.range) {
-      return this.value.from && dateString >= this.value.from && dateString <= this.value.to;
+      return this.from && dateString >= this.from && dateString <= this.to;
     }
     return false;
   };
@@ -7482,7 +7517,7 @@ class TosiMonth extends M {
     }), xinSelect({
       part: "year",
       options: [this.year],
-      onChange: this.setYear
+      onChange: this.setMonth
     }), span8({ style: { flex: "1" } }), button8({
       part: "next",
       onClick: this.nextMonth
@@ -7490,13 +7525,28 @@ class TosiMonth extends M {
     div9({ part: "week" }),
     div9({ part: "days" })
   ];
+  gotoDate(dateString) {
+    const date = new Date(dateString);
+    this.gotoMonth(date.getFullYear(), date.getMonth() + 1);
+  }
   constructor() {
     super();
     this.initAttributes("month", "year", "startDay", "minDate", "maxDate", "selectable", "multiple", "range", "disabled", "readonly");
   }
+  connectedCallback() {
+    super.connectedCallback();
+    const date = new Date(this.value.split(",").pop() || Date.now());
+    if (isNaN(this.month)) {
+      this.month = date.getMonth() + 1;
+    }
+    if (isNaN(this.year)) {
+      this.year = date.getFullYear();
+    }
+  }
   days = [];
   render() {
     const { week, days, month, year, previous, next } = this.parts;
+    this.selectedDays = this.value ? this.value.split(",") : [];
     const firstOfMonth = dateFromYMD(this.year, this.month, 1);
     const startDay = new Date(firstOfMonth.valueOf() - (7 + firstOfMonth.getDay() - this.startDay) % 7 * DAY_MS);
     const nextMonth = this.month === 12 ? 1 : this.month + 1;
@@ -7513,7 +7563,7 @@ class TosiMonth extends M {
         selected: false,
         inMonth: date.getMonth() + 1 === this.month,
         isToday: dateString === today,
-        inRange: !!(this.value.from && dateString >= this.value.from && dateString <= this.value.to)
+        inRange: !!(this.from && dateString >= this.from && dateString <= this.to)
       });
     }
     month.value = String(this.month);
@@ -7524,6 +7574,7 @@ class TosiMonth extends M {
     week.textContent = "";
     week.append(...weekDays.map((day) => span8({ class: "day" }, day)));
     days.textContent = "";
+    let focusElement = null;
     days.append(...this.days.map((day) => {
       const classes = ["date"];
       if (day.inMonth) {
@@ -7533,16 +7584,23 @@ class TosiMonth extends M {
         classes.push("today");
       }
       const dateString = day.date.toISOString().split("T")[0];
-      return label2({
+      if (this.checkDay(dateString)) {
+        classes.push("checked");
+      }
+      const element = span8({
         class: classes.join(" "),
-        title: dateString
-      }, input5({
-        type: "checkbox",
-        checked: this.checkDay(dateString),
-        disabled: dateSelectDisabled,
-        onChange: this.selectDate
-      }), day.date.getDate());
+        title: dateString,
+        onClick: this.clickDate,
+        onKeydown: this.keyDate,
+        tabindex: "0"
+      }, day.date.getDate());
+      if (dateString === this.#focusDate) {
+        focusElement = element;
+      }
+      return element;
     }));
+    if (focusElement !== null)
+      focusElement.focus();
   }
 }
 var tosiMonth = TosiMonth.elementCreator({
@@ -7561,7 +7619,7 @@ var tosiMonth = TosiMonth.elementCreator({
       opacity: sn.disabledOpacity(0.6)
     },
     ':host [part="month"], :host [part="year"]': {
-      _fieldWidth: "5em",
+      _fieldWidth: "4em",
       flex: "1"
     },
     ":host [part=week], :host [part=days]": {
@@ -7571,7 +7629,9 @@ var tosiMonth = TosiMonth.elementCreator({
     },
     ":host .today": {
       background: sn.todayBackground("transparent"),
-      boxShadow: sn.todayShadow(`inset 0 0 2px 1px currentcolor`)
+      boxShadow: sn.todayShadow(`none`),
+      backdropFilter: sn.todayFilter("brightness(0.9)"),
+      fontWeight: sn.todayFontWeight("800")
     },
     ":host .day, :host .date": {
       padding: 5,
@@ -7582,13 +7642,13 @@ var tosiMonth = TosiMonth.elementCreator({
     ":host .day": {
       color: "hotpink"
     },
+    ":host .date": {
+      cursor: "default"
+    },
     ":host .date:not(.in-month)": {
       opacity: 0.5
     },
-    ":host .date input": {
-      display: "none"
-    },
-    ":host .date:has(input:checked)": {
+    ":host .date.checked": {
       color: "white",
       background: "hotpink"
     }
@@ -7851,8 +7911,8 @@ class XinPasswordStrength extends M {
     description.textContent = this.strengthDescriptions[strength];
   };
   update = (event) => {
-    const input6 = event.target.closest("input");
-    this.updateIndicator(input6?.value || "");
+    const input5 = event.target.closest("input");
+    this.updateIndicator(input5?.value || "");
   };
   content = () => [
     xinSlot4({ onInput: this.update }),
@@ -7860,8 +7920,8 @@ class XinPasswordStrength extends M {
   ];
   render() {
     super.render();
-    const input6 = this.querySelector("input");
-    this.updateIndicator(input6?.value);
+    const input5 = this.querySelector("input");
+    this.updateIndicator(input5?.value);
   }
 }
 var xinPasswordStrength = XinPasswordStrength.elementCreator({
@@ -8284,7 +8344,7 @@ var richText = RichText.elementCreator({
   }
 });
 // src/segmented.ts
-var { div: div12, slot: slot6, label: label3, span: span12, input: input6 } = p;
+var { div: div12, slot: slot6, label: label2, span: span12, input: input5 } = p;
 
 class XinSegmented extends M {
   choices = "";
@@ -8299,7 +8359,7 @@ class XinSegmented extends M {
   }
   content = () => [
     slot6(),
-    div12({ part: "options" }, input6({ part: "custom", hidden: true }))
+    div12({ part: "options" }, input5({ part: "custom", hidden: true }))
   ];
   static styleSpec = {
     ":host": {
@@ -8365,14 +8425,14 @@ class XinSegmented extends M {
       const inputs = [
         ...options.querySelectorAll("input:checked")
       ];
-      this.value = inputs.map((input7) => input7.value).join(",");
+      this.value = inputs.map((input6) => input6.value).join(",");
     } else {
-      const input7 = options.querySelector("input:checked");
-      if (!input7) {
+      const input6 = options.querySelector("input:checked");
+      if (!input6) {
         this.value = null;
-      } else if (input7.value) {
+      } else if (input6.value) {
         custom.setAttribute("hidden", "");
-        this.value = input7.value;
+        this.value = input6.value;
       } else {
         custom.removeAttribute("hidden");
         custom.focus();
@@ -8435,7 +8495,7 @@ class XinSegmented extends M {
     const type = this.multiple ? "checkbox" : "radio";
     const { values, isOtherValue } = this;
     options.append(...this._choices.map((choice) => {
-      return label3({ tabindex: 0 }, input6({
+      return label2({ tabindex: 0 }, input5({
         type,
         name: this.name,
         value: choice.value,
@@ -8657,7 +8717,7 @@ var xinSizer = XinSizer.elementCreator({
   tag: "xin-sizer"
 });
 // src/tag-list.ts
-var { div: div13, input: input7, span: span13, button: button11 } = p;
+var { div: div13, input: input6, span: span13, button: button11 } = p;
 
 class XinTag extends M {
   caption = "";
@@ -8822,7 +8882,7 @@ class XinTagList extends M {
       part: "tagContainer",
       class: "row"
     }),
-    input7({
+    input6({
       part: "tagInput",
       class: "elastic",
       onKeydown: this.enterTag
@@ -12138,7 +12198,82 @@ For this reason, \`tosijs-ui\` has its own menu implementation.`,
     path: "src/menu.ts"
   },
   {
-    text: "# month\n\nThis is a component for displaying a month and selecting days within that month.\n\n```html\n<tosi-month></tosi-month>\n```\n```css\n.preview tosi-month {\n  margin: 10px;\n  border-radius: 5px;\n  box-shadow: 0 0 0 2px hotpink;\n}\n```\n\n## `readonly` and `disabled`\n\nThese prevent the user from changing the displayed month. This example is `readonly`.\n\n```html\n<tosi-month readonly></tosi-month>\n```\n\n## `range`\n\nThis allows the user to select date ranges.\n\n```html\n<tosi-month range></tosi-month>\n```\n\n## `selectable`\n\nThis allows the user to pick individual dates\n\n```html\n<tosi-month selectable></tosi-month>\n```\n\n## `multiple`\n\nThis allows the user to pick multiple individual dates\n\n```html\n<tosi-month multiple></tosi-month>\n```",
+    text: `# month
+
+This is a component for displaying a month and selecting days within that month.
+
+If the user changes the \`month\` or \`year\` the component's \`monthChanged(year, month)\`
+method will be called.
+
+The current date is \`[part="today"]\` and can easily be targeted for styling.
+
+\`\`\`js
+const { tosiMonth, postNotification } = tosijsui
+
+preview.append(tosiMonth({
+  monthChanged(year, month) {
+    postNotification({
+      icon: 'calendar',
+      message: \`Month changed to \${year}-\${month}\`,
+      color: 'hotpink',
+      duration: 2,
+    })
+  }
+}))
+\`\`\`
+\`\`\`css
+.preview tosi-month {
+  margin: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 0 2px hotpink;
+}
+\`\`\`
+
+## \`selectable\`
+
+Setting \`selectable\` allows the user to pick individual dates. It's just a friendlier date picker.
+
+The value of the component is an ISO date string, as per \`<input type="date">\`.
+
+\`\`\`html
+<tosi-month selectable></tosi-month>
+\`\`\`
+\`\`\`js
+const month = preview.querySelector('tosi-month')
+month.addEventListener('change', event => console.log('date picked', event.target.value))
+\`\`\`
+
+## \`range\`
+
+Setting \`range\` allows the user to select date ranges.
+
+\`\`\`html
+<tosi-month range></tosi-month>
+\`\`\`
+\`\`\`js
+const month = preview.querySelector('tosi-month')
+month.addEventListener('change', event => console.log('date range', event.target.value))
+\`\`\`
+
+## \`multiple\`
+
+This allows the user to pick multiple individual dates
+
+\`\`\`html
+<tosi-month multiple></tosi-month>
+\`\`\`
+\`\`\`js
+const month = preview.querySelector('tosi-month')
+month.addEventListener('change', event => console.log('multple dates', event.target.value))
+\`\`\`
+
+## \`readonly\` and \`disabled\`
+
+These prevent the user from changing the displayed month. This example is \`readonly\`.
+
+\`\`\`html
+<tosi-month readonly value="1976-04-01"></tosi-month>
+\`\`\``,
     title: "month",
     filename: "month.ts",
     path: "src/month.ts"
@@ -13853,7 +13988,7 @@ setTimeout(() => {
   Object.assign(globalThis, { app, tosi: xe, bindings: tn, elements: p, vars: Hn, touch: j });
 }, 1000);
 var main = document.querySelector("main");
-var { h2: h23, div: div14, span: span14, a: a5, img, header, button: button12, template: template2, input: input8 } = p;
+var { h2: h23, div: div14, span: span14, a: a5, img, header, button: button12, template: template2, input: input7 } = p;
 h(document.body, "prefs.theme", {
   toDOM(element, theme) {
     if (theme === "system") {
@@ -13880,7 +14015,7 @@ var filterDocs = vn(() => {
   j(app.docs);
   console.timeEnd("filter");
 });
-var searchField = input8({
+var searchField = input7({
   slot: "nav",
   placeholder: "search",
   type: "search",
