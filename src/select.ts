@@ -225,7 +225,6 @@ export class XinSelect extends Component<SelectParts> {
   private setValue = (value: string, triggerAction = false) => {
     if (this.value !== value) {
       this.value = value
-      this.queueRender(true)
     }
     if (triggerAction) {
       this.dispatchEvent(new Event('action'))
