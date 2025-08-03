@@ -3,8 +3,24 @@
 
 This is a component for displaying a month and selecting days within that month.
 
-```html
-<tosi-month></tosi-month>
+If the user changes the `month` or `year` the component's `monthChanged(year, month)`
+method will be called.
+
+The current date is `[part="today"]` and can easily be targeted for styling.
+
+```js
+const { tosiMonth, postNotification } = tosijsui
+
+preview.append(tosiMonth({
+  monthChanged(year, month) {
+    postNotification({
+      icon: 'calendar',
+      message: `Month changed to ${year}-${month}`,
+      color: 'hotpink',
+      duration: 2,
+    })
+  }
+}))
 ```
 ```css
 .preview tosi-month {
@@ -14,28 +30,30 @@ This is a component for displaying a month and selecting days within that month.
 }
 ```
 
-## `readonly` and `disabled`
+## `selectable`
 
-These prevent the user from changing the displayed month. This example is `readonly`.
+Setting `selectable` allows the user to pick individual dates. It's just a friendlier date picker.
+
+The value of the component is an ISO date string, as per `<input type="date">`.
 
 ```html
-<tosi-month readonly></tosi-month>
+<tosi-month selectable></tosi-month>
+```
+```js
+const month = preview.querySelector('tosi-month')
+month.addEventListener('change', event => console.log('date picked', event.target.value))
 ```
 
 ## `range`
 
-This allows the user to select date ranges.
+Setting `range` allows the user to select date ranges.
 
 ```html
 <tosi-month range></tosi-month>
 ```
-
-## `selectable`
-
-This allows the user to pick individual dates
-
-```html
-<tosi-month selectable></tosi-month>
+```js
+const month = preview.querySelector('tosi-month')
+month.addEventListener('change', event => console.log('date range', event.target.value))
 ```
 
 ## `multiple`
@@ -45,6 +63,18 @@ This allows the user to pick multiple individual dates
 ```html
 <tosi-month multiple></tosi-month>
 ```
+```js
+const month = preview.querySelector('tosi-month')
+month.addEventListener('change', event => console.log('multple dates', event.target.value))
+```
+
+## `readonly` and `disabled`
+
+These prevent the user from changing the displayed month. This example is `readonly`.
+
+```html
+<tosi-month readonly value="1976-04-01"></tosi-month>
+```
 
 */
 
@@ -52,7 +82,7 @@ import { Component, PartsMap, elements, varDefault } from 'tosijs'
 import { xinSelect, XinSelect } from './select'
 import { icons } from './icons'
 
-const { div, label, input, span, button } = elements
+const { div, span, button } = elements
 
 const DAY_MS = 24 * 3600 * 1000
 const WEEK = [0, 1, 2, 3, 4, 5, 6]
@@ -72,8 +102,8 @@ interface MonthParts extends PartsMap {
 }
 
 export class TosiMonth extends Component<MonthParts> {
-  month = new Date().getMonth() + 1
-  year = new Date().getFullYear()
+  month = NaN
+  year = NaN
   minDate = dateFromYMD(new Date().getFullYear() - 100, 1, 1)
     .toISOString()
     .split('T')[0]
@@ -86,11 +116,8 @@ export class TosiMonth extends Component<MonthParts> {
   range = false
   disabled = false
   readonly = false
-  value = {
-    from: '',
-    to: '',
-    days: new Set<string>(),
-  }
+  selectedDays = [] as string[]
+  value = ''
 
   get endDay(): number {
     return 1 - this.startDay
@@ -111,87 +138,129 @@ export class TosiMonth extends Component<MonthParts> {
     return years
   }
 
+  monthChanged = (year: number, month: number) => {}
+
+  gotoMonth(year: number, month: number) {
+    if (this.month !== month || this.year !== year) {
+      this.month = month
+      this.year = year
+      this.monthChanged(year, month)
+    }
+  }
+
   setMonth = () => {
-    this.month = Number(this.parts.month.value)
+    this.gotoMonth(
+      Number(this.parts.year.value),
+      Number(this.parts.month.value)
+    )
   }
 
-  setYear = () => {
-    this.year = Number(this.parts.year.value)
+  get to(): string {
+    return this.selectedDays[1] || ''
   }
 
-  selectDate = (event: Event) => {
-    const dateString = (event.target as HTMLElement)
-      .closest('label')!
-      .getAttribute('title') as string
-    if (this.range) {
-      event.stopPropagation()
+  set to(dateString: string) {
+    this.selectedDays[1] = dateString
+    this.selectedDays.splice(2)
+  }
+
+  get from(): string {
+    return this.selectedDays[0] || ''
+  }
+
+  set from(dateString: string) {
+    this.selectedDays[0] = dateString
+    this.selectedDays.splice(2)
+  }
+
+  clickDate = (event: Event) => {
+    const dateString = (event.target as HTMLElement).getAttribute(
+      'title'
+    ) as string
+    this.selectDate(dateString)
+  }
+
+  keyDate = (event: KeyboardEvent) => {
+    let stopEvent = false
+    switch (event.code) {
+      case 'Space':
+        const dateString = (event.target as HTMLElement).getAttribute(
+          'title'
+        ) as string
+        this.selectDate(dateString)
+        stopEvent = true
+        break
+      case 'Tab':
+        break
+      default:
+        console.log(event)
+    }
+    if (stopEvent) {
       event.preventDefault()
-      if (!this.value.from) {
-        this.value.from = dateString
-        this.value.to = dateString
-      } else if (
-        this.value.from === dateString &&
-        this.value.to === dateString
-      ) {
-        this.value.from = this.value.to = ''
-      } else if (this.value.from === dateString) {
-        this.value.from = this.value.to
-      } else if (this.value.to === dateString) {
-        this.value.to = this.value.from
-      } else if (dateString < this.value.from) {
-        this.value.from = dateString
-      } else if (dateString > this.value.to) {
-        this.value.to = dateString
-      } else if (dateString < this.value.from) {
-        this.value.from = dateString
+      event.stopPropagation()
+    }
+  }
+
+  selectDate = (dateString: string) => {
+    if (this.range) {
+      if (!this.to) {
+        this.selectedDays = [dateString, dateString]
+      } else if (this.from === dateString && this.to === dateString) {
+        this.selectedDays = []
+      } else if (this.from === dateString) {
+        this.from = this.to
+      } else if (this.to === dateString) {
+        this.to = this.from
+      } else if (dateString < this.from) {
+        this.from = dateString
+      } else if (dateString > this.to) {
+        this.to = dateString
+      } else if (dateString < this.from) {
+        this.from = dateString
       } else {
-        this.value.to = dateString
+        this.to = dateString
       }
-      this.queueRender()
+      this.value = `${this.from},${this.to}`
     } else if (this.multiple) {
-      if (this.value.days.has(dateString)) {
-        this.value.days.delete(dateString)
+      if (this.selectedDays.includes(dateString)) {
+        this.selectedDays.splice(this.selectedDays.indexOf(dateString), 1)
       } else {
-        this.value.days.add(dateString)
+        this.selectedDays.push(dateString)
+        this.selectedDays.sort()
       }
-      this.queueRender()
+      this.value = this.selectedDays.join(',')
     } else if (this.selectable) {
-      if (this.value.days.has(dateString)) {
-        this.value.days = new Set<string>()
+      if (this.selectedDays.includes(dateString)) {
+        this.value = ''
+        this.selectedDays = []
       } else {
-        this.value.days = new Set([dateString])
+        this.value = dateString
+        this.selectedDays = [dateString]
       }
-      this.queueRender()
     }
   }
 
   nextMonth = () => {
     if (this.month < 12) {
-      this.month += 1
+      this.gotoMonth(this.year, this.month + 1)
     } else {
-      this.year += 1
-      this.month = 1
+      this.gotoMonth(this.year + 1, 1)
     }
   }
 
   previousMonth = () => {
     if (this.month > 1) {
-      this.month -= 1
+      this.gotoMonth(this.year, this.month - 1)
     } else {
-      this.year -= 1
-      this.month = 12
+      this.gotoMonth(this.year - 1, 12)
     }
   }
 
   checkDay = (dateString: string) => {
-    if (this.selectable || this.multiple) {
-      return this.value.days.has(dateString)
+    if (!this.range) {
+      return this.selectedDays.includes(dateString)
     } else if (this.range) {
-      return (
-        this.value.from &&
-        dateString >= this.value.from &&
-        dateString <= this.value.to
-      )
+      return this.from && dateString >= this.from && dateString <= this.to
     }
     return false
   }
@@ -215,7 +284,7 @@ export class TosiMonth extends Component<MonthParts> {
       xinSelect({
         part: 'year',
         options: [this.year],
-        onChange: this.setYear,
+        onChange: this.setMonth,
       }),
       span({ style: { flex: '1' } }),
       button(
@@ -229,6 +298,11 @@ export class TosiMonth extends Component<MonthParts> {
     div({ part: 'week' }),
     div({ part: 'days' }),
   ]
+
+  gotoDate(dateString: string) {
+    const date = new Date(dateString)
+    this.gotoMonth(date.getFullYear(), date.getMonth() + 1)
+  }
 
   constructor() {
     super()
@@ -246,6 +320,16 @@ export class TosiMonth extends Component<MonthParts> {
     )
   }
 
+  connectedCallback() {
+    super.connectedCallback()
+    const date = new Date(this.value.split(',').pop() || Date.now())
+    if (isNaN(this.month)) {
+      this.month = date.getMonth() + 1
+    }
+    if (isNaN(this.year)) {
+      this.year = date.getFullYear()
+    }
+  }
   days = [] as Array<{
     date: Date
     selected: boolean
@@ -255,6 +339,7 @@ export class TosiMonth extends Component<MonthParts> {
   }>
   render() {
     const { week, days, month, year, previous, next } = this.parts
+    this.selectedDays = this.value ? this.value.split(',') : []
     const firstOfMonth = dateFromYMD(this.year, this.month, 1)
     const startDay = new Date(
       firstOfMonth.valueOf() -
@@ -288,9 +373,9 @@ export class TosiMonth extends Component<MonthParts> {
         inMonth: date.getMonth() + 1 === this.month,
         isToday: dateString === today,
         inRange: !!(
-          this.value.from &&
-          dateString >= this.value.from &&
-          dateString <= this.value.to
+          this.from &&
+          dateString >= this.from &&
+          dateString <= this.to
         ),
       })
     }
@@ -319,17 +404,17 @@ export class TosiMonth extends Component<MonthParts> {
           classes.push('today')
         }
         const dateString = day.date.toISOString().split('T')[0]
-        return label(
+        if (this.checkDay(dateString)) {
+          classes.push('checked')
+        }
+        return span(
           {
             class: classes.join(' '),
             title: dateString,
+            onClick: this.clickDate,
+            onKeydown: this.keyDate,
+            tabindex: '0',
           },
-          input({
-            type: 'checkbox',
-            checked: this.checkDay(dateString),
-            disabled: dateSelectDisabled,
-            onChange: this.selectDate,
-          }),
           day.date.getDate()
         )
       })
@@ -353,7 +438,7 @@ export const tosiMonth = TosiMonth.elementCreator({
       opacity: varDefault.disabledOpacity(0.6),
     },
     ':host [part="month"], :host [part="year"]': {
-      _fieldWidth: '5em',
+      _fieldWidth: '4em',
       flex: '1',
     },
     ':host [part=week], :host [part=days]': {
@@ -374,13 +459,13 @@ export const tosiMonth = TosiMonth.elementCreator({
     ':host .day': {
       color: 'hotpink',
     },
+    ':host .date': {
+      cursor: 'default',
+    },
     ':host .date:not(.in-month)': {
       opacity: 0.5,
     },
-    ':host .date input': {
-      display: 'none',
-    },
-    ':host .date:has(input:checked)': {
+    ':host .date.checked': {
       color: 'white',
       background: 'hotpink',
     },
