@@ -3159,7 +3159,8 @@ var xinSelect = XinSelect.elementCreator({
       height: Hn.touchSize,
       padding: Hn.padding,
       gridTemplateColumns: `auto ${Hn.iconWidth}`,
-      position: "relative"
+      position: "relative",
+      width: "100%"
     },
     ":host[show-icon] button": {
       gridTemplateColumns: `${Hn.iconWidth} auto ${Hn.iconWidth}`
