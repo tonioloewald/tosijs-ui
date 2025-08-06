@@ -81,6 +81,7 @@ These prevent the user from changing the displayed month. This example is `reado
 import { Component, PartsMap, elements, varDefault } from 'tosijs'
 import { xinSelect, XinSelect } from './select'
 import { icons } from './icons'
+import { popMenu, MenuItem } from './menu'
 
 const { div, span, button } = elements
 
@@ -95,6 +96,7 @@ const dateFromYMD = (year: number, month: number, date: number): Date =>
   new Date(`${year}-${padLeft(month)}-${padLeft(date)}`)
 
 interface MonthParts extends PartsMap {
+  jump: HTMLButtonElement
   month: XinSelect
   year: XinSelect
   previous: HTMLButtonElement
@@ -266,6 +268,28 @@ export class TosiMonth extends Component<MonthParts> {
     }
     return false
   }
+  
+  dateMenuItem = (dateString: string, caption = ''): MenuItem => {
+    dateString = dateString.split('T')[0]
+    return {
+      caption: caption || dateString,
+      enabled: () => !dateString.startsWith(`${this.year}-${padLeft(this.month)}-`),
+      action: () => {
+        this.gotoDate(dateString)
+      }
+    }
+  }
+  
+  jumpMenu = () => {
+    popMenu({
+      target: this.parts.jump,
+      menuItems: [
+        this.dateMenuItem(new Date().toISOString(), 'This Month'),
+        ...(this.selectedDays.length === 0 ? [] : [null]),
+        ...this.selectedDays.map(date => this.dateMenuItem(date))
+      ]
+    })
+  }
 
   content = () => [
     div(
@@ -278,6 +302,13 @@ export class TosiMonth extends Component<MonthParts> {
         icons.chevronLeft()
       ),
       span({ style: { flex: '1' } }),
+      button(
+        {
+          part: 'jump',
+          onClick: this.jumpMenu
+        },
+        icons.calendar()
+      ),
       xinSelect({
         part: 'month',
         options: this.months,
@@ -340,7 +371,7 @@ export class TosiMonth extends Component<MonthParts> {
     isToday: boolean
   }>
   render() {
-    const { week, days, month, year, previous, next } = this.parts
+    const { week, days, jump, month, year, previous, next } = this.parts
     this.selectedDays = this.value ? this.value.split(',') : []
     const firstOfMonth = dateFromYMD(this.year, this.month, 1)
     const startDay = new Date(
@@ -387,6 +418,7 @@ export class TosiMonth extends Component<MonthParts> {
     const isDisabled =
       (month.disabled =
       year.disabled =
+      jump.disabled =
       previous.disabled =
       next.disabled =
         this.disabled || this.readonly)
@@ -426,7 +458,7 @@ export class TosiMonth extends Component<MonthParts> {
         return element
       })
     )
-    if (focusElement !== null) focusElement.focus()
+    if (focusElement) focusElement.focus()
   }
 }
 
