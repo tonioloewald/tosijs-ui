@@ -1,6 +1,8 @@
 import { Component, PartsMap } from 'tosijs';
 import { XinSelect } from './select';
+import { MenuItem } from './menu';
 interface MonthParts extends PartsMap {
+    jump: HTMLButtonElement;
     month: XinSelect;
     year: XinSelect;
     previous: HTMLButtonElement;
@@ -39,6 +41,8 @@ export declare class TosiMonth extends Component<MonthParts> {
     nextMonth: () => void;
     previousMonth: () => void;
     checkDay: (dateString: string) => boolean | "";
+    dateMenuItem: (dateString: string, caption?: string) => MenuItem;
+    jumpMenu: () => void;
     content: () => HTMLDivElement[];
     gotoDate(dateString: string): void;
     constructor();

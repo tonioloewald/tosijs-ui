@@ -134,7 +134,7 @@ bind(document.body, 'prefs.theme', {
 
 bind(document.body, 'prefs.highContrast', {
   toDOM(element, highContrast) {
-    element.classList.toggle('high-contrast', highContrast)
+    element.classList.toggle('high-contrast', highContrast.valueOf())
   },
 })
 
@@ -262,7 +262,7 @@ if (main)
                     {
                       caption: 'System',
                       checked() {
-                        return prefs.theme === 'system'
+                        return prefs.theme.valueOf() === 'system'
                       },
                       action() {
                         prefs.theme = 'system'
@@ -271,7 +271,7 @@ if (main)
                     {
                       caption: 'Dark',
                       checked() {
-                        return prefs.theme === 'dark'
+                        return prefs.theme.valueOf() === 'dark'
                       },
                       action() {
                         prefs.theme = 'dark'
@@ -280,7 +280,7 @@ if (main)
                     {
                       caption: 'Light',
                       checked() {
-                        return prefs.theme === 'light'
+                        return prefs.theme.valueOf() === 'light'
                       },
                       action() {
                         prefs.theme = 'light'
@@ -290,10 +290,10 @@ if (main)
                     {
                       caption: 'High Contrast',
                       checked() {
-                        return prefs.highContrast
+                        return prefs.highContrast.valueOf()
                       },
                       action() {
-                        prefs.highContrast = !prefs.highContrast
+                        prefs.highContrast = !prefs.highContrast.valueOf()
                       },
                     },
                   ],
