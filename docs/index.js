@@ -7507,11 +7507,34 @@ class TosiMonth extends M {
     }
     return false;
   };
+  dateMenuItem = (dateString, caption = "") => {
+    dateString = dateString.split("T")[0];
+    return {
+      caption: caption || dateString,
+      enabled: () => !dateString.startsWith(`${this.year}-${padLeft(this.month)}-`),
+      action: () => {
+        this.gotoDate(dateString);
+      }
+    };
+  };
+  jumpMenu = () => {
+    popMenu({
+      target: this.parts.jump,
+      menuItems: [
+        this.dateMenuItem(new Date().toISOString(), "This Month"),
+        ...this.selectedDays.length === 0 ? [] : [null],
+        ...this.selectedDays.map((date) => this.dateMenuItem(date))
+      ]
+    });
+  };
   content = () => [
     div9({ part: "header" }, button8({
       part: "previous",
       onClick: this.previousMonth
-    }, icons.chevronLeft()), span8({ style: { flex: "1" } }), xinSelect({
+    }, icons.chevronLeft()), span8({ style: { flex: "1" } }), button8({
+      part: "jump",
+      onClick: this.jumpMenu
+    }, icons.calendar()), xinSelect({
       part: "month",
       options: this.months,
       onChange: this.setMonth
@@ -7546,7 +7569,7 @@ class TosiMonth extends M {
   }
   days = [];
   render() {
-    const { week, days, month, year, previous, next } = this.parts;
+    const { week, days, jump, month, year, previous, next } = this.parts;
     this.selectedDays = this.value ? this.value.split(",") : [];
     const firstOfMonth = dateFromYMD(this.year, this.month, 1);
     const startDay = new Date(firstOfMonth.valueOf() - (7 + firstOfMonth.getDay() - this.startDay) % 7 * DAY_MS);
@@ -7569,7 +7592,7 @@ class TosiMonth extends M {
     }
     month.value = String(this.month);
     year.value = String(this.year);
-    const isDisabled = month.disabled = year.disabled = previous.disabled = next.disabled = this.disabled || this.readonly;
+    const isDisabled = month.disabled = year.disabled = jump.disabled = previous.disabled = next.disabled = this.disabled || this.readonly;
     const dateSelectDisabled = isDisabled || !this.selectable && !this.range && !this.multiple;
     year.options = this.years;
     week.textContent = "";
@@ -7600,7 +7623,7 @@ class TosiMonth extends M {
       }
       return element;
     }));
-    if (focusElement !== null)
+    if (focusElement)
       focusElement.focus();
   }
 }
@@ -9030,6 +9053,7 @@ var styleSpec = {
   },
   ".darkmode": {
     ...Ge(colors),
+    _shadowColor: brandColor.opacity(0.5),
     _menuShadow: `0 0 0 2px ${brandColor.opacity(0.75)}`,
     _menuSeparatorColor: brandColor.opacity(0.5)
   },
@@ -9121,27 +9145,38 @@ var styleSpec = {
     borderRadius: 99
   },
   blockquote: {
+    position: "relative",
     background: Hn.insetBg,
-    margin: "0",
-    borderRadius: Hn.spacing50,
-    padding: "var(--spacing) calc(var(--spacing) * 2)"
+    margin: "0 48px 48px 0",
+    borderRadius: Hn.spacing,
+    padding: "var(--spacing) calc(var(--spacing) * 2)",
+    filter: `drop-shadow(0px 1px 1px ${Hn.shadowColor})`
   },
   "blockquote > :first-child": {
     marginTop: "0"
   },
   "blockquote > :last-child": {
-    position: "relative",
-    width: "100%",
-    paddingBottom: 48,
     marginBottom: "0"
   },
-  "blockquote > :last-child::after": {
+  "blockquote::before": {
+    content: '" "',
+    display: "block",
+    width: 1,
+    height: 1,
+    border: "10px solid transparent",
+    borderTopColor: Hn.insetBg,
+    borderRightColor: Hn.insetBg,
+    position: "absolute",
+    bottom: -20,
+    right: 24
+  },
+  "blockquote::after": {
     content: '" "',
     width: 48,
     height: 48,
     display: "block",
-    bottom: 0,
-    right: 0,
+    bottom: -48,
+    right: -24,
     position: "absolute",
     background: svg2DataUrl(icons.tosi())
   },
