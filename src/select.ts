@@ -460,21 +460,15 @@ export const xinSelect = XinSelect.elementCreator({
       position: 'relative',
     },
     ':host button': {
-      display: 'grid',
+      display: 'flex',
       alignItems: 'center',
+      justifyItems: 'center',
       gap: vars.gap,
       textAlign: 'left',
       height: vars.touchSize,
       padding: vars.padding,
-      gridTemplateColumns: `auto ${vars.iconWidth}`,
       position: 'relative',
-      width: '100%'
-    },
-    ':host[show-icon] button': {
-      gridTemplateColumns: `${vars.iconWidth} auto ${vars.iconWidth}`,
-    },
-    ':host[hide-caption] button': {
-      gridTemplateColumns: `${vars.iconWidth} ${vars.iconWidth}`,
+      width: '100%',
     },
     ':host:not([show-icon]) button > :first-child': {
       display: 'none',
@@ -491,6 +485,7 @@ export const xinSelect = XinSelect.elementCreator({
       whiteSpace: 'nowrap',
       outline: 'none',
       background: 'transparent',
+      flex: '1',
     },
     ':host [part="value"]:not(:focus)': {
       overflow: 'hidden',

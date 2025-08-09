@@ -3152,21 +3152,15 @@ var xinSelect = XinSelect.elementCreator({
       position: "relative"
     },
     ":host button": {
-      display: "grid",
+      display: "flex",
       alignItems: "center",
+      justifyItems: "center",
       gap: Hn.gap,
       textAlign: "left",
       height: Hn.touchSize,
       padding: Hn.padding,
-      gridTemplateColumns: `auto ${Hn.iconWidth}`,
       position: "relative",
       width: "100%"
-    },
-    ":host[show-icon] button": {
-      gridTemplateColumns: `${Hn.iconWidth} auto ${Hn.iconWidth}`
-    },
-    ":host[hide-caption] button": {
-      gridTemplateColumns: `${Hn.iconWidth} ${Hn.iconWidth}`
     },
     ":host:not([show-icon]) button > :first-child": {
       display: "none"
@@ -3182,7 +3176,8 @@ var xinSelect = XinSelect.elementCreator({
       boxShadow: "none",
       whiteSpace: "nowrap",
       outline: "none",
-      background: "transparent"
+      background: "transparent",
+      flex: "1"
     },
     ':host [part="value"]:not(:focus)': {
       overflow: "hidden",
@@ -7599,6 +7594,7 @@ class TosiMonth extends M {
     week.append(...weekDays.map((day) => span8({ class: "day" }, day)));
     days.textContent = "";
     let focusElement = null;
+    const { to, from } = this;
     days.append(...this.days.map((day) => {
       const classes = ["date"];
       if (day.inMonth) {
@@ -7610,6 +7606,14 @@ class TosiMonth extends M {
       const dateString = day.date.toISOString().split("T")[0];
       if (this.checkDay(dateString)) {
         classes.push("checked");
+      }
+      if (this.range) {
+        if (to === dateString) {
+          classes.push("range-end");
+        }
+        if (from === dateString) {
+          classes.push("range-start");
+        }
       }
       const element = span8({
         class: classes.join(" "),
@@ -7652,10 +7656,10 @@ var tosiMonth = TosiMonth.elementCreator({
       justifyItems: "stretch"
     },
     ":host .today": {
-      background: sn.todayBackground("transparent"),
-      boxShadow: sn.todayShadow(`none`),
-      backdropFilter: sn.todayFilter("brightness(0.9)"),
-      fontWeight: sn.todayFontWeight("800")
+      background: sn.monthTodayBackground("transparent"),
+      boxShadow: sn.monthTodayShadow(`none`),
+      backdropFilter: sn.monthTodayBackdropFilter("brightness(0.9)"),
+      fontWeight: sn.monthTodayFontWeight("800")
     },
     ":host .day, :host .date": {
       padding: 5,
@@ -7664,7 +7668,9 @@ var tosiMonth = TosiMonth.elementCreator({
       userSelect: "none"
     },
     ":host .day": {
-      color: "hotpink"
+      color: sn.monthDayColor("hotpink"),
+      background: sn.monthDayBackground("white"),
+      fontWeight: sn.monthDayFontWeight("800")
     },
     ":host .date": {
       cursor: "default"
@@ -7673,8 +7679,19 @@ var tosiMonth = TosiMonth.elementCreator({
       opacity: 0.5
     },
     ":host .date.checked": {
-      color: "white",
-      background: "hotpink"
+      color: sn.monthDateCheckedColor("white"),
+      background: sn.monthDateCheckedBackground("hotpink")
+    },
+    ":host:not([range]) .date.checked": {
+      borderRadius: sn.monthDateCheckedBorderRadius("10px")
+    },
+    ":host .range-start": {
+      borderTopLeftRadius: sn.monthDateCheckedBorderRadius("10px"),
+      borderBottomLeftRadius: sn.monthDateCheckedBorderRadius("10px")
+    },
+    ":host .range-end": {
+      borderTopRightRadius: sn.monthDateCheckedBorderRadius("10px"),
+      borderBottomRightRadius: sn.monthDateCheckedBorderRadius("10px")
     }
   }
 });
@@ -11985,13 +12002,13 @@ const menuItems = [
         ]
       },
       {
-        icon: 'xinjs',
-        caption: 'xinjs',
+        icon: 'tosi',
+        caption: 'tosi',
         action: 'https://xinjs.net'
       },
       {
-        icon: 'xinie',
-        caption: 'xinie',
+        icon: 'tosiPlatform',
+        caption: 'tosi-platform',
         action: 'https://xinie.net'
       },
     ]
@@ -14035,7 +14052,7 @@ h(document.body, "prefs.theme", {
 });
 h(document.body, "prefs.highContrast", {
   toDOM(element, highContrast) {
-    element.classList.toggle("high-contrast", highContrast);
+    element.classList.toggle("high-contrast", highContrast.valueOf());
   }
 });
 window.addEventListener("popstate", () => {
@@ -14118,7 +14135,7 @@ if (main)
               {
                 caption: "System",
                 checked() {
-                  return prefs.theme === "system";
+                  return prefs.theme.valueOf() === "system";
                 },
                 action() {
                   prefs.theme = "system";
@@ -14127,7 +14144,7 @@ if (main)
               {
                 caption: "Dark",
                 checked() {
-                  return prefs.theme === "dark";
+                  return prefs.theme.valueOf() === "dark";
                 },
                 action() {
                   prefs.theme = "dark";
@@ -14136,7 +14153,7 @@ if (main)
               {
                 caption: "Light",
                 checked() {
-                  return prefs.theme === "light";
+                  return prefs.theme.valueOf() === "light";
                 },
                 action() {
                   prefs.theme = "light";
@@ -14146,10 +14163,10 @@ if (main)
               {
                 caption: "High Contrast",
                 checked() {
-                  return prefs.highContrast;
+                  return prefs.highContrast.valueOf();
                 },
                 action() {
-                  prefs.highContrast = !prefs.highContrast;
+                  prefs.highContrast = !prefs.highContrast.valueOf();
                 }
               }
             ]

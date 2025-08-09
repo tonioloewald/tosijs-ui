@@ -86,13 +86,13 @@ const menuItems = [
         ]
       },
       {
-        icon: 'xinjs',
-        caption: 'xinjs',
+        icon: 'tosi',
+        caption: 'tosi',
         action: 'https://xinjs.net'
       },
       {
-        icon: 'xinie',
-        caption: 'xinie',
+        icon: 'tosiPlatform',
+        caption: 'tosi-platform',
         action: 'https://xinie.net'
       },
     ]
