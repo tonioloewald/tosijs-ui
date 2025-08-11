@@ -7367,7 +7367,7 @@ class TosiMonth extends M {
   year = NaN;
   minDate = dateFromYMD(new Date().getFullYear() - 100, 1, 1).toISOString().split("T")[0];
   maxDate = dateFromYMD(new Date().getFullYear() + 10, 12, 31).toISOString().split("T")[0];
-  startDay = 1;
+  weekStart = 0;
   selectable = false;
   multiple = false;
   range = false;
@@ -7376,7 +7376,7 @@ class TosiMonth extends M {
   selectedDays = [];
   value = "";
   get endDay() {
-    return 1 - this.startDay;
+    return 1 - this.weekStart;
   }
   get months() {
     return MONTHS.map((value) => ({
@@ -7550,7 +7550,7 @@ class TosiMonth extends M {
   }
   constructor() {
     super();
-    this.initAttributes("month", "year", "startDay", "minDate", "maxDate", "selectable", "multiple", "range", "disabled", "readonly");
+    this.initAttributes("month", "year", "weekStart", "minDate", "maxDate", "selectable", "multiple", "range", "disabled", "readonly");
   }
   connectedCallback() {
     super.connectedCallback();
@@ -7567,14 +7567,14 @@ class TosiMonth extends M {
     const { week, days, jump, month, year, previous, next } = this.parts;
     this.selectedDays = this.value ? this.value.split(",") : [];
     const firstOfMonth = dateFromYMD(this.year, this.month, 1);
-    const startDay = new Date(firstOfMonth.valueOf() - (7 + firstOfMonth.getDay() - this.startDay) % 7 * DAY_MS);
+    const weekStart = new Date(firstOfMonth.valueOf() - (7 + firstOfMonth.getDay() - this.weekStart) % 7 * DAY_MS);
     const nextMonth = this.month === 12 ? 1 : this.month + 1;
     const lastOfMonth = new Date(dateFromYMD(this.year + (this.month === 12 ? 1 : 0), nextMonth, 1).valueOf() - DAY_MS);
-    const endDay = new Date(lastOfMonth.valueOf() + (7 + this.endDay - lastOfMonth.getDay()) % 7 * DAY_MS);
-    const weekDays = WEEK.map((day) => new Date(startDay.valueOf() + day * DAY_MS).toString().split(" ")[0]);
+    const endDay = new Date(lastOfMonth.valueOf() + (this.weekStart * 2 + 5 + this.endDay - lastOfMonth.getDay()) % 7 * DAY_MS);
+    const weekDays = WEEK.map((day) => new Date(weekStart.valueOf() + day * DAY_MS).toString().split(" ")[0]);
     this.days = [];
     const today = new Date().toISOString().split("T")[0];
-    for (let day = startDay.valueOf();day <= endDay.valueOf(); day += DAY_MS) {
+    for (let day = weekStart.valueOf();day <= endDay.valueOf(); day += DAY_MS) {
       const date = new Date(day);
       const dateString = date.toISOString().split("T")[0];
       this.days.push({
@@ -7582,6 +7582,7 @@ class TosiMonth extends M {
         selected: false,
         inMonth: date.getMonth() + 1 === this.month,
         isToday: dateString === today,
+        isWeekend: date.getDay() % 6 === 0,
         inRange: !!(this.from && dateString >= this.from && dateString <= this.to)
       });
     }
@@ -7607,6 +7608,7 @@ class TosiMonth extends M {
       if (this.checkDay(dateString)) {
         classes.push("checked");
       }
+      classes.push(day.isWeekend ? "weekend" : "weekday");
       if (this.range) {
         if (to === dateString) {
           classes.push("range-end");
@@ -7674,6 +7676,9 @@ var tosiMonth = TosiMonth.elementCreator({
     },
     ":host .date": {
       cursor: "default"
+    },
+    ":host .weekend": {
+      background: sn.monthWeekendBackground("#eee")
     },
     ":host .date:not(.in-month)": {
       opacity: 0.5
@@ -12288,8 +12293,11 @@ Setting \`selectable\` allows the user to pick individual dates. It's just a fri
 
 The value of the component is an ISO date string, as per \`<input type="date">\`.
 
+\`week-start\` defaults to \`0\` (Sunday). You can set it to \`1\` (Monday) or some other value
+if you want.
+
 \`\`\`html
-<tosi-month selectable></tosi-month>
+<tosi-month week-start=1 selectable></tosi-month>
 \`\`\`
 \`\`\`js
 const month = preview.querySelector('tosi-month')
@@ -14050,7 +14058,7 @@ h(document.body, "prefs.theme", {
     element.classList.toggle("darkmode", theme === "dark");
   }
 });
-h(document.body, "prefs.highContrast", {
+h(document.body, prefs.highContrast, {
   toDOM(element, highContrast) {
     element.classList.toggle("high-contrast", highContrast.valueOf());
   }

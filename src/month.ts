@@ -36,8 +36,11 @@ Setting `selectable` allows the user to pick individual dates. It's just a frien
 
 The value of the component is an ISO date string, as per `<input type="date">`.
 
+`week-start` defaults to `0` (Sunday). You can set it to `1` (Monday) or some other value
+if you want.
+
 ```html
-<tosi-month selectable></tosi-month>
+<tosi-month week-start=1 selectable></tosi-month>
 ```
 ```js
 const month = preview.querySelector('tosi-month')
@@ -112,7 +115,7 @@ export class TosiMonth extends Component<MonthParts> {
   maxDate = dateFromYMD(new Date().getFullYear() + 10, 12, 31)
     .toISOString()
     .split('T')[0]
-  startDay = 1 // Monday
+  weekStart = 0 // Sunday, 1 = Monday
   selectable = false
   multiple = false
   range = false
@@ -122,7 +125,7 @@ export class TosiMonth extends Component<MonthParts> {
   value = ''
 
   get endDay(): number {
-    return 1 - this.startDay
+    return 1 - this.weekStart
   }
   get months(): { caption: string; value: string }[] {
     return MONTHS.map((value) => ({
@@ -268,26 +271,27 @@ export class TosiMonth extends Component<MonthParts> {
     }
     return false
   }
-  
+
   dateMenuItem = (dateString: string, caption = ''): MenuItem => {
     dateString = dateString.split('T')[0]
     return {
       caption: caption || dateString,
-      enabled: () => !dateString.startsWith(`${this.year}-${padLeft(this.month)}-`),
+      enabled: () =>
+        !dateString.startsWith(`${this.year}-${padLeft(this.month)}-`),
       action: () => {
         this.gotoDate(dateString)
-      }
+      },
     }
   }
-  
+
   jumpMenu = () => {
     popMenu({
       target: this.parts.jump,
       menuItems: [
         this.dateMenuItem(new Date().toISOString(), 'This Month'),
         ...(this.selectedDays.length === 0 ? [] : [null]),
-        ...this.selectedDays.map(date => this.dateMenuItem(date))
-      ]
+        ...this.selectedDays.map((date) => this.dateMenuItem(date)),
+      ],
     })
   }
 
@@ -305,7 +309,7 @@ export class TosiMonth extends Component<MonthParts> {
       button(
         {
           part: 'jump',
-          onClick: this.jumpMenu
+          onClick: this.jumpMenu,
         },
         icons.calendar()
       ),
@@ -342,7 +346,7 @@ export class TosiMonth extends Component<MonthParts> {
     this.initAttributes(
       'month',
       'year',
-      'startDay',
+      'weekStart',
       'minDate',
       'maxDate',
       'selectable',
@@ -368,15 +372,16 @@ export class TosiMonth extends Component<MonthParts> {
     selected: boolean
     inRange: boolean
     inMonth: boolean
+    isWeekend: boolean
     isToday: boolean
   }>
   render() {
     const { week, days, jump, month, year, previous, next } = this.parts
     this.selectedDays = this.value ? this.value.split(',') : []
     const firstOfMonth = dateFromYMD(this.year, this.month, 1)
-    const startDay = new Date(
+    const weekStart = new Date(
       firstOfMonth.valueOf() -
-        ((7 + firstOfMonth.getDay() - this.startDay) % 7) * DAY_MS
+        ((7 + firstOfMonth.getDay() - this.weekStart) % 7) * DAY_MS
     )
     const nextMonth = this.month === 12 ? 1 : this.month + 1
     const lastOfMonth = new Date(
@@ -388,16 +393,21 @@ export class TosiMonth extends Component<MonthParts> {
     )
     const endDay = new Date(
       lastOfMonth.valueOf() +
-        ((7 + this.endDay - lastOfMonth.getDay()) % 7) * DAY_MS
+        ((this.weekStart * 2 + 5 + this.endDay - lastOfMonth.getDay()) % 7) *
+          DAY_MS
     )
 
     const weekDays = WEEK.map(
       (day: number) =>
-        new Date(startDay.valueOf() + day * DAY_MS).toString().split(' ')[0]
+        new Date(weekStart.valueOf() + day * DAY_MS).toString().split(' ')[0]
     )
     this.days = []
     const today = new Date().toISOString().split('T')[0]
-    for (let day = startDay.valueOf(); day <= endDay.valueOf(); day += DAY_MS) {
+    for (
+      let day = weekStart.valueOf();
+      day <= endDay.valueOf();
+      day += DAY_MS
+    ) {
       const date = new Date(day)
       const dateString = date.toISOString().split('T')[0]
       this.days.push({
@@ -405,6 +415,7 @@ export class TosiMonth extends Component<MonthParts> {
         selected: false,
         inMonth: date.getMonth() + 1 === this.month,
         isToday: dateString === today,
+        isWeekend: date.getDay() % 6 === 0,
         inRange: !!(
           this.from &&
           dateString >= this.from &&
@@ -443,6 +454,7 @@ export class TosiMonth extends Component<MonthParts> {
         if (this.checkDay(dateString)) {
           classes.push('checked')
         }
+        classes.push(day.isWeekend ? 'weekend' : 'weekday')
         if (this.range) {
           if (to === dateString) {
             classes.push('range-end')
@@ -467,6 +479,7 @@ export class TosiMonth extends Component<MonthParts> {
         return element
       })
     )
+    // @ts-ignore-error tsc is too stupid to realize it gets assigned
     if (focusElement) focusElement.focus()
   }
 }
@@ -514,6 +527,9 @@ export const tosiMonth = TosiMonth.elementCreator({
     },
     ':host .date': {
       cursor: 'default',
+    },
+    ':host .weekend': {
+      background: varDefault.monthWeekendBackground('#eee'),
     },
     ':host .date:not(.in-month)': {
       opacity: 0.5,

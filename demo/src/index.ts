@@ -132,7 +132,7 @@ bind(document.body, 'prefs.theme', {
   },
 })
 
-bind(document.body, 'prefs.highContrast', {
+bind(document.body, prefs.highContrast, {
   toDOM(element, highContrast) {
     element.classList.toggle('high-contrast', highContrast.valueOf())
   },

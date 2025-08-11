@@ -14,7 +14,7 @@ export declare class TosiMonth extends Component<MonthParts> {
     year: number;
     minDate: string;
     maxDate: string;
-    startDay: number;
+    weekStart: number;
     selectable: boolean;
     multiple: boolean;
     range: boolean;
@@ -52,6 +52,7 @@ export declare class TosiMonth extends Component<MonthParts> {
         selected: boolean;
         inRange: boolean;
         inMonth: boolean;
+        isWeekend: boolean;
         isToday: boolean;
     }>;
     render(): void;
