@@ -9025,7 +9025,7 @@ var xinTagList = XinTagList.elementCreator({
   }
 });
 // src/version.ts
-var version = "1.0.2";
+var version = "1.0.3";
 // demo/src/style.ts
 var brandColor = a.fromCss("#EE257B");
 var colors = {
