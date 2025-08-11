@@ -8821,7 +8821,7 @@ var xinTag = XinTag.elementCreator({
       justifyContent: "center",
       height: Hn.spacing150,
       width: Hn.spacing150,
-      "--text-color": Hn.tagCloseButtonColor,
+      color: Hn.tagCloseButtonColor,
       background: Hn.tagCloseButtonBg,
       borderRadius: sn.tagCloseButtonRadius("99px"),
       opacity: Hn.tagButtonOpacity

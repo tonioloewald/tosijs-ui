@@ -172,7 +172,7 @@ export const xinTag = XinTag.elementCreator({
       justifyContent: 'center',
       height: vars.spacing150,
       width: vars.spacing150,
-      '--text-color': vars.tagCloseButtonColor,
+      color: vars.tagCloseButtonColor,
       background: vars.tagCloseButtonBg,
       borderRadius: varDefault.tagCloseButtonRadius('99px'),
       opacity: vars.tagButtonOpacity,
