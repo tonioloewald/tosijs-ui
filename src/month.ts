@@ -39,6 +39,10 @@ The value of the component is an ISO date string, as per `<input type="date">`.
 `week-start` defaults to `0` (Sunday). You can set it to `1` (Monday) or some other value
 if you want.
 
+> There is a proposed API to obtain the first day of the week for the user's locale from
+> [Intl.Locale](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale/getWeekInfo)
+> but it is not yet widely supported.
+
 ```html
 <tosi-month week-start=1 selectable></tosi-month>
 ```

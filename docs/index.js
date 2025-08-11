@@ -9169,7 +9169,7 @@ var styleSpec = {
   blockquote: {
     position: "relative",
     background: Hn.insetBg,
-    margin: "0 48px 48px 0",
+    margin: "0 48px 56px 0",
     borderRadius: Hn.spacing,
     padding: "var(--spacing) calc(var(--spacing) * 2)",
     filter: `drop-shadow(0px 1px 1px ${Hn.shadowColor})`
@@ -9589,7 +9589,8 @@ var docs_default = [
   {
     text: `# tosijs-ui
 
-> xinjs-ui is now tosijs-ui. This is work in progress.
+> \`xinjs-ui\` has been renamed \`tosijs-ui\`. Updating the documentation and links is a
+> work in progress. The goal is for the API to remain stable during the transition.
 
 <!--{ "pin": "top" }-->
 
@@ -12295,6 +12296,10 @@ The value of the component is an ISO date string, as per \`<input type="date">\`
 
 \`week-start\` defaults to \`0\` (Sunday). You can set it to \`1\` (Monday) or some other value
 if you want.
+
+> There is a proposed API to obtain the first day of the week for the user's locale from
+> [Intl.Locale](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale/getWeekInfo)
+> but it is not yet widely supported.
 
 \`\`\`html
 <tosi-month week-start=1 selectable></tosi-month>

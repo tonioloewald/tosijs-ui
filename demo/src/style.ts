@@ -304,10 +304,10 @@ export const styleSpec: XinStyleSheet = {
   blockquote: {
     position: 'relative',
     background: vars.insetBg,
-    margin: '0 48px 48px 0',
+    margin: '0 48px 56px 0',
     borderRadius: vars.spacing,
     padding: 'var(--spacing) calc(var(--spacing) * 2)',
-    filter: `drop-shadow(0px 1px 1px ${vars.shadowColor})`
+    filter: `drop-shadow(0px 1px 1px ${vars.shadowColor})`,
   },
   'blockquote > :first-child': {
     marginTop: '0',
@@ -325,7 +325,7 @@ export const styleSpec: XinStyleSheet = {
     borderRightColor: vars.insetBg,
     position: 'absolute',
     bottom: -20,
-    right: 24
+    right: 24,
   },
   'blockquote::after': {
     content: '" "',

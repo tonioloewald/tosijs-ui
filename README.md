@@ -1,6 +1,7 @@
 # tosijs-ui
 
-> xinjs-ui is now tosijs-ui. This is work in progress.
+> `xinjs-ui` has been renamed `tosijs-ui`. Updating the documentation and links is a
+> work in progress. The goal is for the API to remain stable during the transition.
 
 <!--{ "pin": "top" }-->
 
