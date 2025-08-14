@@ -34,12 +34,14 @@ grid.addEventListener('click', (event) => {
           })
         ],
         target,
-        position: target.dataset.float
+        position: target.dataset.float,
+        remainOnScroll: 'remove',
+        remainOnResize: 'remove'
       })
     )
   } else {
     // position an existing float
-    positionFloat(float, target, target.dataset.float)
+    positionFloat(float, target, target.dataset.float, 'remove', 'remove')
   }
 })
 ```
@@ -73,9 +75,11 @@ grid.addEventListener('click', (event) => {
   display: flex;
   flex-direction: column;
   border-radius: 5px;
-  padding: 10px;
-  background: white;
-  box-shadow: 2px 10px 5px #0004;
+  padding: 10px 15px;
+  background: var(--inset-bg);
+  box-shadow:
+    inset 0 0 0 1px var(--brand-color),
+    2px 10px 5px #0004;
 }
 ```
 
@@ -86,6 +90,8 @@ export interface PopFloatOptions {
   content: HTMLElement | ElementPart[]
   target: HTMLElement
   position?: FloatPosition
+  remainOnResize?: 'hide' | 'remove' | 'remain' // default is 'remove',
+  remainOnScroll?: 'hide' | 'remove' | 'remain' // default is 'remain'
 }
 
 export const popFloat = (options: PopFloatOptions): XinFloat
@@ -99,9 +105,9 @@ Create a `<xin-float>` with the content provided, positioned as specified (or au
 export const positionFloat = (
   element: HTMLElement,
   target: HTMLElement,
-  position?: FloatPosition
-  remainOnScroll?: 'hide' | 'remove' | boolean // default is 'remove'
-  remainOnResize?: 'hide' | 'remove' | boolean // default is 'remove'
+  position?: FloatPosition,
+  remainOnScroll: 'hide' | 'remove' | 'remain' = 'remain'
+  remainOnResize: 'hide' | 'remove' | 'remain' = 'remove',
 ): void
 ```
 
@@ -161,29 +167,35 @@ export interface PopFloatOptions {
   content: HTMLElement | ElementPart[]
   target: HTMLElement
   position?: FloatPosition
+  remainOnScroll?: 'hide' | 'remove' | 'remain'
+  remainOnResize?: 'hide' | 'remove' | 'remain'
 }
 
 export const popFloat = (options: PopFloatOptions): XinFloat => {
-  const { content, target, position } = options
+  const { content, target, position, remainOnScroll, remainOnResize } = options
   const float = Array.isArray(content)
     ? xinFloat(...content)
     : xinFloat(content)
 
-  positionFloat(float, target, position)
+  positionFloat(float, target, position, remainOnScroll, remainOnResize)
   document.body.append(float)
   return float
 }
 
 export const positionFloat = (
-  element: HTMLElement,
+  element: XinFloat,
   target: HTMLElement,
-  position?: FloatPosition
+  position?: FloatPosition,
+  remainOnScroll?: 'hide' | 'remove' | 'remain',
+  remainOnResize?: 'hide' | 'remove' | 'remain'
 ): void => {
   {
     const { position } = getComputedStyle(element)
     if (position !== 'fixed') {
       element.style.position = 'fixed'
     }
+    if (remainOnResize) element.remainOnResize = remainOnResize
+    if (remainOnScroll) element.remainOnScroll = remainOnScroll
     bringToFront(element)
   }
   const { left, top, width, height } = target.getBoundingClientRect()
