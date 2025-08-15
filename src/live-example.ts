@@ -33,6 +33,21 @@ preview.append('Try editing some code and hitting refresh…')
 }
 ```
 
+You can also use Typescript. It will be stripped down to
+Javascript using [sucrase](https://github.com/alangpierce/sucrase).
+
+```js
+function makeElement(tag: string, ...children: Array<string | HTMLElement>): HTMLElement {
+  const element = document.createElement(tag)
+  element.append(...children)
+  return element
+}
+
+preview.append(
+  makeElement('h2', 'hello typescript')
+)
+```
+
 You can also create a live-example from HTML. And if you add the `persist-to-dom`
 attribute, it will persist your code to the DOM.
 
@@ -280,6 +295,32 @@ export class LiveExample extends Component<ExampleParts> {
     })
   }
 
+  handleShortcuts = (event: KeyboardEvent) => {
+    if (event.metaKey || event.ctrlKey) {
+      let block = false
+      switch (event.key) {
+        case 's':
+        case 'r':
+          this.refresh()
+          block = true
+          break
+        case '/':
+          this.flipLayout()
+          break
+        case 'c':
+          if (event.shiftKey) {
+            this.copy()
+            block = true
+          }
+          break
+      }
+      if (block) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+    }
+  }
+
   content = () => [
     div(
       { part: 'example' },
@@ -297,6 +338,7 @@ export class LiveExample extends Component<ExampleParts> {
       {
         class: 'code-editors',
         part: 'codeEditors',
+        onKeydown: this.handleShortcuts,
         hidden: true,
       },
       h4('Code'),
@@ -345,7 +387,7 @@ export class LiveExample extends Component<ExampleParts> {
           ),
           button(
             {
-              title: 'flip direction',
+              title: 'flip direction (⌘/ | ^/)',
               class: 'transparent',
               onClick: this.flipLayout,
             },
@@ -353,7 +395,7 @@ export class LiveExample extends Component<ExampleParts> {
           ),
           button(
             {
-              title: 'copy as markdown',
+              title: 'copy as markdown (⌘⇧C | ^⇧C)',
               class: 'transparent',
               onClick: this.copy,
             },
@@ -361,7 +403,7 @@ export class LiveExample extends Component<ExampleParts> {
           ),
           button(
             {
-              title: 'reload',
+              title: 'reload (⌘R | ^R)',
               class: 'transparent',
               onClick: this.refreshRemote,
             },
@@ -500,22 +542,17 @@ export class LiveExample extends Component<ExampleParts> {
           )
         }
       }
-      /*
-      let sourceHTML = []
-      if (this.html)
-        sourceHTML.push(`<pre class="language-html">${this.html}</pre>`)
-      if (this.css)
-        sourceHTML.push(`<pre class="language-css">${this.css}</pre>`)
-      if (this.js) sourceHTML.push(`<pre class="language-js">${this.js}</pre>`)
-      sources.innerHTML = sourceHTML.join('\n')
-      */
     }
   }
 
-  refresh = () => {
+  refresh = async () => {
     if (this.remoteId !== '') {
       return
     }
+
+    const { transform } = await import(
+      'https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm'
+    )
 
     const { example, style } = this.parts
 
@@ -532,7 +569,10 @@ export class LiveExample extends Component<ExampleParts> {
     const context = { preview, ...this.context }
     try {
       // @ts-expect-error ts is wrong and it makes me so mad
-      const func = new AsyncFunction(...Object.keys(context), this.js)
+      const func = new AsyncFunction(
+        ...Object.keys(context),
+        transform(this.js, { transforms: ['typescript'] }).code
+      )
       func(...Object.values(context)).catch((err: Error) => console.error(err))
       if (this.persistToDom) {
         this.updateSources()

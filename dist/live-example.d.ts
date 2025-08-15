@@ -41,6 +41,7 @@ export declare class LiveExample extends Component<ExampleParts> {
     get isMaximized(): boolean;
     flipLayout: () => void;
     exampleMenu: () => void;
+    handleShortcuts: (event: KeyboardEvent) => void;
     content: () => any[];
     connectedCallback(): void;
     disconnectedCallback(): void;
@@ -53,7 +54,7 @@ export declare class LiveExample extends Component<ExampleParts> {
     openEditorWindow: () => void;
     refreshRemote: () => void;
     updateSources: () => void;
-    refresh: () => void;
+    refresh: () => Promise<void>;
     initFromElements(elements: HTMLElement[]): void;
     showDefaultTab(): void;
     render(): void;

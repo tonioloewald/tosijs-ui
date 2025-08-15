@@ -1,4 +1,19 @@
+var __create = Object.create;
+var __getProtoOf = Object.getPrototypeOf;
 var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __toESM = (mod, isNodeMode, target) => {
+  target = mod != null ? __create(__getProtoOf(mod)) : {};
+  const to = isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target;
+  for (let key of __getOwnPropNames(mod))
+    if (!__hasOwnProp.call(to, key))
+      __defProp(to, key, {
+        get: () => mod[key],
+        enumerable: true
+      });
+  return to;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, {
@@ -8,6 +23,13 @@ var __export = (target, all) => {
       set: (newValue) => all[name] = () => newValue
     });
 };
+var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
+  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
+}) : x)(function(x) {
+  if (typeof require !== "undefined")
+    return require.apply(this, arguments);
+  throw Error('Dynamic require of "' + x + '" is not supported');
+});
 
 // node_modules/tosijs/dist/module.js
 var exports_module = {};
@@ -5657,6 +5679,31 @@ class LiveExample extends M {
       ]
     });
   };
+  handleShortcuts = (event) => {
+    if (event.metaKey || event.ctrlKey) {
+      let block = false;
+      switch (event.key) {
+        case "s":
+        case "r":
+          this.refresh();
+          block = true;
+          break;
+        case "/":
+          this.flipLayout();
+          break;
+        case "c":
+          if (event.shiftKey) {
+            this.copy();
+            block = true;
+          }
+          break;
+      }
+      if (block) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }
+  };
   content = () => [
     div7({ part: "example" }, style({ part: "style" }), button7({
       title: "example menu",
@@ -5666,6 +5713,7 @@ class LiveExample extends M {
     div7({
       class: "code-editors",
       part: "codeEditors",
+      onKeydown: this.handleShortcuts,
       hidden: true
     }, h4("Code"), button7({
       title: "close code",
@@ -5692,15 +5740,15 @@ class LiveExample extends M {
       class: "transparent",
       onClick: this.redo
     }, icons.cornerUpRight()), button7({
-      title: "flip direction",
+      title: "flip direction (⌘/ | ^/)",
       class: "transparent",
       onClick: this.flipLayout
     }, icons.columns({ class: "layout-indicator" })), button7({
-      title: "copy as markdown",
+      title: "copy as markdown (⌘⇧C | ^⇧C)",
       class: "transparent",
       onClick: this.copy
     }, icons.copy()), button7({
-      title: "reload",
+      title: "reload (⌘R | ^R)",
       class: "transparent",
       onClick: this.refreshRemote
     }, icons.refreshCw())))),
@@ -5802,10 +5850,11 @@ class LiveExample extends M {
       }
     }
   };
-  refresh = () => {
+  refresh = async () => {
     if (this.remoteId !== "") {
       return;
     }
+    const { transform } = await import("https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm");
     const { example, style: style2 } = this.parts;
     const preview = div7({ class: "preview" });
     preview.innerHTML = this.html;
@@ -5818,7 +5867,7 @@ class LiveExample extends M {
     }
     const context = { preview, ...this.context };
     try {
-      const func = new AsyncFunction(...Object.keys(context), this.js);
+      const func = new AsyncFunction(...Object.keys(context), transform(this.js, { transforms: ["typescript"] }).code);
       func(...Object.values(context)).catch((err) => console.error(err));
       if (this.persistToDom) {
         this.updateSources();
@@ -10535,6 +10584,21 @@ preview.append('Try editing some code and hitting refresh…')
   from { color: blue }
   to { color: red }
 }
+\`\`\`
+
+You can also use Typescript. It will be stripped down to
+Javascript using [sucrase](https://github.com/alangpierce/sucrase).
+
+\`\`\`js
+function makeElement(tag: string, ...children: Array<string | HTMLElement>): HTMLElement {
+  const element = document.createElement(tag)
+  element.append(...children)
+  return element
+}
+
+preview.append(
+  makeElement('h2', 'hello typescript')
+)
 \`\`\`
 
 You can also create a live-example from HTML. And if you add the \`persist-to-dom\`
