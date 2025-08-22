@@ -3,6 +3,30 @@
 
 `<xin-word>` is a simple and easily extensible `document.execCommand` WYSIWYG editor with some conveniences.
 
+### `default` widgets
+
+```html
+<xin-word>
+<h3>Heading</h3>
+<p>And some <b>text</b></p>
+</xin-word>
+```
+```css
+xin-word {
+  background: white;
+}
+
+xin-word [part="toolbar"] {
+  background: #f8f8f8;
+}
+
+xin-word [part="doc"] {
+  padding: 20px;
+}
+```
+
+### `minimal` widgets
+
 ```html
 <xin-word widgets="minimal">
 <h3>Heading</h3>
@@ -127,11 +151,11 @@ const paragraphStyleWidgets = () => [
   commandButton('center', 'justifyCenter', icons.alignCenter()),
   commandButton('right-justify', 'justifyRight', icons.alignRight()),
   spacer(),
-  commandButton('bullet list', 'insertUnorderedList', icons.listBullet()),
-  commandButton('numbered list', 'insertOrderedList', icons.listNumber()),
+  commandButton('bullet list', 'insertUnorderedList', icons.list()),
+  commandButton('numbered list', 'insertOrderedList', icons.hash()),
   spacer(),
-  commandButton('indent', 'indent', icons.blockIndent()),
-  commandButton('indent', 'outdent', icons.blockOutdent()),
+  commandButton('indent', 'indent', icons.indent()),
+  commandButton('indent', 'outdent', icons.outdent()),
 ]
 
 const characterStyleWidgets = () => [
@@ -339,11 +363,14 @@ export const richText = RichText.elementCreator({
       height: '100%',
     },
     ':host [part="toolbar"]': {
-      padding: '4px',
+      padding: 4,
       display: 'flex',
       gap: '0px',
       flex: '0 0 auto',
       flexWrap: 'wrap',
     },
+    ':host [part="toolbar"] > button': {
+      _xinIconSize: 18,
+    }
   },
 }) as ElementCreator<RichText>
