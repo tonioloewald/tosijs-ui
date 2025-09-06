@@ -1,6 +1,9 @@
 /*#
 # dialog
 
+`<tosi-dialog>` is a simple wrapper around the standard HTML `<dialog>` element designed
+to make creating dialogs as convenient as possible.
+
 ```html
 <button>Show Dialog</button>
 <tosi-dialog>
@@ -8,21 +11,37 @@
   <p>
     Here is some text
   </p>
+  <button slot="footer">Custom Button</button>
 </tosi-dialog>
 ```
 ```js
 const { on } = tosijs
+const { postNotification } = tosijsui
 
 on(
   preview.querySelector('button'),
   'click',
-  () => {
-    preview.querySelector('tosi-dialog').showModal()
+  async () => {
+    const response = await preview.querySelector('tosi-dialog').showModal()
+    postNotification({
+      message: `user clicked ${response}`,
+      duration: 2
+    })
   }
 )
 ```
 
 ## Static Functions
+
+`TosiDialog` provides static async functions to replace the built-in dialogs provided by
+the browser.
+
+- `alert(message: string, title = 'Alert'): Promise<undefined>`
+- `confirm(message: string, title = 'Confirm'): Promise<boolean>`
+- `prompt(message: string, title = 'Prompt', currentValue = ''): Promise<string | null> `
+
+You can look at the code that implements them to see how to leverage `TosiDialog` to build
+more complex, bespoke dialogs that can be used just as conveniently.
 
 ```js
 const { elements } = tosijs
@@ -50,7 +69,7 @@ preview.append(
           })
         }
       },
-      'TosiDialog.alert()',
+      'TosiDialog.alert',
     ),
     button(
       {
@@ -62,7 +81,7 @@ preview.append(
           })
         }
       },
-      'TosiDialog.confirm()',
+      'TosiDialog.confirm',
     ),
     button(
       {
@@ -74,7 +93,7 @@ preview.append(
           })
         }
       },
-      'TosiDialog.prompt()',
+      'TosiDialog.prompt',
     ),
   ),
 )
@@ -86,9 +105,9 @@ preview.append(
 ```
 
 */
-import { Component, PartsMap, elements }  from 'tosijs'
+import { Component, PartsMap, elements, on }  from 'tosijs'
 
-const { dialog, button, header, footer, slot, h3, p, label, input, div } = elements
+const { dialog, button, header, footer, xinSlot, h3, p, label, input, div } = elements
 
 interface DialogParts extends PartsMap {
   dialog: HTMLDialogElement
@@ -101,6 +120,7 @@ export class TosiDialog extends Component {
       const alertDialog = tosiDialog(
         {
           removeOnClose: true,
+          closeOnBackgroundClick: true,
           dialogWillClose() {
             resolve()
           }
@@ -131,7 +151,7 @@ export class TosiDialog extends Component {
           { slot: 'header'},
           title
         ),
-        div(
+        p(
           message
         ),
         button(
@@ -197,14 +217,19 @@ export class TosiDialog extends Component {
     })
   }
   
-  open = false
   removeOnClose = false
   closeOnBackgroundClick = false
   
   constructor() {
     super()
     
-    this.initAttributes('open', 'removeOnClose', 'closeOnBackgroundClick')
+    this.initAttributes('removeOnClose', 'closeOnBackgroundClick')
+    
+    on(this, 'click', () => {
+      if (this.closeOnBackgroundClick) {
+        this.close()
+      }
+    })
   }
   
   dialogWillClose = (reason = 'cancel') => {
@@ -215,20 +240,21 @@ export class TosiDialog extends Component {
     this.parts.ok.focus()
   }
   
-  connectedCallback() {
-    super.connectedCallback()
-    
-    requestAnimationFrame(() => {
-      this.initialFocus()
-    })
-  }
+  #modalResolution = () => {}
   
-  showModal = () => {
-    this.parts.dialog.showModal()
+  showModal = (): Promise<string | null> => {
+    return new Promise(resolve => {
+      this.#modalResolution = resolve
+      this.parts.dialog.showModal()
+      requestAnimationFrame(() => {
+        this.initialFocus()
+      })
+    })
   }
   
   close = (reason: string) => {
     this.dialogWillClose(reason)
+    this.#modalResolution(reason)
     this.parts.dialog.close()
     if (this.removeOnClose) {
       this.remove()
@@ -242,20 +268,14 @@ export class TosiDialog extends Component {
   content = () => dialog(
     { part: 'dialog' },
     header(
-      slot({name: 'header'}),
+      xinSlot({name: 'header'}),
     ),
-    slot(),
+    xinSlot(),
     footer(
-      slot({name: 'footer'}),
+      xinSlot({name: 'footer'}),
       button({part: 'ok', onClick: this.ok}, 'OK'),
     ),
   )
-  
-  render() {
-    super.render()
-    
-    // this.parts.dialog.open = this.open
-  }
 }
 
 export const tosiDialog = TosiDialog.elementCreator({
