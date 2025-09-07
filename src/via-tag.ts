@@ -14,8 +14,8 @@ has loaded and otherwise behave as much like `import()` as possible.
 This example uses `scriptTag` and `styleSheet` to load [quilljs](https://quilljs.com) on-the-fly.
 
 ```js
-const { elements } = tosijs
-const { scriptTag, styleSheet } = tosijsui
+import { elements } from 'tosijs'
+import { scriptTag, styleSheet } from 'tosijs-ui'
 
 const toolbarOptions = [
   [{ header: [1, 2, 3, 4, false] }],

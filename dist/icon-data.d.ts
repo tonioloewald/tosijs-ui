@@ -297,9 +297,13 @@ declare const _default: {
     alignLeft: string;
     heart: string;
     trendingUp: string;
+    listBullet: string;
+    indent: string;
     fontBold: string;
     fontItalic: string;
     fontUnderline: string;
+    outdent: string;
+    listNumber: string;
     resize: string;
     bug: string;
     blog: string;

@@ -46,7 +46,7 @@ For mouse events, a "tracker" element is thrown up in front of everything for th
 }
 ```
 ```js
-const { trackDrag } = tosijsui
+import { trackDrag } from 'tosijs-ui'
 
 function dragItem(event) {
   const draggable = event.target

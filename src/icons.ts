@@ -27,8 +27,8 @@ icon with the class `icon-chevron-down`.
 
 ```js
 const  { tosi } = tosijs
-const { icons, svgIcon, postNotification } = tosijsui
-const { div } = tosijs.elements
+import { icons, svgIcon, postNotification } from 'tosijs-ui'
+import { div } from 'tosijs'.elements
 
 const { iconDemo } = tosi({
   iconDemo: {
@@ -175,8 +175,8 @@ how it's styled.
 ## SVGs as data-urls
 
 ```js
-const { elements } = tosijs
-const { icons, svg2DataUrl } = tosijsui
+import { elements } from 'tosijs'
+import { icons, svg2DataUrl } from 'tosijs-ui'
 
 preview.append(
   elements.span({
@@ -435,10 +435,11 @@ export class SvgIcon extends WebComponent {
   }
 
   render(): void {
+    super.render()
     this.textContent = ''
     const style: XinStyleRule = {}
     if (this.size) {
-      style.height = this.size
+      style.height = this.size + 'px'
       this.style.setProperty('--xin-icon-size', `${this.size}px`)
     }
     if (this.stroke) {

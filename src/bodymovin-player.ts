@@ -6,8 +6,8 @@ A [lottie](https://airbnb.io/lottie/#/web) (a.k.a. **bodymovin**) player.
 It's designed to work like an `<img>` element (just set its `src` attribute).
 
 ```js
-const { icons, popFloat } = tosijsui
-const { div, label, input, select, option, span } = tosijs.elements
+import { icons, popFloat } from 'tosijs-ui'
+import { div, label, input, select, option, span } from 'tosijs'.elements
 
 const rocket = preview.querySelector('xin-lottie')
 setTimeout(

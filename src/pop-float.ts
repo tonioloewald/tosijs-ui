@@ -11,8 +11,8 @@ purpose admirably, turn out to have some annoying limitation that prevents them
 handling the specific case at hand.
 
 ```js
-const { popFloat, positionFloat } = tosijsui
-const { button } = tosijs.elements
+import { popFloat, positionFloat } from 'tosijs-ui'
+import { button } from 'tosijs'.elements
 const grid = preview.querySelector('.grid')
 
 grid.addEventListener('click', (event) => {

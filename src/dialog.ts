@@ -15,8 +15,8 @@ to make creating dialogs as convenient as possible.
 </tosi-dialog>
 ```
 ```js
-const { on } = tosijs
-const { postNotification } = tosijsui
+import { on } from 'tosijs'
+import { postNotification } from 'tosijs-ui'
 
 on(
   preview.querySelector('button'),
@@ -44,8 +44,8 @@ You can look at the code that implements them to see how to leverage `TosiDialog
 more complex, bespoke dialogs that can be used just as conveniently.
 
 ```js
-const { elements } = tosijs
-const { TosiDialog, postNotification } = tosijsui
+import { elements } from 'tosijs'
+import { TosiDialog, postNotification } from 'tosijs-ui'
 
 const { button, div } = elements
 

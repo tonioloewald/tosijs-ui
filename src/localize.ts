@@ -48,8 +48,8 @@ localize the string, and then append the ellipsis.
 ## `setLocale(language: string)`
 
 ```js
-const { button, p } = tosijs.elements
-const { setLocale } = tosijsui
+import { button, p } from 'tosijs'.elements
+import { setLocale } from 'tosijs-ui'
 
 preview.append(
   p(
@@ -117,7 +117,7 @@ xin-localized {
 }
 ```
 ```js
-const { xinLocalized, localize } = tosijsui
+import { xinLocalized, localize } from 'tosijs-ui'
 
 preview.append(xinLocalized({
   refString: 'localized placeholder',

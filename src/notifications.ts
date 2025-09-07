@@ -37,7 +37,7 @@ when an operation completes). This will *also* call any `close` callback functio
 provided. (The progress demos in the example exercise this functionality.)
 
 ```js
-const { postNotification, icons } = tosijsui
+import { postNotification, icons } from 'tosijs-ui'
 
 const form = preview.querySelector('xin-form')
 const submit = preview.querySelector('.submit')

@@ -13,8 +13,8 @@ menuItems, and (because it persists in the DOM) supports keyboard
 shortcuts.
 
 ```js
-const { popMenu, localize, xinMenu, postNotification, xinLocalized, icons } = tosijsui
-const { elements } = tosijs
+import { popMenu, localize, xinMenu, postNotification, xinLocalized, icons } from 'tosijs-ui'
+import { elements } from 'tosijs'
 
 let picked = ''
 let testingEnabled = false
@@ -176,8 +176,8 @@ preview.append(
 ## Overflow test
 
 ```js
-const { popMenu, icons, postNotification } = tosijsui
-const { elements } = tosijs
+import { popMenu, icons, postNotification } from 'tosijs-ui'
+import { elements } from 'tosijs'
 
 preview.querySelector('button').addEventListener('click', (event) => {
   popMenu({
@@ -279,8 +279,8 @@ To see this in action, see the example below, or look at the
 to render column names when you show hidden columns.
 
 ```js
-const { elements } = tosijs
-const { xinLocalized, localize, icons, popMenu, postNotification } = tosijsui
+import { elements } from 'tosijs'
+import { xinLocalized, localize, icons, popMenu, postNotification } from 'tosijs-ui'
 const { button } = elements
 const makeItem = s => ({
   caption: s,
