@@ -114,8 +114,8 @@ interface DialogParts extends PartsMap {
   ok: HTMLButtonElement
 }
 
-export class TosiDialog extends Component {
-  static async alert(message: string, title = 'Alert'): Promise<undefined> {
+export class TosiDialog extends Component<DialogParts> {
+  static async alert(message: string, title = 'Alert'): Promise<void> {
     return new Promise(resolve => {
       const alertDialog = tosiDialog(
         {
@@ -143,7 +143,7 @@ export class TosiDialog extends Component {
       const confirmDialog = tosiDialog(
         {
           removeOnClose: true,
-          dialogWillClose(reason) {
+          dialogWillClose(reason?: string) {
             resolve(reason === 'confirm')
           }
         },
@@ -175,7 +175,7 @@ export class TosiDialog extends Component {
       const promptDialog = tosiDialog(
         {
           removeOnClose: true,
-          dialogWillClose(reason) {
+          dialogWillClose(reason?: string) {
             resolve (reason === 'confirm' ? inputField.value : null)
           },
           initialFocus() {
@@ -240,7 +240,7 @@ export class TosiDialog extends Component {
     this.parts.ok.focus()
   }
   
-  #modalResolution = () => {}
+  #modalResolution = (outcome: string | null) => {}
   
   showModal = (): Promise<string | null> => {
     return new Promise(resolve => {
@@ -252,7 +252,7 @@ export class TosiDialog extends Component {
     })
   }
   
-  close = (reason: string) => {
+  close = (reason = 'cancel') => {
     this.dialogWillClose(reason)
     this.#modalResolution(reason)
     this.parts.dialog.close()
