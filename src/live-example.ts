@@ -11,7 +11,7 @@ is, by far, the master. And it's still super lightweight.
 ```js
 // this code executes in an async function body
 // it has tosijs, tosijsui, and preview (the preview div) available as local variables
-const { div } = tosijs.elements
+import { div } from 'tosijs'.elements
 preview.append(div({class: 'example'}, 'fiddle de dee!'))
 preview.append('Try editing some code and hitting refresh…')
 ```
@@ -91,6 +91,20 @@ example itself lighter-weight.
 
 ## `context`
 
+```html
+<p>testing</p>
+```
+```js
+import { elements } from 'tosijs'
+import { svgIcon } from 'tosijs-ui'
+
+preview.querySelector('p').style.color = 'red'
+preview.append(
+  elements.p('another paragraph'),
+  svgIcon({icon: 'tosiPlatform', size: 64})
+)
+```
+
 A `<xin-example>` is given a `context` object {[key: string]: any}, which is the
 set of values available in the javascript's execution context (it is wrapped in an
 async function and passed those values). The context always includes `preview`
@@ -121,8 +135,8 @@ import { icons } from 'tosijs-ui'
 is rewritten as:
 
 ```
-const { elements, tosi } = tosijs
-const { icons } = tosijsui
+import { elements, tosi } from 'tosijs'
+import { icons } from 'tosijs-ui'
 ```
 
 The `LiveExample` class provides the static `insertExamples(element: HTMLElement)`
