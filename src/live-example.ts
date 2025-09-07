@@ -89,13 +89,41 @@ windows.
 completely separate component that can be used for other things, and make the
 example itself lighter-weight.
 
-## context
+## `context`
 
-A `<xin-example>` can be given a `context` object {[key: string]: any}, which is the
+A `<xin-example>` is given a `context` object {[key: string]: any}, which is the
 set of values available in the javascript's execution context (it is wrapped in an
-async function and passed those values). By default, that context comprises `preview`
-(the `<div>` in which the example is rendered), `tosijs` (`* from 'tosijs'`),
-and `tosijsui` (`* from 'tosijs-ui'`).
+async function and passed those values). The context always includes `preview`
+which is the element containing the HTML for the example.
+
+If the context keys have hyphens in them, these are removed to allow the examples
+to `import` libraries:
+
+So we provide context like this:
+
+```
+import * as tosijs from 'tosjs'
+import * as tosijsui from 'tosijs-ui'
+
+...
+
+context = {
+  tosijs,
+  'tosijs-ui': tosijsui
+}
+```
+
+```
+import { elements, tosi } from 'tosijs'
+import { icons } from 'tosijs-ui'
+```
+
+is rewritten as:
+
+```
+const { elements, tosi } = tosijs
+const { icons } = tosijsui
+```
 
 The `LiveExample` class provides the static `insertExamples(element: HTMLElement)`
 function that will replace any sequence of
@@ -568,10 +596,14 @@ export class LiveExample extends Component<ExampleParts> {
 
     const context = { preview, ...this.context }
     try {
+      let code = this.js
+      for(const moduleName of Object.keys(this.context)) {
+        code = code.replace(new RegExp(`import \\{(.*)\\} from '${moduleName}'`, 'g'), `const {$1} = ${moduleName.replace(/-/g, '')}`)
+      }
       // @ts-expect-error ts is wrong and it makes me so mad
       const func = new AsyncFunction(
-        ...Object.keys(context),
-        transform(this.js, { transforms: ['typescript'] }).code
+        ...Object.keys(context).map((key: string) => key.replace(/-/g, '')),
+        transform(code, { transforms: ['typescript'] }).code
       )
       func(...Object.values(context)).catch((err: Error) => console.error(err))
       if (this.persistToDom) {
