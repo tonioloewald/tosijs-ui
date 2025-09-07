@@ -10,7 +10,7 @@ If you view this example with an XR-enabled device, such as the
 as an AR scene.
 
 ```js
-const { b3d, gamepadText, xrControllers, xrControllersText } = tosijsui
+import { b3d, gamepadText, xrControllers, xrControllersText } from 'tosijs-ui'
 
 preview.append(b3d({
   async sceneCreated(element, BABYLON) {
@@ -96,8 +96,8 @@ Here's a simple example of a terrain mesh comprising 125k triangles, 50% of whic
 takes an array of numbers that use a linear profile to change the landform.
 
 ```js
-const { b3d } = tosijsui
-const { MoreMath } = tosijs
+import { b3d } from 'tosijs-ui'
+import { MoreMath } from 'tosijs'
 
 const debugCutoff = 0.5
 const defaultProfile = [0, 1, 5, 8, 10].map(x => x/10)

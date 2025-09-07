@@ -4,7 +4,7 @@
 `<xin-ab>` provides a simple method for implementing A|B-testing.
 
 ```js
-const { AbTest } = tosijsui
+import { AbTest } from 'tosijs-ui'
 
 function randomize() {
   const conditions = {

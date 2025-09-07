@@ -42,7 +42,7 @@ built in `<select>` element that addresses its various shortcomings.
 …to check for focus stealing</pre>
 ```
 ```js
-const { icons } = tosijsui
+import { icons } from 'tosijs-ui'
 
 const captions = preview.querySelector('.captions')
 

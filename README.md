@@ -5,7 +5,7 @@
 
 <!--{ "pin": "top" }-->
 
-[ui.xinjs.net live demo](https://ui.xinjs.net) | [xinjs](https://xinjs.net) | [discord](https://discord.gg/ramJ9rgky5) | [github](https://github.com/tonioloewald/xinjs-ui#readme) | [npm](https://www.npmjs.com/package/xinjs-ui)
+[ui.xinjs.net live demo](https://ui.xinjs.net) | [xinjs](https://xinjs.net) | [discord](https://discord.gg/ramJ9rgky5) | [github](https://github.com/tonioloewald/tosijs-ui#readme) | [npm](https://www.npmjs.com/package/tosijs-ui)
 
 <center>
   <xin-icon class="logo" icon="tosiUi" size=300></xin-icon>
@@ -54,8 +54,8 @@ as globals which contain all the things exported by `tosijs` and `tosijs-ui`.
 <script src="https://ui.xinjs.net/iife.js"></script>
 <button id="menu">Menu <xin-icon icon="chevronDown"></xin-icon></button>
 <script>
-  const { elements } = tosijs
-  const { popMenu, icons } = tosijsui
+  import { elements } from 'tosijs'
+  import { popMenu, icons } from 'tosijs-ui'
 
   const button = { elements }
 
@@ -109,7 +109,7 @@ document.body.append(markdownViewer('# hello world\nthis is a test'))
 ```
 
 ```js
-const { markdownViewer } = tosijsui
+import { markdownViewer } from 'tosijs-ui'
 
 preview.append(
   markdownViewer(`

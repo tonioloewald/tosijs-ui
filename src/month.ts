@@ -9,7 +9,7 @@ method will be called.
 The current date is `[part="today"]` and can easily be targeted for styling.
 
 ```js
-const { tosiMonth, postNotification } = tosijsui
+import { tosiMonth, postNotification } from 'tosijs-ui'
 
 preview.append(tosiMonth({
   monthChanged(year, month) {

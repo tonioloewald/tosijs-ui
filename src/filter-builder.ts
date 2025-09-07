@@ -5,8 +5,8 @@ Automatically creates `ArrayFilter` functions `(a: any[]) => any[]` based on the
 macOS Finder-inspired interface, using an easily customizable / extensible collection of `Filter` objects.
 
 ```js
-const { elements } = tosijs
-const { dataTable, filterBuilder, availableFilters } = tosijsui
+import { elements } from 'tosijs'
+import { dataTable, filterBuilder, availableFilters } from 'tosijs-ui'
 
 const sourceWords = ['acorn', 'bubblegum', 'copper', 'daisy', 'ellipse', 'fabulous', 'gerund', 'hopscotch', 'idiom', 'joke']
 function randomWords () {

@@ -1575,6 +1575,7 @@ __export(exports_src, {
   trackDrag: () => trackDrag,
   tosijs: () => exports_module,
   tosiMonth: () => tosiMonth,
+  tosiDialog: () => tosiDialog,
   tabSelector: () => tabSelector,
   svgIcon: () => svgIcon,
   svg2DataUrl: () => svg2DataUrl,
@@ -1641,6 +1642,7 @@ __export(exports_src, {
   XinField: () => XinField,
   XinCarousel: () => XinCarousel,
   TosiMonth: () => TosiMonth,
+  TosiDialog: () => TosiDialog,
   TabSelector: () => TabSelector,
   SvgIcon: () => SvgIcon,
   SizeBreak: () => SizeBreak,
@@ -2026,9 +2028,13 @@ var icon_data_default = {
   alignLeft: '<svg class="stroked" viewBox="0 0 24 24"><line x1="17" y1="10" x2="3" y2="10"></line><line x1="21" y1="6" x2="3" y2="6"></line><line x1="21" y1="14" x2="3" y2="14"></line><line x1="17" y1="18" x2="3" y2="18"></line></svg>',
   heart: '<svg class="stroked" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>',
   trendingUp: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
+  listBullet: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M21,6 C21,6,10,6,10,6"/><path style="" d="M21,12 C21,12,10,12,10,12"/><path style="" d="M21,18 C21,18,10,18,10,18"/><path style="" d="M5.5,5 C6.05,5,6.5,5.45,6.5,6 C6.5,6.55,6.05,7,5.5,7 C4.95,7,4.5,6.55,4.5,6 C4.5,5.45,4.95,5,5.5,5 z"/><path style="" d="M5.5,11 C6.05,11,6.5,11.45,6.5,12 C6.5,12.55,6.05,13,5.5,13 C4.95,13,4.5,12.55,4.5,12 C4.5,11.45,4.95,11,5.5,11 z"/><path style="" d="M5.5,17 C6.05,17,6.5,17.45,6.5,18 C6.5,18.55,6.05,19,5.5,19 C4.95,19,4.5,18.55,4.5,18 C4.5,17.45,4.95,17,5.5,17 z"/></g></svg> ',
+  indent: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M21,10 C21,10,8,10,8,10"/><path style="" d="M21,6 C21,6,8,6,8,6"/><path style="" d="M21,14 C21,14,8,14,8,14"/><path style="" d="M21,18 C21,18,8,18,8,18"/><path style="" d="M2.5,9 C2.5,9,5.5,12,5.5,12 C5.5,12,2.5,15,2.5,15"/></g></svg> ',
   fontBold: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M13.5,11 C15.71,11,17.5,12.68,17.5,14.75 C17.5,16.82,15.71,18.5,13.5,18.5 C13.5,18.5,8.5,18.5,8.5,18.5 C8.5,18.5,8.5,3.5,8.5,3.5 C8.5,3.5,13.5,3.5,13.5,3.5 C15.71,3.5,17.5,5.18,17.5,7.25 C17.5,9.32,15.71,11,13.5,11 C13.5,11,13.5,11,13.5,11 z"/><path style="" d="M13.5,11 C13.5,11,8.5,11,8.5,11"/><path style="" d="M12.5,11 C14.71,11,16.5,12.68,16.5,14.75 C16.5,16.82,14.71,18.5,12.5,18.5 C12.5,18.5,7.5,18.5,7.5,18.5 C7.5,18.5,7.5,3.5,7.5,3.5 C7.5,3.5,12.5,3.5,12.5,3.5 C14.71,3.5,16.5,5.18,16.5,7.25 C16.5,9.32,14.71,11,12.5,11 C12.5,11,12.5,11,12.5,11 z"/><path style="" d="M12.5,11 C12.5,11,7.5,11,7.5,11"/></g></svg> ',
   fontItalic: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M17.00,4.50 C17.00,4.50,13.00,4.50,13.00,4.50"/><path style="" d="M11.00,19.50 C11.00,19.50,7.00,19.50,7.00,19.50"/><path style="" d="M15.00,4.50 C15.00,4.50,9.00,19.50,9.00,19.50"/></g></svg> ',
   fontUnderline: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M7.5,3.5 C7.5,3.5,7.5,10.74,7.5,13.5 C7.5,16.26,9.74,18.5,12.5,18.5 C15.26,18.5,17.5,16.26,17.5,13.5 C17.5,10.74,17.5,3.5,17.5,3.5"/><path style="" d="M7.5,21.5 C7.5,21.5,17.5,21.5,17.5,21.5"/></g></svg> ',
+  outdent: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M21,10 C21,10,8,10,8,10"/><path style="" d="M21,6 C21,6,8,6,8,6"/><path style="" d="M21,14 C21,14,8,14,8,14"/><path style="" d="M21,18 C21,18,8,18,8,18"/><path style="" d="M5.5,9 C5.5,9,2.5,12,2.5,12 C2.5,12,5.5,15,5.5,15"/></g></svg> ',
+  listNumber: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M21,6 C21,6,10,6,10,6"/><path style="" d="M21,12 C21,12,10,12,10,12"/><path style="" d="M21,18 C21,18,10,18,10,18"/><path style="" d="M4.5,5 C4.5,5,5.5,4,5.5,4 C5.5,4,5.5,8,5.5,8"/><path style="" d="M4.5,10 C4.5,10,5.50,10,5.50,10 C6.05,10,6.5,10.45,6.5,11.00 C6.5,11.00,6.5,11.00,6.5,11.00 C6.5,11.55,6.05,12,5.50,12 C5.50,12,5.50,12,5.50,12 C4.95,12,4.5,12.45,4.5,13.00 C4.5,13.00,4.5,14,4.5,14 C4.5,14,6.5,14,6.5,14"/><path style="" d="M4.5,16 C4.5,16,5.50,16,5.50,16 C6.05,16,6.5,16.45,6.5,17.00 C6.5,17.00,6.5,17.00,6.5,17.00 C6.5,17.55,6.05,18,5.50,18 C5.50,18,4.5,18,4.5,18 C4.5,18,5.50,18,5.50,18 C6.05,18,6.5,18.45,6.5,19.00 C6.5,19.00,6.5,19.00,6.5,19.00 C6.5,19.55,6.05,20,5.50,20 C5.50,20,4.5,20,4.5,20"/></g></svg> ',
   resize: '<svg class="stroked" version="1.1" viewBox="0, 0, 24, 24"><g><path d="M9,3 L3,3 L3,9"/><path d="M15,21 L21,21 L21,15"/><path d="M3,3 L10,10"/><path d="M21,21 L14,14"/></g></svg> ',
   bug: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M8,6 C8,3.79,9.79,2,12,2 C14.21,2,16,3.79,16,6 C16,6,8,6,8,6 z"/><path style="" d="M20,7 C20,7,18,9,18,9"/><path style="" d="M20,19 C20,19,18,17,18,17"/><path style="" d="M21,13 C21,13,18,13,18,13"/><path style="" d="M16.44,9 C17.30,9,18.00,9.70,18.00,10.56 C18.00,10.56,18.00,15.00,18.00,15.00 C18.00,18.31,15.31,21,12,21 C8.69,21,6,18.31,6,15.00 C6,15.00,6,10.56,6,10.56 C6,9.70,6.70,9,7.56,9 C7.56,9,16.44,9,16.44,9 z"/><path style="" d="M4,7 C4,7,6,9,6,9"/><path style="" d="M4,19 C4,19,6,17,6,17"/><path style="" d="M3,13 C3,13,6,13,6,13"/><path style="" d="M12,12 C12,12,12,17,12,17"/></g></svg> ',
   blog: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M21,10.02 C21,10.02,21,15,21,15 C21,15.53,20.79,16.04,20.41,16.41 C20.04,16.79,19.53,17,19,17 C19,17,7,17,7,17 C5.67,18.33,4.33,19.67,3,21 C3,21,3,5,3,5 C3,4.47,3.21,3.96,3.59,3.59 C3.96,3.21,4.47,3,5,3 C8.53,3,10.49,3,14.02,3"/><path style="" d="M19,2 C19.54,1.46,20.32,1.25,21.05,1.45 C21.78,1.65,22.35,2.22,22.55,2.95 C22.75,3.68,22.54,4.46,22,5 C22,5,15.5,11.5,15.5,11.5 C14.17,11.83,12.83,12.17,11.5,12.5 C11.83,11.17,12.17,9.83,12.5,8.5 C15.67,5.33,15.83,5.17,19,2 z"/><path style="" d="M14.60,3"/><path style="" d="M21,8.77"/><path style="" d="M7,7 C7,7,10,7,10,7"/><path style="" d="M7,10 C7,10,9,10,9,10"/></g></svg> ',
@@ -2114,10 +2120,11 @@ class SvgIcon extends M {
     this.initAttributes("icon", "size", "fill", "stroke", "strokeWidth");
   }
   render() {
+    super.render();
     this.textContent = "";
     const style = {};
     if (this.size) {
-      style.height = this.size;
+      style.height = this.size + "px";
       this.style.setProperty("--xin-icon-size", `${this.size}px`);
     }
     if (this.stroke) {
@@ -4302,8 +4309,151 @@ var dataTable = DataTable.elementCreator({
     }
   }
 });
+// src/dialog.ts
+var { dialog, button: button5, header, footer, xinSlot: xinSlot2, h3, p: p2, label, input: input3, div: div4 } = p;
+
+class TosiDialog extends M {
+  static async alert(message, title = "Alert") {
+    return new Promise((resolve) => {
+      const alertDialog = tosiDialog({
+        removeOnClose: true,
+        closeOnBackgroundClick: true,
+        dialogWillClose() {
+          resolve();
+        }
+      }, h3({ slot: "header" }, title), p2(message));
+      document.body.append(alertDialog);
+      alertDialog.showModal();
+    });
+  }
+  static async confirm(message, title = "Confirm") {
+    return new Promise((resolve) => {
+      const confirmDialog = tosiDialog({
+        removeOnClose: true,
+        dialogWillClose(reason) {
+          resolve(reason === "confirm");
+        }
+      }, h3({ slot: "header" }, title), p2(message), button5({
+        slot: "footer",
+        onClick() {
+          confirmDialog.close();
+        }
+      }, "Cancel"));
+      document.body.append(confirmDialog);
+      confirmDialog.showModal();
+    });
+  }
+  static async prompt(message, title = "Prompt", currentValue = "") {
+    return new Promise((resolve) => {
+      const inputField = input3({ value: currentValue });
+      const promptDialog = tosiDialog({
+        removeOnClose: true,
+        dialogWillClose(reason) {
+          resolve(reason === "confirm" ? inputField.value : null);
+        },
+        initialFocus() {
+          inputField.focus();
+        }
+      }, h3({ slot: "header" }, title), p2(label({
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
+          gap: 5
+        }
+      }, div4(message), inputField)), button5({
+        slot: "footer",
+        onClick() {
+          promptDialog.close();
+        }
+      }, "Cancel"));
+      document.body.append(promptDialog);
+      promptDialog.showModal();
+    });
+  }
+  removeOnClose = false;
+  closeOnBackgroundClick = false;
+  constructor() {
+    super();
+    this.initAttributes("removeOnClose", "closeOnBackgroundClick");
+    z(this, "click", () => {
+      if (this.closeOnBackgroundClick) {
+        this.close();
+      }
+    });
+  }
+  dialogWillClose = (reason = "cancel") => {
+    console.log("dialog will close with", reason);
+  };
+  initialFocus() {
+    this.parts.ok.focus();
+  }
+  #modalResolution = (outcome) => {};
+  showModal = () => {
+    return new Promise((resolve) => {
+      this.#modalResolution = resolve;
+      this.parts.dialog.showModal();
+      requestAnimationFrame(() => {
+        this.initialFocus();
+      });
+    });
+  };
+  close = (reason = "cancel") => {
+    this.dialogWillClose(reason);
+    this.#modalResolution(reason);
+    this.parts.dialog.close();
+    if (this.removeOnClose) {
+      this.remove();
+    }
+  };
+  ok = () => {
+    this.close("confirm");
+  };
+  content = () => dialog({ part: "dialog" }, header(xinSlot2({ name: "header" })), xinSlot2(), footer(xinSlot2({ name: "footer" }), button5({ part: "ok", onClick: this.ok }, "OK")));
+}
+var tosiDialog = TosiDialog.elementCreator({
+  tag: "tosi-dialog",
+  styleSpec: {
+    ":host:has(dialog[open])": {
+      position: "fixed",
+      display: "block",
+      inset: 0,
+      background: "#0002",
+      zIndex: 2
+    },
+    ":host > dialog[open]": {
+      top: "50%",
+      left: "50%",
+      minWidth: 300,
+      transform: "translate(-50%,-50%)",
+      border: 0,
+      borderRadius: 10,
+      overflow: "hidden",
+      maxHeight: "calc(100% - 20px)",
+      padding: 0,
+      display: "flex",
+      flexDirection: "column",
+      gap: 5,
+      boxShadow: "0 5px 10px #0004"
+    },
+    ":host > dialog > *": {
+      padding: "0 20px"
+    },
+    ":host > dialog > header": {
+      display: "flex",
+      justifyContent: "center",
+      gap: 10
+    },
+    ":host > dialog > footer": {
+      display: "flex",
+      justifyContent: "flex-end",
+      gap: 10,
+      paddingBottom: 20
+    }
+  }
+});
 // src/editable-rect.ts
-var { div: div4, slot: slot3 } = p;
+var { div: div5, slot: slot3 } = p;
 
 class EditableRect extends M {
   static angleSize = 15;
@@ -4573,58 +4723,58 @@ class EditableRect extends M {
     event.preventDefault();
   };
   content = () => [
-    div4({
+    div5({
       part: "move",
       style: { top: "50%", left: "50%", transform: "translate(-50%,-50%)" }
     }, icons.move()),
-    div4({
+    div5({
       part: "left",
       title: "resize left",
       class: "drag-size",
       style: { left: "-6px", width: "8px" }
     }),
-    div4({
+    div5({
       part: "right",
       title: "resize right",
       class: "drag-size",
       style: { left: "calc(100% - 2px)", width: "8px" }
     }),
-    div4({
+    div5({
       part: "top",
       title: "resize top",
       class: "drag-size",
       style: { top: "-6px", height: "8px", cursor: "ns-resize" }
     }),
-    div4({
+    div5({
       part: "bottom",
       title: "resize bottom",
       class: "drag-size",
       style: { top: "calc(100% - 2px)", height: "8px", cursor: "ns-resize" }
     }),
-    div4({
+    div5({
       part: "resize",
       style: { top: "100%", left: "100%" }
     }, icons.resize()),
-    div4({
+    div5({
       part: "rotate",
       style: { top: "50%", right: "0" }
     }, icons.refreshCw()),
-    div4({
+    div5({
       part: "lockLeft",
       title: "lock left",
       style: { top: "50%", left: 0, transform: "translate(-100%, -50%)" }
     }, icons.unlock(), icons.lock()),
-    div4({
+    div5({
       part: "lockRight",
       title: "lock right",
       style: { top: "50%", left: "100%", transform: "translate(0%, -50%)" }
     }, icons.unlock(), icons.lock()),
-    div4({
+    div5({
       part: "lockTop",
       title: "lock top",
       style: { top: 0, left: "50%", transform: "translate(-50%, -100%)" }
     }, icons.unlock(), icons.lock()),
-    div4({
+    div5({
       part: "lockBottom",
       title: "lock bottom",
       style: { top: "100%", left: "50%", transform: "translate(-50%, 0%)" }
@@ -4682,7 +4832,7 @@ var editableRect = EditableRect.elementCreator({
   tag: "xin-editable"
 });
 // src/filter-builder.ts
-var { div: div5, input: input3, select, option, button: button5, span: span5 } = p;
+var { div: div6, input: input4, select, option, button: button6, span: span5 } = p;
 var passThru2 = (array) => array;
 var NULL_FILTER_DESCRIPTION = "null filter, everything matches";
 var availableFilters = {
@@ -4778,9 +4928,9 @@ class FilterPart extends M {
     icons.chevronDown(),
     select({ part: "condition" }),
     icons.chevronDown(),
-    input3({ part: "needle", type: "search" }),
+    input4({ part: "needle", type: "search" }),
     span5({ part: "padding" }),
-    button5({ part: "remove", title: "delete" }, icons.trash())
+    button6({ part: "remove", title: "delete" }, icons.trash())
   ];
   filter = passAnything;
   constructor() {
@@ -4917,14 +5067,14 @@ class FilterBuilder extends M {
     filterContainer.append(filterPart({ fields, filters }));
   };
   content = () => [
-    button5({
+    button6({
       part: "add",
       title: "add filter condition",
       onClick: this.addFilter,
       class: "round"
     }, icons.plus()),
-    div5({ part: "filterContainer" }),
-    button5({ part: "reset", title: "reset filter", onClick: this.reset }, icons.x())
+    div6({ part: "filterContainer" }),
+    button6({ part: "reset", title: "reset filter", onClick: this.reset }, icons.x())
   ];
   filters = availableFilters;
   reset = () => {
@@ -4987,7 +5137,7 @@ var filterBuilder = FilterBuilder.elementCreator({
   }
 });
 // src/form.ts
-var { form, slot: slot4, xinSlot: xinSlot2, label, input: input4, span: span6 } = p;
+var { form, slot: slot4, xinSlot: xinSlot3, label: label2, input: input5, span: span6 } = p;
 function attr(element, name, value) {
   if (value !== "" && value !== false) {
     element.setAttribute(name, value);
@@ -4995,36 +5145,36 @@ function attr(element, name, value) {
     element.removeAttribute(name);
   }
 }
-function getInputValue(input5) {
-  switch (input5.type) {
+function getInputValue(input6) {
+  switch (input6.type) {
     case "checkbox":
-      return input5.checked;
+      return input6.checked;
     case "radio": {
-      const picked = input5.parentElement?.querySelector(`input[type="radio"][name="${input5.name}"]:checked`);
+      const picked = input6.parentElement?.querySelector(`input[type="radio"][name="${input6.name}"]:checked`);
       return picked ? picked.value : null;
     }
     case "range":
     case "number":
-      return Number(input5.value);
+      return Number(input6.value);
     default:
-      return Array.isArray(input5.value) && input5.value.length === 0 ? null : input5.value;
+      return Array.isArray(input6.value) && input6.value.length === 0 ? null : input6.value;
   }
 }
-function setElementValue(input5, value) {
-  if (!(input5 instanceof HTMLElement)) {} else if (input5 instanceof HTMLInputElement) {
-    switch (input5.type) {
+function setElementValue(input6, value) {
+  if (!(input6 instanceof HTMLElement)) {} else if (input6 instanceof HTMLInputElement) {
+    switch (input6.type) {
       case "checkbox":
-        input5.checked = value;
+        input6.checked = value;
         break;
       case "radio":
-        input5.checked = value === input5.value;
+        input6.checked = value === input6.value;
         break;
       default:
-        input5.value = String(value || "");
+        input6.value = String(value || "");
     }
   } else {
-    if (value != null || input5.value != null) {
-      input5.value = String(value || "");
+    if (value != null || input6.value != null) {
+      input6.value = String(value || "");
     }
   }
 }
@@ -5041,15 +5191,15 @@ class XinField extends M {
   step = "";
   fixedPrecision = -1;
   value = null;
-  content = label(xinSlot2({ part: "caption" }), span6({ part: "field" }, xinSlot2({ part: "input", name: "input" }), input4({ part: "valueHolder" })));
+  content = label2(xinSlot3({ part: "caption" }), span6({ part: "field" }, xinSlot3({ part: "input", name: "input" }), input5({ part: "valueHolder" })));
   constructor() {
     super();
     this.initAttributes("caption", "key", "type", "optional", "pattern", "placeholder", "min", "max", "step", "fixedPrecision", "prefix", "suffix");
   }
   valueChanged = false;
   handleChange = () => {
-    const { input: input5, valueHolder } = this.parts;
-    const inputElement = input5.children[0] || valueHolder;
+    const { input: input6, valueHolder } = this.parts;
+    const inputElement = input6.children[0] || valueHolder;
     if (inputElement !== valueHolder) {
       valueHolder.value = inputElement.value;
     }
@@ -5085,34 +5235,34 @@ class XinField extends M {
   }
   connectedCallback() {
     super.connectedCallback();
-    const { input: input5, valueHolder } = this.parts;
+    const { input: input6, valueHolder } = this.parts;
     const form2 = this.closest(XinForm.tagName);
     if (form2 instanceof XinForm) {
       this.initialize(form2);
     }
     valueHolder.addEventListener("change", this.handleChange);
-    input5.addEventListener("change", this.handleChange, true);
+    input6.addEventListener("change", this.handleChange, true);
   }
   render() {
     if (this.valueChanged) {
       this.valueChanged = false;
       return;
     }
-    const { input: input5, caption, valueHolder, field } = this.parts;
+    const { input: input6, caption, valueHolder, field } = this.parts;
     if (caption.textContent?.trim() === "") {
       caption.append(this.caption !== "" ? this.caption : this.key);
     }
     if (this.type === "text") {
-      input5.textContent = "";
+      input6.textContent = "";
       const textarea = p.textarea({ value: this.value });
       if (this.placeholder) {
         textarea.setAttribute("placeholder", this.placeholder);
       }
-      input5.append(textarea);
+      input6.append(textarea);
     } else if (this.type === "color") {
-      input5.textContent = "";
-      input5.append(colorInput({ value: this.value }));
-    } else if (input5.children.length === 0) {
+      input6.textContent = "";
+      input6.append(colorInput({ value: this.value }));
+    } else if (input6.children.length === 0) {
       attr(valueHolder, "placeholder", this.placeholder);
       attr(valueHolder, "type", this.type);
       attr(valueHolder, "pattern", this.pattern);
@@ -5125,16 +5275,16 @@ class XinField extends M {
       }
     }
     setElementValue(valueHolder, this.value);
-    setElementValue(input5.children[0], this.value);
+    setElementValue(input6.children[0], this.value);
     this.prefix ? field.setAttribute("prefix", this.prefix) : field.removeAttribute("prefix");
     this.suffix ? field.setAttribute("suffix", this.suffix) : field.removeAttribute("suffix");
-    valueHolder.classList.toggle("hidden", input5.children.length > 0);
-    if (input5.children.length > 0) {
+    valueHolder.classList.toggle("hidden", input6.children.length > 0);
+    if (input6.children.length > 0) {
       valueHolder.setAttribute("tabindex", "-1");
     } else {
       valueHolder.removeAttribute("tabindex");
     }
-    input5.style.display = input5.children.length === 0 ? "none" : "";
+    input6.style.display = input6.children.length === 0 ? "none" : "";
     attr(valueHolder, "required", !this.optional);
   }
 }
@@ -5268,21 +5418,21 @@ var xinForm = XinForm.elementCreator({
 });
 // src/gamepad.ts
 function gamepadState() {
-  const gamepads = navigator.getGamepads().filter((p2) => p2 !== null);
-  return gamepads.map((p2) => {
-    const { id, axes, buttons } = p2;
+  const gamepads = navigator.getGamepads().filter((p3) => p3 !== null);
+  return gamepads.map((p3) => {
+    const { id, axes, buttons } = p3;
     return {
       id,
       axes,
-      buttons: buttons.map((button6, index) => {
-        const { pressed, value } = button6;
+      buttons: buttons.map((button7, index) => {
+        const { pressed, value } = button7;
         return {
           index,
           pressed,
           value
         };
-      }).filter((b2) => b2.pressed || b2.value !== 0).reduce((map, button6) => {
-        map[button6.index] = button6.value;
+      }).filter((b2) => b2.pressed || b2.value !== 0).reduce((map, button7) => {
+        map[button7.index] = button7.value;
         return map;
       }, {})
     };
@@ -5336,7 +5486,7 @@ ${buttonText}`;
 `);
 }
 // src/tab-selector.ts
-var { div: div6, slot: slot5, span: span7, button: button6 } = p;
+var { div: div7, slot: slot5, span: span7, button: button7 } = p;
 
 class TabSelector extends M {
   value = 0;
@@ -5344,12 +5494,12 @@ class TabSelector extends M {
   makeTab(tabs, tabBody, bodyId) {
     const tabName = tabBody.getAttribute("name");
     const tabContent = tabBody.querySelector('template[role="tab"]')?.content.cloneNode(true) || (this.localized ? xinLocalized(tabName) : span7(tabName));
-    const tab = div6(tabContent, {
+    const tab = div7(tabContent, {
       part: "tab",
       tabindex: 0,
       role: "tab",
       ariaControls: bodyId
-    }, tabBody.hasAttribute("data-close") ? button6({
+    }, tabBody.hasAttribute("data-close") ? button7({
       title: "close",
       class: "close"
     }, icons.x()) : {});
@@ -5425,7 +5575,7 @@ class TabSelector extends M {
   };
   onCloseTab = null;
   content = [
-    div6({ role: "tabpanel", part: "tabpanel" }, div6({ part: "tabrow" }, div6({ class: "tabs", part: "tabs" }), div6({ class: "elastic" }), slot5({ name: "after-tabs" })), div6({ class: "border" }, div6({ class: "selected", part: "selected" }))),
+    div7({ role: "tabpanel", part: "tabpanel" }, div7({ part: "tabrow" }, div7({ class: "tabs", part: "tabs" }), div7({ class: "elastic" }), slot5({ name: "after-tabs" })), div7({ class: "border" }, div7({ class: "selected", part: "selected" }))),
     slot5()
   ];
   constructor() {
@@ -5546,7 +5696,7 @@ var tabSelector = TabSelector.elementCreator({
 });
 
 // src/live-example.ts
-var { div: div7, xinSlot: xinSlot3, style, button: button7, h4, pre } = p;
+var { div: div8, xinSlot: xinSlot4, style, button: button8, h4, pre } = p;
 var AsyncFunction = (async () => {}).constructor;
 
 class LiveExample extends M {
@@ -5705,17 +5855,17 @@ class LiveExample extends M {
     }
   };
   content = () => [
-    div7({ part: "example" }, style({ part: "style" }), button7({
+    div8({ part: "example" }, style({ part: "style" }), button8({
       title: "example menu",
       part: "exampleWidgets",
       onClick: this.exampleMenu
     }, icons.code())),
-    div7({
+    div8({
       class: "code-editors",
       part: "codeEditors",
       onKeydown: this.handleShortcuts,
       hidden: true
-    }, h4("Code"), button7({
+    }, h4("Code"), button8({
       title: "close code",
       class: "transparent close-button",
       onClick: this.closeCode
@@ -5726,33 +5876,33 @@ class LiveExample extends M {
       name: "js",
       mode: "javascript",
       part: "js"
-    }), codeEditor({ name: "html", mode: "html", part: "html" }), codeEditor({ name: "css", mode: "css", part: "css" }), div7({
+    }), codeEditor({ name: "html", mode: "html", part: "html" }), codeEditor({ name: "css", mode: "css", part: "css" }), div8({
       slot: "after-tabs",
       class: "row"
-    }, button7({
+    }, button8({
       title: "undo",
       part: "undo",
       class: "transparent",
       onClick: this.undo
-    }, icons.cornerUpLeft()), button7({
+    }, icons.cornerUpLeft()), button8({
       title: "redo",
       part: "redo",
       class: "transparent",
       onClick: this.redo
-    }, icons.cornerUpRight()), button7({
+    }, icons.cornerUpRight()), button8({
       title: "flip direction (⌘/ | ^/)",
       class: "transparent",
       onClick: this.flipLayout
-    }, icons.columns({ class: "layout-indicator" })), button7({
+    }, icons.columns({ class: "layout-indicator" })), button8({
       title: "copy as markdown (⌘⇧C | ^⇧C)",
       class: "transparent",
       onClick: this.copy
-    }, icons.copy()), button7({
+    }, icons.copy()), button8({
       title: "reload (⌘R | ^R)",
       class: "transparent",
       onClick: this.refreshRemote
     }, icons.refreshCw())))),
-    xinSlot3({ part: "sources", hidden: true })
+    xinSlot4({ part: "sources", hidden: true })
   ];
   connectedCallback() {
     super.connectedCallback();
@@ -5856,7 +6006,7 @@ class LiveExample extends M {
     }
     const { transform } = await import("https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm");
     const { example, style: style2 } = this.parts;
-    const preview = div7({ class: "preview" });
+    const preview = div8({ class: "preview" });
     preview.innerHTML = this.html;
     style2.innerText = this.css;
     const oldPreview = example.querySelector(".preview");
@@ -5867,7 +6017,11 @@ class LiveExample extends M {
     }
     const context = { preview, ...this.context };
     try {
-      const func = new AsyncFunction(...Object.keys(context), transform(this.js, { transforms: ["typescript"] }).code);
+      let code = this.js;
+      for (const moduleName of Object.keys(this.context)) {
+        code = code.replace(new RegExp(`import \\{(.*)\\} from '${moduleName}'`, "g"), `const {$1} = ${moduleName.replace(/-/g, "")}`);
+      }
+      const func = new AsyncFunction(...Object.keys(context).map((key) => key.replace(/-/g, "")), transform(code, { transforms: ["typescript"] }).code);
       func(...Object.values(context)).catch((err) => console.error(err));
       if (this.persistToDom) {
         this.updateSources();
@@ -6061,11 +6215,11 @@ if (remoteId) {
   document.body.append(liveExample({ remoteId }));
 }
 // src/mapbox.ts
-var { div: div8 } = p;
+var { div: div9 } = p;
 
 class MapBox extends M {
   coords = "65.01715565258993,25.48081004203459,12";
-  content = div8({ style: { width: "100%", height: "100%" } });
+  content = div9({ style: { width: "100%", height: "100%" } });
   get map() {
     return this._map;
   }
@@ -6106,7 +6260,7 @@ class MapBox extends M {
     if (!this.token) {
       return;
     }
-    const { div: div9 } = this.parts;
+    const { div: div10 } = this.parts;
     const [long, lat, zoom] = this.coords.split(",").map((x2) => Number(x2));
     if (this.map) {
       this.map.remove();
@@ -6115,7 +6269,7 @@ class MapBox extends M {
       console.log("%cmapbox may complain about missing css -- don't panic!", "background: orange; color: black; padding: 0 5px;");
       mapboxgl.accessToken = this.token;
       this._map = new mapboxgl.Map({
-        container: div9,
+        container: div10,
         style: this.mapStyle,
         zoom,
         center: [lat, long]
@@ -6347,11 +6501,11 @@ var S2 = class {
           else
             break;
         n = n.slice(c);
-        let p2 = l.join(`
-`), u = p2.replace(this.rules.other.blockquoteSetextReplace, `
+        let p3 = l.join(`
+`), u = p3.replace(this.rules.other.blockquoteSetextReplace, `
     $1`).replace(this.rules.other.blockquoteSetextReplace2, "");
         s = s ? `${s}
-${p2}` : p2, i = i ? `${i}
+${p3}` : p3, i = i ? `${i}
 ${u}` : u;
         let d2 = this.lexer.state.top;
         if (this.lexer.state.top = true, this.lexer.blockTokens(u, r, true), this.lexer.state.top = d2, n.length === 0)
@@ -6384,14 +6538,14 @@ ${u}` : u;
       n = s ? `\\d{1,9}\\${n.slice(-1)}` : `\\${n}`, this.options.pedantic && (n = s ? n : "[*+-]");
       let r = this.rules.other.listItemRegex(n), o = false;
       for (;e; ) {
-        let c = false, p2 = "", u = "";
+        let c = false, p3 = "", u = "";
         if (!(t = r.exec(e)) || this.rules.block.hr.test(e))
           break;
-        p2 = t[0], e = e.substring(p2.length);
+        p3 = t[0], e = e.substring(p3.length);
         let d2 = t[2].split(`
 `, 1)[0].replace(this.rules.other.listReplaceTabs, (Z2) => " ".repeat(3 * Z2.length)), g2 = e.split(`
 `, 1)[0], x2 = !d2.trim(), f = 0;
-        if (this.options.pedantic ? (f = 2, u = d2.trimStart()) : x2 ? f = t[1].length + 1 : (f = t[2].search(this.rules.other.nonSpaceChar), f = f > 4 ? 1 : f, u = d2.slice(f), f += t[1].length), x2 && this.rules.other.blankLine.test(g2) && (p2 += g2 + `
+        if (this.options.pedantic ? (f = 2, u = d2.trimStart()) : x2 ? f = t[1].length + 1 : (f = t[2].search(this.rules.other.nonSpaceChar), f = f > 4 ? 1 : f, u = d2.slice(f), f += t[1].length), x2 && this.rules.other.blankLine.test(g2) && (p3 += g2 + `
 `, e = e.substring(g2.length + 1), c = true), !c) {
           let Z2 = this.rules.other.nextBulletRegex(f), ee2 = this.rules.other.hrRegex(f), te2 = this.rules.other.fencesBeginRegex(f), ne2 = this.rules.other.headingBeginRegex(f), me2 = this.rules.other.htmlBeginRegex(f);
           for (;e; ) {
@@ -6408,13 +6562,13 @@ ${u}` : u;
               u += `
 ` + g2;
             }
-            !x2 && !g2.trim() && (x2 = true), p2 += G2 + `
+            !x2 && !g2.trim() && (x2 = true), p3 += G2 + `
 `, e = e.substring(G2.length + 1), d2 = E2.slice(f);
           }
         }
-        i.loose || (o ? i.loose = true : this.rules.other.doubleBlankLine.test(p2) && (o = true));
+        i.loose || (o ? i.loose = true : this.rules.other.doubleBlankLine.test(p3) && (o = true));
         let y = null, Y2;
-        this.options.gfm && (y = this.rules.other.listIsTask.exec(u), y && (Y2 = y[0] !== "[ ] ", u = u.replace(this.rules.other.listReplaceTask, ""))), i.items.push({ type: "list_item", raw: p2, task: !!y, checked: Y2, loose: false, text: u, tokens: [] }), i.raw += p2;
+        this.options.gfm && (y = this.rules.other.listIsTask.exec(u), y && (Y2 = y[0] !== "[ ] ", u = u.replace(this.rules.other.listReplaceTask, ""))), i.items.push({ type: "list_item", raw: p3, task: !!y, checked: Y2, loose: false, text: u, tokens: [] }), i.raw += p3;
       }
       let l = i.items.at(-1);
       if (l)
@@ -6424,7 +6578,7 @@ ${u}` : u;
       i.raw = i.raw.trimEnd();
       for (let c = 0;c < i.items.length; c++)
         if (this.lexer.state.top = false, i.items[c].tokens = this.lexer.blockTokens(i.items[c].text, []), !i.loose) {
-          let p2 = i.items[c].tokens.filter((d2) => d2.type === "space"), u = p2.length > 0 && p2.some((d2) => this.rules.other.anyLine.test(d2.raw));
+          let p3 = i.items[c].tokens.filter((d2) => d2.type === "space"), u = p3.length > 0 && p3.some((d2) => this.rules.other.anyLine.test(d2.raw));
           i.loose = u;
         }
       if (i.loose)
@@ -6533,7 +6687,7 @@ ${u}` : u;
     if (!s || s[3] && n.match(this.rules.other.unicodeAlphaNumeric))
       return;
     if (!(s[1] || s[2] || "") || !n || this.rules.inline.punctuation.exec(n)) {
-      let r = [...s[0]].length - 1, o, l, c = r, p2 = 0, u = s[0][0] === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
+      let r = [...s[0]].length - 1, o, l, c = r, p3 = 0, u = s[0][0] === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
       for (u.lastIndex = 0, t = t.slice(-1 * e.length + r);(s = u.exec(t)) != null; ) {
         if (o = s[1] || s[2] || s[3] || s[4] || s[5] || s[6], !o)
           continue;
@@ -6541,12 +6695,12 @@ ${u}` : u;
           c += l;
           continue;
         } else if ((s[5] || s[6]) && r % 3 && !((r + l) % 3)) {
-          p2 += l;
+          p3 += l;
           continue;
         }
         if (c -= l, c > 0)
           continue;
-        l = Math.min(l, l + c + p2);
+        l = Math.min(l, l + c + p3);
         let d2 = [...s[0]][0].length, g2 = e.slice(0, r + s.index + d2 + l);
         if (Math.min(r, l) % 2) {
           let f = g2.slice(1, -1);
@@ -6792,9 +6946,9 @@ var b2 = class a3 {
       }
       let l = e;
       if (this.options.extensions?.startInline) {
-        let c = 1 / 0, p2 = e.slice(1), u;
+        let c = 1 / 0, p3 = e.slice(1), u;
         this.options.extensions.startInline.forEach((d2) => {
-          u = d2.call({ lexer: this }, p2), typeof u == "number" && u >= 0 && (c = Math.min(c, u));
+          u = d2.call({ lexer: this }, p3), typeof u == "number" && u >= 0 && (c = Math.min(c, u));
         }), c < 1 / 0 && c >= 0 && (l = e.substring(0, c + 1));
       }
       if (o = this.tokenizer.inlineText(l)) {
@@ -7206,9 +7360,9 @@ var B2 = class {
           if (["options", "parser"].includes(r))
             continue;
           let o = r, l = n.renderer[o], c = i[o];
-          i[o] = (...p2) => {
-            let u = l.apply(i, p2);
-            return u === false && (u = c.apply(i, p2)), u || "";
+          i[o] = (...p3) => {
+            let u = l.apply(i, p3);
+            return u === false && (u = c.apply(i, p3)), u || "";
           };
         }
         s.renderer = i;
@@ -7221,9 +7375,9 @@ var B2 = class {
           if (["options", "rules", "lexer"].includes(r))
             continue;
           let o = r, l = n.tokenizer[o], c = i[o];
-          i[o] = (...p2) => {
-            let u = l.apply(i, p2);
-            return u === false && (u = c.apply(i, p2)), u;
+          i[o] = (...p3) => {
+            let u = l.apply(i, p3);
+            return u === false && (u = c.apply(i, p3)), u;
           };
         }
         s.tokenizer = i;
@@ -7236,14 +7390,14 @@ var B2 = class {
           if (["options", "block"].includes(r))
             continue;
           let o = r, l = n.hooks[o], c = i[o];
-          L2.passThroughHooks.has(r) ? i[o] = (p2) => {
+          L2.passThroughHooks.has(r) ? i[o] = (p3) => {
             if (this.defaults.async)
-              return Promise.resolve(l.call(i, p2)).then((d2) => c.call(i, d2));
-            let u = l.call(i, p2);
+              return Promise.resolve(l.call(i, p3)).then((d2) => c.call(i, d2));
+            let u = l.call(i, p3);
             return c.call(i, u);
-          } : i[o] = (...p2) => {
-            let u = l.apply(i, p2);
-            return u === false && (u = c.apply(i, p2)), u;
+          } : i[o] = (...p3) => {
+            let u = l.apply(i, p3);
+            return u === false && (u = c.apply(i, p3)), u;
           };
         }
         s.hooks = i;
@@ -7279,15 +7433,15 @@ var B2 = class {
       r.hooks && (r.hooks.options = r, r.hooks.block = e);
       let l = r.hooks ? r.hooks.provideLexer() : e ? b2.lex : b2.lexInline, c = r.hooks ? r.hooks.provideParser() : e ? T2.parse : T2.parseInline;
       if (r.async)
-        return Promise.resolve(r.hooks ? r.hooks.preprocess(n) : n).then((p2) => l(p2, r)).then((p2) => r.hooks ? r.hooks.processAllTokens(p2) : p2).then((p2) => r.walkTokens ? Promise.all(this.walkTokens(p2, r.walkTokens)).then(() => p2) : p2).then((p2) => c(p2, r)).then((p2) => r.hooks ? r.hooks.postprocess(p2) : p2).catch(o);
+        return Promise.resolve(r.hooks ? r.hooks.preprocess(n) : n).then((p3) => l(p3, r)).then((p3) => r.hooks ? r.hooks.processAllTokens(p3) : p3).then((p3) => r.walkTokens ? Promise.all(this.walkTokens(p3, r.walkTokens)).then(() => p3) : p3).then((p3) => c(p3, r)).then((p3) => r.hooks ? r.hooks.postprocess(p3) : p3).catch(o);
       try {
         r.hooks && (n = r.hooks.preprocess(n));
-        let p2 = l(n, r);
-        r.hooks && (p2 = r.hooks.processAllTokens(p2)), r.walkTokens && this.walkTokens(p2, r.walkTokens);
-        let u = c(p2, r);
+        let p3 = l(n, r);
+        r.hooks && (p3 = r.hooks.processAllTokens(p3)), r.walkTokens && this.walkTokens(p3, r.walkTokens);
+        let u = c(p3, r);
         return r.hooks && (u = r.hooks.postprocess(u)), u;
-      } catch (p2) {
-        return o(p2);
+      } catch (p3) {
+        return o(p3);
       }
     };
   }
@@ -7408,7 +7562,7 @@ var markdownViewer = MarkdownViewer.elementCreator({
   tag: "xin-md"
 });
 // src/month.ts
-var { div: div9, span: span8, button: button8 } = p;
+var { div: div10, span: span8, button: button9 } = p;
 var DAY_MS = 24 * 3600 * 1000;
 var WEEK = [0, 1, 2, 3, 4, 5, 6];
 var MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -7576,10 +7730,10 @@ class TosiMonth extends M {
     });
   };
   content = () => [
-    div9({ part: "header" }, button8({
+    div10({ part: "header" }, button9({
       part: "previous",
       onClick: this.previousMonth
-    }, icons.chevronLeft()), span8({ style: { flex: "1" } }), button8({
+    }, icons.chevronLeft()), span8({ style: { flex: "1" } }), button9({
       part: "jump",
       onClick: this.jumpMenu
     }, icons.calendar()), xinSelect({
@@ -7590,12 +7744,12 @@ class TosiMonth extends M {
       part: "year",
       options: [this.year],
       onChange: this.setMonth
-    }), span8({ style: { flex: "1" } }), button8({
+    }), span8({ style: { flex: "1" } }), button9({
       part: "next",
       onClick: this.nextMonth
     }, icons.chevronRight())),
-    div9({ part: "week" }),
-    div9({ part: "days" })
+    div10({ part: "week" }),
+    div10({ part: "days" })
   ];
   gotoDate(dateString) {
     const date = new Date(dateString);
@@ -7754,7 +7908,7 @@ var tosiMonth = TosiMonth.elementCreator({
   }
 });
 // src/notifications.ts
-var { div: div10, button: button9 } = p;
+var { div: div11, button: button10 } = p;
 var COLOR_MAP = {
   error: "red",
   warn: "orange",
@@ -7879,12 +8033,12 @@ class XinNotification extends M {
       XinNotification.removeNote(note);
     };
     const iconElement = icon instanceof SVGElement ? icon : icon ? icons[icon]({ class: "icon" }) : icons.info({ class: "icon" });
-    const note = div10({
+    const note = div11({
       class: `note ${type}`,
       style: {
         _notificationAccentColor
       }
-    }, iconElement, div10({ class: "message" }, div10(message), progressBar), button9({
+    }, iconElement, div11({ class: "message" }, div11(message), progressBar), button10({
       class: "close",
       title: "close",
       apply(elt) {
@@ -7941,7 +8095,7 @@ var isBreached = async (password) => {
   }
   return response.status !== 404;
 };
-var { span: span9, xinSlot: xinSlot4 } = p;
+var { span: span9, xinSlot: xinSlot5 } = p;
 
 class XinPasswordStrength extends M {
   minLength = 8;
@@ -8010,17 +8164,17 @@ class XinPasswordStrength extends M {
     description.textContent = this.strengthDescriptions[strength];
   };
   update = (event) => {
-    const input5 = event.target.closest("input");
-    this.updateIndicator(input5?.value || "");
+    const input6 = event.target.closest("input");
+    this.updateIndicator(input6?.value || "");
   };
   content = () => [
-    xinSlot4({ onInput: this.update }),
+    xinSlot5({ onInput: this.update }),
     span9({ part: "meter" }, span9({ part: "level" }), span9({ part: "description" }))
   ];
   render() {
     super.render();
-    const input5 = this.querySelector("input");
-    this.updateIndicator(input5?.value);
+    const input6 = this.querySelector("input");
+    this.updateIndicator(input6?.value);
   }
 }
 var xinPasswordStrength = XinPasswordStrength.elementCreator({
@@ -8210,7 +8364,7 @@ var xinRating = XinRating.elementCreator({
   tag: "xin-rating"
 });
 // src/rich-text.ts
-var { xinSlot: xinSlot5, div: div11, button: button10, span: span11 } = p;
+var { xinSlot: xinSlot6, div: div12, button: button11, span: span11 } = p;
 var blockStyles = [
   {
     caption: "Title",
@@ -8261,7 +8415,7 @@ function elastic(width = "10px") {
   });
 }
 function commandButton(title, dataCommand, icon) {
-  return button10({ slot: "toolbar", dataCommand, title }, icon);
+  return button11({ slot: "toolbar", dataCommand, title }, icon);
 }
 var paragraphStyleWidgets = () => [
   commandButton("left-justify", "justifyLeft", icons.alignLeft()),
@@ -8271,8 +8425,8 @@ var paragraphStyleWidgets = () => [
   commandButton("bullet list", "insertUnorderedList", icons.listBullet()),
   commandButton("numbered list", "insertOrderedList", icons.listNumber()),
   spacer(),
-  commandButton("indent", "indent", icons.blockIndent()),
-  commandButton("indent", "outdent", icons.blockOutdent())
+  commandButton("indent", "indent", icons.indent()),
+  commandButton("indent", "outdent", icons.outdent())
 ];
 var characterStyleWidgets = () => [
   commandButton("bold", "bold", icons.fontBold()),
@@ -8350,20 +8504,20 @@ class RichText extends M {
     this.doCommand(select2.value);
   };
   handleButtonClick = (event) => {
-    const button11 = event.target.closest("button");
-    if (button11 == null) {
+    const button12 = event.target.closest("button");
+    if (button12 == null) {
       return;
     }
-    this.doCommand(button11.dataset.command);
+    this.doCommand(button12.dataset.command);
   };
   content = [
-    xinSlot5({
+    xinSlot6({
       name: "toolbar",
       part: "toolbar",
       onClick: this.handleButtonClick,
       onChange: this.handleSelectChange
     }),
-    div11({
+    div12({
       part: "doc",
       contenteditable: true,
       style: {
@@ -8371,7 +8525,7 @@ class RichText extends M {
         outline: "none"
       }
     }),
-    xinSlot5({
+    xinSlot6({
       part: "content"
     })
   ];
@@ -8434,16 +8588,19 @@ var richText = RichText.elementCreator({
       height: "100%"
     },
     ':host [part="toolbar"]': {
-      padding: "4px",
+      padding: 4,
       display: "flex",
       gap: "0px",
       flex: "0 0 auto",
       flexWrap: "wrap"
+    },
+    ':host [part="toolbar"] > button': {
+      _xinIconSize: 18
     }
   }
 });
 // src/segmented.ts
-var { div: div12, slot: slot6, label: label2, span: span12, input: input5 } = p;
+var { div: div13, slot: slot6, label: label3, span: span12, input: input6 } = p;
 
 class XinSegmented extends M {
   choices = "";
@@ -8458,7 +8615,7 @@ class XinSegmented extends M {
   }
   content = () => [
     slot6(),
-    div12({ part: "options" }, input5({ part: "custom", hidden: true }))
+    div13({ part: "options" }, input6({ part: "custom", hidden: true }))
   ];
   static styleSpec = {
     ":host": {
@@ -8524,14 +8681,14 @@ class XinSegmented extends M {
       const inputs = [
         ...options.querySelectorAll("input:checked")
       ];
-      this.value = inputs.map((input6) => input6.value).join(",");
+      this.value = inputs.map((input7) => input7.value).join(",");
     } else {
-      const input6 = options.querySelector("input:checked");
-      if (!input6) {
+      const input7 = options.querySelector("input:checked");
+      if (!input7) {
         this.value = null;
-      } else if (input6.value) {
+      } else if (input7.value) {
         custom.setAttribute("hidden", "");
-        this.value = input6.value;
+        this.value = input7.value;
       } else {
         custom.removeAttribute("hidden");
         custom.focus();
@@ -8594,7 +8751,7 @@ class XinSegmented extends M {
     const type = this.multiple ? "checkbox" : "radio";
     const { values, isOtherValue } = this;
     options.append(...this._choices.map((choice) => {
-      return label2({ tabindex: 0 }, input5({
+      return label3({ tabindex: 0 }, input6({
         type,
         name: this.name,
         value: choice.value,
@@ -8788,7 +8945,7 @@ class XinSizer extends M {
     if (!target)
       return;
     const w2 = target.offsetWidth;
-    const h3 = target.offsetHeight;
+    const h5 = target.offsetHeight;
     target.style.left = target.offsetLeft + "px";
     target.style.top = target.offsetTop + "px";
     target.style.bottom = "";
@@ -8796,7 +8953,7 @@ class XinSizer extends M {
     const { minSize } = this;
     trackDrag(event, (dx, dy, event2) => {
       target.style.width = Math.max(minSize.width, w2 + dx) + "px";
-      target.style.height = Math.max(minSize.height, h3 + dy) + "px";
+      target.style.height = Math.max(minSize.height, h5 + dy) + "px";
       if (event2.type === "mouseup") {
         return true;
       }
@@ -8816,7 +8973,7 @@ var xinSizer = XinSizer.elementCreator({
   tag: "xin-sizer"
 });
 // src/tag-list.ts
-var { div: div13, input: input6, span: span13, button: button11 } = p;
+var { div: div14, input: input7, span: span13, button: button12 } = p;
 
 class XinTag extends M {
   caption = "";
@@ -8826,7 +8983,7 @@ class XinTag extends M {
   };
   content = () => [
     span13({ part: "caption" }, this.caption),
-    button11(icons.x(), {
+    button12(icons.x(), {
       part: "remove",
       hidden: !this.removeable,
       onClick: this.removeCallback
@@ -8976,17 +9133,17 @@ class XinTagList extends M {
     });
   };
   content = () => [
-    button11({ style: { visibility: "hidden" }, tabindex: -1 }),
-    div13({
+    button12({ style: { visibility: "hidden" }, tabindex: -1 }),
+    div14({
       part: "tagContainer",
       class: "row"
     }),
-    input6({
+    input7({
       part: "tagInput",
       class: "elastic",
       onKeydown: this.enterTag
     }),
-    button11({
+    button12({
       title: "add tag",
       part: "tagMenu",
       onClick: this.popSelectMenu
@@ -9647,7 +9804,7 @@ var docs_default = [
 
 <!--{ "pin": "top" }-->
 
-[ui.xinjs.net live demo](https://ui.xinjs.net) | [xinjs](https://xinjs.net) | [discord](https://discord.gg/ramJ9rgky5) | [github](https://github.com/tonioloewald/xinjs-ui#readme) | [npm](https://www.npmjs.com/package/xinjs-ui)
+[ui.xinjs.net live demo](https://ui.xinjs.net) | [xinjs](https://xinjs.net) | [discord](https://discord.gg/ramJ9rgky5) | [github](https://github.com/tonioloewald/tosijs-ui#readme) | [npm](https://www.npmjs.com/package/tosijs-ui)
 
 <center>
   <xin-icon class="logo" icon="tosiUi" size=300></xin-icon>
@@ -9696,8 +9853,8 @@ as globals which contain all the things exported by \`tosijs\` and \`tosijs-ui\`
 <script src="https://ui.xinjs.net/iife.js"></script>
 <button id="menu">Menu <xin-icon icon="chevronDown"></xin-icon></button>
 <script>
-  const { elements } = tosijs
-  const { popMenu, icons } = tosijsui
+  import { elements } from 'tosijs'
+  import { popMenu, icons } from 'tosijs-ui'
 
   const button = { elements }
 
@@ -9751,7 +9908,7 @@ document.body.append(markdownViewer('# hello world\\nthis is a test'))
 \`\`\`
 
 \`\`\`js
-const { markdownViewer } = tosijsui
+import { markdownViewer } from 'tosijs-ui'
 
 preview.append(
   markdownViewer(\`
@@ -9826,7 +9983,7 @@ If you view this example with an XR-enabled device, such as the
 as an AR scene.
 
 \`\`\`js
-const { b3d, gamepadText, xrControllers, xrControllersText } = tosijsui
+import { b3d, gamepadText, xrControllers, xrControllersText } from 'tosijs-ui'
 
 preview.append(b3d({
   async sceneCreated(element, BABYLON) {
@@ -9912,8 +10069,8 @@ Here's a simple example of a terrain mesh comprising 125k triangles, 50% of whic
 takes an array of numbers that use a linear profile to change the landform.
 
 \`\`\`js
-const { b3d } = tosijsui
-const { MoreMath } = tosijs
+import { b3d } from 'tosijs-ui'
+import { MoreMath } from 'tosijs'
 
 const debugCutoff = 0.5
 const defaultProfile = [0, 1, 5, 8, 10].map(x => x/10)
@@ -9999,7 +10156,7 @@ be used to load \`.glb\` files.
 \`<xin-ab>\` provides a simple method for implementing A|B-testing.
 
 \`\`\`js
-const { AbTest } = tosijsui
+import { AbTest } from 'tosijs-ui'
 
 function randomize() {
   const conditions = {
@@ -10214,6 +10371,115 @@ colorInput.addEventListener('change', () => {
     path: "src/color-input.ts"
   },
   {
+    text: `# dialog
+
+\`<tosi-dialog>\` is a simple wrapper around the standard HTML \`<dialog>\` element designed
+to make creating dialogs as convenient as possible.
+
+\`\`\`html
+<button>Show Dialog</button>
+<tosi-dialog>
+  <h3 slot='header'>A Dialog</h3>
+  <p>
+    Here is some text
+  </p>
+  <button slot="footer">Custom Button</button>
+</tosi-dialog>
+\`\`\`
+\`\`\`js
+import { on } from 'tosijs'
+import { postNotification } from 'tosijs-ui'
+
+on(
+  preview.querySelector('button'),
+  'click',
+  async () => {
+    const response = await preview.querySelector('tosi-dialog').showModal()
+    postNotification({
+      message: \`user clicked \${response}\`,
+      duration: 2
+    })
+  }
+)
+\`\`\`
+
+## Static Functions
+
+\`TosiDialog\` provides static async functions to replace the built-in dialogs provided by
+the browser.
+
+- \`alert(message: string, title = 'Alert'): Promise<undefined>\`
+- \`confirm(message: string, title = 'Confirm'): Promise<boolean>\`
+- \`prompt(message: string, title = 'Prompt', currentValue = ''): Promise<string | null> \`
+
+You can look at the code that implements them to see how to leverage \`TosiDialog\` to build
+more complex, bespoke dialogs that can be used just as conveniently.
+
+\`\`\`js
+import { elements } from 'tosijs'
+import { TosiDialog, postNotification } from 'tosijs-ui'
+
+const { button, div } = elements
+
+preview.append(
+  div(
+    {
+      style: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: 10
+      }
+    },
+    button(
+      {
+        async onClick() {
+          await TosiDialog.alert('This is an alert')
+          postNotification({
+            message: 'alert dismissed',
+            duration: 2
+          })
+        }
+      },
+      'TosiDialog.alert',
+    ),
+    button(
+      {
+        async onClick() {
+          const confirmed = await TosiDialog.confirm('Can you confirm?')
+          postNotification({
+            message: \`user \${confirmed ? 'confirmed' : 'cancelled'}\`,
+            duration: 2
+          })
+        }
+      },
+      'TosiDialog.confirm',
+    ),
+    button(
+      {
+        async onClick() {
+          const text = await TosiDialog.prompt('Enter some text please')
+          postNotification({
+            message: text !== null ? \`user entered "\${text}"\`: 'user cancelled',
+            duration: 2
+          })
+        }
+      },
+      'TosiDialog.prompt',
+    ),
+  ),
+)
+\`\`\`
+\`\`\`css
+.preview {
+  padding: 10px;
+}
+\`\`\``,
+    title: "dialog",
+    filename: "dialog.ts",
+    path: "src/dialog.ts"
+  },
+  {
     text: `# drag & drop
 
 > **Note** this library is a modernized version of the [b8rjs](https://b8rjs.com) drag-and-drop.js library.
@@ -10374,7 +10640,7 @@ the drop zone node) simply using data-event="drop:path.to.drop_handler" as usual
 }
 \`\`\`
 \`\`\`js
-const { dragAndDrop } = tosijsui
+import { dragAndDrop } from 'tosijs-ui'
 
 dragAndDrop.init()
 \`\`\`
@@ -10385,8 +10651,8 @@ dragAndDrop.init()
 ### Reorderable List Example
 
 \`\`\`js
-const { elements, tosi, getListItem } = tosijs
-const { dragAndDrop } = tosijsui
+import { elements, tosi, getListItem } from 'tosijs'
+import { dragAndDrop } from 'tosijs-ui'
 
 dragAndDrop.init()
 
@@ -10489,8 +10755,8 @@ or \`position: fixed\` element and you can directly adjust its CSS positioning, 
 Click on an element to adjust its position, dimensions, and rotation.
 
 \`\`\`js
-const { editableRect, icons } = tosijsui
-const { elements } = tosijs
+import { editableRect, icons } from 'tosijs-ui'
+import { elements } from 'tosijs'
 const { button } = elements
 
 function showTools(event) {
@@ -10564,7 +10830,7 @@ is, by far, the master. And it's still super lightweight.
 \`\`\`js
 // this code executes in an async function body
 // it has tosijs, tosijsui, and preview (the preview div) available as local variables
-const { div } = tosijs.elements
+import { div } from 'tosijs'.elements
 preview.append(div({class: 'example'}, 'fiddle de dee!'))
 preview.append('Try editing some code and hitting refresh…')
 \`\`\`
@@ -10642,13 +10908,55 @@ windows.
 completely separate component that can be used for other things, and make the
 example itself lighter-weight.
 
-## context
+## \`context\`
 
-A \`<xin-example>\` can be given a \`context\` object {[key: string]: any}, which is the
+\`\`\`html
+<p>testing</p>
+\`\`\`
+\`\`\`js
+import { elements } from 'tosijs'
+import { svgIcon } from 'tosijs-ui'
+
+preview.querySelector('p').style.color = 'red'
+preview.append(
+  elements.p('another paragraph'),
+  svgIcon({icon: 'tosiPlatform', size: 64})
+)
+\`\`\`
+
+A \`<xin-example>\` is given a \`context\` object {[key: string]: any}, which is the
 set of values available in the javascript's execution context (it is wrapped in an
-async function and passed those values). By default, that context comprises \`preview\`
-(the \`<div>\` in which the example is rendered), \`tosijs\` (\`* from 'tosijs'\`),
-and \`tosijsui\` (\`* from 'tosijs-ui'\`).
+async function and passed those values). The context always includes \`preview\`
+which is the element containing the HTML for the example.
+
+If the context keys have hyphens in them, these are removed to allow the examples
+to \`import\` libraries:
+
+So we provide context like this:
+
+\`\`\`
+import * as tosijs from 'tosjs'
+import * as tosijsui from 'tosijs-ui'
+
+...
+
+context = {
+  tosijs,
+  'tosijs-ui': tosijsui
+}
+\`\`\`
+
+\`\`\`
+import { elements, tosi } from 'tosijs'
+import { icons } from 'tosijs-ui'
+\`\`\`
+
+is rewritten as:
+
+\`\`\`
+import { elements, tosi } from 'tosijs'
+import { icons } from 'tosijs-ui'
+\`\`\`
 
 The \`LiveExample\` class provides the static \`insertExamples(element: HTMLElement)\`
 function that will replace any sequence of
@@ -10665,8 +10973,8 @@ Automatically creates \`ArrayFilter\` functions \`(a: any[]) => any[]\` based on
 macOS Finder-inspired interface, using an easily customizable / extensible collection of \`Filter\` objects.
 
 \`\`\`js
-const { elements } = tosijs
-const { dataTable, filterBuilder, availableFilters } = tosijsui
+import { elements } from 'tosijs'
+import { dataTable, filterBuilder, availableFilters } from 'tosijs-ui'
 
 const sourceWords = ['acorn', 'bubblegum', 'copper', 'daisy', 'ellipse', 'fabulous', 'gerund', 'hopscotch', 'idiom', 'joke']
 function randomWords () {
@@ -11086,8 +11394,8 @@ A couple of utility functions for dealing with gamepads and XRInputs.
 \`gamepadText()\` provides the above in minimal text form for debugging
 
 \`\`\`js
-const { elements } = tosijs
-const { gamepadText } = tosijsui
+import { elements } from 'tosijs'
+import { gamepadText } from 'tosijs-ui'
 
 const pre = elements.pre()
 preview.append(pre)
@@ -11144,8 +11452,8 @@ icon with the class \`icon-chevron-down\`.
 
 \`\`\`js
 const  { tosi } = tosijs
-const { icons, svgIcon, postNotification } = tosijsui
-const { div } = tosijs.elements
+import { icons, svgIcon, postNotification } from 'tosijs-ui'
+import { div } from 'tosijs'.elements
 
 const { iconDemo } = tosi({
   iconDemo: {
@@ -11292,8 +11600,8 @@ how it's styled.
 ## SVGs as data-urls
 
 \`\`\`js
-const { elements } = tosijs
-const { icons, svg2DataUrl } = tosijsui
+import { elements } from 'tosijs'
+import { icons, svg2DataUrl } from 'tosijs-ui'
 
 preview.append(
   elements.span({
@@ -11445,6 +11753,81 @@ copies or substantial portions of the Software.`,
     path: "src/icons.ts"
   },
   {
+    text: `# kitchen sink
+
+This is a testbed for checking styles
+
+## Typography
+
+### This is an H3
+
+You are such a nerd. No wonder you only hang out with boys. Mornings are for coffee and contemplation. We never would've upset you if we knew you had superpowers. 
+
+If anyone asks where I am, I've left the country. It’s finger-lickin’ good. You are such a nerd. No wonder you only hang out with boys.She shut one door! With her mind! Hey kiddo, would you like a balloon? 
+
+Nobody normal ever accomplished anything meaningful in this world. It's just, sometimes... people don't really say what they're really thinking. But when you capture the right moment, it says more.Why are you keeping this curiosity door lock? Mornings are for coffee and contemplation. 
+
+
+#### This is an H4
+
+> Um, I'm happy you're home. This is not yours to fix alone. 
+> ##### This is an H5
+> You act like you’re all alone out there in the world, but you’re not. You’re not alone. This is not yours to fix alone.
+> You act like you want me to be your friend and then you treat me like garbage. 
+> ###### This is an H6
+> It’s about the shadow monster, isn’t it? Do you know anything about sensory deprivation tanks? Specifically how to build one? YOU BETTER RUN! She's our friend, and she's crazy!
+
+## HTML Widgets
+
+> These are wrapped in a div with \`display: flex; flex-direction: column; gap: 0.5em\`.
+
+<div style="display: flex; flex-direction: column; gap: 0.5em">
+  <select value="That">
+    <option>This</option>
+    <option>That</option>
+    <option>The other</option>
+  </select>
+  
+  <label>
+    <span>input field</span>
+    <input placeholder="text goes here">
+  </label>
+  
+  <label>
+    <span>input[type="date"]</span>
+    <input type="date">
+  </label>
+  
+  <label>
+    <span>input[type="number"]</span>
+    <input type="number" value="17" step="0.5">
+  </label>
+  
+  <label>
+    <span>input[type="range"]</span>
+    <input type="range" min="1" max="10" step="2" value="3">
+  </label>
+  
+  <label>
+    <span>input[type="color"]</span>
+    <input type="color" value="hotpink">
+  </label>
+  
+  <progress></progress>
+  <progress value="33" max="100"></progress>
+  
+  <label>
+    <span>textarea</span>
+    <textarea></textarea>
+  </label>
+  
+  <button>Cancel</button> <button>OK</button>
+</div>`,
+    title: "kitchen sink",
+    filename: "kitchen-sink.md",
+    path: "src/kitchen-sink.md"
+  },
+  {
     text: `# localize
 
 \`tosijs-ui\` provides support for localization via the \`localize\` method and the \`<xin-locale-picker>\`
@@ -11494,8 +11877,8 @@ localize the string, and then append the ellipsis.
 ## \`setLocale(language: string)\`
 
 \`\`\`js
-const { button, p } = tosijs.elements
-const { setLocale } = tosijsui
+import { button, p } from 'tosijs'.elements
+import { setLocale } from 'tosijs-ui'
 
 preview.append(
   p(
@@ -11563,7 +11946,7 @@ xin-localized {
 }
 \`\`\`
 \`\`\`js
-const { xinLocalized, localize } = tosijsui
+import { xinLocalized, localize } from 'tosijs-ui'
 
 preview.append(xinLocalized({
   refString: 'localized placeholder',
@@ -11687,8 +12070,8 @@ A [lottie](https://airbnb.io/lottie/#/web) (a.k.a. **bodymovin**) player.
 It's designed to work like an \`<img>\` element (just set its \`src\` attribute).
 
 \`\`\`js
-const { icons, popFloat } = tosijsui
-const { div, label, input, select, option, span } = tosijs.elements
+import { icons, popFloat } from 'tosijs-ui'
+import { div, label, input, select, option, span } from 'tosijs'.elements
 
 const rocket = preview.querySelector('xin-lottie')
 setTimeout(
@@ -11792,8 +12175,8 @@ insanely simple and just works™. It makes writing an array sort callback for a
 other than an array of numbers or strings easier.
 
 \`\`\`js
-const { select, option, div, span, ul, li } = tosijs.elements
-const { icons, makeSorter } = tosijsui
+import { select, option, div, span, ul, li } from 'tosijs'.elements
+import { icons, makeSorter } from 'tosijs-ui'
 
 const people = [
   { first: 'Frasier', last: 'Crane', age: 38 },
@@ -12003,8 +12386,8 @@ menuItems, and (because it persists in the DOM) supports keyboard
 shortcuts.
 
 \`\`\`js
-const { popMenu, localize, xinMenu, postNotification, xinLocalized, icons } = tosijsui
-const { elements } = tosijs
+import { popMenu, localize, xinMenu, postNotification, xinLocalized, icons } from 'tosijs-ui'
+import { elements } from 'tosijs'
 
 let picked = ''
 let testingEnabled = false
@@ -12166,8 +12549,8 @@ preview.append(
 ## Overflow test
 
 \`\`\`js
-const { popMenu, icons, postNotification } = tosijsui
-const { elements } = tosijs
+import { popMenu, icons, postNotification } from 'tosijs-ui'
+import { elements } from 'tosijs'
 
 preview.querySelector('button').addEventListener('click', (event) => {
   popMenu({
@@ -12269,8 +12652,8 @@ To see this in action, see the example below, or look at the
 to render column names when you show hidden columns.
 
 \`\`\`js
-const { elements } = tosijs
-const { xinLocalized, localize, icons, popMenu, postNotification } = tosijsui
+import { elements } from 'tosijs'
+import { xinLocalized, localize, icons, popMenu, postNotification } from 'tosijs-ui'
 const { button } = elements
 const makeItem = s => ({
   caption: s,
@@ -12335,7 +12718,7 @@ method will be called.
 The current date is \`[part="today"]\` and can easily be targeted for styling.
 
 \`\`\`js
-const { tosiMonth, postNotification } = tosijsui
+import { tosiMonth, postNotification } from 'tosijs-ui'
 
 preview.append(tosiMonth({
   monthChanged(year, month) {
@@ -12450,7 +12833,7 @@ when an operation completes). This will *also* call any \`close\` callback funct
 provided. (The progress demos in the example exercise this functionality.)
 
 \`\`\`js
-const { postNotification, icons } = tosijsui
+import { postNotification, icons } from 'tosijs-ui'
 
 const form = preview.querySelector('xin-form')
 const submit = preview.querySelector('.submit')
@@ -12554,7 +12937,7 @@ and it will gauge its content strength as a password. It will also
 let you **securely verify** that the password hasn't been breached.
 
 \`\`\`js
-const { xinLocalized, localize } = tosijsui
+import { xinLocalized, localize } from 'tosijs-ui'
 
 const toggle = preview.querySelector('.toggle')
 const icon = preview.querySelector('xin-icon')
@@ -12720,8 +13103,8 @@ purpose admirably, turn out to have some annoying limitation that prevents them
 handling the specific case at hand.
 
 \`\`\`js
-const { popFloat, positionFloat } = tosijsui
-const { button } = tosijs.elements
+import { popFloat, positionFloat } from 'tosijs-ui'
+import { button } from 'tosijs'.elements
 const grid = preview.querySelector('.grid')
 
 grid.addEventListener('click', (event) => {
@@ -12860,6 +13243,89 @@ export type FloatPosition =
     path: "src/rating.ts"
   },
   {
+    text: `# rich text
+
+\`<xin-word>\` is a simple and easily extensible \`document.execCommand\` WYSIWYG editor with some conveniences.
+The class name is \`RichText\` and the ElementCreator is \`richText\`.
+
+### \`default\` widgets
+
+\`\`\`html
+<xin-word>
+<h3>Heading</h3>
+<p>And some <b>text</b></p>
+</xin-word>
+\`\`\`
+\`\`\`css
+xin-word {
+  background: white;
+}
+
+xin-word [part="toolbar"] {
+  background: #f8f8f8;
+}
+
+xin-word [part="doc"] {
+  padding: 20px;
+}
+\`\`\`
+
+### \`minimal\` widgets
+
+\`\`\`html
+<xin-word widgets="minimal">
+<h3>Heading</h3>
+<p>And some <b>text</b></p>
+</xin-word>
+\`\`\`
+\`\`\`css
+xin-word {
+  background: white;
+}
+
+xin-word [part="toolbar"] {
+  background: #f8f8f8;
+}
+
+xin-word [part="doc"] {
+  padding: 20px;
+}
+\`\`\`
+
+By default, \`<xin-word>\` treats its initial contents as its document, but you can also set (and get)
+its \`value\`.
+
+## toolbar
+
+\`<xin-word>\` elements have a \`toolbar\` slot (actually a xin-slot because it doesn't use
+the shadowDOM).
+
+If you set the \`widgets\` attribute to \`default\` or \`minimal\` you will get a toolbar
+for free. Or you can add your own custom widgets.
+
+## helper functions
+
+A number of helper functions are available, including:
+
+- \`commandButton(title: string, command: string, iconClass: string)\`
+- \`blockStyle(options: Array<{caption: string, tagType: string}>)\`
+- \`spacer(width = '10px')\`
+- \`elastic(width = '10px')\`
+
+These each create a toolbar widget. A \`blockStyle\`-generated \`<select>\` element will
+automatically have its value changed based on the current selection.
+
+## properties
+
+A \`<xin-word>\` element also has \`selectedText\` and \`selectedBlocks\` properties, allowing
+you to easily perform operations on text selections, and a \`selectionChange\` callback (which
+simply passes through document \`selectionchange\` events, but also passes a reference to
+the \`<xin-word>\` component).`,
+    title: "rich text",
+    filename: "rich-text.ts",
+    path: "src/rich-text.ts"
+  },
+  {
     text: `# scriptTag & styleSheet
 
 ## scriptTag
@@ -12875,8 +13341,8 @@ has loaded and otherwise behave as much like \`import()\` as possible.
 This example uses \`scriptTag\` and \`styleSheet\` to load [quilljs](https://quilljs.com) on-the-fly.
 
 \`\`\`js
-const { elements } = tosijs
-const { scriptTag, styleSheet } = tosijsui
+import { elements } from 'tosijs'
+import { scriptTag, styleSheet } from 'tosijs-ui'
 
 const toolbarOptions = [
   [{ header: [1, 2, 3, 4, false] }],
@@ -13090,7 +13556,7 @@ built in \`<select>\` element that addresses its various shortcomings.
 …to check for focus stealing</pre>
 \`\`\`
 \`\`\`js
-const { icons } = tosijsui
+import { icons } from 'tosijs-ui'
 
 const captions = preview.querySelector('.captions')
 
@@ -13484,8 +13950,8 @@ A virtual data-table, configurable via a \`columns\` array (which will automatic
 that displays gigantic tables with fixed headers (and live column-resizing) using a minimum of resources and cpu.
 
 \`\`\`js
-const { dataTable } = tosijsui
-const { input } = tosijs.elements
+import { dataTable } from 'tosijs-ui'
+import { input } from 'tosijs'.elements
 
 const emojiRequest = await fetch('https://raw.githubusercontent.com/tonioloewald/emoji-metadata/master/emoji-metadata.json')
 const emojiData = await emojiRequest.json()
@@ -13669,7 +14135,7 @@ As well as any column names you want localized.`,
   div.style.color = \`hsl(\${(Math.random() * 360).toFixed(0)} 50% 50%)\`
 })
 
-const { div, button } = tosijs.elements
+import { div, button } from 'tosijs'.elements
 const tabSelector = preview.querySelector('xin-tabs')
 
 tabSelector.onCloseTab = body => {
@@ -13913,7 +14379,7 @@ For mouse events, a "tracker" element is thrown up in front of everything for th
 }
 \`\`\`
 \`\`\`js
-const { trackDrag } = tosijsui
+import { trackDrag } from 'tosijs-ui'
 
 function dragItem(event) {
   const draggable = event.target
@@ -13951,64 +14417,6 @@ matching \`selector\`.`,
     title: "trackDrag",
     filename: "track-drag.ts",
     path: "src/track-drag.ts"
-  },
-  {
-    text: `# word (rich text editor)
-
-\`<xin-word>\` is a simple and easily extensible \`document.execCommand\` WYSIWYG editor with some conveniences.
-
-\`\`\`html
-<xin-word widgets="minimal">
-<h3>Heading</h3>
-<p>And some <b>text</b></p>
-</xin-word>
-\`\`\`
-\`\`\`css
-xin-word {
-  background: white;
-}
-
-xin-word [part="toolbar"] {
-  background: #f8f8f8;
-}
-
-xin-word [part="doc"] {
-  padding: 20px;
-}
-\`\`\`
-
-By default, \`<xin-word>\` treats its initial contents as its document, but you can also set (and get)
-its \`value\`.
-
-## toolbar
-
-\`<xin-word>\` elements have a \`toolbar\` slot (actually a xin-slot because it doesn't use
-the shadowDOM).
-
-If you set the \`widgets\` attribute to \`default\` or \`minimal\` you will get a toolbar
-for free. Or you can add your own custom widgets.
-
-## helper functions
-
-A number of helper functions are available, including:
-
-- \`commandButton(title: string, command: string, iconClass: string)\`
-- \`blockStyle(options: Array<{caption: string, tagType: string}>)\`
-- \`spacer(width = '10px')\`
-- \`elastic(width = '10px')\`
-
-These each create a toolbar widget. A \`blockStyle\`-generated \`<select>\` element will
-automatically have its value changed based on the current selection.
-
-## properties
-
-A \`<xin-word>\` element also has \`selectedText\` and \`selectedBlocks\` properties, allowing
-you to easily perform operations on text selections, and a \`selectionChange\` callback (which
-simply passes through document \`selectionchange\` events, but also passes a reference to
-the \`<xin-word>\` component).`,
-    title: "word (rich text editor)",
-    filename: "rich-text.ts",
-    path: "src/rich-text.ts"
   },
   {
     text: `# docs.js
@@ -14128,7 +14536,7 @@ setTimeout(() => {
   Object.assign(globalThis, { app, tosi: xe, bindings: tn, elements: p, vars: Hn, touch: j });
 }, 1000);
 var main = document.querySelector("main");
-var { h2: h23, div: div14, span: span14, a: a5, img, header, button: button12, template: template2, input: input7 } = p;
+var { h2: h23, div: div15, span: span14, a: a5, img, header: header2, button: button13, template: template2, input: input8 } = p;
 h(document.body, "prefs.theme", {
   toDOM(element, theme) {
     if (theme === "system") {
@@ -14155,7 +14563,7 @@ var filterDocs = vn(() => {
   j(app.docs);
   console.timeEnd("filter");
 });
-var searchField = input7({
+var searchField = input8({
   slot: "nav",
   placeholder: "search",
   type: "search",
@@ -14166,7 +14574,7 @@ var searchField = input7({
   onInput: filterDocs
 });
 if (main)
-  main.append(header(a5({
+  main.append(header2(a5({
     href: "/",
     style: {
       display: "flex",
@@ -14193,7 +14601,7 @@ if (main)
     href: app.githubUrl
   }), a5({ class: "iconic", title: "npmjs", target: "_blank" }, icons.npm(), {
     href: app.npmUrl
-  }), span14({ style: { flex: "0 0 10px" } }), button12({
+  }), span14({ style: { flex: "0 0 10px" } }), button13({
     class: "iconic",
     style: { color: Hn.linkColor },
     title: "links and settings",
@@ -14269,7 +14677,7 @@ if (main)
       flex: "1 1 auto",
       overflow: "hidden"
     }
-  }, searchField, div14({
+  }, searchField, div15({
     slot: "nav",
     style: {
       display: "flex",
@@ -14296,13 +14704,13 @@ if (main)
       app.currentDoc = doc;
       event.preventDefault();
     }
-  }, xinLocalized({ bindText: "^.title" })))), div14({
+  }, xinLocalized({ bindText: "^.title" })))), div15({
     style: {
       position: "relative",
       overflowY: "scroll",
       height: "100%"
     }
-  }, button12({
+  }, button13({
     title: "show navigation",
     class: "iconic transparent close-nav show-within-compact",
     style: {
@@ -14322,6 +14730,6 @@ if (main)
     },
     bindValue: "app.currentDoc.text",
     didRender() {
-      LiveExample.insertExamples(this, { tosijs: exports_module, tosijsui: exports_src });
+      LiveExample.insertExamples(this, { tosijs: exports_module, "tosijs-ui": exports_src });
     }
   }))));

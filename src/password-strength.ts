@@ -6,7 +6,7 @@ and it will gauge its content strength as a password. It will also
 let you **securely verify** that the password hasn't been breached.
 
 ```js
-const { xinLocalized, localize } = tosijsui
+import { xinLocalized, localize } from 'tosijs-ui'
 
 const toggle = preview.querySelector('.toggle')
 const icon = preview.querySelector('xin-icon')

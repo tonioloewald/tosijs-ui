@@ -5,8 +5,8 @@ A virtual data-table, configurable via a `columns` array (which will automatical
 that displays gigantic tables with fixed headers (and live column-resizing) using a minimum of resources and cpu.
 
 ```js
-const { dataTable } = tosijsui
-const { input } = tosijs.elements
+import { dataTable } from 'tosijs-ui'
+import { input } from 'tosijs'.elements
 
 const emojiRequest = await fetch('https://raw.githubusercontent.com/tonioloewald/emoji-metadata/master/emoji-metadata.json')
 const emojiData = await emojiRequest.json()

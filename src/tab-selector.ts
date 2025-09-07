@@ -9,7 +9,7 @@
   div.style.color = `hsl(${(Math.random() * 360).toFixed(0)} 50% 50%)`
 })
 
-const { div, button } = tosijs.elements
+import { div, button } from 'tosijs'.elements
 const tabSelector = preview.querySelector('xin-tabs')
 
 tabSelector.onCloseTab = body => {

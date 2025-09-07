@@ -8,8 +8,8 @@ or `position: fixed` element and you can directly adjust its CSS positioning, in
 Click on an element to adjust its position, dimensions, and rotation.
 
 ```js
-const { editableRect, icons } = tosijsui
-const { elements } = tosijs
+import { editableRect, icons } from 'tosijs-ui'
+import { elements } from 'tosijs'
 const { button } = elements
 
 function showTools(event) {
