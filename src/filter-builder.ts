@@ -144,10 +144,11 @@ interface FilterMaker {
 ```
 */
 
-import { Component as WebComponent, ElementCreator, elements } from 'tosijs'
-import { icons } from '../src/'
+import { Component as WebComponent, ElementCreator, elements, PartsMap } from 'tosijs'
+import { icons } from './icons'
+import { xinSelect, XinSelect, SelectOption } from './select'
 
-const { div, input, select, option, button, span } = elements
+const { div, input, button, span } = elements
 
 type ObjectTest = (obj: any) => boolean
 type ArrayFilter = (array: any[]) => any[]
@@ -178,7 +179,6 @@ export const availableFilters: { [key: string]: FilterMaker } = {
         .split(/[\s,]/)
         .map((tag) => tag.trim().toLocaleLowerCase())
         .filter((tag) => tag !== '')
-      console.log(tags)
       return (obj: any) =>
         Array.isArray(obj) &&
         tags.find((tag) => !obj.includes(tag)) === undefined
@@ -191,7 +191,6 @@ export const availableFilters: { [key: string]: FilterMaker } = {
         .split(/[\s,]/)
         .map((tag) => tag.trim().toLocaleLowerCase())
         .filter((tag) => tag !== '')
-      console.log(tags)
       return (obj: any) =>
         Array.isArray(obj) &&
         tags.find((tag) => obj.includes(tag)) === undefined
@@ -257,8 +256,8 @@ const passAnything = {
   test: () => true,
 }
 
-function getSelectText(select: HTMLSelectElement): string {
-  return select.options[select.selectedIndex].text
+function getSelectText(select: XinSelect): string {
+  return (select.options[select.selectedIndex] as SelectOption)?.caption || ''
 }
 
 type Fields = Array<{ name?: string; prop: string }>
@@ -268,18 +267,24 @@ export interface FilterPartState {
   condition: string
   needle: string
 }
-export class FilterPart extends WebComponent {
+
+interface FilterPartParts extends PartsMap {
+  haystack: XinSelect
+  condition: XinSelect
+  needle: HTMLInputElement
+  remove: HTMLButtonElement
+}
+
+export class FilterPart extends WebComponent<FilterPartParts> {
   fields: Fields = []
   filters = availableFilters
   haystack = '*'
-  condition = ''
+  condition = 'contains'
   needle = ''
 
   content = () => [
-    select({ part: 'haystack' }),
-    icons.chevronDown(),
-    select({ part: 'condition' }),
-    icons.chevronDown(),
+    xinSelect({ part: 'haystack' }),
+    xinSelect({ part: 'condition' }),
     input({ part: 'needle', type: 'search' }),
     span({ part: 'padding' }),
     button({ part: 'remove', title: 'delete' }, icons.trash()),
@@ -293,11 +298,7 @@ export class FilterPart extends WebComponent {
   }
 
   get state(): FilterPartState {
-    const { haystack, needle, condition } = this.parts as {
-      haystack: HTMLSelectElement
-      condition: HTMLSelectElement
-      needle: HTMLInputElement
-    }
+    const { haystack, needle, condition } = this.parts
     return {
       haystack: haystack.value,
       needle: needle.value,
@@ -310,11 +311,7 @@ export class FilterPart extends WebComponent {
   }
 
   buildFilter = (/* event: Event */) => {
-    const { haystack, condition, needle } = this.parts as {
-      haystack: HTMLSelectElement
-      condition: HTMLSelectElement
-      needle: HTMLInputElement
-    }
+    const { haystack, condition, needle } = this.parts
 
     const negative = condition.value.startsWith('~')
     const key = negative ? condition.value.slice(1) : condition.value
@@ -356,12 +353,7 @@ export class FilterPart extends WebComponent {
   connectedCallback() {
     super.connectedCallback()
 
-    const { haystack, condition, needle, remove } = this.parts as {
-      haystack: HTMLSelectElement
-      condition: HTMLSelectElement
-      needle: HTMLInputElement
-      remove: HTMLButtonElement
-    }
+    const { haystack, condition, needle, remove } = this.parts
 
     haystack.addEventListener('change', this.buildFilter)
     condition.addEventListener('change', this.buildFilter)
@@ -380,33 +372,26 @@ export class FilterPart extends WebComponent {
   render() {
     super.render()
 
-    const { haystack, condition, needle } = this.parts as {
-      haystack: HTMLSelectElement
-      condition: HTMLSelectElement
-      needle: HTMLInputElement
-    }
+    const { haystack, condition, needle } = this.parts
 
-    haystack.textContent = ''
-    haystack.append(
-      option('any field', { value: '*' }),
-      ...this.fields.map((field) => {
-        const caption = field.name || field.prop
-        return option(`${caption}`, { value: field.prop })
-      })
-    )
-    condition.textContent = ''
-    const conditions = Object.keys(this.filters)
-      .map((key) => {
+    haystack.options = [
+      {
+        caption: 'any field', 
+        value: '*'
+      },
+      ...this.fields.map((field) => field.prop)
+    ]
+    
+    condition.options = Object.keys(this.filters).map((key) => {
         const filter = this.filters[key]
         return filter.negative !== undefined
           ? [
-              option(filter.caption, { value: key }),
-              option(filter.negative, { value: '~' + key }),
+              { caption: filter.caption, value: key },
+              { caption: filter.negative, value: '~' + key },
             ]
-          : option(filter.caption, { value: key })
+          : { caption: filter.caption, value: key }
       })
-      .flat()
-    condition.append(...conditions)
+      .flat() as SelectOption[]
 
     if (this.haystack !== '') {
       haystack.value = this.haystack
@@ -451,7 +436,12 @@ export const filterPart = FilterPart.elementCreator({
 
 export type FilterState = FilterPartState[]
 
-export class FilterBuilder extends WebComponent {
+export interface FilterBuilderParts extends PartsMap {
+  add: HTMLButtonElement
+  resent: HTMLButtonElement
+}
+
+export class FilterBuilder extends WebComponent<FilterBuilderParts> {
   private _fields: Fields = []
 
   get fields(): Fields {
@@ -564,6 +554,18 @@ export const filterBuilder = FilterBuilder.elementCreator({
       flexDirection: 'column',
       alignItems: 'stretch',
       flex: '1 1 auto',
+    },
+    
+    ':host [part="haystack"]': {
+      _fieldWidth: '100px'
+    },
+    
+    ':host [part="condition"]': {
+      _fieldWidth: '60px'
+    },
+    
+    ':host [part="needle"]': {
+      _fieldWidth: '80px'
     },
 
     ':host [part="add"], :host [part="reset"]': {
