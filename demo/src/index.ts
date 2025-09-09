@@ -78,6 +78,7 @@ const { app, prefs } = tosi({
     lottieData: '',
     docs,
     currentDoc,
+    compact: false
   },
   prefs: {
     theme: 'system',
@@ -170,6 +171,28 @@ const searchField = input({
 if (main)
   main.append(
     header(
+      button(
+        {
+          class: 'iconic',
+          style: { color: vars.linkColor },
+          title: 'navigation',
+          bind: {
+            value: app.compact,
+            binding: {
+              toDOM(element, compact) {
+                element.style.display = compact ? '' : 'none'
+                element.nextSibling.style.display = compact ? '' : 'none'
+              }
+            }
+          },
+          onClick() {
+            const nav = document.querySelector(SideNav.tagName) as SideNav
+            nav.contentVisible = !nav.contentVisible
+          }
+        },
+        icons.menu()
+      ),
+      span({ style: { flex: '0 0 10px' } }),
       a(
         {
           href: '/',
@@ -314,6 +337,10 @@ if (main)
           flex: '1 1 auto',
           overflow: 'hidden',
         },
+        onChange(event) {
+          const nav = document.querySelector(SideNav.tagName) as SideNav
+          app.compact = nav.compact
+        }
       },
       searchField,
       div(
@@ -362,22 +389,6 @@ if (main)
             height: '100%',
           },
         },
-        button(
-          {
-            title: 'show navigation',
-            class: 'iconic transparent close-nav show-within-compact',
-            style: {
-              marginTop: '2px',
-              position: 'fixed',
-            },
-            onClick(event: Event) {
-              ;(
-                (event.target as HTMLElement).closest('xin-sidenav') as SideNav
-              ).contentVisible = false
-            },
-          },
-          icons.chevronLeft({ size: 32 })
-        ),
         markdownViewer({
           style: {
             display: 'block',

@@ -4832,7 +4832,7 @@ var editableRect = EditableRect.elementCreator({
   tag: "xin-editable"
 });
 // src/filter-builder.ts
-var { div: div6, input: input4, select, option, button: button6, span: span5 } = p;
+var { div: div6, input: input4, button: button6, span: span5 } = p;
 var passThru2 = (array) => array;
 var NULL_FILTER_DESCRIPTION = "null filter, everything matches";
 var availableFilters = {
@@ -4848,7 +4848,6 @@ var availableFilters = {
     caption: "has tags",
     makeTest: (value) => {
       const tags = value.split(/[\s,]/).map((tag) => tag.trim().toLocaleLowerCase()).filter((tag) => tag !== "");
-      console.log(tags);
       return (obj) => Array.isArray(obj) && tags.find((tag) => !obj.includes(tag)) === undefined;
     }
   },
@@ -4856,7 +4855,6 @@ var availableFilters = {
     caption: "does not have tags",
     makeTest: (value) => {
       const tags = value.split(/[\s,]/).map((tag) => tag.trim().toLocaleLowerCase()).filter((tag) => tag !== "");
-      console.log(tags);
       return (obj) => Array.isArray(obj) && tags.find((tag) => obj.includes(tag)) === undefined;
     }
   },
@@ -4913,21 +4911,19 @@ var passAnything = {
   description: "anything",
   test: () => true
 };
-function getSelectText(select2) {
-  return select2.options[select2.selectedIndex].text;
+function getSelectText(select) {
+  return select.options[select.selectedIndex]?.caption || "";
 }
 
 class FilterPart extends M {
   fields = [];
   filters = availableFilters;
   haystack = "*";
-  condition = "";
+  condition = "contains";
   needle = "";
   content = () => [
-    select({ part: "haystack" }),
-    icons.chevronDown(),
-    select({ part: "condition" }),
-    icons.chevronDown(),
+    xinSelect({ part: "haystack" }),
+    xinSelect({ part: "condition" }),
     input4({ part: "needle", type: "search" }),
     span5({ part: "padding" }),
     button6({ part: "remove", title: "delete" }, icons.trash())
@@ -4988,20 +4984,20 @@ class FilterPart extends M {
   render() {
     super.render();
     const { haystack, condition, needle } = this.parts;
-    haystack.textContent = "";
-    haystack.append(option("any field", { value: "*" }), ...this.fields.map((field) => {
-      const caption = field.name || field.prop;
-      return option(`${caption}`, { value: field.prop });
-    }));
-    condition.textContent = "";
-    const conditions = Object.keys(this.filters).map((key) => {
+    haystack.options = [
+      {
+        caption: "any field",
+        value: "*"
+      },
+      ...this.fields.map((field) => field.prop)
+    ];
+    condition.options = Object.keys(this.filters).map((key) => {
       const filter = this.filters[key];
       return filter.negative !== undefined ? [
-        option(filter.caption, { value: key }),
-        option(filter.negative, { value: "~" + key })
-      ] : option(filter.caption, { value: key });
+        { caption: filter.caption, value: key },
+        { caption: filter.negative, value: "~" + key }
+      ] : { caption: filter.caption, value: key };
     }).flat();
-    condition.append(...conditions);
     if (this.haystack !== "") {
       haystack.value = this.haystack;
     }
@@ -5122,6 +5118,15 @@ var filterBuilder = FilterBuilder.elementCreator({
       flexDirection: "column",
       alignItems: "stretch",
       flex: "1 1 auto"
+    },
+    ':host [part="haystack"]': {
+      _fieldWidth: "100px"
+    },
+    ':host [part="condition"]': {
+      _fieldWidth: "60px"
+    },
+    ':host [part="needle"]': {
+      _fieldWidth: "80px"
     },
     ':host [part="add"], :host [part="reset"]': {
       "--button-size": "var(--touch-size, 32px)",
@@ -8497,11 +8502,11 @@ class RichText extends M {
   }
   selectionChange = () => {};
   handleSelectChange = (event) => {
-    const select2 = event.target.closest(XinSelect.tagName);
-    if (select2 == null) {
+    const select = event.target.closest(XinSelect.tagName);
+    if (select == null) {
       return;
     }
-    this.doCommand(select2.value);
+    this.doCommand(select.value);
   };
   handleButtonClick = (event) => {
     const button12 = event.target.closest("button");
@@ -8542,13 +8547,13 @@ class RichText extends M {
     document.execCommand(args[0], false, ...args.slice(1));
   }
   updateBlockStyle() {
-    const select2 = this.parts.toolbar.querySelector(".block-style");
-    if (select2 === null) {
+    const select = this.parts.toolbar.querySelector(".block-style");
+    if (select === null) {
       return;
     }
     let blockTags = this.selectedBlocks.map((block) => block.tagName);
     blockTags = [...new Set(blockTags)];
-    select2.value = blockTags.length === 1 ? `formatBlock,${blockTags[0]}` : "";
+    select.value = blockTags.length === 1 ? `formatBlock,${blockTags[0]}` : "";
   }
   connectedCallback() {
     super.connectedCallback();
@@ -8777,15 +8782,9 @@ class SideNav extends M {
   minSize = 800;
   navSize = 200;
   compact = false;
+  contentVisible = false;
+  value = "normal";
   content = [slot7({ name: "nav", part: "nav" }), slot7({ part: "content" })];
-  _contentVisible = false;
-  get contentVisible() {
-    return this._contentVisible;
-  }
-  set contentVisible(visible) {
-    this._contentVisible = visible;
-    this.queueRender();
-  }
   static styleSpec = {
     ":host": {
       display: "grid",
@@ -8811,14 +8810,15 @@ class SideNav extends M {
     if (parent === null) {
       return;
     }
+    let navState = this.value;
     this.compact = parent.offsetWidth < this.minSize;
     const empty = [...this.childNodes].find((node) => node instanceof Element ? node.getAttribute("slot") !== "nav" : true) === undefined;
     if (empty) {
+      navState = "compact/nav";
       this.style.setProperty("--nav-width", "100%");
       this.style.setProperty("--content-width", "0%");
-      return;
-    }
-    if (!this.compact) {
+    } else if (!this.compact) {
+      navState = "normal";
       content.classList.add("-xin-sidenav-visible");
       this.style.setProperty("--nav-width", `${this.navSize}px`);
       this.style.setProperty("--content-width", `calc(100% - ${this.navSize}px)`);
@@ -8828,10 +8828,15 @@ class SideNav extends M {
       this.style.setProperty("--nav-width", "50%");
       this.style.setProperty("--content-width", "50%");
       if (this.contentVisible) {
+        navState = "compact/content";
         this.style.setProperty("--margin", "0 0 0 -100%");
       } else {
+        navState = "compact/nav";
         this.style.setProperty("--margin", "0 -100% 0 0");
       }
+    }
+    if (this.value !== navState) {
+      this.value = navState;
     }
   };
   observer;
@@ -8852,7 +8857,7 @@ class SideNav extends M {
   }
   constructor() {
     super();
-    this.initAttributes("minSize", "navSize", "compact");
+    this.initAttributes("minSize", "navSize", "compact", "contentVisible");
   }
   render() {
     super.render();
@@ -14504,7 +14509,8 @@ var { app, prefs } = xe({
     lottieFilename: "",
     lottieData: "",
     docs: docs_default,
-    currentDoc
+    currentDoc,
+    compact: false
   },
   prefs: {
     theme: "system",
@@ -14574,7 +14580,24 @@ var searchField = input8({
   onInput: filterDocs
 });
 if (main)
-  main.append(header2(a5({
+  main.append(header2(button13({
+    class: "iconic",
+    style: { color: Hn.linkColor },
+    title: "navigation",
+    bind: {
+      value: app.compact,
+      binding: {
+        toDOM(element, compact) {
+          element.style.display = compact ? "" : "none";
+          element.nextSibling.style.display = compact ? "" : "none";
+        }
+      }
+    },
+    onClick() {
+      const nav = document.querySelector(SideNav.tagName);
+      nav.contentVisible = !nav.contentVisible;
+    }
+  }, icons.menu()), span14({ style: { flex: "0 0 10px" } }), a5({
     href: "/",
     style: {
       display: "flex",
@@ -14676,6 +14699,10 @@ if (main)
     style: {
       flex: "1 1 auto",
       overflow: "hidden"
+    },
+    onChange(event) {
+      const nav = document.querySelector(SideNav.tagName);
+      app.compact = nav.compact;
     }
   }, searchField, div15({
     slot: "nav",
@@ -14710,17 +14737,7 @@ if (main)
       overflowY: "scroll",
       height: "100%"
     }
-  }, button13({
-    title: "show navigation",
-    class: "iconic transparent close-nav show-within-compact",
-    style: {
-      marginTop: "2px",
-      position: "fixed"
-    },
-    onClick(event) {
-      event.target.closest("xin-sidenav").contentVisible = false;
-    }
-  }, icons.chevronLeft({ size: 32 })), markdownViewer({
+  }, markdownViewer({
     style: {
       display: "block",
       maxWidth: "44em",

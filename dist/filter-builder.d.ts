@@ -1,4 +1,5 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
+import { XinSelect } from './select';
 type ObjectTest = (obj: any) => boolean;
 type ArrayFilter = (array: any[]) => any[];
 interface FilterMaker {
@@ -23,7 +24,13 @@ export interface FilterPartState {
     condition: string;
     needle: string;
 }
-export declare class FilterPart extends WebComponent {
+interface FilterPartParts extends PartsMap {
+    haystack: XinSelect;
+    condition: XinSelect;
+    needle: HTMLInputElement;
+    remove: HTMLButtonElement;
+}
+export declare class FilterPart extends WebComponent<FilterPartParts> {
     fields: Fields;
     filters: {
         [key: string]: FilterMaker;
@@ -31,7 +38,7 @@ export declare class FilterPart extends WebComponent {
     haystack: string;
     condition: string;
     needle: string;
-    content: () => (SVGElement | HTMLSpanElement)[];
+    content: () => HTMLSpanElement[];
     filter: Filter;
     constructor();
     get state(): FilterPartState;
@@ -42,7 +49,11 @@ export declare class FilterPart extends WebComponent {
 }
 export declare const filterPart: ElementCreator<FilterPart>;
 export type FilterState = FilterPartState[];
-export declare class FilterBuilder extends WebComponent {
+export interface FilterBuilderParts extends PartsMap {
+    add: HTMLButtonElement;
+    resent: HTMLButtonElement;
+}
+export declare class FilterBuilder extends WebComponent<FilterBuilderParts> {
     private _fields;
     get fields(): Fields;
     set fields(_fields: Fields);

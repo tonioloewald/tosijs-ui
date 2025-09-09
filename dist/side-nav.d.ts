@@ -1,12 +1,12 @@
 import { Component, ElementCreator } from 'tosijs';
+type NavState = 'normal' | 'compact/nav' | 'compact/content';
 export declare class SideNav extends Component {
     minSize: number;
     navSize: number;
     compact: boolean;
+    contentVisible: boolean;
+    value: NavState;
     content: HTMLSlotElement[];
-    private _contentVisible;
-    get contentVisible(): boolean;
-    set contentVisible(visible: boolean);
     static styleSpec: {
         ':host': {
             display: string;
@@ -34,3 +34,4 @@ export declare class SideNav extends Component {
     render(): void;
 }
 export declare const sideNav: ElementCreator<SideNav>;
+export {};
