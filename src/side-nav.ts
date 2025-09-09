@@ -16,22 +16,16 @@ import { Component, ElementCreator, elements, varDefault } from 'tosijs'
 
 const { slot } = elements
 
+type NavState = 'normal' | 'compact/nav' | 'compact/content'
+
 export class SideNav extends Component {
   minSize = 800
   navSize = 200
   compact = false
+  contentVisible = false
+  value: NavState = 'normal'
 
   content = [slot({ name: 'nav', part: 'nav' }), slot({ part: 'content' })]
-
-  private _contentVisible = false
-  get contentVisible(): boolean {
-    return this._contentVisible
-  }
-
-  set contentVisible(visible: boolean) {
-    this._contentVisible = visible
-    this.queueRender()
-  }
 
   static styleSpec = {
     ':host': {
@@ -61,6 +55,8 @@ export class SideNav extends Component {
     if (parent === null) {
       return
     }
+    
+    let navState = this.value
 
     this.compact = parent.offsetWidth < this.minSize
 
@@ -69,12 +65,11 @@ export class SideNav extends Component {
         node instanceof Element ? node.getAttribute('slot') !== 'nav' : true
       ) === undefined
     if (empty) {
+      navState = 'compact/nav'
       this.style.setProperty('--nav-width', '100%')
       this.style.setProperty('--content-width', '0%')
-      return
-    }
-
-    if (!this.compact) {
+    } else if (!this.compact) {
+      navState = 'normal'
       content.classList.add('-xin-sidenav-visible')
       this.style.setProperty('--nav-width', `${this.navSize}px`)
       this.style.setProperty(
@@ -88,10 +83,16 @@ export class SideNav extends Component {
       this.style.setProperty('--content-width', '50%')
 
       if (this.contentVisible) {
+        navState = 'compact/content'
         this.style.setProperty('--margin', '0 0 0 -100%')
       } else {
+        navState = 'compact/nav'
         this.style.setProperty('--margin', '0 -100% 0 0')
       }
+    }
+    
+    if (this.value !== navState) {
+      this.value = navState
     }
   }
 
@@ -116,7 +117,7 @@ export class SideNav extends Component {
 
   constructor() {
     super()
-    this.initAttributes('minSize', 'navSize', 'compact')
+    this.initAttributes('minSize', 'navSize', 'compact', 'contentVisible')
   }
 
   render(): void {
