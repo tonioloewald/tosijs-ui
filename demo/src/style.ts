@@ -183,6 +183,7 @@ const colors = {
   _menuSeparatorColor: '#2224',
   _scrollThumbColor: '#0006',
   _scrollBarColor: '#0001',
+  _inputBorderShadow: 'inset 0 0 2px #0006',
 }
 
 export const styleSpec: XinStyleSheet = {
@@ -386,9 +387,13 @@ export const styleSpec: XinStyleSheet = {
     border: 'none',
     outline: 'none',
     borderRadius: 'calc(var(--spacing) * 0.5)',
+    boxShadow: vars.inputBorderShadow,
   },
   input: {
     padding: '0 calc(var(--spacing) * 1.5)',
+  },
+  'input[type=color], input[type=range]': {
+    boxShadow: 'none',
   },
   textarea: {
     padding: 'var(--spacing) calc(var(--spacing) * 1.25)',
