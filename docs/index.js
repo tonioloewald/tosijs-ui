@@ -4390,6 +4390,7 @@ class TosiDialog extends M {
   }
   #modalResolution = (outcome) => {};
   showModal = () => {
+    this.style.zIndex = String(findHighestZ());
     return new Promise((resolve) => {
       this.#modalResolution = resolve;
       this.parts.dialog.showModal();
@@ -4414,18 +4415,14 @@ class TosiDialog extends M {
 var tosiDialog = TosiDialog.elementCreator({
   tag: "tosi-dialog",
   styleSpec: {
-    ":host:has(dialog[open])": {
-      position: "fixed",
-      display: "block",
-      inset: 0,
-      background: "#0002",
-      zIndex: 2
+    ":host > dialog::backdrop": {
+      backdropFilter: "blur(8px)"
+    },
+    ":host > dialog:not([open])": {
+      display: "none"
     },
     ":host > dialog[open]": {
-      top: "50%",
-      left: "50%",
       minWidth: 300,
-      transform: "translate(-50%,-50%)",
       border: 0,
       borderRadius: 10,
       overflow: "hidden",
@@ -9265,7 +9262,8 @@ var colors = {
   _menuItemColor: "#222",
   _menuSeparatorColor: "#2224",
   _scrollThumbColor: "#0006",
-  _scrollBarColor: "#0001"
+  _scrollBarColor: "#0001",
+  _inputBorderShadow: "inset 0 0 2px #0006"
 };
 var styleSpec = {
   "@import": "https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&famiSpline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap",
@@ -9465,10 +9463,14 @@ var styleSpec = {
   "input, textarea": {
     border: "none",
     outline: "none",
-    borderRadius: "calc(var(--spacing) * 0.5)"
+    borderRadius: "calc(var(--spacing) * 0.5)",
+    boxShadow: Hn.inputBorderShadow
   },
   input: {
     padding: "0 calc(var(--spacing) * 1.5)"
+  },
+  "input[type=color], input[type=range]": {
+    boxShadow: "none"
   },
   textarea: {
     padding: "var(--spacing) calc(var(--spacing) * 1.25)",
