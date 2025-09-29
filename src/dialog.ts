@@ -106,6 +106,7 @@ preview.append(
 
 */
 import { Component, PartsMap, elements, on }  from 'tosijs'
+import { findHighestZ } from './track-drag'
 
 const { dialog, button, header, footer, xinSlot, h3, p, label, input, div } = elements
 
@@ -137,7 +138,7 @@ export class TosiDialog extends Component<DialogParts> {
       alertDialog.showModal()
     })
   }
-  
+
   static async confirm(message: string, title = 'Confirm'): Promise<boolean> {
     return new Promise(resolve => {
       const confirmDialog = tosiDialog(
@@ -155,7 +156,7 @@ export class TosiDialog extends Component<DialogParts> {
           message
         ),
         button(
-          { 
+          {
             slot: 'footer',
             onClick() {
               confirmDialog.close()
@@ -168,7 +169,7 @@ export class TosiDialog extends Component<DialogParts> {
       confirmDialog.showModal()
     })
   }
-  
+
   static async prompt(message: string, title = 'Prompt', currentValue = ''): Promise<string | null> {
     return new Promise(resolve => {
       const inputField = input({ value: currentValue })
@@ -189,7 +190,7 @@ export class TosiDialog extends Component<DialogParts> {
         p(
           label(
             {
-              style: { 
+              style: {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'stretch',
@@ -203,7 +204,7 @@ export class TosiDialog extends Component<DialogParts> {
           )
         ),
         button(
-          { 
+          {
             slot: 'footer',
             onClick() {
               promptDialog.close()
@@ -216,33 +217,34 @@ export class TosiDialog extends Component<DialogParts> {
       promptDialog.showModal()
     })
   }
-  
+
   removeOnClose = false
   closeOnBackgroundClick = false
-  
+
   constructor() {
     super()
-    
+
     this.initAttributes('removeOnClose', 'closeOnBackgroundClick')
-    
+
     on(this, 'click', () => {
       if (this.closeOnBackgroundClick) {
         this.close()
       }
     })
   }
-  
+
   dialogWillClose = (reason = 'cancel') => {
     console.log('dialog will close with', reason)
   }
-  
+
   initialFocus() {
     this.parts.ok.focus()
   }
-  
+
   #modalResolution = (outcome: string | null) => {}
-  
+
   showModal = (): Promise<string | null> => {
+    this.style.zIndex = String(findHighestZ())
     return new Promise(resolve => {
       this.#modalResolution = resolve
       this.parts.dialog.showModal()
@@ -251,7 +253,7 @@ export class TosiDialog extends Component<DialogParts> {
       })
     })
   }
-  
+
   close = (reason = 'cancel') => {
     this.dialogWillClose(reason)
     this.#modalResolution(reason)
@@ -260,11 +262,11 @@ export class TosiDialog extends Component<DialogParts> {
       this.remove()
     }
   }
-  
+
   ok = () => {
     this.close('confirm')
   }
-  
+
   content = () => dialog(
     { part: 'dialog' },
     header(
@@ -281,18 +283,14 @@ export class TosiDialog extends Component<DialogParts> {
 export const tosiDialog = TosiDialog.elementCreator({
   tag: 'tosi-dialog',
   styleSpec: {
-    ':host:has(dialog[open])': {
-      position: 'fixed',
-      display: 'block',
-      inset: 0,
-      background: '#0002',
-      zIndex: 2,
+    ':host > dialog::backdrop': {
+      backdropFilter: 'blur(8px)',
+    },
+    ':host > dialog:not([open])': {
+      display: 'none',
     },
     ':host > dialog[open]': {
-      top: '50%',
-      left: '50%',
       minWidth: 300,
-      transform: 'translate(-50%,-50%)',
       border: 0,
       borderRadius: 10,
       overflow: 'hidden',
