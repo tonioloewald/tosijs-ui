@@ -9237,7 +9237,7 @@ var xinTagList = XinTagList.elementCreator({
   }
 });
 // src/version.ts
-var version = "1.0.4";
+var version = "1.0.6";
 // demo/src/style.ts
 var brandColor = a.fromCss("#EE257B");
 var colors = {
@@ -12077,10 +12077,10 @@ A [lottie](https://airbnb.io/lottie/#/web) (a.k.a. **bodymovin**) player.
 It's designed to work like an \`<img>\` element (just set its \`src\` attribute).
 
 \`\`\`js
-import { icons, popFloat } from 'tosijs-ui'
+import { icons, popFloat, xinSelect } from 'tosijs-ui'
 import { div, label, input, select, option, span } from 'tosijs'.elements
 
-const rocket = preview.querySelector('xin-lottie')
+const tosiPlatform = preview.querySelector('xin-lottie')
 setTimeout(
   () => {
  preview.append(
@@ -12093,7 +12093,7 @@ setTimeout(
          'speed',
          input({ type: 'range', min: -1, max: 1, step: 0.1, value: 0, onInput(event) {
            const speed = Math.pow(5, Number(event.target.value))
-           rocket.animation.setSpeed(speed)
+           tosiPlatform.animation.setSpeed(speed)
            event.target.nextSibling.textContent = (speed * 100).toFixed(0) + '%'
          } }),
          span('100%', {style: { textAlign: 'right', width: '40px'}})
@@ -12101,19 +12101,19 @@ setTimeout(
        label(
          { class: 'no-drag' },
          'direction',
-         select(
-           option('Forwards', {value: 1, selected: true}),
-           option('Backwards', {value: -1}),
-           {
-             onChange(event) {
-               rocket.animation.setDirection(event.target.value)
-             }
+         xinSelect({
+           value: '1',
+           options: [
+             { caption: 'Forward', value: '1' },
+             { caption: 'Backward', value: '-1' }
+           ],
+           onChange(event) {
+             tosiPlatform.animation.setDirection(event.target.value)
            }
-         ),
-         icons.chevronDown(),
+         })
        )
      ],
-     target: rocket,
+     target: tosiPlatform,
      position: 's'
    })
  )
@@ -12123,11 +12123,11 @@ setTimeout(
 \`\`\`
 \`\`\`html
 <xin-lottie
-  style="height: 100%; max-width: 100%"
-  src="88140-rocket-livetrade.json"
+  style="width: 200px; height: 200px;"
+  src="https://cdn.lottielab.com/l/5dZMPFTou4tfpp.json"
 ></xin-lottie>
 <div class="caption">
-  Animation by <a target="_blank" href="https://lottiefiles.com/dvskjbicfc">chiến lê hồng</a>
+  Animation created with <a target="_blank" href="https://lottielab.com">Lottielab</a>
 </div>
 \`\`\`
 \`\`\`css
