@@ -3,7 +3,7 @@ import {
   ElementCreator,
   elements,
   Color,
-} from 'tosijs'
+} from 'xinjs'
 import { xinForm, XinForm, xinField } from '../../src'
 
 const { h2, code } = elements

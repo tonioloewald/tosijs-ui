@@ -178,7 +178,7 @@ import {
   ElementCreator,
   elements,
   varDefault,
-} from 'tosijs'
+} from 'xinjs'
 
 import { colorInput } from './color-input'
 

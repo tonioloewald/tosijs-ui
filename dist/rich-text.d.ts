@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
+import { Component as WebComponent, ElementCreator, PartsMap } from 'xinjs';
 import { XinSelect } from './select';
 export declare function blockStyle(options?: {
     caption: string;

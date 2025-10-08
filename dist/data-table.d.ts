@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { Component as WebComponent, ElementCreator } from 'xinjs';
 import { SortCallback } from './make-sorter';
 export interface ColumnOptions {
     name?: string;

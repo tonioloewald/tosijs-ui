@@ -1,4 +1,4 @@
-import { Component, PartsMap } from 'tosijs';
+import { Component, PartsMap } from 'xinjs';
 import { XinSelect } from './select';
 import { MenuItem } from './menu';
 interface MonthParts extends PartsMap {
@@ -57,5 +57,5 @@ export declare class TosiMonth extends Component<MonthParts> {
     }>;
     render(): void;
 }
-export declare const tosiMonth: import("tosijs").ElementCreator<Component<PartsMap>>;
+export declare const tosiMonth: import("xinjs").ElementCreator<Component<PartsMap>>;
 export {};

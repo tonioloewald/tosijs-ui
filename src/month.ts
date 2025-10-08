@@ -9,7 +9,7 @@ method will be called.
 The current date is `[part="today"]` and can easily be targeted for styling.
 
 ```js
-import { tosiMonth, postNotification } from 'tosijs-ui'
+import { tosiMonth, postNotification } from 'xinjs-ui'
 
 preview.append(tosiMonth({
   monthChanged(year, month) {
@@ -85,7 +85,7 @@ These prevent the user from changing the displayed month. This example is `reado
 
 */
 
-import { Component, PartsMap, elements, varDefault } from 'tosijs'
+import { Component, PartsMap, elements, varDefault } from 'xinjs'
 import { xinSelect, XinSelect } from './select'
 import { icons } from './icons'
 import { popMenu, MenuItem } from './menu'

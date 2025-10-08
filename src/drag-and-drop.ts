@@ -159,7 +159,7 @@ the drop zone node) simply using data-event="drop:path.to.drop_handler" as usual
 }
 ```
 ```js
-import { dragAndDrop } from 'tosijs-ui'
+import { dragAndDrop } from 'xinjs-ui'
 
 dragAndDrop.init()
 ```
@@ -170,8 +170,8 @@ dragAndDrop.init()
 ### Reorderable List Example
 
 ```js
-import { elements, tosi, getListItem } from 'tosijs'
-import { dragAndDrop } from 'tosijs-ui'
+import { elements, tosi, getListItem } from 'xinjs'
+import { dragAndDrop } from 'xinjs-ui'
 
 dragAndDrop.init()
 

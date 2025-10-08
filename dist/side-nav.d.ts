@@ -1,4 +1,4 @@
-import { Component, ElementCreator } from 'tosijs';
+import { Component, ElementCreator } from 'xinjs';
 type NavState = 'normal' | 'compact/nav' | 'compact/content';
 export declare class SideNav extends Component {
     minSize: number;

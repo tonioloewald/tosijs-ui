@@ -15,8 +15,8 @@ to make creating dialogs as convenient as possible.
 </tosi-dialog>
 ```
 ```js
-import { on } from 'tosijs'
-import { postNotification } from 'tosijs-ui'
+import { on } from 'xinjs'
+import { postNotification } from 'xinjs-ui'
 
 on(
   preview.querySelector('button'),
@@ -44,8 +44,8 @@ You can look at the code that implements them to see how to leverage `TosiDialog
 more complex, bespoke dialogs that can be used just as conveniently.
 
 ```js
-import { elements } from 'tosijs'
-import { TosiDialog, postNotification } from 'tosijs-ui'
+import { elements } from 'xinjs'
+import { TosiDialog, postNotification } from 'xinjs-ui'
 
 const { button, div } = elements
 
@@ -105,7 +105,7 @@ preview.append(
 ```
 
 */
-import { Component, PartsMap, elements, on }  from 'tosijs'
+import { Component, PartsMap, elements, on }  from 'xinjs'
 import { findHighestZ } from './track-drag'
 
 const { dialog, button, header, footer, xinSlot, h3, p, label, input, div } = elements

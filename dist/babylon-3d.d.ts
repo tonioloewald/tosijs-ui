@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { Component as WebComponent, ElementCreator } from 'xinjs';
 type B3dCallback = ((element: B3d, BABYLON: any) => void) | ((element: B3d, BABYLON: any) => Promise<void>);
 interface B3dUIOptions {
     snippetId?: string;

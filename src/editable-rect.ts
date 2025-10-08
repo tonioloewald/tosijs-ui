@@ -8,8 +8,8 @@ or `position: fixed` element and you can directly adjust its CSS positioning, in
 Click on an element to adjust its position, dimensions, and rotation.
 
 ```js
-import { editableRect, icons } from 'tosijs-ui'
-import { elements } from 'tosijs'
+import { editableRect, icons } from 'xinjs-ui'
+import { elements } from 'xinjs'
 const { button } = elements
 
 function showTools(event) {
@@ -68,7 +68,7 @@ Similarly `EditableRect.snapAngle === true` or the shift-key will snap rotation 
 After an element's position, size, or rotation are adjusted a `change` event is triggered on the element.
 */
 
-import { Component, elements, vars } from 'tosijs'
+import { Component, elements, vars } from 'xinjs'
 import { icons } from './icons'
 import { trackDrag } from './track-drag'
 

@@ -1,4 +1,4 @@
-import { Component, ElementCreator } from 'tosijs';
+import { Component, ElementCreator } from 'xinjs';
 interface NotificationSpec {
     message: string;
     type?: 'success' | 'info' | 'log' | 'warn' | 'error' | 'progress';

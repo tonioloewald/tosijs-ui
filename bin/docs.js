@@ -1,7 +1,7 @@
 /*#
 # docs.js
 
-The `tosijs-ui` package includes `docs.js` which is used to build the documentation
+The `xinjs-ui` package includes `docs.js` which is used to build the documentation
 for the [ui.xinjs.net](https://ui.xinjs.net).
 
 This is a simple utility for finding all the markdown files in a directory and also all

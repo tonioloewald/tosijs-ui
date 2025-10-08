@@ -1,7 +1,7 @@
 /*#
 # localize
 
-`tosijs-ui` provides support for localization via the `localize` method and the `<xin-locale-picker>`
+`xinjs-ui` provides support for localization via the `localize` method and the `<xin-locale-picker>`
 and `<xin-localized>` custom-elements.
 
 > ### Important Note
@@ -48,8 +48,8 @@ localize the string, and then append the ellipsis.
 ## `setLocale(language: string)`
 
 ```js
-import { button, p } from 'tosijs'.elements
-import { setLocale } from 'tosijs-ui'
+import { button, p } from 'xinjs'.elements
+import { setLocale } from 'xinjs-ui'
 
 preview.append(
   p(
@@ -117,7 +117,7 @@ xin-localized {
 }
 ```
 ```js
-import { xinLocalized, localize } from 'tosijs-ui'
+import { xinLocalized, localize } from 'xinjs-ui'
 
 preview.append(xinLocalized({
   refString: 'localized placeholder',
@@ -231,7 +231,7 @@ class MyLocalizedComponent extends Component {
 ```
 */
 
-import { Component, tosi, elements, bindings, observe, BoxedProxy } from 'tosijs'
+import { Component, boxedProxy as tosi, elements, bindings, observe, BoxedProxy } from 'xinjs'
 import { makeSorter } from './make-sorter'
 import { xinSelect, XinSelect } from './select'
 
@@ -240,16 +240,17 @@ interface TranslationMap {
 }
 
 interface I18nConfig {
-  locale: string;
-  locales: string[];
-  languages: string[];
-  emoji: string[];
-  stringMap: TranslationMap;
-  localeOptions: Array<{ // Or HTMLElement[], since span() returns an HTMLElement
-    icon: HTMLElement; // Use HTMLElement as the type for span() result
-    caption: string;
-    value: string;
-  }>;
+  locale: string
+  locales: string[]
+  languages: string[]
+  emoji: string[]
+  stringMap: TranslationMap
+  localeOptions: Array<{
+    // Or HTMLElement[], since span() returns an HTMLElement
+    icon: HTMLElement // Use HTMLElement as the type for span() result
+    caption: string
+    value: string
+  }>
 }
 
 const { span } = elements
@@ -269,7 +270,7 @@ export const { i18n } = tosi({
       },
     ],
   },
-}) as {i18n: I18nConfig}
+}) as { i18n: I18nConfig }
 
 bindings.localeOptions = {
   toDOM(select, options) {
@@ -328,8 +329,9 @@ export function initLocalization(localizedStrings: string) {
     if (!i18n.locales.includes(i18n.locale.valueOf())) {
       const language = i18n.locale.substring(0, 2)
       i18n.locale =
-        i18n.locales.find((locale: string) => locale.substring(0, 2) === language) ||
-        i18n.locales[0]
+        i18n.locales.find(
+          (locale: string) => locale.substring(0, 2) === language
+        ) || i18n.locales[0]
     }
     updateLocalized()
   }

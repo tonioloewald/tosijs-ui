@@ -1,4 +1,4 @@
-import { Component, ElementCreator } from 'tosijs';
+import { Component, ElementCreator } from 'xinjs';
 import { MarkedOptions } from 'marked';
 export declare class MarkdownViewer extends Component {
     src: string;

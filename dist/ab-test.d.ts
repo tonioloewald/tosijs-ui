@@ -1,4 +1,4 @@
-import { Component } from 'tosijs';
+import { Component } from 'xinjs';
 export declare class AbTest extends Component {
     static set conditions(context: {
         [key: string]: any;
@@ -11,4 +11,4 @@ export declare class AbTest extends Component {
     disconnectedCallback(): void;
     render(): void;
 }
-export declare const abTest: import("tosijs").ElementCreator<Component<import("tosijs").PartsMap>>;
+export declare const abTest: import("xinjs").ElementCreator<Component<import("xinjs").PartsMap>>;

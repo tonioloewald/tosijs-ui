@@ -1,4 +1,4 @@
-import { ElementCreator } from 'tosijs'
+import { ElementCreator } from 'xinjs'
 
 export type IconData = { [key: string]: string }
 

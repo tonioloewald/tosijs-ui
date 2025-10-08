@@ -1,5 +1,5 @@
 {
-  "name": "tosijs-ui",
+  "name": "xinjs-ui",
   "version": "1.0.6",
   "description": "simple robust web-components for use with xinjs or anything else",
   "scripts": {
@@ -9,7 +9,7 @@
     "latest": "rm -rf node_modules && bun update"
   },
   "keywords": [
-    "tosijs",
+    "xinjs",
     "ui",
     "ux",
     "user interface",
@@ -25,10 +25,10 @@
     "url": "https://github.com/tonioloewald/xinjs-ui.git"
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.1",
+    "@playwright/test": "^1.56.0",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.18.8",
-    "@types/react": "^19.2.0",
+    "@types/react": "^19.2.2",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "bun-types": "latest",
@@ -38,8 +38,8 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "marked": "^16.0.0",
-    "tosijs": "^1.0.3"
+    "marked": "^5.1.2",
+    "xinjs": "^1.0.6"
   },
   "files": [
     "/dist",

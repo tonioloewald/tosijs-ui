@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { Component as WebComponent, ElementCreator } from 'xinjs';
 export declare class MapBox extends WebComponent {
     coords: string;
     content: HTMLDivElement;

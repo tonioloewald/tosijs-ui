@@ -79,7 +79,7 @@ simply passes through document `selectionchange` events, but also passes a refer
 the `<xin-word>` component).
 */
 
-import { Component as WebComponent, ElementCreator, PartsMap, elements } from 'tosijs'
+import { Component as WebComponent, ElementCreator, PartsMap, elements } from 'xinjs'
 import { icons } from './icons'
 
 import { xinSelect, XinSelect } from './select'

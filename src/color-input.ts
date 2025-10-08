@@ -35,7 +35,7 @@ import {
   Color,
   vars,
   PartsMap,
-} from 'tosijs'
+} from 'xinjs'
 
 const { input } = elements
 

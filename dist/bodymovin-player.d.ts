@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { Component as WebComponent, ElementCreator } from 'xinjs';
 export interface LottieConfig {
     container?: HTMLElement | ShadowRoot;
     renderer: 'svg' | 'canvas' | 'html';

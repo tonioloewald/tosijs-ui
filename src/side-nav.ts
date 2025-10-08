@@ -12,7 +12,7 @@ sidebar and content, while `navSize` is the width of the sidebar. You can interr
 currently in `compact` form.
 */
 
-import { Component, ElementCreator, elements, varDefault } from 'tosijs'
+import { Component, ElementCreator, elements, varDefault } from 'xinjs'
 
 const { slot } = elements
 

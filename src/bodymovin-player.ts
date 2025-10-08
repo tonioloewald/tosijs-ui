@@ -6,8 +6,8 @@ A [lottie](https://airbnb.io/lottie/#/web) (a.k.a. **bodymovin**) player.
 It's designed to work like an `<img>` element (just set its `src` attribute).
 
 ```js
-import { icons, popFloat, xinSelect } from 'tosijs-ui'
-import { div, label, input, select, option, span } from 'tosijs'.elements
+import { icons, popFloat, xinSelect } from 'xinjs-ui'
+import { div, label, input, select, option, span } from 'xinjs'.elements
 
 const tosiPlatform = preview.querySelector('xin-lottie')
 setTimeout(
@@ -101,7 +101,7 @@ And of course just access the element's `animation` property to [use the bodymov
 Also see the [documentation for advanced interactions](https://lottiefiles.github.io/lottie-docs/advanced_interactions/)
 */
 
-import { Component as WebComponent, ElementCreator } from 'tosijs'
+import { Component as WebComponent, ElementCreator } from 'xinjs'
 import { scriptTag } from './via-tag'
 
 export interface LottieConfig {

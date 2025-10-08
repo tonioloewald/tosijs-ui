@@ -1,4 +1,4 @@
-import { Component } from 'tosijs';
+import { Component } from 'xinjs';
 interface Locks {
     left: boolean;
     right: boolean;
@@ -93,5 +93,5 @@ export declare class EditableRect extends Component {
     connectedCallback(): void;
     render(): void;
 }
-export declare const editableRect: import("tosijs").ElementCreator<Component<import("tosijs").PartsMap>>;
+export declare const editableRect: import("xinjs").ElementCreator<Component<import("xinjs").PartsMap>>;
 export {};

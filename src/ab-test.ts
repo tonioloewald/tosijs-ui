@@ -4,7 +4,7 @@
 `<xin-ab>` provides a simple method for implementing A|B-testing.
 
 ```js
-import { AbTest } from 'tosijs-ui'
+import { AbTest } from 'xinjs-ui'
 
 function randomize() {
   const conditions = {
@@ -76,7 +76,7 @@ randomize()
 - `not` reverses the condition (so `<xin-ab not condition="foo">` will be visible if `conditions.foo` is `false`)
 */
 
-import { Component } from 'tosijs'
+import { Component } from 'xinjs'
 
 const abTestConditions = {} as { [key: string]: any }
 

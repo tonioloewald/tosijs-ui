@@ -105,7 +105,7 @@ import {
   vars,
   varDefault,
   ElementCreator,
-} from 'tosijs'
+} from 'xinjs'
 import { popMenu, MenuItem } from './menu'
 import { icons } from './icons'
 

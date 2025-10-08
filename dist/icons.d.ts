@@ -1,4 +1,4 @@
-import { ElementCreator, Component as WebComponent } from 'tosijs';
+import { ElementCreator, Component as WebComponent } from 'xinjs';
 import { SVGIconMap } from './icon-types';
 export declare const defineIcons: (newIcons: {
     [key: string]: string;
@@ -14,4 +14,4 @@ export declare class SvgIcon extends WebComponent {
     constructor();
     render(): void;
 }
-export declare const svgIcon: ElementCreator<WebComponent<import("tosijs").PartsMap>>;
+export declare const svgIcon: ElementCreator<WebComponent<import("xinjs").PartsMap>>;

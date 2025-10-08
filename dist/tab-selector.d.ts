@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { Component as WebComponent, ElementCreator } from 'xinjs';
 type TabCloseHandler = (tabBody: Element) => boolean | undefined | void;
 export declare class TabSelector extends WebComponent {
     value: number;

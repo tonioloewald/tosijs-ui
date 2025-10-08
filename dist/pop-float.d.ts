@@ -1,4 +1,4 @@
-import { ElementPart } from 'tosijs';
+import { ElementPart } from 'xinjs';
 import { XinFloat } from './float';
 export type FloatPosition = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' | 'en' | 'wn' | 'es' | 'ws' | 'side' | 'auto';
 export interface PopFloatOptions {

@@ -1,7 +1,7 @@
 /*#
 # menu
 
-Being able to pop a menu up anywhere is just so nice, and `tosijs-ui` allows menus
+Being able to pop a menu up anywhere is just so nice, and `xinjs-ui` allows menus
 to be generated on-the-fly, and even supports hierarchical menus.
 
 ## popMenu and `<xin-menu>`
@@ -13,8 +13,8 @@ menuItems, and (because it persists in the DOM) supports keyboard
 shortcuts.
 
 ```js
-import { popMenu, localize, xinMenu, postNotification, xinLocalized, icons } from 'tosijs-ui'
-import { elements } from 'tosijs'
+import { popMenu, localize, xinMenu, postNotification, xinLocalized, icons } from 'xinjs-ui'
+import { elements } from 'xinjs'
 
 let picked = ''
 let testingEnabled = false
@@ -176,8 +176,8 @@ preview.append(
 ## Overflow test
 
 ```js
-import { popMenu, icons, postNotification } from 'tosijs-ui'
-import { elements } from 'tosijs'
+import { popMenu, icons, postNotification } from 'xinjs-ui'
+import { elements } from 'xinjs'
 
 preview.querySelector('button').addEventListener('click', (event) => {
   popMenu({
@@ -279,8 +279,8 @@ To see this in action, see the example below, or look at the
 to render column names when you show hidden columns.
 
 ```js
-import { elements } from 'tosijs'
-import { xinLocalized, localize, icons, popMenu, postNotification } from 'tosijs-ui'
+import { elements } from 'xinjs'
+import { xinLocalized, localize, icons, popMenu, postNotification } from 'xinjs-ui'
 const { button } = elements
 const makeItem = s => ({
   caption: s,
@@ -329,7 +329,7 @@ or you have to painfully swap out components on-the-fly.
 
 And, finally, submenus are darn useful for any serious app.
 
-For this reason, `tosijs-ui` has its own menu implementation.
+For this reason, `xinjs-ui` has its own menu implementation.
 */
 
 import {
@@ -339,7 +339,7 @@ import {
   StyleSheet,
   Component,
   PartsMap,
-} from 'tosijs'
+} from 'xinjs'
 import { popFloat, FloatPosition } from './pop-float'
 import { icons, svgIcon, SvgIcon } from './icons'
 import { localize, xinLocalized } from './localize'

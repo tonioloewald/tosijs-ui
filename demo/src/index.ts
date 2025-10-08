@@ -10,7 +10,7 @@ import {
   bind,
   hotReload,
   debounce,
-} from 'tosijs'
+} from 'xinjs'
 
 import {
   icons,
@@ -34,10 +34,10 @@ StyleSheet('demo-style', styleSpec)
 import localizedStrings from './localized-strings'
 initLocalization(localizedStrings)
 
-import * as tosijs from 'tosijs'
-import * as tosijsui from '../../src/'
+import * as xinjs from 'xinjs'
+import * as xinjsui from '../../src/'
 
-Object.assign(window, { tosijs, tosijsui })
+Object.assign(window, { xinjs, xinjsui })
 
 import './css-var-editor'
 import docs from '../docs.json'
@@ -53,7 +53,7 @@ setTimeout(() => {
   )
 }, 100)
 
-const PROJECT = 'tosijs-ui'
+const PROJECT = 'xinjs-ui'
 
 const docName =
   document.location.search !== ''
@@ -201,7 +201,7 @@ if (main)
             alignItems: 'center',
             borderBottom: 'none',
           },
-          title: `tosijs ${version}, tosijs-ui ${uiVersion}`,
+          title: `xinjs ${version}, xinjs-ui ${uiVersion}`,
         },
         icons.tosiUi({
           style: { _xinIconSize: 40, marginRight: 10 },
@@ -399,7 +399,7 @@ if (main)
           },
           bindValue: 'app.currentDoc.text',
           didRender(this: MarkdownViewer) {
-            LiveExample.insertExamples(this, { tosijs, 'tosijs-ui': tosijsui })
+            LiveExample.insertExamples(this, { xinjs, 'xinjs-ui': xinjsui })
           },
         })
       )

@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { Component as WebComponent, ElementCreator } from 'xinjs';
 export declare class XinFloat extends WebComponent {
     static floats: Set<XinFloat>;
     drag: boolean;

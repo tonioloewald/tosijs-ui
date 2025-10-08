@@ -1,4 +1,4 @@
-import { Component, ElementCreator, PartsMap } from 'tosijs';
+import { Component, ElementCreator, PartsMap } from 'xinjs';
 import { MenuItem } from './menu';
 type OptionRequest = () => Promise<string | undefined>;
 export interface SelectOption {

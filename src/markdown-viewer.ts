@@ -1,4 +1,4 @@
-import { Component, ElementCreator, xin } from 'tosijs'
+import { Component, ElementCreator, xin } from 'xinjs'
 import { marked, MarkedOptions } from 'marked'
 
 /*#

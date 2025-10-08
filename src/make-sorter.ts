@@ -10,8 +10,8 @@ insanely simple and just works™. It makes writing an array sort callback for a
 other than an array of numbers or strings easier.
 
 ```js
-import { select, option, div, span, ul, li } from 'tosijs'.elements
-import { icons, makeSorter } from 'tosijs-ui'
+import { select, option, div, span, ul, li } from 'xinjs'.elements
+import { icons, makeSorter } from 'xinjs-ui'
 
 const people = [
   { first: 'Frasier', last: 'Crane', age: 38 },

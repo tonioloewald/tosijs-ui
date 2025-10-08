@@ -10,7 +10,7 @@ If you view this example with an XR-enabled device, such as the
 as an AR scene.
 
 ```js
-import { b3d, gamepadText, xrControllers, xrControllersText } from 'tosijs-ui'
+import { b3d, gamepadText, xrControllers, xrControllersText } from 'xinjs-ui'
 
 preview.append(b3d({
   async sceneCreated(element, BABYLON) {
@@ -96,8 +96,8 @@ Here's a simple example of a terrain mesh comprising 125k triangles, 50% of whic
 takes an array of numbers that use a linear profile to change the landform.
 
 ```js
-import { b3d } from 'tosijs-ui'
-import { MoreMath } from 'tosijs'
+import { b3d } from 'xinjs-ui'
+import { MoreMath } from 'xinjs'
 
 const debugCutoff = 0.5
 const defaultProfile = [0, 1, 5, 8, 10].map(x => x/10)
@@ -174,7 +174,7 @@ be used to load `.glb` files.
 
 `<xin-3d>.loadUI(options: B3dUIOptions)` loads babylonjs guis, which you can create programmatically or using the [babylonjs gui tool](https://gui.babylonjs.com/).
 */
-import { Component as WebComponent, ElementCreator, elements } from 'tosijs'
+import { Component as WebComponent, ElementCreator, elements } from 'xinjs'
 import { scriptTag } from './via-tag'
 import { icons, svg2DataUrl } from './icons'
 

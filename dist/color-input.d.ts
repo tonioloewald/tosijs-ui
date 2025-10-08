@@ -1,4 +1,4 @@
-import { Component, ElementCreator, Color, PartsMap } from 'tosijs';
+import { Component, ElementCreator, Color, PartsMap } from 'xinjs';
 interface ColorParts extends PartsMap {
     rgb: HTMLInputElement;
     alpha: HTMLInputElement;

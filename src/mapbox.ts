@@ -93,7 +93,7 @@ There's no need to learn new APIs or write wrappers, just access the element's `
 and [use the standard mapbox APIs directly](https://docs.mapbox.com/api/maps/styles/).
 */
 
-import { Component as WebComponent, ElementCreator, elements } from 'tosijs'
+import { Component as WebComponent, ElementCreator, elements } from 'xinjs'
 import { styleSheet, scriptTag } from './via-tag'
 
 const { div } = elements

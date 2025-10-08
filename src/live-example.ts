@@ -10,8 +10,8 @@ is, by far, the master. And it's still super lightweight.
 
 ```js
 // this code executes in an async function body
-// it has tosijs, tosijsui, and preview (the preview div) available as local variables
-import { div } from 'tosijs'.elements
+// it has xinjs, xinjsui, and preview (the preview div) available as local variables
+import { div } from 'xinjs'.elements
 preview.append(div({class: 'example'}, 'fiddle de dee!'))
 preview.append('Try editing some code and hitting refresh…')
 ```
@@ -95,8 +95,8 @@ example itself lighter-weight.
 <p>testing</p>
 ```
 ```js
-import { elements } from 'tosijs'
-import { svgIcon } from 'tosijs-ui'
+import { elements } from 'xinjs'
+import { svgIcon } from 'xinjs-ui'
 
 preview.querySelector('p').style.color = 'red'
 preview.append(
@@ -116,27 +116,27 @@ to `import` libraries:
 So we provide context like this:
 
 ```
-import * as tosijs from 'tosjs'
-import * as tosijsui from 'tosijs-ui'
+import * as xinjs from 'tosjs'
+import * as xinjsui from 'xinjs-ui'
 
 ...
 
 context = {
-  tosijs,
-  'tosijs-ui': tosijsui
+  xinjs,
+  'xinjs-ui': xinjsui
 }
 ```
 
 ```
-import { elements, tosi } from 'tosijs'
-import { icons } from 'tosijs-ui'
+import { elements, tosi } from 'xinjs'
+import { icons } from 'xinjs-ui'
 ```
 
 is rewritten as:
 
 ```
-import { elements, tosi } from 'tosijs'
-import { icons } from 'tosijs-ui'
+import { elements, tosi } from 'xinjs'
+import { icons } from 'xinjs-ui'
 ```
 
 The `LiveExample` class provides the static `insertExamples(element: HTMLElement)`
@@ -145,7 +145,7 @@ function that will replace any sequence of
 elements with a `<xin-example>` instance.
 */
 
-import { Component, ElementCreator, PartsMap, elements } from 'tosijs'
+import { Component, ElementCreator, PartsMap, elements } from 'xinjs'
 import { codeEditor, CodeEditor } from './code-editor'
 import { tabSelector, TabSelector } from './tab-selector'
 import { icons } from './icons'
