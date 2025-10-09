@@ -436,8 +436,10 @@ export const styleSpec: XinStyleSheet = {
     overflow: 'hidden',
     position: 'relative',
   },
-  'svg text': {
+  svg: {
     pointerEvents: 'none',
+  },
+  'svg text': {
     fontSize: '16px',
     fontWeight: 'bold',
     stroke: '#fff8',

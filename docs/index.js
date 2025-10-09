@@ -9513,8 +9513,10 @@ var styleSpec = {
     overflow: "hidden",
     position: "relative"
   },
+  svg: {
+    pointerEvents: "none"
+  },
   "svg text": {
-    pointerEvents: "none",
     fontSize: "16px",
     fontWeight: "bold",
     stroke: "#fff8",
@@ -11433,10 +11435,10 @@ which is useful when debugging.`,
   {
     text: `# icons
 
-<div class="center">
-  <xin-icon icon="settings" style="--xin-icon-size: 128px"></xin-icon>
-  <xin-icon icon="xrColor" style="--xin-icon-size: 96px"></xin-icon>
-  <xin-icon icon="rgb" style="--xin-icon-size: 128px"></xin-icon>
+<div class="center" style="display: flex; gap: 10px; padding: 10px">
+  <xin-icon title="tosijs" icon="tosiFavicon" style="--xin-icon-size: 128px"></xin-icon>
+  <xin-icon title="tosijs-ui" icon="tosiUi" style="--xin-icon-size: 128px"></xin-icon>
+  <xin-icon title="tosi-platform" icon="tosiPlatform" style="--xin-icon-size: 128px"></xin-icon>
 </div>
 
 A library that provides \`ElementCreator\` functions that produce SVG icons. It leverages \`tosijs\`'s
@@ -11474,8 +11476,8 @@ preview.append(
       class: 'scroller'
     },
     ...Object.keys(icons).sort().map(iconName => div(
-      { 
-        class: 'tile', 
+      {
+        class: 'tile',
         onClick() {
           iconDemo.icon = iconDemo.icon != iconName ? iconName : ''
           postNotification({
@@ -11523,14 +11525,14 @@ preview.append(
   display: flex;
   text-align: center;
   cursor: pointer;
-  background: #fff8;
+  background: #8882;
   padding: 10px;
   gap: 10px;
   border-radius: 5px;
 }
 
 .preview .tile:hover {
-  background: white;
+  background: #8884;
   color: var(--brand-color);
 }
 
@@ -11556,10 +11558,9 @@ preview.append(
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #fffc;
-  padding: 10px;
-  borderRadius: 10px;
-  pointerEvents: none;
+  background: #8886;
+  border-radius: 20px;
+  pointer-events: none;
 }
 \`\`\`
 
@@ -11708,18 +11709,18 @@ My evolution has been:
    from the data
 3. Ingesting SVGs directly, with a little cleanup
 
-The goal is always to have a single source of truth for icons, no magic or convoluted tooling, and 
+The goal is always to have a single source of truth for icons, no magic or convoluted tooling, and
 be able to quickly and easily add and replace icons, distribute them with components, and
 have no mess or fuss.
 
 1. Works well, but…
    - color icons are flaky,
-   - doesn't play well with others, 
-   - can't really distribute the icons with your components. 
+   - doesn't play well with others,
+   - can't really distribute the icons with your components.
    - difficult to use icons in CSS \`content\`
    - impossible to use icons in CSS backgrounds
 2. This is \`icons.ts\` until just now! Solves all the above, but…
-   - no fancy SVG effects, like gradients (goodness knows I experimented with converting CSS gradients to SVG gradients) and, most 
+   - no fancy SVG effects, like gradients (goodness knows I experimented with converting CSS gradients to SVG gradients) and, most
    - **strokes** need to be converted to outlines
    - outlined strokes can't be styled the way strokes can
    - blocks use of popular icon libraries
