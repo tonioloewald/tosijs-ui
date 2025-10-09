@@ -336,7 +336,7 @@ export const styleSpec: XinStyleSheet = {
     bottom: -48,
     right: -24,
     position: 'absolute',
-    background: svg2DataUrl(icons.tosi()),
+    background: svg2DataUrl(icons.tosi(), undefined, undefined, 2),
   },
   '.bar': {
     display: 'flex',

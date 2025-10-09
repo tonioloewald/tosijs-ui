@@ -3,7 +3,7 @@ import { SVGIconMap } from './icon-types';
 export declare const defineIcons: (newIcons: {
     [key: string]: string;
 }) => void;
-export declare const svg2DataUrl: (svg: SVGElement, fill?: string | false, stroke?: string | false, strokeWidth?: number | string) => string;
+export declare const svg2DataUrl: (svg: SVGElement, fill?: string, stroke?: string, strokeWidth?: number) => string;
 export declare const icons: SVGIconMap;
 export declare class SvgIcon extends WebComponent {
     icon: string;
