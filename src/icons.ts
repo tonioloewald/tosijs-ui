@@ -209,7 +209,7 @@ preview.append(
 )
 ```
 
-`svg2DataUrl(svg: SVGElement, fill?: string, stroke?: string): string` is provided as a
+`svg2DataUrl(svg: SVGElement, fill?: string, stroke?: string, strokeWidth?: number): string` is provided as a
 utility for converting SVG elements into data-urls (e.g. for incorporation into
 CSS properties. (It's used by the `<xin-3d>` component to render the XR widget.)
 
@@ -348,20 +348,20 @@ export const defineIcons = (newIcons: { [key: string]: string }): void => {
 
 export const svg2DataUrl = (
   svg: SVGElement,
-  fill?: string | false,
-  stroke?: string | false,
-  strokeWidth: number | string = 1
+  fill?: string,
+  stroke?: string,
+  strokeWidth?: number
 ): string => {
   svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-  if (fill || stroke) {
-    for (const path of [...svg.querySelectorAll('path, polygon')]) {
-      if (fill) {
-        path.setAttribute('fill', fill)
-      }
-      if (stroke) {
-        path.setAttribute('stroke', stroke)
-        path.setAttribute('stroke-width', String(strokeWidth))
-      }
+  for (const path of [...svg.querySelectorAll('path, polygon')]) {
+    if (fill !== undefined) {
+      path.setAttribute('fill', fill)
+    }
+    if (stroke !== undefined) {
+      path.setAttribute('stroke', stroke)
+    }
+    if (strokeWidth !== undefined) {
+      path.setAttribute('stroke-width', String(strokeWidth)) 
     }
   }
 
