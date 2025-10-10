@@ -11552,12 +11552,13 @@ preview.append(
 .preview .icon-detail {
   position: absolute;
   display: block;
-  height: 256px;
+  height: 296px;
   opacity: 0;
   transition: 0.5s ease-out;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  padding: 20px;
   background: #8886;
   border-radius: 20px;
   pointer-events: none;
