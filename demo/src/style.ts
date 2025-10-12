@@ -437,6 +437,7 @@ export const styleSpec: XinStyleSheet = {
     position: 'relative',
   },
   svg: {
+    fill: 'currentColor',
     pointerEvents: 'none',
   },
   'svg text': {

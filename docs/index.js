@@ -9514,6 +9514,7 @@ var styleSpec = {
     position: "relative"
   },
   svg: {
+    fill: "currentColor",
     pointerEvents: "none"
   },
   "svg text": {
