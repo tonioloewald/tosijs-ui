@@ -14,10 +14,13 @@ applications along with being very easy to extend and maintain.
 > ### Supported Use Cases
 > - inline SVGs that can be styled by CSS (for buttons, etc.)
 > - allows both stroked and filled icons (unlike font-based systems)
-> - No build process magic needed (it's "just javascript")
-> - highly optimized and compressible
 > - support for color icons (without requiring multiple glyphs perfectly aligned)
-> - icons can be rendered  as data urls, e.g. to insert into CSS…
+> - icons can be rendered  as data urls, e.g. to insert into CSS… (the little `owl` logo rendered under blockquotes is an example)
+
+### Nice Features
+> - no build process magic needed (your icons are "just javascript", no special CSS files needed, no magic glyph mappings). Adding new, or overriding existing, icons is trivial.
+> - icons are just regular SVG, not a specialized subset.
+> - highly optimized and compressible (the code is comparable in size to what you get with a compressed font built from the same icons, except icon fonts don't support strokes, gradients, etc.)
 
 ## icons
 
@@ -194,16 +197,17 @@ preview.append(
       width: '120px',
       height: '24px',
       content: '" "',
-      background: svg2DataUrl(icons.star(), 'gold', 'orange', 2)
+      background: svg2DataUrl(icons.star(), 'gold', 'orange', 4)
     }
   }),
+  // Note that this is a color icon whose fill and stroke are "baked in"
   elements.span({
     style: {
       display: 'inline-block',
       width: '100px',
       height: '200px',
       content: '" "',
-      background: svg2DataUrl(icons.tosi())
+      background: svg2DataUrl(icons.tosi(), undefined, undefined, 2)
     }
   }),
 )
@@ -361,7 +365,7 @@ export const svg2DataUrl = (
       path.setAttribute('stroke', stroke)
     }
     if (strokeWidth !== undefined) {
-      path.setAttribute('stroke-width', String(strokeWidth)) 
+      path.setAttribute('stroke-width', String(strokeWidth))
     }
   }
 
