@@ -10,7 +10,7 @@ To use it, simply call `dragAndDrop.init()` (it only needs to be called once,
 but calling it again is harmless).
 
 ```
-import { dragAndDrop } from 'xinjs-ui'
+import { dragAndDrop } from 'tosijs-ui'
 
 dragAndDrop.init()
 ```

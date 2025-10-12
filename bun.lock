@@ -3,10 +3,13 @@
   "workspaces": {
     "": {
       "name": "tosijs-ui",
+      "dependencies": {
+        "playwright": "^1.56.0",
+      },
       "devDependencies": {
         "@playwright/test": "^1.56.0",
         "@types/jsdom": "^21.1.7",
-        "@types/node": "^22.18.9",
+        "@types/node": "^22.18.10",
         "@types/react": "^19.2.2",
         "@typescript-eslint/eslint-plugin": "^5.62.0",
         "@typescript-eslint/parser": "^5.62.0",

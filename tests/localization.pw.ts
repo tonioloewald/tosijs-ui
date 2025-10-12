@@ -2,11 +2,11 @@ import { test, expect } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('https://localhost:8787/')
-  // await page.goto('https://ui.xinjs.net/')
+  // await page.goto('https://ui.tosijs.net/')
 })
 
 test('has title', async ({ page }) => {
-  await expect(page).toHaveTitle(/^xinjs-ui$/)
+  await expect(page).toHaveTitle(/^tosijs-ui$/)
 })
 
 test('localize works', async ({ page }) => {

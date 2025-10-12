@@ -10046,7 +10046,7 @@ preview.append(b3d({
           textContext.fillText(line, 40, 70 + i * 40)
         }
         textContext.fillStyle = '#bbb'
-        textContext.fillText('xinjs-xr — debug info', 40, 984)
+        textContext.fillText('tosijs-xr — debug info', 40, 984)
         textTexture.update()
       } else {
         clearInterval(interval)
@@ -10500,7 +10500,7 @@ To use it, simply call \`dragAndDrop.init()\` (it only needs to be called once,
 but calling it again is harmless).
 
 \`\`\`
-import { dragAndDrop } from 'xinjs-ui'
+import { dragAndDrop } from 'tosijs-ui'
 
 dragAndDrop.init()
 \`\`\`
@@ -12462,7 +12462,7 @@ const menuItems = [
           {
             icon: 'externalLink',
             caption: 'timezones',
-            action: 'https://timezones.xinjs.net/'
+            action: 'https://timezones.tosijs.net/'
           },
           {
             icon: 'externalLink',
@@ -12881,7 +12881,7 @@ closeButton.addEventListener('click', () => {
 })
 
 postNotification({
-  message: 'Welcome to xinjs-ui notifications, this message will disappear in 2s',
+  message: 'Welcome to tosijs-ui notifications, this message will disappear in 2s',
   duration: 2
 })
 \`\`\`
@@ -13802,7 +13802,7 @@ from the bottom-right.
 
 ## Convert CSS to Javascript
 
-This is a simple utility for converting CSS into a xinjs \`XinStyleSheet\` object.
+This is a simple utility for converting CSS into a tosijs \`XinStyleSheet\` object.
 Having all of your CSS start as Javascript (or Typescript) has many
 benefits, such as being able to do color math using \`tosijs\`'s \`Color\` class,
 and use the same values that are in your CSS for inline code when needed.
@@ -13981,7 +13981,7 @@ const columns = [
   {
     prop: "name",
     width: 300,
-    // custom cell using xinjs bindings to make the field editable
+    // custom cell using bindings to make the field editable
     dataCell() {
       return input({
         class: 'td',
@@ -14496,7 +14496,7 @@ initLocalization(localized_strings_default);
 Object.assign(window, { tosijs: exports_module, tosijsui: exports_src });
 setTimeout(() => {
   const brandColor2 = getComputedStyle(document.body).getPropertyValue("--brand-color");
-  console.log("welcome to %cui.xinjs.net", `color: ${brandColor2}; padding: 0 5px;`);
+  console.log("welcome to %ui.tosijs.net", `color: ${brandColor2}; padding: 0 5px;`);
 }, 100);
 var PROJECT = "tosijs-ui";
 var docName = document.location.search !== "" ? document.location.search.substring(1).split("&")[0] : "README.md";
@@ -14508,7 +14508,7 @@ var { app, prefs } = xe({
     discordUrl: `https://discord.com/invite/ramJ9rgky5`,
     githubUrl: `https://github.com/tonioloewald/${PROJECT}#readme`,
     npmUrl: `https://www.npmjs.com/package/${PROJECT}`,
-    xinjsUrl: "https://xinjs.net",
+    tosijsUrl: "https://tosijs.net",
     bundleBadgeUrl: `https://deno.bundlejs.com/?q=${PROJECT}&badge=`,
     bundleUrl: `https://bundlejs.com/?q=${PROJECT}`,
     cdnBadgeUrl: `https://data.jsdelivr.com/v1/package/npm/${PROJECT}/badge`,
@@ -14624,7 +14624,9 @@ if (main)
       alignItems: "center",
       gap: Hn.spacing50
     }
-  }, a5({ href: app.bundleUrl }, img({ alt: "bundlejs size badge", src: app.bundleBadgeUrl })), a5({ href: app.cdnUrl }, img({ alt: "jsdelivr", src: app.cdnBadgeUrl }))), span14({ slot: "small" })), a5({ class: "iconic", title: "discord", target: "_blank" }, icons.discord(), {
+  }, a5({ href: app.bundleUrl }, img({ alt: "bundlejs size badge", src: app.bundleBadgeUrl })), a5({ href: app.cdnUrl }, img({ alt: "jsdelivr", src: app.cdnBadgeUrl }))), span14({ slot: "small" })), a5({ class: "iconic", title: "tosijs", target: "_blank" }, icons.tosi(), {
+    href: app.tosijsUrl
+  }), a5({ class: "iconic", title: "discord", target: "_blank" }, icons.discord(), {
     href: app.discordUrl
   }), a5({ class: "iconic", title: "blog", target: "_blank" }, icons.blog(), {
     href: app.blogUrl

@@ -3,7 +3,7 @@
 
 ## Convert CSS to Javascript
 
-This is a simple utility for converting CSS into a xinjs `XinStyleSheet` object.
+This is a simple utility for converting CSS into a tosijs `XinStyleSheet` object.
 Having all of your CSS start as Javascript (or Typescript) has many
 benefits, such as being able to do color math using `tosijs`'s `Color` class,
 and use the same values that are in your CSS for inline code when needed.

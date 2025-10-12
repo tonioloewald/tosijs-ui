@@ -76,7 +76,7 @@ const menuItems = [
           {
             icon: 'externalLink',
             caption: 'timezones',
-            action: 'https://timezones.xinjs.net/'
+            action: 'https://timezones.tosijs.net/'
           },
           {
             icon: 'externalLink',
