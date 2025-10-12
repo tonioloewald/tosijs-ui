@@ -6316,7 +6316,7 @@ var Se2 = h2(/^ {0,3}\[(label)\]: *(?:\n[ \t]*)?([^<\s][^\s]*|<.*?>)(?:(?: +(?:\
 var $e2 = h2(/^( {0,3}bull)([ \t][^\n]+?)?(?:\n|$)/).replace(/bull/g, j2).getRegex();
 var v2 = "address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul";
 var U2 = /<!--(?:-?>|[\s\S]*?(?:-->|$))/;
-var _e2 = h2("^ {0,3}(?:<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)|comment[^\\n]*(\\n+|$)|<\\?[\\s\\S]*?(?:\\?>\\n*|$)|<![A-Z][\\s\\S]*?(?:>\\n*|$)|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ 	]*)+\\n|$))", "i").replace("comment", U2).replace("tag", v2).replace("attribute", / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
+var _e2 = h2("^ {0,3}(?:<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)|comment[^\\n]*(\\n+|$)|<\\?[\\s\\S]*?(?:\\?>\\n*|$)|<![A-Z][\\s\\S]*?(?:>\\n*|$)|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$))", "i").replace("comment", U2).replace("tag", v2).replace("attribute", / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
 var oe2 = h2(F2).replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("|table", "").replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex();
 var Le2 = h2(/^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/).replace("paragraph", oe2).getRegex();
 var K = { blockquote: Le2, code: be2, def: Se2, fences: Te2, heading: we2, hr: I2, html: _e2, lheading: ie2, list: $e2, newline: xe2, paragraph: oe2, table: C2, text: Re2 };
@@ -11448,10 +11448,13 @@ applications along with being very easy to extend and maintain.
 > ### Supported Use Cases
 > - inline SVGs that can be styled by CSS (for buttons, etc.)
 > - allows both stroked and filled icons (unlike font-based systems)
-> - No build process magic needed (it's "just javascript")
-> - highly optimized and compressible
 > - support for color icons (without requiring multiple glyphs perfectly aligned)
-> - icons can be rendered  as data urls, e.g. to insert into CSS…
+> - icons can be rendered  as data urls, e.g. to insert into CSS… (the little \`owl\` logo rendered under blockquotes is an example)
+
+### Nice Features
+> - no build process magic needed (your icons are "just javascript", no special CSS files needed, no magic glyph mappings). Adding new, or overriding existing, icons is trivial.
+> - icons are just regular SVG, not a specialized subset.
+> - highly optimized and compressible (the code is comparable in size to what you get with a compressed font built from the same icons, except icon fonts don't support strokes, gradients, etc.)
 
 ## icons
 
@@ -11628,16 +11631,17 @@ preview.append(
       width: '120px',
       height: '24px',
       content: '" "',
-      background: svg2DataUrl(icons.star(), 'gold', 'orange', 2)
+      background: svg2DataUrl(icons.star(), 'gold', 'orange', 4)
     }
   }),
+  // Note that this is a color icon whose fill and stroke are "baked in"
   elements.span({
     style: {
       display: 'inline-block',
       width: '100px',
       height: '200px',
       content: '" "',
-      background: svg2DataUrl(icons.tosi())
+      background: svg2DataUrl(icons.tosi(), undefined, undefined, 2)
     }
   }),
 )
