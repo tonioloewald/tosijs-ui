@@ -4431,7 +4431,12 @@ var tosiDialog = TosiDialog.elementCreator({
       display: "flex",
       flexDirection: "column",
       gap: 5,
-      boxShadow: "0 5px 10px #0004"
+      _dialogShadow: sn.menuShadow("0 5px 10px #0004"),
+      _dialogBackground: sn.background("#fafafa"),
+      _dialogColor: sn.textColor("#222"),
+      boxShadow: Hn.dialogShadow,
+      background: Hn.dialogBackground,
+      color: Hn.dialogColor
     },
     ":host > dialog > *": {
       padding: "0 20px"
@@ -6316,7 +6321,7 @@ var Se2 = h2(/^ {0,3}\[(label)\]: *(?:\n[ \t]*)?([^<\s][^\s]*|<.*?>)(?:(?: +(?:\
 var $e2 = h2(/^( {0,3}bull)([ \t][^\n]+?)?(?:\n|$)/).replace(/bull/g, j2).getRegex();
 var v2 = "address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul";
 var U2 = /<!--(?:-?>|[\s\S]*?(?:-->|$))/;
-var _e2 = h2("^ {0,3}(?:<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)|comment[^\\n]*(\\n+|$)|<\\?[\\s\\S]*?(?:\\?>\\n*|$)|<![A-Z][\\s\\S]*?(?:>\\n*|$)|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$))", "i").replace("comment", U2).replace("tag", v2).replace("attribute", / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
+var _e2 = h2("^ {0,3}(?:<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)|comment[^\\n]*(\\n+|$)|<\\?[\\s\\S]*?(?:\\?>\\n*|$)|<![A-Z][\\s\\S]*?(?:>\\n*|$)|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ 	]*)+\\n|$))", "i").replace("comment", U2).replace("tag", v2).replace("attribute", / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
 var oe2 = h2(F2).replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("|table", "").replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex();
 var Le2 = h2(/^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/).replace("paragraph", oe2).getRegex();
 var K = { blockquote: Le2, code: be2, def: Se2, fences: Te2, heading: we2, hr: I2, html: _e2, lheading: ie2, list: $e2, newline: xe2, paragraph: oe2, table: C2, text: Re2 };
@@ -9244,6 +9249,7 @@ var colors = {
   _textColor: "#222",
   _brandColor: brandColor,
   _background: "#fafafa",
+  _buttonBg: "#fdfdfd",
   _inputBg: "#fdfdfd",
   _backgroundShaded: "#f5f5f5",
   _navBg: brandColor.rotate(30).desaturate(0.5).brighten(0.9),
@@ -9439,7 +9445,9 @@ var styleSpec = {
     transition: "ease-out 0.2s",
     background: Hn.brandTextColor,
     _textColor: Hn.brandColor,
+    color: Hn.textColor,
     textDecoration: "none",
+    background: Hn.buttonBg,
     padding: "0 calc(var(--spacing) * 1.25)",
     border: "none",
     borderRadius: "calc(var(--spacing) * 0.5)"
@@ -10663,7 +10671,7 @@ dragAndDrop.init()
 
 \`\`\`js
 import { elements, tosi, getListItem } from 'tosijs'
-import { dragAndDrop } from 'tosijs-ui'
+import { dragAndDrop, TosiDialog } from 'tosijs-ui'
 
 dragAndDrop.init()
 
@@ -10684,11 +10692,16 @@ const colors = [
   'indigo',
   'violet',
 ]
-const { spectrum } = tosi({
-  spectrum: shuffle(colors).map(color => ({color}))
-})
 
-const { div, template } = elements
+let spectrum
+
+const start = () => {
+  ({ spectrum } =  tosi({
+    spectrum: shuffle(colors).map(color => ({color}))
+  }))
+}
+
+start()
 
 let dragged = null
 
@@ -10698,6 +10711,10 @@ const dropColor = (event) => {
   const droppedIndex = spectrum.indexOf(dropped)
   spectrum.splice(draggedIndex, 1)
   spectrum.splice(droppedIndex, 0, dragged)
+  
+  if (JSON.stringify(spectrum.map(c => c.color)) === JSON.stringify(colors)) {
+    TosiDialog.alert('You win!').then(start)
+  }
 
   console.log({dragged, draggedIndex, dropped, droppedIndex})
 
@@ -10706,6 +10723,8 @@ const dropColor = (event) => {
 }
 
 const dragId = 'spectrum/' + Math.floor(Math.random() * 1e9)
+
+const { div, button, template } = elements
 
 preview.append(
   div(
