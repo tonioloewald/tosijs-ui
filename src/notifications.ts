@@ -72,7 +72,7 @@ closeButton.addEventListener('click', () => {
 })
 
 postNotification({
-  message: 'Welcome to xinjs-ui notifications, this message will disappear in 2s',
+  message: 'Welcome to tosijs-ui notifications, this message will disappear in 2s',
   duration: 2
 })
 ```
@@ -259,10 +259,11 @@ export class XinNotification extends Component {
   }
 
   static post(spec: NotificationSpec | string): callback {
-    const { message, duration, type, close, progress, icon, color } = Object.assign(
-      { type: 'info', duration: -1 },
-      typeof spec === 'string' ? { message: spec } : spec
-    )
+    const { message, duration, type, close, progress, icon, color } =
+      Object.assign(
+        { type: 'info', duration: -1 },
+        typeof spec === 'string' ? { message: spec } : spec
+      )
 
     if (!this.singleton) {
       this.singleton = xinNotification()

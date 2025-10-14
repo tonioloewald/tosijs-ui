@@ -3,7 +3,7 @@
 
 ## Convert CSS to Javascript
 
-This is a simple utility for converting CSS into a xinjs `XinStyleSheet` object.
+This is a simple utility for converting CSS into a tosijs `XinStyleSheet` object.
 Having all of your CSS start as Javascript (or Typescript) has many
 benefits, such as being able to do color math using `tosijs`'s `Color` class,
 and use the same values that are in your CSS for inline code when needed.
@@ -169,6 +169,7 @@ const colors = {
   _navBg: brandColor.rotate(30).desaturate(0.5).brighten(0.9),
   _barColor: '#dae3df',
   _focusColor: brandColor.opacity(0.7),
+  _placeholderColor: brandColor.opacity(0.4),
   _brandTextColor: brandColor.rotate(30).brighten(0.9),
   _insetBg: brandColor.rotate(45).brighten(0.8),
   _codeBg: brandColor.rotate(-15).desaturate(0.5).brighten(0.9),
@@ -414,7 +415,7 @@ export const styleSpec: XinStyleSheet = {
     maxWidth: vars.lineHeight,
   },
   '::placeholder': {
-    color: vars.focusColor,
+    color: vars.placeholderColor,
   },
   img: {
     verticalAlign: 'middle',
@@ -437,6 +438,7 @@ export const styleSpec: XinStyleSheet = {
     position: 'relative',
   },
   svg: {
+    fill: 'currentColor',
     pointerEvents: 'none',
   },
   'svg text': {

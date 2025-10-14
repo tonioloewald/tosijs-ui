@@ -6316,7 +6316,7 @@ var Se2 = h2(/^ {0,3}\[(label)\]: *(?:\n[ \t]*)?([^<\s][^\s]*|<.*?>)(?:(?: +(?:\
 var $e2 = h2(/^( {0,3}bull)([ \t][^\n]+?)?(?:\n|$)/).replace(/bull/g, j2).getRegex();
 var v2 = "address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul";
 var U2 = /<!--(?:-?>|[\s\S]*?(?:-->|$))/;
-var _e2 = h2("^ {0,3}(?:<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)|comment[^\\n]*(\\n+|$)|<\\?[\\s\\S]*?(?:\\?>\\n*|$)|<![A-Z][\\s\\S]*?(?:>\\n*|$)|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ 	]*)+\\n|$))", "i").replace("comment", U2).replace("tag", v2).replace("attribute", / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
+var _e2 = h2("^ {0,3}(?:<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)|comment[^\\n]*(\\n+|$)|<\\?[\\s\\S]*?(?:\\?>\\n*|$)|<![A-Z][\\s\\S]*?(?:>\\n*|$)|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$))", "i").replace("comment", U2).replace("tag", v2).replace("attribute", / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
 var oe2 = h2(F2).replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("|table", "").replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex();
 var Le2 = h2(/^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/).replace("paragraph", oe2).getRegex();
 var K = { blockquote: Le2, code: be2, def: Se2, fences: Te2, heading: we2, hr: I2, html: _e2, lheading: ie2, list: $e2, newline: xe2, paragraph: oe2, table: C2, text: Re2 };
@@ -9249,6 +9249,7 @@ var colors = {
   _navBg: brandColor.rotate(30).desaturate(0.5).brighten(0.9),
   _barColor: "#dae3df",
   _focusColor: brandColor.opacity(0.7),
+  _placeholderColor: brandColor.opacity(0.4),
   _brandTextColor: brandColor.rotate(30).brighten(0.9),
   _insetBg: brandColor.rotate(45).brighten(0.8),
   _codeBg: brandColor.rotate(-15).desaturate(0.5).brighten(0.9),
@@ -9491,7 +9492,7 @@ var styleSpec = {
     maxWidth: Hn.lineHeight
   },
   "::placeholder": {
-    color: Hn.focusColor
+    color: Hn.placeholderColor
   },
   img: {
     verticalAlign: "middle"
@@ -9514,6 +9515,7 @@ var styleSpec = {
     position: "relative"
   },
   svg: {
+    fill: "currentColor",
     pointerEvents: "none"
   },
   "svg text": {
@@ -10046,7 +10048,7 @@ preview.append(b3d({
           textContext.fillText(line, 40, 70 + i * 40)
         }
         textContext.fillStyle = '#bbb'
-        textContext.fillText('xinjs-xr — debug info', 40, 984)
+        textContext.fillText('tosijs-xr — debug info', 40, 984)
         textTexture.update()
       } else {
         clearInterval(interval)
@@ -10500,7 +10502,7 @@ To use it, simply call \`dragAndDrop.init()\` (it only needs to be called once,
 but calling it again is harmless).
 
 \`\`\`
-import { dragAndDrop } from 'xinjs-ui'
+import { dragAndDrop } from 'tosijs-ui'
 
 dragAndDrop.init()
 \`\`\`
@@ -11448,10 +11450,13 @@ applications along with being very easy to extend and maintain.
 > ### Supported Use Cases
 > - inline SVGs that can be styled by CSS (for buttons, etc.)
 > - allows both stroked and filled icons (unlike font-based systems)
-> - No build process magic needed (it's "just javascript")
-> - highly optimized and compressible
 > - support for color icons (without requiring multiple glyphs perfectly aligned)
-> - icons can be rendered  as data urls, e.g. to insert into CSS…
+> - icons can be rendered  as data urls, e.g. to insert into CSS… (the little \`owl\` logo rendered under blockquotes is an example)
+
+### Nice Features
+> - no build process magic needed (your icons are "just javascript", no special CSS files needed, no magic glyph mappings). Adding new, or overriding existing, icons is trivial.
+> - icons are just regular SVG, not a specialized subset.
+> - highly optimized and compressible (the code is comparable in size to what you get with a compressed font built from the same icons, except icon fonts don't support strokes, gradients, etc.)
 
 ## icons
 
@@ -11552,12 +11557,13 @@ preview.append(
 .preview .icon-detail {
   position: absolute;
   display: block;
-  height: 256px;
+  height: 296px;
   opacity: 0;
   transition: 0.5s ease-out;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  padding: 20px;
   background: #8886;
   border-radius: 20px;
   pointer-events: none;
@@ -11627,16 +11633,17 @@ preview.append(
       width: '120px',
       height: '24px',
       content: '" "',
-      background: svg2DataUrl(icons.star(), 'gold', 'orange', 2)
+      background: svg2DataUrl(icons.star(), 'gold', 'orange', 4)
     }
   }),
+  // Note that this is a color icon whose fill and stroke are "baked in"
   elements.span({
     style: {
       display: 'inline-block',
       width: '100px',
       height: '200px',
       content: '" "',
-      background: svg2DataUrl(icons.tosi())
+      background: svg2DataUrl(icons.tosi(), undefined, undefined, 2)
     }
   }),
 )
@@ -12457,7 +12464,7 @@ const menuItems = [
           {
             icon: 'externalLink',
             caption: 'timezones',
-            action: 'https://timezones.xinjs.net/'
+            action: 'https://timezones.tosijs.net/'
           },
           {
             icon: 'externalLink',
@@ -12876,7 +12883,7 @@ closeButton.addEventListener('click', () => {
 })
 
 postNotification({
-  message: 'Welcome to xinjs-ui notifications, this message will disappear in 2s',
+  message: 'Welcome to tosijs-ui notifications, this message will disappear in 2s',
   duration: 2
 })
 \`\`\`
@@ -13797,7 +13804,7 @@ from the bottom-right.
 
 ## Convert CSS to Javascript
 
-This is a simple utility for converting CSS into a xinjs \`XinStyleSheet\` object.
+This is a simple utility for converting CSS into a tosijs \`XinStyleSheet\` object.
 Having all of your CSS start as Javascript (or Typescript) has many
 benefits, such as being able to do color math using \`tosijs\`'s \`Color\` class,
 and use the same values that are in your CSS for inline code when needed.
@@ -13976,7 +13983,7 @@ const columns = [
   {
     prop: "name",
     width: 300,
-    // custom cell using xinjs bindings to make the field editable
+    // custom cell using bindings to make the field editable
     dataCell() {
       return input({
         class: 'td',
@@ -14491,7 +14498,7 @@ initLocalization(localized_strings_default);
 Object.assign(window, { tosijs: exports_module, tosijsui: exports_src });
 setTimeout(() => {
   const brandColor2 = getComputedStyle(document.body).getPropertyValue("--brand-color");
-  console.log("welcome to %cui.xinjs.net", `color: ${brandColor2}; padding: 0 5px;`);
+  console.log("welcome to %ui.tosijs.net", `color: ${brandColor2}; padding: 0 5px;`);
 }, 100);
 var PROJECT = "tosijs-ui";
 var docName = document.location.search !== "" ? document.location.search.substring(1).split("&")[0] : "README.md";
@@ -14503,7 +14510,7 @@ var { app, prefs } = xe({
     discordUrl: `https://discord.com/invite/ramJ9rgky5`,
     githubUrl: `https://github.com/tonioloewald/${PROJECT}#readme`,
     npmUrl: `https://www.npmjs.com/package/${PROJECT}`,
-    xinjsUrl: "https://xinjs.net",
+    tosijsUrl: "https://tosijs.net",
     bundleBadgeUrl: `https://deno.bundlejs.com/?q=${PROJECT}&badge=`,
     bundleUrl: `https://bundlejs.com/?q=${PROJECT}`,
     cdnBadgeUrl: `https://data.jsdelivr.com/v1/package/npm/${PROJECT}/badge`,
@@ -14619,7 +14626,9 @@ if (main)
       alignItems: "center",
       gap: Hn.spacing50
     }
-  }, a5({ href: app.bundleUrl }, img({ alt: "bundlejs size badge", src: app.bundleBadgeUrl })), a5({ href: app.cdnUrl }, img({ alt: "jsdelivr", src: app.cdnBadgeUrl }))), span14({ slot: "small" })), a5({ class: "iconic", title: "discord", target: "_blank" }, icons.discord(), {
+  }, a5({ href: app.bundleUrl }, img({ alt: "bundlejs size badge", src: app.bundleBadgeUrl })), a5({ href: app.cdnUrl }, img({ alt: "jsdelivr", src: app.cdnBadgeUrl }))), span14({ slot: "small" })), a5({ class: "iconic", title: "tosijs", target: "_blank" }, icons.tosi(), {
+    href: app.tosijsUrl
+  }), a5({ class: "iconic", title: "discord", target: "_blank" }, icons.discord(), {
     href: app.discordUrl
   }), a5({ class: "iconic", title: "blog", target: "_blank" }, icons.blog(), {
     href: app.blogUrl

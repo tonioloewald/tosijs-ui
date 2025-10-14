@@ -23,7 +23,7 @@ const columns = [
   {
     prop: "name",
     width: 300,
-    // custom cell using xinjs bindings to make the field editable
+    // custom cell using bindings to make the field editable
     dataCell() {
       return input({
         class: 'td',

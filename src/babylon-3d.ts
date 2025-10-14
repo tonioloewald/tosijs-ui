@@ -64,7 +64,7 @@ preview.append(b3d({
           textContext.fillText(line, 40, 70 + i * 40)
         }
         textContext.fillStyle = '#bbb'
-        textContext.fillText('xinjs-xr — debug info', 40, 984)
+        textContext.fillText('tosijs-xr — debug info', 40, 984)
         textTexture.update()
       } else {
         clearInterval(interval)

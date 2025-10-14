@@ -48,7 +48,7 @@ setTimeout(() => {
   )
 
   console.log(
-    'welcome to %cui.xinjs.net',
+    'welcome to %ui.tosijs.net',
     `color: ${brandColor}; padding: 0 5px;`
   )
 }, 100)
@@ -68,7 +68,7 @@ const { app, prefs } = tosi({
     discordUrl: `https://discord.com/invite/ramJ9rgky5`,
     githubUrl: `https://github.com/tonioloewald/${PROJECT}#readme`,
     npmUrl: `https://www.npmjs.com/package/${PROJECT}`,
-    xinjsUrl: 'https://xinjs.net',
+    tosijsUrl: 'https://tosijs.net',
     bundleBadgeUrl: `https://deno.bundlejs.com/?q=${PROJECT}&badge=`,
     bundleUrl: `https://bundlejs.com/?q=${PROJECT}`,
     cdnBadgeUrl: `https://data.jsdelivr.com/v1/package/npm/${PROJECT}/badge`,
@@ -78,7 +78,7 @@ const { app, prefs } = tosi({
     lottieData: '',
     docs,
     currentDoc,
-    compact: false
+    compact: false,
   },
   prefs: {
     theme: 'system',
@@ -181,14 +181,16 @@ if (main)
             binding: {
               toDOM(element, compact) {
                 element.style.display = compact ? '' : 'none'
-                element.nextSibling.style.display = compact ? '' : 'none'
-              }
-            }
+                ;(element.nextSibling as HTMLElement).style.display = compact
+                  ? ''
+                  : 'none'
+              },
+            },
           },
           onClick() {
-            const nav = document.querySelector(SideNav.tagName) as SideNav
+            const nav = document.querySelector(SideNav.tagName!) as SideNav
             nav.contentVisible = !nav.contentVisible
-          }
+          },
         },
         icons.menu()
       ),
@@ -233,6 +235,9 @@ if (main)
         ),
         span({ slot: 'small' })
       ),
+      a({ class: 'iconic', title: 'tosijs', target: '_blank' }, icons.tosi(), {
+        href: app.tosijsUrl,
+      }),
       a(
         { class: 'iconic', title: 'discord', target: '_blank' },
         icons.discord(),
@@ -338,9 +343,9 @@ if (main)
           overflow: 'hidden',
         },
         onChange(event) {
-          const nav = document.querySelector(SideNav.tagName) as SideNav
+          const nav = document.querySelector(SideNav.tagName!) as SideNav
           app.compact = nav.compact
-        }
+        },
       },
       searchField,
       div(
