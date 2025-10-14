@@ -171,7 +171,7 @@ dragAndDrop.init()
 
 ```js
 import { elements, tosi, getListItem } from 'tosijs'
-import { dragAndDrop } from 'tosijs-ui'
+import { dragAndDrop, TosiDialog } from 'tosijs-ui'
 
 dragAndDrop.init()
 
@@ -192,11 +192,16 @@ const colors = [
   'indigo',
   'violet',
 ]
-const { spectrum } = tosi({
-  spectrum: shuffle(colors).map(color => ({color}))
-})
 
-const { div, template } = elements
+let spectrum
+
+const start = () => {
+  ({ spectrum } =  tosi({
+    spectrum: shuffle(colors).map(color => ({color}))
+  }))
+}
+
+start()
 
 let dragged = null
 
@@ -206,6 +211,10 @@ const dropColor = (event) => {
   const droppedIndex = spectrum.indexOf(dropped)
   spectrum.splice(draggedIndex, 1)
   spectrum.splice(droppedIndex, 0, dragged)
+  
+  if (JSON.stringify(spectrum.map(c => c.color)) === JSON.stringify(colors)) {
+    TosiDialog.alert('You win!').then(start)
+  }
 
   console.log({dragged, draggedIndex, dropped, droppedIndex})
 
@@ -214,6 +223,8 @@ const dropColor = (event) => {
 }
 
 const dragId = 'spectrum/' + Math.floor(Math.random() * 1e9)
+
+const { div, button, template } = elements
 
 preview.append(
   div(
