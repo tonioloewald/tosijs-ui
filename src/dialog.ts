@@ -105,10 +105,11 @@ preview.append(
 ```
 
 */
-import { Component, PartsMap, elements, on }  from 'tosijs'
+import { Component, PartsMap, elements, on, vars, varDefault } from 'tosijs'
 import { findHighestZ } from './track-drag'
 
-const { dialog, button, header, footer, xinSlot, h3, p, label, input, div } = elements
+const { dialog, button, header, footer, xinSlot, h3, p, label, input, div } =
+  elements
 
 interface DialogParts extends PartsMap {
   dialog: HTMLDialogElement
@@ -117,22 +118,17 @@ interface DialogParts extends PartsMap {
 
 export class TosiDialog extends Component<DialogParts> {
   static async alert(message: string, title = 'Alert'): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const alertDialog = tosiDialog(
         {
           removeOnClose: true,
           closeOnBackgroundClick: true,
           dialogWillClose() {
             resolve()
-          }
+          },
         },
-        h3(
-          { slot: 'header'},
-          title
-        ),
-        p(
-          message
-        ),
+        h3({ slot: 'header' }, title),
+        p(message)
       )
       document.body.append(alertDialog)
       alertDialog.showModal()
@@ -140,27 +136,22 @@ export class TosiDialog extends Component<DialogParts> {
   }
 
   static async confirm(message: string, title = 'Confirm'): Promise<boolean> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const confirmDialog = tosiDialog(
         {
           removeOnClose: true,
           dialogWillClose(reason?: string) {
             resolve(reason === 'confirm')
-          }
+          },
         },
-        h3(
-          { slot: 'header'},
-          title
-        ),
-        p(
-          message
-        ),
+        h3({ slot: 'header' }, title),
+        p(message),
         button(
           {
             slot: 'footer',
             onClick() {
               confirmDialog.close()
-            }
+            },
           },
           'Cancel'
         )
@@ -170,23 +161,24 @@ export class TosiDialog extends Component<DialogParts> {
     })
   }
 
-  static async prompt(message: string, title = 'Prompt', currentValue = ''): Promise<string | null> {
-    return new Promise(resolve => {
+  static async prompt(
+    message: string,
+    title = 'Prompt',
+    currentValue = ''
+  ): Promise<string | null> {
+    return new Promise((resolve) => {
       const inputField = input({ value: currentValue })
       const promptDialog = tosiDialog(
         {
           removeOnClose: true,
           dialogWillClose(reason?: string) {
-            resolve (reason === 'confirm' ? inputField.value : null)
+            resolve(reason === 'confirm' ? inputField.value : null)
           },
           initialFocus() {
             inputField.focus()
-          }
+          },
         },
-        h3(
-          { slot: 'header'},
-          title
-        ),
+        h3({ slot: 'header' }, title),
         p(
           label(
             {
@@ -194,12 +186,10 @@ export class TosiDialog extends Component<DialogParts> {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'stretch',
-                gap: 5
+                gap: 5,
               },
             },
-            div(
-              message
-            ),
+            div(message),
             inputField
           )
         ),
@@ -208,7 +198,7 @@ export class TosiDialog extends Component<DialogParts> {
             slot: 'footer',
             onClick() {
               promptDialog.close()
-            }
+            },
           },
           'Cancel'
         )
@@ -245,7 +235,7 @@ export class TosiDialog extends Component<DialogParts> {
 
   showModal = (): Promise<string | null> => {
     this.style.zIndex = String(findHighestZ())
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       this.#modalResolution = resolve
       this.parts.dialog.showModal()
       requestAnimationFrame(() => {
@@ -267,17 +257,16 @@ export class TosiDialog extends Component<DialogParts> {
     this.close('confirm')
   }
 
-  content = () => dialog(
-    { part: 'dialog' },
-    header(
-      xinSlot({name: 'header'}),
-    ),
-    xinSlot(),
-    footer(
-      xinSlot({name: 'footer'}),
-      button({part: 'ok', onClick: this.ok}, 'OK'),
-    ),
-  )
+  content = () =>
+    dialog(
+      { part: 'dialog' },
+      header(xinSlot({ name: 'header' })),
+      xinSlot(),
+      footer(
+        xinSlot({ name: 'footer' }),
+        button({ part: 'ok', onClick: this.ok }, 'OK')
+      )
+    )
 }
 
 export const tosiDialog = TosiDialog.elementCreator({
@@ -299,10 +288,15 @@ export const tosiDialog = TosiDialog.elementCreator({
       display: 'flex',
       flexDirection: 'column',
       gap: 5,
-      boxShadow: '0 5px 10px #0004'
+      _dialogShadow: varDefault.menuShadow('0 5px 10px #0004'),
+      _dialogBackground: varDefault.background('#fafafa'),
+      _dialogColor: varDefault.textColor('#222'),
+      boxShadow: vars.dialogShadow,
+      background: vars.dialogBackground,
+      color: vars.dialogColor,
     },
     ':host > dialog > *': {
-      padding: '0 20px'
+      padding: '0 20px',
     },
     ':host > dialog > header': {
       display: 'flex',
@@ -313,7 +307,7 @@ export const tosiDialog = TosiDialog.elementCreator({
       display: 'flex',
       justifyContent: 'flex-end',
       gap: 10,
-      paddingBottom: 20
-    }
-  }
+      paddingBottom: 20,
+    },
+  },
 })
