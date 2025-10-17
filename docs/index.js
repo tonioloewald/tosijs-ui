@@ -13275,7 +13275,51 @@ export type FloatPosition =
     path: "src/pop-float.ts"
   },
   {
-    text: '# rating\n\n`XinRating` / `<xin-rating>` provides a drop-in replacement for an `<input>`\nthat renders a rating using <xin-icon icon="star" color="red"></xin-icon>s.\n\n```html\n<xin-rating value=3.4></xin-rating>\n<xin-rating min=0 value=3.4 step=0.5 hollow></xin-rating>\n<xin-rating value=3.4 color="deepskyblue"></xin-rating>\n<xin-rating value=3.1 max=10 color="hotpink" icon="heart" icon-size=32></xin-rating>\n```\n```css\n.preview {\n  display: flex;\n  flex-direction: column;\n}\n```\n\n## Attributes\n\n- `icon-size` (24 by default) determines the height of the control and along with `max` its width\n- `max` maximum rating\n- `min` (1 by default) can be 0 or 1 (allowing ratings of 0 to max or 1 to max)\n- `step` (0.5 by default) granularity of rating\n- `icon` (\'star\' by default) determines the icon used\n- `rating-stroke` (#f91 by default) is the stroke of rating icons\n- `rating-fill` (#e81 by default) is the color of rating icons\n- `empty-stroke` (none by default) is the color of background icons\n- `empty-fill` (#ccc by default) is the color of background icons\n- `readonly` (false by default) prevents the user from changing the rating\n- `hollow` (false by default) makes the empty rating icons hollow.\n\n## Keyboard\n\n`<xin-rating>` should be fully keyboard navigable (and, I hope, accessible).\n\nThe up key increases the rating, down descreases it. This is the same\nas the behavior of `<input type="number">`, [Shoelace\'s rating widget](https://shoelace.style/components/rating/),\nand (in my opinion) common sense, but  not like [MUI\'s rating widget](https://mui.com/material-ui/react-rating/).',
+    text: `# rating
+
+\`XinRating\` / \`<xin-rating>\` provides a drop-in replacement for an \`<input>\`
+that renders a rating using <xin-icon icon="star" color="red"></xin-icon>s.
+
+\`\`\`html
+<xin-rating value=3.4></xin-rating>
+<xin-rating min=0 value=3.4 step=0.5 hollow></xin-rating>
+<xin-rating value=3.4 color="deepskyblue"></xin-rating>
+<xin-rating value=3.1 max=10 color="hotpink" icon="heart" icon-size=32></xin-rating>
+<xin-rating class="color" value=3.1 max=5 color="hotpink" icon="tosiPlatform" icon-size=32></xin-rating>
+\`\`\`
+\`\`\`css
+.preview {
+  display: flex;
+  flex-direction: column;
+}
+
+xin-rating.color::part(empty) {
+  filter: grayscale(1);
+  opacity: 0.25;
+}
+\`\`\`
+
+## Attributes
+
+- \`icon-size\` (24 by default) determines the height of the control and along with \`max\` its width
+- \`max\` maximum rating
+- \`min\` (1 by default) can be 0 or 1 (allowing ratings of 0 to max or 1 to max)
+- \`step\` (0.5 by default) granularity of rating
+- \`icon\` ('star' by default) determines the icon used
+- \`rating-stroke\` (#f91 by default) is the stroke of rating icons
+- \`rating-fill\` (#e81 by default) is the color of rating icons
+- \`empty-stroke\` (none by default) is the color of background icons
+- \`empty-fill\` (#ccc by default) is the color of background icons
+- \`readonly\` (false by default) prevents the user from changing the rating
+- \`hollow\` (false by default) makes the empty rating icons hollow.
+
+## Keyboard
+
+\`<xin-rating>\` should be fully keyboard navigable (and, I hope, accessible).
+
+The up key increases the rating, down descreases it. This is the same
+as the behavior of \`<input type="number">\`, [Shoelace's rating widget](https://shoelace.style/components/rating/),
+and (in my opinion) common sense, but  not like [MUI's rating widget](https://mui.com/material-ui/react-rating/).`,
     title: "rating",
     filename: "rating.ts",
     path: "src/rating.ts"
