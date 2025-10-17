@@ -9,11 +9,17 @@ that renders a rating using <xin-icon icon="star" color="red"></xin-icon>s.
 <xin-rating min=0 value=3.4 step=0.5 hollow></xin-rating>
 <xin-rating value=3.4 color="deepskyblue"></xin-rating>
 <xin-rating value=3.1 max=10 color="hotpink" icon="heart" icon-size=32></xin-rating>
+<xin-rating class="color" value=3.1 max=5 color="hotpink" icon="tosiPlatform" icon-size=32></xin-rating>
 ```
 ```css
 .preview {
   display: flex;
   flex-direction: column;
+}
+
+xin-rating.color::part(empty) {
+  filter: grayscale(1);
+  opacity: 0.25;
 }
 ```
 
