@@ -29,9 +29,10 @@ e.g. `icons.chevronDown()` produces an `<svg>` element containing a downward-poi
 icon with the class `icon-chevron-down`.
 
 ```js
-const  { tosi } = tosijs
+const  { tosi, elements } = tosijs
 import { icons, svgIcon, postNotification } from 'tosijs-ui'
-import { div } from 'tosijs'.elements
+
+const { div, input } = elements
 
 const { iconDemo } = tosi({
   iconDemo: {
@@ -40,6 +41,18 @@ const { iconDemo } = tosi({
 })
 
 preview.append(
+  input({
+    placeholder: 'filter icons by name',
+    type: 'search',
+    onInput(event) {
+      const needle = event.target.value.toLocaleLowerCase()
+      const tiles = Array.from(preview.querySelectorAll('.tile'))
+      tiles.forEach(tile => {
+        const xinIcon = tile.children[0]
+        tile.style.display = xinIcon.icon.toLocaleLowerCase().includes(needle) ? '' : 'none'
+      })
+    }
+  }),
   div(
     {
       class: 'scroller'
@@ -83,11 +96,17 @@ preview.append(
 .preview .scroller {
   display: grid;
   grid-template-columns: calc(33% - 5px) calc(33% - 5px) calc(33% - 5px);
+  grid-auto-rows: 44px;
   flex-wrap: wrap;
   padding: var(--spacing);
   gap: var(--spacing);
   overflow: hidden scroll !important;
   height: 100%;
+}
+
+.preview input[type=search] {
+  margin: 10px 10px 0;
+  width: calc(100% - 20px);
 }
 
 .preview .tile {
