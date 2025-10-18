@@ -12,7 +12,10 @@
 [![tosijs on jsdelivr](https://data.jsdelivr.com/v1/package/npm/tosijs-ui/badge)](https://www.jsdelivr.com/package/npm/tosijs-ui)
 
 <center>
-  <xin-icon class="logo" icon="tosiUi" size=300></xin-icon>
+  <xin-lottie
+    style="width: 320px; height: 320px;"
+    src="/tosi-ui.json"
+  ></xin-lottie>
 </center>
 
 Copyright ©2023-2025 Tonio Loewald

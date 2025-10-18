@@ -53,7 +53,7 @@ setTimeout(
 ```html
 <xin-lottie
   style="width: 200px; height: 200px;"
-  src="https://cdn.lottielab.com/l/5dZMPFTou4tfpp.json"
+  src="/tosi-platform.json"
 ></xin-lottie>
 <div class="caption">
   Animation created with <a target="_blank" href="https://lottielab.com">Lottielab</a>

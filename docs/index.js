@@ -9830,7 +9830,10 @@ var docs_default = [
 [![tosijs on jsdelivr](https://data.jsdelivr.com/v1/package/npm/tosijs-ui/badge)](https://www.jsdelivr.com/package/npm/tosijs-ui)
 
 <center>
-  <xin-icon class="logo" icon="tosiUi" size=300></xin-icon>
+  <xin-lottie
+    style="width: 320px; height: 320px;"
+    src="/tosi-ui.json"
+  ></xin-lottie>
 </center>
 
 Copyright ©2023-2025 Tonio Loewald
@@ -12174,7 +12177,7 @@ setTimeout(
 \`\`\`html
 <xin-lottie
   style="width: 200px; height: 200px;"
-  src="https://cdn.lottielab.com/l/5dZMPFTou4tfpp.json"
+  src="/tosi-platform.json"
 ></xin-lottie>
 <div class="caption">
   Animation created with <a target="_blank" href="https://lottielab.com">Lottielab</a>
