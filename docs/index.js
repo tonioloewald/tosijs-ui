@@ -5872,11 +5872,7 @@ class LiveExample extends M {
       part: "codeEditors",
       onKeydown: this.handleShortcuts,
       hidden: true
-    }, h4("Code"), button8({
-      title: "close code",
-      class: "transparent close-button",
-      onClick: this.closeCode
-    }, icons.x()), tabSelector({
+    }, tabSelector({
       part: "editors",
       onChange: this.updateUndo
     }, codeEditor({
@@ -5908,7 +5904,11 @@ class LiveExample extends M {
       title: "reload (⌘R | ^R)",
       class: "transparent",
       onClick: this.refreshRemote
-    }, icons.refreshCw())))),
+    }, icons.refreshCw()), button8({
+      title: "close code",
+      class: "transparent",
+      onClick: this.closeCode
+    }, icons.x())))),
     xinSlot4({ part: "sources", hidden: true })
   ];
   connectedCallback() {
@@ -6180,12 +6180,6 @@ var liveExample = LiveExample.elementCreator({
       background: "var(--code-editors-bar-bg)",
       color: "var(--code-editors-bar-color)",
       cursor: "move"
-    },
-    ":host .close-button": {
-      position: "absolute",
-      top: "0",
-      right: "0",
-      color: "var(--code-editors-bar-color)"
     },
     ":host button.transparent, :host .sizer": {
       width: "32px",

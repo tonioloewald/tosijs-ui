@@ -383,15 +383,6 @@ export class LiveExample extends Component<ExampleParts> {
         onKeydown: this.handleShortcuts,
         hidden: true,
       },
-      h4('Code'),
-      button(
-        {
-          title: 'close code',
-          class: 'transparent close-button',
-          onClick: this.closeCode,
-        },
-        icons.x()
-      ),
       tabSelector(
         {
           part: 'editors',
@@ -450,6 +441,14 @@ export class LiveExample extends Component<ExampleParts> {
               onClick: this.refreshRemote,
             },
             icons.refreshCw()
+          ),
+          button(
+            {
+              title: 'close code',
+              class: 'transparent',
+              onClick: this.closeCode,
+            },
+            icons.x()
           )
         )
       )
@@ -611,8 +610,11 @@ export class LiveExample extends Component<ExampleParts> {
     const context = { preview, ...this.context }
     try {
       let code = this.js
-      for(const moduleName of Object.keys(this.context)) {
-        code = code.replace(new RegExp(`import \\{(.*)\\} from '${moduleName}'`, 'g'), `const {$1} = ${moduleName.replace(/-/g, '')}`)
+      for (const moduleName of Object.keys(this.context)) {
+        code = code.replace(
+          new RegExp(`import \\{(.*)\\} from '${moduleName}'`, 'g'),
+          `const {$1} = ${moduleName.replace(/-/g, '')}`
+        )
       }
       // @ts-expect-error ts is wrong and it makes me so mad
       const func = new AsyncFunction(
@@ -796,13 +798,6 @@ export const liveExample = LiveExample.elementCreator({
       background: 'var(--code-editors-bar-bg)',
       color: 'var(--code-editors-bar-color)',
       cursor: 'move',
-    },
-
-    ':host .close-button': {
-      position: 'absolute',
-      top: '0',
-      right: '0',
-      color: 'var(--code-editors-bar-color)',
     },
 
     ':host button.transparent, :host .sizer': {
