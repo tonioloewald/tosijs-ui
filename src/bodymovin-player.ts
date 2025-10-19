@@ -69,8 +69,8 @@ setTimeout(
   padding: 10px;
   border-radius: 5px;
   gap: 5px;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  background: var(--background);
+  box-shadow: var(--menu-shadow);
   display: flex;
   flex-direction: column;
   overflow: hidden;

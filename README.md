@@ -13,7 +13,7 @@
 
 <center>
   <xin-lottie
-    style="width: 320px; height: 320px;"
+    style="width: 280px; height: 280px; background: #da1167; border-radius: 40px;"
     src="/tosi-ui.json"
   ></xin-lottie>
 </center>
@@ -173,3 +173,11 @@ for an `<input>` or `<textarea>` (while mitigating the historical pathologies of
 `<select>` and `<input type="radio">`). E.g. the `<xin-select>` does not suffer from a
 race-condition between having its value set and being given an `<option>` with the intended value
 and you can differentiate between the user picking a value (`action`) and the value changing (`change`).
+
+## Credits
+
+`tosijs-ui` is being developed using [bun](https://bun.sh/).
+`bun` is crazy fast (based on Webkit's JS engine, vs. V8), does a lot of stuff
+natively, and runs TypeScript (with import and require) directly.
+
+Logo animations by [@anicoremotion](https://pro.fiverr.com/freelancers/anicoremotion).

@@ -9268,6 +9268,7 @@ var colors = {
   _menuItemHoverBg: "#eee",
   _menuItemColor: "#222",
   _menuSeparatorColor: "#2224",
+  _menuShadow: "0 4px 8px #0004",
   _scrollThumbColor: "#0006",
   _scrollBarColor: "#0001",
   _inputBorderShadow: "inset 0 0 2px #0006"
@@ -9443,7 +9444,6 @@ var styleSpec = {
     alignItems: "center",
     justifyContent: "center",
     transition: "ease-out 0.2s",
-    background: Hn.brandTextColor,
     _textColor: Hn.brandColor,
     color: Hn.textColor,
     textDecoration: "none",
@@ -9831,7 +9831,7 @@ var docs_default = [
 
 <center>
   <xin-lottie
-    style="width: 320px; height: 320px;"
+    style="width: 280px; height: 280px; background: #da1167; border-radius: 40px;"
     src="/tosi-ui.json"
   ></xin-lottie>
 </center>
@@ -9991,6 +9991,14 @@ for an \`<input>\` or \`<textarea>\` (while mitigating the historical pathologie
 \`<select>\` and \`<input type="radio">\`). E.g. the \`<xin-select>\` does not suffer from a
 race-condition between having its value set and being given an \`<option>\` with the intended value
 and you can differentiate between the user picking a value (\`action\`) and the value changing (\`change\`).
+
+## Credits
+
+\`tosijs-ui\` is being developed using [bun](https://bun.sh/).
+\`bun\` is crazy fast (based on Webkit's JS engine, vs. V8), does a lot of stuff
+natively, and runs TypeScript (with import and require) directly.
+
+Logo animations by [@anicoremotion](https://pro.fiverr.com/freelancers/anicoremotion).
 `,
     title: "tosijs-ui",
     filename: "README.md",
@@ -12193,8 +12201,8 @@ setTimeout(
   padding: 10px;
   border-radius: 5px;
   gap: 5px;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  background: var(--background);
+  box-shadow: var(--menu-shadow);
   display: flex;
   flex-direction: column;
   overflow: hidden;
