@@ -2051,7 +2051,9 @@ var defineIcons = (newIcons) => {
 };
 var svg2DataUrl = (svg, fill, stroke, strokeWidth) => {
   svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  for (const path of [...svg.querySelectorAll("path, polygon")]) {
+  for (const path of [
+    ...svg.querySelectorAll("path, polygon, line, circle, rect, ellipse, polyline")
+  ]) {
     if (fill !== undefined) {
       path.setAttribute("fill", fill);
     }
@@ -11671,7 +11673,7 @@ preview.append(
       width: '120px',
       height: '24px',
       content: '" "',
-      background: svg2DataUrl(icons.star(), 'none', '#bbb', 3)
+      background: svg2DataUrl(icons.search(), 'none', '#bbb', 3)
     }
   }),
   elements.span({
