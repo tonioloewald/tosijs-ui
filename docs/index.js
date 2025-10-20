@@ -12184,7 +12184,7 @@ setTimeout(
   src="/tosi-platform.json"
 ></xin-lottie>
 <div class="caption">
-  Animation created by <a target="_blank" href="[@anicoremotion](https://pro.fiverr.com/freelancers/anicoremotion)">@anicoremotion</a>
+  Animation created by <a target="_blank" href="https://pro.fiverr.com/freelancers/anicoremotion">@anicoremotion</a>
 </div>
 \`\`\`
 \`\`\`css
