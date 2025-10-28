@@ -1,6 +1,7 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 export declare class CodeEditor extends WebComponent {
     private source;
+    static ace: () => Promise<any>;
     get value(): string;
     set value(text: string);
     mode: string;

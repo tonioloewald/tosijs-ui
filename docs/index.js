@@ -2573,8 +2573,12 @@ var xinCarousel = XinCarousel.elementCreator({
 // src/code-editor.ts
 var ACE_BASE_URL = "https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.2/";
 var DEFAULT_THEME = "ace/theme/tomorrow";
-var makeCodeEditor = async (codeElement, mode = "html", options = {}, theme = DEFAULT_THEME) => {
+var getAce = async () => {
   const { ace } = await scriptTag(`${ACE_BASE_URL}ace.min.js`);
+  return ace;
+};
+var makeCodeEditor = async (codeElement, mode = "html", options = {}, theme = DEFAULT_THEME) => {
+  const ace = await getAce();
   ace.config.set("basePath", ACE_BASE_URL);
   const editor = ace.edit(codeElement, {
     mode: `ace/mode/${mode}`,
@@ -2589,6 +2593,7 @@ var makeCodeEditor = async (codeElement, mode = "html", options = {}, theme = DE
 
 class CodeEditor extends M {
   source = "";
+  static ace = getAce;
   get value() {
     return this.editor === undefined ? this.source : this.editor.getValue();
   }
@@ -10349,22 +10354,7 @@ This is a minimalist carousel component that supports the usual stuff.
     path: "src/carousel.ts"
   },
   {
-    text: `# code
-
-An [ACE Editor](https://ace.c9.io/) wrapper.
-
-Sometimes, it's nice to be able to just toss a code-editor in a web-page.
-
-\`<xin-code>\`'s \`value\` is the code it contains. Its \`mode\` attribute sets the language, and you can further configure
-the ACE editor instance via its \`options\` property.
-
-\`\`\`html
-<xin-code style="width: 100%; height: 100%" mode="css">
-body {
-  box-sizing: border-box;
-}
-</xin-code>
-\`\`\``,
+    text: '# code\n\nAn [ACE Editor](https://ace.c9.io/) wrapper.\n\nSometimes, it\'s nice to be able to just toss a code-editor in a web-page.\n\n`<xin-code>`\'s `value` is the code it contains. Its `mode` attribute sets the language, and you can further configure\nthe ACE editor instance via its `options` property.\n\n```html\n<xin-code style="width: 100%; height: 100%" mode="css">\nbody {\n  box-sizing: border-box;\n}\n</xin-code>\n```\n\nThe `<xin-code>` element has an `editor` property that gives you its ACE editor instance.\n\nThe `XinCode` class offers a static method `ace()` that returns a reference to the ACE module.',
     title: "code",
     filename: "code-editor.ts",
     path: "src/code-editor.ts"

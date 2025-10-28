@@ -31,7 +31,7 @@
     "path": "src/carousel.ts"
   },
   {
-    "text": "# code\n\nAn [ACE Editor](https://ace.c9.io/) wrapper.\n\nSometimes, it's nice to be able to just toss a code-editor in a web-page.\n\n`<xin-code>`'s `value` is the code it contains. Its `mode` attribute sets the language, and you can further configure\nthe ACE editor instance via its `options` property.\n\n```html\n<xin-code style=\"width: 100%; height: 100%\" mode=\"css\">\nbody {\n  box-sizing: border-box;\n}\n</xin-code>\n```",
+    "text": "# code\n\nAn [ACE Editor](https://ace.c9.io/) wrapper.\n\nSometimes, it's nice to be able to just toss a code-editor in a web-page.\n\n`<xin-code>`'s `value` is the code it contains. Its `mode` attribute sets the language, and you can further configure\nthe ACE editor instance via its `options` property.\n\n```html\n<xin-code style=\"width: 100%; height: 100%\" mode=\"css\">\nbody {\n  box-sizing: border-box;\n}\n</xin-code>\n```\n\nThe `<xin-code>` element has an `editor` property that gives you its ACE editor instance.\n\nThe `XinCode` class offers a static method `ace()` that returns a reference to the ACE module.",
     "title": "code",
     "filename": "code-editor.ts",
     "path": "src/code-editor.ts"

@@ -15,6 +15,10 @@ body {
 }
 </xin-code>
 ```
+
+The `<xin-code>` element has an `editor` property that gives you its ACE editor instance.
+
+The `XinCode` class offers a static method `ace()` that returns a reference to the ACE module.
 */
 
 import { Component as WebComponent, ElementCreator } from 'tosijs'
@@ -23,13 +27,18 @@ import { scriptTag } from './via-tag'
 const ACE_BASE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.2/'
 const DEFAULT_THEME = 'ace/theme/tomorrow'
 
+const getAce = async (): Promise<any> => {
+  const { ace } = await scriptTag(`${ACE_BASE_URL}ace.min.js`)
+  return ace
+}
+
 const makeCodeEditor = async (
   codeElement: any,
   mode = 'html',
   options = {},
   theme = DEFAULT_THEME
 ) => {
-  const { ace } = await scriptTag(`${ACE_BASE_URL}ace.min.js`)
+  const ace = await getAce()
   ace.config.set('basePath', ACE_BASE_URL)
   const editor = ace.edit(codeElement, {
     mode: `ace/mode/${mode}`,
@@ -44,6 +53,7 @@ const makeCodeEditor = async (
 
 export class CodeEditor extends WebComponent {
   private source = ''
+  static ace = getAce
 
   get value(): string {
     return this.editor === undefined ? this.source : this.editor.getValue()
