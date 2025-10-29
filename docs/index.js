@@ -1,19 +1,4 @@
-var __create = Object.create;
-var __getProtoOf = Object.getPrototypeOf;
 var __defProp = Object.defineProperty;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __toESM = (mod, isNodeMode, target) => {
-  target = mod != null ? __create(__getProtoOf(mod)) : {};
-  const to = isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target;
-  for (let key of __getOwnPropNames(mod))
-    if (!__hasOwnProp.call(to, key))
-      __defProp(to, key, {
-        get: () => mod[key],
-        enumerable: true
-      });
-  return to;
-};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, {
@@ -23,13 +8,6 @@ var __export = (target, all) => {
       set: (newValue) => all[name] = () => newValue
     });
 };
-var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
-  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
-}) : x)(function(x) {
-  if (typeof require !== "undefined")
-    return require.apply(this, arguments);
-  throw Error('Dynamic require of "' + x + '" is not supported');
-});
 
 // node_modules/tosijs/dist/module.js
 var exports_module = {};
@@ -1596,7 +1574,6 @@ __export(exports_src, {
   markdownViewer: () => markdownViewer,
   mapBox: () => mapBox,
   makeSorter: () => makeSorter,
-  makeExamplesLive: () => makeExamplesLive,
   localize: () => localize,
   localePicker: () => localePicker,
   liveExample: () => liveExample,
@@ -5710,7 +5687,8 @@ var tabSelector = TabSelector.elementCreator({
 });
 
 // src/live-example.ts
-var { div: div8, xinSlot: xinSlot4, style, button: button8, h4, pre } = p;
+var { div: div8, xinSlot: xinSlot4, style, button: button8, h4, pre, code } = p;
+var sucraseSrc = () => "https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm";
 var AsyncFunction = (async () => {}).constructor;
 
 class LiveExample extends M {
@@ -5726,10 +5704,10 @@ class LiveExample extends M {
   static insertExamples(element, context = {}) {
     const sources = [
       ...element.querySelectorAll(".language-html,.language-js,.language-css")
-    ].filter((element2) => !element2.closest(LiveExample.tagName)).map((code) => ({
-      block: code.parentElement,
-      language: code.classList[0].split("-").pop(),
-      code: code.innerText
+    ].filter((element2) => !element2.closest(LiveExample.tagName)).map((code2) => ({
+      block: code2.parentElement,
+      language: code2.classList[0].split("-").pop(),
+      code: code2.innerText
     }));
     for (let index = 0;index < sources.length; index += 1) {
       const exampleSources = [sources[index]];
@@ -5767,27 +5745,27 @@ class LiveExample extends M {
   getEditorValue(which) {
     return this.parts[which].value;
   }
-  setEditorValue(which, code) {
+  setEditorValue(which, code2) {
     const codeEditor2 = this.parts[which];
-    codeEditor2.value = code;
+    codeEditor2.value = code2;
   }
   get css() {
     return this.getEditorValue("css");
   }
-  set css(code) {
-    this.setEditorValue("css", code);
+  set css(code2) {
+    this.setEditorValue("css", code2);
   }
   get html() {
     return this.getEditorValue("html");
   }
-  set html(code) {
-    this.setEditorValue("html", code);
+  set html(code2) {
+    this.setEditorValue("html", code2);
   }
   get js() {
     return this.getEditorValue("js");
   }
-  set js(code) {
-    this.setEditorValue("js", code);
+  set js(code2) {
+    this.setEditorValue("js", code2);
   }
   updateUndo = () => {
     const { activeTab } = this;
@@ -6018,7 +5996,7 @@ class LiveExample extends M {
     if (this.remoteId !== "") {
       return;
     }
-    const { transform } = await import("https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm");
+    const { transform } = await import(sucraseSrc());
     const { example, style: style2 } = this.parts;
     const preview = div8({ class: "preview" });
     preview.innerHTML = this.html;
@@ -6031,11 +6009,11 @@ class LiveExample extends M {
     }
     const context = { preview, ...this.context };
     try {
-      let code = this.js;
+      let code2 = this.js;
       for (const moduleName of Object.keys(this.context)) {
-        code = code.replace(new RegExp(`import \\{(.*)\\} from '${moduleName}'`, "g"), `const {$1} = ${moduleName.replace(/-/g, "")}`);
+        code2 = code2.replace(new RegExp(`import \\{(.*)\\} from '${moduleName}'`, "g"), `const {$1} = ${moduleName.replace(/-/g, "")}`);
       }
-      const func = new AsyncFunction(...Object.keys(context).map((key) => key.replace(/-/g, "")), transform(code, { transforms: ["typescript"] }).code);
+      const func = new AsyncFunction(...Object.keys(context).map((key) => key.replace(/-/g, "")), transform(code2, { transforms: ["typescript"] }).code);
       func(...Object.values(context)).catch((err) => console.error(err));
       if (this.persistToDom) {
         this.updateSources();
@@ -6201,20 +6179,6 @@ var liveExample = LiveExample.elementCreator({
     }
   }
 });
-function makeExamplesLive(element) {
-  const preElements = [...element.querySelectorAll("pre")].filter((pre2) => ["js", "html", "css", "json"].includes(pre2.innerText.split(`
-`)[0]));
-  for (let i = 0;i < preElements.length; i++) {
-    const parts = [preElements[i]];
-    while (preElements[i].nextElementSibling === preElements[i + 1]) {
-      parts.push(preElements[i + 1]);
-      i += 1;
-    }
-    const example = liveExample();
-    element.insertBefore(example, parts[0]);
-    example.initFromElements(parts);
-  }
-}
 var params = new URL(window.location.href).searchParams;
 var remoteId = params.get("lx");
 if (remoteId) {
@@ -9750,7 +9714,7 @@ Weak	Faible	Heikko	Svag	虚弱的	弱い	약한	Débil	Schwach	Debole
 Yes	Oui	Kyllä	Ja	是的	はい	예	Sí	Ja	Sì`;
 
 // demo/src/css-var-editor.ts
-var { h2: h22, code } = p;
+var { h2: h22, code: code2 } = p;
 
 class XinCssVarEditor extends M {
   elementSelector = "";
@@ -9785,7 +9749,7 @@ class XinCssVarEditor extends M {
           if (type === "color") {
             value = a.fromCss(value).html;
           }
-          variables.append(xinField(code(cssVar), { key: cssVar, value, type }));
+          variables.append(xinField(code2(cssVar), { key: cssVar, value, type }));
         }
       }
     }
@@ -9853,7 +9817,7 @@ It works beautifully with other web-component libraries, such as [shoelace.style
 
 Add xinjs-ui to your project, e.g.
 
-\`\`\`
+\`\`\`bash
 npm add xinjs-ui
 \`\`\`
 
@@ -9861,7 +9825,7 @@ Then you can import the component \`elementCreator\` and create the element any 
 like, the easiest way being to use the \`elementCreator\` itself. A \`tosijs\` \`elementCreator\`
 is syntax sugar around \`document.createElement()\`.
 
-\`\`\`
+\`\`\`ts
 import { dataTable } from 'xinjs-ui'
 
 document.body.append(dataTable())
@@ -10502,10 +10466,7 @@ preview.append(
   {
     text: `# drag & drop
 
-> **Note** this library is a modernized version of the [b8rjs](https://b8rjs.com) drag-and-drop.js library.
-> It removes all usage of b8rjs and has no dependencies.
-
-A lightweight library building on top of HTML5 drag and drop behavior.
+A lightweight library that leverages HTML5 drag and drop behavior.
 
 To use it, simply call \`dragAndDrop.init()\` (it only needs to be called once,
 but calling it again is harmless).
@@ -10516,20 +10477,18 @@ import { dragAndDrop } from 'tosijs-ui'
 dragAndDrop.init()
 \`\`\`
 
-The library just sets up some event listeners.
+This module sets up some global event handlers and *just works*&trade; (arguably, it merely does things
+that the browser should do, such as add a CSS selector for drop zones that are compatible
+with what's being dragged).
 
 You can use \`dragAndDrop.draggedElement()\` to get the element being dragged (if it's
 actually from the page you're in).
 
-> ### Important Note
+> ### The beauty of HTML5 drag-and-drop
 >
 > The nice thing about HTML5 drag-and-drop is that it leverages the OS's drag and
 > drop support. This means you can drag from one window to another, from the desktop
 > to your app and vice versa. It's all a matter of configuring the DOM elements.
-
-This module sets up some global event handlers and *just works*&trade; (arguably, it merely does things
-that the browser should do, such as add a CSS selector for drop zones that are compatible
-with what's being dragged).
 
 This module uses but *does not define* the following class selectors:
 
@@ -10712,7 +10671,7 @@ const dropColor = (event) => {
   const droppedIndex = spectrum.indexOf(dropped)
   spectrum.splice(draggedIndex, 1)
   spectrum.splice(droppedIndex, 0, dragged)
-  
+
   if (JSON.stringify(spectrum.map(c => c.color)) === JSON.stringify(colors)) {
     TosiDialog.alert('You win!').then(start)
   }

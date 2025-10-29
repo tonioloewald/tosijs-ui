@@ -60,5 +60,4 @@ export declare class LiveExample extends Component<ExampleParts> {
     render(): void;
 }
 export declare const liveExample: ElementCreator<LiveExample>;
-export declare function makeExamplesLive(element: HTMLElement): void;
 export {};

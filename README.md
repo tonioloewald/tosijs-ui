@@ -34,7 +34,7 @@ It works beautifully with other web-component libraries, such as [shoelace.style
 
 Add xinjs-ui to your project, e.g.
 
-```
+```bash
 npm add xinjs-ui
 ```
 
@@ -42,7 +42,7 @@ Then you can import the component `elementCreator` and create the element any wa
 like, the easiest way being to use the `elementCreator` itself. A `tosijs` `elementCreator`
 is syntax sugar around `document.createElement()`.
 
-```
+```ts
 import { dataTable } from 'xinjs-ui'
 
 document.body.append(dataTable())
