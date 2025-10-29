@@ -1,10 +1,7 @@
 /*#
 # drag & drop
 
-> **Note** this library is a modernized version of the [b8rjs](https://b8rjs.com) drag-and-drop.js library.
-> It removes all usage of b8rjs and has no dependencies.
-
-A lightweight library building on top of HTML5 drag and drop behavior.
+A lightweight library that leverages HTML5 drag and drop behavior.
 
 To use it, simply call `dragAndDrop.init()` (it only needs to be called once,
 but calling it again is harmless).
@@ -15,20 +12,18 @@ import { dragAndDrop } from 'tosijs-ui'
 dragAndDrop.init()
 ```
 
-The library just sets up some event listeners.
+This module sets up some global event handlers and *just works*&trade; (arguably, it merely does things
+that the browser should do, such as add a CSS selector for drop zones that are compatible
+with what's being dragged).
 
 You can use `dragAndDrop.draggedElement()` to get the element being dragged (if it's
 actually from the page you're in).
 
-> ### Important Note
+> ### The beauty of HTML5 drag-and-drop
 >
 > The nice thing about HTML5 drag-and-drop is that it leverages the OS's drag and
 > drop support. This means you can drag from one window to another, from the desktop
 > to your app and vice versa. It's all a matter of configuring the DOM elements.
-
-This module sets up some global event handlers and *just works*&trade; (arguably, it merely does things
-that the browser should do, such as add a CSS selector for drop zones that are compatible
-with what's being dragged).
 
 This module uses but *does not define* the following class selectors:
 
@@ -211,7 +206,7 @@ const dropColor = (event) => {
   const droppedIndex = spectrum.indexOf(dropped)
   spectrum.splice(draggedIndex, 1)
   spectrum.splice(droppedIndex, 0, dragged)
-  
+
   if (JSON.stringify(spectrum.map(c => c.color)) === JSON.stringify(colors)) {
     TosiDialog.alert('You win!').then(start)
   }
