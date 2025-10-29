@@ -151,7 +151,9 @@ import { tabSelector, TabSelector } from './tab-selector'
 import { icons } from './icons'
 import { popMenu } from './menu'
 
-const { div, xinSlot, style, button, h4, pre } = elements
+const { div, xinSlot, style, button, h4, pre, code } = elements
+
+const sucraseSrc = () => 'https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm'
 
 const AsyncFunction = (async () => {
   /* do not care */
@@ -591,9 +593,7 @@ export class LiveExample extends Component<ExampleParts> {
       return
     }
 
-    const { transform } = await import(
-      'https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm'
-    )
+    const { transform } = await import(sucraseSrc())
 
     const { example, style } = this.parts
 
@@ -814,22 +814,6 @@ export const liveExample = LiveExample.elementCreator({
     },
   },
 }) as ElementCreator<LiveExample>
-
-export function makeExamplesLive(element: HTMLElement) {
-  const preElements = [...element.querySelectorAll('pre')].filter((pre) =>
-    ['js', 'html', 'css', 'json'].includes(pre.innerText.split('\n')[0])
-  )
-  for (let i = 0; i < preElements.length; i++) {
-    const parts = [preElements[i]]
-    while (preElements[i].nextElementSibling === preElements[i + 1]) {
-      parts.push(preElements[i + 1])
-      i += 1
-    }
-    const example = liveExample()
-    element.insertBefore(example, parts[0])
-    example.initFromElements(parts)
-  }
-}
 
 const params = new URL(window.location.href).searchParams
 const remoteId = params.get('lx')
