@@ -2565,12 +2565,11 @@ var makeCodeEditor = async (codeElement, mode = "html", options = {}, theme = DE
     ...options
   });
   editor.setTheme(theme);
-  return editor;
+  return { ace, editor };
 };
 
 class CodeEditor extends M {
   source = "";
-  static ace = getAce;
   get value() {
     return this.editor === undefined ? this.source : this.editor.getValue();
   }
@@ -2586,13 +2585,17 @@ class CodeEditor extends M {
   mode = "javascript";
   disabled = false;
   role = "code editor";
-  get editor() {
-    return this._editor;
-  }
+  _ace;
   _editor;
   _editorPromise;
   options = {};
   theme = DEFAULT_THEME;
+  get ace() {
+    return this._ace;
+  }
+  get editor() {
+    return this._editor;
+  }
   static styleSpec = {
     ":host": {
       display: "block",
@@ -2617,7 +2620,8 @@ class CodeEditor extends M {
     }
     if (this._editorPromise === undefined) {
       this._editorPromise = makeCodeEditor(this, this.mode, this.options, this.theme);
-      this._editorPromise.then((editor) => {
+      this._editorPromise.then(({ ace, editor }) => {
+        this._ace = ace;
         this._editor = editor;
         editor.setValue(this.source, 1);
         editor.clearSelection();
@@ -10318,7 +10322,7 @@ This is a minimalist carousel component that supports the usual stuff.
     path: "src/carousel.ts"
   },
   {
-    text: '# code\n\nAn [ACE Editor](https://ace.c9.io/) wrapper.\n\nSometimes, it\'s nice to be able to just toss a code-editor in a web-page.\n\n`<xin-code>`\'s `value` is the code it contains. Its `mode` attribute sets the language, and you can further configure\nthe ACE editor instance via its `options` property.\n\n```html\n<xin-code style="width: 100%; height: 100%" mode="css">\nbody {\n  box-sizing: border-box;\n}\n</xin-code>\n```\n\nThe `<xin-code>` element has an `editor` property that gives you its ACE editor instance.\n\nThe `XinCode` class offers a static method `ace()` that returns a reference to the ACE module.',
+    text: '# code\n\nAn [ACE Editor](https://ace.c9.io/) wrapper.\n\nSometimes, it\'s nice to be able to just toss a code-editor in a web-page.\n\n`<xin-code>`\'s `value` is the code it contains. Its `mode` attribute sets the language, and you can further configure\nthe ACE editor instance via its `options` property.\n\n```html\n<xin-code style="width: 100%; height: 100%" mode="css">\nbody {\n  box-sizing: border-box;\n}\n</xin-code>\n```\n\nThe `<xin-code>` element has an `editor` property that gives you its ACE editor instance,\nand an `ace` property that returns the `ace` module, giving you complete access to the\n[Ace API](https://ace.c9.io/api/index.html).',
     title: "code",
     filename: "code-editor.ts",
     path: "src/code-editor.ts"
@@ -14613,13 +14617,11 @@ window.addEventListener("popstate", () => {
   app.currentDoc = app.docs.find((doc) => doc.filename === filename) || app.docs[0];
 });
 var filterDocs = vn(() => {
-  console.time("filter");
   const needle = searchField.value.toLocaleLowerCase();
   app.docs.forEach((doc) => {
     doc.hidden = !doc.title.toLocaleLowerCase().includes(needle) && !doc.text.toLocaleLowerCase().includes(needle);
   });
   j(app.docs);
-  console.timeEnd("filter");
 });
 var searchField = input8({
   slot: "nav",

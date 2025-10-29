@@ -1,17 +1,18 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 export declare class CodeEditor extends WebComponent {
     private source;
-    static ace: () => Promise<any>;
     get value(): string;
     set value(text: string);
     mode: string;
     disabled: boolean;
     role: string;
-    get editor(): any;
+    private _ace;
     private _editor;
     private _editorPromise;
     options: any;
     theme: string;
+    get ace(): any;
+    get editor(): any;
     static styleSpec: {
         ':host': {
             display: string;
