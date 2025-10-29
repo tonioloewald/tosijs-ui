@@ -146,7 +146,6 @@ window.addEventListener('popstate', () => {
 })
 
 const filterDocs = debounce(() => {
-  console.time('filter')
   const needle = searchField.value.toLocaleLowerCase()
   app.docs.forEach((doc: any) => {
     doc.hidden =
@@ -154,7 +153,6 @@ const filterDocs = debounce(() => {
       !doc.text.toLocaleLowerCase().includes(needle)
   })
   touch(app.docs)
-  console.timeEnd('filter')
 })
 
 const searchField = input({

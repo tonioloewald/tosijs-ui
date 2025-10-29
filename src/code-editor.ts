@@ -16,9 +16,9 @@ body {
 </xin-code>
 ```
 
-The `<xin-code>` element has an `editor` property that gives you its ACE editor instance.
-
-The `XinCode` class offers a static method `ace()` that returns a reference to the ACE module.
+The `<xin-code>` element has an `editor` property that gives you its ACE editor instance,
+and an `ace` property that returns the `ace` module, giving you complete access to the
+[Ace API](https://ace.c9.io/api/index.html).
 */
 
 import { Component as WebComponent, ElementCreator } from 'tosijs'
@@ -48,12 +48,11 @@ const makeCodeEditor = async (
     ...options,
   })
   editor.setTheme(theme)
-  return editor
+  return { ace, editor }
 }
 
 export class CodeEditor extends WebComponent {
   private source = ''
-  static ace = getAce
 
   get value(): string {
     return this.editor === undefined ? this.source : this.editor.getValue()
@@ -73,13 +72,19 @@ export class CodeEditor extends WebComponent {
   disabled = false
   role = 'code editor'
 
-  get editor(): any {
-    return this._editor
-  }
+  private _ace: any | undefined
   private _editor: any | undefined
   private _editorPromise: Promise<any> | undefined
   options: any = {}
   theme = DEFAULT_THEME
+
+  get ace(): any {
+    return this._ace
+  }
+
+  get editor(): any {
+    return this._editor
+  }
 
   static styleSpec = {
     ':host': {
@@ -116,7 +121,8 @@ export class CodeEditor extends WebComponent {
         this.options,
         this.theme
       )
-      this._editorPromise.then((editor) => {
+      this._editorPromise.then(({ ace, editor }) => {
+        this._ace = ace
         this._editor = editor
         editor.setValue(this.source, 1)
         editor.clearSelection()
