@@ -135,7 +135,9 @@ export class CodeEditor extends WebComponent {
     super.render()
 
     if (this._editorPromise !== undefined) {
-      this._editorPromise.then((editor) => editor.setReadOnly(this.disabled))
+      this._editorPromise.then(({ editor }) =>
+        editor.setReadOnly(this.disabled)
+      )
     }
   }
 }
