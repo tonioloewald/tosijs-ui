@@ -14,4 +14,4 @@ export declare class SvgIcon extends WebComponent {
     constructor();
     render(): void;
 }
-export declare const svgIcon: ElementCreator<WebComponent<import("tosijs").PartsMap>>;
+export declare const svgIcon: ElementCreator<SvgIcon>;

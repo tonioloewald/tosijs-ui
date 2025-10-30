@@ -57,5 +57,5 @@ export declare class TosiMonth extends Component<MonthParts> {
     }>;
     render(): void;
 }
-export declare const tosiMonth: import("tosijs").ElementCreator<Component<PartsMap>>;
+export declare const tosiMonth: import("tosijs").ElementCreator<TosiMonth>;
 export {};

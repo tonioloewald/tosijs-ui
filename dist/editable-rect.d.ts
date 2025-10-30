@@ -93,5 +93,5 @@ export declare class EditableRect extends Component {
     connectedCallback(): void;
     render(): void;
 }
-export declare const editableRect: import("tosijs").ElementCreator<Component<import("tosijs").PartsMap>>;
+export declare const editableRect: import("tosijs").ElementCreator<EditableRect>;
 export {};

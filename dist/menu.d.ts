@@ -57,5 +57,5 @@ export declare class XinMenu extends Component<XinMenuParts> {
     connectedCallback(): void;
     disconnectedCallback(): void;
 }
-export declare const xinMenu: import("tosijs").ElementCreator<Component<PartsMap>>;
+export declare const xinMenu: import("tosijs").ElementCreator<XinMenu>;
 export {};

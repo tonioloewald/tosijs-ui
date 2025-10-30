@@ -31,9 +31,17 @@ export declare class XinSegmented extends WebComponent {
             padding: string;
             font: string;
         };
+        ':host label:focus': {
+            outline: string;
+            boxShadow: string;
+            borderRadius: string;
+        };
         ':host label:has(:checked)': {
             color: string;
             background: string;
+        };
+        ':host label:has(:checked):focus': {
+            boxShadow: string;
         };
         ':host svg': {
             height: string;

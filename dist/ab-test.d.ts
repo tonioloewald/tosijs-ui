@@ -11,4 +11,4 @@ export declare class AbTest extends Component {
     disconnectedCallback(): void;
     render(): void;
 }
-export declare const abTest: import("tosijs").ElementCreator<Component<import("tosijs").PartsMap>>;
+export declare const abTest: import("tosijs").ElementCreator<AbTest>;

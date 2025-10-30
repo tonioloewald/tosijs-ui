@@ -18,5 +18,5 @@ export declare class TosiDialog extends Component<DialogParts> {
     ok: () => void;
     content: () => HTMLDialogElement;
 }
-export declare const tosiDialog: import("tosijs").ElementCreator<Component<PartsMap>>;
+export declare const tosiDialog: import("tosijs").ElementCreator<TosiDialog>;
 export {};
