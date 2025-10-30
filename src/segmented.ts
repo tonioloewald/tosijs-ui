@@ -4,10 +4,6 @@
 This is a fairly general-purpose segmented select control.
 
 ```html
-<blockquote>
-Check the console to see the values being set.
-</blockquote>
-
 <div class="grid">
 <xin-segmented value="yes" choices="yes, no, don't care">
   Should we?
@@ -65,6 +61,8 @@ function logEvent(event) {
 }
 preview.addEventListener('change', logEvent, true)
 ```
+
+> Check the console to see the values being set.
 
 ## Properties
 
