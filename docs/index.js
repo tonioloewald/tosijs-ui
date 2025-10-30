@@ -2667,7 +2667,7 @@ class CodeEditor extends B {
   render() {
     super.render();
     if (this._editorPromise !== undefined) {
-      this._editorPromise.then((editor) => editor.setReadOnly(this.disabled));
+      this._editorPromise.then(({ editor }) => editor.setReadOnly(this.disabled));
     }
   }
 }
@@ -9315,7 +9315,7 @@ var xinTagList = XinTagList.elementCreator({
   }
 });
 // src/version.ts
-var version = "1.0.7";
+var version = "1.0.8";
 // demo/src/style.ts
 var brandColor = a.fromCss("#EE257B");
 var colors = {
