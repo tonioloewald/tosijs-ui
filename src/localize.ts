@@ -231,7 +231,14 @@ class MyLocalizedComponent extends Component {
 ```
 */
 
-import { Component, tosi, elements, bindings, observe, BoxedProxy } from 'tosijs'
+import {
+  Component,
+  tosi,
+  elements,
+  bindings,
+  observe,
+  BoxedProxy,
+} from 'tosijs'
 import { makeSorter } from './make-sorter'
 import { xinSelect, XinSelect } from './select'
 
@@ -240,16 +247,16 @@ interface TranslationMap {
 }
 
 interface I18nConfig {
-  locale: string;
-  locales: string[];
-  languages: string[];
-  emoji: string[];
-  stringMap: TranslationMap;
-  localeOptions: Array<{ // Or HTMLElement[], since span() returns an HTMLElement
-    icon: HTMLElement; // Use HTMLElement as the type for span() result
-    caption: string;
-    value: string;
-  }>;
+  locale: string
+  locales: string[]
+  languages: string[]
+  emoji: string[]
+  stringMap: TranslationMap
+  localeOptions: Array<{
+    icon: any // simplified to prevent inferred type from being massive
+    caption: string
+    value: string
+  }>
 }
 
 const { span } = elements
@@ -263,13 +270,13 @@ export const { i18n } = tosi({
     stringMap: {} as TranslationMap,
     localeOptions: [
       {
-        icon: span(),
+        icon: span() as any,
         caption: window.navigator.language,
         value: window.navigator.language,
       },
     ],
   },
-}) as {i18n: I18nConfig}
+})
 
 bindings.localeOptions = {
   toDOM(select, options) {
@@ -280,8 +287,8 @@ bindings.localeOptions = {
 }
 
 export const setLocale = (language: string) => {
-  if (i18n.locales.includes(language)) {
-    i18n.locale = language
+  if (i18n.locales.xinValue.includes(language)) {
+    i18n.locale.xinValue = language
   } else {
     console.error(`language ${language} is not available`)
   }
@@ -306,17 +313,17 @@ export function initLocalization(localizedStrings: string) {
     .split('\n')
     .map((line) => line.split('\t'))
   if (locales && languages && emoji && strings) {
-    i18n.locales = locales
-    i18n.languages = languages
-    i18n.emoji = emoji
-    i18n.stringMap = strings.reduce(
+    i18n.locales.xinValue = locales
+    i18n.languages.xinValue = languages
+    i18n.emoji.xinValue = emoji
+    i18n.stringMap.xinValue = strings.reduce(
       (map: TranslationMap, strings: string[]) => {
         map[strings[0].toLocaleLowerCase()] = strings
         return map
       },
       {} as TranslationMap
     )
-    i18n.localeOptions = locales
+    i18n.localeOptions.xinValue = locales
       .map((locale, index) => ({
         icon: span({ title: locales[index] }, emoji[index]),
         caption: languages[index],
@@ -325,11 +332,12 @@ export function initLocalization(localizedStrings: string) {
       .sort(captionSort)
 
     // if user locale isn't available, find the best match
-    if (!i18n.locales.includes(i18n.locale.valueOf())) {
+    if (!i18n.locales.xinValue.includes(i18n.locale.xinValue)) {
       const language = i18n.locale.substring(0, 2)
-      i18n.locale =
-        i18n.locales.find((locale: string) => locale.substring(0, 2) === language) ||
-        i18n.locales[0]
+      i18n.locale.xinValue =
+        i18n.locales.xinValue.find(
+          (locale: string) => locale.substring(0, 2) === language
+        ) || i18n.locales.xinValue[0]
     }
     updateLocalized()
   }
@@ -339,7 +347,7 @@ export function localize(ref: string): string {
   if (ref.endsWith('…')) {
     return localize(ref.substring(0, ref.length - 1)) + '…'
   }
-  const index = i18n.locales.indexOf(i18n.locale.valueOf())
+  const index = i18n.locales.xinValue.indexOf(i18n.locale.xinValue)
   if (index > -1) {
     const map = i18n.stringMap[ref.toLocaleLowerCase()]
     const localized = map && map[index]
