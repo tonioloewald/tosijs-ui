@@ -171,9 +171,21 @@ export class XinSegmented extends WebComponent {
       padding: varDefault.segmentedOptionPadding('4px 12px'),
       font: varDefault.segmentedOptionFont('16px'),
     },
+    ':host label:focus': {
+      outline: 'none',
+      boxShadow: varDefault.segmentedFocusShadow(
+        `inset 0 0 0 2px ${varDefault.segmentedOptionCurrentBackground('#44a')}`
+      ),
+      borderRadius: varDefault.segmentedOptionsBorderRadius('8px'),
+    },
     ':host label:has(:checked)': {
       color: varDefault.segmentedOptionCurrentColor('#eee'),
       background: varDefault.segmentedOptionCurrentBackground('#44a'),
+    },
+    ':host label:has(:checked):focus': {
+      boxShadow: varDefault.segmentedCurrentFocusShadow(
+        `inset 0 0 0 2px ${varDefault.segmentedOptionCurrentColor('#eee')}`
+      ),
     },
     ':host svg': {
       height: varDefault.segmentOptionIconSize('16px'),
@@ -250,10 +262,50 @@ export class XinSegmented extends WebComponent {
   }
 
   handleKey = (event: KeyboardEvent) => {
+    let blockEvent = false
     switch (event.code) {
       case 'Space':
-        ;(event.target as HTMLLabelElement).click()
+        if (event.target instanceof HTMLLabelElement) {
+          event.target.click()
+          blockEvent = true
+        }
         break
+      case 'Tab':
+        if (!(event.target instanceof HTMLLabelElement)) {
+          const label = (event.target as HTMLElement).closest(
+            'label'
+          ) as HTMLLabelElement
+          label.focus()
+        }
+        break
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        {
+          const label = (event.target as HTMLElement).closest(
+            'label'
+          ) as HTMLLabelElement
+          if (label.previousElementSibling instanceof HTMLLabelElement) {
+            label.previousElementSibling.focus!()
+          }
+        }
+        blockEvent = true
+        break
+      case 'ArrowRight':
+      case 'ArrowDown':
+        {
+          const label = (event.target as HTMLElement).closest(
+            'label'
+          ) as HTMLLabelElement
+          if (label.nextElementSibling instanceof HTMLLabelElement) {
+            label.nextElementSibling.focus!()
+          }
+        }
+        blockEvent = true
+        break
+    }
+    if (blockEvent) {
+      event.preventDefault()
+      event.stopPropagation()
     }
   }
 
