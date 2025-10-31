@@ -456,7 +456,7 @@ export const xinSelect = XinSelect.elementCreator({
       '--value-padding': '0 8px',
       '--icon-width': '24px',
       '--fieldWidth': '140px',
-      display: 'inline-block',
+      display: 'inline-flex',
       position: 'relative',
     },
     ':host button': {

@@ -3204,7 +3204,7 @@ var xinSelect = XinSelect.elementCreator({
       "--value-padding": "0 8px",
       "--icon-width": "24px",
       "--fieldWidth": "140px",
-      display: "inline-block",
+      display: "inline-flex",
       position: "relative"
     },
     ":host button": {
@@ -4154,7 +4154,7 @@ class DataTable extends B {
       ariaSort,
       style: {
         ...this.cellStyle,
-        textAlign: options.align || "left"
+        justifyContent: options.align || "left"
       }
     }, this.captionSpan(typeof options.name === "string" ? options.name : options.prop), span4({ style: { flex: "1" } }), menuButton);
   };
@@ -4167,7 +4167,7 @@ class DataTable extends B {
       role: "cell",
       style: {
         ...this.cellStyle,
-        textAlign: options.align || "left"
+        justifyContent: options.align || "left"
       },
       bindText: `^.${options.prop}`
     });

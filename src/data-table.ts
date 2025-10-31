@@ -714,7 +714,7 @@ export class DataTable extends WebComponent {
             ariaSort,
             style: {
               ...this.cellStyle,
-              textAlign: options.align || 'left',
+              justifyContent: options.align || 'left',
             },
           },
           this.captionSpan(
@@ -734,7 +734,7 @@ export class DataTable extends WebComponent {
       role: 'cell',
       style: {
         ...this.cellStyle,
-        textAlign: options.align || 'left',
+        justifyContent: options.align || 'left',
       },
       bindText: `^.${options.prop}`,
     })
