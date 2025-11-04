@@ -7,6 +7,7 @@ export interface PopFloatOptions {
     position?: FloatPosition;
     remainOnScroll?: 'hide' | 'remove' | 'remain';
     remainOnResize?: 'hide' | 'remove' | 'remain';
+    draggable?: boolean;
 }
 export declare const popFloat: (options: PopFloatOptions) => XinFloat;
-export declare const positionFloat: (element: XinFloat, target: HTMLElement, position?: FloatPosition, remainOnScroll?: "hide" | "remove" | "remain", remainOnResize?: "hide" | "remove" | "remain") => void;
+export declare const positionFloat: (element: XinFloat, target: HTMLElement, position?: FloatPosition, remainOnScroll?: "hide" | "remove" | "remain", remainOnResize?: "hide" | "remove" | "remain", draggable?: boolean) => void;
