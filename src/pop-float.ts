@@ -20,25 +20,24 @@ grid.addEventListener('click', (event) => {
   if (!target.closest('button')) {
     return
   }
-  const float = preview.querySelector('xin-float')
+  const float = document.querySelector('.popped-float')
   if (float === null) {
     // create and position a float
-    preview.append(
-      popFloat({
-        content: [
-          'hello, I am a float',
-          button('close me', {
-            onClick(event){
-              event.target.closest('xin-float').remove()
-            }
-          })
-        ],
-        target,
-        position: target.dataset.float,
-        remainOnScroll: 'remove',
-        remainOnResize: 'remove'
-      })
-    )
+    popFloat({
+      class: 'popped-float',
+      content: [
+        'hello, I am a float',
+        button('close me', {
+          onClick(event){
+            event.target.closest('xin-float').remove()
+          }
+        })
+      ],
+      target,
+      position: target.dataset.float,
+      remainOnScroll: 'remove',
+      remainOnResize: 'remove'
+    })
   } else {
     // position an existing float
     positionFloat(float, target, target.dataset.float, 'remove', 'remove')
@@ -71,7 +70,7 @@ grid.addEventListener('click', (event) => {
   grid-template-columns: 80px 80px 80px;
 }
 
-.preview xin-float {
+.popped-float {
   display: flex;
   flex-direction: column;
   border-radius: 5px;
@@ -87,11 +86,13 @@ grid.addEventListener('click', (event) => {
 
 ```
 export interface PopFloatOptions {
+  class?: string
   content: HTMLElement | ElementPart[]
   target: HTMLElement
   position?: FloatPosition
   remainOnResize?: 'hide' | 'remove' | 'remain' // default is 'remove',
-  remainOnScroll?: 'hide' | 'remove' | 'remain' // default is 'remain'
+  remainOnScroll?: 'hide' | 'remove' | 'remain' // default is 'remain',
+  draggable?: boolean
 }
 
 export const popFloat = (options: PopFloatOptions): XinFloat
@@ -106,8 +107,9 @@ export const positionFloat = (
   element: HTMLElement,
   target: HTMLElement,
   position?: FloatPosition,
-  remainOnScroll: 'hide' | 'remove' | 'remain' = 'remain'
+  remainOnScroll: 'hide' | 'remove' | 'remain' = 'remain',
   remainOnResize: 'hide' | 'remove' | 'remain' = 'remove',
+  draggable = false
 ): void
 ```
 
@@ -141,6 +143,83 @@ export type FloatPosition =
 | 'auto'
 ```
 
+## Draggable
+
+Sometimes it's nice to have popup palettes and modeless dialogs the user can drag away.
+`popFloat()` makes this really easy to do.
+
+```js
+import { elements } from 'tosijs'
+import { popFloat, icons } from 'tosijs-ui'
+
+const { button, h4, p } = elements
+
+preview.append(button(
+  'Draggable Popup',
+  {
+    class: 'spawn-draggable',
+    onClick(event) {
+      popFloat({
+        class: 'tearoff',
+        content: [
+          h4('Move me!'),
+          p('I’m delicious!'),
+          button(
+            icons.x(),
+            {
+              class: 'no-drag close-tearoff',
+              onClick(event) {
+                event.target.closest('xin-float').remove()
+              } 
+            }
+          )
+        ],
+        target: event.target,
+        remainOnScroll: 'remain',
+        remainOnResize: 'remain',
+        draggable: true,
+      })
+    }
+  },
+))
+```
+```css
+.tearoff {
+  display: flex;
+  flex-direction: column;
+  border-radius: 5px;
+  padding: 10px 15px;
+  background: var(--inset-bg);
+  box-shadow:
+    inset 0 0 0 1px var(--brand-color),
+    2px 10px 5px #0004;
+  width: 200px;
+}
+
+.tearoff > :first-child {
+  margin-top: 0;
+}
+
+.tearoff > :last-child {
+  margin-bottom: 0;
+}
+
+.spawn-draggable {
+  margin: 10px; 
+}
+
+.close-tearoff {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 32px;
+  height: 32px;
+  text-align: center;
+  padding: 0;
+  line-height: 32px;
+}
+```
+
 */
 
 import { ElementPart } from 'tosijs'
@@ -169,15 +248,33 @@ export interface PopFloatOptions {
   position?: FloatPosition
   remainOnScroll?: 'hide' | 'remove' | 'remain'
   remainOnResize?: 'hide' | 'remove' | 'remain'
+  draggable?: boolean
 }
 
 export const popFloat = (options: PopFloatOptions): XinFloat => {
-  const { content, target, position, remainOnScroll, remainOnResize } = options
+  const {
+    content,
+    target,
+    position,
+    remainOnScroll,
+    remainOnResize,
+    draggable,
+  } = options
   const float = Array.isArray(content)
     ? xinFloat(...content)
     : xinFloat(content)
 
-  positionFloat(float, target, position, remainOnScroll, remainOnResize)
+  positionFloat(
+    float,
+    target,
+    position,
+    remainOnScroll,
+    remainOnResize,
+    draggable
+  )
+  if (options.class) {
+    float.setAttribute('class', options.class)
+  }
   document.body.append(float)
   return float
 }
@@ -187,7 +284,8 @@ export const positionFloat = (
   target: HTMLElement,
   position?: FloatPosition,
   remainOnScroll?: 'hide' | 'remove' | 'remain',
-  remainOnResize?: 'hide' | 'remove' | 'remain'
+  remainOnResize?: 'hide' | 'remove' | 'remain',
+  draggable = false
 ): void => {
   {
     const { position } = getComputedStyle(element)
@@ -198,6 +296,7 @@ export const positionFloat = (
     if (remainOnScroll) element.remainOnScroll = remainOnScroll
     bringToFront(element)
   }
+  element.drag = draggable
   const { left, top, width, height } = target.getBoundingClientRect()
   const cx = left + width * 0.5
   const cy = top + height * 0.5
