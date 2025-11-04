@@ -2876,7 +2876,7 @@ var xinFloat = XinFloat.elementCreator({
   tag: "xin-float"
 });
 window.addEventListener("resize", () => {
-  [...XinFloat.floats].forEach((float) => {
+  Array.from(XinFloat.floats).forEach((float) => {
     if (float.remainOnResize === "hide") {
       float.hidden = true;
     } else if (float.remainOnResize === "remove") {
@@ -2888,7 +2888,7 @@ document.addEventListener("scroll", (event) => {
   if (event.target instanceof HTMLElement && event.target.closest(XinFloat.tagName)) {
     return;
   }
-  [...XinFloat.floats].forEach((float) => {
+  Array.from(XinFloat.floats).forEach((float) => {
     if (float.remainOnScroll === "hide") {
       float.hidden = true;
     } else if (float.remainOnScroll === "remove") {
@@ -2899,13 +2899,23 @@ document.addEventListener("scroll", (event) => {
 
 // src/pop-float.ts
 var popFloat = (options) => {
-  const { content, target, position, remainOnScroll, remainOnResize } = options;
+  const {
+    content,
+    target,
+    position,
+    remainOnScroll,
+    remainOnResize,
+    draggable
+  } = options;
   const float = Array.isArray(content) ? xinFloat(...content) : xinFloat(content);
-  positionFloat(float, target, position, remainOnScroll, remainOnResize);
+  positionFloat(float, target, position, remainOnScroll, remainOnResize, draggable);
+  if (options.class) {
+    float.setAttribute("class", options.class);
+  }
   document.body.append(float);
   return float;
 };
-var positionFloat = (element, target, position, remainOnScroll, remainOnResize) => {
+var positionFloat = (element, target, position, remainOnScroll, remainOnResize, draggable = false) => {
   {
     const { position: position2 } = getComputedStyle(element);
     if (position2 !== "fixed") {
@@ -2917,6 +2927,7 @@ var positionFloat = (element, target, position, remainOnScroll, remainOnResize) 
       element.remainOnScroll = remainOnScroll;
     bringToFront(element);
   }
+  element.drag = draggable;
   const { left, top, width, height } = target.getBoundingClientRect();
   const cx = left + width * 0.5;
   const cy = top + height * 0.5;
@@ -9315,7 +9326,7 @@ var xinTagList = XinTagList.elementCreator({
   }
 });
 // src/version.ts
-var version = "1.0.8";
+var version = "1.0.9";
 // demo/src/style.ts
 var brandColor = a.fromCss("#EE257B");
 var colors = {
@@ -9898,7 +9909,7 @@ var docs_default = [
 
 [ui.tosijs.net live demo](https://ui.tosijs.net) | [tosijs](https://tosijs.net) | [discord](https://discord.gg/ramJ9rgky5) | [github](https://github.com/tonioloewald/tosijs-ui#readme) | [npm](https://www.npmjs.com/package/tosijs-ui)
 
-[![tosijs is on NPM](https://badge.fury.io/js/tosijs.svg)](https://www.npmjs.com/package/tosijs-ui)
+[![tosijs is on NPM](https://badge.fury.io/js/tosijs-ui.svg)](https://www.npmjs.com/package/tosijs-ui)
 [![tosijs is about 10kB gzipped](https://deno.bundlejs.com/?q=tosijs-ui&badge=)](https://bundlejs.com/?q=tosijs-ui&badge=)
 [![tosijs on jsdelivr](https://data.jsdelivr.com/v1/package/npm/tosijs-ui/badge)](https://www.jsdelivr.com/package/npm/tosijs-ui)
 
@@ -13233,25 +13244,24 @@ grid.addEventListener('click', (event) => {
   if (!target.closest('button')) {
     return
   }
-  const float = preview.querySelector('xin-float')
+  const float = document.querySelector('.popped-float')
   if (float === null) {
     // create and position a float
-    preview.append(
-      popFloat({
-        content: [
-          'hello, I am a float',
-          button('close me', {
-            onClick(event){
-              event.target.closest('xin-float').remove()
-            }
-          })
-        ],
-        target,
-        position: target.dataset.float,
-        remainOnScroll: 'remove',
-        remainOnResize: 'remove'
-      })
-    )
+    popFloat({
+      class: 'popped-float',
+      content: [
+        'hello, I am a float',
+        button('close me', {
+          onClick(event){
+            event.target.closest('xin-float').remove()
+          }
+        })
+      ],
+      target,
+      position: target.dataset.float,
+      remainOnScroll: 'remove',
+      remainOnResize: 'remove'
+    })
   } else {
     // position an existing float
     positionFloat(float, target, target.dataset.float, 'remove', 'remove')
@@ -13284,7 +13294,7 @@ grid.addEventListener('click', (event) => {
   grid-template-columns: 80px 80px 80px;
 }
 
-.preview xin-float {
+.popped-float {
   display: flex;
   flex-direction: column;
   border-radius: 5px;
@@ -13300,11 +13310,13 @@ grid.addEventListener('click', (event) => {
 
 \`\`\`
 export interface PopFloatOptions {
+  class?: string
   content: HTMLElement | ElementPart[]
   target: HTMLElement
   position?: FloatPosition
   remainOnResize?: 'hide' | 'remove' | 'remain' // default is 'remove',
-  remainOnScroll?: 'hide' | 'remove' | 'remain' // default is 'remain'
+  remainOnScroll?: 'hide' | 'remove' | 'remain' // default is 'remain',
+  draggable?: boolean
 }
 
 export const popFloat = (options: PopFloatOptions): XinFloat
@@ -13319,8 +13331,9 @@ export const positionFloat = (
   element: HTMLElement,
   target: HTMLElement,
   position?: FloatPosition,
-  remainOnScroll: 'hide' | 'remove' | 'remain' = 'remain'
+  remainOnScroll: 'hide' | 'remove' | 'remain' = 'remain',
   remainOnResize: 'hide' | 'remove' | 'remain' = 'remove',
+  draggable = false
 ): void
 \`\`\`
 
@@ -13352,6 +13365,83 @@ export type FloatPosition =
 | 'ws'
 | 'side'
 | 'auto'
+\`\`\`
+
+## Draggable
+
+Sometimes it's nice to have popup palettes and modeless dialogs the user can drag away.
+\`popFloat()\` makes this really easy to do.
+
+\`\`\`js
+import { elements } from 'tosijs'
+import { popFloat, icons } from 'tosijs-ui'
+
+const { button, h4, p } = elements
+
+preview.append(button(
+  'Draggable Popup',
+  {
+    class: 'spawn-draggable',
+    onClick(event) {
+      popFloat({
+        class: 'tearoff',
+        content: [
+          h4('Move me!'),
+          p('I’m delicious!'),
+          button(
+            icons.x(),
+            {
+              class: 'no-drag close-tearoff',
+              onClick(event) {
+                event.target.closest('xin-float').remove()
+              } 
+            }
+          )
+        ],
+        target: event.target,
+        remainOnScroll: 'remain',
+        remainOnResize: 'remain',
+        draggable: true,
+      })
+    }
+  },
+))
+\`\`\`
+\`\`\`css
+.tearoff {
+  display: flex;
+  flex-direction: column;
+  border-radius: 5px;
+  padding: 10px 15px;
+  background: var(--inset-bg);
+  box-shadow:
+    inset 0 0 0 1px var(--brand-color),
+    2px 10px 5px #0004;
+  width: 200px;
+}
+
+.tearoff > :first-child {
+  margin-top: 0;
+}
+
+.tearoff > :last-child {
+  margin-bottom: 0;
+}
+
+.spawn-draggable {
+  margin: 10px; 
+}
+
+.close-tearoff {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 32px;
+  height: 32px;
+  text-align: center;
+  padding: 0;
+  line-height: 32px;
+}
 \`\`\``,
     title: "popFloat",
     filename: "pop-float.ts",

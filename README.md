@@ -7,7 +7,7 @@
 
 [ui.tosijs.net live demo](https://ui.tosijs.net) | [tosijs](https://tosijs.net) | [discord](https://discord.gg/ramJ9rgky5) | [github](https://github.com/tonioloewald/tosijs-ui#readme) | [npm](https://www.npmjs.com/package/tosijs-ui)
 
-[![tosijs is on NPM](https://badge.fury.io/js/tosijs.svg)](https://www.npmjs.com/package/tosijs-ui)
+[![tosijs is on NPM](https://badge.fury.io/js/tosijs-ui.svg)](https://www.npmjs.com/package/tosijs-ui)
 [![tosijs is about 10kB gzipped](https://deno.bundlejs.com/?q=tosijs-ui&badge=)](https://bundlejs.com/?q=tosijs-ui&badge=)
 [![tosijs on jsdelivr](https://data.jsdelivr.com/v1/package/npm/tosijs-ui/badge)](https://www.jsdelivr.com/package/npm/tosijs-ui)
 
