@@ -718,9 +718,9 @@ export class DataTable extends WebComponent {
             },
           },
           this.captionSpan(
+            { style: { flex: '1' } },
             typeof options.name === 'string' ? options.name : options.prop
           ),
-          span({ style: { flex: '1' } }),
           menuButton
         )
   }
@@ -827,11 +827,13 @@ export class DataTable extends WebComponent {
     const dragId = this.instanceId + '-column-header'
     const columnHeaders = visibleColumns.map((column) => {
       const header = this.headerCell(column)
-      if (!this.noreorder) {
-        header.setAttribute('draggable', 'true')
-        header.dataset.drag = dragId
+      if (!this.noreorder && header.children[0]) {
+        const caption = header.children[0]
+        caption.setAttribute('draggable', 'true')
+        caption.style.pointerEvents = 'all'
+        caption.dataset.drag = dragId
         header.dataset.drop = dragId
-        header.addEventListener('dragstart', () => {
+        caption.addEventListener('dragstart', () => {
           this.draggedColumn = column
         })
         header.addEventListener('drop', this.dropColumn)
