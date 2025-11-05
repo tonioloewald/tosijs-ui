@@ -70,16 +70,33 @@ of mime types:
     </div>
 
 Finally, you can override default drop behavior (which is to copy the dragged node into
-the drop zone node) simply using data-event="drop:path.to.drop_handler" as usual.
+the drop zone node) by adding your own `drop` event handler.
 
-    <div
-      data-drop="custom"
-      data-event="drop:path.to.drop_handler"
-    >
-      Drop some custom thing here
-    </div>
+E.g.
+
+    element.addEventListener('drop', (event) => {
+      // event.target is the dragged element
+      ...
+
+      event.stopPropagation()
+      event.preventDefault()
+    })
+
+And of course `elementCreator()`s provide syntax sugar for this:
+
+    elements.div({
+      onDrop(event) {
+        // ...
+      }
+    })
 
 ### Typed Drop Zones Example
+
+In this example, the types are set using `data-drag` attributes and the drop zones are
+set using `data-drop` attributes, but everything else is default behavior. You can also
+drop the draggable objects to another window or the desktop, and similarly you can drag
+appropriate stuff into the drop zones. (You can test this out by opening this page in
+a second browser window—event a different browser.)
 
 ```html
 <div style="display: grid; grid-template-columns: 50% 50%">
@@ -163,6 +180,12 @@ dragAndDrop.init()
 > example (or between two different browsers) and it will work.
 
 ### Reorderable List Example
+
+This example uses a custom `drop` event handler. When you sort the spectrum
+into the correct order you "win" and then the items are reshuffled.
+
+Also notice that the `data-drag` and `data-drop` values are set to a
+random dragId so you cannot drag to another window or the desktop.
 
 ```js
 import { elements, tosi, getListItem } from 'tosijs'

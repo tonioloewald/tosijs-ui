@@ -13,6 +13,13 @@ import { marked, MarkedOptions } from 'marked'
 <xin-md>
 ## hello
 world
+
+![favicon](/favicon.svg)
+
+| this  | is   | a     | table |
+|-------|------|-------|-------|
+| one   | two  | three | four  |
+| five  | six  | seven | eight |
 </xin-md>
 ```
 ```css
@@ -112,7 +119,7 @@ export class MarkdownViewer extends Component {
   content = null
   elements = false
   context: { [key: string]: any } = {}
-  options = {} as MarkedOptions 
+  options = {} as MarkedOptions
 
   constructor() {
     super()
