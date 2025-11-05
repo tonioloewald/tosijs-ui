@@ -167,7 +167,7 @@ export const xinFloat = XinFloat.elementCreator({
 window.addEventListener(
   'resize',
   () => {
-    ;[...XinFloat.floats].forEach((float: XinFloat) => {
+    Array.from(XinFloat.floats).forEach((float: XinFloat) => {
       if (float.remainOnResize === 'hide') {
         float.hidden = true
       } else if (float.remainOnResize === 'remove') {
@@ -187,7 +187,7 @@ document.addEventListener(
     ) {
       return
     }
-    ;[...XinFloat.floats].forEach((float: XinFloat) => {
+    Array.from(XinFloat.floats).forEach((float: XinFloat) => {
       if (float.remainOnScroll === 'hide') {
         float.hidden = true
       } else if (float.remainOnScroll === 'remove') {
