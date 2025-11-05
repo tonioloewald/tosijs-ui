@@ -27,7 +27,7 @@
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "@types/jsdom": "^21.1.7",
-    "@types/node": "^22.18.13",
+    "@types/node": "^22.19.0",
     "@types/react": "^19.2.2",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
@@ -38,7 +38,6 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "marked": "^16.4.1",
     "tosijs": "^1.0.9"
   },
   "files": [
@@ -55,6 +54,7 @@
     "types": "./dist/index.d.ts"
   },
   "dependencies": {
+    "marked": "^16.4.1",
     "playwright": "^1.56.1"
   }
 }

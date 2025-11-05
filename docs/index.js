@@ -4167,7 +4167,7 @@ class DataTable extends B {
         ...this.cellStyle,
         justifyContent: options.align || "left"
       }
-    }, this.captionSpan(typeof options.name === "string" ? options.name : options.prop), span4({ style: { flex: "1" } }), menuButton);
+    }, this.captionSpan({ style: { flex: "1" } }, typeof options.name === "string" ? options.name : options.prop), menuButton);
   };
   dataCell = (options) => {
     if (options.dataCell !== undefined) {
@@ -4237,11 +4237,13 @@ class DataTable extends B {
     const dragId = this.instanceId + "-column-header";
     const columnHeaders = visibleColumns.map((column) => {
       const header = this.headerCell(column);
-      if (!this.noreorder) {
-        header.setAttribute("draggable", "true");
-        header.dataset.drag = dragId;
+      if (!this.noreorder && header.children[0]) {
+        const caption = header.children[0];
+        caption.setAttribute("draggable", "true");
+        caption.style.pointerEvents = "all";
+        caption.dataset.drag = dragId;
         header.dataset.drop = dragId;
-        header.addEventListener("dragstart", () => {
+        caption.addEventListener("dragstart", () => {
           this.draggedColumn = column;
         });
         header.addEventListener("drop", this.dropColumn);
@@ -13409,15 +13411,30 @@ preview.append(button(
 \`\`\`
 \`\`\`css
 .tearoff {
+  --tearoff-bg: #fff6;
+  --tearoff-button-bg: #fff2;
+  --tearoff-color: #222;
+  --tearoff-hilite: #fff8;
+  --tearoff-shadow: #0002;
   display: flex;
   flex-direction: column;
-  border-radius: 5px;
+  border-radius: 20px;
   padding: 10px 15px;
-  background: var(--inset-bg);
+  background: var(--tearoff-bg);
+  backdrop-filter: blur(6px);
   box-shadow:
-    inset 0 0 0 1px var(--brand-color),
-    2px 10px 5px #0004;
+    inset 1px 1px 0 1px var(--tearoff-hilite),
+    inset -1px -1px 0 1px var(--tearoff-shadow),
+    2px 5px 10px var(--tearoff-shadow);
   width: 200px;
+  color: var(--tearoff-color);
+  --text-color: var(--tearoff-color);
+}
+
+.darkmode .tearoff {
+  --tearoff-bg: #0004;
+  --tearoff-button-bg: #0001;
+  --tearoff-color: #fff;
 }
 
 .tearoff > :first-child {
@@ -13434,13 +13451,18 @@ preview.append(button(
 
 .close-tearoff {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: 4px;
+  right: 4px;
   width: 32px;
   height: 32px;
   text-align: center;
   padding: 0;
   line-height: 32px;
+  background: var(--tearoff-button-bg);
+  border-radius: 100px;
+  box-shadow:
+    inset 1px 1px 0 1px var(--tearoff-hilite),
+    inset -1px -1px 0 1px var(--tearoff-shadow);
 }
 \`\`\``,
     title: "popFloat",
