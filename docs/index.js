@@ -10656,16 +10656,33 @@ of mime types:
     </div>
 
 Finally, you can override default drop behavior (which is to copy the dragged node into
-the drop zone node) simply using data-event="drop:path.to.drop_handler" as usual.
+the drop zone node) by adding your own \`drop\` event handler.
 
-    <div
-      data-drop="custom"
-      data-event="drop:path.to.drop_handler"
-    >
-      Drop some custom thing here
-    </div>
+E.g.
+
+    element.addEventListener('drop', (event) => {
+      // event.target is the dragged element
+      ...
+
+      event.stopPropagation()
+      event.preventDefault()
+    })
+
+And of course \`elementCreator()\`s provide syntax sugar for this:
+
+    elements.div({
+      onDrop(event) {
+        // ...
+      }
+    })
 
 ### Typed Drop Zones Example
+
+In this example, the types are set using \`data-drag\` attributes and the drop zones are
+set using \`data-drop\` attributes, but everything else is default behavior. You can also
+drop the draggable objects to another window or the desktop, and similarly you can drag
+appropriate stuff into the drop zones. (You can test this out by opening this page in
+a second browser window—event a different browser.)
 
 \`\`\`html
 <div style="display: grid; grid-template-columns: 50% 50%">
@@ -10749,6 +10766,12 @@ dragAndDrop.init()
 > example (or between two different browsers) and it will work.
 
 ### Reorderable List Example
+
+This example uses a custom \`drop\` event handler. When you sort the spectrum
+into the correct order you "win" and then the items are reshuffled.
+
+Also notice that the \`data-drag\` and \`data-drop\` values are set to a
+random dragId so you cannot drag to another window or the desktop.
 
 \`\`\`js
 import { elements, tosi, getListItem } from 'tosijs'
@@ -12500,7 +12523,98 @@ and [use the standard mapbox APIs directly](https://docs.mapbox.com/api/maps/sty
     path: "src/mapbox.ts"
   },
   {
-    text: "# markdown\n\n`<xin-md>` renders markdown using [marked](https://www.npmjs.com/package/marked).\n\n`<xin-md>` renders [markdown](https://www.markdownguide.org/) anywhere, either using the\n`src` attribute to load the file asynchronously, or rendering the text inside it.\n\n```html\n<xin-md>\n## hello\nworld\n</xin-md>\n```\n```css\nxin-md {\n  display: block;\n  padding: var(--spacing);\n}\n```\n\nNote that, by default, `<xin-md>` will use its `textContent` (not its `innerHTML`) as its source.\n\n## rendering markdown from a url\n\nAgain, like an `<img>` tag, you can simply set a `<xin-md>`'s `src` attribute to a URL pointing\nto markdown source and it will load it asynchronously and render it.\n\n```\n<xin-md src=\"/path/to/file.md\">\n```\n\n## setting its `value`\n\nOr, just set the element's `value` and it will render it for you. You can try\nthis in the console, e.g.\n\n```\n$('.preview xin-md').value = 'testing\\n\\n## this is a test'\n```\n\n## elements\n\n`<xin-md>` also (optionally) allows the embedding of inline HTML elements without blocking markdown\nrendering, so that you can embed specific elements while retaining markdown. You need to explicitly set\nthe `elements` property, and for markdown rendering not to be blocked, the html elements need to\nstart on a new line and not be indented. E.g.\n\n```html\n<xin-md elements>\n<form>\n### this is a form\n<label>\nfill in this field.\n**It's important!**\n<input>\n</label>\n</form>\n</xin-md>\n```\n\nIn this case `<xin-md>` uses its `innerHTML` and not its `textContent`.\n\n## context and template variables\n\n`<xin-md>` also supports **template** values. You need to provide data to the element in the form\nof `context` (an arbitrary object, or a JSON string), and then embed the template text using\nhandlebars-style doubled curly braces, e.g. `{{path.to.value}}`.\n\nIf no value is found, the original text is passed through.\n\nFinally, note that template substitution occurs *before* markdown transformation, which means you can\npass context data through to HTML elements.\n\n```html\n<xin-md\n  elements\n  context='{\"title\": \"template example\", \"foo\": {\"bar\": 17}, \"nested\": \"*work*: {{foo.bar}}\"}'\n>\n## {{title}}\n\nThe magic number is <input type=\"number\" value={{foo.bar}}>\n\nOh, and nested templates {{nested}}.\n</xin-md>\n```",
+    text: `# markdown
+
+\`<xin-md>\` renders markdown using [marked](https://www.npmjs.com/package/marked).
+
+\`<xin-md>\` renders [markdown](https://www.markdownguide.org/) anywhere, either using the
+\`src\` attribute to load the file asynchronously, or rendering the text inside it.
+
+\`\`\`html
+<xin-md>
+## hello
+world
+
+![favicon](/favicon.svg)
+
+| this  | is   | a     | table |
+|-------|------|-------|-------|
+| one   | two  | three | four  |
+| five  | six  | seven | eight |
+</xin-md>
+\`\`\`
+\`\`\`css
+xin-md {
+  display: block;
+  padding: var(--spacing);
+}
+\`\`\`
+
+Note that, by default, \`<xin-md>\` will use its \`textContent\` (not its \`innerHTML\`) as its source.
+
+## rendering markdown from a url
+
+Again, like an \`<img>\` tag, you can simply set a \`<xin-md>\`'s \`src\` attribute to a URL pointing
+to markdown source and it will load it asynchronously and render it.
+
+\`\`\`
+<xin-md src="/path/to/file.md">
+\`\`\`
+
+## setting its \`value\`
+
+Or, just set the element's \`value\` and it will render it for you. You can try
+this in the console, e.g.
+
+\`\`\`
+$('.preview xin-md').value = 'testing\\n\\n## this is a test'
+\`\`\`
+
+## elements
+
+\`<xin-md>\` also (optionally) allows the embedding of inline HTML elements without blocking markdown
+rendering, so that you can embed specific elements while retaining markdown. You need to explicitly set
+the \`elements\` property, and for markdown rendering not to be blocked, the html elements need to
+start on a new line and not be indented. E.g.
+
+\`\`\`html
+<xin-md elements>
+<form>
+### this is a form
+<label>
+fill in this field.
+**It's important!**
+<input>
+</label>
+</form>
+</xin-md>
+\`\`\`
+
+In this case \`<xin-md>\` uses its \`innerHTML\` and not its \`textContent\`.
+
+## context and template variables
+
+\`<xin-md>\` also supports **template** values. You need to provide data to the element in the form
+of \`context\` (an arbitrary object, or a JSON string), and then embed the template text using
+handlebars-style doubled curly braces, e.g. \`{{path.to.value}}\`.
+
+If no value is found, the original text is passed through.
+
+Finally, note that template substitution occurs *before* markdown transformation, which means you can
+pass context data through to HTML elements.
+
+\`\`\`html
+<xin-md
+  elements
+  context='{"title": "template example", "foo": {"bar": 17}, "nested": "*work*: {{foo.bar}}"}'
+>
+## {{title}}
+
+The magic number is <input type="number" value={{foo.bar}}>
+
+Oh, and nested templates {{nested}}.
+</xin-md>
+\`\`\``,
     title: "markdown",
     filename: "markdown-viewer.ts",
     path: "src/markdown-viewer.ts"
@@ -13396,7 +13510,7 @@ preview.append(button(
               class: 'no-drag close-tearoff',
               onClick(event) {
                 event.target.closest('xin-float').remove()
-              } 
+              }
             }
           )
         ],
@@ -13446,7 +13560,7 @@ preview.append(button(
 }
 
 .spawn-draggable {
-  margin: 10px; 
+  margin: 10px;
 }
 
 .close-tearoff {
