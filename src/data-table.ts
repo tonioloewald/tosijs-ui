@@ -828,7 +828,7 @@ export class DataTable extends WebComponent {
     const columnHeaders = visibleColumns.map((column) => {
       const header = this.headerCell(column)
       if (!this.noreorder && header.children[0]) {
-        const caption = header.children[0]
+        const caption = header.children[0] as HTMLElement
         caption.setAttribute('draggable', 'true')
         caption.style.pointerEvents = 'all'
         caption.dataset.drag = dragId

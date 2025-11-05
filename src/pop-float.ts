@@ -170,7 +170,7 @@ preview.append(button(
               class: 'no-drag close-tearoff',
               onClick(event) {
                 event.target.closest('xin-float').remove()
-              } 
+              }
             }
           )
         ],
@@ -220,7 +220,7 @@ preview.append(button(
 }
 
 .spawn-draggable {
-  margin: 10px; 
+  margin: 10px;
 }
 
 .close-tearoff {
@@ -263,6 +263,7 @@ export type FloatPosition =
   | 'auto'
 
 export interface PopFloatOptions {
+  class?: string
   content: HTMLElement | ElementPart[]
   target: HTMLElement
   position?: FloatPosition
