@@ -35,9 +35,11 @@
     "chokidar": "^4.0.3",
     "eslint": "^8.57.1",
     "prettier": "^2.8.8",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "playwright": "^1.56.1"
   },
   "peerDependencies": {
+    "marked": "^16.4.1",
     "tosijs": "^1.0.9"
   },
   "files": [
@@ -52,9 +54,5 @@
     "browser": "./dist/iife.js",
     "default": "./dist/index.js",
     "types": "./dist/index.d.ts"
-  },
-  "dependencies": {
-    "marked": "^16.4.1",
-    "playwright": "^1.56.1"
   }
 }

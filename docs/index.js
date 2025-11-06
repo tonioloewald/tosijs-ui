@@ -9924,7 +9924,7 @@ var docs_default = [
 
 Copyright ©2023-2025 Tonio Loewald
 
-## the tosijs ui library
+## the tosijs-ui library
 
 A set of [web-components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)
 created with [xinjs](https://xinjs.net), designed to augment what the browser gives you
