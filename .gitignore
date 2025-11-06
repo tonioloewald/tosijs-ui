@@ -86,5 +86,6 @@ www/
 /blob-report/
 /playwright/.cache/
 bun.lockb
+bun.lock
 *.pem
 *.csr
