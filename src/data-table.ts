@@ -620,7 +620,7 @@ export class DataTable extends WebComponent {
         {
           caption: this.localized
             ? `${localize('Sort')} ${localize('Descending')}`
-            : 'Sort Ascending',
+            : 'Sort Descending',
           icon: 'sortDescending',
           action() {
             sortByColumn(options, 'descending')
