@@ -4117,7 +4117,7 @@ class DataTable extends F {
           sortByColumn(options);
         }
       }, {
-        caption: this.localized ? `${localize("Sort")} ${localize("Descending")}` : "Sort Ascending",
+        caption: this.localized ? `${localize("Sort")} ${localize("Descending")}` : "Sort Descending",
         icon: "sortDescending",
         action() {
           sortByColumn(options, "descending");
