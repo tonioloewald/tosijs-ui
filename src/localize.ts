@@ -350,12 +350,12 @@ export function localize(ref: string): string {
   const index = i18n.locales.xinValue.indexOf(i18n.locale.xinValue)
   if (index > -1) {
     const map = i18n.stringMap[ref.toLocaleLowerCase()]
-    const localized = map && map[index]
+    const localized = map.xinValue && map[index]
     if (localized) {
       ref =
         ref.toLocaleLowerCase() === ref
           ? localized.toLocaleLowerCase()
-          : localized.valueOf()
+          : localized.tosiValue
     }
   }
   return ref
