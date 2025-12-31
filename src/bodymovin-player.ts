@@ -14,8 +14,9 @@ setTimeout(
   () => {
  preview.append(
    popFloat({
+     draggable: true,
      content: [
-       { class: 'panel', drag: true },
+       { class: 'panel' },
        div({ class: 'panel-header' }, 'Player Controls' ),
        label(
          { class: 'no-drag' },
