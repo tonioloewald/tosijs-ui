@@ -44,6 +44,7 @@
   },
   "files": [
     "/dist",
+    "/bin/docs.ts",
     "/LICENSE",
     "/README.md"
   ],

@@ -1,7 +1,13 @@
 import * as path from 'path'
 import { statSync } from 'fs'
 import { watch } from 'chokidar'
+import { extractDocs } from './docs'
+// @ts-ignore-error
 import { $ } from 'bun'
+
+declare global {
+  var Bun: any
+}
 
 const PORT = 8787
 const PROJECT_ROOT = './'
@@ -18,20 +24,23 @@ async function prebuild() {
   )
   console.log(config.version)
 
-  let output = await $`rm -rf ${PUBLIC}`.text()
-  output = await $`mkdir ${PUBLIC}`.text()
-  output = await $`bun ./bin/docs.js`.text()
-  output = await $`bun ./bin/make-icon-data.js`.text()
-  output = await $`cp ./demo/static/* ${PUBLIC}`.text()
+  await $`rm -rf ${PUBLIC}`.text()
+  await $`mkdir ${PUBLIC}`.text()
+  extractDocs({
+    paths: ['src', 'README.md', 'bin'],
+    output: 'demo/docs.json',
+  })
+  await $`bun ./bin/make-icon-data.js`.text()
+  await $`cp ./demo/static/* ${PUBLIC}`.text()
 
-  output = await $`rm -rf ${DIST}`.text()
-  output = await $`mkdir ${DIST}`.text()
+  await $`rm -rf ${DIST}`.text()
+  await $`mkdir ${DIST}`.text()
   console.timeEnd('prebuild')
 }
 
 async function build() {
   console.time('build')
-  let result
+  let result: any
 
   try {
     await $`bun tsc --declaration --emitDeclarationOnly --outDir dist`
