@@ -91,6 +91,8 @@ This will pin the document to the top or bottom of the navigation list.
 */
 /*{ "pin": "bottom" }*/
 
+// TODO CLI options
+
 import * as fs from 'fs'
 import * as path from 'path'
 

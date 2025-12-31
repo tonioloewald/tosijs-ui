@@ -101,18 +101,6 @@ or
 /*{ "pin": "bottom" }*‎/
 ```
 
-## CLI Options
-
-```bash
-npx tosijs-ui-docs --help
-
-Options:
-  --dirs <paths>       Directories/files to scan (default: ".")
-  --ignore <paths>     Directories to ignore (default: "node_modules,dist,build,docs")
-  --output <path>      Output JSON path (default: "./docs.json")
-  --help, -h           Show help
-```
-
 ## Programmatic API
 
 ```typescript
@@ -176,7 +164,6 @@ import {
 import { markdownViewer, MarkdownViewer } from './markdown-viewer'
 import { LiveExample } from './live-example'
 import { sideNav, SideNav } from './side-nav'
-import { sizeBreak } from './size-break'
 import { icons } from './icons'
 import { xinLocalized } from './localize'
 
