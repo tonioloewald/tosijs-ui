@@ -32,10 +32,10 @@ It works beautifully with other web-component libraries, such as [shoelace.style
 
 ### Using npm and a bundler
 
-Add xinjs-ui to your project, e.g.
+Add tosijs-ui to your project, e.g.
 
 ```bash
-npm add xinjs-ui
+npm add tosijs-ui
 ```
 
 Then you can import the component `elementCreator` and create the element any way you
@@ -43,7 +43,7 @@ like, the easiest way being to use the `elementCreator` itself. A `tosijs` `elem
 is syntax sugar around `document.createElement()`.
 
 ```ts
-import { dataTable } from 'xinjs-ui'
+import { dataTable } from 'tosijs-ui'
 
 document.body.append(dataTable())
 ```
@@ -111,7 +111,7 @@ use HTML or the `ElementCreator` function exported.
 E.g. to use the markdown viewer:
 
 ```
-import { markdownViewer } from 'xinjs-ui'
+import { markdownViewer } from 'tosijs-ui'
 document.body.append(markdownViewer('# hello world\nthis is a test'))
 ```
 

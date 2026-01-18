@@ -359,7 +359,7 @@ dataTable({
 
 - **Live demo**: [ui.tosijs.net](https://ui.tosijs.net)
 - **tosijs docs**: [tosijs.net](https://tosijs.net)
-- **GitHub**: [github.com/tonioloewald/xinjs-ui](https://github.com/tonioloewald/xinjs-ui)
+- **GitHub**: [github.com/tonioloewald/tosijs-ui](https://github.com/tonioloewald/tosijs-ui)
 - **NPM**: [npmjs.com/package/tosijs-ui](https://www.npmjs.com/package/tosijs-ui)
 - **Discord**: [discord.gg/ramJ9rgky5](https://discord.gg/ramJ9rgky5)
 
