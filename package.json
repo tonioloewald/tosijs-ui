@@ -34,9 +34,10 @@
     "bun-types": "latest",
     "chokidar": "^4.0.3",
     "eslint": "^8.57.1",
+    "happy-dom": "^20.3.1",
+    "playwright": "^1.57.0",
     "prettier": "^2.8.8",
-    "typescript": "^5.9.3",
-    "playwright": "^1.57.0"
+    "typescript": "^5.9.3"
   },
   "peerDependencies": {
     "marked": "^16.4.2",

@@ -1,0 +1,58 @@
+import { Window } from 'happy-dom'
+
+const window = new Window()
+
+// Expose all window properties to globalThis for DOM compatibility
+const windowProps = [
+  'window',
+  'document',
+  'HTMLElement',
+  'HTMLSpanElement',
+  'HTMLDivElement',
+  'HTMLInputElement',
+  'HTMLButtonElement',
+  'HTMLFormElement',
+  'HTMLAnchorElement',
+  'HTMLImageElement',
+  'HTMLTableElement',
+  'HTMLTemplateElement',
+  'customElements',
+  'Element',
+  'Node',
+  'Text',
+  'DocumentFragment',
+  'Event',
+  'CustomEvent',
+  'MouseEvent',
+  'KeyboardEvent',
+  'InputEvent',
+  'FocusEvent',
+  'MutationObserver',
+  'ResizeObserver',
+  'IntersectionObserver',
+  'CSSStyleDeclaration',
+  'SVGElement',
+  'SVGSVGElement',
+  'DOMParser',
+  'XMLSerializer',
+  'NodeList',
+  'HTMLCollection',
+  'URL',
+  'URLSearchParams',
+]
+
+const globals: Record<string, unknown> = { window }
+
+for (const prop of windowProps) {
+  if ((window as unknown as Record<string, unknown>)[prop] !== undefined) {
+    globals[prop] = (window as unknown as Record<string, unknown>)[prop]
+  }
+}
+
+// Bind functions that need window context
+globals.getComputedStyle = window.getComputedStyle.bind(window)
+globals.requestAnimationFrame = window.requestAnimationFrame.bind(window)
+globals.cancelAnimationFrame = window.cancelAnimationFrame.bind(window)
+globals.fetch = window.fetch.bind(window)
+
+Object.assign(globalThis, globals)

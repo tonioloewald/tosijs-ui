@@ -13,9 +13,13 @@ Options:
                            Defaults to './icons'.
   --output <path>          Path to the output file (e.g., './app/my-icons.js').
                            Defaults to './src/icon-data.ts'.
+  --optimize <true|false>  Optimize coordinate precision based on viewBox size.
+                           Defaults to true. Larger viewBox = fewer decimal places.
+                           Set to false if you encounter rendering issues.
 
 Example:
-  bun run bin/generate-icons.js --input ./my-icons,./node_modules/some-lib/icons --output ./dist/icons.js
+  bun run bin/make-icon-data.js --input ./my-icons,./node_modules/some-lib/icons --output ./dist/icons.js
+  bun run bin/make-icon-data.js --optimize false  # Disable precision optimization
 */
 
 import fs from 'fs'
@@ -25,6 +29,7 @@ import path from 'path'
 const defaultOptions = {
   input: './icons',
   output: './src/icon-data.ts',
+  optimize: true, // Optimize coordinate precision based on viewBox size
 }
 const flags = Object.keys(defaultOptions)
 
@@ -54,8 +59,40 @@ for (const flag of flags) {
 }
 
 // Destructure options for easier use
-const { input: iconDirectories, output: outputFilePath } = options
+const { input: iconDirectories, output: outputFilePath, optimize } = options
 const isTypescript = outputFilePath.endsWith('.ts')
+const shouldOptimize = optimize === true || optimize === 'true'
+
+// Calculate appropriate decimal precision based on viewBox size
+// Larger viewBox = fewer decimal places needed
+function getPrecisionForViewBox(viewBoxSize) {
+  if (viewBoxSize >= 512) return 0
+  if (viewBoxSize >= 64) return 1
+  return 2
+}
+
+// Round numbers in SVG content based on viewBox-appropriate precision
+function optimizeCoordinates(svgSource, precision) {
+  return svgSource.replace(/\d+\.\d+/g, (number) => {
+    const rounded = Number(number).toFixed(precision)
+    // Remove trailing zeros and unnecessary decimal point
+    return parseFloat(rounded).toString()
+  })
+}
+
+// Extract viewBox size from SVG
+function getViewBoxSize(svgSource) {
+  const match = svgSource.match(/viewBox="([^"]+)"/)
+  if (match) {
+    const parts = match[1].split(/\s+/)
+    if (parts.length >= 4) {
+      const width = parseFloat(parts[2])
+      const height = parseFloat(parts[3])
+      return Math.max(width, height)
+    }
+  }
+  return 24 // Default assumption
+}
 
 const typeDeclaration = isTypescript
   ? 'interface IconData { [key: string]: string }'
@@ -97,13 +134,19 @@ function findIcons(dirs, ignore = []) {
             /\s?\b(opacity:1;|fill="#000000"|fill="#000"|fill="none"|class="[^"]+"|stroke="currentColor"|stroke="#000000"|stroke-linejoin="[^"]+"|stroke-width="[^"]+"|(stroke-)?stroke-linecap="[^"]+")/g,
             ''
           )
-          .replace(/\d+\.\d{3,}/g, (number) => Number(number).toFixed(2))
           .replace(/stroke-stroke/g, 'stroke')
           .replace(/fill-fill/g, 'fill')
           .replace(/\s+/g, ' ')
           .replace(/>\s+</g, '><')
           .replace(/\s(id)="[^"]+"/g, '')
           .replace(/<!--.*?-->/g, '')
+
+        // Optimize coordinate precision based on viewBox size
+        if (shouldOptimize) {
+          const viewBoxSize = getViewBoxSize(svgSource)
+          const precision = getPrecisionForViewBox(viewBoxSize)
+          svgSource = optimizeCoordinates(svgSource, precision)
+        }
         const classes = []
         if (dir.includes('color')) {
           classes.push('color')

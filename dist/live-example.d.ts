@@ -17,6 +17,7 @@ interface ExampleParts extends PartsMap {
 export declare class LiveExample extends Component<ExampleParts> {
     persistToDom: boolean;
     prettier: boolean;
+    iframe: boolean;
     prefix: string;
     storageKey: string;
     context: ExampleContext;
@@ -55,6 +56,9 @@ export declare class LiveExample extends Component<ExampleParts> {
     refreshRemote: () => void;
     updateSources: () => void;
     refresh: () => Promise<void>;
+    private refreshInline;
+    private registerComponentsInIframe;
+    private refreshInIframe;
     initFromElements(elements: HTMLElement[]): void;
     showDefaultTab(): void;
     render(): void;

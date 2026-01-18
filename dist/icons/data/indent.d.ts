@@ -1,0 +1,1 @@
+export declare const indent = "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><g><path style=\"\" d=\"M21,10 C21,10,8,10,8,10\"/><path style=\"\" d=\"M21,6 C21,6,8,6,8,6\"/><path style=\"\" d=\"M21,14 C21,14,8,14,8,14\"/><path style=\"\" d=\"M21,18 C21,18,8,18,8,18\"/><path style=\"\" d=\"M2.5,9 C2.5,9,5.5,12,5.5,12 C5.5,12,2.5,15,2.5,15\"/></g></svg> ";

@@ -432,14 +432,14 @@ export const icons = new Proxy(iconData, {
         ...parts,
         ...sourceSvg.children
       )
-      svg.style.strokeWidth = varDefault.xinIconStrokeWidth('2px')
-      svg.style.stroke = varDefault.xinIconStroke(
+      svg.style.strokeWidth = varDefault.tosiIconStrokeWidth('2px')
+      svg.style.stroke = varDefault.tosiIconStroke(
         classes.has('filled') ? 'none' : 'currentColor'
       )
-      svg.style.fill = varDefault.xinIconFill(
+      svg.style.fill = varDefault.tosiIconFill(
         classes.has('stroked') ? 'none' : 'currentColor'
       )
-      svg.style.height = varDefault.xinIconSize('16px')
+      svg.style.height = varDefault.tosiIconSize('16px')
       return svg
     }
   },
@@ -464,6 +464,8 @@ export class SvgIcon extends WebComponent {
     const style: XinStyleRule = {}
     if (this.size) {
       style.height = this.size + 'px'
+      this.style.setProperty('--tosi-icon-size', `${this.size}px`)
+      // Legacy alias
       this.style.setProperty('--xin-icon-size', `${this.size}px`)
     }
     if (this.stroke) {
@@ -479,15 +481,27 @@ export const svgIcon = SvgIcon.elementCreator({
   tag: 'xin-icon',
   styleSpec: {
     ':host': {
+      // New --tosi-icon-* variables
+      '--tosi-icon-size': '16px',
+      '--tosi-icon-stroke-width': '2px',
+      '--tosi-icon-stroke-linejoin': 'round',
+      '--tosi-icon-stroke-linecap': 'round',
+      '--tosi-icon-fill': 'none',
+      // Legacy aliases for backward compatibility
+      '--xin-icon-size': 'var(--tosi-icon-size)',
+      '--icon-stroke-width': 'var(--tosi-icon-stroke-width)',
+      '--icon-stroke-linejoin': 'var(--tosi-icon-stroke-linejoin)',
+      '--icon-stroke-linecap': 'var(--tosi-icon-stroke-linecap)',
+      '--icon-fill': 'var(--tosi-icon-fill)',
       display: 'inline-flex',
       stroke: 'currentColor',
-      strokeWidth: varDefault.iconStrokeWidth('2px'),
-      strokeLinejoin: varDefault.iconStrokeLinejoin('round'),
-      strokeLinecap: varDefault.iconStrokeLinecap('round'),
-      fill: varDefault.iconFill('none'),
+      strokeWidth: varDefault.tosiIconStrokeWidth('2px'),
+      strokeLinejoin: varDefault.tosiIconStrokeLinejoin('round'),
+      strokeLinecap: varDefault.tosiIconStrokeLinecap('round'),
+      fill: varDefault.tosiIconFill('none'),
     },
     ':host, :host svg': {
-      height: varDefault.xinIconSize('16px'),
+      height: varDefault.tosiIconSize('16px'),
     },
   },
 })

@@ -36,6 +36,19 @@ preview.append('Try editing some code and hitting refresh…')
 You can also use Typescript. It will be stripped down to
 Javascript using [sucrase](https://github.com/alangpierce/sucrase).
 
+## CSS Isolation with `iframe`
+
+Add the `iframe` attribute to render the preview inside an iframe for complete CSS isolation.
+This is useful for testing components without interference from the parent page's styles.
+
+    <xin-example iframe>
+      <pre class="language-html">...</pre>
+      <pre class="language-css">...</pre>
+    </xin-example>
+
+When using iframe mode, tosijs-ui web components are automatically registered in the
+iframe's customElements registry, so custom element tags work as expected.
+
 ```js
 function makeElement(tag: string, ...children: Array<string | HTMLElement>): HTMLElement {
   const element = document.createElement(tag)
@@ -178,6 +191,7 @@ interface ExampleParts extends PartsMap {
 export class LiveExample extends Component<ExampleParts> {
   persistToDom = false
   prettier = false
+  iframe = false
   prefix = 'lx'
   storageKey = 'live-example-payload'
   context: ExampleContext = {}
@@ -236,7 +250,7 @@ export class LiveExample extends Component<ExampleParts> {
   constructor() {
     super()
 
-    this.initAttributes('persistToDom', 'prettier')
+    this.initAttributes('persistToDom', 'prettier', 'iframe')
   }
 
   get activeTab(): Element | undefined {
@@ -597,6 +611,21 @@ export class LiveExample extends Component<ExampleParts> {
 
     const { example, style } = this.parts
 
+    if (this.iframe) {
+      await this.refreshInIframe(transform)
+    } else {
+      await this.refreshInline(transform, example, style)
+    }
+  }
+
+  private async refreshInline(
+    transform: (
+      code: string,
+      options: { transforms: string[] }
+    ) => { code: string },
+    example: HTMLElement,
+    style: HTMLStyleElement
+  ) {
     const preview = div({ class: 'preview' })
     preview.innerHTML = this.html
     style.innerText = this.css
@@ -618,6 +647,143 @@ export class LiveExample extends Component<ExampleParts> {
       }
       // @ts-expect-error ts is wrong and it makes me so mad
       const func = new AsyncFunction(
+        ...Object.keys(context).map((key: string) => key.replace(/-/g, '')),
+        transform(code, { transforms: ['typescript'] }).code
+      )
+      func(...Object.values(context)).catch((err: Error) => console.error(err))
+      if (this.persistToDom) {
+        this.updateSources()
+      }
+    } catch (e) {
+      console.error(e)
+      window.alert(`Error: ${e}, the console may have more information…`)
+    }
+  }
+
+  private registerComponentsInIframe(iframeWindow: Window): void {
+    // Get the iframe's customElements registry
+    const iframeCustomElements = iframeWindow.customElements
+    if (!iframeCustomElements) {
+      return
+    }
+
+    // Get all custom element definitions from the parent window
+    // and re-register them in the iframe
+    const tosijsui = this.context['tosijs-ui']
+    if (!tosijsui) {
+      return
+    }
+
+    // Each component creator in tosijs-ui has a tagName property
+    // We need to find the Component class and register it
+    for (const [key, creator] of Object.entries(tosijsui)) {
+      if (typeof creator === 'function' && 'tagName' in creator) {
+        const tagName = (creator as any).tagName as string
+        if (tagName && !iframeCustomElements.get(tagName)) {
+          // Get the component class from the parent's registry
+          const ComponentClass = customElements.get(tagName)
+          if (ComponentClass) {
+            try {
+              iframeCustomElements.define(tagName, ComponentClass)
+            } catch (e) {
+              // May fail if already defined or invalid - ignore
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private async refreshInIframe(
+    transform: (
+      code: string,
+      options: { transforms: string[] }
+    ) => { code: string }
+  ) {
+    const { example } = this.parts
+
+    // Create or reuse iframe
+    let iframe = example.querySelector(
+      'iframe.preview-iframe'
+    ) as HTMLIFrameElement | null
+    if (!iframe) {
+      iframe = document.createElement('iframe')
+      iframe.className = 'preview-iframe'
+      iframe.style.cssText = 'width: 100%; height: 100%; border: none;'
+      const oldPreview = example.querySelector('.preview')
+      if (oldPreview) {
+        oldPreview.replaceWith(iframe)
+      } else {
+        example.insertBefore(iframe, this.parts.exampleWidgets)
+      }
+    }
+
+    const iframeDoc = iframe.contentDocument
+    if (!iframeDoc) {
+      console.error('Could not access iframe document')
+      return
+    }
+
+    // Build the iframe content
+    // We need to inject tosijs and tosijs-ui into the iframe
+    // Since they're already loaded in the parent, we can pass them via the iframe's window
+    const iframeWindow = iframe.contentWindow as Window & {
+      tosijs?: typeof import('tosijs')
+      tosijsui?: typeof import('./index')
+    }
+
+    // Copy the libraries to the iframe window
+    if (this.context['tosijs']) {
+      iframeWindow.tosijs = this.context['tosijs']
+    }
+    if (this.context['tosijs-ui']) {
+      iframeWindow.tosijsui = this.context['tosijs-ui']
+    }
+
+    // Write the HTML and CSS to the iframe
+    // Include a script that will register web components from the parent window
+    iframeDoc.open()
+    iframeDoc.write(`<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; }
+    .preview { height: 100%; position: relative; }
+    ${this.css}
+  </style>
+</head>
+<body>
+  <div class="preview">${this.html}</div>
+</body>
+</html>`)
+    iframeDoc.close()
+
+    // Register web components in the iframe's customElements registry
+    // This allows custom element tags in HTML to work within the iframe
+    this.registerComponentsInIframe(iframeWindow)
+
+    const preview = iframeDoc.querySelector('.preview') as HTMLElement
+    if (!preview) {
+      console.error('Could not find preview element in iframe')
+      return
+    }
+
+    // Execute the JS in the iframe context
+    const context = { preview, ...this.context }
+    try {
+      let code = this.js
+      for (const moduleName of Object.keys(this.context)) {
+        code = code.replace(
+          new RegExp(`import \\{(.*)\\} from '${moduleName}'`, 'g'),
+          `const {$1} = ${moduleName.replace(/-/g, '')}`
+        )
+      }
+
+      // Create the async function in the iframe's context so DOM operations work
+      const IframeAsyncFunction = (iframeWindow as any).eval(
+        '(async () => {}).constructor'
+      )
+      const func = new IframeAsyncFunction(
         ...Object.keys(context).map((key: string) => key.replace(/-/g, '')),
         transform(code, { transforms: ['typescript'] }).code
       )

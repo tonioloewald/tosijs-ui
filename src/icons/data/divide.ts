@@ -1,0 +1,1 @@
+export const divide = "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"6\" r=\"2\"></circle><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line><circle cx=\"12\" cy=\"18\" r=\"2\"></circle></svg>"

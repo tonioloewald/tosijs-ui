@@ -6,6 +6,12 @@ export declare class TabSelector extends WebComponent {
     makeTab(tabs: TabSelector, tabBody: HTMLElement, bodyId: string): HTMLElement;
     static styleSpec: {
         ':host': {
+            '--tosi-tabs-selected-color': string;
+            '--tosi-tabs-bar-color': string;
+            '--tosi-tabs-bar-height': string;
+            '--xin-tabs-selected-color': string;
+            '--xin-tabs-bar-color': string;
+            '--xin-tabs-bar-height': string;
             display: string;
             flexDirection: string;
             position: string;

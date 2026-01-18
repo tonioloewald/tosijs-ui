@@ -569,14 +569,14 @@ export class DataTable extends WebComponent {
   }
 
   setColumnWidths() {
-    this.style.setProperty(
-      '--grid-columns',
-      this.visibleColumns.map((c) => c.width + 'px').join(' ')
-    )
-    this.style.setProperty(
-      '--grid-row-width',
-      this.visibleColumns.reduce((w, c) => w + c.width, 0) + 'px'
-    )
+    const columns = this.visibleColumns.map((c) => c.width + 'px').join(' ')
+    const rowWidth = this.visibleColumns.reduce((w, c) => w + c.width, 0) + 'px'
+    // Set new --tosi-table-* variables
+    this.style.setProperty('--tosi-table-grid-columns', columns)
+    this.style.setProperty('--tosi-table-grid-row-width', rowWidth)
+    // Legacy aliases for backward compatibility
+    this.style.setProperty('--grid-columns', columns)
+    this.style.setProperty('--grid-row-width', rowWidth)
   }
 
   sortByColumn = (
@@ -818,6 +818,9 @@ export class DataTable extends WebComponent {
     this.style.display = 'flex'
     this.style.flexDirection = 'column'
     const { visibleColumns } = this
+    // Set new --tosi-table-* variable
+    this.style.setProperty('--tosi-table-row-height', `${this.rowHeight}px`)
+    // Legacy alias for backward compatibility
     this.style.setProperty('--row-height', `${this.rowHeight}px`)
     this.setColumnWidths()
 
@@ -921,16 +924,28 @@ export const dataTable = DataTable.elementCreator({
   tag: 'xin-table',
   styleSpec: {
     ':host': {
+      // New --tosi-table-* variables with defaults
+      '--tosi-table-row-height': '32px',
+      '--tosi-table-touch-size': 'var(--tosi-touch-size, 44px)',
+      '--tosi-table-dragged-header-bg': '#0004',
+      '--tosi-table-dragged-header-color': '#fff',
+      '--tosi-table-drop-header-bg': '#fff4',
+      // Legacy aliases for backward compatibility
+      '--row-height': 'var(--tosi-table-row-height)',
+      '--touch-size': 'var(--tosi-table-touch-size)',
+      '--dragged-header-bg': 'var(--tosi-table-dragged-header-bg)',
+      '--dragged-header-color': 'var(--tosi-table-dragged-header-color)',
+      '--drop-header-bg': 'var(--tosi-table-drop-header-bg)',
       overflow: 'auto hidden',
     },
     ':host .thead, :host .tbody': {
-      width: vars.gridRowWidth,
+      width: vars.tosiTableGridRowWidth,
     },
     ':host .tr': {
       display: 'grid',
-      gridTemplateColumns: vars.gridColumns,
-      height: vars.rowHeight,
-      lineHeight: vars.rowHeight,
+      gridTemplateColumns: vars.tosiTableGridColumns,
+      height: vars.tosiTableRowHeight,
+      lineHeight: vars.tosiTableRowHeight,
     },
     ':host .td, :host .th': {
       overflow: 'hidden',
@@ -943,19 +958,19 @@ export const dataTable = DataTable.elementCreator({
       color: 'currentColor',
       background: 'none',
       padding: 0,
-      lineHeight: vars.touchSize,
-      height: vars.touchSize,
-      width: vars.touchSize,
+      lineHeight: vars.tosiTableTouchSize,
+      height: vars.tosiTableTouchSize,
+      width: vars.tosiTableTouchSize,
     },
     ':host [draggable="true"]': {
       cursor: 'ew-resize',
     },
     ':host [draggable="true"]:active': {
-      background: varDefault.draggedHeaderBg('#0004'),
-      color: varDefault.draggedHeaderColor('#fff'),
+      background: vars.tosiTableDraggedHeaderBg,
+      color: vars.tosiTableDraggedHeaderColor,
     },
     ':host .drag-over': {
-      background: varDefault.dropHeaderBg('#fff4'),
+      background: vars.tosiTableDropHeaderBg,
     },
   },
 }) as ElementCreator<DataTable>

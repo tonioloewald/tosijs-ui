@@ -301,8 +301,8 @@ export const updateLocalized = () => {
   }
 }
 
-// @ts-ignore-error it's a proxy
-observe(i18n.locale.xinPath, updateLocalized)
+// TODO: tosijs observe() typing should accept proxied values directly
+observe((i18n.locale as any).xinPath, updateLocalized)
 
 const captionSort = makeSorter((locale: { caption: string }) => [
   locale.caption.toLocaleLowerCase(),

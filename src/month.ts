@@ -483,8 +483,7 @@ export class TosiMonth extends Component<MonthParts> {
         return element
       })
     )
-    // @ts-ignore-error tsc is too stupid to realize it gets assigned
-    if (focusElement) focusElement.focus()
+    ;(focusElement as HTMLElement | null)?.focus()
   }
 }
 

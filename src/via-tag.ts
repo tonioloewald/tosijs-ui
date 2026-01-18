@@ -83,8 +83,9 @@ export function scriptTag(
 ): Promise<any> {
   if (loadedScripts[src] === undefined) {
     if (existingSymbolName !== undefined) {
-      // @ts-ignore-error aaaargh
-      const existing = globalThis[existingSymbolName]
+      const existing = (globalThis as Record<string, unknown>)[
+        existingSymbolName
+      ]
       loadedScripts[src] = Promise.resolve({ [existingSymbolName]: existing })
     }
 

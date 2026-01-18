@@ -1,0 +1,1 @@
+export declare const resize = "<svg class=\"stroked\" version=\"1.1\" viewBox=\"0, 0, 24, 24\"><g><path d=\"M9,3 L3,3 L3,9\"/><path d=\"M15,21 L21,21 L21,15\"/><path d=\"M3,3 L10,10\"/><path d=\"M21,21 L14,14\"/></g></svg> ";

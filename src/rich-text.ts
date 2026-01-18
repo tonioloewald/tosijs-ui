@@ -79,7 +79,12 @@ simply passes through document `selectionchange` events, but also passes a refer
 the `<xin-word>` component).
 */
 
-import { Component as WebComponent, ElementCreator, PartsMap, elements } from 'tosijs'
+import {
+  Component as WebComponent,
+  ElementCreator,
+  PartsMap,
+  elements,
+} from 'tosijs'
 import { icons } from './icons'
 
 import { xinSelect, XinSelect } from './select'
@@ -250,8 +255,10 @@ export class RichText extends WebComponent<EditorParts> {
   }
 
   handleSelectChange = (event: Event) => {
-    // @ts-expect-error Typescript is wrong about event.target lacking closest
-    const select = event.target.closest(XinSelect.tagName) as HTMLSelectElement
+    const target = event.target as Element | null
+    const select = target?.closest(
+      XinSelect.tagName as string
+    ) as HTMLSelectElement | null
     if (select == null) {
       return
     }
@@ -260,8 +267,8 @@ export class RichText extends WebComponent<EditorParts> {
   }
 
   handleButtonClick = (event: Event) => {
-    // @ts-expect-error Typescript is wrong about event.target lacking closest
-    const button = event.target.closest('button')
+    const target = event.target as Element | null
+    const button = target?.closest('button')
     if (button == null) {
       return
     }
@@ -372,6 +379,6 @@ export const richText = RichText.elementCreator({
     },
     ':host [part="toolbar"] > button': {
       _xinIconSize: 18,
-    }
+    },
   },
 }) as ElementCreator<RichText>
