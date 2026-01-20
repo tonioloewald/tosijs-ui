@@ -349,13 +349,16 @@ export function localize(ref: string): string {
   }
   const index = i18n.locales.xinValue.indexOf(i18n.locale.xinValue)
   if (index > -1) {
-    const map = i18n.stringMap[ref.toLocaleLowerCase()]
-    const localized = map.xinValue && map[index]
+    // Access stringMap.xinValue first to get the plain object, then lookup by key
+    // This avoids the proxy treating '.' in the key as property dereference
+    const stringMapValue = i18n.stringMap.xinValue as TranslationMap
+    const map = stringMapValue[ref.toLocaleLowerCase()]
+    const localized = map && map[index]
     if (localized) {
       ref =
         ref.toLocaleLowerCase() === ref
           ? localized.toLocaleLowerCase()
-          : localized.tosiValue
+          : localized
     }
   }
   return ref
