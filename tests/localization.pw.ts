@@ -10,11 +10,15 @@ test('has title', async ({ page }) => {
 })
 
 test('localize works', async ({ page }) => {
-  await page.locator('xin-locale-picker button').click()
+  // Open settings menu, then Language submenu (first menu item)
+  await page.locator('button[title="links and settings"]').click()
+  await page.locator('xin-float button').first().click()
   await page.getByTitle('fi').click()
   await expect(page.getByText('suodattaa')).toBeVisible()
 
-  await page.locator('xin-locale-picker button').click()
+  // Switch back to English (menu text is now localized, so use first button)
+  await page.locator('button[title="links and settings"]').click()
+  await page.locator('xin-float button').first().click()
   await page.getByTitle('en-US').click()
-  await expect(page.getByText('example')).toBeVisible()
+  await expect(page.locator('xin-localized').getByText('example')).toBeVisible()
 })
