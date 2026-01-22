@@ -124,6 +124,7 @@ export class XinTag extends WebComponent {
     button(icons.x(), {
       part: 'remove',
       hidden: !this.removeable,
+      ariaLabel: `Remove ${this.caption}`,
       onClick: this.removeCallback,
     }),
   ]
@@ -315,15 +316,20 @@ export class XinTagList extends WebComponent {
     div({
       part: 'tagContainer',
       class: 'row',
+      role: 'list',
+      ariaLabel: 'Selected tags',
     }),
     input({
       part: 'tagInput',
       class: 'elastic',
+      ariaLabel: 'Enter new tag',
       onKeydown: this.enterTag,
     }),
     button(
       {
         title: 'add tag',
+        ariaLabel: 'Select tags from list',
+        ariaHaspopup: 'listbox',
         part: 'tagMenu',
         onClick: this.popSelectMenu,
       },

@@ -455,11 +455,13 @@ export const createMenuAction = (
   if (typeof icon === 'string') {
     icon = icons[icon]()
   }
+  const itemRole = options.role === 'listbox' ? 'option' : 'menuitem'
   let menuItem: HTMLElement
   if (typeof item?.action === 'string') {
     menuItem = a(
       {
         class: 'xin-menu-item',
+        role: itemRole,
         href: item.action,
       },
       icon,
@@ -470,6 +472,7 @@ export const createMenuAction = (
     menuItem = button(
       {
         class: 'xin-menu-item',
+        role: itemRole,
         onClick: item.action,
       },
       icon,
@@ -478,8 +481,12 @@ export const createMenuAction = (
     )
   }
   menuItem.classList.toggle('xin-menu-item-checked', checked !== false)
+  if (options.role === 'listbox' && checked) {
+    menuItem.setAttribute('aria-selected', 'true')
+  }
   if (item?.enabled && !item.enabled()) {
     menuItem.setAttribute('disabled', '')
+    menuItem.setAttribute('aria-disabled', 'true')
   }
   return menuItem
 }
@@ -537,13 +544,14 @@ export const createMenuItem = (
 }
 
 export const menu = (options: PopMenuOptions): HTMLDivElement => {
-  const { target, width, menuItems } = options
+  const { target, width, menuItems, role = 'menu' } = options
   const hasIcons = menuItems.find(
     (item) => item?.icon || (item as MenuAction)?.checked
   )
   return div(
     {
       class: hasIcons ? 'xin-menu xin-menu-with-icons' : 'xin-menu',
+      role,
       onClick() {
         removeLastMenu(0)
       },
@@ -567,6 +575,7 @@ export const menu = (options: PopMenuOptions): HTMLDivElement => {
 interface PoppedMenu {
   target: HTMLElement
   menu: HTMLElement
+  onClose?: () => void
 }
 let lastPopped: PoppedMenu | undefined
 const poppedMenus: PoppedMenu[] = []
@@ -575,6 +584,9 @@ export const removeLastMenu = (depth = 0): PoppedMenu | undefined => {
   const toBeRemoved = poppedMenus.splice(depth)
   for (const popped of toBeRemoved) {
     popped.menu.remove()
+    if (popped.onClose) {
+      popped.onClose()
+    }
   }
   lastPopped = toBeRemoved[0]
   return depth > 0 ? poppedMenus[depth - 1] : undefined
@@ -589,6 +601,8 @@ export interface PopMenuOptions {
   submenuOffset?: { x: number; y: number }
   localized?: boolean
   showChecked?: boolean
+  onClose?: () => void
+  role?: 'menu' | 'listbox'
 }
 
 document.body.addEventListener('mousedown', (event: Event) => {
@@ -635,6 +649,7 @@ export const popMenu = (options: PopMenuOptions): void => {
   poppedMenus.push({
     target,
     menu: float,
+    onClose: options.onClose,
   })
 }
 

@@ -221,6 +221,7 @@ export class XinSelect extends Component<SelectParts> {
   filter = ''
   localized = false
   disabled = false
+  private isExpanded = false
 
   private setValue = (value: string, triggerAction = false) => {
     if (this.value !== value) {
@@ -337,11 +338,23 @@ export class XinSelect extends Component<SelectParts> {
       this.filter = ''
     }
     this.poppedOptions = this.optionsMenu
+    this.isExpanded = true
+    this.updateAriaExpanded()
     popMenu({
       target: this,
       menuItems: this.poppedOptions,
       showChecked: true,
+      role: 'listbox',
+      onClose: () => {
+        this.isExpanded = false
+        this.updateAriaExpanded()
+      },
     })
+  }
+
+  private updateAriaExpanded() {
+    const { value } = this.parts
+    value.setAttribute('aria-expanded', String(this.isExpanded))
   }
   content = () => [
     button(
@@ -354,6 +367,10 @@ export class XinSelect extends Component<SelectParts> {
         part: 'value',
         value: this.value,
         tabindex: 0,
+        role: 'combobox',
+        ariaHaspopup: 'listbox',
+        ariaExpanded: 'false',
+        ariaAutocomplete: this.editable ? 'list' : 'none',
         onKeydown: this.handleKey,
         onInput: this.filterMenu,
         onChange: this.handleChange,

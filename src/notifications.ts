@@ -289,9 +289,13 @@ export class XinNotification extends Component {
         : icon
         ? icons[icon]({ class: 'icon' })
         : icons.info({ class: 'icon' })
+    // Use assertive for errors/warnings, polite for info/success
+    const isUrgent = type === 'error' || type === 'warn'
     const note = div(
       {
         class: `note ${type}`,
+        role: isUrgent ? 'alert' : 'status',
+        ariaLive: isUrgent ? 'assertive' : 'polite',
         style: {
           _notificationAccentColor,
         },
@@ -302,6 +306,7 @@ export class XinNotification extends Component {
         {
           class: 'close',
           title: 'close',
+          ariaLabel: 'Close notification',
           // we can't use onClick because this lives inside a shadowDOM
           apply(elt) {
             elt.addEventListener('click', closeCallback)
