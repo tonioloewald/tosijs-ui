@@ -85,3 +85,33 @@ The `createDocBrowser()` function renders documentation from extracted `docs.jso
 - `action` event for user interactions (distinct from value changes)
 - Binary attributes (`hidden`, `disabled`) work as expected
 - Interoperable with other web-component libraries
+
+## Issue Tracking with bd
+
+This project uses [bd](https://github.com/steveyegge/beads) (beads) for dependency-aware issue tracking.
+
+### Common bd Commands
+
+```bash
+bd list                    # List open issues
+bd list --status closed    # List closed issues
+bd ready                   # Show issues ready to work on (no blockers)
+bd show xinjs-ui-abc       # Show issue details
+bd create "Title" -d "Description" -t feature   # Create issue
+bd close xinjs-ui-abc --reason "Fixed"          # Close issue
+bd dep add xinjs-ui-1 xinjs-ui-2   # Add dependency (2 blocks 1)
+bd dep tree xinjs-ui-abc           # Visualize dependency tree
+```
+
+### Issue Types
+
+Use `-t` flag: `feature`, `bug`, `task`, `chore`
+
+### Workflow
+
+1. Create issues for planned work with `bd create`
+2. Check `bd ready` for unblocked work
+3. Update status with `bd update <id> --status in_progress`
+4. Close with `bd close <id> --reason "description"`
+
+Issues are stored in `.beads/` and auto-sync with git.
