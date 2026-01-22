@@ -26,6 +26,7 @@ export declare const menu: (options: PopMenuOptions) => HTMLDivElement;
 interface PoppedMenu {
     target: HTMLElement;
     menu: HTMLElement;
+    onClose?: () => void;
 }
 export declare const removeLastMenu: (depth?: number) => PoppedMenu | undefined;
 export interface PopMenuOptions {
@@ -40,6 +41,8 @@ export interface PopMenuOptions {
     };
     localized?: boolean;
     showChecked?: boolean;
+    onClose?: () => void;
+    role?: 'menu' | 'listbox';
 }
 export declare const popMenu: (options: PopMenuOptions) => void;
 interface XinMenuParts extends PartsMap {

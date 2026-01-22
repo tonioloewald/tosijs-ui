@@ -26,6 +26,7 @@ export declare class XinSelect extends Component<SelectParts> {
     filter: string;
     localized: boolean;
     disabled: boolean;
+    private isExpanded;
     private setValue;
     private getValue;
     get selectOptions(): SelectOptions;
@@ -35,6 +36,7 @@ export declare class XinSelect extends Component<SelectParts> {
     handleKey: (event: KeyboardEvent) => void;
     filterMenu: (...args: any[]) => void;
     popOptions: (event?: Event) => void;
+    private updateAriaExpanded;
     content: () => HTMLButtonElement[];
     constructor();
     get allOptions(): SelectOption[];

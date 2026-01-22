@@ -3077,6 +3077,7 @@ class XinSelect extends F {
   filter = "";
   localized = false;
   disabled = false;
+  isExpanded = false;
   setValue = (value, triggerAction = false) => {
     if (this.value !== value) {
       this.value = value;
@@ -3173,12 +3174,23 @@ class XinSelect extends F {
       this.filter = "";
     }
     this.poppedOptions = this.optionsMenu;
+    this.isExpanded = true;
+    this.updateAriaExpanded();
     popMenu({
       target: this,
       menuItems: this.poppedOptions,
-      showChecked: true
+      showChecked: true,
+      role: "listbox",
+      onClose: () => {
+        this.isExpanded = false;
+        this.updateAriaExpanded();
+      }
     });
   };
+  updateAriaExpanded() {
+    const { value } = this.parts;
+    value.setAttribute("aria-expanded", String(this.isExpanded));
+  }
   content = () => [
     button2({
       part: "button",
@@ -3187,6 +3199,10 @@ class XinSelect extends F {
       part: "value",
       value: this.value,
       tabindex: 0,
+      role: "combobox",
+      ariaHaspopup: "listbox",
+      ariaExpanded: "false",
+      ariaAutocomplete: this.editable ? "list" : "none",
       onKeydown: this.handleKey,
       onInput: this.filterMenu,
       onChange: this.handleChange
@@ -3537,21 +3553,28 @@ var createMenuAction = (item, options) => {
   if (typeof icon === "string") {
     icon = icons[icon]();
   }
+  const itemRole = options.role === "listbox" ? "option" : "menuitem";
   let menuItem;
   if (typeof item?.action === "string") {
     menuItem = a2({
       class: "xin-menu-item",
+      role: itemRole,
       href: item.action
     }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut || " "));
   } else {
     menuItem = button3({
       class: "xin-menu-item",
+      role: itemRole,
       onClick: item.action
     }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut || " "));
   }
   menuItem.classList.toggle("xin-menu-item-checked", checked !== false);
+  if (options.role === "listbox" && checked) {
+    menuItem.setAttribute("aria-selected", "true");
+  }
   if (item?.enabled && !item.enabled()) {
     menuItem.setAttribute("disabled", "");
+    menuItem.setAttribute("aria-disabled", "true");
   }
   return menuItem;
 };
@@ -3591,10 +3614,11 @@ var createMenuItem = (item, options) => {
   }
 };
 var menu = (options) => {
-  const { target, width, menuItems } = options;
+  const { target, width, menuItems, role = "menu" } = options;
   const hasIcons = menuItems.find((item) => item?.icon || item?.checked);
   return div2({
     class: hasIcons ? "xin-menu xin-menu-with-icons" : "xin-menu",
+    role,
     onClick() {
       removeLastMenu(0);
     }
@@ -3615,6 +3639,9 @@ var removeLastMenu = (depth = 0) => {
   const toBeRemoved = poppedMenus.splice(depth);
   for (const popped of toBeRemoved) {
     popped.menu.remove();
+    if (popped.onClose) {
+      popped.onClose();
+    }
   }
   lastPopped = toBeRemoved[0];
   return depth > 0 ? poppedMenus[depth - 1] : undefined;
@@ -3659,7 +3686,8 @@ var popMenu = (options) => {
   float.remainOnScroll = "remove";
   poppedMenus.push({
     target,
-    menu: float
+    menu: float,
+    onClose: options.onClose
   });
 };
 function findShortcutAction(items, event) {
@@ -8531,14 +8559,18 @@ class XinNotification extends F {
       XinNotification.removeNote(note);
     };
     const iconElement = icon instanceof SVGElement ? icon : icon ? icons[icon]({ class: "icon" }) : icons.info({ class: "icon" });
+    const isUrgent = type === "error" || type === "warn";
     const note = div12({
       class: `note ${type}`,
+      role: isUrgent ? "alert" : "status",
+      ariaLive: isUrgent ? "assertive" : "polite",
       style: {
         _notificationAccentColor
       }
     }, iconElement, div12({ class: "message" }, div12(message), progressBar), button11({
       class: "close",
       title: "close",
+      ariaLabel: "Close notification",
       apply(elt) {
         elt.addEventListener("click", closeCallback);
       }
@@ -9435,6 +9467,7 @@ class XinTag extends F {
     button13(icons.x(), {
       part: "remove",
       hidden: !this.removeable,
+      ariaLabel: `Remove ${this.caption}`,
       onClick: this.removeCallback
     })
   ];
@@ -9585,15 +9618,20 @@ class XinTagList extends F {
     button13({ style: { visibility: "hidden" }, tabindex: -1 }),
     div15({
       part: "tagContainer",
-      class: "row"
+      class: "row",
+      role: "list",
+      ariaLabel: "Selected tags"
     }),
     input8({
       part: "tagInput",
       class: "elastic",
+      ariaLabel: "Enter new tag",
       onKeydown: this.enterTag
     }),
     button13({
       title: "add tag",
+      ariaLabel: "Select tags from list",
+      ariaHaspopup: "listbox",
       part: "tagMenu",
       onClick: this.popSelectMenu
     }, icons.chevronDown())
@@ -10401,10 +10439,10 @@ It works beautifully with other web-component libraries, such as [shoelace.style
 
 ### Using npm and a bundler
 
-Add xinjs-ui to your project, e.g.
+Add tosijs-ui to your project, e.g.
 
 \`\`\`bash
-npm add xinjs-ui
+npm add tosijs-ui
 \`\`\`
 
 Then you can import the component \`elementCreator\` and create the element any way you
@@ -10412,7 +10450,7 @@ like, the easiest way being to use the \`elementCreator\` itself. A \`tosijs\` \
 is syntax sugar around \`document.createElement()\`.
 
 \`\`\`ts
-import { dataTable } from 'xinjs-ui'
+import { dataTable } from 'tosijs-ui'
 
 document.body.append(dataTable())
 \`\`\`
@@ -10480,7 +10518,7 @@ use HTML or the \`ElementCreator\` function exported.
 E.g. to use the markdown viewer:
 
 \`\`\`
-import { markdownViewer } from 'xinjs-ui'
+import { markdownViewer } from 'tosijs-ui'
 document.body.append(markdownViewer('# hello world\\nthis is a test'))
 \`\`\`
 
