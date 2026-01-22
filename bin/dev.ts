@@ -51,7 +51,7 @@ async function build() {
   let result: any
 
   try {
-    await $`bun tsc --declaration --emitDeclarationOnly --outDir dist`
+    await $`bun tsc --declaration --emitDeclarationOnly --incremental --outDir dist`
   } catch (e) {
     console.log('types created')
   }
