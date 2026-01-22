@@ -15,6 +15,14 @@ const PUBLIC = path.resolve(PROJECT_ROOT, 'docs')
 const DIST = path.resolve(PROJECT_ROOT, 'dist')
 const isSPA = true
 
+async function killStrayServer() {
+  try {
+    await $`lsof -ti:${PORT} | xargs kill -9 2>/dev/null`.quiet()
+  } catch {
+    // No process on port, that's fine
+  }
+}
+
 async function prebuild() {
   console.time('prebuild')
   const config = JSON.parse(await Bun.file('package.json').text())
@@ -102,6 +110,7 @@ watch(['README.md', './src']).on('change', () =>
 )
 watch('./demo/src').on('change', build)
 
+await killStrayServer()
 prebuild()
 
 function serveFromDir(config: {
