@@ -111,7 +111,8 @@ watch(['README.md', './src']).on('change', () =>
 watch('./demo/src').on('change', build)
 
 await killStrayServer()
-prebuild()
+await prebuild()
+await build()
 
 function serveFromDir(config: {
   directory: string
