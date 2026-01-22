@@ -429,6 +429,52 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
             height: '100%',
           },
         },
+        a(
+          {
+            class: 'view-source',
+            target: '_blank',
+            style: {
+              display: projectLinks.github ? 'flex' : 'none',
+              alignItems: 'center',
+              gap: '6px',
+              position: 'fixed',
+              top: 'calc(var(--xin-header-height, 60px) + 5px)',
+              right: '5px',
+              fontSize: '0.875em',
+              color: 'var(--brand-color, inherit)',
+              opacity: '0.7',
+              borderBottom: 'none',
+              transition: 'opacity 0.2s ease',
+            },
+            onMouseenter(event: Event) {
+              ;(event.target as HTMLElement).style.opacity = '0.9'
+            },
+            onMouseleave(event: Event) {
+              ;(event.target as HTMLElement).style.opacity = '0.7'
+            },
+            bind: {
+              value: app.currentDoc,
+              binding(element: HTMLAnchorElement, doc: Doc) {
+                if (
+                  projectLinks.github &&
+                  doc.path &&
+                  doc.path !== 'README.md'
+                ) {
+                  element.href = `${projectLinks.github}/blob/main/${doc.path}`
+                  element.style.display = 'flex'
+                } else {
+                  element.style.display = 'none'
+                }
+              },
+            },
+          },
+          icons.github({
+            style: {
+              _xinIconSize: 16,
+            },
+          }),
+          'View source on GitHub'
+        ),
         markdownViewer({
           style: {
             display: 'block',
