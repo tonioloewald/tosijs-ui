@@ -6969,7 +6969,44 @@ function createDocBrowser(options) {
       overflowY: "scroll",
       height: "100%"
     }
-  }, markdownViewer({
+  }, a3({
+    class: "view-source",
+    target: "_blank",
+    style: {
+      display: projectLinks.github ? "flex" : "none",
+      alignItems: "center",
+      gap: "6px",
+      position: "fixed",
+      top: "calc(var(--xin-header-height, 60px) + 5px)",
+      right: "5px",
+      fontSize: "0.875em",
+      color: "var(--brand-color, inherit)",
+      opacity: "0.7",
+      borderBottom: "none",
+      transition: "opacity 0.2s ease"
+    },
+    onMouseenter(event) {
+      event.target.style.opacity = "0.9";
+    },
+    onMouseleave(event) {
+      event.target.style.opacity = "0.7";
+    },
+    bind: {
+      value: app.currentDoc,
+      binding(element, doc) {
+        if (projectLinks.github && doc.path && doc.path !== "README.md") {
+          element.href = `${projectLinks.github}/blob/main/${doc.path}`;
+          element.style.display = "flex";
+        } else {
+          element.style.display = "none";
+        }
+      }
+    }
+  }, icons.github({
+    style: {
+      _xinIconSize: 16
+    }
+  }), "View source on GitHub"), markdownViewer({
     style: {
       display: "block",
       maxWidth: "44em",
