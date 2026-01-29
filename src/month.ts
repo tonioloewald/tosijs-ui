@@ -147,7 +147,7 @@ export class TosiMonth extends Component<MonthParts> {
     return years
   }
 
-  monthChanged = (_year: number, _month: number) => {}
+  monthChanged = (_year: number, _month: number) => { /* noop */ }
 
   gotoMonth(year: number, month: number) {
     if (this.month !== month || this.year !== year) {
