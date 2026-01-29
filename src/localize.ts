@@ -231,14 +231,7 @@ class MyLocalizedComponent extends Component {
 ```
 */
 
-import {
-  Component,
-  tosi,
-  elements,
-  bindings,
-  observe,
-  BoxedProxy,
-} from 'tosijs'
+import { Component, tosi, elements, bindings, observe } from 'tosijs'
 import { makeSorter } from './make-sorter'
 import { xinSelect, XinSelect } from './select'
 
