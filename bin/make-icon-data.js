@@ -95,7 +95,7 @@ function getViewBoxSize(svgSource) {
 }
 
 const typeDeclaration = isTypescript
-  ? 'interface IconData { [key: string]: string }'
+  ? 'export interface IconData { [key: string]: string }'
   : '' // No type declaration for JS output
 
 const iconData = {}
@@ -190,7 +190,7 @@ const source =
   (typeDeclaration ? typeDeclaration + '\n\n' : '') +
   'export default ' +
   JSON.stringify(iconData, null, 2).replace(/"(\w+)":/g, '$1:') +
-  (isTypescript === 'ts' ? ' as IconData\n' : '\n')
+  (isTypescript ? ' as IconData\n' : '\n')
 
 fs.writeFileSync(outputFilePath, source, 'utf8')
 
