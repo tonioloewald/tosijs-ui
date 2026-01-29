@@ -12,6 +12,9 @@ import {
   PopMenuOptions,
 } from './menu'
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const noop = () => {}
+
 describe('menu', () => {
   let container: HTMLElement
 
@@ -35,7 +38,9 @@ describe('menu', () => {
     test('creates button for function action', () => {
       const item: MenuAction = {
         caption: 'Test Action',
-        action: () => { /* noop */ },
+        action: () => {
+          /* noop */
+        },
       }
       const element = createMenuAction(item, baseOptions)
       expect(element.tagName.toLowerCase()).toBe('button')
@@ -55,7 +60,9 @@ describe('menu', () => {
     test('displays caption', () => {
       const item: MenuAction = {
         caption: 'My Caption',
-        action: () => { /* noop */ },
+        action: () => {
+          /* noop */
+        },
       }
       const element = createMenuAction(item, baseOptions)
       expect(element.textContent).toContain('My Caption')
@@ -65,7 +72,9 @@ describe('menu', () => {
       const item: MenuAction = {
         caption: 'Copy',
         shortcut: '⌘C',
-        action: () => { /* noop */ },
+        action: () => {
+          /* noop */
+        },
       }
       const element = createMenuAction(item, baseOptions)
       expect(element.textContent).toContain('⌘C')
@@ -75,7 +84,9 @@ describe('menu', () => {
       const item: MenuAction = {
         caption: 'Toggle',
         checked: () => true,
-        action: () => { /* noop */ },
+        action: () => {
+          /* noop */
+        },
       }
       const element = createMenuAction(item, baseOptions)
       expect(element.classList.contains('xin-menu-item-checked')).toBe(true)
@@ -85,7 +96,9 @@ describe('menu', () => {
       const item: MenuAction = {
         caption: 'Toggle',
         checked: () => false,
-        action: () => { /* noop */ },
+        action: () => {
+          /* noop */
+        },
       }
       const element = createMenuAction(item, baseOptions)
       expect(element.classList.contains('xin-menu-item-checked')).toBe(false)
@@ -95,7 +108,9 @@ describe('menu', () => {
       const item: MenuAction = {
         caption: 'Disabled',
         enabled: () => false,
-        action: () => { /* noop */ },
+        action: () => {
+          /* noop */
+        },
       }
       const element = createMenuAction(item, baseOptions)
       expect(element.hasAttribute('disabled')).toBe(true)
@@ -105,7 +120,9 @@ describe('menu', () => {
     test('uses role="menuitem" by default', () => {
       const item: MenuAction = {
         caption: 'Test',
-        action: () => { /* noop */ },
+        action: () => {
+          /* noop */
+        },
       }
       const element = createMenuAction(item, { ...baseOptions, role: 'menu' })
       expect(element.getAttribute('role')).toBe('menuitem')
@@ -114,9 +131,14 @@ describe('menu', () => {
     test('uses role="option" when role is listbox', () => {
       const item: MenuAction = {
         caption: 'Test',
-        action: () => { /* noop */ },
+        action: () => {
+          /* noop */
+        },
       }
-      const element = createMenuAction(item, { ...baseOptions, role: 'listbox' })
+      const element = createMenuAction(item, {
+        ...baseOptions,
+        role: 'listbox',
+      })
       expect(element.getAttribute('role')).toBe('option')
     })
 
@@ -124,19 +146,29 @@ describe('menu', () => {
       const item: MenuAction = {
         caption: 'Selected',
         checked: () => true,
-        action: () => { /* noop */ },
+        action: () => {
+          /* noop */
+        },
       }
-      const element = createMenuAction(item, { ...baseOptions, role: 'listbox' })
+      const element = createMenuAction(item, {
+        ...baseOptions,
+        role: 'listbox',
+      })
       expect(element.getAttribute('aria-selected')).toBe('true')
     })
 
     test('localizes caption when localized option is true', () => {
       const item: MenuAction = {
         caption: 'test-key',
-        action: () => { /* noop */ },
+        action: () => {
+          /* noop */
+        },
       }
       // Just verify it doesn't throw when localized is true
-      const element = createMenuAction(item, { ...baseOptions, localized: true })
+      const element = createMenuAction(item, {
+        ...baseOptions,
+        localized: true,
+      })
       expect(element).toBeDefined()
     })
   })
@@ -150,7 +182,14 @@ describe('menu', () => {
     test('creates button element', () => {
       const item: SubMenu = {
         caption: 'Submenu',
-        menuItems: [{ caption: 'Child', action: () => { /* noop */ } }],
+        menuItems: [
+          {
+            caption: 'Child',
+            action: () => {
+              /* noop */
+            },
+          },
+        ],
       }
       const element = createSubMenu(item, baseOptions)
       expect(element.tagName.toLowerCase()).toBe('button')
@@ -190,7 +229,9 @@ describe('menu', () => {
     test('creates menu action for action item', () => {
       const item: MenuAction = {
         caption: 'Action',
-        action: () => { /* noop */ },
+        action: () => {
+          /* noop */
+        },
       }
       const element = createMenuItem(item, baseOptions)
       expect(element.classList.contains('xin-menu-item')).toBe(true)
@@ -199,7 +240,14 @@ describe('menu', () => {
     test('creates submenu for item with menuItems', () => {
       const item: SubMenu = {
         caption: 'Submenu',
-        menuItems: [{ caption: 'Child', action: () => { /* noop */ } }],
+        menuItems: [
+          {
+            caption: 'Child',
+            action: () => {
+              /* noop */
+            },
+          },
+        ],
       }
       const element = createMenuItem(item, baseOptions)
       expect(element.classList.contains('xin-menu-item')).toBe(true)
@@ -212,7 +260,14 @@ describe('menu', () => {
       container.appendChild(target)
       const menuElement = menu({
         target,
-        menuItems: [{ caption: 'Test', action: () => { /* noop */ } }],
+        menuItems: [
+          {
+            caption: 'Test',
+            action: () => {
+              /* noop */
+            },
+          },
+        ],
         role: 'menu',
       })
       expect(menuElement.getAttribute('role')).toBe('menu')
@@ -223,7 +278,14 @@ describe('menu', () => {
       container.appendChild(target)
       const menuElement = menu({
         target,
-        menuItems: [{ caption: 'Test', action: () => { /* noop */ } }],
+        menuItems: [
+          {
+            caption: 'Test',
+            action: () => {
+              /* noop */
+            },
+          },
+        ],
         role: 'listbox',
       })
       expect(menuElement.getAttribute('role')).toBe('listbox')
@@ -234,7 +296,15 @@ describe('menu', () => {
       container.appendChild(target)
       const menuElement = menu({
         target,
-        menuItems: [{ caption: 'Test', icon: 'check', action: () => { /* noop */ } }],
+        menuItems: [
+          {
+            caption: 'Test',
+            icon: 'check',
+            action: () => {
+              /* noop */
+            },
+          },
+        ],
       })
       expect(menuElement.classList.contains('xin-menu-with-icons')).toBe(true)
     })
@@ -244,7 +314,14 @@ describe('menu', () => {
       container.appendChild(target)
       const menuElement = menu({
         target,
-        menuItems: [{ caption: 'Test', action: () => { /* noop */ } }],
+        menuItems: [
+          {
+            caption: 'Test',
+            action: () => {
+              /* noop */
+            },
+          },
+        ],
       })
       expect(menuElement.classList.contains('xin-menu-with-icons')).toBe(false)
     })
@@ -260,8 +337,18 @@ describe('menu', () => {
 
     test('stores menuItems', () => {
       const items: MenuItem[] = [
-        { caption: 'One', action: () => { /* noop */ } },
-        { caption: 'Two', action: () => { /* noop */ } },
+        {
+          caption: 'One',
+          action: () => {
+            /* noop */
+          },
+        },
+        {
+          caption: 'Two',
+          action: () => {
+            /* noop */
+          },
+        },
       ]
       const menuComponent = xinMenu({ menuItems: items })
       container.appendChild(menuComponent)
