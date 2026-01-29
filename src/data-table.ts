@@ -182,11 +182,9 @@ import {
   ElementCreator,
   elements,
   vars,
-  varDefault,
   xinValue,
   getListItem,
   tosi,
-  touch,
 } from 'tosijs'
 import { trackDrag } from './track-drag'
 import { SortCallback } from './make-sorter'

@@ -164,7 +164,7 @@ import { tabSelector, TabSelector } from './tab-selector'
 import { icons } from './icons'
 import { popMenu } from './menu'
 
-const { div, xinSlot, style, button, h4, pre, code } = elements
+const { div, xinSlot, style, button } = elements
 
 const sucraseSrc = () => 'https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm'
 

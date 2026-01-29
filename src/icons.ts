@@ -353,17 +353,13 @@ import {
   svgElements,
   ElementCreator,
   ElementPart,
-  ElementProps,
   Component as WebComponent,
   XinStyleRule,
   Color,
   varDefault,
-  StyleSheet,
 } from 'tosijs'
 import { SVGIconMap } from './icon-types'
 import iconData from './icon-data'
-
-const { svg, path } = svgElements
 
 export const defineIcons = (newIcons: { [key: string]: string }): void => {
   Object.assign(iconData, newIcons)

@@ -239,19 +239,6 @@ interface TranslationMap {
   [key: string]: string[]
 }
 
-interface I18nConfig {
-  locale: string
-  locales: string[]
-  languages: string[]
-  emoji: string[]
-  stringMap: TranslationMap
-  localeOptions: Array<{
-    icon: any // simplified to prevent inferred type from being massive
-    caption: string
-    value: string
-  }>
-}
-
 const { span } = elements
 
 export const { i18n } = tosi({
