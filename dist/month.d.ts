@@ -28,7 +28,7 @@ export declare class TosiMonth extends Component<MonthParts> {
         value: string;
     }[];
     get years(): string[];
-    monthChanged: (year: number, month: number) => void;
+    monthChanged: (_year: number, _month: number) => void;
     gotoMonth(year: number, month: number): void;
     setMonth: () => void;
     get to(): string;

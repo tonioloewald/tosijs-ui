@@ -228,7 +228,7 @@ function setElementValue(input: HTMLElement | null | undefined, value: any) {
     }
   } else {
     if (value != null || (input as HTMLInputElement).value != null) {
-      ;(input as HTMLInputElement).value = String(value || '')
+      (input as HTMLInputElement).value = String(value || '')
     }
   }
 }

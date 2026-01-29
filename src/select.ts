@@ -253,7 +253,7 @@ export class XinSelect extends Component<SelectParts> {
     if (typeof option === 'string') {
       caption = value = option
     } else {
-      ;({ icon, caption, value } = option as SelectOption)
+      ({ icon, caption, value } = option as SelectOption)
     }
     if (this.localized) {
       caption = localize(caption)
@@ -296,7 +296,7 @@ export class XinSelect extends Component<SelectParts> {
       if (option === null) {
         return true
       } else if ((option as SubMenu).menuItems) {
-        ;(option as SubMenu).menuItems = (option as SubMenu).menuItems.filter(
+        (option as SubMenu).menuItems = (option as SubMenu).menuItems.filter(
           showOption
         )
         return (option as SubMenu).menuItems.length > 0

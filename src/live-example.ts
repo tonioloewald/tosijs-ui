@@ -141,7 +141,7 @@ context = {
 ```
 
 ```
-import { elements, tosi } from 'tosijs'
+import { elements, tosi } from 'tosijs'
 import { icons } from 'tosijs-ui'
 ```
 
@@ -676,7 +676,7 @@ export class LiveExample extends Component<ExampleParts> {
 
     // Each component creator in tosijs-ui has a tagName property
     // We need to find the Component class and register it
-    for (const [key, creator] of Object.entries(tosijsui)) {
+    for (const [, creator] of Object.entries(tosijsui)) {
       if (typeof creator === 'function' && 'tagName' in creator) {
         const tagName = (creator as any).tagName as string
         if (tagName && !iframeCustomElements.get(tagName)) {
@@ -815,7 +815,7 @@ export class LiveExample extends Component<ExampleParts> {
           element.matches(`.language-${language}`)
         )
         if (language) {
-          ;(this.parts[language] as CodeEditor).value =
+          (this.parts[language] as CodeEditor).value =
             language === 'html' ? element.innerHTML : element.innerText
         }
       }

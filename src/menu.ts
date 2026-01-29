@@ -341,8 +341,8 @@ import {
   PartsMap,
 } from 'tosijs'
 import { popFloat, FloatPosition } from './pop-float'
-import { icons, svgIcon, SvgIcon } from './icons'
-import { localize, xinLocalized } from './localize'
+import { icons, SvgIcon } from './icons'
+import { localize } from './localize'
 import { matchShortcut } from './match-shortcut'
 
 export type ActionCallback = () => void | Promise<void>

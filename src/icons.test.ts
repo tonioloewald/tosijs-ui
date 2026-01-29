@@ -1,5 +1,5 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
-import { icons, SvgIcon, svgIcon, defineIcons } from './icons'
+import { icons, SvgIcon, svgIcon } from './icons'
 
 describe('icons', () => {
   describe('icons proxy', () => {

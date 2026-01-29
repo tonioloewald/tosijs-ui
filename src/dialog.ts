@@ -231,7 +231,7 @@ export class TosiDialog extends Component<DialogParts> {
     this.parts.ok.focus()
   }
 
-  #modalResolution = (outcome: string | null) => {}
+  #modalResolution = (_outcome: string | null) => {}
 
   showModal = (): Promise<string | null> => {
     this.style.zIndex = String(findHighestZ())

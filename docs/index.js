@@ -4049,8 +4049,8 @@ class DataTable extends F {
       const isTouchEvent = event.touches !== undefined;
       const touchIdentifier = isTouchEvent ? event.touches[0].identifier : undefined;
       trackDrag(event, (dx, _dy, event2) => {
-        const touch2 = isTouchEvent ? [...event2.touches].find((touch3) => touch3.identifier === touchIdentifier) : true;
-        if (touch2 === undefined) {
+        const touch = isTouchEvent ? [...event2.touches].find((touch2) => touch2.identifier === touchIdentifier) : true;
+        if (touch === undefined) {
           return true;
         }
         const width = origWidth + dx;
@@ -4521,7 +4521,7 @@ class TosiDialog extends F {
   initialFocus() {
     this.parts.ok.focus();
   }
-  #modalResolution = (outcome) => {};
+  #modalResolution = (_outcome) => {};
   showModal = () => {
     this.style.zIndex = String(findHighestZ());
     return new Promise((resolve) => {
@@ -6121,7 +6121,7 @@ var tabSelector = TabSelector.elementCreator({
 });
 
 // src/live-example.ts
-var { div: div6, xinSlot: xinSlot3, style, button: button7, h4, pre, code } = f;
+var { div: div6, xinSlot: xinSlot3, style, button: button7 } = f;
 var sucraseSrc = () => "https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm";
 var AsyncFunction = (async () => {}).constructor;
 
@@ -6139,10 +6139,10 @@ class LiveExample extends F {
   static insertExamples(element, context = {}) {
     const sources = [
       ...element.querySelectorAll(".language-html,.language-js,.language-css")
-    ].filter((element2) => !element2.closest(LiveExample.tagName)).map((code2) => ({
-      block: code2.parentElement,
-      language: code2.classList[0].split("-").pop(),
-      code: code2.innerText
+    ].filter((element2) => !element2.closest(LiveExample.tagName)).map((code) => ({
+      block: code.parentElement,
+      language: code.classList[0].split("-").pop(),
+      code: code.innerText
     }));
     for (let index = 0;index < sources.length; index += 1) {
       const exampleSources = [sources[index]];
@@ -6180,27 +6180,27 @@ class LiveExample extends F {
   getEditorValue(which) {
     return this.parts[which].value;
   }
-  setEditorValue(which, code2) {
+  setEditorValue(which, code) {
     const codeEditor2 = this.parts[which];
-    codeEditor2.value = code2;
+    codeEditor2.value = code;
   }
   get css() {
     return this.getEditorValue("css");
   }
-  set css(code2) {
-    this.setEditorValue("css", code2);
+  set css(code) {
+    this.setEditorValue("css", code);
   }
   get html() {
     return this.getEditorValue("html");
   }
-  set html(code2) {
-    this.setEditorValue("html", code2);
+  set html(code) {
+    this.setEditorValue("html", code);
   }
   get js() {
     return this.getEditorValue("js");
   }
-  set js(code2) {
-    this.setEditorValue("js", code2);
+  set js(code) {
+    this.setEditorValue("js", code);
   }
   updateUndo = () => {
     const { activeTab } = this;
@@ -6451,11 +6451,11 @@ class LiveExample extends F {
     }
     const context = { preview, ...this.context };
     try {
-      let code2 = this.js;
+      let code = this.js;
       for (const moduleName of Object.keys(this.context)) {
-        code2 = code2.replace(new RegExp(`import \\{(.*)\\} from '${moduleName}'`, "g"), `const {$1} = ${moduleName.replace(/-/g, "")}`);
+        code = code.replace(new RegExp(`import \\{(.*)\\} from '${moduleName}'`, "g"), `const {$1} = ${moduleName.replace(/-/g, "")}`);
       }
-      const func = new AsyncFunction(...Object.keys(context).map((key) => key.replace(/-/g, "")), transform(code2, { transforms: ["typescript"] }).code);
+      const func = new AsyncFunction(...Object.keys(context).map((key) => key.replace(/-/g, "")), transform(code, { transforms: ["typescript"] }).code);
       func(...Object.values(context)).catch((err) => console.error(err));
       if (this.persistToDom) {
         this.updateSources();
@@ -6474,7 +6474,7 @@ class LiveExample extends F {
     if (!tosijsui) {
       return;
     }
-    for (const [key, creator] of Object.entries(tosijsui)) {
+    for (const [, creator] of Object.entries(tosijsui)) {
       if (typeof creator === "function" && "tagName" in creator) {
         const tagName = creator.tagName;
         if (tagName && !iframeCustomElements.get(tagName)) {
@@ -6537,12 +6537,12 @@ class LiveExample extends F {
     }
     const context = { preview, ...this.context };
     try {
-      let code2 = this.js;
+      let code = this.js;
       for (const moduleName of Object.keys(this.context)) {
-        code2 = code2.replace(new RegExp(`import \\{(.*)\\} from '${moduleName}'`, "g"), `const {$1} = ${moduleName.replace(/-/g, "")}`);
+        code = code.replace(new RegExp(`import \\{(.*)\\} from '${moduleName}'`, "g"), `const {$1} = ${moduleName.replace(/-/g, "")}`);
       }
       const IframeAsyncFunction = iframeWindow.eval("(async () => {}).constructor");
-      const func = new IframeAsyncFunction(...Object.keys(context).map((key) => key.replace(/-/g, "")), transform(code2, { transforms: ["typescript"] }).code);
+      const func = new IframeAsyncFunction(...Object.keys(context).map((key) => key.replace(/-/g, "")), transform(code, { transforms: ["typescript"] }).code);
       func(...Object.values(context)).catch((err) => console.error(err));
       if (this.persistToDom) {
         this.updateSources();
@@ -6932,7 +6932,7 @@ function createDocBrowser(options) {
       flex: "1 1 auto",
       overflow: "hidden"
     },
-    onChange(event) {
+    onChange() {
       const nav = document.querySelector(SideNav.tagName);
       app.compact = nav.compact;
     }
@@ -8165,7 +8165,7 @@ class TosiMonth extends F {
     }
     return years;
   }
-  monthChanged = (year, month) => {};
+  monthChanged = (_year, _month) => {};
   gotoMonth(year, month) {
     if (this.month !== month || this.year !== year) {
       this.month = month;
@@ -8197,11 +8197,12 @@ class TosiMonth extends F {
   keyDate = (event) => {
     let stopEvent = false;
     switch (event.code) {
-      case "Space":
+      case "Space": {
         const dateString = event.target.getAttribute("title");
         this.selectDate(dateString);
         stopEvent = true;
         break;
+      }
       case "Tab":
         break;
       default:
@@ -8228,8 +8229,6 @@ class TosiMonth extends F {
         this.from = dateString;
       } else if (dateString > this.to) {
         this.to = dateString;
-      } else if (dateString < this.from) {
-        this.from = dateString;
       } else {
         this.to = dateString;
       }
@@ -8360,8 +8359,7 @@ class TosiMonth extends F {
     }
     month.value = String(this.month);
     year.value = String(this.year);
-    const isDisabled = month.disabled = year.disabled = jump.disabled = previous.disabled = next.disabled = this.disabled || this.readonly;
-    const dateSelectDisabled = isDisabled || !this.selectable && !this.range && !this.multiple;
+    month.disabled = year.disabled = jump.disabled = previous.disabled = next.disabled = this.disabled || this.readonly;
     year.options = this.years;
     week.textContent = "";
     week.append(...weekDays.map((day) => span9({ class: "day" }, day)));
@@ -10376,7 +10374,7 @@ Weak	Faible	Heikko	Svag	虚弱的	弱い	약한	Débil	Schwach	Debole
 Yes	Oui	Kyllä	Ja	是的	はい	예	Sí	Ja	Sì`;
 
 // demo/src/css-var-editor.ts
-var { h2: h22, code: code2 } = f;
+var { h2: h22, code } = f;
 
 class XinCssVarEditor extends F {
   elementSelector = "";
@@ -10411,7 +10409,7 @@ class XinCssVarEditor extends F {
           if (type === "color") {
             value = a.fromCss(value).html;
           }
-          variables.append(xinField(code2(cssVar), { key: cssVar, value, type }));
+          variables.append(xinField(code(cssVar), { key: cssVar, value, type }));
         }
       }
     }

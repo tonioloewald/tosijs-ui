@@ -1,5 +1,9 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
-import { XinNotification, xinNotification, postNotification } from './notifications'
+import {
+  XinNotification,
+  xinNotification,
+  postNotification,
+} from './notifications'
 
 describe('notifications', () => {
   beforeEach(() => {
@@ -51,15 +55,29 @@ describe('notifications', () => {
 
   describe('XinNotification.post', () => {
     test('accepts message property', () => {
-      const close = XinNotification.post({ message: 'Hello World', duration: -1 })
+      const close = XinNotification.post({
+        message: 'Hello World',
+        duration: -1,
+      })
       expect(typeof close).toBe('function')
       close()
     })
 
     test('accepts type property', () => {
-      const types = ['success', 'info', 'log', 'warn', 'error', 'progress'] as const
+      const types = [
+        'success',
+        'info',
+        'log',
+        'warn',
+        'error',
+        'progress',
+      ] as const
       for (const type of types) {
-        const close = XinNotification.post({ message: 'Test', type, duration: -1 })
+        const close = XinNotification.post({
+          message: 'Test',
+          type,
+          duration: -1,
+        })
         expect(typeof close).toBe('function')
         close()
       }
@@ -105,13 +123,11 @@ describe('notifications', () => {
     })
 
     test('accepts progress callback', () => {
-      let progressCalled = false
       const close = XinNotification.post({
         message: 'Progress',
         type: 'progress',
         duration: -1,
         progress() {
-          progressCalled = true
           return 50
         },
       })
@@ -125,7 +141,10 @@ describe('notifications', () => {
     // We can't easily test shadow DOM content in happy-dom, but we verify the API
 
     test('info type is default', () => {
-      const close = XinNotification.post({ message: 'Default type', duration: -1 })
+      const close = XinNotification.post({
+        message: 'Default type',
+        duration: -1,
+      })
       // If no error, type was accepted
       expect(typeof close).toBe('function')
       close()

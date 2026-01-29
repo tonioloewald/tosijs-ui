@@ -75,7 +75,6 @@ import {
   invertLuminance,
   StyleSheet,
   vars,
-  varDefault,
   XinStyleSheet,
   XinStyleRule,
 } from 'tosijs'

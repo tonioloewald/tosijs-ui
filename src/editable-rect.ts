@@ -259,7 +259,7 @@ export class EditableRect extends Component {
     const target = this.parentElement!
     const { top, left, bottom, right } = this.coords
     trackDrag(event as PointerEvent, (dx, dy, dragEvent) => {
-      ;[dx, dy] = EditableRect.snappedCoords(dragEvent, [dx, dy])
+      [dx, dy] = EditableRect.snappedCoords(dragEvent, [dx, dy])
       if (!isNaN(top)) {
         target.style.top = top + dy + 'px'
       }

@@ -377,7 +377,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
           flex: '1 1 auto',
           overflow: 'hidden',
         },
-        onChange(event) {
+        onChange() {
           const nav = document.querySelector(SideNav.tagName!) as SideNav
           app.compact = nav.compact as any
         },
@@ -447,10 +447,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
               transition: 'opacity 0.2s ease',
             },
             onMouseenter(event: Event) {
-              ;(event.target as HTMLElement).style.opacity = '0.9'
+              (event.target as HTMLElement).style.opacity = '0.9'
             },
             onMouseleave(event: Event) {
-              ;(event.target as HTMLElement).style.opacity = '0.7'
+              (event.target as HTMLElement).style.opacity = '0.7'
             },
             bind: {
               value: app.currentDoc,

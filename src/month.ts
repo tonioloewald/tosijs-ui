@@ -147,7 +147,7 @@ export class TosiMonth extends Component<MonthParts> {
     return years
   }
 
-  monthChanged = (year: number, month: number) => {}
+  monthChanged = (_year: number, _month: number) => {}
 
   gotoMonth(year: number, month: number) {
     if (this.month !== month || this.year !== year) {
@@ -192,13 +192,14 @@ export class TosiMonth extends Component<MonthParts> {
   keyDate = (event: KeyboardEvent) => {
     let stopEvent = false
     switch (event.code) {
-      case 'Space':
+      case 'Space': {
         const dateString = (event.target as HTMLElement).getAttribute(
           'title'
         ) as string
         this.selectDate(dateString)
         stopEvent = true
         break
+      }
       case 'Tab':
         break
       default:
@@ -226,8 +227,6 @@ export class TosiMonth extends Component<MonthParts> {
         this.from = dateString
       } else if (dateString > this.to) {
         this.to = dateString
-      } else if (dateString < this.from) {
-        this.from = dateString
       } else {
         this.to = dateString
       }
@@ -430,15 +429,12 @@ export class TosiMonth extends Component<MonthParts> {
 
     month.value = String(this.month)
     year.value = String(this.year)
-    const isDisabled =
-      (month.disabled =
+    month.disabled =
       year.disabled =
       jump.disabled =
       previous.disabled =
       next.disabled =
-        this.disabled || this.readonly)
-    const dateSelectDisabled =
-      isDisabled || (!this.selectable && !this.range && !this.multiple)
+        this.disabled || this.readonly
     year.options = this.years
     week.textContent = ''
     week.append(...weekDays.map((day) => span({ class: 'day' }, day)))
