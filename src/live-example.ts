@@ -164,7 +164,7 @@ import { tabSelector, TabSelector } from './tab-selector'
 import { icons } from './icons'
 import { popMenu } from './menu'
 
-const { div, xinSlot, style, button } = elements
+const { div, xinSlot, style, button, pre } = elements
 
 const sucraseSrc = () => 'https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm'
 
@@ -815,7 +815,7 @@ export class LiveExample extends Component<ExampleParts> {
           element.matches(`.language-${language}`)
         )
         if (language) {
-          (this.parts[language] as CodeEditor).value =
+          ;(this.parts[language] as CodeEditor).value =
             language === 'html' ? element.innerHTML : element.innerText
         }
       }

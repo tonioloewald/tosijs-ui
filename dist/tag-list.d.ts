@@ -29,7 +29,7 @@ export declare class XinTagList extends WebComponent {
     toggleTag: (toggled: string) => void;
     enterTag: (event: KeyboardEvent) => void;
     popSelectMenu: () => void;
-    content: () => (HTMLDivElement | HTMLButtonElement)[];
+    content: () => (HTMLButtonElement | HTMLDivElement)[];
     removeTag: (event: Event) => void;
     render(): void;
 }

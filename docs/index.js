@@ -6121,7 +6121,7 @@ var tabSelector = TabSelector.elementCreator({
 });
 
 // src/live-example.ts
-var { div: div6, xinSlot: xinSlot3, style, button: button7 } = f;
+var { div: div6, xinSlot: xinSlot3, style, button: button7, pre } = f;
 var sucraseSrc = () => "https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm";
 var AsyncFunction = (async () => {}).constructor;
 
@@ -9758,7 +9758,7 @@ var xinTagList = XinTagList.elementCreator({
   }
 });
 // src/version.ts
-var version = "1.0.12";
+var version = "1.0.13";
 // src/theme.ts
 var defaultColors = {
   accent: a.fromCss("#EE257B"),
@@ -11633,7 +11633,7 @@ context = {
 \`\`\`
 
 \`\`\`
-import { elements, tosi } from 'tosijs'
+import { elements, tosi } from 'tosijs'
 import { icons } from 'tosijs-ui'
 \`\`\`
 

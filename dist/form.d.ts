@@ -51,7 +51,7 @@ export declare class XinForm extends XinComponent {
             overflow: string;
         };
     };
-    content: (HTMLSlotElement | HTMLFormElement)[];
+    content: (HTMLFormElement | HTMLSlotElement)[];
     getField: (key: string) => XinField | null;
     get fields(): any;
     set fields(values: {

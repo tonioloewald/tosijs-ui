@@ -88,7 +88,7 @@ export declare class EditableRect extends Component {
     get element(): HTMLElement;
     adjustRotation: (event: Event) => void;
     toggleLock: (event: Event) => void;
-    content: () => (HTMLSlotElement | HTMLDivElement)[];
+    content: () => (HTMLDivElement | HTMLSlotElement)[];
     constructor();
     connectedCallback(): void;
     render(): void;
