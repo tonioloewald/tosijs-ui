@@ -1,5 +1,6 @@
 import * as path from 'path'
 import { statSync } from 'fs'
+import { gzipSync } from 'zlib'
 import { watch } from 'chokidar'
 import { extractDocs } from './docs'
 // @ts-ignore-error
@@ -87,6 +88,22 @@ async function build() {
     return
   }
   await $`cp ./dist/iife.js ${PUBLIC}`.text()
+
+  // Report gzipped sizes
+  const esmFile = await Bun.file(`${DIST}/index.js`).arrayBuffer()
+  const iifeFile = await Bun.file(`${DIST}/iife.js`).arrayBuffer()
+  const esmGzip = gzipSync(Buffer.from(esmFile))
+  const iifeGzip = gzipSync(Buffer.from(iifeFile))
+  console.log(
+    `dist/index.js: ${(esmFile.byteLength / 1024).toFixed(1)}kb (${(
+      esmGzip.length / 1024
+    ).toFixed(1)}kb gzip)`
+  )
+  console.log(
+    `dist/iife.js: ${(iifeFile.byteLength / 1024).toFixed(1)}kb (${(
+      iifeGzip.length / 1024
+    ).toFixed(1)}kb gzip)`
+  )
 
   await Bun.build({
     entrypoints: ['./demo/src/index.ts'],

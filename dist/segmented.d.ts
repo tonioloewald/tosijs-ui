@@ -13,7 +13,7 @@ export declare class XinSegmented extends WebComponent {
     localized: boolean;
     value: null | string;
     get values(): string[];
-    content: () => (HTMLDivElement | HTMLSlotElement)[];
+    content: () => (HTMLSlotElement | HTMLDivElement)[];
     static styleSpec: {
         ':host': {
             display: string;

@@ -267,8 +267,8 @@ bindings.localeOptions = {
 }
 
 export const setLocale = (language: string) => {
-  if (i18n.locales.xinValue.includes(language)) {
-    i18n.locale.xinValue = language
+  if (i18n.locales.value.includes(language)) {
+    i18n.locale.value = language
   } else {
     console.error(`language ${language} is not available`)
   }
@@ -281,8 +281,8 @@ export const updateLocalized = () => {
   }
 }
 
-// TODO: tosijs observe() typing should accept proxied values directly
-observe((i18n.locale as any).xinPath, updateLocalized)
+// Use BoxedScalar's observe method directly
+i18n.locale.observe(updateLocalized)
 
 const captionSort = makeSorter((locale: { caption: string }) => [
   locale.caption.toLocaleLowerCase(),
@@ -293,17 +293,17 @@ export function initLocalization(localizedStrings: string) {
     .split('\n')
     .map((line) => line.split('\t'))
   if (locales && languages && emoji && strings) {
-    i18n.locales.xinValue = locales
-    i18n.languages.xinValue = languages
-    i18n.emoji.xinValue = emoji
-    i18n.stringMap.xinValue = strings.reduce(
+    i18n.locales.value = locales
+    i18n.languages.value = languages
+    i18n.emoji.value = emoji
+    i18n.stringMap.value = strings.reduce(
       (map: TranslationMap, strings: string[]) => {
         map[strings[0].toLocaleLowerCase()] = strings
         return map
       },
       {} as TranslationMap
     )
-    i18n.localeOptions.xinValue = locales
+    i18n.localeOptions.value = locales
       .map((locale, index) => ({
         icon: span({ title: locales[index] }, emoji[index]),
         caption: languages[index],
@@ -312,12 +312,12 @@ export function initLocalization(localizedStrings: string) {
       .sort(captionSort)
 
     // if user locale isn't available, find the best match
-    if (!i18n.locales.xinValue.includes(i18n.locale.xinValue)) {
-      const language = i18n.locale.substring(0, 2)
-      i18n.locale.xinValue =
-        i18n.locales.xinValue.find(
+    if (!i18n.locales.value.includes(i18n.locale.value)) {
+      const language = (i18n.locale.value as string).substring(0, 2)
+      i18n.locale.value =
+        i18n.locales.value.find(
           (locale: string) => locale.substring(0, 2) === language
-        ) || i18n.locales.xinValue[0]
+        ) || i18n.locales.value[0]
     }
     updateLocalized()
   }
@@ -327,11 +327,11 @@ export function localize(ref: string): string {
   if (ref.endsWith('…')) {
     return localize(ref.substring(0, ref.length - 1)) + '…'
   }
-  const index = i18n.locales.xinValue.indexOf(i18n.locale.xinValue)
+  const index = i18n.locales.value.indexOf(i18n.locale.value)
   if (index > -1) {
-    // Access stringMap.xinValue first to get the plain object, then lookup by key
+    // Access stringMap.value first to get the plain object, then lookup by key
     // This avoids the proxy treating '.' in the key as property dereference
-    const stringMapValue = i18n.stringMap.xinValue as TranslationMap
+    const stringMapValue = i18n.stringMap.value as TranslationMap
     const map = stringMapValue[ref.toLocaleLowerCase()]
     const localized = map && map[index]
     if (localized) {

@@ -62,7 +62,7 @@ export declare class FilterBuilder extends WebComponent<FilterBuilderParts> {
     filter: ArrayFilter;
     description: string;
     addFilter: () => void;
-    content: () => (HTMLButtonElement | HTMLDivElement)[];
+    content: () => (HTMLDivElement | HTMLButtonElement)[];
     filters: {
         [key: string]: FilterMaker;
     };

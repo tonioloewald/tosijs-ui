@@ -53,7 +53,7 @@ hotReload((path) => {
 })
 
 if (prefs.locale) {
-  setLocale(prefs.locale.valueOf())
+  setLocale(prefs.locale.value)
 }
 
 setTimeout(() => {
@@ -73,9 +73,9 @@ bind(document.body, 'prefs.theme', {
   },
 })
 
-bind(document.body, prefs.highContrast, {
+bind(document.body, 'prefs.highContrast', {
   toDOM(element, highContrast) {
-    element.classList.toggle('high-contrast', highContrast.valueOf())
+    element.classList.toggle('high-contrast', highContrast)
   },
 })
 
@@ -153,14 +153,13 @@ if (main) {
               {
                 caption: 'Language',
                 icon: 'globe',
-                menuItems: i18n.localeOptions.xinValue.map((locale) => ({
+                menuItems: i18n.localeOptions.value.map((locale) => ({
                   caption: locale.caption,
                   icon: locale.icon,
-                  checked: () =>
-                    locale.value.valueOf() === i18n.locale.valueOf(),
+                  checked: () => locale.value === i18n.locale.value,
                   action() {
-                    prefs.locale.xinValue = locale.value.valueOf()
-                    setLocale(locale.value.valueOf())
+                    prefs.locale.value = locale.value
+                    setLocale(locale.value)
                   },
                 })),
               },
@@ -171,39 +170,38 @@ if (main) {
                   {
                     caption: 'System',
                     checked() {
-                      return prefs.theme.valueOf() === 'system'
+                      return prefs.theme.value === 'system'
                     },
                     action() {
-                      prefs.theme.xinValue = 'system'
+                      prefs.theme.value = 'system'
                     },
                   },
                   {
                     caption: 'Dark',
                     checked() {
-                      return prefs.theme.valueOf() === 'dark'
+                      return prefs.theme.value === 'dark'
                     },
                     action() {
-                      prefs.theme.xinValue = 'dark'
+                      prefs.theme.value = 'dark'
                     },
                   },
                   {
                     caption: 'Light',
                     checked() {
-                      return prefs.theme.valueOf() === 'light'
+                      return prefs.theme.value === 'light'
                     },
                     action() {
-                      prefs.theme.xinValue = 'light'
+                      prefs.theme.value = 'light'
                     },
                   },
                   null,
                   {
                     caption: 'High Contrast',
                     checked() {
-                      return prefs.highContrast.valueOf()
+                      return prefs.highContrast.value
                     },
                     action() {
-                      prefs.highContrast.xinValue =
-                        !prefs.highContrast.valueOf()
+                      prefs.highContrast.value = !prefs.highContrast.value
                     },
                   },
                 ],

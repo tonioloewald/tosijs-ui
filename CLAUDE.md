@@ -13,6 +13,7 @@ bun start              # Dev server at https://localhost:8787 (hot reload)
 bun tests              # Run unit tests + Playwright tests
 bun format             # ESLint + Prettier
 bun latest             # Clean install (removes node_modules + bun.lock)
+bunx tsc --noEmit      # Type check without emitting (used in CI)
 ```
 
 Running a single unit test:
@@ -30,13 +31,27 @@ bun playwright test tests/form.pw.ts
 ### Build Pipeline
 
 `bin/dev.ts` orchestrates the build:
-1. Extracts `/*#` doc comments from `src/` and `README.md` → `demo/docs.json`
-2. Compiles TypeScript → ESM in `dist/`
-3. Generates type declarations → `dist/*.d.ts`
-4. Bundles IIFE version (tosijs + marked included) → `dist/iife.js`
-5. Builds demo site → `docs/`
+1. Writes version from `package.json` to `src/version.ts`
+2. Extracts `/*#` doc comments from `src/` and `README.md` → `demo/docs.json`
+3. Generates icon data via `bin/make-icon-data.js`
+4. Compiles TypeScript → ESM in `dist/`
+5. Generates type declarations → `dist/*.d.ts`
+6. Bundles IIFE version (tosijs + marked included) → `dist/iife.js`
+7. Builds demo site → `docs/`
 
-The dev server watches `src/`, `demo/src/`, and `README.md` for changes.
+The dev server watches:
+- `src/` and `README.md` → triggers doc extraction + rebuild
+- `demo/src/` → triggers demo rebuild only
+- `demo/xin-icon-font/` → triggers icon data regeneration
+
+### Directory Structure
+
+- `src/` - Library source code and unit tests (`*.test.ts`)
+- `tests/` - Playwright end-to-end tests (`*.pw.ts`)
+- `demo/src/` - Demo site source (separate from library)
+- `demo/static/` - Static assets copied to `docs/`
+- `dist/` - Built library output (ESM + IIFE + types)
+- `docs/` - Built demo site (served at https://localhost:8787)
 
 ### Component Structure
 
@@ -86,32 +101,6 @@ The `createDocBrowser()` function renders documentation from extracted `docs.jso
 - Binary attributes (`hidden`, `disabled`) work as expected
 - Interoperable with other web-component libraries
 
-## Issue Tracking with bd
+## Task Tracking
 
-This project uses [bd](https://github.com/steveyegge/beads) (beads) for dependency-aware issue tracking.
-
-### Common bd Commands
-
-```bash
-bd list                    # List open issues
-bd list --status closed    # List closed issues
-bd ready                   # Show issues ready to work on (no blockers)
-bd show xinjs-ui-abc       # Show issue details
-bd create "Title" -d "Description" -t feature   # Create issue
-bd close xinjs-ui-abc --reason "Fixed"          # Close issue
-bd dep add xinjs-ui-1 xinjs-ui-2   # Add dependency (2 blocks 1)
-bd dep tree xinjs-ui-abc           # Visualize dependency tree
-```
-
-### Issue Types
-
-Use `-t` flag: `feature`, `bug`, `task`, `chore`
-
-### Workflow
-
-1. Create issues for planned work with `bd create`
-2. Check `bd ready` for unblocked work
-3. Update status with `bd update <id> --status in_progress`
-4. Close with `bd close <id> --reason "description"`
-
-Issues are stored in `.beads/` and auto-sync with git.
+Open tasks and planned work are tracked in `TODO.md` at the project root.

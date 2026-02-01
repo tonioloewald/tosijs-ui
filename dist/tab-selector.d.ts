@@ -79,7 +79,7 @@ export declare class TabSelector extends WebComponent {
         };
     };
     onCloseTab: TabCloseHandler | null;
-    content: (HTMLDivElement | HTMLSlotElement)[];
+    content: (HTMLSlotElement | HTMLDivElement)[];
     constructor();
     addTabBody(body: HTMLElement, selectTab?: boolean): void;
     removeTabBody(body: HTMLElement): void;

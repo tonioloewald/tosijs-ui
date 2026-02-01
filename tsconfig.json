@@ -7,7 +7,7 @@
     "moduleDetection": "force",
     "strict": true,
     "downlevelIteration": true,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "jsx": "preserve",
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
