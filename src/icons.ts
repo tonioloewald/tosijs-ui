@@ -477,18 +477,13 @@ export const svgIcon = SvgIcon.elementCreator({
   tag: 'xin-icon',
   styleSpec: {
     ':host': {
-      // New --tosi-icon-* variables
-      '--tosi-icon-size': '16px',
-      '--tosi-icon-stroke-width': '2px',
-      '--tosi-icon-stroke-linejoin': 'round',
-      '--tosi-icon-stroke-linecap': 'round',
-      '--tosi-icon-fill': 'none',
-      // Legacy aliases for backward compatibility
-      '--xin-icon-size': 'var(--tosi-icon-size)',
-      '--icon-stroke-width': 'var(--tosi-icon-stroke-width)',
-      '--icon-stroke-linejoin': 'var(--tosi-icon-stroke-linejoin)',
-      '--icon-stroke-linecap': 'var(--tosi-icon-stroke-linecap)',
-      '--icon-fill': 'var(--tosi-icon-fill)',
+      // New --tosi-icon-* variables with legacy fallbacks
+      '--tosi-icon-size': 'var(--xin-icon-size, 16px)',
+      '--tosi-icon-stroke-width':
+        'var(--xin-icon-stroke-width, var(--icon-stroke-width, 2px))',
+      '--tosi-icon-stroke-linejoin': 'var(--icon-stroke-linejoin, round)',
+      '--tosi-icon-stroke-linecap': 'var(--icon-stroke-linecap, round)',
+      '--tosi-icon-fill': 'var(--xin-icon-fill, var(--icon-fill, none))',
       display: 'inline-flex',
       stroke: 'currentColor',
       strokeWidth: varDefault.tosiIconStrokeWidth('2px'),

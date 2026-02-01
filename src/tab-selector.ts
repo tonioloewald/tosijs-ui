@@ -167,14 +167,11 @@ export class TabSelector extends WebComponent {
 
   static styleSpec = {
     ':host': {
-      // New --tosi-tabs-* variables
-      '--tosi-tabs-selected-color': 'var(--tosi-accent, currentColor)',
-      '--tosi-tabs-bar-color': '#ccc',
-      '--tosi-tabs-bar-height': '2px',
-      // Legacy aliases for backward compatibility
-      '--xin-tabs-selected-color': 'var(--tosi-tabs-selected-color)',
-      '--xin-tabs-bar-color': 'var(--tosi-tabs-bar-color)',
-      '--xin-tabs-bar-height': 'var(--tosi-tabs-bar-height)',
+      // New --tosi-tabs-* variables with legacy fallbacks
+      '--tosi-tabs-selected-color':
+        'var(--xin-tabs-selected-color, var(--tosi-accent, currentColor))',
+      '--tosi-tabs-bar-color': 'var(--xin-tabs-bar-color, #ccc)',
+      '--tosi-tabs-bar-height': 'var(--xin-tabs-bar-height, 2px)',
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',

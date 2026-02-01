@@ -219,7 +219,7 @@ export class XinRating extends Component {
     this.style.setProperty('--rating-stroke', this.ratingStroke)
     this.style.setProperty('--empty-fill', this.emptyFill)
     this.style.setProperty('--empty-stroke', this.emptyStroke)
-    this.style.setProperty('--xin-icon-size', height)
+    this.style.setProperty('--tosi-icon-size', height)
 
     if (this.readonly) {
       this.role = 'image'
