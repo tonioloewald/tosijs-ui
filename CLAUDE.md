@@ -9,7 +9,7 @@ tosijs-ui (formerly xinjs-ui) is a web-component library built on [tosijs](https
 ## Common Commands
 
 ```bash
-bun start              # Dev server at https://localhost:8787 (hot reload)
+bun start              # Dev server at https://localhost:8787 (hot reload, reports gzip sizes)
 bun tests              # Run unit tests + Playwright tests
 bun format             # ESLint + Prettier
 bun latest             # Clean install (removes node_modules + bun.lock)
@@ -37,7 +37,8 @@ bun playwright test tests/form.pw.ts
 4. Compiles TypeScript → ESM in `dist/`
 5. Generates type declarations → `dist/*.d.ts`
 6. Bundles IIFE version (tosijs + marked included) → `dist/iife.js`
-7. Builds demo site → `docs/`
+7. Reports gzipped bundle sizes
+8. Builds demo site → `docs/`
 
 The dev server watches:
 - `src/` and `README.md` → triggers doc extraction + rebuild
@@ -89,9 +90,18 @@ The `createDocBrowser()` function renders documentation from extracted `docs.jso
 
 ### Key Dependencies
 
-- `tosijs`: Core component framework (peer dependency)
+- `tosijs`: Core component framework (peer dependency, currently 1.1.2+)
 - `marked`: Markdown parsing (peer dependency)
 - Components use custom HTML tags with `xin-` prefix (e.g., `<xin-table>`, `<xin-select>`)
+
+### tosijs Binding Patterns
+
+When using `bind()` or `bindXxx` properties in element creators:
+- Pass a string path (`'path.to.value'`) or a BoxedScalar directly
+- BoxedScalars carry their path, so both approaches work for bindings
+- The `toDOM` callback always receives the **raw value**, not the BoxedScalar
+- BoxedScalars work transparently except for `===` (strict identity comparison)
+- Use `.value` to read/write BoxedScalar values, `.observe()` for change callbacks
 
 ### Component Philosophy
 
