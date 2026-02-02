@@ -708,7 +708,8 @@ export class TosiForm extends XinComponent {
     form.addEventListener('submit', this.handleSubmit)
 
     // Listen for change events from named elements to update form value
-    form.addEventListener('change', this.handleElementChange, true)
+    // Use 'this' to capture events from slotted content
+    this.addEventListener('change', this.handleElementChange, true)
 
     // Initialize formAssociated components (those with name attribute) from form value
     this.initializeNamedElements()

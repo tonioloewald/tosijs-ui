@@ -8282,7 +8282,7 @@ class TosiForm extends F {
     super.connectedCallback();
     const { form: form2 } = this.parts;
     form2.addEventListener("submit", this.handleSubmit);
-    form2.addEventListener("change", this.handleElementChange, true);
+    this.addEventListener("change", this.handleElementChange, true);
     this.initializeNamedElements();
   }
   handleElementChange = (event) => {
