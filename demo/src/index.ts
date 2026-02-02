@@ -87,7 +87,7 @@ const browser = createDocBrowser({
   projectName: PROJECT,
   projectLinks: {
     tosijs: 'https://tosijs.net',
-    github: `https://github.com/tonioloewald/${PROJECT}#readme`,
+    github: `https://github.com/tonioloewald/${PROJECT}`,
     npm: `https://www.npmjs.com/package/${PROJECT}`,
     discord: 'https://discord.com/invite/ramJ9rgky5',
     blog: 'https://loewald.com',

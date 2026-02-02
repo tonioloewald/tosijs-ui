@@ -46,7 +46,7 @@ as the behavior of `<input type="number">`, [Shoelace's rating widget](https://s
 and (in my opinion) common sense, but  not like [MUI's rating widget](https://mui.com/material-ui/react-rating/).
 */
 
-import { Component, elements, ElementCreator, vars, PartsMap } from 'tosijs'
+import { Component, elements, ElementCreator, PartsMap } from 'tosijs'
 import { icons } from './icons'
 
 const { span } = elements
@@ -91,14 +91,10 @@ export class XinRating extends Component {
     },
     ':host::part(empty)': {
       pointerEvents: 'none',
-      _tosiIconFill: vars.emptyFill,
-      _tosiIconStroke: vars.emptyStroke,
     },
     ':host::part(filled)': {
       position: 'absolute',
       left: 0,
-      _tosiIconFill: vars.ratingFill,
-      _tosiIconStroke: vars.ratingStroke,
     },
     ':host svg': {
       transform: 'scale(0.9)',
@@ -200,10 +196,6 @@ export class XinRating extends Component {
     super.render()
 
     const height = this.iconSize + 'px'
-    this.style.setProperty('--rating-fill', this.ratingFill)
-    this.style.setProperty('--rating-stroke', this.ratingStroke)
-    this.style.setProperty('--empty-fill', this.emptyFill)
-    this.style.setProperty('--empty-stroke', this.emptyStroke)
     this.style.setProperty('--tosi-icon-size', height)
 
     if (this.readonly) {
@@ -216,8 +208,14 @@ export class XinRating extends Component {
     this.ariaValueMin = String(this.min)
     this.ariaValueNow = this.value === null ? String(-1) : String(this.value)
 
-    const { empty, filled } = this.parts
+    const { empty, filled } = this.parts as RatingParts
     empty.classList.toggle('hollow', this.hollow)
+
+    // Set icon colors on the containers so CSS variables cascade to SVGs
+    empty.style.setProperty('--tosi-icon-fill', this.emptyFill)
+    empty.style.setProperty('--tosi-icon-stroke', this.emptyStroke)
+    filled.style.setProperty('--tosi-icon-fill', this.ratingFill)
+    filled.style.setProperty('--tosi-icon-stroke', this.ratingStroke)
 
     if (this._renderedIcon !== this.icon) {
       this._renderedIcon = this.icon

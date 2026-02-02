@@ -9045,15 +9045,11 @@ class XinRating extends F {
       overflow: "hidden"
     },
     ":host::part(empty)": {
-      pointerEvents: "none",
-      _tosiIconFill: Ao.emptyFill,
-      _tosiIconStroke: Ao.emptyStroke
+      pointerEvents: "none"
     },
     ":host::part(filled)": {
       position: "absolute",
-      left: 0,
-      _tosiIconFill: Ao.ratingFill,
-      _tosiIconStroke: Ao.ratingStroke
+      left: 0
     },
     ":host svg": {
       transform: "scale(0.9)",
@@ -9126,10 +9122,6 @@ class XinRating extends F {
   render() {
     super.render();
     const height = this.iconSize + "px";
-    this.style.setProperty("--rating-fill", this.ratingFill);
-    this.style.setProperty("--rating-stroke", this.ratingStroke);
-    this.style.setProperty("--empty-fill", this.emptyFill);
-    this.style.setProperty("--empty-stroke", this.emptyStroke);
     this.style.setProperty("--tosi-icon-size", height);
     if (this.readonly) {
       this.role = "image";
@@ -9142,6 +9134,10 @@ class XinRating extends F {
     this.ariaValueNow = this.value === null ? String(-1) : String(this.value);
     const { empty, filled } = this.parts;
     empty.classList.toggle("hollow", this.hollow);
+    empty.style.setProperty("--tosi-icon-fill", this.emptyFill);
+    empty.style.setProperty("--tosi-icon-stroke", this.emptyStroke);
+    filled.style.setProperty("--tosi-icon-fill", this.ratingFill);
+    filled.style.setProperty("--tosi-icon-stroke", this.ratingStroke);
     if (this._renderedIcon !== this.icon) {
       this._renderedIcon = this.icon;
       for (let i = 0;i < this.max; i++) {
@@ -15725,7 +15721,7 @@ var browser = createDocBrowser({
   projectName: PROJECT,
   projectLinks: {
     tosijs: "https://tosijs.net",
-    github: `https://github.com/tonioloewald/${PROJECT}#readme`,
+    github: `https://github.com/tonioloewald/${PROJECT}`,
     npm: `https://www.npmjs.com/package/${PROJECT}`,
     discord: "https://discord.com/invite/ramJ9rgky5",
     blog: "https://loewald.com",
