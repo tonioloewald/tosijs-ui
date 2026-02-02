@@ -16,7 +16,8 @@ interface SelectParts extends PartsMap {
     button: HTMLButtonElement;
     value: HTMLInputElement;
 }
-export declare class XinSelect extends Component<SelectParts> {
+export declare class TosiSelect extends Component<SelectParts> {
+    static formAssociated: boolean;
     static initAttributes: {
         editable: boolean;
         placeholder: string;
@@ -24,15 +25,28 @@ export declare class XinSelect extends Component<SelectParts> {
         hideCaption: boolean;
         localized: boolean;
         disabled: boolean;
+        required: boolean;
+        name: string;
     };
     options: string | SelectOptions;
-    value: string;
+    private _value;
     filter: string;
     private isExpanded;
+    private _internals;
+    constructor();
+    get value(): string;
+    set value(v: string);
+    private updateFormValue;
+    private updateValidity;
+    formAssociatedCallback(_form: HTMLFormElement | null): void;
+    formDisabledCallback(disabled: boolean): void;
+    formResetCallback(): void;
+    formStateRestoreCallback(state: string | null): void;
     private setValue;
     private getValue;
     get selectOptions(): SelectOptions;
     private buildOptionMenuItem;
+    poppedOptions: MenuItem[];
     get optionsMenu(): MenuItem[];
     handleChange: (event: Event) => void;
     handleKey: (event: KeyboardEvent) => void;
@@ -47,5 +61,9 @@ export declare class XinSelect extends Component<SelectParts> {
     disconnectedCallback(): void;
     render(): void;
 }
-export declare const xinSelect: ElementCreator<XinSelect>;
+/** @deprecated Use TosiSelect instead */
+export declare const XinSelect: typeof TosiSelect;
+export declare const tosiSelect: ElementCreator<TosiSelect>;
+/** @deprecated Use tosiSelect instead (tag is now tosi-select) */
+export declare const xinSelect: ElementCreator<TosiSelect>;
 export {};

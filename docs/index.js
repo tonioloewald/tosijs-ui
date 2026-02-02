@@ -1872,6 +1872,8 @@ __export(exports_src, {
   updateLocalized: () => updateLocalized,
   trackDrag: () => trackDrag,
   tosijs: () => exports_module,
+  tosiSelect: () => tosiSelect,
+  tosiRating: () => tosiRating,
   tosiMonth: () => tosiMonth,
   tosiDialog: () => tosiDialog,
   tabSelector: () => tabSelector,
@@ -1949,6 +1951,8 @@ __export(exports_src, {
   XinFloat: () => XinFloat,
   XinField: () => XinField,
   XinCarousel: () => XinCarousel,
+  TosiSelect: () => TosiSelect,
+  TosiRating: () => TosiRating,
   TosiMonth: () => TosiMonth,
   TosiDialog: () => TosiDialog,
   TabSelector: () => TabSelector,
@@ -3313,28 +3317,71 @@ var hasValue = (options, value) => {
   });
 };
 
-class XinSelect extends F {
+class TosiSelect extends F {
+  static formAssociated = true;
   static initAttributes = {
     editable: false,
     placeholder: "",
     showIcon: false,
     hideCaption: false,
     localized: false,
-    disabled: false
+    disabled: false,
+    required: false,
+    name: ""
   };
   options = "";
-  value = "";
+  _value = "";
   filter = "";
   isExpanded = false;
+  _internals;
+  constructor() {
+    super();
+    if (this.attachInternals) {
+      this._internals = this.attachInternals();
+    }
+  }
+  get value() {
+    return this._value;
+  }
+  set value(v2) {
+    this._value = v2;
+    this.updateFormValue();
+    this.queueRender();
+  }
+  updateFormValue() {
+    this._internals?.setFormValue(this._value || null);
+    this.updateValidity();
+  }
+  updateValidity() {
+    if (!this._internals)
+      return;
+    if (this.required && !this._value) {
+      this._internals.setValidity({ valueMissing: true }, "Please select an option", this.parts.button);
+    } else {
+      this._internals.setValidity({});
+    }
+  }
+  formAssociatedCallback(_form) {}
+  formDisabledCallback(disabled) {
+    this.disabled = disabled;
+  }
+  formResetCallback() {
+    this.value = "";
+  }
+  formStateRestoreCallback(state) {
+    if (state !== null) {
+      this.value = state;
+    }
+  }
   setValue = (value, triggerAction = false) => {
-    if (this.value !== value) {
+    if (this._value !== value) {
       this.value = value;
     }
     if (triggerAction) {
       this.dispatchEvent(new Event("action"));
     }
   };
-  getValue = () => this.value;
+  getValue = () => this._value;
   get selectOptions() {
     return typeof this.options === "string" ? this.options.split(",").map((option) => option.trim() || null) : this.options;
   }
@@ -3379,6 +3426,7 @@ class XinSelect extends F {
       }
     };
   };
+  poppedOptions = [];
   get optionsMenu() {
     const options = this.selectOptions.map(this.buildOptionMenuItem);
     if (this.filter === "") {
@@ -3399,7 +3447,7 @@ class XinSelect extends F {
   handleChange = (event) => {
     const { value } = this.parts;
     const newValue = value.value || "";
-    if (this.value !== String(newValue)) {
+    if (this._value !== String(newValue)) {
       this.value = newValue;
       this.dispatchEvent(new Event("change"));
     }
@@ -3445,7 +3493,7 @@ class XinSelect extends F {
       onClick: this.popOptions
     }, span(), input2({
       part: "value",
-      value: this.value,
+      value: this._value,
       tabindex: 0,
       role: "combobox",
       ariaHaspopup: "listbox",
@@ -3473,8 +3521,8 @@ class XinSelect extends F {
     return all;
   }
   findOption() {
-    const found = this.allOptions.find((option) => option.value === this.value);
-    return found || { caption: this.value, value: this.value };
+    const found = this.allOptions.find((option) => option.value === this._value);
+    return found || { caption: this._value, value: this._value };
   }
   localeChanged = () => {
     this.queueRender();
@@ -3484,6 +3532,7 @@ class XinSelect extends F {
     if (this.localized) {
       XinLocalized.allInstances.add(this);
     }
+    this.updateFormValue();
   }
   disconnectedCallback() {
     super.disconnectedCallback();
@@ -3512,8 +3561,9 @@ class XinSelect extends F {
     value.readOnly = !this.editable;
   }
 }
-var xinSelect = XinSelect.elementCreator({
-  tag: "xin-select",
+var XinSelect = TosiSelect;
+var tosiSelect = TosiSelect.elementCreator({
+  tag: "tosi-select",
   styleSpec: {
     ":host": {
       "--tosi-select-gap": "var(--tosi-spacing-sm, 8px)",
@@ -3566,6 +3616,7 @@ var xinSelect = XinSelect.elementCreator({
     }
   }
 });
+var xinSelect = Ho((...args) => tosiSelect(...args), "xinSelect is deprecated, use tosiSelect instead (tag is now <tosi-select>)");
 
 // src/localize.ts
 var { span: span2 } = u;
@@ -4181,7 +4232,7 @@ class DataTable extends F {
     };
   }
   set value(data) {
-    const { array, columns, filter } = C(data);
+    const { array, columns, filter } = fe(data);
     if (this._array !== array || this._columns !== columns || this._filter !== filter) {
       this.queueRender();
     }
@@ -4210,7 +4261,7 @@ class DataTable extends F {
     return this._array;
   }
   set array(newArray) {
-    this._array = C(newArray);
+    this._array = fe(newArray);
     this.queueRender();
   }
   get filter() {
@@ -4395,8 +4446,8 @@ class DataTable extends F {
     this.style.setProperty("--grid-row-width", rowWidth);
   }
   sortByColumn = (columnOptions, direction = "auto") => {
-    for (const column of this.columns.filter((c) => C(c.sort) !== false)) {
-      if (C(column) === columnOptions) {
+    for (const column of this.columns.filter((c) => fe(c.sort) !== false)) {
+      if (fe(column) === columnOptions) {
         if (direction === "auto") {
           column.sort = column.sort === "ascending" ? "descending" : "ascending";
         } else {
@@ -4513,7 +4564,7 @@ class DataTable extends F {
     });
   };
   get visibleRows() {
-    return C(this.rowData.visible);
+    return fe(this.rowData.visible);
   }
   get visibleSelectedRows() {
     return this.visibleRows.filter((obj) => obj[this.selectedKey]);
@@ -9014,7 +9065,8 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
 // src/rating.ts
 var { span: span11 } = u;
 
-class XinRating extends F {
+class TosiRating extends F {
+  static formAssociated = true;
   static initAttributes = {
     max: 5,
     min: 1,
@@ -9026,9 +9078,55 @@ class XinRating extends F {
     emptyFill: "#ccc",
     readonly: false,
     iconSize: 24,
-    hollow: false
+    hollow: false,
+    required: false,
+    name: ""
   };
-  value = null;
+  _value = null;
+  _internals;
+  get value() {
+    return this._value;
+  }
+  set value(v3) {
+    this._value = v3;
+    this.updateFormValue();
+    this.queueRender();
+  }
+  constructor() {
+    super();
+    if (this.attachInternals) {
+      this._internals = this.attachInternals();
+    }
+  }
+  updateFormValue() {
+    if (this._value !== null) {
+      this._internals?.setFormValue(String(this._value));
+    } else {
+      this._internals?.setFormValue(null);
+    }
+    this.updateValidity();
+  }
+  updateValidity() {
+    if (!this._internals)
+      return;
+    if (this.required && this._value === null) {
+      this._internals.setValidity({ valueMissing: true }, "Please provide a rating", this.parts.container);
+    } else {
+      this._internals.setValidity({});
+    }
+  }
+  formAssociatedCallback(form2) {}
+  formDisabledCallback(disabled) {
+    this.readonly = disabled;
+  }
+  formResetCallback() {
+    this.value = null;
+  }
+  formStateRestoreCallback(state) {
+    if (state !== null) {
+      this.value = Number(state);
+    }
+  }
   static styleSpec = {
     ":host": {
       display: "inline-block",
@@ -9081,11 +9179,11 @@ class XinRating extends F {
     } else if (event.type === "mousemove") {
       this.displayValue(value);
     } else {
-      this.displayValue(this.value || 0);
+      this.displayValue(this._value || 0);
     }
   };
   handleKey = (event) => {
-    let value = Number(this.value);
+    let value = Number(this._value);
     if (value == null) {
       value = Math.round((this.min + this.max) * 0.5 * this.step) * this.step;
     }
@@ -9117,6 +9215,7 @@ class XinRating extends F {
     container.addEventListener("blur", this.update);
     container.addEventListener("click", this.update);
     container.addEventListener("keydown", this.handleKey);
+    this.updateFormValue();
   }
   _renderedIcon = "";
   render() {
@@ -9128,10 +9227,10 @@ class XinRating extends F {
     } else {
       this.role = "slider";
     }
-    this.ariaLabel = `rating ${this.value} out of ${this.max}`;
+    this.ariaLabel = `rating ${this._value} out of ${this.max}`;
     this.ariaValueMax = String(this.max);
     this.ariaValueMin = String(this.min);
-    this.ariaValueNow = this.value === null ? String(-1) : String(this.value);
+    this.ariaValueNow = this._value === null ? String(-1) : String(this._value);
     const { empty, filled } = this.parts;
     empty.classList.toggle("hollow", this.hollow);
     empty.style.setProperty("--tosi-icon-fill", this.emptyFill);
@@ -9145,12 +9244,14 @@ class XinRating extends F {
         filled.append(icons[this.icon]());
       }
     }
-    this.displayValue(this.value);
+    this.displayValue(this._value);
   }
 }
-var xinRating = XinRating.elementCreator({
-  tag: "xin-rating"
+var XinRating = TosiRating;
+var tosiRating = TosiRating.elementCreator({
+  tag: "tosi-rating"
 });
+var xinRating = Ho((...args) => tosiRating(...args), "xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)");
 // src/rich-text.ts
 var { xinSlot: xinSlot6, div: div13, button: button12, span: span12 } = u;
 var blockStyles = [
@@ -14352,15 +14453,18 @@ preview.append(button(
   {
     text: `# rating
 
-\`XinRating\` / \`<xin-rating>\` provides a drop-in replacement for an \`<input>\`
-that renders a rating using <xin-icon icon="star" color="red"></xin-icon>s.
+\`TosiRating\` / \`<tosi-rating>\` provides a drop-in replacement for an \`<input>\`
+that renders a rating using icons.
 
-\`\`\`html
-<xin-rating value=3.4></xin-rating>
-<xin-rating min=0 value=3.4 step=0.5 hollow></xin-rating>
-<xin-rating value=3.4 color="deepskyblue"></xin-rating>
-<xin-rating value=3.1 max=10 color="hotpink" icon="heart" icon-size=32></xin-rating>
-<xin-rating class="color" value=3.1 max=5 color="hotpink" icon="tosiPlatform" icon-size=32></xin-rating>
+\`\`\`js
+const { tosiRating } = tosijsui
+preview.append(
+  tosiRating({ value: 3.4 }),
+  tosiRating({ min: 0, value: 3.4, step: 0.5, hollow: true }),
+  tosiRating({ value: 3.4, ratingFill: 'deepskyblue', ratingStroke: 'deepskyblue' }),
+  tosiRating({ value: 3.1, max: 10, ratingFill: 'hotpink', ratingStroke: 'hotpink', icon: 'heart', iconSize: 32 }),
+  tosiRating({ class: 'color', value: 3.1, max: 5, icon: 'tosiPlatform', iconSize: 32 }),
+)
 \`\`\`
 \`\`\`css
 .preview {
@@ -14368,7 +14472,7 @@ that renders a rating using <xin-icon icon="star" color="red"></xin-icon>s.
   flex-direction: column;
 }
 
-xin-rating.color::part(empty) {
+.preview .color::part(empty) {
   filter: grayscale(1);
   opacity: 0.25;
 }
@@ -14387,10 +14491,23 @@ xin-rating.color::part(empty) {
 - \`empty-fill\` (#ccc by default) is the color of background icons
 - \`readonly\` (false by default) prevents the user from changing the rating
 - \`hollow\` (false by default) makes the empty rating icons hollow.
+- \`required\` (false by default) marks the field as required for form validation
+- \`name\` the form field name (for formAssociated support)
+
+## Form Integration
+
+\`<tosi-rating>\` is form-associated, meaning it works directly in native \`<form>\` elements:
+
+\`\`\`html
+<form>
+  <tosi-rating name="rating" required></tosi-rating>
+  <button type="submit">Submit</button>
+</form>
+\`\`\`
 
 ## Keyboard
 
-\`<xin-rating>\` should be fully keyboard navigable (and, I hope, accessible).
+\`<tosi-rating>\` should be fully keyboard navigable (and, I hope, accessible).
 
 The up key increases the rating, down descreases it. This is the same
 as the behavior of \`<input type="number">\`, [Shoelace's rating widget](https://shoelace.style/components/rating/),

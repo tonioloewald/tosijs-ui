@@ -5,7 +5,7 @@
   "scripts": {
     "start": "bun --watch bin/dev.ts",
     "format": "bun eslint src demo --fix && bun prettier --write .",
-    "tests": "bun test && bun playwright test",
+    "tests": "bun test src/*.test.ts && bun playwright test",
     "latest": "rm -rf node_modules bun.lock && bun update"
   },
   "keywords": [

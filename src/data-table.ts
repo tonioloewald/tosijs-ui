@@ -182,7 +182,7 @@ import {
   ElementCreator,
   elements,
   vars,
-  xinValue,
+  tosiValue,
   getListItem,
   tosi,
 } from 'tosijs'
@@ -285,7 +285,7 @@ export class DataTable extends WebComponent {
   }
 
   set value(data: TableData) {
-    const { array, columns, filter } = xinValue(data)
+    const { array, columns, filter } = tosiValue(data)
     if (
       this._array !== array ||
       this._columns !== columns ||
@@ -325,7 +325,7 @@ export class DataTable extends WebComponent {
   }
 
   set array(newArray: any[]) {
-    this._array = xinValue(newArray)
+    this._array = tosiValue(newArray)
     this.queueRender()
   }
 
@@ -571,9 +571,9 @@ export class DataTable extends WebComponent {
     direction: 'ascending' | 'descending' | 'auto' = 'auto'
   ) => {
     for (const column of this.columns.filter(
-      (c) => xinValue(c.sort) !== false
+      (c) => tosiValue(c.sort) !== false
     )) {
-      if (xinValue(column) === columnOptions) {
+      if (tosiValue(column) === columnOptions) {
         if (direction === 'auto') {
           column.sort = column.sort === 'ascending' ? 'descending' : 'ascending'
         } else {
@@ -728,7 +728,7 @@ export class DataTable extends WebComponent {
   }
 
   get visibleRows(): any[] {
-    return xinValue(this.rowData.visible) as any[]
+    return tosiValue(this.rowData.visible) as any[]
   }
 
   get visibleSelectedRows(): any[] {

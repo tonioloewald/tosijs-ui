@@ -1,5 +1,4 @@
 import { Component } from 'tosijs';
-import { XinSelect } from './select';
 interface TranslationMap {
     [key: string]: string[];
 }
@@ -48,7 +47,7 @@ export declare class LocalePicker extends Component {
     static initAttributes: {
         hideCaption: boolean;
     };
-    content: () => XinSelect;
+    content: () => import("./select").TosiSelect;
     render(): void;
 }
 export declare const localePicker: import("tosijs").ElementCreator<LocalePicker>;

@@ -1,15 +1,18 @@
 /*#
 # rating
 
-`XinRating` / `<xin-rating>` provides a drop-in replacement for an `<input>`
-that renders a rating using <xin-icon icon="star" color="red"></xin-icon>s.
+`TosiRating` / `<tosi-rating>` provides a drop-in replacement for an `<input>`
+that renders a rating using icons.
 
-```html
-<xin-rating value=3.4></xin-rating>
-<xin-rating min=0 value=3.4 step=0.5 hollow></xin-rating>
-<xin-rating value=3.4 color="deepskyblue"></xin-rating>
-<xin-rating value=3.1 max=10 color="hotpink" icon="heart" icon-size=32></xin-rating>
-<xin-rating class="color" value=3.1 max=5 color="hotpink" icon="tosiPlatform" icon-size=32></xin-rating>
+```js
+const { tosiRating } = tosijsui
+preview.append(
+  tosiRating({ value: 3.4 }),
+  tosiRating({ min: 0, value: 3.4, step: 0.5, hollow: true }),
+  tosiRating({ value: 3.4, ratingFill: 'deepskyblue', ratingStroke: 'deepskyblue' }),
+  tosiRating({ value: 3.1, max: 10, ratingFill: 'hotpink', ratingStroke: 'hotpink', icon: 'heart', iconSize: 32 }),
+  tosiRating({ class: 'color', value: 3.1, max: 5, icon: 'tosiPlatform', iconSize: 32 }),
+)
 ```
 ```css
 .preview {
@@ -17,7 +20,7 @@ that renders a rating using <xin-icon icon="star" color="red"></xin-icon>s.
   flex-direction: column;
 }
 
-xin-rating.color::part(empty) {
+.preview .color::part(empty) {
   filter: grayscale(1);
   opacity: 0.25;
 }
@@ -36,17 +39,36 @@ xin-rating.color::part(empty) {
 - `empty-fill` (#ccc by default) is the color of background icons
 - `readonly` (false by default) prevents the user from changing the rating
 - `hollow` (false by default) makes the empty rating icons hollow.
+- `required` (false by default) marks the field as required for form validation
+- `name` the form field name (for formAssociated support)
+
+## Form Integration
+
+`<tosi-rating>` is form-associated, meaning it works directly in native `<form>` elements:
+
+```html
+<form>
+  <tosi-rating name="rating" required></tosi-rating>
+  <button type="submit">Submit</button>
+</form>
+```
 
 ## Keyboard
 
-`<xin-rating>` should be fully keyboard navigable (and, I hope, accessible).
+`<tosi-rating>` should be fully keyboard navigable (and, I hope, accessible).
 
 The up key increases the rating, down descreases it. This is the same
 as the behavior of `<input type="number">`, [Shoelace's rating widget](https://shoelace.style/components/rating/),
 and (in my opinion) common sense, but  not like [MUI's rating widget](https://mui.com/material-ui/react-rating/).
 */
 
-import { Component, elements, ElementCreator, PartsMap } from 'tosijs'
+import {
+  Component,
+  elements,
+  ElementCreator,
+  PartsMap,
+  deprecated,
+} from 'tosijs'
 import { icons } from './icons'
 
 const { span } = elements
@@ -57,7 +79,9 @@ interface RatingParts extends PartsMap {
   container: HTMLElement
 }
 
-export class XinRating extends Component {
+export class TosiRating extends Component {
+  static formAssociated = true
+
   static initAttributes = {
     max: 5,
     min: 1 as 0 | 1,
@@ -70,9 +94,71 @@ export class XinRating extends Component {
     readonly: false,
     iconSize: 24,
     hollow: false,
+    required: false,
+    name: '',
   }
 
-  value: number | null = null
+  private _value: number | null = null
+  private _internals: ElementInternals
+
+  get value(): number | null {
+    return this._value
+  }
+
+  set value(v: number | null) {
+    this._value = v
+    this.updateFormValue()
+    this.queueRender()
+  }
+
+  constructor() {
+    super()
+    // attachInternals may not be available in test environments (happy-dom)
+    if (this.attachInternals) {
+      this._internals = this.attachInternals()
+    }
+  }
+
+  private updateFormValue() {
+    if (this._value !== null) {
+      this._internals?.setFormValue(String(this._value))
+    } else {
+      this._internals?.setFormValue(null)
+    }
+    this.updateValidity()
+  }
+
+  private updateValidity() {
+    if (!this._internals) return
+    if (this.required && this._value === null) {
+      this._internals.setValidity(
+        { valueMissing: true },
+        'Please provide a rating',
+        this.parts.container as HTMLElement
+      )
+    } else {
+      this._internals.setValidity({})
+    }
+  }
+
+  // Form-associated lifecycle callbacks
+  formAssociatedCallback(form: HTMLFormElement | null) {
+    // Called when associated with a form
+  }
+
+  formDisabledCallback(disabled: boolean) {
+    this.readonly = disabled
+  }
+
+  formResetCallback() {
+    this.value = null
+  }
+
+  formStateRestoreCallback(state: string | null) {
+    if (state !== null) {
+      this.value = Number(state)
+    }
+  }
 
   static styleSpec = {
     ':host': {
@@ -147,12 +233,12 @@ export class XinRating extends Component {
     } else if (event.type === 'mousemove') {
       this.displayValue(value)
     } else {
-      this.displayValue(this.value || 0)
+      this.displayValue(this._value || 0)
     }
   }
 
   handleKey = (event: KeyboardEvent) => {
-    let value = Number(this.value)
+    let value = Number(this._value)
     if (value == null) {
       value = Math.round((this.min + this.max) * 0.5 * this.step) * this.step
     }
@@ -188,6 +274,9 @@ export class XinRating extends Component {
     container.addEventListener('click', this.update)
 
     container.addEventListener('keydown', this.handleKey)
+
+    // Initialize form value
+    this.updateFormValue()
   }
 
   private _renderedIcon = ''
@@ -203,10 +292,10 @@ export class XinRating extends Component {
     } else {
       this.role = 'slider'
     }
-    this.ariaLabel = `rating ${this.value} out of ${this.max}`
+    this.ariaLabel = `rating ${this._value} out of ${this.max}`
     this.ariaValueMax = String(this.max)
     this.ariaValueMin = String(this.min)
-    this.ariaValueNow = this.value === null ? String(-1) : String(this.value)
+    this.ariaValueNow = this._value === null ? String(-1) : String(this._value)
 
     const { empty, filled } = this.parts as RatingParts
     empty.classList.toggle('hollow', this.hollow)
@@ -225,10 +314,19 @@ export class XinRating extends Component {
       }
     }
 
-    this.displayValue(this.value)
+    this.displayValue(this._value)
   }
 }
 
-export const xinRating = XinRating.elementCreator({
-  tag: 'xin-rating',
-}) as ElementCreator<XinRating>
+/** @deprecated Use TosiRating instead */
+export const XinRating = TosiRating
+
+export const tosiRating = TosiRating.elementCreator({
+  tag: 'tosi-rating',
+}) as ElementCreator<TosiRating>
+
+/** @deprecated Use tosiRating instead (tag is now tosi-rating) */
+export const xinRating = deprecated(
+  (...args: Parameters<typeof tosiRating>) => tosiRating(...args),
+  'xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)'
+) as ElementCreator<TosiRating>

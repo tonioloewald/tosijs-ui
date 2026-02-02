@@ -1,5 +1,6 @@
 import { Component, ElementCreator } from 'tosijs';
-export declare class XinRating extends Component {
+export declare class TosiRating extends Component {
+    static formAssociated: boolean;
     static initAttributes: {
         max: number;
         min: 0 | 1;
@@ -12,8 +13,20 @@ export declare class XinRating extends Component {
         readonly: boolean;
         iconSize: number;
         hollow: boolean;
+        required: boolean;
+        name: string;
     };
-    value: number | null;
+    private _value;
+    private _internals;
+    get value(): number | null;
+    set value(v: number | null);
+    constructor();
+    private updateFormValue;
+    private updateValidity;
+    formAssociatedCallback(form: HTMLFormElement | null): void;
+    formDisabledCallback(disabled: boolean): void;
+    formResetCallback(): void;
+    formStateRestoreCallback(state: string | null): void;
     static styleSpec: {
         ':host': {
             display: string;
@@ -56,4 +69,8 @@ export declare class XinRating extends Component {
     private _renderedIcon;
     render(): void;
 }
-export declare const xinRating: ElementCreator<XinRating>;
+/** @deprecated Use TosiRating instead */
+export declare const XinRating: typeof TosiRating;
+export declare const tosiRating: ElementCreator<TosiRating>;
+/** @deprecated Use tosiRating instead (tag is now tosi-rating) */
+export declare const xinRating: ElementCreator<TosiRating>;

@@ -1,9 +1,8 @@
 import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
-import { XinSelect } from './select';
 export declare function blockStyle(options?: {
     caption: string;
     tagType: string;
-}[]): XinSelect;
+}[]): import("./select").TosiSelect;
 export declare function spacer(width?: string): HTMLSpanElement;
 export declare function elastic(width?: string): HTMLSpanElement;
 export declare function commandButton(title: string, dataCommand: string, icon: SVGElement): HTMLButtonElement;

@@ -1,5 +1,4 @@
 import { Component, PartsMap } from 'tosijs';
-import { XinSelect } from './select';
 import { MenuItem } from './menu';
 interface MonthParts extends PartsMap {
     jump: HTMLButtonElement;
