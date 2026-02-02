@@ -168,6 +168,7 @@ export class TosiRating extends Component {
     ':host::part(filled)': {
       position: 'absolute',
       left: 0,
+      transition: 'width 0.15s ease-out',
     },
     ':host svg': {
       transform: 'scale(0.9)',

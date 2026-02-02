@@ -45,6 +45,7 @@ export declare class TosiRating extends Component {
         ':host::part(filled)': {
             position: string;
             left: number;
+            transition: string;
         };
         ':host svg': {
             transform: string;
