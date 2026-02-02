@@ -3,51 +3,56 @@
 
 This is a fairly general-purpose segmented select control.
 
+```html
+<div class="grid">
+<tosi-segmented value="yes" choices="yes, no, don't care">
+  Should we?
+</tosi-segmented>
+
+<div>
+  <b>Localized!</b><br>
+  <tosi-segmented
+    localized
+    title="do you like?"
+    choices="yes=Yes:thumbsUp, no=No:thumbsDown"
+  ></tosi-segmented>
+</div>
+
+<tosi-segmented
+  style="--segmented-direction: column; --segmented-align-items: stretch"
+  choices="in a relationship, single" other="it's complicated…"
+  placeholder="oooh… please elaborate"
+  value="separated"
+>
+  Relationship Status
+</tosi-segmented>
+
+<tosi-segmented
+  multiple
+  style="
+    --segmented-direction: column;
+    --segmented-align-items: start;
+    --segmented-option-grid-columns: 24px 24px 100px;
+    --segmented-input-visibility: visible;
+  "
+  choices="star=Star:star, game=Game:game, bug=Bug:bug, camera=Camera:camera"
+  value="star,bug"
+>
+  Pick all that apply
+</tosi-segmented>
+</div>
+```
+```css
+.preview .grid {
+  --segmented-option-current-background: var(--brand-color);
+  --segmented-option-current-color: var(--brand-text-color);
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+```
 ```js
-const { tosiSegmented } = tosijsui
-
-preview.append(
-  tosiSegmented({
-    value: 'yes',
-    choices: 'yes, no, don\'t care',
-    textContent: 'Should we?'
-  }),
-
-  document.createElement('br'),
-
-  tosiSegmented({
-    localized: true,
-    title: 'do you like?',
-    choices: 'yes=Yes:thumbsUp, no=No:thumbsDown'
-  }),
-
-  document.createElement('br'),
-
-  tosiSegmented({
-    style: '--segmented-direction: column; --segmented-align-items: stretch',
-    choices: 'in a relationship, single',
-    other: 'it\'s complicated…',
-    placeholder: 'oooh… please elaborate',
-    value: 'separated',
-    textContent: 'Relationship Status'
-  }),
-
-  document.createElement('br'),
-
-  tosiSegmented({
-    multiple: true,
-    style: `
-      --segmented-direction: column;
-      --segmented-align-items: start;
-      --segmented-option-grid-columns: 24px 24px 100px;
-      --segmented-input-visibility: visible;
-    `,
-    choices: 'star=Star:star, game=Game:game, bug=Bug:bug, camera=Camera:camera',
-    value: 'star,bug',
-    textContent: 'Pick all that apply'
-  })
-)
-
 function logEvent(event) {
   const { target } = event
   if (target.matches('tosi-segmented')) {
@@ -55,16 +60,6 @@ function logEvent(event) {
   }
 }
 preview.addEventListener('change', logEvent, true)
-```
-```css
-.preview {
-  --segmented-option-current-background: var(--brand-color);
-  --segmented-option-current-color: var(--brand-text-color);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
 ```
 
 > Check the console to see the values being set.
