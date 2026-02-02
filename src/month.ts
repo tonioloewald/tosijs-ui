@@ -86,7 +86,7 @@ These prevent the user from changing the displayed month. This example is `reado
 */
 
 import { Component, PartsMap, elements, varDefault } from 'tosijs'
-import { xinSelect, XinSelect } from './select'
+import { tosiSelect, TosiSelect } from './select'
 import { icons } from './icons'
 import { popMenu, MenuItem } from './menu'
 
@@ -104,8 +104,8 @@ const dateFromYMD = (year: number, month: number, date: number): Date =>
 
 interface MonthParts extends PartsMap {
   jump: HTMLButtonElement
-  month: XinSelect
-  year: XinSelect
+  month: TosiSelect
+  year: TosiSelect
   previous: HTMLButtonElement
   next: HTMLButtonElement
 }
@@ -321,12 +321,12 @@ export class TosiMonth extends Component<MonthParts> {
         },
         icons.calendar()
       ),
-      xinSelect({
+      tosiSelect({
         part: 'month',
         options: this.months,
         onChange: this.setMonth,
       }),
-      xinSelect({
+      tosiSelect({
         part: 'year',
         options: [this.year],
         onChange: this.setMonth,

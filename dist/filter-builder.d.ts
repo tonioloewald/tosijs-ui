@@ -1,4 +1,5 @@
 import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
+import { TosiSelect } from './select';
 type ObjectTest = (obj: any) => boolean;
 type ArrayFilter = (array: any[]) => any[];
 interface FilterMaker {
@@ -24,8 +25,8 @@ export interface FilterPartState {
     needle: string;
 }
 interface FilterPartParts extends PartsMap {
-    haystack: XinSelect;
-    condition: XinSelect;
+    haystack: TosiSelect;
+    condition: TosiSelect;
     needle: HTMLInputElement;
     remove: HTMLButtonElement;
 }
@@ -62,7 +63,7 @@ export declare class FilterBuilder extends WebComponent<FilterBuilderParts> {
     filter: ArrayFilter;
     description: string;
     addFilter: () => void;
-    content: () => (HTMLButtonElement | HTMLDivElement)[];
+    content: () => (HTMLDivElement | HTMLButtonElement)[];
     filters: {
         [key: string]: FilterMaker;
     };

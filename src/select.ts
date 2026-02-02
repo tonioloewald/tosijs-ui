@@ -252,7 +252,7 @@ export class TosiSelect extends Component<SelectParts> {
   private _value = ''
   filter = ''
   private isExpanded = false
-  private _internals: ElementInternals
+  private _internals!: ElementInternals
 
   constructor() {
     super()

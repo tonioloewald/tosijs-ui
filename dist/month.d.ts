@@ -1,9 +1,10 @@
 import { Component, PartsMap } from 'tosijs';
+import { TosiSelect } from './select';
 import { MenuItem } from './menu';
 interface MonthParts extends PartsMap {
     jump: HTMLButtonElement;
-    month: XinSelect;
-    year: XinSelect;
+    month: TosiSelect;
+    year: TosiSelect;
     previous: HTMLButtonElement;
     next: HTMLButtonElement;
 }

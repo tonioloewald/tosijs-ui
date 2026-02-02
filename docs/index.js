@@ -12,628 +12,628 @@ var __export = (target, all) => {
 // ../xinjs/dist/module.js
 var exports_module = {};
 __export(exports_module, {
-  xinValue: () => C,
-  xinProxy: () => ie,
-  xinPath: () => $,
-  xin: () => y,
-  warnDeprecated: () => J,
-  version: () => re,
-  vars: () => Ao,
-  varDefault: () => yo,
-  updates: () => de,
-  unobserve: () => W,
-  touchElement: () => No,
-  touch: () => I,
-  tosiValue: () => fe,
-  tosiSetValue: () => Ze,
-  tosiPath: () => go,
-  tosi: () => wo,
-  throttle: () => mo,
-  svgElements: () => Io,
-  settings: () => G,
-  on: () => V,
-  observe: () => Vo,
-  mathML: () => Po,
-  makeComponent: () => Co,
+  xinValue: () => Qo,
+  xinProxy: () => eo,
+  xinPath: () => qo,
+  xin: () => a,
+  warnDeprecated: () => v,
+  version: () => Ne,
+  vars: () => Ge,
+  varDefault: () => de,
+  updates: () => so,
+  unobserve: () => Y,
+  touchElement: () => Pe,
+  touch: () => R,
+  tosiValue: () => p,
+  tosiSetValue: () => Ao,
+  tosiPath: () => x,
+  tosi: () => he,
+  throttle: () => fe,
+  svgElements: () => Ue,
+  settings: () => q,
+  on: () => P,
+  observe: () => Re,
+  mathML: () => Ke,
+  makeComponent: () => pe,
   invertLuminance: () => tn,
-  initVars: () => sn,
-  hotReload: () => Mn,
-  getListItem: () => _o,
-  getListInstance: () => vo,
-  getListBinding: () => uo,
-  getCssVar: () => Oo,
-  elements: () => u,
-  deprecated: () => Ho,
-  deleteListItem: () => wn,
-  debounce: () => jo,
-  css: () => B,
-  boxedProxy: () => po,
-  boxed: () => v,
-  blueprintLoader: () => Sn,
-  blueprint: () => kn,
-  bindings: () => lo,
-  bind: () => S,
+  initVars: () => rn,
+  hotReload: () => bn,
+  getListItem: () => Ie,
+  getListInstance: () => Ve,
+  getListBinding: () => ue,
+  getCssVar: () => qe,
+  elements: () => d,
+  deprecated: () => Se,
+  deleteListItem: () => hn,
+  debounce: () => Je,
+  css: () => I,
+  boxedProxy: () => we,
+  boxed: () => B,
+  blueprintLoader: () => Ln,
+  blueprint: () => Tn,
+  bindings: () => le,
+  bind: () => H,
   StyleSheet: () => en,
-  MoreMath: () => Ne,
-  Component: () => F,
+  MoreMath: () => _o,
+  Component: () => W,
   Color: () => l,
-  BlueprintLoader: () => te,
-  Blueprint: () => Eo
+  BlueprintLoader: () => no,
+  Blueprint: () => Ce
 });
-function H(o) {
-  if (o == null || typeof o !== "object")
-    return o;
-  if (o instanceof Set)
-    return new Set(o);
-  else if (Array.isArray(o))
-    return o.map(H);
-  let e = {};
-  for (let n in o) {
-    let r = o[n];
-    if (o != null && typeof o === "object")
-      e[n] = H(r);
+function g(e) {
+  if (e == null || typeof e !== "object")
+    return e;
+  if (e instanceof Set)
+    return new Set(e);
+  else if (Array.isArray(e))
+    return e.map(g);
+  let o = {};
+  for (let n in e) {
+    let r = e[n];
+    if (e != null && typeof e === "object")
+      o[n] = g(r);
     else
-      e[n] = r;
-  }
-  return e;
-}
-var bo = "-xin-data";
-var Y = `.${bo}`;
-var Mo = "-xin-event";
-var To = `.${Mo}`;
-var x = Symbol.for("xin-path");
-var X = Symbol.for("xin-value");
-var Lo = "xinObserve";
-var ko = "xinBind";
-var So = "xinOn";
-var _ = Symbol("list-binding");
-var so = Symbol("list-instance");
-var ce = new Set;
-function J(o, e) {
-  if (!ce.has(o))
-    console.warn(e), ce.add(o);
-}
-function Ho(o, e) {
-  let n = false;
-  return (...r) => {
-    if (!n)
-      console.warn(e), n = true;
-    return o(...r);
-  };
-}
-var go = (o) => {
-  return o && o[x] || undefined;
-};
-function fe(o) {
-  if (typeof o === "object" && o !== null) {
-    let e = o[X];
-    return e !== undefined ? e : o;
+      o[n] = r;
   }
   return o;
 }
-function Ze(o, e) {
-  if (go(o) === undefined)
-    throw Error("tosiSetValue requires a xin or boxed proxy");
-  o[X] = e;
+var be = "-xin-data";
+var F = `.${be}`;
+var xe = "-xin-event";
+var Me = `.${xe}`;
+var E = Symbol.for("xin-path");
+var $ = Symbol.for("xin-value");
+var Te = "xinObserve";
+var Le = "xinBind";
+var ke = "xinOn";
+var _ = Symbol("list-binding");
+var ie = Symbol("list-instance");
+var ro = new Set;
+function v(e, o) {
+  if (!ro.has(e))
+    console.warn(o), ro.add(e);
 }
-var $ = Ho(go, "xinPath is deprecated. Use tosiPath instead.");
-var C = Ho(fe, "xinValue is deprecated. Use tosiValue instead.");
-var q = new WeakMap;
-var g = new WeakMap;
-var Q = (o) => {
-  let e = o.cloneNode();
-  if (e instanceof Element) {
-    let n = g.get(o), r = q.get(o);
-    if (n != null)
-      g.set(e, H(n));
-    if (r != null)
-      q.set(e, H(r));
-  }
-  for (let n of Array.from(o instanceof HTMLTemplateElement ? o.content.childNodes : o.childNodes))
-    if (n instanceof Element || n instanceof DocumentFragment)
-      e.appendChild(Q(n));
-    else
-      e.appendChild(n.cloneNode());
-  return e;
+function Se(e, o) {
+  let n = false;
+  return (...r) => {
+    if (!n)
+      console.warn(o), n = true;
+    return e(...r);
+  };
+}
+var x = (e) => {
+  return e && e[E] || undefined;
 };
-var G = { debug: false, perf: false };
-var me = Symbol("observer should be removed");
-var to = [];
-var co = [];
-var Xo = false;
-var $o;
-var zo;
+function p(e) {
+  if (typeof e === "object" && e !== null) {
+    let o = e[$];
+    return o !== undefined ? o : e;
+  }
+  return e;
+}
+function Ao(e, o) {
+  if (x(e) === undefined)
+    throw Error("tosiSetValue requires a xin or boxed proxy");
+  e[$] = o;
+}
+var qo = Se(x, "xinPath is deprecated. Use tosiPath instead.");
+var Qo = Se(p, "xinValue is deprecated. Use tosiValue instead.");
+var j = new WeakMap;
+var X = new WeakMap;
+var A = (e) => {
+  let o = e.cloneNode();
+  if (o instanceof Element) {
+    let n = X.get(e), r = j.get(e);
+    if (n != null)
+      X.set(o, g(n));
+    if (r != null)
+      j.set(o, g(r));
+  }
+  for (let n of Array.from(e instanceof HTMLTemplateElement ? e.content.childNodes : e.childNodes))
+    if (n instanceof Element || n instanceof DocumentFragment)
+      o.appendChild(A(n));
+    else
+      o.appendChild(n.cloneNode());
+  return o;
+};
+var q = { debug: false, perf: false };
+var to = Symbol("observer should be removed");
+var se = [];
+var ce = [];
+var He = false;
+var ge;
+var Xe;
 
-class le {
+class io {
   description;
   test;
   callback;
-  constructor(o, e) {
-    let n = typeof e === "string" ? `"${e}"` : `function ${e.name}`, r;
-    if (typeof o === "string")
-      this.test = (i) => typeof i === "string" && i !== "" && (o.startsWith(i) || i.startsWith(o)), r = `test = "${o}"`;
-    else if (o instanceof RegExp)
-      this.test = o.test.bind(o), r = `test = "${o.toString()}"`;
-    else if (o instanceof Function)
-      this.test = o, r = `test = function ${o.name}`;
+  constructor(e, o) {
+    let n = typeof o === "string" ? `"${o}"` : `function ${o.name}`, r;
+    if (typeof e === "string")
+      this.test = (t) => typeof t === "string" && t !== "" && (e.startsWith(t) || t.startsWith(e)), r = `test = "${e}"`;
+    else if (e instanceof RegExp)
+      this.test = e.test.bind(e), r = `test = "${e.toString()}"`;
+    else if (e instanceof Function)
+      this.test = e, r = `test = function ${e.name}`;
     else
       throw Error("expect listener test to be a string, RegExp, or test function");
-    if (this.description = `${r}, ${n}`, typeof e === "function")
-      this.callback = e;
+    if (this.description = `${r}, ${n}`, typeof o === "function")
+      this.callback = o;
     else
       throw Error("expect callback to be a path or function");
-    to.push(this);
+    se.push(this);
   }
 }
-var de = async () => {
-  if ($o === undefined)
+var so = async () => {
+  if (ge === undefined)
     return;
-  await $o;
+  await ge;
 };
-var Oe = () => {
-  if (G.perf)
+var Go = () => {
+  if (q.perf)
     console.time("xin async update");
-  let o = Array.from(co);
-  for (let e of o)
-    to.filter((n) => {
+  let e = Array.from(ce);
+  for (let o of e)
+    se.filter((n) => {
       let r;
       try {
-        r = n.test(e);
-      } catch (i) {
-        throw Error(`Listener ${n.description} threw "${i}" at "${e}"`);
+        r = n.test(o);
+      } catch (t) {
+        throw Error(`Listener ${n.description} threw "${t}" at "${o}"`);
       }
-      if (r === me)
-        return W(n), false;
+      if (r === to)
+        return Y(n), false;
       return r;
     }).forEach((n) => {
       let r;
       try {
-        r = n.callback(e);
-      } catch (i) {
-        console.error(`Listener ${n.description} threw "${i}" handling "${e}"`);
+        r = n.callback(o);
+      } catch (t) {
+        console.error(`Listener ${n.description} threw "${t}" handling "${o}"`);
       }
-      if (r === me)
-        W(n);
+      if (r === to)
+        Y(n);
     });
-  if (co.splice(0), Xo = false, typeof zo === "function")
-    zo();
-  if (G.perf)
+  if (ce.splice(0), He = false, typeof Xe === "function")
+    Xe();
+  if (q.perf)
     console.timeEnd("xin async update");
 };
-var I = (o) => {
-  let e = typeof o === "string" ? o : $(o);
-  if (e === undefined)
-    throw console.error("touch was called on an invalid target", o), Error("touch was called on an invalid target");
-  if (Xo === false)
-    $o = new Promise((n) => {
-      zo = n;
-    }), Xo = setTimeout(Oe);
-  if (co.find((n) => e.startsWith(n)) == null)
-    co.push(e);
+var R = (e) => {
+  let o = typeof e === "string" ? e : x(e);
+  if (o === undefined)
+    throw console.error("touch was called on an invalid target", e), Error("touch was called on an invalid target");
+  if (He === false)
+    ge = new Promise((n) => {
+      Xe = n;
+    }), He = setTimeout(Go);
+  if (ce.find((n) => o.startsWith(n)) == null)
+    ce.push(o);
 };
-var j = (o, e) => {
-  return new le(o, e);
+var J = (e, o) => {
+  return new io(e, o);
 };
-var W = (o) => {
-  let e = to.indexOf(o);
-  if (e > -1)
-    to.splice(e, 1);
+var Y = (e) => {
+  let o = se.indexOf(e);
+  if (o > -1)
+    se.splice(o, 1);
   else
     throw Error("unobserve failed, listener not found");
 };
 var N = {};
-var Do = null;
-var ue = (o) => {
-  Do = o;
+var $e = null;
+var co = (e) => {
+  $e = e;
 };
-var fo = () => {
-  if (Do === null)
+var me = () => {
+  if ($e === null)
     throw Error("xin proxy not initialized");
-  return Do;
+  return $e;
 };
-var Fo = null;
-var Yo = null;
-var ye = (o, e) => {
-  Fo = o, Yo = e;
+var ze = null;
+var De = null;
+var mo = (e, o) => {
+  ze = e, De = o;
 };
-var oo = () => {
-  if (Fo === null)
+var ee = () => {
+  if (ze === null)
     throw Error("bind not initialized");
-  return Fo;
+  return ze;
 };
-var eo = () => {
-  if (Yo === null)
+var oe = () => {
+  if (De === null)
     throw Error("on not initialized");
-  return Yo;
+  return De;
 };
-var Jo = (o, e) => {
-  let n = new Event(e);
-  o.dispatchEvent(n);
+var Fe = (e, o) => {
+  let n = new Event(o);
+  e.dispatchEvent(n);
 };
-var ae = (o) => {
-  if (o instanceof HTMLInputElement)
-    return o.type;
-  else if (o instanceof HTMLSelectElement && o.hasAttribute("multiple"))
+var lo = (e) => {
+  if (e instanceof HTMLInputElement)
+    return e.type;
+  else if (e instanceof HTMLSelectElement && e.hasAttribute("multiple"))
     return "multi-select";
   else
     return "other";
 };
-var we = (o, e) => {
-  switch (ae(o)) {
+var uo = (e, o) => {
+  switch (lo(e)) {
     case "radio":
-      o.checked = o.value === e;
+      e.checked = e.value === o;
       break;
     case "checkbox":
-      o.checked = !!e;
+      e.checked = !!o;
       break;
     case "date":
-      o.valueAsDate = new Date(e);
+      e.valueAsDate = new Date(o);
       break;
     case "multi-select":
-      for (let n of Array.from(o.querySelectorAll("option")))
-        n.selected = e[n.value];
+      for (let n of Array.from(e.querySelectorAll("option")))
+        n.selected = o[n.value];
       break;
     default:
-      o.value = e;
+      e.value = o;
   }
 };
-var pe = (o) => {
-  switch (ae(o)) {
+var ao = (e) => {
+  switch (lo(e)) {
     case "radio": {
-      let e = o.parentElement?.querySelector(`[name="${o.name}"]:checked`);
-      return e != null ? e.value : null;
+      let o = e.parentElement?.querySelector(`[name="${e.name}"]:checked`);
+      return o != null ? o.value : null;
     }
     case "checkbox":
-      return o.checked;
+      return e.checked;
     case "date":
-      return o.valueAsDate?.toISOString();
+      return e.valueAsDate?.toISOString();
     case "multi-select":
-      return Array.from(o.querySelectorAll("option")).reduce((e, n) => {
-        return e[n.value] = n.selected, e;
+      return Array.from(e.querySelectorAll("option")).reduce((o, n) => {
+        return o[n.value] = n.selected, o;
       }, {});
     default:
-      return o.value;
+      return e.value;
   }
 };
-var { ResizeObserver: he } = globalThis;
-var no = he != null ? new he((o) => {
-  for (let e of o) {
-    let n = e.target;
-    Jo(n, "resize");
+var { ResizeObserver: fo } = globalThis;
+var ne = fo != null ? new fo((e) => {
+  for (let o of e) {
+    let n = o.target;
+    Fe(n, "resize");
   }
 }) : { observe() {}, unobserve() {} };
-var Wo = (o, e, n = true) => {
-  if (o != null && e != null)
-    if (typeof e === "string")
-      o.textContent = e;
-    else if (Array.isArray(e))
-      e.forEach((r) => {
-        o.append(r instanceof Node && n ? Q(r) : r);
+var Ye = (e, o, n = true) => {
+  if (e != null && o != null)
+    if (typeof o === "string")
+      e.textContent = o;
+    else if (Array.isArray(o))
+      o.forEach((r) => {
+        e.append(r instanceof Node && n ? A(r) : r);
       });
-    else if (e instanceof Node)
-      o.append(n ? Q(e) : e);
+    else if (o instanceof Node)
+      e.append(n ? A(o) : o);
     else
       throw Error("expect text content or document node");
 };
-var jo = (o, e = 250) => {
+var Je = (e, o = 250) => {
   let n;
   return (...r) => {
     if (n !== undefined)
       clearTimeout(n);
     n = setTimeout(() => {
-      o(...r);
-    }, e);
+      e(...r);
+    }, o);
   };
 };
-var mo = (o, e = 250) => {
-  let n, r = Date.now() - e, i = false;
-  return (...s) => {
+var fe = (e, o = 250) => {
+  let n, r = Date.now() - o, t = false;
+  return (...i) => {
     if (clearTimeout(n), n = setTimeout(() => {
-      o(...s), r = Date.now();
-    }, e), !i && Date.now() - r >= e) {
-      i = true;
+      e(...i), r = Date.now();
+    }, o), !t && Date.now() - r >= o) {
+      t = true;
       try {
-        o(...s), r = Date.now();
+        e(...i), r = Date.now();
       } finally {
-        i = false;
+        t = false;
       }
     }
   };
 };
-var Ue = (o) => {
+var Zo = (e) => {
   try {
-    return JSON.stringify(o);
-  } catch (e) {
+    return JSON.stringify(e);
+  } catch (o) {
     return "{has circular references}";
   }
 };
-var qo = (...o) => Error(o.map(Ue).join(" "));
-var Ae = () => new Date(parseInt("1000000000", 36) + Date.now()).valueOf().toString(36).slice(1);
-var Re = 0;
-var Ke = () => (parseInt("10000", 36) + ++Re).toString(36).slice(-5);
-var Ie = () => Ae() + Ke();
-var Go = Symbol("delete");
-var xe = Symbol("new-object");
-var Qo = Symbol("automatic-index");
-function be(o) {
-  if (o === "")
+var We = (...e) => Error(e.map(Zo).join(" "));
+var Oo = () => new Date(parseInt("1000000000", 36) + Date.now()).valueOf().toString(36).slice(1);
+var Uo = 0;
+var Ko = () => (parseInt("10000", 36) + ++Uo).toString(36).slice(-5);
+var vo = () => Oo() + Ko();
+var Ae = Symbol("delete");
+var wo = Symbol("new-object");
+var je = Symbol("automatic-index");
+function po(e) {
+  if (e === "")
     return [];
-  if (Array.isArray(o))
-    return o;
+  if (Array.isArray(e))
+    return e;
   else {
-    let e = [];
-    while (o.length > 0) {
-      let n = o.search(/\[[^\]]+\]/);
+    let o = [];
+    while (e.length > 0) {
+      let n = e.search(/\[[^\]]+\]/);
       if (n === -1) {
-        e.push(o.split("."));
+        o.push(e.split("."));
         break;
       } else {
-        let r = o.slice(0, n);
-        if (o = o.slice(n), r !== "")
-          e.push(r.split("."));
-        if (n = o.indexOf("]") + 1, e.push(o.slice(1, n - 1)), o.slice(n, n + 1) === ".")
+        let r = e.slice(0, n);
+        if (e = e.slice(n), r !== "")
+          o.push(r.split("."));
+        if (n = e.indexOf("]") + 1, o.push(e.slice(1, n - 1)), e.slice(n, n + 1) === ".")
           n += 1;
-        o = o.slice(n);
+        e = e.slice(n);
       }
     }
-    return e;
+    return o;
   }
 }
 var z = new WeakMap;
-function Me(o, e) {
-  if (z.get(o) === undefined)
-    z.set(o, {});
-  if (z.get(o)[e] === undefined)
-    z.get(o)[e] = {};
-  let n = z.get(o)[e];
-  if (e === "_auto_")
-    o.forEach((r, i) => {
-      if (r[Qo] === undefined)
-        r[Qo] = Ie();
-      n[r[Qo] + ""] = i;
+function Co(e, o) {
+  if (z.get(e) === undefined)
+    z.set(e, {});
+  if (z.get(e)[o] === undefined)
+    z.get(e)[o] = {};
+  let n = z.get(e)[o];
+  if (o === "_auto_")
+    e.forEach((r, t) => {
+      if (r[je] === undefined)
+        r[je] = vo();
+      n[r[je] + ""] = t;
     });
   else
-    o.forEach((r, i) => {
-      n[Z(r, e) + ""] = i;
+    e.forEach((r, t) => {
+      n[Q(r, o) + ""] = t;
     });
   return n;
 }
-function Pe(o, e) {
-  if (z.get(o) === undefined || z.get(o)[e] === undefined)
-    return Me(o, e);
+function Ro(e, o) {
+  if (z.get(e) === undefined || z.get(e)[o] === undefined)
+    return Co(e, o);
   else
-    return z.get(o)[e];
+    return z.get(e)[o];
 }
-function Be(o, e, n) {
+function Vo(e, o, n) {
   n = n + "";
-  let r = Pe(o, e)[n];
-  if (r === undefined || Z(o[r], e) + "" !== n)
-    r = Me(o, e)[n];
+  let r = Ro(e, o)[n];
+  if (r === undefined || Q(e[r], o) + "" !== n)
+    r = Co(e, o)[n];
   return r;
 }
-function Ve(o, e, n) {
-  if (o[e] === undefined && n !== undefined)
-    o[e] = n;
-  return o[e];
+function Io(e, o, n) {
+  if (e[o] === undefined && n !== undefined)
+    e[o] = n;
+  return e[o];
 }
-function Te(o, e, n, r) {
-  let i = e !== "" ? Be(o, e, n) : n;
-  if (r === Go)
-    return o.splice(i, 1), z.delete(o), Symbol("deleted");
-  else if (r === xe) {
-    if (e === "" && o[i] === undefined)
-      o[i] = {};
+function Eo(e, o, n, r) {
+  let t = o !== "" ? Vo(e, o, n) : n;
+  if (r === Ae)
+    return e.splice(t, 1), z.delete(e), Symbol("deleted");
+  else if (r === wo) {
+    if (o === "" && e[t] === undefined)
+      e[t] = {};
   } else if (r !== undefined)
-    if (i !== undefined)
-      o[i] = r;
-    else if (e !== "" && Z(r, e) + "" === n + "")
-      o.push(r), i = o.length - 1;
+    if (t !== undefined)
+      e[t] = r;
+    else if (o !== "" && Q(r, o) + "" === n + "")
+      e.push(r), t = e.length - 1;
     else
-      throw Error(`byIdPath insert failed at [${e}=${n}]`);
-  return o[i];
+      throw Error(`byIdPath insert failed at [${o}=${n}]`);
+  return e[t];
 }
-function Ce(o) {
-  if (!Array.isArray(o))
-    throw qo("setByPath failed: expected array, found", o);
+function yo(e) {
+  if (!Array.isArray(e))
+    throw We("setByPath failed: expected array, found", e);
 }
-function Ee(o) {
-  if (o == null || !(o instanceof Object))
-    throw qo("setByPath failed: expected Object, found", o);
+function ho(e) {
+  if (e == null || !(e instanceof Object))
+    throw We("setByPath failed: expected Object, found", e);
 }
-function Z(o, e) {
-  let n = be(e), r = o, i, s, t, c;
-  for (i = 0, s = n.length;r !== undefined && i < s; i++) {
-    let f = n[i];
-    if (Array.isArray(f))
-      for (t = 0, c = f.length;r !== undefined && t < c; t++) {
-        let m = f[t];
-        r = r[m];
+function Q(e, o) {
+  let n = po(o), r = e, t, i, m, s;
+  for (t = 0, i = n.length;r !== undefined && t < i; t++) {
+    let c = n[t];
+    if (Array.isArray(c))
+      for (m = 0, s = c.length;r !== undefined && m < s; m++) {
+        let f = c[m];
+        r = r[f];
       }
     else if (r.length === 0) {
-      if (r = r[Number(f.slice(1))], f[0] !== "=")
+      if (r = r[Number(c.slice(1))], c[0] !== "=")
         return;
-    } else if (f.includes("=")) {
-      let [m, ...d] = f.split("=");
-      r = Te(r, m, d.join("="));
+    } else if (c.includes("=")) {
+      let [f, ...u] = c.split("=");
+      r = Eo(r, f, u.join("="));
     } else
-      t = parseInt(f, 10), r = r[t];
+      m = parseInt(c, 10), r = r[m];
   }
   return r;
 }
-function Le(o, e, n) {
-  let r = o;
-  if (e === "")
+function bo(e, o, n) {
+  let r = e;
+  if (o === "")
     throw Error("setByPath cannot be used to set the root object");
-  let i = be(e);
-  while (r != null && i.length > 0) {
-    let s = i.shift();
-    if (typeof s === "string") {
-      let t = s.indexOf("=");
-      if (t > -1) {
-        if (t === 0)
-          Ee(r);
+  let t = po(o);
+  while (r != null && t.length > 0) {
+    let i = t.shift();
+    if (typeof i === "string") {
+      let m = i.indexOf("=");
+      if (m > -1) {
+        if (m === 0)
+          ho(r);
         else
-          Ce(r);
-        let c = s.slice(0, t), f = s.slice(t + 1);
-        if (r = Te(r, c, f, i.length > 0 ? xe : n), i.length === 0)
+          yo(r);
+        let s = i.slice(0, m), c = i.slice(m + 1);
+        if (r = Eo(r, s, c, t.length > 0 ? wo : n), t.length === 0)
           return true;
       } else {
-        Ce(r);
-        let c = parseInt(s, 10);
-        if (i.length > 0)
-          r = r[c];
+        yo(r);
+        let s = parseInt(i, 10);
+        if (t.length > 0)
+          r = r[s];
         else {
-          if (n !== Go) {
-            if (r[c] === n)
+          if (n !== Ae) {
+            if (r[s] === n)
               return false;
-            r[c] = n;
+            r[s] = n;
           } else
-            r.splice(c, 1);
+            r.splice(s, 1);
           return true;
         }
       }
-    } else if (Array.isArray(s) && s.length > 0) {
-      Ee(r);
-      while (s.length > 0) {
-        let t = s.shift();
-        if (s.length > 0 || i.length > 0)
-          r = Ve(r, t, s.length > 0 ? {} : []);
+    } else if (Array.isArray(i) && i.length > 0) {
+      ho(r);
+      while (i.length > 0) {
+        let m = i.shift();
+        if (i.length > 0 || t.length > 0)
+          r = Io(r, m, i.length > 0 ? {} : []);
         else {
-          if (n !== Go) {
-            if (r[t] === n)
+          if (n !== Ae) {
+            if (r[m] === n)
               return false;
-            r[t] = n;
+            r[m] = n;
           } else {
-            if (!Object.prototype.hasOwnProperty.call(r, t))
+            if (!Object.prototype.hasOwnProperty.call(r, m))
               return false;
-            delete r[t];
+            delete r[m];
           }
           return true;
         }
       }
     } else
-      throw Error(`setByPath failed, bad path ${e}`);
+      throw Error(`setByPath failed, bad path ${o}`);
   }
-  throw Error(`setByPath(${o}, ${e}, ${n}) failed`);
+  throw Error(`setByPath(${e}, ${o}, ${n}) failed`);
 }
-var lo = { value: { toDOM: we, fromDOM(o) {
-  return pe(o);
-} }, text: { toDOM(o, e) {
-  o.textContent = e;
-} }, enabled: { toDOM(o, e) {
-  o.disabled = !e;
-} }, disabled: { toDOM(o, e) {
-  o.disabled = Boolean(e);
-} }, list: { toDOM(o, e, n) {
-  uo(o, e, n).update(e);
+var le = { value: { toDOM: uo, fromDOM(e) {
+  return ao(e);
+} }, text: { toDOM(e, o) {
+  e.textContent = o;
+} }, enabled: { toDOM(e, o) {
+  e.disabled = !o;
+} }, disabled: { toDOM(e, o) {
+  e.disabled = Boolean(o);
+} }, list: { toDOM(e, o, n) {
+  ue(e, o, n).update(o);
 } } };
-function E(o) {
-  return o.replace(/[A-Z]/g, (e) => {
-    return `-${e.toLocaleLowerCase()}`;
+function M(e) {
+  return e.replace(/[A-Z]/g, (o) => {
+    return `-${o.toLocaleLowerCase()}`;
   });
 }
-function Zo(o) {
-  return o.replace(/-([a-z])/g, (e, n) => {
+function xo(e) {
+  return e.replace(/-([a-z])/g, (o, n) => {
     return n.toLocaleUpperCase();
   });
 }
-var ve = 180 / Math.PI;
-var _e = Math.PI / 180;
-function M(o, e, n) {
-  return n < o ? NaN : e < o ? o : e > n ? n : e;
+var Po = 180 / Math.PI;
+var Bo = Math.PI / 180;
+function T(e, o, n) {
+  return n < e ? NaN : o < e ? e : o > n ? n : o;
 }
-function D(o, e, n, r = true) {
+function D(e, o, n, r = true) {
   if (r)
-    n = M(0, n, 1);
-  return n * (e - o) + o;
+    n = T(0, n, 1);
+  return n * (o - e) + e;
 }
-var Ne = { RADIANS_TO_DEGREES: ve, DEGREES_TO_RADIANS: _e, clamp: M, lerp: D };
-function Oo(o, e = document.body) {
-  let n = getComputedStyle(e);
-  if (o.endsWith(")") && o.startsWith("var("))
-    o = o.slice(4, -1);
-  return n.getPropertyValue(o).trim();
+var _o = { RADIANS_TO_DEGREES: Po, DEGREES_TO_RADIANS: Bo, clamp: T, lerp: D };
+function qe(e, o = document.body) {
+  let n = getComputedStyle(o);
+  if (e.endsWith(")") && e.startsWith("var("))
+    e = e.slice(4, -1);
+  return n.getPropertyValue(e).trim();
 }
-var on = (o, e, n) => {
-  return (0.299 * o + 0.587 * e + 0.114 * n) / 255;
+var No = (e, o, n) => {
+  return (0.299 * e + 0.587 * o + 0.114 * n) / 255;
 };
-var O = (o) => ("00" + Math.round(Number(o)).toString(16)).slice(-2);
+var G = (e) => ("00" + Math.round(Number(e)).toString(16)).slice(-2);
 
-class ke {
+class Mo {
   h;
   s;
   l;
-  constructor(o, e, n) {
-    o /= 255, e /= 255, n /= 255;
-    let r = Math.max(o, e, n), i = r - Math.min(o, e, n), s = i !== 0 ? r === o ? (e - n) / i : r === e ? 2 + (n - o) / i : 4 + (o - e) / i : 0;
-    this.h = 60 * s < 0 ? 60 * s + 360 : 60 * s, this.s = i !== 0 ? r <= 0.5 ? i / (2 * r - i) : i / (2 - (2 * r - i)) : 0, this.l = (2 * r - i) / 2;
+  constructor(e, o, n) {
+    e /= 255, o /= 255, n /= 255;
+    let r = Math.max(e, o, n), t = r - Math.min(e, o, n), i = t !== 0 ? r === e ? (o - n) / t : r === o ? 2 + (n - e) / t : 4 + (e - o) / t : 0;
+    this.h = 60 * i < 0 ? 60 * i + 360 : 60 * i, this.s = t !== 0 ? r <= 0.5 ? t / (2 * r - t) : t / (2 - (2 * r - t)) : 0, this.l = (2 * r - t) / 2;
   }
 }
-var P = globalThis.document !== undefined ? globalThis.document.createElement("span") : undefined;
+var V = globalThis.document !== undefined ? globalThis.document.createElement("span") : undefined;
 
 class l {
   r;
   g;
   b;
   a;
-  static fromVar(o, e = document.body) {
-    return l.fromCss(Oo(o, e));
+  static fromVar(e, o = document.body) {
+    return l.fromCss(qe(e, o));
   }
-  static fromCss(o) {
-    let e = o;
-    if (P instanceof HTMLSpanElement)
-      P.style.color = "black", P.style.color = o, document.body.appendChild(P), e = getComputedStyle(P).color, P.remove();
-    let [n, r, i, s] = e.match(/[\d.]+/g) || ["0", "0", "0", "0"], t = e.startsWith("color(srgb") ? 255 : 1;
-    return new l(Number(n) * t, Number(r) * t, Number(i) * t, s == null ? 1 : Number(s));
+  static fromCss(e) {
+    let o = e;
+    if (V instanceof HTMLSpanElement)
+      V.style.color = "black", V.style.color = e, document.body.appendChild(V), o = getComputedStyle(V).color, V.remove();
+    let [n, r, t, i] = o.match(/[\d.]+/g) || ["0", "0", "0", "0"], m = o.startsWith("color(srgb") ? 255 : 1;
+    return new l(Number(n) * m, Number(r) * m, Number(t) * m, i == null ? 1 : Number(i));
   }
-  static fromHsl(o, e, n, r = 1) {
-    let i, s, t;
-    if (e === 0)
-      i = s = t = n;
+  static fromHsl(e, o, n, r = 1) {
+    let t, i, m;
+    if (o === 0)
+      t = i = m = n;
     else {
-      let f = (p, T, w) => {
+      let c = (C, L, w) => {
         if (w < 0)
           w += 1;
         if (w > 1)
           w -= 1;
         if (w < 0.16666666666666666)
-          return p + (T - p) * 6 * w;
+          return C + (L - C) * 6 * w;
         if (w < 0.5)
-          return T;
+          return L;
         if (w < 0.6666666666666666)
-          return p + (T - p) * (0.6666666666666666 - w) * 6;
-        return p;
-      }, m = n < 0.5 ? n * (1 + e) : n + e - n * e, d = 2 * n - m, h = (o % 360 + 360) % 360 / 360;
-      i = f(d, m, h + 0.3333333333333333), s = f(d, m, h), t = f(d, m, h - 0.3333333333333333);
+          return C + (L - C) * (0.6666666666666666 - w) * 6;
+        return C;
+      }, f = n < 0.5 ? n * (1 + o) : n + o - n * o, u = 2 * n - f, y = (e % 360 + 360) % 360 / 360;
+      t = c(u, f, y + 0.3333333333333333), i = c(u, f, y), m = c(u, f, y - 0.3333333333333333);
     }
-    let c = new l(i * 255, s * 255, t * 255, r);
-    return c.hslCached = { h: (o % 360 + 360) % 360, s: e, l: n }, c;
+    let s = new l(t * 255, i * 255, m * 255, r);
+    return s.hslCached = { h: (e % 360 + 360) % 360, s: o, l: n }, s;
   }
   static black = new l(0, 0, 0);
   static white = new l(255, 255, 255);
-  constructor(o, e, n, r = 1) {
-    this.r = M(0, o, 255), this.g = M(0, e, 255), this.b = M(0, n, 255), this.a = M(0, r, 1);
+  constructor(e, o, n, r = 1) {
+    this.r = T(0, e, 255), this.g = T(0, o, 255), this.b = T(0, n, 255), this.a = T(0, r, 1);
   }
   get inverse() {
     return new l(255 - this.r, 255 - this.g, 255 - this.b, this.a);
   }
   get inverseLuminance() {
-    let { h: o, s: e, l: n } = this._hsl;
-    return l.fromHsl(o, e, 1 - n, this.a);
+    let { h: e, s: o, l: n } = this._hsl;
+    return l.fromHsl(e, o, 1 - n, this.a);
   }
   get opaque() {
     return this.a === 1 ? this : new l(this.r, this.g, this.b, 1);
   }
-  contrasting(o = 1) {
-    return this.opaque.blend(this.brightness > 0.5 ? l.black : l.white, o);
+  contrasting(e = 1) {
+    return this.opaque.blend(this.brightness > 0.5 ? l.black : l.white, e);
   }
   get rgb() {
-    let { r: o, g: e, b: n } = this;
-    return `rgb(${o.toFixed(0)},${e.toFixed(0)},${n.toFixed(0)})`;
+    let { r: e, g: o, b: n } = this;
+    return `rgb(${e.toFixed(0)},${o.toFixed(0)},${n.toFixed(0)})`;
   }
   get rgba() {
-    let { r: o, g: e, b: n, a: r } = this;
-    return `rgba(${o.toFixed(0)},${e.toFixed(0)},${n.toFixed(0)},${r.toFixed(2)})`;
+    let { r: e, g: o, b: n, a: r } = this;
+    return `rgba(${e.toFixed(0)},${o.toFixed(0)},${n.toFixed(0)},${r.toFixed(2)})`;
   }
   get RGBA() {
     return [this.r / 255, this.g / 255, this.b / 255, this.a];
@@ -644,555 +644,550 @@ class l {
   hslCached;
   get _hsl() {
     if (this.hslCached == null)
-      this.hslCached = new ke(this.r, this.g, this.b);
+      this.hslCached = new Mo(this.r, this.g, this.b);
     return this.hslCached;
   }
   get hsl() {
-    let { h: o, s: e, l: n } = this._hsl;
-    return `hsl(${o.toFixed(0)}deg ${(e * 100).toFixed(0)}% ${(n * 100).toFixed(0)}%)`;
+    let { h: e, s: o, l: n } = this._hsl;
+    return `hsl(${e.toFixed(0)}deg ${(o * 100).toFixed(0)}% ${(n * 100).toFixed(0)}%)`;
   }
   get hsla() {
-    let { h: o, s: e, l: n } = this._hsl;
-    return `hsl(${o.toFixed(0)}deg ${(e * 100).toFixed(0)}% ${(n * 100).toFixed(0)}% / ${(this.a * 100).toFixed(0)}%)`;
+    let { h: e, s: o, l: n } = this._hsl;
+    return `hsl(${e.toFixed(0)}deg ${(o * 100).toFixed(0)}% ${(n * 100).toFixed(0)}% / ${(this.a * 100).toFixed(0)}%)`;
   }
   get mono() {
-    let o = this.brightness * 255;
-    return new l(o, o, o);
+    let e = this.brightness * 255;
+    return new l(e, e, e);
   }
   get brightness() {
-    return on(this.r, this.g, this.b);
+    return No(this.r, this.g, this.b);
   }
   get html() {
     return this.toString();
   }
   toString() {
-    return this.a === 1 ? "#" + O(this.r) + O(this.g) + O(this.b) : "#" + O(this.r) + O(this.g) + O(this.b) + O(Math.floor(255 * this.a));
+    return this.a === 1 ? "#" + G(this.r) + G(this.g) + G(this.b) : "#" + G(this.r) + G(this.g) + G(this.b) + G(Math.floor(255 * this.a));
   }
-  brighten(o) {
-    let { h: e, s: n, l: r } = this._hsl, i = M(0, r + o * (1 - r), 1);
-    return l.fromHsl(e, n, i, this.a);
+  brighten(e) {
+    let { h: o, s: n, l: r } = this._hsl, t = T(0, r + e * (1 - r), 1);
+    return l.fromHsl(o, n, t, this.a);
   }
-  darken(o) {
-    let { h: e, s: n, l: r } = this._hsl, i = M(0, r * (1 - o), 1);
-    return l.fromHsl(e, n, i, this.a);
+  darken(e) {
+    let { h: o, s: n, l: r } = this._hsl, t = T(0, r * (1 - e), 1);
+    return l.fromHsl(o, n, t, this.a);
   }
-  saturate(o) {
-    let { h: e, s: n, l: r } = this._hsl, i = M(0, n + o * (1 - n), 1);
-    return l.fromHsl(e, i, r, this.a);
+  saturate(e) {
+    let { h: o, s: n, l: r } = this._hsl, t = T(0, n + e * (1 - n), 1);
+    return l.fromHsl(o, t, r, this.a);
   }
-  desaturate(o) {
-    let { h: e, s: n, l: r } = this._hsl, i = M(0, n * (1 - o), 1);
-    return l.fromHsl(e, i, r, this.a);
+  desaturate(e) {
+    let { h: o, s: n, l: r } = this._hsl, t = T(0, n * (1 - e), 1);
+    return l.fromHsl(o, t, r, this.a);
   }
-  rotate(o) {
-    let { h: e, s: n, l: r } = this._hsl, i = (e + 360 + o) % 360;
-    return l.fromHsl(i, n, r, this.a);
+  rotate(e) {
+    let { h: o, s: n, l: r } = this._hsl, t = (o + 360 + e) % 360;
+    return l.fromHsl(t, n, r, this.a);
   }
-  opacity(o) {
-    let { h: e, s: n, l: r } = this._hsl;
-    return l.fromHsl(e, n, r, o);
+  opacity(e) {
+    let { h: o, s: n, l: r } = this._hsl;
+    return l.fromHsl(o, n, r, e);
   }
   swatch() {
     return console.log(`%c      %c ${this.html}, ${this.rgba}`, `background-color: ${this.html}`, "background-color: transparent"), this;
   }
-  blend(o, e) {
-    return new l(D(this.r, o.r, e), D(this.g, o.g, e), D(this.b, o.b, e), D(this.a, o.a, e));
+  blend(e, o) {
+    return new l(D(this.r, e.r, o), D(this.g, e.g, o), D(this.b, e.b, o), D(this.a, e.a, o));
   }
-  static blendHue(o, e, n) {
-    let r = (e - o + 720) % 360;
+  static blendHue(e, o, n) {
+    let r = (o - e + 720) % 360;
     if (r < 180)
-      return o + n * r;
+      return e + n * r;
     else
-      return o - (360 - r) * n;
+      return e - (360 - r) * n;
   }
-  mix(o, e) {
-    let n = this._hsl, r = o._hsl;
-    return l.fromHsl(n.s === 0 ? r.h : r.s === 0 ? n.h : l.blendHue(n.h, r.h, e), D(n.s, r.s, e), D(n.l, r.l, e), D(this.a, o.a, e));
+  mix(e, o) {
+    let n = this._hsl, r = e._hsl;
+    return l.fromHsl(n.s === 0 ? r.h : r.s === 0 ? n.h : l.blendHue(n.h, r.h, o), D(n.s, r.s, o), D(n.l, r.l, o), D(this.a, e.a, o));
   }
-  colorMix(o, e) {
-    return l.fromCss(`color-mix(in hsl, ${this.html}, ${o.html} ${(e * 100).toFixed(0)}%)`);
+  colorMix(e, o) {
+    return l.fromCss(`color-mix(in hsl, ${this.html}, ${e.html} ${(o * 100).toFixed(0)}%)`);
   }
 }
-function en(o, e) {
-  let n = u.style(B(e));
-  n.id = o, document.head.append(n);
+function en(e, o) {
+  let n = d.style(I(o));
+  n.id = e, document.head.append(n);
 }
-var nn = ["animation-iteration-count", "flex", "flex-base", "flex-grow", "flex-shrink", "opacity", "order", "tab-size", "widows", "z-index", "zoom"];
-var Uo = (o, e) => {
-  if (typeof e === "number" && !nn.includes(o))
-    e = `${e}px`;
-  if (o.startsWith("_"))
-    if (o.startsWith("__"))
-      o = "--" + o.substring(2), e = `var(${o}-default, ${e})`;
+var on = ["animation-iteration-count", "flex", "flex-base", "flex-grow", "flex-shrink", "opacity", "order", "tab-size", "widows", "z-index", "zoom"];
+var Qe = (e, o) => {
+  if (typeof o === "number" && !on.includes(e))
+    o = `${o}px`;
+  if (e.startsWith("_"))
+    if (e.startsWith("__"))
+      e = "--" + e.substring(2), o = `var(${e}-default, ${o})`;
     else
-      o = "--" + o.substring(1);
-  return { prop: o, value: String(e) };
+      e = "--" + e.substring(1);
+  return { prop: e, value: String(o) };
 };
-var rn = (o, e, n) => {
+var nn = (e, o, n) => {
   if (n === undefined)
     return "";
   if (n instanceof l)
     n = n.html;
-  let r = Uo(e, n);
-  return `${o}  ${r.prop}: ${r.value};`;
+  let r = Qe(o, n);
+  return `${e}  ${r.prop}: ${r.value};`;
 };
-var Se = (o, e, n = "") => {
-  let r = E(o);
-  if (typeof e === "object" && !(e instanceof l)) {
-    let i = Object.keys(e).map((s) => Se(s, e[s], `${n}  `)).join(`
+var To = (e, o, n = "") => {
+  let r = M(e);
+  if (typeof o === "object" && !(o instanceof l)) {
+    let t = Object.keys(o).map((i) => To(i, o[i], `${n}  `)).join(`
 `);
-    return `${n}  ${o} {
-${i}
+    return `${n}  ${e} {
+${t}
 ${n}  }`;
   } else
-    return rn(n, r, e);
+    return nn(n, r, o);
 };
-var B = (o, e = "") => {
-  return Object.keys(o).map((r) => {
-    let i = o[r];
-    if (typeof i === "string") {
+var I = (e, o = "") => {
+  return Object.keys(e).map((r) => {
+    let t = e[r];
+    if (typeof t === "string") {
       if (r === "@import")
-        return `@import url('${i}');`;
+        return `@import url('${t}');`;
       throw Error("top-level string value only allowed for `@import`");
     }
-    let s = Object.keys(i).map((t) => Se(t, i[t])).join(`
+    let i = Object.keys(t).map((m) => To(m, t[m])).join(`
 `);
-    return `${e}${r} {
-${s}
+    return `${o}${r} {
+${i}
 }`;
   }).join(`
 
 `);
 };
-var sn = (o) => {
-  J("initVars", "initVars is deprecated. Just use _ and __ prefixes instead.");
-  let e = {};
-  for (let n of Object.keys(o)) {
-    let r = o[n], i = E(n);
-    e[`--${i}`] = typeof r === "number" && r !== 0 ? String(r) + "px" : r;
+var rn = (e) => {
+  v("initVars", "initVars is deprecated. Just use _ and __ prefixes instead.");
+  let o = {};
+  for (let n of Object.keys(e)) {
+    let r = e[n], t = M(n);
+    o[`--${t}`] = typeof r === "number" && r !== 0 ? String(r) + "px" : r;
   }
-  return e;
+  return o;
 };
-var tn = (o) => {
-  let e = {};
-  for (let n of Object.keys(o)) {
-    let r = o[n];
+var tn = (e) => {
+  let o = {};
+  for (let n of Object.keys(e)) {
+    let r = e[n];
     if (r instanceof l)
-      e[n] = r.inverseLuminance;
+      o[n] = r.inverseLuminance;
     else if (typeof r === "string" && r.match(/^(#[0-9a-fA-F]{3}|rgba?\(|hsla?\()/))
-      e[n] = l.fromCss(r).inverseLuminance;
+      o[n] = l.fromCss(r).inverseLuminance;
   }
-  return e;
+  return o;
 };
-var yo = new Proxy({}, { get(o, e) {
-  if (o[e] === undefined) {
-    let n = "--" + E(e);
-    o[e] = (r) => `var(${n}, ${r})`;
+var de = new Proxy({}, { get(e, o) {
+  if (e[o] === undefined) {
+    let n = "--" + M(o);
+    e[o] = (r) => `var(${n}, ${r})`;
   }
-  return o[e];
+  return e[o];
 } });
-var Ao = new Proxy({}, { get(o, e) {
-  if (e === "default")
-    return yo;
-  if (o[e] == null) {
-    e = E(e);
-    let [, n, , r, i, s] = e.match(/^([-\w]*?)((_)?(\d+)(\w?))?$/) || ["", e], t = `--${n}`;
-    if (i != null) {
-      let c = r == null ? Number(i) / 100 : -Number(i) / 100;
-      switch (s) {
+var Ge = new Proxy({}, { get(e, o) {
+  if (o === "default")
+    return de;
+  if (e[o] == null) {
+    o = M(o);
+    let [, n, , r, t, i] = o.match(/^([-\w]*?)((_)?(\d+)(\w?))?$/) || ["", o], m = `--${n}`;
+    if (t != null) {
+      let s = r == null ? Number(t) / 100 : -Number(t) / 100;
+      switch (i) {
         case "b":
           {
-            let f = l.fromVar(t);
-            o[e] = c > 0 ? f.brighten(c).rgba : f.darken(-c).rgba;
+            let c = l.fromVar(m);
+            e[o] = s > 0 ? c.brighten(s).rgba : c.darken(-s).rgba;
           }
           break;
         case "s":
           {
-            let f = l.fromVar(t);
-            o[e] = c > 0 ? f.saturate(c).rgba : f.desaturate(-c).rgba;
+            let c = l.fromVar(m);
+            e[o] = s > 0 ? c.saturate(s).rgba : c.desaturate(-s).rgba;
           }
           break;
         case "h":
           {
-            let f = l.fromVar(t);
-            o[e] = f.rotate(c * 100).rgba;
+            let c = l.fromVar(m);
+            e[o] = c.rotate(s * 100).rgba;
           }
           break;
         case "o":
           {
-            let f = l.fromVar(t);
-            o[e] = f.opacity(c).rgba;
+            let c = l.fromVar(m);
+            e[o] = c.opacity(s).rgba;
           }
           break;
         case "":
-          o[e] = `calc(var(${t}) * ${c})`;
+          e[o] = `calc(var(${m}) * ${s})`;
           break;
         default:
-          throw console.error(s), Error(`Unrecognized method ${s} for css variable ${t}`);
+          throw console.error(i), Error(`Unrecognized method ${i} for css variable ${m}`);
       }
     } else
-      o[e] = `var(${t})`;
+      e[o] = `var(${m})`;
   }
-  return o[e];
+  return e[o];
 } });
-var He = "http://www.w3.org/1998/Math/MathML";
-var ge = "http://www.w3.org/2000/svg";
-var ho = {};
-var Xe = (o, e, n) => {
-  let r = Uo(E(e), n);
+var Lo = "http://www.w3.org/1998/Math/MathML";
+var ko = "http://www.w3.org/2000/svg";
+var ae = {};
+var So = (e, o, n) => {
+  let r = Qe(M(o), n);
   if (r.prop.startsWith("--"))
-    o.style.setProperty(r.prop, r.value);
+    e.style.setProperty(r.prop, r.value);
   else
-    o.style[e] = r.value;
+    e.style[o] = r.value;
 };
-var cn = (o) => {
-  return { toDOM(e, n) {
-    Xe(e, o, n);
+var sn = (e) => {
+  return { toDOM(o, n) {
+    So(o, e, n);
   } };
 };
-var $e = (o, e, n) => {
-  if (e === "style")
+var Ho = (e, o, n) => {
+  if (o === "style")
     if (typeof n === "object")
       for (let r of Object.keys(n))
-        if ($(n[r]))
-          S(o, n[r], cn(r));
+        if (x(n[r]))
+          H(e, n[r], sn(r));
         else
-          Xe(o, r, n[r]);
+          So(e, r, n[r]);
     else
-      o.setAttribute("style", n);
-  else {
-    let r = E(e), i = o.constructor.observedAttributes;
-    if (i?.includes(e) || i?.includes(r))
-      if (typeof n === "boolean")
-        n ? o.setAttribute(r, "") : o.removeAttribute(r);
-      else
-        o.setAttribute(r, n);
-    else if (o[e] !== undefined) {
-      let { MathMLElement: t } = globalThis;
-      if (o instanceof SVGElement || t !== undefined && o instanceof t)
-        o.setAttribute(e, n);
-      else
-        o[e] = n;
-    } else if (r === "class")
+      e.setAttribute("style", n);
+  else if (e[o] !== undefined) {
+    let { MathMLElement: r } = globalThis;
+    if (e instanceof SVGElement || r !== undefined && e instanceof r)
+      e.setAttribute(o, n);
+    else
+      e[o] = n;
+  } else {
+    let r = M(o);
+    if (r === "class")
       n.split(" ").forEach((t) => {
-        o.classList.add(t);
+        e.classList.add(t);
       });
-    else if (o[r] !== undefined)
-      o[r] = n;
+    else if (e[r] !== undefined)
+      e[r] = n;
     else if (typeof n === "boolean")
-      n ? o.setAttribute(r, "") : o.removeAttribute(r);
+      n ? e.setAttribute(r, "") : e.removeAttribute(r);
     else
-      o.setAttribute(r, n);
+      e.setAttribute(r, n);
   }
 };
-var fn = (o) => {
-  return { toDOM(e, n) {
-    $e(e, o, n);
+var cn = (e) => {
+  return { toDOM(o, n) {
+    Ho(o, e, n);
   } };
 };
-var mn = (o, e, n) => {
-  if (e === "apply")
-    n(o);
-  else if (e.match(/^on[A-Z]/) != null) {
-    let r = e.substring(2).toLowerCase();
-    V(o, r, n);
-  } else if (e === "bind")
-    if ((typeof n.binding === "string" ? lo[n.binding] : n.binding) !== undefined && n.value !== undefined)
-      S(o, n.value, n.binding instanceof Function ? { toDOM: n.binding } : n.binding);
+var mn = (e, o, n) => {
+  if (o === "apply")
+    n(e);
+  else if (o.match(/^on[A-Z]/) != null) {
+    let r = o.substring(2).toLowerCase();
+    P(e, r, n);
+  } else if (o === "bind")
+    if ((typeof n.binding === "string" ? le[n.binding] : n.binding) !== undefined && n.value !== undefined)
+      H(e, n.value, n.binding instanceof Function ? { toDOM: n.binding } : n.binding);
     else
       throw Error("bad binding");
-  else if (e.match(/^bind[A-Z]/) != null) {
-    let r = e.substring(4, 5).toLowerCase() + e.substring(5), i = lo[r];
-    if (i !== undefined)
-      S(o, n, i);
+  else if (o.match(/^bind[A-Z]/) != null) {
+    let r = o.substring(4, 5).toLowerCase() + o.substring(5), t = le[r];
+    if (t !== undefined)
+      H(e, n, t);
     else
-      throw Error(`${e} is not allowed, bindings.${r} is not defined`);
-  } else if ($(n))
-    S(o, n, fn(e));
+      throw Error(`${o} is not allowed, bindings.${r} is not defined`);
+  } else if (x(n))
+    H(e, n, cn(o));
   else
-    $e(o, e, n);
+    Ho(e, o, n);
 };
-var Ro = (o, ...e) => {
-  if (ho[o] === undefined) {
-    let [i, s] = o.split("|");
-    if (s === undefined)
-      ho[o] = globalThis.document.createElement(i);
+var Ze = (e, ...o) => {
+  if (ae[e] === undefined) {
+    let [t, i] = e.split("|");
+    if (i === undefined)
+      ae[e] = globalThis.document.createElement(t);
     else
-      ho[o] = globalThis.document.createElementNS(s, i);
+      ae[e] = globalThis.document.createElementNS(i, t);
   }
-  let n = ho[o].cloneNode(), r = {};
-  for (let i of e)
-    if (i instanceof Element || i instanceof DocumentFragment || typeof i === "string" || typeof i === "number")
+  let n = ae[e].cloneNode(), r = {};
+  for (let t of o)
+    if (t instanceof Element || t instanceof DocumentFragment || typeof t === "string" || typeof t === "number")
       if (n instanceof HTMLTemplateElement)
-        n.content.append(i);
+        n.content.append(t);
       else
-        n.append(i);
-    else if ($(i))
-      n.append(u.span({ bindText: i }));
+        n.append(t);
+    else if (x(t))
+      n.append(d.span({ bindText: t }));
     else
-      Object.assign(r, i);
-  for (let i of Object.keys(r)) {
-    let s = r[i];
-    mn(n, i, s);
+      Object.assign(r, t);
+  for (let t of Object.keys(r)) {
+    let i = r[t];
+    mn(n, t, i);
   }
   return n;
 };
-var Ko = (...o) => {
-  let e = globalThis.document.createDocumentFragment();
-  for (let n of o)
-    e.append(n);
-  return e;
+var Oe = (...e) => {
+  let o = globalThis.document.createDocumentFragment();
+  for (let n of e)
+    o.append(n);
+  return o;
 };
-var u = new Proxy({ fragment: Ko }, { get(o, e) {
-  if (e = e.replace(/[A-Z]/g, (n) => `-${n.toLocaleLowerCase()}`), o[e] === undefined)
-    o[e] = (...n) => Ro(e, ...n);
-  return o[e];
+var d = new Proxy({ fragment: Oe }, { get(e, o) {
+  if (o = o.replace(/[A-Z]/g, (n) => `-${n.toLocaleLowerCase()}`), e[o] === undefined)
+    e[o] = (...n) => Ze(o, ...n);
+  return e[o];
 }, set() {
   throw Error("You may not add new properties to elements");
 } });
-var Io = new Proxy({ fragment: Ko }, { get(o, e) {
-  if (o[e] === undefined)
-    o[e] = (...n) => Ro(`${e}|${ge}`, ...n);
-  return o[e];
+var Ue = new Proxy({ fragment: Oe }, { get(e, o) {
+  if (e[o] === undefined)
+    e[o] = (...n) => Ze(`${o}|${ko}`, ...n);
+  return e[o];
 }, set() {
   throw Error("You may not add new properties to elements");
 } });
-var Po = new Proxy({ fragment: Ko }, { get(o, e) {
-  if (o[e] === undefined)
-    o[e] = (...n) => Ro(`${e}|${He}`, ...n);
-  return o[e];
+var Ke = new Proxy({ fragment: Oe }, { get(e, o) {
+  if (e[o] === undefined)
+    e[o] = (...n) => Ze(`${o}|${Lo}`, ...n);
+  return e[o];
 }, set() {
   throw Error("You may not add new properties to elements");
 } });
-var ln = ["sort", "splice", "copyWithin", "fill", "pop", "push", "reverse", "shift", "unshift"];
-var dn = true;
+var fn = ["sort", "splice", "copyWithin", "fill", "pop", "push", "reverse", "shift", "unshift"];
+var ln = true;
 var un = /^\.?([^.[\](),])+(\.[^.[\](),]+|\[\d+\]|\[[^=[\](),]*=[^[\]()]+\])*$/;
-var yn = (o) => un.test(o);
-var U = (o = "", e = "") => {
-  if (o === "")
-    return e;
-  else if (e.match(/^\d+$/) !== null || e.includes("="))
-    return `${o}[${e}]`;
-  else
-    return `${o}.${e}`;
-};
-var Fe = {};
-function Bo(o, e) {
-  if (o !== null && (typeof o === "object" || typeof o === "function"))
+var dn = (e) => un.test(e);
+var Z = (e = "", o = "") => {
+  if (e === "")
     return o;
-  return new Proxy(Fe, R(e, true));
-}
-var ao = () => new Proxy({}, R("^", true));
-var ze = false;
-function A() {
-  if (!ze)
-    console.warn("xinValue, tosiValue, xinPath, tosiPath, etc. are deprecated. Use value, path, observe, bind, on, binding, listBinding instead."), ze = true;
-}
-var De = (o) => {
-  return o === Fe;
+  else if (o.match(/^\d+$/) !== null || o.includes("="))
+    return `${e}[${o}]`;
+  else
+    return `${e}.${o}`;
 };
-var R = (o, e) => ({ get(n, r) {
-  if (De(n)) {
-    let c = () => Z(N, o);
+var $o = {};
+function ve(e, o) {
+  if (e !== null && (typeof e === "object" || typeof e === "function"))
+    return e;
+  return new Proxy($o, U(o, true));
+}
+var ye = () => new Proxy({}, U("^", true));
+var go = false;
+function O() {
+  if (!go)
+    console.warn("xinValue, tosiValue, xinPath, tosiPath, etc. are deprecated. Use value, path, observe, bind, on, binding, listBinding instead."), go = true;
+}
+var Xo = (e) => {
+  return e === $o;
+};
+var U = (e, o) => ({ get(n, r) {
+  if (Xo(n)) {
+    let s = () => Q(N, e);
     switch (r) {
       case "path":
-        return o;
+        return e;
       case "value":
-        return c();
+        return s();
       case "valueOf":
       case "toJSON":
-        return () => c();
+        return () => s();
       case Symbol.toPrimitive:
-        return (f) => {
-          let m = c();
-          if (f === "number")
-            return Number(m);
-          if (f === "string")
-            return String(m);
-          return m;
+        return (c) => {
+          let f = s();
+          if (c === "number")
+            return Number(f);
+          if (c === "string")
+            return String(f);
+          return f;
         };
       case "toString":
-        return () => String(c());
+        return () => String(s());
       case "observe":
-        return (f) => {
-          let m = j(o, f);
-          return () => W(m);
+        return (c) => {
+          let f = J(e, c);
+          return () => Y(f);
         };
       case "on":
-        return (f, m) => eo()(f, m, c());
+        return (c, f) => oe()(c, f, s());
       case "bind":
-        return (f, m, d) => {
-          oo()(f, o, m, d);
+        return (c, f, u) => {
+          ee()(c, e, f, u);
         };
       case "binding":
-        return (f) => ({ bind: { value: o, binding: f } });
+        return (c) => ({ bind: { value: e, binding: c } });
       case "listBinding":
-        return (f = ({ span: d }) => d({ bindText: "^" }), m = {}) => [{ bindList: { value: o, ...m } }, u.template(f(u, ao()))];
-      case X:
+        return (c = ({ span: u }) => u({ bindText: "^" }), f = {}) => [{ bindList: { value: e, ...f } }, d.template(c(d, ye()))];
+      case $:
       case "xinValue":
       case "tosiValue":
-        return A(), c();
-      case x:
+        return O(), s();
+      case E:
       case "xinPath":
       case "tosiPath":
-        return A(), o;
-      case Lo:
+        return O(), e;
+      case Te:
       case "tosiObserve":
-        return A(), (f) => {
-          let m = j(o, f);
-          return () => W(m);
+        return O(), (c) => {
+          let f = J(e, c);
+          return () => Y(f);
         };
-      case So:
+      case ke:
       case "tosiOn":
-        return A(), (f, m) => eo()(f, m, c());
-      case ko:
+        return O(), (c, f) => oe()(c, f, s());
+      case Le:
       case "tosiBind":
-        return A(), (f, m, d) => {
-          oo()(f, o, m, d);
+        return O(), (c, f, u) => {
+          ee()(c, e, f, u);
         };
       case "tosiBinding":
-        return A(), (f) => ({ bind: { value: o, binding: f } });
+        return O(), (c) => ({ bind: { value: e, binding: c } });
       case "tosiListBinding":
-        return A(), (f = ({ span: d }) => d({ bindText: "^" }), m = {}) => [{ bindList: { value: o, ...m } }, u.template(f(u, ao()))];
+        return O(), (c = ({ span: u }) => u({ bindText: "^" }), f = {}) => [{ bindList: { value: e, ...f } }, d.template(c(d, ye()))];
     }
     if (typeof r === "string" && /^\d+$/.test(r)) {
-      let f = c();
-      if (typeof f === "string")
-        return f[parseInt(r, 10)];
+      let c = s();
+      if (typeof c === "string")
+        return c[parseInt(r, 10)];
     }
     if (r === "length") {
-      let f = c();
-      if (typeof f === "string")
-        return f.length;
+      let c = s();
+      if (typeof c === "string")
+        return c.length;
     }
     return;
   }
-  if (e && !(r in n))
+  if (o && !(r in n))
     switch (r) {
       case "path":
-        return o;
+        return e;
       case "value":
         return n.valueOf ? n.valueOf() : n;
       case "valueOf":
       case "toJSON":
         return () => n.valueOf ? n.valueOf() : n;
       case "observe":
-        return (c) => {
-          let f = j(o, c);
-          return () => W(f);
+        return (s) => {
+          let c = J(e, s);
+          return () => Y(c);
         };
       case "on":
-        return (c, f) => eo()(c, f, C(n));
+        return (s, c) => oe()(s, c, p(n));
       case "bind":
-        return (c, f, m) => {
-          oo()(c, o, f, m);
+        return (s, c, f) => {
+          ee()(s, e, c, f);
         };
       case "binding":
-        return (c) => ({ bind: { value: o, binding: c } });
+        return (s) => ({ bind: { value: e, binding: s } });
       case "listBinding":
-        return (c = ({ span: m }) => m({ bindText: "^" }), f = {}) => [{ bindList: { value: o, ...f } }, u.template(c(u, ao()))];
+        return (s = ({ span: f }) => f({ bindText: "^" }), c = {}) => [{ bindList: { value: e, ...c } }, d.template(s(d, ye()))];
     }
   switch (r) {
-    case x:
+    case E:
     case "xinPath":
     case "tosiPath":
-      return o;
-    case X:
+      return e;
+    case $:
     case "xinValue":
     case "tosiValue":
       return n.valueOf ? n.valueOf() : n;
-    case Lo:
+    case Te:
     case "xinObserve":
     case "tosiObserve":
-      return (c) => {
-        let f = j(o, c);
-        return () => W(f);
+      return (s) => {
+        let c = J(e, s);
+        return () => Y(c);
       };
-    case So:
+    case ke:
     case "xinOn":
     case "tosiOn":
-      return (c, f) => eo()(c, f, C(n));
-    case ko:
+      return (s, c) => oe()(s, c, p(n));
+    case Le:
     case "xinBind":
     case "tosiBind":
-      return (c, f, m) => {
-        oo()(c, o, f, m);
+      return (s, c, f) => {
+        ee()(s, e, c, f);
       };
     case "tosiBinding":
-      return (c) => ({ bind: { value: o, binding: c } });
+      return (s) => ({ bind: { value: e, binding: s } });
     case "tosiListBinding":
-      return (c = ({ span: m }) => m({ bindText: "^" }), f = {}) => [{ bindList: { value: o, ...f } }, u.template(c(u, ao()))];
+      return (s = ({ span: f }) => f({ bindText: "^" }), c = {}) => [{ bindList: { value: e, ...c } }, d.template(s(d, ye()))];
   }
   if (typeof r === "symbol")
     return n[r];
-  let i = Object.getOwnPropertyDescriptor(n, r);
-  if (i && !i.configurable && !i.writable && "value" in i)
-    return i.value;
-  let s = r, t = s.match(/^([^.[]+)\.(.+)$/) ?? s.match(/^([^\]]+)(\[.+)/) ?? s.match(/^(\[[^\]]+\])\.(.+)$/) ?? s.match(/^(\[[^\]]+\])\[(.+)$/);
-  if (t !== null) {
-    let [, c, f] = t, m = U(o, c), d = Z(n, c);
-    return d !== null && typeof d === "object" ? new Proxy(d, R(m, e))[f] : d;
+  let t = Object.getOwnPropertyDescriptor(n, r);
+  if (t && !t.configurable && !t.writable && "value" in t)
+    return t.value;
+  let i = r, m = i.match(/^([^.[]+)\.(.+)$/) ?? i.match(/^([^\]]+)(\[.+)/) ?? i.match(/^(\[[^\]]+\])\.(.+)$/) ?? i.match(/^(\[[^\]]+\])\[(.+)$/);
+  if (m !== null) {
+    let [, s, c] = m, f = Z(e, s), u = Q(n, s);
+    return u !== null && typeof u === "object" ? new Proxy(u, U(f, o))[c] : u;
   }
-  if (s.startsWith("[") && s.endsWith("]"))
-    s = s.substring(1, s.length - 1);
-  if (!Array.isArray(n) && n[s] !== undefined || Array.isArray(n) && s.includes("=")) {
-    let c;
-    if (s.includes("=")) {
-      let [f, m] = s.split("=");
-      c = n.find((d) => `${Z(d, f)}` === m);
+  if (i.startsWith("[") && i.endsWith("]"))
+    i = i.substring(1, i.length - 1);
+  if (!Array.isArray(n) && n[i] !== undefined || Array.isArray(n) && i.includes("=")) {
+    let s;
+    if (i.includes("=")) {
+      let [c, f] = i.split("=");
+      s = n.find((u) => `${Q(u, c)}` === f);
     } else
-      c = n[s];
-    if (c instanceof Object) {
-      let f = U(o, s);
-      return new Proxy(c instanceof Function ? c.bind(n) : c, R(f, e));
+      s = n[i];
+    if (s instanceof Object) {
+      let c = Z(e, i);
+      return new Proxy(s instanceof Function ? s.bind(n) : s, U(c, o));
     } else
-      return e ? Bo(c, U(o, s)) : c;
+      return o ? ve(s, Z(e, i)) : s;
   } else if (Array.isArray(n)) {
-    let c = n[s];
-    return typeof c === "function" ? (...f) => {
-      let m = f.map((h) => C(h)), d = c.apply(n, m);
-      if (ln.includes(s))
-        I(o);
-      return d;
-    } : typeof c === "object" ? new Proxy(c, R(U(o, s), e)) : e ? Bo(c, U(o, s)) : c;
+    let s = n[i];
+    return typeof s === "function" ? (...c) => {
+      let f = c.map((y) => p(y)), u = s.apply(n, f);
+      if (fn.includes(i))
+        R(e);
+      return u;
+    } : typeof s === "object" ? new Proxy(s, U(Z(e, i), o)) : o ? ve(s, Z(e, i)) : s;
   } else
-    return e ? Bo(n[s], U(o, s)) : n[s];
-}, set(n, r, i) {
-  i = C(i);
-  let t = r === X || r === "xinValue" || r === "tosiValue" || r === "value" && (De(n) || e) ? o : U(o, r);
-  if (dn && !yn(t))
-    throw Error(`setting invalid path ${t}`);
-  if (C(y[t]) !== i && Le(N, t, i))
-    I(t);
+    return o ? ve(n[i], Z(e, i)) : n[i];
+}, set(n, r, t) {
+  t = p(t);
+  let m = r === $ || r === "xinValue" || r === "tosiValue" || r === "value" && (Xo(n) || o) ? e : Z(e, r);
+  if (ln && !dn(m))
+    throw Error(`setting invalid path ${m}`);
+  if (p(a[m]) !== t && bo(N, m, t))
+    R(m);
   return true;
 } });
-var Vo = (o, e) => {
-  let n = typeof e === "function" ? e : y[e];
+var Re = (e, o) => {
+  let n = typeof o === "function" ? o : a[o];
   if (typeof n !== "function")
-    throw Error(`observe expects a function or path to a function, ${e} is neither`);
-  return j(o, n);
+    throw Error(`observe expects a function or path to a function, ${o} is neither`);
+  return J(e, n);
 };
-var y = new Proxy(N, R("", false));
-ue(y);
-var v = new Proxy(N, R("", true));
-var hn = 16;
-var an = 100;
-function Ye(o, e) {
-  let n = Array.from(o.querySelectorAll(Y));
-  if (o.matches(Y))
-    n.unshift(o);
+var a = new Proxy(N, U("", false));
+co(a);
+var B = new Proxy(N, U("", true));
+var an = 16;
+var yn = 100;
+function zo(e, o) {
+  let n = Array.from(e.querySelectorAll(F));
+  if (e.matches(F))
+    n.unshift(e);
   for (let r of n) {
-    let i = g.get(r);
-    for (let s of i) {
-      if (s.path.startsWith("^"))
-        s.path = `${e}${s.path.substring(1)}`;
-      if (s.binding.toDOM != null)
-        s.binding.toDOM(r, y[s.path]);
+    let t = X.get(r);
+    for (let i of t) {
+      if (i.path.startsWith("^"))
+        i.path = `${o}${i.path.substring(1)}`;
+      if (i.binding.toDOM != null)
+        i.binding.toDOM(r, a[i.path]);
     }
   }
 }
 
-class Je {
+class Do {
   boundElement;
   listTop;
   listBottom;
@@ -1203,497 +1198,407 @@ class Je {
   _update;
   _previousSlice;
   static filterBoundObservers = new WeakMap;
-  constructor(o, e, n = {}) {
-    if (this.boundElement = o, this.itemToElement = new WeakMap, o.children.length !== 1)
+  constructor(e, o, n = {}) {
+    if (this.boundElement = e, this.itemToElement = new WeakMap, e.children.length !== 1)
       throw Error("ListBinding expects an element with exactly one child element");
-    if (o.children[0] instanceof HTMLTemplateElement) {
-      let r = o.children[0];
+    if (e.children[0] instanceof HTMLTemplateElement) {
+      let r = e.children[0];
       if (r.content.children.length !== 1)
         throw Error("ListBinding expects a template with exactly one child element");
-      this.template = Q(r.content.children[0]);
+      this.template = A(r.content.children[0]);
     } else
-      this.template = o.children[0], this.template.remove();
+      this.template = e.children[0], this.template.remove();
     if (this.options = n, this.listTop = document.createElement("div"), this.listBottom = document.createElement("div"), this.listTop.classList.add("virtual-list-padding"), this.listBottom.classList.add("virtual-list-padding"), this.boundElement.append(this.listTop), this.boundElement.append(this.listBottom), n.virtual != null)
-      if (no.observe(this.boundElement), this._update = mo(() => {
+      if (ne.observe(this.boundElement), this._update = fe(() => {
         this.update(this.array, true);
-      }, hn), this.boundElement.addEventListener("resize", this._update), n.virtual.scrollContainer === "window")
+      }, an), this.boundElement.addEventListener("resize", this._update), n.virtual.scrollContainer === "window")
         window.addEventListener("scroll", this._update), window.addEventListener("resize", this._update);
       else
         this.boundElement.addEventListener("scroll", this._update);
   }
   visibleSlice() {
-    let { virtual: o, hiddenProp: e, visibleProp: n } = this.options, r = this.array;
-    if (e !== undefined)
-      r = r.filter((f) => f[e] !== true);
+    let { virtual: e, hiddenProp: o, visibleProp: n } = this.options, r = this.array;
+    if (o !== undefined)
+      r = r.filter((c) => c[o] !== true);
     if (n !== undefined)
-      r = r.filter((f) => f[n] === true);
+      r = r.filter((c) => c[n] === true);
     if (this.options.filter && this.needle !== undefined)
       r = this.options.filter(r, this.needle);
-    let i = 0, s = r.length - 1, t = 0, c = 0;
-    if (o != null && this.boundElement instanceof HTMLElement) {
-      let f = this.boundElement.offsetWidth, m = o.scrollContainer === "window", d, h;
-      if (m) {
-        d = window.innerHeight;
+    let t = 0, i = r.length - 1, m = 0, s = 0;
+    if (e != null && this.boundElement instanceof HTMLElement) {
+      let c = this.boundElement.offsetWidth, f = e.scrollContainer === "window", u, y;
+      if (f) {
+        u = window.innerHeight;
         let K = this.boundElement.getBoundingClientRect();
-        h = Math.max(0, -K.top);
+        y = Math.max(0, -K.top);
       } else
-        d = this.boundElement.offsetHeight, h = this.boundElement.scrollTop;
-      if (o.visibleColumns == null)
-        o.visibleColumns = o.width != null ? Math.max(1, Math.floor(f / o.width)) : 1;
-      let p = Math.ceil(d / o.height) + (o.rowChunkSize || 1), T = Math.ceil(r.length / o.visibleColumns), w = o.visibleColumns * p, L = Math.floor(h / o.height);
-      if (L > T - p + 1)
-        L = Math.max(0, T - p + 1);
-      if (o.rowChunkSize)
-        L -= L % o.rowChunkSize;
-      i = L * o.visibleColumns, s = i + w - 1, t = L * o.height, c = Math.max((T - p) * o.height - t, 0);
+        u = this.boundElement.offsetHeight, y = this.boundElement.scrollTop;
+      if (e.visibleColumns == null)
+        e.visibleColumns = e.width != null ? Math.max(1, Math.floor(c / e.width)) : 1;
+      let C = Math.ceil(u / e.height) + (e.rowChunkSize || 1), L = Math.ceil(r.length / e.visibleColumns), w = e.visibleColumns * C, k = Math.floor(y / e.height);
+      if (k > L - C + 1)
+        k = Math.max(0, L - C + 1);
+      if (e.rowChunkSize)
+        k -= k % e.rowChunkSize;
+      t = k * e.visibleColumns, i = t + w - 1, m = k * e.height, s = Math.max((L - C) * e.height - m, 0);
     }
-    return { items: r, firstItem: i, lastItem: s, topBuffer: t, bottomBuffer: c };
+    return { items: r, firstItem: t, lastItem: i, topBuffer: m, bottomBuffer: s };
   }
   needle;
-  filter = mo((o) => {
-    if (this.needle !== o)
-      this.needle = o, this.update(this.array);
-  }, an);
-  update(o, e) {
-    if (o == null)
-      o = [];
-    this.array = o;
-    let { hiddenProp: n, visibleProp: r } = this.options, i = $(o), s = this.visibleSlice();
-    this.boundElement.classList.toggle("-xin-empty-list", s.items.length === 0);
-    let t = this._previousSlice, { firstItem: c, lastItem: f, topBuffer: m, bottomBuffer: d } = s;
-    if (n === undefined && r === undefined && e === true && t != null && c === t.firstItem && f === t.lastItem)
+  filter = fe((e) => {
+    if (this.needle !== e)
+      this.needle = e, this.update(this.array);
+  }, yn);
+  update(e, o) {
+    if (e == null)
+      e = [];
+    this.array = e;
+    let { hiddenProp: n, visibleProp: r } = this.options, t = x(e), i = this.visibleSlice();
+    this.boundElement.classList.toggle("-xin-empty-list", i.items.length === 0);
+    let m = this._previousSlice, { firstItem: s, lastItem: c, topBuffer: f, bottomBuffer: u } = i;
+    if (n === undefined && r === undefined && o === true && m != null && s === m.firstItem && c === m.lastItem)
       return;
-    this._previousSlice = s;
-    let h = 0, p = 0, T = 0;
-    for (let a of Array.from(this.boundElement.children)) {
-      if (a === this.listTop || a === this.listBottom)
+    this._previousSlice = i;
+    let y = 0, C = 0, L = 0;
+    for (let h of Array.from(this.boundElement.children)) {
+      if (h === this.listTop || h === this.listBottom)
         continue;
-      let k = a[so];
-      if (k == null)
-        a.remove();
+      let S = h[ie];
+      if (S == null)
+        h.remove();
       else {
-        let b = s.items.indexOf(k);
-        if (b < c || b > f)
-          a.remove(), this.itemToElement.delete(k), h++;
+        let b = i.items.indexOf(S);
+        if (b < s || b > c)
+          h.remove(), this.itemToElement.delete(S), y++;
       }
     }
-    this.listTop.style.height = String(m) + "px", this.listBottom.style.height = String(d) + "px";
-    let w = [], { idPath: L } = this.options;
-    for (let a = c;a <= f; a++) {
-      let k = s.items[a];
-      if (k === undefined)
+    this.listTop.style.height = String(f) + "px", this.listBottom.style.height = String(u) + "px";
+    let w = [], { idPath: k } = this.options;
+    for (let h = s;h <= c; h++) {
+      let S = i.items[h];
+      if (S === undefined)
         continue;
-      let b = this.itemToElement.get(C(k));
+      let b = this.itemToElement.get(p(S));
       if (b == null) {
-        if (T++, b = Q(this.template), typeof k === "object")
-          this.itemToElement.set(C(k), b), b[so] = C(k);
-        if (this.boundElement.insertBefore(b, this.listBottom), L != null) {
-          let xo = k[L], Ge = `${i}[${L}=${xo}]`;
-          Ye(b, Ge);
+        if (L++, b = A(this.template), typeof S === "object")
+          this.itemToElement.set(p(S), b), b[ie] = p(S);
+        if (this.boundElement.insertBefore(b, this.listBottom), k != null) {
+          let Ee = S[k], jo = `${t}[${k}=${Ee}]`;
+          zo(b, jo);
         } else {
-          let xo = `${i}[${a}]`;
-          Ye(b, xo);
+          let Ee = `${t}[${h}]`;
+          zo(b, Ee);
         }
       }
       w.push(b);
     }
     let K = null;
-    for (let a of w) {
-      if (a.previousElementSibling !== K)
-        if (p++, K?.nextElementSibling != null)
-          this.boundElement.insertBefore(a, K.nextElementSibling);
+    for (let h of w) {
+      if (h.previousElementSibling !== K)
+        if (C++, K?.nextElementSibling != null)
+          this.boundElement.insertBefore(h, K.nextElementSibling);
         else
-          this.boundElement.insertBefore(a, this.listBottom);
-      K = a;
+          this.boundElement.insertBefore(h, this.listBottom);
+      K = h;
     }
-    if (G.perf)
-      console.log(i, "updated", { removed: h, created: T, moved: p });
+    if (q.perf)
+      console.log(t, "updated", { removed: y, created: L, moved: C });
   }
 }
-var uo = (o, e, n) => {
-  let r = o[_];
-  if (e && r === undefined)
-    r = new Je(o, e, n), o[_] = r;
+var ue = (e, o, n) => {
+  let r = e[_];
+  if (o && r === undefined)
+    r = new Do(e, o, n), e[_] = r;
   return r;
 };
-var vo = (o) => {
-  let e;
-  while (!(e = o[so]) && o && o.parentElement)
-    o = o.parentElement;
-  return e ? { element: o, item: e } : undefined;
+var Ve = (e) => {
+  let o;
+  while (!(o = e[ie]) && e && e.parentElement)
+    e = e.parentElement;
+  return o ? { element: e, item: o } : undefined;
 };
-var _o = (o) => {
-  let e = vo(o);
-  return e ? e.item : undefined;
+var Ie = (e) => {
+  let o = Ve(e);
+  return o ? o.item : undefined;
 };
-var wn = (o) => {
-  let e = vo(o);
-  if (!e)
-    return console.error("deleteListItem failed, element is not part of a list instance", o), false;
-  let n = uo(e.element.parentElement);
+var hn = (e) => {
+  let o = Ve(e);
+  if (!o)
+    return console.error("deleteListItem failed, element is not part of a list instance", e), false;
+  let n = ue(o.element.parentElement);
   if (!n.options.idPath)
-    return console.error("deleteListItem failed, list binding has no idPath", o.parentElement, n), false;
-  let r = n.array.indexOf(e.item);
+    return console.error("deleteListItem failed, list binding has no idPath", e.parentElement, n), false;
+  let r = n.array.indexOf(o.item);
   if (r > -1)
     return n.array.splice(r, 1), true;
   return false;
 };
-var { document: ro, MutationObserver: We } = globalThis;
-var No = (o, e) => {
-  let n = g.get(o);
+var { document: re, MutationObserver: Fo } = globalThis;
+var Pe = (e, o) => {
+  let n = X.get(e);
   if (n == null)
     return;
   for (let r of n) {
-    let { binding: i, options: s } = r, { path: t } = r, { toDOM: c } = i;
-    if (c != null) {
-      if (t.startsWith("^")) {
-        let f = _o(o);
-        if (f != null && f[x] != null)
-          t = r.path = `${f[x]}${t.substring(1)}`;
+    let { binding: t, options: i } = r, { path: m } = r, { toDOM: s } = t;
+    if (s != null) {
+      if (m.startsWith("^")) {
+        let c = Ie(e);
+        if (c != null && c[E] != null)
+          m = r.path = `${c[E]}${m.substring(1)}`;
         else
-          throw console.error(`Cannot resolve relative binding ${t}`, o, "is not part of a list"), Error(`Cannot resolve relative binding ${t}`);
+          throw console.error(`Cannot resolve relative binding ${m}`, e, "is not part of a list"), Error(`Cannot resolve relative binding ${m}`);
       }
-      if (e == null || t.startsWith(e))
-        c(o, fo()[t], s);
+      if (o == null || m.startsWith(o))
+        s(e, me()[m], i);
     }
   }
 };
-if (We != null)
-  new We((e) => {
-    e.forEach((n) => {
+if (Fo != null)
+  new Fo((o) => {
+    o.forEach((n) => {
       Array.from(n.addedNodes).forEach((r) => {
         if (r instanceof Element)
-          Array.from(r.querySelectorAll(Y)).forEach((i) => No(i));
+          Array.from(r.querySelectorAll(F)).forEach((t) => Pe(t));
       });
     });
-  }).observe(ro.body, { subtree: true, childList: true });
-j(() => true, (o) => {
-  let e = Array.from(ro.querySelectorAll(Y));
-  for (let n of e)
-    No(n, o);
+  }).observe(re.body, { subtree: true, childList: true });
+J(() => true, (e) => {
+  let o = Array.from(re.querySelectorAll(F));
+  for (let n of o)
+    Pe(n, e);
 });
-var je = (o) => {
-  let e = o.target?.closest(Y);
-  while (e != null) {
-    let n = g.get(e);
+var Yo = (e) => {
+  let o = e.target?.closest(F);
+  while (o != null) {
+    let n = X.get(o);
     for (let r of n) {
-      let { binding: i, path: s } = r, { fromDOM: t } = i;
-      if (t != null) {
-        let c;
+      let { binding: t, path: i } = r, { fromDOM: m } = t;
+      if (m != null) {
+        let s;
         try {
-          c = t(e, r.options);
-        } catch (f) {
-          throw console.error("Cannot get value from", e, "via", r), Error("Cannot obtain value fromDOM");
+          s = m(o, r.options);
+        } catch (c) {
+          throw console.error("Cannot get value from", o, "via", r), Error("Cannot obtain value fromDOM");
         }
-        if (c != null) {
-          let f = fo(), m = f[s];
-          if (m == null)
-            f[s] = c;
+        if (s != null) {
+          let c = me(), f = c[i];
+          if (f == null)
+            c[i] = s;
           else {
-            let d = m[x] != null ? m[X] : m, h = c[x] != null ? c[X] : c;
-            if (d !== h)
-              f[s] = h;
+            let u = f[E] != null ? f[$] : f, y = s[E] != null ? s[$] : s;
+            if (u !== y)
+              c[i] = y;
           }
         }
       }
     }
-    e = e.parentElement.closest(Y);
+    o = o.parentElement.closest(F);
   }
 };
 if (globalThis.document != null)
-  ro.body.addEventListener("change", je, true), ro.body.addEventListener("input", je, true);
-function S(o, e, n, r) {
-  if (o instanceof DocumentFragment)
+  re.body.addEventListener("change", Yo, true), re.body.addEventListener("input", Yo, true);
+function H(e, o, n, r) {
+  if (e instanceof DocumentFragment)
     throw Error("bind cannot bind to a DocumentFragment");
-  let i;
-  if (typeof e === "object" && e[x] === undefined && r === undefined) {
-    let { value: c } = e;
-    i = typeof c === "string" ? c : c[x], r = e, delete r.value;
+  let t;
+  if (typeof o === "object" && o[E] === undefined && r === undefined) {
+    let { value: s } = o;
+    t = typeof s === "string" ? s : s[E], r = o, delete r.value;
   } else
-    i = typeof e === "string" ? e : e[x];
-  if (i == null)
-    throw Error("bind requires a path or object with xin Proxy");
-  let { toDOM: s } = n;
-  o.classList?.add(bo);
-  let t = g.get(o);
+    t = typeof o === "string" ? o : o[E];
   if (t == null)
-    t = [], g.set(o, t);
-  if (t.push({ path: i, binding: n, options: r }), s != null && !i.startsWith("^"))
-    I(i);
+    throw Error("bind requires a path or object with xin Proxy");
+  let { toDOM: i } = n;
+  e.classList?.add(be);
+  let m = X.get(e);
+  if (m == null)
+    m = [], X.set(e, m);
+  if (m.push({ path: t, binding: n, options: r }), i != null && !t.startsWith("^"))
+    R(t);
   if (r?.filter && r?.needle)
-    S(o, r.needle, { toDOM(c, f) {
-      console.log({ needle: f }), c[_]?.filter(f);
+    H(e, r.needle, { toDOM(s, c) {
+      console.log({ needle: c }), s[_]?.filter(c);
     } });
-  return o;
+  return e;
 }
-var qe = new Set;
-var pn = (o) => {
-  let e = o?.target?.closest(To), n = false, r = new Proxy(o, { get(s, t) {
-    if (t === "stopPropagation")
+var Jo = new Set;
+var wn = (e) => {
+  let o = e?.target?.closest(Me), n = false, r = new Proxy(e, { get(i, m) {
+    if (m === "stopPropagation")
       return () => {
-        o.stopPropagation(), n = true;
+        e.stopPropagation(), n = true;
       };
     else {
-      let c = s[t];
-      return typeof c === "function" ? c.bind(s) : c;
+      let s = i[m];
+      return typeof s === "function" ? s.bind(i) : s;
     }
-  } }), i = new Set;
-  while (!n && e != null) {
-    let t = q.get(e)[o.type] || i;
-    for (let c of t) {
-      if (typeof c === "function")
-        c(r);
+  } }), t = new Set;
+  while (!n && o != null) {
+    let m = j.get(o)[e.type] || t;
+    for (let s of m) {
+      if (typeof s === "function")
+        s(r);
       else {
-        let f = fo()[c];
-        if (typeof f === "function")
-          f(r);
+        let c = me()[s];
+        if (typeof c === "function")
+          c(r);
         else
-          throw Error(`no event handler found at path ${c}`);
+          throw Error(`no event handler found at path ${s}`);
       }
       if (n)
         continue;
     }
-    e = e.parentElement != null ? e.parentElement.closest(To) : null;
+    o = o.parentElement != null ? o.parentElement.closest(Me) : null;
   }
 };
-function V(o, e, n) {
-  let r = q.get(o);
-  if (o.classList.add(Mo), r == null)
-    r = {}, q.set(o, r);
-  if (!r[e])
-    r[e] = new Set;
-  if (r[e].add(n), !qe.has(e))
-    qe.add(e), ro.body.addEventListener(e, pn, true);
+function P(e, o, n) {
+  let r = j.get(e);
+  if (e.classList.add(xe), r == null)
+    r = {}, j.set(e, r);
+  if (!r[o])
+    r[o] = new Set;
+  if (r[o].add(n), !Jo.has(o))
+    Jo.add(o), re.body.addEventListener(o, wn, true);
   return () => {
-    r[e].delete(n);
+    r[o].delete(n);
   };
 }
-ye(S, V);
-var Cn = 0;
-function oe() {
-  return `custom-elt${(Cn++).toString(36)}`;
+mo(H, P);
+var pn = 0;
+function Be() {
+  return `custom-elt${(pn++).toString(36)}`;
 }
-var Qe = 0;
-var ee = null;
-function En() {
-  if (ee === null)
-    ee = new MutationObserver((o) => {
-      let e = new Set;
-      for (let n of o)
-        if (n.type === "attributes" && n.target instanceof F) {
-          let r = n.target, i = Zo(n.attributeName);
-          if (r._legacyTrackedAttrs?.has(i))
-            e.add(r);
-        }
-      for (let n of e)
-        n.queueRender(false);
-    });
-  return ee;
-}
-var io = {};
-function xn(o, e) {
-  let n = io[o], r = B(e).replace(/:host\b/g, o);
-  io[o] = n ? n + `
+var Wo = 0;
+var te = {};
+function Cn(e, o) {
+  let n = te[e], r = I(o).replace(/:host\b/g, e);
+  te[e] = n ? n + `
 ` + r : r;
 }
-function bn(o) {
-  if (io[o])
-    document.head.append(u.style({ id: o + "-component" }, io[o]));
-  delete io[o];
+function En(e) {
+  if (te[e])
+    document.head.append(d.style({ id: e + "-component" }, te[e]));
+  delete te[e];
 }
 
-class F extends HTMLElement {
-  static elements = u;
+class W extends HTMLElement {
+  static elements = d;
   static _elementCreator;
-  static initAttributes;
-  static formAssociated;
-  internals;
-  static get observedAttributes() {
-    let o = this.initAttributes;
-    if (o)
-      return ["hidden", ...Object.keys(o).map(E)];
-    return ["hidden"];
-  }
   instanceId;
   styleNode;
   static styleSpec;
   static styleNode;
-  content = u.slot();
+  content = d.slot();
   isSlotted;
   static _tagName = null;
   static get tagName() {
     return this._tagName;
   }
-  _legacyTrackedAttrs;
-  _attrValues;
-  static StyleNode(o) {
-    return console.warn("StyleNode is deprecated, just assign static styleSpec: XinStyleSheet to the class directly"), u.style(B(o));
+  static StyleNode(e) {
+    return console.warn("StyleNode is deprecated, just assign static styleSpec: XinStyleSheet to the class directly"), d.style(I(e));
   }
-  static elementCreator(o = {}) {
-    let e = this;
-    if (e._elementCreator == null) {
-      let { tag: n, styleSpec: r } = o, i = o != null ? n : null;
-      if (i == null)
-        if (typeof e.name === "string" && e.name !== "") {
-          if (i = E(e.name), i.startsWith("-"))
-            i = i.slice(1);
+  static elementCreator(e = {}) {
+    let o = this;
+    if (o._elementCreator == null) {
+      let { tag: n, styleSpec: r } = e, t = e != null ? n : null;
+      if (t == null)
+        if (typeof o.name === "string" && o.name !== "") {
+          if (t = M(o.name), t.startsWith("-"))
+            t = t.slice(1);
         } else
-          i = oe();
-      if (customElements.get(i) != null)
-        console.warn(`${i} is already defined`);
-      if (i.match(/\w+(-\w+)+/) == null)
-        console.warn(`${i} is not a legal tag for a custom-element`), i = oe();
-      while (customElements.get(i) !== undefined)
-        i = oe();
-      if (e._tagName = i, r !== undefined)
-        xn(i, r);
-      window.customElements.define(i, this, o), e._elementCreator = u[i];
+          t = Be();
+      if (customElements.get(t) != null)
+        console.warn(`${t} is already defined`);
+      if (t.match(/\w+(-\w+)+/) == null)
+        console.warn(`${t} is not a legal tag for a custom-element`), t = Be();
+      while (customElements.get(t) !== undefined)
+        t = Be();
+      if (o._tagName = t, r !== undefined)
+        Cn(t, r);
+      window.customElements.define(t, this, e), o._elementCreator = d[t];
     }
-    return e._elementCreator;
+    return o._elementCreator;
   }
-  initAttributes(...o) {
-    if (J("initAttributes", "initAttributes() is deprecated. Use static initAttributes = { ... } instead."), !this._legacyTrackedAttrs)
-      this._legacyTrackedAttrs = new Set;
-    for (let i of o)
-      this._legacyTrackedAttrs.add(i);
-    En().observe(this, { attributes: true });
-    let n = {}, r = {};
-    o.forEach((i) => {
-      n[i] = H(this[i]);
-      let s = E(i);
-      Object.defineProperty(this, i, { enumerable: false, get() {
-        if (typeof n[i] === "boolean")
-          return this.hasAttribute(s);
-        else if (this.hasAttribute(s))
-          return typeof n[i] === "number" ? parseFloat(this.getAttribute(s)) : this.getAttribute(s);
-        else if (r[i] !== undefined)
-          return r[i];
+  initAttributes(...e) {
+    let o = {}, n = {};
+    new MutationObserver((t) => {
+      let i = false;
+      if (t.forEach((m) => {
+        i = !!(m.attributeName && e.includes(xo(m.attributeName)));
+      }), i && this.queueRender !== undefined)
+        this.queueRender(false);
+    }).observe(this, { attributes: true }), e.forEach((t) => {
+      o[t] = g(this[t]);
+      let i = M(t);
+      Object.defineProperty(this, t, { enumerable: false, get() {
+        if (typeof o[t] === "boolean")
+          return this.hasAttribute(i);
+        else if (this.hasAttribute(i))
+          return typeof o[t] === "number" ? parseFloat(this.getAttribute(i)) : this.getAttribute(i);
+        else if (n[t] !== undefined)
+          return n[t];
         else
-          return n[i];
-      }, set(t) {
-        if (typeof n[i] === "boolean") {
-          if (t !== this[i]) {
-            if (t)
-              this.setAttribute(s, "");
+          return o[t];
+      }, set(m) {
+        if (typeof o[t] === "boolean") {
+          if (m !== this[t]) {
+            if (m)
+              this.setAttribute(i, "");
             else
-              this.removeAttribute(s);
+              this.removeAttribute(i);
             this.queueRender();
           }
-        } else if (typeof n[i] === "number") {
-          if (t !== parseFloat(this[i]))
-            this.setAttribute(s, t), this.queueRender();
-        } else if (typeof t === "object" || `${t}` !== `${this[i]}`) {
-          if (t === null || t === undefined || typeof t === "object")
-            this.removeAttribute(s);
+        } else if (typeof o[t] === "number") {
+          if (m !== parseFloat(this[t]))
+            this.setAttribute(i, m), this.queueRender();
+        } else if (typeof m === "object" || `${m}` !== `${this[t]}`) {
+          if (m === null || m === undefined || typeof m === "object")
+            this.removeAttribute(i);
           else
-            this.setAttribute(s, t);
-          this.queueRender(), r[i] = t;
+            this.setAttribute(i, m);
+          this.queueRender(), n[t] = m;
         }
       } });
     });
   }
   initValue() {
-    let o = Object.getOwnPropertyDescriptor(this, "value");
-    if (o === undefined || o.get !== undefined || o.set !== undefined)
+    let e = Object.getOwnPropertyDescriptor(this, "value");
+    if (e === undefined || e.get !== undefined || e.set !== undefined)
       return;
-    let e = this.hasAttribute("value") ? this.getAttribute("value") : H(this.value);
+    let o = this.hasAttribute("value") ? this.getAttribute("value") : g(this.value);
     delete this.value, Object.defineProperty(this, "value", { enumerable: false, get() {
-      return e;
+      return o;
     }, set(n) {
-      if (e !== n)
-        e = n, this.queueRender(true);
+      if (o !== n)
+        o = n, this.queueRender(true);
     } });
   }
   _parts;
   get parts() {
-    let o = this.shadowRoot != null ? this.shadowRoot : this;
+    let e = this.shadowRoot != null ? this.shadowRoot : this;
     if (this._parts == null)
-      this._parts = new Proxy({}, { get(e, n) {
-        if (e[n] === undefined) {
-          let r = o.querySelector(`[part="${n}"]`);
+      this._parts = new Proxy({}, { get(o, n) {
+        if (o[n] === undefined) {
+          let r = e.querySelector(`[part="${n}"]`);
           if (r == null)
-            r = o.querySelector(n);
+            r = e.querySelector(n);
           if (r == null)
             throw Error(`elementRef "${n}" does not exist!`);
-          r.removeAttribute("data-ref"), e[n] = r;
+          r.removeAttribute("data-ref"), o[n] = r;
         }
-        return e[n];
+        return o[n];
       } });
     return this._parts;
   }
-  attributeChangedCallback(o, e, n) {
-    let r = Zo(o);
-    if (!this._legacyTrackedAttrs?.has(r))
-      this.queueRender(false);
-  }
   constructor() {
     super();
-    if (Qe += 1, this.constructor.formAssociated && typeof this.attachInternals === "function")
-      this.internals = this.attachInternals();
-    let o = this.constructor.initAttributes;
-    if (o)
-      this._setupAttributeAccessors(o);
-    this.instanceId = `${this.tagName.toLocaleLowerCase()}-${Qe}`, this._value = H(this.defaultValue);
-  }
-  _setupAttributeAccessors(o) {
-    if (!this._attrValues)
-      this._attrValues = new Map;
-    for (let e of Object.keys(o)) {
-      let n = E(e), r = o[e];
-      if (typeof r === "object" && r !== null) {
-        console.warn(`${this.tagName}: initAttributes.${e} is an object. Use a regular property instead.`);
-        continue;
-      }
-      let i = this, s = false;
-      while (i) {
-        let t = Object.getOwnPropertyDescriptor(i, e);
-        if (t) {
-          if (!t.configurable || t.get || t.set) {
-            s = true;
-            break;
-          }
-          break;
-        }
-        i = Object.getPrototypeOf(i);
-      }
-      if (s)
-        continue;
-      Object.defineProperty(this, e, { enumerable: false, get: () => {
-        if (typeof r === "boolean")
-          return this.hasAttribute(n);
-        else if (this.hasAttribute(n))
-          return typeof r === "number" ? parseFloat(this.getAttribute(n)) : this.getAttribute(n);
-        else if (this._attrValues.has(e))
-          return this._attrValues.get(e);
-        else
-          return r;
-      }, set: (t) => {
-        if (typeof r === "boolean") {
-          if (t !== this[e]) {
-            if (t)
-              this.setAttribute(n, "");
-            else
-              this.removeAttribute(n);
-            this.queueRender();
-          }
-        } else if (typeof r === "number") {
-          if (t !== parseFloat(this[e]))
-            this.setAttribute(n, t), this.queueRender();
-        } else if (typeof t === "object" || `${t}` !== `${this[e]}`) {
-          if (t === null || t === undefined || typeof t === "object")
-            this.removeAttribute(n);
-          else
-            this.setAttribute(n, t);
-          this.queueRender(), this._attrValues.set(e, t);
-        }
-      } });
-    }
+    Wo += 1, this.initAttributes("hidden"), this.instanceId = `${this.tagName.toLocaleLowerCase()}-${Wo}`, this._value = g(this.defaultValue);
   }
   connectedCallback() {
-    if (bn(this.constructor.tagName), this.hydrate(), this.role != null)
+    if (En(this.constructor.tagName), this.hydrate(), this.role != null)
       this.setAttribute("role", this.role);
     if (this.onResize !== undefined) {
-      if (no.observe(this), this._onResize == null)
+      if (ne.observe(this), this._onResize == null)
         this._onResize = this.onResize.bind(this);
       this.addEventListener("resize", this._onResize);
     }
@@ -1702,19 +1607,19 @@ class F extends HTMLElement {
     this.queueRender();
   }
   disconnectedCallback() {
-    no.unobserve(this);
+    ne.unobserve(this);
   }
   _changeQueued = false;
   _renderQueued = false;
-  queueRender(o = false) {
+  queueRender(e = false) {
     if (!this._hydrated)
       return;
     if (!this._changeQueued)
-      this._changeQueued = o;
+      this._changeQueued = e;
     if (!this._renderQueued)
       this._renderQueued = true, requestAnimationFrame(() => {
         if (this._changeQueued)
-          Jo(this, "change");
+          Fe(this, "change");
         this._changeQueued = false, this._renderQueued = false, this.render();
       });
   }
@@ -1722,27 +1627,27 @@ class F extends HTMLElement {
   hydrate() {
     if (!this._hydrated) {
       this.initValue();
-      let o = typeof this.content !== "function", e = typeof this.content === "function" ? this.content(u) : this.content, { styleSpec: n } = this.constructor, { styleNode: r } = this.constructor;
+      let e = typeof this.content !== "function", o = typeof this.content === "function" ? this.content(d) : this.content, { styleSpec: n } = this.constructor, { styleNode: r } = this.constructor;
       if (n)
-        r = this.constructor.styleNode = u.style(B(n)), delete this.constructor.styleNode;
+        r = this.constructor.styleNode = d.style(I(n)), delete this.constructor.styleNode;
       if (this.styleNode)
         console.warn(this, "styleNode is deprecrated, use static styleNode or statc styleSpec instead"), r = this.styleNode;
       if (r) {
-        let i = this.attachShadow({ mode: "open" });
-        i.appendChild(r.cloneNode(true)), Wo(i, e, o);
-      } else if (e !== null) {
-        let i = Array.from(this.childNodes);
-        Wo(this, e, o), this.isSlotted = this.querySelector("slot,xin-slot") !== undefined;
-        let s = Array.from(this.querySelectorAll("slot"));
-        if (s.length > 0)
-          s.forEach(ne.replaceSlot);
-        if (i.length > 0) {
-          let t = { "": this };
-          Array.from(this.querySelectorAll("xin-slot")).forEach((c) => {
-            t[c.name] = c;
-          }), i.forEach((c) => {
-            let f = t[""], m = c instanceof Element ? t[c.slot] : f;
-            (m !== undefined ? m : f).append(c);
+        let t = this.attachShadow({ mode: "open" });
+        t.appendChild(r.cloneNode(true)), Ye(t, o, e);
+      } else if (o !== null) {
+        let t = Array.from(this.childNodes);
+        Ye(this, o, e), this.isSlotted = this.querySelector("slot,xin-slot") !== undefined;
+        let i = Array.from(this.querySelectorAll("slot"));
+        if (i.length > 0)
+          i.forEach(_e.replaceSlot);
+        if (t.length > 0) {
+          let m = { "": this };
+          Array.from(this.querySelectorAll("xin-slot")).forEach((s) => {
+            m[s.name] = s;
+          }), t.forEach((s) => {
+            let c = m[""], f = s instanceof Element ? m[s.slot] : c;
+            (f !== undefined ? f : c).append(s);
           });
         }
       }
@@ -1752,78 +1657,78 @@ class F extends HTMLElement {
   render() {}
 }
 
-class ne extends F {
+class _e extends W {
   name = "";
   content = null;
-  static replaceSlot(o) {
-    let e = document.createElement("xin-slot");
-    if (o.name !== "")
-      e.setAttribute("name", o.name);
-    o.replaceWith(e);
+  static replaceSlot(e) {
+    let o = document.createElement("xin-slot");
+    if (e.name !== "")
+      o.setAttribute("name", e.name);
+    e.replaceWith(o);
   }
   constructor() {
     super();
     this.initAttributes("name");
   }
 }
-var Qr = ne.elementCreator({ tag: "xin-slot" });
-var Mn = (o = () => true) => {
-  let e = localStorage.getItem("xin-state");
-  if (e != null) {
-    let r = JSON.parse(e);
-    for (let i of Object.keys(r).filter(o))
-      if (y[i] !== undefined)
-        Object.assign(y[i], r[i]);
+var Wr = _e.elementCreator({ tag: "xin-slot" });
+var bn = (e = () => true) => {
+  let o = localStorage.getItem("xin-state");
+  if (o != null) {
+    let r = JSON.parse(o);
+    for (let t of Object.keys(r).filter(e))
+      if (a[t] !== undefined)
+        Object.assign(a[t], r[t]);
       else
-        y[i] = r[i];
+        a[t] = r[t];
   }
-  let n = jo(() => {
-    let r = {}, i = C(y);
-    for (let s of Object.keys(i).filter(o))
-      r[s] = i[s];
+  let n = Je(() => {
+    let r = {}, t = p(a);
+    for (let i of Object.keys(t).filter(e))
+      r[i] = t[i];
     localStorage.setItem("xin-state", JSON.stringify(r)), console.log("xin state saved to localStorage");
   }, 500);
-  Vo(o, n);
+  Re(e, n);
 };
-var re = "1.1.3";
-function wo(o) {
-  return Object.assign(v, o), v;
+var Ne = "1.1.3";
+function he(e) {
+  return Object.assign(B, e), B;
 }
-function po(o) {
-  return J("boxedProxy", "boxedProxy is deprecated, please use tosi() instead"), wo(o);
+function we(e) {
+  return v("boxedProxy", "boxedProxy is deprecated, please use tosi() instead"), he(e);
 }
-function ie(o, e = false) {
-  if (e)
-    return J("xinProxy-boxed", "xinProxy(..., true) is deprecated; use tosi(...) instead"), po(o);
-  return Object.keys(o).forEach((n) => {
-    y[n] = o[n];
-  }), y;
+function eo(e, o = false) {
+  if (o)
+    return v("xinProxy-boxed", "xinProxy(..., true) is deprecated; use tosi(...) instead"), we(e);
+  return Object.keys(e).forEach((n) => {
+    a[n] = e[n];
+  }), a;
 }
-var Tn = {};
-async function Co(o, e) {
-  let { type: n, styleSpec: r } = await e(o, { Color: l, Component: F, elements: u, svgElements: Io, mathML: Po, varDefault: yo, vars: Ao, xin: y, boxed: v, xinProxy: ie, boxedProxy: po, tosi: wo, makeComponent: Co, bind: S, on: V, version: re }), i = { type: n, creator: n.elementCreator({ tag: o, styleSpec: r }) };
-  return Tn[o] = i, i;
+var xn = {};
+async function pe(e, o) {
+  let { type: n, styleSpec: r } = await o(e, { Color: l, Component: W, elements: d, svgElements: Ue, mathML: Ke, varDefault: de, vars: Ge, xin: a, boxed: B, xinProxy: eo, boxedProxy: we, tosi: he, makeComponent: pe, bind: H, on: P, version: Ne }), t = { type: n, creator: n.elementCreator({ tag: e, styleSpec: r }) };
+  return xn[e] = t, t;
 }
-var se = {};
-var Ln = (o) => import(o);
+var oo = {};
+var Mn = (e) => import(e);
 
-class Eo extends F {
+class Ce extends W {
   tag = "anon-elt";
   src = "";
   property = "default";
   loaded;
-  blueprintLoaded = (o) => {};
+  blueprintLoaded = (e) => {};
   async packaged() {
-    let { tag: o, src: e, property: n } = this, r = `${o}.${n}:${e}`;
+    let { tag: e, src: o, property: n } = this, r = `${e}.${n}:${o}`;
     if (!this.loaded) {
-      if (se[r] === undefined)
-        se[r] = Ln(e).then((i) => {
-          let s = i[n];
-          return Co(o, s);
+      if (oo[r] === undefined)
+        oo[r] = Mn(o).then((t) => {
+          let i = t[n];
+          return pe(e, i);
         });
       else
-        console.log(`using cached ${o} with signature ${r}`);
-      this.loaded = await se[r], this.blueprintLoaded(this.loaded);
+        console.log(`using cached ${e} with signature ${r}`);
+      this.loaded = await oo[r], this.blueprintLoaded(this.loaded);
     }
     return this.loaded;
   }
@@ -1832,22 +1737,22 @@ class Eo extends F {
     this.initAttributes("tag", "src", "property");
   }
 }
-var kn = Eo.elementCreator({ tag: "xin-blueprint", styleSpec: { ":host": { display: "none" } } });
+var Tn = Ce.elementCreator({ tag: "xin-blueprint", styleSpec: { ":host": { display: "none" } } });
 
-class te extends F {
+class no extends W {
   allLoaded = () => {};
   constructor() {
     super();
   }
   async load() {
-    let e = Array.from(this.querySelectorAll(Eo.tagName)).filter((n) => n.src).map((n) => n.packaged());
-    await Promise.all(e), this.allLoaded();
+    let o = Array.from(this.querySelectorAll(Ce.tagName)).filter((n) => n.src).map((n) => n.packaged());
+    await Promise.all(o), this.allLoaded();
   }
   connectedCallback() {
     super.connectedCallback(), this.load();
   }
 }
-var Sn = te.elementCreator({ tag: "xin-loader", styleSpec: { ":host": { display: "none" } } });
+var Ln = no.elementCreator({ tag: "xin-loader", styleSpec: { ":host": { display: "none" } } });
 
 // src/index.ts
 var exports_src = {};
@@ -1873,6 +1778,7 @@ __export(exports_src, {
   trackDrag: () => trackDrag,
   tosijs: () => exports_module,
   tosiSelect: () => tosiSelect,
+  tosiSegmented: () => tosiSegmented,
   tosiRating: () => tosiRating,
   tosiMonth: () => tosiMonth,
   tosiDialog: () => tosiDialog,
@@ -1952,6 +1858,7 @@ __export(exports_src, {
   XinField: () => XinField,
   XinCarousel: () => XinCarousel,
   TosiSelect: () => TosiSelect,
+  TosiSegmented: () => TosiSegmented,
   TosiRating: () => TosiRating,
   TosiMonth: () => TosiMonth,
   TosiDialog: () => TosiDialog,
@@ -1977,7 +1884,7 @@ __export(exports_src, {
 // src/ab-test.ts
 var abTestConditions = {};
 
-class AbTest extends F {
+class AbTest extends W {
   static set conditions(context) {
     Object.assign(abTestConditions, context);
     for (const abTest of [...AbTest.instances]) {
@@ -2014,7 +1921,7 @@ function scriptTag(src, existingSymbolName) {
       const existing = globalThis[existingSymbolName];
       loadedScripts[src] = Promise.resolve({ [existingSymbolName]: existing });
     }
-    const scriptElt = u.script({ src });
+    const scriptElt = d.script({ src });
     document.head.append(scriptElt);
     loadedScripts[src] = new Promise((resolve) => {
       scriptElt.onload = () => resolve(globalThis);
@@ -2025,7 +1932,7 @@ function scriptTag(src, existingSymbolName) {
 var loadedStyleSheets = {};
 function styleSheet(href) {
   if (loadedStyleSheets[href] === undefined) {
-    const linkElement = u.link({
+    const linkElement = d.link({
       rel: "stylesheet",
       type: "text/css",
       href
@@ -2403,25 +2310,25 @@ var icons = new Proxy(icon_data_default, {
       iconSpec = icon_data_default.square;
     }
     return (...parts) => {
-      const div = u.div();
+      const div = d.div();
       div.innerHTML = iconSpec;
       const sourceSvg = div.querySelector("svg");
       const classes = new Set(sourceSvg.classList);
       classes.add("xin-icon");
-      const svg = Io.svg({
+      const svg = Ue.svg({
         class: Array.from(classes).join(" "),
         viewBox: sourceSvg.getAttribute("viewBox")
       }, ...parts, ...sourceSvg.children);
-      svg.style.strokeWidth = yo.tosiIconStrokeWidth("2px");
-      svg.style.stroke = yo.tosiIconStroke(classes.has("filled") ? "none" : "currentColor");
-      svg.style.fill = yo.tosiIconFill(classes.has("stroked") ? "none" : "currentColor");
-      svg.style.height = yo.tosiIconSize("16px");
+      svg.style.strokeWidth = de.tosiIconStrokeWidth("2px");
+      svg.style.stroke = de.tosiIconStroke(classes.has("filled") ? "none" : "currentColor");
+      svg.style.fill = de.tosiIconFill(classes.has("stroked") ? "none" : "currentColor");
+      svg.style.height = de.tosiIconSize("16px");
       return svg;
     };
   }
 });
 
-class SvgIcon extends F {
+class SvgIcon extends W {
   static initAttributes = {
     icon: "",
     size: 0,
@@ -2457,13 +2364,13 @@ var svgIcon = SvgIcon.elementCreator({
       "--tosi-icon-fill": "var(--xin-icon-fill, var(--icon-fill, none))",
       display: "inline-flex",
       stroke: "currentColor",
-      strokeWidth: yo.tosiIconStrokeWidth("2px"),
-      strokeLinejoin: yo.tosiIconStrokeLinejoin("round"),
-      strokeLinecap: yo.tosiIconStrokeLinecap("round"),
-      fill: yo.tosiIconFill("none")
+      strokeWidth: de.tosiIconStrokeWidth("2px"),
+      strokeLinejoin: de.tosiIconStrokeLinejoin("round"),
+      strokeLinecap: de.tosiIconStrokeLinecap("round"),
+      fill: de.tosiIconFill("none")
     },
     ":host, :host svg": {
-      height: yo.tosiIconSize("16px")
+      height: de.tosiIconSize("16px")
     }
   }
 });
@@ -2471,7 +2378,7 @@ var svgIcon = SvgIcon.elementCreator({
 // src/babylon-3d.ts
 var noop = () => {};
 
-class B3d extends F {
+class B3d extends W {
   babylonReady;
   BABYLON;
   static styleSpec = {
@@ -2501,7 +2408,7 @@ class B3d extends F {
       transform: "scale(1.1)"
     }
   };
-  content = u.canvas({ part: "canvas" });
+  content = d.canvas({ part: "canvas" });
   constructor() {
     super();
     this.babylonReady = (async () => {
@@ -2577,7 +2484,7 @@ class B3d extends F {
 }
 var b3d = B3d.elementCreator({ tag: "xin-3d" });
 // src/bodymovin-player.ts
-class BodymovinPlayer extends F {
+class BodymovinPlayer extends W {
   static initAttributes = {
     src: "",
     json: ""
@@ -2643,9 +2550,9 @@ var bodymovinPlayer = BodymovinPlayer.elementCreator({
   tag: "xin-lottie"
 });
 // src/carousel.ts
-var { button, slot, div } = u;
+var { button, slot, div } = d;
 
-class XinCarousel extends F {
+class XinCarousel extends W {
   static initAttributes = {
     dots: false,
     arrows: false,
@@ -2666,17 +2573,17 @@ class XinCarousel extends F {
   get page() {
     return this._page;
   }
-  set page(p) {
+  set page(p2) {
     const { scroller, back, forward } = this.parts;
     if (this.lastPage <= 0) {
       forward.disabled = back.disabled = true;
-      p = 0;
+      p2 = 0;
     } else {
-      p = Math.max(0, Math.min(this.lastPage, p));
-      p = isNaN(p) ? 0 : p;
+      p2 = Math.max(0, Math.min(this.lastPage, p2));
+      p2 = isNaN(p2) ? 0 : p2;
     }
-    if (this._page !== p) {
-      this._page = isNaN(p) ? 0 : p;
+    if (this._page !== p2) {
+      this._page = isNaN(p2) ? 0 : p2;
       this.animateScroll(this._page * scroller.offsetWidth);
       back.disabled = this.page <= 0 && !this.loop;
       forward.disabled = this.page >= this.lastPage && !this.loop;
@@ -2695,21 +2602,21 @@ class XinCarousel extends F {
       position: "relative"
     },
     ":host svg": {
-      height: Ao.carouselIconSize
+      height: Ge.carouselIconSize
     },
     ":host button": {
       outline: "none",
       border: "none",
       boxShadow: "none",
       background: "transparent",
-      color: Ao.carouselButtonColor,
+      color: Ge.carouselButtonColor,
       padding: 0
     },
     ":host::part(back), :host::part(forward)": {
       position: "absolute",
       top: 0,
       bottom: 0,
-      width: Ao.carouseButtonWidth,
+      width: Ge.carouseButtonWidth,
       zIndex: 2
     },
     ":host::part(back)": {
@@ -2723,10 +2630,10 @@ class XinCarousel extends F {
       pointerEvents: "none"
     },
     ":host button:hover": {
-      color: Ao.carouselButtonHoverColor
+      color: Ge.carouselButtonHoverColor
     },
     ":host button:active": {
-      color: Ao.carouselButtonActiveColor
+      color: Ge.carouselButtonActiveColor
     },
     ":host::part(pager)": {
       position: "relative"
@@ -2743,29 +2650,29 @@ class XinCarousel extends F {
       display: "none"
     },
     ":host .dot": {
-      background: Ao.carouselButtonColor,
-      borderRadius: Ao.carouselDotSize,
-      height: Ao.carouselDotSize,
-      width: Ao.carouselDotSize,
-      transition: Ao.carouselDotTransition
+      background: Ge.carouselButtonColor,
+      borderRadius: Ge.carouselDotSize,
+      height: Ge.carouselDotSize,
+      width: Ge.carouselDotSize,
+      transition: Ge.carouselDotTransition
     },
     ":host .dot:not(.current):hover": {
-      background: Ao.carouselButtonHoverColor,
-      height: Ao.carouselDotSize150,
-      width: Ao.carouselDotSize150,
-      margin: Ao.carouselDotSize_25
+      background: Ge.carouselButtonHoverColor,
+      height: Ge.carouselDotSize150,
+      width: Ge.carouselDotSize150,
+      margin: Ge.carouselDotSize_25
     },
     ":host .dot:not(.current):active": {
-      background: Ao.carouselButtonActiveColor
+      background: Ge.carouselButtonActiveColor
     },
     ":host .dot.current": {
-      background: Ao.carouselDotCurrentColor
+      background: Ge.carouselDotCurrentColor
     },
     ":host::part(progress)": {
       display: "flex",
-      gap: Ao.carouselDotSpacing,
+      gap: Ge.carouselDotSpacing,
       justifyContent: "center",
-      padding: Ao.carouselProgressPadding
+      padding: Ge.carouselProgressPadding
     }
   };
   easing = (t) => {
@@ -2873,7 +2780,7 @@ var xinCarousel = XinCarousel.elementCreator({
       _carouseButtonWidth: 48,
       _carouselDotCurrentColor: "#0008",
       _carouselDotSize: 8,
-      _carouselDotSpacing: Ao.carouselDotSize,
+      _carouselDotSpacing: Ge.carouselDotSize,
       _carouselProgressPadding: 12,
       _carouselDotTransition: "0.125s ease-in-out"
     },
@@ -2904,7 +2811,7 @@ var makeCodeEditor = async (codeElement, mode = "html", options = {}, theme = DE
   return { ace, editor };
 };
 
-class CodeEditor extends F {
+class CodeEditor extends W {
   source = "";
   get value() {
     return this.editor === undefined ? this.source : this.editor.getValue();
@@ -2974,10 +2881,10 @@ var codeEditor = CodeEditor.elementCreator({
   tag: "xin-code"
 });
 // src/color-input.ts
-var { input } = u;
+var { input } = d;
 var defaultColor = l.fromCss("#8888");
 
-class ColorInput extends F {
+class ColorInput extends W {
   value = defaultColor.rgba;
   color = defaultColor;
   static styleSpec = {
@@ -2987,20 +2894,20 @@ class ColorInput extends F {
       _cssWidth: 72,
       _alphaWidth: 72,
       display: "inline-flex",
-      gap: Ao.gap,
+      gap: Ge.gap,
       alignItems: "center"
     },
     ':host input[type="color"]': {
       border: 0,
-      width: Ao.swatchSize,
-      height: Ao.swatchSize,
+      width: Ge.swatchSize,
+      height: Ge.swatchSize,
       background: "transparent"
     },
     ":host::part(alpha)": {
-      width: Ao.alphaWidth
+      width: Ge.alphaWidth
     },
     ":host::part(css)": {
-      width: Ao.cssWidth,
+      width: Ge.cssWidth,
       fontFamily: "monospace"
     }
   };
@@ -3056,7 +2963,7 @@ var colorInput = ColorInput.elementCreator({
   tag: "xin-color"
 });
 // src/track-drag.ts
-var TRACKER = u.div({
+var TRACKER = d.div({
   style: {
     content: " ",
     position: "fixed",
@@ -3121,9 +3028,9 @@ var bringToFront = (element, selector = "body *") => {
 };
 
 // src/float.ts
-var { slot: slot2 } = u;
+var { slot: slot2 } = d;
 
-class XinFloat extends F {
+class XinFloat extends W {
   static floats = new Set;
   static initAttributes = {
     drag: false,
@@ -3144,10 +3051,10 @@ class XinFloat extends F {
     if (this.drag) {
       bringToFront(this);
       const x2 = this.offsetLeft;
-      const y2 = this.offsetTop;
+      const y = this.offsetTop;
       trackDrag(event, (dx, dy, pointerEvent) => {
         this.style.left = `${x2 + dx}px`;
-        this.style.top = `${y2 + dy}px`;
+        this.style.top = `${y + dy}px`;
         this.style.right = "auto";
         this.style.bottom = "auto";
         if (pointerEvent.type === "mouseup") {
@@ -3290,8 +3197,8 @@ var positionFloat = (element, target, position, remainOnScroll, remainOnResize, 
 
 // src/make-sorter.ts
 function makeSorter(sortValuator, ascending = true) {
-  return (p, q2) => {
-    const pSort = sortValuator(p);
+  return (p2, q2) => {
+    const pSort = sortValuator(p2);
     const qSort = sortValuator(q2);
     for (const i in pSort) {
       if (pSort[i] !== qSort[i]) {
@@ -3304,7 +3211,7 @@ function makeSorter(sortValuator, ascending = true) {
 }
 
 // src/select.ts
-var { button: button2, span, input: input2 } = u;
+var { button: button2, span, input: input2 } = d;
 var hasValue = (options, value) => {
   return !!options.find((option) => {
     if (option === null || value == null) {
@@ -3317,7 +3224,7 @@ var hasValue = (options, value) => {
   });
 };
 
-class TosiSelect extends F {
+class TosiSelect extends W {
   static formAssociated = true;
   static initAttributes = {
     editable: false,
@@ -3460,7 +3367,7 @@ class TosiSelect extends F {
       event.preventDefault();
     }
   };
-  filterMenu = mo(() => {
+  filterMenu = fe(() => {
     this.filter = this.parts.value.value.toLocaleLowerCase();
     removeLastMenu(0);
     this.popOptions();
@@ -3585,10 +3492,10 @@ var tosiSelect = TosiSelect.elementCreator({
       display: "flex",
       alignItems: "center",
       justifyItems: "center",
-      gap: Ao.tosiSelectGap,
+      gap: Ge.tosiSelectGap,
       textAlign: "left",
-      height: Ao.tosiSelectTouchSize,
-      padding: Ao.tosiSelectPadding,
+      height: Ge.tosiSelectTouchSize,
+      padding: Ge.tosiSelectPadding,
       position: "relative",
       width: "100%"
     },
@@ -3599,10 +3506,10 @@ var tosiSelect = TosiSelect.elementCreator({
       display: "none"
     },
     ':host [part="value"]': {
-      width: Ao.tosiSelectFieldWidth,
-      padding: Ao.tosiSelectValuePadding,
-      height: Ao.tosiSelectTouchSize,
-      lineHeight: Ao.tosiSelectTouchSize,
+      width: Ge.tosiSelectFieldWidth,
+      padding: Ge.tosiSelectValuePadding,
+      height: Ge.tosiSelectTouchSize,
+      lineHeight: Ge.tosiSelectTouchSize,
       boxShadow: "none",
       whiteSpace: "nowrap",
       outline: "none",
@@ -3616,11 +3523,11 @@ var tosiSelect = TosiSelect.elementCreator({
     }
   }
 });
-var xinSelect = Ho((...args) => tosiSelect(...args), "xinSelect is deprecated, use tosiSelect instead (tag is now <tosi-select>)");
+var xinSelect = Se((...args) => tosiSelect(...args), "xinSelect is deprecated, use tosiSelect instead (tag is now <tosi-select>)");
 
 // src/localize.ts
-var { span: span2 } = u;
-var { i18n } = wo({
+var { span: span2 } = d;
+var { i18n } = he({
   i18n: {
     locale: window.navigator.language,
     locales: [window.navigator.language],
@@ -3636,7 +3543,7 @@ var { i18n } = wo({
     ]
   }
 });
-lo.localeOptions = {
+le.localeOptions = {
   toDOM(select, options) {
     if (select instanceof XinSelect) {
       select.options = options;
@@ -3699,7 +3606,7 @@ function localize(ref) {
   return ref;
 }
 
-class LocalePicker extends F {
+class LocalePicker extends W {
   static initAttributes = {
     hideCaption: false
   };
@@ -3721,12 +3628,12 @@ var localePicker = LocalePicker.elementCreator({
   tag: "xin-locale-picker"
 });
 
-class XinLocalized extends F {
+class XinLocalized extends W {
   static allInstances = new Set;
   static initAttributes = {
     refString: ""
   };
-  contents = () => u.xinSlot();
+  contents = () => d.xinSlot();
   connectedCallback() {
     super.connectedCallback();
     XinLocalized.allInstances.add(this);
@@ -3767,30 +3674,30 @@ var matchShortcut = (keystroke, shortcut) => {
 };
 
 // src/menu.ts
-var { div: div2, button: button3, span: span3, a, xinSlot } = u;
+var { div: div2, button: button3, span: span3, a: a2, xinSlot } = d;
 en("xin-menu-helper", {
   ".xin-menu": {
     overflow: "hidden auto",
-    maxHeight: `calc(${Ao.maxHeight} - ${yo.menuInset("8px")})`,
-    borderRadius: Ao.spacing50,
-    background: yo.menuBg("#fafafa"),
-    boxShadow: yo.menuShadow(`${Ao.spacing13} ${Ao.spacing50} ${Ao.spacing} #0004`)
+    maxHeight: `calc(${Ge.maxHeight} - ${de.menuInset("8px")})`,
+    borderRadius: Ge.spacing50,
+    background: de.menuBg("#fafafa"),
+    boxShadow: de.menuShadow(`${Ge.spacing13} ${Ge.spacing50} ${Ge.spacing} #0004`)
   },
   ".xin-menu > div": {
-    width: yo.menuWidth("auto")
+    width: de.menuWidth("auto")
   },
   ".xin-menu-trigger": {
     paddingLeft: 0,
     paddingRight: 0,
-    minWidth: yo.touchSize("48px")
+    minWidth: de.touchSize("48px")
   },
   ".xin-menu-separator": {
     display: "inline-block",
     content: " ",
     height: "1px",
     width: "100%",
-    background: yo.menuSeparatorColor("#2224"),
-    margin: yo.menuSeparatorMargin("8px 0")
+    background: de.menuSeparatorColor("#2224"),
+    margin: de.menuSeparatorMargin("8px 0")
   },
   ".xin-menu-item": {
     boxShadow: "none",
@@ -3803,22 +3710,22 @@ en("xin-menu-helper", {
     width: "100%",
     gap: 0,
     background: "transparent",
-    padding: yo.menuItemPadding("0 16px"),
-    height: yo.menuItemHeight("48px"),
-    lineHeight: yo.menuItemHeight("48px"),
+    padding: de.menuItemPadding("0 16px"),
+    height: de.menuItemHeight("48px"),
+    lineHeight: de.menuItemHeight("48px"),
     textAlign: "left"
   },
   ".xin-menu-item, .xin-menu-item > span": {
-    color: yo.menuItemColor("#222")
+    color: de.menuItemColor("#222")
   },
   ".xin-menu-with-icons .xin-menu-item": {
     gridTemplateColumns: "30px 1fr 30px"
   },
   ".xin-menu-item svg": {
-    stroke: yo.menuItemIconColor("#222")
+    stroke: de.menuItemIconColor("#222")
   },
   ".xin-menu-item.xin-menu-item-checked": {
-    background: yo.menuItemHoverBg("#eee")
+    background: de.menuItemHoverBg("#eee")
   },
   ".xin-menu-item > span:nth-child(2)": {
     whiteSpace: "nowrap",
@@ -3828,15 +3735,15 @@ en("xin-menu-helper", {
   },
   ".xin-menu-item:hover": {
     boxShadow: "none !important",
-    background: yo.menuItemHoverBg("#eee")
+    background: de.menuItemHoverBg("#eee")
   },
   ".xin-menu-item:active": {
     boxShadow: "none !important",
-    background: yo.menuItemActiveBg("#aaa"),
-    color: yo.menuItemActiveColor("#000")
+    background: de.menuItemActiveBg("#aaa"),
+    color: de.menuItemActiveColor("#000")
   },
   ".xin-menu-item:active svg": {
-    stroke: yo.menuItemIconActiveColor("#000")
+    stroke: de.menuItemIconActiveColor("#000")
   }
 });
 var createMenuAction = (item, options) => {
@@ -3848,7 +3755,7 @@ var createMenuAction = (item, options) => {
   const itemRole = options.role === "listbox" ? "option" : "menuitem";
   let menuItem;
   if (typeof item?.action === "string") {
-    menuItem = a({
+    menuItem = a2({
       class: "xin-menu-item",
       role: itemRole,
       href: item.action
@@ -4002,7 +3909,7 @@ function findShortcutAction(items, event) {
   return;
 }
 
-class XinMenu extends F {
+class XinMenu extends W {
   static initAttributes = {
     menuWidth: "auto",
     localized: false,
@@ -4052,7 +3959,7 @@ var xinMenu = XinMenu.elementCreator({
     ":host button > xin-slot": {
       display: "flex",
       alignItems: "center",
-      gap: yo.xinMenuTriggerGap("10px")
+      gap: de.xinMenuTriggerGap("10px")
     }
   }
 });
@@ -4073,8 +3980,8 @@ var isTypeAllowed = (allowedTypes, type) => {
       return true;
     } else if (allowedType.indexOf("*") > -1) {
       const [A2, B2] = allowedType.split("/");
-      const [a2, b] = type.split("/");
-      if ((A2 === "*" || A2 === a2) && (B2 === "*" || B2 === b)) {
+      const [a3, b] = type.split("/");
+      if ((A2 === "*" || A2 === a3) && (B2 === "*" || B2 === b)) {
         return true;
       }
     } else {
@@ -4201,10 +4108,10 @@ function defaultWidth(array, prop, charWidth) {
   }
   return false;
 }
-var { div: div3, span: span4, button: button4, template } = u;
+var { div: div3, span: span4, button: button4, template } = d;
 var passThru = (array) => array;
 
-class DataTable extends F {
+class DataTable extends W {
   static initAttributes = {
     rowHeight: 30,
     charWidth: 15,
@@ -4232,7 +4139,7 @@ class DataTable extends F {
     };
   }
   set value(data) {
-    const { array, columns, filter } = fe(data);
+    const { array, columns, filter } = p(data);
     if (this._array !== array || this._columns !== columns || this._filter !== filter) {
       this.queueRender();
     }
@@ -4253,7 +4160,7 @@ class DataTable extends F {
   }
   constructor() {
     super();
-    this.rowData = wo({
+    this.rowData = he({
       [this.instanceId]: this.rowData
     })[this.instanceId];
   }
@@ -4261,7 +4168,7 @@ class DataTable extends F {
     return this._array;
   }
   set array(newArray) {
-    this._array = fe(newArray);
+    this._array = p(newArray);
     this.queueRender();
   }
   get filter() {
@@ -4282,7 +4189,7 @@ class DataTable extends F {
       return;
     }
     const { prop } = sortColumn;
-    return sortColumn.sort === "ascending" ? (a2, b) => a2[prop] > b[prop] ? 1 : -1 : (a2, b) => a2[prop] > b[prop] ? -1 : 1;
+    return sortColumn.sort === "ascending" ? (a3, b) => a3[prop] > b[prop] ? 1 : -1 : (a3, b) => a3[prop] > b[prop] ? -1 : 1;
   }
   set sort(sortFunc) {
     if (this._sort !== sortFunc) {
@@ -4384,7 +4291,7 @@ class DataTable extends F {
     if (!(tr instanceof HTMLElement)) {
       return;
     }
-    const pickedItem = _o(tr);
+    const pickedItem = Ie(tr);
     if (pickedItem === false) {
       return;
     }
@@ -4399,7 +4306,7 @@ class DataTable extends F {
       const [start2, finish] = [
         this.rangeStart !== undefined ? rows.indexOf(this.rangeStart) : 0,
         rows.indexOf(pickedItem)
-      ].sort((a2, b) => a2 - b);
+      ].sort((a3, b) => a3 - b);
       if (start2 > -1) {
         for (let idx = start2;idx <= finish; idx++) {
           const row = rows[idx];
@@ -4425,7 +4332,7 @@ class DataTable extends F {
     }
     this.selectionChanged(this.visibleSelectedRows);
     for (const row of Array.from(this.querySelectorAll(".tr"))) {
-      const item = _o(row);
+      const item = Ie(row);
       this.selectBinding(row, item);
     }
   };
@@ -4446,8 +4353,8 @@ class DataTable extends F {
     this.style.setProperty("--grid-row-width", rowWidth);
   }
   sortByColumn = (columnOptions, direction = "auto") => {
-    for (const column of this.columns.filter((c) => fe(c.sort) !== false)) {
-      if (fe(column) === columnOptions) {
+    for (const column of this.columns.filter((c) => p(c.sort) !== false)) {
+      if (p(column) === columnOptions) {
         if (direction === "auto") {
           column.sort = column.sort === "ascending" ? "descending" : "ascending";
         } else {
@@ -4564,7 +4471,7 @@ class DataTable extends F {
     });
   };
   get visibleRows() {
-    return fe(this.rowData.visible);
+    return p(this.rowData.visible);
   }
   get visibleSelectedRows() {
     return this.visibleRows.filter((obj) => obj[this.selectedKey]);
@@ -4701,13 +4608,13 @@ var dataTable = DataTable.elementCreator({
       overflow: "auto hidden"
     },
     ":host .thead, :host .tbody": {
-      width: Ao.tosiTableGridRowWidth
+      width: Ge.tosiTableGridRowWidth
     },
     ":host .tr": {
       display: "grid",
-      gridTemplateColumns: Ao.tosiTableGridColumns,
-      height: Ao.tosiTableRowHeight,
-      lineHeight: Ao.tosiTableRowHeight
+      gridTemplateColumns: Ge.tosiTableGridColumns,
+      height: Ge.tosiTableRowHeight,
+      lineHeight: Ge.tosiTableRowHeight
     },
     ":host .td, :host .th": {
       overflow: "hidden",
@@ -4720,26 +4627,26 @@ var dataTable = DataTable.elementCreator({
       color: "currentColor",
       background: "none",
       padding: 0,
-      lineHeight: Ao.tosiTableTouchSize,
-      height: Ao.tosiTableTouchSize,
-      width: Ao.tosiTableTouchSize
+      lineHeight: Ge.tosiTableTouchSize,
+      height: Ge.tosiTableTouchSize,
+      width: Ge.tosiTableTouchSize
     },
     ':host [draggable="true"]': {
       cursor: "ew-resize"
     },
     ':host [draggable="true"]:active': {
-      background: Ao.tosiTableDraggedHeaderBg,
-      color: Ao.tosiTableDraggedHeaderColor
+      background: Ge.tosiTableDraggedHeaderBg,
+      color: Ge.tosiTableDraggedHeaderColor
     },
     ":host .drag-over": {
-      background: Ao.tosiTableDropHeaderBg
+      background: Ge.tosiTableDropHeaderBg
     }
   }
 });
 // src/dialog.ts
-var { dialog, button: button5, header, footer, xinSlot: xinSlot2, h3, p, label, input: input3, div: div4 } = u;
+var { dialog, button: button5, header, footer, xinSlot: xinSlot2, h3, p: p2, label, input: input3, div: div4 } = d;
 
-class TosiDialog extends F {
+class TosiDialog extends W {
   static async alert(message, title = "Alert") {
     return new Promise((resolve) => {
       const alertDialog = tosiDialog({
@@ -4748,7 +4655,7 @@ class TosiDialog extends F {
         dialogWillClose() {
           resolve();
         }
-      }, h3({ slot: "header" }, title), p(message));
+      }, h3({ slot: "header" }, title), p2(message));
       document.body.append(alertDialog);
       alertDialog.showModal();
     });
@@ -4760,7 +4667,7 @@ class TosiDialog extends F {
         dialogWillClose(reason) {
           resolve(reason === "confirm");
         }
-      }, h3({ slot: "header" }, title), p(message), button5({
+      }, h3({ slot: "header" }, title), p2(message), button5({
         slot: "footer",
         onClick() {
           confirmDialog.close();
@@ -4781,7 +4688,7 @@ class TosiDialog extends F {
         initialFocus() {
           inputField.focus();
         }
-      }, h3({ slot: "header" }, title), p(label({
+      }, h3({ slot: "header" }, title), p2(label({
         style: {
           display: "flex",
           flexDirection: "column",
@@ -4804,7 +4711,7 @@ class TosiDialog extends F {
   };
   constructor() {
     super();
-    V(this, "click", () => {
+    P(this, "click", () => {
       if (this.closeOnBackgroundClick) {
         this.close();
       }
@@ -4859,12 +4766,12 @@ var tosiDialog = TosiDialog.elementCreator({
       display: "flex",
       flexDirection: "column",
       gap: 5,
-      _dialogShadow: yo.menuShadow("0 5px 10px #0004"),
-      _dialogBackground: yo.background("#fafafa"),
-      _dialogColor: yo.textColor("#222"),
-      boxShadow: Ao.dialogShadow,
-      background: Ao.dialogBackground,
-      color: Ao.dialogColor
+      _dialogShadow: de.menuShadow("0 5px 10px #0004"),
+      _dialogBackground: de.background("#fafafa"),
+      _dialogColor: de.textColor("#222"),
+      boxShadow: Ge.dialogShadow,
+      background: Ge.dialogBackground,
+      color: Ge.dialogColor
     },
     ":host > dialog > *": {
       padding: "0 20px"
@@ -4886,12 +4793,12 @@ var tosiDialog = TosiDialog.elementCreator({
 function L() {
   return { async: false, breaks: false, extensions: null, gfm: true, hooks: null, pedantic: false, renderer: null, silent: false, tokenizer: null, walkTokens: null };
 }
-var T = L();
+var T2 = L();
 function G2(l2) {
-  T = l2;
+  T2 = l2;
 }
 var E2 = { exec: () => null };
-function d(l2, e = "") {
+function d2(l2, e = "") {
   let t = typeof l2 == "string" ? l2 : l2.source, n = { replace: (r, i) => {
     let s = typeof i == "string" ? i : i.source;
     return s = s.replace(m.caret, "$1"), t = t.replace(r, s), n;
@@ -4913,57 +4820,57 @@ var I2 = /^ {0,3}((?:-[\t ]*){3,}|(?:_[ \t]*){3,}|(?:\*[ \t]*){3,})(?:\n+|$)/;
 var we2 = /^ {0,3}(#{1,6})(?=\s|$)(.*)(?:\n+|$)/;
 var F2 = /(?:[*+-]|\d{1,9}[.)])/;
 var ie2 = /^(?!bull |blockCode|fences|blockquote|heading|html|table)((?:.|\n(?!\s*?\n|bull |blockCode|fences|blockquote|heading|html|table))+?)\n {0,3}(=+|-+) *(?:\n+|$)/;
-var oe2 = d(ie2).replace(/bull/g, F2).replace(/blockCode/g, /(?: {4}| {0,3}\t)/).replace(/fences/g, / {0,3}(?:`{3,}|~{3,})/).replace(/blockquote/g, / {0,3}>/).replace(/heading/g, / {0,3}#{1,6}/).replace(/html/g, / {0,3}<[^\n>]+>\n/).replace(/\|table/g, "").getRegex();
-var ye2 = d(ie2).replace(/bull/g, F2).replace(/blockCode/g, /(?: {4}| {0,3}\t)/).replace(/fences/g, / {0,3}(?:`{3,}|~{3,})/).replace(/blockquote/g, / {0,3}>/).replace(/heading/g, / {0,3}#{1,6}/).replace(/html/g, / {0,3}<[^\n>]+>\n/).replace(/table/g, / {0,3}\|?(?:[:\- ]*\|)+[\:\- ]*\n/).getRegex();
+var oe2 = d2(ie2).replace(/bull/g, F2).replace(/blockCode/g, /(?: {4}| {0,3}\t)/).replace(/fences/g, / {0,3}(?:`{3,}|~{3,})/).replace(/blockquote/g, / {0,3}>/).replace(/heading/g, / {0,3}#{1,6}/).replace(/html/g, / {0,3}<[^\n>]+>\n/).replace(/\|table/g, "").getRegex();
+var ye2 = d2(ie2).replace(/bull/g, F2).replace(/blockCode/g, /(?: {4}| {0,3}\t)/).replace(/fences/g, / {0,3}(?:`{3,}|~{3,})/).replace(/blockquote/g, / {0,3}>/).replace(/heading/g, / {0,3}#{1,6}/).replace(/html/g, / {0,3}<[^\n>]+>\n/).replace(/table/g, / {0,3}\|?(?:[:\- ]*\|)+[\:\- ]*\n/).getRegex();
 var j2 = /^([^\n]+(?:\n(?!hr|heading|lheading|blockquote|fences|list|html|table| +\n)[^\n]+)*)/;
 var Pe2 = /^[^\n]+/;
 var Q2 = /(?!\s*\])(?:\\[\s\S]|[^\[\]\\])+/;
-var Se2 = d(/^ {0,3}\[(label)\]: *(?:\n[ \t]*)?([^<\s][^\s]*|<.*?>)(?:(?: +(?:\n[ \t]*)?| *\n[ \t]*)(title))? *(?:\n+|$)/).replace("label", Q2).replace("title", /(?:"(?:\\"?|[^"\\])*"|'[^'\n]*(?:\n[^'\n]+)*\n?'|\([^()]*\))/).getRegex();
-var $e2 = d(/^( {0,3}bull)([ \t][^\n]+?)?(?:\n|$)/).replace(/bull/g, F2).getRegex();
+var Se2 = d2(/^ {0,3}\[(label)\]: *(?:\n[ \t]*)?([^<\s][^\s]*|<.*?>)(?:(?: +(?:\n[ \t]*)?| *\n[ \t]*)(title))? *(?:\n+|$)/).replace("label", Q2).replace("title", /(?:"(?:\\"?|[^"\\])*"|'[^'\n]*(?:\n[^'\n]+)*\n?'|\([^()]*\))/).getRegex();
+var $e2 = d2(/^( {0,3}bull)([ \t][^\n]+?)?(?:\n|$)/).replace(/bull/g, F2).getRegex();
 var v2 = "address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul";
 var U2 = /<!--(?:-?>|[\s\S]*?(?:-->|$))/;
-var _e2 = d("^ {0,3}(?:<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)|comment[^\\n]*(\\n+|$)|<\\?[\\s\\S]*?(?:\\?>\\n*|$)|<![A-Z][\\s\\S]*?(?:>\\n*|$)|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$))", "i").replace("comment", U2).replace("tag", v2).replace("attribute", / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
-var ae2 = d(j2).replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("|table", "").replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex();
-var Le2 = d(/^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/).replace("paragraph", ae2).getRegex();
+var _e2 = d2("^ {0,3}(?:<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)|comment[^\\n]*(\\n+|$)|<\\?[\\s\\S]*?(?:\\?>\\n*|$)|<![A-Z][\\s\\S]*?(?:>\\n*|$)|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$))", "i").replace("comment", U2).replace("tag", v2).replace("attribute", / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
+var ae2 = d2(j2).replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("|table", "").replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex();
+var Le2 = d2(/^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/).replace("paragraph", ae2).getRegex();
 var K = { blockquote: Le2, code: Te2, def: Se2, fences: Oe2, heading: we2, hr: I2, html: _e2, lheading: oe2, list: $e2, newline: Re2, paragraph: ae2, table: E2, text: Pe2 };
-var re2 = d("^ *([^\\n ].*)\\n {0,3}((?:\\| *)?:?-+:? *(?:\\| *:?-+:? *)*(?:\\| *)?)(?:\\n((?:(?! *\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)").replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("blockquote", " {0,3}>").replace("code", "(?: {4}| {0,3}\t)[^\\n]").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex();
-var Me2 = { ...K, lheading: ye2, table: re2, paragraph: d(j2).replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("table", re2).replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex() };
-var ze2 = { ...K, html: d(`^ *(?:comment *(?:\\n|\\s*$)|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)|<tag(?:"[^"]*"|'[^']*'|\\s[^'"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))`).replace("comment", U2).replace(/tag/g, "(?!(?:a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)\\b)\\w+(?!:|[^\\w\\s@]*@)\\b").getRegex(), def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/, heading: /^(#{1,6})(.*)(?:\n+|$)/, fences: E2, lheading: /^(.+?)\n {0,3}(=+|-+) *(?:\n+|$)/, paragraph: d(j2).replace("hr", I2).replace("heading", ` *#{1,6} *[^
+var re2 = d2("^ *([^\\n ].*)\\n {0,3}((?:\\| *)?:?-+:? *(?:\\| *:?-+:? *)*(?:\\| *)?)(?:\\n((?:(?! *\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)").replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("blockquote", " {0,3}>").replace("code", "(?: {4}| {0,3}\t)[^\\n]").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex();
+var Me2 = { ...K, lheading: ye2, table: re2, paragraph: d2(j2).replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("table", re2).replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex() };
+var ze2 = { ...K, html: d2(`^ *(?:comment *(?:\\n|\\s*$)|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)|<tag(?:"[^"]*"|'[^']*'|\\s[^'"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))`).replace("comment", U2).replace(/tag/g, "(?!(?:a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)\\b)\\w+(?!:|[^\\w\\s@]*@)\\b").getRegex(), def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/, heading: /^(#{1,6})(.*)(?:\n+|$)/, fences: E2, lheading: /^(.+?)\n {0,3}(=+|-+) *(?:\n+|$)/, paragraph: d2(j2).replace("hr", I2).replace("heading", ` *#{1,6} *[^
 ]`).replace("lheading", oe2).replace("|table", "").replace("blockquote", " {0,3}>").replace("|fences", "").replace("|list", "").replace("|html", "").replace("|tag", "").getRegex() };
 var Ae2 = /^\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/;
-var Ee2 = /^(`+)([^`]|[^`][\s\S]*?[^`])\1(?!`)/;
+var Ee = /^(`+)([^`]|[^`][\s\S]*?[^`])\1(?!`)/;
 var le2 = /^( {2,}|\\)\n(?!\s*$)/;
 var Ie2 = /^(`+|[^`])(?:(?= {2,}\n)|[\s\S]*?(?:(?=[\\<!\[`*_]|\b_|$)|[^ ](?= {2,}\n)))/;
 var D2 = /[\p{P}\p{S}]/u;
 var W2 = /[\s\p{P}\p{S}]/u;
 var ue2 = /[^\s\p{P}\p{S}]/u;
-var Ce2 = d(/^((?![*_])punctSpace)/, "u").replace(/punctSpace/g, W2).getRegex();
+var Ce2 = d2(/^((?![*_])punctSpace)/, "u").replace(/punctSpace/g, W2).getRegex();
 var pe2 = /(?!~)[\p{P}\p{S}]/u;
 var Be2 = /(?!~)[\s\p{P}\p{S}]/u;
 var qe2 = /(?:[^\s\p{P}\p{S}]|~)/u;
-var ve2 = d(/link|precode-code|html/, "g").replace("link", /\[(?:[^\[\]`]|(?<a>`+)[^`]+\k<a>(?!`))*?\]\((?:\\[\s\S]|[^\\\(\)]|\((?:\\[\s\S]|[^\\\(\)])*\))*\)/).replace("precode-", be2 ? "(?<!`)()" : "(^^|[^`])").replace("code", /(?<b>`+)[^`]+\k<b>(?!`)/).replace("html", /<(?! )[^<>]*?>/).getRegex();
+var ve2 = d2(/link|precode-code|html/, "g").replace("link", /\[(?:[^\[\]`]|(?<a>`+)[^`]+\k<a>(?!`))*?\]\((?:\\[\s\S]|[^\\\(\)]|\((?:\\[\s\S]|[^\\\(\)])*\))*\)/).replace("precode-", be2 ? "(?<!`)()" : "(^^|[^`])").replace("code", /(?<b>`+)[^`]+\k<b>(?!`)/).replace("html", /<(?! )[^<>]*?>/).getRegex();
 var ce2 = /^(?:\*+(?:((?!\*)punct)|[^\s*]))|^_+(?:((?!_)punct)|([^\s_]))/;
-var De2 = d(ce2, "u").replace(/punct/g, D2).getRegex();
-var He2 = d(ce2, "u").replace(/punct/g, pe2).getRegex();
+var De2 = d2(ce2, "u").replace(/punct/g, D2).getRegex();
+var He2 = d2(ce2, "u").replace(/punct/g, pe2).getRegex();
 var he2 = "^[^_*]*?__[^_*]*?\\*[^_*]*?(?=__)|[^*]+(?=[^*])|(?!\\*)punct(\\*+)(?=[\\s]|$)|notPunctSpace(\\*+)(?!\\*)(?=punctSpace|$)|(?!\\*)punctSpace(\\*+)(?=notPunctSpace)|[\\s](\\*+)(?!\\*)(?=punct)|(?!\\*)punct(\\*+)(?!\\*)(?=punct)|notPunctSpace(\\*+)(?=notPunctSpace)";
-var Ze2 = d(he2, "gu").replace(/notPunctSpace/g, ue2).replace(/punctSpace/g, W2).replace(/punct/g, D2).getRegex();
-var Ge = d(he2, "gu").replace(/notPunctSpace/g, qe2).replace(/punctSpace/g, Be2).replace(/punct/g, pe2).getRegex();
-var Ne2 = d("^[^_*]*?\\*\\*[^_*]*?_[^_*]*?(?=\\*\\*)|[^_]+(?=[^_])|(?!_)punct(_+)(?=[\\s]|$)|notPunctSpace(_+)(?!_)(?=punctSpace|$)|(?!_)punctSpace(_+)(?=notPunctSpace)|[\\s](_+)(?!_)(?=punct)|(?!_)punct(_+)(?!_)(?=punct)", "gu").replace(/notPunctSpace/g, ue2).replace(/punctSpace/g, W2).replace(/punct/g, D2).getRegex();
-var Fe2 = d(/\\(punct)/, "gu").replace(/punct/g, D2).getRegex();
-var je2 = d(/^<(scheme:[^\s\x00-\x1f<>]*|email)>/).replace("scheme", /[a-zA-Z][a-zA-Z0-9+.-]{1,31}/).replace("email", /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(@)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?![-_])/).getRegex();
-var Qe2 = d(U2).replace("(?:-->|$)", "-->").getRegex();
-var Ue2 = d("^comment|^</[a-zA-Z][\\w:-]*\\s*>|^<[a-zA-Z][\\w-]*(?:attribute)*?\\s*/?>|^<\\?[\\s\\S]*?\\?>|^<![a-zA-Z]+\\s[\\s\\S]*?>|^<!\\[CDATA\\[[\\s\\S]*?\\]\\]>").replace("comment", Qe2).replace("attribute", /\s+[a-zA-Z:_][\w.:-]*(?:\s*=\s*"[^"]*"|\s*=\s*'[^']*'|\s*=\s*[^\s"'=<>`]+)?/).getRegex();
+var Ze2 = d2(he2, "gu").replace(/notPunctSpace/g, ue2).replace(/punctSpace/g, W2).replace(/punct/g, D2).getRegex();
+var Ge2 = d2(he2, "gu").replace(/notPunctSpace/g, qe2).replace(/punctSpace/g, Be2).replace(/punct/g, pe2).getRegex();
+var Ne2 = d2("^[^_*]*?\\*\\*[^_*]*?_[^_*]*?(?=\\*\\*)|[^_]+(?=[^_])|(?!_)punct(_+)(?=[\\s]|$)|notPunctSpace(_+)(?!_)(?=punctSpace|$)|(?!_)punctSpace(_+)(?=notPunctSpace)|[\\s](_+)(?!_)(?=punct)|(?!_)punct(_+)(?!_)(?=punct)", "gu").replace(/notPunctSpace/g, ue2).replace(/punctSpace/g, W2).replace(/punct/g, D2).getRegex();
+var Fe2 = d2(/\\(punct)/, "gu").replace(/punct/g, D2).getRegex();
+var je2 = d2(/^<(scheme:[^\s\x00-\x1f<>]*|email)>/).replace("scheme", /[a-zA-Z][a-zA-Z0-9+.-]{1,31}/).replace("email", /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(@)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?![-_])/).getRegex();
+var Qe2 = d2(U2).replace("(?:-->|$)", "-->").getRegex();
+var Ue2 = d2("^comment|^</[a-zA-Z][\\w:-]*\\s*>|^<[a-zA-Z][\\w-]*(?:attribute)*?\\s*/?>|^<\\?[\\s\\S]*?\\?>|^<![a-zA-Z]+\\s[\\s\\S]*?>|^<!\\[CDATA\\[[\\s\\S]*?\\]\\]>").replace("comment", Qe2).replace("attribute", /\s+[a-zA-Z:_][\w.:-]*(?:\s*=\s*"[^"]*"|\s*=\s*'[^']*'|\s*=\s*[^\s"'=<>`]+)?/).getRegex();
 var q2 = /(?:\[(?:\\[\s\S]|[^\[\]\\])*\]|\\[\s\S]|`+[^`]*?`+(?!`)|[^\[\]\\`])*?/;
-var Ke2 = d(/^!?\[(label)\]\(\s*(href)(?:(?:[ \t]*(?:\n[ \t]*)?)(title))?\s*\)/).replace("label", q2).replace("href", /<(?:\\.|[^\n<>\\])+>|[^ \t\n\x00-\x1f]*/).replace("title", /"(?:\\"?|[^"\\])*"|'(?:\\'?|[^'\\])*'|\((?:\\\)?|[^)\\])*\)/).getRegex();
-var de2 = d(/^!?\[(label)\]\[(ref)\]/).replace("label", q2).replace("ref", Q2).getRegex();
-var ke2 = d(/^!?\[(ref)\](?:\[\])?/).replace("ref", Q2).getRegex();
-var We2 = d("reflink|nolink(?!\\()", "g").replace("reflink", de2).replace("nolink", ke2).getRegex();
+var Ke2 = d2(/^!?\[(label)\]\(\s*(href)(?:(?:[ \t]*(?:\n[ \t]*)?)(title))?\s*\)/).replace("label", q2).replace("href", /<(?:\\.|[^\n<>\\])+>|[^ \t\n\x00-\x1f]*/).replace("title", /"(?:\\"?|[^"\\])*"|'(?:\\'?|[^'\\])*'|\((?:\\\)?|[^)\\])*\)/).getRegex();
+var de2 = d2(/^!?\[(label)\]\[(ref)\]/).replace("label", q2).replace("ref", Q2).getRegex();
+var ke2 = d2(/^!?\[(ref)\](?:\[\])?/).replace("ref", Q2).getRegex();
+var We2 = d2("reflink|nolink(?!\\()", "g").replace("reflink", de2).replace("nolink", ke2).getRegex();
 var se2 = /[hH][tT][tT][pP][sS]?|[fF][tT][pP]/;
-var X2 = { _backpedal: E2, anyPunctuation: Fe2, autolink: je2, blockSkip: ve2, br: le2, code: Ee2, del: E2, emStrongLDelim: De2, emStrongRDelimAst: Ze2, emStrongRDelimUnd: Ne2, escape: Ae2, link: Ke2, nolink: ke2, punctuation: Ce2, reflink: de2, reflinkSearch: We2, tag: Ue2, text: Ie2, url: E2 };
-var Xe2 = { ...X2, link: d(/^!?\[(label)\]\((.*?)\)/).replace("label", q2).getRegex(), reflink: d(/^!?\[(label)\]\s*\[([^\]]*)\]/).replace("label", q2).getRegex() };
-var N2 = { ...X2, emStrongRDelimAst: Ge, emStrongLDelim: He2, url: d(/^((?:protocol):\/\/|www\.)(?:[a-zA-Z0-9\-]+\.?)+[^\s<]*|^email/).replace("protocol", se2).replace("email", /[A-Za-z0-9._+-]+(@)[a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]*[a-zA-Z0-9])+(?![-_])/).getRegex(), _backpedal: /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/, del: /^(~~?)(?=[^\s~])((?:\\[\s\S]|[^\\])*?(?:\\[\s\S]|[^\s~\\]))\1(?=[^~]|$)/, text: d(/^([`~]+|[^`~])(?:(?= {2,}\n)|(?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)|[\s\S]*?(?:(?=[\\<!\[`*~_]|\b_|protocol:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)))/).replace("protocol", se2).getRegex() };
-var Je2 = { ...N2, br: d(le2).replace("{2,}", "*").getRegex(), text: d(N2.text).replace("\\b_", "\\b_| {2,}\\n").replace(/\{2,\}/g, "*").getRegex() };
-var C2 = { normal: K, gfm: Me2, pedantic: ze2 };
+var X2 = { _backpedal: E2, anyPunctuation: Fe2, autolink: je2, blockSkip: ve2, br: le2, code: Ee, del: E2, emStrongLDelim: De2, emStrongRDelimAst: Ze2, emStrongRDelimUnd: Ne2, escape: Ae2, link: Ke2, nolink: ke2, punctuation: Ce2, reflink: de2, reflinkSearch: We2, tag: Ue2, text: Ie2, url: E2 };
+var Xe2 = { ...X2, link: d2(/^!?\[(label)\]\((.*?)\)/).replace("label", q2).getRegex(), reflink: d2(/^!?\[(label)\]\s*\[([^\]]*)\]/).replace("label", q2).getRegex() };
+var N2 = { ...X2, emStrongRDelimAst: Ge2, emStrongLDelim: He2, url: d2(/^((?:protocol):\/\/|www\.)(?:[a-zA-Z0-9\-]+\.?)+[^\s<]*|^email/).replace("protocol", se2).replace("email", /[A-Za-z0-9._+-]+(@)[a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]*[a-zA-Z0-9])+(?![-_])/).getRegex(), _backpedal: /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/, del: /^(~~?)(?=[^\s~])((?:\\[\s\S]|[^\\])*?(?:\\[\s\S]|[^\s~\\]))\1(?=[^~]|$)/, text: d2(/^([`~]+|[^`~])(?:(?= {2,}\n)|(?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)|[\s\S]*?(?:(?=[\\<!\[`*~_]|\b_|protocol:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)))/).replace("protocol", se2).getRegex() };
+var Je2 = { ...N2, br: d2(le2).replace("{2,}", "*").getRegex(), text: d2(N2.text).replace("\\b_", "\\b_| {2,}\\n").replace(/\{2,\}/g, "*").getRegex() };
+var C = { normal: K, gfm: Me2, pedantic: ze2 };
 var M2 = { normal: X2, gfm: N2, breaks: Je2, pedantic: Xe2 };
 var Ve2 = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 var ge2 = (l2) => Ve2[l2];
@@ -4984,9 +4891,9 @@ function J2(l2) {
   return l2;
 }
 function V2(l2, e) {
-  let t = l2.replace(m.findPipe, (i, s, a2) => {
-    let o = false, p2 = s;
-    for (;--p2 >= 0 && a2[p2] === "\\"; )
+  let t = l2.replace(m.findPipe, (i, s, a3) => {
+    let o = false, p3 = s;
+    for (;--p3 >= 0 && a3[p3] === "\\"; )
       o = !o;
     return o ? "|" : " |";
   }), n = t.split(m.splitPipe), r = 0;
@@ -5030,9 +4937,9 @@ function fe2(l2, e) {
   return t > 0 ? -2 : -1;
 }
 function me2(l2, e, t, n, r) {
-  let i = e.href, s = e.title || null, a2 = l2[1].replace(r.other.outputLinkReplace, "$1");
+  let i = e.href, s = e.title || null, a3 = l2[1].replace(r.other.outputLinkReplace, "$1");
   n.state.inLink = true;
-  let o = { type: l2[0].charAt(0) === "!" ? "image" : "link", raw: t, href: i, title: s, text: a2, tokens: n.inlineTokens(a2) };
+  let o = { type: l2[0].charAt(0) === "!" ? "image" : "link", raw: t, href: i, title: s, text: a3, tokens: n.inlineTokens(a3) };
   return n.state.inLink = false, o;
 }
 function Ye2(l2, e, t) {
@@ -5045,17 +4952,17 @@ function Ye2(l2, e, t) {
     let s = i.match(t.other.beginningSpace);
     if (s === null)
       return i;
-    let [a2] = s;
-    return a2.length >= r.length ? i.slice(r.length) : i;
+    let [a3] = s;
+    return a3.length >= r.length ? i.slice(r.length) : i;
   }).join(`
 `);
 }
-var y2 = class {
+var y = class {
   options;
   rules;
   lexer;
   constructor(e) {
-    this.options = e || T;
+    this.options = e || T2;
   }
   space(e) {
     let t = this.rules.block.newline.exec(e);
@@ -5101,20 +5008,20 @@ var y2 = class {
 `).split(`
 `), r = "", i = "", s = [];
       for (;n.length > 0; ) {
-        let a2 = false, o = [], p2;
-        for (p2 = 0;p2 < n.length; p2++)
-          if (this.rules.other.blockquoteStart.test(n[p2]))
-            o.push(n[p2]), a2 = true;
-          else if (!a2)
-            o.push(n[p2]);
+        let a3 = false, o = [], p3;
+        for (p3 = 0;p3 < n.length; p3++)
+          if (this.rules.other.blockquoteStart.test(n[p3]))
+            o.push(n[p3]), a3 = true;
+          else if (!a3)
+            o.push(n[p3]);
           else
             break;
-        n = n.slice(p2);
-        let u2 = o.join(`
-`), c = u2.replace(this.rules.other.blockquoteSetextReplace, `
+        n = n.slice(p3);
+        let u = o.join(`
+`), c = u.replace(this.rules.other.blockquoteSetextReplace, `
     $1`).replace(this.rules.other.blockquoteSetextReplace2, "");
         r = r ? `${r}
-${u2}` : u2, i = i ? `${i}
+${u}` : u, i = i ? `${i}
 ${c}` : c;
         let g2 = this.lexer.state.top;
         if (this.lexer.state.top = true, this.lexer.blockTokens(c, s, true), this.lexer.state.top = g2, n.length === 0)
@@ -5145,17 +5052,17 @@ ${c}` : c;
     if (t) {
       let n = t[1].trim(), r = n.length > 1, i = { type: "list", raw: "", ordered: r, start: r ? +n.slice(0, -1) : "", loose: false, items: [] };
       n = r ? `\\d{1,9}\\${n.slice(-1)}` : `\\${n}`, this.options.pedantic && (n = r ? n : "[*+-]");
-      let s = this.rules.other.listItemRegex(n), a2 = false;
+      let s = this.rules.other.listItemRegex(n), a3 = false;
       for (;e; ) {
-        let p2 = false, u2 = "", c = "";
+        let p3 = false, u = "", c = "";
         if (!(t = s.exec(e)) || this.rules.block.hr.test(e))
           break;
-        u2 = t[0], e = e.substring(u2.length);
+        u = t[0], e = e.substring(u.length);
         let g2 = t[2].split(`
 `, 1)[0].replace(this.rules.other.listReplaceTabs, (H2) => " ".repeat(3 * H2.length)), h = e.split(`
 `, 1)[0], R2 = !g2.trim(), f = 0;
-        if (this.options.pedantic ? (f = 2, c = g2.trimStart()) : R2 ? f = t[1].length + 1 : (f = t[2].search(this.rules.other.nonSpaceChar), f = f > 4 ? 1 : f, c = g2.slice(f), f += t[1].length), R2 && this.rules.other.blankLine.test(h) && (u2 += h + `
-`, e = e.substring(h.length + 1), p2 = true), !p2) {
+        if (this.options.pedantic ? (f = 2, c = g2.trimStart()) : R2 ? f = t[1].length + 1 : (f = t[2].search(this.rules.other.nonSpaceChar), f = f > 4 ? 1 : f, c = g2.slice(f), f += t[1].length), R2 && this.rules.other.blankLine.test(h) && (u += h + `
+`, e = e.substring(h.length + 1), p3 = true), !p3) {
           let H2 = this.rules.other.nextBulletRegex(f), ee2 = this.rules.other.hrRegex(f), te2 = this.rules.other.fencesBeginRegex(f), ne2 = this.rules.other.headingBeginRegex(f), xe2 = this.rules.other.htmlBeginRegex(f);
           for (;e; ) {
             let Z2 = e.split(`
@@ -5171,13 +5078,13 @@ ${c}` : c;
               c += `
 ` + h;
             }
-            !R2 && !h.trim() && (R2 = true), u2 += Z2 + `
+            !R2 && !h.trim() && (R2 = true), u += Z2 + `
 `, e = e.substring(Z2.length + 1), g2 = A2.slice(f);
           }
         }
-        i.loose || (a2 ? i.loose = true : this.rules.other.doubleBlankLine.test(u2) && (a2 = true));
+        i.loose || (a3 ? i.loose = true : this.rules.other.doubleBlankLine.test(u) && (a3 = true));
         let O2 = null, Y2;
-        this.options.gfm && (O2 = this.rules.other.listIsTask.exec(c), O2 && (Y2 = O2[0] !== "[ ] ", c = c.replace(this.rules.other.listReplaceTask, ""))), i.items.push({ type: "list_item", raw: u2, task: !!O2, checked: Y2, loose: false, text: c, tokens: [] }), i.raw += u2;
+        this.options.gfm && (O2 = this.rules.other.listIsTask.exec(c), O2 && (Y2 = O2[0] !== "[ ] ", c = c.replace(this.rules.other.listReplaceTask, ""))), i.items.push({ type: "list_item", raw: u, task: !!O2, checked: Y2, loose: false, text: c, tokens: [] }), i.raw += u;
       }
       let o = i.items.at(-1);
       if (o)
@@ -5185,14 +5092,14 @@ ${c}` : c;
       else
         return;
       i.raw = i.raw.trimEnd();
-      for (let p2 = 0;p2 < i.items.length; p2++)
-        if (this.lexer.state.top = false, i.items[p2].tokens = this.lexer.blockTokens(i.items[p2].text, []), !i.loose) {
-          let u2 = i.items[p2].tokens.filter((g2) => g2.type === "space"), c = u2.length > 0 && u2.some((g2) => this.rules.other.anyLine.test(g2.raw));
+      for (let p3 = 0;p3 < i.items.length; p3++)
+        if (this.lexer.state.top = false, i.items[p3].tokens = this.lexer.blockTokens(i.items[p3].text, []), !i.loose) {
+          let u = i.items[p3].tokens.filter((g2) => g2.type === "space"), c = u.length > 0 && u.some((g2) => this.rules.other.anyLine.test(g2.raw));
           i.loose = c;
         }
       if (i.loose)
-        for (let p2 = 0;p2 < i.items.length; p2++)
-          i.items[p2].loose = true;
+        for (let p3 = 0;p3 < i.items.length; p3++)
+          i.items[p3].loose = true;
       return i;
     }
   }
@@ -5215,12 +5122,12 @@ ${c}` : c;
     let n = V2(t[1]), r = t[2].replace(this.rules.other.tableAlignChars, "").split("|"), i = t[3]?.trim() ? t[3].replace(this.rules.other.tableRowBlankLine, "").split(`
 `) : [], s = { type: "table", raw: t[0], header: [], align: [], rows: [] };
     if (n.length === r.length) {
-      for (let a2 of r)
-        this.rules.other.tableAlignRight.test(a2) ? s.align.push("right") : this.rules.other.tableAlignCenter.test(a2) ? s.align.push("center") : this.rules.other.tableAlignLeft.test(a2) ? s.align.push("left") : s.align.push(null);
-      for (let a2 = 0;a2 < n.length; a2++)
-        s.header.push({ text: n[a2], tokens: this.lexer.inline(n[a2]), header: true, align: s.align[a2] });
-      for (let a2 of i)
-        s.rows.push(V2(a2, s.header.length).map((o, p2) => ({ text: o, tokens: this.lexer.inline(o), header: false, align: s.align[p2] })));
+      for (let a3 of r)
+        this.rules.other.tableAlignRight.test(a3) ? s.align.push("right") : this.rules.other.tableAlignCenter.test(a3) ? s.align.push("center") : this.rules.other.tableAlignLeft.test(a3) ? s.align.push("left") : s.align.push(null);
+      for (let a3 = 0;a3 < n.length; a3++)
+        s.header.push({ text: n[a3], tokens: this.lexer.inline(n[a3]), header: true, align: s.align[a3] });
+      for (let a3 of i)
+        s.rows.push(V2(a3, s.header.length).map((o, p3) => ({ text: o, tokens: this.lexer.inline(o), header: false, align: s.align[p3] })));
       return s;
     }
   }
@@ -5296,20 +5203,20 @@ ${c}` : c;
     if (!r || r[3] && n.match(this.rules.other.unicodeAlphaNumeric))
       return;
     if (!(r[1] || r[2] || "") || !n || this.rules.inline.punctuation.exec(n)) {
-      let s = [...r[0]].length - 1, a2, o, p2 = s, u2 = 0, c = r[0][0] === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
+      let s = [...r[0]].length - 1, a3, o, p3 = s, u = 0, c = r[0][0] === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
       for (c.lastIndex = 0, t = t.slice(-1 * e.length + s);(r = c.exec(t)) != null; ) {
-        if (a2 = r[1] || r[2] || r[3] || r[4] || r[5] || r[6], !a2)
+        if (a3 = r[1] || r[2] || r[3] || r[4] || r[5] || r[6], !a3)
           continue;
-        if (o = [...a2].length, r[3] || r[4]) {
-          p2 += o;
+        if (o = [...a3].length, r[3] || r[4]) {
+          p3 += o;
           continue;
         } else if ((r[5] || r[6]) && s % 3 && !((s + o) % 3)) {
-          u2 += o;
+          u += o;
           continue;
         }
-        if (p2 -= o, p2 > 0)
+        if (p3 -= o, p3 > 0)
           continue;
-        o = Math.min(o, o + p2 + u2);
+        o = Math.min(o, o + p3 + u);
         let g2 = [...r[0]][0].length, h = e.slice(0, s + r.index + g2 + o);
         if (Math.min(s, o) % 2) {
           let f = h.slice(1, -1);
@@ -5375,12 +5282,12 @@ var x2 = class l2 {
   tokenizer;
   inlineQueue;
   constructor(e) {
-    this.tokens = [], this.tokens.links = Object.create(null), this.options = e || T, this.options.tokenizer = this.options.tokenizer || new y2, this.tokenizer = this.options.tokenizer, this.tokenizer.options = this.options, this.tokenizer.lexer = this, this.inlineQueue = [], this.state = { inLink: false, inRawBlock: false, top: true };
-    let t = { other: m, block: C2.normal, inline: M2.normal };
-    this.options.pedantic ? (t.block = C2.pedantic, t.inline = M2.pedantic) : this.options.gfm && (t.block = C2.gfm, this.options.breaks ? t.inline = M2.breaks : t.inline = M2.gfm), this.tokenizer.rules = t;
+    this.tokens = [], this.tokens.links = Object.create(null), this.options = e || T2, this.options.tokenizer = this.options.tokenizer || new y, this.tokenizer = this.options.tokenizer, this.tokenizer.options = this.options, this.tokenizer.lexer = this, this.inlineQueue = [], this.state = { inLink: false, inRawBlock: false, top: true };
+    let t = { other: m, block: C.normal, inline: M2.normal };
+    this.options.pedantic ? (t.block = C.pedantic, t.inline = M2.pedantic) : this.options.gfm && (t.block = C.gfm, this.options.breaks ? t.inline = M2.breaks : t.inline = M2.gfm), this.tokenizer.rules = t;
   }
   static get rules() {
-    return { block: C2, inline: M2 };
+    return { block: C, inline: M2 };
   }
   static lex(e, t) {
     return new l2(t).lex(e);
@@ -5461,9 +5368,9 @@ var x2 = class l2 {
       }
       let i = e;
       if (this.options.extensions?.startBlock) {
-        let s = 1 / 0, a2 = e.slice(1), o;
-        this.options.extensions.startBlock.forEach((p2) => {
-          o = p2.call({ lexer: this }, a2), typeof o == "number" && o >= 0 && (s = Math.min(s, o));
+        let s = 1 / 0, a3 = e.slice(1), o;
+        this.options.extensions.startBlock.forEach((p3) => {
+          o = p3.call({ lexer: this }, a3), typeof o == "number" && o >= 0 && (s = Math.min(s, o));
         }), s < 1 / 0 && s >= 0 && (i = e.substring(0, s + 1));
       }
       if (this.state.top && (r = this.tokenizer.paragraph(i))) {
@@ -5511,11 +5418,11 @@ var x2 = class l2 {
     for (;(r = this.tokenizer.rules.inline.blockSkip.exec(n)) != null; )
       i = r[2] ? r[2].length : 0, n = n.slice(0, r.index + i) + "[" + "a".repeat(r[0].length - i - 2) + "]" + n.slice(this.tokenizer.rules.inline.blockSkip.lastIndex);
     n = this.options.hooks?.emStrongMask?.call({ lexer: this }, n) ?? n;
-    let s = false, a2 = "";
+    let s = false, a3 = "";
     for (;e; ) {
-      s || (a2 = ""), s = false;
+      s || (a3 = ""), s = false;
       let o;
-      if (this.options.extensions?.inline?.some((u2) => (o = u2.call({ lexer: this }, e, t)) ? (e = e.substring(o.raw.length), t.push(o), true) : false))
+      if (this.options.extensions?.inline?.some((u) => (o = u.call({ lexer: this }, e, t)) ? (e = e.substring(o.raw.length), t.push(o), true) : false))
         continue;
       if (o = this.tokenizer.escape(e)) {
         e = e.substring(o.raw.length), t.push(o);
@@ -5531,11 +5438,11 @@ var x2 = class l2 {
       }
       if (o = this.tokenizer.reflink(e, this.tokens.links)) {
         e = e.substring(o.raw.length);
-        let u2 = t.at(-1);
-        o.type === "text" && u2?.type === "text" ? (u2.raw += o.raw, u2.text += o.text) : t.push(o);
+        let u = t.at(-1);
+        o.type === "text" && u?.type === "text" ? (u.raw += o.raw, u.text += o.text) : t.push(o);
         continue;
       }
-      if (o = this.tokenizer.emStrong(e, n, a2)) {
+      if (o = this.tokenizer.emStrong(e, n, a3)) {
         e = e.substring(o.raw.length), t.push(o);
         continue;
       }
@@ -5559,26 +5466,26 @@ var x2 = class l2 {
         e = e.substring(o.raw.length), t.push(o);
         continue;
       }
-      let p2 = e;
+      let p3 = e;
       if (this.options.extensions?.startInline) {
-        let u2 = 1 / 0, c = e.slice(1), g2;
+        let u = 1 / 0, c = e.slice(1), g2;
         this.options.extensions.startInline.forEach((h) => {
-          g2 = h.call({ lexer: this }, c), typeof g2 == "number" && g2 >= 0 && (u2 = Math.min(u2, g2));
-        }), u2 < 1 / 0 && u2 >= 0 && (p2 = e.substring(0, u2 + 1));
+          g2 = h.call({ lexer: this }, c), typeof g2 == "number" && g2 >= 0 && (u = Math.min(u, g2));
+        }), u < 1 / 0 && u >= 0 && (p3 = e.substring(0, u + 1));
       }
-      if (o = this.tokenizer.inlineText(p2)) {
-        e = e.substring(o.raw.length), o.raw.slice(-1) !== "_" && (a2 = o.raw.slice(-1)), s = true;
-        let u2 = t.at(-1);
-        u2?.type === "text" ? (u2.raw += o.raw, u2.text += o.text) : t.push(o);
+      if (o = this.tokenizer.inlineText(p3)) {
+        e = e.substring(o.raw.length), o.raw.slice(-1) !== "_" && (a3 = o.raw.slice(-1)), s = true;
+        let u = t.at(-1);
+        u?.type === "text" ? (u.raw += o.raw, u.text += o.text) : t.push(o);
         continue;
       }
       if (e) {
-        let u2 = "Infinite loop on byte: " + e.charCodeAt(0);
+        let u = "Infinite loop on byte: " + e.charCodeAt(0);
         if (this.options.silent) {
-          console.error(u2);
+          console.error(u);
           break;
         } else
-          throw new Error(u2);
+          throw new Error(u);
       }
     }
     return t;
@@ -5588,7 +5495,7 @@ var P2 = class {
   options;
   parser;
   constructor(e) {
-    this.options = e || T;
+    this.options = e || T2;
   }
   space(e) {
     return "";
@@ -5621,8 +5528,8 @@ ${this.parser.parse(e)}</blockquote>
   }
   list(e) {
     let { ordered: t, start: n } = e, r = "";
-    for (let a2 = 0;a2 < e.items.length; a2++) {
-      let o = e.items[a2];
+    for (let a3 = 0;a3 < e.items.length; a3++) {
+      let o = e.items[a3];
       r += this.listitem(o);
     }
     let i = t ? "ol" : "ul", s = t && n !== 1 ? ' start="' + n + '"' : "";
@@ -5655,8 +5562,8 @@ ${this.parser.parse(e)}</blockquote>
     for (let i = 0;i < e.rows.length; i++) {
       let s = e.rows[i];
       n = "";
-      for (let a2 = 0;a2 < s.length; a2++)
-        n += this.tablecell(s[a2]);
+      for (let a3 = 0;a3 < s.length; a3++)
+        n += this.tablecell(s[a3]);
       r += this.tablerow({ text: n });
     }
     return r && (r = `<tbody>${r}</tbody>`), `<table>
@@ -5745,7 +5652,7 @@ var b = class l3 {
   renderer;
   textRenderer;
   constructor(e) {
-    this.options = e || T, this.options.renderer = this.options.renderer || new P2, this.renderer = this.options.renderer, this.renderer.options = this.options, this.renderer.parser = this, this.textRenderer = new $2;
+    this.options = e || T2, this.options.renderer = this.options.renderer || new P2, this.renderer = this.options.renderer, this.renderer.options = this.options, this.renderer.parser = this, this.textRenderer = new $2;
   }
   static parse(e, t) {
     return new l3(t).parse(e);
@@ -5758,8 +5665,8 @@ var b = class l3 {
     for (let r = 0;r < e.length; r++) {
       let i = e[r];
       if (this.options.extensions?.renderers?.[i.type]) {
-        let a2 = i, o = this.options.extensions.renderers[a2.type].call({ parser: this }, a2);
-        if (o !== false || !["space", "hr", "heading", "code", "table", "blockquote", "list", "html", "def", "paragraph", "text"].includes(a2.type)) {
+        let a3 = i, o = this.options.extensions.renderers[a3.type].call({ parser: this }, a3);
+        if (o !== false || !["space", "hr", "heading", "code", "table", "blockquote", "list", "html", "def", "paragraph", "text"].includes(a3.type)) {
           n += o || "";
           continue;
         }
@@ -5807,18 +5714,18 @@ var b = class l3 {
           continue;
         }
         case "text": {
-          let a2 = s, o = this.renderer.text(a2);
+          let a3 = s, o = this.renderer.text(a3);
           for (;r + 1 < e.length && e[r + 1].type === "text"; )
-            a2 = e[++r], o += `
-` + this.renderer.text(a2);
+            a3 = e[++r], o += `
+` + this.renderer.text(a3);
           t ? n += this.renderer.paragraph({ type: "paragraph", raw: o, text: o, tokens: [{ type: "text", raw: o, text: o, escaped: true }] }) : n += o;
           continue;
         }
         default: {
-          let a2 = 'Token with "' + s.type + '" type was not found.';
+          let a3 = 'Token with "' + s.type + '" type was not found.';
           if (this.options.silent)
-            return console.error(a2), "";
-          throw new Error(a2);
+            return console.error(a3), "";
+          throw new Error(a3);
         }
       }
     }
@@ -5829,9 +5736,9 @@ var b = class l3 {
     for (let r = 0;r < e.length; r++) {
       let i = e[r];
       if (this.options.extensions?.renderers?.[i.type]) {
-        let a2 = this.options.extensions.renderers[i.type].call({ parser: this }, i);
-        if (a2 !== false || !["escape", "html", "link", "image", "strong", "em", "codespan", "br", "del", "text"].includes(i.type)) {
-          n += a2 || "";
+        let a3 = this.options.extensions.renderers[i.type].call({ parser: this }, i);
+        if (a3 !== false || !["escape", "html", "link", "image", "strong", "em", "codespan", "br", "del", "text"].includes(i.type)) {
+          n += a3 || "";
           continue;
         }
       }
@@ -5878,21 +5785,21 @@ var b = class l3 {
           break;
         }
         default: {
-          let a2 = 'Token with "' + s.type + '" type was not found.';
+          let a3 = 'Token with "' + s.type + '" type was not found.';
           if (this.options.silent)
-            return console.error(a2), "";
-          throw new Error(a2);
+            return console.error(a3), "";
+          throw new Error(a3);
         }
       }
     }
     return n;
   }
 };
-var S2 = class {
+var S = class {
   options;
   block;
   constructor(e) {
-    this.options = e || T;
+    this.options = e || T2;
   }
   static passThroughHooks = new Set(["preprocess", "postprocess", "processAllTokens", "emStrongMask"]);
   static passThroughHooksRespectAsync = new Set(["preprocess", "postprocess", "processAllTokens"]);
@@ -5924,8 +5831,8 @@ var B2 = class {
   Renderer = P2;
   TextRenderer = $2;
   Lexer = x2;
-  Tokenizer = y2;
-  Hooks = S2;
+  Tokenizer = y;
+  Hooks = S;
   constructor(...e) {
     this.use(...e);
   }
@@ -5938,8 +5845,8 @@ var B2 = class {
           for (let s of i.header)
             n = n.concat(this.walkTokens(s.tokens, t));
           for (let s of i.rows)
-            for (let a2 of s)
-              n = n.concat(this.walkTokens(a2.tokens, t));
+            for (let a3 of s)
+              n = n.concat(this.walkTokens(a3.tokens, t));
           break;
         }
         case "list": {
@@ -5950,8 +5857,8 @@ var B2 = class {
         default: {
           let i = r;
           this.defaults.extensions?.childTokens?.[i.type] ? this.defaults.extensions.childTokens[i.type].forEach((s) => {
-            let a2 = i[s].flat(1 / 0);
-            n = n.concat(this.walkTokens(a2, t));
+            let a3 = i[s].flat(1 / 0);
+            n = n.concat(this.walkTokens(a3, t));
           }) : i.tokens && (n = n.concat(this.walkTokens(i.tokens, t)));
         }
       }
@@ -5966,9 +5873,9 @@ var B2 = class {
           throw new Error("extension name required");
         if ("renderer" in i) {
           let s = t.renderers[i.name];
-          s ? t.renderers[i.name] = function(...a2) {
-            let o = i.renderer.apply(this, a2);
-            return o === false && (o = s.apply(this, a2)), o;
+          s ? t.renderers[i.name] = function(...a3) {
+            let o = i.renderer.apply(this, a3);
+            return o === false && (o = s.apply(this, a3)), o;
           } : t.renderers[i.name] = i.renderer;
         }
         if ("tokenizer" in i) {
@@ -5985,62 +5892,62 @@ var B2 = class {
             throw new Error(`renderer '${s}' does not exist`);
           if (["options", "parser"].includes(s))
             continue;
-          let a2 = s, o = n.renderer[a2], p2 = i[a2];
-          i[a2] = (...u2) => {
-            let c = o.apply(i, u2);
-            return c === false && (c = p2.apply(i, u2)), c || "";
+          let a3 = s, o = n.renderer[a3], p3 = i[a3];
+          i[a3] = (...u) => {
+            let c = o.apply(i, u);
+            return c === false && (c = p3.apply(i, u)), c || "";
           };
         }
         r.renderer = i;
       }
       if (n.tokenizer) {
-        let i = this.defaults.tokenizer || new y2(this.defaults);
+        let i = this.defaults.tokenizer || new y(this.defaults);
         for (let s in n.tokenizer) {
           if (!(s in i))
             throw new Error(`tokenizer '${s}' does not exist`);
           if (["options", "rules", "lexer"].includes(s))
             continue;
-          let a2 = s, o = n.tokenizer[a2], p2 = i[a2];
-          i[a2] = (...u2) => {
-            let c = o.apply(i, u2);
-            return c === false && (c = p2.apply(i, u2)), c;
+          let a3 = s, o = n.tokenizer[a3], p3 = i[a3];
+          i[a3] = (...u) => {
+            let c = o.apply(i, u);
+            return c === false && (c = p3.apply(i, u)), c;
           };
         }
         r.tokenizer = i;
       }
       if (n.hooks) {
-        let i = this.defaults.hooks || new S2;
+        let i = this.defaults.hooks || new S;
         for (let s in n.hooks) {
           if (!(s in i))
             throw new Error(`hook '${s}' does not exist`);
           if (["options", "block"].includes(s))
             continue;
-          let a2 = s, o = n.hooks[a2], p2 = i[a2];
-          S2.passThroughHooks.has(s) ? i[a2] = (u2) => {
-            if (this.defaults.async && S2.passThroughHooksRespectAsync.has(s))
+          let a3 = s, o = n.hooks[a3], p3 = i[a3];
+          S.passThroughHooks.has(s) ? i[a3] = (u) => {
+            if (this.defaults.async && S.passThroughHooksRespectAsync.has(s))
               return (async () => {
-                let g2 = await o.call(i, u2);
-                return p2.call(i, g2);
+                let g2 = await o.call(i, u);
+                return p3.call(i, g2);
               })();
-            let c = o.call(i, u2);
-            return p2.call(i, c);
-          } : i[a2] = (...u2) => {
+            let c = o.call(i, u);
+            return p3.call(i, c);
+          } : i[a3] = (...u) => {
             if (this.defaults.async)
               return (async () => {
-                let g2 = await o.apply(i, u2);
-                return g2 === false && (g2 = await p2.apply(i, u2)), g2;
+                let g2 = await o.apply(i, u);
+                return g2 === false && (g2 = await p3.apply(i, u)), g2;
               })();
-            let c = o.apply(i, u2);
-            return c === false && (c = p2.apply(i, u2)), c;
+            let c = o.apply(i, u);
+            return c === false && (c = p3.apply(i, u)), c;
           };
         }
         r.hooks = i;
       }
       if (n.walkTokens) {
         let i = this.defaults.walkTokens, s = n.walkTokens;
-        r.walkTokens = function(a2) {
+        r.walkTokens = function(a3) {
           let o = [];
-          return o.push(s.call(this, a2)), i && (o = o.concat(i.call(this, a2))), o;
+          return o.push(s.call(this, a3)), i && (o = o.concat(i.call(this, a3))), o;
         };
       }
       this.defaults = { ...this.defaults, ...r };
@@ -6057,28 +5964,28 @@ var B2 = class {
   }
   parseMarkdown(e) {
     return (n, r) => {
-      let i = { ...r }, s = { ...this.defaults, ...i }, a2 = this.onError(!!s.silent, !!s.async);
+      let i = { ...r }, s = { ...this.defaults, ...i }, a3 = this.onError(!!s.silent, !!s.async);
       if (this.defaults.async === true && i.async === false)
-        return a2(new Error("marked(): The async option was set to true by an extension. Remove async: false from the parse options object to return a Promise."));
+        return a3(new Error("marked(): The async option was set to true by an extension. Remove async: false from the parse options object to return a Promise."));
       if (typeof n > "u" || n === null)
-        return a2(new Error("marked(): input parameter is undefined or null"));
+        return a3(new Error("marked(): input parameter is undefined or null"));
       if (typeof n != "string")
-        return a2(new Error("marked(): input parameter is of type " + Object.prototype.toString.call(n) + ", string expected"));
+        return a3(new Error("marked(): input parameter is of type " + Object.prototype.toString.call(n) + ", string expected"));
       if (s.hooks && (s.hooks.options = s, s.hooks.block = e), s.async)
         return (async () => {
-          let o = s.hooks ? await s.hooks.preprocess(n) : n, u2 = await (s.hooks ? await s.hooks.provideLexer() : e ? x2.lex : x2.lexInline)(o, s), c = s.hooks ? await s.hooks.processAllTokens(u2) : u2;
+          let o = s.hooks ? await s.hooks.preprocess(n) : n, u = await (s.hooks ? await s.hooks.provideLexer() : e ? x2.lex : x2.lexInline)(o, s), c = s.hooks ? await s.hooks.processAllTokens(u) : u;
           s.walkTokens && await Promise.all(this.walkTokens(c, s.walkTokens));
           let h = await (s.hooks ? await s.hooks.provideParser() : e ? b.parse : b.parseInline)(c, s);
           return s.hooks ? await s.hooks.postprocess(h) : h;
-        })().catch(a2);
+        })().catch(a3);
       try {
         s.hooks && (n = s.hooks.preprocess(n));
-        let p2 = (s.hooks ? s.hooks.provideLexer() : e ? x2.lex : x2.lexInline)(n, s);
-        s.hooks && (p2 = s.hooks.processAllTokens(p2)), s.walkTokens && this.walkTokens(p2, s.walkTokens);
-        let c = (s.hooks ? s.hooks.provideParser() : e ? b.parse : b.parseInline)(p2, s);
+        let p3 = (s.hooks ? s.hooks.provideLexer() : e ? x2.lex : x2.lexInline)(n, s);
+        s.hooks && (p3 = s.hooks.processAllTokens(p3)), s.walkTokens && this.walkTokens(p3, s.walkTokens);
+        let c = (s.hooks ? s.hooks.provideParser() : e ? b.parse : b.parseInline)(p3, s);
         return s.hooks && (c = s.hooks.postprocess(c)), c;
       } catch (o) {
-        return a2(o);
+        return a3(o);
       }
     };
   }
@@ -6103,7 +6010,7 @@ k.options = k.setOptions = function(l4) {
   return _2.setOptions(l4), k.defaults = _2.defaults, G2(k.defaults), k;
 };
 k.getDefaults = L;
-k.defaults = T;
+k.defaults = T2;
 k.use = function(...l4) {
   return _2.use(...l4), k.defaults = _2.defaults, G2(k.defaults), k;
 };
@@ -6117,8 +6024,8 @@ k.Renderer = P2;
 k.TextRenderer = $2;
 k.Lexer = x2;
 k.lexer = x2.lex;
-k.Tokenizer = y2;
-k.Hooks = S2;
+k.Tokenizer = y;
+k.Hooks = S;
 k.parse = k;
 var Zt = k.options;
 var Gt = k.setOptions;
@@ -6136,12 +6043,12 @@ function populate(basePath, source) {
     source = String(source);
   }
   return source.replace(/\{\{([^}]+)\}\}/g, (original, prop) => {
-    const value = y[`${basePath}${prop.startsWith("[") ? prop : "." + prop}`];
+    const value = a[`${basePath}${prop.startsWith("[") ? prop : "." + prop}`];
     return value === undefined ? original : populate(basePath, String(value));
   });
 }
 
-class MarkdownViewer extends F {
+class MarkdownViewer extends W {
   static initAttributes = {
     src: "",
     elements: false
@@ -6168,7 +6075,7 @@ class MarkdownViewer extends F {
   didRender = () => {};
   render() {
     super.render();
-    y[this.instanceId] = typeof this.context === "string" ? JSON.parse(this.context) : this.context;
+    a[this.instanceId] = typeof this.context === "string" ? JSON.parse(this.context) : this.context;
     const source = populate(this.instanceId, this.value);
     if (this.elements) {
       const chunks = source.split(`
@@ -6198,9 +6105,9 @@ var markdownViewer = MarkdownViewer.elementCreator({
 });
 
 // src/tab-selector.ts
-var { div: div5, slot: slot3, span: span5, button: button6 } = u;
+var { div: div5, slot: slot3, span: span5, button: button6 } = d;
 
-class TabSelector extends F {
+class TabSelector extends W {
   static initAttributes = {
     localized: false
   };
@@ -6257,33 +6164,33 @@ class TabSelector extends F {
       whiteSpace: "nowrap"
     },
     ":host .tabs > div": {
-      padding: `${Ao.spacing50} ${Ao.spacing}`,
+      padding: `${Ge.spacing50} ${Ge.spacing}`,
       cursor: "default",
       display: "flex",
       alignItems: "baseline"
     },
     ':host .tabs > [aria-selected="true"]': {
-      "--text-color": Ao.tosiTabsSelectedColor,
-      color: Ao.textColor
+      "--text-color": Ge.tosiTabsSelectedColor,
+      color: Ge.textColor
     },
     ":host .elastic": {
       flex: "1"
     },
     ":host .border": {
-      background: Ao.tosiTabsBarColor
+      background: Ge.tosiTabsBarColor
     },
     ":host .border > .selected": {
       content: " ",
       width: 0,
-      height: Ao.tosiTabsBarHeight,
-      background: Ao.tosiTabsSelectedColor,
+      height: Ge.tosiTabsBarHeight,
+      background: Ge.tosiTabsSelectedColor,
       transition: "ease-out 0.2s"
     },
     ":host button.close": {
       border: 0,
       background: "transparent",
       textAlign: "center",
-      marginLeft: Ao.spacing50,
+      marginLeft: Ge.spacing50,
       padding: 0
     },
     ":host button.close > svg": {
@@ -6409,11 +6316,11 @@ var tabSelector = TabSelector.elementCreator({
 });
 
 // src/live-example.ts
-var { div: div6, xinSlot: xinSlot3, style, button: button7, pre } = u;
+var { div: div6, xinSlot: xinSlot3, style, button: button7, pre } = d;
 var sucraseSrc = () => "https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm";
 var AsyncFunction = (async () => {}).constructor;
 
-class LiveExample extends F {
+class LiveExample extends W {
   static initAttributes = {
     persistToDom: false,
     prettier: false,
@@ -7003,9 +6910,9 @@ if (remoteId) {
 }
 
 // src/side-nav.ts
-var { slot: slot4 } = u;
+var { slot: slot4 } = d;
 
-class SideNav extends F {
+class SideNav extends W {
   static initAttributes = {
     minSize: 800,
     navSize: 200,
@@ -7017,11 +6924,11 @@ class SideNav extends F {
   static styleSpec = {
     ":host": {
       display: "grid",
-      gridTemplateColumns: `${yo.navWidth("50%")} ${yo.contentWidth("50%")}`,
+      gridTemplateColumns: `${de.navWidth("50%")} ${de.contentWidth("50%")}`,
       gridTemplateRows: "100%",
       position: "relative",
-      margin: yo.margin("0 0 0 -100%"),
-      transition: yo.sideNavTransition("0.25s ease-out")
+      margin: de.margin("0 0 0 -100%"),
+      transition: de.sideNavTransition("0.25s ease-out")
     },
     ":host slot": {
       position: "relative"
@@ -7094,7 +7001,7 @@ var sideNav = SideNav.elementCreator({
 });
 
 // src/doc-browser.ts
-var { div: div7, span: span6, a: a2, header: header2, button: button8, template: template2, input: input4, h2 } = u;
+var { div: div7, span: span6, a: a3, header: header2, button: button8, template: template2, input: input4, h2 } = d;
 function createDocBrowser(options) {
   const {
     docs,
@@ -7106,30 +7013,30 @@ function createDocBrowser(options) {
   } = options;
   const docName = document.location.search !== "" ? document.location.search.substring(1).split("&")[0] : docs[0]?.filename || "README.md";
   const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0];
-  const { app } = wo({
+  const { app } = he({
     app: {
       docs,
       currentDoc,
       compact: false
     }
   });
-  lo.docLink = {
+  le.docLink = {
     toDOM(elt, filename) {
       elt.setAttribute("href", `?${filename}`);
     }
   };
-  lo.current = {
+  le.current = {
     toDOM(elt, currentFile) {
       const boundFile = elt.getAttribute("href") || "";
       elt.classList.toggle("current", currentFile === boundFile.substring(1));
     }
   };
-  const filterDocs = jo(() => {
+  const filterDocs = Je(() => {
     const needle = searchField.value.toLocaleLowerCase();
     app.docs.forEach((doc) => {
       doc.hidden = !doc.title.toLocaleLowerCase().includes(needle) && !doc.text.toLocaleLowerCase().includes(needle);
     });
-    I(app.docs);
+    R(app.docs);
   });
   const searchField = input4({
     slot: "nav",
@@ -7148,7 +7055,7 @@ function createDocBrowser(options) {
   const headerContent = [
     button8({
       class: "iconic",
-      style: { color: Ao.linkColor },
+      style: { color: Ge.linkColor },
       title: "navigation",
       bind: {
         value: app.compact,
@@ -7167,7 +7074,7 @@ function createDocBrowser(options) {
     span6({ style: { flex: "0 0 10px" } })
   ];
   if (projectName) {
-    headerContent.push(a2({
+    headerContent.push(a3({
       href: "/",
       style: {
         display: "flex",
@@ -7180,23 +7087,23 @@ function createDocBrowser(options) {
   }
   headerContent.push(span6({ class: "elastic" }));
   if (projectLinks.tosijs) {
-    headerContent.push(a2({ class: "iconic", title: "tosijs", target: "_blank" }, icons.tosi(), {
+    headerContent.push(a3({ class: "iconic", title: "tosijs", target: "_blank" }, icons.tosi(), {
       href: projectLinks.tosijs
     }));
   }
   if (projectLinks.discord) {
-    headerContent.push(a2({ class: "iconic", title: "discord", target: "_blank" }, icons.discord(), { href: projectLinks.discord }));
+    headerContent.push(a3({ class: "iconic", title: "discord", target: "_blank" }, icons.discord(), { href: projectLinks.discord }));
   }
   if (projectLinks.blog) {
-    headerContent.push(a2({ class: "iconic", title: "blog", target: "_blank" }, icons.blog(), {
+    headerContent.push(a3({ class: "iconic", title: "blog", target: "_blank" }, icons.blog(), {
       href: projectLinks.blog
     }));
   }
   if (projectLinks.github) {
-    headerContent.push(a2({ class: "iconic", title: "github", target: "_blank" }, icons.github(), { href: projectLinks.github }));
+    headerContent.push(a3({ class: "iconic", title: "github", target: "_blank" }, icons.github(), { href: projectLinks.github }));
   }
   if (projectLinks.npm) {
-    headerContent.push(a2({ class: "iconic", title: "npmjs", target: "_blank" }, icons.npm(), {
+    headerContent.push(a3({ class: "iconic", title: "npmjs", target: "_blank" }, icons.npm(), {
       href: projectLinks.npm
     }));
   }
@@ -7233,16 +7140,16 @@ function createDocBrowser(options) {
       hiddenProp: "hidden",
       value: app.docs
     }
-  }, template2(a2({
+  }, template2(a3({
     class: "doc-link",
     bindCurrent: "app.currentDoc.filename",
     bindDocLink: "^.filename",
     onClick(event) {
-      const a3 = event.target;
-      const doc = _o(event.target);
+      const a4 = event.target;
+      const doc = Ie(event.target);
       const nav = event.target.closest("xin-sidenav");
       nav.contentVisible = true;
-      const { href } = a3;
+      const { href } = a4;
       window.history.pushState({ href }, "", href);
       app.currentDoc = doc;
       event.preventDefault();
@@ -7253,7 +7160,7 @@ function createDocBrowser(options) {
       overflowY: "scroll",
       height: "100%"
     }
-  }, a2({
+  }, a3({
     class: "view-source",
     target: "_blank",
     style: {
@@ -7306,9 +7213,9 @@ function createDocBrowser(options) {
   return container;
 }
 // src/editable-rect.ts
-var { div: div8, slot: slot5 } = u;
+var { div: div8, slot: slot5 } = d;
 
-class EditableRect extends F {
+class EditableRect extends W {
   static initAttributes = {
     rotationSnap: 0,
     positionSnap: 0
@@ -7334,11 +7241,11 @@ class EditableRect extends F {
       content: '" "',
       position: "absolute",
       display: "flex",
-      height: Ao.handleSize,
-      width: Ao.handleSize,
-      padding: Ao.handlePadding,
-      "--text-color": Ao.handleColor,
-      background: Ao.handleBg
+      height: Ge.handleSize,
+      width: Ge.handleSize,
+      padding: Ge.handlePadding,
+      "--text-color": Ge.handleColor,
+      background: Ge.handleBg
     },
     ":host > .drag-size": {
       top: 0,
@@ -7351,7 +7258,7 @@ class EditableRect extends F {
       cursor: "ew-resize"
     },
     ':host > [part="rotate"]': {
-      transform: `translateY(${Ao.handleSize_50})`
+      transform: `translateY(${Ge.handleSize_50})`
     },
     ":host > [locked] > svg:first-child, :host > :not([locked]) > svg+svg": {
       display: "none"
@@ -7363,17 +7270,17 @@ class EditableRect extends F {
       pointerEvents: "none"
     },
     ":host > *:hover": {
-      "--text-color": Ao.handleHoverColor,
-      background: Ao.handleHoverBg
+      "--text-color": Ge.handleHoverColor,
+      background: Ge.handleHoverBg
     }
   };
   static snappedCoords(event, coords) {
     const { gridSize } = EditableRect;
     return EditableRect.snapToGrid || event.shiftKey ? coords.map((v3) => Math.round(v3 / gridSize) * gridSize) : coords;
   }
-  static snappedAngle(event, a3) {
+  static snappedAngle(event, a4) {
     const { angleSize } = EditableRect;
-    return EditableRect.snapAngle || event.shiftKey ? Math.round(a3 / angleSize) * angleSize : a3;
+    return EditableRect.snapAngle || event.shiftKey ? Math.round(a4 / angleSize) * angleSize : a4;
   }
   get locked() {
     const element = this.parentElement;
@@ -7554,10 +7461,10 @@ class EditableRect extends F {
     trackDrag(event, (_dx, _dy, dragEvent) => {
       const { clientX, clientY } = dragEvent;
       const x3 = clientX - center.x;
-      const y3 = clientY - center.y;
-      let alpha = y3 > 0 ? 90 : -90;
+      const y2 = clientY - center.y;
+      let alpha = y2 > 0 ? 90 : -90;
       if (x3 !== 0) {
-        alpha = Math.atan2(y3, x3) * 180 / Math.PI;
+        alpha = Math.atan2(y2, x3) * 180 / Math.PI;
       }
       alpha = EditableRect.snappedAngle(dragEvent, alpha);
       if (alpha === 0) {
@@ -7685,7 +7592,7 @@ var editableRect = EditableRect.elementCreator({
   tag: "xin-editable"
 });
 // src/filter-builder.ts
-var { div: div9, input: input5, button: button9, span: span7 } = u;
+var { div: div9, input: input5, button: button9, span: span7 } = d;
 var passThru2 = (array) => array;
 var NULL_FILTER_DESCRIPTION = "null filter, everything matches";
 var availableFilters = {
@@ -7768,7 +7675,7 @@ function getSelectText(select) {
   return select.options[select.selectedIndex]?.caption || "";
 }
 
-class FilterPart extends F {
+class FilterPart extends W {
   static initAttributes = {
     haystack: "*",
     condition: "contains",
@@ -7777,8 +7684,8 @@ class FilterPart extends F {
   fields = [];
   filters = availableFilters;
   content = () => [
-    xinSelect({ part: "haystack" }),
-    xinSelect({ part: "condition" }),
+    tosiSelect({ part: "haystack" }),
+    tosiSelect({ part: "condition" }),
     input5({ part: "needle", type: "search" }),
     span7({ part: "padding" }),
     button9({ part: "remove", title: "delete" }, icons.trash())
@@ -7885,7 +7792,7 @@ var filterPart = FilterPart.elementCreator({
   }
 });
 
-class FilterBuilder extends F {
+class FilterBuilder extends W {
   _fields = [];
   get fields() {
     return this._fields;
@@ -7993,7 +7900,7 @@ var filterBuilder = FilterBuilder.elementCreator({
   }
 });
 // src/form.ts
-var { form, slot: slot6, xinSlot: xinSlot4, label: label2, input: input6, span: span8 } = u;
+var { form, slot: slot6, xinSlot: xinSlot4, label: label2, input: input6, span: span8 } = d;
 function attr(element, name, value) {
   if (value !== "" && value !== false) {
     element.setAttribute(name, value);
@@ -8035,7 +7942,7 @@ function setElementValue(input7, value) {
   }
 }
 
-class XinField extends F {
+class XinField extends W {
   static initAttributes = {
     caption: "",
     key: "",
@@ -8110,7 +8017,7 @@ class XinField extends F {
     }
     if (this.type === "text") {
       input7.textContent = "";
-      const textarea = u.textarea({ value: this.value });
+      const textarea = d.textarea({ value: this.value });
       if (this.placeholder) {
         textarea.setAttribute("placeholder", this.placeholder);
       }
@@ -8145,7 +8052,7 @@ class XinField extends F {
   }
 }
 
-class XinForm extends F {
+class XinForm extends W {
   context = {};
   value = {};
   get isValid() {
@@ -8245,7 +8152,7 @@ var xinField = XinField.elementCreator({
       position: "relative",
       display: "flex",
       alignItems: "center",
-      gap: yo.prefixSuffixGap("8px")
+      gap: de.prefixSuffixGap("8px")
     },
     ':host [part="field"][prefix]::before': {
       content: "attr(prefix)"
@@ -8274,9 +8181,9 @@ var xinForm = XinForm.elementCreator({
 });
 // src/gamepad.ts
 function gamepadState() {
-  const gamepads = navigator.getGamepads().filter((p2) => p2 !== null);
-  return gamepads.map((p2) => {
-    const { id, axes, buttons } = p2;
+  const gamepads = navigator.getGamepads().filter((p3) => p3 !== null);
+  return gamepads.map((p3) => {
+    const { id, axes, buttons } = p3;
     return {
       id,
       axes,
@@ -8297,7 +8204,7 @@ function gamepadState() {
 function gamepadText() {
   const state = gamepadState();
   return state.length === 0 ? "no active gamepads" : state.map(({ id, axes, buttons }) => {
-    const axesText = axes.map((a3) => a3.toFixed(2)).join(" ");
+    const axesText = axes.map((a4) => a4.toFixed(2)).join(" ");
     const buttonText = Object.keys(buttons).map((key) => `[${key}](${buttons[Number(key)].toFixed(2)})`).join(" ");
     return `${id}
 ${axesText}
@@ -8342,9 +8249,9 @@ ${buttonText}`;
 `);
 }
 // src/mapbox.ts
-var { div: div10 } = u;
+var { div: div10 } = d;
 
-class MapBox extends F {
+class MapBox extends W {
   static initAttributes = {
     coords: "65.01715565258993,25.48081004203459,12",
     token: "",
@@ -8410,14 +8317,14 @@ var mapBox = MapBox.elementCreator({
   tag: "xin-map"
 });
 // src/month.ts
-var { div: div11, span: span9, button: button10 } = u;
+var { div: div11, span: span9, button: button10 } = d;
 var DAY_MS = 24 * 3600 * 1000;
 var WEEK = [0, 1, 2, 3, 4, 5, 6];
 var MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 var padLeft = (value, length = 2, padding = "0") => String(value).padStart(length, padding);
 var dateFromYMD = (year, month, date) => new Date(`${year}-${padLeft(month)}-${padLeft(date)}`);
 
-class TosiMonth extends F {
+class TosiMonth extends W {
   static initAttributes = {
     month: NaN,
     year: NaN,
@@ -8585,11 +8492,11 @@ class TosiMonth extends F {
     }, icons.chevronLeft()), span9({ style: { flex: "1" } }), button10({
       part: "jump",
       onClick: this.jumpMenu
-    }, icons.calendar()), xinSelect({
+    }, icons.calendar()), tosiSelect({
       part: "month",
       options: this.months,
       onChange: this.setMonth
-    }), xinSelect({
+    }), tosiSelect({
       part: "year",
       options: [this.year],
       onChange: this.setMonth
@@ -8696,7 +8603,7 @@ var tosiMonth = TosiMonth.elementCreator({
     },
     ":host[disabled]": {
       pointerEvents: "none",
-      opacity: yo.disabledOpacity(0.6)
+      opacity: de.disabledOpacity(0.6)
     },
     ':host [part="month"], :host [part="year"]': {
       _fieldWidth: "4em",
@@ -8708,10 +8615,10 @@ var tosiMonth = TosiMonth.elementCreator({
       justifyItems: "stretch"
     },
     ":host .today": {
-      background: yo.monthTodayBackground("transparent"),
-      boxShadow: yo.monthTodayShadow(`none`),
-      backdropFilter: yo.monthTodayBackdropFilter("brightness(0.9)"),
-      fontWeight: yo.monthTodayFontWeight("800")
+      background: de.monthTodayBackground("transparent"),
+      boxShadow: de.monthTodayShadow(`none`),
+      backdropFilter: de.monthTodayBackdropFilter("brightness(0.9)"),
+      fontWeight: de.monthTodayFontWeight("800")
     },
     ":host .day, :host .date": {
       padding: 5,
@@ -8720,38 +8627,38 @@ var tosiMonth = TosiMonth.elementCreator({
       userSelect: "none"
     },
     ":host .day": {
-      color: yo.monthDayColor("hotpink"),
-      background: yo.monthDayBackground("white"),
-      fontWeight: yo.monthDayFontWeight("800")
+      color: de.monthDayColor("hotpink"),
+      background: de.monthDayBackground("white"),
+      fontWeight: de.monthDayFontWeight("800")
     },
     ":host .date": {
       cursor: "default"
     },
     ":host .weekend": {
-      background: yo.monthWeekendBackground("#eee")
+      background: de.monthWeekendBackground("#eee")
     },
     ":host .date:not(.in-month)": {
       opacity: 0.5
     },
     ":host .date.checked": {
-      color: yo.monthDateCheckedColor("white"),
-      background: yo.monthDateCheckedBackground("hotpink")
+      color: de.monthDateCheckedColor("white"),
+      background: de.monthDateCheckedBackground("hotpink")
     },
     ":host:not([range]) .date.checked": {
-      borderRadius: yo.monthDateCheckedBorderRadius("10px")
+      borderRadius: de.monthDateCheckedBorderRadius("10px")
     },
     ":host .range-start": {
-      borderTopLeftRadius: yo.monthDateCheckedBorderRadius("10px"),
-      borderBottomLeftRadius: yo.monthDateCheckedBorderRadius("10px")
+      borderTopLeftRadius: de.monthDateCheckedBorderRadius("10px"),
+      borderBottomLeftRadius: de.monthDateCheckedBorderRadius("10px")
     },
     ":host .range-end": {
-      borderTopRightRadius: yo.monthDateCheckedBorderRadius("10px"),
-      borderBottomRightRadius: yo.monthDateCheckedBorderRadius("10px")
+      borderTopRightRadius: de.monthDateCheckedBorderRadius("10px"),
+      borderBottomRightRadius: de.monthDateCheckedBorderRadius("10px")
     }
   }
 });
 // src/notifications.ts
-var { div: div12, button: button11 } = u;
+var { div: div12, button: button11 } = d;
 var COLOR_MAP = {
   error: "red",
   warn: "orange",
@@ -8761,63 +8668,63 @@ var COLOR_MAP = {
   progress: "royalblue"
 };
 
-class XinNotification extends F {
+class XinNotification extends W {
   static singleton;
   static styleSpec = {
     ":host": {
       _notificationSpacing: 8,
       _notificationWidth: 360,
-      _notificationPadding: `${Ao.notificationSpacing} ${Ao.notificationSpacing50} ${Ao.notificationSpacing} ${Ao.notificationSpacing200}`,
+      _notificationPadding: `${Ge.notificationSpacing} ${Ge.notificationSpacing50} ${Ge.notificationSpacing} ${Ge.notificationSpacing200}`,
       _notificationBg: "#fafafa",
       _notificationAccentColor: "#aaa",
       _notificationTextColor: "#444",
-      _notificationIconSize: Ao.notificationSpacing300,
+      _notificationIconSize: Ge.notificationSpacing300,
       _notificationButtonSize: 48,
       _notificationBorderWidth: "3px 0 0",
-      _notificationBorderRadius: Ao.notificationSpacing50,
+      _notificationBorderRadius: Ge.notificationSpacing50,
       position: "fixed",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingBottom: Ao.notificationSpacing,
-      width: Ao.notificationWidth,
+      paddingBottom: Ge.notificationSpacing,
+      width: Ge.notificationWidth,
       display: "flex",
       flexDirection: "column-reverse",
       margin: "0 auto",
-      gap: Ao.notificationSpacing,
+      gap: Ge.notificationSpacing,
       maxHeight: "50vh",
       overflow: "hidden auto",
       boxShadow: "none !important"
     },
     ":host *": {
-      color: Ao.notificationTextColor
+      color: Ge.notificationTextColor
     },
     ":host .note": {
       display: "grid",
-      background: Ao.notificationBg,
-      padding: Ao.notificationPadding,
-      gridTemplateColumns: `${Ao.notificationIconSize} 1fr ${Ao.notificationButtonSize}`,
-      gap: Ao.notificationSpacing,
+      background: Ge.notificationBg,
+      padding: Ge.notificationPadding,
+      gridTemplateColumns: `${Ge.notificationIconSize} 1fr ${Ge.notificationButtonSize}`,
+      gap: Ge.notificationSpacing,
       alignItems: "center",
-      borderRadius: Ao.notificationBorderRadius,
-      boxShadow: `0 2px 8px #0006, inset 0 0 0 2px ${Ao.notificationAccentColor}`,
-      borderColor: Ao.notificationAccentColor,
-      borderWidth: Ao.notificationBorderWidth,
+      borderRadius: Ge.notificationBorderRadius,
+      boxShadow: `0 2px 8px #0006, inset 0 0 0 2px ${Ge.notificationAccentColor}`,
+      borderColor: Ge.notificationAccentColor,
+      borderWidth: Ge.notificationBorderWidth,
       borderStyle: "solid",
       transition: "0.5s ease-in",
       transitionProperty: "margin, opacity",
       zIndex: 1
     },
     ":host .note .icon": {
-      stroke: Ao.notificationAccentColor
+      stroke: Ge.notificationAccentColor
     },
     ":host .note button": {
       display: "flex",
-      lineHeight: Ao.notificationButtonSize,
+      lineHeight: Ge.notificationButtonSize,
       padding: 0,
       margin: 0,
-      height: Ao.notificationButtonSize,
-      width: Ao.notificationButtonSize,
+      height: Ge.notificationButtonSize,
+      width: Ge.notificationButtonSize,
       background: "transparent",
       alignItems: "center",
       justifyContent: "center",
@@ -8826,24 +8733,24 @@ class XinNotification extends F {
       position: "relative"
     },
     ":host .note button:hover svg": {
-      stroke: Ao.notificationAccentColor
+      stroke: Ge.notificationAccentColor
     },
     ":host .note button:active svg": {
       borderRadius: 99,
-      stroke: Ao.notificationBg,
-      background: Ao.notificationAccentColor,
-      padding: Ao.spacing50
+      stroke: Ge.notificationBg,
+      background: Ge.notificationAccentColor,
+      padding: Ge.spacing50
     },
     ":host .note svg": {
-      height: Ao.notificationIconSize,
-      width: Ao.notificationIconSize,
+      height: Ge.notificationIconSize,
+      width: Ge.notificationIconSize,
       pointerEvents: "none"
     },
     ":host .message": {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      gap: Ao.notificationSpacing
+      gap: Ge.notificationSpacing
     },
     ":host .note.closing": {
       opacity: 0,
@@ -8868,7 +8775,7 @@ class XinNotification extends F {
     document.body.append(singleton);
     singleton.style.zIndex = String(findHighestZ() + 1);
     const _notificationAccentColor = color || COLOR_MAP[type];
-    const progressBar = progress || type === "progress" ? u.progress() : {};
+    const progressBar = progress || type === "progress" ? d.progress() : {};
     const closeCallback = () => {
       if (close) {
         close();
@@ -8942,9 +8849,9 @@ var isBreached = async (password) => {
   }
   return response.status !== 404;
 };
-var { span: span10, xinSlot: xinSlot5 } = u;
+var { span: span10, xinSlot: xinSlot5 } = d;
 
-class XinPasswordStrength extends F {
+class XinPasswordStrength extends W {
   static initAttributes = {
     minLength: 8,
     goodLength: 12,
@@ -9028,7 +8935,7 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
     ":host": {
       display: "inline-flex",
       flexDirection: "column",
-      gap: Ao.spacing50,
+      gap: Ge.spacing50,
       position: "relative"
     },
     ":host xin-slot": {
@@ -9037,35 +8944,35 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
     ':host [part="meter"]': {
       display: "block",
       position: "relative",
-      height: yo.meterHeight("24px"),
-      background: yo.indicatorBg("white"),
-      borderRadius: yo.meterRadius("4px"),
-      boxShadow: yo.meterShadow(`inset 0 0 0 2px ${Ao.indicatorColor}`)
+      height: de.meterHeight("24px"),
+      background: de.indicatorBg("white"),
+      borderRadius: de.meterRadius("4px"),
+      boxShadow: de.meterShadow(`inset 0 0 0 2px ${Ge.indicatorColor}`)
     },
     ':host [part="level"]': {
-      height: yo.levelHeight("20px"),
+      height: de.levelHeight("20px"),
       content: '" "',
       display: "inline-block",
       width: 0,
       transition: "0.15s ease-out",
-      background: Ao.indicatorColor,
-      margin: yo.levelMargin("2px"),
-      borderRadius: yo.levelRadius("2px")
+      background: Ge.indicatorColor,
+      margin: de.levelMargin("2px"),
+      borderRadius: de.levelRadius("2px")
     },
     ':host [part="description"]': {
       position: "absolute",
       inset: "0",
-      color: Ao.descriptionColor,
-      height: yo.meterHeight("24px"),
-      lineHeight: yo.meterHeight("24px"),
+      color: Ge.descriptionColor,
+      height: de.meterHeight("24px"),
+      lineHeight: de.meterHeight("24px"),
       textAlign: "center"
     }
   }
 });
 // src/rating.ts
-var { span: span11 } = u;
+var { span: span11 } = d;
 
-class TosiRating extends F {
+class TosiRating extends W {
   static formAssociated = true;
   static initAttributes = {
     max: 5,
@@ -9251,9 +9158,9 @@ var XinRating = TosiRating;
 var tosiRating = TosiRating.elementCreator({
   tag: "tosi-rating"
 });
-var xinRating = Ho((...args) => tosiRating(...args), "xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)");
+var xinRating = Se((...args) => tosiRating(...args), "xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)");
 // src/rich-text.ts
-var { xinSlot: xinSlot6, div: div13, button: button12, span: span12 } = u;
+var { xinSlot: xinSlot6, div: div13, button: button12, span: span12 } = d;
 var blockStyles = [
   {
     caption: "Title",
@@ -9335,7 +9242,7 @@ var richTextWidgets = () => [
   ...characterStyleWidgets()
 ];
 
-class RichText extends F {
+class RichText extends W {
   static initAttributes = {
     widgets: "default"
   };
@@ -9489,21 +9396,61 @@ var richText = RichText.elementCreator({
   }
 });
 // src/segmented.ts
-var { div: div14, slot: slot7, label: label3, span: span13, input: input7 } = u;
+var { div: div14, slot: slot7, label: label3, span: span13, input: input7 } = d;
 
-class XinSegmented extends F {
+class TosiSegmented extends W {
+  static formAssociated = true;
   static initAttributes = {
     direction: "row",
     other: "",
     multiple: false,
     name: "",
     placeholder: "Please specify…",
-    localized: false
+    localized: false,
+    required: false
   };
   choices = "";
-  value = null;
+  _value = null;
+  _internals;
+  constructor() {
+    super();
+    if (this.attachInternals) {
+      this._internals = this.attachInternals();
+    }
+  }
+  get value() {
+    return this._value;
+  }
+  set value(v3) {
+    this._value = v3;
+    this.updateFormValue();
+    this.queueRender();
+  }
+  updateFormValue() {
+    this._internals?.setFormValue(this._value || null);
+    this.updateValidity();
+  }
+  updateValidity() {
+    if (!this._internals)
+      return;
+    if (this.required && !this._value) {
+      this._internals.setValidity({ valueMissing: true }, "Please select an option", this.parts.options);
+    } else {
+      this._internals.setValidity({});
+    }
+  }
+  formAssociatedCallback(_form) {}
+  formDisabledCallback(disabled) {}
+  formResetCallback() {
+    this.value = null;
+  }
+  formStateRestoreCallback(state) {
+    if (state !== null) {
+      this.value = state;
+    }
+  }
   get values() {
-    return (this.value || "").split(",").map((v3) => v3.trim()).filter((v3) => v3 !== "");
+    return (this._value || "").split(",").map((v3) => v3.trim()).filter((v3) => v3 !== "");
   }
   content = () => [
     slot7(),
@@ -9512,62 +9459,62 @@ class XinSegmented extends F {
   static styleSpec = {
     ":host": {
       display: "inline-flex",
-      gap: yo.segmentedOptionGap("8px"),
-      alignItems: yo.segmentedAlignItems("center")
+      gap: de.segmentedOptionGap("8px"),
+      alignItems: de.segmentedAlignItems("center")
     },
     ":host, :host::part(options)": {
-      flexDirection: yo.segmentedDirection("row")
+      flexDirection: de.segmentedDirection("row")
     },
     ":host label": {
       display: "inline-grid",
       alignItems: "center",
-      gap: yo.segmentedOptionGap("8px"),
-      gridTemplateColumns: yo.segmentedOptionGridColumns("0px 24px 1fr"),
-      padding: yo.segmentedOptionPadding("4px 12px"),
-      font: yo.segmentedOptionFont("16px")
+      gap: de.segmentedOptionGap("8px"),
+      gridTemplateColumns: de.segmentedOptionGridColumns("0px 24px 1fr"),
+      padding: de.segmentedOptionPadding("4px 12px"),
+      font: de.segmentedOptionFont("16px")
     },
     ":host label:focus": {
       outline: "none",
-      boxShadow: yo.segmentedFocusShadow(`inset 0 0 0 2px ${yo.segmentedOptionCurrentBackground("#44a")}`),
-      borderRadius: yo.segmentedOptionsBorderRadius("8px")
+      boxShadow: de.segmentedFocusShadow(`inset 0 0 0 2px ${de.segmentedOptionCurrentBackground("#44a")}`),
+      borderRadius: de.segmentedOptionsBorderRadius("8px")
     },
     ":host label:has(:checked)": {
-      color: yo.segmentedOptionCurrentColor("#eee"),
-      background: yo.segmentedOptionCurrentBackground("#44a")
+      color: de.segmentedOptionCurrentColor("#eee"),
+      background: de.segmentedOptionCurrentBackground("#44a")
     },
     ":host label:has(:checked):focus": {
-      boxShadow: yo.segmentedCurrentFocusShadow(`inset 0 0 0 2px ${yo.segmentedOptionCurrentColor("#eee")}`)
+      boxShadow: de.segmentedCurrentFocusShadow(`inset 0 0 0 2px ${de.segmentedOptionCurrentColor("#eee")}`)
     },
     ":host svg": {
-      height: yo.segmentOptionIconSize("16px"),
-      stroke: yo.segmentedOptionIconColor("currentColor")
+      height: de.segmentOptionIconSize("16px"),
+      stroke: de.segmentedOptionIconColor("currentColor")
     },
     ":host label.no-icon": {
       gap: 0,
-      gridTemplateColumns: yo.segmentedOptionGridColumns("0px 1fr")
+      gridTemplateColumns: de.segmentedOptionGridColumns("0px 1fr")
     },
     ':host input[type="radio"], :host input[type="checkbox"]': {
-      visibility: yo.segmentedInputVisibility("hidden")
+      visibility: de.segmentedInputVisibility("hidden")
     },
     ":host::part(options)": {
       display: "flex",
-      borderRadius: yo.segmentedOptionsBorderRadius("8px"),
-      background: yo.segmentedOptionsBackground("#fff"),
-      color: yo.segmentedOptionColor("#222"),
+      borderRadius: de.segmentedOptionsBorderRadius("8px"),
+      background: de.segmentedOptionsBackground("#fff"),
+      color: de.segmentedOptionColor("#222"),
       overflow: "hidden",
-      alignItems: yo.segmentedOptionAlignItems("stretch")
+      alignItems: de.segmentedOptionAlignItems("stretch")
     },
     ":host::part(custom)": {
-      padding: yo.segmentedOptionPadding("4px 12px"),
-      color: yo.segmentedOptionCurrentColor("#eee"),
-      background: yo.segmentedOptionCurrentBackground("#44a"),
-      font: yo.segmentedOptionFont("16px"),
+      padding: de.segmentedOptionPadding("4px 12px"),
+      color: de.segmentedOptionCurrentColor("#eee"),
+      background: de.segmentedOptionCurrentBackground("#44a"),
+      font: de.segmentedOptionFont("16px"),
       border: "0",
       outline: "none"
     },
     ":host::part(custom)::placeholder": {
-      color: yo.segmentedOptionCurrentColor("#eee"),
-      opacity: yo.segmentedPlaceholderOpacity(0.75)
+      color: de.segmentedOptionCurrentColor("#eee"),
+      opacity: de.segmentedPlaceholderOpacity(0.75)
     }
   };
   valueChanged = false;
@@ -9647,6 +9594,7 @@ class XinSegmented extends F {
       console.warn(this, "is set to [other] and [multiple]; [other] will be ignored");
       this.other = "";
     }
+    this.updateFormValue();
   }
   get _choices() {
     const options = Array.isArray(this.choices) ? this.choices : this.choices.split(",").filter((c) => c.trim() !== "").map((c) => {
@@ -9667,7 +9615,7 @@ class XinSegmented extends F {
     return options;
   }
   get isOtherValue() {
-    return Boolean(this.value === "" || this.value && !this._choices.find((choice) => choice.value === this.value));
+    return Boolean(this._value === "" || this._value && !this._choices.find((choice) => choice.value === this._value));
   }
   render() {
     super.render();
@@ -9690,19 +9638,21 @@ class XinSegmented extends F {
     }));
     if (this.other && !this.multiple) {
       custom.hidden = !isOtherValue;
-      custom.value = isOtherValue ? this.value : "";
+      custom.value = isOtherValue ? this._value : "";
       custom.placeholder = this.placeholder;
       options.append(custom);
     }
   }
 }
-var xinSegmented = XinSegmented.elementCreator({
-  tag: "xin-segmented"
+var XinSegmented = TosiSegmented;
+var tosiSegmented = TosiSegmented.elementCreator({
+  tag: "tosi-segmented"
 });
+var xinSegmented = Se((...args) => tosiSegmented(...args), "xinSegmented is deprecated, use tosiSegmented instead (tag is now <tosi-segmented>)");
 // src/size-break.ts
-var { slot: slot8 } = u;
+var { slot: slot8 } = d;
 
-class SizeBreak extends F {
+class SizeBreak extends W {
   static initAttributes = {
     minWidth: 0,
     minHeight: 0
@@ -9743,7 +9693,7 @@ var sizeBreak = SizeBreak.elementCreator({
   tag: "xin-sizebreak"
 });
 // src/sizer.ts
-class XinSizer extends F {
+class XinSizer extends W {
   target = null;
   static styleSpec = {
     ":host": {
@@ -9764,7 +9714,7 @@ class XinSizer extends F {
     ":host svg": {
       width: 16,
       height: 16,
-      stroke: Ao.resizeIconFill
+      stroke: Ge.resizeIconFill
     }
   };
   content = icons.resize();
@@ -9808,9 +9758,9 @@ var xinSizer = XinSizer.elementCreator({
   tag: "xin-sizer"
 });
 // src/tag-list.ts
-var { div: div15, input: input8, span: span14, button: button13 } = u;
+var { div: div15, input: input8, span: span14, button: button13 } = d;
 
-class XinTag extends F {
+class XinTag extends W {
   static initAttributes = {
     caption: "",
     removeable: false
@@ -9836,48 +9786,48 @@ var xinTag = XinTag.elementCreator({
       "--tag-close-button-bg": "#fffc",
       "--tag-button-opacity": "0.5",
       "--tag-button-hover-opacity": "0.75",
-      "--tag-bg": yo.brandColor("blue"),
-      "--tag-text-color": yo.brandTextColor("white"),
+      "--tag-bg": de.brandColor("blue"),
+      "--tag-text-color": de.brandTextColor("white"),
       display: "inline-flex",
-      borderRadius: yo.tagRoundedRadius(Ao.spacing50),
-      color: Ao.tagTextColor,
-      background: Ao.tagBg,
-      padding: `0 ${Ao.spacing75} 0 ${Ao.spacing75}`,
-      height: `calc(${Ao.lineHeight} + ${Ao.spacing50})`,
-      lineHeight: `calc(${Ao.lineHeight} + ${Ao.spacing50})`
+      borderRadius: de.tagRoundedRadius(Ge.spacing50),
+      color: Ge.tagTextColor,
+      background: Ge.tagBg,
+      padding: `0 ${Ge.spacing75} 0 ${Ge.spacing75}`,
+      height: `calc(${Ge.lineHeight} + ${Ge.spacing50})`,
+      lineHeight: `calc(${Ge.lineHeight} + ${Ge.spacing50})`
     },
     ':host > [part="caption"]': {
       position: "relative",
       whiteSpace: "nowrap",
       overflow: "hidden",
       flex: "1 1 auto",
-      fontSize: yo.fontSize("16px"),
-      color: Ao.tagTextColor,
+      fontSize: de.fontSize("16px"),
+      color: Ge.tagTextColor,
       textOverflow: "ellipsis"
     },
     ':host [part="remove"]': {
       boxShadow: "none",
-      margin: `0 ${Ao.spacing_50} 0 ${Ao.spacing25}`,
+      margin: `0 ${Ge.spacing_50} 0 ${Ge.spacing25}`,
       padding: 0,
       display: "inline-flex",
       alignItems: "center",
       alignSelf: "center",
       justifyContent: "center",
-      height: Ao.spacing150,
-      width: Ao.spacing150,
-      color: Ao.tagCloseButtonColor,
-      background: Ao.tagCloseButtonBg,
-      borderRadius: yo.tagCloseButtonRadius("99px"),
-      opacity: Ao.tagButtonOpacity
+      height: Ge.spacing150,
+      width: Ge.spacing150,
+      color: Ge.tagCloseButtonColor,
+      background: Ge.tagCloseButtonBg,
+      borderRadius: de.tagCloseButtonRadius("99px"),
+      opacity: Ge.tagButtonOpacity
     },
     ':host [part="remove"]:hover': {
-      background: Ao.tagCloseButtonBg,
-      opacity: Ao.tagButtonHoverOpacity
+      background: Ge.tagCloseButtonBg,
+      opacity: Ge.tagButtonHoverOpacity
     }
   }
 });
 
-class XinTagList extends F {
+class XinTagList extends W {
   static initAttributes = {
     name: "",
     textEntry: false,
@@ -10030,34 +9980,34 @@ var xinTagList = XinTagList.elementCreator({
       display: "grid",
       gridTemplateColumns: "auto",
       alignItems: "center",
-      background: Ao.tagListBg,
-      gap: Ao.spacing25,
-      borderRadius: yo.taglistRoundedRadius(Ao.spacing50),
+      background: Ge.tagListBg,
+      gap: Ge.spacing25,
+      borderRadius: de.taglistRoundedRadius(Ge.spacing50),
       overflow: "hidden"
     },
     ":host[editable]": {
-      gridTemplateColumns: `0px auto ${Ao.touchSize}`
+      gridTemplateColumns: `0px auto ${Ge.touchSize}`
     },
     ":host[editable][text-entry]": {
-      gridTemplateColumns: `0px 2fr 1fr ${Ao.touchSize}`
+      gridTemplateColumns: `0px 2fr 1fr ${Ge.touchSize}`
     },
     ':host [part="tagContainer"]': {
       display: "flex",
       content: '" "',
       alignItems: "center",
-      background: Ao.inputBg,
-      borderRadius: yo.tagContainerRadius(Ao.spacing50),
-      boxShadow: Ao.borderShadow,
+      background: Ge.inputBg,
+      borderRadius: de.tagContainerRadius(Ge.spacing50),
+      boxShadow: Ge.borderShadow,
       flexWrap: "nowrap",
       overflow: "auto hidden",
-      gap: Ao.spacing25,
-      minHeight: `calc(${Ao.lineHeight} + ${Ao.spacing})`,
-      padding: Ao.spacing25
+      gap: Ge.spacing25,
+      minHeight: `calc(${Ge.lineHeight} + ${Ge.spacing})`,
+      padding: Ge.spacing25
     },
     ':host [part="tagMenu"]': {
-      width: Ao.touchSize,
-      height: Ao.touchSize,
-      lineHeight: Ao.touchSize,
+      width: Ge.touchSize,
+      height: Ge.touchSize,
+      lineHeight: Ge.touchSize,
       textAlign: "center",
       padding: 0,
       margin: 0
@@ -10066,8 +10016,8 @@ var xinTagList = XinTagList.elementCreator({
       display: "none !important"
     },
     ':host button[part="tagMenu"]': {
-      background: Ao.brandColor,
-      color: Ao.brandTextColor
+      background: Ge.brandColor,
+      color: Ge.brandTextColor
     }
   }
 });
@@ -10151,19 +10101,19 @@ function applyTheme(theme, id = "tosi-theme") {
 var baseTheme = createTheme(defaultColors);
 var baseDarkTheme = createDarkTheme(defaultColors);
 var legacyAliases = {
-  "--xin-icon-size": Ao.tosiIconSize,
-  "--xin-icon-fill": Ao.tosiIconFill,
-  "--xin-icon-stroke": Ao.tosiIconStroke,
-  "--xin-tabs-bar-color": Ao.tosiTabsBarColor,
-  "--xin-tabs-bar-height": Ao.tosiTabsBarHeight,
-  "--xin-tabs-selected-color": Ao.tosiTabsSelectedColor,
-  "--spacing": Ao.tosiSpacing,
-  "--gap": Ao.tosiSpacingSm,
-  "--touch-size": Ao.tosiTouchSize,
-  "--background": Ao.tosiBg,
-  "--text-color": Ao.tosiText,
-  "--brand-color": Ao.tosiAccent,
-  "--brand-text-color": Ao.tosiAccentText
+  "--xin-icon-size": Ge.tosiIconSize,
+  "--xin-icon-fill": Ge.tosiIconFill,
+  "--xin-icon-stroke": Ge.tosiIconStroke,
+  "--xin-tabs-bar-color": Ge.tosiTabsBarColor,
+  "--xin-tabs-bar-height": Ge.tosiTabsBarHeight,
+  "--xin-tabs-selected-color": Ge.tosiTabsSelectedColor,
+  "--spacing": Ge.tosiSpacing,
+  "--gap": Ge.tosiSpacingSm,
+  "--touch-size": Ge.tosiTouchSize,
+  "--background": Ge.tosiBg,
+  "--text-color": Ge.tosiText,
+  "--brand-color": Ge.tosiAccent,
+  "--brand-text-color": Ge.tosiAccentText
 };
 function createThemeWithLegacy(colors) {
   const theme = createTheme(colors);
@@ -10244,19 +10194,19 @@ var styleSpec = {
   },
   "*": {
     boxSizing: "border-box",
-    scrollbarColor: `${Ao.scrollThumbColor} ${Ao.scrollBarColor}`,
+    scrollbarColor: `${Ge.scrollThumbColor} ${Ge.scrollBarColor}`,
     scrollbarWidth: "thin"
   },
   body: {
-    fontFamily: Ao.fontFamily,
-    fontSize: Ao.fontSize,
+    fontFamily: Ge.fontFamily,
+    fontSize: Ge.fontSize,
     margin: "0",
-    lineHeight: Ao.lineHeight,
-    background: Ao.background,
-    _xinTabsSelectedColor: Ao.brandColor,
-    _xinTabsBarColor: Ao.brandTextColor,
-    _menuItemIconColor: Ao.brandColor,
-    color: Ao.textColor
+    lineHeight: Ge.lineHeight,
+    background: Ge.background,
+    _xinTabsSelectedColor: Ge.brandColor,
+    _xinTabsBarColor: Ge.brandTextColor,
+    _menuItemIconColor: Ge.brandColor,
+    color: Ge.textColor
   },
   ".center": {
     display: "flex",
@@ -10264,42 +10214,42 @@ var styleSpec = {
     justifyContent: "center"
   },
   "input, button, select, textarea": {
-    fontFamily: Ao.fontFamily,
-    fontSize: Ao.fontSize,
+    fontFamily: Ge.fontFamily,
+    fontSize: Ge.fontSize,
     color: "currentColor",
-    background: Ao.inputBg
+    background: Ge.inputBg
   },
   select: {
     WebkitAppearance: "none",
     appearance: "none"
   },
   header: {
-    background: Ao.brandColor,
-    color: Ao.brandTextColor,
-    _textColor: Ao.brandTextColor,
-    _linkColor: Ao.transTextColor,
+    background: Ge.brandColor,
+    color: Ge.brandTextColor,
+    _textColor: Ge.brandTextColor,
+    _linkColor: Ge.transTextColor,
     display: "flex",
     alignItems: "center",
     padding: "0 var(--spacing)",
     lineHeight: "calc(var(--line-height) * var(--h1-scale))",
-    height: Ao.headerHeight,
+    height: Ge.headerHeight,
     whiteSpace: "nowrap"
   },
   h1: {
-    color: Ao.brandColor,
+    color: Ge.brandColor,
     fontSize: "calc(var(--font-size) * var(--h1-scale))",
     lineHeight: "calc(var(--line-height) * var(--h1-scale))",
     fontWeight: "400",
-    borderBottom: `4px solid ${Ao.barColor}`,
-    margin: `${Ao.spacing} 0 ${Ao.spacing200}`,
+    borderBottom: `4px solid ${Ge.barColor}`,
+    margin: `${Ge.spacing} 0 ${Ge.spacing200}`,
     padding: 0
   },
   "header h2": {
-    color: Ao.brandTextColor,
+    color: Ge.brandTextColor,
     whiteSpace: "nowrap"
   },
   h2: {
-    color: Ao.brandColor,
+    color: Ge.brandColor,
     fontSize: "calc(var(--font-size) * var(--h2-scale))",
     lineHeight: "calc(var(--line-height) * var(--h2-scale))",
     margin: "calc(var(--spacing) * var(--h2-scale)) 0"
@@ -10321,18 +10271,18 @@ var styleSpec = {
     height: "calc(100vh - var(--header-height))"
   },
   "main > xin-sidenav::part(nav)": {
-    background: Ao.navBg
+    background: Ge.navBg
   },
   "input[type=search]": {
     borderRadius: 99
   },
   blockquote: {
     position: "relative",
-    background: Ao.insetBg,
+    background: Ge.insetBg,
     margin: "0 48px 56px 0",
-    borderRadius: Ao.spacing,
+    borderRadius: Ge.spacing,
     padding: "var(--spacing) calc(var(--spacing) * 2)",
-    filter: `drop-shadow(0px 1px 1px ${Ao.shadowColor})`
+    filter: `drop-shadow(0px 1px 1px ${Ge.shadowColor})`
   },
   "blockquote > :first-child": {
     marginTop: "0"
@@ -10346,8 +10296,8 @@ var styleSpec = {
     width: 1,
     height: 1,
     border: "10px solid transparent",
-    borderTopColor: Ao.insetBg,
-    borderRightColor: Ao.insetBg,
+    borderTopColor: Ge.insetBg,
+    borderRightColor: Ge.insetBg,
     position: "absolute",
     bottom: -20,
     right: 24
@@ -10364,17 +10314,17 @@ var styleSpec = {
   },
   ".bar": {
     display: "flex",
-    gap: Ao.spacing,
+    gap: Ge.spacing,
     justifyContent: "center",
     alignItems: "center",
-    padding: Ao.spacing,
+    padding: Ge.spacing,
     flexWrap: "wrap",
-    _textColor: Ao.brandColor,
-    background: Ao.barColor
+    _textColor: Ge.brandColor,
+    background: Ge.barColor
   },
   a: {
     textDecoration: "none",
-    color: Ao.linkColor,
+    color: Ge.linkColor,
     opacity: "0.9",
     borderBottom: "1px solid var(--brand-color)"
   },
@@ -10383,10 +10333,10 @@ var styleSpec = {
     alignItems: "center",
     justifyContent: "center",
     transition: "ease-out 0.2s",
-    _textColor: Ao.brandColor,
-    color: Ao.textColor,
+    _textColor: Ge.brandColor,
+    color: Ge.textColor,
     textDecoration: "none",
-    background: Ao.buttonBg,
+    background: Ge.buttonBg,
     padding: "0 calc(var(--spacing) * 1.25)",
     border: "none",
     borderRadius: "calc(var(--spacing) * 0.5)"
@@ -10403,7 +10353,7 @@ var styleSpec = {
     alignSelf: "center",
     pointerEvents: "none",
     objectPosition: "left center",
-    _textColor: Ao.brandColor
+    _textColor: Ge.brandColor
   },
   "label > select + .icon-chevron-down": {
     marginLeft: "calc(var(--spacing) * -3.5)"
@@ -10412,7 +10362,7 @@ var styleSpec = {
     border: "none",
     outline: "none",
     borderRadius: "calc(var(--spacing) * 0.5)",
-    boxShadow: Ao.inputBorderShadow
+    boxShadow: Ge.inputBorderShadow
   },
   input: {
     padding: "0 calc(var(--spacing) * 1.5)"
@@ -10422,7 +10372,7 @@ var styleSpec = {
   },
   textarea: {
     padding: "var(--spacing) calc(var(--spacing) * 1.25)",
-    lineHeight: Ao.lineHeight,
+    lineHeight: Ge.lineHeight,
     minHeight: "calc(var(--spacing) + var(--line-height) * 4)"
   },
   "input[type='number']": {
@@ -10436,10 +10386,10 @@ var styleSpec = {
     inset: 1
   },
   "input[type='checkbox'], input[type='radio']": {
-    maxWidth: Ao.lineHeight
+    maxWidth: Ge.lineHeight
   },
   "::placeholder": {
-    color: Ao.placeholderColor
+    color: Ge.placeholderColor
   },
   img: {
     verticalAlign: "middle"
@@ -10448,8 +10398,8 @@ var styleSpec = {
     boxShadow: "inset 0 0 0 2px var(--brand-color)"
   },
   "button:active, button:active, .clickable:active": {
-    background: Ao.brandColor,
-    color: Ao.brandTextColor
+    background: Ge.brandColor,
+    color: Ge.brandTextColor
   },
   label: {
     display: "inline-flex",
@@ -10476,8 +10426,8 @@ var styleSpec = {
     opacity: "1"
   },
   ".thead": {
-    background: Ao.brandColor,
-    color: Ao.brandTextColor
+    background: Ge.brandColor,
+    color: Ge.brandTextColor
   },
   ".th + .th": {
     border: "1px solid #fff4",
@@ -10498,16 +10448,16 @@ var styleSpec = {
     pointerEvents: "none"
   },
   pre: {
-    background: Ao.codeBg,
-    padding: Ao.spacing,
+    background: Ge.codeBg,
+    padding: Ge.spacing,
     borderRadius: "calc(var(--spacing) * 0.25)",
     overflow: "auto",
-    fontSize: Ao.codeFontSize,
+    fontSize: Ge.codeFontSize,
     lineHeight: "calc(var(--font-size) * 1.2)"
   },
   "pre, code": {
-    fontFamily: Ao.codeFontFamily,
-    _textColor: Ao.brandColor
+    fontFamily: Ge.codeFontFamily,
+    _textColor: Ge.brandColor
   },
   ".-xin-sidenav-visible .close-content": {
     display: "none"
@@ -10526,22 +10476,22 @@ var styleSpec = {
   ".transparent:hover, .iconic:hover": {
     background: "#0002",
     boxShadow: "none",
-    color: Ao.textColor
+    color: Ge.textColor
   },
   ".transparent:active, .iconic:active": {
     background: "#0004",
     boxShadow: "none",
-    color: Ao.textColor
+    color: Ge.textColor
   },
   "xin-sidenav:not([compact]) .show-within-compact": {
     display: "none"
   },
   ".on.on": {
-    background: Ao.brandColor,
-    _textColor: Ao.brandTextColor
+    background: Ge.brandColor,
+    _textColor: Ge.brandTextColor
   },
   ".current": {
-    background: Ao.background
+    background: Ge.background
   },
   ".doc-link": {
     cursor: "pointer",
@@ -10551,7 +10501,7 @@ var styleSpec = {
     padding: "calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.5)"
   },
   ".doc-link:not(.current):hover": {
-    background: Ao.background
+    background: Ge.background
   },
   ".doc-link:not(.current)": {
     opacity: "0.8",
@@ -10561,11 +10511,11 @@ var styleSpec = {
     margin: "var(--spacing) 0"
   },
   "xin-example [part=editors]": {
-    background: Ao.insetBg
+    background: Ge.insetBg
   },
   "[class*='icon-'], xin-icon": {
     color: "currentcolor",
-    height: Ao.fontSize,
+    height: Ge.fontSize,
     pointerEvents: "none"
   },
   "[class*='icon-']": {
@@ -10578,14 +10528,14 @@ var styleSpec = {
     borderCollapse: "collapse"
   },
   thead: {
-    background: Ao.brandColor,
-    color: Ao.brandTextColor
+    background: Ge.brandColor,
+    color: Ge.brandTextColor
   },
   tbody: {
-    background: Ao.background
+    background: Ge.background
   },
   "tr:nth-child(2n)": {
-    background: Ao.backgroundShaded
+    background: Ge.backgroundShaded
   },
   "th, td": {
     padding: "calc(var(--spacing) * 0.5) var(--spacing)"
@@ -10688,9 +10638,9 @@ Weak	Faible	Heikko	Svag	虚弱的	弱い	약한	Débil	Schwach	Debole
 Yes	Oui	Kyllä	Ja	是的	はい	예	Sí	Ja	Sì`;
 
 // demo/src/css-var-editor.ts
-var { h2: h22, code } = u;
+var { h2: h22, code } = d;
 
-class XinCssVarEditor extends F {
+class XinCssVarEditor extends W {
   elementSelector = "";
   targetSelector = "";
   constructor() {
@@ -14678,66 +14628,82 @@ This is awaitable, if you care. The stylesheet \`<link>\` will only be inserted 
 
 This is a fairly general-purpose segmented select control.
 
-\`\`\`html
-<div class="grid">
-<xin-segmented value="yes" choices="yes, no, don't care">
-  Should we?
-</xin-segmented>
-
-<div>
-  <b>Localized!</b><br>
-  <xin-segmented
-    localized
-    title="do you like?"
-    choices="yes=Yes:thumbsUp, no=No:thumbsDown"
-  ></xin-segmented>
-</div>
-
-<xin-segmented
-  style="--segmented-direction: column; --segmented-align-items: stretch"
-  choices="in a relationship, single" other="it's complicated…"
-  placeholder="oooh… please elaborate"
-  value="separated"
->
-  Relationship Status
-</xin-segmented>
-
-<xin-segmented
-  multiple
-  style="
-    --segmented-direction: column;
-    --segmented-align-items: start;
-    --segmented-option-grid-columns: 24px 24px 100px;
-    --segmented-input-visibility: visible;
-  "
-  choices="star=Star:star, game=Game:game, bug=Bug:bug, camera=Camera:camera"
-  value="star,bug"
->
-  Pick all that apply
-</xin-segmented>
-</div>
-\`\`\`
-\`\`\`css
-.preview .grid {
-  --segmented-option-current-background: var(--brand-color);
-  --segmented-option-current-color: var(--brand-text-color);
-  padding: 16px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-\`\`\`
 \`\`\`js
+const { tosiSegmented } = tosijsui
+
+preview.append(
+  tosiSegmented({
+    value: 'yes',
+    choices: 'yes, no, don\\'t care',
+    textContent: 'Should we?'
+  }),
+
+  document.createElement('br'),
+
+  tosiSegmented({
+    localized: true,
+    title: 'do you like?',
+    choices: 'yes=Yes:thumbsUp, no=No:thumbsDown'
+  }),
+
+  document.createElement('br'),
+
+  tosiSegmented({
+    style: '--segmented-direction: column; --segmented-align-items: stretch',
+    choices: 'in a relationship, single',
+    other: 'it\\'s complicated…',
+    placeholder: 'oooh… please elaborate',
+    value: 'separated',
+    textContent: 'Relationship Status'
+  }),
+
+  document.createElement('br'),
+
+  tosiSegmented({
+    multiple: true,
+    style: \`
+      --segmented-direction: column;
+      --segmented-align-items: start;
+      --segmented-option-grid-columns: 24px 24px 100px;
+      --segmented-input-visibility: visible;
+    \`,
+    choices: 'star=Star:star, game=Game:game, bug=Bug:bug, camera=Camera:camera',
+    value: 'star,bug',
+    textContent: 'Pick all that apply'
+  })
+)
+
 function logEvent(event) {
   const { target } = event
-  if (target.tagName === 'XIN-SEGMENTED') {
+  if (target.matches('tosi-segmented')) {
     console.log((target.textContent || target.title).trim(), target.value)
   }
 }
 preview.addEventListener('change', logEvent, true)
 \`\`\`
+\`\`\`css
+.preview {
+  --segmented-option-current-background: var(--brand-color);
+  --segmented-option-current-color: var(--brand-text-color);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+\`\`\`
 
 > Check the console to see the values being set.
+
+## Form Integration
+
+\`<tosi-segmented>\` is form-associated, meaning it works directly in native \`<form>\` elements:
+
+\`\`\`html
+<form>
+  <tosi-segmented name="choice" choices="a,b,c" required></tosi-segmented>
+  <button type="submit">Submit</button>
+</form>
+\`\`\`
 
 ## Properties
 
@@ -14756,16 +14722,16 @@ You can set \`choices\` programmatically to an array of \`Choice\` objects:
 - \`choices\` is a string of comma-delimited options of the form \`value=caption:icon\`,
   where caption and icon are optional
 - \`multiple\` allows multiple selection
-- \`name\` allows you to set the name of the \`<input>\` elements to a specific value, it will default
-  to the component's \`instanceId\`
+- \`name\` the form field name (for formAssociated support)
 - \`other\` (default '', meaning other is not allowed) is the caption for other options, allowing
   the user to input their choice. It will be reset to '' if \`multiple\` is set.
 - \`placeholder\` is the placeholder displayed in the \`<input>\` field for **other** responses
 - \`localized\` automatically localizes captions
+- \`required\` marks the field as required for form validation
 
 ## Styling
 
-The following CSS variables can be used to control customize the \`<xin-segmented>\` component.
+The following CSS variables can be used to control customize the \`<tosi-segmented>\` component.
 
     --segmented-align-items
     --segmented-direction
@@ -14787,52 +14753,61 @@ The following CSS variables can be used to control customize the \`<xin-segmente
   {
     text: `# select
 
-\`<xin-select>\` (\`xinSelect\` is the \`ElementCreator\`) is a replacement for the lamentable
+\`<tosi-select>\` (\`tosiSelect\` is the \`ElementCreator\`) is a replacement for the lamentable
 built in \`<select>\` element that addresses its various shortcomings.
 
-- since \`<xin-select>\` is powered by \`popMenu\`, and supports separators and submenus.
+- since \`<tosi-select>\` is powered by \`popMenu\`, and supports separators and submenus.
 - options can have icons.
-- \`<xin-select>\` will retain and display a value even if the matching option is missing.
+- \`<tosi-select>\` will retain and display a value even if the matching option is missing.
 - its displayed value can be made \`editable\`, allowing use as a "combo box".
 - options can have \`async\` callbacks that return a value.
 - picking an item triggers an \`action\` event even if the value hasn't changed.
 - available options are set via the \`options\` attribute or the element's \`options\` property (not \`<option>\` elements)
 
-\`\`\`html
-<xin-select
-  title="simple select"
-  options="this,that,,the other"
-  value="not an option!"
-></xin-select><br>
-<xin-select
-  show-icon
-  title="has captions"
-  class="captions"
-  value="image"
-></xin-select><br>
-<xin-select
-  show-icon
-  title="combo select with icons"
-  class="icons"
-  editable
-  placeholder="pick an icon"
-></xin-select><br>
-<xin-select
-  show-icon
-  hide-caption
-  title="icons only"
-  class="icons-only"
-  placeholder="pick an icon"
-></xin-select>
-<pre contenteditable>Select some text in here…
-…to check for focus stealing</pre>
-\`\`\`
 \`\`\`js
-import { icons } from 'tosijs-ui'
+const { tosiSelect } = tosijsui
+const { icons } = tosijsui
 
-const captions = preview.querySelector('.captions')
+const simpleSelect = tosiSelect({
+  title: 'simple select',
+  options: 'this,that,,the other',
+  value: 'not an option!'
+})
 
-captions.options = [
+const captionsSelect = tosiSelect({
+  showIcon: true,
+  title: 'has captions',
+  class: 'captions',
+  value: 'image'
+})
+
+const iconsSelect = tosiSelect({
+  showIcon: true,
+  title: 'combo select with icons',
+  class: 'icons',
+  editable: true,
+  placeholder: 'pick an icon'
+})
+
+const iconsOnly = tosiSelect({
+  showIcon: true,
+  hideCaption: true,
+  title: 'icons only',
+  class: 'icons-only',
+  placeholder: 'pick an icon'
+})
+
+preview.append(
+  simpleSelect,
+  document.createElement('br'),
+  captionsSelect,
+  document.createElement('br'),
+  iconsSelect,
+  document.createElement('br'),
+  iconsOnly
+)
+
+captionsSelect.options = [
   {
     caption: 'a heading',
     value: 'heading'
@@ -14875,9 +14850,6 @@ captions.options = [
   }
 ]
 
-const iconsSelect = preview.querySelector('.icons')
-const iconsOnly = preview.querySelector('.icons-only')
-
 iconsSelect.options = iconsOnly.options = Object.keys(icons).sort().map(icon =>({
   icon,
   caption: icon,
@@ -14892,7 +14864,17 @@ preview.addEventListener('change', (event) => {
   console.log(event.target.title, 'changed to', event.target.value)
 }, true)
 \`\`\`
-<xin-css-var-editor element-selector="xin-select"></xin-css-var-editor>
+
+## Form Integration
+
+\`<tosi-select>\` is form-associated, meaning it works directly in native \`<form>\` elements:
+
+\`\`\`html
+<form>
+  <tosi-select name="choice" options="a,b,c" required></tosi-select>
+  <button type="submit">Submit</button>
+</form>
+\`\`\`
 
 ## \`options\`
 
@@ -14912,39 +14894,45 @@ preview.addEventListener('change', (event) => {
 
     export type SelectOptions = Array<string | null | SelectOption | SelectOptionSubmenu>
 
-A \`<xin-select>\` can be assigned \`options\` as a string of comma-delimited choices,
+A \`<tosi-select>\` can be assigned \`options\` as a string of comma-delimited choices,
 or be provided a \`SelectOptions\` array (which allows for submenus, separators, etc.).
 
 ## Attributes
 
-\`<xin-select>\` supports several attributes:
+\`<tosi-select>\` supports several attributes:
 
 - \`editable\` lets the user directly edit the value (like a "combo box").
 - \`show-icon\` displays the icon corresponding to the currently selected value.
 - \`hide-caption\` hides the caption.
 - \`placeholder\` allows you to set a placeholder.
 - \`options\` allows you to assign options as a comma-delimited string attribute.
+- \`required\` marks the field as required for form validation.
+- \`name\` the form field name (for formAssociated support).
 
 ## Events
 
 Picking an option triggers an \`action\` event (whether or not this changes the value).
 
-Changing the value, either by typing in an editable \`<xin-select>\` or picking a new
+Changing the value, either by typing in an editable \`<tosi-select>\` or picking a new
 value triggers a \`change\` event.
 
 You can look at the console to see the events triggered by the second example.
 
 ## Localization
 
-\`<xin-select>\` supports the \`localized\` attribute which automatically localizes
+\`<tosi-select>\` supports the \`localized\` attribute which automatically localizes
 options.
 
-\`\`\`html
-<xin-select
-  localized
-  placeholder="localized placeholder"
-  options="yes,no,,moderate"
-></xin-select>
+\`\`\`js
+const { tosiSelect } = tosijsui
+
+preview.append(
+  tosiSelect({
+    localized: true,
+    placeholder: 'localized placeholder',
+    options: 'yes,no,,moderate'
+  })
+)
 \`\`\``,
     title: "select",
     filename: "select.ts",
@@ -15799,14 +15787,14 @@ setTimeout(() => {
   console.log("welcome to %ui.tosijs.net", `color: ${brandColor2}; padding: 0 5px;`);
 }, 100);
 var PROJECT = "tosijs-ui";
-var { prefs } = wo({
+var { prefs } = he({
   prefs: {
     theme: "system",
     highContrast: false,
     locale: ""
   }
 });
-Mn((path) => {
+bn((path) => {
   if (path.startsWith("prefs")) {
     return true;
   }
@@ -15818,7 +15806,7 @@ if (prefs.locale) {
 setTimeout(() => {
   Object.assign(globalThis, { tosijs: exports_module, tosijsui: exports_src });
 }, 1000);
-S(document.body, "prefs.theme", {
+H(document.body, "prefs.theme", {
   toDOM(element, theme2) {
     if (theme2 === "system") {
       theme2 = getComputedStyle(document.body).getPropertyValue("--darkmode") === "true" ? "dark" : "light";
@@ -15826,7 +15814,7 @@ S(document.body, "prefs.theme", {
     element.classList.toggle("darkmode", theme2 === "dark");
   }
 });
-S(document.body, "prefs.highContrast", {
+H(document.body, "prefs.highContrast", {
   toDOM(element, highContrast) {
     element.classList.toggle("high-contrast", highContrast);
   }
@@ -15849,20 +15837,20 @@ var browser = createDocBrowser({
 if (main) {
   const header3 = browser.querySelector("header");
   if (header3) {
-    const { img, a: a3, span: span15, button: button14 } = u;
+    const { img, a: a4, span: span15, button: button14 } = d;
     const sizeBreakElement = header3.querySelector("xin-sizebreak");
     if (sizeBreakElement) {
       const badges = span15({
         style: {
-          marginRight: Ao.spacing,
+          marginRight: Ge.spacing,
           display: "flex",
           alignItems: "center",
-          gap: Ao.spacing50
+          gap: Ge.spacing50
         }
-      }, a3({ href: `https://bundlejs.com/?q=${PROJECT}`, target: "_blank" }, img({
+      }, a4({ href: `https://bundlejs.com/?q=${PROJECT}`, target: "_blank" }, img({
         alt: "bundlejs size badge",
         src: `https://deno.bundlejs.com/?q=${PROJECT}&badge=`
-      })), a3({
+      })), a4({
         href: `https://www.jsdelivr.com/package/npm/${PROJECT}`,
         target: "_blank"
       }, img({
@@ -15878,7 +15866,7 @@ if (main) {
     }
     const settingsButton = button14({
       class: "iconic",
-      style: { color: Ao.linkColor },
+      style: { color: Ge.linkColor },
       title: "links and settings",
       onClick(event) {
         popMenu({
@@ -15949,4 +15937,4 @@ if (main) {
   }
   main.append(browser);
 }
-console.log(`tosijs ${re}, tosijs-ui ${version}`);
+console.log(`tosijs ${Ne}, tosijs-ui ${version}`);

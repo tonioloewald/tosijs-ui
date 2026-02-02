@@ -4,7 +4,8 @@ interface Choice {
     value: string;
     caption: string;
 }
-export declare class XinSegmented extends WebComponent {
+export declare class TosiSegmented extends WebComponent {
+    static formAssociated: boolean;
     static initAttributes: {
         direction: string;
         other: string;
@@ -12,9 +13,20 @@ export declare class XinSegmented extends WebComponent {
         name: string;
         placeholder: string;
         localized: boolean;
+        required: boolean;
     };
     choices: string | Choice[];
-    value: null | string;
+    private _value;
+    private _internals;
+    constructor();
+    get value(): null | string;
+    set value(v: null | string);
+    private updateFormValue;
+    private updateValidity;
+    formAssociatedCallback(_form: HTMLFormElement | null): void;
+    formDisabledCallback(disabled: boolean): void;
+    formResetCallback(): void;
+    formStateRestoreCallback(state: string | null): void;
     get values(): string[];
     content: () => (HTMLSlotElement | HTMLDivElement)[];
     static styleSpec: {
@@ -86,5 +98,9 @@ export declare class XinSegmented extends WebComponent {
     get isOtherValue(): boolean;
     render(): void;
 }
-export declare const xinSegmented: ElementCreator<XinSegmented>;
+/** @deprecated Use TosiSegmented instead */
+export declare const XinSegmented: typeof TosiSegmented;
+export declare const tosiSegmented: ElementCreator<TosiSegmented>;
+/** @deprecated Use tosiSegmented instead (tag is now tosi-segmented) */
+export declare const xinSegmented: ElementCreator<TosiSegmented>;
 export {};

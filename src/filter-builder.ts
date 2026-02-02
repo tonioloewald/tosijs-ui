@@ -151,7 +151,7 @@ import {
   PartsMap,
 } from 'tosijs'
 import { icons } from './icons'
-import { xinSelect, XinSelect, SelectOption } from './select'
+import { tosiSelect, TosiSelect, SelectOption } from './select'
 
 const { div, input, button, span } = elements
 
@@ -261,7 +261,7 @@ const passAnything = {
   test: () => true,
 }
 
-function getSelectText(select: XinSelect): string {
+function getSelectText(select: TosiSelect): string {
   return (select.options[select.selectedIndex] as SelectOption)?.caption || ''
 }
 
@@ -274,8 +274,8 @@ export interface FilterPartState {
 }
 
 interface FilterPartParts extends PartsMap {
-  haystack: XinSelect
-  condition: XinSelect
+  haystack: TosiSelect
+  condition: TosiSelect
   needle: HTMLInputElement
   remove: HTMLButtonElement
 }
@@ -291,8 +291,8 @@ export class FilterPart extends WebComponent<FilterPartParts> {
   filters = availableFilters
 
   content = () => [
-    xinSelect({ part: 'haystack' }),
-    xinSelect({ part: 'condition' }),
+    tosiSelect({ part: 'haystack' }),
+    tosiSelect({ part: 'condition' }),
     input({ part: 'needle', type: 'search' }),
     span({ part: 'padding' }),
     button({ part: 'remove', title: 'delete' }, icons.trash()),

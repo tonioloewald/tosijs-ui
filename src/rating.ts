@@ -99,7 +99,7 @@ export class TosiRating extends Component {
   }
 
   private _value: number | null = null
-  private _internals: ElementInternals
+  private _internals!: ElementInternals
 
   get value(): number | null {
     return this._value
