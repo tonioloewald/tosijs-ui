@@ -15,10 +15,12 @@ export declare class TosiSegmented extends WebComponent {
         localized: boolean;
         required: boolean;
     };
-    choices: string | Choice[];
-    private _value;
-    get value(): null | string;
-    set value(v: null | string);
+    private _choicesValue;
+    get choices(): string | Choice[];
+    set choices(v: string | Choice[]);
+    static get observedAttributes(): string[];
+    attributeChangedCallback(name: string, oldValue: string, newValue: string): void;
+    value: null | string;
     private updateFormValue;
     private updateValidity;
     formDisabledCallback(disabled: boolean): void;

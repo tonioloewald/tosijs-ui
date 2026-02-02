@@ -1628,7 +1628,7 @@ class F extends HTMLElement {
   }
   constructor() {
     super();
-    if (je += 1, this.constructor.formAssociated && typeof this.attachInternals === "function")
+    if (je += 1, this.constructor.formAssociated && typeof this.attachInternals === "function" && !this.internals)
       this.internals = this.attachInternals();
     let o = this.constructor.initAttributes;
     if (o)
@@ -1640,6 +1640,10 @@ class F extends HTMLElement {
       this._attrValues = new Map;
     for (let e of Object.keys(o)) {
       let n = E(e), r = o[e];
+      if (e === "value") {
+        console.warn(`${this.tagName}: 'value' cannot be an attribute. Use the Component value property instead.`);
+        continue;
+      }
       if (typeof r === "object" && r !== null) {
         console.warn(`${this.tagName}: initAttributes.${e} is an object. Use a regular property instead.`);
         continue;
@@ -1692,6 +1696,8 @@ class F extends HTMLElement {
   connectedCallback() {
     if (bn(this.constructor.tagName), this.hydrate(), this.role != null)
       this.setAttribute("role", this.role);
+    if (this.constructor.formAssociated && !this.hasAttribute("tabindex"))
+      this.setAttribute("tabindex", "0");
     if (this.onResize !== undefined) {
       if (no.observe(this), this._onResize == null)
         this._onResize = this.onResize.bind(this);
@@ -9483,25 +9489,35 @@ class TosiSegmented extends F {
     localized: false,
     required: false
   };
-  choices = "";
-  _value = null;
-  get value() {
-    return this._value;
+  _choicesValue = "";
+  get choices() {
+    return this._choicesValue;
   }
-  set value(v3) {
-    this._value = v3;
-    this.updateFormValue();
+  set choices(v3) {
+    this._choicesValue = v3;
     this.queueRender();
   }
+  static get observedAttributes() {
+    return [...super.observedAttributes, "choices"];
+  }
+  attributeChangedCallback(name, oldValue, newValue) {
+    super.attributeChangedCallback(name, oldValue, newValue);
+    if (name === "choices" && typeof newValue === "string") {
+      this._choicesValue = newValue;
+      this.queueRender();
+    }
+  }
+  value = null;
   updateFormValue() {
-    this.internals?.setFormValue(this._value || null);
+    this.internals?.setFormValue(this.value || null);
     this.updateValidity();
   }
   updateValidity() {
     if (!this.internals)
       return;
-    if (this.required && !this._value) {
-      this.internals.setValidity({ valueMissing: true }, "Please select an option", this.parts.options);
+    const anchor = this.parts?.options;
+    if (this.required && !this.value) {
+      this.internals.setValidity({ valueMissing: true }, "Please select an option", anchor);
     } else {
       this.internals.setValidity({});
     }
@@ -9516,7 +9532,7 @@ class TosiSegmented extends F {
     }
   }
   get values() {
-    return (this._value || "").split(",").map((v3) => v3.trim()).filter((v3) => v3 !== "");
+    return (this.value || "").split(",").map((v3) => v3.trim()).filter((v3) => v3 !== "");
   }
   content = () => [
     slot7(),
@@ -9681,10 +9697,11 @@ class TosiSegmented extends F {
     return options;
   }
   get isOtherValue() {
-    return Boolean(this._value === "" || this._value && !this._choices.find((choice) => choice.value === this._value));
+    return Boolean(this.value === "" || this.value && !this._choices.find((choice) => choice.value === this.value));
   }
   render() {
     super.render();
+    this.updateFormValue();
     if (this.valueChanged) {
       this.valueChanged = false;
       return;
@@ -9704,7 +9721,7 @@ class TosiSegmented extends F {
     }));
     if (this.other && !this.multiple) {
       custom.hidden = !isOtherValue;
-      custom.value = isOtherValue ? this._value : "";
+      custom.value = isOtherValue ? this.value : "";
       custom.placeholder = this.placeholder;
       options.append(custom);
     }
@@ -14963,41 +14980,37 @@ This is a fairly general-purpose segmented select control.
 
 \`\`\`html
 <div class="grid">
-<tosi-segmented value="yes" choices="yes, no, don't care">
-  Should we?
-</tosi-segmented>
+  <tosi-segmented value="yes" choices="yes, no, don't care">
+    Should we?
+  </tosi-segmented>
 
-<div>
-  <b>Localized!</b><br>
+  <div>
+    <b>Localized!</b><br>
+    <tosi-segmented
+      localized
+      title="do you like?"
+      choices="yes=Yes:thumbsUp, no=No:thumbsDown"
+    ></tosi-segmented>
+  </div>
+
   <tosi-segmented
-    localized
-    title="do you like?"
-    choices="yes=Yes:thumbsUp, no=No:thumbsDown"
-  ></tosi-segmented>
-</div>
+    style="--segmented-direction: column; --segmented-align-items: stretch"
+    choices="in a relationship, single"
+    other="it's complicated..."
+    placeholder="please elaborate"
+    value="separated"
+  >
+    Relationship Status
+  </tosi-segmented>
 
-<tosi-segmented
-  style="--segmented-direction: column; --segmented-align-items: stretch"
-  choices="in a relationship, single" other="it's complicated…"
-  placeholder="oooh… please elaborate"
-  value="separated"
->
-  Relationship Status
-</tosi-segmented>
-
-<tosi-segmented
-  multiple
-  style="
-    --segmented-direction: column;
-    --segmented-align-items: start;
-    --segmented-option-grid-columns: 24px 24px 100px;
-    --segmented-input-visibility: visible;
-  "
-  choices="star=Star:star, game=Game:game, bug=Bug:bug, camera=Camera:camera"
-  value="star,bug"
->
-  Pick all that apply
-</tosi-segmented>
+  <tosi-segmented
+    multiple
+    style="--segmented-direction: column; --segmented-align-items: start; --segmented-option-grid-columns: 24px 24px 100px; --segmented-input-visibility: visible;"
+    choices="star=Star:star, game=Game:game, bug=Bug:bug, camera=Camera:camera"
+    value="star,bug"
+  >
+    Pick all that apply
+  </tosi-segmented>
 </div>
 \`\`\`
 \`\`\`css
@@ -15027,10 +15040,19 @@ preview.addEventListener('change', logEvent, true)
 \`<tosi-segmented>\` is form-associated, meaning it works directly in native \`<form>\` elements:
 
 \`\`\`html
-<form>
+<form class="segmented-form">
   <tosi-segmented name="choice" choices="a,b,c" required></tosi-segmented>
   <button type="submit">Submit</button>
+  <span class="output"></span>
 </form>
+\`\`\`
+\`\`\`js
+const form = preview.querySelector('.segmented-form')
+form.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const data = new FormData(form)
+  form.querySelector('.output').textContent = 'Submitted: ' + data.get('choice')
+})
 \`\`\`
 
 ## Properties
