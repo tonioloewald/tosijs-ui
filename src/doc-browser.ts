@@ -329,17 +329,13 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
 
   const updateDocTestStatus = (filename: string) => {
     const results = pageTestResults[filename]
-    const index = app.docs.findIndex(
-      (d: any) => String(d.filename) === filename
-    )
-    if (index >= 0) {
-      const newStatus = results
+    const doc = app.docs.find((d) => d.filename === filename)
+    if (doc) {
+      doc.testStatus = results
         ? results.passed
           ? 'passed'
           : 'failed'
         : undefined
-      // Must use index access to get proxy, not find() which returns unwrapped object
-      app.docs[index].testStatus = newStatus
     }
   }
 
