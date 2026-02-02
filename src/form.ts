@@ -272,6 +272,138 @@ form.addEventListener('change', (e) => {
   output.textContent = 'Current values: ' + JSON.stringify(data, null, 2)
 })
 ```
+
+## Using formAssociated Components with xin-form
+
+While the formAssociated components work with native `<form>` elements, using them with `<xin-form>`
+provides additional benefits:
+
+- **No submit prevention boilerplate** - `xin-form` automatically prevents the default form submission
+- **JSON state management** - Initialize and access form state as a JavaScript object via `value` and `fields`
+- **Validation feedback** - Built-in `isValid` property and `submitCallback` with validation status
+- **Change events** - Unified change events on the form element
+
+Since these components now support `formAssociated`, they participate directly in form submission
+and validation without needing the hidden input workaround that `xin-field` uses.
+
+```html
+<xin-form id="tosi-form" value='{"rating": 3, "tier": "pro"}'>
+  <h4 slot="header">xin-form with formAssociated Components</h4>
+
+  <div class="form-row">
+    <label>Service Rating:</label>
+    <tosi-rating name="rating" required min="1"></tosi-rating>
+  </div>
+
+  <div class="form-row">
+    <label>Country:</label>
+    <tosi-select name="country" required>
+      <option value="">-- Select --</option>
+      <option value="us">United States</option>
+      <option value="uk">United Kingdom</option>
+      <option value="ca">Canada</option>
+    </tosi-select>
+  </div>
+
+  <div class="form-row">
+    <label>Subscription:</label>
+    <tosi-segmented
+      name="tier"
+      required
+      choices="free=Free,pro=Pro:star,enterprise=Enterprise:building"
+    ></tosi-segmented>
+  </div>
+
+  <div class="form-row">
+    <label>Interests:</label>
+    <tosi-tag-list
+      name="interests"
+      required
+      editable
+      available-tags="Tech,Sports,Music,Art"
+    ></tosi-tag-list>
+  </div>
+
+  <div slot="footer" style="flex-direction: column; gap: 8px;">
+    <div style="display: flex; gap: 8px;">
+      <button class="submit-btn">Submit</button>
+      <button class="reset-btn">Reset</button>
+      <button class="set-values-btn">Set Values</button>
+    </div>
+    <pre class="form-output" style="background: #f5f5f5; padding: 8px; margin: 0; font-size: 12px;"></pre>
+  </div>
+</xin-form>
+```
+```css
+.preview #tosi-form {
+  height: auto;
+}
+
+.preview #tosi-form .form-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.preview #tosi-form .form-row label {
+  text-align: right;
+  display: block;
+}
+
+.preview #tosi-form ::part(content) {
+  padding: 16px;
+  gap: 12px;
+}
+
+.preview #tosi-form ::part(header) {
+  padding: 8px 16px;
+}
+
+.preview #tosi-form ::part(footer) {
+  padding: 8px 16px;
+}
+```
+```js
+const tosiForm = preview.querySelector('#tosi-form')
+const tosiOutput = preview.querySelector('#tosi-form .form-output')
+
+// Set up submit callback
+tosiForm.submitCallback = (value, isValid) => {
+  tosiOutput.textContent = `Submit (valid: ${isValid}):\n${JSON.stringify(value, null, 2)}`
+}
+
+preview.querySelector('.submit-btn').addEventListener('click', () => {
+  tosiForm.submit()
+})
+
+preview.querySelector('.reset-btn').addEventListener('click', () => {
+  tosiForm.value = {}
+  tosiForm.querySelectorAll('tosi-rating, tosi-select, tosi-segmented, tosi-tag-list').forEach(el => {
+    el.value = el.tagName === 'TOSI-TAG-LIST' ? [] : null
+  })
+  tosiOutput.textContent = 'Form reset'
+})
+
+preview.querySelector('.set-values-btn').addEventListener('click', () => {
+  // Demonstrate programmatic value setting
+  const rating = tosiForm.querySelector('tosi-rating')
+  const select = tosiForm.querySelector('tosi-select')
+  const segmented = tosiForm.querySelector('tosi-segmented')
+  const tagList = tosiForm.querySelector('tosi-tag-list')
+
+  rating.value = 5
+  select.value = 'uk'
+  segmented.value = 'enterprise'
+  tagList.value = ['Tech', 'Music']
+
+  tosiOutput.textContent = 'Values set programmatically'
+})
+
+tosiForm.addEventListener('change', () => {
+  tosiOutput.textContent = `Current (valid: ${tosiForm.isValid}):\n${JSON.stringify(tosiForm.value, null, 2)}`
+})
+```
 */
 
 import {
