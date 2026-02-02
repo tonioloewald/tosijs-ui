@@ -30,10 +30,12 @@ export declare class TosiTagList extends WebComponent {
         disabled: boolean;
         required: boolean;
     };
-    private _value;
-    availableTags: string | TagList;
-    get value(): string | string[];
-    set value(v: string | string[]);
+    value: string | string[];
+    private _availableTags;
+    get availableTags(): string | TagList;
+    set availableTags(v: string | TagList);
+    static get observedAttributes(): string[];
+    attributeChangedCallback(name: string, oldValue: string, newValue: string): void;
     private updateFormValue;
     private updateValidity;
     formDisabledCallback(disabled: boolean): void;

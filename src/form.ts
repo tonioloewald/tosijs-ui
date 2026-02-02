@@ -5,69 +5,69 @@
 [client-side validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation#built-in_form_validation_examples).
 
 ```js
-const form = preview.querySelector('xin-form')
+const form = preview.querySelector('tosi-form')
 preview.querySelector('.submit').addEventListener('click', form.submit)
 ```
 ```html
-<xin-form value='{"formInitializer": "initial value from form"}'>
+<tosi-form value='{"formInitializer": "initial value from form"}'>
   <h3 slot="header">Example Form Header</h3>
-  <xin-field caption="Required field" key="required"></xin-field>
-  <xin-field optional key="optional"><i>Optional</i> Field</xin-field>
-  <xin-field key="text" type="text" placeholder="type it in here">Tell us a long story</xin-field>
-  <xin-field caption="Zip Code" placeholder="12345 or 12345-6789" key="zipcode" pattern="\d{5}(-\d{4})?"></xin-field>
-  <xin-field caption="Date" key="date" type="date"></xin-field>
-  <xin-field caption="Number" key="number" type="number"></xin-field>
-  <xin-field caption="Range" key="range" type="range" min="0" max="10"></xin-field>
-  <xin-field key="boolean" type="checkbox">😃 <b>Agreed?!</b></xin-field>
-  <xin-field key="color" type="color" value="pink">
+  <tosi-field caption="Required field" key="required"></tosi-field>
+  <tosi-field optional key="optional"><i>Optional</i> Field</tosi-field>
+  <tosi-field key="text" type="text" placeholder="type it in here">Tell us a long story</tosi-field>
+  <tosi-field caption="Zip Code" placeholder="12345 or 12345-6789" key="zipcode" pattern="\d{5}(-\d{4})?"></tosi-field>
+  <tosi-field caption="Date" key="date" type="date"></tosi-field>
+  <tosi-field caption="Number" key="number" type="number"></tosi-field>
+  <tosi-field caption="Range" key="range" type="range" min="0" max="10"></tosi-field>
+  <tosi-field key="boolean" type="checkbox">😃 <b>Agreed?!</b></tosi-field>
+  <tosi-field key="color" type="color" value="pink">
     favorite color
-  </xin-field>
-  <xin-field key="select">
+  </tosi-field>
+  <tosi-field key="select">
     Custom Field
     <select slot="input">
       <option>This</option>
       <option>That</option>
       <option>The Other</option>
     </select>
-  </xin-field>
-  <xin-field key="tags">
+  </tosi-field>
+  <tosi-field key="tags">
     Tag List
-    <xin-tag-list editable slot="input" available-tags="pick me,no pick me"></xin-tag-list>
-  </xin-field>
-  <xin-field key="rating">
+    <tosi-tag-list editable slot="input" available-tags="pick me,no pick me"></tosi-tag-list>
+  </tosi-field>
+  <tosi-field key="rating">
     Rate this form!
-    <xin-rating slot="input"></xin-rating>
-  </xin-field>
-  <xin-field key="like">
+    <tosi-rating slot="input"></tosi-rating>
+  </tosi-field>
+  <tosi-field key="like">
     Do you like it?
-    <xin-segmented
+    <tosi-segmented
       choices="yes=Yes:thumbsUp,no=No:thumbsDown"
       slot="input"
-    ></xin-segmented>
-  </xin-field>
-  <xin-field key="relationship">
+    ></tosi-segmented>
+  </tosi-field>
+  <tosi-field key="relationship">
     Relationship Status
-    <xin-segmented
+    <tosi-segmented
       style="--segmented-direction: column; --segmented-align-items: stretch"
       choices="couple=In a relationship,single=Single"
       other="It's complicated…"
       slot="input"
-    ></xin-segmented>
-  </xin-field>
-  <xin-field key="amount" fixed-precision="2" type="number" prefix="$" suffix="(USD)">
+    ></tosi-segmented>
+  </tosi-field>
+  <tosi-field key="amount" fixed-precision="2" type="number" prefix="$" suffix="(USD)">
     What's it worth?
-  </xin-field>
-  <xin-field key="valueInitializer" value="initial value from field">
+  </tosi-field>
+  <tosi-field key="valueInitializer" value="initial value from field">
     Initialized by field
-  </xin-field>
-  <xin-field key="formInitializer">
+  </tosi-field>
+  <tosi-field key="formInitializer">
     Initialized by form
-  </xin-field>
+  </tosi-field>
   <button slot="footer" class="submit">Submit</button>
-</xin-form>
+</tosi-form>
 ```
 ```css
-.preview xin-form {
+.preview tosi-form {
   height: 100%;
 }
 
@@ -122,8 +122,8 @@ preview.querySelector('.submit').addEventListener('click', form.submit)
     content: '*'
   }
 
-  .preview xin-field [part="field"],
-  .preview xin-field [part="input"] > * {
+  .preview tosi-field [part="field"],
+  .preview tosi-field [part="input"] > * {
     display: flex;
     justify-content: center;
   }
@@ -170,7 +170,7 @@ The `text` type populates the `input` slot with a `<textarea>` element.
 
 The `color` type populates the `input` slot with a `<xin-color>` element (and thus supports colors with alpha values).
 
-<xin-css-var-editor element-selector="xin-field" target-selector=".preview"></xin-css-var-editor>
+<xin-css-var-editor element-selector="tosi-field" target-selector=".preview"></xin-css-var-editor>
 
 ## Native Form Integration
 
@@ -188,31 +188,29 @@ These components can be used directly in a standard `<form>` element with full s
 - The `:invalid` and `:valid` CSS pseudo-classes
 
 ```html
-<form id="native-form" style="display: flex; flex-direction: column; gap: 16px; padding: 16px;">
-  <h4 style="margin: 0">Native Form with formAssociated Components</h4>
-
-  <label style="display: flex; flex-direction: column; gap: 4px;">
+<form id="native-form" class="native-form">
+  <label>
     <span>Rate our service (required):</span>
     <tosi-rating name="rating" required min="1"></tosi-rating>
   </label>
 
-  <label style="display: flex; flex-direction: column; gap: 4px;">
+  <label>
     <span>Select your country:</span>
     <tosi-select name="country" required placeholder="-- Select --"
-      options="us=United States,uk=United Kingdom,ca=Canada,au=Australia"
+      options="us=United States:flag,uk=United Kingdom:flag,ca=Canada:flag,au=Australia:flag"
     ></tosi-select>
   </label>
 
-  <label style="display: flex; flex-direction: column; gap: 4px;">
+  <label>
     <span>Subscription tier:</span>
     <tosi-segmented
       name="tier"
       required
-      choices="free=Free,pro=Pro:star,enterprise=Enterprise:building"
+      choices="free=Free,pro=Pro:star,enterprise=Enterprise:tosi"
     ></tosi-segmented>
   </label>
 
-  <label style="display: flex; flex-direction: column; gap: 4px;">
+  <label>
     <span>Interests (select at least one):</span>
     <tosi-tag-list
       name="interests"
@@ -222,20 +220,38 @@ These components can be used directly in a standard `<form>` element with full s
     ></tosi-tag-list>
   </label>
 
-  <div style="display: flex; gap: 8px; margin-top: 8px;">
+  <div class="buttons">
     <button type="submit">Submit</button>
     <button type="reset">Reset</button>
   </div>
-
-  <pre id="form-output" style="background: #f5f5f5; padding: 8px; margin: 0; min-height: 60px;"></pre>
 </form>
 ```
 ```css
+.preview .native-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  overflow: auto;
+  height: 100%;
+}
+
+.preview .native-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview .native-form .buttons {
+  display: flex;
+  gap: 8px;
+}
+
 .preview tosi-rating:invalid,
 .preview tosi-select:invalid,
 .preview tosi-segmented:invalid,
 .preview tosi-tag-list:invalid {
-  outline: 2px solid #f00;
+  outline: 2px solid #f008;
   outline-offset: 2px;
 }
 
@@ -243,29 +259,23 @@ These components can be used directly in a standard `<form>` element with full s
 .preview tosi-select:valid,
 .preview tosi-segmented:valid,
 .preview tosi-tag-list:valid {
-  outline: 2px solid #0a0;
+  outline: 2px solid #0a08;
   outline-offset: 2px;
 }
 ```
 ```js
+const { TosiDialog } = tosijsui
 const form = preview.querySelector('#native-form')
-const output = preview.querySelector('#form-output')
 
 form.addEventListener('submit', (e) => {
   e.preventDefault()
   const formData = new FormData(form)
   const data = Object.fromEntries(formData.entries())
-  output.textContent = 'Submitted: ' + JSON.stringify(data, null, 2)
+  TosiDialog.alert(JSON.stringify(data, null, 2), 'Form Submitted')
 })
 
 form.addEventListener('reset', () => {
-  output.textContent = 'Form reset'
-})
-
-form.addEventListener('change', (e) => {
-  const formData = new FormData(form)
-  const data = Object.fromEntries(formData.entries())
-  output.textContent = 'Current values: ' + JSON.stringify(data, null, 2)
+  TosiDialog.alert('Form has been reset', 'Reset')
 })
 ```
 
@@ -283,8 +293,8 @@ Since these components now support `formAssociated`, they participate directly i
 and validation without needing the hidden input workaround that `xin-field` uses.
 
 ```html
-<xin-form id="tosi-form" value='{"rating": 3, "tier": "pro"}'>
-  <h4 slot="header">xin-form with formAssociated Components</h4>
+<tosi-form id="tosi-form" value='{"rating": 3, "tier": "pro"}'>
+  <h4 slot="header">tosi-form with formAssociated Components</h4>
 
   <label class="form-row">
     <span>Service Rating:</span>
@@ -294,7 +304,7 @@ and validation without needing the hidden input workaround that `xin-field` uses
   <label class="form-row">
     <span>Country:</span>
     <tosi-select name="country" required placeholder="-- Select --"
-      options="us=United States,uk=United Kingdom,ca=Canada"
+      options="us=United States:flag,uk=United Kingdom:flag,ca=Canada:flag"
     ></tosi-select>
   </label>
 
@@ -303,7 +313,7 @@ and validation without needing the hidden input workaround that `xin-field` uses
     <tosi-segmented
       name="tier"
       required
-      choices="free=Free,pro=Pro:star,enterprise=Enterprise:building"
+      choices="free=Free,pro=Pro:star,enterprise=Enterprise:tosi"
     ></tosi-segmented>
   </label>
 
@@ -317,15 +327,12 @@ and validation without needing the hidden input workaround that `xin-field` uses
     ></tosi-tag-list>
   </label>
 
-  <div slot="footer" style="flex-direction: column; gap: 8px;">
-    <div style="display: flex; gap: 8px;">
-      <button class="submit-btn">Submit</button>
-      <button class="reset-btn">Reset</button>
-      <button class="set-values-btn">Set Values</button>
-    </div>
-    <pre class="form-output" style="background: #f5f5f5; padding: 8px; margin: 0; font-size: 12px;"></pre>
+  <div slot="footer" style="display: flex; gap: 8px;">
+    <button class="submit-btn">Submit</button>
+    <button class="reset-btn">Reset</button>
+    <button class="set-values-btn">Set Values</button>
   </div>
-</xin-form>
+</tosi-form>
 ```
 ```css
 .preview #tosi-form {
@@ -357,12 +364,13 @@ and validation without needing the hidden input workaround that `xin-field` uses
 }
 ```
 ```js
+const { TosiDialog } = tosijsui
 const tosiForm = preview.querySelector('#tosi-form')
-const tosiOutput = preview.querySelector('#tosi-form .form-output')
 
 // Set up submit callback
 tosiForm.submitCallback = (value, isValid) => {
-  tosiOutput.textContent = `Submit (valid: ${isValid}):\n${JSON.stringify(value, null, 2)}`
+  const title = isValid ? 'Form Submitted (Valid)' : 'Form Submitted (Invalid)'
+  TosiDialog.alert(JSON.stringify(value, null, 2), title)
 }
 
 preview.querySelector('.submit-btn').addEventListener('click', () => {
@@ -374,7 +382,7 @@ preview.querySelector('.reset-btn').addEventListener('click', () => {
   tosiForm.querySelectorAll('tosi-rating, tosi-select, tosi-segmented, tosi-tag-list').forEach(el => {
     el.value = el.tagName === 'TOSI-TAG-LIST' ? [] : null
   })
-  tosiOutput.textContent = 'Form reset'
+  TosiDialog.alert('Form has been reset', 'Reset')
 })
 
 preview.querySelector('.set-values-btn').addEventListener('click', () => {
@@ -389,11 +397,7 @@ preview.querySelector('.set-values-btn').addEventListener('click', () => {
   segmented.value = 'enterprise'
   tagList.value = ['Tech', 'Music']
 
-  tosiOutput.textContent = 'Values set programmatically'
-})
-
-tosiForm.addEventListener('change', () => {
-  tosiOutput.textContent = `Current (valid: ${tosiForm.isValid}):\n${JSON.stringify(tosiForm.value, null, 2)}`
+  TosiDialog.alert('Values set programmatically:\n\nRating: 5\nCountry: uk\nTier: enterprise\nInterests: Tech, Music', 'Values Set')
 })
 ```
 */
@@ -458,7 +462,7 @@ function setElementValue(input: HTMLElement | null | undefined, value: any) {
   }
 }
 
-export class XinField extends XinComponent {
+export class TosiField extends XinComponent {
   static initAttributes = {
     caption: '',
     key: '',
@@ -504,7 +508,7 @@ export class XinField extends XinComponent {
     }
     this.value = getInputValue(inputElement)
     this.valueChanged = true
-    const form = this.closest('xin-form') as XinForm
+    const form = this.closest('tosi-form') as TosiForm
     if (form && this.key !== '') {
       switch (this.type) {
         case 'checkbox':
@@ -527,16 +531,6 @@ export class XinField extends XinComponent {
     }
   }
 
-  initialize(form: XinForm) {
-    const initialValue =
-      form.fields[this.key] !== undefined ? form.fields[this.key] : this.value
-
-    if (initialValue != null && initialValue !== '') {
-      if (form.fields[this.key] == null) form.fields[this.key] = initialValue
-      this.value = initialValue
-    }
-  }
-
   connectedCallback(): void {
     super.connectedCallback()
     const { input, valueHolder } = this.parts as {
@@ -544,10 +538,7 @@ export class XinField extends XinComponent {
       valueHolder: HTMLInputElement
     }
 
-    const form = this.closest(XinForm.tagName!)
-    if (form instanceof XinForm) {
-      this.initialize(form)
-    }
+    // Initialization from form value is handled by xin-form.initializeNamedElements()
 
     valueHolder.addEventListener('change', this.handleChange)
     input.addEventListener('change', this.handleChange, true)
@@ -610,7 +601,7 @@ export class XinField extends XinComponent {
   }
 }
 
-export class XinForm extends XinComponent {
+export class TosiForm extends XinComponent {
   context = {} as { [key: string]: any }
   value = {} as { [key: string]: any }
   get isValid(): boolean {
@@ -651,8 +642,8 @@ export class XinForm extends XinComponent {
     slot({ part: 'footer', name: 'footer' }),
   ]
 
-  getField = (key: string): XinField | null => {
-    return this.querySelector(`xin-field[key="${key}"]`) as XinField | null
+  getField = (key: string): TosiField | null => {
+    return this.querySelector(`tosi-field[key="${key}"]`) as TosiField | null
   }
 
   get fields(): any {
@@ -686,7 +677,7 @@ export class XinForm extends XinComponent {
   }
 
   set fields(values: { [key: string]: any }) {
-    const fields = [...this.querySelectorAll(XinField.tagName!)] as XinField[]
+    const fields = [...this.querySelectorAll('tosi-field')] as TosiField[]
     for (const field of fields) {
       field.value = values[field.key]
     }
@@ -699,7 +690,9 @@ export class XinForm extends XinComponent {
   handleSubmit = (event: SubmitEvent) => {
     event.preventDefault()
     event.stopPropagation()
-    this.submitCallback(this.value, this.isValid)
+    // Access fields to ensure value is parsed from JSON string if needed
+    const value = this.fields
+    this.submitCallback(value, this.isValid)
   }
 
   submitCallback = (value: { [key: string]: any }, isValid: boolean): void => {
@@ -713,41 +706,83 @@ export class XinForm extends XinComponent {
     super.connectedCallback()
     const { form } = this.parts as { form: HTMLFormElement }
     form.addEventListener('submit', this.handleSubmit)
+
+    // Listen for change events from named elements to update form value
+    form.addEventListener('change', this.handleElementChange, true)
+
+    // Initialize formAssociated components (those with name attribute) from form value
+    this.initializeNamedElements()
+  }
+
+  private handleElementChange = (event: Event) => {
+    const target = event.target as HTMLElement
+    const name = target.getAttribute('name')
+    if (name && 'value' in target) {
+      this.fields[name] = (target as any).value
+    }
+  }
+
+  private initializeNamedElements(): void {
+    const formValue = this.fields
+    // Handle both 'name' (formAssociated) and 'key' (xin-field) attributes
+    const namedElements = this.querySelectorAll(
+      '[name], [key]'
+    ) as NodeListOf<HTMLElement>
+    for (const el of namedElements) {
+      const key = el.getAttribute('name') || el.getAttribute('key')
+      if (key && formValue[key] !== undefined) {
+        ;(el as any).value = formValue[key]
+      }
+    }
   }
 }
 
-export const xinField = XinField.elementCreator({
-  tag: 'xin-field',
-  styleSpec: {
-    ':host [part="field"]': {
-      position: 'relative',
-      display: 'flex',
-      alignItems: 'center',
-      gap: varDefault.prefixSuffixGap('8px'),
-    },
-    ':host [part="field"][prefix]::before': {
-      content: 'attr(prefix)',
-    },
-    ':host [part="field"][suffix]::after': {
-      content: 'attr(suffix)',
-    },
-    ':host [part="field"] > *, :host [part="input"] > *': {
-      width: '100%',
-    },
-    ':host textarea': {
-      resize: 'none',
-    },
-    ':host input[type="checkbox"]': {
-      width: 'fit-content',
-    },
-    ':host .hidden': {
-      position: 'absolute',
-      pointerEvents: 'none',
-      opacity: 0,
-    },
-  },
-}) as ElementCreator<XinField>
+/** @deprecated Use TosiField instead */
+export const XinField = TosiField
 
-export const xinForm = XinForm.elementCreator({
-  tag: 'xin-form',
-}) as ElementCreator<XinForm>
+/** @deprecated Use TosiForm instead */
+export const XinForm = TosiForm
+
+const fieldStyleSpec = {
+  ':host [part="field"]': {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    gap: varDefault.prefixSuffixGap('8px'),
+  },
+  ':host [part="field"][prefix]::before': {
+    content: 'attr(prefix)',
+  },
+  ':host [part="field"][suffix]::after': {
+    content: 'attr(suffix)',
+  },
+  ':host [part="field"] > *, :host [part="input"] > *': {
+    width: '100%',
+  },
+  ':host textarea': {
+    resize: 'none',
+  },
+  ':host input[type="checkbox"]': {
+    width: 'fit-content',
+  },
+  ':host .hidden': {
+    position: 'absolute',
+    pointerEvents: 'none',
+    opacity: 0,
+  },
+}
+
+export const tosiField = TosiField.elementCreator({
+  tag: 'tosi-field',
+  styleSpec: fieldStyleSpec,
+}) as ElementCreator<TosiField>
+
+export const tosiForm = TosiForm.elementCreator({
+  tag: 'tosi-form',
+}) as ElementCreator<TosiForm>
+
+/** @deprecated Use tosiField instead (tag is now tosi-field) */
+export const xinField = tosiField
+
+/** @deprecated Use tosiForm instead (tag is now tosi-form) */
+export const xinForm = tosiForm

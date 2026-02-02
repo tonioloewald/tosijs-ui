@@ -28,12 +28,14 @@ export declare class TosiSelect extends Component<SelectParts> {
         required: boolean;
         name: string;
     };
-    options: string | SelectOptions;
-    private _value;
+    private _options;
+    get options(): string | SelectOptions;
+    set options(v: string | SelectOptions);
+    static get observedAttributes(): string[];
+    attributeChangedCallback(name: string, oldValue: string, newValue: string): void;
+    value: string;
     filter: string;
     private isExpanded;
-    get value(): string;
-    set value(v: string);
     private updateFormValue;
     private updateValidity;
     formDisabledCallback(disabled: boolean): void;

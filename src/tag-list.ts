@@ -125,6 +125,7 @@ export class TosiTag extends WebComponent {
   content = () => [
     span({ part: 'caption' }, this.caption),
     button(icons.x(), {
+      type: 'button',
       part: 'remove',
       hidden: !this.removeable,
       ariaLabel: `Remove ${this.caption}`,
@@ -213,17 +214,30 @@ export class TosiTagList extends WebComponent {
     required: false,
   }
 
-  private _value: string | string[] = []
-  availableTags: string | TagList = []
+  value: string | string[] = []
 
-  get value(): string | string[] {
-    return this._value
+  private _availableTags: string | TagList = []
+
+  get availableTags(): string | TagList {
+    return this._availableTags
   }
 
-  set value(v: string | string[]) {
-    this._value = v
-    this.updateFormValue()
-    this.updateValidity()
+  set availableTags(v: string | TagList) {
+    this._availableTags = v
+    this.queueRender()
+  }
+
+  // Handle available-tags attribute from HTML
+  static get observedAttributes() {
+    return [...super.observedAttributes, 'available-tags']
+  }
+
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    super.attributeChangedCallback(name, oldValue, newValue)
+    if (name === 'available-tags' && typeof newValue === 'string') {
+      this._availableTags = newValue
+      this.queueRender()
+    }
   }
 
   private updateFormValue(): void {
@@ -236,11 +250,12 @@ export class TosiTagList extends WebComponent {
 
   private updateValidity(): void {
     if (this.internals) {
+      const anchor = this.parts?.tagContainer as HTMLElement | undefined
       if (this.required && this.tags.length === 0) {
         this.internals.setValidity(
           { valueMissing: true },
           'Please select at least one tag',
-          this.parts.tagContainer as HTMLElement
+          anchor
         )
       } else {
         this.internals.setValidity({})
@@ -254,24 +269,24 @@ export class TosiTagList extends WebComponent {
   }
 
   formResetCallback(): void {
-    this._value = []
+    this.value = []
     this.queueRender(true)
   }
 
   formStateRestoreCallback(state: string): void {
     if (state) {
-      this._value = state.split(',').filter((t) => t !== '')
+      this.value = state.split(',').filter((t) => t !== '')
       this.queueRender(true)
     }
   }
 
   get tags(): string[] {
-    return typeof this._value === 'string'
-      ? this._value
+    return typeof this.value === 'string'
+      ? this.value
           .split(',')
           .map((tag) => tag.trim())
           .filter((tag) => tag !== '')
-      : this._value
+      : this.value
   }
 
   addTag = (tag: string) => {
@@ -359,7 +374,7 @@ export class TosiTagList extends WebComponent {
 
   content = () => [
     // this button is simply here to eat click events sent via a label
-    button({ style: { visibility: 'hidden' }, tabindex: -1 }),
+    button({ type: 'button', style: { visibility: 'hidden' }, tabindex: -1 }),
     div({
       part: 'tagContainer',
       class: 'row',
@@ -374,6 +389,7 @@ export class TosiTagList extends WebComponent {
     }),
     button(
       {
+        type: 'button',
         title: 'add tag',
         ariaLabel: 'Select tags from list',
         ariaHaspopup: 'listbox',
@@ -399,6 +415,11 @@ export class TosiTagList extends WebComponent {
 
   render(): void {
     super.render()
+
+    // Update form value/validity on each render
+    this.updateFormValue()
+    this.updateValidity()
+
     const { tagContainer, tagMenu, tagInput } = this.parts as {
       tagContainer: HTMLDivElement
       tagMenu: HTMLButtonElement

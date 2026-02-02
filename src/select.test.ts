@@ -39,7 +39,11 @@ describe('TosiSelect', () => {
     test('accepts options as string', () => {
       const select = tosiSelect({ options: 'one,two,three' })
       container.appendChild(select)
-      expect(select.selectOptions).toEqual(['one', 'two', 'three'])
+      expect(select.selectOptions).toEqual([
+        { value: 'one', caption: 'one' },
+        { value: 'two', caption: 'two' },
+        { value: 'three', caption: 'three' },
+      ])
     })
 
     test('accepts options as array', () => {
@@ -47,15 +51,42 @@ describe('TosiSelect', () => {
         { caption: 'One', value: '1' },
         { caption: 'Two', value: '2' },
       ]
-      const select = tosiSelect({ options })
+      const select = tosiSelect()
+      select.options = options
       container.appendChild(select)
-      expect(select.options).toEqual(options)
+      expect(select.selectOptions).toEqual(options)
     })
 
     test('handles separator in options string', () => {
       const select = tosiSelect({ options: 'one,,two' })
       container.appendChild(select)
-      expect(select.selectOptions).toEqual(['one', null, 'two'])
+      expect(select.selectOptions).toEqual([
+        { value: 'one', caption: 'one' },
+        null,
+        { value: 'two', caption: 'two' },
+      ])
+    })
+
+    test('parses value=caption format', () => {
+      const select = tosiSelect({
+        options: 'us=United States,uk=United Kingdom',
+      })
+      container.appendChild(select)
+      expect(select.selectOptions).toEqual([
+        { value: 'us', caption: 'United States', icon: undefined },
+        { value: 'uk', caption: 'United Kingdom', icon: undefined },
+      ])
+    })
+
+    test('parses value=caption:icon format', () => {
+      const select = tosiSelect({
+        options: 'yes=Yes:thumbsUp,no=No:thumbsDown',
+      })
+      container.appendChild(select)
+      expect(select.selectOptions).toEqual([
+        { value: 'yes', caption: 'Yes', icon: 'thumbsUp' },
+        { value: 'no', caption: 'No', icon: 'thumbsDown' },
+      ])
     })
   })
 
@@ -97,13 +128,11 @@ describe('TosiSelect', () => {
     })
 
     test('findOption returns matching option', () => {
-      const select = tosiSelect({
-        options: [
-          { caption: 'Alpha', value: 'a' },
-          { caption: 'Beta', value: 'b' },
-        ],
-        value: 'b',
-      })
+      const select = tosiSelect({ value: 'b' })
+      select.options = [
+        { caption: 'Alpha', value: 'a' },
+        { caption: 'Beta', value: 'b' },
+      ]
       container.appendChild(select)
       const option = select.findOption()
       expect(option.caption).toBe('Beta')
@@ -119,18 +148,17 @@ describe('TosiSelect', () => {
     })
 
     test('allOptions flattens nested options', () => {
-      const select = tosiSelect({
-        options: [
-          { caption: 'A', value: 'a' },
-          {
-            caption: 'Group',
-            options: [
-              { caption: 'B', value: 'b' },
-              { caption: 'C', value: 'c' },
-            ],
-          },
-        ],
-      })
+      const select = tosiSelect()
+      select.options = [
+        { caption: 'A', value: 'a' },
+        {
+          caption: 'Group',
+          options: [
+            { caption: 'B', value: 'b' },
+            { caption: 'C', value: 'c' },
+          ],
+        },
+      ]
       container.appendChild(select)
       const all = select.allOptions
       expect(all.length).toBe(3)

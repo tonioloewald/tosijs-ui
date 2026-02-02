@@ -60,18 +60,18 @@ __export(exports_module, {
   BlueprintLoader: () => se,
   Blueprint: () => Eo
 });
-function g(o) {
+function X(o) {
   if (o == null || typeof o !== "object")
     return o;
   if (o instanceof Set)
     return new Set(o);
   else if (Array.isArray(o))
-    return o.map(g);
+    return o.map(X);
   let e = {};
   for (let n in o) {
     let r = o[n];
     if (o != null && typeof o === "object")
-      e[n] = g(r);
+      e[n] = X(r);
     else
       e[n] = r;
   }
@@ -119,15 +119,15 @@ function Qe(o, e) {
 var Ge = Ho(M, "xinPath is deprecated. Use tosiPath instead.");
 var Ze = Ho(p, "xinValue is deprecated. Use tosiValue instead.");
 var q = new WeakMap;
-var X = new WeakMap;
+var g = new WeakMap;
 var Q = (o) => {
   let e = o.cloneNode();
   if (e instanceof Element) {
-    let n = X.get(o), r = q.get(o);
+    let n = g.get(o), r = q.get(o);
     if (n != null)
-      X.set(e, g(n));
+      g.set(e, X(n));
     if (r != null)
-      q.set(e, g(r));
+      q.set(e, X(r));
   }
   for (let n of Array.from(o instanceof HTMLTemplateElement ? o.content.childNodes : o.childNodes))
     if (n instanceof Element || n instanceof DocumentFragment)
@@ -140,8 +140,8 @@ var G = { debug: false, perf: false };
 var ce = Symbol("observer should be removed");
 var to = [];
 var co = [];
-var go = false;
-var Xo;
+var Xo = false;
+var go;
 var $o;
 
 class fe {
@@ -166,9 +166,9 @@ class fe {
   }
 }
 var me = async () => {
-  if (Xo === undefined)
+  if (go === undefined)
     return;
-  await Xo;
+  await go;
 };
 var Oe = () => {
   if (G.perf)
@@ -195,7 +195,7 @@ var Oe = () => {
       if (r === ce)
         W(n);
     });
-  if (co.splice(0), go = false, typeof $o === "function")
+  if (co.splice(0), Xo = false, typeof $o === "function")
     $o();
   if (G.perf)
     console.timeEnd("xin async update");
@@ -204,10 +204,10 @@ var I = (o) => {
   let e = typeof o === "string" ? o : M(o);
   if (e === undefined)
     throw console.error("touch was called on an invalid target", o), Error("touch was called on an invalid target");
-  if (go === false)
-    Xo = new Promise((n) => {
+  if (Xo === false)
+    go = new Promise((n) => {
       $o = n;
-    }), go = setTimeout(Oe);
+    }), Xo = setTimeout(Oe);
   if (co.find((n) => e.startsWith(n)) == null)
     co.push(e);
 };
@@ -850,7 +850,7 @@ var cn = (o) => {
     He(e, o, n);
   } };
 };
-var ge = (o, e, n) => {
+var Xe = (o, e, n) => {
   if (e === "style")
     if (typeof n === "object")
       for (let r of Object.keys(n))
@@ -887,7 +887,7 @@ var ge = (o, e, n) => {
 };
 var fn = (o) => {
   return { toDOM(e, n) {
-    ge(e, o, n);
+    Xe(e, o, n);
   } };
 };
 var mn = (o, e, n) => {
@@ -910,7 +910,7 @@ var mn = (o, e, n) => {
   } else if (M(n))
     H(o, n, fn(e));
   else
-    ge(o, e, n);
+    Xe(o, e, n);
 };
 var Ao = (o, ...e) => {
   if (ho[o] === undefined) {
@@ -983,10 +983,10 @@ function Po(o, e) {
   return new Proxy(ze, R(e, true));
 }
 var ao = () => new Proxy({}, R("^", true));
-var Xe = false;
+var ge = false;
 function A() {
-  if (!Xe)
-    console.warn("xinValue, tosiValue, xinPath, tosiPath, etc. are deprecated. Use value, path, observe, bind, on, binding, listBinding instead."), Xe = true;
+  if (!ge)
+    console.warn("xinValue, tosiValue, xinPath, tosiPath, etc. are deprecated. Use value, path, observe, bind, on, binding, listBinding instead."), ge = true;
 }
 var $e = (o) => {
   return o === ze;
@@ -1182,7 +1182,7 @@ function De(o, e) {
   if (o.matches(Y))
     n.unshift(o);
   for (let r of n) {
-    let i = X.get(r);
+    let i = g.get(r);
     for (let s of i) {
       if (s.path.startsWith("^"))
         s.path = `${e}${s.path.substring(1)}`;
@@ -1340,7 +1340,7 @@ var wn = (o) => {
 };
 var { document: ro, MutationObserver: Ye } = globalThis;
 var _o = (o, e) => {
-  let n = X.get(o);
+  let n = g.get(o);
   if (n == null)
     return;
   for (let r of n) {
@@ -1375,7 +1375,7 @@ j(() => true, (o) => {
 var Je = (o) => {
   let e = o.target?.closest(Y);
   while (e != null) {
-    let n = X.get(e);
+    let n = g.get(e);
     for (let r of n) {
       let { binding: i, path: s } = r, { fromDOM: t } = i;
       if (t != null) {
@@ -1415,9 +1415,9 @@ function H(o, e, n, r) {
     throw Error("bind requires a path or object with xin Proxy");
   let { toDOM: s } = n;
   o.classList?.add(bo);
-  let t = X.get(o);
+  let t = g.get(o);
   if (t == null)
-    t = [], X.set(o, t);
+    t = [], g.set(o, t);
   if (t.push({ path: i, binding: n, options: r }), s != null && !i.startsWith("^"))
     I(i);
   if (r?.filter && r?.needle)
@@ -1508,6 +1508,34 @@ class F extends HTMLElement {
   static initAttributes;
   static formAssociated;
   internals;
+  get validity() {
+    return this.internals?.validity;
+  }
+  get validationMessage() {
+    return this.internals?.validationMessage ?? "";
+  }
+  get willValidate() {
+    return this.internals?.willValidate ?? false;
+  }
+  checkValidity() {
+    return this.internals?.checkValidity() ?? true;
+  }
+  reportValidity() {
+    return this.internals?.reportValidity() ?? true;
+  }
+  setCustomValidity(o) {
+    if (this.internals)
+      if (o)
+        this.internals.setValidity({ customError: true }, o);
+      else
+        this.internals.setValidity({});
+  }
+  setValidity(o, e, n) {
+    this.internals?.setValidity(o, e, n);
+  }
+  setFormValue(o, e) {
+    this.internals?.setFormValue(o, e);
+  }
   static get observedAttributes() {
     let o = this.initAttributes;
     if (o)
@@ -1559,7 +1587,7 @@ class F extends HTMLElement {
     En().observe(this, { attributes: true });
     let n = {}, r = {};
     o.forEach((i) => {
-      n[i] = g(this[i]);
+      n[i] = X(this[i]);
       let s = E(i);
       Object.defineProperty(this, i, { enumerable: false, get() {
         if (typeof n[i] === "boolean")
@@ -1596,7 +1624,7 @@ class F extends HTMLElement {
     let o = Object.getOwnPropertyDescriptor(this, "value");
     if (o === undefined || o.get !== undefined || o.set !== undefined)
       return;
-    let e = this.hasAttribute("value") ? this.getAttribute("value") : g(this.value);
+    let e = this.hasAttribute("value") ? this.getAttribute("value") : X(this.value);
     delete this.value, Object.defineProperty(this, "value", { enumerable: false, get() {
       return e;
     }, set(n) {
@@ -1633,7 +1661,7 @@ class F extends HTMLElement {
     let o = this.constructor.initAttributes;
     if (o)
       this._setupAttributeAccessors(o);
-    this.instanceId = `${this.tagName.toLocaleLowerCase()}-${je}`, this._value = g(this.defaultValue);
+    this.instanceId = `${this.tagName.toLocaleLowerCase()}-${je}`, this._value = X(this.defaultValue);
   }
   _setupAttributeAccessors(o) {
     if (!this._attrValues)
@@ -1874,6 +1902,8 @@ __export(exports_src, {
   tosiSegmented: () => tosiSegmented,
   tosiRating: () => tosiRating,
   tosiMonth: () => tosiMonth,
+  tosiForm: () => tosiForm,
+  tosiField: () => tosiField,
   tosiDialog: () => tosiDialog,
   tabSelector: () => tabSelector,
   svgIcon: () => svgIcon,
@@ -1956,6 +1986,8 @@ __export(exports_src, {
   TosiSegmented: () => TosiSegmented,
   TosiRating: () => TosiRating,
   TosiMonth: () => TosiMonth,
+  TosiForm: () => TosiForm,
+  TosiField: () => TosiField,
   TosiDialog: () => TosiDialog,
   TabSelector: () => TabSelector,
   SvgIcon: () => SvgIcon,
@@ -3331,27 +3363,37 @@ class TosiSelect extends F {
     required: false,
     name: ""
   };
-  options = "";
-  _value = "";
-  filter = "";
-  isExpanded = false;
-  get value() {
-    return this._value;
+  _options = "";
+  get options() {
+    return this._options;
   }
-  set value(v2) {
-    this._value = v2;
-    this.updateFormValue();
+  set options(v2) {
+    this._options = v2;
     this.queueRender();
   }
+  static get observedAttributes() {
+    return [...super.observedAttributes, "options"];
+  }
+  attributeChangedCallback(name, oldValue, newValue) {
+    super.attributeChangedCallback(name, oldValue, newValue);
+    if (name === "options" && typeof newValue === "string" && !Array.isArray(this._options) && !newValue.includes("[object")) {
+      this._options = newValue;
+      this.queueRender();
+    }
+  }
+  value = "";
+  filter = "";
+  isExpanded = false;
   updateFormValue() {
-    this.internals?.setFormValue(this._value || null);
+    this.internals?.setFormValue(this.value || null);
     this.updateValidity();
   }
   updateValidity() {
     if (!this.internals)
       return;
-    if (this.required && !this._value) {
-      this.internals.setValidity({ valueMissing: true }, "Please select an option", this.parts.button);
+    const anchor = this.parts?.button;
+    if (this.required && !this.value) {
+      this.internals.setValidity({ valueMissing: true }, "Please select an option", anchor);
     } else {
       this.internals.setValidity({});
     }
@@ -3368,16 +3410,34 @@ class TosiSelect extends F {
     }
   }
   setValue = (value, triggerAction = false) => {
-    if (this._value !== value) {
+    if (this.value !== value) {
       this.value = value;
+      this.queueRender(true);
     }
     if (triggerAction) {
       this.dispatchEvent(new Event("action"));
     }
   };
-  getValue = () => this._value;
+  getValue = () => this.value;
   get selectOptions() {
-    return typeof this.options === "string" ? this.options.split(",").map((option) => option.trim() || null) : this.options;
+    if (typeof this.options !== "string") {
+      return this.options;
+    }
+    return this.options.split(",").map((option) => {
+      const trimmed = option.trim();
+      if (trimmed === "")
+        return null;
+      const [value, remains] = trimmed.split("=").map((v2) => v2.trim());
+      if (!remains) {
+        return { value, caption: value };
+      }
+      const [caption, iconName] = remains.split(":").map((v2) => v2.trim());
+      return {
+        value,
+        caption: caption || value,
+        icon: iconName || undefined
+      };
+    });
   }
   buildOptionMenuItem = (option) => {
     if (option === null) {
@@ -3441,7 +3501,7 @@ class TosiSelect extends F {
   handleChange = (event) => {
     const { value } = this.parts;
     const newValue = value.value || "";
-    if (this._value !== String(newValue)) {
+    if (this.value !== String(newValue)) {
       this.value = newValue;
       this.dispatchEvent(new Event("change"));
     }
@@ -3483,11 +3543,12 @@ class TosiSelect extends F {
   }
   content = () => [
     button2({
+      type: "button",
       part: "button",
       onClick: this.popOptions
     }, span(), input2({
       part: "value",
-      value: this._value,
+      value: this.value,
       tabindex: 0,
       role: "combobox",
       ariaHaspopup: "listbox",
@@ -3515,8 +3576,8 @@ class TosiSelect extends F {
     return all;
   }
   findOption() {
-    const found = this.allOptions.find((option) => option.value === this._value);
-    return found || { caption: this._value, value: this._value };
+    const found = this.allOptions.find((option) => option.value === this.value);
+    return found || { caption: this.value, value: this.value };
   }
   localeChanged = () => {
     this.queueRender();
@@ -3536,6 +3597,7 @@ class TosiSelect extends F {
   }
   render() {
     super.render();
+    this.updateFormValue();
     const { value, button: button3 } = this.parts;
     button3.disabled = this.disabled;
     const icon = value.previousElementSibling;
@@ -4742,7 +4804,8 @@ class TosiDialog extends F {
         dialogWillClose() {
           resolve();
         }
-      }, h3({ slot: "header" }, title), p2(message));
+      }, h3({ slot: "header" }, title), message.includes(`
+`) ? u.pre({ style: { whiteSpace: "pre-wrap", margin: 0 } }, message) : p2(message));
       document.body.append(alertDialog);
       alertDialog.showModal();
     });
@@ -8029,7 +8092,7 @@ function setElementValue(input7, value) {
   }
 }
 
-class XinField extends F {
+class TosiField extends F {
   static initAttributes = {
     caption: "",
     key: "",
@@ -8055,7 +8118,7 @@ class XinField extends F {
     }
     this.value = getInputValue(inputElement);
     this.valueChanged = true;
-    const form2 = this.closest("xin-form");
+    const form2 = this.closest("tosi-form");
     if (form2 && this.key !== "") {
       switch (this.type) {
         case "checkbox":
@@ -8075,21 +8138,9 @@ class XinField extends F {
       }
     }
   };
-  initialize(form2) {
-    const initialValue = form2.fields[this.key] !== undefined ? form2.fields[this.key] : this.value;
-    if (initialValue != null && initialValue !== "") {
-      if (form2.fields[this.key] == null)
-        form2.fields[this.key] = initialValue;
-      this.value = initialValue;
-    }
-  }
   connectedCallback() {
     super.connectedCallback();
     const { input: input7, valueHolder } = this.parts;
-    const form2 = this.closest(XinForm.tagName);
-    if (form2 instanceof XinForm) {
-      this.initialize(form2);
-    }
     valueHolder.addEventListener("change", this.handleChange);
     input7.addEventListener("change", this.handleChange, true);
   }
@@ -8139,7 +8190,7 @@ class XinField extends F {
   }
 }
 
-class XinForm extends F {
+class TosiForm extends F {
   context = {};
   value = {};
   get isValid() {
@@ -8176,7 +8227,7 @@ class XinForm extends F {
     slot6({ part: "footer", name: "footer" })
   ];
   getField = (key) => {
-    return this.querySelector(`xin-field[key="${key}"]`);
+    return this.querySelector(`tosi-field[key="${key}"]`);
   };
   get fields() {
     if (typeof this.value === "string") {
@@ -8207,7 +8258,7 @@ class XinForm extends F {
     });
   }
   set fields(values) {
-    const fields = [...this.querySelectorAll(XinField.tagName)];
+    const fields = [...this.querySelectorAll("tosi-field")];
     for (const field of fields) {
       field.value = values[field.key];
     }
@@ -8218,7 +8269,8 @@ class XinForm extends F {
   handleSubmit = (event) => {
     event.preventDefault();
     event.stopPropagation();
-    this.submitCallback(this.value, this.isValid);
+    const value = this.fields;
+    this.submitCallback(value, this.isValid);
   };
   submitCallback = (value, isValid) => {
     console.log("override submitCallback to handle this data", {
@@ -8230,42 +8282,66 @@ class XinForm extends F {
     super.connectedCallback();
     const { form: form2 } = this.parts;
     form2.addEventListener("submit", this.handleSubmit);
+    form2.addEventListener("change", this.handleElementChange, true);
+    this.initializeNamedElements();
   }
-}
-var xinField = XinField.elementCreator({
-  tag: "xin-field",
-  styleSpec: {
-    ':host [part="field"]': {
-      position: "relative",
-      display: "flex",
-      alignItems: "center",
-      gap: yo.prefixSuffixGap("8px")
-    },
-    ':host [part="field"][prefix]::before': {
-      content: "attr(prefix)"
-    },
-    ':host [part="field"][suffix]::after': {
-      content: "attr(suffix)"
-    },
-    ':host [part="field"] > *, :host [part="input"] > *': {
-      width: "100%"
-    },
-    ":host textarea": {
-      resize: "none"
-    },
-    ':host input[type="checkbox"]': {
-      width: "fit-content"
-    },
-    ":host .hidden": {
-      position: "absolute",
-      pointerEvents: "none",
-      opacity: 0
+  handleElementChange = (event) => {
+    const target = event.target;
+    const name = target.getAttribute("name");
+    if (name && "value" in target) {
+      this.fields[name] = target.value;
+    }
+  };
+  initializeNamedElements() {
+    const formValue = this.fields;
+    const namedElements = this.querySelectorAll("[name], [key]");
+    for (const el of namedElements) {
+      const key = el.getAttribute("name") || el.getAttribute("key");
+      if (key && formValue[key] !== undefined) {
+        el.value = formValue[key];
+      }
     }
   }
+}
+var XinField = TosiField;
+var XinForm = TosiForm;
+var fieldStyleSpec = {
+  ':host [part="field"]': {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    gap: yo.prefixSuffixGap("8px")
+  },
+  ':host [part="field"][prefix]::before': {
+    content: "attr(prefix)"
+  },
+  ':host [part="field"][suffix]::after': {
+    content: "attr(suffix)"
+  },
+  ':host [part="field"] > *, :host [part="input"] > *': {
+    width: "100%"
+  },
+  ":host textarea": {
+    resize: "none"
+  },
+  ':host input[type="checkbox"]': {
+    width: "fit-content"
+  },
+  ":host .hidden": {
+    position: "absolute",
+    pointerEvents: "none",
+    opacity: 0
+  }
+};
+var tosiField = TosiField.elementCreator({
+  tag: "tosi-field",
+  styleSpec: fieldStyleSpec
 });
-var xinForm = XinForm.elementCreator({
-  tag: "xin-form"
+var tosiForm = TosiForm.elementCreator({
+  tag: "tosi-form"
 });
+var xinField = tosiField;
+var xinForm = tosiForm;
 // src/gamepad.ts
 function gamepadState() {
   const gamepads = navigator.getGamepads().filter((p3) => p3 !== null);
@@ -9854,6 +9930,7 @@ class TosiTag extends F {
   content = () => [
     span14({ part: "caption" }, this.caption),
     button13(icons.x(), {
+      type: "button",
       part: "remove",
       hidden: !this.removeable,
       ariaLabel: `Remove ${this.caption}`,
@@ -9922,15 +9999,24 @@ class TosiTagList extends F {
     disabled: false,
     required: false
   };
-  _value = [];
-  availableTags = [];
-  get value() {
-    return this._value;
+  value = [];
+  _availableTags = [];
+  get availableTags() {
+    return this._availableTags;
   }
-  set value(v3) {
-    this._value = v3;
-    this.updateFormValue();
-    this.updateValidity();
+  set availableTags(v3) {
+    this._availableTags = v3;
+    this.queueRender();
+  }
+  static get observedAttributes() {
+    return [...super.observedAttributes, "available-tags"];
+  }
+  attributeChangedCallback(name, oldValue, newValue) {
+    super.attributeChangedCallback(name, oldValue, newValue);
+    if (name === "available-tags" && typeof newValue === "string") {
+      this._availableTags = newValue;
+      this.queueRender();
+    }
   }
   updateFormValue() {
     if (this.internals) {
@@ -9940,8 +10026,9 @@ class TosiTagList extends F {
   }
   updateValidity() {
     if (this.internals) {
+      const anchor = this.parts?.tagContainer;
       if (this.required && this.tags.length === 0) {
-        this.internals.setValidity({ valueMissing: true }, "Please select at least one tag", this.parts.tagContainer);
+        this.internals.setValidity({ valueMissing: true }, "Please select at least one tag", anchor);
       } else {
         this.internals.setValidity({});
       }
@@ -9951,17 +10038,17 @@ class TosiTagList extends F {
     this.disabled = disabled;
   }
   formResetCallback() {
-    this._value = [];
+    this.value = [];
     this.queueRender(true);
   }
   formStateRestoreCallback(state) {
     if (state) {
-      this._value = state.split(",").filter((t) => t !== "");
+      this.value = state.split(",").filter((t) => t !== "");
       this.queueRender(true);
     }
   }
   get tags() {
-    return typeof this._value === "string" ? this._value.split(",").map((tag) => tag.trim()).filter((tag) => tag !== "") : this._value;
+    return typeof this.value === "string" ? this.value.split(",").map((tag) => tag.trim()).filter((tag) => tag !== "") : this.value;
   }
   addTag = (tag) => {
     if (tag.trim() === "") {
@@ -10038,7 +10125,7 @@ class TosiTagList extends F {
     });
   };
   content = () => [
-    button13({ style: { visibility: "hidden" }, tabindex: -1 }),
+    button13({ type: "button", style: { visibility: "hidden" }, tabindex: -1 }),
     div15({
       part: "tagContainer",
       class: "row",
@@ -10052,6 +10139,7 @@ class TosiTagList extends F {
       onKeydown: this.enterTag
     }),
     button13({
+      type: "button",
       title: "add tag",
       ariaLabel: "Select tags from list",
       ariaHaspopup: "listbox",
@@ -10071,6 +10159,8 @@ class TosiTagList extends F {
   };
   render() {
     super.render();
+    this.updateFormValue();
+    this.updateValidity();
     const { tagContainer, tagMenu, tagInput } = this.parts;
     tagMenu.disabled = this.disabled;
     tagInput.value = "";
@@ -12289,69 +12379,69 @@ just add the \`no-drag\` class to an element or its container.`,
 [client-side validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation#built-in_form_validation_examples).
 
 \`\`\`js
-const form = preview.querySelector('xin-form')
+const form = preview.querySelector('tosi-form')
 preview.querySelector('.submit').addEventListener('click', form.submit)
 \`\`\`
 \`\`\`html
-<xin-form value='{"formInitializer": "initial value from form"}'>
+<tosi-form value='{"formInitializer": "initial value from form"}'>
   <h3 slot="header">Example Form Header</h3>
-  <xin-field caption="Required field" key="required"></xin-field>
-  <xin-field optional key="optional"><i>Optional</i> Field</xin-field>
-  <xin-field key="text" type="text" placeholder="type it in here">Tell us a long story</xin-field>
-  <xin-field caption="Zip Code" placeholder="12345 or 12345-6789" key="zipcode" pattern="\\d{5}(-\\d{4})?"></xin-field>
-  <xin-field caption="Date" key="date" type="date"></xin-field>
-  <xin-field caption="Number" key="number" type="number"></xin-field>
-  <xin-field caption="Range" key="range" type="range" min="0" max="10"></xin-field>
-  <xin-field key="boolean" type="checkbox">😃 <b>Agreed?!</b></xin-field>
-  <xin-field key="color" type="color" value="pink">
+  <tosi-field caption="Required field" key="required"></tosi-field>
+  <tosi-field optional key="optional"><i>Optional</i> Field</tosi-field>
+  <tosi-field key="text" type="text" placeholder="type it in here">Tell us a long story</tosi-field>
+  <tosi-field caption="Zip Code" placeholder="12345 or 12345-6789" key="zipcode" pattern="\\d{5}(-\\d{4})?"></tosi-field>
+  <tosi-field caption="Date" key="date" type="date"></tosi-field>
+  <tosi-field caption="Number" key="number" type="number"></tosi-field>
+  <tosi-field caption="Range" key="range" type="range" min="0" max="10"></tosi-field>
+  <tosi-field key="boolean" type="checkbox">😃 <b>Agreed?!</b></tosi-field>
+  <tosi-field key="color" type="color" value="pink">
     favorite color
-  </xin-field>
-  <xin-field key="select">
+  </tosi-field>
+  <tosi-field key="select">
     Custom Field
     <select slot="input">
       <option>This</option>
       <option>That</option>
       <option>The Other</option>
     </select>
-  </xin-field>
-  <xin-field key="tags">
+  </tosi-field>
+  <tosi-field key="tags">
     Tag List
-    <xin-tag-list editable slot="input" available-tags="pick me,no pick me"></xin-tag-list>
-  </xin-field>
-  <xin-field key="rating">
+    <tosi-tag-list editable slot="input" available-tags="pick me,no pick me"></tosi-tag-list>
+  </tosi-field>
+  <tosi-field key="rating">
     Rate this form!
-    <xin-rating slot="input"></xin-rating>
-  </xin-field>
-  <xin-field key="like">
+    <tosi-rating slot="input"></tosi-rating>
+  </tosi-field>
+  <tosi-field key="like">
     Do you like it?
-    <xin-segmented
+    <tosi-segmented
       choices="yes=Yes:thumbsUp,no=No:thumbsDown"
       slot="input"
-    ></xin-segmented>
-  </xin-field>
-  <xin-field key="relationship">
+    ></tosi-segmented>
+  </tosi-field>
+  <tosi-field key="relationship">
     Relationship Status
-    <xin-segmented
+    <tosi-segmented
       style="--segmented-direction: column; --segmented-align-items: stretch"
       choices="couple=In a relationship,single=Single"
       other="It's complicated…"
       slot="input"
-    ></xin-segmented>
-  </xin-field>
-  <xin-field key="amount" fixed-precision="2" type="number" prefix="$" suffix="(USD)">
+    ></tosi-segmented>
+  </tosi-field>
+  <tosi-field key="amount" fixed-precision="2" type="number" prefix="$" suffix="(USD)">
     What's it worth?
-  </xin-field>
-  <xin-field key="valueInitializer" value="initial value from field">
+  </tosi-field>
+  <tosi-field key="valueInitializer" value="initial value from field">
     Initialized by field
-  </xin-field>
-  <xin-field key="formInitializer">
+  </tosi-field>
+  <tosi-field key="formInitializer">
     Initialized by form
-  </xin-field>
+  </tosi-field>
   <button slot="footer" class="submit">Submit</button>
-</xin-form>
+</tosi-form>
 \`\`\`
 \`\`\`css
-.preview xin-form {
+.preview tosi-form {
   height: 100%;
 }
 
@@ -12406,8 +12496,8 @@ preview.querySelector('.submit').addEventListener('click', form.submit)
     content: '*'
   }
 
-  .preview xin-field [part="field"],
-  .preview xin-field [part="input"] > * {
+  .preview tosi-field [part="field"],
+  .preview tosi-field [part="input"] > * {
     display: flex;
     justify-content: center;
   }
@@ -12454,7 +12544,7 @@ The \`text\` type populates the \`input\` slot with a \`<textarea>\` element.
 
 The \`color\` type populates the \`input\` slot with a \`<xin-color>\` element (and thus supports colors with alpha values).
 
-<xin-css-var-editor element-selector="xin-field" target-selector=".preview"></xin-css-var-editor>
+<xin-css-var-editor element-selector="tosi-field" target-selector=".preview"></xin-css-var-editor>
 
 ## Native Form Integration
 
@@ -12472,31 +12562,29 @@ These components can be used directly in a standard \`<form>\` element with full
 - The \`:invalid\` and \`:valid\` CSS pseudo-classes
 
 \`\`\`html
-<form id="native-form" style="display: flex; flex-direction: column; gap: 16px; padding: 16px;">
-  <h4 style="margin: 0">Native Form with formAssociated Components</h4>
-
-  <label style="display: flex; flex-direction: column; gap: 4px;">
+<form id="native-form" class="native-form">
+  <label>
     <span>Rate our service (required):</span>
     <tosi-rating name="rating" required min="1"></tosi-rating>
   </label>
 
-  <label style="display: flex; flex-direction: column; gap: 4px;">
+  <label>
     <span>Select your country:</span>
     <tosi-select name="country" required placeholder="-- Select --"
-      options="us=United States,uk=United Kingdom,ca=Canada,au=Australia"
+      options="us=United States:flag,uk=United Kingdom:flag,ca=Canada:flag,au=Australia:flag"
     ></tosi-select>
   </label>
 
-  <label style="display: flex; flex-direction: column; gap: 4px;">
+  <label>
     <span>Subscription tier:</span>
     <tosi-segmented
       name="tier"
       required
-      choices="free=Free,pro=Pro:star,enterprise=Enterprise:building"
+      choices="free=Free,pro=Pro:star,enterprise=Enterprise:tosi"
     ></tosi-segmented>
   </label>
 
-  <label style="display: flex; flex-direction: column; gap: 4px;">
+  <label>
     <span>Interests (select at least one):</span>
     <tosi-tag-list
       name="interests"
@@ -12506,20 +12594,38 @@ These components can be used directly in a standard \`<form>\` element with full
     ></tosi-tag-list>
   </label>
 
-  <div style="display: flex; gap: 8px; margin-top: 8px;">
+  <div class="buttons">
     <button type="submit">Submit</button>
     <button type="reset">Reset</button>
   </div>
-
-  <pre id="form-output" style="background: #f5f5f5; padding: 8px; margin: 0; min-height: 60px;"></pre>
 </form>
 \`\`\`
 \`\`\`css
+.preview .native-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  overflow: auto;
+  height: 100%;
+}
+
+.preview .native-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview .native-form .buttons {
+  display: flex;
+  gap: 8px;
+}
+
 .preview tosi-rating:invalid,
 .preview tosi-select:invalid,
 .preview tosi-segmented:invalid,
 .preview tosi-tag-list:invalid {
-  outline: 2px solid #f00;
+  outline: 2px solid #f008;
   outline-offset: 2px;
 }
 
@@ -12527,29 +12633,23 @@ These components can be used directly in a standard \`<form>\` element with full
 .preview tosi-select:valid,
 .preview tosi-segmented:valid,
 .preview tosi-tag-list:valid {
-  outline: 2px solid #0a0;
+  outline: 2px solid #0a08;
   outline-offset: 2px;
 }
 \`\`\`
 \`\`\`js
+const { TosiDialog } = tosijsui
 const form = preview.querySelector('#native-form')
-const output = preview.querySelector('#form-output')
 
 form.addEventListener('submit', (e) => {
   e.preventDefault()
   const formData = new FormData(form)
   const data = Object.fromEntries(formData.entries())
-  output.textContent = 'Submitted: ' + JSON.stringify(data, null, 2)
+  TosiDialog.alert(JSON.stringify(data, null, 2), 'Form Submitted')
 })
 
 form.addEventListener('reset', () => {
-  output.textContent = 'Form reset'
-})
-
-form.addEventListener('change', (e) => {
-  const formData = new FormData(form)
-  const data = Object.fromEntries(formData.entries())
-  output.textContent = 'Current values: ' + JSON.stringify(data, null, 2)
+  TosiDialog.alert('Form has been reset', 'Reset')
 })
 \`\`\`
 
@@ -12567,8 +12667,8 @@ Since these components now support \`formAssociated\`, they participate directly
 and validation without needing the hidden input workaround that \`xin-field\` uses.
 
 \`\`\`html
-<xin-form id="tosi-form" value='{"rating": 3, "tier": "pro"}'>
-  <h4 slot="header">xin-form with formAssociated Components</h4>
+<tosi-form id="tosi-form" value='{"rating": 3, "tier": "pro"}'>
+  <h4 slot="header">tosi-form with formAssociated Components</h4>
 
   <label class="form-row">
     <span>Service Rating:</span>
@@ -12578,7 +12678,7 @@ and validation without needing the hidden input workaround that \`xin-field\` us
   <label class="form-row">
     <span>Country:</span>
     <tosi-select name="country" required placeholder="-- Select --"
-      options="us=United States,uk=United Kingdom,ca=Canada"
+      options="us=United States:flag,uk=United Kingdom:flag,ca=Canada:flag"
     ></tosi-select>
   </label>
 
@@ -12587,7 +12687,7 @@ and validation without needing the hidden input workaround that \`xin-field\` us
     <tosi-segmented
       name="tier"
       required
-      choices="free=Free,pro=Pro:star,enterprise=Enterprise:building"
+      choices="free=Free,pro=Pro:star,enterprise=Enterprise:tosi"
     ></tosi-segmented>
   </label>
 
@@ -12601,15 +12701,12 @@ and validation without needing the hidden input workaround that \`xin-field\` us
     ></tosi-tag-list>
   </label>
 
-  <div slot="footer" style="flex-direction: column; gap: 8px;">
-    <div style="display: flex; gap: 8px;">
-      <button class="submit-btn">Submit</button>
-      <button class="reset-btn">Reset</button>
-      <button class="set-values-btn">Set Values</button>
-    </div>
-    <pre class="form-output" style="background: #f5f5f5; padding: 8px; margin: 0; font-size: 12px;"></pre>
+  <div slot="footer" style="display: flex; gap: 8px;">
+    <button class="submit-btn">Submit</button>
+    <button class="reset-btn">Reset</button>
+    <button class="set-values-btn">Set Values</button>
   </div>
-</xin-form>
+</tosi-form>
 \`\`\`
 \`\`\`css
 .preview #tosi-form {
@@ -12641,12 +12738,13 @@ and validation without needing the hidden input workaround that \`xin-field\` us
 }
 \`\`\`
 \`\`\`js
+const { TosiDialog } = tosijsui
 const tosiForm = preview.querySelector('#tosi-form')
-const tosiOutput = preview.querySelector('#tosi-form .form-output')
 
 // Set up submit callback
 tosiForm.submitCallback = (value, isValid) => {
-  tosiOutput.textContent = \`Submit (valid: \${isValid}):\\n\${JSON.stringify(value, null, 2)}\`
+  const title = isValid ? 'Form Submitted (Valid)' : 'Form Submitted (Invalid)'
+  TosiDialog.alert(JSON.stringify(value, null, 2), title)
 }
 
 preview.querySelector('.submit-btn').addEventListener('click', () => {
@@ -12658,7 +12756,7 @@ preview.querySelector('.reset-btn').addEventListener('click', () => {
   tosiForm.querySelectorAll('tosi-rating, tosi-select, tosi-segmented, tosi-tag-list').forEach(el => {
     el.value = el.tagName === 'TOSI-TAG-LIST' ? [] : null
   })
-  tosiOutput.textContent = 'Form reset'
+  TosiDialog.alert('Form has been reset', 'Reset')
 })
 
 preview.querySelector('.set-values-btn').addEventListener('click', () => {
@@ -12673,11 +12771,7 @@ preview.querySelector('.set-values-btn').addEventListener('click', () => {
   segmented.value = 'enterprise'
   tagList.value = ['Tech', 'Music']
 
-  tosiOutput.textContent = 'Values set programmatically'
-})
-
-tosiForm.addEventListener('change', () => {
-  tosiOutput.textContent = \`Current (valid: \${tosiForm.isValid}):\\n\${JSON.stringify(tosiForm.value, null, 2)}\`
+  TosiDialog.alert('Values set programmatically:\\n\\nRating: 5\\nCountry: uk\\nTier: enterprise\\nInterests: Tech, Music', 'Values Set')
 })
 \`\`\``,
     title: "forms",
@@ -15244,8 +15338,14 @@ preview.addEventListener('change', (event) => {
 
     export type SelectOptions = Array<string | null | SelectOption | SelectOptionSubmenu>
 
-A \`<tosi-select>\` can be assigned \`options\` as a string of comma-delimited choices,
+A \`<tosi-select>\` can be assigned \`options\` as a string of comma-delimited choices
+in the format \`value=caption:icon\` (where caption and icon are optional),
 or be provided a \`SelectOptions\` array (which allows for submenus, separators, etc.).
+
+Examples:
+- \`"apple,banana,cherry"\` - simple values (value equals caption)
+- \`"us=United States,uk=United Kingdom"\` - value with caption
+- \`"us=United States:flag,uk=United Kingdom:flag"\` - value with caption and icon
 
 ## Attributes
 

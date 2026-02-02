@@ -142,8 +142,14 @@ preview.addEventListener('change', (event) => {
 
     export type SelectOptions = Array<string | null | SelectOption | SelectOptionSubmenu>
 
-A `<tosi-select>` can be assigned `options` as a string of comma-delimited choices,
+A `<tosi-select>` can be assigned `options` as a string of comma-delimited choices
+in the format `value=caption:icon` (where caption and icon are optional),
 or be provided a `SelectOptions` array (which allows for submenus, separators, etc.).
+
+Examples:
+- `"apple,banana,cherry"` - simple values (value equals caption)
+- `"us=United States,uk=United Kingdom"` - value with caption
+- `"us=United States:flag,uk=United Kingdom:flag"` - value with caption and icon
 
 ## Attributes
 
@@ -248,33 +254,54 @@ export class TosiSelect extends Component<SelectParts> {
     name: '',
   }
 
-  options: string | SelectOptions = ''
-  private _value = ''
-  filter = ''
-  private isExpanded = false
+  private _options: string | SelectOptions = ''
 
-  get value(): string {
-    return this._value
+  get options(): string | SelectOptions {
+    return this._options
   }
 
-  set value(v: string) {
-    this._value = v
-    this.updateFormValue()
+  set options(v: string | SelectOptions) {
+    this._options = v
     this.queueRender()
   }
 
+  // Handle options attribute from HTML
+  static get observedAttributes() {
+    return [...super.observedAttributes, 'options']
+  }
+
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    super.attributeChangedCallback(name, oldValue, newValue)
+    // Only handle options from HTML attribute (actual strings)
+    // Skip if _options is already an array (set via property) or if it's a stringified array
+    if (
+      name === 'options' &&
+      typeof newValue === 'string' &&
+      !Array.isArray(this._options) &&
+      !newValue.includes('[object')
+    ) {
+      this._options = newValue
+      this.queueRender()
+    }
+  }
+
+  value = ''
+  filter = ''
+  private isExpanded = false
+
   private updateFormValue() {
-    this.internals?.setFormValue(this._value || null)
+    this.internals?.setFormValue(this.value || null)
     this.updateValidity()
   }
 
   private updateValidity() {
     if (!this.internals) return
-    if (this.required && !this._value) {
+    const anchor = this.parts?.button as HTMLElement | undefined
+    if (this.required && !this.value) {
       this.internals.setValidity(
         { valueMissing: true },
         'Please select an option',
-        this.parts.button as HTMLElement
+        anchor
       )
     } else {
       this.internals.setValidity({})
@@ -297,20 +324,37 @@ export class TosiSelect extends Component<SelectParts> {
   }
 
   private setValue = (value: string, triggerAction = false) => {
-    if (this._value !== value) {
+    if (this.value !== value) {
       this.value = value
+      this.queueRender(true)
     }
     if (triggerAction) {
       this.dispatchEvent(new Event('action'))
     }
   }
 
-  private getValue = () => this._value
+  private getValue = () => this.value
 
   get selectOptions(): SelectOptions {
-    return typeof this.options === 'string'
-      ? this.options.split(',').map((option) => option.trim() || null)
-      : this.options
+    if (typeof this.options !== 'string') {
+      return this.options
+    }
+    // Parse format: value=caption:icon (caption and icon are optional)
+    return this.options.split(',').map((option) => {
+      const trimmed = option.trim()
+      if (trimmed === '') return null
+      const [value, remains] = trimmed.split('=').map((v) => v.trim())
+      if (!remains) {
+        // Simple format: just "value" means value=caption
+        return { value, caption: value }
+      }
+      const [caption, iconName] = remains.split(':').map((v) => v.trim())
+      return {
+        value,
+        caption: caption || value,
+        icon: iconName || undefined,
+      }
+    })
   }
 
   private buildOptionMenuItem = (
@@ -385,7 +429,7 @@ export class TosiSelect extends Component<SelectParts> {
   handleChange = (event: Event) => {
     const { value } = this.parts
     const newValue = value.value || ''
-    if (this._value !== String(newValue)) {
+    if (this.value !== String(newValue)) {
       this.value = newValue
       this.dispatchEvent(new Event('change'))
     }
@@ -435,13 +479,14 @@ export class TosiSelect extends Component<SelectParts> {
   content = () => [
     button(
       {
+        type: 'button',
         part: 'button',
         onClick: this.popOptions,
       },
       span(),
       input({
         part: 'value',
-        value: this._value,
+        value: this.value,
         tabindex: 0,
         role: 'combobox',
         ariaHaspopup: 'listbox',
@@ -475,8 +520,8 @@ export class TosiSelect extends Component<SelectParts> {
   }
 
   findOption(): SelectOption {
-    const found = this.allOptions.find((option) => option.value === this._value)
-    return found || { caption: this._value, value: this._value }
+    const found = this.allOptions.find((option) => option.value === this.value)
+    return found || { caption: this.value, value: this.value }
   }
 
   localeChanged = () => {
@@ -504,6 +549,9 @@ export class TosiSelect extends Component<SelectParts> {
 
   render(): void {
     super.render()
+
+    // Update form value/validity on each render
+    this.updateFormValue()
 
     const { value, button } = this.parts
     button.disabled = this.disabled

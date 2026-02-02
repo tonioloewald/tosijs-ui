@@ -1,5 +1,5 @@
 import { Component as XinComponent, ElementCreator } from 'tosijs';
-export declare class XinField extends XinComponent {
+export declare class TosiField extends XinComponent {
     static initAttributes: {
         caption: string;
         key: string;
@@ -18,11 +18,10 @@ export declare class XinField extends XinComponent {
     content: HTMLLabelElement;
     private valueChanged;
     handleChange: () => void;
-    initialize(form: XinForm): void;
     connectedCallback(): void;
     render(): void;
 }
-export declare class XinForm extends XinComponent {
+export declare class TosiForm extends XinComponent {
     context: {
         [key: string]: any;
     };
@@ -55,7 +54,7 @@ export declare class XinForm extends XinComponent {
         };
     };
     content: (HTMLSlotElement | HTMLFormElement)[];
-    getField: (key: string) => XinField | null;
+    getField: (key: string) => TosiField | null;
     get fields(): any;
     set fields(values: {
         [key: string]: any;
@@ -66,6 +65,16 @@ export declare class XinForm extends XinComponent {
         [key: string]: any;
     }, isValid: boolean) => void;
     connectedCallback(): void;
+    private handleElementChange;
+    private initializeNamedElements;
 }
-export declare const xinField: ElementCreator<XinField>;
-export declare const xinForm: ElementCreator<XinForm>;
+/** @deprecated Use TosiField instead */
+export declare const XinField: typeof TosiField;
+/** @deprecated Use TosiForm instead */
+export declare const XinForm: typeof TosiForm;
+export declare const tosiField: ElementCreator<TosiField>;
+export declare const tosiForm: ElementCreator<TosiForm>;
+/** @deprecated Use tosiField instead (tag is now tosi-field) */
+export declare const xinField: ElementCreator<TosiField>;
+/** @deprecated Use tosiForm instead (tag is now tosi-form) */
+export declare const xinForm: ElementCreator<TosiForm>;

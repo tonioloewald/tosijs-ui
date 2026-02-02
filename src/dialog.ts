@@ -128,7 +128,12 @@ export class TosiDialog extends Component<DialogParts> {
           },
         },
         h3({ slot: 'header' }, title),
-        p(message)
+        message.includes('\n')
+          ? elements.pre(
+              { style: { whiteSpace: 'pre-wrap', margin: 0 } },
+              message
+            )
+          : p(message)
       )
       document.body.append(alertDialog)
       alertDialog.showModal()
