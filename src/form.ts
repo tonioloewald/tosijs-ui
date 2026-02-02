@@ -191,32 +191,28 @@ These components can be used directly in a standard `<form>` element with full s
 <form id="native-form" style="display: flex; flex-direction: column; gap: 16px; padding: 16px;">
   <h4 style="margin: 0">Native Form with formAssociated Components</h4>
 
-  <label style="display: flex; flex-direction: column; gap: 4px;">
+  <div style="display: flex; flex-direction: column; gap: 4px;">
     <span>Rate our service (required):</span>
     <tosi-rating name="rating" required min="1"></tosi-rating>
-  </label>
+  </div>
 
-  <label style="display: flex; flex-direction: column; gap: 4px;">
+  <div style="display: flex; flex-direction: column; gap: 4px;">
     <span>Select your country:</span>
-    <tosi-select name="country" required>
-      <option value="">-- Select --</option>
-      <option value="us">United States</option>
-      <option value="uk">United Kingdom</option>
-      <option value="ca">Canada</option>
-      <option value="au">Australia</option>
-    </tosi-select>
-  </label>
+    <tosi-select name="country" required placeholder="-- Select --"
+      options="us=United States,uk=United Kingdom,ca=Canada,au=Australia"
+    ></tosi-select>
+  </div>
 
-  <label style="display: flex; flex-direction: column; gap: 4px;">
+  <div style="display: flex; flex-direction: column; gap: 4px;">
     <span>Subscription tier:</span>
     <tosi-segmented
       name="tier"
       required
       choices="free=Free,pro=Pro:star,enterprise=Enterprise:building"
     ></tosi-segmented>
-  </label>
+  </div>
 
-  <label style="display: flex; flex-direction: column; gap: 4px;">
+  <div style="display: flex; flex-direction: column; gap: 4px;">
     <span>Interests (select at least one):</span>
     <tosi-tag-list
       name="interests"
@@ -224,7 +220,7 @@ These components can be used directly in a standard `<form>` element with full s
       editable
       available-tags="Technology,Sports,Music,Art,Travel,Food"
     ></tosi-tag-list>
-  </label>
+  </div>
 
   <div style="display: flex; gap: 8px; margin-top: 8px;">
     <button type="submit">Submit</button>
@@ -291,22 +287,19 @@ and validation without needing the hidden input workaround that `xin-field` uses
   <h4 slot="header">xin-form with formAssociated Components</h4>
 
   <div class="form-row">
-    <label>Service Rating:</label>
+    <span>Service Rating:</span>
     <tosi-rating name="rating" required min="1"></tosi-rating>
   </div>
 
   <div class="form-row">
-    <label>Country:</label>
-    <tosi-select name="country" required>
-      <option value="">-- Select --</option>
-      <option value="us">United States</option>
-      <option value="uk">United Kingdom</option>
-      <option value="ca">Canada</option>
-    </tosi-select>
+    <span>Country:</span>
+    <tosi-select name="country" required placeholder="-- Select --"
+      options="us=United States,uk=United Kingdom,ca=Canada"
+    ></tosi-select>
   </div>
 
   <div class="form-row">
-    <label>Subscription:</label>
+    <span>Subscription:</span>
     <tosi-segmented
       name="tier"
       required
@@ -315,7 +308,7 @@ and validation without needing the hidden input workaround that `xin-field` uses
   </div>
 
   <div class="form-row">
-    <label>Interests:</label>
+    <span>Interests:</span>
     <tosi-tag-list
       name="interests"
       required
@@ -346,9 +339,8 @@ and validation without needing the hidden input workaround that `xin-field` uses
   align-items: center;
 }
 
-.preview #tosi-form .form-row label {
+.preview #tosi-form .form-row > span:first-child {
   text-align: right;
-  display: block;
 }
 
 .preview #tosi-form ::part(content) {
