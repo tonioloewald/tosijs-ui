@@ -101,10 +101,10 @@ describe('TosiTagList', () => {
       expect(tagList.tagName.toLowerCase()).toBe('tosi-tag-list')
     })
 
-    test('value defaults to empty', () => {
+    test('value defaults to empty string', () => {
       const tagList = tosiTagList()
       container.appendChild(tagList)
-      expect(tagList.value).toEqual([])
+      expect(tagList.value).toBe('')
     })
 
     test('editable defaults to false', () => {
@@ -133,12 +133,6 @@ describe('TosiTagList', () => {
       expect(tagList.tags).toEqual(['one', 'two', 'three'])
     })
 
-    test('accepts value as array', () => {
-      const tagList = tosiTagList({ value: ['a', 'b', 'c'] })
-      container.appendChild(tagList)
-      expect(tagList.tags).toEqual(['a', 'b', 'c'])
-    })
-
     test('tags getter parses comma-separated string', () => {
       const tagList = tosiTagList({ value: 'alpha, beta, gamma' })
       container.appendChild(tagList)
@@ -154,21 +148,21 @@ describe('TosiTagList', () => {
 
   describe('addTag', () => {
     test('adds new tag to value', () => {
-      const tagList = tosiTagList({ value: ['existing'] })
+      const tagList = tosiTagList({ value: 'existing' })
       container.appendChild(tagList)
       tagList.addTag('new')
       expect(tagList.tags).toContain('new')
     })
 
     test('does not add duplicate tags', () => {
-      const tagList = tosiTagList({ value: ['existing'] })
+      const tagList = tosiTagList({ value: 'existing' })
       container.appendChild(tagList)
       tagList.addTag('existing')
       expect(tagList.tags.filter((t) => t === 'existing').length).toBe(1)
     })
 
     test('does not add empty tags', () => {
-      const tagList = tosiTagList({ value: ['a'] })
+      const tagList = tosiTagList({ value: 'a' })
       container.appendChild(tagList)
       tagList.addTag('')
       tagList.addTag('   ')
@@ -178,14 +172,14 @@ describe('TosiTagList', () => {
 
   describe('toggleTag', () => {
     test('removes existing tag', () => {
-      const tagList = tosiTagList({ value: ['a', 'b', 'c'] })
+      const tagList = tosiTagList({ value: 'a,b,c' })
       container.appendChild(tagList)
       tagList.toggleTag('b')
       expect(tagList.tags).toEqual(['a', 'c'])
     })
 
     test('adds non-existing tag', () => {
-      const tagList = tosiTagList({ value: ['a'] })
+      const tagList = tosiTagList({ value: 'a' })
       container.appendChild(tagList)
       tagList.toggleTag('b')
       expect(tagList.tags).toContain('b')
@@ -211,10 +205,13 @@ describe('TosiTagList', () => {
       expect(tagList.placeholder).toBe('Custom placeholder')
     })
 
-    test('accepts availableTags as string', () => {
-      const tagList = tosiTagList({ availableTags: 'x,y,z' })
+    test('parses availableTags from attribute string', () => {
+      const tagList = document.createElement('tosi-tag-list') as ReturnType<
+        typeof tosiTagList
+      >
+      tagList.setAttribute('available-tags', 'x,y,z')
       container.appendChild(tagList)
-      expect(tagList.availableTags).toBe('x,y,z')
+      expect(tagList.availableTags).toEqual(['x', 'y', 'z'])
     })
 
     test('accepts availableTags as array', () => {
@@ -233,14 +230,14 @@ describe('TosiTagList', () => {
 
   describe('accessibility', () => {
     test('tag container has role="list"', () => {
-      const tagList = tosiTagList({ value: ['test'] })
+      const tagList = tosiTagList({ value: 'test' })
       container.appendChild(tagList)
       const tagContainer = tagList.querySelector('[part="tagContainer"]')
       expect(tagContainer?.getAttribute('role')).toBe('list')
     })
 
     test('tag container has aria-label', () => {
-      const tagList = tosiTagList({ value: ['test'] })
+      const tagList = tosiTagList({ value: 'test' })
       container.appendChild(tagList)
       const tagContainer = tagList.querySelector('[part="tagContainer"]')
       expect(tagContainer?.getAttribute('aria-label')).toBe('Selected tags')

@@ -102,12 +102,13 @@ describe('TosiForm', () => {
     })
 
     test('initializes tosi-tag-list from form value', () => {
-      const form = tosiForm({ value: '{"tags": ["a", "b"]}' })
+      const form = tosiForm({ value: '{"tags": "a,b"}' })
       const tagList = tosiTagList({ name: 'tags' })
       form.appendChild(tagList)
       container.appendChild(form)
 
-      expect(tagList.value).toEqual(['a', 'b'])
+      expect(tagList.value).toBe('a,b')
+      expect(tagList.tags).toEqual(['a', 'b'])
     })
   })
 

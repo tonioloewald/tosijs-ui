@@ -10,6 +10,7 @@ interface MonthParts extends PartsMap {
 }
 export declare class TosiMonth extends Component<MonthParts> {
     #private;
+    static formAssociated: boolean;
     static initAttributes: {
         month: number;
         year: number;
@@ -21,9 +22,13 @@ export declare class TosiMonth extends Component<MonthParts> {
         range: boolean;
         disabled: boolean;
         readonly: boolean;
+        required: boolean;
+        name: string;
     };
     selectedDays: string[];
     value: string;
+    formDisabledCallback(disabled: boolean): void;
+    formResetCallback(): void;
     get endDay(): number;
     get months(): {
         caption: string;

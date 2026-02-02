@@ -254,59 +254,42 @@ export class TosiSelect extends Component<SelectParts> {
     name: '',
   }
 
-  private _options: string | SelectOptions = ''
+  private _options: SelectOptions = []
 
-  get options(): string | SelectOptions {
+  get options(): SelectOptions {
     return this._options
   }
 
-  set options(v: string | SelectOptions) {
-    this._options = v
+  set options(v: SelectOptions | string) {
+    if (typeof v === 'string') {
+      this._options = TosiSelect.parseOptionsString(v)
+    } else {
+      this._options = v
+    }
     this.queueRender()
   }
 
-  // Handle options attribute from HTML
-  static get observedAttributes() {
-    return [...super.observedAttributes, 'options']
+  // Parse options string format: value=caption:icon (caption and icon are optional)
+  private static parseOptionsString(optionsStr: string): SelectOptions {
+    return optionsStr.split(',').map((option) => {
+      const trimmed = option.trim()
+      if (trimmed === '') return null
+      const [value, remains] = trimmed.split('=').map((v) => v.trim())
+      if (!remains) {
+        // Simple format: just "value" means value=caption
+        return { value, caption: value }
+      }
+      const [caption, iconName] = remains.split(':').map((v) => v.trim())
+      return {
+        value,
+        caption: caption || value,
+        icon: iconName || undefined,
+      }
+    })
   }
-
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    super.attributeChangedCallback(name, oldValue, newValue)
-    // Only handle options from HTML attribute (actual strings)
-    // Skip if _options is already an array (set via property) or if it's a stringified array
-    if (
-      name === 'options' &&
-      typeof newValue === 'string' &&
-      !Array.isArray(this._options) &&
-      !newValue.includes('[object')
-    ) {
-      this._options = newValue
-      this.queueRender()
-    }
-  }
-
   value = ''
   filter = ''
   private isExpanded = false
-
-  private updateFormValue() {
-    this.internals?.setFormValue(this.value || null)
-    this.updateValidity()
-  }
-
-  private updateValidity() {
-    if (!this.internals) return
-    const anchor = this.parts?.button as HTMLElement | undefined
-    if (this.required && !this.value) {
-      this.internals.setValidity(
-        { valueMissing: true },
-        'Please select an option',
-        anchor
-      )
-    } else {
-      this.internals.setValidity({})
-    }
-  }
 
   // Form-associated lifecycle callbacks
   formDisabledCallback(disabled: boolean) {
@@ -315,12 +298,6 @@ export class TosiSelect extends Component<SelectParts> {
 
   formResetCallback() {
     this.value = ''
-  }
-
-  formStateRestoreCallback(state: string | null) {
-    if (state !== null) {
-      this.value = state
-    }
   }
 
   private setValue = (value: string, triggerAction = false) => {
@@ -336,25 +313,7 @@ export class TosiSelect extends Component<SelectParts> {
   private getValue = () => this.value
 
   get selectOptions(): SelectOptions {
-    if (typeof this.options !== 'string') {
-      return this.options
-    }
-    // Parse format: value=caption:icon (caption and icon are optional)
-    return this.options.split(',').map((option) => {
-      const trimmed = option.trim()
-      if (trimmed === '') return null
-      const [value, remains] = trimmed.split('=').map((v) => v.trim())
-      if (!remains) {
-        // Simple format: just "value" means value=caption
-        return { value, caption: value }
-      }
-      const [caption, iconName] = remains.split(':').map((v) => v.trim())
-      return {
-        value,
-        caption: caption || value,
-        icon: iconName || undefined,
-      }
-    })
+    return this.options
   }
 
   private buildOptionMenuItem = (
@@ -531,12 +490,15 @@ export class TosiSelect extends Component<SelectParts> {
   connectedCallback() {
     super.connectedCallback()
 
+    // Parse options from HTML attribute if present and not already set programmatically
+    const optionsAttr = this.getAttribute('options')
+    if (optionsAttr && this._options.length === 0) {
+      this._options = TosiSelect.parseOptionsString(optionsAttr)
+    }
+
     if (this.localized) {
       XinLocalized.allInstances.add(this)
     }
-
-    // Initialize form value
-    this.updateFormValue()
   }
 
   disconnectedCallback() {
@@ -549,9 +511,6 @@ export class TosiSelect extends Component<SelectParts> {
 
   render(): void {
     super.render()
-
-    // Update form value/validity on each render
-    this.updateFormValue()
 
     const { value, button } = this.parts
     button.disabled = this.disabled

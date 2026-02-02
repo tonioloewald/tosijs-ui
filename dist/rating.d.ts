@@ -16,14 +16,9 @@ export declare class TosiRating extends Component {
         required: boolean;
         name: string;
     };
-    private _value;
-    get value(): number | null;
-    set value(v: number | null);
-    private updateFormValue;
-    private updateValidity;
+    value: number | string;
     formDisabledCallback(disabled: boolean): void;
     formResetCallback(): void;
-    formStateRestoreCallback(state: string | null): void;
     static styleSpec: {
         ':host': {
             display: string;
@@ -60,7 +55,7 @@ export declare class TosiRating extends Component {
         };
     };
     content: () => HTMLSpanElement;
-    displayValue(value: number | null): void;
+    displayValue(value: number | string): void;
     update: (event: Event) => void;
     handleKey: (event: KeyboardEvent) => void;
     connectedCallback(): void;

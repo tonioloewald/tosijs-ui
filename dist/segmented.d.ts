@@ -15,17 +15,13 @@ export declare class TosiSegmented extends WebComponent {
         localized: boolean;
         required: boolean;
     };
-    private _choicesValue;
-    get choices(): string | Choice[];
-    set choices(v: string | Choice[]);
-    static get observedAttributes(): string[];
-    attributeChangedCallback(name: string, oldValue: string, newValue: string): void;
-    value: null | string;
-    private updateFormValue;
-    private updateValidity;
+    private _choices;
+    get choices(): Choice[];
+    set choices(v: Choice[] | string);
+    private static parseChoicesString;
+    value: string;
     formDisabledCallback(disabled: boolean): void;
     formResetCallback(): void;
-    formStateRestoreCallback(state: string | null): void;
     get values(): string[];
     content: () => (HTMLSlotElement | HTMLDivElement)[];
     static styleSpec: {
@@ -93,7 +89,7 @@ export declare class TosiSegmented extends WebComponent {
     handleChange: () => void;
     handleKey: (event: KeyboardEvent) => void;
     connectedCallback(): void;
-    private get _choices();
+    private get _choicesWithOther();
     get isOtherValue(): boolean;
     render(): void;
 }

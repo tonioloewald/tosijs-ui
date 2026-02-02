@@ -1,27 +1,27 @@
 /*#
 # rich text
 
-`<xin-word>` is a simple and easily extensible `document.execCommand` WYSIWYG editor with some conveniences.
-The class name is `RichText` and the ElementCreator is `richText`.
+`<tosi-rich-text>` is a simple and easily extensible `document.execCommand` WYSIWYG editor with some conveniences.
+The class name is `RichText` and the ElementCreator is `tosiRichText`.
 
 ### `default` widgets
 
 ```html
-<xin-word>
+<tosi-rich-text>
 <h3>Heading</h3>
 <p>And some <b>text</b></p>
-</xin-word>
+</tosi-rich-text>
 ```
 ```css
-xin-word {
+tosi-rich-text {
   background: white;
 }
 
-xin-word [part="toolbar"] {
+tosi-rich-text [part="toolbar"] {
   background: #f8f8f8;
 }
 
-xin-word [part="doc"] {
+tosi-rich-text [part="doc"] {
   padding: 20px;
 }
 ```
@@ -29,31 +29,31 @@ xin-word [part="doc"] {
 ### `minimal` widgets
 
 ```html
-<xin-word widgets="minimal">
+<tosi-rich-text widgets="minimal">
 <h3>Heading</h3>
 <p>And some <b>text</b></p>
-</xin-word>
+</tosi-rich-text>
 ```
 ```css
-xin-word {
+tosi-rich-text {
   background: white;
 }
 
-xin-word [part="toolbar"] {
+tosi-rich-text [part="toolbar"] {
   background: #f8f8f8;
 }
 
-xin-word [part="doc"] {
+tosi-rich-text [part="doc"] {
   padding: 20px;
 }
 ```
 
-By default, `<xin-word>` treats its initial contents as its document, but you can also set (and get)
+By default, `<tosi-rich-text>` treats its initial contents as its document, but you can also set (and get)
 its `value`.
 
 ## toolbar
 
-`<xin-word>` elements have a `toolbar` slot (actually a xin-slot because it doesn't use
+`<tosi-rich-text>` elements have a `toolbar` slot (actually a xin-slot because it doesn't use
 the shadowDOM).
 
 If you set the `widgets` attribute to `default` or `minimal` you will get a toolbar
@@ -73,10 +73,53 @@ automatically have its value changed based on the current selection.
 
 ## properties
 
-A `<xin-word>` element also has `selectedText` and `selectedBlocks` properties, allowing
+A `<tosi-rich-text>` element also has `selectedText` and `selectedBlocks` properties, allowing
 you to easily perform operations on text selections, and a `selectionChange` callback (which
 simply passes through document `selectionchange` events, but also passes a reference to
-the `<xin-word>` component).
+the `<tosi-rich-text>` component).
+
+## Form Integration
+
+`<tosi-rich-text>` is form-associated, making it work directly in native forms:
+
+```html
+<form class="richtext-form">
+  <label>
+    <b>Compose message (required):</b>
+    <tosi-rich-text name="content" widgets="minimal" required style="height: 150px">
+    </tosi-rich-text>
+  </label>
+  <button type="submit">Submit</button>
+  <button type="reset">Reset</button>
+  <pre class="output" style="max-height: 100px; overflow: auto"></pre>
+</form>
+```
+```css
+.preview .richtext-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.preview .richtext-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.preview tosi-rich-text {
+  background: white;
+}
+.preview tosi-rich-text [part="toolbar"] {
+  background: #f8f8f8;
+}
+```
+```js
+const form = preview.querySelector('.richtext-form')
+form.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const data = new FormData(form)
+  form.querySelector('.output').textContent = 'Content: ' + data.get('content')
+})
+```
 */
 
 import {
@@ -84,10 +127,11 @@ import {
   ElementCreator,
   PartsMap,
   elements,
+  deprecated,
 } from 'tosijs'
 import { icons } from './icons'
 
-import { xinSelect, XinSelect } from './select'
+import { tosiSelect, TosiSelect } from './select'
 
 const { xinSlot, div, button, span } = elements
 
@@ -119,7 +163,7 @@ const blockStyles = [
 ]
 
 export function blockStyle(options = blockStyles) {
-  return xinSelect({
+  return tosiSelect({
     title: 'paragraph style',
     slot: 'toolbar',
     class: 'block-style',
@@ -191,23 +235,45 @@ interface EditorParts extends PartsMap {
 }
 
 export class RichText extends WebComponent<EditorParts> {
+  static formAssociated = true
+
   static initAttributes = {
     widgets: 'default' as 'none' | 'minimal' | 'default',
+    name: '',
+    required: false,
   }
 
   private isInitialized = false
+  private savedValue = ''
+
+  // Form lifecycle callbacks
+  formDisabledCallback(disabled: boolean) {
+    if (this.isInitialized) {
+      this.parts.doc.contentEditable = disabled ? 'false' : 'true'
+    }
+  }
+
+  formResetCallback() {
+    this.value = ''
+  }
+
+  private _value = ''
 
   get value(): string {
-    return this.isInitialized
-      ? this.parts.doc.innerHTML
-      : this.savedValue || this.innerHTML
+    return this.isInitialized ? this.parts.doc.innerHTML : this._value
   }
 
   set value(docHtml: string) {
+    const oldValue = this._value
+    this._value = docHtml
     if (this.isInitialized) {
-      this.parts.doc.innerHTML = docHtml
-    } else {
-      this.innerHTML = docHtml
+      if (this.parts.doc.innerHTML !== docHtml) {
+        this.parts.doc.innerHTML = docHtml
+      }
+    }
+    // Notify tosijs of the change for form value updates
+    if (oldValue !== docHtml && this.internals) {
+      this.internals.setFormValue(docHtml)
     }
   }
 
@@ -256,10 +322,17 @@ export class RichText extends WebComponent<EditorParts> {
     /* no not care */
   }
 
+  private _updatingBlockStyle = false
+
   handleSelectChange = (event: Event) => {
+    // Ignore changes triggered by updateBlockStyle
+    if (this._updatingBlockStyle) {
+      return
+    }
+
     const target = event.target as Element | null
     const select = target?.closest(
-      XinSelect.tagName as string
+      TosiSelect.tagName as string
     ) as HTMLSelectElement | null
     if (select == null) {
       return
@@ -319,7 +392,37 @@ export class RichText extends WebComponent<EditorParts> {
       (block) => block.tagName
     )
     blockTags = [...new Set(blockTags)]
+    this._updatingBlockStyle = true
     select.value = blockTags.length === 1 ? `formatBlock,${blockTags[0]}` : ''
+    this._updatingBlockStyle = false
+  }
+
+  // Check if the editor has meaningful content
+  private hasContent(): boolean {
+    const text = this.parts.doc.textContent || ''
+    return text.trim().length > 0
+  }
+
+  // Update form value and validity when content changes
+  handleInput = () => {
+    if (this.internals) {
+      this.internals.setFormValue(this.parts.doc.innerHTML)
+      this.updateValidity()
+    }
+  }
+
+  private updateValidity(): void {
+    if (this.internals) {
+      if (this.required && !this.hasContent()) {
+        this.internals.setValidity(
+          { valueMissing: true },
+          'Please enter some content',
+          this.parts.doc
+        )
+      } else {
+        this.internals.setValidity({})
+      }
+    }
   }
 
   connectedCallback(): void {
@@ -334,6 +437,12 @@ export class RichText extends WebComponent<EditorParts> {
     this.isInitialized = true
 
     content.style.display = 'none'
+
+    // Listen for content changes
+    doc.addEventListener('input', this.handleInput)
+
+    // Initialize validity state
+    this.updateValidity()
 
     document.addEventListener('selectionchange', (event: Event) => {
       this.updateBlockStyle()
@@ -359,8 +468,11 @@ export class RichText extends WebComponent<EditorParts> {
   }
 }
 
-export const richText = RichText.elementCreator({
-  tag: 'xin-word',
+/** @deprecated Use RichText instead */
+export const XinWord = RichText
+
+export const tosiRichText = RichText.elementCreator({
+  tag: 'tosi-rich-text',
   styleSpec: {
     ':host': {
       display: 'flex',
@@ -379,3 +491,9 @@ export const richText = RichText.elementCreator({
     },
   },
 }) as ElementCreator<RichText>
+
+/** @deprecated Use tosiRichText instead (tag is now <tosi-rich-text>) */
+export const richText = deprecated(
+  (...args: Parameters<typeof tosiRichText>) => tosiRichText(...args),
+  'richText is deprecated, use tosiRichText instead (tag is now <tosi-rich-text>)'
+) as ElementCreator<RichText>

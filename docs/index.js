@@ -12,53 +12,54 @@ var __export = (target, all) => {
 // ../xinjs/dist/module.js
 var exports_module = {};
 __export(exports_module, {
-  xinValue: () => Ze,
-  xinProxy: () => re,
-  xinPath: () => Ge,
-  xin: () => y,
+  xinValue: () => Oe,
+  xinProxy: () => ie,
+  xinPath: () => Ze,
+  xin: () => u,
   warnDeprecated: () => J,
-  version: () => ne,
+  version: () => re,
   vars: () => Uo,
-  varDefault: () => yo,
-  updates: () => me,
+  varDefault: () => uo,
+  validateAgainstConstraints: () => No,
+  updates: () => le,
   unobserve: () => W,
   touchElement: () => _o,
   touch: () => I,
-  tosiValue: () => p,
-  tosiSetValue: () => Qe,
+  tosiValue: () => E,
+  tosiSetValue: () => Ge,
   tosiPath: () => M,
-  tosi: () => wo,
+  tosi: () => Co,
   throttle: () => mo,
   svgElements: () => Ko,
   settings: () => G,
   on: () => V,
   observe: () => Bo,
   mathML: () => Io,
-  makeComponent: () => Co,
-  invertLuminance: () => tn,
-  initVars: () => sn,
-  hotReload: () => Mn,
+  makeComponent: () => po,
+  invertLuminance: () => cn,
+  initVars: () => tn,
+  hotReload: () => Tn,
   getListItem: () => vo,
   getListInstance: () => Vo,
-  getListBinding: () => uo,
+  getListBinding: () => yo,
   getCssVar: () => Zo,
-  elements: () => u,
+  elements: () => y,
   deprecated: () => Ho,
-  deleteListItem: () => wn,
+  deleteListItem: () => En,
   debounce: () => Wo,
   css: () => B,
-  boxedProxy: () => po,
+  boxedProxy: () => Eo,
   boxed: () => v,
-  blueprintLoader: () => Sn,
-  blueprint: () => kn,
+  blueprintLoader: () => Hn,
+  blueprint: () => Sn,
   bindings: () => lo,
   bind: () => H,
-  StyleSheet: () => en,
-  MoreMath: () => Ne,
+  StyleSheet: () => nn,
+  MoreMath: () => on,
   Component: () => F,
   Color: () => l,
-  BlueprintLoader: () => se,
-  Blueprint: () => Eo
+  BlueprintLoader: () => te,
+  Blueprint: () => xo
 });
 function X(o) {
   if (o == null || typeof o !== "object")
@@ -81,17 +82,17 @@ var bo = "-xin-data";
 var Y = `.${bo}`;
 var Mo = "-xin-event";
 var To = `.${Mo}`;
-var x = Symbol.for("xin-path");
-var $ = Symbol.for("xin-value");
+var a = Symbol.for("xin-path");
+var g = Symbol.for("xin-value");
 var Lo = "xinObserve";
 var ko = "xinBind";
 var So = "xinOn";
 var _ = Symbol("list-binding");
 var so = Symbol("list-instance");
-var te = new Set;
+var ce = new Set;
 function J(o, e) {
-  if (!te.has(o))
-    console.warn(e), te.add(o);
+  if (!ce.has(o))
+    console.warn(e), ce.add(o);
 }
 function Ho(o, e) {
   let n = false;
@@ -102,49 +103,49 @@ function Ho(o, e) {
   };
 }
 var M = (o) => {
-  return o && o[x] || undefined;
+  return o && o[a] || undefined;
 };
-function p(o) {
+function E(o) {
   if (typeof o === "object" && o !== null) {
-    let e = o[$];
+    let e = o[g];
     return e !== undefined ? e : o;
   }
   return o;
 }
-function Qe(o, e) {
+function Ge(o, e) {
   if (M(o) === undefined)
     throw Error("tosiSetValue requires a xin or boxed proxy");
-  o[$] = e;
+  o[g] = e;
 }
-var Ge = Ho(M, "xinPath is deprecated. Use tosiPath instead.");
-var Ze = Ho(p, "xinValue is deprecated. Use tosiValue instead.");
-var q = new WeakMap;
-var g = new WeakMap;
-var Q = (o) => {
+var Ze = Ho(M, "xinPath is deprecated. Use tosiPath instead.");
+var Oe = Ho(E, "xinValue is deprecated. Use tosiValue instead.");
+var Q = new WeakMap;
+var $ = new WeakMap;
+var q = (o) => {
   let e = o.cloneNode();
   if (e instanceof Element) {
-    let n = g.get(o), r = q.get(o);
+    let n = $.get(o), r = Q.get(o);
     if (n != null)
-      g.set(e, X(n));
+      $.set(e, X(n));
     if (r != null)
-      q.set(e, X(r));
+      Q.set(e, X(r));
   }
   for (let n of Array.from(o instanceof HTMLTemplateElement ? o.content.childNodes : o.childNodes))
     if (n instanceof Element || n instanceof DocumentFragment)
-      e.appendChild(Q(n));
+      e.appendChild(q(n));
     else
       e.appendChild(n.cloneNode());
   return e;
 };
 var G = { debug: false, perf: false };
-var ce = Symbol("observer should be removed");
+var fe = Symbol("observer should be removed");
 var to = [];
 var co = [];
 var Xo = false;
-var go;
 var $o;
+var go;
 
-class fe {
+class me {
   description;
   test;
   callback;
@@ -165,12 +166,12 @@ class fe {
     to.push(this);
   }
 }
-var me = async () => {
-  if (go === undefined)
+var le = async () => {
+  if ($o === undefined)
     return;
-  await go;
+  await $o;
 };
-var Oe = () => {
+var Ue = () => {
   if (G.perf)
     console.time("xin async update");
   let o = Array.from(co);
@@ -182,7 +183,7 @@ var Oe = () => {
       } catch (i) {
         throw Error(`Listener ${n.description} threw "${i}" at "${e}"`);
       }
-      if (r === ce)
+      if (r === fe)
         return W(n), false;
       return r;
     }).forEach((n) => {
@@ -192,11 +193,11 @@ var Oe = () => {
       } catch (i) {
         console.error(`Listener ${n.description} threw "${i}" handling "${e}"`);
       }
-      if (r === ce)
+      if (r === fe)
         W(n);
     });
-  if (co.splice(0), Xo = false, typeof $o === "function")
-    $o();
+  if (co.splice(0), Xo = false, typeof go === "function")
+    go();
   if (G.perf)
     console.timeEnd("xin async update");
 };
@@ -205,14 +206,14 @@ var I = (o) => {
   if (e === undefined)
     throw console.error("touch was called on an invalid target", o), Error("touch was called on an invalid target");
   if (Xo === false)
-    go = new Promise((n) => {
-      $o = n;
-    }), Xo = setTimeout(Oe);
+    $o = new Promise((n) => {
+      go = n;
+    }), Xo = setTimeout(Ue);
   if (co.find((n) => e.startsWith(n)) == null)
     co.push(e);
 };
 var j = (o, e) => {
-  return new fe(o, e);
+  return new me(o, e);
 };
 var W = (o) => {
   let e = to.indexOf(o);
@@ -223,7 +224,7 @@ var W = (o) => {
 };
 var N = {};
 var zo = null;
-var le = (o) => {
+var de = (o) => {
   zo = o;
 };
 var fo = () => {
@@ -233,7 +234,7 @@ var fo = () => {
 };
 var Do = null;
 var Fo = null;
-var de = (o, e) => {
+var ye = (o, e) => {
   Do = o, Fo = e;
 };
 var oo = () => {
@@ -250,7 +251,7 @@ var Yo = (o, e) => {
   let n = new Event(e);
   o.dispatchEvent(n);
 };
-var ye = (o) => {
+var he = (o) => {
   if (o instanceof HTMLInputElement)
     return o.type;
   else if (o instanceof HTMLSelectElement && o.hasAttribute("multiple"))
@@ -258,8 +259,8 @@ var ye = (o) => {
   else
     return "other";
 };
-var he = (o, e) => {
-  switch (ye(o)) {
+var we = (o, e) => {
+  switch (he(o)) {
     case "radio":
       o.checked = o.value === e;
       break;
@@ -277,8 +278,8 @@ var he = (o, e) => {
       o.value = e;
   }
 };
-var ae = (o) => {
-  switch (ye(o)) {
+var Ce = (o) => {
+  switch (he(o)) {
     case "radio": {
       let e = o.parentElement?.querySelector(`[name="${o.name}"]:checked`);
       return e != null ? e.value : null;
@@ -308,10 +309,10 @@ var Jo = (o, e, n = true) => {
       o.textContent = e;
     else if (Array.isArray(e))
       e.forEach((r) => {
-        o.append(r instanceof Node && n ? Q(r) : r);
+        o.append(r instanceof Node && n ? q(r) : r);
       });
     else if (e instanceof Node)
-      o.append(n ? Q(e) : e);
+      o.append(n ? q(e) : e);
     else
       throw Error("expect text content or document node");
 };
@@ -340,22 +341,22 @@ var mo = (o, e = 250) => {
     }
   };
 };
-var Ue = (o) => {
+var Ae = (o) => {
   try {
     return JSON.stringify(o);
   } catch (e) {
     return "{has circular references}";
   }
 };
-var jo = (...o) => Error(o.map(Ue).join(" "));
-var Ae = () => new Date(parseInt("1000000000", 36) + Date.now()).valueOf().toString(36).slice(1);
-var Re = 0;
-var Ke = () => (parseInt("10000", 36) + ++Re).toString(36).slice(-5);
-var Ie = () => Ae() + Ke();
-var Qo = Symbol("delete");
-var Ce = Symbol("new-object");
-var qo = Symbol("automatic-index");
-function Ee(o) {
+var jo = (...o) => Error(o.map(Ae).join(" "));
+var Re = () => new Date(parseInt("1000000000", 36) + Date.now()).valueOf().toString(36).slice(1);
+var Ke = 0;
+var Ie = () => (parseInt("10000", 36) + ++Ke).toString(36).slice(-5);
+var Pe = () => Re() + Ie();
+var qo = Symbol("delete");
+var xe = Symbol("new-object");
+var Qo = Symbol("automatic-index");
+function ae(o) {
   if (o === "")
     return [];
   if (Array.isArray(o))
@@ -380,7 +381,7 @@ function Ee(o) {
   }
 }
 var z = new WeakMap;
-function xe(o, e) {
+function be(o, e) {
   if (z.get(o) === undefined)
     z.set(o, {});
   if (z.get(o)[e] === undefined)
@@ -388,9 +389,9 @@ function xe(o, e) {
   let n = z.get(o)[e];
   if (e === "_auto_")
     o.forEach((r, i) => {
-      if (r[qo] === undefined)
-        r[qo] = Ie();
-      n[r[qo] + ""] = i;
+      if (r[Qo] === undefined)
+        r[Qo] = Pe();
+      n[r[Qo] + ""] = i;
     });
   else
     o.forEach((r, i) => {
@@ -398,29 +399,29 @@ function xe(o, e) {
     });
   return n;
 }
-function Pe(o, e) {
+function Be(o, e) {
   if (z.get(o) === undefined || z.get(o)[e] === undefined)
-    return xe(o, e);
+    return be(o, e);
   else
     return z.get(o)[e];
 }
-function Be(o, e, n) {
+function Ve(o, e, n) {
   n = n + "";
-  let r = Pe(o, e)[n];
+  let r = Be(o, e)[n];
   if (r === undefined || Z(o[r], e) + "" !== n)
-    r = xe(o, e)[n];
+    r = be(o, e)[n];
   return r;
 }
-function Ve(o, e, n) {
+function ve(o, e, n) {
   if (o[e] === undefined && n !== undefined)
     o[e] = n;
   return o[e];
 }
-function be(o, e, n, r) {
-  let i = e !== "" ? Be(o, e, n) : n;
-  if (r === Qo)
+function Me(o, e, n, r) {
+  let i = e !== "" ? Ve(o, e, n) : n;
+  if (r === qo)
     return o.splice(i, 1), z.delete(o), Symbol("deleted");
-  else if (r === Ce) {
+  else if (r === xe) {
     if (e === "" && o[i] === undefined)
       o[i] = {};
   } else if (r !== undefined)
@@ -432,7 +433,7 @@ function be(o, e, n, r) {
       throw Error(`byIdPath insert failed at [${e}=${n}]`);
   return o[i];
 }
-function we(o) {
+function Ee(o) {
   if (!Array.isArray(o))
     throw jo("setByPath failed: expected array, found", o);
 }
@@ -441,7 +442,7 @@ function pe(o) {
     throw jo("setByPath failed: expected Object, found", o);
 }
 function Z(o, e) {
-  let n = Ee(e), r = o, i, s, t, c;
+  let n = ae(e), r = o, i, s, t, c;
   for (i = 0, s = n.length;r !== undefined && i < s; i++) {
     let f = n[i];
     if (Array.isArray(f))
@@ -454,17 +455,17 @@ function Z(o, e) {
         return;
     } else if (f.includes("=")) {
       let [m, ...d] = f.split("=");
-      r = be(r, m, d.join("="));
+      r = Me(r, m, d.join("="));
     } else
       t = parseInt(f, 10), r = r[t];
   }
   return r;
 }
-function Me(o, e, n) {
+function Te(o, e, n) {
   let r = o;
   if (e === "")
     throw Error("setByPath cannot be used to set the root object");
-  let i = Ee(e);
+  let i = ae(e);
   while (r != null && i.length > 0) {
     let s = i.shift();
     if (typeof s === "string") {
@@ -473,17 +474,17 @@ function Me(o, e, n) {
         if (t === 0)
           pe(r);
         else
-          we(r);
+          Ee(r);
         let c = s.slice(0, t), f = s.slice(t + 1);
-        if (r = be(r, c, f, i.length > 0 ? Ce : n), i.length === 0)
+        if (r = Me(r, c, f, i.length > 0 ? xe : n), i.length === 0)
           return true;
       } else {
-        we(r);
+        Ee(r);
         let c = parseInt(s, 10);
         if (i.length > 0)
           r = r[c];
         else {
-          if (n !== Qo) {
+          if (n !== qo) {
             if (r[c] === n)
               return false;
             r[c] = n;
@@ -497,9 +498,9 @@ function Me(o, e, n) {
       while (s.length > 0) {
         let t = s.shift();
         if (s.length > 0 || i.length > 0)
-          r = Ve(r, t, s.length > 0 ? {} : []);
+          r = ve(r, t, s.length > 0 ? {} : []);
         else {
-          if (n !== Qo) {
+          if (n !== qo) {
             if (r[t] === n)
               return false;
             r[t] = n;
@@ -516,8 +517,8 @@ function Me(o, e, n) {
   }
   throw Error(`setByPath(${o}, ${e}, ${n}) failed`);
 }
-var lo = { value: { toDOM: he, fromDOM(o) {
-  return ae(o);
+var lo = { value: { toDOM: we, fromDOM(o) {
+  return Ce(o);
 } }, text: { toDOM(o, e) {
   o.textContent = e;
 } }, enabled: { toDOM(o, e) {
@@ -525,9 +526,9 @@ var lo = { value: { toDOM: he, fromDOM(o) {
 } }, disabled: { toDOM(o, e) {
   o.disabled = Boolean(e);
 } }, list: { toDOM(o, e, n) {
-  uo(o, e, n).update(e);
+  yo(o, e, n).update(e);
 } } };
-function E(o) {
+function x(o) {
   return o.replace(/[A-Z]/g, (e) => {
     return `-${e.toLocaleLowerCase()}`;
   });
@@ -537,8 +538,8 @@ function Go(o) {
     return n.toLocaleUpperCase();
   });
 }
-var ve = 180 / Math.PI;
-var _e = Math.PI / 180;
+var _e = 180 / Math.PI;
+var Ne = Math.PI / 180;
 function T(o, e, n) {
   return n < o ? NaN : e < o ? o : e > n ? n : e;
 }
@@ -547,19 +548,19 @@ function D(o, e, n, r = true) {
     n = T(0, n, 1);
   return n * (e - o) + o;
 }
-var Ne = { RADIANS_TO_DEGREES: ve, DEGREES_TO_RADIANS: _e, clamp: T, lerp: D };
+var on = { RADIANS_TO_DEGREES: _e, DEGREES_TO_RADIANS: Ne, clamp: T, lerp: D };
 function Zo(o, e = document.body) {
   let n = getComputedStyle(e);
   if (o.endsWith(")") && o.startsWith("var("))
     o = o.slice(4, -1);
   return n.getPropertyValue(o).trim();
 }
-var on = (o, e, n) => {
+var en = (o, e, n) => {
   return (0.299 * o + 0.587 * e + 0.114 * n) / 255;
 };
 var O = (o) => ("00" + Math.round(Number(o)).toString(16)).slice(-2);
 
-class Te {
+class Le {
   h;
   s;
   l;
@@ -591,18 +592,18 @@ class l {
     if (e === 0)
       i = s = t = n;
     else {
-      let f = (C, L, w) => {
-        if (w < 0)
-          w += 1;
-        if (w > 1)
-          w -= 1;
-        if (w < 0.16666666666666666)
-          return C + (L - C) * 6 * w;
-        if (w < 0.5)
+      let f = (p, L, C) => {
+        if (C < 0)
+          C += 1;
+        if (C > 1)
+          C -= 1;
+        if (C < 0.16666666666666666)
+          return p + (L - p) * 6 * C;
+        if (C < 0.5)
           return L;
-        if (w < 0.6666666666666666)
-          return C + (L - C) * (0.6666666666666666 - w) * 6;
-        return C;
+        if (C < 0.6666666666666666)
+          return p + (L - p) * (0.6666666666666666 - C) * 6;
+        return p;
       }, m = n < 0.5 ? n * (1 + e) : n + e - n * e, d = 2 * n - m, h = (o % 360 + 360) % 360 / 360;
       i = f(d, m, h + 0.3333333333333333), s = f(d, m, h), t = f(d, m, h - 0.3333333333333333);
     }
@@ -644,7 +645,7 @@ class l {
   hslCached;
   get _hsl() {
     if (this.hslCached == null)
-      this.hslCached = new Te(this.r, this.g, this.b);
+      this.hslCached = new Le(this.r, this.g, this.b);
     return this.hslCached;
   }
   get hsl() {
@@ -660,7 +661,7 @@ class l {
     return new l(o, o, o);
   }
   get brightness() {
-    return on(this.r, this.g, this.b);
+    return en(this.r, this.g, this.b);
   }
   get html() {
     return this.toString();
@@ -713,13 +714,13 @@ class l {
     return l.fromCss(`color-mix(in hsl, ${this.html}, ${o.html} ${(e * 100).toFixed(0)}%)`);
   }
 }
-function en(o, e) {
-  let n = u.style(B(e));
+function nn(o, e) {
+  let n = y.style(B(e));
   n.id = o, document.head.append(n);
 }
-var nn = ["animation-iteration-count", "flex", "flex-base", "flex-grow", "flex-shrink", "opacity", "order", "tab-size", "widows", "z-index", "zoom"];
+var rn = ["animation-iteration-count", "flex", "flex-base", "flex-grow", "flex-shrink", "opacity", "order", "tab-size", "widows", "z-index", "zoom"];
 var Oo = (o, e) => {
-  if (typeof e === "number" && !nn.includes(o))
+  if (typeof e === "number" && !rn.includes(o))
     e = `${e}px`;
   if (o.startsWith("_"))
     if (o.startsWith("__"))
@@ -728,7 +729,7 @@ var Oo = (o, e) => {
       o = "--" + o.substring(1);
   return { prop: o, value: String(e) };
 };
-var rn = (o, e, n) => {
+var sn = (o, e, n) => {
   if (n === undefined)
     return "";
   if (n instanceof l)
@@ -736,16 +737,16 @@ var rn = (o, e, n) => {
   let r = Oo(e, n);
   return `${o}  ${r.prop}: ${r.value};`;
 };
-var Le = (o, e, n = "") => {
-  let r = E(o);
+var ke = (o, e, n = "") => {
+  let r = x(o);
   if (typeof e === "object" && !(e instanceof l)) {
-    let i = Object.keys(e).map((s) => Le(s, e[s], `${n}  `)).join(`
+    let i = Object.keys(e).map((s) => ke(s, e[s], `${n}  `)).join(`
 `);
     return `${n}  ${o} {
 ${i}
 ${n}  }`;
   } else
-    return rn(n, r, e);
+    return sn(n, r, e);
 };
 var B = (o, e = "") => {
   return Object.keys(o).map((r) => {
@@ -755,7 +756,7 @@ var B = (o, e = "") => {
         return `@import url('${i}');`;
       throw Error("top-level string value only allowed for `@import`");
     }
-    let s = Object.keys(i).map((t) => Le(t, i[t])).join(`
+    let s = Object.keys(i).map((t) => ke(t, i[t])).join(`
 `);
     return `${e}${r} {
 ${s}
@@ -764,16 +765,16 @@ ${s}
 
 `);
 };
-var sn = (o) => {
+var tn = (o) => {
   J("initVars", "initVars is deprecated. Just use _ and __ prefixes instead.");
   let e = {};
   for (let n of Object.keys(o)) {
-    let r = o[n], i = E(n);
+    let r = o[n], i = x(n);
     e[`--${i}`] = typeof r === "number" && r !== 0 ? String(r) + "px" : r;
   }
   return e;
 };
-var tn = (o) => {
+var cn = (o) => {
   let e = {};
   for (let n of Object.keys(o)) {
     let r = o[n];
@@ -784,18 +785,18 @@ var tn = (o) => {
   }
   return e;
 };
-var yo = new Proxy({}, { get(o, e) {
+var uo = new Proxy({}, { get(o, e) {
   if (o[e] === undefined) {
-    let n = "--" + E(e);
+    let n = "--" + x(e);
     o[e] = (r) => `var(${n}, ${r})`;
   }
   return o[e];
 } });
 var Uo = new Proxy({}, { get(o, e) {
   if (e === "default")
-    return yo;
+    return uo;
   if (o[e] == null) {
-    e = E(e);
+    e = x(e);
     let [, n, , r, i, s] = e.match(/^([-\w]*?)((_)?(\d+)(\w?))?$/) || ["", e], t = `--${n}`;
     if (i != null) {
       let c = r == null ? Number(i) / 100 : -Number(i) / 100;
@@ -835,33 +836,33 @@ var Uo = new Proxy({}, { get(o, e) {
   }
   return o[e];
 } });
-var ke = "http://www.w3.org/1998/Math/MathML";
-var Se = "http://www.w3.org/2000/svg";
+var Se = "http://www.w3.org/1998/Math/MathML";
+var He = "http://www.w3.org/2000/svg";
 var ho = {};
-var He = (o, e, n) => {
-  let r = Oo(E(e), n);
+var Xe = (o, e, n) => {
+  let r = Oo(x(e), n);
   if (r.prop.startsWith("--"))
     o.style.setProperty(r.prop, r.value);
   else
     o.style[e] = r.value;
 };
-var cn = (o) => {
+var fn = (o) => {
   return { toDOM(e, n) {
-    He(e, o, n);
+    Xe(e, o, n);
   } };
 };
-var Xe = (o, e, n) => {
+var $e = (o, e, n) => {
   if (e === "style")
     if (typeof n === "object")
       for (let r of Object.keys(n))
         if (M(n[r]))
-          H(o, n[r], cn(r));
+          H(o, n[r], fn(r));
         else
-          He(o, r, n[r]);
+          Xe(o, r, n[r]);
     else
       o.setAttribute("style", n);
   else {
-    let r = E(e), i = o.constructor.observedAttributes;
+    let r = x(e), i = o.constructor.observedAttributes;
     if (i?.includes(e) || i?.includes(r))
       if (typeof n === "boolean")
         n ? o.setAttribute(r, "") : o.removeAttribute(r);
@@ -885,12 +886,12 @@ var Xe = (o, e, n) => {
       o.setAttribute(r, n);
   }
 };
-var fn = (o) => {
+var mn = (o) => {
   return { toDOM(e, n) {
-    Xe(e, o, n);
+    $e(e, o, n);
   } };
 };
-var mn = (o, e, n) => {
+var ln = (o, e, n) => {
   if (e === "apply")
     n(o);
   else if (e.match(/^on[A-Z]/) != null) {
@@ -908,9 +909,9 @@ var mn = (o, e, n) => {
     else
       throw Error(`${e} is not allowed, bindings.${r} is not defined`);
   } else if (M(n))
-    H(o, n, fn(e));
+    H(o, n, mn(e));
   else
-    Xe(o, e, n);
+    $e(o, e, n);
 };
 var Ao = (o, ...e) => {
   if (ho[o] === undefined) {
@@ -928,12 +929,12 @@ var Ao = (o, ...e) => {
       else
         n.append(i);
     else if (M(i))
-      n.append(u.span({ bindText: i }));
+      n.append(y.span({ bindText: i }));
     else
       Object.assign(r, i);
   for (let i of Object.keys(r)) {
     let s = r[i];
-    mn(n, i, s);
+    ln(n, i, s);
   }
   return n;
 };
@@ -943,7 +944,7 @@ var Ro = (...o) => {
     e.append(n);
   return e;
 };
-var u = new Proxy({ fragment: Ro }, { get(o, e) {
+var y = new Proxy({ fragment: Ro }, { get(o, e) {
   if (e = e.replace(/[A-Z]/g, (n) => `-${n.toLocaleLowerCase()}`), o[e] === undefined)
     o[e] = (...n) => Ao(e, ...n);
   return o[e];
@@ -952,22 +953,22 @@ var u = new Proxy({ fragment: Ro }, { get(o, e) {
 } });
 var Ko = new Proxy({ fragment: Ro }, { get(o, e) {
   if (o[e] === undefined)
-    o[e] = (...n) => Ao(`${e}|${Se}`, ...n);
+    o[e] = (...n) => Ao(`${e}|${He}`, ...n);
   return o[e];
 }, set() {
   throw Error("You may not add new properties to elements");
 } });
 var Io = new Proxy({ fragment: Ro }, { get(o, e) {
   if (o[e] === undefined)
-    o[e] = (...n) => Ao(`${e}|${ke}`, ...n);
+    o[e] = (...n) => Ao(`${e}|${Se}`, ...n);
   return o[e];
 }, set() {
   throw Error("You may not add new properties to elements");
 } });
-var ln = ["sort", "splice", "copyWithin", "fill", "pop", "push", "reverse", "shift", "unshift"];
-var dn = true;
+var dn = ["sort", "splice", "copyWithin", "fill", "pop", "push", "reverse", "shift", "unshift"];
+var yn = true;
 var un = /^\.?([^.[\](),])+(\.[^.[\](),]+|\[\d+\]|\[[^=[\](),]*=[^[\]()]+\])*$/;
-var yn = (o) => un.test(o);
+var hn = (o) => un.test(o);
 var U = (o = "", e = "") => {
   if (o === "")
     return e;
@@ -976,23 +977,23 @@ var U = (o = "", e = "") => {
   else
     return `${o}.${e}`;
 };
-var ze = {};
+var De = {};
 function Po(o, e) {
   if (o !== null && (typeof o === "object" || typeof o === "function"))
     return o;
-  return new Proxy(ze, R(e, true));
+  return new Proxy(De, R(e, true));
 }
-var ao = () => new Proxy({}, R("^", true));
+var wo = () => new Proxy({}, R("^", true));
 var ge = false;
 function A() {
   if (!ge)
     console.warn("xinValue, tosiValue, xinPath, tosiPath, etc. are deprecated. Use value, path, observe, bind, on, binding, listBinding instead."), ge = true;
 }
-var $e = (o) => {
-  return o === ze;
+var ze = (o) => {
+  return o === De;
 };
 var R = (o, e) => ({ get(n, r) {
-  if ($e(n)) {
+  if (ze(n)) {
     let c = () => Z(N, o);
     switch (r) {
       case "path":
@@ -1027,12 +1028,12 @@ var R = (o, e) => ({ get(n, r) {
       case "binding":
         return (f) => ({ bind: { value: o, binding: f } });
       case "listBinding":
-        return (f = ({ span: d }) => d({ bindText: "^" }), m = {}) => [{ bindList: { value: o, ...m } }, u.template(f(u, ao()))];
-      case $:
+        return (f = ({ span: d }) => d({ bindText: "^" }), m = {}) => [{ bindList: { value: o, ...m } }, y.template(f(y, wo()))];
+      case g:
       case "xinValue":
       case "tosiValue":
         return A(), c();
-      case x:
+      case a:
       case "xinPath":
       case "tosiPath":
         return A(), o;
@@ -1053,7 +1054,7 @@ var R = (o, e) => ({ get(n, r) {
       case "tosiBinding":
         return A(), (f) => ({ bind: { value: o, binding: f } });
       case "tosiListBinding":
-        return A(), (f = ({ span: d }) => d({ bindText: "^" }), m = {}) => [{ bindList: { value: o, ...m } }, u.template(f(u, ao()))];
+        return A(), (f = ({ span: d }) => d({ bindText: "^" }), m = {}) => [{ bindList: { value: o, ...m } }, y.template(f(y, wo()))];
     }
     if (typeof r === "string" && /^\d+$/.test(r)) {
       let f = c();
@@ -1082,7 +1083,7 @@ var R = (o, e) => ({ get(n, r) {
           return () => W(f);
         };
       case "on":
-        return (c, f) => eo()(c, f, p(n));
+        return (c, f) => eo()(c, f, E(n));
       case "bind":
         return (c, f, m) => {
           oo()(c, o, f, m);
@@ -1090,14 +1091,14 @@ var R = (o, e) => ({ get(n, r) {
       case "binding":
         return (c) => ({ bind: { value: o, binding: c } });
       case "listBinding":
-        return (c = ({ span: m }) => m({ bindText: "^" }), f = {}) => [{ bindList: { value: o, ...f } }, u.template(c(u, ao()))];
+        return (c = ({ span: m }) => m({ bindText: "^" }), f = {}) => [{ bindList: { value: o, ...f } }, y.template(c(y, wo()))];
     }
   switch (r) {
-    case x:
+    case a:
     case "xinPath":
     case "tosiPath":
       return o;
-    case $:
+    case g:
     case "xinValue":
     case "tosiValue":
       return n.valueOf ? n.valueOf() : n;
@@ -1111,7 +1112,7 @@ var R = (o, e) => ({ get(n, r) {
     case So:
     case "xinOn":
     case "tosiOn":
-      return (c, f) => eo()(c, f, p(n));
+      return (c, f) => eo()(c, f, E(n));
     case ko:
     case "xinBind":
     case "tosiBind":
@@ -1121,7 +1122,7 @@ var R = (o, e) => ({ get(n, r) {
     case "tosiBinding":
       return (c) => ({ bind: { value: o, binding: c } });
     case "tosiListBinding":
-      return (c = ({ span: m }) => m({ bindText: "^" }), f = {}) => [{ bindList: { value: o, ...f } }, u.template(c(u, ao()))];
+      return (c = ({ span: m }) => m({ bindText: "^" }), f = {}) => [{ bindList: { value: o, ...f } }, y.template(c(y, wo()))];
   }
   if (typeof r === "symbol")
     return n[r];
@@ -1150,49 +1151,49 @@ var R = (o, e) => ({ get(n, r) {
   } else if (Array.isArray(n)) {
     let c = n[s];
     return typeof c === "function" ? (...f) => {
-      let m = f.map((h) => p(h)), d = c.apply(n, m);
-      if (ln.includes(s))
+      let m = f.map((h) => E(h)), d = c.apply(n, m);
+      if (dn.includes(s))
         I(o);
       return d;
     } : typeof c === "object" ? new Proxy(c, R(U(o, s), e)) : e ? Po(c, U(o, s)) : c;
   } else
     return e ? Po(n[s], U(o, s)) : n[s];
 }, set(n, r, i) {
-  i = p(i);
-  let t = r === $ || r === "xinValue" || r === "tosiValue" || r === "value" && ($e(n) || e) ? o : U(o, r);
-  if (dn && !yn(t))
+  i = E(i);
+  let t = r === g || r === "xinValue" || r === "tosiValue" || r === "value" && (ze(n) || e) ? o : U(o, r);
+  if (yn && !hn(t))
     throw Error(`setting invalid path ${t}`);
-  if (p(y[t]) !== i && Me(N, t, i))
+  if (E(u[t]) !== i && Te(N, t, i))
     I(t);
   return true;
 } });
 var Bo = (o, e) => {
-  let n = typeof e === "function" ? e : y[e];
+  let n = typeof e === "function" ? e : u[e];
   if (typeof n !== "function")
     throw Error(`observe expects a function or path to a function, ${e} is neither`);
   return j(o, n);
 };
-var y = new Proxy(N, R("", false));
-le(y);
+var u = new Proxy(N, R("", false));
+de(u);
 var v = new Proxy(N, R("", true));
-var hn = 16;
-var an = 100;
-function De(o, e) {
+var wn = 16;
+var Cn = 100;
+function Fe(o, e) {
   let n = Array.from(o.querySelectorAll(Y));
   if (o.matches(Y))
     n.unshift(o);
   for (let r of n) {
-    let i = g.get(r);
+    let i = $.get(r);
     for (let s of i) {
       if (s.path.startsWith("^"))
         s.path = `${e}${s.path.substring(1)}`;
       if (s.binding.toDOM != null)
-        s.binding.toDOM(r, y[s.path]);
+        s.binding.toDOM(r, u[s.path]);
     }
   }
 }
 
-class Fe {
+class Ye {
   boundElement;
   listTop;
   listBottom;
@@ -1210,13 +1211,13 @@ class Fe {
       let r = o.children[0];
       if (r.content.children.length !== 1)
         throw Error("ListBinding expects a template with exactly one child element");
-      this.template = Q(r.content.children[0]);
+      this.template = q(r.content.children[0]);
     } else
       this.template = o.children[0], this.template.remove();
     if (this.options = n, this.listTop = document.createElement("div"), this.listBottom = document.createElement("div"), this.listTop.classList.add("virtual-list-padding"), this.listBottom.classList.add("virtual-list-padding"), this.boundElement.append(this.listTop), this.boundElement.append(this.listBottom), n.virtual != null)
       if (no.observe(this.boundElement), this._update = mo(() => {
         this.update(this.array, true);
-      }, hn), this.boundElement.addEventListener("resize", this._update), n.virtual.scrollContainer === "window")
+      }, wn), this.boundElement.addEventListener("resize", this._update), n.virtual.scrollContainer === "window")
         window.addEventListener("scroll", this._update), window.addEventListener("resize", this._update);
       else
         this.boundElement.addEventListener("scroll", this._update);
@@ -1240,12 +1241,12 @@ class Fe {
         d = this.boundElement.offsetHeight, h = this.boundElement.scrollTop;
       if (o.visibleColumns == null)
         o.visibleColumns = o.width != null ? Math.max(1, Math.floor(f / o.width)) : 1;
-      let C = Math.ceil(d / o.height) + (o.rowChunkSize || 1), L = Math.ceil(r.length / o.visibleColumns), w = o.visibleColumns * C, k = Math.floor(h / o.height);
-      if (k > L - C + 1)
-        k = Math.max(0, L - C + 1);
+      let p = Math.ceil(d / o.height) + (o.rowChunkSize || 1), L = Math.ceil(r.length / o.visibleColumns), C = o.visibleColumns * p, k = Math.floor(h / o.height);
+      if (k > L - p + 1)
+        k = Math.max(0, L - p + 1);
       if (o.rowChunkSize)
         k -= k % o.rowChunkSize;
-      i = k * o.visibleColumns, s = i + w - 1, t = k * o.height, c = Math.max((L - C) * o.height - t, 0);
+      i = k * o.visibleColumns, s = i + C - 1, t = k * o.height, c = Math.max((L - p) * o.height - t, 0);
     }
     return { items: r, firstItem: i, lastItem: s, topBuffer: t, bottomBuffer: c };
   }
@@ -1253,7 +1254,7 @@ class Fe {
   filter = mo((o) => {
     if (this.needle !== o)
       this.needle = o, this.update(this.array);
-  }, an);
+  }, Cn);
   update(o, e) {
     if (o == null)
       o = [];
@@ -1264,56 +1265,56 @@ class Fe {
     if (n === undefined && r === undefined && e === true && t != null && c === t.firstItem && f === t.lastItem)
       return;
     this._previousSlice = s;
-    let h = 0, C = 0, L = 0;
-    for (let a of Array.from(this.boundElement.children)) {
-      if (a === this.listTop || a === this.listBottom)
+    let h = 0, p = 0, L = 0;
+    for (let w of Array.from(this.boundElement.children)) {
+      if (w === this.listTop || w === this.listBottom)
         continue;
-      let S = a[so];
+      let S = w[so];
       if (S == null)
-        a.remove();
+        w.remove();
       else {
         let b = s.items.indexOf(S);
         if (b < c || b > f)
-          a.remove(), this.itemToElement.delete(S), h++;
+          w.remove(), this.itemToElement.delete(S), h++;
       }
     }
     this.listTop.style.height = String(m) + "px", this.listBottom.style.height = String(d) + "px";
-    let w = [], { idPath: k } = this.options;
-    for (let a = c;a <= f; a++) {
-      let S = s.items[a];
+    let C = [], { idPath: k } = this.options;
+    for (let w = c;w <= f; w++) {
+      let S = s.items[w];
       if (S === undefined)
         continue;
-      let b = this.itemToElement.get(p(S));
+      let b = this.itemToElement.get(E(S));
       if (b == null) {
-        if (L++, b = Q(this.template), typeof S === "object")
-          this.itemToElement.set(p(S), b), b[so] = p(S);
+        if (L++, b = q(this.template), typeof S === "object")
+          this.itemToElement.set(E(S), b), b[so] = E(S);
         if (this.boundElement.insertBefore(b, this.listBottom), k != null) {
-          let xo = S[k], qe = `${i}[${k}=${xo}]`;
-          De(b, qe);
+          let ao = S[k], qe = `${i}[${k}=${ao}]`;
+          Fe(b, qe);
         } else {
-          let xo = `${i}[${a}]`;
-          De(b, xo);
+          let ao = `${i}[${w}]`;
+          Fe(b, ao);
         }
       }
-      w.push(b);
+      C.push(b);
     }
     let K = null;
-    for (let a of w) {
-      if (a.previousElementSibling !== K)
-        if (C++, K?.nextElementSibling != null)
-          this.boundElement.insertBefore(a, K.nextElementSibling);
+    for (let w of C) {
+      if (w.previousElementSibling !== K)
+        if (p++, K?.nextElementSibling != null)
+          this.boundElement.insertBefore(w, K.nextElementSibling);
         else
-          this.boundElement.insertBefore(a, this.listBottom);
-      K = a;
+          this.boundElement.insertBefore(w, this.listBottom);
+      K = w;
     }
     if (G.perf)
-      console.log(i, "updated", { removed: h, created: L, moved: C });
+      console.log(i, "updated", { removed: h, created: L, moved: p });
   }
 }
-var uo = (o, e, n) => {
+var yo = (o, e, n) => {
   let r = o[_];
   if (e && r === undefined)
-    r = new Fe(o, e, n), o[_] = r;
+    r = new Ye(o, e, n), o[_] = r;
   return r;
 };
 var Vo = (o) => {
@@ -1326,11 +1327,11 @@ var vo = (o) => {
   let e = Vo(o);
   return e ? e.item : undefined;
 };
-var wn = (o) => {
+var En = (o) => {
   let e = Vo(o);
   if (!e)
     return console.error("deleteListItem failed, element is not part of a list instance", o), false;
-  let n = uo(e.element.parentElement);
+  let n = yo(e.element.parentElement);
   if (!n.options.idPath)
     return console.error("deleteListItem failed, list binding has no idPath", o.parentElement, n), false;
   let r = n.array.indexOf(e.item);
@@ -1338,9 +1339,9 @@ var wn = (o) => {
     return n.array.splice(r, 1), true;
   return false;
 };
-var { document: ro, MutationObserver: Ye } = globalThis;
+var { document: ro, MutationObserver: Je } = globalThis;
 var _o = (o, e) => {
-  let n = g.get(o);
+  let n = $.get(o);
   if (n == null)
     return;
   for (let r of n) {
@@ -1348,8 +1349,8 @@ var _o = (o, e) => {
     if (c != null) {
       if (t.startsWith("^")) {
         let f = vo(o);
-        if (f != null && f[x] != null)
-          t = r.path = `${f[x]}${t.substring(1)}`;
+        if (f != null && f[a] != null)
+          t = r.path = `${f[a]}${t.substring(1)}`;
         else
           throw console.error(`Cannot resolve relative binding ${t}`, o, "is not part of a list"), Error(`Cannot resolve relative binding ${t}`);
       }
@@ -1358,8 +1359,8 @@ var _o = (o, e) => {
     }
   }
 };
-if (Ye != null)
-  new Ye((e) => {
+if (Je != null)
+  new Je((e) => {
     e.forEach((n) => {
       Array.from(n.addedNodes).forEach((r) => {
         if (r instanceof Element)
@@ -1372,10 +1373,10 @@ j(() => true, (o) => {
   for (let n of e)
     _o(n, o);
 });
-var Je = (o) => {
+var We = (o) => {
   let e = o.target?.closest(Y);
   while (e != null) {
-    let n = g.get(e);
+    let n = $.get(e);
     for (let r of n) {
       let { binding: i, path: s } = r, { fromDOM: t } = i;
       if (t != null) {
@@ -1390,7 +1391,7 @@ var Je = (o) => {
           if (m == null)
             f[s] = c;
           else {
-            let d = m[x] != null ? m[$] : m, h = c[x] != null ? c[$] : c;
+            let d = m[a] != null ? m[g] : m, h = c[a] != null ? c[g] : c;
             if (d !== h)
               f[s] = h;
           }
@@ -1401,23 +1402,23 @@ var Je = (o) => {
   }
 };
 if (globalThis.document != null)
-  ro.body.addEventListener("change", Je, true), ro.body.addEventListener("input", Je, true);
+  ro.body.addEventListener("change", We, true), ro.body.addEventListener("input", We, true);
 function H(o, e, n, r) {
   if (o instanceof DocumentFragment)
     throw Error("bind cannot bind to a DocumentFragment");
   let i;
-  if (typeof e === "object" && e[x] === undefined && r === undefined) {
+  if (typeof e === "object" && e[a] === undefined && r === undefined) {
     let { value: c } = e;
-    i = typeof c === "string" ? c : c[x], r = e, delete r.value;
+    i = typeof c === "string" ? c : c[a], r = e, delete r.value;
   } else
-    i = typeof e === "string" ? e : e[x];
+    i = typeof e === "string" ? e : e[a];
   if (i == null)
     throw Error("bind requires a path or object with xin Proxy");
   let { toDOM: s } = n;
   o.classList?.add(bo);
-  let t = g.get(o);
+  let t = $.get(o);
   if (t == null)
-    t = [], g.set(o, t);
+    t = [], $.set(o, t);
   if (t.push({ path: i, binding: n, options: r }), s != null && !i.startsWith("^"))
     I(i);
   if (r?.filter && r?.needle)
@@ -1426,7 +1427,7 @@ function H(o, e, n, r) {
     } });
   return o;
 }
-var We = new Set;
+var je = new Set;
 var pn = (o) => {
   let e = o?.target?.closest(To), n = false, r = new Proxy(o, { get(s, t) {
     if (t === "stopPropagation")
@@ -1439,7 +1440,7 @@ var pn = (o) => {
     }
   } }), i = new Set;
   while (!n && e != null) {
-    let t = q.get(e)[o.type] || i;
+    let t = Q.get(e)[o.type] || i;
     for (let c of t) {
       if (typeof c === "function")
         c(r);
@@ -1457,27 +1458,50 @@ var pn = (o) => {
   }
 };
 function V(o, e, n) {
-  let r = q.get(o);
+  let r = Q.get(o);
   if (o.classList.add(Mo), r == null)
-    r = {}, q.set(o, r);
+    r = {}, Q.set(o, r);
   if (!r[e])
     r[e] = new Set;
-  if (r[e].add(n), !We.has(e))
-    We.add(e), ro.body.addEventListener(e, pn, true);
+  if (r[e].add(n), !je.has(e))
+    je.add(e), ro.body.addEventListener(e, pn, true);
   return () => {
     r[e].delete(n);
   };
 }
-de(H, V);
-var Cn = 0;
-function No() {
-  return `custom-elt${(Cn++).toString(36)}`;
+ye(H, V);
+function No(o, e) {
+  if (!o.internals)
+    return;
+  let n = {}, r = "";
+  if (o.hasAttribute("required") && e === "")
+    n.valueMissing = true, r = "Please fill out this field.";
+  let i = o.getAttribute("minlength");
+  if (i && e.length < parseInt(i, 10))
+    n.tooShort = true, r = `Please use at least ${i} characters.`;
+  let s = o.getAttribute("maxlength");
+  if (s && e.length > parseInt(s, 10))
+    n.tooLong = true, r = `Please use no more than ${s} characters.`;
+  let t = o.getAttribute("pattern");
+  if (t && e !== "")
+    try {
+      if (!new RegExp(`^(?:${t})$`).test(e))
+        n.patternMismatch = true, r = "Please match the requested format.";
+    } catch {}
+  if (Object.keys(n).length > 0)
+    o.internals.setValidity(n, r, o);
+  else
+    o.internals.setValidity({});
 }
-var je = 0;
-var oe = null;
-function En() {
-  if (oe === null)
-    oe = new MutationObserver((o) => {
+var xn = 0;
+function oe() {
+  return `custom-elt${(xn++).toString(36)}`;
+}
+var Qe = 0;
+var ee = null;
+function an() {
+  if (ee === null)
+    ee = new MutationObserver((o) => {
       let e = new Set;
       for (let n of o)
         if (n.type === "attributes" && n.target instanceof F) {
@@ -1488,22 +1512,22 @@ function En() {
       for (let n of e)
         n.queueRender(false);
     });
-  return oe;
+  return ee;
 }
 var io = {};
-function xn(o, e) {
+function bn(o, e) {
   let n = io[o], r = B(e).replace(/:host\b/g, o);
   io[o] = n ? n + `
 ` + r : r;
 }
-function bn(o) {
+function Mn(o) {
   if (io[o])
-    document.head.append(u.style({ id: o + "-component" }, io[o]));
+    document.head.append(y.style({ id: o + "-component" }, io[o]));
   delete io[o];
 }
 
 class F extends HTMLElement {
-  static elements = u;
+  static elements = y;
   static _elementCreator;
   static initAttributes;
   static formAssociated;
@@ -1539,14 +1563,14 @@ class F extends HTMLElement {
   static get observedAttributes() {
     let o = this.initAttributes;
     if (o)
-      return ["hidden", ...Object.keys(o).map(E)];
+      return ["hidden", ...Object.keys(o).map(x)];
     return ["hidden"];
   }
   instanceId;
   styleNode;
   static styleSpec;
   static styleNode;
-  content = u.slot();
+  content = y.slot();
   isSlotted;
   static _tagName = null;
   static get tagName() {
@@ -1554,8 +1578,9 @@ class F extends HTMLElement {
   }
   _legacyTrackedAttrs;
   _attrValues;
+  _valueChanged = false;
   static StyleNode(o) {
-    return console.warn("StyleNode is deprecated, just assign static styleSpec: XinStyleSheet to the class directly"), u.style(B(o));
+    return console.warn("StyleNode is deprecated, just assign static styleSpec: XinStyleSheet to the class directly"), y.style(B(o));
   }
   static elementCreator(o = {}) {
     let e = this;
@@ -1563,19 +1588,19 @@ class F extends HTMLElement {
       let { tag: n, styleSpec: r } = o, i = o != null ? n : null;
       if (i == null)
         if (typeof e.name === "string" && e.name !== "") {
-          if (i = E(e.name), i.startsWith("-"))
+          if (i = x(e.name), i.startsWith("-"))
             i = i.slice(1);
         } else
-          i = No();
+          i = oe();
       if (customElements.get(i) != null)
         console.warn(`${i} is already defined`);
       if (i.match(/\w+(-\w+)+/) == null)
-        console.warn(`${i} is not a legal tag for a custom-element`), i = No();
+        console.warn(`${i} is not a legal tag for a custom-element`), i = oe();
       while (customElements.get(i) !== undefined)
-        i = No();
+        i = oe();
       if (e._tagName = i, r !== undefined)
-        xn(i, r);
-      window.customElements.define(i, this, o), e._elementCreator = u[i];
+        bn(i, r);
+      window.customElements.define(i, this, o), e._elementCreator = y[i];
     }
     return e._elementCreator;
   }
@@ -1584,11 +1609,11 @@ class F extends HTMLElement {
       this._legacyTrackedAttrs = new Set;
     for (let i of o)
       this._legacyTrackedAttrs.add(i);
-    En().observe(this, { attributes: true });
+    an().observe(this, { attributes: true });
     let n = {}, r = {};
     o.forEach((i) => {
       n[i] = X(this[i]);
-      let s = E(i);
+      let s = x(i);
       Object.defineProperty(this, i, { enumerable: false, get() {
         if (typeof n[i] === "boolean")
           return this.hasAttribute(s);
@@ -1629,7 +1654,7 @@ class F extends HTMLElement {
       return e;
     }, set(n) {
       if (e !== n)
-        e = n, this.queueRender(true);
+        e = n, this._valueChanged = true, this.queueRender(true);
     } });
   }
   _parts;
@@ -1656,18 +1681,18 @@ class F extends HTMLElement {
   }
   constructor() {
     super();
-    if (je += 1, this.constructor.formAssociated && typeof this.attachInternals === "function" && !this.internals)
+    if (Qe += 1, this.constructor.formAssociated && typeof this.attachInternals === "function" && !this.internals)
       this.internals = this.attachInternals();
     let o = this.constructor.initAttributes;
     if (o)
       this._setupAttributeAccessors(o);
-    this.instanceId = `${this.tagName.toLocaleLowerCase()}-${je}`, this._value = X(this.defaultValue);
+    this.instanceId = `${this.tagName.toLocaleLowerCase()}-${Qe}`, this._value = X(this.defaultValue);
   }
   _setupAttributeAccessors(o) {
     if (!this._attrValues)
       this._attrValues = new Map;
     for (let e of Object.keys(o)) {
-      let n = E(e), r = o[e];
+      let n = x(e), r = o[e];
       if (e === "value") {
         console.warn(`${this.tagName}: 'value' cannot be an attribute. Use the Component value property instead.`);
         continue;
@@ -1722,7 +1747,7 @@ class F extends HTMLElement {
     }
   }
   connectedCallback() {
-    if (bn(this.constructor.tagName), this.hydrate(), this.role != null)
+    if (Mn(this.constructor.tagName), this.hydrate(), this.role != null)
       this.setAttribute("role", this.role);
     if (this.constructor.formAssociated && !this.hasAttribute("tabindex"))
       this.setAttribute("tabindex", "0");
@@ -1733,10 +1758,26 @@ class F extends HTMLElement {
     }
     if (this.value != null && this.getAttribute("value") != null)
       this._value = this.getAttribute("value");
+    if (this.internals && this.value !== undefined)
+      this.internals.setFormValue(this.value), this.validateValue();
     this.queueRender();
   }
   disconnectedCallback() {
     no.unobserve(this);
+  }
+  formResetCallback() {
+    if (this.value !== undefined)
+      this.value = this.defaultValue ?? "";
+  }
+  formDisabledCallback(o) {
+    if (o)
+      this.setAttribute("disabled", "");
+    else
+      this.removeAttribute("disabled");
+  }
+  formStateRestoreCallback(o) {
+    if (this.value !== undefined && typeof o === "string")
+      this.value = o;
   }
   _changeQueued = false;
   _renderQueued = false;
@@ -1747,8 +1788,10 @@ class F extends HTMLElement {
       this._changeQueued = o;
     if (!this._renderQueued)
       this._renderQueued = true, requestAnimationFrame(() => {
-        if (this._changeQueued)
-          Yo(this, "change");
+        if (this._changeQueued) {
+          if (Yo(this, "change"), this.internals && this.value !== undefined)
+            this.internals.setFormValue(this.value);
+        }
         this._changeQueued = false, this._renderQueued = false, this.render();
       });
   }
@@ -1756,9 +1799,9 @@ class F extends HTMLElement {
   hydrate() {
     if (!this._hydrated) {
       this.initValue();
-      let o = typeof this.content !== "function", e = typeof this.content === "function" ? this.content(u) : this.content, { styleSpec: n } = this.constructor, { styleNode: r } = this.constructor;
+      let o = typeof this.content !== "function", e = typeof this.content === "function" ? this.content(y) : this.content, { styleSpec: n } = this.constructor, { styleNode: r } = this.constructor;
       if (n)
-        r = this.constructor.styleNode = u.style(B(n)), delete this.constructor.styleNode;
+        r = this.constructor.styleNode = y.style(B(n)), delete this.constructor.styleNode;
       if (this.styleNode)
         console.warn(this, "styleNode is deprecrated, use static styleNode or statc styleSpec instead"), r = this.styleNode;
       if (r) {
@@ -1769,7 +1812,7 @@ class F extends HTMLElement {
         Jo(this, e, o), this.isSlotted = this.querySelector("slot,xin-slot") !== undefined;
         let s = Array.from(this.querySelectorAll("slot"));
         if (s.length > 0)
-          s.forEach(ee.replaceSlot);
+          s.forEach(ne.replaceSlot);
         if (i.length > 0) {
           let t = { "": this };
           Array.from(this.querySelectorAll("xin-slot")).forEach((c) => {
@@ -1783,10 +1826,20 @@ class F extends HTMLElement {
       this._hydrated = true;
     }
   }
-  render() {}
+  render() {
+    if (this._valueChanged && this.internals && this.value !== undefined)
+      this.internals.setFormValue(this.value), this.validateValue();
+    this._valueChanged = false;
+  }
+  validateValue() {
+    if (!this.internals || this.value === undefined)
+      return;
+    let o = typeof this.value === "string" ? this.value : String(this.value);
+    No(this, o);
+  }
 }
 
-class ee extends F {
+class ne extends F {
   static initAttributes = { name: "" };
   content = null;
   static replaceSlot(o) {
@@ -1796,82 +1849,82 @@ class ee extends F {
     o.replaceWith(e);
   }
 }
-var Qr = ee.elementCreator({ tag: "xin-slot" });
-var Mn = (o = () => true) => {
+var Or = ne.elementCreator({ tag: "xin-slot" });
+var Tn = (o = () => true) => {
   let e = localStorage.getItem("xin-state");
   if (e != null) {
     let r = JSON.parse(e);
     for (let i of Object.keys(r).filter(o))
-      if (y[i] !== undefined)
-        Object.assign(y[i], r[i]);
+      if (u[i] !== undefined)
+        Object.assign(u[i], r[i]);
       else
-        y[i] = r[i];
+        u[i] = r[i];
   }
   let n = Wo(() => {
-    let r = {}, i = p(y);
+    let r = {}, i = E(u);
     for (let s of Object.keys(i).filter(o))
       r[s] = i[s];
     localStorage.setItem("xin-state", JSON.stringify(r)), console.log("xin state saved to localStorage");
   }, 500);
   Bo(o, n);
 };
-var ne = "1.1.4";
-function wo(o) {
+var re = "1.1.4";
+function Co(o) {
   return Object.assign(v, o), v;
 }
-function po(o) {
-  return J("boxedProxy", "boxedProxy is deprecated, please use tosi() instead"), wo(o);
+function Eo(o) {
+  return J("boxedProxy", "boxedProxy is deprecated, please use tosi() instead"), Co(o);
 }
-function re(o, e = false) {
+function ie(o, e = false) {
   if (e)
-    return J("xinProxy-boxed", "xinProxy(..., true) is deprecated; use tosi(...) instead"), po(o);
+    return J("xinProxy-boxed", "xinProxy(..., true) is deprecated; use tosi(...) instead"), Eo(o);
   return Object.keys(o).forEach((n) => {
-    y[n] = o[n];
-  }), y;
+    u[n] = o[n];
+  }), u;
 }
-var Tn = {};
-async function Co(o, e) {
-  let { type: n, styleSpec: r } = await e(o, { Color: l, Component: F, elements: u, svgElements: Ko, mathML: Io, varDefault: yo, vars: Uo, xin: y, boxed: v, xinProxy: re, boxedProxy: po, tosi: wo, makeComponent: Co, bind: H, on: V, version: ne }), i = { type: n, creator: n.elementCreator({ tag: o, styleSpec: r }) };
-  return Tn[o] = i, i;
+var Ln = {};
+async function po(o, e) {
+  let { type: n, styleSpec: r } = await e(o, { Color: l, Component: F, elements: y, svgElements: Ko, mathML: Io, varDefault: uo, vars: Uo, xin: u, boxed: v, xinProxy: ie, boxedProxy: Eo, tosi: Co, makeComponent: po, bind: H, on: V, version: re }), i = { type: n, creator: n.elementCreator({ tag: o, styleSpec: r }) };
+  return Ln[o] = i, i;
 }
-var ie = {};
-var Ln = (o) => import(o);
+var se = {};
+var kn = (o) => import(o);
 
-class Eo extends F {
+class xo extends F {
   static initAttributes = { tag: "anon-elt", src: "", property: "default" };
   loaded;
   blueprintLoaded = (o) => {};
   async packaged() {
     let { tag: o, src: e, property: n } = this, r = `${o}.${n}:${e}`;
     if (!this.loaded) {
-      if (ie[r] === undefined)
-        ie[r] = Ln(e).then((i) => {
+      if (se[r] === undefined)
+        se[r] = kn(e).then((i) => {
           let s = i[n];
-          return Co(o, s);
+          return po(o, s);
         });
       else
         console.log(`using cached ${o} with signature ${r}`);
-      this.loaded = await ie[r], this.blueprintLoaded(this.loaded);
+      this.loaded = await se[r], this.blueprintLoaded(this.loaded);
     }
     return this.loaded;
   }
 }
-var kn = Eo.elementCreator({ tag: "xin-blueprint", styleSpec: { ":host": { display: "none" } } });
+var Sn = xo.elementCreator({ tag: "xin-blueprint", styleSpec: { ":host": { display: "none" } } });
 
-class se extends F {
+class te extends F {
   allLoaded = () => {};
   constructor() {
     super();
   }
   async load() {
-    let e = Array.from(this.querySelectorAll(Eo.tagName)).filter((n) => n.src).map((n) => n.packaged());
+    let e = Array.from(this.querySelectorAll(xo.tagName)).filter((n) => n.src).map((n) => n.packaged());
     await Promise.all(e), this.allLoaded();
   }
   connectedCallback() {
     super.connectedCallback(), this.load();
   }
 }
-var Sn = se.elementCreator({ tag: "xin-loader", styleSpec: { ":host": { display: "none" } } });
+var Hn = te.elementCreator({ tag: "xin-loader", styleSpec: { ":host": { display: "none" } } });
 
 // src/index.ts
 var exports_src = {};
@@ -1900,6 +1953,7 @@ __export(exports_src, {
   tosiTag: () => tosiTag,
   tosiSelect: () => tosiSelect,
   tosiSegmented: () => tosiSegmented,
+  tosiRichText: () => tosiRichText,
   tosiRating: () => tosiRating,
   tosiMonth: () => tosiMonth,
   tosiForm: () => tosiForm,
@@ -1966,6 +2020,7 @@ __export(exports_src, {
   availableFilters: () => availableFilters,
   applyTheme: () => applyTheme,
   abTest: () => abTest,
+  XinWord: () => XinWord,
   XinTagList: () => XinTagList,
   XinTag: () => XinTag,
   XinSizer: () => XinSizer,
@@ -2048,7 +2103,7 @@ function scriptTag(src, existingSymbolName) {
       const existing = globalThis[existingSymbolName];
       loadedScripts[src] = Promise.resolve({ [existingSymbolName]: existing });
     }
-    const scriptElt = u.script({ src });
+    const scriptElt = y.script({ src });
     document.head.append(scriptElt);
     loadedScripts[src] = new Promise((resolve) => {
       scriptElt.onload = () => resolve(globalThis);
@@ -2059,7 +2114,7 @@ function scriptTag(src, existingSymbolName) {
 var loadedStyleSheets = {};
 function styleSheet(href) {
   if (loadedStyleSheets[href] === undefined) {
-    const linkElement = u.link({
+    const linkElement = y.link({
       rel: "stylesheet",
       type: "text/css",
       href
@@ -2437,7 +2492,7 @@ var icons = new Proxy(icon_data_default, {
       iconSpec = icon_data_default.square;
     }
     return (...parts) => {
-      const div = u.div();
+      const div = y.div();
       div.innerHTML = iconSpec;
       const sourceSvg = div.querySelector("svg");
       const classes = new Set(sourceSvg.classList);
@@ -2446,10 +2501,10 @@ var icons = new Proxy(icon_data_default, {
         class: Array.from(classes).join(" "),
         viewBox: sourceSvg.getAttribute("viewBox")
       }, ...parts, ...sourceSvg.children);
-      svg.style.strokeWidth = yo.tosiIconStrokeWidth("2px");
-      svg.style.stroke = yo.tosiIconStroke(classes.has("filled") ? "none" : "currentColor");
-      svg.style.fill = yo.tosiIconFill(classes.has("stroked") ? "none" : "currentColor");
-      svg.style.height = yo.tosiIconSize("16px");
+      svg.style.strokeWidth = uo.tosiIconStrokeWidth("2px");
+      svg.style.stroke = uo.tosiIconStroke(classes.has("filled") ? "none" : "currentColor");
+      svg.style.fill = uo.tosiIconFill(classes.has("stroked") ? "none" : "currentColor");
+      svg.style.height = uo.tosiIconSize("16px");
       return svg;
     };
   }
@@ -2491,13 +2546,13 @@ var svgIcon = SvgIcon.elementCreator({
       "--tosi-icon-fill": "var(--xin-icon-fill, var(--icon-fill, none))",
       display: "inline-flex",
       stroke: "currentColor",
-      strokeWidth: yo.tosiIconStrokeWidth("2px"),
-      strokeLinejoin: yo.tosiIconStrokeLinejoin("round"),
-      strokeLinecap: yo.tosiIconStrokeLinecap("round"),
-      fill: yo.tosiIconFill("none")
+      strokeWidth: uo.tosiIconStrokeWidth("2px"),
+      strokeLinejoin: uo.tosiIconStrokeLinejoin("round"),
+      strokeLinecap: uo.tosiIconStrokeLinecap("round"),
+      fill: uo.tosiIconFill("none")
     },
     ":host, :host svg": {
-      height: yo.tosiIconSize("16px")
+      height: uo.tosiIconSize("16px")
     }
   }
 });
@@ -2535,7 +2590,7 @@ class B3d extends F {
       transform: "scale(1.1)"
     }
   };
-  content = u.canvas({ part: "canvas" });
+  content = y.canvas({ part: "canvas" });
   constructor() {
     super();
     this.babylonReady = (async () => {
@@ -2677,7 +2732,7 @@ var bodymovinPlayer = BodymovinPlayer.elementCreator({
   tag: "xin-lottie"
 });
 // src/carousel.ts
-var { button, slot, div } = u;
+var { button, slot, div } = y;
 
 class XinCarousel extends F {
   static initAttributes = {
@@ -2700,17 +2755,17 @@ class XinCarousel extends F {
   get page() {
     return this._page;
   }
-  set page(p2) {
+  set page(p) {
     const { scroller, back, forward } = this.parts;
     if (this.lastPage <= 0) {
       forward.disabled = back.disabled = true;
-      p2 = 0;
+      p = 0;
     } else {
-      p2 = Math.max(0, Math.min(this.lastPage, p2));
-      p2 = isNaN(p2) ? 0 : p2;
+      p = Math.max(0, Math.min(this.lastPage, p));
+      p = isNaN(p) ? 0 : p;
     }
-    if (this._page !== p2) {
-      this._page = isNaN(p2) ? 0 : p2;
+    if (this._page !== p) {
+      this._page = isNaN(p) ? 0 : p;
       this.animateScroll(this._page * scroller.offsetWidth);
       back.disabled = this.page <= 0 && !this.loop;
       forward.disabled = this.page >= this.lastPage && !this.loop;
@@ -3008,7 +3063,7 @@ var codeEditor = CodeEditor.elementCreator({
   tag: "xin-code"
 });
 // src/color-input.ts
-var { input } = u;
+var { input } = y;
 var defaultColor = l.fromCss("#8888");
 
 class ColorInput extends F {
@@ -3090,7 +3145,7 @@ var colorInput = ColorInput.elementCreator({
   tag: "xin-color"
 });
 // src/track-drag.ts
-var TRACKER = u.div({
+var TRACKER = y.div({
   style: {
     content: " ",
     position: "fixed",
@@ -3155,7 +3210,7 @@ var bringToFront = (element, selector = "body *") => {
 };
 
 // src/float.ts
-var { slot: slot2 } = u;
+var { slot: slot2 } = y;
 
 class XinFloat extends F {
   static floats = new Set;
@@ -3324,8 +3379,8 @@ var positionFloat = (element, target, position, remainOnScroll, remainOnResize, 
 
 // src/make-sorter.ts
 function makeSorter(sortValuator, ascending = true) {
-  return (p2, q2) => {
-    const pSort = sortValuator(p2);
+  return (p, q2) => {
+    const pSort = sortValuator(p);
     const qSort = sortValuator(q2);
     for (const i in pSort) {
       if (pSort[i] !== qSort[i]) {
@@ -3338,7 +3393,7 @@ function makeSorter(sortValuator, ascending = true) {
 }
 
 // src/select.ts
-var { button: button2, span, input: input2 } = u;
+var { button: button2, span, input: input2 } = y;
 var hasValue = (options, value) => {
   return !!options.find((option) => {
     if (option === null || value == null) {
@@ -3363,67 +3418,20 @@ class TosiSelect extends F {
     required: false,
     name: ""
   };
-  _options = "";
+  _options = [];
   get options() {
     return this._options;
   }
   set options(v2) {
-    this._options = v2;
+    if (typeof v2 === "string") {
+      this._options = TosiSelect.parseOptionsString(v2);
+    } else {
+      this._options = v2;
+    }
     this.queueRender();
   }
-  static get observedAttributes() {
-    return [...super.observedAttributes, "options"];
-  }
-  attributeChangedCallback(name, oldValue, newValue) {
-    super.attributeChangedCallback(name, oldValue, newValue);
-    if (name === "options" && typeof newValue === "string" && !Array.isArray(this._options) && !newValue.includes("[object")) {
-      this._options = newValue;
-      this.queueRender();
-    }
-  }
-  value = "";
-  filter = "";
-  isExpanded = false;
-  updateFormValue() {
-    this.internals?.setFormValue(this.value || null);
-    this.updateValidity();
-  }
-  updateValidity() {
-    if (!this.internals)
-      return;
-    const anchor = this.parts?.button;
-    if (this.required && !this.value) {
-      this.internals.setValidity({ valueMissing: true }, "Please select an option", anchor);
-    } else {
-      this.internals.setValidity({});
-    }
-  }
-  formDisabledCallback(disabled) {
-    this.disabled = disabled;
-  }
-  formResetCallback() {
-    this.value = "";
-  }
-  formStateRestoreCallback(state) {
-    if (state !== null) {
-      this.value = state;
-    }
-  }
-  setValue = (value, triggerAction = false) => {
-    if (this.value !== value) {
-      this.value = value;
-      this.queueRender(true);
-    }
-    if (triggerAction) {
-      this.dispatchEvent(new Event("action"));
-    }
-  };
-  getValue = () => this.value;
-  get selectOptions() {
-    if (typeof this.options !== "string") {
-      return this.options;
-    }
-    return this.options.split(",").map((option) => {
+  static parseOptionsString(optionsStr) {
+    return optionsStr.split(",").map((option) => {
       const trimmed = option.trim();
       if (trimmed === "")
         return null;
@@ -3438,6 +3446,28 @@ class TosiSelect extends F {
         icon: iconName || undefined
       };
     });
+  }
+  value = "";
+  filter = "";
+  isExpanded = false;
+  formDisabledCallback(disabled) {
+    this.disabled = disabled;
+  }
+  formResetCallback() {
+    this.value = "";
+  }
+  setValue = (value, triggerAction = false) => {
+    if (this.value !== value) {
+      this.value = value;
+      this.queueRender(true);
+    }
+    if (triggerAction) {
+      this.dispatchEvent(new Event("action"));
+    }
+  };
+  getValue = () => this.value;
+  get selectOptions() {
+    return this.options;
   }
   buildOptionMenuItem = (option) => {
     if (option === null) {
@@ -3584,10 +3614,13 @@ class TosiSelect extends F {
   };
   connectedCallback() {
     super.connectedCallback();
+    const optionsAttr = this.getAttribute("options");
+    if (optionsAttr && this._options.length === 0) {
+      this._options = TosiSelect.parseOptionsString(optionsAttr);
+    }
     if (this.localized) {
       XinLocalized.allInstances.add(this);
     }
-    this.updateFormValue();
   }
   disconnectedCallback() {
     super.disconnectedCallback();
@@ -3597,7 +3630,6 @@ class TosiSelect extends F {
   }
   render() {
     super.render();
-    this.updateFormValue();
     const { value, button: button3 } = this.parts;
     button3.disabled = this.disabled;
     const icon = value.previousElementSibling;
@@ -3675,8 +3707,8 @@ var tosiSelect = TosiSelect.elementCreator({
 var xinSelect = Ho((...args) => tosiSelect(...args), "xinSelect is deprecated, use tosiSelect instead (tag is now <tosi-select>)");
 
 // src/localize.ts
-var { span: span2 } = u;
-var { i18n } = wo({
+var { span: span2 } = y;
+var { i18n } = Co({
   i18n: {
     locale: window.navigator.language,
     locales: [window.navigator.language],
@@ -3782,7 +3814,7 @@ class XinLocalized extends F {
   static initAttributes = {
     refString: ""
   };
-  contents = () => u.xinSlot();
+  contents = () => y.xinSlot();
   connectedCallback() {
     super.connectedCallback();
     XinLocalized.allInstances.add(this);
@@ -3823,30 +3855,30 @@ var matchShortcut = (keystroke, shortcut) => {
 };
 
 // src/menu.ts
-var { div: div2, button: button3, span: span3, a, xinSlot } = u;
-en("xin-menu-helper", {
+var { div: div2, button: button3, span: span3, a: a2, xinSlot } = y;
+nn("xin-menu-helper", {
   ".xin-menu": {
     overflow: "hidden auto",
-    maxHeight: `calc(${Uo.maxHeight} - ${yo.menuInset("8px")})`,
+    maxHeight: `calc(${Uo.maxHeight} - ${uo.menuInset("8px")})`,
     borderRadius: Uo.spacing50,
-    background: yo.menuBg("#fafafa"),
-    boxShadow: yo.menuShadow(`${Uo.spacing13} ${Uo.spacing50} ${Uo.spacing} #0004`)
+    background: uo.menuBg("#fafafa"),
+    boxShadow: uo.menuShadow(`${Uo.spacing13} ${Uo.spacing50} ${Uo.spacing} #0004`)
   },
   ".xin-menu > div": {
-    width: yo.menuWidth("auto")
+    width: uo.menuWidth("auto")
   },
   ".xin-menu-trigger": {
     paddingLeft: 0,
     paddingRight: 0,
-    minWidth: yo.touchSize("48px")
+    minWidth: uo.touchSize("48px")
   },
   ".xin-menu-separator": {
     display: "inline-block",
     content: " ",
     height: "1px",
     width: "100%",
-    background: yo.menuSeparatorColor("#2224"),
-    margin: yo.menuSeparatorMargin("8px 0")
+    background: uo.menuSeparatorColor("#2224"),
+    margin: uo.menuSeparatorMargin("8px 0")
   },
   ".xin-menu-item": {
     boxShadow: "none",
@@ -3859,22 +3891,22 @@ en("xin-menu-helper", {
     width: "100%",
     gap: 0,
     background: "transparent",
-    padding: yo.menuItemPadding("0 16px"),
-    height: yo.menuItemHeight("48px"),
-    lineHeight: yo.menuItemHeight("48px"),
+    padding: uo.menuItemPadding("0 16px"),
+    height: uo.menuItemHeight("48px"),
+    lineHeight: uo.menuItemHeight("48px"),
     textAlign: "left"
   },
   ".xin-menu-item, .xin-menu-item > span": {
-    color: yo.menuItemColor("#222")
+    color: uo.menuItemColor("#222")
   },
   ".xin-menu-with-icons .xin-menu-item": {
     gridTemplateColumns: "30px 1fr 30px"
   },
   ".xin-menu-item svg": {
-    stroke: yo.menuItemIconColor("#222")
+    stroke: uo.menuItemIconColor("#222")
   },
   ".xin-menu-item.xin-menu-item-checked": {
-    background: yo.menuItemHoverBg("#eee")
+    background: uo.menuItemHoverBg("#eee")
   },
   ".xin-menu-item > span:nth-child(2)": {
     whiteSpace: "nowrap",
@@ -3884,15 +3916,15 @@ en("xin-menu-helper", {
   },
   ".xin-menu-item:hover": {
     boxShadow: "none !important",
-    background: yo.menuItemHoverBg("#eee")
+    background: uo.menuItemHoverBg("#eee")
   },
   ".xin-menu-item:active": {
     boxShadow: "none !important",
-    background: yo.menuItemActiveBg("#aaa"),
-    color: yo.menuItemActiveColor("#000")
+    background: uo.menuItemActiveBg("#aaa"),
+    color: uo.menuItemActiveColor("#000")
   },
   ".xin-menu-item:active svg": {
-    stroke: yo.menuItemIconActiveColor("#000")
+    stroke: uo.menuItemIconActiveColor("#000")
   }
 });
 var createMenuAction = (item, options) => {
@@ -3904,7 +3936,7 @@ var createMenuAction = (item, options) => {
   const itemRole = options.role === "listbox" ? "option" : "menuitem";
   let menuItem;
   if (typeof item?.action === "string") {
-    menuItem = a({
+    menuItem = a2({
       class: "xin-menu-item",
       role: itemRole,
       href: item.action
@@ -4108,7 +4140,7 @@ var xinMenu = XinMenu.elementCreator({
     ":host button > xin-slot": {
       display: "flex",
       alignItems: "center",
-      gap: yo.xinMenuTriggerGap("10px")
+      gap: uo.xinMenuTriggerGap("10px")
     }
   }
 });
@@ -4129,8 +4161,8 @@ var isTypeAllowed = (allowedTypes, type) => {
       return true;
     } else if (allowedType.indexOf("*") > -1) {
       const [A2, B2] = allowedType.split("/");
-      const [a2, b] = type.split("/");
-      if ((A2 === "*" || A2 === a2) && (B2 === "*" || B2 === b)) {
+      const [a3, b] = type.split("/");
+      if ((A2 === "*" || A2 === a3) && (B2 === "*" || B2 === b)) {
         return true;
       }
     } else {
@@ -4257,7 +4289,7 @@ function defaultWidth(array, prop, charWidth) {
   }
   return false;
 }
-var { div: div3, span: span4, button: button4, template } = u;
+var { div: div3, span: span4, button: button4, template } = y;
 var passThru = (array) => array;
 
 class DataTable extends F {
@@ -4288,7 +4320,7 @@ class DataTable extends F {
     };
   }
   set value(data) {
-    const { array, columns, filter } = p(data);
+    const { array, columns, filter } = E(data);
     if (this._array !== array || this._columns !== columns || this._filter !== filter) {
       this.queueRender();
     }
@@ -4309,7 +4341,7 @@ class DataTable extends F {
   }
   constructor() {
     super();
-    this.rowData = wo({
+    this.rowData = Co({
       [this.instanceId]: this.rowData
     })[this.instanceId];
   }
@@ -4317,7 +4349,7 @@ class DataTable extends F {
     return this._array;
   }
   set array(newArray) {
-    this._array = p(newArray);
+    this._array = E(newArray);
     this.queueRender();
   }
   get filter() {
@@ -4338,7 +4370,7 @@ class DataTable extends F {
       return;
     }
     const { prop } = sortColumn;
-    return sortColumn.sort === "ascending" ? (a2, b) => a2[prop] > b[prop] ? 1 : -1 : (a2, b) => a2[prop] > b[prop] ? -1 : 1;
+    return sortColumn.sort === "ascending" ? (a3, b) => a3[prop] > b[prop] ? 1 : -1 : (a3, b) => a3[prop] > b[prop] ? -1 : 1;
   }
   set sort(sortFunc) {
     if (this._sort !== sortFunc) {
@@ -4455,7 +4487,7 @@ class DataTable extends F {
       const [start2, finish] = [
         this.rangeStart !== undefined ? rows.indexOf(this.rangeStart) : 0,
         rows.indexOf(pickedItem)
-      ].sort((a2, b) => a2 - b);
+      ].sort((a3, b) => a3 - b);
       if (start2 > -1) {
         for (let idx = start2;idx <= finish; idx++) {
           const row = rows[idx];
@@ -4502,8 +4534,8 @@ class DataTable extends F {
     this.style.setProperty("--grid-row-width", rowWidth);
   }
   sortByColumn = (columnOptions, direction = "auto") => {
-    for (const column of this.columns.filter((c) => p(c.sort) !== false)) {
-      if (p(column) === columnOptions) {
+    for (const column of this.columns.filter((c) => E(c.sort) !== false)) {
+      if (E(column) === columnOptions) {
         if (direction === "auto") {
           column.sort = column.sort === "ascending" ? "descending" : "ascending";
         } else {
@@ -4620,7 +4652,7 @@ class DataTable extends F {
     });
   };
   get visibleRows() {
-    return p(this.rowData.visible);
+    return E(this.rowData.visible);
   }
   get visibleSelectedRows() {
     return this.visibleRows.filter((obj) => obj[this.selectedKey]);
@@ -4793,7 +4825,7 @@ var dataTable = DataTable.elementCreator({
   }
 });
 // src/dialog.ts
-var { dialog, button: button5, header, footer, xinSlot: xinSlot2, h3, p: p2, label, input: input3, div: div4 } = u;
+var { dialog, button: button5, header, footer, xinSlot: xinSlot2, h3, p, label, input: input3, div: div4 } = y;
 
 class TosiDialog extends F {
   static async alert(message, title = "Alert") {
@@ -4805,7 +4837,7 @@ class TosiDialog extends F {
           resolve();
         }
       }, h3({ slot: "header" }, title), message.includes(`
-`) ? u.pre({ style: { whiteSpace: "pre-wrap", margin: 0 } }, message) : p2(message));
+`) ? y.pre({ style: { whiteSpace: "pre-wrap", margin: 0 } }, message) : p(message));
       document.body.append(alertDialog);
       alertDialog.showModal();
     });
@@ -4817,7 +4849,7 @@ class TosiDialog extends F {
         dialogWillClose(reason) {
           resolve(reason === "confirm");
         }
-      }, h3({ slot: "header" }, title), p2(message), button5({
+      }, h3({ slot: "header" }, title), p(message), button5({
         slot: "footer",
         onClick() {
           confirmDialog.close();
@@ -4838,7 +4870,7 @@ class TosiDialog extends F {
         initialFocus() {
           inputField.focus();
         }
-      }, h3({ slot: "header" }, title), p2(label({
+      }, h3({ slot: "header" }, title), p(label({
         style: {
           display: "flex",
           flexDirection: "column",
@@ -4916,9 +4948,9 @@ var tosiDialog = TosiDialog.elementCreator({
       display: "flex",
       flexDirection: "column",
       gap: 5,
-      _dialogShadow: yo.menuShadow("0 5px 10px #0004"),
-      _dialogBackground: yo.background("#fafafa"),
-      _dialogColor: yo.textColor("#222"),
+      _dialogShadow: uo.menuShadow("0 5px 10px #0004"),
+      _dialogBackground: uo.background("#fafafa"),
+      _dialogColor: uo.textColor("#222"),
       boxShadow: Uo.dialogShadow,
       background: Uo.dialogBackground,
       color: Uo.dialogColor
@@ -5041,9 +5073,9 @@ function J2(l2) {
   return l2;
 }
 function V2(l2, e) {
-  let t = l2.replace(m.findPipe, (i, s, a2) => {
-    let o = false, p3 = s;
-    for (;--p3 >= 0 && a2[p3] === "\\"; )
+  let t = l2.replace(m.findPipe, (i, s, a3) => {
+    let o = false, p2 = s;
+    for (;--p2 >= 0 && a3[p2] === "\\"; )
       o = !o;
     return o ? "|" : " |";
   }), n = t.split(m.splitPipe), r = 0;
@@ -5087,9 +5119,9 @@ function fe2(l2, e) {
   return t > 0 ? -2 : -1;
 }
 function me2(l2, e, t, n, r) {
-  let i = e.href, s = e.title || null, a2 = l2[1].replace(r.other.outputLinkReplace, "$1");
+  let i = e.href, s = e.title || null, a3 = l2[1].replace(r.other.outputLinkReplace, "$1");
   n.state.inLink = true;
-  let o = { type: l2[0].charAt(0) === "!" ? "image" : "link", raw: t, href: i, title: s, text: a2, tokens: n.inlineTokens(a2) };
+  let o = { type: l2[0].charAt(0) === "!" ? "image" : "link", raw: t, href: i, title: s, text: a3, tokens: n.inlineTokens(a3) };
   return n.state.inLink = false, o;
 }
 function Ye2(l2, e, t) {
@@ -5102,8 +5134,8 @@ function Ye2(l2, e, t) {
     let s = i.match(t.other.beginningSpace);
     if (s === null)
       return i;
-    let [a2] = s;
-    return a2.length >= r.length ? i.slice(r.length) : i;
+    let [a3] = s;
+    return a3.length >= r.length ? i.slice(r.length) : i;
   }).join(`
 `);
 }
@@ -5158,15 +5190,15 @@ var y2 = class {
 `).split(`
 `), r = "", i = "", s = [];
       for (;n.length > 0; ) {
-        let a2 = false, o = [], p3;
-        for (p3 = 0;p3 < n.length; p3++)
-          if (this.rules.other.blockquoteStart.test(n[p3]))
-            o.push(n[p3]), a2 = true;
-          else if (!a2)
-            o.push(n[p3]);
+        let a3 = false, o = [], p2;
+        for (p2 = 0;p2 < n.length; p2++)
+          if (this.rules.other.blockquoteStart.test(n[p2]))
+            o.push(n[p2]), a3 = true;
+          else if (!a3)
+            o.push(n[p2]);
           else
             break;
-        n = n.slice(p3);
+        n = n.slice(p2);
         let u2 = o.join(`
 `), c = u2.replace(this.rules.other.blockquoteSetextReplace, `
     $1`).replace(this.rules.other.blockquoteSetextReplace2, "");
@@ -5202,9 +5234,9 @@ ${c}` : c;
     if (t) {
       let n = t[1].trim(), r = n.length > 1, i = { type: "list", raw: "", ordered: r, start: r ? +n.slice(0, -1) : "", loose: false, items: [] };
       n = r ? `\\d{1,9}\\${n.slice(-1)}` : `\\${n}`, this.options.pedantic && (n = r ? n : "[*+-]");
-      let s = this.rules.other.listItemRegex(n), a2 = false;
+      let s = this.rules.other.listItemRegex(n), a3 = false;
       for (;e; ) {
-        let p3 = false, u2 = "", c = "";
+        let p2 = false, u2 = "", c = "";
         if (!(t = s.exec(e)) || this.rules.block.hr.test(e))
           break;
         u2 = t[0], e = e.substring(u2.length);
@@ -5212,7 +5244,7 @@ ${c}` : c;
 `, 1)[0].replace(this.rules.other.listReplaceTabs, (H2) => " ".repeat(3 * H2.length)), h = e.split(`
 `, 1)[0], R2 = !g2.trim(), f = 0;
         if (this.options.pedantic ? (f = 2, c = g2.trimStart()) : R2 ? f = t[1].length + 1 : (f = t[2].search(this.rules.other.nonSpaceChar), f = f > 4 ? 1 : f, c = g2.slice(f), f += t[1].length), R2 && this.rules.other.blankLine.test(h) && (u2 += h + `
-`, e = e.substring(h.length + 1), p3 = true), !p3) {
+`, e = e.substring(h.length + 1), p2 = true), !p2) {
           let H2 = this.rules.other.nextBulletRegex(f), ee2 = this.rules.other.hrRegex(f), te2 = this.rules.other.fencesBeginRegex(f), ne2 = this.rules.other.headingBeginRegex(f), xe2 = this.rules.other.htmlBeginRegex(f);
           for (;e; ) {
             let Z2 = e.split(`
@@ -5232,7 +5264,7 @@ ${c}` : c;
 `, e = e.substring(Z2.length + 1), g2 = A2.slice(f);
           }
         }
-        i.loose || (a2 ? i.loose = true : this.rules.other.doubleBlankLine.test(u2) && (a2 = true));
+        i.loose || (a3 ? i.loose = true : this.rules.other.doubleBlankLine.test(u2) && (a3 = true));
         let O2 = null, Y2;
         this.options.gfm && (O2 = this.rules.other.listIsTask.exec(c), O2 && (Y2 = O2[0] !== "[ ] ", c = c.replace(this.rules.other.listReplaceTask, ""))), i.items.push({ type: "list_item", raw: u2, task: !!O2, checked: Y2, loose: false, text: c, tokens: [] }), i.raw += u2;
       }
@@ -5242,14 +5274,14 @@ ${c}` : c;
       else
         return;
       i.raw = i.raw.trimEnd();
-      for (let p3 = 0;p3 < i.items.length; p3++)
-        if (this.lexer.state.top = false, i.items[p3].tokens = this.lexer.blockTokens(i.items[p3].text, []), !i.loose) {
-          let u2 = i.items[p3].tokens.filter((g2) => g2.type === "space"), c = u2.length > 0 && u2.some((g2) => this.rules.other.anyLine.test(g2.raw));
+      for (let p2 = 0;p2 < i.items.length; p2++)
+        if (this.lexer.state.top = false, i.items[p2].tokens = this.lexer.blockTokens(i.items[p2].text, []), !i.loose) {
+          let u2 = i.items[p2].tokens.filter((g2) => g2.type === "space"), c = u2.length > 0 && u2.some((g2) => this.rules.other.anyLine.test(g2.raw));
           i.loose = c;
         }
       if (i.loose)
-        for (let p3 = 0;p3 < i.items.length; p3++)
-          i.items[p3].loose = true;
+        for (let p2 = 0;p2 < i.items.length; p2++)
+          i.items[p2].loose = true;
       return i;
     }
   }
@@ -5272,12 +5304,12 @@ ${c}` : c;
     let n = V2(t[1]), r = t[2].replace(this.rules.other.tableAlignChars, "").split("|"), i = t[3]?.trim() ? t[3].replace(this.rules.other.tableRowBlankLine, "").split(`
 `) : [], s = { type: "table", raw: t[0], header: [], align: [], rows: [] };
     if (n.length === r.length) {
-      for (let a2 of r)
-        this.rules.other.tableAlignRight.test(a2) ? s.align.push("right") : this.rules.other.tableAlignCenter.test(a2) ? s.align.push("center") : this.rules.other.tableAlignLeft.test(a2) ? s.align.push("left") : s.align.push(null);
-      for (let a2 = 0;a2 < n.length; a2++)
-        s.header.push({ text: n[a2], tokens: this.lexer.inline(n[a2]), header: true, align: s.align[a2] });
-      for (let a2 of i)
-        s.rows.push(V2(a2, s.header.length).map((o, p3) => ({ text: o, tokens: this.lexer.inline(o), header: false, align: s.align[p3] })));
+      for (let a3 of r)
+        this.rules.other.tableAlignRight.test(a3) ? s.align.push("right") : this.rules.other.tableAlignCenter.test(a3) ? s.align.push("center") : this.rules.other.tableAlignLeft.test(a3) ? s.align.push("left") : s.align.push(null);
+      for (let a3 = 0;a3 < n.length; a3++)
+        s.header.push({ text: n[a3], tokens: this.lexer.inline(n[a3]), header: true, align: s.align[a3] });
+      for (let a3 of i)
+        s.rows.push(V2(a3, s.header.length).map((o, p2) => ({ text: o, tokens: this.lexer.inline(o), header: false, align: s.align[p2] })));
       return s;
     }
   }
@@ -5353,20 +5385,20 @@ ${c}` : c;
     if (!r || r[3] && n.match(this.rules.other.unicodeAlphaNumeric))
       return;
     if (!(r[1] || r[2] || "") || !n || this.rules.inline.punctuation.exec(n)) {
-      let s = [...r[0]].length - 1, a2, o, p3 = s, u2 = 0, c = r[0][0] === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
+      let s = [...r[0]].length - 1, a3, o, p2 = s, u2 = 0, c = r[0][0] === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
       for (c.lastIndex = 0, t = t.slice(-1 * e.length + s);(r = c.exec(t)) != null; ) {
-        if (a2 = r[1] || r[2] || r[3] || r[4] || r[5] || r[6], !a2)
+        if (a3 = r[1] || r[2] || r[3] || r[4] || r[5] || r[6], !a3)
           continue;
-        if (o = [...a2].length, r[3] || r[4]) {
-          p3 += o;
+        if (o = [...a3].length, r[3] || r[4]) {
+          p2 += o;
           continue;
         } else if ((r[5] || r[6]) && s % 3 && !((s + o) % 3)) {
           u2 += o;
           continue;
         }
-        if (p3 -= o, p3 > 0)
+        if (p2 -= o, p2 > 0)
           continue;
-        o = Math.min(o, o + p3 + u2);
+        o = Math.min(o, o + p2 + u2);
         let g2 = [...r[0]][0].length, h = e.slice(0, s + r.index + g2 + o);
         if (Math.min(s, o) % 2) {
           let f = h.slice(1, -1);
@@ -5518,9 +5550,9 @@ var x2 = class l2 {
       }
       let i = e;
       if (this.options.extensions?.startBlock) {
-        let s = 1 / 0, a2 = e.slice(1), o;
-        this.options.extensions.startBlock.forEach((p3) => {
-          o = p3.call({ lexer: this }, a2), typeof o == "number" && o >= 0 && (s = Math.min(s, o));
+        let s = 1 / 0, a3 = e.slice(1), o;
+        this.options.extensions.startBlock.forEach((p2) => {
+          o = p2.call({ lexer: this }, a3), typeof o == "number" && o >= 0 && (s = Math.min(s, o));
         }), s < 1 / 0 && s >= 0 && (i = e.substring(0, s + 1));
       }
       if (this.state.top && (r = this.tokenizer.paragraph(i))) {
@@ -5568,9 +5600,9 @@ var x2 = class l2 {
     for (;(r = this.tokenizer.rules.inline.blockSkip.exec(n)) != null; )
       i = r[2] ? r[2].length : 0, n = n.slice(0, r.index + i) + "[" + "a".repeat(r[0].length - i - 2) + "]" + n.slice(this.tokenizer.rules.inline.blockSkip.lastIndex);
     n = this.options.hooks?.emStrongMask?.call({ lexer: this }, n) ?? n;
-    let s = false, a2 = "";
+    let s = false, a3 = "";
     for (;e; ) {
-      s || (a2 = ""), s = false;
+      s || (a3 = ""), s = false;
       let o;
       if (this.options.extensions?.inline?.some((u2) => (o = u2.call({ lexer: this }, e, t)) ? (e = e.substring(o.raw.length), t.push(o), true) : false))
         continue;
@@ -5592,7 +5624,7 @@ var x2 = class l2 {
         o.type === "text" && u2?.type === "text" ? (u2.raw += o.raw, u2.text += o.text) : t.push(o);
         continue;
       }
-      if (o = this.tokenizer.emStrong(e, n, a2)) {
+      if (o = this.tokenizer.emStrong(e, n, a3)) {
         e = e.substring(o.raw.length), t.push(o);
         continue;
       }
@@ -5616,15 +5648,15 @@ var x2 = class l2 {
         e = e.substring(o.raw.length), t.push(o);
         continue;
       }
-      let p3 = e;
+      let p2 = e;
       if (this.options.extensions?.startInline) {
         let u2 = 1 / 0, c = e.slice(1), g2;
         this.options.extensions.startInline.forEach((h) => {
           g2 = h.call({ lexer: this }, c), typeof g2 == "number" && g2 >= 0 && (u2 = Math.min(u2, g2));
-        }), u2 < 1 / 0 && u2 >= 0 && (p3 = e.substring(0, u2 + 1));
+        }), u2 < 1 / 0 && u2 >= 0 && (p2 = e.substring(0, u2 + 1));
       }
-      if (o = this.tokenizer.inlineText(p3)) {
-        e = e.substring(o.raw.length), o.raw.slice(-1) !== "_" && (a2 = o.raw.slice(-1)), s = true;
+      if (o = this.tokenizer.inlineText(p2)) {
+        e = e.substring(o.raw.length), o.raw.slice(-1) !== "_" && (a3 = o.raw.slice(-1)), s = true;
         let u2 = t.at(-1);
         u2?.type === "text" ? (u2.raw += o.raw, u2.text += o.text) : t.push(o);
         continue;
@@ -5678,8 +5710,8 @@ ${this.parser.parse(e)}</blockquote>
   }
   list(e) {
     let { ordered: t, start: n } = e, r = "";
-    for (let a2 = 0;a2 < e.items.length; a2++) {
-      let o = e.items[a2];
+    for (let a3 = 0;a3 < e.items.length; a3++) {
+      let o = e.items[a3];
       r += this.listitem(o);
     }
     let i = t ? "ol" : "ul", s = t && n !== 1 ? ' start="' + n + '"' : "";
@@ -5712,8 +5744,8 @@ ${this.parser.parse(e)}</blockquote>
     for (let i = 0;i < e.rows.length; i++) {
       let s = e.rows[i];
       n = "";
-      for (let a2 = 0;a2 < s.length; a2++)
-        n += this.tablecell(s[a2]);
+      for (let a3 = 0;a3 < s.length; a3++)
+        n += this.tablecell(s[a3]);
       r += this.tablerow({ text: n });
     }
     return r && (r = `<tbody>${r}</tbody>`), `<table>
@@ -5815,8 +5847,8 @@ var b = class l3 {
     for (let r = 0;r < e.length; r++) {
       let i = e[r];
       if (this.options.extensions?.renderers?.[i.type]) {
-        let a2 = i, o = this.options.extensions.renderers[a2.type].call({ parser: this }, a2);
-        if (o !== false || !["space", "hr", "heading", "code", "table", "blockquote", "list", "html", "def", "paragraph", "text"].includes(a2.type)) {
+        let a3 = i, o = this.options.extensions.renderers[a3.type].call({ parser: this }, a3);
+        if (o !== false || !["space", "hr", "heading", "code", "table", "blockquote", "list", "html", "def", "paragraph", "text"].includes(a3.type)) {
           n += o || "";
           continue;
         }
@@ -5864,18 +5896,18 @@ var b = class l3 {
           continue;
         }
         case "text": {
-          let a2 = s, o = this.renderer.text(a2);
+          let a3 = s, o = this.renderer.text(a3);
           for (;r + 1 < e.length && e[r + 1].type === "text"; )
-            a2 = e[++r], o += `
-` + this.renderer.text(a2);
+            a3 = e[++r], o += `
+` + this.renderer.text(a3);
           t ? n += this.renderer.paragraph({ type: "paragraph", raw: o, text: o, tokens: [{ type: "text", raw: o, text: o, escaped: true }] }) : n += o;
           continue;
         }
         default: {
-          let a2 = 'Token with "' + s.type + '" type was not found.';
+          let a3 = 'Token with "' + s.type + '" type was not found.';
           if (this.options.silent)
-            return console.error(a2), "";
-          throw new Error(a2);
+            return console.error(a3), "";
+          throw new Error(a3);
         }
       }
     }
@@ -5886,9 +5918,9 @@ var b = class l3 {
     for (let r = 0;r < e.length; r++) {
       let i = e[r];
       if (this.options.extensions?.renderers?.[i.type]) {
-        let a2 = this.options.extensions.renderers[i.type].call({ parser: this }, i);
-        if (a2 !== false || !["escape", "html", "link", "image", "strong", "em", "codespan", "br", "del", "text"].includes(i.type)) {
-          n += a2 || "";
+        let a3 = this.options.extensions.renderers[i.type].call({ parser: this }, i);
+        if (a3 !== false || !["escape", "html", "link", "image", "strong", "em", "codespan", "br", "del", "text"].includes(i.type)) {
+          n += a3 || "";
           continue;
         }
       }
@@ -5935,10 +5967,10 @@ var b = class l3 {
           break;
         }
         default: {
-          let a2 = 'Token with "' + s.type + '" type was not found.';
+          let a3 = 'Token with "' + s.type + '" type was not found.';
           if (this.options.silent)
-            return console.error(a2), "";
-          throw new Error(a2);
+            return console.error(a3), "";
+          throw new Error(a3);
         }
       }
     }
@@ -5995,8 +6027,8 @@ var B2 = class {
           for (let s of i.header)
             n = n.concat(this.walkTokens(s.tokens, t));
           for (let s of i.rows)
-            for (let a2 of s)
-              n = n.concat(this.walkTokens(a2.tokens, t));
+            for (let a3 of s)
+              n = n.concat(this.walkTokens(a3.tokens, t));
           break;
         }
         case "list": {
@@ -6007,8 +6039,8 @@ var B2 = class {
         default: {
           let i = r;
           this.defaults.extensions?.childTokens?.[i.type] ? this.defaults.extensions.childTokens[i.type].forEach((s) => {
-            let a2 = i[s].flat(1 / 0);
-            n = n.concat(this.walkTokens(a2, t));
+            let a3 = i[s].flat(1 / 0);
+            n = n.concat(this.walkTokens(a3, t));
           }) : i.tokens && (n = n.concat(this.walkTokens(i.tokens, t)));
         }
       }
@@ -6023,9 +6055,9 @@ var B2 = class {
           throw new Error("extension name required");
         if ("renderer" in i) {
           let s = t.renderers[i.name];
-          s ? t.renderers[i.name] = function(...a2) {
-            let o = i.renderer.apply(this, a2);
-            return o === false && (o = s.apply(this, a2)), o;
+          s ? t.renderers[i.name] = function(...a3) {
+            let o = i.renderer.apply(this, a3);
+            return o === false && (o = s.apply(this, a3)), o;
           } : t.renderers[i.name] = i.renderer;
         }
         if ("tokenizer" in i) {
@@ -6042,10 +6074,10 @@ var B2 = class {
             throw new Error(`renderer '${s}' does not exist`);
           if (["options", "parser"].includes(s))
             continue;
-          let a2 = s, o = n.renderer[a2], p3 = i[a2];
-          i[a2] = (...u2) => {
+          let a3 = s, o = n.renderer[a3], p2 = i[a3];
+          i[a3] = (...u2) => {
             let c = o.apply(i, u2);
-            return c === false && (c = p3.apply(i, u2)), c || "";
+            return c === false && (c = p2.apply(i, u2)), c || "";
           };
         }
         r.renderer = i;
@@ -6057,10 +6089,10 @@ var B2 = class {
             throw new Error(`tokenizer '${s}' does not exist`);
           if (["options", "rules", "lexer"].includes(s))
             continue;
-          let a2 = s, o = n.tokenizer[a2], p3 = i[a2];
-          i[a2] = (...u2) => {
+          let a3 = s, o = n.tokenizer[a3], p2 = i[a3];
+          i[a3] = (...u2) => {
             let c = o.apply(i, u2);
-            return c === false && (c = p3.apply(i, u2)), c;
+            return c === false && (c = p2.apply(i, u2)), c;
           };
         }
         r.tokenizer = i;
@@ -6072,32 +6104,32 @@ var B2 = class {
             throw new Error(`hook '${s}' does not exist`);
           if (["options", "block"].includes(s))
             continue;
-          let a2 = s, o = n.hooks[a2], p3 = i[a2];
-          S.passThroughHooks.has(s) ? i[a2] = (u2) => {
+          let a3 = s, o = n.hooks[a3], p2 = i[a3];
+          S.passThroughHooks.has(s) ? i[a3] = (u2) => {
             if (this.defaults.async && S.passThroughHooksRespectAsync.has(s))
               return (async () => {
                 let g2 = await o.call(i, u2);
-                return p3.call(i, g2);
+                return p2.call(i, g2);
               })();
             let c = o.call(i, u2);
-            return p3.call(i, c);
-          } : i[a2] = (...u2) => {
+            return p2.call(i, c);
+          } : i[a3] = (...u2) => {
             if (this.defaults.async)
               return (async () => {
                 let g2 = await o.apply(i, u2);
-                return g2 === false && (g2 = await p3.apply(i, u2)), g2;
+                return g2 === false && (g2 = await p2.apply(i, u2)), g2;
               })();
             let c = o.apply(i, u2);
-            return c === false && (c = p3.apply(i, u2)), c;
+            return c === false && (c = p2.apply(i, u2)), c;
           };
         }
         r.hooks = i;
       }
       if (n.walkTokens) {
         let i = this.defaults.walkTokens, s = n.walkTokens;
-        r.walkTokens = function(a2) {
+        r.walkTokens = function(a3) {
           let o = [];
-          return o.push(s.call(this, a2)), i && (o = o.concat(i.call(this, a2))), o;
+          return o.push(s.call(this, a3)), i && (o = o.concat(i.call(this, a3))), o;
         };
       }
       this.defaults = { ...this.defaults, ...r };
@@ -6114,28 +6146,28 @@ var B2 = class {
   }
   parseMarkdown(e) {
     return (n, r) => {
-      let i = { ...r }, s = { ...this.defaults, ...i }, a2 = this.onError(!!s.silent, !!s.async);
+      let i = { ...r }, s = { ...this.defaults, ...i }, a3 = this.onError(!!s.silent, !!s.async);
       if (this.defaults.async === true && i.async === false)
-        return a2(new Error("marked(): The async option was set to true by an extension. Remove async: false from the parse options object to return a Promise."));
+        return a3(new Error("marked(): The async option was set to true by an extension. Remove async: false from the parse options object to return a Promise."));
       if (typeof n > "u" || n === null)
-        return a2(new Error("marked(): input parameter is undefined or null"));
+        return a3(new Error("marked(): input parameter is undefined or null"));
       if (typeof n != "string")
-        return a2(new Error("marked(): input parameter is of type " + Object.prototype.toString.call(n) + ", string expected"));
+        return a3(new Error("marked(): input parameter is of type " + Object.prototype.toString.call(n) + ", string expected"));
       if (s.hooks && (s.hooks.options = s, s.hooks.block = e), s.async)
         return (async () => {
           let o = s.hooks ? await s.hooks.preprocess(n) : n, u2 = await (s.hooks ? await s.hooks.provideLexer() : e ? x2.lex : x2.lexInline)(o, s), c = s.hooks ? await s.hooks.processAllTokens(u2) : u2;
           s.walkTokens && await Promise.all(this.walkTokens(c, s.walkTokens));
           let h = await (s.hooks ? await s.hooks.provideParser() : e ? b.parse : b.parseInline)(c, s);
           return s.hooks ? await s.hooks.postprocess(h) : h;
-        })().catch(a2);
+        })().catch(a3);
       try {
         s.hooks && (n = s.hooks.preprocess(n));
-        let p3 = (s.hooks ? s.hooks.provideLexer() : e ? x2.lex : x2.lexInline)(n, s);
-        s.hooks && (p3 = s.hooks.processAllTokens(p3)), s.walkTokens && this.walkTokens(p3, s.walkTokens);
-        let c = (s.hooks ? s.hooks.provideParser() : e ? b.parse : b.parseInline)(p3, s);
+        let p2 = (s.hooks ? s.hooks.provideLexer() : e ? x2.lex : x2.lexInline)(n, s);
+        s.hooks && (p2 = s.hooks.processAllTokens(p2)), s.walkTokens && this.walkTokens(p2, s.walkTokens);
+        let c = (s.hooks ? s.hooks.provideParser() : e ? b.parse : b.parseInline)(p2, s);
         return s.hooks && (c = s.hooks.postprocess(c)), c;
       } catch (o) {
-        return a2(o);
+        return a3(o);
       }
     };
   }
@@ -6193,7 +6225,7 @@ function populate(basePath, source) {
     source = String(source);
   }
   return source.replace(/\{\{([^}]+)\}\}/g, (original, prop) => {
-    const value = y[`${basePath}${prop.startsWith("[") ? prop : "." + prop}`];
+    const value = u[`${basePath}${prop.startsWith("[") ? prop : "." + prop}`];
     return value === undefined ? original : populate(basePath, String(value));
   });
 }
@@ -6225,7 +6257,7 @@ class MarkdownViewer extends F {
   didRender = () => {};
   render() {
     super.render();
-    y[this.instanceId] = typeof this.context === "string" ? JSON.parse(this.context) : this.context;
+    u[this.instanceId] = typeof this.context === "string" ? JSON.parse(this.context) : this.context;
     const source = populate(this.instanceId, this.value);
     if (this.elements) {
       const chunks = source.split(`
@@ -6255,7 +6287,7 @@ var markdownViewer = MarkdownViewer.elementCreator({
 });
 
 // src/tab-selector.ts
-var { div: div5, slot: slot3, span: span5, button: button6 } = u;
+var { div: div5, slot: slot3, span: span5, button: button6 } = y;
 
 class TabSelector extends F {
   static initAttributes = {
@@ -6466,7 +6498,7 @@ var tabSelector = TabSelector.elementCreator({
 });
 
 // src/live-example.ts
-var { div: div6, xinSlot: xinSlot3, style, button: button7, pre } = u;
+var { div: div6, xinSlot: xinSlot3, style, button: button7, pre } = y;
 var sucraseSrc = () => "https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm";
 var AsyncFunction = (async () => {}).constructor;
 
@@ -7060,7 +7092,7 @@ if (remoteId) {
 }
 
 // src/side-nav.ts
-var { slot: slot4 } = u;
+var { slot: slot4 } = y;
 
 class SideNav extends F {
   static initAttributes = {
@@ -7074,11 +7106,11 @@ class SideNav extends F {
   static styleSpec = {
     ":host": {
       display: "grid",
-      gridTemplateColumns: `${yo.navWidth("50%")} ${yo.contentWidth("50%")}`,
+      gridTemplateColumns: `${uo.navWidth("50%")} ${uo.contentWidth("50%")}`,
       gridTemplateRows: "100%",
       position: "relative",
-      margin: yo.margin("0 0 0 -100%"),
-      transition: yo.sideNavTransition("0.25s ease-out")
+      margin: uo.margin("0 0 0 -100%"),
+      transition: uo.sideNavTransition("0.25s ease-out")
     },
     ":host slot": {
       position: "relative"
@@ -7151,7 +7183,7 @@ var sideNav = SideNav.elementCreator({
 });
 
 // src/doc-browser.ts
-var { div: div7, span: span6, a: a2, header: header2, button: button8, template: template2, input: input4, h2 } = u;
+var { div: div7, span: span6, a: a3, header: header2, button: button8, template: template2, input: input4, h2 } = y;
 function createDocBrowser(options) {
   const {
     docs,
@@ -7163,7 +7195,7 @@ function createDocBrowser(options) {
   } = options;
   const docName = document.location.search !== "" ? document.location.search.substring(1).split("&")[0] : docs[0]?.filename || "README.md";
   const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0];
-  const { app } = wo({
+  const { app } = Co({
     app: {
       docs,
       currentDoc,
@@ -7224,7 +7256,7 @@ function createDocBrowser(options) {
     span6({ style: { flex: "0 0 10px" } })
   ];
   if (projectName) {
-    headerContent.push(a2({
+    headerContent.push(a3({
       href: "/",
       style: {
         display: "flex",
@@ -7237,23 +7269,23 @@ function createDocBrowser(options) {
   }
   headerContent.push(span6({ class: "elastic" }));
   if (projectLinks.tosijs) {
-    headerContent.push(a2({ class: "iconic", title: "tosijs", target: "_blank" }, icons.tosi(), {
+    headerContent.push(a3({ class: "iconic", title: "tosijs", target: "_blank" }, icons.tosi(), {
       href: projectLinks.tosijs
     }));
   }
   if (projectLinks.discord) {
-    headerContent.push(a2({ class: "iconic", title: "discord", target: "_blank" }, icons.discord(), { href: projectLinks.discord }));
+    headerContent.push(a3({ class: "iconic", title: "discord", target: "_blank" }, icons.discord(), { href: projectLinks.discord }));
   }
   if (projectLinks.blog) {
-    headerContent.push(a2({ class: "iconic", title: "blog", target: "_blank" }, icons.blog(), {
+    headerContent.push(a3({ class: "iconic", title: "blog", target: "_blank" }, icons.blog(), {
       href: projectLinks.blog
     }));
   }
   if (projectLinks.github) {
-    headerContent.push(a2({ class: "iconic", title: "github", target: "_blank" }, icons.github(), { href: projectLinks.github }));
+    headerContent.push(a3({ class: "iconic", title: "github", target: "_blank" }, icons.github(), { href: projectLinks.github }));
   }
   if (projectLinks.npm) {
-    headerContent.push(a2({ class: "iconic", title: "npmjs", target: "_blank" }, icons.npm(), {
+    headerContent.push(a3({ class: "iconic", title: "npmjs", target: "_blank" }, icons.npm(), {
       href: projectLinks.npm
     }));
   }
@@ -7290,16 +7322,16 @@ function createDocBrowser(options) {
       hiddenProp: "hidden",
       value: app.docs
     }
-  }, template2(a2({
+  }, template2(a3({
     class: "doc-link",
     bindCurrent: "app.currentDoc.filename",
     bindDocLink: "^.filename",
     onClick(event) {
-      const a3 = event.target;
+      const a4 = event.target;
       const doc = vo(event.target);
       const nav = event.target.closest("xin-sidenav");
       nav.contentVisible = true;
-      const { href } = a3;
+      const { href } = a4;
       window.history.pushState({ href }, "", href);
       app.currentDoc = doc;
       event.preventDefault();
@@ -7310,7 +7342,7 @@ function createDocBrowser(options) {
       overflowY: "scroll",
       height: "100%"
     }
-  }, a2({
+  }, a3({
     class: "view-source",
     target: "_blank",
     style: {
@@ -7363,7 +7395,7 @@ function createDocBrowser(options) {
   return container;
 }
 // src/editable-rect.ts
-var { div: div8, slot: slot5 } = u;
+var { div: div8, slot: slot5 } = y;
 
 class EditableRect extends F {
   static initAttributes = {
@@ -7428,9 +7460,9 @@ class EditableRect extends F {
     const { gridSize } = EditableRect;
     return EditableRect.snapToGrid || event.shiftKey ? coords.map((v3) => Math.round(v3 / gridSize) * gridSize) : coords;
   }
-  static snappedAngle(event, a3) {
+  static snappedAngle(event, a4) {
     const { angleSize } = EditableRect;
-    return EditableRect.snapAngle || event.shiftKey ? Math.round(a3 / angleSize) * angleSize : a3;
+    return EditableRect.snapAngle || event.shiftKey ? Math.round(a4 / angleSize) * angleSize : a4;
   }
   get locked() {
     const element = this.parentElement;
@@ -7742,7 +7774,7 @@ var editableRect = EditableRect.elementCreator({
   tag: "xin-editable"
 });
 // src/filter-builder.ts
-var { div: div9, input: input5, button: button9, span: span7 } = u;
+var { div: div9, input: input5, button: button9, span: span7 } = y;
 var passThru2 = (array) => array;
 var NULL_FILTER_DESCRIPTION = "null filter, everything matches";
 var availableFilters = {
@@ -8050,7 +8082,7 @@ var filterBuilder = FilterBuilder.elementCreator({
   }
 });
 // src/form.ts
-var { form, slot: slot6, xinSlot: xinSlot4, label: label2, input: input6, span: span8 } = u;
+var { form, slot: slot6, xinSlot: xinSlot4, label: label2, input: input6, span: span8 } = y;
 function attr(element, name, value) {
   if (value !== "" && value !== false) {
     element.setAttribute(name, value);
@@ -8155,7 +8187,7 @@ class TosiField extends F {
     }
     if (this.type === "text") {
       input7.textContent = "";
-      const textarea = u.textarea({ value: this.value });
+      const textarea = y.textarea({ value: this.value });
       if (this.placeholder) {
         textarea.setAttribute("placeholder", this.placeholder);
       }
@@ -8310,7 +8342,7 @@ var fieldStyleSpec = {
     position: "relative",
     display: "flex",
     alignItems: "center",
-    gap: yo.prefixSuffixGap("8px")
+    gap: uo.prefixSuffixGap("8px")
   },
   ':host [part="field"][prefix]::before': {
     content: "attr(prefix)"
@@ -8344,9 +8376,9 @@ var xinField = tosiField;
 var xinForm = tosiForm;
 // src/gamepad.ts
 function gamepadState() {
-  const gamepads = navigator.getGamepads().filter((p3) => p3 !== null);
-  return gamepads.map((p3) => {
-    const { id, axes, buttons } = p3;
+  const gamepads = navigator.getGamepads().filter((p2) => p2 !== null);
+  return gamepads.map((p2) => {
+    const { id, axes, buttons } = p2;
     return {
       id,
       axes,
@@ -8367,7 +8399,7 @@ function gamepadState() {
 function gamepadText() {
   const state = gamepadState();
   return state.length === 0 ? "no active gamepads" : state.map(({ id, axes, buttons }) => {
-    const axesText = axes.map((a3) => a3.toFixed(2)).join(" ");
+    const axesText = axes.map((a4) => a4.toFixed(2)).join(" ");
     const buttonText = Object.keys(buttons).map((key) => `[${key}](${buttons[Number(key)].toFixed(2)})`).join(" ");
     return `${id}
 ${axesText}
@@ -8412,14 +8444,22 @@ ${buttonText}`;
 `);
 }
 // src/mapbox.ts
-var { div: div10 } = u;
+var { div: div10 } = y;
 
 class MapBox extends F {
+  static formAssociated = true;
   static initAttributes = {
     coords: "65.01715565258993,25.48081004203459,12",
     token: "",
-    mapStyle: "mapbox://styles/mapbox/streets-v12"
+    mapStyle: "mapbox://styles/mapbox/streets-v12",
+    name: ""
   };
+  value = "";
+  formDisabledCallback(disabled) {}
+  formResetCallback() {
+    this.value = "";
+    this.coords = "65.01715565258993,25.48081004203459,12";
+  }
   content = div10({ style: { width: "100%", height: "100%" } });
   get map() {
     return this._map;
@@ -8439,10 +8479,10 @@ class MapBox extends F {
   constructor() {
     super();
     if (MapBox.mapboxCSSAvailable === undefined) {
-      MapBox.mapboxCSSAvailable = styleSheet("https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.css").catch((e) => {
+      MapBox.mapboxCSSAvailable = styleSheet("https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css").catch((e) => {
         console.error("failed to load mapbox-gl.css", e);
       });
-      MapBox.mapboxAvailable = scriptTag("https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.js").catch((e) => {
+      MapBox.mapboxAvailable = scriptTag("https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.js").catch((e) => {
         console.error("failed to load mapbox-gl.js", e);
       });
     }
@@ -8453,16 +8493,30 @@ class MapBox extends F {
       console.error("mapbox requires an access token which you can provide via the token attribute");
     }
   }
+  _lastCoords = "";
+  _lastStyle = "";
   render() {
     super.render();
     if (!this.token) {
       return;
     }
+    if (this._map) {
+      if (this.coords !== this._lastCoords) {
+        const [long2, lat2, zoom2] = this.coords.split(",").map((x3) => Number(x3));
+        this._map.setCenter([lat2, long2]);
+        this._map.setZoom(zoom2);
+        this._lastCoords = this.coords;
+      }
+      if (this.mapStyle !== this._lastStyle) {
+        this._map.setStyle(this.mapStyle);
+        this._lastStyle = this.mapStyle;
+      }
+      return;
+    }
     const { div: div11 } = this.parts;
     const [long, lat, zoom] = this.coords.split(",").map((x3) => Number(x3));
-    if (this.map) {
-      this.map.remove();
-    }
+    this._lastCoords = this.coords;
+    this._lastStyle = this.mapStyle;
     MapBox.mapboxAvailable.then(({ mapboxgl }) => {
       console.log("%cmapbox may complain about missing css -- don't panic!", "background: orange; color: black; padding: 0 5px;");
       mapboxgl.accessToken = this.token;
@@ -8473,6 +8527,16 @@ class MapBox extends F {
         center: [lat, long]
       });
       this._map.on("render", () => this._map.resize());
+      this._map.on("moveend", () => {
+        const center = this._map.getCenter();
+        const currentZoom = this._map.getZoom();
+        const newValue = `${center.lat.toFixed(6)},${center.lng.toFixed(6)},${currentZoom.toFixed(1)}`;
+        if (newValue !== this.value) {
+          if (this.internals) {
+            this.internals.setFormValue(newValue);
+          }
+        }
+      });
     });
   }
 }
@@ -8480,7 +8544,7 @@ var mapBox = MapBox.elementCreator({
   tag: "xin-map"
 });
 // src/month.ts
-var { div: div11, span: span9, button: button10 } = u;
+var { div: div11, span: span9, button: button10 } = y;
 var DAY_MS = 24 * 3600 * 1000;
 var WEEK = [0, 1, 2, 3, 4, 5, 6];
 var MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -8488,6 +8552,7 @@ var padLeft = (value, length = 2, padding = "0") => String(value).padStart(lengt
 var dateFromYMD = (year, month, date) => new Date(`${year}-${padLeft(month)}-${padLeft(date)}`);
 
 class TosiMonth extends F {
+  static formAssociated = true;
   static initAttributes = {
     month: NaN,
     year: NaN,
@@ -8498,10 +8563,19 @@ class TosiMonth extends F {
     multiple: false,
     range: false,
     disabled: false,
-    readonly: false
+    readonly: false,
+    required: false,
+    name: ""
   };
   selectedDays = [];
   value = "";
+  formDisabledCallback(disabled) {
+    this.disabled = disabled;
+  }
+  formResetCallback() {
+    this.value = "";
+    this.selectedDays = [];
+  }
   get endDay() {
     return 1 - this.weekStart;
   }
@@ -8686,6 +8760,7 @@ class TosiMonth extends F {
   }
   days = [];
   render() {
+    super.render();
     const { week, days, jump, month, year, previous, next } = this.parts;
     this.selectedDays = this.value ? this.value.split(",") : [];
     const firstOfMonth = dateFromYMD(this.year, this.month, 1);
@@ -8766,7 +8841,7 @@ var tosiMonth = TosiMonth.elementCreator({
     },
     ":host[disabled]": {
       pointerEvents: "none",
-      opacity: yo.disabledOpacity(0.6)
+      opacity: uo.disabledOpacity(0.6)
     },
     ':host [part="month"], :host [part="year"]': {
       _fieldWidth: "4em",
@@ -8778,10 +8853,10 @@ var tosiMonth = TosiMonth.elementCreator({
       justifyItems: "stretch"
     },
     ":host .today": {
-      background: yo.monthTodayBackground("transparent"),
-      boxShadow: yo.monthTodayShadow(`none`),
-      backdropFilter: yo.monthTodayBackdropFilter("brightness(0.9)"),
-      fontWeight: yo.monthTodayFontWeight("800")
+      background: uo.monthTodayBackground("transparent"),
+      boxShadow: uo.monthTodayShadow(`none`),
+      backdropFilter: uo.monthTodayBackdropFilter("brightness(0.9)"),
+      fontWeight: uo.monthTodayFontWeight("800")
     },
     ":host .day, :host .date": {
       padding: 5,
@@ -8790,38 +8865,38 @@ var tosiMonth = TosiMonth.elementCreator({
       userSelect: "none"
     },
     ":host .day": {
-      color: yo.monthDayColor("hotpink"),
-      background: yo.monthDayBackground("white"),
-      fontWeight: yo.monthDayFontWeight("800")
+      color: uo.monthDayColor("hotpink"),
+      background: uo.monthDayBackground("white"),
+      fontWeight: uo.monthDayFontWeight("800")
     },
     ":host .date": {
       cursor: "default"
     },
     ":host .weekend": {
-      background: yo.monthWeekendBackground("#eee")
+      background: uo.monthWeekendBackground("#eee")
     },
     ":host .date:not(.in-month)": {
       opacity: 0.5
     },
     ":host .date.checked": {
-      color: yo.monthDateCheckedColor("white"),
-      background: yo.monthDateCheckedBackground("hotpink")
+      color: uo.monthDateCheckedColor("white"),
+      background: uo.monthDateCheckedBackground("hotpink")
     },
     ":host:not([range]) .date.checked": {
-      borderRadius: yo.monthDateCheckedBorderRadius("10px")
+      borderRadius: uo.monthDateCheckedBorderRadius("10px")
     },
     ":host .range-start": {
-      borderTopLeftRadius: yo.monthDateCheckedBorderRadius("10px"),
-      borderBottomLeftRadius: yo.monthDateCheckedBorderRadius("10px")
+      borderTopLeftRadius: uo.monthDateCheckedBorderRadius("10px"),
+      borderBottomLeftRadius: uo.monthDateCheckedBorderRadius("10px")
     },
     ":host .range-end": {
-      borderTopRightRadius: yo.monthDateCheckedBorderRadius("10px"),
-      borderBottomRightRadius: yo.monthDateCheckedBorderRadius("10px")
+      borderTopRightRadius: uo.monthDateCheckedBorderRadius("10px"),
+      borderBottomRightRadius: uo.monthDateCheckedBorderRadius("10px")
     }
   }
 });
 // src/notifications.ts
-var { div: div12, button: button11 } = u;
+var { div: div12, button: button11 } = y;
 var COLOR_MAP = {
   error: "red",
   warn: "orange",
@@ -8938,7 +9013,7 @@ class XinNotification extends F {
     document.body.append(singleton);
     singleton.style.zIndex = String(findHighestZ() + 1);
     const _notificationAccentColor = color || COLOR_MAP[type];
-    const progressBar = progress || type === "progress" ? u.progress() : {};
+    const progressBar = progress || type === "progress" ? y.progress() : {};
     const closeCallback = () => {
       if (close) {
         close();
@@ -9012,7 +9087,7 @@ var isBreached = async (password) => {
   }
   return response.status !== 404;
 };
-var { span: span10, xinSlot: xinSlot5 } = u;
+var { span: span10, xinSlot: xinSlot5 } = y;
 
 class XinPasswordStrength extends F {
   static initAttributes = {
@@ -9107,33 +9182,33 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
     ':host [part="meter"]': {
       display: "block",
       position: "relative",
-      height: yo.meterHeight("24px"),
-      background: yo.indicatorBg("white"),
-      borderRadius: yo.meterRadius("4px"),
-      boxShadow: yo.meterShadow(`inset 0 0 0 2px ${Uo.indicatorColor}`)
+      height: uo.meterHeight("24px"),
+      background: uo.indicatorBg("white"),
+      borderRadius: uo.meterRadius("4px"),
+      boxShadow: uo.meterShadow(`inset 0 0 0 2px ${Uo.indicatorColor}`)
     },
     ':host [part="level"]': {
-      height: yo.levelHeight("20px"),
+      height: uo.levelHeight("20px"),
       content: '" "',
       display: "inline-block",
       width: 0,
       transition: "0.15s ease-out",
       background: Uo.indicatorColor,
-      margin: yo.levelMargin("2px"),
-      borderRadius: yo.levelRadius("2px")
+      margin: uo.levelMargin("2px"),
+      borderRadius: uo.levelRadius("2px")
     },
     ':host [part="description"]': {
       position: "absolute",
       inset: "0",
       color: Uo.descriptionColor,
-      height: yo.meterHeight("24px"),
-      lineHeight: yo.meterHeight("24px"),
+      height: uo.meterHeight("24px"),
+      lineHeight: uo.meterHeight("24px"),
       textAlign: "center"
     }
   }
 });
 // src/rating.ts
-var { span: span11 } = u;
+var { span: span11 } = y;
 
 class TosiRating extends F {
   static formAssociated = true;
@@ -9152,42 +9227,12 @@ class TosiRating extends F {
     required: false,
     name: ""
   };
-  _value = null;
-  get value() {
-    return this._value;
-  }
-  set value(v3) {
-    this._value = v3;
-    this.updateFormValue();
-    this.queueRender();
-  }
-  updateFormValue() {
-    if (this._value !== null) {
-      this.internals?.setFormValue(String(this._value));
-    } else {
-      this.internals?.setFormValue(null);
-    }
-    this.updateValidity();
-  }
-  updateValidity() {
-    if (!this.internals)
-      return;
-    if (this.required && this._value === null) {
-      this.internals.setValidity({ valueMissing: true }, "Please provide a rating", this.parts.container);
-    } else {
-      this.internals.setValidity({});
-    }
-  }
+  value = "";
   formDisabledCallback(disabled) {
     this.readonly = disabled;
   }
   formResetCallback() {
-    this.value = null;
-  }
-  formStateRestoreCallback(state) {
-    if (state !== null) {
-      this.value = Number(state);
-    }
+    this.value = "";
   }
   static styleSpec = {
     ":host": {
@@ -9242,12 +9287,12 @@ class TosiRating extends F {
     } else if (event.type === "mousemove") {
       this.displayValue(value);
     } else {
-      this.displayValue(this._value || 0);
+      this.displayValue(this.value || 0);
     }
   };
   handleKey = (event) => {
-    let value = Number(this._value);
-    if (value == null) {
+    let value = Number(this.value);
+    if (value === "" || value == null) {
       value = Math.round((this.min + this.max) * 0.5 * this.step) * this.step;
     }
     let blockEvent = false;
@@ -9278,7 +9323,6 @@ class TosiRating extends F {
     container.addEventListener("blur", this.update);
     container.addEventListener("click", this.update);
     container.addEventListener("keydown", this.handleKey);
-    this.updateFormValue();
   }
   _renderedIcon = "";
   render() {
@@ -9290,10 +9334,10 @@ class TosiRating extends F {
     } else {
       this.role = "slider";
     }
-    this.ariaLabel = `rating ${this._value} out of ${this.max}`;
+    this.ariaLabel = `rating ${this.value} out of ${this.max}`;
     this.ariaValueMax = String(this.max);
     this.ariaValueMin = String(this.min);
-    this.ariaValueNow = this._value === null ? String(-1) : String(this._value);
+    this.ariaValueNow = this.value === "" ? String(-1) : String(this.value);
     const { empty, filled } = this.parts;
     empty.classList.toggle("hollow", this.hollow);
     empty.style.setProperty("--tosi-icon-fill", this.emptyFill);
@@ -9307,7 +9351,7 @@ class TosiRating extends F {
         filled.append(icons[this.icon]());
       }
     }
-    this.displayValue(this._value);
+    this.displayValue(this.value);
   }
 }
 var XinRating = TosiRating;
@@ -9316,7 +9360,7 @@ var tosiRating = TosiRating.elementCreator({
 });
 var xinRating = Ho((...args) => tosiRating(...args), "xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)");
 // src/rich-text.ts
-var { xinSlot: xinSlot6, div: div13, button: button12, span: span12 } = u;
+var { xinSlot: xinSlot6, div: div13, button: button12, span: span12 } = y;
 var blockStyles = [
   {
     caption: "Title",
@@ -9344,7 +9388,7 @@ var blockStyles = [
   }
 ];
 function blockStyle(options = blockStyles) {
-  return xinSelect({
+  return tosiSelect({
     title: "paragraph style",
     slot: "toolbar",
     class: "block-style",
@@ -9399,18 +9443,36 @@ var richTextWidgets = () => [
 ];
 
 class RichText extends F {
+  static formAssociated = true;
   static initAttributes = {
-    widgets: "default"
+    widgets: "default",
+    name: "",
+    required: false
   };
   isInitialized = false;
+  savedValue = "";
+  formDisabledCallback(disabled) {
+    if (this.isInitialized) {
+      this.parts.doc.contentEditable = disabled ? "false" : "true";
+    }
+  }
+  formResetCallback() {
+    this.value = "";
+  }
+  _value = "";
   get value() {
-    return this.isInitialized ? this.parts.doc.innerHTML : this.savedValue || this.innerHTML;
+    return this.isInitialized ? this.parts.doc.innerHTML : this._value;
   }
   set value(docHtml) {
+    const oldValue = this._value;
+    this._value = docHtml;
     if (this.isInitialized) {
-      this.parts.doc.innerHTML = docHtml;
-    } else {
-      this.innerHTML = docHtml;
+      if (this.parts.doc.innerHTML !== docHtml) {
+        this.parts.doc.innerHTML = docHtml;
+      }
+    }
+    if (oldValue !== docHtml && this.internals) {
+      this.internals.setFormValue(docHtml);
     }
   }
   blockElement(elt) {
@@ -9450,9 +9512,13 @@ class RichText extends F {
     return this.selectedBlocks.length ? selObject.toString() : "";
   }
   selectionChange = () => {};
+  _updatingBlockStyle = false;
   handleSelectChange = (event) => {
+    if (this._updatingBlockStyle) {
+      return;
+    }
     const target = event.target;
-    const select = target?.closest(XinSelect.tagName);
+    const select = target?.closest(TosiSelect.tagName);
     if (select == null) {
       return;
     }
@@ -9500,7 +9566,28 @@ class RichText extends F {
     }
     let blockTags = this.selectedBlocks.map((block) => block.tagName);
     blockTags = [...new Set(blockTags)];
+    this._updatingBlockStyle = true;
     select.value = blockTags.length === 1 ? `formatBlock,${blockTags[0]}` : "";
+    this._updatingBlockStyle = false;
+  }
+  hasContent() {
+    const text = this.parts.doc.textContent || "";
+    return text.trim().length > 0;
+  }
+  handleInput = () => {
+    if (this.internals) {
+      this.internals.setFormValue(this.parts.doc.innerHTML);
+      this.updateValidity();
+    }
+  };
+  updateValidity() {
+    if (this.internals) {
+      if (this.required && !this.hasContent()) {
+        this.internals.setValidity({ valueMissing: true }, "Please enter some content", this.parts.doc);
+      } else {
+        this.internals.setValidity({});
+      }
+    }
   }
   connectedCallback() {
     super.connectedCallback();
@@ -9511,6 +9598,8 @@ class RichText extends F {
     }
     this.isInitialized = true;
     content.style.display = "none";
+    doc.addEventListener("input", this.handleInput);
+    this.updateValidity();
     document.addEventListener("selectionchange", (event) => {
       this.updateBlockStyle();
       this.selectionChange(event, this);
@@ -9531,8 +9620,9 @@ class RichText extends F {
     }
   }
 }
-var richText = RichText.elementCreator({
-  tag: "xin-word",
+var XinWord = RichText;
+var tosiRichText = RichText.elementCreator({
+  tag: "tosi-rich-text",
   styleSpec: {
     ":host": {
       display: "flex",
@@ -9551,8 +9641,9 @@ var richText = RichText.elementCreator({
     }
   }
 });
+var richText = Ho((...args) => tosiRichText(...args), "richText is deprecated, use tosiRichText instead (tag is now <tosi-rich-text>)");
 // src/segmented.ts
-var { div: div14, slot: slot7, label: label3, span: span13, input: input7 } = u;
+var { div: div14, slot: slot7, label: label3, span: span13, input: input7 } = y;
 
 class TosiSegmented extends F {
   static formAssociated = true;
@@ -9565,47 +9656,30 @@ class TosiSegmented extends F {
     localized: false,
     required: false
   };
-  _choicesValue = "";
+  _choices = [];
   get choices() {
-    return this._choicesValue;
+    return this._choices;
   }
   set choices(v3) {
-    this._choicesValue = v3;
+    if (typeof v3 === "string") {
+      this._choices = TosiSegmented.parseChoicesString(v3);
+    } else {
+      this._choices = v3;
+    }
     this.queueRender();
   }
-  static get observedAttributes() {
-    return [...super.observedAttributes, "choices"];
+  static parseChoicesString(choicesStr) {
+    return choicesStr.split(",").filter((c) => c.trim() !== "").map((c) => {
+      const [value, remains] = c.split("=").map((v3) => v3.trim());
+      const [caption, iconName] = (remains || value).split(":").map((v3) => v3.trim());
+      const icon = iconName ? icons[iconName]() : "";
+      return { value, icon, caption };
+    });
   }
-  attributeChangedCallback(name, oldValue, newValue) {
-    super.attributeChangedCallback(name, oldValue, newValue);
-    if (name === "choices" && typeof newValue === "string") {
-      this._choicesValue = newValue;
-      this.queueRender();
-    }
-  }
-  value = null;
-  updateFormValue() {
-    this.internals?.setFormValue(this.value || null);
-    this.updateValidity();
-  }
-  updateValidity() {
-    if (!this.internals)
-      return;
-    const anchor = this.parts?.options;
-    if (this.required && !this.value) {
-      this.internals.setValidity({ valueMissing: true }, "Please select an option", anchor);
-    } else {
-      this.internals.setValidity({});
-    }
-  }
+  value = "";
   formDisabledCallback(disabled) {}
   formResetCallback() {
-    this.value = null;
-  }
-  formStateRestoreCallback(state) {
-    if (state !== null) {
-      this.value = state;
-    }
+    this.value = "";
   }
   get values() {
     return (this.value || "").split(",").map((v3) => v3.trim()).filter((v3) => v3 !== "");
@@ -9617,62 +9691,62 @@ class TosiSegmented extends F {
   static styleSpec = {
     ":host": {
       display: "inline-flex",
-      gap: yo.segmentedOptionGap("8px"),
-      alignItems: yo.segmentedAlignItems("center")
+      gap: uo.segmentedOptionGap("8px"),
+      alignItems: uo.segmentedAlignItems("center")
     },
     ":host, :host::part(options)": {
-      flexDirection: yo.segmentedDirection("row")
+      flexDirection: uo.segmentedDirection("row")
     },
     ":host label": {
       display: "inline-grid",
       alignItems: "center",
-      gap: yo.segmentedOptionGap("8px"),
-      gridTemplateColumns: yo.segmentedOptionGridColumns("0px 24px 1fr"),
-      padding: yo.segmentedOptionPadding("4px 12px"),
-      font: yo.segmentedOptionFont("16px")
+      gap: uo.segmentedOptionGap("8px"),
+      gridTemplateColumns: uo.segmentedOptionGridColumns("0px 24px 1fr"),
+      padding: uo.segmentedOptionPadding("4px 12px"),
+      font: uo.segmentedOptionFont("16px")
     },
     ":host label:focus": {
       outline: "none",
-      boxShadow: yo.segmentedFocusShadow(`inset 0 0 0 2px ${yo.segmentedOptionCurrentBackground("#44a")}`),
-      borderRadius: yo.segmentedOptionsBorderRadius("8px")
+      boxShadow: uo.segmentedFocusShadow(`inset 0 0 0 2px ${uo.segmentedOptionCurrentBackground("#44a")}`),
+      borderRadius: uo.segmentedOptionsBorderRadius("8px")
     },
     ":host label:has(:checked)": {
-      color: yo.segmentedOptionCurrentColor("#eee"),
-      background: yo.segmentedOptionCurrentBackground("#44a")
+      color: uo.segmentedOptionCurrentColor("#eee"),
+      background: uo.segmentedOptionCurrentBackground("#44a")
     },
     ":host label:has(:checked):focus": {
-      boxShadow: yo.segmentedCurrentFocusShadow(`inset 0 0 0 2px ${yo.segmentedOptionCurrentColor("#eee")}`)
+      boxShadow: uo.segmentedCurrentFocusShadow(`inset 0 0 0 2px ${uo.segmentedOptionCurrentColor("#eee")}`)
     },
     ":host svg": {
-      height: yo.segmentOptionIconSize("16px"),
-      stroke: yo.segmentedOptionIconColor("currentColor")
+      height: uo.segmentOptionIconSize("16px"),
+      stroke: uo.segmentedOptionIconColor("currentColor")
     },
     ":host label.no-icon": {
       gap: 0,
-      gridTemplateColumns: yo.segmentedOptionGridColumns("0px 1fr")
+      gridTemplateColumns: uo.segmentedOptionGridColumns("0px 1fr")
     },
     ':host input[type="radio"], :host input[type="checkbox"]': {
-      visibility: yo.segmentedInputVisibility("hidden")
+      visibility: uo.segmentedInputVisibility("hidden")
     },
     ":host::part(options)": {
       display: "flex",
-      borderRadius: yo.segmentedOptionsBorderRadius("8px"),
-      background: yo.segmentedOptionsBackground("#fff"),
-      color: yo.segmentedOptionColor("#222"),
+      borderRadius: uo.segmentedOptionsBorderRadius("8px"),
+      background: uo.segmentedOptionsBackground("#fff"),
+      color: uo.segmentedOptionColor("#222"),
       overflow: "hidden",
-      alignItems: yo.segmentedOptionAlignItems("stretch")
+      alignItems: uo.segmentedOptionAlignItems("stretch")
     },
     ":host::part(custom)": {
-      padding: yo.segmentedOptionPadding("4px 12px"),
-      color: yo.segmentedOptionCurrentColor("#eee"),
-      background: yo.segmentedOptionCurrentBackground("#44a"),
-      font: yo.segmentedOptionFont("16px"),
+      padding: uo.segmentedOptionPadding("4px 12px"),
+      color: uo.segmentedOptionCurrentColor("#eee"),
+      background: uo.segmentedOptionCurrentBackground("#44a"),
+      font: uo.segmentedOptionFont("16px"),
       border: "0",
       outline: "none"
     },
     ":host::part(custom)::placeholder": {
-      color: yo.segmentedOptionCurrentColor("#eee"),
-      opacity: yo.segmentedPlaceholderOpacity(0.75)
+      color: uo.segmentedOptionCurrentColor("#eee"),
+      opacity: uo.segmentedPlaceholderOpacity(0.75)
     }
   };
   valueChanged = false;
@@ -9686,7 +9760,7 @@ class TosiSegmented extends F {
     } else {
       const input8 = options.querySelector("input:checked");
       if (!input8) {
-        this.value = null;
+        this.value = "";
       } else if (input8.value) {
         custom.setAttribute("hidden", "");
         this.value = input8.value;
@@ -9742,6 +9816,10 @@ class TosiSegmented extends F {
   };
   connectedCallback() {
     super.connectedCallback();
+    const choicesAttr = this.getAttribute("choices");
+    if (choicesAttr && this._choices.length === 0) {
+      this._choices = TosiSegmented.parseChoicesString(choicesAttr);
+    }
     const { options } = this.parts;
     if (this.name === "") {
       this.name = this.instanceId;
@@ -9752,16 +9830,9 @@ class TosiSegmented extends F {
       console.warn(this, "is set to [other] and [multiple]; [other] will be ignored");
       this.other = "";
     }
-    this.updateFormValue();
   }
-  get _choices() {
-    const options = Array.isArray(this.choices) ? this.choices : this.choices.split(",").filter((c) => c.trim() !== "").map((c) => {
-      const [value, remains] = c.split("=").map((v3) => v3.trim());
-      const [caption, iconName] = (remains || value).split(":").map((v3) => v3.trim());
-      const icon = iconName ? icons[iconName]() : "";
-      const choice = { value, icon, caption };
-      return choice;
-    });
+  get _choicesWithOther() {
+    const options = [...this.choices];
     if (this.other && !this.multiple) {
       const [caption, icon] = this.other.split(":");
       options.push({
@@ -9773,11 +9844,10 @@ class TosiSegmented extends F {
     return options;
   }
   get isOtherValue() {
-    return Boolean(this.value === "" || this.value && !this._choices.find((choice) => choice.value === this.value));
+    return Boolean(this.value === "" || this.value && !this._choicesWithOther.find((choice) => choice.value === this.value));
   }
   render() {
     super.render();
-    this.updateFormValue();
     if (this.valueChanged) {
       this.valueChanged = false;
       return;
@@ -9786,7 +9856,7 @@ class TosiSegmented extends F {
     options.textContent = "";
     const type = this.multiple ? "checkbox" : "radio";
     const { values, isOtherValue } = this;
-    options.append(...this._choices.map((choice) => {
+    options.append(...this._choicesWithOther.map((choice) => {
       return label3({ tabindex: 0 }, input7({
         type,
         name: this.name,
@@ -9809,7 +9879,7 @@ var tosiSegmented = TosiSegmented.elementCreator({
 });
 var xinSegmented = Ho((...args) => tosiSegmented(...args), "xinSegmented is deprecated, use tosiSegmented instead (tag is now <tosi-segmented>)");
 // src/size-break.ts
-var { slot: slot8 } = u;
+var { slot: slot8 } = y;
 
 class SizeBreak extends F {
   static initAttributes = {
@@ -9917,7 +9987,7 @@ var xinSizer = XinSizer.elementCreator({
   tag: "xin-sizer"
 });
 // src/tag-list.ts
-var { div: div15, input: input8, span: span14, button: button13 } = u;
+var { div: div15, input: input8, span: span14, button: button13 } = y;
 
 class TosiTag extends F {
   static initAttributes = {
@@ -9947,10 +10017,10 @@ var tosiTag = TosiTag.elementCreator({
       "--tag-close-button-bg": "#fffc",
       "--tag-button-opacity": "0.5",
       "--tag-button-hover-opacity": "0.75",
-      "--tag-bg": yo.brandColor("blue"),
-      "--tag-text-color": yo.brandTextColor("white"),
+      "--tag-bg": uo.brandColor("blue"),
+      "--tag-text-color": uo.brandTextColor("white"),
       display: "inline-flex",
-      borderRadius: yo.tagRoundedRadius(Uo.spacing50),
+      borderRadius: uo.tagRoundedRadius(Uo.spacing50),
       color: Uo.tagTextColor,
       background: Uo.tagBg,
       padding: `0 ${Uo.spacing75} 0 ${Uo.spacing75}`,
@@ -9962,7 +10032,7 @@ var tosiTag = TosiTag.elementCreator({
       whiteSpace: "nowrap",
       overflow: "hidden",
       flex: "1 1 auto",
-      fontSize: yo.fontSize("16px"),
+      fontSize: uo.fontSize("16px"),
       color: Uo.tagTextColor,
       textOverflow: "ellipsis"
     },
@@ -9978,7 +10048,7 @@ var tosiTag = TosiTag.elementCreator({
       width: Uo.spacing150,
       color: Uo.tagCloseButtonColor,
       background: Uo.tagCloseButtonBg,
-      borderRadius: yo.tagCloseButtonRadius("99px"),
+      borderRadius: uo.tagCloseButtonRadius("99px"),
       opacity: Uo.tagButtonOpacity
     },
     ':host [part="remove"]:hover': {
@@ -9999,75 +10069,59 @@ class TosiTagList extends F {
     disabled: false,
     required: false
   };
-  value = [];
+  value = "";
+  get tags() {
+    return this.value.split(",").map((tag) => tag.trim()).filter((tag) => tag !== "");
+  }
+  set tags(v3) {
+    this.value = v3.join(",");
+  }
   _availableTags = [];
   get availableTags() {
     return this._availableTags;
   }
   set availableTags(v3) {
-    this._availableTags = v3;
+    if (typeof v3 === "string") {
+      this._availableTags = TosiTagList.parseAvailableTagsString(v3);
+    } else {
+      this._availableTags = v3;
+    }
     this.queueRender();
   }
-  static get observedAttributes() {
-    return [...super.observedAttributes, "available-tags"];
+  static parseAvailableTagsString(tagsStr) {
+    return tagsStr.split(",").map((tag) => {
+      const trimmed = tag.trim();
+      return trimmed === "" ? null : trimmed;
+    });
   }
-  attributeChangedCallback(name, oldValue, newValue) {
-    super.attributeChangedCallback(name, oldValue, newValue);
-    if (name === "available-tags" && typeof newValue === "string") {
-      this._availableTags = newValue;
-      this.queueRender();
-    }
-  }
-  updateFormValue() {
-    if (this.internals) {
-      const stringValue = this.tags.join(",");
-      this.internals.setFormValue(stringValue);
-    }
-  }
-  updateValidity() {
-    if (this.internals) {
-      const anchor = this.parts?.tagContainer;
-      if (this.required && this.tags.length === 0) {
-        this.internals.setValidity({ valueMissing: true }, "Please select at least one tag", anchor);
-      } else {
-        this.internals.setValidity({});
-      }
+  connectedCallback() {
+    super.connectedCallback();
+    const tagsAttr = this.getAttribute("available-tags");
+    if (tagsAttr && this._availableTags.length === 0) {
+      this._availableTags = TosiTagList.parseAvailableTagsString(tagsAttr);
     }
   }
   formDisabledCallback(disabled) {
     this.disabled = disabled;
   }
   formResetCallback() {
-    this.value = [];
-    this.queueRender(true);
-  }
-  formStateRestoreCallback(state) {
-    if (state) {
-      this.value = state.split(",").filter((t) => t !== "");
-      this.queueRender(true);
-    }
-  }
-  get tags() {
-    return typeof this.value === "string" ? this.value.split(",").map((tag) => tag.trim()).filter((tag) => tag !== "") : this.value;
+    this.value = "";
   }
   addTag = (tag) => {
-    if (tag.trim() === "") {
+    const trimmed = tag.trim();
+    if (trimmed === "" || this.tags.includes(trimmed)) {
       return;
     }
-    const { tags } = this;
-    if (!tags.includes(tag)) {
-      tags.push(tag);
-    }
-    this.value = tags;
+    this.tags = [...this.tags, trimmed];
     this.queueRender(true);
   };
   toggleTag = (toggled) => {
     if (this.tags.includes(toggled)) {
-      this.value = this.tags.filter((tag) => tag !== toggled);
+      this.tags = this.tags.filter((t) => t !== toggled);
+      this.queueRender(true);
     } else {
       this.addTag(toggled);
     }
-    this.queueRender(true);
   };
   enterTag = (event) => {
     const { tagInput } = this.parts;
@@ -10092,7 +10146,7 @@ class TosiTagList extends F {
   popSelectMenu = () => {
     const { toggleTag } = this;
     const { tagMenu } = this.parts;
-    const tags = typeof this.availableTags === "string" ? this.availableTags.split(",") : this.availableTags;
+    const tags = [...this.availableTags];
     const extraTags = this.tags.filter((tag) => !tags.includes(tag));
     if (extraTags.length) {
       tags.push(null, ...extraTags);
@@ -10150,7 +10204,7 @@ class TosiTagList extends F {
   removeTag = (event) => {
     if (this.editable && !this.disabled) {
       const tag = event.target.closest(TosiTag.tagName);
-      this.value = this.tags.filter((value) => value !== tag.caption);
+      this.tags = this.tags.filter((t) => t !== tag.caption);
       tag.remove();
       this.queueRender(true);
     }
@@ -10159,8 +10213,6 @@ class TosiTagList extends F {
   };
   render() {
     super.render();
-    this.updateFormValue();
-    this.updateValidity();
     const { tagContainer, tagMenu, tagInput } = this.parts;
     tagMenu.disabled = this.disabled;
     tagInput.value = "";
@@ -10173,8 +10225,7 @@ class TosiTagList extends F {
       tagInput.toggleAttribute("hidden", true);
     }
     tagContainer.textContent = "";
-    const { tags } = this;
-    for (const tag of tags) {
+    for (const tag of this.tags) {
       tagContainer.append(tosiTag({
         caption: tag,
         removeable: this.editable && !this.disabled,
@@ -10196,7 +10247,7 @@ var tosiTagList = TosiTagList.elementCreator({
       alignItems: "center",
       background: Uo.tagListBg,
       gap: Uo.spacing25,
-      borderRadius: yo.taglistRoundedRadius(Uo.spacing50),
+      borderRadius: uo.taglistRoundedRadius(Uo.spacing50),
       overflow: "hidden"
     },
     ":host[editable]": {
@@ -10210,7 +10261,7 @@ var tosiTagList = TosiTagList.elementCreator({
       content: '" "',
       alignItems: "center",
       background: Uo.inputBg,
-      borderRadius: yo.tagContainerRadius(Uo.spacing50),
+      borderRadius: uo.tagContainerRadius(Uo.spacing50),
       boxShadow: Uo.borderShadow,
       flexWrap: "nowrap",
       overflow: "auto hidden",
@@ -10307,11 +10358,11 @@ function createDarkTheme(colors) {
   const lightTheme = createTheme(colors);
   const rootStyles = lightTheme[":root"];
   return {
-    ":root": tn(rootStyles)
+    ":root": cn(rootStyles)
   };
 }
 function applyTheme(theme, id = "tosi-theme") {
-  en(id, theme);
+  nn(id, theme);
 }
 var baseTheme = createTheme(defaultColors);
 var baseDarkTheme = createDarkTheme(defaultColors);
@@ -10399,7 +10450,7 @@ var styleSpec = {
     }
   },
   ".darkmode": {
-    ...tn(colors),
+    ...cn(colors),
     _shadowColor: brandColor.opacity(0.5),
     _menuShadow: `0 0 0 2px ${brandColor.opacity(0.75)}`,
     _menuSeparatorColor: brandColor.opacity(0.5)
@@ -10853,7 +10904,7 @@ Weak	Faible	Heikko	Svag	虚弱的	弱い	약한	Débil	Schwach	Debole
 Yes	Oui	Kyllä	Ja	是的	はい	예	Sí	Ja	Sì`;
 
 // demo/src/css-var-editor.ts
-var { h2: h22, code } = u;
+var { h2: h22, code } = y;
 
 class XinCssVarEditor extends F {
   elementSelector = "";
@@ -12375,7 +12426,7 @@ just add the \`no-drag\` class to an element or its container.`,
   {
     text: `# forms
 
-\`<xin-form>\` and \`<xin-field>\` can be used to quickly create forms complete with
+\`<tosi-form>\` and \`<tosi-field>\` can be used to quickly create forms complete with
 [client-side validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation#built-in_form_validation_examples).
 
 \`\`\`js
@@ -12508,30 +12559,30 @@ preview.querySelector('.submit').addEventListener('click', form.submit)
 }
 \`\`\`
 
-## \`<xin-form>\`
+## \`<tosi-form>\`
 
-\`<xin-form>\` prevents the default form behavior when a \`submit\` event is triggered and instead validates the
+\`<tosi-form>\` prevents the default form behavior when a \`submit\` event is triggered and instead validates the
 form contents (generating feedback if desired) and calls its \`submitCallback(value: {[key: string]: any}, isValid: boolean): void\`
 method.
 
-\`<xin-form>\` offers a \`fields\` proxy that allows values stored in the form to be updated. Any changes will trigger a \`change\`
-event on the \`<xin-form>\` (in addition to any events fired by form fields).
+\`<tosi-form>\` offers a \`fields\` proxy that allows values stored in the form to be updated. Any changes will trigger a \`change\`
+event on the \`<tosi-form>\` (in addition to any events fired by form fields).
 
-\`<xin-form>\` instances have \`value\` and \`isValid\` properties you can access any time. Note that \`isValid\` is computed
+\`<tosi-form>\` instances have \`value\` and \`isValid\` properties you can access any time. Note that \`isValid\` is computed
 and triggers form validation.
 
-\`<xin-form>\` has \`header\` and \`footer\` \`<slot>\`s in addition to default \`<slot>\`, which is tucked inside a \`<form>\` element.
+\`<tosi-form>\` has \`header\` and \`footer\` \`<slot>\`s in addition to default \`<slot>\`, which is tucked inside a \`<form>\` element.
 
-## \`<xin-field>\`
+## \`<tosi-field>\`
 
-\`<xin-field>\` is a simple web-component with no shadowDOM that combines an \`<input>\` field wrapped with a \`<label>\`. Any
+\`<tosi-field>\` is a simple web-component with no shadowDOM that combines an \`<input>\` field wrapped with a \`<label>\`. Any
 content of the custom-element will become the \`caption\` or you can simply set the \`caption\` attribute.
 
 You can replace the default \`<input>\` field by adding an element to the slot \`input\` (it's a \`xinSlot\`) whereupon
 the \`value\` of that element will be used instead of the built-in \`<input>\`. (The \`<input>\` is retained and
 is used to drive form-validation.)
 
-\`<xin-field>\` supports the following attributes:
+\`<tosi-field>\` supports the following attributes:
 
 - \`caption\` labels the field
 - \`key\` determines the form property the field will populate
@@ -12653,18 +12704,18 @@ form.addEventListener('reset', () => {
 })
 \`\`\`
 
-## Using formAssociated Components with xin-form
+## Using formAssociated Components with tosi-form
 
-While the formAssociated components work with native \`<form>\` elements, using them with \`<xin-form>\`
+While the formAssociated components work with native \`<form>\` elements, using them with \`<tosi-form>\`
 provides additional benefits:
 
-- **No submit prevention boilerplate** - \`xin-form\` automatically prevents the default form submission
+- **No submit prevention boilerplate** - \`tosi-form\` automatically prevents the default form submission
 - **JSON state management** - Initialize and access form state as a JavaScript object via \`value\` and \`fields\`
 - **Validation feedback** - Built-in \`isValid\` property and \`submitCallback\` with validation status
 - **Change events** - Unified change events on the form element
 
 Since these components now support \`formAssociated\`, they participate directly in form submission
-and validation without needing the hidden input workaround that \`xin-field\` uses.
+and validation without needing the hidden input workaround that \`tosi-field\` uses.
 
 \`\`\`html
 <tosi-form id="tosi-form" value='{"rating": 3, "tier": "pro"}'>
@@ -13778,7 +13829,48 @@ here.addEventListener('click', async () => {
 \`\`\`
 
 There's no need to learn new APIs or write wrappers, just access the element's \`map\` property
-and [use the standard mapbox APIs directly](https://docs.mapbox.com/api/maps/styles/).`,
+and [use the standard mapbox APIs directly](https://docs.mapbox.com/api/maps/styles/).
+
+## Form Integration
+
+\`<xin-map>\` is form-associated, making it useful as a location picker in forms:
+
+\`\`\`html
+<form class="map-form">
+  <label>
+    <b>Select your location:</b>
+    <xin-map
+      name="location"
+      style="width: 100%; height: 200px"
+      coords="40.7128,-74.0060,10"
+      token="pk.eyJ1IjoicG9kcGVyc29uIiwiYSI6ImNqc2JlbWU0bjA1ZmY0YW5ycHZod3VhbWcifQ.arvqfpOqMgFYkKgQ35UScA"
+    ></xin-map>
+  </label>
+  <button type="submit">Submit Location</button>
+  <button type="reset">Reset</button>
+  <span class="output"></span>
+</form>
+\`\`\`
+\`\`\`css
+.preview .map-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.preview .map-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+\`\`\`
+\`\`\`js
+const form = preview.querySelector('.map-form')
+form.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const data = new FormData(form)
+  form.querySelector('.output').textContent = 'Location: ' + data.get('location')
+})
+\`\`\``,
     title: "map",
     filename: "mapbox.ts",
     path: "src/mapbox.ts"
@@ -14299,6 +14391,67 @@ These prevent the user from changing the displayed month. This example is \`read
 
 \`\`\`html
 <tosi-month readonly value="1976-04-01"></tosi-month>
+\`\`\`
+
+## Form Integration
+
+\`<tosi-month>\` is form-associated, so it works directly in native forms:
+
+\`\`\`html
+<form id="date-form" class="date-form">
+  <label>
+    <span>Select a date (required):</span>
+    <tosi-month name="date" selectable required></tosi-month>
+  </label>
+  <div class="buttons">
+    <button type="submit">Submit</button>
+    <button type="reset">Reset</button>
+  </div>
+</form>
+\`\`\`
+\`\`\`css
+.preview .date-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.preview .date-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview .date-form .buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.preview tosi-month:invalid {
+  outline: 2px solid #f008;
+  outline-offset: 2px;
+}
+
+.preview tosi-month:valid {
+  outline: 2px solid #0a08;
+  outline-offset: 2px;
+}
+\`\`\`
+\`\`\`js
+const { TosiDialog } = tosijsui
+const form = preview.querySelector('#date-form')
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const formData = new FormData(form)
+  const data = Object.fromEntries(formData.entries())
+  TosiDialog.alert(JSON.stringify(data, null, 2), 'Date Selected')
+})
+
+form.addEventListener('reset', () => {
+  TosiDialog.alert('Form has been reset', 'Reset')
+})
 \`\`\``,
     title: "month",
     filename: "month.ts",
@@ -14913,27 +15066,27 @@ and (in my opinion) common sense, but  not like [MUI's rating widget](https://mu
   {
     text: `# rich text
 
-\`<xin-word>\` is a simple and easily extensible \`document.execCommand\` WYSIWYG editor with some conveniences.
-The class name is \`RichText\` and the ElementCreator is \`richText\`.
+\`<tosi-rich-text>\` is a simple and easily extensible \`document.execCommand\` WYSIWYG editor with some conveniences.
+The class name is \`RichText\` and the ElementCreator is \`tosiRichText\`.
 
 ### \`default\` widgets
 
 \`\`\`html
-<xin-word>
+<tosi-rich-text>
 <h3>Heading</h3>
 <p>And some <b>text</b></p>
-</xin-word>
+</tosi-rich-text>
 \`\`\`
 \`\`\`css
-xin-word {
+tosi-rich-text {
   background: white;
 }
 
-xin-word [part="toolbar"] {
+tosi-rich-text [part="toolbar"] {
   background: #f8f8f8;
 }
 
-xin-word [part="doc"] {
+tosi-rich-text [part="doc"] {
   padding: 20px;
 }
 \`\`\`
@@ -14941,31 +15094,31 @@ xin-word [part="doc"] {
 ### \`minimal\` widgets
 
 \`\`\`html
-<xin-word widgets="minimal">
+<tosi-rich-text widgets="minimal">
 <h3>Heading</h3>
 <p>And some <b>text</b></p>
-</xin-word>
+</tosi-rich-text>
 \`\`\`
 \`\`\`css
-xin-word {
+tosi-rich-text {
   background: white;
 }
 
-xin-word [part="toolbar"] {
+tosi-rich-text [part="toolbar"] {
   background: #f8f8f8;
 }
 
-xin-word [part="doc"] {
+tosi-rich-text [part="doc"] {
   padding: 20px;
 }
 \`\`\`
 
-By default, \`<xin-word>\` treats its initial contents as its document, but you can also set (and get)
+By default, \`<tosi-rich-text>\` treats its initial contents as its document, but you can also set (and get)
 its \`value\`.
 
 ## toolbar
 
-\`<xin-word>\` elements have a \`toolbar\` slot (actually a xin-slot because it doesn't use
+\`<tosi-rich-text>\` elements have a \`toolbar\` slot (actually a xin-slot because it doesn't use
 the shadowDOM).
 
 If you set the \`widgets\` attribute to \`default\` or \`minimal\` you will get a toolbar
@@ -14985,10 +15138,53 @@ automatically have its value changed based on the current selection.
 
 ## properties
 
-A \`<xin-word>\` element also has \`selectedText\` and \`selectedBlocks\` properties, allowing
+A \`<tosi-rich-text>\` element also has \`selectedText\` and \`selectedBlocks\` properties, allowing
 you to easily perform operations on text selections, and a \`selectionChange\` callback (which
 simply passes through document \`selectionchange\` events, but also passes a reference to
-the \`<xin-word>\` component).`,
+the \`<tosi-rich-text>\` component).
+
+## Form Integration
+
+\`<tosi-rich-text>\` is form-associated, making it work directly in native forms:
+
+\`\`\`html
+<form class="richtext-form">
+  <label>
+    <b>Compose message (required):</b>
+    <tosi-rich-text name="content" widgets="minimal" required style="height: 150px">
+    </tosi-rich-text>
+  </label>
+  <button type="submit">Submit</button>
+  <button type="reset">Reset</button>
+  <pre class="output" style="max-height: 100px; overflow: auto"></pre>
+</form>
+\`\`\`
+\`\`\`css
+.preview .richtext-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.preview .richtext-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.preview tosi-rich-text {
+  background: white;
+}
+.preview tosi-rich-text [part="toolbar"] {
+  background: #f8f8f8;
+}
+\`\`\`
+\`\`\`js
+const form = preview.querySelector('.richtext-form')
+form.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const data = new FormData(form)
+  form.querySelector('.output').textContent = 'Content: ' + data.get('content')
+})
+\`\`\``,
     title: "rich text",
     filename: "rich-text.ts",
     path: "src/rich-text.ts"
@@ -16229,7 +16425,7 @@ This will pin the document to the top or bottom of the navigation list.`,
 ];
 
 // demo/src/index.ts
-en("demo-style", styleSpec);
+nn("demo-style", styleSpec);
 initLocalization(localized_strings_default);
 Object.assign(window, { tosijs: exports_module, tosijsui: exports_src });
 setTimeout(() => {
@@ -16237,14 +16433,14 @@ setTimeout(() => {
   console.log("welcome to %ui.tosijs.net", `color: ${brandColor2}; padding: 0 5px;`);
 }, 100);
 var PROJECT = "tosijs-ui";
-var { prefs } = wo({
+var { prefs } = Co({
   prefs: {
     theme: "system",
     highContrast: false,
     locale: ""
   }
 });
-Mn((path) => {
+Tn((path) => {
   if (path.startsWith("prefs")) {
     return true;
   }
@@ -16287,7 +16483,7 @@ var browser = createDocBrowser({
 if (main) {
   const header3 = browser.querySelector("header");
   if (header3) {
-    const { img, a: a3, span: span15, button: button14 } = u;
+    const { img, a: a4, span: span15, button: button14 } = y;
     const sizeBreakElement = header3.querySelector("xin-sizebreak");
     if (sizeBreakElement) {
       const badges = span15({
@@ -16297,10 +16493,10 @@ if (main) {
           alignItems: "center",
           gap: Uo.spacing50
         }
-      }, a3({ href: `https://bundlejs.com/?q=${PROJECT}`, target: "_blank" }, img({
+      }, a4({ href: `https://bundlejs.com/?q=${PROJECT}`, target: "_blank" }, img({
         alt: "bundlejs size badge",
         src: `https://deno.bundlejs.com/?q=${PROJECT}&badge=`
-      })), a3({
+      })), a4({
         href: `https://www.jsdelivr.com/package/npm/${PROJECT}`,
         target: "_blank"
       }, img({
@@ -16387,4 +16583,4 @@ if (main) {
   }
   main.append(browser);
 }
-console.log(`tosijs ${ne}, tosijs-ui ${version}`);
+console.log(`tosijs ${re}, tosijs-ui ${version}`);

@@ -98,39 +98,7 @@ export class TosiRating extends Component {
     name: '',
   }
 
-  private _value: number | null = null
-
-  get value(): number | null {
-    return this._value
-  }
-
-  set value(v: number | null) {
-    this._value = v
-    this.updateFormValue()
-    this.queueRender()
-  }
-
-  private updateFormValue() {
-    if (this._value !== null) {
-      this.internals?.setFormValue(String(this._value))
-    } else {
-      this.internals?.setFormValue(null)
-    }
-    this.updateValidity()
-  }
-
-  private updateValidity() {
-    if (!this.internals) return
-    if (this.required && this._value === null) {
-      this.internals.setValidity(
-        { valueMissing: true },
-        'Please provide a rating',
-        this.parts.container as HTMLElement
-      )
-    } else {
-      this.internals.setValidity({})
-    }
-  }
+  value: number | string = ''
 
   // Form-associated lifecycle callbacks
   formDisabledCallback(disabled: boolean) {
@@ -138,13 +106,7 @@ export class TosiRating extends Component {
   }
 
   formResetCallback() {
-    this.value = null
-  }
-
-  formStateRestoreCallback(state: string | null) {
-    if (state !== null) {
-      this.value = Number(state)
-    }
+    this.value = ''
   }
 
   static styleSpec = {
@@ -190,7 +152,7 @@ export class TosiRating extends Component {
       span({ part: 'filled' })
     )
 
-  displayValue(value: number | null) {
+  displayValue(value: number | string) {
     const { empty, filled } = this.parts as RatingParts
     const roundedValue = Math.round((value || 0) / this.step) * this.step
     filled.style.width = (roundedValue / this.max) * empty.offsetWidth + 'px'
@@ -221,13 +183,13 @@ export class TosiRating extends Component {
     } else if (event.type === 'mousemove') {
       this.displayValue(value)
     } else {
-      this.displayValue(this._value || 0)
+      this.displayValue(this.value || 0)
     }
   }
 
   handleKey = (event: KeyboardEvent) => {
-    let value = Number(this._value)
-    if (value == null) {
+    let value = Number(this.value)
+    if (value === '' || value == null) {
       value = Math.round((this.min + this.max) * 0.5 * this.step) * this.step
     }
     let blockEvent = false
@@ -262,9 +224,6 @@ export class TosiRating extends Component {
     container.addEventListener('click', this.update)
 
     container.addEventListener('keydown', this.handleKey)
-
-    // Initialize form value
-    this.updateFormValue()
   }
 
   private _renderedIcon = ''
@@ -280,10 +239,10 @@ export class TosiRating extends Component {
     } else {
       this.role = 'slider'
     }
-    this.ariaLabel = `rating ${this._value} out of ${this.max}`
+    this.ariaLabel = `rating ${this.value} out of ${this.max}`
     this.ariaValueMax = String(this.max)
     this.ariaValueMin = String(this.min)
-    this.ariaValueNow = this._value === null ? String(-1) : String(this._value)
+    this.ariaValueNow = this.value === '' ? String(-1) : String(this.value)
 
     const { empty, filled } = this.parts as RatingParts
     empty.classList.toggle('hollow', this.hollow)
@@ -302,7 +261,7 @@ export class TosiRating extends Component {
       }
     }
 
-    this.displayValue(this._value)
+    this.displayValue(this.value)
   }
 }
 

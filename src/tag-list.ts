@@ -214,52 +214,50 @@ export class TosiTagList extends WebComponent {
     required: false,
   }
 
-  value: string | string[] = []
+  // value is the source of truth (Component watches this for form handling)
+  value = ''
 
-  private _availableTags: string | TagList = []
+  // tags parses value into array
+  get tags(): string[] {
+    return this.value
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag !== '')
+  }
 
-  get availableTags(): string | TagList {
+  set tags(v: string[]) {
+    this.value = v.join(',')
+  }
+
+  private _availableTags: TagList = []
+
+  get availableTags(): TagList {
     return this._availableTags
   }
 
-  set availableTags(v: string | TagList) {
-    this._availableTags = v
+  set availableTags(v: TagList | string) {
+    if (typeof v === 'string') {
+      this._availableTags = TosiTagList.parseAvailableTagsString(v)
+    } else {
+      this._availableTags = v
+    }
     this.queueRender()
   }
 
-  // Handle available-tags attribute from HTML
-  static get observedAttributes() {
-    return [...super.observedAttributes, 'available-tags']
+  // Parse available-tags string (comma-delimited)
+  private static parseAvailableTagsString(tagsStr: string): TagList {
+    return tagsStr.split(',').map((tag) => {
+      const trimmed = tag.trim()
+      return trimmed === '' ? null : trimmed
+    })
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    super.attributeChangedCallback(name, oldValue, newValue)
-    if (name === 'available-tags' && typeof newValue === 'string') {
-      this._availableTags = newValue
-      this.queueRender()
-    }
-  }
-
-  private updateFormValue(): void {
-    if (this.internals) {
-      // Submit as comma-separated string
-      const stringValue = this.tags.join(',')
-      this.internals.setFormValue(stringValue)
-    }
-  }
-
-  private updateValidity(): void {
-    if (this.internals) {
-      const anchor = this.parts?.tagContainer as HTMLElement | undefined
-      if (this.required && this.tags.length === 0) {
-        this.internals.setValidity(
-          { valueMissing: true },
-          'Please select at least one tag',
-          anchor
-        )
-      } else {
-        this.internals.setValidity({})
-      }
+  connectedCallback(): void {
+    super.connectedCallback()
+    // Parse available-tags from HTML attribute if present and not already set programmatically
+    const tagsAttr = this.getAttribute('available-tags')
+    if (tagsAttr && this._availableTags.length === 0) {
+      this._availableTags = TosiTagList.parseAvailableTagsString(tagsAttr)
     }
   }
 
@@ -269,45 +267,25 @@ export class TosiTagList extends WebComponent {
   }
 
   formResetCallback(): void {
-    this.value = []
-    this.queueRender(true)
-  }
-
-  formStateRestoreCallback(state: string): void {
-    if (state) {
-      this.value = state.split(',').filter((t) => t !== '')
-      this.queueRender(true)
-    }
-  }
-
-  get tags(): string[] {
-    return typeof this.value === 'string'
-      ? this.value
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter((tag) => tag !== '')
-      : this.value
+    this.value = ''
   }
 
   addTag = (tag: string) => {
-    if (tag.trim() === '') {
+    const trimmed = tag.trim()
+    if (trimmed === '' || this.tags.includes(trimmed)) {
       return
     }
-    const { tags } = this
-    if (!tags.includes(tag)) {
-      tags.push(tag)
-    }
-    this.value = tags
+    this.tags = [...this.tags, trimmed]
     this.queueRender(true)
   }
 
   toggleTag = (toggled: string) => {
     if (this.tags.includes(toggled)) {
-      this.value = this.tags.filter((tag) => tag !== toggled)
+      this.tags = this.tags.filter((t) => t !== toggled)
+      this.queueRender(true)
     } else {
       this.addTag(toggled)
     }
-    this.queueRender(true)
   }
 
   enterTag = (event: KeyboardEvent) => {
@@ -335,10 +313,7 @@ export class TosiTagList extends WebComponent {
   popSelectMenu = () => {
     const { toggleTag } = this
     const { tagMenu } = this.parts
-    const tags: TagList =
-      typeof this.availableTags === 'string'
-        ? this.availableTags.split(',')
-        : this.availableTags
+    const tags: TagList = [...this.availableTags]
     const extraTags = this.tags.filter((tag) => !tags.includes(tag))
     if (extraTags.length) {
       tags.push(null, ...extraTags)
@@ -405,7 +380,7 @@ export class TosiTagList extends WebComponent {
       const tag = (event.target as HTMLElement).closest(
         TosiTag.tagName!
       ) as TosiTag
-      this.value = this.tags.filter((value) => value !== tag.caption)
+      this.tags = this.tags.filter((t) => t !== tag.caption)
       tag.remove()
       this.queueRender(true)
     }
@@ -415,10 +390,6 @@ export class TosiTagList extends WebComponent {
 
   render(): void {
     super.render()
-
-    // Update form value/validity on each render
-    this.updateFormValue()
-    this.updateValidity()
 
     const { tagContainer, tagMenu, tagInput } = this.parts as {
       tagContainer: HTMLDivElement
@@ -438,8 +409,7 @@ export class TosiTagList extends WebComponent {
     }
 
     tagContainer.textContent = ''
-    const { tags } = this
-    for (const tag of tags) {
+    for (const tag of this.tags) {
       tagContainer.append(
         tosiTag({
           caption: tag,

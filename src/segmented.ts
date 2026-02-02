@@ -160,50 +160,38 @@ export class TosiSegmented extends WebComponent {
     required: false,
   }
 
-  private _choicesValue: string | Choice[] = ''
+  private _choices: Choice[] = []
 
-  get choices(): string | Choice[] {
-    return this._choicesValue
+  get choices(): Choice[] {
+    return this._choices
   }
 
-  set choices(v: string | Choice[]) {
-    this._choicesValue = v
+  set choices(v: Choice[] | string) {
+    if (typeof v === 'string') {
+      this._choices = TosiSegmented.parseChoicesString(v)
+    } else {
+      this._choices = v
+    }
     this.queueRender()
   }
 
-  // Handle choices attribute from HTML (value is handled by Component)
-  static get observedAttributes() {
-    return [...super.observedAttributes, 'choices']
+  // Parse choices string format: value=caption:icon (caption and icon are optional)
+  private static parseChoicesString(choicesStr: string): Choice[] {
+    return choicesStr
+      .split(',')
+      .filter((c) => c.trim() !== '')
+      .map((c) => {
+        const [value, remains] = c.split('=').map((v) => v.trim())
+        const [caption, iconName] = (remains || value)
+          .split(':')
+          .map((v) => v.trim())
+
+        const icon = iconName ? icons[iconName]() : ''
+        return { value, icon, caption }
+      })
   }
 
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    super.attributeChangedCallback(name, oldValue, newValue)
-    if (name === 'choices' && typeof newValue === 'string') {
-      this._choicesValue = newValue
-      this.queueRender()
-    }
-  }
-
-  value: null | string = null
-
-  private updateFormValue() {
-    this.internals?.setFormValue(this.value || null)
-    this.updateValidity()
-  }
-
-  private updateValidity() {
-    if (!this.internals) return
-    const anchor = this.parts?.options as HTMLElement | undefined
-    if (this.required && !this.value) {
-      this.internals.setValidity(
-        { valueMissing: true },
-        'Please select an option',
-        anchor
-      )
-    } else {
-      this.internals.setValidity({})
-    }
-  }
+  value = ''
 
   // Form-associated lifecycle callbacks
   formDisabledCallback(disabled: boolean) {
@@ -212,13 +200,7 @@ export class TosiSegmented extends WebComponent {
   }
 
   formResetCallback() {
-    this.value = null
-  }
-
-  formStateRestoreCallback(state: string | null) {
-    if (state !== null) {
-      this.value = state
-    }
+    this.value = ''
   }
 
   get values(): string[] {
@@ -313,7 +295,7 @@ export class TosiSegmented extends WebComponent {
         'input:checked'
       ) as HTMLInputElement | null
       if (!input) {
-        this.value = null
+        this.value = ''
       } else if (input.value) {
         custom.setAttribute('hidden', '')
         this.value = input.value
@@ -377,6 +359,13 @@ export class TosiSegmented extends WebComponent {
 
   connectedCallback(): void {
     super.connectedCallback()
+
+    // Parse choices from HTML attribute if present and not already set programmatically
+    const choicesAttr = this.getAttribute('choices')
+    if (choicesAttr && this._choices.length === 0) {
+      this._choices = TosiSegmented.parseChoicesString(choicesAttr)
+    }
+
     const { options } = this.parts
 
     if (this.name === '') {
@@ -393,27 +382,10 @@ export class TosiSegmented extends WebComponent {
       )
       this.other = ''
     }
-
-    // Initialize form value
-    this.updateFormValue()
   }
 
-  private get _choices(): Choice[] {
-    const options: Choice[] = Array.isArray(this.choices)
-      ? this.choices
-      : this.choices
-          .split(',')
-          .filter((c) => c.trim() !== '')
-          .map((c) => {
-            const [value, remains] = c.split('=').map((v) => v.trim())
-            const [caption, iconName] = (remains || value)
-              .split(':')
-              .map((v) => v.trim())
-
-            const icon = iconName ? icons[iconName]() : ''
-            const choice = { value, icon, caption }
-            return choice
-          })
+  private get _choicesWithOther(): Choice[] {
+    const options: Choice[] = [...this.choices]
 
     if (this.other && !this.multiple) {
       const [caption, icon] = this.other.split(':')
@@ -431,15 +403,12 @@ export class TosiSegmented extends WebComponent {
     return Boolean(
       this.value === '' ||
         (this.value &&
-          !this._choices.find((choice) => choice.value === this.value))
+          !this._choicesWithOther.find((choice) => choice.value === this.value))
     )
   }
 
   render() {
     super.render()
-
-    // Update form value/validity on each render
-    this.updateFormValue()
 
     if (this.valueChanged) {
       this.valueChanged = false
@@ -451,7 +420,7 @@ export class TosiSegmented extends WebComponent {
     const type = this.multiple ? 'checkbox' : 'radio'
     const { values, isOtherValue } = this
     options.append(
-      ...this._choices.map((choice) => {
+      ...this._choicesWithOther.map((choice) => {
         return label(
           { tabindex: 0 },
           input({
