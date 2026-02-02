@@ -31,14 +31,11 @@ export declare class TosiTagList extends WebComponent {
         required: boolean;
     };
     private _value;
-    private _internals;
     availableTags: string | TagList;
-    constructor();
     get value(): string | string[];
     set value(v: string | string[]);
     private updateFormValue;
     private updateValidity;
-    formAssociatedCallback(_form: HTMLFormElement): void;
     formDisabledCallback(disabled: boolean): void;
     formResetCallback(): void;
     formStateRestoreCallback(state: string): void;

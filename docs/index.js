@@ -3329,13 +3329,6 @@ class TosiSelect extends F {
   _value = "";
   filter = "";
   isExpanded = false;
-  _internals;
-  constructor() {
-    super();
-    if (this.attachInternals) {
-      this._internals = this.attachInternals();
-    }
-  }
   get value() {
     return this._value;
   }
@@ -3345,19 +3338,18 @@ class TosiSelect extends F {
     this.queueRender();
   }
   updateFormValue() {
-    this._internals?.setFormValue(this._value || null);
+    this.internals?.setFormValue(this._value || null);
     this.updateValidity();
   }
   updateValidity() {
-    if (!this._internals)
+    if (!this.internals)
       return;
     if (this.required && !this._value) {
-      this._internals.setValidity({ valueMissing: true }, "Please select an option", this.parts.button);
+      this.internals.setValidity({ valueMissing: true }, "Please select an option", this.parts.button);
     } else {
-      this._internals.setValidity({});
+      this.internals.setValidity({});
     }
   }
-  formAssociatedCallback(_form) {}
   formDisabledCallback(disabled) {
     this.disabled = disabled;
   }
@@ -9079,7 +9071,6 @@ class TosiRating extends F {
     name: ""
   };
   _value = null;
-  _internals;
   get value() {
     return this._value;
   }
@@ -9088,30 +9079,23 @@ class TosiRating extends F {
     this.updateFormValue();
     this.queueRender();
   }
-  constructor() {
-    super();
-    if (this.attachInternals) {
-      this._internals = this.attachInternals();
-    }
-  }
   updateFormValue() {
     if (this._value !== null) {
-      this._internals?.setFormValue(String(this._value));
+      this.internals?.setFormValue(String(this._value));
     } else {
-      this._internals?.setFormValue(null);
+      this.internals?.setFormValue(null);
     }
     this.updateValidity();
   }
   updateValidity() {
-    if (!this._internals)
+    if (!this.internals)
       return;
     if (this.required && this._value === null) {
-      this._internals.setValidity({ valueMissing: true }, "Please provide a rating", this.parts.container);
+      this.internals.setValidity({ valueMissing: true }, "Please provide a rating", this.parts.container);
     } else {
-      this._internals.setValidity({});
+      this.internals.setValidity({});
     }
   }
-  formAssociatedCallback(form2) {}
   formDisabledCallback(disabled) {
     this.readonly = disabled;
   }
@@ -9500,13 +9484,6 @@ class TosiSegmented extends F {
   };
   choices = "";
   _value = null;
-  _internals;
-  constructor() {
-    super();
-    if (this.attachInternals) {
-      this._internals = this.attachInternals();
-    }
-  }
   get value() {
     return this._value;
   }
@@ -9516,19 +9493,18 @@ class TosiSegmented extends F {
     this.queueRender();
   }
   updateFormValue() {
-    this._internals?.setFormValue(this._value || null);
+    this.internals?.setFormValue(this._value || null);
     this.updateValidity();
   }
   updateValidity() {
-    if (!this._internals)
+    if (!this.internals)
       return;
     if (this.required && !this._value) {
-      this._internals.setValidity({ valueMissing: true }, "Please select an option", this.parts.options);
+      this.internals.setValidity({ valueMissing: true }, "Please select an option", this.parts.options);
     } else {
-      this._internals.setValidity({});
+      this.internals.setValidity({});
     }
   }
-  formAssociatedCallback(_form) {}
   formDisabledCallback(disabled) {}
   formResetCallback() {
     this.value = null;
@@ -9929,14 +9905,7 @@ class TosiTagList extends F {
     required: false
   };
   _value = [];
-  _internals;
   availableTags = [];
-  constructor() {
-    super();
-    if (this.attachInternals) {
-      this._internals = this.attachInternals();
-    }
-  }
   get value() {
     return this._value;
   }
@@ -9946,21 +9915,20 @@ class TosiTagList extends F {
     this.updateValidity();
   }
   updateFormValue() {
-    if (this._internals) {
+    if (this.internals) {
       const stringValue = this.tags.join(",");
-      this._internals.setFormValue(stringValue);
+      this.internals.setFormValue(stringValue);
     }
   }
   updateValidity() {
-    if (this._internals) {
+    if (this.internals) {
       if (this.required && this.tags.length === 0) {
-        this._internals.setValidity({ valueMissing: true }, "Please select at least one tag", this.parts.tagContainer);
+        this.internals.setValidity({ valueMissing: true }, "Please select at least one tag", this.parts.tagContainer);
       } else {
-        this._internals.setValidity({});
+        this.internals.setValidity({});
       }
     }
   }
-  formAssociatedCallback(_form) {}
   formDisabledCallback(disabled) {
     this.disabled = disabled;
   }

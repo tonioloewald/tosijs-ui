@@ -214,15 +214,7 @@ export class TosiTagList extends WebComponent {
   }
 
   private _value: string | string[] = []
-  private _internals!: ElementInternals
   availableTags: string | TagList = []
-
-  constructor() {
-    super()
-    if (this.attachInternals) {
-      this._internals = this.attachInternals()
-    }
-  }
 
   get value(): string | string[] {
     return this._value
@@ -235,32 +227,28 @@ export class TosiTagList extends WebComponent {
   }
 
   private updateFormValue(): void {
-    if (this._internals) {
+    if (this.internals) {
       // Submit as comma-separated string
       const stringValue = this.tags.join(',')
-      this._internals.setFormValue(stringValue)
+      this.internals.setFormValue(stringValue)
     }
   }
 
   private updateValidity(): void {
-    if (this._internals) {
+    if (this.internals) {
       if (this.required && this.tags.length === 0) {
-        this._internals.setValidity(
+        this.internals.setValidity(
           { valueMissing: true },
           'Please select at least one tag',
           this.parts.tagContainer as HTMLElement
         )
       } else {
-        this._internals.setValidity({})
+        this.internals.setValidity({})
       }
     }
   }
 
   // Form lifecycle callbacks
-  formAssociatedCallback(_form: HTMLFormElement): void {
-    // Called when associated with a form
-  }
-
   formDisabledCallback(disabled: boolean): void {
     this.disabled = disabled
   }

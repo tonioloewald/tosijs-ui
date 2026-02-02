@@ -32,13 +32,10 @@ export declare class TosiSelect extends Component<SelectParts> {
     private _value;
     filter: string;
     private isExpanded;
-    private _internals;
-    constructor();
     get value(): string;
     set value(v: string);
     private updateFormValue;
     private updateValidity;
-    formAssociatedCallback(_form: HTMLFormElement | null): void;
     formDisabledCallback(disabled: boolean): void;
     formResetCallback(): void;
     formStateRestoreCallback(state: string | null): void;

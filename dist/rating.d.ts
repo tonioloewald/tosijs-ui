@@ -17,13 +17,10 @@ export declare class TosiRating extends Component {
         name: string;
     };
     private _value;
-    private _internals;
     get value(): number | null;
     set value(v: number | null);
-    constructor();
     private updateFormValue;
     private updateValidity;
-    formAssociatedCallback(form: HTMLFormElement | null): void;
     formDisabledCallback(disabled: boolean): void;
     formResetCallback(): void;
     formStateRestoreCallback(state: string | null): void;

@@ -99,7 +99,6 @@ export class TosiRating extends Component {
   }
 
   private _value: number | null = null
-  private _internals!: ElementInternals
 
   get value(): number | null {
     return this._value
@@ -111,41 +110,29 @@ export class TosiRating extends Component {
     this.queueRender()
   }
 
-  constructor() {
-    super()
-    // attachInternals may not be available in test environments (happy-dom)
-    if (this.attachInternals) {
-      this._internals = this.attachInternals()
-    }
-  }
-
   private updateFormValue() {
     if (this._value !== null) {
-      this._internals?.setFormValue(String(this._value))
+      this.internals?.setFormValue(String(this._value))
     } else {
-      this._internals?.setFormValue(null)
+      this.internals?.setFormValue(null)
     }
     this.updateValidity()
   }
 
   private updateValidity() {
-    if (!this._internals) return
+    if (!this.internals) return
     if (this.required && this._value === null) {
-      this._internals.setValidity(
+      this.internals.setValidity(
         { valueMissing: true },
         'Please provide a rating',
         this.parts.container as HTMLElement
       )
     } else {
-      this._internals.setValidity({})
+      this.internals.setValidity({})
     }
   }
 
   // Form-associated lifecycle callbacks
-  formAssociatedCallback(form: HTMLFormElement | null) {
-    // Called when associated with a form
-  }
-
   formDisabledCallback(disabled: boolean) {
     this.readonly = disabled
   }

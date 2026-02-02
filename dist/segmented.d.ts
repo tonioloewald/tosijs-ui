@@ -17,13 +17,10 @@ export declare class TosiSegmented extends WebComponent {
     };
     choices: string | Choice[];
     private _value;
-    private _internals;
-    constructor();
     get value(): null | string;
     set value(v: null | string);
     private updateFormValue;
     private updateValidity;
-    formAssociatedCallback(_form: HTMLFormElement | null): void;
     formDisabledCallback(disabled: boolean): void;
     formResetCallback(): void;
     formStateRestoreCallback(state: string | null): void;

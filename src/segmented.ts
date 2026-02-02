@@ -162,15 +162,6 @@ export class TosiSegmented extends WebComponent {
 
   choices: string | Choice[] = ''
   private _value: null | string = null
-  private _internals!: ElementInternals
-
-  constructor() {
-    super()
-    // attachInternals may not be available in test environments (happy-dom)
-    if (this.attachInternals) {
-      this._internals = this.attachInternals()
-    }
-  }
 
   get value(): null | string {
     return this._value
@@ -183,28 +174,24 @@ export class TosiSegmented extends WebComponent {
   }
 
   private updateFormValue() {
-    this._internals?.setFormValue(this._value || null)
+    this.internals?.setFormValue(this._value || null)
     this.updateValidity()
   }
 
   private updateValidity() {
-    if (!this._internals) return
+    if (!this.internals) return
     if (this.required && !this._value) {
-      this._internals.setValidity(
+      this.internals.setValidity(
         { valueMissing: true },
         'Please select an option',
         this.parts.options as HTMLElement
       )
     } else {
-      this._internals.setValidity({})
+      this.internals.setValidity({})
     }
   }
 
   // Form-associated lifecycle callbacks
-  formAssociatedCallback(_form: HTMLFormElement | null) {
-    // Called when associated with a form
-  }
-
   formDisabledCallback(disabled: boolean) {
     // Could add disabled support here
     void disabled
