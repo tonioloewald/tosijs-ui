@@ -12,89 +12,99 @@ var __export = (target, all) => {
 // ../xinjs/dist/module.js
 var exports_module = {};
 __export(exports_module, {
-  xinValue: () => Oe,
-  xinProxy: () => ie,
-  xinPath: () => Ze,
-  xin: () => u,
-  warnDeprecated: () => J,
-  version: () => re,
-  vars: () => Uo,
-  varDefault: () => uo,
-  validateAgainstConstraints: () => No,
-  updates: () => le,
-  unobserve: () => W,
-  touchElement: () => _o,
-  touch: () => I,
-  tosiValue: () => E,
-  tosiSetValue: () => Ge,
-  tosiPath: () => M,
-  tosi: () => Co,
+  xinValue: () => Ke,
+  xinProxy: () => se,
+  xinPath: () => Re,
+  xin: () => C,
+  warnDeprecated: () => W,
+  version: () => ie,
+  vars: () => Ao,
+  varDefault: () => yo,
+  validateAgainstConstraints: () => oe,
+  updates: () => Me,
+  unobserve: () => j,
+  touchElement: () => No,
+  touch: () => O,
+  tosiValue: () => p,
+  tosiSetValue: () => Ae,
+  tosiPath: () => T,
+  tosi: () => Eo,
   throttle: () => mo,
-  svgElements: () => Ko,
-  settings: () => G,
-  on: () => V,
-  observe: () => Bo,
+  svgElements: () => Bo,
+  settings: () => Z,
+  on: () => _,
+  observe: () => _o,
   mathML: () => Io,
   makeComponent: () => po,
-  invertLuminance: () => cn,
-  initVars: () => tn,
-  hotReload: () => Tn,
-  getListItem: () => vo,
-  getListInstance: () => Vo,
-  getListBinding: () => yo,
-  getCssVar: () => Zo,
-  elements: () => y,
-  deprecated: () => Ho,
-  deleteListItem: () => En,
-  debounce: () => Wo,
-  css: () => B,
-  boxedProxy: () => Eo,
+  invertLuminance: () => dn,
+  initVars: () => ln,
+  hotReload: () => Xn,
+  getListItem: () => Po,
+  getListInstance: () => vo,
+  getListBinding: () => uo,
+  getCssVar: () => Oo,
+  elements: () => u,
+  deprecated: () => ao,
+  deleteListItem: () => Mn,
+  debounce: () => Go,
+  css: () => V,
+  boxedProxy: () => ho,
   boxed: () => v,
-  blueprintLoader: () => Hn,
-  blueprint: () => Sn,
+  blueprintLoader: () => Dn,
+  blueprint: () => zn,
   bindings: () => lo,
-  bind: () => H,
-  StyleSheet: () => nn,
-  MoreMath: () => on,
-  Component: () => F,
+  bind: () => X,
+  StyleSheet: () => cn,
+  MoreMath: () => sn,
+  Component: () => g,
   Color: () => l,
-  BlueprintLoader: () => te,
+  BlueprintLoader: () => ce,
   Blueprint: () => xo
 });
-function X(o) {
+function a(o) {
   if (o == null || typeof o !== "object")
     return o;
   if (o instanceof Set)
     return new Set(o);
   else if (Array.isArray(o))
-    return o.map(X);
+    return o.map(a);
   let e = {};
   for (let n in o) {
     let r = o[n];
     if (o != null && typeof o === "object")
-      e[n] = X(r);
+      e[n] = a(r);
     else
       e[n] = r;
   }
   return e;
 }
-var bo = "-xin-data";
-var Y = `.${bo}`;
-var Mo = "-xin-event";
-var To = `.${Mo}`;
-var a = Symbol.for("xin-path");
-var g = Symbol.for("xin-value");
-var Lo = "xinObserve";
-var ko = "xinBind";
-var So = "xinOn";
-var _ = Symbol("list-binding");
+var To = "-xin-data";
+var J = `.${To}`;
+var Lo = "-xin-event";
+var ko = `.${Lo}`;
+var M = Symbol.for("xin-path");
+var z = Symbol.for("xin-value");
+var So = "xinObserve";
+var Ho = "xinBind";
+var Xo = "xinOn";
+var P = Symbol("list-binding");
 var so = Symbol("list-instance");
-var ce = new Set;
-function J(o, e) {
-  if (!ce.has(o))
-    console.warn(e), ce.add(o);
+var Mo = new Map;
+function me(o, e) {
+  let n = Mo.get(o);
+  if (n === undefined)
+    n = new Set, Mo.set(o, n);
+  n.add(e);
 }
-function Ho(o, e) {
+function le(o) {
+  return Mo.get(o);
+}
+var fe = new Set;
+function W(o, e) {
+  if (!fe.has(o))
+    console.warn(e), fe.add(o);
+}
+function ao(o, e) {
   let n = false;
   return (...r) => {
     if (!n)
@@ -102,50 +112,238 @@ function Ho(o, e) {
     return o(...r);
   };
 }
-var M = (o) => {
-  return o && o[a] || undefined;
+var T = (o) => {
+  return o && o[M] || undefined;
 };
-function E(o) {
+function p(o) {
   if (typeof o === "object" && o !== null) {
-    let e = o[g];
+    let e = o[z];
     return e !== undefined ? e : o;
   }
   return o;
 }
-function Ge(o, e) {
-  if (M(o) === undefined)
+function Ae(o, e) {
+  if (T(o) === undefined)
     throw Error("tosiSetValue requires a xin or boxed proxy");
-  o[g] = e;
+  o[z] = e;
 }
-var Ze = Ho(M, "xinPath is deprecated. Use tosiPath instead.");
-var Oe = Ho(E, "xinValue is deprecated. Use tosiValue instead.");
-var Q = new WeakMap;
+var Re = ao(T, "xinPath is deprecated. Use tosiPath instead.");
+var Ke = ao(p, "xinValue is deprecated. Use tosiValue instead.");
+var q = new WeakMap;
 var $ = new WeakMap;
-var q = (o) => {
+var G = (o) => {
   let e = o.cloneNode();
   if (e instanceof Element) {
-    let n = $.get(o), r = Q.get(o);
+    let n = $.get(o), r = q.get(o);
     if (n != null)
-      $.set(e, X(n));
+      $.set(e, a(n));
     if (r != null)
-      Q.set(e, X(r));
+      q.set(e, a(r));
   }
   for (let n of Array.from(o instanceof HTMLTemplateElement ? o.content.childNodes : o.childNodes))
     if (n instanceof Element || n instanceof DocumentFragment)
-      e.appendChild(q(n));
+      e.appendChild(G(n));
     else
       e.appendChild(n.cloneNode());
   return e;
 };
-var G = { debug: false, perf: false };
-var fe = Symbol("observer should be removed");
+var Z = { debug: false, perf: false };
+var Be = (o) => {
+  try {
+    return JSON.stringify(o);
+  } catch (e) {
+    return "{has circular references}";
+  }
+};
+var $o = (...o) => Error(o.map(Be).join(" "));
+var Ie = () => new Date(parseInt("1000000000", 36) + Date.now()).valueOf().toString(36).slice(1);
+var Ve = 0;
+var _e = () => (parseInt("10000", 36) + ++Ve).toString(36).slice(-5);
+var ve = () => Ie() + _e();
+var Do = Symbol("delete");
+var ye = Symbol("new-object");
+var zo = Symbol("automatic-index");
+function we(o) {
+  if (o === "")
+    return [];
+  if (Array.isArray(o))
+    return o;
+  else {
+    let e = [];
+    while (o.length > 0) {
+      let n = o.search(/\[[^\]]+\]/);
+      if (n === -1) {
+        e.push(o.split("."));
+        break;
+      } else {
+        let r = o.slice(0, n);
+        if (o = o.slice(n), r !== "")
+          e.push(r.split("."));
+        if (n = o.indexOf("]") + 1, e.push(o.slice(1, n - 1)), o.slice(n, n + 1) === ".")
+          n += 1;
+        o = o.slice(n);
+      }
+    }
+    return e;
+  }
+}
+var D = new WeakMap;
+function Ce(o, e) {
+  if (D.get(o) === undefined)
+    D.set(o, {});
+  if (D.get(o)[e] === undefined)
+    D.get(o)[e] = {};
+  let n = D.get(o)[e];
+  if (e === "_auto_")
+    o.forEach((r, i) => {
+      if (r[zo] === undefined)
+        r[zo] = ve();
+      n[r[zo] + ""] = i;
+    });
+  else
+    o.forEach((r, i) => {
+      n[F(r, e) + ""] = i;
+    });
+  return n;
+}
+function Pe(o, e) {
+  if (D.get(o) === undefined || D.get(o)[e] === undefined)
+    return Ce(o, e);
+  else
+    return D.get(o)[e];
+}
+function Ne(o, e, n) {
+  n = n + "";
+  let r = Pe(o, e)[n];
+  if (r === undefined || F(o[r], e) + "" !== n)
+    r = Ce(o, e)[n];
+  return r;
+}
+function on(o, e, n) {
+  if (o[e] === undefined && n !== undefined)
+    o[e] = n;
+  return o[e];
+}
+function Ee(o, e, n, r) {
+  let i = e !== "" ? Ne(o, e, n) : n;
+  if (r === Do)
+    return o.splice(i, 1), D.delete(o), Symbol("deleted");
+  else if (r === ye) {
+    if (e === "" && o[i] === undefined)
+      o[i] = {};
+  } else if (r !== undefined)
+    if (i !== undefined)
+      o[i] = r;
+    else if (e !== "" && F(r, e) + "" === n + "")
+      o.push(r), i = o.length - 1;
+    else
+      throw Error(`byIdPath insert failed at [${e}=${n}]`);
+  return o[i];
+}
+function de(o) {
+  if (!Array.isArray(o))
+    throw $o("setByPath failed: expected array, found", o);
+}
+function ue(o) {
+  if (o == null || !(o instanceof Object))
+    throw $o("setByPath failed: expected Object, found", o);
+}
+function F(o, e) {
+  let n = we(e), r = o, i, s, t, c;
+  for (i = 0, s = n.length;r !== undefined && i < s; i++) {
+    let f = n[i];
+    if (Array.isArray(f))
+      for (t = 0, c = f.length;r !== undefined && t < c; t++) {
+        let m = f[t];
+        r = r[m];
+      }
+    else if (r.length === 0) {
+      if (r = r[Number(f.slice(1))], f[0] !== "=")
+        return;
+    } else if (f.includes("=")) {
+      let [m, ...d] = f.split("=");
+      r = Ee(r, m, d.join("="));
+    } else
+      t = parseInt(f, 10), r = r[t];
+  }
+  return r;
+}
+function he(o, e, n) {
+  let r = o;
+  if (e === "")
+    throw Error("setByPath cannot be used to set the root object");
+  let i = we(e);
+  while (r != null && i.length > 0) {
+    let s = i.shift();
+    if (typeof s === "string") {
+      let t = s.indexOf("=");
+      if (t > -1) {
+        if (t === 0)
+          ue(r);
+        else
+          de(r);
+        let c = s.slice(0, t), f = s.slice(t + 1);
+        if (r = Ee(r, c, f, i.length > 0 ? ye : n), i.length === 0)
+          return true;
+      } else {
+        de(r);
+        let c = parseInt(s, 10);
+        if (i.length > 0)
+          r = r[c];
+        else {
+          if (n !== Do) {
+            if (r[c] === n)
+              return false;
+            r[c] = n;
+          } else
+            r.splice(c, 1);
+          return true;
+        }
+      }
+    } else if (Array.isArray(s) && s.length > 0) {
+      ue(r);
+      while (s.length > 0) {
+        let t = s.shift();
+        if (s.length > 0 || i.length > 0)
+          r = on(r, t, s.length > 0 ? {} : []);
+        else {
+          if (n !== Do) {
+            if (r[t] === n)
+              return false;
+            r[t] = n;
+          } else {
+            if (!Object.prototype.hasOwnProperty.call(r, t))
+              return false;
+            delete r[t];
+          }
+          return true;
+        }
+      }
+    } else
+      throw Error(`setByPath failed, bad path ${e}`);
+  }
+  throw Error(`setByPath(${o}, ${e}, ${n}) failed`);
+}
+var pe = Symbol("observer should be removed");
 var to = [];
 var co = [];
-var Xo = false;
-var $o;
+var Fo = false;
+var Yo;
 var go;
+function xe(o, e, n, r) {
+  let i = le(o);
+  if (i === undefined)
+    return [];
+  let s = [];
+  for (let t of i) {
+    let c = F(n, t);
+    if (c !== undefined)
+      s.push(`${o}[${t}=${c}]${r}`);
+  }
+  return s;
+}
 
-class me {
+class be {
   description;
   test;
   callback;
@@ -166,13 +364,13 @@ class me {
     to.push(this);
   }
 }
-var le = async () => {
-  if ($o === undefined)
+var Me = async () => {
+  if (Yo === undefined)
     return;
-  await $o;
+  await Yo;
 };
-var Ue = () => {
-  if (G.perf)
+var en = () => {
+  if (Z.perf)
     console.time("xin async update");
   let o = Array.from(co);
   for (let e of o)
@@ -183,8 +381,8 @@ var Ue = () => {
       } catch (i) {
         throw Error(`Listener ${n.description} threw "${i}" at "${e}"`);
       }
-      if (r === fe)
-        return W(n), false;
+      if (r === pe)
+        return j(n), false;
       return r;
     }).forEach((n) => {
       let r;
@@ -193,29 +391,29 @@ var Ue = () => {
       } catch (i) {
         console.error(`Listener ${n.description} threw "${i}" handling "${e}"`);
       }
-      if (r === fe)
-        W(n);
+      if (r === pe)
+        j(n);
     });
-  if (co.splice(0), Xo = false, typeof go === "function")
+  if (co.splice(0), Fo = false, typeof go === "function")
     go();
-  if (G.perf)
+  if (Z.perf)
     console.timeEnd("xin async update");
 };
-var I = (o) => {
-  let e = typeof o === "string" ? o : M(o);
+var O = (o) => {
+  let e = typeof o === "string" ? o : T(o);
   if (e === undefined)
     throw console.error("touch was called on an invalid target", o), Error("touch was called on an invalid target");
-  if (Xo === false)
-    $o = new Promise((n) => {
+  if (Fo === false)
+    Yo = new Promise((n) => {
       go = n;
-    }), Xo = setTimeout(Ue);
+    }), Fo = setTimeout(en);
   if (co.find((n) => e.startsWith(n)) == null)
     co.push(e);
 };
-var j = (o, e) => {
-  return new me(o, e);
+var Q = (o, e) => {
+  return new be(o, e);
 };
-var W = (o) => {
+var j = (o) => {
   let e = to.indexOf(o);
   if (e > -1)
     to.splice(e, 1);
@@ -223,35 +421,35 @@ var W = (o) => {
     throw Error("unobserve failed, listener not found");
 };
 var N = {};
-var zo = null;
-var de = (o) => {
-  zo = o;
+var Jo = null;
+var Te = (o) => {
+  Jo = o;
 };
 var fo = () => {
-  if (zo === null)
+  if (Jo === null)
     throw Error("xin proxy not initialized");
-  return zo;
+  return Jo;
 };
-var Do = null;
-var Fo = null;
-var ye = (o, e) => {
-  Do = o, Fo = e;
+var Wo = null;
+var jo = null;
+var Le = (o, e) => {
+  Wo = o, jo = e;
 };
 var oo = () => {
-  if (Do === null)
+  if (Wo === null)
     throw Error("bind not initialized");
-  return Do;
+  return Wo;
 };
 var eo = () => {
-  if (Fo === null)
+  if (jo === null)
     throw Error("on not initialized");
-  return Fo;
+  return jo;
 };
-var Yo = (o, e) => {
+var Qo = (o, e) => {
   let n = new Event(e);
   o.dispatchEvent(n);
 };
-var he = (o) => {
+var Se = (o) => {
   if (o instanceof HTMLInputElement)
     return o.type;
   else if (o instanceof HTMLSelectElement && o.hasAttribute("multiple"))
@@ -259,8 +457,8 @@ var he = (o) => {
   else
     return "other";
 };
-var we = (o, e) => {
-  switch (he(o)) {
+var He = (o, e) => {
+  switch (Se(o)) {
     case "radio":
       o.checked = o.value === e;
       break;
@@ -278,8 +476,8 @@ var we = (o, e) => {
       o.value = e;
   }
 };
-var Ce = (o) => {
-  switch (he(o)) {
+var Xe = (o) => {
+  switch (Se(o)) {
     case "radio": {
       let e = o.parentElement?.querySelector(`[name="${o.name}"]:checked`);
       return e != null ? e.value : null;
@@ -296,27 +494,27 @@ var Ce = (o) => {
       return o.value;
   }
 };
-var { ResizeObserver: ue } = globalThis;
-var no = ue != null ? new ue((o) => {
+var { ResizeObserver: ke } = globalThis;
+var no = ke != null ? new ke((o) => {
   for (let e of o) {
     let n = e.target;
-    Yo(n, "resize");
+    Qo(n, "resize");
   }
 }) : { observe() {}, unobserve() {} };
-var Jo = (o, e, n = true) => {
+var qo = (o, e, n = true) => {
   if (o != null && e != null)
     if (typeof e === "string")
       o.textContent = e;
     else if (Array.isArray(e))
       e.forEach((r) => {
-        o.append(r instanceof Node && n ? q(r) : r);
+        o.append(r instanceof Node && n ? G(r) : r);
       });
     else if (e instanceof Node)
-      o.append(n ? q(e) : e);
+      o.append(n ? G(e) : e);
     else
       throw Error("expect text content or document node");
 };
-var Wo = (o, e = 250) => {
+var Go = (o, e = 250) => {
   let n;
   return (...r) => {
     if (n !== undefined)
@@ -341,184 +539,8 @@ var mo = (o, e = 250) => {
     }
   };
 };
-var Ae = (o) => {
-  try {
-    return JSON.stringify(o);
-  } catch (e) {
-    return "{has circular references}";
-  }
-};
-var jo = (...o) => Error(o.map(Ae).join(" "));
-var Re = () => new Date(parseInt("1000000000", 36) + Date.now()).valueOf().toString(36).slice(1);
-var Ke = 0;
-var Ie = () => (parseInt("10000", 36) + ++Ke).toString(36).slice(-5);
-var Pe = () => Re() + Ie();
-var qo = Symbol("delete");
-var xe = Symbol("new-object");
-var Qo = Symbol("automatic-index");
-function ae(o) {
-  if (o === "")
-    return [];
-  if (Array.isArray(o))
-    return o;
-  else {
-    let e = [];
-    while (o.length > 0) {
-      let n = o.search(/\[[^\]]+\]/);
-      if (n === -1) {
-        e.push(o.split("."));
-        break;
-      } else {
-        let r = o.slice(0, n);
-        if (o = o.slice(n), r !== "")
-          e.push(r.split("."));
-        if (n = o.indexOf("]") + 1, e.push(o.slice(1, n - 1)), o.slice(n, n + 1) === ".")
-          n += 1;
-        o = o.slice(n);
-      }
-    }
-    return e;
-  }
-}
-var z = new WeakMap;
-function be(o, e) {
-  if (z.get(o) === undefined)
-    z.set(o, {});
-  if (z.get(o)[e] === undefined)
-    z.get(o)[e] = {};
-  let n = z.get(o)[e];
-  if (e === "_auto_")
-    o.forEach((r, i) => {
-      if (r[Qo] === undefined)
-        r[Qo] = Pe();
-      n[r[Qo] + ""] = i;
-    });
-  else
-    o.forEach((r, i) => {
-      n[Z(r, e) + ""] = i;
-    });
-  return n;
-}
-function Be(o, e) {
-  if (z.get(o) === undefined || z.get(o)[e] === undefined)
-    return be(o, e);
-  else
-    return z.get(o)[e];
-}
-function Ve(o, e, n) {
-  n = n + "";
-  let r = Be(o, e)[n];
-  if (r === undefined || Z(o[r], e) + "" !== n)
-    r = be(o, e)[n];
-  return r;
-}
-function ve(o, e, n) {
-  if (o[e] === undefined && n !== undefined)
-    o[e] = n;
-  return o[e];
-}
-function Me(o, e, n, r) {
-  let i = e !== "" ? Ve(o, e, n) : n;
-  if (r === qo)
-    return o.splice(i, 1), z.delete(o), Symbol("deleted");
-  else if (r === xe) {
-    if (e === "" && o[i] === undefined)
-      o[i] = {};
-  } else if (r !== undefined)
-    if (i !== undefined)
-      o[i] = r;
-    else if (e !== "" && Z(r, e) + "" === n + "")
-      o.push(r), i = o.length - 1;
-    else
-      throw Error(`byIdPath insert failed at [${e}=${n}]`);
-  return o[i];
-}
-function Ee(o) {
-  if (!Array.isArray(o))
-    throw jo("setByPath failed: expected array, found", o);
-}
-function pe(o) {
-  if (o == null || !(o instanceof Object))
-    throw jo("setByPath failed: expected Object, found", o);
-}
-function Z(o, e) {
-  let n = ae(e), r = o, i, s, t, c;
-  for (i = 0, s = n.length;r !== undefined && i < s; i++) {
-    let f = n[i];
-    if (Array.isArray(f))
-      for (t = 0, c = f.length;r !== undefined && t < c; t++) {
-        let m = f[t];
-        r = r[m];
-      }
-    else if (r.length === 0) {
-      if (r = r[Number(f.slice(1))], f[0] !== "=")
-        return;
-    } else if (f.includes("=")) {
-      let [m, ...d] = f.split("=");
-      r = Me(r, m, d.join("="));
-    } else
-      t = parseInt(f, 10), r = r[t];
-  }
-  return r;
-}
-function Te(o, e, n) {
-  let r = o;
-  if (e === "")
-    throw Error("setByPath cannot be used to set the root object");
-  let i = ae(e);
-  while (r != null && i.length > 0) {
-    let s = i.shift();
-    if (typeof s === "string") {
-      let t = s.indexOf("=");
-      if (t > -1) {
-        if (t === 0)
-          pe(r);
-        else
-          Ee(r);
-        let c = s.slice(0, t), f = s.slice(t + 1);
-        if (r = Me(r, c, f, i.length > 0 ? xe : n), i.length === 0)
-          return true;
-      } else {
-        Ee(r);
-        let c = parseInt(s, 10);
-        if (i.length > 0)
-          r = r[c];
-        else {
-          if (n !== qo) {
-            if (r[c] === n)
-              return false;
-            r[c] = n;
-          } else
-            r.splice(c, 1);
-          return true;
-        }
-      }
-    } else if (Array.isArray(s) && s.length > 0) {
-      pe(r);
-      while (s.length > 0) {
-        let t = s.shift();
-        if (s.length > 0 || i.length > 0)
-          r = ve(r, t, s.length > 0 ? {} : []);
-        else {
-          if (n !== qo) {
-            if (r[t] === n)
-              return false;
-            r[t] = n;
-          } else {
-            if (!Object.prototype.hasOwnProperty.call(r, t))
-              return false;
-            delete r[t];
-          }
-          return true;
-        }
-      }
-    } else
-      throw Error(`setByPath failed, bad path ${e}`);
-  }
-  throw Error(`setByPath(${o}, ${e}, ${n}) failed`);
-}
-var lo = { value: { toDOM: we, fromDOM(o) {
-  return Ce(o);
+var lo = { value: { toDOM: He, fromDOM(o) {
+  return Xe(o);
 } }, text: { toDOM(o, e) {
   o.textContent = e;
 } }, enabled: { toDOM(o, e) {
@@ -526,41 +548,41 @@ var lo = { value: { toDOM: we, fromDOM(o) {
 } }, disabled: { toDOM(o, e) {
   o.disabled = Boolean(e);
 } }, list: { toDOM(o, e, n) {
-  yo(o, e, n).update(e);
+  uo(o, e, n).update(e);
 } } };
 function x(o) {
   return o.replace(/[A-Z]/g, (e) => {
     return `-${e.toLocaleLowerCase()}`;
   });
 }
-function Go(o) {
+function Zo(o) {
   return o.replace(/-([a-z])/g, (e, n) => {
     return n.toLocaleUpperCase();
   });
 }
-var _e = 180 / Math.PI;
-var Ne = Math.PI / 180;
-function T(o, e, n) {
+var nn = 180 / Math.PI;
+var rn = Math.PI / 180;
+function k(o, e, n) {
   return n < o ? NaN : e < o ? o : e > n ? n : e;
 }
-function D(o, e, n, r = true) {
+function Y(o, e, n, r = true) {
   if (r)
-    n = T(0, n, 1);
+    n = k(0, n, 1);
   return n * (e - o) + o;
 }
-var on = { RADIANS_TO_DEGREES: _e, DEGREES_TO_RADIANS: Ne, clamp: T, lerp: D };
-function Zo(o, e = document.body) {
+var sn = { RADIANS_TO_DEGREES: nn, DEGREES_TO_RADIANS: rn, clamp: k, lerp: Y };
+function Oo(o, e = document.body) {
   let n = getComputedStyle(e);
   if (o.endsWith(")") && o.startsWith("var("))
     o = o.slice(4, -1);
   return n.getPropertyValue(o).trim();
 }
-var en = (o, e, n) => {
+var tn = (o, e, n) => {
   return (0.299 * o + 0.587 * e + 0.114 * n) / 255;
 };
-var O = (o) => ("00" + Math.round(Number(o)).toString(16)).slice(-2);
+var U = (o) => ("00" + Math.round(Number(o)).toString(16)).slice(-2);
 
-class Le {
+class ae {
   h;
   s;
   l;
@@ -570,7 +592,7 @@ class Le {
     this.h = 60 * s < 0 ? 60 * s + 360 : 60 * s, this.s = i !== 0 ? r <= 0.5 ? i / (2 * r - i) : i / (2 - (2 * r - i)) : 0, this.l = (2 * r - i) / 2;
   }
 }
-var P = globalThis.document !== undefined ? globalThis.document.createElement("span") : undefined;
+var I = globalThis.document !== undefined ? globalThis.document.createElement("span") : undefined;
 
 class l {
   r;
@@ -578,12 +600,12 @@ class l {
   b;
   a;
   static fromVar(o, e = document.body) {
-    return l.fromCss(Zo(o, e));
+    return l.fromCss(Oo(o, e));
   }
   static fromCss(o) {
     let e = o;
-    if (P instanceof HTMLSpanElement)
-      P.style.color = "black", P.style.color = o, document.body.appendChild(P), e = getComputedStyle(P).color, P.remove();
+    if (I instanceof HTMLSpanElement)
+      I.style.color = "black", I.style.color = o, document.body.appendChild(I), e = getComputedStyle(I).color, I.remove();
     let [n, r, i, s] = e.match(/[\d.]+/g) || ["0", "0", "0", "0"], t = e.startsWith("color(srgb") ? 255 : 1;
     return new l(Number(n) * t, Number(r) * t, Number(i) * t, s == null ? 1 : Number(s));
   }
@@ -592,20 +614,20 @@ class l {
     if (e === 0)
       i = s = t = n;
     else {
-      let f = (p, L, C) => {
-        if (C < 0)
-          C += 1;
-        if (C > 1)
-          C -= 1;
-        if (C < 0.16666666666666666)
-          return p + (L - p) * 6 * C;
-        if (C < 0.5)
-          return L;
-        if (C < 0.6666666666666666)
-          return p + (L - p) * (0.6666666666666666 - C) * 6;
-        return p;
-      }, m = n < 0.5 ? n * (1 + e) : n + e - n * e, d = 2 * n - m, h = (o % 360 + 360) % 360 / 360;
-      i = f(d, m, h + 0.3333333333333333), s = f(d, m, h), t = f(d, m, h - 0.3333333333333333);
+      let f = (E, b, w) => {
+        if (w < 0)
+          w += 1;
+        if (w > 1)
+          w -= 1;
+        if (w < 0.16666666666666666)
+          return E + (b - E) * 6 * w;
+        if (w < 0.5)
+          return b;
+        if (w < 0.6666666666666666)
+          return E + (b - E) * (0.6666666666666666 - w) * 6;
+        return E;
+      }, m = n < 0.5 ? n * (1 + e) : n + e - n * e, d = 2 * n - m, y = (o % 360 + 360) % 360 / 360;
+      i = f(d, m, y + 0.3333333333333333), s = f(d, m, y), t = f(d, m, y - 0.3333333333333333);
     }
     let c = new l(i * 255, s * 255, t * 255, r);
     return c.hslCached = { h: (o % 360 + 360) % 360, s: e, l: n }, c;
@@ -613,7 +635,7 @@ class l {
   static black = new l(0, 0, 0);
   static white = new l(255, 255, 255);
   constructor(o, e, n, r = 1) {
-    this.r = T(0, o, 255), this.g = T(0, e, 255), this.b = T(0, n, 255), this.a = T(0, r, 1);
+    this.r = k(0, o, 255), this.g = k(0, e, 255), this.b = k(0, n, 255), this.a = k(0, r, 1);
   }
   get inverse() {
     return new l(255 - this.r, 255 - this.g, 255 - this.b, this.a);
@@ -645,7 +667,7 @@ class l {
   hslCached;
   get _hsl() {
     if (this.hslCached == null)
-      this.hslCached = new Le(this.r, this.g, this.b);
+      this.hslCached = new ae(this.r, this.g, this.b);
     return this.hslCached;
   }
   get hsl() {
@@ -661,28 +683,28 @@ class l {
     return new l(o, o, o);
   }
   get brightness() {
-    return en(this.r, this.g, this.b);
+    return tn(this.r, this.g, this.b);
   }
   get html() {
     return this.toString();
   }
   toString() {
-    return this.a === 1 ? "#" + O(this.r) + O(this.g) + O(this.b) : "#" + O(this.r) + O(this.g) + O(this.b) + O(Math.floor(255 * this.a));
+    return this.a === 1 ? "#" + U(this.r) + U(this.g) + U(this.b) : "#" + U(this.r) + U(this.g) + U(this.b) + U(Math.floor(255 * this.a));
   }
   brighten(o) {
-    let { h: e, s: n, l: r } = this._hsl, i = T(0, r + o * (1 - r), 1);
+    let { h: e, s: n, l: r } = this._hsl, i = k(0, r + o * (1 - r), 1);
     return l.fromHsl(e, n, i, this.a);
   }
   darken(o) {
-    let { h: e, s: n, l: r } = this._hsl, i = T(0, r * (1 - o), 1);
+    let { h: e, s: n, l: r } = this._hsl, i = k(0, r * (1 - o), 1);
     return l.fromHsl(e, n, i, this.a);
   }
   saturate(o) {
-    let { h: e, s: n, l: r } = this._hsl, i = T(0, n + o * (1 - n), 1);
+    let { h: e, s: n, l: r } = this._hsl, i = k(0, n + o * (1 - n), 1);
     return l.fromHsl(e, i, r, this.a);
   }
   desaturate(o) {
-    let { h: e, s: n, l: r } = this._hsl, i = T(0, n * (1 - o), 1);
+    let { h: e, s: n, l: r } = this._hsl, i = k(0, n * (1 - o), 1);
     return l.fromHsl(e, i, r, this.a);
   }
   rotate(o) {
@@ -697,7 +719,7 @@ class l {
     return console.log(`%c      %c ${this.html}, ${this.rgba}`, `background-color: ${this.html}`, "background-color: transparent"), this;
   }
   blend(o, e) {
-    return new l(D(this.r, o.r, e), D(this.g, o.g, e), D(this.b, o.b, e), D(this.a, o.a, e));
+    return new l(Y(this.r, o.r, e), Y(this.g, o.g, e), Y(this.b, o.b, e), Y(this.a, o.a, e));
   }
   static blendHue(o, e, n) {
     let r = (e - o + 720) % 360;
@@ -708,19 +730,19 @@ class l {
   }
   mix(o, e) {
     let n = this._hsl, r = o._hsl;
-    return l.fromHsl(n.s === 0 ? r.h : r.s === 0 ? n.h : l.blendHue(n.h, r.h, e), D(n.s, r.s, e), D(n.l, r.l, e), D(this.a, o.a, e));
+    return l.fromHsl(n.s === 0 ? r.h : r.s === 0 ? n.h : l.blendHue(n.h, r.h, e), Y(n.s, r.s, e), Y(n.l, r.l, e), Y(this.a, o.a, e));
   }
   colorMix(o, e) {
     return l.fromCss(`color-mix(in hsl, ${this.html}, ${o.html} ${(e * 100).toFixed(0)}%)`);
   }
 }
-function nn(o, e) {
-  let n = y.style(B(e));
+function cn(o, e) {
+  let n = u.style(V(e));
   n.id = o, document.head.append(n);
 }
-var rn = ["animation-iteration-count", "flex", "flex-base", "flex-grow", "flex-shrink", "opacity", "order", "tab-size", "widows", "z-index", "zoom"];
-var Oo = (o, e) => {
-  if (typeof e === "number" && !rn.includes(o))
+var fn = ["animation-iteration-count", "flex", "flex-base", "flex-grow", "flex-shrink", "opacity", "order", "tab-size", "widows", "z-index", "zoom"];
+var Uo = (o, e) => {
+  if (typeof e === "number" && !fn.includes(o))
     e = `${e}px`;
   if (o.startsWith("_"))
     if (o.startsWith("__"))
@@ -729,26 +751,26 @@ var Oo = (o, e) => {
       o = "--" + o.substring(1);
   return { prop: o, value: String(e) };
 };
-var sn = (o, e, n) => {
+var mn = (o, e, n) => {
   if (n === undefined)
     return "";
   if (n instanceof l)
     n = n.html;
-  let r = Oo(e, n);
+  let r = Uo(e, n);
   return `${o}  ${r.prop}: ${r.value};`;
 };
-var ke = (o, e, n = "") => {
+var $e = (o, e, n = "") => {
   let r = x(o);
   if (typeof e === "object" && !(e instanceof l)) {
-    let i = Object.keys(e).map((s) => ke(s, e[s], `${n}  `)).join(`
+    let i = Object.keys(e).map((s) => $e(s, e[s], `${n}  `)).join(`
 `);
     return `${n}  ${o} {
 ${i}
 ${n}  }`;
   } else
-    return sn(n, r, e);
+    return mn(n, r, e);
 };
-var B = (o, e = "") => {
+var V = (o, e = "") => {
   return Object.keys(o).map((r) => {
     let i = o[r];
     if (typeof i === "string") {
@@ -756,7 +778,7 @@ var B = (o, e = "") => {
         return `@import url('${i}');`;
       throw Error("top-level string value only allowed for `@import`");
     }
-    let s = Object.keys(i).map((t) => ke(t, i[t])).join(`
+    let s = Object.keys(i).map((t) => $e(t, i[t])).join(`
 `);
     return `${e}${r} {
 ${s}
@@ -765,8 +787,8 @@ ${s}
 
 `);
 };
-var tn = (o) => {
-  J("initVars", "initVars is deprecated. Just use _ and __ prefixes instead.");
+var ln = (o) => {
+  W("initVars", "initVars is deprecated. Just use _ and __ prefixes instead.");
   let e = {};
   for (let n of Object.keys(o)) {
     let r = o[n], i = x(n);
@@ -774,7 +796,7 @@ var tn = (o) => {
   }
   return e;
 };
-var cn = (o) => {
+var dn = (o) => {
   let e = {};
   for (let n of Object.keys(o)) {
     let r = o[n];
@@ -785,16 +807,16 @@ var cn = (o) => {
   }
   return e;
 };
-var uo = new Proxy({}, { get(o, e) {
+var yo = new Proxy({}, { get(o, e) {
   if (o[e] === undefined) {
     let n = "--" + x(e);
     o[e] = (r) => `var(${n}, ${r})`;
   }
   return o[e];
 } });
-var Uo = new Proxy({}, { get(o, e) {
+var Ao = new Proxy({}, { get(o, e) {
   if (e === "default")
-    return uo;
+    return yo;
   if (o[e] == null) {
     e = x(e);
     let [, n, , r, i, s] = e.match(/^([-\w]*?)((_)?(\d+)(\w?))?$/) || ["", e], t = `--${n}`;
@@ -836,29 +858,29 @@ var Uo = new Proxy({}, { get(o, e) {
   }
   return o[e];
 } });
-var Se = "http://www.w3.org/1998/Math/MathML";
-var He = "http://www.w3.org/2000/svg";
-var ho = {};
-var Xe = (o, e, n) => {
-  let r = Oo(x(e), n);
+var ze = "http://www.w3.org/1998/Math/MathML";
+var De = "http://www.w3.org/2000/svg";
+var wo = {};
+var Fe = (o, e, n) => {
+  let r = Uo(x(e), n);
   if (r.prop.startsWith("--"))
     o.style.setProperty(r.prop, r.value);
   else
     o.style[e] = r.value;
 };
-var fn = (o) => {
+var un = (o) => {
   return { toDOM(e, n) {
-    Xe(e, o, n);
+    Fe(e, o, n);
   } };
 };
-var $e = (o, e, n) => {
+var Ye = (o, e, n) => {
   if (e === "style")
     if (typeof n === "object")
       for (let r of Object.keys(n))
-        if (M(n[r]))
-          H(o, n[r], fn(r));
+        if (T(n[r]))
+          X(o, n[r], un(r));
         else
-          Xe(o, r, n[r]);
+          Fe(o, r, n[r]);
     else
       o.setAttribute("style", n);
   else {
@@ -886,90 +908,90 @@ var $e = (o, e, n) => {
       o.setAttribute(r, n);
   }
 };
-var mn = (o) => {
+var yn = (o) => {
   return { toDOM(e, n) {
-    $e(e, o, n);
+    Ye(e, o, n);
   } };
 };
-var ln = (o, e, n) => {
+var wn = (o, e, n) => {
   if (e === "apply")
     n(o);
   else if (e.match(/^on[A-Z]/) != null) {
     let r = e.substring(2).toLowerCase();
-    V(o, r, n);
+    _(o, r, n);
   } else if (e === "bind")
     if ((typeof n.binding === "string" ? lo[n.binding] : n.binding) !== undefined && n.value !== undefined)
-      H(o, n.value, n.binding instanceof Function ? { toDOM: n.binding } : n.binding);
+      X(o, n.value, n.binding instanceof Function ? { toDOM: n.binding } : n.binding);
     else
       throw Error("bad binding");
   else if (e.match(/^bind[A-Z]/) != null) {
     let r = e.substring(4, 5).toLowerCase() + e.substring(5), i = lo[r];
     if (i !== undefined)
-      H(o, n, i);
+      X(o, n, i);
     else
       throw Error(`${e} is not allowed, bindings.${r} is not defined`);
-  } else if (M(n))
-    H(o, n, mn(e));
+  } else if (T(n))
+    X(o, n, yn(e));
   else
-    $e(o, e, n);
+    Ye(o, e, n);
 };
-var Ao = (o, ...e) => {
-  if (ho[o] === undefined) {
+var Ro = (o, ...e) => {
+  if (wo[o] === undefined) {
     let [i, s] = o.split("|");
     if (s === undefined)
-      ho[o] = globalThis.document.createElement(i);
+      wo[o] = globalThis.document.createElement(i);
     else
-      ho[o] = globalThis.document.createElementNS(s, i);
+      wo[o] = globalThis.document.createElementNS(s, i);
   }
-  let n = ho[o].cloneNode(), r = {};
+  let n = wo[o].cloneNode(), r = {};
   for (let i of e)
     if (i instanceof Element || i instanceof DocumentFragment || typeof i === "string" || typeof i === "number")
       if (n instanceof HTMLTemplateElement)
         n.content.append(i);
       else
         n.append(i);
-    else if (M(i))
-      n.append(y.span({ bindText: i }));
+    else if (T(i))
+      n.append(u.span({ bindText: i }));
     else
       Object.assign(r, i);
   for (let i of Object.keys(r)) {
     let s = r[i];
-    ln(n, i, s);
+    wn(n, i, s);
   }
   return n;
 };
-var Ro = (...o) => {
+var Ko = (...o) => {
   let e = globalThis.document.createDocumentFragment();
   for (let n of o)
     e.append(n);
   return e;
 };
-var y = new Proxy({ fragment: Ro }, { get(o, e) {
+var u = new Proxy({ fragment: Ko }, { get(o, e) {
   if (e = e.replace(/[A-Z]/g, (n) => `-${n.toLocaleLowerCase()}`), o[e] === undefined)
-    o[e] = (...n) => Ao(e, ...n);
+    o[e] = (...n) => Ro(e, ...n);
   return o[e];
 }, set() {
   throw Error("You may not add new properties to elements");
 } });
-var Ko = new Proxy({ fragment: Ro }, { get(o, e) {
+var Bo = new Proxy({ fragment: Ko }, { get(o, e) {
   if (o[e] === undefined)
-    o[e] = (...n) => Ao(`${e}|${He}`, ...n);
+    o[e] = (...n) => Ro(`${e}|${De}`, ...n);
   return o[e];
 }, set() {
   throw Error("You may not add new properties to elements");
 } });
-var Io = new Proxy({ fragment: Ro }, { get(o, e) {
+var Io = new Proxy({ fragment: Ko }, { get(o, e) {
   if (o[e] === undefined)
-    o[e] = (...n) => Ao(`${e}|${Se}`, ...n);
+    o[e] = (...n) => Ro(`${e}|${ze}`, ...n);
   return o[e];
 }, set() {
   throw Error("You may not add new properties to elements");
 } });
-var dn = ["sort", "splice", "copyWithin", "fill", "pop", "push", "reverse", "shift", "unshift"];
-var yn = true;
-var un = /^\.?([^.[\](),])+(\.[^.[\](),]+|\[\d+\]|\[[^=[\](),]*=[^[\]()]+\])*$/;
-var hn = (o) => un.test(o);
-var U = (o = "", e = "") => {
+var Cn = ["sort", "splice", "copyWithin", "fill", "pop", "push", "reverse", "shift", "unshift"];
+var En = true;
+var hn = /^\.?([^.[\](),])+(\.[^.[\](),]+|\[\d+\]|\[[^=[\](),]*=[^[\]()]+\])*$/;
+var pn = (o) => hn.test(o);
+var A = (o = "", e = "") => {
   if (o === "")
     return e;
   else if (e.match(/^\d+$/) !== null || e.includes("="))
@@ -977,24 +999,24 @@ var U = (o = "", e = "") => {
   else
     return `${o}.${e}`;
 };
-var De = {};
-function Po(o, e) {
+var We = {};
+function Vo(o, e) {
   if (o !== null && (typeof o === "object" || typeof o === "function"))
     return o;
-  return new Proxy(De, R(e, true));
+  return new Proxy(We, K(e, true));
 }
-var wo = () => new Proxy({}, R("^", true));
+var Co = () => new Proxy({}, K("^", true));
 var ge = false;
-function A() {
+function R() {
   if (!ge)
     console.warn("xinValue, tosiValue, xinPath, tosiPath, etc. are deprecated. Use value, path, observe, bind, on, binding, listBinding instead."), ge = true;
 }
-var ze = (o) => {
-  return o === De;
+var Je = (o) => {
+  return o === We;
 };
-var R = (o, e) => ({ get(n, r) {
-  if (ze(n)) {
-    let c = () => Z(N, o);
+var K = (o, e) => ({ get(n, r) {
+  if (Je(n)) {
+    let c = () => F(N, o);
     switch (r) {
       case "path":
         return o;
@@ -1016,8 +1038,8 @@ var R = (o, e) => ({ get(n, r) {
         return () => String(c());
       case "observe":
         return (f) => {
-          let m = j(o, f);
-          return () => W(m);
+          let m = Q(o, f);
+          return () => j(m);
         };
       case "on":
         return (f, m) => eo()(f, m, c());
@@ -1028,33 +1050,33 @@ var R = (o, e) => ({ get(n, r) {
       case "binding":
         return (f) => ({ bind: { value: o, binding: f } });
       case "listBinding":
-        return (f = ({ span: d }) => d({ bindText: "^" }), m = {}) => [{ bindList: { value: o, ...m } }, y.template(f(y, wo()))];
-      case g:
+        return (f = ({ span: d }) => d({ bindText: "^" }), m = {}) => [{ bindList: { value: o, ...m } }, u.template(f(u, Co()))];
+      case z:
       case "xinValue":
       case "tosiValue":
-        return A(), c();
-      case a:
+        return R(), c();
+      case M:
       case "xinPath":
       case "tosiPath":
-        return A(), o;
-      case Lo:
-      case "tosiObserve":
-        return A(), (f) => {
-          let m = j(o, f);
-          return () => W(m);
-        };
+        return R(), o;
       case So:
+      case "tosiObserve":
+        return R(), (f) => {
+          let m = Q(o, f);
+          return () => j(m);
+        };
+      case Xo:
       case "tosiOn":
-        return A(), (f, m) => eo()(f, m, c());
-      case ko:
+        return R(), (f, m) => eo()(f, m, c());
+      case Ho:
       case "tosiBind":
-        return A(), (f, m, d) => {
+        return R(), (f, m, d) => {
           oo()(f, o, m, d);
         };
       case "tosiBinding":
-        return A(), (f) => ({ bind: { value: o, binding: f } });
+        return R(), (f) => ({ bind: { value: o, binding: f } });
       case "tosiListBinding":
-        return A(), (f = ({ span: d }) => d({ bindText: "^" }), m = {}) => [{ bindList: { value: o, ...m } }, y.template(f(y, wo()))];
+        return R(), (f = ({ span: d }) => d({ bindText: "^" }), m = {}) => [{ bindList: { value: o, ...m } }, u.template(f(u, Co()))];
     }
     if (typeof r === "string" && /^\d+$/.test(r)) {
       let f = c();
@@ -1079,11 +1101,11 @@ var R = (o, e) => ({ get(n, r) {
         return () => n.valueOf ? n.valueOf() : n;
       case "observe":
         return (c) => {
-          let f = j(o, c);
-          return () => W(f);
+          let f = Q(o, c);
+          return () => j(f);
         };
       case "on":
-        return (c, f) => eo()(c, f, E(n));
+        return (c, f) => eo()(c, f, p(n));
       case "bind":
         return (c, f, m) => {
           oo()(c, o, f, m);
@@ -1091,29 +1113,29 @@ var R = (o, e) => ({ get(n, r) {
       case "binding":
         return (c) => ({ bind: { value: o, binding: c } });
       case "listBinding":
-        return (c = ({ span: m }) => m({ bindText: "^" }), f = {}) => [{ bindList: { value: o, ...f } }, y.template(c(y, wo()))];
+        return (c = ({ span: m }) => m({ bindText: "^" }), f = {}) => [{ bindList: { value: o, ...f } }, u.template(c(u, Co()))];
     }
   switch (r) {
-    case a:
+    case M:
     case "xinPath":
     case "tosiPath":
       return o;
-    case g:
+    case z:
     case "xinValue":
     case "tosiValue":
       return n.valueOf ? n.valueOf() : n;
-    case Lo:
+    case So:
     case "xinObserve":
     case "tosiObserve":
       return (c) => {
-        let f = j(o, c);
-        return () => W(f);
+        let f = Q(o, c);
+        return () => j(f);
       };
-    case So:
+    case Xo:
     case "xinOn":
     case "tosiOn":
-      return (c, f) => eo()(c, f, E(n));
-    case ko:
+      return (c, f) => eo()(c, f, p(n));
+    case Ho:
     case "xinBind":
     case "tosiBind":
       return (c, f, m) => {
@@ -1122,7 +1144,7 @@ var R = (o, e) => ({ get(n, r) {
     case "tosiBinding":
       return (c) => ({ bind: { value: o, binding: c } });
     case "tosiListBinding":
-      return (c = ({ span: m }) => m({ bindText: "^" }), f = {}) => [{ bindList: { value: o, ...f } }, y.template(c(y, wo()))];
+      return (c = ({ span: m }) => m({ bindText: "^" }), f = {}) => [{ bindList: { value: o, ...f } }, u.template(c(u, Co()))];
   }
   if (typeof r === "symbol")
     return n[r];
@@ -1131,8 +1153,8 @@ var R = (o, e) => ({ get(n, r) {
     return i.value;
   let s = r, t = s.match(/^([^.[]+)\.(.+)$/) ?? s.match(/^([^\]]+)(\[.+)/) ?? s.match(/^(\[[^\]]+\])\.(.+)$/) ?? s.match(/^(\[[^\]]+\])\[(.+)$/);
   if (t !== null) {
-    let [, c, f] = t, m = U(o, c), d = Z(n, c);
-    return d !== null && typeof d === "object" ? new Proxy(d, R(m, e))[f] : d;
+    let [, c, f] = t, m = A(o, c), d = F(n, c);
+    return d !== null && typeof d === "object" ? new Proxy(d, K(m, e))[f] : d;
   }
   if (s.startsWith("[") && s.endsWith("]"))
     s = s.substring(1, s.length - 1);
@@ -1140,47 +1162,54 @@ var R = (o, e) => ({ get(n, r) {
     let c;
     if (s.includes("=")) {
       let [f, m] = s.split("=");
-      c = n.find((d) => `${Z(d, f)}` === m);
+      c = n.find((d) => `${F(d, f)}` === m);
     } else
       c = n[s];
     if (c instanceof Object) {
-      let f = U(o, s);
-      return new Proxy(c instanceof Function ? c.bind(n) : c, R(f, e));
+      let f = A(o, s);
+      return new Proxy(c instanceof Function ? c.bind(n) : c, K(f, e));
     } else
-      return e ? Po(c, U(o, s)) : c;
+      return e ? Vo(c, A(o, s)) : c;
   } else if (Array.isArray(n)) {
     let c = n[s];
     return typeof c === "function" ? (...f) => {
-      let m = f.map((h) => E(h)), d = c.apply(n, m);
-      if (dn.includes(s))
-        I(o);
+      let m = f.map((y) => p(y)), d = c.apply(n, m);
+      if (Cn.includes(s))
+        O(o);
       return d;
-    } : typeof c === "object" ? new Proxy(c, R(U(o, s), e)) : e ? Po(c, U(o, s)) : c;
+    } : typeof c === "object" ? new Proxy(c, K(A(o, s), e)) : e ? Vo(c, A(o, s)) : c;
   } else
-    return e ? Po(n[s], U(o, s)) : n[s];
+    return e ? Vo(n[s], A(o, s)) : n[s];
 }, set(n, r, i) {
-  i = E(i);
-  let t = r === g || r === "xinValue" || r === "tosiValue" || r === "value" && (ze(n) || e) ? o : U(o, r);
-  if (yn && !hn(t))
+  i = p(i);
+  let s = r === z || r === "xinValue" || r === "tosiValue" || r === "value" && (Je(n) || e), t = s ? o : A(o, r);
+  if (En && !pn(t))
     throw Error(`setting invalid path ${t}`);
-  if (E(u[t]) !== i && Te(N, t, i))
-    I(t);
+  if (p(C[t]) !== i && he(N, t, i)) {
+    O(t);
+    let f = o.match(/^(.+)\[(\d+)\]$/);
+    if (f !== null) {
+      let [, m, d] = f, y = parseInt(d, 10), E = s ? "" : `.${r}`, b = xe(m, y, n, E);
+      for (let w of b)
+        O(w);
+    }
+  }
   return true;
 } });
-var Bo = (o, e) => {
-  let n = typeof e === "function" ? e : u[e];
+var _o = (o, e) => {
+  let n = typeof e === "function" ? e : C[e];
   if (typeof n !== "function")
     throw Error(`observe expects a function or path to a function, ${e} is neither`);
-  return j(o, n);
+  return Q(o, n);
 };
-var u = new Proxy(N, R("", false));
-de(u);
-var v = new Proxy(N, R("", true));
-var wn = 16;
-var Cn = 100;
-function Fe(o, e) {
-  let n = Array.from(o.querySelectorAll(Y));
-  if (o.matches(Y))
+var C = new Proxy(N, K("", false));
+Te(C);
+var v = new Proxy(N, K("", true));
+var xn = 16;
+var bn = 100;
+function je(o, e) {
+  let n = Array.from(o.querySelectorAll(J));
+  if (o.matches(J))
     n.unshift(o);
   for (let r of n) {
     let i = $.get(r);
@@ -1188,12 +1217,12 @@ function Fe(o, e) {
       if (s.path.startsWith("^"))
         s.path = `${e}${s.path.substring(1)}`;
       if (s.binding.toDOM != null)
-        s.binding.toDOM(r, u[s.path]);
+        s.binding.toDOM(r, C[s.path]);
     }
   }
 }
 
-class Ye {
+class Qe {
   boundElement;
   listTop;
   listBottom;
@@ -1205,19 +1234,24 @@ class Ye {
   _previousSlice;
   static filterBoundObservers = new WeakMap;
   constructor(o, e, n = {}) {
-    if (this.boundElement = o, this.itemToElement = new WeakMap, o.children.length !== 1)
+    if (this.boundElement = o, this.itemToElement = new WeakMap, n.idPath != null) {
+      let r = T(e);
+      if (r != null)
+        me(r, n.idPath);
+    }
+    if (o.children.length !== 1)
       throw Error("ListBinding expects an element with exactly one child element");
     if (o.children[0] instanceof HTMLTemplateElement) {
       let r = o.children[0];
       if (r.content.children.length !== 1)
         throw Error("ListBinding expects a template with exactly one child element");
-      this.template = q(r.content.children[0]);
+      this.template = G(r.content.children[0]);
     } else
       this.template = o.children[0], this.template.remove();
     if (this.options = n, this.listTop = document.createElement("div"), this.listBottom = document.createElement("div"), this.listTop.classList.add("virtual-list-padding"), this.listBottom.classList.add("virtual-list-padding"), this.boundElement.append(this.listTop), this.boundElement.append(this.listBottom), n.virtual != null)
       if (no.observe(this.boundElement), this._update = mo(() => {
         this.update(this.array, true);
-      }, wn), this.boundElement.addEventListener("resize", this._update), n.virtual.scrollContainer === "window")
+      }, xn), this.boundElement.addEventListener("resize", this._update), n.virtual.scrollContainer === "window")
         window.addEventListener("scroll", this._update), window.addEventListener("resize", this._update);
       else
         this.boundElement.addEventListener("scroll", this._update);
@@ -1232,21 +1266,21 @@ class Ye {
       r = this.options.filter(r, this.needle);
     let i = 0, s = r.length - 1, t = 0, c = 0;
     if (o != null && this.boundElement instanceof HTMLElement) {
-      let f = this.boundElement.offsetWidth, m = o.scrollContainer === "window", d, h;
+      let f = this.boundElement.offsetWidth, m = o.scrollContainer === "window", d, y;
       if (m) {
         d = window.innerHeight;
-        let K = this.boundElement.getBoundingClientRect();
-        h = Math.max(0, -K.top);
+        let B = this.boundElement.getBoundingClientRect();
+        y = Math.max(0, -B.top);
       } else
-        d = this.boundElement.offsetHeight, h = this.boundElement.scrollTop;
+        d = this.boundElement.offsetHeight, y = this.boundElement.scrollTop;
       if (o.visibleColumns == null)
         o.visibleColumns = o.width != null ? Math.max(1, Math.floor(f / o.width)) : 1;
-      let p = Math.ceil(d / o.height) + (o.rowChunkSize || 1), L = Math.ceil(r.length / o.visibleColumns), C = o.visibleColumns * p, k = Math.floor(h / o.height);
-      if (k > L - p + 1)
-        k = Math.max(0, L - p + 1);
+      let E = Math.ceil(d / o.height) + (o.rowChunkSize || 1), b = Math.ceil(r.length / o.visibleColumns), w = o.visibleColumns * E, S = Math.floor(y / o.height);
+      if (S > b - E + 1)
+        S = Math.max(0, b - E + 1);
       if (o.rowChunkSize)
-        k -= k % o.rowChunkSize;
-      i = k * o.visibleColumns, s = i + C - 1, t = k * o.height, c = Math.max((L - p) * o.height - t, 0);
+        S -= S % o.rowChunkSize;
+      i = S * o.visibleColumns, s = i + w - 1, t = S * o.height, c = Math.max((b - E) * o.height - t, 0);
     }
     return { items: r, firstItem: i, lastItem: s, topBuffer: t, bottomBuffer: c };
   }
@@ -1254,84 +1288,84 @@ class Ye {
   filter = mo((o) => {
     if (this.needle !== o)
       this.needle = o, this.update(this.array);
-  }, Cn);
+  }, bn);
   update(o, e) {
     if (o == null)
       o = [];
     this.array = o;
-    let { hiddenProp: n, visibleProp: r } = this.options, i = M(o), s = this.visibleSlice();
+    let { hiddenProp: n, visibleProp: r } = this.options, i = T(o), s = this.visibleSlice();
     this.boundElement.classList.toggle("-xin-empty-list", s.items.length === 0);
     let t = this._previousSlice, { firstItem: c, lastItem: f, topBuffer: m, bottomBuffer: d } = s;
     if (n === undefined && r === undefined && e === true && t != null && c === t.firstItem && f === t.lastItem)
       return;
     this._previousSlice = s;
-    let h = 0, p = 0, L = 0;
-    for (let w of Array.from(this.boundElement.children)) {
-      if (w === this.listTop || w === this.listBottom)
+    let y = 0, E = 0, b = 0;
+    for (let h of Array.from(this.boundElement.children)) {
+      if (h === this.listTop || h === this.listBottom)
         continue;
-      let S = w[so];
-      if (S == null)
-        w.remove();
+      let H = h[so];
+      if (H == null)
+        h.remove();
       else {
-        let b = s.items.indexOf(S);
-        if (b < c || b > f)
-          w.remove(), this.itemToElement.delete(S), h++;
+        let L = s.items.indexOf(H);
+        if (L < c || L > f)
+          h.remove(), this.itemToElement.delete(H), y++;
       }
     }
     this.listTop.style.height = String(m) + "px", this.listBottom.style.height = String(d) + "px";
-    let C = [], { idPath: k } = this.options;
-    for (let w = c;w <= f; w++) {
-      let S = s.items[w];
-      if (S === undefined)
+    let w = [], { idPath: S } = this.options;
+    for (let h = c;h <= f; h++) {
+      let H = s.items[h];
+      if (H === undefined)
         continue;
-      let b = this.itemToElement.get(E(S));
-      if (b == null) {
-        if (L++, b = q(this.template), typeof S === "object")
-          this.itemToElement.set(E(S), b), b[so] = E(S);
-        if (this.boundElement.insertBefore(b, this.listBottom), k != null) {
-          let ao = S[k], qe = `${i}[${k}=${ao}]`;
-          Fe(b, qe);
+      let L = this.itemToElement.get(p(H));
+      if (L == null) {
+        if (b++, L = G(this.template), typeof H === "object")
+          this.itemToElement.set(p(H), L), L[so] = p(H);
+        if (this.boundElement.insertBefore(L, this.listBottom), S != null) {
+          let bo = H[S], Ue = `${i}[${S}=${bo}]`;
+          je(L, Ue);
         } else {
-          let ao = `${i}[${w}]`;
-          Fe(b, ao);
+          let bo = `${i}[${h}]`;
+          je(L, bo);
         }
       }
-      C.push(b);
+      w.push(L);
     }
-    let K = null;
-    for (let w of C) {
-      if (w.previousElementSibling !== K)
-        if (p++, K?.nextElementSibling != null)
-          this.boundElement.insertBefore(w, K.nextElementSibling);
+    let B = null;
+    for (let h of w) {
+      if (h.previousElementSibling !== B)
+        if (E++, B?.nextElementSibling != null)
+          this.boundElement.insertBefore(h, B.nextElementSibling);
         else
-          this.boundElement.insertBefore(w, this.listBottom);
-      K = w;
+          this.boundElement.insertBefore(h, this.listBottom);
+      B = h;
     }
-    if (G.perf)
-      console.log(i, "updated", { removed: h, created: L, moved: p });
+    if (Z.perf)
+      console.log(i, "updated", { removed: y, created: b, moved: E });
   }
 }
-var yo = (o, e, n) => {
-  let r = o[_];
+var uo = (o, e, n) => {
+  let r = o[P];
   if (e && r === undefined)
-    r = new Ye(o, e, n), o[_] = r;
+    r = new Qe(o, e, n), o[P] = r;
   return r;
 };
-var Vo = (o) => {
+var vo = (o) => {
   let e;
   while (!(e = o[so]) && o && o.parentElement)
     o = o.parentElement;
   return e ? { element: o, item: e } : undefined;
 };
-var vo = (o) => {
-  let e = Vo(o);
+var Po = (o) => {
+  let e = vo(o);
   return e ? e.item : undefined;
 };
-var En = (o) => {
-  let e = Vo(o);
+var Mn = (o) => {
+  let e = vo(o);
   if (!e)
     return console.error("deleteListItem failed, element is not part of a list instance", o), false;
-  let n = yo(e.element.parentElement);
+  let n = uo(e.element.parentElement);
   if (!n.options.idPath)
     return console.error("deleteListItem failed, list binding has no idPath", o.parentElement, n), false;
   let r = n.array.indexOf(e.item);
@@ -1339,8 +1373,8 @@ var En = (o) => {
     return n.array.splice(r, 1), true;
   return false;
 };
-var { document: ro, MutationObserver: Je } = globalThis;
-var _o = (o, e) => {
+var { document: ro, MutationObserver: qe } = globalThis;
+var No = (o, e) => {
   let n = $.get(o);
   if (n == null)
     return;
@@ -1348,9 +1382,9 @@ var _o = (o, e) => {
     let { binding: i, options: s } = r, { path: t } = r, { toDOM: c } = i;
     if (c != null) {
       if (t.startsWith("^")) {
-        let f = vo(o);
-        if (f != null && f[a] != null)
-          t = r.path = `${f[a]}${t.substring(1)}`;
+        let f = Po(o);
+        if (f != null && f[M] != null)
+          t = r.path = `${f[M]}${t.substring(1)}`;
         else
           throw console.error(`Cannot resolve relative binding ${t}`, o, "is not part of a list"), Error(`Cannot resolve relative binding ${t}`);
       }
@@ -1359,22 +1393,22 @@ var _o = (o, e) => {
     }
   }
 };
-if (Je != null)
-  new Je((e) => {
+if (qe != null)
+  new qe((e) => {
     e.forEach((n) => {
       Array.from(n.addedNodes).forEach((r) => {
         if (r instanceof Element)
-          Array.from(r.querySelectorAll(Y)).forEach((i) => _o(i));
+          Array.from(r.querySelectorAll(J)).forEach((i) => No(i));
       });
     });
   }).observe(ro.body, { subtree: true, childList: true });
-j(() => true, (o) => {
-  let e = Array.from(ro.querySelectorAll(Y));
+Q(() => true, (o) => {
+  let e = Array.from(ro.querySelectorAll(J));
   for (let n of e)
-    _o(n, o);
+    No(n, o);
 });
-var We = (o) => {
-  let e = o.target?.closest(Y);
+var Ge = (o) => {
+  let e = o.target?.closest(J);
   while (e != null) {
     let n = $.get(e);
     for (let r of n) {
@@ -1391,45 +1425,45 @@ var We = (o) => {
           if (m == null)
             f[s] = c;
           else {
-            let d = m[a] != null ? m[g] : m, h = c[a] != null ? c[g] : c;
-            if (d !== h)
-              f[s] = h;
+            let d = m[M] != null ? m[z] : m, y = c[M] != null ? c[z] : c;
+            if (d !== y)
+              f[s] = y;
           }
         }
       }
     }
-    e = e.parentElement.closest(Y);
+    e = e.parentElement.closest(J);
   }
 };
 if (globalThis.document != null)
-  ro.body.addEventListener("change", We, true), ro.body.addEventListener("input", We, true);
-function H(o, e, n, r) {
+  ro.body.addEventListener("change", Ge, true), ro.body.addEventListener("input", Ge, true);
+function X(o, e, n, r) {
   if (o instanceof DocumentFragment)
     throw Error("bind cannot bind to a DocumentFragment");
   let i;
-  if (typeof e === "object" && e[a] === undefined && r === undefined) {
+  if (typeof e === "object" && e[M] === undefined && r === undefined) {
     let { value: c } = e;
-    i = typeof c === "string" ? c : c[a], r = e, delete r.value;
+    i = typeof c === "string" ? c : c[M], r = e, delete r.value;
   } else
-    i = typeof e === "string" ? e : e[a];
+    i = typeof e === "string" ? e : e[M];
   if (i == null)
     throw Error("bind requires a path or object with xin Proxy");
   let { toDOM: s } = n;
-  o.classList?.add(bo);
+  o.classList?.add(To);
   let t = $.get(o);
   if (t == null)
     t = [], $.set(o, t);
   if (t.push({ path: i, binding: n, options: r }), s != null && !i.startsWith("^"))
-    I(i);
+    O(i);
   if (r?.filter && r?.needle)
-    H(o, r.needle, { toDOM(c, f) {
-      console.log({ needle: f }), c[_]?.filter(f);
+    X(o, r.needle, { toDOM(c, f) {
+      console.log({ needle: f }), c[P]?.filter(f);
     } });
   return o;
 }
-var je = new Set;
-var pn = (o) => {
-  let e = o?.target?.closest(To), n = false, r = new Proxy(o, { get(s, t) {
+var Ze = new Set;
+var Tn = (o) => {
+  let e = o?.target?.closest(ko), n = false, r = new Proxy(o, { get(s, t) {
     if (t === "stopPropagation")
       return () => {
         o.stopPropagation(), n = true;
@@ -1440,7 +1474,7 @@ var pn = (o) => {
     }
   } }), i = new Set;
   while (!n && e != null) {
-    let t = Q.get(e)[o.type] || i;
+    let t = q.get(e)[o.type] || i;
     for (let c of t) {
       if (typeof c === "function")
         c(r);
@@ -1454,23 +1488,23 @@ var pn = (o) => {
       if (n)
         continue;
     }
-    e = e.parentElement != null ? e.parentElement.closest(To) : null;
+    e = e.parentElement != null ? e.parentElement.closest(ko) : null;
   }
 };
-function V(o, e, n) {
-  let r = Q.get(o);
-  if (o.classList.add(Mo), r == null)
-    r = {}, Q.set(o, r);
+function _(o, e, n) {
+  let r = q.get(o);
+  if (o.classList.add(Lo), r == null)
+    r = {}, q.set(o, r);
   if (!r[e])
     r[e] = new Set;
-  if (r[e].add(n), !je.has(e))
-    je.add(e), ro.body.addEventListener(e, pn, true);
+  if (r[e].add(n), !Ze.has(e))
+    Ze.add(e), ro.body.addEventListener(e, Tn, true);
   return () => {
     r[e].delete(n);
   };
 }
-ye(H, V);
-function No(o, e) {
+Le(X, _);
+function oe(o, e) {
   if (!o.internals)
     return;
   let n = {}, r = "";
@@ -1493,41 +1527,41 @@ function No(o, e) {
   else
     o.internals.setValidity({});
 }
-var xn = 0;
-function oe() {
-  return `custom-elt${(xn++).toString(36)}`;
+var Ln = 0;
+function ee() {
+  return `custom-elt${(Ln++).toString(36)}`;
 }
-var Qe = 0;
-var ee = null;
-function an() {
-  if (ee === null)
-    ee = new MutationObserver((o) => {
+var Oe = 0;
+var ne = null;
+function kn() {
+  if (ne === null)
+    ne = new MutationObserver((o) => {
       let e = new Set;
       for (let n of o)
-        if (n.type === "attributes" && n.target instanceof F) {
-          let r = n.target, i = Go(n.attributeName);
+        if (n.type === "attributes" && n.target instanceof g) {
+          let r = n.target, i = Zo(n.attributeName);
           if (r._legacyTrackedAttrs?.has(i))
             e.add(r);
         }
       for (let n of e)
         n.queueRender(false);
     });
-  return ee;
+  return ne;
 }
 var io = {};
-function bn(o, e) {
-  let n = io[o], r = B(e).replace(/:host\b/g, o);
+function Sn(o, e) {
+  let n = io[o], r = V(e).replace(/:host\b/g, o);
   io[o] = n ? n + `
 ` + r : r;
 }
-function Mn(o) {
+function Hn(o) {
   if (io[o])
-    document.head.append(y.style({ id: o + "-component" }, io[o]));
+    document.head.append(u.style({ id: o + "-component" }, io[o]));
   delete io[o];
 }
 
-class F extends HTMLElement {
-  static elements = y;
+class g extends HTMLElement {
+  static elements = u;
   static _elementCreator;
   static initAttributes;
   static formAssociated;
@@ -1570,7 +1604,7 @@ class F extends HTMLElement {
   styleNode;
   static styleSpec;
   static styleNode;
-  content = y.slot();
+  content = u.slot();
   isSlotted;
   static _tagName = null;
   static get tagName() {
@@ -1580,7 +1614,7 @@ class F extends HTMLElement {
   _attrValues;
   _valueChanged = false;
   static StyleNode(o) {
-    return console.warn("StyleNode is deprecated, just assign static styleSpec: XinStyleSheet to the class directly"), y.style(B(o));
+    return console.warn("StyleNode is deprecated, just assign static styleSpec: XinStyleSheet to the class directly"), u.style(V(o));
   }
   static elementCreator(o = {}) {
     let e = this;
@@ -1591,28 +1625,28 @@ class F extends HTMLElement {
           if (i = x(e.name), i.startsWith("-"))
             i = i.slice(1);
         } else
-          i = oe();
+          i = ee();
       if (customElements.get(i) != null)
         console.warn(`${i} is already defined`);
       if (i.match(/\w+(-\w+)+/) == null)
-        console.warn(`${i} is not a legal tag for a custom-element`), i = oe();
+        console.warn(`${i} is not a legal tag for a custom-element`), i = ee();
       while (customElements.get(i) !== undefined)
-        i = oe();
+        i = ee();
       if (e._tagName = i, r !== undefined)
-        bn(i, r);
-      window.customElements.define(i, this, o), e._elementCreator = y[i];
+        Sn(i, r);
+      window.customElements.define(i, this, o), e._elementCreator = u[i];
     }
     return e._elementCreator;
   }
   initAttributes(...o) {
-    if (J("initAttributes", "initAttributes() is deprecated. Use static initAttributes = { ... } instead."), !this._legacyTrackedAttrs)
+    if (W("initAttributes", "initAttributes() is deprecated. Use static initAttributes = { ... } instead."), !this._legacyTrackedAttrs)
       this._legacyTrackedAttrs = new Set;
     for (let i of o)
       this._legacyTrackedAttrs.add(i);
-    an().observe(this, { attributes: true });
+    kn().observe(this, { attributes: true });
     let n = {}, r = {};
     o.forEach((i) => {
-      n[i] = X(this[i]);
+      n[i] = a(this[i]);
       let s = x(i);
       Object.defineProperty(this, i, { enumerable: false, get() {
         if (typeof n[i] === "boolean")
@@ -1649,7 +1683,7 @@ class F extends HTMLElement {
     let o = Object.getOwnPropertyDescriptor(this, "value");
     if (o === undefined || o.get !== undefined || o.set !== undefined)
       return;
-    let e = this.hasAttribute("value") ? this.getAttribute("value") : X(this.value);
+    let e = this.hasAttribute("value") ? this.getAttribute("value") : a(this.value);
     delete this.value, Object.defineProperty(this, "value", { enumerable: false, get() {
       return e;
     }, set(n) {
@@ -1675,18 +1709,18 @@ class F extends HTMLElement {
     return this._parts;
   }
   attributeChangedCallback(o, e, n) {
-    let r = Go(o);
+    let r = Zo(o);
     if (!this._legacyTrackedAttrs?.has(r))
       this.queueRender(false);
   }
   constructor() {
     super();
-    if (Qe += 1, this.constructor.formAssociated && typeof this.attachInternals === "function" && !this.internals)
+    if (Oe += 1, this.constructor.formAssociated && typeof this.attachInternals === "function" && !this.internals)
       this.internals = this.attachInternals();
     let o = this.constructor.initAttributes;
     if (o)
       this._setupAttributeAccessors(o);
-    this.instanceId = `${this.tagName.toLocaleLowerCase()}-${Qe}`, this._value = X(this.defaultValue);
+    this.instanceId = `${this.tagName.toLocaleLowerCase()}-${Oe}`, this._value = a(this.defaultValue);
   }
   _setupAttributeAccessors(o) {
     if (!this._attrValues)
@@ -1747,7 +1781,7 @@ class F extends HTMLElement {
     }
   }
   connectedCallback() {
-    if (Mn(this.constructor.tagName), this.hydrate(), this.role != null)
+    if (Hn(this.constructor.tagName), this.hydrate(), this.role != null)
       this.setAttribute("role", this.role);
     if (this.constructor.formAssociated && !this.hasAttribute("tabindex"))
       this.setAttribute("tabindex", "0");
@@ -1789,7 +1823,7 @@ class F extends HTMLElement {
     if (!this._renderQueued)
       this._renderQueued = true, requestAnimationFrame(() => {
         if (this._changeQueued) {
-          if (Yo(this, "change"), this.internals && this.value !== undefined)
+          if (Qo(this, "change"), this.internals && this.value !== undefined)
             this.internals.setFormValue(this.value);
         }
         this._changeQueued = false, this._renderQueued = false, this.render();
@@ -1799,20 +1833,20 @@ class F extends HTMLElement {
   hydrate() {
     if (!this._hydrated) {
       this.initValue();
-      let o = typeof this.content !== "function", e = typeof this.content === "function" ? this.content(y) : this.content, { styleSpec: n } = this.constructor, { styleNode: r } = this.constructor;
+      let o = typeof this.content !== "function", e = typeof this.content === "function" ? this.content(u) : this.content, { styleSpec: n } = this.constructor, { styleNode: r } = this.constructor;
       if (n)
-        r = this.constructor.styleNode = y.style(B(n)), delete this.constructor.styleNode;
+        r = this.constructor.styleNode = u.style(V(n)), delete this.constructor.styleNode;
       if (this.styleNode)
         console.warn(this, "styleNode is deprecrated, use static styleNode or statc styleSpec instead"), r = this.styleNode;
       if (r) {
         let i = this.attachShadow({ mode: "open" });
-        i.appendChild(r.cloneNode(true)), Jo(i, e, o);
+        i.appendChild(r.cloneNode(true)), qo(i, e, o);
       } else if (e !== null) {
         let i = Array.from(this.childNodes);
-        Jo(this, e, o), this.isSlotted = this.querySelector("slot,xin-slot") !== undefined;
+        qo(this, e, o), this.isSlotted = this.querySelector("slot,xin-slot") !== undefined;
         let s = Array.from(this.querySelectorAll("slot"));
         if (s.length > 0)
-          s.forEach(ne.replaceSlot);
+          s.forEach(re.replaceSlot);
         if (i.length > 0) {
           let t = { "": this };
           Array.from(this.querySelectorAll("xin-slot")).forEach((c) => {
@@ -1835,11 +1869,11 @@ class F extends HTMLElement {
     if (!this.internals || this.value === undefined)
       return;
     let o = typeof this.value === "string" ? this.value : String(this.value);
-    No(this, o);
+    oe(this, o);
   }
 }
 
-class ne extends F {
+class re extends g {
   static initAttributes = { name: "" };
   content = null;
   static replaceSlot(o) {
@@ -1849,69 +1883,69 @@ class ne extends F {
     o.replaceWith(e);
   }
 }
-var Or = ne.elementCreator({ tag: "xin-slot" });
-var Tn = (o = () => true) => {
+var Br = re.elementCreator({ tag: "xin-slot" });
+var Xn = (o = () => true) => {
   let e = localStorage.getItem("xin-state");
   if (e != null) {
     let r = JSON.parse(e);
     for (let i of Object.keys(r).filter(o))
-      if (u[i] !== undefined)
-        Object.assign(u[i], r[i]);
+      if (C[i] !== undefined)
+        Object.assign(C[i], r[i]);
       else
-        u[i] = r[i];
+        C[i] = r[i];
   }
-  let n = Wo(() => {
-    let r = {}, i = E(u);
+  let n = Go(() => {
+    let r = {}, i = p(C);
     for (let s of Object.keys(i).filter(o))
       r[s] = i[s];
     localStorage.setItem("xin-state", JSON.stringify(r)), console.log("xin state saved to localStorage");
   }, 500);
-  Bo(o, n);
+  _o(o, n);
 };
-var re = "1.1.4";
-function Co(o) {
+var ie = "1.1.4";
+function Eo(o) {
   return Object.assign(v, o), v;
 }
-function Eo(o) {
-  return J("boxedProxy", "boxedProxy is deprecated, please use tosi() instead"), Co(o);
+function ho(o) {
+  return W("boxedProxy", "boxedProxy is deprecated, please use tosi() instead"), Eo(o);
 }
-function ie(o, e = false) {
+function se(o, e = false) {
   if (e)
-    return J("xinProxy-boxed", "xinProxy(..., true) is deprecated; use tosi(...) instead"), Eo(o);
+    return W("xinProxy-boxed", "xinProxy(..., true) is deprecated; use tosi(...) instead"), ho(o);
   return Object.keys(o).forEach((n) => {
-    u[n] = o[n];
-  }), u;
+    C[n] = o[n];
+  }), C;
 }
-var Ln = {};
+var an = {};
 async function po(o, e) {
-  let { type: n, styleSpec: r } = await e(o, { Color: l, Component: F, elements: y, svgElements: Ko, mathML: Io, varDefault: uo, vars: Uo, xin: u, boxed: v, xinProxy: ie, boxedProxy: Eo, tosi: Co, makeComponent: po, bind: H, on: V, version: re }), i = { type: n, creator: n.elementCreator({ tag: o, styleSpec: r }) };
-  return Ln[o] = i, i;
+  let { type: n, styleSpec: r } = await e(o, { Color: l, Component: g, elements: u, svgElements: Bo, mathML: Io, varDefault: yo, vars: Ao, xin: C, boxed: v, xinProxy: se, boxedProxy: ho, tosi: Eo, makeComponent: po, bind: X, on: _, version: ie }), i = { type: n, creator: n.elementCreator({ tag: o, styleSpec: r }) };
+  return an[o] = i, i;
 }
-var se = {};
-var kn = (o) => import(o);
+var te = {};
+var $n = (o) => import(o);
 
-class xo extends F {
+class xo extends g {
   static initAttributes = { tag: "anon-elt", src: "", property: "default" };
   loaded;
   blueprintLoaded = (o) => {};
   async packaged() {
     let { tag: o, src: e, property: n } = this, r = `${o}.${n}:${e}`;
     if (!this.loaded) {
-      if (se[r] === undefined)
-        se[r] = kn(e).then((i) => {
+      if (te[r] === undefined)
+        te[r] = $n(e).then((i) => {
           let s = i[n];
           return po(o, s);
         });
       else
         console.log(`using cached ${o} with signature ${r}`);
-      this.loaded = await se[r], this.blueprintLoaded(this.loaded);
+      this.loaded = await te[r], this.blueprintLoaded(this.loaded);
     }
     return this.loaded;
   }
 }
-var Sn = xo.elementCreator({ tag: "xin-blueprint", styleSpec: { ":host": { display: "none" } } });
+var zn = xo.elementCreator({ tag: "xin-blueprint", styleSpec: { ":host": { display: "none" } } });
 
-class te extends F {
+class ce extends g {
   allLoaded = () => {};
   constructor() {
     super();
@@ -1924,7 +1958,7 @@ class te extends F {
     super.connectedCallback(), this.load();
   }
 }
-var Hn = te.elementCreator({ tag: "xin-loader", styleSpec: { ":host": { display: "none" } } });
+var Dn = ce.elementCreator({ tag: "xin-loader", styleSpec: { ":host": { display: "none" } } });
 
 // src/index.ts
 var exports_src = {};
@@ -2077,7 +2111,7 @@ __export(exports_src, {
 // src/ab-test.ts
 var abTestConditions = {};
 
-class AbTest extends F {
+class AbTest extends g {
   static set conditions(context) {
     Object.assign(abTestConditions, context);
     for (const abTest of [...AbTest.instances]) {
@@ -2114,7 +2148,7 @@ function scriptTag(src, existingSymbolName) {
       const existing = globalThis[existingSymbolName];
       loadedScripts[src] = Promise.resolve({ [existingSymbolName]: existing });
     }
-    const scriptElt = y.script({ src });
+    const scriptElt = u.script({ src });
     document.head.append(scriptElt);
     loadedScripts[src] = new Promise((resolve) => {
       scriptElt.onload = () => resolve(globalThis);
@@ -2125,7 +2159,7 @@ function scriptTag(src, existingSymbolName) {
 var loadedStyleSheets = {};
 function styleSheet(href) {
   if (loadedStyleSheets[href] === undefined) {
-    const linkElement = y.link({
+    const linkElement = u.link({
       rel: "stylesheet",
       type: "text/css",
       href
@@ -2503,25 +2537,25 @@ var icons = new Proxy(icon_data_default, {
       iconSpec = icon_data_default.square;
     }
     return (...parts) => {
-      const div = y.div();
+      const div = u.div();
       div.innerHTML = iconSpec;
       const sourceSvg = div.querySelector("svg");
       const classes = new Set(sourceSvg.classList);
       classes.add("xin-icon");
-      const svg = Ko.svg({
+      const svg = Bo.svg({
         class: Array.from(classes).join(" "),
         viewBox: sourceSvg.getAttribute("viewBox")
       }, ...parts, ...sourceSvg.children);
-      svg.style.strokeWidth = uo.tosiIconStrokeWidth("2px");
-      svg.style.stroke = uo.tosiIconStroke(classes.has("filled") ? "none" : "currentColor");
-      svg.style.fill = uo.tosiIconFill(classes.has("stroked") ? "none" : "currentColor");
-      svg.style.height = uo.tosiIconSize("16px");
+      svg.style.strokeWidth = yo.tosiIconStrokeWidth("2px");
+      svg.style.stroke = yo.tosiIconStroke(classes.has("filled") ? "none" : "currentColor");
+      svg.style.fill = yo.tosiIconFill(classes.has("stroked") ? "none" : "currentColor");
+      svg.style.height = yo.tosiIconSize("16px");
       return svg;
     };
   }
 });
 
-class SvgIcon extends F {
+class SvgIcon extends g {
   static initAttributes = {
     icon: "",
     size: 0,
@@ -2557,13 +2591,13 @@ var svgIcon = SvgIcon.elementCreator({
       "--tosi-icon-fill": "var(--xin-icon-fill, var(--icon-fill, none))",
       display: "inline-flex",
       stroke: "currentColor",
-      strokeWidth: uo.tosiIconStrokeWidth("2px"),
-      strokeLinejoin: uo.tosiIconStrokeLinejoin("round"),
-      strokeLinecap: uo.tosiIconStrokeLinecap("round"),
-      fill: uo.tosiIconFill("none")
+      strokeWidth: yo.tosiIconStrokeWidth("2px"),
+      strokeLinejoin: yo.tosiIconStrokeLinejoin("round"),
+      strokeLinecap: yo.tosiIconStrokeLinecap("round"),
+      fill: yo.tosiIconFill("none")
     },
     ":host, :host svg": {
-      height: uo.tosiIconSize("16px")
+      height: yo.tosiIconSize("16px")
     }
   }
 });
@@ -2571,7 +2605,7 @@ var svgIcon = SvgIcon.elementCreator({
 // src/babylon-3d.ts
 var noop = () => {};
 
-class B3d extends F {
+class B3d extends g {
   babylonReady;
   BABYLON;
   static styleSpec = {
@@ -2601,7 +2635,7 @@ class B3d extends F {
       transform: "scale(1.1)"
     }
   };
-  content = y.canvas({ part: "canvas" });
+  content = u.canvas({ part: "canvas" });
   constructor() {
     super();
     this.babylonReady = (async () => {
@@ -2677,7 +2711,7 @@ class B3d extends F {
 }
 var b3d = B3d.elementCreator({ tag: "xin-3d" });
 // src/bodymovin-player.ts
-class BodymovinPlayer extends F {
+class BodymovinPlayer extends g {
   static initAttributes = {
     src: "",
     json: ""
@@ -2743,9 +2777,9 @@ var bodymovinPlayer = BodymovinPlayer.elementCreator({
   tag: "xin-lottie"
 });
 // src/carousel.ts
-var { button, slot, div } = y;
+var { button, slot, div } = u;
 
-class XinCarousel extends F {
+class XinCarousel extends g {
   static initAttributes = {
     dots: false,
     arrows: false,
@@ -2766,17 +2800,17 @@ class XinCarousel extends F {
   get page() {
     return this._page;
   }
-  set page(p) {
+  set page(p2) {
     const { scroller, back, forward } = this.parts;
     if (this.lastPage <= 0) {
       forward.disabled = back.disabled = true;
-      p = 0;
+      p2 = 0;
     } else {
-      p = Math.max(0, Math.min(this.lastPage, p));
-      p = isNaN(p) ? 0 : p;
+      p2 = Math.max(0, Math.min(this.lastPage, p2));
+      p2 = isNaN(p2) ? 0 : p2;
     }
-    if (this._page !== p) {
-      this._page = isNaN(p) ? 0 : p;
+    if (this._page !== p2) {
+      this._page = isNaN(p2) ? 0 : p2;
       this.animateScroll(this._page * scroller.offsetWidth);
       back.disabled = this.page <= 0 && !this.loop;
       forward.disabled = this.page >= this.lastPage && !this.loop;
@@ -2795,21 +2829,21 @@ class XinCarousel extends F {
       position: "relative"
     },
     ":host svg": {
-      height: Uo.carouselIconSize
+      height: Ao.carouselIconSize
     },
     ":host button": {
       outline: "none",
       border: "none",
       boxShadow: "none",
       background: "transparent",
-      color: Uo.carouselButtonColor,
+      color: Ao.carouselButtonColor,
       padding: 0
     },
     ":host::part(back), :host::part(forward)": {
       position: "absolute",
       top: 0,
       bottom: 0,
-      width: Uo.carouseButtonWidth,
+      width: Ao.carouseButtonWidth,
       zIndex: 2
     },
     ":host::part(back)": {
@@ -2823,10 +2857,10 @@ class XinCarousel extends F {
       pointerEvents: "none"
     },
     ":host button:hover": {
-      color: Uo.carouselButtonHoverColor
+      color: Ao.carouselButtonHoverColor
     },
     ":host button:active": {
-      color: Uo.carouselButtonActiveColor
+      color: Ao.carouselButtonActiveColor
     },
     ":host::part(pager)": {
       position: "relative"
@@ -2843,29 +2877,29 @@ class XinCarousel extends F {
       display: "none"
     },
     ":host .dot": {
-      background: Uo.carouselButtonColor,
-      borderRadius: Uo.carouselDotSize,
-      height: Uo.carouselDotSize,
-      width: Uo.carouselDotSize,
-      transition: Uo.carouselDotTransition
+      background: Ao.carouselButtonColor,
+      borderRadius: Ao.carouselDotSize,
+      height: Ao.carouselDotSize,
+      width: Ao.carouselDotSize,
+      transition: Ao.carouselDotTransition
     },
     ":host .dot:not(.current):hover": {
-      background: Uo.carouselButtonHoverColor,
-      height: Uo.carouselDotSize150,
-      width: Uo.carouselDotSize150,
-      margin: Uo.carouselDotSize_25
+      background: Ao.carouselButtonHoverColor,
+      height: Ao.carouselDotSize150,
+      width: Ao.carouselDotSize150,
+      margin: Ao.carouselDotSize_25
     },
     ":host .dot:not(.current):active": {
-      background: Uo.carouselButtonActiveColor
+      background: Ao.carouselButtonActiveColor
     },
     ":host .dot.current": {
-      background: Uo.carouselDotCurrentColor
+      background: Ao.carouselDotCurrentColor
     },
     ":host::part(progress)": {
       display: "flex",
-      gap: Uo.carouselDotSpacing,
+      gap: Ao.carouselDotSpacing,
       justifyContent: "center",
-      padding: Uo.carouselProgressPadding
+      padding: Ao.carouselProgressPadding
     }
   };
   easing = (t) => {
@@ -2973,7 +3007,7 @@ var xinCarousel = XinCarousel.elementCreator({
       _carouseButtonWidth: 48,
       _carouselDotCurrentColor: "#0008",
       _carouselDotSize: 8,
-      _carouselDotSpacing: Uo.carouselDotSize,
+      _carouselDotSpacing: Ao.carouselDotSize,
       _carouselProgressPadding: 12,
       _carouselDotTransition: "0.125s ease-in-out"
     },
@@ -3004,7 +3038,7 @@ var makeCodeEditor = async (codeElement, mode = "html", options = {}, theme = DE
   return { ace, editor };
 };
 
-class CodeEditor extends F {
+class CodeEditor extends g {
   source = "";
   get value() {
     return this.editor === undefined ? this.source : this.editor.getValue();
@@ -3074,10 +3108,10 @@ var codeEditor = CodeEditor.elementCreator({
   tag: "xin-code"
 });
 // src/color-input.ts
-var { input } = y;
+var { input } = u;
 var defaultColor = l.fromCss("#8888");
 
-class ColorInput extends F {
+class ColorInput extends g {
   value = defaultColor.rgba;
   color = defaultColor;
   static styleSpec = {
@@ -3087,20 +3121,20 @@ class ColorInput extends F {
       _cssWidth: 72,
       _alphaWidth: 72,
       display: "inline-flex",
-      gap: Uo.gap,
+      gap: Ao.gap,
       alignItems: "center"
     },
     ':host input[type="color"]': {
       border: 0,
-      width: Uo.swatchSize,
-      height: Uo.swatchSize,
+      width: Ao.swatchSize,
+      height: Ao.swatchSize,
       background: "transparent"
     },
     ":host::part(alpha)": {
-      width: Uo.alphaWidth
+      width: Ao.alphaWidth
     },
     ":host::part(css)": {
-      width: Uo.cssWidth,
+      width: Ao.cssWidth,
       fontFamily: "monospace"
     }
   };
@@ -3156,7 +3190,7 @@ var colorInput = ColorInput.elementCreator({
   tag: "xin-color"
 });
 // src/track-drag.ts
-var TRACKER = y.div({
+var TRACKER = u.div({
   style: {
     content: " ",
     position: "fixed",
@@ -3221,9 +3255,9 @@ var bringToFront = (element, selector = "body *") => {
 };
 
 // src/float.ts
-var { slot: slot2 } = y;
+var { slot: slot2 } = u;
 
-class XinFloat extends F {
+class XinFloat extends g {
   static floats = new Set;
   static initAttributes = {
     drag: false,
@@ -3244,10 +3278,10 @@ class XinFloat extends F {
     if (this.drag) {
       bringToFront(this);
       const x2 = this.offsetLeft;
-      const y2 = this.offsetTop;
+      const y = this.offsetTop;
       trackDrag(event, (dx, dy, pointerEvent) => {
         this.style.left = `${x2 + dx}px`;
-        this.style.top = `${y2 + dy}px`;
+        this.style.top = `${y + dy}px`;
         this.style.right = "auto";
         this.style.bottom = "auto";
         if (pointerEvent.type === "mouseup") {
@@ -3390,8 +3424,8 @@ var positionFloat = (element, target, position, remainOnScroll, remainOnResize, 
 
 // src/make-sorter.ts
 function makeSorter(sortValuator, ascending = true) {
-  return (p, q2) => {
-    const pSort = sortValuator(p);
+  return (p2, q2) => {
+    const pSort = sortValuator(p2);
     const qSort = sortValuator(q2);
     for (const i in pSort) {
       if (pSort[i] !== qSort[i]) {
@@ -3404,7 +3438,7 @@ function makeSorter(sortValuator, ascending = true) {
 }
 
 // src/select.ts
-var { button: button2, span, input: input2 } = y;
+var { button: button2, span, input: input2 } = u;
 var hasValue = (options, value) => {
   return !!options.find((option) => {
     if (option === null || value == null) {
@@ -3417,7 +3451,7 @@ var hasValue = (options, value) => {
   });
 };
 
-class TosiSelect extends F {
+class TosiSelect extends g {
   static formAssociated = true;
   static initAttributes = {
     editable: false,
@@ -3684,10 +3718,10 @@ var tosiSelect = TosiSelect.elementCreator({
       display: "flex",
       alignItems: "center",
       justifyItems: "center",
-      gap: Uo.tosiSelectGap,
+      gap: Ao.tosiSelectGap,
       textAlign: "left",
-      height: Uo.tosiSelectTouchSize,
-      padding: Uo.tosiSelectPadding,
+      height: Ao.tosiSelectTouchSize,
+      padding: Ao.tosiSelectPadding,
       position: "relative",
       width: "100%"
     },
@@ -3698,10 +3732,10 @@ var tosiSelect = TosiSelect.elementCreator({
       display: "none"
     },
     ':host [part="value"]': {
-      width: Uo.tosiSelectFieldWidth,
-      padding: Uo.tosiSelectValuePadding,
-      height: Uo.tosiSelectTouchSize,
-      lineHeight: Uo.tosiSelectTouchSize,
+      width: Ao.tosiSelectFieldWidth,
+      padding: Ao.tosiSelectValuePadding,
+      height: Ao.tosiSelectTouchSize,
+      lineHeight: Ao.tosiSelectTouchSize,
       boxShadow: "none",
       whiteSpace: "nowrap",
       outline: "none",
@@ -3715,11 +3749,11 @@ var tosiSelect = TosiSelect.elementCreator({
     }
   }
 });
-var xinSelect = Ho((...args) => tosiSelect(...args), "xinSelect is deprecated, use tosiSelect instead (tag is now <tosi-select>)");
+var xinSelect = ao((...args) => tosiSelect(...args), "xinSelect is deprecated, use tosiSelect instead (tag is now <tosi-select>)");
 
 // src/localize.ts
-var { span: span2 } = y;
-var { i18n } = Co({
+var { span: span2 } = u;
+var { i18n } = Eo({
   i18n: {
     locale: window.navigator.language,
     locales: [window.navigator.language],
@@ -3798,7 +3832,7 @@ function localize(ref) {
   return ref;
 }
 
-class LocalePicker extends F {
+class LocalePicker extends g {
   static initAttributes = {
     hideCaption: false
   };
@@ -3820,12 +3854,12 @@ var localePicker = LocalePicker.elementCreator({
   tag: "xin-locale-picker"
 });
 
-class XinLocalized extends F {
+class XinLocalized extends g {
   static allInstances = new Set;
   static initAttributes = {
     refString: ""
   };
-  contents = () => y.xinSlot();
+  contents = () => u.xinSlot();
   connectedCallback() {
     super.connectedCallback();
     XinLocalized.allInstances.add(this);
@@ -3866,30 +3900,30 @@ var matchShortcut = (keystroke, shortcut) => {
 };
 
 // src/menu.ts
-var { div: div2, button: button3, span: span3, a: a2, xinSlot } = y;
-nn("xin-menu-helper", {
+var { div: div2, button: button3, span: span3, a: a2, xinSlot } = u;
+cn("xin-menu-helper", {
   ".xin-menu": {
     overflow: "hidden auto",
-    maxHeight: `calc(${Uo.maxHeight} - ${uo.menuInset("8px")})`,
-    borderRadius: Uo.spacing50,
-    background: uo.menuBg("#fafafa"),
-    boxShadow: uo.menuShadow(`${Uo.spacing13} ${Uo.spacing50} ${Uo.spacing} #0004`)
+    maxHeight: `calc(${Ao.maxHeight} - ${yo.menuInset("8px")})`,
+    borderRadius: Ao.spacing50,
+    background: yo.menuBg("#fafafa"),
+    boxShadow: yo.menuShadow(`${Ao.spacing13} ${Ao.spacing50} ${Ao.spacing} #0004`)
   },
   ".xin-menu > div": {
-    width: uo.menuWidth("auto")
+    width: yo.menuWidth("auto")
   },
   ".xin-menu-trigger": {
     paddingLeft: 0,
     paddingRight: 0,
-    minWidth: uo.touchSize("48px")
+    minWidth: yo.touchSize("48px")
   },
   ".xin-menu-separator": {
     display: "inline-block",
     content: " ",
     height: "1px",
     width: "100%",
-    background: uo.menuSeparatorColor("#2224"),
-    margin: uo.menuSeparatorMargin("8px 0")
+    background: yo.menuSeparatorColor("#2224"),
+    margin: yo.menuSeparatorMargin("8px 0")
   },
   ".xin-menu-item": {
     boxShadow: "none",
@@ -3902,22 +3936,22 @@ nn("xin-menu-helper", {
     width: "100%",
     gap: 0,
     background: "transparent",
-    padding: uo.menuItemPadding("0 16px"),
-    height: uo.menuItemHeight("48px"),
-    lineHeight: uo.menuItemHeight("48px"),
+    padding: yo.menuItemPadding("0 16px"),
+    height: yo.menuItemHeight("48px"),
+    lineHeight: yo.menuItemHeight("48px"),
     textAlign: "left"
   },
   ".xin-menu-item, .xin-menu-item > span": {
-    color: uo.menuItemColor("#222")
+    color: yo.menuItemColor("#222")
   },
   ".xin-menu-with-icons .xin-menu-item": {
     gridTemplateColumns: "30px 1fr 30px"
   },
   ".xin-menu-item svg": {
-    stroke: uo.menuItemIconColor("#222")
+    stroke: yo.menuItemIconColor("#222")
   },
   ".xin-menu-item.xin-menu-item-checked": {
-    background: uo.menuItemHoverBg("#eee")
+    background: yo.menuItemHoverBg("#eee")
   },
   ".xin-menu-item > span:nth-child(2)": {
     whiteSpace: "nowrap",
@@ -3927,15 +3961,15 @@ nn("xin-menu-helper", {
   },
   ".xin-menu-item:hover": {
     boxShadow: "none !important",
-    background: uo.menuItemHoverBg("#eee")
+    background: yo.menuItemHoverBg("#eee")
   },
   ".xin-menu-item:active": {
     boxShadow: "none !important",
-    background: uo.menuItemActiveBg("#aaa"),
-    color: uo.menuItemActiveColor("#000")
+    background: yo.menuItemActiveBg("#aaa"),
+    color: yo.menuItemActiveColor("#000")
   },
   ".xin-menu-item:active svg": {
-    stroke: uo.menuItemIconActiveColor("#000")
+    stroke: yo.menuItemIconActiveColor("#000")
   }
 });
 var createMenuAction = (item, options) => {
@@ -4101,7 +4135,7 @@ function findShortcutAction(items, event) {
   return;
 }
 
-class XinMenu extends F {
+class XinMenu extends g {
   static initAttributes = {
     menuWidth: "auto",
     localized: false,
@@ -4151,7 +4185,7 @@ var xinMenu = XinMenu.elementCreator({
     ":host button > xin-slot": {
       display: "flex",
       alignItems: "center",
-      gap: uo.xinMenuTriggerGap("10px")
+      gap: yo.xinMenuTriggerGap("10px")
     }
   }
 });
@@ -4171,9 +4205,9 @@ var isTypeAllowed = (allowedTypes, type) => {
     if (allowedType === "special/any") {
       return true;
     } else if (allowedType.indexOf("*") > -1) {
-      const [A2, B2] = allowedType.split("/");
+      const [A2, B] = allowedType.split("/");
       const [a3, b] = type.split("/");
-      if ((A2 === "*" || A2 === a3) && (B2 === "*" || B2 === b)) {
+      if ((A2 === "*" || A2 === a3) && (B === "*" || B === b)) {
         return true;
       }
     } else {
@@ -4300,10 +4334,10 @@ function defaultWidth(array, prop, charWidth) {
   }
   return false;
 }
-var { div: div3, span: span4, button: button4, template } = y;
+var { div: div3, span: span4, button: button4, template } = u;
 var passThru = (array) => array;
 
-class DataTable extends F {
+class DataTable extends g {
   static initAttributes = {
     rowHeight: 30,
     charWidth: 15,
@@ -4331,7 +4365,7 @@ class DataTable extends F {
     };
   }
   set value(data) {
-    const { array, columns, filter } = E(data);
+    const { array, columns, filter } = p(data);
     if (this._array !== array || this._columns !== columns || this._filter !== filter) {
       this.queueRender();
     }
@@ -4352,7 +4386,7 @@ class DataTable extends F {
   }
   constructor() {
     super();
-    this.rowData = Co({
+    this.rowData = Eo({
       [this.instanceId]: this.rowData
     })[this.instanceId];
   }
@@ -4360,7 +4394,7 @@ class DataTable extends F {
     return this._array;
   }
   set array(newArray) {
-    this._array = E(newArray);
+    this._array = p(newArray);
     this.queueRender();
   }
   get filter() {
@@ -4483,7 +4517,7 @@ class DataTable extends F {
     if (!(tr instanceof HTMLElement)) {
       return;
     }
-    const pickedItem = vo(tr);
+    const pickedItem = Po(tr);
     if (pickedItem === false) {
       return;
     }
@@ -4524,7 +4558,7 @@ class DataTable extends F {
     }
     this.selectionChanged(this.visibleSelectedRows);
     for (const row of Array.from(this.querySelectorAll(".tr"))) {
-      const item = vo(row);
+      const item = Po(row);
       this.selectBinding(row, item);
     }
   };
@@ -4545,8 +4579,8 @@ class DataTable extends F {
     this.style.setProperty("--grid-row-width", rowWidth);
   }
   sortByColumn = (columnOptions, direction = "auto") => {
-    for (const column of this.columns.filter((c) => E(c.sort) !== false)) {
-      if (E(column) === columnOptions) {
+    for (const column of this.columns.filter((c) => p(c.sort) !== false)) {
+      if (p(column) === columnOptions) {
         if (direction === "auto") {
           column.sort = column.sort === "ascending" ? "descending" : "ascending";
         } else {
@@ -4663,7 +4697,7 @@ class DataTable extends F {
     });
   };
   get visibleRows() {
-    return E(this.rowData.visible);
+    return p(this.rowData.visible);
   }
   get visibleSelectedRows() {
     return this.visibleRows.filter((obj) => obj[this.selectedKey]);
@@ -4800,13 +4834,13 @@ var dataTable = DataTable.elementCreator({
       overflow: "auto hidden"
     },
     ":host .thead, :host .tbody": {
-      width: Uo.tosiTableGridRowWidth
+      width: Ao.tosiTableGridRowWidth
     },
     ":host .tr": {
       display: "grid",
-      gridTemplateColumns: Uo.tosiTableGridColumns,
-      height: Uo.tosiTableRowHeight,
-      lineHeight: Uo.tosiTableRowHeight
+      gridTemplateColumns: Ao.tosiTableGridColumns,
+      height: Ao.tosiTableRowHeight,
+      lineHeight: Ao.tosiTableRowHeight
     },
     ":host .td, :host .th": {
       overflow: "hidden",
@@ -4819,26 +4853,26 @@ var dataTable = DataTable.elementCreator({
       color: "currentColor",
       background: "none",
       padding: 0,
-      lineHeight: Uo.tosiTableTouchSize,
-      height: Uo.tosiTableTouchSize,
-      width: Uo.tosiTableTouchSize
+      lineHeight: Ao.tosiTableTouchSize,
+      height: Ao.tosiTableTouchSize,
+      width: Ao.tosiTableTouchSize
     },
     ':host [draggable="true"]': {
       cursor: "ew-resize"
     },
     ':host [draggable="true"]:active': {
-      background: Uo.tosiTableDraggedHeaderBg,
-      color: Uo.tosiTableDraggedHeaderColor
+      background: Ao.tosiTableDraggedHeaderBg,
+      color: Ao.tosiTableDraggedHeaderColor
     },
     ":host .drag-over": {
-      background: Uo.tosiTableDropHeaderBg
+      background: Ao.tosiTableDropHeaderBg
     }
   }
 });
 // src/dialog.ts
-var { dialog, button: button5, header, footer, xinSlot: xinSlot2, h3, p, label, input: input3, div: div4 } = y;
+var { dialog, button: button5, header, footer, xinSlot: xinSlot2, h3, p: p2, label, input: input3, div: div4 } = u;
 
-class TosiDialog extends F {
+class TosiDialog extends g {
   static async alert(message, title = "Alert") {
     return new Promise((resolve) => {
       const alertDialog = tosiDialog({
@@ -4848,7 +4882,7 @@ class TosiDialog extends F {
           resolve();
         }
       }, h3({ slot: "header" }, title), message.includes(`
-`) ? y.pre({ style: { whiteSpace: "pre-wrap", margin: 0 } }, message) : p(message));
+`) ? u.pre({ style: { whiteSpace: "pre-wrap", margin: 0 } }, message) : p2(message));
       document.body.append(alertDialog);
       alertDialog.showModal();
     });
@@ -4860,7 +4894,7 @@ class TosiDialog extends F {
         dialogWillClose(reason) {
           resolve(reason === "confirm");
         }
-      }, h3({ slot: "header" }, title), p(message), button5({
+      }, h3({ slot: "header" }, title), p2(message), button5({
         slot: "footer",
         onClick() {
           confirmDialog.close();
@@ -4881,7 +4915,7 @@ class TosiDialog extends F {
         initialFocus() {
           inputField.focus();
         }
-      }, h3({ slot: "header" }, title), p(label({
+      }, h3({ slot: "header" }, title), p2(label({
         style: {
           display: "flex",
           flexDirection: "column",
@@ -4904,7 +4938,7 @@ class TosiDialog extends F {
   };
   constructor() {
     super();
-    V(this, "click", () => {
+    _(this, "click", () => {
       if (this.closeOnBackgroundClick) {
         this.close();
       }
@@ -4959,12 +4993,12 @@ var tosiDialog = TosiDialog.elementCreator({
       display: "flex",
       flexDirection: "column",
       gap: 5,
-      _dialogShadow: uo.menuShadow("0 5px 10px #0004"),
-      _dialogBackground: uo.background("#fafafa"),
-      _dialogColor: uo.textColor("#222"),
-      boxShadow: Uo.dialogShadow,
-      background: Uo.dialogBackground,
-      color: Uo.dialogColor
+      _dialogShadow: yo.menuShadow("0 5px 10px #0004"),
+      _dialogBackground: yo.background("#fafafa"),
+      _dialogColor: yo.textColor("#222"),
+      boxShadow: Ao.dialogShadow,
+      background: Ao.dialogBackground,
+      color: Ao.dialogColor
     },
     ":host > dialog > *": {
       padding: "0 20px"
@@ -4990,7 +5024,7 @@ var T2 = L();
 function G2(l2) {
   T2 = l2;
 }
-var E2 = { exec: () => null };
+var E = { exec: () => null };
 function d(l2, e = "") {
   let t = typeof l2 == "string" ? l2 : l2.source, n = { replace: (r, i) => {
     let s = typeof i == "string" ? i : i.source;
@@ -5025,10 +5059,10 @@ var U2 = /<!--(?:-?>|[\s\S]*?(?:-->|$))/;
 var _e2 = d("^ {0,3}(?:<(script|pre|style|textarea)[\\s>][\\s\\S]*?(?:</\\1>[^\\n]*\\n+|$)|comment[^\\n]*(\\n+|$)|<\\?[\\s\\S]*?(?:\\?>\\n*|$)|<![A-Z][\\s\\S]*?(?:>\\n*|$)|<!\\[CDATA\\[[\\s\\S]*?(?:\\]\\]>\\n*|$)|</?(tag)(?: +|\\n|/?>)[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|<(?!script|pre|style|textarea)([a-z][\\w-]*)(?:attribute)*? */?>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$)|</(?!script|pre|style|textarea)[a-z][\\w-]*\\s*>(?=[ \\t]*(?:\\n|$))[\\s\\S]*?(?:(?:\\n[ \t]*)+\\n|$))", "i").replace("comment", U2).replace("tag", v2).replace("attribute", / +[a-zA-Z:_][\w.:-]*(?: *= *"[^"\n]*"| *= *'[^'\n]*'| *= *[^\s"'=<>`]+)?/).getRegex();
 var ae2 = d(j2).replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("|table", "").replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex();
 var Le2 = d(/^( {0,3}> ?(paragraph|[^\n]*)(?:\n|$))+/).replace("paragraph", ae2).getRegex();
-var K = { blockquote: Le2, code: Te2, def: Se2, fences: Oe2, heading: we2, hr: I2, html: _e2, lheading: oe2, list: $e2, newline: Re2, paragraph: ae2, table: E2, text: Pe2 };
+var K2 = { blockquote: Le2, code: Te2, def: Se2, fences: Oe2, heading: we2, hr: I2, html: _e2, lheading: oe2, list: $e2, newline: Re2, paragraph: ae2, table: E, text: Pe2 };
 var re2 = d("^ *([^\\n ].*)\\n {0,3}((?:\\| *)?:?-+:? *(?:\\| *:?-+:? *)*(?:\\| *)?)(?:\\n((?:(?! *\\n|hr|heading|blockquote|code|fences|list|html).*(?:\\n|$))*)\\n*|$)").replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("blockquote", " {0,3}>").replace("code", "(?: {4}| {0,3}\t)[^\\n]").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex();
-var Me2 = { ...K, lheading: ye2, table: re2, paragraph: d(j2).replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("table", re2).replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex() };
-var ze2 = { ...K, html: d(`^ *(?:comment *(?:\\n|\\s*$)|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)|<tag(?:"[^"]*"|'[^']*'|\\s[^'"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))`).replace("comment", U2).replace(/tag/g, "(?!(?:a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)\\b)\\w+(?!:|[^\\w\\s@]*@)\\b").getRegex(), def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/, heading: /^(#{1,6})(.*)(?:\n+|$)/, fences: E2, lheading: /^(.+?)\n {0,3}(=+|-+) *(?:\n+|$)/, paragraph: d(j2).replace("hr", I2).replace("heading", ` *#{1,6} *[^
+var Me2 = { ...K2, lheading: ye2, table: re2, paragraph: d(j2).replace("hr", I2).replace("heading", " {0,3}#{1,6}(?:\\s|$)").replace("|lheading", "").replace("table", re2).replace("blockquote", " {0,3}>").replace("fences", " {0,3}(?:`{3,}(?=[^`\\n]*\\n)|~{3,})[^\\n]*\\n").replace("list", " {0,3}(?:[*+-]|1[.)]) ").replace("html", "</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|textarea|!--)").replace("tag", v2).getRegex() };
+var ze2 = { ...K2, html: d(`^ *(?:comment *(?:\\n|\\s*$)|<(tag)[\\s\\S]+?</\\1> *(?:\\n{2,}|\\s*$)|<tag(?:"[^"]*"|'[^']*'|\\s[^'"/>\\s]*)*?/?> *(?:\\n{2,}|\\s*$))`).replace("comment", U2).replace(/tag/g, "(?!(?:a|em|strong|small|s|cite|q|dfn|abbr|data|time|code|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo|span|br|wbr|ins|del|img)\\b)\\w+(?!:|[^\\w\\s@]*@)\\b").getRegex(), def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +(["(][^\n]+[")]))? *(?:\n+|$)/, heading: /^(#{1,6})(.*)(?:\n+|$)/, fences: E, lheading: /^(.+?)\n {0,3}(=+|-+) *(?:\n+|$)/, paragraph: d(j2).replace("hr", I2).replace("heading", ` *#{1,6} *[^
 ]`).replace("lheading", oe2).replace("|table", "").replace("blockquote", " {0,3}>").replace("|fences", "").replace("|list", "").replace("|html", "").replace("|tag", "").getRegex() };
 var Ae2 = /^\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/;
 var Ee2 = /^(`+)([^`]|[^`][\s\S]*?[^`])\1(?!`)/;
@@ -5040,30 +5074,30 @@ var ue2 = /[^\s\p{P}\p{S}]/u;
 var Ce2 = d(/^((?![*_])punctSpace)/, "u").replace(/punctSpace/g, W2).getRegex();
 var pe2 = /(?!~)[\p{P}\p{S}]/u;
 var Be2 = /(?!~)[\s\p{P}\p{S}]/u;
-var qe = /(?:[^\s\p{P}\p{S}]|~)/u;
+var qe2 = /(?:[^\s\p{P}\p{S}]|~)/u;
 var ve2 = d(/link|precode-code|html/, "g").replace("link", /\[(?:[^\[\]`]|(?<a>`+)[^`]+\k<a>(?!`))*?\]\((?:\\[\s\S]|[^\\\(\)]|\((?:\\[\s\S]|[^\\\(\)])*\))*\)/).replace("precode-", be2 ? "(?<!`)()" : "(^^|[^`])").replace("code", /(?<b>`+)[^`]+\k<b>(?!`)/).replace("html", /<(?! )[^<>]*?>/).getRegex();
 var ce2 = /^(?:\*+(?:((?!\*)punct)|[^\s*]))|^_+(?:((?!_)punct)|([^\s_]))/;
 var De2 = d(ce2, "u").replace(/punct/g, D2).getRegex();
 var He2 = d(ce2, "u").replace(/punct/g, pe2).getRegex();
 var he2 = "^[^_*]*?__[^_*]*?\\*[^_*]*?(?=__)|[^*]+(?=[^*])|(?!\\*)punct(\\*+)(?=[\\s]|$)|notPunctSpace(\\*+)(?!\\*)(?=punctSpace|$)|(?!\\*)punctSpace(\\*+)(?=notPunctSpace)|[\\s](\\*+)(?!\\*)(?=punct)|(?!\\*)punct(\\*+)(?!\\*)(?=punct)|notPunctSpace(\\*+)(?=notPunctSpace)";
 var Ze2 = d(he2, "gu").replace(/notPunctSpace/g, ue2).replace(/punctSpace/g, W2).replace(/punct/g, D2).getRegex();
-var Ge2 = d(he2, "gu").replace(/notPunctSpace/g, qe).replace(/punctSpace/g, Be2).replace(/punct/g, pe2).getRegex();
+var Ge2 = d(he2, "gu").replace(/notPunctSpace/g, qe2).replace(/punctSpace/g, Be2).replace(/punct/g, pe2).getRegex();
 var Ne2 = d("^[^_*]*?\\*\\*[^_*]*?_[^_*]*?(?=\\*\\*)|[^_]+(?=[^_])|(?!_)punct(_+)(?=[\\s]|$)|notPunctSpace(_+)(?!_)(?=punctSpace|$)|(?!_)punctSpace(_+)(?=notPunctSpace)|[\\s](_+)(?!_)(?=punct)|(?!_)punct(_+)(?!_)(?=punct)", "gu").replace(/notPunctSpace/g, ue2).replace(/punctSpace/g, W2).replace(/punct/g, D2).getRegex();
 var Fe2 = d(/\\(punct)/, "gu").replace(/punct/g, D2).getRegex();
 var je2 = d(/^<(scheme:[^\s\x00-\x1f<>]*|email)>/).replace("scheme", /[a-zA-Z][a-zA-Z0-9+.-]{1,31}/).replace("email", /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(@)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?![-_])/).getRegex();
 var Qe2 = d(U2).replace("(?:-->|$)", "-->").getRegex();
-var Ue2 = d("^comment|^</[a-zA-Z][\\w:-]*\\s*>|^<[a-zA-Z][\\w-]*(?:attribute)*?\\s*/?>|^<\\?[\\s\\S]*?\\?>|^<![a-zA-Z]+\\s[\\s\\S]*?>|^<!\\[CDATA\\[[\\s\\S]*?\\]\\]>").replace("comment", Qe2).replace("attribute", /\s+[a-zA-Z:_][\w.:-]*(?:\s*=\s*"[^"]*"|\s*=\s*'[^']*'|\s*=\s*[^\s"'=<>`]+)?/).getRegex();
+var Ue = d("^comment|^</[a-zA-Z][\\w:-]*\\s*>|^<[a-zA-Z][\\w-]*(?:attribute)*?\\s*/?>|^<\\?[\\s\\S]*?\\?>|^<![a-zA-Z]+\\s[\\s\\S]*?>|^<!\\[CDATA\\[[\\s\\S]*?\\]\\]>").replace("comment", Qe2).replace("attribute", /\s+[a-zA-Z:_][\w.:-]*(?:\s*=\s*"[^"]*"|\s*=\s*'[^']*'|\s*=\s*[^\s"'=<>`]+)?/).getRegex();
 var q2 = /(?:\[(?:\\[\s\S]|[^\[\]\\])*\]|\\[\s\S]|`+[^`]*?`+(?!`)|[^\[\]\\`])*?/;
 var Ke2 = d(/^!?\[(label)\]\(\s*(href)(?:(?:[ \t]*(?:\n[ \t]*)?)(title))?\s*\)/).replace("label", q2).replace("href", /<(?:\\.|[^\n<>\\])+>|[^ \t\n\x00-\x1f]*/).replace("title", /"(?:\\"?|[^"\\])*"|'(?:\\'?|[^'\\])*'|\((?:\\\)?|[^)\\])*\)/).getRegex();
 var de2 = d(/^!?\[(label)\]\[(ref)\]/).replace("label", q2).replace("ref", Q2).getRegex();
 var ke2 = d(/^!?\[(ref)\](?:\[\])?/).replace("ref", Q2).getRegex();
 var We2 = d("reflink|nolink(?!\\()", "g").replace("reflink", de2).replace("nolink", ke2).getRegex();
 var se2 = /[hH][tT][tT][pP][sS]?|[fF][tT][pP]/;
-var X2 = { _backpedal: E2, anyPunctuation: Fe2, autolink: je2, blockSkip: ve2, br: le2, code: Ee2, del: E2, emStrongLDelim: De2, emStrongRDelimAst: Ze2, emStrongRDelimUnd: Ne2, escape: Ae2, link: Ke2, nolink: ke2, punctuation: Ce2, reflink: de2, reflinkSearch: We2, tag: Ue2, text: Ie2, url: E2 };
+var X2 = { _backpedal: E, anyPunctuation: Fe2, autolink: je2, blockSkip: ve2, br: le2, code: Ee2, del: E, emStrongLDelim: De2, emStrongRDelimAst: Ze2, emStrongRDelimUnd: Ne2, escape: Ae2, link: Ke2, nolink: ke2, punctuation: Ce2, reflink: de2, reflinkSearch: We2, tag: Ue, text: Ie2, url: E };
 var Xe2 = { ...X2, link: d(/^!?\[(label)\]\((.*?)\)/).replace("label", q2).getRegex(), reflink: d(/^!?\[(label)\]\s*\[([^\]]*)\]/).replace("label", q2).getRegex() };
 var N2 = { ...X2, emStrongRDelimAst: Ge2, emStrongLDelim: He2, url: d(/^((?:protocol):\/\/|www\.)(?:[a-zA-Z0-9\-]+\.?)+[^\s<]*|^email/).replace("protocol", se2).replace("email", /[A-Za-z0-9._+-]+(@)[a-zA-Z0-9-_]+(?:\.[a-zA-Z0-9-_]*[a-zA-Z0-9])+(?![-_])/).getRegex(), _backpedal: /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/, del: /^(~~?)(?=[^\s~])((?:\\[\s\S]|[^\\])*?(?:\\[\s\S]|[^\s~\\]))\1(?=[^~]|$)/, text: d(/^([`~]+|[^`~])(?:(?= {2,}\n)|(?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)|[\s\S]*?(?:(?=[\\<!\[`*~_]|\b_|protocol:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@)))/).replace("protocol", se2).getRegex() };
 var Je2 = { ...N2, br: d(le2).replace("{2,}", "*").getRegex(), text: d(N2.text).replace("\\b_", "\\b_| {2,}\\n").replace(/\{2,\}/g, "*").getRegex() };
-var C = { normal: K, gfm: Me2, pedantic: ze2 };
+var C2 = { normal: K2, gfm: Me2, pedantic: ze2 };
 var M2 = { normal: X2, gfm: N2, breaks: Je2, pedantic: Xe2 };
 var Ve2 = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 var ge2 = (l2) => Ve2[l2];
@@ -5085,8 +5119,8 @@ function J2(l2) {
 }
 function V2(l2, e) {
   let t = l2.replace(m.findPipe, (i, s, a3) => {
-    let o = false, p2 = s;
-    for (;--p2 >= 0 && a3[p2] === "\\"; )
+    let o = false, p3 = s;
+    for (;--p3 >= 0 && a3[p3] === "\\"; )
       o = !o;
     return o ? "|" : " |";
   }), n = t.split(m.splitPipe), r = 0;
@@ -5150,7 +5184,7 @@ function Ye2(l2, e, t) {
   }).join(`
 `);
 }
-var y2 = class {
+var y = class {
   options;
   rules;
   lexer;
@@ -5201,15 +5235,15 @@ var y2 = class {
 `).split(`
 `), r = "", i = "", s = [];
       for (;n.length > 0; ) {
-        let a3 = false, o = [], p2;
-        for (p2 = 0;p2 < n.length; p2++)
-          if (this.rules.other.blockquoteStart.test(n[p2]))
-            o.push(n[p2]), a3 = true;
+        let a3 = false, o = [], p3;
+        for (p3 = 0;p3 < n.length; p3++)
+          if (this.rules.other.blockquoteStart.test(n[p3]))
+            o.push(n[p3]), a3 = true;
           else if (!a3)
-            o.push(n[p2]);
+            o.push(n[p3]);
           else
             break;
-        n = n.slice(p2);
+        n = n.slice(p3);
         let u2 = o.join(`
 `), c = u2.replace(this.rules.other.blockquoteSetextReplace, `
     $1`).replace(this.rules.other.blockquoteSetextReplace2, "");
@@ -5247,20 +5281,20 @@ ${c}` : c;
       n = r ? `\\d{1,9}\\${n.slice(-1)}` : `\\${n}`, this.options.pedantic && (n = r ? n : "[*+-]");
       let s = this.rules.other.listItemRegex(n), a3 = false;
       for (;e; ) {
-        let p2 = false, u2 = "", c = "";
+        let p3 = false, u2 = "", c = "";
         if (!(t = s.exec(e)) || this.rules.block.hr.test(e))
           break;
         u2 = t[0], e = e.substring(u2.length);
         let g2 = t[2].split(`
-`, 1)[0].replace(this.rules.other.listReplaceTabs, (H2) => " ".repeat(3 * H2.length)), h = e.split(`
+`, 1)[0].replace(this.rules.other.listReplaceTabs, (H) => " ".repeat(3 * H.length)), h = e.split(`
 `, 1)[0], R2 = !g2.trim(), f = 0;
         if (this.options.pedantic ? (f = 2, c = g2.trimStart()) : R2 ? f = t[1].length + 1 : (f = t[2].search(this.rules.other.nonSpaceChar), f = f > 4 ? 1 : f, c = g2.slice(f), f += t[1].length), R2 && this.rules.other.blankLine.test(h) && (u2 += h + `
-`, e = e.substring(h.length + 1), p2 = true), !p2) {
-          let H2 = this.rules.other.nextBulletRegex(f), ee2 = this.rules.other.hrRegex(f), te2 = this.rules.other.fencesBeginRegex(f), ne2 = this.rules.other.headingBeginRegex(f), xe2 = this.rules.other.htmlBeginRegex(f);
+`, e = e.substring(h.length + 1), p3 = true), !p3) {
+          let H = this.rules.other.nextBulletRegex(f), ee2 = this.rules.other.hrRegex(f), te2 = this.rules.other.fencesBeginRegex(f), ne2 = this.rules.other.headingBeginRegex(f), xe2 = this.rules.other.htmlBeginRegex(f);
           for (;e; ) {
             let Z2 = e.split(`
 `, 1)[0], A2;
-            if (h = Z2, this.options.pedantic ? (h = h.replace(this.rules.other.listReplaceNesting, "  "), A2 = h) : A2 = h.replace(this.rules.other.tabCharGlobal, "    "), te2.test(h) || ne2.test(h) || xe2.test(h) || H2.test(h) || ee2.test(h))
+            if (h = Z2, this.options.pedantic ? (h = h.replace(this.rules.other.listReplaceNesting, "  "), A2 = h) : A2 = h.replace(this.rules.other.tabCharGlobal, "    "), te2.test(h) || ne2.test(h) || xe2.test(h) || H.test(h) || ee2.test(h))
               break;
             if (A2.search(this.rules.other.nonSpaceChar) >= f || !h.trim())
               c += `
@@ -5285,14 +5319,14 @@ ${c}` : c;
       else
         return;
       i.raw = i.raw.trimEnd();
-      for (let p2 = 0;p2 < i.items.length; p2++)
-        if (this.lexer.state.top = false, i.items[p2].tokens = this.lexer.blockTokens(i.items[p2].text, []), !i.loose) {
-          let u2 = i.items[p2].tokens.filter((g2) => g2.type === "space"), c = u2.length > 0 && u2.some((g2) => this.rules.other.anyLine.test(g2.raw));
+      for (let p3 = 0;p3 < i.items.length; p3++)
+        if (this.lexer.state.top = false, i.items[p3].tokens = this.lexer.blockTokens(i.items[p3].text, []), !i.loose) {
+          let u2 = i.items[p3].tokens.filter((g2) => g2.type === "space"), c = u2.length > 0 && u2.some((g2) => this.rules.other.anyLine.test(g2.raw));
           i.loose = c;
         }
       if (i.loose)
-        for (let p2 = 0;p2 < i.items.length; p2++)
-          i.items[p2].loose = true;
+        for (let p3 = 0;p3 < i.items.length; p3++)
+          i.items[p3].loose = true;
       return i;
     }
   }
@@ -5320,7 +5354,7 @@ ${c}` : c;
       for (let a3 = 0;a3 < n.length; a3++)
         s.header.push({ text: n[a3], tokens: this.lexer.inline(n[a3]), header: true, align: s.align[a3] });
       for (let a3 of i)
-        s.rows.push(V2(a3, s.header.length).map((o, p2) => ({ text: o, tokens: this.lexer.inline(o), header: false, align: s.align[p2] })));
+        s.rows.push(V2(a3, s.header.length).map((o, p3) => ({ text: o, tokens: this.lexer.inline(o), header: false, align: s.align[p3] })));
       return s;
     }
   }
@@ -5396,20 +5430,20 @@ ${c}` : c;
     if (!r || r[3] && n.match(this.rules.other.unicodeAlphaNumeric))
       return;
     if (!(r[1] || r[2] || "") || !n || this.rules.inline.punctuation.exec(n)) {
-      let s = [...r[0]].length - 1, a3, o, p2 = s, u2 = 0, c = r[0][0] === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
+      let s = [...r[0]].length - 1, a3, o, p3 = s, u2 = 0, c = r[0][0] === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
       for (c.lastIndex = 0, t = t.slice(-1 * e.length + s);(r = c.exec(t)) != null; ) {
         if (a3 = r[1] || r[2] || r[3] || r[4] || r[5] || r[6], !a3)
           continue;
         if (o = [...a3].length, r[3] || r[4]) {
-          p2 += o;
+          p3 += o;
           continue;
         } else if ((r[5] || r[6]) && s % 3 && !((s + o) % 3)) {
           u2 += o;
           continue;
         }
-        if (p2 -= o, p2 > 0)
+        if (p3 -= o, p3 > 0)
           continue;
-        o = Math.min(o, o + p2 + u2);
+        o = Math.min(o, o + p3 + u2);
         let g2 = [...r[0]][0].length, h = e.slice(0, s + r.index + g2 + o);
         if (Math.min(s, o) % 2) {
           let f = h.slice(1, -1);
@@ -5475,12 +5509,12 @@ var x2 = class l2 {
   tokenizer;
   inlineQueue;
   constructor(e) {
-    this.tokens = [], this.tokens.links = Object.create(null), this.options = e || T2, this.options.tokenizer = this.options.tokenizer || new y2, this.tokenizer = this.options.tokenizer, this.tokenizer.options = this.options, this.tokenizer.lexer = this, this.inlineQueue = [], this.state = { inLink: false, inRawBlock: false, top: true };
-    let t = { other: m, block: C.normal, inline: M2.normal };
-    this.options.pedantic ? (t.block = C.pedantic, t.inline = M2.pedantic) : this.options.gfm && (t.block = C.gfm, this.options.breaks ? t.inline = M2.breaks : t.inline = M2.gfm), this.tokenizer.rules = t;
+    this.tokens = [], this.tokens.links = Object.create(null), this.options = e || T2, this.options.tokenizer = this.options.tokenizer || new y, this.tokenizer = this.options.tokenizer, this.tokenizer.options = this.options, this.tokenizer.lexer = this, this.inlineQueue = [], this.state = { inLink: false, inRawBlock: false, top: true };
+    let t = { other: m, block: C2.normal, inline: M2.normal };
+    this.options.pedantic ? (t.block = C2.pedantic, t.inline = M2.pedantic) : this.options.gfm && (t.block = C2.gfm, this.options.breaks ? t.inline = M2.breaks : t.inline = M2.gfm), this.tokenizer.rules = t;
   }
   static get rules() {
-    return { block: C, inline: M2 };
+    return { block: C2, inline: M2 };
   }
   static lex(e, t) {
     return new l2(t).lex(e);
@@ -5562,8 +5596,8 @@ var x2 = class l2 {
       let i = e;
       if (this.options.extensions?.startBlock) {
         let s = 1 / 0, a3 = e.slice(1), o;
-        this.options.extensions.startBlock.forEach((p2) => {
-          o = p2.call({ lexer: this }, a3), typeof o == "number" && o >= 0 && (s = Math.min(s, o));
+        this.options.extensions.startBlock.forEach((p3) => {
+          o = p3.call({ lexer: this }, a3), typeof o == "number" && o >= 0 && (s = Math.min(s, o));
         }), s < 1 / 0 && s >= 0 && (i = e.substring(0, s + 1));
       }
       if (this.state.top && (r = this.tokenizer.paragraph(i))) {
@@ -5659,14 +5693,14 @@ var x2 = class l2 {
         e = e.substring(o.raw.length), t.push(o);
         continue;
       }
-      let p2 = e;
+      let p3 = e;
       if (this.options.extensions?.startInline) {
         let u2 = 1 / 0, c = e.slice(1), g2;
         this.options.extensions.startInline.forEach((h) => {
           g2 = h.call({ lexer: this }, c), typeof g2 == "number" && g2 >= 0 && (u2 = Math.min(u2, g2));
-        }), u2 < 1 / 0 && u2 >= 0 && (p2 = e.substring(0, u2 + 1));
+        }), u2 < 1 / 0 && u2 >= 0 && (p3 = e.substring(0, u2 + 1));
       }
-      if (o = this.tokenizer.inlineText(p2)) {
+      if (o = this.tokenizer.inlineText(p3)) {
         e = e.substring(o.raw.length), o.raw.slice(-1) !== "_" && (a3 = o.raw.slice(-1)), s = true;
         let u2 = t.at(-1);
         u2?.type === "text" ? (u2.raw += o.raw, u2.text += o.text) : t.push(o);
@@ -6015,7 +6049,7 @@ var S = class {
     return this.block ? b.parse : b.parseInline;
   }
 };
-var B2 = class {
+var B = class {
   defaults = L();
   options = this.setOptions;
   parse = this.parseMarkdown(true);
@@ -6024,7 +6058,7 @@ var B2 = class {
   Renderer = P2;
   TextRenderer = $2;
   Lexer = x2;
-  Tokenizer = y2;
+  Tokenizer = y;
   Hooks = S;
   constructor(...e) {
     this.use(...e);
@@ -6085,25 +6119,25 @@ var B2 = class {
             throw new Error(`renderer '${s}' does not exist`);
           if (["options", "parser"].includes(s))
             continue;
-          let a3 = s, o = n.renderer[a3], p2 = i[a3];
+          let a3 = s, o = n.renderer[a3], p3 = i[a3];
           i[a3] = (...u2) => {
             let c = o.apply(i, u2);
-            return c === false && (c = p2.apply(i, u2)), c || "";
+            return c === false && (c = p3.apply(i, u2)), c || "";
           };
         }
         r.renderer = i;
       }
       if (n.tokenizer) {
-        let i = this.defaults.tokenizer || new y2(this.defaults);
+        let i = this.defaults.tokenizer || new y(this.defaults);
         for (let s in n.tokenizer) {
           if (!(s in i))
             throw new Error(`tokenizer '${s}' does not exist`);
           if (["options", "rules", "lexer"].includes(s))
             continue;
-          let a3 = s, o = n.tokenizer[a3], p2 = i[a3];
+          let a3 = s, o = n.tokenizer[a3], p3 = i[a3];
           i[a3] = (...u2) => {
             let c = o.apply(i, u2);
-            return c === false && (c = p2.apply(i, u2)), c;
+            return c === false && (c = p3.apply(i, u2)), c;
           };
         }
         r.tokenizer = i;
@@ -6115,23 +6149,23 @@ var B2 = class {
             throw new Error(`hook '${s}' does not exist`);
           if (["options", "block"].includes(s))
             continue;
-          let a3 = s, o = n.hooks[a3], p2 = i[a3];
+          let a3 = s, o = n.hooks[a3], p3 = i[a3];
           S.passThroughHooks.has(s) ? i[a3] = (u2) => {
             if (this.defaults.async && S.passThroughHooksRespectAsync.has(s))
               return (async () => {
                 let g2 = await o.call(i, u2);
-                return p2.call(i, g2);
+                return p3.call(i, g2);
               })();
             let c = o.call(i, u2);
-            return p2.call(i, c);
+            return p3.call(i, c);
           } : i[a3] = (...u2) => {
             if (this.defaults.async)
               return (async () => {
                 let g2 = await o.apply(i, u2);
-                return g2 === false && (g2 = await p2.apply(i, u2)), g2;
+                return g2 === false && (g2 = await p3.apply(i, u2)), g2;
               })();
             let c = o.apply(i, u2);
-            return c === false && (c = p2.apply(i, u2)), c;
+            return c === false && (c = p3.apply(i, u2)), c;
           };
         }
         r.hooks = i;
@@ -6173,9 +6207,9 @@ var B2 = class {
         })().catch(a3);
       try {
         s.hooks && (n = s.hooks.preprocess(n));
-        let p2 = (s.hooks ? s.hooks.provideLexer() : e ? x2.lex : x2.lexInline)(n, s);
-        s.hooks && (p2 = s.hooks.processAllTokens(p2)), s.walkTokens && this.walkTokens(p2, s.walkTokens);
-        let c = (s.hooks ? s.hooks.provideParser() : e ? b.parse : b.parseInline)(p2, s);
+        let p3 = (s.hooks ? s.hooks.provideLexer() : e ? x2.lex : x2.lexInline)(n, s);
+        s.hooks && (p3 = s.hooks.processAllTokens(p3)), s.walkTokens && this.walkTokens(p3, s.walkTokens);
+        let c = (s.hooks ? s.hooks.provideParser() : e ? b.parse : b.parseInline)(p3, s);
         return s.hooks && (c = s.hooks.postprocess(c)), c;
       } catch (o) {
         return a3(o);
@@ -6195,36 +6229,36 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     };
   }
 };
-var _2 = new B2;
-function k(l4, e) {
+var _2 = new B;
+function k2(l4, e) {
   return _2.parse(l4, e);
 }
-k.options = k.setOptions = function(l4) {
-  return _2.setOptions(l4), k.defaults = _2.defaults, G2(k.defaults), k;
+k2.options = k2.setOptions = function(l4) {
+  return _2.setOptions(l4), k2.defaults = _2.defaults, G2(k2.defaults), k2;
 };
-k.getDefaults = L;
-k.defaults = T2;
-k.use = function(...l4) {
-  return _2.use(...l4), k.defaults = _2.defaults, G2(k.defaults), k;
+k2.getDefaults = L;
+k2.defaults = T2;
+k2.use = function(...l4) {
+  return _2.use(...l4), k2.defaults = _2.defaults, G2(k2.defaults), k2;
 };
-k.walkTokens = function(l4, e) {
+k2.walkTokens = function(l4, e) {
   return _2.walkTokens(l4, e);
 };
-k.parseInline = _2.parseInline;
-k.Parser = b;
-k.parser = b.parse;
-k.Renderer = P2;
-k.TextRenderer = $2;
-k.Lexer = x2;
-k.lexer = x2.lex;
-k.Tokenizer = y2;
-k.Hooks = S;
-k.parse = k;
-var Zt = k.options;
-var Gt = k.setOptions;
-var Nt = k.use;
-var Ft = k.walkTokens;
-var jt = k.parseInline;
+k2.parseInline = _2.parseInline;
+k2.Parser = b;
+k2.parser = b.parse;
+k2.Renderer = P2;
+k2.TextRenderer = $2;
+k2.Lexer = x2;
+k2.lexer = x2.lex;
+k2.Tokenizer = y;
+k2.Hooks = S;
+k2.parse = k2;
+var Zt = k2.options;
+var Gt = k2.setOptions;
+var Nt = k2.use;
+var Ft = k2.walkTokens;
+var jt = k2.parseInline;
 var Ut = b.parse;
 var Kt = x2.lex;
 
@@ -6236,12 +6270,12 @@ function populate(basePath, source) {
     source = String(source);
   }
   return source.replace(/\{\{([^}]+)\}\}/g, (original, prop) => {
-    const value = u[`${basePath}${prop.startsWith("[") ? prop : "." + prop}`];
+    const value = C[`${basePath}${prop.startsWith("[") ? prop : "." + prop}`];
     return value === undefined ? original : populate(basePath, String(value));
   });
 }
 
-class MarkdownViewer extends F {
+class MarkdownViewer extends g {
   static initAttributes = {
     src: "",
     elements: false
@@ -6268,7 +6302,7 @@ class MarkdownViewer extends F {
   didRender = () => {};
   render() {
     super.render();
-    u[this.instanceId] = typeof this.context === "string" ? JSON.parse(this.context) : this.context;
+    C[this.instanceId] = typeof this.context === "string" ? JSON.parse(this.context) : this.context;
     const source = populate(this.instanceId, this.value);
     if (this.elements) {
       const chunks = source.split(`
@@ -6286,9 +6320,9 @@ class MarkdownViewer extends F {
         }
         return chunks2;
       }, []);
-      this.innerHTML = chunks.map((chunk) => chunk.startsWith("<") && chunk.endsWith(">") ? chunk : k(chunk, this.options)).join("");
+      this.innerHTML = chunks.map((chunk) => chunk.startsWith("<") && chunk.endsWith(">") ? chunk : k2(chunk, this.options)).join("");
     } else {
-      this.innerHTML = k(source, this.options);
+      this.innerHTML = k2(source, this.options);
     }
     this.didRender();
   }
@@ -6298,9 +6332,9 @@ var markdownViewer = MarkdownViewer.elementCreator({
 });
 
 // src/tab-selector.ts
-var { div: div5, slot: slot3, span: span5, button: button6 } = y;
+var { div: div5, slot: slot3, span: span5, button: button6 } = u;
 
-class TabSelector extends F {
+class TabSelector extends g {
   static initAttributes = {
     localized: false
   };
@@ -6357,33 +6391,33 @@ class TabSelector extends F {
       whiteSpace: "nowrap"
     },
     ":host .tabs > div": {
-      padding: `${Uo.spacing50} ${Uo.spacing}`,
+      padding: `${Ao.spacing50} ${Ao.spacing}`,
       cursor: "default",
       display: "flex",
       alignItems: "baseline"
     },
     ':host .tabs > [aria-selected="true"]': {
-      "--text-color": Uo.tosiTabsSelectedColor,
-      color: Uo.textColor
+      "--text-color": Ao.tosiTabsSelectedColor,
+      color: Ao.textColor
     },
     ":host .elastic": {
       flex: "1"
     },
     ":host .border": {
-      background: Uo.tosiTabsBarColor
+      background: Ao.tosiTabsBarColor
     },
     ":host .border > .selected": {
       content: " ",
       width: 0,
-      height: Uo.tosiTabsBarHeight,
-      background: Uo.tosiTabsSelectedColor,
+      height: Ao.tosiTabsBarHeight,
+      background: Ao.tosiTabsSelectedColor,
       transition: "ease-out 0.2s"
     },
     ":host button.close": {
       border: 0,
       background: "transparent",
       textAlign: "center",
-      marginLeft: Uo.spacing50,
+      marginLeft: Ao.spacing50,
       padding: 0
     },
     ":host button.close > svg": {
@@ -6618,7 +6652,7 @@ class RemoteSyncManager {
 }
 
 // src/live-example/execution.ts
-var { div: div6 } = y;
+var { div: div6 } = u;
 function registerComponentsInIframe(iframeWindow, context) {
   const iframeCustomElements = iframeWindow.customElements;
   if (!iframeCustomElements)
@@ -7077,9 +7111,9 @@ async function runTests(testCode, preview, context, transform) {
 }
 
 // src/live-example/component.ts
-var { div: div7, xinSlot: xinSlot3, style, button: button7, pre, span: span6 } = y;
+var { div: div7, xinSlot: xinSlot3, style, button: button7, pre, span: span6 } = u;
 
-class LiveExample extends F {
+class LiveExample extends g {
   static initAttributes = {
     persistToDom: false,
     prettier: false,
@@ -7308,7 +7342,12 @@ class LiveExample extends F {
   };
   openEditorWindow = () => {
     const { css, html, js, test } = this;
-    openEditorWindow(this.prefix, this.uuid, this.storageKey, this.remoteKey, { css, html, js, test });
+    openEditorWindow(this.prefix, this.uuid, this.storageKey, this.remoteKey, {
+      css,
+      html,
+      js,
+      test
+    });
   };
   refreshRemote = () => {
     this.remoteSync?.send({
@@ -7388,6 +7427,13 @@ class LiveExample extends F {
     }
     this.classList.toggle("-test-passed", results.failed === 0);
     this.classList.toggle("-test-failed", results.failed > 0);
+    this.dispatchEvent(new CustomEvent("testcomplete", {
+      bubbles: true,
+      detail: {
+        results,
+        element: this
+      }
+    }));
   }
   initFromElements(elements) {
     for (const element of elements) {
@@ -7454,9 +7500,9 @@ if (remoteId) {
   document.body.append(liveExample({ remoteId }));
 }
 // src/side-nav.ts
-var { slot: slot4 } = y;
+var { slot: slot4 } = u;
 
-class SideNav extends F {
+class SideNav extends g {
   static initAttributes = {
     minSize: 800,
     navSize: 200,
@@ -7468,11 +7514,11 @@ class SideNav extends F {
   static styleSpec = {
     ":host": {
       display: "grid",
-      gridTemplateColumns: `${uo.navWidth("50%")} ${uo.contentWidth("50%")}`,
+      gridTemplateColumns: `${yo.navWidth("50%")} ${yo.contentWidth("50%")}`,
       gridTemplateRows: "100%",
       position: "relative",
-      margin: uo.margin("0 0 0 -100%"),
-      transition: uo.sideNavTransition("0.25s ease-out")
+      margin: yo.margin("0 0 0 -100%"),
+      transition: yo.sideNavTransition("0.25s ease-out")
     },
     ":host slot": {
       position: "relative"
@@ -7545,7 +7591,69 @@ var sideNav = SideNav.elementCreator({
 });
 
 // src/doc-browser.ts
-var { div: div8, span: span7, a: a3, header: header2, button: button8, template: template2, input: input4, h2 } = y;
+var { div: div8, span: span7, a: a3, header: header2, button: button8, template: template2, input: input4, h2, style: style2 } = u;
+var testIndicatorStyles = `
+  @keyframes blink-fail {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .doc-link.-test-failed::after {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #f00;
+    border-radius: 50%;
+    margin-left: 6px;
+    animation: blink-fail 2s ease-in-out infinite;
+  }
+
+  .doc-link.-test-passed::after {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #0a0;
+    border-radius: 50%;
+    margin-left: 6px;
+  }
+
+  .test-failure-widget {
+    position: fixed;
+    bottom: 12px;
+    right: 12px;
+    z-index: 1000;
+    background: #c00;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .test-failure-widget:hover {
+    background: #a00;
+  }
+
+  .test-failure-widget .count {
+    background: white;
+    color: #c00;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+  }
+`;
 function createDocBrowser(options) {
   const {
     docs,
@@ -7555,15 +7663,64 @@ function createDocBrowser(options) {
     navSize = 200,
     minSize = 600
   } = options;
+  for (const doc of docs) {
+    doc.testStatus = undefined;
+  }
   const docName = document.location.search !== "" ? document.location.search.substring(1).split("&")[0] : docs[0]?.filename || "README.md";
   const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0];
-  const { app } = Co({
+  const { app } = Eo({
     app: {
       docs,
       currentDoc,
       compact: false
     }
   });
+  const pageTestResults = {};
+  let testResultsResolve;
+  let backgroundTestsStarted = false;
+  let pagesWithTests = 0;
+  let pagesTested = 0;
+  window.__docTestResults = new Promise((resolve) => {
+    testResultsResolve = resolve;
+  });
+  const updateDocTestStatus = (filename) => {
+    const results = pageTestResults[filename];
+    const index = app.docs.findIndex((d2) => String(d2.filename) === filename);
+    if (index >= 0) {
+      const newStatus = results ? results.passed ? "passed" : "failed" : undefined;
+      app.docs[index].testStatus = newStatus;
+    }
+  };
+  const checkAllTestsComplete = () => {
+    if (pagesTested >= pagesWithTests && testResultsResolve) {
+      const allResults = {
+        passed: 0,
+        failed: 0,
+        pages: pageTestResults
+      };
+      for (const pageResults of Object.values(pageTestResults)) {
+        allResults.passed += pageResults.totalPassed;
+        allResults.failed += pageResults.totalFailed;
+      }
+      testResultsResolve(allResults);
+      testResultsResolve = undefined;
+    }
+  };
+  const handleTestComplete = (event) => {
+    const { results } = event.detail;
+    const filename = String(app.currentDoc.filename);
+    pageTestResults[filename] = {
+      passed: results.failed === 0,
+      tests: [...results.tests],
+      totalPassed: results.passed,
+      totalFailed: results.failed
+    };
+    updateDocTestStatus(filename);
+  };
+  const markPageTested = (_filename) => {
+    pagesTested++;
+    checkAllTestsComplete();
+  };
   lo.docLink = {
     toDOM(elt, filename) {
       elt.setAttribute("href", `?${filename}`);
@@ -7575,12 +7732,22 @@ function createDocBrowser(options) {
       elt.classList.toggle("current", currentFile === boundFile.substring(1));
     }
   };
-  const filterDocs = Wo(() => {
+  lo.testStatus = {
+    toDOM(elt, status) {
+      elt.classList.remove("-test-passed", "-test-failed");
+      if (status === "passed") {
+        elt.classList.add("-test-passed");
+      } else if (status === "failed") {
+        elt.classList.add("-test-failed");
+      }
+    }
+  };
+  const filterDocs = Go(() => {
     const needle = searchField.value.toLocaleLowerCase();
     app.docs.forEach((doc) => {
       doc.hidden = !doc.title.toLocaleLowerCase().includes(needle) && !doc.text.toLocaleLowerCase().includes(needle);
     });
-    I(app.docs);
+    O(app.docs);
   });
   const searchField = input4({
     slot: "nav",
@@ -7599,7 +7766,7 @@ function createDocBrowser(options) {
   const headerContent = [
     button8({
       class: "iconic",
-      style: { color: Uo.linkColor },
+      style: { color: Ao.linkColor },
       title: "navigation",
       bind: {
         value: app.compact,
@@ -7681,6 +7848,7 @@ function createDocBrowser(options) {
       overflowY: "scroll"
     },
     bindList: {
+      idPath: "filename",
       hiddenProp: "hidden",
       value: app.docs
     }
@@ -7688,15 +7856,29 @@ function createDocBrowser(options) {
     class: "doc-link",
     bindCurrent: "app.currentDoc.filename",
     bindDocLink: "^.filename",
+    bindTestStatus: "^.testStatus",
     onClick(event) {
       const a4 = event.target;
-      const doc = vo(event.target);
+      const doc = Po(event.target);
       const nav = event.target.closest("xin-sidenav");
       nav.contentVisible = true;
       const { href } = a4;
       window.history.pushState({ href }, "", href);
       app.currentDoc = doc;
       event.preventDefault();
+      const docFilename = String(doc.filename);
+      const results = pageTestResults[docFilename];
+      if (results && !results.passed) {
+        setTimeout(() => {
+          const failedExample = document.querySelector("xin-example.-test-failed");
+          if (failedExample) {
+            failedExample.scrollIntoView({
+              behavior: "smooth",
+              block: "center"
+            });
+          }
+        }, 100);
+      }
     }
   }, xinLocalized({ bindText: "^.title" })))), div8({
     style: {
@@ -7753,13 +7935,176 @@ function createDocBrowser(options) {
     didRender() {
       LiveExample.insertExamples(this, context);
     }
-  }))));
+  }))), style2(testIndicatorStyles));
+  const failureWidget = button8({
+    class: "test-failure-widget",
+    hidden: true,
+    onClick: showFailureMenu
+  }, "Tests Failing", span7({ class: "count", part: "failCount" }, "0"));
+  container.appendChild(failureWidget);
+  function updateFailureWidget() {
+    const failedPages = Object.entries(pageTestResults).filter(([, results]) => !results.passed);
+    const totalFailed = failedPages.reduce((sum, [, results]) => sum + results.totalFailed, 0);
+    failureWidget.hidden = totalFailed === 0;
+    const countEl = failureWidget.querySelector('[part="failCount"]');
+    if (countEl) {
+      countEl.textContent = String(totalFailed);
+    }
+  }
+  function showFailureMenu() {
+    const failedPages = Object.entries(pageTestResults).filter(([, results]) => !results.passed);
+    const menuItems = [];
+    for (const [filename, results] of failedPages) {
+      const doc = docs.find((d2) => d2.filename === filename);
+      const failedTests = results.tests.filter((t) => !t.passed);
+      for (const test of failedTests) {
+        menuItems.push({
+          caption: `${doc?.title || filename}: ${test.name}`,
+          action: () => {
+            const docObj = app.docs.find((d2) => String(d2.filename) === filename);
+            if (docObj) {
+              window.history.pushState({ href: `?${filename}` }, "", `?${filename}`);
+              app.currentDoc = docObj;
+              setTimeout(() => {
+                const failedExample = document.querySelector("xin-example.-test-failed");
+                if (failedExample) {
+                  failedExample.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                  });
+                }
+              }, 100);
+            }
+          }
+        });
+      }
+    }
+    if (menuItems.length > 0) {
+      menuItems.push(null);
+    }
+    menuItems.push({
+      icon: "copy",
+      caption: "Copy test results to clipboard",
+      action: () => {
+        const report = generateTestReport();
+        navigator.clipboard.writeText(report);
+      }
+    });
+    popMenu({
+      target: failureWidget,
+      menuItems
+    });
+  }
+  function generateTestReport() {
+    const lines = ["# Test Results", ""];
+    let totalPassed = 0;
+    let totalFailed = 0;
+    for (const [filename, results] of Object.entries(pageTestResults)) {
+      const doc = docs.find((d2) => d2.filename === filename);
+      const title = doc?.title || filename;
+      totalPassed += results.totalPassed;
+      totalFailed += results.totalFailed;
+      if (results.tests.length > 0) {
+        lines.push(`## ${title}`);
+        lines.push("");
+        for (const test of results.tests) {
+          const icon = test.passed ? "✓" : "✗";
+          const line = test.error ? `- ${icon} ${test.name}: ${test.error}` : `- ${icon} ${test.name}`;
+          lines.push(line);
+        }
+        lines.push("");
+      }
+    }
+    lines.unshift(`**Summary: ${totalPassed} passed, ${totalFailed} failed**`, "");
+    return lines.join(`
+`);
+  }
+  container.addEventListener("testcomplete", (event) => {
+    handleTestComplete(event);
+    updateFailureWidget();
+  });
+  const runBackgroundTests = async () => {
+    if (backgroundTestsStarted)
+      return;
+    backgroundTestsStarted = true;
+    const docsWithTests = docs.filter((doc) => doc.text.includes("```test"));
+    pagesWithTests = docsWithTests.length;
+    if (pagesWithTests === 0) {
+      if (testResultsResolve) {
+        testResultsResolve({ passed: 0, failed: 0, pages: {} });
+        testResultsResolve = undefined;
+      }
+      return;
+    }
+    const testFrame = document.createElement("iframe");
+    testFrame.style.cssText = "position: fixed; left: -9999px; width: 800px; height: 600px; visibility: hidden;";
+    document.body.appendChild(testFrame);
+    const currentFilename = String(app.currentDoc.filename);
+    for (const doc of docsWithTests) {
+      if (doc.filename === currentFilename) {
+        continue;
+      }
+      pageTestResults[doc.filename] = {
+        passed: true,
+        tests: [],
+        totalPassed: 0,
+        totalFailed: 0
+      };
+      const testContainer = document.createElement("div");
+      const viewer = markdownViewer({
+        value: doc.text,
+        didRender() {
+          LiveExample.insertExamples(this, context);
+        }
+      });
+      testContainer.appendChild(viewer);
+      const handleBgTest = (event) => {
+        const { results } = event.detail;
+        const pageResults = pageTestResults[doc.filename];
+        pageResults.tests.push(...results.tests);
+        pageResults.totalPassed += results.passed;
+        pageResults.totalFailed += results.failed;
+        pageResults.passed = pageResults.totalFailed === 0;
+        updateDocTestStatus(doc.filename);
+        updateFailureWidget();
+      };
+      testContainer.addEventListener("testcomplete", handleBgTest);
+      const frameDoc = testFrame.contentDocument;
+      if (frameDoc) {
+        frameDoc.body.innerHTML = "";
+        frameDoc.body.appendChild(testContainer);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+      markPageTested(doc.filename);
+    }
+    testFrame.remove();
+    if (docsWithTests.some((d2) => d2.filename === currentFilename)) {
+      setTimeout(() => {
+        markPageTested(currentFilename);
+      }, 1000);
+    }
+  };
+  const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  if (isLocalhost) {
+    setTimeout(runBackgroundTests, 1000);
+  } else {
+    const currentHasTests = currentDoc.text.includes("```test");
+    if (currentHasTests) {
+      pagesWithTests = 1;
+      setTimeout(() => markPageTested(currentDoc.filename), 2000);
+    } else {
+      if (testResultsResolve) {
+        testResultsResolve({ passed: 0, failed: 0, pages: {} });
+        testResultsResolve = undefined;
+      }
+    }
+  }
   return container;
 }
 // src/editable-rect.ts
-var { div: div9, slot: slot5 } = y;
+var { div: div9, slot: slot5 } = u;
 
-class EditableRect extends F {
+class EditableRect extends g {
   static initAttributes = {
     rotationSnap: 0,
     positionSnap: 0
@@ -7785,11 +8130,11 @@ class EditableRect extends F {
       content: '" "',
       position: "absolute",
       display: "flex",
-      height: Uo.handleSize,
-      width: Uo.handleSize,
-      padding: Uo.handlePadding,
-      "--text-color": Uo.handleColor,
-      background: Uo.handleBg
+      height: Ao.handleSize,
+      width: Ao.handleSize,
+      padding: Ao.handlePadding,
+      "--text-color": Ao.handleColor,
+      background: Ao.handleBg
     },
     ":host > .drag-size": {
       top: 0,
@@ -7802,7 +8147,7 @@ class EditableRect extends F {
       cursor: "ew-resize"
     },
     ':host > [part="rotate"]': {
-      transform: `translateY(${Uo.handleSize_50})`
+      transform: `translateY(${Ao.handleSize_50})`
     },
     ":host > [locked] > svg:first-child, :host > :not([locked]) > svg+svg": {
       display: "none"
@@ -7814,8 +8159,8 @@ class EditableRect extends F {
       pointerEvents: "none"
     },
     ":host > *:hover": {
-      "--text-color": Uo.handleHoverColor,
-      background: Uo.handleHoverBg
+      "--text-color": Ao.handleHoverColor,
+      background: Ao.handleHoverBg
     }
   };
   static snappedCoords(event, coords) {
@@ -8005,10 +8350,10 @@ class EditableRect extends F {
     trackDrag(event, (_dx, _dy, dragEvent) => {
       const { clientX, clientY } = dragEvent;
       const x3 = clientX - center.x;
-      const y3 = clientY - center.y;
-      let alpha = y3 > 0 ? 90 : -90;
+      const y2 = clientY - center.y;
+      let alpha = y2 > 0 ? 90 : -90;
       if (x3 !== 0) {
-        alpha = Math.atan2(y3, x3) * 180 / Math.PI;
+        alpha = Math.atan2(y2, x3) * 180 / Math.PI;
       }
       alpha = EditableRect.snappedAngle(dragEvent, alpha);
       if (alpha === 0) {
@@ -8136,7 +8481,7 @@ var editableRect = EditableRect.elementCreator({
   tag: "xin-editable"
 });
 // src/filter-builder.ts
-var { div: div10, input: input5, button: button9, span: span8 } = y;
+var { div: div10, input: input5, button: button9, span: span8 } = u;
 var passThru2 = (array) => array;
 var NULL_FILTER_DESCRIPTION = "null filter, everything matches";
 var availableFilters = {
@@ -8219,7 +8564,7 @@ function getSelectText(select) {
   return select.options[select.selectedIndex]?.caption || "";
 }
 
-class FilterPart extends F {
+class FilterPart extends g {
   static initAttributes = {
     haystack: "*",
     condition: "contains",
@@ -8336,7 +8681,7 @@ var filterPart = FilterPart.elementCreator({
   }
 });
 
-class FilterBuilder extends F {
+class FilterBuilder extends g {
   _fields = [];
   get fields() {
     return this._fields;
@@ -8444,7 +8789,7 @@ var filterBuilder = FilterBuilder.elementCreator({
   }
 });
 // src/form.ts
-var { form, slot: slot6, xinSlot: xinSlot4, label: label2, input: input6, span: span9 } = y;
+var { form, slot: slot6, xinSlot: xinSlot4, label: label2, input: input6, span: span9 } = u;
 function attr(element, name, value) {
   if (value !== "" && value !== false) {
     element.setAttribute(name, value);
@@ -8486,7 +8831,7 @@ function setElementValue(input7, value) {
   }
 }
 
-class TosiField extends F {
+class TosiField extends g {
   static initAttributes = {
     caption: "",
     key: "",
@@ -8549,7 +8894,7 @@ class TosiField extends F {
     }
     if (this.type === "text") {
       input7.textContent = "";
-      const textarea = y.textarea({ value: this.value });
+      const textarea = u.textarea({ value: this.value });
       if (this.placeholder) {
         textarea.setAttribute("placeholder", this.placeholder);
       }
@@ -8584,7 +8929,7 @@ class TosiField extends F {
   }
 }
 
-class TosiForm extends F {
+class TosiForm extends g {
   context = {};
   value = {};
   get isValid() {
@@ -8704,7 +9049,7 @@ var fieldStyleSpec = {
     position: "relative",
     display: "flex",
     alignItems: "center",
-    gap: uo.prefixSuffixGap("8px")
+    gap: yo.prefixSuffixGap("8px")
   },
   ':host [part="field"][prefix]::before': {
     content: "attr(prefix)"
@@ -8738,9 +9083,9 @@ var xinField = tosiField;
 var xinForm = tosiForm;
 // src/gamepad.ts
 function gamepadState() {
-  const gamepads = navigator.getGamepads().filter((p2) => p2 !== null);
-  return gamepads.map((p2) => {
-    const { id, axes, buttons } = p2;
+  const gamepads = navigator.getGamepads().filter((p3) => p3 !== null);
+  return gamepads.map((p3) => {
+    const { id, axes, buttons } = p3;
     return {
       id,
       axes,
@@ -8806,9 +9151,9 @@ ${buttonText}`;
 `);
 }
 // src/mapbox.ts
-var { div: div11 } = y;
+var { div: div11 } = u;
 
-class MapBox extends F {
+class MapBox extends g {
   static formAssociated = true;
   static initAttributes = {
     coords: "65.01715565258993,25.48081004203459,12",
@@ -8906,14 +9251,14 @@ var mapBox = MapBox.elementCreator({
   tag: "xin-map"
 });
 // src/month.ts
-var { div: div12, span: span10, button: button10 } = y;
+var { div: div12, span: span10, button: button10 } = u;
 var DAY_MS = 24 * 3600 * 1000;
 var WEEK = [0, 1, 2, 3, 4, 5, 6];
 var MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 var padLeft = (value, length = 2, padding = "0") => String(value).padStart(length, padding);
 var dateFromYMD = (year, month, date) => new Date(`${year}-${padLeft(month)}-${padLeft(date)}`);
 
-class TosiMonth extends F {
+class TosiMonth extends g {
   static formAssociated = true;
   static initAttributes = {
     month: NaN,
@@ -9203,7 +9548,7 @@ var tosiMonth = TosiMonth.elementCreator({
     },
     ":host[disabled]": {
       pointerEvents: "none",
-      opacity: uo.disabledOpacity(0.6)
+      opacity: yo.disabledOpacity(0.6)
     },
     ':host [part="month"], :host [part="year"]': {
       _fieldWidth: "4em",
@@ -9215,10 +9560,10 @@ var tosiMonth = TosiMonth.elementCreator({
       justifyItems: "stretch"
     },
     ":host .today": {
-      background: uo.monthTodayBackground("transparent"),
-      boxShadow: uo.monthTodayShadow(`none`),
-      backdropFilter: uo.monthTodayBackdropFilter("brightness(0.9)"),
-      fontWeight: uo.monthTodayFontWeight("800")
+      background: yo.monthTodayBackground("transparent"),
+      boxShadow: yo.monthTodayShadow(`none`),
+      backdropFilter: yo.monthTodayBackdropFilter("brightness(0.9)"),
+      fontWeight: yo.monthTodayFontWeight("800")
     },
     ":host .day, :host .date": {
       padding: 5,
@@ -9227,38 +9572,38 @@ var tosiMonth = TosiMonth.elementCreator({
       userSelect: "none"
     },
     ":host .day": {
-      color: uo.monthDayColor("hotpink"),
-      background: uo.monthDayBackground("white"),
-      fontWeight: uo.monthDayFontWeight("800")
+      color: yo.monthDayColor("hotpink"),
+      background: yo.monthDayBackground("white"),
+      fontWeight: yo.monthDayFontWeight("800")
     },
     ":host .date": {
       cursor: "default"
     },
     ":host .weekend": {
-      background: uo.monthWeekendBackground("#eee")
+      background: yo.monthWeekendBackground("#eee")
     },
     ":host .date:not(.in-month)": {
       opacity: 0.5
     },
     ":host .date.checked": {
-      color: uo.monthDateCheckedColor("white"),
-      background: uo.monthDateCheckedBackground("hotpink")
+      color: yo.monthDateCheckedColor("white"),
+      background: yo.monthDateCheckedBackground("hotpink")
     },
     ":host:not([range]) .date.checked": {
-      borderRadius: uo.monthDateCheckedBorderRadius("10px")
+      borderRadius: yo.monthDateCheckedBorderRadius("10px")
     },
     ":host .range-start": {
-      borderTopLeftRadius: uo.monthDateCheckedBorderRadius("10px"),
-      borderBottomLeftRadius: uo.monthDateCheckedBorderRadius("10px")
+      borderTopLeftRadius: yo.monthDateCheckedBorderRadius("10px"),
+      borderBottomLeftRadius: yo.monthDateCheckedBorderRadius("10px")
     },
     ":host .range-end": {
-      borderTopRightRadius: uo.monthDateCheckedBorderRadius("10px"),
-      borderBottomRightRadius: uo.monthDateCheckedBorderRadius("10px")
+      borderTopRightRadius: yo.monthDateCheckedBorderRadius("10px"),
+      borderBottomRightRadius: yo.monthDateCheckedBorderRadius("10px")
     }
   }
 });
 // src/notifications.ts
-var { div: div13, button: button11 } = y;
+var { div: div13, button: button11 } = u;
 var COLOR_MAP = {
   error: "red",
   warn: "orange",
@@ -9268,63 +9613,63 @@ var COLOR_MAP = {
   progress: "royalblue"
 };
 
-class XinNotification extends F {
+class XinNotification extends g {
   static singleton;
   static styleSpec = {
     ":host": {
       _notificationSpacing: 8,
       _notificationWidth: 360,
-      _notificationPadding: `${Uo.notificationSpacing} ${Uo.notificationSpacing50} ${Uo.notificationSpacing} ${Uo.notificationSpacing200}`,
+      _notificationPadding: `${Ao.notificationSpacing} ${Ao.notificationSpacing50} ${Ao.notificationSpacing} ${Ao.notificationSpacing200}`,
       _notificationBg: "#fafafa",
       _notificationAccentColor: "#aaa",
       _notificationTextColor: "#444",
-      _notificationIconSize: Uo.notificationSpacing300,
+      _notificationIconSize: Ao.notificationSpacing300,
       _notificationButtonSize: 48,
       _notificationBorderWidth: "3px 0 0",
-      _notificationBorderRadius: Uo.notificationSpacing50,
+      _notificationBorderRadius: Ao.notificationSpacing50,
       position: "fixed",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingBottom: Uo.notificationSpacing,
-      width: Uo.notificationWidth,
+      paddingBottom: Ao.notificationSpacing,
+      width: Ao.notificationWidth,
       display: "flex",
       flexDirection: "column-reverse",
       margin: "0 auto",
-      gap: Uo.notificationSpacing,
+      gap: Ao.notificationSpacing,
       maxHeight: "50vh",
       overflow: "hidden auto",
       boxShadow: "none !important"
     },
     ":host *": {
-      color: Uo.notificationTextColor
+      color: Ao.notificationTextColor
     },
     ":host .note": {
       display: "grid",
-      background: Uo.notificationBg,
-      padding: Uo.notificationPadding,
-      gridTemplateColumns: `${Uo.notificationIconSize} 1fr ${Uo.notificationButtonSize}`,
-      gap: Uo.notificationSpacing,
+      background: Ao.notificationBg,
+      padding: Ao.notificationPadding,
+      gridTemplateColumns: `${Ao.notificationIconSize} 1fr ${Ao.notificationButtonSize}`,
+      gap: Ao.notificationSpacing,
       alignItems: "center",
-      borderRadius: Uo.notificationBorderRadius,
-      boxShadow: `0 2px 8px #0006, inset 0 0 0 2px ${Uo.notificationAccentColor}`,
-      borderColor: Uo.notificationAccentColor,
-      borderWidth: Uo.notificationBorderWidth,
+      borderRadius: Ao.notificationBorderRadius,
+      boxShadow: `0 2px 8px #0006, inset 0 0 0 2px ${Ao.notificationAccentColor}`,
+      borderColor: Ao.notificationAccentColor,
+      borderWidth: Ao.notificationBorderWidth,
       borderStyle: "solid",
       transition: "0.5s ease-in",
       transitionProperty: "margin, opacity",
       zIndex: 1
     },
     ":host .note .icon": {
-      stroke: Uo.notificationAccentColor
+      stroke: Ao.notificationAccentColor
     },
     ":host .note button": {
       display: "flex",
-      lineHeight: Uo.notificationButtonSize,
+      lineHeight: Ao.notificationButtonSize,
       padding: 0,
       margin: 0,
-      height: Uo.notificationButtonSize,
-      width: Uo.notificationButtonSize,
+      height: Ao.notificationButtonSize,
+      width: Ao.notificationButtonSize,
       background: "transparent",
       alignItems: "center",
       justifyContent: "center",
@@ -9333,24 +9678,24 @@ class XinNotification extends F {
       position: "relative"
     },
     ":host .note button:hover svg": {
-      stroke: Uo.notificationAccentColor
+      stroke: Ao.notificationAccentColor
     },
     ":host .note button:active svg": {
       borderRadius: 99,
-      stroke: Uo.notificationBg,
-      background: Uo.notificationAccentColor,
-      padding: Uo.spacing50
+      stroke: Ao.notificationBg,
+      background: Ao.notificationAccentColor,
+      padding: Ao.spacing50
     },
     ":host .note svg": {
-      height: Uo.notificationIconSize,
-      width: Uo.notificationIconSize,
+      height: Ao.notificationIconSize,
+      width: Ao.notificationIconSize,
       pointerEvents: "none"
     },
     ":host .message": {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      gap: Uo.notificationSpacing
+      gap: Ao.notificationSpacing
     },
     ":host .note.closing": {
       opacity: 0,
@@ -9375,7 +9720,7 @@ class XinNotification extends F {
     document.body.append(singleton);
     singleton.style.zIndex = String(findHighestZ() + 1);
     const _notificationAccentColor = color || COLOR_MAP[type];
-    const progressBar = progress || type === "progress" ? y.progress() : {};
+    const progressBar = progress || type === "progress" ? u.progress() : {};
     const closeCallback = () => {
       if (close) {
         close();
@@ -9449,9 +9794,9 @@ var isBreached = async (password) => {
   }
   return response.status !== 404;
 };
-var { span: span11, xinSlot: xinSlot5 } = y;
+var { span: span11, xinSlot: xinSlot5 } = u;
 
-class XinPasswordStrength extends F {
+class XinPasswordStrength extends g {
   static initAttributes = {
     minLength: 8,
     goodLength: 12,
@@ -9535,7 +9880,7 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
     ":host": {
       display: "inline-flex",
       flexDirection: "column",
-      gap: Uo.spacing50,
+      gap: Ao.spacing50,
       position: "relative"
     },
     ":host xin-slot": {
@@ -9544,35 +9889,35 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
     ':host [part="meter"]': {
       display: "block",
       position: "relative",
-      height: uo.meterHeight("24px"),
-      background: uo.indicatorBg("white"),
-      borderRadius: uo.meterRadius("4px"),
-      boxShadow: uo.meterShadow(`inset 0 0 0 2px ${Uo.indicatorColor}`)
+      height: yo.meterHeight("24px"),
+      background: yo.indicatorBg("white"),
+      borderRadius: yo.meterRadius("4px"),
+      boxShadow: yo.meterShadow(`inset 0 0 0 2px ${Ao.indicatorColor}`)
     },
     ':host [part="level"]': {
-      height: uo.levelHeight("20px"),
+      height: yo.levelHeight("20px"),
       content: '" "',
       display: "inline-block",
       width: 0,
       transition: "0.15s ease-out",
-      background: Uo.indicatorColor,
-      margin: uo.levelMargin("2px"),
-      borderRadius: uo.levelRadius("2px")
+      background: Ao.indicatorColor,
+      margin: yo.levelMargin("2px"),
+      borderRadius: yo.levelRadius("2px")
     },
     ':host [part="description"]': {
       position: "absolute",
       inset: "0",
-      color: Uo.descriptionColor,
-      height: uo.meterHeight("24px"),
-      lineHeight: uo.meterHeight("24px"),
+      color: Ao.descriptionColor,
+      height: yo.meterHeight("24px"),
+      lineHeight: yo.meterHeight("24px"),
       textAlign: "center"
     }
   }
 });
 // src/rating.ts
-var { span: span12 } = y;
+var { span: span12 } = u;
 
-class TosiRating extends F {
+class TosiRating extends g {
   static formAssociated = true;
   static initAttributes = {
     max: 5,
@@ -9634,7 +9979,8 @@ class TosiRating extends F {
   content = () => span12({ part: "container" }, span12({ part: "empty" }), span12({ part: "filled" }));
   displayValue(value) {
     const { empty, filled } = this.parts;
-    const roundedValue = Math.round((value || 0) / this.step) * this.step;
+    const numValue = typeof value === "string" ? 0 : value || 0;
+    const roundedValue = Math.round(numValue / this.step) * this.step;
     filled.style.width = roundedValue / this.max * empty.offsetWidth + "px";
   }
   update = (event) => {
@@ -9653,8 +9999,8 @@ class TosiRating extends F {
     }
   };
   handleKey = (event) => {
-    let value = Number(this.value);
-    if (value === "" || value == null) {
+    let value = this.value === "" ? NaN : Number(this.value);
+    if (isNaN(value)) {
       value = Math.round((this.min + this.max) * 0.5 * this.step) * this.step;
     }
     let blockEvent = false;
@@ -9720,9 +10066,9 @@ var XinRating = TosiRating;
 var tosiRating = TosiRating.elementCreator({
   tag: "tosi-rating"
 });
-var xinRating = Ho((...args) => tosiRating(...args), "xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)");
+var xinRating = ao((...args) => tosiRating(...args), "xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)");
 // src/rich-text.ts
-var { xinSlot: xinSlot6, div: div14, button: button12, span: span13 } = y;
+var { xinSlot: xinSlot6, div: div14, button: button12, span: span13 } = u;
 var blockStyles = [
   {
     caption: "Title",
@@ -9804,7 +10150,7 @@ var richTextWidgets = () => [
   ...characterStyleWidgets()
 ];
 
-class RichText extends F {
+class RichText extends g {
   static formAssociated = true;
   static initAttributes = {
     widgets: "default",
@@ -10003,11 +10349,11 @@ var tosiRichText = RichText.elementCreator({
     }
   }
 });
-var richText = Ho((...args) => tosiRichText(...args), "richText is deprecated, use tosiRichText instead (tag is now <tosi-rich-text>)");
+var richText = ao((...args) => tosiRichText(...args), "richText is deprecated, use tosiRichText instead (tag is now <tosi-rich-text>)");
 // src/segmented.ts
-var { div: div15, slot: slot7, label: label3, span: span14, input: input7 } = y;
+var { div: div15, slot: slot7, label: label3, span: span14, input: input7 } = u;
 
-class TosiSegmented extends F {
+class TosiSegmented extends g {
   static formAssociated = true;
   static initAttributes = {
     direction: "row",
@@ -10053,62 +10399,62 @@ class TosiSegmented extends F {
   static styleSpec = {
     ":host": {
       display: "inline-flex",
-      gap: uo.segmentedOptionGap("8px"),
-      alignItems: uo.segmentedAlignItems("center")
+      gap: yo.segmentedOptionGap("8px"),
+      alignItems: yo.segmentedAlignItems("center")
     },
     ":host, :host::part(options)": {
-      flexDirection: uo.segmentedDirection("row")
+      flexDirection: yo.segmentedDirection("row")
     },
     ":host label": {
       display: "inline-grid",
       alignItems: "center",
-      gap: uo.segmentedOptionGap("8px"),
-      gridTemplateColumns: uo.segmentedOptionGridColumns("0px 24px 1fr"),
-      padding: uo.segmentedOptionPadding("4px 12px"),
-      font: uo.segmentedOptionFont("16px")
+      gap: yo.segmentedOptionGap("8px"),
+      gridTemplateColumns: yo.segmentedOptionGridColumns("0px 24px 1fr"),
+      padding: yo.segmentedOptionPadding("4px 12px"),
+      font: yo.segmentedOptionFont("16px")
     },
     ":host label:focus": {
       outline: "none",
-      boxShadow: uo.segmentedFocusShadow(`inset 0 0 0 2px ${uo.segmentedOptionCurrentBackground("#44a")}`),
-      borderRadius: uo.segmentedOptionsBorderRadius("8px")
+      boxShadow: yo.segmentedFocusShadow(`inset 0 0 0 2px ${yo.segmentedOptionCurrentBackground("#44a")}`),
+      borderRadius: yo.segmentedOptionsBorderRadius("8px")
     },
     ":host label:has(:checked)": {
-      color: uo.segmentedOptionCurrentColor("#eee"),
-      background: uo.segmentedOptionCurrentBackground("#44a")
+      color: yo.segmentedOptionCurrentColor("#eee"),
+      background: yo.segmentedOptionCurrentBackground("#44a")
     },
     ":host label:has(:checked):focus": {
-      boxShadow: uo.segmentedCurrentFocusShadow(`inset 0 0 0 2px ${uo.segmentedOptionCurrentColor("#eee")}`)
+      boxShadow: yo.segmentedCurrentFocusShadow(`inset 0 0 0 2px ${yo.segmentedOptionCurrentColor("#eee")}`)
     },
     ":host svg": {
-      height: uo.segmentOptionIconSize("16px"),
-      stroke: uo.segmentedOptionIconColor("currentColor")
+      height: yo.segmentOptionIconSize("16px"),
+      stroke: yo.segmentedOptionIconColor("currentColor")
     },
     ":host label.no-icon": {
       gap: 0,
-      gridTemplateColumns: uo.segmentedOptionGridColumns("0px 1fr")
+      gridTemplateColumns: yo.segmentedOptionGridColumns("0px 1fr")
     },
     ':host input[type="radio"], :host input[type="checkbox"]': {
-      visibility: uo.segmentedInputVisibility("hidden")
+      visibility: yo.segmentedInputVisibility("hidden")
     },
     ":host::part(options)": {
       display: "flex",
-      borderRadius: uo.segmentedOptionsBorderRadius("8px"),
-      background: uo.segmentedOptionsBackground("#fff"),
-      color: uo.segmentedOptionColor("#222"),
+      borderRadius: yo.segmentedOptionsBorderRadius("8px"),
+      background: yo.segmentedOptionsBackground("#fff"),
+      color: yo.segmentedOptionColor("#222"),
       overflow: "hidden",
-      alignItems: uo.segmentedOptionAlignItems("stretch")
+      alignItems: yo.segmentedOptionAlignItems("stretch")
     },
     ":host::part(custom)": {
-      padding: uo.segmentedOptionPadding("4px 12px"),
-      color: uo.segmentedOptionCurrentColor("#eee"),
-      background: uo.segmentedOptionCurrentBackground("#44a"),
-      font: uo.segmentedOptionFont("16px"),
+      padding: yo.segmentedOptionPadding("4px 12px"),
+      color: yo.segmentedOptionCurrentColor("#eee"),
+      background: yo.segmentedOptionCurrentBackground("#44a"),
+      font: yo.segmentedOptionFont("16px"),
       border: "0",
       outline: "none"
     },
     ":host::part(custom)::placeholder": {
-      color: uo.segmentedOptionCurrentColor("#eee"),
-      opacity: uo.segmentedPlaceholderOpacity(0.75)
+      color: yo.segmentedOptionCurrentColor("#eee"),
+      opacity: yo.segmentedPlaceholderOpacity(0.75)
     }
   };
   valueChanged = false;
@@ -10239,11 +10585,11 @@ var XinSegmented = TosiSegmented;
 var tosiSegmented = TosiSegmented.elementCreator({
   tag: "tosi-segmented"
 });
-var xinSegmented = Ho((...args) => tosiSegmented(...args), "xinSegmented is deprecated, use tosiSegmented instead (tag is now <tosi-segmented>)");
+var xinSegmented = ao((...args) => tosiSegmented(...args), "xinSegmented is deprecated, use tosiSegmented instead (tag is now <tosi-segmented>)");
 // src/size-break.ts
-var { slot: slot8 } = y;
+var { slot: slot8 } = u;
 
-class SizeBreak extends F {
+class SizeBreak extends g {
   static initAttributes = {
     minWidth: 0,
     minHeight: 0
@@ -10284,7 +10630,7 @@ var sizeBreak = SizeBreak.elementCreator({
   tag: "xin-sizebreak"
 });
 // src/sizer.ts
-class XinSizer extends F {
+class XinSizer extends g {
   target = null;
   static styleSpec = {
     ":host": {
@@ -10305,7 +10651,7 @@ class XinSizer extends F {
     ":host svg": {
       width: 16,
       height: 16,
-      stroke: Uo.resizeIconFill
+      stroke: Ao.resizeIconFill
     }
   };
   content = icons.resize();
@@ -10349,9 +10695,9 @@ var xinSizer = XinSizer.elementCreator({
   tag: "xin-sizer"
 });
 // src/tag-list.ts
-var { div: div16, input: input8, span: span15, button: button13 } = y;
+var { div: div16, input: input8, span: span15, button: button13 } = u;
 
-class TosiTag extends F {
+class TosiTag extends g {
   static initAttributes = {
     caption: "",
     removeable: false
@@ -10379,49 +10725,49 @@ var tosiTag = TosiTag.elementCreator({
       "--tag-close-button-bg": "#fffc",
       "--tag-button-opacity": "0.5",
       "--tag-button-hover-opacity": "0.75",
-      "--tag-bg": uo.brandColor("blue"),
-      "--tag-text-color": uo.brandTextColor("white"),
+      "--tag-bg": yo.brandColor("blue"),
+      "--tag-text-color": yo.brandTextColor("white"),
       display: "inline-flex",
-      borderRadius: uo.tagRoundedRadius(Uo.spacing50),
-      color: Uo.tagTextColor,
-      background: Uo.tagBg,
-      padding: `0 ${Uo.spacing75} 0 ${Uo.spacing75}`,
-      height: `calc(${Uo.lineHeight} + ${Uo.spacing50})`,
-      lineHeight: `calc(${Uo.lineHeight} + ${Uo.spacing50})`
+      borderRadius: yo.tagRoundedRadius(Ao.spacing50),
+      color: Ao.tagTextColor,
+      background: Ao.tagBg,
+      padding: `0 ${Ao.spacing75} 0 ${Ao.spacing75}`,
+      height: `calc(${Ao.lineHeight} + ${Ao.spacing50})`,
+      lineHeight: `calc(${Ao.lineHeight} + ${Ao.spacing50})`
     },
     ':host > [part="caption"]': {
       position: "relative",
       whiteSpace: "nowrap",
       overflow: "hidden",
       flex: "1 1 auto",
-      fontSize: uo.fontSize("16px"),
-      color: Uo.tagTextColor,
+      fontSize: yo.fontSize("16px"),
+      color: Ao.tagTextColor,
       textOverflow: "ellipsis"
     },
     ':host [part="remove"]': {
       boxShadow: "none",
-      margin: `0 ${Uo.spacing_50} 0 ${Uo.spacing25}`,
+      margin: `0 ${Ao.spacing_50} 0 ${Ao.spacing25}`,
       padding: 0,
       display: "inline-flex",
       alignItems: "center",
       alignSelf: "center",
       justifyContent: "center",
-      height: Uo.spacing150,
-      width: Uo.spacing150,
-      color: Uo.tagCloseButtonColor,
-      background: Uo.tagCloseButtonBg,
-      borderRadius: uo.tagCloseButtonRadius("99px"),
-      opacity: Uo.tagButtonOpacity
+      height: Ao.spacing150,
+      width: Ao.spacing150,
+      color: Ao.tagCloseButtonColor,
+      background: Ao.tagCloseButtonBg,
+      borderRadius: yo.tagCloseButtonRadius("99px"),
+      opacity: Ao.tagButtonOpacity
     },
     ':host [part="remove"]:hover': {
-      background: Uo.tagCloseButtonBg,
-      opacity: Uo.tagButtonHoverOpacity
+      background: Ao.tagCloseButtonBg,
+      opacity: Ao.tagButtonHoverOpacity
     }
   }
 });
-var xinTag = Ho((...args) => tosiTag(...args), "xinTag is deprecated, use tosiTag instead (tag is now <tosi-tag>)");
+var xinTag = ao((...args) => tosiTag(...args), "xinTag is deprecated, use tosiTag instead (tag is now <tosi-tag>)");
 
-class TosiTagList extends F {
+class TosiTagList extends g {
   static formAssociated = true;
   static initAttributes = {
     name: "",
@@ -10607,34 +10953,34 @@ var tosiTagList = TosiTagList.elementCreator({
       display: "grid",
       gridTemplateColumns: "auto",
       alignItems: "center",
-      background: Uo.tagListBg,
-      gap: Uo.spacing25,
-      borderRadius: uo.taglistRoundedRadius(Uo.spacing50),
+      background: Ao.tagListBg,
+      gap: Ao.spacing25,
+      borderRadius: yo.taglistRoundedRadius(Ao.spacing50),
       overflow: "hidden"
     },
     ":host[editable]": {
-      gridTemplateColumns: `0px auto ${Uo.touchSize}`
+      gridTemplateColumns: `0px auto ${Ao.touchSize}`
     },
     ":host[editable][text-entry]": {
-      gridTemplateColumns: `0px 2fr 1fr ${Uo.touchSize}`
+      gridTemplateColumns: `0px 2fr 1fr ${Ao.touchSize}`
     },
     ':host [part="tagContainer"]': {
       display: "flex",
       content: '" "',
       alignItems: "center",
-      background: Uo.inputBg,
-      borderRadius: uo.tagContainerRadius(Uo.spacing50),
-      boxShadow: Uo.borderShadow,
+      background: Ao.inputBg,
+      borderRadius: yo.tagContainerRadius(Ao.spacing50),
+      boxShadow: Ao.borderShadow,
       flexWrap: "nowrap",
       overflow: "auto hidden",
-      gap: Uo.spacing25,
-      minHeight: `calc(${Uo.lineHeight} + ${Uo.spacing})`,
-      padding: Uo.spacing25
+      gap: Ao.spacing25,
+      minHeight: `calc(${Ao.lineHeight} + ${Ao.spacing})`,
+      padding: Ao.spacing25
     },
     ':host [part="tagMenu"]': {
-      width: Uo.touchSize,
-      height: Uo.touchSize,
-      lineHeight: Uo.touchSize,
+      width: Ao.touchSize,
+      height: Ao.touchSize,
+      lineHeight: Ao.touchSize,
       textAlign: "center",
       padding: 0,
       margin: 0
@@ -10643,12 +10989,12 @@ var tosiTagList = TosiTagList.elementCreator({
       display: "none !important"
     },
     ':host button[part="tagMenu"]': {
-      background: Uo.brandColor,
-      color: Uo.brandTextColor
+      background: Ao.brandColor,
+      color: Ao.brandTextColor
     }
   }
 });
-var xinTagList = Ho((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
+var xinTagList = ao((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
 var version = "1.1.1";
 // src/theme.ts
@@ -10720,28 +11066,28 @@ function createDarkTheme(colors) {
   const lightTheme = createTheme(colors);
   const rootStyles = lightTheme[":root"];
   return {
-    ":root": cn(rootStyles)
+    ":root": dn(rootStyles)
   };
 }
 function applyTheme(theme, id = "tosi-theme") {
-  nn(id, theme);
+  cn(id, theme);
 }
 var baseTheme = createTheme(defaultColors);
 var baseDarkTheme = createDarkTheme(defaultColors);
 var legacyAliases = {
-  "--xin-icon-size": Uo.tosiIconSize,
-  "--xin-icon-fill": Uo.tosiIconFill,
-  "--xin-icon-stroke": Uo.tosiIconStroke,
-  "--xin-tabs-bar-color": Uo.tosiTabsBarColor,
-  "--xin-tabs-bar-height": Uo.tosiTabsBarHeight,
-  "--xin-tabs-selected-color": Uo.tosiTabsSelectedColor,
-  "--spacing": Uo.tosiSpacing,
-  "--gap": Uo.tosiSpacingSm,
-  "--touch-size": Uo.tosiTouchSize,
-  "--background": Uo.tosiBg,
-  "--text-color": Uo.tosiText,
-  "--brand-color": Uo.tosiAccent,
-  "--brand-text-color": Uo.tosiAccentText
+  "--xin-icon-size": Ao.tosiIconSize,
+  "--xin-icon-fill": Ao.tosiIconFill,
+  "--xin-icon-stroke": Ao.tosiIconStroke,
+  "--xin-tabs-bar-color": Ao.tosiTabsBarColor,
+  "--xin-tabs-bar-height": Ao.tosiTabsBarHeight,
+  "--xin-tabs-selected-color": Ao.tosiTabsSelectedColor,
+  "--spacing": Ao.tosiSpacing,
+  "--gap": Ao.tosiSpacingSm,
+  "--touch-size": Ao.tosiTouchSize,
+  "--background": Ao.tosiBg,
+  "--text-color": Ao.tosiText,
+  "--brand-color": Ao.tosiAccent,
+  "--brand-text-color": Ao.tosiAccentText
 };
 function createThemeWithLegacy(colors) {
   const theme = createTheme(colors);
@@ -10812,7 +11158,7 @@ var styleSpec = {
     }
   },
   ".darkmode": {
-    ...cn(colors),
+    ...dn(colors),
     _shadowColor: brandColor.opacity(0.5),
     _menuShadow: `0 0 0 2px ${brandColor.opacity(0.75)}`,
     _menuSeparatorColor: brandColor.opacity(0.5)
@@ -10822,19 +11168,19 @@ var styleSpec = {
   },
   "*": {
     boxSizing: "border-box",
-    scrollbarColor: `${Uo.scrollThumbColor} ${Uo.scrollBarColor}`,
+    scrollbarColor: `${Ao.scrollThumbColor} ${Ao.scrollBarColor}`,
     scrollbarWidth: "thin"
   },
   body: {
-    fontFamily: Uo.fontFamily,
-    fontSize: Uo.fontSize,
+    fontFamily: Ao.fontFamily,
+    fontSize: Ao.fontSize,
     margin: "0",
-    lineHeight: Uo.lineHeight,
-    background: Uo.background,
-    _xinTabsSelectedColor: Uo.brandColor,
-    _xinTabsBarColor: Uo.brandTextColor,
-    _menuItemIconColor: Uo.brandColor,
-    color: Uo.textColor
+    lineHeight: Ao.lineHeight,
+    background: Ao.background,
+    _xinTabsSelectedColor: Ao.brandColor,
+    _xinTabsBarColor: Ao.brandTextColor,
+    _menuItemIconColor: Ao.brandColor,
+    color: Ao.textColor
   },
   ".center": {
     display: "flex",
@@ -10842,42 +11188,42 @@ var styleSpec = {
     justifyContent: "center"
   },
   "input, button, select, textarea": {
-    fontFamily: Uo.fontFamily,
-    fontSize: Uo.fontSize,
+    fontFamily: Ao.fontFamily,
+    fontSize: Ao.fontSize,
     color: "currentColor",
-    background: Uo.inputBg
+    background: Ao.inputBg
   },
   select: {
     WebkitAppearance: "none",
     appearance: "none"
   },
   header: {
-    background: Uo.brandColor,
-    color: Uo.brandTextColor,
-    _textColor: Uo.brandTextColor,
-    _linkColor: Uo.transTextColor,
+    background: Ao.brandColor,
+    color: Ao.brandTextColor,
+    _textColor: Ao.brandTextColor,
+    _linkColor: Ao.transTextColor,
     display: "flex",
     alignItems: "center",
     padding: "0 var(--spacing)",
     lineHeight: "calc(var(--line-height) * var(--h1-scale))",
-    height: Uo.headerHeight,
+    height: Ao.headerHeight,
     whiteSpace: "nowrap"
   },
   h1: {
-    color: Uo.brandColor,
+    color: Ao.brandColor,
     fontSize: "calc(var(--font-size) * var(--h1-scale))",
     lineHeight: "calc(var(--line-height) * var(--h1-scale))",
     fontWeight: "400",
-    borderBottom: `4px solid ${Uo.barColor}`,
-    margin: `${Uo.spacing} 0 ${Uo.spacing200}`,
+    borderBottom: `4px solid ${Ao.barColor}`,
+    margin: `${Ao.spacing} 0 ${Ao.spacing200}`,
     padding: 0
   },
   "header h2": {
-    color: Uo.brandTextColor,
+    color: Ao.brandTextColor,
     whiteSpace: "nowrap"
   },
   h2: {
-    color: Uo.brandColor,
+    color: Ao.brandColor,
     fontSize: "calc(var(--font-size) * var(--h2-scale))",
     lineHeight: "calc(var(--line-height) * var(--h2-scale))",
     margin: "calc(var(--spacing) * var(--h2-scale)) 0"
@@ -10899,18 +11245,18 @@ var styleSpec = {
     height: "calc(100vh - var(--header-height))"
   },
   "main > xin-sidenav::part(nav)": {
-    background: Uo.navBg
+    background: Ao.navBg
   },
   "input[type=search]": {
     borderRadius: 99
   },
   blockquote: {
     position: "relative",
-    background: Uo.insetBg,
+    background: Ao.insetBg,
     margin: "0 48px 56px 0",
-    borderRadius: Uo.spacing,
+    borderRadius: Ao.spacing,
     padding: "var(--spacing) calc(var(--spacing) * 2)",
-    filter: `drop-shadow(0px 1px 1px ${Uo.shadowColor})`
+    filter: `drop-shadow(0px 1px 1px ${Ao.shadowColor})`
   },
   "blockquote > :first-child": {
     marginTop: "0"
@@ -10924,8 +11270,8 @@ var styleSpec = {
     width: 1,
     height: 1,
     border: "10px solid transparent",
-    borderTopColor: Uo.insetBg,
-    borderRightColor: Uo.insetBg,
+    borderTopColor: Ao.insetBg,
+    borderRightColor: Ao.insetBg,
     position: "absolute",
     bottom: -20,
     right: 24
@@ -10942,17 +11288,17 @@ var styleSpec = {
   },
   ".bar": {
     display: "flex",
-    gap: Uo.spacing,
+    gap: Ao.spacing,
     justifyContent: "center",
     alignItems: "center",
-    padding: Uo.spacing,
+    padding: Ao.spacing,
     flexWrap: "wrap",
-    _textColor: Uo.brandColor,
-    background: Uo.barColor
+    _textColor: Ao.brandColor,
+    background: Ao.barColor
   },
   a: {
     textDecoration: "none",
-    color: Uo.linkColor,
+    color: Ao.linkColor,
     opacity: "0.9",
     borderBottom: "1px solid var(--brand-color)"
   },
@@ -10961,10 +11307,10 @@ var styleSpec = {
     alignItems: "center",
     justifyContent: "center",
     transition: "ease-out 0.2s",
-    _textColor: Uo.brandColor,
-    color: Uo.textColor,
+    _textColor: Ao.brandColor,
+    color: Ao.textColor,
     textDecoration: "none",
-    background: Uo.buttonBg,
+    background: Ao.buttonBg,
     padding: "0 calc(var(--spacing) * 1.25)",
     border: "none",
     borderRadius: "calc(var(--spacing) * 0.5)"
@@ -10981,7 +11327,7 @@ var styleSpec = {
     alignSelf: "center",
     pointerEvents: "none",
     objectPosition: "left center",
-    _textColor: Uo.brandColor
+    _textColor: Ao.brandColor
   },
   "label > select + .icon-chevron-down": {
     marginLeft: "calc(var(--spacing) * -3.5)"
@@ -10990,7 +11336,7 @@ var styleSpec = {
     border: "none",
     outline: "none",
     borderRadius: "calc(var(--spacing) * 0.5)",
-    boxShadow: Uo.inputBorderShadow
+    boxShadow: Ao.inputBorderShadow
   },
   input: {
     padding: "0 calc(var(--spacing) * 1.5)"
@@ -11000,7 +11346,7 @@ var styleSpec = {
   },
   textarea: {
     padding: "var(--spacing) calc(var(--spacing) * 1.25)",
-    lineHeight: Uo.lineHeight,
+    lineHeight: Ao.lineHeight,
     minHeight: "calc(var(--spacing) + var(--line-height) * 4)"
   },
   "input[type='number']": {
@@ -11014,10 +11360,10 @@ var styleSpec = {
     inset: 1
   },
   "input[type='checkbox'], input[type='radio']": {
-    maxWidth: Uo.lineHeight
+    maxWidth: Ao.lineHeight
   },
   "::placeholder": {
-    color: Uo.placeholderColor
+    color: Ao.placeholderColor
   },
   img: {
     verticalAlign: "middle"
@@ -11026,8 +11372,8 @@ var styleSpec = {
     boxShadow: "inset 0 0 0 2px var(--brand-color)"
   },
   "button:active, button:active, .clickable:active": {
-    background: Uo.brandColor,
-    color: Uo.brandTextColor
+    background: Ao.brandColor,
+    color: Ao.brandTextColor
   },
   label: {
     display: "inline-flex",
@@ -11054,8 +11400,8 @@ var styleSpec = {
     opacity: "1"
   },
   ".thead": {
-    background: Uo.brandColor,
-    color: Uo.brandTextColor
+    background: Ao.brandColor,
+    color: Ao.brandTextColor
   },
   ".th + .th": {
     border: "1px solid #fff4",
@@ -11076,16 +11422,16 @@ var styleSpec = {
     pointerEvents: "none"
   },
   pre: {
-    background: Uo.codeBg,
-    padding: Uo.spacing,
+    background: Ao.codeBg,
+    padding: Ao.spacing,
     borderRadius: "calc(var(--spacing) * 0.25)",
     overflow: "auto",
-    fontSize: Uo.codeFontSize,
+    fontSize: Ao.codeFontSize,
     lineHeight: "calc(var(--font-size) * 1.2)"
   },
   "pre, code": {
-    fontFamily: Uo.codeFontFamily,
-    _textColor: Uo.brandColor
+    fontFamily: Ao.codeFontFamily,
+    _textColor: Ao.brandColor
   },
   ".-xin-sidenav-visible .close-content": {
     display: "none"
@@ -11104,22 +11450,22 @@ var styleSpec = {
   ".transparent:hover, .iconic:hover": {
     background: "#0002",
     boxShadow: "none",
-    color: Uo.textColor
+    color: Ao.textColor
   },
   ".transparent:active, .iconic:active": {
     background: "#0004",
     boxShadow: "none",
-    color: Uo.textColor
+    color: Ao.textColor
   },
   "xin-sidenav:not([compact]) .show-within-compact": {
     display: "none"
   },
   ".on.on": {
-    background: Uo.brandColor,
-    _textColor: Uo.brandTextColor
+    background: Ao.brandColor,
+    _textColor: Ao.brandTextColor
   },
   ".current": {
-    background: Uo.background
+    background: Ao.background
   },
   ".doc-link": {
     cursor: "pointer",
@@ -11129,7 +11475,7 @@ var styleSpec = {
     padding: "calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.5)"
   },
   ".doc-link:not(.current):hover": {
-    background: Uo.background
+    background: Ao.background
   },
   ".doc-link:not(.current)": {
     opacity: "0.8",
@@ -11139,11 +11485,11 @@ var styleSpec = {
     margin: "var(--spacing) 0"
   },
   "xin-example [part=editors]": {
-    background: Uo.insetBg
+    background: Ao.insetBg
   },
   "[class*='icon-'], xin-icon": {
     color: "currentcolor",
-    height: Uo.fontSize,
+    height: Ao.fontSize,
     pointerEvents: "none"
   },
   "[class*='icon-']": {
@@ -11156,14 +11502,14 @@ var styleSpec = {
     borderCollapse: "collapse"
   },
   thead: {
-    background: Uo.brandColor,
-    color: Uo.brandTextColor
+    background: Ao.brandColor,
+    color: Ao.brandTextColor
   },
   tbody: {
-    background: Uo.background
+    background: Ao.background
   },
   "tr:nth-child(2n)": {
-    background: Uo.backgroundShaded
+    background: Ao.backgroundShaded
   },
   "th, td": {
     padding: "calc(var(--spacing) * 0.5) var(--spacing)"
@@ -11266,9 +11612,9 @@ Weak	Faible	Heikko	Svag	虚弱的	弱い	약한	Débil	Schwach	Debole
 Yes	Oui	Kyllä	Ja	是的	はい	예	Sí	Ja	Sì`;
 
 // demo/src/css-var-editor.ts
-var { h2: h22, code } = y;
+var { h2: h22, code } = u;
 
-class XinCssVarEditor extends F {
+class XinCssVarEditor extends g {
   elementSelector = "";
   targetSelector = "";
   constructor() {
@@ -16716,7 +17062,7 @@ This will pin the document to the top or bottom of the navigation list.`,
 ];
 
 // demo/src/index.ts
-nn("demo-style", styleSpec);
+cn("demo-style", styleSpec);
 initLocalization(localized_strings_default);
 Object.assign(window, { tosijs: exports_module, tosijsui: exports_src });
 setTimeout(() => {
@@ -16724,14 +17070,14 @@ setTimeout(() => {
   console.log("welcome to %ui.tosijs.net", `color: ${brandColor2}; padding: 0 5px;`);
 }, 100);
 var PROJECT = "tosijs-ui";
-var { prefs } = Co({
+var { prefs } = Eo({
   prefs: {
     theme: "system",
     highContrast: false,
     locale: ""
   }
 });
-Tn((path) => {
+Xn((path) => {
   if (path.startsWith("prefs")) {
     return true;
   }
@@ -16743,7 +17089,7 @@ if (prefs.locale) {
 setTimeout(() => {
   Object.assign(globalThis, { tosijs: exports_module, tosijsui: exports_src });
 }, 1000);
-H(document.body, "prefs.theme", {
+X(document.body, "prefs.theme", {
   toDOM(element, theme2) {
     if (theme2 === "system") {
       theme2 = getComputedStyle(document.body).getPropertyValue("--darkmode") === "true" ? "dark" : "light";
@@ -16751,7 +17097,7 @@ H(document.body, "prefs.theme", {
     element.classList.toggle("darkmode", theme2 === "dark");
   }
 });
-H(document.body, "prefs.highContrast", {
+X(document.body, "prefs.highContrast", {
   toDOM(element, highContrast) {
     element.classList.toggle("high-contrast", highContrast);
   }
@@ -16774,15 +17120,15 @@ var browser = createDocBrowser({
 if (main) {
   const header3 = browser.querySelector("header");
   if (header3) {
-    const { img, a: a4, span: span16, button: button14 } = y;
+    const { img, a: a4, span: span16, button: button14 } = u;
     const sizeBreakElement = header3.querySelector("xin-sizebreak");
     if (sizeBreakElement) {
       const badges = span16({
         style: {
-          marginRight: Uo.spacing,
+          marginRight: Ao.spacing,
           display: "flex",
           alignItems: "center",
-          gap: Uo.spacing50
+          gap: Ao.spacing50
         }
       }, a4({ href: `https://bundlejs.com/?q=${PROJECT}`, target: "_blank" }, img({
         alt: "bundlejs size badge",
@@ -16803,7 +17149,7 @@ if (main) {
     }
     const settingsButton = button14({
       class: "iconic",
-      style: { color: Uo.linkColor },
+      style: { color: Ao.linkColor },
       title: "links and settings",
       onClick(event) {
         popMenu({
@@ -16874,4 +17220,4 @@ if (main) {
   }
   main.append(browser);
 }
-console.log(`tosijs ${re}, tosijs-ui ${version}`);
+console.log(`tosijs ${ie}, tosijs-ui ${version}`);

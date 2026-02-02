@@ -424,13 +424,12 @@ export class LiveExample extends Component<ExampleParts> {
 
   openEditorWindow = () => {
     const { css, html, js, test } = this
-    openEditorWindow(
-      this.prefix,
-      this.uuid,
-      this.storageKey,
-      this.remoteKey,
-      { css, html, js, test }
-    )
+    openEditorWindow(this.prefix, this.uuid, this.storageKey, this.remoteKey, {
+      css,
+      html,
+      js,
+      test,
+    })
   }
 
   refreshRemote = () => {
@@ -532,13 +531,26 @@ export class LiveExample extends Component<ExampleParts> {
         { class: cls },
         span(icon + ' '),
         test.name,
-        test.error ? span({ style: { opacity: '0.7' } }, ` - ${test.error}`) : ''
+        test.error
+          ? span({ style: { opacity: '0.7' } }, ` - ${test.error}`)
+          : ''
       )
       resultsEl.append(testEl)
     }
 
     this.classList.toggle('-test-passed', results.failed === 0)
     this.classList.toggle('-test-failed', results.failed > 0)
+
+    // Dispatch event for doc-browser to track results
+    this.dispatchEvent(
+      new CustomEvent('testcomplete', {
+        bubbles: true,
+        detail: {
+          results,
+          element: this,
+        },
+      })
+    )
   }
 
   initFromElements(elements: HTMLElement[]) {
