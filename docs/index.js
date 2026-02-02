@@ -1777,6 +1777,8 @@ __export(exports_src, {
   updateLocalized: () => updateLocalized,
   trackDrag: () => trackDrag,
   tosijs: () => exports_module,
+  tosiTagList: () => tosiTagList,
+  tosiTag: () => tosiTag,
   tosiSelect: () => tosiSelect,
   tosiSegmented: () => tosiSegmented,
   tosiRating: () => tosiRating,
@@ -1857,6 +1859,8 @@ __export(exports_src, {
   XinFloat: () => XinFloat,
   XinField: () => XinField,
   XinCarousel: () => XinCarousel,
+  TosiTagList: () => TosiTagList,
+  TosiTag: () => TosiTag,
   TosiSelect: () => TosiSelect,
   TosiSegmented: () => TosiSegmented,
   TosiRating: () => TosiRating,
@@ -9760,7 +9764,7 @@ var xinSizer = XinSizer.elementCreator({
 // src/tag-list.ts
 var { div: div15, input: input8, span: span14, button: button13 } = d;
 
-class XinTag extends W {
+class TosiTag extends W {
   static initAttributes = {
     caption: "",
     removeable: false
@@ -9778,8 +9782,9 @@ class XinTag extends W {
     })
   ];
 }
-var xinTag = XinTag.elementCreator({
-  tag: "xin-tag",
+var XinTag = TosiTag;
+var tosiTag = TosiTag.elementCreator({
+  tag: "tosi-tag",
   styleSpec: {
     ":host": {
       "--tag-close-button-color": "#000c",
@@ -9826,19 +9831,66 @@ var xinTag = XinTag.elementCreator({
     }
   }
 });
+var xinTag = Se((...args) => tosiTag(...args), "xinTag is deprecated, use tosiTag instead (tag is now <tosi-tag>)");
 
-class XinTagList extends W {
+class TosiTagList extends W {
+  static formAssociated = true;
   static initAttributes = {
     name: "",
     textEntry: false,
     editable: false,
     placeholder: "enter tags",
-    disabled: false
+    disabled: false,
+    required: false
   };
-  value = [];
+  _value = [];
+  _internals;
   availableTags = [];
+  constructor() {
+    super();
+    if (this.attachInternals) {
+      this._internals = this.attachInternals();
+    }
+  }
+  get value() {
+    return this._value;
+  }
+  set value(v3) {
+    this._value = v3;
+    this.updateFormValue();
+    this.updateValidity();
+  }
+  updateFormValue() {
+    if (this._internals) {
+      const stringValue = this.tags.join(",");
+      this._internals.setFormValue(stringValue);
+    }
+  }
+  updateValidity() {
+    if (this._internals) {
+      if (this.required && this.tags.length === 0) {
+        this._internals.setValidity({ valueMissing: true }, "Please select at least one tag", this.parts.tagContainer);
+      } else {
+        this._internals.setValidity({});
+      }
+    }
+  }
+  formAssociatedCallback(_form) {}
+  formDisabledCallback(disabled) {
+    this.disabled = disabled;
+  }
+  formResetCallback() {
+    this._value = [];
+    this.queueRender(true);
+  }
+  formStateRestoreCallback(state) {
+    if (state) {
+      this._value = state.split(",").filter((t) => t !== "");
+      this.queueRender(true);
+    }
+  }
   get tags() {
-    return typeof this.value === "string" ? this.value.split(",").map((tag) => tag.trim()).filter((tag) => tag !== "") : this.value;
+    return typeof this._value === "string" ? this._value.split(",").map((tag) => tag.trim()).filter((tag) => tag !== "") : this._value;
   }
   addTag = (tag) => {
     if (tag.trim() === "") {
@@ -9938,7 +9990,7 @@ class XinTagList extends W {
   ];
   removeTag = (event) => {
     if (this.editable && !this.disabled) {
-      const tag = event.target.closest(XinTag.tagName);
+      const tag = event.target.closest(TosiTag.tagName);
       this.value = this.tags.filter((value) => value !== tag.caption);
       tag.remove();
       this.queueRender(true);
@@ -9962,7 +10014,7 @@ class XinTagList extends W {
     tagContainer.textContent = "";
     const { tags } = this;
     for (const tag of tags) {
-      tagContainer.append(xinTag({
+      tagContainer.append(tosiTag({
         caption: tag,
         removeable: this.editable && !this.disabled,
         removeCallback: this.removeTag
@@ -9970,8 +10022,9 @@ class XinTagList extends W {
     }
   }
 }
-var xinTagList = XinTagList.elementCreator({
-  tag: "xin-tag-list",
+var XinTagList = TosiTagList;
+var tosiTagList = TosiTagList.elementCreator({
+  tag: "tosi-tag-list",
   styleSpec: {
     ":host": {
       "--tag-list-bg": "#f8f8f8",
@@ -10021,6 +10074,7 @@ var xinTagList = XinTagList.elementCreator({
     }
   }
 });
+var xinTagList = Se((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
 var version = "1.1.1";
 // src/theme.ts
@@ -15342,7 +15396,7 @@ tab names (but it won't override custom tab content, so localizing that is on yo
 
 Building a tag-list from standard HTML elements is a bit of a nightmare.
 
-\`<xin-tag-list>\` allows you to display an editable or read-only tag list (represented either
+\`<tosi-tag-list>\` allows you to display an editable or read-only tag list (represented either
 as a comma-delimited string or an array of strings).
 
 \`\`\`html
@@ -15352,32 +15406,32 @@ as a comma-delimited string or an array of strings).
 </label>
 <label>
   <b>Display Only</b>
-  <xin-tag-list
+  <tosi-tag-list
     value="this,that,,the-other"
-  ></xin-tag-list>
+  ></tosi-tag-list>
 </label>
-<xin-tag-list
+<tosi-tag-list
   class="compact"
   value="this,that,,the-other"
-></xin-tag-list>
+></tosi-tag-list>
 <br>
 <label>
   <b>Editable</b>
-  <xin-tag-list
+  <tosi-tag-list
     class="editable-tag-list"
     value="belongs,also belongs,custom"
     editable
     available-tags="belongs,also belongs,not initially chosen"
-  ></xin-tag-list>
+  ></tosi-tag-list>
 </label>
 <br>
 <b>Text-Entry</b>
-<xin-tag-list
+<tosi-tag-list
   value="this,that,the-other,not,enough,space"
   editable
   text-entry
   available-tags="tomasina,dick,,harriet"
-></xin-tag-list>
+></tosi-tag-list>
 \`\`\`
 \`\`\`css
 .preview .compact {
@@ -15393,12 +15447,12 @@ as a comma-delimited string or an array of strings).
 \`\`\`
 \`\`\`js
 preview.addEventListener('change', (event) => {
-  if (event.target.matches('xin-tag-list')) {
+  if (event.target.matches('tosi-tag-list')) {
     console.log(event.target, event.target.value)
   }
 }, true)
 preview.querySelector('.disable-toggle').addEventListener('change', (event) => {
-  const tagLists = Array.from(preview.querySelectorAll('xin-tag-list'))
+  const tagLists = Array.from(preview.querySelectorAll('tosi-tag-list'))
   for(const tagList of tagLists) {
     tagList.disabled = event.target.checked
   }

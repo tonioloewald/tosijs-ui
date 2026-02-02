@@ -3,7 +3,7 @@
 
 Building a tag-list from standard HTML elements is a bit of a nightmare.
 
-`<xin-tag-list>` allows you to display an editable or read-only tag list (represented either
+`<tosi-tag-list>` allows you to display an editable or read-only tag list (represented either
 as a comma-delimited string or an array of strings).
 
 ```html
@@ -13,32 +13,32 @@ as a comma-delimited string or an array of strings).
 </label>
 <label>
   <b>Display Only</b>
-  <xin-tag-list
+  <tosi-tag-list
     value="this,that,,the-other"
-  ></xin-tag-list>
+  ></tosi-tag-list>
 </label>
-<xin-tag-list
+<tosi-tag-list
   class="compact"
   value="this,that,,the-other"
-></xin-tag-list>
+></tosi-tag-list>
 <br>
 <label>
   <b>Editable</b>
-  <xin-tag-list
+  <tosi-tag-list
     class="editable-tag-list"
     value="belongs,also belongs,custom"
     editable
     available-tags="belongs,also belongs,not initially chosen"
-  ></xin-tag-list>
+  ></tosi-tag-list>
 </label>
 <br>
 <b>Text-Entry</b>
-<xin-tag-list
+<tosi-tag-list
   value="this,that,the-other,not,enough,space"
   editable
   text-entry
   available-tags="tomasina,dick,,harriet"
-></xin-tag-list>
+></tosi-tag-list>
 ```
 ```css
 .preview .compact {
@@ -54,12 +54,12 @@ as a comma-delimited string or an array of strings).
 ```
 ```js
 preview.addEventListener('change', (event) => {
-  if (event.target.matches('xin-tag-list')) {
+  if (event.target.matches('tosi-tag-list')) {
     console.log(event.target, event.target.value)
   }
 }, true)
 preview.querySelector('.disable-toggle').addEventListener('change', (event) => {
-  const tagLists = Array.from(preview.querySelectorAll('xin-tag-list'))
+  const tagLists = Array.from(preview.querySelectorAll('tosi-tag-list'))
   for(const tagList of tagLists) {
     tagList.disabled = event.target.checked
   }
@@ -105,13 +105,14 @@ import {
   vars,
   varDefault,
   ElementCreator,
+  deprecated,
 } from 'tosijs'
 import { popMenu, MenuItem } from './menu'
 import { icons } from './icons'
 
 const { div, input, span, button } = elements
 
-export class XinTag extends WebComponent {
+export class TosiTag extends WebComponent {
   static initAttributes = {
     caption: '',
     removeable: false,
@@ -132,8 +133,11 @@ export class XinTag extends WebComponent {
   ]
 }
 
-export const xinTag = XinTag.elementCreator({
-  tag: 'xin-tag',
+/** @deprecated Use TosiTag instead */
+export const XinTag = TosiTag
+
+export const tosiTag = TosiTag.elementCreator({
+  tag: 'tosi-tag',
   styleSpec: {
     ':host': {
       '--tag-close-button-color': '#000c',
@@ -179,7 +183,13 @@ export const xinTag = XinTag.elementCreator({
       opacity: vars.tagButtonHoverOpacity,
     },
   },
-}) as ElementCreator<XinTag>
+}) as ElementCreator<TosiTag>
+
+/** @deprecated Use tosiTag instead */
+export const xinTag = deprecated(
+  (...args: Parameters<typeof tosiTag>) => tosiTag(...args),
+  'xinTag is deprecated, use tosiTag instead (tag is now <tosi-tag>)'
+) as ElementCreator<TosiTag>
 
 interface Tag {
   value: string
@@ -191,25 +201,89 @@ interface Tag {
 
 type TagList = (string | Tag | null)[]
 
-export class XinTagList extends WebComponent {
+export class TosiTagList extends WebComponent {
+  static formAssociated = true
+
   static initAttributes = {
     name: '',
     textEntry: false,
     editable: false,
     placeholder: 'enter tags',
     disabled: false,
+    required: false,
   }
 
-  value: string | string[] = []
+  private _value: string | string[] = []
+  private _internals!: ElementInternals
   availableTags: string | TagList = []
 
+  constructor() {
+    super()
+    if (this.attachInternals) {
+      this._internals = this.attachInternals()
+    }
+  }
+
+  get value(): string | string[] {
+    return this._value
+  }
+
+  set value(v: string | string[]) {
+    this._value = v
+    this.updateFormValue()
+    this.updateValidity()
+  }
+
+  private updateFormValue(): void {
+    if (this._internals) {
+      // Submit as comma-separated string
+      const stringValue = this.tags.join(',')
+      this._internals.setFormValue(stringValue)
+    }
+  }
+
+  private updateValidity(): void {
+    if (this._internals) {
+      if (this.required && this.tags.length === 0) {
+        this._internals.setValidity(
+          { valueMissing: true },
+          'Please select at least one tag',
+          this.parts.tagContainer as HTMLElement
+        )
+      } else {
+        this._internals.setValidity({})
+      }
+    }
+  }
+
+  // Form lifecycle callbacks
+  formAssociatedCallback(_form: HTMLFormElement): void {
+    // Called when associated with a form
+  }
+
+  formDisabledCallback(disabled: boolean): void {
+    this.disabled = disabled
+  }
+
+  formResetCallback(): void {
+    this._value = []
+    this.queueRender(true)
+  }
+
+  formStateRestoreCallback(state: string): void {
+    if (state) {
+      this._value = state.split(',').filter((t) => t !== '')
+      this.queueRender(true)
+    }
+  }
+
   get tags(): string[] {
-    return typeof this.value === 'string'
-      ? this.value
+    return typeof this._value === 'string'
+      ? this._value
           .split(',')
           .map((tag) => tag.trim())
           .filter((tag) => tag !== '')
-      : this.value
+      : this._value
   }
 
   addTag = (tag: string) => {
@@ -325,8 +399,8 @@ export class XinTagList extends WebComponent {
   removeTag = (event: Event) => {
     if (this.editable && !this.disabled) {
       const tag = (event.target as HTMLElement).closest(
-        XinTag.tagName!
-      ) as XinTag
+        TosiTag.tagName!
+      ) as TosiTag
       this.value = this.tags.filter((value) => value !== tag.caption)
       tag.remove()
       this.queueRender(true)
@@ -358,7 +432,7 @@ export class XinTagList extends WebComponent {
     const { tags } = this
     for (const tag of tags) {
       tagContainer.append(
-        xinTag({
+        tosiTag({
           caption: tag,
           removeable: this.editable && !this.disabled,
           removeCallback: this.removeTag,
@@ -368,8 +442,11 @@ export class XinTagList extends WebComponent {
   }
 }
 
-export const xinTagList = XinTagList.elementCreator({
-  tag: 'xin-tag-list',
+/** @deprecated Use TosiTagList instead */
+export const XinTagList = TosiTagList
+
+export const tosiTagList = TosiTagList.elementCreator({
+  tag: 'tosi-tag-list',
   styleSpec: {
     ':host': {
       '--tag-list-bg': '#f8f8f8',
@@ -418,4 +495,10 @@ export const xinTagList = XinTagList.elementCreator({
       color: vars.brandTextColor,
     },
   },
-}) as ElementCreator<XinTagList>
+}) as ElementCreator<TosiTagList>
+
+/** @deprecated Use tosiTagList instead */
+export const xinTagList = deprecated(
+  (...args: Parameters<typeof tosiTagList>) => tosiTagList(...args),
+  'xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)'
+) as ElementCreator<TosiTagList>
