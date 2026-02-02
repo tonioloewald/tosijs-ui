@@ -8234,7 +8234,7 @@ class TosiForm extends F {
       try {
         this.value = JSON.parse(this.value);
       } catch (e) {
-        console.log("<xin-form> could not use its value, expects valid JSON");
+        console.log("<tosi-form> could not use its value, expects valid JSON");
         this.value = {};
       }
     }

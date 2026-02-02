@@ -1,7 +1,7 @@
 /*#
 # forms
 
-`<xin-form>` and `<xin-field>` can be used to quickly create forms complete with
+`<tosi-form>` and `<tosi-field>` can be used to quickly create forms complete with
 [client-side validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation#built-in_form_validation_examples).
 
 ```js
@@ -134,30 +134,30 @@ preview.querySelector('.submit').addEventListener('click', form.submit)
 }
 ```
 
-## `<xin-form>`
+## `<tosi-form>`
 
-`<xin-form>` prevents the default form behavior when a `submit` event is triggered and instead validates the
+`<tosi-form>` prevents the default form behavior when a `submit` event is triggered and instead validates the
 form contents (generating feedback if desired) and calls its `submitCallback(value: {[key: string]: any}, isValid: boolean): void`
 method.
 
-`<xin-form>` offers a `fields` proxy that allows values stored in the form to be updated. Any changes will trigger a `change`
-event on the `<xin-form>` (in addition to any events fired by form fields).
+`<tosi-form>` offers a `fields` proxy that allows values stored in the form to be updated. Any changes will trigger a `change`
+event on the `<tosi-form>` (in addition to any events fired by form fields).
 
-`<xin-form>` instances have `value` and `isValid` properties you can access any time. Note that `isValid` is computed
+`<tosi-form>` instances have `value` and `isValid` properties you can access any time. Note that `isValid` is computed
 and triggers form validation.
 
-`<xin-form>` has `header` and `footer` `<slot>`s in addition to default `<slot>`, which is tucked inside a `<form>` element.
+`<tosi-form>` has `header` and `footer` `<slot>`s in addition to default `<slot>`, which is tucked inside a `<form>` element.
 
-## `<xin-field>`
+## `<tosi-field>`
 
-`<xin-field>` is a simple web-component with no shadowDOM that combines an `<input>` field wrapped with a `<label>`. Any
+`<tosi-field>` is a simple web-component with no shadowDOM that combines an `<input>` field wrapped with a `<label>`. Any
 content of the custom-element will become the `caption` or you can simply set the `caption` attribute.
 
 You can replace the default `<input>` field by adding an element to the slot `input` (it's a `xinSlot`) whereupon
 the `value` of that element will be used instead of the built-in `<input>`. (The `<input>` is retained and
 is used to drive form-validation.)
 
-`<xin-field>` supports the following attributes:
+`<tosi-field>` supports the following attributes:
 
 - `caption` labels the field
 - `key` determines the form property the field will populate
@@ -279,18 +279,18 @@ form.addEventListener('reset', () => {
 })
 ```
 
-## Using formAssociated Components with xin-form
+## Using formAssociated Components with tosi-form
 
-While the formAssociated components work with native `<form>` elements, using them with `<xin-form>`
+While the formAssociated components work with native `<form>` elements, using them with `<tosi-form>`
 provides additional benefits:
 
-- **No submit prevention boilerplate** - `xin-form` automatically prevents the default form submission
+- **No submit prevention boilerplate** - `tosi-form` automatically prevents the default form submission
 - **JSON state management** - Initialize and access form state as a JavaScript object via `value` and `fields`
 - **Validation feedback** - Built-in `isValid` property and `submitCallback` with validation status
 - **Change events** - Unified change events on the form element
 
 Since these components now support `formAssociated`, they participate directly in form submission
-and validation without needing the hidden input workaround that `xin-field` uses.
+and validation without needing the hidden input workaround that `tosi-field` uses.
 
 ```html
 <tosi-form id="tosi-form" value='{"rating": 3, "tier": "pro"}'>
@@ -538,7 +538,7 @@ export class TosiField extends XinComponent {
       valueHolder: HTMLInputElement
     }
 
-    // Initialization from form value is handled by xin-form.initializeNamedElements()
+    // Initialization from form value is handled by tosi-form.initializeNamedElements()
 
     valueHolder.addEventListener('change', this.handleChange)
     input.addEventListener('change', this.handleChange, true)
@@ -651,7 +651,7 @@ export class TosiForm extends XinComponent {
       try {
         this.value = JSON.parse(this.value)
       } catch (e) {
-        console.log('<xin-form> could not use its value, expects valid JSON')
+        console.log('<tosi-form> could not use its value, expects valid JSON')
         this.value = {}
       }
     }
@@ -725,7 +725,7 @@ export class TosiForm extends XinComponent {
 
   private initializeNamedElements(): void {
     const formValue = this.fields
-    // Handle both 'name' (formAssociated) and 'key' (xin-field) attributes
+    // Handle both 'name' (formAssociated) and 'key' (tosi-field) attributes
     const namedElements = this.querySelectorAll(
       '[name], [key]'
     ) as NodeListOf<HTMLElement>
