@@ -329,7 +329,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
 
   const updateDocTestStatus = (filename: string) => {
     const results = pageTestResults[filename]
-    const doc = app.docs.find((d) => d.filename === filename)
+    // Callback receives bare object, return is proxy - cast to work with both
+    const doc = (app.docs as unknown as Doc[]).find(
+      (d) => d.filename === filename
+    )
     if (doc) {
       doc.testStatus = results
         ? results.passed
