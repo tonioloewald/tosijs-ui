@@ -68,15 +68,18 @@ export class CodeEditor extends WebComponent {
     }
   }
 
-  mode = 'javascript'
-  disabled = false
+  static initAttributes = {
+    mode: 'javascript',
+    theme: DEFAULT_THEME,
+    disabled: false,
+  }
+
   role = 'code editor'
 
   private _ace: any | undefined
   private _editor: any | undefined
   private _editorPromise: Promise<any> | undefined
   options: any = {}
-  theme = DEFAULT_THEME
 
   get ace(): any {
     return this._ace
@@ -93,12 +96,6 @@ export class CodeEditor extends WebComponent {
       width: '100%',
       height: '100%',
     },
-  }
-
-  constructor() {
-    super()
-
-    this.initAttributes('mode', 'theme', 'disabled')
   }
 
   onResize() {

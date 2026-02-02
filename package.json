@@ -41,7 +41,7 @@
   },
   "peerDependencies": {
     "marked": "^16.4.2",
-    "tosijs": "1.1.2"
+    "tosijs": "file:../xinjs"
   },
   "files": [
     "/dist",

@@ -1,0 +1,51 @@
+import { Component, ElementCreator, PartsMap } from 'tosijs';
+import { MenuItem } from './menu';
+type OptionRequest = () => Promise<string | undefined>;
+export interface SelectOption {
+    icon?: string | HTMLElement;
+    caption: string;
+    value: string | OptionRequest;
+}
+export interface SelectOptionSubmenu {
+    icon?: string | HTMLElement;
+    caption: string;
+    options: SelectOptions;
+}
+export type SelectOptions = Array<string | null | SelectOption | SelectOptionSubmenu>;
+interface SelectParts extends PartsMap {
+    button: HTMLButtonElement;
+    value: HTMLInputElement;
+}
+export declare class XinSelect extends Component<SelectParts> {
+    static initAttributes: {
+        editable: boolean;
+        placeholder: string;
+        showIcon: boolean;
+        hideCaption: boolean;
+        localized: boolean;
+        disabled: boolean;
+    };
+    options: string | SelectOptions;
+    value: string;
+    filter: string;
+    private isExpanded;
+    private setValue;
+    private getValue;
+    get selectOptions(): SelectOptions;
+    private buildOptionMenuItem;
+    get optionsMenu(): MenuItem[];
+    handleChange: (event: Event) => void;
+    handleKey: (event: KeyboardEvent) => void;
+    filterMenu: (...args: any[]) => void;
+    popOptions: (event?: Event) => void;
+    private updateAriaExpanded;
+    content: () => HTMLButtonElement[];
+    get allOptions(): SelectOption[];
+    findOption(): SelectOption;
+    localeChanged: () => void;
+    connectedCallback(): void;
+    disconnectedCallback(): void;
+    render(): void;
+}
+export declare const xinSelect: ElementCreator<XinSelect>;
+export {};

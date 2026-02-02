@@ -111,20 +111,23 @@ interface MonthParts extends PartsMap {
 }
 
 export class TosiMonth extends Component<MonthParts> {
-  month = NaN
-  year = NaN
-  minDate = dateFromYMD(new Date().getFullYear() - 100, 1, 1)
-    .toISOString()
-    .split('T')[0]
-  maxDate = dateFromYMD(new Date().getFullYear() + 10, 12, 31)
-    .toISOString()
-    .split('T')[0]
-  weekStart = 0 // Sunday, 1 = Monday
-  selectable = false
-  multiple = false
-  range = false
-  disabled = false
-  readonly = false
+  static initAttributes = {
+    month: NaN,
+    year: NaN,
+    weekStart: 0, // Sunday, 1 = Monday
+    minDate: dateFromYMD(new Date().getFullYear() - 100, 1, 1)
+      .toISOString()
+      .split('T')[0],
+    maxDate: dateFromYMD(new Date().getFullYear() + 10, 12, 31)
+      .toISOString()
+      .split('T')[0],
+    selectable: false,
+    multiple: false,
+    range: false,
+    disabled: false,
+    readonly: false,
+  }
+
   selectedDays = [] as string[]
   value = ''
 
@@ -147,7 +150,9 @@ export class TosiMonth extends Component<MonthParts> {
     return years
   }
 
-  monthChanged = (_year: number, _month: number) => { /* noop */ }
+  monthChanged = (_year: number, _month: number) => {
+    /* noop */
+  }
 
   gotoMonth(year: number, month: number) {
     if (this.month !== month || this.year !== year) {
@@ -342,22 +347,6 @@ export class TosiMonth extends Component<MonthParts> {
   gotoDate(dateString: string) {
     const date = new Date(dateString)
     this.gotoMonth(date.getFullYear(), date.getMonth() + 1)
-  }
-
-  constructor() {
-    super()
-    this.initAttributes(
-      'month',
-      'year',
-      'weekStart',
-      'minDate',
-      'maxDate',
-      'selectable',
-      'multiple',
-      'range',
-      'disabled',
-      'readonly'
-    )
   }
 
   connectedCallback() {

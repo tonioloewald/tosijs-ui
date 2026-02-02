@@ -442,16 +442,12 @@ export const icons = new Proxy(iconData, {
 }) as unknown as SVGIconMap
 
 export class SvgIcon extends WebComponent {
-  icon = ''
-  size = 0
-  fill = ''
-  stroke = ''
-  strokeWidth = 1
-
-  constructor() {
-    super()
-
-    this.initAttributes('icon', 'size', 'fill', 'stroke', 'strokeWidth')
+  static initAttributes = {
+    icon: '',
+    size: 0,
+    fill: '',
+    stroke: '',
+    strokeWidth: 1,
   }
 
   render(): void {

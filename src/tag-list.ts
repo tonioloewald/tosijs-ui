@@ -112,8 +112,10 @@ import { icons } from './icons'
 const { div, input, span, button } = elements
 
 export class XinTag extends WebComponent {
-  caption = ''
-  removeable = false
+  static initAttributes = {
+    caption: '',
+    removeable: false,
+  }
 
   removeCallback: (event: Event) => void = () => {
     this.remove()
@@ -128,12 +130,6 @@ export class XinTag extends WebComponent {
       onClick: this.removeCallback,
     }),
   ]
-
-  constructor() {
-    super()
-
-    this.initAttributes('caption', 'removeable')
-  }
 }
 
 export const xinTag = XinTag.elementCreator({
@@ -196,13 +192,16 @@ interface Tag {
 type TagList = (string | Tag | null)[]
 
 export class XinTagList extends WebComponent {
-  disabled = false
-  name = ''
-  availableTags: string | TagList = []
+  static initAttributes = {
+    name: '',
+    textEntry: false,
+    editable: false,
+    placeholder: 'enter tags',
+    disabled: false,
+  }
+
   value: string | string[] = []
-  textEntry = false
-  editable = false
-  placeholder = 'enter tags'
+  availableTags: string | TagList = []
 
   get tags(): string[] {
     return typeof this.value === 'string'
@@ -211,20 +210,6 @@ export class XinTagList extends WebComponent {
           .map((tag) => tag.trim())
           .filter((tag) => tag !== '')
       : this.value
-  }
-
-  constructor() {
-    super()
-
-    this.initAttributes(
-      'name',
-      'value',
-      'textEntry',
-      'availableTags',
-      'editable',
-      'placeholder',
-      'disabled'
-    )
   }
 
   addTag = (tag: string) => {

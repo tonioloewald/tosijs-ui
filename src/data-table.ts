@@ -251,23 +251,29 @@ const passThru = (array: any[]) => array
 export type SelectCallback = (selected: any[]) => void
 
 export class DataTable extends WebComponent {
-  select = false
-  multiple = false
-  nosort = false
-  nohide = false
-  noreorder = false
+  static initAttributes = {
+    rowHeight: 30,
+    charWidth: 15,
+    minColumnWidth: 30,
+    select: false,
+    multiple: false,
+    pinnedTop: 0,
+    pinnedBottom: 0,
+    nosort: false,
+    nohide: false,
+    noreorder: false,
+    localized: false,
+  }
+
   selectionChanged: SelectCallback = () => {
     /* do not care */
   }
-  localized = false
 
   private selectedKey = Symbol('selected')
   private selectBinding = (elt: Element, obj: any) => {
     elt.toggleAttribute('aria-selected', obj[this.selectedKey] === true)
   }
 
-  pinnedTop = 0
-  pinnedBottom = 0
   maxVisibleRows = 10000
 
   get value(): TableData {
@@ -301,9 +307,6 @@ export class DataTable extends WebComponent {
   private _array: any[] = []
   private _columns: ColumnOptions[] | null = null
   private _filter: ArrayFilter = passThru
-  charWidth = 15
-  rowHeight = 30
-  minColumnWidth = 30
 
   get virtual(): { height: number } | undefined {
     return this.rowHeight > 0 ? { height: this.rowHeight } : undefined
@@ -315,20 +318,6 @@ export class DataTable extends WebComponent {
     this.rowData = tosi({
       [this.instanceId]: this.rowData,
     })[this.instanceId]
-
-    this.initAttributes(
-      'rowHeight',
-      'charWidth',
-      'minColumnWidth',
-      'select',
-      'multiple',
-      'pinnedTop',
-      'pinnedBottom',
-      'nosort',
-      'nohide',
-      'noreorder',
-      'localized'
-    )
   }
 
   get array(): any[] {

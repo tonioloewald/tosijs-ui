@@ -208,14 +208,13 @@ export class TosiDialog extends Component<DialogParts> {
     })
   }
 
-  removeOnClose = false
-  closeOnBackgroundClick = false
+  static initAttributes = {
+    removeOnClose: false,
+    closeOnBackgroundClick: false,
+  }
 
   constructor() {
     super()
-
-    this.initAttributes('removeOnClose', 'closeOnBackgroundClick')
-
     on(this, 'click', () => {
       if (this.closeOnBackgroundClick) {
         this.close()
@@ -231,7 +230,9 @@ export class TosiDialog extends Component<DialogParts> {
     this.parts.ok.focus()
   }
 
-  #modalResolution = (_outcome: string | null) => { /* noop */ }
+  #modalResolution = (_outcome: string | null) => {
+    /* noop */
+  }
 
   showModal = (): Promise<string | null> => {
     this.style.zIndex = String(findHighestZ())

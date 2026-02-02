@@ -682,9 +682,13 @@ interface XinMenuParts extends PartsMap {
 }
 
 export class XinMenu extends Component<XinMenuParts> {
+  static initAttributes = {
+    menuWidth: 'auto',
+    localized: false,
+    icon: '',
+  }
+
   menuItems: MenuItem[] = []
-  menuWidth = 'auto'
-  localized = false
 
   showMenu = (event: Event) => {
     if (event.type === 'click' || (event as KeyboardEvent).code === 'Space') {
@@ -713,9 +717,6 @@ export class XinMenu extends Component<XinMenuParts> {
 
   constructor() {
     super()
-
-    this.initAttributes('menuWidth', 'localized', 'icon')
-
     this.addEventListener('keydown', this.showMenu)
   }
 

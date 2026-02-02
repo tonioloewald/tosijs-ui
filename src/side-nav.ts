@@ -19,10 +19,13 @@ const { slot } = elements
 type NavState = 'normal' | 'compact/nav' | 'compact/content'
 
 export class SideNav extends Component {
-  minSize = 800
-  navSize = 200
-  compact = false
-  contentVisible = false
+  static initAttributes = {
+    minSize: 800,
+    navSize: 200,
+    compact: false,
+    contentVisible: false,
+  }
+
   value: NavState = 'normal'
 
   content = [slot({ name: 'nav', part: 'nav' }), slot({ part: 'content' })]
@@ -55,7 +58,7 @@ export class SideNav extends Component {
     if (parent === null) {
       return
     }
-    
+
     let navState = this.value
 
     this.compact = parent.offsetWidth < this.minSize
@@ -90,7 +93,7 @@ export class SideNav extends Component {
         this.style.setProperty('--margin', '0 -100% 0 0')
       }
     }
-    
+
     if (this.value !== navState) {
       this.value = navState
     }
@@ -113,11 +116,6 @@ export class SideNav extends Component {
   disconnectedCallback() {
     super.disconnectedCallback()
     this.observer.disconnect()
-  }
-
-  constructor() {
-    super()
-    this.initAttributes('minSize', 'navSize', 'compact', 'contentVisible')
   }
 
   render(): void {

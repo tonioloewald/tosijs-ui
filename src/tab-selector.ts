@@ -130,8 +130,11 @@ interface TabsParts extends PartsMap {
 }
 
 export class TabSelector extends WebComponent {
+  static initAttributes = {
+    localized: false,
+  }
+
   value = 0
-  localized = false
 
   makeTab(
     tabs: TabSelector,
@@ -254,11 +257,6 @@ export class TabSelector extends WebComponent {
     ),
     slot(),
   ]
-
-  constructor() {
-    super()
-    this.initAttributes('localized')
-  }
 
   addTabBody(body: HTMLElement, selectTab = false): void {
     if (!body.hasAttribute('name')) {

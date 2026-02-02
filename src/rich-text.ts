@@ -191,7 +191,9 @@ interface EditorParts extends PartsMap {
 }
 
 export class RichText extends WebComponent<EditorParts> {
-  widgets: 'none' | 'minimal' | 'default' = 'default'
+  static initAttributes = {
+    widgets: 'default' as 'none' | 'minimal' | 'default',
+  }
 
   private isInitialized = false
 
@@ -295,11 +297,6 @@ export class RichText extends WebComponent<EditorParts> {
       part: 'content',
     }),
   ]
-
-  constructor() {
-    super()
-    this.initAttributes('widgets')
-  }
 
   doCommand(command?: string) {
     if (command === undefined) {

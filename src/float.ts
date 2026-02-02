@@ -97,9 +97,11 @@ const { slot } = elements
 export class XinFloat extends WebComponent {
   static floats: Set<XinFloat> = new Set()
 
-  drag = false
-  remainOnResize: 'hide' | 'remove' | 'remain' = 'remove'
-  remainOnScroll: 'hide' | 'remove' | 'remain' = 'remain'
+  static initAttributes = {
+    drag: false,
+    remainOnResize: 'remove' as 'hide' | 'remove' | 'remain',
+    remainOnScroll: 'remain' as 'hide' | 'remove' | 'remain',
+  }
 
   content = slot()
 
@@ -107,11 +109,6 @@ export class XinFloat extends WebComponent {
     ':host': {
       position: 'fixed',
     },
-  }
-
-  constructor() {
-    super()
-    this.initAttributes('drag', 'remainOnResize', 'remainOnScroll')
   }
 
   reposition = (event: Event) => {

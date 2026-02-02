@@ -114,21 +114,19 @@ function populate(basePath: string, source?: any): string {
 }
 
 export class MarkdownViewer extends Component {
-  src = ''
+  static initAttributes = {
+    src: '',
+    elements: false,
+  }
+
+  context: { [key: string]: any } = {}
   value = ''
   content = null
-  elements = false
-  context: { [key: string]: any } = {}
   options = {} as MarkedOptions
-
-  constructor() {
-    super()
-    this.initAttributes('src', 'elements', 'context')
-  }
   connectedCallback(): void {
     super.connectedCallback()
     if (this.src !== '') {
-      (async () => {
+      ;(async () => {
         const request = await fetch(this.src)
         this.value = await request.text()
       })()

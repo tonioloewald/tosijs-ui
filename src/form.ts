@@ -228,22 +228,34 @@ function setElementValue(input: HTMLElement | null | undefined, value: any) {
     }
   } else {
     if (value != null || (input as HTMLInputElement).value != null) {
-      (input as HTMLInputElement).value = String(value || '')
+      ;(input as HTMLInputElement).value = String(value || '')
     }
   }
 }
 
 export class XinField extends XinComponent {
-  caption = ''
-  key = ''
-  type: '' | 'checkbox' | 'number' | 'range' | 'date' | 'text' | 'color' = ''
-  optional = false
-  pattern = ''
-  placeholder = ''
-  min = ''
-  max = ''
-  step = ''
-  fixedPrecision = -1
+  static initAttributes = {
+    caption: '',
+    key: '',
+    type: '' as
+      | ''
+      | 'checkbox'
+      | 'number'
+      | 'range'
+      | 'date'
+      | 'text'
+      | 'color',
+    optional: false,
+    pattern: '',
+    placeholder: '',
+    min: '',
+    max: '',
+    step: '',
+    fixedPrecision: -1,
+    prefix: '',
+    suffix: '',
+  }
+
   value: any = null
 
   content = label(
@@ -254,24 +266,6 @@ export class XinField extends XinComponent {
       input({ part: 'valueHolder' })
     )
   )
-
-  constructor() {
-    super()
-    this.initAttributes(
-      'caption',
-      'key',
-      'type',
-      'optional',
-      'pattern',
-      'placeholder',
-      'min',
-      'max',
-      'step',
-      'fixedPrecision',
-      'prefix',
-      'suffix'
-    )
-  }
 
   private valueChanged = false
   handleChange = () => {
@@ -367,7 +361,7 @@ export class XinField extends XinComponent {
       if (this.step) {
         attr(valueHolder, 'step', this.step)
       } else if (this.fixedPrecision > 0 && this.type === 'number') {
-        attr(valueHolder, 'step', Math.pow(10, - this.fixedPrecision))
+        attr(valueHolder, 'step', Math.pow(10, -this.fixedPrecision))
       }
     }
     setElementValue(valueHolder, this.value)

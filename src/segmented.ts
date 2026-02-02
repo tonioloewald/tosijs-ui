@@ -130,13 +130,16 @@ interface SegmentParts {
 }
 
 export class XinSegmented extends WebComponent {
-  choices: string | Choice[] = ''
-  other = ''
-  multiple = false
-  name = ''
-  placeholder = 'Please specify…'
-  localized = false
+  static initAttributes = {
+    direction: 'row',
+    other: '',
+    multiple: false,
+    name: '',
+    placeholder: 'Please specify…',
+    localized: false,
+  }
 
+  choices: string | Choice[] = ''
   value: null | string = null
 
   get values(): string[] {
@@ -216,20 +219,6 @@ export class XinSegmented extends WebComponent {
       color: varDefault.segmentedOptionCurrentColor('#eee'),
       opacity: varDefault.segmentedPlaceholderOpacity(0.75),
     },
-  }
-
-  constructor() {
-    super()
-
-    this.initAttributes(
-      'direction',
-      'choices',
-      'other',
-      'multiple',
-      'name',
-      'placeholder',
-      'localized'
-    )
   }
 
   private valueChanged = false

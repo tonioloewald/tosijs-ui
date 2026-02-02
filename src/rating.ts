@@ -58,18 +58,21 @@ interface RatingParts extends PartsMap {
 }
 
 export class XinRating extends Component {
-  iconSize = 24
-  min: 0 | 1 = 1
-  max = 5
-  step = 1
+  static initAttributes = {
+    max: 5,
+    min: 1 as 0 | 1,
+    icon: 'star',
+    step: 1,
+    ratingStroke: '#e81',
+    ratingFill: '#f91',
+    emptyStroke: 'none',
+    emptyFill: '#ccc',
+    readonly: false,
+    iconSize: 24,
+    hollow: false,
+  }
+
   value: number | null = null
-  icon = 'star'
-  ratingFill = '#f91'
-  ratingStroke = '#e81'
-  emptyFill = '#ccc'
-  emptyStroke = 'none'
-  readonly = false
-  hollow = false
 
   static styleSpec = {
     ':host': {
@@ -108,24 +111,6 @@ export class XinRating extends Component {
     ':host svg:active': {
       transform: 'scale(1.1)',
     },
-  }
-
-  constructor() {
-    super()
-
-    this.initAttributes(
-      'max',
-      'min',
-      'icon',
-      'step',
-      'ratingStroke',
-      'ratingColor',
-      'emptyStroke',
-      'emptyColor',
-      'readonly',
-      'iconSize',
-      'hollow'
-    )
   }
 
   content = () =>

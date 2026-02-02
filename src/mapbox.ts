@@ -99,13 +99,16 @@ import { styleSheet, scriptTag } from './via-tag'
 const { div } = elements
 
 export class MapBox extends WebComponent {
-  coords = '65.01715565258993,25.48081004203459,12'
+  static initAttributes = {
+    coords: '65.01715565258993,25.48081004203459,12',
+    token: '',
+    mapStyle: 'mapbox://styles/mapbox/streets-v12',
+  }
+
   content = div({ style: { width: '100%', height: '100%' } })
   get map(): any {
     return this._map
   }
-  mapStyle = 'mapbox://styles/mapbox/streets-v12'
-  token = ''
 
   static mapboxCSSAvailable: Promise<void>
   static mapboxAvailable?: Promise<any>
@@ -124,8 +127,6 @@ export class MapBox extends WebComponent {
 
   constructor() {
     super()
-    this.initAttributes('coords', 'token', 'mapStyle')
-
     if (MapBox.mapboxCSSAvailable === undefined) {
       MapBox.mapboxCSSAvailable = styleSheet(
         'https://api.mapbox.com/mapbox-gl-js/v1.4.1/mapbox-gl.css'
@@ -158,7 +159,9 @@ export class MapBox extends WebComponent {
 
     const { div } = this.parts
 
-    const [long, lat, zoom] = this.coords.split(',').map((x) => Number(x))
+    const [long, lat, zoom] = this.coords
+      .split(',')
+      .map((x: string) => Number(x))
 
     if (this.map) {
       this.map.remove()

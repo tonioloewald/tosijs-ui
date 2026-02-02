@@ -345,7 +345,9 @@ export function localize(ref: string): string {
 }
 
 export class LocalePicker extends Component {
-  hideCaption = false
+  static initAttributes = {
+    hideCaption: false,
+  }
 
   content = () => {
     return xinSelect({
@@ -355,12 +357,6 @@ export class LocalePicker extends Component {
       bindValue: i18n.locale,
       bindLocaleOptions: i18n.localeOptions,
     })
-  }
-
-  constructor() {
-    super()
-
-    this.initAttributes('hideCaption')
   }
 
   render(): void {
@@ -382,16 +378,11 @@ interface AbstractLocalized {
 
 export class XinLocalized extends Component {
   static allInstances = new Set<AbstractLocalized>()
+  static initAttributes = {
+    refString: '',
+  }
 
   contents = () => elements.xinSlot()
-
-  refString = ''
-
-  constructor() {
-    super()
-
-    this.initAttributes('refString')
-  }
 
   connectedCallback() {
     super.connectedCallback()

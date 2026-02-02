@@ -189,9 +189,12 @@ interface ExampleParts extends PartsMap {
 }
 
 export class LiveExample extends Component<ExampleParts> {
-  persistToDom = false
-  prettier = false
-  iframe = false
+  static initAttributes = {
+    persistToDom: false,
+    prettier: false,
+    iframe: false,
+  }
+
   prefix = 'lx'
   storageKey = 'live-example-payload'
   context: ExampleContext = {}
@@ -245,12 +248,6 @@ export class LiveExample extends Component<ExampleParts> {
       })
       example.showDefaultTab()
     }
-  }
-
-  constructor() {
-    super()
-
-    this.initAttributes('persistToDom', 'prettier', 'iframe')
   }
 
   get activeTab(): Element | undefined {

@@ -73,8 +73,11 @@ space is tight.
 */
 
 export class SizeBreak extends WebComponent {
-  minWidth = 0
-  minHeight = 0
+  static initAttributes = {
+    minWidth: 0,
+    minHeight: 0,
+  }
+
   value: 'normal' | 'small' = 'normal'
 
   content = [slot({ part: 'normal' }), slot({ part: 'small', name: 'small' })]
@@ -84,11 +87,6 @@ export class SizeBreak extends WebComponent {
       display: 'inline-block',
       position: 'relative',
     },
-  }
-
-  constructor() {
-    super()
-    this.initAttributes('minWidth', 'minHeight')
   }
 
   onResize = () => {

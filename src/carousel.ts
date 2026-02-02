@@ -73,13 +73,15 @@ interface CarouselParts {
 }
 
 export class XinCarousel extends WebComponent {
-  arrows = false
-  dots = false
-  loop = false
-  maxVisibleItems = 1
-  snapDelay = 0.1
-  snapDuration = 0.25
-  auto = 0
+  static initAttributes = {
+    dots: false,
+    arrows: false,
+    maxVisibleItems: 1,
+    snapDuration: 0.25,
+    snapDelay: 0.1,
+    loop: false,
+    auto: 0,
+  }
 
   private lastAutoAdvance = Date.now()
   private interval?: Timer
@@ -297,19 +299,6 @@ export class XinCarousel extends WebComponent {
     ),
     div({ title: 'choose slide to display', role: 'group', part: 'progress' }),
   ]
-
-  constructor() {
-    super()
-
-    this.initAttributes(
-      'dots',
-      'arrows',
-      'maxVisibleItems',
-      'snapDuration',
-      'loop',
-      'auto'
-    )
-  }
 
   connectedCallback() {
     super.connectedCallback()
