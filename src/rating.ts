@@ -91,14 +91,14 @@ export class XinRating extends Component {
     },
     ':host::part(empty)': {
       pointerEvents: 'none',
-      _xinIconFill: vars.emptyFill,
-      _xinIconStroke: vars.emptyStroke,
+      _tosiIconFill: vars.emptyFill,
+      _tosiIconStroke: vars.emptyStroke,
     },
     ':host::part(filled)': {
       position: 'absolute',
       left: 0,
-      _xinIconFill: vars.ratingFill,
-      _xinIconStroke: vars.ratingStroke,
+      _tosiIconFill: vars.ratingFill,
+      _tosiIconStroke: vars.ratingStroke,
     },
     ':host svg': {
       transform: 'scale(0.9)',

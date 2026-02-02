@@ -31,14 +31,14 @@ export declare class XinRating extends Component {
         };
         ':host::part(empty)': {
             pointerEvents: string;
-            _xinIconFill: string;
-            _xinIconStroke: string;
+            _tosiIconFill: string;
+            _tosiIconStroke: string;
         };
         ':host::part(filled)': {
             position: string;
             left: number;
-            _xinIconFill: string;
-            _xinIconStroke: string;
+            _tosiIconFill: string;
+            _tosiIconStroke: string;
         };
         ':host svg': {
             transform: string;

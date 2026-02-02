@@ -9046,14 +9046,14 @@ class XinRating extends F {
     },
     ":host::part(empty)": {
       pointerEvents: "none",
-      _xinIconFill: Ao.emptyFill,
-      _xinIconStroke: Ao.emptyStroke
+      _tosiIconFill: Ao.emptyFill,
+      _tosiIconStroke: Ao.emptyStroke
     },
     ":host::part(filled)": {
       position: "absolute",
       left: 0,
-      _xinIconFill: Ao.ratingFill,
-      _xinIconStroke: Ao.ratingStroke
+      _tosiIconFill: Ao.ratingFill,
+      _tosiIconStroke: Ao.ratingStroke
     },
     ":host svg": {
       transform: "scale(0.9)",
