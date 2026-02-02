@@ -9,7 +9,7 @@ var __export = (target, all) => {
     });
 };
 
-// ../xinjs/dist/module.js
+// node_modules/tosijs/dist/module.js
 var exports_module = {};
 __export(exports_module, {
   xinValue: () => Ke,
@@ -1909,7 +1909,7 @@ var Xn = (o = () => true) => {
   }, 500);
   _o(o, n);
 };
-var ie = "1.1.4";
+var ie = "1.2.0";
 function Eo(o) {
   return Object.assign(v, o), v;
 }
@@ -6927,7 +6927,7 @@ var liveExampleStyleSpec = {
     cursor: "nwse-resize"
   },
   ':host.-test-failed [part="example"]': {
-    boxShadow: "0 0 10px 2px rgba(255, 0, 0, 0.5)"
+    outline: "4px solid #c00"
   },
   ':host.-test-passed [part="exampleWidgets"]': {
     "--widget-color": "#0a0"
@@ -6942,8 +6942,9 @@ var liveExampleStyleSpec = {
     background: "var(--widget-bg)",
     borderRadius: "5px",
     padding: "8px",
-    fontSize: "12px",
-    maxWidth: "300px",
+    fontSize: "14px",
+    margin: "0",
+    maxWidth: "400px",
     maxHeight: "200px",
     overflow: "auto",
     zIndex: "100"
@@ -7255,7 +7256,7 @@ class LiveExample extends g {
     }
   };
   content = () => [
-    div7({ part: "example" }, style({ part: "style" }), div7({ part: "testResults", hidden: true }), button7({
+    div7({ part: "example" }, style({ part: "style" }), pre({ part: "testResults", hidden: true }), button7({
       title: "example menu",
       part: "exampleWidgets",
       onClick: this.exampleMenu
@@ -7710,8 +7711,16 @@ function createDocBrowser(options) {
       }
       testResultsResolve(allResults);
       testResultsResolve = undefined;
+      if (isLocalhost) {
+        fetch("/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(allResults)
+        }).catch(() => {});
+      }
     }
   };
+  const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
   const handleTestComplete = (event) => {
     const { results } = event.detail;
     const filename = String(app.currentDoc.filename);
@@ -8090,7 +8099,6 @@ function createDocBrowser(options) {
       }, 1000);
     }
   };
-  const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
   if (isLocalhost) {
     setTimeout(runBackgroundTests, 1000);
   } else {

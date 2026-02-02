@@ -151,15 +151,67 @@ function serveFromDir(config: {
   return null
 }
 
+const TEST_RESULTS_FILE = '.browser-tests.json'
+
+async function handleTestReport(request: Request): Promise<Response> {
+  try {
+    const results = await request.json()
+
+    // Save to file
+    await Bun.write(TEST_RESULTS_FILE, JSON.stringify(results, null, 2))
+
+    // Log failures to console
+    if (results.failed > 0) {
+      console.error(
+        `\n❌ Browser tests: ${results.failed} failed, ${results.passed} passed`
+      )
+      for (const [pageName, pageResults] of Object.entries(results.pages) as [
+        string,
+        any
+      ][]) {
+        if (!pageResults.passed) {
+          console.error(`\n  ${pageName}:`)
+          for (const test of pageResults.tests) {
+            if (!test.passed) {
+              console.error(
+                `    ✗ ${test.name}${test.error ? `: ${test.error}` : ''}`
+              )
+            }
+          }
+        }
+      }
+      console.error('')
+    } else if (results.passed > 0) {
+      console.log(`\n✓ Browser tests: ${results.passed} passed\n`)
+    }
+
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: { 'Content-Type': 'application/json' },
+    })
+  } catch (e) {
+    console.error('Failed to process test report:', e)
+    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+}
+
 const server = Bun.serve({
   port: PORT,
   tls: {
     key: Bun.file('./tls/key.pem'),
     cert: Bun.file('./tls/certificate.pem'),
   },
-  fetch(request) {
+  async fetch(request) {
     let reqPath = new URL(request.url).pathname
     console.log(request.method, reqPath)
+
+    // Handle test report endpoint
+    if (request.method === 'POST' && reqPath === '/report') {
+      return handleTestReport(request)
+    }
+
     if (reqPath === '/') reqPath = '/index.html'
 
     const buildResponse = serveFromDir({

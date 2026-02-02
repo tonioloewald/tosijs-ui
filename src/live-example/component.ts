@@ -270,7 +270,7 @@ export class LiveExample extends Component<ExampleParts> {
     div(
       { part: 'example' },
       style({ part: 'style' }),
-      div({ part: 'testResults', hidden: true }),
+      pre({ part: 'testResults', hidden: true }),
       button(
         {
           title: 'example menu',

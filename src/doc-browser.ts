@@ -357,8 +357,23 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
 
       testResultsResolve(allResults)
       testResultsResolve = undefined
+
+      // Post results to dev server on localhost
+      if (isLocalhost) {
+        fetch('/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(allResults),
+        }).catch(() => {
+          // Ignore errors - server may not support this endpoint
+        })
+      }
     }
   }
+
+  const isLocalhost =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
 
   const handleTestComplete = (event: CustomEvent) => {
     const { results } = event.detail as {
@@ -907,10 +922,6 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   }
 
   // Run background tests on localhost, or run current page tests on load
-  const isLocalhost =
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1'
-
   if (isLocalhost) {
     // Run all tests in background on localhost
     setTimeout(runBackgroundTests, 1000)

@@ -89,3 +89,4 @@ bun.lockb
 bun.lock
 *.pem
 *.csr
+.browser-tests.json

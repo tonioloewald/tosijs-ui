@@ -100,7 +100,7 @@ export declare const liveExampleStyleSpec: {
         cursor: string;
     };
     ':host.-test-failed [part="example"]': {
-        boxShadow: string;
+        outline: string;
     };
     ':host.-test-passed [part="exampleWidgets"]': {
         '--widget-color': string;
@@ -116,6 +116,7 @@ export declare const liveExampleStyleSpec: {
         borderRadius: string;
         padding: string;
         fontSize: string;
+        margin: string;
         maxWidth: string;
         maxHeight: string;
         overflow: string;

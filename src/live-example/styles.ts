@@ -119,7 +119,7 @@ export const liveExampleStyleSpec = {
 
   // Test results styling
   ':host.-test-failed [part="example"]': {
-    boxShadow: '0 0 10px 2px rgba(255, 0, 0, 0.5)',
+    outline: '4px solid #c00',
   },
 
   ':host.-test-passed [part="exampleWidgets"]': {
@@ -137,8 +137,9 @@ export const liveExampleStyleSpec = {
     background: 'var(--widget-bg)',
     borderRadius: '5px',
     padding: '8px',
-    fontSize: '12px',
-    maxWidth: '300px',
+    fontSize: '14px',
+    margin: '0',
+    maxWidth: '400px',
     maxHeight: '200px',
     overflow: 'auto',
     zIndex: '100',
