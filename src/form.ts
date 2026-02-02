@@ -171,6 +171,107 @@ The `text` type populates the `input` slot with a `<textarea>` element.
 The `color` type populates the `input` slot with a `<xin-color>` element (and thus supports colors with alpha values).
 
 <xin-css-var-editor element-selector="xin-field" target-selector=".preview"></xin-css-var-editor>
+
+## Native Form Integration
+
+The following components support native form integration via `formAssociated`:
+
+- `<tosi-rating>` - star ratings
+- `<tosi-select>` - custom select dropdowns
+- `<tosi-segmented>` - segmented button groups
+- `<tosi-tag-list>` - tag selection lists
+
+These components can be used directly in a standard `<form>` element with full support for:
+- Form submission (values included in FormData)
+- Form reset
+- Required field validation
+- The `:invalid` and `:valid` CSS pseudo-classes
+
+```html
+<form id="native-form" style="display: flex; flex-direction: column; gap: 16px; padding: 16px;">
+  <h4 style="margin: 0">Native Form with formAssociated Components</h4>
+
+  <label style="display: flex; flex-direction: column; gap: 4px;">
+    <span>Rate our service (required):</span>
+    <tosi-rating name="rating" required min="1"></tosi-rating>
+  </label>
+
+  <label style="display: flex; flex-direction: column; gap: 4px;">
+    <span>Select your country:</span>
+    <tosi-select name="country" required>
+      <option value="">-- Select --</option>
+      <option value="us">United States</option>
+      <option value="uk">United Kingdom</option>
+      <option value="ca">Canada</option>
+      <option value="au">Australia</option>
+    </tosi-select>
+  </label>
+
+  <label style="display: flex; flex-direction: column; gap: 4px;">
+    <span>Subscription tier:</span>
+    <tosi-segmented
+      name="tier"
+      required
+      choices="free=Free,pro=Pro:star,enterprise=Enterprise:building"
+    ></tosi-segmented>
+  </label>
+
+  <label style="display: flex; flex-direction: column; gap: 4px;">
+    <span>Interests (select at least one):</span>
+    <tosi-tag-list
+      name="interests"
+      required
+      editable
+      available-tags="Technology,Sports,Music,Art,Travel,Food"
+    ></tosi-tag-list>
+  </label>
+
+  <div style="display: flex; gap: 8px; margin-top: 8px;">
+    <button type="submit">Submit</button>
+    <button type="reset">Reset</button>
+  </div>
+
+  <pre id="form-output" style="background: #f5f5f5; padding: 8px; margin: 0; min-height: 60px;"></pre>
+</form>
+```
+```css
+.preview tosi-rating:invalid,
+.preview tosi-select:invalid,
+.preview tosi-segmented:invalid,
+.preview tosi-tag-list:invalid {
+  outline: 2px solid #f00;
+  outline-offset: 2px;
+}
+
+.preview tosi-rating:valid,
+.preview tosi-select:valid,
+.preview tosi-segmented:valid,
+.preview tosi-tag-list:valid {
+  outline: 2px solid #0a0;
+  outline-offset: 2px;
+}
+```
+```js
+const form = preview.querySelector('#native-form')
+const output = preview.querySelector('#form-output')
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const formData = new FormData(form)
+  const data = Object.fromEntries(formData.entries())
+  output.textContent = 'Submitted: ' + JSON.stringify(data, null, 2)
+})
+
+form.addEventListener('reset', () => {
+  output.textContent = 'Form reset'
+})
+
+form.addEventListener('change', (e) => {
+  const formData = new FormData(form)
+  const data = Object.fromEntries(formData.entries())
+  output.textContent = 'Current values: ' + JSON.stringify(data, null, 2)
+})
+```
 */
 
 import {
