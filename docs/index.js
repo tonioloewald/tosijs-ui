@@ -1968,8 +1968,10 @@ __export(exports_src, {
   sideNav: () => sideNav,
   setLocale: () => setLocale,
   scriptTag: () => scriptTag,
+  runTests: () => runTests,
   richTextWidgets: () => richTextWidgets,
   richText: () => richText,
+  rewriteImports: () => rewriteImports,
   removeLastMenu: () => removeLastMenu,
   postNotification: () => postNotification,
   positionFloat: () => positionFloat,
@@ -1981,9 +1983,11 @@ __export(exports_src, {
   makeSorter: () => makeSorter,
   localize: () => localize,
   localePicker: () => localePicker,
+  loadTransform: () => loadTransform,
   liveExample: () => liveExample,
   legacyAliases: () => legacyAliases,
   isBreached: () => isBreached,
+  insertExamples: () => insertExamples,
   initLocalization: () => initLocalization,
   icons: () => icons,
   i18n: () => i18n,
@@ -1992,6 +1996,10 @@ __export(exports_src, {
   findHighestZ: () => findHighestZ,
   filterPart: () => filterPart,
   filterBuilder: () => filterBuilder,
+  expect: () => expect,
+  executeInline: () => executeInline,
+  executeInIframe: () => executeInIframe,
+  executeCode: () => executeCode,
   elastic: () => elastic,
   editableRect: () => editableRect,
   dragAndDrop: () => exports_drag_and_drop,
@@ -2001,6 +2009,7 @@ __export(exports_src, {
   dataTable: () => dataTable,
   createThemeWithLegacy: () => createThemeWithLegacy,
   createTheme: () => createTheme,
+  createTestContext: () => createTestContext,
   createSubMenu: () => createSubMenu,
   createMenuItem: () => createMenuItem,
   createMenuAction: () => createMenuAction,
@@ -2048,7 +2057,9 @@ __export(exports_src, {
   SvgIcon: () => SvgIcon,
   SizeBreak: () => SizeBreak,
   SideNav: () => SideNav,
+  STORAGE_KEY: () => STORAGE_KEY,
   RichText: () => RichText,
+  RemoteSyncManager: () => RemoteSyncManager,
   MarkdownViewer: () => MarkdownViewer,
   MapBox: () => MapBox,
   LocalePicker: () => LocalePicker,
@@ -6497,10 +6508,576 @@ var tabSelector = TabSelector.elementCreator({
   tag: "xin-tabs"
 });
 
-// src/live-example.ts
-var { div: div6, xinSlot: xinSlot3, style, button: button7, pre } = y;
+// src/live-example/code-transform.ts
 var sucraseSrc = () => "https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm";
 var AsyncFunction = (async () => {}).constructor;
+function rewriteImports(code, contextKeys) {
+  let result = code;
+  for (const moduleName of contextKeys) {
+    result = result.replace(new RegExp(`import \\{(.*)\\} from '${moduleName}'`, "g"), `const {$1} = ${moduleName.replace(/-/g, "")}`);
+  }
+  return result;
+}
+async function executeCode(code, context, transform) {
+  const rewrittenCode = rewriteImports(code, Object.keys(context));
+  const transformedCode = transform(rewrittenCode, {
+    transforms: ["typescript"]
+  }).code;
+  const contextKeys = Object.keys(context).map((key) => key.replace(/-/g, ""));
+  const contextValues = Object.values(context);
+  const func = new AsyncFunction(...contextKeys, transformedCode);
+  await func(...contextValues);
+}
+async function loadTransform() {
+  const { transform } = await import(sucraseSrc());
+  return transform;
+}
+
+// src/live-example/remote-sync.ts
+var STORAGE_KEY = "live-example-payload";
+function createRemoteKey(prefix, uuid, remoteId) {
+  return remoteId !== "" ? `${prefix}-${remoteId}` : `${prefix}-${uuid}`;
+}
+function sendPayload(storageKey, payload) {
+  localStorage.setItem(storageKey, JSON.stringify(payload));
+}
+function parsePayload(data) {
+  if (data === null)
+    return null;
+  try {
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
+}
+function openEditorWindow(prefix, uuid, storageKey, remoteKey, code) {
+  const href = location.href.split("?")[0] + `?${prefix}=${uuid}`;
+  sendPayload(storageKey, {
+    remoteKey,
+    sentAt: Date.now(),
+    ...code
+  });
+  window.open(href);
+}
+function sendCloseSignal(storageKey, remoteKey) {
+  sendPayload(storageKey, {
+    remoteKey,
+    sentAt: Date.now(),
+    css: "",
+    html: "",
+    js: "",
+    close: true
+  });
+}
+
+class RemoteSyncManager {
+  storageKey;
+  remoteKey;
+  lastUpdate = 0;
+  interval;
+  onReceive;
+  constructor(storageKey, remoteKey, onReceive) {
+    this.storageKey = storageKey;
+    this.remoteKey = remoteKey;
+    this.onReceive = onReceive;
+  }
+  handleChange = (event) => {
+    if (event instanceof StorageEvent && event.key !== this.storageKey) {
+      return;
+    }
+    const payload = parsePayload(localStorage.getItem(this.storageKey));
+    if (!payload)
+      return;
+    if (payload.sentAt <= this.lastUpdate)
+      return;
+    if (payload.remoteKey !== this.remoteKey)
+      return;
+    this.lastUpdate = payload.sentAt;
+    this.onReceive(payload);
+  };
+  startListening() {
+    addEventListener("storage", this.handleChange);
+    this.interval = setInterval(this.handleChange, 500);
+  }
+  stopListening() {
+    removeEventListener("storage", this.handleChange);
+    if (this.interval) {
+      clearInterval(this.interval);
+    }
+  }
+  send(code) {
+    sendPayload(this.storageKey, {
+      remoteKey: this.remoteKey,
+      sentAt: Date.now(),
+      ...code
+    });
+  }
+  sendClose() {
+    sendCloseSignal(this.storageKey, this.remoteKey);
+  }
+}
+
+// src/live-example/execution.ts
+var { div: div6 } = y;
+function registerComponentsInIframe(iframeWindow, context) {
+  const iframeCustomElements = iframeWindow.customElements;
+  if (!iframeCustomElements)
+    return;
+  const tosijsui = context["tosijs-ui"];
+  if (!tosijsui)
+    return;
+  for (const [, creator] of Object.entries(tosijsui)) {
+    if (typeof creator === "function" && "tagName" in creator) {
+      const tagName = creator.tagName;
+      if (tagName && !iframeCustomElements.get(tagName)) {
+        const ComponentClass = customElements.get(tagName);
+        if (ComponentClass) {
+          try {
+            iframeCustomElements.define(tagName, ComponentClass);
+          } catch {}
+        }
+      }
+    }
+  }
+}
+async function executeInline(options) {
+  const {
+    html,
+    css,
+    js,
+    context,
+    transform,
+    exampleElement,
+    styleElement,
+    widgetsElement,
+    onError
+  } = options;
+  const preview = div6({ class: "preview" });
+  preview.innerHTML = html;
+  styleElement.innerText = css;
+  const oldPreview = exampleElement.querySelector(".preview");
+  if (oldPreview) {
+    oldPreview.replaceWith(preview);
+  } else {
+    exampleElement.insertBefore(preview, widgetsElement);
+  }
+  const fullContext = { preview, ...context };
+  try {
+    const code = rewriteImports(js, Object.keys(context));
+    const transformedCode = transform(code, { transforms: ["typescript"] }).code;
+    const contextKeys = Object.keys(fullContext).map((key) => key.replace(/-/g, ""));
+    const contextValues = Object.values(fullContext);
+    const func = new AsyncFunction(...contextKeys, transformedCode);
+    await func(...contextValues);
+  } catch (e) {
+    console.error(e);
+    if (onError)
+      onError(e);
+    else
+      window.alert(`Error: ${e}, the console may have more information…`);
+  }
+  return preview;
+}
+async function executeInIframe(options) {
+  const { html, css, js, context, transform, exampleElement, widgetsElement, onError } = options;
+  let iframe = exampleElement.querySelector("iframe.preview-iframe");
+  if (!iframe) {
+    iframe = document.createElement("iframe");
+    iframe.className = "preview-iframe";
+    iframe.style.cssText = "width: 100%; height: 100%; border: none;";
+    const oldPreview = exampleElement.querySelector(".preview");
+    if (oldPreview) {
+      oldPreview.replaceWith(iframe);
+    } else {
+      exampleElement.insertBefore(iframe, widgetsElement);
+    }
+  }
+  const iframeDoc = iframe.contentDocument;
+  if (!iframeDoc) {
+    console.error("Could not access iframe document");
+    return null;
+  }
+  const iframeWindow = iframe.contentWindow;
+  if (context["tosijs"]) {
+    iframeWindow.tosijs = context["tosijs"];
+  }
+  if (context["tosijs-ui"]) {
+    iframeWindow.tosijsui = context["tosijs-ui"];
+  }
+  iframeDoc.open();
+  iframeDoc.write(`<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; }
+    .preview { height: 100%; position: relative; }
+    ${css}
+  </style>
+</head>
+<body>
+  <div class="preview">${html}</div>
+</body>
+</html>`);
+  iframeDoc.close();
+  registerComponentsInIframe(iframeWindow, context);
+  const preview = iframeDoc.querySelector(".preview");
+  if (!preview) {
+    console.error("Could not find preview element in iframe");
+    return null;
+  }
+  const fullContext = { preview, ...context };
+  try {
+    const code = rewriteImports(js, Object.keys(context));
+    const transformedCode = transform(code, { transforms: ["typescript"] }).code;
+    const IframeAsyncFunction = iframeWindow.eval("(async () => {}).constructor");
+    const contextKeys = Object.keys(fullContext).map((key) => key.replace(/-/g, ""));
+    const contextValues = Object.values(fullContext);
+    const func = new IframeAsyncFunction(...contextKeys, transformedCode);
+    await func(...contextValues);
+  } catch (e) {
+    console.error(e);
+    if (onError)
+      onError(e);
+    else
+      window.alert(`Error: ${e}, the console may have more information…`);
+  }
+  return preview;
+}
+
+// src/live-example/insert-examples.ts
+function insertExamples(element, context, liveExampleCreator, liveExampleTagName) {
+  const sources = [
+    ...element.querySelectorAll(".language-html,.language-js,.language-css,.language-test")
+  ].filter((el) => !el.closest(liveExampleTagName)).map((code) => ({
+    block: code.parentElement,
+    language: code.classList[0].split("-").pop(),
+    code: code.innerText
+  }));
+  for (let index = 0;index < sources.length; index += 1) {
+    const exampleSources = [sources[index]];
+    while (index < sources.length - 1 && sources[index].block.nextElementSibling === sources[index + 1].block) {
+      exampleSources.push(sources[index + 1]);
+      index += 1;
+    }
+    const example = liveExampleCreator({ context });
+    const parent = exampleSources[0].block.parentElement;
+    parent.insertBefore(example, exampleSources[0].block);
+    exampleSources.forEach((source) => {
+      switch (source.language) {
+        case "js":
+          example.js = source.code;
+          break;
+        case "html":
+          example.html = source.code;
+          break;
+        case "css":
+          example.css = source.code;
+          break;
+        case "test":
+          example.test = source.code;
+          break;
+      }
+      source.block.remove();
+    });
+    example.showDefaultTab();
+  }
+}
+
+// src/live-example/styles.ts
+var liveExampleStyleSpec = {
+  ":host": {
+    "--xin-example-height": "320px",
+    "--code-editors-bar-bg": "#777",
+    "--code-editors-bar-color": "#fff",
+    "--widget-bg": "#fff8",
+    "--widget-color": "#000",
+    position: "relative",
+    display: "flex",
+    height: "var(--xin-example-height)",
+    background: "var(--background)",
+    boxSizing: "border-box"
+  },
+  ":host.-maximize": {
+    position: "fixed",
+    left: "0",
+    top: "0",
+    height: "100vh",
+    width: "100vw",
+    margin: "0 !important"
+  },
+  ".-maximize": {
+    zIndex: 101
+  },
+  ":host.-vertical": {
+    flexDirection: "column"
+  },
+  ":host .layout-indicator": {
+    transition: "0.5s ease-out",
+    transform: "rotateZ(270deg)"
+  },
+  ":host.-vertical .layout-indicator": {
+    transform: "rotateZ(180deg)"
+  },
+  ":host.-maximize .hide-if-maximized, :host:not(.-maximize) .show-if-maximized": {
+    display: "none"
+  },
+  ':host [part="example"]': {
+    flex: "1 1 50%",
+    height: "100%",
+    position: "relative",
+    overflowX: "auto"
+  },
+  ":host .preview": {
+    height: "100%",
+    position: "relative",
+    overflow: "hidden",
+    boxShadow: "inset 0 0 0 2px #8883"
+  },
+  ':host [part="editors"]': {
+    flex: "1 1 200px",
+    height: "100%",
+    position: "relative"
+  },
+  ':host [part="exampleWidgets"]': {
+    position: "absolute",
+    left: "5px",
+    bottom: "5px",
+    "--widget-color": "var(--brand-color)",
+    borderRadius: "5px",
+    width: "44px",
+    height: "44px",
+    lineHeight: "44px",
+    zIndex: "100"
+  },
+  ':host [part="exampleWidgets"] svg': {
+    stroke: "var(--widget-color)"
+  },
+  ":host .code-editors": {
+    overflow: "hidden",
+    background: "white",
+    position: "relative",
+    top: "0",
+    right: "0",
+    flex: "1 1 50%",
+    height: "100%",
+    flexDirection: "column",
+    zIndex: "10"
+  },
+  ":host .code-editors:not([hidden])": {
+    display: "flex"
+  },
+  ":host .code-editors > h4": {
+    padding: "5px",
+    margin: "0",
+    textAlign: "center",
+    background: "var(--code-editors-bar-bg)",
+    color: "var(--code-editors-bar-color)",
+    cursor: "move"
+  },
+  ":host button.transparent, :host .sizer": {
+    width: "32px",
+    height: "32px",
+    lineHeight: "32px",
+    textAlign: "center",
+    padding: "0",
+    margin: "0"
+  },
+  ":host .sizer": {
+    cursor: "nwse-resize"
+  },
+  ':host.-test-failed [part="example"]': {
+    boxShadow: "0 0 10px 2px rgba(255, 0, 0, 0.5)"
+  },
+  ':host.-test-passed [part="exampleWidgets"]': {
+    "--widget-color": "#0a0"
+  },
+  ':host.-test-failed [part="exampleWidgets"]': {
+    "--widget-color": "#f00"
+  },
+  ':host [part="testResults"]': {
+    position: "absolute",
+    bottom: "54px",
+    left: "5px",
+    background: "var(--widget-bg)",
+    borderRadius: "5px",
+    padding: "8px",
+    fontSize: "12px",
+    maxWidth: "300px",
+    maxHeight: "200px",
+    overflow: "auto",
+    zIndex: "100"
+  },
+  ':host [part="testResults"][hidden]': {
+    display: "none"
+  },
+  ":host .test-pass": {
+    color: "#0a0"
+  },
+  ":host .test-fail": {
+    color: "#f00"
+  }
+};
+
+// src/live-example/test-harness.ts
+class AssertionError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "AssertionError";
+  }
+}
+function deepEqual(a3, b2) {
+  if (a3 === b2)
+    return true;
+  if (typeof a3 !== typeof b2)
+    return false;
+  if (a3 === null || b2 === null)
+    return a3 === b2;
+  if (typeof a3 !== "object")
+    return false;
+  const aObj = a3;
+  const bObj = b2;
+  if (Array.isArray(aObj) !== Array.isArray(bObj))
+    return false;
+  const aKeys = Object.keys(aObj);
+  const bKeys = Object.keys(bObj);
+  if (aKeys.length !== bKeys.length)
+    return false;
+  return aKeys.every((key) => deepEqual(aObj[key], bObj[key]));
+}
+function createMatchers(value, negated = false) {
+  const assert = (condition, message) => {
+    const result = negated ? !condition : condition;
+    if (!result) {
+      throw new AssertionError(negated ? `not: ${message}` : message);
+    }
+  };
+  const matchers = {
+    toBe(expected) {
+      assert(value === expected, `Expected ${JSON.stringify(value)} to be ${JSON.stringify(expected)}`);
+    },
+    toEqual(expected) {
+      assert(deepEqual(value, expected), `Expected ${JSON.stringify(value)} to equal ${JSON.stringify(expected)}`);
+    },
+    toBeTruthy() {
+      assert(!!value, `Expected ${JSON.stringify(value)} to be truthy`);
+    },
+    toBeFalsy() {
+      assert(!value, `Expected ${JSON.stringify(value)} to be falsy`);
+    },
+    toBeNull() {
+      assert(value === null, `Expected ${JSON.stringify(value)} to be null`);
+    },
+    toBeUndefined() {
+      assert(value === undefined, `Expected ${JSON.stringify(value)} to be undefined`);
+    },
+    toBeDefined() {
+      assert(value !== undefined, `Expected ${JSON.stringify(value)} to be defined`);
+    },
+    toContain(item) {
+      if (typeof value === "string") {
+        assert(value.includes(item), `Expected "${value}" to contain "${item}"`);
+      } else if (Array.isArray(value)) {
+        assert(value.includes(item), `Expected array to contain ${JSON.stringify(item)}`);
+      } else {
+        throw new AssertionError("toContain requires string or array");
+      }
+    },
+    toHaveLength(length) {
+      const actual = value.length;
+      assert(actual === length, `Expected length ${actual} to be ${length}`);
+    },
+    toMatch(pattern) {
+      assert(pattern.test(value), `Expected "${value}" to match ${pattern}`);
+    },
+    toBeGreaterThan(n) {
+      assert(value > n, `Expected ${value} to be greater than ${n}`);
+    },
+    toBeLessThan(n) {
+      assert(value < n, `Expected ${value} to be less than ${n}`);
+    },
+    toBeInstanceOf(cls) {
+      assert(value instanceof cls, `Expected value to be instance of ${cls.name}`);
+    },
+    get not() {
+      return createMatchers(value, !negated);
+    }
+  };
+  return matchers;
+}
+function expect(value) {
+  return createMatchers(value);
+}
+function createTestContext(results) {
+  let currentDescribe = "";
+  return {
+    expect,
+    test(name, fn2) {
+      const fullName = currentDescribe ? `${currentDescribe} > ${name}` : name;
+      try {
+        const result = fn2();
+        if (result instanceof Promise) {
+          result.then(() => {
+            results.push({ name: fullName, passed: true });
+          }).catch((err) => {
+            results.push({
+              name: fullName,
+              passed: false,
+              error: err.message
+            });
+          });
+        } else {
+          results.push({ name: fullName, passed: true });
+        }
+      } catch (err) {
+        results.push({
+          name: fullName,
+          passed: false,
+          error: err.message
+        });
+      }
+    },
+    describe(name, fn2) {
+      const previousDescribe = currentDescribe;
+      currentDescribe = currentDescribe ? `${currentDescribe} > ${name}` : name;
+      fn2();
+      currentDescribe = previousDescribe;
+    }
+  };
+}
+async function runTests(testCode, preview, context, transform) {
+  const results = [];
+  const testContext = createTestContext(results);
+  const fullContext = {
+    preview,
+    ...context,
+    expect: testContext.expect,
+    test: testContext.test,
+    describe: testContext.describe
+  };
+  try {
+    const code = rewriteImports(testCode, Object.keys(context));
+    const transformedCode = transform(code, { transforms: ["typescript"] }).code;
+    const contextKeys = Object.keys(fullContext).map((key) => key.replace(/-/g, ""));
+    const contextValues = Object.values(fullContext);
+    const func = new AsyncFunction(...contextKeys, transformedCode);
+    await func(...contextValues);
+  } catch (err) {
+    results.push({
+      name: "Test execution",
+      passed: false,
+      error: err.message
+    });
+  }
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  return {
+    passed: results.filter((r) => r.passed).length,
+    failed: results.filter((r) => !r.passed).length,
+    tests: results
+  };
+}
+
+// src/live-example/component.ts
+var { div: div7, xinSlot: xinSlot3, style, button: button7, pre, span: span6 } = y;
 
 class LiveExample extends F {
   static initAttributes = {
@@ -6509,44 +7086,15 @@ class LiveExample extends F {
     iframe: false
   };
   prefix = "lx";
-  storageKey = "live-example-payload";
+  storageKey = STORAGE_KEY;
   context = {};
   uuid = crypto.randomUUID();
   remoteId = "";
-  lastUpdate = 0;
-  interval;
+  remoteSync;
+  undoInterval;
+  testResults;
   static insertExamples(element, context = {}) {
-    const sources = [
-      ...element.querySelectorAll(".language-html,.language-js,.language-css")
-    ].filter((element2) => !element2.closest(LiveExample.tagName)).map((code) => ({
-      block: code.parentElement,
-      language: code.classList[0].split("-").pop(),
-      code: code.innerText
-    }));
-    for (let index = 0;index < sources.length; index += 1) {
-      const exampleSources = [sources[index]];
-      while (index < sources.length - 1 && sources[index].block.nextElementSibling === sources[index + 1].block) {
-        exampleSources.push(sources[index + 1]);
-        index += 1;
-      }
-      const example = liveExample({ context });
-      exampleSources[0].block.parentElement.insertBefore(example, exampleSources[0].block);
-      exampleSources.forEach((source) => {
-        switch (source.language) {
-          case "js":
-            example.js = source.code;
-            break;
-          case "html":
-            example.html = source.code;
-            break;
-          case "css":
-            example.css = source.code;
-            break;
-        }
-        source.block.remove();
-      });
-      example.showDefaultTab();
-    }
+    insertExamples(element, context, liveExample, LiveExample.tagName);
   }
   get activeTab() {
     const { editors } = this.parts;
@@ -6576,6 +7124,15 @@ class LiveExample extends F {
   }
   set js(code) {
     this.setEditorValue("js", code);
+  }
+  get test() {
+    return this.getEditorValue("test");
+  }
+  set test(code) {
+    this.setEditorValue("test", code);
+  }
+  get remoteKey() {
+    return createRemoteKey(this.prefix, this.uuid, this.remoteId);
   }
   updateUndo = () => {
     const { activeTab } = this;
@@ -6657,12 +7214,12 @@ class LiveExample extends F {
     }
   };
   content = () => [
-    div6({ part: "example" }, style({ part: "style" }), button7({
+    div7({ part: "example" }, style({ part: "style" }), div7({ part: "testResults", hidden: true }), button7({
       title: "example menu",
       part: "exampleWidgets",
       onClick: this.exampleMenu
     }, icons.code())),
-    div6({
+    div7({
       class: "code-editors",
       part: "codeEditors",
       onKeydown: this.handleShortcuts,
@@ -6670,14 +7227,7 @@ class LiveExample extends F {
     }, tabSelector({
       part: "editors",
       onChange: this.updateUndo
-    }, codeEditor({
-      name: "js",
-      mode: "javascript",
-      part: "js"
-    }), codeEditor({ name: "html", mode: "html", part: "html" }), codeEditor({ name: "css", mode: "css", part: "css" }), div6({
-      slot: "after-tabs",
-      class: "row"
-    }, button7({
+    }, codeEditor({ name: "js", mode: "javascript", part: "js" }), codeEditor({ name: "html", mode: "html", part: "html" }), codeEditor({ name: "css", mode: "css", part: "css" }), codeEditor({ name: "test", mode: "javascript", part: "test" }), div7({ slot: "after-tabs", class: "row" }, button7({
       title: "undo",
       part: "undo",
       class: "transparent",
@@ -6710,57 +7260,38 @@ class LiveExample extends F {
     super.connectedCallback();
     const { sources } = this.parts;
     this.initFromElements([...sources.children]);
-    addEventListener("storage", this.remoteChange);
-    this.interval = setInterval(this.remoteChange, 500);
+    this.remoteSync = new RemoteSyncManager(this.storageKey, this.remoteKey, (payload) => {
+      if (payload.close) {
+        window.close();
+        return;
+      }
+      this.css = payload.css;
+      this.html = payload.html;
+      this.js = payload.js;
+      if (payload.test)
+        this.test = payload.test;
+      this.refresh();
+    });
+    this.remoteSync.startListening();
     this.undoInterval = setInterval(this.updateUndo, 250);
   }
   disconnectedCallback() {
     super.disconnectedCallback();
-    const { storageKey, remoteKey } = this;
-    clearInterval(this.interval);
-    clearInterval(this.undoInterval);
-    localStorage.setItem(storageKey, JSON.stringify({
-      remoteKey,
-      sentAt: Date.now(),
-      close: true
-    }));
+    this.remoteSync?.sendClose();
+    this.remoteSync?.stopListening();
+    if (this.undoInterval) {
+      clearInterval(this.undoInterval);
+    }
   }
   copy = () => {
     const js = this.js !== "" ? "```js\n" + this.js.trim() + "\n```\n" : "";
     const html = this.html !== "" ? "```html\n" + this.html.trim() + "\n```\n" : "";
     const css = this.css !== "" ? "```css\n" + this.css.trim() + "\n```\n" : "";
-    navigator.clipboard.writeText(js + html + css);
+    const test = this.test !== "" ? "```test\n" + this.test.trim() + "\n```\n" : "";
+    navigator.clipboard.writeText(js + html + css + test);
   };
   toggleMaximize = () => {
     this.classList.toggle("-maximize");
-  };
-  get remoteKey() {
-    return this.remoteId !== "" ? this.prefix + "-" + this.remoteId : this.prefix + "-" + this.uuid;
-  }
-  remoteChange = (event) => {
-    const data = localStorage.getItem(this.storageKey);
-    if (event instanceof StorageEvent && event.key !== this.storageKey) {
-      return;
-    }
-    if (data === null) {
-      return;
-    }
-    const { remoteKey, sentAt, css, html, js, close } = JSON.parse(data);
-    if (sentAt <= this.lastUpdate) {
-      return;
-    }
-    if (remoteKey !== this.remoteKey) {
-      return;
-    }
-    if (close === true) {
-      window.close();
-    }
-    console.log("received new code", sentAt, this.lastUpdate);
-    this.lastUpdate = sentAt;
-    this.css = css;
-    this.html = html;
-    this.js = js;
-    this.refresh();
   };
   showCode = () => {
     this.classList.add("-maximize");
@@ -6776,169 +7307,100 @@ class LiveExample extends F {
     }
   };
   openEditorWindow = () => {
-    const { storageKey, remoteKey, css, html, js, uuid, prefix } = this;
-    const href = location.href.split("?")[0] + `?${prefix}=${uuid}`;
-    localStorage.setItem(storageKey, JSON.stringify({
-      remoteKey,
-      sentAt: Date.now(),
-      css,
-      html,
-      js
-    }));
-    window.open(href);
+    const { css, html, js, test } = this;
+    openEditorWindow(this.prefix, this.uuid, this.storageKey, this.remoteKey, { css, html, js, test });
   };
   refreshRemote = () => {
-    const { remoteKey, css, html, js } = this;
-    localStorage.setItem(this.storageKey, JSON.stringify({ remoteKey, sentAt: Date.now(), css, html, js }));
+    this.remoteSync?.send({
+      css: this.css,
+      html: this.html,
+      js: this.js,
+      test: this.test
+    });
   };
   updateSources = () => {
     if (this.persistToDom) {
       const { sources } = this.parts;
       sources.innerText = "";
-      for (const language of ["js", "css", "html"]) {
+      for (const language of ["js", "css", "html", "test"]) {
         if (this[language]) {
-          sources.append(pre({ class: `language-${language}`, innerHTML: this[language] }));
+          sources.append(pre({
+            class: `language-${language}`,
+            innerHTML: this[language]
+          }));
         }
       }
     }
   };
   refresh = async () => {
-    if (this.remoteId !== "") {
+    if (this.remoteId !== "")
       return;
-    }
-    const { transform } = await import(sucraseSrc());
-    const { example, style: style2 } = this.parts;
+    const transform = await loadTransform();
+    const { example, style: styleEl, exampleWidgets } = this.parts;
+    let preview;
     if (this.iframe) {
-      await this.refreshInIframe(transform);
+      preview = await executeInIframe({
+        html: this.html,
+        css: this.css,
+        js: this.js,
+        context: this.context,
+        transform,
+        exampleElement: example,
+        widgetsElement: exampleWidgets
+      });
     } else {
-      await this.refreshInline(transform, example, style2);
+      preview = await executeInline({
+        html: this.html,
+        css: this.css,
+        js: this.js,
+        context: this.context,
+        transform,
+        exampleElement: example,
+        styleElement: styleEl,
+        widgetsElement: exampleWidgets
+      });
+    }
+    if (this.persistToDom) {
+      this.updateSources();
+    }
+    if (this.test && preview) {
+      this.testResults = await runTests(this.test, preview, this.context, transform);
+      this.displayTestResults();
     }
   };
-  async refreshInline(transform, example, style2) {
-    const preview = div6({ class: "preview" });
-    preview.innerHTML = this.html;
-    style2.innerText = this.css;
-    const oldPreview = example.querySelector(".preview");
-    if (oldPreview) {
-      oldPreview.replaceWith(preview);
-    } else {
-      example.insertBefore(preview, this.parts.exampleWidgets);
-    }
-    const context = { preview, ...this.context };
-    try {
-      let code = this.js;
-      for (const moduleName of Object.keys(this.context)) {
-        code = code.replace(new RegExp(`import \\{(.*)\\} from '${moduleName}'`, "g"), `const {$1} = ${moduleName.replace(/-/g, "")}`);
-      }
-      const func = new AsyncFunction(...Object.keys(context).map((key) => key.replace(/-/g, "")), transform(code, { transforms: ["typescript"] }).code);
-      func(...Object.values(context)).catch((err) => console.error(err));
-      if (this.persistToDom) {
-        this.updateSources();
-      }
-    } catch (e) {
-      console.error(e);
-      window.alert(`Error: ${e}, the console may have more information…`);
-    }
-  }
-  registerComponentsInIframe(iframeWindow) {
-    const iframeCustomElements = iframeWindow.customElements;
-    if (!iframeCustomElements) {
+  displayTestResults() {
+    const { testResults: resultsEl } = this.parts;
+    const results = this.testResults;
+    if (!results || results.tests.length === 0) {
+      resultsEl.hidden = true;
+      this.classList.remove("-test-passed", "-test-failed");
       return;
     }
-    const tosijsui = this.context["tosijs-ui"];
-    if (!tosijsui) {
-      return;
+    resultsEl.hidden = false;
+    resultsEl.innerHTML = "";
+    const summary = div7({ style: { marginBottom: "8px", fontWeight: "bold" } }, `${results.passed}/${results.tests.length} tests passed`);
+    resultsEl.append(summary);
+    for (const test of results.tests) {
+      const icon = test.passed ? "✓" : "✗";
+      const cls = test.passed ? "test-pass" : "test-fail";
+      const testEl = div7({ class: cls }, span6(icon + " "), test.name, test.error ? span6({ style: { opacity: "0.7" } }, ` - ${test.error}`) : "");
+      resultsEl.append(testEl);
     }
-    for (const [, creator] of Object.entries(tosijsui)) {
-      if (typeof creator === "function" && "tagName" in creator) {
-        const tagName = creator.tagName;
-        if (tagName && !iframeCustomElements.get(tagName)) {
-          const ComponentClass = customElements.get(tagName);
-          if (ComponentClass) {
-            try {
-              iframeCustomElements.define(tagName, ComponentClass);
-            } catch (e) {}
-          }
-        }
-      }
-    }
-  }
-  async refreshInIframe(transform) {
-    const { example } = this.parts;
-    let iframe = example.querySelector("iframe.preview-iframe");
-    if (!iframe) {
-      iframe = document.createElement("iframe");
-      iframe.className = "preview-iframe";
-      iframe.style.cssText = "width: 100%; height: 100%; border: none;";
-      const oldPreview = example.querySelector(".preview");
-      if (oldPreview) {
-        oldPreview.replaceWith(iframe);
-      } else {
-        example.insertBefore(iframe, this.parts.exampleWidgets);
-      }
-    }
-    const iframeDoc = iframe.contentDocument;
-    if (!iframeDoc) {
-      console.error("Could not access iframe document");
-      return;
-    }
-    const iframeWindow = iframe.contentWindow;
-    if (this.context["tosijs"]) {
-      iframeWindow.tosijs = this.context["tosijs"];
-    }
-    if (this.context["tosijs-ui"]) {
-      iframeWindow.tosijsui = this.context["tosijs-ui"];
-    }
-    iframeDoc.open();
-    iframeDoc.write(`<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    body { margin: 0; }
-    .preview { height: 100%; position: relative; }
-    ${this.css}
-  </style>
-</head>
-<body>
-  <div class="preview">${this.html}</div>
-</body>
-</html>`);
-    iframeDoc.close();
-    this.registerComponentsInIframe(iframeWindow);
-    const preview = iframeDoc.querySelector(".preview");
-    if (!preview) {
-      console.error("Could not find preview element in iframe");
-      return;
-    }
-    const context = { preview, ...this.context };
-    try {
-      let code = this.js;
-      for (const moduleName of Object.keys(this.context)) {
-        code = code.replace(new RegExp(`import \\{(.*)\\} from '${moduleName}'`, "g"), `const {$1} = ${moduleName.replace(/-/g, "")}`);
-      }
-      const IframeAsyncFunction = iframeWindow.eval("(async () => {}).constructor");
-      const func = new IframeAsyncFunction(...Object.keys(context).map((key) => key.replace(/-/g, "")), transform(code, { transforms: ["typescript"] }).code);
-      func(...Object.values(context)).catch((err) => console.error(err));
-      if (this.persistToDom) {
-        this.updateSources();
-      }
-    } catch (e) {
-      console.error(e);
-      window.alert(`Error: ${e}, the console may have more information…`);
-    }
+    this.classList.toggle("-test-passed", results.failed === 0);
+    this.classList.toggle("-test-failed", results.failed > 0);
   }
   initFromElements(elements) {
     for (const element of elements) {
       element.hidden = true;
       const [mode, ...lines] = element.innerHTML.split(`
 `);
-      if (["js", "html", "css"].includes(mode)) {
+      if (["js", "html", "css", "test"].includes(mode)) {
         const minIndex = lines.filter((line) => line.trim() !== "").map((line) => line.match(/^\s*/)[0].length).sort()[0];
         const source = (minIndex > 0 ? lines.map((line) => line.substring(minIndex)) : lines).join(`
 `);
         this.parts[mode].value = source;
       } else {
-        const language = ["js", "html", "css"].find((language2) => element.matches(`.language-${language2}`));
+        const language = ["js", "html", "css", "test"].find((lang) => element.matches(`.language-${lang}`));
         if (language) {
           this.parts[language].value = language === "html" ? element.innerHTML : element.innerText;
         }
@@ -6953,6 +7415,8 @@ class LiveExample extends F {
       editors.value = 1;
     } else if (this.css !== "") {
       editors.value = 2;
+    } else if (this.test !== "") {
+      editors.value = 3;
     }
   }
   render() {
@@ -6960,14 +7424,14 @@ class LiveExample extends F {
     if (this.remoteId !== "") {
       const data = localStorage.getItem(this.storageKey);
       if (data !== null) {
-        const { remoteKey, sentAt, css, html, js } = JSON.parse(data);
-        if (this.remoteKey !== remoteKey) {
+        const payload = JSON.parse(data);
+        if (this.remoteKey !== payload.remoteKey)
           return;
-        }
-        this.lastUpdate = sentAt;
-        this.css = css;
-        this.html = html;
-        this.js = js;
+        this.css = payload.css;
+        this.html = payload.html;
+        this.js = payload.js;
+        if (payload.test)
+          this.test = payload.test;
         this.parts.example.hidden = true;
         this.parts.codeEditors.hidden = false;
         this.classList.add("-maximize");
@@ -6980,108 +7444,7 @@ class LiveExample extends F {
 }
 var liveExample = LiveExample.elementCreator({
   tag: "xin-example",
-  styleSpec: {
-    ":host": {
-      "--xin-example-height": "320px",
-      "--code-editors-bar-bg": "#777",
-      "--code-editors-bar-color": "#fff",
-      "--widget-bg": "#fff8",
-      "--widget-color": "#000",
-      position: "relative",
-      display: "flex",
-      height: "var(--xin-example-height)",
-      background: "var(--background)",
-      boxSizing: "border-box"
-    },
-    ":host.-maximize": {
-      position: "fixed",
-      left: "0",
-      top: "0",
-      height: "100vh",
-      width: "100vw",
-      margin: "0 !important"
-    },
-    ".-maximize": {
-      zIndex: 101
-    },
-    ":host.-vertical": {
-      flexDirection: "column"
-    },
-    ":host .layout-indicator": {
-      transition: "0.5s ease-out",
-      transform: "rotateZ(270deg)"
-    },
-    ":host.-vertical .layout-indicator": {
-      transform: "rotateZ(180deg)"
-    },
-    ":host.-maximize .hide-if-maximized, :host:not(.-maximize) .show-if-maximized": {
-      display: "none"
-    },
-    ':host [part="example"]': {
-      flex: "1 1 50%",
-      height: "100%",
-      position: "relative",
-      overflowX: "auto"
-    },
-    ":host .preview": {
-      height: "100%",
-      position: "relative",
-      overflow: "hidden",
-      boxShadow: "inset 0 0 0 2px #8883"
-    },
-    ':host [part="editors"]': {
-      flex: "1 1 200px",
-      height: "100%",
-      position: "relative"
-    },
-    ':host [part="exampleWidgets"]': {
-      position: "absolute",
-      left: "5px",
-      bottom: "5px",
-      "--widget-color": "var(--brand-color)",
-      borderRadius: "5px",
-      width: "44px",
-      height: "44px",
-      lineHeight: "44px",
-      zIndex: "100"
-    },
-    ':host [part="exampleWidgets"] svg': {
-      stroke: "var(--widget-color)"
-    },
-    ":host .code-editors": {
-      overflow: "hidden",
-      background: "white",
-      position: "relative",
-      top: "0",
-      right: "0",
-      flex: "1 1 50%",
-      height: "100%",
-      flexDirection: "column",
-      zIndex: "10"
-    },
-    ":host .code-editors:not([hidden])": {
-      display: "flex"
-    },
-    ":host .code-editors > h4": {
-      padding: "5px",
-      margin: "0",
-      textAlign: "center",
-      background: "var(--code-editors-bar-bg)",
-      color: "var(--code-editors-bar-color)",
-      cursor: "move"
-    },
-    ":host button.transparent, :host .sizer": {
-      width: "32px",
-      height: "32px",
-      lineHeight: "32px",
-      textAlign: "center",
-      padding: "0",
-      margin: "0"
-    },
-    ":host .sizer": {
-      cursor: "nwse-resize"
-    }
-  }
+  styleSpec: liveExampleStyleSpec
 });
 var params = new URL(window.location.href).searchParams;
 var remoteId = params.get("lx");
@@ -7090,7 +7453,6 @@ if (remoteId) {
   document.body.textContent = "";
   document.body.append(liveExample({ remoteId }));
 }
-
 // src/side-nav.ts
 var { slot: slot4 } = y;
 
@@ -7183,7 +7545,7 @@ var sideNav = SideNav.elementCreator({
 });
 
 // src/doc-browser.ts
-var { div: div7, span: span6, a: a3, header: header2, button: button8, template: template2, input: input4, h2 } = y;
+var { div: div8, span: span7, a: a3, header: header2, button: button8, template: template2, input: input4, h2 } = y;
 function createDocBrowser(options) {
   const {
     docs,
@@ -7253,7 +7615,7 @@ function createDocBrowser(options) {
         nav.contentVisible = !nav.contentVisible;
       }
     }, icons.menu()),
-    span6({ style: { flex: "0 0 10px" } })
+    span7({ style: { flex: "0 0 10px" } })
   ];
   if (projectName) {
     headerContent.push(a3({
@@ -7265,9 +7627,9 @@ function createDocBrowser(options) {
       }
     }, projectLinks.tosijs ? icons.tosiUi({
       style: { _xinIconSize: 40, marginRight: 10 }
-    }) : span6(), h2(projectName)));
+    }) : span7(), h2(projectName)));
   }
-  headerContent.push(span6({ class: "elastic" }));
+  headerContent.push(span7({ class: "elastic" }));
   if (projectLinks.tosijs) {
     headerContent.push(a3({ class: "iconic", title: "tosijs", target: "_blank" }, icons.tosi(), {
       href: projectLinks.tosijs
@@ -7289,7 +7651,7 @@ function createDocBrowser(options) {
       href: projectLinks.npm
     }));
   }
-  const container = div7({
+  const container = div8({
     style: {
       display: "flex",
       flexDirection: "column",
@@ -7309,7 +7671,7 @@ function createDocBrowser(options) {
       const nav = document.querySelector(SideNav.tagName);
       app.compact = nav.compact;
     }
-  }, searchField, div7({
+  }, searchField, div8({
     slot: "nav",
     style: {
       display: "flex",
@@ -7336,7 +7698,7 @@ function createDocBrowser(options) {
       app.currentDoc = doc;
       event.preventDefault();
     }
-  }, xinLocalized({ bindText: "^.title" })))), div7({
+  }, xinLocalized({ bindText: "^.title" })))), div8({
     style: {
       position: "relative",
       overflowY: "scroll",
@@ -7395,7 +7757,7 @@ function createDocBrowser(options) {
   return container;
 }
 // src/editable-rect.ts
-var { div: div8, slot: slot5 } = y;
+var { div: div9, slot: slot5 } = y;
 
 class EditableRect extends F {
   static initAttributes = {
@@ -7669,58 +8031,58 @@ class EditableRect extends F {
     event.preventDefault();
   };
   content = () => [
-    div8({
+    div9({
       part: "move",
       style: { top: "50%", left: "50%", transform: "translate(-50%,-50%)" }
     }, icons.move()),
-    div8({
+    div9({
       part: "left",
       title: "resize left",
       class: "drag-size",
       style: { left: "-6px", width: "8px" }
     }),
-    div8({
+    div9({
       part: "right",
       title: "resize right",
       class: "drag-size",
       style: { left: "calc(100% - 2px)", width: "8px" }
     }),
-    div8({
+    div9({
       part: "top",
       title: "resize top",
       class: "drag-size",
       style: { top: "-6px", height: "8px", cursor: "ns-resize" }
     }),
-    div8({
+    div9({
       part: "bottom",
       title: "resize bottom",
       class: "drag-size",
       style: { top: "calc(100% - 2px)", height: "8px", cursor: "ns-resize" }
     }),
-    div8({
+    div9({
       part: "resize",
       style: { top: "100%", left: "100%" }
     }, icons.resize()),
-    div8({
+    div9({
       part: "rotate",
       style: { top: "50%", right: "0" }
     }, icons.refreshCw()),
-    div8({
+    div9({
       part: "lockLeft",
       title: "lock left",
       style: { top: "50%", left: 0, transform: "translate(-100%, -50%)" }
     }, icons.unlock(), icons.lock()),
-    div8({
+    div9({
       part: "lockRight",
       title: "lock right",
       style: { top: "50%", left: "100%", transform: "translate(0%, -50%)" }
     }, icons.unlock(), icons.lock()),
-    div8({
+    div9({
       part: "lockTop",
       title: "lock top",
       style: { top: 0, left: "50%", transform: "translate(-50%, -100%)" }
     }, icons.unlock(), icons.lock()),
-    div8({
+    div9({
       part: "lockBottom",
       title: "lock bottom",
       style: { top: "100%", left: "50%", transform: "translate(-50%, 0%)" }
@@ -7774,7 +8136,7 @@ var editableRect = EditableRect.elementCreator({
   tag: "xin-editable"
 });
 // src/filter-builder.ts
-var { div: div9, input: input5, button: button9, span: span7 } = y;
+var { div: div10, input: input5, button: button9, span: span8 } = y;
 var passThru2 = (array) => array;
 var NULL_FILTER_DESCRIPTION = "null filter, everything matches";
 var availableFilters = {
@@ -7869,7 +8231,7 @@ class FilterPart extends F {
     tosiSelect({ part: "haystack" }),
     tosiSelect({ part: "condition" }),
     input5({ part: "needle", type: "search" }),
-    span7({ part: "padding" }),
+    span8({ part: "padding" }),
     button9({ part: "remove", title: "delete" }, icons.trash())
   ];
   filter = passAnything;
@@ -8009,7 +8371,7 @@ class FilterBuilder extends F {
       onClick: this.addFilter,
       class: "round"
     }, icons.plus()),
-    div9({ part: "filterContainer" }),
+    div10({ part: "filterContainer" }),
     button9({ part: "reset", title: "reset filter", onClick: this.reset }, icons.x())
   ];
   filters = availableFilters;
@@ -8082,7 +8444,7 @@ var filterBuilder = FilterBuilder.elementCreator({
   }
 });
 // src/form.ts
-var { form, slot: slot6, xinSlot: xinSlot4, label: label2, input: input6, span: span8 } = y;
+var { form, slot: slot6, xinSlot: xinSlot4, label: label2, input: input6, span: span9 } = y;
 function attr(element, name, value) {
   if (value !== "" && value !== false) {
     element.setAttribute(name, value);
@@ -8140,7 +8502,7 @@ class TosiField extends F {
     suffix: ""
   };
   value = null;
-  content = label2(xinSlot4({ part: "caption" }), span8({ part: "field" }, xinSlot4({ part: "input", name: "input" }), input6({ part: "valueHolder" })));
+  content = label2(xinSlot4({ part: "caption" }), span9({ part: "field" }, xinSlot4({ part: "input", name: "input" }), input6({ part: "valueHolder" })));
   valueChanged = false;
   handleChange = () => {
     const { input: input7, valueHolder } = this.parts;
@@ -8444,7 +8806,7 @@ ${buttonText}`;
 `);
 }
 // src/mapbox.ts
-var { div: div10 } = y;
+var { div: div11 } = y;
 
 class MapBox extends F {
   static formAssociated = true;
@@ -8460,7 +8822,7 @@ class MapBox extends F {
     this.value = "";
     this.coords = "65.01715565258993,25.48081004203459,12";
   }
-  content = div10({ style: { width: "100%", height: "100%" } });
+  content = div11({ style: { width: "100%", height: "100%" } });
   get map() {
     return this._map;
   }
@@ -8513,7 +8875,7 @@ class MapBox extends F {
       }
       return;
     }
-    const { div: div11 } = this.parts;
+    const { div: div12 } = this.parts;
     const [long, lat, zoom] = this.coords.split(",").map((x3) => Number(x3));
     this._lastCoords = this.coords;
     this._lastStyle = this.mapStyle;
@@ -8521,7 +8883,7 @@ class MapBox extends F {
       console.log("%cmapbox may complain about missing css -- don't panic!", "background: orange; color: black; padding: 0 5px;");
       mapboxgl.accessToken = this.token;
       this._map = new mapboxgl.Map({
-        container: div11,
+        container: div12,
         style: this.mapStyle,
         zoom,
         center: [lat, long]
@@ -8544,7 +8906,7 @@ var mapBox = MapBox.elementCreator({
   tag: "xin-map"
 });
 // src/month.ts
-var { div: div11, span: span9, button: button10 } = y;
+var { div: div12, span: span10, button: button10 } = y;
 var DAY_MS = 24 * 3600 * 1000;
 var WEEK = [0, 1, 2, 3, 4, 5, 6];
 var MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -8723,10 +9085,10 @@ class TosiMonth extends F {
     });
   };
   content = () => [
-    div11({ part: "header" }, button10({
+    div12({ part: "header" }, button10({
       part: "previous",
       onClick: this.previousMonth
-    }, icons.chevronLeft()), span9({ style: { flex: "1" } }), button10({
+    }, icons.chevronLeft()), span10({ style: { flex: "1" } }), button10({
       part: "jump",
       onClick: this.jumpMenu
     }, icons.calendar()), tosiSelect({
@@ -8737,12 +9099,12 @@ class TosiMonth extends F {
       part: "year",
       options: [this.year],
       onChange: this.setMonth
-    }), span9({ style: { flex: "1" } }), button10({
+    }), span10({ style: { flex: "1" } }), button10({
       part: "next",
       onClick: this.nextMonth
     }, icons.chevronRight())),
-    div11({ part: "week" }),
-    div11({ part: "days" })
+    div12({ part: "week" }),
+    div12({ part: "days" })
   ];
   gotoDate(dateString) {
     const date = new Date(dateString);
@@ -8788,7 +9150,7 @@ class TosiMonth extends F {
     month.disabled = year.disabled = jump.disabled = previous.disabled = next.disabled = this.disabled || this.readonly;
     year.options = this.years;
     week.textContent = "";
-    week.append(...weekDays.map((day) => span9({ class: "day" }, day)));
+    week.append(...weekDays.map((day) => span10({ class: "day" }, day)));
     days.textContent = "";
     let focusElement = null;
     const { to: to2, from } = this;
@@ -8813,7 +9175,7 @@ class TosiMonth extends F {
           classes.push("range-start");
         }
       }
-      const element = span9({
+      const element = span10({
         class: classes.join(" "),
         title: dateString,
         onClick: this.clickDate,
@@ -8896,7 +9258,7 @@ var tosiMonth = TosiMonth.elementCreator({
   }
 });
 // src/notifications.ts
-var { div: div12, button: button11 } = y;
+var { div: div13, button: button11 } = y;
 var COLOR_MAP = {
   error: "red",
   warn: "orange",
@@ -9022,14 +9384,14 @@ class XinNotification extends F {
     };
     const iconElement = icon instanceof SVGElement ? icon : icon ? icons[icon]({ class: "icon" }) : icons.info({ class: "icon" });
     const isUrgent = type === "error" || type === "warn";
-    const note = div12({
+    const note = div13({
       class: `note ${type}`,
       role: isUrgent ? "alert" : "status",
       ariaLive: isUrgent ? "assertive" : "polite",
       style: {
         _notificationAccentColor
       }
-    }, iconElement, div12({ class: "message" }, div12(message), progressBar), button11({
+    }, iconElement, div13({ class: "message" }, div13(message), progressBar), button11({
       class: "close",
       title: "close",
       ariaLabel: "Close notification",
@@ -9087,7 +9449,7 @@ var isBreached = async (password) => {
   }
   return response.status !== 404;
 };
-var { span: span10, xinSlot: xinSlot5 } = y;
+var { span: span11, xinSlot: xinSlot5 } = y;
 
 class XinPasswordStrength extends F {
   static initAttributes = {
@@ -9159,7 +9521,7 @@ class XinPasswordStrength extends F {
   };
   content = () => [
     xinSlot5({ onInput: this.update }),
-    span10({ part: "meter" }, span10({ part: "level" }), span10({ part: "description" }))
+    span11({ part: "meter" }, span11({ part: "level" }), span11({ part: "description" }))
   ];
   render() {
     super.render();
@@ -9208,7 +9570,7 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
   }
 });
 // src/rating.ts
-var { span: span11 } = y;
+var { span: span12 } = y;
 
 class TosiRating extends F {
   static formAssociated = true;
@@ -9269,7 +9631,7 @@ class TosiRating extends F {
       transform: "scale(1.1)"
     }
   };
-  content = () => span11({ part: "container" }, span11({ part: "empty" }), span11({ part: "filled" }));
+  content = () => span12({ part: "container" }, span12({ part: "empty" }), span12({ part: "filled" }));
   displayValue(value) {
     const { empty, filled } = this.parts;
     const roundedValue = Math.round((value || 0) / this.step) * this.step;
@@ -9360,7 +9722,7 @@ var tosiRating = TosiRating.elementCreator({
 });
 var xinRating = Ho((...args) => tosiRating(...args), "xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)");
 // src/rich-text.ts
-var { xinSlot: xinSlot6, div: div13, button: button12, span: span12 } = y;
+var { xinSlot: xinSlot6, div: div14, button: button12, span: span13 } = y;
 var blockStyles = [
   {
     caption: "Title",
@@ -9399,13 +9761,13 @@ function blockStyle(options = blockStyles) {
   });
 }
 function spacer(width = "10px") {
-  return span12({
+  return span13({
     slot: "toolbar",
     style: { flex: `0 0 ${width}`, content: " " }
   });
 }
 function elastic(width = "10px") {
-  return span12({
+  return span13({
     slot: "toolbar",
     style: { flex: `0 0 ${width}`, content: " " }
   });
@@ -9539,7 +9901,7 @@ class RichText extends F {
       onClick: this.handleButtonClick,
       onChange: this.handleSelectChange
     }),
-    div13({
+    div14({
       part: "doc",
       contenteditable: true,
       style: {
@@ -9643,7 +10005,7 @@ var tosiRichText = RichText.elementCreator({
 });
 var richText = Ho((...args) => tosiRichText(...args), "richText is deprecated, use tosiRichText instead (tag is now <tosi-rich-text>)");
 // src/segmented.ts
-var { div: div14, slot: slot7, label: label3, span: span13, input: input7 } = y;
+var { div: div15, slot: slot7, label: label3, span: span14, input: input7 } = y;
 
 class TosiSegmented extends F {
   static formAssociated = true;
@@ -9686,7 +10048,7 @@ class TosiSegmented extends F {
   }
   content = () => [
     slot7(),
-    div14({ part: "options" }, input7({ part: "custom", hidden: true }))
+    div15({ part: "options" }, input7({ part: "custom", hidden: true }))
   ];
   static styleSpec = {
     ":host": {
@@ -9863,7 +10225,7 @@ class TosiSegmented extends F {
         value: choice.value,
         checked: values.includes(choice.value) || choice.value === "" && isOtherValue,
         tabIndex: -1
-      }), choice.icon || { class: "no-icon" }, this.localized ? xinLocalized(choice.caption) : span13(choice.caption));
+      }), choice.icon || { class: "no-icon" }, this.localized ? xinLocalized(choice.caption) : span14(choice.caption));
     }));
     if (this.other && !this.multiple) {
       custom.hidden = !isOtherValue;
@@ -9987,7 +10349,7 @@ var xinSizer = XinSizer.elementCreator({
   tag: "xin-sizer"
 });
 // src/tag-list.ts
-var { div: div15, input: input8, span: span14, button: button13 } = y;
+var { div: div16, input: input8, span: span15, button: button13 } = y;
 
 class TosiTag extends F {
   static initAttributes = {
@@ -9998,7 +10360,7 @@ class TosiTag extends F {
     this.remove();
   };
   content = () => [
-    span14({ part: "caption" }, this.caption),
+    span15({ part: "caption" }, this.caption),
     button13(icons.x(), {
       type: "button",
       part: "remove",
@@ -10180,7 +10542,7 @@ class TosiTagList extends F {
   };
   content = () => [
     button13({ type: "button", style: { visibility: "hidden" }, tabindex: -1 }),
-    div15({
+    div16({
       part: "tagContainer",
       class: "row",
       role: "list",
@@ -12061,126 +12423,55 @@ Javascript using [sucrase](https://github.com/alangpierce/sucrase).
 ## CSS Isolation with \`iframe\`
 
 Add the \`iframe\` attribute to render the preview inside an iframe for complete CSS isolation.
-This is useful for testing components without interference from the parent page's styles.
 
-    <xin-example iframe>
-      <pre class="language-html">...</pre>
-      <pre class="language-css">...</pre>
-    </xin-example>
+## Test Blocks
 
-When using iframe mode, tosijs-ui web components are automatically registered in the
-iframe's customElements registry, so custom element tags work as expected.
+Add \`\\\`\\\`\\\`test\` code blocks to write inline tests that run against the preview:
 
+\`\`\`html
+<button class="demo-btn">Click me</button>
+\`\`\`
 \`\`\`js
-function makeElement(tag: string, ...children: Array<string | HTMLElement>): HTMLElement {
-  const element = document.createElement(tag)
-  element.append(...children)
-  return element
+preview.querySelector('.demo-btn').onclick = () => {
+  preview.querySelector('.demo-btn').textContent = 'Clicked!'
 }
+\`\`\`
+\`\`\`test
+test('button exists', () => {
+  const btn = preview.querySelector('.demo-btn')
+  expect(btn).toBeDefined()
+  expect(btn.textContent).toBe('Click me')
+})
 
-preview.append(
-  makeElement('h2', 'hello typescript')
-)
+test('this test intentionally fails', () => {
+  expect(1 + 1).toBe(3)
+})
 \`\`\`
 
-You can also create a live-example from HTML. And if you add the \`persist-to-dom\`
-attribute, it will persist your code to the DOM.
-
-<xin-example persist-to-dom>
-  <pre class="language-html">
-    <h1 class="make-it-red">Pure HTML!</h1>
-    <button>Click Me!</button>
-  </pre>
-  <pre class="language-js">
-    preview.querySelector('button').addEventListener('click', () => {
-      alert('you clicked?')
-    })
-  </pre>
-  <pre class="language-css">
-    .make-it-red {
-      color: red;
-    }
-  </pre>
-</xin-example>
-
-You can simply wrap it around a sequence of code blocks in the DOM with the
-languages (js, html, css) as annotations or you can directly set the \`js\`, \`html\`,
-and \`css\` properties.
-
-## Code-Editor
-
-The **code-editor** is actually the same component spawned in a new window using
-a couple of clever tricks, the most important of which is leveraging
-[StorageEvent](https://developer.mozilla.org/en-US/docs/Web/API/StorageEvent).
-
-This functionality was originally added to make working in XR easier, but it turned
-out that it's just better than the earlier way of doing things.
-
-It actually uses just one \`localStorage\` item to handle any number of code-editors,
-and cleans up after itself when you close the example (including closing stray
-windows.
-
-> **To Do** a little refactoring and tweaking to split the the editor off as a
-completely separate component that can be used for other things, and make the
-example itself lighter-weight.
+Tests have access to:
+- \`preview\` - the DOM element containing the rendered HTML
+- \`expect(value)\` - Jest-like assertions (.toBe, .toEqual, .toBeTruthy, etc.)
+- \`test(name, fn)\` - define a test case
+- \`describe(name, fn)\` - group tests
+- All context libraries (tosijs, tosijs-ui, etc.)
 
 ## \`context\`
 
-\`\`\`html
-<p>testing</p>
-\`\`\`
-\`\`\`js
-import { elements } from 'tosijs'
-import { svgIcon } from 'tosijs-ui'
-
-preview.querySelector('p').style.color = 'red'
-preview.append(
-  elements.p('another paragraph'),
-  svgIcon({icon: 'tosiPlatform', size: 64})
-)
-\`\`\`
-
-A \`<xin-example>\` is given a \`context\` object {[key: string]: any}, which is the
-set of values available in the javascript's execution context (it is wrapped in an
-async function and passed those values). The context always includes \`preview\`
-which is the element containing the HTML for the example.
-
-If the context keys have hyphens in them, these are removed to allow the examples
-to \`import\` libraries:
-
-So we provide context like this:
+A \`<xin-example>\` is given a \`context\` object which is the set of values available
+in the javascript's execution context. The context always includes \`preview\`.
 
 \`\`\`
-import * as tosijs from 'tosjs'
+import * as tosijs from 'tosijs'
 import * as tosijsui from 'tosijs-ui'
-
-...
 
 context = {
   tosijs,
   'tosijs-ui': tosijsui
 }
-\`\`\`
-
-\`\`\`
-import { elements, tosi } from 'tosijs'
-import { icons } from 'tosijs-ui'
-\`\`\`
-
-is rewritten as:
-
-\`\`\`
-import { elements, tosi } from 'tosijs'
-import { icons } from 'tosijs-ui'
-\`\`\`
-
-The \`LiveExample\` class provides the static \`insertExamples(element: HTMLElement)\`
-function that will replace any sequence of
-\`pre code[class="language-html"],pre code[class="language-js"],pre code[class="language-css"]\`
-elements with a \`<xin-example>\` instance.`,
+\`\`\``,
     title: "example",
-    filename: "live-example.ts",
-    path: "src/live-example.ts"
+    filename: "component.ts",
+    path: "src/live-example/component.ts"
   },
   {
     text: `# filter
@@ -16483,10 +16774,10 @@ var browser = createDocBrowser({
 if (main) {
   const header3 = browser.querySelector("header");
   if (header3) {
-    const { img, a: a4, span: span15, button: button14 } = y;
+    const { img, a: a4, span: span16, button: button14 } = y;
     const sizeBreakElement = header3.querySelector("xin-sizebreak");
     if (sizeBreakElement) {
-      const badges = span15({
+      const badges = span16({
         style: {
           marginRight: Uo.spacing,
           display: "flex",

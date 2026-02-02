@@ -154,7 +154,8 @@ export class TosiRating extends Component {
 
   displayValue(value: number | string) {
     const { empty, filled } = this.parts as RatingParts
-    const roundedValue = Math.round((value || 0) / this.step) * this.step
+    const numValue = typeof value === 'string' ? 0 : value || 0
+    const roundedValue = Math.round(numValue / this.step) * this.step
     filled.style.width = (roundedValue / this.max) * empty.offsetWidth + 'px'
   }
 
@@ -188,8 +189,8 @@ export class TosiRating extends Component {
   }
 
   handleKey = (event: KeyboardEvent) => {
-    let value = Number(this.value)
-    if (value === '' || value == null) {
+    let value = this.value === '' ? NaN : Number(this.value)
+    if (isNaN(value)) {
       value = Math.round((this.min + this.max) * 0.5 * this.step) * this.step
     }
     let blockEvent = false
