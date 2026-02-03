@@ -1974,13 +1974,17 @@ __export(exports_src, {
   xrControllers: () => xrControllers,
   xinTagList: () => xinTagList,
   xinTag: () => xinTag,
+  xinTabs: () => xinTabs,
+  xinTable: () => xinTable,
   xinSizer: () => xinSizer,
+  xinSidenav: () => xinSidenav,
   xinSelect: () => xinSelect,
   xinSegmented: () => xinSegmented,
   xinRating: () => xinRating,
   xinPasswordStrength: () => xinPasswordStrength,
   xinNotification: () => xinNotification,
   xinMenu: () => xinMenu,
+  xinMd: () => xinMd,
   xinLocalized: () => xinLocalized,
   xinForm: () => xinForm,
   xinFloat: () => xinFloat,
@@ -1997,9 +2001,11 @@ __export(exports_src, {
   tosiRichText: () => tosiRichText,
   tosiRating: () => tosiRating,
   tosiMonth: () => tosiMonth,
+  tosiMenu: () => tosiMenu,
   tosiForm: () => tosiForm,
   tosiField: () => tosiField,
   tosiDialog: () => tosiDialog,
+  testManager: () => testManager,
   tabSelector: () => tabSelector,
   svgIcon: () => svgIcon,
   svg2DataUrl: () => svg2DataUrl,
@@ -2041,9 +2047,11 @@ __export(exports_src, {
   executeInline: () => executeInline,
   executeInIframe: () => executeInIframe,
   executeCode: () => executeCode,
+  enableTests: () => enableTests,
   elastic: () => elastic,
   editableRect: () => editableRect,
   dragAndDrop: () => exports_drag_and_drop,
+  disableTests: () => disableTests,
   digest: () => digest,
   defineIcons: () => defineIcons,
   defaultColors: () => defaultColors,
@@ -2091,6 +2099,7 @@ __export(exports_src, {
   TosiSegmented: () => TosiSegmented,
   TosiRating: () => TosiRating,
   TosiMonth: () => TosiMonth,
+  TosiMenu: () => TosiMenu,
   TosiForm: () => TosiForm,
   TosiField: () => TosiField,
   TosiDialog: () => TosiDialog,
@@ -4142,7 +4151,7 @@ function findShortcutAction(items, event) {
   return;
 }
 
-class XinMenu extends g {
+class TosiMenu extends g {
   static initAttributes = {
     menuWidth: "auto",
     localized: false,
@@ -4183,8 +4192,8 @@ class XinMenu extends g {
     document.removeEventListener("keydown", this.handleShortcut);
   }
 }
-var xinMenu = XinMenu.elementCreator({
-  tag: "xin-menu",
+var tosiMenu = TosiMenu.elementCreator({
+  tag: "tosi-menu",
   styleSpec: {
     ":host": {
       display: "inline-block"
@@ -4192,10 +4201,12 @@ var xinMenu = XinMenu.elementCreator({
     ":host button > xin-slot": {
       display: "flex",
       alignItems: "center",
-      gap: yo.xinMenuTriggerGap("10px")
+      gap: yo.tosiMenuTriggerGap("10px")
     }
   }
 });
+var xinMenu = tosiMenu;
+var XinMenu = TosiMenu;
 
 // src/drag-and-drop.ts
 var exports_drag_and_drop = {};
@@ -4825,7 +4836,7 @@ class DataTable extends g {
   }
 }
 var dataTable = DataTable.elementCreator({
-  tag: "xin-table",
+  tag: "tosi-table",
   styleSpec: {
     ":host": {
       "--tosi-table-row-height": "32px",
@@ -4876,6 +4887,7 @@ var dataTable = DataTable.elementCreator({
     }
   }
 });
+var xinTable = ao(dataTable, "xinTable is deprecated. Use dataTable instead.");
 // src/dialog.ts
 var { dialog, button: button5, header, footer, xinSlot: xinSlot2, h3, p: p2, label, input: input3, div: div4 } = u;
 
@@ -6335,8 +6347,9 @@ class MarkdownViewer extends g {
   }
 }
 var markdownViewer = MarkdownViewer.elementCreator({
-  tag: "xin-md"
+  tag: "tosi-md"
 });
+var xinMd = markdownViewer;
 
 // src/tab-selector.ts
 var { div: div5, slot: slot3, span: span5, button: button6 } = u;
@@ -6546,8 +6559,9 @@ class TabSelector extends g {
   }
 }
 var tabSelector = TabSelector.elementCreator({
-  tag: "xin-tabs"
+  tag: "tosi-tabs"
 });
+var xinTabs = tabSelector;
 
 // src/live-example/code-transform.ts
 var sucraseSrc = () => "https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm";
@@ -6926,8 +6940,41 @@ var liveExampleStyleSpec = {
   ":host .sizer": {
     cursor: "nwse-resize"
   },
-  ':host.-test-failed [part="example"]': {
-    outline: "4px solid #c00"
+  ':host [part="testIndicator"]': {
+    position: "absolute",
+    top: "8px",
+    right: "8px",
+    width: "12px",
+    height: "12px",
+    borderRadius: "50%",
+    background: "#888",
+    zIndex: "100",
+    display: "none"
+  },
+  ':host.-has-tests [part="testIndicator"]': {
+    display: "block",
+    opacity: "var(--tests-enabled, 1)"
+  },
+  ':host.-test-running [part="testIndicator"]': {
+    background: "#fa0",
+    animation: "test-pulse 0.5s ease-in-out infinite"
+  },
+  ':host.-test-passed [part="testIndicator"]': {
+    background: "#0a0",
+    animation: "test-fade 2s ease-out forwards"
+  },
+  ':host.-test-failed [part="testIndicator"]': {
+    background: "#c00",
+    animation: "test-pulse 1s ease-in-out infinite"
+  },
+  "@keyframes test-pulse": {
+    "0%, 100%": { opacity: "1" },
+    "50%": { opacity: "0.4" }
+  },
+  "@keyframes test-fade": {
+    "0%": { opacity: "1" },
+    "50%": { opacity: "1" },
+    "100%": { opacity: "0" }
   },
   ':host.-test-passed [part="exampleWidgets"]': {
     "--widget-color": "#0a0"
@@ -6986,6 +7033,19 @@ function deepEqual(a3, b2) {
     return false;
   return aKeys.every((key) => deepEqual(aObj[key], bObj[key]));
 }
+var safeJSON = {
+  stringify(val) {
+    if (val instanceof Element) {
+      return `<${val.tagName.toLowerCase()}>`;
+    }
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return String(val);
+    }
+  }
+};
+var { stringify } = safeJSON;
 function createMatchers(value, negated = false) {
   const assert = (condition, message) => {
     const result = negated ? !condition : condition;
@@ -6995,31 +7055,31 @@ function createMatchers(value, negated = false) {
   };
   const matchers = {
     toBe(expected) {
-      assert(value === expected, `Expected ${JSON.stringify(value)} to be ${JSON.stringify(expected)}`);
+      assert(value === expected, `Expected ${stringify(value)} to be ${stringify(expected)}`);
     },
     toEqual(expected) {
-      assert(deepEqual(value, expected), `Expected ${JSON.stringify(value)} to equal ${JSON.stringify(expected)}`);
+      assert(deepEqual(value, expected), `Expected ${stringify(value)} to equal ${stringify(expected)}`);
     },
     toBeTruthy() {
-      assert(!!value, `Expected ${JSON.stringify(value)} to be truthy`);
+      assert(!!value, `Expected ${stringify(value)} to be truthy`);
     },
     toBeFalsy() {
-      assert(!value, `Expected ${JSON.stringify(value)} to be falsy`);
+      assert(!value, `Expected ${stringify(value)} to be falsy`);
     },
     toBeNull() {
-      assert(value === null, `Expected ${JSON.stringify(value)} to be null`);
+      assert(value === null, `Expected ${stringify(value)} to be null`);
     },
     toBeUndefined() {
-      assert(value === undefined, `Expected ${JSON.stringify(value)} to be undefined`);
+      assert(value === undefined, `Expected ${stringify(value)} to be undefined`);
     },
     toBeDefined() {
-      assert(value !== undefined, `Expected ${JSON.stringify(value)} to be defined`);
+      assert(value !== undefined, `Expected ${stringify(value)} to be defined`);
     },
     toContain(item) {
       if (typeof value === "string") {
         assert(value.includes(item), `Expected "${value}" to contain "${item}"`);
       } else if (Array.isArray(value)) {
-        assert(value.includes(item), `Expected array to contain ${JSON.stringify(item)}`);
+        assert(value.includes(item), `Expected array to contain ${stringify(item)}`);
       } else {
         throw new AssertionError("toContain requires string or array");
       }
@@ -7048,6 +7108,27 @@ function createMatchers(value, negated = false) {
 }
 function expect(value) {
   return createMatchers(value);
+}
+function waitMs(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+function waitFor(preview, selector, timeout = 1000) {
+  return new Promise((resolve, reject) => {
+    const startTime = Date.now();
+    const check = () => {
+      const element = preview.querySelector(selector);
+      if (element) {
+        resolve(element);
+        return;
+      }
+      if (Date.now() - startTime >= timeout) {
+        reject(new Error(`Timeout waiting for "${selector}" after ${timeout}ms`));
+        return;
+      }
+      requestAnimationFrame(check);
+    };
+    check();
+  });
 }
 function createTestContext(results) {
   let currentDescribe = "";
@@ -7094,7 +7175,9 @@ async function runTests(testCode, preview, context, transform) {
     ...context,
     expect: testContext.expect,
     test: testContext.test,
-    describe: testContext.describe
+    describe: testContext.describe,
+    waitMs,
+    waitFor: (selector, timeout) => waitFor(preview, selector, timeout)
   };
   try {
     const code = rewriteImports(testCode, Object.keys(context));
@@ -7120,6 +7203,46 @@ async function runTests(testCode, preview, context, transform) {
 
 // src/live-example/component.ts
 var { div: div7, xinSlot: xinSlot3, style, button: button7, pre, span: span6 } = u;
+var TESTS_ENABLED_KEY = "tosijs-ui-tests-enabled";
+var isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+function getStoredTestsEnabled() {
+  if (typeof localStorage === "undefined")
+    return false;
+  const stored = localStorage.getItem(TESTS_ENABLED_KEY);
+  if (stored !== null) {
+    return stored === "true";
+  }
+  return isLocalhost;
+}
+var { testManager } = Eo({
+  testManager: {
+    enabled: getStoredTestsEnabled()
+  }
+});
+function updateTestsEnabledClass() {
+  document.body.classList.toggle("tests-enabled", testManager.enabled.value);
+  document.body.style.setProperty("--tests-enabled", testManager.enabled.value ? "1" : "0");
+}
+if (typeof document !== "undefined") {
+  if (document.body) {
+    updateTestsEnabledClass();
+  } else {
+    document.addEventListener("DOMContentLoaded", updateTestsEnabledClass);
+  }
+}
+function enableTests() {
+  localStorage.setItem(TESTS_ENABLED_KEY, "true");
+  testManager.enabled.value = true;
+  updateTestsEnabledClass();
+  document.querySelectorAll("xin-example").forEach((el) => {
+    el.refresh();
+  });
+}
+function disableTests() {
+  localStorage.setItem(TESTS_ENABLED_KEY, "false");
+  testManager.enabled.value = false;
+  updateTestsEnabledClass();
+}
 
 class LiveExample extends g {
   static initAttributes = {
@@ -7187,7 +7310,15 @@ class LiveExample extends g {
       undo.disabled = true;
       redo.disabled = true;
     }
+    this.updateTestResultsVisibility();
   };
+  updateTestResultsVisibility() {
+    const { testResults: resultsEl } = this.parts;
+    const results = this.testResults;
+    const isTestTabActive = this.activeTab?.getAttribute("name") === "test";
+    const hasFailed = results && results.failed > 0;
+    resultsEl.hidden = !results || results.tests.length === 0 || !isTestTabActive && !hasFailed;
+  }
   undo = () => {
     const { activeTab } = this;
     if (activeTab instanceof CodeEditor) {
@@ -7207,6 +7338,7 @@ class LiveExample extends g {
     this.classList.toggle("-vertical");
   };
   exampleMenu = () => {
+    const testsOn = testManager.enabled.value;
     popMenu({
       target: this.parts.exampleWidgets,
       width: "auto",
@@ -7226,6 +7358,18 @@ class LiveExample extends g {
           icon: this.isMaximized ? "minimize" : "maximize",
           caption: this.isMaximized ? "restore preview" : "maximize preview",
           action: this.toggleMaximize
+        },
+        null,
+        {
+          icon: testsOn ? "check" : "",
+          caption: "Run tests",
+          action: () => {
+            if (testsOn) {
+              disableTests();
+            } else {
+              enableTests();
+            }
+          }
         }
       ]
     });
@@ -7256,7 +7400,7 @@ class LiveExample extends g {
     }
   };
   content = () => [
-    div7({ part: "example" }, style({ part: "style" }), pre({ part: "testResults", hidden: true }), button7({
+    div7({ part: "example" }, style({ part: "style" }), div7({ part: "testIndicator", title: "test status" }), pre({ part: "testResults", hidden: true }), button7({
       title: "example menu",
       part: "exampleWidgets",
       onClick: this.exampleMenu
@@ -7410,20 +7554,25 @@ class LiveExample extends g {
     if (this.persistToDom) {
       this.updateSources();
     }
-    if (this.test && preview) {
+    if (this.test && preview && testManager.enabled.value) {
+      this.classList.add("-has-tests", "-test-running");
+      this.classList.remove("-test-passed", "-test-failed");
       this.testResults = await runTests(this.test, preview, this.context, transform);
+      this.classList.remove("-test-running");
       this.displayTestResults();
+    } else {
+      this.classList.remove("-has-tests", "-test-running", "-test-passed", "-test-failed");
     }
   };
   displayTestResults() {
-    const { testResults: resultsEl } = this.parts;
+    const { testResults: resultsEl, testIndicator } = this.parts;
     const results = this.testResults;
     if (!results || results.tests.length === 0) {
       resultsEl.hidden = true;
       this.classList.remove("-test-passed", "-test-failed");
+      testIndicator.title = "no tests";
       return;
     }
-    resultsEl.hidden = false;
     resultsEl.innerHTML = "";
     const summary = div7({ style: { marginBottom: "8px", fontWeight: "bold" } }, `${results.passed}/${results.tests.length} tests passed`);
     resultsEl.append(summary);
@@ -7435,6 +7584,8 @@ class LiveExample extends g {
     }
     this.classList.toggle("-test-passed", results.failed === 0);
     this.classList.toggle("-test-failed", results.failed > 0);
+    testIndicator.title = results.failed === 0 ? `${results.passed} tests passed` : `${results.failed}/${results.tests.length} tests failed`;
+    this.updateTestResultsVisibility();
     this.dispatchEvent(new CustomEvent("testcomplete", {
       bubbles: true,
       detail: {
@@ -7553,12 +7704,12 @@ class SideNav extends g {
       this.style.setProperty("--content-width", "0%");
     } else if (!this.compact) {
       navState = "normal";
-      content.classList.add("-xin-sidenav-visible");
+      content.classList.add("-tosi-sidenav-visible");
       this.style.setProperty("--nav-width", `${this.navSize}px`);
       this.style.setProperty("--content-width", `calc(100% - ${this.navSize}px)`);
       this.style.setProperty("--margin", "0");
     } else {
-      content.classList.remove("-xin-sidenav-visible");
+      content.classList.remove("-tosi-sidenav-visible");
       this.style.setProperty("--nav-width", "50%");
       this.style.setProperty("--content-width", "50%");
       if (this.contentVisible) {
@@ -7595,73 +7746,82 @@ class SideNav extends g {
   }
 }
 var sideNav = SideNav.elementCreator({
-  tag: "xin-sidenav"
+  tag: "tosi-sidenav"
 });
+var xinSidenav = sideNav;
 
 // src/doc-browser.ts
-var { div: div8, span: span7, a: a3, header: header2, button: button8, template: template2, input: input4, h2, style: style2 } = u;
-var testIndicatorStyles = `
-  @keyframes blink-fail {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
+var { div: div8, span: span7, a: a3, header: header2, button: button8, template: template2, input: input4, h2 } = u;
+var testColor = {
+  pass: yo.testColorPass("#0a0"),
+  fail: yo.testColorFail("#c00"),
+  running: yo.testColorRunning("#fa0")
+};
+var testIndicatorStyleSpec = {
+  "@keyframes test-pulse": {
+    "0%, 100%": { opacity: "1" },
+    "50%": { opacity: "0.7" }
+  },
+  "@keyframes test-appear": {
+    from: { opacity: "0", transform: "scale(0.8)" },
+    to: { opacity: "1", transform: "scale(1)" }
+  },
+  "@keyframes test-fade": {
+    "0%, 20%": { opacity: "1", transform: "scale(1)" },
+    "70%": { opacity: "1", transform: "scale(1.1)" },
+    "100%": { opacity: "0", transform: "scale(0.9)", pointerEvents: "none" }
+  },
+  "body:not(.tests-enabled) .doc-link::after, body:not(.tests-enabled) .test-widget": {
+    display: "none !important"
+  },
+  ".doc-link.-test-passed::after, .doc-link.-test-failed::after": {
+    content: "''",
+    width: Ao.fontSize50,
+    height: Ao.fontSize50,
+    borderRadius: "50%",
+    marginLeft: Ao.spacing50,
+    display: "inline-block",
+    verticalAlign: "middle"
+  },
+  ".doc-link.-test-passed::after": { background: testColor.pass },
+  ".doc-link.-test-failed::after": {
+    background: testColor.fail,
+    animation: "test-pulse 2s ease-in-out infinite"
+  },
+  ".test-widget": {
+    _testBg: testColor.running,
+    position: "fixed",
+    bottom: Ao.spacing,
+    right: Ao.spacing,
+    zIndex: "1000",
+    background: Ao.testBg,
+    color: "white"
+  },
+  ".test-widget[hidden]": { display: "none" },
+  ".test-widget.-running": {
+    _testBg: testColor.running,
+    animation: "test-appear 0.3s ease-out, test-pulse 2s ease-in-out 0.3s infinite"
+  },
+  ".test-widget.-passed": {
+    _testBg: testColor.pass,
+    animation: "test-fade 3s ease-out forwards"
+  },
+  ".test-widget.-failed": {
+    _testBg: testColor.fail,
+    animation: "test-pulse 2s ease-in-out infinite"
+  },
+  ".test-widget .count": {
+    background: "white",
+    color: Ao.testBg,
+    borderRadius: "50%",
+    width: Ao.lineHeight,
+    height: Ao.lineHeight,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "bold"
   }
-
-  .doc-link.-test-failed::after {
-    content: '';
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background: #f00;
-    border-radius: 50%;
-    margin-left: 6px;
-    animation: blink-fail 2s ease-in-out infinite;
-  }
-
-  .doc-link.-test-passed::after {
-    content: '';
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background: #0a0;
-    border-radius: 50%;
-    margin-left: 6px;
-  }
-
-  .test-failure-widget {
-    position: fixed;
-    bottom: 12px;
-    right: 12px;
-    z-index: 1000;
-    background: #c00;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 2px 10px;
-    font-size: 12px;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .test-failure-widget:hover {
-    background: #a00;
-  }
-
-  .test-failure-widget .count {
-    background: white;
-    color: #c00;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: bold;
-  }
-`;
+};
 function createDocBrowser(options) {
   const {
     docs,
@@ -7711,7 +7871,7 @@ function createDocBrowser(options) {
       }
       testResultsResolve(allResults);
       testResultsResolve = undefined;
-      if (isLocalhost) {
+      if (isLocalhost2) {
         fetch("/report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -7720,7 +7880,7 @@ function createDocBrowser(options) {
       }
     }
   };
-  const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  const isLocalhost2 = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
   const handleTestComplete = (event) => {
     const { results } = event.detail;
     const filename = String(app.currentDoc.filename);
@@ -7735,6 +7895,7 @@ function createDocBrowser(options) {
   const markPageTested = (_filename) => {
     pagesTested++;
     checkAllTestsComplete();
+    updateTestWidget();
   };
   lo.docLink = {
     toDOM(elt, filename) {
@@ -7950,23 +8111,60 @@ function createDocBrowser(options) {
     didRender() {
       LiveExample.insertExamples(this, context);
     }
-  }))), style2(testIndicatorStyles));
-  const failureWidget = button8({
-    class: "test-failure-widget",
+  }))));
+  cn("test-indicators", testIndicatorStyleSpec);
+  const testWidget = button8({
+    class: "test-widget",
     hidden: true,
-    onClick: showFailureMenu
-  }, "Tests Failing", span7({ class: "count", part: "failCount" }, "0"));
-  container.appendChild(failureWidget);
-  function updateFailureWidget() {
-    const failedPages = Object.entries(pageTestResults).filter(([, results]) => !results.passed);
-    const totalFailed = failedPages.reduce((sum, [, results]) => sum + results.totalFailed, 0);
-    failureWidget.hidden = totalFailed === 0;
-    const countEl = failureWidget.querySelector('[part="failCount"]');
+    onClick: showTestMenu
+  }, span7({ part: "label" }, "Tests"), span7({ class: "count", part: "count" }, "0"));
+  container.appendChild(testWidget);
+  let testsRunning = false;
+  function setTestWidgetRunning() {
+    testsRunning = true;
+    testWidget.hidden = false;
+    testWidget.classList.remove("-passed", "-failed");
+    testWidget.classList.add("-running");
+    updateTestWidgetDisplay();
+  }
+  function updateTestWidgetDisplay() {
+    const labelEl = testWidget.querySelector('[part="label"]');
+    const countEl = testWidget.querySelector('[part="count"]');
+    const totalPassed = Object.values(pageTestResults).reduce((sum, r) => sum + r.totalPassed, 0);
+    const totalFailed = Object.values(pageTestResults).reduce((sum, r) => sum + r.totalFailed, 0);
+    if (labelEl) {
+      if (testsRunning) {
+        labelEl.textContent = "Running";
+      } else if (totalFailed > 0) {
+        labelEl.textContent = "Failed";
+      } else if (totalPassed > 0) {
+        labelEl.textContent = "Passed";
+      } else {
+        labelEl.textContent = "Tests";
+      }
+    }
     if (countEl) {
-      countEl.textContent = String(totalFailed);
+      countEl.textContent = totalFailed > 0 ? String(totalFailed) : String(totalPassed);
     }
   }
-  function showFailureMenu() {
+  function updateTestWidget() {
+    const totalFailed = Object.values(pageTestResults).reduce((sum, r) => sum + r.totalFailed, 0);
+    if (testsRunning && pagesTested >= pagesWithTests) {
+      testsRunning = false;
+      testWidget.classList.remove("-running");
+      if (totalFailed > 0) {
+        testWidget.classList.add("-failed");
+        testWidget.classList.remove("-passed");
+        testWidget.hidden = false;
+      } else {
+        testWidget.classList.add("-passed");
+        testWidget.classList.remove("-failed");
+        testWidget.hidden = false;
+      }
+    }
+    updateTestWidgetDisplay();
+  }
+  function showTestMenu() {
     const failedPages = Object.entries(pageTestResults).filter(([, results]) => !results.passed);
     const menuItems = [];
     for (const [filename, results] of failedPages) {
@@ -8006,7 +8204,7 @@ function createDocBrowser(options) {
       }
     });
     popMenu({
-      target: failureWidget,
+      target: testWidget,
       menuItems
     });
   }
@@ -8036,14 +8234,19 @@ function createDocBrowser(options) {
   }
   container.addEventListener("testcomplete", (event) => {
     handleTestComplete(event);
-    updateFailureWidget();
+    updateTestWidget();
   });
   const runBackgroundTests = async () => {
     if (backgroundTestsStarted)
       return;
+    if (!testManager.enabled.value)
+      return;
     backgroundTestsStarted = true;
     const docsWithTests = docs.filter((doc) => doc.text.includes("```test"));
     pagesWithTests = docsWithTests.length;
+    if (pagesWithTests > 0) {
+      setTestWidgetRunning();
+    }
     if (pagesWithTests === 0) {
       if (testResultsResolve) {
         testResultsResolve({ passed: 0, failed: 0, pages: {} });
@@ -8081,7 +8284,7 @@ function createDocBrowser(options) {
         pageResults.totalFailed += results.failed;
         pageResults.passed = pageResults.totalFailed === 0;
         updateDocTestStatus(doc.filename);
-        updateFailureWidget();
+        updateTestWidget();
       };
       testContainer.addEventListener("testcomplete", handleBgTest);
       const frameDoc = testFrame.contentDocument;
@@ -8099,20 +8302,25 @@ function createDocBrowser(options) {
       }, 1000);
     }
   };
-  if (isLocalhost) {
-    setTimeout(runBackgroundTests, 1000);
-  } else {
-    const currentHasTests = currentDoc.text.includes("```test");
-    if (currentHasTests) {
-      pagesWithTests = 1;
-      setTimeout(() => markPageTested(currentDoc.filename), 2000);
+  const startBackgroundTests = () => {
+    if (!testManager.enabled.value)
+      return;
+    if (isLocalhost2) {
+      setTimeout(runBackgroundTests, 1000);
     } else {
-      if (testResultsResolve) {
+      const currentHasTests = currentDoc.text.includes("```test");
+      if (currentHasTests) {
+        pagesWithTests = 1;
+        setTestWidgetRunning();
+        setTimeout(() => markPageTested(currentDoc.filename), 2000);
+      } else if (testResultsResolve) {
         testResultsResolve({ passed: 0, failed: 0, pages: {} });
         testResultsResolve = undefined;
       }
     }
-  }
+  };
+  startBackgroundTests();
+  testManager.enabled.observe(startBackgroundTests);
   return container;
 }
 // src/editable-rect.ts
@@ -11010,7 +11218,7 @@ var tosiTagList = TosiTagList.elementCreator({
 });
 var xinTagList = ao((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.1.1";
+var version = "1.2.0";
 // src/theme.ts
 var defaultColors = {
   accent: d.fromCss("#EE257B"),
@@ -12298,6 +12506,18 @@ on(
   }
 )
 \`\`\`
+\`\`\`test
+const dialog = preview.querySelector('tosi-dialog')
+test('dialog renders', () => {
+  expect(dialog).toBeTruthy()
+  expect(dialog.tagName.toLowerCase()).toBe('tosi-dialog')
+})
+test('dialog has header slot content', () => {
+  const header = dialog.querySelector('[slot="header"]')
+  expect(header).toBeTruthy()
+  expect(header.textContent).toBe('A Dialog')
+})
+\`\`\`
 
 ## Static Functions
 
@@ -12803,17 +13023,51 @@ test('button exists', () => {
   expect(btn.textContent).toBe('Click me')
 })
 
-test('this test intentionally fails', () => {
-  expect(1 + 1).toBe(3)
+test('slow test shows running state', async () => {
+  await waitMs(500)
+  expect(true).toBe(true)
 })
 \`\`\`
 
 Tests have access to:
 - \`preview\` - the DOM element containing the rendered HTML
 - \`expect(value)\` - Jest-like assertions (.toBe, .toEqual, .toBeTruthy, etc.)
-- \`test(name, fn)\` - define a test case
+- \`test(name, fn)\` - define a test case (can be async)
 - \`describe(name, fn)\` - group tests
+- \`waitMs(ms)\` - wait for a specified number of milliseconds
+- \`waitFor(selector, timeout?)\` - wait for an element to appear (default 1s timeout)
 - All context libraries (tosijs, tosijs-ui, etc.)
+
+### Async Tests
+
+Tests can be async functions. Use \`waitMs\` for simple delays and \`waitFor\` to wait
+for dynamically created elements:
+
+\`\`\`html
+<button class="async-btn">Load Data</button>
+<div class="result"></div>
+\`\`\`
+\`\`\`js
+preview.querySelector('.async-btn').onclick = () => {
+  setTimeout(() => {
+    preview.querySelector('.result').innerHTML = '<span class="data">Loaded!</span>'
+  }, 100)
+}
+// Auto-click to trigger the async behavior
+preview.querySelector('.async-btn').click()
+\`\`\`
+\`\`\`test
+test('waitFor finds dynamically created element', async () => {
+  const data = await waitFor('.data')
+  expect(data.textContent).toBe('Loaded!')
+})
+
+test('waitMs delays execution', async () => {
+  const start = Date.now()
+  await waitMs(50)
+  expect(Date.now() - start).toBeGreaterThan(40)
+})
+\`\`\`
 
 ## \`context\`
 
@@ -13673,6 +13927,20 @@ preview.append(
   pointer-events: none;
 }
 \`\`\`
+\`\`\`test
+const tiles = preview.querySelectorAll('.tile')
+test('icons are rendered', () => {
+  expect(tiles.length).toBeGreaterThan(100)
+})
+test('icon tiles have svg icons', () => {
+  const firstIcon = tiles[0].querySelector('xin-icon')
+  expect(firstIcon).toBeTruthy()
+})
+test('filter input exists', () => {
+  const input = preview.querySelector('input[type="search"]')
+  expect(input).toBeTruthy()
+})
+\`\`\`
 
 These icons are completely unstyled and can be colored using the css \`fill\` property. This will
 probably be broken out as a standalone library to allow the use of whatever icons you like
@@ -14529,13 +14797,13 @@ form.addEventListener('submit', (e) => {
   {
     text: `# markdown
 
-\`<xin-md>\` renders markdown using [marked](https://www.npmjs.com/package/marked).
+\`<tosi-md>\` renders markdown using [marked](https://www.npmjs.com/package/marked).
 
-\`<xin-md>\` renders [markdown](https://www.markdownguide.org/) anywhere, either using the
+\`<tosi-md>\` renders [markdown](https://www.markdownguide.org/) anywhere, either using the
 \`src\` attribute to load the file asynchronously, or rendering the text inside it.
 
 \`\`\`html
-<xin-md>
+<tosi-md>
 ## hello
 world
 
@@ -14545,24 +14813,24 @@ world
 |-------|------|-------|-------|
 | one   | two  | three | four  |
 | five  | six  | seven | eight |
-</xin-md>
+</tosi-md>
 \`\`\`
 \`\`\`css
-xin-md {
+tosi-md {
   display: block;
   padding: var(--spacing);
 }
 \`\`\`
 
-Note that, by default, \`<xin-md>\` will use its \`textContent\` (not its \`innerHTML\`) as its source.
+Note that, by default, \`<tosi-md>\` will use its \`textContent\` (not its \`innerHTML\`) as its source.
 
 ## rendering markdown from a url
 
-Again, like an \`<img>\` tag, you can simply set a \`<xin-md>\`'s \`src\` attribute to a URL pointing
+Again, like an \`<img>\` tag, you can simply set a \`<tosi-md>\`'s \`src\` attribute to a URL pointing
 to markdown source and it will load it asynchronously and render it.
 
 \`\`\`
-<xin-md src="/path/to/file.md">
+<tosi-md src="/path/to/file.md">
 \`\`\`
 
 ## setting its \`value\`
@@ -14571,18 +14839,18 @@ Or, just set the element's \`value\` and it will render it for you. You can try
 this in the console, e.g.
 
 \`\`\`
-$('.preview xin-md').value = 'testing\\n\\n## this is a test'
+$('.preview tosi-md').value = 'testing\\n\\n## this is a test'
 \`\`\`
 
 ## elements
 
-\`<xin-md>\` also (optionally) allows the embedding of inline HTML elements without blocking markdown
+\`<tosi-md>\` also (optionally) allows the embedding of inline HTML elements without blocking markdown
 rendering, so that you can embed specific elements while retaining markdown. You need to explicitly set
 the \`elements\` property, and for markdown rendering not to be blocked, the html elements need to
 start on a new line and not be indented. E.g.
 
 \`\`\`html
-<xin-md elements>
+<tosi-md elements>
 <form>
 ### this is a form
 <label>
@@ -14591,14 +14859,14 @@ fill in this field.
 <input>
 </label>
 </form>
-</xin-md>
+</tosi-md>
 \`\`\`
 
-In this case \`<xin-md>\` uses its \`innerHTML\` and not its \`textContent\`.
+In this case \`<tosi-md>\` uses its \`innerHTML\` and not its \`textContent\`.
 
 ## context and template variables
 
-\`<xin-md>\` also supports **template** values. You need to provide data to the element in the form
+\`<tosi-md>\` also supports **template** values. You need to provide data to the element in the form
 of \`context\` (an arbitrary object, or a JSON string), and then embed the template text using
 handlebars-style doubled curly braces, e.g. \`{{path.to.value}}\`.
 
@@ -14608,7 +14876,7 @@ Finally, note that template substitution occurs *before* markdown transformation
 pass context data through to HTML elements.
 
 \`\`\`html
-<xin-md
+<tosi-md
   elements
   context='{"title": "template example", "foo": {"bar": 17}, "nested": "*work*: {{foo.bar}}"}'
 >
@@ -14617,7 +14885,7 @@ pass context data through to HTML elements.
 The magic number is <input type="number" value={{foo.bar}}>
 
 Oh, and nested templates {{nested}}.
-</xin-md>
+</tosi-md>
 \`\`\``,
     title: "markdown",
     filename: "markdown-viewer.ts",
@@ -14629,16 +14897,16 @@ Oh, and nested templates {{nested}}.
 Being able to pop a menu up anywhere is just so nice, and \`tosijs-ui\` allows menus
 to be generated on-the-fly, and even supports hierarchical menus.
 
-## popMenu and \`<xin-menu>\`
+## popMenu and \`<tosi-menu>\`
 
 \`popMenu({target, menuItems, …})\` will spawn a menu from a target.
 
-The \`<xin-menu>\` component places creates a trigger button, hosts
+The \`<tosi-menu>\` component places creates a trigger button, hosts
 menuItems, and (because it persists in the DOM) supports keyboard
 shortcuts.
 
 \`\`\`js
-import { popMenu, localize, xinMenu, postNotification, xinLocalized, icons } from 'tosijs-ui'
+import { popMenu, localize, tosiMenu, postNotification, xinLocalized, icons } from 'tosijs-ui'
 import { elements } from 'tosijs'
 
 let picked = ''
@@ -14771,7 +15039,7 @@ preview.addEventListener('click', (event) => {
 })
 
 preview.append(
-  xinMenu(
+  tosiMenu(
     {
       menuItems,
       localized: true,
@@ -15234,6 +15502,17 @@ xin-form label {
   grid-template-columns: 120px 1fr;
 }
 \`\`\`
+\`\`\`test
+test('notification singleton exists', async () => {
+  await waitMs(100)
+  const notification = document.querySelector('xin-notification')
+  expect(notification).toBeTruthy()
+})
+test('form renders', () => {
+  const form = preview.querySelector('xin-form')
+  expect(form).toBeTruthy()
+})
+\`\`\`
 
 ## \`postNotification(spec: NotificationSpec | string)\`
 
@@ -15664,6 +15943,19 @@ preview.append(
   tosiRating({ class: 'color', value: 3.1, max: 5, icon: 'tosiPlatform', iconSize: 32 }),
 )
 \`\`\`
+\`\`\`test
+const rating = preview.querySelector('tosi-rating')
+test('rating renders', () => {
+  expect(rating).toBeTruthy()
+  expect(rating.tagName.toLowerCase()).toBe('tosi-rating')
+})
+test('rating has correct value', () => {
+  expect(rating.value).toBe(3.4)
+})
+test('rating has correct max', () => {
+  expect(rating.max).toBe(5)
+})
+\`\`\`
 \`\`\`css
 .preview {
   display: flex;
@@ -15973,6 +16265,18 @@ function logEvent(event) {
 }
 preview.addEventListener('change', logEvent, true)
 \`\`\`
+\`\`\`test
+const segmented = preview.querySelectorAll('tosi-segmented')
+test('segmented controls render', () => {
+  expect(segmented.length).toBe(4)
+})
+test('first segmented has value "yes"', () => {
+  expect(segmented[0].value).toBe('yes')
+})
+test('multiple segmented has array value', () => {
+  expect(segmented[3].value).toBe('star,bug')
+})
+\`\`\`
 
 > Check the console to see the values being set.
 
@@ -16155,6 +16459,18 @@ preview.addEventListener('change', (event) => {
   console.log(event.target.title, 'changed to', event.target.value)
 }, true)
 \`\`\`
+\`\`\`test
+const selects = preview.querySelectorAll('tosi-select')
+test('selects render', () => {
+  expect(selects.length).toBe(4)
+})
+test('simple select has value', () => {
+  expect(selects[0].value).toBe('not an option!')
+})
+test('captions select has value', () => {
+  expect(selects[1].value).toBe('image')
+})
+\`\`\`
 
 ## Form Integration
 
@@ -16236,7 +16552,7 @@ preview.append(
     path: "src/select.ts"
   },
   {
-    text: "# sidebar\n\nThe default layout for iOS / iPadOS apps is to hide the sidebar when displaying content on small\nscreens, and display the sidebar when space is available (with the user able to explicitly hide\nthe sidebar if so desired). `<xin-sidenav>` provides this functionality.\n\n`<xin-sidenav>` is used to handle the layout of the documentation tab panel.\n\n`<xin-sidenav>`'s behavior is controlled by two attributes, `minSize` is the point at which it will toggle between showing the navigation\nsidebar and content, while `navSize` is the width of the sidebar. You can interrogate its `compact` property to find out if it's\ncurrently in `compact` form.",
+    text: "# sidebar\n\nThe default layout for iOS / iPadOS apps is to hide the sidebar when displaying content on small\nscreens, and display the sidebar when space is available (with the user able to explicitly hide\nthe sidebar if so desired). `<tosi-sidenav>` provides this functionality.\n\n`<tosi-sidenav>` is used to handle the layout of the documentation tab panel.\n\n`<tosi-sidenav>`'s behavior is controlled by two attributes, `minSize` is the point at which it will toggle between showing the navigation\nsidebar and content, while `navSize` is the width of the sidebar. You can interrogate its `compact` property to find out if it's\ncurrently in `compact` form.",
     title: "sidebar",
     filename: "side-nav.ts",
     path: "src/side-nav.ts"
@@ -16405,21 +16721,21 @@ preview.append(dataTable({
   background: #fff4;
 }
 
-.preview xin-table {
+.preview tosi-table {
   height: 100%;
 }
 
-.preview xin-table [part="pinnedTopRows"],
-.preview xin-table [part="pinnedBottomRows"] {
+.preview tosi-table [part="pinnedTopRows"],
+.preview tosi-table [part="pinnedBottomRows"] {
   background: #ddd;
 }
 \`\`\`
 
 > In the preceding example, the \`name\` column is *editable* (and *bound*, try editing something and scrolling
-> it out of view and back) and \`multiple\` select is enabled. In the console, you can try \`$('xin-table').visibleRows\`
-> and $('xin-table').selectedRows\`.
+> it out of view and back) and \`multiple\` select is enabled. In the console, you can try \`$('tosi-table').visibleRows\`
+> and $('tosi-table').selectedRows\`.
 
-You can set the \`<xin-table>\`'s \`array\`, \`columns\`, and \`filter\` properties directly, or set its \`value\` to:
+You can set the \`<tosi-table>\`'s \`array\`, \`columns\`, and \`filter\` properties directly, or set its \`value\` to:
 
 \`\`\`
 {
@@ -16525,7 +16841,7 @@ As well as any column names you want localized.`,
   {
     text: `# tabs
 
-\`<xin-tabs>\` creates a \`tabpanel\` for its children, creating a \`tab\` for each based on its
+\`<tosi-tabs>\` creates a \`tabpanel\` for its children, creating a \`tab\` for each based on its
 \`name\` attribute.
 
 \`\`\`js
@@ -16534,7 +16850,7 @@ As well as any column names you want localized.`,
 })
 
 import { div, button } from 'tosijs'.elements
-const tabSelector = preview.querySelector('xin-tabs')
+const tabSelector = preview.querySelector('tosi-tabs')
 
 tabSelector.onCloseTab = body => {
   if (!confirm(\`Are you sure you want to close the \${body.getAttribute('name')} tab?\`)) {
@@ -16553,7 +16869,7 @@ preview.querySelector('.add').addEventListener('click', () => {
 })
 \`\`\`
 \`\`\`html
-<xin-tabs>
+<tosi-tabs>
   <div name="first">first body</div>
   <div name="second" data-close>
     <template role="tab">
@@ -16576,10 +16892,10 @@ preview.querySelector('.add').addEventListener('click', () => {
   <button class="add" slot="after-tabs">
     <xin-icon icon="plus"></xin-icon>
   </button>
-</xin-tabs>
+</tosi-tabs>
 \`\`\`
 \`\`\`css
-  .preview xin-tabs {
+  .preview tosi-tabs {
     height: 100%;
   }
 
@@ -16598,9 +16914,9 @@ preview.querySelector('.add').addEventListener('click', () => {
   }
 \`\`\`
 
-The \`<xin-tabs>\`s \`value\` is the index of its active body.
+The \`<tosi-tabs>\`s \`value\` is the index of its active body.
 
-A \`<xin-tabs>\` has \`addTabBody(body: HTMLElement, select?: boolean)\` and
+A \`<tosi-tabs>\` has \`addTabBody(body: HTMLElement, select?: boolean)\` and
 \`removeTabBody(body: number | HTMLElement)\` methods for updating its content.
 
 You can also just insert or remove tab bodies directly and call \`setupTabs()\`.
@@ -16609,7 +16925,7 @@ You can also just insert or remove tab bodies directly and call \`setupTabs()\`.
 
 Adding the \`data-close\` attribute to a tab will make it closeable.
 
-When a tab is closed, the \`<xin-tabs>\` element's \`onCloseTab: (tabBody: Element) => boolean | undefined | void\`
+When a tab is closed, the \`<tosi-tabs>\` element's \`onCloseTab: (tabBody: Element) => boolean | undefined | void\`
 will be called. If you override this method and return \`false\`, the tab will
 not be closed (e.g. if you want to implement save/cancel behavior).
 
@@ -16622,13 +16938,13 @@ template will be cloned into the tab.
 ## Localized Support
 
 \`\`\`html
-<xin-tabs localized>
+<tosi-tabs localized>
   <div name="localize"><h2>localize!</h2></div>
   <div name="tabs"><h2>tabs</h2></div>
-</xin-tabs>
+</tosi-tabs>
 \`\`\`
 
-\`<xin-tabs>\` supports the \`localized\` attribute. It will automatically localize
+\`<tosi-tabs>\` supports the \`localized\` attribute. It will automatically localize
 tab names (but it won't override custom tab content, so localizing that is on you).`,
     title: "tabs",
     filename: "tab-selector.ts",
@@ -16699,6 +17015,19 @@ preview.querySelector('.disable-toggle').addEventListener('change', (event) => {
   for(const tagList of tagLists) {
     tagList.disabled = event.target.checked
   }
+})
+\`\`\`
+\`\`\`test
+const tagLists = preview.querySelectorAll('tosi-tag-list')
+test('tag-lists render', () => {
+  expect(tagLists.length).toBe(4)
+})
+test('first tag-list has correct tags', () => {
+  expect(tagLists[0].tags.length).toBe(3)
+  expect(tagLists[0].tags).toContain('this')
+})
+test('editable tag-list has editable attribute', () => {
+  expect(tagLists[2].editable).toBe(true)
 })
 \`\`\`
 

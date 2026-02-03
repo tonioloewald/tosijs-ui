@@ -1,5 +1,14 @@
 import { Component, ElementCreator } from 'tosijs';
 import { ExampleContext, ExampleParts } from './types';
+export declare const testManager: {
+    enabled: import("tosijs").BoxedScalar<boolean>;
+} & import("tosijs").XinProps<{
+    enabled: boolean;
+}>;
+/** Enable test mode (runs tests and shows indicators) */
+export declare function enableTests(): void;
+/** Disable test mode */
+export declare function disableTests(): void;
 export declare class LiveExample extends Component<ExampleParts> {
     static initAttributes: {
         persistToDom: boolean;
@@ -28,6 +37,7 @@ export declare class LiveExample extends Component<ExampleParts> {
     set test(code: string);
     get remoteKey(): string;
     updateUndo: () => void;
+    private updateTestResultsVisibility;
     undo: () => void;
     redo: () => void;
     get isMaximized(): boolean;

@@ -3,11 +3,11 @@
 
 The default layout for iOS / iPadOS apps is to hide the sidebar when displaying content on small
 screens, and display the sidebar when space is available (with the user able to explicitly hide
-the sidebar if so desired). `<xin-sidenav>` provides this functionality.
+the sidebar if so desired). `<tosi-sidenav>` provides this functionality.
 
-`<xin-sidenav>` is used to handle the layout of the documentation tab panel.
+`<tosi-sidenav>` is used to handle the layout of the documentation tab panel.
 
-`<xin-sidenav>`'s behavior is controlled by two attributes, `minSize` is the point at which it will toggle between showing the navigation
+`<tosi-sidenav>`'s behavior is controlled by two attributes, `minSize` is the point at which it will toggle between showing the navigation
 sidebar and content, while `navSize` is the width of the sidebar. You can interrogate its `compact` property to find out if it's
 currently in `compact` form.
 */
@@ -73,7 +73,7 @@ export class SideNav extends Component {
       this.style.setProperty('--content-width', '0%')
     } else if (!this.compact) {
       navState = 'normal'
-      content.classList.add('-xin-sidenav-visible')
+      content.classList.add('-tosi-sidenav-visible')
       this.style.setProperty('--nav-width', `${this.navSize}px`)
       this.style.setProperty(
         '--content-width',
@@ -81,7 +81,7 @@ export class SideNav extends Component {
       )
       this.style.setProperty('--margin', '0')
     } else {
-      content.classList.remove('-xin-sidenav-visible')
+      content.classList.remove('-tosi-sidenav-visible')
       this.style.setProperty('--nav-width', '50%')
       this.style.setProperty('--content-width', '50%')
 
@@ -125,5 +125,8 @@ export class SideNav extends Component {
 }
 
 export const sideNav = SideNav.elementCreator({
-  tag: 'xin-sidenav',
+  tag: 'tosi-sidenav',
 }) as ElementCreator<SideNav>
+
+/** @deprecated Use sideNav with tag 'tosi-sidenav' instead */
+export const xinSidenav = sideNav

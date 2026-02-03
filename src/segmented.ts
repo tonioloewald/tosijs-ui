@@ -57,6 +57,18 @@ function logEvent(event) {
 }
 preview.addEventListener('change', logEvent, true)
 ```
+```test
+const segmented = preview.querySelectorAll('tosi-segmented')
+test('segmented controls render', () => {
+  expect(segmented.length).toBe(4)
+})
+test('first segmented has value "yes"', () => {
+  expect(segmented[0].value).toBe('yes')
+})
+test('multiple segmented has array value', () => {
+  expect(segmented[3].value).toBe('star,bug')
+})
+```
 
 > Check the console to see the values being set.
 

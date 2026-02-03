@@ -62,21 +62,21 @@ preview.append(dataTable({
   background: #fff4;
 }
 
-.preview xin-table {
+.preview tosi-table {
   height: 100%;
 }
 
-.preview xin-table [part="pinnedTopRows"],
-.preview xin-table [part="pinnedBottomRows"] {
+.preview tosi-table [part="pinnedTopRows"],
+.preview tosi-table [part="pinnedBottomRows"] {
   background: #ddd;
 }
 ```
 
 > In the preceding example, the `name` column is *editable* (and *bound*, try editing something and scrolling
-> it out of view and back) and `multiple` select is enabled. In the console, you can try `$('xin-table').visibleRows`
-> and $('xin-table').selectedRows`.
+> it out of view and back) and `multiple` select is enabled. In the console, you can try `$('tosi-table').visibleRows`
+> and $('tosi-table').selectedRows`.
 
-You can set the `<xin-table>`'s `array`, `columns`, and `filter` properties directly, or set its `value` to:
+You can set the `<tosi-table>`'s `array`, `columns`, and `filter` properties directly, or set its `value` to:
 
 ```
 {
@@ -185,6 +185,7 @@ import {
   tosiValue,
   getListItem,
   tosi,
+  deprecated,
 } from 'tosijs'
 import { trackDrag } from './track-drag'
 import { SortCallback } from './make-sorter'
@@ -908,7 +909,7 @@ export class DataTable extends WebComponent {
 }
 
 export const dataTable = DataTable.elementCreator({
-  tag: 'xin-table',
+  tag: 'tosi-table',
   styleSpec: {
     ':host': {
       // New --tosi-table-* variables with defaults
@@ -961,3 +962,9 @@ export const dataTable = DataTable.elementCreator({
     },
   },
 }) as ElementCreator<DataTable>
+
+// Legacy alias for backward compatibility
+export const xinTable = deprecated(
+  dataTable,
+  'xinTable is deprecated. Use dataTable instead.'
+)

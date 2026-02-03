@@ -35,4 +35,6 @@ export declare class SideNav extends Component {
     render(): void;
 }
 export declare const sideNav: ElementCreator<SideNav>;
+/** @deprecated Use sideNav with tag 'tosi-sidenav' instead */
+export declare const xinSidenav: ElementCreator<SideNav>;
 export {};

@@ -30,6 +30,18 @@ on(
   }
 )
 ```
+```test
+const dialog = preview.querySelector('tosi-dialog')
+test('dialog renders', () => {
+  expect(dialog).toBeTruthy()
+  expect(dialog.tagName.toLowerCase()).toBe('tosi-dialog')
+})
+test('dialog has header slot content', () => {
+  const header = dialog.querySelector('[slot="header"]')
+  expect(header).toBeTruthy()
+  expect(header.textContent).toBe('A Dialog')
+})
+```
 
 ## Static Functions
 

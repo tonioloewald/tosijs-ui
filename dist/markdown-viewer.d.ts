@@ -16,3 +16,5 @@ export declare class MarkdownViewer extends Component {
     render(): void;
 }
 export declare const markdownViewer: ElementCreator<MarkdownViewer>;
+/** @deprecated Use markdownViewer with tag 'tosi-md' instead */
+export declare const xinMd: ElementCreator<MarkdownViewer>;

@@ -117,9 +117,48 @@ export const liveExampleStyleSpec = {
     cursor: 'nwse-resize',
   },
 
-  // Test results styling
-  ':host.-test-failed [part="example"]': {
-    outline: '4px solid #c00',
+  // Test status indicator (--tests-enabled CSS var pierces shadow DOM)
+  ':host [part="testIndicator"]': {
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    width: '12px',
+    height: '12px',
+    borderRadius: '50%',
+    background: '#888',
+    zIndex: '100',
+    display: 'none',
+  },
+
+  ':host.-has-tests [part="testIndicator"]': {
+    display: 'block',
+    opacity: 'var(--tests-enabled, 1)',
+  },
+
+  ':host.-test-running [part="testIndicator"]': {
+    background: '#fa0',
+    animation: 'test-pulse 0.5s ease-in-out infinite',
+  },
+
+  ':host.-test-passed [part="testIndicator"]': {
+    background: '#0a0',
+    animation: 'test-fade 2s ease-out forwards',
+  },
+
+  ':host.-test-failed [part="testIndicator"]': {
+    background: '#c00',
+    animation: 'test-pulse 1s ease-in-out infinite',
+  },
+
+  '@keyframes test-pulse': {
+    '0%, 100%': { opacity: '1' },
+    '50%': { opacity: '0.4' },
+  },
+
+  '@keyframes test-fade': {
+    '0%': { opacity: '1' },
+    '50%': { opacity: '1' },
+    '100%': { opacity: '0' },
   },
 
   ':host.-test-passed [part="exampleWidgets"]': {

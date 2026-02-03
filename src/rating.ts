@@ -14,6 +14,19 @@ preview.append(
   tosiRating({ class: 'color', value: 3.1, max: 5, icon: 'tosiPlatform', iconSize: 32 }),
 )
 ```
+```test
+const rating = preview.querySelector('tosi-rating')
+test('rating renders', () => {
+  expect(rating).toBeTruthy()
+  expect(rating.tagName.toLowerCase()).toBe('tosi-rating')
+})
+test('rating has correct value', () => {
+  expect(rating.value).toBe(3.4)
+})
+test('rating has correct max', () => {
+  expect(rating.max).toBe(5)
+})
+```
 ```css
 .preview {
   display: flex;

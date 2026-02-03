@@ -1,7 +1,7 @@
 /*#
 # tabs
 
-`<xin-tabs>` creates a `tabpanel` for its children, creating a `tab` for each based on its
+`<tosi-tabs>` creates a `tabpanel` for its children, creating a `tab` for each based on its
 `name` attribute.
 
 ```js
@@ -10,7 +10,7 @@
 })
 
 import { div, button } from 'tosijs'.elements
-const tabSelector = preview.querySelector('xin-tabs')
+const tabSelector = preview.querySelector('tosi-tabs')
 
 tabSelector.onCloseTab = body => {
   if (!confirm(`Are you sure you want to close the ${body.getAttribute('name')} tab?`)) {
@@ -29,7 +29,7 @@ preview.querySelector('.add').addEventListener('click', () => {
 })
 ```
 ```html
-<xin-tabs>
+<tosi-tabs>
   <div name="first">first body</div>
   <div name="second" data-close>
     <template role="tab">
@@ -52,10 +52,10 @@ preview.querySelector('.add').addEventListener('click', () => {
   <button class="add" slot="after-tabs">
     <xin-icon icon="plus"></xin-icon>
   </button>
-</xin-tabs>
+</tosi-tabs>
 ```
 ```css
-  .preview xin-tabs {
+  .preview tosi-tabs {
     height: 100%;
   }
 
@@ -74,9 +74,9 @@ preview.querySelector('.add').addEventListener('click', () => {
   }
 ```
 
-The `<xin-tabs>`s `value` is the index of its active body.
+The `<tosi-tabs>`s `value` is the index of its active body.
 
-A `<xin-tabs>` has `addTabBody(body: HTMLElement, select?: boolean)` and
+A `<tosi-tabs>` has `addTabBody(body: HTMLElement, select?: boolean)` and
 `removeTabBody(body: number | HTMLElement)` methods for updating its content.
 
 You can also just insert or remove tab bodies directly and call `setupTabs()`.
@@ -85,7 +85,7 @@ You can also just insert or remove tab bodies directly and call `setupTabs()`.
 
 Adding the `data-close` attribute to a tab will make it closeable.
 
-When a tab is closed, the `<xin-tabs>` element's `onCloseTab: (tabBody: Element) => boolean | undefined | void`
+When a tab is closed, the `<tosi-tabs>` element's `onCloseTab: (tabBody: Element) => boolean | undefined | void`
 will be called. If you override this method and return `false`, the tab will
 not be closed (e.g. if you want to implement save/cancel behavior).
 
@@ -98,13 +98,13 @@ template will be cloned into the tab.
 ## Localized Support
 
 ```html
-<xin-tabs localized>
+<tosi-tabs localized>
   <div name="localize"><h2>localize!</h2></div>
   <div name="tabs"><h2>tabs</h2></div>
-</xin-tabs>
+</tosi-tabs>
 ```
 
-`<xin-tabs>` supports the `localized` attribute. It will automatically localize
+`<tosi-tabs>` supports the `localized` attribute. It will automatically localize
 tab names (but it won't override custom tab content, so localizing that is on you).
 */
 
@@ -383,5 +383,8 @@ export class TabSelector extends WebComponent {
 }
 
 export const tabSelector = TabSelector.elementCreator({
-  tag: 'xin-tabs',
+  tag: 'tosi-tabs',
 }) as ElementCreator<TabSelector>
+
+/** @deprecated Use tabSelector with tag 'tosi-tabs' instead */
+export const xinTabs = tabSelector

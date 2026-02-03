@@ -59,17 +59,51 @@ test('button exists', () => {
   expect(btn.textContent).toBe('Click me')
 })
 
-test('this test intentionally fails', () => {
-  expect(1 + 1).toBe(3)
+test('slow test shows running state', async () => {
+  await waitMs(500)
+  expect(true).toBe(true)
 })
 ```
 
 Tests have access to:
 - `preview` - the DOM element containing the rendered HTML
 - `expect(value)` - Jest-like assertions (.toBe, .toEqual, .toBeTruthy, etc.)
-- `test(name, fn)` - define a test case
+- `test(name, fn)` - define a test case (can be async)
 - `describe(name, fn)` - group tests
+- `waitMs(ms)` - wait for a specified number of milliseconds
+- `waitFor(selector, timeout?)` - wait for an element to appear (default 1s timeout)
 - All context libraries (tosijs, tosijs-ui, etc.)
+
+### Async Tests
+
+Tests can be async functions. Use `waitMs` for simple delays and `waitFor` to wait
+for dynamically created elements:
+
+```html
+<button class="async-btn">Load Data</button>
+<div class="result"></div>
+```
+```js
+preview.querySelector('.async-btn').onclick = () => {
+  setTimeout(() => {
+    preview.querySelector('.result').innerHTML = '<span class="data">Loaded!</span>'
+  }, 100)
+}
+// Auto-click to trigger the async behavior
+preview.querySelector('.async-btn').click()
+```
+```test
+test('waitFor finds dynamically created element', async () => {
+  const data = await waitFor('.data')
+  expect(data.textContent).toBe('Loaded!')
+})
+
+test('waitMs delays execution', async () => {
+  const start = Date.now()
+  await waitMs(50)
+  expect(Date.now() - start).toBeGreaterThan(40)
+})
+```
 
 ## `context`
 
@@ -87,7 +121,7 @@ context = {
 ```
 */
 
-import { Component, ElementCreator, elements } from 'tosijs'
+import { Component, ElementCreator, elements, tosi } from 'tosijs'
 import { codeEditor, CodeEditor } from '../code-editor'
 import { tabSelector, TabSelector } from '../tab-selector'
 import { icons } from '../icons'
@@ -107,6 +141,66 @@ import { liveExampleStyleSpec } from './styles'
 import { runTests, TestResults } from './test-harness'
 
 const { div, xinSlot, style, button, pre, span } = elements
+
+// Test mode: controlled by localStorage, defaults to enabled on localhost
+const TESTS_ENABLED_KEY = 'tosijs-ui-tests-enabled'
+
+const isLocalhost =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1')
+
+function getStoredTestsEnabled(): boolean {
+  if (typeof localStorage === 'undefined') return false
+  const stored = localStorage.getItem(TESTS_ENABLED_KEY)
+  if (stored !== null) {
+    return stored === 'true'
+  }
+  // Default: enabled on localhost, disabled elsewhere
+  return isLocalhost
+}
+
+// Test manager - observable state for test mode
+export const { testManager } = tosi({
+  testManager: {
+    enabled: getStoredTestsEnabled(),
+  },
+})
+
+// Set CSS variable on body for test visibility (CSS vars pierce shadow DOM)
+function updateTestsEnabledClass() {
+  document.body.classList.toggle('tests-enabled', testManager.enabled.value)
+  document.body.style.setProperty(
+    '--tests-enabled',
+    testManager.enabled.value ? '1' : '0'
+  )
+}
+if (typeof document !== 'undefined') {
+  // Set initial state when DOM is ready
+  if (document.body) {
+    updateTestsEnabledClass()
+  } else {
+    document.addEventListener('DOMContentLoaded', updateTestsEnabledClass)
+  }
+}
+
+/** Enable test mode (runs tests and shows indicators) */
+export function enableTests(): void {
+  localStorage.setItem(TESTS_ENABLED_KEY, 'true')
+  testManager.enabled.value = true
+  updateTestsEnabledClass()
+  // Re-run tests on all existing examples
+  document.querySelectorAll('xin-example').forEach((el) => {
+    ;(el as LiveExample).refresh()
+  })
+}
+
+/** Disable test mode */
+export function disableTests(): void {
+  localStorage.setItem(TESTS_ENABLED_KEY, 'false')
+  testManager.enabled.value = false
+  updateTestsEnabledClass()
+}
 
 export class LiveExample extends Component<ExampleParts> {
   static initAttributes = {
@@ -191,6 +285,18 @@ export class LiveExample extends Component<ExampleParts> {
       undo.disabled = true
       redo.disabled = true
     }
+    this.updateTestResultsVisibility()
+  }
+
+  private updateTestResultsVisibility(): void {
+    const { testResults: resultsEl } = this.parts
+    const results = this.testResults
+    const isTestTabActive = this.activeTab?.getAttribute('name') === 'test'
+    const hasFailed = results && results.failed > 0
+
+    // Show results if: has results AND (test tab is active OR there are failures)
+    resultsEl.hidden =
+      !results || results.tests.length === 0 || (!isTestTabActive && !hasFailed)
   }
 
   undo = () => {
@@ -216,6 +322,7 @@ export class LiveExample extends Component<ExampleParts> {
   }
 
   exampleMenu = () => {
+    const testsOn = testManager.enabled.value
     popMenu({
       target: this.parts.exampleWidgets,
       width: 'auto',
@@ -235,6 +342,18 @@ export class LiveExample extends Component<ExampleParts> {
           icon: this.isMaximized ? 'minimize' : 'maximize',
           caption: this.isMaximized ? 'restore preview' : 'maximize preview',
           action: this.toggleMaximize,
+        },
+        null,
+        {
+          icon: testsOn ? 'check' : '',
+          caption: 'Run tests',
+          action: () => {
+            if (testsOn) {
+              disableTests()
+            } else {
+              enableTests()
+            }
+          },
         },
       ],
     })
@@ -270,6 +389,7 @@ export class LiveExample extends Component<ExampleParts> {
     div(
       { part: 'example' },
       style({ part: 'style' }),
+      div({ part: 'testIndicator', title: 'test status' }),
       pre({ part: 'testResults', hidden: true }),
       button(
         {
@@ -493,29 +613,39 @@ export class LiveExample extends Component<ExampleParts> {
       this.updateSources()
     }
 
-    // Run tests if there are any
-    if (this.test && preview) {
+    // Run tests if enabled and there are any
+    if (this.test && preview && testManager.enabled.value) {
+      this.classList.add('-has-tests', '-test-running')
+      this.classList.remove('-test-passed', '-test-failed')
       this.testResults = await runTests(
         this.test,
         preview,
         this.context,
         transform
       )
+      this.classList.remove('-test-running')
       this.displayTestResults()
+    } else {
+      this.classList.remove(
+        '-has-tests',
+        '-test-running',
+        '-test-passed',
+        '-test-failed'
+      )
     }
   }
 
   private displayTestResults(): void {
-    const { testResults: resultsEl } = this.parts
+    const { testResults: resultsEl, testIndicator } = this.parts
     const results = this.testResults
 
     if (!results || results.tests.length === 0) {
       resultsEl.hidden = true
       this.classList.remove('-test-passed', '-test-failed')
+      testIndicator.title = 'no tests'
       return
     }
 
-    resultsEl.hidden = false
     resultsEl.innerHTML = ''
 
     const summary = div(
@@ -540,6 +670,15 @@ export class LiveExample extends Component<ExampleParts> {
 
     this.classList.toggle('-test-passed', results.failed === 0)
     this.classList.toggle('-test-failed', results.failed > 0)
+
+    // Update indicator title
+    testIndicator.title =
+      results.failed === 0
+        ? `${results.passed} tests passed`
+        : `${results.failed}/${results.tests.length} tests failed`
+
+    // Update visibility based on tab and failure status
+    this.updateTestResultsVisibility()
 
     // Dispatch event for doc-browser to track results
     this.dispatchEvent(

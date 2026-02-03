@@ -112,6 +112,18 @@ preview.addEventListener('change', (event) => {
   console.log(event.target.title, 'changed to', event.target.value)
 }, true)
 ```
+```test
+const selects = preview.querySelectorAll('tosi-select')
+test('selects render', () => {
+  expect(selects.length).toBe(4)
+})
+test('simple select has value', () => {
+  expect(selects[0].value).toBe('not an option!')
+})
+test('captions select has value', () => {
+  expect(selects[1].value).toBe('image')
+})
+```
 
 ## Form Integration
 
