@@ -1,5 +1,5 @@
-export { LiveExample, liveExample } from './component';
-export type { ExampleContext, ExampleParts, RemotePayload, TransformFn } from './types';
+export { LiveExample, liveExample, enableTests, disableTests, testManager, } from './component';
+export type { ExampleContext, ExampleParts, RemotePayload, TransformFn, } from './types';
 export { runTests, createTestContext, expect } from './test-harness';
 export type { TestResult, TestResults, TestContext } from './test-harness';
 export { insertExamples } from './insert-examples';

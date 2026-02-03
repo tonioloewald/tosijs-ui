@@ -79,3 +79,4 @@ export declare class DataTable extends WebComponent {
     render(): void;
 }
 export declare const dataTable: ElementCreator<DataTable>;
+export declare const xinTable: ElementCreator<DataTable>;

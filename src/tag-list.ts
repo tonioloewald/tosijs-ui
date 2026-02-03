@@ -65,6 +65,19 @@ preview.querySelector('.disable-toggle').addEventListener('change', (event) => {
   }
 })
 ```
+```test
+const tagLists = preview.querySelectorAll('tosi-tag-list')
+test('tag-lists render', () => {
+  expect(tagLists.length).toBe(4)
+})
+test('first tag-list has correct tags', () => {
+  expect(tagLists[0].tags.length).toBe(3)
+  expect(tagLists[0].tags).toContain('this')
+})
+test('editable tag-list has editable attribute', () => {
+  expect(tagLists[2].editable).toBe(true)
+})
+```
 
 ## Properties
 

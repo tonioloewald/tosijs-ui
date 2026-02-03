@@ -26,6 +26,17 @@ interface Matchers {
     not: Matchers;
 }
 export declare function expect(value: unknown): Matchers;
+/**
+ * Wait for a specified number of milliseconds
+ */
+export declare function waitMs(ms: number): Promise<void>;
+/**
+ * Wait for an element matching the selector to appear in the preview
+ * @param preview - The preview element to search within
+ * @param selector - CSS selector to find
+ * @param timeout - Maximum time to wait in ms (default: 1000)
+ */
+export declare function waitFor(preview: HTMLElement, selector: string, timeout?: number): Promise<Element>;
 export interface TestContext {
     expect: typeof expect;
     test: (name: string, fn: () => void | Promise<void>) => void;

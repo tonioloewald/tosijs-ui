@@ -45,11 +45,11 @@ export interface PopMenuOptions {
     role?: 'menu' | 'listbox';
 }
 export declare const popMenu: (options: PopMenuOptions) => void;
-interface XinMenuParts extends PartsMap {
+interface TosiMenuParts extends PartsMap {
     trigger: HTMLButtonElement;
     icon: SvgIcon;
 }
-export declare class XinMenu extends Component<XinMenuParts> {
+export declare class TosiMenu extends Component<TosiMenuParts> {
     static initAttributes: {
         menuWidth: string;
         localized: boolean;
@@ -63,5 +63,9 @@ export declare class XinMenu extends Component<XinMenuParts> {
     connectedCallback(): void;
     disconnectedCallback(): void;
 }
-export declare const xinMenu: import("tosijs").ElementCreator<XinMenu>;
+export declare const tosiMenu: import("tosijs").ElementCreator<TosiMenu>;
+/** @deprecated Use tosiMenu instead */
+export declare const xinMenu: import("tosijs").ElementCreator<TosiMenu>;
+/** @deprecated Use TosiMenu instead */
+export declare const XinMenu: typeof TosiMenu;
 export {};

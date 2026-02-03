@@ -4,13 +4,13 @@ import { marked, MarkedOptions } from 'marked'
 /*#
 # markdown
 
-`<xin-md>` renders markdown using [marked](https://www.npmjs.com/package/marked).
+`<tosi-md>` renders markdown using [marked](https://www.npmjs.com/package/marked).
 
-`<xin-md>` renders [markdown](https://www.markdownguide.org/) anywhere, either using the
+`<tosi-md>` renders [markdown](https://www.markdownguide.org/) anywhere, either using the
 `src` attribute to load the file asynchronously, or rendering the text inside it.
 
 ```html
-<xin-md>
+<tosi-md>
 ## hello
 world
 
@@ -20,24 +20,24 @@ world
 |-------|------|-------|-------|
 | one   | two  | three | four  |
 | five  | six  | seven | eight |
-</xin-md>
+</tosi-md>
 ```
 ```css
-xin-md {
+tosi-md {
   display: block;
   padding: var(--spacing);
 }
 ```
 
-Note that, by default, `<xin-md>` will use its `textContent` (not its `innerHTML`) as its source.
+Note that, by default, `<tosi-md>` will use its `textContent` (not its `innerHTML`) as its source.
 
 ## rendering markdown from a url
 
-Again, like an `<img>` tag, you can simply set a `<xin-md>`'s `src` attribute to a URL pointing
+Again, like an `<img>` tag, you can simply set a `<tosi-md>`'s `src` attribute to a URL pointing
 to markdown source and it will load it asynchronously and render it.
 
 ```
-<xin-md src="/path/to/file.md">
+<tosi-md src="/path/to/file.md">
 ```
 
 ## setting its `value`
@@ -46,18 +46,18 @@ Or, just set the element's `value` and it will render it for you. You can try
 this in the console, e.g.
 
 ```
-$('.preview xin-md').value = 'testing\n\n## this is a test'
+$('.preview tosi-md').value = 'testing\n\n## this is a test'
 ```
 
 ## elements
 
-`<xin-md>` also (optionally) allows the embedding of inline HTML elements without blocking markdown
+`<tosi-md>` also (optionally) allows the embedding of inline HTML elements without blocking markdown
 rendering, so that you can embed specific elements while retaining markdown. You need to explicitly set
 the `elements` property, and for markdown rendering not to be blocked, the html elements need to
 start on a new line and not be indented. E.g.
 
 ```html
-<xin-md elements>
+<tosi-md elements>
 <form>
 ### this is a form
 <label>
@@ -66,14 +66,14 @@ fill in this field.
 <input>
 </label>
 </form>
-</xin-md>
+</tosi-md>
 ```
 
-In this case `<xin-md>` uses its `innerHTML` and not its `textContent`.
+In this case `<tosi-md>` uses its `innerHTML` and not its `textContent`.
 
 ## context and template variables
 
-`<xin-md>` also supports **template** values. You need to provide data to the element in the form
+`<tosi-md>` also supports **template** values. You need to provide data to the element in the form
 of `context` (an arbitrary object, or a JSON string), and then embed the template text using
 handlebars-style doubled curly braces, e.g. `{{path.to.value}}`.
 
@@ -83,7 +83,7 @@ Finally, note that template substitution occurs *before* markdown transformation
 pass context data through to HTML elements.
 
 ```html
-<xin-md
+<tosi-md
   elements
   context='{"title": "template example", "foo": {"bar": 17}, "nested": "*work*: {{foo.bar}}"}'
 >
@@ -92,7 +92,7 @@ pass context data through to HTML elements.
 The magic number is <input type="number" value={{foo.bar}}>
 
 Oh, and nested templates {{nested}}.
-</xin-md>
+</tosi-md>
 ```
 */
 
@@ -179,5 +179,8 @@ export class MarkdownViewer extends Component {
 }
 
 export const markdownViewer = MarkdownViewer.elementCreator({
-  tag: 'xin-md',
+  tag: 'tosi-md',
 }) as ElementCreator<MarkdownViewer>
+
+/** @deprecated Use markdownViewer with tag 'tosi-md' instead */
+export const xinMd = markdownViewer

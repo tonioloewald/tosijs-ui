@@ -99,8 +99,51 @@ export declare const liveExampleStyleSpec: {
     ':host .sizer': {
         cursor: string;
     };
-    ':host.-test-failed [part="example"]': {
-        outline: string;
+    ':host [part="testIndicator"]': {
+        position: string;
+        top: string;
+        right: string;
+        width: string;
+        height: string;
+        borderRadius: string;
+        background: string;
+        zIndex: string;
+        display: string;
+    };
+    ':host.-has-tests [part="testIndicator"]': {
+        display: string;
+        opacity: string;
+    };
+    ':host.-test-running [part="testIndicator"]': {
+        background: string;
+        animation: string;
+    };
+    ':host.-test-passed [part="testIndicator"]': {
+        background: string;
+        animation: string;
+    };
+    ':host.-test-failed [part="testIndicator"]': {
+        background: string;
+        animation: string;
+    };
+    '@keyframes test-pulse': {
+        '0%, 100%': {
+            opacity: string;
+        };
+        '50%': {
+            opacity: string;
+        };
+    };
+    '@keyframes test-fade': {
+        '0%': {
+            opacity: string;
+        };
+        '50%': {
+            opacity: string;
+        };
+        '100%': {
+            opacity: string;
+        };
     };
     ':host.-test-passed [part="exampleWidgets"]': {
         '--widget-color': string;

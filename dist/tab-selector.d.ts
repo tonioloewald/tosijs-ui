@@ -92,4 +92,6 @@ export declare class TabSelector extends WebComponent {
     render(): void;
 }
 export declare const tabSelector: ElementCreator<TabSelector>;
+/** @deprecated Use tabSelector with tag 'tosi-tabs' instead */
+export declare const xinTabs: ElementCreator<TabSelector>;
 export {};

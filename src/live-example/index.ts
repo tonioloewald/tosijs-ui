@@ -1,8 +1,19 @@
 // Main exports
-export { LiveExample, liveExample } from './component'
+export {
+  LiveExample,
+  liveExample,
+  enableTests,
+  disableTests,
+  testManager,
+} from './component'
 
 // Types
-export type { ExampleContext, ExampleParts, RemotePayload, TransformFn } from './types'
+export type {
+  ExampleContext,
+  ExampleParts,
+  RemotePayload,
+  TransformFn,
+} from './types'
 
 // Test harness (for doc-browser integration)
 export { runTests, createTestContext, expect } from './test-harness'

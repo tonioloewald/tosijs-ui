@@ -55,6 +55,22 @@ function deepEqual(a: unknown, b: unknown): boolean {
   return aKeys.every((key) => deepEqual(aObj[key], bObj[key]))
 }
 
+// Safe JSON that handles DOM elements and circular references
+const safeJSON = {
+  stringify(val: unknown): string {
+    if (val instanceof Element) {
+      return `<${val.tagName.toLowerCase()}>`
+    }
+    try {
+      return JSON.stringify(val)
+    } catch {
+      return String(val)
+    }
+  },
+}
+
+const { stringify } = safeJSON
+
 function createMatchers(value: unknown, negated = false): Matchers {
   const assert = (condition: boolean, message: string) => {
     const result = negated ? !condition : condition
@@ -67,34 +83,34 @@ function createMatchers(value: unknown, negated = false): Matchers {
     toBe(expected: unknown) {
       assert(
         value === expected,
-        `Expected ${JSON.stringify(value)} to be ${JSON.stringify(expected)}`
+        `Expected ${stringify(value)} to be ${stringify(expected)}`
       )
     },
     toEqual(expected: unknown) {
       assert(
         deepEqual(value, expected),
-        `Expected ${JSON.stringify(value)} to equal ${JSON.stringify(expected)}`
+        `Expected ${stringify(value)} to equal ${stringify(expected)}`
       )
     },
     toBeTruthy() {
-      assert(!!value, `Expected ${JSON.stringify(value)} to be truthy`)
+      assert(!!value, `Expected ${stringify(value)} to be truthy`)
     },
     toBeFalsy() {
-      assert(!value, `Expected ${JSON.stringify(value)} to be falsy`)
+      assert(!value, `Expected ${stringify(value)} to be falsy`)
     },
     toBeNull() {
-      assert(value === null, `Expected ${JSON.stringify(value)} to be null`)
+      assert(value === null, `Expected ${stringify(value)} to be null`)
     },
     toBeUndefined() {
       assert(
         value === undefined,
-        `Expected ${JSON.stringify(value)} to be undefined`
+        `Expected ${stringify(value)} to be undefined`
       )
     },
     toBeDefined() {
       assert(
         value !== undefined,
-        `Expected ${JSON.stringify(value)} to be defined`
+        `Expected ${stringify(value)} to be defined`
       )
     },
     toContain(item: unknown) {
@@ -106,7 +122,7 @@ function createMatchers(value: unknown, negated = false): Matchers {
       } else if (Array.isArray(value)) {
         assert(
           value.includes(item),
-          `Expected array to contain ${JSON.stringify(item)}`
+          `Expected array to contain ${stringify(item)}`
         )
       } else {
         throw new AssertionError('toContain requires string or array')
@@ -114,10 +130,7 @@ function createMatchers(value: unknown, negated = false): Matchers {
     },
     toHaveLength(length: number) {
       const actual = (value as { length: number }).length
-      assert(
-        actual === length,
-        `Expected length ${actual} to be ${length}`
-      )
+      assert(actual === length, `Expected length ${actual} to be ${length}`)
     },
     toMatch(pattern: RegExp) {
       assert(
@@ -126,10 +139,7 @@ function createMatchers(value: unknown, negated = false): Matchers {
       )
     },
     toBeGreaterThan(n: number) {
-      assert(
-        (value as number) > n,
-        `Expected ${value} to be greater than ${n}`
-      )
+      assert((value as number) > n, `Expected ${value} to be greater than ${n}`)
     },
     toBeLessThan(n: number) {
       assert((value as number) < n, `Expected ${value} to be less than ${n}`)
@@ -150,6 +160,48 @@ function createMatchers(value: unknown, negated = false): Matchers {
 
 export function expect(value: unknown): Matchers {
   return createMatchers(value)
+}
+
+/**
+ * Wait for a specified number of milliseconds
+ */
+export function waitMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/**
+ * Wait for an element matching the selector to appear in the preview
+ * @param preview - The preview element to search within
+ * @param selector - CSS selector to find
+ * @param timeout - Maximum time to wait in ms (default: 1000)
+ */
+export function waitFor(
+  preview: HTMLElement,
+  selector: string,
+  timeout = 1000
+): Promise<Element> {
+  return new Promise((resolve, reject) => {
+    const startTime = Date.now()
+
+    const check = () => {
+      const element = preview.querySelector(selector)
+      if (element) {
+        resolve(element)
+        return
+      }
+
+      if (Date.now() - startTime >= timeout) {
+        reject(
+          new Error(`Timeout waiting for "${selector}" after ${timeout}ms`)
+        )
+        return
+      }
+
+      requestAnimationFrame(check)
+    }
+
+    check()
+  })
 }
 
 export interface TestContext {
@@ -220,6 +272,9 @@ export async function runTests(
     expect: testContext.expect,
     test: testContext.test,
     describe: testContext.describe,
+    waitMs,
+    waitFor: (selector: string, timeout?: number) =>
+      waitFor(preview, selector, timeout),
   }
 
   try {
