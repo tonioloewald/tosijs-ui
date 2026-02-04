@@ -11218,7 +11218,7 @@ var tosiTagList = TosiTagList.elementCreator({
 });
 var xinTagList = ao((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.2.0";
+var version = "1.2.1";
 // src/theme.ts
 var defaultColors = {
   accent: d.fromCss("#EE257B"),
