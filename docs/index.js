@@ -18,22 +18,22 @@ __export(exports_module, {
   xin: () => X,
   warnDeprecated: () => K,
   version: () => mo,
-  vars: () => _n,
+  vars: () => hn,
   varDefault: () => Hn,
   validateAgainstConstraints: () => oo,
   updates: () => Jo,
   unobserve: () => R,
   touchElement: () => no,
-  touch: () => b,
+  touch: () => P,
   tosiValue: () => C,
   tosiSetValue: () => No,
   tosiPath: () => D,
   tosi: () => Fn,
-  throttle: () => yn,
+  throttle: () => Ln,
   svgElements: () => gn,
-  settings: () => e,
+  settings: () => b,
   onThemePreferencesChange: () => Df,
-  onStylesheetChange: () => Lf,
+  onStylesheetChange: () => xf,
   on: () => g,
   observe: () => cn,
   mathML: () => tn,
@@ -45,22 +45,22 @@ __export(exports_module, {
   getListItem: () => an,
   getListInstance: () => vn,
   getListBinding: () => Tn,
-  getCssVar: () => bn,
-  elements: () => L,
+  getCssVar: () => Pn,
+  elements: () => x,
   deprecated: () => On,
   deleteListItem: () => zf,
-  debounce: () => hn,
-  css: () => _,
+  debounce: () => en,
+  css: () => h,
   boxedProxy: () => Dn,
   boxed: () => t,
   blueprintLoader: () => Bf,
   blueprint: () => Sf,
-  bindings: () => Ln,
+  bindings: () => xn,
   bind: () => k,
   StyleSheet: () => sf,
   MoreMath: () => Mf,
   Component: () => j,
-  Color: () => x,
+  Color: () => y,
   BlueprintLoader: () => wo,
   Blueprint: () => $n
 });
@@ -93,13 +93,13 @@ var zn = "xinOn";
 var v = Symbol("list-binding");
 var rn = Symbol("list-instance");
 var Zn = new Map;
-function xo(n, o) {
+function yo(n, o) {
   let f = Zn.get(n);
   if (f === undefined)
     f = new Set, Zn.set(n, f);
   f.add(o);
 }
-function yo(n) {
+function Lo(n) {
   return Zn.get(n);
 }
 var Mo = new Set;
@@ -134,7 +134,7 @@ var go = On(D, "xinPath is deprecated. Use tosiPath instead.");
 var to = On(C, "xinValue is deprecated. Use tosiValue instead.");
 var V = new WeakMap;
 var z = new WeakMap;
-var h = (n) => {
+var e = (n) => {
   let o = n.cloneNode();
   if (o instanceof Element) {
     let f = z.get(n), i = V.get(n);
@@ -145,12 +145,12 @@ var h = (n) => {
   }
   for (let f of Array.from(n instanceof HTMLTemplateElement ? n.content.childNodes : n.childNodes))
     if (f instanceof Element || f instanceof DocumentFragment)
-      o.appendChild(h(f));
+      o.appendChild(e(f));
     else
       o.appendChild(f.cloneNode());
   return o;
 };
-var e = { debug: false, perf: false };
+var b = { debug: false, perf: false };
 var lo = (n) => {
   try {
     return JSON.stringify(n);
@@ -243,7 +243,7 @@ function Xo(n, o, f, i) {
       throw Error(`byIdPath insert failed at [${o}=${f}]`);
   return n[c];
 }
-function Lo(n) {
+function xo(n) {
   if (!Array.isArray(n))
     throw Un("setByPath failed: expected array, found", n);
 }
@@ -252,22 +252,22 @@ function To(n) {
     throw Un("setByPath failed: expected Object, found", n);
 }
 function q(n, o) {
-  let f = Ho(o), i = n, c, m, E, r;
+  let f = Ho(o), i = n, c, m, r, w;
   for (c = 0, m = f.length;i !== undefined && c < m; c++) {
-    let w = f[c];
-    if (Array.isArray(w))
-      for (E = 0, r = w.length;i !== undefined && E < r; E++) {
-        let M = w[E];
+    let E = f[c];
+    if (Array.isArray(E))
+      for (r = 0, w = E.length;i !== undefined && r < w; r++) {
+        let M = E[r];
         i = i[M];
       }
     else if (i.length === 0) {
-      if (i = i[Number(w.slice(1))], w[0] !== "=")
+      if (i = i[Number(E.slice(1))], E[0] !== "=")
         return;
-    } else if (w.includes("=")) {
-      let [M, ...y] = w.split("=");
-      i = Xo(i, M, y.join("="));
+    } else if (E.includes("=")) {
+      let [M, ...L] = E.split("=");
+      i = Xo(i, M, L.join("="));
     } else
-      E = parseInt(w, 10), i = i[E];
+      r = parseInt(E, 10), i = i[r];
   }
   return i;
 }
@@ -279,45 +279,45 @@ function Fo(n, o, f) {
   while (i != null && c.length > 0) {
     let m = c.shift();
     if (typeof m === "string") {
-      let E = m.indexOf("=");
-      if (E > -1) {
-        if (E === 0)
+      let r = m.indexOf("=");
+      if (r > -1) {
+        if (r === 0)
           To(i);
         else
-          Lo(i);
-        let r = m.slice(0, E), w = m.slice(E + 1);
-        if (i = Xo(i, r, w, c.length > 0 ? so : f), c.length === 0)
+          xo(i);
+        let w = m.slice(0, r), E = m.slice(r + 1);
+        if (i = Xo(i, w, E, c.length > 0 ? so : f), c.length === 0)
           return true;
       } else {
-        Lo(i);
-        let r = parseInt(m, 10);
+        xo(i);
+        let w = parseInt(m, 10);
         if (c.length > 0)
-          i = i[r];
+          i = i[w];
         else {
           if (f !== An) {
-            if (i[r] === f)
+            if (i[w] === f)
               return false;
-            i[r] = f;
+            i[w] = f;
           } else
-            i.splice(r, 1);
+            i.splice(w, 1);
           return true;
         }
       }
     } else if (Array.isArray(m) && m.length > 0) {
       To(i);
       while (m.length > 0) {
-        let E = m.shift();
+        let r = m.shift();
         if (m.length > 0 || c.length > 0)
-          i = mf(i, E, m.length > 0 ? {} : []);
+          i = mf(i, r, m.length > 0 ? {} : []);
         else {
           if (f !== An) {
-            if (i[E] === f)
+            if (i[r] === f)
               return false;
-            i[E] = f;
+            i[r] = f;
           } else {
-            if (!Object.prototype.hasOwnProperty.call(i, E))
+            if (!Object.prototype.hasOwnProperty.call(i, r))
               return false;
-            delete i[E];
+            delete i[r];
           }
           return true;
         }
@@ -334,14 +334,14 @@ var jn = false;
 var un;
 var Kn;
 function Yo(n, o, f, i) {
-  let c = yo(n);
+  let c = Lo(n);
   if (c === undefined)
     return [];
   let m = [];
-  for (let E of c) {
-    let r = q(f, E);
-    if (r !== undefined)
-      m.push(`${n}[${E}=${r}]${i}`);
+  for (let r of c) {
+    let w = q(f, r);
+    if (w !== undefined)
+      m.push(`${n}[${r}=${w}]${i}`);
   }
   return m;
 }
@@ -373,9 +373,10 @@ var Jo = async () => {
   await un;
 };
 var Ef = () => {
-  if (e.perf)
+  if (b.perf)
     console.time("xin async update");
   let n = Array.from(Mn);
+  Mn.length = 0, jn = false;
   for (let o of n)
     wn.filter((f) => {
       let i;
@@ -397,12 +398,12 @@ var Ef = () => {
       if (i === Do)
         R(f);
     });
-  if (Mn.splice(0), jn = false, typeof Kn === "function")
+  if (typeof Kn === "function")
     Kn();
-  if (e.perf)
+  if (b.perf)
     console.timeEnd("xin async update");
 };
-var b = (n) => {
+var P = (n) => {
   let o = typeof n === "string" ? n : D(n);
   if (o === undefined)
     throw console.error("touch was called on an invalid target", n), Error("touch was called on an invalid target");
@@ -428,7 +429,7 @@ var Rn = null;
 var Zo = (n) => {
   Rn = n;
 };
-var xn = () => {
+var yn = () => {
   if (Rn === null)
     throw Error("xin proxy not initialized");
   return Rn;
@@ -510,14 +511,14 @@ var Vn = (n, o, f = true) => {
       n.textContent = o;
     else if (Array.isArray(o))
       o.forEach((i) => {
-        n.append(i instanceof Node && f ? h(i) : i);
+        n.append(i instanceof Node && f ? e(i) : i);
       });
     else if (o instanceof Node)
-      n.append(f ? h(o) : o);
+      n.append(f ? e(o) : o);
     else
       throw Error("expect text content or document node");
 };
-var hn = (n, o = 250) => {
+var en = (n, o = 250) => {
   let f;
   return (...i) => {
     if (f !== undefined)
@@ -527,7 +528,7 @@ var hn = (n, o = 250) => {
     }, o);
   };
 };
-var yn = (n, o = 250) => {
+var Ln = (n, o = 250) => {
   let f, i = Date.now() - o, c = false;
   return (...m) => {
     if (clearTimeout(f), f = setTimeout(() => {
@@ -542,7 +543,7 @@ var yn = (n, o = 250) => {
     }
   };
 };
-var Ln = { value: { toDOM: Wo, fromDOM(n) {
+var xn = { value: { toDOM: Wo, fromDOM(n) {
   return zo(n);
 } }, text: { toDOM(n, o) {
   n.textContent = o;
@@ -558,7 +559,7 @@ function $(n) {
     return `-${o.toLocaleLowerCase()}`;
   });
 }
-function en(n) {
+function bn(n) {
   return n.replace(/-([a-z])/g, (o, f) => {
     return f.toLocaleUpperCase();
   });
@@ -574,16 +575,16 @@ function A(n, o, f, i = true) {
   return f * (o - n) + n;
 }
 var Mf = { RADIANS_TO_DEGREES: rf, DEGREES_TO_RADIANS: wf, clamp: G, lerp: A };
-function bn(n, o = document.body) {
+function Pn(n, o = document.body) {
   let f = getComputedStyle(o);
   if (n.endsWith(")") && n.startsWith("var("))
     n = n.slice(4, -1);
   return f.getPropertyValue(n).trim();
 }
-var xf = (n, o, f) => {
+var yf = (n, o, f) => {
   return (0.299 * n + 0.587 * o + 0.114 * f) / 255;
 };
-var P = (n) => ("00" + Math.round(Number(n)).toString(16)).slice(-2);
+var _ = (n) => ("00" + Math.round(Number(n)).toString(16)).slice(-2);
 
 class Oo {
   h;
@@ -597,27 +598,39 @@ class Oo {
 }
 var N = globalThis.document !== undefined ? globalThis.document.createElement("span") : undefined;
 
-class x {
+class y {
   r;
   g;
   b;
   a;
   static fromVar(n, o = document.body) {
-    return x.fromCss(bn(n, o));
+    return y.fromCss(Pn(n, o));
   }
   static fromCss(n) {
-    let o = n;
+    let o = n.match(/^#([0-9a-fA-F]+)$/);
+    if (o) {
+      let E = o[1];
+      if (E.length === 3)
+        return new y(parseInt(E[0] + E[0], 16), parseInt(E[1] + E[1], 16), parseInt(E[2] + E[2], 16));
+      if (E.length === 4)
+        return new y(parseInt(E[0] + E[0], 16), parseInt(E[1] + E[1], 16), parseInt(E[2] + E[2], 16), parseInt(E[3] + E[3], 16) / 255);
+      if (E.length === 6)
+        return new y(parseInt(E.slice(0, 2), 16), parseInt(E.slice(2, 4), 16), parseInt(E.slice(4, 6), 16));
+      if (E.length === 8)
+        return new y(parseInt(E.slice(0, 2), 16), parseInt(E.slice(2, 4), 16), parseInt(E.slice(4, 6), 16), parseInt(E.slice(6, 8), 16) / 255);
+    }
+    let f = n;
     if (N instanceof HTMLSpanElement)
-      N.style.color = "black", N.style.color = n, document.body.appendChild(N), o = getComputedStyle(N).color, N.remove();
-    let [f, i, c, m] = o.match(/[\d.]+/g) || ["0", "0", "0", "0"], E = o.startsWith("color(srgb") ? 255 : 1;
-    return new x(Number(f) * E, Number(i) * E, Number(c) * E, m == null ? 1 : Number(m));
+      N.style.color = "black", N.style.color = n, document.body.appendChild(N), f = getComputedStyle(N).color, N.remove();
+    let [i, c, m, r] = f.match(/[\d.]+/g) || ["0", "0", "0", "0"], w = f.startsWith("color(srgb") ? 255 : 1;
+    return new y(Number(i) * w, Number(c) * w, Number(m) * w, r == null ? 1 : Number(r));
   }
   static fromHsl(n, o, f, i = 1) {
-    let c, m, E;
+    let c, m, r;
     if (o === 0)
-      c = m = E = f;
+      c = m = r = f;
     else {
-      let w = (F, Y, s) => {
+      let E = (F, Y, s) => {
         if (s < 0)
           s += 1;
         if (s > 1)
@@ -629,29 +642,29 @@ class x {
         if (s < 0.6666666666666666)
           return F + (Y - F) * (0.6666666666666666 - s) * 6;
         return F;
-      }, M = f < 0.5 ? f * (1 + o) : f + o - f * o, y = 2 * f - M, T = (n % 360 + 360) % 360 / 360;
-      c = w(y, M, T + 0.3333333333333333), m = w(y, M, T), E = w(y, M, T - 0.3333333333333333);
+      }, M = f < 0.5 ? f * (1 + o) : f + o - f * o, L = 2 * f - M, T = (n % 360 + 360) % 360 / 360;
+      c = E(L, M, T + 0.3333333333333333), m = E(L, M, T), r = E(L, M, T - 0.3333333333333333);
     }
-    let r = new x(c * 255, m * 255, E * 255, i);
-    return r.hslCached = { h: (n % 360 + 360) % 360, s: o, l: f }, r;
+    let w = new y(c * 255, m * 255, r * 255, i);
+    return w.hslCached = { h: (n % 360 + 360) % 360, s: o, l: f }, w;
   }
-  static black = new x(0, 0, 0);
-  static white = new x(255, 255, 255);
+  static black = new y(0, 0, 0);
+  static white = new y(255, 255, 255);
   constructor(n, o, f, i = 1) {
     this.r = G(0, n, 255), this.g = G(0, o, 255), this.b = G(0, f, 255), this.a = G(0, i, 1);
   }
   get inverse() {
-    return new x(255 - this.r, 255 - this.g, 255 - this.b, this.a);
+    return new y(255 - this.r, 255 - this.g, 255 - this.b, this.a);
   }
   get inverseLuminance() {
     let { h: n, s: o, l: f } = this._hsl;
-    return x.fromHsl(n, o, 1 - f, this.a);
+    return y.fromHsl(n, o, 1 - f, this.a);
   }
   get opaque() {
-    return this.a === 1 ? this : new x(this.r, this.g, this.b, 1);
+    return this.a === 1 ? this : new y(this.r, this.g, this.b, 1);
   }
   contrasting(n = 1) {
-    return this.opaque.blend(this.brightness > 0.5 ? x.black : x.white, n);
+    return this.opaque.blend(this.brightness > 0.5 ? y.black : y.white, n);
   }
   get rgb() {
     let { r: n, g: o, b: f } = this;
@@ -683,46 +696,46 @@ class x {
   }
   get mono() {
     let n = this.brightness * 255;
-    return new x(n, n, n);
+    return new y(n, n, n);
   }
   get brightness() {
-    return xf(this.r, this.g, this.b);
+    return yf(this.r, this.g, this.b);
   }
   get html() {
     return this.toString();
   }
   toString() {
-    return this.a === 1 ? "#" + P(this.r) + P(this.g) + P(this.b) : "#" + P(this.r) + P(this.g) + P(this.b) + P(Math.floor(255 * this.a));
+    return this.a === 1 ? "#" + _(this.r) + _(this.g) + _(this.b) : "#" + _(this.r) + _(this.g) + _(this.b) + _(Math.floor(255 * this.a));
   }
   brighten(n) {
     let { h: o, s: f, l: i } = this._hsl, c = G(0, i + n * (1 - i), 1);
-    return x.fromHsl(o, f, c, this.a);
+    return y.fromHsl(o, f, c, this.a);
   }
   darken(n) {
     let { h: o, s: f, l: i } = this._hsl, c = G(0, i * (1 - n), 1);
-    return x.fromHsl(o, f, c, this.a);
+    return y.fromHsl(o, f, c, this.a);
   }
   saturate(n) {
     let { h: o, s: f, l: i } = this._hsl, c = G(0, f + n * (1 - f), 1);
-    return x.fromHsl(o, c, i, this.a);
+    return y.fromHsl(o, c, i, this.a);
   }
   desaturate(n) {
     let { h: o, s: f, l: i } = this._hsl, c = G(0, f * (1 - n), 1);
-    return x.fromHsl(o, c, i, this.a);
+    return y.fromHsl(o, c, i, this.a);
   }
   rotate(n) {
     let { h: o, s: f, l: i } = this._hsl, c = (o + 360 + n) % 360;
-    return x.fromHsl(c, f, i, this.a);
+    return y.fromHsl(c, f, i, this.a);
   }
   opacity(n) {
     let { h: o, s: f, l: i } = this._hsl;
-    return x.fromHsl(o, f, i, n);
+    return y.fromHsl(o, f, i, n);
   }
   swatch() {
     return console.log(`%c      %c ${this.html}, ${this.rgba}`, `background-color: ${this.html}`, "background-color: transparent"), this;
   }
   blend(n, o) {
-    return new x(A(this.r, n.r, o), A(this.g, n.g, o), A(this.b, n.b, o), A(this.a, n.a, o));
+    return new y(A(this.r, n.r, o), A(this.g, n.g, o), A(this.b, n.b, o), A(this.a, n.a, o));
   }
   static blendHue(n, o, f) {
     let i = (o - n + 720) % 360;
@@ -733,86 +746,86 @@ class x {
   }
   mix(n, o) {
     let f = this._hsl, i = n._hsl;
-    return x.fromHsl(f.s === 0 ? i.h : i.s === 0 ? f.h : x.blendHue(f.h, i.h, o), A(f.s, i.s, o), A(f.l, i.l, o), A(this.a, n.a, o));
+    return y.fromHsl(f.s === 0 ? i.h : i.s === 0 ? f.h : y.blendHue(f.h, i.h, o), A(f.s, i.s, o), A(f.l, i.l, o), A(this.a, n.a, o));
   }
   colorMix(n, o) {
-    return x.fromCss(`color-mix(in hsl, ${this.html}, ${n.html} ${(o * 100).toFixed(0)}%)`);
+    return y.fromCss(`color-mix(in hsl, ${this.html}, ${n.html} ${(o * 100).toFixed(0)}%)`);
   }
   static computedColorStylesheet = null;
   static computedColors = new Map;
   static recomputeQueued = false;
   static registerComputedColor(n, o, f, i) {
-    if (!x.computedColors.has(n))
-      x.computedColors.set(n, { varName: o, scale: f, method: i }), x.queueRecompute();
+    if (!y.computedColors.has(n))
+      y.computedColors.set(n, { varName: o, scale: f, method: i }), y.queueRecompute();
   }
   static queueRecompute() {
-    if (x.recomputeQueued)
+    if (y.recomputeQueued)
       return;
-    x.recomputeQueued = true, queueMicrotask(() => {
-      x.recomputeQueued = false, x.recomputeColors();
+    y.recomputeQueued = true, queueMicrotask(() => {
+      y.recomputeQueued = false, y.recomputeColors();
     });
   }
   static recomputeColors() {
-    if (x.computedColors.size === 0)
+    if (y.computedColors.size === 0)
       return;
     let n = [];
-    for (let [f, { varName: i, scale: c, method: m }] of x.computedColors)
+    for (let [f, { varName: i, scale: c, method: m }] of y.computedColors)
       try {
-        let E = x.fromVar(i), r;
+        let r = y.fromVar(i), w;
         switch (m) {
           case "b":
-            r = c > 0 ? E.brighten(c) : E.darken(-c);
+            w = c > 0 ? r.brighten(c) : r.darken(-c);
             break;
           case "s":
-            r = c > 0 ? E.saturate(c) : E.desaturate(-c);
+            w = c > 0 ? r.saturate(c) : r.desaturate(-c);
             break;
           case "h":
-            r = E.rotate(c * 100);
+            w = r.rotate(c * 100);
             break;
           case "o":
-            r = E.opacity(c);
+            w = r.opacity(c);
             break;
           default:
             continue;
         }
-        n.push(`  ${f}: ${r.rgba};`);
-      } catch (E) {}
+        n.push(`  ${f}: ${w.rgba};`);
+      } catch (r) {}
     if (n.length === 0)
       return;
     let o = `:root {
 ${n.join(`
 `)}
 }`;
-    if (x.computedColorStylesheet === null)
-      x.computedColorStylesheet = document.createElement("style"), x.computedColorStylesheet.id = "tosijs-computed-colors", document.head.append(x.computedColorStylesheet);
-    x.computedColorStylesheet.textContent = o;
+    if (y.computedColorStylesheet === null)
+      y.computedColorStylesheet = document.createElement("style"), y.computedColorStylesheet.id = "tosijs-computed-colors", document.head.append(y.computedColorStylesheet);
+    y.computedColorStylesheet.textContent = o;
   }
 }
 var sn = new Set;
 var Uo = false;
-function yf() {
+function Lf() {
   if (!Uo)
-    Uo = true, sn.add(() => x.queueRecompute());
+    Uo = true, sn.add(() => y.queueRecompute());
 }
-function Lf(n) {
+function xf(n) {
   return sn.add(n), () => sn.delete(n);
 }
 function Tf() {
-  yf();
+  Lf();
   for (let n of sn)
     n();
 }
 function sf(n, o) {
-  let f = C(o), i = L.style(_(f));
+  let f = C(o), i = x.style(h(f));
   i.id = n, document.head.append(i);
   let c = D(o);
   if (c !== undefined)
     cn(c, () => {
-      i.textContent = _(C(o)), Tf();
+      i.textContent = h(C(o)), Tf();
     });
 }
 var Hf = /^(animation-iteration-count|column-count|flex(-grow|-shrink)?|font-weight|line-height|opacity|order|orphans|scale|tab-size|widows|z-index|zoom)$/;
-var Pn = (n, o) => {
+var _n = (n, o) => {
   if (typeof o === "number" && !Hf.test(n))
     o = `${o}px`;
   if (n.startsWith("_"))
@@ -825,14 +838,14 @@ var Pn = (n, o) => {
 var Cf = (n, o, f) => {
   if (f === undefined)
     return "";
-  if (f instanceof x)
+  if (f instanceof y)
     f = f.html;
-  let i = Pn(o, f);
+  let i = _n(o, f);
   return `${n}  ${i.prop}: ${i.value};`;
 };
 var qo = (n, o, f = "") => {
   let i = $(n);
-  if (typeof o === "object" && !(o instanceof x)) {
+  if (typeof o === "object" && !(o instanceof y)) {
     let c = Object.keys(o).map((m) => qo(m, o[m], `${f}  `)).join(`
 `);
     return `${f}  ${n} {
@@ -841,7 +854,7 @@ ${f}  }`;
   } else
     return Cf(f, i, o);
 };
-var _ = (n, o = "") => {
+var h = (n, o = "") => {
   return Object.keys(n).map((i) => {
     let c = n[i];
     if (typeof c === "string") {
@@ -849,7 +862,7 @@ var _ = (n, o = "") => {
         return `@import url('${c}');`;
       throw Error("top-level string value only allowed for `@import`");
     }
-    let m = Object.keys(c).map((E) => qo(E, c[E])).join(`
+    let m = Object.keys(c).map((r) => qo(r, c[r])).join(`
 `);
     return `${o}${i} {
 ${m}
@@ -871,10 +884,10 @@ var Ff = (n) => {
   let o = {};
   for (let f of Object.keys(n)) {
     let i = n[f];
-    if (i instanceof x)
+    if (i instanceof y)
       o[f] = i.inverseLuminance;
     else if (typeof i === "string" && i.match(/^(#[0-9a-fA-F]{3}|rgba?\(|hsla?\()/))
-      o[f] = x.fromCss(i).inverseLuminance;
+      o[f] = y.fromCss(i).inverseLuminance;
   }
   return o;
 };
@@ -885,32 +898,32 @@ var Hn = new Proxy({}, { get(n, o) {
   }
   return n[o];
 } });
-var _n = new Proxy({}, { get(n, o) {
+var hn = new Proxy({}, { get(n, o) {
   if (o === "default")
     return Hn;
   if (n[o] == null) {
     o = $(o);
-    let [, f, , i, c, m] = o.match(/^([-\w]*?)((_)?(\d+)(\w?))?$/) || ["", o], E = `--${f}`;
+    let [, f, , i, c, m] = o.match(/^([-\w]*?)((_)?(\d+)(\w?))?$/) || ["", o], r = `--${f}`;
     if (c != null) {
-      let r = i == null ? Number(c) / 100 : -Number(c) / 100;
+      let w = i == null ? Number(c) / 100 : -Number(c) / 100;
       switch (m) {
         case "b":
         case "s":
         case "h":
         case "o":
           {
-            let w = `--${o}`;
-            x.registerComputedColor(w, E, r, m), n[o] = `var(${w})`;
+            let E = `--${o}`;
+            y.registerComputedColor(E, r, w, m), n[o] = `var(${E})`;
           }
           break;
         case "":
-          n[o] = `calc(var(${E}) * ${r})`;
+          n[o] = `calc(var(${r}) * ${w})`;
           break;
         default:
-          throw console.error(m), Error(`Unrecognized method ${m} for css variable ${E}`);
+          throw console.error(m), Error(`Unrecognized method ${m} for css variable ${r}`);
       }
     } else
-      n[o] = `var(${E})`;
+      n[o] = `var(${r})`;
   }
   return n[o];
 } });
@@ -933,7 +946,7 @@ var jo = "http://www.w3.org/1998/Math/MathML";
 var uo = "http://www.w3.org/2000/svg";
 var Cn = {};
 var Ko = (n, o, f) => {
-  let i = Pn($(o), f);
+  let i = _n($(o), f);
   if (i.prop.startsWith("--"))
     n.style.setProperty(i.prop, i.value);
   else
@@ -962,14 +975,14 @@ var Ro = (n, o, f) => {
       else
         n.setAttribute(i, f);
     else if (n[o] !== undefined) {
-      let { MathMLElement: E } = globalThis;
-      if (n instanceof SVGElement || E !== undefined && n instanceof E)
+      let { MathMLElement: r } = globalThis;
+      if (n instanceof SVGElement || r !== undefined && n instanceof r)
         n.setAttribute(o, f);
       else
         n[o] = f;
     } else if (i === "class")
-      f.split(" ").forEach((E) => {
-        n.classList.add(E);
+      f.split(" ").forEach((r) => {
+        n.classList.add(r);
       });
     else if (n[i] !== undefined)
       n[i] = f;
@@ -991,12 +1004,12 @@ var Jf = (n, o, f) => {
     let i = o.substring(2).toLowerCase();
     g(n, i, f);
   } else if (o === "bind")
-    if ((typeof f.binding === "string" ? Ln[f.binding] : f.binding) !== undefined && f.value !== undefined)
+    if ((typeof f.binding === "string" ? xn[f.binding] : f.binding) !== undefined && f.value !== undefined)
       k(n, f.value, f.binding instanceof Function ? { toDOM: f.binding } : f.binding);
     else
       throw Error("bad binding");
   else if (o.match(/^bind[A-Z]/) != null) {
-    let i = o.substring(4, 5).toLowerCase() + o.substring(5), c = Ln[i];
+    let i = o.substring(4, 5).toLowerCase() + o.substring(5), c = xn[i];
     if (c !== undefined)
       k(n, f, c);
     else
@@ -1022,7 +1035,7 @@ var pn = (n, ...o) => {
       else
         f.append(c);
     else if (D(c))
-      f.append(L.span({ bindText: c }));
+      f.append(x.span({ bindText: c }));
     else
       Object.assign(i, c);
   for (let c of Object.keys(i)) {
@@ -1037,7 +1050,7 @@ var Nn = (...n) => {
     o.append(f);
   return o;
 };
-var L = new Proxy({ fragment: Nn }, { get(n, o) {
+var x = new Proxy({ fragment: Nn }, { get(n, o) {
   if (o = o.replace(/[A-Z]/g, (f) => `-${f.toLocaleLowerCase()}`), n[o] === undefined)
     n[o] = (...f) => pn(o, ...f);
   return n[o];
@@ -1087,77 +1100,77 @@ var Bo = (n) => {
 };
 var I = (n, o) => ({ get(f, i) {
   if (Bo(f)) {
-    let r = () => q(a, n);
+    let w = () => q(a, n);
     switch (i) {
       case "path":
         return n;
       case "value":
-        return r();
+        return w();
       case "valueOf":
       case "toJSON":
-        return () => r();
+        return () => w();
       case Symbol.toPrimitive:
-        return (w) => {
-          let M = r();
-          if (w === "number")
+        return (E) => {
+          let M = w();
+          if (E === "number")
             return Number(M);
-          if (w === "string")
+          if (E === "string")
             return String(M);
           return M;
         };
       case "toString":
-        return () => String(r());
+        return () => String(w());
       case "observe":
-        return (w) => {
-          let M = S(n, w);
+        return (E) => {
+          let M = S(n, E);
           return () => R(M);
         };
       case "on":
-        return (w, M) => on()(w, M, r());
+        return (E, M) => on()(E, M, w());
       case "bind":
-        return (w, M, y) => {
-          nn()(w, n, M, y);
+        return (E, M, L) => {
+          nn()(E, n, M, L);
         };
       case "binding":
-        return (w) => ({ bind: { value: n, binding: w } });
+        return (E) => ({ bind: { value: n, binding: E } });
       case "listBinding":
-        return (w = ({ span: y }) => y({ bindText: "^" }), M = {}) => [{ bindList: { value: n, ...M } }, L.template(w(L, Xn()))];
+        return (E = ({ span: L }) => L({ bindText: "^" }), M = {}) => [{ bindList: { value: n, ...M } }, x.template(E(x, Xn()))];
       case O:
       case "xinValue":
       case "tosiValue":
-        return p(), r();
+        return p(), w();
       case J:
       case "xinPath":
       case "tosiPath":
         return p(), n;
       case kn:
       case "tosiObserve":
-        return p(), (w) => {
-          let M = S(n, w);
+        return p(), (E) => {
+          let M = S(n, E);
           return () => R(M);
         };
       case zn:
       case "tosiOn":
-        return p(), (w, M) => on()(w, M, r());
+        return p(), (E, M) => on()(E, M, w());
       case Wn:
       case "tosiBind":
-        return p(), (w, M, y) => {
-          nn()(w, n, M, y);
+        return p(), (E, M, L) => {
+          nn()(E, n, M, L);
         };
       case "tosiBinding":
-        return p(), (w) => ({ bind: { value: n, binding: w } });
+        return p(), (E) => ({ bind: { value: n, binding: E } });
       case "tosiListBinding":
-        return p(), (w = ({ span: y }) => y({ bindText: "^" }), M = {}) => [{ bindList: { value: n, ...M } }, L.template(w(L, Xn()))];
+        return p(), (E = ({ span: L }) => L({ bindText: "^" }), M = {}) => [{ bindList: { value: n, ...M } }, x.template(E(x, Xn()))];
     }
     if (typeof i === "string" && /^\d+$/.test(i)) {
-      let w = r();
-      if (typeof w === "string")
-        return w[parseInt(i, 10)];
+      let E = w();
+      if (typeof E === "string")
+        return E[parseInt(i, 10)];
     }
     if (i === "length") {
-      let w = r();
-      if (typeof w === "string")
-        return w.length;
+      let E = w();
+      if (typeof E === "string")
+        return E.length;
     }
     return;
   }
@@ -1171,20 +1184,20 @@ var I = (n, o) => ({ get(f, i) {
       case "toJSON":
         return () => f.valueOf ? f.valueOf() : f;
       case "observe":
-        return (r) => {
-          let w = S(n, r);
-          return () => R(w);
+        return (w) => {
+          let E = S(n, w);
+          return () => R(E);
         };
       case "on":
-        return (r, w) => on()(r, w, C(f));
+        return (w, E) => on()(w, E, C(f));
       case "bind":
-        return (r, w, M) => {
-          nn()(r, n, w, M);
+        return (w, E, M) => {
+          nn()(w, n, E, M);
         };
       case "binding":
-        return (r) => ({ bind: { value: n, binding: r } });
+        return (w) => ({ bind: { value: n, binding: w } });
       case "listBinding":
-        return (r = ({ span: M }) => M({ bindText: "^" }), w = {}) => [{ bindList: { value: n, ...w } }, L.template(r(L, Xn()))];
+        return (w = ({ span: M }) => M({ bindText: "^" }), E = {}) => [{ bindList: { value: n, ...E } }, x.template(w(x, Xn()))];
     }
   switch (i) {
     case J:
@@ -1198,78 +1211,78 @@ var I = (n, o) => ({ get(f, i) {
     case kn:
     case "xinObserve":
     case "tosiObserve":
-      return (r) => {
-        let w = S(n, r);
-        return () => R(w);
+      return (w) => {
+        let E = S(n, w);
+        return () => R(E);
       };
     case zn:
     case "xinOn":
     case "tosiOn":
-      return (r, w) => on()(r, w, C(f));
+      return (w, E) => on()(w, E, C(f));
     case Wn:
     case "xinBind":
     case "tosiBind":
-      return (r, w, M) => {
-        nn()(r, n, w, M);
+      return (w, E, M) => {
+        nn()(w, n, E, M);
       };
     case "tosiBinding":
-      return (r) => ({ bind: { value: n, binding: r } });
+      return (w) => ({ bind: { value: n, binding: w } });
     case "tosiListBinding":
-      return (r = ({ span: M }) => M({ bindText: "^" }), w = {}) => [{ bindList: { value: n, ...w } }, L.template(r(L, Xn()))];
+      return (w = ({ span: M }) => M({ bindText: "^" }), E = {}) => [{ bindList: { value: n, ...E } }, x.template(w(x, Xn()))];
   }
   if (typeof i === "symbol")
     return f[i];
   let c = Object.getOwnPropertyDescriptor(f, i);
   if (c && !c.configurable && !c.writable && "value" in c)
     return c.value;
-  let m = i, E = m.match(/^([^.[]+)\.(.+)$/) ?? m.match(/^([^\]]+)(\[.+)/) ?? m.match(/^(\[[^\]]+\])\.(.+)$/) ?? m.match(/^(\[[^\]]+\])\[(.+)$/);
-  if (E !== null) {
-    let [, r, w] = E, M = B(n, r), y = q(f, r);
-    return y !== null && typeof y === "object" ? new Proxy(y, I(M, o))[w] : y;
+  let m = i, r = m.match(/^([^.[]+)\.(.+)$/) ?? m.match(/^([^\]]+)(\[.+)/) ?? m.match(/^(\[[^\]]+\])\.(.+)$/) ?? m.match(/^(\[[^\]]+\])\[(.+)$/);
+  if (r !== null) {
+    let [, w, E] = r, M = B(n, w), L = q(f, w);
+    return L !== null && typeof L === "object" ? new Proxy(L, I(M, o))[E] : L;
   }
   if (m.startsWith("[") && m.endsWith("]"))
     m = m.substring(1, m.length - 1);
   if (!Array.isArray(f) && f[m] !== undefined || Array.isArray(f) && m.includes("=")) {
-    let r;
+    let w;
     if (m.includes("=")) {
-      let [w, M] = m.split("=");
-      r = f.find((y) => `${q(y, w)}` === M);
+      let [E, M] = m.split("=");
+      w = f.find((L) => `${q(L, E)}` === M);
     } else
-      r = f[m];
-    if (r instanceof Object) {
-      let w = B(n, m);
-      return new Proxy(r instanceof Function ? r.bind(f) : r, I(w, o));
+      w = f[m];
+    if (w instanceof Object) {
+      let E = B(n, m);
+      return new Proxy(w instanceof Function ? w.bind(f) : w, I(E, o));
     } else
-      return o ? ln(r, B(n, m)) : r;
+      return o ? ln(w, B(n, m)) : w;
   } else if (Array.isArray(f)) {
-    let r = f[m];
-    return typeof r === "function" ? (...w) => {
-      let M = w.map((T) => C(T)), y = r.apply(f, M);
+    let w = f[m];
+    return typeof w === "function" ? (...E) => {
+      let M = E.map((T) => C(T)), L = w.apply(f, M);
       if (Zf.includes(m))
-        b(n);
-      if (y != null && typeof y === "object") {
+        P(n);
+      if (L != null && typeof L === "object") {
         if (m === "find" || m === "findLast" || m === "at") {
-          let T = f.indexOf(y);
+          let T = f.indexOf(L);
           if (T !== -1)
-            return new Proxy(y, I(B(n, String(T)), o));
+            return new Proxy(L, I(B(n, String(T)), o));
         }
       }
-      return y;
-    } : typeof r === "object" ? new Proxy(r, I(B(n, m), o)) : o ? ln(r, B(n, m)) : r;
+      return L;
+    } : typeof w === "object" ? new Proxy(w, I(B(n, m), o)) : o ? ln(w, B(n, m)) : w;
   } else
     return o ? ln(f[m], B(n, m)) : f[m];
 }, set(f, i, c) {
   c = C(c);
-  let m = i === O || i === "xinValue" || i === "tosiValue" || i === "value" && (Bo(f) || o), E = m ? n : B(n, i);
-  if (df && !Qf(E))
-    throw Error(`setting invalid path ${E}`);
-  if (C(X[E]) !== c && Fo(a, E, c)) {
-    b(E);
-    let w = n.match(/^(.+)\[(\d+)\]$/);
-    if (w !== null) {
-      let [, M, y] = w, T = parseInt(y, 10), F = m ? "" : `.${i}`, Y = Yo(M, T, f, F);
+  let m = i === O || i === "xinValue" || i === "tosiValue" || i === "value" && (Bo(f) || o), r = m ? n : B(n, i);
+  if (df && !Qf(r))
+    throw Error(`setting invalid path ${r}`);
+  if (C(X[r]) !== c && Fo(a, r, c)) {
+    P(r);
+    let E = n.match(/^(.+)\[(\d+)\]$/);
+    if (E !== null) {
+      let [, M, L] = E, T = parseInt(L, 10), F = m ? "" : `.${i}`, Y = Yo(M, T, f, F);
       for (let s of Y)
-        b(s);
+        P(s);
     }
   }
   return true;
@@ -1300,7 +1313,7 @@ function Vo(n, o) {
   }
 }
 
-class ho {
+class eo {
   boundElement;
   listTop;
   listBottom;
@@ -1315,7 +1328,7 @@ class ho {
     if (this.boundElement = n, this.itemToElement = new WeakMap, f.idPath != null) {
       let i = D(o);
       if (i != null)
-        xo(i, f.idPath);
+        yo(i, f.idPath);
     }
     if (n.children.length !== 1)
       throw Error("ListBinding expects an element with exactly one child element");
@@ -1323,11 +1336,11 @@ class ho {
       let i = n.children[0];
       if (i.content.children.length !== 1)
         throw Error("ListBinding expects a template with exactly one child element");
-      this.template = h(i.content.children[0]);
+      this.template = e(i.content.children[0]);
     } else
       this.template = n.children[0], this.template.remove();
     if (this.options = f, this.listTop = document.createElement("div"), this.listBottom = document.createElement("div"), this.listTop.classList.add("virtual-list-padding"), this.listBottom.classList.add("virtual-list-padding"), this.boundElement.append(this.listTop), this.boundElement.append(this.listBottom), f.virtual != null)
-      if (fn.observe(this.boundElement), this._update = yn(() => {
+      if (fn.observe(this.boundElement), this._update = Ln(() => {
         this.update(this.array, true);
       }, kf), this.boundElement.addEventListener("resize", this._update), f.virtual.scrollContainer === "window")
         window.addEventListener("scroll", this._update), window.addEventListener("resize", this._update);
@@ -1337,31 +1350,31 @@ class ho {
   visibleSlice() {
     let { virtual: n, hiddenProp: o, visibleProp: f } = this.options, i = this.array;
     if (o !== undefined)
-      i = i.filter((w) => w[o] !== true);
+      i = i.filter((E) => E[o] !== true);
     if (f !== undefined)
-      i = i.filter((w) => w[f] === true);
+      i = i.filter((E) => E[f] === true);
     if (this.options.filter && this.needle !== undefined)
       i = this.options.filter(i, this.needle);
-    let c = 0, m = i.length - 1, E = 0, r = 0;
+    let c = 0, m = i.length - 1, r = 0, w = 0;
     if (n != null && this.boundElement instanceof HTMLElement) {
-      let w = this.boundElement.offsetWidth, M = n.scrollContainer === "window", y, T;
+      let E = this.boundElement.offsetWidth, M = n.scrollContainer === "window", L, T;
       if (M) {
-        y = window.innerHeight;
+        L = window.innerHeight;
         let H = this.boundElement.getBoundingClientRect();
         T = Math.max(0, -H.top);
       } else
-        y = this.boundElement.offsetHeight, T = this.boundElement.scrollTop;
-      let F = n.width != null ? Math.max(1, Math.floor(w / n.width)) : n.visibleColumns ?? 1, Y = Math.ceil(y / n.height) + (n.rowChunkSize || 1), s = Math.ceil(i.length / F), l = F * Y, Z = Math.floor(T / n.height);
+        L = this.boundElement.offsetHeight, T = this.boundElement.scrollTop;
+      let F = n.width != null ? Math.max(1, Math.floor(E / n.width)) : n.visibleColumns ?? 1, Y = Math.ceil(L / n.height) + (n.rowChunkSize || 1), s = Math.ceil(i.length / F), l = F * Y, Z = Math.floor(T / n.height);
       if (Z > s - Y + 1)
         Z = Math.max(0, s - Y + 1);
       if (n.rowChunkSize)
         Z -= Z % n.rowChunkSize;
-      c = Z * F, m = c + l - 1, E = Z * n.height, r = Math.max((s - Y) * n.height - E, 0);
+      c = Z * F, m = c + l - 1, r = Z * n.height, w = Math.max((s - Y) * n.height - r, 0);
     }
-    return { items: i, firstItem: c, lastItem: m, topBuffer: E, bottomBuffer: r };
+    return { items: i, firstItem: c, lastItem: m, topBuffer: r, bottomBuffer: w };
   }
   needle;
-  filter = yn((n) => {
+  filter = Ln((n) => {
     if (this.needle !== n)
       this.needle = n, this.update(this.array);
   }, Wf);
@@ -1371,8 +1384,8 @@ class ho {
     this.array = n;
     let { hiddenProp: f, visibleProp: i } = this.options, c = D(n), m = this.visibleSlice();
     this.boundElement.classList.toggle("-xin-empty-list", m.items.length === 0);
-    let E = this._previousSlice, { firstItem: r, lastItem: w, topBuffer: M, bottomBuffer: y } = m;
-    if (f === undefined && i === undefined && o === true && E != null && r === E.firstItem && w === E.lastItem && M === E.topBuffer && y === E.bottomBuffer)
+    let r = this._previousSlice, { firstItem: w, lastItem: E, topBuffer: M, bottomBuffer: L } = m;
+    if (f === undefined && i === undefined && o === true && r != null && w === r.firstItem && E === r.lastItem && M === r.topBuffer && L === r.bottomBuffer)
       return;
     this._previousSlice = m;
     let T = 0, F = 0, Y = 0;
@@ -1384,19 +1397,19 @@ class ho {
         H.remove();
       else {
         let d = m.items.indexOf(Q);
-        if (d < r || d > w)
+        if (d < w || d > E)
           H.remove(), this.itemToElement.delete(Q), T++;
       }
     }
-    this.listTop.style.height = String(M) + "px", this.listBottom.style.height = String(y) + "px";
+    this.listTop.style.height = String(M) + "px", this.listBottom.style.height = String(L) + "px";
     let s = [], { idPath: l } = this.options;
-    for (let H = r;H <= w; H++) {
+    for (let H = w;H <= E; H++) {
       let Q = m.items[H];
       if (Q === undefined)
         continue;
       let d = this.itemToElement.get(C(Q));
       if (d == null) {
-        if (Y++, d = h(this.template), typeof Q === "object")
+        if (Y++, d = e(this.template), typeof Q === "object")
           this.itemToElement.set(C(Q), d), d[rn] = C(Q);
         if (this.boundElement.insertBefore(d, this.listBottom), l != null) {
           let Jn = Q[l], po = `${c}[${l}=${Jn}]`;
@@ -1417,14 +1430,14 @@ class ho {
           this.boundElement.insertBefore(H, this.listBottom);
       Z = H;
     }
-    if (e.perf)
+    if (b.perf)
       console.log(c, "updated", { removed: T, created: Y, moved: F });
   }
 }
 var Tn = (n, o, f) => {
   let i = n[v];
   if (o && i === undefined)
-    i = new ho(n, o, f), n[v] = i;
+    i = new eo(n, o, f), n[v] = i;
   return i;
 };
 var vn = (n) => {
@@ -1449,28 +1462,28 @@ var zf = (n) => {
     return f.array.splice(i, 1), true;
   return false;
 };
-var { document: mn, MutationObserver: eo } = globalThis;
+var { document: mn, MutationObserver: bo } = globalThis;
 var no = (n, o) => {
   let f = z.get(n);
   if (f == null)
     return;
   for (let i of f) {
-    let { binding: c, options: m } = i, { path: E } = i, { toDOM: r } = c;
-    if (r != null) {
-      if (E.startsWith("^")) {
-        let w = an(n);
-        if (w != null && w[J] != null)
-          E = i.path = `${w[J]}${E.substring(1)}`;
+    let { binding: c, options: m } = i, { path: r } = i, { toDOM: w } = c;
+    if (w != null) {
+      if (r.startsWith("^")) {
+        let E = an(n);
+        if (E != null && E[J] != null)
+          r = i.path = `${E[J]}${r.substring(1)}`;
         else
-          throw console.error(`Cannot resolve relative binding ${E}`, n, "is not part of a list"), Error(`Cannot resolve relative binding ${E}`);
+          throw console.error(`Cannot resolve relative binding ${r}`, n, "is not part of a list"), Error(`Cannot resolve relative binding ${r}`);
       }
-      if (o == null || E.startsWith(o))
-        r(n, xn()[E], m);
+      if (o == null || r.startsWith(o))
+        w(n, yn()[r], m);
     }
   }
 };
-if (eo != null)
-  new eo((o) => {
+if (bo != null)
+  new bo((o) => {
     o.forEach((f) => {
       Array.from(f.addedNodes).forEach((i) => {
         if (i instanceof Element)
@@ -1483,27 +1496,27 @@ S(() => true, (n) => {
   for (let f of o)
     no(f, n);
 });
-var bo = (n) => {
+var Po = (n) => {
   let o = n.target?.closest(u);
   while (o != null) {
     let f = z.get(o);
     for (let i of f) {
-      let { binding: c, path: m } = i, { fromDOM: E } = c;
-      if (E != null) {
-        let r;
+      let { binding: c, path: m } = i, { fromDOM: r } = c;
+      if (r != null) {
+        let w;
         try {
-          r = E(o, i.options);
-        } catch (w) {
+          w = r(o, i.options);
+        } catch (E) {
           throw console.error("Cannot get value from", o, "via", i), Error("Cannot obtain value fromDOM");
         }
-        if (r != null) {
-          let w = xn(), M = w[m];
+        if (w != null) {
+          let E = yn(), M = E[m];
           if (M == null)
-            w[m] = r;
+            E[m] = w;
           else {
-            let y = M[J] != null ? M[O] : M, T = r[J] != null ? r[O] : r;
-            if (y !== T)
-              w[m] = T;
+            let L = M[J] != null ? M[O] : M, T = w[J] != null ? w[O] : w;
+            if (L !== T)
+              E[m] = T;
           }
         }
       }
@@ -1512,54 +1525,54 @@ var bo = (n) => {
   }
 };
 if (globalThis.document != null)
-  mn.body.addEventListener("change", bo, true), mn.body.addEventListener("input", bo, true);
+  mn.body.addEventListener("change", Po, true), mn.body.addEventListener("input", Po, true);
 function k(n, o, f, i) {
   if (n instanceof DocumentFragment)
     throw Error("bind cannot bind to a DocumentFragment");
   let c;
   if (typeof o === "object" && o[J] === undefined && i === undefined) {
-    let { value: r } = o;
-    c = typeof r === "string" ? r : r[J], i = o, delete i.value;
+    let { value: w } = o;
+    c = typeof w === "string" ? w : w[J], i = o, delete i.value;
   } else
     c = typeof o === "string" ? o : o[J];
   if (c == null)
     throw Error("bind requires a path or object with xin Proxy");
   let { toDOM: m } = f;
   n.classList?.add(dn);
-  let E = z.get(n);
-  if (E == null)
-    E = [], z.set(n, E);
-  if (E.push({ path: c, binding: f, options: i }), m != null && !c.startsWith("^"))
-    b(c);
+  let r = z.get(n);
+  if (r == null)
+    r = [], z.set(n, r);
+  if (r.push({ path: c, binding: f, options: i }), m != null && !c.startsWith("^"))
+    P(c);
   if (i?.filter && i?.needle)
-    k(n, i.needle, { toDOM(r, w) {
-      console.log({ needle: w }), r[v]?.filter(w);
+    k(n, i.needle, { toDOM(w, E) {
+      console.log({ needle: E }), w[v]?.filter(E);
     } });
   return n;
 }
-var Po = new Set;
+var _o = new Set;
 var Of = (n) => {
-  let o = n?.target?.closest(Qn), f = false, i = new Proxy(n, { get(m, E) {
-    if (E === "stopPropagation")
+  let o = n?.target?.closest(Qn), f = false, i = new Proxy(n, { get(m, r) {
+    if (r === "stopPropagation")
       return () => {
         n.stopPropagation(), f = true;
       };
     else {
-      let r = m[E];
-      return typeof r === "function" ? r.bind(m) : r;
+      let w = m[r];
+      return typeof w === "function" ? w.bind(m) : w;
     }
   } }), c = new Set;
   while (!f && o != null) {
-    let E = V.get(o)[n.type] || c;
-    for (let r of E) {
-      if (typeof r === "function")
-        r(i);
+    let r = V.get(o)[n.type] || c;
+    for (let w of r) {
+      if (typeof w === "function")
+        w(i);
       else {
-        let w = xn()[r];
-        if (typeof w === "function")
-          w(i);
+        let E = yn()[w];
+        if (typeof E === "function")
+          E(i);
         else
-          throw Error(`no event handler found at path ${r}`);
+          throw Error(`no event handler found at path ${w}`);
       }
       if (f)
         continue;
@@ -1573,8 +1586,8 @@ function g(n, o, f) {
     i = {}, V.set(n, i);
   if (!i[o])
     i[o] = new Set;
-  if (i[o].add(f), !Po.has(o))
-    Po.add(o), mn.body.addEventListener(o, Of, true);
+  if (i[o].add(f), !_o.has(o))
+    _o.add(o), mn.body.addEventListener(o, Of, true);
   return () => {
     i[o].delete(f);
   };
@@ -1592,10 +1605,10 @@ function oo(n, o) {
   let m = n.getAttribute("maxlength");
   if (m && o.length > parseInt(m, 10))
     f.tooLong = true, i = `Please use no more than ${m} characters.`;
-  let E = n.getAttribute("pattern");
-  if (E && o !== "")
+  let r = n.getAttribute("pattern");
+  if (r && o !== "")
     try {
-      if (!new RegExp(`^(?:${E})$`).test(o))
+      if (!new RegExp(`^(?:${r})$`).test(o))
         f.patternMismatch = true, i = "Please match the requested format.";
     } catch {}
   if (Object.keys(f).length > 0)
@@ -1607,7 +1620,7 @@ var Uf = 0;
 function fo() {
   return `custom-elt${(Uf++).toString(36)}`;
 }
-var _o = 0;
+var ho = 0;
 var io = null;
 function qf() {
   if (io === null)
@@ -1615,7 +1628,7 @@ function qf() {
       let o = new Set;
       for (let f of n)
         if (f.type === "attributes" && f.target instanceof j) {
-          let i = f.target, c = en(f.attributeName);
+          let i = f.target, c = bn(f.attributeName);
           if (i._legacyTrackedAttrs?.has(c))
             o.add(i);
         }
@@ -1626,18 +1639,18 @@ function qf() {
 }
 var En = {};
 function Af(n, o) {
-  let f = En[n], i = _(o).replace(/:host\b/g, n);
+  let f = En[n], i = h(o).replace(/:host\b/g, n);
   En[n] = f ? f + `
 ` + i : i;
 }
 function jf(n) {
   if (En[n])
-    document.head.append(L.style({ id: n + "-component" }, En[n]));
+    document.head.append(x.style({ id: n + "-component" }, En[n]));
   delete En[n];
 }
 
 class j extends HTMLElement {
-  static elements = L;
+  static elements = x;
   static _elementCreator;
   static initAttributes;
   static formAssociated;
@@ -1680,7 +1693,7 @@ class j extends HTMLElement {
   styleNode;
   static styleSpec;
   static styleNode;
-  content = L.slot();
+  content = x.slot();
   isSlotted;
   static _tagName = null;
   static get tagName() {
@@ -1690,7 +1703,7 @@ class j extends HTMLElement {
   _attrValues;
   _valueChanged = false;
   static StyleNode(n) {
-    return console.warn("StyleNode is deprecated, just assign static styleSpec: XinStyleSheet to the class directly"), L.style(_(n));
+    return console.warn("StyleNode is deprecated, just assign static styleSpec: XinStyleSheet to the class directly"), x.style(h(n));
   }
   static elementCreator(n = {}) {
     let o = this;
@@ -1710,7 +1723,7 @@ class j extends HTMLElement {
         c = fo();
       if (o._tagName = c, i !== undefined)
         Af(c, i);
-      window.customElements.define(c, this, n), o._elementCreator = L[c];
+      window.customElements.define(c, this, n), o._elementCreator = x[c];
     }
     return o._elementCreator;
   }
@@ -1733,24 +1746,24 @@ class j extends HTMLElement {
           return i[c];
         else
           return f[c];
-      }, set(E) {
+      }, set(r) {
         if (typeof f[c] === "boolean") {
-          if (E !== this[c]) {
-            if (E)
+          if (r !== this[c]) {
+            if (r)
               this.setAttribute(m, "");
             else
               this.removeAttribute(m);
             this.queueRender();
           }
         } else if (typeof f[c] === "number") {
-          if (E !== parseFloat(this[c]))
-            this.setAttribute(m, E), this.queueRender();
-        } else if (typeof E === "object" || `${E}` !== `${this[c]}`) {
-          if (E === null || E === undefined || typeof E === "object")
+          if (r !== parseFloat(this[c]))
+            this.setAttribute(m, r), this.queueRender();
+        } else if (typeof r === "object" || `${r}` !== `${this[c]}`) {
+          if (r === null || r === undefined || typeof r === "object")
             this.removeAttribute(m);
           else
-            this.setAttribute(m, E);
-          this.queueRender(), i[c] = E;
+            this.setAttribute(m, r);
+          this.queueRender(), i[c] = r;
         }
       } });
     });
@@ -1785,18 +1798,18 @@ class j extends HTMLElement {
     return this._parts;
   }
   attributeChangedCallback(n, o, f) {
-    let i = en(n);
+    let i = bn(n);
     if (!this._legacyTrackedAttrs?.has(i))
       this.queueRender(false);
   }
   constructor() {
     super();
-    if (_o += 1, this.constructor.formAssociated && typeof this.attachInternals === "function" && !this.internals)
+    if (ho += 1, this.constructor.formAssociated && typeof this.attachInternals === "function" && !this.internals)
       this.internals = this.attachInternals();
     let n = this.constructor.initAttributes;
     if (n)
       this._setupAttributeAccessors(n);
-    this.instanceId = `${this.tagName.toLocaleLowerCase()}-${_o}`, this._value = W(this.defaultValue);
+    this.instanceId = `${this.tagName.toLocaleLowerCase()}-${ho}`, this._value = W(this.defaultValue);
   }
   _setupAttributeAccessors(n) {
     if (!this._attrValues)
@@ -1813,9 +1826,9 @@ class j extends HTMLElement {
       }
       let c = this, m = false;
       while (c) {
-        let E = Object.getOwnPropertyDescriptor(c, o);
-        if (E) {
-          if (!E.configurable || E.get || E.set) {
+        let r = Object.getOwnPropertyDescriptor(c, o);
+        if (r) {
+          if (!r.configurable || r.get || r.set) {
             m = true;
             break;
           }
@@ -1834,24 +1847,24 @@ class j extends HTMLElement {
           return this._attrValues.get(o);
         else
           return i;
-      }, set: (E) => {
+      }, set: (r) => {
         if (typeof i === "boolean") {
-          if (E !== this[o]) {
-            if (E)
+          if (r !== this[o]) {
+            if (r)
               this.setAttribute(f, "");
             else
               this.removeAttribute(f);
             this.queueRender();
           }
         } else if (typeof i === "number") {
-          if (E !== parseFloat(this[o]))
-            this.setAttribute(f, E), this.queueRender();
-        } else if (typeof E === "object" || `${E}` !== `${this[o]}`) {
-          if (E === null || E === undefined || typeof E === "object")
+          if (r !== parseFloat(this[o]))
+            this.setAttribute(f, r), this.queueRender();
+        } else if (typeof r === "object" || `${r}` !== `${this[o]}`) {
+          if (r === null || r === undefined || typeof r === "object")
             this.removeAttribute(f);
           else
-            this.setAttribute(f, E);
-          this.queueRender(), this._attrValues.set(o, E);
+            this.setAttribute(f, r);
+          this.queueRender(), this._attrValues.set(o, r);
         }
       } });
     }
@@ -1909,9 +1922,9 @@ class j extends HTMLElement {
   hydrate() {
     if (!this._hydrated) {
       this.initValue();
-      let n = typeof this.content !== "function", o = typeof this.content === "function" ? this.content(L) : this.content, { styleSpec: f } = this.constructor, { styleNode: i } = this.constructor;
+      let n = typeof this.content !== "function", o = typeof this.content === "function" ? this.content(x) : this.content, { styleSpec: f } = this.constructor, { styleNode: i } = this.constructor;
       if (f)
-        i = this.constructor.styleNode = L.style(_(f)), delete this.constructor.styleNode;
+        i = this.constructor.styleNode = x.style(h(f)), delete this.constructor.styleNode;
       if (this.styleNode)
         console.warn(this, "styleNode is deprecrated, use static styleNode or statc styleSpec instead"), i = this.styleNode;
       if (i) {
@@ -1924,12 +1937,12 @@ class j extends HTMLElement {
         if (m.length > 0)
           m.forEach(co.replaceSlot);
         if (c.length > 0) {
-          let E = { "": this };
-          Array.from(this.querySelectorAll("xin-slot")).forEach((r) => {
-            E[r.name] = r;
-          }), c.forEach((r) => {
-            let w = E[""], M = r instanceof Element ? E[r.slot] : w;
-            (M !== undefined ? M : w).append(r);
+          let r = { "": this };
+          Array.from(this.querySelectorAll("xin-slot")).forEach((w) => {
+            r[w.name] = w;
+          }), c.forEach((w) => {
+            let E = r[""], M = w instanceof Element ? r[w.slot] : E;
+            (M !== undefined ? M : E).append(w);
           });
         }
       }
@@ -1970,7 +1983,7 @@ var uf = (n = () => true) => {
       else
         X[c] = i[c];
   }
-  let f = hn(() => {
+  let f = en(() => {
     let i = {}, c = C(X);
     for (let m of Object.keys(c).filter(n))
       i[m] = c[m];
@@ -1978,7 +1991,7 @@ var uf = (n = () => true) => {
   }, 500);
   cn(n, f);
 };
-var mo = "1.3.1";
+var mo = "1.3.3";
 function Fn(n) {
   return Object.assign(t, n), t;
 }
@@ -1994,7 +2007,7 @@ function Eo(n, o = false) {
 }
 var Kf = {};
 async function Yn(n, o) {
-  let { type: f, styleSpec: i } = await o(n, { Color: x, Component: j, elements: L, svgElements: gn, mathML: tn, varDefault: Hn, vars: _n, xin: X, boxed: t, xinProxy: Eo, boxedProxy: Dn, tosi: Fn, makeComponent: Yn, bind: k, on: g, version: mo }), c = { type: f, creator: f.elementCreator({ tag: n, styleSpec: i }) };
+  let { type: f, styleSpec: i } = await o(n, { Color: y, Component: j, elements: x, svgElements: gn, mathML: tn, varDefault: Hn, vars: hn, xin: X, boxed: t, xinProxy: Eo, boxedProxy: Dn, tosi: Fn, makeComponent: Yn, bind: k, on: g, version: mo }), c = { type: f, creator: f.elementCreator({ tag: n, styleSpec: i }) };
   return Kf[n] = c, c;
 }
 var ro = {};
@@ -2233,7 +2246,7 @@ function scriptTag(src, existingSymbolName) {
       const existing = globalThis[existingSymbolName];
       loadedScripts[src] = Promise.resolve({ [existingSymbolName]: existing });
     }
-    const scriptElt = L.script({ src });
+    const scriptElt = x.script({ src });
     document.head.append(scriptElt);
     loadedScripts[src] = new Promise((resolve) => {
       scriptElt.onload = () => resolve(globalThis);
@@ -2244,7 +2257,7 @@ function scriptTag(src, existingSymbolName) {
 var loadedStyleSheets = {};
 function styleSheet(href) {
   if (loadedStyleSheets[href] === undefined) {
-    const linkElement = L.link({
+    const linkElement = x.link({
       rel: "stylesheet",
       type: "text/css",
       href
@@ -2598,9 +2611,9 @@ var svg2DataUrl = (svg, fill, stroke, strokeWidth) => {
   for (const item of [...styled]) {
     const { fill: fill2, stroke: stroke2, strokeWidth: strokeWidth2, strokeLinecap, strokeLinejoin } = item.style;
     if (fill2)
-      item.setAttribute("fill", x.fromCss(fill2).html);
+      item.setAttribute("fill", y.fromCss(fill2).html);
     if (stroke2)
-      item.setAttribute("stroke", x.fromCss(stroke2).html);
+      item.setAttribute("stroke", y.fromCss(stroke2).html);
     if (strokeWidth2)
       item.setAttribute("strokeWidth", strokeWidth2);
     if (strokeLinecap)
@@ -2622,7 +2635,7 @@ var icons = new Proxy(icon_data_default, {
       iconSpec = icon_data_default.square;
     }
     return (...parts) => {
-      const div = L.div();
+      const div = x.div();
       div.innerHTML = iconSpec;
       const sourceSvg = div.querySelector("svg");
       const classes = new Set(sourceSvg.classList);
@@ -2720,7 +2733,7 @@ class B3d extends j {
       transform: "scale(1.1)"
     }
   };
-  content = L.canvas({ part: "canvas" });
+  content = x.canvas({ part: "canvas" });
   constructor() {
     super();
     this.babylonReady = (async () => {
@@ -2862,7 +2875,7 @@ var bodymovinPlayer = BodymovinPlayer.elementCreator({
   tag: "xin-lottie"
 });
 // src/carousel.ts
-var { button, slot, div } = L;
+var { button, slot, div } = x;
 
 class XinCarousel extends j {
   static initAttributes = {
@@ -2914,21 +2927,21 @@ class XinCarousel extends j {
       position: "relative"
     },
     ":host svg": {
-      height: _n.carouselIconSize
+      height: hn.carouselIconSize
     },
     ":host button": {
       outline: "none",
       border: "none",
       boxShadow: "none",
       background: "transparent",
-      color: _n.carouselButtonColor,
+      color: hn.carouselButtonColor,
       padding: 0
     },
     ":host::part(back), :host::part(forward)": {
       position: "absolute",
       top: 0,
       bottom: 0,
-      width: _n.carouseButtonWidth,
+      width: hn.carouseButtonWidth,
       zIndex: 2
     },
     ":host::part(back)": {
@@ -2942,10 +2955,10 @@ class XinCarousel extends j {
       pointerEvents: "none"
     },
     ":host button:hover": {
-      color: _n.carouselButtonHoverColor
+      color: hn.carouselButtonHoverColor
     },
     ":host button:active": {
-      color: _n.carouselButtonActiveColor
+      color: hn.carouselButtonActiveColor
     },
     ":host::part(pager)": {
       position: "relative"
@@ -2962,29 +2975,29 @@ class XinCarousel extends j {
       display: "none"
     },
     ":host .dot": {
-      background: _n.carouselButtonColor,
-      borderRadius: _n.carouselDotSize,
-      height: _n.carouselDotSize,
-      width: _n.carouselDotSize,
-      transition: _n.carouselDotTransition
+      background: hn.carouselButtonColor,
+      borderRadius: hn.carouselDotSize,
+      height: hn.carouselDotSize,
+      width: hn.carouselDotSize,
+      transition: hn.carouselDotTransition
     },
     ":host .dot:not(.current):hover": {
-      background: _n.carouselButtonHoverColor,
-      height: _n.carouselDotSize150,
-      width: _n.carouselDotSize150,
-      margin: _n.carouselDotSize_25
+      background: hn.carouselButtonHoverColor,
+      height: hn.carouselDotSize150,
+      width: hn.carouselDotSize150,
+      margin: hn.carouselDotSize_25
     },
     ":host .dot:not(.current):active": {
-      background: _n.carouselButtonActiveColor
+      background: hn.carouselButtonActiveColor
     },
     ":host .dot.current": {
-      background: _n.carouselDotCurrentColor
+      background: hn.carouselDotCurrentColor
     },
     ":host::part(progress)": {
       display: "flex",
-      gap: _n.carouselDotSpacing,
+      gap: hn.carouselDotSpacing,
       justifyContent: "center",
-      padding: _n.carouselProgressPadding
+      padding: hn.carouselProgressPadding
     }
   };
   easing = (t2) => {
@@ -3092,7 +3105,7 @@ var xinCarousel = XinCarousel.elementCreator({
       _carouseButtonWidth: 48,
       _carouselDotCurrentColor: "#0008",
       _carouselDotSize: 8,
-      _carouselDotSpacing: _n.carouselDotSize,
+      _carouselDotSpacing: hn.carouselDotSize,
       _carouselProgressPadding: 12,
       _carouselDotTransition: "0.125s ease-in-out"
     },
@@ -3193,8 +3206,8 @@ var codeEditor = CodeEditor.elementCreator({
   tag: "xin-code"
 });
 // src/color-input.ts
-var { input } = L;
-var defaultColor = x.fromCss("#8888");
+var { input } = x;
+var defaultColor = y.fromCss("#8888");
 
 class ColorInput extends j {
   value = defaultColor.rgba;
@@ -3206,20 +3219,20 @@ class ColorInput extends j {
       _cssWidth: 72,
       _alphaWidth: 72,
       display: "inline-flex",
-      gap: _n.gap,
+      gap: hn.gap,
       alignItems: "center"
     },
     ':host input[type="color"]': {
       border: 0,
-      width: _n.swatchSize,
-      height: _n.swatchSize,
+      width: hn.swatchSize,
+      height: hn.swatchSize,
       background: "transparent"
     },
     ":host::part(alpha)": {
-      width: _n.alphaWidth
+      width: hn.alphaWidth
     },
     ":host::part(css)": {
-      width: _n.cssWidth,
+      width: hn.cssWidth,
       fontFamily: "monospace"
     }
   };
@@ -3239,11 +3252,11 @@ class ColorInput extends j {
   update = (event) => {
     const { rgb, alpha, css } = this.parts;
     if (event.type === "input") {
-      this.color = x.fromCss(rgb.value);
+      this.color = y.fromCss(rgb.value);
       this.color.a = Number(alpha.value);
       css.value = this.color.html;
     } else {
-      this.color = x.fromCss(css.value);
+      this.color = y.fromCss(css.value);
       rgb.value = this.color.html.substring(0, 7);
       alpha.value = String(this.color.a);
     }
@@ -3264,7 +3277,7 @@ class ColorInput extends j {
       return;
     }
     const { rgb, alpha, css } = this.parts;
-    this.color = x.fromCss(this.value);
+    this.color = y.fromCss(this.value);
     rgb.value = this.color.html.substring(0, 7);
     rgb.style.opacity = String(this.color.a);
     alpha.value = String(this.color.a);
@@ -3275,7 +3288,7 @@ var colorInput = ColorInput.elementCreator({
   tag: "xin-color"
 });
 // src/track-drag.ts
-var TRACKER = L.div({
+var TRACKER = x.div({
   style: {
     content: " ",
     position: "fixed",
@@ -3340,7 +3353,7 @@ var bringToFront = (element, selector = "body *") => {
 };
 
 // src/float.ts
-var { slot: slot2 } = L;
+var { slot: slot2 } = x;
 
 class XinFloat extends j {
   static floats = new Set;
@@ -3363,10 +3376,10 @@ class XinFloat extends j {
     if (this.drag) {
       bringToFront(this);
       const x2 = this.offsetLeft;
-      const y = this.offsetTop;
+      const y2 = this.offsetTop;
       trackDrag(event, (dx, dy, pointerEvent) => {
         this.style.left = `${x2 + dx}px`;
-        this.style.top = `${y + dy}px`;
+        this.style.top = `${y2 + dy}px`;
         this.style.right = "auto";
         this.style.bottom = "auto";
         if (pointerEvent.type === "mouseup") {
@@ -3523,7 +3536,7 @@ function makeSorter(sortValuator, ascending = true) {
 }
 
 // src/select.ts
-var { button: button2, span, input: input2 } = L;
+var { button: button2, span, input: input2 } = x;
 var hasValue = (options, value) => {
   return !!options.find((option) => {
     if (option === null || value == null) {
@@ -3674,7 +3687,7 @@ class TosiSelect extends j {
       event.preventDefault();
     }
   };
-  filterMenu = yn(() => {
+  filterMenu = Ln(() => {
     this.filter = this.parts.value.value.toLocaleLowerCase();
     removeLastMenu(0);
     this.popOptions();
@@ -3803,10 +3816,10 @@ var tosiSelect = TosiSelect.elementCreator({
       display: "flex",
       alignItems: "center",
       justifyItems: "center",
-      gap: _n.tosiSelectGap,
+      gap: hn.tosiSelectGap,
       textAlign: "left",
-      height: _n.tosiSelectTouchSize,
-      padding: _n.tosiSelectPadding,
+      height: hn.tosiSelectTouchSize,
+      padding: hn.tosiSelectPadding,
       position: "relative",
       width: "100%"
     },
@@ -3817,10 +3830,10 @@ var tosiSelect = TosiSelect.elementCreator({
       display: "none"
     },
     ':host [part="value"]': {
-      width: _n.tosiSelectFieldWidth,
-      padding: _n.tosiSelectValuePadding,
-      height: _n.tosiSelectTouchSize,
-      lineHeight: _n.tosiSelectTouchSize,
+      width: hn.tosiSelectFieldWidth,
+      padding: hn.tosiSelectValuePadding,
+      height: hn.tosiSelectTouchSize,
+      lineHeight: hn.tosiSelectTouchSize,
       boxShadow: "none",
       whiteSpace: "nowrap",
       outline: "none",
@@ -3837,7 +3850,7 @@ var tosiSelect = TosiSelect.elementCreator({
 var xinSelect = On((...args) => tosiSelect(...args), "xinSelect is deprecated, use tosiSelect instead (tag is now <tosi-select>)");
 
 // src/localize.ts
-var { span: span2 } = L;
+var { span: span2 } = x;
 var { i18n } = Fn({
   i18n: {
     locale: window.navigator.language,
@@ -3854,7 +3867,7 @@ var { i18n } = Fn({
     ]
   }
 });
-Ln.localeOptions = {
+xn.localeOptions = {
   toDOM(select, options) {
     if (select instanceof XinSelect) {
       select.options = options;
@@ -3944,7 +3957,7 @@ class XinLocalized extends j {
   static initAttributes = {
     refString: ""
   };
-  contents = () => L.xinSlot();
+  contents = () => x.xinSlot();
   connectedCallback() {
     super.connectedCallback();
     XinLocalized.allInstances.add(this);
@@ -3985,14 +3998,14 @@ var matchShortcut = (keystroke, shortcut) => {
 };
 
 // src/menu.ts
-var { div: div2, button: button3, span: span3, a: a2, xinSlot } = L;
+var { div: div2, button: button3, span: span3, a: a2, xinSlot } = x;
 sf("xin-menu-helper", {
   ".xin-menu": {
     overflow: "hidden auto",
-    maxHeight: `calc(${_n.maxHeight} - ${Hn.menuInset("8px")})`,
-    borderRadius: _n.spacing50,
+    maxHeight: `calc(${hn.maxHeight} - ${Hn.menuInset("8px")})`,
+    borderRadius: hn.spacing50,
     background: Hn.menuBg("#fafafa"),
-    boxShadow: Hn.menuShadow(`${_n.spacing13} ${_n.spacing50} ${_n.spacing} #0004`)
+    boxShadow: Hn.menuShadow(`${hn.spacing13} ${hn.spacing50} ${hn.spacing} #0004`)
   },
   ".xin-menu > div": {
     width: Hn.menuWidth("auto")
@@ -4421,7 +4434,7 @@ function defaultWidth(array, prop, charWidth) {
   }
   return false;
 }
-var { div: div3, span: span4, button: button4, template } = L;
+var { div: div3, span: span4, button: button4, template } = x;
 var passThru = (array) => array;
 
 class DataTable extends j {
@@ -4921,13 +4934,13 @@ var dataTable = DataTable.elementCreator({
       overflow: "auto hidden"
     },
     ":host .thead, :host .tbody": {
-      width: _n.tosiTableGridRowWidth
+      width: hn.tosiTableGridRowWidth
     },
     ":host .tr": {
       display: "grid",
-      gridTemplateColumns: _n.tosiTableGridColumns,
-      height: _n.tosiTableRowHeight,
-      lineHeight: _n.tosiTableRowHeight
+      gridTemplateColumns: hn.tosiTableGridColumns,
+      height: hn.tosiTableRowHeight,
+      lineHeight: hn.tosiTableRowHeight
     },
     ":host .td, :host .th": {
       overflow: "hidden",
@@ -4940,25 +4953,25 @@ var dataTable = DataTable.elementCreator({
       color: "currentColor",
       background: "none",
       padding: 0,
-      lineHeight: _n.tosiTableTouchSize,
-      height: _n.tosiTableTouchSize,
-      width: _n.tosiTableTouchSize
+      lineHeight: hn.tosiTableTouchSize,
+      height: hn.tosiTableTouchSize,
+      width: hn.tosiTableTouchSize
     },
     ':host [draggable="true"]': {
       cursor: "ew-resize"
     },
     ':host [draggable="true"]:active': {
-      background: _n.tosiTableDraggedHeaderBg,
-      color: _n.tosiTableDraggedHeaderColor
+      background: hn.tosiTableDraggedHeaderBg,
+      color: hn.tosiTableDraggedHeaderColor
     },
     ":host .drag-over": {
-      background: _n.tosiTableDropHeaderBg
+      background: hn.tosiTableDropHeaderBg
     }
   }
 });
 var xinTable = On(dataTable, "xinTable is deprecated. Use dataTable instead.");
 // src/dialog.ts
-var { dialog, button: button5, header, footer, xinSlot: xinSlot2, h3, p: p2, label, input: input3, div: div4 } = L;
+var { dialog, button: button5, header, footer, xinSlot: xinSlot2, h3, p: p2, label, input: input3, div: div4 } = x;
 
 class TosiDialog extends j {
   static async alert(message, title = "Alert") {
@@ -4970,7 +4983,7 @@ class TosiDialog extends j {
           resolve();
         }
       }, h3({ slot: "header" }, title), message.includes(`
-`) ? L.pre({ style: { whiteSpace: "pre-wrap", margin: 0 } }, message) : p2(message));
+`) ? x.pre({ style: { whiteSpace: "pre-wrap", margin: 0 } }, message) : p2(message));
       document.body.append(alertDialog);
       alertDialog.showModal();
     });
@@ -5084,9 +5097,9 @@ var tosiDialog = TosiDialog.elementCreator({
       _dialogShadow: Hn.menuShadow("0 5px 10px #0004"),
       _dialogBackground: Hn.background("#fafafa"),
       _dialogColor: Hn.textColor("#222"),
-      boxShadow: _n.dialogShadow,
-      background: _n.dialogBackground,
-      color: _n.dialogColor
+      boxShadow: hn.dialogShadow,
+      background: hn.dialogBackground,
+      color: hn.dialogColor
     },
     ":host > dialog > *": {
       padding: "0 20px"
@@ -5105,10 +5118,10 @@ var tosiDialog = TosiDialog.elementCreator({
   }
 });
 // node_modules/marked/lib/marked.esm.js
-function L2() {
+function L() {
   return { async: false, breaks: false, extensions: null, gfm: true, hooks: null, pedantic: false, renderer: null, silent: false, tokenizer: null, walkTokens: null };
 }
-var T = L2();
+var T = L();
 function G2(l) {
   T = l;
 }
@@ -5272,7 +5285,7 @@ function Ye(l, e2, t2) {
   }).join(`
 `);
 }
-var y = class {
+var y2 = class {
   options;
   rules;
   lexer;
@@ -5597,7 +5610,7 @@ var x2 = class l {
   tokenizer;
   inlineQueue;
   constructor(e2) {
-    this.tokens = [], this.tokens.links = Object.create(null), this.options = e2 || T, this.options.tokenizer = this.options.tokenizer || new y, this.tokenizer = this.options.tokenizer, this.tokenizer.options = this.options, this.tokenizer.lexer = this, this.inlineQueue = [], this.state = { inLink: false, inRawBlock: false, top: true };
+    this.tokens = [], this.tokens.links = Object.create(null), this.options = e2 || T, this.options.tokenizer = this.options.tokenizer || new y2, this.tokenizer = this.options.tokenizer, this.tokenizer.options = this.options, this.tokenizer.lexer = this, this.inlineQueue = [], this.state = { inLink: false, inRawBlock: false, top: true };
     let t2 = { other: m, block: C2.normal, inline: M.normal };
     this.options.pedantic ? (t2.block = C2.pedantic, t2.inline = M.pedantic) : this.options.gfm && (t2.block = C2.gfm, this.options.breaks ? t2.inline = M.breaks : t2.inline = M.gfm), this.tokenizer.rules = t2;
   }
@@ -6138,7 +6151,7 @@ var S2 = class {
   }
 };
 var B2 = class {
-  defaults = L2();
+  defaults = L();
   options = this.setOptions;
   parse = this.parseMarkdown(true);
   parseInline = this.parseMarkdown(false);
@@ -6146,7 +6159,7 @@ var B2 = class {
   Renderer = P2;
   TextRenderer = $2;
   Lexer = x2;
-  Tokenizer = y;
+  Tokenizer = y2;
   Hooks = S2;
   constructor(...e2) {
     this.use(...e2);
@@ -6216,7 +6229,7 @@ var B2 = class {
         r.renderer = i;
       }
       if (n.tokenizer) {
-        let i = this.defaults.tokenizer || new y(this.defaults);
+        let i = this.defaults.tokenizer || new y2(this.defaults);
         for (let s in n.tokenizer) {
           if (!(s in i))
             throw new Error(`tokenizer '${s}' does not exist`);
@@ -6324,7 +6337,7 @@ function k2(l3, e2) {
 k2.options = k2.setOptions = function(l3) {
   return _2.setOptions(l3), k2.defaults = _2.defaults, G2(k2.defaults), k2;
 };
-k2.getDefaults = L2;
+k2.getDefaults = L;
 k2.defaults = T;
 k2.use = function(...l3) {
   return _2.use(...l3), k2.defaults = _2.defaults, G2(k2.defaults), k2;
@@ -6339,7 +6352,7 @@ k2.Renderer = P2;
 k2.TextRenderer = $2;
 k2.Lexer = x2;
 k2.lexer = x2.lex;
-k2.Tokenizer = y;
+k2.Tokenizer = y2;
 k2.Hooks = S2;
 k2.parse = k2;
 var Zt = k2.options;
@@ -6421,7 +6434,7 @@ var markdownViewer = MarkdownViewer.elementCreator({
 var xinMd = markdownViewer;
 
 // src/tab-selector.ts
-var { div: div5, slot: slot3, span: span5, button: button6 } = L;
+var { div: div5, slot: slot3, span: span5, button: button6 } = x;
 
 class TabSelector extends j {
   static initAttributes = {
@@ -6480,33 +6493,33 @@ class TabSelector extends j {
       whiteSpace: "nowrap"
     },
     ":host .tabs > div": {
-      padding: `${_n.spacing50} ${_n.spacing}`,
+      padding: `${hn.spacing50} ${hn.spacing}`,
       cursor: "default",
       display: "flex",
       alignItems: "baseline"
     },
     ':host .tabs > [aria-selected="true"]': {
-      "--text-color": _n.tosiTabsSelectedColor,
-      color: _n.textColor
+      "--text-color": hn.tosiTabsSelectedColor,
+      color: hn.textColor
     },
     ":host .elastic": {
       flex: "1"
     },
     ":host .border": {
-      background: _n.tosiTabsBarColor
+      background: hn.tosiTabsBarColor
     },
     ":host .border > .selected": {
       content: " ",
       width: 0,
-      height: _n.tosiTabsBarHeight,
-      background: _n.tosiTabsSelectedColor,
+      height: hn.tosiTabsBarHeight,
+      background: hn.tosiTabsSelectedColor,
       transition: "ease-out 0.2s"
     },
     ":host button.close": {
       border: 0,
       background: "transparent",
       textAlign: "center",
-      marginLeft: _n.spacing50,
+      marginLeft: hn.spacing50,
       padding: 0
     },
     ":host button.close > svg": {
@@ -6742,7 +6755,7 @@ class RemoteSyncManager {
 }
 
 // src/live-example/execution.ts
-var { div: div6 } = L;
+var { div: div6 } = x;
 function registerComponentsInIframe(iframeWindow, context) {
   const iframeCustomElements = iframeWindow.customElements;
   if (!iframeCustomElements)
@@ -7271,7 +7284,7 @@ async function runTests(testCode, preview, context, transform) {
 }
 
 // src/live-example/component.ts
-var { div: div7, xinSlot: xinSlot3, style, button: button7, pre, span: span6 } = L;
+var { div: div7, xinSlot: xinSlot3, style, button: button7, pre, span: span6 } = x;
 var TESTS_ENABLED_KEY = "tosijs-ui-tests-enabled";
 var isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 function getStoredTestsEnabled() {
@@ -7728,7 +7741,7 @@ if (remoteId) {
   document.body.append(liveExample({ remoteId }));
 }
 // src/side-nav.ts
-var { slot: slot4 } = L;
+var { slot: slot4 } = x;
 
 class SideNav extends j {
   static initAttributes = {
@@ -7820,7 +7833,7 @@ var sideNav = SideNav.elementCreator({
 var xinSidenav = sideNav;
 
 // src/doc-browser.ts
-var { div: div8, span: span7, a: a3, header: header2, button: button8, template: template2, input: input4, h2 } = L;
+var { div: div8, span: span7, a: a3, header: header2, button: button8, template: template2, input: input4, h2 } = x;
 var testColor = {
   pass: Hn.testColorPass("#0a0"),
   fail: Hn.testColorFail("#c00"),
@@ -7845,10 +7858,10 @@ var testIndicatorStyleSpec = {
   },
   ".doc-link.-test-passed::after, .doc-link.-test-failed::after": {
     content: "''",
-    width: _n.fontSize50,
-    height: _n.fontSize50,
+    width: hn.fontSize50,
+    height: hn.fontSize50,
     borderRadius: "50%",
-    marginLeft: _n.spacing50,
+    marginLeft: hn.spacing50,
     display: "inline-block",
     verticalAlign: "middle"
   },
@@ -7860,10 +7873,10 @@ var testIndicatorStyleSpec = {
   ".test-widget": {
     _testBg: testColor.running,
     position: "fixed",
-    bottom: _n.spacing,
-    right: _n.spacing,
+    bottom: hn.spacing,
+    right: hn.spacing,
     zIndex: "1000",
-    background: _n.testBg,
+    background: hn.testBg,
     color: "white"
   },
   ".test-widget[hidden]": { display: "none" },
@@ -7881,10 +7894,10 @@ var testIndicatorStyleSpec = {
   },
   ".test-widget .count": {
     background: "white",
-    color: _n.testBg,
+    color: hn.testBg,
     borderRadius: "50%",
-    width: _n.lineHeight,
-    height: _n.lineHeight,
+    width: hn.lineHeight,
+    height: hn.lineHeight,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -7966,18 +7979,18 @@ function createDocBrowser(options) {
     checkAllTestsComplete();
     updateTestWidget();
   };
-  Ln.docLink = {
+  xn.docLink = {
     toDOM(elt, filename) {
       elt.setAttribute("href", `?${filename}`);
     }
   };
-  Ln.current = {
+  xn.current = {
     toDOM(elt, currentFile) {
       const boundFile = elt.getAttribute("href") || "";
       elt.classList.toggle("current", currentFile === boundFile.substring(1));
     }
   };
-  Ln.testStatus = {
+  xn.testStatus = {
     toDOM(elt, status) {
       elt.classList.remove("-test-passed", "-test-failed");
       if (status === "passed") {
@@ -7987,12 +8000,12 @@ function createDocBrowser(options) {
       }
     }
   };
-  const filterDocs = hn(() => {
+  const filterDocs = en(() => {
     const needle = searchField.value.toLocaleLowerCase();
     app.docs.forEach((doc) => {
       doc.hidden = !doc.title.toLocaleLowerCase().includes(needle) && !doc.text.toLocaleLowerCase().includes(needle);
     });
-    b(app.docs);
+    P(app.docs);
   });
   const searchField = input4({
     slot: "nav",
@@ -8011,7 +8024,7 @@ function createDocBrowser(options) {
   const headerContent = [
     button8({
       class: "iconic",
-      style: { color: _n.linkColor },
+      style: { color: hn.linkColor },
       title: "navigation",
       bind: {
         value: app.compact,
@@ -8393,7 +8406,7 @@ function createDocBrowser(options) {
   return container;
 }
 // src/editable-rect.ts
-var { div: div9, slot: slot5 } = L;
+var { div: div9, slot: slot5 } = x;
 
 class EditableRect extends j {
   static initAttributes = {
@@ -8421,11 +8434,11 @@ class EditableRect extends j {
       content: '" "',
       position: "absolute",
       display: "flex",
-      height: _n.handleSize,
-      width: _n.handleSize,
-      padding: _n.handlePadding,
-      "--text-color": _n.handleColor,
-      background: _n.handleBg
+      height: hn.handleSize,
+      width: hn.handleSize,
+      padding: hn.handlePadding,
+      "--text-color": hn.handleColor,
+      background: hn.handleBg
     },
     ":host > .drag-size": {
       top: 0,
@@ -8438,7 +8451,7 @@ class EditableRect extends j {
       cursor: "ew-resize"
     },
     ':host > [part="rotate"]': {
-      transform: `translateY(${_n.handleSize_50})`
+      transform: `translateY(${hn.handleSize_50})`
     },
     ":host > [locked] > svg:first-child, :host > :not([locked]) > svg+svg": {
       display: "none"
@@ -8450,8 +8463,8 @@ class EditableRect extends j {
       pointerEvents: "none"
     },
     ":host > *:hover": {
-      "--text-color": _n.handleHoverColor,
-      background: _n.handleHoverBg
+      "--text-color": hn.handleHoverColor,
+      background: hn.handleHoverBg
     }
   };
   static snappedCoords(event, coords) {
@@ -8641,10 +8654,10 @@ class EditableRect extends j {
     trackDrag(event, (_dx, _dy, dragEvent) => {
       const { clientX, clientY } = dragEvent;
       const x3 = clientX - center.x;
-      const y2 = clientY - center.y;
-      let alpha = y2 > 0 ? 90 : -90;
+      const y3 = clientY - center.y;
+      let alpha = y3 > 0 ? 90 : -90;
       if (x3 !== 0) {
-        alpha = Math.atan2(y2, x3) * 180 / Math.PI;
+        alpha = Math.atan2(y3, x3) * 180 / Math.PI;
       }
       alpha = EditableRect.snappedAngle(dragEvent, alpha);
       if (alpha === 0) {
@@ -8772,7 +8785,7 @@ var editableRect = EditableRect.elementCreator({
   tag: "xin-editable"
 });
 // src/filter-builder.ts
-var { div: div10, input: input5, button: button9, span: span8 } = L;
+var { div: div10, input: input5, button: button9, span: span8 } = x;
 var passThru2 = (array) => array;
 var NULL_FILTER_DESCRIPTION = "null filter, everything matches";
 var availableFilters = {
@@ -9080,7 +9093,7 @@ var filterBuilder = FilterBuilder.elementCreator({
   }
 });
 // src/form.ts
-var { form, slot: slot6, xinSlot: xinSlot4, label: label2, input: input6, span: span9 } = L;
+var { form, slot: slot6, xinSlot: xinSlot4, label: label2, input: input6, span: span9 } = x;
 function attr(element, name, value) {
   if (value !== "" && value !== false) {
     element.setAttribute(name, value);
@@ -9185,7 +9198,7 @@ class TosiField extends j {
     }
     if (this.type === "text") {
       input7.textContent = "";
-      const textarea = L.textarea({ value: this.value });
+      const textarea = x.textarea({ value: this.value });
       if (this.placeholder) {
         textarea.setAttribute("placeholder", this.placeholder);
       }
@@ -9442,7 +9455,7 @@ ${buttonText}`;
 `);
 }
 // src/mapbox.ts
-var { div: div11 } = L;
+var { div: div11 } = x;
 
 class MapBox extends j {
   static formAssociated = true;
@@ -9542,7 +9555,7 @@ var mapBox = MapBox.elementCreator({
   tag: "xin-map"
 });
 // src/month.ts
-var { div: div12, span: span10, button: button10 } = L;
+var { div: div12, span: span10, button: button10 } = x;
 var DAY_MS = 24 * 3600 * 1000;
 var WEEK = [0, 1, 2, 3, 4, 5, 6];
 var MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -9894,7 +9907,7 @@ var tosiMonth = TosiMonth.elementCreator({
   }
 });
 // src/notifications.ts
-var { div: div13, button: button11 } = L;
+var { div: div13, button: button11 } = x;
 var COLOR_MAP = {
   error: "red",
   warn: "orange",
@@ -9910,57 +9923,57 @@ class XinNotification extends j {
     ":host": {
       _notificationSpacing: 8,
       _notificationWidth: 360,
-      _notificationPadding: `${_n.notificationSpacing} ${_n.notificationSpacing50} ${_n.notificationSpacing} ${_n.notificationSpacing200}`,
+      _notificationPadding: `${hn.notificationSpacing} ${hn.notificationSpacing50} ${hn.notificationSpacing} ${hn.notificationSpacing200}`,
       _notificationBg: "#fafafa",
       _notificationAccentColor: "#aaa",
       _notificationTextColor: "#444",
-      _notificationIconSize: _n.notificationSpacing300,
+      _notificationIconSize: hn.notificationSpacing300,
       _notificationButtonSize: 48,
       _notificationBorderWidth: "3px 0 0",
-      _notificationBorderRadius: _n.notificationSpacing50,
+      _notificationBorderRadius: hn.notificationSpacing50,
       position: "fixed",
       left: 0,
       right: 0,
       bottom: 0,
-      paddingBottom: _n.notificationSpacing,
-      width: _n.notificationWidth,
+      paddingBottom: hn.notificationSpacing,
+      width: hn.notificationWidth,
       display: "flex",
       flexDirection: "column-reverse",
       margin: "0 auto",
-      gap: _n.notificationSpacing,
+      gap: hn.notificationSpacing,
       maxHeight: "50vh",
       overflow: "hidden auto",
       boxShadow: "none !important"
     },
     ":host *": {
-      color: _n.notificationTextColor
+      color: hn.notificationTextColor
     },
     ":host .note": {
       display: "grid",
-      background: _n.notificationBg,
-      padding: _n.notificationPadding,
-      gridTemplateColumns: `${_n.notificationIconSize} 1fr ${_n.notificationButtonSize}`,
-      gap: _n.notificationSpacing,
+      background: hn.notificationBg,
+      padding: hn.notificationPadding,
+      gridTemplateColumns: `${hn.notificationIconSize} 1fr ${hn.notificationButtonSize}`,
+      gap: hn.notificationSpacing,
       alignItems: "center",
-      borderRadius: _n.notificationBorderRadius,
-      boxShadow: `0 2px 8px #0006, inset 0 0 0 2px ${_n.notificationAccentColor}`,
-      borderColor: _n.notificationAccentColor,
-      borderWidth: _n.notificationBorderWidth,
+      borderRadius: hn.notificationBorderRadius,
+      boxShadow: `0 2px 8px #0006, inset 0 0 0 2px ${hn.notificationAccentColor}`,
+      borderColor: hn.notificationAccentColor,
+      borderWidth: hn.notificationBorderWidth,
       borderStyle: "solid",
       transition: "0.5s ease-in",
       transitionProperty: "margin, opacity",
       zIndex: 1
     },
     ":host .note .icon": {
-      stroke: _n.notificationAccentColor
+      stroke: hn.notificationAccentColor
     },
     ":host .note button": {
       display: "flex",
-      lineHeight: _n.notificationButtonSize,
+      lineHeight: hn.notificationButtonSize,
       padding: 0,
       margin: 0,
-      height: _n.notificationButtonSize,
-      width: _n.notificationButtonSize,
+      height: hn.notificationButtonSize,
+      width: hn.notificationButtonSize,
       background: "transparent",
       alignItems: "center",
       justifyContent: "center",
@@ -9969,24 +9982,24 @@ class XinNotification extends j {
       position: "relative"
     },
     ":host .note button:hover svg": {
-      stroke: _n.notificationAccentColor
+      stroke: hn.notificationAccentColor
     },
     ":host .note button:active svg": {
       borderRadius: 99,
-      stroke: _n.notificationBg,
-      background: _n.notificationAccentColor,
-      padding: _n.spacing50
+      stroke: hn.notificationBg,
+      background: hn.notificationAccentColor,
+      padding: hn.spacing50
     },
     ":host .note svg": {
-      height: _n.notificationIconSize,
-      width: _n.notificationIconSize,
+      height: hn.notificationIconSize,
+      width: hn.notificationIconSize,
       pointerEvents: "none"
     },
     ":host .message": {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      gap: _n.notificationSpacing
+      gap: hn.notificationSpacing
     },
     ":host .note.closing": {
       opacity: 0,
@@ -10011,7 +10024,7 @@ class XinNotification extends j {
     document.body.append(singleton);
     singleton.style.zIndex = String(findHighestZ() + 1);
     const _notificationAccentColor = color || COLOR_MAP[type];
-    const progressBar = progress || type === "progress" ? L.progress() : {};
+    const progressBar = progress || type === "progress" ? x.progress() : {};
     const closeCallback = () => {
       if (close) {
         close();
@@ -10085,7 +10098,7 @@ var isBreached = async (password) => {
   }
   return response.status !== 404;
 };
-var { span: span11, xinSlot: xinSlot5 } = L;
+var { span: span11, xinSlot: xinSlot5 } = x;
 
 class XinPasswordStrength extends j {
   static initAttributes = {
@@ -10171,7 +10184,7 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
     ":host": {
       display: "inline-flex",
       flexDirection: "column",
-      gap: _n.spacing50,
+      gap: hn.spacing50,
       position: "relative"
     },
     ":host xin-slot": {
@@ -10183,7 +10196,7 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
       height: Hn.meterHeight("24px"),
       background: Hn.indicatorBg("white"),
       borderRadius: Hn.meterRadius("4px"),
-      boxShadow: Hn.meterShadow(`inset 0 0 0 2px ${_n.indicatorColor}`)
+      boxShadow: Hn.meterShadow(`inset 0 0 0 2px ${hn.indicatorColor}`)
     },
     ':host [part="level"]': {
       height: Hn.levelHeight("20px"),
@@ -10191,14 +10204,14 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
       display: "inline-block",
       width: 0,
       transition: "0.15s ease-out",
-      background: _n.indicatorColor,
+      background: hn.indicatorColor,
       margin: Hn.levelMargin("2px"),
       borderRadius: Hn.levelRadius("2px")
     },
     ':host [part="description"]': {
       position: "absolute",
       inset: "0",
-      color: _n.descriptionColor,
+      color: hn.descriptionColor,
       height: Hn.meterHeight("24px"),
       lineHeight: Hn.meterHeight("24px"),
       textAlign: "center"
@@ -10206,7 +10219,7 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
   }
 });
 // src/rating.ts
-var { span: span12 } = L;
+var { span: span12 } = x;
 
 class TosiRating extends j {
   static formAssociated = true;
@@ -10359,7 +10372,7 @@ var tosiRating = TosiRating.elementCreator({
 });
 var xinRating = On((...args) => tosiRating(...args), "xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)");
 // src/rich-text.ts
-var { xinSlot: xinSlot6, div: div14, button: button12, span: span13 } = L;
+var { xinSlot: xinSlot6, div: div14, button: button12, span: span13 } = x;
 var blockStyles = [
   {
     caption: "Title",
@@ -10642,7 +10655,7 @@ var tosiRichText = RichText.elementCreator({
 });
 var richText = On((...args) => tosiRichText(...args), "richText is deprecated, use tosiRichText instead (tag is now <tosi-rich-text>)");
 // src/segmented.ts
-var { div: div15, slot: slot7, label: label3, span: span14, input: input7 } = L;
+var { div: div15, slot: slot7, label: label3, span: span14, input: input7 } = x;
 
 class TosiSegmented extends j {
   static formAssociated = true;
@@ -10878,7 +10891,7 @@ var tosiSegmented = TosiSegmented.elementCreator({
 });
 var xinSegmented = On((...args) => tosiSegmented(...args), "xinSegmented is deprecated, use tosiSegmented instead (tag is now <tosi-segmented>)");
 // src/size-break.ts
-var { slot: slot8 } = L;
+var { slot: slot8 } = x;
 
 class SizeBreak extends j {
   static initAttributes = {
@@ -10942,7 +10955,7 @@ class XinSizer extends j {
     ":host svg": {
       width: 16,
       height: 16,
-      stroke: _n.resizeIconFill
+      stroke: hn.resizeIconFill
     }
   };
   content = icons.resize();
@@ -10986,7 +10999,7 @@ var xinSizer = XinSizer.elementCreator({
   tag: "xin-sizer"
 });
 // src/tag-list.ts
-var { div: div16, input: input8, span: span15, button: button13 } = L;
+var { div: div16, input: input8, span: span15, button: button13 } = x;
 
 class TosiTag extends j {
   static initAttributes = {
@@ -11019,12 +11032,12 @@ var tosiTag = TosiTag.elementCreator({
       "--tag-bg": Hn.brandColor("blue"),
       "--tag-text-color": Hn.brandTextColor("white"),
       display: "inline-flex",
-      borderRadius: Hn.tagRoundedRadius(_n.spacing50),
-      color: _n.tagTextColor,
-      background: _n.tagBg,
-      padding: `0 ${_n.spacing75} 0 ${_n.spacing75}`,
-      height: `calc(${_n.lineHeight} + ${_n.spacing50})`,
-      lineHeight: `calc(${_n.lineHeight} + ${_n.spacing50})`
+      borderRadius: Hn.tagRoundedRadius(hn.spacing50),
+      color: hn.tagTextColor,
+      background: hn.tagBg,
+      padding: `0 ${hn.spacing75} 0 ${hn.spacing75}`,
+      height: `calc(${hn.lineHeight} + ${hn.spacing50})`,
+      lineHeight: `calc(${hn.lineHeight} + ${hn.spacing50})`
     },
     ':host > [part="caption"]': {
       position: "relative",
@@ -11032,27 +11045,27 @@ var tosiTag = TosiTag.elementCreator({
       overflow: "hidden",
       flex: "1 1 auto",
       fontSize: Hn.fontSize("16px"),
-      color: _n.tagTextColor,
+      color: hn.tagTextColor,
       textOverflow: "ellipsis"
     },
     ':host [part="remove"]': {
       boxShadow: "none",
-      margin: `0 ${_n.spacing_50} 0 ${_n.spacing25}`,
+      margin: `0 ${hn.spacing_50} 0 ${hn.spacing25}`,
       padding: 0,
       display: "inline-flex",
       alignItems: "center",
       alignSelf: "center",
       justifyContent: "center",
-      height: _n.spacing150,
-      width: _n.spacing150,
-      color: _n.tagCloseButtonColor,
-      background: _n.tagCloseButtonBg,
+      height: hn.spacing150,
+      width: hn.spacing150,
+      color: hn.tagCloseButtonColor,
+      background: hn.tagCloseButtonBg,
       borderRadius: Hn.tagCloseButtonRadius("99px"),
-      opacity: _n.tagButtonOpacity
+      opacity: hn.tagButtonOpacity
     },
     ':host [part="remove"]:hover': {
-      background: _n.tagCloseButtonBg,
-      opacity: _n.tagButtonHoverOpacity
+      background: hn.tagCloseButtonBg,
+      opacity: hn.tagButtonHoverOpacity
     }
   }
 });
@@ -11244,34 +11257,34 @@ var tosiTagList = TosiTagList.elementCreator({
       display: "grid",
       gridTemplateColumns: "auto",
       alignItems: "center",
-      background: _n.tagListBg,
-      gap: _n.spacing25,
-      borderRadius: Hn.taglistRoundedRadius(_n.spacing50),
+      background: hn.tagListBg,
+      gap: hn.spacing25,
+      borderRadius: Hn.taglistRoundedRadius(hn.spacing50),
       overflow: "hidden"
     },
     ":host[editable]": {
-      gridTemplateColumns: `0px auto ${_n.touchSize}`
+      gridTemplateColumns: `0px auto ${hn.touchSize}`
     },
     ":host[editable][text-entry]": {
-      gridTemplateColumns: `0px 2fr 1fr ${_n.touchSize}`
+      gridTemplateColumns: `0px 2fr 1fr ${hn.touchSize}`
     },
     ':host [part="tagContainer"]': {
       display: "flex",
       content: '" "',
       alignItems: "center",
-      background: _n.inputBg,
-      borderRadius: Hn.tagContainerRadius(_n.spacing50),
-      boxShadow: _n.borderShadow,
+      background: hn.inputBg,
+      borderRadius: Hn.tagContainerRadius(hn.spacing50),
+      boxShadow: hn.borderShadow,
       flexWrap: "nowrap",
       overflow: "auto hidden",
-      gap: _n.spacing25,
-      minHeight: `calc(${_n.lineHeight} + ${_n.spacing})`,
-      padding: _n.spacing25
+      gap: hn.spacing25,
+      minHeight: `calc(${hn.lineHeight} + ${hn.spacing})`,
+      padding: hn.spacing25
     },
     ':host [part="tagMenu"]': {
-      width: _n.touchSize,
-      height: _n.touchSize,
-      lineHeight: _n.touchSize,
+      width: hn.touchSize,
+      height: hn.touchSize,
+      lineHeight: hn.touchSize,
       textAlign: "center",
       padding: 0,
       margin: 0
@@ -11280,8 +11293,8 @@ var tosiTagList = TosiTagList.elementCreator({
       display: "none !important"
     },
     ':host button[part="tagMenu"]': {
-      background: _n.brandColor,
-      color: _n.brandTextColor
+      background: hn.brandColor,
+      color: hn.brandTextColor
     }
   }
 });
@@ -11290,9 +11303,9 @@ var xinTagList = On((...args) => tosiTagList(...args), "xinTagList is deprecated
 var version = "1.2.1";
 // src/theme.ts
 var defaultColors = {
-  accent: x.fromCss("#EE257B"),
-  background: x.fromCss("#fafafa"),
-  text: x.fromCss("#222222")
+  accent: y.fromCss("#EE257B"),
+  background: y.fromCss("#fafafa"),
+  text: y.fromCss("#222222")
 };
 var baseVariables = {
   _tosiSpacingXs: "4px",
@@ -11366,19 +11379,19 @@ function applyTheme(theme, id = "tosi-theme") {
 var baseTheme = createTheme(defaultColors);
 var baseDarkTheme = createDarkTheme(defaultColors);
 var legacyAliases = {
-  "--xin-icon-size": _n.tosiIconSize,
-  "--xin-icon-fill": _n.tosiIconFill,
-  "--xin-icon-stroke": _n.tosiIconStroke,
-  "--xin-tabs-bar-color": _n.tosiTabsBarColor,
-  "--xin-tabs-bar-height": _n.tosiTabsBarHeight,
-  "--xin-tabs-selected-color": _n.tosiTabsSelectedColor,
-  "--spacing": _n.tosiSpacing,
-  "--gap": _n.tosiSpacingSm,
-  "--touch-size": _n.tosiTouchSize,
-  "--background": _n.tosiBg,
-  "--text-color": _n.tosiText,
-  "--brand-color": _n.tosiAccent,
-  "--brand-text-color": _n.tosiAccentText
+  "--xin-icon-size": hn.tosiIconSize,
+  "--xin-icon-fill": hn.tosiIconFill,
+  "--xin-icon-stroke": hn.tosiIconStroke,
+  "--xin-tabs-bar-color": hn.tosiTabsBarColor,
+  "--xin-tabs-bar-height": hn.tosiTabsBarHeight,
+  "--xin-tabs-selected-color": hn.tosiTabsSelectedColor,
+  "--spacing": hn.tosiSpacing,
+  "--gap": hn.tosiSpacingSm,
+  "--touch-size": hn.tosiTouchSize,
+  "--background": hn.tosiBg,
+  "--text-color": hn.tosiText,
+  "--brand-color": hn.tosiAccent,
+  "--brand-text-color": hn.tosiAccentText
 };
 function createThemeWithLegacy(colors) {
   const theme = createTheme(colors);
@@ -11398,7 +11411,7 @@ function componentVars(componentName, defaults) {
   return result;
 }
 // demo/src/style.ts
-var brandColor = x.fromCss("#EE257B");
+var brandColor = y.fromCss("#EE257B");
 var colors = {
   _textColor: "#222",
   _brandColor: brandColor,
@@ -11459,19 +11472,19 @@ var styleSpec = {
   },
   "*": {
     boxSizing: "border-box",
-    scrollbarColor: `${_n.scrollThumbColor} ${_n.scrollBarColor}`,
+    scrollbarColor: `${hn.scrollThumbColor} ${hn.scrollBarColor}`,
     scrollbarWidth: "thin"
   },
   body: {
-    fontFamily: _n.fontFamily,
-    fontSize: _n.fontSize,
+    fontFamily: hn.fontFamily,
+    fontSize: hn.fontSize,
     margin: "0",
-    lineHeight: _n.lineHeight,
-    background: _n.background,
-    _xinTabsSelectedColor: _n.brandColor,
-    _xinTabsBarColor: _n.brandTextColor,
-    _menuItemIconColor: _n.brandColor,
-    color: _n.textColor
+    lineHeight: hn.lineHeight,
+    background: hn.background,
+    _xinTabsSelectedColor: hn.brandColor,
+    _xinTabsBarColor: hn.brandTextColor,
+    _menuItemIconColor: hn.brandColor,
+    color: hn.textColor
   },
   ".center": {
     display: "flex",
@@ -11479,42 +11492,42 @@ var styleSpec = {
     justifyContent: "center"
   },
   "input, button, select, textarea": {
-    fontFamily: _n.fontFamily,
-    fontSize: _n.fontSize,
+    fontFamily: hn.fontFamily,
+    fontSize: hn.fontSize,
     color: "currentColor",
-    background: _n.inputBg
+    background: hn.inputBg
   },
   select: {
     WebkitAppearance: "none",
     appearance: "none"
   },
   header: {
-    background: _n.brandColor,
-    color: _n.brandTextColor,
-    _textColor: _n.brandTextColor,
-    _linkColor: _n.transTextColor,
+    background: hn.brandColor,
+    color: hn.brandTextColor,
+    _textColor: hn.brandTextColor,
+    _linkColor: hn.transTextColor,
     display: "flex",
     alignItems: "center",
     padding: "0 var(--spacing)",
     lineHeight: "calc(var(--line-height) * var(--h1-scale))",
-    height: _n.headerHeight,
+    height: hn.headerHeight,
     whiteSpace: "nowrap"
   },
   h1: {
-    color: _n.brandColor,
+    color: hn.brandColor,
     fontSize: "calc(var(--font-size) * var(--h1-scale))",
     lineHeight: "calc(var(--line-height) * var(--h1-scale))",
     fontWeight: "400",
-    borderBottom: `4px solid ${_n.barColor}`,
-    margin: `${_n.spacing} 0 ${_n.spacing200}`,
+    borderBottom: `4px solid ${hn.barColor}`,
+    margin: `${hn.spacing} 0 ${hn.spacing200}`,
     padding: 0
   },
   "header h2": {
-    color: _n.brandTextColor,
+    color: hn.brandTextColor,
     whiteSpace: "nowrap"
   },
   h2: {
-    color: _n.brandColor,
+    color: hn.brandColor,
     fontSize: "calc(var(--font-size) * var(--h2-scale))",
     lineHeight: "calc(var(--line-height) * var(--h2-scale))",
     margin: "calc(var(--spacing) * var(--h2-scale)) 0"
@@ -11536,18 +11549,18 @@ var styleSpec = {
     height: "calc(100vh - var(--header-height))"
   },
   "main > xin-sidenav::part(nav)": {
-    background: _n.navBg
+    background: hn.navBg
   },
   "input[type=search]": {
     borderRadius: 99
   },
   blockquote: {
     position: "relative",
-    background: _n.insetBg,
+    background: hn.insetBg,
     margin: "0 48px 56px 0",
-    borderRadius: _n.spacing,
+    borderRadius: hn.spacing,
     padding: "var(--spacing) calc(var(--spacing) * 2)",
-    filter: `drop-shadow(0px 1px 1px ${_n.shadowColor})`
+    filter: `drop-shadow(0px 1px 1px ${hn.shadowColor})`
   },
   "blockquote > :first-child": {
     marginTop: "0"
@@ -11561,8 +11574,8 @@ var styleSpec = {
     width: 1,
     height: 1,
     border: "10px solid transparent",
-    borderTopColor: _n.insetBg,
-    borderRightColor: _n.insetBg,
+    borderTopColor: hn.insetBg,
+    borderRightColor: hn.insetBg,
     position: "absolute",
     bottom: -20,
     right: 24
@@ -11579,17 +11592,17 @@ var styleSpec = {
   },
   ".bar": {
     display: "flex",
-    gap: _n.spacing,
+    gap: hn.spacing,
     justifyContent: "center",
     alignItems: "center",
-    padding: _n.spacing,
+    padding: hn.spacing,
     flexWrap: "wrap",
-    _textColor: _n.brandColor,
-    background: _n.barColor
+    _textColor: hn.brandColor,
+    background: hn.barColor
   },
   a: {
     textDecoration: "none",
-    color: _n.linkColor,
+    color: hn.linkColor,
     opacity: "0.9",
     borderBottom: "1px solid var(--brand-color)"
   },
@@ -11598,10 +11611,10 @@ var styleSpec = {
     alignItems: "center",
     justifyContent: "center",
     transition: "ease-out 0.2s",
-    _textColor: _n.brandColor,
-    color: _n.textColor,
+    _textColor: hn.brandColor,
+    color: hn.textColor,
     textDecoration: "none",
-    background: _n.buttonBg,
+    background: hn.buttonBg,
     padding: "0 calc(var(--spacing) * 1.25)",
     border: "none",
     borderRadius: "calc(var(--spacing) * 0.5)"
@@ -11618,7 +11631,7 @@ var styleSpec = {
     alignSelf: "center",
     pointerEvents: "none",
     objectPosition: "left center",
-    _textColor: _n.brandColor
+    _textColor: hn.brandColor
   },
   "label > select + .icon-chevron-down": {
     marginLeft: "calc(var(--spacing) * -3.5)"
@@ -11627,7 +11640,7 @@ var styleSpec = {
     border: "none",
     outline: "none",
     borderRadius: "calc(var(--spacing) * 0.5)",
-    boxShadow: _n.inputBorderShadow
+    boxShadow: hn.inputBorderShadow
   },
   input: {
     padding: "0 calc(var(--spacing) * 1.5)"
@@ -11637,7 +11650,7 @@ var styleSpec = {
   },
   textarea: {
     padding: "var(--spacing) calc(var(--spacing) * 1.25)",
-    lineHeight: _n.lineHeight,
+    lineHeight: hn.lineHeight,
     minHeight: "calc(var(--spacing) + var(--line-height) * 4)"
   },
   "input[type='number']": {
@@ -11651,10 +11664,10 @@ var styleSpec = {
     inset: 1
   },
   "input[type='checkbox'], input[type='radio']": {
-    maxWidth: _n.lineHeight
+    maxWidth: hn.lineHeight
   },
   "::placeholder": {
-    color: _n.placeholderColor
+    color: hn.placeholderColor
   },
   img: {
     verticalAlign: "middle"
@@ -11663,8 +11676,8 @@ var styleSpec = {
     boxShadow: "inset 0 0 0 2px var(--brand-color)"
   },
   "button:active, button:active, .clickable:active": {
-    background: _n.brandColor,
-    color: _n.brandTextColor
+    background: hn.brandColor,
+    color: hn.brandTextColor
   },
   label: {
     display: "inline-flex",
@@ -11691,8 +11704,8 @@ var styleSpec = {
     opacity: "1"
   },
   ".thead": {
-    background: _n.brandColor,
-    color: _n.brandTextColor
+    background: hn.brandColor,
+    color: hn.brandTextColor
   },
   ".th + .th": {
     border: "1px solid #fff4",
@@ -11713,16 +11726,16 @@ var styleSpec = {
     pointerEvents: "none"
   },
   pre: {
-    background: _n.codeBg,
-    padding: _n.spacing,
+    background: hn.codeBg,
+    padding: hn.spacing,
     borderRadius: "calc(var(--spacing) * 0.25)",
     overflow: "auto",
-    fontSize: _n.codeFontSize,
+    fontSize: hn.codeFontSize,
     lineHeight: "calc(var(--font-size) * 1.2)"
   },
   "pre, code": {
-    fontFamily: _n.codeFontFamily,
-    _textColor: _n.brandColor
+    fontFamily: hn.codeFontFamily,
+    _textColor: hn.brandColor
   },
   ".-xin-sidenav-visible .close-content": {
     display: "none"
@@ -11741,22 +11754,22 @@ var styleSpec = {
   ".transparent:hover, .iconic:hover": {
     background: "#0002",
     boxShadow: "none",
-    color: _n.textColor
+    color: hn.textColor
   },
   ".transparent:active, .iconic:active": {
     background: "#0004",
     boxShadow: "none",
-    color: _n.textColor
+    color: hn.textColor
   },
   "xin-sidenav:not([compact]) .show-within-compact": {
     display: "none"
   },
   ".on.on": {
-    background: _n.brandColor,
-    _textColor: _n.brandTextColor
+    background: hn.brandColor,
+    _textColor: hn.brandTextColor
   },
   ".current": {
-    background: _n.background
+    background: hn.background
   },
   ".doc-link": {
     cursor: "pointer",
@@ -11766,7 +11779,7 @@ var styleSpec = {
     padding: "calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.5)"
   },
   ".doc-link:not(.current):hover": {
-    background: _n.background
+    background: hn.background
   },
   ".doc-link:not(.current)": {
     opacity: "0.8",
@@ -11776,11 +11789,11 @@ var styleSpec = {
     margin: "var(--spacing) 0"
   },
   "xin-example [part=editors]": {
-    background: _n.insetBg
+    background: hn.insetBg
   },
   "[class*='icon-'], xin-icon": {
     color: "currentcolor",
-    height: _n.fontSize,
+    height: hn.fontSize,
     pointerEvents: "none"
   },
   "[class*='icon-']": {
@@ -11793,14 +11806,14 @@ var styleSpec = {
     borderCollapse: "collapse"
   },
   thead: {
-    background: _n.brandColor,
-    color: _n.brandTextColor
+    background: hn.brandColor,
+    color: hn.brandTextColor
   },
   tbody: {
-    background: _n.background
+    background: hn.background
   },
   "tr:nth-child(2n)": {
-    background: _n.backgroundShaded
+    background: hn.backgroundShaded
   },
   "th, td": {
     padding: "calc(var(--spacing) * 0.5) var(--spacing)"
@@ -11903,7 +11916,7 @@ Weak	Faible	Heikko	Svag	虚弱的	弱い	약한	Débil	Schwach	Debole
 Yes	Oui	Kyllä	Ja	是的	はい	예	Sí	Ja	Sì`;
 
 // demo/src/css-var-editor.ts
-var { h2: h22, code } = L;
+var { h2: h22, code } = x;
 
 class XinCssVarEditor extends j {
   elementSelector = "";
@@ -11936,7 +11949,7 @@ class XinCssVarEditor extends j {
           let value = computedStyle.getPropertyValue(cssVar);
           const type = value.match(/^(#|rgb|hsl)[\d()a-fA-F]+$/) ? "color" : "string";
           if (type === "color") {
-            value = x.fromCss(value).html;
+            value = y.fromCss(value).html;
           }
           variables.append(xinField(code(cssVar), { key: cssVar, value, type }));
         }
@@ -17532,15 +17545,15 @@ var browser = createDocBrowser({
 if (main) {
   const header3 = browser.querySelector("header");
   if (header3) {
-    const { img, a: a4, span: span16, button: button14 } = L;
+    const { img, a: a4, span: span16, button: button14 } = x;
     const sizeBreakElement = header3.querySelector("xin-sizebreak");
     if (sizeBreakElement) {
       const badges = span16({
         style: {
-          marginRight: _n.spacing,
+          marginRight: hn.spacing,
           display: "flex",
           alignItems: "center",
-          gap: _n.spacing50
+          gap: hn.spacing50
         }
       }, a4({ href: `https://bundlejs.com/?q=${PROJECT}`, target: "_blank" }, img({
         alt: "bundlejs size badge",
@@ -17561,7 +17574,7 @@ if (main) {
     }
     const settingsButton = button14({
       class: "iconic",
-      style: { color: _n.linkColor },
+      style: { color: hn.linkColor },
       title: "links and settings",
       onClick(event) {
         popMenu({
