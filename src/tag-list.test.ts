@@ -1,7 +1,7 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
-import { XinTag, xinTag, XinTagList, xinTagList } from './tag-list'
+import { TosiTag, tosiTag, TosiTagList, tosiTagList } from './tag-list'
 
-describe('XinTag', () => {
+describe('TosiTag', () => {
   let container: HTMLElement
 
   beforeEach(() => {
@@ -15,26 +15,26 @@ describe('XinTag', () => {
 
   describe('initialization', () => {
     test('creates a custom element', () => {
-      const tag = xinTag({ caption: 'test' })
+      const tag = tosiTag({ caption: 'test' })
       container.appendChild(tag)
-      expect(tag).toBeInstanceOf(XinTag)
-      expect(tag.tagName.toLowerCase()).toBe('xin-tag')
+      expect(tag).toBeInstanceOf(TosiTag)
+      expect(tag.tagName.toLowerCase()).toBe('tosi-tag')
     })
 
     test('displays caption', () => {
-      const tag = xinTag({ caption: 'Hello' })
+      const tag = tosiTag({ caption: 'Hello' })
       container.appendChild(tag)
       expect(tag.caption).toBe('Hello')
     })
 
     test('removeable defaults to false', () => {
-      const tag = xinTag({ caption: 'test' })
+      const tag = tosiTag({ caption: 'test' })
       container.appendChild(tag)
       expect(tag.removeable).toBe(false)
     })
 
     test('accepts removeable property', () => {
-      const tag = xinTag({ caption: 'test', removeable: true })
+      const tag = tosiTag({ caption: 'test', removeable: true })
       container.appendChild(tag)
       expect(tag.removeable).toBe(true)
     })
@@ -42,7 +42,7 @@ describe('XinTag', () => {
 
   describe('structure', () => {
     test('has caption span', () => {
-      const tag = xinTag({ caption: 'Test Caption' })
+      const tag = tosiTag({ caption: 'Test Caption' })
       container.appendChild(tag)
       const caption = tag.querySelector('span[part="caption"]')
       expect(caption).not.toBeNull()
@@ -50,14 +50,14 @@ describe('XinTag', () => {
     })
 
     test('has remove button', () => {
-      const tag = xinTag({ caption: 'test', removeable: true })
+      const tag = tosiTag({ caption: 'test', removeable: true })
       container.appendChild(tag)
       const removeBtn = tag.querySelector('button[part="remove"]')
       expect(removeBtn).not.toBeNull()
     })
 
     test('remove button has aria-label', () => {
-      const tag = xinTag({ caption: 'MyTag', removeable: true })
+      const tag = tosiTag({ caption: 'MyTag', removeable: true })
       container.appendChild(tag)
       const removeBtn = tag.querySelector('button[part="remove"]')
       expect(removeBtn?.getAttribute('aria-label')).toBe('Remove MyTag')
@@ -67,7 +67,7 @@ describe('XinTag', () => {
   describe('removeCallback', () => {
     test('calls removeCallback when set', () => {
       let called = false
-      const tag = xinTag({
+      const tag = tosiTag({
         caption: 'test',
         removeable: true,
         removeCallback: () => {
@@ -81,7 +81,7 @@ describe('XinTag', () => {
   })
 })
 
-describe('XinTagList', () => {
+describe('TosiTagList', () => {
   let container: HTMLElement
 
   beforeEach(() => {
@@ -95,32 +95,32 @@ describe('XinTagList', () => {
 
   describe('initialization', () => {
     test('creates a custom element', () => {
-      const tagList = xinTagList()
+      const tagList = tosiTagList()
       container.appendChild(tagList)
-      expect(tagList).toBeInstanceOf(XinTagList)
-      expect(tagList.tagName.toLowerCase()).toBe('xin-tag-list')
+      expect(tagList).toBeInstanceOf(TosiTagList)
+      expect(tagList.tagName.toLowerCase()).toBe('tosi-tag-list')
     })
 
-    test('value defaults to empty', () => {
-      const tagList = xinTagList()
+    test('value defaults to empty string', () => {
+      const tagList = tosiTagList()
       container.appendChild(tagList)
-      expect(tagList.value).toEqual([])
+      expect(tagList.value).toBe('')
     })
 
     test('editable defaults to false', () => {
-      const tagList = xinTagList()
+      const tagList = tosiTagList()
       container.appendChild(tagList)
       expect(tagList.editable).toBe(false)
     })
 
     test('textEntry defaults to false', () => {
-      const tagList = xinTagList()
+      const tagList = tosiTagList()
       container.appendChild(tagList)
       expect(tagList.textEntry).toBe(false)
     })
 
     test('disabled defaults to false', () => {
-      const tagList = xinTagList()
+      const tagList = tosiTagList()
       container.appendChild(tagList)
       expect(tagList.disabled).toBe(false)
     })
@@ -128,25 +128,19 @@ describe('XinTagList', () => {
 
   describe('value handling', () => {
     test('accepts value as string', () => {
-      const tagList = xinTagList({ value: 'one,two,three' })
+      const tagList = tosiTagList({ value: 'one,two,three' })
       container.appendChild(tagList)
       expect(tagList.tags).toEqual(['one', 'two', 'three'])
     })
 
-    test('accepts value as array', () => {
-      const tagList = xinTagList({ value: ['a', 'b', 'c'] })
-      container.appendChild(tagList)
-      expect(tagList.tags).toEqual(['a', 'b', 'c'])
-    })
-
     test('tags getter parses comma-separated string', () => {
-      const tagList = xinTagList({ value: 'alpha, beta, gamma' })
+      const tagList = tosiTagList({ value: 'alpha, beta, gamma' })
       container.appendChild(tagList)
       expect(tagList.tags).toEqual(['alpha', 'beta', 'gamma'])
     })
 
     test('tags getter filters empty strings', () => {
-      const tagList = xinTagList({ value: 'one,,two,,,three' })
+      const tagList = tosiTagList({ value: 'one,,two,,,three' })
       container.appendChild(tagList)
       expect(tagList.tags).toEqual(['one', 'two', 'three'])
     })
@@ -154,21 +148,21 @@ describe('XinTagList', () => {
 
   describe('addTag', () => {
     test('adds new tag to value', () => {
-      const tagList = xinTagList({ value: ['existing'] })
+      const tagList = tosiTagList({ value: 'existing' })
       container.appendChild(tagList)
       tagList.addTag('new')
       expect(tagList.tags).toContain('new')
     })
 
     test('does not add duplicate tags', () => {
-      const tagList = xinTagList({ value: ['existing'] })
+      const tagList = tosiTagList({ value: 'existing' })
       container.appendChild(tagList)
       tagList.addTag('existing')
       expect(tagList.tags.filter((t) => t === 'existing').length).toBe(1)
     })
 
     test('does not add empty tags', () => {
-      const tagList = xinTagList({ value: ['a'] })
+      const tagList = tosiTagList({ value: 'a' })
       container.appendChild(tagList)
       tagList.addTag('')
       tagList.addTag('   ')
@@ -178,14 +172,14 @@ describe('XinTagList', () => {
 
   describe('toggleTag', () => {
     test('removes existing tag', () => {
-      const tagList = xinTagList({ value: ['a', 'b', 'c'] })
+      const tagList = tosiTagList({ value: 'a,b,c' })
       container.appendChild(tagList)
       tagList.toggleTag('b')
       expect(tagList.tags).toEqual(['a', 'c'])
     })
 
     test('adds non-existing tag', () => {
-      const tagList = xinTagList({ value: ['a'] })
+      const tagList = tosiTagList({ value: 'a' })
       container.appendChild(tagList)
       tagList.toggleTag('b')
       expect(tagList.tags).toContain('b')
@@ -194,37 +188,41 @@ describe('XinTagList', () => {
 
   describe('properties', () => {
     test('accepts editable property', () => {
-      const tagList = xinTagList({ editable: true })
+      const tagList = tosiTagList({ editable: true })
       container.appendChild(tagList)
       expect(tagList.editable).toBe(true)
     })
 
     test('accepts textEntry property', () => {
-      const tagList = xinTagList({ textEntry: true })
+      const tagList = tosiTagList({ textEntry: true })
       container.appendChild(tagList)
       expect(tagList.textEntry).toBe(true)
     })
 
     test('accepts placeholder property', () => {
-      const tagList = xinTagList({ placeholder: 'Custom placeholder' })
+      const tagList = tosiTagList({ placeholder: 'Custom placeholder' })
       container.appendChild(tagList)
       expect(tagList.placeholder).toBe('Custom placeholder')
     })
 
-    test('accepts availableTags as string', () => {
-      const tagList = xinTagList({ availableTags: 'x,y,z' })
+    test('parses availableTags from attribute string', () => {
+      const tagList = document.createElement('tosi-tag-list') as ReturnType<
+        typeof tosiTagList
+      >
+      tagList.setAttribute('available-tags', 'x,y,z')
       container.appendChild(tagList)
-      expect(tagList.availableTags).toBe('x,y,z')
+      expect(tagList.availableTags).toEqual(['x', 'y', 'z'])
     })
 
     test('accepts availableTags as array', () => {
-      const tagList = xinTagList({ availableTags: ['x', 'y', 'z'] })
+      const tagList = tosiTagList()
+      tagList.availableTags = ['x', 'y', 'z']
       container.appendChild(tagList)
       expect(tagList.availableTags).toEqual(['x', 'y', 'z'])
     })
 
     test('accepts disabled property', () => {
-      const tagList = xinTagList({ disabled: true })
+      const tagList = tosiTagList({ disabled: true })
       container.appendChild(tagList)
       expect(tagList.disabled).toBe(true)
     })
@@ -232,35 +230,35 @@ describe('XinTagList', () => {
 
   describe('accessibility', () => {
     test('tag container has role="list"', () => {
-      const tagList = xinTagList({ value: ['test'] })
+      const tagList = tosiTagList({ value: 'test' })
       container.appendChild(tagList)
       const tagContainer = tagList.querySelector('[part="tagContainer"]')
       expect(tagContainer?.getAttribute('role')).toBe('list')
     })
 
     test('tag container has aria-label', () => {
-      const tagList = xinTagList({ value: ['test'] })
+      const tagList = tosiTagList({ value: 'test' })
       container.appendChild(tagList)
       const tagContainer = tagList.querySelector('[part="tagContainer"]')
       expect(tagContainer?.getAttribute('aria-label')).toBe('Selected tags')
     })
 
     test('input has aria-label', () => {
-      const tagList = xinTagList({ editable: true, textEntry: true })
+      const tagList = tosiTagList({ editable: true, textEntry: true })
       container.appendChild(tagList)
       const input = tagList.querySelector('[part="tagInput"]')
       expect(input?.getAttribute('aria-label')).toBe('Enter new tag')
     })
 
     test('menu button has aria-haspopup', () => {
-      const tagList = xinTagList({ editable: true })
+      const tagList = tosiTagList({ editable: true })
       container.appendChild(tagList)
       const menuBtn = tagList.querySelector('[part="tagMenu"]')
       expect(menuBtn?.getAttribute('aria-haspopup')).toBe('listbox')
     })
 
     test('menu button has aria-label', () => {
-      const tagList = xinTagList({ editable: true })
+      const tagList = tosiTagList({ editable: true })
       container.appendChild(tagList)
       const menuBtn = tagList.querySelector('[part="tagMenu"]')
       expect(menuBtn?.getAttribute('aria-label')).toBe('Select tags from list')

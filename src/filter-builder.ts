@@ -144,9 +144,14 @@ interface FilterMaker {
 ```
 */
 
-import { Component as WebComponent, ElementCreator, elements, PartsMap } from 'tosijs'
+import {
+  Component as WebComponent,
+  ElementCreator,
+  elements,
+  PartsMap,
+} from 'tosijs'
 import { icons } from './icons'
-import { xinSelect, XinSelect, SelectOption } from './select'
+import { tosiSelect, TosiSelect, SelectOption } from './select'
 
 const { div, input, button, span } = elements
 
@@ -256,7 +261,7 @@ const passAnything = {
   test: () => true,
 }
 
-function getSelectText(select: XinSelect): string {
+function getSelectText(select: TosiSelect): string {
   return (select.options[select.selectedIndex] as SelectOption)?.caption || ''
 }
 
@@ -269,33 +274,31 @@ export interface FilterPartState {
 }
 
 interface FilterPartParts extends PartsMap {
-  haystack: XinSelect
-  condition: XinSelect
+  haystack: TosiSelect
+  condition: TosiSelect
   needle: HTMLInputElement
   remove: HTMLButtonElement
 }
 
 export class FilterPart extends WebComponent<FilterPartParts> {
+  static initAttributes = {
+    haystack: '*',
+    condition: 'contains',
+    needle: '',
+  }
+
   fields: Fields = []
   filters = availableFilters
-  haystack = '*'
-  condition = 'contains'
-  needle = ''
 
   content = () => [
-    xinSelect({ part: 'haystack' }),
-    xinSelect({ part: 'condition' }),
+    tosiSelect({ part: 'haystack' }),
+    tosiSelect({ part: 'condition' }),
     input({ part: 'needle', type: 'search' }),
     span({ part: 'padding' }),
     button({ part: 'remove', title: 'delete' }, icons.trash()),
   ]
 
   filter: Filter = passAnything
-
-  constructor() {
-    super()
-    this.initAttributes('haystack', 'condition', 'needle')
-  }
 
   get state(): FilterPartState {
     const { haystack, needle, condition } = this.parts
@@ -376,13 +379,14 @@ export class FilterPart extends WebComponent<FilterPartParts> {
 
     haystack.options = [
       {
-        caption: 'any field', 
-        value: '*'
+        caption: 'any field',
+        value: '*',
       },
-      ...this.fields.map((field) => field.prop)
+      ...this.fields.map((field) => field.prop),
     ]
-    
-    condition.options = Object.keys(this.filters).map((key) => {
+
+    condition.options = Object.keys(this.filters)
+      .map((key) => {
         const filter = this.filters[key]
         return filter.negative !== undefined
           ? [
@@ -555,17 +559,17 @@ export const filterBuilder = FilterBuilder.elementCreator({
       alignItems: 'stretch',
       flex: '1 1 auto',
     },
-    
+
     ':host [part="haystack"]': {
-      _fieldWidth: '100px'
+      _fieldWidth: '100px',
     },
-    
+
     ':host [part="condition"]': {
-      _fieldWidth: '60px'
+      _fieldWidth: '60px',
     },
-    
+
     ':host [part="needle"]': {
-      _fieldWidth: '80px'
+      _fieldWidth: '80px',
     },
 
     ':host [part="add"], :host [part="reset"]': {

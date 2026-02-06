@@ -1,52 +1,61 @@
 /*#
 # select
 
-`<xin-select>` (`xinSelect` is the `ElementCreator`) is a replacement for the lamentable
+`<tosi-select>` (`tosiSelect` is the `ElementCreator`) is a replacement for the lamentable
 built in `<select>` element that addresses its various shortcomings.
 
-- since `<xin-select>` is powered by `popMenu`, and supports separators and submenus.
+- since `<tosi-select>` is powered by `popMenu`, and supports separators and submenus.
 - options can have icons.
-- `<xin-select>` will retain and display a value even if the matching option is missing.
+- `<tosi-select>` will retain and display a value even if the matching option is missing.
 - its displayed value can be made `editable`, allowing use as a "combo box".
 - options can have `async` callbacks that return a value.
 - picking an item triggers an `action` event even if the value hasn't changed.
 - available options are set via the `options` attribute or the element's `options` property (not `<option>` elements)
 
-```html
-<xin-select
-  title="simple select"
-  options="this,that,,the other"
-  value="not an option!"
-></xin-select><br>
-<xin-select
-  show-icon
-  title="has captions"
-  class="captions"
-  value="image"
-></xin-select><br>
-<xin-select
-  show-icon
-  title="combo select with icons"
-  class="icons"
-  editable
-  placeholder="pick an icon"
-></xin-select><br>
-<xin-select
-  show-icon
-  hide-caption
-  title="icons only"
-  class="icons-only"
-  placeholder="pick an icon"
-></xin-select>
-<pre contenteditable>Select some text in here…
-…to check for focus stealing</pre>
-```
 ```js
-import { icons } from 'tosijs-ui'
+const { tosiSelect } = tosijsui
+const { icons } = tosijsui
 
-const captions = preview.querySelector('.captions')
+const simpleSelect = tosiSelect({
+  title: 'simple select',
+  options: 'this,that,,the other',
+  value: 'not an option!'
+})
 
-captions.options = [
+const captionsSelect = tosiSelect({
+  showIcon: true,
+  title: 'has captions',
+  class: 'captions',
+  value: 'image'
+})
+
+const iconsSelect = tosiSelect({
+  showIcon: true,
+  title: 'combo select with icons',
+  class: 'icons',
+  editable: true,
+  placeholder: 'pick an icon'
+})
+
+const iconsOnly = tosiSelect({
+  showIcon: true,
+  hideCaption: true,
+  title: 'icons only',
+  class: 'icons-only',
+  placeholder: 'pick an icon'
+})
+
+preview.append(
+  simpleSelect,
+  document.createElement('br'),
+  captionsSelect,
+  document.createElement('br'),
+  iconsSelect,
+  document.createElement('br'),
+  iconsOnly
+)
+
+captionsSelect.options = [
   {
     caption: 'a heading',
     value: 'heading'
@@ -89,9 +98,6 @@ captions.options = [
   }
 ]
 
-const iconsSelect = preview.querySelector('.icons')
-const iconsOnly = preview.querySelector('.icons-only')
-
 iconsSelect.options = iconsOnly.options = Object.keys(icons).sort().map(icon =>({
   icon,
   caption: icon,
@@ -106,7 +112,29 @@ preview.addEventListener('change', (event) => {
   console.log(event.target.title, 'changed to', event.target.value)
 }, true)
 ```
-<xin-css-var-editor element-selector="xin-select"></xin-css-var-editor>
+```test
+const selects = preview.querySelectorAll('tosi-select')
+test('selects render', () => {
+  expect(selects.length).toBe(4)
+})
+test('simple select has value', () => {
+  expect(selects[0].value).toBe('not an option!')
+})
+test('captions select has value', () => {
+  expect(selects[1].value).toBe('image')
+})
+```
+
+## Form Integration
+
+`<tosi-select>` is form-associated, meaning it works directly in native `<form>` elements:
+
+```html
+<form>
+  <tosi-select name="choice" options="a,b,c" required></tosi-select>
+  <button type="submit">Submit</button>
+</form>
+```
 
 ## `options`
 
@@ -126,39 +154,51 @@ preview.addEventListener('change', (event) => {
 
     export type SelectOptions = Array<string | null | SelectOption | SelectOptionSubmenu>
 
-A `<xin-select>` can be assigned `options` as a string of comma-delimited choices,
+A `<tosi-select>` can be assigned `options` as a string of comma-delimited choices
+in the format `value=caption:icon` (where caption and icon are optional),
 or be provided a `SelectOptions` array (which allows for submenus, separators, etc.).
+
+Examples:
+- `"apple,banana,cherry"` - simple values (value equals caption)
+- `"us=United States,uk=United Kingdom"` - value with caption
+- `"us=United States:flag,uk=United Kingdom:flag"` - value with caption and icon
 
 ## Attributes
 
-`<xin-select>` supports several attributes:
+`<tosi-select>` supports several attributes:
 
 - `editable` lets the user directly edit the value (like a "combo box").
 - `show-icon` displays the icon corresponding to the currently selected value.
 - `hide-caption` hides the caption.
 - `placeholder` allows you to set a placeholder.
 - `options` allows you to assign options as a comma-delimited string attribute.
+- `required` marks the field as required for form validation.
+- `name` the form field name (for formAssociated support).
 
 ## Events
 
 Picking an option triggers an `action` event (whether or not this changes the value).
 
-Changing the value, either by typing in an editable `<xin-select>` or picking a new
+Changing the value, either by typing in an editable `<tosi-select>` or picking a new
 value triggers a `change` event.
 
 You can look at the console to see the events triggered by the second example.
 
 ## Localization
 
-`<xin-select>` supports the `localized` attribute which automatically localizes
+`<tosi-select>` supports the `localized` attribute which automatically localizes
 options.
 
-```html
-<xin-select
-  localized
-  placeholder="localized placeholder"
-  options="yes,no,,moderate"
-></xin-select>
+```js
+const { tosiSelect } = tosijsui
+
+preview.append(
+  tosiSelect({
+    localized: true,
+    placeholder: 'localized placeholder',
+    options: 'yes,no,,moderate'
+  })
+)
 ```
 */
 
@@ -169,6 +209,7 @@ import {
   elements,
   vars,
   throttle,
+  deprecated,
 } from 'tosijs'
 import { icons } from './icons'
 import { popMenu, MenuItem, SubMenu, removeLastMenu } from './menu'
@@ -211,21 +252,70 @@ interface SelectParts extends PartsMap {
   value: HTMLInputElement
 }
 
-export class XinSelect extends Component<SelectParts> {
-  editable = false
-  showIcon = false
-  hideCaption = false
-  options: string | SelectOptions = ''
+export class TosiSelect extends Component<SelectParts> {
+  static formAssociated = true
+
+  static initAttributes = {
+    editable: false,
+    placeholder: '',
+    showIcon: false,
+    hideCaption: false,
+    localized: false,
+    disabled: false,
+    required: false,
+    name: '',
+  }
+
+  private _options: SelectOptions = []
+
+  get options(): SelectOptions {
+    return this._options
+  }
+
+  set options(v: SelectOptions | string) {
+    if (typeof v === 'string') {
+      this._options = TosiSelect.parseOptionsString(v)
+    } else {
+      this._options = v
+    }
+    this.queueRender()
+  }
+
+  // Parse options string format: value=caption:icon (caption and icon are optional)
+  private static parseOptionsString(optionsStr: string): SelectOptions {
+    return optionsStr.split(',').map((option) => {
+      const trimmed = option.trim()
+      if (trimmed === '') return null
+      const [value, remains] = trimmed.split('=').map((v) => v.trim())
+      if (!remains) {
+        // Simple format: just "value" means value=caption
+        return { value, caption: value }
+      }
+      const [caption, iconName] = remains.split(':').map((v) => v.trim())
+      return {
+        value,
+        caption: caption || value,
+        icon: iconName || undefined,
+      }
+    })
+  }
   value = ''
-  placeholder = ''
   filter = ''
-  localized = false
-  disabled = false
   private isExpanded = false
+
+  // Form-associated lifecycle callbacks
+  formDisabledCallback(disabled: boolean) {
+    this.disabled = disabled
+  }
+
+  formResetCallback() {
+    this.value = ''
+  }
 
   private setValue = (value: string, triggerAction = false) => {
     if (this.value !== value) {
       this.value = value
+      this.queueRender(true)
     }
     if (triggerAction) {
       this.dispatchEvent(new Event('action'))
@@ -235,9 +325,7 @@ export class XinSelect extends Component<SelectParts> {
   private getValue = () => this.value
 
   get selectOptions(): SelectOptions {
-    return typeof this.options === 'string'
-      ? this.options.split(',').map((option) => option.trim() || null)
-      : this.options
+    return this.options
   }
 
   private buildOptionMenuItem = (
@@ -253,7 +341,7 @@ export class XinSelect extends Component<SelectParts> {
     if (typeof option === 'string') {
       caption = value = option
     } else {
-      ({ icon, caption, value } = option as SelectOption)
+      ;({ icon, caption, value } = option as SelectOption)
     }
     if (this.localized) {
       caption = localize(caption)
@@ -287,6 +375,8 @@ export class XinSelect extends Component<SelectParts> {
     }
   }
 
+  poppedOptions: MenuItem[] = []
+
   get optionsMenu(): MenuItem[] {
     const options = this.selectOptions.map(this.buildOptionMenuItem)
     if (this.filter === '') {
@@ -296,7 +386,7 @@ export class XinSelect extends Component<SelectParts> {
       if (option === null) {
         return true
       } else if ((option as SubMenu).menuItems) {
-        (option as SubMenu).menuItems = (option as SubMenu).menuItems.filter(
+        ;(option as SubMenu).menuItems = (option as SubMenu).menuItems.filter(
           showOption
         )
         return (option as SubMenu).menuItems.length > 0
@@ -356,9 +446,11 @@ export class XinSelect extends Component<SelectParts> {
     const { value } = this.parts
     value.setAttribute('aria-expanded', String(this.isExpanded))
   }
+
   content = () => [
     button(
       {
+        type: 'button',
         part: 'button',
         onClick: this.popOptions,
       },
@@ -379,20 +471,6 @@ export class XinSelect extends Component<SelectParts> {
     ),
   ]
 
-  constructor() {
-    super()
-
-    this.initAttributes(
-      'options',
-      'editable',
-      'placeholder',
-      'showIcon',
-      'hideCaption',
-      'localized',
-      'disabled'
-    )
-  }
-
   get allOptions(): SelectOption[] {
     const all: SelectOption[] = []
 
@@ -411,6 +489,7 @@ export class XinSelect extends Component<SelectParts> {
     flatten(this.selectOptions)
     return all
   }
+
   findOption(): SelectOption {
     const found = this.allOptions.find((option) => option.value === this.value)
     return found || { caption: this.value, value: this.value }
@@ -422,6 +501,12 @@ export class XinSelect extends Component<SelectParts> {
 
   connectedCallback() {
     super.connectedCallback()
+
+    // Parse options from HTML attribute if present and not already set programmatically
+    const optionsAttr = this.getAttribute('options')
+    if (optionsAttr && this._options.length === 0) {
+      this._options = TosiSelect.parseOptionsString(optionsAttr)
+    }
 
     if (this.localized) {
       XinLocalized.allInstances.add(this)
@@ -463,8 +548,11 @@ export class XinSelect extends Component<SelectParts> {
   }
 }
 
-export const xinSelect = XinSelect.elementCreator({
-  tag: 'xin-select',
+/** @deprecated Use TosiSelect instead */
+export const XinSelect = TosiSelect
+
+export const tosiSelect = TosiSelect.elementCreator({
+  tag: 'tosi-select',
   styleSpec: {
     ':host': {
       // New --tosi-select-* variables with defaults deriving from base theme
@@ -518,4 +606,10 @@ export const xinSelect = XinSelect.elementCreator({
       background: 'transparent',
     },
   },
-}) as ElementCreator<XinSelect>
+}) as ElementCreator<TosiSelect>
+
+/** @deprecated Use tosiSelect instead (tag is now tosi-select) */
+export const xinSelect = deprecated(
+  (...args: Parameters<typeof tosiSelect>) => tosiSelect(...args),
+  'xinSelect is deprecated, use tosiSelect instead (tag is now <tosi-select>)'
+) as ElementCreator<TosiSelect>

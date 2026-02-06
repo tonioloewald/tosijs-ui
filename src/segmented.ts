@@ -5,41 +5,37 @@ This is a fairly general-purpose segmented select control.
 
 ```html
 <div class="grid">
-<xin-segmented value="yes" choices="yes, no, don't care">
-  Should we?
-</xin-segmented>
+  <tosi-segmented value="yes" choices="yes, no, don't care">
+    Should we?
+  </tosi-segmented>
 
-<div>
-  <b>Localized!</b><br>
-  <xin-segmented
-    localized
-    title="do you like?"
-    choices="yes=Yes:thumbsUp, no=No:thumbsDown"
-  ></xin-segmented>
-</div>
+  <div>
+    <b>Localized!</b><br>
+    <tosi-segmented
+      localized
+      title="do you like?"
+      choices="yes=Yes:thumbsUp, no=No:thumbsDown"
+    ></tosi-segmented>
+  </div>
 
-<xin-segmented
-  style="--segmented-direction: column; --segmented-align-items: stretch"
-  choices="in a relationship, single" other="it's complicated…"
-  placeholder="oooh… please elaborate"
-  value="separated"
->
-  Relationship Status
-</xin-segmented>
+  <tosi-segmented
+    style="--segmented-direction: column; --segmented-align-items: stretch"
+    choices="in a relationship, single"
+    other="it's complicated..."
+    placeholder="please elaborate"
+    value="separated"
+  >
+    Relationship Status
+  </tosi-segmented>
 
-<xin-segmented
-  multiple
-  style="
-    --segmented-direction: column;
-    --segmented-align-items: start;
-    --segmented-option-grid-columns: 24px 24px 100px;
-    --segmented-input-visibility: visible;
-  "
-  choices="star=Star:star, game=Game:game, bug=Bug:bug, camera=Camera:camera"
-  value="star,bug"
->
-  Pick all that apply
-</xin-segmented>
+  <tosi-segmented
+    multiple
+    style="--segmented-direction: column; --segmented-align-items: start; --segmented-option-grid-columns: 24px 24px 100px; --segmented-input-visibility: visible;"
+    choices="star=Star:star, game=Game:game, bug=Bug:bug, camera=Camera:camera"
+    value="star,bug"
+  >
+    Pick all that apply
+  </tosi-segmented>
 </div>
 ```
 ```css
@@ -55,14 +51,46 @@ This is a fairly general-purpose segmented select control.
 ```js
 function logEvent(event) {
   const { target } = event
-  if (target.tagName === 'XIN-SEGMENTED') {
+  if (target.matches('tosi-segmented')) {
     console.log((target.textContent || target.title).trim(), target.value)
   }
 }
 preview.addEventListener('change', logEvent, true)
 ```
+```test
+const segmented = preview.querySelectorAll('tosi-segmented')
+test('segmented controls render', () => {
+  expect(segmented.length).toBe(4)
+})
+test('first segmented has value "yes"', () => {
+  expect(segmented[0].value).toBe('yes')
+})
+test('multiple segmented has array value', () => {
+  expect(segmented[3].value).toBe('star,bug')
+})
+```
 
 > Check the console to see the values being set.
+
+## Form Integration
+
+`<tosi-segmented>` is form-associated, meaning it works directly in native `<form>` elements:
+
+```html
+<form class="segmented-form">
+  <tosi-segmented name="choice" choices="a,b,c" required></tosi-segmented>
+  <button type="submit">Submit</button>
+  <span class="output"></span>
+</form>
+```
+```js
+const form = preview.querySelector('.segmented-form')
+form.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const data = new FormData(form)
+  form.querySelector('.output').textContent = 'Submitted: ' + data.get('choice')
+})
+```
 
 ## Properties
 
@@ -81,16 +109,16 @@ You can set `choices` programmatically to an array of `Choice` objects:
 - `choices` is a string of comma-delimited options of the form `value=caption:icon`,
   where caption and icon are optional
 - `multiple` allows multiple selection
-- `name` allows you to set the name of the `<input>` elements to a specific value, it will default
-  to the component's `instanceId`
+- `name` the form field name (for formAssociated support)
 - `other` (default '', meaning other is not allowed) is the caption for other options, allowing
   the user to input their choice. It will be reset to '' if `multiple` is set.
 - `placeholder` is the placeholder displayed in the `<input>` field for **other** responses
 - `localized` automatically localizes captions
+- `required` marks the field as required for form validation
 
 ## Styling
 
-The following CSS variables can be used to control customize the `<xin-segmented>` component.
+The following CSS variables can be used to control customize the `<tosi-segmented>` component.
 
     --segmented-align-items
     --segmented-direction
@@ -112,6 +140,7 @@ import {
   ElementCreator,
   elements,
   varDefault,
+  deprecated,
 } from 'tosijs'
 import { icons } from './icons'
 import { xinLocalized } from './localize'
@@ -127,17 +156,64 @@ interface Choice {
 interface SegmentParts {
   [key: string]: HTMLElement
   custom: HTMLInputElement
+  options: HTMLElement
 }
 
-export class XinSegmented extends WebComponent {
-  choices: string | Choice[] = ''
-  other = ''
-  multiple = false
-  name = ''
-  placeholder = 'Please specify…'
-  localized = false
+export class TosiSegmented extends WebComponent {
+  static formAssociated = true
 
-  value: null | string = null
+  static initAttributes = {
+    direction: 'row',
+    other: '',
+    multiple: false,
+    name: '',
+    placeholder: 'Please specify…',
+    localized: false,
+    required: false,
+  }
+
+  private _choices: Choice[] = []
+
+  get choices(): Choice[] {
+    return this._choices
+  }
+
+  set choices(v: Choice[] | string) {
+    if (typeof v === 'string') {
+      this._choices = TosiSegmented.parseChoicesString(v)
+    } else {
+      this._choices = v
+    }
+    this.queueRender()
+  }
+
+  // Parse choices string format: value=caption:icon (caption and icon are optional)
+  private static parseChoicesString(choicesStr: string): Choice[] {
+    return choicesStr
+      .split(',')
+      .filter((c) => c.trim() !== '')
+      .map((c) => {
+        const [value, remains] = c.split('=').map((v) => v.trim())
+        const [caption, iconName] = (remains || value)
+          .split(':')
+          .map((v) => v.trim())
+
+        const icon = iconName ? icons[iconName]() : ''
+        return { value, icon, caption }
+      })
+  }
+
+  value = ''
+
+  // Form-associated lifecycle callbacks
+  formDisabledCallback(disabled: boolean) {
+    // Could add disabled support here
+    void disabled
+  }
+
+  formResetCallback() {
+    this.value = ''
+  }
 
   get values(): string[] {
     return (this.value || '')
@@ -218,20 +294,6 @@ export class XinSegmented extends WebComponent {
     },
   }
 
-  constructor() {
-    super()
-
-    this.initAttributes(
-      'direction',
-      'choices',
-      'other',
-      'multiple',
-      'name',
-      'placeholder',
-      'localized'
-    )
-  }
-
   private valueChanged = false
   handleChange = () => {
     const { options, custom } = this.parts as SegmentParts
@@ -245,7 +307,7 @@ export class XinSegmented extends WebComponent {
         'input:checked'
       ) as HTMLInputElement | null
       if (!input) {
-        this.value = null
+        this.value = ''
       } else if (input.value) {
         custom.setAttribute('hidden', '')
         this.value = input.value
@@ -309,6 +371,13 @@ export class XinSegmented extends WebComponent {
 
   connectedCallback(): void {
     super.connectedCallback()
+
+    // Parse choices from HTML attribute if present and not already set programmatically
+    const choicesAttr = this.getAttribute('choices')
+    if (choicesAttr && this._choices.length === 0) {
+      this._choices = TosiSegmented.parseChoicesString(choicesAttr)
+    }
+
     const { options } = this.parts
 
     if (this.name === '') {
@@ -327,22 +396,8 @@ export class XinSegmented extends WebComponent {
     }
   }
 
-  private get _choices(): Choice[] {
-    const options: Choice[] = Array.isArray(this.choices)
-      ? this.choices
-      : this.choices
-          .split(',')
-          .filter((c) => c.trim() !== '')
-          .map((c) => {
-            const [value, remains] = c.split('=').map((v) => v.trim())
-            const [caption, iconName] = (remains || value)
-              .split(':')
-              .map((v) => v.trim())
-
-            const icon = iconName ? icons[iconName]() : ''
-            const choice = { value, icon, caption }
-            return choice
-          })
+  private get _choicesWithOther(): Choice[] {
+    const options: Choice[] = [...this.choices]
 
     if (this.other && !this.multiple) {
       const [caption, icon] = this.other.split(':')
@@ -360,7 +415,7 @@ export class XinSegmented extends WebComponent {
     return Boolean(
       this.value === '' ||
         (this.value &&
-          !this._choices.find((choice) => choice.value === this.value))
+          !this._choicesWithOther.find((choice) => choice.value === this.value))
     )
   }
 
@@ -377,7 +432,7 @@ export class XinSegmented extends WebComponent {
     const type = this.multiple ? 'checkbox' : 'radio'
     const { values, isOtherValue } = this
     options.append(
-      ...this._choices.map((choice) => {
+      ...this._choicesWithOther.map((choice) => {
         return label(
           { tabindex: 0 },
           input({
@@ -403,6 +458,15 @@ export class XinSegmented extends WebComponent {
   }
 }
 
-export const xinSegmented = XinSegmented.elementCreator({
-  tag: 'xin-segmented',
-}) as ElementCreator<XinSegmented>
+/** @deprecated Use TosiSegmented instead */
+export const XinSegmented = TosiSegmented
+
+export const tosiSegmented = TosiSegmented.elementCreator({
+  tag: 'tosi-segmented',
+}) as ElementCreator<TosiSegmented>
+
+/** @deprecated Use tosiSegmented instead (tag is now tosi-segmented) */
+export const xinSegmented = deprecated(
+  (...args: Parameters<typeof tosiSegmented>) => tosiSegmented(...args),
+  'xinSegmented is deprecated, use tosiSegmented instead (tag is now <tosi-segmented>)'
+) as ElementCreator<TosiSegmented>

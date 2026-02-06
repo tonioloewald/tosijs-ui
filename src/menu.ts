@@ -4,16 +4,16 @@
 Being able to pop a menu up anywhere is just so nice, and `tosijs-ui` allows menus
 to be generated on-the-fly, and even supports hierarchical menus.
 
-## popMenu and `<xin-menu>`
+## popMenu and `<tosi-menu>`
 
 `popMenu({target, menuItems, …})` will spawn a menu from a target.
 
-The `<xin-menu>` component places creates a trigger button, hosts
+The `<tosi-menu>` component places creates a trigger button, hosts
 menuItems, and (because it persists in the DOM) supports keyboard
 shortcuts.
 
 ```js
-import { popMenu, localize, xinMenu, postNotification, xinLocalized, icons } from 'tosijs-ui'
+import { popMenu, localize, tosiMenu, postNotification, xinLocalized, icons } from 'tosijs-ui'
 import { elements } from 'tosijs'
 
 let picked = ''
@@ -146,7 +146,7 @@ preview.addEventListener('click', (event) => {
 })
 
 preview.append(
-  xinMenu(
+  tosiMenu(
     {
       menuItems,
       localized: true,
@@ -676,15 +676,19 @@ function findShortcutAction(
   return undefined
 }
 
-interface XinMenuParts extends PartsMap {
+interface TosiMenuParts extends PartsMap {
   trigger: HTMLButtonElement
   icon: SvgIcon
 }
 
-export class XinMenu extends Component<XinMenuParts> {
+export class TosiMenu extends Component<TosiMenuParts> {
+  static initAttributes = {
+    menuWidth: 'auto',
+    localized: false,
+    icon: '',
+  }
+
   menuItems: MenuItem[] = []
-  menuWidth = 'auto'
-  localized = false
 
   showMenu = (event: Event) => {
     if (event.type === 'click' || (event as KeyboardEvent).code === 'Space') {
@@ -713,9 +717,6 @@ export class XinMenu extends Component<XinMenuParts> {
 
   constructor() {
     super()
-
-    this.initAttributes('menuWidth', 'localized', 'icon')
-
     this.addEventListener('keydown', this.showMenu)
   }
 
@@ -731,8 +732,8 @@ export class XinMenu extends Component<XinMenuParts> {
   }
 }
 
-export const xinMenu = XinMenu.elementCreator({
-  tag: 'xin-menu',
+export const tosiMenu = TosiMenu.elementCreator({
+  tag: 'tosi-menu',
   styleSpec: {
     ':host': {
       display: 'inline-block',
@@ -740,7 +741,12 @@ export const xinMenu = XinMenu.elementCreator({
     ':host button > xin-slot': {
       display: 'flex',
       alignItems: 'center',
-      gap: varDefault.xinMenuTriggerGap('10px'),
+      gap: varDefault.tosiMenuTriggerGap('10px'),
     },
   },
 })
+
+/** @deprecated Use tosiMenu instead */
+export const xinMenu = tosiMenu
+/** @deprecated Use TosiMenu instead */
+export const XinMenu = TosiMenu

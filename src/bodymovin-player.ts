@@ -116,9 +116,12 @@ export interface LottieConfig {
 }
 
 export class BodymovinPlayer extends WebComponent {
+  static initAttributes = {
+    src: '',
+    json: '',
+  }
+
   content = null
-  src = ''
-  json = ''
   config: LottieConfig = {
     renderer: 'svg',
     loop: true,
@@ -145,7 +148,6 @@ export class BodymovinPlayer extends WebComponent {
 
   constructor() {
     super()
-    this.initAttributes('src', 'json')
     if (BodymovinPlayer.bodymovinAvailable === undefined) {
       BodymovinPlayer.bodymovinAvailable = scriptTag(
         'https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js',

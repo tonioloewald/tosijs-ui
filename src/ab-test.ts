@@ -89,16 +89,12 @@ export class AbTest extends Component {
     }
   }
 
-  condition = ''
-
-  not = false
+  static initAttributes = {
+    condition: '',
+    not: false,
+  }
 
   static instances: Set<AbTest> = new Set()
-
-  constructor() {
-    super()
-    this.initAttributes('condition', 'not')
-  }
 
   connectedCallback() {
     super.connectedCallback()
@@ -114,8 +110,8 @@ export class AbTest extends Component {
     if (
       this.condition !== '' &&
       (this.not
-        ? (abTestConditions[this.condition]) !== true
-        : (abTestConditions[this.condition]) === true)
+        ? abTestConditions[this.condition] !== true
+        : abTestConditions[this.condition] === true)
     ) {
       this.toggleAttribute('hidden', false)
     } else {

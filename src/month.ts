@@ -83,10 +83,71 @@ These prevent the user from changing the displayed month. This example is `reado
 <tosi-month readonly value="1976-04-01"></tosi-month>
 ```
 
+## Form Integration
+
+`<tosi-month>` is form-associated, so it works directly in native forms:
+
+```html
+<form id="date-form" class="date-form">
+  <label>
+    <span>Select a date (required):</span>
+    <tosi-month name="date" selectable required></tosi-month>
+  </label>
+  <div class="buttons">
+    <button type="submit">Submit</button>
+    <button type="reset">Reset</button>
+  </div>
+</form>
+```
+```css
+.preview .date-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.preview .date-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview .date-form .buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.preview tosi-month:invalid {
+  outline: 2px solid #f008;
+  outline-offset: 2px;
+}
+
+.preview tosi-month:valid {
+  outline: 2px solid #0a08;
+  outline-offset: 2px;
+}
+```
+```js
+const { TosiDialog } = tosijsui
+const form = preview.querySelector('#date-form')
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const formData = new FormData(form)
+  const data = Object.fromEntries(formData.entries())
+  TosiDialog.alert(JSON.stringify(data, null, 2), 'Date Selected')
+})
+
+form.addEventListener('reset', () => {
+  TosiDialog.alert('Form has been reset', 'Reset')
+})
+```
+
 */
 
 import { Component, PartsMap, elements, varDefault } from 'tosijs'
-import { xinSelect, XinSelect } from './select'
+import { tosiSelect, TosiSelect } from './select'
 import { icons } from './icons'
 import { popMenu, MenuItem } from './menu'
 
@@ -104,29 +165,45 @@ const dateFromYMD = (year: number, month: number, date: number): Date =>
 
 interface MonthParts extends PartsMap {
   jump: HTMLButtonElement
-  month: XinSelect
-  year: XinSelect
+  month: TosiSelect
+  year: TosiSelect
   previous: HTMLButtonElement
   next: HTMLButtonElement
 }
 
 export class TosiMonth extends Component<MonthParts> {
-  month = NaN
-  year = NaN
-  minDate = dateFromYMD(new Date().getFullYear() - 100, 1, 1)
-    .toISOString()
-    .split('T')[0]
-  maxDate = dateFromYMD(new Date().getFullYear() + 10, 12, 31)
-    .toISOString()
-    .split('T')[0]
-  weekStart = 0 // Sunday, 1 = Monday
-  selectable = false
-  multiple = false
-  range = false
-  disabled = false
-  readonly = false
+  static formAssociated = true
+
+  static initAttributes = {
+    month: NaN,
+    year: NaN,
+    weekStart: 0, // Sunday, 1 = Monday
+    minDate: dateFromYMD(new Date().getFullYear() - 100, 1, 1)
+      .toISOString()
+      .split('T')[0],
+    maxDate: dateFromYMD(new Date().getFullYear() + 10, 12, 31)
+      .toISOString()
+      .split('T')[0],
+    selectable: false,
+    multiple: false,
+    range: false,
+    disabled: false,
+    readonly: false,
+    required: false,
+    name: '',
+  }
+
   selectedDays = [] as string[]
   value = ''
+
+  formDisabledCallback(disabled: boolean) {
+    this.disabled = disabled
+  }
+
+  formResetCallback() {
+    this.value = ''
+    this.selectedDays = []
+  }
 
   get endDay(): number {
     return 1 - this.weekStart
@@ -147,7 +224,9 @@ export class TosiMonth extends Component<MonthParts> {
     return years
   }
 
-  monthChanged = (_year: number, _month: number) => { /* noop */ }
+  monthChanged = (_year: number, _month: number) => {
+    /* noop */
+  }
 
   gotoMonth(year: number, month: number) {
     if (this.month !== month || this.year !== year) {
@@ -316,12 +395,12 @@ export class TosiMonth extends Component<MonthParts> {
         },
         icons.calendar()
       ),
-      xinSelect({
+      tosiSelect({
         part: 'month',
         options: this.months,
         onChange: this.setMonth,
       }),
-      xinSelect({
+      tosiSelect({
         part: 'year',
         options: [this.year],
         onChange: this.setMonth,
@@ -344,22 +423,6 @@ export class TosiMonth extends Component<MonthParts> {
     this.gotoMonth(date.getFullYear(), date.getMonth() + 1)
   }
 
-  constructor() {
-    super()
-    this.initAttributes(
-      'month',
-      'year',
-      'weekStart',
-      'minDate',
-      'maxDate',
-      'selectable',
-      'multiple',
-      'range',
-      'disabled',
-      'readonly'
-    )
-  }
-
   connectedCallback() {
     super.connectedCallback()
     const date = new Date(this.value.split(',').pop() || Date.now())
@@ -379,6 +442,8 @@ export class TosiMonth extends Component<MonthParts> {
     isToday: boolean
   }>
   render() {
+    super.render()
+
     const { week, days, jump, month, year, previous, next } = this.parts
     this.selectedDays = this.value ? this.value.split(',') : []
     const firstOfMonth = dateFromYMD(this.year, this.month, 1)

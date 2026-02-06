@@ -327,12 +327,12 @@ describe('menu', () => {
     })
   })
 
-  describe('XinMenu component', () => {
+  describe('TosiMenu component', () => {
     test('creates custom element', () => {
       const menuComponent = xinMenu({ menuItems: [] })
       container.appendChild(menuComponent)
       expect(menuComponent).toBeInstanceOf(XinMenu)
-      expect(menuComponent.tagName.toLowerCase()).toBe('xin-menu')
+      expect(menuComponent.tagName.toLowerCase()).toBe('tosi-menu')
     })
 
     test('stores menuItems', () => {

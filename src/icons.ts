@@ -152,6 +152,20 @@ preview.append(
   pointer-events: none;
 }
 ```
+```test
+const tiles = preview.querySelectorAll('.tile')
+test('icons are rendered', () => {
+  expect(tiles.length).toBeGreaterThan(100)
+})
+test('icon tiles have svg icons', () => {
+  const firstIcon = tiles[0].querySelector('xin-icon')
+  expect(firstIcon).toBeTruthy()
+})
+test('filter input exists', () => {
+  const input = preview.querySelector('input[type="search"]')
+  expect(input).toBeTruthy()
+})
+```
 
 These icons are completely unstyled and can be colored using the css `fill` property. This will
 probably be broken out as a standalone library to allow the use of whatever icons you like
@@ -442,16 +456,12 @@ export const icons = new Proxy(iconData, {
 }) as unknown as SVGIconMap
 
 export class SvgIcon extends WebComponent {
-  icon = ''
-  size = 0
-  fill = ''
-  stroke = ''
-  strokeWidth = 1
-
-  constructor() {
-    super()
-
-    this.initAttributes('icon', 'size', 'fill', 'stroke', 'strokeWidth')
+  static initAttributes = {
+    icon: '',
+    size: 0,
+    fill: '',
+    stroke: '',
+    strokeWidth: 1,
   }
 
   render(): void {

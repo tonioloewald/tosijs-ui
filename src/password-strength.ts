@@ -188,9 +188,12 @@ export const isBreached = async (password: string): Promise<boolean> => {
 
 const { span, xinSlot } = elements
 export class XinPasswordStrength extends Component {
-  minLength = 8
-  goodLength = 12
-  indicatorColors = '#f00,#f40,#f80,#ef0,#8f0,#0a2'
+  static initAttributes = {
+    minLength: 8,
+    goodLength: 12,
+    indicatorColors: '#f00,#f40,#f80,#ef0,#8f0,#0a2',
+  }
+
   descriptionColors = '#000,#000,#000,#000,#000,#fff'
   issues = {
     tooShort: true,
@@ -217,12 +220,6 @@ export class XinPasswordStrength extends Component {
     'strong',
     'very strong',
   ]
-
-  constructor() {
-    super()
-
-    this.initAttributes('minLength', 'goodLength', 'indicatorColors')
-  }
 
   strength(password: string): number {
     this.issues = {

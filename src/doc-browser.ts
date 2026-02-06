@@ -155,19 +155,128 @@ The `tosijs-ui` demo is a complete working example. See:
 import {
   elements,
   vars,
+  varDefault,
   bindings,
   touch,
   getListItem,
   debounce,
   tosi,
+  StyleSheet,
+  XinStyleSheet,
 } from 'tosijs'
 import { markdownViewer, MarkdownViewer } from './markdown-viewer'
-import { LiveExample } from './live-example'
+import { LiveExample, testManager } from './live-example'
+import { TestResults } from './live-example/test-harness'
 import { sideNav, SideNav } from './side-nav'
 import { icons } from './icons'
 import { xinLocalized } from './localize'
+import { popMenu } from './menu'
+
+// Types for global test results
+export interface PageTestResults {
+  passed: boolean
+  tests: TestResults['tests']
+  totalPassed: number
+  totalFailed: number
+}
+
+export interface DocTestResults {
+  passed: number
+  failed: number
+  pages: Record<string, PageTestResults>
+}
+
+declare global {
+  interface Window {
+    __docTestResults?: Promise<DocTestResults>
+  }
+}
 
 const { div, span, a, header, button, template, input, h2 } = elements
+
+// Test colors
+const testColor = {
+  pass: varDefault.testColorPass('#0a0'),
+  fail: varDefault.testColorFail('#c00'),
+  running: varDefault.testColorRunning('#fa0'),
+}
+
+// Test indicator styles - widget inherits button styles from base stylesheet
+const testIndicatorStyleSpec: XinStyleSheet = {
+  '@keyframes test-pulse': {
+    '0%, 100%': { opacity: '1' },
+    '50%': { opacity: '0.7' },
+  },
+  '@keyframes test-appear': {
+    from: { opacity: '0', transform: 'scale(0.8)' },
+    to: { opacity: '1', transform: 'scale(1)' },
+  },
+  '@keyframes test-fade': {
+    '0%, 20%': { opacity: '1', transform: 'scale(1)' },
+    '70%': { opacity: '1', transform: 'scale(1.1)' },
+    '100%': { opacity: '0', transform: 'scale(0.9)', pointerEvents: 'none' },
+  },
+
+  // Hide when tests disabled
+  'body:not(.tests-enabled) .doc-link::after, body:not(.tests-enabled) .test-widget':
+    {
+      display: 'none !important',
+    },
+
+  // Nav link dot indicators
+  '.doc-link.-test-passed::after, .doc-link.-test-failed::after': {
+    content: "''",
+    width: vars.fontSize50,
+    height: vars.fontSize50,
+    borderRadius: '50%',
+    marginLeft: vars.spacing50,
+    display: 'inline-block',
+    verticalAlign: 'middle',
+  },
+  '.doc-link.-test-passed::after': { background: testColor.pass },
+  '.doc-link.-test-failed::after': {
+    background: testColor.fail,
+    animation: 'test-pulse 2s ease-in-out infinite',
+  },
+
+  // Floating widget - position and colors only, inherits button structure
+  '.test-widget': {
+    _testBg: testColor.running,
+    position: 'fixed',
+    bottom: vars.spacing,
+    right: vars.spacing,
+    zIndex: '1000',
+    background: vars.testBg,
+    color: 'white',
+  },
+  '.test-widget[hidden]': { display: 'none' },
+  '.test-widget.-running': {
+    _testBg: testColor.running,
+    animation:
+      'test-appear 0.3s ease-out, test-pulse 2s ease-in-out 0.3s infinite',
+  },
+  '.test-widget.-passed': {
+    _testBg: testColor.pass,
+    animation: 'test-fade 3s ease-out forwards',
+  },
+  '.test-widget.-failed': {
+    _testBg: testColor.fail,
+    animation: 'test-pulse 2s ease-in-out infinite',
+  },
+
+  // Count badge
+  '.test-widget .count': {
+    background: 'white',
+    color: vars.testBg,
+    borderRadius: '50%',
+    width: vars.lineHeight,
+    height: vars.lineHeight,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 'bold',
+  },
+}
 
 export interface Doc {
   text: string
@@ -176,6 +285,7 @@ export interface Doc {
   path: string
   pin?: string
   hidden?: boolean
+  testStatus?: 'passed' | 'failed' | 'pending'
 }
 
 export interface ProjectLinks {
@@ -208,6 +318,11 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     minSize = 600,
   } = options
 
+  // Initialize testStatus on all docs so tosi can track it
+  for (const doc of docs) {
+    doc.testStatus = undefined
+  }
+
   const docName =
     document.location.search !== ''
       ? document.location.search.substring(1).split('&')[0]
@@ -223,6 +338,91 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     },
   })
 
+  // Test result tracking
+  const pageTestResults: Record<string, PageTestResults> = {}
+  let testResultsResolve: ((results: DocTestResults) => void) | undefined
+  let backgroundTestsStarted = false
+  let pagesWithTests = 0
+  let pagesTested = 0
+
+  // Set up global promise for scriptable browser integration
+  window.__docTestResults = new Promise((resolve) => {
+    testResultsResolve = resolve
+  })
+
+  const updateDocTestStatus = (filename: string) => {
+    const results = pageTestResults[filename]
+    // Callback receives bare object, return is proxy - cast to work with both
+    const doc = (app.docs as unknown as Doc[]).find(
+      (d) => d.filename === filename
+    )
+    if (doc) {
+      doc.testStatus = results
+        ? results.passed
+          ? 'passed'
+          : 'failed'
+        : undefined
+    }
+  }
+
+  const checkAllTestsComplete = () => {
+    if (pagesTested >= pagesWithTests && testResultsResolve) {
+      const allResults: DocTestResults = {
+        passed: 0,
+        failed: 0,
+        pages: pageTestResults,
+      }
+
+      for (const pageResults of Object.values(pageTestResults)) {
+        allResults.passed += pageResults.totalPassed
+        allResults.failed += pageResults.totalFailed
+      }
+
+      testResultsResolve(allResults)
+      testResultsResolve = undefined
+
+      // Post results to dev server on localhost
+      if (isLocalhost) {
+        fetch('/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(allResults),
+        }).catch(() => {
+          // Ignore errors - server may not support this endpoint
+        })
+      }
+    }
+  }
+
+  const isLocalhost =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+
+  const handleTestComplete = (event: CustomEvent) => {
+    const { results } = event.detail as {
+      results: TestResults
+      element: LiveExample
+    }
+    const filename = String(app.currentDoc.filename)
+
+    // Reset page results each time (don't accumulate across reloads)
+    pageTestResults[filename] = {
+      passed: results.failed === 0,
+      tests: [...results.tests],
+      totalPassed: results.passed,
+      totalFailed: results.failed,
+    }
+
+    updateDocTestStatus(filename)
+  }
+
+  // Track when a page finishes loading all its tests
+  const markPageTested = (_filename: string) => {
+    pagesTested++
+    checkAllTestsComplete()
+    updateTestWidget()
+  }
+
   bindings.docLink = {
     toDOM(elt, filename) {
       elt.setAttribute('href', `?${filename}`)
@@ -233,6 +433,17 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     toDOM(elt, currentFile) {
       const boundFile = elt.getAttribute('href') || ''
       elt.classList.toggle('current', currentFile === boundFile.substring(1))
+    },
+  }
+
+  bindings.testStatus = {
+    toDOM(elt, status) {
+      elt.classList.remove('-test-passed', '-test-failed')
+      if (status === 'passed') {
+        elt.classList.add('-test-passed')
+      } else if (status === 'failed') {
+        elt.classList.add('-test-failed')
+      }
     },
   }
 
@@ -394,6 +605,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
             overflowY: 'scroll',
           },
           bindList: {
+            idPath: 'filename',
             hiddenProp: 'hidden',
             value: app.docs,
           },
@@ -404,6 +616,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
               class: 'doc-link',
               bindCurrent: 'app.currentDoc.filename',
               bindDocLink: '^.filename',
+              bindTestStatus: '^.testStatus',
               onClick(event: Event) {
                 const a = event.target as HTMLAnchorElement
                 const doc = getListItem(event.target as HTMLElement)
@@ -415,6 +628,23 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
                 window.history.pushState({ href }, '', href)
                 app.currentDoc = doc
                 event.preventDefault()
+
+                // If this page has failing tests, scroll to first failure after render
+                const docFilename = String((doc as Doc).filename)
+                const results = pageTestResults[docFilename]
+                if (results && !results.passed) {
+                  setTimeout(() => {
+                    const failedExample = document.querySelector(
+                      'xin-example.-test-failed'
+                    )
+                    if (failedExample) {
+                      failedExample.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                      })
+                    }
+                  }, 100)
+                }
               },
             },
             xinLocalized({ bindText: '^.title' })
@@ -447,10 +677,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
               transition: 'opacity 0.2s ease',
             },
             onMouseenter(event: Event) {
-              (event.target as HTMLElement).style.opacity = '0.9'
+              ;(event.target as HTMLElement).style.opacity = '0.9'
             },
             onMouseleave(event: Event) {
-              (event.target as HTMLElement).style.opacity = '0.7'
+              ;(event.target as HTMLElement).style.opacity = '0.7'
             },
             bind: {
               value: app.currentDoc,
@@ -491,6 +721,306 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       )
     )
   )
+
+  // Inject test indicator styles
+  StyleSheet('test-indicators', testIndicatorStyleSpec)
+
+  // Floating widget for test status
+  const testWidget = button(
+    {
+      class: 'test-widget',
+      hidden: true,
+      onClick: showTestMenu,
+    },
+    span({ part: 'label' }, 'Tests'),
+    span({ class: 'count', part: 'count' }, '0')
+  )
+  container.appendChild(testWidget)
+
+  let testsRunning = false
+
+  function setTestWidgetRunning() {
+    testsRunning = true
+    testWidget.hidden = false
+    testWidget.classList.remove('-passed', '-failed')
+    testWidget.classList.add('-running')
+    updateTestWidgetDisplay()
+  }
+
+  function updateTestWidgetDisplay() {
+    const labelEl = testWidget.querySelector('[part="label"]')
+    const countEl = testWidget.querySelector('[part="count"]')
+
+    const totalPassed = Object.values(pageTestResults).reduce(
+      (sum, r) => sum + r.totalPassed,
+      0
+    )
+    const totalFailed = Object.values(pageTestResults).reduce(
+      (sum, r) => sum + r.totalFailed,
+      0
+    )
+
+    if (labelEl) {
+      if (testsRunning) {
+        labelEl.textContent = 'Running'
+      } else if (totalFailed > 0) {
+        labelEl.textContent = 'Failed'
+      } else if (totalPassed > 0) {
+        labelEl.textContent = 'Passed'
+      } else {
+        labelEl.textContent = 'Tests'
+      }
+    }
+    if (countEl) {
+      countEl.textContent =
+        totalFailed > 0 ? String(totalFailed) : String(totalPassed)
+    }
+  }
+
+  function updateTestWidget() {
+    const totalFailed = Object.values(pageTestResults).reduce(
+      (sum, r) => sum + r.totalFailed,
+      0
+    )
+
+    if (testsRunning && pagesTested >= pagesWithTests) {
+      // Tests complete
+      testsRunning = false
+      testWidget.classList.remove('-running')
+      if (totalFailed > 0) {
+        testWidget.classList.add('-failed')
+        testWidget.classList.remove('-passed')
+        testWidget.hidden = false
+      } else {
+        testWidget.classList.add('-passed')
+        testWidget.classList.remove('-failed')
+        testWidget.hidden = false // Show briefly before fade
+      }
+    }
+
+    updateTestWidgetDisplay()
+  }
+
+  function showTestMenu() {
+    const failedPages = Object.entries(pageTestResults).filter(
+      ([, results]) => !results.passed
+    )
+
+    const menuItems: any[] = []
+
+    for (const [filename, results] of failedPages) {
+      const doc = docs.find((d) => d.filename === filename)
+      const failedTests = results.tests.filter((t) => !t.passed)
+
+      for (const test of failedTests) {
+        menuItems.push({
+          caption: `${doc?.title || filename}: ${test.name}`,
+          action: () => {
+            // Navigate to the page
+            const docObj = app.docs.find(
+              (d: any) => String(d.filename) === filename
+            )
+            if (docObj) {
+              window.history.pushState(
+                { href: `?${filename}` },
+                '',
+                `?${filename}`
+              )
+              app.currentDoc = docObj
+              // Scroll to failing test after render
+              setTimeout(() => {
+                const failedExample = document.querySelector(
+                  'xin-example.-test-failed'
+                )
+                if (failedExample) {
+                  failedExample.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                  })
+                }
+              }, 100)
+            }
+          },
+        })
+      }
+    }
+
+    if (menuItems.length > 0) {
+      menuItems.push(null) // separator
+    }
+
+    menuItems.push({
+      icon: 'copy',
+      caption: 'Copy test results to clipboard',
+      action: () => {
+        const report = generateTestReport()
+        navigator.clipboard.writeText(report)
+      },
+    })
+
+    popMenu({
+      target: testWidget,
+      menuItems,
+    })
+  }
+
+  function generateTestReport(): string {
+    const lines: string[] = ['# Test Results', '']
+    let totalPassed = 0
+    let totalFailed = 0
+
+    for (const [filename, results] of Object.entries(pageTestResults)) {
+      const doc = docs.find((d) => d.filename === filename)
+      const title = doc?.title || filename
+
+      totalPassed += results.totalPassed
+      totalFailed += results.totalFailed
+
+      if (results.tests.length > 0) {
+        lines.push(`## ${title}`)
+        lines.push('')
+        for (const test of results.tests) {
+          const icon = test.passed ? '✓' : '✗'
+          const line = test.error
+            ? `- ${icon} ${test.name}: ${test.error}`
+            : `- ${icon} ${test.name}`
+          lines.push(line)
+        }
+        lines.push('')
+      }
+    }
+
+    lines.unshift(
+      `**Summary: ${totalPassed} passed, ${totalFailed} failed**`,
+      ''
+    )
+
+    return lines.join('\n')
+  }
+
+  // Listen for test completion events
+  container.addEventListener('testcomplete', ((event: CustomEvent) => {
+    handleTestComplete(event)
+    updateTestWidget()
+  }) as EventListener)
+
+  // Background test runner for all doc pages
+  const runBackgroundTests = async () => {
+    if (backgroundTestsStarted) return
+    if (!testManager.enabled.value) return
+    backgroundTestsStarted = true
+
+    // Find all docs that have test blocks
+    const docsWithTests = docs.filter((doc) => doc.text.includes('```test'))
+    pagesWithTests = docsWithTests.length
+
+    if (pagesWithTests > 0) {
+      setTestWidgetRunning()
+    }
+
+    if (pagesWithTests === 0) {
+      // No tests to run, resolve immediately
+      if (testResultsResolve) {
+        testResultsResolve({ passed: 0, failed: 0, pages: {} })
+        testResultsResolve = undefined
+      }
+      return
+    }
+
+    // Create a hidden iframe to run tests in background
+    const testFrame = document.createElement('iframe')
+    testFrame.style.cssText =
+      'position: fixed; left: -9999px; width: 800px; height: 600px; visibility: hidden;'
+    document.body.appendChild(testFrame)
+
+    const currentFilename = String(app.currentDoc.filename)
+
+    for (const doc of docsWithTests) {
+      // Skip current page - it will run tests naturally
+      if (doc.filename === currentFilename) {
+        continue
+      }
+
+      // Reset page results for this doc
+      pageTestResults[doc.filename] = {
+        passed: true,
+        tests: [],
+        totalPassed: 0,
+        totalFailed: 0,
+      }
+
+      // Create a container and render the doc content
+      const testContainer = document.createElement('div')
+      const viewer = markdownViewer({
+        value: doc.text,
+        didRender() {
+          LiveExample.insertExamples(this as MarkdownViewer, context)
+        },
+      })
+      testContainer.appendChild(viewer)
+
+      // Listen for test results from this container
+      const handleBgTest = (event: CustomEvent) => {
+        const { results } = event.detail as { results: TestResults }
+        const pageResults = pageTestResults[doc.filename]
+        pageResults.tests.push(...results.tests)
+        pageResults.totalPassed += results.passed
+        pageResults.totalFailed += results.failed
+        pageResults.passed = pageResults.totalFailed === 0
+        updateDocTestStatus(doc.filename)
+        updateTestWidget()
+      }
+      testContainer.addEventListener(
+        'testcomplete',
+        handleBgTest as EventListener
+      )
+
+      // Append to iframe for execution
+      const frameDoc = testFrame.contentDocument
+      if (frameDoc) {
+        frameDoc.body.innerHTML = ''
+        frameDoc.body.appendChild(testContainer)
+
+        // Wait for all live examples to finish rendering/testing
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      }
+
+      markPageTested(doc.filename)
+    }
+
+    // Clean up
+    testFrame.remove()
+
+    // Mark current page as tested if it has tests
+    if (docsWithTests.some((d) => d.filename === currentFilename)) {
+      // Current page tests will complete naturally, just wait a bit
+      setTimeout(() => {
+        markPageTested(currentFilename)
+      }, 1000)
+    }
+  }
+
+  // Run background tests when enabled (initially or when toggled on)
+  const startBackgroundTests = () => {
+    if (!testManager.enabled.value) return
+    if (isLocalhost) {
+      setTimeout(runBackgroundTests, 1000)
+    } else {
+      const currentHasTests = currentDoc.text.includes('```test')
+      if (currentHasTests) {
+        pagesWithTests = 1
+        setTestWidgetRunning()
+        setTimeout(() => markPageTested(currentDoc.filename), 2000)
+      } else if (testResultsResolve) {
+        testResultsResolve({ passed: 0, failed: 0, pages: {} })
+        testResultsResolve = undefined
+      }
+    }
+  }
+
+  // Start now if enabled, and watch for toggle
+  startBackgroundTests()
+  testManager.enabled.observe(startBackgroundTests)
 
   return container as HTMLElement
 }

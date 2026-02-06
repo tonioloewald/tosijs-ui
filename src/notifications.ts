@@ -125,6 +125,17 @@ xin-form label {
   grid-template-columns: 120px 1fr;
 }
 ```
+```test
+test('notification singleton exists', async () => {
+  await waitMs(100)
+  const notification = document.querySelector('xin-notification')
+  expect(notification).toBeTruthy()
+})
+test('form renders', () => {
+  const form = preview.querySelector('xin-form')
+  expect(form).toBeTruthy()
+})
+```
 
 ## `postNotification(spec: NotificationSpec | string)`
 

@@ -30,6 +30,18 @@ on(
   }
 )
 ```
+```test
+const dialog = preview.querySelector('tosi-dialog')
+test('dialog renders', () => {
+  expect(dialog).toBeTruthy()
+  expect(dialog.tagName.toLowerCase()).toBe('tosi-dialog')
+})
+test('dialog has header slot content', () => {
+  const header = dialog.querySelector('[slot="header"]')
+  expect(header).toBeTruthy()
+  expect(header.textContent).toBe('A Dialog')
+})
+```
 
 ## Static Functions
 
@@ -128,7 +140,12 @@ export class TosiDialog extends Component<DialogParts> {
           },
         },
         h3({ slot: 'header' }, title),
-        p(message)
+        message.includes('\n')
+          ? elements.pre(
+              { style: { whiteSpace: 'pre-wrap', margin: 0 } },
+              message
+            )
+          : p(message)
       )
       document.body.append(alertDialog)
       alertDialog.showModal()
@@ -208,14 +225,13 @@ export class TosiDialog extends Component<DialogParts> {
     })
   }
 
-  removeOnClose = false
-  closeOnBackgroundClick = false
+  static initAttributes = {
+    removeOnClose: false,
+    closeOnBackgroundClick: false,
+  }
 
   constructor() {
     super()
-
-    this.initAttributes('removeOnClose', 'closeOnBackgroundClick')
-
     on(this, 'click', () => {
       if (this.closeOnBackgroundClick) {
         this.close()
@@ -231,7 +247,9 @@ export class TosiDialog extends Component<DialogParts> {
     this.parts.ok.focus()
   }
 
-  #modalResolution = (_outcome: string | null) => { /* noop */ }
+  #modalResolution = (_outcome: string | null) => {
+    /* noop */
+  }
 
   showModal = (): Promise<string | null> => {
     this.style.zIndex = String(findHighestZ())

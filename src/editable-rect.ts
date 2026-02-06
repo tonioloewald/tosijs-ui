@@ -84,6 +84,11 @@ interface Locks {
 type Side = keyof Locks
 
 export class EditableRect extends Component {
+  static initAttributes = {
+    rotationSnap: 0,
+    positionSnap: 0,
+  }
+
   static angleSize = 15
   static gridSize = 8
   static snapAngle = false
@@ -259,7 +264,7 @@ export class EditableRect extends Component {
     const target = this.parentElement!
     const { top, left, bottom, right } = this.coords
     trackDrag(event as PointerEvent, (dx, dy, dragEvent) => {
-      [dx, dy] = EditableRect.snappedCoords(dragEvent, [dx, dy])
+      ;[dx, dy] = EditableRect.snappedCoords(dragEvent, [dx, dy])
       if (!isNaN(top)) {
         target.style.top = top + dy + 'px'
       }
@@ -467,12 +472,6 @@ export class EditableRect extends Component {
     ),
     slot(),
   ]
-
-  constructor() {
-    super()
-
-    this.initAttributes('rotationSnap', 'positionSnap')
-  }
 
   connectedCallback(): void {
     super.connectedCallback()

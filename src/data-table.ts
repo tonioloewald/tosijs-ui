@@ -62,21 +62,21 @@ preview.append(dataTable({
   background: #fff4;
 }
 
-.preview xin-table {
+.preview tosi-table {
   height: 100%;
 }
 
-.preview xin-table [part="pinnedTopRows"],
-.preview xin-table [part="pinnedBottomRows"] {
+.preview tosi-table [part="pinnedTopRows"],
+.preview tosi-table [part="pinnedBottomRows"] {
   background: #ddd;
 }
 ```
 
 > In the preceding example, the `name` column is *editable* (and *bound*, try editing something and scrolling
-> it out of view and back) and `multiple` select is enabled. In the console, you can try `$('xin-table').visibleRows`
-> and $('xin-table').selectedRows`.
+> it out of view and back) and `multiple` select is enabled. In the console, you can try `$('tosi-table').visibleRows`
+> and $('tosi-table').selectedRows`.
 
-You can set the `<xin-table>`'s `array`, `columns`, and `filter` properties directly, or set its `value` to:
+You can set the `<tosi-table>`'s `array`, `columns`, and `filter` properties directly, or set its `value` to:
 
 ```
 {
@@ -182,9 +182,10 @@ import {
   ElementCreator,
   elements,
   vars,
-  xinValue,
+  tosiValue,
   getListItem,
   tosi,
+  deprecated,
 } from 'tosijs'
 import { trackDrag } from './track-drag'
 import { SortCallback } from './make-sorter'
@@ -251,23 +252,29 @@ const passThru = (array: any[]) => array
 export type SelectCallback = (selected: any[]) => void
 
 export class DataTable extends WebComponent {
-  select = false
-  multiple = false
-  nosort = false
-  nohide = false
-  noreorder = false
+  static initAttributes = {
+    rowHeight: 30,
+    charWidth: 15,
+    minColumnWidth: 30,
+    select: false,
+    multiple: false,
+    pinnedTop: 0,
+    pinnedBottom: 0,
+    nosort: false,
+    nohide: false,
+    noreorder: false,
+    localized: false,
+  }
+
   selectionChanged: SelectCallback = () => {
     /* do not care */
   }
-  localized = false
 
   private selectedKey = Symbol('selected')
   private selectBinding = (elt: Element, obj: any) => {
     elt.toggleAttribute('aria-selected', obj[this.selectedKey] === true)
   }
 
-  pinnedTop = 0
-  pinnedBottom = 0
   maxVisibleRows = 10000
 
   get value(): TableData {
@@ -279,7 +286,7 @@ export class DataTable extends WebComponent {
   }
 
   set value(data: TableData) {
-    const { array, columns, filter } = xinValue(data)
+    const { array, columns, filter } = tosiValue(data)
     if (
       this._array !== array ||
       this._columns !== columns ||
@@ -301,9 +308,6 @@ export class DataTable extends WebComponent {
   private _array: any[] = []
   private _columns: ColumnOptions[] | null = null
   private _filter: ArrayFilter = passThru
-  charWidth = 15
-  rowHeight = 30
-  minColumnWidth = 30
 
   get virtual(): { height: number } | undefined {
     return this.rowHeight > 0 ? { height: this.rowHeight } : undefined
@@ -315,20 +319,6 @@ export class DataTable extends WebComponent {
     this.rowData = tosi({
       [this.instanceId]: this.rowData,
     })[this.instanceId]
-
-    this.initAttributes(
-      'rowHeight',
-      'charWidth',
-      'minColumnWidth',
-      'select',
-      'multiple',
-      'pinnedTop',
-      'pinnedBottom',
-      'nosort',
-      'nohide',
-      'noreorder',
-      'localized'
-    )
   }
 
   get array(): any[] {
@@ -336,7 +326,7 @@ export class DataTable extends WebComponent {
   }
 
   set array(newArray: any[]) {
-    this._array = xinValue(newArray)
+    this._array = tosiValue(newArray)
     this.queueRender()
   }
 
@@ -582,9 +572,9 @@ export class DataTable extends WebComponent {
     direction: 'ascending' | 'descending' | 'auto' = 'auto'
   ) => {
     for (const column of this.columns.filter(
-      (c) => xinValue(c.sort) !== false
+      (c) => tosiValue(c.sort) !== false
     )) {
-      if (xinValue(column) === columnOptions) {
+      if (tosiValue(column) === columnOptions) {
         if (direction === 'auto') {
           column.sort = column.sort === 'ascending' ? 'descending' : 'ascending'
         } else {
@@ -739,7 +729,7 @@ export class DataTable extends WebComponent {
   }
 
   get visibleRows(): any[] {
-    return xinValue(this.rowData.visible) as any[]
+    return tosiValue(this.rowData.visible) as any[]
   }
 
   get visibleSelectedRows(): any[] {
@@ -919,7 +909,7 @@ export class DataTable extends WebComponent {
 }
 
 export const dataTable = DataTable.elementCreator({
-  tag: 'xin-table',
+  tag: 'tosi-table',
   styleSpec: {
     ':host': {
       // New --tosi-table-* variables with defaults
@@ -972,3 +962,9 @@ export const dataTable = DataTable.elementCreator({
     },
   },
 }) as ElementCreator<DataTable>
+
+// Legacy alias for backward compatibility
+export const xinTable = deprecated(
+  dataTable,
+  'xinTable is deprecated. Use dataTable instead.'
+)
