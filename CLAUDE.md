@@ -64,35 +64,54 @@ New components must be added to `src/index.ts`.
 
 Example pattern:
 ```typescript
-export class MyComponent extends Component {
-  myProperty: string = ''
-  
-  constructor() {
-    super()
-    this.initAttributes('myProperty')  // Make reactive
+export class TosiWidget extends Component {
+  // Static initAttributes replaces constructor-based initAttributes
+  static initAttributes = {
+    myProperty: '',
+    disabled: false,
   }
   
   content = () => [/* elements or template */]
 }
 
-export const myComponent = MyComponent.elementCreator({
-  tag: 'my-component',
+export const tosiWidget = TosiWidget.elementCreator({
+  tag: 'tosi-widget',
   styleSpec: { /* styles */ }
-}) as ElementCreator<MyComponent>
+}) as ElementCreator<TosiWidget>
+
+// Deprecated alias for backward compatibility during rename
+export const xinWidget = deprecated(
+  (...args) => tosiWidget(...args),
+  'xinWidget is deprecated, use tosiWidget instead'
+)
 ```
+
+**Naming convention**: New components use `Tosi*` class names, `tosi*` element creators, and `<tosi-*>` tags. Legacy `xin*` exports are deprecated but maintained for compatibility.
 
 ### Documentation System
 
 Components are self-documenting via `/*#` comment blocks containing markdown. Live examples use consecutive code blocks (html/js/css). Control nav ordering with JSON metadata:
 - `/*{ "pin": "top" }*/` or `<!--{ "pin": "top" }-->` for pinning
 
+**Test blocks**: Use a `test` language code block after html/js/css blocks to add inline tests:
+````markdown
+```js
+// Setup code that creates elements in `preview`
+```
+```test
+test('element renders', () => {
+  expect(preview.querySelector('my-element')).toBeTruthy()
+})
+```
+````
+
 The `createDocBrowser()` function renders documentation from extracted `docs.json`.
 
 ### Key Dependencies
 
-- `tosijs`: Core component framework (peer dependency, currently 1.1.2+)
-- `marked`: Markdown parsing (peer dependency)
-- Components use custom HTML tags with `xin-` prefix (e.g., `<xin-table>`, `<xin-select>`)
+- `tosijs`: Core component framework (peer dependency, ^1.2.0)
+- `marked`: Markdown parsing (peer dependency, ^17.0.0)
+- Components use custom HTML tags with `tosi-` prefix (e.g., `<tosi-select>`, `<tosi-dialog>`)
 
 ### tosijs Observable Proxies
 
@@ -128,6 +147,37 @@ app.user.name.value = 'Bob'
 - Use `.observe()` for change callbacks
 - BoxedScalars work transparently except for `===` comparisons
 - In bindings, `toDOM` callbacks receive the raw value, not the BoxedScalar
+
+### List Binding Syntax Sugar
+
+The `.listBinding` property on array proxies provides concise syntax for binding arrays to DOM:
+
+```typescript
+import { tosi, elements } from 'tosijs'
+
+const { div, span } = elements
+const { app } = tosi({
+  app: {
+    items: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }]
+  }
+})
+
+// New syntax sugar - template callback receives (elements, item)
+div(
+  app.items.listBinding(
+    ({ span }, item) => span({ bindText: item.name }),
+    { idPath: 'id' }  // optional ListBindingOptions
+  )
+)
+
+// Equivalent verbose syntax (still works)
+div(
+  { bindList: { value: app.items, idPath: 'id' } },
+  template(span({ bindText: '^.name' }))
+)
+```
+
+The callback receives the `elements` proxy and the item proxy, making it easier to build templates without string-based paths.
 
 ### CSS with StyleSheet and styleSpec
 
@@ -237,6 +287,27 @@ UI is a fixed landscape wired to state, not a function that rebuilds on every ch
 2. **Dynamic/read-only** - updates but not user-editable  
 3. **Clickable** - responds to clicks/taps
 4. **Focusable/Editable** - can receive focus and keyboard input
+
+### Theme System
+
+The theme system (`src/theme.ts`) provides automatic dark mode and consistent styling:
+
+```typescript
+import { Color } from 'tosijs'
+import { createTheme, createDarkTheme, applyTheme } from 'tosijs-ui'
+
+const colors = {
+  accent: Color.fromCss('#007AFF'),
+  background: Color.fromCss('#ffffff'),
+  text: Color.fromCss('#1a1a1a'),
+}
+
+// Auto dark mode based on preference
+const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches
+applyTheme(prefersDark ? createDarkTheme(colors) : createTheme(colors))
+```
+
+Base variables use `--tosi-` prefix (e.g., `--tosi-spacing`, `--tosi-accent`, `--tosi-touch-size`). Components derive their own variables from these (e.g., `--tosi-select-gap` defaults to `var(--tosi-spacing-sm)`).
 
 ### Component Philosophy
 
