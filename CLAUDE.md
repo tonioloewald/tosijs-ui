@@ -12,7 +12,7 @@ tosijs-ui (formerly xinjs-ui) is a web-component library built on [tosijs](https
 bun start              # Dev server at https://localhost:8787 (hot reload, reports gzip sizes)
 bun tests              # Run unit tests + Playwright tests
 bun format             # ESLint + Prettier
-bun latest             # Clean install (removes node_modules + bun.lock)
+bun latest             # Clean install (removes node_modules + bun.lock, then bun update)
 bunx tsc --noEmit      # Type check without emitting (used in CI)
 ```
 
@@ -21,10 +21,23 @@ Running a single unit test:
 bun test src/make-sorter.test.ts
 ```
 
-Running a single Playwright test:
+Running a single Playwright test (dev server must be running first):
 ```bash
 bun playwright test tests/form.pw.ts
 ```
+
+### Testing Setup
+
+- **Unit tests** (`src/*.test.ts`): Run with `bun test`. Use `happy-dom` for DOM simulation (preloaded via `bunfig.toml` → `test-setup.ts`). Import from `bun:test`.
+- **Playwright tests** (`tests/*.pw.ts`): Require the dev server running at `https://localhost:8787`. The Playwright config does NOT auto-start the server. Tests run against Chromium, Firefox, and WebKit.
+
+### Dev Server TLS
+
+The dev server runs HTTPS using self-signed certs in `tls/`. If certs are missing, run `tls/create-dev-certs.sh` to regenerate them.
+
+### Code Style
+
+No semicolons, single quotes, 2-space indent, trailing commas (es5). Enforced by Prettier (`.prettierrc.json`). ESLint allows `any` and non-null assertions.
 
 ## Architecture
 
@@ -109,9 +122,11 @@ The `createDocBrowser()` function renders documentation from extracted `docs.jso
 
 ### Key Dependencies
 
-- `tosijs`: Core component framework (peer dependency, ^1.2.0)
+- `tosijs`: Core component framework (peer dep ^1.2.0, dev dep ^1.3.3)
 - `marked`: Markdown parsing (peer dependency, ^17.0.0)
+- `happy-dom`: DOM simulation for unit tests (dev dependency)
 - Components use custom HTML tags with `tosi-` prefix (e.g., `<tosi-select>`, `<tosi-dialog>`)
+- IIFE build (`src/index-iife.ts`) bundles tosijs + marked + tosijs-ui, exposes `xinjs` and `xinjsui` globals
 
 ### tosijs Observable Proxies
 
