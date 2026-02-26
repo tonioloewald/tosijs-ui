@@ -443,12 +443,16 @@ export const icons = new Proxy(iconData, {
         ...sourceSvg.children
       )
       svg.style.strokeWidth = varDefault.tosiIconStrokeWidth('2px')
-      svg.style.stroke = varDefault.tosiIconStroke(
-        classes.has('filled') ? 'none' : 'currentColor'
-      )
-      svg.style.fill = varDefault.tosiIconFill(
-        classes.has('stroked') ? 'none' : 'currentColor'
-      )
+      if (classes.has('filled')) {
+        svg.style.stroke = 'none'
+        svg.style.fill = 'currentColor'
+      } else if (classes.has('stroked')) {
+        svg.style.stroke = varDefault.tosiIconStroke('currentColor')
+        svg.style.fill = 'none'
+      } else {
+        svg.style.stroke = varDefault.tosiIconStroke('currentColor')
+        svg.style.fill = varDefault.tosiIconFill('currentColor')
+      }
       svg.style.height = varDefault.tosiIconSize('16px')
       return svg
     }
@@ -478,7 +482,9 @@ export class SvgIcon extends WebComponent {
       style.stroke = this.stroke
       style.strokeWidth = this.strokeWidth
     }
-    style.fill = this.fill
+    if (this.fill) {
+      style.fill = this.fill
+    }
     this.append(icons[this.icon]({ style }))
   }
 }
