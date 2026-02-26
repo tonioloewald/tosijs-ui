@@ -75,16 +75,29 @@ Each component lives in `src/<component>.ts` and exports:
 
 New components must be added to `src/index.ts`.
 
+> **Note**: Some files import `Component as WebComponent` — this is just an alias, not a separate class. All components extend the same tosijs `Component`.
+
 Example pattern:
 ```typescript
-export class TosiWidget extends Component {
+// Typed parts for accessing named sub-elements via this.parts.*
+interface WidgetParts extends PartsMap {
+  button: HTMLButtonElement
+  label: HTMLSpanElement
+}
+
+export class TosiWidget extends Component<WidgetParts> {
   // Static initAttributes replaces constructor-based initAttributes
   static initAttributes = {
     myProperty: '',
     disabled: false,
   }
   
-  content = () => [/* elements or template */]
+  // content returns element tree; use { part: 'name' } to register parts
+  content = () => [
+    button({ part: 'button' }, span({ part: 'label' }, 'Click'))
+  ]
+  
+  // Set content = null for components that build DOM programmatically in render()
 }
 
 export const tosiWidget = TosiWidget.elementCreator({
@@ -100,6 +113,15 @@ export const xinWidget = deprecated(
 ```
 
 **Naming convention**: New components use `Tosi*` class names, `tosi*` element creators, and `<tosi-*>` tags. Legacy `xin*` exports are deprecated but maintained for compatibility.
+
+### Form-Associated Components
+
+Several components support native form integration via `static formAssociated = true`. These participate in form submission and validation automatically. Form-associated components implement:
+- `name` attribute for the form field name
+- `formDisabledCallback()` / `formResetCallback()` lifecycle methods
+- Integration with both native `<form>` and `<tosi-form>`
+
+Components with form association: `TosiSelect`, `TosiSegmented`, `TosiRating`, `TosiMonth`, `TosiTagList`, `RichText`, `MapBox`.
 
 ### Documentation System
 
