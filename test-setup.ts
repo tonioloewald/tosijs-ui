@@ -2,6 +2,16 @@ import { Window } from 'happy-dom'
 
 const window = new Window()
 
+// Patch error constructors onto happy-dom Window for Bun compatibility.
+// Bun doesn't populate these on the Window instance, but happy-dom's internals
+// (e.g. SelectorParser) reference this.window.SyntaxError.
+const errorConstructors = ['SyntaxError', 'TypeError', 'RangeError'] as const
+for (const name of errorConstructors) {
+  if ((window as any)[name] === undefined) {
+    ;(window as any)[name] = globalThis[name]
+  }
+}
+
 // Expose all window properties to globalThis for DOM compatibility
 const windowProps = [
   'window',
