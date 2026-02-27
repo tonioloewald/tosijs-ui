@@ -12,8 +12,8 @@
   <body>
     <script src="iife.js"></script>
     <script>
-      import { div, h1, a } from 'tosijs'.elements
-      import { icons } from 'tosijs-ui'
+      const { div, h1, a } = xinjs.elements
+      const { icons } = xinjsui
 
       const App = () =>
         div(
@@ -22,9 +22,9 @@
               textAlign: 'center',
             },
           },
-          h1('xinjs-ui iife test'),
-          div(icons.tosijsui({ style: { height: 128 } })),
-          a('Return to xinjs-ui demo site', { href: '/' })
+          h1('tosijs-ui iife test'),
+          div(icons.tosiUi({ style: { height: '128px' } })),
+          a({ href: '/' }, 'Return to tosijs-ui demo site')
         )
       document.body.append(App())
     </script>
