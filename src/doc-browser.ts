@@ -248,6 +248,7 @@ const testIndicatorStyleSpec: XinStyleSheet = {
     zIndex: '1000',
     background: vars.testBg,
     color: 'white',
+    gap: vars.spacing50,
   },
   '.test-widget[hidden]': { display: 'none' },
   '.test-widget.-running': {
@@ -981,8 +982,24 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         frameDoc.body.innerHTML = ''
         frameDoc.body.appendChild(testContainer)
 
-        // Wait for all live examples to finish rendering/testing
-        await new Promise((resolve) => setTimeout(resolve, 500))
+        // Wait for all live examples to finish rendering/testing.
+        // Each xin-example fires 'testcomplete' when done; wait for all of them
+        // with a safety timeout so we never hang indefinitely.
+        const examples = testContainer.querySelectorAll('xin-example')
+        if (examples.length > 0) {
+          await new Promise<void>((resolve) => {
+            let remaining = examples.length
+            const done = () => {
+              remaining--
+              if (remaining <= 0) resolve()
+            }
+            for (const ex of examples) {
+              ex.addEventListener('testcomplete', done, { once: true })
+            }
+            // Safety timeout — resolve even if some examples have no tests
+            setTimeout(resolve, 5000)
+          })
+        }
       }
 
       markPageTested(doc.filename)
@@ -991,12 +1008,26 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     // Clean up
     testFrame.remove()
 
-    // Mark current page as tested if it has tests
+    // Mark current page as tested if it has tests.
+    // Its examples run naturally in the main document — listen for their events.
     if (docsWithTests.some((d) => d.filename === currentFilename)) {
-      // Current page tests will complete naturally, just wait a bit
-      setTimeout(() => {
+      const currentExamples = document.querySelectorAll('xin-example')
+      if (currentExamples.length > 0) {
+        let remaining = currentExamples.length
+        const done = () => {
+          remaining--
+          if (remaining <= 0) markPageTested(currentFilename)
+        }
+        for (const ex of currentExamples) {
+          ex.addEventListener('testcomplete', done, { once: true })
+        }
+        // Safety timeout
+        setTimeout(() => {
+          if (remaining > 0) markPageTested(currentFilename)
+        }, 10000)
+      } else {
         markPageTested(currentFilename)
-      }, 1000)
+      }
     }
   }
 

@@ -6851,7 +6851,11 @@ function createRemoteKey(prefix, uuid, remoteId) {
   return remoteId !== "" ? `${prefix}-${remoteId}` : `${prefix}-${uuid}`;
 }
 function sendPayload(storageKey, payload) {
-  localStorage.setItem(storageKey, JSON.stringify(payload));
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(payload));
+  } catch (e2) {
+    console.warn("live-example: failed to write to localStorage", e2);
+  }
 }
 function parsePayload(data) {
   if (data === null)
@@ -6871,35 +6875,22 @@ function openEditorWindow(prefix, uuid, storageKey, remoteKey, code) {
   });
   window.open(href);
 }
-function sendCloseSignal(storageKey, remoteKey) {
-  sendPayload(storageKey, {
-    remoteKey,
-    sentAt: Date.now(),
-    css: "",
-    html: "",
-    js: "",
-    close: true
-  });
-}
+var hasBroadcastChannel = typeof BroadcastChannel !== "undefined";
 
 class RemoteSyncManager {
   storageKey;
   remoteKey;
   lastUpdate = 0;
   interval;
+  channel;
+  listening = false;
   onReceive;
   constructor(storageKey, remoteKey, onReceive) {
     this.storageKey = storageKey;
     this.remoteKey = remoteKey;
     this.onReceive = onReceive;
   }
-  handleChange = (event) => {
-    if (event instanceof StorageEvent && event.key !== this.storageKey) {
-      return;
-    }
-    const payload = parsePayload(localStorage.getItem(this.storageKey));
-    if (!payload)
-      return;
+  handlePayload = (payload) => {
     if (payload.sentAt <= this.lastUpdate)
       return;
     if (payload.remoteKey !== this.remoteKey)
@@ -6907,25 +6898,69 @@ class RemoteSyncManager {
     this.lastUpdate = payload.sentAt;
     this.onReceive(payload);
   };
+  handleMessage = (event) => {
+    const payload = event.data;
+    if (payload)
+      this.handlePayload(payload);
+  };
+  handlePoll = () => {
+    let data = null;
+    try {
+      data = localStorage.getItem(this.storageKey);
+    } catch {
+      return;
+    }
+    const payload = parsePayload(data);
+    if (payload)
+      this.handlePayload(payload);
+  };
   startListening() {
-    addEventListener("storage", this.handleChange);
-    this.interval = setInterval(this.handleChange, 500);
+    if (this.listening)
+      return;
+    this.listening = true;
+    if (hasBroadcastChannel) {
+      this.channel = new BroadcastChannel(this.storageKey);
+      this.channel.onmessage = this.handleMessage;
+    }
+    this.interval = setInterval(this.handlePoll, 500);
   }
   stopListening() {
-    removeEventListener("storage", this.handleChange);
+    if (!this.listening)
+      return;
+    this.listening = false;
+    if (this.channel) {
+      this.channel.close();
+      this.channel = undefined;
+    }
     if (this.interval) {
       clearInterval(this.interval);
+      this.interval = undefined;
     }
   }
   send(code) {
-    sendPayload(this.storageKey, {
+    const payload = {
       remoteKey: this.remoteKey,
       sentAt: Date.now(),
       ...code
-    });
+    };
+    sendPayload(this.storageKey, payload);
+    if (this.channel) {
+      this.channel.postMessage(payload);
+    }
   }
   sendClose() {
-    sendCloseSignal(this.storageKey, this.remoteKey);
+    const payload = {
+      remoteKey: this.remoteKey,
+      sentAt: Date.now(),
+      css: "",
+      html: "",
+      js: "",
+      close: true
+    };
+    sendPayload(this.storageKey, payload);
+    if (this.channel) {
+      this.channel.postMessage(payload);
+    }
   }
 }
 
@@ -6935,19 +6970,32 @@ function registerComponentsInIframe(iframeWindow, context) {
   const iframeCustomElements = iframeWindow.customElements;
   if (!iframeCustomElements)
     return;
-  const tosijsui = context["tosijs-ui"];
-  if (!tosijsui)
-    return;
-  for (const [, creator] of Object.entries(tosijsui)) {
-    if (typeof creator === "function" && "tagName" in creator) {
-      const tagName = creator.tagName;
-      if (tagName && !iframeCustomElements.get(tagName)) {
-        const ComponentClass = customElements.get(tagName);
-        if (ComponentClass) {
-          try {
-            iframeCustomElements.define(tagName, ComponentClass);
-          } catch {}
+  const register = (tagName) => {
+    if (!tagName || iframeCustomElements.get(tagName))
+      return;
+    const ComponentClass = customElements.get(tagName);
+    if (ComponentClass) {
+      try {
+        iframeCustomElements.define(tagName, ComponentClass);
+      } catch {}
+    }
+  };
+  for (const lib of Object.values(context)) {
+    if (lib && typeof lib === "object") {
+      for (const creator of Object.values(lib)) {
+        if (typeof creator === "function" && "tagName" in creator) {
+          register(creator.tagName);
         }
+      }
+    }
+  }
+  const iframeDoc = iframeWindow.document;
+  if (iframeDoc) {
+    const allElements = iframeDoc.querySelectorAll("*");
+    for (const el of allElements) {
+      const tag = el.tagName.toLowerCase();
+      if (tag.includes("-")) {
+        register(tag);
       }
     }
   }
@@ -6991,7 +7039,16 @@ async function executeInline(options) {
   return preview;
 }
 async function executeInIframe(options) {
-  const { html, css, js, context, transform, exampleElement, widgetsElement, onError } = options;
+  const {
+    html,
+    css,
+    js,
+    context,
+    transform,
+    exampleElement,
+    widgetsElement,
+    onError
+  } = options;
   let iframe = exampleElement.querySelector("iframe.preview-iframe");
   if (!iframe) {
     iframe = document.createElement("iframe");
@@ -7290,10 +7347,18 @@ function deepEqual(a3, b3) {
     return false;
   return aKeys.every((key) => deepEqual(aObj[key], bObj[key]));
 }
+var TEST_TIMEOUT = 5000;
 var safeJSON = {
   stringify(val) {
-    if (val instanceof Element) {
+    if (typeof val === "undefined")
+      return "undefined";
+    if (val === null)
+      return "null";
+    if (typeof Element !== "undefined" && val instanceof Element) {
       return `<${val.tagName.toLowerCase()}>`;
+    }
+    if (typeof Node !== "undefined" && val instanceof Node) {
+      return `[${val.nodeName}]`;
     }
     try {
       return JSON.stringify(val);
@@ -7387,16 +7452,24 @@ function waitFor(preview, selector, timeout = 1000) {
     check();
   });
 }
-function createTestContext(results) {
+function withTimeout(promise, ms, name) {
+  return Promise.race([
+    promise,
+    new Promise((_3, reject) => setTimeout(() => reject(new Error(`Test "${name}" timed out after ${ms}ms`)), ms))
+  ]);
+}
+function createTestContext(results, timeout = TEST_TIMEOUT) {
   let currentDescribe = "";
+  const pending = [];
   return {
+    pending,
     expect,
     test(name, fn2) {
       const fullName = currentDescribe ? `${currentDescribe} > ${name}` : name;
       try {
         const result = fn2();
         if (result instanceof Promise) {
-          result.then(() => {
+          const wrapped = withTimeout(result, timeout, fullName).then(() => {
             results.push({ name: fullName, passed: true });
           }).catch((err) => {
             results.push({
@@ -7405,6 +7478,7 @@ function createTestContext(results) {
               error: err.message
             });
           });
+          pending.push(wrapped);
         } else {
           results.push({ name: fullName, passed: true });
         }
@@ -7450,7 +7524,9 @@ async function runTests(testCode, preview, context, transform) {
       error: err.message
     });
   }
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  if (testContext.pending.length > 0) {
+    await Promise.all(testContext.pending);
+  }
   return {
     passed: results.filter((r2) => r2.passed).length,
     failed: results.filter((r2) => !r2.passed).length,
@@ -7504,7 +7580,6 @@ function disableTests() {
 class LiveExample extends R {
   static initAttributes = {
     persistToDom: false,
-    prettier: false,
     iframe: false
   };
   prefix = "lx";
@@ -7515,6 +7590,9 @@ class LiveExample extends R {
   remoteSync;
   undoInterval;
   testResults;
+  pendingValues = {};
+  pendingShowDefaultTab = false;
+  beforeUnloadHandler;
   static insertExamples(element, context = {}) {
     insertExamples(element, context, liveExample, LiveExample.tagName);
   }
@@ -7522,12 +7600,37 @@ class LiveExample extends R {
     const { editors } = this.parts;
     return [...editors.children].find((elt) => elt.getAttribute("hidden") === null);
   }
+  get hydrated() {
+    try {
+      return this.parts.js !== undefined;
+    } catch {
+      return false;
+    }
+  }
   getEditorValue(which) {
+    if (!this.hydrated)
+      return this.pendingValues[which] ?? "";
     return this.parts[which].value;
   }
   setEditorValue(which, code) {
+    if (!this.hydrated) {
+      this.pendingValues[which] = code;
+      return;
+    }
     const codeEditor2 = this.parts[which];
     codeEditor2.value = code;
+  }
+  flushPendingValues() {
+    for (const [which, code] of Object.entries(this.pendingValues)) {
+      const codeEditor2 = this.parts[which];
+      if (codeEditor2)
+        codeEditor2.value = code;
+    }
+    this.pendingValues = {};
+    if (this.pendingShowDefaultTab) {
+      this.pendingShowDefaultTab = false;
+      this.showDefaultTab();
+    }
   }
   get css() {
     return this.getEditorValue("css");
@@ -7701,11 +7804,17 @@ class LiveExample extends R {
   ];
   connectedCallback() {
     super.connectedCallback();
+    this.flushPendingValues();
     const { sources } = this.parts;
     this.initFromElements([...sources.children]);
     this.remoteSync = new RemoteSyncManager(this.storageKey, this.remoteKey, (payload) => {
       if (payload.close) {
-        window.close();
+        if (this.remoteId !== "") {
+          window.close();
+        } else {
+          this.classList.remove("-maximize");
+          this.parts.codeEditors.hidden = true;
+        }
         return;
       }
       this.css = payload.css;
@@ -7716,7 +7825,13 @@ class LiveExample extends R {
       this.refresh();
     });
     this.remoteSync.startListening();
-    this.undoInterval = setInterval(this.updateUndo, 250);
+    const jitter = Math.random() * 100;
+    this.undoInterval = setInterval(() => {
+      if (!document.hidden)
+        this.updateUndo();
+    }, 250 + jitter);
+    this.beforeUnloadHandler = () => this.remoteSync?.sendClose();
+    addEventListener("beforeunload", this.beforeUnloadHandler);
   }
   disconnectedCallback() {
     super.disconnectedCallback();
@@ -7724,6 +7839,11 @@ class LiveExample extends R {
     this.remoteSync?.stopListening();
     if (this.undoInterval) {
       clearInterval(this.undoInterval);
+      this.undoInterval = undefined;
+    }
+    if (this.beforeUnloadHandler) {
+      removeEventListener("beforeunload", this.beforeUnloadHandler);
+      this.beforeUnloadHandler = undefined;
     }
   }
   copy = () => {
@@ -7743,8 +7863,10 @@ class LiveExample extends R {
   };
   closeCode = () => {
     if (this.remoteId !== "") {
+      this.remoteSync?.sendClose();
       window.close();
     } else {
+      this.remoteSync?.sendClose();
       this.classList.remove("-maximize");
       this.parts.codeEditors.hidden = true;
     }
@@ -7757,6 +7879,7 @@ class LiveExample extends R {
       js,
       test
     });
+    this.classList.add("-maximize");
   };
   refreshRemote = () => {
     this.remoteSync?.send({
@@ -7860,16 +7983,20 @@ class LiveExample extends R {
         const minIndex = lines.filter((line) => line.trim() !== "").map((line) => line.match(/^\s*/)[0].length).sort()[0];
         const source = (minIndex > 0 ? lines.map((line) => line.substring(minIndex)) : lines).join(`
 `);
-        this.parts[mode].value = source;
+        this.setEditorValue(mode, source);
       } else {
         const language = ["js", "html", "css", "test"].find((lang) => element.matches(`.language-${lang}`));
         if (language) {
-          this.parts[language].value = language === "html" ? element.innerHTML : element.innerText;
+          this.setEditorValue(language, language === "html" ? element.innerHTML : element.innerText);
         }
       }
     }
   }
   showDefaultTab() {
+    if (!this.hydrated) {
+      this.pendingShowDefaultTab = true;
+      return;
+    }
     const { editors } = this.parts;
     if (this.js !== "") {
       editors.value = 0;
@@ -8052,7 +8179,8 @@ var testIndicatorStyleSpec = {
     right: gn.spacing,
     zIndex: "1000",
     background: gn.testBg,
-    color: "white"
+    color: "white",
+    gap: gn.spacing50
   },
   ".test-widget[hidden]": { display: "none" },
   ".test-widget.-running": {
@@ -8548,15 +8676,44 @@ function createDocBrowser(options) {
       if (frameDoc) {
         frameDoc.body.innerHTML = "";
         frameDoc.body.appendChild(testContainer);
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        const examples = testContainer.querySelectorAll("xin-example");
+        if (examples.length > 0) {
+          await new Promise((resolve) => {
+            let remaining = examples.length;
+            const done = () => {
+              remaining--;
+              if (remaining <= 0)
+                resolve();
+            };
+            for (const ex of examples) {
+              ex.addEventListener("testcomplete", done, { once: true });
+            }
+            setTimeout(resolve, 5000);
+          });
+        }
       }
       markPageTested(doc.filename);
     }
     testFrame.remove();
     if (docsWithTests.some((d3) => d3.filename === currentFilename)) {
-      setTimeout(() => {
+      const currentExamples = document.querySelectorAll("xin-example");
+      if (currentExamples.length > 0) {
+        let remaining = currentExamples.length;
+        const done = () => {
+          remaining--;
+          if (remaining <= 0)
+            markPageTested(currentFilename);
+        };
+        for (const ex of currentExamples) {
+          ex.addEventListener("testcomplete", done, { once: true });
+        }
+        setTimeout(() => {
+          if (remaining > 0)
+            markPageTested(currentFilename);
+        }, 1e4);
+      } else {
         markPageTested(currentFilename);
-      }, 1000);
+      }
     }
   };
   const startBackgroundTests = () => {
@@ -11475,7 +11632,7 @@ var tosiTagList = TosiTagList.elementCreator({
 });
 var xinTagList = On((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.2.2";
+var version = "1.2.3";
 // src/theme.ts
 var defaultColors = {
   accent: x.fromCss("#EE257B"),

@@ -55,11 +55,19 @@ function deepEqual(a: unknown, b: unknown): boolean {
   return aKeys.every((key) => deepEqual(aObj[key], bObj[key]))
 }
 
+/** Default timeout for individual tests (ms) */
+export const TEST_TIMEOUT = 5000
+
 // Safe JSON that handles DOM elements and circular references
 const safeJSON = {
   stringify(val: unknown): string {
-    if (val instanceof Element) {
+    if (typeof val === 'undefined') return 'undefined'
+    if (val === null) return 'null'
+    if (typeof Element !== 'undefined' && val instanceof Element) {
       return `<${val.tagName.toLowerCase()}>`
+    }
+    if (typeof Node !== 'undefined' && val instanceof Node) {
+      return `[${val.nodeName}]`
     }
     try {
       return JSON.stringify(val)
@@ -108,10 +116,7 @@ function createMatchers(value: unknown, negated = false): Matchers {
       )
     },
     toBeDefined() {
-      assert(
-        value !== undefined,
-        `Expected ${stringify(value)} to be defined`
-      )
+      assert(value !== undefined, `Expected ${stringify(value)} to be defined`)
     },
     toContain(item: unknown) {
       if (typeof value === 'string') {
@@ -210,20 +215,43 @@ export interface TestContext {
   describe: (name: string, fn: () => void) => void
 }
 
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  name: string
+): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`Test "${name}" timed out after ${ms}ms`)),
+        ms
+      )
+    ),
+  ])
+}
+
 /**
- * Create a test context that collects results
+ * Create a test context that collects results.
+ * Returns the context and a `pending` promise array that must be awaited
+ * to capture async test results.
  */
-export function createTestContext(results: TestResult[]): TestContext {
+export function createTestContext(
+  results: TestResult[],
+  timeout = TEST_TIMEOUT
+): TestContext & { pending: Promise<void>[] } {
   let currentDescribe = ''
+  const pending: Promise<void>[] = []
 
   return {
+    pending,
     expect,
     test(name: string, fn: () => void | Promise<void>) {
       const fullName = currentDescribe ? `${currentDescribe} > ${name}` : name
       try {
         const result = fn()
         if (result instanceof Promise) {
-          result
+          const wrapped = withTimeout(result, timeout, fullName)
             .then(() => {
               results.push({ name: fullName, passed: true })
             })
@@ -234,6 +262,7 @@ export function createTestContext(results: TestResult[]): TestContext {
                 error: err.message,
               })
             })
+          pending.push(wrapped)
         } else {
           results.push({ name: fullName, passed: true })
         }
@@ -298,8 +327,10 @@ export async function runTests(
     })
   }
 
-  // Wait a tick for any async tests to complete
-  await new Promise((resolve) => setTimeout(resolve, 0))
+  // Wait for any async tests to settle
+  if (testContext.pending.length > 0) {
+    await Promise.all(testContext.pending)
+  }
 
   return {
     passed: results.filter((r) => r.passed).length,

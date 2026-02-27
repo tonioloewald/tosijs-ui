@@ -5,7 +5,12 @@ import { rewriteImports, AsyncFunction } from './code-transform'
 const { div } = elements
 
 /**
- * Register web components in an iframe's customElements registry
+ * Register web components in an iframe's customElements registry.
+ *
+ * Uses two strategies:
+ * 1. Scans context exports for creator functions with a `tagName` property
+ * 2. Scans the iframe HTML for any custom-element tags (contain a hyphen)
+ *    and registers them from the main window's customElements registry
  */
 export function registerComponentsInIframe(
   iframeWindow: Window,
@@ -14,21 +19,37 @@ export function registerComponentsInIframe(
   const iframeCustomElements = iframeWindow.customElements
   if (!iframeCustomElements) return
 
-  const tosijsui = context['tosijs-ui']
-  if (!tosijsui) return
+  const register = (tagName: string) => {
+    if (!tagName || iframeCustomElements.get(tagName)) return
+    const ComponentClass = customElements.get(tagName)
+    if (ComponentClass) {
+      try {
+        iframeCustomElements.define(tagName, ComponentClass)
+      } catch {
+        // May fail if already defined — ignore
+      }
+    }
+  }
 
-  for (const [, creator] of Object.entries(tosijsui)) {
-    if (typeof creator === 'function' && 'tagName' in creator) {
-      const tagName = (creator as { tagName: string }).tagName
-      if (tagName && !iframeCustomElements.get(tagName)) {
-        const ComponentClass = customElements.get(tagName)
-        if (ComponentClass) {
-          try {
-            iframeCustomElements.define(tagName, ComponentClass)
-          } catch {
-            // May fail if already defined - ignore
-          }
+  // Strategy 1: context exports with tagName (e.g. element creators)
+  for (const lib of Object.values(context)) {
+    if (lib && typeof lib === 'object') {
+      for (const creator of Object.values(lib as Record<string, unknown>)) {
+        if (typeof creator === 'function' && 'tagName' in creator) {
+          register((creator as { tagName: string }).tagName)
         }
+      }
+    }
+  }
+
+  // Strategy 2: scan iframe DOM for unregistered custom-element tags
+  const iframeDoc = iframeWindow.document
+  if (iframeDoc) {
+    const allElements = iframeDoc.querySelectorAll('*')
+    for (const el of allElements) {
+      const tag = el.tagName.toLowerCase()
+      if (tag.includes('-')) {
+        register(tag)
       }
     }
   }
@@ -108,8 +129,16 @@ export async function executeInIframe(
     widgetsElement: HTMLElement
   }
 ): Promise<HTMLElement | null> {
-  const { html, css, js, context, transform, exampleElement, widgetsElement, onError } =
-    options
+  const {
+    html,
+    css,
+    js,
+    context,
+    transform,
+    exampleElement,
+    widgetsElement,
+    onError,
+  } = options
 
   // Create or reuse iframe
   let iframe = exampleElement.querySelector(
@@ -181,9 +210,9 @@ export async function executeInIframe(
     const transformedCode = transform(code, { transforms: ['typescript'] }).code
 
     // Create AsyncFunction in iframe's context
-    const IframeAsyncFunction = (iframeWindow as Window & { eval: typeof eval }).eval(
-      '(async () => {}).constructor'
-    )
+    const IframeAsyncFunction = (
+      iframeWindow as Window & { eval: typeof eval }
+    ).eval('(async () => {}).constructor')
 
     const contextKeys = Object.keys(fullContext).map((key) =>
       key.replace(/-/g, '')

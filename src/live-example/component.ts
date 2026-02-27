@@ -205,7 +205,6 @@ export function disableTests(): void {
 export class LiveExample extends Component<ExampleParts> {
   static initAttributes = {
     persistToDom: false,
-    prettier: false,
     iframe: false,
   }
 
@@ -218,6 +217,9 @@ export class LiveExample extends Component<ExampleParts> {
   private remoteSync?: RemoteSyncManager
   private undoInterval?: ReturnType<typeof setInterval>
   private testResults?: TestResults
+  private pendingValues: Record<string, string> = {}
+  private pendingShowDefaultTab = false
+  private beforeUnloadHandler?: () => void
 
   static insertExamples(
     element: HTMLElement,
@@ -233,13 +235,39 @@ export class LiveExample extends Component<ExampleParts> {
     )
   }
 
+  private get hydrated(): boolean {
+    try {
+      return this.parts.js !== undefined
+    } catch {
+      return false
+    }
+  }
+
   private getEditorValue(which: string): string {
+    if (!this.hydrated) return this.pendingValues[which] ?? ''
     return (this.parts[which] as CodeEditor).value
   }
 
   private setEditorValue(which: string, code: string): void {
+    if (!this.hydrated) {
+      this.pendingValues[which] = code
+      return
+    }
     const codeEditor = this.parts[which] as CodeEditor
     codeEditor.value = code
+  }
+
+  private flushPendingValues(): void {
+    for (const [which, code] of Object.entries(this.pendingValues)) {
+      const codeEditor = this.parts[which] as CodeEditor
+      if (codeEditor) codeEditor.value = code
+    }
+    this.pendingValues = {}
+
+    if (this.pendingShowDefaultTab) {
+      this.pendingShowDefaultTab = false
+      this.showDefaultTab()
+    }
   }
 
   get css(): string {
@@ -476,8 +504,11 @@ export class LiveExample extends Component<ExampleParts> {
 
   connectedCallback(): void {
     super.connectedCallback()
-    const { sources } = this.parts
 
+    // Flush any values set before the shadow DOM was ready
+    this.flushPendingValues()
+
+    const { sources } = this.parts
     this.initFromElements([...sources.children] as HTMLElement[])
 
     // Set up remote sync
@@ -486,7 +517,14 @@ export class LiveExample extends Component<ExampleParts> {
       this.remoteKey,
       (payload) => {
         if (payload.close) {
-          window.close()
+          if (this.remoteId !== '') {
+            // Remote editor window — close the popup
+            window.close()
+          } else {
+            // Original window — restore from maximized state
+            this.classList.remove('-maximize')
+            this.parts.codeEditors.hidden = true
+          }
           return
         }
         this.css = payload.css
@@ -498,7 +536,17 @@ export class LiveExample extends Component<ExampleParts> {
     )
     this.remoteSync.startListening()
 
-    this.undoInterval = setInterval(this.updateUndo, 250)
+    // Stochastic undo-state polling — jittered base interval avoids
+    // synchronizing when many examples are on the same page.
+    const jitter = Math.random() * 100
+    this.undoInterval = setInterval(() => {
+      if (!document.hidden) this.updateUndo()
+    }, 250 + jitter)
+
+    // Send close signal when the tab/window closes — disconnectedCallback
+    // does not fire reliably during page unload.
+    this.beforeUnloadHandler = () => this.remoteSync?.sendClose()
+    addEventListener('beforeunload', this.beforeUnloadHandler)
   }
 
   disconnectedCallback(): void {
@@ -509,6 +557,12 @@ export class LiveExample extends Component<ExampleParts> {
 
     if (this.undoInterval) {
       clearInterval(this.undoInterval)
+      this.undoInterval = undefined
+    }
+
+    if (this.beforeUnloadHandler) {
+      removeEventListener('beforeunload', this.beforeUnloadHandler)
+      this.beforeUnloadHandler = undefined
     }
   }
 
@@ -535,8 +589,12 @@ export class LiveExample extends Component<ExampleParts> {
 
   closeCode = () => {
     if (this.remoteId !== '') {
+      // Remote editor window — send close signal to original, then close popup
+      this.remoteSync?.sendClose()
       window.close()
     } else {
+      // Original window — restore and close any remote editor
+      this.remoteSync?.sendClose()
       this.classList.remove('-maximize')
       this.parts.codeEditors.hidden = true
     }
@@ -550,6 +608,8 @@ export class LiveExample extends Component<ExampleParts> {
       js,
       test,
     })
+    // Maximize preview — the remote window handles code editing
+    this.classList.add('-maximize')
   }
 
   refreshRemote = () => {
@@ -704,20 +764,26 @@ export class LiveExample extends Component<ExampleParts> {
         const source = (
           minIndex > 0 ? lines.map((line) => line.substring(minIndex)) : lines
         ).join('\n')
-        ;(this.parts[mode] as CodeEditor).value = source
+        this.setEditorValue(mode, source)
       } else {
         const language = ['js', 'html', 'css', 'test'].find((lang) =>
           element.matches(`.language-${lang}`)
         )
         if (language) {
-          ;(this.parts[language] as CodeEditor).value =
+          this.setEditorValue(
+            language,
             language === 'html' ? element.innerHTML : element.innerText
+          )
         }
       }
     }
   }
 
   showDefaultTab() {
+    if (!this.hydrated) {
+      this.pendingShowDefaultTab = true
+      return
+    }
     const { editors } = this.parts
     if (this.js !== '') {
       editors.value = 0

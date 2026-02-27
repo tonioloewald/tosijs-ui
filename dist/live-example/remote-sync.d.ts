@@ -11,16 +11,29 @@ export declare function openEditorWindow(prefix: string, uuid: string, storageKe
 }): void;
 export declare function sendCloseSignal(storageKey: string, remoteKey: string): void;
 /**
- * Manager for remote window synchronization via localStorage/StorageEvent
+ * Manager for remote window synchronization.
+ *
+ * Primary transport: BroadcastChannel (reliable, instant, works when
+ * tabs close). Falls back to localStorage polling for environments
+ * that lack BroadcastChannel (e.g. older Quest 3 browser builds).
+ *
+ * localStorage is still used for the initial payload (persisted so the
+ * new window can read it on first render).
  */
 export declare class RemoteSyncManager {
     private storageKey;
     private remoteKey;
     private lastUpdate;
     private interval?;
+    private channel?;
+    private listening;
     private onReceive;
     constructor(storageKey: string, remoteKey: string, onReceive: (payload: RemotePayload) => void);
-    private handleChange;
+    private handlePayload;
+    /** Handle incoming BroadcastChannel messages */
+    private handleMessage;
+    /** Polling fallback — reads from localStorage */
+    private handlePoll;
     startListening(): void;
     stopListening(): void;
     send(code: {

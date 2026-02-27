@@ -16,6 +16,9 @@ for (const name of errorConstructors) {
 const windowProps = [
   'window',
   'document',
+  'localStorage',
+  'addEventListener',
+  'removeEventListener',
   'HTMLElement',
   'HTMLSpanElement',
   'HTMLDivElement',

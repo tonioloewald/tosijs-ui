@@ -12,7 +12,6 @@ export declare function disableTests(): void;
 export declare class LiveExample extends Component<ExampleParts> {
     static initAttributes: {
         persistToDom: boolean;
-        prettier: boolean;
         iframe: boolean;
     };
     prefix: string;
@@ -23,10 +22,15 @@ export declare class LiveExample extends Component<ExampleParts> {
     private remoteSync?;
     private undoInterval?;
     private testResults?;
+    private pendingValues;
+    private pendingShowDefaultTab;
+    private beforeUnloadHandler?;
     static insertExamples(element: HTMLElement, context?: ExampleContext): void;
     get activeTab(): Element | undefined;
+    private get hydrated();
     private getEditorValue;
     private setEditorValue;
+    private flushPendingValues;
     get css(): string;
     set css(code: string);
     get html(): string;

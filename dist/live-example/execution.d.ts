@@ -1,6 +1,11 @@
 import { ExampleContext, TransformFn } from './types';
 /**
- * Register web components in an iframe's customElements registry
+ * Register web components in an iframe's customElements registry.
+ *
+ * Uses two strategies:
+ * 1. Scans context exports for creator functions with a `tagName` property
+ * 2. Scans the iframe HTML for any custom-element tags (contain a hyphen)
+ *    and registers them from the main window's customElements registry
  */
 export declare function registerComponentsInIframe(iframeWindow: Window, context: ExampleContext): void;
 export interface ExecutionOptions {

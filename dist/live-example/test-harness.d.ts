@@ -25,6 +25,8 @@ interface Matchers {
     toBeInstanceOf: (cls: new (...args: unknown[]) => unknown) => void;
     not: Matchers;
 }
+/** Default timeout for individual tests (ms) */
+export declare const TEST_TIMEOUT = 5000;
 export declare function expect(value: unknown): Matchers;
 /**
  * Wait for a specified number of milliseconds
@@ -43,9 +45,13 @@ export interface TestContext {
     describe: (name: string, fn: () => void) => void;
 }
 /**
- * Create a test context that collects results
+ * Create a test context that collects results.
+ * Returns the context and a `pending` promise array that must be awaited
+ * to capture async test results.
  */
-export declare function createTestContext(results: TestResult[]): TestContext;
+export declare function createTestContext(results: TestResult[], timeout?: number): TestContext & {
+    pending: Promise<void>[];
+};
 /**
  * Run test code and collect results
  */
