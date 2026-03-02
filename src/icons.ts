@@ -2,9 +2,9 @@
 # icons
 
 <div class="center" style="display: flex; gap: 10px; padding: 10px">
-  <xin-icon title="tosijs" icon="tosiFavicon" style="--xin-icon-size: 128px"></xin-icon>
-  <xin-icon title="tosijs-ui" icon="tosiUi" style="--xin-icon-size: 128px"></xin-icon>
-  <xin-icon title="tosi-platform" icon="tosiPlatform" style="--xin-icon-size: 128px"></xin-icon>
+  <tosi-icon title="tosijs" icon="tosiFavicon" style="--tosi-icon-size: 128px"></tosi-icon>
+  <tosi-icon title="tosijs-ui" icon="tosiUi" style="--tosi-icon-size: 128px"></tosi-icon>
+  <tosi-icon title="tosi-platform" icon="tosiPlatform" style="--tosi-icon-size: 128px"></tosi-icon>
 </div>
 
 A library that provides `ElementCreator` functions that produce SVG icons. It leverages `tosijs`'s
@@ -133,7 +133,7 @@ preview.append(
   line-height: 1.5;
 }
 
-.preview .tile xin-icon {
+.preview .tile tosi-icon {
   font-size: 24px;
 }
 
@@ -158,7 +158,7 @@ test('icons are rendered', () => {
   expect(tiles.length).toBeGreaterThan(100)
 })
 test('icon tiles have svg icons', () => {
-  const firstIcon = tiles[0].querySelector('xin-icon')
+  const firstIcon = tiles[0].querySelector('tosi-icon')
   expect(firstIcon).toBeTruthy()
 })
 test('filter input exists', () => {
@@ -185,17 +185,17 @@ defineIcons({
 
 ### Icon Classes
 
-Icons will be generated with the class `xin-icon`.
+Icons will be generated with the class `tosi-icon`.
 
 You can also assign the classes `filled`, `stroked`, and `color` to icons to set default
 icon styling.
 
-## `<xin-icon>`
+## `<tosi-icon>`
 
-`<xin-icon>` is a simple component that lets you embed icons as HTML. Check the CSS tab to see
+`<tosi-icon>` is a simple component that lets you embed icons as HTML. Check the CSS tab to see
 how it's styled.
 
-`<xin-icon>` supports four attributes:
+`<tosi-icon>` supports four attributes:
 
 - `size` (defaults to 0) if non-zero sets the height of the icon in pixels
 - `icon` is the name of the icon
@@ -248,7 +248,7 @@ preview.append(
 
 `svg2DataUrl(svg: SVGElement, fill?: string, stroke?: string, strokeWidth?: number): string` is provided as a
 utility for converting SVG elements into data-urls (e.g. for incorporation into
-CSS properties. (It's used by the `<xin-3d>` component to render the XR widget.)
+CSS properties. (It's used by the `<tosi-3d>` component to render the XR widget.)
 
 If you're using `SVGElement`s created using the `icons` proxy, you'll want to provide `fill` and/or
 `stroke` values, because images loaded via css properties cannot be styled.
@@ -256,13 +256,13 @@ If you're using `SVGElement`s created using the `icons` proxy, you'll want to pr
 ## Color Icons
 
 ```html
-<xin-icon icon="tosiFavicon" class="demo-icon"></xin-icon>
-<xin-icon icon="tosiPlatform" class="demo-icon recolored"></xin-icon>
-<xin-icon icon="tosiXr" class="demo-icon animated"></xin-icon>
+<tosi-icon icon="tosiFavicon" class="demo-icon"></tosi-icon>
+<tosi-icon icon="tosiPlatform" class="demo-icon recolored"></tosi-icon>
+<tosi-icon icon="tosiXr" class="demo-icon animated"></tosi-icon>
 ```
 ```css
 .demo-icon {
-  --xin-icon-size: 160px
+  --tosi-icon-size: 160px
 }
 
 .recolored > svg {
@@ -433,7 +433,7 @@ export const icons = new Proxy(iconData, {
       div.innerHTML = iconSpec
       const sourceSvg = div.querySelector('svg') as SVGElement
       const classes = new Set(sourceSvg.classList)
-      classes.add('xin-icon')
+      classes.add('tosi-icon')
       const svg = svgElements.svg(
         {
           class: Array.from(classes).join(' '),
@@ -490,7 +490,7 @@ export class SvgIcon extends WebComponent {
 }
 
 export const svgIcon = SvgIcon.elementCreator({
-  tag: 'xin-icon',
+  tag: 'tosi-icon',
   styleSpec: {
     ':host': {
       // New --tosi-icon-* variables with legacy fallbacks

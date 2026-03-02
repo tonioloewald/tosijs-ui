@@ -113,7 +113,7 @@ function populate(basePath: string, source?: any): string {
   )
 }
 
-export class MarkdownViewer extends Component {
+export class TosiMd extends Component {
   static initAttributes = {
     src: '',
     elements: false,
@@ -178,9 +178,15 @@ export class MarkdownViewer extends Component {
   }
 }
 
-export const markdownViewer = MarkdownViewer.elementCreator({
-  tag: 'tosi-md',
-}) as ElementCreator<MarkdownViewer>
+/** @deprecated Use TosiMd instead */
+export const MarkdownViewer = TosiMd
 
-/** @deprecated Use markdownViewer with tag 'tosi-md' instead */
-export const xinMd = markdownViewer
+export const tosiMd = TosiMd.elementCreator({
+  tag: 'tosi-md',
+}) as ElementCreator<TosiMd>
+
+/** @deprecated Use tosiMd instead */
+export const markdownViewer = tosiMd
+
+/** @deprecated Use tosiMd instead */
+export const xinMd = tosiMd

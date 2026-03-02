@@ -1,7 +1,7 @@
 /*#
 # example
 
-`<xin-example>` makes it easy to insert interactive code examples in a web page. It
+`<tosi-example>` makes it easy to insert interactive code examples in a web page. It
 started life as a super lightweight, easier-to-embed implementation of
 [b8rjs's fiddle component](https://b8rjs.com)—which I dearly missed—but now the student
 is, by far, the master. And it's still super lightweight.
@@ -107,7 +107,7 @@ test('waitMs delays execution', async () => {
 
 ## `context`
 
-A `<xin-example>` is given a `context` object which is the set of values available
+A `<tosi-example>` is given a `context` object which is the set of values available
 in the javascript's execution context. The context always includes `preview`.
 
 ```
@@ -123,7 +123,7 @@ context = {
 
 import { Component, ElementCreator, elements, tosi } from 'tosijs'
 import { codeEditor, CodeEditor } from '../code-editor'
-import { tabSelector, TabSelector } from '../tab-selector'
+import { tosiTabs, TosiTabs } from '../tab-selector'
 import { icons } from '../icons'
 import { popMenu } from '../menu'
 
@@ -190,7 +190,7 @@ export function enableTests(): void {
   testManager.enabled.value = true
   updateTestsEnabledClass()
   // Re-run tests on all existing examples
-  document.querySelectorAll('xin-example').forEach((el) => {
+  document.querySelectorAll('tosi-example').forEach((el) => {
     ;(el as LiveExample).refresh()
   })
 }
@@ -435,7 +435,7 @@ export class LiveExample extends Component<ExampleParts> {
         onKeydown: this.handleShortcuts,
         hidden: true,
       },
-      tabSelector(
+      tosiTabs(
         {
           part: 'editors',
           onChange: this.updateUndo,
@@ -821,7 +821,7 @@ export class LiveExample extends Component<ExampleParts> {
 }
 
 export const liveExample = LiveExample.elementCreator({
-  tag: 'xin-example',
+  tag: 'tosi-example',
   styleSpec: liveExampleStyleSpec,
 }) as ElementCreator<LiveExample>
 

@@ -6,10 +6,10 @@ A [lottie](https://airbnb.io/lottie/#/web) (a.k.a. **bodymovin**) player.
 It's designed to work like an `<img>` element (just set its `src` attribute).
 
 ```js
-import { icons, popFloat, xinSelect } from 'tosijs-ui'
+import { icons, popFloat, tosiSelect } from 'tosijs-ui'
 import { div, label, input, select, option, span } from 'tosijs'.elements
 
-const tosiPlatform = preview.querySelector('xin-lottie')
+const tosiPlatform = preview.querySelector('tosi-lottie')
 setTimeout(
   () => {
  preview.append(
@@ -31,7 +31,7 @@ setTimeout(
        label(
          { class: 'no-drag' },
          'direction',
-         xinSelect({
+         tosiSelect({
            value: '1',
            options: [
              { caption: 'Forward', value: '1' },
@@ -52,10 +52,10 @@ setTimeout(
 )
 ```
 ```html
-<xin-lottie
+<tosi-lottie
   style="width: 200px; height: 200px;"
   src="/tosi-platform.json"
-></xin-lottie>
+></tosi-lottie>
 <div class="caption">
   Animation created by <a target="_blank" href="https://pro.fiverr.com/freelancers/anicoremotion">@anicoremotion</a>
 </div>
@@ -173,7 +173,7 @@ export class BodymovinPlayer extends WebComponent {
       this.config.path = this.src
     } else {
       console.log(
-        '%c<xin-lottie>%c expected either %cjson%c (animation data) or %csrc% c(url) but found neither.',
+        '%c<tosi-lottie>%c expected either %cjson%c (animation data) or %csrc% c(url) but found neither.',
         'color: #44f; background: #fff; padding: 0 5px',
         'color: default',
         'color: #44f; background: #fff; padding: 0 5px',
@@ -206,5 +206,5 @@ export class BodymovinPlayer extends WebComponent {
 }
 
 export const bodymovinPlayer = BodymovinPlayer.elementCreator({
-  tag: 'xin-lottie',
+  tag: 'tosi-lottie',
 }) as ElementCreator<BodymovinPlayer>

@@ -168,9 +168,9 @@ is used to drive form-validation.)
 
 The `text` type populates the `input` slot with a `<textarea>` element.
 
-The `color` type populates the `input` slot with a `<xin-color>` element (and thus supports colors with alpha values).
+The `color` type populates the `input` slot with a `<tosi-color>` element (and thus supports colors with alpha values).
 
-<xin-css-var-editor element-selector="tosi-field" target-selector=".preview"></xin-css-var-editor>
+<tosi-css-var-editor element-selector="tosi-field" target-selector=".preview"></tosi-css-var-editor>
 
 ## Native Form Integration
 

@@ -1,6 +1,6 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
-export declare class XinFloat extends WebComponent {
-    static floats: Set<XinFloat>;
+export declare class TosiFloat extends WebComponent {
+    static floats: Set<TosiFloat>;
     static initAttributes: {
         drag: boolean;
         remainOnResize: "hide" | "remove" | "remain";
@@ -16,4 +16,8 @@ export declare class XinFloat extends WebComponent {
     connectedCallback(): void;
     disconnectedCallback(): void;
 }
-export declare const xinFloat: ElementCreator<XinFloat>;
+/** @deprecated Use TosiFloat instead */
+export declare const XinFloat: typeof TosiFloat;
+export declare const tosiFloat: ElementCreator<TosiFloat>;
+/** @deprecated Use tosiFloat instead */
+export declare const xinFloat: ElementCreator<TosiFloat>;

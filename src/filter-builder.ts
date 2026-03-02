@@ -6,7 +6,7 @@ macOS Finder-inspired interface, using an easily customizable / extensible colle
 
 ```js
 import { elements } from 'tosijs'
-import { dataTable, filterBuilder, availableFilters } from 'tosijs-ui'
+import { tosiTable, filterBuilder, availableFilters } from 'tosijs-ui'
 
 const sourceWords = ['acorn', 'bubblegum', 'copper', 'daisy', 'ellipse', 'fabulous', 'gerund', 'hopscotch', 'idiom', 'joke']
 function randomWords () {
@@ -70,7 +70,7 @@ const columns = [
   },
 ]
 
-const table = dataTable({ array, columns })
+const table = tosiTable({ array, columns })
 const filter = filterBuilder({
   fields: columns,
   onChange(event) {
@@ -85,7 +85,7 @@ preview.append(filter, table)
   flex-direction: column;
 }
 
-.preview xin-table {
+.preview tosi-table {
   flex: 1 1 auto;
 }
 
@@ -109,13 +109,13 @@ preview.append(filter, table)
 
 ## serialization
 
-The current state of a `<xin-filter>` can be serialized as, and restored from, a Javascript object (which itself
-can easily be converted into JSON or a URL component) via its `state` property. Obviously, a `<xin-filter>` can
+The current state of a `<tosi-filter>` can be serialized as, and restored from, a Javascript object (which itself
+can easily be converted into JSON or a URL component) via its `state` property. Obviously, a `<tosi-filter>` can
 only restore state if it has the necessary constituent `filters`.
 
 ## availableFilters
 
-`<xin-filter>` has a default set of `FilterMaker` objects which it uses to construct filter function.
+`<tosi-filter>` has a default set of `FilterMaker` objects which it uses to construct filter function.
 In the example above, the default collection of filters is reduced to `contains`, `equals`, `after`, and `isTrue`.
 
 The full collection includes:
@@ -411,13 +411,13 @@ export class FilterPart extends WebComponent<FilterPartParts> {
 }
 
 export const filterPart = FilterPart.elementCreator({
-  tag: 'xin-filter-part',
+  tag: 'tosi-filter-part',
   styleSpec: {
     ':host': {
       display: 'flex',
     },
 
-    ':host .xin-icon:': {
+    ':host .tosi-icon:': {
       verticalAlign: 'middle',
       pointerEvents: 'none',
     },
@@ -544,7 +544,7 @@ export class FilterBuilder extends WebComponent<FilterBuilderParts> {
 }
 
 export const filterBuilder = FilterBuilder.elementCreator({
-  tag: 'xin-filter',
+  tag: 'tosi-filter',
   styleSpec: {
     ':host': {
       height: 'auto',

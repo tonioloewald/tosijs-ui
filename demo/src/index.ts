@@ -102,7 +102,7 @@ if (main) {
     const { img, a, span, button } = elements
 
     // Add bundle and cdn badges before the icon links
-    const sizeBreakElement = header.querySelector('xin-sizebreak')
+    const sizeBreakElement = header.querySelector('tosi-sizebreak')
     if (sizeBreakElement) {
       const badges = span(
         {

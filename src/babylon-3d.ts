@@ -3,7 +3,7 @@
 
 A [babylonjs](https://www.babylonjs.com/) wrapper.
 
-A `<xin-3d>` element is initialized with an `engine`, `canvas`, `scene`, and an update-loop.
+A `<tosi-3d>` element is initialized with an `engine`, `canvas`, `scene`, and an update-loop.
 
 If you view this example with an XR-enabled device, such as the
 [Meta Quest 3](https://www.meta.com/quest/quest-3/), then you should be able to view this
@@ -74,7 +74,7 @@ preview.append(b3d({
 }))
 ```
 ```css
-.preview xin-3d {
+.preview tosi-3d {
   width: 100%;
   height: 100%;
 }
@@ -167,12 +167,12 @@ preview.append(b3d({
 
 ## loadScene
 
-`<xin-3d>.loadScene(path: string, file: string, callBack(meshes: any[]): void)` can
+`<tosi-3d>.loadScene(path: string, file: string, callBack(meshes: any[]): void)` can
 be used to load `.glb` files.
 
 ## loadUI
 
-`<xin-3d>.loadUI(options: B3dUIOptions)` loads babylonjs guis, which you can create programmatically or using the [babylonjs gui tool](https://gui.babylonjs.com/).
+`<tosi-3d>.loadUI(options: B3dUIOptions)` loads babylonjs guis, which you can create programmatically or using the [babylonjs gui tool](https://gui.babylonjs.com/).
 */
 import { Component as WebComponent, ElementCreator, elements } from 'tosijs'
 import { scriptTag } from './via-tag'
@@ -345,4 +345,4 @@ export class B3d extends WebComponent {
   }
 }
 
-export const b3d = B3d.elementCreator({ tag: 'xin-3d' }) as ElementCreator<B3d>
+export const b3d = B3d.elementCreator({ tag: 'tosi-3d' }) as ElementCreator<B3d>

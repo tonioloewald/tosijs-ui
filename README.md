@@ -12,10 +12,10 @@
 [![tosijs on jsdelivr](https://data.jsdelivr.com/v1/package/npm/tosijs-ui/badge)](https://www.jsdelivr.com/package/npm/tosijs-ui)
 
 <center>
-  <xin-lottie
+  <tosi-lottie
     style="width: 280px; height: 280px; background: #da1167; border-radius: 40px;"
     src="/tosi-ui.json"
-  ></xin-lottie>
+  ></tosi-lottie>
 </center>
 
 Copyright ©2023-2025 Tonio Loewald
@@ -59,7 +59,7 @@ as globals which contain all the things exported by `tosijs` and `tosijs-ui`.
 
 ```
 <script src="https://ui.xinjs.net/iife.js"></script>
-<button id="menu">Menu <xin-icon icon="chevronDown"></xin-icon></button>
+<button id="menu">Menu <tosi-icon icon="chevronDown"></tosi-icon></button>
 <script>
   import { elements } from 'tosijs'
   import { popMenu, icons } from 'tosijs-ui'
@@ -129,10 +129,10 @@ here is some markdown
 Assuming you import the module somewhere, the HTML will work as well.
 
 ```
-<xin-md>
+<tosi-md>
 ## hello world
 here is some markdown
-</xin-md>
+</tosi-md>
 ```
 
 The big difference with using the `markdownViewer()` function is that the `tosijs` `Component`
@@ -170,7 +170,7 @@ and accessible.
 The goal here is to provide useful components and other utilities that add to what's built
 into HTML5 and CSS3 and to make custom-elements work as much as possible like drop-in replacements
 for an `<input>` or `<textarea>` (while mitigating the historical pathologies of things like
-`<select>` and `<input type="radio">`). E.g. the `<xin-select>` does not suffer from a
+`<select>` and `<input type="radio">`). E.g. the `<tosi-select>` does not suffer from a
 race-condition between having its value set and being given an `<option>` with the intended value
 and you can differentiate between the user picking a value (`action`) and the value changing (`change`).
 

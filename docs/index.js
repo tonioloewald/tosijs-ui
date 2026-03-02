@@ -2243,15 +2243,26 @@ __export(exports_src, {
   tosijs: () => exports_module,
   tosiTagList: () => tosiTagList,
   tosiTag: () => tosiTag,
+  tosiTabs: () => tosiTabs,
+  tosiTable: () => tosiTable,
+  tosiSizer: () => tosiSizer,
+  tosiSidenav: () => tosiSidenav,
   tosiSelect: () => tosiSelect,
   tosiSegmented: () => tosiSegmented,
   tosiRichText: () => tosiRichText,
   tosiRating: () => tosiRating,
+  tosiPasswordStrength: () => tosiPasswordStrength,
+  tosiNotification: () => tosiNotification,
   tosiMonth: () => tosiMonth,
   tosiMenu: () => tosiMenu,
+  tosiMd: () => tosiMd,
+  tosiLocalized: () => tosiLocalized,
+  tosiLocalePicker: () => tosiLocalePicker,
   tosiForm: () => tosiForm,
+  tosiFloat: () => tosiFloat,
   tosiField: () => tosiField,
   tosiDialog: () => tosiDialog,
+  tosiCarousel: () => tosiCarousel,
   testManager: () => testManager,
   tabSelector: () => tabSelector,
   svgIcon: () => svgIcon,
@@ -2342,14 +2353,25 @@ __export(exports_src, {
   XinCarousel: () => XinCarousel,
   TosiTagList: () => TosiTagList,
   TosiTag: () => TosiTag,
+  TosiTabs: () => TosiTabs,
+  TosiTable: () => TosiTable,
+  TosiSizer: () => TosiSizer,
+  TosiSidenav: () => TosiSidenav,
   TosiSelect: () => TosiSelect,
   TosiSegmented: () => TosiSegmented,
   TosiRating: () => TosiRating,
+  TosiPasswordStrength: () => TosiPasswordStrength,
+  TosiNotification: () => TosiNotification,
   TosiMonth: () => TosiMonth,
   TosiMenu: () => TosiMenu,
+  TosiMd: () => TosiMd,
+  TosiLocalized: () => TosiLocalized,
+  TosiLocalePicker: () => TosiLocalePicker,
   TosiForm: () => TosiForm,
+  TosiFloat: () => TosiFloat,
   TosiField: () => TosiField,
   TosiDialog: () => TosiDialog,
+  TosiCarousel: () => TosiCarousel,
   TabSelector: () => TabSelector,
   SvgIcon: () => SvgIcon,
   SizeBreak: () => SizeBreak,
@@ -2402,7 +2424,7 @@ class AbTest extends R {
     }
   }
 }
-var abTest = AbTest.elementCreator({ tag: "xin-ab" });
+var abTest = AbTest.elementCreator({ tag: "tosi-ab" });
 // src/via-tag.ts
 var loadedScripts = {};
 function scriptTag(src, existingSymbolName) {
@@ -2804,7 +2826,7 @@ var icons = new Proxy(icon_data_default, {
       div.innerHTML = iconSpec;
       const sourceSvg = div.querySelector("svg");
       const classes = new Set(sourceSvg.classList);
-      classes.add("xin-icon");
+      classes.add("tosi-icon");
       const svg = tn.svg({
         class: Array.from(classes).join(" "),
         viewBox: sourceSvg.getAttribute("viewBox")
@@ -2854,7 +2876,7 @@ class SvgIcon extends R {
   }
 }
 var svgIcon = SvgIcon.elementCreator({
-  tag: "xin-icon",
+  tag: "tosi-icon",
   styleSpec: {
     ":host": {
       "--tosi-icon-size": "var(--xin-icon-size, 16px)",
@@ -2982,7 +3004,7 @@ class B3d extends R {
     });
   }
 }
-var b3d = B3d.elementCreator({ tag: "xin-3d" });
+var b3d = B3d.elementCreator({ tag: "tosi-3d" });
 // src/bodymovin-player.ts
 class BodymovinPlayer extends R {
   static initAttributes = {
@@ -3027,7 +3049,7 @@ class BodymovinPlayer extends R {
       delete this.config.animationData;
       this.config.path = this.src;
     } else {
-      console.log("%c<xin-lottie>%c expected either %cjson%c (animation data) or %csrc% c(url) but found neither.", "color: #44f; background: #fff; padding: 0 5px", "color: default", "color: #44f; background: #fff; padding: 0 5px", "color: default", "color: #44f; background: #fff; padding: 0 5px", "color: default");
+      console.log("%c<tosi-lottie>%c expected either %cjson%c (animation data) or %csrc% c(url) but found neither.", "color: #44f; background: #fff; padding: 0 5px", "color: default", "color: #44f; background: #fff; padding: 0 5px", "color: default", "color: #44f; background: #fff; padding: 0 5px", "color: default");
     }
     if (this.animation) {
       this.animation.destroy();
@@ -3047,12 +3069,12 @@ class BodymovinPlayer extends R {
   }
 }
 var bodymovinPlayer = BodymovinPlayer.elementCreator({
-  tag: "xin-lottie"
+  tag: "tosi-lottie"
 });
 // src/carousel.ts
 var { button, slot, div } = T;
 
-class XinCarousel extends R {
+class TosiCarousel extends R {
   static initAttributes = {
     dots: false,
     arrows: false,
@@ -3269,8 +3291,9 @@ class XinCarousel extends R {
     back.hidden = forward.hidden = !(arrows && lastPage > 0);
   }
 }
-var xinCarousel = XinCarousel.elementCreator({
-  tag: "xin-carousel",
+var XinCarousel = TosiCarousel;
+var tosiCarousel = TosiCarousel.elementCreator({
+  tag: "tosi-carousel",
   styleSpec: {
     ":host": {
       _carouselIconSize: 24,
@@ -3290,6 +3313,7 @@ var xinCarousel = XinCarousel.elementCreator({
     }
   }
 });
+var xinCarousel = tosiCarousel;
 // src/code-editor.ts
 var ACE_BASE_URL = "https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.2/";
 var DEFAULT_THEME = "ace/theme/tomorrow";
@@ -3378,7 +3402,7 @@ class CodeEditor extends R {
   }
 }
 var codeEditor = CodeEditor.elementCreator({
-  tag: "xin-code"
+  tag: "tosi-code"
 });
 // src/color-input.ts
 var { input } = T;
@@ -3460,7 +3484,7 @@ class ColorInput extends R {
   }
 }
 var colorInput = ColorInput.elementCreator({
-  tag: "xin-color"
+  tag: "tosi-color"
 });
 // src/track-drag.ts
 var TRACKER = T.div({
@@ -3530,7 +3554,7 @@ var bringToFront = (element, selector = "body *") => {
 // src/float.ts
 var { slot: slot2 } = T;
 
-class XinFloat extends R {
+class TosiFloat extends R {
   static floats = new Set;
   static initAttributes = {
     drag: false,
@@ -3565,7 +3589,7 @@ class XinFloat extends R {
   };
   connectedCallback() {
     super.connectedCallback();
-    XinFloat.floats.add(this);
+    TosiFloat.floats.add(this);
     const PASSIVE2 = { passive: true };
     this.addEventListener("touchstart", this.reposition, PASSIVE2);
     this.addEventListener("mousedown", this.reposition, PASSIVE2);
@@ -3573,14 +3597,16 @@ class XinFloat extends R {
   }
   disconnectedCallback() {
     super.disconnectedCallback();
-    XinFloat.floats.delete(this);
+    TosiFloat.floats.delete(this);
   }
 }
-var xinFloat = XinFloat.elementCreator({
-  tag: "xin-float"
+var XinFloat = TosiFloat;
+var tosiFloat = TosiFloat.elementCreator({
+  tag: "tosi-float"
 });
+var xinFloat = tosiFloat;
 window.addEventListener("resize", () => {
-  Array.from(XinFloat.floats).forEach((float) => {
+  Array.from(TosiFloat.floats).forEach((float) => {
     if (float.remainOnResize === "hide") {
       float.hidden = true;
     } else if (float.remainOnResize === "remove") {
@@ -3589,10 +3615,10 @@ window.addEventListener("resize", () => {
   });
 }, { passive: true });
 document.addEventListener("scroll", (event) => {
-  if (event.target instanceof HTMLElement && event.target.closest(XinFloat.tagName)) {
+  if (event.target instanceof HTMLElement && event.target.closest(TosiFloat.tagName)) {
     return;
   }
-  Array.from(XinFloat.floats).forEach((float) => {
+  Array.from(TosiFloat.floats).forEach((float) => {
     if (float.remainOnScroll === "hide") {
       float.hidden = true;
     } else if (float.remainOnScroll === "remove") {
@@ -3611,7 +3637,7 @@ var popFloat = (options) => {
     remainOnResize,
     draggable
   } = options;
-  const float = Array.isArray(content) ? xinFloat(...content) : xinFloat(content);
+  const float = Array.isArray(content) ? tosiFloat(...content) : tosiFloat(content);
   positionFloat(float, target, position, remainOnScroll, remainOnResize, draggable);
   if (options.class) {
     float.setAttribute("class", options.class);
@@ -4044,7 +4070,7 @@ var { i18n } = Zn({
 });
 Yn.localeOptions = {
   toDOM(select, options) {
-    if (select instanceof XinSelect) {
+    if (select instanceof TosiSelect) {
       select.options = options;
     }
   }
@@ -4057,7 +4083,7 @@ var setLocale = (language) => {
   }
 };
 var updateLocalized = () => {
-  const localizeds = Array.from(XinLocalized.allInstances);
+  const localizeds = Array.from(TosiLocalized.allInstances);
   for (const localized of localizeds) {
     localized.localeChanged();
   }
@@ -4105,12 +4131,12 @@ function localize(ref) {
   return ref;
 }
 
-class LocalePicker extends R {
+class TosiLocalePicker extends R {
   static initAttributes = {
     hideCaption: false
   };
   content = () => {
-    return xinSelect({
+    return tosiSelect({
       part: "select",
       showIcon: true,
       title: localize("Language"),
@@ -4123,11 +4149,13 @@ class LocalePicker extends R {
     this.parts.select.toggleAttribute("hide-caption", this.hideCaption);
   }
 }
-var localePicker = LocalePicker.elementCreator({
-  tag: "xin-locale-picker"
+var LocalePicker = TosiLocalePicker;
+var tosiLocalePicker = TosiLocalePicker.elementCreator({
+  tag: "tosi-locale-picker"
 });
+var localePicker = tosiLocalePicker;
 
-class XinLocalized extends R {
+class TosiLocalized extends R {
   static allInstances = new Set;
   static initAttributes = {
     refString: ""
@@ -4135,11 +4163,11 @@ class XinLocalized extends R {
   contents = () => T.xinSlot();
   connectedCallback() {
     super.connectedCallback();
-    XinLocalized.allInstances.add(this);
+    TosiLocalized.allInstances.add(this);
   }
   disconnectedCallback() {
     super.disconnectedCallback();
-    XinLocalized.allInstances.delete(this);
+    TosiLocalized.allInstances.delete(this);
   }
   localeChanged() {
     if (!this.refString) {
@@ -4152,14 +4180,16 @@ class XinLocalized extends R {
     this.localeChanged();
   }
 }
-var xinLocalized = XinLocalized.elementCreator({
-  tag: "xin-localized",
+var XinLocalized = TosiLocalized;
+var tosiLocalized = TosiLocalized.elementCreator({
+  tag: "tosi-localized",
   styleSpec: {
     ":host": {
       pointerEvents: "none"
     }
   }
 });
+var xinLocalized = tosiLocalized;
 
 // src/match-shortcut.ts
 var matchShortcut = (keystroke, shortcut) => {
@@ -4612,7 +4642,7 @@ function defaultWidth(array, prop, charWidth) {
 var { div: div3, span: span4, button: button4, template } = T;
 var passThru = (array) => array;
 
-class DataTable extends R {
+class TosiTable extends R {
   static initAttributes = {
     rowHeight: 30,
     charWidth: 15,
@@ -4921,7 +4951,7 @@ class DataTable extends R {
     });
   };
   get captionSpan() {
-    return this.localized ? xinLocalized : span4;
+    return this.localized ? tosiLocalized : span4;
   }
   headerCell = (options) => {
     const { popColumnMenu } = this;
@@ -5092,7 +5122,8 @@ class DataTable extends R {
     }
   }
 }
-var dataTable = DataTable.elementCreator({
+var DataTable = TosiTable;
+var tosiTable = TosiTable.elementCreator({
   tag: "tosi-table",
   styleSpec: {
     ":host": {
@@ -5144,7 +5175,8 @@ var dataTable = DataTable.elementCreator({
     }
   }
 });
-var xinTable = On(dataTable, "xinTable is deprecated. Use dataTable instead.");
+var dataTable = tosiTable;
+var xinTable = tosiTable;
 // src/dialog.ts
 var { dialog, button: button5, header, footer, xinSlot: xinSlot2, h3, p: p2, label, input: input3, div: div4 } = T;
 
@@ -6551,7 +6583,7 @@ function populate(basePath, source) {
   });
 }
 
-class MarkdownViewer extends R {
+class TosiMd extends R {
   static initAttributes = {
     src: "",
     elements: false
@@ -6603,22 +6635,24 @@ class MarkdownViewer extends R {
     this.didRender();
   }
 }
-var markdownViewer = MarkdownViewer.elementCreator({
+var MarkdownViewer = TosiMd;
+var tosiMd = TosiMd.elementCreator({
   tag: "tosi-md"
 });
-var xinMd = markdownViewer;
+var markdownViewer = tosiMd;
+var xinMd = tosiMd;
 
 // src/tab-selector.ts
 var { div: div5, slot: slot3, span: span5, button: button6 } = T;
 
-class TabSelector extends R {
+class TosiTabs extends R {
   static initAttributes = {
     localized: false
   };
   value = 0;
   makeTab(tabs, tabBody, bodyId) {
     const tabName = tabBody.getAttribute("name");
-    const tabContent = tabBody.querySelector('template[role="tab"]')?.content.cloneNode(true) || (this.localized ? xinLocalized(tabName) : span5(tabName));
+    const tabContent = tabBody.querySelector('template[role="tab"]')?.content.cloneNode(true) || (this.localized ? tosiLocalized(tabName) : span5(tabName));
     const tab = div5(tabContent, {
       part: "tab",
       tabindex: 0,
@@ -6785,11 +6819,11 @@ class TabSelector extends R {
     tabs.addEventListener("click", this.pickTab);
     tabs.addEventListener("keydown", this.keyTab);
     this.setupTabs();
-    XinLocalized.allInstances.add(this);
+    TosiLocalized.allInstances.add(this);
   }
   disconnectedCallback() {
     super.disconnectedCallback();
-    XinLocalized.allInstances.delete(this);
+    TosiLocalized.allInstances.delete(this);
   }
   localeChanged = () => {
     this.queueRender();
@@ -6815,10 +6849,12 @@ class TabSelector extends R {
     }
   }
 }
-var tabSelector = TabSelector.elementCreator({
+var TabSelector = TosiTabs;
+var tosiTabs = TosiTabs.elementCreator({
   tag: "tosi-tabs"
 });
-var xinTabs = tabSelector;
+var tabSelector = tosiTabs;
+var xinTabs = tosiTabs;
 
 // src/live-example/code-transform.ts
 var sucraseSrc = () => "https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm";
@@ -7155,14 +7191,14 @@ function insertExamples(element, context, liveExampleCreator, liveExampleTagName
 // src/live-example/styles.ts
 var liveExampleStyleSpec = {
   ":host": {
-    "--xin-example-height": "320px",
+    "--tosi-example-height": "320px",
     "--code-editors-bar-bg": "#777",
     "--code-editors-bar-color": "#fff",
     "--widget-bg": "#fff8",
     "--widget-color": "#000",
     position: "relative",
     display: "flex",
-    height: "var(--xin-example-height)",
+    height: "var(--tosi-example-height)",
     background: "var(--background)",
     boxSizing: "border-box"
   },
@@ -7567,7 +7603,7 @@ function enableTests() {
   localStorage.setItem(TESTS_ENABLED_KEY, "true");
   testManager.enabled.value = true;
   updateTestsEnabledClass();
-  document.querySelectorAll("xin-example").forEach((el) => {
+  document.querySelectorAll("tosi-example").forEach((el) => {
     el.refresh();
   });
 }
@@ -7770,7 +7806,7 @@ class LiveExample extends R {
       part: "codeEditors",
       onKeydown: this.handleShortcuts,
       hidden: true
-    }, tabSelector({
+    }, tosiTabs({
       part: "editors",
       onChange: this.updateUndo
     }, codeEditor({ name: "js", mode: "javascript", part: "js" }), codeEditor({ name: "html", mode: "html", part: "html" }), codeEditor({ name: "css", mode: "css", part: "css" }), codeEditor({ name: "test", mode: "javascript", part: "test" }), div7({ slot: "after-tabs", class: "row" }, button7({
@@ -8032,7 +8068,7 @@ class LiveExample extends R {
   }
 }
 var liveExample = LiveExample.elementCreator({
-  tag: "xin-example",
+  tag: "tosi-example",
   styleSpec: liveExampleStyleSpec
 });
 var params = new URL(window.location.href).searchParams;
@@ -8045,7 +8081,7 @@ if (remoteId) {
 // src/side-nav.ts
 var { slot: slot4 } = T;
 
-class SideNav extends R {
+class TosiSidenav extends R {
   static initAttributes = {
     minSize: 800,
     navSize: 200,
@@ -8129,10 +8165,12 @@ class SideNav extends R {
     this.onResize();
   }
 }
-var sideNav = SideNav.elementCreator({
+var SideNav = TosiSidenav;
+var tosiSidenav = TosiSidenav.elementCreator({
   tag: "tosi-sidenav"
 });
-var xinSidenav = sideNav;
+var sideNav = tosiSidenav;
+var xinSidenav = tosiSidenav;
 
 // src/doc-browser.ts
 var { div: div8, span: span7, a: a3, header: header2, button: button8, template: template2, input: input4, h2 } = T;
@@ -8339,7 +8377,7 @@ function createDocBrowser(options) {
         }
       },
       onClick() {
-        const nav = document.querySelector(SideNav.tagName);
+        const nav = document.querySelector(TosiSidenav.tagName);
         nav.contentVisible = !nav.contentVisible;
       }
     }, icons.menu()),
@@ -8387,7 +8425,7 @@ function createDocBrowser(options) {
       height: "100vh",
       overflow: "hidden"
     }
-  }, header2(...headerContent), sideNav({
+  }, header2(...headerContent), tosiSidenav({
     name: "Documentation",
     navSize,
     minSize,
@@ -8396,7 +8434,7 @@ function createDocBrowser(options) {
       overflow: "hidden"
     },
     onChange() {
-      const nav = document.querySelector(SideNav.tagName);
+      const nav = document.querySelector(TosiSidenav.tagName);
       app.compact = nav.compact;
     }
   }, searchField, div8({
@@ -8421,7 +8459,7 @@ function createDocBrowser(options) {
     onClick(event) {
       const a4 = event.target;
       const doc = Mf(event.target);
-      const nav = event.target.closest("xin-sidenav");
+      const nav = event.target.closest("tosi-sidenav");
       nav.contentVisible = true;
       const { href } = a4;
       window.history.pushState({ href }, "", href);
@@ -8431,7 +8469,7 @@ function createDocBrowser(options) {
       const results = pageTestResults[docFilename];
       if (results && !results.passed) {
         setTimeout(() => {
-          const failedExample = document.querySelector("xin-example.-test-failed");
+          const failedExample = document.querySelector("tosi-example.-test-failed");
           if (failedExample) {
             failedExample.scrollIntoView({
               behavior: "smooth",
@@ -8441,7 +8479,7 @@ function createDocBrowser(options) {
         }, 100);
       }
     }
-  }, xinLocalized({ bindText: "^.title" })))), div8({
+  }, tosiLocalized({ bindText: "^.title" })))), div8({
     style: {
       position: "relative",
       overflowY: "scroll",
@@ -8484,7 +8522,7 @@ function createDocBrowser(options) {
     style: {
       _xinIconSize: 16
     }
-  }), "View source on GitHub"), markdownViewer({
+  }), "View source on GitHub"), tosiMd({
     style: {
       display: "block",
       maxWidth: "44em",
@@ -8564,7 +8602,7 @@ function createDocBrowser(options) {
               window.history.pushState({ href: `?${filename}` }, "", `?${filename}`);
               app.currentDoc = docObj;
               setTimeout(() => {
-                const failedExample = document.querySelector("xin-example.-test-failed");
+                const failedExample = document.querySelector("tosi-example.-test-failed");
                 if (failedExample) {
                   failedExample.scrollIntoView({
                     behavior: "smooth",
@@ -8654,7 +8692,7 @@ function createDocBrowser(options) {
         totalFailed: 0
       };
       const testContainer = document.createElement("div");
-      const viewer = markdownViewer({
+      const viewer = tosiMd({
         value: doc.text,
         didRender() {
           LiveExample.insertExamples(this, context);
@@ -8676,7 +8714,7 @@ function createDocBrowser(options) {
       if (frameDoc) {
         frameDoc.body.innerHTML = "";
         frameDoc.body.appendChild(testContainer);
-        const examples = testContainer.querySelectorAll("xin-example");
+        const examples = testContainer.querySelectorAll("tosi-example");
         if (examples.length > 0) {
           await new Promise((resolve) => {
             let remaining = examples.length;
@@ -8696,7 +8734,7 @@ function createDocBrowser(options) {
     }
     testFrame.remove();
     if (docsWithTests.some((d3) => d3.filename === currentFilename)) {
-      const currentExamples = document.querySelectorAll("xin-example");
+      const currentExamples = document.querySelectorAll("tosi-example");
       if (currentExamples.length > 0) {
         let remaining = currentExamples.length;
         const done = () => {
@@ -9114,7 +9152,7 @@ class EditableRect extends R {
   }
 }
 var editableRect = EditableRect.elementCreator({
-  tag: "xin-editable"
+  tag: "tosi-editable"
 });
 // src/filter-builder.ts
 var { div: div10, input: input5, button: button9, span: span8 } = T;
@@ -9294,12 +9332,12 @@ class FilterPart extends R {
   }
 }
 var filterPart = FilterPart.elementCreator({
-  tag: "xin-filter-part",
+  tag: "tosi-filter-part",
   styleSpec: {
     ":host": {
       display: "flex"
     },
-    ":host .xin-icon:": {
+    ":host .tosi-icon:": {
       verticalAlign: "middle",
       pointerEvents: "none"
     },
@@ -9388,7 +9426,7 @@ class FilterBuilder extends R {
   }
 }
 var filterBuilder = FilterBuilder.elementCreator({
-  tag: "xin-filter",
+  tag: "tosi-filter",
   styleSpec: {
     ":host": {
       height: "auto",
@@ -9884,7 +9922,7 @@ class MapBox extends R {
   }
 }
 var mapBox = MapBox.elementCreator({
-  tag: "xin-map"
+  tag: "tosi-map"
 });
 // src/month.ts
 var { div: div12, span: span10, button: button10 } = T;
@@ -10249,7 +10287,7 @@ var COLOR_MAP = {
   progress: "royalblue"
 };
 
-class XinNotification extends R {
+class TosiNotification extends R {
   static singleton;
   static styleSpec = {
     ":host": {
@@ -10350,7 +10388,7 @@ class XinNotification extends R {
   static post(spec) {
     const { message, duration, type, close, progress, icon, color } = Object.assign({ type: "info", duration: -1 }, typeof spec === "string" ? { message: spec } : spec);
     if (!this.singleton) {
-      this.singleton = xinNotification();
+      this.singleton = tosiNotification();
     }
     const singleton = this.singleton;
     document.body.append(singleton);
@@ -10361,7 +10399,7 @@ class XinNotification extends R {
       if (close) {
         close();
       }
-      XinNotification.removeNote(note);
+      TosiNotification.removeNote(note);
     };
     const iconElement = icon instanceof SVGElement ? icon : icon ? icons[icon]({ class: "icon" }) : icons.info({ class: "icon" });
     const isUrgent = type === "error" || type === "warn";
@@ -10392,13 +10430,13 @@ class XinNotification extends R {
         const percentage = progress();
         progressBar.value = percentage;
         if (percentage >= 100) {
-          XinNotification.removeNote(note);
+          TosiNotification.removeNote(note);
         }
       }, 1000);
     }
     if (duration > 0) {
       setTimeout(() => {
-        XinNotification.removeNote(note);
+        TosiNotification.removeNote(note);
       }, duration * 1000);
     }
     note.scrollIntoView();
@@ -10406,11 +10444,13 @@ class XinNotification extends R {
   }
   content = null;
 }
-var xinNotification = XinNotification.elementCreator({
-  tag: "xin-notification"
+var XinNotification = TosiNotification;
+var tosiNotification = TosiNotification.elementCreator({
+  tag: "tosi-notification"
 });
+var xinNotification = tosiNotification;
 function postNotification(spec) {
-  return XinNotification.post(spec);
+  return TosiNotification.post(spec);
 }
 // src/password-strength.ts
 var digest = async (s2, method = "SHA-1") => {
@@ -10432,7 +10472,7 @@ var isBreached = async (password) => {
 };
 var { span: span11, xinSlot: xinSlot5 } = T;
 
-class XinPasswordStrength extends R {
+class TosiPasswordStrength extends R {
   static initAttributes = {
     minLength: 8,
     goodLength: 12,
@@ -10510,8 +10550,9 @@ class XinPasswordStrength extends R {
     this.updateIndicator(input7?.value);
   }
 }
-var xinPasswordStrength = XinPasswordStrength.elementCreator({
-  tag: "xin-password-strength",
+var XinPasswordStrength = TosiPasswordStrength;
+var tosiPasswordStrength = TosiPasswordStrength.elementCreator({
+  tag: "tosi-password-strength",
   styleSpec: {
     ":host": {
       display: "inline-flex",
@@ -10550,6 +10591,7 @@ var xinPasswordStrength = XinPasswordStrength.elementCreator({
     }
   }
 });
+var xinPasswordStrength = tosiPasswordStrength;
 // src/rating.ts
 var { span: span12 } = T;
 
@@ -11207,7 +11249,7 @@ class TosiSegmented extends R {
         value: choice.value,
         checked: values.includes(choice.value) || choice.value === "" && isOtherValue,
         tabIndex: -1
-      }), choice.icon || { class: "no-icon" }, this.localized ? xinLocalized(choice.caption) : span14(choice.caption));
+      }), choice.icon || { class: "no-icon" }, this.localized ? tosiLocalized(choice.caption) : span14(choice.caption));
     }));
     if (this.other && !this.multiple) {
       custom.hidden = !isOtherValue;
@@ -11263,10 +11305,10 @@ class SizeBreak extends R {
   }
 }
 var sizeBreak = SizeBreak.elementCreator({
-  tag: "xin-sizebreak"
+  tag: "tosi-sizebreak"
 });
 // src/sizer.ts
-class XinSizer extends R {
+class TosiSizer extends R {
   target = null;
   static styleSpec = {
     ":host": {
@@ -11327,9 +11369,11 @@ class XinSizer extends R {
     this.addEventListener("touchstart", this.resizeTarget, PASSIVE2);
   }
 }
-var xinSizer = XinSizer.elementCreator({
-  tag: "xin-sizer"
+var XinSizer = TosiSizer;
+var tosiSizer = TosiSizer.elementCreator({
+  tag: "tosi-sizer"
 });
+var xinSizer = tosiSizer;
 // src/tag-list.ts
 var { div: div16, input: input8, span: span15, button: button13 } = T;
 
@@ -11813,8 +11857,8 @@ var styleSpec = {
     margin: "0",
     lineHeight: gn.lineHeight,
     background: gn.background,
-    _xinTabsSelectedColor: gn.brandColor,
-    _xinTabsBarColor: gn.brandTextColor,
+    _tosiTabsSelectedColor: gn.brandColor,
+    _tosiTabsBarColor: gn.brandTextColor,
     _menuItemIconColor: gn.brandColor,
     color: gn.textColor
   },
@@ -11877,10 +11921,10 @@ var styleSpec = {
     height: "100vh",
     overflow: "hidden"
   },
-  "main > xin-sidenav": {
+  "main > tosi-sidenav": {
     height: "calc(100vh - var(--header-height))"
   },
-  "main > xin-sidenav::part(nav)": {
+  "main > tosi-sidenav::part(nav)": {
     background: gn.navBg
   },
   "input[type=search]": {
@@ -12069,7 +12113,7 @@ var styleSpec = {
     fontFamily: gn.codeFontFamily,
     _textColor: gn.brandColor
   },
-  ".-xin-sidenav-visible .close-content": {
+  ".-tosi-sidenav-visible .close-content": {
     display: "none"
   },
   ".transparent, .iconic": {
@@ -12093,7 +12137,7 @@ var styleSpec = {
     boxShadow: "none",
     color: gn.textColor
   },
-  "xin-sidenav:not([compact]) .show-within-compact": {
+  "tosi-sidenav:not([compact]) .show-within-compact": {
     display: "none"
   },
   ".on.on": {
@@ -12117,13 +12161,13 @@ var styleSpec = {
     opacity: "0.8",
     marginLeft: 0
   },
-  "xin-example": {
+  "tosi-example": {
     margin: "var(--spacing) 0"
   },
-  "xin-example [part=editors]": {
+  "tosi-example [part=editors]": {
     background: gn.insetBg
   },
-  "[class*='icon-'], xin-icon": {
+  "[class*='icon-'], tosi-icon": {
     color: "currentcolor",
     height: gn.fontSize,
     pointerEvents: "none"
@@ -12150,12 +12194,12 @@ var styleSpec = {
   "th, td": {
     padding: "calc(var(--spacing) * 0.5) var(--spacing)"
   },
-  "header xin-locale-picker xin-select button": {
+  "header tosi-locale-picker tosi-select button": {
     color: "currentcolor",
     background: "transparent",
     gap: "2px"
   },
-  "img.logo, xin-icon.logo": {
+  "img.logo, tosi-icon.logo": {
     animation: "2s ease-in-out 0s infinite alternate logo-swing"
   },
   "@keyframes logo-swing": {
@@ -12250,7 +12294,7 @@ Yes	Oui	Kyllä	Ja	是的	はい	예	Sí	Ja	Sì`;
 // demo/src/css-var-editor.ts
 var { h2: h22, code } = T;
 
-class XinCssVarEditor extends R {
+class TosiCssVarEditor extends R {
   elementSelector = "";
   targetSelector = "";
   constructor() {
@@ -12259,7 +12303,7 @@ class XinCssVarEditor extends R {
   }
   content = () => [
     h22({ part: "title" }, "CSS variables"),
-    xinForm({ part: "variables", changeCallback: this.update })
+    tosiForm({ part: "variables", changeCallback: this.update })
   ];
   loadVars = () => {
     const { title, variables } = this.parts;
@@ -12283,7 +12327,7 @@ class XinCssVarEditor extends R {
           if (type === "color") {
             value = x.fromCss(value).html;
           }
-          variables.append(xinField(code(cssVar), { key: cssVar, value, type }));
+          variables.append(tosiField(code(cssVar), { key: cssVar, value, type }));
         }
       }
     }
@@ -12308,8 +12352,8 @@ class XinCssVarEditor extends R {
     this.parts.variables.addEventListener("change", this.update);
   }
 }
-var xinCssVarEditor = XinCssVarEditor.elementCreator({
-  tag: "xin-css-var-editor"
+var tosiCssVarEditor = TosiCssVarEditor.elementCreator({
+  tag: "tosi-css-var-editor"
 });
 
 // demo/docs.json
@@ -12329,10 +12373,10 @@ var docs_default = [
 [![tosijs on jsdelivr](https://data.jsdelivr.com/v1/package/npm/tosijs-ui/badge)](https://www.jsdelivr.com/package/npm/tosijs-ui)
 
 <center>
-  <xin-lottie
+  <tosi-lottie
     style="width: 280px; height: 280px; background: #da1167; border-radius: 40px;"
     src="/tosi-ui.json"
-  ></xin-lottie>
+  ></tosi-lottie>
 </center>
 
 Copyright ©2023-2025 Tonio Loewald
@@ -12376,7 +12420,7 @@ as globals which contain all the things exported by \`tosijs\` and \`tosijs-ui\`
 
 \`\`\`
 <script src="https://ui.xinjs.net/iife.js"></script>
-<button id="menu">Menu <xin-icon icon="chevronDown"></xin-icon></button>
+<button id="menu">Menu <tosi-icon icon="chevronDown"></tosi-icon></button>
 <script>
   import { elements } from 'tosijs'
   import { popMenu, icons } from 'tosijs-ui'
@@ -12446,10 +12490,10 @@ here is some markdown
 Assuming you import the module somewhere, the HTML will work as well.
 
 \`\`\`
-<xin-md>
+<tosi-md>
 ## hello world
 here is some markdown
-</xin-md>
+</tosi-md>
 \`\`\`
 
 The big difference with using the \`markdownViewer()\` function is that the \`tosijs\` \`Component\`
@@ -12487,7 +12531,7 @@ and accessible.
 The goal here is to provide useful components and other utilities that add to what's built
 into HTML5 and CSS3 and to make custom-elements work as much as possible like drop-in replacements
 for an \`<input>\` or \`<textarea>\` (while mitigating the historical pathologies of things like
-\`<select>\` and \`<input type="radio">\`). E.g. the \`<xin-select>\` does not suffer from a
+\`<select>\` and \`<input type="radio">\`). E.g. the \`<tosi-select>\` does not suffer from a
 race-condition between having its value set and being given an \`<option>\` with the intended value
 and you can differentiate between the user picking a value (\`action\`) and the value changing (\`change\`).
 
@@ -12509,7 +12553,7 @@ Logo animations by [@anicoremotion](https://pro.fiverr.com/freelancers/anicoremo
 
 A [babylonjs](https://www.babylonjs.com/) wrapper.
 
-A \`<xin-3d>\` element is initialized with an \`engine\`, \`canvas\`, \`scene\`, and an update-loop.
+A \`<tosi-3d>\` element is initialized with an \`engine\`, \`canvas\`, \`scene\`, and an update-loop.
 
 If you view this example with an XR-enabled device, such as the
 [Meta Quest 3](https://www.meta.com/quest/quest-3/), then you should be able to view this
@@ -12580,7 +12624,7 @@ preview.append(b3d({
 }))
 \`\`\`
 \`\`\`css
-.preview xin-3d {
+.preview tosi-3d {
   width: 100%;
   height: 100%;
 }
@@ -12673,12 +12717,12 @@ preview.append(b3d({
 
 ## loadScene
 
-\`<xin-3d>.loadScene(path: string, file: string, callBack(meshes: any[]): void)\` can
+\`<tosi-3d>.loadScene(path: string, file: string, callBack(meshes: any[]): void)\` can
 be used to load \`.glb\` files.
 
 ## loadUI
 
-\`<xin-3d>.loadUI(options: B3dUIOptions)\` loads babylonjs guis, which you can create programmatically or using the [babylonjs gui tool](https://gui.babylonjs.com/).`,
+\`<tosi-3d>.loadUI(options: B3dUIOptions)\` loads babylonjs guis, which you can create programmatically or using the [babylonjs gui tool](https://gui.babylonjs.com/).`,
     title: "3d",
     filename: "babylon-3d.ts",
     path: "src/babylon-3d.ts"
@@ -12686,7 +12730,7 @@ be used to load \`.glb\` files.
   {
     text: `# ab-test
 
-\`<xin-ab>\` provides a simple method for implementing A|B-testing.
+\`<tosi-ab>\` provides a simple method for implementing A|B-testing.
 
 \`\`\`js
 import { AbTest } from 'tosijs-ui'
@@ -12710,24 +12754,24 @@ randomize()
 \`\`\`html
 <div style="display: flex; gap: 10px; align-items: center;">
   <div style="display: flex; flex-direction: column; gap: 10px;">
-    <xin-ab class="a" condition="testA">
+    <tosi-ab class="a" condition="testA">
       <p>testA</p>
-    </xin-ab>
-    <xin-ab class="not-a" not condition="testA">
+    </tosi-ab>
+    <tosi-ab class="not-a" not condition="testA">
       <p>not testA</p>
-    </xin-ab>
-    <xin-ab class="b" condition="testB">
+    </tosi-ab>
+    <tosi-ab class="b" condition="testB">
       <p>testB</p>
-    </xin-ab>
-    <xin-ab class="not-b" not condition="testB">
+    </tosi-ab>
+    <tosi-ab class="not-b" not condition="testB">
       <p>not testB</p>
-    </xin-ab>
-    <xin-ab class="c" condition="testC">
+    </tosi-ab>
+    <tosi-ab class="c" condition="testC">
       <p>testC</p>
-    </xin-ab>
-    <xin-ab class="not-c" not condition="testC">
+    </tosi-ab>
+    <tosi-ab class="not-c" not condition="testC">
       <p>not testC</p>
-    </xin-ab>
+    </tosi-ab>
   </div>
   <pre>
   </pre>
@@ -12750,15 +12794,15 @@ randomize()
   margin: 0;
 }
 
-.preview xin-ab[not] p {
+.preview tosi-ab[not] p {
   background: red;
 }
 \`\`\`
 
 - Set \`AbTest.conditions\` to anything you like.
-- Use \`<xin-ab>\` elements to display conditional content.
+- Use \`<tosi-ab>\` elements to display conditional content.
 - \`condition\` attribute determines which value in \`AbTest.conditions\` controls the element
-- \`not\` reverses the condition (so \`<xin-ab not condition="foo">\` will be visible if \`conditions.foo\` is \`false\`)`,
+- \`not\` reverses the condition (so \`<tosi-ab not condition="foo">\` will be visible if \`conditions.foo\` is \`false\`)`,
     title: "ab-test",
     filename: "ab-test.ts",
     path: "src/ab-test.ts"
@@ -12767,7 +12811,7 @@ randomize()
     text: `# blueprint loading
 
 <center>
-  <xin-icon icon="blueprint" class="logo" size=256></xin-icon>
+  <tosi-icon icon="blueprint" class="logo" size=256></tosi-icon>
 </center>
 
 \`<xin-loader>\` and \`<xin-blueprint>\` are simple elements provided by \`tosijs\` for the dynamic loading
@@ -12795,20 +12839,20 @@ of component **blueprints**.
     text: `# carousel
 
 \`\`\`html
-<xin-carousel arrows dots max-visible-items=2 auto=2 snap-delay=4 snap-duration=0.5 loop>
-  <xin-icon icon="tosiFavicon" class="thing"></xin-icon>
-  <xin-icon icon="tosi" class="thing"></xin-icon>
-  <xin-icon icon="tosiUi" class="thing"></xin-icon>
-  <xin-icon icon="tosiPlatform" class="thing"></xin-icon>
-  <xin-icon icon="tosiXr" class="thing"></xin-icon>
-  <xin-icon icon="blueprint" class="thing"></xin-icon>
-  <xin-icon icon="cmy" class="thing"></xin-icon>
-  <xin-icon icon="rgb" class="thing"></xin-icon>
-</xin-carousel>
+<tosi-carousel arrows dots max-visible-items=2 auto=2 snap-delay=4 snap-duration=0.5 loop>
+  <tosi-icon icon="tosiFavicon" class="thing"></tosi-icon>
+  <tosi-icon icon="tosi" class="thing"></tosi-icon>
+  <tosi-icon icon="tosiUi" class="thing"></tosi-icon>
+  <tosi-icon icon="tosiPlatform" class="thing"></tosi-icon>
+  <tosi-icon icon="tosiXr" class="thing"></tosi-icon>
+  <tosi-icon icon="blueprint" class="thing"></tosi-icon>
+  <tosi-icon icon="cmy" class="thing"></tosi-icon>
+  <tosi-icon icon="rgb" class="thing"></tosi-icon>
+</tosi-carousel>
 \`\`\`
 \`\`\`css
 .thing {
-  --xin-icon-size: 160px;
+  --tosi-icon-size: 160px;
   height: 160px;
   margin: 30px 0 70px;
   position: relative;
@@ -12827,7 +12871,7 @@ of component **blueprints**.
   border-radius: 5px;
 }
 
-.preview xin-carousel {
+.preview tosi-carousel {
   background: #8883;
   margin: 10px;
   border-radius: 10px;
@@ -12846,13 +12890,13 @@ This is a minimalist carousel component that supports the usual stuff.
 - \`loop\` (boolean, false by default) causes next/previous buttons to loop
 - \`auto\` (number, 0 [seconds] by default) if > 0, automatically advances after that many seconds (always loops!)
 
-<xin-css-var-editor element-selector="xin-carousel"></xin-css-var-editor>`,
+<tosi-css-var-editor element-selector="tosi-carousel"></tosi-css-var-editor>`,
     title: "carousel",
     filename: "carousel.ts",
     path: "src/carousel.ts"
   },
   {
-    text: '# code\n\nAn [ACE Editor](https://ace.c9.io/) wrapper.\n\nSometimes, it\'s nice to be able to just toss a code-editor in a web-page.\n\n`<xin-code>`\'s `value` is the code it contains. Its `mode` attribute sets the language, and you can further configure\nthe ACE editor instance via its `options` property.\n\n```html\n<xin-code style="width: 100%; height: 100%" mode="css">\nbody {\n  box-sizing: border-box;\n}\n</xin-code>\n```\n\nThe `<xin-code>` element has an `editor` property that gives you its ACE editor instance,\nand an `ace` property that returns the `ace` module, giving you complete access to the\n[Ace API](https://ace.c9.io/api/index.html).',
+    text: '# code\n\nAn [ACE Editor](https://ace.c9.io/) wrapper.\n\nSometimes, it\'s nice to be able to just toss a code-editor in a web-page.\n\n`<tosi-code>`\'s `value` is the code it contains. Its `mode` attribute sets the language, and you can further configure\nthe ACE editor instance via its `options` property.\n\n```html\n<tosi-code style="width: 100%; height: 100%" mode="css">\nbody {\n  box-sizing: border-box;\n}\n</tosi-code>\n```\n\nThe `<tosi-code>` element has an `editor` property that gives you its ACE editor instance,\nand an `ace` property that returns the `ace` module, giving you complete access to the\n[Ace API](https://ace.c9.io/api/index.html).',
     title: "code",
     filename: "code-editor.ts",
     path: "src/code-editor.ts"
@@ -12863,7 +12907,7 @@ This is a minimalist carousel component that supports the usual stuff.
 This is a color input field that supports opacity
 
 \`\`\`js
-const colorInput = preview.querySelector('xin-color')
+const colorInput = preview.querySelector('tosi-color')
 const circle = preview.querySelector('div')
 
 colorInput.addEventListener('change', () => {
@@ -12871,7 +12915,7 @@ colorInput.addEventListener('change', () => {
 })
 \`\`\`
 \`\`\`html
-<xin-color value="red"></xin-color>
+<tosi-color value="red"></tosi-color>
 <div
   style="
     width: 200px;
@@ -12883,7 +12927,7 @@ colorInput.addEventListener('change', () => {
 \`\`\`
 
 
-<xin-css-var-editor element-selector="xin-color"></xin-css-var-editor>`,
+<tosi-css-var-editor element-selector="tosi-color"></tosi-css-var-editor>`,
     title: "color input field",
     filename: "color-input.ts",
     path: "src/color-input.ts"
@@ -13307,7 +13351,7 @@ preview.append(
   {
     text: `# editable-rect
 
-\`<xin-editable>\` (\`editableRect\` is the \`ElementCreator\` and \`EditableRect\` is the class) is an element
+\`<tosi-editable>\` (\`editableRect\` is the \`ElementCreator\` and \`EditableRect\` is the class) is an element
 for allowing the adjustment of another element's position and size. Simply insert it in a \`position: absolute\`
 or \`position: fixed\` element and you can directly adjust its CSS positioning, including rotation.
 
@@ -13379,7 +13423,7 @@ After an element's position, size, or rotation are adjusted a \`change\` event i
   {
     text: `# example
 
-\`<xin-example>\` makes it easy to insert interactive code examples in a web page. It
+\`<tosi-example>\` makes it easy to insert interactive code examples in a web page. It
 started life as a super lightweight, easier-to-embed implementation of
 [b8rjs's fiddle component](https://b8rjs.com)—which I dearly missed—but now the student
 is, by far, the master. And it's still super lightweight.
@@ -13485,7 +13529,7 @@ test('waitMs delays execution', async () => {
 
 ## \`context\`
 
-A \`<xin-example>\` is given a \`context\` object which is the set of values available
+A \`<tosi-example>\` is given a \`context\` object which is the set of values available
 in the javascript's execution context. The context always includes \`preview\`.
 
 \`\`\`
@@ -13509,7 +13553,7 @@ macOS Finder-inspired interface, using an easily customizable / extensible colle
 
 \`\`\`js
 import { elements } from 'tosijs'
-import { dataTable, filterBuilder, availableFilters } from 'tosijs-ui'
+import { tosiTable, filterBuilder, availableFilters } from 'tosijs-ui'
 
 const sourceWords = ['acorn', 'bubblegum', 'copper', 'daisy', 'ellipse', 'fabulous', 'gerund', 'hopscotch', 'idiom', 'joke']
 function randomWords () {
@@ -13573,7 +13617,7 @@ const columns = [
   },
 ]
 
-const table = dataTable({ array, columns })
+const table = tosiTable({ array, columns })
 const filter = filterBuilder({
   fields: columns,
   onChange(event) {
@@ -13588,7 +13632,7 @@ preview.append(filter, table)
   flex-direction: column;
 }
 
-.preview xin-table {
+.preview tosi-table {
   flex: 1 1 auto;
 }
 
@@ -13612,13 +13656,13 @@ preview.append(filter, table)
 
 ## serialization
 
-The current state of a \`<xin-filter>\` can be serialized as, and restored from, a Javascript object (which itself
-can easily be converted into JSON or a URL component) via its \`state\` property. Obviously, a \`<xin-filter>\` can
+The current state of a \`<tosi-filter>\` can be serialized as, and restored from, a Javascript object (which itself
+can easily be converted into JSON or a URL component) via its \`state\` property. Obviously, a \`<tosi-filter>\` can
 only restore state if it has the necessary constituent \`filters\`.
 
 ## availableFilters
 
-\`<xin-filter>\` has a default set of \`FilterMaker\` objects which it uses to construct filter function.
+\`<tosi-filter>\` has a default set of \`FilterMaker\` objects which it uses to construct filter function.
 In the example above, the default collection of filters is reduced to \`contains\`, \`equals\`, \`after\`, and \`isTrue\`.
 
 The full collection includes:
@@ -13655,26 +13699,26 @@ interface FilterMaker {
 A floating, potentially draggable user interface element.
 
 \`\`\`html
-<xin-float class="float" remain-on-resize="remain" remain-on-scroll="remain" drag>
+<tosi-float class="float" remain-on-resize="remain" remain-on-scroll="remain" drag>
   <h4>Drag Me</h4>
   <div class="no-drag balloon">🎈</div>
   <div class="behavior">I ignore resizing and scrolling</div>
   <footer style="font-size: 75%">neunundneunzig pixel-ballon</footer>
-</xin-float>
+</tosi-float>
 
-<xin-float class="float" remain-on-scroll="remain" style="top: 50px; right: 20px;" drag>
+<tosi-float class="float" remain-on-scroll="remain" style="top: 50px; right: 20px;" drag>
   <h4>Drag Me</h4>
   <div class="no-drag balloon">🎈</div>
   <div class="behavior">I disappear on resize</div>
   <footer style="font-size: 75%">neunundneunzig pixel-ballon</footer>
-</xin-float>
+</tosi-float>
 
-<xin-float class="float" remain-on-resize="remain" remain-on-scroll="remove" style="bottom: 20px; left: 50px;" drag>
+<tosi-float class="float" remain-on-resize="remain" remain-on-scroll="remove" style="bottom: 20px; left: 50px;" drag>
   <h4>Drag Me</h4>
   <div class="no-drag balloon">🎈</div>
   <div class="behavior">I disappear on scroll</div>
   <footer style="font-size: 75%">neunundneunzig pixel-ballon</footer>
-</xin-float>
+</tosi-float>
 \`\`\`
 \`\`\`css
 .preview .float {
@@ -13724,12 +13768,12 @@ A floating, potentially draggable user interface element.
 
 ## Styling
 
-Note that the \`<xin-float>\` element has absolutely minimal styling. It's up to you to provide a drop
+Note that the \`<tosi-float>\` element has absolutely minimal styling. It's up to you to provide a drop
 shadow and background and so on.
 
 ## Attributes
 
-- \`drag\` false | true — to make a \`<xin-float>\` element draggable, simply set its \`drag\` attribute.
+- \`drag\` false | true — to make a \`<tosi-float>\` element draggable, simply set its \`drag\` attribute.
 - \`remain-on-resize\` 'remove' | 'hide' | 'remain' — by default, floats will hide if the window is resized
 - \`remain-on-scroll\` 'remain' | 'remove' | 'hide' — by default, floats will remain if the document is scrolled
 
@@ -13912,9 +13956,9 @@ is used to drive form-validation.)
 
 The \`text\` type populates the \`input\` slot with a \`<textarea>\` element.
 
-The \`color\` type populates the \`input\` slot with a \`<xin-color>\` element (and thus supports colors with alpha values).
+The \`color\` type populates the \`input\` slot with a \`<tosi-color>\` element (and thus supports colors with alpha values).
 
-<xin-css-var-editor element-selector="tosi-field" target-selector=".preview"></xin-css-var-editor>
+<tosi-css-var-editor element-selector="tosi-field" target-selector=".preview"></tosi-css-var-editor>
 
 ## Native Form Integration
 
@@ -14191,9 +14235,9 @@ which is useful when debugging.`,
     text: `# icons
 
 <div class="center" style="display: flex; gap: 10px; padding: 10px">
-  <xin-icon title="tosijs" icon="tosiFavicon" style="--xin-icon-size: 128px"></xin-icon>
-  <xin-icon title="tosijs-ui" icon="tosiUi" style="--xin-icon-size: 128px"></xin-icon>
-  <xin-icon title="tosi-platform" icon="tosiPlatform" style="--xin-icon-size: 128px"></xin-icon>
+  <tosi-icon title="tosijs" icon="tosiFavicon" style="--tosi-icon-size: 128px"></tosi-icon>
+  <tosi-icon title="tosijs-ui" icon="tosiUi" style="--tosi-icon-size: 128px"></tosi-icon>
+  <tosi-icon title="tosi-platform" icon="tosiPlatform" style="--tosi-icon-size: 128px"></tosi-icon>
 </div>
 
 A library that provides \`ElementCreator\` functions that produce SVG icons. It leverages \`tosijs\`'s
@@ -14322,7 +14366,7 @@ preview.append(
   line-height: 1.5;
 }
 
-.preview .tile xin-icon {
+.preview .tile tosi-icon {
   font-size: 24px;
 }
 
@@ -14347,7 +14391,7 @@ test('icons are rendered', () => {
   expect(tiles.length).toBeGreaterThan(100)
 })
 test('icon tiles have svg icons', () => {
-  const firstIcon = tiles[0].querySelector('xin-icon')
+  const firstIcon = tiles[0].querySelector('tosi-icon')
   expect(firstIcon).toBeTruthy()
 })
 test('filter input exists', () => {
@@ -14374,17 +14418,17 @@ defineIcons({
 
 ### Icon Classes
 
-Icons will be generated with the class \`xin-icon\`.
+Icons will be generated with the class \`tosi-icon\`.
 
 You can also assign the classes \`filled\`, \`stroked\`, and \`color\` to icons to set default
 icon styling.
 
-## \`<xin-icon>\`
+## \`<tosi-icon>\`
 
-\`<xin-icon>\` is a simple component that lets you embed icons as HTML. Check the CSS tab to see
+\`<tosi-icon>\` is a simple component that lets you embed icons as HTML. Check the CSS tab to see
 how it's styled.
 
-\`<xin-icon>\` supports four attributes:
+\`<tosi-icon>\` supports four attributes:
 
 - \`size\` (defaults to 0) if non-zero sets the height of the icon in pixels
 - \`icon\` is the name of the icon
@@ -14437,7 +14481,7 @@ preview.append(
 
 \`svg2DataUrl(svg: SVGElement, fill?: string, stroke?: string, strokeWidth?: number): string\` is provided as a
 utility for converting SVG elements into data-urls (e.g. for incorporation into
-CSS properties. (It's used by the \`<xin-3d>\` component to render the XR widget.)
+CSS properties. (It's used by the \`<tosi-3d>\` component to render the XR widget.)
 
 If you're using \`SVGElement\`s created using the \`icons\` proxy, you'll want to provide \`fill\` and/or
 \`stroke\` values, because images loaded via css properties cannot be styled.
@@ -14445,13 +14489,13 @@ If you're using \`SVGElement\`s created using the \`icons\` proxy, you'll want t
 ## Color Icons
 
 \`\`\`html
-<xin-icon icon="tosiFavicon" class="demo-icon"></xin-icon>
-<xin-icon icon="tosiPlatform" class="demo-icon recolored"></xin-icon>
-<xin-icon icon="tosiXr" class="demo-icon animated"></xin-icon>
+<tosi-icon icon="tosiFavicon" class="demo-icon"></tosi-icon>
+<tosi-icon icon="tosiPlatform" class="demo-icon recolored"></tosi-icon>
+<tosi-icon icon="tosiXr" class="demo-icon animated"></tosi-icon>
 \`\`\`
 \`\`\`css
 .demo-icon {
-  --xin-icon-size: 160px
+  --tosi-icon-size: 160px
 }
 
 .recolored > svg {
@@ -14631,8 +14675,8 @@ Nobody normal ever accomplished anything meaningful in this world. It's just, so
   {
     text: `# localize
 
-\`tosijs-ui\` provides support for localization via the \`localize\` method and the \`<xin-locale-picker>\`
-and \`<xin-localized>\` custom-elements.
+\`tosijs-ui\` provides support for localization via the \`localize\` method and the \`<tosi-locale-picker>\`
+and \`<tosi-localized>\` custom-elements.
 
 > ### Important Note
 > This module deals with the **language** used in the user interface. "locale" is
@@ -14648,16 +14692,16 @@ and \`<xin-localized>\` custom-elements.
 
 Enables localization from TSV string data.
 
-## XinLocalePicker
+## TosiLocalePicker
 
 A selector that lets the user pick from among supported languages.
 
 \`\`\`html
 <h3>Locale Picker</h3>
-<xin-locale-picker></xin-locale-picker>
+<tosi-locale-picker></tosi-locale-picker>
 
 <h3>Locale Picker with <code>hide-captions</code></h3>
-<xin-locale-picker hide-caption></xin-locale-picker>
+<tosi-locale-picker hide-caption></tosi-locale-picker>
 \`\`\`
 
 ## \`localize()\`
@@ -14717,39 +14761,39 @@ preview.append(
 
 If you want to directly set locale, just use \`setLocale()\`.
 
-## XinLocalized
+## TosiLocalized
 
 A span-replacement that automatically localizes its text content.
 By default the case in the localized data is preserved unless the
 reference text is all lowercase, in which case the localized text
 is also lowercased.
 
-While viewing this documentation, all \`<xin-localized>\` elements should display a **red
+While viewing this documentation, all \`<tosi-localized>\` elements should display a **red
 underline**.
 
 \`\`\`html
 <h3>Localized Widgets</h3>
-<button><xin-localized>Yes</xin-localized></button>
-<button><xin-localized>No</xin-localized></button>
-<button><xin-localized>Open…</xin-localized></button> <i>note the ellipsis</i>
+<button><tosi-localized>Yes</tosi-localized></button>
+<button><tosi-localized>No</tosi-localized></button>
+<button><tosi-localized>Open…</tosi-localized></button> <i>note the ellipsis</i>
 
 <h3>Lowercase is preserved</h3>
-<button><xin-localized>yes</xin-localized></button>
-<button><xin-localized>no</xin-localized></button>
-<button><xin-localized>open…</xin-localized></button>
+<button><tosi-localized>yes</tosi-localized></button>
+<button><tosi-localized>no</tosi-localized></button>
+<button><tosi-localized>open…</tosi-localized></button>
 
 <h3>Localized Attribute</h3>
 <input>
 \`\`\`
 \`\`\`css
-xin-localized {
+tosi-localized {
   border-bottom: 2px solid red;
 }
 \`\`\`
 \`\`\`js
-import { xinLocalized, localize } from 'tosijs-ui'
+import { tosiLocalized, localize } from 'tosijs-ui'
 
-preview.append(xinLocalized({
+preview.append(tosiLocalized({
   refString: 'localized placeholder',
   localeChanged() {
     this.previousElementSibling.setAttribute('placeholder', localize(this.refString))
@@ -14757,14 +14801,14 @@ preview.append(xinLocalized({
 }))
 \`\`\`
 
-\`<xin-localized>\` has a \`refString\` attribute (which defaults to its initial \`textContent\`)
+\`<tosi-localized>\` has a \`refString\` attribute (which defaults to its initial \`textContent\`)
 which is the text that it localizes. You can set it directly.
 
 It also has an \`localeChanged\` method which defaults to setting the content of the element
 to the localized reference string, but which you can override, to (for example) set a property
 or attribute of the parent element.
 
-> \`<xin-localized>\` *can* be used inside the shadowDOM of other custom-elements.
+> \`<tosi-localized>\` *can* be used inside the shadowDOM of other custom-elements.
 
 ## \`i18n\`
 
@@ -14827,10 +14871,10 @@ export default \`( content of tsv file )\`
 
 You use this data using \`initLocalization()\`.
 
-## Leveraging XinLocalized Automatic Updates
+## Leveraging TosiLocalized Automatic Updates
 
-If you want to leverage XinLocalized's automatic updates you simply need to
-implement \`updateLocale\` and register yourself with \`XinLocalized.allInstances\`
+If you want to leverage TosiLocalized's automatic updates you simply need to
+implement \`updateLocale\` and register yourself with \`TosiLocalized.allInstances\`
 (which is a \`Set<AbstractLocalized>).
 
 Typically, this would look like something like:
@@ -14843,14 +14887,14 @@ class MyLocalizedComponent extends Component {
   connectecCallback() {
     super.connectedCallback()
 
-    XinLocalized.allInstances.add(this)
+    TosiLocalized.allInstances.add(this)
   }
 
   // avoid leaking!
   disconnectecCallback() {
     super.connectedCallback()
 
-    XinLocalized.allInstances.delete(this)
+    TosiLocalized.allInstances.delete(this)
   }
 
   // presumably your render method does the right things
@@ -14871,10 +14915,10 @@ A [lottie](https://airbnb.io/lottie/#/web) (a.k.a. **bodymovin**) player.
 It's designed to work like an \`<img>\` element (just set its \`src\` attribute).
 
 \`\`\`js
-import { icons, popFloat, xinSelect } from 'tosijs-ui'
+import { icons, popFloat, tosiSelect } from 'tosijs-ui'
 import { div, label, input, select, option, span } from 'tosijs'.elements
 
-const tosiPlatform = preview.querySelector('xin-lottie')
+const tosiPlatform = preview.querySelector('tosi-lottie')
 setTimeout(
   () => {
  preview.append(
@@ -14896,7 +14940,7 @@ setTimeout(
        label(
          { class: 'no-drag' },
          'direction',
-         xinSelect({
+         tosiSelect({
            value: '1',
            options: [
              { caption: 'Forward', value: '1' },
@@ -14917,10 +14961,10 @@ setTimeout(
 )
 \`\`\`
 \`\`\`html
-<xin-lottie
+<tosi-lottie
   style="width: 200px; height: 200px;"
   src="/tosi-platform.json"
-></xin-lottie>
+></tosi-lottie>
 <div class="caption">
   Animation created by <a target="_blank" href="https://pro.fiverr.com/freelancers/anicoremotion">@anicoremotion</a>
 </div>
@@ -15077,7 +15121,7 @@ A [mapboxgl](https://docs.mapbox.com/mapbox-gl-js/api/) wrapper.
 
 \`\`\`js
 const pickStyle = preview.querySelector('select')
-const mapbox = preview.querySelector('xin-map')
+const mapbox = preview.querySelector('tosi-map')
 const here = preview.querySelector('button')
 
 pickStyle.addEventListener('change', () => {
@@ -15126,12 +15170,12 @@ here.addEventListener('click', async () => {
 \`\`\`
 \`\`\`html
 <!-- please don't abuse my mapbox token -->
-<xin-map
+<tosi-map
   style="width: 100%; height: 100%"
   coords="14.0093606,120.995083,17"
   token="pk.eyJ1IjoicG9kcGVyc29uIiwiYSI6ImNqc2JlbWU0bjA1ZmY0YW5ycHZod3VhbWcifQ.arvqfpOqMgFYkKgQ35UScA"
   map-style="mapbox://styles/mapbox/streets-v12"
-></xin-map>
+></tosi-map>
 <select>
   <option selected value="mapbox://styles/mapbox/streets-v12">Streets</option>
   <option value="mapbox://styles/mapbox/satellite-v9">Satellite</option>
@@ -15140,7 +15184,7 @@ here.addEventListener('click', async () => {
   <option value="mapbox://styles/mapbox/outdoors-v12">Outdoors</option>
 </select>
 <button>
-  <xin-icon icon="mapPin"></xin-icon>
+  <tosi-icon icon="mapPin"></tosi-icon>
   <span>Your Location</span>
 </button>
 \`\`\`
@@ -15166,18 +15210,18 @@ and [use the standard mapbox APIs directly](https://docs.mapbox.com/api/maps/sty
 
 ## Form Integration
 
-\`<xin-map>\` is form-associated, making it useful as a location picker in forms:
+\`<tosi-map>\` is form-associated, making it useful as a location picker in forms:
 
 \`\`\`html
 <form class="map-form">
   <label>
     <b>Select your location:</b>
-    <xin-map
+    <tosi-map
       name="location"
       style="width: 100%; height: 200px"
       coords="40.7128,-74.0060,10"
       token="pk.eyJ1IjoicG9kcGVyc29uIiwiYSI6ImNqc2JlbWU0bjA1ZmY0YW5ycHZod3VhbWcifQ.arvqfpOqMgFYkKgQ35UScA"
-    ></xin-map>
+    ></tosi-map>
   </label>
   <button type="submit">Submit Location</button>
   <button type="reset">Reset</button>
@@ -15320,7 +15364,7 @@ menuItems, and (because it persists in the DOM) supports keyboard
 shortcuts.
 
 \`\`\`js
-import { popMenu, localize, tosiMenu, postNotification, xinLocalized, icons } from 'tosijs-ui'
+import { popMenu, localize, tosiMenu, postNotification, tosiLocalized, icons } from 'tosijs-ui'
 import { elements } from 'tosijs'
 
 let picked = ''
@@ -15458,17 +15502,17 @@ preview.append(
       menuItems,
       localized: true,
     },
-    xinLocalized('Menu'),
+    tosiLocalized('Menu'),
     icons.chevronDown()
   )
 )
 \`\`\`
 \`\`\`html
 <button title="menu test">
-  <xin-icon icon="moreVertical"></xin-icon>
+  <tosi-icon icon="moreVertical"></tosi-icon>
 </button>
 <button title="menu test from bottom-right" style="position: absolute; bottom: 0; right: 0">
-  <xin-icon icon="moreVertical"></xin-icon>
+  <tosi-icon icon="moreVertical"></tosi-icon>
 </button>
 \`\`\`
 \`\`\`css
@@ -15563,7 +15607,7 @@ interface SubMenu {
 
 ### Keyboard Shortcuts
 
-If a menu is embodied in a \`<xin-menu>\` it is supported by keyboard
+If a menu is embodied in a \`<tosi-menu>\` it is supported by keyboard
 shortcuts. Both text and symbolic shortcut descriptions are supported,
 e.g.
 
@@ -15578,7 +15622,7 @@ If you set \`localized: true\` in \`PopMenuOptions\` then menu captions will be 
 passed through \`localize\`. You'll need to provide the appropriate localized strings,
 of course.
 
-> \`<xin-menu>\` supports the \`localized\` attribute but it doesn't localize
+> \`<tosi-menu>\` supports the \`localized\` attribute but it doesn't localize
 > its trigger button.
 
 To see this in action, see the example below, or look at the
@@ -15587,7 +15631,7 @@ to render column names when you show hidden columns.
 
 \`\`\`js
 import { elements } from 'tosijs'
-import { xinLocalized, localize, icons, popMenu, postNotification } from 'tosijs-ui'
+import { tosiLocalized, localize, icons, popMenu, postNotification } from 'tosijs-ui'
 const { button } = elements
 const makeItem = s => ({
   caption: s,
@@ -15613,7 +15657,7 @@ const target = button(
       })
     }
   },
-  xinLocalized(
+  tosiLocalized(
     { style: { marginRight: '5px' }},
     'menu'
   ),
@@ -15793,13 +15837,13 @@ form.addEventListener('reset', () => {
   {
     text: `# notifications
 
-\`XinNotification\` provides a singleton custom \`<xin-notification>\` element that manages
+\`TosiNotification\` provides a singleton custom \`<tosi-notification>\` element that manages
 a list of notifications.
 
 The notifications are displayed most-recent first. If the notifications would take more than
 half the height of the display, they are scrolled.
 
-You can post a notification simply with \`XinNotification.post()\` or \`postNotification()\`.
+You can post a notification simply with \`TosiNotification.post()\` or \`postNotification()\`.
 
 \`\`\`
 interface NotificationSpec {
@@ -15814,7 +15858,7 @@ interface NotificationSpec {
 \`\`\`
 
 If you provide a \`progress\` callback (which is assumed to return a number from \`0-100\`, with
-100+ indicating completion) then \`XinNotification\` will poll it every second until the
+100+ indicating completion) then \`TosiNotification\` will poll it every second until the
 task completes or the notification is closed. Returning 100 or more will automatically close
 the notification.
 
@@ -15830,7 +15874,7 @@ provided. (The progress demos in the example exercise this functionality.)
 \`\`\`js
 import { postNotification, icons } from 'tosijs-ui'
 
-const form = preview.querySelector('xin-form')
+const form = preview.querySelector('tosi-form')
 const submit = preview.querySelector('.submit')
 const closeButton = preview.querySelector('.close')
 
@@ -15868,31 +15912,31 @@ postNotification({
 })
 \`\`\`
 \`\`\`html
-<xin-form>
+<tosi-form>
   <h3 slot="header">Notification Test</h3>
-  <xin-field caption="Message" key="message" type="string" value="This is a test…"></xin-field>
-  <xin-field caption="Type" key="type" value="info">
-    <xin-select slot="input"
+  <tosi-field caption="Message" key="message" type="string" value="This is a test…"></tosi-field>
+  <tosi-field caption="Type" key="type" value="info">
+    <tosi-select slot="input"
       options="error,warn,info,success,log,,progress,progress (indefinite)"
-    ></xin-select>
-  </xin-field>
-  <xin-field caption="Icon" key="icon" value="info">
-    <xin-select slot="input"
+    ></tosi-select>
+  </tosi-field>
+  <tosi-field caption="Icon" key="icon" value="info">
+    <tosi-select slot="input"
       options="info,bug,thumbsUp,thumbsDown,message"
-    ></xin-select>
-  </xin-field>
-  <xin-field caption="Duration" key="duration" type="number" value="2"></xin-field>
+    ></tosi-select>
+  </tosi-field>
+  <tosi-field caption="Duration" key="duration" type="number" value="2"></tosi-field>
   <button slot="footer" class="close" disabled>Close Last Notification</button>
   <span slot="footer" class="elastic"></span>
   <button slot="footer" class="submit">Post Notification</button>
-</xin-form>
+</tosi-form>
 \`\`\`
 \`\`\`css
-xin-form {
+tosi-form {
   height: 100%;
 }
 
-xin-form::part(content) {
+tosi-form::part(content) {
   display: flex;
   flex-direction: column;
   padding: 10px;
@@ -15900,18 +15944,18 @@ xin-form::part(content) {
   background: var(--background);
 }
 
-xin-form::part(header),
-xin-form::part(footer) {
+tosi-form::part(header),
+tosi-form::part(footer) {
   background: #eee;
   justify-content: center;
   padding: 10px;
 }
 
-xin-form h3 {
+tosi-form h3 {
   margin: 0;
 }
 
-xin-form label {
+tosi-form label {
   display: grid;
   grid-template-columns: 120px 1fr;
 }
@@ -15919,18 +15963,18 @@ xin-form label {
 \`\`\`test
 test('notification singleton exists', async () => {
   await waitMs(100)
-  const notification = document.querySelector('xin-notification')
+  const notification = document.querySelector('tosi-notification')
   expect(notification).toBeTruthy()
 })
 test('form renders', () => {
-  const form = preview.querySelector('xin-form')
+  const form = preview.querySelector('tosi-form')
   expect(form).toBeTruthy()
 })
 \`\`\`
 
 ## \`postNotification(spec: NotificationSpec | string)\`
 
-This is simply a wrapper for \`XinNotification.post()\`.`,
+This is simply a wrapper for \`TosiNotification.post()\`.`,
     title: "notifications",
     filename: "notifications.ts",
     path: "src/notifications.ts"
@@ -15938,22 +15982,22 @@ This is simply a wrapper for \`XinNotification.post()\`.`,
   {
     text: `# password strength
 
-Just wrap it a \`<xin-password-strength>\` element around an \`<input>\`
+Just wrap it a \`<tosi-password-strength>\` element around an \`<input>\`
 and it will gauge its content strength as a password. It will also
 let you **securely verify** that the password hasn't been breached.
 
 \`\`\`js
-import { xinLocalized, localize } from 'tosijs-ui'
+import { tosiLocalized, localize } from 'tosijs-ui'
 
 const toggle = preview.querySelector('.toggle')
-const icon = preview.querySelector('xin-icon')
+const icon = preview.querySelector('tosi-icon')
 const input = preview.querySelector('input')
 const breach = preview.querySelector('.breach')
 const output = preview.querySelector('.output')
-const passwordStrength = preview.querySelector('xin-password-strength')
+const passwordStrength = preview.querySelector('tosi-password-strength')
 
 // Localization Example
-passwordStrength.append(xinLocalized({
+passwordStrength.append(tosiLocalized({
   refString: 'Yes',
   localeChanged () {
     this.parentElement.strengthDescriptions = [
@@ -15979,7 +16023,7 @@ toggle.addEventListener('click', () => {
 })
 
 breach.addEventListener('click', async () => {
-  preview.querySelector('xin-password-strength').isBreached().then(isBreached => {
+  preview.querySelector('tosi-password-strength').isBreached().then(isBreached => {
     output.textContent =
       isBreached
       ? 'This password has been breached, look at console for details'
@@ -15989,16 +16033,16 @@ breach.addEventListener('click', async () => {
 })
 \`\`\`
 \`\`\`html
-<xin-password-strength>
+<tosi-password-strength>
   <input class="password" type="password">
   <button class="toggle">
-    <xin-icon icon="eye"></xin-icon>
+    <tosi-icon icon="eye"></tosi-icon>
   </button>
-</xin-password-strength>
+</tosi-password-strength>
 
 <br><br>
 <button class="breach">
-  <xin-localized>Check if breached</xin-localized>
+  <tosi-localized>Check if breached</tosi-localized>
 </button>
 <div class="output"></div>
 \`\`\`
@@ -16038,7 +16082,7 @@ A password smaller than \`minLength\` is an automatic \`0\`.
 - \`issues\` is a structure which you can use to generate feedback
 
 \`\`\`
-<xin-password-strength>.issues = {
+<tosi-password-strength>.issues = {
   tooShort: boolean,
   short: boolean,
   noUpper: boolean,
@@ -16076,7 +16120,7 @@ strengthDescriptions = [
 
 ## \`isBreached()\`
 
-\`<xin-password-meter>\` also provides an \`isBreached(): Promise<boolean>\` method
+\`<tosi-password-strength>\` also provides an \`isBreached(): Promise<boolean>\` method
 which uses [weakpass.com's API](https://weakpass.com/) to tell you if the password has been
 breached.
 
@@ -16127,7 +16171,7 @@ grid.addEventListener('click', (event) => {
         'hello, I am a float',
         button('close me', {
           onClick(event){
-            event.target.closest('xin-float').remove()
+            event.target.closest('tosi-float').remove()
           }
         })
       ],
@@ -16193,10 +16237,10 @@ export interface PopFloatOptions {
   draggable?: boolean
 }
 
-export const popFloat = (options: PopFloatOptions): XinFloat
+export const popFloat = (options: PopFloatOptions): TosiFloat
 \`\`\`
 
-Create a \`<xin-float>\` with the content provided, positioned as specified (or automatically).
+Create a \`<tosi-float>\` with the content provided, positioned as specified (or automatically).
 
 ## positionFloat
 
@@ -16267,7 +16311,7 @@ preview.append(button(
             {
               class: 'no-drag close-tearoff',
               onClick(event) {
-                event.target.closest('xin-float').remove()
+                event.target.closest('tosi-float').remove()
               }
             }
           )
@@ -16553,7 +16597,7 @@ form.addEventListener('submit', (e) => {
 
 If you need to load an old school (cjs) javascript or css library via cdn then use these two functions.
 
-\`tosijs-ui\` uses this library to implement the \`<xin-code>\`, \`<xin-lottie>\`, and \`<xin-map>\`
+\`tosijs-ui\` uses this library to implement the \`<tosi-code>\`, \`<tosi-lottie>\`, and \`<tosi-map>\`
 elements.
 
 \`scriptTag()\` and \`styleSheet()\` return promises that resolve \`globalThis\` when the module in question
@@ -16601,11 +16645,11 @@ as possible.
 
 As an aside:
 
-\`<xin-lottie>\` is implemented in such a way that if you've preloaded the module
+\`<tosi-lottie>\` is implemented in such a way that if you've preloaded the module
 (e.g. via a script tag or packaging) it won't load it again, which affords offline
 use.
 
-There's no point for \`<xin-map>\` since it won't work without connectivity anyway.
+There's no point for \`<tosi-map>\` since it won't work without connectivity anyway.
 
 ## styleSheet
 
@@ -16976,18 +17020,18 @@ preview.append(
 
 While we wait for enough browsers to implement [container-queries](https://www.w3.org/TR/css-contain-3/),
 and in any event when you simply want to do different things at different sizes (e.g. in the project I'm
-working on right now, a row of buttons turns into a menu at narrow widths) there's \`<xin-sizebreak>\`.
+working on right now, a row of buttons turns into a menu at narrow widths) there's \`<tosi-sizebreak>\`.
 
-Note that the sizes referred to are of the \`<xin-sizebreak>\`'s \`.offsetParent\`, and it watches for
+Note that the sizes referred to are of the \`<tosi-sizebreak>\`'s \`.offsetParent\`, and it watches for
 the window's \`resize\` events and its own (via \`ResizeObserver\`).
 
 \`\`\`html
 <div class="container">
-  <xin-sizebreak min-width="300" min-height="150">
+  <tosi-sizebreak min-width="300" min-height="150">
     <h1>BIG!</h1>
     <i slot="small">little</i>
-  </xin-sizebreak>
-  <xin-sizer></xin-sizer>
+  </tosi-sizebreak>
+  <tosi-sizer></tosi-sizer>
 </div>
 \`\`\`
 \`\`\`css
@@ -16995,14 +17039,14 @@ the window's \`resize\` events and its own (via \`ResizeObserver\`).
   touch-action: none;
 }
 
-.preview xin-sizebreak {
+.preview tosi-sizebreak {
   width: 100%;
   height: 100%;
   background: #fff8;
   border: 1px solid #aaa;
 }
 
-.preview xin-sizebreak * {
+.preview tosi-sizebreak * {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -17036,7 +17080,7 @@ the window's \`resize\` events and its own (via \`ResizeObserver\`).
 }
 \`\`\`
 
-\`<xin-sizebreak>\` supports both \`min-width\` and/or \`min-height\`, and you can of course target only one
+\`<tosi-sizebreak>\` supports both \`min-width\` and/or \`min-height\`, and you can of course target only one
 of the slots if you like. The demo site uses them to hide the [bundlejs](https://bundlejs.com/) badge when
 space is tight.`,
     title: "size-break",
@@ -17051,7 +17095,7 @@ from the bottom-right.
 
 \`\`\`html
 <div>
-  <xin-sizer></xin-sizer>
+  <tosi-sizer></tosi-sizer>
 </div>
 \`\`\`
 \`\`\`css
@@ -17066,7 +17110,7 @@ from the bottom-right.
 }
 \`\`\`
 
-<xin-css-var-editor element-selector="xin-sizer"></xin-css-var-editor>`,
+<tosi-css-var-editor element-selector="tosi-sizer"></tosi-css-var-editor>`,
     title: "sizer",
     filename: "sizer.ts",
     path: "src/sizer.ts"
@@ -17078,7 +17122,7 @@ A virtual data-table, configurable via a \`columns\` array (which will automatic
 that displays gigantic tables with fixed headers (and live column-resizing) using a minimum of resources and cpu.
 
 \`\`\`js
-import { dataTable } from 'tosijs-ui'
+import { tosiTable } from 'tosijs-ui'
 import { input } from 'tosijs'.elements
 
 const emojiRequest = await fetch('https://raw.githubusercontent.com/tonioloewald/emoji-metadata/master/emoji-metadata.json')
@@ -17118,7 +17162,7 @@ const columns = [
   },
 ]
 
-preview.append(dataTable({
+preview.append(tosiTable({
   multiple: true,
   array: emojiData,
   localized: true,
@@ -17178,19 +17222,19 @@ export interface ColumnOptions {
 
 ## Selection
 
-\`<xin-table>\` supports \`select\` and \`multiple\` boolean properties allowing rows to be selectable. Selected rows will
+\`<tosi-table>\` supports \`select\` and \`multiple\` boolean properties allowing rows to be selectable. Selected rows will
 be given the \`[aria-selected]\` attribute, so style them as you wish.
 
 \`multiple\` select supports shift-clicking and command/meta-clicking.
 
-\`<xin-table>\` provides an \`selectionChanged(visibleSelectedRows: any[]): void\` callback property allowing you to respond to changes
+\`<tosi-table>\` provides an \`selectionChanged(visibleSelectedRows: any[]): void\` callback property allowing you to respond to changes
 in the selection, and also \`selectedRows\` and \`visibleSelectedRows\` properties.
 
 The following methods are also provided:
 
-- \`<xin-table>.selectRow(row: any, select = true)\` (de)selects specified row
-- \`<xin-table>.selectRows(rows?: any[], select = true)\` (de)selects specified rows
-- \`<xin-table>.deSelect(rows?: any[])\` deselects all or specified rows.
+- \`<tosi-table>.selectRow(row: any, select = true)\` (de)selects specified row
+- \`<tosi-table>.selectRows(rows?: any[], select = true)\` (de)selects specified rows
+- \`<tosi-table>.deSelect(rows?: any[])\` deselects all or specified rows.
 
 These are rather fine-grained but they're used internally by the selection code so they may as well be documented.
 
@@ -17205,21 +17249,21 @@ You can override this by setting the table's sort function (it's an \`Array.sort
 to whatever you like, and you can replace the \`headerCell\` or set the \`sort\` of each column
 to \`false\` if you have some specific sorting in mind.
 
-You can disable sorting controls by adding the \`nosort\` attribute to the \`<xin-table>\`.
+You can disable sorting controls by adding the \`nosort\` attribute to the \`<tosi-table>\`.
 
 ## Hiding (and Showing) Columns
 
 By default, the user can show / hide columns by clicking via the column header menu.
-You can remove this option by adding the \`nohide\` attribute to the \`<xin-table>\`
+You can remove this option by adding the \`nohide\` attribute to the \`<tosi-table>\`
 
 ## Reordering Columns
 
 By default, the user can reorder columns by dragging them around. You can disable this
-by adding the \`noreorder\` attribute to the \`<xin-table>\`.
+by adding the \`noreorder\` attribute to the \`<tosi-table>\`.
 
 ## Row Height
 
-If you set the \`<xin-table>\`'s \`rowHeight\` to \`0\` it will render all its elements (i.e. not be virtual). This is
+If you set the \`<tosi-table>\`'s \`rowHeight\` to \`0\` it will render all its elements (i.e. not be virtual). This is
 useful for smaller tables, or tables with variable row-heights.
 
 ## Styling
@@ -17234,8 +17278,8 @@ of top and bottom rows.
 
 ## Localization
 
-\`<xin-table>\` supports the \`localized\` attribute which simply causes its default \`headerCell\`
-to render a \`<xin-localized>\` element instead of a span for its caption, and localize its
+\`<tosi-table>\` supports the \`localized\` attribute which simply causes its default \`headerCell\`
+to render a \`<tosi-localized>\` element instead of a span for its caption, and localize its
 popup menu.
 
 You'll need to make sure your localized strings include:
@@ -17287,7 +17331,7 @@ preview.querySelector('.add').addEventListener('click', () => {
   <div name="first">first body</div>
   <div name="second" data-close>
     <template role="tab">
-      <xin-icon
+      <tosi-icon
         style="
           display: inline-block;
           width: 16px;
@@ -17297,14 +17341,14 @@ preview.querySelector('.add').addEventListener('click', () => {
           stroke: var(--brand-color);
         "
         icon="eye"
-      ></xin-icon>
+      ></tosi-icon>
       <span>Ooooh!!!</span>
     </template>
     look at the html…
   </div>
   <div name="third">third body</div>
   <button class="add" slot="after-tabs">
-    <xin-icon icon="plus"></xin-icon>
+    <tosi-icon icon="plus"></tosi-icon>
   </button>
 </tosi-tabs>
 \`\`\`
@@ -17481,7 +17525,7 @@ Placeholder shown on input field.`,
     path: "src/tag-list.ts"
   },
   {
-    text: "# theme\n\nThe theme system provides consistent CSS variables across all tosijs-ui components,\nwith support for automatic dark mode via tosijs's `Color` class and `invertLuminance`.\n\n## Base Variables\n\nAll components use these foundational CSS variables with the `--tosi-` prefix:\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `--tosi-spacing-xs` | 4px | Extra small spacing |\n| `--tosi-spacing-sm` | 8px | Small spacing |\n| `--tosi-spacing` | 12px | Default spacing |\n| `--tosi-spacing-lg` | 16px | Large spacing |\n| `--tosi-spacing-xl` | 24px | Extra large spacing |\n| `--tosi-bg` | #fafafa | Background color |\n| `--tosi-bg-inset` | derived | Inset/recessed background |\n| `--tosi-text` | #222 | Text color |\n| `--tosi-accent` | #EE257B | Accent/brand color |\n| `--tosi-accent-text` | derived | Text on accent background |\n| `--tosi-font-family` | system-ui | Font family |\n| `--tosi-font-size` | 16px | Base font size |\n| `--tosi-line-height` | 1.5 | Line height |\n| `--tosi-touch-size` | 44px | Minimum touch target |\n| `--tosi-focus-ring` | derived | Focus outline style |\n\n## Creating Themes\n\n```js\nimport { Color } from 'tosijs'\nimport { createTheme, applyTheme } from 'tosijs-ui'\n\nconst myTheme = createTheme({\n  accent: Color.fromCss('#007AFF'),\n  background: Color.fromCss('#ffffff'),\n  text: Color.fromCss('#1a1a1a'),\n})\n\napplyTheme(myTheme, 'my-theme')\n```\n\n## Dark Mode\n\nDark mode is automatic when using `createDarkTheme`:\n\n```js\nimport { createTheme, createDarkTheme, applyTheme } from 'tosijs-ui'\n\nconst colors = {\n  accent: Color.fromCss('#007AFF'),\n  background: Color.fromCss('#ffffff'),\n  text: Color.fromCss('#1a1a1a'),\n}\n\n// Apply based on user preference\nconst prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches\napplyTheme(prefersDark ? createDarkTheme(colors) : createTheme(colors))\n```\n\n## Component Variables\n\nEach component defines its own variables that derive from base variables.\nFor example, xin-select derives from base:\n\n    --tosi-select-gap: var(--tosi-spacing-sm, 8px);\n    --tosi-select-touch-size: var(--tosi-touch-size, 44px);\n\nThis allows fine-grained customization while maintaining consistency.",
+    text: "# theme\n\nThe theme system provides consistent CSS variables across all tosijs-ui components,\nwith support for automatic dark mode via tosijs's `Color` class and `invertLuminance`.\n\n## Base Variables\n\nAll components use these foundational CSS variables with the `--tosi-` prefix:\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `--tosi-spacing-xs` | 4px | Extra small spacing |\n| `--tosi-spacing-sm` | 8px | Small spacing |\n| `--tosi-spacing` | 12px | Default spacing |\n| `--tosi-spacing-lg` | 16px | Large spacing |\n| `--tosi-spacing-xl` | 24px | Extra large spacing |\n| `--tosi-bg` | #fafafa | Background color |\n| `--tosi-bg-inset` | derived | Inset/recessed background |\n| `--tosi-text` | #222 | Text color |\n| `--tosi-accent` | #EE257B | Accent/brand color |\n| `--tosi-accent-text` | derived | Text on accent background |\n| `--tosi-font-family` | system-ui | Font family |\n| `--tosi-font-size` | 16px | Base font size |\n| `--tosi-line-height` | 1.5 | Line height |\n| `--tosi-touch-size` | 44px | Minimum touch target |\n| `--tosi-focus-ring` | derived | Focus outline style |\n\n## Creating Themes\n\n```js\nimport { Color } from 'tosijs'\nimport { createTheme, applyTheme } from 'tosijs-ui'\n\nconst myTheme = createTheme({\n  accent: Color.fromCss('#007AFF'),\n  background: Color.fromCss('#ffffff'),\n  text: Color.fromCss('#1a1a1a'),\n})\n\napplyTheme(myTheme, 'my-theme')\n```\n\n## Dark Mode\n\nDark mode is automatic when using `createDarkTheme`:\n\n```js\nimport { createTheme, createDarkTheme, applyTheme } from 'tosijs-ui'\n\nconst colors = {\n  accent: Color.fromCss('#007AFF'),\n  background: Color.fromCss('#ffffff'),\n  text: Color.fromCss('#1a1a1a'),\n}\n\n// Apply based on user preference\nconst prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches\napplyTheme(prefersDark ? createDarkTheme(colors) : createTheme(colors))\n```\n\n## Component Variables\n\nEach component defines its own variables that derive from base variables.\nFor example, tosi-select derives from base:\n\n    --tosi-select-gap: var(--tosi-spacing-sm, 8px);\n    --tosi-select-touch-size: var(--tosi-touch-size, 44px);\n\nThis allows fine-grained customization while maintaining consistency.",
     title: "theme",
     filename: "theme.ts",
     path: "src/theme.ts"
@@ -17490,7 +17534,7 @@ Placeholder shown on input field.`,
     text: `# trackDrag
 
 Sometimes you want to track a mouse-drag or touch-drag operation without messing around.
-This is how the resizeable columns in \`<xin-table>\` work.
+This is how the resizeable columns in \`<tosi-table>\` work.
 
 Just call \`trackDrag(event, (dx, dy, event) => { ... })\` and you'll get updates on corresponding events until
 you return \`true\` from the event-handler (or, in the case of \`touch\` events, the last \`touch\` ends).
@@ -17878,7 +17922,7 @@ if (main) {
   const header3 = browser.querySelector("header");
   if (header3) {
     const { img, a: a4, span: span16, button: button14 } = T;
-    const sizeBreakElement = header3.querySelector("xin-sizebreak");
+    const sizeBreakElement = header3.querySelector("tosi-sizebreak");
     if (sizeBreakElement) {
       const badges = span16({
         style: {

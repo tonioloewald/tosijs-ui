@@ -164,12 +164,12 @@ import {
   StyleSheet,
   XinStyleSheet,
 } from 'tosijs'
-import { markdownViewer, MarkdownViewer } from './markdown-viewer'
+import { tosiMd, TosiMd } from './markdown-viewer'
 import { LiveExample, testManager } from './live-example'
 import { TestResults } from './live-example/test-harness'
-import { sideNav, SideNav } from './side-nav'
+import { tosiSidenav, TosiSidenav } from './side-nav'
 import { icons } from './icons'
-import { xinLocalized } from './localize'
+import { tosiLocalized } from './localize'
 import { popMenu } from './menu'
 
 // Types for global test results
@@ -493,7 +493,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
           },
         },
         onClick() {
-          const nav = document.querySelector(SideNav.tagName!) as SideNav
+          const nav = document.querySelector(
+            TosiSidenav.tagName!
+          ) as TosiSidenav
           nav.contentVisible = !nav.contentVisible
         },
       },
@@ -580,7 +582,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       },
     },
     header(...headerContent),
-    sideNav(
+    tosiSidenav(
       {
         name: 'Documentation',
         navSize,
@@ -590,7 +592,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
           overflow: 'hidden',
         },
         onChange() {
-          const nav = document.querySelector(SideNav.tagName!) as SideNav
+          const nav = document.querySelector(
+            TosiSidenav.tagName!
+          ) as TosiSidenav
           app.compact = nav.compact as any
         },
       },
@@ -622,8 +626,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
                 const a = event.target as HTMLAnchorElement
                 const doc = getListItem(event.target as HTMLElement)
                 const nav = (event.target as HTMLElement).closest(
-                  'xin-sidenav'
-                ) as SideNav
+                  'tosi-sidenav'
+                ) as TosiSidenav
                 nav.contentVisible = true
                 const { href } = a
                 window.history.pushState({ href }, '', href)
@@ -636,7 +640,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
                 if (results && !results.passed) {
                   setTimeout(() => {
                     const failedExample = document.querySelector(
-                      'xin-example.-test-failed'
+                      'tosi-example.-test-failed'
                     )
                     if (failedExample) {
                       failedExample.scrollIntoView({
@@ -648,7 +652,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
                 }
               },
             },
-            xinLocalized({ bindText: '^.title' })
+            tosiLocalized({ bindText: '^.title' })
           )
         )
       ),
@@ -706,7 +710,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
           }),
           'View source on GitHub'
         ),
-        markdownViewer({
+        tosiMd({
           style: {
             display: 'block',
             maxWidth: '44em',
@@ -715,7 +719,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
             overflow: 'hidden',
           },
           bindValue: 'app.currentDoc.text',
-          didRender(this: MarkdownViewer) {
+          didRender(this: TosiMd) {
             LiveExample.insertExamples(this, context)
           },
         })
@@ -831,7 +835,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
               // Scroll to failing test after render
               setTimeout(() => {
                 const failedExample = document.querySelector(
-                  'xin-example.-test-failed'
+                  'tosi-example.-test-failed'
                 )
                 if (failedExample) {
                   failedExample.scrollIntoView({
@@ -952,10 +956,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
 
       // Create a container and render the doc content
       const testContainer = document.createElement('div')
-      const viewer = markdownViewer({
+      const viewer = tosiMd({
         value: doc.text,
         didRender() {
-          LiveExample.insertExamples(this as MarkdownViewer, context)
+          LiveExample.insertExamples(this as TosiMd, context)
         },
       })
       testContainer.appendChild(viewer)
@@ -983,9 +987,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         frameDoc.body.appendChild(testContainer)
 
         // Wait for all live examples to finish rendering/testing.
-        // Each xin-example fires 'testcomplete' when done; wait for all of them
+        // Each tosi-example fires 'testcomplete' when done; wait for all of them
         // with a safety timeout so we never hang indefinitely.
-        const examples = testContainer.querySelectorAll('xin-example')
+        const examples = testContainer.querySelectorAll('tosi-example')
         if (examples.length > 0) {
           await new Promise<void>((resolve) => {
             let remaining = examples.length
@@ -1011,7 +1015,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     // Mark current page as tested if it has tests.
     // Its examples run naturally in the main document — listen for their events.
     if (docsWithTests.some((d) => d.filename === currentFilename)) {
-      const currentExamples = document.querySelectorAll('xin-example')
+      const currentExamples = document.querySelectorAll('tosi-example')
       if (currentExamples.length > 0) {
         let remaining = currentExamples.length
         const done = () => {

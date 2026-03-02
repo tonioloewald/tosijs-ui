@@ -1,26 +1,26 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
 import {
-  XinNotification,
-  xinNotification,
+  TosiNotification,
+  tosiNotification,
   postNotification,
 } from './notifications'
 
 describe('notifications', () => {
   beforeEach(() => {
     // Clean up any existing notifications
-    document.querySelectorAll('xin-notification').forEach((el) => el.remove())
+    document.querySelectorAll('tosi-notification').forEach((el) => el.remove())
   })
 
   afterEach(() => {
-    document.querySelectorAll('xin-notification').forEach((el) => el.remove())
+    document.querySelectorAll('tosi-notification').forEach((el) => el.remove())
   })
 
-  describe('XinNotification', () => {
+  describe('TosiNotification', () => {
     test('creates a custom element', () => {
-      const notification = xinNotification()
+      const notification = tosiNotification()
       document.body.appendChild(notification)
-      expect(notification).toBeInstanceOf(XinNotification)
-      expect(notification.tagName.toLowerCase()).toBe('xin-notification')
+      expect(notification).toBeInstanceOf(TosiNotification)
+      expect(notification.tagName.toLowerCase()).toBe('tosi-notification')
     })
   })
 
@@ -39,23 +39,23 @@ describe('notifications', () => {
 
     test('creates notification singleton', () => {
       postNotification({ message: 'Test', duration: -1 })
-      const notifications = document.querySelectorAll('xin-notification')
+      const notifications = document.querySelectorAll('tosi-notification')
       expect(notifications.length).toBe(1)
     })
 
     test('reuses singleton for multiple notifications', () => {
       const close1 = postNotification({ message: 'First', duration: -1 })
       const close2 = postNotification({ message: 'Second', duration: -1 })
-      const notifications = document.querySelectorAll('xin-notification')
+      const notifications = document.querySelectorAll('tosi-notification')
       expect(notifications.length).toBe(1)
       close1()
       close2()
     })
   })
 
-  describe('XinNotification.post', () => {
+  describe('TosiNotification.post', () => {
     test('accepts message property', () => {
-      const close = XinNotification.post({
+      const close = TosiNotification.post({
         message: 'Hello World',
         duration: -1,
       })
@@ -73,7 +73,7 @@ describe('notifications', () => {
         'progress',
       ] as const
       for (const type of types) {
-        const close = XinNotification.post({
+        const close = TosiNotification.post({
           message: 'Test',
           type,
           duration: -1,
@@ -84,7 +84,7 @@ describe('notifications', () => {
     })
 
     test('accepts icon property as string', () => {
-      const close = XinNotification.post({
+      const close = TosiNotification.post({
         message: 'With icon',
         icon: 'check',
         duration: -1,
@@ -94,14 +94,14 @@ describe('notifications', () => {
     })
 
     test('accepts duration property', () => {
-      const close = XinNotification.post({ message: 'Quick', duration: 0.1 })
+      const close = TosiNotification.post({ message: 'Quick', duration: 0.1 })
       expect(typeof close).toBe('function')
       // Don't need to manually close - it will auto-close
     })
 
     test('accepts close callback', () => {
       let wasClosed = false
-      const close = XinNotification.post({
+      const close = TosiNotification.post({
         message: 'With callback',
         duration: -1,
         close() {
@@ -113,7 +113,7 @@ describe('notifications', () => {
     })
 
     test('accepts color property', () => {
-      const close = XinNotification.post({
+      const close = TosiNotification.post({
         message: 'Custom color',
         color: '#ff0000',
         duration: -1,
@@ -123,7 +123,7 @@ describe('notifications', () => {
     })
 
     test('accepts progress callback', () => {
-      const close = XinNotification.post({
+      const close = TosiNotification.post({
         message: 'Progress',
         type: 'progress',
         duration: -1,
@@ -141,7 +141,7 @@ describe('notifications', () => {
     // We can't easily test shadow DOM content in happy-dom, but we verify the API
 
     test('info type is default', () => {
-      const close = XinNotification.post({
+      const close = TosiNotification.post({
         message: 'Default type',
         duration: -1,
       })
@@ -151,7 +151,7 @@ describe('notifications', () => {
     })
 
     test('error type is accepted', () => {
-      const close = XinNotification.post({
+      const close = TosiNotification.post({
         message: 'Error!',
         type: 'error',
         duration: -1,
@@ -161,7 +161,7 @@ describe('notifications', () => {
     })
 
     test('warn type is accepted', () => {
-      const close = XinNotification.post({
+      const close = TosiNotification.post({
         message: 'Warning!',
         type: 'warn',
         duration: -1,
@@ -171,7 +171,7 @@ describe('notifications', () => {
     })
 
     test('success type is accepted', () => {
-      const close = XinNotification.post({
+      const close = TosiNotification.post({
         message: 'Success!',
         type: 'success',
         duration: -1,
@@ -183,7 +183,7 @@ describe('notifications', () => {
 
   describe('removeNote', () => {
     test('static method exists', () => {
-      expect(typeof XinNotification.removeNote).toBe('function')
+      expect(typeof TosiNotification.removeNote).toBe('function')
     })
   })
 })

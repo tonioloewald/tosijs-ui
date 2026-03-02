@@ -17,7 +17,7 @@ export interface TableData {
 }
 export type ArrayFilter = (array: any[]) => any[];
 export type SelectCallback = (selected: any[]) => void;
-export declare class DataTable extends WebComponent {
+export declare class TosiTable extends WebComponent {
     static initAttributes: {
         rowHeight: number;
         charWidth: number;
@@ -78,5 +78,10 @@ export declare class DataTable extends WebComponent {
     private dropColumn;
     render(): void;
 }
-export declare const dataTable: ElementCreator<DataTable>;
-export declare const xinTable: ElementCreator<DataTable>;
+/** @deprecated Use TosiTable instead */
+export declare const DataTable: typeof TosiTable;
+export declare const tosiTable: ElementCreator<TosiTable>;
+/** @deprecated Use tosiTable instead */
+export declare const dataTable: ElementCreator<TosiTable>;
+/** @deprecated Use tosiTable instead */
+export declare const xinTable: ElementCreator<TosiTable>;

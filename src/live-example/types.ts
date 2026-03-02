@@ -1,5 +1,5 @@
 import { PartsMap } from 'tosijs'
-import { TabSelector } from '../tab-selector'
+import { TosiTabs } from '../tab-selector'
 import { CodeEditor } from '../code-editor'
 
 export interface ExampleContext {
@@ -11,7 +11,7 @@ export interface ExampleParts extends PartsMap {
   undo: HTMLButtonElement
   redo: HTMLButtonElement
   exampleWidgets: HTMLButtonElement
-  editors: TabSelector
+  editors: TosiTabs
   code: HTMLElement
   sources: HTMLElement
   style: HTMLStyleElement

@@ -143,7 +143,7 @@ import {
   deprecated,
 } from 'tosijs'
 import { icons } from './icons'
-import { xinLocalized } from './localize'
+import { tosiLocalized } from './localize'
 
 const { div, slot, label, span, input } = elements
 
@@ -445,7 +445,7 @@ export class TosiSegmented extends WebComponent {
             tabIndex: -1,
           }),
           choice.icon || { class: 'no-icon' },
-          this.localized ? xinLocalized(choice.caption) : span(choice.caption)
+          this.localized ? tosiLocalized(choice.caption) : span(choice.caption)
         )
       })
     )

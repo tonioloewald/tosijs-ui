@@ -1,6 +1,6 @@
 import { Component, ElementCreator } from 'tosijs';
 type NavState = 'normal' | 'compact/nav' | 'compact/content';
-export declare class SideNav extends Component {
+export declare class TosiSidenav extends Component {
     static initAttributes: {
         minSize: number;
         navSize: number;
@@ -34,7 +34,11 @@ export declare class SideNav extends Component {
     disconnectedCallback(): void;
     render(): void;
 }
-export declare const sideNav: ElementCreator<SideNav>;
-/** @deprecated Use sideNav with tag 'tosi-sidenav' instead */
-export declare const xinSidenav: ElementCreator<SideNav>;
+/** @deprecated Use TosiSidenav instead */
+export declare const SideNav: typeof TosiSidenav;
+export declare const tosiSidenav: ElementCreator<TosiSidenav>;
+/** @deprecated Use tosiSidenav instead */
+export declare const sideNav: ElementCreator<TosiSidenav>;
+/** @deprecated Use tosiSidenav instead */
+export declare const xinSidenav: ElementCreator<TosiSidenav>;
 export {};

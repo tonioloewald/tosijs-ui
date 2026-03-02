@@ -105,14 +105,11 @@ export const tosiWidget = TosiWidget.elementCreator({
   styleSpec: { /* styles */ }
 }) as ElementCreator<TosiWidget>
 
-// Deprecated alias for backward compatibility during rename
-export const xinWidget = deprecated(
-  (...args) => tosiWidget(...args),
-  'xinWidget is deprecated, use tosiWidget instead'
-)
+/** @deprecated Use tosiWidget instead */
+export const xinWidget = tosiWidget
 ```
 
-**Naming convention**: New components use `Tosi*` class names, `tosi*` element creators, and `<tosi-*>` tags. Legacy `xin*` exports are deprecated but maintained for compatibility.
+**Naming convention**: All components use `Tosi*` class names, `tosi*` element creators, and `<tosi-*>` tags. Legacy `xin*` exports are simple aliases kept for backward compatibility.
 
 ### Form-Associated Components
 

@@ -4,11 +4,11 @@ import {
   elements,
   Color,
 } from 'tosijs'
-import { xinForm, XinForm, xinField } from '../../src'
+import { tosiForm, TosiForm, tosiField } from '../../src'
 
 const { h2, code } = elements
 
-class XinCssVarEditor extends WebComponent {
+class TosiCssVarEditor extends WebComponent {
   elementSelector = ''
   targetSelector = ''
 
@@ -20,7 +20,7 @@ class XinCssVarEditor extends WebComponent {
 
   content = () => [
     h2({ part: 'title' }, 'CSS variables'),
-    xinForm({ part: 'variables', changeCallback: this.update }),
+    tosiForm({ part: 'variables', changeCallback: this.update }),
   ]
 
   loadVars = () => {
@@ -52,7 +52,9 @@ class XinCssVarEditor extends WebComponent {
           if (type === 'color') {
             value = Color.fromCss(value).html
           }
-          variables.append(xinField(code(cssVar), { key: cssVar, value, type }))
+          variables.append(
+            tosiField(code(cssVar), { key: cssVar, value, type })
+          )
         }
       }
     }
@@ -64,7 +66,7 @@ class XinCssVarEditor extends WebComponent {
       const targets = [
         ...(document.querySelectorAll(selector) || []),
       ] as HTMLElement[]
-      const { value } = this.parts.variables as XinForm
+      const { value } = this.parts.variables as TosiForm
       for (const target of targets) {
         for (const key of Object.keys(value)) {
           target.style.setProperty(key, value[key])
@@ -82,6 +84,6 @@ class XinCssVarEditor extends WebComponent {
   }
 }
 
-export const xinCssVarEditor = XinCssVarEditor.elementCreator({
-  tag: 'xin-css-var-editor',
-}) as ElementCreator<XinCssVarEditor>
+export const tosiCssVarEditor = TosiCssVarEditor.elementCreator({
+  tag: 'tosi-css-var-editor',
+}) as ElementCreator<TosiCssVarEditor>

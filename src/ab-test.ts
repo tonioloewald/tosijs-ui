@@ -1,7 +1,7 @@
 /*#
 # ab-test
 
-`<xin-ab>` provides a simple method for implementing A|B-testing.
+`<tosi-ab>` provides a simple method for implementing A|B-testing.
 
 ```js
 import { AbTest } from 'tosijs-ui'
@@ -25,24 +25,24 @@ randomize()
 ```html
 <div style="display: flex; gap: 10px; align-items: center;">
   <div style="display: flex; flex-direction: column; gap: 10px;">
-    <xin-ab class="a" condition="testA">
+    <tosi-ab class="a" condition="testA">
       <p>testA</p>
-    </xin-ab>
-    <xin-ab class="not-a" not condition="testA">
+    </tosi-ab>
+    <tosi-ab class="not-a" not condition="testA">
       <p>not testA</p>
-    </xin-ab>
-    <xin-ab class="b" condition="testB">
+    </tosi-ab>
+    <tosi-ab class="b" condition="testB">
       <p>testB</p>
-    </xin-ab>
-    <xin-ab class="not-b" not condition="testB">
+    </tosi-ab>
+    <tosi-ab class="not-b" not condition="testB">
       <p>not testB</p>
-    </xin-ab>
-    <xin-ab class="c" condition="testC">
+    </tosi-ab>
+    <tosi-ab class="c" condition="testC">
       <p>testC</p>
-    </xin-ab>
-    <xin-ab class="not-c" not condition="testC">
+    </tosi-ab>
+    <tosi-ab class="not-c" not condition="testC">
       <p>not testC</p>
-    </xin-ab>
+    </tosi-ab>
   </div>
   <pre>
   </pre>
@@ -65,15 +65,15 @@ randomize()
   margin: 0;
 }
 
-.preview xin-ab[not] p {
+.preview tosi-ab[not] p {
   background: red;
 }
 ```
 
 - Set `AbTest.conditions` to anything you like.
-- Use `<xin-ab>` elements to display conditional content.
+- Use `<tosi-ab>` elements to display conditional content.
 - `condition` attribute determines which value in `AbTest.conditions` controls the element
-- `not` reverses the condition (so `<xin-ab not condition="foo">` will be visible if `conditions.foo` is `false`)
+- `not` reverses the condition (so `<tosi-ab not condition="foo">` will be visible if `conditions.foo` is `false`)
 */
 
 import { Component } from 'tosijs'
@@ -120,4 +120,4 @@ export class AbTest extends Component {
   }
 }
 
-export const abTest = AbTest.elementCreator({ tag: 'xin-ab' })
+export const abTest = AbTest.elementCreator({ tag: 'tosi-ab' })

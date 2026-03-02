@@ -1,4 +1,4 @@
-import { Component, ElementCreator } from 'tosijs';
+import { Component } from 'tosijs';
 interface NotificationSpec {
     message: string;
     type?: 'success' | 'info' | 'log' | 'warn' | 'error' | 'progress';
@@ -9,7 +9,7 @@ interface NotificationSpec {
     color?: string;
 }
 type callback = () => void;
-export declare class XinNotification extends Component {
+export declare class TosiNotification extends Component {
     private static singleton?;
     static styleSpec: {
         ':host': {
@@ -102,6 +102,10 @@ export declare class XinNotification extends Component {
     static post(spec: NotificationSpec | string): callback;
     content: null;
 }
-export declare const xinNotification: ElementCreator<XinNotification>;
+/** @deprecated Use TosiNotification instead */
+export declare const XinNotification: typeof TosiNotification;
+export declare const tosiNotification: import("tosijs").ElementCreator<TosiNotification>;
+/** @deprecated Use tosiNotification instead */
+export declare const xinNotification: import("tosijs").ElementCreator<TosiNotification>;
 export declare function postNotification(spec: NotificationSpec | string): callback;
 export {};

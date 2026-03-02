@@ -2,20 +2,20 @@
 # carousel
 
 ```html
-<xin-carousel arrows dots max-visible-items=2 auto=2 snap-delay=4 snap-duration=0.5 loop>
-  <xin-icon icon="tosiFavicon" class="thing"></xin-icon>
-  <xin-icon icon="tosi" class="thing"></xin-icon>
-  <xin-icon icon="tosiUi" class="thing"></xin-icon>
-  <xin-icon icon="tosiPlatform" class="thing"></xin-icon>
-  <xin-icon icon="tosiXr" class="thing"></xin-icon>
-  <xin-icon icon="blueprint" class="thing"></xin-icon>
-  <xin-icon icon="cmy" class="thing"></xin-icon>
-  <xin-icon icon="rgb" class="thing"></xin-icon>
-</xin-carousel>
+<tosi-carousel arrows dots max-visible-items=2 auto=2 snap-delay=4 snap-duration=0.5 loop>
+  <tosi-icon icon="tosiFavicon" class="thing"></tosi-icon>
+  <tosi-icon icon="tosi" class="thing"></tosi-icon>
+  <tosi-icon icon="tosiUi" class="thing"></tosi-icon>
+  <tosi-icon icon="tosiPlatform" class="thing"></tosi-icon>
+  <tosi-icon icon="tosiXr" class="thing"></tosi-icon>
+  <tosi-icon icon="blueprint" class="thing"></tosi-icon>
+  <tosi-icon icon="cmy" class="thing"></tosi-icon>
+  <tosi-icon icon="rgb" class="thing"></tosi-icon>
+</tosi-carousel>
 ```
 ```css
 .thing {
-  --xin-icon-size: 160px;
+  --tosi-icon-size: 160px;
   height: 160px;
   margin: 30px 0 70px;
   position: relative;
@@ -34,7 +34,7 @@
   border-radius: 5px;
 }
 
-.preview xin-carousel {
+.preview tosi-carousel {
   background: #8883;
   margin: 10px;
   border-radius: 10px;
@@ -53,7 +53,7 @@ This is a minimalist carousel component that supports the usual stuff.
 - `loop` (boolean, false by default) causes next/previous buttons to loop
 - `auto` (number, 0 [seconds] by default) if > 0, automatically advances after that many seconds (always loops!)
 
-<xin-css-var-editor element-selector="xin-carousel"></xin-css-var-editor>
+<tosi-css-var-editor element-selector="tosi-carousel"></tosi-css-var-editor>
 */
 
 import {
@@ -72,7 +72,7 @@ interface CarouselParts {
   forward: HTMLButtonElement
 }
 
-export class XinCarousel extends WebComponent {
+export class TosiCarousel extends WebComponent {
   static initAttributes = {
     dots: false,
     arrows: false,
@@ -349,8 +349,11 @@ export class XinCarousel extends WebComponent {
   }
 }
 
-export const xinCarousel = XinCarousel.elementCreator({
-  tag: 'xin-carousel',
+/** @deprecated Use TosiCarousel instead */
+export const XinCarousel = TosiCarousel
+
+export const tosiCarousel = TosiCarousel.elementCreator({
+  tag: 'tosi-carousel',
   styleSpec: {
     ':host': {
       _carouselIconSize: 24,
@@ -369,4 +372,7 @@ export const xinCarousel = XinCarousel.elementCreator({
       boxShadow: 'none',
     },
   },
-}) as ElementCreator<XinCarousel>
+}) as ElementCreator<TosiCarousel>
+
+/** @deprecated Use tosiCarousel instead */
+export const xinCarousel = tosiCarousel

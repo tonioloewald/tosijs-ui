@@ -1,5 +1,5 @@
 import { Component as XinComponent, ElementCreator } from 'tosijs';
-export declare class XinSizer extends XinComponent {
+export declare class TosiSizer extends XinComponent {
     target?: HTMLElement | null;
     static styleSpec: {
         ':host': {
@@ -31,4 +31,8 @@ export declare class XinSizer extends XinComponent {
     resizeTarget: (event: Event) => void;
     connectedCallback(): void;
 }
-export declare const xinSizer: ElementCreator<XinSizer>;
+/** @deprecated Use TosiSizer instead */
+export declare const XinSizer: typeof TosiSizer;
+export declare const tosiSizer: ElementCreator<TosiSizer>;
+/** @deprecated Use tosiSizer instead */
+export declare const xinSizer: ElementCreator<TosiSizer>;

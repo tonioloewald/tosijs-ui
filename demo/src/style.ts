@@ -17,8 +17,8 @@ and use the same values that are in your CSS for inline code when needed.
 >   into `vars` values.
 
 ```js
-const tabs = preview.querySelector('xin-tabs')
-const [css, js] = preview.querySelectorAll('xin-code')
+const tabs = preview.querySelector('tosi-tabs')
+const [css, js] = preview.querySelectorAll('tosi-code')
 const convertButton = preview.querySelector('button')
 
 function quoteTrim(s, symbol = false) {
@@ -88,9 +88,9 @@ convertButton.addEventListener('click', () => {
 })
 ```
 ```html
-<xin-tabs>
+<tosi-tabs>
 <button slot="after-tabs">Convert</button>
-<xin-code mode="css" name="css">
+<tosi-code mode="css" name="css">
 @import url('https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&famiSpline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap');
 
 tr:nth-child(2n) {
@@ -111,24 +111,24 @@ td {
   }
 }
 
-header xin-locale-picker xin-select button {
+header tosi-locale-picker tosi-select button {
   --brand-color: var(--brand-text-color);
   background: transparent;
   gap: 2px;
 }
 
-header xin-locale-picker xin-select button svg {
+header tosi-locale-picker tosi-select button svg {
   stroke: var(--brand-text-color) !important;
 }
-</xin-code>
-<xin-code mode="javascript" name="js"></xin-code>
-</xin-tabs>
+</tosi-code>
+<tosi-code mode="javascript" name="js"></tosi-code>
+</tosi-tabs>
 ```
 ```css
-.preview xin-tabs {
+.preview tosi-tabs {
   background: var(--inset-bg);
 }
-.preview xin-tabs, .preview textarea, .preview xin-code {
+.preview tosi-tabs, .preview textarea, .preview tosi-code {
   width: 100%;
   height: 100%;
   resize: none;
@@ -232,8 +232,8 @@ export const styleSpec: XinStyleSheet = {
     margin: '0',
     lineHeight: vars.lineHeight,
     background: vars.background,
-    _xinTabsSelectedColor: vars.brandColor,
-    _xinTabsBarColor: vars.brandTextColor,
+    _tosiTabsSelectedColor: vars.brandColor,
+    _tosiTabsBarColor: vars.brandTextColor,
     _menuItemIconColor: vars.brandColor,
     color: vars.textColor,
   },
@@ -296,10 +296,10 @@ export const styleSpec: XinStyleSheet = {
     height: '100vh',
     overflow: 'hidden',
   },
-  'main > xin-sidenav': {
+  'main > tosi-sidenav': {
     height: 'calc(100vh - var(--header-height))',
   },
-  'main > xin-sidenav::part(nav)': {
+  'main > tosi-sidenav::part(nav)': {
     background: vars.navBg,
   },
   'input[type=search]': {
@@ -488,7 +488,7 @@ export const styleSpec: XinStyleSheet = {
     fontFamily: vars.codeFontFamily,
     _textColor: vars.brandColor,
   },
-  '.-xin-sidenav-visible .close-content': {
+  '.-tosi-sidenav-visible .close-content': {
     display: 'none',
   },
   '.transparent, .iconic': {
@@ -512,7 +512,7 @@ export const styleSpec: XinStyleSheet = {
     boxShadow: 'none',
     color: vars.textColor,
   },
-  'xin-sidenav:not([compact]) .show-within-compact': {
+  'tosi-sidenav:not([compact]) .show-within-compact': {
     display: 'none',
   },
   '.on.on': {
@@ -536,13 +536,13 @@ export const styleSpec: XinStyleSheet = {
     opacity: '0.8',
     marginLeft: 0,
   },
-  'xin-example': {
+  'tosi-example': {
     margin: 'var(--spacing) 0',
   },
-  'xin-example [part=editors]': {
+  'tosi-example [part=editors]': {
     background: vars.insetBg,
   },
-  "[class*='icon-'], xin-icon": {
+  "[class*='icon-'], tosi-icon": {
     color: 'currentcolor',
     height: vars.fontSize,
     pointerEvents: 'none',
@@ -569,12 +569,12 @@ export const styleSpec: XinStyleSheet = {
   'th, td': {
     padding: 'calc(var(--spacing) * 0.5) var(--spacing)',
   },
-  'header xin-locale-picker xin-select button': {
+  'header tosi-locale-picker tosi-select button': {
     color: 'currentcolor',
     background: 'transparent',
     gap: '2px',
   },
-  'img.logo, xin-icon.logo': {
+  'img.logo, tosi-icon.logo': {
     animation: '2s ease-in-out 0s infinite alternate logo-swing',
   },
   '@keyframes logo-swing': {

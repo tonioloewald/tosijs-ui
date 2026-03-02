@@ -5,7 +5,7 @@ A [mapboxgl](https://docs.mapbox.com/mapbox-gl-js/api/) wrapper.
 
 ```js
 const pickStyle = preview.querySelector('select')
-const mapbox = preview.querySelector('xin-map')
+const mapbox = preview.querySelector('tosi-map')
 const here = preview.querySelector('button')
 
 pickStyle.addEventListener('change', () => {
@@ -54,12 +54,12 @@ here.addEventListener('click', async () => {
 ```
 ```html
 <!-- please don't abuse my mapbox token -->
-<xin-map
+<tosi-map
   style="width: 100%; height: 100%"
   coords="14.0093606,120.995083,17"
   token="pk.eyJ1IjoicG9kcGVyc29uIiwiYSI6ImNqc2JlbWU0bjA1ZmY0YW5ycHZod3VhbWcifQ.arvqfpOqMgFYkKgQ35UScA"
   map-style="mapbox://styles/mapbox/streets-v12"
-></xin-map>
+></tosi-map>
 <select>
   <option selected value="mapbox://styles/mapbox/streets-v12">Streets</option>
   <option value="mapbox://styles/mapbox/satellite-v9">Satellite</option>
@@ -68,7 +68,7 @@ here.addEventListener('click', async () => {
   <option value="mapbox://styles/mapbox/outdoors-v12">Outdoors</option>
 </select>
 <button>
-  <xin-icon icon="mapPin"></xin-icon>
+  <tosi-icon icon="mapPin"></tosi-icon>
   <span>Your Location</span>
 </button>
 ```
@@ -94,18 +94,18 @@ and [use the standard mapbox APIs directly](https://docs.mapbox.com/api/maps/sty
 
 ## Form Integration
 
-`<xin-map>` is form-associated, making it useful as a location picker in forms:
+`<tosi-map>` is form-associated, making it useful as a location picker in forms:
 
 ```html
 <form class="map-form">
   <label>
     <b>Select your location:</b>
-    <xin-map
+    <tosi-map
       name="location"
       style="width: 100%; height: 200px"
       coords="40.7128,-74.0060,10"
       token="pk.eyJ1IjoicG9kcGVyc29uIiwiYSI6ImNqc2JlbWU0bjA1ZmY0YW5ycHZod3VhbWcifQ.arvqfpOqMgFYkKgQ35UScA"
-    ></xin-map>
+    ></tosi-map>
   </label>
   <button type="submit">Submit Location</button>
   <button type="reset">Reset</button>
@@ -277,5 +277,5 @@ export class MapBox extends WebComponent {
 }
 
 export const mapBox = MapBox.elementCreator({
-  tag: 'xin-map',
+  tag: 'tosi-map',
 }) as ElementCreator<MapBox>

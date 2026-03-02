@@ -1,6 +1,6 @@
 export declare const liveExampleStyleSpec: {
     ':host': {
-        '--xin-example-height': string;
+        '--tosi-example-height': string;
         '--code-editors-bar-bg': string;
         '--code-editors-bar-color': string;
         '--widget-bg': string;

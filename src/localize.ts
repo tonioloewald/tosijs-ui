@@ -1,8 +1,8 @@
 /*#
 # localize
 
-`tosijs-ui` provides support for localization via the `localize` method and the `<xin-locale-picker>`
-and `<xin-localized>` custom-elements.
+`tosijs-ui` provides support for localization via the `localize` method and the `<tosi-locale-picker>`
+and `<tosi-localized>` custom-elements.
 
 > ### Important Note
 > This module deals with the **language** used in the user interface. "locale" is
@@ -18,16 +18,16 @@ and `<xin-localized>` custom-elements.
 
 Enables localization from TSV string data.
 
-## XinLocalePicker
+## TosiLocalePicker
 
 A selector that lets the user pick from among supported languages.
 
 ```html
 <h3>Locale Picker</h3>
-<xin-locale-picker></xin-locale-picker>
+<tosi-locale-picker></tosi-locale-picker>
 
 <h3>Locale Picker with <code>hide-captions</code></h3>
-<xin-locale-picker hide-caption></xin-locale-picker>
+<tosi-locale-picker hide-caption></tosi-locale-picker>
 ```
 
 ## `localize()`
@@ -87,39 +87,39 @@ preview.append(
 
 If you want to directly set locale, just use `setLocale()`.
 
-## XinLocalized
+## TosiLocalized
 
 A span-replacement that automatically localizes its text content.
 By default the case in the localized data is preserved unless the
 reference text is all lowercase, in which case the localized text
 is also lowercased.
 
-While viewing this documentation, all `<xin-localized>` elements should display a **red
+While viewing this documentation, all `<tosi-localized>` elements should display a **red
 underline**.
 
 ```html
 <h3>Localized Widgets</h3>
-<button><xin-localized>Yes</xin-localized></button>
-<button><xin-localized>No</xin-localized></button>
-<button><xin-localized>Open…</xin-localized></button> <i>note the ellipsis</i>
+<button><tosi-localized>Yes</tosi-localized></button>
+<button><tosi-localized>No</tosi-localized></button>
+<button><tosi-localized>Open…</tosi-localized></button> <i>note the ellipsis</i>
 
 <h3>Lowercase is preserved</h3>
-<button><xin-localized>yes</xin-localized></button>
-<button><xin-localized>no</xin-localized></button>
-<button><xin-localized>open…</xin-localized></button>
+<button><tosi-localized>yes</tosi-localized></button>
+<button><tosi-localized>no</tosi-localized></button>
+<button><tosi-localized>open…</tosi-localized></button>
 
 <h3>Localized Attribute</h3>
 <input>
 ```
 ```css
-xin-localized {
+tosi-localized {
   border-bottom: 2px solid red;
 }
 ```
 ```js
-import { xinLocalized, localize } from 'tosijs-ui'
+import { tosiLocalized, localize } from 'tosijs-ui'
 
-preview.append(xinLocalized({
+preview.append(tosiLocalized({
   refString: 'localized placeholder',
   localeChanged() {
     this.previousElementSibling.setAttribute('placeholder', localize(this.refString))
@@ -127,14 +127,14 @@ preview.append(xinLocalized({
 }))
 ```
 
-`<xin-localized>` has a `refString` attribute (which defaults to its initial `textContent`)
+`<tosi-localized>` has a `refString` attribute (which defaults to its initial `textContent`)
 which is the text that it localizes. You can set it directly.
 
 It also has an `localeChanged` method which defaults to setting the content of the element
 to the localized reference string, but which you can override, to (for example) set a property
 or attribute of the parent element.
 
-> `<xin-localized>` *can* be used inside the shadowDOM of other custom-elements.
+> `<tosi-localized>` *can* be used inside the shadowDOM of other custom-elements.
 
 ## `i18n`
 
@@ -197,10 +197,10 @@ export default `( content of tsv file )`
 
 You use this data using `initLocalization()`.
 
-## Leveraging XinLocalized Automatic Updates
+## Leveraging TosiLocalized Automatic Updates
 
-If you want to leverage XinLocalized's automatic updates you simply need to
-implement `updateLocale` and register yourself with `XinLocalized.allInstances`
+If you want to leverage TosiLocalized's automatic updates you simply need to
+implement `updateLocale` and register yourself with `TosiLocalized.allInstances`
 (which is a `Set<AbstractLocalized>).
 
 Typically, this would look like something like:
@@ -213,14 +213,14 @@ class MyLocalizedComponent extends Component {
   connectecCallback() {
     super.connectedCallback()
 
-    XinLocalized.allInstances.add(this)
+    TosiLocalized.allInstances.add(this)
   }
 
   // avoid leaking!
   disconnectecCallback() {
     super.connectedCallback()
 
-    XinLocalized.allInstances.delete(this)
+    TosiLocalized.allInstances.delete(this)
   }
 
   // presumably your render method does the right things
@@ -233,7 +233,7 @@ class MyLocalizedComponent extends Component {
 
 import { Component, tosi, elements, bindings, observe } from 'tosijs'
 import { makeSorter } from './make-sorter'
-import { xinSelect, XinSelect } from './select'
+import { tosiSelect, TosiSelect } from './select'
 
 interface TranslationMap {
   [key: string]: string[]
@@ -260,7 +260,7 @@ export const { i18n } = tosi({
 
 bindings.localeOptions = {
   toDOM(select, options) {
-    if (select instanceof XinSelect) {
+    if (select instanceof TosiSelect) {
       select.options = options
     }
   },
@@ -275,7 +275,7 @@ export const setLocale = (language: string) => {
 }
 
 export const updateLocalized = () => {
-  const localizeds = Array.from(XinLocalized.allInstances)
+  const localizeds = Array.from(TosiLocalized.allInstances)
   for (const localized of localizeds) {
     localized.localeChanged()
   }
@@ -344,13 +344,13 @@ export function localize(ref: string): string {
   return ref
 }
 
-export class LocalePicker extends Component {
+export class TosiLocalePicker extends Component {
   static initAttributes = {
     hideCaption: false,
   }
 
   content = () => {
-    return xinSelect({
+    return tosiSelect({
       part: 'select',
       showIcon: true,
       title: localize('Language'),
@@ -366,9 +366,15 @@ export class LocalePicker extends Component {
   }
 }
 
-export const localePicker = LocalePicker.elementCreator({
-  tag: 'xin-locale-picker',
+/** @deprecated Use TosiLocalePicker instead */
+export const LocalePicker = TosiLocalePicker
+
+export const tosiLocalePicker = TosiLocalePicker.elementCreator({
+  tag: 'tosi-locale-picker',
 })
+
+/** @deprecated Use tosiLocalePicker instead */
+export const localePicker = tosiLocalePicker
 
 interface AbstractLocalized {
   localeChanged: () => void
@@ -376,7 +382,7 @@ interface AbstractLocalized {
   disconnectedCallback: () => void
 }
 
-export class XinLocalized extends Component {
+export class TosiLocalized extends Component {
   static allInstances = new Set<AbstractLocalized>()
   static initAttributes = {
     refString: '',
@@ -387,13 +393,13 @@ export class XinLocalized extends Component {
   connectedCallback() {
     super.connectedCallback()
 
-    XinLocalized.allInstances.add(this as unknown as AbstractLocalized)
+    TosiLocalized.allInstances.add(this as unknown as AbstractLocalized)
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback()
 
-    XinLocalized.allInstances.delete(this as unknown as AbstractLocalized)
+    TosiLocalized.allInstances.delete(this as unknown as AbstractLocalized)
   }
 
   localeChanged() {
@@ -410,11 +416,17 @@ export class XinLocalized extends Component {
   }
 }
 
-export const xinLocalized = XinLocalized.elementCreator({
-  tag: 'xin-localized',
+/** @deprecated Use TosiLocalized instead */
+export const XinLocalized = TosiLocalized
+
+export const tosiLocalized = TosiLocalized.elementCreator({
+  tag: 'tosi-localized',
   styleSpec: {
     ':host': {
       pointerEvents: 'none',
     },
   },
 })
+
+/** @deprecated Use tosiLocalized instead */
+export const xinLocalized = tosiLocalized

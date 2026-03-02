@@ -13,7 +13,7 @@ menuItems, and (because it persists in the DOM) supports keyboard
 shortcuts.
 
 ```js
-import { popMenu, localize, tosiMenu, postNotification, xinLocalized, icons } from 'tosijs-ui'
+import { popMenu, localize, tosiMenu, postNotification, tosiLocalized, icons } from 'tosijs-ui'
 import { elements } from 'tosijs'
 
 let picked = ''
@@ -151,17 +151,17 @@ preview.append(
       menuItems,
       localized: true,
     },
-    xinLocalized('Menu'),
+    tosiLocalized('Menu'),
     icons.chevronDown()
   )
 )
 ```
 ```html
 <button title="menu test">
-  <xin-icon icon="moreVertical"></xin-icon>
+  <tosi-icon icon="moreVertical"></tosi-icon>
 </button>
 <button title="menu test from bottom-right" style="position: absolute; bottom: 0; right: 0">
-  <xin-icon icon="moreVertical"></xin-icon>
+  <tosi-icon icon="moreVertical"></tosi-icon>
 </button>
 ```
 ```css
@@ -256,7 +256,7 @@ interface SubMenu {
 
 ### Keyboard Shortcuts
 
-If a menu is embodied in a `<xin-menu>` it is supported by keyboard
+If a menu is embodied in a `<tosi-menu>` it is supported by keyboard
 shortcuts. Both text and symbolic shortcut descriptions are supported,
 e.g.
 
@@ -271,7 +271,7 @@ If you set `localized: true` in `PopMenuOptions` then menu captions will be be
 passed through `localize`. You'll need to provide the appropriate localized strings,
 of course.
 
-> `<xin-menu>` supports the `localized` attribute but it doesn't localize
+> `<tosi-menu>` supports the `localized` attribute but it doesn't localize
 > its trigger button.
 
 To see this in action, see the example below, or look at the
@@ -280,7 +280,7 @@ to render column names when you show hidden columns.
 
 ```js
 import { elements } from 'tosijs'
-import { xinLocalized, localize, icons, popMenu, postNotification } from 'tosijs-ui'
+import { tosiLocalized, localize, icons, popMenu, postNotification } from 'tosijs-ui'
 const { button } = elements
 const makeItem = s => ({
   caption: s,
@@ -306,7 +306,7 @@ const target = button(
       })
     }
   },
-  xinLocalized(
+  tosiLocalized(
     { style: { marginRight: '5px' }},
     'menu'
   ),

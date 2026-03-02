@@ -5,7 +5,7 @@ A virtual data-table, configurable via a `columns` array (which will automatical
 that displays gigantic tables with fixed headers (and live column-resizing) using a minimum of resources and cpu.
 
 ```js
-import { dataTable } from 'tosijs-ui'
+import { tosiTable } from 'tosijs-ui'
 import { input } from 'tosijs'.elements
 
 const emojiRequest = await fetch('https://raw.githubusercontent.com/tonioloewald/emoji-metadata/master/emoji-metadata.json')
@@ -45,7 +45,7 @@ const columns = [
   },
 ]
 
-preview.append(dataTable({
+preview.append(tosiTable({
   multiple: true,
   array: emojiData,
   localized: true,
@@ -105,19 +105,19 @@ export interface ColumnOptions {
 
 ## Selection
 
-`<xin-table>` supports `select` and `multiple` boolean properties allowing rows to be selectable. Selected rows will
+`<tosi-table>` supports `select` and `multiple` boolean properties allowing rows to be selectable. Selected rows will
 be given the `[aria-selected]` attribute, so style them as you wish.
 
 `multiple` select supports shift-clicking and command/meta-clicking.
 
-`<xin-table>` provides an `selectionChanged(visibleSelectedRows: any[]): void` callback property allowing you to respond to changes
+`<tosi-table>` provides an `selectionChanged(visibleSelectedRows: any[]): void` callback property allowing you to respond to changes
 in the selection, and also `selectedRows` and `visibleSelectedRows` properties.
 
 The following methods are also provided:
 
-- `<xin-table>.selectRow(row: any, select = true)` (de)selects specified row
-- `<xin-table>.selectRows(rows?: any[], select = true)` (de)selects specified rows
-- `<xin-table>.deSelect(rows?: any[])` deselects all or specified rows.
+- `<tosi-table>.selectRow(row: any, select = true)` (de)selects specified row
+- `<tosi-table>.selectRows(rows?: any[], select = true)` (de)selects specified rows
+- `<tosi-table>.deSelect(rows?: any[])` deselects all or specified rows.
 
 These are rather fine-grained but they're used internally by the selection code so they may as well be documented.
 
@@ -132,21 +132,21 @@ You can override this by setting the table's sort function (it's an `Array.sort(
 to whatever you like, and you can replace the `headerCell` or set the `sort` of each column
 to `false` if you have some specific sorting in mind.
 
-You can disable sorting controls by adding the `nosort` attribute to the `<xin-table>`.
+You can disable sorting controls by adding the `nosort` attribute to the `<tosi-table>`.
 
 ## Hiding (and Showing) Columns
 
 By default, the user can show / hide columns by clicking via the column header menu.
-You can remove this option by adding the `nohide` attribute to the `<xin-table>`
+You can remove this option by adding the `nohide` attribute to the `<tosi-table>`
 
 ## Reordering Columns
 
 By default, the user can reorder columns by dragging them around. You can disable this
-by adding the `noreorder` attribute to the `<xin-table>`.
+by adding the `noreorder` attribute to the `<tosi-table>`.
 
 ## Row Height
 
-If you set the `<xin-table>`'s `rowHeight` to `0` it will render all its elements (i.e. not be virtual). This is
+If you set the `<tosi-table>`'s `rowHeight` to `0` it will render all its elements (i.e. not be virtual). This is
 useful for smaller tables, or tables with variable row-heights.
 
 ## Styling
@@ -161,8 +161,8 @@ of top and bottom rows.
 
 ## Localization
 
-`<xin-table>` supports the `localized` attribute which simply causes its default `headerCell`
-to render a `<xin-localized>` element instead of a span for its caption, and localize its
+`<tosi-table>` supports the `localized` attribute which simply causes its default `headerCell`
+to render a `<tosi-localized>` element instead of a span for its caption, and localize its
 popup menu.
 
 You'll need to make sure your localized strings include:
@@ -185,14 +185,13 @@ import {
   tosiValue,
   getListItem,
   tosi,
-  deprecated,
 } from 'tosijs'
 import { trackDrag } from './track-drag'
 import { SortCallback } from './make-sorter'
 import { icons } from './icons'
 import { popMenu, MenuItem } from './menu'
 import * as dragAndDrop from './drag-and-drop'
-import { xinLocalized, localize } from './localize'
+import { tosiLocalized, localize } from './localize'
 
 function defaultWidth(
   array: any[],
@@ -251,7 +250,7 @@ const passThru = (array: any[]) => array
 
 export type SelectCallback = (selected: any[]) => void
 
-export class DataTable extends WebComponent {
+export class TosiTable extends WebComponent {
   static initAttributes = {
     rowHeight: 30,
     charWidth: 15,
@@ -659,7 +658,7 @@ export class DataTable extends WebComponent {
   }
 
   get captionSpan(): ElementCreator {
-    return this.localized ? xinLocalized : span
+    return this.localized ? tosiLocalized : span
   }
 
   headerCell = (options: ColumnOptions) => {
@@ -908,7 +907,10 @@ export class DataTable extends WebComponent {
   }
 }
 
-export const dataTable = DataTable.elementCreator({
+/** @deprecated Use TosiTable instead */
+export const DataTable = TosiTable
+
+export const tosiTable = TosiTable.elementCreator({
   tag: 'tosi-table',
   styleSpec: {
     ':host': {
@@ -961,10 +963,10 @@ export const dataTable = DataTable.elementCreator({
       background: vars.tosiTableDropHeaderBg,
     },
   },
-}) as ElementCreator<DataTable>
+}) as ElementCreator<TosiTable>
 
-// Legacy alias for backward compatibility
-export const xinTable = deprecated(
-  dataTable,
-  'xinTable is deprecated. Use dataTable instead.'
-)
+/** @deprecated Use tosiTable instead */
+export const dataTable = tosiTable
+
+/** @deprecated Use tosiTable instead */
+export const xinTable = tosiTable

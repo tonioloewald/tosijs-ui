@@ -1,22 +1,22 @@
 /*#
 # password strength
 
-Just wrap it a `<xin-password-strength>` element around an `<input>`
+Just wrap it a `<tosi-password-strength>` element around an `<input>`
 and it will gauge its content strength as a password. It will also
 let you **securely verify** that the password hasn't been breached.
 
 ```js
-import { xinLocalized, localize } from 'tosijs-ui'
+import { tosiLocalized, localize } from 'tosijs-ui'
 
 const toggle = preview.querySelector('.toggle')
-const icon = preview.querySelector('xin-icon')
+const icon = preview.querySelector('tosi-icon')
 const input = preview.querySelector('input')
 const breach = preview.querySelector('.breach')
 const output = preview.querySelector('.output')
-const passwordStrength = preview.querySelector('xin-password-strength')
+const passwordStrength = preview.querySelector('tosi-password-strength')
 
 // Localization Example
-passwordStrength.append(xinLocalized({
+passwordStrength.append(tosiLocalized({
   refString: 'Yes',
   localeChanged () {
     this.parentElement.strengthDescriptions = [
@@ -42,7 +42,7 @@ toggle.addEventListener('click', () => {
 })
 
 breach.addEventListener('click', async () => {
-  preview.querySelector('xin-password-strength').isBreached().then(isBreached => {
+  preview.querySelector('tosi-password-strength').isBreached().then(isBreached => {
     output.textContent =
       isBreached
       ? 'This password has been breached, look at console for details'
@@ -52,16 +52,16 @@ breach.addEventListener('click', async () => {
 })
 ```
 ```html
-<xin-password-strength>
+<tosi-password-strength>
   <input class="password" type="password">
   <button class="toggle">
-    <xin-icon icon="eye"></xin-icon>
+    <tosi-icon icon="eye"></tosi-icon>
   </button>
-</xin-password-strength>
+</tosi-password-strength>
 
 <br><br>
 <button class="breach">
-  <xin-localized>Check if breached</xin-localized>
+  <tosi-localized>Check if breached</tosi-localized>
 </button>
 <div class="output"></div>
 ```
@@ -101,7 +101,7 @@ A password smaller than `minLength` is an automatic `0`.
 - `issues` is a structure which you can use to generate feedback
 
 ```
-<xin-password-strength>.issues = {
+<tosi-password-strength>.issues = {
   tooShort: boolean,
   short: boolean,
   noUpper: boolean,
@@ -139,7 +139,7 @@ strengthDescriptions = [
 
 ## `isBreached()`
 
-`<xin-password-meter>` also provides an `isBreached(): Promise<boolean>` method
+`<tosi-password-strength>` also provides an `isBreached(): Promise<boolean>` method
 which uses [weakpass.com's API](https://weakpass.com/) to tell you if the password has been
 breached.
 
@@ -187,7 +187,7 @@ export const isBreached = async (password: string): Promise<boolean> => {
 }
 
 const { span, xinSlot } = elements
-export class XinPasswordStrength extends Component {
+export class TosiPasswordStrength extends Component {
   static initAttributes = {
     minLength: 8,
     goodLength: 12,
@@ -287,8 +287,11 @@ export class XinPasswordStrength extends Component {
   }
 }
 
-export const xinPasswordStrength = XinPasswordStrength.elementCreator({
-  tag: 'xin-password-strength',
+/** @deprecated Use TosiPasswordStrength instead */
+export const XinPasswordStrength = TosiPasswordStrength
+
+export const tosiPasswordStrength = TosiPasswordStrength.elementCreator({
+  tag: 'tosi-password-strength',
   styleSpec: {
     ':host': {
       display: 'inline-flex',
@@ -329,3 +332,6 @@ export const xinPasswordStrength = XinPasswordStrength.elementCreator({
     },
   },
 })
+
+/** @deprecated Use tosiPasswordStrength instead */
+export const xinPasswordStrength = tosiPasswordStrength

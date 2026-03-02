@@ -7,18 +7,18 @@ const { slot } = elements
 
 While we wait for enough browsers to implement [container-queries](https://www.w3.org/TR/css-contain-3/),
 and in any event when you simply want to do different things at different sizes (e.g. in the project I'm
-working on right now, a row of buttons turns into a menu at narrow widths) there's `<xin-sizebreak>`.
+working on right now, a row of buttons turns into a menu at narrow widths) there's `<tosi-sizebreak>`.
 
-Note that the sizes referred to are of the `<xin-sizebreak>`'s `.offsetParent`, and it watches for
+Note that the sizes referred to are of the `<tosi-sizebreak>`'s `.offsetParent`, and it watches for
 the window's `resize` events and its own (via `ResizeObserver`).
 
 ```html
 <div class="container">
-  <xin-sizebreak min-width="300" min-height="150">
+  <tosi-sizebreak min-width="300" min-height="150">
     <h1>BIG!</h1>
     <i slot="small">little</i>
-  </xin-sizebreak>
-  <xin-sizer></xin-sizer>
+  </tosi-sizebreak>
+  <tosi-sizer></tosi-sizer>
 </div>
 ```
 ```css
@@ -26,14 +26,14 @@ the window's `resize` events and its own (via `ResizeObserver`).
   touch-action: none;
 }
 
-.preview xin-sizebreak {
+.preview tosi-sizebreak {
   width: 100%;
   height: 100%;
   background: #fff8;
   border: 1px solid #aaa;
 }
 
-.preview xin-sizebreak * {
+.preview tosi-sizebreak * {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -67,7 +67,7 @@ the window's `resize` events and its own (via `ResizeObserver`).
 }
 ```
 
-`<xin-sizebreak>` supports both `min-width` and/or `min-height`, and you can of course target only one
+`<tosi-sizebreak>` supports both `min-width` and/or `min-height`, and you can of course target only one
 of the slots if you like. The demo site uses them to hide the [bundlejs](https://bundlejs.com/) badge when
 space is tight.
 */
@@ -122,5 +122,5 @@ export class SizeBreak extends WebComponent {
 }
 
 export const sizeBreak = SizeBreak.elementCreator({
-  tag: 'xin-sizebreak',
+  tag: 'tosi-sizebreak',
 }) as ElementCreator<SizeBreak>

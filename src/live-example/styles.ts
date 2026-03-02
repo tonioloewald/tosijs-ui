@@ -1,13 +1,13 @@
 export const liveExampleStyleSpec = {
   ':host': {
-    '--xin-example-height': '320px',
+    '--tosi-example-height': '320px',
     '--code-editors-bar-bg': '#777',
     '--code-editors-bar-color': '#fff',
     '--widget-bg': '#fff8',
     '--widget-color': '#000',
     position: 'relative',
     display: 'flex',
-    height: 'var(--xin-example-height)',
+    height: 'var(--tosi-example-height)',
     background: 'var(--background)',
     boxSizing: 'border-box',
   },

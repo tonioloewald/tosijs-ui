@@ -6,7 +6,7 @@ from the bottom-right.
 
 ```html
 <div>
-  <xin-sizer></xin-sizer>
+  <tosi-sizer></tosi-sizer>
 </div>
 ```
 ```css
@@ -21,14 +21,14 @@ from the bottom-right.
 }
 ```
 
-<xin-css-var-editor element-selector="xin-sizer"></xin-css-var-editor>
+<tosi-css-var-editor element-selector="tosi-sizer"></tosi-css-var-editor>
 */
 
 import { Component as XinComponent, ElementCreator, vars } from 'tosijs'
 import { icons } from './icons'
 import { trackDrag } from './track-drag'
 
-export class XinSizer extends XinComponent {
+export class TosiSizer extends XinComponent {
   target?: HTMLElement | null = null
 
   static styleSpec = {
@@ -101,6 +101,12 @@ export class XinSizer extends XinComponent {
   }
 }
 
-export const xinSizer = XinSizer.elementCreator({
-  tag: 'xin-sizer',
-}) as ElementCreator<XinSizer>
+/** @deprecated Use TosiSizer instead */
+export const XinSizer = TosiSizer
+
+export const tosiSizer = TosiSizer.elementCreator({
+  tag: 'tosi-sizer',
+}) as ElementCreator<TosiSizer>
+
+/** @deprecated Use tosiSizer instead */
+export const xinSizer = tosiSizer

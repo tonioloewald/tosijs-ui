@@ -29,7 +29,7 @@ grid.addEventListener('click', (event) => {
         'hello, I am a float',
         button('close me', {
           onClick(event){
-            event.target.closest('xin-float').remove()
+            event.target.closest('tosi-float').remove()
           }
         })
       ],
@@ -95,10 +95,10 @@ export interface PopFloatOptions {
   draggable?: boolean
 }
 
-export const popFloat = (options: PopFloatOptions): XinFloat
+export const popFloat = (options: PopFloatOptions): TosiFloat
 ```
 
-Create a `<xin-float>` with the content provided, positioned as specified (or automatically).
+Create a `<tosi-float>` with the content provided, positioned as specified (or automatically).
 
 ## positionFloat
 
@@ -169,7 +169,7 @@ preview.append(button(
             {
               class: 'no-drag close-tearoff',
               onClick(event) {
-                event.target.closest('xin-float').remove()
+                event.target.closest('tosi-float').remove()
               }
             }
           )
@@ -243,7 +243,7 @@ preview.append(button(
 */
 
 import { ElementPart } from 'tosijs'
-import { xinFloat, XinFloat } from './float'
+import { tosiFloat, TosiFloat } from './float'
 import { bringToFront } from './track-drag'
 
 export type FloatPosition =
@@ -272,7 +272,7 @@ export interface PopFloatOptions {
   draggable?: boolean
 }
 
-export const popFloat = (options: PopFloatOptions): XinFloat => {
+export const popFloat = (options: PopFloatOptions): TosiFloat => {
   const {
     content,
     target,
@@ -282,8 +282,8 @@ export const popFloat = (options: PopFloatOptions): XinFloat => {
     draggable,
   } = options
   const float = Array.isArray(content)
-    ? xinFloat(...content)
-    : xinFloat(content)
+    ? tosiFloat(...content)
+    : tosiFloat(content)
 
   positionFloat(
     float,
@@ -301,7 +301,7 @@ export const popFloat = (options: PopFloatOptions): XinFloat => {
 }
 
 export const positionFloat = (
-  element: XinFloat,
+  element: TosiFloat,
   target: HTMLElement,
   position?: FloatPosition,
   remainOnScroll?: 'hide' | 'remove' | 'remain',

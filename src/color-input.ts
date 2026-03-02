@@ -5,7 +5,7 @@
 This is a color input field that supports opacity
 
 ```js
-const colorInput = preview.querySelector('xin-color')
+const colorInput = preview.querySelector('tosi-color')
 const circle = preview.querySelector('div')
 
 colorInput.addEventListener('change', () => {
@@ -13,7 +13,7 @@ colorInput.addEventListener('change', () => {
 })
 ```
 ```html
-<xin-color value="red"></xin-color>
+<tosi-color value="red"></tosi-color>
 <div
   style="
     width: 200px;
@@ -25,7 +25,7 @@ colorInput.addEventListener('change', () => {
 ```
 
 
-<xin-css-var-editor element-selector="xin-color"></xin-css-var-editor>
+<tosi-css-var-editor element-selector="tosi-color"></tosi-css-var-editor>
 */
 
 import {
@@ -131,5 +131,5 @@ class ColorInput extends Component<ColorParts> {
 }
 
 export const colorInput = ColorInput.elementCreator({
-  tag: 'xin-color',
+  tag: 'tosi-color',
 }) as ElementCreator<ColorInput>

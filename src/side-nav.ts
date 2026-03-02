@@ -18,7 +18,7 @@ const { slot } = elements
 
 type NavState = 'normal' | 'compact/nav' | 'compact/content'
 
-export class SideNav extends Component {
+export class TosiSidenav extends Component {
   static initAttributes = {
     minSize: 800,
     navSize: 200,
@@ -124,9 +124,15 @@ export class SideNav extends Component {
   }
 }
 
-export const sideNav = SideNav.elementCreator({
-  tag: 'tosi-sidenav',
-}) as ElementCreator<SideNav>
+/** @deprecated Use TosiSidenav instead */
+export const SideNav = TosiSidenav
 
-/** @deprecated Use sideNav with tag 'tosi-sidenav' instead */
-export const xinSidenav = sideNav
+export const tosiSidenav = TosiSidenav.elementCreator({
+  tag: 'tosi-sidenav',
+}) as ElementCreator<TosiSidenav>
+
+/** @deprecated Use tosiSidenav instead */
+export const sideNav = tosiSidenav
+
+/** @deprecated Use tosiSidenav instead */
+export const xinSidenav = tosiSidenav

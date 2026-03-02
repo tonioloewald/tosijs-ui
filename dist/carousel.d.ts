@@ -1,5 +1,5 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
-export declare class XinCarousel extends WebComponent {
+export declare class TosiCarousel extends WebComponent {
     static initAttributes: {
         dots: boolean;
         arrows: boolean;
@@ -111,4 +111,8 @@ export declare class XinCarousel extends WebComponent {
     disconnectedCallback(): void;
     render(): void;
 }
-export declare const xinCarousel: ElementCreator<XinCarousel>;
+/** @deprecated Use TosiCarousel instead */
+export declare const XinCarousel: typeof TosiCarousel;
+export declare const tosiCarousel: ElementCreator<TosiCarousel>;
+/** @deprecated Use tosiCarousel instead */
+export declare const xinCarousel: ElementCreator<TosiCarousel>;

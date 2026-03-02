@@ -2,13 +2,13 @@
 
 # notifications
 
-`XinNotification` provides a singleton custom `<xin-notification>` element that manages
+`TosiNotification` provides a singleton custom `<tosi-notification>` element that manages
 a list of notifications.
 
 The notifications are displayed most-recent first. If the notifications would take more than
 half the height of the display, they are scrolled.
 
-You can post a notification simply with `XinNotification.post()` or `postNotification()`.
+You can post a notification simply with `TosiNotification.post()` or `postNotification()`.
 
 ```
 interface NotificationSpec {
@@ -23,7 +23,7 @@ interface NotificationSpec {
 ```
 
 If you provide a `progress` callback (which is assumed to return a number from `0-100`, with
-100+ indicating completion) then `XinNotification` will poll it every second until the
+100+ indicating completion) then `TosiNotification` will poll it every second until the
 task completes or the notification is closed. Returning 100 or more will automatically close
 the notification.
 
@@ -39,7 +39,7 @@ provided. (The progress demos in the example exercise this functionality.)
 ```js
 import { postNotification, icons } from 'tosijs-ui'
 
-const form = preview.querySelector('xin-form')
+const form = preview.querySelector('tosi-form')
 const submit = preview.querySelector('.submit')
 const closeButton = preview.querySelector('.close')
 
@@ -77,31 +77,31 @@ postNotification({
 })
 ```
 ```html
-<xin-form>
+<tosi-form>
   <h3 slot="header">Notification Test</h3>
-  <xin-field caption="Message" key="message" type="string" value="This is a test…"></xin-field>
-  <xin-field caption="Type" key="type" value="info">
-    <xin-select slot="input"
+  <tosi-field caption="Message" key="message" type="string" value="This is a test…"></tosi-field>
+  <tosi-field caption="Type" key="type" value="info">
+    <tosi-select slot="input"
       options="error,warn,info,success,log,,progress,progress (indefinite)"
-    ></xin-select>
-  </xin-field>
-  <xin-field caption="Icon" key="icon" value="info">
-    <xin-select slot="input"
+    ></tosi-select>
+  </tosi-field>
+  <tosi-field caption="Icon" key="icon" value="info">
+    <tosi-select slot="input"
       options="info,bug,thumbsUp,thumbsDown,message"
-    ></xin-select>
-  </xin-field>
-  <xin-field caption="Duration" key="duration" type="number" value="2"></xin-field>
+    ></tosi-select>
+  </tosi-field>
+  <tosi-field caption="Duration" key="duration" type="number" value="2"></tosi-field>
   <button slot="footer" class="close" disabled>Close Last Notification</button>
   <span slot="footer" class="elastic"></span>
   <button slot="footer" class="submit">Post Notification</button>
-</xin-form>
+</tosi-form>
 ```
 ```css
-xin-form {
+tosi-form {
   height: 100%;
 }
 
-xin-form::part(content) {
+tosi-form::part(content) {
   display: flex;
   flex-direction: column;
   padding: 10px;
@@ -109,18 +109,18 @@ xin-form::part(content) {
   background: var(--background);
 }
 
-xin-form::part(header),
-xin-form::part(footer) {
+tosi-form::part(header),
+tosi-form::part(footer) {
   background: #eee;
   justify-content: center;
   padding: 10px;
 }
 
-xin-form h3 {
+tosi-form h3 {
   margin: 0;
 }
 
-xin-form label {
+tosi-form label {
   display: grid;
   grid-template-columns: 120px 1fr;
 }
@@ -128,21 +128,21 @@ xin-form label {
 ```test
 test('notification singleton exists', async () => {
   await waitMs(100)
-  const notification = document.querySelector('xin-notification')
+  const notification = document.querySelector('tosi-notification')
   expect(notification).toBeTruthy()
 })
 test('form renders', () => {
-  const form = preview.querySelector('xin-form')
+  const form = preview.querySelector('tosi-form')
   expect(form).toBeTruthy()
 })
 ```
 
 ## `postNotification(spec: NotificationSpec | string)`
 
-This is simply a wrapper for `XinNotification.post()`.
+This is simply a wrapper for `TosiNotification.post()`.
 */
 
-import { Component, elements, vars, ElementCreator } from 'tosijs'
+import { Component, elements, vars } from 'tosijs'
 import { icons } from './icons'
 import { findHighestZ } from './track-drag'
 const { div, button } = elements
@@ -168,8 +168,8 @@ const COLOR_MAP = {
 
 type callback = () => void
 
-export class XinNotification extends Component {
-  private static singleton?: XinNotification
+export class TosiNotification extends Component {
+  private static singleton?: TosiNotification
 
   static styleSpec = {
     ':host': {
@@ -259,7 +259,7 @@ export class XinNotification extends Component {
     },
   }
 
-  static removeNote(note: HTMLElement) {
+  static removeNote(note: HTMLElement): void {
     note.classList.add('closing')
     note.style.marginBottom = -note.offsetHeight + 'px'
     const remove = () => {
@@ -277,7 +277,7 @@ export class XinNotification extends Component {
       )
 
     if (!this.singleton) {
-      this.singleton = xinNotification()
+      this.singleton = tosiNotification()
     }
 
     const singleton = this.singleton as HTMLElement
@@ -292,7 +292,7 @@ export class XinNotification extends Component {
       if (close) {
         close()
       }
-      XinNotification.removeNote(note)
+      TosiNotification.removeNote(note)
     }
     const iconElement: SVGElement =
       icon instanceof SVGElement
@@ -343,14 +343,14 @@ export class XinNotification extends Component {
         const percentage = progress()
         progressBar.value = percentage
         if (percentage >= 100) {
-          XinNotification.removeNote(note)
+          TosiNotification.removeNote(note)
         }
       }, 1000)
     }
 
     if (duration > 0) {
       setTimeout(() => {
-        XinNotification.removeNote(note)
+        TosiNotification.removeNote(note)
       }, duration * 1000)
     }
 
@@ -362,10 +362,16 @@ export class XinNotification extends Component {
   content = null
 }
 
-export const xinNotification = XinNotification.elementCreator({
-  tag: 'xin-notification',
-}) as ElementCreator<XinNotification>
+/** @deprecated Use TosiNotification instead */
+export const XinNotification = TosiNotification
+
+export const tosiNotification = TosiNotification.elementCreator({
+  tag: 'tosi-notification',
+})
+
+/** @deprecated Use tosiNotification instead */
+export const xinNotification = tosiNotification
 
 export function postNotification(spec: NotificationSpec | string): callback {
-  return XinNotification.post(spec)
+  return TosiNotification.post(spec)
 }

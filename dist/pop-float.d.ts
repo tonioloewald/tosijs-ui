@@ -1,5 +1,5 @@
 import { ElementPart } from 'tosijs';
-import { XinFloat } from './float';
+import { TosiFloat } from './float';
 export type FloatPosition = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' | 'en' | 'wn' | 'es' | 'ws' | 'side' | 'auto';
 export interface PopFloatOptions {
     class?: string;
@@ -10,5 +10,5 @@ export interface PopFloatOptions {
     remainOnResize?: 'hide' | 'remove' | 'remain';
     draggable?: boolean;
 }
-export declare const popFloat: (options: PopFloatOptions) => XinFloat;
-export declare const positionFloat: (element: XinFloat, target: HTMLElement, position?: FloatPosition, remainOnScroll?: "hide" | "remove" | "remain", remainOnResize?: "hide" | "remove" | "remain", draggable?: boolean) => void;
+export declare const popFloat: (options: PopFloatOptions) => TosiFloat;
+export declare const positionFloat: (element: TosiFloat, target: HTMLElement, position?: FloatPosition, remainOnScroll?: "hide" | "remove" | "remain", remainOnResize?: "hide" | "remove" | "remain", draggable?: boolean) => void;

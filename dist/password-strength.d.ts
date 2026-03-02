@@ -1,7 +1,7 @@
 import { Component } from 'tosijs';
 export declare const digest: (s: string, method?: string) => Promise<string>;
 export declare const isBreached: (password: string) => Promise<boolean>;
-export declare class XinPasswordStrength extends Component {
+export declare class TosiPasswordStrength extends Component {
     static initAttributes: {
         minLength: number;
         goodLength: number;
@@ -33,4 +33,8 @@ export declare class XinPasswordStrength extends Component {
     content: () => any[];
     render(): void;
 }
-export declare const xinPasswordStrength: import("tosijs").ElementCreator<XinPasswordStrength>;
+/** @deprecated Use TosiPasswordStrength instead */
+export declare const XinPasswordStrength: typeof TosiPasswordStrength;
+export declare const tosiPasswordStrength: import("tosijs").ElementCreator<TosiPasswordStrength>;
+/** @deprecated Use tosiPasswordStrength instead */
+export declare const xinPasswordStrength: import("tosijs").ElementCreator<TosiPasswordStrength>;

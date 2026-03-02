@@ -4,26 +4,26 @@
 A floating, potentially draggable user interface element.
 
 ```html
-<xin-float class="float" remain-on-resize="remain" remain-on-scroll="remain" drag>
+<tosi-float class="float" remain-on-resize="remain" remain-on-scroll="remain" drag>
   <h4>Drag Me</h4>
   <div class="no-drag balloon">🎈</div>
   <div class="behavior">I ignore resizing and scrolling</div>
   <footer style="font-size: 75%">neunundneunzig pixel-ballon</footer>
-</xin-float>
+</tosi-float>
 
-<xin-float class="float" remain-on-scroll="remain" style="top: 50px; right: 20px;" drag>
+<tosi-float class="float" remain-on-scroll="remain" style="top: 50px; right: 20px;" drag>
   <h4>Drag Me</h4>
   <div class="no-drag balloon">🎈</div>
   <div class="behavior">I disappear on resize</div>
   <footer style="font-size: 75%">neunundneunzig pixel-ballon</footer>
-</xin-float>
+</tosi-float>
 
-<xin-float class="float" remain-on-resize="remain" remain-on-scroll="remove" style="bottom: 20px; left: 50px;" drag>
+<tosi-float class="float" remain-on-resize="remain" remain-on-scroll="remove" style="bottom: 20px; left: 50px;" drag>
   <h4>Drag Me</h4>
   <div class="no-drag balloon">🎈</div>
   <div class="behavior">I disappear on scroll</div>
   <footer style="font-size: 75%">neunundneunzig pixel-ballon</footer>
-</xin-float>
+</tosi-float>
 ```
 ```css
 .preview .float {
@@ -73,12 +73,12 @@ A floating, potentially draggable user interface element.
 
 ## Styling
 
-Note that the `<xin-float>` element has absolutely minimal styling. It's up to you to provide a drop
+Note that the `<tosi-float>` element has absolutely minimal styling. It's up to you to provide a drop
 shadow and background and so on.
 
 ## Attributes
 
-- `drag` false | true — to make a `<xin-float>` element draggable, simply set its `drag` attribute.
+- `drag` false | true — to make a `<tosi-float>` element draggable, simply set its `drag` attribute.
 - `remain-on-resize` 'remove' | 'hide' | 'remain' — by default, floats will hide if the window is resized
 - `remain-on-scroll` 'remain' | 'remove' | 'hide' — by default, floats will remain if the document is scrolled
 
@@ -94,8 +94,8 @@ import { trackDrag, bringToFront } from './track-drag'
 
 const { slot } = elements
 
-export class XinFloat extends WebComponent {
-  static floats: Set<XinFloat> = new Set()
+export class TosiFloat extends WebComponent {
+  static floats: Set<TosiFloat> = new Set()
 
   static initAttributes = {
     drag: false,
@@ -143,7 +143,7 @@ export class XinFloat extends WebComponent {
   connectedCallback(): void {
     super.connectedCallback()
 
-    XinFloat.floats.add(this)
+    TosiFloat.floats.add(this)
     const PASSIVE = { passive: true }
     this.addEventListener('touchstart', this.reposition, PASSIVE)
     this.addEventListener('mousedown', this.reposition, PASSIVE)
@@ -153,18 +153,24 @@ export class XinFloat extends WebComponent {
   disconnectedCallback(): void {
     super.disconnectedCallback()
 
-    XinFloat.floats.delete(this)
+    TosiFloat.floats.delete(this)
   }
 }
 
-export const xinFloat = XinFloat.elementCreator({
-  tag: 'xin-float',
-}) as ElementCreator<XinFloat>
+/** @deprecated Use TosiFloat instead */
+export const XinFloat = TosiFloat
+
+export const tosiFloat = TosiFloat.elementCreator({
+  tag: 'tosi-float',
+}) as ElementCreator<TosiFloat>
+
+/** @deprecated Use tosiFloat instead */
+export const xinFloat = tosiFloat
 
 window.addEventListener(
   'resize',
   () => {
-    Array.from(XinFloat.floats).forEach((float: XinFloat) => {
+    Array.from(TosiFloat.floats).forEach((float: TosiFloat) => {
       if (float.remainOnResize === 'hide') {
         float.hidden = true
       } else if (float.remainOnResize === 'remove') {
@@ -180,11 +186,11 @@ document.addEventListener(
   (event: Event) => {
     if (
       event.target instanceof HTMLElement &&
-      event.target.closest(XinFloat.tagName as string)
+      event.target.closest(TosiFloat.tagName as string)
     ) {
       return
     }
-    Array.from(XinFloat.floats).forEach((float: XinFloat) => {
+    Array.from(TosiFloat.floats).forEach((float: TosiFloat) => {
       if (float.remainOnScroll === 'hide') {
         float.hidden = true
       } else if (float.remainOnScroll === 'remove') {

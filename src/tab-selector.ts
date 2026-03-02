@@ -33,7 +33,7 @@ preview.querySelector('.add').addEventListener('click', () => {
   <div name="first">first body</div>
   <div name="second" data-close>
     <template role="tab">
-      <xin-icon
+      <tosi-icon
         style="
           display: inline-block;
           width: 16px;
@@ -43,14 +43,14 @@ preview.querySelector('.add').addEventListener('click', () => {
           stroke: var(--brand-color);
         "
         icon="eye"
-      ></xin-icon>
+      ></tosi-icon>
       <span>Ooooh!!!</span>
     </template>
     look at the html…
   </div>
   <div name="third">third body</div>
   <button class="add" slot="after-tabs">
-    <xin-icon icon="plus"></xin-icon>
+    <tosi-icon icon="plus"></tosi-icon>
   </button>
 </tosi-tabs>
 ```
@@ -116,7 +116,7 @@ import {
   PartsMap,
 } from 'tosijs'
 
-import { xinLocalized, XinLocalized } from './localize'
+import { tosiLocalized, TosiLocalized } from './localize'
 
 import { icons } from '../src'
 
@@ -129,24 +129,20 @@ interface TabsParts extends PartsMap {
   selected: HTMLElement
 }
 
-export class TabSelector extends WebComponent {
+export class TosiTabs extends WebComponent {
   static initAttributes = {
     localized: false,
   }
 
   value = 0
 
-  makeTab(
-    tabs: TabSelector,
-    tabBody: HTMLElement,
-    bodyId: string
-  ): HTMLElement {
+  makeTab(tabs: TosiTabs, tabBody: HTMLElement, bodyId: string): HTMLElement {
     const tabName = tabBody.getAttribute('name') as string
     const tabContent =
       (
         tabBody.querySelector('template[role="tab"]') as HTMLTemplateElement
       )?.content.cloneNode(true) ||
-      (this.localized ? xinLocalized(tabName) : span(tabName))
+      (this.localized ? tosiLocalized(tabName) : span(tabName))
     const tab = div(
       tabContent,
       {
@@ -347,12 +343,12 @@ export class TabSelector extends WebComponent {
     tabs.addEventListener('click', this.pickTab)
     tabs.addEventListener('keydown', this.keyTab)
     this.setupTabs()
-    XinLocalized.allInstances.add(this)
+    TosiLocalized.allInstances.add(this)
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback()
-    XinLocalized.allInstances.delete(this)
+    TosiLocalized.allInstances.delete(this)
   }
 
   localeChanged = () => {
@@ -382,9 +378,15 @@ export class TabSelector extends WebComponent {
   }
 }
 
-export const tabSelector = TabSelector.elementCreator({
-  tag: 'tosi-tabs',
-}) as ElementCreator<TabSelector>
+/** @deprecated Use TosiTabs instead */
+export const TabSelector = TosiTabs
 
-/** @deprecated Use tabSelector with tag 'tosi-tabs' instead */
-export const xinTabs = tabSelector
+export const tosiTabs = TosiTabs.elementCreator({
+  tag: 'tosi-tabs',
+}) as ElementCreator<TosiTabs>
+
+/** @deprecated Use tosiTabs instead */
+export const tabSelector = tosiTabs
+
+/** @deprecated Use tosiTabs instead */
+export const xinTabs = tosiTabs

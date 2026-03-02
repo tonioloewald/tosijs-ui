@@ -62,7 +62,7 @@ applyTheme(prefersDark ? createDarkTheme(colors) : createTheme(colors))
 ## Component Variables
 
 Each component defines its own variables that derive from base variables.
-For example, xin-select derives from base:
+For example, tosi-select derives from base:
 
     --tosi-select-gap: var(--tosi-spacing-sm, 8px);
     --tosi-select-touch-size: var(--tosi-touch-size, 44px);

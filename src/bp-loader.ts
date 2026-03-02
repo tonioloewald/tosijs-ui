@@ -2,7 +2,7 @@
 # blueprint loading
 
 <center>
-  <xin-icon icon="blueprint" class="logo" size=256></xin-icon>
+  <tosi-icon icon="blueprint" class="logo" size=256></tosi-icon>
 </center>
 
 `<xin-loader>` and `<xin-blueprint>` are simple elements provided by `tosijs` for the dynamic loading

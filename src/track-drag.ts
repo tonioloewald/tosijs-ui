@@ -10,7 +10,7 @@ type TrackerCallback = (
 # trackDrag
 
 Sometimes you want to track a mouse-drag or touch-drag operation without messing around.
-This is how the resizeable columns in `<xin-table>` work.
+This is how the resizeable columns in `<tosi-table>` work.
 
 Just call `trackDrag(event, (dx, dy, event) => { ... })` and you'll get updates on corresponding events until
 you return `true` from the event-handler (or, in the case of `touch` events, the last `touch` ends).

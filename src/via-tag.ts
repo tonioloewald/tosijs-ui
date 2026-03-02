@@ -5,7 +5,7 @@
 
 If you need to load an old school (cjs) javascript or css library via cdn then use these two functions.
 
-`tosijs-ui` uses this library to implement the `<xin-code>`, `<xin-lottie>`, and `<xin-map>`
+`tosijs-ui` uses this library to implement the `<tosi-code>`, `<tosi-lottie>`, and `<tosi-map>`
 elements.
 
 `scriptTag()` and `styleSheet()` return promises that resolve `globalThis` when the module in question
@@ -53,11 +53,11 @@ as possible.
 
 As an aside:
 
-`<xin-lottie>` is implemented in such a way that if you've preloaded the module
+`<tosi-lottie>` is implemented in such a way that if you've preloaded the module
 (e.g. via a script tag or packaging) it won't load it again, which affords offline
 use.
 
-There's no point for `<xin-map>` since it won't work without connectivity anyway.
+There's no point for `<tosi-map>` since it won't work without connectivity anyway.
 
 ## styleSheet
 

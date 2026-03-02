@@ -1,7 +1,7 @@
 /*#
 # editable-rect
 
-`<xin-editable>` (`editableRect` is the `ElementCreator` and `EditableRect` is the class) is an element
+`<tosi-editable>` (`editableRect` is the `ElementCreator` and `EditableRect` is the class) is an element
 for allowing the adjustment of another element's position and size. Simply insert it in a `position: absolute`
 or `position: fixed` element and you can directly adjust its CSS positioning, including rotation.
 
@@ -524,5 +524,5 @@ export class EditableRect extends Component {
 }
 
 export const editableRect = EditableRect.elementCreator({
-  tag: 'xin-editable',
+  tag: 'tosi-editable',
 })

@@ -49,9 +49,9 @@ describe('icons', () => {
       }
     })
 
-    test('created SVGs have xin-icon class', () => {
+    test('created SVGs have tosi-icon class', () => {
       const icon = icons.check()
-      expect(icon.classList.contains('xin-icon')).toBe(true)
+      expect(icon.classList.contains('tosi-icon')).toBe(true)
     })
 
     test('accepts style attributes', () => {
@@ -81,7 +81,7 @@ describe('icons', () => {
       const icon = svgIcon({ icon: 'check' })
       container.appendChild(icon)
       expect(icon).toBeInstanceOf(SvgIcon)
-      expect(icon.tagName.toLowerCase()).toBe('xin-icon')
+      expect(icon.tagName.toLowerCase()).toBe('tosi-icon')
     })
 
     test('accepts icon property', () => {

@@ -1,11 +1,11 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 type TabCloseHandler = (tabBody: Element) => boolean | undefined | void;
-export declare class TabSelector extends WebComponent {
+export declare class TosiTabs extends WebComponent {
     static initAttributes: {
         localized: boolean;
     };
     value: number;
-    makeTab(tabs: TabSelector, tabBody: HTMLElement, bodyId: string): HTMLElement;
+    makeTab(tabs: TosiTabs, tabBody: HTMLElement, bodyId: string): HTMLElement;
     static styleSpec: {
         ':host': {
             '--tosi-tabs-selected-color': string;
@@ -91,7 +91,11 @@ export declare class TabSelector extends WebComponent {
     onResize(): void;
     render(): void;
 }
-export declare const tabSelector: ElementCreator<TabSelector>;
-/** @deprecated Use tabSelector with tag 'tosi-tabs' instead */
-export declare const xinTabs: ElementCreator<TabSelector>;
+/** @deprecated Use TosiTabs instead */
+export declare const TabSelector: typeof TosiTabs;
+export declare const tosiTabs: ElementCreator<TosiTabs>;
+/** @deprecated Use tosiTabs instead */
+export declare const tabSelector: ElementCreator<TosiTabs>;
+/** @deprecated Use tosiTabs instead */
+export declare const xinTabs: ElementCreator<TosiTabs>;
 export {};

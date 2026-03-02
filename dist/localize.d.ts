@@ -1,4 +1,5 @@
 import { Component } from 'tosijs';
+import { TosiSelect } from './select';
 interface TranslationMap {
     [key: string]: string[];
 }
@@ -43,20 +44,24 @@ export declare const setLocale: (language: string) => void;
 export declare const updateLocalized: () => void;
 export declare function initLocalization(localizedStrings: string): void;
 export declare function localize(ref: string): string;
-export declare class LocalePicker extends Component {
+export declare class TosiLocalePicker extends Component {
     static initAttributes: {
         hideCaption: boolean;
     };
-    content: () => import("./select").TosiSelect;
+    content: () => TosiSelect;
     render(): void;
 }
-export declare const localePicker: import("tosijs").ElementCreator<LocalePicker>;
+/** @deprecated Use TosiLocalePicker instead */
+export declare const LocalePicker: typeof TosiLocalePicker;
+export declare const tosiLocalePicker: import("tosijs").ElementCreator<TosiLocalePicker>;
+/** @deprecated Use tosiLocalePicker instead */
+export declare const localePicker: import("tosijs").ElementCreator<TosiLocalePicker>;
 interface AbstractLocalized {
     localeChanged: () => void;
     connectedCallback: () => void;
     disconnectedCallback: () => void;
 }
-export declare class XinLocalized extends Component {
+export declare class TosiLocalized extends Component {
     static allInstances: Set<AbstractLocalized>;
     static initAttributes: {
         refString: string;
@@ -67,5 +72,9 @@ export declare class XinLocalized extends Component {
     localeChanged(): void;
     render(): void;
 }
-export declare const xinLocalized: import("tosijs").ElementCreator<XinLocalized>;
+/** @deprecated Use TosiLocalized instead */
+export declare const XinLocalized: typeof TosiLocalized;
+export declare const tosiLocalized: import("tosijs").ElementCreator<TosiLocalized>;
+/** @deprecated Use tosiLocalized instead */
+export declare const xinLocalized: import("tosijs").ElementCreator<TosiLocalized>;
 export {};

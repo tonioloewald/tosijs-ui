@@ -5,18 +5,18 @@ An [ACE Editor](https://ace.c9.io/) wrapper.
 
 Sometimes, it's nice to be able to just toss a code-editor in a web-page.
 
-`<xin-code>`'s `value` is the code it contains. Its `mode` attribute sets the language, and you can further configure
+`<tosi-code>`'s `value` is the code it contains. Its `mode` attribute sets the language, and you can further configure
 the ACE editor instance via its `options` property.
 
 ```html
-<xin-code style="width: 100%; height: 100%" mode="css">
+<tosi-code style="width: 100%; height: 100%" mode="css">
 body {
   box-sizing: border-box;
 }
-</xin-code>
+</tosi-code>
 ```
 
-The `<xin-code>` element has an `editor` property that gives you its ACE editor instance,
+The `<tosi-code>` element has an `editor` property that gives you its ACE editor instance,
 and an `ace` property that returns the `ace` module, giving you complete access to the
 [Ace API](https://ace.c9.io/api/index.html).
 */
@@ -140,5 +140,5 @@ export class CodeEditor extends WebComponent {
 }
 
 export const codeEditor = CodeEditor.elementCreator({
-  tag: 'xin-code',
+  tag: 'tosi-code',
 }) as ElementCreator<CodeEditor>
