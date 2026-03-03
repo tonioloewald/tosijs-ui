@@ -8714,44 +8714,15 @@ function createDocBrowser(options) {
       if (frameDoc) {
         frameDoc.body.innerHTML = "";
         frameDoc.body.appendChild(testContainer);
-        const examples = testContainer.querySelectorAll("tosi-example");
-        if (examples.length > 0) {
-          await new Promise((resolve) => {
-            let remaining = examples.length;
-            const done = () => {
-              remaining--;
-              if (remaining <= 0)
-                resolve();
-            };
-            for (const ex of examples) {
-              ex.addEventListener("testcomplete", done, { once: true });
-            }
-            setTimeout(resolve, 5000);
-          });
-        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
       markPageTested(doc.filename);
     }
     testFrame.remove();
     if (docsWithTests.some((d3) => d3.filename === currentFilename)) {
-      const currentExamples = document.querySelectorAll("tosi-example");
-      if (currentExamples.length > 0) {
-        let remaining = currentExamples.length;
-        const done = () => {
-          remaining--;
-          if (remaining <= 0)
-            markPageTested(currentFilename);
-        };
-        for (const ex of currentExamples) {
-          ex.addEventListener("testcomplete", done, { once: true });
-        }
-        setTimeout(() => {
-          if (remaining > 0)
-            markPageTested(currentFilename);
-        }, 1e4);
-      } else {
+      setTimeout(() => {
         markPageTested(currentFilename);
-      }
+      }, 1000);
     }
   };
   const startBackgroundTests = () => {
@@ -9796,14 +9767,20 @@ function xrControllers(xrHelper) {
       const componentIds = mc.getComponentIds();
       componentIds.forEach((componentId) => {
         const component = mc.getComponent(componentId);
-        state[componentId] = { pressed: component.pressed };
-        component.onButtonStateChangedObservable.add(() => {
-          state[componentId].pressed = component.pressed;
+        state[componentId] = {
+          pressed: component.pressed,
+          touched: component.touched,
+          value: component.value,
+          axes: { x: component.axes.x, y: component.axes.y }
+        };
+        component.onButtonStateChangedObservable.add((c) => {
+          state[componentId].pressed = c.pressed;
+          state[componentId].touched = c.touched;
+          state[componentId].value = c.value;
         });
         if (component.onAxisValueChangedObservable) {
-          state[componentId].axes = [];
           component.onAxisValueChangedObservable.add((axes) => {
-            state[componentId].axes = axes;
+            state[componentId].axes = { x: axes.x, y: axes.y };
           });
         }
       });
@@ -9818,9 +9795,27 @@ function xrControllersText(controllers) {
   }
   return Object.keys(controllers).map((controllerId) => {
     const state = controllers[controllerId];
-    const buttonText = Object.keys(state).filter((componentId) => state[componentId].pressed).join(" ");
+    const parts = [];
+    for (const [id, comp] of Object.entries(state)) {
+      const flags = [];
+      if (comp.pressed)
+        flags.push("P");
+      if (comp.touched)
+        flags.push("T");
+      const hasValue2 = comp.value > 0;
+      const hasAxes = comp.axes.x !== 0 || comp.axes.y !== 0;
+      if (flags.length > 0 || hasValue2 || hasAxes) {
+        let text = `${id}[${flags.join("")}]`;
+        if (hasValue2)
+          text += ` v:${comp.value.toFixed(2)}`;
+        if (hasAxes)
+          text += ` x:${comp.axes.x.toFixed(2)} y:${comp.axes.y.toFixed(2)}`;
+        parts.push(text);
+      }
+    }
     return `${controllerId}
-${buttonText}`;
+${parts.join(`
+`) || "(idle)"}`;
   }).join(`
 `);
 }
@@ -11676,7 +11671,7 @@ var tosiTagList = TosiTagList.elementCreator({
 });
 var xinTagList = On((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.2.3";
+var version = "1.3.0";
 // src/theme.ts
 var defaultColors = {
   accent: x.fromCss("#EE257B"),
@@ -12361,9 +12356,6 @@ var docs_default = [
   {
     text: `# tosijs-ui
 
-> \`xinjs-ui\` has been renamed \`tosijs-ui\`. Updating the documentation and links is a
-> work in progress. The goal is for the API to remain stable during the transition.
-
 <!--{ "pin": "top" }-->
 
 [ui.tosijs.net live demo](https://ui.tosijs.net) | [tosijs](https://tosijs.net) | [discord](https://discord.gg/ramJ9rgky5) | [github](https://github.com/tonioloewald/tosijs-ui#readme) | [npm](https://www.npmjs.com/package/tosijs-ui)
@@ -12384,10 +12376,39 @@ Copyright ©2023-2025 Tonio Loewald
 ## the tosijs-ui library
 
 A set of [web-components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)
-created with [xinjs](https://xinjs.net), designed to augment what the browser gives you
+created with [tosijs](https://tosijs.net), designed to augment what the browser gives you
 for free rather than replace it.
 
 It works beautifully with other web-component libraries, such as [shoelace.style](https://shoelace.style/).
+
+## Migrating to v1.3.0
+
+v1.3.0 completes the rename from \`xinjs-ui\` to \`tosijs-ui\`. All custom element
+tags now use the \`tosi-\` prefix and all exports use \`Tosi*\`/\`tosi*\` names.
+
+### Breaking changes
+
+- **Custom element tags** have changed from \`<xin-*>\` to \`<tosi-*>\`.
+  For example: \`<xin-select>\` is now \`<tosi-select>\`, \`<xin-icon>\` is now
+  \`<tosi-icon>\`, \`<xin-example>\` is now \`<tosi-example>\`, etc.
+- **CSS selectors** targeting old tag names (e.g. \`xin-select { ... }\`) must
+  be updated.
+- **CSS custom properties** in component \`styleSpec\` objects retain \`--xin-*\`
+  fallbacks for backward compatibility, but new code should use \`--tosi-*\`.
+
+### Deprecated exports still work
+
+The old \`xin*\` JavaScript exports (\`xinSelect\`, \`xinTabs\`, \`xinTable\`, etc.)
+remain available and will continue to work. Most log a runtime deprecation
+warning; a few are silent aliases marked with JSDoc \`@deprecated\`. They will
+be removed in a future major version.
+
+### Migration checklist
+
+1. Search your HTML for \`<xin-\` and replace with \`<tosi-\`
+2. Search your CSS for \`xin-\` selectors and update to \`tosi-\`
+3. Search your JS/TS for \`xinSelect\`, \`xinTabs\`, etc. and switch to \`tosiSelect\`, \`tosiTabs\`, etc.
+4. Search for \`--xin-\` CSS variable overrides and switch to \`--tosi-\`
 
 ## Quick Start
 
@@ -12399,33 +12420,28 @@ Add tosijs-ui to your project, e.g.
 npm add tosijs-ui
 \`\`\`
 
-Then you can import the component \`elementCreator\` and create the element any way you
-like, the easiest way being to use the \`elementCreator\` itself. A \`tosijs\` \`elementCreator\`
-is syntax sugar around \`document.createElement()\`.
+Then import the component \`elementCreator\` and create elements. A \`tosijs\`
+\`elementCreator\` is syntax sugar around \`document.createElement()\`.
 
 \`\`\`ts
-import { dataTable } from 'tosijs-ui'
+import { tosiTable } from 'tosijs-ui'
 
-document.body.append(dataTable())
+document.body.append(tosiTable())
 \`\`\`
 
 ### Using the iife via cdn
 
 The \`tosijs-ui\` iife build bundles \`tosijs\`, \`tosijs-ui\`, and \`marked\` into
-a single minified javascript source file. You can access \`tosijs\` and \`xinjsui\`
+a single minified javascript source file. You can access \`xinjs\` and \`xinjsui\`
 as globals which contain all the things exported by \`tosijs\` and \`tosijs-ui\`.
 
-> iife support is new so it may not have propagated to the cdn yet. This
-> example loads the library from ui.xinjs.net for now.
-
 \`\`\`
-<script src="https://ui.xinjs.net/iife.js"></script>
+<script src="https://ui.tosijs.net/iife.js"></script>
 <button id="menu">Menu <tosi-icon icon="chevronDown"></tosi-icon></button>
 <script>
-  import { elements } from 'tosijs'
-  import { popMenu, icons } from 'tosijs-ui'
-
-  const button = { elements }
+  const { elements } = xinjs
+  const { popMenu, icons } = xinjsui
+  const { button } = elements
 
   const showMenu = (target) => {
     popMenu({
@@ -12441,7 +12457,7 @@ as globals which contain all the things exported by \`tosijs\` and \`tosijs-ui\`
         {
           caption: 'Version',
           action() {
-            alert(\`xinjs \${xinjs.version}\\nxinjs-ui \${xinjsui.version}\`)
+            alert(\`tosijs \${xinjs.version}\\ntosijs-ui \${xinjsui.version}\`)
           }
         }
       ]
@@ -12462,7 +12478,7 @@ as globals which contain all the things exported by \`tosijs\` and \`tosijs-ui\`
 </script>
 \`\`\`
 
-[Click here to see a simple iife demo](https://ui.xinjs.net/iife.html)
+[Click here to see a simple iife demo](https://ui.tosijs.net/iife.html)
 
 ## custom-elements
 
@@ -12472,15 +12488,15 @@ use HTML or the \`ElementCreator\` function exported.
 E.g. to use the markdown viewer:
 
 \`\`\`
-import { markdownViewer } from 'tosijs-ui'
-document.body.append(markdownViewer('# hello world\\nthis is a test'))
+import { tosiMd } from 'tosijs-ui'
+document.body.append(tosiMd('# hello world\\nthis is a test'))
 \`\`\`
 
 \`\`\`js
-import { markdownViewer } from 'tosijs-ui'
+import { tosiMd } from 'tosijs-ui'
 
 preview.append(
-  markdownViewer(\`
+  tosiMd(\`
 ## hello world
 here is some markdown
 \`)
@@ -12496,9 +12512,9 @@ here is some markdown
 </tosi-md>
 \`\`\`
 
-The big difference with using the \`markdownViewer()\` function is that the \`tosijs\` \`Component\`
+The big difference with using the \`tosiMd()\` function is that the \`tosijs\` \`Component\`
 class will automatically pick a new tag if the expected tag is taken (e.g. by a previously
-defined custom-element from another library). \`markdownViewer()\` will create an element of
+defined custom-element from another library). \`tosiMd()\` will create an element of
 the correct type.
 
 The other thing is that \`tosijs\` \`ElementCreator\` functions are convenient and composable,
@@ -12510,16 +12526,16 @@ JSX, TSX, or HTML.
 In general, \`tosijs\` strives to work _with_ the browser rather than trying to _replace_ it.
 
 In a similar vein, \`tosijs-ui\` comprises a collection of [web-components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components)
-with the goal of augmenting what _already_ works well, and the components are intended be interoperable as
-similar as possible to things that you already use, such as \`<input>\` or \`<select>\` elements.
+with the goal of augmenting what _already_ works well, and the components are intended to be
+as similar as possible to things that you already use, such as \`<input>\` or \`<select>\` elements.
 E.g. where appropriate, the \`value\` of an element is its malleable \`state\`, and when this changes,
 the element emits a \`change\` event.
 
-Similarly, the xinjs base \`Component\` class and the components in this collection strive to
+Similarly, the tosijs base \`Component\` class and the components in this collection strive to
 be as similar in operation as possible to DOM elements as makes sense. E.g. binary attributes
 work as expected. Adding the \`hidden\` attribute makes them disappear. If a component subclass
 has a \`value\` property then it will be rendered if the value changes (similarly it will be
-rendered if an initialized attribute is changed). Intinsic properties of components will
+rendered if an initialized attribute is changed). Intrinsic properties of components will
 default to \`null\` rather than \`undefined\`.
 
 Similarly, because web-components are highly interoperable, there's no reason to reinvent
@@ -14219,14 +14235,14 @@ const interval = setInterval(() => {
 
 ## XRInput Devices
 
-> This is experimental, the API is changing and stuff doesn't work. Hopefully it
-> will become a lot more generally useful once Apple's VisionPro comes out.
+\`xrControllers(babylonjsXRHelper)\` returns an \`XinXRControllerMap\` that tracks
+the current state of XR controllers — button presses, analog values, touch state,
+and thumbstick axes. It subscribes to BabylonJS \`onButtonStateChangedObservable\`
+and \`onAxisValueChangedObservable\` events so the map stays current.
 
-\`xrControllers(babylonjsXRHelper)\` returns an \`XinXRControllerMap\` structure that tries to
-conveniently render the current state of XR controls. (The babylonjs API for this is horrific!)
-
-\`xrControllerText(controllerMap)\` renders the map output by the above in a compact form
-which is useful when debugging.`,
+\`xrControllersText(controllerMap)\` renders the map in a compact debug format
+showing active inputs with their flags (P=pressed, T=touched), analog values,
+and axis positions.`,
     title: "gamepads",
     filename: "gamepad.ts",
     path: "src/gamepad.ts"

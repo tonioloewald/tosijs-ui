@@ -20,7 +20,12 @@ export declare function gamepadState(): {
 export declare function gamepadText(): string;
 export interface XinXRControllerComponentState {
     pressed: boolean;
-    axes?: number[];
+    touched: boolean;
+    value: number;
+    axes: {
+        x: number;
+        y: number;
+    };
 }
 export interface XinXRControllerState {
     [key: string]: XinXRControllerComponentState;

@@ -85,11 +85,11 @@ const rating = tosiRating({
 })
 ```
 
-Some components also fire `action` — this means the user did
-something, even if the value didn't change. A select fires `action`
-when the user picks the already-selected option. A menu fires
-`action` when an item is clicked. `change` is for state;
-`action` is for intent.
+`tosiSelect` also fires `action` — this means the user picked
+something, even if the value didn't change (e.g. re-selecting
+the current option). `change` is for state; `action` is for
+intent. Note that menus use `action` callbacks in their config
+objects — that's a different mechanism, not a DOM event.
 
 Most of the time you won't use either event directly. Bind the
 value to a proxy path and let tosijs handle synchronization:
@@ -335,8 +335,8 @@ button(icons.save(), 'Save')
 div({ style: { height: '64px' } }, icons.tosiUi())
 ```
 
-700+ icons from Feather Icons plus custom additions. The proxy
-pattern means you get autocomplete in your editor and a clear
+300+ icons sourced from Feather Icons plus custom additions. The
+proxy pattern means you get autocomplete in your editor and a clear
 error at runtime if an icon doesn't exist.
 
 ### Menus
@@ -406,9 +406,18 @@ Override at any level in the CSS cascade.
 ```typescript
 import { initLocalization, setLocale, localize } from 'tosijs-ui'
 
-// TSV format: columns are locales, rows are strings
+// TSV format — 5 header rows, then translatable strings:
+//   Row 1: locale codes
+//   Row 2: (skipped)
+//   Row 3: language names in reference language
+//   Row 4: language names in native language
+//   Row 5: flag emoji
+//   Row 6+: translatable strings (first column is the key)
 initLocalization(`en-US\tfr\tfi
-English\tFrançais\tsuomi
+\t\t
+English\tFrench\tFinnish
+English (US)\tFrançais\tsuomi
+🇺🇸\t🇫🇷\t🇫🇮
 Ok\tD'accord\tOk
 Cancel\tAnnuler\tPeruuttaa`)
 

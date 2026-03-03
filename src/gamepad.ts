@@ -25,14 +25,14 @@ const interval = setInterval(() => {
 
 ## XRInput Devices
 
-> This is experimental, the API is changing and stuff doesn't work. Hopefully it
-> will become a lot more generally useful once Apple's VisionPro comes out.
+`xrControllers(babylonjsXRHelper)` returns an `XinXRControllerMap` that tracks
+the current state of XR controllers — button presses, analog values, touch state,
+and thumbstick axes. It subscribes to BabylonJS `onButtonStateChangedObservable`
+and `onAxisValueChangedObservable` events so the map stays current.
 
-`xrControllers(babylonjsXRHelper)` returns an `XinXRControllerMap` structure that tries to
-conveniently render the current state of XR controls. (The babylonjs API for this is horrific!)
-
-`xrControllerText(controllerMap)` renders the map output by the above in a compact form
-which is useful when debugging.
+`xrControllersText(controllerMap)` renders the map in a compact debug format
+showing active inputs with their flags (P=pressed, T=touched), analog values,
+and axis positions.
 */
 
 export interface XinButton {
@@ -91,7 +91,9 @@ export function gamepadText() {
 
 export interface XinXRControllerComponentState {
   pressed: boolean
-  axes?: number[]
+  touched: boolean
+  value: number
+  axes: { x: number; y: number }
 }
 
 export interface XinXRControllerState {
@@ -110,16 +112,25 @@ export function xrControllers(xrHelper: any) {
       const componentIds = mc.getComponentIds() as string[]
       componentIds.forEach((componentId) => {
         const component = mc.getComponent(componentId)
-        state[componentId] = { pressed: component.pressed as boolean }
-        component.onButtonStateChangedObservable.add(() => {
-          state[componentId].pressed = component.pressed
-        })
-        // TODO does this work?! inquiring minds…
+        state[componentId] = {
+          pressed: component.pressed as boolean,
+          touched: component.touched as boolean,
+          value: component.value as number,
+          axes: { x: component.axes.x, y: component.axes.y },
+        }
+        component.onButtonStateChangedObservable.add(
+          (c: { pressed: boolean; touched: boolean; value: number }) => {
+            state[componentId].pressed = c.pressed
+            state[componentId].touched = c.touched
+            state[componentId].value = c.value
+          }
+        )
         if (component.onAxisValueChangedObservable) {
-          state[componentId].axes = [] as number[]
-          component.onAxisValueChangedObservable.add((axes: number[]) => {
-            state[componentId].axes = axes
-          })
+          component.onAxisValueChangedObservable.add(
+            (axes: { x: number; y: number }) => {
+              state[componentId].axes = { x: axes.x, y: axes.y }
+            }
+          )
         }
       })
       controllers[mc.handedness] = state
@@ -136,10 +147,22 @@ export function xrControllersText(controllers?: XinXRControllerMap) {
   return Object.keys(controllers)
     .map((controllerId) => {
       const state = controllers[controllerId] as XinXRControllerState
-      const buttonText = Object.keys(state)
-        .filter((componentId) => state[componentId].pressed)
-        .join(' ')
-      return `${controllerId}\n${buttonText}`
+      const parts: string[] = []
+      for (const [id, comp] of Object.entries(state)) {
+        const flags: string[] = []
+        if (comp.pressed) flags.push('P')
+        if (comp.touched) flags.push('T')
+        const hasValue = comp.value > 0
+        const hasAxes = comp.axes.x !== 0 || comp.axes.y !== 0
+        if (flags.length > 0 || hasValue || hasAxes) {
+          let text = `${id}[${flags.join('')}]`
+          if (hasValue) text += ` v:${comp.value.toFixed(2)}`
+          if (hasAxes)
+            text += ` x:${comp.axes.x.toFixed(2)} y:${comp.axes.y.toFixed(2)}`
+          parts.push(text)
+        }
+      }
+      return `${controllerId}\n${parts.join('\n') || '(idle)'}`
     })
     .join('\n')
 }
