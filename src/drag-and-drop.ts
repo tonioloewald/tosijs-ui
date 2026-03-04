@@ -293,7 +293,7 @@ preview.append(
 
 const dragInProgress = () => !!document.querySelector('.drag-source')
 
-const isTypeAllowed = (
+export const isTypeAllowed = (
   allowedTypes: readonly string[] | undefined,
   type: string
 ) => {
@@ -328,7 +328,10 @@ const end = () => {
   removeClass('drag-target')
 }
 
-const stringToTypes = (s: string | undefined, delimiter = ';'): string[] => {
+export const stringToTypes = (
+  s: string | undefined,
+  delimiter = ';'
+): string[] => {
   return (s || '')
     .split(delimiter)
     .map((t) => t.trim())

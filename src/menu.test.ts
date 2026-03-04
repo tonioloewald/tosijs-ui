@@ -6,6 +6,9 @@ import {
   createMenuAction,
   createSubMenu,
   createMenuItem,
+  createDropMenuItem,
+  filterForDrop,
+  filterForClick,
   MenuItem,
   MenuAction,
   SubMenu,
@@ -372,6 +375,314 @@ describe('menu', () => {
       container.appendChild(menuComponent)
       const trigger = menuComponent.querySelector('button[part="trigger"]')
       expect(trigger).not.toBeNull()
+    })
+
+    test('accepts acceptsDrop property', () => {
+      const menuComponent = xinMenu({
+        menuItems: [],
+        acceptsDrop: 'text/plain;text/html',
+      })
+      container.appendChild(menuComponent)
+      expect(menuComponent.acceptsDrop).toBe('text/plain;text/html')
+    })
+  })
+
+  describe('filterForDrop', () => {
+    test('filters out items without acceptsDrop', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Has drop',
+          acceptsDrop: ['text/plain'],
+          dropAction: () => {},
+          action: () => {},
+        },
+        { caption: 'No drop', action: () => {} },
+      ]
+      const result = filterForDrop(items, ['text/plain'])
+      expect(result.length).toBe(1)
+      expect((result[0] as MenuAction).caption).toBe('Has drop')
+    })
+
+    test('filters by matching MIME types', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Text only',
+          acceptsDrop: ['text/plain'],
+          dropAction: () => {},
+          action: () => {},
+        },
+        {
+          caption: 'HTML only',
+          acceptsDrop: ['text/html'],
+          dropAction: () => {},
+          action: () => {},
+        },
+      ]
+      const result = filterForDrop(items, ['text/plain'])
+      expect(result.length).toBe(1)
+      expect((result[0] as MenuAction).caption).toBe('Text only')
+    })
+
+    test('supports wildcard MIME types', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Any text',
+          acceptsDrop: ['text/*'],
+          dropAction: () => {},
+          action: () => {},
+        },
+      ]
+      const result = filterForDrop(items, ['text/html'])
+      expect(result.length).toBe(1)
+    })
+
+    test('recursively filters submenu children', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Folder',
+          acceptsDrop: ['text/plain'],
+          menuItems: [
+            {
+              caption: 'Accepts text',
+              acceptsDrop: ['text/plain'],
+              dropAction: () => {},
+              action: () => {},
+            },
+            {
+              caption: 'Accepts images',
+              acceptsDrop: ['image/png'],
+              dropAction: () => {},
+              action: () => {},
+            },
+          ],
+        },
+      ]
+      const result = filterForDrop(items, ['text/plain'])
+      expect(result.length).toBe(1)
+      const sub = result[0] as SubMenu
+      expect(sub.menuItems.length).toBe(1)
+      expect((sub.menuItems[0] as MenuAction).caption).toBe('Accepts text')
+    })
+
+    test('removes empty submenus', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Empty folder',
+          acceptsDrop: ['text/plain'],
+          menuItems: [
+            {
+              caption: 'Images only',
+              acceptsDrop: ['image/png'],
+              dropAction: () => {},
+              action: () => {},
+            },
+          ],
+        },
+      ]
+      const result = filterForDrop(items, ['text/plain'])
+      expect(result.length).toBe(0)
+    })
+
+    test('keeps submenu with dropAction even if children filtered out', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Drop here too',
+          acceptsDrop: ['text/plain'],
+          dropAction: () => {},
+          menuItems: [
+            {
+              caption: 'Images only',
+              acceptsDrop: ['image/png'],
+              dropAction: () => {},
+              action: () => {},
+            },
+          ],
+        },
+      ]
+      const result = filterForDrop(items, ['text/plain'])
+      expect(result.length).toBe(1)
+      expect((result[0] as SubMenu).caption).toBe('Drop here too')
+    })
+
+    test('cleans up double separators', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Keep',
+          acceptsDrop: ['text/plain'],
+          dropAction: () => {},
+          action: () => {},
+        },
+        null,
+        { caption: 'Remove', action: () => {} },
+        null,
+        {
+          caption: 'Also keep',
+          acceptsDrop: ['text/plain'],
+          dropAction: () => {},
+          action: () => {},
+        },
+      ]
+      const result = filterForDrop(items, ['text/plain'])
+      expect(result.length).toBe(3)
+      expect(result[1]).toBeNull()
+    })
+
+    test('removes trailing separators', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Keep',
+          acceptsDrop: ['text/plain'],
+          dropAction: () => {},
+          action: () => {},
+        },
+        null,
+        { caption: 'Remove', action: () => {} },
+      ]
+      const result = filterForDrop(items, ['text/plain'])
+      expect(result.length).toBe(1)
+    })
+
+    test('returns empty for no matches', () => {
+      const items: MenuItem[] = [
+        { caption: 'No drop', action: () => {} },
+        { caption: 'Also no drop', action: () => {} },
+      ]
+      const result = filterForDrop(items, ['text/plain'])
+      expect(result.length).toBe(0)
+    })
+  })
+
+  describe('filterForClick', () => {
+    test('keeps items with action', () => {
+      const items: MenuItem[] = [
+        { caption: 'Click me', action: () => {} },
+        {
+          caption: 'Drop only',
+          acceptsDrop: ['text/plain'],
+          dropAction: () => {},
+        } as MenuItem,
+      ]
+      const result = filterForClick(items)
+      expect(result.length).toBe(1)
+      expect((result[0] as MenuAction).caption).toBe('Click me')
+    })
+
+    test('keeps submenus with clickable children', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Sub',
+          menuItems: [{ caption: 'Child', action: () => {} }],
+        },
+      ]
+      const result = filterForClick(items)
+      expect(result.length).toBe(1)
+    })
+
+    test('removes submenus with no clickable children', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Sub',
+          menuItems: [
+            {
+              caption: 'Drop only',
+              acceptsDrop: ['text/plain'],
+              dropAction: () => {},
+            } as MenuItem,
+          ],
+        },
+      ]
+      const result = filterForClick(items)
+      expect(result.length).toBe(0)
+    })
+  })
+
+  describe('createDropMenuItem', () => {
+    const baseOptions: PopMenuOptions = {
+      target: document.createElement('button'),
+      menuItems: [],
+      _dropMode: true,
+      _dataTypes: ['text/plain'],
+    }
+
+    test('creates button element', () => {
+      const item: MenuAction = {
+        caption: 'Drop here',
+        acceptsDrop: ['text/plain'],
+        dropAction: () => {},
+        action: () => {},
+      }
+      const element = createDropMenuItem(item, baseOptions)
+      expect(element.tagName.toLowerCase()).toBe('button')
+      expect(element.classList.contains('xin-menu-item')).toBe(true)
+    })
+
+    test('displays caption', () => {
+      const item: MenuAction = {
+        caption: 'My Drop Target',
+        acceptsDrop: ['text/plain'],
+        dropAction: () => {},
+        action: () => {},
+      }
+      const element = createDropMenuItem(item, baseOptions)
+      expect(element.textContent).toContain('My Drop Target')
+    })
+
+    test('respects disabled state', () => {
+      const item: MenuAction = {
+        caption: 'Disabled',
+        acceptsDrop: ['text/plain'],
+        dropAction: () => {},
+        action: () => {},
+        enabled: () => false,
+      }
+      const element = createDropMenuItem(item, baseOptions)
+      expect(element.hasAttribute('disabled')).toBe(true)
+    })
+  })
+
+  describe('createMenuItem in drop mode', () => {
+    const dropOptions: PopMenuOptions = {
+      target: document.createElement('button'),
+      menuItems: [],
+      _dropMode: true,
+      _dataTypes: ['text/plain'],
+    }
+
+    test('creates drop item for action with dropAction', () => {
+      const item: MenuAction = {
+        caption: 'Drop target',
+        acceptsDrop: ['text/plain'],
+        dropAction: () => {},
+        action: () => {},
+      }
+      const element = createMenuItem(item, dropOptions)
+      expect(element.classList.contains('xin-menu-item')).toBe(true)
+    })
+
+    test('creates submenu for item with menuItems', () => {
+      const item: SubMenu = {
+        caption: 'Folder',
+        acceptsDrop: ['text/plain'],
+        menuItems: [
+          {
+            caption: 'Child',
+            acceptsDrop: ['text/plain'],
+            dropAction: () => {},
+            action: () => {},
+          },
+        ],
+      }
+      const element = createMenuItem(item, dropOptions)
+      expect(element.classList.contains('xin-menu-item')).toBe(true)
+    })
+
+    test('creates disabled item for acceptsDrop without dropAction or menuItems', () => {
+      const item = {
+        caption: 'Label only',
+        acceptsDrop: ['text/plain'],
+      } as MenuItem
+      const element = createMenuItem(item, dropOptions)
+      expect(element.hasAttribute('disabled')).toBe(true)
     })
   })
 })

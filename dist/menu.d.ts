@@ -9,6 +9,8 @@ export interface MenuAction {
     enabled?: () => boolean;
     action: ActionCallback | string;
     icon?: string | Element;
+    acceptsDrop?: string[];
+    dropAction?: (dataTransfer: DataTransfer) => void;
 }
 export interface SubMenu {
     caption: string;
@@ -16,10 +18,15 @@ export interface SubMenu {
     enabled?: () => boolean;
     menuItems: MenuItem[];
     icon?: string | Element;
+    acceptsDrop?: string[];
+    dropAction?: (dataTransfer: DataTransfer) => void;
 }
 export type MenuSeparator = null;
 export type MenuItem = MenuAction | SubMenu | MenuSeparator;
+export declare const filterForDrop: (items: MenuItem[], dataTypes: readonly string[]) => MenuItem[];
+export declare const filterForClick: (items: MenuItem[]) => MenuItem[];
 export declare const createMenuAction: (item: MenuAction, options: PopMenuOptions) => HTMLElement;
+export declare const createDropMenuItem: (item: MenuAction, options: PopMenuOptions) => HTMLElement;
 export declare const createSubMenu: (item: SubMenu, options: PopMenuOptions) => HTMLElement;
 export declare const createMenuItem: (item: MenuItem, options: PopMenuOptions) => HTMLElement;
 export declare const menu: (options: PopMenuOptions) => HTMLDivElement;
@@ -43,8 +50,15 @@ export interface PopMenuOptions {
     showChecked?: boolean;
     onClose?: () => void;
     role?: 'menu' | 'listbox';
+    _dropMode?: boolean;
+    _dataTypes?: readonly string[];
+    disclosureDelay?: number;
+}
+export interface PopDropMenuOptions extends Omit<PopMenuOptions, '_dropMode' | '_dataTypes'> {
+    dataTypes: readonly string[];
 }
 export declare const popMenu: (options: PopMenuOptions) => void;
+export declare const popDropMenu: (options: PopDropMenuOptions) => void;
 interface TosiMenuParts extends PartsMap {
     trigger: HTMLButtonElement;
     icon: SvgIcon;
@@ -54,9 +68,18 @@ export declare class TosiMenu extends Component<TosiMenuParts> {
         menuWidth: string;
         localized: boolean;
         icon: string;
+        acceptsDrop: string;
+        disclosureDelay: number;
     };
     menuItems: MenuItem[];
+    dropAction: ((dataTransfer: DataTransfer) => void) | null;
+    private _dragMatches;
+    private _matchesDrag;
     showMenu: (event: Event) => void;
+    handleDragEnter: (event: DragEvent) => void;
+    handleDragOver: (event: DragEvent) => void;
+    handleDragLeave: (event: DragEvent) => void;
+    handleDrop: (event: DragEvent) => void;
     content: () => HTMLButtonElement;
     handleShortcut: (event: KeyboardEvent) => Promise<void>;
     constructor();
