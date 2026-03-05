@@ -2277,6 +2277,7 @@ __export(exports_src, {
   richTextWidgets: () => richTextWidgets,
   richText: () => richText,
   rewriteImports: () => rewriteImports,
+  resolveMenuItems: () => resolveMenuItems,
   removeLastMenu: () => removeLastMenu,
   postNotification: () => postNotification,
   positionFloat: () => positionFloat,
@@ -3868,8 +3869,9 @@ class TosiSelect extends R {
       if (option === null) {
         return true;
       } else if (option.menuItems) {
-        option.menuItems = option.menuItems.filter(showOption);
-        return option.menuItems.length > 0;
+        const resolved = resolveMenuItems(option.menuItems);
+        option.menuItems = resolved.filter(showOption);
+        return resolved.length > 0;
       } else {
         return option.caption.toLocaleLowerCase().includes(this.filter);
       }
@@ -4327,6 +4329,7 @@ var init = () => {
 };
 
 // src/menu.ts
+var resolveMenuItems = (provider) => typeof provider === "function" ? provider() : provider;
 var { div: div2, button: button3, span: span3, a: a2, xinSlot } = T;
 var cleanSeparators = (items) => {
   const result = [];
@@ -4344,7 +4347,7 @@ var cleanSeparators = (items) => {
   }
   return result;
 };
-var filterForDrop = (items, dataTypes) => {
+var filterForDrop = (items, dataTypes, hideDisabled = false) => {
   const filtered = [];
   for (const item of items) {
     if (item === null) {
@@ -4352,24 +4355,35 @@ var filterForDrop = (items, dataTypes) => {
       continue;
     }
     const { acceptsDrop } = item;
-    if (!acceptsDrop)
+    if (!acceptsDrop) {
+      if (!hideDisabled) {
+        filtered.push({ ...item, enabled: () => false });
+      }
       continue;
+    }
     const matches = dataTypes.some((t2) => isTypeAllowed(acceptsDrop, t2));
-    if (!matches)
+    if (!matches) {
+      if (!hideDisabled) {
+        filtered.push({ ...item, enabled: () => false });
+      }
       continue;
+    }
     const subMenu = item;
     if (subMenu.menuItems) {
-      const childItems = filterForDrop(subMenu.menuItems, dataTypes);
-      if (childItems.length > 0 || subMenu.dropAction) {
+      const validChildren = filterForDrop(resolveMenuItems(subMenu.menuItems), dataTypes, true);
+      if (validChildren.length > 0 || subMenu.dropAction) {
+        const childItems = hideDisabled ? validChildren : filterForDrop(resolveMenuItems(subMenu.menuItems), dataTypes, false);
         filtered.push({ ...subMenu, menuItems: childItems });
-      } else {}
+      } else if (!hideDisabled) {
+        filtered.push({ ...subMenu, enabled: () => false });
+      }
     } else {
       filtered.push(item);
     }
   }
   return cleanSeparators(filtered);
 };
-var filterForClick = (items) => {
+var filterForClick = (items, hideDisabled = false) => {
   const filtered = [];
   for (const item of items) {
     if (item === null) {
@@ -4377,16 +4391,21 @@ var filterForClick = (items) => {
       continue;
     }
     const action = item.action;
-    const menuItems = item.menuItems;
-    if (action || menuItems) {
-      if (menuItems) {
-        const childItems = filterForClick(menuItems);
-        if (childItems.length > 0) {
+    const menuItemsProvider = item.menuItems;
+    if (action || menuItemsProvider) {
+      if (menuItemsProvider) {
+        const validChildren = filterForClick(resolveMenuItems(menuItemsProvider), true);
+        if (validChildren.length > 0) {
+          const childItems = hideDisabled ? validChildren : filterForClick(resolveMenuItems(menuItemsProvider), false);
           filtered.push({ ...item, menuItems: childItems });
+        } else if (!hideDisabled) {
+          filtered.push({ ...item, enabled: () => false });
         }
       } else {
         filtered.push(item);
       }
+    } else if (!hideDisabled) {
+      filtered.push({ ...item, enabled: () => false });
     }
   }
   return cleanSeparators(filtered);
@@ -4453,6 +4472,9 @@ Jo("xin-menu-helper", {
     boxShadow: "none !important",
     background: Jn.menuItemHoverBg("#eee")
   },
+  ".xin-menu-item.drag-target:hover": {
+    boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${Jn.menuDropOverBg("#2196F3")} 50%, transparent) !important`
+  },
   ".xin-menu-item:active": {
     boxShadow: "none !important",
     background: Jn.menuItemActiveBg("#aaa"),
@@ -4470,6 +4492,9 @@ Jo("xin-menu-helper", {
   },
   ".xin-drop-over svg": {
     stroke: `${Jn.menuDropOverColor("#fff")} !important`
+  },
+  ".drag-target": {
+    boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${Jn.menuDropOverBg("#2196F3")} 50%, transparent) !important`
   }
 });
 var createMenuAction = (item, options) => {
@@ -4537,6 +4562,9 @@ var createDropMenuItem = (item, options) => {
       removeLastMenu(0);
     }
   }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(" "));
+  if (item.dropAction) {
+    menuItem.classList.add("drag-target");
+  }
   if (item?.enabled && !item.enabled()) {
     menuItem.setAttribute("disabled", "");
     menuItem.setAttribute("aria-disabled", "true");
@@ -4558,7 +4586,7 @@ var createSubMenu = (item, options) => {
       if (options._dropMode)
         return;
       popMenu(Object.assign({}, options, {
-        menuItems: item.menuItems,
+        menuItems: resolveMenuItems(item.menuItems),
         target: submenuItem,
         submenuDepth: (options.submenuDepth || 0) + 1,
         position: "side"
@@ -4570,27 +4598,37 @@ var createSubMenu = (item, options) => {
       if (!options._dropMode)
         return;
       clearDropGraceTimer();
-      submenuItem.classList.add("xin-drop-over");
       event.preventDefault();
       event.stopPropagation();
-      if (!disclosed) {
+      const from = event.relatedTarget;
+      if (from && submenuItem.contains(from))
+        return;
+      submenuItem.classList.add("xin-drop-over");
+      if (disclosed) {
+        removeLastMenu((options.submenuDepth || 0) + 1);
+        disclosed = false;
         if (disclosureTimer)
           clearTimeout(disclosureTimer);
-        disclosureTimer = setTimeout(() => {
-          disclosed = true;
-          const filteredItems = options._dataTypes ? filterForDrop(item.menuItems, options._dataTypes) : item.menuItems;
-          if (filteredItems.length > 0) {
-            popMenu(Object.assign({}, options, {
-              menuItems: filteredItems,
-              target: submenuItem,
-              submenuDepth: (options.submenuDepth || 0) + 1,
-              position: "side",
-              _dropMode: true,
-              _dataTypes: options._dataTypes
-            }));
-          }
-        }, options.disclosureDelay ?? 200);
+        disclosureTimer = null;
+        return;
       }
+      if (disclosureTimer)
+        clearTimeout(disclosureTimer);
+      disclosureTimer = setTimeout(() => {
+        disclosed = true;
+        const resolved = resolveMenuItems(item.menuItems);
+        const filteredItems = options._dataTypes ? filterForDrop(resolved, options._dataTypes, options.hideDisabled) : resolved;
+        if (filteredItems.length > 0) {
+          popMenu(Object.assign({}, options, {
+            menuItems: filteredItems,
+            target: submenuItem,
+            submenuDepth: (options.submenuDepth || 0) + 1,
+            position: "side",
+            _dropMode: true,
+            _dataTypes: options._dataTypes
+          }));
+        }
+      }, options.disclosureDelay ?? 200);
     },
     onDragover(event) {
       if (!options._dropMode)
@@ -4607,8 +4645,9 @@ var createSubMenu = (item, options) => {
       const related = event.relatedTarget;
       if (related && submenuItem.contains(related))
         return;
-      if (item.dropAction && disclosed)
+      if (disclosed && related && poppedMenus.some((p2) => p2.menu.contains(related) || p2.target.contains(related))) {
         return;
+      }
       submenuItem.classList.remove("xin-drop-over");
       if (disclosureTimer) {
         clearTimeout(disclosureTimer);
@@ -4627,6 +4666,9 @@ var createSubMenu = (item, options) => {
       removeLastMenu(0);
     }
   }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), icons.chevronRight({ style: { justifySelf: "flex-end" } }));
+  if (options._dropMode && item.dropAction) {
+    submenuItem.classList.add("drag-target");
+  }
   return submenuItem;
 };
 var createMenuItem = (item, options) => {
@@ -4634,7 +4676,7 @@ var createMenuItem = (item, options) => {
     return span3({ class: "xin-menu-separator" });
   } else if (options._dropMode) {
     const sub = item;
-    const hasChildren = sub.menuItems && sub.menuItems.length > 0;
+    const hasChildren = sub.menuItems && resolveMenuItems(sub.menuItems).length > 0;
     if (hasChildren) {
       return createSubMenu(sub, options);
     } else if (item.dropAction) {
@@ -4722,6 +4764,9 @@ var startDropGraceTimer = (depth) => {
 };
 var removeLastMenu = (depth = 0) => {
   clearDropGraceTimer();
+  if (depth === 0) {
+    document.querySelectorAll("tosi-menu.xin-drop-over").forEach((el) => el.classList.remove("xin-drop-over"));
+  }
   const toBeRemoved = poppedMenus.splice(depth);
   for (const popped of toBeRemoved) {
     popped.menu.remove();
@@ -4785,7 +4830,7 @@ var popMenu = (options) => {
 };
 var popDropMenu = (options) => {
   const { dataTypes, ...rest } = options;
-  const filtered = filterForDrop(options.menuItems, dataTypes);
+  const filtered = filterForDrop(options.menuItems, dataTypes, options.hideDisabled);
   if (!filtered.length)
     return;
   popMenu({
@@ -4806,7 +4851,7 @@ function findShortcutAction(items, event) {
         return item;
       }
     } else if (menuItems) {
-      const foundAction = findShortcutAction(menuItems, event);
+      const foundAction = findShortcutAction(resolveMenuItems(menuItems), event);
       if (foundAction) {
         return foundAction;
       }
@@ -4821,7 +4866,8 @@ class TosiMenu extends R {
     localized: false,
     icon: "",
     acceptsDrop: "",
-    disclosureDelay: 0
+    disclosureDelay: 0,
+    hideDisabled: false
   };
   menuItems = [];
   dropAction = null;
@@ -4859,7 +4905,8 @@ class TosiMenu extends R {
         dataTypes: dragTypes,
         width: this.menuWidth,
         localized: this.localized,
-        disclosureDelay: this.disclosureDelay || undefined
+        disclosureDelay: this.disclosureDelay || undefined,
+        hideDisabled: this.hideDisabled
       });
     }
     event.preventDefault();
@@ -4916,6 +4963,9 @@ class TosiMenu extends R {
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener("keydown", this.handleShortcut, true);
+    if (this.acceptsDrop) {
+      this.dataset.drop = this.acceptsDrop;
+    }
   }
   disconnectedCallback() {
     super.disconnectedCallback();
@@ -16090,6 +16140,32 @@ dragAndDrop.init()
 
 const { button, div, span } = elements
 
+const adjectives = ['Important', 'Old', 'Shared', 'Archive', 'Draft', 'Final', 'Review', 'Backup']
+const randomFolders = (type) => () => {
+  const count = 2 + Math.floor(Math.random() * 3)
+  const picked = []
+  const pool = [...adjectives]
+  for (let i = 0; i < count; i++) {
+    const idx = Math.floor(Math.random() * pool.length)
+    picked.push(pool.splice(idx, 1)[0])
+  }
+  return picked.map(name => ({
+    caption: name,
+    icon: 'folder',
+    acceptsDrop: [type],
+    dropAction(data) {
+      postNotification({
+        type: 'success',
+        message: 'Saved to ' + name + ': ' + (data.getData(type) || 'file'),
+        duration: 2
+      })
+    },
+    action() {
+      postNotification({ message: 'Opened ' + name, duration: 1 })
+    },
+  }))
+}
+
 const menuItems = [
   {
     caption: 'Documents',
@@ -16107,36 +16183,36 @@ const menuItems = [
     },
     menuItems: [
       {
-        caption: 'Reports',
+        caption: 'Text Files',
         icon: 'folder',
-        acceptsDrop: ['text/plain', 'text/html'],
+        acceptsDrop: ['text/plain'],
         dropAction(data) {
           postNotification({
             type: 'success',
-            message: 'Saved to Reports: ' + (data.getData('text/plain') || data.getData('text/html')),
+            message: 'Saved to Text Files: ' + data.getData('text/plain'),
             duration: 2
           })
         },
         action() {
-          postNotification({ message: 'Navigated to Reports', duration: 1 })
+          postNotification({ message: 'Navigated to Text Files', duration: 1 })
         },
-        menuItems: [
-          {
-            caption: '2024',
-            icon: 'file',
-            acceptsDrop: ['text/plain'],
-            dropAction(data) {
-              postNotification({
-                type: 'success',
-                message: 'Saved to 2024: ' + data.getData('text/plain'),
-                duration: 2
-              })
-            },
-            action() {
-              postNotification({ message: 'Opened 2024 folder', duration: 1 })
-            },
-          }
-        ]
+        menuItems: randomFolders('text/plain'),
+      },
+      {
+        caption: 'HTML Files',
+        icon: 'folder',
+        acceptsDrop: ['text/html'],
+        dropAction(data) {
+          postNotification({
+            type: 'success',
+            message: 'Saved to HTML Files: ' + data.getData('text/html'),
+            duration: 2
+          })
+        },
+        action() {
+          postNotification({ message: 'Navigated to HTML Files', duration: 1 })
+        },
+        menuItems: randomFolders('text/html'),
       },
       {
         caption: 'readme.txt',
@@ -16192,11 +16268,11 @@ preview.append(
     { style: { display: 'flex', gap: '10px', alignItems: 'flex-start' } },
     div(
       { draggable: 'true', dataDrag: 'text/plain', dataDragContent: 'quarterly-report.txt', style: { padding: '8px', border: '1px dashed #888', borderRadius: '4px', cursor: 'grab' } },
-      '📄 quarterly-report.txt'
+      'quarterly-report.txt'
     ),
     div(
       { draggable: 'true', dataDrag: 'text/html', dataDragContent: '<b>notes</b>', style: { padding: '8px', border: '1px dashed #888', borderRadius: '4px', cursor: 'grab' } },
-      '📝 notes.html'
+      'notes.html'
     ),
   ),
   div(
@@ -16210,12 +16286,18 @@ preview.append(
 .preview {
   padding: 10px;
 }
+
+.drag-target {
+  box-shadow: inset 0 0 0 2px #2196F3;
+  border-radius: 4px;
+}
 \`\`\`
 
 > **Try it:** Click "Browse Files" to navigate the menu normally.
-> Drag one of the files onto "Drop Menu" to see the drop-filtered menu
-> with auto-disclosing submenus. Drop directly on "Drop Menu" to save
-> to the root folder, or drill into subfolders.`,
+> Drag a file and notice the Drop Menu highlights as a valid target.
+> "Text Files" only accepts .txt, "HTML Files" only accepts .html —
+> the menu filters accordingly. Subfolders are randomly generated
+> each time a folder is disclosed (dynamic \`menuItems\`).`,
     title: "menu",
     filename: "menu.ts",
     path: "src/menu.ts"

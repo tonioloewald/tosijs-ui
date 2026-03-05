@@ -388,7 +388,7 @@ describe('menu', () => {
   })
 
   describe('filterForDrop', () => {
-    test('filters out items without acceptsDrop', () => {
+    test('disables items without acceptsDrop by default', () => {
       const items: MenuItem[] = [
         {
           caption: 'Has drop',
@@ -399,11 +399,27 @@ describe('menu', () => {
         { caption: 'No drop', action: () => {} },
       ]
       const result = filterForDrop(items, ['text/plain'])
+      expect(result.length).toBe(2)
+      expect((result[0] as MenuAction).caption).toBe('Has drop')
+      expect((result[1] as MenuAction).enabled!()).toBe(false)
+    })
+
+    test('hides items without acceptsDrop when hideDisabled', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Has drop',
+          acceptsDrop: ['text/plain'],
+          dropAction: () => {},
+          action: () => {},
+        },
+        { caption: 'No drop', action: () => {} },
+      ]
+      const result = filterForDrop(items, ['text/plain'], true)
       expect(result.length).toBe(1)
       expect((result[0] as MenuAction).caption).toBe('Has drop')
     })
 
-    test('filters by matching MIME types', () => {
+    test('disables non-matching MIME types by default', () => {
       const items: MenuItem[] = [
         {
           caption: 'Text only',
@@ -419,6 +435,27 @@ describe('menu', () => {
         },
       ]
       const result = filterForDrop(items, ['text/plain'])
+      expect(result.length).toBe(2)
+      expect((result[0] as MenuAction).caption).toBe('Text only')
+      expect((result[1] as MenuAction).enabled!()).toBe(false)
+    })
+
+    test('hides non-matching MIME types when hideDisabled', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Text only',
+          acceptsDrop: ['text/plain'],
+          dropAction: () => {},
+          action: () => {},
+        },
+        {
+          caption: 'HTML only',
+          acceptsDrop: ['text/html'],
+          dropAction: () => {},
+          action: () => {},
+        },
+      ]
+      const result = filterForDrop(items, ['text/plain'], true)
       expect(result.length).toBe(1)
       expect((result[0] as MenuAction).caption).toBe('Text only')
     })
@@ -436,7 +473,7 @@ describe('menu', () => {
       expect(result.length).toBe(1)
     })
 
-    test('recursively filters submenu children', () => {
+    test('recursively filters submenu children when hideDisabled', () => {
       const items: MenuItem[] = [
         {
           caption: 'Folder',
@@ -457,14 +494,14 @@ describe('menu', () => {
           ],
         },
       ]
-      const result = filterForDrop(items, ['text/plain'])
+      const result = filterForDrop(items, ['text/plain'], true)
       expect(result.length).toBe(1)
       const sub = result[0] as SubMenu
       expect(sub.menuItems.length).toBe(1)
       expect((sub.menuItems[0] as MenuAction).caption).toBe('Accepts text')
     })
 
-    test('removes empty submenus', () => {
+    test('removes empty submenus when hideDisabled', () => {
       const items: MenuItem[] = [
         {
           caption: 'Empty folder',
@@ -479,7 +516,7 @@ describe('menu', () => {
           ],
         },
       ]
-      const result = filterForDrop(items, ['text/plain'])
+      const result = filterForDrop(items, ['text/plain'], true)
       expect(result.length).toBe(0)
     })
 
@@ -499,12 +536,12 @@ describe('menu', () => {
           ],
         },
       ]
-      const result = filterForDrop(items, ['text/plain'])
+      const result = filterForDrop(items, ['text/plain'], true)
       expect(result.length).toBe(1)
       expect((result[0] as SubMenu).caption).toBe('Drop here too')
     })
 
-    test('cleans up double separators', () => {
+    test('cleans up double separators when hideDisabled', () => {
       const items: MenuItem[] = [
         {
           caption: 'Keep',
@@ -522,12 +559,12 @@ describe('menu', () => {
           action: () => {},
         },
       ]
-      const result = filterForDrop(items, ['text/plain'])
+      const result = filterForDrop(items, ['text/plain'], true)
       expect(result.length).toBe(3)
       expect(result[1]).toBeNull()
     })
 
-    test('removes trailing separators', () => {
+    test('removes trailing separators when hideDisabled', () => {
       const items: MenuItem[] = [
         {
           caption: 'Keep',
@@ -538,17 +575,28 @@ describe('menu', () => {
         null,
         { caption: 'Remove', action: () => {} },
       ]
-      const result = filterForDrop(items, ['text/plain'])
+      const result = filterForDrop(items, ['text/plain'], true)
       expect(result.length).toBe(1)
     })
 
-    test('returns empty for no matches', () => {
+    test('returns empty for no matches when hideDisabled', () => {
+      const items: MenuItem[] = [
+        { caption: 'No drop', action: () => {} },
+        { caption: 'Also no drop', action: () => {} },
+      ]
+      const result = filterForDrop(items, ['text/plain'], true)
+      expect(result.length).toBe(0)
+    })
+
+    test('disables all for no matches by default', () => {
       const items: MenuItem[] = [
         { caption: 'No drop', action: () => {} },
         { caption: 'Also no drop', action: () => {} },
       ]
       const result = filterForDrop(items, ['text/plain'])
-      expect(result.length).toBe(0)
+      expect(result.length).toBe(2)
+      expect((result[0] as MenuAction).enabled!()).toBe(false)
+      expect((result[1] as MenuAction).enabled!()).toBe(false)
     })
   })
 
@@ -562,9 +610,23 @@ describe('menu', () => {
           dropAction: () => {},
         } as MenuItem,
       ]
-      const result = filterForClick(items)
+      const result = filterForClick(items, true)
       expect(result.length).toBe(1)
       expect((result[0] as MenuAction).caption).toBe('Click me')
+    })
+
+    test('disables drop-only items by default', () => {
+      const items: MenuItem[] = [
+        { caption: 'Click me', action: () => {} },
+        {
+          caption: 'Drop only',
+          acceptsDrop: ['text/plain'],
+          dropAction: () => {},
+        } as MenuItem,
+      ]
+      const result = filterForClick(items)
+      expect(result.length).toBe(2)
+      expect((result[1] as MenuAction).enabled!()).toBe(false)
     })
 
     test('keeps submenus with clickable children', () => {
@@ -578,7 +640,24 @@ describe('menu', () => {
       expect(result.length).toBe(1)
     })
 
-    test('removes submenus with no clickable children', () => {
+    test('hides submenus with no clickable children when hideDisabled', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Sub',
+          menuItems: [
+            {
+              caption: 'Drop only',
+              acceptsDrop: ['text/plain'],
+              dropAction: () => {},
+            } as MenuItem,
+          ],
+        },
+      ]
+      const result = filterForClick(items, true)
+      expect(result.length).toBe(0)
+    })
+
+    test('disables submenus with no clickable children by default', () => {
       const items: MenuItem[] = [
         {
           caption: 'Sub',
@@ -592,7 +671,8 @@ describe('menu', () => {
         },
       ]
       const result = filterForClick(items)
-      expect(result.length).toBe(0)
+      expect(result.length).toBe(1)
+      expect((result[0] as MenuAction).enabled!()).toBe(false)
     })
   })
 

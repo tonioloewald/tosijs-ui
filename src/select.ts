@@ -212,7 +212,13 @@ import {
   deprecated,
 } from 'tosijs'
 import { icons } from './icons'
-import { popMenu, MenuItem, SubMenu, removeLastMenu } from './menu'
+import {
+  popMenu,
+  MenuItem,
+  SubMenu,
+  removeLastMenu,
+  resolveMenuItems,
+} from './menu'
 import { localize, XinLocalized } from './localize'
 
 const { button, span, input } = elements
@@ -386,10 +392,9 @@ export class TosiSelect extends Component<SelectParts> {
       if (option === null) {
         return true
       } else if ((option as SubMenu).menuItems) {
-        ;(option as SubMenu).menuItems = (option as SubMenu).menuItems.filter(
-          showOption
-        )
-        return (option as SubMenu).menuItems.length > 0
+        const resolved = resolveMenuItems((option as SubMenu).menuItems)
+        ;(option as SubMenu).menuItems = resolved.filter(showOption)
+        return resolved.length > 0
       } else {
         return option.caption.toLocaleLowerCase().includes(this.filter)
       }

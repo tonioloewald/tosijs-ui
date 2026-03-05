@@ -214,6 +214,7 @@ export interface PopMenuOptions {
   submenuOffset?: { x: number; y: number }
   localized?: boolean,
   showChecked?: boolean,  // if true, scroll checked item(s) into view
+  hideDisabled?: boolean, // if true, non-applicable items are hidden (default: shown disabled)
 }
 ```
 
@@ -352,7 +353,7 @@ dropAction?: (dataTransfer: DataTransfer) => void
 - A **SubMenu** with `acceptsDrop` auto-discloses on drag hover
 - A **SubMenu** with `dropAction` can also receive drops directly
 - A **MenuAction** with `dropAction` is a drop target
-- Items without `acceptsDrop` are filtered out in drop mode
+- Items without `acceptsDrop` are shown disabled in drop mode (or hidden if `hideDisabled` is set)
 
 ### popDropMenu({target, menuItems, dataTypes, …})
 
@@ -363,19 +364,29 @@ export interface PopDropMenuOptions extends PopMenuOptions {
 ```
 
 `popDropMenu` filters menuItems to only those matching `dataTypes`,
-then opens the menu in drop mode.
+then opens the menu in drop mode. Non-matching items are shown
+disabled by default; set `hideDisabled: true` to remove them entirely.
 
 `disclosureDelay` (ms, default 200) controls how long a drag must hover
 over a submenu before it auto-discloses.
 
+### hideDisabled
+
+By default (`hideDisabled: false`), non-matching items remain visible but disabled.
+This preserves spatial stability — items don't jump around as you drag different
+types. Set `hideDisabled: true` to hide them entirely for a cleaner menu.
+
+Applies symmetrically to both `filterForDrop` and `filterForClick`.
+
 ### filterForDrop / filterForClick
 
 ```
-filterForDrop(items: MenuItem[], dataTypes: readonly string[]): MenuItem[]
-filterForClick(items: MenuItem[]): MenuItem[]
+filterForDrop(items: MenuItem[], dataTypes: readonly string[], hideDisabled?: boolean): MenuItem[]
+filterForClick(items: MenuItem[], hideDisabled?: boolean): MenuItem[]
 ```
 
 Utility functions to filter a single menu definition for each mode.
+When `hideDisabled` is false (default), non-matching items are kept but disabled.
 
 ### TosiMenu accepts-drop
 
@@ -398,6 +409,32 @@ dragAndDrop.init()
 
 const { button, div, span } = elements
 
+const adjectives = ['Important', 'Old', 'Shared', 'Archive', 'Draft', 'Final', 'Review', 'Backup']
+const randomFolders = (type) => () => {
+  const count = 2 + Math.floor(Math.random() * 3)
+  const picked = []
+  const pool = [...adjectives]
+  for (let i = 0; i < count; i++) {
+    const idx = Math.floor(Math.random() * pool.length)
+    picked.push(pool.splice(idx, 1)[0])
+  }
+  return picked.map(name => ({
+    caption: name,
+    icon: 'folder',
+    acceptsDrop: [type],
+    dropAction(data) {
+      postNotification({
+        type: 'success',
+        message: 'Saved to ' + name + ': ' + (data.getData(type) || 'file'),
+        duration: 2
+      })
+    },
+    action() {
+      postNotification({ message: 'Opened ' + name, duration: 1 })
+    },
+  }))
+}
+
 const menuItems = [
   {
     caption: 'Documents',
@@ -415,36 +452,36 @@ const menuItems = [
     },
     menuItems: [
       {
-        caption: 'Reports',
+        caption: 'Text Files',
         icon: 'folder',
-        acceptsDrop: ['text/plain', 'text/html'],
+        acceptsDrop: ['text/plain'],
         dropAction(data) {
           postNotification({
             type: 'success',
-            message: 'Saved to Reports: ' + (data.getData('text/plain') || data.getData('text/html')),
+            message: 'Saved to Text Files: ' + data.getData('text/plain'),
             duration: 2
           })
         },
         action() {
-          postNotification({ message: 'Navigated to Reports', duration: 1 })
+          postNotification({ message: 'Navigated to Text Files', duration: 1 })
         },
-        menuItems: [
-          {
-            caption: '2024',
-            icon: 'file',
-            acceptsDrop: ['text/plain'],
-            dropAction(data) {
-              postNotification({
-                type: 'success',
-                message: 'Saved to 2024: ' + data.getData('text/plain'),
-                duration: 2
-              })
-            },
-            action() {
-              postNotification({ message: 'Opened 2024 folder', duration: 1 })
-            },
-          }
-        ]
+        menuItems: randomFolders('text/plain'),
+      },
+      {
+        caption: 'HTML Files',
+        icon: 'folder',
+        acceptsDrop: ['text/html'],
+        dropAction(data) {
+          postNotification({
+            type: 'success',
+            message: 'Saved to HTML Files: ' + data.getData('text/html'),
+            duration: 2
+          })
+        },
+        action() {
+          postNotification({ message: 'Navigated to HTML Files', duration: 1 })
+        },
+        menuItems: randomFolders('text/html'),
       },
       {
         caption: 'readme.txt',
@@ -479,7 +516,7 @@ const clickBtn = button('Click: Browse Files', {
   }
 })
 
-const dropTarget = tosiMenu(
+const dropMenu = tosiMenu(
   {
     menuItems,
     acceptsDrop: 'text/plain;text/html',
@@ -492,7 +529,24 @@ const dropTarget = tosiMenu(
     },
   },
   icons.folder(),
-  span(' Drop Menu')
+  span(' Drop (show all)')
+)
+
+const dropMenuHidden = tosiMenu(
+  {
+    menuItems,
+    acceptsDrop: 'text/plain;text/html',
+    hideDisabled: true,
+    dropAction(data) {
+      postNotification({
+        type: 'success',
+        message: 'Saved to root: ' + (data.getData('text/plain') || data.getData('text/html')),
+        duration: 2
+      })
+    },
+  },
+  icons.folder(),
+  span(' Drop (hide disabled)')
 )
 
 preview.append(
@@ -500,17 +554,18 @@ preview.append(
     { style: { display: 'flex', gap: '10px', alignItems: 'flex-start' } },
     div(
       { draggable: 'true', dataDrag: 'text/plain', dataDragContent: 'quarterly-report.txt', style: { padding: '8px', border: '1px dashed #888', borderRadius: '4px', cursor: 'grab' } },
-      '📄 quarterly-report.txt'
+      'quarterly-report.txt'
     ),
     div(
       { draggable: 'true', dataDrag: 'text/html', dataDragContent: '<b>notes</b>', style: { padding: '8px', border: '1px dashed #888', borderRadius: '4px', cursor: 'grab' } },
-      '📝 notes.html'
+      'notes.html'
     ),
   ),
   div(
-    { style: { display: 'flex', gap: '10px', marginTop: '10px' } },
+    { style: { display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' } },
     clickBtn,
-    dropTarget,
+    dropMenu,
+    dropMenuHidden,
   )
 )
 ```
@@ -521,9 +576,11 @@ preview.append(
 ```
 
 > **Try it:** Click "Browse Files" to navigate the menu normally.
-> Drag one of the files onto "Drop Menu" to see the drop-filtered menu
-> with auto-disclosing submenus. Drop directly on "Drop Menu" to save
-> to the root folder, or drill into subfolders.
+> Drag a file over "Drop (show all)" — non-matching items appear
+> disabled. Drag over "Drop (hide disabled)" — non-matching items
+> are hidden entirely. "Text Files" only accepts .txt, "HTML Files"
+> only accepts .html. Subfolders are randomly generated each time
+> a folder is disclosed (dynamic `menuItems`).
 
 */
 
@@ -554,11 +611,13 @@ export interface MenuAction {
   dropAction?: (dataTransfer: DataTransfer) => void
 }
 
+export type MenuItemsProvider = MenuItem[] | (() => MenuItem[])
+
 export interface SubMenu {
   caption: string
   checked?: () => boolean
   enabled?: () => boolean
-  menuItems: MenuItem[]
+  menuItems: MenuItemsProvider
   icon?: string | Element
   acceptsDrop?: string[]
   dropAction?: (dataTransfer: DataTransfer) => void
@@ -567,6 +626,9 @@ export interface SubMenu {
 export type MenuSeparator = null
 
 export type MenuItem = MenuAction | SubMenu | MenuSeparator
+
+export const resolveMenuItems = (provider: MenuItemsProvider): MenuItem[] =>
+  typeof provider === 'function' ? provider() : provider
 
 const { div, button, span, a, xinSlot } = elements
 
@@ -589,7 +651,8 @@ const cleanSeparators = (items: MenuItem[]): MenuItem[] => {
 
 export const filterForDrop = (
   items: MenuItem[],
-  dataTypes: readonly string[]
+  dataTypes: readonly string[],
+  hideDisabled = false
 ): MenuItem[] => {
   const filtered: MenuItem[] = []
   for (const item of items) {
@@ -598,16 +661,34 @@ export const filterForDrop = (
       continue
     }
     const { acceptsDrop } = item
-    if (!acceptsDrop) continue
+    if (!acceptsDrop) {
+      if (!hideDisabled) {
+        filtered.push({ ...item, enabled: () => false } as MenuItem)
+      }
+      continue
+    }
     const matches = dataTypes.some((t) => isTypeAllowed(acceptsDrop, t))
-    if (!matches) continue
+    if (!matches) {
+      if (!hideDisabled) {
+        filtered.push({ ...item, enabled: () => false } as MenuItem)
+      }
+      continue
+    }
     const subMenu = item as SubMenu
     if (subMenu.menuItems) {
-      const childItems = filterForDrop(subMenu.menuItems, dataTypes)
-      if (childItems.length > 0 || subMenu.dropAction) {
+      // Always check with hideDisabled=true to see if there are valid children
+      const validChildren = filterForDrop(
+        resolveMenuItems(subMenu.menuItems),
+        dataTypes,
+        true
+      )
+      if (validChildren.length > 0 || subMenu.dropAction) {
+        const childItems = hideDisabled
+          ? validChildren
+          : filterForDrop(resolveMenuItems(subMenu.menuItems), dataTypes, false)
         filtered.push({ ...subMenu, menuItems: childItems })
-      } else {
-        // submenu with no valid children and no dropAction — skip
+      } else if (!hideDisabled) {
+        filtered.push({ ...subMenu, enabled: () => false } as MenuItem)
       }
     } else {
       filtered.push(item)
@@ -616,7 +697,10 @@ export const filterForDrop = (
   return cleanSeparators(filtered)
 }
 
-export const filterForClick = (items: MenuItem[]): MenuItem[] => {
+export const filterForClick = (
+  items: MenuItem[],
+  hideDisabled = false
+): MenuItem[] => {
   const filtered: MenuItem[] = []
   for (const item of items) {
     if (item === null) {
@@ -624,16 +708,27 @@ export const filterForClick = (items: MenuItem[]): MenuItem[] => {
       continue
     }
     const action = (item as MenuAction).action
-    const menuItems = (item as SubMenu).menuItems
-    if (action || menuItems) {
-      if (menuItems) {
-        const childItems = filterForClick(menuItems)
-        if (childItems.length > 0) {
+    const menuItemsProvider = (item as SubMenu).menuItems
+    if (action || menuItemsProvider) {
+      if (menuItemsProvider) {
+        // Always check with hideDisabled=true to see if there are valid children
+        const validChildren = filterForClick(
+          resolveMenuItems(menuItemsProvider),
+          true
+        )
+        if (validChildren.length > 0) {
+          const childItems = hideDisabled
+            ? validChildren
+            : filterForClick(resolveMenuItems(menuItemsProvider), false)
           filtered.push({ ...item, menuItems: childItems } as SubMenu)
+        } else if (!hideDisabled) {
+          filtered.push({ ...item, enabled: () => false } as MenuItem)
         }
       } else {
         filtered.push(item)
       }
+    } else if (!hideDisabled) {
+      filtered.push({ ...item, enabled: () => false } as MenuItem)
     }
   }
   return cleanSeparators(filtered)
@@ -704,6 +799,11 @@ StyleSheet('xin-menu-helper', {
     boxShadow: 'none !important',
     background: varDefault.menuItemHoverBg('#eee'),
   },
+  '.xin-menu-item.drag-target:hover': {
+    boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${varDefault.menuDropOverBg(
+      '#2196F3'
+    )} 50%, transparent) !important`,
+  },
   '.xin-menu-item:active': {
     // chrome rendering bug
     boxShadow: 'none !important',
@@ -722,6 +822,11 @@ StyleSheet('xin-menu-helper', {
   },
   '.xin-drop-over svg': {
     stroke: `${varDefault.menuDropOverColor('#fff')} !important`,
+  },
+  '.drag-target': {
+    boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${varDefault.menuDropOverBg(
+      '#2196F3'
+    )} 50%, transparent) !important`,
   },
 })
 
@@ -811,6 +916,9 @@ export const createDropMenuItem = (
     options.localized ? span(localize(item.caption)) : span(item.caption),
     span(' ')
   )
+  if (item.dropAction) {
+    menuItem.classList.add('drag-target')
+  }
   if (item?.enabled && !item.enabled()) {
     menuItem.setAttribute('disabled', '')
     menuItem.setAttribute('aria-disabled', 'true')
@@ -839,7 +947,7 @@ export const createSubMenu = (
         if (options._dropMode) return
         popMenu(
           Object.assign({}, options, {
-            menuItems: item.menuItems,
+            menuItems: resolveMenuItems(item.menuItems),
             target: submenuItem,
             submenuDepth: (options.submenuDepth || 0) + 1,
             position: 'side',
@@ -851,30 +959,40 @@ export const createSubMenu = (
       onDragenter(event: DragEvent) {
         if (!options._dropMode) return
         clearDropGraceTimer()
-        submenuItem.classList.add('xin-drop-over')
         event.preventDefault()
         event.stopPropagation()
-        if (!disclosed) {
+        const from = event.relatedTarget as Node | null
+        // Ignore dragenter from own child elements (icon, text, chevron)
+        if (from && submenuItem.contains(from)) return
+        submenuItem.classList.add('xin-drop-over')
+        if (disclosed) {
+          // Dragged back to this item — close child menus, don't re-disclose
+          removeLastMenu((options.submenuDepth || 0) + 1)
+          disclosed = false
           if (disclosureTimer) clearTimeout(disclosureTimer)
-          disclosureTimer = setTimeout(() => {
-            disclosed = true
-            const filteredItems = options._dataTypes
-              ? filterForDrop(item.menuItems, options._dataTypes)
-              : item.menuItems
-            if (filteredItems.length > 0) {
-              popMenu(
-                Object.assign({}, options, {
-                  menuItems: filteredItems,
-                  target: submenuItem,
-                  submenuDepth: (options.submenuDepth || 0) + 1,
-                  position: 'side',
-                  _dropMode: true,
-                  _dataTypes: options._dataTypes,
-                })
-              )
-            }
-          }, options.disclosureDelay ?? 200)
+          disclosureTimer = null
+          return
         }
+        if (disclosureTimer) clearTimeout(disclosureTimer)
+        disclosureTimer = setTimeout(() => {
+          disclosed = true
+          const resolved = resolveMenuItems(item.menuItems)
+          const filteredItems = options._dataTypes
+            ? filterForDrop(resolved, options._dataTypes, options.hideDisabled)
+            : resolved
+          if (filteredItems.length > 0) {
+            popMenu(
+              Object.assign({}, options, {
+                menuItems: filteredItems,
+                target: submenuItem,
+                submenuDepth: (options.submenuDepth || 0) + 1,
+                position: 'side',
+                _dropMode: true,
+                _dataTypes: options._dataTypes,
+              })
+            )
+          }
+        }, options.disclosureDelay ?? 200)
       },
       onDragover(event: DragEvent) {
         if (!options._dropMode) return
@@ -888,8 +1006,16 @@ export const createSubMenu = (
         if (!options._dropMode) return
         const related = event.relatedTarget as Node | null
         if (related && submenuItem.contains(related)) return
-        // If disclosed and droppable, keep highlight
-        if (item.dropAction && disclosed) return
+        // Keep highlight if cursor moved into the disclosed child menu
+        if (
+          disclosed &&
+          related &&
+          poppedMenus.some(
+            (p) => p.menu.contains(related) || p.target.contains(related)
+          )
+        ) {
+          return
+        }
         submenuItem.classList.remove('xin-drop-over')
         if (disclosureTimer) {
           clearTimeout(disclosureTimer)
@@ -911,6 +1037,9 @@ export const createSubMenu = (
     options.localized ? span(localize(item.caption)) : span(item.caption),
     icons.chevronRight({ style: { justifySelf: 'flex-end' } })
   )
+  if (options._dropMode && item.dropAction) {
+    submenuItem.classList.add('drag-target')
+  }
   return submenuItem
 }
 
@@ -922,7 +1051,8 @@ export const createMenuItem = (
     return span({ class: 'xin-menu-separator' })
   } else if (options._dropMode) {
     const sub = item as SubMenu
-    const hasChildren = sub.menuItems && sub.menuItems.length > 0
+    const hasChildren =
+      sub.menuItems && resolveMenuItems(sub.menuItems).length > 0
     if (hasChildren) {
       return createSubMenu(sub, options)
     } else if ((item as MenuAction).dropAction) {
@@ -1041,6 +1171,11 @@ const startDropGraceTimer = (depth: number) => {
 
 export const removeLastMenu = (depth = 0): PoppedMenu | undefined => {
   clearDropGraceTimer()
+  if (depth === 0) {
+    document
+      .querySelectorAll('tosi-menu.xin-drop-over')
+      .forEach((el) => el.classList.remove('xin-drop-over'))
+  }
   const toBeRemoved = poppedMenus.splice(depth)
   for (const popped of toBeRemoved) {
     popped.menu.remove()
@@ -1061,6 +1196,7 @@ export interface PopMenuOptions {
   submenuOffset?: { x: number; y: number }
   localized?: boolean
   showChecked?: boolean
+  hideDisabled?: boolean
   onClose?: () => void
   role?: 'menu' | 'listbox'
   _dropMode?: boolean
@@ -1135,7 +1271,11 @@ export const popMenu = (options: PopMenuOptions): void => {
 
 export const popDropMenu = (options: PopDropMenuOptions): void => {
   const { dataTypes, ...rest } = options
-  const filtered = filterForDrop(options.menuItems, dataTypes)
+  const filtered = filterForDrop(
+    options.menuItems,
+    dataTypes,
+    options.hideDisabled
+  )
   if (!filtered.length) return
   popMenu({
     ...rest,
@@ -1159,7 +1299,7 @@ function findShortcutAction(
         return item as MenuAction
       }
     } else if (menuItems) {
-      const foundAction = findShortcutAction(menuItems, event)
+      const foundAction = findShortcutAction(resolveMenuItems(menuItems), event)
       if (foundAction) {
         return foundAction
       }
@@ -1180,6 +1320,7 @@ export class TosiMenu extends Component<TosiMenuParts> {
     icon: '',
     acceptsDrop: '',
     disclosureDelay: 0,
+    hideDisabled: false,
   }
 
   menuItems: MenuItem[] = []
@@ -1221,6 +1362,7 @@ export class TosiMenu extends Component<TosiMenuParts> {
         width: this.menuWidth,
         localized: this.localized,
         disclosureDelay: this.disclosureDelay || undefined,
+        hideDisabled: this.hideDisabled,
       })
     }
     event.preventDefault()
@@ -1287,6 +1429,9 @@ export class TosiMenu extends Component<TosiMenuParts> {
   connectedCallback() {
     super.connectedCallback()
     document.addEventListener('keydown', this.handleShortcut, true)
+    if (this.acceptsDrop) {
+      this.dataset.drop = this.acceptsDrop
+    }
   }
 
   disconnectedCallback(): void {

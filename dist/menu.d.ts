@@ -12,19 +12,21 @@ export interface MenuAction {
     acceptsDrop?: string[];
     dropAction?: (dataTransfer: DataTransfer) => void;
 }
+export type MenuItemsProvider = MenuItem[] | (() => MenuItem[]);
 export interface SubMenu {
     caption: string;
     checked?: () => boolean;
     enabled?: () => boolean;
-    menuItems: MenuItem[];
+    menuItems: MenuItemsProvider;
     icon?: string | Element;
     acceptsDrop?: string[];
     dropAction?: (dataTransfer: DataTransfer) => void;
 }
 export type MenuSeparator = null;
 export type MenuItem = MenuAction | SubMenu | MenuSeparator;
-export declare const filterForDrop: (items: MenuItem[], dataTypes: readonly string[]) => MenuItem[];
-export declare const filterForClick: (items: MenuItem[]) => MenuItem[];
+export declare const resolveMenuItems: (provider: MenuItemsProvider) => MenuItem[];
+export declare const filterForDrop: (items: MenuItem[], dataTypes: readonly string[], hideDisabled?: boolean) => MenuItem[];
+export declare const filterForClick: (items: MenuItem[], hideDisabled?: boolean) => MenuItem[];
 export declare const createMenuAction: (item: MenuAction, options: PopMenuOptions) => HTMLElement;
 export declare const createDropMenuItem: (item: MenuAction, options: PopMenuOptions) => HTMLElement;
 export declare const createSubMenu: (item: SubMenu, options: PopMenuOptions) => HTMLElement;
@@ -48,6 +50,7 @@ export interface PopMenuOptions {
     };
     localized?: boolean;
     showChecked?: boolean;
+    hideDisabled?: boolean;
     onClose?: () => void;
     role?: 'menu' | 'listbox';
     _dropMode?: boolean;
@@ -70,6 +73,7 @@ export declare class TosiMenu extends Component<TosiMenuParts> {
         icon: string;
         acceptsDrop: string;
         disclosureDelay: number;
+        hideDisabled: boolean;
     };
     menuItems: MenuItem[];
     dropAction: ((dataTransfer: DataTransfer) => void) | null;

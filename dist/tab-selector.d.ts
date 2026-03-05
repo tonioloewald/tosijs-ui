@@ -78,7 +78,7 @@ export declare class TosiTabs extends WebComponent {
         };
     };
     onCloseTab: TabCloseHandler | null;
-    content: (HTMLSlotElement | HTMLDivElement)[];
+    content: (HTMLDivElement | HTMLSlotElement)[];
     addTabBody(body: HTMLElement, selectTab?: boolean): void;
     removeTabBody(body: HTMLElement): void;
     keyTab: (event: Event) => void;
