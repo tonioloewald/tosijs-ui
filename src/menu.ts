@@ -916,8 +916,8 @@ export const createDropMenuItem = (
     options.localized ? span(localize(item.caption)) : span(item.caption),
     span(' ')
   )
-  if (item.dropAction) {
-    menuItem.classList.add('drag-target')
+  if (item.dropAction && item.acceptsDrop) {
+    menuItem.dataset.drop = item.acceptsDrop.join(';')
   }
   if (item?.enabled && !item.enabled()) {
     menuItem.setAttribute('disabled', '')
@@ -1037,8 +1037,8 @@ export const createSubMenu = (
     options.localized ? span(localize(item.caption)) : span(item.caption),
     icons.chevronRight({ style: { justifySelf: 'flex-end' } })
   )
-  if (options._dropMode && item.dropAction) {
-    submenuItem.classList.add('drag-target')
+  if (options._dropMode && item.dropAction && item.acceptsDrop) {
+    submenuItem.dataset.drop = item.acceptsDrop.join(';')
   }
   return submenuItem
 }

@@ -4243,6 +4243,11 @@ var removeClass = (className) => {
   }
 };
 var end = () => {
+  if (dropObserver) {
+    dropObserver.disconnect();
+    dropObserver = null;
+  }
+  activeDragTypes = [];
   removeClass("drag-over");
   removeClass("drag-source");
   removeClass("drag-target");
@@ -4250,9 +4255,12 @@ var end = () => {
 var stringToTypes = (s2, delimiter = ";") => {
   return (s2 || "").split(delimiter).map((t2) => t2.trim()).filter((i) => i !== "");
 };
+var activeDragTypes = [];
+var dropObserver = null;
 var markDroppable = (types) => {
   if (!types)
     types = [];
+  activeDragTypes = types;
   const elements = [
     ...document.querySelectorAll("[data-drop]")
   ];
@@ -4263,6 +4271,10 @@ var markDroppable = (types) => {
     } else {
       element.classList.remove("drag-target");
     }
+  }
+  if (!dropObserver) {
+    dropObserver = new MutationObserver(() => markDroppable(activeDragTypes));
+    dropObserver.observe(document.body, { childList: true, subtree: true });
   }
 };
 function start(evt) {
@@ -4562,8 +4574,8 @@ var createDropMenuItem = (item, options) => {
       removeLastMenu(0);
     }
   }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(" "));
-  if (item.dropAction) {
-    menuItem.classList.add("drag-target");
+  if (item.dropAction && item.acceptsDrop) {
+    menuItem.dataset.drop = item.acceptsDrop.join(";");
   }
   if (item?.enabled && !item.enabled()) {
     menuItem.setAttribute("disabled", "");
@@ -4666,8 +4678,8 @@ var createSubMenu = (item, options) => {
       removeLastMenu(0);
     }
   }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), icons.chevronRight({ style: { justifySelf: "flex-end" } }));
-  if (options._dropMode && item.dropAction) {
-    submenuItem.classList.add("drag-target");
+  if (options._dropMode && item.dropAction && item.acceptsDrop) {
+    submenuItem.dataset.drop = item.acceptsDrop.join(";");
   }
   return submenuItem;
 };

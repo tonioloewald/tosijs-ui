@@ -323,6 +323,11 @@ const removeClass = (className: string) => {
   }
 }
 const end = () => {
+  if (dropObserver) {
+    dropObserver.disconnect()
+    dropObserver = null
+  }
+  activeDragTypes = []
   removeClass('drag-over')
   removeClass('drag-source')
   removeClass('drag-target')
@@ -338,8 +343,12 @@ export const stringToTypes = (
     .filter((i) => i !== '')
 }
 
+let activeDragTypes: readonly string[] = []
+let dropObserver: MutationObserver | null = null
+
 const markDroppable = (types: readonly string[] | undefined) => {
   if (!types) types = []
+  activeDragTypes = types
   const elements = [
     ...document.querySelectorAll('[data-drop]'),
   ] as HTMLElement[]
@@ -350,6 +359,10 @@ const markDroppable = (types: readonly string[] | undefined) => {
     } else {
       element.classList.remove('drag-target')
     }
+  }
+  if (!dropObserver) {
+    dropObserver = new MutationObserver(() => markDroppable(activeDragTypes))
+    dropObserver.observe(document.body, { childList: true, subtree: true })
   }
 }
 
