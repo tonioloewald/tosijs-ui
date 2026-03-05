@@ -343,6 +343,46 @@ applyTheme(prefersDark ? createDarkTheme(colors) : createTheme(colors))
 
 Base variables use `--tosi-` prefix (e.g., `--tosi-spacing`, `--tosi-accent`, `--tosi-touch-size`). Components derive their own variables from these (e.g., `--tosi-select-gap` defaults to `var(--tosi-spacing-sm)`).
 
+### Drop Menus
+
+`popDropMenu()` extends the menu system for drag-and-drop. A single `menuItems` array serves both click navigation (`popMenu`) and drag-to-drop (`popDropMenu`).
+
+```typescript
+import { popMenu, popDropMenu, tosiMenu } from 'tosijs-ui'
+
+const menuItems = [
+  {
+    caption: 'Documents',
+    icon: 'folder',
+    acceptsDrop: ['text/*'],        // MIME types this item accepts
+    dropAction(data) { /* ... */ },  // called on drop
+    action() { /* click handler */ },
+    menuItems: [/* children */],     // can be () => MenuItem[] for lazy loading
+  },
+]
+
+// Click mode - shows all items
+popMenu({ target, menuItems })
+
+// Drop mode - filters/disables non-matching items
+popDropMenu({ target, menuItems, dataTypes: ['text/plain'] })
+```
+
+Key options:
+- `hideDisabled` (default `false`) — non-matching items shown disabled; set `true` to hide them
+- `disclosureDelay` (ms, default 200) — hover time before submenu auto-discloses
+- `MenuItemsProvider` — `menuItems` can be `MenuItem[]` or `() => MenuItem[]` for lazy evaluation
+- `<tosi-menu accepts-drop="text/plain;text/html">` — auto-opens drop menu on compatible drag
+
+### Drag and Drop Library
+
+`dragAndDrop.init()` sets up global drag-and-drop handling. It automatically marks `[data-drop]` elements with `.drag-target` when a compatible drag starts, including elements added dynamically during the drag (via MutationObserver). The observer is torn down when the drag ends.
+
+Classes managed by the library:
+- `.drag-source` — element being dragged
+- `.drag-target` — valid drop target for current drag
+- `.drag-over` — drop target currently hovered
+
 ### Component Philosophy
 
 - Work with the browser, not against it

@@ -13,21 +13,21 @@
 ## Localization
 
 - Adding automatic localization where appropriate:
-  - `<xin-password-strength>`
-  - `<xin-tag-list>`
-  - `<xin-filter>`
+  - `<tosi-password-strength>`
+  - `<tosi-tag-list>`
+  - `<tosi-filter>`
 
 ## Components
 
-### `<xin-b3d>`
+### `<tosi-b3d>`
 - Converting this to a blueprint
 
-### `<xin-filter>`
-- Leverage `<xin-select>` for picking fields etc.
-- Leverage `<xin-tag-list>` for displaying filters compactly
+### `<tosi-filter>`
+- Leverage `<tosi-select>` for picking fields etc.
+- Leverage `<tosi-tag-list>` for displaying filters compactly
 - Leverage `popFloat` for disclosing filter-editor
 
-### `<xin-editable>`
+### `<tosi-editable>`
 - Add support for disabling / enabling options
 - Hide lock icons while resizing
 - Maybe show lines under locks indicating the parent
@@ -41,3 +41,6 @@
 
 - ~~Add unit tests for components~~
 - ~~Add accessibility (ARIA) attributes to components~~
+- ~~xin → tosi rename (all exports, classes, tags, interfaces)~~
+- ~~Drop menu support (`popDropMenu`, `hideDisabled`, dynamic `menuItems`)~~
+- ~~Drag-and-drop MutationObserver for dynamic drop targets~~
