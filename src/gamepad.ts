@@ -25,7 +25,7 @@ const interval = setInterval(() => {
 
 ## XRInput Devices
 
-`xrControllers(babylonjsXRHelper)` returns an `XinXRControllerMap` that tracks
+`xrControllers(babylonjsXRHelper)` returns a `TosiXRControllerMap` that tracks
 the current state of XR controllers — button presses, analog values, touch state,
 and thumbstick axes. It subscribes to BabylonJS `onButtonStateChangedObservable`
 and `onAxisValueChangedObservable` events so the map stays current.
@@ -35,16 +35,21 @@ showing active inputs with their flags (P=pressed, T=touched), analog values,
 and axis positions.
 */
 
-export interface XinButton {
+export interface TosiButton {
   index: number
   pressed: boolean
   value: number
 }
-export interface XinGamepad {
+/** @deprecated Use TosiButton instead */
+export type XinButton = TosiButton
+
+export interface TosiGamepad {
   id: string
   axes: number[]
   buttons: { [key: number]: number }
 }
+/** @deprecated Use TosiGamepad instead */
+export type XinGamepad = TosiGamepad
 
 export function gamepadState() {
   const gamepads: Gamepad[] = navigator
@@ -63,7 +68,7 @@ export function gamepadState() {
             index,
             pressed,
             value,
-          } as XinButton
+          } as TosiButton
         })
         .filter((b) => b.pressed || b.value !== 0)
         .reduce((map: { [key: number]: number }, button) => {
@@ -89,26 +94,32 @@ export function gamepadText() {
         .join('\n')
 }
 
-export interface XinXRControllerComponentState {
+export interface TosiXRControllerComponentState {
   pressed: boolean
   touched: boolean
   value: number
   axes: { x: number; y: number }
 }
+/** @deprecated Use TosiXRControllerComponentState instead */
+export type XinXRControllerComponentState = TosiXRControllerComponentState
 
-export interface XinXRControllerState {
-  [key: string]: XinXRControllerComponentState
+export interface TosiXRControllerState {
+  [key: string]: TosiXRControllerComponentState
 }
+/** @deprecated Use TosiXRControllerState instead */
+export type XinXRControllerState = TosiXRControllerState
 
-export interface XinXRControllerMap {
-  [key: string]: XinXRControllerState
+export interface TosiXRControllerMap {
+  [key: string]: TosiXRControllerState
 }
+/** @deprecated Use TosiXRControllerMap instead */
+export type XinXRControllerMap = TosiXRControllerMap
 
 export function xrControllers(xrHelper: any) {
-  const controllers = {} as { [key: string]: XinXRControllerState }
+  const controllers = {} as { [key: string]: TosiXRControllerState }
   xrHelper.input.onControllerAddedObservable.add((controller: any) => {
     controller.onMotionControllerInitObservable.add((mc: any) => {
-      const state = {} as XinXRControllerState
+      const state = {} as TosiXRControllerState
       const componentIds = mc.getComponentIds() as string[]
       componentIds.forEach((componentId) => {
         const component = mc.getComponent(componentId)
@@ -139,14 +150,14 @@ export function xrControllers(xrHelper: any) {
   return controllers
 }
 
-export function xrControllersText(controllers?: XinXRControllerMap) {
+export function xrControllersText(controllers?: TosiXRControllerMap) {
   if (controllers === undefined || Object.keys(controllers).length === 0) {
     return 'no xr inputs'
   }
 
   return Object.keys(controllers)
     .map((controllerId) => {
-      const state = controllers[controllerId] as XinXRControllerState
+      const state = controllers[controllerId] as TosiXRControllerState
       const parts: string[] = []
       for (const [id, comp] of Object.entries(state)) {
         const flags: string[] = []

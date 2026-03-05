@@ -23,7 +23,7 @@ export declare class TosiSegmented extends WebComponent {
     formDisabledCallback(disabled: boolean): void;
     formResetCallback(): void;
     get values(): string[];
-    content: () => (HTMLDivElement | HTMLSlotElement)[];
+    content: () => (HTMLSlotElement | HTMLDivElement)[];
     static styleSpec: {
         ':host': {
             display: string;
