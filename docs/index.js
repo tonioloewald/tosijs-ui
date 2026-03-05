@@ -12058,7 +12058,7 @@ var tosiTagList = TosiTagList.elementCreator({
 });
 var xinTagList = On((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.3.2";
+var version = "1.4.0";
 // src/theme.ts
 var defaultColors = {
   accent: x.fromCss("#EE257B"),
@@ -13472,7 +13472,8 @@ dragAndDrop.init()
 
 This module sets up some global event handlers and *just works*&trade; (arguably, it merely does things
 that the browser should do, such as add a CSS selector for drop zones that are compatible
-with what's being dragged).
+with what's being dragged). Drop zones added dynamically during a drag (e.g. menu items)
+are automatically detected and marked.
 
 You can use \`dragAndDrop.draggedElement()\` to get the element being dragged (if it's
 actually from the page you're in).
@@ -14622,7 +14623,7 @@ const interval = setInterval(() => {
 
 ## XRInput Devices
 
-\`xrControllers(babylonjsXRHelper)\` returns an \`XinXRControllerMap\` that tracks
+\`xrControllers(babylonjsXRHelper)\` returns a \`TosiXRControllerMap\` that tracks
 the current state of XR controllers — button presses, analog values, touch state,
 and thumbstick axes. It subscribes to BabylonJS \`onButtonStateChangedObservable\`
 and \`onAxisValueChangedObservable\` events so the map stays current.
@@ -15968,6 +15969,7 @@ export interface PopMenuOptions {
   submenuOffset?: { x: number; y: number }
   localized?: boolean,
   showChecked?: boolean,  // if true, scroll checked item(s) into view
+  hideDisabled?: boolean, // if true, non-applicable items are hidden (default: shown disabled)
 }
 \`\`\`
 
@@ -16106,7 +16108,7 @@ dropAction?: (dataTransfer: DataTransfer) => void
 - A **SubMenu** with \`acceptsDrop\` auto-discloses on drag hover
 - A **SubMenu** with \`dropAction\` can also receive drops directly
 - A **MenuAction** with \`dropAction\` is a drop target
-- Items without \`acceptsDrop\` are filtered out in drop mode
+- Items without \`acceptsDrop\` are shown disabled in drop mode (or hidden if \`hideDisabled\` is set)
 
 ### popDropMenu({target, menuItems, dataTypes, …})
 
@@ -16117,19 +16119,29 @@ export interface PopDropMenuOptions extends PopMenuOptions {
 \`\`\`
 
 \`popDropMenu\` filters menuItems to only those matching \`dataTypes\`,
-then opens the menu in drop mode.
+then opens the menu in drop mode. Non-matching items are shown
+disabled by default; set \`hideDisabled: true\` to remove them entirely.
 
 \`disclosureDelay\` (ms, default 200) controls how long a drag must hover
 over a submenu before it auto-discloses.
 
+### hideDisabled
+
+By default (\`hideDisabled: false\`), non-matching items remain visible but disabled.
+This preserves spatial stability — items don't jump around as you drag different
+types. Set \`hideDisabled: true\` to hide them entirely for a cleaner menu.
+
+Applies symmetrically to both \`filterForDrop\` and \`filterForClick\`.
+
 ### filterForDrop / filterForClick
 
 \`\`\`
-filterForDrop(items: MenuItem[], dataTypes: readonly string[]): MenuItem[]
-filterForClick(items: MenuItem[]): MenuItem[]
+filterForDrop(items: MenuItem[], dataTypes: readonly string[], hideDisabled?: boolean): MenuItem[]
+filterForClick(items: MenuItem[], hideDisabled?: boolean): MenuItem[]
 \`\`\`
 
 Utility functions to filter a single menu definition for each mode.
+When \`hideDisabled\` is false (default), non-matching items are kept but disabled.
 
 ### TosiMenu accepts-drop
 
@@ -16259,7 +16271,7 @@ const clickBtn = button('Click: Browse Files', {
   }
 })
 
-const dropTarget = tosiMenu(
+const dropMenu = tosiMenu(
   {
     menuItems,
     acceptsDrop: 'text/plain;text/html',
@@ -16272,7 +16284,24 @@ const dropTarget = tosiMenu(
     },
   },
   icons.folder(),
-  span(' Drop Menu')
+  span(' Drop (show all)')
+)
+
+const dropMenuHidden = tosiMenu(
+  {
+    menuItems,
+    acceptsDrop: 'text/plain;text/html',
+    hideDisabled: true,
+    dropAction(data) {
+      postNotification({
+        type: 'success',
+        message: 'Saved to root: ' + (data.getData('text/plain') || data.getData('text/html')),
+        duration: 2
+      })
+    },
+  },
+  icons.folder(),
+  span(' Drop (hide disabled)')
 )
 
 preview.append(
@@ -16288,9 +16317,10 @@ preview.append(
     ),
   ),
   div(
-    { style: { display: 'flex', gap: '10px', marginTop: '10px' } },
+    { style: { display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' } },
     clickBtn,
-    dropTarget,
+    dropMenu,
+    dropMenuHidden,
   )
 )
 \`\`\`
@@ -16298,18 +16328,14 @@ preview.append(
 .preview {
   padding: 10px;
 }
-
-.drag-target {
-  box-shadow: inset 0 0 0 2px #2196F3;
-  border-radius: 4px;
-}
 \`\`\`
 
 > **Try it:** Click "Browse Files" to navigate the menu normally.
-> Drag a file and notice the Drop Menu highlights as a valid target.
-> "Text Files" only accepts .txt, "HTML Files" only accepts .html —
-> the menu filters accordingly. Subfolders are randomly generated
-> each time a folder is disclosed (dynamic \`menuItems\`).`,
+> Drag a file over "Drop (show all)" — non-matching items appear
+> disabled. Drag over "Drop (hide disabled)" — non-matching items
+> are hidden entirely. "Text Files" only accepts .txt, "HTML Files"
+> only accepts .html. Subfolders are randomly generated each time
+> a folder is disclosed (dynamic \`menuItems\`).`,
     title: "menu",
     filename: "menu.ts",
     path: "src/menu.ts"
