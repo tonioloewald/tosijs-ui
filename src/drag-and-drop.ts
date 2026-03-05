@@ -14,7 +14,8 @@ dragAndDrop.init()
 
 This module sets up some global event handlers and *just works*&trade; (arguably, it merely does things
 that the browser should do, such as add a CSS selector for drop zones that are compatible
-with what's being dragged).
+with what's being dragged). Drop zones added dynamically during a drag (e.g. menu items)
+are automatically detected and marked.
 
 You can use `dragAndDrop.draggedElement()` to get the element being dragged (if it's
 actually from the page you're in).
