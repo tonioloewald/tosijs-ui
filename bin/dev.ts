@@ -4,7 +4,7 @@ import { gzipSync } from 'zlib'
 import { watch } from 'chokidar'
 import { extractDocs } from './docs'
 // @ts-ignore-error
-import { $ } from 'bun'
+import { $, spawn } from 'bun'
 
 declare global {
   var Bun: any
@@ -47,7 +47,7 @@ async function prebuild() {
   console.timeEnd('prebuild')
 }
 
-async function build() {
+async function build(): Promise<boolean> {
   console.time('build')
   let result: any
 
@@ -69,7 +69,7 @@ async function build() {
     for (const message of result.logs) {
       console.error(message)
     }
-    return
+    return false
   }
 
   result = await Bun.build({
@@ -85,7 +85,7 @@ async function build() {
     for (const message of result.logs) {
       console.error(message)
     }
-    return
+    return false
   }
   await $`cp ./dist/iife.js ${PUBLIC}`.text()
 
@@ -115,21 +115,37 @@ async function build() {
     for (const message of result.logs) {
       console.error(message)
     }
-    return
+    return false
   }
 
   console.timeEnd('build')
+  return true
 }
 
-watch('./demo/xin-icon-font').on('change', () => $`bun ./bin/make-icon-data.js`)
-watch(['README.md', './src']).on('change', () =>
-  $`bun ./bin/docs.js`.then(build)
-)
-watch('./demo/src').on('change', build)
+const buildOnly = process.argv.includes('--build-only')
+const testMode = process.argv.includes('--test')
 
-await killStrayServer()
+let testReportResolve: ((results: any) => void) | undefined
+
+if (!buildOnly) {
+  await killStrayServer()
+}
 await prebuild()
-await build()
+const ok = await build()
+
+if (buildOnly) {
+  process.exit(ok ? 0 : 1)
+}
+
+if (!testMode) {
+  watch('./demo/xin-icon-font').on('change', () =>
+    $`bun ./bin/make-icon-data.js`
+  )
+  watch(['README.md', './src']).on('change', () =>
+    $`bun ./bin/docs.js`.then(build)
+  )
+  watch('./demo/src').on('change', build)
+}
 
 function serveFromDir(config: {
   directory: string
@@ -185,6 +201,10 @@ async function handleTestReport(request: Request): Promise<Response> {
       console.log(`\n✓ Browser tests: ${results.passed} passed\n`)
     }
 
+    if (testReportResolve) {
+      testReportResolve(results)
+    }
+
     return new Response(JSON.stringify({ ok: true }), {
       headers: { 'Content-Type': 'application/json' },
     })
@@ -235,3 +255,53 @@ const server = Bun.serve({
 })
 
 console.log(`Listening on https://localhost:${PORT}`)
+
+if (testMode) {
+  const testTimeout = 120_000
+  const testResults = new Promise<any>((resolve, reject) => {
+    testReportResolve = resolve
+    setTimeout(() => reject(new Error('Browser tests timed out')), testTimeout)
+  })
+
+  // Launch haltija (with its own browser) and navigate to the demo site
+  console.log('Starting haltija...')
+  const haltija = spawn(['bunx', 'haltija@latest', '-f'], {
+    stdout: 'inherit',
+    stderr: 'inherit',
+  })
+
+  // Wait for haltija's browser window to appear
+  console.log('Waiting for browser...')
+  for (let i = 0; i < 20; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    try {
+      const result = await $`hj windows`.quiet()
+      const { windows } = JSON.parse(result.stdout.toString())
+      if (windows.length > 0) break
+    } catch {
+      // not ready yet
+    }
+    if (i === 19) {
+      console.error('Haltija browser did not become available within 10s')
+      haltija.kill()
+      server.stop()
+      process.exit(1)
+    }
+  }
+
+  console.log('Opening demo site...')
+  await $`hj navigate https://localhost:${PORT}`
+
+  try {
+    const results = await testResults
+    const exitCode = results.failed > 0 ? 1 : 0
+    haltija.kill()
+    server.stop()
+    process.exit(exitCode)
+  } catch (e: any) {
+    console.error(e.message)
+    haltija.kill()
+    server.stop()
+    process.exit(1)
+  }
+}
