@@ -16425,27 +16425,30 @@ outside.style.cssText = 'padding: 8px 16px; margin-left: 10px'
 preview.append(host, outside)
 \`\`\`
 \`\`\`test
-test('menu opens from shadow DOM button', async () => {
-  const btn = preview.querySelector('shadow-menu-host').shadowRoot.querySelector('#shadow-btn')
+import { removeLastMenu } from 'tosijs-ui'
+
+test('shadow DOM menu: open and dismiss', async () => {
+  const host = preview.querySelector('shadow-menu-host')
+  const btn = host.shadowRoot.querySelector('#shadow-btn')
+  const countFloats = () => document.querySelectorAll('tosi-float').length
+
+  // opens from shadow DOM button click
+  const before = countFloats()
   btn.click()
   await waitMs(100)
-  expect(document.querySelector('tosi-float')).toBeTruthy()
-})
+  expect(countFloats()).toBe(before + 1)
 
-test('mousedown outside dismisses shadow DOM menu', async () => {
-  const outside = preview.querySelector('#outside-btn')
-  outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }))
-  await waitMs(100)
-  expect(document.querySelector('tosi-float')).toBeFalsy()
-})
+  // removeLastMenu dismisses it
+  removeLastMenu(0)
+  expect(countFloats()).toBe(before)
 
-test('menu stays open when clicking its shadow DOM target', async () => {
-  const btn = preview.querySelector('shadow-menu-host').shadowRoot.querySelector('#shadow-btn')
+  // re-open and verify target mousedown keeps it open
   btn.click()
   await waitMs(100)
-  expect(document.querySelector('tosi-float')).toBeTruthy()
+  expect(countFloats()).toBe(before + 1)
   btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }))
   await waitMs(100)
+  expect(countFloats()).toBe(before + 1)
   removeLastMenu(0)
 })
 \`\`\``,

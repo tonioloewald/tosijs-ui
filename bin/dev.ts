@@ -201,7 +201,7 @@ async function handleTestReport(request: Request): Promise<Response> {
       console.log(`\n✓ Browser tests: ${results.passed} passed\n`)
     }
 
-    if (testReportResolve) {
+    if (testReportResolve && (results.passed > 0 || results.failed > 0)) {
       testReportResolve(results)
     }
 
@@ -263,30 +263,46 @@ if (testMode) {
     setTimeout(() => reject(new Error('Browser tests timed out')), testTimeout)
   })
 
-  // Launch haltija (with its own browser) and navigate to the demo site
-  console.log('Starting haltija...')
-  const haltija = spawn(['bunx', 'haltija@latest', '-f'], {
-    stdout: 'inherit',
-    stderr: 'inherit',
-  })
+  // Check if haltija is already running
+  let haltija: ReturnType<typeof spawn> | undefined
+  let hjAvailable = false
 
-  // Wait for haltija's browser window to appear
-  console.log('Waiting for browser...')
-  for (let i = 0; i < 20; i++) {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    try {
-      const result = await $`hj windows`.quiet()
-      const { windows } = JSON.parse(result.stdout.toString())
-      if (windows.length > 0) break
-    } catch {
-      // not ready yet
+  try {
+    const result = await $`hj windows`.quiet()
+    const { windows } = JSON.parse(result.stdout.toString())
+    hjAvailable = windows.length > 0
+  } catch {
+    // haltija not running
+  }
+
+  if (!hjAvailable) {
+    console.log('Starting haltija...')
+    haltija = spawn(['bunx', 'haltija@latest', '-f'], {
+      stdout: 'inherit',
+      stderr: 'inherit',
+    })
+
+    console.log('Waiting for browser...')
+    for (let i = 0; i < 20; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      try {
+        const result = await $`hj windows`.quiet()
+        const { windows } = JSON.parse(result.stdout.toString())
+        if (windows.length > 0 && windows[0].url !== 'about:blank') {
+          break
+        }
+      } catch {
+        // not ready yet
+      }
+      if (i === 19) {
+        console.error('Haltija browser did not become available within 10s')
+        haltija.kill()
+        server.stop()
+        process.exit(1)
+      }
     }
-    if (i === 19) {
-      console.error('Haltija browser did not become available within 10s')
-      haltija.kill()
-      server.stop()
-      process.exit(1)
-    }
+  } else {
+    console.log('Using existing haltija browser')
   }
 
   console.log('Opening demo site...')
@@ -295,12 +311,12 @@ if (testMode) {
   try {
     const results = await testResults
     const exitCode = results.failed > 0 ? 1 : 0
-    haltija.kill()
+    if (haltija) haltija.kill()
     server.stop()
     process.exit(exitCode)
   } catch (e: any) {
     console.error(e.message)
-    haltija.kill()
+    if (haltija) haltija.kill()
     server.stop()
     process.exit(1)
   }
