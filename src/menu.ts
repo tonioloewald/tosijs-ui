@@ -1210,9 +1210,13 @@ export interface PopDropMenuOptions
 }
 
 document.body.addEventListener('mousedown', (event: Event) => {
+  const path = event.composedPath()
   if (
-    event.target &&
-    !poppedMenus.find((popped) => popped.target.contains(event.target as Node))
+    path.length > 0 &&
+    !poppedMenus.find(
+      (popped) =>
+        path.includes(popped.target) || path.includes(popped.menu)
+    )
   ) {
     removeLastMenu(0)
   }
