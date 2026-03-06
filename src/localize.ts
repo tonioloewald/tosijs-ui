@@ -151,6 +151,37 @@ if (i18n.locales.includes('fr')) {
 }
 ```
 
+## String Annotations (`#`)
+
+Sometimes a single term in your reference language needs different translations
+depending on context. For example, "OK" might translate to both "D'accord" and
+"Bien" in French depending on usage.
+
+Use `#` annotations to create context-specific variants:
+
+- In your TSV data, add rows like `OK#confirm` or `OK#accept` alongside the base `OK` row.
+- Use `"` (a double-quote) in any language column to mean "same as the base translation."
+  This avoids duplicating translations for languages that don't need a variant.
+- `localize('OK#confirm')` looks up the `OK#confirm` entry first. If no entry exists
+  (or the cell is empty), it falls back to the base `OK` translation.
+- The `#` annotation is always stripped from the output — the user never sees it.
+
+Example TSV rows:
+```
+OK	D'accord	Ok	好的
+OK#confirm	"	"	"
+OK#accept	Bien	"	"
+```
+
+With the above data:
+- `localize('OK')` → `D'accord` (French), `Ok` (Finnish), `好的` (Chinese)
+- `localize('OK#confirm')` → `D'accord` (French — inherited via `"`)
+- `localize('OK#accept')` → `Bien` (French — specific override), `Ok` (Finnish — inherited)
+
+Ellipsis and case handling work normally with annotations:
+- `localize('ok#confirm')` → `d'accord` (lowercase preserved)
+- `localize('OK#confirm…')` → `D'accord…`
+
 ## Creating Localized String Data
 
 You can create your own localization data using any spreadsheet and exporting TSV.
@@ -332,14 +363,25 @@ export function localize(ref: string): string {
     // Access stringMap.value first to get the plain object, then lookup by key
     // This avoids the proxy treating '.' in the key as property dereference
     const stringMapValue = i18n.stringMap.value as TranslationMap
-    const map = stringMapValue[ref.toLocaleLowerCase()]
-    const localized = map && map[index]
+    const lowerRef = ref.toLocaleLowerCase()
+    const map = stringMapValue[lowerRef]
+    let localized = map && map[index]
+    // fall back to base string for ditto marks (") and missing annotations
+    if ((!localized || localized === '"') && lowerRef.includes('#')) {
+      const baseMap = stringMapValue[lowerRef.substring(0, lowerRef.indexOf('#'))]
+      localized = baseMap && baseMap[index]
+    }
     if (localized) {
+      localized = localized.split('#', 2)[0]
       ref =
         ref.toLocaleLowerCase() === ref
           ? localized.toLocaleLowerCase()
           : localized
+    } else {
+      ref = ref.split('#', 2)[0]
     }
+  } else {
+    ref = ref.split('#', 2)[0]
   }
   return ref
 }
