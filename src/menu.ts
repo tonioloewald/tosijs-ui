@@ -582,6 +582,75 @@ preview.append(
 > only accepts .html. Subfolders are randomly generated each time
 > a folder is disclosed (dynamic `menuItems`).
 
+## Shadow DOM
+
+Menus work when triggered from inside a shadow DOM. Clicking outside
+the menu dismisses it; clicking the shadow DOM target toggles it.
+
+```js
+import { popMenu, removeLastMenu } from 'tosijs-ui'
+
+class ShadowMenuHost extends HTMLElement {
+  constructor() {
+    super()
+    const shadow = this.attachShadow({ mode: 'open' })
+    const wrapper = document.createElement('div')
+    wrapper.style.cssText = 'padding: 20px; background: #d0dce8; border-radius: 8px; display: inline-block'
+    const btn = document.createElement('button')
+    btn.textContent = 'Shadow Menu'
+    btn.id = 'shadow-btn'
+    btn.style.cssText = 'padding: 8px 16px; cursor: pointer'
+    btn.addEventListener('click', () => {
+      popMenu({
+        target: btn,
+        menuItems: [
+          { caption: 'Alpha', action() {} },
+          { caption: 'Bravo', action() {} },
+          { caption: 'Charlie', action() {} },
+        ]
+      })
+    })
+    wrapper.appendChild(btn)
+    shadow.appendChild(wrapper)
+  }
+}
+if (!customElements.get('shadow-menu-host')) {
+  customElements.define('shadow-menu-host', ShadowMenuHost)
+}
+
+const host = document.createElement('shadow-menu-host')
+const outside = document.createElement('button')
+outside.textContent = 'Click to dismiss'
+outside.id = 'outside-btn'
+outside.style.cssText = 'padding: 8px 16px; margin-left: 10px'
+preview.append(host, outside)
+```
+```test
+test('menu opens from shadow DOM button', async () => {
+  const btn = preview.querySelector('shadow-menu-host').shadowRoot.querySelector('#shadow-btn')
+  btn.click()
+  await waitMs(100)
+  expect(document.querySelector('tosi-float')).toBeTruthy()
+})
+
+test('mousedown outside dismisses shadow DOM menu', async () => {
+  const outside = preview.querySelector('#outside-btn')
+  outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }))
+  await waitMs(100)
+  expect(document.querySelector('tosi-float')).toBeFalsy()
+})
+
+test('menu stays open when clicking its shadow DOM target', async () => {
+  const btn = preview.querySelector('shadow-menu-host').shadowRoot.querySelector('#shadow-btn')
+  btn.click()
+  await waitMs(100)
+  expect(document.querySelector('tosi-float')).toBeTruthy()
+  btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }))
+  await waitMs(100)
+  removeLastMenu(0)
+})
+```
+
 */
 
 import {
@@ -1209,10 +1278,10 @@ export interface PopDropMenuOptions
   dataTypes: readonly string[]
 }
 
-document.body.addEventListener('mousedown', (event: Event) => {
+document.addEventListener('mousedown', (event: Event) => {
+  if (poppedMenus.length === 0) return
   const path = event.composedPath()
   if (
-    path.length > 0 &&
     !poppedMenus.find(
       (popped) =>
         path.includes(popped.target) || path.includes(popped.menu)
