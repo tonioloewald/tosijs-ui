@@ -25,6 +25,16 @@ describe('rewriteImports', () => {
     expect(result).toContain('const { icons } = tosijsui')
   })
 
+  test('rewrites multiline imports', () => {
+    const code = `import {
+  div,
+  span,
+  button
+} from 'tosijs'`
+    const result = rewriteImports(code, ['tosijs'])
+    expect(result).toBe('const { div, span, button } = tosijs')
+  })
+
   test('leaves non-matching imports untouched', () => {
     const code = "import { foo } from 'bar'"
     const result = rewriteImports(code, ['tosijs'])
