@@ -15,7 +15,7 @@ export function rewriteImports(code: string, contextKeys: string[]): string {
   let result = code
   for (const moduleName of contextKeys) {
     result = result.replace(
-      new RegExp(`import \\{([\\s\\S]*?)\\} from '${moduleName}'`, 'g'),
+      new RegExp(`import \\{([^}]*)\\} from '${moduleName}'`, 'g'),
       (_, names: string) => {
         const collapsed = names.replace(/\s+/g, ' ').trim()
         return `const { ${collapsed} } = ${moduleName.replace(/-/g, '')}`

@@ -35,6 +35,17 @@ describe('rewriteImports', () => {
     expect(result).toBe('const { div, span, button } = tosijs')
   })
 
+  test('handles superset module names without cross-matching', () => {
+    const code = [
+      "import { icons } from 'tosijs-ui'",
+      "import { elements } from 'tosijs'",
+    ].join('\n')
+    const result = rewriteImports(code, ['tosijs', 'tosijs-ui'])
+    expect(result).toContain('const { icons } = tosijsui')
+    expect(result).toContain('const { elements } = tosijs')
+    expect(result).not.toContain('import')
+  })
+
   test('leaves non-matching imports untouched', () => {
     const code = "import { foo } from 'bar'"
     const result = rewriteImports(code, ['tosijs'])

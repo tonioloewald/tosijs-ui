@@ -7575,7 +7575,7 @@ var AsyncFunction = (async () => {}).constructor;
 function rewriteImports(code, contextKeys) {
   let result = code;
   for (const moduleName of contextKeys) {
-    result = result.replace(new RegExp(`import \\{([\\s\\S]*?)\\} from '${moduleName}'`, "g"), (_3, names) => {
+    result = result.replace(new RegExp(`import \\{([^}]*)\\} from '${moduleName}'`, "g"), (_3, names) => {
       const collapsed = names.replace(/\s+/g, " ").trim();
       return `const { ${collapsed} } = ${moduleName.replace(/-/g, "")}`;
     });
@@ -12368,7 +12368,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = bE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.3.6";
+var version = "1.3.7";
 // src/theme.ts
 var defaultColors = {
   accent: w.fromCss("#EE257B"),
