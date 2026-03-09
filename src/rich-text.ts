@@ -128,6 +128,7 @@ import {
   PartsMap,
   elements,
   deprecated,
+  XinStyleSheet,
 } from 'tosijs'
 import { icons } from './icons'
 
@@ -235,6 +236,26 @@ interface EditorParts extends PartsMap {
 }
 
 export class RichText extends WebComponent<EditorParts> {
+  static preferredTagName = 'tosi-rich-text'
+
+  static lightStyleSpec: XinStyleSheet = {
+    ':host': {
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+    },
+    ':host [part="toolbar"]': {
+      padding: 4,
+      display: 'flex',
+      gap: '0px',
+      flex: '0 0 auto',
+      flexWrap: 'wrap',
+    },
+    ':host [part="toolbar"] > button': {
+      _xinIconSize: 18,
+    },
+  }
+
   static formAssociated = true
 
   static initAttributes = {
@@ -471,26 +492,7 @@ export class RichText extends WebComponent<EditorParts> {
 /** @deprecated Use RichText instead */
 export const XinWord = RichText
 
-export const tosiRichText = RichText.elementCreator({
-  tag: 'tosi-rich-text',
-  styleSpec: {
-    ':host': {
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-    },
-    ':host [part="toolbar"]': {
-      padding: 4,
-      display: 'flex',
-      gap: '0px',
-      flex: '0 0 auto',
-      flexWrap: 'wrap',
-    },
-    ':host [part="toolbar"] > button': {
-      _xinIconSize: 18,
-    },
-  },
-}) as ElementCreator<RichText>
+export const tosiRichText = RichText.elementCreator() as ElementCreator<RichText>
 
 /** @deprecated Use tosiRichText instead (tag is now <tosi-rich-text>) */
 export const richText = deprecated(

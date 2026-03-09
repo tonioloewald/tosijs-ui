@@ -169,9 +169,10 @@ const COLOR_MAP = {
 type callback = () => void
 
 export class TosiNotification extends Component {
+  static preferredTagName = 'tosi-notification'
   private static singleton?: TosiNotification
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       _notificationSpacing: 8,
       _notificationWidth: 360,
@@ -365,9 +366,7 @@ export class TosiNotification extends Component {
 /** @deprecated Use TosiNotification instead */
 export const XinNotification = TosiNotification
 
-export const tosiNotification = TosiNotification.elementCreator({
-  tag: 'tosi-notification',
-})
+export const tosiNotification = TosiNotification.elementCreator()
 
 /** @deprecated Use tosiNotification instead */
 export const xinNotification = tosiNotification

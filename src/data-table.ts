@@ -251,6 +251,60 @@ const passThru = (array: any[]) => array
 export type SelectCallback = (selected: any[]) => void
 
 export class TosiTable extends WebComponent {
+  static preferredTagName = 'tosi-table'
+
+  static lightStyleSpec = {
+    ':host': {
+      // New --tosi-table-* variables with defaults
+      '--tosi-table-row-height': '32px',
+      '--tosi-table-touch-size': 'var(--tosi-touch-size, 44px)',
+      '--tosi-table-dragged-header-bg': '#0004',
+      '--tosi-table-dragged-header-color': '#fff',
+      '--tosi-table-drop-header-bg': '#fff4',
+      // Legacy aliases for backward compatibility
+      '--row-height': 'var(--tosi-table-row-height)',
+      '--touch-size': 'var(--tosi-table-touch-size)',
+      '--dragged-header-bg': 'var(--tosi-table-dragged-header-bg)',
+      '--dragged-header-color': 'var(--tosi-table-dragged-header-color)',
+      '--drop-header-bg': 'var(--tosi-table-drop-header-bg)',
+      overflow: 'auto hidden',
+    },
+    ':host .thead, :host .tbody': {
+      width: vars.tosiTableGridRowWidth,
+    },
+    ':host .tr': {
+      display: 'grid',
+      gridTemplateColumns: vars.tosiTableGridColumns,
+      height: vars.tosiTableRowHeight,
+      lineHeight: vars.tosiTableRowHeight,
+    },
+    ':host .td, :host .th': {
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
+      display: 'flex',
+      alignItems: 'center',
+    },
+    ':host .th .menu-trigger': {
+      color: 'currentColor',
+      background: 'none',
+      padding: 0,
+      lineHeight: vars.tosiTableTouchSize,
+      height: vars.tosiTableTouchSize,
+      width: vars.tosiTableTouchSize,
+    },
+    ':host [draggable="true"]': {
+      cursor: 'ew-resize',
+    },
+    ':host [draggable="true"]:active': {
+      background: vars.tosiTableDraggedHeaderBg,
+      color: vars.tosiTableDraggedHeaderColor,
+    },
+    ':host .drag-over': {
+      background: vars.tosiTableDropHeaderBg,
+    },
+  }
+
   static initAttributes = {
     rowHeight: 30,
     charWidth: 15,
@@ -910,60 +964,7 @@ export class TosiTable extends WebComponent {
 /** @deprecated Use TosiTable instead */
 export const DataTable = TosiTable
 
-export const tosiTable = TosiTable.elementCreator({
-  tag: 'tosi-table',
-  styleSpec: {
-    ':host': {
-      // New --tosi-table-* variables with defaults
-      '--tosi-table-row-height': '32px',
-      '--tosi-table-touch-size': 'var(--tosi-touch-size, 44px)',
-      '--tosi-table-dragged-header-bg': '#0004',
-      '--tosi-table-dragged-header-color': '#fff',
-      '--tosi-table-drop-header-bg': '#fff4',
-      // Legacy aliases for backward compatibility
-      '--row-height': 'var(--tosi-table-row-height)',
-      '--touch-size': 'var(--tosi-table-touch-size)',
-      '--dragged-header-bg': 'var(--tosi-table-dragged-header-bg)',
-      '--dragged-header-color': 'var(--tosi-table-dragged-header-color)',
-      '--drop-header-bg': 'var(--tosi-table-drop-header-bg)',
-      overflow: 'auto hidden',
-    },
-    ':host .thead, :host .tbody': {
-      width: vars.tosiTableGridRowWidth,
-    },
-    ':host .tr': {
-      display: 'grid',
-      gridTemplateColumns: vars.tosiTableGridColumns,
-      height: vars.tosiTableRowHeight,
-      lineHeight: vars.tosiTableRowHeight,
-    },
-    ':host .td, :host .th': {
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      textOverflow: 'ellipsis',
-      display: 'flex',
-      alignItems: 'center',
-    },
-    ':host .th .menu-trigger': {
-      color: 'currentColor',
-      background: 'none',
-      padding: 0,
-      lineHeight: vars.tosiTableTouchSize,
-      height: vars.tosiTableTouchSize,
-      width: vars.tosiTableTouchSize,
-    },
-    ':host [draggable="true"]': {
-      cursor: 'ew-resize',
-    },
-    ':host [draggable="true"]:active': {
-      background: vars.tosiTableDraggedHeaderBg,
-      color: vars.tosiTableDraggedHeaderColor,
-    },
-    ':host .drag-over': {
-      background: vars.tosiTableDropHeaderBg,
-    },
-  },
-}) as ElementCreator<TosiTable>
+export const tosiTable = TosiTable.elementCreator() as ElementCreator<TosiTable>
 
 /** @deprecated Use tosiTable instead */
 export const dataTable = tosiTable

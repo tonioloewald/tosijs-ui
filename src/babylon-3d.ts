@@ -196,10 +196,12 @@ const noop = () => {
 }
 
 export class B3d extends WebComponent {
+  static preferredTagName = 'tosi-3d'
+
   babylonReady: Promise<any>
   BABYLON?: any
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       display: 'block',
       position: 'relative',
@@ -345,4 +347,4 @@ export class B3d extends WebComponent {
   }
 }
 
-export const b3d = B3d.elementCreator({ tag: 'tosi-3d' }) as ElementCreator<B3d>
+export const b3d = B3d.elementCreator() as ElementCreator<B3d>

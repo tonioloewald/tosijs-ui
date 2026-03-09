@@ -463,6 +463,37 @@ function setElementValue(input: HTMLElement | null | undefined, value: any) {
 }
 
 export class TosiField extends XinComponent {
+  static preferredTagName = 'tosi-field'
+
+  static lightStyleSpec = {
+    ':host [part="field"]': {
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      gap: varDefault.prefixSuffixGap('8px'),
+    },
+    ':host [part="field"][prefix]::before': {
+      content: 'attr(prefix)',
+    },
+    ':host [part="field"][suffix]::after': {
+      content: 'attr(suffix)',
+    },
+    ':host [part="field"] > *, :host [part="input"] > *': {
+      width: '100%',
+    },
+    ':host textarea': {
+      resize: 'none',
+    },
+    ':host input[type="checkbox"]': {
+      width: 'fit-content',
+    },
+    ':host .hidden': {
+      position: 'absolute',
+      pointerEvents: 'none',
+      opacity: 0,
+    },
+  }
+
   static initAttributes = {
     caption: '',
     key: '',
@@ -602,6 +633,8 @@ export class TosiField extends XinComponent {
 }
 
 export class TosiForm extends XinComponent {
+  static preferredTagName = 'tosi-form'
+
   context = {} as { [key: string]: any }
   value = {} as { [key: string]: any }
   get isValid(): boolean {
@@ -611,7 +644,7 @@ export class TosiForm extends XinComponent {
     return widgets.find((widget) => !widget.reportValidity()) === undefined
   }
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       display: 'flex',
       flexDirection: 'column',
@@ -744,43 +777,9 @@ export const XinField = TosiField
 /** @deprecated Use TosiForm instead */
 export const XinForm = TosiForm
 
-const fieldStyleSpec = {
-  ':host [part="field"]': {
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    gap: varDefault.prefixSuffixGap('8px'),
-  },
-  ':host [part="field"][prefix]::before': {
-    content: 'attr(prefix)',
-  },
-  ':host [part="field"][suffix]::after': {
-    content: 'attr(suffix)',
-  },
-  ':host [part="field"] > *, :host [part="input"] > *': {
-    width: '100%',
-  },
-  ':host textarea': {
-    resize: 'none',
-  },
-  ':host input[type="checkbox"]': {
-    width: 'fit-content',
-  },
-  ':host .hidden': {
-    position: 'absolute',
-    pointerEvents: 'none',
-    opacity: 0,
-  },
-}
+export const tosiField = TosiField.elementCreator() as ElementCreator<TosiField>
 
-export const tosiField = TosiField.elementCreator({
-  tag: 'tosi-field',
-  styleSpec: fieldStyleSpec,
-}) as ElementCreator<TosiField>
-
-export const tosiForm = TosiForm.elementCreator({
-  tag: 'tosi-form',
-}) as ElementCreator<TosiForm>
+export const tosiForm = TosiForm.elementCreator() as ElementCreator<TosiForm>
 
 /** @deprecated Use tosiField instead (tag is now tosi-field) */
 export const xinField = tosiField

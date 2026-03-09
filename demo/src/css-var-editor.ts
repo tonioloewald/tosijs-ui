@@ -9,13 +9,11 @@ import { tosiForm, TosiForm, tosiField } from '../../src'
 const { h2, code } = elements
 
 class TosiCssVarEditor extends WebComponent {
-  elementSelector = ''
-  targetSelector = ''
+  static preferredTagName = 'tosi-css-var-editor'
 
-  constructor() {
-    super()
-
-    this.initAttributes('elementSelector', 'targetSelector')
+  static initAttributes = {
+    elementSelector: '',
+    targetSelector: '',
   }
 
   content = () => [
@@ -84,6 +82,5 @@ class TosiCssVarEditor extends WebComponent {
   }
 }
 
-export const tosiCssVarEditor = TosiCssVarEditor.elementCreator({
-  tag: 'tosi-css-var-editor',
-}) as ElementCreator<TosiCssVarEditor>
+export const tosiCssVarEditor =
+  TosiCssVarEditor.elementCreator() as ElementCreator<TosiCssVarEditor>

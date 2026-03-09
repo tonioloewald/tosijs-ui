@@ -95,6 +95,7 @@ import { trackDrag, bringToFront } from './track-drag'
 const { slot } = elements
 
 export class TosiFloat extends WebComponent {
+  static preferredTagName = 'tosi-float'
   static floats: Set<TosiFloat> = new Set()
 
   static initAttributes = {
@@ -105,7 +106,7 @@ export class TosiFloat extends WebComponent {
 
   content = slot()
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       position: 'fixed',
     },
@@ -160,9 +161,7 @@ export class TosiFloat extends WebComponent {
 /** @deprecated Use TosiFloat instead */
 export const XinFloat = TosiFloat
 
-export const tosiFloat = TosiFloat.elementCreator({
-  tag: 'tosi-float',
-}) as ElementCreator<TosiFloat>
+export const tosiFloat = TosiFloat.elementCreator() as ElementCreator<TosiFloat>
 
 /** @deprecated Use tosiFloat instead */
 export const xinFloat = tosiFloat

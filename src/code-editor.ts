@@ -52,6 +52,8 @@ const makeCodeEditor = async (
 }
 
 export class CodeEditor extends WebComponent {
+  static preferredTagName = 'tosi-code'
+
   private source = ''
 
   get value(): string {
@@ -89,7 +91,7 @@ export class CodeEditor extends WebComponent {
     return this._editor
   }
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       display: 'block',
       position: 'relative',
@@ -139,6 +141,4 @@ export class CodeEditor extends WebComponent {
   }
 }
 
-export const codeEditor = CodeEditor.elementCreator({
-  tag: 'tosi-code',
-}) as ElementCreator<CodeEditor>
+export const codeEditor = CodeEditor.elementCreator() as ElementCreator<CodeEditor>

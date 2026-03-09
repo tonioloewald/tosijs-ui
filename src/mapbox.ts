@@ -140,6 +140,7 @@ import { styleSheet, scriptTag } from './via-tag'
 const { div } = elements
 
 export class MapBox extends WebComponent {
+  static preferredTagName = 'tosi-map'
   static formAssociated = true
 
   static initAttributes = {
@@ -172,7 +173,7 @@ export class MapBox extends WebComponent {
 
   private _map: any
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       display: 'inline-block',
       position: 'relative',
@@ -276,6 +277,4 @@ export class MapBox extends WebComponent {
   }
 }
 
-export const mapBox = MapBox.elementCreator({
-  tag: 'tosi-map',
-}) as ElementCreator<MapBox>
+export const mapBox = MapBox.elementCreator() as ElementCreator<MapBox>

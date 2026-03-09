@@ -172,6 +172,73 @@ interface MonthParts extends PartsMap {
 }
 
 export class TosiMonth extends Component<MonthParts> {
+  static preferredTagName = 'tosi-month'
+
+  static lightStyleSpec = {
+    ':host': {
+      display: 'block',
+    },
+    ':host [part=header]': {
+      display: 'flex',
+      alignItems: 'stretch',
+      justifyContent: 'stretch',
+    },
+    ':host[disabled]': {
+      pointerEvents: 'none',
+      opacity: varDefault.disabledOpacity(0.6),
+    },
+    ':host [part="month"], :host [part="year"]': {
+      _fieldWidth: '4em',
+      flex: '1',
+    },
+    ':host [part=week], :host [part=days]': {
+      display: 'grid',
+      gridTemplateColumns: 'auto auto auto auto auto auto auto',
+      justifyItems: 'stretch',
+    },
+    ':host .today': {
+      background: varDefault.monthTodayBackground('transparent'),
+      boxShadow: varDefault.monthTodayShadow(`none`),
+      backdropFilter: varDefault.monthTodayBackdropFilter('brightness(0.9)'),
+      fontWeight: varDefault.monthTodayFontWeight('800'),
+    },
+    ':host .day, :host .date': {
+      padding: 5,
+      display: 'flex',
+      justifyContent: 'center',
+      userSelect: 'none',
+    },
+    ':host .day': {
+      color: varDefault.monthDayColor('hotpink'),
+      background: varDefault.monthDayBackground('white'),
+      fontWeight: varDefault.monthDayFontWeight('800'),
+    },
+    ':host .date': {
+      cursor: 'default',
+    },
+    ':host .weekend': {
+      background: varDefault.monthWeekendBackground('#eee'),
+    },
+    ':host .date:not(.in-month)': {
+      opacity: 0.5,
+    },
+    ':host .date.checked': {
+      color: varDefault.monthDateCheckedColor('white'),
+      background: varDefault.monthDateCheckedBackground('hotpink'),
+    },
+    ':host:not([range]) .date.checked': {
+      borderRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+    },
+    ':host .range-start': {
+      borderTopLeftRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+      borderBottomLeftRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+    },
+    ':host .range-end': {
+      borderTopRightRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+      borderBottomRightRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+    },
+  }
+
   static formAssociated = true
 
   static initAttributes = {
@@ -548,70 +615,4 @@ export class TosiMonth extends Component<MonthParts> {
   }
 }
 
-export const tosiMonth = TosiMonth.elementCreator({
-  tag: 'tosi-month',
-  styleSpec: {
-    ':host': {
-      display: 'block',
-    },
-    ':host [part=header]': {
-      display: 'flex',
-      alignItems: 'stretch',
-      justifyContent: 'stretch',
-    },
-    ':host[disabled]': {
-      pointerEvents: 'none',
-      opacity: varDefault.disabledOpacity(0.6),
-    },
-    ':host [part="month"], :host [part="year"]': {
-      _fieldWidth: '4em',
-      flex: '1',
-    },
-    ':host [part=week], :host [part=days]': {
-      display: 'grid',
-      gridTemplateColumns: 'auto auto auto auto auto auto auto',
-      justifyItems: 'stretch',
-    },
-    ':host .today': {
-      background: varDefault.monthTodayBackground('transparent'),
-      boxShadow: varDefault.monthTodayShadow(`none`),
-      backdropFilter: varDefault.monthTodayBackdropFilter('brightness(0.9)'),
-      fontWeight: varDefault.monthTodayFontWeight('800'),
-    },
-    ':host .day, :host .date': {
-      padding: 5,
-      display: 'flex',
-      justifyContent: 'center',
-      userSelect: 'none',
-    },
-    ':host .day': {
-      color: varDefault.monthDayColor('hotpink'),
-      background: varDefault.monthDayBackground('white'),
-      fontWeight: varDefault.monthDayFontWeight('800'),
-    },
-    ':host .date': {
-      cursor: 'default',
-    },
-    ':host .weekend': {
-      background: varDefault.monthWeekendBackground('#eee'),
-    },
-    ':host .date:not(.in-month)': {
-      opacity: 0.5,
-    },
-    ':host .date.checked': {
-      color: varDefault.monthDateCheckedColor('white'),
-      background: varDefault.monthDateCheckedBackground('hotpink'),
-    },
-    ':host:not([range]) .date.checked': {
-      borderRadius: varDefault.monthDateCheckedBorderRadius('10px'),
-    },
-    ':host .range-start': {
-      borderTopLeftRadius: varDefault.monthDateCheckedBorderRadius('10px'),
-      borderBottomLeftRadius: varDefault.monthDateCheckedBorderRadius('10px'),
-    },
-    ':host .range-end': {
-      borderTopRightRadius: varDefault.monthDateCheckedBorderRadius('10px'),
-      borderBottomRightRadius: varDefault.monthDateCheckedBorderRadius('10px'),
-    },
-  },
-})
+export const tosiMonth = TosiMonth.elementCreator()

@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
+import { Component as WebComponent, ElementCreator, PartsMap, XinStyleSheet } from 'tosijs';
 import { TosiSelect } from './select';
 export declare function blockStyle(options?: {
     caption: string;
@@ -14,6 +14,8 @@ interface EditorParts extends PartsMap {
     content: HTMLElement;
 }
 export declare class RichText extends WebComponent<EditorParts> {
+    static preferredTagName: string;
+    static lightStyleSpec: XinStyleSheet;
     static formAssociated: boolean;
     static initAttributes: {
         widgets: "none" | "minimal" | "default";

@@ -81,6 +81,8 @@ import { Component } from 'tosijs'
 const abTestConditions = {} as { [key: string]: any }
 
 export class AbTest extends Component {
+  static preferredTagName = 'tosi-ab'
+
   static set conditions(context: { [key: string]: any }) {
     Object.assign(abTestConditions, context)
 
@@ -120,4 +122,4 @@ export class AbTest extends Component {
   }
 }
 
-export const abTest = AbTest.elementCreator({ tag: 'tosi-ab' })
+export const abTest = AbTest.elementCreator()

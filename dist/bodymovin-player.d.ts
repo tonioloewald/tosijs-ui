@@ -9,6 +9,7 @@ export interface LottieConfig {
     [key: string]: any;
 }
 export declare class BodymovinPlayer extends WebComponent {
+    static preferredTagName: string;
     static initAttributes: {
         src: string;
         json: string;
@@ -17,7 +18,7 @@ export declare class BodymovinPlayer extends WebComponent {
     config: LottieConfig;
     static bodymovinAvailable?: Promise<any>;
     animation: any;
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             width: number;
             height: number;

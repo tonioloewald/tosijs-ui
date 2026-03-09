@@ -18,6 +18,56 @@ export interface TableData {
 export type ArrayFilter = (array: any[]) => any[];
 export type SelectCallback = (selected: any[]) => void;
 export declare class TosiTable extends WebComponent {
+    static preferredTagName: string;
+    static lightStyleSpec: {
+        ':host': {
+            '--tosi-table-row-height': string;
+            '--tosi-table-touch-size': string;
+            '--tosi-table-dragged-header-bg': string;
+            '--tosi-table-dragged-header-color': string;
+            '--tosi-table-drop-header-bg': string;
+            '--row-height': string;
+            '--touch-size': string;
+            '--dragged-header-bg': string;
+            '--dragged-header-color': string;
+            '--drop-header-bg': string;
+            overflow: string;
+        };
+        ':host .thead, :host .tbody': {
+            width: string;
+        };
+        ':host .tr': {
+            display: string;
+            gridTemplateColumns: string;
+            height: string;
+            lineHeight: string;
+        };
+        ':host .td, :host .th': {
+            overflow: string;
+            whiteSpace: string;
+            textOverflow: string;
+            display: string;
+            alignItems: string;
+        };
+        ':host .th .menu-trigger': {
+            color: string;
+            background: string;
+            padding: number;
+            lineHeight: string;
+            height: string;
+            width: string;
+        };
+        ':host [draggable="true"]': {
+            cursor: string;
+        };
+        ':host [draggable="true"]:active': {
+            background: string;
+            color: string;
+        };
+        ':host .drag-over': {
+            background: string;
+        };
+    };
     static initAttributes: {
         rowHeight: number;
         charWidth: number;

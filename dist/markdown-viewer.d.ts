@@ -1,6 +1,7 @@
 import { Component, ElementCreator } from 'tosijs';
 import { MarkedOptions } from 'marked';
 export declare class TosiMd extends Component {
+    static preferredTagName: string;
     static initAttributes: {
         src: string;
         elements: boolean;

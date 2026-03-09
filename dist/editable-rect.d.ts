@@ -6,6 +6,7 @@ interface Locks {
     bottom: boolean;
 }
 export declare class EditableRect extends Component {
+    static preferredTagName: string;
     static initAttributes: {
         rotationSnap: number;
         positionSnap: number;
@@ -14,7 +15,7 @@ export declare class EditableRect extends Component {
     static gridSize: number;
     static snapAngle: boolean;
     static snapToGrid: boolean;
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             '--handle-bg': string;
             '--handle-color': string;

@@ -259,7 +259,62 @@ interface SelectParts extends PartsMap {
 }
 
 export class TosiSelect extends Component<SelectParts> {
+  static preferredTagName = 'tosi-select'
   static formAssociated = true
+
+  static lightStyleSpec = {
+    ':host': {
+      // New --tosi-select-* variables with defaults deriving from base theme
+      '--tosi-select-gap': 'var(--tosi-spacing-sm, 8px)',
+      '--tosi-select-touch-size': 'var(--tosi-touch-size, 44px)',
+      '--tosi-select-padding': '0 var(--tosi-spacing-sm, 8px)',
+      '--tosi-select-value-padding': '0 var(--tosi-spacing-sm, 8px)',
+      '--tosi-select-icon-width': '24px',
+      '--tosi-select-field-width': '140px',
+      // Legacy aliases for backward compatibility
+      '--gap': 'var(--tosi-select-gap)',
+      '--touch-size': 'var(--tosi-select-touch-size)',
+      '--padding': 'var(--tosi-select-padding)',
+      '--value-padding': 'var(--tosi-select-value-padding)',
+      '--icon-width': 'var(--tosi-select-icon-width)',
+      '--fieldWidth': 'var(--tosi-select-field-width)',
+      display: 'inline-flex',
+      position: 'relative',
+    },
+    ':host button': {
+      display: 'flex',
+      alignItems: 'center',
+      justifyItems: 'center',
+      gap: vars.tosiSelectGap,
+      textAlign: 'left',
+      height: vars.tosiSelectTouchSize,
+      padding: vars.tosiSelectPadding,
+      position: 'relative',
+      width: '100%',
+    },
+    ':host:not([show-icon]) button > :first-child': {
+      display: 'none',
+    },
+    ':host[hide-caption] button > :nth-child(2)': {
+      display: 'none',
+    },
+    ':host [part="value"]': {
+      width: vars.tosiSelectFieldWidth,
+      padding: vars.tosiSelectValuePadding,
+      height: vars.tosiSelectTouchSize,
+      lineHeight: vars.tosiSelectTouchSize,
+      boxShadow: 'none',
+      whiteSpace: 'nowrap',
+      outline: 'none',
+      background: 'transparent',
+      flex: '1',
+    },
+    ':host [part="value"]:not(:focus)': {
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      background: 'transparent',
+    },
+  }
 
   static initAttributes = {
     editable: false,
@@ -556,62 +611,7 @@ export class TosiSelect extends Component<SelectParts> {
 /** @deprecated Use TosiSelect instead */
 export const XinSelect = TosiSelect
 
-export const tosiSelect = TosiSelect.elementCreator({
-  tag: 'tosi-select',
-  styleSpec: {
-    ':host': {
-      // New --tosi-select-* variables with defaults deriving from base theme
-      '--tosi-select-gap': 'var(--tosi-spacing-sm, 8px)',
-      '--tosi-select-touch-size': 'var(--tosi-touch-size, 44px)',
-      '--tosi-select-padding': '0 var(--tosi-spacing-sm, 8px)',
-      '--tosi-select-value-padding': '0 var(--tosi-spacing-sm, 8px)',
-      '--tosi-select-icon-width': '24px',
-      '--tosi-select-field-width': '140px',
-      // Legacy aliases for backward compatibility
-      '--gap': 'var(--tosi-select-gap)',
-      '--touch-size': 'var(--tosi-select-touch-size)',
-      '--padding': 'var(--tosi-select-padding)',
-      '--value-padding': 'var(--tosi-select-value-padding)',
-      '--icon-width': 'var(--tosi-select-icon-width)',
-      '--fieldWidth': 'var(--tosi-select-field-width)',
-      display: 'inline-flex',
-      position: 'relative',
-    },
-    ':host button': {
-      display: 'flex',
-      alignItems: 'center',
-      justifyItems: 'center',
-      gap: vars.tosiSelectGap,
-      textAlign: 'left',
-      height: vars.tosiSelectTouchSize,
-      padding: vars.tosiSelectPadding,
-      position: 'relative',
-      width: '100%',
-    },
-    ':host:not([show-icon]) button > :first-child': {
-      display: 'none',
-    },
-    ':host[hide-caption] button > :nth-child(2)': {
-      display: 'none',
-    },
-    ':host [part="value"]': {
-      width: vars.tosiSelectFieldWidth,
-      padding: vars.tosiSelectValuePadding,
-      height: vars.tosiSelectTouchSize,
-      lineHeight: vars.tosiSelectTouchSize,
-      boxShadow: 'none',
-      whiteSpace: 'nowrap',
-      outline: 'none',
-      background: 'transparent',
-      flex: '1',
-    },
-    ':host [part="value"]:not(:focus)': {
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      background: 'transparent',
-    },
-  },
-}) as ElementCreator<TosiSelect>
+export const tosiSelect = TosiSelect.elementCreator() as ElementCreator<TosiSelect>
 
 /** @deprecated Use tosiSelect instead (tag is now tosi-select) */
 export const xinSelect = deprecated(

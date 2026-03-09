@@ -10,6 +10,8 @@ tosijs-ui (formerly xinjs-ui) is a web-component library built on [tosijs](https
 
 ```bash
 bun start              # Dev server at https://localhost:8787 (hot reload, reports gzip sizes)
+bun run build          # Build only (no server), exits with 0/1
+bun run test-browser   # Build, launch haltija, run browser tests, exit with 0/1
 bun tests              # Run unit tests + Playwright tests
 bun format             # ESLint + Prettier
 bun latest             # Clean install (removes node_modules + bun.lock, then bun update)
@@ -29,7 +31,16 @@ bun playwright test tests/form.pw.ts
 ### Testing Setup
 
 - **Unit tests** (`src/*.test.ts`): Run with `bun test`. Use `happy-dom` for DOM simulation (preloaded via `bunfig.toml` → `test-setup.ts`). Import from `bun:test`.
+- **Browser tests** (`bun run test-browser`): Builds the project, starts the dev server, launches [haltija](https://github.com/nicholasgasior/haltija) headless browser, navigates to the demo site, waits for inline doc tests to run and POST results to `/report`, then exits with pass/fail. Uses `hj` CLI commands (`hj windows`, `hj navigate`). Reuses an existing haltija instance if one is running, otherwise spawns `bunx haltija@latest -f`. Results saved to `.browser-tests.json`.
 - **Playwright tests** (`tests/*.pw.ts`): Require the dev server running at `https://localhost:8787`. The Playwright config does NOT auto-start the server. Tests run against Chromium, Firefox, and WebKit.
+
+#### Inline doc tests
+
+Components use `` ```test `` code blocks in their `/*#` doc comments for browser-based tests. Key behaviors:
+- JS blocks and test blocks run as **separate** `AsyncFunction` invocations — imports/variables from JS blocks are NOT available in test blocks (add imports to each block independently).
+- `import { x } from 'tosijs-ui'` is rewritten to `const { x } = tosijsui` automatically.
+- `test()` calls within a block run **concurrently** (pushed to a pending array, not awaited sequentially). Combine dependent assertions into a single `test()` call.
+- The `preview` DOM element is shared between JS and test blocks. Other examples on the page may leave elements in the DOM, so use count-based assertions rather than presence/absence checks.
 
 ### Dev Server TLS
 

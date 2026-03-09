@@ -387,6 +387,8 @@ export function localize(ref: string): string {
 }
 
 export class TosiLocalePicker extends Component {
+  static preferredTagName = 'tosi-locale-picker'
+
   static initAttributes = {
     hideCaption: false,
   }
@@ -411,9 +413,7 @@ export class TosiLocalePicker extends Component {
 /** @deprecated Use TosiLocalePicker instead */
 export const LocalePicker = TosiLocalePicker
 
-export const tosiLocalePicker = TosiLocalePicker.elementCreator({
-  tag: 'tosi-locale-picker',
-})
+export const tosiLocalePicker = TosiLocalePicker.elementCreator()
 
 /** @deprecated Use tosiLocalePicker instead */
 export const localePicker = tosiLocalePicker
@@ -425,6 +425,13 @@ interface AbstractLocalized {
 }
 
 export class TosiLocalized extends Component {
+  static preferredTagName = 'tosi-localized'
+  static lightStyleSpec = {
+    ':host': {
+      pointerEvents: 'none',
+    },
+  }
+
   static allInstances = new Set<AbstractLocalized>()
   static initAttributes = {
     refString: '',
@@ -461,14 +468,7 @@ export class TosiLocalized extends Component {
 /** @deprecated Use TosiLocalized instead */
 export const XinLocalized = TosiLocalized
 
-export const tosiLocalized = TosiLocalized.elementCreator({
-  tag: 'tosi-localized',
-  styleSpec: {
-    ':host': {
-      pointerEvents: 'none',
-    },
-  },
-})
+export const tosiLocalized = TosiLocalized.elementCreator()
 
 /** @deprecated Use tosiLocalized instead */
 export const xinLocalized = tosiLocalized

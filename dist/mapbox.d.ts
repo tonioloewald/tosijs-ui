@@ -1,5 +1,6 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 export declare class MapBox extends WebComponent {
+    static preferredTagName: string;
     static formAssociated: boolean;
     static initAttributes: {
         coords: string;
@@ -15,7 +16,7 @@ export declare class MapBox extends WebComponent {
     static mapboxCSSAvailable: Promise<void>;
     static mapboxAvailable?: Promise<any>;
     private _map;
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             display: string;
             position: string;

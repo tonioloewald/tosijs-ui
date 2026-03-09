@@ -130,6 +130,8 @@ interface TabsParts extends PartsMap {
 }
 
 export class TosiTabs extends WebComponent {
+  static preferredTagName = 'tosi-tabs'
+
   static initAttributes = {
     localized: false,
   }
@@ -164,7 +166,7 @@ export class TosiTabs extends WebComponent {
     return tab
   }
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       // New --tosi-tabs-* variables with legacy fallbacks
       '--tosi-tabs-selected-color':
@@ -381,9 +383,7 @@ export class TosiTabs extends WebComponent {
 /** @deprecated Use TosiTabs instead */
 export const TabSelector = TosiTabs
 
-export const tosiTabs = TosiTabs.elementCreator({
-  tag: 'tosi-tabs',
-}) as ElementCreator<TosiTabs>
+export const tosiTabs = TosiTabs.elementCreator() as ElementCreator<TosiTabs>
 
 /** @deprecated Use tosiTabs instead */
 export const tabSelector = tosiTabs

@@ -29,9 +29,10 @@ import { icons } from './icons'
 import { trackDrag } from './track-drag'
 
 export class TosiSizer extends XinComponent {
+  static preferredTagName = 'tosi-sizer'
   target?: HTMLElement | null = null
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       _resizeIconFill: '#222',
       display: 'block',
@@ -104,9 +105,7 @@ export class TosiSizer extends XinComponent {
 /** @deprecated Use TosiSizer instead */
 export const XinSizer = TosiSizer
 
-export const tosiSizer = TosiSizer.elementCreator({
-  tag: 'tosi-sizer',
-}) as ElementCreator<TosiSizer>
+export const tosiSizer = TosiSizer.elementCreator() as ElementCreator<TosiSizer>
 
 /** @deprecated Use tosiSizer instead */
 export const xinSizer = tosiSizer

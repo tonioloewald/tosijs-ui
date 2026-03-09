@@ -5,6 +5,7 @@ interface Choice {
     caption: string;
 }
 export declare class TosiSegmented extends WebComponent {
+    static preferredTagName: string;
     static formAssociated: boolean;
     static initAttributes: {
         direction: string;
@@ -24,7 +25,7 @@ export declare class TosiSegmented extends WebComponent {
     formResetCallback(): void;
     get values(): string[];
     content: () => (HTMLSlotElement | HTMLDivElement)[];
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             display: string;
             gap: string;

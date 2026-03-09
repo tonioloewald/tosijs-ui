@@ -203,6 +203,9 @@ export function disableTests(): void {
 }
 
 export class LiveExample extends Component<ExampleParts> {
+  static preferredTagName = 'tosi-example'
+  static lightStyleSpec = liveExampleStyleSpec
+
   static initAttributes = {
     persistToDom: false,
     iframe: false,
@@ -820,10 +823,7 @@ export class LiveExample extends Component<ExampleParts> {
   }
 }
 
-export const liveExample = LiveExample.elementCreator({
-  tag: 'tosi-example',
-  styleSpec: liveExampleStyleSpec,
-}) as ElementCreator<LiveExample>
+export const liveExample = LiveExample.elementCreator() as ElementCreator<LiveExample>
 
 // Auto-initialize remote editor window
 const params = new URL(window.location.href).searchParams

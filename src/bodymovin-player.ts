@@ -116,6 +116,8 @@ export interface LottieConfig {
 }
 
 export class BodymovinPlayer extends WebComponent {
+  static preferredTagName = 'tosi-lottie'
+
   static initAttributes = {
     src: '',
     json: '',
@@ -132,7 +134,7 @@ export class BodymovinPlayer extends WebComponent {
 
   animation: any
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       width: 400,
       height: 400,
@@ -205,6 +207,4 @@ export class BodymovinPlayer extends WebComponent {
   }
 }
 
-export const bodymovinPlayer = BodymovinPlayer.elementCreator({
-  tag: 'tosi-lottie',
-}) as ElementCreator<BodymovinPlayer>
+export const bodymovinPlayer = BodymovinPlayer.elementCreator() as ElementCreator<BodymovinPlayer>

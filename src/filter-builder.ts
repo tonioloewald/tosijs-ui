@@ -281,6 +281,33 @@ interface FilterPartParts extends PartsMap {
 }
 
 export class FilterPart extends WebComponent<FilterPartParts> {
+  static preferredTagName = 'tosi-filter-part'
+
+  static lightStyleSpec = {
+    ':host': {
+      display: 'flex',
+    },
+
+    ':host .tosi-icon:': {
+      verticalAlign: 'middle',
+      pointerEvents: 'none',
+    },
+
+    ':host [part="haystack"], :host [part="condition"]': {
+      flex: '1',
+    },
+
+    ':host [part="needle"]': {
+      flex: 2,
+    },
+
+    ':host [hidden]+[part="padding"]': {
+      display: 'block',
+      content: ' ',
+      flex: '1 1 auto',
+    },
+  }
+
   static initAttributes = {
     haystack: '*',
     condition: 'contains',
@@ -410,33 +437,7 @@ export class FilterPart extends WebComponent<FilterPartParts> {
   }
 }
 
-export const filterPart = FilterPart.elementCreator({
-  tag: 'tosi-filter-part',
-  styleSpec: {
-    ':host': {
-      display: 'flex',
-    },
-
-    ':host .tosi-icon:': {
-      verticalAlign: 'middle',
-      pointerEvents: 'none',
-    },
-
-    ':host [part="haystack"], :host [part="condition"]': {
-      flex: '1',
-    },
-
-    ':host [part="needle"]': {
-      flex: 2,
-    },
-
-    ':host [hidden]+[part="padding"]': {
-      display: 'block',
-      content: ' ',
-      flex: '1 1 auto',
-    },
-  },
-}) as ElementCreator<FilterPart>
+export const filterPart = FilterPart.elementCreator() as ElementCreator<FilterPart>
 
 export type FilterState = FilterPartState[]
 
@@ -446,6 +447,48 @@ export interface FilterBuilderParts extends PartsMap {
 }
 
 export class FilterBuilder extends WebComponent<FilterBuilderParts> {
+  static preferredTagName = 'tosi-filter'
+
+  static lightStyleSpec = {
+    ':host': {
+      height: 'auto',
+      display: 'grid',
+      gridTemplateColumns: '32px calc(100% - 64px) 32px',
+      alignItems: 'center',
+    },
+
+    ':host [part="filterContainer"]': {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      flex: '1 1 auto',
+    },
+
+    ':host [part="haystack"]': {
+      _fieldWidth: '100px',
+    },
+
+    ':host [part="condition"]': {
+      _fieldWidth: '60px',
+    },
+
+    ':host [part="needle"]': {
+      _fieldWidth: '80px',
+    },
+
+    ':host [part="add"], :host [part="reset"]': {
+      '--button-size': 'var(--touch-size, 32px)',
+      borderRadius: '999px',
+      height: 'var(--button-size)',
+      lineHeight: 'var(--button-size)',
+      margin: '0',
+      padding: '0',
+      textAlign: 'center',
+      width: 'var(--button-size)',
+      flex: '0 0 var(--button-size)',
+    },
+  }
+
   private _fields: Fields = []
 
   get fields(): Fields {
@@ -543,45 +586,4 @@ export class FilterBuilder extends WebComponent<FilterBuilderParts> {
   }
 }
 
-export const filterBuilder = FilterBuilder.elementCreator({
-  tag: 'tosi-filter',
-  styleSpec: {
-    ':host': {
-      height: 'auto',
-      display: 'grid',
-      gridTemplateColumns: '32px calc(100% - 64px) 32px',
-      alignItems: 'center',
-    },
-
-    ':host [part="filterContainer"]': {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'stretch',
-      flex: '1 1 auto',
-    },
-
-    ':host [part="haystack"]': {
-      _fieldWidth: '100px',
-    },
-
-    ':host [part="condition"]': {
-      _fieldWidth: '60px',
-    },
-
-    ':host [part="needle"]': {
-      _fieldWidth: '80px',
-    },
-
-    ':host [part="add"], :host [part="reset"]': {
-      '--button-size': 'var(--touch-size, 32px)',
-      borderRadius: '999px',
-      height: 'var(--button-size)',
-      lineHeight: 'var(--button-size)',
-      margin: '0',
-      padding: '0',
-      textAlign: 'center',
-      width: 'var(--button-size)',
-      flex: '0 0 var(--button-size)',
-    },
-  },
-}) as ElementCreator<FilterBuilder>
+export const filterBuilder = FilterBuilder.elementCreator() as ElementCreator<FilterBuilder>

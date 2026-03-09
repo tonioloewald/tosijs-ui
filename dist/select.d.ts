@@ -17,7 +17,59 @@ interface SelectParts extends PartsMap {
     value: HTMLInputElement;
 }
 export declare class TosiSelect extends Component<SelectParts> {
+    static preferredTagName: string;
     static formAssociated: boolean;
+    static lightStyleSpec: {
+        ':host': {
+            '--tosi-select-gap': string;
+            '--tosi-select-touch-size': string;
+            '--tosi-select-padding': string;
+            '--tosi-select-value-padding': string;
+            '--tosi-select-icon-width': string;
+            '--tosi-select-field-width': string;
+            '--gap': string;
+            '--touch-size': string;
+            '--padding': string;
+            '--value-padding': string;
+            '--icon-width': string;
+            '--fieldWidth': string;
+            display: string;
+            position: string;
+        };
+        ':host button': {
+            display: string;
+            alignItems: string;
+            justifyItems: string;
+            gap: string;
+            textAlign: string;
+            height: string;
+            padding: string;
+            position: string;
+            width: string;
+        };
+        ':host:not([show-icon]) button > :first-child': {
+            display: string;
+        };
+        ':host[hide-caption] button > :nth-child(2)': {
+            display: string;
+        };
+        ':host [part="value"]': {
+            width: string;
+            padding: string;
+            height: string;
+            lineHeight: string;
+            boxShadow: string;
+            whiteSpace: string;
+            outline: string;
+            background: string;
+            flex: string;
+        };
+        ':host [part="value"]:not(:focus)': {
+            overflow: string;
+            textOverflow: string;
+            background: string;
+        };
+    };
     static initAttributes: {
         editable: boolean;
         placeholder: string;

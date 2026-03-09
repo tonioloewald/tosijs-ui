@@ -9,6 +9,7 @@ import {
   createDropMenuItem,
   filterForDrop,
   filterForClick,
+  findShortcutAction,
   MenuItem,
   MenuAction,
   SubMenu,
@@ -763,6 +764,103 @@ describe('menu', () => {
       } as MenuItem
       const element = createMenuItem(item, dropOptions)
       expect(element.hasAttribute('disabled')).toBe(true)
+    })
+  })
+
+  describe('findShortcutAction', () => {
+    const mockEvent = (key: string, mods: Partial<KeyboardEvent> = {}) =>
+      ({
+        key,
+        code: '',
+        ctrlKey: false,
+        metaKey: false,
+        altKey: false,
+        shiftKey: false,
+        ...mods,
+      }) as KeyboardEvent
+
+    test('finds matching shortcut', () => {
+      const items: MenuItem[] = [
+        { caption: 'Copy', shortcut: '⌘C', action: noop },
+      ]
+      const match = findShortcutAction(items, mockEvent('c', { metaKey: true }))
+      expect(match).toBeDefined()
+      expect(match!.action.caption).toBe('Copy')
+    })
+
+    test('returns undefined when no match', () => {
+      const items: MenuItem[] = [
+        { caption: 'Copy', shortcut: '⌘C', action: noop },
+      ]
+      const match = findShortcutAction(items, mockEvent('x', { metaKey: true }))
+      expect(match).toBeUndefined()
+    })
+
+    test('skips disabled actions', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Disabled',
+          shortcut: '⌘D',
+          enabled: () => false,
+          action: noop,
+        },
+      ]
+      const match = findShortcutAction(items, mockEvent('d', { metaKey: true }))
+      expect(match).toBeUndefined()
+    })
+
+    test('finds shortcut in submenu', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Edit',
+          menuItems: [
+            { caption: 'Paste', shortcut: '⌘V', action: noop },
+          ],
+        },
+      ]
+      const match = findShortcutAction(items, mockEvent('v', { metaKey: true }))
+      expect(match).toBeDefined()
+      expect(match!.action.caption).toBe('Paste')
+      expect(match!.path.length).toBe(1)
+      expect(match!.path[0].caption).toBe('Edit')
+    })
+
+    test('skips shortcut when parent submenu is disabled', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Edit',
+          enabled: () => false,
+          menuItems: [
+            { caption: 'Paste', shortcut: '⌘V', action: noop },
+          ],
+        },
+      ]
+      const match = findShortcutAction(items, mockEvent('v', { metaKey: true }))
+      expect(match).toBeUndefined()
+    })
+
+    test('returns path for deeply nested shortcut', () => {
+      const items: MenuItem[] = [
+        {
+          caption: 'Level 1',
+          menuItems: [
+            {
+              caption: 'Level 2',
+              menuItems: [
+                { caption: 'Deep', shortcut: '^D', action: noop },
+              ],
+            },
+          ],
+        },
+      ]
+      const match = findShortcutAction(
+        items,
+        mockEvent('d', { ctrlKey: true }),
+      )
+      expect(match).toBeDefined()
+      expect(match!.path.length).toBe(2)
+      expect(match!.path[0].caption).toBe('Level 1')
+      expect(match!.path[1].caption).toBe('Level 2')
     })
   })
 })

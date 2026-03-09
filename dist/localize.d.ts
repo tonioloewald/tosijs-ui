@@ -45,6 +45,7 @@ export declare const updateLocalized: () => void;
 export declare function initLocalization(localizedStrings: string): void;
 export declare function localize(ref: string): string;
 export declare class TosiLocalePicker extends Component {
+    static preferredTagName: string;
     static initAttributes: {
         hideCaption: boolean;
     };
@@ -62,6 +63,12 @@ interface AbstractLocalized {
     disconnectedCallback: () => void;
 }
 export declare class TosiLocalized extends Component {
+    static preferredTagName: string;
+    static lightStyleSpec: {
+        ':host': {
+            pointerEvents: string;
+        };
+    };
     static allInstances: Set<AbstractLocalized>;
     static initAttributes: {
         refString: string;

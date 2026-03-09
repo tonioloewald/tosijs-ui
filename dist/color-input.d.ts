@@ -5,9 +5,10 @@ interface ColorParts extends PartsMap {
     css: HTMLInputElement;
 }
 declare class ColorInput extends Component<ColorParts> {
+    static preferredTagName: string;
     value: string;
     color: Color;
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             _gap: number;
             _swatchSize: number;

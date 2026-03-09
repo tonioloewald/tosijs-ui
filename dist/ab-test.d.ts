@@ -1,5 +1,6 @@
 import { Component } from 'tosijs';
 export declare class AbTest extends Component {
+    static preferredTagName: string;
     static set conditions(context: {
         [key: string]: any;
     });

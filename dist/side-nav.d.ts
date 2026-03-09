@@ -1,6 +1,7 @@
 import { Component, ElementCreator } from 'tosijs';
 type NavState = 'normal' | 'compact/nav' | 'compact/content';
 export declare class TosiSidenav extends Component {
+    static preferredTagName: string;
     static initAttributes: {
         minSize: number;
         navSize: number;
@@ -9,7 +10,7 @@ export declare class TosiSidenav extends Component {
     };
     value: NavState;
     content: HTMLSlotElement[];
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             display: string;
             gridTemplateColumns: string;

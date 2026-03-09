@@ -1,5 +1,51 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { Component as WebComponent, ElementCreator, XinStyleSheet } from 'tosijs';
 export declare class TosiTag extends WebComponent {
+    static preferredTagName: string;
+    static lightStyleSpec: {
+        ':host': {
+            '--tag-close-button-color': string;
+            '--tag-close-button-bg': string;
+            '--tag-button-opacity': string;
+            '--tag-button-hover-opacity': string;
+            '--tag-bg': string;
+            '--tag-text-color': string;
+            display: string;
+            borderRadius: string;
+            color: string;
+            background: string;
+            padding: string;
+            height: string;
+            lineHeight: string;
+        };
+        ':host > [part="caption"]': {
+            position: string;
+            whiteSpace: string;
+            overflow: string;
+            flex: string;
+            fontSize: string;
+            color: string;
+            textOverflow: string;
+        };
+        ':host [part="remove"]': {
+            boxShadow: string;
+            margin: string;
+            padding: number;
+            display: string;
+            alignItems: string;
+            alignSelf: string;
+            justifyContent: string;
+            height: string;
+            width: string;
+            color: string;
+            background: string;
+            borderRadius: string;
+            opacity: string;
+        };
+        ':host [part="remove"]:hover': {
+            background: string;
+            opacity: string;
+        };
+    };
     static initAttributes: {
         caption: string;
         removeable: boolean;
@@ -21,6 +67,8 @@ interface Tag {
 }
 type TagList = (string | Tag | null)[];
 export declare class TosiTagList extends WebComponent {
+    static preferredTagName: string;
+    static lightStyleSpec: XinStyleSheet;
     static formAssociated: boolean;
     static initAttributes: {
         name: string;

@@ -62,11 +62,27 @@ export interface PopDropMenuOptions extends Omit<PopMenuOptions, '_dropMode' | '
 }
 export declare const popMenu: (options: PopMenuOptions) => void;
 export declare const popDropMenu: (options: PopDropMenuOptions) => void;
+interface ShortcutMatch {
+    action: MenuAction;
+    path: SubMenu[];
+}
+export declare function findShortcutAction(items: MenuItem[], event: KeyboardEvent, path?: SubMenu[]): ShortcutMatch | undefined;
 interface TosiMenuParts extends PartsMap {
     trigger: HTMLButtonElement;
     icon: SvgIcon;
 }
 export declare class TosiMenu extends Component<TosiMenuParts> {
+    static preferredTagName: string;
+    static lightStyleSpec: {
+        ':host': {
+            display: string;
+        };
+        ':host button > xin-slot': {
+            display: string;
+            alignItems: string;
+            gap: string;
+        };
+    };
     static initAttributes: {
         menuWidth: string;
         localized: boolean;
@@ -86,6 +102,8 @@ export declare class TosiMenu extends Component<TosiMenuParts> {
     handleDrop: (event: DragEvent) => void;
     content: () => HTMLButtonElement;
     handleShortcut: (event: KeyboardEvent) => Promise<void>;
+    private findMenuItemByCaption;
+    private animateShortcut;
     constructor();
     connectedCallback(): void;
     disconnectedCallback(): void;

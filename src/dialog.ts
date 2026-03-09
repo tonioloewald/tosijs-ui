@@ -129,6 +129,48 @@ interface DialogParts extends PartsMap {
 }
 
 export class TosiDialog extends Component<DialogParts> {
+  static preferredTagName = 'tosi-dialog'
+
+  static lightStyleSpec = {
+    ':host > dialog::backdrop': {
+      backdropFilter: 'blur(8px)',
+    },
+    ':host > dialog:not([open])': {
+      display: 'none',
+    },
+    ':host > dialog[open]': {
+      minWidth: 300,
+      border: 0,
+      borderRadius: 10,
+      overflow: 'hidden',
+      maxHeight: 'calc(100% - 20px)',
+      padding: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 5,
+      _dialogShadow: varDefault.menuShadow('0 5px 10px #0004'),
+      _dialogBackground: varDefault.background('#fafafa'),
+      _dialogColor: varDefault.textColor('#222'),
+      boxShadow: vars.dialogShadow,
+      background: vars.dialogBackground,
+      color: vars.dialogColor,
+    },
+    ':host > dialog > *': {
+      padding: '0 20px',
+    },
+    ':host > dialog > header': {
+      display: 'flex',
+      justifyContent: 'center',
+      gap: 10,
+    },
+    ':host > dialog > footer': {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: 10,
+      paddingBottom: 20,
+    },
+  }
+
   static async alert(message: string, title = 'Alert'): Promise<void> {
     return new Promise((resolve) => {
       const alertDialog = tosiDialog(
@@ -287,45 +329,4 @@ export class TosiDialog extends Component<DialogParts> {
     )
 }
 
-export const tosiDialog = TosiDialog.elementCreator({
-  tag: 'tosi-dialog',
-  styleSpec: {
-    ':host > dialog::backdrop': {
-      backdropFilter: 'blur(8px)',
-    },
-    ':host > dialog:not([open])': {
-      display: 'none',
-    },
-    ':host > dialog[open]': {
-      minWidth: 300,
-      border: 0,
-      borderRadius: 10,
-      overflow: 'hidden',
-      maxHeight: 'calc(100% - 20px)',
-      padding: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 5,
-      _dialogShadow: varDefault.menuShadow('0 5px 10px #0004'),
-      _dialogBackground: varDefault.background('#fafafa'),
-      _dialogColor: varDefault.textColor('#222'),
-      boxShadow: vars.dialogShadow,
-      background: vars.dialogBackground,
-      color: vars.dialogColor,
-    },
-    ':host > dialog > *': {
-      padding: '0 20px',
-    },
-    ':host > dialog > header': {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: 10,
-    },
-    ':host > dialog > footer': {
-      display: 'flex',
-      justifyContent: 'flex-end',
-      gap: 10,
-      paddingBottom: 20,
-    },
-  },
-})
+export const tosiDialog = TosiDialog.elementCreator()

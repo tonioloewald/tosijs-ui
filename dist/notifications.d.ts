@@ -10,8 +10,9 @@ interface NotificationSpec {
 }
 type callback = () => void;
 export declare class TosiNotification extends Component {
+    static preferredTagName: string;
     private static singleton?;
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             _notificationSpacing: number;
             _notificationWidth: number;

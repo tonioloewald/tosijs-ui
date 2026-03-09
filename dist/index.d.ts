@@ -19,6 +19,7 @@ export * from './live-example';
 export * from './localize';
 export { makeSorter } from './make-sorter';
 export * from './mapbox';
+export * from './match-shortcut';
 export * from './markdown-viewer';
 export * from './menu';
 export * from './month';

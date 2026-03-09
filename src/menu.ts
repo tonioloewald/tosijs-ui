@@ -83,6 +83,16 @@ const menuItems = [
             caption: 'b8rjs',
             action: 'https://b8rjs.com'
           },
+          {
+            caption: 'deep shortcut',
+            shortcut: '⌘⇧D',
+            action() {
+              postNotification({
+                message: 'Deep shortcut fired!',
+                duration: 1
+              })
+            }
+          },
         ]
       },
       {
@@ -112,6 +122,7 @@ const menuItems = [
     menuItems: [
       {
         caption: 'one',
+        shortcut: '⌘1',
         checked: () => picked === 'one',
         action () {
           picked = 'one'
@@ -119,6 +130,7 @@ const menuItems = [
       },
       {
         caption: 'two',
+        shortcut: '⌘2',
         checked: () => picked === 'two',
         action () {
           picked = 'two'
@@ -126,6 +138,7 @@ const menuItems = [
       },
       {
         caption: 'three',
+        shortcut: '⌘3',
         checked: () => picked === 'three',
         action () {
           picked = 'three'
@@ -667,7 +680,7 @@ import {
 import { popFloat, FloatPosition } from './pop-float'
 import { icons, SvgIcon } from './icons'
 import { localize } from './localize'
-import { matchShortcut } from './match-shortcut'
+import { matchShortcut, displayShortcut } from './match-shortcut'
 import { isTypeAllowed, stringToTypes } from './drag-and-drop'
 
 export type ActionCallback = () => void | Promise<void>
@@ -885,6 +898,14 @@ StyleSheet('xin-menu-helper', {
   '.xin-menu-item:active svg': {
     stroke: varDefault.menuItemIconActiveColor('#000'),
   },
+  '.xin-menu-item-highlight': {
+    boxShadow: 'none !important',
+    background: varDefault.menuItemActiveBg('#aaa'),
+    color: varDefault.menuItemActiveColor('#000'),
+  },
+  '.xin-menu-item-highlight svg': {
+    stroke: varDefault.menuItemIconActiveColor('#000'),
+  },
   '.xin-drop-over': {
     background: `${varDefault.menuDropOverBg('#2196F3')} !important`,
     color: `${varDefault.menuDropOverColor('#fff')} !important`,
@@ -922,7 +943,7 @@ export const createMenuAction = (
       },
       icon,
       options.localized ? span(localize(item.caption)) : span(item.caption),
-      span(item.shortcut || ' ')
+      span(item.shortcut ? displayShortcut(item.shortcut) : ' ')
     )
   } else {
     menuItem = button(
@@ -933,7 +954,7 @@ export const createMenuAction = (
       },
       icon,
       options.localized ? span(localize(item.caption)) : span(item.caption),
-      span(item.shortcut || ' ')
+      span(item.shortcut ? displayShortcut(item.shortcut) : ' ')
     )
   }
   menuItem.classList.toggle('xin-menu-item-checked', checked !== false)
@@ -1361,10 +1382,16 @@ export const popDropMenu = (options: PopDropMenuOptions): void => {
   })
 }
 
-function findShortcutAction(
+interface ShortcutMatch {
+  action: MenuAction
+  path: SubMenu[]
+}
+
+export function findShortcutAction(
   items: MenuItem[],
-  event: KeyboardEvent
-): MenuAction | undefined {
+  event: KeyboardEvent,
+  path: SubMenu[] = [],
+): ShortcutMatch | undefined {
   for (const item of items) {
     if (!item) continue
     const { shortcut } = item as MenuAction
@@ -1372,13 +1399,20 @@ function findShortcutAction(
 
     if (shortcut) {
       if (matchShortcut(event, shortcut)) {
-        return item as MenuAction
+        const menuAction = item as MenuAction
+        // Check if the action itself is disabled
+        if (menuAction.enabled && !menuAction.enabled()) return undefined
+        // Check if any parent submenu is disabled
+        if (path.some((sub) => sub.enabled && !sub.enabled())) return undefined
+        return { action: menuAction, path }
       }
     } else if (menuItems) {
-      const foundAction = findShortcutAction(resolveMenuItems(menuItems), event)
-      if (foundAction) {
-        return foundAction
-      }
+      const found = findShortcutAction(
+        resolveMenuItems(menuItems),
+        event,
+        [...path, item as SubMenu],
+      )
+      if (found) return found
     }
   }
   return undefined
@@ -1390,6 +1424,18 @@ interface TosiMenuParts extends PartsMap {
 }
 
 export class TosiMenu extends Component<TosiMenuParts> {
+  static preferredTagName = 'tosi-menu'
+  static lightStyleSpec = {
+    ':host': {
+      display: 'inline-block',
+    },
+    ':host button > xin-slot': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: varDefault.tosiMenuTriggerGap('10px'),
+    },
+  }
+
   static initAttributes = {
     menuWidth: 'auto',
     localized: false,
@@ -1485,12 +1531,89 @@ export class TosiMenu extends Component<TosiMenuParts> {
     button({ tabindex: 0, part: 'trigger', onClick: this.showMenu }, xinSlot())
 
   handleShortcut = async (event: KeyboardEvent) => {
-    const menuAction = findShortcutAction(this.menuItems, event)
-    if (menuAction) {
-      if (menuAction.action instanceof Function) {
-        menuAction.action()
+    const match = findShortcutAction(this.menuItems, event)
+    if (!match) return
+
+    event.preventDefault()
+    event.stopImmediatePropagation()
+
+    const { action: menuAction, path } = match
+
+    // Animate: disclose menu path, highlight item, then execute
+    if (this.isConnected && document.body.contains(this)) {
+      await this.animateShortcut(path, menuAction)
+    }
+
+    if (menuAction.action instanceof Function) {
+      menuAction.action()
+    }
+  }
+
+  private findMenuItemByCaption(
+    container: Element,
+    caption: string,
+  ): HTMLElement | null {
+    for (const el of container.querySelectorAll('.xin-menu-item')) {
+      // Menu items are: icon (svg or span), span(caption), span(shortcut/chevron)
+      // Caption is always children[1]
+      const captionEl = el.children[1]
+      if (captionEl && captionEl.textContent === caption) {
+        return el as HTMLElement
       }
     }
+    return null
+  }
+
+  private async animateShortcut(
+    path: SubMenu[],
+    action: MenuAction,
+  ): Promise<void> {
+    // Ensure any existing menus are closed first
+    removeLastMenu(0)
+
+    // Open root menu
+    popMenu({
+      target: this.parts.trigger,
+      width: this.menuWidth,
+      localized: this.localized,
+      menuItems: this.menuItems,
+    })
+    await new Promise((r) => setTimeout(r, 80))
+
+    // Disclose each submenu in the path
+    for (let i = 0; i < path.length; i++) {
+      const depth = i + 1
+      const parentFloat = poppedMenus[i]?.menu
+      if (!parentFloat) break
+
+      const submenuEl = this.findMenuItemByCaption(parentFloat, path[i].caption)
+      if (!submenuEl) break
+
+      popMenu({
+        target: submenuEl,
+        width: this.menuWidth,
+        localized: this.localized,
+        menuItems: resolveMenuItems(path[i].menuItems),
+        submenuDepth: depth,
+        position: 'side' as FloatPosition,
+      })
+      await new Promise((r) => setTimeout(r, 80))
+    }
+
+    // Highlight the matching action item
+    const lastFloat = poppedMenus[poppedMenus.length - 1]?.menu
+    if (lastFloat) {
+      const itemEl = this.findMenuItemByCaption(lastFloat, action.caption)
+      if (itemEl) {
+        itemEl.classList.add('xin-menu-item-highlight')
+      }
+    }
+
+    // Brief pause so user can see the highlight
+    await new Promise((r) => setTimeout(r, 300))
+
+    // Close everything
+    removeLastMenu(0)
   }
 
   constructor() {
@@ -1517,19 +1640,7 @@ export class TosiMenu extends Component<TosiMenuParts> {
   }
 }
 
-export const tosiMenu = TosiMenu.elementCreator({
-  tag: 'tosi-menu',
-  styleSpec: {
-    ':host': {
-      display: 'inline-block',
-    },
-    ':host button > xin-slot': {
-      display: 'flex',
-      alignItems: 'center',
-      gap: varDefault.tosiMenuTriggerGap('10px'),
-    },
-  },
-})
+export const tosiMenu = TosiMenu.elementCreator()
 
 /** @deprecated Use tosiMenu instead */
 export const xinMenu = tosiMenu

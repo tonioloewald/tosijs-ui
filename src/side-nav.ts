@@ -19,6 +19,8 @@ const { slot } = elements
 type NavState = 'normal' | 'compact/nav' | 'compact/content'
 
 export class TosiSidenav extends Component {
+  static preferredTagName = 'tosi-sidenav'
+
   static initAttributes = {
     minSize: 800,
     navSize: 200,
@@ -30,7 +32,7 @@ export class TosiSidenav extends Component {
 
   content = [slot({ name: 'nav', part: 'nav' }), slot({ part: 'content' })]
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       display: 'grid',
       gridTemplateColumns: `${varDefault.navWidth(
@@ -127,9 +129,7 @@ export class TosiSidenav extends Component {
 /** @deprecated Use TosiSidenav instead */
 export const SideNav = TosiSidenav
 
-export const tosiSidenav = TosiSidenav.elementCreator({
-  tag: 'tosi-sidenav',
-}) as ElementCreator<TosiSidenav>
+export const tosiSidenav = TosiSidenav.elementCreator() as ElementCreator<TosiSidenav>
 
 /** @deprecated Use tosiSidenav instead */
 export const sideNav = tosiSidenav

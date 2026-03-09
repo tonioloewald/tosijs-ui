@@ -73,6 +73,8 @@ space is tight.
 */
 
 export class SizeBreak extends WebComponent {
+  static preferredTagName = 'tosi-sizebreak'
+
   static initAttributes = {
     minWidth: 0,
     minHeight: 0,
@@ -82,7 +84,7 @@ export class SizeBreak extends WebComponent {
 
   content = [slot({ part: 'normal' }), slot({ part: 'small', name: 'small' })]
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       display: 'inline-block',
       position: 'relative',
@@ -121,6 +123,4 @@ export class SizeBreak extends WebComponent {
   }
 }
 
-export const sizeBreak = SizeBreak.elementCreator({
-  tag: 'tosi-sizebreak',
-}) as ElementCreator<SizeBreak>
+export const sizeBreak = SizeBreak.elementCreator() as ElementCreator<SizeBreak>

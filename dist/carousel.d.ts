@@ -1,5 +1,6 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 export declare class TosiCarousel extends WebComponent {
+    static preferredTagName: string;
     static initAttributes: {
         dots: boolean;
         arrows: boolean;
@@ -17,11 +18,25 @@ export declare class TosiCarousel extends WebComponent {
     set page(p: number);
     get visibleItems(): HTMLElement[];
     get lastPage(): number;
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
+            _carouselIconSize: number;
+            _carouselButtonColor: string;
+            _carouselButtonHoverColor: string;
+            _carouselButtonActiveColor: string;
+            _carouseButtonWidth: number;
+            _carouselDotCurrentColor: string;
+            _carouselDotSize: number;
+            _carouselDotSpacing: string;
+            _carouselProgressPadding: number;
+            _carouselDotTransition: string;
             display: string;
             flexDirection: string;
             position: string;
+        };
+        ':host:focus': {
+            outline: string;
+            boxShadow: string;
         };
         ':host svg': {
             height: string;

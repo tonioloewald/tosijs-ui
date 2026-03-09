@@ -73,6 +73,8 @@ interface CarouselParts {
 }
 
 export class TosiCarousel extends WebComponent {
+  static preferredTagName = 'tosi-carousel'
+
   static initAttributes = {
     dots: false,
     arrows: false,
@@ -128,11 +130,25 @@ export class TosiCarousel extends WebComponent {
     )
   }
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
+      _carouselIconSize: 24,
+      _carouselButtonColor: '#0004',
+      _carouselButtonHoverColor: '#0006',
+      _carouselButtonActiveColor: '#000c',
+      _carouseButtonWidth: 48,
+      _carouselDotCurrentColor: '#0008',
+      _carouselDotSize: 8,
+      _carouselDotSpacing: vars.carouselDotSize,
+      _carouselProgressPadding: 12,
+      _carouselDotTransition: '0.125s ease-in-out',
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
+    },
+    ':host:focus': {
+      outline: 'none',
+      boxShadow: 'none',
     },
     ':host svg': {
       height: vars.carouselIconSize,
@@ -352,27 +368,7 @@ export class TosiCarousel extends WebComponent {
 /** @deprecated Use TosiCarousel instead */
 export const XinCarousel = TosiCarousel
 
-export const tosiCarousel = TosiCarousel.elementCreator({
-  tag: 'tosi-carousel',
-  styleSpec: {
-    ':host': {
-      _carouselIconSize: 24,
-      _carouselButtonColor: '#0004',
-      _carouselButtonHoverColor: '#0006',
-      _carouselButtonActiveColor: '#000c',
-      _carouseButtonWidth: 48,
-      _carouselDotCurrentColor: '#0008',
-      _carouselDotSize: 8,
-      _carouselDotSpacing: vars.carouselDotSize,
-      _carouselProgressPadding: 12,
-      _carouselDotTransition: '0.125s ease-in-out',
-    },
-    ':host:focus': {
-      outline: 'none',
-      boxShadow: 'none',
-    },
-  },
-}) as ElementCreator<TosiCarousel>
+export const tosiCarousel = TosiCarousel.elementCreator() as ElementCreator<TosiCarousel>
 
 /** @deprecated Use tosiCarousel instead */
 export const xinCarousel = tosiCarousel

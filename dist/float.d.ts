@@ -1,5 +1,6 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 export declare class TosiFloat extends WebComponent {
+    static preferredTagName: string;
     static floats: Set<TosiFloat>;
     static initAttributes: {
         drag: boolean;
@@ -7,7 +8,7 @@ export declare class TosiFloat extends WebComponent {
         remainOnScroll: "hide" | "remove" | "remain";
     };
     content: HTMLSlotElement;
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             position: string;
         };

@@ -1,5 +1,6 @@
 import { Component, ElementCreator } from 'tosijs';
 export declare class TosiRating extends Component {
+    static preferredTagName: string;
     static formAssociated: boolean;
     static initAttributes: {
         max: number;
@@ -19,7 +20,7 @@ export declare class TosiRating extends Component {
     value: number | string;
     formDisabledCallback(disabled: boolean): void;
     formResetCallback(): void;
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             display: string;
             position: string;

@@ -1,5 +1,6 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 export declare class CodeEditor extends WebComponent {
+    static preferredTagName: string;
     private source;
     get value(): string;
     set value(text: string);
@@ -15,7 +16,7 @@ export declare class CodeEditor extends WebComponent {
     options: any;
     get ace(): any;
     get editor(): any;
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             display: string;
             position: string;

@@ -460,6 +460,28 @@ export const icons = new Proxy(iconData, {
 }) as unknown as SVGIconMap
 
 export class SvgIcon extends WebComponent {
+  static preferredTagName = 'tosi-icon'
+  static lightStyleSpec = {
+    ':host': {
+      // New --tosi-icon-* variables with legacy fallbacks
+      '--tosi-icon-size': 'var(--xin-icon-size, 16px)',
+      '--tosi-icon-stroke-width':
+        'var(--xin-icon-stroke-width, var(--icon-stroke-width, 2px))',
+      '--tosi-icon-stroke-linejoin': 'var(--icon-stroke-linejoin, round)',
+      '--tosi-icon-stroke-linecap': 'var(--icon-stroke-linecap, round)',
+      '--tosi-icon-fill': 'var(--xin-icon-fill, var(--icon-fill, none))',
+      display: 'inline-flex',
+      stroke: 'currentColor',
+      strokeWidth: varDefault.tosiIconStrokeWidth('2px'),
+      strokeLinejoin: varDefault.tosiIconStrokeLinejoin('round'),
+      strokeLinecap: varDefault.tosiIconStrokeLinecap('round'),
+      fill: varDefault.tosiIconFill('none'),
+    },
+    ':host, :host svg': {
+      height: varDefault.tosiIconSize('16px'),
+    },
+  }
+
   static initAttributes = {
     icon: '',
     size: 0,
@@ -489,26 +511,4 @@ export class SvgIcon extends WebComponent {
   }
 }
 
-export const svgIcon = SvgIcon.elementCreator({
-  tag: 'tosi-icon',
-  styleSpec: {
-    ':host': {
-      // New --tosi-icon-* variables with legacy fallbacks
-      '--tosi-icon-size': 'var(--xin-icon-size, 16px)',
-      '--tosi-icon-stroke-width':
-        'var(--xin-icon-stroke-width, var(--icon-stroke-width, 2px))',
-      '--tosi-icon-stroke-linejoin': 'var(--icon-stroke-linejoin, round)',
-      '--tosi-icon-stroke-linecap': 'var(--icon-stroke-linecap, round)',
-      '--tosi-icon-fill': 'var(--xin-icon-fill, var(--icon-fill, none))',
-      display: 'inline-flex',
-      stroke: 'currentColor',
-      strokeWidth: varDefault.tosiIconStrokeWidth('2px'),
-      strokeLinejoin: varDefault.tosiIconStrokeLinejoin('round'),
-      strokeLinecap: varDefault.tosiIconStrokeLinecap('round'),
-      fill: varDefault.tosiIconFill('none'),
-    },
-    ':host, :host svg': {
-      height: varDefault.tosiIconSize('16px'),
-    },
-  },
-})
+export const svgIcon = SvgIcon.elementCreator()

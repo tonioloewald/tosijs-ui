@@ -1,7 +1,8 @@
 import { Component as XinComponent, ElementCreator } from 'tosijs';
 export declare class TosiSizer extends XinComponent {
+    static preferredTagName: string;
     target?: HTMLElement | null;
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             _resizeIconFill: string;
             display: string;

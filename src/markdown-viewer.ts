@@ -114,6 +114,8 @@ function populate(basePath: string, source?: any): string {
 }
 
 export class TosiMd extends Component {
+  static preferredTagName = 'tosi-md'
+
   static initAttributes = {
     src: '',
     elements: false,
@@ -181,9 +183,7 @@ export class TosiMd extends Component {
 /** @deprecated Use TosiMd instead */
 export const MarkdownViewer = TosiMd
 
-export const tosiMd = TosiMd.elementCreator({
-  tag: 'tosi-md',
-}) as ElementCreator<TosiMd>
+export const tosiMd = TosiMd.elementCreator() as ElementCreator<TosiMd>
 
 /** @deprecated Use tosiMd instead */
 export const markdownViewer = tosiMd

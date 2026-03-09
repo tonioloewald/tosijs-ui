@@ -93,6 +93,7 @@ interface RatingParts extends PartsMap {
 }
 
 export class TosiRating extends Component {
+  static preferredTagName = 'tosi-rating'
   static formAssociated = true
 
   static initAttributes = {
@@ -122,7 +123,7 @@ export class TosiRating extends Component {
     this.value = ''
   }
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       display: 'inline-block',
       position: 'relative',
@@ -282,9 +283,7 @@ export class TosiRating extends Component {
 /** @deprecated Use TosiRating instead */
 export const XinRating = TosiRating
 
-export const tosiRating = TosiRating.elementCreator({
-  tag: 'tosi-rating',
-}) as ElementCreator<TosiRating>
+export const tosiRating = TosiRating.elementCreator() as ElementCreator<TosiRating>
 
 /** @deprecated Use tosiRating instead (tag is now tosi-rating) */
 export const xinRating = deprecated(

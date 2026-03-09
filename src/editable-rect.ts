@@ -84,6 +84,8 @@ interface Locks {
 type Side = keyof Locks
 
 export class EditableRect extends Component {
+  static preferredTagName = 'tosi-editable'
+
   static initAttributes = {
     rotationSnap: 0,
     positionSnap: 0,
@@ -94,7 +96,7 @@ export class EditableRect extends Component {
   static snapAngle = false
   static snapToGrid = false
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       '--handle-bg': '#fff4',
       '--handle-color': '#2228',
@@ -523,6 +525,4 @@ export class EditableRect extends Component {
   }
 }
 
-export const editableRect = EditableRect.elementCreator({
-  tag: 'tosi-editable',
-})
+export const editableRect = EditableRect.elementCreator()

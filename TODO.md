@@ -3,7 +3,6 @@
 ## High Priority
 
 - **JSON Schema-driven form editor** - Integrate schema-based form generation
-- **Agent-based QA using Haltija** - Build automated QA testing with Haltija
 
 ## Medium Priority
 
@@ -44,3 +43,4 @@
 - ~~xin → tosi rename (all exports, classes, tags, interfaces)~~
 - ~~Drop menu support (`popDropMenu`, `hideDisabled`, dynamic `menuItems`)~~
 - ~~Drag-and-drop MutationObserver for dynamic drop targets~~
+- ~~Agent-based QA using Haltija~~ (`bun run test-browser`)

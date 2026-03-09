@@ -1,5 +1,34 @@
 import { Component as XinComponent, ElementCreator } from 'tosijs';
 export declare class TosiField extends XinComponent {
+    static preferredTagName: string;
+    static lightStyleSpec: {
+        ':host [part="field"]': {
+            position: string;
+            display: string;
+            alignItems: string;
+            gap: string;
+        };
+        ':host [part="field"][prefix]::before': {
+            content: string;
+        };
+        ':host [part="field"][suffix]::after': {
+            content: string;
+        };
+        ':host [part="field"] > *, :host [part="input"] > *': {
+            width: string;
+        };
+        ':host textarea': {
+            resize: string;
+        };
+        ':host input[type="checkbox"]': {
+            width: string;
+        };
+        ':host .hidden': {
+            position: string;
+            pointerEvents: string;
+            opacity: number;
+        };
+    };
     static initAttributes: {
         caption: string;
         key: string;
@@ -22,6 +51,7 @@ export declare class TosiField extends XinComponent {
     render(): void;
 }
 export declare class TosiForm extends XinComponent {
+    static preferredTagName: string;
     context: {
         [key: string]: any;
     };
@@ -29,7 +59,7 @@ export declare class TosiForm extends XinComponent {
         [key: string]: any;
     };
     get isValid(): boolean;
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             display: string;
             flexDirection: string;

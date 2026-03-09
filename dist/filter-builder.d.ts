@@ -31,6 +31,27 @@ interface FilterPartParts extends PartsMap {
     remove: HTMLButtonElement;
 }
 export declare class FilterPart extends WebComponent<FilterPartParts> {
+    static preferredTagName: string;
+    static lightStyleSpec: {
+        ':host': {
+            display: string;
+        };
+        ':host .tosi-icon:': {
+            verticalAlign: string;
+            pointerEvents: string;
+        };
+        ':host [part="haystack"], :host [part="condition"]': {
+            flex: string;
+        };
+        ':host [part="needle"]': {
+            flex: number;
+        };
+        ':host [hidden]+[part="padding"]': {
+            display: string;
+            content: string;
+            flex: string;
+        };
+    };
     static initAttributes: {
         haystack: string;
         condition: string;
@@ -55,6 +76,41 @@ export interface FilterBuilderParts extends PartsMap {
     resent: HTMLButtonElement;
 }
 export declare class FilterBuilder extends WebComponent<FilterBuilderParts> {
+    static preferredTagName: string;
+    static lightStyleSpec: {
+        ':host': {
+            height: string;
+            display: string;
+            gridTemplateColumns: string;
+            alignItems: string;
+        };
+        ':host [part="filterContainer"]': {
+            display: string;
+            flexDirection: string;
+            alignItems: string;
+            flex: string;
+        };
+        ':host [part="haystack"]': {
+            _fieldWidth: string;
+        };
+        ':host [part="condition"]': {
+            _fieldWidth: string;
+        };
+        ':host [part="needle"]': {
+            _fieldWidth: string;
+        };
+        ':host [part="add"], :host [part="reset"]': {
+            '--button-size': string;
+            borderRadius: string;
+            height: string;
+            lineHeight: string;
+            margin: string;
+            padding: string;
+            textAlign: string;
+            width: string;
+            flex: string;
+        };
+    };
     private _fields;
     get fields(): Fields;
     set fields(_fields: Fields);

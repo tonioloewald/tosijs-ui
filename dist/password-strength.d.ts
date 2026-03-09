@@ -2,6 +2,44 @@ import { Component } from 'tosijs';
 export declare const digest: (s: string, method?: string) => Promise<string>;
 export declare const isBreached: (password: string) => Promise<boolean>;
 export declare class TosiPasswordStrength extends Component {
+    static preferredTagName: string;
+    static lightStyleSpec: {
+        ':host': {
+            display: string;
+            flexDirection: string;
+            gap: string;
+            position: string;
+        };
+        ':host xin-slot': {
+            display: string;
+        };
+        ':host [part="meter"]': {
+            display: string;
+            position: string;
+            height: string;
+            background: string;
+            borderRadius: string;
+            boxShadow: string;
+        };
+        ':host [part="level"]': {
+            height: string;
+            content: string;
+            display: string;
+            width: number;
+            transition: string;
+            background: string;
+            margin: string;
+            borderRadius: string;
+        };
+        ':host [part="description"]': {
+            position: string;
+            inset: string;
+            color: string;
+            height: string;
+            lineHeight: string;
+            textAlign: string;
+        };
+    };
     static initAttributes: {
         minLength: number;
         goodLength: number;

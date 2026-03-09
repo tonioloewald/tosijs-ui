@@ -1,12 +1,13 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 type TabCloseHandler = (tabBody: Element) => boolean | undefined | void;
 export declare class TosiTabs extends WebComponent {
+    static preferredTagName: string;
     static initAttributes: {
         localized: boolean;
     };
     value: number;
     makeTab(tabs: TosiTabs, tabBody: HTMLElement, bodyId: string): HTMLElement;
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             '--tosi-tabs-selected-color': string;
             '--tosi-tabs-bar-color': string;

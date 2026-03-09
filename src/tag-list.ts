@@ -119,6 +119,7 @@ import {
   varDefault,
   ElementCreator,
   deprecated,
+  XinStyleSheet,
 } from 'tosijs'
 import { popMenu, MenuItem } from './menu'
 import { icons } from './icons'
@@ -126,33 +127,9 @@ import { icons } from './icons'
 const { div, input, span, button } = elements
 
 export class TosiTag extends WebComponent {
-  static initAttributes = {
-    caption: '',
-    removeable: false,
-  }
+  static preferredTagName = 'tosi-tag'
 
-  removeCallback: (event: Event) => void = () => {
-    this.remove()
-  }
-
-  content = () => [
-    span({ part: 'caption' }, this.caption),
-    button(icons.x(), {
-      type: 'button',
-      part: 'remove',
-      hidden: !this.removeable,
-      ariaLabel: `Remove ${this.caption}`,
-      onClick: this.removeCallback,
-    }),
-  ]
-}
-
-/** @deprecated Use TosiTag instead */
-export const XinTag = TosiTag
-
-export const tosiTag = TosiTag.elementCreator({
-  tag: 'tosi-tag',
-  styleSpec: {
+  static lightStyleSpec = {
     ':host': {
       '--tag-close-button-color': '#000c',
       '--tag-close-button-bg': '#fffc',
@@ -196,8 +173,33 @@ export const tosiTag = TosiTag.elementCreator({
       background: vars.tagCloseButtonBg,
       opacity: vars.tagButtonHoverOpacity,
     },
-  },
-}) as ElementCreator<TosiTag>
+  }
+
+  static initAttributes = {
+    caption: '',
+    removeable: false,
+  }
+
+  removeCallback: (event: Event) => void = () => {
+    this.remove()
+  }
+
+  content = () => [
+    span({ part: 'caption' }, this.caption),
+    button(icons.x(), {
+      type: 'button',
+      part: 'remove',
+      hidden: !this.removeable,
+      ariaLabel: `Remove ${this.caption}`,
+      onClick: this.removeCallback,
+    }),
+  ]
+}
+
+/** @deprecated Use TosiTag instead */
+export const XinTag = TosiTag
+
+export const tosiTag = TosiTag.elementCreator() as ElementCreator<TosiTag>
 
 /** @deprecated Use tosiTag instead */
 export const xinTag = deprecated(
@@ -216,6 +218,57 @@ interface Tag {
 type TagList = (string | Tag | null)[]
 
 export class TosiTagList extends WebComponent {
+  static preferredTagName = 'tosi-tag-list'
+
+  static lightStyleSpec: XinStyleSheet = {
+    ':host': {
+      '--tag-list-bg': '#f8f8f8',
+      '--touch-size': '44px',
+      '--spacing': '16px',
+      display: 'grid',
+      gridTemplateColumns: 'auto',
+      alignItems: 'center',
+      background: vars.tagListBg,
+      gap: vars.spacing25,
+      borderRadius: varDefault.taglistRoundedRadius(vars.spacing50),
+      overflow: 'hidden',
+    },
+    ':host[editable]': {
+      gridTemplateColumns: `0px auto ${vars.touchSize}`,
+    },
+    ':host[editable][text-entry]': {
+      gridTemplateColumns: `0px 2fr 1fr ${vars.touchSize}`,
+    },
+    ':host [part="tagContainer"]': {
+      display: 'flex',
+      content: '" "',
+      alignItems: 'center',
+      background: vars.inputBg,
+      borderRadius: varDefault.tagContainerRadius(vars.spacing50),
+      boxShadow: vars.borderShadow,
+      flexWrap: 'nowrap',
+      overflow: 'auto hidden',
+      gap: vars.spacing25,
+      minHeight: `calc(${vars.lineHeight} + ${vars.spacing})`,
+      padding: vars.spacing25,
+    },
+    ':host [part="tagMenu"]': {
+      width: vars.touchSize,
+      height: vars.touchSize,
+      lineHeight: vars.touchSize,
+      textAlign: 'center',
+      padding: 0,
+      margin: 0,
+    },
+    ':host [hidden]': {
+      display: 'none !important',
+    },
+    ':host button[part="tagMenu"]': {
+      background: vars.brandColor,
+      color: vars.brandTextColor,
+    },
+  }
+
   static formAssociated = true
 
   static initAttributes = {
@@ -437,57 +490,7 @@ export class TosiTagList extends WebComponent {
 /** @deprecated Use TosiTagList instead */
 export const XinTagList = TosiTagList
 
-export const tosiTagList = TosiTagList.elementCreator({
-  tag: 'tosi-tag-list',
-  styleSpec: {
-    ':host': {
-      '--tag-list-bg': '#f8f8f8',
-      '--touch-size': '44px',
-      '--spacing': '16px',
-      display: 'grid',
-      gridTemplateColumns: 'auto',
-      alignItems: 'center',
-      background: vars.tagListBg,
-      gap: vars.spacing25,
-      borderRadius: varDefault.taglistRoundedRadius(vars.spacing50),
-      overflow: 'hidden',
-    },
-    ':host[editable]': {
-      gridTemplateColumns: `0px auto ${vars.touchSize}`,
-    },
-    ':host[editable][text-entry]': {
-      gridTemplateColumns: `0px 2fr 1fr ${vars.touchSize}`,
-    },
-    ':host [part="tagContainer"]': {
-      display: 'flex',
-      content: '" "',
-      alignItems: 'center',
-      background: vars.inputBg,
-      borderRadius: varDefault.tagContainerRadius(vars.spacing50),
-      boxShadow: vars.borderShadow,
-      flexWrap: 'nowrap',
-      overflow: 'auto hidden',
-      gap: vars.spacing25,
-      minHeight: `calc(${vars.lineHeight} + ${vars.spacing})`,
-      padding: vars.spacing25,
-    },
-    ':host [part="tagMenu"]': {
-      width: vars.touchSize,
-      height: vars.touchSize,
-      lineHeight: vars.touchSize,
-      textAlign: 'center',
-      padding: 0,
-      margin: 0,
-    },
-    ':host [hidden]': {
-      display: 'none !important',
-    },
-    ':host button[part="tagMenu"]': {
-      background: vars.brandColor,
-      color: vars.brandTextColor,
-    },
-  },
-}) as ElementCreator<TosiTagList>
+export const tosiTagList = TosiTagList.elementCreator() as ElementCreator<TosiTagList>
 
 /** @deprecated Use tosiTagList instead */
 export const xinTagList = deprecated(

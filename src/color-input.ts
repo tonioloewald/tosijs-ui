@@ -48,10 +48,12 @@ interface ColorParts extends PartsMap {
 }
 
 class ColorInput extends Component<ColorParts> {
+  static preferredTagName = 'tosi-color'
+
   value = defaultColor.rgba
   color = defaultColor
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       _gap: 8,
       _swatchSize: 32,
@@ -130,6 +132,4 @@ class ColorInput extends Component<ColorParts> {
   }
 }
 
-export const colorInput = ColorInput.elementCreator({
-  tag: 'tosi-color',
-}) as ElementCreator<ColorInput>
+export const colorInput = ColorInput.elementCreator() as ElementCreator<ColorInput>

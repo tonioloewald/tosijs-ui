@@ -1,12 +1,13 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 export declare class SizeBreak extends WebComponent {
+    static preferredTagName: string;
     static initAttributes: {
         minWidth: number;
         minHeight: number;
     };
     value: 'normal' | 'small';
     content: HTMLSlotElement[];
-    static styleSpec: {
+    static shadowStyleSpec: {
         ':host': {
             display: string;
             position: string;

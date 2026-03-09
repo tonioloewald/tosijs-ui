@@ -188,6 +188,48 @@ export const isBreached = async (password: string): Promise<boolean> => {
 
 const { span, xinSlot } = elements
 export class TosiPasswordStrength extends Component {
+  static preferredTagName = 'tosi-password-strength'
+
+  static lightStyleSpec = {
+    ':host': {
+      display: 'inline-flex',
+      flexDirection: 'column',
+      gap: vars.spacing50,
+      position: 'relative',
+    },
+    ':host xin-slot': {
+      display: 'flex',
+    },
+    ':host [part="meter"]': {
+      display: 'block',
+      position: 'relative',
+      height: varDefault.meterHeight('24px'),
+      background: varDefault.indicatorBg('white'),
+      borderRadius: varDefault.meterRadius('4px'),
+      boxShadow: varDefault.meterShadow(
+        `inset 0 0 0 2px ${vars.indicatorColor}`
+      ),
+    },
+    ':host [part="level"]': {
+      height: varDefault.levelHeight('20px'),
+      content: '" "',
+      display: 'inline-block',
+      width: 0,
+      transition: '0.15s ease-out',
+      background: vars.indicatorColor,
+      margin: varDefault.levelMargin('2px'),
+      borderRadius: varDefault.levelRadius('2px'),
+    },
+    ':host [part="description"]': {
+      position: 'absolute',
+      inset: '0',
+      color: vars.descriptionColor,
+      height: varDefault.meterHeight('24px'),
+      lineHeight: varDefault.meterHeight('24px'),
+      textAlign: 'center',
+    },
+  }
+
   static initAttributes = {
     minLength: 8,
     goodLength: 12,
@@ -290,48 +332,7 @@ export class TosiPasswordStrength extends Component {
 /** @deprecated Use TosiPasswordStrength instead */
 export const XinPasswordStrength = TosiPasswordStrength
 
-export const tosiPasswordStrength = TosiPasswordStrength.elementCreator({
-  tag: 'tosi-password-strength',
-  styleSpec: {
-    ':host': {
-      display: 'inline-flex',
-      flexDirection: 'column',
-      gap: vars.spacing50,
-      position: 'relative',
-    },
-    ':host xin-slot': {
-      display: 'flex',
-    },
-    ':host [part="meter"]': {
-      display: 'block',
-      position: 'relative',
-      height: varDefault.meterHeight('24px'),
-      background: varDefault.indicatorBg('white'),
-      borderRadius: varDefault.meterRadius('4px'),
-      boxShadow: varDefault.meterShadow(
-        `inset 0 0 0 2px ${vars.indicatorColor}`
-      ),
-    },
-    ':host [part="level"]': {
-      height: varDefault.levelHeight('20px'),
-      content: '" "',
-      display: 'inline-block',
-      width: 0,
-      transition: '0.15s ease-out',
-      background: vars.indicatorColor,
-      margin: varDefault.levelMargin('2px'),
-      borderRadius: varDefault.levelRadius('2px'),
-    },
-    ':host [part="description"]': {
-      position: 'absolute',
-      inset: '0',
-      color: vars.descriptionColor,
-      height: varDefault.meterHeight('24px'),
-      lineHeight: varDefault.meterHeight('24px'),
-      textAlign: 'center',
-    },
-  },
-})
+export const tosiPasswordStrength = TosiPasswordStrength.elementCreator()
 
 /** @deprecated Use tosiPasswordStrength instead */
 export const xinPasswordStrength = tosiPasswordStrength

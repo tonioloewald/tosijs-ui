@@ -10,6 +10,71 @@ interface MonthParts extends PartsMap {
 }
 export declare class TosiMonth extends Component<MonthParts> {
     #private;
+    static preferredTagName: string;
+    static lightStyleSpec: {
+        ':host': {
+            display: string;
+        };
+        ':host [part=header]': {
+            display: string;
+            alignItems: string;
+            justifyContent: string;
+        };
+        ':host[disabled]': {
+            pointerEvents: string;
+            opacity: string;
+        };
+        ':host [part="month"], :host [part="year"]': {
+            _fieldWidth: string;
+            flex: string;
+        };
+        ':host [part=week], :host [part=days]': {
+            display: string;
+            gridTemplateColumns: string;
+            justifyItems: string;
+        };
+        ':host .today': {
+            background: string;
+            boxShadow: string;
+            backdropFilter: string;
+            fontWeight: string;
+        };
+        ':host .day, :host .date': {
+            padding: number;
+            display: string;
+            justifyContent: string;
+            userSelect: string;
+        };
+        ':host .day': {
+            color: string;
+            background: string;
+            fontWeight: string;
+        };
+        ':host .date': {
+            cursor: string;
+        };
+        ':host .weekend': {
+            background: string;
+        };
+        ':host .date:not(.in-month)': {
+            opacity: number;
+        };
+        ':host .date.checked': {
+            color: string;
+            background: string;
+        };
+        ':host:not([range]) .date.checked': {
+            borderRadius: string;
+        };
+        ':host .range-start': {
+            borderTopLeftRadius: string;
+            borderBottomLeftRadius: string;
+        };
+        ':host .range-end': {
+            borderTopRightRadius: string;
+            borderBottomRightRadius: string;
+        };
+    };
     static formAssociated: boolean;
     static initAttributes: {
         month: number;

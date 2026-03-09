@@ -160,6 +160,7 @@ interface SegmentParts {
 }
 
 export class TosiSegmented extends WebComponent {
+  static preferredTagName = 'tosi-segmented'
   static formAssociated = true
 
   static initAttributes = {
@@ -227,7 +228,7 @@ export class TosiSegmented extends WebComponent {
     div({ part: 'options' }, input({ part: 'custom', hidden: true })),
   ]
 
-  static styleSpec = {
+  static shadowStyleSpec = {
     ':host': {
       display: 'inline-flex',
       gap: varDefault.segmentedOptionGap('8px'),
@@ -461,9 +462,7 @@ export class TosiSegmented extends WebComponent {
 /** @deprecated Use TosiSegmented instead */
 export const XinSegmented = TosiSegmented
 
-export const tosiSegmented = TosiSegmented.elementCreator({
-  tag: 'tosi-segmented',
-}) as ElementCreator<TosiSegmented>
+export const tosiSegmented = TosiSegmented.elementCreator() as ElementCreator<TosiSegmented>
 
 /** @deprecated Use tosiSegmented instead (tag is now tosi-segmented) */
 export const xinSegmented = deprecated(
