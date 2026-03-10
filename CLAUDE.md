@@ -36,11 +36,7 @@ bun playwright test tests/form.pw.ts
 
 #### Inline doc tests
 
-Components use `` ```test `` code blocks in their `/*#` doc comments for browser-based tests. Key behaviors:
-- JS blocks and test blocks run as **separate** `AsyncFunction` invocations — imports/variables from JS blocks are NOT available in test blocks (add imports to each block independently).
-- `import { x } from 'tosijs-ui'` is rewritten to `const { x } = tosijsui` automatically.
-- `test()` calls within a block run **concurrently** (pushed to a pending array, not awaited sequentially). Combine dependent assertions into a single `test()` call.
-- The `preview` DOM element is shared between JS and test blocks. Other examples on the page may leave elements in the DOM, so use count-based assertions rather than presence/absence checks.
+Use `` ```test `` code blocks in `/*#` doc comments for browser-based tests. See "Live example code blocks" under Documentation System for full details on how code blocks are grouped, executed, and scoped.
 
 ### Dev Server TLS
 
@@ -97,24 +93,26 @@ interface WidgetParts extends PartsMap {
 }
 
 export class TosiWidget extends Component<WidgetParts> {
-  // Static initAttributes replaces constructor-based initAttributes
+  static preferredTagName = 'tosi-widget'
+
+  // Use shadowStyleSpec for shadow DOM styles, lightStyleSpec for global/light DOM styles
+  static shadowStyleSpec = { /* shadow DOM styles */ }
+  // static lightStyleSpec = { /* light DOM styles */ }
+
   static initAttributes = {
     myProperty: '',
     disabled: false,
   }
-  
+
   // content returns element tree; use { part: 'name' } to register parts
   content = () => [
     button({ part: 'button' }, span({ part: 'label' }, 'Click'))
   ]
-  
+
   // Set content = null for components that build DOM programmatically in render()
 }
 
-export const tosiWidget = TosiWidget.elementCreator({
-  tag: 'tosi-widget',
-  styleSpec: { /* styles */ }
-}) as ElementCreator<TosiWidget>
+export const tosiWidget = TosiWidget.elementCreator() as ElementCreator<TosiWidget>
 
 /** @deprecated Use tosiWidget instead */
 export const xinWidget = tosiWidget
@@ -133,22 +131,34 @@ Components with form association: `TosiSelect`, `TosiSegmented`, `TosiRating`, `
 
 ### Documentation System
 
-Components are self-documenting via `/*#` comment blocks containing markdown. Live examples use consecutive code blocks (html/js/css). Control nav ordering with JSON metadata:
+Components are self-documenting via `/*#` comment blocks containing markdown. Control nav ordering with JSON metadata:
 - `/*{ "pin": "top" }*/` or `<!--{ "pin": "top" }-->` for pinning
 
-**Test blocks**: Use a `test` language code block after html/js/css blocks to add inline tests:
-````markdown
-```js
-// Setup code that creates elements in `preview`
-```
-```test
-test('element renders', () => {
-  expect(preview.querySelector('my-element')).toBeTruthy()
-})
-```
-````
-
 The `createDocBrowser()` function renders documentation from extracted `docs.json`.
+
+#### Live example code blocks
+
+**Consecutive** code blocks with languages `js`, `html`, `css`, or `test` are grouped into a single live example by `src/live-example/insert-examples.ts`. Any non-code-block content (headings, paragraphs, etc.) between blocks breaks the group — the blocks become separate examples.
+
+How grouping works (`insert-examples.ts`):
+1. Finds all `.language-{js,html,css,test}` elements not already inside a live-example
+2. Groups consecutive `<pre>` siblings (checked via `nextElementSibling`)
+3. Creates one `<live-example>` per group, setting `.js`, `.html`, `.css`, `.test` properties
+
+**Execution model** (`src/live-example/execution.ts`):
+- Each code block type (`js`, `test`) runs as a **separate** `AsyncFunction` invocation
+- `import { x } from 'tosijs-ui'` is rewritten to `const { x } = tosijsui` (also works for `'tosijs'` → `tosijs`). Only named imports with `{ }` and single quotes are supported.
+- `import { x } from 'tosijs'.elements` works — the `.elements` accessor is preserved after rewriting
+- Variables/imports from a `js` block are NOT available in `test` blocks — each block has its own scope
+- The `preview` DOM element is injected as a context variable, shared across blocks in the same example
+- If execution throws, it's reported as a test failure: "example loads without error"
+
+**Writing doc examples**:
+- Use ` ```js ` for executable JavaScript, ` ```typescript ` (or any other language) for display-only code
+- Each `js` block must import everything it needs — no sharing between blocks
+- Consecutive html/js/css/test blocks form ONE example. Put markdown between them to create separate examples.
+- `test()` calls within a block run **concurrently** — combine dependent assertions into a single `test()` call
+- Other examples on the page may leave elements in the DOM — use count-based assertions, not presence/absence
 
 ### Key Dependencies
 

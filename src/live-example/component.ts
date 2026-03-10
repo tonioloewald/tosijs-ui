@@ -648,6 +648,11 @@ export class LiveExample extends Component<ExampleParts> {
     const { example, style: styleEl, exampleWidgets } = this.parts
 
     let preview: HTMLElement | null
+    let executionError: Error | undefined
+
+    const onError = (error: Error) => {
+      executionError = error
+    }
 
     if (this.iframe) {
       preview = await executeInIframe({
@@ -658,6 +663,7 @@ export class LiveExample extends Component<ExampleParts> {
         transform,
         exampleElement: example,
         widgetsElement: exampleWidgets,
+        onError,
       })
     } else {
       preview = await executeInline({
@@ -669,6 +675,7 @@ export class LiveExample extends Component<ExampleParts> {
         exampleElement: example,
         styleElement: styleEl,
         widgetsElement: exampleWidgets,
+        onError,
       })
     }
 
@@ -677,15 +684,20 @@ export class LiveExample extends Component<ExampleParts> {
     }
 
     // Run tests if enabled and there are any
-    if (this.test && preview && testManager.enabled.value) {
+    if ((this.test || executionError) && preview && testManager.enabled.value) {
       this.classList.add('-has-tests', '-test-running')
       this.classList.remove('-test-passed', '-test-failed')
-      this.testResults = await runTests(
-        this.test,
-        preview,
-        this.context,
-        transform
-      )
+      this.testResults = this.test
+        ? await runTests(this.test, preview, this.context, transform)
+        : { passed: 0, failed: 0, tests: [] }
+      if (executionError) {
+        this.testResults.failed += 1
+        this.testResults.tests.unshift({
+          name: 'example loads without error',
+          passed: false,
+          error: String(executionError),
+        })
+      }
       this.classList.remove('-test-running')
       this.displayTestResults()
     } else {

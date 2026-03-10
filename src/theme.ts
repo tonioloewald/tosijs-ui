@@ -28,7 +28,7 @@ All components use these foundational CSS variables with the `--tosi-` prefix:
 
 ## Creating Themes
 
-```js
+```typescript
 import { Color } from 'tosijs'
 import { createTheme, applyTheme } from 'tosijs-ui'
 
@@ -43,10 +43,39 @@ applyTheme(myTheme, 'my-theme')
 
 ## Dark Mode
 
-Dark mode is automatic when using `createDarkTheme`:
+Toggle between light and dark themes. `createTheme` and `createDarkTheme` return
+`XinStyleSheet` objects — ordinary CSS variable maps you can apply however you like:
 
+```html
+<label><input type="checkbox" class="dark-toggle"> Dark mode</label>
+<div class="theme-sample">
+  <span>Sample text</span>
+  <button>Button</button>
+</div>
+```
+```css
+.preview .theme-sample {
+  padding: 12px;
+  background: var(--sample-bg);
+  color: var(--sample-text);
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  transition: all 0.3s;
+}
+.preview .theme-sample button {
+  background: var(--sample-accent);
+  color: var(--sample-accent-text);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+```
 ```js
-import { createTheme, createDarkTheme, applyTheme } from 'tosijs-ui'
+import { Color } from 'tosijs'
+import { createTheme, createDarkTheme } from 'tosijs-ui'
 
 const colors = {
   accent: Color.fromCss('#007AFF'),
@@ -54,9 +83,20 @@ const colors = {
   text: Color.fromCss('#1a1a1a'),
 }
 
-// Apply based on user preference
-const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-applyTheme(prefersDark ? createDarkTheme(colors) : createTheme(colors))
+function applyToPreview(theme) {
+  const vars = theme[':root']
+  const sample = preview.querySelector('.theme-sample')
+  sample.style.setProperty('--sample-bg', String(vars._tosiBg))
+  sample.style.setProperty('--sample-text', String(vars._tosiText))
+  sample.style.setProperty('--sample-accent', String(vars._tosiAccent))
+  sample.style.setProperty('--sample-accent-text', String(vars._tosiAccentText))
+}
+
+applyToPreview(createTheme(colors))
+
+preview.querySelector('.dark-toggle').addEventListener('change', (e) => {
+  applyToPreview(e.target.checked ? createDarkTheme(colors) : createTheme(colors))
+})
 ```
 
 ## Component Variables

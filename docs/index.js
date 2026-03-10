@@ -8663,6 +8663,10 @@ class LiveExample extends P {
     const transform = await loadTransform();
     const { example, style: styleEl, exampleWidgets } = this.parts;
     let preview;
+    let executionError;
+    const onError = (error) => {
+      executionError = error;
+    };
     if (this.iframe) {
       preview = await executeInIframe({
         html: this.html,
@@ -8671,7 +8675,8 @@ class LiveExample extends P {
         context: this.context,
         transform,
         exampleElement: example,
-        widgetsElement: exampleWidgets
+        widgetsElement: exampleWidgets,
+        onError
       });
     } else {
       preview = await executeInline({
@@ -8682,16 +8687,25 @@ class LiveExample extends P {
         transform,
         exampleElement: example,
         styleElement: styleEl,
-        widgetsElement: exampleWidgets
+        widgetsElement: exampleWidgets,
+        onError
       });
     }
     if (this.persistToDom) {
       this.updateSources();
     }
-    if (this.test && preview && testManager.enabled.value) {
+    if ((this.test || executionError) && preview && testManager.enabled.value) {
       this.classList.add("-has-tests", "-test-running");
       this.classList.remove("-test-passed", "-test-failed");
-      this.testResults = await runTests(this.test, preview, this.context, transform);
+      this.testResults = this.test ? await runTests(this.test, preview, this.context, transform) : { passed: 0, failed: 0, tests: [] };
+      if (executionError) {
+        this.testResults.failed += 1;
+        this.testResults.tests.unshift({
+          name: "example loads without error",
+          passed: false,
+          error: String(executionError)
+        });
+      }
       this.classList.remove("-test-running");
       this.displayTestResults();
     } else {
@@ -18603,7 +18617,7 @@ Placeholder shown on input field.`,
     path: "src/tag-list.ts"
   },
   {
-    text: "# theme\n\nThe theme system provides consistent CSS variables across all tosijs-ui components,\nwith support for automatic dark mode via tosijs's `Color` class and `invertLuminance`.\n\n## Base Variables\n\nAll components use these foundational CSS variables with the `--tosi-` prefix:\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `--tosi-spacing-xs` | 4px | Extra small spacing |\n| `--tosi-spacing-sm` | 8px | Small spacing |\n| `--tosi-spacing` | 12px | Default spacing |\n| `--tosi-spacing-lg` | 16px | Large spacing |\n| `--tosi-spacing-xl` | 24px | Extra large spacing |\n| `--tosi-bg` | #fafafa | Background color |\n| `--tosi-bg-inset` | derived | Inset/recessed background |\n| `--tosi-text` | #222 | Text color |\n| `--tosi-accent` | #EE257B | Accent/brand color |\n| `--tosi-accent-text` | derived | Text on accent background |\n| `--tosi-font-family` | system-ui | Font family |\n| `--tosi-font-size` | 16px | Base font size |\n| `--tosi-line-height` | 1.5 | Line height |\n| `--tosi-touch-size` | 44px | Minimum touch target |\n| `--tosi-focus-ring` | derived | Focus outline style |\n\n## Creating Themes\n\n```js\nimport { Color } from 'tosijs'\nimport { createTheme, applyTheme } from 'tosijs-ui'\n\nconst myTheme = createTheme({\n  accent: Color.fromCss('#007AFF'),\n  background: Color.fromCss('#ffffff'),\n  text: Color.fromCss('#1a1a1a'),\n})\n\napplyTheme(myTheme, 'my-theme')\n```\n\n## Dark Mode\n\nDark mode is automatic when using `createDarkTheme`:\n\n```js\nimport { createTheme, createDarkTheme, applyTheme } from 'tosijs-ui'\n\nconst colors = {\n  accent: Color.fromCss('#007AFF'),\n  background: Color.fromCss('#ffffff'),\n  text: Color.fromCss('#1a1a1a'),\n}\n\n// Apply based on user preference\nconst prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches\napplyTheme(prefersDark ? createDarkTheme(colors) : createTheme(colors))\n```\n\n## Component Variables\n\nEach component defines its own variables that derive from base variables.\nFor example, tosi-select derives from base:\n\n    --tosi-select-gap: var(--tosi-spacing-sm, 8px);\n    --tosi-select-touch-size: var(--tosi-touch-size, 44px);\n\nThis allows fine-grained customization while maintaining consistency.",
+    text: "# theme\n\nThe theme system provides consistent CSS variables across all tosijs-ui components,\nwith support for automatic dark mode via tosijs's `Color` class and `invertLuminance`.\n\n## Base Variables\n\nAll components use these foundational CSS variables with the `--tosi-` prefix:\n\n| Variable | Default | Description |\n|----------|---------|-------------|\n| `--tosi-spacing-xs` | 4px | Extra small spacing |\n| `--tosi-spacing-sm` | 8px | Small spacing |\n| `--tosi-spacing` | 12px | Default spacing |\n| `--tosi-spacing-lg` | 16px | Large spacing |\n| `--tosi-spacing-xl` | 24px | Extra large spacing |\n| `--tosi-bg` | #fafafa | Background color |\n| `--tosi-bg-inset` | derived | Inset/recessed background |\n| `--tosi-text` | #222 | Text color |\n| `--tosi-accent` | #EE257B | Accent/brand color |\n| `--tosi-accent-text` | derived | Text on accent background |\n| `--tosi-font-family` | system-ui | Font family |\n| `--tosi-font-size` | 16px | Base font size |\n| `--tosi-line-height` | 1.5 | Line height |\n| `--tosi-touch-size` | 44px | Minimum touch target |\n| `--tosi-focus-ring` | derived | Focus outline style |\n\n## Creating Themes\n\n```typescript\nimport { Color } from 'tosijs'\nimport { createTheme, applyTheme } from 'tosijs-ui'\n\nconst myTheme = createTheme({\n  accent: Color.fromCss('#007AFF'),\n  background: Color.fromCss('#ffffff'),\n  text: Color.fromCss('#1a1a1a'),\n})\n\napplyTheme(myTheme, 'my-theme')\n```\n\n## Dark Mode\n\nToggle between light and dark themes. `createTheme` and `createDarkTheme` return\n`XinStyleSheet` objects — ordinary CSS variable maps you can apply however you like:\n\n```html\n<label><input type=\"checkbox\" class=\"dark-toggle\"> Dark mode</label>\n<div class=\"theme-sample\">\n  <span>Sample text</span>\n  <button>Button</button>\n</div>\n```\n```css\n.preview .theme-sample {\n  padding: 12px;\n  background: var(--sample-bg);\n  color: var(--sample-text);\n  border-radius: 8px;\n  display: flex;\n  gap: 12px;\n  align-items: center;\n  transition: all 0.3s;\n}\n.preview .theme-sample button {\n  background: var(--sample-accent);\n  color: var(--sample-accent-text);\n  border: none;\n  padding: 8px 16px;\n  border-radius: 4px;\n  cursor: pointer;\n}\n```\n```js\nimport { Color } from 'tosijs'\nimport { createTheme, createDarkTheme } from 'tosijs-ui'\n\nconst colors = {\n  accent: Color.fromCss('#007AFF'),\n  background: Color.fromCss('#ffffff'),\n  text: Color.fromCss('#1a1a1a'),\n}\n\nfunction applyToPreview(theme) {\n  const vars = theme[':root']\n  const sample = preview.querySelector('.theme-sample')\n  sample.style.setProperty('--sample-bg', String(vars._tosiBg))\n  sample.style.setProperty('--sample-text', String(vars._tosiText))\n  sample.style.setProperty('--sample-accent', String(vars._tosiAccent))\n  sample.style.setProperty('--sample-accent-text', String(vars._tosiAccentText))\n}\n\napplyToPreview(createTheme(colors))\n\npreview.querySelector('.dark-toggle').addEventListener('change', (e) => {\n  applyToPreview(e.target.checked ? createDarkTheme(colors) : createTheme(colors))\n})\n```\n\n## Component Variables\n\nEach component defines its own variables that derive from base variables.\nFor example, tosi-select derives from base:\n\n    --tosi-select-gap: var(--tosi-spacing-sm, 8px);\n    --tosi-select-touch-size: var(--tosi-touch-size, 44px);\n\nThis allows fine-grained customization while maintaining consistency.",
     title: "theme",
     filename: "theme.ts",
     path: "src/theme.ts"
