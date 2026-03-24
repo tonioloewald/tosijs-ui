@@ -366,7 +366,9 @@ export class TosiCarousel extends WebComponent {
 }
 
 /** @deprecated Use TosiCarousel instead */
-export const XinCarousel = TosiCarousel
+export type XinCarousel = TosiCarousel
+/** @deprecated Use TosiCarousel instead */
+export const XinCarousel: typeof TosiCarousel = TosiCarousel
 
 export const tosiCarousel = TosiCarousel.elementCreator() as ElementCreator<TosiCarousel>
 

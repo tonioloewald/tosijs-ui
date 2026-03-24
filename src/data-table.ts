@@ -962,7 +962,9 @@ export class TosiTable extends WebComponent {
 }
 
 /** @deprecated Use TosiTable instead */
-export const DataTable = TosiTable
+export type DataTable = TosiTable
+/** @deprecated Use TosiTable instead */
+export const DataTable: typeof TosiTable = TosiTable
 
 export const tosiTable = TosiTable.elementCreator() as ElementCreator<TosiTable>
 

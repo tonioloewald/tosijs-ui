@@ -159,7 +159,9 @@ export class TosiFloat extends WebComponent {
 }
 
 /** @deprecated Use TosiFloat instead */
-export const XinFloat = TosiFloat
+export type XinFloat = TosiFloat
+/** @deprecated Use TosiFloat instead */
+export const XinFloat: typeof TosiFloat = TosiFloat
 
 export const tosiFloat = TosiFloat.elementCreator() as ElementCreator<TosiFloat>
 

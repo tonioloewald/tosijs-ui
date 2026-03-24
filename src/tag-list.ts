@@ -197,7 +197,9 @@ export class TosiTag extends WebComponent {
 }
 
 /** @deprecated Use TosiTag instead */
-export const XinTag = TosiTag
+export type XinTag = TosiTag
+/** @deprecated Use TosiTag instead */
+export const XinTag: typeof TosiTag = TosiTag
 
 export const tosiTag = TosiTag.elementCreator() as ElementCreator<TosiTag>
 
@@ -488,7 +490,9 @@ export class TosiTagList extends WebComponent {
 }
 
 /** @deprecated Use TosiTagList instead */
-export const XinTagList = TosiTagList
+export type XinTagList = TosiTagList
+/** @deprecated Use TosiTagList instead */
+export const XinTagList: typeof TosiTagList = TosiTagList
 
 export const tosiTagList = TosiTagList.elementCreator() as ElementCreator<TosiTagList>
 

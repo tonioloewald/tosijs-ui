@@ -609,7 +609,9 @@ export class TosiSelect extends Component<SelectParts> {
 }
 
 /** @deprecated Use TosiSelect instead */
-export const XinSelect = TosiSelect
+export type XinSelect = TosiSelect
+/** @deprecated Use TosiSelect instead */
+export const XinSelect: typeof TosiSelect = TosiSelect
 
 export const tosiSelect = TosiSelect.elementCreator() as ElementCreator<TosiSelect>
 

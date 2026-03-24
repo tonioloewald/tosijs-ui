@@ -281,7 +281,9 @@ export class TosiRating extends Component {
 }
 
 /** @deprecated Use TosiRating instead */
-export const XinRating = TosiRating
+export type XinRating = TosiRating
+/** @deprecated Use TosiRating instead */
+export const XinRating: typeof TosiRating = TosiRating
 
 export const tosiRating = TosiRating.elementCreator() as ElementCreator<TosiRating>
 

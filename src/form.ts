@@ -772,10 +772,14 @@ export class TosiForm extends XinComponent {
 }
 
 /** @deprecated Use TosiField instead */
-export const XinField = TosiField
+export type XinField = TosiField
+/** @deprecated Use TosiField instead */
+export const XinField: typeof TosiField = TosiField
 
 /** @deprecated Use TosiForm instead */
-export const XinForm = TosiForm
+export type XinForm = TosiForm
+/** @deprecated Use TosiForm instead */
+export const XinForm: typeof TosiForm = TosiForm
 
 export const tosiField = TosiField.elementCreator() as ElementCreator<TosiField>
 

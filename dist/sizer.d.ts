@@ -33,6 +33,8 @@ export declare class TosiSizer extends XinComponent {
     connectedCallback(): void;
 }
 /** @deprecated Use TosiSizer instead */
+export type XinSizer = TosiSizer;
+/** @deprecated Use TosiSizer instead */
 export declare const XinSizer: typeof TosiSizer;
 export declare const tosiSizer: ElementCreator<TosiSizer>;
 /** @deprecated Use tosiSizer instead */

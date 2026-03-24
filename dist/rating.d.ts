@@ -64,6 +64,8 @@ export declare class TosiRating extends Component {
     render(): void;
 }
 /** @deprecated Use TosiRating instead */
+export type XinRating = TosiRating;
+/** @deprecated Use TosiRating instead */
 export declare const XinRating: typeof TosiRating;
 export declare const tosiRating: ElementCreator<TosiRating>;
 /** @deprecated Use tosiRating instead (tag is now tosi-rating) */

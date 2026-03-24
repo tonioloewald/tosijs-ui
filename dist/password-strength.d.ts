@@ -72,6 +72,8 @@ export declare class TosiPasswordStrength extends Component {
     render(): void;
 }
 /** @deprecated Use TosiPasswordStrength instead */
+export type XinPasswordStrength = TosiPasswordStrength;
+/** @deprecated Use TosiPasswordStrength instead */
 export declare const XinPasswordStrength: typeof TosiPasswordStrength;
 export declare const tosiPasswordStrength: import("tosijs").ElementCreator<TosiPasswordStrength>;
 /** @deprecated Use tosiPasswordStrength instead */

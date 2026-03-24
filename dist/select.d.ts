@@ -109,6 +109,8 @@ export declare class TosiSelect extends Component<SelectParts> {
     render(): void;
 }
 /** @deprecated Use TosiSelect instead */
+export type XinSelect = TosiSelect;
+/** @deprecated Use TosiSelect instead */
 export declare const XinSelect: typeof TosiSelect;
 export declare const tosiSelect: ElementCreator<TosiSelect>;
 /** @deprecated Use tosiSelect instead (tag is now tosi-select) */

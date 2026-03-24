@@ -54,6 +54,8 @@ export declare class TosiTag extends WebComponent {
     content: () => HTMLSpanElement[];
 }
 /** @deprecated Use TosiTag instead */
+export type XinTag = TosiTag;
+/** @deprecated Use TosiTag instead */
 export declare const XinTag: typeof TosiTag;
 export declare const tosiTag: ElementCreator<TosiTag>;
 /** @deprecated Use tosiTag instead */
@@ -96,6 +98,8 @@ export declare class TosiTagList extends WebComponent {
     removeTag: (event: Event) => void;
     render(): void;
 }
+/** @deprecated Use TosiTagList instead */
+export type XinTagList = TosiTagList;
 /** @deprecated Use TosiTagList instead */
 export declare const XinTagList: typeof TosiTagList;
 export declare const tosiTagList: ElementCreator<TosiTagList>;

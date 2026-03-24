@@ -104,6 +104,8 @@ export declare class TosiNotification extends Component {
     content: null;
 }
 /** @deprecated Use TosiNotification instead */
+export type XinNotification = TosiNotification;
+/** @deprecated Use TosiNotification instead */
 export declare const XinNotification: typeof TosiNotification;
 export declare const tosiNotification: import("tosijs").ElementCreator<TosiNotification>;
 /** @deprecated Use tosiNotification instead */

@@ -127,6 +127,8 @@ export declare class TosiCarousel extends WebComponent {
     render(): void;
 }
 /** @deprecated Use TosiCarousel instead */
+export type XinCarousel = TosiCarousel;
+/** @deprecated Use TosiCarousel instead */
 export declare const XinCarousel: typeof TosiCarousel;
 export declare const tosiCarousel: ElementCreator<TosiCarousel>;
 /** @deprecated Use tosiCarousel instead */

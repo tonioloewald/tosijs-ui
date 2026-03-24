@@ -381,7 +381,9 @@ export class TosiTabs extends WebComponent {
 }
 
 /** @deprecated Use TosiTabs instead */
-export const TabSelector = TosiTabs
+export type TabSelector = TosiTabs
+/** @deprecated Use TosiTabs instead */
+export const TabSelector: typeof TosiTabs = TosiTabs
 
 export const tosiTabs = TosiTabs.elementCreator() as ElementCreator<TosiTabs>
 

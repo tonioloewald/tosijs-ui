@@ -364,7 +364,9 @@ export class TosiNotification extends Component {
 }
 
 /** @deprecated Use TosiNotification instead */
-export const XinNotification = TosiNotification
+export type XinNotification = TosiNotification
+/** @deprecated Use TosiNotification instead */
+export const XinNotification: typeof TosiNotification = TosiNotification
 
 export const tosiNotification = TosiNotification.elementCreator()
 

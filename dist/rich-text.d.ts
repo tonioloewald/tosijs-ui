@@ -46,6 +46,8 @@ export declare class RichText extends WebComponent<EditorParts> {
     render(): void;
 }
 /** @deprecated Use RichText instead */
+export type XinWord = RichText;
+/** @deprecated Use RichText instead */
 export declare const XinWord: typeof RichText;
 export declare const tosiRichText: ElementCreator<RichText>;
 /** @deprecated Use tosiRichText instead (tag is now <tosi-rich-text>) */

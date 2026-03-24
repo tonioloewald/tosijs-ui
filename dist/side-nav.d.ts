@@ -36,6 +36,8 @@ export declare class TosiSidenav extends Component {
     render(): void;
 }
 /** @deprecated Use TosiSidenav instead */
+export type SideNav = TosiSidenav;
+/** @deprecated Use TosiSidenav instead */
 export declare const SideNav: typeof TosiSidenav;
 export declare const tosiSidenav: ElementCreator<TosiSidenav>;
 /** @deprecated Use tosiSidenav instead */

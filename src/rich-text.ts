@@ -490,7 +490,9 @@ export class RichText extends WebComponent<EditorParts> {
 }
 
 /** @deprecated Use RichText instead */
-export const XinWord = RichText
+export type XinWord = RichText
+/** @deprecated Use RichText instead */
+export const XinWord: typeof RichText = RichText
 
 export const tosiRichText = RichText.elementCreator() as ElementCreator<RichText>
 

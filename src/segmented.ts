@@ -460,7 +460,9 @@ export class TosiSegmented extends WebComponent {
 }
 
 /** @deprecated Use TosiSegmented instead */
-export const XinSegmented = TosiSegmented
+export type XinSegmented = TosiSegmented
+/** @deprecated Use TosiSegmented instead */
+export const XinSegmented: typeof TosiSegmented = TosiSegmented
 
 export const tosiSegmented = TosiSegmented.elementCreator() as ElementCreator<TosiSegmented>
 

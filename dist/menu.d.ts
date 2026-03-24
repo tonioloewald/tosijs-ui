@@ -112,5 +112,7 @@ export declare const tosiMenu: import("tosijs").ElementCreator<TosiMenu>;
 /** @deprecated Use tosiMenu instead */
 export declare const xinMenu: import("tosijs").ElementCreator<TosiMenu>;
 /** @deprecated Use TosiMenu instead */
+export type XinMenu = TosiMenu;
+/** @deprecated Use TosiMenu instead */
 export declare const XinMenu: typeof TosiMenu;
 export {};

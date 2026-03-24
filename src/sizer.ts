@@ -103,7 +103,9 @@ export class TosiSizer extends XinComponent {
 }
 
 /** @deprecated Use TosiSizer instead */
-export const XinSizer = TosiSizer
+export type XinSizer = TosiSizer
+/** @deprecated Use TosiSizer instead */
+export const XinSizer: typeof TosiSizer = TosiSizer
 
 export const tosiSizer = TosiSizer.elementCreator() as ElementCreator<TosiSizer>
 

@@ -93,6 +93,8 @@ export declare class TosiTabs extends WebComponent {
     render(): void;
 }
 /** @deprecated Use TosiTabs instead */
+export type TabSelector = TosiTabs;
+/** @deprecated Use TosiTabs instead */
 export declare const TabSelector: typeof TosiTabs;
 export declare const tosiTabs: ElementCreator<TosiTabs>;
 /** @deprecated Use tosiTabs instead */

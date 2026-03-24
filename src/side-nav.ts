@@ -127,7 +127,9 @@ export class TosiSidenav extends Component {
 }
 
 /** @deprecated Use TosiSidenav instead */
-export const SideNav = TosiSidenav
+export type SideNav = TosiSidenav
+/** @deprecated Use TosiSidenav instead */
+export const SideNav: typeof TosiSidenav = TosiSidenav
 
 export const tosiSidenav = TosiSidenav.elementCreator() as ElementCreator<TosiSidenav>
 

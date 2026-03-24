@@ -330,7 +330,9 @@ export class TosiPasswordStrength extends Component {
 }
 
 /** @deprecated Use TosiPasswordStrength instead */
-export const XinPasswordStrength = TosiPasswordStrength
+export type XinPasswordStrength = TosiPasswordStrength
+/** @deprecated Use TosiPasswordStrength instead */
+export const XinPasswordStrength: typeof TosiPasswordStrength = TosiPasswordStrength
 
 export const tosiPasswordStrength = TosiPasswordStrength.elementCreator()
 

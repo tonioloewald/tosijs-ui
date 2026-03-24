@@ -181,7 +181,9 @@ export class TosiMd extends Component {
 }
 
 /** @deprecated Use TosiMd instead */
-export const MarkdownViewer = TosiMd
+export type MarkdownViewer = TosiMd
+/** @deprecated Use TosiMd instead */
+export const MarkdownViewer: typeof TosiMd = TosiMd
 
 export const tosiMd = TosiMd.elementCreator() as ElementCreator<TosiMd>
 

@@ -1645,4 +1645,6 @@ export const tosiMenu = TosiMenu.elementCreator()
 /** @deprecated Use tosiMenu instead */
 export const xinMenu = tosiMenu
 /** @deprecated Use TosiMenu instead */
-export const XinMenu = TosiMenu
+export type XinMenu = TosiMenu
+/** @deprecated Use TosiMenu instead */
+export const XinMenu: typeof TosiMenu = TosiMenu

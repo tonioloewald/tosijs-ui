@@ -53,6 +53,8 @@ export declare class TosiLocalePicker extends Component {
     render(): void;
 }
 /** @deprecated Use TosiLocalePicker instead */
+export type LocalePicker = TosiLocalePicker;
+/** @deprecated Use TosiLocalePicker instead */
 export declare const LocalePicker: typeof TosiLocalePicker;
 export declare const tosiLocalePicker: import("tosijs").ElementCreator<TosiLocalePicker>;
 /** @deprecated Use tosiLocalePicker instead */
@@ -79,6 +81,8 @@ export declare class TosiLocalized extends Component {
     localeChanged(): void;
     render(): void;
 }
+/** @deprecated Use TosiLocalized instead */
+export type XinLocalized = TosiLocalized;
 /** @deprecated Use TosiLocalized instead */
 export declare const XinLocalized: typeof TosiLocalized;
 export declare const tosiLocalized: import("tosijs").ElementCreator<TosiLocalized>;

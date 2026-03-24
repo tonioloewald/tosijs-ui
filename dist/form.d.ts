@@ -99,7 +99,11 @@ export declare class TosiForm extends XinComponent {
     private initializeNamedElements;
 }
 /** @deprecated Use TosiField instead */
+export type XinField = TosiField;
+/** @deprecated Use TosiField instead */
 export declare const XinField: typeof TosiField;
+/** @deprecated Use TosiForm instead */
+export type XinForm = TosiForm;
 /** @deprecated Use TosiForm instead */
 export declare const XinForm: typeof TosiForm;
 export declare const tosiField: ElementCreator<TosiField>;

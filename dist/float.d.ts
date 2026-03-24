@@ -18,6 +18,8 @@ export declare class TosiFloat extends WebComponent {
     disconnectedCallback(): void;
 }
 /** @deprecated Use TosiFloat instead */
+export type XinFloat = TosiFloat;
+/** @deprecated Use TosiFloat instead */
 export declare const XinFloat: typeof TosiFloat;
 export declare const tosiFloat: ElementCreator<TosiFloat>;
 /** @deprecated Use tosiFloat instead */

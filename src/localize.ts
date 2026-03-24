@@ -411,7 +411,9 @@ export class TosiLocalePicker extends Component {
 }
 
 /** @deprecated Use TosiLocalePicker instead */
-export const LocalePicker = TosiLocalePicker
+export type LocalePicker = TosiLocalePicker
+/** @deprecated Use TosiLocalePicker instead */
+export const LocalePicker: typeof TosiLocalePicker = TosiLocalePicker
 
 export const tosiLocalePicker = TosiLocalePicker.elementCreator()
 
@@ -466,7 +468,9 @@ export class TosiLocalized extends Component {
 }
 
 /** @deprecated Use TosiLocalized instead */
-export const XinLocalized = TosiLocalized
+export type XinLocalized = TosiLocalized
+/** @deprecated Use TosiLocalized instead */
+export const XinLocalized: typeof TosiLocalized = TosiLocalized
 
 export const tosiLocalized = TosiLocalized.elementCreator()
 
