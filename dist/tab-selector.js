@@ -109,7 +109,7 @@ tab names (but it won't override custom tab content, so localizing that is on yo
 */
 import { Component as WebComponent, elements, vars, } from 'tosijs';
 import { tosiLocalized, TosiLocalized } from './localize';
-import { icons } from '../src';
+import { icons } from './icons';
 const { div, slot, span, button } = elements;
 export class TosiTabs extends WebComponent {
     static preferredTagName = 'tosi-tabs';

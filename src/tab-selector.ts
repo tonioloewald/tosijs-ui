@@ -118,7 +118,7 @@ import {
 
 import { tosiLocalized, TosiLocalized } from './localize'
 
-import { icons } from '../src'
+import { icons } from './icons'
 
 const { div, slot, span, button } = elements
 

@@ -163,7 +163,7 @@ How grouping works (`insert-examples.ts`):
 ### Key Dependencies
 
 - `tosijs`: Core component framework (peer dep ^1.2.0, dev dep ^1.4.0)
-- `marked`: Markdown parsing (peer dependency, ^17.0.0)
+- `marked`: Markdown parsing (peer dependency, ^16.4.2)
 - `happy-dom`: DOM simulation for unit tests (dev dependency)
 - Components use custom HTML tags with `tosi-` prefix (e.g., `<tosi-select>`, `<tosi-dialog>`)
 - IIFE build (`src/index-iife.ts`) bundles tosijs + marked + tosijs-ui, exposes `xinjs` and `xinjsui` globals
