@@ -1,0 +1,530 @@
+/*#
+# month
+
+This is a component for displaying a month and selecting days within that month.
+
+If the user changes the `month` or `year` the component's `monthChanged(year, month)`
+method will be called.
+
+The current date is `[part="today"]` and can easily be targeted for styling.
+
+```js
+import { tosiMonth, postNotification } from 'tosijs-ui'
+
+preview.append(tosiMonth({
+  monthChanged(year, month) {
+    postNotification({
+      icon: 'calendar',
+      message: `Month changed to ${year}-${month}`,
+      color: 'hotpink',
+      duration: 2,
+    })
+  }
+}))
+```
+```css
+.preview tosi-month {
+  margin: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 0 2px hotpink;
+}
+```
+
+## `selectable`
+
+Setting `selectable` allows the user to pick individual dates. It's just a friendlier date picker.
+
+The value of the component is an ISO date string, as per `<input type="date">`.
+
+`week-start` defaults to `0` (Sunday). You can set it to `1` (Monday) or some other value
+if you want.
+
+> There is a proposed API to obtain the first day of the week for the user's locale from
+> [Intl.Locale](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale/getWeekInfo)
+> but it is not yet widely supported.
+
+```html
+<tosi-month week-start=1 selectable></tosi-month>
+```
+```js
+const month = preview.querySelector('tosi-month')
+month.addEventListener('change', event => console.log('date picked', event.target.value))
+```
+
+## `range`
+
+Setting `range` allows the user to select date ranges.
+
+```html
+<tosi-month range></tosi-month>
+```
+```js
+const month = preview.querySelector('tosi-month')
+month.addEventListener('change', event => console.log('date range', event.target.value))
+```
+
+## `multiple`
+
+This allows the user to pick multiple individual dates
+
+```html
+<tosi-month multiple></tosi-month>
+```
+```js
+const month = preview.querySelector('tosi-month')
+month.addEventListener('change', event => console.log('multple dates', event.target.value))
+```
+
+## `readonly` and `disabled`
+
+These prevent the user from changing the displayed month. This example is `readonly`.
+
+```html
+<tosi-month readonly value="1976-04-01"></tosi-month>
+```
+
+## Form Integration
+
+`<tosi-month>` is form-associated, so it works directly in native forms:
+
+```html
+<form id="date-form" class="date-form">
+  <label>
+    <span>Select a date (required):</span>
+    <tosi-month name="date" selectable required></tosi-month>
+  </label>
+  <div class="buttons">
+    <button type="submit">Submit</button>
+    <button type="reset">Reset</button>
+  </div>
+</form>
+```
+```css
+.preview .date-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.preview .date-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview .date-form .buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.preview tosi-month:invalid {
+  outline: 2px solid #f008;
+  outline-offset: 2px;
+}
+
+.preview tosi-month:valid {
+  outline: 2px solid #0a08;
+  outline-offset: 2px;
+}
+```
+```js
+const { TosiDialog } = tosijsui
+const form = preview.querySelector('#date-form')
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const formData = new FormData(form)
+  const data = Object.fromEntries(formData.entries())
+  TosiDialog.alert(JSON.stringify(data, null, 2), 'Date Selected')
+})
+
+form.addEventListener('reset', () => {
+  TosiDialog.alert('Form has been reset', 'Reset')
+})
+```
+
+*/
+import { Component, elements, varDefault } from 'tosijs';
+import { tosiSelect } from './select';
+import { icons } from './icons';
+import { popMenu } from './menu';
+const { div, span, button } = elements;
+const DAY_MS = 24 * 3600 * 1000;
+const WEEK = [0, 1, 2, 3, 4, 5, 6];
+const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+// Note this is because Safari is super strict about leading zeros
+const padLeft = (value, length = 2, padding = '0') => String(value).padStart(length, padding);
+const dateFromYMD = (year, month, date) => new Date(`${year}-${padLeft(month)}-${padLeft(date)}`);
+export class TosiMonth extends Component {
+    static preferredTagName = 'tosi-month';
+    static lightStyleSpec = {
+        ':host': {
+            display: 'block',
+        },
+        ':host [part=header]': {
+            display: 'flex',
+            alignItems: 'stretch',
+            justifyContent: 'stretch',
+        },
+        ':host[disabled]': {
+            pointerEvents: 'none',
+            opacity: varDefault.disabledOpacity(0.6),
+        },
+        ':host [part="month"], :host [part="year"]': {
+            _fieldWidth: '4em',
+            flex: '1',
+        },
+        ':host [part=week], :host [part=days]': {
+            display: 'grid',
+            gridTemplateColumns: 'auto auto auto auto auto auto auto',
+            justifyItems: 'stretch',
+        },
+        ':host .today': {
+            background: varDefault.monthTodayBackground('transparent'),
+            boxShadow: varDefault.monthTodayShadow(`none`),
+            backdropFilter: varDefault.monthTodayBackdropFilter('brightness(0.9)'),
+            fontWeight: varDefault.monthTodayFontWeight('800'),
+        },
+        ':host .day, :host .date': {
+            padding: 5,
+            display: 'flex',
+            justifyContent: 'center',
+            userSelect: 'none',
+        },
+        ':host .day': {
+            color: varDefault.monthDayColor('hotpink'),
+            background: varDefault.monthDayBackground('white'),
+            fontWeight: varDefault.monthDayFontWeight('800'),
+        },
+        ':host .date': {
+            cursor: 'default',
+        },
+        ':host .weekend': {
+            background: varDefault.monthWeekendBackground('#eee'),
+        },
+        ':host .date:not(.in-month)': {
+            opacity: 0.5,
+        },
+        ':host .date.checked': {
+            color: varDefault.monthDateCheckedColor('white'),
+            background: varDefault.monthDateCheckedBackground('hotpink'),
+        },
+        ':host:not([range]) .date.checked': {
+            borderRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+        },
+        ':host .range-start': {
+            borderTopLeftRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+            borderBottomLeftRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+        },
+        ':host .range-end': {
+            borderTopRightRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+            borderBottomRightRadius: varDefault.monthDateCheckedBorderRadius('10px'),
+        },
+    };
+    static formAssociated = true;
+    static initAttributes = {
+        month: NaN,
+        year: NaN,
+        weekStart: 0, // Sunday, 1 = Monday
+        minDate: dateFromYMD(new Date().getFullYear() - 100, 1, 1)
+            .toISOString()
+            .split('T')[0],
+        maxDate: dateFromYMD(new Date().getFullYear() + 10, 12, 31)
+            .toISOString()
+            .split('T')[0],
+        selectable: false,
+        multiple: false,
+        range: false,
+        disabled: false,
+        readonly: false,
+        required: false,
+        name: '',
+    };
+    selectedDays = [];
+    value = '';
+    formDisabledCallback(disabled) {
+        this.disabled = disabled;
+    }
+    formResetCallback() {
+        this.value = '';
+        this.selectedDays = [];
+    }
+    get endDay() {
+        return 1 - this.weekStart;
+    }
+    get months() {
+        return MONTHS.map((value) => ({
+            caption: dateFromYMD(2025, value, 1).toString().split(' ')[1],
+            value: String(value),
+        }));
+    }
+    get years() {
+        const startYear = Number(this.minDate.split('-')[0]);
+        const endYear = Number(this.maxDate.split('-')[0]);
+        const years = [];
+        for (let year = startYear; year <= endYear; year++) {
+            years.push(String(year));
+        }
+        return years;
+    }
+    monthChanged = (_year, _month) => {
+        /* noop */
+    };
+    gotoMonth(year, month) {
+        if (this.month !== month || this.year !== year) {
+            this.month = month;
+            this.year = year;
+            this.monthChanged(year, month);
+        }
+    }
+    setMonth = () => {
+        this.gotoMonth(Number(this.parts.year.value), Number(this.parts.month.value));
+    };
+    get to() {
+        return this.selectedDays[1] || '';
+    }
+    set to(dateString) {
+        this.selectedDays[1] = dateString;
+        this.selectedDays.splice(2);
+    }
+    get from() {
+        return this.selectedDays[0] || '';
+    }
+    set from(dateString) {
+        this.selectedDays[0] = dateString;
+        this.selectedDays.splice(2);
+    }
+    clickDate = (event) => {
+        const dateString = event.target.getAttribute('title');
+        this.selectDate(dateString);
+    };
+    keyDate = (event) => {
+        let stopEvent = false;
+        switch (event.code) {
+            case 'Space': {
+                const dateString = event.target.getAttribute('title');
+                this.selectDate(dateString);
+                stopEvent = true;
+                break;
+            }
+            case 'Tab':
+                break;
+            default:
+                console.log(event);
+        }
+        if (stopEvent) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    };
+    #focusDate = '';
+    selectDate = (dateString) => {
+        this.#focusDate = dateString;
+        if (this.range) {
+            if (!this.to) {
+                this.selectedDays = [dateString, dateString];
+            }
+            else if (this.from === dateString && this.to === dateString) {
+                this.selectedDays = [];
+            }
+            else if (this.from === dateString) {
+                this.from = this.to;
+            }
+            else if (this.to === dateString) {
+                this.to = this.from;
+            }
+            else if (dateString < this.from) {
+                this.from = dateString;
+            }
+            else if (dateString > this.to) {
+                this.to = dateString;
+            }
+            else {
+                this.to = dateString;
+            }
+            this.value = `${this.from},${this.to}`;
+        }
+        else if (this.multiple) {
+            if (this.selectedDays.includes(dateString)) {
+                this.selectedDays.splice(this.selectedDays.indexOf(dateString), 1);
+            }
+            else {
+                this.selectedDays.push(dateString);
+                this.selectedDays.sort();
+            }
+            this.value = this.selectedDays.join(',');
+        }
+        else if (this.selectable) {
+            if (this.selectedDays.includes(dateString)) {
+                this.value = '';
+                this.selectedDays = [];
+            }
+            else {
+                this.value = dateString;
+                this.selectedDays = [dateString];
+            }
+        }
+    };
+    nextMonth = () => {
+        if (this.month < 12) {
+            this.gotoMonth(this.year, this.month + 1);
+        }
+        else {
+            this.gotoMonth(this.year + 1, 1);
+        }
+    };
+    previousMonth = () => {
+        if (this.month > 1) {
+            this.gotoMonth(this.year, this.month - 1);
+        }
+        else {
+            this.gotoMonth(this.year - 1, 12);
+        }
+    };
+    checkDay = (dateString) => {
+        if (!this.range) {
+            return this.selectedDays.includes(dateString);
+        }
+        else if (this.range) {
+            return this.from && dateString >= this.from && dateString <= this.to;
+        }
+        return false;
+    };
+    dateMenuItem = (dateString, caption = '') => {
+        dateString = dateString.split('T')[0];
+        return {
+            caption: caption || dateString,
+            enabled: () => !dateString.startsWith(`${this.year}-${padLeft(this.month)}-`),
+            action: () => {
+                this.gotoDate(dateString);
+            },
+        };
+    };
+    jumpMenu = () => {
+        popMenu({
+            target: this.parts.jump,
+            menuItems: [
+                this.dateMenuItem(new Date().toISOString(), 'This Month'),
+                ...(this.selectedDays.length === 0 ? [] : [null]),
+                ...this.selectedDays.map((date) => this.dateMenuItem(date)),
+            ],
+        });
+    };
+    content = () => [
+        div({ part: 'header' }, button({
+            part: 'previous',
+            onClick: this.previousMonth,
+        }, icons.chevronLeft()), span({ style: { flex: '1' } }), button({
+            part: 'jump',
+            onClick: this.jumpMenu,
+        }, icons.calendar()), tosiSelect({
+            part: 'month',
+            options: this.months,
+            onChange: this.setMonth,
+        }), tosiSelect({
+            part: 'year',
+            options: [this.year],
+            onChange: this.setMonth,
+        }), span({ style: { flex: '1' } }), button({
+            part: 'next',
+            onClick: this.nextMonth,
+        }, icons.chevronRight())),
+        div({ part: 'week' }),
+        div({ part: 'days' }),
+    ];
+    gotoDate(dateString) {
+        const date = new Date(dateString);
+        this.gotoMonth(date.getFullYear(), date.getMonth() + 1);
+    }
+    connectedCallback() {
+        super.connectedCallback();
+        const date = new Date(this.value.split(',').pop() || Date.now());
+        if (isNaN(this.month)) {
+            this.month = date.getMonth() + 1;
+        }
+        if (isNaN(this.year)) {
+            this.year = date.getFullYear();
+        }
+    }
+    days = [];
+    render() {
+        super.render();
+        const { week, days, jump, month, year, previous, next } = this.parts;
+        this.selectedDays = this.value ? this.value.split(',') : [];
+        const firstOfMonth = dateFromYMD(this.year, this.month, 1);
+        const weekStart = new Date(firstOfMonth.valueOf() -
+            ((7 + firstOfMonth.getDay() - this.weekStart) % 7) * DAY_MS);
+        const nextMonth = this.month === 12 ? 1 : this.month + 1;
+        const lastOfMonth = new Date(dateFromYMD(this.year + (this.month === 12 ? 1 : 0), nextMonth, 1).valueOf() - DAY_MS);
+        const endDay = new Date(lastOfMonth.valueOf() +
+            ((this.weekStart * 2 + 5 + this.endDay - lastOfMonth.getDay()) % 7) *
+                DAY_MS);
+        const weekDays = WEEK.map((day) => new Date(weekStart.valueOf() + day * DAY_MS).toString().split(' ')[0]);
+        this.days = [];
+        const today = new Date().toISOString().split('T')[0];
+        for (let day = weekStart.valueOf(); day <= endDay.valueOf(); day += DAY_MS) {
+            const date = new Date(day);
+            const dateString = date.toISOString().split('T')[0];
+            this.days.push({
+                date,
+                selected: false,
+                inMonth: date.getMonth() + 1 === this.month,
+                isToday: dateString === today,
+                isWeekend: date.getDay() % 6 === 0,
+                inRange: !!(this.from &&
+                    dateString >= this.from &&
+                    dateString <= this.to),
+            });
+        }
+        month.value = String(this.month);
+        year.value = String(this.year);
+        month.disabled =
+            year.disabled =
+                jump.disabled =
+                    previous.disabled =
+                        next.disabled =
+                            this.disabled || this.readonly;
+        year.options = this.years;
+        week.textContent = '';
+        week.append(...weekDays.map((day) => span({ class: 'day' }, day)));
+        days.textContent = '';
+        let focusElement = null;
+        const { to, from } = this;
+        days.append(...this.days.map((day) => {
+            const classes = ['date'];
+            if (day.inMonth) {
+                classes.push('in-month');
+            }
+            if (day.isToday) {
+                classes.push('today');
+            }
+            const dateString = day.date.toISOString().split('T')[0];
+            if (this.checkDay(dateString)) {
+                classes.push('checked');
+            }
+            classes.push(day.isWeekend ? 'weekend' : 'weekday');
+            if (this.range) {
+                if (to === dateString) {
+                    classes.push('range-end');
+                }
+                if (from === dateString) {
+                    classes.push('range-start');
+                }
+            }
+            const element = span({
+                class: classes.join(' '),
+                title: dateString,
+                onClick: this.clickDate,
+                onKeydown: this.keyDate,
+                tabindex: '0',
+            }, day.date.getDate());
+            if (dateString === this.#focusDate) {
+                focusElement = element;
+            }
+            return element;
+        }));
+        focusElement?.focus();
+    }
+}
+export const tosiMonth = TosiMonth.elementCreator();

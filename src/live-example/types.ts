@@ -36,5 +36,5 @@ export interface RemotePayload {
 
 export type TransformFn = (
   code: string,
-  options: { transforms: string[] }
+  options: { transforms: ('jsx' | 'typescript' | 'flow' | 'imports')[] }
 ) => { code: string }

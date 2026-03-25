@@ -51,25 +51,11 @@ async function build(): Promise<boolean> {
   console.time('build')
   let result: any
 
+  // Emit unbundled ESM + declarations (tree-shakeable by consumers)
   try {
-    await $`bun tsc --declaration --emitDeclarationOnly --incremental --outDir dist`
+    await $`bun tsc --declaration --incremental --outDir dist`
   } catch (e) {
-    console.log('types created')
-  }
-  result = await Bun.build({
-    entrypoints: ['./src/index.ts'],
-    outdir: DIST,
-    sourcemap: 'linked',
-    format: 'esm',
-    minify: true,
-    external: ['tosijs', 'marked'],
-  })
-  if (!result.success) {
-    console.error('dist build failed')
-    for (const message of result.logs) {
-      console.error(message)
-    }
-    return false
+    console.log('esm + types created')
   }
 
   result = await Bun.build({
@@ -79,6 +65,7 @@ async function build(): Promise<boolean> {
     format: 'iife',
     minify: true,
     naming: 'iife.js',
+    external: ['sucrase'],
   })
   if (!result.success) {
     console.error('dist build failed')
@@ -90,15 +77,8 @@ async function build(): Promise<boolean> {
   await $`cp ./dist/iife.js ${PUBLIC}`.text()
 
   // Report gzipped sizes
-  const esmFile = await Bun.file(`${DIST}/index.js`).arrayBuffer()
   const iifeFile = await Bun.file(`${DIST}/iife.js`).arrayBuffer()
-  const esmGzip = gzipSync(Buffer.from(esmFile))
   const iifeGzip = gzipSync(Buffer.from(iifeFile))
-  console.log(
-    `dist/index.js: ${(esmFile.byteLength / 1024).toFixed(1)}kb (${(
-      esmGzip.length / 1024
-    ).toFixed(1)}kb gzip)`
-  )
   console.log(
     `dist/iife.js: ${(iifeFile.byteLength / 1024).toFixed(1)}kb (${(
       iifeGzip.length / 1024
