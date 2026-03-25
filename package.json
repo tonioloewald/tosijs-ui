@@ -1,6 +1,6 @@
 {
   "name": "tosijs-ui",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "simple robust web-components for use with tosijs or anything else",
   "scripts": {
     "start": "bun --watch bin/dev.ts",
@@ -62,9 +62,9 @@
   "source": "src/index.ts",
   "types": "dist/index.d.ts",
   "exports": {
+    "types": "./dist/index.d.ts",
     "import": "./dist/index.js",
     "browser": "./dist/iife.js",
-    "default": "./dist/index.js",
-    "types": "./dist/index.d.ts"
+    "default": "./dist/index.js"
   }
 }
