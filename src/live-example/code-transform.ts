@@ -47,9 +47,12 @@ export async function executeCode(
 }
 
 /**
- * Load sucrase transform function
+ * Load sucrase transform function.
+ *
+ * webpackIgnore prevents bundlers (webpack/CRA) from rewriting
+ * this dynamic import of an external CDN URL.
  */
 export async function loadTransform(): Promise<TransformFn> {
-  const { transform } = await import(sucraseSrc())
+  const { transform } = await import(/* webpackIgnore: true */ sucraseSrc())
   return transform
 }

@@ -1,6 +1,6 @@
 {
   "name": "tosijs-ui",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "description": "simple robust web-components for use with tosijs or anything else",
   "scripts": {
     "start": "bun --watch bin/dev.ts",
@@ -27,7 +27,6 @@
     "url": "https://github.com/tonioloewald/xinjs-ui.git"
   },
   "devDependencies": {
-    "tosijs": "^1.4.3",
     "@playwright/test": "^1.58.2",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.19.12",
@@ -40,6 +39,8 @@
     "happy-dom": "^20.7.0",
     "playwright": "^1.58.2",
     "prettier": "^2.8.8",
+    "sucrase": "3.35.0",
+    "tosijs": "^1.4.3",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {

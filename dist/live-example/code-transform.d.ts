@@ -11,6 +11,9 @@ export declare function rewriteImports(code: string, contextKeys: string[]): str
  */
 export declare function executeCode(code: string, context: ExampleContext, transform: TransformFn): Promise<void>;
 /**
- * Load sucrase transform function
+ * Load sucrase transform function.
+ *
+ * webpackIgnore prevents bundlers (webpack/CRA) from rewriting
+ * this dynamic import of an external CDN URL.
  */
 export declare function loadTransform(): Promise<TransformFn>;
