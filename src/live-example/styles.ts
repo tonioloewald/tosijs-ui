@@ -57,6 +57,17 @@ export const liveExampleStyleSpec = {
     boxShadow: 'inset 0 0 0 2px #8883',
   },
 
+  ':host .preview-error': {
+    padding: '8px 12px',
+    margin: '8px',
+    background: '#fee',
+    color: '#900',
+    borderRadius: '4px',
+    fontSize: '13px',
+    fontFamily: 'system-ui, sans-serif',
+    whiteSpace: 'pre-wrap',
+  },
+
   ':host [part="editors"]': {
     flex: '1 1 200px',
     height: '100%',

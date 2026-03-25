@@ -47,12 +47,33 @@ export async function executeCode(
 }
 
 /**
+ * Passthrough transform — returns code unchanged.
+ * Used as fallback when sucrase can't be loaded.
+ */
+const passthroughTransform: TransformFn = (code, options) => {
+  if (options.transforms.includes('typescript')) {
+    throw new Error(
+      'TypeScript code requires sucrase, which failed to load ' +
+        '(possibly blocked by CSP or network). ' +
+        'Use plain JavaScript or ensure sucrase is accessible.'
+    )
+  }
+  return { code }
+}
+
+/**
  * Load sucrase transform function.
  *
  * webpackIgnore prevents bundlers (webpack/CRA) from rewriting
  * this dynamic import of an external CDN URL.
+ * Falls back to a passthrough that errors on TypeScript.
  */
 export async function loadTransform(): Promise<TransformFn> {
-  const { transform } = await import(/* webpackIgnore: true */ sucraseSrc())
-  return transform
+  try {
+    const { transform } = await import(/* webpackIgnore: true */ sucraseSrc())
+    return transform
+  } catch (e) {
+    console.warn('Failed to load sucrase:', e)
+    return passthroughTransform
+  }
 }

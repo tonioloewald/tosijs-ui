@@ -15,5 +15,6 @@ export declare function executeCode(code: string, context: ExampleContext, trans
  *
  * webpackIgnore prevents bundlers (webpack/CRA) from rewriting
  * this dynamic import of an external CDN URL.
+ * Falls back to a passthrough that errors on TypeScript.
  */
 export declare function loadTransform(): Promise<TransformFn>;

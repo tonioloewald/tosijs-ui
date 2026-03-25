@@ -7592,9 +7592,20 @@ async function executeCode(code, context, transform) {
   const func = new AsyncFunction(...contextKeys, transformedCode);
   await func(...contextValues);
 }
+var passthroughTransform = (code, options) => {
+  if (options.transforms.includes("typescript")) {
+    throw new Error("TypeScript code requires sucrase, which failed to load " + "(possibly blocked by CSP or network). " + "Use plain JavaScript or ensure sucrase is accessible.");
+  }
+  return { code };
+};
 async function loadTransform() {
-  const { transform } = await import(sucraseSrc());
-  return transform;
+  try {
+    const { transform } = await import(sucraseSrc());
+    return transform;
+  } catch (e2) {
+    console.warn("Failed to load sucrase:", e2);
+    return passthroughTransform;
+  }
 }
 
 // src/live-example/remote-sync.ts
@@ -7783,6 +7794,7 @@ async function executeInline(options) {
     await func(...contextValues);
   } catch (e2) {
     console.error(e2);
+    preview.append(div6({ class: "preview-error" }, String(e2.message || e2)));
     if (onError)
       onError(e2);
     else
@@ -7857,6 +7869,10 @@ async function executeInIframe(options) {
     await func(...contextValues);
   } catch (e2) {
     console.error(e2);
+    const errorDiv = iframeDoc.createElement("div");
+    errorDiv.className = "preview-error";
+    errorDiv.textContent = String(e2.message || e2);
+    preview.append(errorDiv);
     if (onError)
       onError(e2);
     else
@@ -7953,6 +7969,16 @@ var liveExampleStyleSpec = {
     position: "relative",
     overflow: "hidden",
     boxShadow: "inset 0 0 0 2px #8883"
+  },
+  ":host .preview-error": {
+    padding: "8px 12px",
+    margin: "8px",
+    background: "#fee",
+    color: "#900",
+    borderRadius: "4px",
+    fontSize: "13px",
+    fontFamily: "system-ui, sans-serif",
+    whiteSpace: "pre-wrap"
   },
   ':host [part="editors"]': {
     flex: "1 1 200px",

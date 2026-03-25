@@ -60,6 +60,16 @@ export declare class LiveExample extends Component<ExampleParts> {
             overflow: string;
             boxShadow: string;
         };
+        ':host .preview-error': {
+            padding: string;
+            margin: string;
+            background: string;
+            color: string;
+            borderRadius: string;
+            fontSize: string;
+            fontFamily: string;
+            whiteSpace: string;
+        };
         ':host [part="editors"]': {
             flex: string;
             height: string;

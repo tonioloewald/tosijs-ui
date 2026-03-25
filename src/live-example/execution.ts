@@ -113,6 +113,9 @@ export async function executeInline(
     await func(...contextValues)
   } catch (e) {
     console.error(e)
+    preview.append(
+      div({ class: 'preview-error' }, String((e as Error).message || e))
+    )
     if (onError) onError(e as Error)
     else window.alert(`Error: ${e}, the console may have more information…`)
   }
@@ -223,6 +226,10 @@ export async function executeInIframe(
     await func(...contextValues)
   } catch (e) {
     console.error(e)
+    const errorDiv = iframeDoc.createElement('div')
+    errorDiv.className = 'preview-error'
+    errorDiv.textContent = String((e as Error).message || e)
+    preview.append(errorDiv)
     if (onError) onError(e as Error)
     else window.alert(`Error: ${e}, the console may have more information…`)
   }
