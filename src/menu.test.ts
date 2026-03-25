@@ -81,7 +81,11 @@ describe('menu', () => {
         },
       }
       const element = createMenuAction(item, baseOptions)
-      expect(element.textContent).toContain('⌘C')
+      // displayShortcut renders platform-appropriate symbols
+      const text = element.textContent || ''
+      expect(text).toContain('Copy')
+      // Mac: ⌘C, Linux/Windows: Meta+C
+      expect(text.includes('⌘C') || text.includes('Meta+C')).toBe(true)
     })
 
     test('adds checked class when checked', () => {
