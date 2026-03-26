@@ -504,7 +504,7 @@ export class TosiTable extends WebComponent {
             return;
         }
         const pickedItem = getListItem(tr);
-        if (pickedItem === false) {
+        if (pickedItem == null) {
             return;
         }
         const mouseEvent = event;

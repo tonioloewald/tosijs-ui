@@ -26308,7 +26308,7 @@ class TosiTable extends P {
       return;
     }
     const pickedItem = Qf(tr);
-    if (pickedItem === false) {
+    if (pickedItem == null) {
       return;
     }
     const mouseEvent = event;
