@@ -71,6 +71,33 @@ preview.append(tosiTable({
   background: #ddd;
 }
 ```
+```test
+const table = await new Promise(resolve => {
+  const check = () => {
+    const t = preview.querySelector('tosi-table')
+    if (t && t.visibleRows.length > 0) return resolve(t)
+    setTimeout(check, 100)
+  }
+  check()
+})
+
+test('table renders with data', () => {
+  expect(table.multiple).toBe(true)
+  expect(table.visibleRows.length).toBeGreaterThan(0)
+})
+
+test('row selection works', () => {
+  const rows = table.visibleRows
+  table.deSelect()
+  table.selectRow(rows[0])
+  table.selectRow(rows[1])
+  expect(table.selectedRows.length).toBe(2)
+  expect(table.querySelectorAll('.tr[aria-selected]').length).toBe(2)
+  table.deSelect()
+  expect(table.selectedRows.length).toBe(0)
+  expect(table.querySelectorAll('.tr[aria-selected]').length).toBe(0)
+})
+```
 
 > In the preceding example, the `name` column is *editable* (and *bound*, try editing something and scrolling
 > it out of view and back) and `multiple` select is enabled. In the console, you can try `$('tosi-table').visibleRows`
@@ -325,6 +352,7 @@ export class TosiTable extends WebComponent {
 
   private selectedKey = Symbol('selected')
   private selectBinding = (elt: Element, obj: any) => {
+    if (obj == null) return
     elt.toggleAttribute('aria-selected', obj[this.selectedKey] === true)
   }
 
@@ -514,11 +542,23 @@ export class TosiTable extends WebComponent {
     } else {
       delete row[this.selectedKey]
     }
+    for (const elt of Array.from(this.querySelectorAll('.tr'))) {
+      const item = getListItem(elt)
+      this.selectBinding(elt, item)
+    }
   }
 
   selectRows(rows?: any[], select = true) {
     for (const row of rows || this.array) {
-      this.selectRow(row, select)
+      if (select) {
+        row[this.selectedKey] = true
+      } else {
+        delete row[this.selectedKey]
+      }
+    }
+    for (const elt of Array.from(this.querySelectorAll('.tr'))) {
+      const item = getListItem(elt)
+      this.selectBinding(elt, item)
     }
   }
 

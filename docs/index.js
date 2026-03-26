@@ -26130,6 +26130,8 @@ class TosiTable extends P {
   selectionChanged = () => {};
   selectedKey = Symbol("selected");
   selectBinding = (elt, obj) => {
+    if (obj == null)
+      return;
     elt.toggleAttribute("aria-selected", obj[this.selectedKey] === true);
   };
   maxVisibleRows = 1e4;
@@ -26271,10 +26273,22 @@ class TosiTable extends P {
     } else {
       delete row[this.selectedKey];
     }
+    for (const elt of Array.from(this.querySelectorAll(".tr"))) {
+      const item = Qf(elt);
+      this.selectBinding(elt, item);
+    }
   }
   selectRows(rows, select = true) {
     for (const row of rows || this.array) {
-      this.selectRow(row, select);
+      if (select) {
+        row[this.selectedKey] = true;
+      } else {
+        delete row[this.selectedKey];
+      }
+    }
+    for (const elt of Array.from(this.querySelectorAll(".tr"))) {
+      const item = Qf(elt);
+      this.selectBinding(elt, item);
     }
   }
   deSelect(rows) {
@@ -33116,7 +33130,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = bE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.4.3";
+var version = "1.4.4";
 // src/theme.ts
 var defaultColors = {
   accent: w.fromCss("#EE257B"),
@@ -39013,6 +39027,33 @@ preview.append(tosiTable({
 .preview tosi-table [part="pinnedBottomRows"] {
   background: #ddd;
 }
+\`\`\`
+\`\`\`test
+const table = await new Promise(resolve => {
+  const check = () => {
+    const t = preview.querySelector('tosi-table')
+    if (t && t.visibleRows.length > 0) return resolve(t)
+    setTimeout(check, 100)
+  }
+  check()
+})
+
+test('table renders with data', () => {
+  expect(table.multiple).toBe(true)
+  expect(table.visibleRows.length).toBeGreaterThan(0)
+})
+
+test('row selection works', () => {
+  const rows = table.visibleRows
+  table.deSelect()
+  table.selectRow(rows[0])
+  table.selectRow(rows[1])
+  expect(table.selectedRows.length).toBe(2)
+  expect(table.querySelectorAll('.tr[aria-selected]').length).toBe(2)
+  table.deSelect()
+  expect(table.selectedRows.length).toBe(0)
+  expect(table.querySelectorAll('.tr[aria-selected]').length).toBe(0)
+})
 \`\`\`
 
 > In the preceding example, the \`name\` column is *editable* (and *bound*, try editing something and scrolling
