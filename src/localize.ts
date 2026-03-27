@@ -262,7 +262,7 @@ class MyLocalizedComponent extends Component {
 ```
 */
 
-import { Component, tosi, elements, bindings, observe } from 'tosijs'
+import { Component, tosi, tosiValue, elements, bindings, observe } from 'tosijs'
 import { makeSorter } from './make-sorter'
 import { tosiSelect, TosiSelect } from './select'
 
@@ -360,9 +360,7 @@ export function localize(ref: string): string {
   }
   const index = i18n.locales.value.indexOf(i18n.locale.value)
   if (index > -1) {
-    // Access stringMap.value first to get the plain object, then lookup by key
-    // This avoids the proxy treating '.' in the key as property dereference
-    const stringMapValue = i18n.stringMap.value as TranslationMap
+    const stringMapValue = tosiValue(i18n.stringMap) as unknown as TranslationMap
     const lowerRef = ref.toLocaleLowerCase()
     const map = stringMapValue[lowerRef]
     let localized = map && map[index]
