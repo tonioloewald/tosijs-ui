@@ -26848,10 +26848,8 @@ class TosiDialog extends P {
       promptDialog.showModal();
     });
   }
-  static initAttributes = {
-    removeOnClose: false,
-    closeOnBackgroundClick: false
-  };
+  removeOnClose = false;
+  closeOnBackgroundClick = false;
   constructor() {
     super();
     YE(this, "click", () => {
@@ -33264,7 +33262,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = vE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.4.7";
+var version = "1.4.8";
 // src/theme.ts
 var defaultColors = {
   accent: F.fromCss("#EE257B"),

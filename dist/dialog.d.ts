@@ -48,10 +48,8 @@ export declare class TosiDialog extends Component<DialogParts> {
     static alert(message: string, title?: string): Promise<void>;
     static confirm(message: string, title?: string): Promise<boolean>;
     static prompt(message: string, title?: string, currentValue?: string): Promise<string | null>;
-    static initAttributes: {
-        removeOnClose: boolean;
-        closeOnBackgroundClick: boolean;
-    };
+    removeOnClose: boolean;
+    closeOnBackgroundClick: boolean;
     constructor();
     dialogWillClose: (reason?: string) => void;
     initialFocus(): void;

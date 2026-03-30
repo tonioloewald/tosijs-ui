@@ -221,10 +221,8 @@ export class TosiDialog extends Component {
             promptDialog.showModal();
         });
     }
-    static initAttributes = {
-        removeOnClose: false,
-        closeOnBackgroundClick: false,
-    };
+    removeOnClose = false;
+    closeOnBackgroundClick = false;
     constructor() {
         super();
         on(this, 'click', () => {

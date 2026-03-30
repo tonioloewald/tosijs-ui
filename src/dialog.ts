@@ -267,10 +267,8 @@ export class TosiDialog extends Component<DialogParts> {
     })
   }
 
-  static initAttributes = {
-    removeOnClose: false,
-    closeOnBackgroundClick: false,
-  }
+  removeOnClose = false
+  closeOnBackgroundClick = false
 
   constructor() {
     super()
