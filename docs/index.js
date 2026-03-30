@@ -24585,6 +24585,9 @@ class TosiFloat extends P {
     }
   };
   reposition = (event) => {
+    if (event instanceof MouseEvent && event.button !== 0) {
+      return;
+    }
     const target = event.target;
     if (target?.closest(".no-drag")) {
       return;
@@ -33261,7 +33264,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = vE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.4.6";
+var version = "1.4.7";
 // src/theme.ts
 var defaultColors = {
   accent: F.fromCss("#EE257B"),

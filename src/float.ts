@@ -113,6 +113,9 @@ export class TosiFloat extends WebComponent {
   }
 
   reposition = (event: Event) => {
+    if (event instanceof MouseEvent && event.button !== 0) {
+      return
+    }
     const target = event.target as HTMLElement | null
     if (target?.closest('.no-drag')) {
       return
