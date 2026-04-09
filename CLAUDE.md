@@ -164,6 +164,7 @@ How grouping works (`insert-examples.ts`):
 
 - `tosijs`: Core component framework (peer dep ^1.2.0, dev dep ^1.4.0)
 - `marked`: Markdown parsing (peer dependency, ^16.4.2)
+- `sucrase`: TypeScript transform for live examples (optional peer dependency, ^3.35.0)
 - `happy-dom`: DOM simulation for unit tests (dev dependency)
 - Components use custom HTML tags with `tosi-` prefix (e.g., `<tosi-select>`, `<tosi-dialog>`)
 - IIFE build (`src/index-iife.ts`) bundles tosijs + marked + tosijs-ui, exposes `xinjs` and `xinjsui` globals
@@ -411,6 +412,15 @@ Classes managed by the library:
 - `action` event for user interactions (distinct from value changes)
 - Binary attributes (`hidden`, `disabled`) work as expected
 - Interoperable with other web-component libraries
+
+## Publishing
+
+1. Update version in `package.json`
+2. Run `bun tests` to verify all tests pass
+3. Build: `bun run build`
+4. Commit changes including `dist/` and `docs/`
+5. Tag release: `git tag v1.x.x`
+6. Push: `git push --tags`
 
 ## Task Tracking
 
