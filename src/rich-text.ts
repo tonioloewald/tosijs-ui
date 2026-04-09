@@ -133,6 +133,10 @@ import {
 import { icons } from './icons'
 
 import { tosiSelect, TosiSelect } from './select'
+import {
+  elastic as layoutElastic,
+  spacer as layoutSpacer,
+} from './layout'
 
 const { xinSlot, div, button, span } = elements
 
@@ -175,19 +179,8 @@ export function blockStyle(options = blockStyles) {
   })
 }
 
-export function spacer(width = '10px') {
-  return span({
-    slot: 'toolbar',
-    style: { flex: `0 0 ${width}`, content: ' ' },
-  })
-}
-
-export function elastic(width = '10px') {
-  return span({
-    slot: 'toolbar',
-    style: { flex: `0 0 ${width}`, content: ' ' },
-  })
-}
+const spacer = () => layoutSpacer({ slot: 'toolbar' })
+const elastic = () => layoutElastic({ slot: 'toolbar' })
 
 export function commandButton(
   title: string,

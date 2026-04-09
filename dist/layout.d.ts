@@ -1,4 +1,4 @@
-import { Component, ElementCreator } from 'tosijs';
+import { Component, ElementCreator, ElementPart } from 'tosijs';
 export declare class TosiRow extends Component {
     static preferredTagName: string;
     static initAttributes: {
@@ -60,3 +60,5 @@ export declare class TosiGrid extends Component {
     render(): void;
 }
 export declare const tosiGrid: ElementCreator<TosiGrid>;
+export declare const elastic: (...parts: ElementPart<HTMLSpanElement>[]) => HTMLSpanElement;
+export declare const spacer: (...parts: ElementPart<HTMLSpanElement>[]) => HTMLSpanElement;

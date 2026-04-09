@@ -1307,8 +1307,7 @@ document.addEventListener('mousedown', (event: Event) => {
   const path = event.composedPath()
   if (
     !poppedMenus.find(
-      (popped) =>
-        path.includes(popped.target) || path.includes(popped.menu)
+      (popped) => path.includes(popped.target) || path.includes(popped.menu)
     )
   ) {
     removeLastMenu(0)
@@ -1390,7 +1389,7 @@ interface ShortcutMatch {
 export function findShortcutAction(
   items: MenuItem[],
   event: KeyboardEvent,
-  path: SubMenu[] = [],
+  path: SubMenu[] = []
 ): ShortcutMatch | undefined {
   for (const item of items) {
     if (!item) continue
@@ -1407,11 +1406,10 @@ export function findShortcutAction(
         return { action: menuAction, path }
       }
     } else if (menuItems) {
-      const found = findShortcutAction(
-        resolveMenuItems(menuItems),
-        event,
-        [...path, item as SubMenu],
-      )
+      const found = findShortcutAction(resolveMenuItems(menuItems), event, [
+        ...path,
+        item as SubMenu,
+      ])
       if (found) return found
     }
   }
@@ -1427,7 +1425,16 @@ export class TosiMenu extends Component<TosiMenuParts> {
   static preferredTagName = 'tosi-menu'
   static lightStyleSpec = {
     ':host': {
-      display: 'inline-block',
+      display: 'inline-flex',
+      minWidth: vars.touchSize,
+      minHeight: vars.touchSize,
+    },
+    ':host button': {
+      margin: 0,
+      padding: 0,
+      alignSelf: 'stretch',
+      flex: '1',
+      textAlign: 'center',
     },
     ':host button > xin-slot': {
       display: 'flex',
@@ -1551,7 +1558,7 @@ export class TosiMenu extends Component<TosiMenuParts> {
 
   private findMenuItemByCaption(
     container: Element,
-    caption: string,
+    caption: string
   ): HTMLElement | null {
     for (const el of container.querySelectorAll('.xin-menu-item')) {
       // Menu items are: icon (svg or span), span(caption), span(shortcut/chevron)
@@ -1566,7 +1573,7 @@ export class TosiMenu extends Component<TosiMenuParts> {
 
   private async animateShortcut(
     path: SubMenu[],
-    action: MenuAction,
+    action: MenuAction
   ): Promise<void> {
     // Ensure any existing menus are closed first
     removeLastMenu(0)

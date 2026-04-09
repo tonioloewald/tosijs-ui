@@ -14,20 +14,6 @@ A flex row container. Children are laid out horizontally.
   <button>Three</button>
 </tosi-row>
 ```
-```js
-import { tosiRow } from 'tosijs-ui'
-
-preview.append(
-  tosiRow(
-    { gap: '8px', wrap: true },
-    ...Array.from({ length: 8 }, (_, i) => {
-      const btn = document.createElement('button')
-      btn.textContent = `Item ${i + 1}`
-      return btn
-    })
-  )
-)
-```
 
 ## tosi-column
 
@@ -39,20 +25,6 @@ A flex column container. Children are laid out vertically.
   <span>Second</span>
   <span>Third</span>
 </tosi-column>
-```
-```js
-import { tosiColumn } from 'tosijs-ui'
-
-preview.append(
-  tosiColumn(
-    { gap: '4px' },
-    ...['Alpha', 'Beta', 'Gamma'].map((t) => {
-      const span = document.createElement('span')
-      span.textContent = t
-      return span
-    })
-  )
-)
 ```
 
 ## tosi-grid
@@ -69,24 +41,8 @@ A CSS grid container.
   <div style="background:#999;padding:8px;color:white">F</div>
 </tosi-grid>
 ```
-```js
-import { tosiGrid } from 'tosijs-ui'
-
-preview.append(
-  tosiGrid(
-    { columns: 'repeat(3, 1fr)', gap: '4px' },
-    ...Array.from({ length: 6 }, (_, i) => {
-      const d = document.createElement('div')
-      d.textContent = `Cell ${i + 1}`
-      d.style.padding = '8px'
-      d.style.background = '#eee'
-      return d
-    })
-  )
-)
-```
 */
-import { Component, elements, varDefault } from 'tosijs';
+import { Component, elements, varDefault, } from 'tosijs';
 const { slot } = elements;
 // ============================================================================
 // TosiRow
@@ -220,3 +176,9 @@ export class TosiGrid extends Component {
     }
 }
 export const tosiGrid = TosiGrid.elementCreator();
+// ============================================================================
+// Layout utility factories
+// ============================================================================
+const { span } = elements;
+export const elastic = (...parts) => span({ style: { flex: '1 1 var(--tosi-space, 0.5em)' } }, ...parts);
+export const spacer = (...parts) => span({ style: { flex: '0 0 var(--tosi-space, 0.5em)' } }, ...parts);

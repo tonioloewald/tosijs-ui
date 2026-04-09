@@ -1253,7 +1253,10 @@ export function findShortcutAction(items, event, path = []) {
             }
         }
         else if (menuItems) {
-            const found = findShortcutAction(resolveMenuItems(menuItems), event, [...path, item]);
+            const found = findShortcutAction(resolveMenuItems(menuItems), event, [
+                ...path,
+                item,
+            ]);
             if (found)
                 return found;
         }
@@ -1264,7 +1267,16 @@ export class TosiMenu extends Component {
     static preferredTagName = 'tosi-menu';
     static lightStyleSpec = {
         ':host': {
-            display: 'inline-block',
+            display: 'inline-flex',
+            minWidth: vars.touchSize,
+            minHeight: vars.touchSize,
+        },
+        ':host button': {
+            margin: 0,
+            padding: 0,
+            alignSelf: 'stretch',
+            flex: '1',
+            textAlign: 'center',
         },
         ':host button > xin-slot': {
             display: 'flex',

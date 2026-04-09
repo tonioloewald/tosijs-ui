@@ -76,6 +76,15 @@ export declare class TosiMenu extends Component<TosiMenuParts> {
     static lightStyleSpec: {
         ':host': {
             display: string;
+            minWidth: string;
+            minHeight: string;
+        };
+        ':host button': {
+            margin: number;
+            padding: number;
+            alignSelf: string;
+            flex: string;
+            textAlign: string;
         };
         ':host button > xin-slot': {
             display: string;

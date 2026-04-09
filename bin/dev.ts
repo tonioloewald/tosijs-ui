@@ -118,9 +118,7 @@ if (buildOnly) {
 }
 
 if (!testMode) {
-  watch('./demo/xin-icon-font').on('change', () =>
-    $`bun ./bin/make-icon-data.js`
-  )
+  watch('./icons').on('change', () => $`bun ./bin/make-icon-data.js`)
   watch(['README.md', './src']).on('change', () =>
     $`bun ./bin/docs.js`.then(build)
   )

@@ -4,8 +4,6 @@ export declare function blockStyle(options?: {
     caption: string;
     tagType: string;
 }[]): TosiSelect;
-export declare function spacer(width?: string): HTMLSpanElement;
-export declare function elastic(width?: string): HTMLSpanElement;
 export declare function commandButton(title: string, dataCommand: string, icon: SVGElement): HTMLButtonElement;
 export declare const richTextWidgets: () => HTMLSpanElement[];
 interface EditorParts extends PartsMap {

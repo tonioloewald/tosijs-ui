@@ -63,7 +63,7 @@ No semicolons, single quotes, 2-space indent, trailing commas (es5). Enforced by
 The dev server watches:
 - `src/` and `README.md` → triggers doc extraction + rebuild
 - `demo/src/` → triggers demo rebuild only
-- `demo/xin-icon-font/` → triggers icon data regeneration
+- `icons/` → triggers icon data regeneration (`bin/make-icon-data.js` → `src/icon-data.ts`)
 
 ### Directory Structure
 
@@ -109,6 +109,12 @@ export class TosiWidget extends Component<WidgetParts> {
     button({ part: 'button' }, span({ part: 'label' }, 'Click'))
   ]
 
+  render(): void {
+    super.render()
+    // Access named parts via this.parts — never query the DOM manually
+    this.parts.label.textContent = this.myProperty
+  }
+
   // Set content = null for components that build DOM programmatically in render()
 }
 
@@ -117,6 +123,49 @@ export const tosiWidget = TosiWidget.elementCreator() as ElementCreator<TosiWidg
 /** @deprecated Use tosiWidget instead */
 export const xinWidget = tosiWidget
 ```
+
+#### The `content` property
+
+`content` can be:
+- **An array** of elements (static content): `content = [slot()]`
+- **A function** returning elements: `content = () => [button({ part: 'btn' })]`
+- **null** for components that build DOM programmatically in `render()`
+
+The function form has access to `this` so it can read `initAttributes` at construction time. It also accepts `elements` as an argument: `content = ({div, span}) => [div(span('hello'))]` — though most components import element creators at the module level.
+
+#### Parts system
+
+Define typed parts via a `PartsMap` interface and assign `{ part: 'name' }` to elements in `content`. Access them in `render()` or methods via `this.parts.name`. **Never query the shadow DOM manually** — parts are the correct way to reference sub-elements.
+
+#### Shadow DOM vs Light DOM slots
+
+- Components with `shadowStyleSpec` use **shadow DOM** — use the standard `slot()` element for composition
+- Components with `lightStyleSpec` use **light DOM** — use `xinSlot()` (from `elements`) which provides slot-like composition in the light DOM
+- If you use `slot()` in a light DOM component, it is automatically instantiated as a `tosi-slot` element
+
+#### Event handler binding
+
+Methods passed as event handlers in `content` must be arrow function properties so `this` is correctly bound:
+
+```typescript
+// Correct — arrow property is auto-bound
+showSettingsMenu = (): void => { ... }
+content = () => [button({ onClick: this.showSettingsMenu })]
+
+// Wrong — class method loses `this` when passed as callback
+showSettingsMenu(): void { ... }
+content = () => [button({ onClick: this.showSettingsMenu })]  // `this` is wrong
+
+// Wrong — unnecessary wrapper
+content = () => [button({ onClick: () => this.showSettingsMenu() })]
+```
+
+**Declaration order matters**: class fields initialize top-to-bottom. Arrow property handlers referenced in `content` must be declared **before** `content`, or they will be `undefined` when `content()` runs.
+
+#### Content function pitfalls
+
+- Content is called once at construction. Use `render()` for dynamic updates — toggle `hidden`, update `textContent`, call `replaceChildren()`, etc.
+- Prefer a declarative `content` that defines the full element tree, with `render()` handling visibility and dynamic state. Building content imperatively (push into array based on conditionals) works but is verbose and clumsy.
 
 **Naming convention**: All components use `Tosi*` class names, `tosi*` element creators, and `<tosi-*>` tags. Legacy `xin*` exports are simple aliases kept for backward compatibility.
 
@@ -157,8 +206,10 @@ How grouping works (`insert-examples.ts`):
 - Use ` ```js ` for executable JavaScript, ` ```typescript ` (or any other language) for display-only code
 - Each `js` block must import everything it needs — no sharing between blocks
 - Consecutive html/js/css/test blocks form ONE example. Put markdown between them to create separate examples.
+- **Do not put both `html` and `js` blocks for the same demo** — if an `html` block creates a `<tosi-widget>` and the `js` block also appends one, you get duplicates. Pick one approach per example.
 - `test()` calls within a block run **concurrently** — combine dependent assertions into a single `test()` call
 - Other examples on the page may leave elements in the DOM — use count-based assertions, not presence/absence
+- Router demos must use `{ hashRouting: true }` — `navigate()` with History API `pushState` changes the URL path and breaks the doc-browser's `?filename` navigation
 
 ### Key Dependencies
 
@@ -167,7 +218,7 @@ How grouping works (`insert-examples.ts`):
 - `sucrase`: TypeScript transform for live examples (optional peer dependency, ^3.35.0)
 - `happy-dom`: DOM simulation for unit tests (dev dependency)
 - Components use custom HTML tags with `tosi-` prefix (e.g., `<tosi-select>`, `<tosi-dialog>`)
-- IIFE build (`src/index-iife.ts`) bundles tosijs + marked + tosijs-ui, exposes `xinjs` and `xinjsui` globals
+- IIFE build (`src/index-iife.ts`) bundles tosijs + marked + tosijs-ui, exposes `xinjs` and `xinjsui` globals (legacy names kept for backward compatibility; `window.xinjs` = tosijs, `window.xinjsui` = tosijs-ui)
 
 ### tosijs Observable Proxies
 

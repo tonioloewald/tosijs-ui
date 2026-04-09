@@ -262,7 +262,7 @@ class MyLocalizedComponent extends Component {
 ```
 */
 
-import { Component, tosi, tosiValue, elements, bindings, observe } from 'tosijs'
+import { Component, tosi, tosiValue, elements, bindings } from 'tosijs'
 import { makeSorter } from './make-sorter'
 import { tosiSelect, TosiSelect } from './select'
 
@@ -360,13 +360,16 @@ export function localize(ref: string): string {
   }
   const index = i18n.locales.value.indexOf(i18n.locale.value)
   if (index > -1) {
-    const stringMapValue = tosiValue(i18n.stringMap) as unknown as TranslationMap
+    const stringMapValue = tosiValue(
+      i18n.stringMap
+    ) as unknown as TranslationMap
     const lowerRef = ref.toLocaleLowerCase()
     const map = stringMapValue[lowerRef]
     let localized = map && map[index]
     // fall back to base string for ditto marks (") and missing annotations
     if ((!localized || localized === '"') && lowerRef.includes('#')) {
-      const baseMap = stringMapValue[lowerRef.substring(0, lowerRef.indexOf('#'))]
+      const baseMap =
+        stringMapValue[lowerRef.substring(0, lowerRef.indexOf('#'))]
       localized = baseMap && baseMap[index]
     }
     if (localized) {

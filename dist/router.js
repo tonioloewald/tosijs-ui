@@ -28,11 +28,14 @@ const greeting = (params) => {
   return el
 }
 
-defineRoutes([
-  { pattern: '', targets: [{ component: home }] },
-  { pattern: 'about', targets: [{ component: about }] },
-  { pattern: 'greet/:name', targets: [{ component: greeting }] },
-])
+defineRoutes(
+  [
+    { pattern: '', targets: [{ component: home }] },
+    { pattern: 'about', targets: [{ component: about }] },
+    { pattern: 'greet/:name', targets: [{ component: greeting }] },
+  ],
+  { hashRouting: true }
+)
 
 preview.append(
   tosiRouteView(),
@@ -66,15 +69,18 @@ const sidebar = () => {
   return el
 }
 
-defineRoutes([
-  {
-    pattern: 'photos/:id/edit',
-    targets: [
-      { view: 'main', component: mainContent },
-      { view: 'tools', component: sidebar },
-    ],
-  },
-])
+defineRoutes(
+  [
+    {
+      pattern: 'photos/:id/edit',
+      targets: [
+        { view: 'main', component: mainContent },
+        { view: 'tools', component: sidebar },
+      ],
+    },
+  ],
+  { hashRouting: true }
+)
 
 const container = document.createElement('div')
 container.style.display = 'flex'
