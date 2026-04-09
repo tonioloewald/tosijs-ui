@@ -709,7 +709,7 @@ export function createDocBrowser(options) {
         // Create a hidden iframe to run tests in background
         const testFrame = document.createElement('iframe');
         testFrame.style.cssText =
-            'position: fixed; left: -9999px; width: 800px; height: 600px; visibility: hidden;';
+            'position: fixed; left: 0; top: 0; width: 800px; height: 600px; opacity: 0; pointer-events: none;';
         document.body.appendChild(testFrame);
         const currentFilename = String(app.currentDoc.filename);
         for (const doc of docsWithTests) {
@@ -750,8 +750,27 @@ export function createDocBrowser(options) {
             if (frameDoc) {
                 frameDoc.body.innerHTML = '';
                 frameDoc.body.appendChild(testContainer);
-                // Wait for all live examples to finish rendering/testing
-                await new Promise((resolve) => setTimeout(resolve, 500));
+                // Wait for all live examples with tests to finish (max 30s per page)
+                await new Promise((resolve) => {
+                    const deadline = Date.now() + 30_000;
+                    const checkDone = () => {
+                        if (Date.now() > deadline) {
+                            resolve();
+                            return;
+                        }
+                        const examples = testContainer.querySelectorAll('tosi-example');
+                        const withTests = [...examples].filter((ex) => ex.classList.contains('-has-tests'));
+                        const running = withTests.filter((ex) => ex.classList.contains('-test-running'));
+                        if (withTests.length > 0 && running.length === 0) {
+                            resolve();
+                        }
+                        else {
+                            setTimeout(checkDone, 100);
+                        }
+                    };
+                    // Give initial render time to start
+                    setTimeout(checkDone, 200);
+                });
             }
             markPageTested(doc.filename);
         }

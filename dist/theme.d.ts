@@ -12,6 +12,10 @@ export interface ThemeColors {
 export declare const defaultColors: ThemeColors;
 export declare const baseVariables: XinStyleRule;
 /**
+ * Creates color variables from ThemeColors
+ */
+export declare function createColorVariables(colors: ThemeColors): XinStyleRule;
+/**
  * Creates a complete theme stylesheet from colors
  */
 export declare function createTheme(colors: ThemeColors): XinStyleSheet;

@@ -178,7 +178,7 @@ export const baseVariables: XinStyleRule = {
 /**
  * Creates color variables from ThemeColors
  */
-function createColorVariables(colors: ThemeColors): XinStyleRule {
+export function createColorVariables(colors: ThemeColors): XinStyleRule {
   const { accent, background, text } = colors
 
   // Derive colors if not provided

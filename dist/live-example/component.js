@@ -570,6 +570,8 @@ export class LiveExample extends Component {
         }
         // Run tests if enabled and there are any
         if ((this.test || executionError) && preview && testManager.enabled.value) {
+            // Let queued renders (rAF) settle before running tests
+            await new Promise((resolve) => requestAnimationFrame(resolve));
             this.classList.add('-has-tests', '-test-running');
             this.classList.remove('-test-passed', '-test-failed');
             this.testResults = this.test

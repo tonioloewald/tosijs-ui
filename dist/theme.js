@@ -146,7 +146,7 @@ export const baseVariables = {
 /**
  * Creates color variables from ThemeColors
  */
-function createColorVariables(colors) {
+export function createColorVariables(colors) {
     const { accent, background, text } = colors;
     // Derive colors if not provided
     const accentText = colors.accentText ?? accent.contrasting();

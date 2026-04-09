@@ -23251,6 +23251,7 @@ __export(exports_src, {
   updateLocalized: () => updateLocalized,
   trackDrag: () => trackDrag,
   tosijs: () => exports_module,
+  tosiThemeEditor: () => tosiThemeEditor,
   tosiTagList: () => tosiTagList,
   tosiTag: () => tosiTag,
   tosiTabs: () => tosiTabs,
@@ -23259,6 +23260,8 @@ __export(exports_src, {
   tosiSidenav: () => tosiSidenav,
   tosiSelect: () => tosiSelect,
   tosiSegmented: () => tosiSegmented,
+  tosiRow: () => tosiRow,
+  tosiRouteView: () => tosiRouteView,
   tosiRichText: () => tosiRichText,
   tosiRating: () => tosiRating,
   tosiPasswordStrength: () => tosiPasswordStrength,
@@ -23268,10 +23271,13 @@ __export(exports_src, {
   tosiMd: () => tosiMd,
   tosiLocalized: () => tosiLocalized,
   tosiLocalePicker: () => tosiLocalePicker,
+  tosiHeader: () => tosiHeader,
+  tosiGrid: () => tosiGrid,
   tosiForm: () => tosiForm,
   tosiFloat: () => tosiFloat,
   tosiField: () => tosiField,
   tosiDialog: () => tosiDialog,
+  tosiColumn: () => tosiColumn,
   tosiCarousel: () => tosiCarousel,
   testManager: () => testManager,
   tabSelector: () => tabSelector,
@@ -23284,6 +23290,7 @@ __export(exports_src, {
   setLocale: () => setLocale,
   scriptTag: () => scriptTag,
   runTests: () => runTests,
+  router: () => router,
   richTextWidgets: () => richTextWidgets,
   richText: () => richText,
   rewriteImports: () => rewriteImports,
@@ -23295,6 +23302,7 @@ __export(exports_src, {
   popFloat: () => popFloat,
   popDropMenu: () => popDropMenu,
   parseShortcut: () => parseShortcut,
+  navigate: () => navigate,
   modifierKeys: () => modifierKeys,
   menu: () => menu,
   matchShortcut: () => matchShortcut,
@@ -23304,6 +23312,7 @@ __export(exports_src, {
   localize: () => localize,
   localePicker: () => localePicker,
   loadTransform: () => loadTransform,
+  liveTheme: () => liveTheme,
   liveExample: () => liveExample,
   legacyAliases: () => legacyAliases,
   keystroke: () => keystroke,
@@ -23313,6 +23322,7 @@ __export(exports_src, {
   initLocalization: () => initLocalization,
   icons: () => icons,
   i18n: () => i18n,
+  getRouterParams: () => getRouterParams,
   gamepadText: () => gamepadText,
   gamepadState: () => gamepadState,
   findShortcutAction: () => findShortcutAction,
@@ -23326,12 +23336,15 @@ __export(exports_src, {
   executeInIframe: () => executeInIframe,
   executeCode: () => executeCode,
   enableTests: () => enableTests,
+  enableLiveTheme: () => enableLiveTheme,
   elastic: () => elastic,
   editableRect: () => editableRect,
   dragAndDrop: () => exports_drag_and_drop,
   displayShortcut: () => displayShortcut,
   disableTests: () => disableTests,
+  disableLiveTheme: () => disableLiveTheme,
   digest: () => digest,
+  defineRoutes: () => defineRoutes,
   defineIcons: () => defineIcons,
   defaultColors: () => defaultColors,
   dataTable: () => dataTable,
@@ -23344,6 +23357,7 @@ __export(exports_src, {
   createDropMenuItem: () => createDropMenuItem,
   createDocBrowser: () => createDocBrowser,
   createDarkTheme: () => createDarkTheme,
+  createColorVariables: () => createColorVariables,
   componentVars: () => componentVars,
   commandButton: () => commandButton,
   colorInput: () => colorInput,
@@ -23374,6 +23388,7 @@ __export(exports_src, {
   XinFloat: () => XinFloat,
   XinField: () => XinField,
   XinCarousel: () => XinCarousel,
+  TosiThemeEditor: () => TosiThemeEditor,
   TosiTagList: () => TosiTagList,
   TosiTag: () => TosiTag,
   TosiTabs: () => TosiTabs,
@@ -23382,6 +23397,8 @@ __export(exports_src, {
   TosiSidenav: () => TosiSidenav,
   TosiSelect: () => TosiSelect,
   TosiSegmented: () => TosiSegmented,
+  TosiRow: () => TosiRow,
+  TosiRouteView: () => TosiRouteView,
   TosiRating: () => TosiRating,
   TosiPasswordStrength: () => TosiPasswordStrength,
   TosiNotification: () => TosiNotification,
@@ -23390,10 +23407,13 @@ __export(exports_src, {
   TosiMd: () => TosiMd,
   TosiLocalized: () => TosiLocalized,
   TosiLocalePicker: () => TosiLocalePicker,
+  TosiHeader: () => TosiHeader,
+  TosiGrid: () => TosiGrid,
   TosiForm: () => TosiForm,
   TosiFloat: () => TosiFloat,
   TosiField: () => TosiField,
   TosiDialog: () => TosiDialog,
+  TosiColumn: () => TosiColumn,
   TosiCarousel: () => TosiCarousel,
   TabSelector: () => TabSelector,
   SvgIcon: () => SvgIcon,
@@ -29575,6 +29595,7 @@ class LiveExample extends P {
       this.updateSources();
     }
     if ((this.test || executionError) && preview && testManager.enabled.value) {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
       this.classList.add("-has-tests", "-test-running");
       this.classList.remove("-test-passed", "-test-failed");
       this.testResults = this.test ? await runTests(this.test, preview, this.context, transform2) : { passed: 0, failed: 0, tests: [] };
@@ -30286,7 +30307,7 @@ function createDocBrowser(options) {
       return;
     }
     const testFrame = document.createElement("iframe");
-    testFrame.style.cssText = "position: fixed; left: -9999px; width: 800px; height: 600px; visibility: hidden;";
+    testFrame.style.cssText = "position: fixed; left: 0; top: 0; width: 800px; height: 600px; opacity: 0; pointer-events: none;";
     document.body.appendChild(testFrame);
     const currentFilename = String(app.currentDoc.filename);
     for (const doc of docsWithTests) {
@@ -30322,7 +30343,24 @@ function createDocBrowser(options) {
       if (frameDoc) {
         frameDoc.body.innerHTML = "";
         frameDoc.body.appendChild(testContainer);
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => {
+          const deadline = Date.now() + 30000;
+          const checkDone = () => {
+            if (Date.now() > deadline) {
+              resolve();
+              return;
+            }
+            const examples = testContainer.querySelectorAll("tosi-example");
+            const withTests = [...examples].filter((ex) => ex.classList.contains("-has-tests"));
+            const running = withTests.filter((ex) => ex.classList.contains("-test-running"));
+            if (withTests.length > 0 && running.length === 0) {
+              resolve();
+            } else {
+              setTimeout(checkDone, 100);
+            }
+          };
+          setTimeout(checkDone, 200);
+        });
       }
       markPageTested(doc.filename);
     }
@@ -31328,6 +31366,162 @@ var tosiField = TosiField.elementCreator();
 var tosiForm = TosiForm.elementCreator();
 var xinField = tosiField;
 var xinForm = tosiForm;
+// src/header.ts
+var { div: div11, span: span10, a: a4, h2: h22, button: button10, slot: slot7 } = D;
+var linkIcons = {
+  tosijs: () => icons.tosi(),
+  discord: () => icons.discord(),
+  blog: () => icons.blog(),
+  github: () => icons.github(),
+  npm: () => icons.npm()
+};
+
+class TosiHeader extends P {
+  static preferredTagName = "tosi-header";
+  static initAttributes = {
+    projectName: "",
+    showLocale: true,
+    showTheme: true
+  };
+  projectLinks = {};
+  themePrefs = null;
+  menuItems = [];
+  static shadowStyleSpec = {
+    ":host": {
+      display: "flex",
+      alignItems: "center",
+      padding: `0 ${jE.tosiHeaderPadding("var(--tosi-spacing, 12px)")}`,
+      background: jE.tosiHeaderBg("var(--tosi-accent, #EE257B)"),
+      color: jE.tosiHeaderColor("var(--tosi-accent-text, white)"),
+      lineHeight: jE.tosiHeaderLineHeight("2.5em"),
+      gap: jE.tosiHeaderGap("4px")
+    },
+    ":host .elastic": {
+      flex: "1 1 auto"
+    },
+    ":host a, :host button.iconic": {
+      color: "inherit",
+      textDecoration: "none",
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      display: "inline-flex",
+      alignItems: "center",
+      padding: "4px",
+      opacity: "0.8"
+    },
+    ":host a:hover, :host button.iconic:hover": {
+      opacity: "1"
+    },
+    ":host h2": {
+      margin: "0",
+      fontSize: "1.2em",
+      fontWeight: "600"
+    },
+    ":host .title-link": {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      borderBottom: "none"
+    }
+  };
+  content = () => {
+    const parts = [
+      slot7({ name: "before" })
+    ];
+    if (this.projectName) {
+      parts.push(a4({ part: "title", class: "title-link", href: "/" }, h22(this.projectName)));
+    }
+    parts.push(span10({ class: "elastic" }));
+    parts.push(slot7({ name: "links" }));
+    for (const [key, url] of Object.entries(this.projectLinks)) {
+      if (!url || !linkIcons[key])
+        continue;
+      parts.push(a4({ class: "iconic", title: key, target: "_blank", href: url }, linkIcons[key]()));
+    }
+    parts.push(slot7({ name: "after" }));
+    parts.push(button10({
+      part: "settings",
+      class: "iconic",
+      title: "settings",
+      onClick: (event) => this.showSettingsMenu(event)
+    }, icons.moreVertical()));
+    return parts;
+  };
+  showSettingsMenu(event) {
+    const items = [];
+    if (this.showLocale && i18n.localeOptions.value.length > 0) {
+      const prefs = this.themePrefs;
+      items.push({
+        caption: "Language",
+        icon: "globe",
+        menuItems: i18n.localeOptions.value.map((locale) => ({
+          caption: locale.caption,
+          icon: locale.icon,
+          checked: () => locale.value === i18n.locale.value,
+          action() {
+            if (prefs?.locale) {
+              prefs.locale.value = locale.value;
+            }
+            setLocale(locale.value);
+          }
+        }))
+      });
+    }
+    if (this.showTheme) {
+      const prefs = this.themePrefs;
+      const themeItems = [
+        {
+          caption: "System",
+          checked: () => prefs?.theme.value === "system",
+          action() {
+            if (prefs)
+              prefs.theme.value = "system";
+          }
+        },
+        {
+          caption: "Dark",
+          checked: () => prefs?.theme.value === "dark",
+          action() {
+            if (prefs)
+              prefs.theme.value = "dark";
+          }
+        },
+        {
+          caption: "Light",
+          checked: () => prefs?.theme.value === "light",
+          action() {
+            if (prefs)
+              prefs.theme.value = "light";
+          }
+        },
+        null,
+        {
+          caption: "High Contrast",
+          checked: () => prefs?.highContrast.value ?? false,
+          action() {
+            if (prefs)
+              prefs.highContrast.value = !prefs.highContrast.value;
+          }
+        }
+      ];
+      items.push({
+        caption: "Color Theme",
+        icon: "rgb",
+        menuItems: themeItems
+      });
+    }
+    items.push(...this.menuItems);
+    if (items.length > 0) {
+      popMenu({
+        target: event.target,
+        localized: true,
+        menuItems: items
+      });
+    }
+  }
+}
+var tosiHeader = TosiHeader.elementCreator();
 // src/gamepad.ts
 function gamepadState() {
   const gamepads = navigator.getGamepads().filter((p2) => p2 !== null);
@@ -31336,15 +31530,15 @@ function gamepadState() {
     return {
       id,
       axes,
-      buttons: buttons.map((button10, index) => {
-        const { pressed, value } = button10;
+      buttons: buttons.map((button11, index) => {
+        const { pressed, value } = button11;
         return {
           index,
           pressed,
           value
         };
-      }).filter((b3) => b3.pressed || b3.value !== 0).reduce((map, button10) => {
-        map[button10.index] = button10.value;
+      }).filter((b3) => b3.pressed || b3.value !== 0).reduce((map, button11) => {
+        map[button11.index] = button11.value;
         return map;
       }, {})
     };
@@ -31353,7 +31547,7 @@ function gamepadState() {
 function gamepadText() {
   const state2 = gamepadState();
   return state2.length === 0 ? "no active gamepads" : state2.map(({ id, axes, buttons }) => {
-    const axesText = axes.map((a4) => a4.toFixed(2)).join(" ");
+    const axesText = axes.map((a5) => a5.toFixed(2)).join(" ");
     const buttonText = Object.keys(buttons).map((key) => `[${key}](${buttons[Number(key)].toFixed(2)})`).join(" ");
     return `${id}
 ${axesText}
@@ -31421,8 +31615,401 @@ ${parts.join(`
   }).join(`
 `);
 }
+// src/layout.ts
+var { slot: slot8 } = D;
+
+class TosiRow extends P {
+  static preferredTagName = "tosi-row";
+  static initAttributes = {
+    gap: "",
+    wrap: false,
+    align: "",
+    justify: ""
+  };
+  content = [slot8()];
+  static shadowStyleSpec = {
+    ":host": {
+      display: "flex",
+      flexDirection: "row",
+      gap: jE.tosiRowGap("0"),
+      alignItems: jE.tosiRowAlign("stretch"),
+      justifyContent: jE.tosiRowJustify("flex-start")
+    }
+  };
+  render() {
+    super.render();
+    if (this.gap) {
+      this.style.setProperty("--tosi-row-gap", this.gap);
+    } else {
+      this.style.removeProperty("--tosi-row-gap");
+    }
+    if (this.align) {
+      this.style.setProperty("--tosi-row-align", this.align);
+    } else {
+      this.style.removeProperty("--tosi-row-align");
+    }
+    if (this.justify) {
+      this.style.setProperty("--tosi-row-justify", this.justify);
+    } else {
+      this.style.removeProperty("--tosi-row-justify");
+    }
+    this.style.flexWrap = this.wrap ? "wrap" : "";
+  }
+}
+var tosiRow = TosiRow.elementCreator();
+
+class TosiColumn extends P {
+  static preferredTagName = "tosi-column";
+  static initAttributes = {
+    gap: "",
+    wrap: false,
+    align: "",
+    justify: ""
+  };
+  content = [slot8()];
+  static shadowStyleSpec = {
+    ":host": {
+      display: "flex",
+      flexDirection: "column",
+      gap: jE.tosiColumnGap("0"),
+      alignItems: jE.tosiColumnAlign("stretch"),
+      justifyContent: jE.tosiColumnJustify("flex-start")
+    }
+  };
+  render() {
+    super.render();
+    if (this.gap) {
+      this.style.setProperty("--tosi-column-gap", this.gap);
+    } else {
+      this.style.removeProperty("--tosi-column-gap");
+    }
+    if (this.align) {
+      this.style.setProperty("--tosi-column-align", this.align);
+    } else {
+      this.style.removeProperty("--tosi-column-align");
+    }
+    if (this.justify) {
+      this.style.setProperty("--tosi-column-justify", this.justify);
+    } else {
+      this.style.removeProperty("--tosi-column-justify");
+    }
+    this.style.flexWrap = this.wrap ? "wrap" : "";
+  }
+}
+var tosiColumn = TosiColumn.elementCreator();
+
+class TosiGrid extends P {
+  static preferredTagName = "tosi-grid";
+  static initAttributes = {
+    columns: "",
+    rows: "",
+    gap: ""
+  };
+  content = [slot8()];
+  static shadowStyleSpec = {
+    ":host": {
+      display: "grid",
+      gridTemplateColumns: jE.tosiGridColumns("1fr"),
+      gridTemplateRows: jE.tosiGridRows("auto"),
+      gap: jE.tosiGridGap("0")
+    }
+  };
+  render() {
+    super.render();
+    if (this.columns) {
+      this.style.setProperty("--tosi-grid-columns", this.columns);
+    } else {
+      this.style.removeProperty("--tosi-grid-columns");
+    }
+    if (this.rows) {
+      this.style.setProperty("--tosi-grid-rows", this.rows);
+    } else {
+      this.style.removeProperty("--tosi-grid-rows");
+    }
+    if (this.gap) {
+      this.style.setProperty("--tosi-grid-gap", this.gap);
+    } else {
+      this.style.removeProperty("--tosi-grid-gap");
+    }
+  }
+}
+var tosiGrid = TosiGrid.elementCreator();
+// src/theme.ts
+var defaultColors = {
+  accent: F.fromCss("#EE257B"),
+  background: F.fromCss("#fafafa"),
+  text: F.fromCss("#222222")
+};
+var baseVariables = {
+  _tosiSpacingXs: "4px",
+  _tosiSpacingSm: "8px",
+  _tosiSpacing: "12px",
+  _tosiSpacingLg: "16px",
+  _tosiSpacingXl: "24px",
+  _tosiFontFamily: "system-ui, -apple-system, sans-serif",
+  _tosiFontSize: "16px",
+  _tosiLineHeight: "1.5",
+  _tosiCodeFontFamily: "ui-monospace, monospace",
+  _tosiCodeFontSize: "14px",
+  _tosiTouchSize: "44px",
+  _tosiBorderRadius: "4px",
+  _tosiBorderRadiusLg: "8px",
+  _tosiTransition: "0.15s ease-out"
+};
+function createColorVariables(colors) {
+  const { accent, background, text } = colors;
+  const accentText = colors.accentText ?? accent.contrasting();
+  const backgroundInset = colors.backgroundInset ?? background.darken(0.03);
+  const border = colors.border ?? text.opacity(0.15);
+  const shadow = colors.shadow ?? text.opacity(0.1);
+  const focus = colors.focus ?? accent.opacity(0.5);
+  return {
+    _tosiAccent: accent,
+    _tosiAccentLight: accent.brighten(0.15),
+    _tosiAccentDark: accent.darken(0.15),
+    _tosiAccentText: accentText,
+    _tosiBg: background,
+    _tosiBgInset: backgroundInset,
+    _tosiBgHover: background.darken(0.05),
+    _tosiBgActive: background.darken(0.1),
+    _tosiText: text,
+    _tosiTextMuted: text.opacity(0.6),
+    _tosiTextDisabled: text.opacity(0.4),
+    _tosiBorder: border,
+    _tosiBorderFocus: accent,
+    _tosiShadow: shadow,
+    _tosiShadowColor: shadow,
+    _tosiFocusRing: `0 0 0 2px ${focus}`,
+    _tosiInputBg: background,
+    _tosiInputBorder: border,
+    _tosiInputBorderFocus: accent,
+    _tosiButtonBg: background,
+    _tosiButtonText: text,
+    _tosiButtonBorder: border,
+    _tosiButtonHoverBg: background.darken(0.05),
+    _tosiButtonActiveBg: accent,
+    _tosiButtonActiveText: accentText
+  };
+}
+function createTheme(colors) {
+  return {
+    ":root": {
+      ...baseVariables,
+      ...createColorVariables(colors)
+    }
+  };
+}
+function createDarkTheme(colors) {
+  const lightTheme = createTheme(colors);
+  const rootStyles = lightTheme[":root"];
+  return {
+    ":root": uf(rootStyles)
+  };
+}
+function applyTheme(theme, id = "tosi-theme") {
+  Pf(id, theme);
+}
+var baseTheme = createTheme(defaultColors);
+var baseDarkTheme = createDarkTheme(defaultColors);
+var legacyAliases = {
+  "--xin-icon-size": fM.tosiIconSize,
+  "--xin-icon-fill": fM.tosiIconFill,
+  "--xin-icon-stroke": fM.tosiIconStroke,
+  "--xin-tabs-bar-color": fM.tosiTabsBarColor,
+  "--xin-tabs-bar-height": fM.tosiTabsBarHeight,
+  "--xin-tabs-selected-color": fM.tosiTabsSelectedColor,
+  "--spacing": fM.tosiSpacing,
+  "--gap": fM.tosiSpacingSm,
+  "--touch-size": fM.tosiTouchSize,
+  "--background": fM.tosiBg,
+  "--text-color": fM.tosiText,
+  "--brand-color": fM.tosiAccent,
+  "--brand-text-color": fM.tosiAccentText
+};
+function createThemeWithLegacy(colors) {
+  const theme = createTheme(colors);
+  return {
+    ":root": {
+      ...theme[":root"],
+      ...legacyAliases
+    }
+  };
+}
+function componentVars(componentName, defaults) {
+  const result = {};
+  for (const [key, value] of Object.entries(defaults)) {
+    const varName = `--tosi-${componentName}-${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`;
+    result[key] = `var(${varName}, ${value})`;
+  }
+  return result;
+}
+
+// src/live-theme.ts
+var { div: div12, label: label3, input: input8, span: span11, button: button11 } = D;
+var { liveTheme } = kE({
+  liveTheme: {
+    accent: String(defaultColors.accent),
+    background: String(defaultColors.background),
+    text: String(defaultColors.text),
+    dark: false
+  }
+});
+var liveThemeActive = false;
+function applyLiveTheme() {
+  if (!liveThemeActive)
+    return;
+  const colors = {
+    accent: F.fromCss(liveTheme.accent.value),
+    background: F.fromCss(liveTheme.background.value),
+    text: F.fromCss(liveTheme.text.value)
+  };
+  const theme = liveTheme.dark.value ? createDarkTheme(colors) : createTheme(colors);
+  applyTheme(theme, "tosi-live-theme");
+}
+function enableLiveTheme() {
+  if (liveThemeActive)
+    return;
+  liveThemeActive = true;
+  liveTheme.accent.observe(applyLiveTheme);
+  liveTheme.background.observe(applyLiveTheme);
+  liveTheme.text.observe(applyLiveTheme);
+  liveTheme.dark.observe(applyLiveTheme);
+  applyLiveTheme();
+}
+function disableLiveTheme() {
+  liveThemeActive = false;
+}
+
+class TosiThemeEditor extends P {
+  static preferredTagName = "tosi-theme-editor";
+  static shadowStyleSpec = {
+    ":host": {
+      display: "block",
+      fontFamily: "system-ui, -apple-system, sans-serif",
+      fontSize: "14px",
+      lineHeight: "1.5",
+      background: "#ffffff",
+      color: "#222222",
+      padding: "16px",
+      borderRadius: "8px",
+      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+      maxWidth: "320px"
+    },
+    ":host .field": {
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      marginBottom: "8px"
+    },
+    ":host label": {
+      flex: "1",
+      fontWeight: "500"
+    },
+    ':host input[type="color"]': {
+      width: "48px",
+      height: "32px",
+      border: "1px solid #ccc",
+      borderRadius: "4px",
+      cursor: "pointer",
+      padding: "2px"
+    },
+    ':host input[type="checkbox"]': {
+      width: "18px",
+      height: "18px",
+      cursor: "pointer"
+    },
+    ":host .preview": {
+      marginTop: "12px",
+      padding: "12px",
+      borderRadius: "4px",
+      transition: "all 0.15s ease-out"
+    },
+    ":host .preview-button": {
+      border: "none",
+      padding: "6px 12px",
+      borderRadius: "4px",
+      cursor: "pointer",
+      fontFamily: "inherit",
+      fontSize: "13px"
+    },
+    ":host .actions": {
+      marginTop: "8px",
+      display: "flex",
+      gap: "8px"
+    },
+    ":host .actions button": {
+      flex: "1",
+      padding: "6px 12px",
+      border: "1px solid #ccc",
+      borderRadius: "4px",
+      background: "#f5f5f5",
+      color: "#222",
+      cursor: "pointer",
+      fontFamily: "inherit",
+      fontSize: "13px"
+    },
+    ":host .actions button:hover": {
+      background: "#e8e8e8"
+    }
+  };
+  content = () => [
+    div12({ class: "field" }, label3("Accent"), input8({ type: "color", part: "accent" })),
+    div12({ class: "field" }, label3("Background"), input8({ type: "color", part: "background" })),
+    div12({ class: "field" }, label3("Text"), input8({ type: "color", part: "text" })),
+    div12({ class: "field" }, label3("Dark mode"), input8({ type: "checkbox", part: "dark" })),
+    div12({
+      class: "preview",
+      part: "preview",
+      style: {
+        background: "var(--tosi-bg, #fafafa)",
+        color: "var(--tosi-text, #222)"
+      }
+    }, span11("Preview "), button11({
+      class: "preview-button",
+      style: {
+        background: "var(--tosi-accent, #EE257B)",
+        color: "var(--tosi-accent-text, white)"
+      }
+    }, "Button")),
+    div12({ class: "actions" }, button11({ part: "reset" }, "Reset"))
+  ];
+  connectedCallback() {
+    super.connectedCallback();
+    enableLiveTheme();
+    const syncFromTheme = () => {
+      this.parts.accent.value = liveTheme.accent.value;
+      this.parts.background.value = liveTheme.background.value;
+      this.parts.text.value = liveTheme.text.value;
+      this.parts.dark.checked = liveTheme.dark.value;
+    };
+    syncFromTheme();
+    liveTheme.accent.observe(syncFromTheme);
+    liveTheme.background.observe(syncFromTheme);
+    liveTheme.text.observe(syncFromTheme);
+    liveTheme.dark.observe(syncFromTheme);
+    this.parts.accent.addEventListener("input", () => {
+      liveTheme.accent.value = this.parts.accent.value;
+    });
+    this.parts.background.addEventListener("input", () => {
+      liveTheme.background.value = this.parts.background.value;
+    });
+    this.parts.text.addEventListener("input", () => {
+      liveTheme.text.value = this.parts.text.value;
+    });
+    this.parts.dark.addEventListener("change", () => {
+      liveTheme.dark.value = this.parts.dark.checked;
+    });
+    this.parts.reset.addEventListener("click", () => {
+      liveTheme.accent.value = String(defaultColors.accent);
+      liveTheme.background.value = String(defaultColors.background);
+      liveTheme.text.value = String(defaultColors.text);
+      liveTheme.dark.value = false;
+    });
+  }
+}
+var tosiThemeEditor = TosiThemeEditor.elementCreator();
 // src/mapbox.ts
-var { div: div11 } = D;
+var { div: div13 } = D;
 
 class MapBox extends P {
   static preferredTagName = "tosi-map";
@@ -31439,7 +32026,7 @@ class MapBox extends P {
     this.value = "";
     this.coords = "65.01715565258993,25.48081004203459,12";
   }
-  content = div11({ style: { width: "100%", height: "100%" } });
+  content = div13({ style: { width: "100%", height: "100%" } });
   get map() {
     return this._map;
   }
@@ -31492,7 +32079,7 @@ class MapBox extends P {
       }
       return;
     }
-    const { div: div12 } = this.parts;
+    const { div: div14 } = this.parts;
     const [long, lat, zoom] = this.coords.split(",").map((x3) => Number(x3));
     this._lastCoords = this.coords;
     this._lastStyle = this.mapStyle;
@@ -31500,7 +32087,7 @@ class MapBox extends P {
       console.log("%cmapbox may complain about missing css -- don't panic!", "background: orange; color: black; padding: 0 5px;");
       mapboxgl.accessToken = this.token;
       this._map = new mapboxgl.Map({
-        container: div12,
+        container: div14,
         style: this.mapStyle,
         zoom,
         center: [lat, long]
@@ -31521,7 +32108,7 @@ class MapBox extends P {
 }
 var mapBox = MapBox.elementCreator();
 // src/month.ts
-var { div: div12, span: span10, button: button10 } = D;
+var { div: div14, span: span12, button: button12 } = D;
 var DAY_MS = 24 * 3600 * 1000;
 var WEEK = [0, 1, 2, 3, 4, 5, 6];
 var MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -31765,10 +32352,10 @@ class TosiMonth extends P {
     });
   };
   content = () => [
-    div12({ part: "header" }, button10({
+    div14({ part: "header" }, button12({
       part: "previous",
       onClick: this.previousMonth
-    }, icons.chevronLeft()), span10({ style: { flex: "1" } }), button10({
+    }, icons.chevronLeft()), span12({ style: { flex: "1" } }), button12({
       part: "jump",
       onClick: this.jumpMenu
     }, icons.calendar()), tosiSelect({
@@ -31779,12 +32366,12 @@ class TosiMonth extends P {
       part: "year",
       options: [this.year],
       onChange: this.setMonth
-    }), span10({ style: { flex: "1" } }), button10({
+    }), span12({ style: { flex: "1" } }), button12({
       part: "next",
       onClick: this.nextMonth
     }, icons.chevronRight())),
-    div12({ part: "week" }),
-    div12({ part: "days" })
+    div14({ part: "week" }),
+    div14({ part: "days" })
   ];
   gotoDate(dateString) {
     const date = new Date(dateString);
@@ -31830,7 +32417,7 @@ class TosiMonth extends P {
     month.disabled = year.disabled = jump.disabled = previous.disabled = next2.disabled = this.disabled || this.readonly;
     year.options = this.years;
     week.textContent = "";
-    week.append(...weekDays.map((day) => span10({ class: "day" }, day)));
+    week.append(...weekDays.map((day) => span12({ class: "day" }, day)));
     days.textContent = "";
     let focusElement = null;
     const { to, from } = this;
@@ -31855,7 +32442,7 @@ class TosiMonth extends P {
           classes.push("range-start");
         }
       }
-      const element = span10({
+      const element = span12({
         class: classes.join(" "),
         title: dateString,
         onClick: this.clickDate,
@@ -31872,7 +32459,7 @@ class TosiMonth extends P {
 }
 var tosiMonth = TosiMonth.elementCreator();
 // src/notifications.ts
-var { div: div13, button: button11 } = D;
+var { div: div15, button: button13 } = D;
 var COLOR_MAP = {
   error: "red",
   warn: "orange",
@@ -31999,14 +32586,14 @@ class TosiNotification extends P {
     };
     const iconElement = icon instanceof SVGElement ? icon : icon ? icons[icon]({ class: "icon" }) : icons.info({ class: "icon" });
     const isUrgent = type === "error" || type === "warn";
-    const note = div13({
+    const note = div15({
       class: `note ${type}`,
       role: isUrgent ? "alert" : "status",
       ariaLive: isUrgent ? "assertive" : "polite",
       style: {
         _notificationAccentColor
       }
-    }, iconElement, div13({ class: "message" }, div13(message), progressBar), button11({
+    }, iconElement, div15({ class: "message" }, div15(message), progressBar), button13({
       class: "close",
       title: "close",
       ariaLabel: "Close notification",
@@ -32064,7 +32651,7 @@ var isBreached = async (password) => {
   }
   return response.status !== 404;
 };
-var { span: span11, xinSlot: xinSlot5 } = D;
+var { span: span13, xinSlot: xinSlot5 } = D;
 
 class TosiPasswordStrength extends P {
   static preferredTagName = "tosi-password-strength";
@@ -32169,24 +32756,24 @@ class TosiPasswordStrength extends P {
     description.textContent = this.strengthDescriptions[strength];
   };
   update = (event) => {
-    const input8 = event.target.closest("input");
-    this.updateIndicator(input8?.value || "");
+    const input9 = event.target.closest("input");
+    this.updateIndicator(input9?.value || "");
   };
   content = () => [
     xinSlot5({ onInput: this.update }),
-    span11({ part: "meter" }, span11({ part: "level" }), span11({ part: "description" }))
+    span13({ part: "meter" }, span13({ part: "level" }), span13({ part: "description" }))
   ];
   render() {
     super.render();
-    const input8 = this.querySelector("input");
-    this.updateIndicator(input8?.value);
+    const input9 = this.querySelector("input");
+    this.updateIndicator(input9?.value);
   }
 }
 var XinPasswordStrength = TosiPasswordStrength;
 var tosiPasswordStrength = TosiPasswordStrength.elementCreator();
 var xinPasswordStrength = tosiPasswordStrength;
 // src/rating.ts
-var { span: span12 } = D;
+var { span: span14 } = D;
 
 class TosiRating extends P {
   static preferredTagName = "tosi-rating";
@@ -32248,7 +32835,7 @@ class TosiRating extends P {
       transform: "scale(1.1)"
     }
   };
-  content = () => span12({ part: "container" }, span12({ part: "empty" }), span12({ part: "filled" }));
+  content = () => span14({ part: "container" }, span14({ part: "empty" }), span14({ part: "filled" }));
   displayValue(value) {
     const { empty, filled } = this.parts;
     const numValue = typeof value === "string" ? 0 : value || 0;
@@ -32338,7 +32925,7 @@ var XinRating = TosiRating;
 var tosiRating = TosiRating.elementCreator();
 var xinRating = vE((...args) => tosiRating(...args), "xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)");
 // src/rich-text.ts
-var { xinSlot: xinSlot6, div: div14, button: button12, span: span13 } = D;
+var { xinSlot: xinSlot6, div: div16, button: button14, span: span15 } = D;
 var blockStyles = [
   {
     caption: "Title",
@@ -32377,19 +32964,19 @@ function blockStyle(options = blockStyles) {
   });
 }
 function spacer(width = "10px") {
-  return span13({
+  return span15({
     slot: "toolbar",
     style: { flex: `0 0 ${width}`, content: " " }
   });
 }
 function elastic(width = "10px") {
-  return span13({
+  return span15({
     slot: "toolbar",
     style: { flex: `0 0 ${width}`, content: " " }
   });
 }
 function commandButton(title, dataCommand, icon) {
-  return button12({ slot: "toolbar", dataCommand, title }, icon);
+  return button14({ slot: "toolbar", dataCommand, title }, icon);
 }
 var paragraphStyleWidgets = () => [
   commandButton("left-justify", "justifyLeft", icons.alignLeft()),
@@ -32522,11 +33109,11 @@ class RichText extends P {
   };
   handleButtonClick = (event) => {
     const target = event.target;
-    const button13 = target?.closest("button");
-    if (button13 == null) {
+    const button15 = target?.closest("button");
+    if (button15 == null) {
       return;
     }
-    this.doCommand(button13.dataset.command);
+    this.doCommand(button15.dataset.command);
   };
   content = [
     xinSlot6({
@@ -32535,7 +33122,7 @@ class RichText extends P {
       onClick: this.handleButtonClick,
       onChange: this.handleSelectChange
     }),
-    div14({
+    div16({
       part: "doc",
       contenteditable: true,
       style: {
@@ -32619,8 +33206,138 @@ class RichText extends P {
 var XinWord = RichText;
 var tosiRichText = RichText.elementCreator();
 var richText = vE((...args) => tosiRichText(...args), "richText is deprecated, use tosiRichText instead (tag is now <tosi-rich-text>)");
+// src/router.ts
+var { router } = kE({
+  router: {
+    path: "",
+    hash: "",
+    pattern: ""
+  }
+});
+var routerParams = {};
+function getRouterParams() {
+  return { ...routerParams };
+}
+var compiledRoutes = [];
+var useHashRouting = false;
+var viewRegistry = new Set;
+function compilePattern(pattern) {
+  const paramNames = [];
+  if (pattern === "") {
+    return { regex: /^\/?$/, paramNames };
+  }
+  const regexParts = pattern.split("/").map((segment) => {
+    if (segment.startsWith(":")) {
+      paramNames.push(segment.slice(1));
+      return "([^/]+)";
+    }
+    return segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  });
+  const regex = new RegExp("^/?" + regexParts.join("/") + "/?$");
+  return { regex, paramNames };
+}
+function matchRoute(path) {
+  const cleanPath = path.split("?")[0].split("#")[0];
+  for (const route of compiledRoutes) {
+    if (route.fallback)
+      continue;
+    const match2 = cleanPath.match(route.regex);
+    if (match2) {
+      const params2 = {};
+      route.paramNames.forEach((name, i2) => {
+        params2[name] = decodeURIComponent(match2[i2 + 1]);
+      });
+      return { route, params: params2 };
+    }
+  }
+  const fallback = compiledRoutes.find((r2) => r2.fallback);
+  if (fallback) {
+    return { route: fallback, params: {} };
+  }
+  return null;
+}
+function renderRoute() {
+  const path = useHashRouting ? window.location.hash.replace(/^#\/?/, "") : window.location.pathname;
+  router.path.value = path;
+  router.hash.value = window.location.hash;
+  const match2 = matchRoute(path);
+  if (match2) {
+    routerParams = match2.params;
+    router.pattern.value = match2.route.regex.source;
+    const targetsByView = new Map;
+    for (const target of match2.route.targets) {
+      targetsByView.set(target.view ?? "default", target);
+    }
+    for (const view of viewRegistry) {
+      const viewName = view.name || "default";
+      const target = targetsByView.get(viewName);
+      if (target) {
+        view.replaceChildren(target.component(match2.params));
+      } else {
+        view.replaceChildren();
+      }
+    }
+  } else {
+    routerParams = {};
+    router.pattern.value = "";
+    for (const view of viewRegistry) {
+      view.replaceChildren();
+    }
+  }
+}
+var initialized = false;
+function ensureListeners() {
+  if (initialized)
+    return;
+  initialized = true;
+  window.addEventListener("popstate", renderRoute);
+  window.addEventListener("hashchange", renderRoute);
+}
+function defineRoutes(routes, options = {}) {
+  useHashRouting = options.hashRouting ?? false;
+  compiledRoutes = routes.map((def) => {
+    const { regex, paramNames } = compilePattern(def.pattern);
+    return {
+      regex,
+      paramNames,
+      targets: def.targets,
+      fallback: def.fallback ?? false
+    };
+  });
+  ensureListeners();
+  renderRoute();
+}
+function navigate(path) {
+  ensureListeners();
+  if (useHashRouting) {
+    window.location.hash = "#/" + path.replace(/^\//, "");
+  } else {
+    window.history.pushState({}, "", "/" + path.replace(/^\//, ""));
+  }
+  renderRoute();
+}
+
+class TosiRouteView extends P {
+  static preferredTagName = "tosi-route-view";
+  static initAttributes = {
+    name: "default"
+  };
+  content = null;
+  connectedCallback() {
+    super.connectedCallback();
+    viewRegistry.add(this);
+    if (compiledRoutes.length > 0) {
+      renderRoute();
+    }
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    viewRegistry.delete(this);
+  }
+}
+var tosiRouteView = TosiRouteView.elementCreator();
 // src/segmented.ts
-var { div: div15, slot: slot7, label: label3, span: span14, input: input8 } = D;
+var { div: div17, slot: slot9, label: label4, span: span16, input: input9 } = D;
 
 class TosiSegmented extends P {
   static preferredTagName = "tosi-segmented";
@@ -32663,8 +33380,8 @@ class TosiSegmented extends P {
     return (this.value || "").split(",").map((v3) => v3.trim()).filter((v3) => v3 !== "");
   }
   content = () => [
-    slot7(),
-    div15({ part: "options" }, input8({ part: "custom", hidden: true }))
+    slot9(),
+    div17({ part: "options" }, input9({ part: "custom", hidden: true }))
   ];
   static shadowStyleSpec = {
     ":host": {
@@ -32734,14 +33451,14 @@ class TosiSegmented extends P {
       const inputs = [
         ...options.querySelectorAll("input:checked")
       ];
-      this.value = inputs.map((input9) => input9.value).join(",");
+      this.value = inputs.map((input10) => input10.value).join(",");
     } else {
-      const input9 = options.querySelector("input:checked");
-      if (!input9) {
+      const input10 = options.querySelector("input:checked");
+      if (!input10) {
         this.value = "";
-      } else if (input9.value) {
+      } else if (input10.value) {
         custom.setAttribute("hidden", "");
-        this.value = input9.value;
+        this.value = input10.value;
       } else {
         custom.removeAttribute("hidden");
         custom.focus();
@@ -32762,16 +33479,16 @@ class TosiSegmented extends P {
         break;
       case "Tab":
         if (!(event.target instanceof HTMLLabelElement)) {
-          const label4 = event.target.closest("label");
-          label4.focus();
+          const label5 = event.target.closest("label");
+          label5.focus();
         }
         break;
       case "ArrowLeft":
       case "ArrowUp":
         {
-          const label4 = event.target.closest("label");
-          if (label4.previousElementSibling instanceof HTMLLabelElement) {
-            label4.previousElementSibling.focus();
+          const label5 = event.target.closest("label");
+          if (label5.previousElementSibling instanceof HTMLLabelElement) {
+            label5.previousElementSibling.focus();
           }
         }
         blockEvent = true;
@@ -32779,9 +33496,9 @@ class TosiSegmented extends P {
       case "ArrowRight":
       case "ArrowDown":
         {
-          const label4 = event.target.closest("label");
-          if (label4.nextElementSibling instanceof HTMLLabelElement) {
-            label4.nextElementSibling.focus();
+          const label5 = event.target.closest("label");
+          if (label5.nextElementSibling instanceof HTMLLabelElement) {
+            label5.nextElementSibling.focus();
           }
         }
         blockEvent = true;
@@ -32835,13 +33552,13 @@ class TosiSegmented extends P {
     const type = this.multiple ? "checkbox" : "radio";
     const { values, isOtherValue } = this;
     options.append(...this._choicesWithOther.map((choice) => {
-      return label3({ tabindex: 0 }, input8({
+      return label4({ tabindex: 0 }, input9({
         type,
         name: this.name,
         value: choice.value,
         checked: values.includes(choice.value) || choice.value === "" && isOtherValue,
         tabIndex: -1
-      }), choice.icon || { class: "no-icon" }, this.localized ? tosiLocalized(choice.caption) : span14(choice.caption));
+      }), choice.icon || { class: "no-icon" }, this.localized ? tosiLocalized(choice.caption) : span16(choice.caption));
     }));
     if (this.other && !this.multiple) {
       custom.hidden = !isOtherValue;
@@ -32855,7 +33572,7 @@ var XinSegmented = TosiSegmented;
 var tosiSegmented = TosiSegmented.elementCreator();
 var xinSegmented = vE((...args) => tosiSegmented(...args), "xinSegmented is deprecated, use tosiSegmented instead (tag is now <tosi-segmented>)");
 // src/size-break.ts
-var { slot: slot8 } = D;
+var { slot: slot10 } = D;
 
 class SizeBreak extends P {
   static preferredTagName = "tosi-sizebreak";
@@ -32864,7 +33581,7 @@ class SizeBreak extends P {
     minHeight: 0
   };
   value = "normal";
-  content = [slot8({ part: "normal" }), slot8({ part: "small", name: "small" })];
+  content = [slot10({ part: "normal" }), slot10({ part: "small", name: "small" })];
   static shadowStyleSpec = {
     ":host": {
       display: "inline-block",
@@ -32963,7 +33680,7 @@ var XinSizer = TosiSizer;
 var tosiSizer = TosiSizer.elementCreator();
 var xinSizer = tosiSizer;
 // src/tag-list.ts
-var { div: div16, input: input9, span: span15, button: button13 } = D;
+var { div: div18, input: input10, span: span17, button: button15 } = D;
 
 class TosiTag extends P {
   static preferredTagName = "tosi-tag";
@@ -33020,8 +33737,8 @@ class TosiTag extends P {
     this.remove();
   };
   content = () => [
-    span15({ part: "caption" }, this.caption),
-    button13(icons.x(), {
+    span17({ part: "caption" }, this.caption),
+    button15(icons.x(), {
       type: "button",
       part: "remove",
       hidden: !this.removeable,
@@ -33203,20 +33920,20 @@ class TosiTagList extends P {
     });
   };
   content = () => [
-    button13({ type: "button", style: { visibility: "hidden" }, tabindex: -1 }),
-    div16({
+    button15({ type: "button", style: { visibility: "hidden" }, tabindex: -1 }),
+    div18({
       part: "tagContainer",
       class: "row",
       role: "list",
       ariaLabel: "Selected tags"
     }),
-    input9({
+    input10({
       part: "tagInput",
       class: "elastic",
       ariaLabel: "Enter new tag",
       onKeydown: this.enterTag
     }),
-    button13({
+    button15({
       type: "button",
       title: "add tag",
       ariaLabel: "Select tags from list",
@@ -33263,115 +33980,6 @@ var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = vE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
 var version = "1.4.8";
-// src/theme.ts
-var defaultColors = {
-  accent: F.fromCss("#EE257B"),
-  background: F.fromCss("#fafafa"),
-  text: F.fromCss("#222222")
-};
-var baseVariables = {
-  _tosiSpacingXs: "4px",
-  _tosiSpacingSm: "8px",
-  _tosiSpacing: "12px",
-  _tosiSpacingLg: "16px",
-  _tosiSpacingXl: "24px",
-  _tosiFontFamily: "system-ui, -apple-system, sans-serif",
-  _tosiFontSize: "16px",
-  _tosiLineHeight: "1.5",
-  _tosiCodeFontFamily: "ui-monospace, monospace",
-  _tosiCodeFontSize: "14px",
-  _tosiTouchSize: "44px",
-  _tosiBorderRadius: "4px",
-  _tosiBorderRadiusLg: "8px",
-  _tosiTransition: "0.15s ease-out"
-};
-function createColorVariables(colors) {
-  const { accent, background, text } = colors;
-  const accentText = colors.accentText ?? accent.contrasting();
-  const backgroundInset = colors.backgroundInset ?? background.darken(0.03);
-  const border = colors.border ?? text.opacity(0.15);
-  const shadow = colors.shadow ?? text.opacity(0.1);
-  const focus = colors.focus ?? accent.opacity(0.5);
-  return {
-    _tosiAccent: accent,
-    _tosiAccentLight: accent.brighten(0.15),
-    _tosiAccentDark: accent.darken(0.15),
-    _tosiAccentText: accentText,
-    _tosiBg: background,
-    _tosiBgInset: backgroundInset,
-    _tosiBgHover: background.darken(0.05),
-    _tosiBgActive: background.darken(0.1),
-    _tosiText: text,
-    _tosiTextMuted: text.opacity(0.6),
-    _tosiTextDisabled: text.opacity(0.4),
-    _tosiBorder: border,
-    _tosiBorderFocus: accent,
-    _tosiShadow: shadow,
-    _tosiShadowColor: shadow,
-    _tosiFocusRing: `0 0 0 2px ${focus}`,
-    _tosiInputBg: background,
-    _tosiInputBorder: border,
-    _tosiInputBorderFocus: accent,
-    _tosiButtonBg: background,
-    _tosiButtonText: text,
-    _tosiButtonBorder: border,
-    _tosiButtonHoverBg: background.darken(0.05),
-    _tosiButtonActiveBg: accent,
-    _tosiButtonActiveText: accentText
-  };
-}
-function createTheme(colors) {
-  return {
-    ":root": {
-      ...baseVariables,
-      ...createColorVariables(colors)
-    }
-  };
-}
-function createDarkTheme(colors) {
-  const lightTheme = createTheme(colors);
-  const rootStyles = lightTheme[":root"];
-  return {
-    ":root": uf(rootStyles)
-  };
-}
-function applyTheme(theme, id = "tosi-theme") {
-  Pf(id, theme);
-}
-var baseTheme = createTheme(defaultColors);
-var baseDarkTheme = createDarkTheme(defaultColors);
-var legacyAliases = {
-  "--xin-icon-size": fM.tosiIconSize,
-  "--xin-icon-fill": fM.tosiIconFill,
-  "--xin-icon-stroke": fM.tosiIconStroke,
-  "--xin-tabs-bar-color": fM.tosiTabsBarColor,
-  "--xin-tabs-bar-height": fM.tosiTabsBarHeight,
-  "--xin-tabs-selected-color": fM.tosiTabsSelectedColor,
-  "--spacing": fM.tosiSpacing,
-  "--gap": fM.tosiSpacingSm,
-  "--touch-size": fM.tosiTouchSize,
-  "--background": fM.tosiBg,
-  "--text-color": fM.tosiText,
-  "--brand-color": fM.tosiAccent,
-  "--brand-text-color": fM.tosiAccentText
-};
-function createThemeWithLegacy(colors) {
-  const theme = createTheme(colors);
-  return {
-    ":root": {
-      ...theme[":root"],
-      ...legacyAliases
-    }
-  };
-}
-function componentVars(componentName, defaults) {
-  const result = {};
-  for (const [key, value] of Object.entries(defaults)) {
-    const varName = `--tosi-${componentName}-${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`;
-    result[key] = `var(${varName}, ${value})`;
-  }
-  return result;
-}
 // demo/src/style.ts
 var brandColor = F.fromCss("#EE257B");
 var colors = {
@@ -33878,7 +34486,7 @@ Weak	Faible	Heikko	Svag	虚弱的	弱い	약한	Débil	Schwach	Debole
 Yes	Oui	Kyllä	Ja	是的	はい	예	Sí	Ja	Sì`;
 
 // demo/src/css-var-editor.ts
-var { h2: h22, code } = D;
+var { h2: h23, code } = D;
 
 class TosiCssVarEditor extends P {
   static preferredTagName = "tosi-css-var-editor";
@@ -33887,7 +34495,7 @@ class TosiCssVarEditor extends P {
     targetSelector: ""
   };
   content = () => [
-    h22({ part: "title" }, "CSS variables"),
+    h23({ part: "title" }, "CSS variables"),
     tosiForm({ part: "variables", changeCallback: this.update })
   ];
   loadVars = () => {
@@ -35837,6 +36445,67 @@ and axis positions.`,
     path: "src/gamepad.ts"
   },
   {
+    text: `# header
+
+A reusable app header with built-in settings menu for theme switching
+and locale selection.
+
+## Basic Header
+
+\`\`\`html
+<tosi-header project-name="My App"></tosi-header>
+\`\`\`
+\`\`\`js
+import { tosiHeader } from 'tosijs-ui'
+
+preview.append(
+  tosiHeader({ projectName: 'My App' })
+)
+\`\`\`
+
+## Header with Links
+
+Pass \`projectLinks\` as a property to show icon links in the header:
+
+\`\`\`js
+import { tosiHeader } from 'tosijs-ui'
+
+const header = tosiHeader({ projectName: 'Demo' })
+header.projectLinks = {
+  github: 'https://github.com/example/project',
+}
+preview.append(header)
+\`\`\`
+
+## Theme and Locale Control
+
+The header's settings menu controls theme (system/dark/light + high contrast)
+and locale. Pass a \`themePrefs\` observable to persist user choices:
+
+\`\`\`js
+import { tosiHeader } from 'tosijs-ui'
+import { tosi } from 'tosijs'
+
+const { prefs } = tosi({
+  prefs: {
+    theme: 'system',
+    highContrast: false,
+    locale: '',
+  },
+})
+
+const header = tosiHeader({
+  projectName: 'Themed App',
+  showLocale: false,
+})
+header.themePrefs = prefs
+preview.append(header)
+\`\`\``,
+    title: "header",
+    filename: "header.ts",
+    path: "src/header.ts"
+  },
+  {
     text: `# icons
 
 <div class="center" style="display: flex; gap: 10px; padding: 10px">
@@ -36276,6 +36945,133 @@ Nobody normal ever accomplished anything meaningful in this world. It's just, so
     title: "kitchen sink",
     filename: "kitchen-sink.md",
     path: "src/kitchen-sink.md"
+  },
+  {
+    text: `# layout
+
+Thin structural layout components that wrap CSS flexbox and grid.
+
+## tosi-row
+
+A flex row container. Children are laid out horizontally.
+
+\`\`\`html
+<tosi-row gap="12px" align="center">
+  <button>One</button>
+  <button>Two</button>
+  <button>Three</button>
+</tosi-row>
+\`\`\`
+\`\`\`js
+import { tosiRow } from 'tosijs-ui'
+
+preview.append(
+  tosiRow(
+    { gap: '8px', wrap: true },
+    ...Array.from({ length: 8 }, (_, i) => {
+      const btn = document.createElement('button')
+      btn.textContent = \`Item \${i + 1}\`
+      return btn
+    })
+  )
+)
+\`\`\`
+
+## tosi-column
+
+A flex column container. Children are laid out vertically.
+
+\`\`\`html
+<tosi-column gap="8px">
+  <span>First</span>
+  <span>Second</span>
+  <span>Third</span>
+</tosi-column>
+\`\`\`
+\`\`\`js
+import { tosiColumn } from 'tosijs-ui'
+
+preview.append(
+  tosiColumn(
+    { gap: '4px' },
+    ...['Alpha', 'Beta', 'Gamma'].map((t) => {
+      const span = document.createElement('span')
+      span.textContent = t
+      return span
+    })
+  )
+)
+\`\`\`
+
+## tosi-grid
+
+A CSS grid container.
+
+\`\`\`html
+<tosi-grid columns="1fr 1fr 1fr" gap="8px">
+  <div style="background:#eee;padding:8px">A</div>
+  <div style="background:#ddd;padding:8px">B</div>
+  <div style="background:#ccc;padding:8px">C</div>
+  <div style="background:#bbb;padding:8px">D</div>
+  <div style="background:#aaa;padding:8px">E</div>
+  <div style="background:#999;padding:8px;color:white">F</div>
+</tosi-grid>
+\`\`\`
+\`\`\`js
+import { tosiGrid } from 'tosijs-ui'
+
+preview.append(
+  tosiGrid(
+    { columns: 'repeat(3, 1fr)', gap: '4px' },
+    ...Array.from({ length: 6 }, (_, i) => {
+      const d = document.createElement('div')
+      d.textContent = \`Cell \${i + 1}\`
+      d.style.padding = '8px'
+      d.style.background = '#eee'
+      return d
+    })
+  )
+)
+\`\`\``,
+    title: "layout",
+    filename: "layout.ts",
+    path: "src/layout.ts"
+  },
+  {
+    text: `# live-theme
+
+A live theme editor that lets you tweak theme colors in real time.
+Changes apply instantly to the page. The editor itself is immune to
+theme changes (it uses hardcoded styles in shadow DOM).
+
+## Theme Editor
+
+\`\`\`html
+<tosi-theme-editor></tosi-theme-editor>
+\`\`\`
+\`\`\`js
+import { tosiThemeEditor, liveTheme } from 'tosijs-ui'
+
+preview.append(tosiThemeEditor())
+\`\`\`
+
+## Programmatic Control
+
+The \`liveTheme\` observable lets you read and write theme values from code:
+
+\`\`\`js
+import { liveTheme } from 'tosijs-ui'
+
+// Read current values
+// liveTheme.accent.value   // '#EE257B'
+// liveTheme.dark.value     // false
+
+// Set values programmatically (triggers immediate theme update)
+// liveTheme.accent.value = '#007AFF'
+\`\`\``,
+    title: "live-theme",
+    filename: "live-theme.ts",
+    path: "src/live-theme.ts"
   },
   {
     text: `# localize
@@ -38563,6 +39359,128 @@ form.addEventListener('submit', (e) => {
     path: "src/rich-text.ts"
   },
   {
+    text: `# router
+
+A lightweight client-side router for single-page applications. Supports
+pattern matching with named parameters, hash-based routing, and multiple
+named route views (slots).
+
+## Basic Usage
+
+\`\`\`js
+import { defineRoutes, navigate, router, tosiRouteView } from 'tosijs-ui'
+
+const home = () => {
+  const el = document.createElement('div')
+  el.textContent = 'Home page'
+  return el
+}
+
+const about = () => {
+  const el = document.createElement('div')
+  el.textContent = 'About page'
+  return el
+}
+
+const greeting = (params) => {
+  const el = document.createElement('div')
+  el.textContent = \`Hello, \${params.name}!\`
+  return el
+}
+
+defineRoutes([
+  { pattern: '', targets: [{ component: home }] },
+  { pattern: 'about', targets: [{ component: about }] },
+  { pattern: 'greet/:name', targets: [{ component: greeting }] },
+])
+
+preview.append(
+  tosiRouteView(),
+)
+
+// Navigate programmatically
+navigate('greet/World')
+\`\`\`
+
+## Named Views
+
+Routes can target multiple named views simultaneously. This is useful
+for layouts where a route change should update several areas of the page.
+
+\`\`\`js
+import { defineRoutes, navigate, tosiRouteView } from 'tosijs-ui'
+
+const mainContent = (params) => {
+  const el = document.createElement('div')
+  el.textContent = \`Editing photo \${params.id}\`
+  el.style.padding = '12px'
+  el.style.background = '#f0f0f0'
+  return el
+}
+
+const sidebar = () => {
+  const el = document.createElement('div')
+  el.textContent = 'Color palette tools'
+  el.style.padding = '12px'
+  el.style.background = '#e0e0ff'
+  return el
+}
+
+defineRoutes([
+  {
+    pattern: 'photos/:id/edit',
+    targets: [
+      { view: 'main', component: mainContent },
+      { view: 'tools', component: sidebar },
+    ],
+  },
+])
+
+const container = document.createElement('div')
+container.style.display = 'flex'
+container.style.gap = '8px'
+container.append(
+  tosiRouteView({ name: 'main', style: { flex: '1' } }),
+  tosiRouteView({ name: 'tools', style: { width: '200px' } }),
+)
+preview.append(container)
+
+navigate('photos/42/edit')
+\`\`\`
+
+## Hash Routing
+
+Set \`hashRouting: true\` when defining routes to use hash-based URLs
+(\`#/path\`) instead of History API paths. This is useful when your app
+is served from a static file server that doesn't support URL rewriting.
+
+\`\`\`js
+import { defineRoutes, navigate, tosiRouteView } from 'tosijs-ui'
+
+defineRoutes(
+  [
+    {
+      pattern: 'page/:id',
+      targets: [{
+        component: (p) => {
+          const el = document.createElement('div')
+          el.textContent = \`Page \${p.id}\`
+          return el
+        },
+      }],
+    },
+  ],
+  { hashRouting: true }
+)
+
+preview.append(tosiRouteView())
+navigate('page/1')
+\`\`\``,
+    title: "router",
+    filename: "router.ts",
+    path: "src/router.ts"
+  },
+  {
     text: `# scriptTag & styleSheet
 
 ## scriptTag
@@ -39161,10 +40079,10 @@ preview.append(tosiTable({
 }
 \`\`\`
 \`\`\`test
-const table = await new Promise(resolve => {
+const table = await waitFor('tosi-table')
+await new Promise(resolve => {
   const check = () => {
-    const t = preview.querySelector('tosi-table')
-    if (t && t.visibleRows.length > 0) return resolve(t)
+    if (table.visibleRows.length > 0) return resolve()
     setTimeout(check, 100)
   }
   check()
@@ -39173,18 +40091,25 @@ const table = await new Promise(resolve => {
 test('table renders with data', () => {
   expect(table.multiple).toBe(true)
   expect(table.visibleRows.length).toBeGreaterThan(0)
+  expect(table.array.length).toBeGreaterThan(0)
 })
 
-test('row selection works', () => {
-  const rows = table.visibleRows
+test('row selection via data model', () => {
+  const items = table.array
   table.deSelect()
-  table.selectRow(rows[0])
-  table.selectRow(rows[1])
+  table.selectRow(items[0])
+  table.selectRow(items[1])
+
+  // Data model reflects selection immediately
+  expect(items[0][table.selectedKey]).toBe(true)
+  expect(items[1][table.selectedKey]).toBe(true)
   expect(table.selectedRows.length).toBe(2)
-  expect(table.querySelectorAll('.tr[aria-selected]').length).toBe(2)
+
+  // Deselect and verify data model
   table.deSelect()
   expect(table.selectedRows.length).toBe(0)
-  expect(table.querySelectorAll('.tr[aria-selected]').length).toBe(0)
+  expect(items[0][table.selectedKey]).not.toBe(true)
+  expect(items[1][table.selectedKey]).not.toBe(true)
 })
 \`\`\`
 
@@ -39918,22 +40843,22 @@ var browser = createDocBrowser({
   }
 });
 if (main) {
-  const header3 = browser.querySelector("header");
-  if (header3) {
-    const { img, a: a4, span: span16, button: button14 } = D;
-    const sizeBreakElement = header3.querySelector("tosi-sizebreak");
+  const header4 = browser.querySelector("header");
+  if (header4) {
+    const { img, a: a5, span: span18, button: button16 } = D;
+    const sizeBreakElement = header4.querySelector("tosi-sizebreak");
     if (sizeBreakElement) {
-      const badges = span16({
+      const badges = span18({
         style: {
           marginRight: fM.spacing,
           display: "flex",
           alignItems: "center",
           gap: fM.spacing50
         }
-      }, a4({ href: `https://bundlejs.com/?q=${PROJECT}`, target: "_blank" }, img({
+      }, a5({ href: `https://bundlejs.com/?q=${PROJECT}`, target: "_blank" }, img({
         alt: "bundlejs size badge",
         src: `https://deno.bundlejs.com/?q=${PROJECT}&badge=`
-      })), a4({
+      })), a5({
         href: `https://www.jsdelivr.com/package/npm/${PROJECT}`,
         target: "_blank"
       }, img({
@@ -39947,7 +40872,7 @@ if (main) {
         sizeBreakElement.prepend(badges);
       }
     }
-    const settingsButton = button14({
+    const settingsButton = button16({
       class: "iconic",
       style: { color: fM.linkColor },
       title: "links and settings",
@@ -40016,7 +40941,7 @@ if (main) {
         });
       }
     }, icons.moreVertical());
-    header3.append(settingsButton);
+    header4.append(settingsButton);
   }
   main.append(browser);
 }

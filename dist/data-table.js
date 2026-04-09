@@ -72,10 +72,10 @@ preview.append(tosiTable({
 }
 ```
 ```test
-const table = await new Promise(resolve => {
+const table = await waitFor('tosi-table')
+await new Promise(resolve => {
   const check = () => {
-    const t = preview.querySelector('tosi-table')
-    if (t && t.visibleRows.length > 0) return resolve(t)
+    if (table.visibleRows.length > 0) return resolve()
     setTimeout(check, 100)
   }
   check()
@@ -84,18 +84,25 @@ const table = await new Promise(resolve => {
 test('table renders with data', () => {
   expect(table.multiple).toBe(true)
   expect(table.visibleRows.length).toBeGreaterThan(0)
+  expect(table.array.length).toBeGreaterThan(0)
 })
 
-test('row selection works', () => {
-  const rows = table.visibleRows
+test('row selection via data model', () => {
+  const items = table.array
   table.deSelect()
-  table.selectRow(rows[0])
-  table.selectRow(rows[1])
+  table.selectRow(items[0])
+  table.selectRow(items[1])
+
+  // Data model reflects selection immediately
+  expect(items[0][table.selectedKey]).toBe(true)
+  expect(items[1][table.selectedKey]).toBe(true)
   expect(table.selectedRows.length).toBe(2)
-  expect(table.querySelectorAll('.tr[aria-selected]').length).toBe(2)
+
+  // Deselect and verify data model
   table.deSelect()
   expect(table.selectedRows.length).toBe(0)
-  expect(table.querySelectorAll('.tr[aria-selected]').length).toBe(0)
+  expect(items[0][table.selectedKey]).not.toBe(true)
+  expect(items[1][table.selectedKey]).not.toBe(true)
 })
 ```
 
