@@ -25553,23 +25553,65 @@ var filterForClick = (items, hideDisabled = false) => {
   }
   return cleanSeparators(filtered);
 };
+var menuStyles = {
+  overflow: "hidden auto",
+  maxHeight: `calc(${fM.maxHeight} - ${jE.menuInset("8px")})`,
+  borderRadius: fM.spacing50,
+  background: jE.menuBg("#fafafa"),
+  boxShadow: jE.menuShadow(`${fM.spacing13} ${fM.spacing50} ${fM.spacing} #0004`)
+};
+var menuItemStyles = {
+  boxShadow: "none",
+  border: "none !important",
+  display: "grid",
+  alignItems: "center",
+  justifyContent: "flex-start",
+  textDecoration: "none",
+  gridTemplateColumns: "0px 1fr 30px",
+  width: "100%",
+  gap: 0,
+  background: "transparent",
+  padding: jE.menuItemPadding("0 16px"),
+  height: jE.menuItemHeight("48px"),
+  lineHeight: jE.menuItemHeight("48px"),
+  textAlign: "left"
+};
+var menuItemColorStyles = {
+  color: jE.menuItemColor("#222")
+};
+var menuItemHoverStyles = {
+  boxShadow: "none !important",
+  background: jE.menuItemHoverBg("#eee")
+};
+var menuItemActiveStyles = {
+  boxShadow: "none !important",
+  background: jE.menuItemActiveBg("#aaa"),
+  color: jE.menuItemActiveColor("#000")
+};
+var dropOverStyles = {
+  background: `${jE.menuDropOverBg("#2196F3")} !important`,
+  color: `${jE.menuDropOverColor("#fff")} !important`
+};
+var dropOverSpanStyles = {
+  color: `${jE.menuDropOverColor("#fff")} !important`
+};
+var dropOverSvgStyles = {
+  stroke: `${jE.menuDropOverColor("#fff")} !important`
+};
+var dragTargetHoverStyles = {
+  boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${jE.menuDropOverBg("#2196F3")} 50%, transparent) !important`
+};
 Pf("xin-menu-helper", {
-  ".xin-menu": {
-    overflow: "hidden auto",
-    maxHeight: `calc(${fM.maxHeight} - ${jE.menuInset("8px")})`,
-    borderRadius: fM.spacing50,
-    background: jE.menuBg("#fafafa"),
-    boxShadow: jE.menuShadow(`${fM.spacing13} ${fM.spacing50} ${fM.spacing} #0004`)
-  },
-  ".xin-menu > div": {
+  ".xin-menu, .tosi-menu": menuStyles,
+  ".xin-menu > div, .tosi-menu > div": {
     width: jE.menuWidth("auto")
   },
-  ".xin-menu-trigger": {
+  ".xin-menu-trigger, .tosi-menu-trigger": {
     paddingLeft: 0,
     paddingRight: 0,
     minWidth: jE.touchSize("48px")
   },
-  ".xin-menu-separator": {
+  ".xin-menu-separator, .tosi-menu-separator": {
     display: "inline-block",
     content: " ",
     height: "1px",
@@ -25577,76 +25619,37 @@ Pf("xin-menu-helper", {
     background: jE.menuSeparatorColor("#2224"),
     margin: jE.menuSeparatorMargin("8px 0")
   },
-  ".xin-menu-item": {
-    boxShadow: "none",
-    border: "none !important",
-    display: "grid",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    textDecoration: "none",
-    gridTemplateColumns: "0px 1fr 30px",
-    width: "100%",
-    gap: 0,
-    background: "transparent",
-    padding: jE.menuItemPadding("0 16px"),
-    height: jE.menuItemHeight("48px"),
-    lineHeight: jE.menuItemHeight("48px"),
-    textAlign: "left"
-  },
-  ".xin-menu-item, .xin-menu-item > span": {
-    color: jE.menuItemColor("#222")
-  },
-  ".xin-menu-with-icons .xin-menu-item": {
+  ".xin-menu-item, .tosi-menu-item": menuItemStyles,
+  ".xin-menu-item, .xin-menu-item > span, .tosi-menu-item, .tosi-menu-item > span": menuItemColorStyles,
+  ".xin-menu-with-icons .xin-menu-item, .tosi-menu-with-icons .tosi-menu-item": {
     gridTemplateColumns: "30px 1fr 30px"
   },
-  ".xin-menu-item svg": {
+  ".xin-menu-item svg, .tosi-menu-item svg": {
     stroke: jE.menuItemIconColor("#222")
   },
-  ".xin-menu-item.xin-menu-item-checked": {
+  ".xin-menu-item.xin-menu-item-checked, .tosi-menu-item.tosi-menu-item-checked": {
     background: jE.menuItemHoverBg("#eee")
   },
-  ".xin-menu-item > span:nth-child(2)": {
+  ".xin-menu-item > span:nth-child(2), .tosi-menu-item > span:nth-child(2)": {
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
     textAlign: "left"
   },
-  ".xin-menu-item:hover": {
-    boxShadow: "none !important",
-    background: jE.menuItemHoverBg("#eee")
-  },
-  ".xin-menu-item.drag-target:hover": {
-    boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${jE.menuDropOverBg("#2196F3")} 50%, transparent) !important`
-  },
-  ".xin-menu-item:active": {
-    boxShadow: "none !important",
-    background: jE.menuItemActiveBg("#aaa"),
-    color: jE.menuItemActiveColor("#000")
-  },
-  ".xin-menu-item:active svg": {
+  ".xin-menu-item:hover, .tosi-menu-item:hover": menuItemHoverStyles,
+  ".xin-menu-item.drag-target:hover, .tosi-menu-item.drag-target:hover": dragTargetHoverStyles,
+  ".xin-menu-item:active, .tosi-menu-item:active": menuItemActiveStyles,
+  ".xin-menu-item:active svg, .tosi-menu-item:active svg": {
     stroke: jE.menuItemIconActiveColor("#000")
   },
-  ".xin-menu-item-highlight": {
-    boxShadow: "none !important",
-    background: jE.menuItemActiveBg("#aaa"),
-    color: jE.menuItemActiveColor("#000")
-  },
-  ".xin-menu-item-highlight svg": {
+  ".xin-menu-item-highlight, .tosi-menu-item-highlight": menuItemActiveStyles,
+  ".xin-menu-item-highlight svg, .tosi-menu-item-highlight svg": {
     stroke: jE.menuItemIconActiveColor("#000")
   },
-  ".xin-drop-over": {
-    background: `${jE.menuDropOverBg("#2196F3")} !important`,
-    color: `${jE.menuDropOverColor("#fff")} !important`
-  },
-  ".xin-drop-over > span": {
-    color: `${jE.menuDropOverColor("#fff")} !important`
-  },
-  ".xin-drop-over svg": {
-    stroke: `${jE.menuDropOverColor("#fff")} !important`
-  },
-  ".drag-target": {
-    boxShadow: `inset 0 0 0 2px color-mix(in srgb, ${jE.menuDropOverBg("#2196F3")} 50%, transparent) !important`
-  }
+  ".xin-drop-over, .tosi-drop-over": dropOverStyles,
+  ".xin-drop-over > span, .tosi-drop-over > span": dropOverSpanStyles,
+  ".xin-drop-over svg, .tosi-drop-over svg": dropOverSvgStyles,
+  ".drag-target": dragTargetHoverStyles
 });
 var createMenuAction = (item, options) => {
   const checked = item.checked && item.checked() && "check" || false;
@@ -25659,18 +25662,19 @@ var createMenuAction = (item, options) => {
   const props = item.properties || {};
   if (typeof item?.action === "string") {
     menuItem = a2({
-      class: "xin-menu-item",
+      class: "xin-menu-item tosi-menu-item",
       role: itemRole,
       href: item.action
     }, props, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut ? displayShortcut(item.shortcut) : " "));
   } else {
     menuItem = button3({
-      class: "xin-menu-item",
+      class: "xin-menu-item tosi-menu-item",
       role: itemRole,
       onClick: item.action
     }, props, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut ? displayShortcut(item.shortcut) : " "));
   }
   menuItem.classList.toggle("xin-menu-item-checked", checked !== false);
+  menuItem.classList.toggle("tosi-menu-item-checked", checked !== false);
   if (item.tooltip) {
     menuItem.dataset.tooltip = item.tooltip;
   }
@@ -25690,10 +25694,10 @@ var createDropMenuItem = (item, options) => {
   }
   const props = item.properties || {};
   const menuItem = button3({
-    class: "xin-menu-item",
+    class: "xin-menu-item tosi-menu-item",
     onDragenter(event) {
       clearDropGraceTimer();
-      menuItem.classList.add("xin-drop-over");
+      menuItem.classList.add("xin-drop-over", "tosi-drop-over");
       event.preventDefault();
     },
     onDragover(event) {
@@ -25706,12 +25710,12 @@ var createDropMenuItem = (item, options) => {
       const related = event.relatedTarget;
       if (related && menuItem.contains(related))
         return;
-      menuItem.classList.remove("xin-drop-over");
+      menuItem.classList.remove("xin-drop-over", "tosi-drop-over");
     },
     onDrop(event) {
       event.preventDefault();
       event.stopPropagation();
-      menuItem.classList.remove("xin-drop-over");
+      menuItem.classList.remove("xin-drop-over", "tosi-drop-over");
       if (item.dropAction && event.dataTransfer) {
         item.dropAction(event.dataTransfer);
       }
@@ -25740,7 +25744,7 @@ var createSubMenu = (item, options) => {
   let disclosed = false;
   const props = item.properties || {};
   const submenuItem = button3({
-    class: "xin-menu-item",
+    class: "xin-menu-item tosi-menu-item",
     disabled: !(!item.enabled || item.enabled()),
     onClick(event) {
       if (options._dropMode)
@@ -25763,7 +25767,7 @@ var createSubMenu = (item, options) => {
       const from = event.relatedTarget;
       if (from && submenuItem.contains(from))
         return;
-      submenuItem.classList.add("xin-drop-over");
+      submenuItem.classList.add("xin-drop-over", "tosi-drop-over");
       if (disclosed) {
         removeLastMenu((options.submenuDepth || 0) + 1);
         disclosed = false;
@@ -25808,7 +25812,7 @@ var createSubMenu = (item, options) => {
       if (disclosed && related && poppedMenus.some((p) => p.menu.contains(related) || p.target.contains(related))) {
         return;
       }
-      submenuItem.classList.remove("xin-drop-over");
+      submenuItem.classList.remove("xin-drop-over", "tosi-drop-over");
       if (disclosureTimer) {
         clearTimeout(disclosureTimer);
         disclosureTimer = null;
@@ -25819,7 +25823,7 @@ var createSubMenu = (item, options) => {
         return;
       event.preventDefault();
       event.stopPropagation();
-      submenuItem.classList.remove("xin-drop-over");
+      submenuItem.classList.remove("xin-drop-over", "tosi-drop-over");
       if (event.dataTransfer) {
         item.dropAction(event.dataTransfer);
       }
@@ -25836,7 +25840,7 @@ var createSubMenu = (item, options) => {
 };
 var createMenuItem = (item, options) => {
   if (item === null) {
-    return span3({ class: "xin-menu-separator" });
+    return span3({ class: "xin-menu-separator tosi-menu-separator" });
   } else if (options._dropMode) {
     const sub = item;
     const hasChildren = sub.menuItems && resolveMenuItems(sub.menuItems).length > 0;
@@ -25850,7 +25854,7 @@ var createMenuItem = (item, options) => {
         icon = icons[icon]();
       }
       return button3({
-        class: "xin-menu-item",
+        class: "xin-menu-item tosi-menu-item",
         disabled: true
       }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(" "));
     }
@@ -25869,7 +25873,7 @@ var menu = (options) => {
   const hasIcons = menuItems.find((item) => item?.icon || item?.checked);
   const menuDepth = options.submenuDepth || 0;
   const menuDiv = div2({
-    class: hasIcons ? "xin-menu xin-menu-with-icons" : "xin-menu",
+    class: hasIcons ? "xin-menu tosi-menu xin-menu-with-icons tosi-menu-with-icons" : "xin-menu tosi-menu",
     role,
     onClick() {
       if (!options._dropMode) {
@@ -25928,7 +25932,7 @@ var startDropGraceTimer = (depth) => {
 var removeLastMenu = (depth = 0) => {
   clearDropGraceTimer();
   if (depth === 0) {
-    document.querySelectorAll("tosi-menu.xin-drop-over").forEach((el) => el.classList.remove("xin-drop-over"));
+    document.querySelectorAll("tosi-menu.xin-drop-over, tosi-menu.tosi-drop-over").forEach((el) => el.classList.remove("xin-drop-over", "tosi-drop-over"));
   }
   const toBeRemoved = poppedMenus.splice(depth);
   for (const popped of toBeRemoved) {
@@ -26089,7 +26093,7 @@ class TosiMenu extends P {
     if (!this._dragMatches)
       return;
     clearDropGraceTimer();
-    this.classList.add("xin-drop-over");
+    this.classList.add("xin-drop-over", "tosi-drop-over");
     const dragTypes = [...event.dataTransfer?.types || []];
     if (this.menuItems.length) {
       popDropMenu({
@@ -26119,10 +26123,10 @@ class TosiMenu extends P {
     if (related && this.contains(related))
       return;
     if (related && poppedMenus.some((p) => p.menu.contains(related) || p.target.contains(related))) {
-      this.classList.remove("xin-drop-over");
+      this.classList.remove("xin-drop-over", "tosi-drop-over");
       return;
     }
-    this.classList.remove("xin-drop-over");
+    this.classList.remove("xin-drop-over", "tosi-drop-over");
     startDropGraceTimer(0);
   };
   handleDrop = (event) => {
@@ -26130,7 +26134,7 @@ class TosiMenu extends P {
       return;
     event.preventDefault();
     event.stopPropagation();
-    this.classList.remove("xin-drop-over");
+    this.classList.remove("xin-drop-over", "tosi-drop-over");
     if (event.dataTransfer) {
       this.dropAction(event.dataTransfer);
     }
@@ -26191,7 +26195,7 @@ class TosiMenu extends P {
     if (lastFloat) {
       const itemEl = this.findMenuItemByCaption(lastFloat, action.caption);
       if (itemEl) {
-        itemEl.classList.add("xin-menu-item-highlight");
+        itemEl.classList.add("xin-menu-item-highlight", "tosi-menu-item-highlight");
       }
     }
     await new Promise((r2) => setTimeout(r2, 300));
@@ -33917,7 +33921,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = vE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.4.11";
+var version = "1.4.12";
 // src/tooltip.ts
 var { span: span18 } = D;
 var tooltipFloat = null;
