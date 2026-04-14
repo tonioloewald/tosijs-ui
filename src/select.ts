@@ -229,12 +229,14 @@ export interface SelectOption {
   icon?: string | HTMLElement
   caption: string
   value: string | OptionRequest
+  tooltip?: string
 }
 
 export interface SelectOptionSubmenu {
   icon?: string | HTMLElement
   caption: string
   options: SelectOptions
+  tooltip?: string
 }
 
 export type SelectOptions = Array<
@@ -399,10 +401,13 @@ export class TosiSelect extends Component<SelectParts> {
     let icon: string | HTMLElement | undefined
     let caption: string
     let value: string | OptionRequest
+    let tooltip: string | undefined
     if (typeof option === 'string') {
       caption = value = option
     } else {
-      ;({ icon, caption, value } = option as SelectOption)
+      ;({ icon, caption, value, tooltip } = option as SelectOption & {
+        tooltip?: string
+      })
     }
     if (this.localized) {
       caption = localize(caption)
@@ -412,6 +417,7 @@ export class TosiSelect extends Component<SelectParts> {
       return {
         icon,
         caption,
+        tooltip,
         checked: () => hasValue(options, getValue()),
         menuItems: options.map(this.buildOptionMenuItem),
       }
@@ -419,6 +425,7 @@ export class TosiSelect extends Component<SelectParts> {
     return {
       icon,
       caption,
+      tooltip,
       checked: () => getValue() === value,
       action:
         typeof value === 'function'

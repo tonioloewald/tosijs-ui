@@ -24914,10 +24914,11 @@ class TosiSelect extends P {
     let icon;
     let caption;
     let value;
+    let tooltip;
     if (typeof option === "string") {
       caption = value = option;
     } else {
-      ({ icon, caption, value } = option);
+      ({ icon, caption, value, tooltip } = option);
     }
     if (this.localized) {
       caption = localize(caption);
@@ -24927,6 +24928,7 @@ class TosiSelect extends P {
       return {
         icon,
         caption,
+        tooltip,
         checked: () => hasValue(options, getValue()),
         menuItems: options.map(this.buildOptionMenuItem)
       };
@@ -24934,6 +24936,7 @@ class TosiSelect extends P {
     return {
       icon,
       caption,
+      tooltip,
       checked: () => getValue() === value,
       action: typeof value === "function" ? async () => {
         const newValue = await value();
@@ -33908,7 +33911,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = vE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.4.9";
+var version = "1.4.10";
 // src/tooltip.ts
 var { span: span18 } = D;
 var tooltipFloat = null;

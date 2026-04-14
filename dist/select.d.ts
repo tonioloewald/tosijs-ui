@@ -5,11 +5,13 @@ export interface SelectOption {
     icon?: string | HTMLElement;
     caption: string;
     value: string | OptionRequest;
+    tooltip?: string;
 }
 export interface SelectOptionSubmenu {
     icon?: string | HTMLElement;
     caption: string;
     options: SelectOptions;
+    tooltip?: string;
 }
 export type SelectOptions = Array<string | null | SelectOption | SelectOptionSubmenu>;
 interface SelectParts extends PartsMap {
