@@ -23320,6 +23320,7 @@ __export(exports_src, {
   keycode: () => keycode,
   isBreached: () => isBreached,
   insertExamples: () => insertExamples,
+  initTooltips: () => initTooltips,
   initLocalization: () => initLocalization,
   icons: () => icons,
   i18n: () => i18n,
@@ -25663,6 +25664,9 @@ var createMenuAction = (item, options) => {
     }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut ? displayShortcut(item.shortcut) : " "));
   }
   menuItem.classList.toggle("xin-menu-item-checked", checked !== false);
+  if (item.tooltip) {
+    menuItem.dataset.tooltip = item.tooltip;
+  }
   if (options.role === "listbox" && checked) {
     menuItem.setAttribute("aria-selected", "true");
   }
@@ -25706,6 +25710,9 @@ var createDropMenuItem = (item, options) => {
       removeLastMenu(0);
     }
   }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(" "));
+  if (item.tooltip) {
+    menuItem.dataset.tooltip = item.tooltip;
+  }
   if (item.dropAction && item.acceptsDrop) {
     menuItem.dataset.drop = item.acceptsDrop.join(";");
   }
@@ -25810,6 +25817,9 @@ var createSubMenu = (item, options) => {
       removeLastMenu(0);
     }
   }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), icons.chevronRight({ style: { justifySelf: "flex-end" } }));
+  if (item.tooltip) {
+    submenuItem.dataset.tooltip = item.tooltip;
+  }
   if (options._dropMode && item.dropAction && item.acceptsDrop) {
     submenuItem.dataset.drop = item.acceptsDrop.join(";");
   }
@@ -28261,6 +28271,10 @@ class TosiTabs extends P {
       title: "close",
       class: "close"
     }, icons.x()) : {});
+    const tooltip = tabBody.dataset.tooltip;
+    if (tooltip) {
+      tab.dataset.tooltip = tooltip;
+    }
     return tab;
   }
   static shadowStyleSpec = {
@@ -33894,7 +33908,170 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = vE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.4.8";
+var version = "1.4.9";
+// src/tooltip.ts
+var { span: span18 } = D;
+var tooltipFloat = null;
+var showTimeout = null;
+var currentTarget = null;
+var TOOLTIP_CLASS = "tosi-tooltip";
+Pf("tosi-tooltip", {
+  [`.${TOOLTIP_CLASS}`]: {
+    pointerEvents: "none",
+    padding: jE.tosiTooltipPadding("4px 10px"),
+    borderRadius: jE.tosiTooltipRadius("6px"),
+    background: jE.tosiTooltipBg("#333"),
+    color: jE.tosiTooltipColor("#fff"),
+    fontSize: jE.tosiTooltipFontSize("13px"),
+    lineHeight: "1.4",
+    maxWidth: jE.tosiTooltipMaxWidth("280px"),
+    whiteSpace: "pre-line",
+    boxShadow: "0 2px 8px #0003",
+    position: "relative"
+  },
+  [`.${TOOLTIP_CLASS} p`]: {
+    margin: "0"
+  },
+  [`.${TOOLTIP_CLASS} code`]: {
+    background: "#fff2",
+    padding: "0 4px",
+    borderRadius: "3px",
+    fontSize: "0.9em"
+  },
+  [`.${TOOLTIP_CLASS} a`]: {
+    color: "inherit"
+  },
+  [`.${TOOLTIP_CLASS}::before`]: {
+    content: '""',
+    position: "absolute",
+    width: "8px",
+    height: "8px",
+    background: "inherit",
+    transform: "rotate(45deg)"
+  },
+  [`.${TOOLTIP_CLASS}.tt-s::before`]: {
+    top: "-4px",
+    left: "var(--tosi-tooltip-arrow)"
+  },
+  [`.${TOOLTIP_CLASS}.tt-n::before`]: {
+    bottom: "-4px",
+    left: "var(--tosi-tooltip-arrow)"
+  },
+  [`.${TOOLTIP_CLASS}.tt-e::before`]: {
+    left: "-4px",
+    top: "var(--tosi-tooltip-arrow)"
+  },
+  [`.${TOOLTIP_CLASS}.tt-w::before`]: {
+    right: "-4px",
+    top: "var(--tosi-tooltip-arrow)"
+  }
+});
+function hideTooltip() {
+  if (showTimeout !== null) {
+    clearTimeout(showTimeout);
+    showTimeout = null;
+  }
+  if (tooltipFloat !== null) {
+    tooltipFloat.remove();
+    tooltipFloat = null;
+  }
+  currentTarget = null;
+}
+function arrowClass(position) {
+  if (position.startsWith("s"))
+    return "tt-s";
+  if (position.startsWith("n"))
+    return "tt-n";
+  if (position.startsWith("e"))
+    return "tt-e";
+  if (position.startsWith("w"))
+    return "tt-w";
+  return "tt-s";
+}
+function positionArrow(tooltipEl, target, position) {
+  const targetRect = target.getBoundingClientRect();
+  const tipRect = tooltipEl.getBoundingClientRect();
+  const targetCx = targetRect.left + targetRect.width * 0.5;
+  const targetCy = targetRect.top + targetRect.height * 0.5;
+  let offset;
+  if (position.startsWith("s") || position.startsWith("n")) {
+    offset = Math.max(8, Math.min(tipRect.width - 8, targetCx - tipRect.left)) - 4;
+  } else {
+    offset = Math.max(8, Math.min(tipRect.height - 8, targetCy - tipRect.top)) - 4;
+  }
+  tooltipEl.style.setProperty("--tosi-tooltip-arrow", offset + "px");
+}
+function renderText(text, useLocalize) {
+  if (useLocalize) {
+    text = localize(text);
+  }
+  const el = span18({ class: TOOLTIP_CLASS });
+  el.innerHTML = k2.parseInline(text);
+  return el;
+}
+function showTooltip(target, text, useLocalize) {
+  hideTooltip();
+  currentTarget = target;
+  const { top, left, width } = target.getBoundingClientRect();
+  const cx = left + width * 0.5;
+  const h4 = window.innerHeight;
+  const w2 = window.innerWidth;
+  const position = (top > h4 * 0.5 ? "n" : "s") + (cx > w2 * 0.5 ? "w" : "e");
+  const content = renderText(text, useLocalize);
+  content.classList.add(arrowClass(position));
+  tooltipFloat = popFloat({
+    content,
+    target,
+    position,
+    remainOnScroll: "remove",
+    remainOnResize: "remove"
+  });
+  requestAnimationFrame(() => {
+    if (tooltipFloat && currentTarget) {
+      positionArrow(content, target, position);
+    }
+  });
+}
+function findTooltipTarget(event) {
+  for (const node of event.composedPath()) {
+    if (node instanceof HTMLElement && node.dataset.tooltip) {
+      return node;
+    }
+  }
+  return null;
+}
+function initTooltips(options = {}) {
+  const {
+    convertTitles = true,
+    delay = 250,
+    localize: useLocalize = false
+  } = options;
+  document.addEventListener("pointermove", (event) => {
+    if (convertTitles) {
+      for (const node of event.composedPath()) {
+        if (node instanceof HTMLElement && node.title && !node.dataset.tooltip) {
+          node.dataset.tooltip = node.title;
+          node.removeAttribute("title");
+          break;
+        }
+      }
+    }
+    const target = findTooltipTarget(event);
+    if (target === currentTarget)
+      return;
+    hideTooltip();
+    if (!target)
+      return;
+    const text = target.dataset.tooltip || null;
+    if (!text)
+      return;
+    showTimeout = setTimeout(() => showTooltip(target, text, useLocalize), delay);
+  });
+  document.addEventListener("pointerleave", hideTooltip);
+  document.addEventListener("pointerdown", hideTooltip);
+  document.addEventListener("keydown", hideTooltip);
+  window.addEventListener("scroll", hideTooltip, true);
+}
 // demo/src/style.ts
 var brandColor = F.fromCss("#EE257B");
 var colors = {
@@ -36390,8 +36567,8 @@ import { tosiHeader, tosiMenu, elastic, icons } from 'tosijs-ui'
 
 const menu = tosiMenu({ class: 'menu-demo' }, icons.moreVertical())
 menu.menuItems = [
-  { caption: 'About', action() { alert('About!') } },
-  { caption: 'Settings', icon: 'settings', menuItems: [
+  { caption: 'About', tooltip: 'Learn more about this app', action() { alert('About!') } },
+  { caption: 'Settings', icon: 'settings', tooltip: 'Appearance options', menuItems: [
     { caption: 'Dark Mode' },
     { caption: 'High Contrast' },
   ]},
@@ -36407,7 +36584,7 @@ preview.append(
 )
 \`\`\`
 \`\`\`css
-.menu-demo {
+.menu-demo * {
   color: white;
   margin: 0;
   --text-color: white;
@@ -37939,6 +38116,7 @@ interface MenuAction {
   enabled?: () => boolean
   action: ActionCallback | string
   icon?: string | Element
+  tooltip?: string
 }
 \`\`\`
 
@@ -37950,6 +38128,7 @@ interface SubMenu {
   enabled?: () => boolean
   menuItems: MenuItem[]
   icon?: string | Element
+  tooltip?: string
 }
 \`\`\`
 
@@ -38350,6 +38529,38 @@ test('shadow DOM menu: open and dismiss', async () => {
   expect(countFloats()).toBe(before + 1)
   removeLastMenu(0)
 })
+\`\`\`
+
+## Menu Item Tooltips
+
+Add \`tooltip\` to any menu item to show a tooltip on hover (requires
+\`initTooltips()\`).
+
+\`\`\`js
+import { elements } from 'tosijs'
+import { popMenu, initTooltips, icons } from 'tosijs-ui'
+
+initTooltips()
+
+const { button } = elements
+const btn = button('Tooltipped Menu')
+
+btn.addEventListener('click', () => {
+  popMenu({
+    target: btn,
+    menuItems: [
+      { caption: 'Copy', icon: 'copy', tooltip: 'Copy to **clipboard**', shortcut: '⌘C', action() {} },
+      { caption: 'Paste', icon: 'clipboard', tooltip: 'Paste from clipboard', shortcut: '⌘V', action() {} },
+      null,
+      { caption: 'Export', icon: 'download', tooltip: 'Export as \`JSON\` or \`CSV\`', menuItems: [
+        { caption: 'JSON', action() {} },
+        { caption: 'CSV', action() {} },
+      ]},
+    ]
+  })
+})
+
+preview.append(btn)
 \`\`\``,
     title: "menu",
     filename: "menu.ts",
@@ -40235,7 +40446,34 @@ template will be cloned into the tab.
 \`\`\`
 
 \`<tosi-tabs>\` supports the \`localized\` attribute. It will automatically localize
-tab names (but it won't override custom tab content, so localizing that is on you).`,
+tab names (but it won't override custom tab content, so localizing that is on you).
+
+## Tab Tooltips
+
+Add \`data-tooltip\` to a tab body and it will be shown on its tab button
+(requires \`initTooltips()\`).
+
+\`\`\`js
+import { initTooltips } from 'tosijs-ui'
+
+initTooltips()
+\`\`\`
+\`\`\`html
+<tosi-tabs>
+  <div name="Overview" data-tooltip="Project summary and status">Overview content</div>
+  <div name="Details" data-tooltip="Configuration and **advanced** settings">Details content</div>
+  <div name="Log" data-tooltip="Recent activity and events">Log content</div>
+</tosi-tabs>
+\`\`\`
+\`\`\`css
+.preview tosi-tabs {
+  height: 100%;
+}
+.preview div[name] {
+  padding: 20px;
+  text-align: center;
+}
+\`\`\``,
     title: "tabs",
     filename: "tab-selector.ts",
     path: "src/tab-selector.ts"
@@ -40361,6 +40599,48 @@ Placeholder shown on input field.`,
     title: "theme",
     filename: "theme.ts",
     path: "src/theme.ts"
+  },
+  {
+    text: `# tooltip
+
+Automatic tooltips for any element with \`data-tooltip\` or \`title\` attributes.
+Call \`initTooltips()\` once to activate. By default, \`title\` attributes are
+converted to \`data-tooltip\` on hover so the browser's native tooltip is
+replaced.
+
+Tooltip text is parsed as **markdown** (if \`marked\` is available), so you
+can use \`*bold*\`, \`\` \`code\` \`\`, links, etc.
+
+\`\`\`js
+import { elements } from 'tosijs'
+import { initTooltips } from 'tosijs-ui'
+
+const { button, div } = elements
+
+initTooltips()
+
+preview.append(
+  div(
+    { style: { display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' } },
+    button({ dataTooltip: 'Save your work' }, 'Save'),
+    button({ dataTooltip: '**Bold** and \`code\` work' }, 'Markdown'),
+    button({ title: 'This was a title attribute' }, 'Title → Tooltip'),
+  )
+)
+\`\`\`
+
+## Options
+
+\`\`\`
+initTooltips({
+  convertTitles: true,  // convert title attrs to data-tooltip (default true)
+  delay: 250,           // ms before showing (default 250)
+  localize: false,      // pass tooltip text through localize() (default false)
+})
+\`\`\``,
+    title: "tooltip",
+    filename: "tooltip.ts",
+    path: "src/tooltip.ts"
   },
   {
     text: `# trackDrag
@@ -40753,10 +41033,10 @@ var browser = createDocBrowser({
 if (main) {
   const header4 = browser.querySelector("header");
   if (header4) {
-    const { img, a: a5, span: span18, button: button15 } = D;
+    const { img, a: a5, span: span19, button: button15 } = D;
     const sizeBreakElement = header4.querySelector("tosi-sizebreak");
     if (sizeBreakElement) {
-      const badges = span18({
+      const badges = span19({
         style: {
           marginRight: fM.spacing,
           display: "flex",

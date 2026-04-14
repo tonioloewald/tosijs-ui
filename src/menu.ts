@@ -254,6 +254,7 @@ interface MenuAction {
   enabled?: () => boolean
   action: ActionCallback | string
   icon?: string | Element
+  tooltip?: string
 }
 ```
 
@@ -265,6 +266,7 @@ interface SubMenu {
   enabled?: () => boolean
   menuItems: MenuItem[]
   icon?: string | Element
+  tooltip?: string
 }
 ```
 
@@ -667,6 +669,38 @@ test('shadow DOM menu: open and dismiss', async () => {
 })
 ```
 
+## Menu Item Tooltips
+
+Add `tooltip` to any menu item to show a tooltip on hover (requires
+`initTooltips()`).
+
+```js
+import { elements } from 'tosijs'
+import { popMenu, initTooltips, icons } from 'tosijs-ui'
+
+initTooltips()
+
+const { button } = elements
+const btn = button('Tooltipped Menu')
+
+btn.addEventListener('click', () => {
+  popMenu({
+    target: btn,
+    menuItems: [
+      { caption: 'Copy', icon: 'copy', tooltip: 'Copy to **clipboard**', shortcut: '⌘C', action() {} },
+      { caption: 'Paste', icon: 'clipboard', tooltip: 'Paste from clipboard', shortcut: '⌘V', action() {} },
+      null,
+      { caption: 'Export', icon: 'download', tooltip: 'Export as `JSON` or `CSV`', menuItems: [
+        { caption: 'JSON', action() {} },
+        { caption: 'CSV', action() {} },
+      ]},
+    ]
+  })
+})
+
+preview.append(btn)
+```
+
 */
 
 import {
@@ -692,6 +726,7 @@ export interface MenuAction {
   enabled?: () => boolean
   action: ActionCallback | string
   icon?: string | Element
+  tooltip?: string
   acceptsDrop?: string[]
   dropAction?: (dataTransfer: DataTransfer) => void
 }
@@ -704,6 +739,7 @@ export interface SubMenu {
   enabled?: () => boolean
   menuItems: MenuItemsProvider
   icon?: string | Element
+  tooltip?: string
   acceptsDrop?: string[]
   dropAction?: (dataTransfer: DataTransfer) => void
 }
@@ -958,6 +994,9 @@ export const createMenuAction = (
     )
   }
   menuItem.classList.toggle('xin-menu-item-checked', checked !== false)
+  if (item.tooltip) {
+    menuItem.dataset.tooltip = item.tooltip
+  }
   if (options.role === 'listbox' && checked) {
     menuItem.setAttribute('aria-selected', 'true')
   }
@@ -1009,6 +1048,9 @@ export const createDropMenuItem = (
     options.localized ? span(localize(item.caption)) : span(item.caption),
     span(' ')
   )
+  if (item.tooltip) {
+    menuItem.dataset.tooltip = item.tooltip
+  }
   if (item.dropAction && item.acceptsDrop) {
     menuItem.dataset.drop = item.acceptsDrop.join(';')
   }
@@ -1130,6 +1172,9 @@ export const createSubMenu = (
     options.localized ? span(localize(item.caption)) : span(item.caption),
     icons.chevronRight({ style: { justifySelf: 'flex-end' } })
   )
+  if (item.tooltip) {
+    submenuItem.dataset.tooltip = item.tooltip
+  }
   if (options._dropMode && item.dropAction && item.acceptsDrop) {
     submenuItem.dataset.drop = item.acceptsDrop.join(';')
   }

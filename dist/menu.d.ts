@@ -9,6 +9,7 @@ export interface MenuAction {
     enabled?: () => boolean;
     action: ActionCallback | string;
     icon?: string | Element;
+    tooltip?: string;
     acceptsDrop?: string[];
     dropAction?: (dataTransfer: DataTransfer) => void;
 }
@@ -19,6 +20,7 @@ export interface SubMenu {
     enabled?: () => boolean;
     menuItems: MenuItemsProvider;
     icon?: string | Element;
+    tooltip?: string;
     acceptsDrop?: string[];
     dropAction?: (dataTransfer: DataTransfer) => void;
 }

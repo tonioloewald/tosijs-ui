@@ -29,8 +29,8 @@ import { tosiHeader, tosiMenu, elastic, icons } from 'tosijs-ui'
 
 const menu = tosiMenu({ class: 'menu-demo' }, icons.moreVertical())
 menu.menuItems = [
-  { caption: 'About', action() { alert('About!') } },
-  { caption: 'Settings', icon: 'settings', menuItems: [
+  { caption: 'About', tooltip: 'Learn more about this app', action() { alert('About!') } },
+  { caption: 'Settings', icon: 'settings', tooltip: 'Appearance options', menuItems: [
     { caption: 'Dark Mode' },
     { caption: 'High Contrast' },
   ]},
@@ -46,7 +46,7 @@ preview.append(
 )
 ```
 ```css
-.menu-demo {
+.menu-demo * {
   color: white;
   margin: 0;
   --text-color: white;

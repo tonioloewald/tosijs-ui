@@ -106,6 +106,33 @@ template will be cloned into the tab.
 
 `<tosi-tabs>` supports the `localized` attribute. It will automatically localize
 tab names (but it won't override custom tab content, so localizing that is on you).
+
+## Tab Tooltips
+
+Add `data-tooltip` to a tab body and it will be shown on its tab button
+(requires `initTooltips()`).
+
+```js
+import { initTooltips } from 'tosijs-ui'
+
+initTooltips()
+```
+```html
+<tosi-tabs>
+  <div name="Overview" data-tooltip="Project summary and status">Overview content</div>
+  <div name="Details" data-tooltip="Configuration and **advanced** settings">Details content</div>
+  <div name="Log" data-tooltip="Recent activity and events">Log content</div>
+</tosi-tabs>
+```
+```css
+.preview tosi-tabs {
+  height: 100%;
+}
+.preview div[name] {
+  padding: 20px;
+  text-align: center;
+}
+```
 */
 
 import {
@@ -163,6 +190,10 @@ export class TosiTabs extends WebComponent {
           )
         : {}
     )
+    const tooltip = tabBody.dataset.tooltip
+    if (tooltip) {
+      tab.dataset.tooltip = tooltip
+    }
     return tab
   }
 
