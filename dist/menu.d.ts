@@ -1,4 +1,4 @@
-import { Component, PartsMap } from 'tosijs';
+import { ElementProps, Component, PartsMap } from 'tosijs';
 import { FloatPosition } from './pop-float';
 import { SvgIcon } from './icons';
 export type ActionCallback = () => void | Promise<void>;
@@ -10,6 +10,7 @@ export interface MenuAction {
     action: ActionCallback | string;
     icon?: string | Element;
     tooltip?: string;
+    properties?: ElementProps;
     acceptsDrop?: string[];
     dropAction?: (dataTransfer: DataTransfer) => void;
 }
@@ -21,6 +22,7 @@ export interface SubMenu {
     menuItems: MenuItemsProvider;
     icon?: string | Element;
     tooltip?: string;
+    properties?: ElementProps;
     acceptsDrop?: string[];
     dropAction?: (dataTransfer: DataTransfer) => void;
 }

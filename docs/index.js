@@ -24915,10 +24915,11 @@ class TosiSelect extends P {
     let caption;
     let value;
     let tooltip;
+    let properties;
     if (typeof option === "string") {
       caption = value = option;
     } else {
-      ({ icon, caption, value, tooltip } = option);
+      ({ icon, caption, value, tooltip, properties } = option);
     }
     if (this.localized) {
       caption = localize(caption);
@@ -24929,6 +24930,7 @@ class TosiSelect extends P {
         icon,
         caption,
         tooltip,
+        properties,
         checked: () => hasValue(options, getValue()),
         menuItems: options.map(this.buildOptionMenuItem)
       };
@@ -24937,6 +24939,7 @@ class TosiSelect extends P {
       icon,
       caption,
       tooltip,
+      properties,
       checked: () => getValue() === value,
       action: typeof value === "function" ? async () => {
         const newValue = await value();
@@ -25653,18 +25656,19 @@ var createMenuAction = (item, options) => {
   }
   const itemRole = options.role === "listbox" ? "option" : "menuitem";
   let menuItem;
+  const props = item.properties || {};
   if (typeof item?.action === "string") {
     menuItem = a2({
       class: "xin-menu-item",
       role: itemRole,
       href: item.action
-    }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut ? displayShortcut(item.shortcut) : " "));
+    }, props, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut ? displayShortcut(item.shortcut) : " "));
   } else {
     menuItem = button3({
       class: "xin-menu-item",
       role: itemRole,
       onClick: item.action
-    }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut ? displayShortcut(item.shortcut) : " "));
+    }, props, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut ? displayShortcut(item.shortcut) : " "));
   }
   menuItem.classList.toggle("xin-menu-item-checked", checked !== false);
   if (item.tooltip) {
@@ -25684,6 +25688,7 @@ var createDropMenuItem = (item, options) => {
   if (typeof icon === "string") {
     icon = icons[icon]();
   }
+  const props = item.properties || {};
   const menuItem = button3({
     class: "xin-menu-item",
     onDragenter(event) {
@@ -25712,7 +25717,7 @@ var createDropMenuItem = (item, options) => {
       }
       removeLastMenu(0);
     }
-  }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(" "));
+  }, props, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(" "));
   if (item.tooltip) {
     menuItem.dataset.tooltip = item.tooltip;
   }
@@ -25733,6 +25738,7 @@ var createSubMenu = (item, options) => {
   }
   let disclosureTimer = null;
   let disclosed = false;
+  const props = item.properties || {};
   const submenuItem = button3({
     class: "xin-menu-item",
     disabled: !(!item.enabled || item.enabled()),
@@ -25819,7 +25825,7 @@ var createSubMenu = (item, options) => {
       }
       removeLastMenu(0);
     }
-  }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), icons.chevronRight({ style: { justifySelf: "flex-end" } }));
+  }, props, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), icons.chevronRight({ style: { justifySelf: "flex-end" } }));
   if (item.tooltip) {
     submenuItem.dataset.tooltip = item.tooltip;
   }
@@ -26407,7 +26413,7 @@ class TosiTable extends P {
   }
   content = null;
   getColumn(event) {
-    const x2 = (event.touches !== undefined ? event.touches[0].clientX : event.clientX) - this.getBoundingClientRect().x;
+    const x2 = (event.touches !== undefined ? event.touches[0].clientX : event.clientX) - this.getBoundingClientRect().x + this.scrollLeft;
     const epsilon = event.touches !== undefined ? 20 : 5;
     let boundaryX = 0;
     const log = [];
@@ -33911,7 +33917,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = vE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.4.10";
+var version = "1.4.11";
 // src/tooltip.ts
 var { span: span18 } = D;
 var tooltipFloat = null;
@@ -38120,6 +38126,7 @@ interface MenuAction {
   action: ActionCallback | string
   icon?: string | Element
   tooltip?: string
+  properties?: ElementProps
 }
 \`\`\`
 
@@ -38132,6 +38139,7 @@ interface SubMenu {
   menuItems: MenuItem[]
   icon?: string | Element
   tooltip?: string
+  properties?: ElementProps
 }
 \`\`\`
 

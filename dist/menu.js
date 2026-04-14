@@ -255,6 +255,7 @@ interface MenuAction {
   action: ActionCallback | string
   icon?: string | Element
   tooltip?: string
+  properties?: ElementProps
 }
 ```
 
@@ -267,6 +268,7 @@ interface SubMenu {
   menuItems: MenuItem[]
   icon?: string | Element
   tooltip?: string
+  properties?: ElementProps
 }
 ```
 
@@ -906,19 +908,20 @@ export const createMenuAction = (item, options) => {
     }
     const itemRole = options.role === 'listbox' ? 'option' : 'menuitem';
     let menuItem;
+    const props = item.properties || {};
     if (typeof item?.action === 'string') {
         menuItem = a({
             class: 'xin-menu-item',
             role: itemRole,
             href: item.action,
-        }, icon, options.localized ? span(localize(item.caption)) : span(item.caption), span(item.shortcut ? displayShortcut(item.shortcut) : ' '));
+        }, props, icon, options.localized ? span(localize(item.caption)) : span(item.caption), span(item.shortcut ? displayShortcut(item.shortcut) : ' '));
     }
     else {
         menuItem = button({
             class: 'xin-menu-item',
             role: itemRole,
             onClick: item.action,
-        }, icon, options.localized ? span(localize(item.caption)) : span(item.caption), span(item.shortcut ? displayShortcut(item.shortcut) : ' '));
+        }, props, icon, options.localized ? span(localize(item.caption)) : span(item.caption), span(item.shortcut ? displayShortcut(item.shortcut) : ' '));
     }
     menuItem.classList.toggle('xin-menu-item-checked', checked !== false);
     if (item.tooltip) {
@@ -938,6 +941,7 @@ export const createDropMenuItem = (item, options) => {
     if (typeof icon === 'string') {
         icon = icons[icon]();
     }
+    const props = item.properties || {};
     const menuItem = button({
         class: 'xin-menu-item',
         onDragenter(event) {
@@ -966,7 +970,7 @@ export const createDropMenuItem = (item, options) => {
             }
             removeLastMenu(0);
         },
-    }, icon, options.localized ? span(localize(item.caption)) : span(item.caption), span(' '));
+    }, props, icon, options.localized ? span(localize(item.caption)) : span(item.caption), span(' '));
     if (item.tooltip) {
         menuItem.dataset.tooltip = item.tooltip;
     }
@@ -987,6 +991,7 @@ export const createSubMenu = (item, options) => {
     }
     let disclosureTimer = null;
     let disclosed = false;
+    const props = item.properties || {};
     const submenuItem = button({
         class: 'xin-menu-item',
         disabled: !(!item.enabled || item.enabled()),
@@ -1080,7 +1085,7 @@ export const createSubMenu = (item, options) => {
             }
             removeLastMenu(0);
         },
-    }, icon, options.localized ? span(localize(item.caption)) : span(item.caption), icons.chevronRight({ style: { justifySelf: 'flex-end' } }));
+    }, props, icon, options.localized ? span(localize(item.caption)) : span(item.caption), icons.chevronRight({ style: { justifySelf: 'flex-end' } }));
     if (item.tooltip) {
         submenuItem.dataset.tooltip = item.tooltip;
     }

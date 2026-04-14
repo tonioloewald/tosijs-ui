@@ -420,7 +420,8 @@ export class TosiTable extends WebComponent {
     content = null;
     getColumn(event) {
         const x = (event.touches !== undefined ? event.touches[0].clientX : event.clientX) -
-            this.getBoundingClientRect().x;
+            this.getBoundingClientRect().x +
+            this.scrollLeft;
         const epsilon = event.touches !== undefined ? 20 : 5;
         let boundaryX = 0;
         const log = [];

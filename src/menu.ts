@@ -255,6 +255,7 @@ interface MenuAction {
   action: ActionCallback | string
   icon?: string | Element
   tooltip?: string
+  properties?: ElementProps
 }
 ```
 
@@ -267,6 +268,7 @@ interface SubMenu {
   menuItems: MenuItem[]
   icon?: string | Element
   tooltip?: string
+  properties?: ElementProps
 }
 ```
 
@@ -705,6 +707,7 @@ preview.append(btn)
 
 import {
   elements,
+  ElementProps,
   varDefault,
   vars,
   StyleSheet,
@@ -727,6 +730,7 @@ export interface MenuAction {
   action: ActionCallback | string
   icon?: string | Element
   tooltip?: string
+  properties?: ElementProps
   acceptsDrop?: string[]
   dropAction?: (dataTransfer: DataTransfer) => void
 }
@@ -740,6 +744,7 @@ export interface SubMenu {
   menuItems: MenuItemsProvider
   icon?: string | Element
   tooltip?: string
+  properties?: ElementProps
   acceptsDrop?: string[]
   dropAction?: (dataTransfer: DataTransfer) => void
 }
@@ -970,6 +975,7 @@ export const createMenuAction = (
   }
   const itemRole = options.role === 'listbox' ? 'option' : 'menuitem'
   let menuItem: HTMLElement
+  const props = item.properties || {}
   if (typeof item?.action === 'string') {
     menuItem = a(
       {
@@ -977,6 +983,7 @@ export const createMenuAction = (
         role: itemRole,
         href: item.action,
       },
+      props,
       icon,
       options.localized ? span(localize(item.caption)) : span(item.caption),
       span(item.shortcut ? displayShortcut(item.shortcut) : ' ')
@@ -988,6 +995,7 @@ export const createMenuAction = (
         role: itemRole,
         onClick: item.action,
       },
+      props,
       icon,
       options.localized ? span(localize(item.caption)) : span(item.caption),
       span(item.shortcut ? displayShortcut(item.shortcut) : ' ')
@@ -1015,6 +1023,7 @@ export const createDropMenuItem = (
   if (typeof icon === 'string') {
     icon = icons[icon]()
   }
+  const props = item.properties || {}
   const menuItem = button(
     {
       class: 'xin-menu-item',
@@ -1044,6 +1053,7 @@ export const createDropMenuItem = (
         removeLastMenu(0)
       },
     },
+    props,
     icon,
     options.localized ? span(localize(item.caption)) : span(item.caption),
     span(' ')
@@ -1074,6 +1084,7 @@ export const createSubMenu = (
   let disclosureTimer: ReturnType<typeof setTimeout> | null = null
   let disclosed = false
 
+  const props = item.properties || {}
   const submenuItem = button(
     {
       class: 'xin-menu-item',
@@ -1168,6 +1179,7 @@ export const createSubMenu = (
         removeLastMenu(0)
       },
     },
+    props,
     icon,
     options.localized ? span(localize(item.caption)) : span(item.caption),
     icons.chevronRight({ style: { justifySelf: 'flex-end' } })

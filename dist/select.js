@@ -349,12 +349,14 @@ export class TosiSelect extends Component {
         let caption;
         let value;
         let tooltip;
+        let properties;
         if (typeof option === 'string') {
             caption = value = option;
         }
         else {
             ;
-            ({ icon, caption, value, tooltip } = option);
+            ({ icon, caption, value, tooltip, properties } =
+                option);
         }
         if (this.localized) {
             caption = localize(caption);
@@ -365,6 +367,7 @@ export class TosiSelect extends Component {
                 icon,
                 caption,
                 tooltip,
+                properties,
                 checked: () => hasValue(options, getValue()),
                 menuItems: options.map(this.buildOptionMenuItem),
             };
@@ -373,6 +376,7 @@ export class TosiSelect extends Component {
             icon,
             caption,
             tooltip,
+            properties,
             checked: () => getValue() === value,
             action: typeof value === 'function'
                 ? async () => {

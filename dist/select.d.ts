@@ -1,4 +1,4 @@
-import { Component, ElementCreator, PartsMap } from 'tosijs';
+import { Component, ElementCreator, ElementProps, PartsMap } from 'tosijs';
 import { MenuItem } from './menu';
 type OptionRequest = () => Promise<string | undefined>;
 export interface SelectOption {
@@ -6,12 +6,14 @@ export interface SelectOption {
     caption: string;
     value: string | OptionRequest;
     tooltip?: string;
+    properties?: ElementProps;
 }
 export interface SelectOptionSubmenu {
     icon?: string | HTMLElement;
     caption: string;
     options: SelectOptions;
     tooltip?: string;
+    properties?: ElementProps;
 }
 export type SelectOptions = Array<string | null | SelectOption | SelectOptionSubmenu>;
 interface SelectParts extends PartsMap {
