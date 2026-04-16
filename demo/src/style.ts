@@ -454,8 +454,10 @@ export const styleSpec: XinStyleSheet = {
   'svg text.hover': {
     opacity: '1',
   },
-  '.thead': {
-    background: vars.brandColor,
+  'tosi-table': {
+    '--tosi-table-header-bg': 'var(--brand-color)',
+  },
+  '.th': {
     color: vars.brandTextColor,
   },
   '.th + .th': {
@@ -464,9 +466,6 @@ export const styleSpec: XinStyleSheet = {
   },
   '.th, .td': {
     padding: '0 var(--spacing)',
-  },
-  '.tr:not([aria-selected]):hover': {
-    background: '#08835810',
   },
   '[aria-selected]': {
     background: '#08835820',

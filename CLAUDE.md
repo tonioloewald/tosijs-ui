@@ -42,6 +42,10 @@ Use `` ```test `` code blocks in `/*#` doc comments for browser-based tests. See
 
 The dev server runs HTTPS using self-signed certs in `tls/`. If certs are missing, run `tls/create-dev-certs.sh` to regenerate them.
 
+### CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on push/PR to `main`: `bun install` → `bunx tsc --noEmit` → `bun test` (unit tests only, no browser or Playwright tests in CI).
+
 ### Code Style
 
 No semicolons, single quotes, 2-space indent, trailing commas (es5). Enforced by Prettier (`.prettierrc.json`). ESLint allows `any` and non-null assertions.

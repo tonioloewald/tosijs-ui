@@ -51,7 +51,6 @@ preview.append(tosiTable({
   localized: true,
   columns,
   rowHeight: 40,
-  pinnedBottom: 2
 }))
 ```
 ```css
@@ -64,11 +63,6 @@ preview.append(tosiTable({
 
 .preview tosi-table {
   height: 100%;
-}
-
-.preview tosi-table [part="pinnedTopRows"],
-.preview tosi-table [part="pinnedBottomRows"] {
-  background: #ddd;
 }
 ```
 ```test
@@ -137,6 +131,94 @@ export interface ColumnOptions {
 }
 ```
 
+## Pinned Columns and Rows
+
+Set `pinnedLeft` and `pinnedRight` on the table to pin the first/last N
+visible columns during horizontal scroll. Set `pinnedTop` and `pinnedBottom`
+to pin the first/last N data rows (pinned top rows appear below the
+header row). All pinning uses CSS `position: sticky` for frame-perfect
+rendering with no jitter.
+
+```js
+import { elements } from 'tosijs'
+import { tosiTable, icons } from 'tosijs-ui'
+
+const { button } = elements
+
+const count = 100
+const cols = ['Q1', 'Q2', 'Q3', 'Q4']
+const rows = Array.from({ length: count }, (_, i) => {
+  const row = { id: i + 1, name: 'Item ' + (i + 1) }
+  for (const year of [2024, 2025, 2026]) {
+    for (const q of cols) {
+      row[q + ' ' + year] = Math.round(Math.random() * 10000) / 100
+    }
+  }
+  return row
+})
+
+// totals row
+const totals = { id: '', name: 'Total' }
+for (const key of Object.keys(rows[0])) {
+  if (key === 'id' || key === 'name') continue
+  totals[key] = Math.round(rows.reduce((sum, r) => sum + r[key], 0) * 100) / 100
+}
+rows.push(totals)
+
+const dataColumns = []
+for (const year of [2024, 2025, 2026]) {
+  for (const q of cols) {
+    dataColumns.push({ prop: q + ' ' + year, width: 100, align: 'right' })
+  }
+}
+
+preview.append(tosiTable({
+  array: rows,
+  rowHeight: 32,
+  pinnedBottom: 1,
+  pinnedLeft: 2,
+  pinnedRight: 1,
+  columns: [
+    { prop: 'id', name: '#', width: 50, align: 'right' },
+    { prop: 'name', width: 120 },
+    ...dataColumns,
+    {
+      prop: '_actions',
+      name: '',
+      width: 48,
+      sort: false,
+      dataCell() {
+        return button(
+          {
+            class: 'td actions-btn',
+            onClick(e) { e.stopPropagation() },
+            onMouseup(e) { e.stopPropagation() },
+          },
+          icons.moreVertical(),
+        )
+      },
+    },
+  ],
+}))
+```
+```css
+.preview tosi-table {
+  height: 100%;
+}
+.preview .actions-btn {
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+  text-align: center;
+  width: 100%;
+}
+.preview tosi-table .pinned-bottom {
+  background: #eee;
+  font-weight: bold;
+}
+```
+
 ## Selection
 
 `<tosi-table>` supports `select` and `multiple` boolean properties allowing rows to be selectable. Selected rows will
@@ -185,13 +267,21 @@ useful for smaller tables, or tables with variable row-heights.
 
 ## Styling
 
-Aside from row height (see previous) the component doesn't use the shadowDOM, so it's easy to override
-its styles.
+The component uses a flat CSS grid layout where every cell (header, data, pinned)
+is a direct child of the grid container. This means standard CSS works for styling,
+and `position: sticky` handles all pinning.
 
-## Pinned Rows
+**Breaking change in v1.5.0:** The table no longer uses `.thead`, `.tbody`, or `.tr`
+wrapper elements. All cells are direct children of a single `.grid` container.
+Update any custom CSS targeting those classes:
 
-The table supports two attributes, `pinnedTop` and `pinnedBottom` that let you pin the specified number
-of top and bottom rows.
+- `.thead` → `.th` (header cells)
+- `.tbody` → the `.grid` container itself
+- `.tr` → no equivalent; cells are flat grid children
+- `[part="pinnedTopRows"]` → `.pinned-top`
+- `[part="pinnedBottomRows"]` → `.pinned-bottom`
+- `.td-pinned`, `.th-pinned` → `.col-pinned`
+- `.pin-left`, `.pin-right` → no longer needed (CSS `sticky` handles positioning)
 
 ## Localization
 
@@ -210,7 +300,7 @@ You'll need to make sure your localized strings include:
 
 As well as any column names you want localized.
 */
-import { Component as WebComponent, elements, vars, tosiValue, getListItem, tosi, } from 'tosijs';
+import { Component as WebComponent, elements, vars, varDefault, tosiValue, getListItem, tosi, } from 'tosijs';
 import { trackDrag } from './track-drag';
 import { icons } from './icons';
 import { popMenu } from './menu';
@@ -243,41 +333,80 @@ function defaultWidth(array, prop, charWidth) {
     }
     return false;
 }
-const { div, span, button, template } = elements;
+const { div, span, button } = elements;
 const passThru = (array) => array;
 export class TosiTable extends WebComponent {
     static preferredTagName = 'tosi-table';
     static lightStyleSpec = {
         ':host': {
-            // New --tosi-table-* variables with defaults
             '--tosi-table-row-height': '32px',
             '--tosi-table-touch-size': 'var(--tosi-touch-size, 44px)',
             '--tosi-table-dragged-header-bg': '#0004',
             '--tosi-table-dragged-header-color': '#fff',
             '--tosi-table-drop-header-bg': '#fff4',
-            // Legacy aliases for backward compatibility
-            '--row-height': 'var(--tosi-table-row-height)',
-            '--touch-size': 'var(--tosi-table-touch-size)',
-            '--dragged-header-bg': 'var(--tosi-table-dragged-header-bg)',
-            '--dragged-header-color': 'var(--tosi-table-dragged-header-color)',
-            '--drop-header-bg': 'var(--tosi-table-drop-header-bg)',
-            overflow: 'auto hidden',
+            display: 'block',
+            overflow: 'hidden',
+            background: varDefault.tosiTableBg('var(--tosi-bg, #fff)'),
         },
-        ':host .thead, :host .tbody': {
-            width: vars.tosiTableGridRowWidth,
+        ':host .grid': {
+            overflow: 'auto',
+            height: '100%',
+            overscrollBehavior: 'none',
         },
-        ':host .tr': {
-            display: 'grid',
-            gridTemplateColumns: vars.tosiTableGridColumns,
-            height: vars.tosiTableRowHeight,
-            lineHeight: vars.tosiTableRowHeight,
-        },
-        ':host .td, :host .th': {
+        ':host .th, :host .td': {
             overflow: 'hidden',
             whiteSpace: 'nowrap',
             textOverflow: 'ellipsis',
             display: 'flex',
             alignItems: 'center',
+            height: vars.tosiTableRowHeight,
+            lineHeight: vars.tosiTableRowHeight,
+        },
+        ':host .th': {
+            position: 'sticky',
+            top: '0',
+            zIndex: '2',
+            background: varDefault.tosiTableHeaderBg(varDefault.tosiTableBg('var(--tosi-bg, #fff)')),
+        },
+        ':host .col-pinned': {
+            position: 'sticky',
+            zIndex: '1',
+            background: varDefault.tosiTableBg('var(--tosi-bg, #fff)'),
+        },
+        ':host .th.col-pinned': {
+            zIndex: '3',
+            background: varDefault.tosiTableHeaderBg(varDefault.tosiTableBg('var(--tosi-bg, #fff)')),
+        },
+        ':host .pinned-top': {
+            position: 'sticky',
+            zIndex: '2',
+            background: varDefault.tosiTableBg('var(--tosi-bg, #fff)'),
+        },
+        ':host .pinned-top.col-pinned': {
+            zIndex: '3',
+        },
+        ':host .pinned-bottom': {
+            position: 'sticky',
+            bottom: '0',
+            zIndex: '2',
+            background: varDefault.tosiTableBg('var(--tosi-bg, #fff)'),
+        },
+        ':host .pinned-bottom.col-pinned': {
+            zIndex: '3',
+        },
+        ':host .td:focus, :host .th:focus': {
+            outline: '2px solid var(--tosi-accent, #007AFF)',
+            outlineOffset: '-2px',
+            zIndex: '1',
+        },
+        ':host .col-pinned:focus': {
+            zIndex: '4',
+        },
+        ':host .col-edge-right': {
+            boxShadow: '1px 0 0 var(--tosi-table-edge-color, #0002)',
+        },
+        ':host .col-edge-left': {
+            boxShadow: '-1px 0 0 var(--tosi-table-edge-color, #0002)',
         },
         ':host .th .menu-trigger': {
             color: 'currentColor',
@@ -306,6 +435,8 @@ export class TosiTable extends WebComponent {
         multiple: false,
         pinnedTop: 0,
         pinnedBottom: 0,
+        pinnedLeft: 0,
+        pinnedRight: 0,
         nosort: false,
         nohide: false,
         noreorder: false,
@@ -321,6 +452,7 @@ export class TosiTable extends WebComponent {
         elt.toggleAttribute('aria-selected', obj[this.selectedKey] === true);
     };
     maxVisibleRows = 10000;
+    _grid = null;
     get value() {
         return {
             array: this.array,
@@ -341,15 +473,11 @@ export class TosiTable extends WebComponent {
     }
     rowData = {
         visible: [],
-        pinnedTop: [],
-        pinnedBottom: [],
     };
     _array = [];
     _columns = null;
     _filter = passThru;
-    get virtual() {
-        return this.rowHeight > 0 ? { height: this.rowHeight } : undefined;
-    }
+    _sort;
     constructor() {
         super();
         this.rowData = tosi({
@@ -418,29 +546,110 @@ export class TosiTable extends WebComponent {
         return this.columns.filter((c) => c.visible !== false);
     }
     content = null;
-    getColumn(event) {
-        const x = (event.touches !== undefined ? event.touches[0].clientX : event.clientX) -
-            this.getBoundingClientRect().x +
-            this.scrollLeft;
-        const epsilon = event.touches !== undefined ? 20 : 5;
-        let boundaryX = 0;
-        const log = [];
-        const column = this.visibleColumns.find((options) => {
-            if (options.visible !== false) {
-                boundaryX += options.width;
-                log.push(boundaryX);
-                return Math.abs(x - boundaryX) < epsilon;
+    computeStickyInfo(cols) {
+        const info = cols.map(() => ({}));
+        let leftOffset = 0;
+        for (let i = 0; i < this.pinnedLeft && i < cols.length; i++) {
+            info[i].left = leftOffset + 'px';
+            leftOffset += cols[i].width;
+            if (i === this.pinnedLeft - 1) {
+                info[i].edgeClass = 'col-edge-right';
             }
+        }
+        let rightOffset = 0;
+        for (let i = cols.length - 1; i >= 0 && i >= cols.length - this.pinnedRight; i--) {
+            info[i].right = rightOffset + 'px';
+            rightOffset += cols[i].width;
+            if (i === cols.length - this.pinnedRight) {
+                info[i].edgeClass = 'col-edge-left';
+            }
+        }
+        return info;
+    }
+    cellClasses(base, si) {
+        let cls = base;
+        if (si.left != null || si.right != null)
+            cls += ' col-pinned';
+        if (si.edgeClass)
+            cls += ' ' + si.edgeClass;
+        return cls;
+    }
+    cellStyle(col, si, extra) {
+        const style = {
+            justifyContent: col.align || 'left',
+            ...extra,
+        };
+        if (si.left != null) {
+            style.position = 'sticky';
+            style.left = si.left;
+        }
+        if (si.right != null) {
+            style.position = 'sticky';
+            style.right = si.right;
+        }
+        return style;
+    }
+    applyPinnedToCustomCell(cell, colIndex, si, style) {
+        cell.dataset.col = String(colIndex);
+        cell.tabIndex = -1;
+        cell.classList.add(...this.cellClasses('td', si).split(' '));
+        Object.assign(cell.style, style);
+    }
+    buildPinnedCells(rows, cols, stickyInfo, pin, rowHeight) {
+        const cells = [];
+        for (let r = 0; r < rows.length; r++) {
+            const rowItem = rows[r];
+            const offset = pin === 'top'
+                ? (r + 1) * rowHeight + 'px'
+                : (rows.length - 1 - r) * rowHeight + 'px';
+            for (let c = 0; c < cols.length; c++) {
+                const col = cols[c];
+                const si = stickyInfo[c];
+                cells.push(span({
+                    class: this.cellClasses(`td pinned-${pin}`, si),
+                    role: 'cell',
+                    tabindex: -1,
+                    style: this.cellStyle(col, si, {
+                        position: 'sticky',
+                        [pin]: offset,
+                    }),
+                    dataCol: String(c),
+                }, String(rowItem[col.prop] ?? '')));
+            }
+        }
+        return cells;
+    }
+    getColumn(event) {
+        if (!this._grid)
+            return undefined;
+        const pointerX = (event.touches !== undefined ? event.touches[0].clientX : event.clientX) -
+            this._grid.getBoundingClientRect().x;
+        const epsilon = event.touches !== undefined ? 20 : 5;
+        const { scrollLeft, clientWidth, scrollWidth } = this._grid;
+        const cols = this.visibleColumns;
+        const rightScroll = scrollWidth - clientWidth - scrollLeft;
+        let boundaryX = 0;
+        return cols.find((options, i) => {
+            if (options.visible === false)
+                return false;
+            boundaryX += options.width;
+            let visualBoundary;
+            if (i < this.pinnedLeft) {
+                visualBoundary = boundaryX;
+            }
+            else if (i >= cols.length - this.pinnedRight) {
+                visualBoundary = boundaryX - scrollLeft - rightScroll;
+            }
+            else {
+                visualBoundary = boundaryX - scrollLeft;
+            }
+            return Math.abs(pointerX - visualBoundary) < epsilon;
         });
-        return column;
     }
     setCursor = (event) => {
         const column = this.getColumn(event);
-        if (column !== undefined) {
-            this.style.cursor = 'col-resize';
-        }
-        else {
-            this.style.cursor = '';
+        if (this._grid) {
+            this._grid.style.cursor = column !== undefined ? 'col-resize' : '';
         }
     };
     resizeColumn = (event) => {
@@ -475,10 +684,7 @@ export class TosiTable extends WebComponent {
         else {
             delete row[this.selectedKey];
         }
-        for (const elt of Array.from(this.querySelectorAll('.tr'))) {
-            const item = getListItem(elt);
-            this.selectBinding(elt, item);
-        }
+        this.updateSelectionVisuals();
     }
     selectRows(rows, select = true) {
         for (const row of rows || this.array) {
@@ -489,13 +695,20 @@ export class TosiTable extends WebComponent {
                 delete row[this.selectedKey];
             }
         }
-        for (const elt of Array.from(this.querySelectorAll('.tr'))) {
-            const item = getListItem(elt);
-            this.selectBinding(elt, item);
-        }
+        this.updateSelectionVisuals();
     }
     deSelect(rows) {
         this.selectRows(rows, false);
+    }
+    updateSelectionVisuals() {
+        if (!this._grid)
+            return;
+        for (const elt of Array.from(this._grid.children)) {
+            const item = getListItem(elt);
+            if (item != null) {
+                this.selectBinding(elt, item);
+            }
+        }
     }
     // tracking click / shift-click
     rangeStart;
@@ -507,11 +720,7 @@ export class TosiTable extends WebComponent {
         if (!(target instanceof HTMLElement)) {
             return;
         }
-        const tr = target.closest('.tr');
-        if (!(tr instanceof HTMLElement)) {
-            return;
-        }
-        const pickedItem = getListItem(tr);
+        const pickedItem = getListItem(target);
         if (pickedItem == null) {
             return;
         }
@@ -562,9 +771,194 @@ export class TosiTable extends WebComponent {
             this.selectRow(pickedItem, true);
         }
         this.selectionChanged(this.visibleSelectedRows);
-        for (const row of Array.from(this.querySelectorAll('.tr'))) {
-            const item = getListItem(row);
-            this.selectBinding(row, item);
+        this.updateSelectionVisuals();
+    };
+    findCell(rowIndex, colIndex) {
+        if (!this._grid)
+            return null;
+        const cols = this.visibleColumns.length;
+        // Header cells
+        if (rowIndex === -1) {
+            return this._grid.querySelector(`.th[data-col="${colIndex}"]`);
+        }
+        // Pinned top cells
+        if (rowIndex < this.pinnedTop) {
+            let count = 0;
+            for (const child of this._grid.children) {
+                const el = child;
+                if (el.classList.contains('pinned-top') &&
+                    el.dataset.col === String(colIndex)) {
+                    if (count === rowIndex)
+                        return el;
+                    count++;
+                }
+            }
+            return null;
+        }
+        // Pinned bottom cells
+        const totalRows = this._array.length;
+        if (rowIndex >= totalRows - this.pinnedBottom) {
+            const bottomIdx = rowIndex - (totalRows - this.pinnedBottom);
+            let count = 0;
+            for (const child of this._grid.children) {
+                const el = child;
+                if (el.classList.contains('pinned-bottom') &&
+                    el.dataset.col === String(colIndex)) {
+                    if (count === bottomIdx)
+                        return el;
+                    count++;
+                }
+            }
+            return null;
+        }
+        // Virtual data cells — find by aria-rowindex and aria-colindex
+        const dataRowIndex = rowIndex - this.pinnedTop;
+        const cell = this._grid.querySelector(`[aria-rowindex="${dataRowIndex + 1}"][aria-colindex="${colIndex + 1}"]`);
+        return cell;
+    }
+    _pendingFocus = null;
+    onScrollEnd = () => {
+        if (!this._pendingFocus)
+            return;
+        const { row, col } = this._pendingFocus;
+        this._pendingFocus = null;
+        const cell = this.findCell(row, col);
+        if (cell)
+            cell.focus();
+    };
+    focusCell(rowIndex, colIndex) {
+        if (!this._grid)
+            return;
+        this._pendingFocus = { row: rowIndex, col: colIndex };
+        const cell = this.findCell(rowIndex, colIndex);
+        if (cell) {
+            cell.focus();
+            cell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        }
+        else {
+            // Not in DOM — rough scroll to bring it into virtualisation range
+            const dataRowIndex = rowIndex - this.pinnedTop;
+            if (dataRowIndex >= 0 && dataRowIndex < this.visibleRows.length) {
+                this._grid.scrollTop = dataRowIndex * this.rowHeight;
+            }
+        }
+    }
+    handleKeyNav = (event) => {
+        if (!this._grid)
+            return;
+        const el = event.target;
+        const target = el.closest('.td') || el.closest('.th');
+        if (!target)
+            return;
+        const colIndex = parseInt(target.dataset.col, 10);
+        if (isNaN(colIndex))
+            return;
+        const cols = this.visibleColumns.length;
+        const totalRows = this._array.length;
+        const meta = event.metaKey || event.ctrlKey;
+        const isHeader = target.classList.contains('th');
+        // Determine current logical row index (-1 for header)
+        let rowIndex;
+        if (isHeader) {
+            rowIndex = -1;
+        }
+        else if (target.classList.contains('pinned-top')) {
+            let count = 0;
+            for (const child of this._grid.children) {
+                if (child === target)
+                    break;
+                const c = child;
+                if (c.classList.contains('pinned-top') &&
+                    c.dataset.col === String(colIndex)) {
+                    count++;
+                }
+            }
+            rowIndex = count;
+        }
+        else if (target.classList.contains('pinned-bottom')) {
+            let count = 0;
+            for (const child of this._grid.children) {
+                if (child === target)
+                    break;
+                const c = child;
+                if (c.classList.contains('pinned-bottom') &&
+                    c.dataset.col === String(colIndex)) {
+                    count++;
+                }
+            }
+            rowIndex = totalRows - this.pinnedBottom + count;
+        }
+        else {
+            const ariaRow = parseInt(target.getAttribute('aria-rowindex') || '', 10);
+            if (isNaN(ariaRow))
+                return;
+            rowIndex = this.pinnedTop + ariaRow - 1;
+        }
+        let nextRow = rowIndex;
+        let nextCol = colIndex;
+        switch (event.key) {
+            case 'ArrowUp':
+                nextRow = meta ? 0 : Math.max(-1, rowIndex - 1);
+                break;
+            case 'ArrowDown':
+                nextRow = meta ? totalRows - 1 : Math.min(totalRows - 1, rowIndex + 1);
+                break;
+            case 'ArrowLeft':
+                nextCol = meta ? 0 : Math.max(0, colIndex - 1);
+                break;
+            case 'ArrowRight':
+                nextCol = meta ? cols - 1 : Math.min(cols - 1, colIndex + 1);
+                break;
+            case 'Tab':
+                if (event.shiftKey) {
+                    if (colIndex > 0) {
+                        nextCol = colIndex - 1;
+                    }
+                    else if (rowIndex > 0) {
+                        nextRow = rowIndex - 1;
+                        nextCol = cols - 1;
+                    }
+                    else {
+                        return; // let tab leave the table
+                    }
+                }
+                else {
+                    if (colIndex < cols - 1) {
+                        nextCol = colIndex + 1;
+                    }
+                    else if (rowIndex < totalRows - 1) {
+                        nextRow = rowIndex + 1;
+                        nextCol = 0;
+                    }
+                    else {
+                        return; // let tab leave the table
+                    }
+                }
+                break;
+            case 'Home':
+                if (meta) {
+                    nextRow = 0;
+                    nextCol = 0;
+                }
+                else {
+                    nextCol = 0;
+                }
+                break;
+            case 'End':
+                if (meta) {
+                    nextRow = totalRows - 1;
+                    nextCol = cols - 1;
+                }
+                else {
+                    nextCol = cols - 1;
+                }
+                break;
+            default:
+                return;
+        }
+        if (nextRow !== rowIndex || nextCol !== colIndex) {
+            event.preventDefault();
+            this.focusCell(nextRow, nextCol);
         }
     };
     connectedCallback() {
@@ -574,16 +968,34 @@ export class TosiTable extends WebComponent {
         this.addEventListener('touchstart', this.resizeColumn, { passive: true });
         this.addEventListener('mouseup', this.updateSelection);
         this.addEventListener('touchend', this.updateSelection);
+        this.addEventListener('keydown', this.handleKeyNav);
     }
     setColumnWidths() {
-        const columns = this.visibleColumns.map((c) => c.width + 'px').join(' ');
-        const rowWidth = this.visibleColumns.reduce((w, c) => w + c.width, 0) + 'px';
-        // Set new --tosi-table-* variables
+        const cols = this.visibleColumns;
+        const columns = cols.map((c) => c.width + 'px').join(' ');
+        const rowWidth = cols.reduce((w, c) => w + c.width, 0) + 'px';
+        if (this._grid) {
+            this._grid.style.gridTemplateColumns = columns;
+        }
+        // Legacy CSS variables for backward compatibility
         this.style.setProperty('--tosi-table-grid-columns', columns);
         this.style.setProperty('--tosi-table-grid-row-width', rowWidth);
-        // Legacy aliases for backward compatibility
         this.style.setProperty('--grid-columns', columns);
         this.style.setProperty('--grid-row-width', rowWidth);
+        // Update sticky positions for pinned columns after resize
+        if (this._grid) {
+            const stickyInfo = this.computeStickyInfo(cols);
+            for (const cell of this._grid.querySelectorAll('.col-pinned')) {
+                const colIndex = parseInt(cell.dataset.col, 10);
+                if (!isNaN(colIndex) && stickyInfo[colIndex]) {
+                    const si = stickyInfo[colIndex];
+                    if (si.left != null)
+                        cell.style.left = si.left;
+                    if (si.right != null)
+                        cell.style.right = si.right;
+                }
+            }
+        }
     }
     sortByColumn = (columnOptions, direction = 'auto') => {
         for (const column of this.columns.filter((c) => tosiValue(c.sort) !== false)) {
@@ -665,58 +1077,6 @@ export class TosiTable extends WebComponent {
     get captionSpan() {
         return this.localized ? tosiLocalized : span;
     }
-    headerCell = (options) => {
-        const { popColumnMenu } = this;
-        let ariaSort = 'none';
-        let sortIcon;
-        switch (options.sort) {
-            case 'ascending':
-                sortIcon = icons.sortAscending();
-                ariaSort = 'descending';
-                break;
-            case false:
-                break;
-            default:
-                break;
-            case 'descending':
-                ariaSort = 'ascending';
-                sortIcon = icons.sortDescending();
-        }
-        const menuButton = !(this.nosort && this.nohide)
-            ? button({
-                class: 'menu-trigger',
-                onClick(event) {
-                    popColumnMenu(event.target, options);
-                    event.stopPropagation();
-                },
-            }, sortIcon || icons.moreVertical())
-            : {};
-        return options.headerCell !== undefined
-            ? options.headerCell(options)
-            : span({
-                class: 'th',
-                role: 'columnheader',
-                ariaSort,
-                style: {
-                    ...this.cellStyle,
-                    justifyContent: options.align || 'left',
-                },
-            }, this.captionSpan({ style: { flex: '1' } }, typeof options.name === 'string' ? options.name : options.prop), menuButton);
-    };
-    dataCell = (options) => {
-        if (options.dataCell !== undefined) {
-            return options.dataCell(options);
-        }
-        return span({
-            class: 'td',
-            role: 'cell',
-            style: {
-                ...this.cellStyle,
-                justifyContent: options.align || 'left',
-            },
-            bindText: `^.${options.prop}`,
-        });
-    };
     get visibleRows() {
         return tosiValue(this.rowData.visible);
     }
@@ -726,122 +1086,143 @@ export class TosiTable extends WebComponent {
     get selectedRows() {
         return this.array.filter((obj) => obj[this.selectedKey]);
     }
-    rowTemplate(columns) {
-        return template(div({
-            class: 'tr',
-            role: 'row',
-            bind: {
-                value: '^',
-                binding: { toDOM: this.selectBinding },
-            },
-        }, ...columns.map(this.dataCell)));
-    }
     draggedColumn;
     dropColumn = (event) => {
         const target = event.target.closest('.drag-over');
-        const targetIndex = Array.from(target.parentElement.children).indexOf(target);
-        const dropped = this.visibleColumns[targetIndex];
+        const colIndex = parseInt(target.dataset.col, 10);
+        const dropped = this.visibleColumns[colIndex];
         const draggedIndex = this.columns.indexOf(this.draggedColumn);
         const droppedIndex = this.columns.indexOf(dropped);
         this.columns.splice(draggedIndex, 1);
         this.columns.splice(droppedIndex, 0, this.draggedColumn);
-        console.log({ event, target, targetIndex, draggedIndex, droppedIndex });
         this.queueRender();
         event.preventDefault();
         event.stopPropagation();
     };
     render() {
         super.render();
-        this.rowData.pinnedTop =
-            this.pinnedTop > 0 ? this._array.slice(0, this.pinnedTop) : [];
-        this.rowData.pinnedBottom =
-            this.pinnedBottom > 0
-                ? this._array.slice(this._array.length - this.pinnedBottom)
-                : [];
-        this.rowData.visible = this.filter(this._array.slice(this.pinnedTop, Math.min(this.maxVisibleRows, this._array.length - this.pinnedTop - this.pinnedBottom)));
+        this.textContent = '';
+        // Prepare data
+        const pinnedTopData = this.pinnedTop > 0 ? this._array.slice(0, this.pinnedTop) : [];
+        const pinnedBottomData = this.pinnedBottom > 0 ? this._array.slice(-this.pinnedBottom) : [];
+        const maxIndex = Math.min(this._array.length - this.pinnedBottom, this.pinnedTop + this.maxVisibleRows);
+        const visibleData = this.filter(this._array.slice(this.pinnedTop, maxIndex));
         const { sort } = this;
         if (sort) {
-            this.rowData.visible.sort(sort);
+            visibleData.sort(sort);
         }
-        this.textContent = '';
-        this.style.display = 'flex';
-        this.style.flexDirection = 'column';
-        const { visibleColumns } = this;
-        // Set new --tosi-table-* variable
-        this.style.setProperty('--tosi-table-row-height', `${this.rowHeight}px`);
-        // Legacy alias for backward compatibility
-        this.style.setProperty('--row-height', `${this.rowHeight}px`);
-        this.setColumnWidths();
-        if (!this.noreorder) {
-            dragAndDrop.init();
-        }
-        const dragId = this.instanceId + '-column-header';
-        const columnHeaders = visibleColumns.map((column) => {
-            const header = this.headerCell(column);
-            if (!this.noreorder && header.children[0]) {
-                const caption = header.children[0];
+        this.rowData.visible = visibleData;
+        // Column layout
+        const cols = this.visibleColumns;
+        if (cols.length === 0)
+            return;
+        const stickyInfo = this.computeStickyInfo(cols);
+        const rowHeight = this.rowHeight || 1;
+        this.style.setProperty('--tosi-table-row-height', this.rowHeight > 0 ? `${this.rowHeight}px` : 'auto');
+        // Build header cells
+        const { popColumnMenu } = this;
+        const headerCells = cols.map((col, i) => {
+            const si = stickyInfo[i];
+            let ariaSort = 'none';
+            let sortIcon;
+            switch (col.sort) {
+                case 'ascending':
+                    sortIcon = icons.sortAscending();
+                    ariaSort = 'descending';
+                    break;
+                case 'descending':
+                    ariaSort = 'ascending';
+                    sortIcon = icons.sortDescending();
+                    break;
+            }
+            const menuButton = !(this.nosort && this.nohide)
+                ? button({
+                    class: 'menu-trigger',
+                    onClick(event) {
+                        popColumnMenu(event.target, col);
+                        event.stopPropagation();
+                    },
+                }, sortIcon || icons.moreVertical())
+                : {};
+            const cell = col.headerCell !== undefined
+                ? col.headerCell(col)
+                : span({
+                    class: this.cellClasses('th', si),
+                    role: 'columnheader',
+                    tabindex: -1,
+                    ariaSort,
+                    style: this.cellStyle(col, si),
+                    dataCol: String(i),
+                }, this.captionSpan({ style: { flex: '1' } }, typeof col.name === 'string' ? col.name : col.prop), menuButton);
+            // Apply sticky to custom headerCell
+            if (col.headerCell !== undefined) {
+                this.applyPinnedToCustomCell(cell, i, si, this.cellStyle(col, si));
+            }
+            // Column reordering
+            if (!this.noreorder && cell.children[0]) {
+                dragAndDrop.init();
+                const dragId = this.instanceId + '-column-header';
+                const caption = cell.children[0];
                 caption.setAttribute('draggable', 'true');
                 caption.style.pointerEvents = 'all';
                 caption.dataset.drag = dragId;
-                header.dataset.drop = dragId;
+                cell.dataset.drop = dragId;
                 caption.addEventListener('dragstart', () => {
-                    this.draggedColumn = column;
+                    this.draggedColumn = col;
                 });
-                header.addEventListener('drop', this.dropColumn);
+                cell.addEventListener('drop', this.dropColumn);
             }
-            return header;
+            return cell;
         });
-        this.append(div({ class: 'thead', role: 'rowgroup', style: { touchAction: 'none' } }, div({
-            class: 'tr',
-            role: 'row',
-        }, ...columnHeaders)));
-        if (this.pinnedTop > 0) {
-            this.append(div({
-                part: 'pinnedTopRows',
-                class: 'tbody',
-                role: 'rowgroup',
-                style: {
-                    flex: '0 0 auto',
-                    overflow: 'hidden',
-                    height: `${this.rowHeight * this.pinnedTop}px`,
-                },
-                bindList: {
-                    value: this.rowData.pinnedTop,
-                    virtual: this.virtual,
-                },
-            }, this.rowTemplate(visibleColumns)));
-        }
-        this.append(div({
-            part: 'visibleRows',
-            class: 'tbody',
-            role: 'rowgroup',
+        const pinnedTopCells = this.buildPinnedCells(pinnedTopData, cols, stickyInfo, 'top', rowHeight);
+        const pinnedBottomCells = this.buildPinnedCells(pinnedBottomData, cols, stickyInfo, 'bottom', rowHeight);
+        // Data cells via listBinding with itemsPerRow
+        const selectEnabled = this.select || this.multiple;
+        const selectBindingFn = this.selectBinding;
+        const binding = this.rowData.visible.listBinding(({ span: s }, item, colIndex) => {
+            const col = cols[colIndex];
+            const si = stickyInfo[colIndex];
+            const style = this.cellStyle(col, si);
+            if (col.dataCell != null) {
+                const customCell = col.dataCell(col);
+                this.applyPinnedToCustomCell(customCell, colIndex, si, style);
+                return customCell;
+            }
+            const props = {
+                class: this.cellClasses('td', si),
+                role: 'cell',
+                tabindex: -1,
+                style,
+                dataCol: String(colIndex),
+                bindText: item[col.prop],
+            };
+            if (selectEnabled) {
+                props.bind = {
+                    value: item,
+                    binding: { toDOM: selectBindingFn },
+                };
+            }
+            return s(props);
+        }, {
+            virtual: {
+                height: rowHeight,
+                itemsPerRow: cols.length,
+            },
+        });
+        // Assemble grid
+        const stickyTopHeight = (1 + this.pinnedTop) * rowHeight;
+        const stickyBottomHeight = this.pinnedBottom * rowHeight;
+        const grid = div({
+            class: 'grid',
             style: {
-                content: ' ',
-                minHeight: '100px',
-                flex: '1 1 100px',
-                overflow: 'hidden auto',
+                gridTemplateColumns: cols.map((c) => c.width + 'px').join(' '),
+                scrollPaddingTop: stickyTopHeight + 'px',
+                scrollPaddingBottom: stickyBottomHeight + 'px',
             },
-            bindList: {
-                value: this.rowData.visible,
-                virtual: this.virtual,
-            },
-        }, this.rowTemplate(visibleColumns)));
-        if (this.pinnedBottom > 0) {
-            this.append(div({
-                part: 'pinnedBottomRows',
-                class: 'tbody',
-                role: 'rowgroup',
-                style: {
-                    flex: '0 0 auto',
-                    overflow: 'hidden',
-                    height: `${this.rowHeight * this.pinnedBottom}px`,
-                },
-                bindList: {
-                    value: this.rowData.pinnedBottom,
-                    virtual: this.virtual,
-                },
-            }, this.rowTemplate(visibleColumns)));
-        }
+        }, ...headerCells, ...pinnedTopCells, ...binding, ...pinnedBottomCells);
+        this._grid = grid;
+        grid.addEventListener('scrollend', this.onScrollEnd);
+        this.append(grid);
     }
 }
 /** @deprecated Use TosiTable instead */
