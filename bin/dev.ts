@@ -3,6 +3,7 @@ import { statSync } from 'fs'
 import { gzipSync } from 'zlib'
 import { watch } from 'chokidar'
 import { extractDocs } from './docs'
+import { generateLlmsTxt } from './make-llms-txt'
 // @ts-ignore-error
 import { $, spawn } from 'bun'
 
@@ -75,6 +76,8 @@ async function build(): Promise<boolean> {
     return false
   }
   await $`cp ./dist/iife.js ${PUBLIC}`.text()
+
+  generateLlmsTxt('llms.txt')
 
   // Report gzipped sizes
   const iifeFile = await Bun.file(`${DIST}/iife.js`).arrayBuffer()
