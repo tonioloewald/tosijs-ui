@@ -125,6 +125,7 @@ export declare class TosiTable extends WebComponent {
         localized: boolean;
     };
     selectionChanged: SelectCallback;
+    rowRendered: ((item: any, cells: HTMLElement[]) => void) | null;
     private selectedKey;
     private selectBinding;
     maxVisibleRows: number;
@@ -174,6 +175,8 @@ export declare class TosiTable extends WebComponent {
     get visibleRows(): any[];
     get visibleSelectedRows(): any[];
     get selectedRows(): any[];
+    getCells(itemOrCell: any): HTMLElement[] | undefined;
+    getItem(cell: Element): any;
     private draggedColumn?;
     private dropColumn;
     render(): void;

@@ -98,6 +98,30 @@ test('row selection via data model', () => {
   expect(items[0][table.selectedKey]).not.toBe(true)
   expect(items[1][table.selectedKey]).not.toBe(true)
 })
+
+test('getCells and getItem', async () => {
+  // Wait for list binding to stamp DOM elements
+  const items = table.visibleRows
+  let cells
+  await new Promise(resolve => {
+    const check = () => {
+      cells = table.getCells(items[0])
+      if (cells) return resolve()
+      setTimeout(check, 100)
+    }
+    check()
+  })
+
+  expect(cells.length).toBe(table.visibleColumns.length)
+
+  // getItem round-trips back to the same item
+  const item = table.getItem(cells[0])
+  expect(item).toBe(items[0])
+
+  // getCells from a cell element
+  const cellsFromCell = table.getCells(cells[1])
+  expect(cellsFromCell).toBe(cells)
+})
 ```
 
 > In the preceding example, the `name` column is *editable* (and *bound*, try editing something and scrolling
@@ -237,6 +261,43 @@ The following methods are also provided:
 
 These are rather fine-grained but they're used internally by the selection code so they may as well be documented.
 
+## Row Access
+
+Because the table uses a flat CSS grid (no `.tr` row elements), two methods
+provide O(1) access between items and their cells:
+
+- `<tosi-table>.getCells(itemOrCell)` — returns the `HTMLElement[]` of cells for a
+  given data item or any cell in the row, or `undefined` if the row isn't
+  currently rendered (virtual scroll)
+- `<tosi-table>.getItem(cell)` — returns the data item bound to a cell element
+
+These are useful for row-level hover effects, styling, and event handling:
+
+```typescript
+table.addEventListener('mouseover', (e) => {
+  for (const el of table.querySelectorAll('.row-hover')) {
+    el.classList.remove('row-hover')
+  }
+  const item = table.getItem(e.target)
+  if (!item) return
+  table.getCells(item)?.forEach(c => c.classList.add('row-hover'))
+})
+```
+
+### `rowRendered` callback
+
+For virtual tables, cells are created and destroyed as you scroll. The
+`rowRendered` callback fires whenever a row's cells are rendered, letting
+you apply styling that survives virtualisation:
+
+```typescript
+table.rowRendered = (item, cells) => {
+  if (item.overdue) {
+    cells.forEach(c => c.classList.add('overdue'))
+  }
+}
+```
+
 ## Sorting
 
 By default, the user can sort the table by any column which doesn't have a `sort === false`.
@@ -300,7 +361,7 @@ You'll need to make sure your localized strings include:
 
 As well as any column names you want localized.
 */
-import { Component as WebComponent, elements, vars, varDefault, tosiValue, getListItem, tosi, } from 'tosijs';
+import { Component as WebComponent, elements, vars, varDefault, tosiValue, getListItem, getListBinding, tosi, } from 'tosijs';
 import { trackDrag } from './track-drag';
 import { icons } from './icons';
 import { popMenu } from './menu';
@@ -445,6 +506,7 @@ export class TosiTable extends WebComponent {
     selectionChanged = () => {
         /* do not care */
     };
+    rowRendered = null;
     selectedKey = Symbol('selected');
     selectBinding = (elt, obj) => {
         if (obj == null)
@@ -1047,6 +1109,20 @@ export class TosiTable extends WebComponent {
     get selectedRows() {
         return this.array.filter((obj) => obj[this.selectedKey]);
     }
+    getCells(itemOrCell) {
+        if (!this._grid)
+            return undefined;
+        const binding = getListBinding(this._grid);
+        if (!binding)
+            return undefined;
+        const item = itemOrCell instanceof Element ? getListItem(itemOrCell) : itemOrCell;
+        if (item == null)
+            return undefined;
+        return binding.itemToElement.get(tosiValue(item));
+    }
+    getItem(cell) {
+        return getListItem(cell);
+    }
     draggedColumn;
     dropColumn = (event) => {
         const target = event.target.closest('.drag-over');
@@ -1140,6 +1216,18 @@ export class TosiTable extends WebComponent {
         // Data cells via listBinding with itemsPerRow
         const selectEnabled = this.select || this.multiple;
         const selectBindingFn = this.selectBinding;
+        const { rowRendered } = this;
+        const lastCol = cols.length - 1;
+        const rowRenderedBinding = rowRendered
+            ? (cell) => {
+                const item = getListItem(cell);
+                if (item != null) {
+                    const cells = this.getCells(item);
+                    if (cells)
+                        rowRendered(item, cells);
+                }
+            }
+            : null;
         const binding = this.rowData.visible.listBinding(({ span: s }, item, colIndex) => {
             const col = cols[colIndex];
             const si = stickyInfo[colIndex];
@@ -1160,6 +1248,19 @@ export class TosiTable extends WebComponent {
                 props.bind = {
                     value: item,
                     binding: { toDOM: selectBindingFn },
+                };
+            }
+            // Fire rowRendered on the last cell of each row
+            if (rowRenderedBinding && colIndex === lastCol) {
+                props.bind = {
+                    value: item,
+                    binding: {
+                        toDOM(cell) {
+                            if (selectEnabled)
+                                selectBindingFn(cell, getListItem(cell));
+                            rowRenderedBinding(cell);
+                        },
+                    },
                 };
             }
             return s(props);
