@@ -45,13 +45,24 @@ const columns = [
   },
 ]
 
-preview.append(tosiTable({
+const table = tosiTable({
   multiple: true,
   array: emojiData,
   localized: true,
   columns,
   rowHeight: 40,
-}))
+})
+
+table.addEventListener('mouseover', (e) => {
+  for (const el of table.querySelectorAll('.row-hover')) {
+    el.classList.remove('row-hover')
+  }
+  const item = table.getItem(e.target)
+  if (!item) return
+  table.getCells(item)?.forEach(c => c.classList.add('row-hover'))
+})
+
+preview.append(table)
 ```
 ```css
 .preview input.td {
@@ -63,6 +74,10 @@ preview.append(tosiTable({
 
 .preview tosi-table {
   height: 100%;
+}
+
+.preview .row-hover {
+  background: #08835810;
 }
 ```
 ```test
@@ -167,15 +182,18 @@ rendering with no jitter.
 import { elements } from 'tosijs'
 import { tosiTable, icons } from 'tosijs-ui'
 
-const { button } = elements
+const { button, span } = elements
 
 const count = 100
 const cols = ['Q1', 'Q2', 'Q3', 'Q4']
+const numKeys = []
 const rows = Array.from({ length: count }, (_, i) => {
   const row = { id: i + 1, name: 'Item ' + (i + 1) }
   for (const year of [2024, 2025, 2026]) {
     for (const q of cols) {
-      row[q + ' ' + year] = Math.round(Math.random() * 10000) / 100
+      const key = q + ' ' + year
+      row[key] = Math.round((Math.random() * 200 - 100) * 100) / 100
+      if (i === 0) numKeys.push(key)
     }
   }
   return row
@@ -183,25 +201,44 @@ const rows = Array.from({ length: count }, (_, i) => {
 
 // totals row
 const totals = { id: '', name: 'Total' }
-for (const key of Object.keys(rows[0])) {
-  if (key === 'id' || key === 'name') continue
+for (const key of numKeys) {
   totals[key] = Math.round(rows.reduce((sum, r) => sum + r[key], 0) * 100) / 100
 }
 rows.push(totals)
 
-const dataColumns = []
-for (const year of [2024, 2025, 2026]) {
-  for (const q of cols) {
-    dataColumns.push({ prop: q + ' ' + year, width: 100, align: 'right' })
-  }
+// custom cell that colors negative numbers red
+function numCell(options) {
+  return span({
+    class: 'td num-cell',
+    bindText: '^.' + options.prop,
+    bind: {
+      value: '^.' + options.prop,
+      binding: {
+        toDOM(el, val) {
+          el.style.color = val < 0 ? '#c00' : ''
+        }
+      }
+    }
+  })
 }
 
-preview.append(tosiTable({
+const dataColumns = numKeys.map(key => ({
+  prop: key, width: 100, align: 'right', dataCell: numCell,
+}))
+
+const table = tosiTable({
   array: rows,
   rowHeight: 32,
   pinnedBottom: 1,
   pinnedLeft: 2,
   pinnedRight: 1,
+  rowRendered(item, cells) {
+    const total = numKeys.reduce((sum, key) => sum + (item[key] || 0), 0)
+    const cls = total < 0 ? 'row-negative' : ''
+    for (const c of cells) {
+      c.classList.toggle('row-negative', total < 0)
+    }
+  },
   columns: [
     { prop: 'id', name: '#', width: 50, align: 'right' },
     { prop: 'name', width: 120 },
@@ -223,7 +260,9 @@ preview.append(tosiTable({
       },
     },
   ],
-}))
+})
+
+preview.append(table)
 ```
 ```css
 .preview tosi-table {
@@ -240,6 +279,12 @@ preview.append(tosiTable({
 .preview tosi-table .pinned-bottom {
   background: #eee;
   font-weight: bold;
+}
+.preview .row-negative {
+  background: #fdd;
+}
+.preview .num-cell {
+  font-variant-numeric: tabular-nums;
 }
 ```
 
@@ -371,6 +416,7 @@ import {
   tosiValue,
   getListItem,
   getListBinding,
+  bind,
   tosi,
 } from 'tosijs'
 import { trackDrag } from './track-drag'
@@ -1448,6 +1494,9 @@ export class TosiTable extends WebComponent {
             si,
             style
           )
+          if (rowRenderedBinding && colIndex === lastCol) {
+            bind(customCell, item, { toDOM: rowRenderedBinding })
+          }
           return customCell
         }
 
