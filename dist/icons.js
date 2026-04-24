@@ -777,17 +777,17 @@ function resolveIcon(prop, parts) {
         });
         return wrapIcon(prop, parts, baseIcon, overlayIcon);
     }
-    // Try composition (rot, flip, spin, un, check, etc.)
-    const composed = composeIcon(prop, parts);
-    if (composed)
-        return composed;
-    // Style suffixes: lock50o → lock at 50% opacity, star75s → star at 75% scale
+    // Style suffixes first — strip them, resolve the base, apply after
     const parsed = parseStyleSuffixes(prop);
     if (parsed) {
         const icon = resolveIcon(parsed.baseName, parts);
         Object.assign(icon.style, parsed.style);
         return icon;
     }
+    // Try composition (spin, un, check, etc.)
+    const composed = composeIcon(prop, parts);
+    if (composed)
+        return composed;
     if (prop) {
         console.warn(`icon ${prop} does not exist`);
     }

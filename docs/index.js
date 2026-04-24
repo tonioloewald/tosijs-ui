@@ -24142,15 +24142,15 @@ function resolveIcon(prop, parts) {
     });
     return wrapIcon(prop, parts, baseIcon, overlayIcon);
   }
-  const composed = composeIcon(prop, parts);
-  if (composed)
-    return composed;
   const parsed = parseStyleSuffixes(prop);
   if (parsed) {
     const icon = resolveIcon(parsed.baseName, parts);
     Object.assign(icon.style, parsed.style);
     return icon;
   }
+  const composed = composeIcon(prop, parts);
+  if (composed)
+    return composed;
   if (prop) {
     console.warn(`icon ${prop} does not exist`);
   }
