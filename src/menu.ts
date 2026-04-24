@@ -938,7 +938,7 @@ StyleSheet('xin-menu-helper', {
   '.xin-menu-with-icons .xin-menu-item, .tosi-menu-with-icons .tosi-menu-item':
     {
       gridTemplateColumns: '24px 1fr 30px',
-      gap: varDefault.menuItemGap('4px'),
+      gap: varDefault.menuItemGap('8px'),
     },
   '.xin-menu-item > :first-child, .tosi-menu-item > :first-child': {
     justifySelf: 'center',
