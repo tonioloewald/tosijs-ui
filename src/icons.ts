@@ -32,39 +32,43 @@ icon with the class `icon-chevron-down`.
 const  { tosi, elements } = tosijs
 import { icons, svgIcon, postNotification } from 'tosijs-ui'
 
-const { div, input } = elements
+const { div, span, input, select, option } = elements
+
+const prefixes = [
+  '', 'un', 'check', 'cancel', 'search',
+  'rot90', 'rot180', 'rot_90', 'flipH', 'flipV',
+  'spin120', 'spin360', 'spin_180',
+]
+
+const iconNames = Object.keys(icons).sort()
 
 const { iconDemo } = tosi({
   iconDemo: {
-    icon: ''
+    icon: '',
+    prefix: '',
   }
 })
 
-preview.append(
-  input({
-    placeholder: 'filter icons by name',
-    type: 'search',
-    onInput(event) {
-      const needle = event.target.value.toLocaleLowerCase()
-      const tiles = Array.from(preview.querySelectorAll('.tile'))
-      tiles.forEach(tile => {
-        const xinIcon = tile.children[0]
-        tile.style.display = xinIcon.icon.toLocaleLowerCase().includes(needle) ? '' : 'none'
-      })
-    }
-  }),
-  div(
-    {
-      class: 'scroller'
-    },
-    ...Object.keys(icons).sort().map(iconName => div(
+function composeName(prefix, base) {
+  if (!prefix) return base
+  return prefix + base[0].toUpperCase() + base.slice(1)
+}
+
+const scroller = div({ class: 'scroller' })
+
+function rebuildGrid() {
+  const prefix = iconDemo.prefix.value
+  scroller.textContent = ''
+  for (const iconName of iconNames) {
+    const composed = composeName(prefix, iconName)
+    scroller.append(div(
       {
         class: 'tile',
         onClick() {
-          iconDemo.icon = iconDemo.icon != iconName ? iconName : ''
+          iconDemo.icon = iconDemo.icon != composed ? composed : ''
           postNotification({
             icon: iconName,
-            message: `${iconName} clicked`,
+            message: `${composed} clicked`,
             duration: 2,
             color: 'hotpink'
           })
@@ -73,26 +77,64 @@ preview.append(
           iconDemo.icon = ''
         }
       },
-      svgIcon({icon: iconName, size: 24}),
-      div(iconName)
-    )),
+      svgIcon({ icon: composed, size: 24 }),
+      div(prefix ? composed : iconName)
+    ))
+  }
+}
+
+iconDemo.prefix.observe(rebuildGrid)
+rebuildGrid()
+
+const detailIcon = svgIcon({
+  class: 'icon-detail',
+  size: 256,
+  bind: {
+    binding: {
+      toDOM(element, value) {
+        element.style.opacity = value ? 1 : 0
+        if (value) element.icon = value
+      }
+    },
+    value: iconDemo.icon
+  }
+})
+
+preview.append(
+  div(
+    { class: 'toolbar' },
+    input({
+      placeholder: 'filter icons by name',
+      type: 'search',
+      onInput(event) {
+        const needle = event.target.value.toLocaleLowerCase()
+        const tiles = Array.from(scroller.querySelectorAll('.tile'))
+        tiles.forEach(tile => {
+          tile.style.display = tile.textContent.toLocaleLowerCase().includes(needle) ? '' : 'none'
+        })
+      }
+    }),
+    select(
+      { bindValue: iconDemo.prefix },
+      ...prefixes.map(p => option({ value: p }, p || '(none)'))
+    ),
   ),
-  svgIcon({
-    class: 'icon-detail',
-    size: 256,
-    bind: {
-      binding: {
-        toDOM(element, value) {
-          element.style.opacity = value ? 1 : 0
-          if (value) element.icon = value
-        }
-      },
-      value: iconDemo.icon
-    }
-  })
+  scroller,
+  detailIcon
 )
 ```
 ```css
+.preview .toolbar {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  align-items: center;
+}
+
+.preview .toolbar input[type=search] {
+  flex: 1;
+}
+
 .preview .scroller {
   display: grid;
   grid-template-columns: calc(33% - 5px) calc(33% - 5px) calc(33% - 5px);
@@ -102,11 +144,6 @@ preview.append(
   gap: var(--spacing);
   overflow: hidden scroll !important;
   height: 100%;
-}
-
-.preview input[type=search] {
-  margin: 10px 10px 0;
-  width: calc(100% - 20px);
 }
 
 .preview .tile {
@@ -126,21 +163,18 @@ preview.append(
 
 .preview .tile > div {
   font-family: Menlo, Monaco, monospace;
-  whitespace: no-wrap;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 14px;
   line-height: 1.5;
 }
 
-.preview .tile tosi-icon {
-  font-size: 24px;
-}
-
 .preview .icon-detail {
   position: absolute;
-  display: block;
-  height: 296px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   opacity: 0;
   transition: 0.5s ease-out;
   top: 50%;
@@ -161,9 +195,9 @@ test('icon tiles have svg icons', () => {
   const firstIcon = tiles[0].querySelector('tosi-icon')
   expect(firstIcon).toBeTruthy()
 })
-test('filter input exists', () => {
-  const input = preview.querySelector('input[type="search"]')
-  expect(input).toBeTruthy()
+test('filter input and prefix select exist', () => {
+  expect(preview.querySelector('input[type="search"]')).toBeTruthy()
+  expect(preview.querySelector('select')).toBeTruthy()
 })
 ```
 
@@ -301,6 +335,12 @@ that, for example, treat all colored icons inside buttons the same way.
 
 ## Icon Composition & Math
 
+<tosi-icon icon="tosi$map50o" size=128></tosi-icon>
+<tosi-icon icon="lock50s75o_10y$shield" size=128></tosi-icon>
+<tosi-icon icon="unLock" size=128></tosi-icon>
+<tosi-icon icon="checkFile" size=128></tosi-icon>
+<tosi-icon icon="spin120Loader40s_20x$cloud" size=128></tosi-icon>
+
 If you request an icon that doesn't exist, the system tries to compose one
 from a base icon and a prefix:
 
@@ -310,6 +350,8 @@ from a base icon and a prefix:
 - `rot_<angle><Icon>` — negative rotation, e.g. `rot_30Arrow` → -30°
 - `flipH<Icon>` — mirror horizontally, e.g. `flipHSidebar`
 - `flipV<Icon>` — mirror vertically
+- `spin<dps><Icon>` — continuous rotation at N degrees/second, e.g. `spin360Loader` (1 rev/s)
+- `spin_<dps><Icon>` — counter-clockwise, e.g. `spin_180Star`
 
 ### Modifier overlays
 
@@ -334,13 +376,53 @@ to another icon name (which can include composition prefixes):
 
 ### Custom rules
 
-Add your own modifier prefixes via `iconRules.push(...)`:
+`iconRules` is a mutable array of modifier rules. Add your own prefixes,
+modify existing ones, or replace them entirely:
 
+    // Add a new prefix
     iconRules.push({
       prefix: 'add',
       overlay: 'plus',
       overlayStyle: { color: 'blue', opacity: '0.75' },
       baseStyle: { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' },
+    })
+
+    // Override the built-in 'un' rule
+    iconRules[0] = { ...iconRules[0], overlayStyle: { color: 'orange', opacity: '0.9' } }
+
+    // Replace all rules
+    iconRules.length = 0
+    iconRules.push(...myCustomRules)
+
+### Stacking icons
+
+Use `$` to stack one icon on top of another: `overlay$base`. Combine
+with opacity suffixes and transforms for layered compositions:
+
+    icons['tosi$map50o']()          // tosi logo on a 50% opacity map
+    icons['rot45Star$circle']()     // rotated star on a circle
+    icons['lock50s75o_10y$shield']() // small translucent lock on a shield
+
+Each side of the `$` is resolved independently, so redirects, transforms,
+and modifiers all work on either side.
+
+### Style suffixes
+
+Append two-digit codes to any icon name to apply transforms and opacity.
+Each suffix is a number followed by a letter:
+
+- `NNo` — opacity N% (e.g. `lock50o` = 50% opacity)
+- `NNs` — scale N% (e.g. `star75s` = 75% scale)
+- `NNx` — translateX N% (e.g. `plus20x` = shift right 20%)
+- `NNy` — translateY N% (e.g. `plus_20y` = shift up 20%)
+
+Suffixes can be combined: `plus50o60s25x25y` = plus at 50% opacity,
+60% scale, shifted 25% right and down.
+
+This is especially powerful with stacking:
+
+    defineIcons({
+      userAdd: 'plus50o60s25x25y$user',
     })
 
 ### Composites and `svg2DataUrl`
@@ -350,114 +432,6 @@ single SVG. `svg2DataUrl()` will render only the base icon and log a
 console error. Transforms (`rot`, `flip`) and plain icons work normally
 with `svg2DataUrl`.
 
-```js
-import { icons, iconRules } from 'tosijs-ui'
-import { elements, tosi } from 'tosijs'
-
-const { div, span, label, select, option, input } = elements
-
-const prefixes = [
-  '', 'un', 'check', 'cancel', 'search',
-  'rot90', 'rot180', 'rot270', 'flipH', 'flipV',
-]
-
-const iconNames = Object.keys(icons).sort()
-
-const { iconMath } = tosi({
-  iconMath: { base: 'pin', prefix: 'un', size: 64 }
-})
-
-const iconEl = div({ class: 'composition-icon' })
-const nameEl = span({ class: 'composition-name' })
-
-function renderResult() {
-  const name = iconMath.prefix.value + (
-    iconMath.prefix.value
-      ? iconMath.base.value[0].toUpperCase() + iconMath.base.value.slice(1)
-      : iconMath.base.value
-  )
-  const size = iconMath.size.value + 'px'
-  iconEl.style.setProperty('--tosi-icon-size', size)
-  iconEl.textContent = ''
-  iconEl.append(icons[name]())
-  nameEl.textContent = name
-}
-
-iconMath.base.observe(renderResult)
-iconMath.prefix.observe(renderResult)
-iconMath.size.observe(renderResult)
-
-preview.append(
-  div(
-    { class: 'composition-demo' },
-    iconEl,
-    div(
-      { class: 'composition-controls' },
-      select(
-        { bindValue: iconMath.prefix },
-        ...prefixes.map(p => option({ value: p }, p || '(none)'))
-      ),
-      span({ class: 'composition-op' }, '+'),
-      select(
-        { bindValue: iconMath.base },
-        ...iconNames.map(name => option(name))
-      ),
-      span({ class: 'composition-op' }, '='),
-      nameEl,
-    ),
-    label(
-      { class: 'composition-size' },
-      input({
-        type: 'range',
-        min: 16,
-        max: 128,
-        bindValue: iconMath.size,
-      }),
-      span({ bindText: iconMath.size }, '64'),
-      'px',
-    ),
-  ),
-)
-
-renderResult()
-```
-```css
-.preview .composition-demo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 20px;
-}
-.preview .composition-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 80px;
-}
-.preview .composition-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.preview .composition-op {
-  font-size: 20px;
-  font-weight: bold;
-  opacity: 0.5;
-}
-.preview .composition-name {
-  font-family: Menlo, Monaco, monospace;
-  font-size: 14px;
-}
-.preview .composition-size {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 14px;
-}
-```
 
 ## Missing Icons
 
@@ -530,6 +504,7 @@ import {
   Component as WebComponent,
   XinStyleRule,
   Color,
+  vars,
   varDefault,
 } from 'tosijs'
 import { SVGIconMap } from './icon-types'
@@ -587,44 +562,115 @@ export const svg2DataUrl = (
 
 // Compositional icon rules — when an icon isn't found, try to compose it
 export interface IconRule {
-  prefix: string
-  overlay: string // icon name to overlay
-  overlayStyle: Partial<CSSStyleDeclaration>
-  baseStyle: Partial<CSSStyleDeclaration>
+  prefix: string | RegExp
+  apply: (
+    baseName: string,
+    match: RegExpMatchArray | string,
+    parts: ElementPart[]
+  ) => Element | null
 }
+
+// Helper for overlay-style rules
+function overlayRule(
+  prefix: string,
+  overlay: string,
+  overlayStyle: Partial<CSSStyleDeclaration>,
+  baseStyle: Partial<CSSStyleDeclaration>
+): IconRule {
+  return {
+    prefix,
+    apply(baseName, _match, parts) {
+      const data = iconData as Record<string, string>
+      if (!data[baseName] || !data[overlay]) return null
+      const base = makeIcon(data[baseName], [])
+      Object.assign(base.style, baseStyle)
+      const over = makeIcon(data[overlay], [])
+      Object.assign(over.style, {
+        position: 'absolute',
+        inset: '0',
+        width: '100%',
+        height: '100%',
+        ...overlayStyle,
+      })
+      return wrapIcon(baseName, parts, base, over)
+    },
+  }
+}
+
+const spinKeyframesInjected = { done: false }
 
 export const iconRules: IconRule[] = [
   {
-    prefix: 'un',
-    overlay: 'slash',
-    overlayStyle: { color: 'red', opacity: '0.75' },
-    baseStyle: { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' },
-  },
-  {
-    prefix: 'check',
-    overlay: 'check',
-    overlayStyle: { color: 'green', opacity: '0.75' },
-    baseStyle: { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' },
-  },
-  {
-    prefix: 'cancel',
-    overlay: 'x',
-    overlayStyle: { color: 'red', opacity: '0.75' },
-    baseStyle: { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' },
-  },
-  {
-    prefix: 'search',
-    overlay: 'search',
-    overlayStyle: {
-      transform: 'scale(0.8) translate(30%, 30%)',
-      transformOrigin: '50% 50%',
+    prefix: /^rot(_?\d+)/,
+    apply(baseName, match, parts) {
+      const data = iconData as Record<string, string>
+      if (!data[baseName]) return null
+      const angle = (match as RegExpMatchArray)[1].replace('_', '-')
+      const svg = makeIcon(data[baseName], [])
+      svg.style.transform = `rotate(${angle}deg)`
+      return wrapIcon(baseName, parts, svg)
     },
-    baseStyle: { opacity: '0.5' },
   },
+  {
+    prefix: /^flip(H|V)/,
+    apply(baseName, match, parts) {
+      const data = iconData as Record<string, string>
+      if (!data[baseName]) return null
+      const axis = (match as RegExpMatchArray)[1]
+      const svg = makeIcon(data[baseName], [])
+      svg.style.transform = axis === 'H' ? 'scaleX(-1)' : 'scaleY(-1)'
+      return wrapIcon(baseName, parts, svg)
+    },
+  },
+  {
+    prefix: /^spin(_?\d+)/,
+    apply(baseName, match, parts) {
+      const data = iconData as Record<string, string>
+      if (!data[baseName]) return null
+      const dps = (match as RegExpMatchArray)[1].replace('_', '-')
+      const duration = 360 / Math.abs(parseFloat(dps))
+      const direction = dps.startsWith('-') ? 'reverse' : 'normal'
+      if (!spinKeyframesInjected.done) {
+        const style = document.createElement('style')
+        style.textContent =
+          '@keyframes tosi-spin { to { transform: rotate(360deg) } }'
+        document.head.appendChild(style)
+        spinKeyframesInjected.done = true
+      }
+      const svg = makeIcon(data[baseName], [])
+      svg.style.animation = `tosi-spin ${duration}s linear infinite ${direction}`
+      return wrapIcon(baseName, parts, svg)
+    },
+  },
+  overlayRule(
+    'un',
+    'slash',
+    { opacity: '0.25' },
+    {
+      opacity: '0.75',
+      transform: 'scale(0.75)',
+      transformOrigin: '50% 50%',
+    }
+  ),
+  overlayRule(
+    'check',
+    'check',
+    { color: 'green', opacity: '0.75' },
+    { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' }
+  ),
+  overlayRule(
+    'cancel',
+    'x',
+    { color: 'red', opacity: '0.75' },
+    { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' }
+  ),
+  overlayRule(
+    'search',
+    'search',
+    { transform: 'scale(0.8) translate(30%, 30%)', transformOrigin: '50% 50%' },
+    { opacity: '0.5' }
+  ),
 ]
-
-const ROTATION_RE = /^rot(_?\d+)(.+)$/
-const FLIP_RE = /^flip(H|V)(.+)$/
 
 function makeIcon(spec: string, parts: ElementPart[]): SVGElement {
   const div = elements.div()
@@ -660,68 +706,56 @@ function wrapIcon(
   parts: ElementPart[],
   ...children: Element[]
 ): HTMLSpanElement {
-  return elements.span(
+  const wrapper = elements.span(
     {
       class: 'tosi-icon-composite',
       dataIcon: prop,
       style: {
-        display: 'inline-block',
+        display: 'inline-flex',
         position: 'relative',
-        height: varDefault.tosiIconSize('16px'),
+        pointerEvents: 'none',
       },
     },
-    ...parts,
     ...children
   )
+  // Merge any style parts without clobbering the wrapper's own styles
+  for (const part of parts) {
+    if (part && typeof part === 'object' && !('nodeType' in (part as any))) {
+      const props = part as Record<string, any>
+      if (props.style && typeof props.style === 'object') {
+        Object.assign(wrapper.style, props.style)
+      }
+      if (props.class) {
+        wrapper.classList.add(...String(props.class).split(' '))
+      }
+    }
+  }
+  return wrapper
 }
 
 function composeIcon(prop: string, parts: ElementPart[]): Element | null {
-  const data = iconData as Record<string, string>
-
-  // Rotation: rot90ChevronRight → chevronRight rotated 90°
-  const rotMatch = prop.match(ROTATION_RE)
-  if (rotMatch) {
-    const angle = rotMatch[1].replace('_', '-')
-    const baseName = rotMatch[2][0].toLowerCase() + rotMatch[2].slice(1)
-    if (data[baseName]) {
-      const svg = makeIcon(data[baseName], [])
-      svg.style.transform = `rotate(${angle}deg)`
-      return wrapIcon(prop, parts, svg)
-    }
-  }
-
-  // Flip: flipHSidebar → sidebar flipped horizontally
-  const flipMatch = prop.match(FLIP_RE)
-  if (flipMatch) {
-    const axis = flipMatch[1]
-    const baseName = flipMatch[2][0].toLowerCase() + flipMatch[2].slice(1)
-    if (data[baseName]) {
-      const svg = makeIcon(data[baseName], [])
-      svg.style.transform = axis === 'H' ? 'scaleX(-1)' : 'scaleY(-1)'
-      return wrapIcon(prop, parts, svg)
-    }
-  }
-
-  // Modifier prefixes: unPin → pin with slash overlay
   for (const rule of iconRules) {
-    if (prop.startsWith(rule.prefix) && prop.length > rule.prefix.length) {
-      const baseName =
+    let baseName: string
+    let match: RegExpMatchArray | string
+
+    if (rule.prefix instanceof RegExp) {
+      const re = new RegExp(rule.prefix.source + '(.+)$')
+      const m = prop.match(re)
+      if (!m) continue
+      baseName = m[m.length - 1]
+      baseName = baseName[0].toLowerCase() + baseName.slice(1)
+      match = m
+    } else {
+      if (!prop.startsWith(rule.prefix) || prop.length <= rule.prefix.length)
+        continue
+      baseName =
         prop[rule.prefix.length].toLowerCase() +
         prop.slice(rule.prefix.length + 1)
-      if (data[baseName] && data[rule.overlay]) {
-        const base = makeIcon(data[baseName], [])
-        Object.assign(base.style, rule.baseStyle)
-        const overlay = makeIcon(data[rule.overlay], [])
-        Object.assign(overlay.style, {
-          position: 'absolute',
-          inset: '0',
-          width: '100%',
-          height: '100%',
-          ...rule.overlayStyle,
-        })
-        return wrapIcon(prop, parts, base, overlay)
-      }
+      match = rule.prefix
     }
+
+    const result = rule.apply(baseName, match, parts)
+    if (result) return result
   }
 
   return null
@@ -729,8 +763,52 @@ function composeIcon(prop: string, parts: ElementPart[]): Element | null {
 
 const MAX_REDIRECTS = 10
 
+// Style suffixes: 50o (opacity), 75s (scale), 20x (translateX%), _10y (translateY%)
+const SUFFIX_RE = /(_?\d{2,3}[osxy])+$/
+
+function parseStyleSuffixes(name: string): {
+  baseName: string
+  style: Partial<CSSStyleDeclaration>
+} | null {
+  const match = name.match(SUFFIX_RE)
+  if (!match) return null
+  const baseName = name.slice(0, match.index!)
+  if (!baseName) return null
+
+  const style: Partial<CSSStyleDeclaration> = {}
+  const suffixes = match[0].match(/_?\d{2,3}[osxy]/g)!
+  let tx = ''
+  let ty = ''
+  let scale = ''
+  for (const s of suffixes) {
+    const val = parseInt(s.replace('_', '-'))
+    switch (s[s.length - 1]) {
+      case 'o':
+        style.opacity = String(val / 100)
+        break
+      case 's':
+        scale = `scale(${val / 100})`
+        break
+      case 'x':
+        tx = `translateX(${val}%)`
+        break
+      case 'y':
+        ty = `translateY(${val}%)`
+        break
+    }
+  }
+  const transform = [scale, tx, ty].filter(Boolean).join(' ')
+  if (transform) {
+    style.transform = transform
+    style.transformOrigin = '50% 50%'
+  }
+  return { baseName, style }
+}
+
 function resolveIcon(prop: string, parts: ElementPart[]): Element {
   const data = iconData as Record<string, string>
+
+  // Direct match or redirect chain
   let name = prop
   for (let i = 0; i < MAX_REDIRECTS; i++) {
     const spec = data[name]
@@ -739,12 +817,36 @@ function resolveIcon(prop: string, parts: ElementPart[]): Element {
     name = spec
   }
   if (name !== prop) {
-    // Redirected but final target not found — try composition on final name
     const composed = composeIcon(name, parts)
     if (composed) return composed
   }
+
+  // Stack: foo50o$bar → overlay foo at 50% opacity on bar
+  if (prop.includes('$')) {
+    const [overlayName, baseName] = prop.split('$', 2)
+    const baseIcon = resolveIcon(baseName, [])
+    const overlayIcon = resolveIcon(overlayName, [])
+    Object.assign((overlayIcon as HTMLElement).style, {
+      position: 'absolute',
+      inset: '0',
+      width: '100%',
+      height: '100%',
+    })
+    return wrapIcon(prop, parts, baseIcon as Element, overlayIcon as Element)
+  }
+
+  // Try composition (rot, flip, spin, un, check, etc.)
   const composed = composeIcon(prop, parts)
   if (composed) return composed
+
+  // Style suffixes: lock50o → lock at 50% opacity, star75s → star at 75% scale
+  const parsed = parseStyleSuffixes(prop)
+  if (parsed) {
+    const icon = resolveIcon(parsed.baseName, parts)
+    Object.assign((icon as HTMLElement).style, parsed.style)
+    return icon
+  }
+
   if (prop) {
     console.warn(`icon ${prop} does not exist`)
   }
@@ -774,8 +876,9 @@ export class SvgIcon extends WebComponent {
       strokeLinejoin: varDefault.tosiIconStrokeLinejoin('round'),
       strokeLinecap: varDefault.tosiIconStrokeLinecap('round'),
       fill: varDefault.tosiIconFill('none'),
+      height: vars.tosiIconSize,
     },
-    ':host, :host svg': {
+    ':host svg, :host .tosi-icon-composite': {
       height: varDefault.tosiIconSize('16px'),
     },
   }

@@ -543,7 +543,6 @@ export const styleSpec: XinStyleSheet = {
   },
   "[class*='icon-'], tosi-icon": {
     color: 'currentcolor',
-    height: vars.fontSize,
     pointerEvents: 'none',
   },
   "[class*='icon-']": {

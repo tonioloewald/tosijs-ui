@@ -1,14 +1,12 @@
-import { ElementCreator, Component as WebComponent } from 'tosijs';
+import { ElementCreator, ElementPart, Component as WebComponent } from 'tosijs';
 import { SVGIconMap } from './icon-types';
 export declare const defineIcons: (newIcons: {
     [key: string]: string;
 }) => void;
 export declare const svg2DataUrl: (icon: Element, fill?: string, stroke?: string, strokeWidth?: number) => string;
 export interface IconRule {
-    prefix: string;
-    overlay: string;
-    overlayStyle: Partial<CSSStyleDeclaration>;
-    baseStyle: Partial<CSSStyleDeclaration>;
+    prefix: string | RegExp;
+    apply: (baseName: string, match: RegExpMatchArray | string, parts: ElementPart[]) => Element | null;
 }
 export declare const iconRules: IconRule[];
 export declare const icons: SVGIconMap;
@@ -27,8 +25,9 @@ export declare class SvgIcon extends WebComponent {
             strokeLinejoin: string;
             strokeLinecap: string;
             fill: string;
+            height: string;
         };
-        ':host, :host svg': {
+        ':host svg, :host .tosi-icon-composite': {
             height: string;
         };
     };
