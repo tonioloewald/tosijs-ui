@@ -835,6 +835,12 @@ function resolveIcon(prop: string, parts: ElementPart[]): Element {
   if (name !== prop) {
     const composed = composeIcon(name, parts)
     if (composed) return composed
+    const parsed = parseStyleSuffixes(name)
+    if (parsed) {
+      const icon = resolveIcon(parsed.baseName, parts)
+      Object.assign((icon as HTMLElement).style, parsed.style)
+      return icon
+    }
   }
 
   // Stack: foo50o$bar → overlay foo at 50% opacity on bar

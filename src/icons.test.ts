@@ -269,6 +269,28 @@ describe('icons', () => {
     })
   })
 
+  describe('directional redirects', () => {
+    const redirected = [
+      'arrowDown', 'arrowUp', 'arrowLeft',
+      'arrowDownCircle', 'arrowUpCircle', 'arrowLeftCircle',
+      'chevronDown', 'chevronUp', 'chevronLeft',
+      'chevronsDown', 'chevronsUp', 'chevronsLeft',
+      'toggleLeft', 'skipBack', 'refreshCcw', 'rotateCcw',
+      'arrowDownRight', 'arrowDownLeft', 'arrowUpLeft',
+      'cornerDownLeft', 'cornerUpLeft', 'cornerLeftDown', 'cornerLeftUp',
+    ]
+    for (const name of redirected) {
+      test(`${name} resolves to an icon (not square)`, () => {
+        const el = icons[name]()
+        // Should be a composite span with inner svg, not a bare square fallback
+        const svg = el instanceof SVGElement ? el : el.querySelector('svg')
+        expect(svg).toBeTruthy()
+        // Verify it's not the square fallback
+        expect(svg!.classList.contains('tosi-icon')).toBe(true)
+      })
+    }
+  })
+
   describe('icon redirects', () => {
     test('redirect to existing icon', () => {
       defineIcons({ testRedirect: 'check' })

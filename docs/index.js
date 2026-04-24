@@ -24129,6 +24129,12 @@ function resolveIcon(prop, parts) {
     const composed2 = composeIcon(name, parts);
     if (composed2)
       return composed2;
+    const parsed2 = parseStyleSuffixes(name);
+    if (parsed2) {
+      const icon = resolveIcon(parsed2.baseName, parts);
+      Object.assign(icon.style, parsed2.style);
+      return icon;
+    }
   }
   if (prop.includes("$")) {
     const [overlayName, baseName] = prop.split("$", 2);

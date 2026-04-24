@@ -762,6 +762,12 @@ function resolveIcon(prop, parts) {
         const composed = composeIcon(name, parts);
         if (composed)
             return composed;
+        const parsed = parseStyleSuffixes(name);
+        if (parsed) {
+            const icon = resolveIcon(parsed.baseName, parts);
+            Object.assign(icon.style, parsed.style);
+            return icon;
+        }
     }
     // Stack: foo50o$bar → overlay foo at 50% opacity on bar
     if (prop.includes('$')) {
