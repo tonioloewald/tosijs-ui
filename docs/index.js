@@ -23397,6 +23397,7 @@ __export(exports_src, {
   initTooltips: () => initTooltips,
   initLocalization: () => initLocalization,
   icons: () => icons,
+  iconRules: () => iconRules,
   i18n: () => i18n,
   getRouterParams: () => getRouterParams,
   gamepadText: () => gamepadText,
@@ -23879,6 +23880,7 @@ var icon_data_default = {
   heart: '<svg class="stroked" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>',
   trendingUp: '<svg class="stroked" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
   listBullet: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M21,6 C21,6,10,6,10,6"/><path style="" d="M21,12 C21,12,10,12,10,12"/><path style="" d="M21,18 C21,18,10,18,10,18"/><path style="" d="M5.5,5 C6.05,5,6.5,5.45,6.5,6 C6.5,6.55,6.05,7,5.5,7 C4.95,7,4.5,6.55,4.5,6 C4.5,5.45,4.95,5,5.5,5 z"/><path style="" d="M5.5,11 C6.05,11,6.5,11.45,6.5,12 C6.5,12.55,6.05,13,5.5,13 C4.95,13,4.5,12.55,4.5,12 C4.5,11.45,4.95,11,5.5,11 z"/><path style="" d="M5.5,17 C6.05,17,6.5,17.45,6.5,18 C6.5,18.55,6.05,19,5.5,19 C4.95,19,4.5,18.55,4.5,18 C4.5,17.45,4.95,17,5.5,17 z"/></g></svg> ',
+  pin: '<svg class="stroked" viewBox="0 0 24 24"><g><g><path style="" d="M16.23,4.73 C16.23,4.73,19.42,7.9,19.42,7.9 C19.42,7.9,14.46,15.69,14.46,15.69 C14.46,15.69,8.45,9.68,8.45,9.68 C8.45,9.68,16.23,4.73,16.23,4.73 z"/><path style="" d="M20.84,9.32 C20.84,9.32,14.47,2.95,14.47,2.95"/><path style="" d="M16.6,17.8 C16.6,17.8,6.7,7.9,6.7,7.9"/><path style="" d="M10.23,11.44 C10.23,11.44,5.99,18.51,5.99,18.51 C5.99,18.51,13.06,14.27,13.06,14.27"/></g></g></svg> ',
   indent: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M21,10 C21,10,8,10,8,10"/><path style="" d="M21,6 C21,6,8,6,8,6"/><path style="" d="M21,14 C21,14,8,14,8,14"/><path style="" d="M21,18 C21,18,8,18,8,18"/><path style="" d="M2.5,9 C2.5,9,5.5,12,5.5,12 C5.5,12,2.5,15,2.5,15"/></g></svg> ',
   fontBold: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M13.5,11 C15.71,11,17.5,12.68,17.5,14.75 C17.5,16.82,15.71,18.5,13.5,18.5 C13.5,18.5,8.5,18.5,8.5,18.5 C8.5,18.5,8.5,3.5,8.5,3.5 C8.5,3.5,13.5,3.5,13.5,3.5 C15.71,3.5,17.5,5.18,17.5,7.25 C17.5,9.32,15.71,11,13.5,11 C13.5,11,13.5,11,13.5,11 z"/><path style="" d="M13.5,11 C13.5,11,8.5,11,8.5,11"/><path style="" d="M12.5,11 C14.71,11,16.5,12.68,16.5,14.75 C16.5,16.82,14.71,18.5,12.5,18.5 C12.5,18.5,7.5,18.5,7.5,18.5 C7.5,18.5,7.5,3.5,7.5,3.5 C7.5,3.5,12.5,3.5,12.5,3.5 C14.71,3.5,16.5,5.18,16.5,7.25 C16.5,9.32,14.71,11,12.5,11 C12.5,11,12.5,11,12.5,11 z"/><path style="" d="M12.5,11 C12.5,11,7.5,11,7.5,11"/></g></svg> ',
   fontItalic: '<svg class="stroked" viewBox="0 0 24 24"><g><path style="" d="M17,4.5 C17,4.5,13,4.5,13,4.5"/><path style="" d="M11,19.5 C11,19.5,7,19.5,7,19.5"/><path style="" d="M15,4.5 C15,4.5,9,19.5,9,19.5"/></g></svg> ',
@@ -23899,73 +23901,177 @@ var icon_data_default = {
 var defineIcons = (newIcons) => {
   Object.assign(icon_data_default, newIcons);
 };
-var svg2DataUrl = (svg, fill, stroke, strokeWidth) => {
+var svg2DataUrl = (icon, fill, stroke, strokeWidth) => {
+  const svgs = icon instanceof SVGElement ? [icon] : Array.from(icon.querySelectorAll("svg"));
+  if (svgs.length > 1) {
+    const name = icon.dataset?.icon || "unknown";
+    console.error(`svg2DataUrl: composite icon "${name}" cannot be serialized as a data URL, rendering base icon only`);
+  }
+  const svg = svgs[0];
   svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  for (const path of [
-    ...svg.querySelectorAll("path, polygon, line, circle, rect, ellipse, polyline")
-  ]) {
-    if (fill !== undefined) {
+  for (const path of svg.querySelectorAll("path, polygon, line, circle, rect, ellipse, polyline")) {
+    if (fill !== undefined)
       path.setAttribute("fill", fill);
-    }
-    if (stroke !== undefined) {
+    if (stroke !== undefined)
       path.setAttribute("stroke", stroke);
-    }
-    if (strokeWidth !== undefined) {
+    if (strokeWidth !== undefined)
       path.setAttribute("stroke-width", String(strokeWidth));
-    }
   }
   const styled = svg.querySelectorAll("[style]");
   svg.removeAttribute("style");
   for (const item of [...styled]) {
-    const { fill: fill2, stroke: stroke2, strokeWidth: strokeWidth2, strokeLinecap, strokeLinejoin } = item.style;
-    if (fill2)
-      item.setAttribute("fill", X.fromCss(fill2).html);
-    if (stroke2)
-      item.setAttribute("stroke", X.fromCss(stroke2).html);
-    if (strokeWidth2)
-      item.setAttribute("strokeWidth", strokeWidth2);
-    if (strokeLinecap)
-      item.setAttribute("strokeLinecap", strokeLinecap);
-    if (strokeLinejoin)
-      item.setAttribute("strokeLinejoin", strokeLinejoin);
+    const s2 = item.style;
+    if (s2.fill)
+      item.setAttribute("fill", X.fromCss(s2.fill).html);
+    if (s2.stroke)
+      item.setAttribute("stroke", X.fromCss(s2.stroke).html);
+    if (s2.strokeWidth)
+      item.setAttribute("strokeWidth", s2.strokeWidth);
+    if (s2.strokeLinecap)
+      item.setAttribute("strokeLinecap", s2.strokeLinecap);
+    if (s2.strokeLinejoin)
+      item.setAttribute("strokeLinejoin", s2.strokeLinejoin);
     item.removeAttribute("style");
   }
   const text = encodeURIComponent(svg.outerHTML);
   return `url(data:image/svg+xml;charset=UTF-8,${text})`;
 };
+var iconRules = [
+  {
+    prefix: "un",
+    overlay: "slash",
+    overlayStyle: { color: "red", opacity: "0.75" },
+    baseStyle: { opacity: "0.5", transform: "scale(0.75)", transformOrigin: "50% 50%" }
+  },
+  {
+    prefix: "check",
+    overlay: "check",
+    overlayStyle: { color: "green", opacity: "0.75" },
+    baseStyle: { opacity: "0.5", transform: "scale(0.75)", transformOrigin: "50% 50%" }
+  },
+  {
+    prefix: "cancel",
+    overlay: "x",
+    overlayStyle: { color: "red", opacity: "0.75" },
+    baseStyle: { opacity: "0.5", transform: "scale(0.75)", transformOrigin: "50% 50%" }
+  },
+  {
+    prefix: "search",
+    overlay: "search",
+    overlayStyle: {
+      transform: "scale(0.8) translate(30%, 30%)",
+      transformOrigin: "50% 50%"
+    },
+    baseStyle: { opacity: "0.5" }
+  }
+];
+var ROTATION_RE = /^rot(_?\d+)(.+)$/;
+var FLIP_RE = /^flip(H|V)(.+)$/;
+function makeIcon(spec, parts) {
+  const div = I.div();
+  div.innerHTML = spec;
+  const sourceSvg = div.querySelector("svg");
+  const classes = new Set(sourceSvg.classList);
+  classes.add("tosi-icon");
+  const svg = ZM.svg({
+    class: Array.from(classes).join(" "),
+    viewBox: sourceSvg.getAttribute("viewBox")
+  }, ...parts, ...sourceSvg.children);
+  svg.style.strokeWidth = kE.tosiIconStrokeWidth("2px");
+  if (classes.has("filled")) {
+    svg.style.stroke = "none";
+    svg.style.fill = "currentColor";
+  } else if (classes.has("stroked")) {
+    svg.style.stroke = kE.tosiIconStroke("currentColor");
+    svg.style.fill = "none";
+  } else {
+    svg.style.stroke = kE.tosiIconStroke("currentColor");
+    svg.style.fill = kE.tosiIconFill("currentColor");
+  }
+  svg.style.height = kE.tosiIconSize("16px");
+  return svg;
+}
+function wrapIcon(prop, parts, ...children) {
+  return I.span({
+    class: "tosi-icon-composite",
+    dataIcon: prop,
+    style: {
+      display: "inline-block",
+      position: "relative",
+      height: kE.tosiIconSize("16px")
+    }
+  }, ...parts, ...children);
+}
+function composeIcon(prop, parts) {
+  const data = icon_data_default;
+  const rotMatch = prop.match(ROTATION_RE);
+  if (rotMatch) {
+    const angle = rotMatch[1].replace("_", "-");
+    const baseName = rotMatch[2][0].toLowerCase() + rotMatch[2].slice(1);
+    if (data[baseName]) {
+      const svg = makeIcon(data[baseName], []);
+      svg.style.transform = `rotate(${angle}deg)`;
+      return wrapIcon(prop, parts, svg);
+    }
+  }
+  const flipMatch = prop.match(FLIP_RE);
+  if (flipMatch) {
+    const axis = flipMatch[1];
+    const baseName = flipMatch[2][0].toLowerCase() + flipMatch[2].slice(1);
+    if (data[baseName]) {
+      const svg = makeIcon(data[baseName], []);
+      svg.style.transform = axis === "H" ? "scaleX(-1)" : "scaleY(-1)";
+      return wrapIcon(prop, parts, svg);
+    }
+  }
+  for (const rule of iconRules) {
+    if (prop.startsWith(rule.prefix) && prop.length > rule.prefix.length) {
+      const baseName = prop[rule.prefix.length].toLowerCase() + prop.slice(rule.prefix.length + 1);
+      if (data[baseName] && data[rule.overlay]) {
+        const base = makeIcon(data[baseName], []);
+        Object.assign(base.style, rule.baseStyle);
+        const overlay = makeIcon(data[rule.overlay], []);
+        Object.assign(overlay.style, {
+          position: "absolute",
+          inset: "0",
+          width: "100%",
+          height: "100%",
+          ...rule.overlayStyle
+        });
+        return wrapIcon(prop, parts, base, overlay);
+      }
+    }
+  }
+  return null;
+}
+var MAX_REDIRECTS = 10;
+function resolveIcon(prop, parts) {
+  const data = icon_data_default;
+  let name = prop;
+  for (let i2 = 0;i2 < MAX_REDIRECTS; i2++) {
+    const spec = data[name];
+    if (!spec)
+      break;
+    if (spec.startsWith("<"))
+      return makeIcon(spec, parts);
+    name = spec;
+  }
+  if (name !== prop) {
+    const composed2 = composeIcon(name, parts);
+    if (composed2)
+      return composed2;
+  }
+  const composed = composeIcon(prop, parts);
+  if (composed)
+    return composed;
+  if (prop) {
+    console.warn(`icon ${prop} does not exist`);
+  }
+  return makeIcon(icon_data_default.square, parts);
+}
 var icons = new Proxy(icon_data_default, {
   get(target, prop) {
-    let iconSpec = icon_data_default[prop];
-    if (prop && !iconSpec) {
-      console.warn(`icon ${prop} does not exist`);
-    }
-    if (!iconSpec) {
-      iconSpec = icon_data_default.square;
-    }
-    return (...parts) => {
-      const div = I.div();
-      div.innerHTML = iconSpec;
-      const sourceSvg = div.querySelector("svg");
-      const classes = new Set(sourceSvg.classList);
-      classes.add("tosi-icon");
-      const svg = ZM.svg({
-        class: Array.from(classes).join(" "),
-        viewBox: sourceSvg.getAttribute("viewBox")
-      }, ...parts, ...sourceSvg.children);
-      svg.style.strokeWidth = kE.tosiIconStrokeWidth("2px");
-      if (classes.has("filled")) {
-        svg.style.stroke = "none";
-        svg.style.fill = "currentColor";
-      } else if (classes.has("stroked")) {
-        svg.style.stroke = kE.tosiIconStroke("currentColor");
-        svg.style.fill = "none";
-      } else {
-        svg.style.stroke = kE.tosiIconStroke("currentColor");
-        svg.style.fill = kE.tosiIconFill("currentColor");
-      }
-      svg.style.height = kE.tosiIconSize("16px");
-      return svg;
-    };
+    return (...parts) => resolveIcon(prop, parts);
   }
 });
 
@@ -34340,7 +34446,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.5.5";
+var version = "1.5.6";
 // src/tooltip.ts
 var { span: span18 } = I;
 var tooltipFloat = null;
@@ -37361,6 +37467,166 @@ that, for example, treat all colored icons inside buttons the same way.
 > Earlier versions of this library replaced color specifications with CSS-variables in a
 > very convoluted way, but in practice this isn't terribly useful as SVG properties can't
 > be animated by CSS, so this functionality has been stripped out.
+
+## Icon Composition & Math
+
+If you request an icon that doesn't exist, the system tries to compose one
+from a base icon and a prefix:
+
+### Transforms
+
+- \`rot<angle><Icon>\` — rotate by any angle, e.g. \`rot90ChevronRight\`, \`rot45Arrow\`
+- \`rot_<angle><Icon>\` — negative rotation, e.g. \`rot_30Arrow\` → -30°
+- \`flipH<Icon>\` — mirror horizontally, e.g. \`flipHSidebar\`
+- \`flipV<Icon>\` — mirror vertically
+
+### Modifier overlays
+
+- \`un<Icon>\` — red slash overlay (e.g. \`unPin\`, \`unLock\`)
+- \`check<Icon>\` — green check overlay
+- \`cancel<Icon>\` — red x overlay
+- \`search<Icon>\` — magnifier overlay
+
+Modifier overlays render the base icon at reduced opacity/scale with the
+overlay icon centered on top. **Overlay icons should have a square viewBox** —
+a non-square overlay on a non-square base will produce unexpected results.
+
+### Icon redirects
+
+Icon definitions that don't start with \`<svg\` are treated as redirects
+to another icon name (which can include composition prefixes):
+
+    defineIcons({
+      chevronDown: 'rot90ChevronRight',
+      sidebarRight: 'flipHSidebar',
+    })
+
+### Custom rules
+
+Add your own modifier prefixes via \`iconRules.push(...)\`:
+
+    iconRules.push({
+      prefix: 'add',
+      overlay: 'plus',
+      overlayStyle: { color: 'blue', opacity: '0.75' },
+      baseStyle: { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' },
+    })
+
+### Composites and \`svg2DataUrl\`
+
+Composed icons (modifiers) are wrapped in a \`<span>\` container, not a
+single SVG. \`svg2DataUrl()\` will render only the base icon and log a
+console error. Transforms (\`rot\`, \`flip\`) and plain icons work normally
+with \`svg2DataUrl\`.
+
+\`\`\`js
+import { icons, iconRules } from 'tosijs-ui'
+import { elements, tosi } from 'tosijs'
+
+const { div, span, label, select, option, input } = elements
+
+const prefixes = [
+  '', 'un', 'check', 'cancel', 'search',
+  'rot90', 'rot180', 'rot270', 'flipH', 'flipV',
+]
+
+const iconNames = Object.keys(icons).sort()
+
+const { iconMath } = tosi({
+  iconMath: { base: 'pin', prefix: 'un', size: 64 }
+})
+
+const iconEl = div({ class: 'composition-icon' })
+const nameEl = span({ class: 'composition-name' })
+
+function renderResult() {
+  const name = iconMath.prefix.value + (
+    iconMath.prefix.value
+      ? iconMath.base.value[0].toUpperCase() + iconMath.base.value.slice(1)
+      : iconMath.base.value
+  )
+  const size = iconMath.size.value + 'px'
+  iconEl.style.setProperty('--tosi-icon-size', size)
+  iconEl.textContent = ''
+  iconEl.append(icons[name]())
+  nameEl.textContent = name
+}
+
+iconMath.base.observe(renderResult)
+iconMath.prefix.observe(renderResult)
+iconMath.size.observe(renderResult)
+
+preview.append(
+  div(
+    { class: 'composition-demo' },
+    iconEl,
+    div(
+      { class: 'composition-controls' },
+      select(
+        { bindValue: iconMath.prefix },
+        ...prefixes.map(p => option({ value: p }, p || '(none)'))
+      ),
+      span({ class: 'composition-op' }, '+'),
+      select(
+        { bindValue: iconMath.base },
+        ...iconNames.map(name => option(name))
+      ),
+      span({ class: 'composition-op' }, '='),
+      nameEl,
+    ),
+    label(
+      { class: 'composition-size' },
+      input({
+        type: 'range',
+        min: 16,
+        max: 128,
+        bindValue: iconMath.size,
+      }),
+      span({ bindText: iconMath.size }, '64'),
+      'px',
+    ),
+  ),
+)
+
+renderResult()
+\`\`\`
+\`\`\`css
+.preview .composition-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+}
+.preview .composition-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+}
+.preview .composition-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.preview .composition-op {
+  font-size: 20px;
+  font-weight: bold;
+  opacity: 0.5;
+}
+.preview .composition-name {
+  font-family: Menlo, Monaco, monospace;
+  font-size: 14px;
+}
+.preview .composition-size {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+\`\`\`
 
 ## Missing Icons
 

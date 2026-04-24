@@ -299,6 +299,166 @@ that, for example, treat all colored icons inside buttons the same way.
 > very convoluted way, but in practice this isn't terribly useful as SVG properties can't
 > be animated by CSS, so this functionality has been stripped out.
 
+## Icon Composition & Math
+
+If you request an icon that doesn't exist, the system tries to compose one
+from a base icon and a prefix:
+
+### Transforms
+
+- `rot<angle><Icon>` — rotate by any angle, e.g. `rot90ChevronRight`, `rot45Arrow`
+- `rot_<angle><Icon>` — negative rotation, e.g. `rot_30Arrow` → -30°
+- `flipH<Icon>` — mirror horizontally, e.g. `flipHSidebar`
+- `flipV<Icon>` — mirror vertically
+
+### Modifier overlays
+
+- `un<Icon>` — red slash overlay (e.g. `unPin`, `unLock`)
+- `check<Icon>` — green check overlay
+- `cancel<Icon>` — red x overlay
+- `search<Icon>` — magnifier overlay
+
+Modifier overlays render the base icon at reduced opacity/scale with the
+overlay icon centered on top. **Overlay icons should have a square viewBox** —
+a non-square overlay on a non-square base will produce unexpected results.
+
+### Icon redirects
+
+Icon definitions that don't start with `<svg` are treated as redirects
+to another icon name (which can include composition prefixes):
+
+    defineIcons({
+      chevronDown: 'rot90ChevronRight',
+      sidebarRight: 'flipHSidebar',
+    })
+
+### Custom rules
+
+Add your own modifier prefixes via `iconRules.push(...)`:
+
+    iconRules.push({
+      prefix: 'add',
+      overlay: 'plus',
+      overlayStyle: { color: 'blue', opacity: '0.75' },
+      baseStyle: { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' },
+    })
+
+### Composites and `svg2DataUrl`
+
+Composed icons (modifiers) are wrapped in a `<span>` container, not a
+single SVG. `svg2DataUrl()` will render only the base icon and log a
+console error. Transforms (`rot`, `flip`) and plain icons work normally
+with `svg2DataUrl`.
+
+```js
+import { icons, iconRules } from 'tosijs-ui'
+import { elements, tosi } from 'tosijs'
+
+const { div, span, label, select, option, input } = elements
+
+const prefixes = [
+  '', 'un', 'check', 'cancel', 'search',
+  'rot90', 'rot180', 'rot270', 'flipH', 'flipV',
+]
+
+const iconNames = Object.keys(icons).sort()
+
+const { iconMath } = tosi({
+  iconMath: { base: 'pin', prefix: 'un', size: 64 }
+})
+
+const iconEl = div({ class: 'composition-icon' })
+const nameEl = span({ class: 'composition-name' })
+
+function renderResult() {
+  const name = iconMath.prefix.value + (
+    iconMath.prefix.value
+      ? iconMath.base.value[0].toUpperCase() + iconMath.base.value.slice(1)
+      : iconMath.base.value
+  )
+  const size = iconMath.size.value + 'px'
+  iconEl.style.setProperty('--tosi-icon-size', size)
+  iconEl.textContent = ''
+  iconEl.append(icons[name]())
+  nameEl.textContent = name
+}
+
+iconMath.base.observe(renderResult)
+iconMath.prefix.observe(renderResult)
+iconMath.size.observe(renderResult)
+
+preview.append(
+  div(
+    { class: 'composition-demo' },
+    iconEl,
+    div(
+      { class: 'composition-controls' },
+      select(
+        { bindValue: iconMath.prefix },
+        ...prefixes.map(p => option({ value: p }, p || '(none)'))
+      ),
+      span({ class: 'composition-op' }, '+'),
+      select(
+        { bindValue: iconMath.base },
+        ...iconNames.map(name => option(name))
+      ),
+      span({ class: 'composition-op' }, '='),
+      nameEl,
+    ),
+    label(
+      { class: 'composition-size' },
+      input({
+        type: 'range',
+        min: 16,
+        max: 128,
+        bindValue: iconMath.size,
+      }),
+      span({ bindText: iconMath.size }, '64'),
+      'px',
+    ),
+  ),
+)
+
+renderResult()
+```
+```css
+.preview .composition-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+}
+.preview .composition-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+}
+.preview .composition-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.preview .composition-op {
+  font-size: 20px;
+  font-weight: bold;
+  opacity: 0.5;
+}
+.preview .composition-name {
+  font-family: Menlo, Monaco, monospace;
+  font-size: 14px;
+}
+.preview .composition-size {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+```
+
 ## Missing Icons
 
 If you ask for an icon that isn't defined, the `icons` proxy will print a warning to console
@@ -380,38 +540,44 @@ export const defineIcons = (newIcons: { [key: string]: string }): void => {
 }
 
 export const svg2DataUrl = (
-  svg: SVGElement,
+  icon: Element,
   fill?: string,
   stroke?: string,
   strokeWidth?: number
 ): string => {
+  // Handle composite icons (span wrappers) by finding the inner SVG(s)
+  const svgs =
+    icon instanceof SVGElement
+      ? [icon]
+      : Array.from(icon.querySelectorAll('svg'))
+
+  if (svgs.length > 1) {
+    const name = (icon as HTMLElement).dataset?.icon || 'unknown'
+    console.error(
+      `svg2DataUrl: composite icon "${name}" cannot be serialized as a data URL, rendering base icon only`
+    )
+  }
+
+  const svg = svgs[0]
   svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-  for (const path of [
-    ...svg.querySelectorAll(
-      'path, polygon, line, circle, rect, ellipse, polyline'
-    ),
-  ]) {
-    if (fill !== undefined) {
-      path.setAttribute('fill', fill)
-    }
-    if (stroke !== undefined) {
-      path.setAttribute('stroke', stroke)
-    }
-    if (strokeWidth !== undefined) {
+  for (const path of svg.querySelectorAll(
+    'path, polygon, line, circle, rect, ellipse, polyline'
+  )) {
+    if (fill !== undefined) path.setAttribute('fill', fill)
+    if (stroke !== undefined) path.setAttribute('stroke', stroke)
+    if (strokeWidth !== undefined)
       path.setAttribute('stroke-width', String(strokeWidth))
-    }
   }
 
   const styled = svg.querySelectorAll('[style]')
   svg.removeAttribute('style')
   for (const item of [...styled] as HTMLElement[]) {
-    const { fill, stroke, strokeWidth, strokeLinecap, strokeLinejoin } =
-      item.style
-    if (fill) item.setAttribute('fill', Color.fromCss(fill).html)
-    if (stroke) item.setAttribute('stroke', Color.fromCss(stroke).html)
-    if (strokeWidth) item.setAttribute('strokeWidth', strokeWidth)
-    if (strokeLinecap) item.setAttribute('strokeLinecap', strokeLinecap)
-    if (strokeLinejoin) item.setAttribute('strokeLinejoin', strokeLinejoin)
+    const s = item.style
+    if (s.fill) item.setAttribute('fill', Color.fromCss(s.fill).html)
+    if (s.stroke) item.setAttribute('stroke', Color.fromCss(s.stroke).html)
+    if (s.strokeWidth) item.setAttribute('strokeWidth', s.strokeWidth)
+    if (s.strokeLinecap) item.setAttribute('strokeLinecap', s.strokeLinecap)
+    if (s.strokeLinejoin) item.setAttribute('strokeLinejoin', s.strokeLinejoin)
     item.removeAttribute('style')
   }
 
@@ -419,43 +585,175 @@ export const svg2DataUrl = (
   return `url(data:image/svg+xml;charset=UTF-8,${text})`
 }
 
+// Compositional icon rules — when an icon isn't found, try to compose it
+export interface IconRule {
+  prefix: string
+  overlay: string // icon name to overlay
+  overlayStyle: Partial<CSSStyleDeclaration>
+  baseStyle: Partial<CSSStyleDeclaration>
+}
+
+export const iconRules: IconRule[] = [
+  {
+    prefix: 'un',
+    overlay: 'slash',
+    overlayStyle: { color: 'red', opacity: '0.75' },
+    baseStyle: { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' },
+  },
+  {
+    prefix: 'check',
+    overlay: 'check',
+    overlayStyle: { color: 'green', opacity: '0.75' },
+    baseStyle: { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' },
+  },
+  {
+    prefix: 'cancel',
+    overlay: 'x',
+    overlayStyle: { color: 'red', opacity: '0.75' },
+    baseStyle: { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' },
+  },
+  {
+    prefix: 'search',
+    overlay: 'search',
+    overlayStyle: {
+      transform: 'scale(0.8) translate(30%, 30%)',
+      transformOrigin: '50% 50%',
+    },
+    baseStyle: { opacity: '0.5' },
+  },
+]
+
+const ROTATION_RE = /^rot(_?\d+)(.+)$/
+const FLIP_RE = /^flip(H|V)(.+)$/
+
+function makeIcon(spec: string, parts: ElementPart[]): SVGElement {
+  const div = elements.div()
+  div.innerHTML = spec
+  const sourceSvg = div.querySelector('svg') as SVGElement
+  const classes = new Set(sourceSvg.classList)
+  classes.add('tosi-icon')
+  const svg = svgElements.svg(
+    {
+      class: Array.from(classes).join(' '),
+      viewBox: sourceSvg.getAttribute('viewBox'),
+    },
+    ...parts,
+    ...sourceSvg.children
+  )
+  svg.style.strokeWidth = varDefault.tosiIconStrokeWidth('2px')
+  if (classes.has('filled')) {
+    svg.style.stroke = 'none'
+    svg.style.fill = 'currentColor'
+  } else if (classes.has('stroked')) {
+    svg.style.stroke = varDefault.tosiIconStroke('currentColor')
+    svg.style.fill = 'none'
+  } else {
+    svg.style.stroke = varDefault.tosiIconStroke('currentColor')
+    svg.style.fill = varDefault.tosiIconFill('currentColor')
+  }
+  svg.style.height = varDefault.tosiIconSize('16px')
+  return svg
+}
+
+function wrapIcon(
+  prop: string,
+  parts: ElementPart[],
+  ...children: Element[]
+): HTMLSpanElement {
+  return elements.span(
+    {
+      class: 'tosi-icon-composite',
+      dataIcon: prop,
+      style: {
+        display: 'inline-block',
+        position: 'relative',
+        height: varDefault.tosiIconSize('16px'),
+      },
+    },
+    ...parts,
+    ...children
+  )
+}
+
+function composeIcon(prop: string, parts: ElementPart[]): Element | null {
+  const data = iconData as Record<string, string>
+
+  // Rotation: rot90ChevronRight → chevronRight rotated 90°
+  const rotMatch = prop.match(ROTATION_RE)
+  if (rotMatch) {
+    const angle = rotMatch[1].replace('_', '-')
+    const baseName = rotMatch[2][0].toLowerCase() + rotMatch[2].slice(1)
+    if (data[baseName]) {
+      const svg = makeIcon(data[baseName], [])
+      svg.style.transform = `rotate(${angle}deg)`
+      return wrapIcon(prop, parts, svg)
+    }
+  }
+
+  // Flip: flipHSidebar → sidebar flipped horizontally
+  const flipMatch = prop.match(FLIP_RE)
+  if (flipMatch) {
+    const axis = flipMatch[1]
+    const baseName = flipMatch[2][0].toLowerCase() + flipMatch[2].slice(1)
+    if (data[baseName]) {
+      const svg = makeIcon(data[baseName], [])
+      svg.style.transform = axis === 'H' ? 'scaleX(-1)' : 'scaleY(-1)'
+      return wrapIcon(prop, parts, svg)
+    }
+  }
+
+  // Modifier prefixes: unPin → pin with slash overlay
+  for (const rule of iconRules) {
+    if (prop.startsWith(rule.prefix) && prop.length > rule.prefix.length) {
+      const baseName =
+        prop[rule.prefix.length].toLowerCase() +
+        prop.slice(rule.prefix.length + 1)
+      if (data[baseName] && data[rule.overlay]) {
+        const base = makeIcon(data[baseName], [])
+        Object.assign(base.style, rule.baseStyle)
+        const overlay = makeIcon(data[rule.overlay], [])
+        Object.assign(overlay.style, {
+          position: 'absolute',
+          inset: '0',
+          width: '100%',
+          height: '100%',
+          ...rule.overlayStyle,
+        })
+        return wrapIcon(prop, parts, base, overlay)
+      }
+    }
+  }
+
+  return null
+}
+
+const MAX_REDIRECTS = 10
+
+function resolveIcon(prop: string, parts: ElementPart[]): Element {
+  const data = iconData as Record<string, string>
+  let name = prop
+  for (let i = 0; i < MAX_REDIRECTS; i++) {
+    const spec = data[name]
+    if (!spec) break
+    if (spec.startsWith('<')) return makeIcon(spec, parts)
+    name = spec
+  }
+  if (name !== prop) {
+    // Redirected but final target not found — try composition on final name
+    const composed = composeIcon(name, parts)
+    if (composed) return composed
+  }
+  const composed = composeIcon(prop, parts)
+  if (composed) return composed
+  if (prop) {
+    console.warn(`icon ${prop} does not exist`)
+  }
+  return makeIcon(iconData.square, parts)
+}
+
 export const icons = new Proxy(iconData, {
   get(target, prop: string): ElementCreator {
-    let iconSpec = iconData[prop as keyof typeof iconData] as string
-    if (prop && !iconSpec) {
-      console.warn(`icon ${prop} does not exist`)
-    }
-    if (!iconSpec) {
-      iconSpec = iconData.square
-    }
-    return (...parts: ElementPart[]) => {
-      const div = elements.div()
-      div.innerHTML = iconSpec
-      const sourceSvg = div.querySelector('svg') as SVGElement
-      const classes = new Set(sourceSvg.classList)
-      classes.add('tosi-icon')
-      const svg = svgElements.svg(
-        {
-          class: Array.from(classes).join(' '),
-          viewBox: sourceSvg.getAttribute('viewBox'),
-        },
-        ...parts,
-        ...sourceSvg.children
-      )
-      svg.style.strokeWidth = varDefault.tosiIconStrokeWidth('2px')
-      if (classes.has('filled')) {
-        svg.style.stroke = 'none'
-        svg.style.fill = 'currentColor'
-      } else if (classes.has('stroked')) {
-        svg.style.stroke = varDefault.tosiIconStroke('currentColor')
-        svg.style.fill = 'none'
-      } else {
-        svg.style.stroke = varDefault.tosiIconStroke('currentColor')
-        svg.style.fill = varDefault.tosiIconFill('currentColor')
-      }
-      svg.style.height = varDefault.tosiIconSize('16px')
-      return svg
-    }
+    return (...parts: ElementPart[]) => resolveIcon(prop, parts)
   },
 }) as unknown as SVGIconMap
 
