@@ -1333,13 +1333,18 @@ export class TosiTable extends WebComponent {
     if (menu.length) {
       menu.push(null)
     }
+    const pinIcon = options.pinned === 'left'
+      ? 'pin'
+      : options.pinned === 'right'
+        ? 'pin0f'
+        : 'pin50o'
     menu.push({
       caption: this.localized ? localize('Pin') : 'Pin',
-      icon: 'lock',
+      icon: pinIcon,
       menuItems: [
         {
           caption: this.localized ? localize('Left') : 'Left',
-          icon: 'arrowLeft',
+          icon: 'pin',
           enabled: () => options.pinned !== 'left',
           action() {
             options.pinned = 'left'
@@ -1348,7 +1353,7 @@ export class TosiTable extends WebComponent {
         },
         {
           caption: this.localized ? localize('Right') : 'Right',
-          icon: 'arrowRight',
+          icon: 'pin0f',
           enabled: () => options.pinned !== 'right',
           action() {
             options.pinned = 'right'
@@ -1357,7 +1362,7 @@ export class TosiTable extends WebComponent {
         },
         {
           caption: this.localized ? localize('Unpin') : 'Unpin',
-          icon: 'unlock',
+          icon: 'unPin',
           enabled: () => !!options.pinned,
           action() {
             delete options.pinned
