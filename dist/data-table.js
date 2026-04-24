@@ -1192,39 +1192,39 @@ export class TosiTable extends WebComponent {
         if (menu.length) {
             menu.push(null);
         }
-        if (options.pinned) {
-            menu.push({
-                caption: this.localized
-                    ? localize('Unpin')
-                    : 'Unpin',
-                icon: 'unlock',
-                action() {
-                    delete options.pinned;
-                    queueRender();
+        menu.push({
+            caption: this.localized ? localize('Pin') : 'Pin',
+            icon: 'lock',
+            menuItems: [
+                {
+                    caption: this.localized ? localize('Left') : 'Left',
+                    icon: 'arrowLeft',
+                    enabled: () => options.pinned !== 'left',
+                    action() {
+                        options.pinned = 'left';
+                        queueRender();
+                    },
                 },
-            });
-        }
-        else {
-            menu.push({
-                caption: this.localized
-                    ? `${localize('Pin')} ${localize('Left')}`
-                    : 'Pin Left',
-                icon: 'lock',
-                action() {
-                    options.pinned = 'left';
-                    queueRender();
+                {
+                    caption: this.localized ? localize('Right') : 'Right',
+                    icon: 'arrowRight',
+                    enabled: () => options.pinned !== 'right',
+                    action() {
+                        options.pinned = 'right';
+                        queueRender();
+                    },
                 },
-            }, {
-                caption: this.localized
-                    ? `${localize('Pin')} ${localize('Right')}`
-                    : 'Pin Right',
-                icon: 'lock',
-                action() {
-                    options.pinned = 'right';
-                    queueRender();
+                {
+                    caption: this.localized ? localize('Unpin') : 'Unpin',
+                    icon: 'unlock',
+                    enabled: () => !!options.pinned,
+                    action() {
+                        delete options.pinned;
+                        queueRender();
+                    },
                 },
-            });
-        }
+            ],
+        });
         popMenu({
             target,
             localized: this.localized,

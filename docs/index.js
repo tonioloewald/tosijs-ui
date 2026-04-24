@@ -26999,32 +26999,39 @@ class TosiTable extends g {
     if (menu2.length) {
       menu2.push(null);
     }
-    if (options.pinned) {
-      menu2.push({
-        caption: this.localized ? localize("Unpin") : "Unpin",
-        icon: "unlock",
-        action() {
-          delete options.pinned;
-          queueRender();
+    menu2.push({
+      caption: this.localized ? localize("Pin") : "Pin",
+      icon: "lock",
+      menuItems: [
+        {
+          caption: this.localized ? localize("Left") : "Left",
+          icon: "arrowLeft",
+          enabled: () => options.pinned !== "left",
+          action() {
+            options.pinned = "left";
+            queueRender();
+          }
+        },
+        {
+          caption: this.localized ? localize("Right") : "Right",
+          icon: "arrowRight",
+          enabled: () => options.pinned !== "right",
+          action() {
+            options.pinned = "right";
+            queueRender();
+          }
+        },
+        {
+          caption: this.localized ? localize("Unpin") : "Unpin",
+          icon: "unlock",
+          enabled: () => !!options.pinned,
+          action() {
+            delete options.pinned;
+            queueRender();
+          }
         }
-      });
-    } else {
-      menu2.push({
-        caption: this.localized ? `${localize("Pin")} ${localize("Left")}` : "Pin Left",
-        icon: "lock",
-        action() {
-          options.pinned = "left";
-          queueRender();
-        }
-      }, {
-        caption: this.localized ? `${localize("Pin")} ${localize("Right")}` : "Pin Right",
-        icon: "lock",
-        action() {
-          options.pinned = "right";
-          queueRender();
-        }
-      });
-    }
+      ]
+    });
     popMenu({
       target,
       localized: this.localized,
@@ -34333,7 +34340,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.5.4";
+var version = "1.5.5";
 // src/tooltip.ts
 var { span: span18 } = I;
 var tooltipFloat = null;
