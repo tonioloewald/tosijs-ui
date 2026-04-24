@@ -16,6 +16,9 @@ applications along with being very easy to extend and maintain.
 > - allows both stroked and filled icons (unlike font-based systems)
 > - support for color icons (without requiring multiple glyphs perfectly aligned)
 > - icons can be rendered  as data urls, e.g. to insert into CSS… (the little `owl` logo rendered under blockquotes is an example)
+> - icon composition: stack, transform, and style icons via naming conventions (e.g. `lock50s75o$shield`)
+> - extensible rules system for custom prefixes and overlays (e.g. `unLock`, `checkFile`)
+> - icon redirects eliminate redundant SVG data (e.g. `chevronDown` → `chevronRightr90`)
 
 ### Nice Features
 > - no build process magic needed (your icons are "just javascript", no special CSS files needed, no magic glyph mappings). Adding new, or overriding existing, icons is trivial.
@@ -34,10 +37,10 @@ import { icons, svgIcon, postNotification } from 'tosijs-ui'
 
 const { div, span, input, select, option } = elements
 
-const prefixes = [
-  '', 'un', 'check', 'cancel', 'search',
-  'rot90', 'rot180', 'rot_90', 'flipH', 'flipV',
-  'spin120', 'spin360', 'spin_180',
+const prefixes = ['', 'un', 'check', 'cancel', 'search', 'spin120', 'spin360']
+const suffixes = [
+  '', 'r90', 'r180', 'r_90', 'f0', 'f1',
+  '50o', '75s', 'Fff0000', 'S00f', 'W4',
 ]
 
 const iconNames = Object.keys(icons).sort()
@@ -46,21 +49,25 @@ const { iconDemo } = tosi({
   iconDemo: {
     icon: '',
     prefix: '',
+    suffix: '',
   }
 })
 
-function composeName(prefix, base) {
-  if (!prefix) return base
-  return prefix + base[0].toUpperCase() + base.slice(1)
+function composeName(prefix, suffix, base) {
+  let name = base
+  if (prefix) name = prefix + name[0].toUpperCase() + name.slice(1)
+  if (suffix) name = name + suffix
+  return name
 }
 
 const scroller = div({ class: 'scroller' })
 
 function rebuildGrid() {
   const prefix = iconDemo.prefix.value
+  const suffix = iconDemo.suffix.value
   scroller.textContent = ''
   for (const iconName of iconNames) {
-    const composed = composeName(prefix, iconName)
+    const composed = composeName(prefix, suffix, iconName)
     scroller.append(div(
       {
         class: 'tile',
@@ -78,12 +85,13 @@ function rebuildGrid() {
         }
       },
       svgIcon({ icon: composed, size: 24 }),
-      div(prefix ? composed : iconName)
+      div((prefix || suffix) ? composed : iconName)
     ))
   }
 }
 
 iconDemo.prefix.observe(rebuildGrid)
+iconDemo.suffix.observe(rebuildGrid)
 rebuildGrid()
 
 const detailIcon = svgIcon({
@@ -116,7 +124,11 @@ preview.append(
     }),
     select(
       { bindValue: iconDemo.prefix },
-      ...prefixes.map(p => option({ value: p }, p || '(none)'))
+      ...prefixes.map(p => option({ value: p }, p || 'prefix'))
+    ),
+    select(
+      { bindValue: iconDemo.suffix },
+      ...suffixes.map(s => option({ value: s }, s || 'suffix'))
     ),
   ),
   scroller,
@@ -344,12 +356,8 @@ that, for example, treat all colored icons inside buttons the same way.
 If you request an icon that doesn't exist, the system tries to compose one
 from a base icon and a prefix:
 
-### Transforms
+### Prefix rules
 
-- `rot<angle><Icon>` — rotate by any angle, e.g. `rot90ChevronRight`, `rot45Arrow`
-- `rot_<angle><Icon>` — negative rotation, e.g. `rot_30Arrow` → -30°
-- `flipH<Icon>` — mirror horizontally, e.g. `flipHSidebar`
-- `flipV<Icon>` — mirror vertically
 - `spin<dps><Icon>` — continuous rotation at N degrees/second, e.g. `spin360Loader` (1 rev/s)
 - `spin_<dps><Icon>` — counter-clockwise, e.g. `spin_180Star`
 
@@ -415,9 +423,16 @@ Each suffix is a number followed by a letter:
 - `NNs` — scale N% (e.g. `star75s` = 75% scale)
 - `NNx` — translateX N% (e.g. `plus20x` = shift right 20%)
 - `NNy` — translateY N% (e.g. `plus_20y` = shift up 20%)
+- `rNN` — rotate N° (e.g. `chevronRightr90` = chevron pointing down)
+- `r_NN` — rotate -N° (e.g. `arrowr_45`)
+- `f0` — flip horizontally (e.g. `sidebarf0`)
+- `f1` — flip vertically
+- `F<hex>` — fill color (e.g. `starFff0000` = red fill, `starFf00` = shorthand)
+- `S<hex>` — stroke color (e.g. `lockS00f` = blue stroke)
+- `W<n>` — stroke width (e.g. `lockW4` = stroke-width 4)
 
-Suffixes can be combined: `plus50o60s25x25y` = plus at 50% opacity,
-60% scale, shifted 25% right and down.
+Suffixes can be combined: `plus50o60s25x25yFf00` = plus at 50% opacity,
+60% scale, shifted 25% right and down, filled red.
 
 This is especially powerful with stacking:
 
@@ -601,28 +616,6 @@ const spinKeyframesInjected = { done: false }
 
 export const iconRules: IconRule[] = [
   {
-    prefix: /^rot(_?\d+)/,
-    apply(baseName, match, parts) {
-      const data = iconData as Record<string, string>
-      if (!data[baseName]) return null
-      const angle = (match as RegExpMatchArray)[1].replace('_', '-')
-      const svg = makeIcon(data[baseName], [])
-      svg.style.transform = `rotate(${angle}deg)`
-      return wrapIcon(baseName, parts, svg)
-    },
-  },
-  {
-    prefix: /^flip(H|V)/,
-    apply(baseName, match, parts) {
-      const data = iconData as Record<string, string>
-      if (!data[baseName]) return null
-      const axis = (match as RegExpMatchArray)[1]
-      const svg = makeIcon(data[baseName], [])
-      svg.style.transform = axis === 'H' ? 'scaleX(-1)' : 'scaleY(-1)'
-      return wrapIcon(baseName, parts, svg)
-    },
-  },
-  {
     prefix: /^spin(_?\d+)/,
     apply(baseName, match, parts) {
       const data = iconData as Record<string, string>
@@ -763,8 +756,12 @@ function composeIcon(prop: string, parts: ElementPart[]): Element | null {
 
 const MAX_REDIRECTS = 10
 
-// Style suffixes: 50o (opacity), 75s (scale), 20x (translateX%), _10y (translateY%)
-const SUFFIX_RE = /(_?\d{2,3}[osxy])+$/
+// Style suffixes:
+//   50o (opacity), 75s (scale), 20x (translateX%), _10y (translateY%)
+//   r90 (rotate 90°), r_45 (rotate -45°), f0 (flipH), f1 (flipV)
+//   Fff0000 (fill #ff0000), Sf00 (stroke #f00), W3 (stroke-width 3)
+const SUFFIX_RE =
+  /(_?\d{2,3}[osxy]|r_?\d{2,3}|f[01]|F[0-9a-fA-F]{3,8}|S[0-9a-fA-F]{3,8}|W\d{1,3})+$/
 
 function parseStyleSuffixes(name: string): {
   baseName: string
@@ -776,28 +773,46 @@ function parseStyleSuffixes(name: string): {
   if (!baseName) return null
 
   const style: Partial<CSSStyleDeclaration> = {}
-  const suffixes = match[0].match(/_?\d{2,3}[osxy]/g)!
+  const suffixes = match[0].match(
+    /_?\d{2,3}[osxy]|r_?\d{2,3}|f[01]|F[0-9a-fA-F]{3,8}|S[0-9a-fA-F]{3,8}|W\d{1,3}/g
+  )!
   let tx = ''
   let ty = ''
   let scale = ''
+  let rotate = ''
+  let flip = ''
   for (const s of suffixes) {
-    const val = parseInt(s.replace('_', '-'))
-    switch (s[s.length - 1]) {
-      case 'o':
-        style.opacity = String(val / 100)
-        break
-      case 's':
-        scale = `scale(${val / 100})`
-        break
-      case 'x':
-        tx = `translateX(${val}%)`
-        break
-      case 'y':
-        ty = `translateY(${val}%)`
-        break
+    const code = s[0]
+    if (code === 'F') {
+      style.fill = '#' + s.slice(1)
+    } else if (code === 'S') {
+      style.stroke = '#' + s.slice(1)
+    } else if (code === 'W') {
+      style.strokeWidth = s.slice(1)
+    } else if (code === 'r') {
+      const angle = s.slice(1).replace('_', '-')
+      rotate = `rotate(${angle}deg)`
+    } else if (code === 'f') {
+      flip = s[1] === '0' ? 'scaleX(-1)' : 'scaleY(-1)'
+    } else {
+      const val = parseInt(s.replace('_', '-'))
+      switch (s[s.length - 1]) {
+        case 'o':
+          style.opacity = String(val / 100)
+          break
+        case 's':
+          scale = `scale(${val / 100})`
+          break
+        case 'x':
+          tx = `translateX(${val}%)`
+          break
+        case 'y':
+          ty = `translateY(${val}%)`
+          break
+      }
     }
   }
-  const transform = [scale, tx, ty].filter(Boolean).join(' ')
+  const transform = [rotate, flip, scale, tx, ty].filter(Boolean).join(' ')
   if (transform) {
     style.transform = transform
     style.transformOrigin = '50% 50%'
