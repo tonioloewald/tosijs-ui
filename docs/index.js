@@ -37900,6 +37900,8 @@ A CSS grid container.
   {
     text: `# live-theme
 
+> **Work in progress** — this component is under active development and its API may change.
+
 A live theme editor that lets you tweak theme colors in real time.
 Changes apply instantly to the page. The editor itself is immune to
 theme changes (it uses hardcoded styles in shadow DOM).
