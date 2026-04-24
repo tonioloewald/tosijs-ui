@@ -140,7 +140,7 @@ import { insertExamples } from './insert-examples'
 import { liveExampleStyleSpec } from './styles'
 import { runTests, TestResults } from './test-harness'
 
-const { div, xinSlot, style, button, pre, span } = elements
+const { div, tosiSlot, style, button, pre, span } = elements
 
 // Test mode: controlled by localStorage, defaults to enabled on localhost
 const TESTS_ENABLED_KEY = 'tosijs-ui-tests-enabled'
@@ -502,7 +502,7 @@ export class LiveExample extends Component<ExampleParts> {
         )
       )
     ),
-    xinSlot({ part: 'sources', hidden: true }),
+    tosiSlot({ part: 'sources', hidden: true }),
   ]
 
   connectedCallback(): void {

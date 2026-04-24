@@ -440,7 +440,7 @@ export class TosiLocalized extends Component {
     refString: '',
   }
 
-  contents = () => elements.xinSlot()
+  contents = () => elements.tosiSlot()
 
   connectedCallback() {
     super.connectedCallback()

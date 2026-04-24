@@ -25496,7 +25496,7 @@ class TosiLocalized extends g {
   static initAttributes = {
     refString: ""
   };
-  contents = () => I.xinSlot();
+  contents = () => I.tosiSlot();
   connectedCallback() {
     super.connectedCallback();
     TosiLocalized.allInstances.add(this);
@@ -25747,7 +25747,7 @@ var init = () => {
 
 // src/menu.ts
 var resolveMenuItems = (provider) => typeof provider === "function" ? provider() : provider;
-var { div: div2, button: button3, span: span3, a: a2, xinSlot } = I;
+var { div: div2, button: button3, span: span3, a: a2, tosiSlot } = I;
 var cleanSeparators = (items) => {
   const result = [];
   for (const item of items) {
@@ -26326,7 +26326,7 @@ class TosiMenu extends g {
       flex: "1",
       textAlign: "center"
     },
-    ":host button > xin-slot": {
+    ":host button > tosi-slot": {
       display: "flex",
       alignItems: "center",
       gap: kE.tosiMenuTriggerGap("10px")
@@ -26414,7 +26414,7 @@ class TosiMenu extends g {
     }
     removeLastMenu(0);
   };
-  content = () => button3({ tabindex: 0, part: "trigger", onClick: this.showMenu }, xinSlot());
+  content = () => button3({ tabindex: 0, part: "trigger", onClick: this.showMenu }, tosiSlot());
   handleShortcut = async (event) => {
     const match = findShortcutAction(this.menuItems, event);
     if (!match)
@@ -27422,7 +27422,7 @@ var tosiTable = TosiTable.elementCreator();
 var dataTable = tosiTable;
 var xinTable = tosiTable;
 // src/dialog.ts
-var { dialog, button: button5, header, footer, xinSlot: xinSlot2, h3, p: p2, label, input: input3, div: div4 } = I;
+var { dialog, button: button5, header, footer, tosiSlot: tosiSlot2, h3, p: p2, label, input: input3, div: div4 } = I;
 
 class TosiDialog extends g {
   static preferredTagName = "tosi-dialog";
@@ -27562,7 +27562,7 @@ class TosiDialog extends g {
   ok = () => {
     this.close("confirm");
   };
-  content = () => dialog({ part: "dialog" }, header(xinSlot2({ name: "header" })), xinSlot2(), footer(xinSlot2({ name: "footer" }), button5({ part: "ok", onClick: this.ok }, "OK")));
+  content = () => dialog({ part: "dialog" }, header(tosiSlot2({ name: "header" })), tosiSlot2(), footer(tosiSlot2({ name: "footer" }), button5({ part: "ok", onClick: this.ok }, "OK")));
 }
 var tosiDialog = TosiDialog.elementCreator();
 // node_modules/marked/lib/marked.esm.js
@@ -29847,7 +29847,7 @@ async function runTests(testCode, preview, context, transform2) {
 }
 
 // src/live-example/component.ts
-var { div: div7, xinSlot: xinSlot3, style, button: button7, pre, span: span6 } = I;
+var { div: div7, tosiSlot: tosiSlot3, style, button: button7, pre, span: span6 } = I;
 var TESTS_ENABLED_KEY = "tosijs-ui-tests-enabled";
 var isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 function getStoredTestsEnabled() {
@@ -30114,7 +30114,7 @@ class LiveExample extends g {
       class: "transparent",
       onClick: this.closeCode
     }, icons.x())))),
-    xinSlot3({ part: "sources", hidden: true })
+    tosiSlot3({ part: "sources", hidden: true })
   ];
   connectedCallback() {
     super.connectedCallback();
@@ -31737,7 +31737,7 @@ class FilterBuilder extends g {
 }
 var filterBuilder = FilterBuilder.elementCreator();
 // src/form.ts
-var { form, slot: slot6, xinSlot: xinSlot4, label: label2, input: input7, span: span9 } = I;
+var { form, slot: slot6, tosiSlot: tosiSlot4, label: label2, input: input7, span: span9 } = I;
 function attr(element, name, value) {
   if (value !== "" && value !== false) {
     element.setAttribute(name, value);
@@ -31824,7 +31824,7 @@ class TosiField extends g {
     suffix: ""
   };
   value = null;
-  content = label2(xinSlot4({ part: "caption" }), span9({ part: "field" }, xinSlot4({ part: "input", name: "input" }), input7({ part: "valueHolder" })));
+  content = label2(tosiSlot4({ part: "caption" }), span9({ part: "field" }, tosiSlot4({ part: "input", name: "input" }), input7({ part: "valueHolder" })));
   valueChanged = false;
   handleChange = () => {
     const { input: input8, valueHolder } = this.parts;
@@ -33223,7 +33223,7 @@ var isBreached = async (password) => {
   }
   return response.status !== 404;
 };
-var { span: span13, xinSlot: xinSlot5 } = I;
+var { span: span13, tosiSlot: tosiSlot5 } = I;
 
 class TosiPasswordStrength extends g {
   static preferredTagName = "tosi-password-strength";
@@ -33234,7 +33234,7 @@ class TosiPasswordStrength extends g {
       gap: fM.spacing50,
       position: "relative"
     },
-    ":host xin-slot": {
+    ":host tosi-slot": {
       display: "flex"
     },
     ':host [part="meter"]': {
@@ -33332,7 +33332,7 @@ class TosiPasswordStrength extends g {
     this.updateIndicator(input9?.value || "");
   };
   content = () => [
-    xinSlot5({ onInput: this.update }),
+    tosiSlot5({ onInput: this.update }),
     span13({ part: "meter" }, span13({ part: "level" }), span13({ part: "description" }))
   ];
   render() {
@@ -33497,7 +33497,7 @@ var XinRating = TosiRating;
 var tosiRating = TosiRating.elementCreator();
 var xinRating = gE((...args) => tosiRating(...args), "xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)");
 // src/rich-text.ts
-var { xinSlot: xinSlot6, div: div15, button: button13, span: span15 } = I;
+var { tosiSlot: tosiSlot6, div: div15, button: button13, span: span15 } = I;
 var blockStyles = [
   {
     caption: "Title",
@@ -33677,7 +33677,7 @@ class RichText extends g {
     this.doCommand(button14.dataset.command);
   };
   content = [
-    xinSlot6({
+    tosiSlot6({
       name: "toolbar",
       part: "toolbar",
       onClick: this.handleButtonClick,
@@ -33691,7 +33691,7 @@ class RichText extends g {
         outline: "none"
       }
     }),
-    xinSlot6({
+    tosiSlot6({
       part: "content"
     })
   ];
@@ -36878,7 +36878,7 @@ and triggers form validation.
 \`<tosi-field>\` is a simple web-component with no shadowDOM that combines an \`<input>\` field wrapped with a \`<label>\`. Any
 content of the custom-element will become the \`caption\` or you can simply set the \`caption\` attribute.
 
-You can replace the default \`<input>\` field by adding an element to the slot \`input\` (it's a \`xinSlot\`) whereupon
+You can replace the default \`<input>\` field by adding an element to the slot \`input\` (it's a \`tosiSlot\`) whereupon
 the \`value\` of that element will be used instead of the built-in \`<input>\`. (The \`<input>\` is retained and
 is used to drive form-validation.)
 
@@ -40183,7 +40183,7 @@ its \`value\`.
 
 ## toolbar
 
-\`<tosi-rich-text>\` elements have a \`toolbar\` slot (actually a xin-slot because it doesn't use
+\`<tosi-rich-text>\` elements have a \`toolbar\` slot (actually a tosi-slot because it doesn't use
 the shadowDOM).
 
 If you set the \`widgets\` attribute to \`default\` or \`minimal\` you will get a toolbar

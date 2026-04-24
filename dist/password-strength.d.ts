@@ -10,7 +10,7 @@ export declare class TosiPasswordStrength extends Component {
             gap: string;
             position: string;
         };
-        ':host xin-slot': {
+        ':host tosi-slot': {
             display: string;
         };
         ':host [part="meter"]': {

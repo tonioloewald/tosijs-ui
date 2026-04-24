@@ -120,7 +120,7 @@ preview.append(
 import { Component, PartsMap, elements, on, vars, varDefault } from 'tosijs'
 import { findHighestZ } from './track-drag'
 
-const { dialog, button, header, footer, xinSlot, h3, p, label, input, div } =
+const { dialog, button, header, footer, tosiSlot, h3, p, label, input, div } =
   elements
 
 interface DialogParts extends PartsMap {
@@ -318,10 +318,10 @@ export class TosiDialog extends Component<DialogParts> {
   content = () =>
     dialog(
       { part: 'dialog' },
-      header(xinSlot({ name: 'header' })),
-      xinSlot(),
+      header(tosiSlot({ name: 'header' })),
+      tosiSlot(),
       footer(
-        xinSlot({ name: 'footer' }),
+        tosiSlot({ name: 'footer' }),
         button({ part: 'ok', onClick: this.ok }, 'OK')
       )
     )

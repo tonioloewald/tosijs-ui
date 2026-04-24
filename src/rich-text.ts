@@ -53,7 +53,7 @@ its `value`.
 
 ## toolbar
 
-`<tosi-rich-text>` elements have a `toolbar` slot (actually a xin-slot because it doesn't use
+`<tosi-rich-text>` elements have a `toolbar` slot (actually a tosi-slot because it doesn't use
 the shadowDOM).
 
 If you set the `widgets` attribute to `default` or `minimal` you will get a toolbar
@@ -138,7 +138,7 @@ import {
   spacer as layoutSpacer,
 } from './layout'
 
-const { xinSlot, div, button, span } = elements
+const { tosiSlot, div, button, span } = elements
 
 const blockStyles = [
   {
@@ -366,7 +366,7 @@ export class RichText extends WebComponent<EditorParts> {
   }
 
   content = [
-    xinSlot({
+    tosiSlot({
       name: 'toolbar',
       part: 'toolbar',
       onClick: this.handleButtonClick,
@@ -380,7 +380,7 @@ export class RichText extends WebComponent<EditorParts> {
         outline: 'none',
       },
     }),
-    xinSlot({
+    tosiSlot({
       part: 'content',
     }),
   ]

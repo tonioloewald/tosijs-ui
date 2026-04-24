@@ -401,7 +401,7 @@ export class TosiLocalized extends Component {
     static initAttributes = {
         refString: '',
     };
-    contents = () => elements.xinSlot();
+    contents = () => elements.tosiSlot();
     connectedCallback() {
         super.connectedCallback();
         TosiLocalized.allInstances.add(this);

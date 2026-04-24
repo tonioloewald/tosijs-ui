@@ -33,9 +33,9 @@ describe('TosiDialog', () => {
     test('has header, content, and footer slots', () => {
       const dialog = tosiDialog()
       container.appendChild(dialog)
-      const headerSlot = dialog.querySelector('xin-slot[name="header"]')
-      const footerSlot = dialog.querySelector('xin-slot[name="footer"]')
-      const contentSlot = dialog.querySelector('xin-slot:not([name])')
+      const headerSlot = dialog.querySelector('tosi-slot[name="header"]')
+      const footerSlot = dialog.querySelector('tosi-slot[name="footer"]')
+      const contentSlot = dialog.querySelector('tosi-slot:not([name])')
       expect(headerSlot).not.toBeNull()
       expect(footerSlot).not.toBeNull()
       expect(contentSlot).not.toBeNull()

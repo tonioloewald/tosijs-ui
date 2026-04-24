@@ -90,7 +90,7 @@ export declare class TosiMenu extends Component<TosiMenuParts> {
             flex: string;
             textAlign: string;
         };
-        ':host button > xin-slot': {
+        ':host button > tosi-slot': {
             display: string;
             alignItems: string;
             gap: string;

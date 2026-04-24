@@ -153,7 +153,7 @@ and triggers form validation.
 `<tosi-field>` is a simple web-component with no shadowDOM that combines an `<input>` field wrapped with a `<label>`. Any
 content of the custom-element will become the `caption` or you can simply set the `caption` attribute.
 
-You can replace the default `<input>` field by adding an element to the slot `input` (it's a `xinSlot`) whereupon
+You can replace the default `<input>` field by adding an element to the slot `input` (it's a `tosiSlot`) whereupon
 the `value` of that element will be used instead of the built-in `<input>`. (The `<input>` is retained and
 is used to drive form-validation.)
 
@@ -411,7 +411,7 @@ import {
 
 import { colorInput } from './color-input'
 
-const { form, slot, xinSlot, label, input, span } = elements
+const { form, slot, tosiSlot, label, input, span } = elements
 
 function attr(element: HTMLElement, name: string, value: any): void {
   if (value !== '' && value !== false) {
@@ -519,10 +519,10 @@ export class TosiField extends XinComponent {
   value: any = null
 
   content = label(
-    xinSlot({ part: 'caption' }),
+    tosiSlot({ part: 'caption' }),
     span(
       { part: 'field' },
-      xinSlot({ part: 'input', name: 'input' }),
+      tosiSlot({ part: 'input', name: 'input' }),
       input({ part: 'valueHolder' })
     )
   )

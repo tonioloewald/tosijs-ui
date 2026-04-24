@@ -186,7 +186,7 @@ export const isBreached = async (password: string): Promise<boolean> => {
   return response.status !== 404
 }
 
-const { span, xinSlot } = elements
+const { span, tosiSlot } = elements
 export class TosiPasswordStrength extends Component {
   static preferredTagName = 'tosi-password-strength'
 
@@ -197,7 +197,7 @@ export class TosiPasswordStrength extends Component {
       gap: vars.spacing50,
       position: 'relative',
     },
-    ':host xin-slot': {
+    ':host tosi-slot': {
       display: 'flex',
     },
     ':host [part="meter"]': {
@@ -313,7 +313,7 @@ export class TosiPasswordStrength extends Component {
   }
 
   content = () => [
-    xinSlot({ onInput: this.update }),
+    tosiSlot({ onInput: this.update }),
     span(
       { part: 'meter' },
       span({ part: 'level' }),

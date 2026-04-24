@@ -756,7 +756,7 @@ export type MenuItem = MenuAction | SubMenu | MenuSeparator
 export const resolveMenuItems = (provider: MenuItemsProvider): MenuItem[] =>
   typeof provider === 'function' ? provider() : provider
 
-const { div, button, span, a, xinSlot } = elements
+const { div, button, span, a, tosiSlot } = elements
 
 const cleanSeparators = (items: MenuItem[]): MenuItem[] => {
   const result: MenuItem[] = []
@@ -1503,7 +1503,7 @@ export class TosiMenu extends Component<TosiMenuParts> {
       flex: '1',
       textAlign: 'center',
     },
-    ':host button > xin-slot': {
+    ':host button > tosi-slot': {
       display: 'flex',
       alignItems: 'center',
       gap: varDefault.tosiMenuTriggerGap('10px'),
@@ -1602,7 +1602,7 @@ export class TosiMenu extends Component<TosiMenuParts> {
   }
 
   content = () =>
-    button({ tabindex: 0, part: 'trigger', onClick: this.showMenu }, xinSlot())
+    button({ tabindex: 0, part: 'trigger', onClick: this.showMenu }, tosiSlot())
 
   handleShortcut = async (event: KeyboardEvent) => {
     const match = findShortcutAction(this.menuItems, event)

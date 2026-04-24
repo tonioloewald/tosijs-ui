@@ -119,7 +119,7 @@ preview.append(
 */
 import { Component, elements, on, vars, varDefault } from 'tosijs';
 import { findHighestZ } from './track-drag';
-const { dialog, button, header, footer, xinSlot, h3, p, label, input, div } = elements;
+const { dialog, button, header, footer, tosiSlot, h3, p, label, input, div } = elements;
 export class TosiDialog extends Component {
     static preferredTagName = 'tosi-dialog';
     static lightStyleSpec = {
@@ -261,6 +261,6 @@ export class TosiDialog extends Component {
     ok = () => {
         this.close('confirm');
     };
-    content = () => dialog({ part: 'dialog' }, header(xinSlot({ name: 'header' })), xinSlot(), footer(xinSlot({ name: 'footer' }), button({ part: 'ok', onClick: this.ok }, 'OK')));
+    content = () => dialog({ part: 'dialog' }, header(tosiSlot({ name: 'header' })), tosiSlot(), footer(tosiSlot({ name: 'footer' }), button({ part: 'ok', onClick: this.ok }, 'OK')));
 }
 export const tosiDialog = TosiDialog.elementCreator();

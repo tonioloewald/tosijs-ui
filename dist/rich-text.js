@@ -53,7 +53,7 @@ its `value`.
 
 ## toolbar
 
-`<tosi-rich-text>` elements have a `toolbar` slot (actually a xin-slot because it doesn't use
+`<tosi-rich-text>` elements have a `toolbar` slot (actually a tosi-slot because it doesn't use
 the shadowDOM).
 
 If you set the `widgets` attribute to `default` or `minimal` you will get a toolbar
@@ -125,7 +125,7 @@ import { Component as WebComponent, elements, deprecated, } from 'tosijs';
 import { icons } from './icons';
 import { tosiSelect, TosiSelect } from './select';
 import { elastic as layoutElastic, spacer as layoutSpacer, } from './layout';
-const { xinSlot, div, button, span } = elements;
+const { tosiSlot, div, button, span } = elements;
 const blockStyles = [
     {
         caption: 'Title',
@@ -310,7 +310,7 @@ export class RichText extends WebComponent {
         this.doCommand(button.dataset.command);
     };
     content = [
-        xinSlot({
+        tosiSlot({
             name: 'toolbar',
             part: 'toolbar',
             onClick: this.handleButtonClick,
@@ -324,7 +324,7 @@ export class RichText extends WebComponent {
                 outline: 'none',
             },
         }),
-        xinSlot({
+        tosiSlot({
             part: 'content',
         }),
     ];

@@ -131,7 +131,7 @@ import { executeInline, executeInIframe } from './execution';
 import { insertExamples } from './insert-examples';
 import { liveExampleStyleSpec } from './styles';
 import { runTests } from './test-harness';
-const { div, xinSlot, style, button, pre, span } = elements;
+const { div, tosiSlot, style, button, pre, span } = elements;
 // Test mode: controlled by localStorage, defaults to enabled on localhost
 const TESTS_ENABLED_KEY = 'tosijs-ui-tests-enabled';
 const isLocalhost = typeof window !== 'undefined' &&
@@ -414,7 +414,7 @@ export class LiveExample extends Component {
             class: 'transparent',
             onClick: this.closeCode,
         }, icons.x())))),
-        xinSlot({ part: 'sources', hidden: true }),
+        tosiSlot({ part: 'sources', hidden: true }),
     ];
     connectedCallback() {
         super.connectedCallback();
