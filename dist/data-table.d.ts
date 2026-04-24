@@ -6,6 +6,7 @@ export interface ColumnOptions {
     width: number;
     visible?: boolean;
     align?: string;
+    pinned?: 'left' | 'right';
     sort?: false | 'ascending' | 'descending';
     headerCell?: (options: ColumnOptions) => HTMLElement;
     dataCell?: (options: ColumnOptions) => HTMLElement;
@@ -117,8 +118,6 @@ export declare class TosiTable extends WebComponent {
         multiple: boolean;
         pinnedTop: number;
         pinnedBottom: number;
-        pinnedLeft: number;
-        pinnedRight: number;
         nosort: boolean;
         nohide: boolean;
         noreorder: boolean;
@@ -147,6 +146,14 @@ export declare class TosiTable extends WebComponent {
     get columns(): ColumnOptions[];
     set columns(newColumns: ColumnOptions[]);
     get visibleColumns(): ColumnOptions[];
+    /** @deprecated Set pinned: 'left' on individual columns instead */
+    get pinnedLeft(): number;
+    /** @deprecated Set pinned: 'left' on individual columns instead */
+    set pinnedLeft(n: number);
+    /** @deprecated Set pinned: 'right' on individual columns instead */
+    get pinnedRight(): number;
+    /** @deprecated Set pinned: 'right' on individual columns instead */
+    set pinnedRight(n: number);
     content: null;
     private computeStickyInfo;
     private cellClasses;

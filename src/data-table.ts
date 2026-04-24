@@ -164,6 +164,7 @@ export interface ColumnOptions {
   width: number
   visible?: boolean
   align?: string
+  pinned?: 'left' | 'right'
   sort?: false | 'ascending' | 'descending'
   headerCell?: (options: ColumnOptions) => HTMLElement
   dataCell?: (options: ColumnOptions) => HTMLElement
@@ -172,11 +173,16 @@ export interface ColumnOptions {
 
 ## Pinned Columns and Rows
 
-Set `pinnedLeft` and `pinnedRight` on the table to pin the first/last N
-visible columns during horizontal scroll. Set `pinnedTop` and `pinnedBottom`
-to pin the first/last N data rows (pinned top rows appear below the
-header row). All pinning uses CSS `position: sticky` for frame-perfect
-rendering with no jitter.
+Set `pinned: 'left'` or `pinned: 'right'` on individual columns to pin
+them during horizontal scroll. Pinned columns are sorted to the edges
+automatically. You can also pin/unpin columns via the header menu, or by
+dragging a column into/out of a pinned zone.
+
+Set `pinnedTop` and `pinnedBottom` to pin the first/last N data rows
+(pinned top rows appear below the header row).
+
+All pinning uses CSS `position: sticky` for frame-perfect rendering with
+no jitter.
 
 ```js
 import { elements } from 'tosijs'
@@ -230,24 +236,22 @@ const table = tosiTable({
   array: rows,
   rowHeight: 32,
   pinnedBottom: 1,
-  pinnedLeft: 2,
-  pinnedRight: 1,
   rowRendered(item, cells) {
     const total = numKeys.reduce((sum, key) => sum + (item[key] || 0), 0)
-    const cls = total < 0 ? 'row-negative' : ''
     for (const c of cells) {
       c.classList.toggle('row-negative', total < 0)
     }
   },
   columns: [
-    { prop: 'id', name: '#', width: 50, align: 'right' },
-    { prop: 'name', width: 120 },
+    { prop: 'id', name: '#', width: 50, align: 'right', pinned: 'left' },
+    { prop: 'name', width: 120, pinned: 'left' },
     ...dataColumns,
     {
       prop: '_actions',
       name: '',
       width: 48,
       sort: false,
+      pinned: 'right',
       dataCell() {
         return button(
           {
@@ -403,6 +407,10 @@ You'll need to make sure your localized strings include:
 - Column
 - Ascending
 - Descending
+- Pin
+- Unpin
+- Left
+- Right
 
 As well as any column names you want localized.
 */
@@ -466,6 +474,7 @@ export interface ColumnOptions {
   width: number
   visible?: boolean
   align?: string
+  pinned?: 'left' | 'right'
   sort?: false | 'ascending' | 'descending'
   headerCell?: (options: ColumnOptions) => HTMLElement
   dataCell?: (options: ColumnOptions) => HTMLElement
@@ -595,8 +604,6 @@ export class TosiTable extends WebComponent {
     multiple: false,
     pinnedTop: 0,
     pinnedBottom: 0,
-    pinnedLeft: 0,
-    pinnedRight: 0,
     nosort: false,
     nohide: false,
     noreorder: false,
@@ -729,7 +736,45 @@ export class TosiTable extends WebComponent {
   }
 
   get visibleColumns(): ColumnOptions[] {
-    return this.columns.filter((c) => c.visible !== false)
+    const visible = this.columns.filter((c) => c.visible !== false)
+    const left = visible.filter((c) => c.pinned === 'left')
+    const middle = visible.filter((c) => !c.pinned)
+    const right = visible.filter((c) => c.pinned === 'right')
+    return [...left, ...middle, ...right]
+  }
+
+  /** @deprecated Set pinned: 'left' on individual columns instead */
+  get pinnedLeft(): number {
+    return this.visibleColumns.filter((c) => c.pinned === 'left').length
+  }
+
+  /** @deprecated Set pinned: 'left' on individual columns instead */
+  set pinnedLeft(n: number) {
+    const visible = this.columns.filter((c) => c.visible !== false)
+    for (const col of visible) {
+      if (col.pinned === 'left') delete col.pinned
+    }
+    for (let i = 0; i < n && i < visible.length; i++) {
+      visible[i].pinned = 'left'
+    }
+    this.queueRender()
+  }
+
+  /** @deprecated Set pinned: 'right' on individual columns instead */
+  get pinnedRight(): number {
+    return this.visibleColumns.filter((c) => c.pinned === 'right').length
+  }
+
+  /** @deprecated Set pinned: 'right' on individual columns instead */
+  set pinnedRight(n: number) {
+    const visible = this.columns.filter((c) => c.visible !== false)
+    for (const col of visible) {
+      if (col.pinned === 'right') delete col.pinned
+    }
+    for (let i = visible.length - n; i < visible.length; i++) {
+      if (i >= 0) visible[i].pinned = 'right'
+    }
+    this.queueRender()
   }
 
   content = null
@@ -737,26 +782,30 @@ export class TosiTable extends WebComponent {
   private computeStickyInfo(cols: ColumnOptions[]): StickyInfo[] {
     const info: StickyInfo[] = cols.map(() => ({}))
 
+    // Left-pinned columns
     let leftOffset = 0
-    for (let i = 0; i < this.pinnedLeft && i < cols.length; i++) {
+    let lastLeft = -1
+    for (let i = 0; i < cols.length; i++) {
+      if (cols[i].pinned !== 'left') break
       info[i].left = leftOffset + 'px'
       leftOffset += cols[i].width
-      if (i === this.pinnedLeft - 1) {
-        info[i].edgeClass = 'col-edge-right'
-      }
+      lastLeft = i
+    }
+    if (lastLeft >= 0) {
+      info[lastLeft].edgeClass = 'col-edge-right'
     }
 
+    // Right-pinned columns
     let rightOffset = 0
-    for (
-      let i = cols.length - 1;
-      i >= 0 && i >= cols.length - this.pinnedRight;
-      i--
-    ) {
+    let firstRight = cols.length
+    for (let i = cols.length - 1; i >= 0; i--) {
+      if (cols[i].pinned !== 'right') break
       info[i].right = rightOffset + 'px'
       rightOffset += cols[i].width
-      if (i === cols.length - this.pinnedRight) {
-        info[i].edgeClass = 'col-edge-left'
-      }
+      firstRight = i
+    }
+    if (firstRight < cols.length) {
+      info[firstRight].edgeClass = 'col-edge-left'
     }
 
     return info
@@ -855,9 +904,9 @@ export class TosiTable extends WebComponent {
       if (options.visible === false) return false
       boundaryX += options.width
       let visualBoundary: number
-      if (i < this.pinnedLeft) {
+      if (options.pinned === 'left') {
         visualBoundary = boundaryX
-      } else if (i >= cols.length - this.pinnedRight) {
+      } else if (options.pinned === 'right') {
         visualBoundary = boundaryX - scrollLeft - rightScroll
       } else {
         visualBoundary = boundaryX - scrollLeft
@@ -1281,6 +1330,45 @@ export class TosiTable extends WebComponent {
       )
     }
 
+    if (menu.length) {
+      menu.push(null)
+    }
+    if (options.pinned) {
+      menu.push({
+        caption: this.localized
+          ? localize('Unpin')
+          : 'Unpin',
+        icon: 'unlock',
+        action() {
+          delete options.pinned
+          queueRender()
+        },
+      })
+    } else {
+      menu.push(
+        {
+          caption: this.localized
+            ? `${localize('Pin')} ${localize('Left')}`
+            : 'Pin Left',
+          icon: 'lock',
+          action() {
+            options.pinned = 'left'
+            queueRender()
+          },
+        },
+        {
+          caption: this.localized
+            ? `${localize('Pin')} ${localize('Right')}`
+            : 'Pin Right',
+          icon: 'lock',
+          action() {
+            options.pinned = 'right'
+            queueRender()
+          },
+        }
+      )
+    }
+
     popMenu({
       target,
       localized: this.localized,
@@ -1330,6 +1418,8 @@ export class TosiTable extends WebComponent {
     const dropped = this.visibleColumns[colIndex]
     const draggedIndex = this.columns.indexOf(this.draggedColumn!)
     const droppedIndex = this.columns.indexOf(dropped)
+    // Inherit pinning from the drop target's zone
+    this.draggedColumn!.pinned = dropped.pinned
     this.columns.splice(draggedIndex, 1)
     this.columns.splice(droppedIndex, 0, this.draggedColumn!)
     this.queueRender()

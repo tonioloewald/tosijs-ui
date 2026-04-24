@@ -52,6 +52,7 @@ Notifications	Notifications	Ilmoitukset	Aviseringar	通知	通知	알림	Notific
 Okay	D'accord	Kunnossa	Okej	好的	わかった	좋아요	Bueno	Okay	Va bene
 Open	Ouvrir	Avata	Öppna	打开	開ける	열려 있는	Abierto	Offen	Aprire
 Paste	Coller	Liitä	Klistra	粘贴	ペースト	반죽	Pasta	Paste	Impasto
+Pin	Épingler	Kiinnitä	Fäst	固定	ピン留め	고정	Fijar	Anheften	Fissare
 Quit	Quitter	Lopettaa	Sluta	辞职	やめる	그만두다	Abandonar	Aufhören	Esentato
 Rating	Notation	Arvosana	Gradering	等级	評価	평가	Clasificación	Bewertung	Valutazione
 Redo	Refaire	Tee uudelleen	Göra om	重做	やり直す	다시 하다	Rehacer	Wiederholen	Rifare
@@ -70,6 +71,7 @@ Tabs	Onglets	Välilehdet	Flikar	标签页	タブ	탭	Pestañas	Registerkarten	Sc
 Unacceptable	Inacceptable	Hyväksymätön	Oacceptabel	不可接受	受け入れられない	받아들일 수 없음	Inaceptable	Unakzeptabel	Inaccettabile
 Underline	Souligner	Korostaa	Betona	强调	下線	밑줄	Subrayar	Unterstreichen	Sottolineare
 Undo	Défaire	Kumoa	Ångra	撤销	元に戻す	끄르다	Deshacer	Rückgängig machen	Disfare
+Unpin	Désépingler	Irrota	Lossa	取消固定	ピン留め解除	고정 해제	Desfijar	Loslösen	Sbloccare
 Untitled	Sans titre	Nimetön	Ofrälse	无题	無題	제목 없음	Intitulado	Ohne Titel	Senza titolo
 Very Strong	Très fort	Erittäin vahva	Mycket stark	非常强	非常に強い	매우 강함	Acérrimo	Sehr stark	Molto forte
 Very Weak	Très faible	Hyvin heikko	Mycket svag	非常弱	非常に弱い	매우 약함	Muy débil	Sehr schwach	Molto debole
