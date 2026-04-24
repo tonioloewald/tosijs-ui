@@ -104,7 +104,6 @@ export default {
     cornerRightDown: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><polyline points=\"10 15 15 20 20 15\"></polyline><path d=\"M4 4h7a4 4 0 0 1 4 4v12\"></path></svg>",
     skipForward: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><polygon points=\"5 4 15 12 5 20 5 4\"></polygon><line x1=\"19\" y1=\"5\" x2=\"19\" y2=\"19\"></line></svg>",
     refreshCw: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><polyline points=\"23 4 23 10 17 10\"></polyline><polyline points=\"1 20 1 14 7 14\"></polyline><path d=\"M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15\"></path></svg>",
-    arrowUpRight: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><line x1=\"7\" y1=\"17\" x2=\"17\" y2=\"7\"></line><polyline points=\"7 7 17 7 17 17\"></polyline></svg>",
     rotateCw: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><polyline points=\"23 4 23 10 17 10\"></polyline><path d=\"M20.49 15a9 9 0 1 1-2.12-9.36L23 10\"></path></svg>",
     phoneForwarded: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><polyline points=\"19 1 23 5 19 9\"></polyline><line x1=\"15\" y1=\"5\" x2=\"23\" y2=\"5\"></line><path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z\"></path></svg>",
     bookOpen: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><path d=\"M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z\"></path><path d=\"M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z\"></path></svg>",
@@ -183,6 +182,7 @@ export default {
     link2: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><path d=\"M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3\"></path><line x1=\"8\" y1=\"12\" x2=\"16\" y2=\"12\"></line></svg>",
     printer: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><polyline points=\"6 9 6 2 18 2 18 9\"></polyline><path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"></path><rect x=\"6\" y=\"14\" width=\"12\" height=\"8\"></rect></svg>",
     folderMinus: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><path d=\"M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z\"></path><line x1=\"9\" y1=\"14\" x2=\"15\" y2=\"14\"></line></svg>",
+    arrowUpRight: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><line x1=\"7\" y1=\"17\" x2=\"17\" y2=\"7\"></line><polyline points=\"7 7 17 7 17 17\"></polyline></svg>",
     truck: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><rect x=\"1\" y=\"3\" width=\"15\" height=\"13\"></rect><polygon points=\"16 8 20 8 23 11 23 16 16 16 16 8\"></polygon><circle cx=\"5.5\" cy=\"18.5\" r=\"2.5\"></circle><circle cx=\"18.5\" cy=\"18.5\" r=\"2.5\"></circle></svg>",
     lifeBuoy: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><circle cx=\"12\" cy=\"12\" r=\"4\"></circle><line x1=\"4.93\" y1=\"4.93\" x2=\"9.17\" y2=\"9.17\"></line><line x1=\"14.83\" y1=\"14.83\" x2=\"19.07\" y2=\"19.07\"></line><line x1=\"14.83\" y1=\"9.17\" x2=\"19.07\" y2=\"4.93\"></line><line x1=\"14.83\" y1=\"9.17\" x2=\"18.36\" y2=\"5.64\"></line><line x1=\"4.93\" y1=\"19.07\" x2=\"9.17\" y2=\"14.83\"></line></svg>",
     penTool: "<svg class=\"stroked\" viewBox=\"0 0 24 24\"><path d=\"M12 19l7-7 3 3-7 7-3-3z\"></path><path d=\"M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z\"></path><path d=\"M2 2l7.59 7.59\"></path><circle cx=\"11\" cy=\"11\" r=\"2\"></circle></svg>",
@@ -297,7 +297,6 @@ export default {
     cornerLeftDown: "cornerRightDown0f",
     skipBack: "skipForward0f",
     refreshCcw: "refreshCw0f",
-    arrowUpLeft: "arrowUpRight0f",
     rotateCcw: "rotateCw0f",
     chevronsDown: "chevronsRight90r",
     chevronsLeft: "chevronsRight180r",
@@ -310,5 +309,8 @@ export default {
     arrowUp: "arrowRight270r",
     arrowDownCircle: "arrowRightCircle90r",
     arrowLeftCircle: "arrowRightCircle180r",
-    arrowUpCircle: "arrowRightCircle270r"
+    arrowUpCircle: "arrowRightCircle270r",
+    arrowDownRight: "arrowUpRight90r",
+    arrowDownLeft: "arrowUpRight180r",
+    arrowUpLeft: "arrowUpRight270r"
 };

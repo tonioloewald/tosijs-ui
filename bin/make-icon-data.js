@@ -240,6 +240,14 @@ function findIcons(dirs, ignore = []) {
 
 findIcons(iconDirectories.split(','))
 
+// Manual redirects for icons that don't fit folder conventions
+const manualRedirects = {
+  arrowDownRight: 'arrowUpRight90r',
+  arrowDownLeft: 'arrowUpRight180r',
+  arrowUpLeft: 'arrowUpRight270r',
+}
+Object.assign(iconRedirects, manualRedirects)
+
 // Merge redirects — only add if the target name doesn't already have SVG data
 let redirectCount = 0
 for (const [name, redirect] of Object.entries(iconRedirects)) {
