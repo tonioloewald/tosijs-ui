@@ -311,6 +311,26 @@ describe('icons', () => {
     })
   })
 
+  describe('suffixes apply after composition', () => {
+    test('suffixes on spin icon apply to result, not base name', () => {
+      const icon = icons.spin360Loader40s()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+      // The 40s scale should be on the wrapper, not parsed as part of "loader40s"
+      const svg = icon.querySelector('svg')
+      expect(svg!.style.animation).toContain('tosi-spin')
+      expect((icon as HTMLElement).style.transform).toContain('scale(0.4)')
+    })
+
+    test('suffixes on overlay in stacked icon', () => {
+      const icon = icons['spin360Loader40s_20x$cloud']()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+      // The overlay (spin loader) should have scale and translate applied
+      const children = icon.children
+      // base is cloud, overlay is the spin result
+      expect(children.length).toBe(2)
+    })
+  })
+
   describe('spin rule', () => {
     test('spin prefix creates wrapped icon', () => {
       const icon = icons.spin360Loader()
