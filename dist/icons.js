@@ -558,12 +558,9 @@ function overlayRule(prefix, overlay, overlayStyle, baseStyle) {
     return {
         prefix,
         apply(baseName, _match, parts) {
-            const data = iconData;
-            if (!data[baseName] || !data[overlay])
-                return null;
-            const base = makeIcon(data[baseName], []);
+            const base = resolveIcon(baseName, []);
+            const over = resolveIcon(overlay, []);
             Object.assign(base.style, baseStyle);
-            const over = makeIcon(data[overlay], []);
             Object.assign(over.style, {
                 position: 'absolute',
                 inset: '0',
@@ -580,9 +577,6 @@ export const iconRules = [
     {
         prefix: /^spin(_?\d+)/,
         apply(baseName, match, parts) {
-            const data = iconData;
-            if (!data[baseName])
-                return null;
             const dps = match[1].replace('_', '-');
             const duration = 360 / Math.abs(parseFloat(dps));
             const direction = dps.startsWith('-') ? 'reverse' : 'normal';
@@ -593,9 +587,10 @@ export const iconRules = [
                 document.head.appendChild(style);
                 spinKeyframesInjected.done = true;
             }
-            const svg = makeIcon(data[baseName], []);
-            svg.style.animation = `tosi-spin ${duration}s linear infinite ${direction}`;
-            return wrapIcon(baseName, parts, svg);
+            const icon = resolveIcon(baseName, []);
+            icon.style.animation =
+                `tosi-spin ${duration}s linear infinite ${direction}`;
+            return wrapIcon(baseName, parts, icon);
         },
     },
     overlayRule('un', 'slash', { opacity: '0.25' }, {

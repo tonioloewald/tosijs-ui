@@ -595,12 +595,10 @@ function overlayRule(
   return {
     prefix,
     apply(baseName, _match, parts) {
-      const data = iconData as Record<string, string>
-      if (!data[baseName] || !data[overlay]) return null
-      const base = makeIcon(data[baseName], [])
-      Object.assign(base.style, baseStyle)
-      const over = makeIcon(data[overlay], [])
-      Object.assign(over.style, {
+      const base = resolveIcon(baseName, [])
+      const over = resolveIcon(overlay, [])
+      Object.assign((base as HTMLElement).style, baseStyle)
+      Object.assign((over as HTMLElement).style, {
         position: 'absolute',
         inset: '0',
         width: '100%',
@@ -618,8 +616,6 @@ export const iconRules: IconRule[] = [
   {
     prefix: /^spin(_?\d+)/,
     apply(baseName, match, parts) {
-      const data = iconData as Record<string, string>
-      if (!data[baseName]) return null
       const dps = (match as RegExpMatchArray)[1].replace('_', '-')
       const duration = 360 / Math.abs(parseFloat(dps))
       const direction = dps.startsWith('-') ? 'reverse' : 'normal'
@@ -630,9 +626,10 @@ export const iconRules: IconRule[] = [
         document.head.appendChild(style)
         spinKeyframesInjected.done = true
       }
-      const svg = makeIcon(data[baseName], [])
-      svg.style.animation = `tosi-spin ${duration}s linear infinite ${direction}`
-      return wrapIcon(baseName, parts, svg)
+      const icon = resolveIcon(baseName, [])
+      ;(icon as HTMLElement).style.animation =
+        `tosi-spin ${duration}s linear infinite ${direction}`
+      return wrapIcon(baseName, parts, icon)
     },
   },
   overlayRule(
