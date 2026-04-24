@@ -881,7 +881,7 @@ const menuItemStyles = {
   width: '100%',
   gap: 0,
   background: 'transparent',
-  padding: varDefault.menuItemPadding('0 16px'),
+  padding: varDefault.menuItemPadding('0 8px'),
   height: varDefault.menuItemHeight('48px'),
   lineHeight: varDefault.menuItemHeight('48px'),
   textAlign: 'left',
@@ -937,8 +937,13 @@ StyleSheet('xin-menu-helper', {
     menuItemColorStyles,
   '.xin-menu-with-icons .xin-menu-item, .tosi-menu-with-icons .tosi-menu-item':
     {
-      gridTemplateColumns: '30px 1fr 30px',
+      gridTemplateColumns: '24px 1fr 30px',
+      gap: varDefault.menuItemGap('4px'),
     },
+  '.xin-menu-item > :first-child, .tosi-menu-item > :first-child': {
+    justifySelf: 'center',
+    alignSelf: 'center',
+  },
   '.xin-menu-item svg, .tosi-menu-item svg': {
     stroke: varDefault.menuItemIconColor('#222'),
   },

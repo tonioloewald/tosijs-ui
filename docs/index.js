@@ -25839,7 +25839,7 @@ var menuItemStyles = {
   width: "100%",
   gap: 0,
   background: "transparent",
-  padding: kE.menuItemPadding("0 16px"),
+  padding: kE.menuItemPadding("0 8px"),
   height: kE.menuItemHeight("48px"),
   lineHeight: kE.menuItemHeight("48px"),
   textAlign: "left"
@@ -25890,7 +25890,12 @@ hL("xin-menu-helper", {
   ".xin-menu-item, .tosi-menu-item": menuItemStyles,
   ".xin-menu-item, .xin-menu-item > span, .tosi-menu-item, .tosi-menu-item > span": menuItemColorStyles,
   ".xin-menu-with-icons .xin-menu-item, .tosi-menu-with-icons .tosi-menu-item": {
-    gridTemplateColumns: "30px 1fr 30px"
+    gridTemplateColumns: "24px 1fr 30px",
+    gap: kE.menuItemGap("4px")
+  },
+  ".xin-menu-item > :first-child, .tosi-menu-item > :first-child": {
+    justifySelf: "center",
+    alignSelf: "center"
   },
   ".xin-menu-item svg, .tosi-menu-item svg": {
     stroke: kE.menuItemIconColor("#222")
