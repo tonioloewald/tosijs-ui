@@ -37295,7 +37295,7 @@ const { div, span, input, select, option } = elements
 
 const prefixes = ['', 'un', 'check', 'cancel', 'search', 'spin120', 'spin360']
 const suffixes = [
-  '', 'r90', 'r180', 'r_90', 'f0', 'f1',
+  '', '90r', '180r', '_90r', '0f', '1f',
   '50o', '75s', '_ff0000F', '_00fS', '4W',
 ]
 
@@ -37700,8 +37700,8 @@ This is especially powerful with stacking:
 
 Composed icons (modifiers) are wrapped in a \`<span>\` container, not a
 single SVG. \`svg2DataUrl()\` will render only the base icon and log a
-console error. Transforms (\`rot\`, \`flip\`) and plain icons work normally
-with \`svg2DataUrl\`.
+console error. Transforms (rotation/flip suffixes) and plain icons work
+normally with \`svg2DataUrl\`.
 
 
 ## Missing Icons
