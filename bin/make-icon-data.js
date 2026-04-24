@@ -99,6 +99,48 @@ const typeDeclaration = isTypescript
   : '' // No type declaration for JS output
 
 const iconData = {}
+const iconRedirects = {}
+
+// Directional folder conventions:
+// right-left: base has "Right", generate "Left" as flip
+// up-down: base has "Up", generate "Down" as flip
+// up-down-right-left: base has "Right", generate Down/Left/Up via rotation
+const DIRECTION_FOLDERS = {
+  'right-left': {
+    base: 'Right',
+    variants: { Left: '0f' },
+  },
+  'up-down': {
+    base: 'Up',
+    variants: { Down: '1f' },
+  },
+  'up-down-right-left': {
+    base: 'Right',
+    variants: {
+      Down: '90r',
+      Left: '180r',
+      Up: '270r',
+    },
+  },
+}
+
+function getDirectionConfig(dir) {
+  const dirName = path.basename(dir)
+  return DIRECTION_FOLDERS[dirName] || null
+}
+
+function generateDirectionalRedirects(name, dirConfig) {
+  // Find the base direction word in the camelCase name
+  const baseDir = dirConfig.base
+  if (!name.includes(baseDir)) return
+
+  for (const [targetDir, suffix] of Object.entries(dirConfig.variants)) {
+    const redirectName = name.replace(baseDir, targetDir)
+    if (redirectName !== name) {
+      iconRedirects[redirectName] = name + suffix
+    }
+  }
+}
 
 function findIcons(dirs, ignore = []) {
   function traverseDirectory(dir) {
@@ -119,9 +161,11 @@ function findIcons(dirs, ignore = []) {
         traverseDirectory(filePath)
       } else if (path.extname(file) === '.svg') {
         const content = fs.readFileSync(filePath, 'utf8')
-        const name = file
-          .split('.')[0]
-          .replace(/-([a-z0-9])/g, (_, char) => char.toLocaleUpperCase())
+        const rawName = file.split('.')[0]
+        const names = rawName.split(',').map((n) =>
+          n.trim().replace(/-([a-z0-9])/g, (_, char) => char.toLocaleUpperCase())
+        )
+        const name = names[0]
         let svgSource = content
           .replace(/(<\?xml.*?>|<!DOCTYPE.*?>)\s?/g, '')
           .replace(/<svg.*?>/, (a) =>
@@ -169,6 +213,22 @@ function findIcons(dirs, ignore = []) {
           )
         }
         iconData[name] = svgSource
+
+        // Comma-separated names: skip-forward,skip-back.svg
+        // First name is the base, subsequent names are redirects using
+        // the folder's convention (0f for right-left, etc.)
+        const dirConfig = getDirectionConfig(dir)
+        if (names.length > 1 && dirConfig) {
+          const suffixes = Object.values(dirConfig.variants)
+          for (let n = 1; n < names.length && n - 1 < suffixes.length; n++) {
+            iconRedirects[names[n]] = name + suffixes[n - 1]
+          }
+        }
+
+        // Generate directional redirects based on folder convention
+        if (dirConfig) {
+          generateDirectionalRedirects(name, dirConfig)
+        }
       }
     })
   }
@@ -179,6 +239,18 @@ function findIcons(dirs, ignore = []) {
 }
 
 findIcons(iconDirectories.split(','))
+
+// Merge redirects — only add if the target name doesn't already have SVG data
+let redirectCount = 0
+for (const [name, redirect] of Object.entries(iconRedirects)) {
+  if (!iconData[name]) {
+    iconData[name] = redirect
+    redirectCount++
+  }
+}
+if (redirectCount > 0) {
+  console.log(`Generated ${redirectCount} directional redirects`)
+}
 
 // Ensure the output directory exists
 const outputDir = path.dirname(outputFilePath)
