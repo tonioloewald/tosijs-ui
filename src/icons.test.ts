@@ -1,5 +1,5 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
-import { icons, SvgIcon, svgIcon } from './icons'
+import { icons, SvgIcon, svgIcon, defineIcons, iconRules } from './icons'
 
 describe('icons', () => {
   describe('icons proxy', () => {
@@ -119,6 +119,188 @@ describe('icons', () => {
       container.appendChild(icon)
       icon.icon = 'x'
       expect(icon.icon).toBe('x')
+    })
+  })
+
+  describe('style suffixes', () => {
+    test('opacity suffix', () => {
+      const icon = icons.lock50o()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.opacity).toBe('0.5')
+    })
+
+    test('scale suffix', () => {
+      const icon = icons.star75s()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.transform).toContain('scale(0.75)')
+    })
+
+    test('rotation suffix', () => {
+      const icon = icons.chevronRight90r()
+      expect(icon).toBeDefined()
+      const el = icon.querySelector('svg') || icon
+      expect((el as HTMLElement).style.transform).toContain('rotate(90deg)')
+    })
+
+    test('negative rotation suffix', () => {
+      const icon = icons.chevronRight_90r()
+      expect(icon).toBeDefined()
+      const el = icon.querySelector('svg') || icon
+      expect((el as HTMLElement).style.transform).toContain('rotate(-90deg)')
+    })
+
+    test('flip horizontal suffix', () => {
+      const icon = icons.sidebar0f()
+      expect(icon).toBeDefined()
+      const el = icon.querySelector('svg') || icon
+      expect((el as HTMLElement).style.transform).toContain('scaleX(-1)')
+    })
+
+    test('flip vertical suffix', () => {
+      const icon = icons.sidebar1f()
+      expect(icon).toBeDefined()
+      const el = icon.querySelector('svg') || icon
+      expect((el as HTMLElement).style.transform).toContain('scaleY(-1)')
+    })
+
+    test('translate suffixes', () => {
+      const icon = icons.plus20x_10y()
+      expect(icon).toBeDefined()
+      const style = (icon as HTMLElement).style.transform
+      expect(style).toContain('translateX(20%)')
+      expect(style).toContain('translateY(-10%)')
+    })
+
+    test('fill color suffix', () => {
+      const icon = icons.star_ff0000F()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.fill).toBe('#ff0000')
+    })
+
+    test('stroke color suffix', () => {
+      const icon = icons.lock_00fS()
+      expect(icon).toBeDefined()
+      // stroke is set via Object.assign after makeIcon sets the default
+      expect((icon as HTMLElement).style.cssText).toContain('#00f')
+    })
+
+    test('stroke width suffix', () => {
+      const icon = icons.lock4W()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.strokeWidth).toBe('4')
+    })
+
+    test('combined suffixes', () => {
+      const icon = icons.plus50o75s20x20y()
+      expect(icon).toBeDefined()
+      const style = (icon as HTMLElement).style
+      expect(style.opacity).toBe('0.5')
+      expect(style.transform).toContain('scale(0.75)')
+      expect(style.transform).toContain('translateX(20%)')
+      expect(style.transform).toContain('translateY(20%)')
+    })
+
+    test('real icons with trailing digits are not treated as suffixes', () => {
+      const edit2 = icons.edit2()
+      expect(edit2).toBeInstanceOf(SVGElement)
+      expect((edit2 as SVGElement).style.opacity).not.toBe('0.02')
+    })
+  })
+
+  describe('modifier overlays', () => {
+    test('un prefix creates composite', () => {
+      const icon = icons.unLock()
+      expect(icon).toBeDefined()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+      const svgs = icon.querySelectorAll('svg')
+      expect(svgs.length).toBe(2)
+    })
+
+    test('check prefix creates composite', () => {
+      const icon = icons.checkFile()
+      expect(icon).toBeDefined()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+
+    test('cancel prefix creates composite', () => {
+      const icon = icons.cancelUpload()
+      expect(icon).toBeDefined()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+
+    test('search prefix creates composite', () => {
+      const icon = icons.searchUser()
+      expect(icon).toBeDefined()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+
+    test('composite has pointer-events none', () => {
+      const icon = icons.unLock()
+      expect((icon as HTMLElement).style.pointerEvents).toBe('none')
+    })
+
+    test('composite has data-icon attribute', () => {
+      const icon = icons.unLock()
+      expect((icon as HTMLElement).dataset.icon).toBe('lock')
+    })
+  })
+
+  describe('icon stacking', () => {
+    test('$ stacks overlay on base', () => {
+      const icon = icons['lock$shield']()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+      const svgs = icon.querySelectorAll('svg')
+      expect(svgs.length).toBe(2)
+    })
+
+    test('stacking with opacity suffix on overlay', () => {
+      const icon = icons['lock50o$shield']()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+      const svgs = icon.querySelectorAll('svg')
+      expect(svgs.length).toBe(2)
+      // lock50o is the overlay (second child), shield is the base (first)
+      expect(svgs[1].style.opacity).toBe('0.5')
+    })
+
+    test('stacking with multiple suffixes', () => {
+      const icon = icons['lock50s75o$shield']()
+      expect(icon).toBeDefined()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+  })
+
+  describe('icon redirects', () => {
+    test('redirect to existing icon', () => {
+      defineIcons({ testRedirect: 'check' })
+      const icon = icons.testRedirect()
+      expect(icon).toBeInstanceOf(SVGElement)
+    })
+
+    test('redirect to composition', () => {
+      defineIcons({ testRedirectCompose: 'unLock' })
+      const icon = icons.testRedirectCompose()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+
+    test('redirect with suffix', () => {
+      defineIcons({ testRedirectSuffix: 'chevronRight90r' })
+      const icon = icons.testRedirectSuffix()
+      expect(icon).toBeDefined()
+    })
+  })
+
+  describe('spin rule', () => {
+    test('spin prefix creates wrapped icon', () => {
+      const icon = icons.spin360Loader()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+      const svg = icon.querySelector('svg')
+      expect(svg!.style.animation).toContain('tosi-spin')
+    })
+
+    test('negative spin reverses direction', () => {
+      const icon = icons.spin_180Star()
+      const svg = icon.querySelector('svg')
+      expect(svg!.style.animation).toContain('reverse')
     })
   })
 

@@ -24060,7 +24060,7 @@ function composeIcon(prop, parts) {
   return null;
 }
 var MAX_REDIRECTS = 10;
-var SUFFIX_RE = /(_?\d{2,3}[osxy]|r_?\d{2,3}|f[01]|F[0-9a-fA-F]{3,8}|S[0-9a-fA-F]{3,8}|W\d{1,3})+$/;
+var SUFFIX_RE = /(_?\d{2,3}[osxyr]|[01]f|_[0-9a-fA-F]{3,8}[FS]|\d{1,3}W)+$/;
 function parseStyleSuffixes(name) {
   const match = name.match(SUFFIX_RE);
   if (!match)
@@ -24069,28 +24069,23 @@ function parseStyleSuffixes(name) {
   if (!baseName)
     return null;
   const style = {};
-  const suffixes = match[0].match(/_?\d{2,3}[osxy]|r_?\d{2,3}|f[01]|F[0-9a-fA-F]{3,8}|S[0-9a-fA-F]{3,8}|W\d{1,3}/g);
+  const suffixes = match[0].match(/_?\d{2,3}[osxyr]|[01]f|_[0-9a-fA-F]{3,8}[FS]|\d{1,3}W/g);
   let tx = "";
   let ty = "";
   let scale = "";
   let rotate = "";
   let flip = "";
   for (const s2 of suffixes) {
-    const code = s2[0];
+    const code = s2[s2.length - 1];
     if (code === "F") {
-      style.fill = "#" + s2.slice(1);
+      style.fill = "#" + s2.slice(1, -1);
     } else if (code === "S") {
-      style.stroke = "#" + s2.slice(1);
+      style.stroke = "#" + s2.slice(1, -1);
     } else if (code === "W") {
-      style.strokeWidth = s2.slice(1);
-    } else if (code === "r") {
-      const angle = s2.slice(1).replace("_", "-");
-      rotate = `rotate(${angle}deg)`;
-    } else if (code === "f") {
-      flip = s2[1] === "0" ? "scaleX(-1)" : "scaleY(-1)";
+      style.strokeWidth = s2.slice(0, -1);
     } else {
       const val = parseInt(s2.replace("_", "-"));
-      switch (s2[s2.length - 1]) {
+      switch (code) {
         case "o":
           style.opacity = String(val / 100);
           break;
@@ -24102,6 +24097,12 @@ function parseStyleSuffixes(name) {
           break;
         case "y":
           ty = `translateY(${val}%)`;
+          break;
+        case "r":
+          rotate = `rotate(${val}deg)`;
+          break;
+        case "f":
+          flip = val === 0 ? "scaleX(-1)" : "scaleY(-1)";
           break;
       }
     }
@@ -37273,7 +37274,7 @@ applications along with being very easy to extend and maintain.
 > - icons can be rendered  as data urls, e.g. to insert into CSS… (the little \`owl\` logo rendered under blockquotes is an example)
 > - icon composition: stack, transform, and style icons via naming conventions (e.g. \`lock50s75o$shield\`)
 > - extensible rules system for custom prefixes and overlays (e.g. \`unLock\`, \`checkFile\`)
-> - icon redirects eliminate redundant SVG data (e.g. \`chevronDown\` → \`chevronRightr90\`)
+> - icon redirects eliminate redundant SVG data (e.g. \`chevronDown\` → \`chevronRight90r\`)
 
 ### Nice Features
 > - no build process magic needed (your icons are "just javascript", no special CSS files needed, no magic glyph mappings). Adding new, or overriding existing, icons is trivial.
@@ -37295,7 +37296,7 @@ const { div, span, input, select, option } = elements
 const prefixes = ['', 'un', 'check', 'cancel', 'search', 'spin120', 'spin360']
 const suffixes = [
   '', 'r90', 'r180', 'r_90', 'f0', 'f1',
-  '50o', '75s', 'Fff0000', 'S00f', 'W4',
+  '50o', '75s', '_ff0000F', '_00fS', '4W',
 ]
 
 const iconNames = Object.keys(icons).sort()
@@ -37663,7 +37664,7 @@ Use \`$\` to stack one icon on top of another: \`overlay$base\`. Combine
 with opacity suffixes and transforms for layered compositions:
 
     icons['tosi$map50o']()          // tosi logo on a 50% opacity map
-    icons['rot45Star$circle']()     // rotated star on a circle
+    icons['star45r$circle']()        // rotated star on a circle
     icons['lock50s75o_10y$shield']() // small translucent lock on a shield
 
 Each side of the \`$\` is resolved independently, so redirects, transforms,
@@ -37678,15 +37679,15 @@ Each suffix is a number followed by a letter:
 - \`NNs\` — scale N% (e.g. \`star75s\` = 75% scale)
 - \`NNx\` — translateX N% (e.g. \`plus20x\` = shift right 20%)
 - \`NNy\` — translateY N% (e.g. \`plus_20y\` = shift up 20%)
-- \`rNN\` — rotate N° (e.g. \`chevronRightr90\` = chevron pointing down)
-- \`r_NN\` — rotate -N° (e.g. \`arrowr_45\`)
-- \`f0\` — flip horizontally (e.g. \`sidebarf0\`)
-- \`f1\` — flip vertically
-- \`F<hex>\` — fill color (e.g. \`starFff0000\` = red fill, \`starFf00\` = shorthand)
-- \`S<hex>\` — stroke color (e.g. \`lockS00f\` = blue stroke)
-- \`W<n>\` — stroke width (e.g. \`lockW4\` = stroke-width 4)
+- \`NNr\` — rotate N° (e.g. \`chevronRight90r\` = chevron pointing down)
+- \`_NNr\` — rotate -N° (e.g. \`arrow_45r\`)
+- \`0f\` — flip horizontally (e.g. \`sidebar0f\`)
+- \`1f\` — flip vertically
+- \`_<hex>F\` — fill color (e.g. \`star_ff0000F\` = red fill, \`star_f00F\` = shorthand)
+- \`_<hex>S\` — stroke color (e.g. \`lock_00fS\` = blue stroke)
+- \`NW\` — stroke width (e.g. \`lock4W\` = stroke-width 4)
 
-Suffixes can be combined: \`plus50o60s25x25yFf00\` = plus at 50% opacity,
+Suffixes can be combined: \`plus50o60s25x25y_f00F\` = plus at 50% opacity,
 60% scale, shifted 25% right and down, filled red.
 
 This is especially powerful with stacking:
