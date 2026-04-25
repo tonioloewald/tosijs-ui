@@ -509,7 +509,7 @@ organizations themselves. It's up to you to use them correctly.
 
 The remaining icons I have created myself using the excellent but sometimes flawed
 [Amadine](https://apps.apple.com/us/app/amadine-vector-design-art/id1339198386?mt=12)
-and generally reliable [Graphic](https://apps.apple.com/us/app/graphic/id404705039?mt=12).
+and before that [Graphic](https://apps.apple.com/us/app/graphic/id404705039?mt=12).
 
 ### Feather Icons Copyright Notice
 

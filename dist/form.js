@@ -702,9 +702,16 @@ export class TosiForm extends XinComponent {
         const namedElements = this.querySelectorAll('[name], [key]');
         for (const el of namedElements) {
             const key = el.getAttribute('name') || el.getAttribute('key');
-            if (key && formValue[key] !== undefined) {
+            if (!key)
+                continue;
+            if (formValue[key] !== undefined) {
+                // Push form value to field
                 ;
                 el.value = formValue[key];
+            }
+            else if ('value' in el) {
+                // Pull field default into form value
+                formValue[key] = el.value;
             }
         }
     }
