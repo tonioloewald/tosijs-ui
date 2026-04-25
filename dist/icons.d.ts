@@ -20,6 +20,7 @@ export declare class SvgIcon extends WebComponent {
             '--tosi-icon-stroke-linecap': string;
             '--tosi-icon-fill': string;
             display: string;
+            verticalAlign: string;
             stroke: string;
             strokeWidth: string;
             strokeLinejoin: string;

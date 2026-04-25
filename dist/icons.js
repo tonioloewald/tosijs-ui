@@ -351,49 +351,92 @@ that, for example, treat all colored icons inside buttons the same way.
 <tosi-icon icon="lock50s75o_10y$shield" size=128></tosi-icon>
 <tosi-icon icon="unLock" size=128></tosi-icon>
 <tosi-icon icon="checkFile" size=128></tosi-icon>
-<tosi-icon icon="spin120Loader40s_20x$cloud" size=128></tosi-icon>
+<tosi-icon icon="spin120Loader40s_30x$cloud" size=128></tosi-icon>
 
-If you request an icon that doesn't exist, the system tries to compose one
-from a base icon and a prefix:
+### Why?
 
-### Prefix rules
+I needed a pin icon for column pinning in the data table. The only pin
+in the feather set is a map pin, so I created a push-pin icon
+<tosi-icon icon="pin" size=24 style="stroke: var(--brand-color)"></tosi-icon>.
+But immediately I also needed unpin, pin-left, and pin-right — a lot
+of new icons for one feature. Of course I could flip the pin with CSS, but
+this is a problem *everywhere, all the time*: every directional icon
+needs 2–4 variants, every action needs a negation, every status needs
+an overlay.
 
-- `spin<dps><Icon>` — continuous rotation at N degrees/second, e.g. `spin360Loader` (1 rev/s)
-- `spin_<dps><Icon>` — counter-clockwise, e.g. `spin_180Star`
+Why not fix it once and also eliminate the need to maintain trivial
+variations on every icon?
 
-### Modifier overlays
+<tosi-icon icon="pin" size=64></tosi-icon>
+<tosi-icon icon="pin0f" size=64></tosi-icon>
+<tosi-icon icon="unPin" size=64></tosi-icon>
 
-- `un<Icon>` — red slash overlay (e.g. `unPin`, `unLock`)
-- `check<Icon>` — green check overlay
-- `cancel<Icon>` — red x overlay
-- `search<Icon>` — magnifier overlay
+### Icon modifier suffixes
 
-Modifier overlays render the base icon at reduced opacity/scale with the
-overlay icon centered on top. **Overlay icons should have a square viewBox** —
-a non-square overlay on a non-square base will produce unexpected results.
+The suffix system is inspired by tosijs's CSS variable math, where
+`borderRadius50` becomes `calc(var(--border-radius) * 0.5)` and
+`someColor50o` adjusts opacity to 50%. The same `value + letter`
+convention works for icons:
+
+- `NNo` — opacity N% (e.g. `lock50o` = 50% opacity)
+- `NNs` — scale N% (e.g. `star75s` = 75% scale)
+- `NNr` — rotate N° (e.g. `chevronRight90r` = chevron pointing down)
+- `_NNr` — rotate -N° (e.g. `arrow_45r`)
+- `0f` — flip horizontally (e.g. `sidebar0f`)
+- `1f` — flip vertically
+- `NNx` — translateX N% (e.g. `plus20x` = shift right 20%)
+- `NNy` — translateY N% (e.g. `plus_20y` = shift up 20%)
+- `_<hex>F` — fill color (e.g. `star_ff0000F` = red fill, `star_f00F` = shorthand)
+- `_<hex>S` — stroke color (e.g. `lock_00fS` = blue stroke)
+- `NW` — stroke width (e.g. `lock4W` = stroke-width 4)
+
+Suffixes combine freely: `plus50o60s25x25y_f00F` = plus at 50% opacity,
+60% scale, shifted 25% right and down, filled red.
+
+### Stacking icons
+
+Use `$` to stack one icon on top of another: `overlay$base`. Each side
+is resolved independently — suffixes, redirects, and rules all work:
+
+    icons['tosi$map50o']()          // tosi logo on a 50% opacity map
+    icons['star45r$circle']()        // rotated star on a circle
+    icons['lock50s75o_10y$shield']() // small translucent lock on a shield
 
 ### Icon redirects
 
-Icon definitions that don't start with `<svg` are treated as redirects
-to another icon name (which can include composition prefixes):
+Icon definitions that don't start with `<svg` are treated as redirects.
+This is how we eliminate redundant SVG files — `chevronDown` doesn't
+need its own SVG:
 
     defineIcons({
-      chevronDown: 'rot90ChevronRight',
-      sidebarRight: 'flipHSidebar',
+      chevronDown: 'chevronRight90r',
+      chevronLeft: 'chevronRight180r',
+      chevronUp: 'chevronRight270r',
+      userAdd: 'plus50o60s25x25y$user',
     })
+
+### Prefix rules
+
+Rules apply named prefixes to icons. Built-in rules use string rewrites
+that feed back into the resolution pipeline:
+
+- `un<Icon>` — translucent slash overlay (e.g. `unPin`, `unLock`)
+- `check<Icon>` — green check overlay
+- `cancel<Icon>` — red x overlay
+- `search<Icon>` — magnifier overlay
+- `spin<dps><Icon>` — continuous rotation at N°/second (e.g. `spin360Loader`)
+- `spin_<dps><Icon>` — counter-clockwise (e.g. `spin_180Star`)
+
+The overlay rules are just string rewrites — for example, `unFoo`
+becomes `slash25o$foo75s75o`. **Overlay icons should have a square
+viewBox** for best results on non-square base icons.
 
 ### Custom rules
 
-`iconRules` is a mutable array of modifier rules. Each rule has a `prefix`
-(string or RegExp) and an `apply` function that receives the base icon name
-and returns either:
-
-- A **string** — resolved through the full icon pipeline (redirects, stacking, suffixes)
-- An **Element** — used directly as the icon
-- **null** — rule doesn't apply, try the next one
-
-String returns are the simplest and most powerful — they let you define
-new icon prefixes as pure naming conventions:
+`iconRules` is a mutable array. Each rule has a `prefix` (string or
+RegExp) and an `apply` function that returns a **string** (resolved
+through the full pipeline), an **Element** (used directly), or **null**
+(skip to next rule):
 
     // String rewrite: addFoo → plus75o_0000ffS$foo75s50o
     iconRules.push({
@@ -401,59 +444,22 @@ new icon prefixes as pure naming conventions:
       apply: (baseName) => `plus75o_0000ffS$${baseName}75s50o`,
     })
 
-    // RegExp prefix with capture: glow120Foo → spinning foo
+    // Function rule with side effects (like spin)
     iconRules.push({
       prefix: /^glow(\d+)/,
-      apply: (baseName, match) => `spin${match[1]}${baseName}50o`,
-    })
-
-The built-in rules (`un`, `check`, `cancel`, `search`) are all string
-rewrites. For example, `unFoo` rewrites to `slash25o$foo75s75o`.
-
-### Stacking icons
-
-Use `$` to stack one icon on top of another: `overlay$base`. Combine
-with opacity suffixes and transforms for layered compositions:
-
-    icons['tosi$map50o']()          // tosi logo on a 50% opacity map
-    icons['star45r$circle']()        // rotated star on a circle
-    icons['lock50s75o_10y$shield']() // small translucent lock on a shield
-
-Each side of the `$` is resolved independently, so redirects, transforms,
-and modifiers all work on either side.
-
-### Style suffixes
-
-Append two-digit codes to any icon name to apply transforms and opacity.
-Each suffix is a number followed by a letter:
-
-- `NNo` — opacity N% (e.g. `lock50o` = 50% opacity)
-- `NNs` — scale N% (e.g. `star75s` = 75% scale)
-- `NNx` — translateX N% (e.g. `plus20x` = shift right 20%)
-- `NNy` — translateY N% (e.g. `plus_20y` = shift up 20%)
-- `NNr` — rotate N° (e.g. `chevronRight90r` = chevron pointing down)
-- `_NNr` — rotate -N° (e.g. `arrow_45r`)
-- `0f` — flip horizontally (e.g. `sidebar0f`)
-- `1f` — flip vertically
-- `_<hex>F` — fill color (e.g. `star_ff0000F` = red fill, `star_f00F` = shorthand)
-- `_<hex>S` — stroke color (e.g. `lock_00fS` = blue stroke)
-- `NW` — stroke width (e.g. `lock4W` = stroke-width 4)
-
-Suffixes can be combined: `plus50o60s25x25y_f00F` = plus at 50% opacity,
-60% scale, shifted 25% right and down, filled red.
-
-This is especially powerful with stacking:
-
-    defineIcons({
-      userAdd: 'plus50o60s25x25y$user',
+      apply: (baseName, match, parts) => {
+        const icon = resolveIcon(baseName, parts)
+        icon.style.filter = `brightness(${match[1]}%)`
+        return icon
+      },
     })
 
 ### Composites and `svg2DataUrl`
 
-Composed icons (modifiers) are wrapped in a `<span>` container, not a
-single SVG. `svg2DataUrl()` will render only the base icon and log a
-console error. Transforms (rotation/flip suffixes) and plain icons work
-normally with `svg2DataUrl`.
+Composed icons (stacked, overlay rules) are wrapped in a `<span>`, not
+a single SVG. `svg2DataUrl()` will render only the base icon and log a
+console error. Simple suffix transforms and plain icons work normally
+with `svg2DataUrl`.
 
 
 ## Missing Icons
@@ -577,8 +583,7 @@ export const iconRules = [
                 spinKeyframesInjected.done = true;
             }
             const icon = resolveIcon(baseName, []);
-            icon.style.animation =
-                `tosi-spin ${duration}s linear infinite ${direction}`;
+            icon.style.animation = `tosi-spin ${duration}s linear infinite ${direction}`;
             return wrapIcon(baseName, parts, icon);
         },
     },
@@ -808,6 +813,7 @@ export class SvgIcon extends WebComponent {
             '--tosi-icon-stroke-linecap': 'var(--icon-stroke-linecap, round)',
             '--tosi-icon-fill': 'var(--xin-icon-fill, var(--icon-fill, none))',
             display: 'inline-flex',
+            verticalAlign: 'text-bottom',
             stroke: 'currentColor',
             strokeWidth: varDefault.tosiIconStrokeWidth('2px'),
             strokeLinejoin: varDefault.tosiIconStrokeLinejoin('round'),
