@@ -37638,23 +37638,31 @@ to another icon name (which can include composition prefixes):
 
 ### Custom rules
 
-\`iconRules\` is a mutable array of modifier rules. Add your own prefixes,
-modify existing ones, or replace them entirely:
+\`iconRules\` is a mutable array of modifier rules. Each rule has a \`prefix\`
+(string or RegExp) and an \`apply\` function that receives the base icon name
+and returns either:
 
-    // Add a new prefix
+- A **string** — resolved through the full icon pipeline (redirects, stacking, suffixes)
+- An **Element** — used directly as the icon
+- **null** — rule doesn't apply, try the next one
+
+String returns are the simplest and most powerful — they let you define
+new icon prefixes as pure naming conventions:
+
+    // String rewrite: addFoo → plus75o_0000ffS$foo75s50o
     iconRules.push({
       prefix: 'add',
-      overlay: 'plus',
-      overlayStyle: { color: 'blue', opacity: '0.75' },
-      baseStyle: { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' },
+      apply: (baseName) => \`plus75o_0000ffS$\${baseName}75s50o\`,
     })
 
-    // Override the built-in 'un' rule
-    iconRules[0] = { ...iconRules[0], overlayStyle: { color: 'orange', opacity: '0.9' } }
+    // RegExp prefix with capture: glow120Foo → spinning foo
+    iconRules.push({
+      prefix: /^glow(\\d+)/,
+      apply: (baseName, match) => \`spin\${match[1]}\${baseName}50o\`,
+    })
 
-    // Replace all rules
-    iconRules.length = 0
-    iconRules.push(...myCustomRules)
+The built-in rules (\`un\`, \`check\`, \`cancel\`, \`search\`) are all string
+rewrites. For example, \`unFoo\` rewrites to \`slash25o$foo75s75o\`.
 
 ### Stacking icons
 
