@@ -96,6 +96,7 @@ export declare class TosiForm extends XinComponent {
     }, isValid: boolean) => void;
     connectedCallback(): void;
     private handleElementChange;
+    private syncFieldValues;
     private initializeNamedElements;
 }
 /** @deprecated Use TosiField instead */

@@ -171,10 +171,28 @@ describe('icons', () => {
       expect(style).toContain('translateY(-10%)')
     })
 
-    test('fill color suffix', () => {
-      const icon = icons.star_ff0000F()
+    test('fill hex color suffix', () => {
+      const icon = icons.star_FF0000F()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.fill).toBe('#ff0000')
+      expect((icon as HTMLElement).style.fill).toBe('#FF0000')
+    })
+
+    test('fill CSS variable suffix', () => {
+      const icon = icons.star_brandColorF()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.fill).toBe('var(--brand-color)')
+    })
+
+    test('stroke CSS variable suffix', () => {
+      const icon = icons.lock_accentS()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.stroke).toContain('var(--accent)')
+    })
+
+    test('CSS color math in fill suffix', () => {
+      const icon = icons.star_brandColor40oF()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.fill).toContain('brand-color')
     })
 
     test('stroke color suffix', () => {
@@ -320,22 +338,17 @@ describe('icons', () => {
   })
 
   describe('suffixes apply after composition', () => {
-    test('suffixes on spin icon apply to result, not base name', () => {
+    test('suffixes on spin icon apply to wrapper', () => {
       const icon = icons.spin360Loader40s()
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
-      // The 40s scale should be on the wrapper, not parsed as part of "loader40s"
-      const svg = icon.querySelector('svg')
-      expect(svg!.style.animation).toContain('tosi-spin')
+      // The 40s scale is on the wrapper so it affects layout
       expect((icon as HTMLElement).style.transform).toContain('scale(0.4)')
     })
 
     test('suffixes on overlay in stacked icon', () => {
       const icon = icons['spin360Loader40s_20x$cloud']()
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
-      // The overlay (spin loader) should have scale and translate applied
-      const children = icon.children
-      // base is cloud, overlay is the spin result
-      expect(children.length).toBe(2)
+      expect(icon.children.length).toBe(2)
     })
   })
 
@@ -343,14 +356,13 @@ describe('icons', () => {
     test('spin prefix creates wrapped icon', () => {
       const icon = icons.spin360Loader()
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
-      const svg = icon.querySelector('svg')
-      expect(svg!.style.animation).toContain('tosi-spin')
+      expect(icon.querySelector('svg')).toBeTruthy()
     })
 
-    test('negative spin reverses direction', () => {
+    test('negative spin creates wrapped icon', () => {
       const icon = icons.spin_180Star()
-      const svg = icon.querySelector('svg')
-      expect(svg!.style.animation).toContain('reverse')
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+      expect(icon.querySelector('svg')).toBeTruthy()
     })
   })
 

@@ -37,8 +37,6 @@ export declare class TosiNotification extends Component {
             maxHeight: string;
             overflow: string;
             boxShadow: string;
-        };
-        ':host *': {
             color: string;
         };
         ':host .note': {
@@ -56,9 +54,6 @@ export declare class TosiNotification extends Component {
             transition: string;
             transitionProperty: string;
             zIndex: number;
-        };
-        ':host .note .icon': {
-            stroke: string;
         };
         ':host .note button': {
             display: string;
@@ -87,6 +82,7 @@ export declare class TosiNotification extends Component {
             height: string;
             width: string;
             pointerEvents: string;
+            color: string;
         };
         ':host .message': {
             display: string;

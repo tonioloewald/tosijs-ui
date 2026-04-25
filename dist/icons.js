@@ -347,9 +347,9 @@ that, for example, treat all colored icons inside buttons the same way.
 
 ## Icon Composition & Math
 
-<tosi-icon icon="tosi$map50o" size=128></tosi-icon>
-<tosi-icon icon="lock50s75o_10y$shield" size=128></tosi-icon>
-<tosi-icon icon="unLock" size=128></tosi-icon>
+<tosi-icon icon="tosi$map50o_brandColorS" size=128></tosi-icon>
+<tosi-icon icon="lock50s75o_10y$shield_brandColorS" size=128></tosi-icon>
+<tosi-icon icon="unLock_brandColorS" size=128></tosi-icon>
 <tosi-icon icon="checkFile" size=128></tosi-icon>
 <tosi-icon icon="spin120Loader40s_30x$cloud" size=128></tosi-icon>
 
@@ -357,7 +357,7 @@ that, for example, treat all colored icons inside buttons the same way.
 
 I needed a pin icon for column pinning in the data table. The only pin
 in the feather set is a map pin, so I created a push-pin icon
-<tosi-icon icon="pin" size=24 style="stroke: var(--brand-color)"></tosi-icon>.
+<tosi-icon icon="pin_brandColorS" size=24></tosi-icon>.
 But immediately I also needed unpin, pin-left, and pin-right — a lot
 of new icons for one feature. Of course I could flip the pin with CSS, but
 this is a problem *everywhere, all the time*: every directional icon
@@ -367,9 +367,9 @@ an overlay.
 Why not fix it once and also eliminate the need to maintain trivial
 variations on every icon?
 
-<tosi-icon icon="pin" size=64></tosi-icon>
-<tosi-icon icon="pin0f" size=64></tosi-icon>
-<tosi-icon icon="unPin" size=64></tosi-icon>
+<tosi-icon icon="pin_brandColorS" size=64></tosi-icon>
+<tosi-icon icon="pin0f_brandColorS" size=64></tosi-icon>
+<tosi-icon icon="unPin_brandColorS" size=64></tosi-icon>
 
 ### Icon modifier suffixes
 
@@ -386,8 +386,11 @@ convention works for icons:
 - `1f` — flip vertically
 - `NNx` — translateX N% (e.g. `plus20x` = shift right 20%)
 - `NNy` — translateY N% (e.g. `plus_20y` = shift up 20%)
-- `_<hex>F` — fill color (e.g. `star_ff0000F` = red fill, `star_f00F` = shorthand)
-- `_<hex>S` — stroke color (e.g. `lock_00fS` = blue stroke)
+- `_<HEX>F` — fill color (e.g. `star_FF0000F` = red fill; use uppercase hex)
+- `_<HEX>S` — stroke color (e.g. `lock_00FS` = blue stroke)
+- `_<camelCase>F` — fill CSS variable (e.g. `star_brandColorF` = `var(--brand-color)`)
+- `_<camelCase>S` — stroke CSS variable (e.g. `lock_accentS` = `var(--accent)`)
+- CSS color math works too: `star_brandColor40oF` = brand color at 40% opacity
 - `NW` — stroke width (e.g. `lock4W` = stroke-width 4)
 
 Suffixes combine freely: `plus50o60s25x25y_f00F` = plus at 50% opacity,
@@ -570,7 +573,6 @@ export const svg2DataUrl = (icon, fill, stroke, strokeWidth) => {
     const text = encodeURIComponent(svg.outerHTML);
     return `url(data:image/svg+xml;charset=UTF-8,${text})`;
 };
-const spinKeyframesInjected = { done: false };
 export const iconRules = [
     {
         prefix: /^spin(_?\d+)/,
@@ -578,16 +580,23 @@ export const iconRules = [
             const dps = match[1].replace('_', '-');
             const duration = 360 / Math.abs(parseFloat(dps));
             const direction = dps.startsWith('-') ? 'reverse' : 'normal';
-            if (!spinKeyframesInjected.done) {
-                const style = document.createElement('style');
-                style.textContent =
-                    '@keyframes tosi-spin { to { transform: rotate(360deg) } }';
-                document.head.appendChild(style);
-                spinKeyframesInjected.done = true;
+            // Strip suffixes — apply them to the wrapper, not the inner icon
+            const parsed = parseStyleSuffixes(baseName);
+            const iconName = parsed ? parsed.baseName : baseName;
+            const icon = resolveIcon(iconName, []);
+            const el = icon;
+            if (el.animate) {
+                el.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], {
+                    duration: duration * 1000,
+                    iterations: Infinity,
+                    direction,
+                });
             }
-            const icon = resolveIcon(baseName, []);
-            icon.style.animation = `tosi-spin ${duration}s linear infinite ${direction}`;
-            return wrapIcon(baseName, parts, icon);
+            const wrapper = wrapIcon(baseName, parts, icon);
+            if (parsed) {
+                Object.assign(wrapper.style, parsed.style);
+            }
+            return wrapper;
         },
     },
     {
@@ -657,6 +666,13 @@ function wrapIcon(prop, parts, ...children) {
     }
     return wrapper;
 }
+function canResolve(name) {
+    const data = iconData;
+    if (data[name])
+        return true;
+    const parsed = parseStyleSuffixes(name);
+    return parsed != null && !!data[parsed.baseName];
+}
 function composeIcon(prop, parts) {
     for (const rule of iconRules) {
         let baseName;
@@ -678,6 +694,9 @@ function composeIcon(prop, parts) {
                     prop.slice(rule.prefix.length + 1);
             match = rule.prefix;
         }
+        // Only apply if baseName can actually resolve to an icon
+        if (!canResolve(baseName))
+            continue;
         const result = rule.apply(baseName, match, parts);
         if (typeof result === 'string')
             return resolveIcon(result, parts);
@@ -690,8 +709,9 @@ const MAX_REDIRECTS = 10;
 // Style suffixes — always value then letter code:
 //   50o (opacity), 75s (scale), 20x (translateX%), _10y (translateY%)
 //   90r (rotate 90°), _45r (rotate -45°), 0f (flipH), 1f (flipV)
-//   _ff0000F (fill), _f00S (stroke), 3W (stroke-width)
-const SUFFIX_RE = /(_?\d{2,3}[osxyr]|[01]f|_[0-9a-fA-F]{3,8}[FS]|\d{1,3}W)+$/;
+//   _FF0000F (fill hex), _f00S (stroke hex), 3W (stroke-width)
+//   _brandColorF (fill var), _accentS (stroke var)
+const SUFFIX_RE = /(_?\d{2,3}[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d{1,3}W)+$/;
 function parseStyleSuffixes(name) {
     const match = name.match(SUFFIX_RE);
     if (!match)
@@ -699,8 +719,13 @@ function parseStyleSuffixes(name) {
     const baseName = name.slice(0, match.index);
     if (!baseName)
         return null;
+    // Verify baseName resolves — prevents icon names ending in digits
+    // from having their trailing digits consumed as suffix values
+    const data = iconData;
+    if (!data[baseName])
+        return null;
     const style = {};
-    const suffixes = match[0].match(/_?\d{2,3}[osxyr]|[01]f|_[0-9a-fA-F]{3,8}[FS]|\d{1,3}W/g);
+    const suffixes = match[0].match(/_?\d{2,3}[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d{1,3}W/g);
     let tx = '';
     let ty = '';
     let scale = '';
@@ -708,11 +733,16 @@ function parseStyleSuffixes(name) {
     let flip = '';
     for (const s of suffixes) {
         const code = s[s.length - 1];
-        if (code === 'F') {
-            style.fill = '#' + s.slice(1, -1);
-        }
-        else if (code === 'S') {
-            style.stroke = '#' + s.slice(1, -1);
+        if (code === 'F' || code === 'S') {
+            const raw = s.slice(1, -1);
+            const isHex = /^[0-9a-fA-F]{3,8}$/.test(raw);
+            const value = isHex ? '#' + raw : vars[raw];
+            if (code === 'F') {
+                style.fill = value;
+            }
+            else {
+                style.stroke = value;
+            }
         }
         else if (code === 'W') {
             style.strokeWidth = s.slice(0, -1);
@@ -788,17 +818,17 @@ function resolveIcon(prop, parts) {
         });
         return wrapIcon(prop, parts, base, ...overlays);
     }
-    // Style suffixes first — strip them, resolve the base, apply after
+    // Try composition (spin, un, check, etc.)
+    const composed = composeIcon(prop, parts);
+    if (composed)
+        return composed;
+    // Style suffixes — strip them, resolve the base, apply after
     const parsed = parseStyleSuffixes(prop);
     if (parsed) {
         const icon = resolveIcon(parsed.baseName, parts);
         Object.assign(icon.style, parsed.style);
         return icon;
     }
-    // Try composition (spin, un, check, etc.)
-    const composed = composeIcon(prop, parts);
-    if (composed)
-        return composed;
     if (prop) {
         console.warn(`icon ${prop} does not exist`);
     }

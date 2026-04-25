@@ -60,7 +60,6 @@ form.submitCallback = (value, isValid) => {
   } else {
     close = postNotification(value)
   }
-  console.log(close)
   closeButton.disabled = false
 }
 
@@ -87,7 +86,7 @@ postNotification({
   </tosi-field>
   <tosi-field caption="Icon" key="icon" value="info">
     <tosi-select slot="input"
-      options="info,bug,thumbsUp,thumbsDown,message"
+      options="info,bug,thumbsUp,thumbsDown,message,spin120Loader"
     ></tosi-select>
   </tosi-field>
   <tosi-field caption="Duration" key="duration" type="number" value="2"></tosi-field>
@@ -181,8 +180,6 @@ export class TosiNotification extends Component {
             maxHeight: '50vh',
             overflow: 'hidden auto',
             boxShadow: 'none !important',
-        },
-        ':host *': {
             color: vars.notificationTextColor,
         },
         ':host .note': {
@@ -200,9 +197,6 @@ export class TosiNotification extends Component {
             transition: '0.5s ease-in',
             transitionProperty: 'margin, opacity',
             zIndex: 1,
-        },
-        ':host .note .icon': {
-            stroke: vars.notificationAccentColor,
         },
         ':host .note button': {
             display: 'flex',
@@ -231,6 +225,7 @@ export class TosiNotification extends Component {
             height: vars.notificationIconSize,
             width: vars.notificationIconSize,
             pointerEvents: 'none',
+            color: vars.notificationAccentColor,
         },
         ':host .message': {
             display: 'flex',
@@ -268,11 +263,7 @@ export class TosiNotification extends Component {
             }
             TosiNotification.removeNote(note);
         };
-        const iconElement = icon instanceof SVGElement
-            ? icon
-            : icon
-                ? icons[icon]({ class: 'icon' })
-                : icons.info({ class: 'icon' });
+        const iconElement = icon instanceof SVGElement ? icon : icon ? icons[icon]() : icons.info();
         // Use assertive for errors/warnings, polite for info/success
         const isUrgent = type === 'error' || type === 'warn';
         const note = div({

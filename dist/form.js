@@ -669,7 +669,8 @@ export class TosiForm extends XinComponent {
     handleSubmit = (event) => {
         event.preventDefault();
         event.stopPropagation();
-        // Access fields to ensure value is parsed from JSON string if needed
+        // Sync field values before submitting
+        this.syncFieldValues();
         const value = this.fields;
         this.submitCallback(value, this.isValid);
     };
@@ -696,6 +697,21 @@ export class TosiForm extends XinComponent {
             this.fields[name] = target.value;
         }
     };
+    syncFieldValues() {
+        const formValue = this.fields;
+        const namedElements = this.querySelectorAll('[name], [key]');
+        for (const el of namedElements) {
+            const key = el.getAttribute('name') || el.getAttribute('key');
+            if (!key)
+                continue;
+            if (formValue[key] === undefined) {
+                const val = el.value ?? el.getAttribute('value');
+                if (val != null) {
+                    formValue[key] = val;
+                }
+            }
+        }
+    }
     initializeNamedElements() {
         const formValue = this.fields;
         // Handle both 'name' (formAssociated) and 'key' (tosi-field) attributes
@@ -705,13 +721,8 @@ export class TosiForm extends XinComponent {
             if (!key)
                 continue;
             if (formValue[key] !== undefined) {
-                // Push form value to field
                 ;
                 el.value = formValue[key];
-            }
-            else if ('value' in el) {
-                // Pull field default into form value
-                formValue[key] = el.value;
             }
         }
     }

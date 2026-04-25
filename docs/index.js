@@ -23724,7 +23724,7 @@ var icon_data_default = {
   rss: '<svg class="stroked" viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>',
   wifi: '<svg class="stroked" viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>',
   watch: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"></circle><polyline points="12 9 12 12 13.5 13.5"></polyline><path d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7l.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"></path></svg>',
-  info: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>',
+  info: '<svg class="stroked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="7.75"></line></svg>',
   userX: '<svg class="stroked" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="18" y1="8" x2="23" y2="13"></line><line x1="23" y1="8" x2="18" y2="13"></line></svg>',
   loader: '<svg class="stroked" viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>',
   folderPlus: '<svg class="stroked" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>',
@@ -23936,7 +23936,6 @@ var svg2DataUrl = (icon, fill, stroke, strokeWidth) => {
   const text = encodeURIComponent(svg.outerHTML);
   return `url(data:image/svg+xml;charset=UTF-8,${text})`;
 };
-var spinKeyframesInjected = { done: false };
 var iconRules = [
   {
     prefix: /^spin(_?\d+)/,
@@ -23944,15 +23943,22 @@ var iconRules = [
       const dps = match[1].replace("_", "-");
       const duration = 360 / Math.abs(parseFloat(dps));
       const direction = dps.startsWith("-") ? "reverse" : "normal";
-      if (!spinKeyframesInjected.done) {
-        const style = document.createElement("style");
-        style.textContent = "@keyframes tosi-spin { to { transform: rotate(360deg) } }";
-        document.head.appendChild(style);
-        spinKeyframesInjected.done = true;
+      const parsed = parseStyleSuffixes(baseName);
+      const iconName = parsed ? parsed.baseName : baseName;
+      const icon = resolveIcon(iconName, []);
+      const el = icon;
+      if (el.animate) {
+        el.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }], {
+          duration: duration * 1000,
+          iterations: Infinity,
+          direction
+        });
       }
-      const icon = resolveIcon(baseName, []);
-      icon.style.animation = `tosi-spin ${duration}s linear infinite ${direction}`;
-      return wrapIcon(baseName, parts, icon);
+      const wrapper = wrapIcon(baseName, parts, icon);
+      if (parsed) {
+        Object.assign(wrapper.style, parsed.style);
+      }
+      return wrapper;
     }
   },
   {
@@ -24019,6 +24025,13 @@ function wrapIcon(prop, parts, ...children) {
   }
   return wrapper;
 }
+function canResolve(name) {
+  const data = icon_data_default;
+  if (data[name])
+    return true;
+  const parsed = parseStyleSuffixes(name);
+  return parsed != null && !!data[parsed.baseName];
+}
 function composeIcon(prop, parts) {
   for (const rule of iconRules) {
     let baseName;
@@ -24037,6 +24050,8 @@ function composeIcon(prop, parts) {
       baseName = prop[rule.prefix.length].toLowerCase() + prop.slice(rule.prefix.length + 1);
       match = rule.prefix;
     }
+    if (!canResolve(baseName))
+      continue;
     const result = rule.apply(baseName, match, parts);
     if (typeof result === "string")
       return resolveIcon(result, parts);
@@ -24046,7 +24061,7 @@ function composeIcon(prop, parts) {
   return null;
 }
 var MAX_REDIRECTS = 10;
-var SUFFIX_RE = /(_?\d{2,3}[osxyr]|[01]f|_[0-9a-fA-F]{3,8}[FS]|\d{1,3}W)+$/;
+var SUFFIX_RE = /(_?\d{2,3}[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d{1,3}W)+$/;
 function parseStyleSuffixes(name) {
   const match = name.match(SUFFIX_RE);
   if (!match)
@@ -24054,8 +24069,11 @@ function parseStyleSuffixes(name) {
   const baseName = name.slice(0, match.index);
   if (!baseName)
     return null;
+  const data = icon_data_default;
+  if (!data[baseName])
+    return null;
   const style = {};
-  const suffixes = match[0].match(/_?\d{2,3}[osxyr]|[01]f|_[0-9a-fA-F]{3,8}[FS]|\d{1,3}W/g);
+  const suffixes = match[0].match(/_?\d{2,3}[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d{1,3}W/g);
   let tx = "";
   let ty = "";
   let scale = "";
@@ -24063,10 +24081,15 @@ function parseStyleSuffixes(name) {
   let flip = "";
   for (const s2 of suffixes) {
     const code = s2[s2.length - 1];
-    if (code === "F") {
-      style.fill = "#" + s2.slice(1, -1);
-    } else if (code === "S") {
-      style.stroke = "#" + s2.slice(1, -1);
+    if (code === "F" || code === "S") {
+      const raw = s2.slice(1, -1);
+      const isHex = /^[0-9a-fA-F]{3,8}$/.test(raw);
+      const value = isHex ? "#" + raw : fM[raw];
+      if (code === "F") {
+        style.fill = value;
+      } else {
+        style.stroke = value;
+      }
     } else if (code === "W") {
       style.strokeWidth = s2.slice(0, -1);
     } else {
@@ -24137,15 +24160,15 @@ function resolveIcon(prop, parts) {
     });
     return wrapIcon(prop, parts, base, ...overlays);
   }
+  const composed = composeIcon(prop, parts);
+  if (composed)
+    return composed;
   const parsed = parseStyleSuffixes(prop);
   if (parsed) {
     const icon = resolveIcon(parsed.baseName, parts);
     Object.assign(icon.style, parsed.style);
     return icon;
   }
-  const composed = composeIcon(prop, parts);
-  if (composed)
-    return composed;
   if (prop) {
     console.warn(`icon ${prop} does not exist`);
   }
@@ -31982,6 +32005,7 @@ class TosiForm extends g {
   handleSubmit = (event) => {
     event.preventDefault();
     event.stopPropagation();
+    this.syncFieldValues();
     const value = this.fields;
     this.submitCallback(value, this.isValid);
   };
@@ -32005,6 +32029,21 @@ class TosiForm extends g {
       this.fields[name] = target.value;
     }
   };
+  syncFieldValues() {
+    const formValue = this.fields;
+    const namedElements = this.querySelectorAll("[name], [key]");
+    for (const el of namedElements) {
+      const key = el.getAttribute("name") || el.getAttribute("key");
+      if (!key)
+        continue;
+      if (formValue[key] === undefined) {
+        const val = el.value ?? el.getAttribute("value");
+        if (val != null) {
+          formValue[key] = val;
+        }
+      }
+    }
+  }
   initializeNamedElements() {
     const formValue = this.fields;
     const namedElements = this.querySelectorAll("[name], [key]");
@@ -32014,8 +32053,6 @@ class TosiForm extends g {
         continue;
       if (formValue[key] !== undefined) {
         el.value = formValue[key];
-      } else if ("value" in el) {
-        formValue[key] = el.value;
       }
     }
   }
@@ -33068,9 +33105,7 @@ class TosiNotification extends g {
       gap: fM.notificationSpacing,
       maxHeight: "50vh",
       overflow: "hidden auto",
-      boxShadow: "none !important"
-    },
-    ":host *": {
+      boxShadow: "none !important",
       color: fM.notificationTextColor
     },
     ":host .note": {
@@ -33088,9 +33123,6 @@ class TosiNotification extends g {
       transition: "0.5s ease-in",
       transitionProperty: "margin, opacity",
       zIndex: 1
-    },
-    ":host .note .icon": {
-      stroke: fM.notificationAccentColor
     },
     ":host .note button": {
       display: "flex",
@@ -33118,7 +33150,8 @@ class TosiNotification extends g {
     ":host .note svg": {
       height: fM.notificationIconSize,
       width: fM.notificationIconSize,
-      pointerEvents: "none"
+      pointerEvents: "none",
+      color: fM.notificationAccentColor
     },
     ":host .message": {
       display: "flex",
@@ -33156,7 +33189,7 @@ class TosiNotification extends g {
       }
       TosiNotification.removeNote(note);
     };
-    const iconElement = icon instanceof SVGElement ? icon : icon ? icons[icon]({ class: "icon" }) : icons.info({ class: "icon" });
+    const iconElement = icon instanceof SVGElement ? icon : icon ? icons[icon]() : icons.info();
     const isUrgent = type === "error" || type === "warn";
     const note = div14({
       class: `note ${type}`,
@@ -37609,9 +37642,9 @@ that, for example, treat all colored icons inside buttons the same way.
 
 ## Icon Composition & Math
 
-<tosi-icon icon="tosi$map50o" size=128></tosi-icon>
-<tosi-icon icon="lock50s75o_10y$shield" size=128></tosi-icon>
-<tosi-icon icon="unLock" size=128></tosi-icon>
+<tosi-icon icon="tosi$map50o_brandColorS" size=128></tosi-icon>
+<tosi-icon icon="lock50s75o_10y$shield_brandColorS" size=128></tosi-icon>
+<tosi-icon icon="unLock_brandColorS" size=128></tosi-icon>
 <tosi-icon icon="checkFile" size=128></tosi-icon>
 <tosi-icon icon="spin120Loader40s_30x$cloud" size=128></tosi-icon>
 
@@ -37619,7 +37652,7 @@ that, for example, treat all colored icons inside buttons the same way.
 
 I needed a pin icon for column pinning in the data table. The only pin
 in the feather set is a map pin, so I created a push-pin icon
-<tosi-icon icon="pin" size=24 style="stroke: var(--brand-color)"></tosi-icon>.
+<tosi-icon icon="pin_brandColorS" size=24></tosi-icon>.
 But immediately I also needed unpin, pin-left, and pin-right — a lot
 of new icons for one feature. Of course I could flip the pin with CSS, but
 this is a problem *everywhere, all the time*: every directional icon
@@ -37629,9 +37662,9 @@ an overlay.
 Why not fix it once and also eliminate the need to maintain trivial
 variations on every icon?
 
-<tosi-icon icon="pin" size=64></tosi-icon>
-<tosi-icon icon="pin0f" size=64></tosi-icon>
-<tosi-icon icon="unPin" size=64></tosi-icon>
+<tosi-icon icon="pin_brandColorS" size=64></tosi-icon>
+<tosi-icon icon="pin0f_brandColorS" size=64></tosi-icon>
+<tosi-icon icon="unPin_brandColorS" size=64></tosi-icon>
 
 ### Icon modifier suffixes
 
@@ -37648,8 +37681,11 @@ convention works for icons:
 - \`1f\` — flip vertically
 - \`NNx\` — translateX N% (e.g. \`plus20x\` = shift right 20%)
 - \`NNy\` — translateY N% (e.g. \`plus_20y\` = shift up 20%)
-- \`_<hex>F\` — fill color (e.g. \`star_ff0000F\` = red fill, \`star_f00F\` = shorthand)
-- \`_<hex>S\` — stroke color (e.g. \`lock_00fS\` = blue stroke)
+- \`_<HEX>F\` — fill color (e.g. \`star_FF0000F\` = red fill; use uppercase hex)
+- \`_<HEX>S\` — stroke color (e.g. \`lock_00FS\` = blue stroke)
+- \`_<camelCase>F\` — fill CSS variable (e.g. \`star_brandColorF\` = \`var(--brand-color)\`)
+- \`_<camelCase>S\` — stroke CSS variable (e.g. \`lock_accentS\` = \`var(--accent)\`)
+- CSS color math works too: \`star_brandColor40oF\` = brand color at 40% opacity
 - \`NW\` — stroke width (e.g. \`lock4W\` = stroke-width 4)
 
 Suffixes combine freely: \`plus50o60s25x25y_f00F\` = plus at 50% opacity,
@@ -39578,7 +39614,6 @@ form.submitCallback = (value, isValid) => {
   } else {
     close = postNotification(value)
   }
-  console.log(close)
   closeButton.disabled = false
 }
 
@@ -39605,7 +39640,7 @@ postNotification({
   </tosi-field>
   <tosi-field caption="Icon" key="icon" value="info">
     <tosi-select slot="input"
-      options="info,bug,thumbsUp,thumbsDown,message"
+      options="info,bug,thumbsUp,thumbsDown,message,spin120Loader"
     ></tosi-select>
   </tosi-field>
   <tosi-field caption="Duration" key="duration" type="number" value="2"></tosi-field>
