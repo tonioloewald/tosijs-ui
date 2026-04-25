@@ -395,12 +395,15 @@ Suffixes combine freely: `plus50o60s25x25y_f00F` = plus at 50% opacity,
 
 ### Stacking icons
 
-Use `$` to stack one icon on top of another: `overlay$base`. Each side
-is resolved independently — suffixes, redirects, and rules all work:
+Use `$` to stack icons: `overlay$base`, or `top$middle$bottom` for
+multiple layers. The last segment is the base (sets the size), everything
+before it is overlaid on top. Each segment is resolved independently —
+suffixes, redirects, and rules all work:
 
-    icons['tosi$map50o']()          // tosi logo on a 50% opacity map
-    icons['star45r$circle']()        // rotated star on a circle
-    icons['lock50s75o_10y$shield']() // small translucent lock on a shield
+    icons['tosi$map50o']()                // tosi logo on a 50% opacity map
+    icons['star45r$circle']()              // rotated star on a circle
+    icons['lock50s75o_10y$shield']()       // translucent lock on a shield
+    icons['star25o$lock50o$shield']()      // three layers
 
 ### Icon redirects
 
@@ -768,18 +771,22 @@ function resolveIcon(prop, parts) {
             return icon;
         }
     }
-    // Stack: foo50o$bar → overlay foo at 50% opacity on bar
+    // Stack: foo$bar$baz → baz on bottom, bar on top, foo on top
     if (prop.includes('$')) {
-        const [overlayName, baseName] = prop.split('$', 2);
-        const baseIcon = resolveIcon(baseName, []);
-        const overlayIcon = resolveIcon(overlayName, []);
-        Object.assign(overlayIcon.style, {
-            position: 'absolute',
-            inset: '0',
-            width: '100%',
-            height: '100%',
+        const segments = prop.split('$');
+        // Last segment is the base (sets the size), rest are overlays
+        const base = resolveIcon(segments[segments.length - 1], []);
+        const overlays = segments.slice(0, -1).map((name) => {
+            const icon = resolveIcon(name, []);
+            Object.assign(icon.style, {
+                position: 'absolute',
+                inset: '0',
+                width: '100%',
+                height: '100%',
+            });
+            return icon;
         });
-        return wrapIcon(prop, parts, baseIcon, overlayIcon);
+        return wrapIcon(prop, parts, base, ...overlays);
     }
     // Style suffixes first — strip them, resolve the base, apply after
     const parsed = parseStyleSuffixes(prop);

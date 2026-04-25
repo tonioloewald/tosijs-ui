@@ -262,6 +262,14 @@ describe('icons', () => {
       expect(svgs[1].style.opacity).toBe('0.5')
     })
 
+    test('triple stacking', () => {
+      const icon = icons['star25o$lock50o$shield']()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+      // All three icons are flat siblings, not nested composites
+      const svgs = icon.querySelectorAll('svg')
+      expect(svgs.length).toBe(3)
+    })
+
     test('stacking with multiple suffixes', () => {
       const icon = icons['lock50s75o$shield']()
       expect(icon).toBeDefined()
