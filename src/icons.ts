@@ -582,32 +582,7 @@ export interface IconRule {
     baseName: string,
     match: RegExpMatchArray | string,
     parts: ElementPart[]
-  ) => Element | null
-}
-
-// Helper for overlay-style rules
-function overlayRule(
-  prefix: string,
-  overlay: string,
-  overlayStyle: Partial<CSSStyleDeclaration>,
-  baseStyle: Partial<CSSStyleDeclaration>
-): IconRule {
-  return {
-    prefix,
-    apply(baseName, _match, parts) {
-      const base = resolveIcon(baseName, [])
-      const over = resolveIcon(overlay, [])
-      Object.assign((base as HTMLElement).style, baseStyle)
-      Object.assign((over as HTMLElement).style, {
-        position: 'absolute',
-        inset: '0',
-        width: '100%',
-        height: '100%',
-        ...overlayStyle,
-      })
-      return wrapIcon(baseName, parts, base, over)
-    },
-  }
+  ) => Element | string | null
 }
 
 const spinKeyframesInjected = { done: false }
@@ -632,34 +607,22 @@ export const iconRules: IconRule[] = [
       return wrapIcon(baseName, parts, icon)
     },
   },
-  overlayRule(
-    'un',
-    'slash',
-    { opacity: '0.25' },
-    {
-      opacity: '0.75',
-      transform: 'scale(0.75)',
-      transformOrigin: '50% 50%',
-    }
-  ),
-  overlayRule(
-    'check',
-    'check',
-    { color: 'green', opacity: '0.75' },
-    { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' }
-  ),
-  overlayRule(
-    'cancel',
-    'x',
-    { color: 'red', opacity: '0.75' },
-    { opacity: '0.5', transform: 'scale(0.75)', transformOrigin: '50% 50%' }
-  ),
-  overlayRule(
-    'search',
-    'search',
-    { transform: 'scale(0.8) translate(30%, 30%)', transformOrigin: '50% 50%' },
-    { opacity: '0.5' }
-  ),
+  {
+    prefix: 'un',
+    apply: (baseName) => `slash25o$${baseName}75s75o`,
+  },
+  {
+    prefix: 'check',
+    apply: (baseName) => `check75o_00aa00S$${baseName}75s50o`,
+  },
+  {
+    prefix: 'cancel',
+    apply: (baseName) => `x75o_cc0000S$${baseName}75s50o`,
+  },
+  {
+    prefix: 'search',
+    apply: (baseName) => `search80s30x30y$${baseName}50o`,
+  },
 ]
 
 function makeIcon(spec: string, parts: ElementPart[]): SVGElement {
@@ -745,6 +708,7 @@ function composeIcon(prop: string, parts: ElementPart[]): Element | null {
     }
 
     const result = rule.apply(baseName, match, parts)
+    if (typeof result === 'string') return resolveIcon(result, parts)
     if (result) return result
   }
 

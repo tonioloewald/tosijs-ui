@@ -23936,24 +23936,6 @@ var svg2DataUrl = (icon, fill, stroke, strokeWidth) => {
   const text = encodeURIComponent(svg.outerHTML);
   return `url(data:image/svg+xml;charset=UTF-8,${text})`;
 };
-function overlayRule(prefix, overlay, overlayStyle, baseStyle) {
-  return {
-    prefix,
-    apply(baseName, _match, parts) {
-      const base = resolveIcon(baseName, []);
-      const over = resolveIcon(overlay, []);
-      Object.assign(base.style, baseStyle);
-      Object.assign(over.style, {
-        position: "absolute",
-        inset: "0",
-        width: "100%",
-        height: "100%",
-        ...overlayStyle
-      });
-      return wrapIcon(baseName, parts, base, over);
-    }
-  };
-}
 var spinKeyframesInjected = { done: false };
 var iconRules = [
   {
@@ -23973,14 +23955,22 @@ var iconRules = [
       return wrapIcon(baseName, parts, icon);
     }
   },
-  overlayRule("un", "slash", { opacity: "0.25" }, {
-    opacity: "0.75",
-    transform: "scale(0.75)",
-    transformOrigin: "50% 50%"
-  }),
-  overlayRule("check", "check", { color: "green", opacity: "0.75" }, { opacity: "0.5", transform: "scale(0.75)", transformOrigin: "50% 50%" }),
-  overlayRule("cancel", "x", { color: "red", opacity: "0.75" }, { opacity: "0.5", transform: "scale(0.75)", transformOrigin: "50% 50%" }),
-  overlayRule("search", "search", { transform: "scale(0.8) translate(30%, 30%)", transformOrigin: "50% 50%" }, { opacity: "0.5" })
+  {
+    prefix: "un",
+    apply: (baseName) => `slash25o$${baseName}75s75o`
+  },
+  {
+    prefix: "check",
+    apply: (baseName) => `check75o_00aa00S$${baseName}75s50o`
+  },
+  {
+    prefix: "cancel",
+    apply: (baseName) => `x75o_cc0000S$${baseName}75s50o`
+  },
+  {
+    prefix: "search",
+    apply: (baseName) => `search80s30x30y$${baseName}50o`
+  }
 ];
 function makeIcon(spec, parts) {
   const div = I.div();
@@ -24048,6 +24038,8 @@ function composeIcon(prop, parts) {
       match = rule.prefix;
     }
     const result = rule.apply(baseName, match, parts);
+    if (typeof result === "string")
+      return resolveIcon(result, parts);
     if (result)
       return result;
   }

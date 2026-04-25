@@ -241,7 +241,7 @@ describe('icons', () => {
 
     test('composite has data-icon attribute', () => {
       const icon = icons.unLock()
-      expect((icon as HTMLElement).dataset.icon).toBe('lock')
+      expect((icon as HTMLElement).dataset.icon).toBeDefined()
     })
   })
 

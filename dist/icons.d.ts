@@ -6,7 +6,7 @@ export declare const defineIcons: (newIcons: {
 export declare const svg2DataUrl: (icon: Element, fill?: string, stroke?: string, strokeWidth?: number) => string;
 export interface IconRule {
     prefix: string | RegExp;
-    apply: (baseName: string, match: RegExpMatchArray | string, parts: ElementPart[]) => Element | null;
+    apply: (baseName: string, match: RegExpMatchArray | string, parts: ElementPart[]) => Element | string | null;
 }
 export declare const iconRules: IconRule[];
 export declare const icons: SVGIconMap;
