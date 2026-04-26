@@ -23356,7 +23356,6 @@ __export(exports_src, {
   tosiCarousel: () => tosiCarousel,
   testManager: () => testManager,
   tabSelector: () => tabSelector,
-  sx: () => sx,
   svgIcon: () => svgIcon,
   svg2DataUrl: () => svg2DataUrl,
   styleSheet: () => styleSheet,
@@ -23365,6 +23364,7 @@ __export(exports_src, {
   sideNav: () => sideNav,
   setLocale: () => setLocale,
   scriptTag: () => scriptTag,
+  safeIconSuffix: () => safeIconSuffix,
   runTests: () => runTests,
   router: () => router,
   richTextWidgets: () => richTextWidgets,
@@ -23937,7 +23937,7 @@ var svg2DataUrl = (icon, fill, stroke, strokeWidth) => {
   const text = encodeURIComponent(svg.outerHTML);
   return `url(data:image/svg+xml;charset=UTF-8,${text})`;
 };
-var sx = (name) => /\d$/.test(name) ? "_" : "";
+var safeIconSuffix = (name) => /\d$/.test(name) ? name + "_" : name;
 var iconRules = [
   {
     prefix: /^spin(_?\d+)/,
@@ -23965,19 +23965,19 @@ var iconRules = [
   },
   {
     prefix: "un",
-    apply: (baseName) => `slash25o$${baseName}${sx(baseName)}75s75o`
+    apply: (baseName) => `slash25o$${safeIconSuffix(baseName)}75s75o`
   },
   {
     prefix: "check",
-    apply: (baseName) => `check75o_00aa00S$${baseName}${sx(baseName)}75s50o`
+    apply: (baseName) => `check75o_00aa00S$${safeIconSuffix(baseName)}75s50o`
   },
   {
     prefix: "cancel",
-    apply: (baseName) => `x75o_cc0000S$${baseName}${sx(baseName)}75s50o`
+    apply: (baseName) => `x75o_cc0000S$${safeIconSuffix(baseName)}75s50o`
   },
   {
     prefix: "search",
-    apply: (baseName) => `search80s30x30y$${baseName}${sx(baseName)}50o`
+    apply: (baseName) => `search80s30x30y$${safeIconSuffix(baseName)}50o`
   }
 ];
 function makeIcon(spec, parts) {

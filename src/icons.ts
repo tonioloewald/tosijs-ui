@@ -605,8 +605,9 @@ export interface IconRule {
   ) => Element | string | null
 }
 
-/** Suffix separator — use in string rewrites: `${baseName}${sx(baseName)}75s` */
-export const sx = (name: string): string => (/\d$/.test(name) ? '_' : '')
+/** Returns icon name safe for suffix concatenation (appends _ if name ends in digit) */
+export const safeIconSuffix = (name: string): string =>
+  /\d$/.test(name) ? name + '_' : name
 
 export const iconRules: IconRule[] = [
   {
@@ -639,19 +640,19 @@ export const iconRules: IconRule[] = [
   },
   {
     prefix: 'un',
-    apply: (baseName) => `slash25o$${baseName}${sx(baseName)}75s75o`,
+    apply: (baseName) => `slash25o$${safeIconSuffix(baseName)}75s75o`,
   },
   {
     prefix: 'check',
-    apply: (baseName) => `check75o_00aa00S$${baseName}${sx(baseName)}75s50o`,
+    apply: (baseName) => `check75o_00aa00S$${safeIconSuffix(baseName)}75s50o`,
   },
   {
     prefix: 'cancel',
-    apply: (baseName) => `x75o_cc0000S$${baseName}${sx(baseName)}75s50o`,
+    apply: (baseName) => `x75o_cc0000S$${safeIconSuffix(baseName)}75s50o`,
   },
   {
     prefix: 'search',
-    apply: (baseName) => `search80s30x30y$${baseName}${sx(baseName)}50o`,
+    apply: (baseName) => `search80s30x30y$${safeIconSuffix(baseName)}50o`,
   },
 ]
 
