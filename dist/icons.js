@@ -573,8 +573,8 @@ export const svg2DataUrl = (icon, fill, stroke, strokeWidth) => {
     const text = encodeURIComponent(svg.outerHTML);
     return `url(data:image/svg+xml;charset=UTF-8,${text})`;
 };
-// Suffix separator — inserts _ after digit-ending names to prevent ambiguity
-const sx = (name) => (/\d$/.test(name) ? '_' : '');
+/** Suffix separator — use in string rewrites: `${baseName}${sx(baseName)}75s` */
+export const sx = (name) => (/\d$/.test(name) ? '_' : '');
 export const iconRules = [
     {
         prefix: /^spin(_?\d+)/,

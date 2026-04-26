@@ -8,6 +8,8 @@ export interface IconRule {
     prefix: string | RegExp;
     apply: (baseName: string, match: RegExpMatchArray | string, parts: ElementPart[]) => Element | string | null;
 }
+/** Suffix separator — use in string rewrites: `${baseName}${sx(baseName)}75s` */
+export declare const sx: (name: string) => string;
 export declare const iconRules: IconRule[];
 export declare const icons: SVGIconMap;
 export declare class SvgIcon extends WebComponent {

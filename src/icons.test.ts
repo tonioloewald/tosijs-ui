@@ -385,6 +385,52 @@ describe('icons', () => {
       expect((icon as HTMLElement).style.opacity).toBe('0.5')
     })
 
+    test('multiple suffixes on digit-ending icon', () => {
+      // Only first _ is separator, suffixes chain normally after
+      const icon = icons['edit2_50o75s']()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.opacity).toBe('0.5')
+      expect((icon as HTMLElement).style.transform).toContain('scale(0.75)')
+    })
+
+    test('rotation + opacity + fill on digit-ending icon', () => {
+      const icon = icons['trash2_90r50o_FF0000F']()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.opacity).toBe('0.5')
+      expect((icon as HTMLElement).style.transform).toContain('rotate(90deg)')
+      expect((icon as HTMLElement).style.fill).toBe('#FF0000')
+    })
+
+    test('prefix + multiple suffixes on digit-ending icon', () => {
+      const icon = icons['unEdit2_50o_brandColorS']()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+
+    test('prefix + flip + opacity', () => {
+      const icon = icons.cancelLock0f50o()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+
+    test('spin + scale + translate + stacking', () => {
+      const icon = icons['spin360Star75s_20x$circle50o']()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+      const svgs = icon.querySelectorAll('svg')
+      expect(svgs.length).toBe(2)
+    })
+
+    test('prefix + stacking + suffixes', () => {
+      const icon = icons['unLock50o$shield_brandColorS']()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+
+    test('redirected icon with multiple suffixes', () => {
+      // chevronDown redirects to chevronRight90r
+      const icon = icons.chevronDown50o_FF0000F()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.opacity).toBe('0.5')
+      expect((icon as HTMLElement).style.fill).toBe('#FF0000')
+    })
+
     test('redirected icon with negative suffix', () => {
       const icon = icons.arrowUpLeft_50o()
       expect(icon).toBeDefined()

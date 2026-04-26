@@ -23356,6 +23356,7 @@ __export(exports_src, {
   tosiCarousel: () => tosiCarousel,
   testManager: () => testManager,
   tabSelector: () => tabSelector,
+  sx: () => sx,
   svgIcon: () => svgIcon,
   svg2DataUrl: () => svg2DataUrl,
   styleSheet: () => styleSheet,

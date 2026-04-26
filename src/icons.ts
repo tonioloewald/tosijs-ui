@@ -605,8 +605,8 @@ export interface IconRule {
   ) => Element | string | null
 }
 
-// Suffix separator — inserts _ after digit-ending names to prevent ambiguity
-const sx = (name: string) => (/\d$/.test(name) ? '_' : '')
+/** Suffix separator — use in string rewrites: `${baseName}${sx(baseName)}75s` */
+export const sx = (name: string): string => (/\d$/.test(name) ? '_' : '')
 
 export const iconRules: IconRule[] = [
   {
