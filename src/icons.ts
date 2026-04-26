@@ -473,35 +473,6 @@ with `svg2DataUrl`.
 If you ask for an icon that isn't defined, the `icons` proxy will print a warning to console
 and render a `square` (in fact, `icons.square()`) as a fallback.
 
-## Why?
-
-My evolution has been:
-
-1. Using Icomoon.io, which I still think is a solid choice for managing custom icon fonts
-2. Processing Icomoon selection.json files into icon-data and then generating SVGs dynamically
-   from the data
-3. Ingesting SVGs directly, with a little cleanup
-
-The goal is always to have a single source of truth for icons, no magic or convoluted tooling, and
-be able to quickly and easily add and replace icons, distribute them with components, and
-have no mess or fuss.
-
-1. Works well, but…
-   - color icons are flaky,
-   - doesn't play well with others,
-   - can't really distribute the icons with your components.
-   - difficult to use icons in CSS `content`
-   - impossible to use icons in CSS backgrounds
-2. This is `icons.ts` until just now! Solves all the above, but…
-   - no fancy SVG effects, like gradients (goodness knows I experimented with converting CSS gradients to SVG gradients) and, most
-   - **strokes** need to be converted to outlines
-   - outlined strokes can't be styled the way strokes can
-   - blocks use of popular icon libraries
-3. This is how everyone else works, except…
-   - no build magic needed: `defineIcons({ myIcon: '<svg....>', ... })`
-   - if you want build magic, `icons.js` has no dependencies, finds icons and creates an `icon-data.ts` file.
-   - smaller icon files, even though I'm now including more icons (including *all the current* feathericons)
-
 ## Icon Sources
 
 Many of these icons are sourced from [Feather Icons](https://github.com/feathericons/feather), but
@@ -513,6 +484,12 @@ organizations themselves. It's up to you to use them correctly.
 The remaining icons I have created myself using the excellent but sometimes flawed
 [Amadine](https://apps.apple.com/us/app/amadine-vector-design-art/id1339198386?mt=12)
 and before that [Graphic](https://apps.apple.com/us/app/graphic/id404705039?mt=12).
+
+### Building icon data
+
+Use [make-icon-data](/?make-icon-data.js) to generate icon data from SVG files.
+It supports directional folder conventions to auto-generate rotated and flipped
+variants, eliminating redundant SVGs.
 
 ### Feather Icons Copyright Notice
 
@@ -764,7 +741,8 @@ const MAX_REDIRECTS = 10
 //   _FF0000F (fill hex), _f00S (stroke hex), 3W (stroke-width)
 //   _brandColorF (fill var), _accentS (stroke var)
 // Icon names ending in digits need _ separator: edit2_50o
-const SUFFIX_RE = /(?:(?<=[a-zA-Z_])(?:_?\d+[osxyr]|[01]f|\d+W)|_[a-zA-Z0-9]+[FS])+$/
+const SUFFIX_RE =
+  /(?:(?<=[a-zA-Z_])(?:_?\d+[osxyr]|[01]f|\d+W)|_[a-zA-Z0-9]+[FS])+$/
 
 function parseStyleSuffixes(name: string): {
   baseName: string
@@ -781,9 +759,7 @@ function parseStyleSuffixes(name: string): {
   if (!data[baseName]) return null
 
   const style: Partial<CSSStyleDeclaration> = {}
-  const suffixes = match[0].match(
-    /_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W/g
-  )!
+  const suffixes = match[0].match(/_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W/g)!
   if (!suffixes) return null
   let tx = ''
   let ty = ''

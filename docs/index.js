@@ -37785,35 +37785,6 @@ with \`svg2DataUrl\`.
 If you ask for an icon that isn't defined, the \`icons\` proxy will print a warning to console
 and render a \`square\` (in fact, \`icons.square()\`) as a fallback.
 
-## Why?
-
-My evolution has been:
-
-1. Using Icomoon.io, which I still think is a solid choice for managing custom icon fonts
-2. Processing Icomoon selection.json files into icon-data and then generating SVGs dynamically
-   from the data
-3. Ingesting SVGs directly, with a little cleanup
-
-The goal is always to have a single source of truth for icons, no magic or convoluted tooling, and
-be able to quickly and easily add and replace icons, distribute them with components, and
-have no mess or fuss.
-
-1. Works well, but…
-   - color icons are flaky,
-   - doesn't play well with others,
-   - can't really distribute the icons with your components.
-   - difficult to use icons in CSS \`content\`
-   - impossible to use icons in CSS backgrounds
-2. This is \`icons.ts\` until just now! Solves all the above, but…
-   - no fancy SVG effects, like gradients (goodness knows I experimented with converting CSS gradients to SVG gradients) and, most
-   - **strokes** need to be converted to outlines
-   - outlined strokes can't be styled the way strokes can
-   - blocks use of popular icon libraries
-3. This is how everyone else works, except…
-   - no build magic needed: \`defineIcons({ myIcon: '<svg....>', ... })\`
-   - if you want build magic, \`icons.js\` has no dependencies, finds icons and creates an \`icon-data.ts\` file.
-   - smaller icon files, even though I'm now including more icons (including *all the current* feathericons)
-
 ## Icon Sources
 
 Many of these icons are sourced from [Feather Icons](https://github.com/feathericons/feather), but
@@ -37825,6 +37796,12 @@ organizations themselves. It's up to you to use them correctly.
 The remaining icons I have created myself using the excellent but sometimes flawed
 [Amadine](https://apps.apple.com/us/app/amadine-vector-design-art/id1339198386?mt=12)
 and before that [Graphic](https://apps.apple.com/us/app/graphic/id404705039?mt=12).
+
+### Building icon data
+
+Use [make-icon-data](/?make-icon-data.js) to generate icon data from SVG files.
+It supports directional folder conventions to auto-generate rotated and flipped
+variants, eliminating redundant SVGs.
 
 ### Feather Icons Copyright Notice
 
@@ -42028,6 +42005,77 @@ This will pin the document to the top or bottom of the navigation list.`,
     title: "docs",
     filename: "docs.ts",
     path: "bin/docs.ts",
+    pin: "bottom"
+  },
+  {
+    text: `# make-icon-data
+
+<!--{ "pin": "bottom" }-->
+
+Ingests SVG files from icon directories and generates an icon-data module
+(TypeScript or JavaScript). This is the build tool behind the \`icons\` system.
+
+## Usage
+
+    bun run bin/make-icon-data.js [options]
+
+### Options
+
+- \`--input <dir1,dir2,...>\` — directories to scan (default: \`./icons\`)
+- \`--output <path>\` — output file (default: \`./src/icon-data.ts\`)
+- \`--optimize <true|false>\` — round coordinates based on viewBox size (default: true)
+
+### Examples
+
+    bun run bin/make-icon-data.js
+    bun run bin/make-icon-data.js --input ./my-icons --output ./dist/icons.js
+    bun run bin/make-icon-data.js --optimize false
+
+## Directory conventions
+
+### Style classes
+
+Folder names control CSS classes on the generated SVGs:
+
+- \`color/\` — icons with baked-in colors (class \`color\`, fill/stroke preserved)
+- \`stroked/\` — stroke-only icons (class \`stroked\`, fill styles removed)
+- \`filled/\` — fill-only icons (class \`filled\`, stroke styles removed)
+
+### Directional folders
+
+Place icons in specially named folders to auto-generate directional
+redirects, eliminating redundant SVG files:
+
+- \`right-left/\` — base icon points right; generates a flipped left variant
+- \`up-down/\` — base icon points up; generates a flipped down variant
+- \`up-down-right-left/\` — base icon points right; generates down (90°),
+  left (180°), and up (270°) rotation variants
+
+For example, \`chevron-right.svg\` in an \`up-down-right-left/\` folder produces
+\`chevronRight\` (SVG) plus \`chevronDown\`, \`chevronLeft\`, \`chevronUp\` (redirects).
+
+### Comma-separated names
+
+For icons where the directional variant has a different name (not just a
+direction swap), use commas in the filename:
+
+    skip-forward,skip-back.svg    → skipForward (SVG) + skipBack (redirect)
+    refresh-cw,refresh-ccw.svg    → refreshCw (SVG) + refreshCcw (redirect)
+
+The first name is the base, additional names are mapped to the folder's
+variant suffixes in order.
+
+## SVG processing
+
+The tool automatically:
+- Strips XML declarations, namespaces, IDs, and comments
+- Removes redundant attributes (default fills, strokes)
+- Collapses whitespace
+- Rounds coordinates based on viewBox size (larger viewBox = fewer decimals)
+- Converts filenames to camelCase (\`arrow-right.svg\` → \`arrowRight\`)`,
+    title: "make-icon-data",
+    filename: "make-icon-data.js",
+    path: "bin/make-icon-data.js",
     pin: "bottom"
   }
 ];
