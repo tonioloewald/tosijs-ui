@@ -331,7 +331,7 @@ that, for example, treat all colored icons inside buttons the same way.
 <tosi-icon icon="lock50s75o_10y$shield_brandColorS" size=128></tosi-icon>
 <tosi-icon icon="unLock_brandColorS" size=128></tosi-icon>
 <tosi-icon icon="checkFile" size=128></tosi-icon>
-<tosi-icon icon="spin120Loader40s_30x$cloud" size=128></tosi-icon>
+<tosi-icon icon="spin120Loader40s_30x_brandColorS$cloud" size=128></tosi-icon>
 
 ### Why?
 
@@ -549,7 +549,11 @@ export const iconRules = [
             const icon = resolveIcon(baseName, []);
             const el = icon;
             if (el.animate) {
-                el.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], {
+                const base = el.style.transform || '';
+                el.animate([
+                    { transform: `${base} rotate(0deg)` },
+                    { transform: `${base} rotate(360deg)` },
+                ], {
                     duration: duration * 1000,
                     iterations: Infinity,
                     direction,
