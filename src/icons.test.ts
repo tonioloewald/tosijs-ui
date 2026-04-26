@@ -223,6 +223,24 @@ describe('icons', () => {
       expect(edit2).toBeInstanceOf(SVGElement)
       expect((edit2 as SVGElement).style.opacity).not.toBe('0.02')
     })
+
+    test('digit-ending icon with _ separator suffix', () => {
+      const icon = icons['edit2_50o']()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.opacity).toBe('0.5')
+    })
+
+    test('digit-ending icon with _F suffix', () => {
+      const icon = icons['volume2_FF0000F']()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.fill).toBe('#FF0000')
+    })
+
+    test('digit-ending icon with _S CSS variable suffix', () => {
+      const icon = icons['volume2_brandColorS']()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.stroke).toContain('brand-color')
+    })
   })
 
   describe('modifier overlays', () => {
@@ -249,6 +267,23 @@ describe('icons', () => {
     test('search prefix creates composite', () => {
       const icon = icons.searchUser()
       expect(icon).toBeDefined()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+
+    test('prefix rule on digit-ending icon', () => {
+      const icon = icons.unEdit2()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+      const svgs = icon.querySelectorAll('svg')
+      expect(svgs.length).toBe(2)
+    })
+
+    test('check prefix on digit-ending icon', () => {
+      const icon = icons.checkTrash2()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+
+    test('prefix rule with suffix on digit-ending icon', () => {
+      const icon = icons['checkVolume2_FF0000S']()
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
     })
 
@@ -286,6 +321,13 @@ describe('icons', () => {
       // All three icons are flat siblings, not nested composites
       const svgs = icon.querySelectorAll('svg')
       expect(svgs.length).toBe(3)
+    })
+
+    test('stacking with digit-ending icon', () => {
+      const icon = icons['lock$edit2_50o']()
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+      const svgs = icon.querySelectorAll('svg')
+      expect(svgs.length).toBe(2)
     })
 
     test('stacking with multiple suffixes', () => {
@@ -334,6 +376,20 @@ describe('icons', () => {
       defineIcons({ testRedirectSuffix: 'chevronRight90r' })
       const icon = icons.testRedirectSuffix()
       expect(icon).toBeDefined()
+    })
+
+    test('redirected icon with additional suffix', () => {
+      // arrowUpLeft redirects to arrowUpRight270r
+      const icon = icons.arrowUpLeft50o()
+      expect(icon).toBeDefined()
+      expect((icon as HTMLElement).style.opacity).toBe('0.5')
+    })
+
+    test('redirected icon with negative suffix', () => {
+      const icon = icons.arrowUpLeft_50o()
+      expect(icon).toBeDefined()
+      // _50o is negative opacity (-0.5)
+      expect((icon as HTMLElement).style.opacity).toBe('-0.5')
     })
   })
 
