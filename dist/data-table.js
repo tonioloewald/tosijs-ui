@@ -118,10 +118,14 @@ test('getCells and getItem', async () => {
   // Wait for list binding to stamp DOM elements
   const items = table.visibleRows
   let cells
-  await new Promise(resolve => {
+  await new Promise((resolve, reject) => {
+    const deadline = Date.now() + 3000
     const check = () => {
       cells = table.getCells(items[0])
       if (cells) return resolve()
+      if (Date.now() > deadline) return reject(new Error(
+        'getCells timed out — virtual scroll may not have rendered in this context'
+      ))
       setTimeout(check, 100)
     }
     check()
