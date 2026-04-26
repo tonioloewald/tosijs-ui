@@ -48,7 +48,7 @@ relevant dist/*.js file for complete docs, usage examples, and API.
 - dist/header.js — header
   A simple flex header. Compose it with `elastic()` and `spacer()` from
 - dist/icons.js — icons
-  A library that provides `ElementCreator` functions that produce SVG icons. It leverages `tosijs`'s
+  `icons` is a proxy that generates an `ElementCreator` for a given icon on demand,
 - dist/layout.js — layout
   Thin structural layout components that wrap CSS flexbox and grid.
 - dist/live-theme.js — live-theme

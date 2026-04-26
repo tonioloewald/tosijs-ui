@@ -440,11 +440,12 @@ describe('icons', () => {
   })
 
   describe('suffixes apply after composition', () => {
-    test('suffixes on spin icon apply to wrapper', () => {
+    test('suffixes on spin icon apply to inner icon', () => {
       const icon = icons.spin360Loader40s()
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
-      // The 40s scale is on the wrapper so it affects layout
-      expect((icon as HTMLElement).style.transform).toContain('scale(0.4)')
+      // Suffixes apply to the resolved icon inside the spin wrapper
+      const inner = icon.querySelector('svg') || icon.children[0]
+      expect((inner as HTMLElement).style.transform).toContain('scale(0.4)')
     })
 
     test('suffixes on overlay in stacked icon', () => {

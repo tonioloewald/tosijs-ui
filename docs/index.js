@@ -23945,9 +23945,7 @@ var iconRules = [
       const dps = match[1].replace("_", "-");
       const duration = 360 / Math.abs(parseFloat(dps));
       const direction = dps.startsWith("-") ? "reverse" : "normal";
-      const parsed = parseStyleSuffixes(baseName);
-      const iconName = parsed ? parsed.baseName : baseName;
-      const icon = resolveIcon(iconName, []);
+      const icon = resolveIcon(baseName, []);
       const el = icon;
       if (el.animate) {
         el.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }], {
@@ -23956,11 +23954,7 @@ var iconRules = [
           direction
         });
       }
-      const wrapper = wrapIcon(baseName, parts, icon);
-      if (parsed) {
-        Object.assign(wrapper.style, parsed.style);
-      }
-      return wrapper;
+      return wrapIcon(baseName, parts, icon);
     }
   },
   {
@@ -24076,8 +24070,16 @@ function parseStyleSuffixes(name) {
   if (!baseName)
     return null;
   const data = icon_data_default;
-  if (!data[baseName])
-    return null;
+  if (!data[baseName]) {
+    const matchesRule = iconRules.some((rule) => {
+      if (rule.prefix instanceof RegExp) {
+        return rule.prefix.test(baseName);
+      }
+      return baseName.startsWith(rule.prefix) && baseName.length > rule.prefix.length;
+    });
+    if (!matchesRule)
+      return null;
+  }
   const style = {};
   const suffixes = match[0].match(/_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W/g);
   if (!suffixes)
@@ -37319,26 +37321,6 @@ preview.append(
   <tosi-icon title="tosi-platform" icon="tosiPlatform" style="--tosi-icon-size: 128px"></tosi-icon>
 </div>
 
-A library that provides \`ElementCreator\` functions that produce SVG icons. It leverages \`tosijs\`'s
-\`svgElements\` proxy and is intended to address all the key use-cases for SVG icons in web
-applications along with being very easy to extend and maintain.
-
-> ### Supported Use Cases
-> - inline SVGs that can be styled by CSS (for buttons, etc.)
-> - allows both stroked and filled icons (unlike font-based systems)
-> - support for color icons (without requiring multiple glyphs perfectly aligned)
-> - icons can be rendered  as data urls, e.g. to insert into CSS… (the little \`owl\` logo rendered under blockquotes is an example)
-> - icon composition: stack, transform, and style icons via naming conventions (e.g. \`lock50s75o$shield\`)
-> - extensible rules system for custom prefixes and overlays (e.g. \`unLock\`, \`checkFile\`)
-> - icon redirects eliminate redundant SVG data (e.g. \`chevronDown\` → \`chevronRight90r\`)
-
-### Nice Features
-> - no build process magic needed (your icons are "just javascript", no special CSS files needed, no magic glyph mappings). Adding new, or overriding existing, icons is trivial.
-> - icons are just regular SVG, not a specialized subset.
-> - highly optimized and compressible (the code is comparable in size to what you get with a compressed font built from the same icons, except icon fonts don't support strokes, gradients, etc.)
-
-## icons
-
 \`icons\` is a proxy that generates an \`ElementCreator\` for a given icon on demand,
 e.g. \`icons.chevronDown()\` produces an \`<svg>\` element containing a downward-pointing chevron
 icon with the class \`icon-chevron-down\`.
@@ -37682,6 +37664,12 @@ variations on every icon?
 <tosi-icon icon="pin_brandColorS" size=64></tosi-icon>
 <tosi-icon icon="pin0f_brandColorS" size=64></tosi-icon>
 <tosi-icon icon="unPin_brandColorS" size=64></tosi-icon>
+
+And now we can just create icon languages…
+
+<tosi-icon icon="checkUsers" size=64></tosi-icon>
+<tosi-icon icon="searchMap" size=64></tosi-icon>
+<tosi-icon icon="cancelHeart" size=64></tosi-icon>
 
 ### Icon modifier suffixes
 
