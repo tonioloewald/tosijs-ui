@@ -34590,7 +34590,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.5.7";
+var version = "1.5.8";
 // src/tooltip.ts
 var { span: span18 } = I;
 var tooltipFloat = null;
