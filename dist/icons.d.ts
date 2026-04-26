@@ -8,8 +8,6 @@ export interface IconRule {
     prefix: string | RegExp;
     apply: (baseName: string, match: RegExpMatchArray | string, parts: ElementPart[]) => Element | string | null;
 }
-/** Returns icon name safe for suffix concatenation (appends _ if name ends in digit) */
-export declare const safeIconSuffix: (name: string) => string;
 export declare const iconRules: IconRule[];
 export declare const icons: SVGIconMap;
 export declare class SvgIcon extends WebComponent {

@@ -455,7 +455,7 @@ For example, a `remove` prefix that overlays a trash icon:
     iconRules.push({
       prefix: 'remove',
       apply: (baseName) =>
-        `trash75o_actionColorS$${safeIconSuffix(baseName)}50o`,
+        `trash75o_actionColorS$${baseName}50o`,
     })
 
 Now `removeUser`, `removeFile`, `removeProject` all just work — and
@@ -563,8 +563,8 @@ export const svg2DataUrl = (icon, fill, stroke, strokeWidth) => {
     const text = encodeURIComponent(svg.outerHTML);
     return `url(data:image/svg+xml;charset=UTF-8,${text})`;
 };
-/** Returns icon name safe for suffix concatenation (appends _ if name ends in digit) */
-export const safeIconSuffix = (name) => /\d$/.test(name) ? name + '_' : name;
+// Appends _ to names ending in digits to prevent suffix ambiguity
+const safeIconSuffix = (name) => /\d$/.test(name) ? name + '_' : name;
 export const iconRules = [
     {
         prefix: /^spin(_?\d+)/,
@@ -591,19 +591,19 @@ export const iconRules = [
     },
     {
         prefix: 'un',
-        apply: (baseName) => `slash25o$${safeIconSuffix(baseName)}75s75o`,
+        apply: (baseName) => `slash25o$${baseName}75s75o`,
     },
     {
         prefix: 'check',
-        apply: (baseName) => `check75o_00aa00S$${safeIconSuffix(baseName)}75s50o`,
+        apply: (baseName) => `check75o_00aa00S$${baseName}75s50o`,
     },
     {
         prefix: 'cancel',
-        apply: (baseName) => `x75o_cc0000S$${safeIconSuffix(baseName)}75s50o`,
+        apply: (baseName) => `x75o_cc0000S$${baseName}75s50o`,
     },
     {
         prefix: 'search',
-        apply: (baseName) => `search80s30x30y$${safeIconSuffix(baseName)}50o`,
+        apply: (baseName) => `search80s30x30y$${baseName}50o`,
     },
 ];
 function makeIcon(spec, parts) {
@@ -687,7 +687,7 @@ function composeIcon(prop, parts) {
         // Only apply if baseName can actually resolve to an icon
         if (!canResolve(baseName))
             continue;
-        const result = rule.apply(baseName, match, parts);
+        const result = rule.apply(safeIconSuffix(baseName), match, parts);
         if (typeof result === 'string')
             return resolveIcon(result, parts);
         if (result)
@@ -784,6 +784,8 @@ function parseStyleSuffixes(name) {
     return { baseName, style };
 }
 function resolveIcon(prop, parts) {
+    if (prop.endsWith('_'))
+        prop = prop.slice(0, -1);
     const data = iconData;
     // Direct match or redirect chain
     let name = prop;
