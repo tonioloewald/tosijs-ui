@@ -446,6 +446,33 @@ through the full pipeline), an **Element** (used directly), or **null**
       },
     })
 
+### Building an icon vocabulary
+
+You don't need to spell out the DSL every time. The real power is in
+defining named patterns that become your application's icon language.
+For example, a `remove` prefix that overlays a trash icon:
+
+    iconRules.push({
+      prefix: 'remove',
+      apply: (baseName) =>
+        `trash75o_actionColorS$${safeIconSuffix(baseName)}50o`,
+    })
+
+Now `removeUser`, `removeFile`, `removeProject` all just work — and
+they're consistent. If you redesign the trash icon or change
+`--action-color`, every "remove" icon updates automatically.
+
+You can also use `defineIcons` for one-off named compositions:
+
+    defineIcons({
+      cloudSync: 'spin120Loader40s_30x$cloud',
+      secureShield: 'lock50s75o_10y$shield',
+      newFile: 'plus75o60s25x25y$file',
+    })
+
+Then just use `icons.cloudSync()` or `<tosi-icon icon="cloudSync">` —
+the composition is invisible to consumers of the icon.
+
 ### Composites and `svg2DataUrl`
 
 Composed icons (stacked, overlay rules) are wrapped in a `<span>`, not
