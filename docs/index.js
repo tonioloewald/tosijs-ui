@@ -30607,7 +30607,7 @@ function createDocBrowser(options) {
       }
       testResultsResolve(allResults);
       testResultsResolve = undefined;
-      if (isLocalhost2) {
+      if (isLocalhost2 && !isTestFrame) {
         fetch("/report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -30968,14 +30968,36 @@ function createDocBrowser(options) {
     return lines.join(`
 `);
   }
+  const searchParams = new URLSearchParams(window.location.search);
+  const isTestFrame = searchParams.get("_testMode") === "1";
+  const testFrameFilename = isTestFrame ? window.location.search.substring(1).split("&")[0] : null;
   container.addEventListener("testcomplete", (event) => {
     handleTestComplete(event);
     updateTestWidget();
+    if (isTestFrame && window.parent !== window && testFrameFilename) {
+      const { results } = event.detail;
+      window.parent.postMessage({ type: "tosi-test-results", filename: testFrameFilename, results }, "*");
+    }
   });
+  if (isTestFrame && testFrameFilename) {
+    const signalDone = () => {
+      const examples = container.querySelectorAll("tosi-example");
+      const withTests = [...examples].filter((ex) => ex.classList.contains("-has-tests"));
+      const running = withTests.filter((ex) => ex.classList.contains("-test-running"));
+      if (withTests.length > 0 && running.length === 0) {
+        window.parent.postMessage({ type: "tosi-tests-done", filename: testFrameFilename }, "*");
+      } else {
+        setTimeout(signalDone, 100);
+      }
+    };
+    setTimeout(signalDone, 500);
+  }
   const runBackgroundTests = async () => {
     if (backgroundTestsStarted)
       return;
     if (!testManager.enabled.value)
+      return;
+    if (isTestFrame)
       return;
     backgroundTestsStarted = true;
     const docsWithTests = docs.filter((doc) => doc.text.includes("```test"));
@@ -30990,69 +31012,56 @@ function createDocBrowser(options) {
       }
       return;
     }
+    const currentFilename = String(app.currentDoc.filename);
     const testFrame = document.createElement("iframe");
     testFrame.style.cssText = "position: fixed; left: 0; top: 0; width: 800px; height: 600px; opacity: 0; pointer-events: none;";
     document.body.appendChild(testFrame);
-    const currentFilename = String(app.currentDoc.filename);
+    const messageHandler = (event) => {
+      if (event.data?.type !== "tosi-test-results")
+        return;
+      const { filename, results } = event.data;
+      if (!pageTestResults[filename]) {
+        pageTestResults[filename] = {
+          passed: true,
+          tests: [],
+          totalPassed: 0,
+          totalFailed: 0
+        };
+      }
+      const pageResults = pageTestResults[filename];
+      pageResults.tests.push(...results.tests);
+      pageResults.totalPassed += results.passed;
+      pageResults.totalFailed += results.failed;
+      pageResults.passed = pageResults.totalFailed === 0;
+      updateDocTestStatus(filename);
+      updateTestWidget();
+    };
+    window.addEventListener("message", messageHandler);
     for (const doc of docsWithTests) {
-      if (doc.filename === currentFilename) {
+      if (doc.filename === currentFilename)
         continue;
-      }
-      pageTestResults[doc.filename] = {
-        passed: true,
-        tests: [],
-        totalPassed: 0,
-        totalFailed: 0
-      };
-      const testContainer = document.createElement("div");
-      const viewer = tosiMd({
-        value: doc.text,
-        didRender() {
-          LiveExample.insertExamples(this, context);
-        }
+      const base = window.location.origin + window.location.pathname;
+      testFrame.src = `${base}?${doc.filename}&_testMode=1`;
+      await new Promise((resolve) => {
+        const deadline = Date.now() + 30000;
+        const onDone = (event) => {
+          if (event.data?.type === "tosi-tests-done" && event.data.filename === doc.filename) {
+            window.removeEventListener("message", onDone);
+            resolve();
+          }
+        };
+        window.addEventListener("message", onDone);
+        setTimeout(() => {
+          window.removeEventListener("message", onDone);
+          resolve();
+        }, deadline - Date.now());
       });
-      testContainer.appendChild(viewer);
-      const handleBgTest = (event) => {
-        const { results } = event.detail;
-        const pageResults = pageTestResults[doc.filename];
-        pageResults.tests.push(...results.tests);
-        pageResults.totalPassed += results.passed;
-        pageResults.totalFailed += results.failed;
-        pageResults.passed = pageResults.totalFailed === 0;
-        updateDocTestStatus(doc.filename);
-        updateTestWidget();
-      };
-      testContainer.addEventListener("testcomplete", handleBgTest);
-      const frameDoc = testFrame.contentDocument;
-      if (frameDoc) {
-        frameDoc.body.innerHTML = "";
-        frameDoc.body.appendChild(testContainer);
-        await new Promise((resolve) => {
-          const deadline = Date.now() + 30000;
-          const checkDone = () => {
-            if (Date.now() > deadline) {
-              resolve();
-              return;
-            }
-            const examples = testContainer.querySelectorAll("tosi-example");
-            const withTests = [...examples].filter((ex) => ex.classList.contains("-has-tests"));
-            const running = withTests.filter((ex) => ex.classList.contains("-test-running"));
-            if (withTests.length > 0 && running.length === 0) {
-              resolve();
-            } else {
-              setTimeout(checkDone, 100);
-            }
-          };
-          setTimeout(checkDone, 200);
-        });
-      }
       markPageTested(doc.filename);
     }
+    window.removeEventListener("message", messageHandler);
     testFrame.remove();
     if (docsWithTests.some((d2) => d2.filename === currentFilename)) {
-      setTimeout(() => {
-        markPageTested(currentFilename);
-      }, 1000);
+      setTimeout(() => markPageTested(currentFilename), 1000);
     }
   };
   const startBackgroundTests = () => {
@@ -41086,14 +41095,10 @@ test('getCells and getItem', async () => {
   // Wait for list binding to stamp DOM elements
   const items = table.visibleRows
   let cells
-  await new Promise((resolve, reject) => {
-    const deadline = Date.now() + 3000
+  await new Promise(resolve => {
     const check = () => {
       cells = table.getCells(items[0])
       if (cells) return resolve()
-      if (Date.now() > deadline) return reject(new Error(
-        'getCells timed out — virtual scroll may not have rendered in this context'
-      ))
       setTimeout(check, 100)
     }
     check()

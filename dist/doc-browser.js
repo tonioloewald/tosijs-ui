@@ -288,8 +288,8 @@ export function createDocBrowser(options) {
             }
             testResultsResolve(allResults);
             testResultsResolve = undefined;
-            // Post results to dev server on localhost
-            if (isLocalhost) {
+            // Post results to dev server on localhost (not from test iframes)
+            if (isLocalhost && !isTestFrame) {
                 fetch('/report', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -680,17 +680,46 @@ export function createDocBrowser(options) {
         lines.unshift(`**Summary: ${totalPassed} passed, ${totalFailed} failed**`, '');
         return lines.join('\n');
     }
+    // Detect if running as background test iframe
+    const searchParams = new URLSearchParams(window.location.search);
+    const isTestFrame = searchParams.get('_testMode') === '1';
+    const testFrameFilename = isTestFrame
+        ? window.location.search.substring(1).split('&')[0]
+        : null;
     // Listen for test completion events
     container.addEventListener('testcomplete', ((event) => {
         handleTestComplete(event);
         updateTestWidget();
+        // If running in test iframe, post results to parent
+        if (isTestFrame && window.parent !== window && testFrameFilename) {
+            const { results } = event.detail;
+            window.parent.postMessage({ type: 'tosi-test-results', filename: testFrameFilename, results }, '*');
+        }
     }));
+    // If running as test iframe, signal when all tests on this page are done
+    if (isTestFrame && testFrameFilename) {
+        const signalDone = () => {
+            const examples = container.querySelectorAll('tosi-example');
+            const withTests = [...examples].filter((ex) => ex.classList.contains('-has-tests'));
+            const running = withTests.filter((ex) => ex.classList.contains('-test-running'));
+            if (withTests.length > 0 && running.length === 0) {
+                window.parent.postMessage({ type: 'tosi-tests-done', filename: testFrameFilename }, '*');
+            }
+            else {
+                setTimeout(signalDone, 100);
+            }
+        };
+        // Give time for examples to start running
+        setTimeout(signalDone, 500);
+    }
     // Background test runner for all doc pages
     const runBackgroundTests = async () => {
         if (backgroundTestsStarted)
             return;
         if (!testManager.enabled.value)
             return;
+        if (isTestFrame)
+            return; // Don't run background tests in test iframe
         backgroundTestsStarted = true;
         // Find all docs that have test blocks
         const docsWithTests = docs.filter((doc) => doc.text.includes('```test'));
@@ -699,89 +728,71 @@ export function createDocBrowser(options) {
             setTestWidgetRunning();
         }
         if (pagesWithTests === 0) {
-            // No tests to run, resolve immediately
             if (testResultsResolve) {
                 testResultsResolve({ passed: 0, failed: 0, pages: {} });
                 testResultsResolve = undefined;
             }
             return;
         }
-        // Create a hidden iframe to run tests in background
+        const currentFilename = String(app.currentDoc.filename);
+        // Create a hidden iframe that loads the full page
         const testFrame = document.createElement('iframe');
         testFrame.style.cssText =
             'position: fixed; left: 0; top: 0; width: 800px; height: 600px; opacity: 0; pointer-events: none;';
         document.body.appendChild(testFrame);
-        const currentFilename = String(app.currentDoc.filename);
+        // Listen for test results posted from the iframe
+        const messageHandler = (event) => {
+            if (event.data?.type !== 'tosi-test-results')
+                return;
+            const { filename, results } = event.data;
+            if (!pageTestResults[filename]) {
+                pageTestResults[filename] = {
+                    passed: true,
+                    tests: [],
+                    totalPassed: 0,
+                    totalFailed: 0,
+                };
+            }
+            const pageResults = pageTestResults[filename];
+            pageResults.tests.push(...results.tests);
+            pageResults.totalPassed += results.passed;
+            pageResults.totalFailed += results.failed;
+            pageResults.passed = pageResults.totalFailed === 0;
+            updateDocTestStatus(filename);
+            updateTestWidget();
+        };
+        window.addEventListener('message', messageHandler);
         for (const doc of docsWithTests) {
-            // Skip current page - it will run tests naturally
-            if (doc.filename === currentFilename) {
+            // Skip current page — it runs tests naturally
+            if (doc.filename === currentFilename)
                 continue;
-            }
-            // Reset page results for this doc
-            pageTestResults[doc.filename] = {
-                passed: true,
-                tests: [],
-                totalPassed: 0,
-                totalFailed: 0,
-            };
-            // Create a container and render the doc content
-            const testContainer = document.createElement('div');
-            const viewer = tosiMd({
-                value: doc.text,
-                didRender() {
-                    LiveExample.insertExamples(this, context);
-                },
+            // Navigate iframe to the page
+            const base = window.location.origin + window.location.pathname;
+            testFrame.src = `${base}?${doc.filename}&_testMode=1`;
+            // Wait for the iframe to signal it's done (max 30s per page)
+            await new Promise((resolve) => {
+                const deadline = Date.now() + 30_000;
+                const onDone = (event) => {
+                    if (event.data?.type === 'tosi-tests-done' &&
+                        event.data.filename === doc.filename) {
+                        window.removeEventListener('message', onDone);
+                        resolve();
+                    }
+                };
+                window.addEventListener('message', onDone);
+                setTimeout(() => {
+                    window.removeEventListener('message', onDone);
+                    resolve();
+                }, deadline - Date.now());
             });
-            testContainer.appendChild(viewer);
-            // Listen for test results from this container
-            const handleBgTest = (event) => {
-                const { results } = event.detail;
-                const pageResults = pageTestResults[doc.filename];
-                pageResults.tests.push(...results.tests);
-                pageResults.totalPassed += results.passed;
-                pageResults.totalFailed += results.failed;
-                pageResults.passed = pageResults.totalFailed === 0;
-                updateDocTestStatus(doc.filename);
-                updateTestWidget();
-            };
-            testContainer.addEventListener('testcomplete', handleBgTest);
-            // Append to iframe for execution
-            const frameDoc = testFrame.contentDocument;
-            if (frameDoc) {
-                frameDoc.body.innerHTML = '';
-                frameDoc.body.appendChild(testContainer);
-                // Wait for all live examples with tests to finish (max 30s per page)
-                await new Promise((resolve) => {
-                    const deadline = Date.now() + 30_000;
-                    const checkDone = () => {
-                        if (Date.now() > deadline) {
-                            resolve();
-                            return;
-                        }
-                        const examples = testContainer.querySelectorAll('tosi-example');
-                        const withTests = [...examples].filter((ex) => ex.classList.contains('-has-tests'));
-                        const running = withTests.filter((ex) => ex.classList.contains('-test-running'));
-                        if (withTests.length > 0 && running.length === 0) {
-                            resolve();
-                        }
-                        else {
-                            setTimeout(checkDone, 100);
-                        }
-                    };
-                    // Give initial render time to start
-                    setTimeout(checkDone, 200);
-                });
-            }
             markPageTested(doc.filename);
         }
         // Clean up
+        window.removeEventListener('message', messageHandler);
         testFrame.remove();
         // Mark current page as tested if it has tests
         if (docsWithTests.some((d) => d.filename === currentFilename)) {
-            // Current page tests will complete naturally, just wait a bit
-            setTimeout(() => {
-                markPageTested(currentFilename);
-            }, 1000);
+            setTimeout(() => markPageTested(currentFilename), 1000);
         }
     };
     // Run background tests when enabled (initially or when toggled on)
