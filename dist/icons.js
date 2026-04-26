@@ -573,6 +573,8 @@ export const svg2DataUrl = (icon, fill, stroke, strokeWidth) => {
     const text = encodeURIComponent(svg.outerHTML);
     return `url(data:image/svg+xml;charset=UTF-8,${text})`;
 };
+// Suffix separator — inserts _ after digit-ending names to prevent ambiguity
+const sx = (name) => (/\d$/.test(name) ? '_' : '');
 export const iconRules = [
     {
         prefix: /^spin(_?\d+)/,
@@ -601,19 +603,19 @@ export const iconRules = [
     },
     {
         prefix: 'un',
-        apply: (baseName) => `slash25o$${baseName}75s75o`,
+        apply: (baseName) => `slash25o$${baseName}${sx(baseName)}75s75o`,
     },
     {
         prefix: 'check',
-        apply: (baseName) => `check75o_00aa00S$${baseName}75s50o`,
+        apply: (baseName) => `check75o_00aa00S$${baseName}${sx(baseName)}75s50o`,
     },
     {
         prefix: 'cancel',
-        apply: (baseName) => `x75o_cc0000S$${baseName}75s50o`,
+        apply: (baseName) => `x75o_cc0000S$${baseName}${sx(baseName)}75s50o`,
     },
     {
         prefix: 'search',
-        apply: (baseName) => `search80s30x30y$${baseName}50o`,
+        apply: (baseName) => `search80s30x30y$${baseName}${sx(baseName)}50o`,
     },
 ];
 function makeIcon(spec, parts) {
@@ -706,26 +708,30 @@ function composeIcon(prop, parts) {
     return null;
 }
 const MAX_REDIRECTS = 10;
-// Style suffixes — always value then letter code:
+// Style suffixes — value then letter code:
 //   50o (opacity), 75s (scale), 20x (translateX%), _10y (translateY%)
 //   90r (rotate 90°), _45r (rotate -45°), 0f (flipH), 1f (flipV)
 //   _FF0000F (fill hex), _f00S (stroke hex), 3W (stroke-width)
 //   _brandColorF (fill var), _accentS (stroke var)
-const SUFFIX_RE = /(_?\d{2,3}[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d{1,3}W)+$/;
+// Icon names ending in digits need _ separator: edit2_50o
+const SUFFIX_RE = /(?<=[a-zA-Z]|(?<=\d)_)(_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W)+$/;
 function parseStyleSuffixes(name) {
     const match = name.match(SUFFIX_RE);
     if (!match)
         return null;
-    const baseName = name.slice(0, match.index);
+    let baseName = name.slice(0, match.index);
     if (!baseName)
         return null;
-    // Verify baseName resolves — prevents icon names ending in digits
-    // from having their trailing digits consumed as suffix values
+    // Strip trailing _ separator (for digit-ending names: edit2_50o)
+    if (baseName.endsWith('_'))
+        baseName = baseName.slice(0, -1);
+    if (!baseName)
+        return null;
     const data = iconData;
     if (!data[baseName])
         return null;
     const style = {};
-    const suffixes = match[0].match(/_?\d{2,3}[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d{1,3}W/g);
+    const suffixes = match[0].match(/_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W/g);
     let tx = '';
     let ty = '';
     let scale = '';

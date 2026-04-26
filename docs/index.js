@@ -23936,6 +23936,7 @@ var svg2DataUrl = (icon, fill, stroke, strokeWidth) => {
   const text = encodeURIComponent(svg.outerHTML);
   return `url(data:image/svg+xml;charset=UTF-8,${text})`;
 };
+var sx = (name) => /\d$/.test(name) ? "_" : "";
 var iconRules = [
   {
     prefix: /^spin(_?\d+)/,
@@ -23963,19 +23964,19 @@ var iconRules = [
   },
   {
     prefix: "un",
-    apply: (baseName) => `slash25o$${baseName}75s75o`
+    apply: (baseName) => `slash25o$${baseName}${sx(baseName)}75s75o`
   },
   {
     prefix: "check",
-    apply: (baseName) => `check75o_00aa00S$${baseName}75s50o`
+    apply: (baseName) => `check75o_00aa00S$${baseName}${sx(baseName)}75s50o`
   },
   {
     prefix: "cancel",
-    apply: (baseName) => `x75o_cc0000S$${baseName}75s50o`
+    apply: (baseName) => `x75o_cc0000S$${baseName}${sx(baseName)}75s50o`
   },
   {
     prefix: "search",
-    apply: (baseName) => `search80s30x30y$${baseName}50o`
+    apply: (baseName) => `search80s30x30y$${baseName}${sx(baseName)}50o`
   }
 ];
 function makeIcon(spec, parts) {
@@ -24061,19 +24062,23 @@ function composeIcon(prop, parts) {
   return null;
 }
 var MAX_REDIRECTS = 10;
-var SUFFIX_RE = /(_?\d{2,3}[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d{1,3}W)+$/;
+var SUFFIX_RE = /(?<=[a-zA-Z]|(?<=\d)_)(_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W)+$/;
 function parseStyleSuffixes(name) {
   const match = name.match(SUFFIX_RE);
   if (!match)
     return null;
-  const baseName = name.slice(0, match.index);
+  let baseName = name.slice(0, match.index);
+  if (!baseName)
+    return null;
+  if (baseName.endsWith("_"))
+    baseName = baseName.slice(0, -1);
   if (!baseName)
     return null;
   const data = icon_data_default;
   if (!data[baseName])
     return null;
   const style = {};
-  const suffixes = match[0].match(/_?\d{2,3}[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d{1,3}W/g);
+  const suffixes = match[0].match(/_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W/g);
   let tx = "";
   let ty = "";
   let scale = "";
