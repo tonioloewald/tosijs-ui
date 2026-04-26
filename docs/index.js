@@ -24062,7 +24062,7 @@ function composeIcon(prop, parts) {
   return null;
 }
 var MAX_REDIRECTS = 10;
-var SUFFIX_RE = /(?<=[a-zA-Z]|(?<=\d)_)(_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W)+$/;
+var SUFFIX_RE = /(?:(?<=[a-zA-Z_])(?:_?\d+[osxyr]|[01]f|\d+W)|_[a-zA-Z0-9]+[FS])+$/;
 function parseStyleSuffixes(name) {
   const match = name.match(SUFFIX_RE);
   if (!match)
@@ -24079,6 +24079,8 @@ function parseStyleSuffixes(name) {
     return null;
   const style = {};
   const suffixes = match[0].match(/_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W/g);
+  if (!suffixes)
+    return null;
   let tx = "";
   let ty = "";
   let scale = "";

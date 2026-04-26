@@ -714,7 +714,7 @@ const MAX_REDIRECTS = 10;
 //   _FF0000F (fill hex), _f00S (stroke hex), 3W (stroke-width)
 //   _brandColorF (fill var), _accentS (stroke var)
 // Icon names ending in digits need _ separator: edit2_50o
-const SUFFIX_RE = /(?<=[a-zA-Z]|(?<=\d)_)(_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W)+$/;
+const SUFFIX_RE = /(?:(?<=[a-zA-Z_])(?:_?\d+[osxyr]|[01]f|\d+W)|_[a-zA-Z0-9]+[FS])+$/;
 function parseStyleSuffixes(name) {
     const match = name.match(SUFFIX_RE);
     if (!match)
@@ -732,6 +732,8 @@ function parseStyleSuffixes(name) {
         return null;
     const style = {};
     const suffixes = match[0].match(/_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W/g);
+    if (!suffixes)
+        return null;
     let tx = '';
     let ty = '';
     let scale = '';
