@@ -9,6 +9,10 @@ export interface IconRule {
     apply: (baseName: string, match: RegExpMatchArray | string, parts: ElementPart[]) => Element | string | null;
 }
 export declare const iconRules: IconRule[];
+/** Wrap icon elements in a composite container (for custom function rules) */
+export declare function wrapIcon(prop: string, parts: ElementPart[], ...children: Element[]): HTMLSpanElement;
+/** Resolve an icon name through the full pipeline (redirects, suffixes, rules, stacking) */
+export declare function resolveIcon(prop: string, parts: ElementPart[]): Element;
 export declare const icons: SVGIconMap;
 export declare class SvgIcon extends WebComponent {
     static preferredTagName: string;

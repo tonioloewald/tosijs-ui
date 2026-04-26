@@ -23321,6 +23321,7 @@ __export(exports_src, {
   xinFloat: () => xinFloat,
   xinField: () => xinField,
   xinCarousel: () => xinCarousel,
+  wrapIcon: () => wrapIcon,
   version: () => version,
   updateLocalized: () => updateLocalized,
   trackDrag: () => trackDrag,
@@ -23370,6 +23371,7 @@ __export(exports_src, {
   richText: () => richText,
   rewriteImports: () => rewriteImports,
   resolveMenuItems: () => resolveMenuItems,
+  resolveIcon: () => resolveIcon,
   removeLastMenu: () => removeLastMenu,
   postNotification: () => postNotification,
   positionFloat: () => positionFloat,
@@ -34597,7 +34599,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.5.9";
+var version = "1.5.10";
 // src/tooltip.ts
 var { span: span18 } = I;
 var tooltipFloat = null;
@@ -37747,7 +37749,9 @@ viewBox** for best results on non-square base icons.
 \`iconRules\` is a mutable array. Each rule has a \`prefix\` (string or
 RegExp) and an \`apply\` function that returns a **string** (resolved
 through the full pipeline), an **Element** (used directly), or **null**
-(skip to next rule):
+(skip to next rule).
+
+String rewrites are the simplest — just return a composition string:
 
     // String rewrite: addFoo → plus75o_0000ffS$foo75s50o
     iconRules.push({
@@ -37755,15 +37759,23 @@ through the full pipeline), an **Element** (used directly), or **null**
       apply: (baseName) => \`plus75o_0000ffS$\${baseName}75s50o\`,
     })
 
-    // Function rule with side effects (like spin)
+Function rules can use \`resolveIcon()\` and \`wrapIcon()\` (both exported)
+for more control:
+
+    // Function rule: glowNNFoo → foo with brightness filter
     iconRules.push({
       prefix: /^glow(\\d+)/,
       apply: (baseName, match, parts) => {
         const icon = resolveIcon(baseName, parts)
         icon.style.filter = \`brightness(\${match[1]}%)\`
-        return icon
+        return wrapIcon(baseName, parts, icon)
       },
     })
+
+- \`resolveIcon(name, parts)\` — resolve any icon name through the full
+  pipeline (redirects, suffixes, rules, stacking)
+- \`wrapIcon(name, parts, ...children)\` — wrap elements in a composite
+  container with proper sizing, \`pointer-events: none\`, and \`data-icon\`
 
 ### Building an icon vocabulary
 

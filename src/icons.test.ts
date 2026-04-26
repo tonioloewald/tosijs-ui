@@ -1,5 +1,13 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
-import { icons, SvgIcon, svgIcon, defineIcons, iconRules } from './icons'
+import {
+  icons,
+  SvgIcon,
+  svgIcon,
+  defineIcons,
+  iconRules,
+  resolveIcon,
+  wrapIcon,
+} from './icons'
 
 describe('icons', () => {
   describe('icons proxy', () => {
@@ -466,6 +474,75 @@ describe('icons', () => {
       const icon = icons.spin_180Star()
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
       expect(icon.querySelector('svg')).toBeTruthy()
+    })
+  })
+
+  describe('resolveIcon', () => {
+    test('resolves a plain icon', () => {
+      const icon = resolveIcon('check', [])
+      expect(icon).toBeInstanceOf(SVGElement)
+    })
+
+    test('resolves a redirect', () => {
+      const icon = resolveIcon('chevronDown', [])
+      expect(icon).toBeDefined()
+      expect(icon.querySelector('svg') || icon).toBeTruthy()
+    })
+
+    test('resolves a composition', () => {
+      const icon = resolveIcon('unLock', [])
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+
+    test('resolves suffixes', () => {
+      const icon = resolveIcon('lock50o', [])
+      expect((icon as HTMLElement).style.opacity).toBe('0.5')
+    })
+
+    test('resolves stacking', () => {
+      const icon = resolveIcon('lock$shield', [])
+      expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+
+    test('strips trailing underscore', () => {
+      const icon = resolveIcon('check_', [])
+      expect(icon).toBeInstanceOf(SVGElement)
+    })
+  })
+
+  describe('wrapIcon', () => {
+    test('creates a composite span', () => {
+      const svg = resolveIcon('check', [])
+      const wrapper = wrapIcon('test', [], svg)
+      expect(wrapper.tagName).toBe('SPAN')
+      expect(wrapper.classList.contains('tosi-icon-composite')).toBe(true)
+    })
+
+    test('sets data-icon attribute', () => {
+      const svg = resolveIcon('check', [])
+      const wrapper = wrapIcon('myIcon', [], svg)
+      expect(wrapper.dataset.icon).toBe('myIcon')
+    })
+
+    test('sets pointer-events none', () => {
+      const svg = resolveIcon('check', [])
+      const wrapper = wrapIcon('test', [], svg)
+      expect(wrapper.style.pointerEvents).toBe('none')
+    })
+
+    test('accepts multiple children', () => {
+      const svg1 = resolveIcon('check', [])
+      const svg2 = resolveIcon('x', [])
+      const wrapper = wrapIcon('test', [], svg1, svg2)
+      expect(wrapper.children.length).toBe(2)
+    })
+
+    test('merges style from parts', () => {
+      const svg = resolveIcon('check', [])
+      const wrapper = wrapIcon('test', [{ style: { opacity: '0.5' } }], svg)
+      expect(wrapper.style.opacity).toBe('0.5')
+      // Original styles preserved
+      expect(wrapper.style.pointerEvents).toBe('none')
     })
   })
 
