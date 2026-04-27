@@ -825,7 +825,10 @@ export function resolveIcon(prop, parts) {
         const segments = prop.split('$');
         // Last segment is the base (sets the size), rest are overlays
         const base = resolveIcon(segments[segments.length - 1], []);
-        const overlays = segments.slice(0, -1).map((name) => {
+        const overlays = segments
+            .slice(0, -1)
+            .reverse()
+            .map((name) => {
             const icon = resolveIcon(name, []);
             Object.assign(icon.style, {
                 position: 'absolute',

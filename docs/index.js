@@ -24165,7 +24165,7 @@ function resolveIcon(prop, parts) {
   if (prop.includes("$")) {
     const segments = prop.split("$");
     const base = resolveIcon(segments[segments.length - 1], []);
-    const overlays = segments.slice(0, -1).map((name2) => {
+    const overlays = segments.slice(0, -1).reverse().map((name2) => {
       const icon = resolveIcon(name2, []);
       Object.assign(icon.style, {
         position: "absolute",

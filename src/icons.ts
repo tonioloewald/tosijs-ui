@@ -870,16 +870,19 @@ export function resolveIcon(prop: string, parts: ElementPart[]): Element {
     const segments = prop.split('$')
     // Last segment is the base (sets the size), rest are overlays
     const base = resolveIcon(segments[segments.length - 1], [])
-    const overlays = segments.slice(0, -1).map((name) => {
-      const icon = resolveIcon(name, [])
-      Object.assign((icon as HTMLElement).style, {
-        position: 'absolute',
-        inset: '0',
-        width: '100%',
-        height: '100%',
+    const overlays = segments
+      .slice(0, -1)
+      .reverse()
+      .map((name) => {
+        const icon = resolveIcon(name, [])
+        Object.assign((icon as HTMLElement).style, {
+          position: 'absolute',
+          inset: '0',
+          width: '100%',
+          height: '100%',
+        })
+        return icon
       })
-      return icon
-    })
     return wrapIcon(prop, parts, base as Element, ...(overlays as Element[]))
   }
 
