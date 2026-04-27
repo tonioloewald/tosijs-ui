@@ -331,6 +331,19 @@ describe('icons', () => {
       expect(svgs.length).toBe(3)
     })
 
+    test('triple stack z-order: first segment on top', () => {
+      const icon = icons['star$lock$shield']()
+      const children = Array.from(icon.children) as HTMLElement[]
+      // DOM order: shield (base, first), lock (middle), star (top, last)
+      // Last child = highest z = the first segment in the name
+      expect(children.length).toBe(3)
+      // Base (shield) has no absolute positioning
+      expect(children[0].style.position).not.toBe('absolute')
+      // Middle and top have absolute positioning
+      expect(children[1].style.position).toBe('absolute')
+      expect(children[2].style.position).toBe('absolute')
+    })
+
     test('stacking with digit-ending icon', () => {
       const icon = icons['lock$edit2_50o']()
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
