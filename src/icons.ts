@@ -819,11 +819,7 @@ function parseStyleSuffixes(name: string): {
   const style: Partial<CSSStyleDeclaration> = {}
   const suffixes = match[0].match(/_?\d+[osxyr]|[01]f|_[a-zA-Z0-9]+[FS]|\d+W/g)!
   if (!suffixes) return null
-  let tx = ''
-  let ty = ''
-  let scale = ''
-  let rotate = ''
-  let flip = ''
+  const transforms: string[] = []
   for (const s of suffixes) {
     const code = s[s.length - 1]
     if (code === 'F' || code === 'S') {
@@ -844,26 +840,25 @@ function parseStyleSuffixes(name: string): {
           style.opacity = String(val / 100)
           break
         case 's':
-          scale = `scale(${val / 100})`
+          transforms.push(`scale(${val / 100})`)
           break
         case 'x':
-          tx = `translateX(${val}%)`
+          transforms.push(`translateX(${val}%)`)
           break
         case 'y':
-          ty = `translateY(${val}%)`
+          transforms.push(`translateY(${val}%)`)
           break
         case 'r':
-          rotate = `rotate(${val}deg)`
+          transforms.push(`rotate(${val}deg)`)
           break
         case 'f':
-          flip = val === 0 ? 'scaleX(-1)' : 'scaleY(-1)'
+          transforms.push(val === 0 ? 'scaleX(-1)' : 'scaleY(-1)')
           break
       }
     }
   }
-  const transform = [rotate, flip, scale, tx, ty].filter(Boolean).join(' ')
-  if (transform) {
-    style.transform = transform
+  if (transforms.length > 0) {
+    style.transform = transforms.join(' ')
     style.transformOrigin = '50% 50%'
   }
   return { baseName, style }
