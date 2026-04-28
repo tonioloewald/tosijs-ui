@@ -37,7 +37,7 @@ async function prebuild() {
   await $`rm -rf ${PUBLIC}`.text()
   await $`mkdir ${PUBLIC}`.text()
   extractDocs({
-    paths: ['src', 'README.md', 'bin'],
+    paths: ['src', 'README.md', 'bin', 'icons'],
     output: 'demo/docs.json',
   })
   await $`bun ./bin/make-icon-data.js`.text()

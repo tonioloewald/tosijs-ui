@@ -490,7 +490,6 @@ a single SVG. `svg2DataUrl()` will render only the base icon and log a
 console error. Simple suffix transforms and plain icons work normally
 with `svg2DataUrl`.
 
-
 ## Missing Icons
 
 If you ask for an icon that isn't defined, the `icons` proxy will print a warning to console
@@ -811,7 +810,9 @@ function parseStyleSuffixes(name: string): {
       if (rule.prefix instanceof RegExp) {
         return rule.prefix.test(baseName)
       }
-      return baseName.startsWith(rule.prefix) && baseName.length > rule.prefix.length
+      return (
+        baseName.startsWith(rule.prefix) && baseName.length > rule.prefix.length
+      )
     })
     if (!matchesRule) return null
   }
