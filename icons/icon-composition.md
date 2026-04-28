@@ -37,7 +37,7 @@ const ideas = [
   '(and sunglasses):tosiHat$glasses$coat$tosi',
   'Looking for the:tosiHat$glasses4y$coat$tosi',
   'Big Quote:messageCircle80s70x_60y1W_fffF$tosiHat$glasses4y$coat$tosi',
-  'build system:tool0f_40x30y_fffF$settings50o',
+  'build system:tool0f_50x20y_fffF$settings50o',
   'Not Facebook:slash_f00S$facebook_237F75s50o',
   'flip your lid:hat1f',
   'pin',
@@ -115,7 +115,7 @@ preview.append(
   padding: 20px;
 }
 
-.preview .suzy tosi-icon {
+.preview .suzy * {
   z-index: 2;
 }
 

@@ -42172,7 +42172,7 @@ preview.append(
   padding: 20px;
 }
 
-.preview .suzy tosi-icon {
+.preview .suzy * {
   z-index: 2;
 }
 
