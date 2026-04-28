@@ -67,6 +67,25 @@ describe('icons', () => {
       expect(icon).toBeInstanceOf(SVGElement)
     })
 
+    test('uniquifies IDs across instances', () => {
+      // Define an icon with internal IDs (clipPath, gradient, etc.)
+      defineIcons({
+        testClipIcon:
+          '<svg viewBox="0 0 24 24"><defs><clipPath id="clip1"><rect width="24" height="24"/></clipPath></defs><g clip-path="url(#clip1)"><circle cx="12" cy="12" r="10"/></g></svg>',
+      })
+      const icon1 = icons.testClipIcon()
+      const icon2 = icons.testClipIcon()
+      const clip1 = icon1.querySelector('[id^="tosi_svg_id_"]')
+      const clip2 = icon2.querySelector('[id^="tosi_svg_id_"]')
+      expect(clip1).toBeTruthy()
+      expect(clip2).toBeTruthy()
+      // IDs should be different
+      expect(clip1!.id).not.toBe(clip2!.id)
+      // url references should be updated
+      const g1 = icon1.querySelector('g[clip-path]')
+      expect(g1?.getAttribute('clip-path')).toBe(`url(#${clip1!.id})`)
+    })
+
     test('accepts class attribute', () => {
       const icon = icons.check({ class: 'my-custom-class' })
       expect(icon.classList.contains('my-custom-class')).toBe(true)

@@ -23979,10 +23979,30 @@ var iconRules = [
     apply: (baseName) => `search80s30x30y$${baseName}50o`
   }
 ];
+var iconIdCounter = 0;
 function makeIcon(spec, parts) {
   const div = I.div();
   div.innerHTML = spec;
   const sourceSvg = div.querySelector("svg");
+  const idEls = sourceSvg.querySelectorAll("[id]");
+  if (idEls.length > 0) {
+    const idMap = new Map;
+    for (const el of idEls) {
+      const oldId = el.id;
+      const newId = `tosi_svg_id_${++iconIdCounter}`;
+      idMap.set(oldId, newId);
+      el.id = newId;
+    }
+    const html = sourceSvg.innerHTML;
+    let updated = html;
+    for (const [oldId, newId] of idMap) {
+      const escaped = oldId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      updated = updated.replace(new RegExp(`url\\(#${escaped}\\)`, "g"), `url(#${newId})`).replace(new RegExp(`href="#${escaped}"`, "g"), `href="#${newId}"`);
+    }
+    if (updated !== html) {
+      sourceSvg.innerHTML = updated;
+    }
+  }
   const classes = new Set(sourceSvg.classList);
   classes.add("tosi-icon");
   const svg = ZM.svg({
@@ -34599,7 +34619,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.5.12";
+var version = "1.5.13";
 // src/tooltip.ts
 var { span: span18 } = I;
 var tooltipFloat = null;

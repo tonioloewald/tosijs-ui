@@ -616,10 +616,34 @@ export const iconRules = [
         apply: (baseName) => `search80s30x30y$${baseName}50o`,
     },
 ];
+let iconIdCounter = 0;
 function makeIcon(spec, parts) {
     const div = elements.div();
     div.innerHTML = spec;
     const sourceSvg = div.querySelector('svg');
+    // Uniquify IDs (clipPath, mask, gradient, etc.) to prevent collisions
+    const idEls = sourceSvg.querySelectorAll('[id]');
+    if (idEls.length > 0) {
+        const idMap = new Map();
+        for (const el of idEls) {
+            const oldId = el.id;
+            const newId = `tosi_svg_id_${++iconIdCounter}`;
+            idMap.set(oldId, newId);
+            el.id = newId;
+        }
+        // Update all url(#...) and href references
+        const html = sourceSvg.innerHTML;
+        let updated = html;
+        for (const [oldId, newId] of idMap) {
+            const escaped = oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            updated = updated
+                .replace(new RegExp(`url\\(#${escaped}\\)`, 'g'), `url(#${newId})`)
+                .replace(new RegExp(`href="#${escaped}"`, 'g'), `href="#${newId}"`);
+        }
+        if (updated !== html) {
+            sourceSvg.innerHTML = updated;
+        }
+    }
     const classes = new Set(sourceSvg.classList);
     classes.add('tosi-icon');
     const svg = svgElements.svg({
