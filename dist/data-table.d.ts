@@ -35,6 +35,7 @@ export declare class TosiTable extends WebComponent {
             overflow: string;
             height: string;
             overscrollBehavior: string;
+            alignContent: string;
         };
         ':host .th, :host .td': {
             overflow: string;

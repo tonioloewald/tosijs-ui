@@ -26594,7 +26594,8 @@ class TosiTable extends g {
     ":host .grid": {
       overflow: "auto",
       height: "100%",
-      overscrollBehavior: "none"
+      overscrollBehavior: "none",
+      alignContent: "start"
     },
     ":host .th, :host .td": {
       overflow: "hidden",

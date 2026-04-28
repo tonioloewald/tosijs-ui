@@ -516,6 +516,7 @@ export class TosiTable extends WebComponent {
       overflow: 'auto',
       height: '100%',
       overscrollBehavior: 'none',
+      alignContent: 'start',
     },
     ':host .th, :host .td': {
       overflow: 'hidden',
