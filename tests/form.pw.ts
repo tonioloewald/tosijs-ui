@@ -10,5 +10,5 @@ test('forms work', async ({ page }) => {
   await expect(page.locator('h1')).toHaveText('forms')
 
   await expect(page.getByLabel('Required Field')).toHaveValue('')
-  // await expect(page.locator('xin-form')).toBeVisible()
+  // await expect(page.locator('tosi-form')).toBeVisible()
 })
