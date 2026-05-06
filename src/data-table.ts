@@ -316,6 +316,54 @@ preview.append(table)
   font-variant-numeric: tabular-nums;
 }
 ```
+```test
+const tables = document.querySelectorAll('tosi-table')
+const table = tables[tables.length - 1]
+await new Promise(resolve => {
+  const check = () => {
+    if (table.querySelector('.pinned-bottom')) return resolve()
+    setTimeout(check, 100)
+  }
+  check()
+})
+
+test('pinned row honours dataCell, rowRendered, getCells, getItem, selection', () => {
+  const totals = table.array[table.array.length - 1]
+  const pinnedCells = Array.from(table.querySelectorAll('.pinned-bottom'))
+
+  // Sanity: number of pinned cells equals number of visible columns
+  expect(pinnedCells.length).toBe(table.visibleColumns.length)
+
+  // dataCell honoured: numeric columns kept their `num-cell` class, and the
+  // _actions column rendered its <button>
+  const numCells = pinnedCells.filter(c => c.classList.contains('num-cell'))
+  expect(numCells.length).toBeGreaterThan(0)
+  expect(pinnedCells.some(c => c.tagName === 'BUTTON')).toBe(true)
+
+  // rowRendered fired: totals row is negative on average, so all cells of
+  // this row should carry `row-negative`
+  const total = Object.keys(totals)
+    .filter(k => typeof totals[k] === 'number')
+    .reduce((s, k) => s + totals[k], 0)
+  if (total < 0) {
+    expect(pinnedCells.every(c => c.classList.contains('row-negative'))).toBe(true)
+  }
+
+  // getCells / getItem round-trip works for pinned items
+  const cellsForTotals = table.getCells(totals)
+  expect(cellsForTotals?.length).toBe(table.visibleColumns.length)
+  expect(table.getItem(cellsForTotals[0])).toBe(totals)
+
+  // Selection on a pinned row applies aria-selected to every cell
+  table.multiple = true
+  table.deSelect()
+  table.selectRow(totals)
+  expect(cellsForTotals.every(c => c.hasAttribute('aria-selected'))).toBe(true)
+
+  table.deSelect()
+  expect(cellsForTotals.some(c => c.hasAttribute('aria-selected'))).toBe(false)
+})
+```
 
 ## Selection
 
@@ -651,6 +699,15 @@ export class TosiTable extends WebComponent {
   maxVisibleRows = 10000
 
   private _grid: HTMLElement | null = null
+  // Pinned rows live outside the listBinding's virtual window, so we keep a
+  // side-table for getCells, getItem, and click-to-select to traverse.
+  private pinnedItemToCells = new Map<any, HTMLElement[]>()
+  private pinnedCellToItem = new WeakMap<Element, any>()
+
+  private resolvePinnedItem(target: Element): any {
+    const cell = target.closest('.pinned-top, .pinned-bottom')
+    return cell ? this.pinnedCellToItem.get(cell) : undefined
+  }
 
   get value(): TableData {
     return {
@@ -884,35 +941,57 @@ export class TosiTable extends WebComponent {
     rowHeight: number,
     startRowIndex: number
   ): HTMLElement[] {
-    const cells: HTMLElement[] = []
+    const allCells: HTMLElement[] = []
+    const selectBindingFn = this.selectBinding
+    const { rowRendered } = this
     for (let r = 0; r < rows.length; r++) {
       const rowItem = rows[r]
       const offset =
         pin === 'top'
           ? (r + 1) * rowHeight + 'px'
           : (rows.length - 1 - r) * rowHeight + 'px'
+      const rowCells: HTMLElement[] = []
       for (let c = 0; c < cols.length; c++) {
         const col = cols[c]
         const si = stickyInfo[c]
-        cells.push(
-          span(
+        const style = this.cellStyle(col, si, {
+          position: 'sticky',
+          [pin]: offset,
+        })
+        let cell: HTMLElement
+        if (col.dataCell !== undefined) {
+          cell = col.dataCell(col) as HTMLElement
+          this.applyPinnedToCustomCell(cell, c, si, style)
+          cell.classList.add(`pinned-${pin}`)
+          cell.setAttribute('aria-rowindex', String(startRowIndex + r + 1))
+        } else {
+          cell = span(
             {
               class: this.cellClasses(`td pinned-${pin}`, si),
               role: 'gridcell',
               tabindex: -1,
               ariaRowindex: String(startRowIndex + r + 1),
               ariaColindex: String(c + 1),
-              style: this.cellStyle(col, si, {
-                position: 'sticky',
-                [pin]: offset,
-              }),
+              style,
             },
             String(rowItem[col.prop] ?? '')
           )
-        )
+        }
+        // Track cell → item so click-to-select and updateSelectionVisuals
+        // can resolve pinned cells (which aren't in the listBinding).
+        this.pinnedCellToItem.set(cell, rowItem)
+        // Apply any pre-existing selection state.
+        selectBindingFn(cell, rowItem)
+        rowCells.push(cell)
+        allCells.push(cell)
+      }
+      // Track cells per item so getCells works for pinned rows
+      this.pinnedItemToCells.set(tosiValue(rowItem), rowCells)
+      if (rowRendered) {
+        rowRendered(rowItem, rowCells)
       }
     }
-    return cells
+    return allCells
   }
 
   getColumn(event: any): ColumnOptions | undefined {
@@ -1007,7 +1086,8 @@ export class TosiTable extends WebComponent {
   private updateSelectionVisuals() {
     if (!this._grid) return
     for (const elt of Array.from(this._grid.children)) {
-      const item = getListItem(elt)
+      const item =
+        getListItem(elt) ?? this.pinnedCellToItem.get(elt as Element)
       if (item != null) {
         this.selectBinding(elt, item)
       }
@@ -1024,7 +1104,8 @@ export class TosiTable extends WebComponent {
     if (!(target instanceof HTMLElement)) {
       return
     }
-    const pickedItem = getListItem(target)
+    const pickedItem =
+      getListItem(target) ?? this.resolvePinnedItem(target)
     if (pickedItem == null) {
       return
     }
@@ -1423,18 +1504,19 @@ export class TosiTable extends WebComponent {
 
   getCells(itemOrCell: any): HTMLElement[] | undefined {
     if (!this._grid) return undefined
+    const item =
+      itemOrCell instanceof Element ? this.getItem(itemOrCell) : itemOrCell
+    if (item == null) return undefined
+    const key = tosiValue(item)
+    const pinned = this.pinnedItemToCells.get(key)
+    if (pinned) return pinned
     const binding = getListBinding(this._grid)
     if (!binding) return undefined
-    const item =
-      itemOrCell instanceof Element ? getListItem(itemOrCell) : itemOrCell
-    if (item == null) return undefined
-    return binding.itemToElement.get(tosiValue(item)) as
-      | HTMLElement[]
-      | undefined
+    return binding.itemToElement.get(key) as HTMLElement[] | undefined
   }
 
   getItem(cell: Element): any {
-    return getListItem(cell)
+    return getListItem(cell) ?? this.resolvePinnedItem(cell)
   }
 
   private draggedColumn?: ColumnOptions
@@ -1460,6 +1542,7 @@ export class TosiTable extends WebComponent {
   render() {
     super.render()
     this.textContent = ''
+    this.pinnedItemToCells.clear()
 
     // Prepare data
     const pinnedTopData =
