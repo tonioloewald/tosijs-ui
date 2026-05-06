@@ -34623,7 +34623,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.5.14";
+var version = "1.5.15";
 // src/tooltip.ts
 var { span: span18 } = I;
 var tooltipFloat = null;
@@ -41109,9 +41109,17 @@ test('table renders with data', () => {
 })
 
 test('row selection: data model + aria-selected on every cell (incl. custom dataCell)', async () => {
-  // Use visibleRows so the items are stamped in the virtualised window
-  table.deSelect()
+  // Wait for listBinding to stamp DOM cells for the visible window
   const items = table.visibleRows
+  await new Promise(resolve => {
+    const check = () => {
+      if (table.getCells(items[0]) && table.getCells(items[1])) return resolve()
+      setTimeout(check, 100)
+    }
+    check()
+  })
+
+  table.deSelect()
   table.selectRow(items[0])
   table.selectRow(items[1])
 
@@ -41125,8 +41133,8 @@ test('row selection: data model + aria-selected on every cell (incl. custom data
   // skipped by selectBinding).
   const cells0 = table.getCells(items[0])
   const cells1 = table.getCells(items[1])
-  expect(cells0?.length).toBe(table.visibleColumns.length)
-  expect(cells1?.length).toBe(table.visibleColumns.length)
+  expect(cells0.length).toBe(table.visibleColumns.length)
+  expect(cells1.length).toBe(table.visibleColumns.length)
   for (const c of cells0) expect(c.hasAttribute('aria-selected')).toBe(true)
   for (const c of cells1) expect(c.hasAttribute('aria-selected')).toBe(true)
   // The \`name\` column (index 1) uses a dataCell input — confirm the custom
