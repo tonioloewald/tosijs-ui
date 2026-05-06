@@ -96,9 +96,10 @@ test('table renders with data', () => {
   expect(table.array.length).toBeGreaterThan(0)
 })
 
-test('row selection via data model', () => {
-  const items = table.array
+test('row selection: data model + aria-selected on every cell (incl. custom dataCell)', async () => {
+  // Use visibleRows so the items are stamped in the virtualised window
   table.deSelect()
+  const items = table.visibleRows
   table.selectRow(items[0])
   table.selectRow(items[1])
 
@@ -107,11 +108,27 @@ test('row selection via data model', () => {
   expect(items[1][table.selectedKey]).toBe(true)
   expect(table.selectedRows.length).toBe(2)
 
-  // Deselect and verify data model
+  // DOM: every cell of a selected row has aria-selected, including the
+  // custom-rendered `name` column (regression test for custom cells being
+  // skipped by selectBinding).
+  const cells0 = table.getCells(items[0])
+  const cells1 = table.getCells(items[1])
+  expect(cells0?.length).toBe(table.visibleColumns.length)
+  expect(cells1?.length).toBe(table.visibleColumns.length)
+  for (const c of cells0) expect(c.hasAttribute('aria-selected')).toBe(true)
+  for (const c of cells1) expect(c.hasAttribute('aria-selected')).toBe(true)
+  // The `name` column (index 1) uses a dataCell input — confirm the custom
+  // element is the actual cell and that it carries aria-selected.
+  expect(cells0[1].tagName).toBe('INPUT')
+  expect(cells0[1].hasAttribute('aria-selected')).toBe(true)
+
+  // Deselect and verify both data model and DOM clear
   table.deSelect()
   expect(table.selectedRows.length).toBe(0)
   expect(items[0][table.selectedKey]).not.toBe(true)
   expect(items[1][table.selectedKey]).not.toBe(true)
+  for (const c of cells0) expect(c.hasAttribute('aria-selected')).toBe(false)
+  for (const c of cells1) expect(c.hasAttribute('aria-selected')).toBe(false)
 })
 
 test('getCells and getItem', async () => {
@@ -1589,7 +1606,14 @@ export class TosiTable extends WebComponent {
             style
           )
           if (rowRenderedBinding && colIndex === lastCol) {
-            bind(customCell, item, { toDOM: rowRenderedBinding })
+            bind(customCell, item, {
+              toDOM(cell: Element) {
+                if (selectEnabled) selectBindingFn(cell, getListItem(cell))
+                rowRenderedBinding(cell)
+              },
+            })
+          } else if (selectEnabled) {
+            bind(customCell, item, { toDOM: selectBindingFn })
           }
           return customCell
         }
