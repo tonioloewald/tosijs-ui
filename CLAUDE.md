@@ -63,6 +63,7 @@ No semicolons, single quotes, 2-space indent, trailing commas (es5). Enforced by
 6. Bundles IIFE version (tosijs + marked included) → `dist/iife.js`
 7. Reports gzipped bundle sizes
 8. Builds demo site → `docs/`
+9. Generates `llms.txt` (agent-discoverability index, shipped in the published package) via `bin/make-llms-txt.ts`
 
 The dev server watches:
 - `src/` and `README.md` → triggers doc extraction + rebuild
@@ -180,7 +181,7 @@ Several components support native form integration via `static formAssociated = 
 - `formDisabledCallback()` / `formResetCallback()` lifecycle methods
 - Integration with both native `<form>` and `<tosi-form>`
 
-Components with form association: `TosiSelect`, `TosiSegmented`, `TosiRating`, `TosiMonth`, `TosiTagList`, `RichText`, `MapBox`.
+To find form-associated components, grep `src/` for `formAssociated = true`.
 
 ### Documentation System
 
@@ -217,10 +218,12 @@ How grouping works (`insert-examples.ts`):
 
 ### Key Dependencies
 
-- `tosijs`: Core component framework (peer dep ^1.2.0, dev dep ^1.4.0)
-- `marked`: Markdown parsing (peer dependency, ^16.4.2)
-- `sucrase`: TypeScript transform for live examples (optional peer dependency, ^3.35.0)
-- `happy-dom`: DOM simulation for unit tests (dev dependency)
+See `package.json` for current versions. The notable ones:
+
+- `tosijs`: Core component framework (peer + dev dep)
+- `marked`: Markdown parsing (peer dep)
+- `sucrase`: TypeScript transform for live examples (optional peer dep)
+- `happy-dom`: DOM simulation for unit tests (dev dep)
 - Components use custom HTML tags with `tosi-` prefix (e.g., `<tosi-select>`, `<tosi-dialog>`)
 - IIFE build (`src/index-iife.ts`) bundles tosijs + marked + tosijs-ui, exposes `xinjs` and `xinjsui` globals (legacy names kept for backward compatibility; `window.xinjs` = tosijs, `window.xinjsui` = tosijs-ui)
 
@@ -459,6 +462,14 @@ Classes managed by the library:
 - `.drag-source` — element being dragged
 - `.drag-target` — valid drop target for current drag
 - `.drag-over` — drop target currently hovered
+
+### Icon Composition
+
+The icon system (introduced in 1.5.10) supports a compact composition language for combining and modifying icons inline. SVG sources live in `icons/` (subdirs `color/`, `filled/`, `stroked/`); `bin/make-icon-data.js` regenerates `src/icon-data.ts` when files there change.
+
+The composition language uses single-character suffixes on icon names — e.g. size, fill/stroke color, x/y offset, rotation, weight — and `$` to stack multiple icons into one composite. Examples like `tool_fffF70s50x$tosi` (a tool overlaid on a person), `spin90Loader` (a rotated spinning loader), and `messageCircle80s70x_60y1W_fffF$tosiHat$glasses4y$coat$tosi` (a multi-layer composite) appear throughout the demos.
+
+See `icons/icon-composition.md` for the full grammar — suffix codes (`o/s/r/f/x/y/F/S/W`), stacking (`$`), prefix rules, redirects, and `spin`. When working with icons, read that file first rather than guessing the syntax.
 
 ### Component Philosophy
 
