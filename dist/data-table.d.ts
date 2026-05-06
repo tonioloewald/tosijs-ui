@@ -130,6 +130,9 @@ export declare class TosiTable extends WebComponent {
     private selectBinding;
     maxVisibleRows: number;
     private _grid;
+    private pinnedItemToCells;
+    private pinnedCellToItem;
+    private resolvePinnedItem;
     get value(): TableData;
     set value(data: TableData);
     private rowData;
