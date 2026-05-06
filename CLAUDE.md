@@ -91,7 +91,6 @@ New components must be added to `src/index.ts`.
 
 Example pattern:
 ```typescript
-// Typed parts for accessing named sub-elements via this.parts.*
 interface WidgetParts extends PartsMap {
   button: HTMLButtonElement
   label: HTMLSpanElement
@@ -100,7 +99,6 @@ interface WidgetParts extends PartsMap {
 export class TosiWidget extends Component<WidgetParts> {
   static preferredTagName = 'tosi-widget'
 
-  // Use shadowStyleSpec for shadow DOM styles, lightStyleSpec for global/light DOM styles
   static shadowStyleSpec = { /* shadow DOM styles */ }
   // static lightStyleSpec = { /* light DOM styles */ }
 
@@ -109,18 +107,14 @@ export class TosiWidget extends Component<WidgetParts> {
     disabled: false,
   }
 
-  // content returns element tree; use { part: 'name' } to register parts
   content = () => [
     button({ part: 'button' }, span({ part: 'label' }, 'Click'))
   ]
 
   render(): void {
     super.render()
-    // Access named parts via this.parts — never query the DOM manually
     this.parts.label.textContent = this.myProperty
   }
-
-  // Set content = null for components that build DOM programmatically in render()
 }
 
 export const tosiWidget = TosiWidget.elementCreator() as ElementCreator<TosiWidget>
