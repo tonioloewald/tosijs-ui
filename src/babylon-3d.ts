@@ -80,6 +80,9 @@ preview.append(b3d({
 }
 ```
 
+> Note: for more involved 3d work there's [tosijs-3d](https://3d.tosijs.net),
+> a library of modular components for 3d development.
+
 You can access the `scene` and `engine` properties. You can also assign `sceneCreated`
 and `update` callbacks that will be executed when the scene is first initialized and
 before each update, respectively. (See the example, it does both.)

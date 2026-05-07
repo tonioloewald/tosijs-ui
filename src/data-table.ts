@@ -69,6 +69,9 @@ preview.append(table)
   margin: 0;
   border-radius: 0;
   box-shadow: none !important;
+}
+
+.preview input.td:focus {
   background: #fff4;
 }
 
@@ -339,6 +342,12 @@ test('pinned row honours dataCell, rowRendered, getCells, getItem, selection', (
   const numCells = pinnedCells.filter(c => c.classList.contains('num-cell'))
   expect(numCells.length).toBeGreaterThan(0)
   expect(pinnedCells.some(c => c.tagName === 'BUTTON')).toBe(true)
+
+  // numCell uses bindText: '^.<prop>' — confirm path-bindings resolved for
+  // pinned items (regression: pinned dataCells lacked a binding context).
+  const renderedTexts = numCells.map(c => c.textContent?.trim() ?? '')
+  expect(renderedTexts.every(t => t.length > 0)).toBe(true)
+  expect(renderedTexts.some(t => /^-?\d/.test(t))).toBe(true)
 
   // rowRendered fired: totals row is negative on average, so all cells of
   // this row should carry `row-negative`
@@ -706,11 +715,16 @@ export class TosiTable extends WebComponent {
 
   // Resolve the row item associated with a cell (or any element inside one),
   // whether it lives in the listBinding's virtual window or in a pinned row.
+  // Pinned cells take precedence: they may also have a tosi binding context
+  // attached (so dataCell path-bindings like `^.prop` resolve), but selection
+  // and getCells consumers expect the original raw item.
   private itemFor(cell: Element): any {
-    const item = getListItem(cell)
-    if (item != null) return item
     const pinned = cell.closest('.pinned-top, .pinned-bottom')
-    return pinned ? this.pinnedCellToItem.get(pinned) : undefined
+    if (pinned) {
+      const item = this.pinnedCellToItem.get(pinned)
+      if (item !== undefined) return item
+    }
+    return getListItem(cell)
   }
 
   // Resolve the cells of a row, whether the row is virtually scrolled or
@@ -1202,15 +1216,21 @@ export class TosiTable extends WebComponent {
     // Virtual data cells use visible-data-relative aria-rowindex (set by bindList)
     // Try pinned first, then virtual
     const cell = this._grid.querySelector(
-      `.pinned-top[aria-rowindex="${rowIndex + 1}"][aria-colindex="${colIndex + 1}"],` +
-      `.pinned-bottom[aria-rowindex="${rowIndex + 1}"][aria-colindex="${colIndex + 1}"]`
+      `.pinned-top[aria-rowindex="${rowIndex + 1}"][aria-colindex="${
+        colIndex + 1
+      }"],` +
+        `.pinned-bottom[aria-rowindex="${rowIndex + 1}"][aria-colindex="${
+          colIndex + 1
+        }"]`
     ) as HTMLElement | null
     if (cell) return cell
 
     // Virtual data cell: convert full-array index to visible-data index
     const dataRowIndex = rowIndex - this.pinnedTop
     return this._grid.querySelector(
-      `[aria-rowindex="${dataRowIndex + 1}"][aria-colindex="${colIndex + 1}"]:not(.pinned-top):not(.pinned-bottom)`
+      `[aria-rowindex="${dataRowIndex + 1}"][aria-colindex="${
+        colIndex + 1
+      }"]:not(.pinned-top):not(.pinned-bottom)`
     ) as HTMLElement | null
   }
 
@@ -1466,9 +1486,10 @@ export class TosiTable extends WebComponent {
     if (menu.length) {
       menu.push(null)
     }
-    const pinIcon = options.pinned === 'left'
-      ? 'pin'
-      : options.pinned === 'right'
+    const pinIcon =
+      options.pinned === 'left'
+        ? 'pin'
+        : options.pinned === 'right'
         ? 'pin0f'
         : 'pin50o'
     menu.push({
@@ -1544,7 +1565,8 @@ export class TosiTable extends WebComponent {
     const target = (event.target as HTMLElement).closest(
       '.drag-over'
     ) as HTMLElement
-    const colIndex = parseInt(target.getAttribute('aria-colindex') || '', 10) - 1
+    const colIndex =
+      parseInt(target.getAttribute('aria-colindex') || '', 10) - 1
     const dropped = this.visibleColumns[colIndex]
     const draggedIndex = this.columns.indexOf(this.draggedColumn!)
     const droppedIndex = this.columns.indexOf(dropped)
@@ -1572,9 +1594,7 @@ export class TosiTable extends WebComponent {
       this._array.length - this.pinnedBottom,
       this.pinnedTop + this.maxVisibleRows
     )
-    const visibleData = this.filter(
-      this._array.slice(this.pinnedTop, maxIndex)
-    )
+    const visibleData = this.filter(this._array.slice(this.pinnedTop, maxIndex))
     const { sort } = this
     if (sort) {
       visibleData.sort(sort)
@@ -1715,9 +1735,10 @@ export class TosiTable extends WebComponent {
         const si = stickyInfo[colIndex]
         const style = this.cellStyle(col, si)
         const isLast = colIndex === lastCol
-        const toDOM = lastCellToDOM && isLast
-          ? lastCellToDOM
-          : selectEnabled
+        const toDOM =
+          lastCellToDOM && isLast
+            ? lastCellToDOM
+            : selectEnabled
             ? selectBindingFn
             : null
 
