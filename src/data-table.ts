@@ -699,14 +699,29 @@ export class TosiTable extends WebComponent {
   maxVisibleRows = 10000
 
   private _grid: HTMLElement | null = null
-  // Pinned rows live outside the listBinding's virtual window, so we keep a
-  // side-table for getCells, getItem, and click-to-select to traverse.
+  // Pinned rows live outside the listBinding's virtual window, so we keep
+  // side-tables that itemFor/cellsFor consult alongside the listBinding.
   private pinnedItemToCells = new Map<any, HTMLElement[]>()
   private pinnedCellToItem = new WeakMap<Element, any>()
 
-  private resolvePinnedItem(target: Element): any {
-    const cell = target.closest('.pinned-top, .pinned-bottom')
-    return cell ? this.pinnedCellToItem.get(cell) : undefined
+  // Resolve the row item associated with a cell (or any element inside one),
+  // whether it lives in the listBinding's virtual window or in a pinned row.
+  private itemFor(cell: Element): any {
+    const item = getListItem(cell)
+    if (item != null) return item
+    const pinned = cell.closest('.pinned-top, .pinned-bottom')
+    return pinned ? this.pinnedCellToItem.get(pinned) : undefined
+  }
+
+  // Resolve the cells of a row, whether the row is virtually scrolled or
+  // pinned. Returns undefined if the row isn't currently stamped in the DOM.
+  private cellsFor(item: any): HTMLElement[] | undefined {
+    if (!this._grid) return undefined
+    const key = tosiValue(item)
+    const pinned = this.pinnedItemToCells.get(key)
+    if (pinned) return pinned
+    const binding = getListBinding(this._grid)
+    return binding?.itemToElement.get(key) as HTMLElement[] | undefined
   }
 
   get value(): TableData {
@@ -1086,8 +1101,7 @@ export class TosiTable extends WebComponent {
   private updateSelectionVisuals() {
     if (!this._grid) return
     for (const elt of Array.from(this._grid.children)) {
-      const item =
-        getListItem(elt) ?? this.pinnedCellToItem.get(elt as Element)
+      const item = this.itemFor(elt)
       if (item != null) {
         this.selectBinding(elt, item)
       }
@@ -1104,8 +1118,7 @@ export class TosiTable extends WebComponent {
     if (!(target instanceof HTMLElement)) {
       return
     }
-    const pickedItem =
-      getListItem(target) ?? this.resolvePinnedItem(target)
+    const pickedItem = this.itemFor(target)
     if (pickedItem == null) {
       return
     }
@@ -1503,20 +1516,13 @@ export class TosiTable extends WebComponent {
   }
 
   getCells(itemOrCell: any): HTMLElement[] | undefined {
-    if (!this._grid) return undefined
     const item =
-      itemOrCell instanceof Element ? this.getItem(itemOrCell) : itemOrCell
-    if (item == null) return undefined
-    const key = tosiValue(item)
-    const pinned = this.pinnedItemToCells.get(key)
-    if (pinned) return pinned
-    const binding = getListBinding(this._grid)
-    if (!binding) return undefined
-    return binding.itemToElement.get(key) as HTMLElement[] | undefined
+      itemOrCell instanceof Element ? this.itemFor(itemOrCell) : itemOrCell
+    return item == null ? undefined : this.cellsFor(item)
   }
 
   getItem(cell: Element): any {
-    return getListItem(cell) ?? this.resolvePinnedItem(cell)
+    return this.itemFor(cell)
   }
 
   private draggedColumn?: ColumnOptions
