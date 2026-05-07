@@ -1688,11 +1688,25 @@ export class TosiTable extends WebComponent {
           }
         }
       : null
+    // Combined toDOM for the last cell of a row when rowRendered is wired up:
+    // refresh selection state, then fire the user's rowRendered callback.
+    const lastCellToDOM = rowRenderedBinding
+      ? (cell: Element) => {
+          if (selectEnabled) selectBindingFn(cell, getListItem(cell))
+          rowRenderedBinding(cell)
+        }
+      : null
     const binding = (this.rowData.visible as any).listBinding(
       ({ span: s }: any, item: any, colIndex: number) => {
         const col = cols[colIndex]
         const si = stickyInfo[colIndex]
         const style = this.cellStyle(col, si)
+        const isLast = colIndex === lastCol
+        const toDOM = lastCellToDOM && isLast
+          ? lastCellToDOM
+          : selectEnabled
+            ? selectBindingFn
+            : null
 
         if (col.dataCell != null) {
           const customCell = col.dataCell(col)
@@ -1702,16 +1716,7 @@ export class TosiTable extends WebComponent {
             si,
             style
           )
-          if (rowRenderedBinding && colIndex === lastCol) {
-            bind(customCell, item, {
-              toDOM(cell: Element) {
-                if (selectEnabled) selectBindingFn(cell, getListItem(cell))
-                rowRenderedBinding(cell)
-              },
-            })
-          } else if (selectEnabled) {
-            bind(customCell, item, { toDOM: selectBindingFn })
-          }
+          if (toDOM) bind(customCell, item, { toDOM })
           return customCell
         }
 
@@ -1722,23 +1727,8 @@ export class TosiTable extends WebComponent {
           style,
           bindText: item[col.prop],
         }
-        if (selectEnabled) {
-          props.bind = {
-            value: item,
-            binding: { toDOM: selectBindingFn },
-          }
-        }
-        // Fire rowRendered on the last cell of each row
-        if (rowRenderedBinding && colIndex === lastCol) {
-          props.bind = {
-            value: item,
-            binding: {
-              toDOM(cell: Element) {
-                if (selectEnabled) selectBindingFn(cell, getListItem(cell))
-                rowRenderedBinding(cell)
-              },
-            },
-          }
+        if (toDOM) {
+          props.bind = { value: item, binding: { toDOM } }
         }
         return s(props)
       },
