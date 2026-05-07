@@ -936,7 +936,7 @@ export class TosiTable extends WebComponent {
     return style
   }
 
-  private applyPinnedToCustomCell(
+  private applyGridCellAttrs(
     cell: HTMLElement,
     colIndex: number,
     si: StickyInfo,
@@ -976,7 +976,7 @@ export class TosiTable extends WebComponent {
         let cell: HTMLElement
         if (col.dataCell !== undefined) {
           cell = col.dataCell(col) as HTMLElement
-          this.applyPinnedToCustomCell(cell, c, si, style)
+          this.applyGridCellAttrs(cell, c, si, style)
           cell.classList.add(`pinned-${pin}`)
           cell.setAttribute('aria-rowindex', String(startRowIndex + r + 1))
         } else {
@@ -1631,7 +1631,7 @@ export class TosiTable extends WebComponent {
 
       // Apply sticky to custom headerCell
       if (col.headerCell !== undefined) {
-        this.applyPinnedToCustomCell(
+        this.applyGridCellAttrs(
           cell as HTMLElement,
           i,
           si,
@@ -1696,7 +1696,7 @@ export class TosiTable extends WebComponent {
 
         if (col.dataCell != null) {
           const customCell = col.dataCell(col)
-          this.applyPinnedToCustomCell(
+          this.applyGridCellAttrs(
             customCell as HTMLElement,
             colIndex,
             si,
