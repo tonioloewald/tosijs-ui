@@ -948,6 +948,20 @@ export class TosiTable extends WebComponent {
     Object.assign(cell.style, style)
   }
 
+  // Construct a cell from col.dataCell() with grid-cell aria/classes/style
+  // applied. Caller is responsible for any row-level attributes (pinned class,
+  // aria-rowindex) and for wiring selection / rowRendered.
+  private buildCustomCell(
+    col: ColumnOptions,
+    colIndex: number,
+    si: StickyInfo,
+    style: Record<string, string>
+  ): HTMLElement {
+    const cell = col.dataCell!(col) as HTMLElement
+    this.applyGridCellAttrs(cell, colIndex, si, style)
+    return cell
+  }
+
   private buildPinnedCells(
     rows: any[],
     cols: ColumnOptions[],
@@ -975,8 +989,7 @@ export class TosiTable extends WebComponent {
         })
         let cell: HTMLElement
         if (col.dataCell !== undefined) {
-          cell = col.dataCell(col) as HTMLElement
-          this.applyGridCellAttrs(cell, c, si, style)
+          cell = this.buildCustomCell(col, c, si, style)
           cell.classList.add(`pinned-${pin}`)
           cell.setAttribute('aria-rowindex', String(startRowIndex + r + 1))
         } else {
@@ -1709,13 +1722,7 @@ export class TosiTable extends WebComponent {
             : null
 
         if (col.dataCell != null) {
-          const customCell = col.dataCell(col)
-          this.applyGridCellAttrs(
-            customCell as HTMLElement,
-            colIndex,
-            si,
-            style
-          )
+          const customCell = this.buildCustomCell(col, colIndex, si, style)
           if (toDOM) bind(customCell, item, { toDOM })
           return customCell
         }
