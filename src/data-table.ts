@@ -99,7 +99,7 @@ test('table renders with data', () => {
   expect(table.array.length).toBeGreaterThan(0)
 })
 
-test('row selection: data model + aria-selected on every cell (incl. custom dataCell)', async () => {
+test('row selection: data model + aria-selected on row (incl. custom dataCell)', async () => {
   // Wait for listBinding to stamp DOM cells for the visible window
   const items = table.visibleRows
   await new Promise(resolve => {
@@ -119,27 +119,28 @@ test('row selection: data model + aria-selected on every cell (incl. custom data
   expect(items[1][table.selectedKey]).toBe(true)
   expect(table.selectedRows.length).toBe(2)
 
-  // DOM: every cell of a selected row has aria-selected, including the
-  // custom-rendered `name` column (regression test for custom cells being
-  // skipped by selectBinding).
+  // DOM: aria-selected lives on the row element. CSS targets
+  // .tr[aria-selected="true"] .td to highlight cells.
   const cells0 = table.getCells(items[0])
   const cells1 = table.getCells(items[1])
   expect(cells0.length).toBe(table.visibleColumns.length)
   expect(cells1.length).toBe(table.visibleColumns.length)
-  for (const c of cells0) expect(c.hasAttribute('aria-selected')).toBe(true)
-  for (const c of cells1) expect(c.hasAttribute('aria-selected')).toBe(true)
+  const row0 = cells0[0].closest('.tr')
+  const row1 = cells1[0].closest('.tr')
+  expect(row0.hasAttribute('aria-selected')).toBe(true)
+  expect(row1.hasAttribute('aria-selected')).toBe(true)
   // The `name` column (index 1) uses a dataCell input — confirm the custom
-  // element is the actual cell and that it carries aria-selected.
+  // element is the actual cell living inside the same selected row.
   expect(cells0[1].tagName).toBe('INPUT')
-  expect(cells0[1].hasAttribute('aria-selected')).toBe(true)
+  expect(cells0[1].closest('.tr')).toBe(row0)
 
   // Deselect and verify both data model and DOM clear
   table.deSelect()
   expect(table.selectedRows.length).toBe(0)
   expect(items[0][table.selectedKey]).not.toBe(true)
   expect(items[1][table.selectedKey]).not.toBe(true)
-  for (const c of cells0) expect(c.hasAttribute('aria-selected')).toBe(false)
-  for (const c of cells1) expect(c.hasAttribute('aria-selected')).toBe(false)
+  expect(row0.hasAttribute('aria-selected')).toBe(false)
+  expect(row1.hasAttribute('aria-selected')).toBe(false)
 })
 
 test('getCells and getItem', async () => {
@@ -322,19 +323,27 @@ preview.append(table)
 ```test
 const tables = document.querySelectorAll('tosi-table')
 const table = tables[tables.length - 1]
+// Wait until the pinned row has been stamped AND its bindings have settled
+// (numeric cells show their text, the actions button is in place).
 await new Promise(resolve => {
   const check = () => {
-    if (table.querySelector('.pinned-bottom')) return resolve()
+    const row = table.querySelector('.tbody-pinned-bottom .tr')
+    if (
+      row &&
+      row.querySelector('button') &&
+      Array.from(row.children).some(c => c.classList.contains('num-cell') && c.textContent.trim().length > 0)
+    ) return resolve()
     setTimeout(check, 100)
   }
   check()
 })
 
-test('pinned row honours dataCell, rowRendered, getCells, getItem, selection', () => {
+test('pinned row goes through the same listBinding as virtual rows', () => {
   const totals = table.array[table.array.length - 1]
-  const pinnedCells = Array.from(table.querySelectorAll('.pinned-bottom'))
+  const pinnedRow = table.querySelector('.tbody-pinned-bottom .tr')
+  const pinnedCells = Array.from(pinnedRow.children)
 
-  // Sanity: number of pinned cells equals number of visible columns
+  // Sanity: same number of cells as visible columns
   expect(pinnedCells.length).toBe(table.visibleColumns.length)
 
   // dataCell honoured: numeric columns kept their `num-cell` class, and the
@@ -343,14 +352,14 @@ test('pinned row honours dataCell, rowRendered, getCells, getItem, selection', (
   expect(numCells.length).toBeGreaterThan(0)
   expect(pinnedCells.some(c => c.tagName === 'BUTTON')).toBe(true)
 
-  // numCell uses bindText: '^.<prop>' — confirm path-bindings resolved for
-  // pinned items (regression: pinned dataCells lacked a binding context).
+  // numCell uses bindText: '^.<prop>' — confirm path-bindings resolved
+  // (this requires the cell to live inside a list-bound row).
   const renderedTexts = numCells.map(c => c.textContent?.trim() ?? '')
   expect(renderedTexts.every(t => t.length > 0)).toBe(true)
   expect(renderedTexts.some(t => /^-?\d/.test(t))).toBe(true)
 
-  // rowRendered fired: totals row is negative on average, so all cells of
-  // this row should carry `row-negative`
+  // rowRendered fired: totals row may be negative on average; if so, every
+  // cell of this row should carry `row-negative`
   const total = Object.keys(totals)
     .filter(k => typeof totals[k] === 'number')
     .reduce((s, k) => s + totals[k], 0)
@@ -363,14 +372,13 @@ test('pinned row honours dataCell, rowRendered, getCells, getItem, selection', (
   expect(cellsForTotals?.length).toBe(table.visibleColumns.length)
   expect(table.getItem(cellsForTotals[0])).toBe(totals)
 
-  // Selection on a pinned row applies aria-selected to every cell
-  table.multiple = true
+  // Selection on a pinned row sets aria-selected on the row element
   table.deSelect()
   table.selectRow(totals)
-  expect(cellsForTotals.every(c => c.hasAttribute('aria-selected'))).toBe(true)
+  expect(pinnedRow.hasAttribute('aria-selected')).toBe(true)
 
   table.deSelect()
-  expect(cellsForTotals.some(c => c.hasAttribute('aria-selected'))).toBe(false)
+  expect(pinnedRow.hasAttribute('aria-selected')).toBe(false)
 })
 ```
 
@@ -583,6 +591,11 @@ interface StickyInfo {
 export class TosiTable extends WebComponent {
   static preferredTagName = 'tosi-table'
 
+  // Layout: host is a vertical flex of four regions — thead, optional pinned-top
+  // tbody, virtual tbody, optional pinned-bottom tbody. Only the virtual tbody
+  // scrolls vertically; horizontal scroll is shared via the host. Each row
+  // (.tr) is its own CSS grid keyed off --tosi-table-grid-columns, so column
+  // resize updates one variable and every row reflows.
   static lightStyleSpec = {
     ':host': {
       '--tosi-table-row-height': '32px',
@@ -590,15 +603,45 @@ export class TosiTable extends WebComponent {
       '--tosi-table-dragged-header-bg': '#0004',
       '--tosi-table-dragged-header-color': '#fff',
       '--tosi-table-drop-header-bg': '#fff4',
-      display: 'block',
-      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'auto hidden',
+      overscrollBehavior: 'none',
       background: varDefault.tosiTableBg('var(--tosi-bg, #fff)'),
     },
-    ':host .grid': {
-      overflow: 'auto',
-      height: '100%',
-      overscrollBehavior: 'none',
-      alignContent: 'start',
+    ':host .thead, :host .tbody': {
+      width: vars.tosiTableGridRowWidth,
+      flex: '0 0 auto',
+    },
+    ':host .thead': {
+      position: 'sticky',
+      top: '0',
+      zIndex: '2',
+      background: varDefault.tosiTableHeaderBg(
+        varDefault.tosiTableBg('var(--tosi-bg, #fff)')
+      ),
+    },
+    ':host .tbody-virtual': {
+      flex: '1 1 100px',
+      overflow: 'hidden auto',
+      minHeight: '100px',
+    },
+    ':host .tbody-pinned-top, :host .tbody-pinned-bottom': {
+      overflow: 'hidden',
+      background: varDefault.tosiTableBg('var(--tosi-bg, #fff)'),
+      position: 'sticky',
+      zIndex: '1',
+    },
+    ':host .tbody-pinned-top': {
+      top: vars.tosiTableRowHeight,
+    },
+    ':host .tbody-pinned-bottom': {
+      bottom: '0',
+    },
+    ':host .tr': {
+      display: 'grid',
+      gridTemplateColumns: vars.tosiTableGridColumns,
+      height: vars.tosiTableRowHeight,
     },
     ':host .th, :host .td': {
       overflow: 'hidden',
@@ -608,14 +651,6 @@ export class TosiTable extends WebComponent {
       alignItems: 'center',
       height: vars.tosiTableRowHeight,
       lineHeight: vars.tosiTableRowHeight,
-    },
-    ':host .th': {
-      position: 'sticky',
-      top: '0',
-      zIndex: '2',
-      background: varDefault.tosiTableHeaderBg(
-        varDefault.tosiTableBg('var(--tosi-bg, #fff)')
-      ),
     },
     ':host .col-pinned': {
       position: 'sticky',
@@ -628,22 +663,8 @@ export class TosiTable extends WebComponent {
         varDefault.tosiTableBg('var(--tosi-bg, #fff)')
       ),
     },
-    ':host .pinned-top': {
-      position: 'sticky',
-      zIndex: '2',
-      background: varDefault.tosiTableBg('var(--tosi-bg, #fff)'),
-    },
-    ':host .pinned-top.col-pinned': {
-      zIndex: '3',
-    },
-    ':host .pinned-bottom': {
-      position: 'sticky',
-      bottom: '0',
-      zIndex: '2',
-      background: varDefault.tosiTableBg('var(--tosi-bg, #fff)'),
-    },
-    ':host .pinned-bottom.col-pinned': {
-      zIndex: '3',
+    ':host .tr[aria-selected="true"] .td': {
+      background: varDefault.tosiTableSelectedBg('var(--tosi-accent, #007AFF22)'),
     },
     ':host .td:focus, :host .th:focus': {
       outline: '2px solid var(--tosi-accent, #007AFF)',
@@ -707,35 +728,45 @@ export class TosiTable extends WebComponent {
 
   maxVisibleRows = 10000
 
-  private _grid: HTMLElement | null = null
-  // Pinned rows live outside the listBinding's virtual window, so we keep
-  // side-tables that itemFor/cellsFor consult alongside the listBinding.
-  private pinnedItemToCells = new Map<any, HTMLElement[]>()
-  private pinnedCellToItem = new WeakMap<Element, any>()
+  // Region elements rendered in render(). Each tbody is a list-bound
+  // container; each row is a `.tr` div whose children are the cells.
+  private _head: HTMLElement | null = null
+  private _tbodyTop: HTMLElement | null = null
+  private _tbodyVisible: HTMLElement | null = null
+  private _tbodyBottom: HTMLElement | null = null
+  // Cache the cells array per row to preserve array identity across getCells
+  // calls — consumers compare by reference.
+  private _rowCellsCache = new WeakMap<Element, HTMLElement[]>()
 
-  // Resolve the row item associated with a cell (or any element inside one),
-  // whether it lives in the listBinding's virtual window or in a pinned row.
-  // Pinned cells take precedence: they may also have a tosi binding context
-  // attached (so dataCell path-bindings like `^.prop` resolve), but selection
-  // and getCells consumers expect the original raw item.
+  // Resolve the row item from a cell or any element inside a row. Cells live
+  // inside list-bound `.tr` rows, so getListItem walks up to find the item.
   private itemFor(cell: Element): any {
-    const pinned = cell.closest('.pinned-top, .pinned-bottom')
-    if (pinned) {
-      const item = this.pinnedCellToItem.get(pinned)
-      if (item !== undefined) return item
-    }
     return getListItem(cell)
   }
 
-  // Resolve the cells of a row, whether the row is virtually scrolled or
-  // pinned. Returns undefined if the row isn't currently stamped in the DOM.
+  // Resolve the cells of a row by checking each region's listBinding.
   private cellsFor(item: any): HTMLElement[] | undefined {
-    if (!this._grid) return undefined
     const key = tosiValue(item)
-    const pinned = this.pinnedItemToCells.get(key)
-    if (pinned) return pinned
-    const binding = getListBinding(this._grid)
-    return binding?.itemToElement.get(key) as HTMLElement[] | undefined
+    for (const region of [
+      this._tbodyTop,
+      this._tbodyVisible,
+      this._tbodyBottom,
+    ]) {
+      if (!region) continue
+      const binding = getListBinding(region)
+      if (!binding) continue
+      const rowEls = binding.itemToElement.get(key) as Element[] | undefined
+      if (rowEls && rowEls.length > 0) {
+        const row = rowEls[0]
+        let cached = this._rowCellsCache.get(row)
+        if (!cached) {
+          cached = Array.from(row.children) as HTMLElement[]
+          this._rowCellsCache.set(row, cached)
+        }
+        return cached
+      }
+    }
+    return undefined
   }
 
   get value(): TableData {
@@ -762,12 +793,56 @@ export class TosiTable extends WebComponent {
 
   private rowData = {
     visible: [] as any[],
+    pinnedTopData: [] as any[],
+    pinnedBottomData: [] as any[],
   }
 
   private _array: any[] = []
   private _columns: ColumnOptions[] | null = null
   private _filter: ArrayFilter = passThru
   private _sort?: SortCallback
+  // Optional explicit arrays of pinned items. When set, they are managed
+  // separately from `array` and override the `pinnedTop` / `pinnedBottom`
+  // count-based slicing.
+  private _pinnedTopRows?: any[]
+  private _pinnedBottomRows?: any[]
+
+  get pinnedTopRows(): any[] | undefined {
+    return this._pinnedTopRows
+  }
+
+  set pinnedTopRows(rows: any[] | undefined) {
+    this._pinnedTopRows = rows ? tosiValue(rows) : undefined
+    this.queueRender()
+  }
+
+  get pinnedBottomRows(): any[] | undefined {
+    return this._pinnedBottomRows
+  }
+
+  set pinnedBottomRows(rows: any[] | undefined) {
+    this._pinnedBottomRows = rows ? tosiValue(rows) : undefined
+    this.queueRender()
+  }
+
+  // Resolve pinned-top items. If pinnedTopRows is set, it wins; otherwise
+  // slice the first `pinnedTop` items from `_array`.
+  get effectivePinnedTopData(): any[] {
+    if (this._pinnedTopRows) return this._pinnedTopRows
+    return this.pinnedTop > 0 ? this._array.slice(0, this.pinnedTop) : []
+  }
+
+  get effectivePinnedBottomData(): any[] {
+    if (this._pinnedBottomRows) return this._pinnedBottomRows
+    return this.pinnedBottom > 0 ? this._array.slice(-this.pinnedBottom) : []
+  }
+
+  // Visible (non-pinned) data. With explicit pinnedTopRows/pinnedBottomRows,
+  // _array is rendered untouched; otherwise we slice off the count-pinned ends.
+  private get effectiveBaseData(): any[] {
+    if (this._pinnedTopRows || this._pinnedBottomRows) return this._array
+    return this._array.slice(this.pinnedTop, this._array.length - this.pinnedBottom)
+  }
 
   constructor() {
     super()
@@ -962,87 +1037,190 @@ export class TosiTable extends WebComponent {
     Object.assign(cell.style, style)
   }
 
-  // Construct a cell from col.dataCell() with grid-cell aria/classes/style
-  // applied. Caller is responsible for any row-level attributes (pinned class,
-  // aria-rowindex) and for wiring selection / rowRendered.
-  private buildCustomCell(
+  // Build a single data cell for a column. Cells live inside list-bound `.tr`
+  // rows, so path-based bindings inside col.dataCell() (e.g. bindText:'^.prop')
+  // resolve against the row's list-instance automatically.
+  private buildCell(
     col: ColumnOptions,
     colIndex: number,
     si: StickyInfo,
-    style: Record<string, string>
+    item: any
   ): HTMLElement {
-    const cell = col.dataCell!(col) as HTMLElement
-    this.applyGridCellAttrs(cell, colIndex, si, style)
-    return cell
+    const style = this.cellStyle(col, si)
+    if (col.dataCell !== undefined) {
+      const cell = col.dataCell(col) as HTMLElement
+      this.applyGridCellAttrs(cell, colIndex, si, style)
+      return cell
+    }
+    return span(
+      {
+        class: this.cellClasses('td', si),
+        role: 'gridcell',
+        tabindex: -1,
+        ariaColindex: String(colIndex + 1),
+        style,
+        bindText: item[col.prop],
+      } as any
+    )
   }
 
-  private buildPinnedCells(
-    rows: any[],
+  // Build a `.tr` row element with all cells for a single item. The row is
+  // bound to the item so selection state and rowRendered fire correctly.
+  // Note: listBinding sets role="listitem" on stamped elements; that's good
+  // enough — selectors throughout this file use `.tr` for row matching.
+  private buildRow(
+    item: any,
     cols: ColumnOptions[],
-    stickyInfo: StickyInfo[],
-    pin: 'top' | 'bottom',
-    rowHeight: number,
-    startRowIndex: number
-  ): HTMLElement[] {
-    const allCells: HTMLElement[] = []
+    stickyInfo: StickyInfo[]
+  ): HTMLElement {
+    const cells = cols.map((col, i) =>
+      this.buildCell(col, i, stickyInfo[i], item)
+    )
     const selectBindingFn = this.selectBinding
     const { rowRendered } = this
-    for (let r = 0; r < rows.length; r++) {
-      const rowItem = rows[r]
-      const offset =
-        pin === 'top'
-          ? (r + 1) * rowHeight + 'px'
-          : (rows.length - 1 - r) * rowHeight + 'px'
-      const rowCells: HTMLElement[] = []
-      for (let c = 0; c < cols.length; c++) {
-        const col = cols[c]
-        const si = stickyInfo[c]
-        const style = this.cellStyle(col, si, {
-          position: 'sticky',
-          [pin]: offset,
-        })
-        let cell: HTMLElement
-        if (col.dataCell !== undefined) {
-          cell = this.buildCustomCell(col, c, si, style)
-          cell.classList.add(`pinned-${pin}`)
-          cell.setAttribute('aria-rowindex', String(startRowIndex + r + 1))
-        } else {
-          cell = span(
-            {
-              class: this.cellClasses(`td pinned-${pin}`, si),
-              role: 'gridcell',
-              tabindex: -1,
-              ariaRowindex: String(startRowIndex + r + 1),
-              ariaColindex: String(c + 1),
-              style,
-            },
-            String(rowItem[col.prop] ?? '')
-          )
-        }
-        // Track cell → item so click-to-select and updateSelectionVisuals
-        // can resolve pinned cells (which aren't in the listBinding).
-        this.pinnedCellToItem.set(cell, rowItem)
-        // Apply any pre-existing selection state.
-        selectBindingFn(cell, rowItem)
-        rowCells.push(cell)
-        allCells.push(cell)
-      }
-      // Track cells per item so getCells works for pinned rows
-      this.pinnedItemToCells.set(tosiValue(rowItem), rowCells)
-      if (rowRendered) {
-        rowRendered(rowItem, rowCells)
-      }
+    const props: any = { class: 'tr' }
+    props.bind = {
+      value: item,
+      binding: {
+        toDOM: (rowEl: Element) => {
+          selectBindingFn(rowEl, item)
+          if (rowRendered) {
+            rowRendered(item, Array.from(rowEl.children) as HTMLElement[])
+          }
+        },
+      },
     }
-    return allCells
+    return div(props, ...cells)
+  }
+
+  // Build the header row (one `.tr` of header cells inside a `.thead`).
+  private buildHeaderCell(
+    col: ColumnOptions,
+    colIndex: number,
+    si: StickyInfo
+  ): HTMLElement {
+    const { popColumnMenu } = this
+    let ariaSort = 'none'
+    let sortIcon: SVGElement | undefined
+    switch (col.sort) {
+      case 'ascending':
+        sortIcon = icons.sortAscending()
+        ariaSort = 'descending'
+        break
+      case 'descending':
+        ariaSort = 'ascending'
+        sortIcon = icons.sortDescending()
+        break
+    }
+
+    const menuButton = !(this.nosort && this.nohide)
+      ? button(
+          {
+            class: 'menu-trigger',
+            onClick(event: Event) {
+              popColumnMenu(event.target as HTMLElement, col)
+              event.stopPropagation()
+            },
+          },
+          sortIcon || icons.moreVertical()
+        )
+      : {}
+
+    const cell =
+      col.headerCell !== undefined
+        ? col.headerCell(col)
+        : span(
+            {
+              class: this.cellClasses('th', si),
+              role: 'columnheader',
+              tabindex: -1,
+              ariaSort,
+              ariaColindex: String(colIndex + 1),
+              style: this.cellStyle(col, si),
+            },
+            this.captionSpan(
+              { style: { flex: '1' } },
+              typeof col.name === 'string' ? col.name : col.prop
+            ),
+            menuButton
+          )
+
+    if (col.headerCell !== undefined) {
+      this.applyGridCellAttrs(
+        cell as HTMLElement,
+        colIndex,
+        si,
+        this.cellStyle(col, si)
+      )
+      cell.classList.remove('td')
+      cell.classList.add('th')
+      cell.setAttribute('role', 'columnheader')
+    }
+
+    if (!this.noreorder && cell.children[0]) {
+      dragAndDrop.init()
+      const dragId = this.instanceId + '-column-header'
+      const caption = cell.children[0] as HTMLElement
+      caption.setAttribute('draggable', 'true')
+      caption.style.pointerEvents = 'all'
+      caption.dataset.drag = dragId
+      ;(cell as HTMLElement).dataset.drop = dragId
+      caption.addEventListener('dragstart', () => {
+        this.draggedColumn = col
+      })
+      cell.addEventListener('drop', this.dropColumn)
+    }
+
+    return cell as HTMLElement
+  }
+
+  private buildHeader(
+    cols: ColumnOptions[],
+    stickyInfo: StickyInfo[]
+  ): HTMLElement {
+    const headerCells = cols.map((col, i) =>
+      this.buildHeaderCell(col, i, stickyInfo[i])
+    )
+    return div(
+      { class: 'thead', role: 'rowgroup' },
+      div({ class: 'tr', role: 'row' }, ...headerCells)
+    )
+  }
+
+  // Build a tbody region with a listBinding that stamps `.tr` rows.
+  private buildBody(
+    rowsProxy: any,
+    cols: ColumnOptions[],
+    stickyInfo: StickyInfo[],
+    region: 'pinned-top' | 'virtual' | 'pinned-bottom',
+    part: string
+  ): HTMLElement {
+    const className =
+      region === 'virtual' ? 'tbody tbody-virtual' : `tbody tbody-${region}`
+    const options: any =
+      region === 'virtual' && this.rowHeight > 0
+        ? { virtual: { height: this.rowHeight } }
+        : {}
+    const binding = (rowsProxy as any).listBinding(
+      (_elements: any, item: any) => this.buildRow(item, cols, stickyInfo),
+      options
+    )
+    return div(
+      {
+        class: className,
+        role: 'rowgroup',
+        part,
+      },
+      ...binding
+    )
   }
 
   getColumn(event: any): ColumnOptions | undefined {
-    if (!this._grid) return undefined
     const pointerX =
       (event.touches !== undefined ? event.touches[0].clientX : event.clientX) -
-      this._grid.getBoundingClientRect().x
+      this.getBoundingClientRect().x
     const epsilon = event.touches !== undefined ? 20 : 5
-    const { scrollLeft, clientWidth, scrollWidth } = this._grid
+    const { scrollLeft, clientWidth, scrollWidth } = this
     const cols = this.visibleColumns
     const rightScroll = scrollWidth - clientWidth - scrollLeft
 
@@ -1064,9 +1242,7 @@ export class TosiTable extends WebComponent {
 
   private setCursor = (event: Event) => {
     const column = this.getColumn(event)
-    if (this._grid) {
-      this._grid.style.cursor = column !== undefined ? 'col-resize' : ''
-    }
+    this.style.cursor = column !== undefined ? 'col-resize' : ''
   }
 
   private resizeColumn = (event: any) => {
@@ -1126,11 +1302,12 @@ export class TosiTable extends WebComponent {
   }
 
   private updateSelectionVisuals() {
-    if (!this._grid) return
-    for (const elt of Array.from(this._grid.children)) {
-      const item = this.itemFor(elt)
+    // Query rows in tbodies only (skip the header row in thead).
+    const rows = this.querySelectorAll('.tbody .tr')
+    for (const row of rows) {
+      const item = this.itemFor(row)
       if (item != null) {
-        this.selectBinding(elt, item)
+        this.selectBinding(row, item)
       }
     }
   }
@@ -1201,37 +1378,38 @@ export class TosiTable extends WebComponent {
     this.updateSelectionVisuals()
   }
 
+  // Resolve a (rowIndex, colIndex) coordinate to a DOM cell.
+  // rowIndex semantics: -1 = header, 0..pinnedTop.length-1 = pinned-top rows,
+  // then visible rows, then pinned-bottom rows.
   private findCell(rowIndex: number, colIndex: number): HTMLElement | null {
-    if (!this._grid) return null
-    const cols = this.visibleColumns.length
-
-    // Header cells (row -1)
     if (rowIndex === -1) {
-      return this._grid.querySelector(
-        `.th[aria-colindex="${colIndex + 1}"]`
+      return this.querySelector(
+        `.thead .th[aria-colindex="${colIndex + 1}"]`
       ) as HTMLElement | null
     }
 
-    // Pinned cells use full-array-relative aria-rowindex
-    // Virtual data cells use visible-data-relative aria-rowindex (set by bindList)
-    // Try pinned first, then virtual
-    const cell = this._grid.querySelector(
-      `.pinned-top[aria-rowindex="${rowIndex + 1}"][aria-colindex="${
-        colIndex + 1
-      }"],` +
-        `.pinned-bottom[aria-rowindex="${rowIndex + 1}"][aria-colindex="${
-          colIndex + 1
-        }"]`
-    ) as HTMLElement | null
-    if (cell) return cell
+    const top = this.effectivePinnedTopData
+    const bottom = this.effectivePinnedBottomData
+    const visible = this.visibleRows
 
-    // Virtual data cell: convert full-array index to visible-data index
-    const dataRowIndex = rowIndex - this.pinnedTop
-    return this._grid.querySelector(
-      `[aria-rowindex="${dataRowIndex + 1}"][aria-colindex="${
-        colIndex + 1
-      }"]:not(.pinned-top):not(.pinned-bottom)`
-    ) as HTMLElement | null
+    let region: HTMLElement | null = null
+    let regionRowIndex = -1
+    if (rowIndex < top.length) {
+      region = this._tbodyTop
+      regionRowIndex = rowIndex
+    } else if (rowIndex < top.length + visible.length) {
+      region = this._tbodyVisible
+      regionRowIndex = rowIndex - top.length
+    } else if (rowIndex < top.length + visible.length + bottom.length) {
+      region = this._tbodyBottom
+      regionRowIndex = rowIndex - top.length - visible.length
+    }
+    if (!region) return null
+
+    const rows = region.querySelectorAll('.tr')
+    const row = rows[regionRowIndex] as HTMLElement | undefined
+    if (!row) return null
+    return row.children[colIndex] as HTMLElement | null
   }
 
   private _pendingFocus: { row: number; col: number } | null = null
@@ -1245,25 +1423,23 @@ export class TosiTable extends WebComponent {
   }
 
   private focusCell(rowIndex: number, colIndex: number): void {
-    if (!this._grid) return
-
     this._pendingFocus = { row: rowIndex, col: colIndex }
 
     const cell = this.findCell(rowIndex, colIndex)
     if (cell) {
       cell.focus()
       cell.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-    } else {
+    } else if (this._tbodyVisible) {
       // Not in DOM — rough scroll to bring it into virtualisation range
-      const dataRowIndex = rowIndex - this.pinnedTop
+      const top = this.effectivePinnedTopData
+      const dataRowIndex = rowIndex - top.length
       if (dataRowIndex >= 0 && dataRowIndex < this.visibleRows.length) {
-        this._grid.scrollTop = dataRowIndex * this.rowHeight
+        this._tbodyVisible.scrollTop = dataRowIndex * this.rowHeight
       }
     }
   }
 
   private handleKeyNav = (event: KeyboardEvent) => {
-    if (!this._grid) return
     const el = event.target as HTMLElement
     const target = el.closest('.td') || el.closest('.th')
     if (!target) return
@@ -1273,27 +1449,35 @@ export class TosiTable extends WebComponent {
     const colIndex = ariaCol - 1
 
     const cols = this.visibleColumns.length
-    const totalRows = this._array.length
+    const top = this.effectivePinnedTopData
+    const visible = this.visibleRows
+    const bottom = this.effectivePinnedBottomData
+    const totalRows = top.length + visible.length + bottom.length
     const meta = event.metaKey || event.ctrlKey
     const isHeader = target.classList.contains('th')
 
-    // Determine current logical row index (-1 for header, 0-based full-array for data)
+    // Resolve the row's logical index in the unified row-space:
+    //   -1 = header, 0..top-1 = pinned-top, then visible, then pinned-bottom.
     let rowIndex: number
     if (isHeader) {
       rowIndex = -1
-    } else if (
-      target.classList.contains('pinned-top') ||
-      target.classList.contains('pinned-bottom')
-    ) {
-      // Pinned cells: aria-rowindex is full-array-relative (1-based)
-      const ariaRow = parseInt(target.getAttribute('aria-rowindex') || '', 10)
-      if (isNaN(ariaRow)) return
-      rowIndex = ariaRow - 1
     } else {
-      // Virtual data cells: aria-rowindex is visible-data-relative (1-based)
-      const ariaRow = parseInt(target.getAttribute('aria-rowindex') || '', 10)
-      if (isNaN(ariaRow)) return
-      rowIndex = this.pinnedTop + ariaRow - 1
+      const row = target.closest('.tr') as HTMLElement | null
+      if (!row) return
+      const tbody = row.parentElement
+      const indexInTbody = tbody
+        ? Array.from(tbody.querySelectorAll('.tr')).indexOf(row)
+        : -1
+      if (indexInTbody < 0) return
+      if (tbody === this._tbodyTop) {
+        rowIndex = indexInTbody
+      } else if (tbody === this._tbodyVisible) {
+        rowIndex = top.length + indexInTbody
+      } else if (tbody === this._tbodyBottom) {
+        rowIndex = top.length + visible.length + indexInTbody
+      } else {
+        return
+      }
     }
 
     let nextRow = rowIndex
@@ -1375,26 +1559,22 @@ export class TosiTable extends WebComponent {
     const columns = cols.map((c) => c.width + 'px').join(' ')
     const rowWidth = cols.reduce((w, c) => w + c.width, 0) + 'px'
 
-    if (this._grid) {
-      this._grid.style.gridTemplateColumns = columns
-    }
-
-    // Legacy CSS variables for backward compatibility
+    // The CSS variable is consumed by every `.tr` (display:grid) and by .thead
+    // / .tbody for explicit width — one var, all rows reflow.
     this.style.setProperty('--tosi-table-grid-columns', columns)
     this.style.setProperty('--tosi-table-grid-row-width', rowWidth)
+    // Legacy aliases
     this.style.setProperty('--grid-columns', columns)
     this.style.setProperty('--grid-row-width', rowWidth)
 
-    // Update sticky positions for pinned columns after resize
-    if (this._grid) {
-      const stickyInfo = this.computeStickyInfo(cols)
-      for (const cell of this._grid.querySelectorAll('.col-pinned')) {
-        const ci = parseInt(cell.getAttribute('aria-colindex') || '', 10) - 1
-        if (!isNaN(ci) && stickyInfo[ci]) {
-          const si = stickyInfo[ci]
-          if (si.left != null) (cell as HTMLElement).style.left = si.left
-          if (si.right != null) (cell as HTMLElement).style.right = si.right
-        }
+    // Update sticky positions for column-pinned cells across all regions
+    const stickyInfo = this.computeStickyInfo(cols)
+    for (const cell of this.querySelectorAll('.col-pinned')) {
+      const ci = parseInt(cell.getAttribute('aria-colindex') || '', 10) - 1
+      if (!isNaN(ci) && stickyInfo[ci]) {
+        const si = stickyInfo[ci]
+        if (si.left != null) (cell as HTMLElement).style.left = si.left
+        if (si.right != null) (cell as HTMLElement).style.right = si.right
       }
     }
   }
@@ -1546,7 +1726,17 @@ export class TosiTable extends WebComponent {
   }
 
   get selectedRows(): any[] {
-    return this.array.filter((obj) => obj[this.selectedKey])
+    // With the array form, pinned items live outside _array — include them
+    // in the search. With the count form, they're already inside _array.
+    if (this._pinnedTopRows || this._pinnedBottomRows) {
+      const all = [
+        ...(this._pinnedTopRows ?? []),
+        ...this._array,
+        ...(this._pinnedBottomRows ?? []),
+      ]
+      return all.filter((obj) => obj[this.selectedKey])
+    }
+    return this._array.filter((obj) => obj[this.selectedKey])
   }
 
   getCells(itemOrCell: any): HTMLElement[] | undefined {
@@ -1583,212 +1773,72 @@ export class TosiTable extends WebComponent {
   render() {
     super.render()
     this.textContent = ''
-    this.pinnedItemToCells.clear()
 
-    // Prepare data
-    const pinnedTopData =
-      this.pinnedTop > 0 ? this._array.slice(0, this.pinnedTop) : []
-    const pinnedBottomData =
-      this.pinnedBottom > 0 ? this._array.slice(-this.pinnedBottom) : []
-    const maxIndex = Math.min(
-      this._array.length - this.pinnedBottom,
-      this.pinnedTop + this.maxVisibleRows
-    )
-    const visibleData = this.filter(this._array.slice(this.pinnedTop, maxIndex))
+    // Resolve data sources
+    const pinnedTopData = this.effectivePinnedTopData
+    const pinnedBottomData = this.effectivePinnedBottomData
+    const baseData = this.effectiveBaseData
+    const cap = Math.min(baseData.length, this.maxVisibleRows)
+    const visibleData = this.filter(baseData.slice(0, cap))
     const { sort } = this
-    if (sort) {
-      visibleData.sort(sort)
-    }
+    if (sort) visibleData.sort(sort)
+
+    this.rowData.pinnedTopData = pinnedTopData
+    this.rowData.pinnedBottomData = pinnedBottomData
     this.rowData.visible = visibleData
 
     // Column layout
     const cols = this.visibleColumns
     if (cols.length === 0) return
     const stickyInfo = this.computeStickyInfo(cols)
-    const rowHeight = this.rowHeight || 1
 
     this.style.setProperty(
       '--tosi-table-row-height',
       this.rowHeight > 0 ? `${this.rowHeight}px` : 'auto'
     )
+    this.setColumnWidths()
 
-    // Build header cells
-    const { popColumnMenu } = this
-    const headerCells = cols.map((col, i) => {
-      const si = stickyInfo[i]
-
-      let ariaSort = 'none'
-      let sortIcon: SVGElement | undefined
-      switch (col.sort) {
-        case 'ascending':
-          sortIcon = icons.sortAscending()
-          ariaSort = 'descending'
-          break
-        case 'descending':
-          ariaSort = 'ascending'
-          sortIcon = icons.sortDescending()
-          break
-      }
-
-      const menuButton = !(this.nosort && this.nohide)
-        ? button(
-            {
-              class: 'menu-trigger',
-              onClick(event: Event) {
-                popColumnMenu(event.target as HTMLElement, col)
-                event.stopPropagation()
-              },
-            },
-            sortIcon || icons.moreVertical()
+    // Build the four sibling regions: thead, optional pinned-top tbody,
+    // virtual tbody, optional pinned-bottom tbody. Each tbody owns its own
+    // listBinding; rows go through the same pipeline so dataCell, rowRendered,
+    // and `^.prop` resolve uniformly.
+    this._head = this.buildHeader(cols, stickyInfo)
+    this._tbodyTop =
+      pinnedTopData.length > 0
+        ? this.buildBody(
+            this.rowData.pinnedTopData,
+            cols,
+            stickyInfo,
+            'pinned-top',
+            'pinnedTopRows'
           )
-        : {}
-
-      const cell =
-        col.headerCell !== undefined
-          ? col.headerCell(col)
-          : span(
-              {
-                class: this.cellClasses('th', si),
-                role: 'columnheader',
-                tabindex: -1,
-                ariaSort,
-                ariaColindex: String(i + 1),
-                style: this.cellStyle(col, si),
-              },
-              this.captionSpan(
-                { style: { flex: '1' } },
-                typeof col.name === 'string' ? col.name : col.prop
-              ),
-              menuButton
-            )
-
-      // Apply sticky to custom headerCell
-      if (col.headerCell !== undefined) {
-        this.applyGridCellAttrs(
-          cell as HTMLElement,
-          i,
-          si,
-          this.cellStyle(col, si)
-        )
-      }
-
-      // Column reordering
-      if (!this.noreorder && cell.children[0]) {
-        dragAndDrop.init()
-        const dragId = this.instanceId + '-column-header'
-        const caption = cell.children[0] as HTMLElement
-        caption.setAttribute('draggable', 'true')
-        caption.style.pointerEvents = 'all'
-        caption.dataset.drag = dragId
-        ;(cell as HTMLElement).dataset.drop = dragId
-        caption.addEventListener('dragstart', () => {
-          this.draggedColumn = col
-        })
-        cell.addEventListener('drop', this.dropColumn)
-      }
-
-      return cell
-    })
-
-    const pinnedTopCells = this.buildPinnedCells(
-      pinnedTopData,
+        : null
+    this._tbodyVisible = this.buildBody(
+      this.rowData.visible,
       cols,
       stickyInfo,
-      'top',
-      rowHeight,
-      0
+      'virtual',
+      'visibleRows'
     )
-    const pinnedBottomCells = this.buildPinnedCells(
-      pinnedBottomData,
-      cols,
-      stickyInfo,
-      'bottom',
-      rowHeight,
-      this._array.length - this.pinnedBottom
-    )
+    this._tbodyBottom =
+      pinnedBottomData.length > 0
+        ? this.buildBody(
+            this.rowData.pinnedBottomData,
+            cols,
+            stickyInfo,
+            'pinned-bottom',
+            'pinnedBottomRows'
+          )
+        : null
 
-    // Data cells via listBinding with itemsPerRow
-    const selectEnabled = this.select || this.multiple
-    const selectBindingFn = this.selectBinding
-    const { rowRendered } = this
-    const lastCol = cols.length - 1
-    const rowRenderedBinding = rowRendered
-      ? (cell: Element) => {
-          const item = getListItem(cell)
-          if (item != null) {
-            const cells = this.getCells(item)
-            if (cells) rowRendered(item, cells)
-          }
-        }
-      : null
-    // Combined toDOM for the last cell of a row when rowRendered is wired up:
-    // refresh selection state, then fire the user's rowRendered callback.
-    const lastCellToDOM = rowRenderedBinding
-      ? (cell: Element) => {
-          if (selectEnabled) selectBindingFn(cell, getListItem(cell))
-          rowRenderedBinding(cell)
-        }
-      : null
-    const binding = (this.rowData.visible as any).listBinding(
-      ({ span: s }: any, item: any, colIndex: number) => {
-        const col = cols[colIndex]
-        const si = stickyInfo[colIndex]
-        const style = this.cellStyle(col, si)
-        const isLast = colIndex === lastCol
-        const toDOM =
-          lastCellToDOM && isLast
-            ? lastCellToDOM
-            : selectEnabled
-            ? selectBindingFn
-            : null
+    // The virtual tbody is the only vertical scroll container — focus
+    // restore on virtualised cells fires scrollend on it.
+    this._tbodyVisible.addEventListener('scrollend', this.onScrollEnd)
 
-        if (col.dataCell != null) {
-          const customCell = this.buildCustomCell(col, colIndex, si, style)
-          if (toDOM) bind(customCell, item, { toDOM })
-          return customCell
-        }
-
-        const props: any = {
-          class: this.cellClasses('td', si),
-          role: 'gridcell',
-          tabindex: -1,
-          style,
-          bindText: item[col.prop],
-        }
-        if (toDOM) {
-          props.bind = { value: item, binding: { toDOM } }
-        }
-        return s(props)
-      },
-      {
-        virtual: {
-          height: rowHeight,
-          itemsPerRow: cols.length,
-        },
-      }
-    )
-
-    // Assemble grid
-    const stickyTopHeight = (1 + this.pinnedTop) * rowHeight
-    const stickyBottomHeight = this.pinnedBottom * rowHeight
-    const grid = div(
-      {
-        class: 'grid',
-        style: {
-          gridTemplateColumns: cols.map((c) => c.width + 'px').join(' '),
-          scrollPaddingTop: stickyTopHeight + 'px',
-          scrollPaddingBottom: stickyBottomHeight + 'px',
-        },
-      },
-      ...headerCells,
-      ...pinnedTopCells,
-      ...binding,
-      ...pinnedBottomCells
-    )
-
-    this._grid = grid
-    grid.addEventListener('scrollend', this.onScrollEnd)
-    this.append(grid)
+    this.append(this._head)
+    if (this._tbodyTop) this.append(this._tbodyTop)
+    this.append(this._tbodyVisible)
+    if (this._tbodyBottom) this.append(this._tbodyBottom)
   }
 }
 
