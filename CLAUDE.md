@@ -473,6 +473,8 @@ See `icons/icon-composition.md` for the full grammar — suffix codes (`o/s/r/f/
 - Binary attributes (`hidden`, `disabled`) work as expected
 - Interoperable with other web-component libraries
 
+For the consumer-facing mental model — element-creator pattern, value/change/action contract, form association, theming, localization, and a "fighting the framework" anti-pattern checklist — see `Using-Components.md` at the repo root. Read it before answering questions about how a component should be used.
+
 ## Publishing
 
 1. Update version in `package.json`

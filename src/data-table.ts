@@ -518,7 +518,6 @@ import {
   tosiValue,
   getListItem,
   getListBinding,
-  bind,
   tosi,
 } from 'tosijs'
 import { trackDrag } from './track-drag'
@@ -1036,31 +1035,29 @@ export class TosiTable extends WebComponent {
   // padding divs around its stamped rows, so we walk `.tr` children rather
   // than relying on :first-child / :last-child.
   private tagPinnedRows = () => {
-    if (this._tbodyTop) {
-      const rows = Array.from(
-        this._tbodyTop.querySelectorAll('.tr')
-      ) as HTMLElement[]
-      rows.forEach((r, i) => {
-        r.classList.remove('row-edge-bottom')
-        r.style.top = `calc(var(--tosi-table-row-height) * ${i + 1})`
-      })
-      if (rows.length > 0) {
-        rows[rows.length - 1].classList.add('row-edge-bottom')
-      }
-    }
-    if (this._tbodyBottom) {
-      const rows = Array.from(
-        this._tbodyBottom.querySelectorAll('.tr')
-      ) as HTMLElement[]
-      const last = rows.length - 1
-      rows.forEach((r, i) => {
-        r.classList.remove('row-edge-top')
-        r.style.bottom = `calc(var(--tosi-table-row-height) * ${last - i})`
-      })
-      if (rows.length > 0) {
-        rows[0].classList.add('row-edge-top')
-      }
-    }
+    this.tagPinnedTbody(this._tbodyTop, 'top')
+    this.tagPinnedTbody(this._tbodyBottom, 'bottom')
+  }
+
+  private tagPinnedTbody(
+    tbody: HTMLElement | null,
+    axis: 'top' | 'bottom'
+  ): void {
+    if (!tbody) return
+    const rows = Array.from(tbody.querySelectorAll('.tr')) as HTMLElement[]
+    if (rows.length === 0) return
+    // For top-pinned, header occupies row 0 so first pinned row sits at
+    // 1*rowHeight; for bottom-pinned, last row sticks at 0 with earlier rows
+    // stacked above it.
+    const last = rows.length - 1
+    const edgeClass = axis === 'top' ? 'row-edge-bottom' : 'row-edge-top'
+    rows.forEach((r, i) => {
+      r.classList.remove(edgeClass)
+      const steps = axis === 'top' ? i + 1 : last - i
+      r.style[axis] = `calc(var(--tosi-table-row-height) * ${steps})`
+    })
+    const edgeRow = axis === 'top' ? rows[last] : rows[0]
+    edgeRow.classList.add(edgeClass)
   }
 
   private cellStyle(
@@ -1068,18 +1065,14 @@ export class TosiTable extends WebComponent {
     si: StickyInfo,
     extra?: Record<string, string>
   ): Record<string, string> {
+    // position: sticky lives in `.col-pinned` (added by cellClasses), so only
+    // the per-cell offsets need to be set inline here.
     const style: Record<string, string> = {
       justifyContent: col.align || 'left',
       ...extra,
     }
-    if (si.left != null) {
-      style.position = 'sticky'
-      style.left = si.left
-    }
-    if (si.right != null) {
-      style.position = 'sticky'
-      style.right = si.right
-    }
+    if (si.left != null) style.left = si.left
+    if (si.right != null) style.right = si.right
     return style
   }
 
@@ -1613,9 +1606,6 @@ export class TosiTable extends WebComponent {
     this.addEventListener('mouseup', this.updateSelection)
     this.addEventListener('touchend', this.updateSelection)
     this.addEventListener('keydown', this.handleKeyNav)
-    this.addEventListener('scroll', this.updatePinnedCellTransforms, {
-      passive: true,
-    })
   }
 
   setColumnWidths() {
@@ -1909,20 +1899,21 @@ export class TosiTable extends WebComponent {
 
     this.append(this._scrollArea)
 
-    // Edge classes need to track listBinding mutations (pinned data may
-    // change without a full re-render), so observe each pinned tbody and
-    // re-tag on childList changes.
+    this.observePinnedRowMutations()
+    this.tagPinnedRows()
+  }
+
+  // Edge classes need to track listBinding mutations (pinned data may change
+  // without a full re-render), so observe each pinned tbody and re-tag on
+  // childList changes.
+  private observePinnedRowMutations(): void {
     this._pinnedRowEdgeObserver?.disconnect()
     this._pinnedRowEdgeObserver = new MutationObserver(this.tagPinnedRows)
-    if (this._tbodyTop) {
-      this._pinnedRowEdgeObserver.observe(this._tbodyTop, { childList: true })
+    for (const tbody of [this._tbodyTop, this._tbodyBottom]) {
+      if (tbody) {
+        this._pinnedRowEdgeObserver.observe(tbody, { childList: true })
+      }
     }
-    if (this._tbodyBottom) {
-      this._pinnedRowEdgeObserver.observe(this._tbodyBottom, {
-        childList: true,
-      })
-    }
-    this.tagPinnedRows()
   }
 }
 

@@ -182,6 +182,7 @@ export declare class TosiTable extends WebComponent {
     private cellClasses;
     private rowClasses;
     private tagPinnedRows;
+    private tagPinnedTbody;
     private cellStyle;
     private applyGridCellAttrs;
     private buildCell;
@@ -216,6 +217,7 @@ export declare class TosiTable extends WebComponent {
     private draggedColumn?;
     private dropColumn;
     render(): void;
+    private observePinnedRowMutations;
 }
 /** @deprecated Use TosiTable instead */
 export type DataTable = TosiTable;

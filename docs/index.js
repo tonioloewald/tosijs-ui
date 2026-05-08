@@ -26925,41 +26925,34 @@ class TosiTable extends g {
     return region === "visible" ? "tr" : "tr row-pinned";
   }
   tagPinnedRows = () => {
-    if (this._tbodyTop) {
-      const rows = Array.from(this._tbodyTop.querySelectorAll(".tr"));
-      rows.forEach((r2, i2) => {
-        r2.classList.remove("row-edge-bottom");
-        r2.style.top = `calc(var(--tosi-table-row-height) * ${i2 + 1})`;
-      });
-      if (rows.length > 0) {
-        rows[rows.length - 1].classList.add("row-edge-bottom");
-      }
-    }
-    if (this._tbodyBottom) {
-      const rows = Array.from(this._tbodyBottom.querySelectorAll(".tr"));
-      const last = rows.length - 1;
-      rows.forEach((r2, i2) => {
-        r2.classList.remove("row-edge-top");
-        r2.style.bottom = `calc(var(--tosi-table-row-height) * ${last - i2})`;
-      });
-      if (rows.length > 0) {
-        rows[0].classList.add("row-edge-top");
-      }
-    }
+    this.tagPinnedTbody(this._tbodyTop, "top");
+    this.tagPinnedTbody(this._tbodyBottom, "bottom");
   };
+  tagPinnedTbody(tbody, axis) {
+    if (!tbody)
+      return;
+    const rows = Array.from(tbody.querySelectorAll(".tr"));
+    if (rows.length === 0)
+      return;
+    const last = rows.length - 1;
+    const edgeClass = axis === "top" ? "row-edge-bottom" : "row-edge-top";
+    rows.forEach((r2, i2) => {
+      r2.classList.remove(edgeClass);
+      const steps = axis === "top" ? i2 + 1 : last - i2;
+      r2.style[axis] = `calc(var(--tosi-table-row-height) * ${steps})`;
+    });
+    const edgeRow = axis === "top" ? rows[last] : rows[0];
+    edgeRow.classList.add(edgeClass);
+  }
   cellStyle(col, si, extra) {
     const style = {
       justifyContent: col.align || "left",
       ...extra
     };
-    if (si.left != null) {
-      style.position = "sticky";
+    if (si.left != null)
       style.left = si.left;
-    }
-    if (si.right != null) {
-      style.position = "sticky";
+    if (si.right != null)
       style.right = si.right;
-    }
     return style;
   }
   applyGridCellAttrs(cell, colIndex, si, style) {
@@ -27346,9 +27339,6 @@ class TosiTable extends g {
     this.addEventListener("mouseup", this.updateSelection);
     this.addEventListener("touchend", this.updateSelection);
     this.addEventListener("keydown", this.handleKeyNav);
-    this.addEventListener("scroll", this.updatePinnedCellTransforms, {
-      passive: true
-    });
   }
   setColumnWidths() {
     const cols = this.visibleColumns;
@@ -27548,17 +27538,17 @@ class TosiTable extends g {
     this._scrollArea = div3({ class: "scroll-area", part: "visibleRows" }, ...scrollAreaChildren);
     this._scrollArea.addEventListener("scrollend", this.onScrollEnd);
     this.append(this._scrollArea);
+    this.observePinnedRowMutations();
+    this.tagPinnedRows();
+  }
+  observePinnedRowMutations() {
     this._pinnedRowEdgeObserver?.disconnect();
     this._pinnedRowEdgeObserver = new MutationObserver(this.tagPinnedRows);
-    if (this._tbodyTop) {
-      this._pinnedRowEdgeObserver.observe(this._tbodyTop, { childList: true });
+    for (const tbody of [this._tbodyTop, this._tbodyBottom]) {
+      if (tbody) {
+        this._pinnedRowEdgeObserver.observe(tbody, { childList: true });
+      }
     }
-    if (this._tbodyBottom) {
-      this._pinnedRowEdgeObserver.observe(this._tbodyBottom, {
-        childList: true
-      });
-    }
-    this.tagPinnedRows();
   }
 }
 var DataTable = TosiTable;
@@ -34747,7 +34737,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.5.17";
+var version = "1.5.18";
 // src/tooltip.ts
 var { span: span18 } = I;
 var tooltipFloat = null;
