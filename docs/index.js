@@ -26591,11 +26591,31 @@ class TosiTable extends g {
       overflow: "hidden",
       background: kE.tosiTableBg("var(--tosi-bg, #fff)")
     },
-    ":host .grid": {
-      overflow: "auto",
+    ":host .scroll-area": {
+      width: "100%",
       height: "100%",
-      overscrollBehavior: "none",
-      alignContent: "start"
+      overflow: "auto",
+      overscrollBehavior: "none"
+    },
+    ":host .thead, :host .tbody": {
+      display: "contents"
+    },
+    ":host .tr": {
+      display: "grid",
+      gridTemplateColumns: fM.tosiTableGridColumns,
+      width: fM.tosiTableGridRowWidth,
+      height: fM.tosiTableRowHeight,
+      background: kE.tosiTableBg("var(--tosi-bg, #fff)")
+    },
+    ":host .thead .tr": {
+      position: "sticky",
+      top: "0",
+      zIndex: "2",
+      background: kE.tosiTableHeaderBg(kE.tosiTableBg("var(--tosi-bg, #fff)"))
+    },
+    ":host .tbody-pinned-top .tr, :host .tbody-pinned-bottom .tr": {
+      position: "sticky",
+      zIndex: "1"
     },
     ":host .th, :host .td": {
       overflow: "hidden",
@@ -26606,12 +26626,6 @@ class TosiTable extends g {
       height: fM.tosiTableRowHeight,
       lineHeight: fM.tosiTableRowHeight
     },
-    ":host .th": {
-      position: "sticky",
-      top: "0",
-      zIndex: "2",
-      background: kE.tosiTableHeaderBg(kE.tosiTableBg("var(--tosi-bg, #fff)"))
-    },
     ":host .col-pinned": {
       position: "sticky",
       zIndex: "1",
@@ -26621,22 +26635,8 @@ class TosiTable extends g {
       zIndex: "3",
       background: kE.tosiTableHeaderBg(kE.tosiTableBg("var(--tosi-bg, #fff)"))
     },
-    ":host .pinned-top": {
-      position: "sticky",
-      zIndex: "2",
-      background: kE.tosiTableBg("var(--tosi-bg, #fff)")
-    },
-    ":host .pinned-top.col-pinned": {
-      zIndex: "3"
-    },
-    ":host .pinned-bottom": {
-      position: "sticky",
-      bottom: "0",
-      zIndex: "2",
-      background: kE.tosiTableBg("var(--tosi-bg, #fff)")
-    },
-    ":host .pinned-bottom.col-pinned": {
-      zIndex: "3"
+    ':host .tr[aria-selected="true"] .td': {
+      background: kE.tosiTableSelectedBg("var(--tosi-accent, #007AFF22)")
     },
     ":host .td:focus, :host .th:focus": {
       outline: "2px solid var(--tosi-accent, #007AFF)",
@@ -26651,6 +26651,12 @@ class TosiTable extends g {
     },
     ":host .col-edge-left": {
       boxShadow: "-1px 0 0 var(--tosi-table-edge-color, #0002)"
+    },
+    ":host .row-edge-bottom": {
+      boxShadow: "0 1px 0 var(--tosi-table-edge-color, #0002)"
+    },
+    ":host .row-edge-top": {
+      boxShadow: "0 -1px 0 var(--tosi-table-edge-color, #0002)"
     },
     ":host .th .menu-trigger": {
       color: "currentColor",
@@ -26693,12 +26699,39 @@ class TosiTable extends g {
     elt.toggleAttribute("aria-selected", obj[this.selectedKey] === true);
   };
   maxVisibleRows = 1e4;
-  _grid = null;
-  pinnedItemToCells = new Map;
-  pinnedCellToItem = new WeakMap;
-  resolvePinnedItem(target) {
-    const cell = target.closest(".pinned-top, .pinned-bottom");
-    return cell ? this.pinnedCellToItem.get(cell) : undefined;
+  _head = null;
+  _scrollArea = null;
+  _tbodyTop = null;
+  _tbodyBottom = null;
+  _pinnedRowEdgeObserver = null;
+  _rowCellsCache = new WeakMap;
+  itemFor(cell) {
+    return GM(cell);
+  }
+  cellsFor(item) {
+    const key = C(item);
+    for (const region of [
+      this._tbodyTop,
+      this._scrollArea,
+      this._tbodyBottom
+    ]) {
+      if (!region)
+        continue;
+      const binding = DE(region);
+      if (!binding)
+        continue;
+      const rowEls = binding.itemToElement.get(key);
+      if (rowEls && rowEls.length > 0) {
+        const row = rowEls[0];
+        let cached = this._rowCellsCache.get(row);
+        if (!cached) {
+          cached = Array.from(row.children);
+          this._rowCellsCache.set(row, cached);
+        }
+        return cached;
+      }
+    }
+    return;
   }
   get value() {
     return {
@@ -26717,12 +26750,45 @@ class TosiTable extends g {
     this._filter = filter || passThru;
   }
   rowData = {
-    visible: []
+    visible: [],
+    pinnedTopData: [],
+    pinnedBottomData: []
   };
   _array = [];
   _columns = null;
   _filter = passThru;
   _sort;
+  _pinnedTopRows;
+  _pinnedBottomRows;
+  get pinnedTopRows() {
+    return this._pinnedTopRows;
+  }
+  set pinnedTopRows(rows) {
+    this._pinnedTopRows = rows ? C(rows) : undefined;
+    this.queueRender();
+  }
+  get pinnedBottomRows() {
+    return this._pinnedBottomRows;
+  }
+  set pinnedBottomRows(rows) {
+    this._pinnedBottomRows = rows ? C(rows) : undefined;
+    this.queueRender();
+  }
+  get effectivePinnedTopData() {
+    if (this._pinnedTopRows)
+      return this._pinnedTopRows;
+    return this.pinnedTop > 0 ? this._array.slice(0, this.pinnedTop) : [];
+  }
+  get effectivePinnedBottomData() {
+    if (this._pinnedBottomRows)
+      return this._pinnedBottomRows;
+    return this.pinnedBottom > 0 ? this._array.slice(-this.pinnedBottom) : [];
+  }
+  get effectiveBaseData() {
+    if (this._pinnedTopRows || this._pinnedBottomRows)
+      return this._array;
+    return this._array.slice(this.pinnedTop, this._array.length - this.pinnedBottom);
+  }
   constructor() {
     super();
     this.rowData = xE({
@@ -26855,6 +26921,32 @@ class TosiTable extends g {
       cls += " " + si.edgeClass;
     return cls;
   }
+  rowClasses(region) {
+    return region === "visible" ? "tr" : "tr row-pinned";
+  }
+  tagPinnedRows = () => {
+    if (this._tbodyTop) {
+      const rows = Array.from(this._tbodyTop.querySelectorAll(".tr"));
+      rows.forEach((r2, i2) => {
+        r2.classList.remove("row-edge-bottom");
+        r2.style.top = `calc(var(--tosi-table-row-height) * ${i2 + 1})`;
+      });
+      if (rows.length > 0) {
+        rows[rows.length - 1].classList.add("row-edge-bottom");
+      }
+    }
+    if (this._tbodyBottom) {
+      const rows = Array.from(this._tbodyBottom.querySelectorAll(".tr"));
+      const last = rows.length - 1;
+      rows.forEach((r2, i2) => {
+        r2.classList.remove("row-edge-top");
+        r2.style.bottom = `calc(var(--tosi-table-row-height) * ${last - i2})`;
+      });
+      if (rows.length > 0) {
+        rows[0].classList.add("row-edge-top");
+      }
+    }
+  };
   cellStyle(col, si, extra) {
     const style = {
       justifyContent: col.align || "left",
@@ -26870,61 +26962,116 @@ class TosiTable extends g {
     }
     return style;
   }
-  applyPinnedToCustomCell(cell, colIndex, si, style) {
+  applyGridCellAttrs(cell, colIndex, si, style) {
     cell.setAttribute("aria-colindex", String(colIndex + 1));
     cell.tabIndex = -1;
     cell.classList.add(...this.cellClasses("td", si).split(" "));
     Object.assign(cell.style, style);
   }
-  buildPinnedCells(rows, cols, stickyInfo, pin, rowHeight, startRowIndex) {
-    const allCells = [];
-    const selectBindingFn = this.selectBinding;
-    const { rowRendered } = this;
-    for (let r2 = 0;r2 < rows.length; r2++) {
-      const rowItem = rows[r2];
-      const offset = pin === "top" ? (r2 + 1) * rowHeight + "px" : (rows.length - 1 - r2) * rowHeight + "px";
-      const rowCells = [];
-      for (let c2 = 0;c2 < cols.length; c2++) {
-        const col = cols[c2];
-        const si = stickyInfo[c2];
-        const style = this.cellStyle(col, si, {
-          position: "sticky",
-          [pin]: offset
-        });
-        let cell;
-        if (col.dataCell !== undefined) {
-          cell = col.dataCell(col);
-          this.applyPinnedToCustomCell(cell, c2, si, style);
-          cell.classList.add(`pinned-${pin}`);
-          cell.setAttribute("aria-rowindex", String(startRowIndex + r2 + 1));
-        } else {
-          cell = span4({
-            class: this.cellClasses(`td pinned-${pin}`, si),
-            role: "gridcell",
-            tabindex: -1,
-            ariaRowindex: String(startRowIndex + r2 + 1),
-            ariaColindex: String(c2 + 1),
-            style
-          }, String(rowItem[col.prop] ?? ""));
-        }
-        this.pinnedCellToItem.set(cell, rowItem);
-        selectBindingFn(cell, rowItem);
-        rowCells.push(cell);
-        allCells.push(cell);
-      }
-      this.pinnedItemToCells.set(C(rowItem), rowCells);
-      if (rowRendered) {
-        rowRendered(rowItem, rowCells);
-      }
+  buildCell(col, colIndex, si, item) {
+    const style = this.cellStyle(col, si);
+    if (col.dataCell !== undefined) {
+      const cell = col.dataCell(col);
+      this.applyGridCellAttrs(cell, colIndex, si, style);
+      return cell;
     }
-    return allCells;
+    return span4({
+      class: this.cellClasses("td", si),
+      role: "gridcell",
+      tabindex: -1,
+      ariaColindex: String(colIndex + 1),
+      style,
+      bindText: item[col.prop]
+    });
+  }
+  buildRow(item, cols, stickyInfo, rowClass = "tr") {
+    const cells = cols.map((col, i2) => this.buildCell(col, i2, stickyInfo[i2], item));
+    const selectBindingFn = this.selectBinding;
+    const tableInst = this;
+    const props = { class: rowClass };
+    props.bind = {
+      value: item,
+      binding: {
+        toDOM: (rowEl, value) => {
+          selectBindingFn(rowEl, value);
+          const fn = tableInst.rowRendered;
+          if (fn) {
+            fn(value, Array.from(rowEl.children));
+          }
+        }
+      }
+    };
+    return div3(props, ...cells);
+  }
+  buildHeaderCell(col, colIndex, si) {
+    const { popColumnMenu } = this;
+    let ariaSort = "none";
+    let sortIcon;
+    switch (col.sort) {
+      case "ascending":
+        sortIcon = icons.sortAscending();
+        ariaSort = "descending";
+        break;
+      case "descending":
+        ariaSort = "ascending";
+        sortIcon = icons.sortDescending();
+        break;
+    }
+    const menuButton = !(this.nosort && this.nohide) ? button4({
+      class: "menu-trigger",
+      onClick(event) {
+        popColumnMenu(event.target, col);
+        event.stopPropagation();
+      }
+    }, sortIcon || icons.moreVertical()) : {};
+    const cell = col.headerCell !== undefined ? col.headerCell(col) : span4({
+      class: this.cellClasses("th", si),
+      role: "columnheader",
+      tabindex: -1,
+      ariaSort,
+      ariaColindex: String(colIndex + 1),
+      style: this.cellStyle(col, si)
+    }, this.captionSpan({ style: { flex: "1" } }, typeof col.name === "string" ? col.name : col.prop), menuButton);
+    if (col.headerCell !== undefined) {
+      this.applyGridCellAttrs(cell, colIndex, si, this.cellStyle(col, si));
+      cell.classList.remove("td");
+      cell.classList.add("th");
+      cell.setAttribute("role", "columnheader");
+    }
+    if (!this.noreorder && cell.children[0]) {
+      init();
+      const dragId = this.instanceId + "-column-header";
+      const caption = cell.children[0];
+      caption.setAttribute("draggable", "true");
+      caption.style.pointerEvents = "all";
+      caption.dataset.drag = dragId;
+      cell.dataset.drop = dragId;
+      caption.addEventListener("dragstart", () => {
+        this.draggedColumn = col;
+      });
+      cell.addEventListener("drop", this.dropColumn);
+    }
+    return cell;
+  }
+  buildHeader(cols, stickyInfo) {
+    const headerCells = cols.map((col, i2) => this.buildHeaderCell(col, i2, stickyInfo[i2]));
+    return div3({ class: "thead", role: "rowgroup" }, div3({ class: "tr", role: "row" }, ...headerCells));
+  }
+  buildPinnedBody(rowsProxy, cols, stickyInfo, region, part) {
+    const rowClass = this.rowClasses(region);
+    const binding = rowsProxy.listBinding((_elements, item) => this.buildRow(item, cols, stickyInfo, rowClass), {});
+    return div3({
+      class: `tbody tbody-${region}`,
+      role: "rowgroup",
+      part
+    }, ...binding);
   }
   getColumn(event) {
-    if (!this._grid)
+    if (!this._scrollArea)
       return;
-    const pointerX = (event.touches !== undefined ? event.touches[0].clientX : event.clientX) - this._grid.getBoundingClientRect().x;
+    const pointerX = (event.touches !== undefined ? event.touches[0].clientX : event.clientX) - this._scrollArea.getBoundingClientRect().x;
     const epsilon = event.touches !== undefined ? 20 : 5;
-    const { scrollLeft, clientWidth, scrollWidth } = this._grid;
+    const { scrollLeft, clientWidth, scrollWidth } = this._scrollArea;
     const cols = this.visibleColumns;
     const rightScroll = scrollWidth - clientWidth - scrollLeft;
     let boundaryX = 0;
@@ -26945,9 +27092,7 @@ class TosiTable extends g {
   }
   setCursor = (event) => {
     const column = this.getColumn(event);
-    if (this._grid) {
-      this._grid.style.cursor = column !== undefined ? "col-resize" : "";
-    }
+    this.style.cursor = column !== undefined ? "col-resize" : "";
   };
   resizeColumn = (event) => {
     const column = this.getColumn(event);
@@ -26991,12 +27136,11 @@ class TosiTable extends g {
     this.selectRows(rows, false);
   }
   updateSelectionVisuals() {
-    if (!this._grid)
-      return;
-    for (const elt of Array.from(this._grid.children)) {
-      const item = GM(elt) ?? this.pinnedCellToItem.get(elt);
+    const rows = this._scrollArea?.querySelectorAll(".tr") ?? [];
+    for (const row of rows) {
+      const item = this.itemFor(row);
       if (item != null) {
-        this.selectBinding(elt, item);
+        this.selectBinding(row, item);
       }
     }
   }
@@ -27009,7 +27153,7 @@ class TosiTable extends g {
     if (!(target instanceof HTMLElement)) {
       return;
     }
-    const pickedItem = GM(target) ?? this.resolvePinnedItem(target);
+    const pickedItem = this.itemFor(target);
     if (pickedItem == null) {
       return;
     }
@@ -27052,17 +27196,24 @@ class TosiTable extends g {
     this.updateSelectionVisuals();
   };
   findCell(rowIndex, colIndex) {
-    if (!this._grid)
-      return null;
-    const cols = this.visibleColumns.length;
     if (rowIndex === -1) {
-      return this._grid.querySelector(`.th[aria-colindex="${colIndex + 1}"]`);
+      return this.querySelector(`.thead .th[aria-colindex="${colIndex + 1}"]`);
     }
-    const cell = this._grid.querySelector(`.pinned-top[aria-rowindex="${rowIndex + 1}"][aria-colindex="${colIndex + 1}"],` + `.pinned-bottom[aria-rowindex="${rowIndex + 1}"][aria-colindex="${colIndex + 1}"]`);
-    if (cell)
-      return cell;
-    const dataRowIndex = rowIndex - this.pinnedTop;
-    return this._grid.querySelector(`[aria-rowindex="${dataRowIndex + 1}"][aria-colindex="${colIndex + 1}"]:not(.pinned-top):not(.pinned-bottom)`);
+    const top = this.effectivePinnedTopData;
+    const visible = this.visibleRows;
+    const bottom = this.effectivePinnedBottomData;
+    let item;
+    if (rowIndex < top.length) {
+      item = top[rowIndex];
+    } else if (rowIndex < top.length + visible.length) {
+      item = visible[rowIndex - top.length];
+    } else if (rowIndex < top.length + visible.length + bottom.length) {
+      item = bottom[rowIndex - top.length - visible.length];
+    } else {
+      return null;
+    }
+    const cells = this.cellsFor(item);
+    return cells?.[colIndex] ?? null;
   }
   _pendingFocus = null;
   onScrollEnd = () => {
@@ -27075,23 +27226,20 @@ class TosiTable extends g {
       cell.focus();
   };
   focusCell(rowIndex, colIndex) {
-    if (!this._grid)
-      return;
     this._pendingFocus = { row: rowIndex, col: colIndex };
     const cell = this.findCell(rowIndex, colIndex);
     if (cell) {
       cell.focus();
       cell.scrollIntoView({ block: "nearest", inline: "nearest" });
-    } else {
-      const dataRowIndex = rowIndex - this.pinnedTop;
+    } else if (this._scrollArea) {
+      const top = this.effectivePinnedTopData;
+      const dataRowIndex = rowIndex - top.length;
       if (dataRowIndex >= 0 && dataRowIndex < this.visibleRows.length) {
-        this._grid.scrollTop = dataRowIndex * this.rowHeight;
+        this._scrollArea.scrollTop = dataRowIndex * this.rowHeight;
       }
     }
   }
   handleKeyNav = (event) => {
-    if (!this._grid)
-      return;
     const el = event.target;
     const target = el.closest(".td") || el.closest(".th");
     if (!target)
@@ -27101,22 +27249,34 @@ class TosiTable extends g {
       return;
     const colIndex = ariaCol - 1;
     const cols = this.visibleColumns.length;
-    const totalRows = this._array.length;
+    const top = this.effectivePinnedTopData;
+    const visible = this.visibleRows;
+    const bottom = this.effectivePinnedBottomData;
+    const totalRows = top.length + visible.length + bottom.length;
     const meta = event.metaKey || event.ctrlKey;
     const isHeader = target.classList.contains("th");
     let rowIndex;
     if (isHeader) {
       rowIndex = -1;
-    } else if (target.classList.contains("pinned-top") || target.classList.contains("pinned-bottom")) {
-      const ariaRow = parseInt(target.getAttribute("aria-rowindex") || "", 10);
-      if (isNaN(ariaRow))
-        return;
-      rowIndex = ariaRow - 1;
     } else {
-      const ariaRow = parseInt(target.getAttribute("aria-rowindex") || "", 10);
-      if (isNaN(ariaRow))
+      const row = target.closest(".tr");
+      if (!row)
         return;
-      rowIndex = this.pinnedTop + ariaRow - 1;
+      const item = GM(row);
+      if (item == null)
+        return;
+      const idxTop = top.indexOf(item);
+      const idxVisible = idxTop === -1 ? visible.indexOf(item) : -1;
+      const idxBottom = idxTop === -1 && idxVisible === -1 ? bottom.indexOf(item) : -1;
+      if (idxTop !== -1) {
+        rowIndex = idxTop;
+      } else if (idxVisible !== -1) {
+        rowIndex = top.length + idxVisible;
+      } else if (idxBottom !== -1) {
+        rowIndex = top.length + visible.length + idxBottom;
+      } else {
+        return;
+      }
     }
     let nextRow = rowIndex;
     let nextCol = colIndex;
@@ -27186,29 +27346,27 @@ class TosiTable extends g {
     this.addEventListener("mouseup", this.updateSelection);
     this.addEventListener("touchend", this.updateSelection);
     this.addEventListener("keydown", this.handleKeyNav);
+    this.addEventListener("scroll", this.updatePinnedCellTransforms, {
+      passive: true
+    });
   }
   setColumnWidths() {
     const cols = this.visibleColumns;
     const columns = cols.map((c2) => c2.width + "px").join(" ");
     const rowWidth = cols.reduce((w2, c2) => w2 + c2.width, 0) + "px";
-    if (this._grid) {
-      this._grid.style.gridTemplateColumns = columns;
-    }
     this.style.setProperty("--tosi-table-grid-columns", columns);
     this.style.setProperty("--tosi-table-grid-row-width", rowWidth);
     this.style.setProperty("--grid-columns", columns);
     this.style.setProperty("--grid-row-width", rowWidth);
-    if (this._grid) {
-      const stickyInfo = this.computeStickyInfo(cols);
-      for (const cell of this._grid.querySelectorAll(".col-pinned")) {
-        const ci = parseInt(cell.getAttribute("aria-colindex") || "", 10) - 1;
-        if (!isNaN(ci) && stickyInfo[ci]) {
-          const si = stickyInfo[ci];
-          if (si.left != null)
-            cell.style.left = si.left;
-          if (si.right != null)
-            cell.style.right = si.right;
-        }
+    const stickyInfo = this.computeStickyInfo(cols);
+    for (const cell of this.querySelectorAll(".col-pinned")) {
+      const ci = parseInt(cell.getAttribute("aria-colindex") || "", 10) - 1;
+      if (!isNaN(ci) && stickyInfo[ci]) {
+        const si = stickyInfo[ci];
+        if (si.left != null)
+          cell.style.left = si.left;
+        if (si.right != null)
+          cell.style.right = si.right;
       }
     }
   }
@@ -27326,25 +27484,22 @@ class TosiTable extends g {
     return this.visibleRows.filter((obj) => obj[this.selectedKey]);
   }
   get selectedRows() {
-    return this.array.filter((obj) => obj[this.selectedKey]);
+    if (this._pinnedTopRows || this._pinnedBottomRows) {
+      const all = [
+        ...this._pinnedTopRows ?? [],
+        ...this._array,
+        ...this._pinnedBottomRows ?? []
+      ];
+      return all.filter((obj) => obj[this.selectedKey]);
+    }
+    return this._array.filter((obj) => obj[this.selectedKey]);
   }
   getCells(itemOrCell) {
-    if (!this._grid)
-      return;
-    const item = itemOrCell instanceof Element ? this.getItem(itemOrCell) : itemOrCell;
-    if (item == null)
-      return;
-    const key = C(item);
-    const pinned = this.pinnedItemToCells.get(key);
-    if (pinned)
-      return pinned;
-    const binding = DE(this._grid);
-    if (!binding)
-      return;
-    return binding.itemToElement.get(key);
+    const item = itemOrCell instanceof Element ? this.itemFor(itemOrCell) : itemOrCell;
+    return item == null ? undefined : this.cellsFor(item);
   }
   getItem(cell) {
-    return GM(cell) ?? this.resolvePinnedItem(cell);
+    return this.itemFor(cell);
   }
   draggedColumn;
   dropColumn = (event) => {
@@ -27363,149 +27518,47 @@ class TosiTable extends g {
   render() {
     super.render();
     this.textContent = "";
-    this.pinnedItemToCells.clear();
-    const pinnedTopData = this.pinnedTop > 0 ? this._array.slice(0, this.pinnedTop) : [];
-    const pinnedBottomData = this.pinnedBottom > 0 ? this._array.slice(-this.pinnedBottom) : [];
-    const maxIndex = Math.min(this._array.length - this.pinnedBottom, this.pinnedTop + this.maxVisibleRows);
-    const visibleData = this.filter(this._array.slice(this.pinnedTop, maxIndex));
+    const pinnedTopData = this.effectivePinnedTopData;
+    const pinnedBottomData = this.effectivePinnedBottomData;
+    const baseData = this.effectiveBaseData;
+    const cap = Math.min(baseData.length, this.maxVisibleRows);
+    const visibleData = this.filter(baseData.slice(0, cap));
     const { sort } = this;
-    if (sort) {
+    if (sort)
       visibleData.sort(sort);
-    }
+    this.rowData.pinnedTopData = pinnedTopData;
+    this.rowData.pinnedBottomData = pinnedBottomData;
     this.rowData.visible = visibleData;
     const cols = this.visibleColumns;
     if (cols.length === 0)
       return;
     const stickyInfo = this.computeStickyInfo(cols);
-    const rowHeight = this.rowHeight || 1;
     this.style.setProperty("--tosi-table-row-height", this.rowHeight > 0 ? `${this.rowHeight}px` : "auto");
-    const { popColumnMenu } = this;
-    const headerCells = cols.map((col, i2) => {
-      const si = stickyInfo[i2];
-      let ariaSort = "none";
-      let sortIcon;
-      switch (col.sort) {
-        case "ascending":
-          sortIcon = icons.sortAscending();
-          ariaSort = "descending";
-          break;
-        case "descending":
-          ariaSort = "ascending";
-          sortIcon = icons.sortDescending();
-          break;
-      }
-      const menuButton = !(this.nosort && this.nohide) ? button4({
-        class: "menu-trigger",
-        onClick(event) {
-          popColumnMenu(event.target, col);
-          event.stopPropagation();
-        }
-      }, sortIcon || icons.moreVertical()) : {};
-      const cell = col.headerCell !== undefined ? col.headerCell(col) : span4({
-        class: this.cellClasses("th", si),
-        role: "columnheader",
-        tabindex: -1,
-        ariaSort,
-        ariaColindex: String(i2 + 1),
-        style: this.cellStyle(col, si)
-      }, this.captionSpan({ style: { flex: "1" } }, typeof col.name === "string" ? col.name : col.prop), menuButton);
-      if (col.headerCell !== undefined) {
-        this.applyPinnedToCustomCell(cell, i2, si, this.cellStyle(col, si));
-      }
-      if (!this.noreorder && cell.children[0]) {
-        init();
-        const dragId = this.instanceId + "-column-header";
-        const caption = cell.children[0];
-        caption.setAttribute("draggable", "true");
-        caption.style.pointerEvents = "all";
-        caption.dataset.drag = dragId;
-        cell.dataset.drop = dragId;
-        caption.addEventListener("dragstart", () => {
-          this.draggedColumn = col;
-        });
-        cell.addEventListener("drop", this.dropColumn);
-      }
-      return cell;
-    });
-    const pinnedTopCells = this.buildPinnedCells(pinnedTopData, cols, stickyInfo, "top", rowHeight, 0);
-    const pinnedBottomCells = this.buildPinnedCells(pinnedBottomData, cols, stickyInfo, "bottom", rowHeight, this._array.length - this.pinnedBottom);
-    const selectEnabled = this.select || this.multiple;
-    const selectBindingFn = this.selectBinding;
-    const { rowRendered } = this;
-    const lastCol = cols.length - 1;
-    const rowRenderedBinding = rowRendered ? (cell) => {
-      const item = GM(cell);
-      if (item != null) {
-        const cells = this.getCells(item);
-        if (cells)
-          rowRendered(item, cells);
-      }
-    } : null;
-    const binding = this.rowData.visible.listBinding(({ span: s2 }, item, colIndex) => {
-      const col = cols[colIndex];
-      const si = stickyInfo[colIndex];
-      const style = this.cellStyle(col, si);
-      if (col.dataCell != null) {
-        const customCell = col.dataCell(col);
-        this.applyPinnedToCustomCell(customCell, colIndex, si, style);
-        if (rowRenderedBinding && colIndex === lastCol) {
-          u(customCell, item, {
-            toDOM(cell) {
-              if (selectEnabled)
-                selectBindingFn(cell, GM(cell));
-              rowRenderedBinding(cell);
-            }
-          });
-        } else if (selectEnabled) {
-          u(customCell, item, { toDOM: selectBindingFn });
-        }
-        return customCell;
-      }
-      const props = {
-        class: this.cellClasses("td", si),
-        role: "gridcell",
-        tabindex: -1,
-        style,
-        bindText: item[col.prop]
-      };
-      if (selectEnabled) {
-        props.bind = {
-          value: item,
-          binding: { toDOM: selectBindingFn }
-        };
-      }
-      if (rowRenderedBinding && colIndex === lastCol) {
-        props.bind = {
-          value: item,
-          binding: {
-            toDOM(cell) {
-              if (selectEnabled)
-                selectBindingFn(cell, GM(cell));
-              rowRenderedBinding(cell);
-            }
-          }
-        };
-      }
-      return s2(props);
-    }, {
-      virtual: {
-        height: rowHeight,
-        itemsPerRow: cols.length
-      }
-    });
-    const stickyTopHeight = (1 + this.pinnedTop) * rowHeight;
-    const stickyBottomHeight = this.pinnedBottom * rowHeight;
-    const grid = div3({
-      class: "grid",
-      style: {
-        gridTemplateColumns: cols.map((c2) => c2.width + "px").join(" "),
-        scrollPaddingTop: stickyTopHeight + "px",
-        scrollPaddingBottom: stickyBottomHeight + "px"
-      }
-    }, ...headerCells, ...pinnedTopCells, ...binding, ...pinnedBottomCells);
-    this._grid = grid;
-    grid.addEventListener("scrollend", this.onScrollEnd);
-    this.append(grid);
+    this.setColumnWidths();
+    this._head = this.buildHeader(cols, stickyInfo);
+    this._tbodyTop = pinnedTopData.length > 0 ? this.buildPinnedBody(this.rowData.pinnedTopData, cols, stickyInfo, "pinned-top", "pinnedTopRows") : null;
+    this._tbodyBottom = pinnedBottomData.length > 0 ? this.buildPinnedBody(this.rowData.pinnedBottomData, cols, stickyInfo, "pinned-bottom", "pinnedBottomRows") : null;
+    const visibleBinding = this.rowData.visible.listBinding((_elements, item) => this.buildRow(item, cols, stickyInfo), this.rowHeight > 0 ? { virtual: { height: this.rowHeight } } : {});
+    const scrollAreaChildren = [this._head];
+    if (this._tbodyTop)
+      scrollAreaChildren.push(this._tbodyTop);
+    scrollAreaChildren.push(...visibleBinding);
+    if (this._tbodyBottom)
+      scrollAreaChildren.push(this._tbodyBottom);
+    this._scrollArea = div3({ class: "scroll-area", part: "visibleRows" }, ...scrollAreaChildren);
+    this._scrollArea.addEventListener("scrollend", this.onScrollEnd);
+    this.append(this._scrollArea);
+    this._pinnedRowEdgeObserver?.disconnect();
+    this._pinnedRowEdgeObserver = new MutationObserver(this.tagPinnedRows);
+    if (this._tbodyTop) {
+      this._pinnedRowEdgeObserver.observe(this._tbodyTop, { childList: true });
+    }
+    if (this._tbodyBottom) {
+      this._pinnedRowEdgeObserver.observe(this._tbodyBottom, {
+        childList: true
+      });
+    }
+    this.tagPinnedRows();
   }
 }
 var DataTable = TosiTable;
@@ -29731,6 +29784,35 @@ class AssertionError extends Error {
     this.name = "AssertionError";
   }
 }
+var BUNDLE_FILES = /\/(index|module|iife|module\.debug|module\.safe)\.js$/;
+function firstUserStackFrame(stack) {
+  if (!stack)
+    return null;
+  for (const raw of stack.split(`
+`)) {
+    const line = raw.trim();
+    if (!line)
+      continue;
+    if (/^\w*Error[:\s]/.test(line))
+      continue;
+    const match2 = line.match(/[(@\s]([^()\s]+):(\d+):(\d+)\)?$/);
+    if (!match2)
+      continue;
+    const [, url, ln, col] = match2;
+    if (BUNDLE_FILES.test(url))
+      continue;
+    return { url, line: Number(ln), col: Number(col) };
+  }
+  return null;
+}
+var currentTestSource = null;
+function getSourceLine(lineNum) {
+  if (!currentTestSource || lineNum < 1)
+    return null;
+  const lines = currentTestSource.split(`
+`);
+  return lines[lineNum - 1]?.trim() || null;
+}
 function deepEqual(a3, b2) {
   if (a3 === b2)
     return true;
@@ -29775,7 +29857,14 @@ function createMatchers(value, negated = false) {
   const assert2 = (condition, message) => {
     const result = negated ? !condition : condition;
     if (!result) {
-      throw new AssertionError(negated ? `not: ${message}` : message);
+      const err = new AssertionError(negated ? `not: ${message}` : message);
+      const frame = firstUserStackFrame(err.stack);
+      if (frame) {
+        const src = getSourceLine(frame.line);
+        const loc = `line ${frame.line}`;
+        err.message = src ? `${err.message} | ${src} (${loc})` : `${err.message} (${loc})`;
+      }
+      throw err;
     }
   };
   const matchers = {
@@ -29918,7 +30007,10 @@ async function runTests(testCode, preview, context, transform2) {
     const transformedCode = transform2(code, { transforms: ["typescript"] }).code;
     const contextKeys = Object.keys(fullContext).map((key) => key.replace(/-/g, ""));
     const contextValues = Object.values(fullContext);
-    const func = new AsyncFunction(...contextKeys, transformedCode);
+    const taggedCode = `${transformedCode}
+//# sourceURL=inline-test`;
+    currentTestSource = transformedCode;
+    const func = new AsyncFunction(...contextKeys, taggedCode);
     await func(...contextValues);
   } catch (err) {
     results.push({
@@ -29930,6 +30022,7 @@ async function runTests(testCode, preview, context, transform2) {
   if (testContext.pending.length > 0) {
     await Promise.all(testContext.pending);
   }
+  currentTestSource = null;
   return {
     passed: results.filter((r2) => r2.passed).length,
     failed: results.filter((r2) => !r2.passed).length,
@@ -34654,7 +34747,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.5.16";
+var version = "1.5.17";
 // src/tooltip.ts
 var { span: span18 } = I;
 var tooltipFloat = null;
@@ -35679,6 +35772,9 @@ preview.append(b3d({
   height: 100%;
 }
 \`\`\`
+
+> Note: for more involved 3d work there's [tosijs-3d](https://3d.tosijs.net),
+> a library of modular components for 3d development.
 
 You can access the \`scene\` and \`engine\` properties. You can also assign \`sceneCreated\`
 and \`update\` callbacks that will be executed when the scene is first initialized and
@@ -41112,6 +41208,9 @@ preview.append(table)
   margin: 0;
   border-radius: 0;
   box-shadow: none !important;
+}
+
+.preview input.td:focus {
   background: #fff4;
 }
 
@@ -41139,7 +41238,7 @@ test('table renders with data', () => {
   expect(table.array.length).toBeGreaterThan(0)
 })
 
-test('row selection: data model + aria-selected on every cell (incl. custom dataCell)', async () => {
+test('row selection: data model + aria-selected on row (incl. custom dataCell)', async () => {
   // Wait for listBinding to stamp DOM cells for the visible window
   const items = table.visibleRows
   await new Promise(resolve => {
@@ -41159,27 +41258,28 @@ test('row selection: data model + aria-selected on every cell (incl. custom data
   expect(items[1][table.selectedKey]).toBe(true)
   expect(table.selectedRows.length).toBe(2)
 
-  // DOM: every cell of a selected row has aria-selected, including the
-  // custom-rendered \`name\` column (regression test for custom cells being
-  // skipped by selectBinding).
+  // DOM: aria-selected lives on the row element. CSS targets
+  // .tr[aria-selected="true"] .td to highlight cells.
   const cells0 = table.getCells(items[0])
   const cells1 = table.getCells(items[1])
   expect(cells0.length).toBe(table.visibleColumns.length)
   expect(cells1.length).toBe(table.visibleColumns.length)
-  for (const c of cells0) expect(c.hasAttribute('aria-selected')).toBe(true)
-  for (const c of cells1) expect(c.hasAttribute('aria-selected')).toBe(true)
+  const row0 = cells0[0].closest('.tr')
+  const row1 = cells1[0].closest('.tr')
+  expect(row0.hasAttribute('aria-selected')).toBe(true)
+  expect(row1.hasAttribute('aria-selected')).toBe(true)
   // The \`name\` column (index 1) uses a dataCell input — confirm the custom
-  // element is the actual cell and that it carries aria-selected.
+  // element is the actual cell living inside the same selected row.
   expect(cells0[1].tagName).toBe('INPUT')
-  expect(cells0[1].hasAttribute('aria-selected')).toBe(true)
+  expect(cells0[1].closest('.tr')).toBe(row0)
 
   // Deselect and verify both data model and DOM clear
   table.deSelect()
   expect(table.selectedRows.length).toBe(0)
   expect(items[0][table.selectedKey]).not.toBe(true)
   expect(items[1][table.selectedKey]).not.toBe(true)
-  for (const c of cells0) expect(c.hasAttribute('aria-selected')).toBe(false)
-  for (const c of cells1) expect(c.hasAttribute('aria-selected')).toBe(false)
+  expect(row0.hasAttribute('aria-selected')).toBe(false)
+  expect(row1.hasAttribute('aria-selected')).toBe(false)
 })
 
 test('getCells and getItem', async () => {
@@ -41306,8 +41406,11 @@ const table = tosiTable({
   pinnedBottom: 1,
   rowRendered(item, cells) {
     const total = numKeys.reduce((sum, key) => sum + (item[key] || 0), 0)
+    const rowClass = total < 0 ? 'row-negative' : 'row-positive'
     for (const c of cells) {
-      c.classList.toggle('row-negative', total < 0)
+      if (c.classList.contains('num-cell')) {
+        c.classList.add(rowClass)
+      }
     }
   },
   columns: [
@@ -41352,8 +41455,8 @@ preview.append(table)
   background: #eee;
   font-weight: bold;
 }
-.preview .row-negative {
-  background: #fdd;
+.preview .row-pinned .td {
+  background: #eee;
 }
 .preview .num-cell {
   font-variant-numeric: tabular-nums;
@@ -41362,19 +41465,27 @@ preview.append(table)
 \`\`\`test
 const tables = document.querySelectorAll('tosi-table')
 const table = tables[tables.length - 1]
+// Wait until the pinned row has been stamped AND its bindings have settled
+// (numeric cells show their text, the actions button is in place).
 await new Promise(resolve => {
   const check = () => {
-    if (table.querySelector('.pinned-bottom')) return resolve()
+    const row = table.querySelector('.tbody-pinned-bottom .tr')
+    if (
+      row &&
+      row.querySelector('button') &&
+      Array.from(row.children).some(c => c.classList.contains('num-cell') && c.textContent.trim().length > 0)
+    ) return resolve()
     setTimeout(check, 100)
   }
   check()
 })
 
-test('pinned row honours dataCell, rowRendered, getCells, getItem, selection', () => {
+test('pinned row goes through the same listBinding as virtual rows', () => {
   const totals = table.array[table.array.length - 1]
-  const pinnedCells = Array.from(table.querySelectorAll('.pinned-bottom'))
+  const pinnedRow = table.querySelector('.tbody-pinned-bottom .tr')
+  const pinnedCells = Array.from(pinnedRow.children)
 
-  // Sanity: number of pinned cells equals number of visible columns
+  // Sanity: same number of cells as visible columns
   expect(pinnedCells.length).toBe(table.visibleColumns.length)
 
   // dataCell honoured: numeric columns kept their \`num-cell\` class, and the
@@ -41383,28 +41494,34 @@ test('pinned row honours dataCell, rowRendered, getCells, getItem, selection', (
   expect(numCells.length).toBeGreaterThan(0)
   expect(pinnedCells.some(c => c.tagName === 'BUTTON')).toBe(true)
 
-  // rowRendered fired: totals row is negative on average, so all cells of
-  // this row should carry \`row-negative\`
+  // numCell uses bindText: '^.<prop>' — confirm path-bindings resolved
+  // (this requires the cell to live inside a list-bound row).
+  const renderedTexts = numCells.map(c => c.textContent?.trim() ?? '')
+  expect(renderedTexts.every(t => t.length > 0)).toBe(true)
+  expect(renderedTexts.some(t => /^-?\\d/.test(t))).toBe(true)
+
+  // rowRendered fired: numeric cells of this row carry \`row-negative\` or
+  // \`row-positive\` based on the totals row's sign. Either way the loop did
+  // *something* — so the test verifies the work happened regardless of the
+  // randomized data.
   const total = Object.keys(totals)
     .filter(k => typeof totals[k] === 'number')
     .reduce((s, k) => s + totals[k], 0)
-  if (total < 0) {
-    expect(pinnedCells.every(c => c.classList.contains('row-negative'))).toBe(true)
-  }
+  const expected = total < 0 ? 'row-negative' : 'row-positive'
+  expect(numCells.every(c => c.classList.contains(expected))).toBe(true)
 
   // getCells / getItem round-trip works for pinned items
   const cellsForTotals = table.getCells(totals)
   expect(cellsForTotals?.length).toBe(table.visibleColumns.length)
   expect(table.getItem(cellsForTotals[0])).toBe(totals)
 
-  // Selection on a pinned row applies aria-selected to every cell
-  table.multiple = true
+  // Selection on a pinned row sets aria-selected on the row element
   table.deSelect()
   table.selectRow(totals)
-  expect(cellsForTotals.every(c => c.hasAttribute('aria-selected'))).toBe(true)
+  expect(pinnedRow.hasAttribute('aria-selected')).toBe(true)
 
   table.deSelect()
-  expect(cellsForTotals.some(c => c.hasAttribute('aria-selected'))).toBe(false)
+  expect(pinnedRow.hasAttribute('aria-selected')).toBe(false)
 })
 \`\`\`
 

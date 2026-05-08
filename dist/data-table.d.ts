@@ -31,11 +31,31 @@ export declare class TosiTable extends WebComponent {
             overflow: string;
             background: string;
         };
-        ':host .grid': {
-            overflow: string;
+        ':host .scroll-area': {
+            width: string;
             height: string;
+            overflow: string;
             overscrollBehavior: string;
-            alignContent: string;
+        };
+        ':host .thead, :host .tbody': {
+            display: string;
+        };
+        ':host .tr': {
+            display: string;
+            gridTemplateColumns: string;
+            width: string;
+            height: string;
+            background: string;
+        };
+        ':host .thead .tr': {
+            position: string;
+            top: string;
+            zIndex: string;
+            background: string;
+        };
+        ':host .tbody-pinned-top .tr, :host .tbody-pinned-bottom .tr': {
+            position: string;
+            zIndex: string;
         };
         ':host .th, :host .td': {
             overflow: string;
@@ -46,12 +66,6 @@ export declare class TosiTable extends WebComponent {
             height: string;
             lineHeight: string;
         };
-        ':host .th': {
-            position: string;
-            top: string;
-            zIndex: string;
-            background: string;
-        };
         ':host .col-pinned': {
             position: string;
             zIndex: string;
@@ -61,22 +75,8 @@ export declare class TosiTable extends WebComponent {
             zIndex: string;
             background: string;
         };
-        ':host .pinned-top': {
-            position: string;
-            zIndex: string;
+        ':host .tr[aria-selected="true"] .td': {
             background: string;
-        };
-        ':host .pinned-top.col-pinned': {
-            zIndex: string;
-        };
-        ':host .pinned-bottom': {
-            position: string;
-            bottom: string;
-            zIndex: string;
-            background: string;
-        };
-        ':host .pinned-bottom.col-pinned': {
-            zIndex: string;
         };
         ':host .td:focus, :host .th:focus': {
             outline: string;
@@ -90,6 +90,12 @@ export declare class TosiTable extends WebComponent {
             boxShadow: string;
         };
         ':host .col-edge-left': {
+            boxShadow: string;
+        };
+        ':host .row-edge-bottom': {
+            boxShadow: string;
+        };
+        ':host .row-edge-top': {
             boxShadow: string;
         };
         ':host .th .menu-trigger': {
@@ -129,10 +135,14 @@ export declare class TosiTable extends WebComponent {
     private selectedKey;
     private selectBinding;
     maxVisibleRows: number;
-    private _grid;
-    private pinnedItemToCells;
-    private pinnedCellToItem;
-    private resolvePinnedItem;
+    private _head;
+    private _scrollArea;
+    private _tbodyTop;
+    private _tbodyBottom;
+    private _pinnedRowEdgeObserver;
+    private _rowCellsCache;
+    private itemFor;
+    private cellsFor;
     get value(): TableData;
     set value(data: TableData);
     private rowData;
@@ -140,6 +150,15 @@ export declare class TosiTable extends WebComponent {
     private _columns;
     private _filter;
     private _sort?;
+    private _pinnedTopRows?;
+    private _pinnedBottomRows?;
+    get pinnedTopRows(): any[] | undefined;
+    set pinnedTopRows(rows: any[] | undefined);
+    get pinnedBottomRows(): any[] | undefined;
+    set pinnedBottomRows(rows: any[] | undefined);
+    get effectivePinnedTopData(): any[];
+    get effectivePinnedBottomData(): any[];
+    private get effectiveBaseData();
     constructor();
     get array(): any[];
     set array(newArray: any[]);
@@ -161,9 +180,15 @@ export declare class TosiTable extends WebComponent {
     content: null;
     private computeStickyInfo;
     private cellClasses;
+    private rowClasses;
+    private tagPinnedRows;
     private cellStyle;
-    private applyPinnedToCustomCell;
-    private buildPinnedCells;
+    private applyGridCellAttrs;
+    private buildCell;
+    private buildRow;
+    private buildHeaderCell;
+    private buildHeader;
+    private buildPinnedBody;
     getColumn(event: any): ColumnOptions | undefined;
     private setCursor;
     private resizeColumn;

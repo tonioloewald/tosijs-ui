@@ -267,8 +267,11 @@ const table = tosiTable({
   pinnedBottom: 1,
   rowRendered(item, cells) {
     const total = numKeys.reduce((sum, key) => sum + (item[key] || 0), 0)
+    const rowClass = total < 0 ? 'row-negative' : 'row-positive'
     for (const c of cells) {
-      c.classList.toggle('row-negative', total < 0)
+      if (c.classList.contains('num-cell')) {
+        c.classList.add(rowClass)
+      }
     }
   },
   columns: [
@@ -313,8 +316,8 @@ preview.append(table)
   background: #eee;
   font-weight: bold;
 }
-.preview .row-negative {
-  background: #fdd;
+.preview .row-pinned .td {
+  background: #eee;
 }
 .preview .num-cell {
   font-variant-numeric: tabular-nums;
@@ -358,14 +361,15 @@ test('pinned row goes through the same listBinding as virtual rows', () => {
   expect(renderedTexts.every(t => t.length > 0)).toBe(true)
   expect(renderedTexts.some(t => /^-?\d/.test(t))).toBe(true)
 
-  // rowRendered fired: totals row may be negative on average; if so, every
-  // cell of this row should carry `row-negative`
+  // rowRendered fired: numeric cells of this row carry `row-negative` or
+  // `row-positive` based on the totals row's sign. Either way the loop did
+  // *something* — so the test verifies the work happened regardless of the
+  // randomized data.
   const total = Object.keys(totals)
     .filter(k => typeof totals[k] === 'number')
     .reduce((s, k) => s + totals[k], 0)
-  if (total < 0) {
-    expect(pinnedCells.every(c => c.classList.contains('row-negative'))).toBe(true)
-  }
+  const expected = total < 0 ? 'row-negative' : 'row-positive'
+  expect(numCells.every(c => c.classList.contains(expected))).toBe(true)
 
   // getCells / getItem round-trip works for pinned items
   const cellsForTotals = table.getCells(totals)
@@ -591,11 +595,15 @@ interface StickyInfo {
 export class TosiTable extends WebComponent {
   static preferredTagName = 'tosi-table'
 
-  // Layout: host is a vertical flex of four regions — thead, optional pinned-top
-  // tbody, virtual tbody, optional pinned-bottom tbody. Only the virtual tbody
-  // scrolls vertically; horizontal scroll is shared via the host. Each row
-  // (.tr) is its own CSS grid keyed off --tosi-table-grid-columns, so column
-  // resize updates one variable and every row reflows.
+  // Layout: a single .scroll-area inside :host is the only scroll container
+  // (both axes). It also hosts the virtualised visible-rows listBinding, so
+  // virtualisation reads from the same scroll context that sticky cells stick
+  // against. The header, optional pinned-top tbody, and optional pinned-bottom
+  // tbody are siblings inside .scroll-area; the pinned tbodies use
+  // `display: contents` so their stamped .tr rows participate in
+  // .scroll-area's layout directly. Each .tr is its own CSS grid keyed off
+  // --tosi-table-grid-columns, so column resize updates one variable and every
+  // row reflows.
   static lightStyleSpec = {
     ':host': {
       '--tosi-table-row-height': '32px',
@@ -603,17 +611,31 @@ export class TosiTable extends WebComponent {
       '--tosi-table-dragged-header-bg': '#0004',
       '--tosi-table-dragged-header-color': '#fff',
       '--tosi-table-drop-header-bg': '#fff4',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'auto hidden',
-      overscrollBehavior: 'none',
+      display: 'block',
+      overflow: 'hidden',
       background: varDefault.tosiTableBg('var(--tosi-bg, #fff)'),
     },
-    ':host .thead, :host .tbody': {
-      width: vars.tosiTableGridRowWidth,
-      flex: '0 0 auto',
+    ':host .scroll-area': {
+      width: '100%',
+      height: '100%',
+      overflow: 'auto',
+      overscrollBehavior: 'none',
     },
-    ':host .thead': {
+    // The thead and pinned tbodies are layout pass-throughs so their .tr rows
+    // are direct children of .scroll-area for sticky positioning. Without
+    // display:contents, the .tr can only stick within its narrow parent and
+    // scrolls out of view as soon as the parent does.
+    ':host .thead, :host .tbody': {
+      display: 'contents',
+    },
+    ':host .tr': {
+      display: 'grid',
+      gridTemplateColumns: vars.tosiTableGridColumns,
+      width: vars.tosiTableGridRowWidth,
+      height: vars.tosiTableRowHeight,
+      background: varDefault.tosiTableBg('var(--tosi-bg, #fff)'),
+    },
+    ':host .thead .tr': {
       position: 'sticky',
       top: '0',
       zIndex: '2',
@@ -621,27 +643,11 @@ export class TosiTable extends WebComponent {
         varDefault.tosiTableBg('var(--tosi-bg, #fff)')
       ),
     },
-    ':host .tbody-virtual': {
-      flex: '1 1 100px',
-      overflow: 'hidden auto',
-      minHeight: '100px',
-    },
-    ':host .tbody-pinned-top, :host .tbody-pinned-bottom': {
-      overflow: 'hidden',
-      background: varDefault.tosiTableBg('var(--tosi-bg, #fff)'),
+    // Per-row sticky offsets are set inline in tagPinnedRows so multiple
+    // pinned rows stack instead of overlapping at the same sticky position.
+    ':host .tbody-pinned-top .tr, :host .tbody-pinned-bottom .tr': {
       position: 'sticky',
       zIndex: '1',
-    },
-    ':host .tbody-pinned-top': {
-      top: vars.tosiTableRowHeight,
-    },
-    ':host .tbody-pinned-bottom': {
-      bottom: '0',
-    },
-    ':host .tr': {
-      display: 'grid',
-      gridTemplateColumns: vars.tosiTableGridColumns,
-      height: vars.tosiTableRowHeight,
     },
     ':host .th, :host .td': {
       overflow: 'hidden',
@@ -664,7 +670,9 @@ export class TosiTable extends WebComponent {
       ),
     },
     ':host .tr[aria-selected="true"] .td': {
-      background: varDefault.tosiTableSelectedBg('var(--tosi-accent, #007AFF22)'),
+      background: varDefault.tosiTableSelectedBg(
+        'var(--tosi-accent, #007AFF22)'
+      ),
     },
     ':host .td:focus, :host .th:focus': {
       outline: '2px solid var(--tosi-accent, #007AFF)',
@@ -679,6 +687,12 @@ export class TosiTable extends WebComponent {
     },
     ':host .col-edge-left': {
       boxShadow: '-1px 0 0 var(--tosi-table-edge-color, #0002)',
+    },
+    ':host .row-edge-bottom': {
+      boxShadow: '0 1px 0 var(--tosi-table-edge-color, #0002)',
+    },
+    ':host .row-edge-top': {
+      boxShadow: '0 -1px 0 var(--tosi-table-edge-color, #0002)',
     },
     ':host .th .menu-trigger': {
       color: 'currentColor',
@@ -728,12 +742,14 @@ export class TosiTable extends WebComponent {
 
   maxVisibleRows = 10000
 
-  // Region elements rendered in render(). Each tbody is a list-bound
-  // container; each row is a `.tr` div whose children are the cells.
+  // Region elements rendered in render(). The visible-rows listBinding lives
+  // on _scrollArea (the single scroll container); pinned tbodies are
+  // display:contents wrappers each holding their own listBinding.
   private _head: HTMLElement | null = null
+  private _scrollArea: HTMLElement | null = null
   private _tbodyTop: HTMLElement | null = null
-  private _tbodyVisible: HTMLElement | null = null
   private _tbodyBottom: HTMLElement | null = null
+  private _pinnedRowEdgeObserver: MutationObserver | null = null
   // Cache the cells array per row to preserve array identity across getCells
   // calls — consumers compare by reference.
   private _rowCellsCache = new WeakMap<Element, HTMLElement[]>()
@@ -749,7 +765,7 @@ export class TosiTable extends WebComponent {
     const key = tosiValue(item)
     for (const region of [
       this._tbodyTop,
-      this._tbodyVisible,
+      this._scrollArea,
       this._tbodyBottom,
     ]) {
       if (!region) continue
@@ -841,7 +857,10 @@ export class TosiTable extends WebComponent {
   // _array is rendered untouched; otherwise we slice off the count-pinned ends.
   private get effectiveBaseData(): any[] {
     if (this._pinnedTopRows || this._pinnedBottomRows) return this._array
-    return this._array.slice(this.pinnedTop, this._array.length - this.pinnedBottom)
+    return this._array.slice(
+      this.pinnedTop,
+      this._array.length - this.pinnedBottom
+    )
   }
 
   constructor() {
@@ -1005,6 +1024,45 @@ export class TosiTable extends WebComponent {
     return cls
   }
 
+  private rowClasses(
+    region: 'visible' | 'pinned-top' | 'pinned-bottom'
+  ): string {
+    return region === 'visible' ? 'tr' : 'tr row-pinned'
+  }
+
+  // Tag the boundary rows of each pinned tbody so consumers can style them,
+  // and assign per-row sticky offsets so stacked pinned rows don't overlap
+  // at the same `top`/`bottom` value. listBinding inserts listTop/listBottom
+  // padding divs around its stamped rows, so we walk `.tr` children rather
+  // than relying on :first-child / :last-child.
+  private tagPinnedRows = () => {
+    if (this._tbodyTop) {
+      const rows = Array.from(
+        this._tbodyTop.querySelectorAll('.tr')
+      ) as HTMLElement[]
+      rows.forEach((r, i) => {
+        r.classList.remove('row-edge-bottom')
+        r.style.top = `calc(var(--tosi-table-row-height) * ${i + 1})`
+      })
+      if (rows.length > 0) {
+        rows[rows.length - 1].classList.add('row-edge-bottom')
+      }
+    }
+    if (this._tbodyBottom) {
+      const rows = Array.from(
+        this._tbodyBottom.querySelectorAll('.tr')
+      ) as HTMLElement[]
+      const last = rows.length - 1
+      rows.forEach((r, i) => {
+        r.classList.remove('row-edge-top')
+        r.style.bottom = `calc(var(--tosi-table-row-height) * ${last - i})`
+      })
+      if (rows.length > 0) {
+        rows[0].classList.add('row-edge-top')
+      }
+    }
+  }
+
   private cellStyle(
     col: ColumnOptions,
     si: StickyInfo,
@@ -1052,16 +1110,14 @@ export class TosiTable extends WebComponent {
       this.applyGridCellAttrs(cell, colIndex, si, style)
       return cell
     }
-    return span(
-      {
-        class: this.cellClasses('td', si),
-        role: 'gridcell',
-        tabindex: -1,
-        ariaColindex: String(colIndex + 1),
-        style,
-        bindText: item[col.prop],
-      } as any
-    )
+    return span({
+      class: this.cellClasses('td', si),
+      role: 'gridcell',
+      tabindex: -1,
+      ariaColindex: String(colIndex + 1),
+      style,
+      bindText: item[col.prop],
+    } as any)
   }
 
   // Build a `.tr` row element with all cells for a single item. The row is
@@ -1071,21 +1127,27 @@ export class TosiTable extends WebComponent {
   private buildRow(
     item: any,
     cols: ColumnOptions[],
-    stickyInfo: StickyInfo[]
+    stickyInfo: StickyInfo[],
+    rowClass = 'tr'
   ): HTMLElement {
     const cells = cols.map((col, i) =>
       this.buildCell(col, i, stickyInfo[i], item)
     )
     const selectBindingFn = this.selectBinding
-    const { rowRendered } = this
-    const props: any = { class: 'tr' }
+    const tableInst = this
+    const props: any = { class: rowClass }
+    // `item` here is the placeholder proxy from template-build time. The
+    // actual stamped row's item is delivered to toDOM as the second arg
+    // (resolved via the rewritten path) — use that, not the closure-captured
+    // placeholder.
     props.bind = {
       value: item,
       binding: {
-        toDOM: (rowEl: Element) => {
-          selectBindingFn(rowEl, item)
-          if (rowRendered) {
-            rowRendered(item, Array.from(rowEl.children) as HTMLElement[])
+        toDOM: (rowEl: Element, value: any) => {
+          selectBindingFn(rowEl, value)
+          const fn = tableInst.rowRendered
+          if (fn) {
+            fn(value, Array.from(rowEl.children) as HTMLElement[])
           }
         },
       },
@@ -1187,27 +1249,27 @@ export class TosiTable extends WebComponent {
     )
   }
 
-  // Build a tbody region with a listBinding that stamps `.tr` rows.
-  private buildBody(
+  // Build a pinned tbody (top or bottom) — a `display: contents` wrapper with
+  // its own non-virtualised listBinding so each pinned row goes through the
+  // same dataCell / rowRendered / `^.prop` pipeline as the virtual rows. The
+  // wrapper has no box of its own, so its stamped rows are layout children of
+  // .scroll-area and share its single sticky context.
+  private buildPinnedBody(
     rowsProxy: any,
     cols: ColumnOptions[],
     stickyInfo: StickyInfo[],
-    region: 'pinned-top' | 'virtual' | 'pinned-bottom',
+    region: 'pinned-top' | 'pinned-bottom',
     part: string
   ): HTMLElement {
-    const className =
-      region === 'virtual' ? 'tbody tbody-virtual' : `tbody tbody-${region}`
-    const options: any =
-      region === 'virtual' && this.rowHeight > 0
-        ? { virtual: { height: this.rowHeight } }
-        : {}
+    const rowClass = this.rowClasses(region)
     const binding = (rowsProxy as any).listBinding(
-      (_elements: any, item: any) => this.buildRow(item, cols, stickyInfo),
-      options
+      (_elements: any, item: any) =>
+        this.buildRow(item, cols, stickyInfo, rowClass),
+      {}
     )
     return div(
       {
-        class: className,
+        class: `tbody tbody-${region}`,
         role: 'rowgroup',
         part,
       },
@@ -1216,11 +1278,12 @@ export class TosiTable extends WebComponent {
   }
 
   getColumn(event: any): ColumnOptions | undefined {
+    if (!this._scrollArea) return undefined
     const pointerX =
       (event.touches !== undefined ? event.touches[0].clientX : event.clientX) -
-      this.getBoundingClientRect().x
+      this._scrollArea.getBoundingClientRect().x
     const epsilon = event.touches !== undefined ? 20 : 5
-    const { scrollLeft, clientWidth, scrollWidth } = this
+    const { scrollLeft, clientWidth, scrollWidth } = this._scrollArea
     const cols = this.visibleColumns
     const rightScroll = scrollWidth - clientWidth - scrollLeft
 
@@ -1302,8 +1365,10 @@ export class TosiTable extends WebComponent {
   }
 
   private updateSelectionVisuals() {
-    // Query rows in tbodies only (skip the header row in thead).
-    const rows = this.querySelectorAll('.tbody .tr')
+    // Apply selection state to every body row currently in the DOM. Header
+    // rows live inside .thead and don't have a list-instance, so itemFor
+    // returns null and they're skipped.
+    const rows = this._scrollArea?.querySelectorAll('.tr') ?? []
     for (const row of rows) {
       const item = this.itemFor(row)
       if (item != null) {
@@ -1389,27 +1454,22 @@ export class TosiTable extends WebComponent {
     }
 
     const top = this.effectivePinnedTopData
-    const bottom = this.effectivePinnedBottomData
     const visible = this.visibleRows
+    const bottom = this.effectivePinnedBottomData
 
-    let region: HTMLElement | null = null
-    let regionRowIndex = -1
+    let item: any
     if (rowIndex < top.length) {
-      region = this._tbodyTop
-      regionRowIndex = rowIndex
+      item = top[rowIndex]
     } else if (rowIndex < top.length + visible.length) {
-      region = this._tbodyVisible
-      regionRowIndex = rowIndex - top.length
+      item = visible[rowIndex - top.length]
     } else if (rowIndex < top.length + visible.length + bottom.length) {
-      region = this._tbodyBottom
-      regionRowIndex = rowIndex - top.length - visible.length
+      item = bottom[rowIndex - top.length - visible.length]
+    } else {
+      return null
     }
-    if (!region) return null
 
-    const rows = region.querySelectorAll('.tr')
-    const row = rows[regionRowIndex] as HTMLElement | undefined
-    if (!row) return null
-    return row.children[colIndex] as HTMLElement | null
+    const cells = this.cellsFor(item)
+    return (cells?.[colIndex] as HTMLElement | undefined) ?? null
   }
 
   private _pendingFocus: { row: number; col: number } | null = null
@@ -1429,12 +1489,12 @@ export class TosiTable extends WebComponent {
     if (cell) {
       cell.focus()
       cell.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-    } else if (this._tbodyVisible) {
+    } else if (this._scrollArea) {
       // Not in DOM — rough scroll to bring it into virtualisation range
       const top = this.effectivePinnedTopData
       const dataRowIndex = rowIndex - top.length
       if (dataRowIndex >= 0 && dataRowIndex < this.visibleRows.length) {
-        this._tbodyVisible.scrollTop = dataRowIndex * this.rowHeight
+        this._scrollArea.scrollTop = dataRowIndex * this.rowHeight
       }
     }
   }
@@ -1464,17 +1524,18 @@ export class TosiTable extends WebComponent {
     } else {
       const row = target.closest('.tr') as HTMLElement | null
       if (!row) return
-      const tbody = row.parentElement
-      const indexInTbody = tbody
-        ? Array.from(tbody.querySelectorAll('.tr')).indexOf(row)
-        : -1
-      if (indexInTbody < 0) return
-      if (tbody === this._tbodyTop) {
-        rowIndex = indexInTbody
-      } else if (tbody === this._tbodyVisible) {
-        rowIndex = top.length + indexInTbody
-      } else if (tbody === this._tbodyBottom) {
-        rowIndex = top.length + visible.length + indexInTbody
+      const item = getListItem(row)
+      if (item == null) return
+      const idxTop = top.indexOf(item)
+      const idxVisible = idxTop === -1 ? visible.indexOf(item) : -1
+      const idxBottom =
+        idxTop === -1 && idxVisible === -1 ? bottom.indexOf(item) : -1
+      if (idxTop !== -1) {
+        rowIndex = idxTop
+      } else if (idxVisible !== -1) {
+        rowIndex = top.length + idxVisible
+      } else if (idxBottom !== -1) {
+        rowIndex = top.length + visible.length + idxBottom
       } else {
         return
       }
@@ -1552,6 +1613,9 @@ export class TosiTable extends WebComponent {
     this.addEventListener('mouseup', this.updateSelection)
     this.addEventListener('touchend', this.updateSelection)
     this.addEventListener('keydown', this.handleKeyNav)
+    this.addEventListener('scroll', this.updatePinnedCellTransforms, {
+      passive: true,
+    })
   }
 
   setColumnWidths() {
@@ -1798,14 +1862,15 @@ export class TosiTable extends WebComponent {
     )
     this.setColumnWidths()
 
-    // Build the four sibling regions: thead, optional pinned-top tbody,
-    // virtual tbody, optional pinned-bottom tbody. Each tbody owns its own
-    // listBinding; rows go through the same pipeline so dataCell, rowRendered,
-    // and `^.prop` resolve uniformly.
+    // Build the regions. Header + optional pinned tbodies are siblings
+    // alongside the visible-rows listBinding, all inside a single .scroll-area
+    // which is the only scroll container. Pinned tbodies use display: contents
+    // so their stamped rows participate in .scroll-area's layout directly,
+    // sharing one sticky context with the visible rows and the header.
     this._head = this.buildHeader(cols, stickyInfo)
     this._tbodyTop =
       pinnedTopData.length > 0
-        ? this.buildBody(
+        ? this.buildPinnedBody(
             this.rowData.pinnedTopData,
             cols,
             stickyInfo,
@@ -1813,16 +1878,9 @@ export class TosiTable extends WebComponent {
             'pinnedTopRows'
           )
         : null
-    this._tbodyVisible = this.buildBody(
-      this.rowData.visible,
-      cols,
-      stickyInfo,
-      'virtual',
-      'visibleRows'
-    )
     this._tbodyBottom =
       pinnedBottomData.length > 0
-        ? this.buildBody(
+        ? this.buildPinnedBody(
             this.rowData.pinnedBottomData,
             cols,
             stickyInfo,
@@ -1831,14 +1889,40 @@ export class TosiTable extends WebComponent {
           )
         : null
 
-    // The virtual tbody is the only vertical scroll container — focus
-    // restore on virtualised cells fires scrollend on it.
-    this._tbodyVisible.addEventListener('scrollend', this.onScrollEnd)
+    // The visible-rows listBinding is bound directly to .scroll-area so
+    // virtualisation observes the same scroll container that sticky cells
+    // stick against.
+    const visibleBinding = (this.rowData.visible as any).listBinding(
+      (_elements: any, item: any) => this.buildRow(item, cols, stickyInfo),
+      this.rowHeight > 0 ? { virtual: { height: this.rowHeight } } : {}
+    )
+    const scrollAreaChildren: any[] = [this._head]
+    if (this._tbodyTop) scrollAreaChildren.push(this._tbodyTop)
+    scrollAreaChildren.push(...visibleBinding)
+    if (this._tbodyBottom) scrollAreaChildren.push(this._tbodyBottom)
 
-    this.append(this._head)
-    if (this._tbodyTop) this.append(this._tbodyTop)
-    this.append(this._tbodyVisible)
-    if (this._tbodyBottom) this.append(this._tbodyBottom)
+    this._scrollArea = div(
+      { class: 'scroll-area', part: 'visibleRows' },
+      ...scrollAreaChildren
+    )
+    this._scrollArea.addEventListener('scrollend', this.onScrollEnd)
+
+    this.append(this._scrollArea)
+
+    // Edge classes need to track listBinding mutations (pinned data may
+    // change without a full re-render), so observe each pinned tbody and
+    // re-tag on childList changes.
+    this._pinnedRowEdgeObserver?.disconnect()
+    this._pinnedRowEdgeObserver = new MutationObserver(this.tagPinnedRows)
+    if (this._tbodyTop) {
+      this._pinnedRowEdgeObserver.observe(this._tbodyTop, { childList: true })
+    }
+    if (this._tbodyBottom) {
+      this._pinnedRowEdgeObserver.observe(this._tbodyBottom, {
+        childList: true,
+      })
+    }
+    this.tagPinnedRows()
   }
 }
 

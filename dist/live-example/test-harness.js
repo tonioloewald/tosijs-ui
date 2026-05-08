@@ -5,6 +5,43 @@ class AssertionError extends Error {
         this.name = 'AssertionError';
     }
 }
+// Parse an Error.stack and return the first frame that isn't from inside
+// the bundled harness itself — that's the user's test code. The harness is
+// minified into a single bundle (index.js / module.js / iife.js), so we
+// skip frames whose URL ends in those filenames and pick the next one.
+// Stack-frame format varies across browsers (Chrome: " at fn (url:line:col)";
+// Safari/FF: "fn@url:line:col") — the trailing "url:line:col" capture handles
+// both.
+const BUNDLE_FILES = /\/(index|module|iife|module\.debug|module\.safe)\.js$/;
+function firstUserStackFrame(stack) {
+    if (!stack)
+        return null;
+    for (const raw of stack.split('\n')) {
+        const line = raw.trim();
+        if (!line)
+            continue;
+        // Skip the "AssertionError: ..." header line.
+        if (/^\w*Error[:\s]/.test(line))
+            continue;
+        const match = line.match(/[(@\s]([^()\s]+):(\d+):(\d+)\)?$/);
+        if (!match)
+            continue;
+        const [, url, ln, col] = match;
+        if (BUNDLE_FILES.test(url))
+            continue;
+        return { url, line: Number(ln), col: Number(col) };
+    }
+    return null;
+}
+// Source of the currently-running test block, set by runTests so matchers
+// can lift the failing line out of it for inclusion in the error message.
+let currentTestSource = null;
+function getSourceLine(lineNum) {
+    if (!currentTestSource || lineNum < 1)
+        return null;
+    const lines = currentTestSource.split('\n');
+    return lines[lineNum - 1]?.trim() || null;
+}
 function deepEqual(a, b) {
     if (a === b)
         return true;
@@ -52,7 +89,16 @@ function createMatchers(value, negated = false) {
     const assert = (condition, message) => {
         const result = negated ? !condition : condition;
         if (!result) {
-            throw new AssertionError(negated ? `not: ${message}` : message);
+            const err = new AssertionError(negated ? `not: ${message}` : message);
+            const frame = firstUserStackFrame(err.stack);
+            if (frame) {
+                const src = getSourceLine(frame.line);
+                const loc = `line ${frame.line}`;
+                err.message = src
+                    ? `${err.message} | ${src} (${loc})`
+                    : `${err.message} (${loc})`;
+            }
+            throw err;
         }
     };
     const matchers = {
@@ -218,8 +264,17 @@ export async function runTests(testCode, preview, context, transform) {
         const transformedCode = transform(code, { transforms: ['typescript'] }).code;
         const contextKeys = Object.keys(fullContext).map((key) => key.replace(/-/g, ''));
         const contextValues = Object.values(fullContext);
+        // Tag the AsyncFunction body with a sourceURL so stack traces report
+        // line numbers relative to the test source (not a position inside the
+        // bundled harness). `firstUserStackFrame` uses this to skip our own
+        // frames and surface the assertion's actual location to the user.
+        const taggedCode = `${transformedCode}\n//# sourceURL=inline-test`;
+        // Capture the source so matchers can lift the failing line into the
+        // error message. rewriteImports + sucrase preserve line breaks, so
+        // line numbers in the stack match this source.
+        currentTestSource = transformedCode;
         // @ts-expect-error AsyncFunction constructor typing
-        const func = new AsyncFunction(...contextKeys, transformedCode);
+        const func = new AsyncFunction(...contextKeys, taggedCode);
         await func(...contextValues);
     }
     catch (err) {
@@ -234,6 +289,7 @@ export async function runTests(testCode, preview, context, transform) {
     if (testContext.pending.length > 0) {
         await Promise.all(testContext.pending);
     }
+    currentTestSource = null;
     return {
         passed: results.filter((r) => r.passed).length,
         failed: results.filter((r) => !r.passed).length,
