@@ -399,7 +399,7 @@ export class TosiSelect extends Component {
             return options;
         }
         const showOption = (option) => {
-            if (option === null) {
+            if (option === null || typeof option === 'function') {
                 return true;
             }
             else if (option.menuItems) {

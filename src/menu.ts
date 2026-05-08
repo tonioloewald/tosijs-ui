@@ -235,12 +235,14 @@ export interface PopMenuOptions {
 
 ## MenuItem
 
-A `MenuItem` can be one of three things:
+A `MenuItem` can be one of four things:
 
 - `null` denotes a separator
 - `MenuAction` denotes a labeled button or `<a>` tag based on whether the `action` provided
   is a url (string) or an event handler (function).
 - `SubMenu` is a submenu.
+- A `() => HTMLElement` function returns a custom element to embed inline in
+  the menu (see `MenuElement` below).
 
 ### MenuAction
 
@@ -270,6 +272,54 @@ interface SubMenu {
   tooltip?: string
   properties?: ElementProps
 }
+```
+
+### MenuElement
+
+For embedding a custom widget inline in a menu — e.g. a `<tosi-segmented>` for
+quick option-picking — pass a function that returns an `HTMLElement`:
+
+```
+type MenuElement = () => HTMLElement
+```
+
+The returned element is added as-is and tagged with the `tosi-menu-element`
+class, which sets `min-height` to match standard menu items so the row
+aligns visually. The widget is responsible for its own click/focus behaviour.
+
+```js
+import { popMenu, tosiSegmented } from 'tosijs-ui'
+import { elements } from 'tosijs'
+
+const { button } = elements
+
+let view = 'list'
+
+const btn = button('View options')
+btn.addEventListener('click', () => {
+  popMenu({
+    target: btn,
+    menuItems: [
+      { caption: 'Refresh', icon: 'refreshCcw', action() {} },
+      null,
+      () => tosiSegmented({
+        choices: 'list,grid,table',
+        value: view,
+        style: { margin: '0 1em' },
+        onChange(event) {
+          view = event.target.value
+        },
+        // stop the menu's outer onClick from closing it when the user
+        // picks a segment
+        onClick(event) { event.stopPropagation() },
+      }),
+      null,
+      { caption: 'Settings…', icon: 'settings', action() {} },
+    ]
+  })
+})
+
+preview.append(btn)
 ```
 
 ### Keyboard Shortcuts
@@ -751,7 +801,12 @@ export interface SubMenu {
 
 export type MenuSeparator = null
 
-export type MenuItem = MenuAction | SubMenu | MenuSeparator
+// A function returning an HTMLElement is rendered as-is, sized to match the
+// height of standard menu items via `tosi-menu-element`. Useful for embedding
+// custom controls (e.g. a tosiSegmented for inline option pickers).
+export type MenuElement = () => HTMLElement
+
+export type MenuItem = MenuAction | SubMenu | MenuSeparator | MenuElement
 
 export const resolveMenuItems = (provider: MenuItemsProvider): MenuItem[] =>
   typeof provider === 'function' ? provider() : provider
@@ -783,6 +838,10 @@ export const filterForDrop = (
   const filtered: MenuItem[] = []
   for (const item of items) {
     if (item === null) {
+      filtered.push(item)
+      continue
+    }
+    if (typeof item === 'function') {
       filtered.push(item)
       continue
     }
@@ -830,6 +889,10 @@ export const filterForClick = (
   const filtered: MenuItem[] = []
   for (const item of items) {
     if (item === null) {
+      filtered.push(item)
+      continue
+    }
+    if (typeof item === 'function') {
       filtered.push(item)
       continue
     }
@@ -932,6 +995,9 @@ StyleSheet('xin-menu-helper', {
     background: varDefault.menuSeparatorColor('#2224'),
     margin: varDefault.menuSeparatorMargin('8px 0'),
   },
+  '.xin-menu-element, .tosi-menu-element': {
+    minHeight: varDefault.menuItemHeight('48px'),
+  },
   '.xin-menu-item, .tosi-menu-item': menuItemStyles,
   '.xin-menu-item, .xin-menu-item > span, .tosi-menu-item, .tosi-menu-item > span':
     menuItemColorStyles,
@@ -988,29 +1054,28 @@ export const createMenuAction = (
   const props = item.properties || {}
   if (typeof item?.action === 'string') {
     menuItem = a(
+      props,
       {
-        class: 'xin-menu-item tosi-menu-item',
         role: itemRole,
         href: item.action,
       },
-      props,
       icon,
       options.localized ? span(localize(item.caption)) : span(item.caption),
       span(item.shortcut ? displayShortcut(item.shortcut) : ' ')
     )
   } else {
     menuItem = button(
+      props,
       {
-        class: 'xin-menu-item tosi-menu-item',
         role: itemRole,
         onClick: item.action,
       },
-      props,
       icon,
       options.localized ? span(localize(item.caption)) : span(item.caption),
       span(item.shortcut ? displayShortcut(item.shortcut) : ' ')
     )
   }
+  menuItem.classList.add('xin-menu-item', 'tosi-menu-item')
   menuItem.classList.toggle('xin-menu-item-checked', checked !== false)
   menuItem.classList.toggle('tosi-menu-item-checked', checked !== false)
   if (item.tooltip) {
@@ -1036,8 +1101,8 @@ export const createDropMenuItem = (
   }
   const props = item.properties || {}
   const menuItem = button(
+    props,
     {
-      class: 'xin-menu-item tosi-menu-item',
       onDragenter(event: DragEvent) {
         clearDropGraceTimer()
         menuItem.classList.add('xin-drop-over', 'tosi-drop-over')
@@ -1064,11 +1129,11 @@ export const createDropMenuItem = (
         removeLastMenu(0)
       },
     },
-    props,
     icon,
     options.localized ? span(localize(item.caption)) : span(item.caption),
     span(' ')
   )
+  menuItem.classList.add('xin-menu-item', 'tosi-menu-item')
   if (item.tooltip) {
     menuItem.dataset.tooltip = item.tooltip
   }
@@ -1097,8 +1162,8 @@ export const createSubMenu = (
 
   const props = item.properties || {}
   const submenuItem = button(
+    props,
     {
-      class: 'xin-menu-item tosi-menu-item',
       disabled: !(!item.enabled || item.enabled()),
       onClick(event: Event) {
         if (options._dropMode) return
@@ -1190,11 +1255,11 @@ export const createSubMenu = (
         removeLastMenu(0)
       },
     },
-    props,
     icon,
     options.localized ? span(localize(item.caption)) : span(item.caption),
     icons.chevronRight({ style: { justifySelf: 'flex-end' } })
   )
+  submenuItem.classList.add('xin-menu-item', 'tosi-menu-item')
   if (item.tooltip) {
     submenuItem.dataset.tooltip = item.tooltip
   }
@@ -1210,6 +1275,10 @@ export const createMenuItem = (
 ): HTMLElement => {
   if (item === null) {
     return span({ class: 'xin-menu-separator tosi-menu-separator' })
+  } else if (typeof item === 'function') {
+    const el = item()
+    el.classList.add('xin-menu-element', 'tosi-menu-element')
+    return el
   } else if (options._dropMode) {
     const sub = item as SubMenu
     const hasChildren =
@@ -1251,7 +1320,10 @@ export const createMenuItem = (
 export const menu = (options: PopMenuOptions): HTMLDivElement => {
   const { target, width, menuItems, role = 'menu' } = options
   const hasIcons = menuItems.find(
-    (item) => item?.icon || (item as MenuAction)?.checked
+    (item) =>
+      item != null &&
+      typeof item !== 'function' &&
+      ((item as MenuAction).icon || (item as MenuAction).checked)
   )
 
   const menuDepth = options.submenuDepth || 0
@@ -1465,6 +1537,7 @@ export function findShortcutAction(
 ): ShortcutMatch | undefined {
   for (const item of items) {
     if (!item) continue
+    if (typeof item === 'function') continue
     const { shortcut } = item as MenuAction
     const { menuItems } = item as SubMenu
 

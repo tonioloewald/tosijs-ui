@@ -459,7 +459,7 @@ export class TosiSelect extends Component<SelectParts> {
       return options
     }
     const showOption = (option: MenuItem) => {
-      if (option === null) {
+      if (option === null || typeof option === 'function') {
         return true
       } else if ((option as SubMenu).menuItems) {
         const resolved = resolveMenuItems((option as SubMenu).menuItems)

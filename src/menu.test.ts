@@ -260,6 +260,15 @@ describe('menu', () => {
       const element = createMenuItem(item, baseOptions)
       expect(element.classList.contains('xin-menu-item')).toBe(true)
     })
+
+    test('returns custom element from function MenuItem with tosi-menu-element class', () => {
+      const probe = document.createElement('span')
+      probe.id = 'fn-menu-item-probe'
+      const element = createMenuItem(() => probe, baseOptions)
+      expect(element).toBe(probe)
+      expect(element.classList.contains('xin-menu-element')).toBe(true)
+      expect(element.classList.contains('tosi-menu-element')).toBe(true)
+    })
   })
 
   describe('menu function', () => {

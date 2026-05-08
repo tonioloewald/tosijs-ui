@@ -27,7 +27,8 @@ export interface SubMenu {
     dropAction?: (dataTransfer: DataTransfer) => void;
 }
 export type MenuSeparator = null;
-export type MenuItem = MenuAction | SubMenu | MenuSeparator;
+export type MenuElement = () => HTMLElement;
+export type MenuItem = MenuAction | SubMenu | MenuSeparator | MenuElement;
 export declare const resolveMenuItems: (provider: MenuItemsProvider) => MenuItem[];
 export declare const filterForDrop: (items: MenuItem[], dataTypes: readonly string[], hideDisabled?: boolean) => MenuItem[];
 export declare const filterForClick: (items: MenuItem[], hideDisabled?: boolean) => MenuItem[];

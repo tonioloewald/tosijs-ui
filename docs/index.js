@@ -25279,7 +25279,7 @@ class TosiSelect extends g {
       return options;
     }
     const showOption = (option) => {
-      if (option === null) {
+      if (option === null || typeof option === "function") {
         return true;
       } else if (option.menuItems) {
         const resolved = resolveMenuItems(option.menuItems);
@@ -25816,6 +25816,10 @@ var filterForDrop = (items, dataTypes, hideDisabled = false) => {
       filtered.push(item);
       continue;
     }
+    if (typeof item === "function") {
+      filtered.push(item);
+      continue;
+    }
     const { acceptsDrop } = item;
     if (!acceptsDrop) {
       if (!hideDisabled) {
@@ -25849,6 +25853,10 @@ var filterForClick = (items, hideDisabled = false) => {
   const filtered = [];
   for (const item of items) {
     if (item === null) {
+      filtered.push(item);
+      continue;
+    }
+    if (typeof item === "function") {
       filtered.push(item);
       continue;
     }
@@ -25938,6 +25946,9 @@ hL("xin-menu-helper", {
     background: kE.menuSeparatorColor("#2224"),
     margin: kE.menuSeparatorMargin("8px 0")
   },
+  ".xin-menu-element, .tosi-menu-element": {
+    minHeight: kE.menuItemHeight("48px")
+  },
   ".xin-menu-item, .tosi-menu-item": menuItemStyles,
   ".xin-menu-item, .xin-menu-item > span, .tosi-menu-item, .tosi-menu-item > span": menuItemColorStyles,
   ".xin-menu-with-icons .xin-menu-item, .tosi-menu-with-icons .tosi-menu-item": {
@@ -25985,18 +25996,17 @@ var createMenuAction = (item, options) => {
   let menuItem;
   const props = item.properties || {};
   if (typeof item?.action === "string") {
-    menuItem = a2({
-      class: "xin-menu-item tosi-menu-item",
+    menuItem = a2(props, {
       role: itemRole,
       href: item.action
-    }, props, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut ? displayShortcut(item.shortcut) : " "));
+    }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut ? displayShortcut(item.shortcut) : " "));
   } else {
-    menuItem = button3({
-      class: "xin-menu-item tosi-menu-item",
+    menuItem = button3(props, {
       role: itemRole,
       onClick: item.action
-    }, props, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut ? displayShortcut(item.shortcut) : " "));
+    }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(item.shortcut ? displayShortcut(item.shortcut) : " "));
   }
+  menuItem.classList.add("xin-menu-item", "tosi-menu-item");
   menuItem.classList.toggle("xin-menu-item-checked", checked !== false);
   menuItem.classList.toggle("tosi-menu-item-checked", checked !== false);
   if (item.tooltip) {
@@ -26017,8 +26027,7 @@ var createDropMenuItem = (item, options) => {
     icon = icons[icon]();
   }
   const props = item.properties || {};
-  const menuItem = button3({
-    class: "xin-menu-item tosi-menu-item",
+  const menuItem = button3(props, {
     onDragenter(event) {
       clearDropGraceTimer();
       menuItem.classList.add("xin-drop-over", "tosi-drop-over");
@@ -26045,7 +26054,8 @@ var createDropMenuItem = (item, options) => {
       }
       removeLastMenu(0);
     }
-  }, props, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(" "));
+  }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), span3(" "));
+  menuItem.classList.add("xin-menu-item", "tosi-menu-item");
   if (item.tooltip) {
     menuItem.dataset.tooltip = item.tooltip;
   }
@@ -26067,8 +26077,7 @@ var createSubMenu = (item, options) => {
   let disclosureTimer = null;
   let disclosed = false;
   const props = item.properties || {};
-  const submenuItem = button3({
-    class: "xin-menu-item tosi-menu-item",
+  const submenuItem = button3(props, {
     disabled: !(!item.enabled || item.enabled()),
     onClick(event) {
       if (options._dropMode)
@@ -26153,7 +26162,8 @@ var createSubMenu = (item, options) => {
       }
       removeLastMenu(0);
     }
-  }, props, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), icons.chevronRight({ style: { justifySelf: "flex-end" } }));
+  }, icon, options.localized ? span3(localize(item.caption)) : span3(item.caption), icons.chevronRight({ style: { justifySelf: "flex-end" } }));
+  submenuItem.classList.add("xin-menu-item", "tosi-menu-item");
   if (item.tooltip) {
     submenuItem.dataset.tooltip = item.tooltip;
   }
@@ -26165,6 +26175,10 @@ var createSubMenu = (item, options) => {
 var createMenuItem = (item, options) => {
   if (item === null) {
     return span3({ class: "xin-menu-separator tosi-menu-separator" });
+  } else if (typeof item === "function") {
+    const el = item();
+    el.classList.add("xin-menu-element", "tosi-menu-element");
+    return el;
   } else if (options._dropMode) {
     const sub = item;
     const hasChildren = sub.menuItems && resolveMenuItems(sub.menuItems).length > 0;
@@ -26194,7 +26208,7 @@ var createMenuItem = (item, options) => {
 };
 var menu = (options) => {
   const { target, width, menuItems, role = "menu" } = options;
-  const hasIcons = menuItems.find((item) => item?.icon || item?.checked);
+  const hasIcons = menuItems.find((item) => item != null && typeof item !== "function" && (item.icon || item.checked));
   const menuDepth = options.submenuDepth || 0;
   const menuDiv = div2({
     class: hasIcons ? "xin-menu tosi-menu xin-menu-with-icons tosi-menu-with-icons" : "xin-menu tosi-menu",
@@ -26337,6 +26351,8 @@ var popDropMenu = (options) => {
 function findShortcutAction(items, event, path = []) {
   for (const item of items) {
     if (!item)
+      continue;
+    if (typeof item === "function")
       continue;
     const { shortcut } = item;
     const { menuItems } = item;
@@ -34737,7 +34753,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.5.18";
+var version = "1.5.19";
 // src/tooltip.ts
 var { span: span18 } = I;
 var tooltipFloat = null;
@@ -39099,12 +39115,14 @@ export interface PopMenuOptions {
 
 ## MenuItem
 
-A \`MenuItem\` can be one of three things:
+A \`MenuItem\` can be one of four things:
 
 - \`null\` denotes a separator
 - \`MenuAction\` denotes a labeled button or \`<a>\` tag based on whether the \`action\` provided
   is a url (string) or an event handler (function).
 - \`SubMenu\` is a submenu.
+- A \`() => HTMLElement\` function returns a custom element to embed inline in
+  the menu (see \`MenuElement\` below).
 
 ### MenuAction
 
@@ -39134,6 +39152,54 @@ interface SubMenu {
   tooltip?: string
   properties?: ElementProps
 }
+\`\`\`
+
+### MenuElement
+
+For embedding a custom widget inline in a menu — e.g. a \`<tosi-segmented>\` for
+quick option-picking — pass a function that returns an \`HTMLElement\`:
+
+\`\`\`
+type MenuElement = () => HTMLElement
+\`\`\`
+
+The returned element is added as-is and tagged with the \`tosi-menu-element\`
+class, which sets \`min-height\` to match standard menu items so the row
+aligns visually. The widget is responsible for its own click/focus behaviour.
+
+\`\`\`js
+import { popMenu, tosiSegmented } from 'tosijs-ui'
+import { elements } from 'tosijs'
+
+const { button } = elements
+
+let view = 'list'
+
+const btn = button('View options')
+btn.addEventListener('click', () => {
+  popMenu({
+    target: btn,
+    menuItems: [
+      { caption: 'Refresh', icon: 'refreshCcw', action() {} },
+      null,
+      () => tosiSegmented({
+        choices: 'list,grid,table',
+        value: view,
+        style: { margin: '0 1em' },
+        onChange(event) {
+          view = event.target.value
+        },
+        // stop the menu's outer onClick from closing it when the user
+        // picks a segment
+        onClick(event) { event.stopPropagation() },
+      }),
+      null,
+      { caption: 'Settings…', icon: 'settings', action() {} },
+    ]
+  })
+})
+
+preview.append(btn)
 \`\`\`
 
 ### Keyboard Shortcuts
