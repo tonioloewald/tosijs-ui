@@ -1246,14 +1246,17 @@ export class TosiTable extends WebComponent {
   // its own non-virtualised listBinding so each pinned row goes through the
   // same dataCell / rowRendered / `^.prop` pipeline as the virtual rows. The
   // wrapper has no box of its own, so its stamped rows are layout children of
-  // .scroll-area and share its single sticky context.
+  // .scroll-area and share its single sticky context. Returns null when the
+  // region is empty so render() can drop it from the DOM.
   private buildPinnedBody(
     rowsProxy: any,
     cols: ColumnOptions[],
     stickyInfo: StickyInfo[],
-    region: 'pinned-top' | 'pinned-bottom',
-    part: string
-  ): HTMLElement {
+    region: 'pinned-top' | 'pinned-bottom'
+  ): HTMLElement | null {
+    const data = tosiValue(rowsProxy) as any[] | undefined
+    if (!data || data.length === 0) return null
+    const part = region === 'pinned-top' ? 'pinnedTopRows' : 'pinnedBottomRows'
     const rowClass = this.rowClasses(region)
     const binding = (rowsProxy as any).listBinding(
       (_elements: any, item: any) =>
@@ -1858,26 +1861,18 @@ export class TosiTable extends WebComponent {
     // so their stamped rows participate in .scroll-area's layout directly,
     // sharing one sticky context with the visible rows and the header.
     this._head = this.buildHeader(cols, stickyInfo)
-    this._tbodyTop =
-      pinnedTopData.length > 0
-        ? this.buildPinnedBody(
-            this.rowData.pinnedTopData,
-            cols,
-            stickyInfo,
-            'pinned-top',
-            'pinnedTopRows'
-          )
-        : null
-    this._tbodyBottom =
-      pinnedBottomData.length > 0
-        ? this.buildPinnedBody(
-            this.rowData.pinnedBottomData,
-            cols,
-            stickyInfo,
-            'pinned-bottom',
-            'pinnedBottomRows'
-          )
-        : null
+    this._tbodyTop = this.buildPinnedBody(
+      this.rowData.pinnedTopData,
+      cols,
+      stickyInfo,
+      'pinned-top'
+    )
+    this._tbodyBottom = this.buildPinnedBody(
+      this.rowData.pinnedBottomData,
+      cols,
+      stickyInfo,
+      'pinned-bottom'
+    )
 
     // The visible-rows listBinding is bound directly to .scroll-area so
     // virtualisation observes the same scroll container that sticky cells
@@ -1886,14 +1881,15 @@ export class TosiTable extends WebComponent {
       (_elements: any, item: any) => this.buildRow(item, cols, stickyInfo),
       this.rowHeight > 0 ? { virtual: { height: this.rowHeight } } : {}
     )
-    const scrollAreaChildren: any[] = [this._head]
-    if (this._tbodyTop) scrollAreaChildren.push(this._tbodyTop)
-    scrollAreaChildren.push(...visibleBinding)
-    if (this._tbodyBottom) scrollAreaChildren.push(this._tbodyBottom)
 
     this._scrollArea = div(
       { class: 'scroll-area', part: 'visibleRows' },
-      ...scrollAreaChildren
+      ...[
+        this._head,
+        this._tbodyTop,
+        ...visibleBinding,
+        this._tbodyBottom,
+      ].filter(Boolean)
     )
     this._scrollArea.addEventListener('scrollend', this.onScrollEnd)
 

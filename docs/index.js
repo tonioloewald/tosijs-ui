@@ -27066,7 +27066,11 @@ class TosiTable extends g {
     const headerCells = cols.map((col, i2) => this.buildHeaderCell(col, i2, stickyInfo[i2]));
     return div3({ class: "thead", role: "rowgroup" }, div3({ class: "tr", role: "row" }, ...headerCells));
   }
-  buildPinnedBody(rowsProxy, cols, stickyInfo, region, part) {
+  buildPinnedBody(rowsProxy, cols, stickyInfo, region) {
+    const data = C(rowsProxy);
+    if (!data || data.length === 0)
+      return null;
+    const part = region === "pinned-top" ? "pinnedTopRows" : "pinnedBottomRows";
     const rowClass = this.rowClasses(region);
     const binding = rowsProxy.listBinding((_elements, item) => this.buildRow(item, cols, stickyInfo, rowClass), {});
     return div3({
@@ -27542,16 +27546,15 @@ class TosiTable extends g {
     this.style.setProperty("--tosi-table-row-height", this.rowHeight > 0 ? `${this.rowHeight}px` : "auto");
     this.setColumnWidths();
     this._head = this.buildHeader(cols, stickyInfo);
-    this._tbodyTop = pinnedTopData.length > 0 ? this.buildPinnedBody(this.rowData.pinnedTopData, cols, stickyInfo, "pinned-top", "pinnedTopRows") : null;
-    this._tbodyBottom = pinnedBottomData.length > 0 ? this.buildPinnedBody(this.rowData.pinnedBottomData, cols, stickyInfo, "pinned-bottom", "pinnedBottomRows") : null;
+    this._tbodyTop = this.buildPinnedBody(this.rowData.pinnedTopData, cols, stickyInfo, "pinned-top");
+    this._tbodyBottom = this.buildPinnedBody(this.rowData.pinnedBottomData, cols, stickyInfo, "pinned-bottom");
     const visibleBinding = this.rowData.visible.listBinding((_elements, item) => this.buildRow(item, cols, stickyInfo), this.rowHeight > 0 ? { virtual: { height: this.rowHeight } } : {});
-    const scrollAreaChildren = [this._head];
-    if (this._tbodyTop)
-      scrollAreaChildren.push(this._tbodyTop);
-    scrollAreaChildren.push(...visibleBinding);
-    if (this._tbodyBottom)
-      scrollAreaChildren.push(this._tbodyBottom);
-    this._scrollArea = div3({ class: "scroll-area", part: "visibleRows" }, ...scrollAreaChildren);
+    this._scrollArea = div3({ class: "scroll-area", part: "visibleRows" }, ...[
+      this._head,
+      this._tbodyTop,
+      ...visibleBinding,
+      this._tbodyBottom
+    ].filter(Boolean));
     this._scrollArea.addEventListener("scrollend", this.onScrollEnd);
     this.append(this._scrollArea);
     this.observePinnedRowMutations();
@@ -34753,7 +34756,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.5.19";
+var version = "1.5.20";
 // src/tooltip.ts
 var { span: span18 } = I;
 var tooltipFloat = null;
