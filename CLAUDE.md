@@ -38,6 +38,8 @@ bun playwright test tests/form.pw.ts
 
 Use `` ```test `` code blocks in `/*#` doc comments for browser-based tests. See "Live example code blocks" under Documentation System for full details on how code blocks are grouped, executed, and scoped.
 
+When an `expect()` fails the harness appends the source line and `(line N)` to the error message — e.g. `Expected false to be true | expect(x).toBe(true) (line 46)`. Line numbers refer to the test source via `//# sourceURL=inline-test`. You don't need to comment assertions out one by one to find the failure.
+
 ### Dev Server TLS
 
 The dev server runs HTTPS using self-signed certs in `tls/`. If certs are missing, run `tls/create-dev-certs.sh` to regenerate them.
@@ -69,6 +71,10 @@ The dev server watches:
 - `src/` and `README.md` → triggers doc extraction + rebuild
 - `demo/src/` → triggers demo rebuild only
 - `icons/` → triggers icon data regeneration (`bin/make-icon-data.js` → `src/icon-data.ts`)
+
+#### Generated files are tracked in git
+
+`dist/`, `docs/`, `demo/docs.json`, and `src/version.ts` are build outputs but are **committed**, not gitignored. A build (`bun run build`) regenerates them, often producing large diffs in `dist/iife.js`, `dist/*.map`, `docs/*.js`, etc. — this is expected. Commit those diffs alongside the source change that caused them; do not revert or hand-edit them. Run `bun run build` before committing so the generated files match the source you're shipping.
 
 ### Directory Structure
 
@@ -472,6 +478,12 @@ See `icons/icon-composition.md` for the full grammar — suffix codes (`o/s/r/f/
 - `action` event for user interactions (distinct from value changes)
 - Binary attributes (`hidden`, `disabled`) work as expected
 - Interoperable with other web-component libraries
+
+**Pinned-element class naming** — when a component supports pinning (sticky cells/rows), it tags the pinned elements and the boundary touching the unpinned area with parallel classes:
+- Cells: `col-pinned` on every pinned column cell; `col-edge-right` on the rightmost left-pinned column (right edge of the left-pinned group), `col-edge-left` on the leftmost right-pinned column.
+- Rows: `row-pinned` on every pinned row; `row-edge-bottom` on the bottom-most pinned-top row (the boundary below the pinned-top group), `row-edge-top` on the top-most pinned-bottom row.
+
+The edge-class name describes which side of the pinned group the boundary is on, not which side of the viewport — so a new pinning context (e.g. `tab-pinned` + `tab-edge-*`) should follow the same convention.
 
 For the consumer-facing mental model — element-creator pattern, value/change/action contract, form association, theming, localization, and a "fighting the framework" anti-pattern checklist — see `Using-Components.md` at the repo root. Read it before answering questions about how a component should be used.
 
