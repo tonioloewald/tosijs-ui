@@ -34458,6 +34458,8 @@ var tosiSizer = TosiSizer.elementCreator();
 var xinSizer = tosiSizer;
 // src/tag-list.ts
 var { div: div17, input: input10, span: span17, button: button14 } = I;
+var splitTags = (str) => str.split(/(?<!\\),/).map((tag) => tag.trim().replace(/\\,/g, ","));
+var joinTags = (tags) => tags.map((tag) => tag.replace(/,/g, "\\,")).join(",");
 
 class TosiTag extends g {
   static preferredTagName = "tosi-tag";
@@ -34589,10 +34591,10 @@ class TosiTagList extends g {
   };
   value = "";
   get tags() {
-    return this.value.split(",").map((tag) => tag.trim()).filter((tag) => tag !== "");
+    return splitTags(this.value).filter((tag) => tag !== "");
   }
   set tags(v3) {
-    this.value = v3.join(",");
+    this.value = joinTags(v3);
   }
   _availableTags = [];
   get availableTags() {
@@ -34607,10 +34609,7 @@ class TosiTagList extends g {
     this.queueRender();
   }
   static parseAvailableTagsString(tagsStr) {
-    return tagsStr.split(",").map((tag) => {
-      const trimmed = tag.trim();
-      return trimmed === "" ? null : trimmed;
-    });
+    return splitTags(tagsStr).map((tag) => tag === "" ? null : tag);
   }
   connectedCallback() {
     super.connectedCallback();
@@ -34756,7 +34755,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.5.20";
+var version = "1.5.21";
 // src/tooltip.ts
 var { span: span18 } = I;
 var tooltipFloat = null;
@@ -41876,9 +41875,9 @@ as a comma-delimited string or an array of strings).
   <b>Editable</b>
   <tosi-tag-list
     class="editable-tag-list"
-    value="belongs,also belongs,custom"
+    value="belongs,also belongs,has\\, comma,custom"
     editable
-    available-tags="belongs,also belongs,not initially chosen"
+    available-tags="belongs,also belongs,has\\, comma,not initially chosen"
   ></tosi-tag-list>
 </label>
 <br>
@@ -41927,13 +41926,29 @@ test('first tag-list has correct tags', () => {
 test('editable tag-list has editable attribute', () => {
   expect(tagLists[2].editable).toBe(true)
 })
+test('a comma inside a tag survives the value round-trip', () => {
+  const tl = document.createElement('tosi-tag-list')
+  tl.tags = ['New York, NY', 'Boston']
+  // the literal comma is escaped in \`value\` so it is not a delimiter
+  expect(tl.value).toBe('New York\\\\, NY,Boston')
+  expect(tl.tags.length).toBe(2)
+  expect(tl.tags).toContain('New York, NY')
+})
+test('an escaped comma in a value string parses as one tag', () => {
+  const tl = document.createElement('tosi-tag-list')
+  tl.value = 'New York\\\\, NY,Boston'
+  expect(tl.tags.length).toBe(2)
+  expect(tl.tags).toContain('New York, NY')
+})
 \`\`\`
 
 ## Properties
 
 ### \`value\`: string | string[]
 
-A list of tags
+A comma-delimited list of tags. A tag that itself contains a comma must
+escape it as \`\\,\` — e.g. \`value="New York\\, NY,Boston"\` is two tags. The
+\`tags\` accessor handles this escaping for you in both directions.
 
 ### \`tags\`: string[]
 
@@ -41947,7 +41962,8 @@ A read-only property giving the value as an array.
 ### \`available-tags\`: string | string[]
 
 A list of tags that will be displayed in the popup menu by default. The popup menu
-will always display custom tags (allowing their removal).
+will always display custom tags (allowing their removal). As with \`value\`, a
+comma inside a tag must be escaped as \`\\,\` when set via the attribute string.
 
 ### \`editable\`: boolean
 

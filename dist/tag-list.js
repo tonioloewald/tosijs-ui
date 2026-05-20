@@ -26,9 +26,9 @@ as a comma-delimited string or an array of strings).
   <b>Editable</b>
   <tosi-tag-list
     class="editable-tag-list"
-    value="belongs,also belongs,custom"
+    value="belongs,also belongs,has\, comma,custom"
     editable
-    available-tags="belongs,also belongs,not initially chosen"
+    available-tags="belongs,also belongs,has\, comma,not initially chosen"
   ></tosi-tag-list>
 </label>
 <br>
@@ -77,13 +77,29 @@ test('first tag-list has correct tags', () => {
 test('editable tag-list has editable attribute', () => {
   expect(tagLists[2].editable).toBe(true)
 })
+test('a comma inside a tag survives the value round-trip', () => {
+  const tl = document.createElement('tosi-tag-list')
+  tl.tags = ['New York, NY', 'Boston']
+  // the literal comma is escaped in `value` so it is not a delimiter
+  expect(tl.value).toBe('New York\\, NY,Boston')
+  expect(tl.tags.length).toBe(2)
+  expect(tl.tags).toContain('New York, NY')
+})
+test('an escaped comma in a value string parses as one tag', () => {
+  const tl = document.createElement('tosi-tag-list')
+  tl.value = 'New York\\, NY,Boston'
+  expect(tl.tags.length).toBe(2)
+  expect(tl.tags).toContain('New York, NY')
+})
 ```
 
 ## Properties
 
 ### `value`: string | string[]
 
-A list of tags
+A comma-delimited list of tags. A tag that itself contains a comma must
+escape it as `\,` — e.g. `value="New York\, NY,Boston"` is two tags. The
+`tags` accessor handles this escaping for you in both directions.
 
 ### `tags`: string[]
 
@@ -97,7 +113,8 @@ A read-only property giving the value as an array.
 ### `available-tags`: string | string[]
 
 A list of tags that will be displayed in the popup menu by default. The popup menu
-will always display custom tags (allowing their removal).
+will always display custom tags (allowing their removal). As with `value`, a
+comma inside a tag must be escaped as `\,` when set via the attribute string.
 
 ### `editable`: boolean
 
@@ -115,6 +132,12 @@ import { Component as WebComponent, elements, vars, varDefault, deprecated, } fr
 import { popMenu } from './menu';
 import { icons } from './icons';
 const { div, input, span, button } = elements;
+// Tags are serialised as a comma-delimited string (the form `value`). A
+// literal comma inside a tag is escaped as `\,` so it survives the
+// split/join round-trip — both in programmatic values and in the
+// `value` / `available-tags` HTML attributes.
+const splitTags = (str) => str.split(/(?<!\\),/).map((tag) => tag.trim().replace(/\\,/g, ','));
+const joinTags = (tags) => tags.map((tag) => tag.replace(/,/g, '\\,')).join(',');
 export class TosiTag extends WebComponent {
     static preferredTagName = 'tosi-tag';
     static lightStyleSpec = {
@@ -248,13 +271,10 @@ export class TosiTagList extends WebComponent {
     value = '';
     // tags parses value into array
     get tags() {
-        return this.value
-            .split(',')
-            .map((tag) => tag.trim())
-            .filter((tag) => tag !== '');
+        return splitTags(this.value).filter((tag) => tag !== '');
     }
     set tags(v) {
-        this.value = v.join(',');
+        this.value = joinTags(v);
     }
     _availableTags = [];
     get availableTags() {
@@ -269,12 +289,9 @@ export class TosiTagList extends WebComponent {
         }
         this.queueRender();
     }
-    // Parse available-tags string (comma-delimited)
+    // Parse available-tags string (comma-delimited; `\,` is a literal comma).
     static parseAvailableTagsString(tagsStr) {
-        return tagsStr.split(',').map((tag) => {
-            const trimmed = tag.trim();
-            return trimmed === '' ? null : trimmed;
-        });
+        return splitTags(tagsStr).map((tag) => (tag === '' ? null : tag));
     }
     connectedCallback() {
         super.connectedCallback();
