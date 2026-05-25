@@ -162,7 +162,7 @@ describe('menu', () => {
         ...baseOptions,
         role: 'listbox',
       })
-      expect(element.getAttribute('aria-selected')).toBe('true')
+      expect(element.hasAttribute('aria-selected')).toBe(true)
     })
 
     test('localizes caption when localized option is true', () => {

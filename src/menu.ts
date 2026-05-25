@@ -1081,8 +1081,8 @@ export const createMenuAction = (
   if (item.tooltip) {
     menuItem.dataset.tooltip = item.tooltip
   }
-  if (options.role === 'listbox' && checked) {
-    menuItem.setAttribute('aria-selected', 'true')
+  if (options.role === 'listbox') {
+    menuItem.toggleAttribute('aria-selected', checked !== false)
   }
   if (item?.enabled && !item.enabled()) {
     menuItem.setAttribute('disabled', '')

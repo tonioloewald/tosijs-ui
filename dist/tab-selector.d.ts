@@ -50,7 +50,7 @@ export declare class TosiTabs extends WebComponent {
             display: string;
             alignItems: string;
         };
-        ':host .tabs > [aria-selected="true"]': {
+        ':host .tabs > [aria-selected]': {
             '--text-color': string;
             color: string;
         };

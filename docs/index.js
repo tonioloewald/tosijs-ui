@@ -26012,8 +26012,8 @@ var createMenuAction = (item, options) => {
   if (item.tooltip) {
     menuItem.dataset.tooltip = item.tooltip;
   }
-  if (options.role === "listbox" && checked) {
-    menuItem.setAttribute("aria-selected", "true");
+  if (options.role === "listbox") {
+    menuItem.toggleAttribute("aria-selected", checked !== false);
   }
   if (item?.enabled && !item.enabled()) {
     menuItem.setAttribute("disabled", "");
@@ -26651,7 +26651,7 @@ class TosiTable extends g {
       zIndex: "3",
       background: kE.tosiTableHeaderBg(kE.tosiTableBg("var(--tosi-bg, #fff)"))
     },
-    ':host .tr[aria-selected="true"] .td': {
+    ":host .tr[aria-selected] .td": {
       background: kE.tosiTableSelectedBg("var(--tosi-accent, #007AFF22)")
     },
     ":host .td:focus, :host .th:focus": {
@@ -29105,7 +29105,7 @@ class TosiTabs extends g {
       display: "flex",
       alignItems: "baseline"
     },
-    ':host .tabs > [aria-selected="true"]': {
+    ":host .tabs > [aria-selected]": {
       "--text-color": fM.tosiTabsSelectedColor,
       color: fM.textColor
     },
@@ -29235,14 +29235,12 @@ class TosiTabs extends g {
     for (let i2 = 0;i2 < tabBodies.length; i2++) {
       const tabBody = tabBodies[i2];
       const tab = tabs.children[i2];
-      if (this.value === Number(i2)) {
-        tab.setAttribute("aria-selected", "true");
+      const isSelected = this.value === Number(i2);
+      tab.toggleAttribute("aria-selected", isSelected);
+      tabBody.toggleAttribute("hidden", !isSelected);
+      if (isSelected) {
         selected.style.marginLeft = `${tab.offsetLeft - tabs.offsetLeft}px`;
         selected.style.width = `${tab.offsetWidth}px`;
-        tabBody.toggleAttribute("hidden", false);
-      } else {
-        tab.toggleAttribute("aria-selected", false);
-        tabBody.toggleAttribute("hidden", true);
       }
     }
   }
@@ -34755,7 +34753,7 @@ var XinTagList = TosiTagList;
 var tosiTagList = TosiTagList.elementCreator();
 var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated, use tosiTagList instead (tag is now <tosi-tag-list>)");
 // src/version.ts
-var version = "1.5.21";
+var version = "1.5.22";
 // src/tooltip.ts
 var { span: span18 } = I;
 var tooltipFloat = null;
@@ -41317,7 +41315,8 @@ test('row selection: data model + aria-selected on row (incl. custom dataCell)',
   expect(table.selectedRows.length).toBe(2)
 
   // DOM: aria-selected lives on the row element. CSS targets
-  // .tr[aria-selected="true"] .td to highlight cells.
+  // .tr[aria-selected] .td to highlight cells. The attribute is set via
+  // toggleAttribute, so its value is "" (presence-only) — match accordingly.
   const cells0 = table.getCells(items[0])
   const cells1 = table.getCells(items[1])
   expect(cells0.length).toBe(table.visibleColumns.length)

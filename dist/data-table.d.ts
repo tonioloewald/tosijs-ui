@@ -75,7 +75,7 @@ export declare class TosiTable extends WebComponent {
             zIndex: string;
             background: string;
         };
-        ':host .tr[aria-selected="true"] .td': {
+        ':host .tr[aria-selected] .td': {
             background: string;
         };
         ':host .td:focus, :host .th:focus': {

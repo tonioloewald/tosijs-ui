@@ -209,7 +209,7 @@ export class TosiTabs extends WebComponent {
             display: 'flex',
             alignItems: 'baseline',
         },
-        ':host .tabs > [aria-selected="true"]': {
+        ':host .tabs > [aria-selected]': {
             '--text-color': vars.tosiTabsSelectedColor,
             color: vars.textColor,
         },
@@ -342,15 +342,12 @@ export class TosiTabs extends WebComponent {
         for (let i = 0; i < tabBodies.length; i++) {
             const tabBody = tabBodies[i];
             const tab = tabs.children[i];
-            if (this.value === Number(i)) {
-                tab.setAttribute('aria-selected', 'true');
+            const isSelected = this.value === Number(i);
+            tab.toggleAttribute('aria-selected', isSelected);
+            tabBody.toggleAttribute('hidden', !isSelected);
+            if (isSelected) {
                 selected.style.marginLeft = `${tab.offsetLeft - tabs.offsetLeft}px`;
                 selected.style.width = `${tab.offsetWidth}px`;
-                tabBody.toggleAttribute('hidden', false);
-            }
-            else {
-                tab.toggleAttribute('aria-selected', false);
-                tabBody.toggleAttribute('hidden', true);
             }
         }
     }

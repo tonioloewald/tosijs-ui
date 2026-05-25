@@ -120,7 +120,8 @@ test('row selection: data model + aria-selected on row (incl. custom dataCell)',
   expect(table.selectedRows.length).toBe(2)
 
   // DOM: aria-selected lives on the row element. CSS targets
-  // .tr[aria-selected="true"] .td to highlight cells.
+  // .tr[aria-selected] .td to highlight cells. The attribute is set via
+  // toggleAttribute, so its value is "" (presence-only) — match accordingly.
   const cells0 = table.getCells(items[0])
   const cells1 = table.getCells(items[1])
   expect(cells0.length).toBe(table.visibleColumns.length)
@@ -668,7 +669,7 @@ export class TosiTable extends WebComponent {
         varDefault.tosiTableBg('var(--tosi-bg, #fff)')
       ),
     },
-    ':host .tr[aria-selected="true"] .td': {
+    ':host .tr[aria-selected] .td': {
       background: varDefault.tosiTableSelectedBg(
         'var(--tosi-accent, #007AFF22)'
       ),
