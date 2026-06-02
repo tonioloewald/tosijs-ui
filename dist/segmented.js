@@ -218,11 +218,15 @@ export class TosiSegmented extends WebComponent {
             boxShadow: varDefault.segmentedFocusShadow(`inset 0 0 0 2px ${varDefault.segmentedOptionCurrentBackground('#44a')}`),
             borderRadius: varDefault.segmentedOptionsBorderRadius('8px'),
         },
-        ':host label:has(:checked)': {
+        // Selection highlight is driven by an explicit `.current` class rather than
+        // `label:has(:checked)`. Firefox does not reliably re-evaluate `:has(:checked)`
+        // when a descendant radio's checked state changes via interaction, leaving the
+        // previously-selected segment highlighted (works in Chrome/Safari).
+        ':host label.current': {
             color: varDefault.segmentedOptionCurrentColor('#eee'),
             background: varDefault.segmentedOptionCurrentBackground('#44a'),
         },
-        ':host label:has(:checked):focus': {
+        ':host label.current:focus': {
             boxShadow: varDefault.segmentedCurrentFocusShadow(`inset 0 0 0 2px ${varDefault.segmentedOptionCurrentColor('#eee')}`),
         },
         ':host svg': {
@@ -257,6 +261,16 @@ export class TosiSegmented extends WebComponent {
             opacity: varDefault.segmentedPlaceholderOpacity(0.75),
         },
     };
+    // Reflects each radio/checkbox's checked state onto its containing label as a
+    // `.current` class so the selection highlight updates reliably (see note on the
+    // `.current` style rule).
+    syncCurrent() {
+        const { options } = this.parts;
+        options.querySelectorAll('label').forEach((label) => {
+            const input = label.querySelector('input');
+            label.classList.toggle('current', Boolean(input && input.checked));
+        });
+    }
     valueChanged = false;
     handleChange = () => {
         const { options, custom } = this.parts;
@@ -282,6 +296,7 @@ export class TosiSegmented extends WebComponent {
                 this.value = custom.value;
             }
         }
+        this.syncCurrent();
         this.valueChanged = true;
     };
     handleKey = (event) => {
@@ -386,6 +401,7 @@ export class TosiSegmented extends WebComponent {
             custom.placeholder = this.placeholder;
             options.append(custom);
         }
+        this.syncCurrent();
     }
 }
 /** @deprecated Use TosiSegmented instead */

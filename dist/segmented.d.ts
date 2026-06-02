@@ -47,11 +47,11 @@ export declare class TosiSegmented extends WebComponent {
             boxShadow: string;
             borderRadius: string;
         };
-        ':host label:has(:checked)': {
+        ':host label.current': {
             color: string;
             background: string;
         };
-        ':host label:has(:checked):focus': {
+        ':host label.current:focus': {
             boxShadow: string;
         };
         ':host svg': {
@@ -86,6 +86,7 @@ export declare class TosiSegmented extends WebComponent {
             opacity: string;
         };
     };
+    private syncCurrent;
     private valueChanged;
     handleChange: () => void;
     handleKey: (event: KeyboardEvent) => void;

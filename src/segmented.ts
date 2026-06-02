@@ -253,11 +253,15 @@ export class TosiSegmented extends WebComponent {
       ),
       borderRadius: varDefault.segmentedOptionsBorderRadius('8px'),
     },
-    ':host label:has(:checked)': {
+    // Selection highlight is driven by an explicit `.current` class rather than
+    // `label:has(:checked)`. Firefox does not reliably re-evaluate `:has(:checked)`
+    // when a descendant radio's checked state changes via interaction, leaving the
+    // previously-selected segment highlighted (works in Chrome/Safari).
+    ':host label.current': {
       color: varDefault.segmentedOptionCurrentColor('#eee'),
       background: varDefault.segmentedOptionCurrentBackground('#44a'),
     },
-    ':host label:has(:checked):focus': {
+    ':host label.current:focus': {
       boxShadow: varDefault.segmentedCurrentFocusShadow(
         `inset 0 0 0 2px ${varDefault.segmentedOptionCurrentColor('#eee')}`
       ),
@@ -295,6 +299,17 @@ export class TosiSegmented extends WebComponent {
     },
   }
 
+  // Reflects each radio/checkbox's checked state onto its containing label as a
+  // `.current` class so the selection highlight updates reliably (see note on the
+  // `.current` style rule).
+  private syncCurrent() {
+    const { options } = this.parts as SegmentParts
+    options.querySelectorAll('label').forEach((label) => {
+      const input = label.querySelector('input')
+      label.classList.toggle('current', Boolean(input && input.checked))
+    })
+  }
+
   private valueChanged = false
   handleChange = () => {
     const { options, custom } = this.parts as SegmentParts
@@ -319,6 +334,7 @@ export class TosiSegmented extends WebComponent {
         this.value = custom.value
       }
     }
+    this.syncCurrent()
     this.valueChanged = true
   }
 
@@ -456,6 +472,7 @@ export class TosiSegmented extends WebComponent {
       custom.placeholder = this.placeholder
       options.append(custom)
     }
+    this.syncCurrent()
   }
 }
 
