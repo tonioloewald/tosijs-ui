@@ -79,7 +79,7 @@ export class RemoteSyncManager {
     };
     /** Polling fallback — reads from localStorage */
     handlePoll = () => {
-        let data = null;
+        let data;
         try {
             data = localStorage.getItem(this.storageKey);
         }

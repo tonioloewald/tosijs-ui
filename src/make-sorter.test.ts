@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { test, expect } from 'bun:test'
 import { makeSorter } from './make-sorter'
 

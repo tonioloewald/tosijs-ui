@@ -61,7 +61,7 @@ export class TosiSidenav extends Component {
       return
     }
 
-    let navState = this.value
+    let navState: NavState
 
     this.compact = parent.offsetWidth < this.minSize
 

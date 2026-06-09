@@ -101,7 +101,7 @@ export class RemoteSyncManager {
 
   /** Polling fallback — reads from localStorage */
   private handlePoll = () => {
-    let data: string | null = null
+    let data: string | null
     try {
       data = localStorage.getItem(this.storageKey)
     } catch {

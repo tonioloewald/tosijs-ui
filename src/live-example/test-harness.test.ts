@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { test, expect, describe } from 'bun:test'
 import {
   expect as testExpect,

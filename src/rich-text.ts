@@ -133,12 +133,9 @@ import {
 import { icons } from './icons'
 
 import { tosiSelect, TosiSelect } from './select'
-import {
-  elastic as layoutElastic,
-  spacer as layoutSpacer,
-} from './layout'
+import { spacer as layoutSpacer } from './layout'
 
-const { tosiSlot, div, button, span } = elements
+const { tosiSlot, div, button } = elements
 
 const blockStyles = [
   {
@@ -180,7 +177,6 @@ export function blockStyle(options = blockStyles) {
 }
 
 const spacer = () => layoutSpacer({ slot: 'toolbar' })
-const elastic = () => layoutElastic({ slot: 'toolbar' })
 
 export function commandButton(
   title: string,

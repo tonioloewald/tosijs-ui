@@ -1008,7 +1008,6 @@ export class TosiTable extends WebComponent {
     buildRow(item, cols, stickyInfo, rowClass = 'tr') {
         const cells = cols.map((col, i) => this.buildCell(col, i, stickyInfo[i], item));
         const selectBindingFn = this.selectBinding;
-        const tableInst = this;
         const props = { class: rowClass };
         // `item` here is the placeholder proxy from template-build time. The
         // actual stamped row's item is delivered to toDOM as the second arg
@@ -1019,7 +1018,7 @@ export class TosiTable extends WebComponent {
             binding: {
                 toDOM: (rowEl, value) => {
                     selectBindingFn(rowEl, value);
-                    const fn = tableInst.rowRendered;
+                    const fn = this.rowRendered;
                     if (fn) {
                         fn(value, Array.from(rowEl.children));
                     }
@@ -1116,7 +1115,7 @@ export class TosiTable extends WebComponent {
         const cols = this.visibleColumns;
         const rightScroll = scrollWidth - clientWidth - scrollLeft;
         let boundaryX = 0;
-        return cols.find((options, i) => {
+        return cols.find((options) => {
             if (options.visible === false)
                 return false;
             boundaryX += options.width;

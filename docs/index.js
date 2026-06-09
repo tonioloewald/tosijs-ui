@@ -26996,14 +26996,13 @@ class TosiTable extends g {
   buildRow(item, cols, stickyInfo, rowClass = "tr") {
     const cells = cols.map((col, i2) => this.buildCell(col, i2, stickyInfo[i2], item));
     const selectBindingFn = this.selectBinding;
-    const tableInst = this;
     const props = { class: rowClass };
     props.bind = {
       value: item,
       binding: {
         toDOM: (rowEl, value) => {
           selectBindingFn(rowEl, value);
-          const fn = tableInst.rowRendered;
+          const fn = this.rowRendered;
           if (fn) {
             fn(value, Array.from(rowEl.children));
           }
@@ -27088,7 +27087,7 @@ class TosiTable extends g {
     const cols = this.visibleColumns;
     const rightScroll = scrollWidth - clientWidth - scrollLeft;
     let boundaryX = 0;
-    return cols.find((options, i2) => {
+    return cols.find((options) => {
       if (options.visible === false)
         return false;
       boundaryX += options.width;
@@ -29352,7 +29351,7 @@ class RemoteSyncManager {
       this.handlePayload(payload);
   };
   handlePoll = () => {
-    let data = null;
+    let data;
     try {
       data = localStorage.getItem(this.storageKey);
     } catch {
@@ -30597,7 +30596,7 @@ class TosiSidenav extends g {
     if (parent === null) {
       return;
     }
-    let navState = this.value;
+    let navState;
     this.compact = parent.offsetWidth < this.minSize;
     const empty = [...this.childNodes].find((node) => node instanceof Element ? node.getAttribute("slot") !== "nav" : true) === undefined;
     if (empty) {
@@ -32093,8 +32092,16 @@ class TosiField extends g {
     }
     setElementValue(valueHolder, this.value);
     setElementValue(input8.children[0], this.value);
-    this.prefix ? field.setAttribute("prefix", this.prefix) : field.removeAttribute("prefix");
-    this.suffix ? field.setAttribute("suffix", this.suffix) : field.removeAttribute("suffix");
+    if (this.prefix) {
+      field.setAttribute("prefix", this.prefix);
+    } else {
+      field.removeAttribute("prefix");
+    }
+    if (this.suffix) {
+      field.setAttribute("suffix", this.suffix);
+    } else {
+      field.removeAttribute("suffix");
+    }
     valueHolder.classList.toggle("hidden", input8.children.length > 0);
     if (input8.children.length > 0) {
       valueHolder.setAttribute("tabindex", "-1");
@@ -32150,7 +32157,7 @@ class TosiForm extends g {
     if (typeof this.value === "string") {
       try {
         this.value = JSON.parse(this.value);
-      } catch (e2) {
+      } catch {
         console.log("<tosi-form> could not use its value, expects valid JSON");
         this.value = {};
       }
@@ -33711,7 +33718,7 @@ var XinRating = TosiRating;
 var tosiRating = TosiRating.elementCreator();
 var xinRating = gE((...args) => tosiRating(...args), "xinRating is deprecated, use tosiRating instead (tag is now <tosi-rating>)");
 // src/rich-text.ts
-var { tosiSlot: tosiSlot6, div: div15, button: button13, span: span15 } = I;
+var { tosiSlot: tosiSlot6, div: div15, button: button13 } = I;
 var blockStyles = [
   {
     caption: "Title",
@@ -34112,7 +34119,7 @@ class TosiRouteView extends g {
 }
 var tosiRouteView = TosiRouteView.elementCreator();
 // src/segmented.ts
-var { div: div16, slot: slot8, label: label4, span: span16, input: input9 } = I;
+var { div: div16, slot: slot8, label: label4, span: span15, input: input9 } = I;
 
 class TosiSegmented extends g {
   static preferredTagName = "tosi-segmented";
@@ -34341,7 +34348,7 @@ class TosiSegmented extends g {
         value: choice.value,
         checked: values.includes(choice.value) || choice.value === "" && isOtherValue,
         tabIndex: -1
-      }), choice.icon || { class: "no-icon" }, this.localized ? tosiLocalized(choice.caption) : span16(choice.caption));
+      }), choice.icon || { class: "no-icon" }, this.localized ? tosiLocalized(choice.caption) : span15(choice.caption));
     }));
     if (this.other && !this.multiple) {
       custom.hidden = !isOtherValue;
@@ -34464,7 +34471,7 @@ var XinSizer = TosiSizer;
 var tosiSizer = TosiSizer.elementCreator();
 var xinSizer = tosiSizer;
 // src/tag-list.ts
-var { div: div17, input: input10, span: span17, button: button14 } = I;
+var { div: div17, input: input10, span: span16, button: button14 } = I;
 var splitTags = (str) => str.split(/(?<!\\),/).map((tag) => tag.trim().replace(/\\,/g, ","));
 var joinTags = (tags) => tags.map((tag) => tag.replace(/,/g, "\\,")).join(",");
 
@@ -34523,7 +34530,7 @@ class TosiTag extends g {
     this.remove();
   };
   content = () => [
-    span17({ part: "caption" }, this.caption),
+    span16({ part: "caption" }, this.caption),
     button14(icons.x(), {
       type: "button",
       part: "remove",
@@ -34764,7 +34771,7 @@ var xinTagList = gE((...args) => tosiTagList(...args), "xinTagList is deprecated
 // src/version.ts
 var version = "1.5.23";
 // src/tooltip.ts
-var { span: span18 } = I;
+var { span: span17 } = I;
 var tooltipFloat = null;
 var showTimeout = null;
 var currentTarget = null;
@@ -34859,7 +34866,7 @@ function renderText(text, useLocalize) {
   if (useLocalize) {
     text = localize(text);
   }
-  const el = span18({ class: TOOLTIP_CLASS });
+  const el = span17({ class: TOOLTIP_CLASS });
   el.innerHTML = k2.parseInline(text);
   return el;
 }
@@ -42630,10 +42637,10 @@ var browser = createDocBrowser({
 if (main) {
   const header4 = browser.querySelector("header");
   if (header4) {
-    const { img, a: a5, span: span19, button: button15 } = I;
+    const { img, a: a5, span: span18, button: button15 } = I;
     const sizeBreakElement = header4.querySelector("tosi-sizebreak");
     if (sizeBreakElement) {
-      const badges = span19({
+      const badges = span18({
         style: {
           marginRight: fM.spacing,
           display: "flex",

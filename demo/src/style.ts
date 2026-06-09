@@ -155,7 +155,7 @@ export const styleSpec: XinStyleSheet = ...
 ```
 */
 
-import { XinStyleSheet, vars, Color, invertLuminance, MoreMath } from 'tosijs'
+import { XinStyleSheet, vars, Color, invertLuminance } from 'tosijs'
 import { icons, svg2DataUrl } from '../../src'
 
 const brandColor = Color.fromCss('#EE257B')

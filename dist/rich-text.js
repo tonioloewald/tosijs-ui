@@ -124,8 +124,8 @@ form.addEventListener('submit', (e) => {
 import { Component as WebComponent, elements, deprecated, } from 'tosijs';
 import { icons } from './icons';
 import { tosiSelect, TosiSelect } from './select';
-import { elastic as layoutElastic, spacer as layoutSpacer, } from './layout';
-const { tosiSlot, div, button, span } = elements;
+import { spacer as layoutSpacer } from './layout';
+const { tosiSlot, div, button } = elements;
 const blockStyles = [
     {
         caption: 'Title',
@@ -164,7 +164,6 @@ export function blockStyle(options = blockStyles) {
     });
 }
 const spacer = () => layoutSpacer({ slot: 'toolbar' });
-const elastic = () => layoutElastic({ slot: 'toolbar' });
 export function commandButton(title, dataCommand, icon) {
     return button({ slot: 'toolbar', dataCommand, title }, icon);
 }

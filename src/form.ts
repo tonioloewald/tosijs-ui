@@ -614,12 +614,16 @@ export class TosiField extends XinComponent {
     setElementValue(valueHolder, this.value)
     setElementValue(input.children[0] as HTMLElement, this.value)
 
-    this.prefix
-      ? field.setAttribute('prefix', this.prefix)
-      : field.removeAttribute('prefix')
-    this.suffix
-      ? field.setAttribute('suffix', this.suffix)
-      : field.removeAttribute('suffix')
+    if (this.prefix) {
+      field.setAttribute('prefix', this.prefix)
+    } else {
+      field.removeAttribute('prefix')
+    }
+    if (this.suffix) {
+      field.setAttribute('suffix', this.suffix)
+    } else {
+      field.removeAttribute('suffix')
+    }
 
     valueHolder.classList.toggle('hidden', input.children.length > 0)
     if (input.children.length > 0) {
@@ -683,7 +687,7 @@ export class TosiForm extends XinComponent {
     if (typeof this.value === 'string') {
       try {
         this.value = JSON.parse(this.value)
-      } catch (e) {
+      } catch {
         console.log('<tosi-form> could not use its value, expects valid JSON')
         this.value = {}
       }

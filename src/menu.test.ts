@@ -16,7 +16,6 @@ import {
   PopMenuOptions,
 } from './menu'
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {}
 
 describe('menu', () => {
@@ -790,7 +789,7 @@ describe('menu', () => {
         altKey: false,
         shiftKey: false,
         ...mods,
-      }) as KeyboardEvent
+      } as KeyboardEvent)
 
     test('finds matching shortcut', () => {
       const items: MenuItem[] = [
@@ -826,9 +825,7 @@ describe('menu', () => {
       const items: MenuItem[] = [
         {
           caption: 'Edit',
-          menuItems: [
-            { caption: 'Paste', shortcut: '⌘V', action: noop },
-          ],
+          menuItems: [{ caption: 'Paste', shortcut: '⌘V', action: noop }],
         },
       ]
       const match = findShortcutAction(items, mockEvent('v', { metaKey: true }))
@@ -843,9 +840,7 @@ describe('menu', () => {
         {
           caption: 'Edit',
           enabled: () => false,
-          menuItems: [
-            { caption: 'Paste', shortcut: '⌘V', action: noop },
-          ],
+          menuItems: [{ caption: 'Paste', shortcut: '⌘V', action: noop }],
         },
       ]
       const match = findShortcutAction(items, mockEvent('v', { metaKey: true }))
@@ -859,17 +854,12 @@ describe('menu', () => {
           menuItems: [
             {
               caption: 'Level 2',
-              menuItems: [
-                { caption: 'Deep', shortcut: '^D', action: noop },
-              ],
+              menuItems: [{ caption: 'Deep', shortcut: '^D', action: noop }],
             },
           ],
         },
       ]
-      const match = findShortcutAction(
-        items,
-        mockEvent('d', { ctrlKey: true }),
-      )
+      const match = findShortcutAction(items, mockEvent('d', { ctrlKey: true }))
       expect(match).toBeDefined()
       expect(match!.path.length).toBe(2)
       expect(match!.path[0].caption).toBe('Level 1')

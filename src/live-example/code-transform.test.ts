@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { test, expect, describe } from 'bun:test'
 import { rewriteImports, AsyncFunction } from './code-transform'
 

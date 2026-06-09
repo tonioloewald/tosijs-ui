@@ -123,7 +123,7 @@ context = {
 
 import { Component, ElementCreator, elements, tosi } from 'tosijs'
 import { codeEditor, CodeEditor } from '../code-editor'
-import { tosiTabs, TosiTabs } from '../tab-selector'
+import { tosiTabs } from '../tab-selector'
 import { icons } from '../icons'
 import { popMenu } from '../menu'
 

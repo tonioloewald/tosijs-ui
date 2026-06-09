@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { test, expect, beforeEach } from 'bun:test'
 import { initLocalization, localize, i18n } from './localize'
 
@@ -7,7 +6,7 @@ const testTSV = [
   'English\tFrench\tGerman',
   'English\tFrançais\tDeutsch',
   '🇺🇸\t🇫🇷\t🇩🇪',
-  'Okay\tD\'accord\tOkay',
+  "Okay\tD'accord\tOkay",
   'Cancel\tAnnuler\tAbbrechen',
   'Yes\tOui\tJa',
   'Okay#confirm\t"\t"\t',
@@ -37,7 +36,7 @@ test('# annotation: returns base string for reference locale', () => {
 test('# annotation with ditto: inherits base translation', () => {
   i18n.locale.value = 'fr'
   // Okay#confirm has " for French, so it inherits from Okay -> D'accord
-  expect(localize('Okay#confirm')).toBe('D\'accord')
+  expect(localize('Okay#confirm')).toBe("D'accord")
 })
 
 test('# annotation with specific override', () => {
@@ -55,7 +54,7 @@ test('# annotation with ditto for German', () => {
 test('# annotation fallback when annotated key not in map', () => {
   i18n.locale.value = 'fr'
   // Okay#unknown is not in the TSV at all, falls back to Okay -> D'accord
-  expect(localize('Okay#unknown')).toBe('D\'accord')
+  expect(localize('Okay#unknown')).toBe("D'accord")
 })
 
 test('# annotation strips annotation even with no translations', () => {
@@ -66,12 +65,12 @@ test('# annotation strips annotation even with no translations', () => {
 test('case preservation with # annotations', () => {
   i18n.locale.value = 'fr'
   // lowercase input -> lowercase output
-  expect(localize('okay#confirm')).toBe('d\'accord')
+  expect(localize('okay#confirm')).toBe("d'accord")
 })
 
 test('ellipsis works with # annotations', () => {
   i18n.locale.value = 'fr'
-  expect(localize('Okay#confirm…')).toBe('D\'accord…')
+  expect(localize('Okay#confirm…')).toBe("D'accord…")
 })
 
 test('ditto resolution works regardless of row order', () => {
@@ -82,9 +81,9 @@ test('ditto resolution works regardless of row order', () => {
     'English\tFrançais\tDeutsch',
     '🇺🇸\t🇫🇷\t🇩🇪',
     'Okay#confirm\t"\t"',
-    'Okay\tD\'accord\tOkay',
+    "Okay\tD'accord\tOkay",
   ].join('\n')
   initLocalization(reversedTSV)
   i18n.locale.value = 'fr'
-  expect(localize('Okay#confirm')).toBe('D\'accord')
+  expect(localize('Okay#confirm')).toBe("D'accord")
 })

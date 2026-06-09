@@ -4,7 +4,6 @@ import {
   SvgIcon,
   svgIcon,
   defineIcons,
-  iconRules,
   resolveIcon,
   wrapIcon,
 } from './icons'

@@ -48,7 +48,7 @@ export class TosiSidenav extends Component {
         if (parent === null) {
             return;
         }
-        let navState = this.value;
+        let navState;
         this.compact = parent.offsetWidth < this.minSize;
         const empty = [...this.childNodes].find((node) => node instanceof Element ? node.getAttribute('slot') !== 'nav' : true) === undefined;
         if (empty) {
