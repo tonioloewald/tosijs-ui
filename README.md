@@ -122,7 +122,9 @@ as globals which contain all the things exported by `tosijs` and `tosijs-ui`.
 </script>
 ```
 
-[Click here to see a simple iife demo](https://ui.tosijs.net/iife.html)
+The entire [live documentation site](https://ui.tosijs.net) is built with the iife
+bundle — every page is static HTML that loads `iife.js` and hydrates, so it doubles
+as a working iife example (view source on any page).
 
 ## custom-elements
 
