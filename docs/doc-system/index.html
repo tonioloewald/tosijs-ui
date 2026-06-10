@@ -15,7 +15,7 @@
   <link rel="icon" href="/favicon.svg" />
 </head>
 <body>
-  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="/localized-strings.txt">
   <article class="doc-content">
 <h1>doc-system</h1>
 <p><code>&lt;tosi-doc-system&gt;</code> turns a folder of pre-rendered, statically-served pages into a
@@ -25,11 +25,13 @@ to HTML, and a real <code>&lt;ul&gt;</code> of links to every other page — so 
 no-JS browsers get everything. When the library&#39;s IIFE bundle loads, the
 <code>&lt;tosi-doc-system&gt;</code> element upgrades that static content into the interactive
 <a href="?doc-browser.ts">doc-browser</a>: client-side navigation (no full reloads), live
-code examples, search, and responsive navigation.</p>
+code examples, search, responsive navigation, and a settings menu (theme +
+language).</p>
 <pre><code class="language-html">&lt;body&gt;
   &lt;tosi-doc-system docs=&quot;/docs.json&quot; config=&#39;{&quot;projectName&quot;:&quot;My Project&quot;}&#39;&gt;
     &lt;article class=&quot;doc-content&quot;&gt;&lt;!-- markdown pre-rendered to HTML --&gt;&lt;/article&gt;
     &lt;ul class=&quot;doc-nav&quot;&gt;&lt;!-- links to every page --&gt;&lt;/ul&gt;
+    &lt;ul class=&quot;doc-navbar&quot;&gt;&lt;!-- header-bar links --&gt;&lt;/ul&gt;
   &lt;/tosi-doc-system&gt;
   &lt;script src=&quot;/iife.js&quot;&gt;&lt;/script&gt;
 &lt;/body&gt;
@@ -40,6 +42,10 @@ code examples, search, and responsive navigation.</p>
 corpus is the size of a JPEG, so the client fetches it once and renders any page
 instantly.</li>
 <li><code>config</code> — inline JSON <code>{ projectName, projectLinks }</code> baked in at build time.</li>
+<li><code>localized</code> — URL of a tab-separated translation table; when set, it powers the
+settings menu&#39;s language picker.</li>
+<li><code>accent</code> / <code>background</code> / <code>text</code> — base theme colors (most of the palette is
+derived from <code>accent</code> via color math).</li>
 </ul>
 <p>The element is light-DOM (no shadow root) so the pre-rendered markdown remains the
 real, indexable page content until hydration replaces it with the live browser.
@@ -101,6 +107,13 @@ setting the element&#39;s <code>context</code> property before it connects.</p>
     <li><a href="/make-icon-data/">make-icon-data</a></li>
   </ul>
   </nav>
+  <ul class="doc-navbar">
+    <li><a href="https://tosijs.net" data-icon="tosi">tosijs</a></li>
+    <li><a href="https://discord.com/invite/ramJ9rgky5" data-icon="discord">discord</a></li>
+    <li><a href="https://loewald.com" data-icon="blog">blog</a></li>
+    <li><a href="https://github.com/tonioloewald/tosijs-ui" data-icon="github">github</a></li>
+    <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
+  </ul>
   </tosi-doc-system>
   <script src="/iife.js"></script>
 </body>

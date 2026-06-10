@@ -9,13 +9,15 @@ to HTML, and a real `<ul>` of links to every other page — so search engines an
 no-JS browsers get everything. When the library's IIFE bundle loads, the
 `<tosi-doc-system>` element upgrades that static content into the interactive
 [doc-browser](?doc-browser.ts): client-side navigation (no full reloads), live
-code examples, search, and responsive navigation.
+code examples, search, responsive navigation, and a settings menu (theme +
+language).
 
 ```html
 <body>
   <tosi-doc-system docs="/docs.json" config='{"projectName":"My Project"}'>
     <article class="doc-content"><!-- markdown pre-rendered to HTML --></article>
     <ul class="doc-nav"><!-- links to every page --></ul>
+    <ul class="doc-navbar"><!-- header-bar links --></ul>
   </tosi-doc-system>
   <script src="/iife.js"></script>
 </body>
@@ -27,20 +29,30 @@ code examples, search, and responsive navigation.
   corpus is the size of a JPEG, so the client fetches it once and renders any page
   instantly.
 - `config` — inline JSON `{ projectName, projectLinks }` baked in at build time.
+- `localized` — URL of a tab-separated translation table; when set, it powers the
+  settings menu's language picker.
+- `accent` / `background` / `text` — base theme colors (most of the palette is
+  derived from `accent` via color math).
 
 The element is light-DOM (no shadow root) so the pre-rendered markdown remains the
 real, indexable page content until hydration replaces it with the live browser.
 Live-example modules default to the `xinjs` / `xinjsui` IIFE globals; override by
 setting the element's `context` property before it connects.
 */
-import { Component, StyleSheet } from 'tosijs';
+import { Component, StyleSheet, elements, tosi, vars } from 'tosijs';
 import { createDocBrowser } from '../doc-browser';
 import { docSystemStyleSpec } from './doc-system-styles';
+import { icons } from '../icons';
+import { popMenu } from '../menu';
+import { i18n, setLocale, initLocalization } from '../localize';
+const { button } = elements;
+const PREFS_KEY = 'tosi-doc-system-prefs';
 export class TosiDocSystem extends Component {
     static preferredTagName = 'tosi-doc-system';
     static initAttributes = {
         docs: '/docs.json',
         config: '',
+        localized: '',
         // Base theme colors — most of the palette is derived from `accent`.
         accent: '',
         background: '',
@@ -54,9 +66,10 @@ export class TosiDocSystem extends Component {
     // The loaded corpus and the mounted browser; both also act as one-time guards.
     corpus;
     browser;
+    // User theme/locale preferences (persisted to localStorage).
+    prefs;
     stylesApplied = false;
-    // Inject the theme synchronously on connect (before the async corpus load) so a
-    // static page is styled as soon as the bundle runs, and wire automatic dark mode.
+    // ---- Theme ---------------------------------------------------------------
     applyStyles() {
         if (this.stylesApplied)
             return;
@@ -71,14 +84,147 @@ export class TosiDocSystem extends Component {
                 text: this.text || undefined,
             }));
         }
-        const dark = matchMedia('(prefers-color-scheme: dark)');
-        const syncDark = () => document.body.classList.toggle('darkmode', dark.matches);
-        syncDark();
-        dark.addEventListener('change', syncDark);
+    }
+    applyThemePrefs = () => {
+        const theme = this.prefs.theme.value;
+        const dark = theme === 'dark' ||
+            (theme === 'system' &&
+                matchMedia('(prefers-color-scheme: dark)').matches);
+        document.body.classList.toggle('darkmode', dark);
+        document.body.classList.toggle('high-contrast', this.prefs.highContrast.value);
+    };
+    persistPrefs() {
+        try {
+            localStorage.setItem(PREFS_KEY, JSON.stringify({
+                theme: this.prefs.theme.value,
+                highContrast: this.prefs.highContrast.value,
+                locale: this.prefs.locale.value,
+            }));
+        }
+        catch {
+            // localStorage may be unavailable (private mode); preferences just won't persist.
+        }
+    }
+    initPrefs() {
+        let saved = {};
+        try {
+            saved = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
+        }
+        catch {
+            /* ignore */
+        }
+        this.prefs = tosi({
+            prefs: {
+                theme: saved.theme || 'system',
+                highContrast: saved.highContrast || false,
+                locale: saved.locale || '',
+            },
+        }).prefs;
+        this.applyThemePrefs();
+        matchMedia('(prefers-color-scheme: dark)').addEventListener('change', this.applyThemePrefs);
+        this.prefs.theme.observe(() => {
+            this.applyThemePrefs();
+            this.persistPrefs();
+        });
+        this.prefs.highContrast.observe(() => {
+            this.applyThemePrefs();
+            this.persistPrefs();
+        });
+        this.prefs.locale.observe(() => this.persistPrefs());
+    }
+    // ---- Localization --------------------------------------------------------
+    async initLocale() {
+        if (!this.localized)
+            return;
+        try {
+            const text = await (await fetch(this.localized)).text();
+            initLocalization(text);
+            if (this.prefs.locale.value)
+                setLocale(this.prefs.locale.value);
+        }
+        catch (error) {
+            console.warn('<tosi-doc-system> could not load localization from', this.localized, error);
+        }
+    }
+    // ---- Settings menu -------------------------------------------------------
+    settingsButton() {
+        return button({
+            class: 'iconic',
+            // Header buttons default to the brand color (invisible on the brand bar);
+            // use the link color like the nav toggle so the icon is visible.
+            style: { color: vars.linkColor },
+            title: 'settings',
+            onClick: (event) => {
+                const menuItems = [];
+                const localeOptions = i18n.localeOptions.value || [];
+                if (localeOptions.length > 1) {
+                    menuItems.push({
+                        caption: 'Language',
+                        icon: 'globe',
+                        menuItems: localeOptions.map((locale) => ({
+                            caption: locale.caption,
+                            icon: locale.icon,
+                            checked: () => locale.value === i18n.locale.value,
+                            action: () => {
+                                this.prefs.locale.value = locale.value;
+                                setLocale(locale.value);
+                            },
+                        })),
+                    });
+                }
+                menuItems.push({
+                    caption: 'Color Theme',
+                    icon: 'rgb',
+                    menuItems: [
+                        {
+                            caption: 'System',
+                            checked: () => this.prefs.theme.value === 'system',
+                            action: () => (this.prefs.theme.value = 'system'),
+                        },
+                        {
+                            caption: 'Dark',
+                            checked: () => this.prefs.theme.value === 'dark',
+                            action: () => (this.prefs.theme.value = 'dark'),
+                        },
+                        {
+                            caption: 'Light',
+                            checked: () => this.prefs.theme.value === 'light',
+                            action: () => (this.prefs.theme.value = 'light'),
+                        },
+                        null,
+                        {
+                            caption: 'High Contrast',
+                            checked: () => this.prefs.highContrast.value,
+                            action: () => (this.prefs.highContrast.value = !this.prefs.highContrast.value),
+                        },
+                    ],
+                });
+                popMenu({
+                    target: event.target,
+                    localized: true,
+                    menuItems,
+                });
+            },
+        }, icons.moreVertical());
+    }
+    // ---- Lifecycle -----------------------------------------------------------
+    // Parse a declarative <ul class="..."> of <li><a href data-icon?>label</a> into
+    // LinkItem[]. Returns [] when the list is absent.
+    parseLinks(selector) {
+        const list = this.querySelector(selector);
+        if (!list)
+            return [];
+        return [...list.querySelectorAll('a')].map((anchor) => ({
+            href: anchor.getAttribute('href') || '',
+            label: (anchor.textContent || '').trim(),
+            icon: anchor.dataset.icon || undefined,
+        }));
     }
     connectedCallback() {
         super.connectedCallback();
         this.applyStyles();
+        this.initPrefs();
+        void this.initLocale();
         // Async data source: fetch once, then let the normal render pipeline mount.
         if (this.corpus === undefined) {
             const url = this.docs || '/docs.json';
@@ -108,6 +254,8 @@ export class TosiDocSystem extends Component {
         // place, never re-rendered. createDocBrowser grafts this node into its content
         // area; the static nav list (already crawled) is replaced by the reactive one.
         const contentElement = this.querySelector('.doc-content') || undefined;
+        // Header-bar links are declared as a real, crawlable list in the static page.
+        const navbarLinks = this.parseLinks('.doc-navbar');
         this.browser = createDocBrowser({
             docs: this.corpus,
             routing: 'path',
@@ -117,8 +265,13 @@ export class TosiDocSystem extends Component {
             },
             projectName: config.projectName,
             projectLinks: config.projectLinks,
+            navbarLinks: navbarLinks.length ? navbarLinks : undefined,
             contentElement,
         });
+        // Add the settings (theme + language) menu to the header.
+        const header = this.browser.querySelector('header');
+        if (header)
+            header.append(this.settingsButton());
         this.replaceChildren(this.browser);
     }
 }

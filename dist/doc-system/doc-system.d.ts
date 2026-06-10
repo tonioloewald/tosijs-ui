@@ -4,6 +4,7 @@ export declare class TosiDocSystem extends Component {
     static initAttributes: {
         docs: string;
         config: string;
+        localized: string;
         accent: string;
         background: string;
         text: string;
@@ -12,8 +13,15 @@ export declare class TosiDocSystem extends Component {
     content: null;
     private corpus?;
     private browser?;
+    private prefs;
     private stylesApplied;
     private applyStyles;
+    private applyThemePrefs;
+    private persistPrefs;
+    private initPrefs;
+    private initLocale;
+    private settingsButton;
+    private parseLinks;
     connectedCallback(): void;
     render(): void;
 }
