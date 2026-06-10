@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>month — tosijs-ui</title>
+  <meta name="description" content="This is a component for displaying a month and selecting days within that month." />
+  <link rel="canonical" href="https://ui.tosijs.net/month/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="month — tosijs-ui" />
+  <meta property="og:description" content="This is a component for displaying a month and selecting days within that month." />
+  <meta property="og:url" content="https://ui.tosijs.net/month/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>month</h1>
+<p>This is a component for displaying a month and selecting days within that month.</p>
+<p>If the user changes the <code>month</code> or <code>year</code> the component&#39;s <code>monthChanged(year, month)</code>
+method will be called.</p>
+<p>The current date is <code>[part=&quot;today&quot;]</code> and can easily be targeted for styling.</p>
+<pre><code class="language-js">import { tosiMonth, postNotification } from &#39;tosijs-ui&#39;
+
+preview.append(tosiMonth({
+  monthChanged(year, month) {
+    postNotification({
+      icon: &#39;calendar&#39;,
+      message: `Month changed to ${year}-${month}`,
+      color: &#39;hotpink&#39;,
+      duration: 2,
+    })
+  }
+}))
+</code></pre>
+<pre><code class="language-css">.preview tosi-month {
+  margin: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 0 2px hotpink;
+}
+</code></pre>
+<h2><code>selectable</code></h2>
+<p>Setting <code>selectable</code> allows the user to pick individual dates. It&#39;s just a friendlier date picker.</p>
+<p>The value of the component is an ISO date string, as per <code>&lt;input type=&quot;date&quot;&gt;</code>.</p>
+<p><code>week-start</code> defaults to <code>0</code> (Sunday). You can set it to <code>1</code> (Monday) or some other value
+if you want.</p>
+<blockquote>
+<p>There is a proposed API to obtain the first day of the week for the user&#39;s locale from
+<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale/getWeekInfo">Intl.Locale</a>
+but it is not yet widely supported.</p>
+</blockquote>
+<pre><code class="language-html">&lt;tosi-month week-start=1 selectable&gt;&lt;/tosi-month&gt;
+</code></pre>
+<pre><code class="language-js">const month = preview.querySelector(&#39;tosi-month&#39;)
+month.addEventListener(&#39;change&#39;, event =&gt; console.log(&#39;date picked&#39;, event.target.value))
+</code></pre>
+<h2><code>range</code></h2>
+<p>Setting <code>range</code> allows the user to select date ranges.</p>
+<pre><code class="language-html">&lt;tosi-month range&gt;&lt;/tosi-month&gt;
+</code></pre>
+<pre><code class="language-js">const month = preview.querySelector(&#39;tosi-month&#39;)
+month.addEventListener(&#39;change&#39;, event =&gt; console.log(&#39;date range&#39;, event.target.value))
+</code></pre>
+<h2><code>multiple</code></h2>
+<p>This allows the user to pick multiple individual dates</p>
+<pre><code class="language-html">&lt;tosi-month multiple&gt;&lt;/tosi-month&gt;
+</code></pre>
+<pre><code class="language-js">const month = preview.querySelector(&#39;tosi-month&#39;)
+month.addEventListener(&#39;change&#39;, event =&gt; console.log(&#39;multple dates&#39;, event.target.value))
+</code></pre>
+<h2><code>readonly</code> and <code>disabled</code></h2>
+<p>These prevent the user from changing the displayed month. This example is <code>readonly</code>.</p>
+<pre><code class="language-html">&lt;tosi-month readonly value=&quot;1976-04-01&quot;&gt;&lt;/tosi-month&gt;
+</code></pre>
+<h2>Form Integration</h2>
+<p><code>&lt;tosi-month&gt;</code> is form-associated, so it works directly in native forms:</p>
+<pre><code class="language-html">&lt;form id=&quot;date-form&quot; class=&quot;date-form&quot;&gt;
+  &lt;label&gt;
+    &lt;span&gt;Select a date (required):&lt;/span&gt;
+    &lt;tosi-month name=&quot;date&quot; selectable required&gt;&lt;/tosi-month&gt;
+  &lt;/label&gt;
+  &lt;div class=&quot;buttons&quot;&gt;
+    &lt;button type=&quot;submit&quot;&gt;Submit&lt;/button&gt;
+    &lt;button type=&quot;reset&quot;&gt;Reset&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/form&gt;
+</code></pre>
+<pre><code class="language-css">.preview .date-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.preview .date-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview .date-form .buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.preview tosi-month:invalid {
+  outline: 2px solid #f008;
+  outline-offset: 2px;
+}
+
+.preview tosi-month:valid {
+  outline: 2px solid #0a08;
+  outline-offset: 2px;
+}
+</code></pre>
+<pre><code class="language-js">const { TosiDialog } = tosijsui
+const form = preview.querySelector(&#39;#date-form&#39;)
+
+form.addEventListener(&#39;submit&#39;, (e) =&gt; {
+  e.preventDefault()
+  const formData = new FormData(form)
+  const data = Object.fromEntries(formData.entries())
+  TosiDialog.alert(JSON.stringify(data, null, 2), &#39;Date Selected&#39;)
+})
+
+form.addEventListener(&#39;reset&#39;, () =&gt; {
+  TosiDialog.alert(&#39;Form has been reset&#39;, &#39;Reset&#39;)
+})
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/" aria-current="page" class="current">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

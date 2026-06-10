@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>markdown — tosijs-ui</title>
+  <meta name="description" content="&lt;tosi-md&gt; renders markdown using marked." />
+  <link rel="canonical" href="https://ui.tosijs.net/markdown-viewer/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="markdown — tosijs-ui" />
+  <meta property="og:description" content="&lt;tosi-md&gt; renders markdown using marked." />
+  <meta property="og:url" content="https://ui.tosijs.net/markdown-viewer/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>markdown</h1>
+<p><code>&lt;tosi-md&gt;</code> renders markdown using <a href="https://www.npmjs.com/package/marked">marked</a>.</p>
+<p><code>&lt;tosi-md&gt;</code> renders <a href="https://www.markdownguide.org/">markdown</a> anywhere, either using the
+<code>src</code> attribute to load the file asynchronously, or rendering the text inside it.</p>
+<pre><code class="language-html">&lt;tosi-md&gt;
+## hello
+world
+
+![favicon](/favicon.svg)
+
+| this  | is   | a     | table |
+|-------|------|-------|-------|
+| one   | two  | three | four  |
+| five  | six  | seven | eight |
+&lt;/tosi-md&gt;
+</code></pre>
+<pre><code class="language-css">tosi-md {
+  display: block;
+  padding: var(--spacing);
+}
+</code></pre>
+<p>Note that, by default, <code>&lt;tosi-md&gt;</code> will use its <code>textContent</code> (not its <code>innerHTML</code>) as its source.</p>
+<h2>rendering markdown from a url</h2>
+<p>Again, like an <code>&lt;img&gt;</code> tag, you can simply set a <code>&lt;tosi-md&gt;</code>&#39;s <code>src</code> attribute to a URL pointing
+to markdown source and it will load it asynchronously and render it.</p>
+<pre><code>&lt;tosi-md src=&quot;/path/to/file.md&quot;&gt;
+</code></pre>
+<h2>setting its <code>value</code></h2>
+<p>Or, just set the element&#39;s <code>value</code> and it will render it for you. You can try
+this in the console, e.g.</p>
+<pre><code>$(&#39;.preview tosi-md&#39;).value = &#39;testing\n\n## this is a test&#39;
+</code></pre>
+<h2>elements</h2>
+<p><code>&lt;tosi-md&gt;</code> also (optionally) allows the embedding of inline HTML elements without blocking markdown
+rendering, so that you can embed specific elements while retaining markdown. You need to explicitly set
+the <code>elements</code> property, and for markdown rendering not to be blocked, the html elements need to
+start on a new line and not be indented. E.g.</p>
+<pre><code class="language-html">&lt;tosi-md elements&gt;
+&lt;form&gt;
+### this is a form
+&lt;label&gt;
+fill in this field.
+**It&#39;s important!**
+&lt;input&gt;
+&lt;/label&gt;
+&lt;/form&gt;
+&lt;/tosi-md&gt;
+</code></pre>
+<p>In this case <code>&lt;tosi-md&gt;</code> uses its <code>innerHTML</code> and not its <code>textContent</code>.</p>
+<h2>context and template variables</h2>
+<p><code>&lt;tosi-md&gt;</code> also supports <strong>template</strong> values. You need to provide data to the element in the form
+of <code>context</code> (an arbitrary object, or a JSON string), and then embed the template text using
+handlebars-style doubled curly braces, e.g. <code>{{path.to.value}}</code>.</p>
+<p>If no value is found, the original text is passed through.</p>
+<p>Finally, note that template substitution occurs <em>before</em> markdown transformation, which means you can
+pass context data through to HTML elements.</p>
+<pre><code class="language-html">&lt;tosi-md
+  elements
+  context=&#39;{&quot;title&quot;: &quot;template example&quot;, &quot;foo&quot;: {&quot;bar&quot;: 17}, &quot;nested&quot;: &quot;*work*: {{foo.bar}}&quot;}&#39;
+&gt;
+## {{title}}
+
+The magic number is &lt;input type=&quot;number&quot; value={{foo.bar}}&gt;
+
+Oh, and nested templates {{nested}}.
+&lt;/tosi-md&gt;
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/" aria-current="page" class="current">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

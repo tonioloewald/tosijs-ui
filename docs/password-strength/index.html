@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>password strength — tosijs-ui</title>
+  <meta name="description" content="Just wrap it a &lt;tosi-password-strength&gt; element around an &lt;input&gt;" />
+  <link rel="canonical" href="https://ui.tosijs.net/password-strength/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="password strength — tosijs-ui" />
+  <meta property="og:description" content="Just wrap it a &lt;tosi-password-strength&gt; element around an &lt;input&gt;" />
+  <meta property="og:url" content="https://ui.tosijs.net/password-strength/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>password strength</h1>
+<p>Just wrap it a <code>&lt;tosi-password-strength&gt;</code> element around an <code>&lt;input&gt;</code>
+and it will gauge its content strength as a password. It will also
+let you <strong>securely verify</strong> that the password hasn&#39;t been breached.</p>
+<pre><code class="language-js">import { tosiLocalized, localize } from &#39;tosijs-ui&#39;
+
+const toggle = preview.querySelector(&#39;.toggle&#39;)
+const icon = preview.querySelector(&#39;tosi-icon&#39;)
+const input = preview.querySelector(&#39;input&#39;)
+const breach = preview.querySelector(&#39;.breach&#39;)
+const output = preview.querySelector(&#39;.output&#39;)
+const passwordStrength = preview.querySelector(&#39;tosi-password-strength&#39;)
+
+// Localization Example
+passwordStrength.append(tosiLocalized({
+  refString: &#39;Yes&#39;,
+  localeChanged () {
+    this.parentElement.strengthDescriptions = [
+      &#39;unacceptable&#39;,
+      &#39;very weak&#39;,
+      &#39;weak&#39;,
+      &#39;moderate&#39;,
+      &#39;strong&#39;,
+      &#39;very strong&#39;,
+    ].map(localize)
+    this.parentElement.queueRender()
+  }
+}))
+
+toggle.addEventListener(&#39;click&#39;, () =&gt; {
+  if (icon.icon === &#39;eye&#39;) {
+    input.type = &#39;text&#39;
+    icon.icon = &#39;eyeOff&#39;
+  } else {
+    input.type = &#39;password&#39;
+    icon.icon = &#39;eye&#39;
+  }
+})
+
+breach.addEventListener(&#39;click&#39;, async () =&gt; {
+  preview.querySelector(&#39;tosi-password-strength&#39;).isBreached().then(isBreached =&gt; {
+    output.textContent =
+      isBreached
+      ? &#39;This password has been breached, look at console for details&#39;
+      : &#39;Seems OK&#39;
+    output.classList.toggle(&#39;breached&#39;, isBreached)
+  })
+})
+</code></pre>
+<pre><code class="language-html">&lt;tosi-password-strength&gt;
+  &lt;input class=&quot;password&quot; type=&quot;password&quot;&gt;
+  &lt;button class=&quot;toggle&quot;&gt;
+    &lt;tosi-icon icon=&quot;eye&quot;&gt;&lt;/tosi-icon&gt;
+  &lt;/button&gt;
+&lt;/tosi-password-strength&gt;
+
+&lt;br&gt;&lt;br&gt;
+&lt;button class=&quot;breach&quot;&gt;
+  &lt;tosi-localized&gt;Check if breached&lt;/tosi-localized&gt;
+&lt;/button&gt;
+&lt;div class=&quot;output&quot;&gt;&lt;/div&gt;
+</code></pre>
+<pre><code class="language-css">input.password {
+  box-shadow: inset 0 0 0 2px var(--indicator-color);
+}
+
+.breached {
+  color: white;
+  background: red;
+}
+</code></pre>
+<h2>Algorithm</h2>
+<p>The password is assessed to have a strength based on:</p>
+<ul>
+<li><strong>length</strong> one point for at least <code>goodLength</code> characters long.</li>
+<li><strong>[a-z]</strong> one point for containing a lowercase letter</li>
+<li><strong>[A-Z]</strong> one point for containing an uppercase letter</li>
+<li><strong>[0-9]</strong> one point for containing a numeric character</li>
+<li><strong>^[a-zA-Z0-9]]</strong> one point for containing some other kind of character</li>
+</ul>
+<p>A password smaller than <code>minLength</code> is an automatic <code>0</code>.</p>
+<h2>Attributes</h2>
+<ul>
+<li><code>minLength</code> defaults to <code>8</code></li>
+<li><code>goodLength</code> defaults to <code>12</code></li>
+<li><code>indicatorColors</code> six HTML colors, separated by commas, defaults to <code>&#39;#f00,#f40,#f80,#ef0,#8f0,#0d4&#39;</code></li>
+<li><code>descriptionColors</code> six HTML colors, sepeated by commans, defaults to <code>&#39;#000,#000,#000,#000,#000,#fff&#39;</code></li>
+</ul>
+<h2>Properties</h2>
+<ul>
+<li><code>value</code>, <code>strength</code> is a number from 0 to 5</li>
+<li><code>issues</code> is a structure which you can use to generate feedback</li>
+</ul>
+<pre><code>&lt;tosi-password-strength&gt;.issues = {
+  tooShort: boolean,
+  short: boolean,
+  noUpper: boolean,
+  noLower: boolean,
+  noNumber: boolean,
+  noSpecial: boolean,
+}
+</code></pre>
+<h2>Customizing / Localizing Strings</h2>
+<p>The following properties control the feedback generated.</p>
+<pre><code>issueDescriptions = {
+  tooShort: &#39;too short&#39;,
+  short: &#39;short&#39;,
+  noUpper: &#39;no upper case&#39;,
+  noLower: &#39;no lower case&#39;,
+  noNumber: &#39;no digits&#39;,
+  noSpecial: &#39;no unusual characters&#39;,
+}
+</code></pre>
+<pre><code>strengthDescriptions = [
+  &#39;unacceptable&#39;,
+  &#39;very weak&#39;,
+  &#39;weak&#39;,
+  &#39;moderate&#39;,
+  &#39;strong&#39;,
+  &#39;very strong&#39;,
+]
+</code></pre>
+<h2><code>isBreached()</code></h2>
+<p><code>&lt;tosi-password-strength&gt;</code> also provides an <code>isBreached(): Promise&lt;boolean&gt;</code> method
+which uses <a href="https://weakpass.com/">weakpass.com&#39;s API</a> to tell you if the password has been
+breached.</p>
+<blockquote>
+<p>Note that <code>isBreached</code> does not send the plain-text password anywhere. It uses <strong>SHA-1</strong>
+to hash the password and then sends that for lookup.</p>
+</blockquote>
+<h2>Utility Functions</h2>
+<p>Two functions used internally for querying <a href="https://weakpass.com/">Weakpass,com</a> are
+provided in case they&#39;re useful on their own.</p>
+<p><code>isBreached(password: striing): Promise&lt;boolean&gt;</code> will return <code>true</code> if the password is
+found in Weakpass&#39;s database (and spit out extra info to the console).</p>
+<p><code>digest(s: string, method=&quot;sha-1&quot;): Promise&lt;string&gt;</code> is just a nice wrapper for <code>crypto.digest</code>.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/" aria-current="page" class="current">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

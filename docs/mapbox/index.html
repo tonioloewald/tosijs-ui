@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>map — tosijs-ui</title>
+  <meta name="description" content="A mapboxgl wrapper." />
+  <link rel="canonical" href="https://ui.tosijs.net/mapbox/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="map — tosijs-ui" />
+  <meta property="og:description" content="A mapboxgl wrapper." />
+  <meta property="og:url" content="https://ui.tosijs.net/mapbox/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>map</h1>
+<p>A <a href="https://docs.mapbox.com/mapbox-gl-js/api/">mapboxgl</a> wrapper.</p>
+<pre><code class="language-js">const pickStyle = preview.querySelector(&#39;select&#39;)
+const mapbox = preview.querySelector(&#39;tosi-map&#39;)
+const here = preview.querySelector(&#39;button&#39;)
+
+pickStyle.addEventListener(&#39;change&#39;, () =&gt; {
+  mapbox.mapStyle = pickStyle.value
+})
+
+function getUserGPSCoordinates() {
+  return new Promise((resolve) =&gt; {
+    // Check if geolocation is supported
+    if (!navigator.geolocation) {
+      console.log(&quot;Geolocation is not supported by this browser.&quot;);
+      resolve(null);
+      return;
+    }
+
+    // Request position with options
+    navigator.geolocation.getCurrentPosition(
+      // Success callback
+      (position) =&gt; {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        });
+      },
+      // Error callback
+      (error) =&gt; {
+        console.log(`Error getting location: ${error.message}`);
+        resolve(null);
+      },
+      // Options
+      {
+        enableHighAccuracy: true,  // Request high accuracy if available
+        timeout: 10000,            // Time to wait for position (10 seconds)
+        maximumAge: 0              // Don&#39;t use cached position
+      }
+    );
+  });
+}
+
+here.addEventListener(&#39;click&#39;, async () =&gt; {
+  const location = await getUserGPSCoordinates()
+  if (location) {
+    mapbox.coords = `${location.latitude},${location.longitude},12`
+  }
+})
+</code></pre>
+<pre><code class="language-html">&lt;!-- please don&#39;t abuse my mapbox token --&gt;
+&lt;tosi-map
+  style=&quot;width: 100%; height: 100%&quot;
+  coords=&quot;14.0093606,120.995083,17&quot;
+  token=&quot;pk.eyJ1IjoicG9kcGVyc29uIiwiYSI6ImNqc2JlbWU0bjA1ZmY0YW5ycHZod3VhbWcifQ.arvqfpOqMgFYkKgQ35UScA&quot;
+  map-style=&quot;mapbox://styles/mapbox/streets-v12&quot;
+&gt;&lt;/tosi-map&gt;
+&lt;select&gt;
+  &lt;option selected value=&quot;mapbox://styles/mapbox/streets-v12&quot;&gt;Streets&lt;/option&gt;
+  &lt;option value=&quot;mapbox://styles/mapbox/satellite-v9&quot;&gt;Satellite&lt;/option&gt;
+  &lt;option value=&quot;mapbox://styles/mapbox/light-v11&quot;&gt;Light&lt;/option&gt;
+  &lt;option value=&quot;mapbox://styles/mapbox/dark-v11&quot;&gt;Dark&lt;/option&gt;
+  &lt;option value=&quot;mapbox://styles/mapbox/outdoors-v12&quot;&gt;Outdoors&lt;/option&gt;
+&lt;/select&gt;
+&lt;button&gt;
+  &lt;tosi-icon icon=&quot;mapPin&quot;&gt;&lt;/tosi-icon&gt;
+  &lt;span&gt;Your Location&lt;/span&gt;
+&lt;/button&gt;
+</code></pre>
+<pre><code class="language-css">.preview button {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.preview select {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+}
+</code></pre>
+<p>There&#39;s no need to learn new APIs or write wrappers, just access the element&#39;s <code>map</code> property
+and <a href="https://docs.mapbox.com/api/maps/styles/">use the standard mapbox APIs directly</a>.</p>
+<h2>Form Integration</h2>
+<p><code>&lt;tosi-map&gt;</code> is form-associated, making it useful as a location picker in forms:</p>
+<pre><code class="language-html">&lt;form class=&quot;map-form&quot;&gt;
+  &lt;label&gt;
+    &lt;b&gt;Select your location:&lt;/b&gt;
+    &lt;tosi-map
+      name=&quot;location&quot;
+      style=&quot;width: 100%; height: 200px&quot;
+      coords=&quot;40.7128,-74.0060,10&quot;
+      token=&quot;pk.eyJ1IjoicG9kcGVyc29uIiwiYSI6ImNqc2JlbWU0bjA1ZmY0YW5ycHZod3VhbWcifQ.arvqfpOqMgFYkKgQ35UScA&quot;
+    &gt;&lt;/tosi-map&gt;
+  &lt;/label&gt;
+  &lt;button type=&quot;submit&quot;&gt;Submit Location&lt;/button&gt;
+  &lt;button type=&quot;reset&quot;&gt;Reset&lt;/button&gt;
+  &lt;span class=&quot;output&quot;&gt;&lt;/span&gt;
+&lt;/form&gt;
+</code></pre>
+<pre><code class="language-css">.preview .map-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.preview .map-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+</code></pre>
+<pre><code class="language-js">const form = preview.querySelector(&#39;.map-form&#39;)
+form.addEventListener(&#39;submit&#39;, (e) =&gt; {
+  e.preventDefault()
+  const data = new FormData(form)
+  form.querySelector(&#39;.output&#39;).textContent = &#39;Location: &#39; + data.get(&#39;location&#39;)
+})
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/" aria-current="page" class="current">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

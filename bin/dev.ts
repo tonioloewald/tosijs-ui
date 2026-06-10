@@ -4,6 +4,7 @@ import { gzipSync } from 'zlib'
 import { watch } from 'chokidar'
 import { extractDocs } from './docs'
 import { generateLlmsTxt } from './make-llms-txt'
+import { generateSite } from './generate-site'
 // @ts-ignore-error
 import { $, spawn } from 'bun'
 
@@ -88,18 +89,28 @@ async function build(): Promise<boolean> {
     ).toFixed(1)}kb gzip)`
   )
 
-  await Bun.build({
-    entrypoints: ['./demo/src/index.ts'],
-    outdir: PUBLIC,
-    target: 'browser',
+  // Generate the static, pre-rendered doc site (one /slug/index.html per doc).
+  // Runs after the static-asset copy so the generated index.html (README) wins,
+  // and after the iife copy so every page's <script src="/iife.js"> resolves.
+  const PROJECT = 'tosijs-ui'
+  const docs = JSON.parse(await Bun.file('demo/docs.json').text())
+  const pageCount = await generateSite({
+    docs,
+    outputDir: PUBLIC,
+    projectName: PROJECT,
+    baseUrl: 'https://ui.tosijs.net',
+    projectLinks: {
+      tosijs: 'https://tosijs.net',
+      github: `https://github.com/tonioloewald/${PROJECT}`,
+      npm: `https://www.npmjs.com/package/${PROJECT}`,
+      discord: 'https://discord.com/invite/ramJ9rgky5',
+      blog: 'https://loewald.com',
+      bundle: `https://bundlejs.com/?q=${PROJECT}`,
+      cdn: `https://www.jsdelivr.com/package/npm/${PROJECT}`,
+    },
+    headExtra: '  <link rel="icon" href="/favicon.svg" />',
   })
-  if (!result.success) {
-    console.error('demo build failed')
-    for (const message of result.logs) {
-      console.error(message)
-    }
-    return false
-  }
+  console.log(`generated ${pageCount} static pages`)
 
   console.timeEnd('build')
   return true

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>popFloat — tosijs-ui</title>
+  <meta name="description" content="There are so many cases in user-interfaces where it&#39;s useful to pop-up a floating" />
+  <link rel="canonical" href="https://ui.tosijs.net/pop-float/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="popFloat — tosijs-ui" />
+  <meta property="og:description" content="There are so many cases in user-interfaces where it&#39;s useful to pop-up a floating" />
+  <meta property="og:url" content="https://ui.tosijs.net/pop-float/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>popFloat</h1>
+<p>There are so many cases in user-interfaces where it&#39;s useful to pop-up a floating
+user interface element that a simple and reliable way of doing this seems like
+a good idea.</p>
+<p>The problem with many such approaches is that they assume a highly specific
+use-case (e.g. popup menu or combo box) and while meeting the creator&#39;s intended
+purpose admirably, turn out to have some annoying limitation that prevents them
+handling the specific case at hand.</p>
+<pre><code class="language-js">import { popFloat, positionFloat } from &#39;tosijs-ui&#39;
+import { button } from &#39;tosijs&#39;.elements
+const grid = preview.querySelector(&#39;.grid&#39;)
+
+grid.addEventListener(&#39;click&#39;, (event) =&gt; {
+  const { target } = event
+  if (!target.closest(&#39;button&#39;)) {
+    return
+  }
+  const float = document.querySelector(&#39;.popped-float&#39;)
+  if (float === null) {
+    // create and position a float
+    popFloat({
+      class: &#39;popped-float&#39;,
+      content: [
+        &#39;hello, I am a float&#39;,
+        button(&#39;close me&#39;, {
+          onClick(event){
+            event.target.closest(&#39;tosi-float&#39;).remove()
+          }
+        })
+      ],
+      target,
+      position: target.dataset.float,
+      remainOnScroll: &#39;remove&#39;,
+      remainOnResize: &#39;remove&#39;
+    })
+  } else {
+    // position an existing float
+    positionFloat(float, target, target.dataset.float, &#39;remove&#39;, &#39;remove&#39;)
+  }
+})
+</code></pre>
+<pre><code class="language-html">&lt;h2&gt;Pop Float Demo&lt;/h2&gt;
+&lt;div class=&quot;grid&quot;&gt;
+  &lt;button data-float=&quot;nw&quot;&gt;nw&lt;/button&gt;
+  &lt;button data-float=&quot;n&quot;&gt;n&lt;/button&gt;
+  &lt;button data-float=&quot;ne&quot;&gt;ne&lt;/button&gt;
+  &lt;button data-float=&quot;wn&quot;&gt;wn&lt;/button&gt;
+  &lt;span&gt;&amp;nbsp;&lt;/span&gt;
+  &lt;button data-float=&quot;en&quot;&gt;en&lt;/button&gt;
+  &lt;button data-float=&quot;w&quot;&gt;w&lt;/button&gt;
+  &lt;button data-float=&quot;auto&quot;&gt;auto&lt;/button&gt;
+  &lt;button data-float=&quot;e&quot;&gt;e&lt;/button&gt;
+  &lt;button data-float=&quot;ws&quot;&gt;ws&lt;/button&gt;
+  &lt;button data-float=&quot;side&quot;&gt;side&lt;/button&gt;
+  &lt;button data-float=&quot;es&quot;&gt;es&lt;/button&gt;
+  &lt;button data-float=&quot;sw&quot;&gt;sw&lt;/button&gt;
+  &lt;button data-float=&quot;s&quot;&gt;s&lt;/button&gt;
+  &lt;button data-float=&quot;se&quot;&gt;se&lt;/button&gt;
+&lt;/div&gt;
+</code></pre>
+<pre><code class="language-css">.preview .grid {
+  display: grid;
+  grid-template-columns: 80px 80px 80px;
+}
+
+.popped-float {
+  display: flex;
+  flex-direction: column;
+  border-radius: 5px;
+  padding: 10px 15px;
+  background: var(--inset-bg);
+  box-shadow:
+    inset 0 0 0 1px var(--brand-color),
+    2px 10px 5px #0004;
+}
+</code></pre>
+<h2>popFloat</h2>
+<pre><code>export interface PopFloatOptions {
+  class?: string
+  content: HTMLElement | ElementPart[]
+  target: HTMLElement
+  position?: FloatPosition
+  remainOnResize?: &#39;hide&#39; | &#39;remove&#39; | &#39;remain&#39; // default is &#39;remove&#39;,
+  remainOnScroll?: &#39;hide&#39; | &#39;remove&#39; | &#39;remain&#39; // default is &#39;remain&#39;,
+  draggable?: boolean
+}
+
+export const popFloat = (options: PopFloatOptions): TosiFloat
+</code></pre>
+<p>Create a <code>&lt;tosi-float&gt;</code> with the content provided, positioned as specified (or automatically).</p>
+<h2>positionFloat</h2>
+<pre><code>export const positionFloat = (
+  element: HTMLElement,
+  target: HTMLElement,
+  position?: FloatPosition,
+  remainOnScroll: &#39;hide&#39; | &#39;remove&#39; | &#39;remain&#39; = &#39;remain&#39;,
+  remainOnResize: &#39;hide&#39; | &#39;remove&#39; | &#39;remain&#39; = &#39;remove&#39;,
+  draggable = false
+): void
+</code></pre>
+<p>This allows you to, for example, provide a global menu that can be used on any element
+instead of needing to have a whole instance of the menu wrapped around every instance
+of the thing you want the menu to affect (a common anti-pattern of front-end frameworks).</p>
+<h3>Handling Overflow</h3>
+<p><code>positionFloat</code> automatically sets two css-variables <code>--max-height</code> and <code>--max-width</code> on
+the floating element to help you deal with overflow (e.g. in menus). E.g. if the float
+is positioned with <code>top: 125px</code> then it will set <code>--max-height: calc(100vh - 125px)</code>.</p>
+<h2>FloatPosition</h2>
+<pre><code>export type FloatPosition =
+| &#39;n&#39;
+| &#39;s&#39;
+| &#39;e&#39;
+| &#39;w&#39;
+| &#39;ne&#39;
+| &#39;nw&#39;
+| &#39;se&#39;
+| &#39;sw&#39;
+| &#39;en&#39;
+| &#39;wn&#39;
+| &#39;es&#39;
+| &#39;ws&#39;
+| &#39;side&#39;
+| &#39;auto&#39;
+</code></pre>
+<h2>Draggable</h2>
+<p>Sometimes it&#39;s nice to have popup palettes and modeless dialogs the user can drag away.
+<code>popFloat()</code> makes this really easy to do.</p>
+<pre><code class="language-js">import { elements } from &#39;tosijs&#39;
+import { popFloat, icons } from &#39;tosijs-ui&#39;
+
+const { button, h4, p } = elements
+
+preview.append(button(
+  &#39;Draggable Popup&#39;,
+  {
+    class: &#39;spawn-draggable&#39;,
+    onClick(event) {
+      popFloat({
+        class: &#39;tearoff&#39;,
+        content: [
+          h4(&#39;Move me!&#39;),
+          p(&#39;I’m delicious!&#39;),
+          button(
+            icons.x(),
+            {
+              class: &#39;no-drag close-tearoff&#39;,
+              onClick(event) {
+                event.target.closest(&#39;tosi-float&#39;).remove()
+              }
+            }
+          )
+        ],
+        target: event.target,
+        remainOnScroll: &#39;remain&#39;,
+        remainOnResize: &#39;remain&#39;,
+        draggable: true,
+      })
+    }
+  },
+))
+</code></pre>
+<pre><code class="language-css">.tearoff {
+  --tearoff-bg: #fff6;
+  --tearoff-button-bg: #fff2;
+  --tearoff-color: #222;
+  --tearoff-hilite: #fff8;
+  --tearoff-shadow: #0002;
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  padding: 10px 15px;
+  background: var(--tearoff-bg);
+  backdrop-filter: blur(6px);
+  box-shadow:
+    inset 1px 1px 0 1px var(--tearoff-hilite),
+    inset -1px -1px 0 1px var(--tearoff-shadow),
+    2px 5px 10px var(--tearoff-shadow);
+  width: 200px;
+  color: var(--tearoff-color);
+  --text-color: var(--tearoff-color);
+}
+
+.darkmode .tearoff {
+  --tearoff-bg: #0004;
+  --tearoff-button-bg: #0001;
+  --tearoff-color: #fff;
+}
+
+.tearoff &gt; :first-child {
+  margin-top: 0;
+}
+
+.tearoff &gt; :last-child {
+  margin-bottom: 0;
+}
+
+.spawn-draggable {
+  margin: 10px;
+}
+
+.close-tearoff {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 32px;
+  height: 32px;
+  text-align: center;
+  padding: 0;
+  line-height: 32px;
+  background: var(--tearoff-button-bg);
+  border-radius: 100px;
+  box-shadow:
+    inset 1px 1px 0 1px var(--tearoff-hilite),
+    inset -1px -1px 0 1px var(--tearoff-shadow);
+}
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/" aria-current="page" class="current">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

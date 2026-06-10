@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>makeSorter — tosijs-ui</title>
+  <meta name="description" content="I&#39;m always confusing myself when writing sort functions, so I wrote makeSorter(). It&#39;s" />
+  <link rel="canonical" href="https://ui.tosijs.net/make-sorter/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="makeSorter — tosijs-ui" />
+  <meta property="og:description" content="I&#39;m always confusing myself when writing sort functions, so I wrote makeSorter(). It&#39;s" />
+  <meta property="og:url" content="https://ui.tosijs.net/make-sorter/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>makeSorter</h1>
+<p>I&#39;m always confusing myself when writing sort functions, so I wrote <code>makeSorter()</code>. It&#39;s
+insanely simple and just works™. It makes writing an array sort callback for anything
+other than an array of numbers or strings easier.</p>
+<pre><code class="language-js">import { select, option, div, span, ul, li } from &#39;tosijs&#39;.elements
+import { icons, makeSorter } from &#39;tosijs-ui&#39;
+
+const people = [
+  { first: &#39;Frasier&#39;, last: &#39;Crane&#39;, age: 38 },
+  { first: &#39;Lilith&#39;, last: &#39;Crane&#39;, age: 37 },
+  { first: &#39;Rebecca&#39;, last: &#39;Howe&#39;, age: 35 },
+  { first: &#39;Woody&#39;, last: &#39;Boyd&#39;, age: 25 },
+  { first: &#39;Sam&#39;, last: &#39;Malone&#39;, age: 40 },
+  { first: &#39;Norm&#39;, last: &#39;Peterson&#39;, age: 38 },
+]
+
+const sorters = {
+  firstSort: makeSorter(person =&gt; [person.first]),
+  firstDescSort: makeSorter(person =&gt; [person.first], false),
+  nameSort: makeSorter(person =&gt; [person.last, person.first]),
+  ageFirst: makeSorter(person =&gt; [-person.age, person.last]),
+  ageLast: makeSorter(person =&gt; [person.age, person.first], [true, false]),
+}
+
+function person({first, last, age}) {
+  return li(`${first} ${last}, ${age}`)
+}
+
+const list = ul()
+sortPicker = select(
+  option(&#39;Sort by first&#39;, {value: &#39;firstSort&#39;}),
+  option(&#39;Sort by first (desc)&#39;, {value: &#39;firstDescSort&#39;}),
+  option(&#39;Sort by last, first&#39;, {value: &#39;nameSort&#39;}),
+  option(&#39;Sort by age (desc), first&#39;, {value: &#39;ageFirst&#39;}),
+  option(&#39;Sort by age, last (desc)&#39;, {value: &#39;ageLast&#39;}),
+  {
+    onChange: render,
+    value: &#39;nameSort&#39;
+  },
+)
+
+function render () {
+  list.textContent = &#39;&#39;
+  list.append(...people.sort(sorters[sortPicker.value]).map(person))
+}
+
+preview.append(
+  div(
+    sortPicker,
+    icons.chevronDown()
+  ),
+  list
+)
+
+render()
+</code></pre>
+<pre><code class="language-css">.preview {
+  padding: var(--spacing);
+}
+
+.preview div {
+  position: absolute;
+  top: var(--spacing);
+  right: var(--spacing);
+}
+</code></pre>
+<h2>Details</h2>
+<p>To create a sort callback that sorts by propA then propB (if propA is tied):</p>
+<pre><code>const sorter = makeSorter(
+  obj =&gt; [obj.propA, obj.propB]
+)
+</code></pre>
+<p>As above, but sort descending:</p>
+<pre><code>const sorter = makeSorter(
+  obj =&gt; [obj.propA, obj.propB],
+  false
+)
+</code></pre>
+<p>As above but propA is sorted ascending, propB descending</p>
+<pre><code>const sorter = makeSorter(
+  obj =&gt; [obj.propA, obj.propB],
+  [true, false]
+)
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/" aria-current="page" class="current">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

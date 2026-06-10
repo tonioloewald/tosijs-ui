@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>filter — tosijs-ui</title>
+  <meta name="description" content="Automatically creates ArrayFilter functions (a: any[]) =&gt; any[] based on the query you build using its" />
+  <link rel="canonical" href="https://ui.tosijs.net/filter-builder/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="filter — tosijs-ui" />
+  <meta property="og:description" content="Automatically creates ArrayFilter functions (a: any[]) =&gt; any[] based on the query you build using its" />
+  <meta property="og:url" content="https://ui.tosijs.net/filter-builder/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>filter</h1>
+<p>Automatically creates <code>ArrayFilter</code> functions <code>(a: any[]) =&gt; any[]</code> based on the query you build using its
+macOS Finder-inspired interface, using an easily customizable / extensible collection of <code>Filter</code> objects.</p>
+<pre><code class="language-js">import { elements } from &#39;tosijs&#39;
+import { tosiTable, filterBuilder, availableFilters } from &#39;tosijs-ui&#39;
+
+const sourceWords = [&#39;acorn&#39;, &#39;bubblegum&#39;, &#39;copper&#39;, &#39;daisy&#39;, &#39;ellipse&#39;, &#39;fabulous&#39;, &#39;gerund&#39;, &#39;hopscotch&#39;, &#39;idiom&#39;, &#39;joke&#39;]
+function randomWords () {
+  let numWords = Math.random() * 4
+  const words = []
+  while (numWords &gt; 0) {
+    numWords -= 1
+    words.push(sourceWords[Math.floor(Math.random() * 10)])
+  }
+  return [...new Set(words)]
+}
+
+const array = []
+for(let i = 0; i &lt; 1000; i++) {
+  array.push({
+    date: new Date(Math.random() * Date.now()).toISOString().split(&#39;T&#39;)[0],
+    isLucky: Math.random() &lt; 0.1,
+    number: Math.floor(Math.random() * 200 - 100),
+    string: randomWords().join(&#39; &#39;),
+    tags: randomWords()
+  })
+}
+
+const { span } = elements
+const tagsBinding = {
+  value: &#39;^.tags&#39;,
+  binding: {
+    toDOM(element, value) {
+      element.classList.add(&#39;tag-list&#39;)
+      element.textContent = &#39;&#39;
+      element.append(...value.map(tag =&gt; span(tag, {class: &#39;tag&#39;})))
+    }
+  }
+}
+
+const columns = [
+  {
+    prop: &#39;date&#39;,
+    width: 120
+  },
+  {
+    prop: &#39;isLucky&#39;,
+    type: &#39;boolean&#39;,
+    width: 90
+  },
+  {
+    prop: &#39;number&#39;,
+    align: &#39;right&#39;,
+    width: 90
+  },
+  {
+    prop: &#39;string&#39;,
+    width: 200
+  },
+  {
+    prop: &#39;tags&#39;,
+    width: 200,
+    dataCell() {
+      return elements.div({ bind: tagsBinding })
+    }
+  },
+]
+
+const table = tosiTable({ array, columns })
+const filter = filterBuilder({
+  fields: columns,
+  onChange(event) {
+    table.filter = filter.filter
+  }
+})
+preview.append(filter, table)
+</code></pre>
+<pre><code class="language-css">.preview {
+  display: flex;
+  flex-direction: column;
+}
+
+.preview tosi-table {
+  flex: 1 1 auto;
+}
+
+.preview .tag-list {
+  display: flex;
+  font-size: 80%;
+  align-items: center;
+  gap: 2px;
+}
+
+.preview .tag {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 0 5px;
+  line-height: 20px;
+  height: 20px;
+  color: var(--brand-text-color);
+  background: var(--brand-color);
+}
+</code></pre>
+<h2>serialization</h2>
+<p>The current state of a <code>&lt;tosi-filter&gt;</code> can be serialized as, and restored from, a Javascript object (which itself
+can easily be converted into JSON or a URL component) via its <code>state</code> property. Obviously, a <code>&lt;tosi-filter&gt;</code> can
+only restore state if it has the necessary constituent <code>filters</code>.</p>
+<h2>availableFilters</h2>
+<p><code>&lt;tosi-filter&gt;</code> has a default set of <code>FilterMaker</code> objects which it uses to construct filter function.
+In the example above, the default collection of filters is reduced to <code>contains</code>, <code>equals</code>, <code>after</code>, and <code>isTrue</code>.</p>
+<p>The full collection includes:</p>
+<ul>
+<li><strong>contains</strong> * looks for fields containing a string (ignoring case)</li>
+<li><strong>equals</strong> * looks for fields containing equivalent values (ignoring case)</li>
+<li><strong>after</strong> * looks for fields with a date after a provided value</li>
+<li><strong>greaterThan</strong> * looks for fields with a value greater than a provided value</li>
+<li><strong>truthy</strong> * looks for fields that are true / non-zero / non-empty</li>
+<li><strong>true</strong> looks for fields that are <code>true</code></li>
+<li><strong>false</strong> looks for fields that are <code>false</code></li>
+<li><strong>hasTags</strong> looks for fields that are arrays containing all the (space/comma) delimited strings</li>
+<li><strong>doesNotHaveTags</strong> looks for fields that are arrays containing <em>none</em> of the strings</li>
+</ul>
+<p><strong>Note</strong>: the filters marked with an * have negative version (e.g. does not contain).</p>
+<pre><code>type ObjectTest (obj: any) =&gt; boolean
+
+interface FilterMaker {
+  caption: string                                 // describes the test condition
+  negative?: string                               // describes the negative test condition
+  needsValue?: boolean                            // if false, the filterMaker doesn&#39;t need a needle value
+  filterMaker(needle: any) =&gt; ObjectTest          // builds an ObjectTest
+}
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/" aria-current="page" class="current">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

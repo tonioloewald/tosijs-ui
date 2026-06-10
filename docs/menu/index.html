@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>menu — tosijs-ui</title>
+  <meta name="description" content="Being able to pop a menu up anywhere is just so nice, and tosijs-ui allows menus" />
+  <link rel="canonical" href="https://ui.tosijs.net/menu/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="menu — tosijs-ui" />
+  <meta property="og:description" content="Being able to pop a menu up anywhere is just so nice, and tosijs-ui allows menus" />
+  <meta property="og:url" content="https://ui.tosijs.net/menu/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>menu</h1>
+<p>Being able to pop a menu up anywhere is just so nice, and <code>tosijs-ui</code> allows menus
+to be generated on-the-fly, and even supports hierarchical menus.</p>
+<h2>popMenu and <code>&lt;tosi-menu&gt;</code></h2>
+<p><code>popMenu({target, menuItems, …})</code> will spawn a menu from a target.</p>
+<p>The <code>&lt;tosi-menu&gt;</code> component places creates a trigger button, hosts
+menuItems, and (because it persists in the DOM) supports keyboard
+shortcuts.</p>
+<pre><code class="language-js">import { popMenu, localize, tosiMenu, postNotification, tosiLocalized, icons } from &#39;tosijs-ui&#39;
+import { elements } from &#39;tosijs&#39;
+
+let picked = &#39;&#39;
+let testingEnabled = false
+
+const menuItems = [
+  {
+    icon: &#39;thumbsUp&#39;,
+    caption: &#39;Like&#39;,
+    shortcut: &#39;^L&#39;,
+    action() {
+      postNotification({
+        message: &#39;I like it!&#39;,
+        icon: &#39;thumbsUp&#39;,
+        duration: 1
+      })
+    }
+  },
+  {
+    icon: &#39;heart&#39;,
+    caption: &#39;Love&#39;,
+    shortcut: &#39;⌘⇧L&#39;,
+    action() {
+      postNotification({
+        type: &#39;success&#39;,
+        message: &#39;I LOVE it!&#39;,
+        icon: &#39;heart&#39;,
+        duration: 1
+      })
+    }
+  },
+  {
+    icon: &#39;thumbsDown&#39;,
+    caption: &#39;dislike&#39;,
+    shortcut: &#39;⌘D&#39;,
+    action() {
+      postNotification({
+        type: &#39;error&#39;,
+        message: &#39;Awwwwwww…&#39;,
+        icon: &#39;thumbsDown&#39;,
+        duration: 1
+      })
+    }
+  },
+  null, // separator
+  {
+    caption: localize(&#39;Localized placeholder&#39;),
+    action() {
+      alert(localize(&#39;Localized placeholder&#39;))
+    }
+  },
+  {
+    icon: elements.span(&#39;🥹&#39;),
+    caption: &#39;Also see…&#39;,
+    menuItems: [
+      {
+        icon: elements.span(&#39;😳&#39;),
+        caption: &#39;And that’s not all…&#39;,
+        menuItems: [
+          {
+            icon: &#39;externalLink&#39;,
+            caption: &#39;timezones&#39;,
+            action: &#39;https://timezones.tosijs.net/&#39;
+          },
+          {
+            icon: &#39;externalLink&#39;,
+            caption: &#39;b8rjs&#39;,
+            action: &#39;https://b8rjs.com&#39;
+          },
+          {
+            caption: &#39;deep shortcut&#39;,
+            shortcut: &#39;⌘⇧D&#39;,
+            action() {
+              postNotification({
+                message: &#39;Deep shortcut fired!&#39;,
+                duration: 1
+              })
+            }
+          },
+        ]
+      },
+      {
+        icon: &#39;tosi&#39;,
+        caption: &#39;tosi&#39;,
+        action: &#39;https://xinjs.net&#39;
+      },
+      {
+        icon: &#39;tosiPlatform&#39;,
+        caption: &#39;tosi-platform&#39;,
+        action: &#39;https://xinie.net&#39;
+      },
+    ]
+  },
+  {
+    icon: testingEnabled ? &#39;check&#39; : &#39;&#39;,
+    caption: &#39;Testing Enabled&#39;,
+    action() {
+      testingEnabled = !testingEnabled
+    }
+  },
+  {
+    caption: &#39;Testing…&#39;,
+    enabled() {
+      return testingEnabled
+    },
+    menuItems: [
+      {
+        caption: &#39;one&#39;,
+        shortcut: &#39;⌘1&#39;,
+        checked: () =&gt; picked === &#39;one&#39;,
+        action () {
+          picked = &#39;one&#39;
+        }
+      },
+      {
+        caption: &#39;two&#39;,
+        shortcut: &#39;⌘2&#39;,
+        checked: () =&gt; picked === &#39;two&#39;,
+        action () {
+          picked = &#39;two&#39;
+        }
+      },
+      {
+        caption: &#39;three&#39;,
+        shortcut: &#39;⌘3&#39;,
+        checked: () =&gt; picked === &#39;three&#39;,
+        action () {
+          picked = &#39;three&#39;
+        }
+      }
+    ]
+  }
+]
+
+preview.addEventListener(&#39;click&#39;, (event) =&gt; {
+  if (!event.target.closest(&#39;button&#39;)) {
+    return
+  }
+  popMenu({
+    target: event.target,
+    menuItems
+  })
+})
+
+preview.append(
+  tosiMenu(
+    {
+      menuItems,
+      localized: true,
+    },
+    tosiLocalized(&#39;Menu&#39;),
+    icons.chevronDown()
+  )
+)
+</code></pre>
+<pre><code class="language-html">&lt;button title=&quot;menu test&quot;&gt;
+  &lt;tosi-icon icon=&quot;moreVertical&quot;&gt;&lt;/tosi-icon&gt;
+&lt;/button&gt;
+&lt;button title=&quot;menu test from bottom-right&quot; style=&quot;position: absolute; bottom: 0; right: 0&quot;&gt;
+  &lt;tosi-icon icon=&quot;moreVertical&quot;&gt;&lt;/tosi-icon&gt;
+&lt;/button&gt;
+</code></pre>
+<pre><code class="language-css">.preview button {
+  min-width: 44px;
+  text-align: center;
+  height: 44px;
+  margin: 5px;
+}
+</code></pre>
+<h2>Overflow test</h2>
+<pre><code class="language-js">import { popMenu, icons, postNotification } from &#39;tosijs-ui&#39;
+import { elements } from &#39;tosijs&#39;
+
+preview.querySelector(&#39;button&#39;).addEventListener(&#39;click&#39;, (event) =&gt; {
+  popMenu({
+    target: event.target,
+    menuItems:  Object.keys(icons).map(icon =&gt; ({
+      icon,
+      caption: icon,
+      action() {
+        postNotification({
+          icon: icon,
+          message: icon,
+          duration: 1
+        })
+      }
+    }))
+  })
+})
+</code></pre>
+<pre><code class="language-html">&lt;button title=&quot;big menu test&quot; style=&quot;position: absolute; top: 0; left: 0&quot;&gt;
+  Big Menu Test
+&lt;/button&gt;
+</code></pre>
+<h2>popMenu({target, width, menuItems…})</h2>
+<pre><code>export interface PopMenuOptions {
+  target: HTMLElement
+  menuItems: MenuItem[]
+  width?: string | number
+  position?: FloatPosition
+  submenuDepth?: number   // don&#39;t set this, it&#39;s set internally by popMenu
+  submenuOffset?: { x: number; y: number }
+  localized?: boolean,
+  showChecked?: boolean,  // if true, scroll checked item(s) into view
+  hideDisabled?: boolean, // if true, non-applicable items are hidden (default: shown disabled)
+}
+</code></pre>
+<p><code>popMenu</code> will spawn a menu on a target element. A menu is just a <code>MenuItem[]</code>.</p>
+<h2>MenuItem</h2>
+<p>A <code>MenuItem</code> can be one of four things:</p>
+<ul>
+<li><code>null</code> denotes a separator</li>
+<li><code>MenuAction</code> denotes a labeled button or <code>&lt;a&gt;</code> tag based on whether the <code>action</code> provided
+is a url (string) or an event handler (function).</li>
+<li><code>SubMenu</code> is a submenu.</li>
+<li>A <code>() =&gt; HTMLElement</code> function returns a custom element to embed inline in
+the menu (see <code>MenuElement</code> below).</li>
+</ul>
+<h3>MenuAction</h3>
+<p>Note that popMenu does not implement shortcuts for you (yet!).</p>
+<pre><code>interface MenuAction {
+  caption: string
+  shortcut?: string
+  checked?: () =&gt; boolean
+  enabled?: () =&gt; boolean
+  action: ActionCallback | string
+  icon?: string | Element
+  tooltip?: string
+  properties?: ElementProps
+}
+</code></pre>
+<h3>SubMenu</h3>
+<pre><code>interface SubMenu {
+  caption: string
+  enabled?: () =&gt; boolean
+  menuItems: MenuItem[]
+  icon?: string | Element
+  tooltip?: string
+  properties?: ElementProps
+}
+</code></pre>
+<h3>MenuElement</h3>
+<p>For embedding a custom widget inline in a menu — e.g. a <code>&lt;tosi-segmented&gt;</code> for
+quick option-picking — pass a function that returns an <code>HTMLElement</code>:</p>
+<pre><code>type MenuElement = () =&gt; HTMLElement
+</code></pre>
+<p>The returned element is added as-is and tagged with the <code>tosi-menu-element</code>
+class, which sets <code>min-height</code> to match standard menu items so the row
+aligns visually. The widget is responsible for its own click/focus behaviour.</p>
+<pre><code class="language-js">import { popMenu, tosiSegmented } from &#39;tosijs-ui&#39;
+import { elements } from &#39;tosijs&#39;
+
+const { button } = elements
+
+let view = &#39;list&#39;
+
+const btn = button(&#39;View options&#39;)
+btn.addEventListener(&#39;click&#39;, () =&gt; {
+  popMenu({
+    target: btn,
+    menuItems: [
+      { caption: &#39;Refresh&#39;, icon: &#39;refreshCcw&#39;, action() {} },
+      null,
+      () =&gt; tosiSegmented({
+        choices: &#39;list,grid,table&#39;,
+        value: view,
+        style: { margin: &#39;0 1em&#39; },
+        onChange(event) {
+          view = event.target.value
+        },
+        // stop the menu&#39;s outer onClick from closing it when the user
+        // picks a segment
+        onClick(event) { event.stopPropagation() },
+      }),
+      null,
+      { caption: &#39;Settings…&#39;, icon: &#39;settings&#39;, action() {} },
+    ]
+  })
+})
+
+preview.append(btn)
+</code></pre>
+<h3>Keyboard Shortcuts</h3>
+<p>If a menu is embodied in a <code>&lt;tosi-menu&gt;</code> it is supported by keyboard
+shortcuts. Both text and symbolic shortcut descriptions are supported,
+e.g.</p>
+<ul>
+<li><code>⌘C</code> or <code>meta-C</code></li>
+<li><code>⇧P</code> for <code>shift-P</code></li>
+<li><code>^F</code> or <code>ctrl-f</code></li>
+<li><code>⌥x</code>, <code>⎇x</code>, <code>alt-x</code> or <code>option-x</code></li>
+</ul>
+<h2>Localization</h2>
+<p>If you set <code>localized: true</code> in <code>PopMenuOptions</code> then menu captions will be be
+passed through <code>localize</code>. You&#39;ll need to provide the appropriate localized strings,
+of course.</p>
+<blockquote>
+<p><code>&lt;tosi-menu&gt;</code> supports the <code>localized</code> attribute but it doesn&#39;t localize
+its trigger button.</p>
+</blockquote>
+<p>To see this in action, see the example below, or look at the
+<a href="?data-table.ts">table example</a>. It uses a <code>localized</code> menu
+to render column names when you show hidden columns.</p>
+<pre><code class="language-js">import { elements } from &#39;tosijs&#39;
+import { tosiLocalized, localize, icons, popMenu, postNotification } from &#39;tosijs-ui&#39;
+const { button } = elements
+const makeItem = s =&gt; ({
+  caption: s,
+  action() {
+    postNotification({
+      message: localize(s),
+      duration: 1
+    })
+  }
+})
+const target = button(
+  {
+    onClick(event) {
+      popMenu({
+        target: event.target.closest(&#39;button&#39;),
+        localized: true,
+        menuItems: [
+          makeItem(&#39;New&#39;),
+          makeItem(&#39;Open...&#39;),
+          makeItem(&#39;Save&#39;),
+          makeItem(&#39;Close&#39;),
+        ]
+      })
+    }
+  },
+  tosiLocalized(
+    { style: { marginRight: &#39;5px&#39; }},
+    &#39;menu&#39;
+  ),
+  icons.chevronDown()
+)
+preview.append(target)
+</code></pre>
+<h2>Why another menu library?!</h2>
+<p>Support for menus is sadly lacking in HTML, and unfortunately there&#39;s a huge conceptual problem
+with menus implemented the way React and React-influenced libraries work, i.e. you need
+to have an instance of a menu &quot;wrapped around&quot; the DOM element that triggers it, whereas
+a better approach (and one dating back at least as far as the original Mac UI) is to treat
+a menu as a separate resource that can be instantiated on demand.</p>
+<p>A simple example where this becomes really obvious is if you want to associate a &quot;more options&quot;
+menu with every row of a large table. Either you end up having an enormous DOM (virtual or otherwise)
+or you have to painfully swap out components on-the-fly.</p>
+<p>And, finally, submenus are darn useful for any serious app.</p>
+<p>For this reason, <code>tosijs-ui</code> has its own menu implementation.</p>
+<h2>Drop Menus</h2>
+<p><code>popDropMenu</code> extends the menu system to support drag-and-drop. A single <code>menuItems</code>
+array can serve both click navigation (via <code>popMenu</code>) and drag-to-drop (via <code>popDropMenu</code>).</p>
+<p>Items with <code>acceptsDrop</code> (array of MIME types) participate in drop mode.
+Items with <code>dropAction</code> are valid drop targets. Submenus auto-disclose when
+a matching drag hovers over them.</p>
+<h3>DropMenu Interfaces</h3>
+<p><code>MenuAction</code> and <code>SubMenu</code> gain two optional fields:</p>
+<pre><code>acceptsDrop?: string[]    // MIME types this item accepts
+dropAction?: (dataTransfer: DataTransfer) =&gt; void
+</code></pre>
+<ul>
+<li>A <strong>SubMenu</strong> with <code>acceptsDrop</code> auto-discloses on drag hover</li>
+<li>A <strong>SubMenu</strong> with <code>dropAction</code> can also receive drops directly</li>
+<li>A <strong>MenuAction</strong> with <code>dropAction</code> is a drop target</li>
+<li>Items without <code>acceptsDrop</code> are shown disabled in drop mode (or hidden if <code>hideDisabled</code> is set)</li>
+</ul>
+<h3>popDropMenu({target, menuItems, dataTypes, …})</h3>
+<pre><code>export interface PopDropMenuOptions extends PopMenuOptions {
+  dataTypes: readonly string[]  // MIME types from the current drag
+}
+</code></pre>
+<p><code>popDropMenu</code> filters menuItems to only those matching <code>dataTypes</code>,
+then opens the menu in drop mode. Non-matching items are shown
+disabled by default; set <code>hideDisabled: true</code> to remove them entirely.</p>
+<p><code>disclosureDelay</code> (ms, default 200) controls how long a drag must hover
+over a submenu before it auto-discloses.</p>
+<h3>hideDisabled</h3>
+<p>By default (<code>hideDisabled: false</code>), non-matching items remain visible but disabled.
+This preserves spatial stability — items don&#39;t jump around as you drag different
+types. Set <code>hideDisabled: true</code> to hide them entirely for a cleaner menu.</p>
+<p>Applies symmetrically to both <code>filterForDrop</code> and <code>filterForClick</code>.</p>
+<h3>filterForDrop / filterForClick</h3>
+<pre><code>filterForDrop(items: MenuItem[], dataTypes: readonly string[], hideDisabled?: boolean): MenuItem[]
+filterForClick(items: MenuItem[], hideDisabled?: boolean): MenuItem[]
+</code></pre>
+<p>Utility functions to filter a single menu definition for each mode.
+When <code>hideDisabled</code> is false (default), non-matching items are kept but disabled.</p>
+<h3>TosiMenu accepts-drop</h3>
+<p>Set <code>accepts-drop</code> (semicolon-delimited MIME types) on <code>&lt;tosi-menu&gt;</code> to auto-open
+in drop mode when a matching drag enters. Set <code>dropAction</code> to accept drops
+directly on the trigger (e.g. saving to the root folder). Set <code>disclosure-delay</code>
+(ms) to control submenu auto-disclosure speed.</p>
+<pre><code>&lt;tosi-menu accepts-drop=&quot;text/plain;text/html&quot; disclosure-delay=&quot;150&quot;&gt;Files&lt;/tosi-menu&gt;
+
+menuElement.dropAction = (data) =&gt; saveToRoot(data)
+</code></pre>
+<h3>Drop Menu Example</h3>
+<pre><code class="language-js">import { popMenu, popDropMenu, tosiMenu, dragAndDrop, icons, postNotification } from &#39;tosijs-ui&#39;
+import { elements } from &#39;tosijs&#39;
+
+dragAndDrop.init()
+
+const { button, div, span } = elements
+
+const adjectives = [&#39;Important&#39;, &#39;Old&#39;, &#39;Shared&#39;, &#39;Archive&#39;, &#39;Draft&#39;, &#39;Final&#39;, &#39;Review&#39;, &#39;Backup&#39;]
+const randomFolders = (type) =&gt; () =&gt; {
+  const count = 2 + Math.floor(Math.random() * 3)
+  const picked = []
+  const pool = [...adjectives]
+  for (let i = 0; i &lt; count; i++) {
+    const idx = Math.floor(Math.random() * pool.length)
+    picked.push(pool.splice(idx, 1)[0])
+  }
+  return picked.map(name =&gt; ({
+    caption: name,
+    icon: &#39;folder&#39;,
+    acceptsDrop: [type],
+    dropAction(data) {
+      postNotification({
+        type: &#39;success&#39;,
+        message: &#39;Saved to &#39; + name + &#39;: &#39; + (data.getData(type) || &#39;file&#39;),
+        duration: 2
+      })
+    },
+    action() {
+      postNotification({ message: &#39;Opened &#39; + name, duration: 1 })
+    },
+  }))
+}
+
+const menuItems = [
+  {
+    caption: &#39;Documents&#39;,
+    icon: &#39;folder&#39;,
+    acceptsDrop: [&#39;text/*&#39;],
+    dropAction(data) {
+      postNotification({
+        type: &#39;success&#39;,
+        message: &#39;Saved to Documents: &#39; + (data.getData(&#39;text/plain&#39;) || data.getData(&#39;text/html&#39;)),
+        duration: 2
+      })
+    },
+    action() {
+      postNotification({ message: &#39;Navigated to Documents&#39;, duration: 1 })
+    },
+    menuItems: [
+      {
+        caption: &#39;Text Files&#39;,
+        icon: &#39;folder&#39;,
+        acceptsDrop: [&#39;text/plain&#39;],
+        dropAction(data) {
+          postNotification({
+            type: &#39;success&#39;,
+            message: &#39;Saved to Text Files: &#39; + data.getData(&#39;text/plain&#39;),
+            duration: 2
+          })
+        },
+        action() {
+          postNotification({ message: &#39;Navigated to Text Files&#39;, duration: 1 })
+        },
+        menuItems: randomFolders(&#39;text/plain&#39;),
+      },
+      {
+        caption: &#39;HTML Files&#39;,
+        icon: &#39;folder&#39;,
+        acceptsDrop: [&#39;text/html&#39;],
+        dropAction(data) {
+          postNotification({
+            type: &#39;success&#39;,
+            message: &#39;Saved to HTML Files: &#39; + data.getData(&#39;text/html&#39;),
+            duration: 2
+          })
+        },
+        action() {
+          postNotification({ message: &#39;Navigated to HTML Files&#39;, duration: 1 })
+        },
+        menuItems: randomFolders(&#39;text/html&#39;),
+      },
+      {
+        caption: &#39;readme.txt&#39;,
+        icon: &#39;file&#39;,
+        action() {
+          postNotification({ message: &#39;Opened readme.txt&#39;, duration: 1 })
+        },
+      },
+    ]
+  },
+  null,
+  {
+    caption: &#39;Trash&#39;,
+    icon: &#39;trash&#39;,
+    acceptsDrop: [&#39;special/any&#39;],
+    dropAction(data) {
+      postNotification({
+        type: &#39;error&#39;,
+        message: &#39;Trashed: &#39; + (data.getData(&#39;text/plain&#39;) || &#39;item&#39;),
+        duration: 2
+      })
+    },
+    action() {
+      postNotification({ message: &#39;Opened Trash&#39;, duration: 1 })
+    },
+  },
+]
+
+const clickBtn = button(&#39;Click: Browse Files&#39;, {
+  onClick(event) {
+    popMenu({ target: event.target.closest(&#39;button&#39;), menuItems })
+  }
+})
+
+const dropMenu = tosiMenu(
+  {
+    menuItems,
+    acceptsDrop: &#39;text/plain;text/html&#39;,
+    dropAction(data) {
+      postNotification({
+        type: &#39;success&#39;,
+        message: &#39;Saved to root: &#39; + (data.getData(&#39;text/plain&#39;) || data.getData(&#39;text/html&#39;)),
+        duration: 2
+      })
+    },
+  },
+  icons.folder(),
+  span(&#39; Drop (show all)&#39;)
+)
+
+const dropMenuHidden = tosiMenu(
+  {
+    menuItems,
+    acceptsDrop: &#39;text/plain;text/html&#39;,
+    hideDisabled: true,
+    dropAction(data) {
+      postNotification({
+        type: &#39;success&#39;,
+        message: &#39;Saved to root: &#39; + (data.getData(&#39;text/plain&#39;) || data.getData(&#39;text/html&#39;)),
+        duration: 2
+      })
+    },
+  },
+  icons.folder(),
+  span(&#39; Drop (hide disabled)&#39;)
+)
+
+preview.append(
+  div(
+    { style: { display: &#39;flex&#39;, gap: &#39;10px&#39;, alignItems: &#39;flex-start&#39; } },
+    div(
+      { draggable: &#39;true&#39;, dataDrag: &#39;text/plain&#39;, dataDragContent: &#39;quarterly-report.txt&#39;, style: { padding: &#39;8px&#39;, border: &#39;1px dashed #888&#39;, borderRadius: &#39;4px&#39;, cursor: &#39;grab&#39; } },
+      &#39;quarterly-report.txt&#39;
+    ),
+    div(
+      { draggable: &#39;true&#39;, dataDrag: &#39;text/html&#39;, dataDragContent: &#39;&lt;b&gt;notes&lt;/b&gt;&#39;, style: { padding: &#39;8px&#39;, border: &#39;1px dashed #888&#39;, borderRadius: &#39;4px&#39;, cursor: &#39;grab&#39; } },
+      &#39;notes.html&#39;
+    ),
+  ),
+  div(
+    { style: { display: &#39;flex&#39;, gap: &#39;10px&#39;, marginTop: &#39;10px&#39;, flexWrap: &#39;wrap&#39; } },
+    clickBtn,
+    dropMenu,
+    dropMenuHidden,
+  )
+)
+</code></pre>
+<pre><code class="language-css">.preview {
+  padding: 10px;
+}
+</code></pre>
+<blockquote>
+<p><strong>Try it:</strong> Click &quot;Browse Files&quot; to navigate the menu normally.
+Drag a file over &quot;Drop (show all)&quot; — non-matching items appear
+disabled. Drag over &quot;Drop (hide disabled)&quot; — non-matching items
+are hidden entirely. &quot;Text Files&quot; only accepts .txt, &quot;HTML Files&quot;
+only accepts .html. Subfolders are randomly generated each time
+a folder is disclosed (dynamic <code>menuItems</code>).</p>
+</blockquote>
+<h2>Shadow DOM</h2>
+<p>Menus work when triggered from inside a shadow DOM. Clicking outside
+the menu dismisses it; clicking the shadow DOM target toggles it.</p>
+<pre><code class="language-js">import { popMenu, removeLastMenu } from &#39;tosijs-ui&#39;
+
+class ShadowMenuHost extends HTMLElement {
+  constructor() {
+    super()
+    const shadow = this.attachShadow({ mode: &#39;open&#39; })
+    const wrapper = document.createElement(&#39;div&#39;)
+    wrapper.style.cssText = &#39;padding: 20px; background: #d0dce8; border-radius: 8px; display: inline-block&#39;
+    const btn = document.createElement(&#39;button&#39;)
+    btn.textContent = &#39;Shadow Menu&#39;
+    btn.id = &#39;shadow-btn&#39;
+    btn.style.cssText = &#39;padding: 8px 16px; cursor: pointer&#39;
+    btn.addEventListener(&#39;click&#39;, () =&gt; {
+      popMenu({
+        target: btn,
+        menuItems: [
+          { caption: &#39;Alpha&#39;, action() {} },
+          { caption: &#39;Bravo&#39;, action() {} },
+          { caption: &#39;Charlie&#39;, action() {} },
+        ]
+      })
+    })
+    wrapper.appendChild(btn)
+    shadow.appendChild(wrapper)
+  }
+}
+if (!customElements.get(&#39;shadow-menu-host&#39;)) {
+  customElements.define(&#39;shadow-menu-host&#39;, ShadowMenuHost)
+}
+
+const host = document.createElement(&#39;shadow-menu-host&#39;)
+const outside = document.createElement(&#39;button&#39;)
+outside.textContent = &#39;Click to dismiss&#39;
+outside.id = &#39;outside-btn&#39;
+outside.style.cssText = &#39;padding: 8px 16px; margin-left: 10px&#39;
+preview.append(host, outside)
+</code></pre>
+<pre><code class="language-test">import { removeLastMenu } from &#39;tosijs-ui&#39;
+
+test(&#39;shadow DOM menu: open and dismiss&#39;, async () =&gt; {
+  const host = preview.querySelector(&#39;shadow-menu-host&#39;)
+  const btn = host.shadowRoot.querySelector(&#39;#shadow-btn&#39;)
+  const countFloats = () =&gt; document.querySelectorAll(&#39;tosi-float&#39;).length
+
+  // opens from shadow DOM button click
+  const before = countFloats()
+  btn.click()
+  await waitMs(100)
+  expect(countFloats()).toBe(before + 1)
+
+  // removeLastMenu dismisses it
+  removeLastMenu(0)
+  expect(countFloats()).toBe(before)
+
+  // re-open and verify target mousedown keeps it open
+  btn.click()
+  await waitMs(100)
+  expect(countFloats()).toBe(before + 1)
+  btn.dispatchEvent(new MouseEvent(&#39;mousedown&#39;, { bubbles: true, composed: true }))
+  await waitMs(100)
+  expect(countFloats()).toBe(before + 1)
+  removeLastMenu(0)
+})
+</code></pre>
+<h2>Menu Item Tooltips</h2>
+<p>Add <code>tooltip</code> to any menu item to show a tooltip on hover (requires
+<code>initTooltips()</code>).</p>
+<pre><code class="language-js">import { elements } from &#39;tosijs&#39;
+import { popMenu, initTooltips, icons } from &#39;tosijs-ui&#39;
+
+initTooltips()
+
+const { button } = elements
+const btn = button(&#39;Tooltipped Menu&#39;)
+
+btn.addEventListener(&#39;click&#39;, () =&gt; {
+  popMenu({
+    target: btn,
+    menuItems: [
+      { caption: &#39;Copy&#39;, icon: &#39;copy&#39;, tooltip: &#39;Copy to **clipboard**&#39;, shortcut: &#39;⌘C&#39;, action() {} },
+      { caption: &#39;Paste&#39;, icon: &#39;clipboard&#39;, tooltip: &#39;Paste from clipboard&#39;, shortcut: &#39;⌘V&#39;, action() {} },
+      null,
+      { caption: &#39;Export&#39;, icon: &#39;download&#39;, tooltip: &#39;Export as `JSON` or `CSV`&#39;, menuItems: [
+        { caption: &#39;JSON&#39;, action() {} },
+        { caption: &#39;CSV&#39;, action() {} },
+      ]},
+    ]
+  })
+})
+
+preview.append(btn)
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/" aria-current="page" class="current">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

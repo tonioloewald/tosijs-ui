@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>tag-list — tosijs-ui</title>
+  <meta name="description" content="Building a tag-list from standard HTML elements is a bit of a nightmare." />
+  <link rel="canonical" href="https://ui.tosijs.net/tag-list/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="tag-list — tosijs-ui" />
+  <meta property="og:description" content="Building a tag-list from standard HTML elements is a bit of a nightmare." />
+  <meta property="og:url" content="https://ui.tosijs.net/tag-list/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>tag-list</h1>
+<p>Building a tag-list from standard HTML elements is a bit of a nightmare.</p>
+<p><code>&lt;tosi-tag-list&gt;</code> allows you to display an editable or read-only tag list (represented either
+as a comma-delimited string or an array of strings).</p>
+<pre><code class="language-html">&lt;label style=&quot;position: absolute; right: 10px; top: 10px; display: block&quot;&gt;
+  &lt;input type=&quot;checkbox&quot; class=&quot;disable-toggle&quot;&gt;
+  &lt;b&gt;Disable All&lt;/b&gt;
+&lt;/label&gt;
+&lt;label&gt;
+  &lt;b&gt;Display Only&lt;/b&gt;
+  &lt;tosi-tag-list
+    value=&quot;this,that,,the-other&quot;
+  &gt;&lt;/tosi-tag-list&gt;
+&lt;/label&gt;
+&lt;tosi-tag-list
+  class=&quot;compact&quot;
+  value=&quot;this,that,,the-other&quot;
+&gt;&lt;/tosi-tag-list&gt;
+&lt;br&gt;
+&lt;label&gt;
+  &lt;b&gt;Editable&lt;/b&gt;
+  &lt;tosi-tag-list
+    class=&quot;editable-tag-list&quot;
+    value=&quot;belongs,also belongs,has\, comma,custom&quot;
+    editable
+    available-tags=&quot;belongs,also belongs,has\, comma,not initially chosen&quot;
+  &gt;&lt;/tosi-tag-list&gt;
+&lt;/label&gt;
+&lt;br&gt;
+&lt;b&gt;Text-Entry&lt;/b&gt;
+&lt;tosi-tag-list
+  value=&quot;this,that,the-other,not,enough,space&quot;
+  editable
+  text-entry
+  available-tags=&quot;tomasina,dick,,harriet&quot;
+&gt;&lt;/tosi-tag-list&gt;
+</code></pre>
+<pre><code class="language-css">.preview .compact {
+  --spacing: 8px;
+  --font-size: 12px;
+  --line-height: 18px;
+}
+.preview label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+</code></pre>
+<pre><code class="language-js">preview.addEventListener(&#39;change&#39;, (event) =&gt; {
+  if (event.target.matches(&#39;tosi-tag-list&#39;)) {
+    console.log(event.target, event.target.value)
+  }
+}, true)
+preview.querySelector(&#39;.disable-toggle&#39;).addEventListener(&#39;change&#39;, (event) =&gt; {
+  const tagLists = Array.from(preview.querySelectorAll(&#39;tosi-tag-list&#39;))
+  for(const tagList of tagLists) {
+    tagList.disabled = event.target.checked
+  }
+})
+</code></pre>
+<pre><code class="language-test">const tagLists = preview.querySelectorAll(&#39;tosi-tag-list&#39;)
+test(&#39;tag-lists render&#39;, () =&gt; {
+  expect(tagLists.length).toBe(4)
+})
+test(&#39;first tag-list has correct tags&#39;, () =&gt; {
+  expect(tagLists[0].tags.length).toBe(3)
+  expect(tagLists[0].tags).toContain(&#39;this&#39;)
+})
+test(&#39;editable tag-list has editable attribute&#39;, () =&gt; {
+  expect(tagLists[2].editable).toBe(true)
+})
+test(&#39;a comma inside a tag survives the value round-trip&#39;, () =&gt; {
+  const tl = document.createElement(&#39;tosi-tag-list&#39;)
+  tl.tags = [&#39;New York, NY&#39;, &#39;Boston&#39;]
+  // the literal comma is escaped in `value` so it is not a delimiter
+  expect(tl.value).toBe(&#39;New York\\, NY,Boston&#39;)
+  expect(tl.tags.length).toBe(2)
+  expect(tl.tags).toContain(&#39;New York, NY&#39;)
+})
+test(&#39;an escaped comma in a value string parses as one tag&#39;, () =&gt; {
+  const tl = document.createElement(&#39;tosi-tag-list&#39;)
+  tl.value = &#39;New York\\, NY,Boston&#39;
+  expect(tl.tags.length).toBe(2)
+  expect(tl.tags).toContain(&#39;New York, NY&#39;)
+})
+</code></pre>
+<h2>Properties</h2>
+<h3><code>value</code>: string | string[]</h3>
+<p>A comma-delimited list of tags. A tag that itself contains a comma must
+escape it as <code>\,</code> — e.g. <code>value=&quot;New York\, NY,Boston&quot;</code> is two tags. The
+<code>tags</code> accessor handles this escaping for you in both directions.</p>
+<h3><code>tags</code>: string[]</h3>
+<h2><code>popSelectMenu</code>: () =&gt; void</h2>
+<p>This is the method called when the user clicks the menu button. By default is displays a
+pick list of tags, but if you wish to customize the behavior, just replace this method.</p>
+<p>A read-only property giving the value as an array.</p>
+<h3><code>available-tags</code>: string | string[]</h3>
+<p>A list of tags that will be displayed in the popup menu by default. The popup menu
+will always display custom tags (allowing their removal). As with <code>value</code>, a
+comma inside a tag must be escaped as <code>\,</code> when set via the attribute string.</p>
+<h3><code>editable</code>: boolean</h3>
+<p>Allows the tag list to be modified via menu and removing tags.</p>
+<h3><code>text-entry</code>: boolean</h3>
+<p>If <code>editable</code>, an input field is provided for entering tags directly.</p>
+<h3><code>placeholder</code>: string = &#39;enter tags&#39;</h3>
+<p>Placeholder shown on input field.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/" aria-current="page" class="current">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

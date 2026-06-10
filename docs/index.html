@@ -1,20 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="./favicon.svg" />
-    <link rel="apple-touch-icon" href="./favicon.svg" />
-    <meta
-      name="description"
-      content="the tosijs-ui library, web-components and utilities for web applications"
-    />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <title>tosijs-ui</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <main></main>
-    <script src="./index.js" async type="module"></script>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>tosijs-ui — tosijs-ui</title>
+  <meta name="description" content="style=&quot;width: 280px; height: 280px; background: #da1167; border-radius: 40px;&quot;" />
+  <link rel="canonical" href="https://ui.tosijs.net/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="tosijs-ui — tosijs-ui" />
+  <meta property="og:description" content="style=&quot;width: 280px; height: 280px; background: #da1167; border-radius: 40px;&quot;" />
+  <meta property="og:url" content="https://ui.tosijs.net/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>tosijs-ui</h1>
+<!--{ "pin": "top" }-->
+
+<p><a href="https://ui.tosijs.net">ui.tosijs.net live demo</a> | <a href="https://tosijs.net">tosijs</a> | <a href="https://discord.gg/ramJ9rgky5">discord</a> | <a href="https://github.com/tonioloewald/tosijs-ui#readme">github</a> | <a href="https://www.npmjs.com/package/tosijs-ui">npm</a></p>
+<p><a href="https://www.npmjs.com/package/tosijs-ui"><img src="https://badge.fury.io/js/tosijs-ui.svg" alt="tosijs is on NPM"></a>
+<a href="https://bundlejs.com/?q=tosijs-ui&badge="><img src="https://deno.bundlejs.com/?q=tosijs-ui&badge=" alt="tosijs is about 10kB gzipped"></a>
+<a href="https://www.jsdelivr.com/package/npm/tosijs-ui"><img src="https://data.jsdelivr.com/v1/package/npm/tosijs-ui/badge" alt="tosijs on jsdelivr"></a></p>
+<center>
+  <tosi-lottie
+    style="width: 280px; height: 280px; background: #da1167; border-radius: 40px;"
+    src="/tosi-ui.json"
+  ></tosi-lottie>
+</center>
+
+<p>Copyright ©2023-2025 Tonio Loewald</p>
+<h2>the tosijs-ui library</h2>
+<p>A set of <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components">web-components</a>
+created with <a href="https://tosijs.net">tosijs</a>, designed to augment what the browser gives you
+for free rather than replace it.</p>
+<p>It works beautifully with other web-component libraries, such as <a href="https://shoelace.style/">shoelace.style</a>.</p>
+<h2>Migrating to v1.3.0</h2>
+<p>v1.3.0 completes the rename from <code>xinjs-ui</code> to <code>tosijs-ui</code>. All custom element
+tags now use the <code>tosi-</code> prefix and all exports use <code>Tosi*</code>/<code>tosi*</code> names.</p>
+<h3>Breaking changes</h3>
+<ul>
+<li><strong>Custom element tags</strong> have changed from <code>&lt;xin-*&gt;</code> to <code>&lt;tosi-*&gt;</code>.
+For example: <code>&lt;xin-select&gt;</code> is now <code>&lt;tosi-select&gt;</code>, <code>&lt;xin-icon&gt;</code> is now
+<code>&lt;tosi-icon&gt;</code>, <code>&lt;xin-example&gt;</code> is now <code>&lt;tosi-example&gt;</code>, etc.</li>
+<li><strong>CSS selectors</strong> targeting old tag names (e.g. <code>xin-select { ... }</code>) must
+be updated.</li>
+<li><strong>CSS custom properties</strong> in component <code>styleSpec</code> objects retain <code>--xin-*</code>
+fallbacks for backward compatibility, but new code should use <code>--tosi-*</code>.</li>
+</ul>
+<h3>Deprecated exports still work</h3>
+<p>The old <code>xin*</code> JavaScript exports (<code>xinSelect</code>, <code>xinTabs</code>, <code>xinTable</code>, etc.)
+remain available and will continue to work. Most log a runtime deprecation
+warning; a few are silent aliases marked with JSDoc <code>@deprecated</code>. They will
+be removed in a future major version.</p>
+<h3>Migration checklist</h3>
+<ol>
+<li>Search your HTML for <code>&lt;xin-</code> and replace with <code>&lt;tosi-</code></li>
+<li>Search your CSS for <code>xin-</code> selectors and update to <code>tosi-</code></li>
+<li>Search your JS/TS for <code>xinSelect</code>, <code>xinTabs</code>, etc. and switch to <code>tosiSelect</code>, <code>tosiTabs</code>, etc.</li>
+<li>Search for <code>--xin-</code> CSS variable overrides and switch to <code>--tosi-</code></li>
+</ol>
+<h2>Quick Start</h2>
+<h3>Using npm and a bundler</h3>
+<p>Add tosijs-ui to your project, e.g.</p>
+<pre><code class="language-bash">npm add tosijs-ui
+</code></pre>
+<p>Then import the component <code>elementCreator</code> and create elements. A <code>tosijs</code>
+<code>elementCreator</code> is syntax sugar around <code>document.createElement()</code>.</p>
+<pre><code class="language-ts">import { tosiTable } from &#39;tosijs-ui&#39;
+
+document.body.append(tosiTable())
+</code></pre>
+<h3>Using the iife via cdn</h3>
+<p>The <code>tosijs-ui</code> iife build bundles <code>tosijs</code>, <code>tosijs-ui</code>, and <code>marked</code> into
+a single minified javascript source file. You can access <code>xinjs</code> and <code>xinjsui</code>
+as globals which contain all the things exported by <code>tosijs</code> and <code>tosijs-ui</code>.</p>
+<pre><code>&lt;script src=&quot;https://ui.tosijs.net/iife.js&quot;&gt;&lt;/script&gt;
+&lt;button id=&quot;menu&quot;&gt;Menu &lt;tosi-icon icon=&quot;chevronDown&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
+&lt;script&gt;
+  const { elements } = xinjs
+  const { popMenu, icons } = xinjsui
+  const { button } = elements
+
+  const showMenu = (target) =&gt; {
+    popMenu({
+      target,
+      menuItems: [
+        {
+          caption: &#39;Say hello&#39;,
+          action() {
+            alert(&#39;hello&#39;)
+          }
+        },
+        null,
+        {
+          caption: &#39;Version&#39;,
+          action() {
+            alert(`tosijs ${xinjs.version}\ntosijs-ui ${xinjsui.version}`)
+          }
+        }
+      ]
+    })
+  }
+
+  document.body.append(
+    button(
+      {
+        onClick(event) {
+          showMenu(event.target)
+        }
+      },
+      &#39;Menu&#39;,
+      icons.chevronDown()
+    )
+  )
+&lt;/script&gt;
+</code></pre>
+<p><a href="https://ui.tosijs.net/iife.html">Click here to see a simple iife demo</a></p>
+<h2>custom-elements</h2>
+<p>The simplest way to use these elements is to simply import the element and then either
+use HTML or the <code>ElementCreator</code> function exported.</p>
+<p>E.g. to use the markdown viewer:</p>
+<pre><code>import { tosiMd } from &#39;tosijs-ui&#39;
+document.body.append(tosiMd(&#39;# hello world\nthis is a test&#39;))
+</code></pre>
+<pre><code class="language-js">import { tosiMd } from &#39;tosijs-ui&#39;
+
+preview.append(
+  tosiMd(`
+## hello world
+here is some markdown
+`)
+)
+</code></pre>
+<p>Assuming you import the module somewhere, the HTML will work as well.</p>
+<pre><code>&lt;tosi-md&gt;
+## hello world
+here is some markdown
+&lt;/tosi-md&gt;
+</code></pre>
+<p>The big difference with using the <code>tosiMd()</code> function is that the <code>tosijs</code> <code>Component</code>
+class will automatically pick a new tag if the expected tag is taken (e.g. by a previously
+defined custom-element from another library). <code>tosiMd()</code> will create an element of
+the correct type.</p>
+<p>The other thing is that <code>tosijs</code> <code>ElementCreator</code> functions are convenient and composable,
+allowing you to build DOM elements with less code than pretty much any other option, including
+JSX, TSX, or HTML.</p>
+<h2>Philosophy</h2>
+<p>In general, <code>tosijs</code> strives to work <em>with</em> the browser rather than trying to <em>replace</em> it.</p>
+<p>In a similar vein, <code>tosijs-ui</code> comprises a collection of <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components">web-components</a>
+with the goal of augmenting what <em>already</em> works well, and the components are intended to be
+as similar as possible to things that you already use, such as <code>&lt;input&gt;</code> or <code>&lt;select&gt;</code> elements.
+E.g. where appropriate, the <code>value</code> of an element is its malleable <code>state</code>, and when this changes,
+the element emits a <code>change</code> event.</p>
+<p>Similarly, the tosijs base <code>Component</code> class and the components in this collection strive to
+be as similar in operation as possible to DOM elements as makes sense. E.g. binary attributes
+work as expected. Adding the <code>hidden</code> attribute makes them disappear. If a component subclass
+has a <code>value</code> property then it will be rendered if the value changes (similarly it will be
+rendered if an initialized attribute is changed). Intrinsic properties of components will
+default to <code>null</code> rather than <code>undefined</code>.</p>
+<p>Similarly, because web-components are highly interoperable, there&#39;s no reason to reinvent
+wheels. In particular, this library won&#39;t try to replace existing, excellent libraries
+such as <a href="https://shoelace.style/">shoelace.style</a> or wrap perfectly functional HTML
+elements, like the venerable <code>&lt;input&gt;</code> or <code>&lt;form&gt;</code> elements that are already capable
+and accessible.</p>
+<p>The goal here is to provide useful components and other utilities that add to what&#39;s built
+into HTML5 and CSS3 and to make custom-elements work as much as possible like drop-in replacements
+for an <code>&lt;input&gt;</code> or <code>&lt;textarea&gt;</code> (while mitigating the historical pathologies of things like
+<code>&lt;select&gt;</code> and <code>&lt;input type=&quot;radio&quot;&gt;</code>). E.g. the <code>&lt;tosi-select&gt;</code> does not suffer from a
+race-condition between having its value set and being given an <code>&lt;option&gt;</code> with the intended value
+and you can differentiate between the user picking a value (<code>action</code>) and the value changing (<code>change</code>).</p>
+<h2>Credits</h2>
+<p><code>tosijs-ui</code> is being developed using <a href="https://bun.sh/">bun</a>.
+<code>bun</code> is crazy fast (based on Webkit&#39;s JS engine, vs. V8), does a lot of stuff
+natively, and runs TypeScript (with import and require) directly.</p>
+<p>Logo animations by <a href="https://pro.fiverr.com/freelancers/anicoremotion">@anicoremotion</a>.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/" aria-current="page" class="current">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
 </html>

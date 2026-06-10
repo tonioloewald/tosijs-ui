@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>notifications — tosijs-ui</title>
+  <meta name="description" content="TosiNotification provides a singleton custom &lt;tosi-notification&gt; element that manages" />
+  <link rel="canonical" href="https://ui.tosijs.net/notifications/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="notifications — tosijs-ui" />
+  <meta property="og:description" content="TosiNotification provides a singleton custom &lt;tosi-notification&gt; element that manages" />
+  <meta property="og:url" content="https://ui.tosijs.net/notifications/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>notifications</h1>
+<p><code>TosiNotification</code> provides a singleton custom <code>&lt;tosi-notification&gt;</code> element that manages
+a list of notifications.</p>
+<p>The notifications are displayed most-recent first. If the notifications would take more than
+half the height of the display, they are scrolled.</p>
+<p>You can post a notification simply with <code>TosiNotification.post()</code> or <code>postNotification()</code>.</p>
+<pre><code>interface NotificationSpec {
+  message: string
+  type?: &#39;success&#39; | &#39;info&#39; | &#39;log&#39; | &#39;warn&#39; | &#39;error&#39; | &#39;progress&#39; // default &#39;info&#39;
+  icon?: SVGElement | string // defaults to an info icon
+  duration?: number
+  progress?: () =&gt; number    // return percentage completion
+  close?: () =&gt; void
+  color?: string             // specify color
+}
+</code></pre>
+<p>If you provide a <code>progress</code> callback (which is assumed to return a number from <code>0-100</code>, with
+100+ indicating completion) then <code>TosiNotification</code> will poll it every second until the
+task completes or the notification is closed. Returning 100 or more will automatically close
+the notification.</p>
+<p>If you configure a notification&#39;s <code>type = &quot;progress&quot;</code> but don&#39;t provide a <code>progress</code> callback
+then an indefinite <code>&lt;progress&gt;</code> element will be displayed.</p>
+<p>If you provide a <code>close</code> callback, it will be fired if the user closes the notification.</p>
+<p><code>postNotification</code> returns a callback function that closes the note programmatically (e.g.
+when an operation completes). This will <em>also</em> call any <code>close</code> callback function you
+provided. (The progress demos in the example exercise this functionality.)</p>
+<pre><code class="language-js">import { postNotification, icons } from &#39;tosijs-ui&#39;
+
+const form = preview.querySelector(&#39;tosi-form&#39;)
+const submit = preview.querySelector(&#39;.submit&#39;)
+const closeButton = preview.querySelector(&#39;.close&#39;)
+
+let close
+
+form.submitCallback = (value, isValid) =&gt; {
+  if (!isValid) return
+  if (value.type.startsWith(&#39;progress&#39;)) {
+    startTime = Date.now()
+    const { message, duration, icon } = value
+    close = postNotification({
+      message,
+      type: &#39;progress&#39;,
+      icon,
+      progress: value.type === &#39;progress&#39; ? () =&gt; (Date.now() - startTime) / (10 * duration) : undefined,
+      close: () =&gt; { postNotification(`${value.message} cancelled`) },
+    })
+  } else {
+    close = postNotification(value)
+  }
+  closeButton.disabled = false
+}
+
+submit.addEventListener(&#39;click&#39;, form.submit)
+closeButton.addEventListener(&#39;click&#39;, () =&gt; {
+  if (close) {
+    close()
+  }
+})
+
+postNotification({
+  message: &#39;Welcome to tosijs-ui notifications, this message will disappear in 2s&#39;,
+  duration: 2
+})
+</code></pre>
+<pre><code class="language-html">&lt;tosi-form&gt;
+  &lt;h3 slot=&quot;header&quot;&gt;Notification Test&lt;/h3&gt;
+  &lt;tosi-field caption=&quot;Message&quot; key=&quot;message&quot; type=&quot;string&quot; value=&quot;This is a test…&quot;&gt;&lt;/tosi-field&gt;
+  &lt;tosi-field caption=&quot;Type&quot; key=&quot;type&quot; value=&quot;info&quot;&gt;
+    &lt;tosi-select slot=&quot;input&quot;
+      options=&quot;error,warn,info,success,log,,progress,progress (indefinite)&quot;
+    &gt;&lt;/tosi-select&gt;
+  &lt;/tosi-field&gt;
+  &lt;tosi-field caption=&quot;Icon&quot; key=&quot;icon&quot; value=&quot;info&quot;&gt;
+    &lt;tosi-select slot=&quot;input&quot;
+      options=&quot;info,bug,thumbsUp,thumbsDown,message,spin120Loader&quot;
+    &gt;&lt;/tosi-select&gt;
+  &lt;/tosi-field&gt;
+  &lt;tosi-field caption=&quot;Duration&quot; key=&quot;duration&quot; type=&quot;number&quot; value=&quot;2&quot;&gt;&lt;/tosi-field&gt;
+  &lt;button slot=&quot;footer&quot; class=&quot;close&quot; disabled&gt;Close Last Notification&lt;/button&gt;
+  &lt;span slot=&quot;footer&quot; class=&quot;elastic&quot;&gt;&lt;/span&gt;
+  &lt;button slot=&quot;footer&quot; class=&quot;submit&quot;&gt;Post Notification&lt;/button&gt;
+&lt;/tosi-form&gt;
+</code></pre>
+<pre><code class="language-css">tosi-form {
+  height: 100%;
+}
+
+tosi-form::part(content) {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 10px;
+  background: var(--background);
+}
+
+tosi-form::part(header),
+tosi-form::part(footer) {
+  background: #eee;
+  justify-content: center;
+  padding: 10px;
+}
+
+tosi-form h3 {
+  margin: 0;
+}
+
+tosi-form label {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+}
+</code></pre>
+<pre><code class="language-test">test(&#39;notification singleton exists&#39;, async () =&gt; {
+  await waitMs(100)
+  const notification = document.querySelector(&#39;tosi-notification&#39;)
+  expect(notification).toBeTruthy()
+})
+test(&#39;form renders&#39;, () =&gt; {
+  const form = preview.querySelector(&#39;tosi-form&#39;)
+  expect(form).toBeTruthy()
+})
+</code></pre>
+<h2><code>postNotification(spec: NotificationSpec | string)</code></h2>
+<p>This is simply a wrapper for <code>TosiNotification.post()</code>.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/" aria-current="page" class="current">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

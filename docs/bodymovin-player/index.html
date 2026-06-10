@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>lottie / bodymovin — tosijs-ui</title>
+  <meta name="description" content="A lottie (a.k.a. bodymovin) player." />
+  <link rel="canonical" href="https://ui.tosijs.net/bodymovin-player/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="lottie / bodymovin — tosijs-ui" />
+  <meta property="og:description" content="A lottie (a.k.a. bodymovin) player." />
+  <meta property="og:url" content="https://ui.tosijs.net/bodymovin-player/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>lottie / bodymovin</h1>
+<p>A <a href="https://airbnb.io/lottie/#/web">lottie</a> (a.k.a. <strong>bodymovin</strong>) player.</p>
+<p>It&#39;s designed to work like an <code>&lt;img&gt;</code> element (just set its <code>src</code> attribute).</p>
+<pre><code class="language-js">import { icons, popFloat, tosiSelect } from &#39;tosijs-ui&#39;
+import { div, label, input, select, option, span } from &#39;tosijs&#39;.elements
+
+const tosiPlatform = preview.querySelector(&#39;tosi-lottie&#39;)
+setTimeout(
+  () =&gt; {
+ preview.append(
+   popFloat({
+     draggable: true,
+     content: [
+       { class: &#39;panel&#39; },
+       div({ class: &#39;panel-header&#39; }, &#39;Player Controls&#39; ),
+       label(
+         { class: &#39;no-drag&#39; },
+         &#39;speed&#39;,
+         input({ type: &#39;range&#39;, min: -1, max: 1, step: 0.1, value: 0, onInput(event) {
+           const speed = Math.pow(5, Number(event.target.value))
+           tosiPlatform.animation.setSpeed(speed)
+           event.target.nextSibling.textContent = (speed * 100).toFixed(0) + &#39;%&#39;
+         } }),
+         span(&#39;100%&#39;, {style: { textAlign: &#39;right&#39;, width: &#39;40px&#39;}})
+       ),
+       label(
+         { class: &#39;no-drag&#39; },
+         &#39;direction&#39;,
+         tosiSelect({
+           value: &#39;1&#39;,
+           options: [
+             { caption: &#39;Forward&#39;, value: &#39;1&#39; },
+             { caption: &#39;Backward&#39;, value: &#39;-1&#39; }
+           ],
+           onChange(event) {
+             tosiPlatform.animation.setDirection(event.target.value)
+           }
+         })
+       )
+     ],
+     target: tosiPlatform,
+     position: &#39;s&#39;
+   })
+ )
+  },
+  500
+)
+</code></pre>
+<pre><code class="language-html">&lt;tosi-lottie
+  style=&quot;width: 200px; height: 200px;&quot;
+  src=&quot;/tosi-platform.json&quot;
+&gt;&lt;/tosi-lottie&gt;
+&lt;div class=&quot;caption&quot;&gt;
+  Animation created by &lt;a target=&quot;_blank&quot; href=&quot;https://pro.fiverr.com/freelancers/anicoremotion&quot;&gt;@anicoremotion&lt;/a&gt;
+&lt;/div&gt;
+</code></pre>
+<pre><code class="language-css">.preview {
+  padding: var(--spacing);
+  text-align: center;
+}
+
+.preview .panel {
+  padding: 10px;
+  border-radius: 5px;
+  gap: 5px;
+  background: var(--background);
+  box-shadow: var(--menu-shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.preview .caption {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+}
+
+.preview .panel-header {
+  margin: 0;
+  text-align: center;
+  font-weight: bold;
+  background: var(--brand-color);
+  color: white;
+  padding: 5px;
+  margin: -10px -10px 0 -10px;
+  cursor: move;
+}
+</code></pre>
+<p>You can also directly set its <code>json</code> property to the content of a <code>lottie.json</code> file.</p>
+<p>And of course just access the element&#39;s <code>animation</code> property to <a href="https://airbnb.io/lottie/#/web">use the bodymovin API</a>.</p>
+<p>Also see the <a href="https://lottiefiles.github.io/lottie-docs/advanced_interactions/">documentation for advanced interactions</a></p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/" aria-current="page" class="current">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

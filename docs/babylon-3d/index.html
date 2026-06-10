@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>3d — tosijs-ui</title>
+  <meta name="description" content="A babylonjs wrapper." />
+  <link rel="canonical" href="https://ui.tosijs.net/babylon-3d/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="3d — tosijs-ui" />
+  <meta property="og:description" content="A babylonjs wrapper." />
+  <meta property="og:url" content="https://ui.tosijs.net/babylon-3d/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>3d</h1>
+<p>A <a href="https://www.babylonjs.com/">babylonjs</a> wrapper.</p>
+<p>A <code>&lt;tosi-3d&gt;</code> element is initialized with an <code>engine</code>, <code>canvas</code>, <code>scene</code>, and an update-loop.</p>
+<p>If you view this example with an XR-enabled device, such as the
+<a href="https://www.meta.com/quest/quest-3/">Meta Quest 3</a>, then you should be able to view this
+as an AR scene.</p>
+<pre><code class="language-js">import { b3d, gamepadText, xrControllers, xrControllersText } from &#39;tosijs-ui&#39;
+
+preview.append(b3d({
+  async sceneCreated(element, BABYLON) {
+    const camera = new BABYLON.FreeCamera(
+      &#39;camera&#39;,
+      new BABYLON.Vector3(0, 1, -4),
+      element.scene
+    )
+    camera.attachControl(element.parts.canvas, true)
+
+    new BABYLON.HemisphericLight(&#39;light&#39;, new BABYLON.Vector3(0.25, 1, -0.5))
+
+    this.loadScene(&#39;/&#39;, &#39;xin3d.glb&#39;)
+
+    const size = 1024
+    const textTexture = new BABYLON.DynamicTexture(&#39;Text&#39;, size, element.scene)
+    const textContext = textTexture.getContext()
+    textTexture.update()
+
+    const textMaterial = new BABYLON.StandardMaterial(&#39;Text&#39;, element.scene)
+    textMaterial.diffuseTexture = textTexture
+    textMaterial.emissiveTexture = textTexture
+    textMaterial.backfaceCulling = false
+
+    const plaque = BABYLON.MeshBuilder.CreatePlane(&#39;Plaque&#39;, {size: 1}, element.scene)
+    plaque.position.x = 0
+    plaque.position.y = 2
+    plaque.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL
+    plaque.material = textMaterial
+
+    let controllers
+    if (navigator.xr) {
+      const xrHelper = await element.scene.createDefaultXRExperienceAsync({
+        uiOptions: {
+          sessionMode: &#39;immersive-ar&#39;
+        }
+      })
+      controllers = xrControllers(xrHelper)
+    }
+
+    const interval = setInterval(() =&gt; {
+      if (document.body.contains(element)) {
+        textContext.fillStyle = &#39;#204020&#39;
+        textContext.fillRect(0, 0, size, size)
+        const text = gamepadText() + &#39;\n&#39; + xrControllersText(controllers)
+        const lines = text.split(&#39;\n&#39;)
+        textContext.fillStyle = &#39;#afa&#39;
+        textContext.font = &#39;32px monospace&#39;
+        for(let i = 0; i &lt; lines.length; i++) {
+          const line = lines[i]
+          textContext.fillText(line, 40, 70 + i * 40)
+        }
+        textContext.fillStyle = &#39;#bbb&#39;
+        textContext.fillText(&#39;tosijs-xr — debug info&#39;, 40, 984)
+        textTexture.update()
+      } else {
+        clearInterval(interval)
+      }
+    }, 100)
+  },
+}))
+</code></pre>
+<pre><code class="language-css">.preview tosi-3d {
+  width: 100%;
+  height: 100%;
+}
+</code></pre>
+<blockquote>
+<p>Note: for more involved 3d work there&#39;s <a href="https://3d.tosijs.net">tosijs-3d</a>,
+a library of modular components for 3d development.</p>
+</blockquote>
+<p>You can access the <code>scene</code> and <code>engine</code> properties. You can also assign <code>sceneCreated</code>
+and <code>update</code> callbacks that will be executed when the scene is first initialized and
+before each update, respectively. (See the example, it does both.)</p>
+<p>Both <code>sceneCreated</code> and <code>update</code> may be <code>async</code>. The component will <code>await</code> <code>sceneCreated</code>
+before starting the renderLoop, but <code>update</code> is simply passed to babylon, so be careful.</p>
+<p>By default, this component loads <code>babylon.js</code> from the <a href="https://doc.babylonjs.com/setup/frameworkPackages/CDN">babylonjs CDN</a>,
+but if <code>BABYLON</code> is already defined (e.g. if you&#39;ve bundled it) then it will use that instead.</p>
+<p>If you need additional libraries, e.g. <code>https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js</code> for loading models such as <code>gltf</code> and <code>glb</code> files, you should load those in <code>sceneCreated</code>.</p>
+<p>Here&#39;s a simple example of a terrain mesh comprising 125k triangles, 50% of which is being scaled using a <code>profileScale</code> function that
+takes an array of numbers that use a linear profile to change the landform.</p>
+<pre><code class="language-js">import { b3d } from &#39;tosijs-ui&#39;
+import { MoreMath } from &#39;tosijs&#39;
+
+const debugCutoff = 0.5
+const defaultProfile = [0, 1, 5, 8, 10].map(x =&gt; x/10)
+
+const { clamp } = MoreMath
+function profileScale(t = 0, bypass = false, profile = defaultProfile) {
+  if (bypass) {
+    return t
+  }
+  const count = profile.length - 1
+  if (count &lt; 1) {
+    throw new Error(&#39;profile must be of length ≥ 2&#39;)
+  }
+
+  const s = clamp(0, (t + 1) / 2, 1)
+  const index = Math.floor(s * count)
+  const dt = (s - index / count) * count
+  const min = profile[index]
+  const max = profile[index + 1]
+  const p = dt * (max - min) + min
+  return 2 * p - 1
+}
+
+preview.append(b3d({
+  async sceneCreated(element, BABYLON) {
+    const { scene } = element
+    const { createNoise2D } = await import(&#39;https://cdn.jsdelivr.net/npm/simplex-noise@4.0.1/+esm&#39;)
+
+    new BABYLON.HemisphericLight(&#39;light&#39;, new BABYLON.Vector3(0.25, 1, 2))
+
+    const terrain = new BABYLON.Mesh(&#39;terrain&#39;, scene)
+    const vertexData = new BABYLON.VertexData()
+
+    const noise2D = createNoise2D()
+    const positions = []
+    const indices = []
+    const gridSize = 100
+    const gridResolution = 250
+    const gridPoints = gridResolution + 1
+    const noiseScale = 0.03
+    const heightScale = 4.5
+    terrain.position.y = -5
+    const scale = t =&gt; t * gridSize / gridResolution - gridSize * 0.5
+    for(let x = 0; x &lt;= gridResolution; x++) {
+      for(let z = 0; z &lt;= gridResolution; z++) {
+        const y =  profileScale(noise2D(scale(x) * noiseScale, scale(z) * noiseScale), x &lt; gridResolution * debugCutoff)
+        positions.push(scale(x), y * heightScale, scale(z))
+        if (x &gt; 0 &amp;&amp; z &gt; 0) {
+          const i = x * gridPoints + z
+          indices.push(
+            i, i - gridPoints - 1, i - 1,
+            i, i - gridPoints, i - gridPoints - 1,
+          )
+        }
+      }
+    }
+    const normals = []
+    BABYLON.VertexData.ComputeNormals(positions, indices, normals);
+
+    vertexData.positions = positions
+    vertexData.indices = indices
+    vertexData.normals = normals
+    vertexData.applyToMesh(terrain)
+  },
+}))
+</code></pre>
+<h2>loadScene</h2>
+<p><code>&lt;tosi-3d&gt;.loadScene(path: string, file: string, callBack(meshes: any[]): void)</code> can
+be used to load <code>.glb</code> files.</p>
+<h2>loadUI</h2>
+<p><code>&lt;tosi-3d&gt;.loadUI(options: B3dUIOptions)</code> loads babylonjs guis, which you can create programmatically or using the <a href="https://gui.babylonjs.com/">babylonjs gui tool</a>.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/" aria-current="page" class="current">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

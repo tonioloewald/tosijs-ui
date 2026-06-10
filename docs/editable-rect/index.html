@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>editable-rect — tosijs-ui</title>
+  <meta name="description" content="&lt;tosi-editable&gt; (editableRect is the ElementCreator and EditableRect is the class) is an element" />
+  <link rel="canonical" href="https://ui.tosijs.net/editable-rect/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="editable-rect — tosijs-ui" />
+  <meta property="og:description" content="&lt;tosi-editable&gt; (editableRect is the ElementCreator and EditableRect is the class) is an element" />
+  <meta property="og:url" content="https://ui.tosijs.net/editable-rect/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>editable-rect</h1>
+<p><code>&lt;tosi-editable&gt;</code> (<code>editableRect</code> is the <code>ElementCreator</code> and <code>EditableRect</code> is the class) is an element
+for allowing the adjustment of another element&#39;s position and size. Simply insert it in a <code>position: absolute</code>
+or <code>position: fixed</code> element and you can directly adjust its CSS positioning, including rotation.</p>
+<p>Click on an element to adjust its position, dimensions, and rotation.</p>
+<pre><code class="language-js">import { editableRect, icons } from &#39;tosijs-ui&#39;
+import { elements } from &#39;tosijs&#39;
+const { button } = elements
+
+function showTools(event) {
+  event.stopPropagation()
+  event.preventDefault()
+}
+
+const editable = editableRect(button({class: &#39;more-popup&#39;, onClick: showTools}, icons.moreVertical()))
+preview.addEventListener(&#39;click&#39;, (event) =&gt; {
+  const target = event.target
+  if ([&#39;absolute&#39;, &#39;fixed&#39;].includes(getComputedStyle(target).position)) {
+    target.append(editable)
+  } else {
+    editable.remove()
+  }
+})
+preview.addEventListener(&#39;change&#39;, event =&gt; console.log(event))
+</code></pre>
+<pre><code class="language-html">&lt;div class=&quot;editable&quot; style=&quot;top: 20px; left: 20px; width: auto; height: auto; right: 20px; bottom: 20px;&quot;&gt;
+  &lt;div class=&quot;editable&quot; style=&quot;top: 20px; left: 20px; width: 200px; height: 150px;&quot;&gt;
+  &lt;/div&gt;
+  &lt;div class=&quot;editable&quot; style=&quot;bottom: 20px; top: 20px; width: 300px; height: auto; right: 20px;&quot;&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<pre><code class="language-css">.preview .editable {
+  position: absolute;
+  box-shadow: inset 0 0 0 1px #0ccc;
+  background: #0cc1;
+}
+
+.preview button.more-popup {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  top: 2px;
+  right: 2px;
+  --text-color: black;
+  background: transparent;
+  box-shadow: none;
+}
+
+.previw button
+</code></pre>
+<h2>Snapping</h2>
+<p>When <code>EditableRect.snapToGrid === true</code> or the shift-key is depresseed, position will snap to <code>EditableRect.gridSize</code> pixels (default = 8).</p>
+<p>Similarly <code>EditableRect.snapAngle === true</code> or the shift-key will snap rotation to increments of <code>EditableRect.angleSize</code> degrees (default = 15).</p>
+<h2>Events</h2>
+<p>After an element&#39;s position, size, or rotation are adjusted a <code>change</code> event is triggered on the element.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/" aria-current="page" class="current">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>
