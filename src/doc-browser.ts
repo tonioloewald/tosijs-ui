@@ -301,6 +301,14 @@ export interface ProjectLinks {
   [key: string]: string | undefined
 }
 
+/** A configurable link for the header bar or the overflow menu. */
+export interface LinkItem {
+  href: string
+  label: string
+  /** optional icon name (from `icons`); falls back to the text label if unknown */
+  icon?: string
+}
+
 /**
  * How the doc browser maps docs to URLs.
  * - 'query' (default, legacy): single-page app, links are `?filename`.
@@ -317,6 +325,12 @@ export interface DocBrowserOptions {
   navSize?: number
   minSize?: number
   routing?: DocRoutingMode
+  /**
+   * Header-bar links. When provided, these replace the legacy `projectLinks` icon
+   * set in the header (each renders as an icon if `icon` names a known icon, else
+   * as its text label). `projectLinks` is still used for the logo and view-source.
+   */
+  navbarLinks?: LinkItem[]
   /**
    * Pre-rendered content for the landing doc to ADOPT in place (true hydration).
    * When provided, the current page's already-rendered markdown is left untouched
@@ -335,6 +349,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     navSize = 200,
     minSize = 600,
     routing = 'query',
+    navbarLinks,
     contentElement,
   } = options
 
@@ -556,48 +571,35 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
 
   headerContent.push(span({ class: 'elastic' }))
 
-  if (projectLinks.tosijs) {
-    headerContent.push(
-      a({ class: 'iconic', title: 'tosijs', target: '_blank' }, icons.tosi(), {
-        href: projectLinks.tosijs,
-      })
+  // A header link renders as an icon (if `icon` names a known icon) or its label.
+  const headerLink = (link: LinkItem) => {
+    const iconFactory = link.icon ? (icons as any)[link.icon] : undefined
+    return a(
+      {
+        class: iconFactory ? 'iconic' : '',
+        title: link.label,
+        target: '_blank',
+        href: link.href,
+      },
+      iconFactory ? iconFactory() : link.label
     )
   }
 
-  if (projectLinks.discord) {
-    headerContent.push(
-      a(
-        { class: 'iconic', title: 'discord', target: '_blank' },
-        icons.discord(),
-        { href: projectLinks.discord }
-      )
-    )
-  }
-
-  if (projectLinks.blog) {
-    headerContent.push(
-      a({ class: 'iconic', title: 'blog', target: '_blank' }, icons.blog(), {
-        href: projectLinks.blog,
-      })
-    )
-  }
-
-  if (projectLinks.github) {
-    headerContent.push(
-      a(
-        { class: 'iconic', title: 'github', target: '_blank' },
-        icons.github(),
-        { href: projectLinks.github }
-      )
-    )
-  }
-
-  if (projectLinks.npm) {
-    headerContent.push(
-      a({ class: 'iconic', title: 'npmjs', target: '_blank' }, icons.npm(), {
-        href: projectLinks.npm,
-      })
-    )
+  if (navbarLinks) {
+    // Configurable link set.
+    navbarLinks.forEach((link) => headerContent.push(headerLink(link)))
+  } else {
+    // Legacy: derive header icons from the known `projectLinks` keys.
+    const legacy: Array<[string | undefined, string, string]> = [
+      [projectLinks.tosijs, 'tosi', 'tosijs'],
+      [projectLinks.discord, 'discord', 'discord'],
+      [projectLinks.blog, 'blog', 'blog'],
+      [projectLinks.github, 'github', 'github'],
+      [projectLinks.npm, 'npm', 'npmjs'],
+    ]
+    for (const [href, icon, label] of legacy) {
+      if (href) headerContent.push(headerLink({ href, label, icon }))
+    }
   }
 
   // The rendered-markdown content area. When hydrating a static page we ADOPT the

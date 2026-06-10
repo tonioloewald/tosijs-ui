@@ -5,6 +5,8 @@ import { watch } from 'chokidar'
 import { extractDocs } from './docs'
 import { generateLlmsTxt } from './make-llms-txt'
 import { generateSite } from './generate-site'
+// Translation table for the doc-site UI (powers the settings menu's language picker).
+import localizedStrings from '../demo/src/localized-strings'
 // @ts-ignore-error
 import { $, spawn } from 'bun'
 
@@ -119,14 +121,31 @@ async function build(): Promise<boolean> {
     projectName: PROJECT,
     baseUrl: 'https://ui.tosijs.net',
     projectLinks: {
+      // Still used for the logo and the view-source link.
       tosijs: 'https://tosijs.net',
       github: `https://github.com/tonioloewald/${PROJECT}`,
-      npm: `https://www.npmjs.com/package/${PROJECT}`,
-      discord: 'https://discord.com/invite/ramJ9rgky5',
-      blog: 'https://loewald.com',
-      bundle: `https://bundlejs.com/?q=${PROJECT}`,
-      cdn: `https://www.jsdelivr.com/package/npm/${PROJECT}`,
     },
+    // Header-bar icon links.
+    navbarLinks: [
+      { href: 'https://tosijs.net', label: 'tosijs', icon: 'tosi' },
+      {
+        href: 'https://discord.com/invite/ramJ9rgky5',
+        label: 'discord',
+        icon: 'discord',
+      },
+      { href: 'https://loewald.com', label: 'blog', icon: 'blog' },
+      {
+        href: `https://github.com/tonioloewald/${PROJECT}`,
+        label: 'github',
+        icon: 'github',
+      },
+      {
+        href: `https://www.npmjs.com/package/${PROJECT}`,
+        label: 'npmjs',
+        icon: 'npm',
+      },
+    ],
+    localizedStrings,
     headExtra: '  <link rel="icon" href="/favicon.svg" />',
   })
   // Burn the theme into a static stylesheet (separate subprocess — see generate-css.ts).

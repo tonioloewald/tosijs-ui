@@ -238,7 +238,7 @@ const testIndicatorStyleSpec = {
     },
 };
 export function createDocBrowser(options) {
-    const { docs, context = {}, projectName = '', projectLinks = {}, navSize = 200, minSize = 600, routing = 'query', contentElement, } = options;
+    const { docs, context = {}, projectName = '', projectLinks = {}, navSize = 200, minSize = 600, routing = 'query', navbarLinks, contentElement, } = options;
     // Initialize testStatus on all docs so tosi can track it
     for (const doc of docs) {
         doc.testStatus = undefined;
@@ -410,26 +410,33 @@ export function createDocBrowser(options) {
             : span(), h2(projectName)));
     }
     headerContent.push(span({ class: 'elastic' }));
-    if (projectLinks.tosijs) {
-        headerContent.push(a({ class: 'iconic', title: 'tosijs', target: '_blank' }, icons.tosi(), {
-            href: projectLinks.tosijs,
-        }));
+    // A header link renders as an icon (if `icon` names a known icon) or its label.
+    const headerLink = (link) => {
+        const iconFactory = link.icon ? icons[link.icon] : undefined;
+        return a({
+            class: iconFactory ? 'iconic' : '',
+            title: link.label,
+            target: '_blank',
+            href: link.href,
+        }, iconFactory ? iconFactory() : link.label);
+    };
+    if (navbarLinks) {
+        // Configurable link set.
+        navbarLinks.forEach((link) => headerContent.push(headerLink(link)));
     }
-    if (projectLinks.discord) {
-        headerContent.push(a({ class: 'iconic', title: 'discord', target: '_blank' }, icons.discord(), { href: projectLinks.discord }));
-    }
-    if (projectLinks.blog) {
-        headerContent.push(a({ class: 'iconic', title: 'blog', target: '_blank' }, icons.blog(), {
-            href: projectLinks.blog,
-        }));
-    }
-    if (projectLinks.github) {
-        headerContent.push(a({ class: 'iconic', title: 'github', target: '_blank' }, icons.github(), { href: projectLinks.github }));
-    }
-    if (projectLinks.npm) {
-        headerContent.push(a({ class: 'iconic', title: 'npmjs', target: '_blank' }, icons.npm(), {
-            href: projectLinks.npm,
-        }));
+    else {
+        // Legacy: derive header icons from the known `projectLinks` keys.
+        const legacy = [
+            [projectLinks.tosijs, 'tosi', 'tosijs'],
+            [projectLinks.discord, 'discord', 'discord'],
+            [projectLinks.blog, 'blog', 'blog'],
+            [projectLinks.github, 'github', 'github'],
+            [projectLinks.npm, 'npm', 'npmjs'],
+        ];
+        for (const [href, icon, label] of legacy) {
+            if (href)
+                headerContent.push(headerLink({ href, label, icon }));
+        }
     }
     // The rendered-markdown content area. When hydrating a static page we ADOPT the
     // pre-rendered node so the landing page's HTML is never re-rendered; otherwise we

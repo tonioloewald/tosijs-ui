@@ -34,6 +34,13 @@ export interface ProjectLinks {
     cdn?: string;
     [key: string]: string | undefined;
 }
+/** A configurable link for the header bar or the overflow menu. */
+export interface LinkItem {
+    href: string;
+    label: string;
+    /** optional icon name (from `icons`); falls back to the text label if unknown */
+    icon?: string;
+}
 /**
  * How the doc browser maps docs to URLs.
  * - 'query' (default, legacy): single-page app, links are `?filename`.
@@ -49,6 +56,12 @@ export interface DocBrowserOptions {
     navSize?: number;
     minSize?: number;
     routing?: DocRoutingMode;
+    /**
+     * Header-bar links. When provided, these replace the legacy `projectLinks` icon
+     * set in the header (each renders as an icon if `icon` names a known icon, else
+     * as its text label). `projectLinks` is still used for the logo and view-source.
+     */
+    navbarLinks?: LinkItem[];
     /**
      * Pre-rendered content for the landing doc to ADOPT in place (true hydration).
      * When provided, the current page's already-rendered markdown is left untouched

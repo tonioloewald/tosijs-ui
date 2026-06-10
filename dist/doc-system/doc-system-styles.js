@@ -338,5 +338,14 @@ export function docSystemStyleSpec(theme = {}) {
             margin: 0,
             padding: vars.spacing,
         },
+        // Declarative header link list — shown for no-JS, removed on hydration.
+        '.doc-navbar': {
+            listStyle: 'none',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: vars.spacing,
+            margin: 0,
+            padding: vars.spacing,
+        },
     };
 }

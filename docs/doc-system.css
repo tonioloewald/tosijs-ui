@@ -385,3 +385,12 @@ th, td {
   margin: 0px;
   padding: var(--spacing);
 }
+
+.doc-navbar {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing);
+  margin: 0px;
+  padding: var(--spacing);
+}
