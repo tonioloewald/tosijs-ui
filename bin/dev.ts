@@ -110,6 +110,8 @@ async function build(): Promise<boolean> {
     },
     headExtra: '  <link rel="icon" href="/favicon.svg" />',
   })
+  // Burn the theme into a static stylesheet (separate subprocess — see generate-css.ts).
+  await $`bun ./bin/generate-css.ts ${PUBLIC}/doc-system.css`.text()
   console.log(`generated ${pageCount} static pages`)
 
   console.timeEnd('build')
