@@ -42,7 +42,7 @@ When an `expect()` fails the harness appends the source line and `(line N)` to t
 
 ### Dev Server TLS
 
-The dev server runs HTTPS using self-signed certs in `tls/`. If certs are missing, run `tls/create-dev-certs.sh` to regenerate them.
+The dev server runs HTTPS using certs in `tls/` (`key.pem` + `certificate.pem`, both gitignored). If they're missing (e.g. a fresh clone), `bin/dev.ts` exits with a message telling you to run `bun tls` (`tls/create-dev-certs.sh`) — it doesn't auto-generate, because the script runs `mkcert -install` which prompts for sudo. The script uses [mkcert](https://github.com/FiloSottile/mkcert) to install a locally-trusted CA, so browsers show **no** certificate warnings (unlike a bare self-signed cert). If mkcert isn't installed the script prints platform-specific install instructions and exits; install it, then re-run. Certs cover `localhost`, `127.0.0.1`, `::1`, and `<hostname>.local` (for LAN device testing).
 
 ### CI
 

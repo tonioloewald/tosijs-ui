@@ -1,20 +1,35 @@
-# Create your own certificates
+# Dev TLS certificates
 
-```
-openssl genrsa -out key.pem 4096
-openssl req -new -sha256 -key key.pem -out csr.csr
-openssl req -x509 -sha256 -days 365 -key key.pem -in csr.csr -out certificate.pem
-openssl req -in csr.csr -text -noout | grep -i "Signature.*SHA256" && echo "All is well"
-```
+The HTTPS dev server (bin/dev.ts) loads ./key.pem and ./certificate.pem.
+The dev server generates them automatically on first launch if they are
+missing; you can also generate them by hand.
 
-A script is provided for this:
+They are produced with mkcert, which installs a locally-trusted CA so browsers
+show NO certificate warnings (a bare self-signed cert always warns):
 
-```
-cd tls
-chmod +x create-dev-certs.sh
-./create-dev-certs.sh
-cd ..
-```
+    bun tls          # runs tls/create-dev-certs.sh
 
-[instructions adapted from here](https://msol.io/blog/tech/create-a-self-signed-ssl-certificate-with-openssl/)
+The script installs the local CA (mkcert -install) and issues a cert valid
+for localhost, 127.0.0.1, ::1, and this machine's <hostname>.local name.
 
+## Installing mkcert
+
+macOS:
+    brew install mkcert
+    brew install nss        # only needed if you use Firefox
+
+Linux:
+    sudo apt install libnss3-tools
+    curl -JLO 'https://dl.filippo.io/mkcert/latest?for=linux/amd64'
+    chmod +x mkcert-v*-linux-amd64
+    sudo mv mkcert-v*-linux-amd64 /usr/local/bin/mkcert
+
+## Other devices on the LAN (phone, another laptop)
+
+The cert covers <hostname>.local, but each device must also trust the CA.
+Copy the CA root to the device and trust it:
+
+    mkcert -CAROOT          # prints the dir containing rootCA.pem
+
+Copy only rootCA.pem (NOT rootCA-key.pem — that key can mint trusted certs
+for any site). The .pem files and CA are per-machine and are gitignored.

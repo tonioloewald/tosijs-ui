@@ -4,6 +4,7 @@
   "description": "simple robust web-components for use with tosijs or anything else",
   "scripts": {
     "start": "bun --watch bin/dev.ts",
+    "tls": "bash tls/create-dev-certs.sh",
     "build": "bun bin/dev.ts --build-only",
     "test-browser": "bun bin/dev.ts --test",
     "format": "bun eslint src demo --fix && bun prettier --write .",
