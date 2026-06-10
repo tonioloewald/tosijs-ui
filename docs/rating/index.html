@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>rating — tosijs-ui</title>
+  <meta name="description" content="TosiRating / &lt;tosi-rating&gt; provides a drop-in replacement for an &lt;input&gt;" />
+  <link rel="canonical" href="https://ui.tosijs.net/rating/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="rating — tosijs-ui" />
+  <meta property="og:description" content="TosiRating / &lt;tosi-rating&gt; provides a drop-in replacement for an &lt;input&gt;" />
+  <meta property="og:url" content="https://ui.tosijs.net/rating/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>rating</h1>
+<p><code>TosiRating</code> / <code>&lt;tosi-rating&gt;</code> provides a drop-in replacement for an <code>&lt;input&gt;</code>
+that renders a rating using icons.</p>
+<pre><code class="language-js">const { tosiRating } = tosijsui
+preview.append(
+  tosiRating({ value: 3.4 }),
+  tosiRating({ min: 0, value: 3.4, step: 0.5, hollow: true }),
+  tosiRating({ value: 3.4, ratingFill: &#39;deepskyblue&#39;, ratingStroke: &#39;deepskyblue&#39; }),
+  tosiRating({ value: 3.1, max: 10, ratingFill: &#39;hotpink&#39;, ratingStroke: &#39;hotpink&#39;, icon: &#39;heart&#39;, iconSize: 32 }),
+  tosiRating({ class: &#39;color&#39;, value: 3.1, max: 5, icon: &#39;tosiPlatform&#39;, iconSize: 32 }),
+)
+</code></pre>
+<pre><code class="language-test">const rating = preview.querySelector(&#39;tosi-rating&#39;)
+test(&#39;rating renders&#39;, () =&gt; {
+  expect(rating).toBeTruthy()
+  expect(rating.tagName.toLowerCase()).toBe(&#39;tosi-rating&#39;)
+})
+test(&#39;rating has correct value&#39;, () =&gt; {
+  expect(rating.value).toBe(3.4)
+})
+test(&#39;rating has correct max&#39;, () =&gt; {
+  expect(rating.max).toBe(5)
+})
+</code></pre>
+<pre><code class="language-css">.preview {
+  display: flex;
+  flex-direction: column;
+}
+
+.preview .color::part(empty) {
+  filter: grayscale(1);
+  opacity: 0.25;
+}
+</code></pre>
+<h2>Attributes</h2>
+<ul>
+<li><code>icon-size</code> (24 by default) determines the height of the control and along with <code>max</code> its width</li>
+<li><code>max</code> maximum rating</li>
+<li><code>min</code> (1 by default) can be 0 or 1 (allowing ratings of 0 to max or 1 to max)</li>
+<li><code>step</code> (0.5 by default) granularity of rating</li>
+<li><code>icon</code> (&#39;star&#39; by default) determines the icon used</li>
+<li><code>rating-stroke</code> (#f91 by default) is the stroke of rating icons</li>
+<li><code>rating-fill</code> (#e81 by default) is the color of rating icons</li>
+<li><code>empty-stroke</code> (none by default) is the color of background icons</li>
+<li><code>empty-fill</code> (#ccc by default) is the color of background icons</li>
+<li><code>readonly</code> (false by default) prevents the user from changing the rating</li>
+<li><code>hollow</code> (false by default) makes the empty rating icons hollow.</li>
+<li><code>required</code> (false by default) marks the field as required for form validation</li>
+<li><code>name</code> the form field name (for formAssociated support)</li>
+</ul>
+<h2>Form Integration</h2>
+<p><code>&lt;tosi-rating&gt;</code> is form-associated, meaning it works directly in native <code>&lt;form&gt;</code> elements:</p>
+<pre><code class="language-html">&lt;form&gt;
+  &lt;tosi-rating name=&quot;rating&quot; required&gt;&lt;/tosi-rating&gt;
+  &lt;button type=&quot;submit&quot;&gt;Submit&lt;/button&gt;
+&lt;/form&gt;
+</code></pre>
+<h2>Keyboard</h2>
+<p><code>&lt;tosi-rating&gt;</code> should be fully keyboard navigable (and, I hope, accessible).</p>
+<p>The up key increases the rating, down descreases it. This is the same
+as the behavior of <code>&lt;input type=&quot;number&quot;&gt;</code>, <a href="https://shoelace.style/components/rating/">Shoelace&#39;s rating widget</a>,
+and (in my opinion) common sense, but  not like <a href="https://mui.com/material-ui/react-rating/">MUI&#39;s rating widget</a>.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/" aria-current="page" class="current">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

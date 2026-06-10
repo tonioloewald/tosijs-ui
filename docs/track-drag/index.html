@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>trackDrag — tosijs-ui</title>
+  <meta name="description" content="Sometimes you want to track a mouse-drag or touch-drag operation without messing around." />
+  <link rel="canonical" href="https://ui.tosijs.net/track-drag/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="trackDrag — tosijs-ui" />
+  <meta property="og:description" content="Sometimes you want to track a mouse-drag or touch-drag operation without messing around." />
+  <meta property="og:url" content="https://ui.tosijs.net/track-drag/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>trackDrag</h1>
+<p>Sometimes you want to track a mouse-drag or touch-drag operation without messing around.
+This is how the resizeable columns in <code>&lt;tosi-table&gt;</code> work.</p>
+<p>Just call <code>trackDrag(event, (dx, dy, event) =&gt; { ... })</code> and you&#39;ll get updates on corresponding events until
+you return <code>true</code> from the event-handler (or, in the case of <code>touch</code> events, the last <code>touch</code> ends).
+For mouse events, a &quot;tracker&quot; element is thrown up in front of everything for the event.</p>
+<pre><code class="language-html">&lt;p&gt;
+  Try dragging the squares…&lt;br&gt;
+  (You can drag them separately with multi-touch!)
+&lt;/p&gt;
+&lt;div class=&quot;draggable&quot; style=&quot;top: 20px; left: 40px; background: #f008&quot;&gt;&lt;/div&gt;
+&lt;div class=&quot;draggable&quot; style=&quot;left: 40%; bottom: 30%; background: #0f08&quot;&gt;&lt;/div&gt;
+&lt;div class=&quot;draggable&quot; style=&quot;bottom: 30px; right: 10px; background: #00f8&quot;&gt;&lt;/div&gt;
+</code></pre>
+<pre><code class="language-css">.preview {
+  touch-action: none;
+}
+
+.draggable {
+  content: &#39; &#39;;
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  cursor: move;
+}
+
+.preview p {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+}
+</code></pre>
+<pre><code class="language-js">import { trackDrag } from &#39;tosijs-ui&#39;
+
+function dragItem(event) {
+  const draggable = event.target
+  if (draggable.classList.contains(&#39;draggable&#39;)) {
+    const x = draggable.offsetLeft
+    const y = draggable.offsetTop
+    trackDrag(event, (dx, dy, event) =&gt; {
+      draggable.style.left = (x + dx) + &#39;px&#39;
+      draggable.style.top = (y + dy) + &#39;px&#39;
+      draggable.style.bottom = &#39;auto&#39;
+      draggable.style.right = &#39;auto&#39;
+      return event.type === &#39;mouseup&#39;
+    })
+  }
+}
+
+preview.addEventListener(&#39;mousedown&#39;, dragItem )
+preview.addEventListener(&#39;touchstart&#39;, dragItem, { passive: true } )
+</code></pre>
+<p>For <code>touch</code> events, <code>dx</code> and <code>dy</code> are based on tracking <code>event.changedTouches[0]</code> which
+is almost certainly what you want.</p>
+<p>To handle multi-touch gestures you will need to track the touches yourself.</p>
+<h2>bringToFront</h2>
+<p><code>bringToFront(element: HTMLElement, selector = &#39;body *&#39;)</code>  gives the element the highest
+<code>z-index</code> of any element matching the selector (which is passed to findHighestZ).</p>
+<h2>findHighestZ</h2>
+<p><code>findHighestZ(selector = &#39;body *&#39;): number</code> returns the the highest <code>z-index</code> of any element
+matching <code>selector</code>.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/" aria-current="page" class="current">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

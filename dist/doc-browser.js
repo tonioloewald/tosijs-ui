@@ -152,7 +152,8 @@ The `tosijs-ui` demo is a complete working example. See:
 */
 /*{"pin": "bottom"}*/
 import { elements, vars, varDefault, bindings, touch, getListItem, debounce, tosi, StyleSheet, } from 'tosijs';
-import { tosiMd } from './markdown-viewer';
+import { buildSlugMap, pathForSlug, filenameForPath } from './doc-system/routing';
+import { renderDocMarkdown } from './doc-system/render';
 import { LiveExample, testManager } from './live-example';
 import { tosiSidenav, TosiSidenav } from './side-nav';
 import { icons } from './icons';
@@ -237,14 +238,21 @@ const testIndicatorStyleSpec = {
     },
 };
 export function createDocBrowser(options) {
-    const { docs, context = {}, projectName = '', projectLinks = {}, navSize = 200, minSize = 600, } = options;
+    const { docs, context = {}, projectName = '', projectLinks = {}, navSize = 200, minSize = 600, routing = 'query', contentElement, } = options;
     // Initialize testStatus on all docs so tosi can track it
     for (const doc of docs) {
         doc.testStatus = undefined;
     }
-    const docName = document.location.search !== ''
-        ? document.location.search.substring(1).split('&')[0]
-        : docs[0]?.filename || 'README.md';
+    // Routing abstraction — keeps the legacy `?filename` SPA behavior the default,
+    // while letting <tosi-doc-system> drive clean `/slug/` URLs off the same docs.
+    const slugMap = routing === 'path' ? buildSlugMap(docs) : {};
+    const hrefFor = (filename) => routing === 'path' ? pathForSlug(slugMap[filename] ?? filename) : `?${filename}`;
+    const filenameFromLocation = () => routing === 'path'
+        ? filenameForPath(document.location.pathname, slugMap)
+        : document.location.search !== ''
+            ? document.location.search.substring(1).split('&')[0]
+            : '';
+    const docName = filenameFromLocation() || docs[0]?.filename || 'README.md';
     const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0];
     const { app } = tosi({
         app: {
@@ -322,13 +330,13 @@ export function createDocBrowser(options) {
     };
     bindings.docLink = {
         toDOM(elt, filename) {
-            elt.setAttribute('href', `?${filename}`);
+            elt.setAttribute('href', hrefFor(filename));
+            elt.dataset.filename = filename;
         },
     };
     bindings.current = {
         toDOM(elt, currentFile) {
-            const boundFile = elt.getAttribute('href') || '';
-            elt.classList.toggle('current', currentFile === boundFile.substring(1));
+            elt.classList.toggle('current', currentFile === elt.dataset.filename);
         },
     };
     bindings.testStatus = {
@@ -362,9 +370,7 @@ export function createDocBrowser(options) {
         onInput: filterDocs,
     });
     window.addEventListener('popstate', () => {
-        const filename = window.location.search.substring(1);
-        app.currentDoc =
-            app.docs.find((doc) => doc.filename === filename) || app.docs[0];
+        navigateTo(filenameFromLocation());
     });
     const headerContent = [
         button({
@@ -425,6 +431,40 @@ export function createDocBrowser(options) {
             href: projectLinks.npm,
         }));
     }
+    // The rendered-markdown content area. When hydrating a static page we ADOPT the
+    // pre-rendered node so the landing page's HTML is never re-rendered; otherwise we
+    // render from doc text. Every navigation funnels through navigateTo() -> showDoc().
+    const docContent = contentElement || div();
+    docContent.classList.add('doc-content');
+    Object.assign(docContent.style, {
+        display: 'block',
+        maxWidth: '44em',
+        margin: 'auto',
+        padding: '0 1em',
+        overflow: 'hidden',
+    });
+    let adoptInitialContent = contentElement !== undefined;
+    const showDoc = (doc) => {
+        if (adoptInitialContent) {
+            adoptInitialContent = false; // leave the pre-rendered HTML untouched
+        }
+        else {
+            docContent.innerHTML = renderDocMarkdown(doc.text);
+        }
+        LiveExample.insertExamples(docContent, context);
+        if (routing === 'path') {
+            document.title = projectName
+                ? `${doc.title} — ${projectName}`
+                : doc.title;
+        }
+    };
+    // Always resolve to the RAW doc from the original array — docs reached via the
+    // app.docs proxy expose BoxedScalar fields (doc.text), which break marked().
+    const navigateTo = (filename) => {
+        const doc = docs.find((d) => d.filename === filename) || docs[0];
+        app.currentDoc = doc;
+        showDoc(doc);
+    };
     const container = div({
         style: {
             display: 'flex',
@@ -471,7 +511,7 @@ export function createDocBrowser(options) {
             nav.contentVisible = true;
             const { href } = a;
             window.history.pushState({ href }, '', href);
-            app.currentDoc = doc;
+            navigateTo(String(doc.filename));
             event.preventDefault();
             // If this page has failing tests, scroll to first failure after render
             const docFilename = String(doc.filename);
@@ -536,19 +576,9 @@ export function createDocBrowser(options) {
         style: {
             _xinIconSize: 16,
         },
-    }), 'View source on GitHub'), tosiMd({
-        style: {
-            display: 'block',
-            maxWidth: '44em',
-            margin: 'auto',
-            padding: `0 1em`,
-            overflow: 'hidden',
-        },
-        bindValue: 'app.currentDoc.text',
-        didRender() {
-            LiveExample.insertExamples(this, context);
-        },
-    }))));
+    }), 'View source on GitHub'), docContent)));
+    // Render the landing doc (adopts pre-rendered HTML when hydrating).
+    showDoc(currentDoc);
     // Inject test indicator styles
     StyleSheet('test-indicators', testIndicatorStyleSpec);
     // Floating widget for test status
@@ -622,8 +652,9 @@ export function createDocBrowser(options) {
                         // Navigate to the page
                         const docObj = app.docs.find((d) => String(d.filename) === filename);
                         if (docObj) {
-                            window.history.pushState({ href: `?${filename}` }, '', `?${filename}`);
-                            app.currentDoc = docObj;
+                            const href = hrefFor(filename);
+                            window.history.pushState({ href }, '', href);
+                            navigateTo(filename);
                             // Scroll to failing test after render
                             setTimeout(() => {
                                 const failedExample = document.querySelector('tosi-example.-test-failed');
@@ -683,9 +714,7 @@ export function createDocBrowser(options) {
     // Detect if running as background test iframe
     const searchParams = new URLSearchParams(window.location.search);
     const isTestFrame = searchParams.get('_testMode') === '1';
-    const testFrameFilename = isTestFrame
-        ? window.location.search.substring(1).split('&')[0]
-        : null;
+    const testFrameFilename = isTestFrame ? filenameFromLocation() : null;
     // Listen for test completion events
     container.addEventListener('testcomplete', ((event) => {
         handleTestComplete(event);
@@ -767,8 +796,10 @@ export function createDocBrowser(options) {
             if (doc.filename === currentFilename)
                 continue;
             // Navigate iframe to the page
-            const base = window.location.origin + window.location.pathname;
-            testFrame.src = `${base}?${doc.filename}&_testMode=1`;
+            testFrame.src =
+                routing === 'path'
+                    ? `${window.location.origin}${hrefFor(doc.filename)}?_testMode=1`
+                    : `${window.location.origin}${window.location.pathname}?${doc.filename}&_testMode=1`;
             // Wait for the iframe to signal it's done (max 30s per page)
             await new Promise((resolve) => {
                 const deadline = Date.now() + 30_000;

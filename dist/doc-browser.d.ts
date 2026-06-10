@@ -34,6 +34,13 @@ export interface ProjectLinks {
     cdn?: string;
     [key: string]: string | undefined;
 }
+/**
+ * How the doc browser maps docs to URLs.
+ * - 'query' (default, legacy): single-page app, links are `?filename`.
+ * - 'path': clean per-page URLs (`/slug/`), for the static pre-rendered site
+ *   driven by <tosi-doc-system>. Requires a real page to exist at each path.
+ */
+export type DocRoutingMode = 'query' | 'path';
 export interface DocBrowserOptions {
     docs: Doc[];
     context?: Record<string, any>;
@@ -41,5 +48,13 @@ export interface DocBrowserOptions {
     projectLinks?: ProjectLinks;
     navSize?: number;
     minSize?: number;
+    routing?: DocRoutingMode;
+    /**
+     * Pre-rendered content for the landing doc to ADOPT in place (true hydration).
+     * When provided, the current page's already-rendered markdown is left untouched
+     * — only live examples are wired up — instead of being re-rendered from text.
+     * Used by <tosi-doc-system>. Subsequent navigation renders from doc text.
+     */
+    contentElement?: HTMLElement;
 }
 export declare function createDocBrowser(options: DocBrowserOptions): HTMLElement;

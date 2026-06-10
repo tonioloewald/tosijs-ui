@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>dialog — tosijs-ui</title>
+  <meta name="description" content="&lt;tosi-dialog&gt; is a simple wrapper around the standard HTML &lt;dialog&gt; element designed" />
+  <link rel="canonical" href="https://ui.tosijs.net/dialog/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="dialog — tosijs-ui" />
+  <meta property="og:description" content="&lt;tosi-dialog&gt; is a simple wrapper around the standard HTML &lt;dialog&gt; element designed" />
+  <meta property="og:url" content="https://ui.tosijs.net/dialog/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>dialog</h1>
+<p><code>&lt;tosi-dialog&gt;</code> is a simple wrapper around the standard HTML <code>&lt;dialog&gt;</code> element designed
+to make creating dialogs as convenient as possible.</p>
+<pre><code class="language-html">&lt;button&gt;Show Dialog&lt;/button&gt;
+&lt;tosi-dialog&gt;
+  &lt;h3 slot=&#39;header&#39;&gt;A Dialog&lt;/h3&gt;
+  &lt;p&gt;
+    Here is some text
+  &lt;/p&gt;
+  &lt;button slot=&quot;footer&quot;&gt;Custom Button&lt;/button&gt;
+&lt;/tosi-dialog&gt;
+</code></pre>
+<pre><code class="language-js">import { on } from &#39;tosijs&#39;
+import { postNotification } from &#39;tosijs-ui&#39;
+
+on(
+  preview.querySelector(&#39;button&#39;),
+  &#39;click&#39;,
+  async () =&gt; {
+    const response = await preview.querySelector(&#39;tosi-dialog&#39;).showModal()
+    postNotification({
+      message: `user clicked ${response}`,
+      duration: 2
+    })
+  }
+)
+</code></pre>
+<pre><code class="language-test">const dialog = preview.querySelector(&#39;tosi-dialog&#39;)
+test(&#39;dialog renders&#39;, () =&gt; {
+  expect(dialog).toBeTruthy()
+  expect(dialog.tagName.toLowerCase()).toBe(&#39;tosi-dialog&#39;)
+})
+test(&#39;dialog has header slot content&#39;, () =&gt; {
+  const header = dialog.querySelector(&#39;[slot=&quot;header&quot;]&#39;)
+  expect(header).toBeTruthy()
+  expect(header.textContent).toBe(&#39;A Dialog&#39;)
+})
+</code></pre>
+<h2>Static Functions</h2>
+<p><code>TosiDialog</code> provides static async functions to replace the built-in dialogs provided by
+the browser.</p>
+<ul>
+<li><code>alert(message: string, title = &#39;Alert&#39;): Promise&lt;undefined&gt;</code></li>
+<li><code>confirm(message: string, title = &#39;Confirm&#39;): Promise&lt;boolean&gt;</code></li>
+<li><code>prompt(message: string, title = &#39;Prompt&#39;, currentValue = &#39;&#39;): Promise&lt;string | null&gt; </code></li>
+</ul>
+<p>You can look at the code that implements them to see how to leverage <code>TosiDialog</code> to build
+more complex, bespoke dialogs that can be used just as conveniently.</p>
+<pre><code class="language-js">import { elements } from &#39;tosijs&#39;
+import { TosiDialog, postNotification } from &#39;tosijs-ui&#39;
+
+const { button, div } = elements
+
+preview.append(
+  div(
+    {
+      style: {
+        display: &#39;flex&#39;,
+        flexDirection: &#39;column&#39;,
+        alignItems: &#39;flex-start&#39;,
+        gap: 10
+      }
+    },
+    button(
+      {
+        async onClick() {
+          await TosiDialog.alert(&#39;This is an alert&#39;)
+          postNotification({
+            message: &#39;alert dismissed&#39;,
+            duration: 2
+          })
+        }
+      },
+      &#39;TosiDialog.alert&#39;,
+    ),
+    button(
+      {
+        async onClick() {
+          const confirmed = await TosiDialog.confirm(&#39;Can you confirm?&#39;)
+          postNotification({
+            message: `user ${confirmed ? &#39;confirmed&#39; : &#39;cancelled&#39;}`,
+            duration: 2
+          })
+        }
+      },
+      &#39;TosiDialog.confirm&#39;,
+    ),
+    button(
+      {
+        async onClick() {
+          const text = await TosiDialog.prompt(&#39;Enter some text please&#39;)
+          postNotification({
+            message: text !== null ? `user entered &quot;${text}&quot;`: &#39;user cancelled&#39;,
+            duration: 2
+          })
+        }
+      },
+      &#39;TosiDialog.prompt&#39;,
+    ),
+  ),
+)
+</code></pre>
+<pre><code class="language-css">.preview {
+  padding: 10px;
+}
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/" aria-current="page" class="current">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

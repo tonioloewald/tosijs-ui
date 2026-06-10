@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>select — tosijs-ui</title>
+  <meta name="description" content="&lt;tosi-select&gt; (tosiSelect is the ElementCreator) is a replacement for the lamentable" />
+  <link rel="canonical" href="https://ui.tosijs.net/select/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="select — tosijs-ui" />
+  <meta property="og:description" content="&lt;tosi-select&gt; (tosiSelect is the ElementCreator) is a replacement for the lamentable" />
+  <meta property="og:url" content="https://ui.tosijs.net/select/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>select</h1>
+<p><code>&lt;tosi-select&gt;</code> (<code>tosiSelect</code> is the <code>ElementCreator</code>) is a replacement for the lamentable
+built in <code>&lt;select&gt;</code> element that addresses its various shortcomings.</p>
+<ul>
+<li>since <code>&lt;tosi-select&gt;</code> is powered by <code>popMenu</code>, and supports separators and submenus.</li>
+<li>options can have icons.</li>
+<li><code>&lt;tosi-select&gt;</code> will retain and display a value even if the matching option is missing.</li>
+<li>its displayed value can be made <code>editable</code>, allowing use as a &quot;combo box&quot;.</li>
+<li>options can have <code>async</code> callbacks that return a value.</li>
+<li>picking an item triggers an <code>action</code> event even if the value hasn&#39;t changed.</li>
+<li>available options are set via the <code>options</code> attribute or the element&#39;s <code>options</code> property (not <code>&lt;option&gt;</code> elements)</li>
+</ul>
+<pre><code class="language-js">const { tosiSelect } = tosijsui
+const { icons } = tosijsui
+
+const simpleSelect = tosiSelect({
+  title: &#39;simple select&#39;,
+  options: &#39;this,that,,the other&#39;,
+  value: &#39;not an option!&#39;
+})
+
+const captionsSelect = tosiSelect({
+  showIcon: true,
+  title: &#39;has captions&#39;,
+  class: &#39;captions&#39;,
+  value: &#39;image&#39;
+})
+
+const iconsSelect = tosiSelect({
+  showIcon: true,
+  title: &#39;combo select with icons&#39;,
+  class: &#39;icons&#39;,
+  editable: true,
+  placeholder: &#39;pick an icon&#39;
+})
+
+const iconsOnly = tosiSelect({
+  showIcon: true,
+  hideCaption: true,
+  title: &#39;icons only&#39;,
+  class: &#39;icons-only&#39;,
+  placeholder: &#39;pick an icon&#39;
+})
+
+preview.append(
+  simpleSelect,
+  document.createElement(&#39;br&#39;),
+  captionsSelect,
+  document.createElement(&#39;br&#39;),
+  iconsSelect,
+  document.createElement(&#39;br&#39;),
+  iconsOnly
+)
+
+captionsSelect.options = [
+  {
+    caption: &#39;a heading&#39;,
+    value: &#39;heading&#39;
+  },
+  {
+    caption: &#39;a paragraph&#39;,
+    value: &#39;paragraph&#39;
+  },
+  null,
+  {
+    caption: &#39;choose some other&#39;,
+    options: [
+      {
+        icon: &#39;image&#39;,
+        caption: &#39;an image&#39;,
+        value: &#39;image&#39;
+      },
+      {
+        icon: &#39;fileText&#39;,
+        caption: &#39;a text file&#39;,
+        value: &#39;text&#39;,
+      },
+      {
+        icon: &#39;video&#39;,
+        caption: &#39;a video&#39;,
+        value: &#39;video&#39;
+      },
+      null,
+      {
+        caption: &#39;anything goes…&#39;,
+        value: () =&gt; prompt(&#39;Enter your other&#39;, &#39;other&#39;) || undefined
+      },
+      {
+        caption: &#39;brother… (after 1s delay)&#39;,
+        value: async () =&gt; new Promise(resolve =&gt; {
+          setTimeout(() =&gt; resolve(&#39;brother&#39;), 1000)
+        })
+      }
+    ]
+  }
+]
+
+iconsSelect.options = iconsOnly.options = Object.keys(icons).sort().map(icon =&gt;({
+  icon,
+  caption: icon,
+  value: icon
+}))
+
+preview.addEventListener(&#39;action&#39;, (event) =&gt; {
+  console.log(event.target.title, &#39;user picked&#39;, event.target.value)
+}, true)
+
+preview.addEventListener(&#39;change&#39;, (event) =&gt; {
+  console.log(event.target.title, &#39;changed to&#39;, event.target.value)
+}, true)
+</code></pre>
+<pre><code class="language-test">const selects = preview.querySelectorAll(&#39;tosi-select&#39;)
+test(&#39;selects render&#39;, () =&gt; {
+  expect(selects.length).toBe(4)
+})
+test(&#39;simple select has value&#39;, () =&gt; {
+  expect(selects[0].value).toBe(&#39;not an option!&#39;)
+})
+test(&#39;captions select has value&#39;, () =&gt; {
+  expect(selects[1].value).toBe(&#39;image&#39;)
+})
+</code></pre>
+<h2>Form Integration</h2>
+<p><code>&lt;tosi-select&gt;</code> is form-associated, meaning it works directly in native <code>&lt;form&gt;</code> elements:</p>
+<pre><code class="language-html">&lt;form&gt;
+  &lt;tosi-select name=&quot;choice&quot; options=&quot;a,b,c&quot; required&gt;&lt;/tosi-select&gt;
+  &lt;button type=&quot;submit&quot;&gt;Submit&lt;/button&gt;
+&lt;/form&gt;
+</code></pre>
+<h2><code>options</code></h2>
+<pre><code>type OptionRequest = () =&gt; Promise&lt;string | undefined&gt;
+
+export interface SelectOption {
+  icon?: string | HTMLElement
+  caption: string
+  value: string | OptionRequest
+}
+
+export interface SelectOptionSubmenu {
+  icon?: string | HTMLElement
+  caption: string
+  options: SelectOptions
+}
+
+export type SelectOptions = Array&lt;string | null | SelectOption | SelectOptionSubmenu&gt;
+</code></pre>
+<p>A <code>&lt;tosi-select&gt;</code> can be assigned <code>options</code> as a string of comma-delimited choices
+in the format <code>value=caption:icon</code> (where caption and icon are optional),
+or be provided a <code>SelectOptions</code> array (which allows for submenus, separators, etc.).</p>
+<p>Examples:</p>
+<ul>
+<li><code>&quot;apple,banana,cherry&quot;</code> - simple values (value equals caption)</li>
+<li><code>&quot;us=United States,uk=United Kingdom&quot;</code> - value with caption</li>
+<li><code>&quot;us=United States:flag,uk=United Kingdom:flag&quot;</code> - value with caption and icon</li>
+</ul>
+<h2>Attributes</h2>
+<p><code>&lt;tosi-select&gt;</code> supports several attributes:</p>
+<ul>
+<li><code>editable</code> lets the user directly edit the value (like a &quot;combo box&quot;).</li>
+<li><code>show-icon</code> displays the icon corresponding to the currently selected value.</li>
+<li><code>hide-caption</code> hides the caption.</li>
+<li><code>placeholder</code> allows you to set a placeholder.</li>
+<li><code>options</code> allows you to assign options as a comma-delimited string attribute.</li>
+<li><code>required</code> marks the field as required for form validation.</li>
+<li><code>name</code> the form field name (for formAssociated support).</li>
+</ul>
+<h2>Events</h2>
+<p>Picking an option triggers an <code>action</code> event (whether or not this changes the value).</p>
+<p>Changing the value, either by typing in an editable <code>&lt;tosi-select&gt;</code> or picking a new
+value triggers a <code>change</code> event.</p>
+<p>You can look at the console to see the events triggered by the second example.</p>
+<h2>Localization</h2>
+<p><code>&lt;tosi-select&gt;</code> supports the <code>localized</code> attribute which automatically localizes
+options.</p>
+<pre><code class="language-js">const { tosiSelect } = tosijsui
+
+preview.append(
+  tosiSelect({
+    localized: true,
+    placeholder: &#39;localized placeholder&#39;,
+    options: &#39;yes,no,,moderate&#39;
+  })
+)
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/" aria-current="page" class="current">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

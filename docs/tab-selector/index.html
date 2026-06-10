@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>tabs — tosijs-ui</title>
+  <meta name="description" content="&lt;tosi-tabs&gt; creates a tabpanel for its children, creating a tab for each based on its" />
+  <link rel="canonical" href="https://ui.tosijs.net/tab-selector/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="tabs — tosijs-ui" />
+  <meta property="og:description" content="&lt;tosi-tabs&gt; creates a tabpanel for its children, creating a tab for each based on its" />
+  <meta property="og:url" content="https://ui.tosijs.net/tab-selector/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>tabs</h1>
+<p><code>&lt;tosi-tabs&gt;</code> creates a <code>tabpanel</code> for its children, creating a <code>tab</code> for each based on its
+<code>name</code> attribute.</p>
+<pre><code class="language-js">[...preview.querySelectorAll(&#39;div[name]&#39;)].forEach(div =&gt; {
+  div.style.color = `hsl(${(Math.random() * 360).toFixed(0)} 50% 50%)`
+})
+
+import { div, button } from &#39;tosijs&#39;.elements
+const tabSelector = preview.querySelector(&#39;tosi-tabs&#39;)
+
+tabSelector.onCloseTab = body =&gt; {
+  if (!confirm(`Are you sure you want to close the ${body.getAttribute(&#39;name&#39;)} tab?`)) {
+    return false
+  }
+}
+
+let bodycount = 0
+preview.querySelector(&#39;.add&#39;).addEventListener(&#39;click&#39;, () =&gt; {
+  const name = `new tab ${++bodycount}`
+  const body = div(
+    {name, dataClose: true},
+    name,
+  )
+  tabSelector.addTabBody(body, true)
+})
+</code></pre>
+<pre><code class="language-html">&lt;tosi-tabs&gt;
+  &lt;div name=&quot;first&quot;&gt;first body&lt;/div&gt;
+  &lt;div name=&quot;second&quot; data-close&gt;
+    &lt;template role=&quot;tab&quot;&gt;
+      &lt;tosi-icon
+        style=&quot;
+          display: inline-block;
+          width: 16px;
+          height: 16px;
+          transform: translateY(2px);
+          margin-right: 4px;
+          stroke: var(--brand-color);
+        &quot;
+        icon=&quot;eye&quot;
+      &gt;&lt;/tosi-icon&gt;
+      &lt;span&gt;Ooooh!!!&lt;/span&gt;
+    &lt;/template&gt;
+    look at the html…
+  &lt;/div&gt;
+  &lt;div name=&quot;third&quot;&gt;third body&lt;/div&gt;
+  &lt;button class=&quot;add&quot; slot=&quot;after-tabs&quot;&gt;
+    &lt;tosi-icon icon=&quot;plus&quot;&gt;&lt;/tosi-icon&gt;
+  &lt;/button&gt;
+&lt;/tosi-tabs&gt;
+</code></pre>
+<pre><code class="language-css">  .preview tosi-tabs {
+    height: 100%;
+  }
+
+  .preview div[name] {
+    padding: 20px;
+    text-align: center;
+    height: 100%;
+    font-size: 200%;
+  }
+
+  .preview .add {
+    width: 38px;
+    line-height: 38px;
+    height: 38px;
+    padding: 0;
+  }
+</code></pre>
+<p>The <code>&lt;tosi-tabs&gt;</code>s <code>value</code> is the index of its active body.</p>
+<p>A <code>&lt;tosi-tabs&gt;</code> has <code>addTabBody(body: HTMLElement, select?: boolean)</code> and
+<code>removeTabBody(body: number | HTMLElement)</code> methods for updating its content.</p>
+<p>You can also just insert or remove tab bodies directly and call <code>setupTabs()</code>.</p>
+<h2>Closeable Tabs</h2>
+<p>Adding the <code>data-close</code> attribute to a tab will make it closeable.</p>
+<p>When a tab is closed, the <code>&lt;tosi-tabs&gt;</code> element&#39;s <code>onCloseTab: (tabBody: Element) =&gt; boolean | undefined | void</code>
+will be called. If you override this method and return <code>false</code>, the tab will
+not be closed (e.g. if you want to implement save/cancel behavior).</p>
+<h2>Custom Tab Content</h2>
+<p>You can specify the exact content of the tab for a given body by
+adding a <code>&lt;template role=&quot;tab&quot;&gt;</code> to that body. The contents of that
+template will be cloned into the tab.</p>
+<h2>Localized Support</h2>
+<pre><code class="language-html">&lt;tosi-tabs localized&gt;
+  &lt;div name=&quot;localize&quot;&gt;&lt;h2&gt;localize!&lt;/h2&gt;&lt;/div&gt;
+  &lt;div name=&quot;tabs&quot;&gt;&lt;h2&gt;tabs&lt;/h2&gt;&lt;/div&gt;
+&lt;/tosi-tabs&gt;
+</code></pre>
+<p><code>&lt;tosi-tabs&gt;</code> supports the <code>localized</code> attribute. It will automatically localize
+tab names (but it won&#39;t override custom tab content, so localizing that is on you).</p>
+<h2>Tab Tooltips</h2>
+<p>Add <code>data-tooltip</code> to a tab body and it will be shown on its tab button
+(requires <code>initTooltips()</code>).</p>
+<pre><code class="language-js">import { initTooltips } from &#39;tosijs-ui&#39;
+
+initTooltips()
+</code></pre>
+<pre><code class="language-html">&lt;tosi-tabs&gt;
+  &lt;div name=&quot;Overview&quot; data-tooltip=&quot;Project summary and status&quot;&gt;Overview content&lt;/div&gt;
+  &lt;div name=&quot;Details&quot; data-tooltip=&quot;Configuration and **advanced** settings&quot;&gt;Details content&lt;/div&gt;
+  &lt;div name=&quot;Log&quot; data-tooltip=&quot;Recent activity and events&quot;&gt;Log content&lt;/div&gt;
+&lt;/tosi-tabs&gt;
+</code></pre>
+<pre><code class="language-css">.preview tosi-tabs {
+  height: 100%;
+}
+.preview div[name] {
+  padding: 20px;
+  text-align: center;
+}
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/" aria-current="page" class="current">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

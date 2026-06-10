@@ -1,0 +1,157 @@
+/*
+Static site generator for the doc system.
+
+Emits one optimized, pre-rendered HTML file per doc at `/slug/index.html` (README
+-> site root). Each page is complete without JavaScript — real <head> metadata, the
+doc's markdown already rendered to HTML, and real <a> links to every other page —
+then the <tosi-doc-system> element hydrates it into the interactive doc browser when
+the IIFE bundle loads.
+
+Build-time only (uses Bun.write). Shares slug + markdown rendering with the runtime
+component (src/doc-system/*) so static and hydrated output agree.
+*/
+
+import { Doc, ProjectLinks } from '../src/doc-browser'
+import { buildSlugMap, pathForSlug } from '../src/doc-system/routing'
+import { renderDocMarkdown, docDescription } from '../src/doc-system/render'
+
+declare global {
+  var Bun: any
+}
+
+export interface GenerateSiteConfig {
+  docs: Doc[]
+  /** directory to write pages into (the served web root, e.g. ./docs) */
+  outputDir: string
+  projectName?: string
+  projectLinks?: ProjectLinks
+  /** absolute site origin for canonical/og URLs, e.g. https://ui.tosijs.net */
+  baseUrl?: string
+  /** URL the component fetches the corpus from (default /docs.json) */
+  docsUrl?: string
+  /** path to the IIFE bundle script (default /iife.js) */
+  scriptUrl?: string
+  /** extra lines injected into every <head> (favicon, analytics, etc.) */
+  headExtra?: string
+}
+
+const escapeAttr = (s: string): string =>
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+
+const escapeText = (s: string): string =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+/** Build the shared nav <ul> once; `currentFilename` gets aria-current. */
+function navHtml(
+  docs: Doc[],
+  slugMap: Record<string, string>,
+  currentFilename: string
+): string {
+  const items = docs
+    .map((doc) => {
+      const href = pathForSlug(slugMap[doc.filename])
+      const current = doc.filename === currentFilename
+      return `    <li><a href="${escapeAttr(href)}"${
+        current ? ' aria-current="page" class="current"' : ''
+      }>${escapeText(doc.title)}</a></li>`
+    })
+    .join('\n')
+  return `  <nav class="doc-nav" aria-label="Documentation">\n  <ul>\n${items}\n  </ul>\n  </nav>`
+}
+
+function pageHtml(
+  doc: Doc,
+  config: GenerateSiteConfig,
+  slugMap: Record<string, string>,
+  configAttr: string
+): string {
+  const {
+    projectName = '',
+    baseUrl = '',
+    docsUrl = '/docs.json',
+    scriptUrl = '/iife.js',
+    headExtra = '',
+  } = config
+
+  const title = projectName ? `${doc.title} — ${projectName}` : doc.title
+  const description = docDescription(doc.text)
+  const canonical = baseUrl + pathForSlug(slugMap[doc.filename])
+  const body = renderDocMarkdown(doc.text)
+  const nav = navHtml(config.docs, slugMap, doc.filename)
+
+  const head = [
+    '  <meta charset="utf-8" />',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1" />',
+    `  <title>${escapeText(title)}</title>`,
+    description ? `  <meta name="description" content="${escapeAttr(description)}" />` : '',
+    baseUrl ? `  <link rel="canonical" href="${escapeAttr(canonical)}" />` : '',
+    '  <meta property="og:type" content="article" />',
+    `  <meta property="og:title" content="${escapeAttr(title)}" />`,
+    description ? `  <meta property="og:description" content="${escapeAttr(description)}" />` : '',
+    baseUrl ? `  <meta property="og:url" content="${escapeAttr(canonical)}" />` : '',
+    '  <meta name="twitter:card" content="summary" />',
+    headExtra,
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+${head}
+</head>
+<body>
+  <tosi-doc-system docs="${escapeAttr(docsUrl)}" config="${configAttr}">
+  <article class="doc-content">
+${body}
+  </article>
+${nav}
+  </tosi-doc-system>
+  <script src="${escapeAttr(scriptUrl)}"></script>
+</body>
+</html>
+`
+}
+
+export async function generateSite(config: GenerateSiteConfig): Promise<number> {
+  const { docs, outputDir } = config
+  const slugMap = buildSlugMap(docs)
+
+  // Surface any slug collisions (the slug map disambiguates them, but a warning
+  // tells the maintainer two docs share a base name).
+  const seen = new Map<string, string>()
+  for (const doc of docs) {
+    const slug = slugMap[doc.filename]
+    if (seen.has(slug)) {
+      console.warn(
+        `generate-site: slug "${slug}" used by both ${seen.get(slug)} and ${doc.filename}`
+      )
+    }
+    seen.set(slug, doc.filename)
+  }
+
+  const configAttr = escapeAttr(
+    JSON.stringify({
+      projectName: config.projectName,
+      projectLinks: config.projectLinks,
+    })
+  )
+
+  let count = 0
+  for (const doc of docs) {
+    const slug = slugMap[doc.filename]
+    const dir = slug === '' ? outputDir : `${outputDir}/${slug}`
+    await Bun.write(`${dir}/index.html`, pageHtml(doc, config, slugMap, configAttr))
+    count += 1
+  }
+
+  // The corpus the component fetches for nav + client-side rendering of other pages.
+  await Bun.write(`${outputDir}/docs.json`, JSON.stringify(docs))
+
+  return count
+}

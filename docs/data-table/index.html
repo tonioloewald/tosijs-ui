@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>table — tosijs-ui</title>
+  <meta name="description" content="A virtual data-table, configurable via a columns array (which will automatically be generated if not provided)," />
+  <link rel="canonical" href="https://ui.tosijs.net/data-table/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="table — tosijs-ui" />
+  <meta property="og:description" content="A virtual data-table, configurable via a columns array (which will automatically be generated if not provided)," />
+  <meta property="og:url" content="https://ui.tosijs.net/data-table/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>table</h1>
+<p>A virtual data-table, configurable via a <code>columns</code> array (which will automatically be generated if not provided),
+that displays gigantic tables with fixed headers (and live column-resizing) using a minimum of resources and cpu.</p>
+<pre><code class="language-js">import { tosiTable } from &#39;tosijs-ui&#39;
+import { input } from &#39;tosijs&#39;.elements
+
+const emojiRequest = await fetch(&#39;https://raw.githubusercontent.com/tonioloewald/emoji-metadata/master/emoji-metadata.json&#39;)
+const emojiData = await emojiRequest.json()
+
+const columns = [
+  {
+    name: &quot;emoji&quot;,
+    prop: &quot;chars&quot;,
+    align: &quot;center&quot;,
+    width: 80,
+    sort: false,
+    visible: true
+  },
+  {
+    prop: &quot;name&quot;,
+    width: 300,
+    // custom cell using bindings to make the field editable
+    dataCell() {
+      return input({
+        class: &#39;td&#39;,
+        bindValue: &#39;^.name&#39;,
+        title: &#39;name&#39;,
+        onMouseup: (event) =&gt; { event.stopPropagation() },
+        onTouchend: (event) =&gt; { event.stopPropagation() },
+      })
+    },
+  },
+  {
+    prop: &quot;category&quot;,
+    sort: &quot;ascending&quot;,
+    width: 150
+  },
+  {
+    prop: &quot;subcategory&quot;,
+    width: 150
+  },
+]
+
+const table = tosiTable({
+  multiple: true,
+  array: emojiData,
+  localized: true,
+  columns,
+  rowHeight: 40,
+})
+
+table.addEventListener(&#39;mouseover&#39;, (e) =&gt; {
+  for (const el of table.querySelectorAll(&#39;.row-hover&#39;)) {
+    el.classList.remove(&#39;row-hover&#39;)
+  }
+  const item = table.getItem(e.target)
+  if (!item) return
+  table.getCells(item)?.forEach(c =&gt; c.classList.add(&#39;row-hover&#39;))
+})
+
+preview.append(table)
+</code></pre>
+<pre><code class="language-css">.preview input.td {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none !important;
+}
+
+.preview input.td:focus {
+  background: #fff4;
+}
+
+.preview tosi-table {
+  height: 100%;
+}
+
+.preview .row-hover {
+  background: #08835810;
+}
+</code></pre>
+<pre><code class="language-test">const table = await waitFor(&#39;tosi-table&#39;)
+await new Promise(resolve =&gt; {
+  const check = () =&gt; {
+    if (table.visibleRows.length &gt; 0) return resolve()
+    setTimeout(check, 100)
+  }
+  check()
+})
+
+test(&#39;table renders with data&#39;, () =&gt; {
+  expect(table.multiple).toBe(true)
+  expect(table.visibleRows.length).toBeGreaterThan(0)
+  expect(table.array.length).toBeGreaterThan(0)
+})
+
+test(&#39;row selection: data model + aria-selected on row (incl. custom dataCell)&#39;, async () =&gt; {
+  // Wait for listBinding to stamp DOM cells for the visible window
+  const items = table.visibleRows
+  await new Promise(resolve =&gt; {
+    const check = () =&gt; {
+      if (table.getCells(items[0]) &amp;&amp; table.getCells(items[1])) return resolve()
+      setTimeout(check, 100)
+    }
+    check()
+  })
+
+  table.deSelect()
+  table.selectRow(items[0])
+  table.selectRow(items[1])
+
+  // Data model reflects selection immediately
+  expect(items[0][table.selectedKey]).toBe(true)
+  expect(items[1][table.selectedKey]).toBe(true)
+  expect(table.selectedRows.length).toBe(2)
+
+  // DOM: aria-selected lives on the row element. CSS targets
+  // .tr[aria-selected] .td to highlight cells. The attribute is set via
+  // toggleAttribute, so its value is &quot;&quot; (presence-only) — match accordingly.
+  const cells0 = table.getCells(items[0])
+  const cells1 = table.getCells(items[1])
+  expect(cells0.length).toBe(table.visibleColumns.length)
+  expect(cells1.length).toBe(table.visibleColumns.length)
+  const row0 = cells0[0].closest(&#39;.tr&#39;)
+  const row1 = cells1[0].closest(&#39;.tr&#39;)
+  expect(row0.hasAttribute(&#39;aria-selected&#39;)).toBe(true)
+  expect(row1.hasAttribute(&#39;aria-selected&#39;)).toBe(true)
+  // The `name` column (index 1) uses a dataCell input — confirm the custom
+  // element is the actual cell living inside the same selected row.
+  expect(cells0[1].tagName).toBe(&#39;INPUT&#39;)
+  expect(cells0[1].closest(&#39;.tr&#39;)).toBe(row0)
+
+  // Deselect and verify both data model and DOM clear
+  table.deSelect()
+  expect(table.selectedRows.length).toBe(0)
+  expect(items[0][table.selectedKey]).not.toBe(true)
+  expect(items[1][table.selectedKey]).not.toBe(true)
+  expect(row0.hasAttribute(&#39;aria-selected&#39;)).toBe(false)
+  expect(row1.hasAttribute(&#39;aria-selected&#39;)).toBe(false)
+})
+
+test(&#39;getCells and getItem&#39;, async () =&gt; {
+  // Wait for list binding to stamp DOM elements
+  const items = table.visibleRows
+  let cells
+  await new Promise(resolve =&gt; {
+    const check = () =&gt; {
+      cells = table.getCells(items[0])
+      if (cells) return resolve()
+      setTimeout(check, 100)
+    }
+    check()
+  })
+
+  expect(cells.length).toBe(table.visibleColumns.length)
+
+  // getItem round-trips back to the same item
+  const item = table.getItem(cells[0])
+  expect(item).toBe(items[0])
+
+  // getCells from a cell element
+  const cellsFromCell = table.getCells(cells[1])
+  expect(cellsFromCell).toBe(cells)
+})
+</code></pre>
+<blockquote>
+<p>In the preceding example, the <code>name</code> column is <em>editable</em> (and <em>bound</em>, try editing something and scrolling
+it out of view and back) and <code>multiple</code> select is enabled. In the console, you can try <code>$(&#39;tosi-table&#39;).visibleRows</code>
+and $(&#39;tosi-table&#39;).selectedRows`.</p>
+</blockquote>
+<p>You can set the <code>&lt;tosi-table&gt;</code>&#39;s <code>array</code>, <code>columns</code>, and <code>filter</code> properties directly, or set its <code>value</code> to:</p>
+<pre><code>{
+  array: any[],
+  columns: ColumnOptions[] | null,
+  filter?: ArrayFilter
+}
+</code></pre>
+<h2><code>ColumnOptions</code></h2>
+<p>You can configure the table&#39;s columns by providing it an array of <code>ColumnOptions</code>:</p>
+<pre><code>export interface ColumnOptions {
+  name?: string
+  prop: string
+  width: number
+  visible?: boolean
+  align?: string
+  pinned?: &#39;left&#39; | &#39;right&#39;
+  sort?: false | &#39;ascending&#39; | &#39;descending&#39;
+  headerCell?: (options: ColumnOptions) =&gt; HTMLElement
+  dataCell?: (options: ColumnOptions) =&gt; HTMLElement
+}
+</code></pre>
+<h2>Pinned Columns and Rows</h2>
+<p>Set <code>pinned: &#39;left&#39;</code> or <code>pinned: &#39;right&#39;</code> on individual columns to pin
+them during horizontal scroll. Pinned columns are sorted to the edges
+automatically. You can also pin/unpin columns via the header menu, or by
+dragging a column into/out of a pinned zone.</p>
+<p>Set <code>pinnedTop</code> and <code>pinnedBottom</code> to pin the first/last N data rows
+(pinned top rows appear below the header row).</p>
+<p>All pinning uses CSS <code>position: sticky</code> for frame-perfect rendering with
+no jitter.</p>
+<pre><code class="language-js">import { elements } from &#39;tosijs&#39;
+import { tosiTable, icons } from &#39;tosijs-ui&#39;
+
+const { button, span } = elements
+
+const count = 100
+const cols = [&#39;Q1&#39;, &#39;Q2&#39;, &#39;Q3&#39;, &#39;Q4&#39;]
+const numKeys = []
+const rows = Array.from({ length: count }, (_, i) =&gt; {
+  const row = { id: i + 1, name: &#39;Item &#39; + (i + 1) }
+  for (const year of [2024, 2025, 2026]) {
+    for (const q of cols) {
+      const key = q + &#39; &#39; + year
+      row[key] = Math.round((Math.random() * 200 - 100) * 100) / 100
+      if (i === 0) numKeys.push(key)
+    }
+  }
+  return row
+})
+
+// totals row
+const totals = { id: &#39;&#39;, name: &#39;Total&#39; }
+for (const key of numKeys) {
+  totals[key] = Math.round(rows.reduce((sum, r) =&gt; sum + r[key], 0) * 100) / 100
+}
+rows.push(totals)
+
+// custom cell that colors negative numbers red
+function numCell(options) {
+  return span({
+    class: &#39;td num-cell&#39;,
+    bindText: &#39;^.&#39; + options.prop,
+    bind: {
+      value: &#39;^.&#39; + options.prop,
+      binding: {
+        toDOM(el, val) {
+          el.style.color = val &lt; 0 ? &#39;#c00&#39; : &#39;&#39;
+        }
+      }
+    }
+  })
+}
+
+const dataColumns = numKeys.map(key =&gt; ({
+  prop: key, width: 100, align: &#39;right&#39;, dataCell: numCell,
+}))
+
+const table = tosiTable({
+  array: rows,
+  rowHeight: 32,
+  pinnedBottom: 1,
+  rowRendered(item, cells) {
+    const total = numKeys.reduce((sum, key) =&gt; sum + (item[key] || 0), 0)
+    const rowClass = total &lt; 0 ? &#39;row-negative&#39; : &#39;row-positive&#39;
+    for (const c of cells) {
+      if (c.classList.contains(&#39;num-cell&#39;)) {
+        c.classList.add(rowClass)
+      }
+    }
+  },
+  columns: [
+    { prop: &#39;id&#39;, name: &#39;#&#39;, width: 50, align: &#39;right&#39;, pinned: &#39;left&#39; },
+    { prop: &#39;name&#39;, width: 120, pinned: &#39;left&#39; },
+    ...dataColumns,
+    {
+      prop: &#39;_actions&#39;,
+      name: &#39;&#39;,
+      width: 48,
+      sort: false,
+      pinned: &#39;right&#39;,
+      dataCell() {
+        return button(
+          {
+            class: &#39;td actions-btn&#39;,
+            onClick(e) { e.stopPropagation() },
+            onMouseup(e) { e.stopPropagation() },
+          },
+          icons.moreVertical(),
+        )
+      },
+    },
+  ],
+})
+
+preview.append(table)
+</code></pre>
+<pre><code class="language-css">.preview tosi-table {
+  height: 100%;
+}
+.preview .actions-btn {
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+  text-align: center;
+  width: 100%;
+}
+.preview tosi-table .pinned-bottom {
+  background: #eee;
+  font-weight: bold;
+}
+.preview .row-pinned .td {
+  background: #eee;
+}
+.preview .num-cell {
+  font-variant-numeric: tabular-nums;
+}
+</code></pre>
+<pre><code class="language-test">const tables = document.querySelectorAll(&#39;tosi-table&#39;)
+const table = tables[tables.length - 1]
+// Wait until the pinned row has been stamped AND its bindings have settled
+// (numeric cells show their text, the actions button is in place).
+await new Promise(resolve =&gt; {
+  const check = () =&gt; {
+    const row = table.querySelector(&#39;.tbody-pinned-bottom .tr&#39;)
+    if (
+      row &amp;&amp;
+      row.querySelector(&#39;button&#39;) &amp;&amp;
+      Array.from(row.children).some(c =&gt; c.classList.contains(&#39;num-cell&#39;) &amp;&amp; c.textContent.trim().length &gt; 0)
+    ) return resolve()
+    setTimeout(check, 100)
+  }
+  check()
+})
+
+test(&#39;pinned row goes through the same listBinding as virtual rows&#39;, () =&gt; {
+  const totals = table.array[table.array.length - 1]
+  const pinnedRow = table.querySelector(&#39;.tbody-pinned-bottom .tr&#39;)
+  const pinnedCells = Array.from(pinnedRow.children)
+
+  // Sanity: same number of cells as visible columns
+  expect(pinnedCells.length).toBe(table.visibleColumns.length)
+
+  // dataCell honoured: numeric columns kept their `num-cell` class, and the
+  // _actions column rendered its &lt;button&gt;
+  const numCells = pinnedCells.filter(c =&gt; c.classList.contains(&#39;num-cell&#39;))
+  expect(numCells.length).toBeGreaterThan(0)
+  expect(pinnedCells.some(c =&gt; c.tagName === &#39;BUTTON&#39;)).toBe(true)
+
+  // numCell uses bindText: &#39;^.&lt;prop&gt;&#39; — confirm path-bindings resolved
+  // (this requires the cell to live inside a list-bound row).
+  const renderedTexts = numCells.map(c =&gt; c.textContent?.trim() ?? &#39;&#39;)
+  expect(renderedTexts.every(t =&gt; t.length &gt; 0)).toBe(true)
+  expect(renderedTexts.some(t =&gt; /^-?\d/.test(t))).toBe(true)
+
+  // rowRendered fired: numeric cells of this row carry `row-negative` or
+  // `row-positive` based on the totals row&#39;s sign. Either way the loop did
+  // *something* — so the test verifies the work happened regardless of the
+  // randomized data.
+  const total = Object.keys(totals)
+    .filter(k =&gt; typeof totals[k] === &#39;number&#39;)
+    .reduce((s, k) =&gt; s + totals[k], 0)
+  const expected = total &lt; 0 ? &#39;row-negative&#39; : &#39;row-positive&#39;
+  expect(numCells.every(c =&gt; c.classList.contains(expected))).toBe(true)
+
+  // getCells / getItem round-trip works for pinned items
+  const cellsForTotals = table.getCells(totals)
+  expect(cellsForTotals?.length).toBe(table.visibleColumns.length)
+  expect(table.getItem(cellsForTotals[0])).toBe(totals)
+
+  // Selection on a pinned row sets aria-selected on the row element
+  table.deSelect()
+  table.selectRow(totals)
+  expect(pinnedRow.hasAttribute(&#39;aria-selected&#39;)).toBe(true)
+
+  table.deSelect()
+  expect(pinnedRow.hasAttribute(&#39;aria-selected&#39;)).toBe(false)
+})
+</code></pre>
+<h2>Selection</h2>
+<p><code>&lt;tosi-table&gt;</code> supports <code>select</code> and <code>multiple</code> boolean properties allowing rows to be selectable. Selected rows will
+be given the <code>[aria-selected]</code> attribute, so style them as you wish.</p>
+<p><code>multiple</code> select supports shift-clicking and command/meta-clicking.</p>
+<p><code>&lt;tosi-table&gt;</code> provides an <code>selectionChanged(visibleSelectedRows: any[]): void</code> callback property allowing you to respond to changes
+in the selection, and also <code>selectedRows</code> and <code>visibleSelectedRows</code> properties.</p>
+<p>The following methods are also provided:</p>
+<ul>
+<li><code>&lt;tosi-table&gt;.selectRow(row: any, select = true)</code> (de)selects specified row</li>
+<li><code>&lt;tosi-table&gt;.selectRows(rows?: any[], select = true)</code> (de)selects specified rows</li>
+<li><code>&lt;tosi-table&gt;.deSelect(rows?: any[])</code> deselects all or specified rows.</li>
+</ul>
+<p>These are rather fine-grained but they&#39;re used internally by the selection code so they may as well be documented.</p>
+<h2>Row Access</h2>
+<p>Because the table uses a flat CSS grid (no <code>.tr</code> row elements), two methods
+provide O(1) access between items and their cells:</p>
+<ul>
+<li><code>&lt;tosi-table&gt;.getCells(itemOrCell)</code> — returns the <code>HTMLElement[]</code> of cells for a
+given data item or any cell in the row, or <code>undefined</code> if the row isn&#39;t
+currently rendered (virtual scroll)</li>
+<li><code>&lt;tosi-table&gt;.getItem(cell)</code> — returns the data item bound to a cell element</li>
+</ul>
+<p>These are useful for row-level hover effects, styling, and event handling:</p>
+<pre><code class="language-typescript">table.addEventListener(&#39;mouseover&#39;, (e) =&gt; {
+  for (const el of table.querySelectorAll(&#39;.row-hover&#39;)) {
+    el.classList.remove(&#39;row-hover&#39;)
+  }
+  const item = table.getItem(e.target)
+  if (!item) return
+  table.getCells(item)?.forEach(c =&gt; c.classList.add(&#39;row-hover&#39;))
+})
+</code></pre>
+<h3><code>rowRendered</code> callback</h3>
+<p>For virtual tables, cells are created and destroyed as you scroll. The
+<code>rowRendered</code> callback fires whenever a row&#39;s cells are rendered, letting
+you apply styling that survives virtualisation:</p>
+<pre><code class="language-typescript">table.rowRendered = (item, cells) =&gt; {
+  if (item.overdue) {
+    cells.forEach(c =&gt; c.classList.add(&#39;overdue&#39;))
+  }
+}
+</code></pre>
+<h2>Sorting</h2>
+<p>By default, the user can sort the table by any column which doesn&#39;t have a <code>sort === false</code>.</p>
+<p>You can set the initial sort by setting the <code>sort</code> value of a specific column to <code>ascending</code>
+or <code>descending</code>.</p>
+<p>You can override this by setting the table&#39;s sort function (it&#39;s an <code>Array.sort()</code> callback)
+to whatever you like, and you can replace the <code>headerCell</code> or set the <code>sort</code> of each column
+to <code>false</code> if you have some specific sorting in mind.</p>
+<p>You can disable sorting controls by adding the <code>nosort</code> attribute to the <code>&lt;tosi-table&gt;</code>.</p>
+<h2>Hiding (and Showing) Columns</h2>
+<p>By default, the user can show / hide columns by clicking via the column header menu.
+You can remove this option by adding the <code>nohide</code> attribute to the <code>&lt;tosi-table&gt;</code></p>
+<h2>Reordering Columns</h2>
+<p>By default, the user can reorder columns by dragging them around. You can disable this
+by adding the <code>noreorder</code> attribute to the <code>&lt;tosi-table&gt;</code>.</p>
+<h2>Row Height</h2>
+<p>If you set the <code>&lt;tosi-table&gt;</code>&#39;s <code>rowHeight</code> to <code>0</code> it will render all its elements (i.e. not be virtual). This is
+useful for smaller tables, or tables with variable row-heights.</p>
+<h2>Styling</h2>
+<p>The component uses a flat CSS grid layout where every cell (header, data, pinned)
+is a direct child of the grid container. This means standard CSS works for styling,
+and <code>position: sticky</code> handles all pinning.</p>
+<p><strong>Breaking change in v1.5.0:</strong> The table no longer uses <code>.thead</code>, <code>.tbody</code>, or <code>.tr</code>
+wrapper elements. All cells are direct children of a single <code>.grid</code> container.
+Update any custom CSS targeting those classes:</p>
+<ul>
+<li><code>.thead</code> → <code>.th</code> (header cells)</li>
+<li><code>.tbody</code> → the <code>.grid</code> container itself</li>
+<li><code>.tr</code> → no equivalent; cells are flat grid children</li>
+<li><code>[part=&quot;pinnedTopRows&quot;]</code> → <code>.pinned-top</code></li>
+<li><code>[part=&quot;pinnedBottomRows&quot;]</code> → <code>.pinned-bottom</code></li>
+<li><code>.td-pinned</code>, <code>.th-pinned</code> → <code>.col-pinned</code></li>
+<li><code>.pin-left</code>, <code>.pin-right</code> → no longer needed (CSS <code>sticky</code> handles positioning)</li>
+</ul>
+<h2>Localization</h2>
+<p><code>&lt;tosi-table&gt;</code> supports the <code>localized</code> attribute which simply causes its default <code>headerCell</code>
+to render a <code>&lt;tosi-localized&gt;</code> element instead of a span for its caption, and localize its
+popup menu.</p>
+<p>You&#39;ll need to make sure your localized strings include:</p>
+<ul>
+<li>Sort</li>
+<li>Show</li>
+<li>Hide</li>
+<li>Column</li>
+<li>Ascending</li>
+<li>Descending</li>
+<li>Pin</li>
+<li>Unpin</li>
+<li>Left</li>
+<li>Right</li>
+</ul>
+<p>As well as any column names you want localized.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/" aria-current="page" class="current">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

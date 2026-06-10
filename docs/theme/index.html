@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>theme — tosijs-ui</title>
+  <meta name="description" content="The theme system provides consistent CSS variables across all tosijs-ui components," />
+  <link rel="canonical" href="https://ui.tosijs.net/theme/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="theme — tosijs-ui" />
+  <meta property="og:description" content="The theme system provides consistent CSS variables across all tosijs-ui components," />
+  <meta property="og:url" content="https://ui.tosijs.net/theme/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>theme</h1>
+<p>The theme system provides consistent CSS variables across all tosijs-ui components,
+with support for automatic dark mode via tosijs&#39;s <code>Color</code> class and <code>invertLuminance</code>.</p>
+<h2>Base Variables</h2>
+<p>All components use these foundational CSS variables with the <code>--tosi-</code> prefix:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--tosi-spacing-xs</code></td>
+<td>4px</td>
+<td>Extra small spacing</td>
+</tr>
+<tr>
+<td><code>--tosi-spacing-sm</code></td>
+<td>8px</td>
+<td>Small spacing</td>
+</tr>
+<tr>
+<td><code>--tosi-spacing</code></td>
+<td>12px</td>
+<td>Default spacing</td>
+</tr>
+<tr>
+<td><code>--tosi-spacing-lg</code></td>
+<td>16px</td>
+<td>Large spacing</td>
+</tr>
+<tr>
+<td><code>--tosi-spacing-xl</code></td>
+<td>24px</td>
+<td>Extra large spacing</td>
+</tr>
+<tr>
+<td><code>--tosi-bg</code></td>
+<td>#fafafa</td>
+<td>Background color</td>
+</tr>
+<tr>
+<td><code>--tosi-bg-inset</code></td>
+<td>derived</td>
+<td>Inset/recessed background</td>
+</tr>
+<tr>
+<td><code>--tosi-text</code></td>
+<td>#222</td>
+<td>Text color</td>
+</tr>
+<tr>
+<td><code>--tosi-accent</code></td>
+<td>#EE257B</td>
+<td>Accent/brand color</td>
+</tr>
+<tr>
+<td><code>--tosi-accent-text</code></td>
+<td>derived</td>
+<td>Text on accent background</td>
+</tr>
+<tr>
+<td><code>--tosi-font-family</code></td>
+<td>system-ui</td>
+<td>Font family</td>
+</tr>
+<tr>
+<td><code>--tosi-font-size</code></td>
+<td>16px</td>
+<td>Base font size</td>
+</tr>
+<tr>
+<td><code>--tosi-line-height</code></td>
+<td>1.5</td>
+<td>Line height</td>
+</tr>
+<tr>
+<td><code>--tosi-touch-size</code></td>
+<td>44px</td>
+<td>Minimum touch target</td>
+</tr>
+<tr>
+<td><code>--tosi-focus-ring</code></td>
+<td>derived</td>
+<td>Focus outline style</td>
+</tr>
+</tbody></table>
+<h2>Creating Themes</h2>
+<pre><code class="language-typescript">import { Color } from &#39;tosijs&#39;
+import { createTheme, applyTheme } from &#39;tosijs-ui&#39;
+
+const myTheme = createTheme({
+  accent: Color.fromCss(&#39;#007AFF&#39;),
+  background: Color.fromCss(&#39;#ffffff&#39;),
+  text: Color.fromCss(&#39;#1a1a1a&#39;),
+})
+
+applyTheme(myTheme, &#39;my-theme&#39;)
+</code></pre>
+<h2>Dark Mode</h2>
+<p>Toggle between light and dark themes. <code>createTheme</code> and <code>createDarkTheme</code> return
+<code>XinStyleSheet</code> objects — ordinary CSS variable maps you can apply however you like:</p>
+<pre><code class="language-html">&lt;label&gt;&lt;input type=&quot;checkbox&quot; class=&quot;dark-toggle&quot;&gt; Dark mode&lt;/label&gt;
+&lt;div class=&quot;theme-sample&quot;&gt;
+  &lt;span&gt;Sample text&lt;/span&gt;
+  &lt;button&gt;Button&lt;/button&gt;
+&lt;/div&gt;
+</code></pre>
+<pre><code class="language-css">.preview .theme-sample {
+  padding: 12px;
+  background: var(--sample-bg);
+  color: var(--sample-text);
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  transition: all 0.3s;
+}
+.preview .theme-sample button {
+  background: var(--sample-accent);
+  color: var(--sample-accent-text);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+</code></pre>
+<pre><code class="language-js">import { Color } from &#39;tosijs&#39;
+import { createTheme, createDarkTheme } from &#39;tosijs-ui&#39;
+
+const colors = {
+  accent: Color.fromCss(&#39;#007AFF&#39;),
+  background: Color.fromCss(&#39;#ffffff&#39;),
+  text: Color.fromCss(&#39;#1a1a1a&#39;),
+}
+
+function applyToPreview(theme) {
+  const vars = theme[&#39;:root&#39;]
+  const sample = preview.querySelector(&#39;.theme-sample&#39;)
+  sample.style.setProperty(&#39;--sample-bg&#39;, String(vars._tosiBg))
+  sample.style.setProperty(&#39;--sample-text&#39;, String(vars._tosiText))
+  sample.style.setProperty(&#39;--sample-accent&#39;, String(vars._tosiAccent))
+  sample.style.setProperty(&#39;--sample-accent-text&#39;, String(vars._tosiAccentText))
+}
+
+applyToPreview(createTheme(colors))
+
+preview.querySelector(&#39;.dark-toggle&#39;).addEventListener(&#39;change&#39;, (e) =&gt; {
+  applyToPreview(e.target.checked ? createDarkTheme(colors) : createTheme(colors))
+})
+</code></pre>
+<h2>Component Variables</h2>
+<p>Each component defines its own variables that derive from base variables.
+For example, tosi-select derives from base:</p>
+<pre><code>--tosi-select-gap: var(--tosi-spacing-sm, 8px);
+--tosi-select-touch-size: var(--tosi-touch-size, 44px);
+</code></pre>
+<p>This allows fine-grained customization while maintaining consistency.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/" aria-current="page" class="current">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

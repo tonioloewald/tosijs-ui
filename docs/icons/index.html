@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>icons — tosijs-ui</title>
+  <meta name="description" content="icons is a proxy that generates an ElementCreator for a given icon on demand," />
+  <link rel="canonical" href="https://ui.tosijs.net/icons/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="icons — tosijs-ui" />
+  <meta property="og:description" content="icons is a proxy that generates an ElementCreator for a given icon on demand," />
+  <meta property="og:url" content="https://ui.tosijs.net/icons/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>icons</h1>
+<div class="center" style="display: flex; gap: 10px; padding: 10px">
+  <tosi-icon title="tosijs" icon="tosiFavicon" style="--tosi-icon-size: 128px"></tosi-icon>
+  <tosi-icon title="tosijs-ui" icon="tosiUi" style="--tosi-icon-size: 128px"></tosi-icon>
+  <tosi-icon title="tosi-platform" icon="tosiPlatform" style="--tosi-icon-size: 128px"></tosi-icon>
+</div>
+
+<p><code>icons</code> is a proxy that generates an <code>ElementCreator</code> for a given icon on demand,
+e.g. <code>icons.chevronDown()</code> produces an <code>&lt;svg&gt;</code> element containing a downward-pointing chevron
+icon with the class <code>icon-chevron-down</code>.</p>
+<pre><code class="language-js">const  { tosi, elements } = tosijs
+import { icons, svgIcon, postNotification } from &#39;tosijs-ui&#39;
+
+const { div, span, input, select, option } = elements
+
+const prefixes = [&#39;&#39;, &#39;un&#39;, &#39;check&#39;, &#39;cancel&#39;, &#39;search&#39;, &#39;spin120&#39;, &#39;spin360&#39;]
+const suffixes = [
+  &#39;&#39;, &#39;90r&#39;, &#39;180r&#39;, &#39;_90r&#39;, &#39;0f&#39;, &#39;1f&#39;,
+  &#39;50o&#39;, &#39;75s&#39;, &#39;_ff0000F&#39;, &#39;_00fS&#39;, &#39;4W&#39;,
+]
+
+const iconNames = Object.keys(icons).sort()
+
+const { iconDemo } = tosi({
+  iconDemo: {
+    icon: &#39;&#39;,
+    prefix: &#39;&#39;,
+    suffix: &#39;&#39;,
+  }
+})
+
+function composeName(prefix, suffix, base) {
+  let name = base
+  if (prefix) name = prefix + name[0].toUpperCase() + name.slice(1)
+  if (suffix) name = name + suffix
+  return name
+}
+
+const scroller = div({ class: &#39;scroller&#39; })
+
+function rebuildGrid() {
+  const prefix = iconDemo.prefix.value
+  const suffix = iconDemo.suffix.value
+  scroller.textContent = &#39;&#39;
+  for (const iconName of iconNames) {
+    const composed = composeName(prefix, suffix, iconName)
+    scroller.append(div(
+      {
+        class: &#39;tile&#39;,
+        onClick() {
+          iconDemo.icon = iconDemo.icon != composed ? composed : &#39;&#39;
+          postNotification({
+            icon: iconName,
+            message: `${composed} clicked`,
+            duration: 2,
+            color: &#39;hotpink&#39;
+          })
+        },
+        onMouseleave() {
+          iconDemo.icon = &#39;&#39;
+        }
+      },
+      svgIcon({ icon: composed, size: 24 }),
+      div((prefix || suffix) ? composed : iconName)
+    ))
+  }
+}
+
+iconDemo.prefix.observe(rebuildGrid)
+iconDemo.suffix.observe(rebuildGrid)
+rebuildGrid()
+
+const detailIcon = svgIcon({
+  class: &#39;icon-detail&#39;,
+  size: 256,
+  bind: {
+    binding: {
+      toDOM(element, value) {
+        element.style.opacity = value ? 1 : 0
+        if (value) element.icon = value
+      }
+    },
+    value: iconDemo.icon
+  }
+})
+
+preview.append(
+  div(
+    { class: &#39;toolbar&#39; },
+    input({
+      placeholder: &#39;filter icons by name&#39;,
+      type: &#39;search&#39;,
+      onInput(event) {
+        const needle = event.target.value.toLocaleLowerCase()
+        const tiles = Array.from(scroller.querySelectorAll(&#39;.tile&#39;))
+        tiles.forEach(tile =&gt; {
+          tile.style.display = tile.textContent.toLocaleLowerCase().includes(needle) ? &#39;&#39; : &#39;none&#39;
+        })
+      }
+    }),
+    select(
+      { bindValue: iconDemo.prefix },
+      ...prefixes.map(p =&gt; option({ value: p }, p || &#39;prefix&#39;))
+    ),
+    select(
+      { bindValue: iconDemo.suffix },
+      ...suffixes.map(s =&gt; option({ value: s }, s || &#39;suffix&#39;))
+    ),
+  ),
+  scroller,
+  detailIcon
+)
+</code></pre>
+<pre><code class="language-css">.preview .toolbar {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  align-items: center;
+}
+
+.preview .toolbar input[type=search] {
+  flex: 1;
+}
+
+.preview .scroller {
+  display: grid;
+  grid-template-columns: calc(33% - 5px) calc(33% - 5px) calc(33% - 5px);
+  grid-auto-rows: 44px;
+  flex-wrap: wrap;
+  padding: var(--spacing);
+  gap: var(--spacing);
+  overflow: hidden scroll !important;
+  height: 100%;
+}
+
+.preview .tile {
+  display: flex;
+  text-align: center;
+  cursor: pointer;
+  background: #8882;
+  padding: 10px;
+  gap: 10px;
+  border-radius: 5px;
+}
+
+.preview .tile:hover {
+  background: #8884;
+  color: var(--brand-color);
+}
+
+.preview .tile &gt; div {
+  font-family: Menlo, Monaco, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.preview .icon-detail {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: 0.5s ease-out;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  background: #8886;
+  border-radius: 20px;
+  pointer-events: none;
+}
+</code></pre>
+<pre><code class="language-test">const tiles = preview.querySelectorAll(&#39;.tile&#39;)
+test(&#39;icons are rendered&#39;, () =&gt; {
+  expect(tiles.length).toBeGreaterThan(100)
+})
+test(&#39;icon tiles have svg icons&#39;, () =&gt; {
+  const firstIcon = tiles[0].querySelector(&#39;tosi-icon&#39;)
+  expect(firstIcon).toBeTruthy()
+})
+test(&#39;filter input and prefix select exist&#39;, () =&gt; {
+  expect(preview.querySelector(&#39;input[type=&quot;search&quot;]&#39;)).toBeTruthy()
+  expect(preview.querySelector(&#39;select&#39;)).toBeTruthy()
+})
+</code></pre>
+<p>These icons are completely unstyled and can be colored using the css <code>fill</code> property. This will
+probably be broken out as a standalone library to allow the use of whatever icons you like
+(its source data is currently generated from an <a href="https://icomoon.com/app">icomoon</a>
+<code>selection.json</code> file, but could just as easily be generated from a directory full of SVGs).</p>
+<h2>Adding and redefining icons</h2>
+<p>Simply pass a map of icon names to svg source strings…</p>
+<pre><code>defineIcons({
+  someIcon: &#39;&lt;svg ....&#39;,
+  otherIcon: &#39;&lt;svg ...&#39;,
+})
+</code></pre>
+<h3>Icon Classes</h3>
+<p>Icons will be generated with the class <code>tosi-icon</code>.</p>
+<p>You can also assign the classes <code>filled</code>, <code>stroked</code>, and <code>color</code> to icons to set default
+icon styling.</p>
+<h2><code>&lt;tosi-icon&gt;</code></h2>
+<p><code>&lt;tosi-icon&gt;</code> is a simple component that lets you embed icons as HTML. Check the CSS tab to see
+how it&#39;s styled.</p>
+<p><code>&lt;tosi-icon&gt;</code> supports four attributes:</p>
+<ul>
+<li><code>size</code> (defaults to 0) if non-zero sets the height of the icon in pixels</li>
+<li><code>icon</code> is the name of the icon</li>
+<li><code>color</code> is the fill color (if you don&#39;t want to style it using CSS)</li>
+<li><code>stroke</code> is the stroke color</li>
+<li><code>stroke-width</code> (defaults to 1) is the width of the stroke assuming the icon&#39;s viewBox is 1024 units tall but the
+icon is rendered at 32px (so it&#39;s multiplied by 32).</li>
+</ul>
+<blockquote>
+<p><strong>Aside</strong>: the tool used to build the icon library scales up the viewBox to 1024 tall and then rounds
+all coordinates to nearest integer on the assumption that this is plenty precise enough for icons and
+makes everything smaller and easier to compress.</p>
+</blockquote>
+<h2>SVGs as data-urls</h2>
+<pre><code class="language-js">import { elements } from &#39;tosijs&#39;
+import { icons, svg2DataUrl } from &#39;tosijs-ui&#39;
+
+preview.append(
+  elements.span({
+    style: {
+      display: &#39;inline-block&#39;,
+      width: &#39;120px&#39;,
+      height: &#39;24px&#39;,
+      content: &#39;&quot; &quot;&#39;,
+      background: svg2DataUrl(icons.search(), &#39;none&#39;, &#39;#bbb&#39;, 3)
+    }
+  }),
+  elements.span({
+    style: {
+      display: &#39;inline-block&#39;,
+      width: &#39;120px&#39;,
+      height: &#39;24px&#39;,
+      content: &#39;&quot; &quot;&#39;,
+      background: svg2DataUrl(icons.star(), &#39;gold&#39;, &#39;orange&#39;, 4)
+    }
+  }),
+  // Note that this is a color icon whose fill and stroke are &quot;baked in&quot;
+  elements.span({
+    style: {
+      display: &#39;inline-block&#39;,
+      width: &#39;100px&#39;,
+      height: &#39;200px&#39;,
+      content: &#39;&quot; &quot;&#39;,
+      background: svg2DataUrl(icons.tosi(), undefined, undefined, 2)
+    }
+  }),
+)
+</code></pre>
+<p><code>svg2DataUrl(svg: SVGElement, fill?: string, stroke?: string, strokeWidth?: number): string</code> is provided as a
+utility for converting SVG elements into data-urls (e.g. for incorporation into
+CSS properties. (It&#39;s used by the <code>&lt;tosi-3d&gt;</code> component to render the XR widget.)</p>
+<p>If you&#39;re using <code>SVGElement</code>s created using the <code>icons</code> proxy, you&#39;ll want to provide <code>fill</code> and/or
+<code>stroke</code> values, because images loaded via css properties cannot be styled.</p>
+<h2>Color Icons</h2>
+<pre><code class="language-html">&lt;tosi-icon icon=&quot;tosiFavicon&quot; class=&quot;demo-icon&quot;&gt;&lt;/tosi-icon&gt;
+&lt;tosi-icon icon=&quot;tosiPlatform&quot; class=&quot;demo-icon recolored&quot;&gt;&lt;/tosi-icon&gt;
+&lt;tosi-icon icon=&quot;tosiXr&quot; class=&quot;demo-icon animated&quot;&gt;&lt;/tosi-icon&gt;
+</code></pre>
+<pre><code class="language-css">.demo-icon {
+  --tosi-icon-size: 160px
+}
+
+.recolored &gt; svg {
+  pointer-events: all;
+  transition: 0.25s ease-out;
+  transform: scale(1);
+  filter: grayscale(0.5)
+}
+
+.recolored:hover &gt; svg {
+  opacity: 1;
+  transform: scale(1.1);
+  filter: grayscale(0);
+}
+
+.animated &gt; svg {
+  animation: 2s linear 0s infinite rainbow;
+}
+
+@keyframes rainbow {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+</code></pre>
+<p>Colored icons have the <code>color</code> class added to them, so you can easily create css rules
+that, for example, treat all colored icons inside buttons the same way.</p>
+<blockquote>
+<p>Earlier versions of this library replaced color specifications with CSS-variables in a
+very convoluted way, but in practice this isn&#39;t terribly useful as SVG properties can&#39;t
+be animated by CSS, so this functionality has been stripped out.</p>
+</blockquote>
+<h2>Icon Composition &amp; Math</h2>
+<p><tosi-icon icon="tosi$map50o_brandColorS" size=128></tosi-icon>
+<tosi-icon icon="lock50s75o_10y$shield_brandColorS" size=128></tosi-icon>
+<tosi-icon icon="unLock_brandColorS" size=128></tosi-icon>
+<tosi-icon icon="checkFile" size=128></tosi-icon>
+<tosi-icon icon="spin120Loader40s_30x_brandColorS$cloud" size=128></tosi-icon></p>
+<h3>Why?</h3>
+<p>I needed a pin icon for column pinning in the data table. The only pin
+in the feather set is a map pin, so I created a push-pin icon
+<tosi-icon icon="pin_brandColorS" size=24></tosi-icon>.
+But immediately I also needed unpin, pin-left, and pin-right — a lot
+of new icons for one feature. Of course I could flip the pin with CSS, but
+this is a problem <em>everywhere, all the time</em>: every directional icon
+needs 2–4 variants, every action needs a negation, every status needs
+an overlay.</p>
+<p>Why not fix it once and also eliminate the need to maintain trivial
+variations on every icon?</p>
+<p><tosi-icon icon="pin_brandColorS" size=64></tosi-icon>
+<tosi-icon icon="pin0f_brandColorS" size=64></tosi-icon>
+<tosi-icon icon="unPin_brandColorS" size=64></tosi-icon></p>
+<p>And now we can just create icon languages…</p>
+<p><tosi-icon icon="checkUsers" size=64></tosi-icon>
+<tosi-icon icon="searchMap" size=64></tosi-icon>
+<tosi-icon icon="cancelHeart" size=64></tosi-icon></p>
+<h3>Icon modifier suffixes</h3>
+<p>The suffix system is inspired by tosijs&#39;s CSS variable math, where
+<code>borderRadius50</code> becomes <code>calc(var(--border-radius) * 0.5)</code> and
+<code>someColor50o</code> adjusts opacity to 50%. The same <code>value + letter</code>
+convention works for icons:</p>
+<ul>
+<li><code>NNo</code> — opacity N% (e.g. <code>lock50o</code> = 50% opacity)</li>
+<li><code>NNs</code> — scale N% (e.g. <code>star75s</code> = 75% scale)</li>
+<li><code>NNr</code> — rotate N° (e.g. <code>chevronRight90r</code> = chevron pointing down)</li>
+<li><code>_NNr</code> — rotate -N° (e.g. <code>arrow_45r</code>)</li>
+<li><code>0f</code> — flip horizontally (e.g. <code>sidebar0f</code>)</li>
+<li><code>1f</code> — flip vertically</li>
+<li><code>NNx</code> — translateX N% (e.g. <code>plus20x</code> = shift right 20%)</li>
+<li><code>NNy</code> — translateY N% (e.g. <code>plus_20y</code> = shift up 20%)</li>
+<li><code>_&lt;HEX&gt;F</code> — fill color (e.g. <code>star_FF0000F</code> = red fill; use uppercase hex)</li>
+<li><code>_&lt;HEX&gt;S</code> — stroke color (e.g. <code>lock_00FS</code> = blue stroke)</li>
+<li><code>_&lt;camelCase&gt;F</code> — fill CSS variable (e.g. <code>star_brandColorF</code> = <code>var(--brand-color)</code>)</li>
+<li><code>_&lt;camelCase&gt;S</code> — stroke CSS variable (e.g. <code>lock_accentS</code> = <code>var(--accent)</code>)</li>
+<li>CSS color math works too: <code>star_brandColor40oF</code> = brand color at 40% opacity</li>
+<li><code>NW</code> — stroke width (e.g. <code>lock4W</code> = stroke-width 4)</li>
+</ul>
+<p>Suffixes combine freely: <code>plus50o60s25x25y_f00F</code> = plus at 50% opacity,
+60% scale, shifted 25% right and down, filled red.</p>
+<h3>Stacking icons</h3>
+<p>Use <code>$</code> to stack icons: <code>overlay$base</code>, or <code>top$middle$bottom</code> for
+multiple layers. The last segment is the base (sets the size), everything
+before it is overlaid on top. Each segment is resolved independently —
+suffixes, redirects, and rules all work:</p>
+<pre><code>icons[&#39;tosi$map50o&#39;]()                // tosi logo on a 50% opacity map
+icons[&#39;star45r$circle&#39;]()              // rotated star on a circle
+icons[&#39;lock50s75o_10y$shield&#39;]()       // translucent lock on a shield
+icons[&#39;star25o$lock50o$shield&#39;]()      // three layers
+</code></pre>
+<h3>Icon redirects</h3>
+<p>Icon definitions that don&#39;t start with <code>&lt;svg</code> are treated as redirects.
+This is how we eliminate redundant SVG files — <code>chevronDown</code> doesn&#39;t
+need its own SVG:</p>
+<pre><code>defineIcons({
+  chevronDown: &#39;chevronRight90r&#39;,
+  chevronLeft: &#39;chevronRight180r&#39;,
+  chevronUp: &#39;chevronRight270r&#39;,
+  userAdd: &#39;plus50o60s25x25y$user&#39;,
+})
+</code></pre>
+<h3>Prefix rules</h3>
+<p>Rules apply named prefixes to icons. Built-in rules use string rewrites
+that feed back into the resolution pipeline:</p>
+<ul>
+<li><code>un&lt;Icon&gt;</code> — translucent slash overlay (e.g. <code>unPin</code>, <code>unLock</code>)</li>
+<li><code>check&lt;Icon&gt;</code> — green check overlay</li>
+<li><code>cancel&lt;Icon&gt;</code> — red x overlay</li>
+<li><code>search&lt;Icon&gt;</code> — magnifier overlay</li>
+<li><code>spin&lt;dps&gt;&lt;Icon&gt;</code> — continuous rotation at N°/second (e.g. <code>spin360Loader</code>)</li>
+<li><code>spin_&lt;dps&gt;&lt;Icon&gt;</code> — counter-clockwise (e.g. <code>spin_180Star</code>)</li>
+</ul>
+<p>The overlay rules are just string rewrites — for example, <code>unFoo</code>
+becomes <code>slash25o$foo75s75o</code>. <strong>Overlay icons should have a square
+viewBox</strong> for best results on non-square base icons.</p>
+<h3>Custom rules</h3>
+<p><code>iconRules</code> is a mutable array. Each rule has a <code>prefix</code> (string or
+RegExp) and an <code>apply</code> function that returns a <strong>string</strong> (resolved
+through the full pipeline), an <strong>Element</strong> (used directly), or <strong>null</strong>
+(skip to next rule).</p>
+<p>String rewrites are the simplest — just return a composition string:</p>
+<pre><code>// String rewrite: addFoo → plus75o_0000ffS$foo75s50o
+iconRules.push({
+  prefix: &#39;add&#39;,
+  apply: (baseName) =&gt; `plus75o_0000ffS$${baseName}75s50o`,
+})
+</code></pre>
+<p>Function rules can use <code>resolveIcon()</code> and <code>wrapIcon()</code> (both exported)
+for more control:</p>
+<pre><code>// Function rule: glowNNFoo → foo with brightness filter
+iconRules.push({
+  prefix: /^glow(\d+)/,
+  apply: (baseName, match, parts) =&gt; {
+    const icon = resolveIcon(baseName, parts)
+    icon.style.filter = `brightness(${match[1]}%)`
+    return wrapIcon(baseName, parts, icon)
+  },
+})
+</code></pre>
+<ul>
+<li><code>resolveIcon(name, parts)</code> — resolve any icon name through the full
+pipeline (redirects, suffixes, rules, stacking)</li>
+<li><code>wrapIcon(name, parts, ...children)</code> — wrap elements in a composite
+container with proper sizing, <code>pointer-events: none</code>, and <code>data-icon</code></li>
+</ul>
+<h3>Building an icon vocabulary</h3>
+<p>You don&#39;t need to spell out the DSL every time. The real power is in
+defining named patterns that become your application&#39;s icon language.
+For example, a <code>remove</code> prefix that overlays a trash icon:</p>
+<pre><code>iconRules.push({
+  prefix: &#39;remove&#39;,
+  apply: (baseName) =&gt;
+    `trash75o_actionColorS$${baseName}50o`,
+})
+</code></pre>
+<p>Now <code>removeUser</code>, <code>removeFile</code>, <code>removeProject</code> all just work — and
+they&#39;re consistent. If you redesign the trash icon or change
+<code>--action-color</code>, every &quot;remove&quot; icon updates automatically.</p>
+<p>You can also use <code>defineIcons</code> for one-off named compositions:</p>
+<pre><code>defineIcons({
+  cloudSync: &#39;spin120Loader40s_30x$cloud&#39;,
+  secureShield: &#39;lock50s75o_10y$shield&#39;,
+  newFile: &#39;plus75o60s25x25y$file&#39;,
+})
+</code></pre>
+<p>Then just use <code>icons.cloudSync()</code> or <code>&lt;tosi-icon icon=&quot;cloudSync&quot;&gt;</code> —
+the composition is invisible to consumers of the icon.</p>
+<h3>Composites and <code>svg2DataUrl</code></h3>
+<p>Composed icons (stacked, overlay rules) are wrapped in a <code>&lt;span&gt;</code>, not
+a single SVG. <code>svg2DataUrl()</code> will render only the base icon and log a
+console error. Simple suffix transforms and plain icons work normally
+with <code>svg2DataUrl</code>.</p>
+<h2>Missing Icons</h2>
+<p>If you ask for an icon that isn&#39;t defined, the <code>icons</code> proxy will print a warning to console
+and render a <code>square</code> (in fact, <code>icons.square()</code>) as a fallback.</p>
+<h2>Icon Sources</h2>
+<p>Many of these icons are sourced from <a href="https://github.com/feathericons/feather">Feather Icons</a>, but
+all the icons have been processed to have integer coordinates in a <code>viewBox</code> typically scaled to 1024  &times; 1024.</p>
+<p>The corporate logos (Google, etc.) are from a variety of sources, in many cases ultimately from the
+organizations themselves. It&#39;s up to you to use them correctly.</p>
+<p>The remaining icons I have created myself using the excellent but sometimes flawed
+<a href="https://apps.apple.com/us/app/amadine-vector-design-art/id1339198386?mt=12">Amadine</a>
+and before that <a href="https://apps.apple.com/us/app/graphic/id404705039?mt=12">Graphic</a>.</p>
+<h3>Building icon data</h3>
+<p>Use <a href="/?make-icon-data.js">make-icon-data</a> to generate icon data from SVG files.
+It supports directional folder conventions to auto-generate rotated and flipped
+variants, eliminating redundant SVGs.</p>
+<h3>Feather Icons Copyright Notice</h3>
+<p>The MIT License (MIT)</p>
+<p>Copyright (c) 2013-2023 Cole Bemis</p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/" aria-current="page" class="current">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

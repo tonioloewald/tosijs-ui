@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>drag &amp; drop — tosijs-ui</title>
+  <meta name="description" content="A lightweight library that leverages HTML5 drag and drop behavior." />
+  <link rel="canonical" href="https://ui.tosijs.net/drag-and-drop/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="drag &amp; drop — tosijs-ui" />
+  <meta property="og:description" content="A lightweight library that leverages HTML5 drag and drop behavior." />
+  <meta property="og:url" content="https://ui.tosijs.net/drag-and-drop/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>drag &amp; drop</h1>
+<p>A lightweight library that leverages HTML5 drag and drop behavior.</p>
+<p>To use it, simply call <code>dragAndDrop.init()</code> (it only needs to be called once,
+but calling it again is harmless).</p>
+<pre><code>import { dragAndDrop } from &#39;tosijs-ui&#39;
+
+dragAndDrop.init()
+</code></pre>
+<p>This module sets up some global event handlers and <em>just works</em>&trade; (arguably, it merely does things
+that the browser should do, such as add a CSS selector for drop zones that are compatible
+with what&#39;s being dragged). Drop zones added dynamically during a drag (e.g. menu items)
+are automatically detected and marked.</p>
+<p>You can use <code>dragAndDrop.draggedElement()</code> to get the element being dragged (if it&#39;s
+actually from the page you&#39;re in).</p>
+<blockquote>
+<h3>The beauty of HTML5 drag-and-drop</h3>
+<p>The nice thing about HTML5 drag-and-drop is that it leverages the OS&#39;s drag and
+drop support. This means you can drag from one window to another, from the desktop
+to your app and vice versa. It&#39;s all a matter of configuring the DOM elements.</p>
+</blockquote>
+<p>This module uses but <em>does not define</em> the following class selectors:</p>
+<ul>
+<li><code>.drag-source</code> an element being dragged</li>
+<li><code>.drag-target</code> an element on which the dragged object may be dropped</li>
+<li><code>.drag-over</code> a <code>.drag-target</code> which the object is currently over</li>
+</ul>
+<p>You may also wish to create style rules for:</p>
+<ul>
+<li><code>[draggable=&quot;true&quot;]</code> anything other than a <code>&lt;a&gt;</code> (and perhaps an <code>&lt;img&gt;</code>) that can be dragged</li>
+<li><code>[data-drag]</code> indicates <em>types</em> of draggable things that can be dropped on them.</li>
+<li><code>[data-drop]</code> indicates potential <em>drop zones</em>.</li>
+</ul>
+<blockquote>
+<p><strong>Note</strong> <code>draggable</code> is has to be set to &quot;true&quot;, <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/draggable">see documentation on draggable</a>.</p>
+</blockquote>
+<h2>Draggable Objects</h2>
+<p>To create a draggable element, add <code>draggable=&quot;true&quot;</code>.</p>
+<pre><code>&lt;div draggable=&quot;true&quot;&gt;Drag Me&lt;/div&gt;
+</code></pre>
+<p>To specify the type(s) of content that will be dragged, use the <code>data-drag</code> attribute:</p>
+<pre><code>&lt;div draggable=&quot;true&quot; data-drag=&quot;text/plain&quot;&gt;Drag Me&lt;/div&gt;
+</code></pre>
+<p>To specify the content dragged, use a <code>data-drag-content</code> attribute.</p>
+<pre><code>&lt;div
+  draggable=&quot;true&quot;
+  data-drag=&quot;text/plain&quot;
+  data-drag-content=&quot;Surprise!&quot;
+&gt;Drag Me&lt;/div&gt;
+</code></pre>
+<h2>Drop Zones</h2>
+<p>To create a drop zone, use the data-drop attribute set to a semicolon-delimited list
+of mime types:</p>
+<pre><code>&lt;div data-drop=&quot;text/plain&quot;&gt;
+  Drop plain text here
+&lt;/div&gt;
+&lt;div data-drop=&quot;text/plain;text/html&quot;&gt;
+  Drop html or plain text here
+&lt;/div&gt;
+</code></pre>
+<p>Finally, you can override default drop behavior (which is to copy the dragged node into
+the drop zone node) by adding your own <code>drop</code> event handler.</p>
+<p>E.g.</p>
+<pre><code>element.addEventListener(&#39;drop&#39;, (event) =&gt; {
+  // event.target is the dragged element
+  ...
+
+  event.stopPropagation()
+  event.preventDefault()
+})
+</code></pre>
+<p>And of course <code>elementCreator()</code>s provide syntax sugar for this:</p>
+<pre><code>elements.div({
+  onDrop(event) {
+    // ...
+  }
+})
+</code></pre>
+<h3>Typed Drop Zones Example</h3>
+<p>In this example, the types are set using <code>data-drag</code> attributes and the drop zones are
+set using <code>data-drop</code> attributes, but everything else is default behavior. You can also
+drop the draggable objects to another window or the desktop, and similarly you can drag
+appropriate stuff into the drop zones. (You can test this out by opening this page in
+a second browser window—event a different browser.)</p>
+<pre><code class="language-html">&lt;div style=&quot;display: grid; grid-template-columns: 50% 50%&quot;&gt;
+  &lt;div&gt;
+    &lt;h4&gt;Draggable&lt;/h4&gt;
+    &lt;a class=&quot;drag&quot; href=&quot;javascript: alert(&#39;I don&#39;t do anything)&quot;&gt;Links are draggable by default&lt;/a&gt;
+    &lt;p draggable=&quot;true&quot;&gt;
+      Just adding the &lt;code&gt;draggable=&quot;true&quot;&lt;/code&gt;
+      makes this paragraph draggable (as text/html by default)
+    &lt;/p&gt;
+    &lt;p draggable=&quot;true&quot; data-drag=&quot;text/html&quot;&gt;
+      Draggable as &lt;i&gt;text/html&lt;/i&gt;
+    &lt;/p&gt;
+    &lt;p draggable=&quot;true&quot; data-drag=&quot;text/plain&quot; data-drag-content=&quot;Surprise!&quot;&gt;
+      Draggable as &lt;i&gt;text/plain&lt;/i&gt;, with &lt;b&gt;custom content&lt;/b&gt;
+    &lt;/p&gt;
+    &lt;p draggable=&quot;true&quot; data-drag=&quot;text/html;text/plain&quot;&gt;
+      Draggable as &lt;i&gt;text/html&lt;/i&gt; or &lt;i&gt;text/plain&lt;/i&gt;
+    &lt;/p&gt;
+    &lt;p draggable=&quot;true&quot; data-drag=&quot;text/plain&quot;&gt;
+      Draggable as &lt;i&gt;text/plain&lt;/i&gt;
+    &lt;/p&gt;
+  &lt;/div&gt;
+  &lt;div&gt;
+    &lt;h4&gt;Drop Targets&lt;/h4&gt;
+    &lt;div data-drop=&quot;text/html&quot;&gt;
+      You can drop stuff here
+    &lt;/div&gt;
+    &lt;div data-drop=&quot;text/html&quot;&gt;
+      You can drop HTML here
+    &lt;/div&gt;
+    &lt;div data-drop=&quot;text/*&quot;&gt;
+      You can drop any text
+    &lt;/div&gt;
+    &lt;div data-drop=&quot;text/html;url&quot;&gt;
+      You can drop HTML or urls here
+    &lt;/div&gt;
+    &lt;div
+      data-drop=&quot;special/any&quot;
+      data-event=&quot;drop:_component_.drop&quot;
+    &gt;
+      I accept anything and have special drop handling
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+<pre><code class="language-css">.drag-source {
+  box-shadow: 0 0 2px 2px orange;
+  opacity: 0.5;
+}
+.drag-target {
+  min-height: 10px;
+  background: rgba(0,0,255,0.25);
+}
+.drag-target.drag-over {
+  background: rgba(0,0,255,0.5);
+}
+:not([data-drop]) &gt; .drag,
+[draggable=&quot;true&quot;] {
+  border: 1px solid rgba(255,192,0,0.5);
+  cursor: pointer;
+  display: block;
+}
+
+:not([data-drop]) &gt; .drag,
+[data-drop],
+[draggable=&quot;true&quot;] {
+  padding: 4px;
+  margin: 4px;
+  border-radius: 5px;
+}
+</code></pre>
+<pre><code class="language-js">import { dragAndDrop } from &#39;tosijs-ui&#39;
+
+dragAndDrop.init()
+</code></pre>
+<blockquote>
+<p>Note that you can drag between two browser tabs containing this
+example (or between two different browsers) and it will work.</p>
+</blockquote>
+<h3>Reorderable List Example</h3>
+<p>This example uses a custom <code>drop</code> event handler. When you sort the spectrum
+into the correct order you &quot;win&quot; and then the items are reshuffled.</p>
+<p>Also notice that the <code>data-drag</code> and <code>data-drop</code> values are set to a
+random dragId so you cannot drag to another window or the desktop.</p>
+<pre><code class="language-js">import { elements, tosi, getListItem } from &#39;tosijs&#39;
+import { dragAndDrop, TosiDialog } from &#39;tosijs-ui&#39;
+
+dragAndDrop.init()
+
+const shuffle = (deck) =&gt; {
+  var shuffled = [];
+  for( const card of deck ){
+    shuffled.splice( Math.floor( Math.random() * (1 + shuffled.length) ), 0, card );
+  }
+  return shuffled;
+}
+
+const colors = [
+  &#39;red&#39;,
+  &#39;orange&#39;,
+  &#39;yellow&#39;,
+  &#39;green&#39;,
+  &#39;blue&#39;,
+  &#39;indigo&#39;,
+  &#39;violet&#39;,
+]
+
+let spectrum
+
+const start = () =&gt; {
+  ({ spectrum } =  tosi({
+    spectrum: shuffle(colors).map(color =&gt; ({color}))
+  }))
+}
+
+start()
+
+let dragged = null
+
+const dropColor = (event) =&gt; {
+  const dropped = getListItem(event.target)
+  const draggedIndex = spectrum.indexOf(dragged)
+  const droppedIndex = spectrum.indexOf(dropped)
+  spectrum.splice(draggedIndex, 1)
+  spectrum.splice(droppedIndex, 0, dragged)
+
+  if (JSON.stringify(spectrum.map(c =&gt; c.color)) === JSON.stringify(colors)) {
+    TosiDialog.alert(&#39;You win!&#39;).then(start)
+  }
+
+  console.log({dragged, draggedIndex, dropped, droppedIndex})
+
+  event.preventDefault()
+  event.stopPropagation()
+}
+
+const dragId = &#39;spectrum/&#39; + Math.floor(Math.random() * 1e9)
+
+const { div, button, template } = elements
+
+preview.append(
+  div(
+    {
+      bindList: { value: spectrum, idPath: &#39;color&#39; }
+    },
+    template(
+      div({
+        class: &#39;spectrum&#39;,
+        bindText: &#39;^.color&#39;,
+        draggable: &#39;true&#39;,
+        dataDrag: dragId,
+        dataDrop: dragId,
+        onDrop: dropColor,
+        bind: {
+          value: &#39;^.color&#39;,
+          binding(element, value) {
+            element.style.backgroundColor = value
+          }
+        },
+        onDragstart(event) {
+          dragged = getListItem(event.target)
+        }
+      })
+    )
+  ),
+)
+</code></pre>
+<pre><code class="language-css">.spectrum {
+  height: 36px;
+  color: white;
+  font-weight: 700;
+  text-shadow: 1px 2px 0 black;
+  padding-left: 10px;
+}
+
+.spectrum.drag-over {
+  box-shadow: 0 0 0 4px blue;
+}
+</code></pre>
+<blockquote>
+<p>To prevent this example from allowing drags between windows (which
+wouldn&#39;t make sense) a random dragId is assigned to <code>data-drag</code> and
+<code>data-drop</code> in this example.
+)</p>
+</blockquote>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/" aria-current="page" class="current">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

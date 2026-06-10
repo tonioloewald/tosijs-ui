@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>forms — tosijs-ui</title>
+  <meta name="description" content="&lt;tosi-form&gt; and &lt;tosi-field&gt; can be used to quickly create forms complete with" />
+  <link rel="canonical" href="https://ui.tosijs.net/form/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="forms — tosijs-ui" />
+  <meta property="og:description" content="&lt;tosi-form&gt; and &lt;tosi-field&gt; can be used to quickly create forms complete with" />
+  <meta property="og:url" content="https://ui.tosijs.net/form/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;,&quot;npm&quot;:&quot;https://www.npmjs.com/package/tosijs-ui&quot;,&quot;discord&quot;:&quot;https://discord.com/invite/ramJ9rgky5&quot;,&quot;blog&quot;:&quot;https://loewald.com&quot;,&quot;bundle&quot;:&quot;https://bundlejs.com/?q=tosijs-ui&quot;,&quot;cdn&quot;:&quot;https://www.jsdelivr.com/package/npm/tosijs-ui&quot;}}">
+  <article class="doc-content">
+<h1>forms</h1>
+<p><code>&lt;tosi-form&gt;</code> and <code>&lt;tosi-field&gt;</code> can be used to quickly create forms complete with
+<a href="https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation#built-in_form_validation_examples">client-side validation</a>.</p>
+<pre><code class="language-js">const form = preview.querySelector(&#39;tosi-form&#39;)
+preview.querySelector(&#39;.submit&#39;).addEventListener(&#39;click&#39;, form.submit)
+</code></pre>
+<pre><code class="language-html">&lt;tosi-form value=&#39;{&quot;formInitializer&quot;: &quot;initial value from form&quot;}&#39;&gt;
+  &lt;h3 slot=&quot;header&quot;&gt;Example Form Header&lt;/h3&gt;
+  &lt;tosi-field caption=&quot;Required field&quot; key=&quot;required&quot;&gt;&lt;/tosi-field&gt;
+  &lt;tosi-field optional key=&quot;optional&quot;&gt;&lt;i&gt;Optional&lt;/i&gt; Field&lt;/tosi-field&gt;
+  &lt;tosi-field key=&quot;text&quot; type=&quot;text&quot; placeholder=&quot;type it in here&quot;&gt;Tell us a long story&lt;/tosi-field&gt;
+  &lt;tosi-field caption=&quot;Zip Code&quot; placeholder=&quot;12345 or 12345-6789&quot; key=&quot;zipcode&quot; pattern=&quot;\d{5}(-\d{4})?&quot;&gt;&lt;/tosi-field&gt;
+  &lt;tosi-field caption=&quot;Date&quot; key=&quot;date&quot; type=&quot;date&quot;&gt;&lt;/tosi-field&gt;
+  &lt;tosi-field caption=&quot;Number&quot; key=&quot;number&quot; type=&quot;number&quot;&gt;&lt;/tosi-field&gt;
+  &lt;tosi-field caption=&quot;Range&quot; key=&quot;range&quot; type=&quot;range&quot; min=&quot;0&quot; max=&quot;10&quot;&gt;&lt;/tosi-field&gt;
+  &lt;tosi-field key=&quot;boolean&quot; type=&quot;checkbox&quot;&gt;😃 &lt;b&gt;Agreed?!&lt;/b&gt;&lt;/tosi-field&gt;
+  &lt;tosi-field key=&quot;color&quot; type=&quot;color&quot; value=&quot;pink&quot;&gt;
+    favorite color
+  &lt;/tosi-field&gt;
+  &lt;tosi-field key=&quot;select&quot;&gt;
+    Custom Field
+    &lt;select slot=&quot;input&quot;&gt;
+      &lt;option&gt;This&lt;/option&gt;
+      &lt;option&gt;That&lt;/option&gt;
+      &lt;option&gt;The Other&lt;/option&gt;
+    &lt;/select&gt;
+  &lt;/tosi-field&gt;
+  &lt;tosi-field key=&quot;tags&quot;&gt;
+    Tag List
+    &lt;tosi-tag-list editable slot=&quot;input&quot; available-tags=&quot;pick me,no pick me&quot;&gt;&lt;/tosi-tag-list&gt;
+  &lt;/tosi-field&gt;
+  &lt;tosi-field key=&quot;rating&quot;&gt;
+    Rate this form!
+    &lt;tosi-rating slot=&quot;input&quot;&gt;&lt;/tosi-rating&gt;
+  &lt;/tosi-field&gt;
+  &lt;tosi-field key=&quot;like&quot;&gt;
+    Do you like it?
+    &lt;tosi-segmented
+      choices=&quot;yes=Yes:thumbsUp,no=No:thumbsDown&quot;
+      slot=&quot;input&quot;
+    &gt;&lt;/tosi-segmented&gt;
+  &lt;/tosi-field&gt;
+  &lt;tosi-field key=&quot;relationship&quot;&gt;
+    Relationship Status
+    &lt;tosi-segmented
+      style=&quot;--segmented-direction: column; --segmented-align-items: stretch&quot;
+      choices=&quot;couple=In a relationship,single=Single&quot;
+      other=&quot;It&#39;s complicated…&quot;
+      slot=&quot;input&quot;
+    &gt;&lt;/tosi-segmented&gt;
+  &lt;/tosi-field&gt;
+  &lt;tosi-field key=&quot;amount&quot; fixed-precision=&quot;2&quot; type=&quot;number&quot; prefix=&quot;$&quot; suffix=&quot;(USD)&quot;&gt;
+    What&#39;s it worth?
+  &lt;/tosi-field&gt;
+  &lt;tosi-field key=&quot;valueInitializer&quot; value=&quot;initial value from field&quot;&gt;
+    Initialized by field
+  &lt;/tosi-field&gt;
+  &lt;tosi-field key=&quot;formInitializer&quot;&gt;
+    Initialized by form
+  &lt;/tosi-field&gt;
+  &lt;button slot=&quot;footer&quot; class=&quot;submit&quot;&gt;Submit&lt;/button&gt;
+&lt;/tosi-form&gt;
+</code></pre>
+<pre><code class="language-css">.preview tosi-form {
+  height: 100%;
+}
+
+.preview ::part(header), .preview ::part(footer) {
+  background: var(--inset-bg);
+  justify-content: center;
+  padding: calc(var(--spacing) * 0.5) var(--spacing);
+}
+
+.preview h3, .preview h4 {
+  margin: 0;
+  padding: 0;
+}
+
+.preview ::part(content) {
+  padding: var(--spacing);
+  gap: var(--spacing);
+  background: var(--background);
+}
+
+.preview label {
+  display: grid;
+  grid-template-columns: 180px auto 100px;
+  gap: var(--spacing);
+}
+
+.preview label [part=&quot;caption&quot;] {
+  text-align: right;
+}
+
+.preview label:has(:invalid:required)::after {
+  content: &#39;* required&#39;
+}
+
+@media (max-width: 500px) {
+  .preview label [part=&quot;caption&quot;] {
+    text-align: center;
+  }
+
+  .preview label {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    align-items: stretch;
+    gap: calc(var(--spacing) * 0.5);
+  }
+
+  .preview label:has(:invalid:required)::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    content: &#39;*&#39;
+  }
+
+  .preview tosi-field [part=&quot;field&quot;],
+  .preview tosi-field [part=&quot;input&quot;] &gt; * {
+    display: flex;
+    justify-content: center;
+  }
+}
+
+.preview :invalid {
+  box-shadow: inset 0 0 0 2px #F008;
+}
+</code></pre>
+<h2><code>&lt;tosi-form&gt;</code></h2>
+<p><code>&lt;tosi-form&gt;</code> prevents the default form behavior when a <code>submit</code> event is triggered and instead validates the
+form contents (generating feedback if desired) and calls its <code>submitCallback(value: {[key: string]: any}, isValid: boolean): void</code>
+method.</p>
+<p><code>&lt;tosi-form&gt;</code> offers a <code>fields</code> proxy that allows values stored in the form to be updated. Any changes will trigger a <code>change</code>
+event on the <code>&lt;tosi-form&gt;</code> (in addition to any events fired by form fields).</p>
+<p><code>&lt;tosi-form&gt;</code> instances have <code>value</code> and <code>isValid</code> properties you can access any time. Note that <code>isValid</code> is computed
+and triggers form validation.</p>
+<p><code>&lt;tosi-form&gt;</code> has <code>header</code> and <code>footer</code> <code>&lt;slot&gt;</code>s in addition to default <code>&lt;slot&gt;</code>, which is tucked inside a <code>&lt;form&gt;</code> element.</p>
+<h2><code>&lt;tosi-field&gt;</code></h2>
+<p><code>&lt;tosi-field&gt;</code> is a simple web-component with no shadowDOM that combines an <code>&lt;input&gt;</code> field wrapped with a <code>&lt;label&gt;</code>. Any
+content of the custom-element will become the <code>caption</code> or you can simply set the <code>caption</code> attribute.</p>
+<p>You can replace the default <code>&lt;input&gt;</code> field by adding an element to the slot <code>input</code> (it&#39;s a <code>tosiSlot</code>) whereupon
+the <code>value</code> of that element will be used instead of the built-in <code>&lt;input&gt;</code>. (The <code>&lt;input&gt;</code> is retained and
+is used to drive form-validation.)</p>
+<p><code>&lt;tosi-field&gt;</code> supports the following attributes:</p>
+<ul>
+<li><code>caption</code> labels the field</li>
+<li><code>key</code> determines the form property the field will populate</li>
+<li><code>type</code> determines the data-type: &#39;&#39; | &#39;checkbox&#39; | &#39;number&#39; | &#39;range&#39; | &#39;date&#39; | &#39;text&#39; | &#39;color&#39;</li>
+<li><code>optional</code> turns off the <code>required</code> attribute (fields are required by default)</li>
+<li><code>pattern</code> is an (optional) regex pattern</li>
+<li><code>placeholder</code> is an (optional) placeholder</li>
+</ul>
+<p>The <code>text</code> type populates the <code>input</code> slot with a <code>&lt;textarea&gt;</code> element.</p>
+<p>The <code>color</code> type populates the <code>input</code> slot with a <code>&lt;tosi-color&gt;</code> element (and thus supports colors with alpha values).</p>
+<p><tosi-css-var-editor element-selector="tosi-field" target-selector=".preview"></tosi-css-var-editor></p>
+<h2>Native Form Integration</h2>
+<p>The following components support native form integration via <code>formAssociated</code>:</p>
+<ul>
+<li><code>&lt;tosi-rating&gt;</code> - star ratings</li>
+<li><code>&lt;tosi-select&gt;</code> - custom select dropdowns</li>
+<li><code>&lt;tosi-segmented&gt;</code> - segmented button groups</li>
+<li><code>&lt;tosi-tag-list&gt;</code> - tag selection lists</li>
+</ul>
+<p>These components can be used directly in a standard <code>&lt;form&gt;</code> element with full support for:</p>
+<ul>
+<li>Form submission (values included in FormData)</li>
+<li>Form reset</li>
+<li>Required field validation</li>
+<li>The <code>:invalid</code> and <code>:valid</code> CSS pseudo-classes</li>
+</ul>
+<pre><code class="language-html">&lt;form id=&quot;native-form&quot; class=&quot;native-form&quot;&gt;
+  &lt;label&gt;
+    &lt;span&gt;Rate our service (required):&lt;/span&gt;
+    &lt;tosi-rating name=&quot;rating&quot; required min=&quot;1&quot;&gt;&lt;/tosi-rating&gt;
+  &lt;/label&gt;
+
+  &lt;label&gt;
+    &lt;span&gt;Select your country:&lt;/span&gt;
+    &lt;tosi-select name=&quot;country&quot; required placeholder=&quot;-- Select --&quot;
+      options=&quot;us=United States:flag,uk=United Kingdom:flag,ca=Canada:flag,au=Australia:flag&quot;
+    &gt;&lt;/tosi-select&gt;
+  &lt;/label&gt;
+
+  &lt;label&gt;
+    &lt;span&gt;Subscription tier:&lt;/span&gt;
+    &lt;tosi-segmented
+      name=&quot;tier&quot;
+      required
+      choices=&quot;free=Free,pro=Pro:star,enterprise=Enterprise:tosi&quot;
+    &gt;&lt;/tosi-segmented&gt;
+  &lt;/label&gt;
+
+  &lt;label&gt;
+    &lt;span&gt;Interests (select at least one):&lt;/span&gt;
+    &lt;tosi-tag-list
+      name=&quot;interests&quot;
+      required
+      editable
+      available-tags=&quot;Technology,Sports,Music,Art,Travel,Food&quot;
+    &gt;&lt;/tosi-tag-list&gt;
+  &lt;/label&gt;
+
+  &lt;div class=&quot;buttons&quot;&gt;
+    &lt;button type=&quot;submit&quot;&gt;Submit&lt;/button&gt;
+    &lt;button type=&quot;reset&quot;&gt;Reset&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/form&gt;
+</code></pre>
+<pre><code class="language-css">.preview .native-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  overflow: auto;
+  height: 100%;
+}
+
+.preview .native-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview .native-form .buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.preview tosi-rating:invalid,
+.preview tosi-select:invalid,
+.preview tosi-segmented:invalid,
+.preview tosi-tag-list:invalid {
+  outline: 2px solid #f008;
+  outline-offset: 2px;
+}
+
+.preview tosi-rating:valid,
+.preview tosi-select:valid,
+.preview tosi-segmented:valid,
+.preview tosi-tag-list:valid {
+  outline: 2px solid #0a08;
+  outline-offset: 2px;
+}
+</code></pre>
+<pre><code class="language-js">const { TosiDialog } = tosijsui
+const form = preview.querySelector(&#39;#native-form&#39;)
+
+form.addEventListener(&#39;submit&#39;, (e) =&gt; {
+  e.preventDefault()
+  const formData = new FormData(form)
+  const data = Object.fromEntries(formData.entries())
+  TosiDialog.alert(JSON.stringify(data, null, 2), &#39;Form Submitted&#39;)
+})
+
+form.addEventListener(&#39;reset&#39;, () =&gt; {
+  TosiDialog.alert(&#39;Form has been reset&#39;, &#39;Reset&#39;)
+})
+</code></pre>
+<h2>Using formAssociated Components with tosi-form</h2>
+<p>While the formAssociated components work with native <code>&lt;form&gt;</code> elements, using them with <code>&lt;tosi-form&gt;</code>
+provides additional benefits:</p>
+<ul>
+<li><strong>No submit prevention boilerplate</strong> - <code>tosi-form</code> automatically prevents the default form submission</li>
+<li><strong>JSON state management</strong> - Initialize and access form state as a JavaScript object via <code>value</code> and <code>fields</code></li>
+<li><strong>Validation feedback</strong> - Built-in <code>isValid</code> property and <code>submitCallback</code> with validation status</li>
+<li><strong>Change events</strong> - Unified change events on the form element</li>
+</ul>
+<p>Since these components now support <code>formAssociated</code>, they participate directly in form submission
+and validation without needing the hidden input workaround that <code>tosi-field</code> uses.</p>
+<pre><code class="language-html">&lt;tosi-form id=&quot;tosi-form&quot; value=&#39;{&quot;rating&quot;: 3, &quot;tier&quot;: &quot;pro&quot;}&#39;&gt;
+  &lt;h4 slot=&quot;header&quot;&gt;tosi-form with formAssociated Components&lt;/h4&gt;
+
+  &lt;label class=&quot;form-row&quot;&gt;
+    &lt;span&gt;Service Rating:&lt;/span&gt;
+    &lt;tosi-rating name=&quot;rating&quot; required min=&quot;1&quot;&gt;&lt;/tosi-rating&gt;
+  &lt;/label&gt;
+
+  &lt;label class=&quot;form-row&quot;&gt;
+    &lt;span&gt;Country:&lt;/span&gt;
+    &lt;tosi-select name=&quot;country&quot; required placeholder=&quot;-- Select --&quot;
+      options=&quot;us=United States:flag,uk=United Kingdom:flag,ca=Canada:flag&quot;
+    &gt;&lt;/tosi-select&gt;
+  &lt;/label&gt;
+
+  &lt;label class=&quot;form-row&quot;&gt;
+    &lt;span&gt;Subscription:&lt;/span&gt;
+    &lt;tosi-segmented
+      name=&quot;tier&quot;
+      required
+      choices=&quot;free=Free,pro=Pro:star,enterprise=Enterprise:tosi&quot;
+    &gt;&lt;/tosi-segmented&gt;
+  &lt;/label&gt;
+
+  &lt;label class=&quot;form-row&quot;&gt;
+    &lt;span&gt;Interests:&lt;/span&gt;
+    &lt;tosi-tag-list
+      name=&quot;interests&quot;
+      required
+      editable
+      available-tags=&quot;Tech,Sports,Music,Art&quot;
+    &gt;&lt;/tosi-tag-list&gt;
+  &lt;/label&gt;
+
+  &lt;div slot=&quot;footer&quot; style=&quot;display: flex; gap: 8px;&quot;&gt;
+    &lt;button class=&quot;submit-btn&quot;&gt;Submit&lt;/button&gt;
+    &lt;button class=&quot;reset-btn&quot;&gt;Reset&lt;/button&gt;
+    &lt;button class=&quot;set-values-btn&quot;&gt;Set Values&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/tosi-form&gt;
+</code></pre>
+<pre><code class="language-css">.preview #tosi-form {
+  height: auto;
+}
+
+.preview #tosi-form .form-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.preview #tosi-form .form-row &gt; span {
+  text-align: right;
+}
+
+.preview #tosi-form ::part(content) {
+  padding: 16px;
+  gap: 12px;
+}
+
+.preview #tosi-form ::part(header) {
+  padding: 8px 16px;
+}
+
+.preview #tosi-form ::part(footer) {
+  padding: 8px 16px;
+}
+</code></pre>
+<pre><code class="language-js">const { TosiDialog } = tosijsui
+const tosiForm = preview.querySelector(&#39;#tosi-form&#39;)
+
+// Set up submit callback
+tosiForm.submitCallback = (value, isValid) =&gt; {
+  const title = isValid ? &#39;Form Submitted (Valid)&#39; : &#39;Form Submitted (Invalid)&#39;
+  TosiDialog.alert(JSON.stringify(value, null, 2), title)
+}
+
+preview.querySelector(&#39;.submit-btn&#39;).addEventListener(&#39;click&#39;, () =&gt; {
+  tosiForm.submit()
+})
+
+preview.querySelector(&#39;.reset-btn&#39;).addEventListener(&#39;click&#39;, () =&gt; {
+  tosiForm.value = {}
+  tosiForm.querySelectorAll(&#39;tosi-rating, tosi-select, tosi-segmented, tosi-tag-list&#39;).forEach(el =&gt; {
+    el.value = el.tagName === &#39;TOSI-TAG-LIST&#39; ? [] : null
+  })
+  TosiDialog.alert(&#39;Form has been reset&#39;, &#39;Reset&#39;)
+})
+
+preview.querySelector(&#39;.set-values-btn&#39;).addEventListener(&#39;click&#39;, () =&gt; {
+  // Demonstrate programmatic value setting
+  const rating = tosiForm.querySelector(&#39;tosi-rating&#39;)
+  const select = tosiForm.querySelector(&#39;tosi-select&#39;)
+  const segmented = tosiForm.querySelector(&#39;tosi-segmented&#39;)
+  const tagList = tosiForm.querySelector(&#39;tosi-tag-list&#39;)
+
+  rating.value = 5
+  select.value = &#39;uk&#39;
+  segmented.value = &#39;enterprise&#39;
+  tagList.value = [&#39;Tech&#39;, &#39;Music&#39;]
+
+  TosiDialog.alert(&#39;Values set programmatically:\n\nRating: 5\nCountry: uk\nTier: enterprise\nInterests: Tech, Music&#39;, &#39;Values Set&#39;)
+})
+</code></pre>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/" aria-current="page" class="current">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

@@ -8,6 +8,7 @@ export * from './color-input';
 export * from './data-table';
 export * from './dialog';
 export * from './doc-browser';
+export * from './doc-system/doc-system';
 export * as dragAndDrop from './drag-and-drop';
 export * from './editable-rect';
 export * from './filter-builder';
