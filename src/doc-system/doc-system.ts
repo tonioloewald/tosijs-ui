@@ -73,14 +73,19 @@ export class TosiDocSystem extends Component {
   private applyStyles(): void {
     if (this.stylesApplied) return
     this.stylesApplied = true
-    StyleSheet(
-      'tosi-doc-system',
-      docSystemStyleSpec({
-        accent: this.accent || undefined,
-        background: this.background || undefined,
-        text: this.text || undefined,
-      })
-    )
+    // When the generator has burned the theme into a static <link>, the page is
+    // already styled (no JS / no flash) — don't inject a duplicate. Otherwise this
+    // is a drop-in usage, so inject the computed theme.
+    if (!document.querySelector('link[data-tosi-doc-system]')) {
+      StyleSheet(
+        'tosi-doc-system',
+        docSystemStyleSpec({
+          accent: this.accent || undefined,
+          background: this.background || undefined,
+          text: this.text || undefined,
+        })
+      )
+    }
     const dark = matchMedia('(prefers-color-scheme: dark)')
     const syncDark = () =>
       document.body.classList.toggle('darkmode', dark.matches)
