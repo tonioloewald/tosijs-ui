@@ -15,13 +15,16 @@ export function renderDocMarkdown(text) {
     return marked(text, docMarkedOptions);
 }
 /**
- * First prose line of a doc, for <meta name="description">. Skips the title
- * heading, code fences, blockquotes, tables and other non-sentence lines, then
- * truncates to a sensible length on a word boundary.
+ * Derive a clean <meta name="description"> from a doc's first prose paragraph.
+ * Skips the title heading, code fences, tables, quotes, html and image/link-only
+ * lines; strips inline markdown; drops low-value "This is a…" leads; and truncates
+ * on a sentence boundary where possible (never mid-clause ending in a comma).
+ * Pages can override this entirely via their JSON metadata `description`.
  */
 export function docDescription(text, maxLength = 160) {
     const lines = text.split('\n');
     let inFence = false;
+    const prose = [];
     for (const raw of lines) {
         const line = raw.trim();
         if (line.startsWith('```') || line.startsWith('~~~')) {
@@ -30,8 +33,11 @@ export function docDescription(text, maxLength = 160) {
         }
         if (inFence)
             continue;
-        if (line === '')
+        if (line === '') {
+            if (prose.length)
+                break; // end of the first prose paragraph
             continue;
+        }
         if (line.startsWith('#'))
             continue; // headings
         if (line.startsWith('<!--') || line.startsWith('/*'))
@@ -41,17 +47,28 @@ export function docDescription(text, maxLength = 160) {
         if (line.startsWith('|') || line.startsWith('>'))
             continue; // tables, quotes
         if (line.startsWith('![') || /^\[.*\]\(.*\)$/.test(line))
-            continue; // image/link-only lines
-        // Strip inline markdown for a clean snippet.
-        const clean = line
-            .replace(/`([^`]+)`/g, '$1')
-            .replace(/\*\*([^*]+)\*\*/g, '$1')
-            .replace(/\*([^*]+)\*/g, '$1')
-            .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-            .trim();
-        if (clean.length <= maxLength)
-            return clean;
-        return clean.slice(0, clean.lastIndexOf(' ', maxLength)).trim() + '…';
+            continue; // image/link-only
+        prose.push(line);
+        if (prose.join(' ').length >= maxLength)
+            break;
     }
-    return '';
+    let s = prose
+        .join(' ')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+        .replace(/^This (?:is|component is|widget is)\s+(?:a|an|the)\s+/i, '')
+        .trim();
+    if (!s)
+        return '';
+    s = s.charAt(0).toUpperCase() + s.slice(1);
+    if (s.length <= maxLength)
+        return s.replace(/[,;:\s]+$/, '');
+    const slice = s.slice(0, maxLength);
+    const sentenceEnd = Math.max(slice.lastIndexOf('. '), slice.lastIndexOf('! '), slice.lastIndexOf('? '));
+    if (sentenceEnd > maxLength * 0.6)
+        return slice.slice(0, sentenceEnd + 1).trim();
+    const wordEnd = slice.lastIndexOf(' ');
+    return slice.slice(0, wordEnd).replace(/[,;:.\s]+$/, '').trim() + '…';
 }
