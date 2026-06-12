@@ -1,6 +1,6 @@
 # tosijs-ui
 
-<!--{ "pin": "top" }-->
+<!--{ "pin": "top", "headTitle": "tosijs-ui — robust, dependency-free web components", "description": "A small, fast library of standards-based web components (data tables, dialogs, forms, rich text, carousels, and more) built on tosijs — smaller and faster than a React app, with no virtual DOM.", "keywords": "web components, custom elements, tosijs, data table, dialog, form, rich text, no virtual dom" }-->
 
 [ui.tosijs.net live demo](https://ui.tosijs.net) | [tosijs](https://tosijs.net) | [discord](https://discord.gg/ramJ9rgky5) | [github](https://github.com/tonioloewald/tosijs-ui#readme) | [npm](https://www.npmjs.com/package/tosijs-ui)
 

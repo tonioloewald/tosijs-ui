@@ -14,6 +14,7 @@ Default output: docs/doc-system.css
 import './build-dom-shim' // must precede any tosijs import (build has no DOM)
 import { css } from 'tosijs'
 import { docSystemStyleSpec, DocSystemTheme } from '../src/doc-system/doc-system-styles'
+import siteConfig from '../tosijs-site.config'
 
 declare global {
   var Bun: any
@@ -28,6 +29,6 @@ export async function generateCss(
 
 if (import.meta.main) {
   const outputPath = process.argv[2] || 'docs/doc-system.css'
-  await generateCss(outputPath)
+  await generateCss(outputPath, siteConfig.theme || {})
   console.log(`generated ${outputPath}`)
 }

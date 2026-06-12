@@ -5,8 +5,7 @@ import { watch } from 'chokidar'
 import { extractDocs } from './docs'
 import { generateLlmsTxt } from './make-llms-txt'
 import { generateSite } from './generate-site'
-// Translation table for the doc-site UI (powers the settings menu's language picker).
-import localizedStrings from '../demo/src/localized-strings'
+import siteConfig from '../tosijs-site.config'
 // @ts-ignore-error
 import { $, spawn } from 'bun'
 
@@ -14,9 +13,9 @@ declare global {
   var Bun: any
 }
 
-const PORT = 8787
+const PORT = siteConfig.port ?? 8787
 const PROJECT_ROOT = './'
-const PUBLIC = path.resolve(PROJECT_ROOT, 'docs')
+const PUBLIC = path.resolve(PROJECT_ROOT, siteConfig.outputDir ?? 'docs')
 const DIST = path.resolve(PROJECT_ROOT, 'dist')
 const isSPA = true
 
@@ -59,7 +58,7 @@ async function prebuild() {
   await $`rm -rf ${PUBLIC}`.text()
   await $`mkdir ${PUBLIC}`.text()
   extractDocs({
-    paths: ['src', 'README.md', 'bin', 'icons'],
+    paths: siteConfig.docPaths ?? ['src', 'README.md', 'bin', 'icons'],
     output: 'demo/docs.json',
   })
   await $`bun ./bin/make-icon-data.js`.text()
@@ -113,40 +112,21 @@ async function build(): Promise<boolean> {
   // Generate the static, pre-rendered doc site (one /slug/index.html per doc).
   // Runs after the static-asset copy so the generated index.html (README) wins,
   // and after the iife copy so every page's <script src="/iife.js"> resolves.
-  const PROJECT = 'tosijs-ui'
+  // Everything project-specific comes from tosijs-site.config.ts.
   const docs = JSON.parse(await Bun.file('demo/docs.json').text())
   const pageCount = await generateSite({
     docs,
     outputDir: PUBLIC,
-    projectName: PROJECT,
-    baseUrl: 'https://ui.tosijs.net',
-    projectLinks: {
-      // Still used for the logo and the view-source link.
-      tosijs: 'https://tosijs.net',
-      github: `https://github.com/tonioloewald/${PROJECT}`,
-    },
-    // Header-bar icon links.
-    navbarLinks: [
-      { href: 'https://tosijs.net', label: 'tosijs', icon: 'tosi' },
-      {
-        href: 'https://discord.com/invite/ramJ9rgky5',
-        label: 'discord',
-        icon: 'discord',
-      },
-      { href: 'https://loewald.com', label: 'blog', icon: 'blog' },
-      {
-        href: `https://github.com/tonioloewald/${PROJECT}`,
-        label: 'github',
-        icon: 'github',
-      },
-      {
-        href: `https://www.npmjs.com/package/${PROJECT}`,
-        label: 'npmjs',
-        icon: 'npm',
-      },
-    ],
-    localizedStrings,
-    headExtra: '  <link rel="icon" href="/favicon.svg" />',
+    projectName: siteConfig.name,
+    description: siteConfig.description,
+    baseUrl: siteConfig.baseUrl,
+    lang: siteConfig.lang,
+    projectLinks: siteConfig.projectLinks,
+    navbarLinks: siteConfig.navbarLinks,
+    localizedStrings: siteConfig.localizedStrings,
+    favicon: siteConfig.favicon,
+    ogImage: siteConfig.ogImage,
+    headExtra: siteConfig.headExtra,
   })
   // Burn the theme into a static stylesheet (separate subprocess — see generate-css.ts).
   await $`bun ./bin/generate-css.ts ${PUBLIC}/doc-system.css`.text()

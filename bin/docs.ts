@@ -103,6 +103,15 @@ export interface Doc {
   path: string
   pin?: 'top' | 'bottom'
   hidden?: boolean
+  // Opt-in SEO / agent metadata, provided in the doc's JSON block alongside `pin`:
+  //   <!--{ "headTitle": "...", "description": "...", "keywords": "a, b", "image": "/og/x.webp" }-->
+  // `title` (if provided) also renames the nav item + heading; `headTitle` sets only
+  // the <title> tag (verbatim, no project suffix). The rest override head metadata.
+  headTitle?: string
+  description?: string
+  keywords?: string | string[]
+  image?: string
+  noindex?: boolean
 }
 
 export interface ExtractDocsOptions {
