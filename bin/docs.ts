@@ -123,12 +123,12 @@ export interface ExtractDocsOptions {
 const TRIM_REGEX = /^#+ |`/g
 
 function metadata(content: string, filePath: string): Partial<Doc> {
-  const source = content.match(/<\!\-\-(\{.*\})\-\->|\/\*(\{.*\})\*\//)
+  const source = content.match(/<!--(\{.*\})-->|\/\*(\{.*\})\*\//)
   let data: Partial<Doc> = {}
   if (source) {
     try {
       data = JSON.parse(source[1] || source[2])
-    } catch (e) {
+    } catch {
       console.error('bad metadata in doc', filePath)
     }
   }
@@ -163,7 +163,7 @@ function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
 
       try {
         stats = fs.statSync(filePath)
-      } catch (err) {
+      } catch {
         return
       }
 

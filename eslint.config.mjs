@@ -28,5 +28,5 @@ export default tseslint.config(
       ],
     },
   },
-  { ignores: ['dist/', 'docs/', 'node_modules/'] }
+  { ignores: ['**/dist/', 'docs/', 'node_modules/'] }
 )
