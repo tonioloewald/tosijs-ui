@@ -87,6 +87,65 @@ preview.append(
 
 If you want to directly set locale, just use `setLocale()`.
 
+## `data-tosi-localized` directive
+
+Set the `data-tosi-localized` attribute on any element with a JSON object mapping
+attribute names to localization keys. The library applies `localize()` to each
+key and writes the result to the corresponding attribute — immediately when the
+element appears in the DOM, on every locale change, and whenever the
+`data-tosi-localized` attribute itself is mutated.
+
+The keys must be reference strings that exist in your localization data — try
+switching languages with the locale picker above and watch the `title` and
+`placeholder` below update (hover the button to see its tooltip).
+
+```html
+<button data-tosi-localized='{"title":"Delete","aria-label":"Delete"}'>
+  <tosi-localized>Delete</tosi-localized>
+</button>
+<input data-tosi-localized='{"placeholder":"Filter…"}'>
+```
+
+You never need to set the underlying attributes (`title` / `aria-label` /
+`placeholder`) yourself — the data attribute is the source of truth and stays
+reactive across locale switches. JSON (not a comma-separated mini-format) is
+deliberate: real translation keys contain commas and colons.
+
+**Scope.** The library observes the light DOM with a `MutationObserver`. On
+locale change, the walk also descends into **open** shadow roots, so existing
+elements get re-applied. *Insertions* inside a shadow root between locale
+changes are not picked up automatically — call `applyLocalized(el)` from the
+component's `connectedCallback` (or after building the shadow tree) when you
+add localized elements inside a shadow root. Closed shadow roots are
+inaccessible by design.
+
+If the JSON is malformed, the directive logs a warning and skips that element
+— it never throws.
+
+```html
+<button
+  id="tdl-demo"
+  data-tosi-localized='{"title":"Cancel","aria-label":"Cancel"}'
+>Hover me</button>
+```
+```test
+test('data-tosi-localized: insert and runtime mutation both apply', async () => {
+  const wait = () => new Promise((r) => setTimeout(r, 0))
+  // Combine on-insert and runtime-mutation checks into one test — the
+  // page-wide locale-change path is exercised by the unit tests and by
+  // localization.pw.ts; changing the locale here would cascade through
+  // every localized example on the page.
+  await wait(); await wait()
+  const btn = preview.querySelector('#tdl-demo')
+  expect(btn.getAttribute('title')).toBeTruthy()
+  expect(btn.getAttribute('title')).toBe(btn.getAttribute('aria-label'))
+  const before = btn.getAttribute('title')
+  btn.setAttribute('data-tosi-localized', JSON.stringify({ title: 'Yes' }))
+  await wait(); await wait()
+  expect(btn.getAttribute('title')).not.toBe(before)
+})
+```
+
 ## TosiLocalized
 
 A span-replacement that automatically localizes its text content.
@@ -301,9 +360,94 @@ export const updateLocalized = () => {
     for (const localized of localizeds) {
         localized.localeChanged();
     }
+    applyLocalizedEverywhere();
 };
 // Use BoxedScalar's observe method directly
 i18n.locale.observe(updateLocalized);
+// --- data-tosi-localized directive --------------------------------------
+const LOCALIZED_ATTR = 'data-tosi-localized';
+/**
+ * Apply localization to every attribute listed in the element's
+ * data-tosi-localized JSON map. Exported so components that build shadow-DOM
+ * subtrees with localized children can apply at construction time, since the
+ * MutationObserver below does not descend into shadow roots.
+ */
+export function applyLocalized(el) {
+    const spec = el.getAttribute(LOCALIZED_ATTR);
+    if (!spec)
+        return;
+    let map;
+    try {
+        map = JSON.parse(spec);
+    }
+    catch (err) {
+        console.warn(`[data-tosi-localized] invalid JSON: ${spec}`, err);
+        return;
+    }
+    if (!map || typeof map !== 'object')
+        return;
+    for (const [attr, key] of Object.entries(map)) {
+        if (typeof key !== 'string')
+            continue;
+        el.setAttribute(attr, localize(key));
+    }
+}
+function* walkLocalizedRoots(root) {
+    for (const el of Array.from(root.querySelectorAll(`[${LOCALIZED_ATTR}]`))) {
+        yield el;
+    }
+    for (const el of Array.from(root.querySelectorAll('*'))) {
+        const shadow = el
+            .shadowRoot;
+        if (shadow)
+            yield* walkLocalizedRoots(shadow);
+    }
+}
+function applyLocalizedEverywhere() {
+    if (typeof document === 'undefined')
+        return;
+    for (const el of walkLocalizedRoots(document)) {
+        applyLocalized(el);
+    }
+}
+// Module-level reference keeps the observer (and its callback) alive. happy-dom
+// holds mutation listeners via WeakRef, so a locally-scoped instance can get GC'd
+// between test runs and silently stop firing.
+let localizedObserver = null;
+if (typeof document !== 'undefined' && typeof MutationObserver !== 'undefined') {
+    const startObserver = () => {
+        if (!document.body) {
+            queueMicrotask(startObserver);
+            return;
+        }
+        localizedObserver = new MutationObserver((records) => {
+            for (const rec of records) {
+                if (rec.type === 'attributes' && rec.target instanceof Element) {
+                    applyLocalized(rec.target);
+                    continue;
+                }
+                for (const node of Array.from(rec.addedNodes)) {
+                    if (!(node instanceof Element))
+                        continue;
+                    if (node.hasAttribute(LOCALIZED_ATTR))
+                        applyLocalized(node);
+                    for (const el of Array.from(node.querySelectorAll(`[${LOCALIZED_ATTR}]`))) {
+                        applyLocalized(el);
+                    }
+                }
+            }
+        });
+        localizedObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: [LOCALIZED_ATTR],
+        });
+        // Pick up any elements that were already in the DOM before this module ran.
+        applyLocalizedEverywhere();
+    };
+    startObserver();
+}
 const captionSort = makeSorter((locale) => [
     locale.caption.toLocaleLowerCase(),
 ]);

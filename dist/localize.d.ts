@@ -42,6 +42,13 @@ export declare const i18n: {
 }>;
 export declare const setLocale: (language: string) => void;
 export declare const updateLocalized: () => void;
+/**
+ * Apply localization to every attribute listed in the element's
+ * data-tosi-localized JSON map. Exported so components that build shadow-DOM
+ * subtrees with localized children can apply at construction time, since the
+ * MutationObserver below does not descend into shadow roots.
+ */
+export declare function applyLocalized(el: Element): void;
 export declare function initLocalization(localizedStrings: string): void;
 export declare function localize(ref: string): string;
 export declare class TosiLocalePicker extends Component {
