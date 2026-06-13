@@ -3,3 +3,22 @@
 
 # Use bd merge for beads JSONL files
 .beads/issues.jsonl merge=beads
+
+# Generated, committed build outputs. These are regenerated deterministically
+# by `bun run build`, so their merge conflicts are never worth resolving by
+# hand — a rebase/merge should just keep one side and let the next build
+# overwrite them. The `ours` driver below makes git auto-resolve them instead
+# of stopping at every generated file.
+#
+# IMPORTANT: the `ours` driver must be defined once per clone (it is not stored
+# in the repo). Run:
+#
+#     git config merge.ours.driver true
+#
+# `linguist-generated` also collapses these in GitHub diff views.
+dist/**          merge=ours linguist-generated
+docs/**          merge=ours linguist-generated
+demo/docs.json   merge=ours linguist-generated
+llms.txt         merge=ours linguist-generated
+src/icon-data.ts merge=ours linguist-generated
+src/version.ts   merge=ours linguist-generated

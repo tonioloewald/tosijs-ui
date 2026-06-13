@@ -74,7 +74,15 @@ The dev server watches:
 
 #### Generated files are tracked in git
 
-`dist/`, `docs/`, `demo/docs.json`, and `src/version.ts` are build outputs but are **committed**, not gitignored. A build (`bun run build`) regenerates them, often producing large diffs in `dist/iife.js`, `dist/*.map`, `docs/*.js`, etc. — this is expected. Commit those diffs alongside the source change that caused them; do not revert or hand-edit them. Run `bun run build` before committing so the generated files match the source you're shipping.
+`dist/`, `docs/`, `demo/docs.json`, `llms.txt`, `src/icon-data.ts`, and `src/version.ts` are build outputs but are **committed**, not gitignored. A build (`bun run build`) regenerates them, often producing large diffs in `dist/iife.js`, `dist/*.map`, `docs/*.js`, etc. — this is expected. Commit those diffs alongside the source change that caused them; do not revert or hand-edit them. Run `bun run build` before committing so the generated files match the source you're shipping.
+
+**Rebasing/merging across generated files:** `.gitattributes` marks these paths `merge=ours` so git auto-resolves their conflicts (the next build overwrites them anyway) instead of stopping at every one. This driver is **not** stored in the repo — run it once per clone:
+
+```bash
+git config merge.ours.driver true
+```
+
+After a rebase/merge that touched generated files, run `bun run build` to regenerate them canonically, then amend/commit. Don't hand-resolve generated-file conflicts.
 
 ### Directory Structure
 
