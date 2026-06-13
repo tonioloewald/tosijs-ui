@@ -6,7 +6,6 @@ import { extractDocs } from './docs'
 import { generateLlmsTxt } from './make-llms-txt'
 import { generateSite } from './generate-site'
 import siteConfig from '../tosijs-site.config'
-// @ts-ignore-error
 import { $, spawn } from 'bun'
 
 declare global {
@@ -62,7 +61,7 @@ async function prebuild() {
     output: 'demo/docs.json',
   })
   await $`bun ./bin/make-icon-data.js`.text()
-  await $`cp ./demo/static/* ${PUBLIC}`.text()
+  await $`cp -R ./demo/static/. ${PUBLIC}`.text()
 
   await $`rm -rf ${DIST}`.text()
   await $`mkdir ${DIST}`.text()
@@ -71,16 +70,14 @@ async function prebuild() {
 
 async function build(): Promise<boolean> {
   console.time('build')
-  let result: any
-
   // Emit unbundled ESM + declarations (tree-shakeable by consumers)
   try {
     await $`bun tsc --declaration --incremental --outDir dist`
-  } catch (e) {
+  } catch {
     console.log('esm + types created')
   }
 
-  result = await Bun.build({
+  const result = await Bun.build({
     entrypoints: ['./src/index-iife.ts'],
     outdir: DIST,
     sourcemap: 'linked',
@@ -163,7 +160,7 @@ function serveFromDir(config: {
   directory: string
   path: string
 }): Response | null {
-  let basePath = path.join(config.directory, config.path)
+  const basePath = path.join(config.directory, config.path)
   const suffixes = ['', '.html', 'index.html']
 
   for (const suffix of suffixes) {
@@ -173,7 +170,9 @@ function serveFromDir(config: {
       if (stat && stat.isFile()) {
         return new Response(Bun.file(pathWithSuffix))
       }
-    } catch (err) {}
+    } catch {
+      // not found at this suffix — try the next
+    }
   }
 
   return null
