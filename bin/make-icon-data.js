@@ -192,7 +192,10 @@ function findIcons(dirs, ignore = []) {
       console.warn(`Warning: Directory not found: ${dir}. Skipping.`)
       return
     }
-    const files = fs.readdirSync(dir)
+    // Sort so output is reproducible across machines — readdirSync returns
+    // entries in filesystem order, which differs by OS and otherwise produces
+    // spurious reordering diffs in the generated icon-data on every build.
+    const files = fs.readdirSync(dir).sort()
     if (ignore.includes(dir)) {
       return
     }
