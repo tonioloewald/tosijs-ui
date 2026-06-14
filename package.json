@@ -65,9 +65,16 @@
   "source": "src/index.ts",
   "types": "dist/index.d.ts",
   "exports": {
-    "types": "./dist/index.d.ts",
-    "import": "./dist/index.js",
-    "browser": "./dist/iife.js",
-    "default": "./dist/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "browser": "./dist/iife.js",
+      "default": "./dist/index.js"
+    },
+    "./site": {
+      "types": "./dist/doc-system/site/index.d.ts",
+      "import": "./dist/doc-system/site/index.js",
+      "default": "./dist/doc-system/site/index.js"
+    }
   }
 }
