@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="/doc-system.css" data-tosi-doc-system />
+  <title>Doc-Site System — tosijs-ui</title>
+  <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
+  <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="tosijs-ui" />
+  <meta property="og:title" content="Doc-Site System — tosijs-ui" />
+  <meta property="og:description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
+  <meta property="og:url" content="https://ui.tosijs.net/doc-site-system/" />
+  <meta name="twitter:card" content="summary" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","url":"https://ui.tosijs.net/doc-site-system/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <link rel="icon" href="/favicon.svg" />
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="/localized-strings.txt">
+  <article class="doc-content">
+<!--{ "pin": "bottom", "title": "Doc-Site System", "description": "How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." }-->
+
+<h1><code>tosijs-ui/site</code> — static, pre-rendered, hydrating doc sites</h1>
+<p>A build system that turns a project&#39;s markdown (<code>.md</code> files + <code>/*#</code> block
+comments in source) into a <strong>fast, SEO/AI-friendly documentation site</strong> that
+works with no JavaScript and then upgrades itself into the interactive
+<code>&lt;tosi-doc-system&gt;</code> doc browser when the bundle loads.</p>
+<p>The output is a plain folder of static files — drop it on GitHub Pages,
+Firebase Hosting, or any static host.</p>
+<blockquote>
+<p><strong>Status:</strong> extraction in progress. The runtime component lives here in
+<code>src/doc-system/</code>; the build tooling still lives in <code>bin/</code> (<code>site-config.ts</code>,
+<code>generate-site.ts</code>, <code>generate-css.ts</code>, <code>generate-og.ts</code>, <code>build-dom-shim.ts</code>,
+<code>docs.ts</code>) and is being consolidated into <code>src/doc-system/</code> behind the
+importable <code>tosijs-ui/site</code> entry described here. See &quot;Current layout&quot; at the
+bottom.</p>
+</blockquote>
+<h2>What you get</h2>
+<ul>
+<li><strong>One pre-rendered <code>/{slug}/index.html</code> per doc</strong> (README → site root) with
+real <code>&lt;head&gt;</code> metadata: <code>&lt;title&gt;</code>, description, canonical, Open Graph,
+Twitter card, and <code>schema.org</code> <code>TechArticle</code> JSON-LD.</li>
+<li><strong>No-JS readable</strong>: the markdown is already rendered to HTML and every nav
+item is a real <code>&lt;a&gt;</code>, so crawlers and AI agents see full content and links.</li>
+<li><strong>Zero-flash hydration</strong>: the theme is burned into a static stylesheet, so
+pages are styled before any JS runs; then <code>&lt;tosi-doc-system&gt;</code> hydrates the
+page into the live doc browser (search, live examples, locale switching).</li>
+<li><strong><code>sitemap.xml</code> + <code>robots.txt</code></strong> (when <code>baseUrl</code> is set), and host files
+(<code>.nojekyll</code>, <code>CNAME</code>, …) appropriate to the chosen host.</li>
+</ul>
+<h2>How it works (pipeline)</h2>
+<pre><code>extractDocs(docPaths)            →  docs.json   (markdown corpus)
+generateSite(config, docs)       →  /{slug}/index.html + docs.json + sitemap + robots
+generate-css(theme)              →  doc-system.css   (burned-in, no FOUC)
+bundle(bundleEntry | iife.js)    →  the JS that hydrates the pages
+host preset                      →  .nojekyll / CNAME / firebase.json
+</code></pre>
+<p>Static and hydrated output share the same slug + markdown rendering
+(<code>src/doc-system/routing</code> + <code>render</code>) so the page never reflows on hydration.</p>
+<h2>Quick start (adopting in your project)</h2>
+<p><strong>1. <code>site.config.ts</code></strong> at your repo root:</p>
+<pre><code class="language-ts">import { defineSiteConfig } from &#39;tosijs-ui/site&#39;
+
+export default defineSiteConfig({
+  name: &#39;my-lib&#39;,
+  description: &#39;What my library does.&#39;,
+  baseUrl: &#39;https://my-lib.example.com&#39;,
+  host: &#39;github-pages&#39;,          // emits .nojekyll + CNAME (domain from baseUrl)
+  bundleEntry: &#39;demo/site.ts&#39;,   // omit to use tosijs-ui&#39;s published iife.js
+  navbarLinks: [
+    { href: &#39;https://github.com/me/my-lib&#39;, label: &#39;github&#39;, icon: &#39;github&#39; },
+  ],
+})
+</code></pre>
+<p><strong>2. <code>bin/site.ts</code></strong> — the only build file you write:</p>
+<pre><code class="language-ts">import { buildSite, devServer } from &#39;tosijs-ui/site&#39;
+import config from &#39;../site.config&#39;
+
+process.argv.includes(&#39;--build&#39;) ? buildSite(config) : devServer(config)
+</code></pre>
+<p><strong>3. scripts</strong> in <code>package.json</code>:</p>
+<pre><code class="language-json">{ &quot;scripts&quot;: { &quot;start&quot;: &quot;bun bin/site.ts&quot;, &quot;build&quot;: &quot;bun bin/site.ts --build&quot; } }
+</code></pre>
+<h2>Bundles &amp; live examples (read this)</h2>
+<p>The static pages are inert HTML until a JS bundle loads and registers the
+custom elements (and powers live <code>js</code>/<code>test</code> examples). You pick one of two
+modes:</p>
+<ul>
+<li><p><strong><code>bundleEntry</code> — bring your own (recommended for any project with custom
+components).</strong> The build bundles your entrypoint to IIFE and pages load it.
+<strong>Your entrypoint must import everything your pages and live examples
+reference</strong> — typically:</p>
+<pre><code class="language-ts">// demo/site.ts
+import &#39;tosijs-ui&#39;          // registers tosi-* elements + the doc-system
+import * as tosijs from &#39;tosijs&#39;
+import * as mylib from &#39;../src/index&#39;   // your own components
+// expose anything your inline examples import:
+globalThis.tosijs = tosijs
+globalThis.mylib = mylib
+</code></pre>
+<p>Without these imports your custom elements won&#39;t upgrade and live examples
+that <code>import { x } from &#39;mylib&#39;</code> won&#39;t resolve.</p>
+</li>
+<li><p><strong><code>scriptUrl</code> fallback — use a prebuilt bundle.</strong> Omit <code>bundleEntry</code> and
+pages load <code>scriptUrl</code> (default <code>/iife.js</code>, i.e. tosijs-ui&#39;s published
+bundle). Good for a pure docs site with no custom elements of its own.</p>
+</li>
+</ul>
+<h2>Configuration reference</h2>
+<p>All fields are optional except <code>name</code>. See <code>bin/site-config.ts</code> for the
+authoritative typed definition.</p>
+<h3>Identity &amp; SEO</h3>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>default</th>
+<th>purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>name</code></td>
+<td>—</td>
+<td>brand name; <code>&lt;title&gt;</code> suffix, <code>og:site_name</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>—</td>
+<td>site-level meta + structured-data fallback</td>
+</tr>
+<tr>
+<td><code>baseUrl</code></td>
+<td>—</td>
+<td>absolute origin for canonical/OG/sitemap URLs</td>
+</tr>
+<tr>
+<td><code>lang</code></td>
+<td><code>&#39;en&#39;</code></td>
+<td><code>&lt;html lang&gt;</code></td>
+</tr>
+<tr>
+<td><code>favicon</code></td>
+<td><code>/favicon.svg</code></td>
+<td>favicon href</td>
+</tr>
+<tr>
+<td><code>ogImage</code></td>
+<td>—</td>
+<td>default share image (per-page overridable)</td>
+</tr>
+<tr>
+<td><code>headExtra</code></td>
+<td>—</td>
+<td>raw lines injected into every <code>&lt;head&gt;</code></td>
+</tr>
+</tbody></table>
+<h3>Branding &amp; chrome</h3>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>default</th>
+<th>purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>projectLinks</code></td>
+<td>—</td>
+<td>logo + view-source links</td>
+</tr>
+<tr>
+<td><code>navbarLinks</code></td>
+<td>—</td>
+<td>header-bar icon links</td>
+</tr>
+<tr>
+<td><code>theme</code></td>
+<td>—</td>
+<td>base colors (palette derived from <code>accent</code>)</td>
+</tr>
+<tr>
+<td><code>localizedStrings</code></td>
+<td>—</td>
+<td>TSV table for the language picker</td>
+</tr>
+</tbody></table>
+<h3>Doc sources</h3>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>default</th>
+<th>purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>docPaths</code></td>
+<td><code>[&#39;src&#39;, &#39;README.md&#39;]</code></td>
+<td>dirs scanned for <code>/*#</code> + <code>.md</code> files (list root <code>.md</code> files explicitly)</td>
+</tr>
+</tbody></table>
+<h3>Bundle</h3>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>default</th>
+<th>purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>bundleEntry</code></td>
+<td>—</td>
+<td>your IIFE entrypoint; omit to use the fallback bundle</td>
+</tr>
+<tr>
+<td><code>bundleExternals</code></td>
+<td>—</td>
+<td>modules left external, e.g. <code>[&#39;jolt-physics&#39;]</code></td>
+</tr>
+<tr>
+<td><code>scriptUrl</code></td>
+<td><code>/iife.js</code></td>
+<td>bundle URL pages load (fallback + output name)</td>
+</tr>
+</tbody></table>
+<h3>Static assets</h3>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>default</th>
+<th>purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>staticDirs</code></td>
+<td><code>[&#39;demo/static&#39;]</code> or <code>[&#39;static&#39;]</code></td>
+<td>dirs copied to the web root</td>
+</tr>
+</tbody></table>
+<h3>Hosting</h3>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>default</th>
+<th>purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>host</code></td>
+<td><code>&#39;static&#39;</code></td>
+<td><code>&#39;github-pages&#39; | &#39;firebase&#39; | &#39;static&#39;</code> preset</td>
+</tr>
+<tr>
+<td><code>domain</code></td>
+<td>derived from <code>baseUrl</code></td>
+<td>custom domain → <code>CNAME</code> (github-pages); implies <code>basePath: &#39;/&#39;</code></td>
+</tr>
+<tr>
+<td><code>basePath</code></td>
+<td><code>&#39;/&#39;</code></td>
+<td>URL prefix; set <code>&#39;/&lt;repo&gt;&#39;</code> for a GitHub project page without a custom domain</td>
+</tr>
+</tbody></table>
+<h3>Build toggles &amp; dev server</h3>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>default</th>
+<th>purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>generateIcons</code></td>
+<td><code>false</code></td>
+<td>run icon-data generation (tosijs-ui-specific)</td>
+</tr>
+<tr>
+<td><code>llmsTxt</code></td>
+<td><code>true</code></td>
+<td>emit <code>llms.txt</code> discoverability index</td>
+</tr>
+<tr>
+<td><code>outputDir</code></td>
+<td><code>&#39;docs&#39;</code></td>
+<td>served web-root output dir</td>
+</tr>
+<tr>
+<td><code>port</code></td>
+<td><code>8787</code></td>
+<td>dev-server port</td>
+</tr>
+<tr>
+<td><code>watchPaths</code></td>
+<td>—</td>
+<td>extra dev-server watch dirs</td>
+</tr>
+</tbody></table>
+<h2>Host presets &amp; custom domains</h2>
+<table>
+<thead>
+<tr>
+<th><code>host</code></th>
+<th align="center"><code>.nojekyll</code></th>
+<th align="center"><code>CNAME</code></th>
+<th><code>basePath</code></th>
+<th>other</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>github-pages</code> + <code>domain</code></td>
+<td align="center">✅</td>
+<td align="center"><code>domain</code></td>
+<td><code>/</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>github-pages</code>, no <code>domain</code></td>
+<td align="center">✅</td>
+<td align="center">—</td>
+<td>set <code>&#39;/&lt;repo&gt;&#39;</code> yourself</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>firebase</code></td>
+<td align="center">—</td>
+<td align="center">—</td>
+<td><code>/</code></td>
+<td>optional <code>firebase.json</code> rewrites</td>
+</tr>
+<tr>
+<td><code>static</code> (default)</td>
+<td align="center">—</td>
+<td align="center">—</td>
+<td><code>/</code></td>
+<td>nothing host-specific</td>
+</tr>
+</tbody></table>
+<p><code>domain</code> is derived from <code>baseUrl</code>&#39;s hostname when omitted (and
+<code>host: &#39;github-pages&#39;</code>), so the common case needs no extra config; set it
+explicitly to override (apex vs <code>www</code>, or a domain that differs from the
+canonical origin). A custom domain always serves from root, so it forces
+<code>basePath: &#39;/&#39;</code>.</p>
+<h2>Doc format</h2>
+<ul>
+<li><strong><code>.md</code> files</strong> are included whole.</li>
+<li><strong><code>/*#</code> … <code>*/</code> block comments</strong> in <code>.ts</code>/<code>.js</code>/<code>.css</code> are extracted as
+markdown. The first heading is the page title.</li>
+<li><strong>Metadata</strong> via a JSON block — <code>&lt;!--{ &quot;pin&quot;: &quot;top&quot; }--&gt;</code> (html) or
+<code>/*{ &quot;pin&quot;: &quot;bottom&quot; }*/</code> (ts/js/css) — controls nav ordering; per-page SEO
+overrides (<code>description</code>, <code>keywords</code>, <code>image</code>, <code>noindex</code>, <code>headTitle</code>) live
+in the same block.</li>
+<li><strong>Consecutive <code>js</code>/<code>html</code>/<code>css</code>/<code>test</code> code blocks</strong> become one live example
+(see the main project&#39;s &quot;Live example code blocks&quot; docs).</li>
+</ul>
+<h2>Notes &amp; gotchas</h2>
+<ul>
+<li><strong>Build-time only.</strong> The orchestrator and generators run under Bun and never
+enter a browser bundle. Only the runtime <code>&lt;tosi-doc-system&gt;</code> component ships
+to the page (and is tree-shaken away for consumers that don&#39;t use it).</li>
+<li><strong>Dependency direction for <code>tosijs</code> itself.</strong> If the core <code>tosijs</code> repo uses
+this to build <em>its</em> docs, that&#39;s a <strong>build-time-only</strong> dependency on
+tosijs-ui — the published <code>tosijs</code> library still depends on nothing upstream.
+It is not circular, but CI must build/resolve tosijs-ui first.</li>
+<li><strong>Not every site fits.</strong> This is for reference/doc sites built from markdown.
+A bespoke scroll-driven marketing page (e.g. <code>tosijs-product</code>) wants a
+different page model — use tosijs-ui&#39;s <em>components</em> there, not this doc
+system (or host its API docs as a separate site).</li>
+</ul>
+<h2>Current layout (extraction in progress)</h2>
+<table>
+<thead>
+<tr>
+<th>concern</th>
+<th>today</th>
+<th>target</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>config type + <code>defineSiteConfig</code></td>
+<td><code>bin/site-config.ts</code></td>
+<td><code>src/site/</code></td>
+</tr>
+<tr>
+<td>orchestrator (prebuild/build/serve)</td>
+<td><code>bin/dev.ts</code></td>
+<td><code>src/site/</code> (<code>buildSite</code>/<code>devServer</code>)</td>
+</tr>
+<tr>
+<td>static page generator</td>
+<td><code>bin/generate-site.ts</code></td>
+<td><code>src/site/</code></td>
+</tr>
+<tr>
+<td>theme → static CSS</td>
+<td><code>bin/generate-css.ts</code></td>
+<td><code>src/site/</code></td>
+</tr>
+<tr>
+<td>OG image generation</td>
+<td><code>bin/generate-og.ts</code></td>
+<td><code>src/site/</code></td>
+</tr>
+<tr>
+<td>doc extraction</td>
+<td><code>bin/docs.ts</code></td>
+<td><code>src/site/</code></td>
+</tr>
+<tr>
+<td>runtime component</td>
+<td><code>src/doc-system/</code></td>
+<td>unchanged (ships in the bundle)</td>
+</tr>
+</tbody></table>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/babylon-3d/">3d</a></li>
+    <li><a href="/ab-test/">ab-test</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/carousel/">carousel</a></li>
+    <li><a href="/code-editor/">code</a></li>
+    <li><a href="/color-input/">color input field</a></li>
+    <li><a href="/dialog/">dialog</a></li>
+    <li><a href="/doc-system/">doc-system</a></li>
+    <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+    <li><a href="/editable-rect/">editable-rect</a></li>
+    <li><a href="/component/">example</a></li>
+    <li><a href="/filter-builder/">filter</a></li>
+    <li><a href="/float/">float</a></li>
+    <li><a href="/form/">forms</a></li>
+    <li><a href="/gamepad/">gamepads</a></li>
+    <li><a href="/header/">header</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><a href="/kitchen-sink/">kitchen sink</a></li>
+    <li><a href="/layout/">layout</a></li>
+    <li><a href="/live-theme/">live-theme</a></li>
+    <li><a href="/localize/">localize</a></li>
+    <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+    <li><a href="/make-sorter/">makeSorter</a></li>
+    <li><a href="/mapbox/">map</a></li>
+    <li><a href="/markdown-viewer/">markdown</a></li>
+    <li><a href="/menu/">menu</a></li>
+    <li><a href="/month/">month</a></li>
+    <li><a href="/notifications/">notifications</a></li>
+    <li><a href="/password-strength/">password strength</a></li>
+    <li><a href="/pop-float/">popFloat</a></li>
+    <li><a href="/rating/">rating</a></li>
+    <li><a href="/rich-text/">rich text</a></li>
+    <li><a href="/router/">router</a></li>
+    <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+    <li><a href="/segmented/">segmented select</a></li>
+    <li><a href="/select/">select</a></li>
+    <li><a href="/side-nav/">sidebar</a></li>
+    <li><a href="/size-break/">size-break</a></li>
+    <li><a href="/sizer/">sizer</a></li>
+    <li><a href="/data-table/">table</a></li>
+    <li><a href="/tab-selector/">tabs</a></li>
+    <li><a href="/tag-list/">tag-list</a></li>
+    <li><a href="/theme/">theme</a></li>
+    <li><a href="/tooltip/">tooltip</a></li>
+    <li><a href="/track-drag/">trackDrag</a></li>
+    <li><a href="/doc-browser/">doc-browser</a></li>
+    <li><a href="/doc-site-system/" aria-current="page" class="current">Doc-Site System</a></li>
+    <li><a href="/docs/">docs</a></li>
+    <li><a href="/icon-composition/">Icon Composition</a></li>
+    <li><a href="/make-icon-data/">make-icon-data</a></li>
+  </ul>
+  </nav>
+  <ul class="doc-navbar">
+    <li><a href="https://tosijs.net" data-icon="tosi">tosijs</a></li>
+    <li><a href="https://discord.com/invite/ramJ9rgky5" data-icon="discord">discord</a></li>
+    <li><a href="https://loewald.com" data-icon="blog">blog</a></li>
+    <li><a href="https://github.com/tonioloewald/tosijs-ui" data-icon="github">github</a></li>
+    <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
+  </ul>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>
