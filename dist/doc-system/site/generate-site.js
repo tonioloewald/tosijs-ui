@@ -20,10 +20,10 @@ const escapeAttr = (s) => s
     .replace(/'/g, '&#39;');
 const escapeText = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 /** Build the shared nav <ul> once; `currentFilename` gets aria-current. */
-function navHtml(docs, slugMap, currentFilename) {
+function navHtml(docs, slugMap, currentFilename, basePath) {
     const items = docs
         .map((doc) => {
-        const href = pathForSlug(slugMap[doc.filename]);
+        const href = withBase(basePath, pathForSlug(slugMap[doc.filename]));
         const current = doc.filename === currentFilename;
         return `    <li><a href="${escapeAttr(href)}"${current ? ' aria-current="page" class="current"' : ''}>${escapeText(doc.title)}</a></li>`;
     })
@@ -49,10 +49,19 @@ function absUrl(baseUrl, pathOrUrl) {
         return '';
     return /^https?:\/\//.test(pathOrUrl) ? pathOrUrl : baseUrl + pathOrUrl;
 }
+/**
+ * Prefix a root-relative path with basePath. No-op for '/', empty, protocol-
+ * relative (`//…`), or absolute (`https://…`) URLs.
+ */
+function withBase(basePath, p) {
+    if (!p || !basePath || basePath === '/' || /^(https?:)?\/\//.test(p))
+        return p;
+    return basePath.replace(/\/$/, '') + (p.startsWith('/') ? p : '/' + p);
+}
 function pageHtml(doc, config, slugMap, configAttr) {
-    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', stylesUrl = '/doc-system.css', localizedUrl = '/localized-strings.txt', headExtra = '', } = config;
+    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', stylesUrl = '/doc-system.css', localizedUrl = '/localized-strings.txt', basePath, headExtra = '', } = config;
     const localizedAttr = config.localizedStrings
-        ? ` localized="${escapeAttr(localizedUrl)}"`
+        ? ` localized="${escapeAttr(withBase(basePath, localizedUrl))}"`
         : '';
     // `headTitle` is the verbatim <title>; otherwise suffix the project name (unless
     // the doc title already includes it).
@@ -65,10 +74,10 @@ function pageHtml(doc, config, slugMap, configAttr) {
     const keywords = Array.isArray(doc.keywords)
         ? doc.keywords.join(', ')
         : doc.keywords || '';
-    const canonical = baseUrl + pathForSlug(slugMap[doc.filename]);
-    const imageAbs = absUrl(baseUrl, doc.image || config.ogImage || '');
+    const canonical = baseUrl + withBase(basePath, pathForSlug(slugMap[doc.filename]));
+    const imageAbs = absUrl(baseUrl, withBase(basePath, doc.image || config.ogImage || ''));
     const body = renderDocMarkdown(doc.text);
-    const nav = navHtml(config.docs, slugMap, doc.filename);
+    const nav = navHtml(config.docs, slugMap, doc.filename, basePath);
     const navbar = linkListHtml('doc-navbar', config.navbarLinks);
     const jsonLd = baseUrl
         ? jsonLdScript({
@@ -89,7 +98,7 @@ function pageHtml(doc, config, slugMap, configAttr) {
         '  <link rel="preconnect" href="https://fonts.googleapis.com" />',
         '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
         // Burned-in theme: styles the page with no JS and with zero flash on hydration.
-        `  <link rel="stylesheet" href="${escapeAttr(stylesUrl)}" data-tosi-doc-system />`,
+        `  <link rel="stylesheet" href="${escapeAttr(withBase(basePath, stylesUrl))}" data-tosi-doc-system />`,
         `  <title>${escapeText(title)}</title>`,
         description ? `  <meta name="description" content="${escapeAttr(description)}" />` : '',
         keywords ? `  <meta name="keywords" content="${escapeAttr(keywords)}" />` : '',
@@ -104,7 +113,7 @@ function pageHtml(doc, config, slugMap, configAttr) {
         `  <meta name="twitter:card" content="${imageAbs ? 'summary_large_image' : 'summary'}" />`,
         imageAbs ? `  <meta name="twitter:image" content="${escapeAttr(imageAbs)}" />` : '',
         jsonLd,
-        `  <link rel="icon" href="${escapeAttr(favicon)}" />`,
+        `  <link rel="icon" href="${escapeAttr(withBase(basePath, favicon))}" />`,
         headExtra,
     ]
         .filter(Boolean)
@@ -115,14 +124,14 @@ function pageHtml(doc, config, slugMap, configAttr) {
 ${head}
 </head>
 <body>
-  <tosi-doc-system docs="${escapeAttr(docsUrl)}" config="${configAttr}"${localizedAttr}>
+  <tosi-doc-system docs="${escapeAttr(withBase(basePath, docsUrl))}" config="${configAttr}"${localizedAttr}>
   <article class="doc-content">
 ${body}
   </article>
 ${nav}
 ${navbar}
   </tosi-doc-system>
-  <script src="${escapeAttr(scriptUrl)}"></script>
+  <script src="${escapeAttr(withBase(basePath, scriptUrl))}"></script>
 </body>
 </html>
 `;
@@ -164,7 +173,8 @@ export async function generateSite(config) {
     if (config.baseUrl) {
         const urls = docs
             .filter((doc) => !doc.noindex)
-            .map((doc) => `  <url><loc>${escapeText(config.baseUrl + pathForSlug(slugMap[doc.filename]))}</loc></url>`)
+            .map((doc) => `  <url><loc>${escapeText(config.baseUrl +
+            withBase(config.basePath, pathForSlug(slugMap[doc.filename])))}</loc></url>`)
             .join('\n');
         await Bun.write(`${outputDir}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
         // Append a Sitemap line to robots.txt (already copied from static assets).

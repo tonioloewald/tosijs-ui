@@ -118,6 +118,7 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     ogImage: config.ogImage,
     headExtra: config.headExtra,
     scriptUrl: config.scriptUrl,
+    basePath: config.basePath,
   })
 
   // Burn the theme into a static stylesheet (separate subprocess — see
@@ -131,6 +132,33 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     config.theme || {}
   )}`.text()
   console.log(`generated ${pageCount} static pages`)
+
+  // ── host preset files ──
+  // Idempotent, and an explicit static file (copied from staticDirs) always wins.
+  if (config.host === 'github-pages') {
+    await Bun.write(`${PUBLIC}/.nojekyll`, '')
+    const domain =
+      config.domain ??
+      (config.baseUrl ? new URL(config.baseUrl).hostname : undefined)
+    if (domain && !existsSync(`${PUBLIC}/CNAME`)) {
+      await Bun.write(`${PUBLIC}/CNAME`, `${domain}\n`)
+    }
+  } else if (config.host === 'firebase' && !existsSync('firebase.json')) {
+    await Bun.write(
+      'firebase.json',
+      JSON.stringify(
+        {
+          hosting: {
+            public: config.outputDir ?? 'docs',
+            ignore: ['firebase.json', '**/.*', '**/node_modules/**'],
+            cleanUrls: true,
+          },
+        },
+        null,
+        2
+      ) + '\n'
+    )
+  }
 
   console.timeEnd('build')
   return true

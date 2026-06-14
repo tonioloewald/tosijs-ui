@@ -25,6 +25,12 @@ export interface GenerateSiteConfig {
     localizedUrl?: string;
     /** absolute site origin for canonical/og URLs, e.g. https://ui.tosijs.net */
     baseUrl?: string;
+    /**
+     * URL prefix the site is served under, default '/'. Set to '/<repo>' for a
+     * GitHub project page without a custom domain; every root-relative URL the
+     * generator emits is rewritten under it.
+     */
+    basePath?: string;
     /** URL the component fetches the corpus from (default /docs.json) */
     docsUrl?: string;
     /** path to the IIFE bundle script (default /iife.js) */

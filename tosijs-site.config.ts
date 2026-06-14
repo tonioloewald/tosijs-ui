@@ -46,5 +46,8 @@ export default defineSiteConfig({
   bundleEntry: './src/index-iife.ts',
   docPaths: ['src', 'README.md', 'bin', 'icons'],
   staticDirs: ['demo/static'],
+  // Served from GitHub Pages at the apex custom domain (CNAME in demo/static;
+  // domain derives from baseUrl). basePath stays '/'.
+  host: 'github-pages',
   // version stamp + icon-data regeneration are wired in bin/dev.ts (prebuild).
 })
