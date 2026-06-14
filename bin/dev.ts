@@ -3,8 +3,8 @@ import { statSync } from 'fs'
 import { gzipSync } from 'zlib'
 import { watch } from 'chokidar'
 import { extractDocs } from './docs'
-import { generateLlmsTxt } from './make-llms-txt'
-import { generateSite } from './generate-site'
+import { generateLlmsTxt } from '../src/doc-system/site/make-llms-txt'
+import { generateSite } from '../src/doc-system/site/generate-site'
 import siteConfig from '../tosijs-site.config'
 import { $, spawn } from 'bun'
 
@@ -126,7 +126,9 @@ async function build(): Promise<boolean> {
     headExtra: siteConfig.headExtra,
   })
   // Burn the theme into a static stylesheet (separate subprocess — see generate-css.ts).
-  await $`bun ./bin/generate-css.ts ${PUBLIC}/doc-system.css`.text()
+  await $`bun ./src/doc-system/site/generate-css.ts ${PUBLIC}/doc-system.css ${JSON.stringify(
+    siteConfig.theme || {}
+  )}`.text()
   console.log(`generated ${pageCount} static pages`)
 
   console.timeEnd('build')

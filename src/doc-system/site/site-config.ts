@@ -11,8 +11,8 @@ Imports here are type-only so this module stays free of runtime/DOM dependencies
 (it is loaded by the build, which has no DOM).
 */
 
-import type { ProjectLinks, LinkItem } from '../src/doc-browser'
-import type { DocSystemTheme } from '../src/doc-system/doc-system-styles'
+import type { ProjectLinks, LinkItem } from '../../doc-browser'
+import type { DocSystemTheme } from '../doc-system-styles'
 
 export type SiteHost = 'github-pages' | 'firebase' | 'static'
 

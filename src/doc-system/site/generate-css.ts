@@ -13,8 +13,7 @@ Default output: docs/doc-system.css
 
 import './build-dom-shim' // must precede any tosijs import (build has no DOM)
 import { css } from 'tosijs'
-import { docSystemStyleSpec, DocSystemTheme } from '../src/doc-system/doc-system-styles'
-import siteConfig from '../tosijs-site.config'
+import { docSystemStyleSpec, DocSystemTheme } from '../doc-system-styles'
 
 declare global {
   var Bun: any
@@ -28,7 +27,10 @@ export async function generateCss(
 }
 
 if (import.meta.main) {
+  // theme is passed as a JSON arg by the orchestrator (the shipped module must
+  // not import a consumer's repo-root config). Defaults to {} (base theme).
   const outputPath = process.argv[2] || 'docs/doc-system.css'
-  await generateCss(outputPath, siteConfig.theme || {})
+  const theme: DocSystemTheme = process.argv[3] ? JSON.parse(process.argv[3]) : {}
+  await generateCss(outputPath, theme)
   console.log(`generated ${outputPath}`)
 }

@@ -1,7 +1,7 @@
 // Site configuration for the tosijs-ui documentation site.
 // See bin/site-config.ts for the full set of options.
 
-import { defineSiteConfig } from './bin/site-config'
+import { defineSiteConfig } from './src/doc-system/site/site-config'
 import localizedStrings from './demo/src/localized-strings'
 
 const PROJECT = 'tosijs-ui'
