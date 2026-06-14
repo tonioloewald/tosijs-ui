@@ -40,4 +40,11 @@ export default defineSiteConfig({
 
   localizedStrings,
   favicon: '/favicon.svg',
+
+  // tosijs-ui's build also publishes the npm package, and bundles its own IIFE.
+  emitLibrary: true,
+  bundleEntry: './src/index-iife.ts',
+  docPaths: ['src', 'README.md', 'bin', 'icons'],
+  staticDirs: ['demo/static'],
+  // version stamp + icon-data regeneration are wired in bin/dev.ts (prebuild).
 })

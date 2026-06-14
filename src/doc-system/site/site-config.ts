@@ -95,8 +95,18 @@ export interface SiteConfig {
   basePath?: string
 
   // ── Build toggles & dev server ────────────────────────────────────────────
-  /** run icon-data generation before build (tosijs-ui-specific). Default false. */
-  generateIcons?: boolean
+  /**
+   * Project-specific codegen run first, before doc extraction and the build
+   * (e.g. stamp a version file, regenerate icon data). Runs before the dist
+   * dir is reset, so don't emit into dist here — use it for src/ codegen.
+   */
+  prebuild?: () => void | Promise<void>
+  /**
+   * Also build the library: `tsc --declaration --outDir dist` (ESM + types).
+   * Default false. Repos whose single build publishes BOTH an npm package and
+   * its doc site (the tosijs-* libs) set this true; a pure docs site omits it.
+   */
+  emitLibrary?: boolean
   /** emit llms.txt agent-discoverability index. Default true. */
   llmsTxt?: boolean
   /** served web-root output dir, default 'docs' */
