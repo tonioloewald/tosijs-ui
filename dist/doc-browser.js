@@ -484,6 +484,9 @@ export function createDocBrowser(options) {
     // search visibility, and auto-open are applied imperatively by refreshNav.
     const navStyle = {
         slot: 'nav',
+        // .doc-nav so the shared nav CSS (list reset, indentation) matches the
+        // runtime nav too, not just the static pre-rendered <nav class="doc-nav">.
+        class: 'doc-nav',
         style: {
             display: 'flex',
             flexDirection: 'column',
