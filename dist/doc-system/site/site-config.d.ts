@@ -31,6 +31,14 @@ export interface SiteConfig {
      */
     docPaths?: string[];
     /**
+     * Directory where the build writes auto-created section ("parent") docs and
+     * regenerates their `<!-- toc -->` blocks. Committed source (like
+     * src/version.ts) so authors can add intro prose + metadata. Default
+     * 'src/docs'. Must sit inside a scanned docPath so the section docs are
+     * extracted into the corpus.
+     */
+    sectionsDir?: string;
+    /**
      * Path to YOUR bundle entrypoint. If set, the build bundles it (IIFE) and
      * pages load it. Your entry should import what your pages/live-examples need
      * from tosijs / tosijs-ui / your own lib, so custom elements register AND

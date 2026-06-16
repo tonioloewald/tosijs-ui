@@ -50,6 +50,14 @@ export interface SiteConfig {
    * files explicitly, e.g. ['src', 'README.md', 'Building-Apps.md'].
    */
   docPaths?: string[]
+  /**
+   * Directory where the build writes auto-created section ("parent") docs and
+   * regenerates their `<!-- toc -->` blocks. Committed source (like
+   * src/version.ts) so authors can add intro prose + metadata. Default
+   * 'src/docs'. Must sit inside a scanned docPath so the section docs are
+   * extracted into the corpus.
+   */
+  sectionsDir?: string
 
   // ── Bundle (the JS that hydrates the static pages) ────────────────────────
   /**

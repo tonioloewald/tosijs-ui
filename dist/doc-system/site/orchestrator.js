@@ -16,6 +16,7 @@ import { existsSync } from 'fs';
 import { gzipSync } from 'zlib';
 import { $ } from 'bun';
 import { extractDocs } from './docs';
+import { ensureSections } from './sections';
 import { generateLlmsTxt } from './make-llms-txt';
 import { generateSite } from './generate-site';
 export async function buildSite(config) {
@@ -28,9 +29,20 @@ export async function buildSite(config) {
     await config.prebuild?.();
     await $ `rm -rf ${PUBLIC}`.text();
     await $ `mkdir ${PUBLIC}`.text();
-    extractDocs({
+    const extract = () => extractDocs({
         paths: config.docPaths ?? ['src', 'README.md'],
+        // Skip the build's own output dir by path (not by the name 'docs', so a
+        // source dir like src/docs is still scanned).
+        ignore: ['node_modules', 'dist', 'build', PUBLIC],
         output: 'demo/docs.json',
+    });
+    extract();
+    // Auto-create missing section docs + regenerate their TOC blocks, then
+    // re-extract so the corpus reflects the on-disk changes.
+    ensureSections({
+        docsJsonPath: 'demo/docs.json',
+        sectionsDir: config.sectionsDir ?? 'src/docs',
+        reExtract: extract,
     });
     // Copy static-asset dirs into the web root.
     const staticDirs = config.staticDirs ?? (existsSync('demo/static') ? ['demo/static'] : ['static']);

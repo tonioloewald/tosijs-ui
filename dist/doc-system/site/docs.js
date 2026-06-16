@@ -114,7 +114,12 @@ function findMarkdownFiles(paths, ignore) {
         console.log(dir);
         const files = fs.readdirSync(dir);
         const baseName = path.basename(dir);
-        if (ignore.includes(baseName)) {
+        // Each ignore entry matches either by basename (node_modules, dist, build —
+        // skipped wherever they appear) or by resolved path (e.g. the build's
+        // output dir — skipped only at that exact location, so a source dir that
+        // happens to share the name, like src/docs, is still scanned).
+        const resolved = path.resolve(dir);
+        if (ignore.some((ig) => ig === baseName || path.resolve(ig) === resolved)) {
             return;
         }
         files.forEach((file) => {
@@ -183,7 +188,7 @@ function findMarkdownFiles(paths, ignore) {
     return markdownFiles.sort(pinnedSort);
 }
 export function extractDocs(options) {
-    const { paths, ignore = ['node_modules', 'dist', 'build', 'docs'], output, } = options;
+    const { paths, ignore = ['node_modules', 'dist', 'build'], output, } = options;
     const docs = findMarkdownFiles(paths, ignore);
     if (output) {
         saveDocsJSON(docs, output);
