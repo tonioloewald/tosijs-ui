@@ -338,6 +338,19 @@ export function docSystemStyleSpec(theme = {}) {
             margin: 0,
             padding: vars.spacing,
         },
+        // Hierarchical sections: nested lists indent; the <summary> is the section
+        // header (its triangle toggles; clicking the link navigates).
+        '.doc-nav ul ul': {
+            paddingTop: 0,
+            paddingBottom: 0,
+            paddingLeft: vars.spacing,
+        },
+        '.doc-nav summary': {
+            cursor: 'pointer',
+        },
+        '.doc-nav summary > .doc-link': {
+            display: 'inline-block',
+        },
         // Declarative header link list — shown for no-JS, removed on hydration.
         '.doc-navbar': {
             listStyle: 'none',

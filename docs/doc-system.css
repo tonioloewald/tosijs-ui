@@ -386,6 +386,20 @@ th, td {
   padding: var(--spacing);
 }
 
+.doc-nav ul ul {
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-left: var(--spacing);
+}
+
+.doc-nav summary {
+  cursor: pointer;
+}
+
+.doc-nav summary > .doc-link {
+  display: inline-block;
+}
+
 .doc-navbar {
   list-style: none;
   display: flex;

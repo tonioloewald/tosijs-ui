@@ -153,13 +153,14 @@ The `tosijs-ui` demo is a complete working example. See:
 /*{"pin":"bottom","parent":"Appendices"}*/
 import { elements, vars, varDefault, bindings, touch, getListItem, debounce, tosi, StyleSheet, } from 'tosijs';
 import { buildSlugMap, pathForSlug, filenameForPath } from './doc-system/routing';
+import { buildNavTree } from './doc-system/nav-tree';
 import { renderDocMarkdown } from './doc-system/render';
 import { LiveExample, testManager } from './live-example';
 import { tosiSidenav, TosiSidenav } from './side-nav';
 import { icons } from './icons';
 import { tosiLocalized } from './localize';
 import { popMenu } from './menu';
-const { div, span, a, header, button, template, input, h2 } = elements;
+const { div, span, a, header, button, template, input, h2, details, summary, ul, li } = elements;
 // Test colors
 const testColor = {
     pass: varDefault.testColorPass('#0a0'),
@@ -261,6 +262,9 @@ export function createDocBrowser(options) {
             compact: false,
         },
     });
+    // Assigned by the hierarchical nav builder (path routing); re-applies current
+    // highlight, test status, search visibility, and auto-open imperatively.
+    let refreshNav = () => { };
     // Test result tracking
     const pageTestResults = {};
     let testResultsResolve;
@@ -282,6 +286,7 @@ export function createDocBrowser(options) {
                     : 'failed'
                 : undefined;
         }
+        refreshNav();
     };
     const checkAllTestsComplete = () => {
         if (pagesTested >= pagesWithTests && testResultsResolve) {
@@ -358,6 +363,7 @@ export function createDocBrowser(options) {
                     !doc.text.toLocaleLowerCase().includes(needle);
         });
         touch(app.docs);
+        refreshNav();
     });
     const searchField = input({
         slot: 'nav',
@@ -471,7 +477,110 @@ export function createDocBrowser(options) {
         const doc = docs.find((d) => d.filename === filename) || docs[0];
         app.currentDoc = doc;
         showDoc(doc);
+        refreshNav();
     };
+    // ── Hierarchical nav (path routing) ───────────────────────────────────────
+    // Build nested <details> from the doc tree; current-highlight, test status,
+    // search visibility, and auto-open are applied imperatively by refreshNav.
+    const navStyle = {
+        slot: 'nav',
+        style: {
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+            height: 'calc(100% - 44px)',
+            overflowY: 'scroll',
+        },
+    };
+    const buildHierarchicalNav = () => {
+        const roots = buildNavTree(docs, slugMap);
+        const leaves = new Map();
+        const branches = [];
+        const subtreeFilenames = (node) => {
+            const out = [node.doc.filename];
+            for (const c of node.children)
+                out.push(...subtreeFilenames(c));
+            return out;
+        };
+        const navClick = (doc) => (event) => {
+            const anchor = event.currentTarget;
+            const nav = anchor.closest('tosi-sidenav');
+            if (nav)
+                nav.contentVisible = true;
+            window.history.pushState({ href: anchor.href }, '', anchor.href);
+            navigateTo(String(doc.filename));
+            event.preventDefault();
+            const results = pageTestResults[doc.filename];
+            if (results && !results.passed) {
+                setTimeout(() => {
+                    const failed = document.querySelector('tosi-example.-test-failed');
+                    if (failed)
+                        failed.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        };
+        const renderNode = (node) => {
+            const link = a({
+                class: 'doc-link',
+                href: hrefFor(node.doc.filename),
+                onClick: navClick(node.doc),
+            }, tosiLocalized(node.doc.title));
+            if (node.children.length === 0) {
+                const item = li(link);
+                leaves.set(node.doc.filename, { li: item, link });
+                return item;
+            }
+            const det = details(summary(link), ul(...node.children.map(renderNode)));
+            const item = li(det);
+            branches.push({ li: item, el: det, subtree: subtreeFilenames(node) });
+            return item;
+        };
+        const root = div(navStyle, ul(...roots.map(renderNode)));
+        refreshNav = () => {
+            const current = app.currentDoc?.filename;
+            const searching = !!searchField.value;
+            for (const [filename, { li: item, link }] of leaves) {
+                const doc = docs.find((d) => d.filename === filename);
+                item.hidden = !!doc?.hidden;
+                link.classList.toggle('current', filename === current);
+                const r = pageTestResults[filename];
+                link.classList.toggle('-test-passed', !!r && r.passed);
+                link.classList.toggle('-test-failed', !!r && !r.passed);
+            }
+            for (const { li: item, el, subtree } of branches) {
+                const visible = subtree.some((fn) => leaves.has(fn) && !leaves.get(fn).li.hidden);
+                item.hidden = !visible;
+                if (subtree.includes(current) || (searching && visible))
+                    el.open = true;
+            }
+        };
+        refreshNav();
+        return root;
+    };
+    const navContent = routing === 'path'
+        ? buildHierarchicalNav()
+        : div({
+            ...navStyle,
+            bindList: {
+                idPath: 'filename',
+                hiddenProp: 'hidden',
+                value: app.docs,
+            },
+        }, template(a({
+            class: 'doc-link',
+            bindCurrent: 'app.currentDoc.filename',
+            bindDocLink: '^.filename',
+            bindTestStatus: '^.testStatus',
+            onClick(event) {
+                const anchor = event.target;
+                const doc = getListItem(event.target);
+                const nav = event.target.closest('tosi-sidenav');
+                nav.contentVisible = true;
+                window.history.pushState({ href: anchor.href }, '', anchor.href);
+                navigateTo(String(doc.filename));
+                event.preventDefault();
+            },
+        }, tosiLocalized({ bindText: '^.title' }))));
     const container = div({
         style: {
             display: 'flex',
@@ -492,50 +601,7 @@ export function createDocBrowser(options) {
             const nav = document.querySelector(TosiSidenav.tagName);
             app.compact = nav.compact;
         },
-    }, searchField, div({
-        slot: 'nav',
-        style: {
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-            height: 'calc(100% - 44px)',
-            overflowY: 'scroll',
-        },
-        bindList: {
-            idPath: 'filename',
-            hiddenProp: 'hidden',
-            value: app.docs,
-        },
-    }, template(a({
-        class: 'doc-link',
-        bindCurrent: 'app.currentDoc.filename',
-        bindDocLink: '^.filename',
-        bindTestStatus: '^.testStatus',
-        onClick(event) {
-            const a = event.target;
-            const doc = getListItem(event.target);
-            const nav = event.target.closest('tosi-sidenav');
-            nav.contentVisible = true;
-            const { href } = a;
-            window.history.pushState({ href }, '', href);
-            navigateTo(String(doc.filename));
-            event.preventDefault();
-            // If this page has failing tests, scroll to first failure after render
-            const docFilename = String(doc.filename);
-            const results = pageTestResults[docFilename];
-            if (results && !results.passed) {
-                setTimeout(() => {
-                    const failedExample = document.querySelector('tosi-example.-test-failed');
-                    if (failedExample) {
-                        failedExample.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center',
-                        });
-                    }
-                }, 100);
-            }
-        },
-    }, tosiLocalized({ bindText: '^.title' })))), div({
+    }, searchField, navContent, div({
         style: {
             position: 'relative',
             overflowY: 'scroll',
