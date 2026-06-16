@@ -23,6 +23,7 @@
   <url><loc>https://ui.tosijs.net/live-theme/</loc></url>
   <url><loc>https://ui.tosijs.net/localize/</loc></url>
   <url><loc>https://ui.tosijs.net/bodymovin-player/</loc></url>
+  <url><loc>https://ui.tosijs.net/make-icon-data/</loc></url>
   <url><loc>https://ui.tosijs.net/make-sorter/</loc></url>
   <url><loc>https://ui.tosijs.net/mapbox/</loc></url>
   <url><loc>https://ui.tosijs.net/markdown-viewer/</loc></url>
@@ -54,5 +55,4 @@
   <url><loc>https://ui.tosijs.net/doc-site-system/</loc></url>
   <url><loc>https://ui.tosijs.net/docs/</loc></url>
   <url><loc>https://ui.tosijs.net/icon-composition/</loc></url>
-  <url><loc>https://ui.tosijs.net/make-icon-data/</loc></url>
 </urlset>

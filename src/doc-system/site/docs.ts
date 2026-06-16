@@ -89,7 +89,7 @@ ts, js, css:
 
 This will pin the document to the top or bottom of the navigation list.
 */
-/*{ "pin": "bottom" }*/
+/*{"pin":"bottom","parent":"Appendices"}*/
 
 // TODO CLI options
 
@@ -128,7 +128,10 @@ export interface ExtractDocsOptions {
 const TRIM_REGEX = /^#+ |`/g
 
 function metadata(content: string, filePath: string): Partial<Doc> {
-  const source = content.match(/<!--(\{.*\})-->|\/\*(\{.*\})\*\//)
+  // Ignore metadata-style comments INSIDE /*# ... */ doc blocks — those are
+  // documentation examples, not real directives.
+  const scannable = content.replace(/\/\*#[\s\S]*?\*\//g, '')
+  const source = scannable.match(/<!--(\{.*\})-->|\/\*(\{.*\})\*\//)
   let data: Partial<Doc> = {}
   if (source) {
     try {

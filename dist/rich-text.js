@@ -121,6 +121,7 @@ form.addEventListener('submit', (e) => {
 })
 ```
 */
+/*{ "parent": "Form Components" }*/
 import { Component as WebComponent, elements, deprecated, } from 'tosijs';
 import { icons } from './icons';
 import { tosiSelect, TosiSelect } from './select';

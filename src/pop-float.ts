@@ -242,6 +242,8 @@ preview.append(button(
 
 */
 
+/*{ "parent": "Components" }*/
+
 import { ElementPart } from 'tosijs'
 import { tosiFloat, TosiFloat } from './float'
 import { bringToFront } from './track-drag'

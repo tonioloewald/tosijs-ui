@@ -755,6 +755,8 @@ preview.append(btn)
 
 */
 
+/*{ "parent": "Components" }*/
+
 import {
   elements,
   ElementProps,

@@ -20,6 +20,7 @@ The `<tosi-code>` element has an `editor` property that gives you its ACE editor
 and an `ace` property that returns the `ace` module, giving you complete access to the
 [Ace API](https://ace.c9.io/api/index.html).
 */
+/*{ "parent": "Components" }*/
 import { Component as WebComponent } from 'tosijs';
 import { scriptTag } from './via-tag';
 const ACE_BASE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.2/';

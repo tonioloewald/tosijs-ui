@@ -1,5 +1,7 @@
 # kitchen sink
 
+<!--{ "parent": "Appendices" }-->
+
 This is a testbed for checking styles
 
 ## Typography

@@ -40,6 +40,8 @@ Live-example modules default to the `xinjs` / `xinjsui` IIFE globals; override b
 setting the element's `context` property before it connects.
 */
 
+/*{ "parent": "Appendices" }*/
+
 import { Component, ElementCreator, StyleSheet, elements, tosi, vars } from 'tosijs'
 import { createDocBrowser, Doc, ProjectLinks, LinkItem } from '../doc-browser'
 import { buildSlugMap, legacyQueryPath } from './routing'

@@ -66,6 +66,8 @@ The tool automatically:
 - Converts filenames to camelCase (`arrow-right.svg` → `arrowRight`)
 */
 
+/*{ "parent": "Appendices" }*/
+
 import fs from 'fs'
 import path from 'path'
 

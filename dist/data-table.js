@@ -509,6 +509,7 @@ You'll need to make sure your localized strings include:
 
 As well as any column names you want localized.
 */
+/*{ "parent": "Components" }*/
 import { Component as WebComponent, elements, vars, varDefault, tosiValue, getListItem, getListBinding, tosi, } from 'tosijs';
 import { trackDrag } from './track-drag';
 import { icons } from './icons';

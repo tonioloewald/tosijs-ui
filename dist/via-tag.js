@@ -69,6 +69,7 @@ Using `styleSheet`:
 
 This is awaitable, if you care. The stylesheet `<link>` will only be inserted _once_.
 */
+/*{ "parent": "Helper Libraries" }*/
 import { elements } from 'tosijs';
 const loadedScripts = {};
 export function scriptTag(src, existingSymbolName) {

@@ -117,6 +117,7 @@ preview.append(
 ```
 
 */
+/*{ "parent": "Components" }*/
 import { Component, elements, on, vars, varDefault } from 'tosijs';
 import { findHighestZ } from './track-drag';
 const { dialog, button, header, footer, tosiSlot, h3, p, label, input, div } = elements;

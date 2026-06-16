@@ -134,6 +134,7 @@ The following CSS variables can be used to control customize the `<tosi-segmente
     --segmented-options-border-radius
     --segmented-placeholder-opacity
 */
+/*{ "parent": "Form Components" }*/
 import { Component as WebComponent, elements, varDefault, deprecated, } from 'tosijs';
 import { icons } from './icons';
 import { tosiLocalized } from './localize';

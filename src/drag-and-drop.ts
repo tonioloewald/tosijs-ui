@@ -292,6 +292,8 @@ preview.append(
 )
 */
 
+/*{ "parent": "Helper Libraries" }*/
+
 const dragInProgress = () => !!document.querySelector('.drag-source')
 
 export const isTypeAllowed = (

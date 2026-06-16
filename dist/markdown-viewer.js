@@ -94,6 +94,7 @@ Oh, and nested templates {{nested}}.
 </tosi-md>
 ```
 */
+/*{ "parent": "Components" }*/
 function populate(basePath, source) {
     if (source == null) {
         source = '';

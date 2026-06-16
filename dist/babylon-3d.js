@@ -177,6 +177,7 @@ be used to load `.glb` files.
 
 `<tosi-3d>.loadUI(options: B3dUIOptions)` loads babylonjs guis, which you can create programmatically or using the [babylonjs gui tool](https://gui.babylonjs.com/).
 */
+/*{ "parent": "Components" }*/
 import { Component as WebComponent, elements } from 'tosijs';
 import { scriptTag } from './via-tag';
 import { icons, svg2DataUrl } from './icons';

@@ -134,6 +134,7 @@ initTooltips()
 }
 ```
 */
+/*{ "parent": "Components" }*/
 import { Component as WebComponent, elements, vars, } from 'tosijs';
 import { tosiLocalized, TosiLocalized } from './localize';
 import { icons } from './icons';

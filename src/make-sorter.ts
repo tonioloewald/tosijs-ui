@@ -101,6 +101,8 @@ const sorter = makeSorter(
 ```
 */
 
+/*{ "parent": "Helper Libraries" }*/
+
 export function makeSorter<T>(
   sortValuator: SortValuator<T>,
   ascending: boolean | boolean[] = true

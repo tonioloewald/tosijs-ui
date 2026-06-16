@@ -201,6 +201,7 @@ preview.append(
 )
 ```
 */
+/*{ "parent": "Form Components" }*/
 import { Component, elements, vars, throttle, deprecated, } from 'tosijs';
 import { icons } from './icons';
 import { popMenu, removeLastMenu, resolveMenuItems, } from './menu';

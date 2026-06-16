@@ -21,6 +21,8 @@ and an `ace` property that returns the `ace` module, giving you complete access 
 [Ace API](https://ace.c9.io/api/index.html).
 */
 
+/*{ "parent": "Components" }*/
+
 import { Component as WebComponent, ElementCreator } from 'tosijs'
 import { scriptTag } from './via-tag'
 

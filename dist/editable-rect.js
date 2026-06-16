@@ -67,6 +67,7 @@ Similarly `EditableRect.snapAngle === true` or the shift-key will snap rotation 
 
 After an element's position, size, or rotation are adjusted a `change` event is triggered on the element.
 */
+/*{ "parent": "Components" }*/
 import { Component, elements, vars } from 'tosijs';
 import { icons } from './icons';
 import { trackDrag } from './track-drag';

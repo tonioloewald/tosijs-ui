@@ -510,6 +510,8 @@ You'll need to make sure your localized strings include:
 As well as any column names you want localized.
 */
 
+/*{ "parent": "Components" }*/
+
 import {
   Component as WebComponent,
   ElementCreator,

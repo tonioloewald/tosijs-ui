@@ -117,6 +117,8 @@ preview.append(
 ```
 
 */
+
+/*{ "parent": "Components" }*/
 import { Component, PartsMap, elements, on, vars, varDefault } from 'tosijs'
 import { findHighestZ } from './track-drag'
 

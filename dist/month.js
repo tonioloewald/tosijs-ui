@@ -145,6 +145,7 @@ form.addEventListener('reset', () => {
 ```
 
 */
+/*{ "parent": "Form Components" }*/
 import { Component, elements, varDefault } from 'tosijs';
 import { tosiSelect } from './select';
 import { icons } from './icons';

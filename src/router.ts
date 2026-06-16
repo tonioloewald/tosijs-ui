@@ -124,6 +124,8 @@ navigate('page/1')
 ```
 */
 
+/*{ "parent": "Helper Libraries" }*/
+
 import { Component, ElementCreator, tosi } from 'tosijs'
 
 // ============================================================================

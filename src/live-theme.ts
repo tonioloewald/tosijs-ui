@@ -34,6 +34,8 @@ import { liveTheme } from 'tosijs-ui'
 ```
 */
 
+/*{ "parent": "Helper Libraries" }*/
+
 import {
   Color,
   Component,

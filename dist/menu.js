@@ -754,6 +754,7 @@ preview.append(btn)
 ```
 
 */
+/*{ "parent": "Components" }*/
 import { elements, varDefault, vars, StyleSheet, Component, } from 'tosijs';
 import { popFloat } from './pop-float';
 import { icons } from './icons';

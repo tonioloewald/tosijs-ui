@@ -146,6 +146,8 @@ form.addEventListener('reset', () => {
 
 */
 
+/*{ "parent": "Form Components" }*/
+
 import { Component, PartsMap, elements, varDefault } from 'tosijs'
 import { tosiSelect, TosiSelect } from './select'
 import { icons } from './icons'

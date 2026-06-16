@@ -96,6 +96,7 @@ const sorter = makeSorter(
 )
 ```
 */
+/*{ "parent": "Helper Libraries" }*/
 export function makeSorter(sortValuator, ascending = true) {
     return (p, q) => {
         const pSort = sortValuator(p);

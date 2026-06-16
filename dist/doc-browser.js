@@ -150,7 +150,7 @@ The `tosijs-ui` demo is a complete working example. See:
 - `/bin/docs.ts` - The extraction tool
 - `/src/doc-browser.ts` - The createDocBrowser implementation
 */
-/*{"pin": "bottom"}*/
+/*{"pin":"bottom","parent":"Appendices"}*/
 import { elements, vars, varDefault, bindings, touch, getListItem, debounce, tosi, StyleSheet, } from 'tosijs';
 import { buildSlugMap, pathForSlug, filenameForPath } from './doc-system/routing';
 import { renderDocMarkdown } from './doc-system/render';

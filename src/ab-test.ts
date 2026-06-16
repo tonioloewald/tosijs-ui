@@ -76,6 +76,8 @@ randomize()
 - `not` reverses the condition (so `<tosi-ab not condition="foo">` will be visible if `conditions.foo` is `false`)
 */
 
+/*{ "parent": "Helper Libraries" }*/
+
 import { Component } from 'tosijs'
 
 const abTestConditions = {} as { [key: string]: any }

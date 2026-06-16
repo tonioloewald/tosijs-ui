@@ -82,6 +82,8 @@ To handle multi-touch gestures you will need to track the touches yourself.
 `findHighestZ(selector = 'body *'): number` returns the the highest `z-index` of any element
 matching `selector`.
 */
+
+/*{ "parent": "Helper Libraries" }*/
 const TRACKER = elements.div({
   style: {
     content: ' ',

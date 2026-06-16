@@ -402,6 +402,8 @@ preview.querySelector('.set-values-btn').addEventListener('click', () => {
 ```
 */
 
+/*{ "parent": "Form Components" }*/
+
 import {
   Component as XinComponent,
   ElementCreator,

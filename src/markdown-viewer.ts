@@ -96,6 +96,8 @@ Oh, and nested templates {{nested}}.
 ```
 */
 
+/*{ "parent": "Components" }*/
+
 function populate(basePath: string, source?: any): string {
   if (source == null) {
     source = ''

@@ -157,6 +157,8 @@ found in Weakpass's database (and spit out extra info to the console).
 `digest(s: string, method="sha-1"): Promise<string>` is just a nice wrapper for `crypto.digest`.
 */
 
+/*{ "parent": "Form Components" }*/
+
 import { Component, elements, vars, varDefault } from 'tosijs'
 
 export const digest = async (s: string, method = 'SHA-1'): Promise<string> => {

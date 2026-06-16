@@ -133,6 +133,7 @@ form.addEventListener('submit', (e) => {
 })
 ```
 */
+/*{ "parent": "Components" }*/
 import { Component as WebComponent, elements } from 'tosijs';
 import { styleSheet, scriptTag } from './via-tag';
 const { div } = elements;

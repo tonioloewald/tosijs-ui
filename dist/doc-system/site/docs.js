@@ -89,14 +89,17 @@ ts, js, css:
 
 This will pin the document to the top or bottom of the navigation list.
 */
-/*{ "pin": "bottom" }*/
+/*{"pin":"bottom","parent":"Appendices"}*/
 // TODO CLI options
 import * as fs from 'fs';
 import * as path from 'path';
 import { pinnedSort } from '../nav-tree';
 const TRIM_REGEX = /^#+ |`/g;
 function metadata(content, filePath) {
-    const source = content.match(/<!--(\{.*\})-->|\/\*(\{.*\})\*\//);
+    // Ignore metadata-style comments INSIDE /*# ... */ doc blocks — those are
+    // documentation examples, not real directives.
+    const scannable = content.replace(/\/\*#[\s\S]*?\*\//g, '');
+    const source = scannable.match(/<!--(\{.*\})-->|\/\*(\{.*\})\*\//);
     let data = {};
     if (source) {
         try {

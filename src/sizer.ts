@@ -24,6 +24,8 @@ from the bottom-right.
 <tosi-css-var-editor element-selector="tosi-sizer"></tosi-css-var-editor>
 */
 
+/*{ "parent": "Components" }*/
+
 import { Component as XinComponent, ElementCreator, vars } from 'tosijs'
 import { icons } from './icons'
 import { trackDrag } from './track-drag'

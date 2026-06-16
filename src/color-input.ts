@@ -28,6 +28,8 @@ colorInput.addEventListener('change', () => {
 <tosi-css-var-editor element-selector="tosi-color"></tosi-css-var-editor>
 */
 
+/*{ "parent": "Form Components" }*/
+
 import {
   Component,
   ElementCreator,

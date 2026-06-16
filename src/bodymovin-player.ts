@@ -102,6 +102,8 @@ And of course just access the element's `animation` property to [use the bodymov
 Also see the [documentation for advanced interactions](https://lottiefiles.github.io/lottie-docs/advanced_interactions/)
 */
 
+/*{ "parent": "Components" }*/
+
 import { Component as WebComponent, ElementCreator } from 'tosijs'
 import { scriptTag } from './via-tag'
 

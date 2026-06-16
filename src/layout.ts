@@ -43,6 +43,8 @@ A CSS grid container.
 ```
 */
 
+/*{ "parent": "Components" }*/
+
 import {
   Component,
   ElementCreator,

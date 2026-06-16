@@ -69,6 +69,7 @@ the window's `resize` events and its own (via `ResizeObserver`).
 of the slots if you like. The demo site uses them to hide the [bundlejs](https://bundlejs.com/) badge when
 space is tight.
 */
+/*{ "parent": "Components" }*/
 export class SizeBreak extends WebComponent {
     static preferredTagName = 'tosi-sizebreak';
     static initAttributes = {

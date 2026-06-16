@@ -75,6 +75,7 @@ randomize()
 - `condition` attribute determines which value in `AbTest.conditions` controls the element
 - `not` reverses the condition (so `<tosi-ab not condition="foo">` will be visible if `conditions.foo` is `false`)
 */
+/*{ "parent": "Helper Libraries" }*/
 import { Component } from 'tosijs';
 const abTestConditions = {};
 export class AbTest extends Component {

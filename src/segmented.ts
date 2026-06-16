@@ -135,6 +135,8 @@ The following CSS variables can be used to control customize the `<tosi-segmente
     --segmented-placeholder-opacity
 */
 
+/*{ "parent": "Form Components" }*/
+
 import {
   Component as WebComponent,
   ElementCreator,

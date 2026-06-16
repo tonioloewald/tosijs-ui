@@ -12,6 +12,8 @@ sidebar and content, while `navSize` is the width of the sidebar. You can interr
 currently in `compact` form.
 */
 
+/*{ "parent": "Components" }*/
+
 import { Component, ElementCreator, elements, varDefault } from 'tosijs'
 
 const { slot } = elements

@@ -128,6 +128,7 @@ If `editable`, an input field is provided for entering tags directly.
 
 Placeholder shown on input field.
 */
+/*{ "parent": "Form Components" }*/
 import { Component as WebComponent, elements, vars, varDefault, deprecated, } from 'tosijs';
 import { popMenu } from './menu';
 import { icons } from './icons';

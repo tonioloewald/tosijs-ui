@@ -110,6 +110,8 @@ For example, tosi-select derives from base:
 This allows fine-grained customization while maintaining consistency.
 */
 
+/*{ "parent": "Helper Libraries" }*/
+
 import {
   Color,
   invertLuminance,

@@ -72,6 +72,8 @@ of the slots if you like. The demo site uses them to hide the [bundlejs](https:/
 space is tight.
 */
 
+/*{ "parent": "Components" }*/
+
 export class SizeBreak extends WebComponent {
   static preferredTagName = 'tosi-sizebreak'
 

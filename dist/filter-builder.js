@@ -143,6 +143,7 @@ interface FilterMaker {
 }
 ```
 */
+/*{ "parent": "Form Components" }*/
 import { Component as WebComponent, elements, } from 'tosijs';
 import { icons } from './icons';
 import { tosiSelect } from './select';

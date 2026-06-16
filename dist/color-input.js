@@ -27,6 +27,7 @@ colorInput.addEventListener('change', () => {
 
 <tosi-css-var-editor element-selector="tosi-color"></tosi-css-var-editor>
 */
+/*{ "parent": "Form Components" }*/
 import { Component, elements, Color, vars, } from 'tosijs';
 const { input } = elements;
 const defaultColor = Color.fromCss('#8888');

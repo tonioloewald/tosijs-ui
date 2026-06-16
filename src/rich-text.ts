@@ -122,6 +122,8 @@ form.addEventListener('submit', (e) => {
 ```
 */
 
+/*{ "parent": "Form Components" }*/
+
 import {
   Component as WebComponent,
   ElementCreator,

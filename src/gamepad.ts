@@ -35,6 +35,8 @@ showing active inputs with their flags (P=pressed, T=touched), analog values,
 and axis positions.
 */
 
+/*{ "parent": "Components" }*/
+
 export interface TosiButton {
   index: number
   pressed: boolean

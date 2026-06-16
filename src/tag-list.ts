@@ -129,6 +129,8 @@ If `editable`, an input field is provided for entering tags directly.
 Placeholder shown on input field.
 */
 
+/*{ "parent": "Form Components" }*/
+
 import {
   Component as WebComponent,
   elements,

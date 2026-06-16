@@ -291,6 +291,7 @@ preview.append(
 > `data-drop` in this example.
 )
 */
+/*{ "parent": "Helper Libraries" }*/
 const dragInProgress = () => !!document.querySelector('.drag-source');
 export const isTypeAllowed = (allowedTypes, type) => {
     if (!allowedTypes) {

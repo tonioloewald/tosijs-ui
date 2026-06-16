@@ -401,6 +401,7 @@ preview.querySelector('.set-values-btn').addEventListener('click', () => {
 })
 ```
 */
+/*{ "parent": "Form Components" }*/
 import { Component as XinComponent, elements, varDefault, } from 'tosijs';
 import { colorInput } from './color-input';
 const { form, slot, tosiSlot, label, input, span } = elements;

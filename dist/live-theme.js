@@ -33,6 +33,7 @@ import { liveTheme } from 'tosijs-ui'
 // liveTheme.accent.value = '#007AFF'
 ```
 */
+/*{ "parent": "Helper Libraries" }*/
 import { Color, Component, elements, tosi, } from 'tosijs';
 import { createTheme, createDarkTheme, applyTheme, defaultColors, } from './theme';
 const { div, label, input, span, button } = elements;

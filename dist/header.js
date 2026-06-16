@@ -87,6 +87,7 @@ preview.append(
 }
 ```
 */
+/*{ "parent": "Components" }*/
 import { Component, elements, varDefault } from 'tosijs';
 import { icons } from './icons';
 const { a } = elements;

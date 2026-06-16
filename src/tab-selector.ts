@@ -135,6 +135,8 @@ initTooltips()
 ```
 */
 
+/*{ "parent": "Components" }*/
+
 import {
   Component as WebComponent,
   ElementCreator,

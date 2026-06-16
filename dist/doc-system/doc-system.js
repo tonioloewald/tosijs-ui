@@ -39,6 +39,7 @@ real, indexable page content until hydration replaces it with the live browser.
 Live-example modules default to the `xinjs` / `xinjsui` IIFE globals; override by
 setting the element's `context` property before it connects.
 */
+/*{ "parent": "Appendices" }*/
 import { Component, StyleSheet, elements, tosi, vars } from 'tosijs';
 import { createDocBrowser } from '../doc-browser';
 import { buildSlugMap, legacyQueryPath } from './routing';

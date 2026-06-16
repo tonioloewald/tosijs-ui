@@ -1,4 +1,4 @@
-<!--{ "pin": "bottom", "title": "Doc-Site System", "description": "How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." }-->
+<!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
 # `tosijs-ui/site` — static, pre-rendered, hydrating doc sites
 

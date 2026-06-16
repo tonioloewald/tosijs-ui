@@ -141,6 +141,8 @@ test('form renders', () => {
 This is simply a wrapper for `TosiNotification.post()`.
 */
 
+/*{ "parent": "Components" }*/
+
 import { Component, elements, vars } from 'tosijs'
 import { icons } from './icons'
 import { findHighestZ } from './track-drag'

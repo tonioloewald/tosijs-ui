@@ -11,6 +11,7 @@ the sidebar if so desired). `<tosi-sidenav>` provides this functionality.
 sidebar and content, while `navSize` is the width of the sidebar. You can interrogate its `compact` property to find out if it's
 currently in `compact` form.
 */
+/*{ "parent": "Components" }*/
 import { Component, elements, varDefault } from 'tosijs';
 const { slot } = elements;
 export class TosiSidenav extends Component {

@@ -123,6 +123,7 @@ preview.append(tosiRouteView())
 navigate('page/1')
 ```
 */
+/*{ "parent": "Helper Libraries" }*/
 import { Component, tosi } from 'tosijs';
 // ============================================================================
 // Router State

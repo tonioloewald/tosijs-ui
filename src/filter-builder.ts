@@ -144,6 +144,8 @@ interface FilterMaker {
 ```
 */
 
+/*{ "parent": "Form Components" }*/
+
 import {
   Component as WebComponent,
   ElementCreator,

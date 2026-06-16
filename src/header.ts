@@ -88,6 +88,8 @@ preview.append(
 ```
 */
 
+/*{ "parent": "Components" }*/
+
 import { Component, ElementCreator, elements, varDefault } from 'tosijs'
 
 import { icons } from './icons'

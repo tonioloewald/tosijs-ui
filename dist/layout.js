@@ -42,6 +42,7 @@ A CSS grid container.
 </tosi-grid>
 ```
 */
+/*{ "parent": "Components" }*/
 import { Component, elements, varDefault, } from 'tosijs';
 const { slot } = elements;
 // ============================================================================

@@ -37,6 +37,7 @@ initTooltips({
 })
 ```
 */
+/*{ "parent": "Components" }*/
 import { elements, StyleSheet, varDefault } from 'tosijs';
 import { marked } from 'marked';
 import { popFloat } from './pop-float';
