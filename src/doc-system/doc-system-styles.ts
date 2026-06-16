@@ -11,7 +11,13 @@ palette can eventually be driven entirely by a few attributes on the element
 (accent/background/text) — most of the palette is derived from `accent`.
 */
 
-import { XinStyleSheet, XinStyleRule, vars, Color, invertLuminance } from 'tosijs'
+import {
+  XinStyleSheet,
+  XinStyleRule,
+  vars,
+  Color,
+  invertLuminance,
+} from 'tosijs'
 import { icons, svg2DataUrl } from '../icons'
 
 export interface DocSystemTheme {
@@ -300,14 +306,14 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       boxShadow: 'none',
       color: vars.textColor,
     },
-    '.current': {
+    '.current, summary:has(.current)': {
       background: vars.background,
     },
     '.doc-link': {
       cursor: 'pointer',
       borderBottom: 'none',
       transition: '0.15s ease-out',
-      marginLeft: '20px',
+      marginLeft: '10px',
       padding: 'calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.5)',
     },
     '.doc-link:not(.current):hover': {
@@ -353,15 +359,30 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       margin: 0,
       padding: 0,
     },
+    '.doc-nav li': {
+      display: 'flex',
+      flexDirection: 'column',
+    },
+    '.doc-nav': {
+      display: 'flex',
+      flexDirection: 'column',
+    },
     '.doc-nav details > ul': {
       paddingLeft: vars.spacing,
     },
     // <summary> is the section header (its triangle toggles; the link navigates).
     '.doc-nav summary': {
       cursor: 'pointer',
+      // indent the disclosure marker a bit from the edge
+      paddingLeft: 'calc(var(--spacing) * 0.5)',
+    },
+    '.doc-nav summary::marker': {
+      color: vars.brandColor,
     },
     '.doc-nav summary > .doc-link': {
       display: 'inline-block',
+      // push the summary text in a bit less than a normal doc-link
+      paddingLeft: 'calc(var(--spacing) * 0.5)',
     },
     // Declarative header link list — shown for no-JS, removed on hydration.
     '.doc-navbar': {

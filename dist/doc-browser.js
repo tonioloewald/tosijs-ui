@@ -264,6 +264,7 @@ export function createDocBrowser(options) {
     });
     // Assigned by the hierarchical nav builder (path routing); re-applies current
     // highlight, test status, search visibility, and auto-open imperatively.
+    // resetOpen=true collapses every section except the current doc's.
     let refreshNav = () => { };
     // Test result tracking
     const pageTestResults = {};
@@ -363,7 +364,9 @@ export function createDocBrowser(options) {
                     !doc.text.toLocaleLowerCase().includes(needle);
         });
         touch(app.docs);
-        refreshNav();
+        // resetOpen: when the field is cleared this collapses back to the current
+        // section; while typing, matching sections expand via the needle branch.
+        refreshNav(true);
     });
     const searchField = input({
         slot: 'nav',
@@ -477,7 +480,7 @@ export function createDocBrowser(options) {
         const doc = docs.find((d) => d.filename === filename) || docs[0];
         app.currentDoc = doc;
         showDoc(doc);
-        refreshNav();
+        refreshNav(true);
     };
     // ── Hierarchical nav (path routing) ───────────────────────────────────────
     // Build nested <details> from the doc tree; current-highlight, test status,
@@ -538,31 +541,61 @@ export function createDocBrowser(options) {
             }
             const det = details(summary(link), ul(...node.children.map(renderNode)));
             const item = li(det);
-            branches.push({ li: item, el: det, subtree: subtreeFilenames(node) });
+            branches.push({
+                li: item,
+                el: det,
+                link,
+                filename: node.doc.filename,
+                subtree: subtreeFilenames(node),
+            });
             return item;
         };
         const root = div(navStyle, ul(...roots.map(renderNode)));
-        refreshNav = () => {
-            // app.currentDoc.filename is a BoxedScalar; coerce so === and includes work.
+        // Search is computed straight from the raw docs (plain strings) — going
+        // through app.docs gives BoxedScalars / unreliable write-through.
+        const matchesSearch = (filename, needle) => {
+            if (!needle)
+                return true;
+            const doc = docs.find((d) => d.filename === filename);
+            return (!!doc &&
+                (String(doc.title).toLocaleLowerCase().includes(needle) ||
+                    String(doc.text).toLocaleLowerCase().includes(needle)));
+        };
+        const applyStatus = (link, filename, current) => {
+            link.classList.toggle('current', filename === current);
+            const r = pageTestResults[filename];
+            link.classList.toggle('-test-passed', !!r && r.passed);
+            link.classList.toggle('-test-failed', !!r && !r.passed);
+        };
+        refreshNav = (resetOpen = false) => {
+            // app.currentDoc.filename is a BoxedScalar; coerce so === / includes work.
             const cur = app.currentDoc;
             const current = cur && cur.filename != null ? String(cur.filename) : '';
-            const searching = !!searchField.value;
+            const needle = searchField.value.trim().toLocaleLowerCase();
+            // Use inline display (not the [hidden] attr): an author `display` rule on
+            // .doc-nav li would override [hidden]'s display:none.
             for (const [filename, { li: item, link }] of leaves) {
-                const doc = docs.find((d) => d.filename === filename);
-                item.hidden = !!doc?.hidden;
-                link.classList.toggle('current', filename === current);
-                const r = pageTestResults[filename];
-                link.classList.toggle('-test-passed', !!r && r.passed);
-                link.classList.toggle('-test-failed', !!r && !r.passed);
+                item.style.display = matchesSearch(filename, needle) ? '' : 'none';
+                applyStatus(link, filename, current);
             }
-            for (const { li: item, el, subtree } of branches) {
-                const visible = subtree.some((fn) => leaves.has(fn) && !leaves.get(fn).li.hidden);
-                item.hidden = !visible;
-                if (subtree.includes(current) || (searching && visible))
+            for (const { li: item, el, link, filename, subtree } of branches) {
+                // Visible if the section name matches, or any descendant leaf is shown.
+                const visible = matchesSearch(filename, needle) ||
+                    subtree.some((fn) => leaves.has(fn) && leaves.get(fn).li.style.display !== 'none');
+                item.style.display = visible ? '' : 'none';
+                applyStatus(link, filename, current);
+                // While searching, expand sections with matches. On navigation/clear
+                // (resetOpen), collapse everything except the current doc's section.
+                // Otherwise (e.g. test-status refresh) leave user toggles alone.
+                if (needle)
+                    el.open = visible;
+                else if (resetOpen)
+                    el.open = subtree.includes(current);
+                else if (subtree.includes(current))
                     el.open = true;
             }
         };
-        refreshNav();
+        refreshNav(true);
         return root;
     };
     const navContent = routing === 'path'

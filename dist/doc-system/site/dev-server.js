@@ -98,9 +98,41 @@ export async function devServer(config, opts = {}) {
         }
     }
     if (!testMode) {
-        watch('./icons').on('change', () => $ `bun ./bin/make-icon-data.js`);
-        watch(['README.md', './src']).on('change', () => $ `bun ./bin/docs.js`.then(() => buildSite(config)));
-        watch('./demo/src').on('change', () => buildSite(config));
+        // Rebuild on any source change. buildSite() already re-extracts docs and
+        // regenerates icon-data, so a single rebuild covers everything. Serialize
+        // builds (no overlap) and coalesce bursts.
+        let building = false;
+        let pending = false;
+        const rebuild = async () => {
+            if (building) {
+                pending = true;
+                return;
+            }
+            building = true;
+            try {
+                await buildSite(config);
+            }
+            catch (error) {
+                console.error('rebuild failed:', error);
+            }
+            finally {
+                building = false;
+                if (pending) {
+                    pending = false;
+                    void rebuild();
+                }
+            }
+        };
+        // Ignore the files the build itself writes, or the watch would loop.
+        const ignored = (p) => /node_modules|(^|[/\\])(version|icon-data)\.ts$/.test(p);
+        const watchPaths = [
+            'README.md',
+            './src',
+            './demo/src',
+            './icons',
+            ...(config.watchPaths ?? []),
+        ];
+        watch(watchPaths, { ignored, ignoreInitial: true }).on('all', () => void rebuild());
     }
     await ensureDevCerts();
     const server = Bun.serve({

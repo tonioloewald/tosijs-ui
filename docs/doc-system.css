@@ -321,7 +321,7 @@ pre, code {
   color: var(--text-color);
 }
 
-.current {
+.current, summary:has(.current) {
   background: var(--background);
 }
 
@@ -329,7 +329,7 @@ pre, code {
   cursor: pointer;
   border-bottom: none;
   transition: 0.15s ease-out;
-  margin-left: 20px;
+  margin-left: 10px;
   padding: calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.5);
 }
 
@@ -386,16 +386,32 @@ th, td {
   padding: 0px;
 }
 
+.doc-nav li {
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-nav {
+  display: flex;
+  flex-direction: column;
+}
+
 .doc-nav details > ul {
   padding-left: var(--spacing);
 }
 
 .doc-nav summary {
   cursor: pointer;
+  padding-left: calc(var(--spacing) * 0.5);
+}
+
+.doc-nav summary::marker {
+  color: var(--brand-color);
 }
 
 .doc-nav summary > .doc-link {
   display: inline-block;
+  padding-left: calc(var(--spacing) * 0.5);
 }
 
 .doc-navbar {
