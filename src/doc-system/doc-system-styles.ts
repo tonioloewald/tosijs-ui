@@ -346,19 +346,17 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
     'th, td': {
       padding: 'calc(var(--spacing) * 0.5) var(--spacing)',
     },
-    // The pre-rendered nav list in static HTML (visible before hydration replaces it).
-    '.doc-nav ul': {
+    // Nav lists carry semantics only — no list styling. Hierarchy indentation
+    // comes from left-padding on each section's child list (inside <details>).
+    '.doc-nav ul, .doc-nav li': {
       listStyle: 'none',
       margin: 0,
-      padding: vars.spacing,
+      padding: 0,
     },
-    // Hierarchical sections: nested lists indent; the <summary> is the section
-    // header (its triangle toggles; clicking the link navigates).
-    '.doc-nav ul ul': {
-      paddingTop: 0,
-      paddingBottom: 0,
+    '.doc-nav details > ul': {
       paddingLeft: vars.spacing,
     },
+    // <summary> is the section header (its triangle toggles; the link navigates).
     '.doc-nav summary': {
       cursor: 'pointer',
     },

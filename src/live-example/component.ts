@@ -121,7 +121,7 @@ context = {
 ```
 */
 
-/*{ "parent": "Helper Libraries" }*/
+/*{ "parent": "Components" }*/
 
 import { Component, ElementCreator, elements, tosi } from 'tosijs'
 import { codeEditor, CodeEditor } from '../code-editor'

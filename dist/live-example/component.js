@@ -120,7 +120,7 @@ context = {
 }
 ```
 */
-/*{ "parent": "Helper Libraries" }*/
+/*{ "parent": "Components" }*/
 import { Component, elements, tosi } from 'tosijs';
 import { codeEditor, CodeEditor } from '../code-editor';
 import { tosiTabs } from '../tab-selector';

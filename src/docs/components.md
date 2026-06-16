@@ -11,6 +11,7 @@ tables, menus, layout, media, and more.
 - [code](/code-editor/)
 - [dialog](/dialog/)
 - [editable-rect](/editable-rect/)
+- [example](/component/)
 - [float](/float/)
 - [gamepads](/gamepad/)
 - [header](/header/)

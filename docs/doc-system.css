@@ -380,15 +380,13 @@ th, td {
   padding: calc(var(--spacing) * 0.5) var(--spacing);
 }
 
-.doc-nav ul {
+.doc-nav ul, .doc-nav li {
   list-style: none;
   margin: 0px;
-  padding: var(--spacing);
+  padding: 0px;
 }
 
-.doc-nav ul ul {
-  padding-top: 0px;
-  padding-bottom: 0px;
+.doc-nav details > ul {
   padding-left: var(--spacing);
 }
 

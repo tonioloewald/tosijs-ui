@@ -714,7 +714,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     const root = div(navStyle, ul(...roots.map(renderNode)))
 
     refreshNav = () => {
-      const current = (app.currentDoc as any)?.filename
+      // app.currentDoc.filename is a BoxedScalar; coerce so === and includes work.
+      const cur = app.currentDoc as any
+      const current = cur && cur.filename != null ? String(cur.filename) : ''
       const searching = !!searchField.value
       for (const [filename, { li: item, link }] of leaves) {
         const doc = docs.find((d) => d.filename === filename) as any
