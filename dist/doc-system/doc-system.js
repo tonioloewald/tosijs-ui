@@ -41,6 +41,7 @@ setting the element's `context` property before it connects.
 */
 import { Component, StyleSheet, elements, tosi, vars } from 'tosijs';
 import { createDocBrowser } from '../doc-browser';
+import { buildSlugMap, legacyQueryPath } from './routing';
 import { docSystemStyleSpec } from './doc-system-styles';
 import { icons } from '../icons';
 import { popMenu } from '../menu';
@@ -232,6 +233,18 @@ export class TosiDocSystem extends Component {
                 .then((response) => response.json())
                 .then((corpus) => {
                 this.corpus = corpus;
+                // Redirect legacy ?filename query-param links (the old doc-browser's
+                // routing) to the new /slug/ paths.
+                const legacy = legacyQueryPath(location.search, buildSlugMap(corpus));
+                if (legacy) {
+                    if (legacy !== location.pathname) {
+                        // Different page — navigate to the real pre-rendered static page.
+                        location.replace(legacy + location.hash);
+                        return;
+                    }
+                    // Same page — just drop the stale legacy query, no reload.
+                    history.replaceState(null, '', legacy + location.hash);
+                }
                 this.queueRender();
             })
                 .catch((error) => console.error('<tosi-doc-system> could not load docs from', url, error));

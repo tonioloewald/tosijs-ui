@@ -54,6 +54,28 @@ export function pathForSlug(slug: string): string {
   return slug === '' ? '/' : `/${slug}/`
 }
 
+/**
+ * Map a legacy `?<filename>` query (the old doc-browser's query-param routing,
+ * e.g. `?button.ts`, `?README.md`) to the new slug path (`/button/`, `/`).
+ *
+ * Returns the new path, or null when `search` isn't a bare-filename query or
+ * doesn't match a known doc. Uses the slug map so README -> '/' and collision
+ * disambiguation (foo.ts + foo.css -> /foo-ts/, /foo-css/) are handled.
+ */
+export function legacyQueryPath(
+  search: string,
+  slugMap: Record<string, string>
+): string | null {
+  const query = search.replace(/^\?/, '')
+  // Legacy links are a single bare filename — anything with key=value pairs is
+  // a real query string, not the old routing.
+  if (!query || query.includes('=') || query.includes('&')) return null
+  const filename = decodeURIComponent(query)
+  const slug = slugMap[filename]
+  if (slug === undefined) return null
+  return pathForSlug(slug)
+}
+
 /** strip a pathname down to its slug: '/button/' -> 'button', '/' -> '' */
 export function slugForPath(pathname: string): string {
   return pathname.replace(/^\/+/, '').replace(/\/+$/, '').replace(/\/index\.html$/i, '')
