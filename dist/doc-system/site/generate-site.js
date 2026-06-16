@@ -11,6 +11,7 @@ Build-time only (uses Bun.write). Shares slug + markdown rendering with the runt
 component (src/doc-system/*) so static and hydrated output agree.
 */
 import { buildSlugMap, pathForSlug } from '../routing';
+import { buildNavTree, navOpenPath } from '../nav-tree';
 import { renderDocMarkdown, docDescription } from '../render';
 const escapeAttr = (s) => s
     .replace(/&/g, '&amp;')
@@ -19,15 +20,31 @@ const escapeAttr = (s) => s
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 const escapeText = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-/** Build the shared nav <ul> once; `currentFilename` gets aria-current. */
+/**
+ * Build the hierarchical nav as nested <details>. Parents render as
+ * <details><summary><a>…</a></summary><ul>…children…</ul></details>, with the
+ * <details> on the path to `currentFilename` opened. `currentFilename` gets
+ * aria-current. Crawlable + no-JS: every node is a real <a>.
+ */
 function navHtml(docs, slugMap, currentFilename, basePath) {
-    const items = docs
-        .map((doc) => {
-        const href = withBase(basePath, pathForSlug(slugMap[doc.filename]));
-        const current = doc.filename === currentFilename;
-        return `    <li><a href="${escapeAttr(href)}"${current ? ' aria-current="page" class="current"' : ''}>${escapeText(doc.title)}</a></li>`;
-    })
-        .join('\n');
+    const roots = buildNavTree(docs, slugMap);
+    const open = navOpenPath(roots, currentFilename);
+    const renderNode = (node, indent) => {
+        const href = withBase(basePath, pathForSlug(node.slug));
+        const current = node.doc.filename === currentFilename;
+        const link = `<a href="${escapeAttr(href)}"${current ? ' aria-current="page" class="current"' : ''}>${escapeText(node.doc.title)}</a>`;
+        if (node.children.length === 0) {
+            return `${indent}<li>${link}</li>`;
+        }
+        const isOpen = open.has(node.doc.filename) ? ' open' : '';
+        const kids = node.children
+            .map((c) => renderNode(c, indent + '  '))
+            .join('\n');
+        return (`${indent}<li><details${isOpen}><summary>${link}</summary>\n` +
+            `${indent}<ul>\n${kids}\n${indent}</ul>\n` +
+            `${indent}</details></li>`);
+    };
+    const items = roots.map((n) => renderNode(n, '    ')).join('\n');
     return `  <nav class="doc-nav" aria-label="Documentation">\n  <ul>\n${items}\n  </ul>\n  </nav>`;
 }
 /** Render a configurable link list (header bar or overflow menu) as crawlable HTML. */
