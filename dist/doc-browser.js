@@ -503,11 +503,14 @@ export function createDocBrowser(options) {
             return out;
         };
         const navClick = (doc) => (event) => {
-            const anchor = event.currentTarget;
-            const nav = anchor.closest('tosi-sidenav');
+            // Use the href from the closure, not the event — the click can land on a
+            // child of the <a> (the localized label), so event.currentTarget/target
+            // isn't reliably the anchor.
+            const href = hrefFor(doc.filename);
+            const nav = event.target.closest('tosi-sidenav');
             if (nav)
                 nav.contentVisible = true;
-            window.history.pushState({ href: anchor.href }, '', anchor.href);
+            window.history.pushState({ href }, '', href);
             navigateTo(String(doc.filename));
             event.preventDefault();
             const results = pageTestResults[doc.filename];
