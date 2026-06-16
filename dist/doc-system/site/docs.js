@@ -93,6 +93,7 @@ This will pin the document to the top or bottom of the navigation list.
 // TODO CLI options
 import * as fs from 'fs';
 import * as path from 'path';
+import { pinnedSort } from '../nav-tree';
 const TRIM_REGEX = /^#+ |`/g;
 function metadata(content, filePath) {
     const source = content.match(/<!--(\{.*\})-->|\/\*(\{.*\})\*\//);
@@ -106,13 +107,6 @@ function metadata(content, filePath) {
         }
     }
     return data;
-}
-function pinnedSort(a, b) {
-    const aKey = (a.pin === 'top' ? 'A' : a.pin === 'bottom' ? 'Z' : 'M') +
-        a.title.toLocaleLowerCase();
-    const bKey = (b.pin === 'top' ? 'A' : b.pin === 'bottom' ? 'Z' : 'M') +
-        b.title.toLocaleLowerCase();
-    return aKey > bKey ? 1 : bKey > aKey ? -1 : 0;
 }
 function findMarkdownFiles(paths, ignore) {
     const markdownFiles = [];

@@ -95,6 +95,7 @@ This will pin the document to the top or bottom of the navigation list.
 
 import * as fs from 'fs'
 import * as path from 'path'
+import { pinnedSort } from '../nav-tree'
 
 export interface Doc {
   text: string
@@ -102,6 +103,10 @@ export interface Doc {
   filename: string
   path: string
   pin?: 'top' | 'bottom'
+  /** sub-order within a pin bucket (lower first); section docs use this */
+  order?: number
+  /** parent doc name or slug — groups this doc into a nav section */
+  parent?: string
   hidden?: boolean
   // Opt-in SEO / agent metadata, provided in the doc's JSON block alongside `pin`:
   //   <!--{ "headTitle": "...", "description": "...", "keywords": "a, b", "image": "/og/x.webp" }-->
@@ -135,15 +140,6 @@ function metadata(content: string, filePath: string): Partial<Doc> {
   return data
 }
 
-function pinnedSort(a: Doc, b: Doc): number {
-  const aKey =
-    (a.pin === 'top' ? 'A' : a.pin === 'bottom' ? 'Z' : 'M') +
-    a.title.toLocaleLowerCase()
-  const bKey =
-    (b.pin === 'top' ? 'A' : b.pin === 'bottom' ? 'Z' : 'M') +
-    b.title.toLocaleLowerCase()
-  return aKey > bKey ? 1 : bKey > aKey ? -1 : 0
-}
 
 function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
   const markdownFiles: Doc[] = []

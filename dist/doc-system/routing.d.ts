@@ -28,3 +28,15 @@ export declare function slugForPath(pathname: string): string;
  * Returns '' if nothing matches (caller falls back to the first/README doc).
  */
 export declare function filenameForPath(pathname: string, slugMap: Record<string, string>): string;
+/** Turn a human name/title into a slug: 'Form Components' -> 'form-components'. */
+export declare function slugify(s: string): string;
+/**
+ * Resolve a doc's `parent` value (a NAME or a slug) to the parent doc's
+ * filename. Tries, in order: exact filename, exact slug (slug->slug no-op),
+ * slugify(value) against doc slugs, then slugify(value) against slugify(title).
+ * Returns '' if nothing matches (the build then auto-creates a section doc).
+ */
+export declare function resolveParent(parentValue: string, docs: Array<{
+    filename: string;
+    title?: string;
+}>, slugMap: Record<string, string>): string;

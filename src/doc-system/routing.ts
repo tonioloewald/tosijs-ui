@@ -95,3 +95,32 @@ export function filenameForPath(
   }
   return ''
 }
+
+/** Turn a human name/title into a slug: 'Form Components' -> 'form-components'. */
+export function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+/**
+ * Resolve a doc's `parent` value (a NAME or a slug) to the parent doc's
+ * filename. Tries, in order: exact filename, exact slug (slug->slug no-op),
+ * slugify(value) against doc slugs, then slugify(value) against slugify(title).
+ * Returns '' if nothing matches (the build then auto-creates a section doc).
+ */
+export function resolveParent(
+  parentValue: string,
+  docs: Array<{ filename: string; title?: string }>,
+  slugMap: Record<string, string>
+): string {
+  if (!parentValue) return ''
+  for (const d of docs) if (d.filename === parentValue) return d.filename
+  for (const d of docs) if (slugMap[d.filename] === parentValue) return d.filename
+  const target = slugify(parentValue)
+  for (const d of docs) if (slugMap[d.filename] === target) return d.filename
+  for (const d of docs) if (d.title && slugify(d.title) === target) return d.filename
+  return ''
+}

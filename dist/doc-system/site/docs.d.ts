@@ -4,6 +4,10 @@ export interface Doc {
     filename: string;
     path: string;
     pin?: 'top' | 'bottom';
+    /** sub-order within a pin bucket (lower first); section docs use this */
+    order?: number;
+    /** parent doc name or slug — groups this doc into a nav section */
+    parent?: string;
     hidden?: boolean;
     headTitle?: string;
     description?: string;
