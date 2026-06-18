@@ -45,10 +45,22 @@ describe('rewriteImports', () => {
     expect(result).not.toContain('import')
   })
 
-  test('leaves non-matching imports untouched', () => {
-    const code = "import { foo } from 'bar'"
-    const result = rewriteImports(code, ['tosijs'])
-    expect(result).toBe(code)
+  test('rewrites namespace imports', () => {
+    const code = "import * as BABYLON from '@babylonjs/core'"
+    const result = rewriteImports(code, ['@babylonjs/core'])
+    expect(result).toBe('const BABYLON = babylonjscore')
+  })
+
+  test('rewrites default imports', () => {
+    const code = "import Foo from 'my-lib'"
+    const result = rewriteImports(code, ['my-lib'])
+    expect(result).toBe('const Foo = mylib')
+  })
+
+  test('throws a clear error on a non-context import', () => {
+    expect(() => rewriteImports("import { foo } from 'bar'", ['tosijs'])).toThrow(
+      /unsupported import/
+    )
   })
 
   test('handles dot-access imports', () => {

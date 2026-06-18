@@ -1,6 +1,6 @@
 import { elements } from 'tosijs'
 import { ExampleContext, TransformFn } from './types'
-import { rewriteImports, AsyncFunction } from './code-transform'
+import { rewriteImports, AsyncFunction, contextVarName } from './code-transform'
 
 const { div } = elements
 
@@ -103,9 +103,7 @@ export async function executeInline(
     const code = rewriteImports(js, Object.keys(context))
     const transformedCode = transform(code, { transforms: ['typescript'] }).code
 
-    const contextKeys = Object.keys(fullContext).map((key) =>
-      key.replace(/-/g, '')
-    )
+    const contextKeys = Object.keys(fullContext).map(contextVarName)
     const contextValues = Object.values(fullContext)
 
     // @ts-expect-error AsyncFunction constructor typing
@@ -217,9 +215,7 @@ export async function executeInIframe(
       iframeWindow as Window & { eval: typeof eval }
     ).eval('(async () => {}).constructor')
 
-    const contextKeys = Object.keys(fullContext).map((key) =>
-      key.replace(/-/g, '')
-    )
+    const contextKeys = Object.keys(fullContext).map(contextVarName)
     const contextValues = Object.values(fullContext)
 
     const func = new IframeAsyncFunction(...contextKeys, transformedCode)

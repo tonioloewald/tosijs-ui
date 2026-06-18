@@ -5,18 +5,53 @@ export const AsyncFunction = (async () => {
 }).constructor
 
 /**
- * Rewrite import statements to use context variables
- * e.g., `import { x } from 'tosijs'` -> `const { x } = tosijs`
+ * Sanitize a context module key into a JS identifier used as the binding name
+ * in rewritten imports and as the AsyncFunction parameter. Must be applied
+ * consistently on both sides. e.g. 'tosijs-ui' -> 'tosijsui',
+ * '@babylonjs/core' -> 'babylonjscore'.
+ */
+export function contextVarName(key: string): string {
+  return key.replace(/[^a-zA-Z0-9_$]/g, '')
+}
+
+/**
+ * Rewrite import statements (from the example context) to const bindings:
+ *   import { x } from 'tosijs'        -> const { x } = tosijs
+ *   import * as B from '@babylonjs'   -> const B = babylonjs   (context key)
+ *   import Foo from 'my-lib'          -> const Foo = mylib
+ * The `.elements` accessor form (`import { x } from 'tosijs'.elements`) is
+ * preserved. Any static import that isn't from a context module (or uses an
+ * unsupported form) throws a clear error rather than becoming a SyntaxError in
+ * the AsyncFunction body.
  */
 export function rewriteImports(code: string, contextKeys: string[]): string {
   let result = code
   for (const moduleName of contextKeys) {
+    const js = contextVarName(moduleName)
+    const m = moduleName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    // import { a, b } from 'mod'
     result = result.replace(
-      new RegExp(`import \\{([^}]*)\\} from '${moduleName}'`, 'g'),
-      (_, names: string) => {
-        const collapsed = names.replace(/\s+/g, ' ').trim()
-        return `const { ${collapsed} } = ${moduleName.replace(/-/g, '')}`
-      }
+      new RegExp(`import\\s*\\{([^}]*)\\}\\s*from\\s*'${m}'`, 'g'),
+      (_, names: string) => `const { ${names.replace(/\s+/g, ' ').trim()} } = ${js}`
+    )
+    // import * as X from 'mod'
+    result = result.replace(
+      new RegExp(`import\\s*\\*\\s*as\\s+(\\w+)\\s+from\\s*'${m}'`, 'g'),
+      (_, name: string) => `const ${name} = ${js}`
+    )
+    // import X from 'mod'  (default)
+    result = result.replace(
+      new RegExp(`import\\s+(\\w+)\\s+from\\s*'${m}'`, 'g'),
+      (_, name: string) => `const ${name} = ${js}`
+    )
+  }
+  // Anything still a static import is unsupported — fail loudly with the line.
+  const leftover = result.match(/^\s*import\s+['"{*\w][^\n]*/m)
+  if (leftover) {
+    throw new Error(
+      `live example: unsupported import \`${leftover[0].trim()}\` — only imports ` +
+        `from the example context (${contextKeys.join(', ')}) are supported, in ` +
+        `{ named }, * as ns, or default form.`
     )
   }
   return result
@@ -35,7 +70,7 @@ export async function executeCode(
     transforms: ['typescript'],
   }).code
 
-  const contextKeys = Object.keys(context).map((key) => key.replace(/-/g, ''))
+  const contextKeys = Object.keys(context).map(contextVarName)
   const contextValues = Object.values(context)
 
   // @ts-expect-error AsyncFunction constructor typing

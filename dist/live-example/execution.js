@@ -1,5 +1,5 @@
 import { elements } from 'tosijs';
-import { rewriteImports, AsyncFunction } from './code-transform';
+import { rewriteImports, AsyncFunction, contextVarName } from './code-transform';
 const { div } = elements;
 /**
  * Register web components in an iframe's customElements registry.
@@ -67,7 +67,7 @@ export async function executeInline(options) {
     try {
         const code = rewriteImports(js, Object.keys(context));
         const transformedCode = transform(code, { transforms: ['typescript'] }).code;
-        const contextKeys = Object.keys(fullContext).map((key) => key.replace(/-/g, ''));
+        const contextKeys = Object.keys(fullContext).map(contextVarName);
         const contextValues = Object.values(fullContext);
         // @ts-expect-error AsyncFunction constructor typing
         const func = new AsyncFunction(...contextKeys, transformedCode);
@@ -145,7 +145,7 @@ export async function executeInIframe(options) {
         const transformedCode = transform(code, { transforms: ['typescript'] }).code;
         // Create AsyncFunction in iframe's context
         const IframeAsyncFunction = iframeWindow.eval('(async () => {}).constructor');
-        const contextKeys = Object.keys(fullContext).map((key) => key.replace(/-/g, ''));
+        const contextKeys = Object.keys(fullContext).map(contextVarName);
         const contextValues = Object.values(fullContext);
         const func = new IframeAsyncFunction(...contextKeys, transformedCode);
         await func(...contextValues);
