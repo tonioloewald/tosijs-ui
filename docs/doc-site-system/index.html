@@ -248,6 +248,11 @@ authoritative typed definition.</p>
 <td><code>[&#39;src&#39;, &#39;README.md&#39;]</code></td>
 <td>dirs scanned for <code>/*#</code> + <code>.md</code> files (list root <code>.md</code> files explicitly)</td>
 </tr>
+<tr>
+<td><code>sectionsDir</code></td>
+<td><code>&#39;src/docs&#39;</code></td>
+<td>where auto-created section docs + their <code>&lt;!-- toc --&gt;</code> blocks are written (must be inside a <code>docPath</code>, not named <code>docs</code>)</td>
+</tr>
 </tbody></table>
 <h3>Bundle</h3>
 <table>
@@ -324,14 +329,24 @@ authoritative typed definition.</p>
 </tr>
 </thead>
 <tbody><tr>
-<td><code>generateIcons</code></td>
+<td><code>prebuild</code></td>
+<td>—</td>
+<td><code>() =&gt; void | Promise&lt;void&gt;</code> run first, for source-tree codegen (version stamp, icon data, …). Runs before <code>dist</code>/output are reset — don&#39;t write there</td>
+</tr>
+<tr>
+<td><code>emitLibrary</code></td>
 <td><code>false</code></td>
-<td>run icon-data generation (tosijs-ui-specific)</td>
+<td>also build the library: <code>tsc --declaration --incremental --outDir dist</code> (for repos publishing a package + their docs)</td>
+</tr>
+<tr>
+<td><code>libraryTsconfig</code></td>
+<td>—</td>
+<td>run <code>tsc -p &lt;path&gt;</code> for the library build instead (handles root <code>noEmit</code>, <code>removeComments</code>, custom <code>outDir</code>); supersedes <code>emitLibrary</code></td>
 </tr>
 <tr>
 <td><code>llmsTxt</code></td>
 <td><code>true</code></td>
-<td>emit <code>llms.txt</code> discoverability index</td>
+<td>emit the <code>llms.txt</code> index — <code>true</code>, <code>false</code>, or <code>(docs) =&gt; string</code> for a custom one (see below)</td>
 </tr>
 <tr>
 <td><code>outputDir</code></td>
@@ -349,6 +364,14 @@ authoritative typed definition.</p>
 <td>extra dev-server watch dirs</td>
 </tr>
 </tbody></table>
+<h4><code>llms.txt</code></h4>
+<p>The default index is built from your config — <code>name</code>, <code>description</code>, <code>baseUrl</code>
+(→ <code>Docs:</code> link), and <code>projectLinks.github</code>/<code>.npm</code> (→ <code>Source:</code>/<code>npm:</code> links;
+npm falls back to your package name) — plus one entry per documented <code>src/*.ts</code>
+with a <code>dist/*.js</code> pointer. It&#39;s written <strong>both</strong> to the project root (so you can
+ship it in your package&#39;s <code>files</code>) <strong>and</strong> to the served output dir, so
+<code>{baseUrl}/llms.txt</code> resolves for crawlers/agents. Set <code>llmsTxt: false</code> to skip,
+or pass a function <code>(docs) =&gt; string</code> to generate your own from the corpus.</p>
 <h2>Host presets &amp; custom domains</h2>
 <table>
 <thead>

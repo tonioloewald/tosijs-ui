@@ -194,6 +194,7 @@ authoritative typed definition.
 | field | default | purpose |
 |---|---|---|
 | `docPaths` | `['src', 'README.md']` | dirs scanned for `/*#` + `.md` files (list root `.md` files explicitly) |
+| `sectionsDir` | `'src/docs'` | where auto-created section docs + their `<!-- toc -->` blocks are written (must be inside a `docPath`, not named `docs`) |
 
 ### Bundle
 | field | default | purpose |
@@ -217,11 +218,23 @@ authoritative typed definition.
 ### Build toggles & dev server
 | field | default | purpose |
 |---|---|---|
-| `generateIcons` | `false` | run icon-data generation (tosijs-ui-specific) |
-| `llmsTxt` | `true` | emit `llms.txt` discoverability index |
+| `prebuild` | — | `() => void \| Promise<void>` run first, for source-tree codegen (version stamp, icon data, …). Runs before `dist`/output are reset — don't write there |
+| `emitLibrary` | `false` | also build the library: `tsc --declaration --incremental --outDir dist` (for repos publishing a package + their docs) |
+| `libraryTsconfig` | — | run `tsc -p <path>` for the library build instead (handles root `noEmit`, `removeComments`, custom `outDir`); supersedes `emitLibrary` |
+| `llmsTxt` | `true` | emit the `llms.txt` index — `true`, `false`, or `(docs) => string` for a custom one (see below) |
 | `outputDir` | `'docs'` | served web-root output dir |
 | `port` | `8787` | dev-server port |
 | `watchPaths` | — | extra dev-server watch dirs |
+
+#### `llms.txt`
+
+The default index is built from your config — `name`, `description`, `baseUrl`
+(→ `Docs:` link), and `projectLinks.github`/`.npm` (→ `Source:`/`npm:` links;
+npm falls back to your package name) — plus one entry per documented `src/*.ts`
+with a `dist/*.js` pointer. It's written **both** to the project root (so you can
+ship it in your package's `files`) **and** to the served output dir, so
+`{baseUrl}/llms.txt` resolves for crawlers/agents. Set `llmsTxt: false` to skip,
+or pass a function `(docs) => string` to generate your own from the corpus.
 
 ## Host presets & custom domains
 
