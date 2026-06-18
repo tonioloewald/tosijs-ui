@@ -84,6 +84,15 @@ process.argv.includes(&#39;--build&#39;) ? buildSite(config) : devServer(config)
 <p><strong>3. scripts</strong> in <code>package.json</code>:</p>
 <pre><code class="language-json">{ &quot;scripts&quot;: { &quot;start&quot;: &quot;bun bin/site.ts&quot;, &quot;build&quot;: &quot;bun bin/site.ts --build&quot; } }
 </code></pre>
+<p><strong>4. build-time dependencies.</strong> The build (not your shipped library) needs a few
+tools installed alongside tosijs-ui. They&#39;re declared as optional peers, so
+install whichever the build reports missing:</p>
+<pre><code class="language-bash">bun add -d happy-dom sucrase marked
+</code></pre>
+<p><code>happy-dom</code> powers the theme-stylesheet step (the build runs with no real DOM);
+<code>sucrase</code> transforms TypeScript live-examples; <code>marked</code> renders markdown. If one
+is absent the build fails mid-run with a <code>Cannot find package …</code> from inside
+<code>node_modules/tosijs-ui/dist/…</code> — that means a build-time peer isn&#39;t installed.</p>
 <h2>Bundles &amp; live examples (read this)</h2>
 <p>The static pages are inert HTML until a JS bundle loads and registers the
 custom elements (and powers live <code>js</code>/<code>test</code> examples). You pick one of two

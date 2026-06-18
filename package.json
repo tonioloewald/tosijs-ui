@@ -46,11 +46,15 @@
     "typescript-eslint": "^8"
   },
   "peerDependencies": {
+    "happy-dom": "^20.7.0",
     "marked": "^16.4.2",
     "sucrase": "^3.35.0",
     "tosijs": "^1.6.0"
   },
   "peerDependenciesMeta": {
+    "happy-dom": {
+      "optional": true
+    },
     "sucrase": {
       "optional": true
     }
