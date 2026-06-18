@@ -45,8 +45,19 @@ function extractDescription(text: string): string {
   return ''
 }
 
-export function generateLlmsTxt(outputPath: string): void {
-  const config = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+export interface LlmsTxtMeta {
+  name?: string
+  description?: string
+  /** site origin, used for the Docs link */
+  baseUrl?: string
+  /** project links — `github` / `npm` (or any) become Source/npm links */
+  projectLinks?: Record<string, string | undefined>
+  /** optional framing line(s) under the description */
+  tagline?: string
+}
+
+export function generateLlmsTxt(outputPath: string, meta: LlmsTxtMeta = {}): void {
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
   const docs: ComponentDoc[] = []
 
   const files = fs.readdirSync(SRC).filter((f) => f.endsWith('.ts'))
@@ -74,17 +85,21 @@ export function generateLlmsTxt(outputPath: string): void {
 
   docs.sort((a, b) => a.title.localeCompare(b.title))
 
+  const name = meta.name ?? pkg.name
+  const description = meta.description ?? pkg.description
+  const links: string[] = []
+  if (meta.baseUrl) links.push(`- Docs: ${meta.baseUrl}`)
+  if (meta.projectLinks?.github) links.push(`- Source: ${meta.projectLinks.github}`)
+  const npm = meta.projectLinks?.npm ?? `https://www.npmjs.com/package/${pkg.name}`
+  if (npm) links.push(`- npm: ${npm}`)
+
   const lines: string[] = [
-    `# ${config.name} v${config.version}`,
+    `# ${name} v${pkg.version}`,
     '',
-    config.description,
+    description,
+    ...(meta.tagline ? ['', meta.tagline] : []),
     '',
-    'Web component library built on tosijs. Components augment HTML5/CSS3',
-    'rather than replacing native elements.',
-    '',
-    '- Docs: https://ui.tosijs.net',
-    '- Source: https://github.com/tonioloewald/xinjs-ui',
-    '- npm: https://www.npmjs.com/package/tosijs-ui',
+    ...links,
     '',
     '## Documentation',
     '',

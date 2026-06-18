@@ -33,8 +33,8 @@ function extractDescription(text) {
     }
     return '';
 }
-export function generateLlmsTxt(outputPath) {
-    const config = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+export function generateLlmsTxt(outputPath, meta = {}) {
+    const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
     const docs = [];
     const files = fs.readdirSync(SRC).filter((f) => f.endsWith('.ts'));
     for (const file of files) {
@@ -59,17 +59,23 @@ export function generateLlmsTxt(outputPath) {
         });
     }
     docs.sort((a, b) => a.title.localeCompare(b.title));
+    const name = meta.name ?? pkg.name;
+    const description = meta.description ?? pkg.description;
+    const links = [];
+    if (meta.baseUrl)
+        links.push(`- Docs: ${meta.baseUrl}`);
+    if (meta.projectLinks?.github)
+        links.push(`- Source: ${meta.projectLinks.github}`);
+    const npm = meta.projectLinks?.npm ?? `https://www.npmjs.com/package/${pkg.name}`;
+    if (npm)
+        links.push(`- npm: ${npm}`);
     const lines = [
-        `# ${config.name} v${config.version}`,
+        `# ${name} v${pkg.version}`,
         '',
-        config.description,
+        description,
+        ...(meta.tagline ? ['', meta.tagline] : []),
         '',
-        'Web component library built on tosijs. Components augment HTML5/CSS3',
-        'rather than replacing native elements.',
-        '',
-        '- Docs: https://ui.tosijs.net',
-        '- Source: https://github.com/tonioloewald/xinjs-ui',
-        '- npm: https://www.npmjs.com/package/tosijs-ui',
+        ...links,
         '',
         '## Documentation',
         '',

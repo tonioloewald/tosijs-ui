@@ -13,6 +13,7 @@ Imports here are type-only so this module stays free of runtime/DOM dependencies
 
 import type { ProjectLinks, LinkItem } from '../../doc-browser'
 import type { DocSystemTheme } from '../doc-system-styles'
+import type { Doc } from './docs'
 
 export type SiteHost = 'github-pages' | 'firebase' | 'static'
 
@@ -115,8 +116,13 @@ export interface SiteConfig {
    * its doc site (the tosijs-* libs) set this true; a pure docs site omits it.
    */
   emitLibrary?: boolean
-  /** emit llms.txt agent-discoverability index. Default true. */
-  llmsTxt?: boolean
+  /**
+   * Emit llms.txt agent-discoverability index. Default true (uses `name` /
+   * `description` / `baseUrl` / `projectLinks`). Set false to skip, or pass a
+   * function for a fully custom index — it receives the doc corpus and returns
+   * the file contents.
+   */
+  llmsTxt?: boolean | ((docs: Doc[]) => string)
   /** served web-root output dir, default 'docs' */
   outputDir?: string
   /** dev-server port, default 8787 */

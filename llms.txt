@@ -1,12 +1,9 @@
 # tosijs-ui v1.6.1
 
-simple robust web-components for use with tosijs or anything else
-
-Web component library built on tosijs. Components augment HTML5/CSS3
-rather than replacing native elements.
+Simple, robust web-components for use with tosijs or anything else.
 
 - Docs: https://ui.tosijs.net
-- Source: https://github.com/tonioloewald/xinjs-ui
+- Source: https://github.com/tonioloewald/tosijs-ui
 - npm: https://www.npmjs.com/package/tosijs-ui
 
 ## Documentation

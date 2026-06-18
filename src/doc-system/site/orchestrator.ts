@@ -130,8 +130,18 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     )
   }
 
-  if (config.llmsTxt ?? true) {
-    generateLlmsTxt('llms.txt')
+  if (config.llmsTxt !== false) {
+    if (typeof config.llmsTxt === 'function') {
+      const corpus = JSON.parse(await Bun.file('demo/docs.json').text())
+      await Bun.write('llms.txt', config.llmsTxt(corpus))
+    } else {
+      generateLlmsTxt('llms.txt', {
+        name: config.name,
+        description: config.description,
+        baseUrl: config.baseUrl,
+        projectLinks: config.projectLinks,
+      })
+    }
   }
 
   // Generate the static, pre-rendered doc site (one /slug/index.html per doc).

@@ -104,8 +104,19 @@ export async function buildSite(config) {
         const bundleGzip = gzipSync(Buffer.from(bundleFile));
         console.log(`${scriptName}: ${(bundleFile.byteLength / 1024).toFixed(1)}kb (${(bundleGzip.length / 1024).toFixed(1)}kb gzip)`);
     }
-    if (config.llmsTxt ?? true) {
-        generateLlmsTxt('llms.txt');
+    if (config.llmsTxt !== false) {
+        if (typeof config.llmsTxt === 'function') {
+            const corpus = JSON.parse(await Bun.file('demo/docs.json').text());
+            await Bun.write('llms.txt', config.llmsTxt(corpus));
+        }
+        else {
+            generateLlmsTxt('llms.txt', {
+                name: config.name,
+                description: config.description,
+                baseUrl: config.baseUrl,
+                projectLinks: config.projectLinks,
+            });
+        }
     }
     // Generate the static, pre-rendered doc site (one /slug/index.html per doc).
     // Runs after the static-asset copy so the generated index.html (README) wins,
