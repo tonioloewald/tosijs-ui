@@ -263,6 +263,14 @@ canonical origin). A custom domain always serves from root, so it forces
   A bespoke scroll-driven marketing page (e.g. `tosijs-product`) wants a
   different page model — use tosijs-ui's *components* there, not this doc
   system (or host its API docs as a separate site).
+- **Relative asset URLs break (migration gotcha).** Each doc is served at its
+  own path (`/{slug}/`), so a `./asset` reference inside a `/*# … */` block now
+  resolves under that slug, not the site root. Use **root-absolute** URLs
+  (`/asset`) for images and links in doc content.
+- **`prebuild` runs before `dist/` exists and `outputDir` is wiped.** Use the
+  `prebuild` hook for source-tree codegen (version stamp, icon data, …) and
+  write into a `staticDirs` folder for assets — not `dist/` or the output dir,
+  which the build resets immediately after.
 
 ## Current layout (extraction in progress)
 

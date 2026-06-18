@@ -419,6 +419,14 @@ It is not circular, but CI must build/resolve tosijs-ui first.</li>
 A bespoke scroll-driven marketing page (e.g. <code>tosijs-product</code>) wants a
 different page model — use tosijs-ui&#39;s <em>components</em> there, not this doc
 system (or host its API docs as a separate site).</li>
+<li><strong>Relative asset URLs break (migration gotcha).</strong> Each doc is served at its
+own path (<code>/{slug}/</code>), so a <code>./asset</code> reference inside a <code>/*# … */</code> block now
+resolves under that slug, not the site root. Use <strong>root-absolute</strong> URLs
+(<code>/asset</code>) for images and links in doc content.</li>
+<li><strong><code>prebuild</code> runs before <code>dist/</code> exists and <code>outputDir</code> is wiped.</strong> Use the
+<code>prebuild</code> hook for source-tree codegen (version stamp, icon data, …) and
+write into a <code>staticDirs</code> folder for assets — not <code>dist/</code> or the output dir,
+which the build resets immediately after.</li>
 </ul>
 <h2>Current layout (extraction in progress)</h2>
 <table>
