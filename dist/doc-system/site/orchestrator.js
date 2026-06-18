@@ -127,6 +127,9 @@ export async function buildSite(config) {
                 projectLinks: config.projectLinks,
             });
         }
+        // Also place it at the served web root so {baseUrl}/llms.txt resolves (the
+        // root copy stays for the npm package's `files`).
+        await $ `cp llms.txt ${PUBLIC}/llms.txt`.text();
     }
     // Generate the static, pre-rendered doc site (one /slug/index.html per doc).
     // Runs after the static-asset copy so the generated index.html (README) wins,
