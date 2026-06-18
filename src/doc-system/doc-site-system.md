@@ -99,24 +99,38 @@ modes:
 - **`bundleEntry` — bring your own (recommended for any project with custom
   components).** The build bundles your entrypoint to IIFE and pages load it.
   **Your entrypoint must import everything your pages and live examples
-  reference** — typically:
+  reference**, and expose any custom modules to live examples by setting each
+  `<tosi-doc-system>`'s `context` property (live examples resolve
+  `import { x } from 'my-lib'` against `context['my-lib']`):
 
   ```ts
   // demo/site.ts
-  import 'tosijs-ui'          // registers tosi-* elements + the doc-system
-  import * as tosijs from 'tosijs'
-  import * as mylib from '../src/index'   // your own components
-  // expose anything your inline examples import:
-  globalThis.tosijs = tosijs
-  globalThis.mylib = mylib
+  import 'tosijs-ui' // registers tosi-* elements + the doc-system component
+  import * as mylib from '../src/index' // your own components/exports
+
+  // Expose your library to live examples. tosijs / tosijs-ui are provided by
+  // default (from the IIFE globals); add your own here.
+  for (const el of document.querySelectorAll('tosi-doc-system')) {
+    ;(el as any).context = { 'my-lib': mylib }
+  }
   ```
 
-  Without these imports your custom elements won't upgrade and live examples
-  that `import { x } from 'mylib'` won't resolve.
+  Without the `import` your custom elements won't upgrade; without the
+  `context` entry, `import … from 'my-lib'` in a live example won't resolve.
 
 - **`scriptUrl` fallback — use a prebuilt bundle.** Omit `bundleEntry` and
   pages load `scriptUrl` (default `/iife.js`, i.e. tosijs-ui's published
   bundle). Good for a pure docs site with no custom elements of its own.
+
+**Heads-up — IIFE bundle limits.** The bundle is a classic `<script>` (IIFE), so:
+- **`import.meta` is illegal** in it — if an isomorphic dep references
+  `import.meta.url` in a branch the bundler can't drop, the page dies with a
+  `SyntaxError`. Mark that dep external (+ an importmap) or use a browser-only entry.
+- **`bundleExternals` are a dynamic `require()` shim** that throws at runtime
+  (`Dynamic require of … is not supported`). Load externals via `import()`
+  (kept async) or an importmap — never a static top-level import.
+
+The build warns about both, but they fail at page-load, not build-time.
 
 ## Configuration reference
 

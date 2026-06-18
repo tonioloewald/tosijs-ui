@@ -101,23 +101,37 @@ modes:</p>
 <li><p><strong><code>bundleEntry</code> — bring your own (recommended for any project with custom
 components).</strong> The build bundles your entrypoint to IIFE and pages load it.
 <strong>Your entrypoint must import everything your pages and live examples
-reference</strong> — typically:</p>
+reference</strong>, and expose any custom modules to live examples by setting each
+<code>&lt;tosi-doc-system&gt;</code>&#39;s <code>context</code> property (live examples resolve
+<code>import { x } from &#39;my-lib&#39;</code> against <code>context[&#39;my-lib&#39;]</code>):</p>
 <pre><code class="language-ts">// demo/site.ts
-import &#39;tosijs-ui&#39;          // registers tosi-* elements + the doc-system
-import * as tosijs from &#39;tosijs&#39;
-import * as mylib from &#39;../src/index&#39;   // your own components
-// expose anything your inline examples import:
-globalThis.tosijs = tosijs
-globalThis.mylib = mylib
+import &#39;tosijs-ui&#39; // registers tosi-* elements + the doc-system component
+import * as mylib from &#39;../src/index&#39; // your own components/exports
+
+// Expose your library to live examples. tosijs / tosijs-ui are provided by
+// default (from the IIFE globals); add your own here.
+for (const el of document.querySelectorAll(&#39;tosi-doc-system&#39;)) {
+  ;(el as any).context = { &#39;my-lib&#39;: mylib }
+}
 </code></pre>
-<p>Without these imports your custom elements won&#39;t upgrade and live examples
-that <code>import { x } from &#39;mylib&#39;</code> won&#39;t resolve.</p>
+<p>Without the <code>import</code> your custom elements won&#39;t upgrade; without the
+<code>context</code> entry, <code>import … from &#39;my-lib&#39;</code> in a live example won&#39;t resolve.</p>
 </li>
 <li><p><strong><code>scriptUrl</code> fallback — use a prebuilt bundle.</strong> Omit <code>bundleEntry</code> and
 pages load <code>scriptUrl</code> (default <code>/iife.js</code>, i.e. tosijs-ui&#39;s published
 bundle). Good for a pure docs site with no custom elements of its own.</p>
 </li>
 </ul>
+<p><strong>Heads-up — IIFE bundle limits.</strong> The bundle is a classic <code>&lt;script&gt;</code> (IIFE), so:</p>
+<ul>
+<li><strong><code>import.meta</code> is illegal</strong> in it — if an isomorphic dep references
+<code>import.meta.url</code> in a branch the bundler can&#39;t drop, the page dies with a
+<code>SyntaxError</code>. Mark that dep external (+ an importmap) or use a browser-only entry.</li>
+<li><strong><code>bundleExternals</code> are a dynamic <code>require()</code> shim</strong> that throws at runtime
+(<code>Dynamic require of … is not supported</code>). Load externals via <code>import()</code>
+(kept async) or an importmap — never a static top-level import.</li>
+</ul>
+<p>The build warns about both, but they fail at page-load, not build-time.</p>
 <h2>Configuration reference</h2>
 <p>All fields are optional except <code>name</code>. See <code>bin/site-config.ts</code> for the
 authoritative typed definition.</p>

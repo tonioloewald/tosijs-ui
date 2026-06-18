@@ -85,6 +85,17 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
   // consumer supplies (e.g. via staticDirs or an absolute URL).
   const scriptName = (config.scriptUrl ?? '/iife.js').replace(/^\//, '')
   if (config.bundleEntry) {
+    // IIFE externals become a synchronous require() shim that throws at
+    // module-eval ("Dynamic require of … is not supported") — the build still
+    // succeeds, so warn rather than fail silently.
+    if (config.bundleExternals && config.bundleExternals.length > 0) {
+      console.warn(
+        `⚠️  bundleExternals in an IIFE bundle (${config.bundleExternals.join(
+          ', '
+        )}): Bun emits a dynamic require() shim that throws at runtime. Load these\n` +
+          `    via import() (dynamically, so the bundler keeps them async) or an importmap, not a static import.`
+      )
+    }
     const result = await Bun.build({
       entrypoints: [config.bundleEntry],
       outdir: DIST,
@@ -102,6 +113,15 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     await $`cp ${DIST}/${scriptName} ${PUBLIC}`.text()
 
     const bundleFile = await Bun.file(`${DIST}/${scriptName}`).arrayBuffer()
+    // import.meta is illegal in a classic <script> — if it survived bundling
+    // (a branch the bundler couldn't eliminate) the IIFE will SyntaxError.
+    if (Buffer.from(bundleFile).toString('utf8').includes('import.meta')) {
+      console.warn(
+        `⚠️  ${scriptName} contains \`import.meta\`, which is a SyntaxError in a classic <script>.\n` +
+          `    A dependency referenced it in a branch the bundler couldn't drop — mark that dep external\n` +
+          `    (+ importmap) or choose a browser-only entry point.`
+      )
+    }
     const bundleGzip = gzipSync(Buffer.from(bundleFile))
     console.log(
       `${scriptName}: ${(bundleFile.byteLength / 1024).toFixed(1)}kb (${(
