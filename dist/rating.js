@@ -46,12 +46,12 @@ test('rating has correct max', () => {
 - `min` (1 by default) can be 0 or 1 (allowing ratings of 0 to max or 1 to max)
 - `step` (0.5 by default) granularity of rating
 - `icon` ('star' by default) determines the icon used
-- `rating-stroke` (#f91 by default) is the stroke of rating icons
-- `rating-fill` (#e81 by default) is the color of rating icons
-- `empty-stroke` (none by default) is the color of background icons
-- `empty-fill` (#ccc by default) is the color of background icons
+- `rating-stroke` (#e81 by default) is the stroke of the filled (active) icons
+- `rating-fill` (#f91 by default) is the fill of the filled (active) icons
+- `empty-stroke` (#ccc by default) is the stroke of the empty icons
+- `empty-fill` (#ccc by default) is the fill of the empty icons (ignored when `hollow`)
 - `readonly` (false by default) prevents the user from changing the rating
-- `hollow` (false by default) makes the empty rating icons hollow.
+- `hollow` (false by default) makes the empty rating icons hollow (outline only).
 - `required` (false by default) marks the field as required for form validation
 - `name` the form field name (for formAssociated support)
 
@@ -88,7 +88,7 @@ export class TosiRating extends Component {
         step: 1,
         ratingStroke: '#e81',
         ratingFill: '#f91',
-        emptyStroke: 'none',
+        emptyStroke: '#ccc',
         emptyFill: '#ccc',
         readonly: false,
         iconSize: 24,
@@ -215,9 +215,10 @@ export class TosiRating extends Component {
         this.ariaValueMin = String(this.min);
         this.ariaValueNow = this.value === '' ? String(-1) : String(this.value);
         const { empty, filled } = this.parts;
-        empty.classList.toggle('hollow', this.hollow);
-        // Set icon colors on the containers so CSS variables cascade to SVGs
-        empty.style.setProperty('--tosi-icon-fill', this.emptyFill);
+        // Icons are single fill+stroke SVGs now: empty stars are gray (outlined when
+        // `hollow`, solid otherwise), active stars are solid. Colors cascade to the
+        // SVGs via these CSS variables.
+        empty.style.setProperty('--tosi-icon-fill', this.hollow ? 'none' : this.emptyFill);
         empty.style.setProperty('--tosi-icon-stroke', this.emptyStroke);
         filled.style.setProperty('--tosi-icon-fill', this.ratingFill);
         filled.style.setProperty('--tosi-icon-stroke', this.ratingStroke);

@@ -700,7 +700,10 @@ function makeIcon(spec: string, parts: ElementPart[]): SVGElement {
     svg.style.fill = 'currentColor'
   } else if (classes.has('stroked')) {
     svg.style.stroke = varDefault.tosiIconStroke('currentColor')
-    svg.style.fill = 'none'
+    // Honor an explicit fill (default none) so a stroked icon can also be
+    // filled — the modern single-icon model (e.g. a star that's outlined when
+    // empty and solid when active).
+    svg.style.fill = varDefault.tosiIconFill('none')
   } else {
     svg.style.stroke = varDefault.tosiIconStroke('currentColor')
     svg.style.fill = varDefault.tosiIconFill('currentColor')

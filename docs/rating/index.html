@@ -62,12 +62,12 @@ test(&#39;rating has correct max&#39;, () =&gt; {
 <li><code>min</code> (1 by default) can be 0 or 1 (allowing ratings of 0 to max or 1 to max)</li>
 <li><code>step</code> (0.5 by default) granularity of rating</li>
 <li><code>icon</code> (&#39;star&#39; by default) determines the icon used</li>
-<li><code>rating-stroke</code> (#f91 by default) is the stroke of rating icons</li>
-<li><code>rating-fill</code> (#e81 by default) is the color of rating icons</li>
-<li><code>empty-stroke</code> (none by default) is the color of background icons</li>
-<li><code>empty-fill</code> (#ccc by default) is the color of background icons</li>
+<li><code>rating-stroke</code> (#e81 by default) is the stroke of the filled (active) icons</li>
+<li><code>rating-fill</code> (#f91 by default) is the fill of the filled (active) icons</li>
+<li><code>empty-stroke</code> (#ccc by default) is the stroke of the empty icons</li>
+<li><code>empty-fill</code> (#ccc by default) is the fill of the empty icons (ignored when <code>hollow</code>)</li>
 <li><code>readonly</code> (false by default) prevents the user from changing the rating</li>
-<li><code>hollow</code> (false by default) makes the empty rating icons hollow.</li>
+<li><code>hollow</code> (false by default) makes the empty rating icons hollow (outline only).</li>
 <li><code>required</code> (false by default) marks the field as required for form validation</li>
 <li><code>name</code> the form field name (for formAssociated support)</li>
 </ul>
