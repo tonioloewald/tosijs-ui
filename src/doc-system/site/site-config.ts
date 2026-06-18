@@ -111,11 +111,19 @@ export interface SiteConfig {
    */
   prebuild?: () => void | Promise<void>
   /**
-   * Also build the library: `tsc --declaration --outDir dist` (ESM + types).
-   * Default false. Repos whose single build publishes BOTH an npm package and
-   * its doc site (the tosijs-* libs) set this true; a pure docs site omits it.
+   * Also build the library: `tsc --declaration --incremental --outDir dist`
+   * (ESM + types). Default false. Repos whose single build publishes BOTH an
+   * npm package and its doc site (the tosijs-* libs) set this true; a pure docs
+   * site omits it. Ignored when `libraryTsconfig` is set.
    */
   emitLibrary?: boolean
+  /**
+   * Path to a tsconfig for the library build, run as `tsc -p <path>` instead of
+   * the fixed `emitLibrary` command. Use this when the root tsconfig has
+   * `noEmit: true`, or to control `removeComments`/`outDir`/`declaration`
+   * yourself (e.g. keep doc comments in the published JS for AI readers).
+   */
+  libraryTsconfig?: string
   /**
    * Emit llms.txt agent-discoverability index. Default true (uses `name` /
    * `description` / `baseUrl` / `projectLinks`). Set false to skip, or pass a

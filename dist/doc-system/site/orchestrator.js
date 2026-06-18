@@ -57,7 +57,17 @@ export async function buildSite(config) {
     console.time('build');
     // Optionally also build the library (ESM + type declarations) — for repos
     // whose single build publishes both an npm package and its doc site.
-    if (config.emitLibrary) {
+    if (config.libraryTsconfig) {
+        // Consumer-controlled library build (handles root noEmit, removeComments,
+        // outDir, etc.).
+        try {
+            await $ `bun tsc -p ${config.libraryTsconfig}`;
+        }
+        catch {
+            console.log('library (tsc -p) build finished');
+        }
+    }
+    else if (config.emitLibrary) {
         try {
             await $ `bun tsc --declaration --incremental --outDir dist`;
         }
