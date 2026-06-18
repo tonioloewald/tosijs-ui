@@ -62,10 +62,14 @@
   "files": [
     "/dist",
     "/bin/docs.ts",
+    "/bin/make-icon-data.js",
     "/LICENSE",
     "/README.md",
     "/llms.txt"
   ],
+  "bin": {
+    "tosijs-make-icons": "bin/make-icon-data.js"
+  },
   "source": "src/index.ts",
   "types": "dist/index.d.ts",
   "exports": {

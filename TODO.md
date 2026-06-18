@@ -34,6 +34,13 @@
 
 ## Build System
 
+- **Built-in custom icon generation for `tosijs-ui/site`** — currently a consumer
+  generates an icon module with the shipped `tosijs-make-icons` CLI and registers
+  it via `defineIcons` in their bundle entry. Make it first-class: export
+  `generateIconData({ input, output })` from `tosijs-ui/site` (refactor
+  make-icon-data's core into an importable function, CLI as a thin wrapper) so it
+  can run from a doc-site `prebuild` hook with no shelling out. Possibly a config
+  field (`icons: { input, output }`) that the orchestrator runs automatically.
 - ~~Better leveraging of tree-shaking~~ (unbundled ESM output, sucrase as peer dep)
 - **Migrate CDN-loaded libraries to peer deps** — now that ESM output is unbundled, these can be normal imports (tree-shaken when unused):
   - `<tosi-code>` — replace ace editor with CodeMirror (peer dep)

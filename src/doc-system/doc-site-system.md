@@ -132,6 +132,40 @@ modes:
 
 The build warns about both, but they fail at page-load, not build-time.
 
+## Custom icons
+
+The icon set is extensible at runtime: `defineIcons({ name: '<svg…>' })` adds new
+icons or **overrides a default by reusing its name**. Registered icons work with
+`icons.name()`, `<tosi-icon icon="name">`, and the composition language; an icon's
+`class="filled|stroked|color"` sets its default styling. Do this in your bundle
+entry so the icons are available before the page renders:
+
+```ts
+// demo/site.ts
+import { defineIcons } from 'tosijs-ui'
+
+defineIcons({
+  // a brand glyph, and an override of the default `star`
+  acme: '<svg class="stroked" viewBox="0 0 24 24"><path d="…"/></svg>',
+  star: '<svg class="filled" viewBox="0 0 24 24"><path d="…"/></svg>',
+})
+```
+
+For a **folder of SVGs**, generate a ready-to-register module with the bundled
+CLI (it scales/rounds coordinates and emits `export default { name: '<svg>' }`):
+
+```bash
+bunx tosijs-make-icons --input ./my-icons --output ./src/my-icons.ts
+```
+
+```ts
+import { defineIcons } from 'tosijs-ui'
+import myIcons from './my-icons'
+defineIcons(myIcons)
+```
+
+(Each SVG file's `class` attribute — `filled` / `stroked` / `color` — is preserved.)
+
 ## Configuration reference
 
 All fields are optional except `name`. See `bin/site-config.ts` for the

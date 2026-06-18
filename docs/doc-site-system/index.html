@@ -132,6 +132,30 @@ bundle). Good for a pure docs site with no custom elements of its own.</p>
 (kept async) or an importmap — never a static top-level import.</li>
 </ul>
 <p>The build warns about both, but they fail at page-load, not build-time.</p>
+<h2>Custom icons</h2>
+<p>The icon set is extensible at runtime: <code>defineIcons({ name: &#39;&lt;svg…&gt;&#39; })</code> adds new
+icons or <strong>overrides a default by reusing its name</strong>. Registered icons work with
+<code>icons.name()</code>, <code>&lt;tosi-icon icon=&quot;name&quot;&gt;</code>, and the composition language; an icon&#39;s
+<code>class=&quot;filled|stroked|color&quot;</code> sets its default styling. Do this in your bundle
+entry so the icons are available before the page renders:</p>
+<pre><code class="language-ts">// demo/site.ts
+import { defineIcons } from &#39;tosijs-ui&#39;
+
+defineIcons({
+  // a brand glyph, and an override of the default `star`
+  acme: &#39;&lt;svg class=&quot;stroked&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;…&quot;/&gt;&lt;/svg&gt;&#39;,
+  star: &#39;&lt;svg class=&quot;filled&quot; viewBox=&quot;0 0 24 24&quot;&gt;&lt;path d=&quot;…&quot;/&gt;&lt;/svg&gt;&#39;,
+})
+</code></pre>
+<p>For a <strong>folder of SVGs</strong>, generate a ready-to-register module with the bundled
+CLI (it scales/rounds coordinates and emits <code>export default { name: &#39;&lt;svg&gt;&#39; }</code>):</p>
+<pre><code class="language-bash">bunx tosijs-make-icons --input ./my-icons --output ./src/my-icons.ts
+</code></pre>
+<pre><code class="language-ts">import { defineIcons } from &#39;tosijs-ui&#39;
+import myIcons from &#39;./my-icons&#39;
+defineIcons(myIcons)
+</code></pre>
+<p>(Each SVG file&#39;s <code>class</code> attribute — <code>filled</code> / <code>stroked</code> / <code>color</code> — is preserved.)</p>
 <h2>Configuration reference</h2>
 <p>All fields are optional except <code>name</code>. See <code>bin/site-config.ts</code> for the
 authoritative typed definition.</p>

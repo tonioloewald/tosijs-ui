@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 /*#
 # make-icon-data
 
