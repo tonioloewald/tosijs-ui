@@ -4,4 +4,5 @@ declare global {
 }
 export declare function devServer(config: SiteConfig, opts?: {
     test?: boolean;
+    build?: () => unknown | Promise<unknown>;
 }): Promise<void>;

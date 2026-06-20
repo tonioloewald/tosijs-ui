@@ -98,9 +98,15 @@ export async function devServer(config, opts = {}) {
         }
     }
     if (!testMode) {
-        // Rebuild on any source change. buildSite() already re-extracts docs and
-        // regenerates icon-data, so a single rebuild covers everything. Serialize
-        // builds (no overlap) and coalesce bursts.
+        // Rebuild on any source change. By default that's just buildSite(), but a
+        // consumer whose full build has steps BEYOND buildSite — e.g. a custom IIFE
+        // bundle built separately (because it needs a Bun plugin buildSite can't
+        // take) — MUST pass opts.build with their whole pipeline. buildSite() starts
+        // with `rm -rf <outputDir>`, so any artifact those extra steps produced
+        // (iife.js, etc.) is deleted on the first rebuild and, without opts.build,
+        // never regenerated — leaving the page's /iife.js to 404 into the SPA
+        // fallback (it "loads as html"). Serialize builds and coalesce bursts.
+        const runBuild = opts.build ?? (() => buildSite(config));
         let building = false;
         let pending = false;
         const rebuild = async () => {
@@ -110,7 +116,7 @@ export async function devServer(config, opts = {}) {
             }
             building = true;
             try {
-                await buildSite(config);
+                await runBuild();
             }
             catch (error) {
                 console.error('rebuild failed:', error);

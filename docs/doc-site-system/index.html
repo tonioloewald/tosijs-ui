@@ -81,6 +81,25 @@ import config from &#39;../site.config&#39;
 
 process.argv.includes(&#39;--build&#39;) ? buildSite(config) : devServer(config)
 </code></pre>
+<blockquote>
+<p><strong>If your build does more than <code>buildSite</code></strong> — e.g. you bundle your own
+hydration <code>iife.js</code> separately (needed when the bundle requires a Bun plugin,
+which <code>bundleEntry</code> can&#39;t take) — wrap the whole pipeline in one function and
+pass it to <code>devServer</code> as <code>{ build }</code>. <code>buildSite</code> begins with
+<code>rm -rf &lt;outputDir&gt;</code>, so any artifact your extra steps wrote is deleted on the
+first file-change rebuild; without <code>build</code>, the watcher only re-runs
+<code>buildSite</code> and never regenerates it, so <code>/iife.js</code> 404s into the SPA fallback
+and &quot;loads as html&quot;. The initial build still runs your steps explicitly:</p>
+<pre><code class="language-ts">const build = async () =&gt; {
+  if (!(await buildSite(config))) throw new Error(&#39;site build failed&#39;)
+  await buildMyIifeBundle()   // re-create what buildSite&#39;s rm -rf removed
+}
+if (!(await buildSite(config))) process.exit(1)
+await buildMyIifeBundle()
+if (process.argv.includes(&#39;--build&#39;)) process.exit(0)
+await devServer(config, { build })   // ← watcher runs the full pipeline
+</code></pre>
+</blockquote>
 <p><strong>3. scripts</strong> in <code>package.json</code>:</p>
 <pre><code class="language-json">{ &quot;scripts&quot;: { &quot;start&quot;: &quot;bun bin/site.ts&quot;, &quot;build&quot;: &quot;bun bin/site.ts --build&quot; } }
 </code></pre>
