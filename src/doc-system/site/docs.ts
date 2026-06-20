@@ -87,7 +87,9 @@ html:
 ts, js, css:
     /*{ "pin": "bottom" }*‎/
 
-This will pin the document to the top or bottom of the navigation list.
+This pins the document to the top or bottom of the navigation list. Within a
+pin bucket, add `"order"` (a number, lower first; default 500) to rank items —
+e.g. `{ "pin": "top", "order": 1 }` above `{ "pin": "top", "order": 2 }`.
 */
 /*{"pin":"bottom","parent":"Appendices"}*/
 

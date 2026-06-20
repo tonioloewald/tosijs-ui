@@ -433,9 +433,13 @@ canonical origin). A custom domain always serves from root, so it forces
 <li><strong><code>/*#</code> … <code>*/</code> block comments</strong> in <code>.ts</code>/<code>.js</code>/<code>.css</code> are extracted as
 markdown. The first heading is the page title.</li>
 <li><strong>Metadata</strong> via a JSON block — <code>&lt;!--{ &quot;pin&quot;: &quot;top&quot; }--&gt;</code> (html) or
-<code>/*{ &quot;pin&quot;: &quot;bottom&quot; }*/</code> (ts/js/css) — controls nav ordering; per-page SEO
-overrides (<code>description</code>, <code>keywords</code>, <code>image</code>, <code>noindex</code>, <code>headTitle</code>) live
-in the same block.</li>
+<code>/*{ &quot;pin&quot;: &quot;bottom&quot; }*/</code> (ts/js/css) — controls nav ordering, plus per-page
+SEO overrides (<code>description</code>, <code>keywords</code>, <code>image</code>, <code>noindex</code>, <code>headTitle</code>) and
+the section <code>parent</code>, all in the same block.</li>
+<li><strong>Nav order</strong> is: pin bucket (<code>top</code> → none → <code>bottom</code>), then <code>order</code>, then
+title, then filename. Use <strong><code>order</code></strong> (a number, <strong>lower first</strong>; default 500)
+to rank items <em>within</em> the same <code>pin</code> — e.g. two <code>&quot;pin&quot;: &quot;top&quot;</code> docs with
+<code>&quot;order&quot;: 1</code> and <code>&quot;order&quot;: 2</code>. Siblings inside a section sort the same way.</li>
 <li><strong>Consecutive <code>js</code>/<code>html</code>/<code>css</code>/<code>test</code> code blocks</strong> become one live example
 (see the main project&#39;s &quot;Live example code blocks&quot; docs).</li>
 </ul>

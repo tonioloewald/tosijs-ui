@@ -271,9 +271,13 @@ canonical origin). A custom domain always serves from root, so it forces
 - **`/*#` … `*/` block comments** in `.ts`/`.js`/`.css` are extracted as
   markdown. The first heading is the page title.
 - **Metadata** via a JSON block — `<!--{ "pin": "top" }-->` (html) or
-  `/*{ "pin": "bottom" }*/` (ts/js/css) — controls nav ordering; per-page SEO
-  overrides (`description`, `keywords`, `image`, `noindex`, `headTitle`) live
-  in the same block.
+  `/*{ "pin": "bottom" }*/` (ts/js/css) — controls nav ordering, plus per-page
+  SEO overrides (`description`, `keywords`, `image`, `noindex`, `headTitle`) and
+  the section `parent`, all in the same block.
+- **Nav order** is: pin bucket (`top` → none → `bottom`), then `order`, then
+  title, then filename. Use **`order`** (a number, **lower first**; default 500)
+  to rank items *within* the same `pin` — e.g. two `"pin": "top"` docs with
+  `"order": 1` and `"order": 2`. Siblings inside a section sort the same way.
 - **Consecutive `js`/`html`/`css`/`test` code blocks** become one live example
   (see the main project's "Live example code blocks" docs).
 
