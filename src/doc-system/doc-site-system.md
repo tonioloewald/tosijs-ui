@@ -90,6 +90,20 @@ bun add -d happy-dom sucrase marked
 is absent the build fails mid-run with a `Cannot find package …` from inside
 `node_modules/tosijs-ui/dist/…` — that means a build-time peer isn't installed.
 
+**5. dev-server TLS (once).** `devServer` serves over HTTPS and looks for
+`tls/key.pem` + `tls/certificate.pem`; if they're missing it tells you to run:
+
+```bash
+bunx tosijs-dev-certs
+```
+
+This ships with tosijs-ui — it uses [mkcert](https://github.com/FiloSottile/mkcert)
+to write a **locally-trusted** cert into `./tls/` (no browser warnings), valid
+for `localhost`, `127.0.0.1`, `::1`, and your machine's `.local` name. Run it as
+your normal user (it prompts for sudo itself only to install its CA); re-run to
+add hostnames. Requires `mkcert` — the command prints install instructions if
+it's missing.
+
 ## Bundles & live examples (read this)
 
 The static pages are inert HTML until a JS bundle loads and registers the

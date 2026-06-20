@@ -1,6 +1,6 @@
 {
   "name": "tosijs-ui",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "description": "simple robust web-components for use with tosijs or anything else",
   "scripts": {
     "start": "bun --watch bin/dev.ts",
@@ -63,12 +63,14 @@
     "/dist",
     "/bin/docs.ts",
     "/bin/make-icon-data.js",
+    "/tls/create-dev-certs.sh",
     "/LICENSE",
     "/README.md",
     "/llms.txt"
   ],
   "bin": {
-    "tosijs-make-icons": "bin/make-icon-data.js"
+    "tosijs-make-icons": "bin/make-icon-data.js",
+    "tosijs-dev-certs": "tls/create-dev-certs.sh"
   },
   "source": "src/index.ts",
   "types": "dist/index.d.ts",

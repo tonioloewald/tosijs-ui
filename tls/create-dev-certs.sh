@@ -6,13 +6,16 @@
 # (and Firefox/Chrome) trust stores, so browsers show NO warnings. Run once;
 # re-run to regenerate or to add hostnames.
 #
-# Outputs ./key.pem and ./certificate.pem next to this script — the names the
-# dev server (bin/dev.ts) loads.
+# Outputs ./tls/key.pem and ./tls/certificate.pem in the current project — the
+# files the dev server loads. Works run from this repo (`bun tls`) or from an
+# adopter's project (`bunx tosijs-dev-certs`).
 
 set -euo pipefail
 
-# Work in this script's own directory regardless of where it was invoked from.
-cd "$(dirname "$0")"
+# Write into ./tls/ relative to where it was invoked (the project root the dev
+# server runs from), creating it if needed.
+mkdir -p tls
+cd tls
 
 # Never run mkcert as root. mkcert installs its CA into the *current user's*
 # browser trust stores (Firefox/Chrome NSS); under sudo it installs root's CA
@@ -20,7 +23,7 @@ cd "$(dirname "$0")"
 # and you still get warnings. Run as your normal user; mkcert prompts for sudo
 # itself when (and only when) it needs the system trust store.
 if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
-  echo "Don't run this with sudo — run it as your normal user (e.g. 'bun tls')."
+  echo "Don't run this with sudo — run it as your normal user."
   echo "mkcert will ask for your password itself when it needs elevated access,"
   echo "and it must install its CA into YOUR browser's trust store, not root's."
   exit 1
@@ -40,7 +43,7 @@ if ! command -v mkcert >/dev/null 2>&1; then
     echo "    chmod +x mkcert-v*-linux-amd64 && sudo mv mkcert-v*-linux-amd64 /usr/local/bin/mkcert"
   fi
   echo
-  echo "Then re-run: bun tls"
+  echo "Then re-run the certs command (bun tls, or bunx tosijs-dev-certs)."
   exit 1
 fi
 

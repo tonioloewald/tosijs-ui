@@ -21,9 +21,9 @@ async function killStrayServer(port) {
         // No process on port, that's fine
     }
 }
-// The HTTPS dev server needs a cert in tls/. On a fresh clone there isn't one,
-// so warn with the exact command to run rather than serving a broken server. We
-// don't generate it automatically because `bun tls` runs `mkcert -install`,
+// The HTTPS dev server needs a cert in tls/. On a fresh clone/adopter there
+// isn't one, so warn with the exact command rather than serving a broken
+// server. We don't generate it automatically because it runs `mkcert -install`,
 // which prompts for sudo — not something to spring on someone mid-startup.
 async function ensureDevCerts() {
     const haveCerts = (await Bun.file('./tls/key.pem').exists()) &&
@@ -32,8 +32,8 @@ async function ensureDevCerts() {
         return;
     console.error('\nNo dev TLS certificate found in tls/.\n\n' +
         'Generate one (locally-trusted, no browser warnings) with:\n\n' +
-        '    bun tls\n\n' +
-        'then start the dev server again. Requires mkcert — `bun tls` prints\n' +
+        '    bunx tosijs-dev-certs\n\n' +
+        'then start the dev server again. Requires mkcert — the command prints\n' +
         'install instructions if it is missing.\n');
     process.exit(1);
 }
