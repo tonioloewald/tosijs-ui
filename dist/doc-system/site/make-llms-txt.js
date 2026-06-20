@@ -34,7 +34,16 @@ function extractDescription(text) {
     return '';
 }
 export function generateLlmsTxt(outputPath, meta = {}) {
-    const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+    // package.json supplies fallback name/version/description, but a doc site
+    // isn't guaranteed to have one (or it may be unreadable) — degrade gracefully
+    // rather than aborting the whole build.
+    let pkg = {};
+    try {
+        pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+    }
+    catch {
+        console.warn('llms.txt: no readable package.json — using config values only');
+    }
     const docs = [];
     const files = fs.readdirSync(SRC).filter((f) => f.endsWith('.ts'));
     for (const file of files) {
@@ -59,18 +68,19 @@ export function generateLlmsTxt(outputPath, meta = {}) {
         });
     }
     docs.sort((a, b) => a.title.localeCompare(b.title));
-    const name = meta.name ?? pkg.name;
-    const description = meta.description ?? pkg.description;
+    const name = meta.name ?? pkg.name ?? '';
+    const description = meta.description ?? pkg.description ?? '';
     const links = [];
     if (meta.baseUrl)
         links.push(`- Docs: ${meta.baseUrl}`);
     if (meta.projectLinks?.github)
         links.push(`- Source: ${meta.projectLinks.github}`);
-    const npm = meta.projectLinks?.npm ?? `https://www.npmjs.com/package/${pkg.name}`;
+    const npm = meta.projectLinks?.npm ??
+        (pkg.name ? `https://www.npmjs.com/package/${pkg.name}` : undefined);
     if (npm)
         links.push(`- npm: ${npm}`);
     const lines = [
-        `# ${name} v${pkg.version}`,
+        `# ${name}${pkg.version ? ` v${pkg.version}` : ''}`,
         '',
         description,
         ...(meta.tagline ? ['', meta.tagline] : []),

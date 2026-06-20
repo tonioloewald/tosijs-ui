@@ -209,6 +209,7 @@ authoritative typed definition.
 |---|---|---|
 | `docPaths` | `['src', 'README.md']` | dirs scanned for `/*#` + `.md` files (list root `.md` files explicitly) |
 | `sectionsDir` | `'src/docs'` | where auto-created section docs + their `<!-- toc -->` blocks are written (must be inside a `docPath`, not named `docs`) |
+| `docsJson` | `'demo/docs.json'` | path of the intermediate doc corpus the build writes and re-reads; its directory is created automatically, so you don't need a `demo/` folder |
 
 ### Bundle
 | field | default | purpose |

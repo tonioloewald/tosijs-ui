@@ -59,6 +59,12 @@ export interface SiteConfig {
    * extracted into the corpus.
    */
   sectionsDir?: string
+  /**
+   * Path to the intermediate doc corpus the build extracts to and re-reads
+   * during a build. Default 'demo/docs.json'. Its directory is created if
+   * missing, so a project without a demo/ folder still builds.
+   */
+  docsJson?: string
 
   // ── Bundle (the JS that hydrates the static pages) ────────────────────────
   /**

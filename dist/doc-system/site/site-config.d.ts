@@ -40,6 +40,12 @@ export interface SiteConfig {
      */
     sectionsDir?: string;
     /**
+     * Path to the intermediate doc corpus the build extracts to and re-reads
+     * during a build. Default 'demo/docs.json'. Its directory is created if
+     * missing, so a project without a demo/ folder still builds.
+     */
+    docsJson?: string;
+    /**
      * Path to YOUR bundle entrypoint. If set, the build bundles it (IIFE) and
      * pages load it. Your entry should import what your pages/live-examples need
      * from tosijs / tosijs-ui / your own lib, so custom elements register AND

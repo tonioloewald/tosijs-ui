@@ -12,7 +12,7 @@ the icon system here would put src/icon-data.ts into `bun --watch`'s graph and
 cause an endless rebuild loop.
 */
 import * as path from 'path';
-import { existsSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { gzipSync } from 'zlib';
 import { $ } from 'bun';
 import { extractDocs } from './docs';
@@ -23,6 +23,15 @@ export async function buildSite(config) {
     const PROJECT_ROOT = './';
     const PUBLIC = path.resolve(PROJECT_ROOT, config.outputDir ?? 'docs');
     const DIST = path.resolve(PROJECT_ROOT, 'dist');
+    // Intermediate corpus the build extracts to and re-reads. Default keeps the
+    // legacy 'demo/docs.json' location, but we mkdir -p its directory so a project
+    // without a demo/ folder doesn't fail with ENOENT on the very first write
+    // (which would abort the whole build, every build, and leave the dev server
+    // SPA-fallback serving index.html for /iife.js).
+    const DOCS_JSON = config.docsJson ?? 'demo/docs.json';
+    mkdirSync(path.dirname(path.resolve(PROJECT_ROOT, DOCS_JSON)), {
+        recursive: true,
+    });
     // ── prebuild ──────────────────────────────────────────────────────────────
     console.time('prebuild');
     // Project-specific codegen (version stamp, icon data, …) before anything else.
@@ -34,13 +43,13 @@ export async function buildSite(config) {
         // Skip the build's own output dir by path (not by the name 'docs', so a
         // source dir like src/docs is still scanned).
         ignore: ['node_modules', 'dist', 'build', PUBLIC],
-        output: 'demo/docs.json',
+        output: DOCS_JSON,
     });
     extract();
     // Auto-create missing section docs + regenerate their TOC blocks, then
     // re-extract so the corpus reflects the on-disk changes.
     ensureSections({
-        docsJsonPath: 'demo/docs.json',
+        docsJsonPath: DOCS_JSON,
         sectionsDir: config.sectionsDir ?? 'src/docs',
         reExtract: extract,
     });
@@ -116,7 +125,7 @@ export async function buildSite(config) {
     }
     if (config.llmsTxt !== false) {
         if (typeof config.llmsTxt === 'function') {
-            const corpus = JSON.parse(await Bun.file('demo/docs.json').text());
+            const corpus = JSON.parse(await Bun.file(DOCS_JSON).text());
             await Bun.write('llms.txt', config.llmsTxt(corpus));
         }
         else {
@@ -134,7 +143,7 @@ export async function buildSite(config) {
     // Generate the static, pre-rendered doc site (one /slug/index.html per doc).
     // Runs after the static-asset copy so the generated index.html (README) wins,
     // and after the bundle copy so every page's <script src> resolves.
-    const docs = JSON.parse(await Bun.file('demo/docs.json').text());
+    const docs = JSON.parse(await Bun.file(DOCS_JSON).text());
     const pageCount = await generateSite({
         docs,
         outputDir: PUBLIC,
