@@ -239,20 +239,37 @@ const testIndicatorStyleSpec = {
     },
 };
 export function createDocBrowser(options) {
-    const { docs, context = {}, projectName = '', projectLinks = {}, navSize = 200, minSize = 600, routing = 'query', navbarLinks, contentElement, } = options;
+    const { docs, context = {}, projectName = '', projectLinks = {}, navSize = 200, minSize = 600, routing = 'query', initialRoute, onRouteChange, navbarLinks, contentElement, } = options;
+    // Memory routing is fully self-contained: it never reads or writes
+    // window.history/location, so an embedded or nested browser can't hijack the
+    // host page's URL (or recurse into it).
+    const memoryRouting = routing === 'memory';
     // Initialize testStatus on all docs so tosi can track it
     for (const doc of docs) {
         doc.testStatus = undefined;
     }
     // Routing abstraction — keeps the legacy `?filename` SPA behavior the default,
     // while letting <tosi-doc-system> drive clean `/slug/` URLs off the same docs.
-    const slugMap = routing === 'path' ? buildSlugMap(docs) : {};
-    const hrefFor = (filename) => routing === 'path' ? pathForSlug(slugMap[filename] ?? filename) : `?${filename}`;
-    const filenameFromLocation = () => routing === 'path'
-        ? filenameForPath(document.location.pathname, slugMap)
-        : document.location.search !== ''
-            ? document.location.search.substring(1).split('&')[0]
-            : '';
+    // Both path and memory routing key off slugs; only legacy query routing doesn't.
+    const slugMap = routing === 'query' ? {} : buildSlugMap(docs);
+    const slugFor = (filename) => slugMap[filename] ?? filename;
+    const filenameForSlug = (slug) => {
+        for (const d of docs)
+            if (slugFor(d.filename) === slug)
+                return d.filename;
+        return '';
+    };
+    const hrefFor = (filename) => routing === 'query' ? `?${filename}` : pathForSlug(slugFor(filename));
+    const filenameFromLocation = () => {
+        // Memory routing ignores the page URL entirely — it starts at initialRoute.
+        if (memoryRouting)
+            return initialRoute ? filenameForSlug(initialRoute) : '';
+        return routing === 'path'
+            ? filenameForPath(document.location.pathname, slugMap)
+            : document.location.search !== ''
+                ? document.location.search.substring(1).split('&')[0]
+                : '';
+    };
     const docName = filenameFromLocation() || docs[0]?.filename || 'README.md';
     const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0];
     const { app } = tosi({
@@ -272,10 +289,13 @@ export function createDocBrowser(options) {
     let backgroundTestsStarted = false;
     let pagesWithTests = 0;
     let pagesTested = 0;
-    // Set up global promise for scriptable browser integration
-    window.__docTestResults = new Promise((resolve) => {
-        testResultsResolve = resolve;
-    });
+    // Set up global promise for scriptable browser integration. A memory-routed
+    // (embedded) browser must not clobber the host page's global.
+    if (!memoryRouting) {
+        window.__docTestResults = new Promise((resolve) => {
+            testResultsResolve = resolve;
+        });
+    }
     const updateDocTestStatus = (filename) => {
         const results = pageTestResults[filename];
         // Callback receives bare object, return is proxy - cast to work with both
@@ -378,9 +398,13 @@ export function createDocBrowser(options) {
         },
         onInput: filterDocs,
     });
-    window.addEventListener('popstate', () => {
-        navigateTo(filenameFromLocation());
-    });
+    // Memory routing is decoupled from the page URL, so it ignores browser
+    // back/forward (the host owns history, if any).
+    if (!memoryRouting) {
+        window.addEventListener('popstate', () => {
+            navigateTo(filenameFromLocation());
+        });
+    }
     const headerContent = [
         button({
             class: 'iconic',
@@ -459,7 +483,12 @@ export function createDocBrowser(options) {
         padding: '0 1em',
         overflow: 'hidden',
     });
-    let adoptInitialContent = contentElement !== undefined;
+    // Adoption is zero-flash hydration of a statically pre-rendered page: it only
+    // holds for the page's own path-routed instance, whose static `.doc-content`
+    // matches the initial doc. A memory-routed embed's initial doc
+    // (initialRoute/docs[0]) has no relation to whatever happens to sit inside the
+    // host element (often an empty placeholder), so always render it fresh.
+    let adoptInitialContent = contentElement !== undefined && !memoryRouting;
     const showDoc = (doc) => {
         if (adoptInitialContent) {
             adoptInitialContent = false; // leave the pre-rendered HTML untouched
@@ -481,6 +510,19 @@ export function createDocBrowser(options) {
         app.currentDoc = doc;
         showDoc(doc);
         refreshNav(true);
+    };
+    // User-initiated navigation: record the new location (history for path/query,
+    // the onRouteChange callback for memory) and then render the doc. Every nav
+    // click funnels through here so memory mode never touches window.history.
+    const go = (filename) => {
+        if (memoryRouting) {
+            onRouteChange?.(slugFor(filename));
+        }
+        else {
+            const href = hrefFor(filename);
+            window.history.pushState({ href }, '', href);
+        }
+        navigateTo(filename);
     };
     // ── Hierarchical nav (path routing) ───────────────────────────────────────
     // Build nested <details> from the doc tree; current-highlight, test status,
@@ -512,12 +554,10 @@ export function createDocBrowser(options) {
             // Use the href from the closure, not the event — the click can land on a
             // child of the <a> (the localized label), so event.currentTarget/target
             // isn't reliably the anchor.
-            const href = hrefFor(doc.filename);
             const nav = event.target.closest('tosi-sidenav');
             if (nav)
                 nav.contentVisible = true;
-            window.history.pushState({ href }, '', href);
-            navigateTo(String(doc.filename));
+            go(String(doc.filename));
             event.preventDefault();
             const results = pageTestResults[doc.filename];
             if (results && !results.passed) {
@@ -598,7 +638,7 @@ export function createDocBrowser(options) {
         refreshNav(true);
         return root;
     };
-    const navContent = routing === 'path'
+    const navContent = routing !== 'query'
         ? buildHierarchicalNav()
         : div({
             ...navStyle,
@@ -613,12 +653,10 @@ export function createDocBrowser(options) {
             bindDocLink: '^.filename',
             bindTestStatus: '^.testStatus',
             onClick(event) {
-                const anchor = event.target;
                 const doc = getListItem(event.target);
                 const nav = event.target.closest('tosi-sidenav');
                 nav.contentVisible = true;
-                window.history.pushState({ href: anchor.href }, '', anchor.href);
-                navigateTo(String(doc.filename));
+                go(String(doc.filename));
                 event.preventDefault();
             },
         }, tosiLocalized({ bindText: '^.title' }))));
@@ -766,9 +804,7 @@ export function createDocBrowser(options) {
                         // Navigate to the page
                         const docObj = app.docs.find((d) => String(d.filename) === filename);
                         if (docObj) {
-                            const href = hrefFor(filename);
-                            window.history.pushState({ href }, '', href);
-                            navigateTo(filename);
+                            go(filename);
                             // Scroll to failing test after render
                             setTimeout(() => {
                                 const failedExample = document.querySelector('tosi-example.-test-failed');
@@ -825,9 +861,10 @@ export function createDocBrowser(options) {
         lines.unshift(`**Summary: ${totalPassed} passed, ${totalFailed} failed**`, '');
         return lines.join('\n');
     }
-    // Detect if running as background test iframe
+    // Detect if running as background test iframe (never for an embedded browser —
+    // it shares the host page's URL but isn't the test target).
     const searchParams = new URLSearchParams(window.location.search);
-    const isTestFrame = searchParams.get('_testMode') === '1';
+    const isTestFrame = !memoryRouting && searchParams.get('_testMode') === '1';
     const testFrameFilename = isTestFrame ? filenameFromLocation() : null;
     // Listen for test completion events
     container.addEventListener('testcomplete', ((event) => {
@@ -960,8 +997,20 @@ export function createDocBrowser(options) {
             }
         }
     };
-    // Start now if enabled, and watch for toggle
-    startBackgroundTests();
-    testManager.enabled.observe(startBackgroundTests);
+    // Start now if enabled, and watch for toggle. A memory-routed (embedded)
+    // browser never spawns the test-runner iframes (they'd navigate the host site).
+    if (!memoryRouting) {
+        startBackgroundTests();
+        testManager.enabled.observe(startBackgroundTests);
+    }
+    // Memory routing: let the host drive navigation programmatically (by slug) and
+    // read the current slug back, so the browser can live in a floating panel etc.
+    if (memoryRouting) {
+        ;
+        container.navigate = (slug) => navigateTo(filenameForSlug(slug) || slug);
+        Object.defineProperty(container, 'currentSlug', {
+            get: () => slugFor(String(app.currentDoc.filename)),
+        });
+    }
     return container;
 }

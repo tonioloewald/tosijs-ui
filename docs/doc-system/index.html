@@ -48,6 +48,15 @@ instantly.</li>
 <li><code>config</code> — inline JSON <code>{ projectName, projectLinks }</code> baked in at build time.</li>
 <li><code>localized</code> — URL of a tab-separated translation table; when set, it powers the
 settings menu&#39;s language picker.</li>
+<li><code>routing</code> — <code>&#39;&#39;</code> (default) drives the page with clean <code>/slug/</code> URLs. Set
+<code>&quot;memory&quot;</code> for a <strong>self-contained</strong> instance whose navigation never touches the
+page URL or history — for embedding the docs in a dialog, side panel, or
+floating element. (A <code>&lt;tosi-doc-system&gt;</code> nested inside another one — e.g. the
+live demo on this page — is forced to memory routing automatically, and a demo
+nested two levels deep renders an inert placeholder instead of recursing.)</li>
+<li><code>route</code> — memory routing only: the current doc&#39;s slug. Set it to navigate the
+embedded browser to a doc; it&#39;s reflected back here as the user clicks around,
+so a host can observe/bind it (e.g. to remember where a help panel was left).</li>
 <li><code>accent</code> / <code>background</code> / <code>text</code> — base theme colors (most of the palette is
 derived from <code>accent</code> via color math).</li>
 </ul>
@@ -55,6 +64,10 @@ derived from <code>accent</code> via color math).</li>
 real, indexable page content until hydration replaces it with the live browser.
 Live-example modules default to the <code>xinjs</code> / <code>xinjsui</code> IIFE globals; override by
 setting the element&#39;s <code>context</code> property before it connects.</p>
+<p>A self-contained, controllable embed (e.g. docs in a floating panel):</p>
+<pre><code class="language-html">&lt;tosi-doc-system docs=&quot;/docs.json&quot; routing=&quot;memory&quot; route=&quot;data-table&quot;&gt;
+&lt;/tosi-doc-system&gt;
+</code></pre>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">

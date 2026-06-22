@@ -316,8 +316,12 @@ export interface LinkItem {
  * - 'query' (default, legacy): single-page app, links are `?filename`.
  * - 'path': clean per-page URLs (`/slug/`), for the static pre-rendered site
  *   driven by <tosi-doc-system>. Requires a real page to exist at each path.
+ * - 'memory': self-contained — navigation never touches window.history/location
+ *   and the instance ignores the page URL. For an embedded/nested browser (a
+ *   live demo, a floating help panel). Drive it via `initialRoute` +
+ *   `onRouteChange`, and the returned element's `.navigate(slug)` method.
  */
-export type DocRoutingMode = 'query' | 'path'
+export type DocRoutingMode = 'query' | 'path' | 'memory'
 
 export interface DocBrowserOptions {
   docs: Doc[]
@@ -327,6 +331,16 @@ export interface DocBrowserOptions {
   navSize?: number
   minSize?: number
   routing?: DocRoutingMode
+  /**
+   * Memory routing only: the slug to show first (instead of the page URL / first
+   * doc). Lets a host mount the browser already pointed at a specific doc.
+   */
+  initialRoute?: string
+  /**
+   * Memory routing only: called with the current doc's slug whenever in-app
+   * navigation happens, so a host can reflect it (e.g. to an attribute).
+   */
+  onRouteChange?: (slug: string) => void
   /**
    * Header-bar links. When provided, these replace the legacy `projectLinks` icon
    * set in the header (each renders as an icon if `icon` names a known icon, else
@@ -351,9 +365,16 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     navSize = 200,
     minSize = 600,
     routing = 'query',
+    initialRoute,
+    onRouteChange,
     navbarLinks,
     contentElement,
   } = options
+
+  // Memory routing is fully self-contained: it never reads or writes
+  // window.history/location, so an embedded or nested browser can't hijack the
+  // host page's URL (or recurse into it).
+  const memoryRouting = routing === 'memory'
 
   // Initialize testStatus on all docs so tosi can track it
   for (const doc of docs) {
@@ -362,15 +383,24 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
 
   // Routing abstraction — keeps the legacy `?filename` SPA behavior the default,
   // while letting <tosi-doc-system> drive clean `/slug/` URLs off the same docs.
-  const slugMap = routing === 'path' ? buildSlugMap(docs) : {}
+  // Both path and memory routing key off slugs; only legacy query routing doesn't.
+  const slugMap = routing === 'query' ? {} : buildSlugMap(docs)
+  const slugFor = (filename: string): string => slugMap[filename] ?? filename
+  const filenameForSlug = (slug: string): string => {
+    for (const d of docs) if (slugFor(d.filename) === slug) return d.filename
+    return ''
+  }
   const hrefFor = (filename: string): string =>
-    routing === 'path' ? pathForSlug(slugMap[filename] ?? filename) : `?${filename}`
-  const filenameFromLocation = (): string =>
-    routing === 'path'
+    routing === 'query' ? `?${filename}` : pathForSlug(slugFor(filename))
+  const filenameFromLocation = (): string => {
+    // Memory routing ignores the page URL entirely — it starts at initialRoute.
+    if (memoryRouting) return initialRoute ? filenameForSlug(initialRoute) : ''
+    return routing === 'path'
       ? filenameForPath(document.location.pathname, slugMap)
       : document.location.search !== ''
         ? document.location.search.substring(1).split('&')[0]
         : ''
+  }
 
   const docName = filenameFromLocation() || docs[0]?.filename || 'README.md'
 
@@ -396,10 +426,13 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   let pagesWithTests = 0
   let pagesTested = 0
 
-  // Set up global promise for scriptable browser integration
-  window.__docTestResults = new Promise((resolve) => {
-    testResultsResolve = resolve
-  })
+  // Set up global promise for scriptable browser integration. A memory-routed
+  // (embedded) browser must not clobber the host page's global.
+  if (!memoryRouting) {
+    window.__docTestResults = new Promise((resolve) => {
+      testResultsResolve = resolve
+    })
+  }
 
   const updateDocTestStatus = (filename: string) => {
     const results = pageTestResults[filename]
@@ -526,9 +559,13 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     onInput: filterDocs,
   })
 
-  window.addEventListener('popstate', () => {
-    navigateTo(filenameFromLocation())
-  })
+  // Memory routing is decoupled from the page URL, so it ignores browser
+  // back/forward (the host owns history, if any).
+  if (!memoryRouting) {
+    window.addEventListener('popstate', () => {
+      navigateTo(filenameFromLocation())
+    })
+  }
 
   const headerContent: any[] = [
     button(
@@ -626,7 +663,12 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     overflow: 'hidden',
   })
 
-  let adoptInitialContent = contentElement !== undefined
+  // Adoption is zero-flash hydration of a statically pre-rendered page: it only
+  // holds for the page's own path-routed instance, whose static `.doc-content`
+  // matches the initial doc. A memory-routed embed's initial doc
+  // (initialRoute/docs[0]) has no relation to whatever happens to sit inside the
+  // host element (often an empty placeholder), so always render it fresh.
+  let adoptInitialContent = contentElement !== undefined && !memoryRouting
   const showDoc = (doc: Doc) => {
     if (adoptInitialContent) {
       adoptInitialContent = false // leave the pre-rendered HTML untouched
@@ -647,6 +689,19 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     app.currentDoc = doc as any
     showDoc(doc)
     refreshNav(true)
+  }
+
+  // User-initiated navigation: record the new location (history for path/query,
+  // the onRouteChange callback for memory) and then render the doc. Every nav
+  // click funnels through here so memory mode never touches window.history.
+  const go = (filename: string) => {
+    if (memoryRouting) {
+      onRouteChange?.(slugFor(filename))
+    } else {
+      const href = hrefFor(filename)
+      window.history.pushState({ href }, '', href)
+    }
+    navigateTo(filename)
   }
 
   // ── Hierarchical nav (path routing) ───────────────────────────────────────
@@ -687,13 +742,11 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       // Use the href from the closure, not the event — the click can land on a
       // child of the <a> (the localized label), so event.currentTarget/target
       // isn't reliably the anchor.
-      const href = hrefFor(doc.filename)
       const nav = (event.target as HTMLElement).closest(
         'tosi-sidenav'
       ) as TosiSidenav | null
       if (nav) nav.contentVisible = true
-      window.history.pushState({ href }, '', href)
-      navigateTo(String(doc.filename))
+      go(String(doc.filename))
       event.preventDefault()
       const results = pageTestResults[doc.filename]
       if (results && !results.passed) {
@@ -788,7 +841,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   }
 
   const navContent =
-    routing === 'path'
+    routing !== 'query'
       ? buildHierarchicalNav()
       : div(
           {
@@ -807,14 +860,12 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
                 bindDocLink: '^.filename',
                 bindTestStatus: '^.testStatus',
                 onClick(event: Event) {
-                  const anchor = event.target as HTMLAnchorElement
                   const doc = getListItem(event.target as HTMLElement)
                   const nav = (event.target as HTMLElement).closest(
                     'tosi-sidenav'
                   ) as TosiSidenav
                   nav.contentVisible = true
-                  window.history.pushState({ href: anchor.href }, '', anchor.href)
-                  navigateTo(String((doc as Doc).filename))
+                  go(String((doc as Doc).filename))
                   event.preventDefault()
                 },
               },
@@ -1013,9 +1064,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
               (d: any) => String(d.filename) === filename
             )
             if (docObj) {
-              const href = hrefFor(filename)
-              window.history.pushState({ href }, '', href)
-              navigateTo(filename)
+              go(filename)
               // Scroll to failing test after render
               setTimeout(() => {
                 const failedExample = document.querySelector(
@@ -1087,9 +1136,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     return lines.join('\n')
   }
 
-  // Detect if running as background test iframe
+  // Detect if running as background test iframe (never for an embedded browser —
+  // it shares the host page's URL but isn't the test target).
   const searchParams = new URLSearchParams(window.location.search)
-  const isTestFrame = searchParams.get('_testMode') === '1'
+  const isTestFrame = !memoryRouting && searchParams.get('_testMode') === '1'
   const testFrameFilename = isTestFrame ? filenameFromLocation() : null
 
   // Listen for test completion events
@@ -1247,9 +1297,22 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     }
   }
 
-  // Start now if enabled, and watch for toggle
-  startBackgroundTests()
-  testManager.enabled.observe(startBackgroundTests)
+  // Start now if enabled, and watch for toggle. A memory-routed (embedded)
+  // browser never spawns the test-runner iframes (they'd navigate the host site).
+  if (!memoryRouting) {
+    startBackgroundTests()
+    testManager.enabled.observe(startBackgroundTests)
+  }
+
+  // Memory routing: let the host drive navigation programmatically (by slug) and
+  // read the current slug back, so the browser can live in a floating panel etc.
+  if (memoryRouting) {
+    ;(container as any).navigate = (slug: string) =>
+      navigateTo(filenameForSlug(slug) || slug)
+    Object.defineProperty(container, 'currentSlug', {
+      get: () => slugFor(String(app.currentDoc.filename)),
+    })
+  }
 
   return container as HTMLElement
 }

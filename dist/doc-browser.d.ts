@@ -46,8 +46,12 @@ export interface LinkItem {
  * - 'query' (default, legacy): single-page app, links are `?filename`.
  * - 'path': clean per-page URLs (`/slug/`), for the static pre-rendered site
  *   driven by <tosi-doc-system>. Requires a real page to exist at each path.
+ * - 'memory': self-contained — navigation never touches window.history/location
+ *   and the instance ignores the page URL. For an embedded/nested browser (a
+ *   live demo, a floating help panel). Drive it via `initialRoute` +
+ *   `onRouteChange`, and the returned element's `.navigate(slug)` method.
  */
-export type DocRoutingMode = 'query' | 'path';
+export type DocRoutingMode = 'query' | 'path' | 'memory';
 export interface DocBrowserOptions {
     docs: Doc[];
     context?: Record<string, any>;
@@ -56,6 +60,16 @@ export interface DocBrowserOptions {
     navSize?: number;
     minSize?: number;
     routing?: DocRoutingMode;
+    /**
+     * Memory routing only: the slug to show first (instead of the page URL / first
+     * doc). Lets a host mount the browser already pointed at a specific doc.
+     */
+    initialRoute?: string;
+    /**
+     * Memory routing only: called with the current doc's slug whenever in-app
+     * navigation happens, so a host can reflect it (e.g. to an attribute).
+     */
+    onRouteChange?: (slug: string) => void;
     /**
      * Header-bar links. When provided, these replace the legacy `projectLinks` icon
      * set in the header (each renders as an icon if `icon` names a known icon, else

@@ -19,6 +19,9 @@ import { extractDocs } from './docs';
 import { ensureSections } from './sections';
 import { generateLlmsTxt } from './make-llms-txt';
 import { generateSite } from './generate-site';
+// Module specifiers contain regex metacharacters (`/`, `.`, `@`, …), so escape
+// before interpolating into the require-shim detector below.
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export async function buildSite(config) {
     const PROJECT_ROOT = './';
     const PUBLIC = path.resolve(PROJECT_ROOT, config.outputDir ?? 'docs');
@@ -89,13 +92,6 @@ export async function buildSite(config) {
     // consumer supplies (e.g. via staticDirs or an absolute URL).
     const scriptName = (config.scriptUrl ?? '/iife.js').replace(/^\//, '');
     if (config.bundleEntry) {
-        // IIFE externals become a synchronous require() shim that throws at
-        // module-eval ("Dynamic require of … is not supported") — the build still
-        // succeeds, so warn rather than fail silently.
-        if (config.bundleExternals && config.bundleExternals.length > 0) {
-            console.warn(`⚠️  bundleExternals in an IIFE bundle (${config.bundleExternals.join(', ')}): Bun emits a dynamic require() shim that throws at runtime. Load these\n` +
-                `    via import() (dynamically, so the bundler keeps them async) or an importmap, not a static import.`);
-        }
         const result = await Bun.build({
             entrypoints: [config.bundleEntry],
             outdir: DIST,
@@ -110,6 +106,23 @@ export async function buildSite(config) {
             for (const message of result.logs)
                 console.error(message);
             return false;
+        }
+        // Warn only when an external actually compiled to a synchronous require()
+        // shim, which throws at module-eval ("Dynamic require of … is not
+        // supported"). That only happens for a *static* `import x from 'ext'`. A
+        // *dynamic* `import('ext')` is preserved as native `import("ext")` and
+        // resolves via the page's importmap — the recommended pattern, so it must
+        // stay silent. The config alone can't tell the two apart; the emitted
+        // bundle can, so we inspect the actual output.
+        if (config.bundleExternals && config.bundleExternals.length > 0) {
+            const js = (await Promise.all(result.outputs
+                .filter((o) => o.kind === 'entry-point' || o.path.endsWith('.js'))
+                .map((o) => o.text()))).join('\n');
+            const broken = config.bundleExternals.filter((ext) => new RegExp(`(?:__require|\\brequire)\\(\\s*["'\`]${escapeRegExp(ext)}["'\`]`).test(js));
+            if (broken.length > 0) {
+                console.warn(`⚠️  bundleExternals compiled to a synchronous require() shim that throws at runtime (${broken.join(', ')}). Reference these via a dynamic import() (kept async by the bundler)\n` +
+                    `    or an importmap, not a static import.`);
+            }
         }
         await $ `cp ${DIST}/${scriptName} ${PUBLIC}`.text();
         const bundleFile = await Bun.file(`${DIST}/${scriptName}`).arrayBuffer();

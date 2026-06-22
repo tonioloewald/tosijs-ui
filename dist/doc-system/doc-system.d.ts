@@ -5,6 +5,8 @@ export declare class TosiDocSystem extends Component {
         docs: string;
         config: string;
         localized: string;
+        routing: string;
+        route: string;
         accent: string;
         background: string;
         text: string;
@@ -13,6 +15,9 @@ export declare class TosiDocSystem extends Component {
     content: null;
     private corpus?;
     private browser?;
+    private appliedRoute;
+    private suppressed;
+    private nestingDepth;
     private prefs;
     private stylesApplied;
     private applyStyles;

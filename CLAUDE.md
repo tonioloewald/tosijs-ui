@@ -196,7 +196,14 @@ To find form-associated components, grep `src/` for `formAssociated = true`.
 Components are self-documenting via `/*#` comment blocks containing markdown. Control nav ordering with JSON metadata:
 - `/*{ "pin": "top" }*/` or `<!--{ "pin": "top" }-->` for pinning
 
-The `createDocBrowser()` function renders documentation from extracted `docs.json`.
+The `createDocBrowser()` function renders documentation from extracted `docs.json`. It supports three `routing` modes (`DocRoutingMode` in `src/doc-browser.ts`):
+- `'query'` (default, legacy SPA): links are `?filename`; uses `popstate`.
+- `'path'`: clean per-page `/slug/` URLs, for the static pre-rendered site.
+- `'memory'`: self-contained — never reads/writes `window.history`/`location` or the `__docTestResults` global, so an embedded/nested browser can't hijack the host page's URL. Drive it via `initialRoute` + `onRouteChange` and the element's `.navigate(slug)` method.
+
+#### Static doc-site system (`tosijs-ui/site`)
+
+`src/doc-system/site/` (exported as `tosijs-ui/site`, with `defineSiteConfig`/`buildSite`/`devServer`) turns a project's markdown + `/*#` block comments into a **static, pre-rendered, hydrating** documentation site: one `/{slug}/index.html` per doc with real `<head>` metadata, no-JS readable, zero-flash hydration into the live `<tosi-doc-system>` browser, plus `sitemap.xml`/`robots.txt`. Output is a plain folder of static files for any static host. The canonical reference is `src/doc-system/doc-site-system.md` — read it before working on this system. Note (per memory): `devServer(config, { build })` takes the consumer's **full** build, not just `buildSite`, because `buildSite` does `rm -rf` on the output dir on watch rebuild and would otherwise drop sibling artifacts (e.g. a separate iife bundle).
 
 #### Live example code blocks
 

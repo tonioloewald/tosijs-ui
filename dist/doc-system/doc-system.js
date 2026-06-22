@@ -31,6 +31,15 @@ language).
 - `config` — inline JSON `{ projectName, projectLinks }` baked in at build time.
 - `localized` — URL of a tab-separated translation table; when set, it powers the
   settings menu's language picker.
+- `routing` — `''` (default) drives the page with clean `/slug/` URLs. Set
+  `"memory"` for a **self-contained** instance whose navigation never touches the
+  page URL or history — for embedding the docs in a dialog, side panel, or
+  floating element. (A `<tosi-doc-system>` nested inside another one — e.g. the
+  live demo on this page — is forced to memory routing automatically, and a demo
+  nested two levels deep renders an inert placeholder instead of recursing.)
+- `route` — memory routing only: the current doc's slug. Set it to navigate the
+  embedded browser to a doc; it's reflected back here as the user clicks around,
+  so a host can observe/bind it (e.g. to remember where a help panel was left).
 - `accent` / `background` / `text` — base theme colors (most of the palette is
   derived from `accent` via color math).
 
@@ -38,6 +47,13 @@ The element is light-DOM (no shadow root) so the pre-rendered markdown remains t
 real, indexable page content until hydration replaces it with the live browser.
 Live-example modules default to the `xinjs` / `xinjsui` IIFE globals; override by
 setting the element's `context` property before it connects.
+
+A self-contained, controllable embed (e.g. docs in a floating panel):
+
+```html
+<tosi-doc-system docs="/docs.json" routing="memory" route="data-table">
+</tosi-doc-system>
+```
 */
 /*{ "parent": "Appendices" }*/
 import { Component, StyleSheet, elements, tosi, vars } from 'tosijs';
@@ -47,7 +63,7 @@ import { docSystemStyleSpec } from './doc-system-styles';
 import { icons } from '../icons';
 import { popMenu } from '../menu';
 import { i18n, setLocale, initLocalization } from '../localize';
-const { button } = elements;
+const { button, div } = elements;
 const PREFS_KEY = 'tosi-doc-system-prefs';
 export class TosiDocSystem extends Component {
     static preferredTagName = 'tosi-doc-system';
@@ -55,6 +71,15 @@ export class TosiDocSystem extends Component {
         docs: '/docs.json',
         config: '',
         localized: '',
+        // Routing mode. '' (default) → clean `/slug/` URLs that drive the page. Set
+        // 'memory' (or 'internal') for a self-contained instance that never touches
+        // the page URL — for embedding the docs in a panel, dialog, etc. A nested
+        // <tosi-doc-system> (inside a live example) is forced to 'memory' too.
+        routing: '',
+        // Memory routing only: the current doc slug. Set it to navigate the embedded
+        // browser; it's reflected back here as the user clicks around, so a host can
+        // bind/observe it (e.g. docs in a floating element).
+        route: '',
         // Base theme colors — most of the palette is derived from `accent`.
         accent: '',
         background: '',
@@ -68,6 +93,27 @@ export class TosiDocSystem extends Component {
     // The loaded corpus and the mounted browser; both also act as one-time guards.
     corpus;
     browser;
+    // Route-reflection bookkeeping (memory routing): the last slug applied to the
+    // browser, so external `route` changes navigate but internal navigation (which
+    // writes `route` back) doesn't re-navigate or loop.
+    appliedRoute = '';
+    suppressed = false;
+    // How many <tosi-doc-system> ancestors this element has, crossing shadow
+    // boundaries. 0 = the page's own; ≥1 = embedded in another (e.g. the live
+    // demo on the doc-system page). Used to force memory routing on nested
+    // instances and to stop runaway recursion (a doc page that demos itself).
+    nestingDepth() {
+        let depth = 0;
+        let node = this.parentNode;
+        while (node) {
+            if (node.nodeType === Node.ELEMENT_NODE &&
+                node.tagName === 'TOSI-DOC-SYSTEM') {
+                depth++;
+            }
+            node = node.parentNode || node.host || null;
+        }
+        return depth;
+    }
     // User theme/locale preferences (persisted to localStorage).
     prefs;
     stylesApplied = false;
@@ -224,6 +270,15 @@ export class TosiDocSystem extends Component {
     }
     connectedCallback() {
         super.connectedCallback();
+        // A doc page can demo the doc system itself. The page's browser (depth 0)
+        // and one embedded demo (depth 1) are fine, but a demo INSIDE that demo
+        // (depth ≥ 2) would recurse forever — so render an inert placeholder and
+        // stop. (Don't even fetch the corpus.)
+        if (this.nestingDepth() >= 2) {
+            this.suppressed = true;
+            this.replaceChildren(div({ class: 'doc-system-nested' }, '📖 nested doc-system preview (suppressed)'));
+            return;
+        }
         this.applyStyles();
         this.initPrefs();
         void this.initLocale();
@@ -253,8 +308,19 @@ export class TosiDocSystem extends Component {
     }
     render() {
         super.render();
-        if (this.corpus === undefined || this.browser !== undefined)
+        if (this.suppressed || this.corpus === undefined)
             return;
+        // Already mounted: the only live input is an external `route` change (memory
+        // routing), which navigates the embedded browser. The appliedRoute guard
+        // stops the browser's own write-back to `route` from re-navigating.
+        if (this.browser !== undefined) {
+            const navigate = this.browser.navigate;
+            if (navigate && this.route && this.route !== this.appliedRoute) {
+                this.appliedRoute = this.route;
+                navigate(this.route);
+            }
+            return;
+        }
         let config = {};
         if (this.config) {
             try {
@@ -264,15 +330,28 @@ export class TosiDocSystem extends Component {
                 console.warn('<tosi-doc-system> ignoring invalid config attribute');
             }
         }
+        // Nested instances (a live demo of the doc system) must never drive the page
+        // URL — force memory routing. A top-level instance opts in via the attribute.
+        const nested = this.nestingDepth() >= 1;
+        const memory = nested || this.routing === 'memory' || this.routing === 'internal';
         // Adopt the pre-rendered markdown for the landing page so it is hydrated in
         // place, never re-rendered. createDocBrowser grafts this node into its content
         // area; the static nav list (already crawled) is replaced by the reactive one.
         const contentElement = this.querySelector('.doc-content') || undefined;
         // Header-bar links are declared as a real, crawlable list in the static page.
         const navbarLinks = this.parseLinks('.doc-navbar');
+        this.appliedRoute = this.route;
         this.browser = createDocBrowser({
             docs: this.corpus,
-            routing: 'path',
+            routing: memory ? 'memory' : 'path',
+            initialRoute: memory ? this.route || undefined : undefined,
+            onRouteChange: memory
+                ? (slug) => {
+                    // Record before reflecting so the resulting render() no-ops.
+                    this.appliedRoute = slug;
+                    this.route = slug;
+                }
+                : undefined,
             context: this.context || {
                 tosijs: globalThis.xinjs,
                 'tosijs-ui': globalThis.xinjsui,
@@ -282,10 +361,13 @@ export class TosiDocSystem extends Component {
             navbarLinks: navbarLinks.length ? navbarLinks : undefined,
             contentElement,
         });
-        // Add the settings (theme + language) menu to the header.
-        const header = this.browser.querySelector('header');
-        if (header)
-            header.append(this.settingsButton());
+        // Add the settings (theme + language) menu — except in a nested demo, where
+        // a gear that retints the whole host page would be surprising.
+        if (!nested) {
+            const header = this.browser.querySelector('header');
+            if (header)
+                header.append(this.settingsButton());
+        }
         this.replaceChildren(this.browser);
     }
 }
