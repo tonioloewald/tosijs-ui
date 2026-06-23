@@ -119,6 +119,14 @@ Implementations:
 
 ## #6 seam — validated against tjs-lang (spike, Jun 2026)
 
+> **Status: #6.1 SHIPPED.** sucrase removed; `js` blocks transpile through
+> tjs-lang `dialect: 'js'` (behavior-neutral), tjs lazy-loaded (`tjs-lang/lang`
+> → jsdelivr `+esm` → degraded raw-JS). tsc clean, 455 unit tests, browser suite
+> 31/0. Known non-issue: the background-test iframe flashes *in haltija only*
+> (Chromium compositor) — invisible in Safari/Chrome, deemed not important.
+> Next: **#6.2** — `ts`/`tjs` executable block dialects (TS via `fromTS` behind
+> `tjs-lang/lang/from-ts`) + generated-JS / types tabs.
+
 Empirically confirmed against `../tjs-lang` (`tjs-lang` npm). The seam:
 
 - **Entry point:** `tjs(source, opts) → TJSTranspileResult` (from `tjs-lang`, in
