@@ -915,10 +915,14 @@ export function createDocBrowser(options) {
             return;
         }
         const currentFilename = String(app.currentDoc.filename);
-        // Create a hidden iframe that loads the full page
+        // Create a hidden iframe that loads the full page. Keep its real 800x600
+        // layout size (layout-dependent example tests need it) but park it
+        // off-screen rather than rely on opacity:0 over the visible page — Chromium
+        // (and haltija on top of it) still composites a 0-opacity layer at 0,0,
+        // which flashes as the frame navigates page to page.
         const testFrame = document.createElement('iframe');
         testFrame.style.cssText =
-            'position: fixed; left: 0; top: 0; width: 800px; height: 600px; opacity: 0; pointer-events: none;';
+            'position: fixed; left: -10000px; top: 0; width: 800px; height: 600px; opacity: 0; pointer-events: none;';
         document.body.appendChild(testFrame);
         // Listen for test results posted from the iframe
         const messageHandler = (event) => {
