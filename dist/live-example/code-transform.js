@@ -82,6 +82,13 @@ async function loadTjs() {
     }
     return null;
 }
+// Load tjs once per page, not once per example. refresh() runs on every render
+// (and renders fire repeatedly while tests run), so a per-call import + parse
+// would re-pay tjs's cost each time and make every preview swap visibly lag —
+// the engine load is memoized and transform output is cached by source.
+let tjsOnce;
+const resultCache = new Map();
+let warnedNoTjs = false;
 /**
  * Load the live-example transform.
  *
@@ -94,13 +101,22 @@ async function loadTjs() {
  * (`dialect: 'js'` is a no-op on it), so we just pass the code through.
  */
 export async function loadTransform() {
-    const tjs = await loadTjs();
-    if (!tjs) {
+    const tjs = await (tjsOnce ??= loadTjs());
+    if (!tjs && !warnedNoTjs) {
+        warnedNoTjs = true;
         console.warn('tjs-lang not available — live examples run as raw JavaScript ' +
             '(TypeScript examples will not transpile). Install with: npm install tjs-lang');
-        return (code) => ({ code });
     }
-    // runTests:false — examples must not run tjs inline tests at transpile time
-    // (the default throws on failure, which would break the example render).
-    return (code) => ({ code: tjs(code, { dialect: 'js', runTests: false }).code });
+    return (code) => {
+        const cached = resultCache.get(code);
+        if (cached)
+            return cached;
+        // runTests:false — examples must not run tjs inline tests at transpile time
+        // (the default throws on failure, which would break the example render).
+        const result = tjs
+            ? { code: tjs(code, { dialect: 'js', runTests: false }).code }
+            : { code };
+        resultCache.set(code, result);
+        return result;
+    };
 }
