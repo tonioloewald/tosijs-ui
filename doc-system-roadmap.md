@@ -145,11 +145,37 @@ Empirically confirmed against `../tjs-lang` (`tjs-lang` npm). The seam:
   for our own libs (→ `const { x } = tosijs`) and other imports still fail until
   examples execute as real ES modules (phase-2, open-world). Unchanged from today.
 
-Implementation shape: `loadTransform()` gains a tjs path (lazy `import('tjs-lang')`,
-mirroring the sucrase CDN/fallback ladder); `execution.ts` threads the richer
-result (`code` + `types` + `warnings`) back so the component can render the
-generated-JS and types tabs and surface `warnings`/thrown tjs errors. `tjs-lang`
-is an **optional peer/dev dep**, never a runtime `dependency`.
+### Decision: drop sucrase entirely — tjs for everything
+
+No dual-engine, no sucrase fallback. tjs is far more robust than sucrase for this
+job: its `.compat-tests/` clone and run the **real test suites of `effect`,
+`zod`, `ts-pattern`, `kysely`, `radash`, `superstruct`** through `fromTS`
+(`scripts/compat-*.ts`) — i.e. it's validated against the most type-intensive TS
+libraries in the wild. Sucrase only strips types without checking. And tjs gives
+descriptive `TranspileError`s (file:line:col) where raw `AsyncFunction`/eval gives
+a terse `SyntaxError` — better "what's broken" reporting, which was the point.
+
+So every executable example block routes through tjs:
+- `js` / `tjs` → `tjs(code, { mode, runTests: false }).code`
+- `ts` / `typescript` (executable) → `fromTS(code, { emitTJS: true }).code` → `tjs(...)`
+
+**Consciously-accepted consequence:** tjs is *not* a transparent pass-through —
+it fixes JS gotchas. Verified: `1 == '1'` → `__tjs.toBool(Eq(1,'1'))` (structural
+equality + truthiness), `typeof x` → `TypeOf(x)` (returns `'null'` for null). So a
+`js` example block gets **tjs semantics**, not raw-JS semantics. For our own docs
+that's desirable (it's fix-at-the-source applied to the examples themselves), but
+authors must know `==` in a `js` example is structural. Rollout safety net: switch
+the engine, run the full inline-doc-test (browser) suite, fix any example that
+relied on raw-JS `==`/coercion.
+
+Implementation shape: `loadTransform()` is replaced by a lazy `import('tjs-lang')`
+(+ lazy `fromTS` only for TS blocks); `execution.ts` threads the richer result
+(`code` + `types` + `warnings`) back so the component renders the generated-JS and
+types tabs and surfaces `warnings` / thrown `TranspileError`s. tjs is lazy-loaded
+only when an example renders — a plain component consumer never pulls it in — so
+it's never a runtime `dependency`, but it *is* required for the doc system.
+Optional degraded mode (if tjs fails to load): run `js` blocks raw, TS blocks
+error. **Sucrase is removed** from deps, CDN load, and the passthrough fallback.
 
 ## The four foundations
 
@@ -190,7 +216,7 @@ Low-risk, high-leverage, and a prerequisite for #6. Ship it first, on its own.
 
 | # | Feature | Foundation(s) | Key decision / risk |
 |---|---|---|---|
-| 6 | **sucrase → tjs-lang in live examples** + generated-JS / types tabs + graceful tjs error handling | D | The near-term scope. tjs stays optional/lazy. Keep fake-imports for our libs, fail on others, widen to whatever tjs resolves for free. |
+| 6 | **replace sucrase with tjs-lang in live examples** (drop sucrase entirely) + generated-JS / types tabs + graceful tjs errors | D | tjs for every executable block (js/tjs direct, ts via fromTS). Lazy-loaded, doc-system-only. `js` blocks gain tjs semantics (structural `==`) — accepted. Keep fake-imports for our libs; others fail. |
 | 6b | *(deferred)* migrate editor Ace → **CodeMirror** | D, step-zero | Wait for a componentized CM export from tjs-lang. CodeMirror can't be CDN-`import()`'d → must bundle → needs the `./docs` subpath first. |
 | 6c | *(deferred)* migrate in-browser doc tests → tjs inline tests | D | Tests are JS now and stay JS; no forcing function. Revisit post-#6. |
 | 5 | **haltija widget in dev** | A | Wire-up, not build (beta 10 ships server + widget). Free-port discovery, localhost-only injection. |
