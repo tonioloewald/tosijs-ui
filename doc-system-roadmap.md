@@ -34,6 +34,15 @@ layer. Closed loop.
 
 ## Principles
 
+- **Fix at the source, where the leverage is.** We control the whole stack —
+  down to the JS engine and the browser. When a limitation really belongs to
+  another layer, fix it *there*, not with a workaround here. The doc system stays
+  thin; leverage compounds at the lowest layer that owns the problem.
+  - Corollary: **import resolution for live examples is tjs-lang's problem, not
+    the doc system's.** We keep only the minimal fake-import for our own libs (so
+    examples exercise in-page, possibly-just-edited code) and otherwise delegate
+    to whatever tjs's transform resolves. We don't build resolvers, importmaps,
+    or widening allow-lists to compensate for the transform.
 - **Unbundled web.** tjs-lang "targets an unbundled web" and transpiles in the
   browser with no build step. Examples should reach real ESM endpoints, not just
   injected globals (see the import-resolution fork in Open Decisions).
@@ -194,16 +203,15 @@ Deferred until there's a forcing function: **step zero** (`./docs` subpath) +
 
 ## Resolved decisions (Jun 2026)
 
-1. **Import resolution — keep what we do now; take tjs's for free as it lands.**
-   The fake-import rewrite for `tosijs` / `tosijs-ui` is the point: examples and
-   tests run against the code we may have *just changed*, so those must resolve
-   to the in-page globals. Every other import: **fail as today.** Separately,
-   tjs-lang's playground already resolves real ESM (e.g. `import * as React from
-   'react@^…'`); how much of that is exposed to consumers right now is hazy.
-   Plan: don't build our own importmap resolver — when we adopt tjs as the
-   transform, whatever import resolution it offers comes **"for free,"** and we
-   widen the allow-list to match. The open-world cross-library story (phase 2)
-   likely arrives *via tjs-lang itself*, not custom code here.
+1. **Import resolution is tjs-lang's problem, not ours** (fix-at-the-source).
+   The fake-import rewrite for `tosijs` / `tosijs-ui` is the *only* thing the doc
+   system owns — examples and tests must run against the code we may have just
+   changed, so those resolve to in-page globals. Everything else is delegated to
+   tjs's transform: whatever it resolves (its playground already does real ESM
+   like `import * as React from 'react@^…'`) we get for free, and whatever it
+   doesn't, it fails — we add **no** resolver, importmap, or allow-list widening
+   here. The open-world cross-library story (phase 2) is a tjs-lang capability we
+   consume, not code we write.
 2. **Editor — stay on Ace for now; defer CodeMirror.** Ace is CDN-loaded (zero
    bundle), so there's no urgency. tjs provides CM highlighting + autocomplete in
    its playground but it may not be cleanly extractable yet. Revisit when tjs-lang
