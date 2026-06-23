@@ -1,5 +1,15 @@
 # TODO
 
+## Doc-System Roadmap
+
+See [doc-system-roadmap.md](doc-system-roadmap.md) for the full plan. North star:
+each library is a web-accessible doc-system endpoint (library-as-ESM + docs +
+authoring), with **tjs-lang** as the live-example transpiler, the **tosijs-ui doc
+system** as build/docs/front-end, and an **AJS-VM universal endpoint** as the
+back end. Sequence: `./docs` subpath refactor → #6 tjs+CodeMirror → #5 haltija
+widget → #4 edit source → #3 save/load examples → #1 ePub → #2 PDF. Phase-2:
+importmap example resolution, versioned endpoints, AJS RestStore.
+
 ## High Priority
 
 - **JSON Schema-driven form editor** - Integrate schema-based form generation
