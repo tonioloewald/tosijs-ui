@@ -117,6 +117,40 @@ Implementations:
   (no source writes). Always available; the offline default for tinkering.
 - **RestStore** (later): same calls against the AJS universal endpoint.
 
+## #6 seam — validated against tjs-lang (spike, Jun 2026)
+
+Empirically confirmed against `../tjs-lang` (`tjs-lang` npm). The seam:
+
+- **Entry point:** `tjs(source, opts) → TJSTranspileResult` (from `tjs-lang`, in
+  `src/lang/emitters/js.ts`). `.code` is the JS string — a drop-in for sucrase's
+  `.code`. Also returns `types`/`metadata` (the `__tjs` runtime type info → the
+  "types/docs" tab, **for free**), `warnings` (→ editor markers), `testResults`,
+  `wasmCompiled`.
+- **Options that matter:** `mode: 'dev' | 'strict' | 'production'` (the
+  strictness levels), `runTests: false` — **must set this for examples**;
+  default `true` *runs inline tests at transpile time and throws on failure*,
+  which would break an example render. `debug: true` for source locations.
+- **Plain/imperative JS examples** transpile cleanly (verified) — examples are
+  top-level scripts, not function declarations, and that's fine (JS superset).
+- **Real TypeScript** (`const x: number`) is **not** accepted by `tjs()`
+  directly — it expects TJS. The path is **TS → TJS → JS**:
+  `fromTS(tsSrc, { emitTJS: true }).code` → `tjs(...).code`. Verified:
+  `function add(a: number, b: number): number` → JS with `add.__tjs` metadata.
+  Caveat: `fromTS` uses the real TypeScript compiler (`ts.createSourceFile`), so
+  it's heavy — **lazy-load it only when an example is authored in TS**; pure
+  JS/TJS examples skip it and call `tjs()` directly (no `typescript` pulled in).
+- **Imports** are preserved verbatim by `tjs()` (runtime resolves them) — the
+  fix-at-the-source model. But our examples run via `new AsyncFunction(...)`,
+  whose body **can't contain `import`** — so we still pre-run `rewriteImports`
+  for our own libs (→ `const { x } = tosijs`) and other imports still fail until
+  examples execute as real ES modules (phase-2, open-world). Unchanged from today.
+
+Implementation shape: `loadTransform()` gains a tjs path (lazy `import('tjs-lang')`,
+mirroring the sucrase CDN/fallback ladder); `execution.ts` threads the richer
+result (`code` + `types` + `warnings`) back so the component can render the
+generated-JS and types tabs and surface `warnings`/thrown tjs errors. `tjs-lang`
+is an **optional peer/dev dep**, never a runtime `dependency`.
+
 ## The four foundations
 
 - **A — Headless render in dev + build.** Non-test `devServer` launches
