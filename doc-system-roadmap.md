@@ -155,18 +155,24 @@ libraries in the wild. Sucrase only strips types without checking. And tjs gives
 descriptive `TranspileError`s (file:line:col) where raw `AsyncFunction`/eval gives
 a terse `SyntaxError` — better "what's broken" reporting, which was the point.
 
-So every executable example block routes through tjs:
-- `js` / `tjs` → `tjs(code, { mode, runTests: false }).code`
-- `ts` / `typescript` (executable) → `fromTS(code, { emitTJS: true }).code` → `tjs(...)`
+Every executable block routes through tjs, **keyed by the block's dialect**
+(tjs-lang ≥ 0.8.2 added an explicit `dialect` option — `feat(lang): explicit
+source dialect`; see `TJS-FOR-JS.md`'s js|ts|tjs recipe):
+- `js` → `tjs(code, { dialect: 'js', runTests: false }).code` — **vanilla JS,
+  untouched.** Verified: `if (1 == '1') x = typeof y` round-trips identically.
+- `tjs` → `tjs(code, { dialect: 'tjs', … }).code` — full TJS (structural `==`,
+  `TjsStandard`, …). Opt-in per block.
+- `ts` / `typescript` (executable) → `tjs(fromTS(code, { emitTJS: true }).code).code`,
+  with `fromTS` imported from `tjs-lang/lang/from-ts` so the TypeScript compiler
+  loads **only** on the TS path (`tjs-lang/lang` stays TS-free).
 
-**Consciously-accepted consequence:** tjs is *not* a transparent pass-through —
-it fixes JS gotchas. Verified: `1 == '1'` → `__tjs.toBool(Eq(1,'1'))` (structural
-equality + truthiness), `typeof x` → `TypeOf(x)` (returns `'null'` for null). So a
-`js` example block gets **tjs semantics**, not raw-JS semantics. For our own docs
-that's desirable (it's fix-at-the-source applied to the examples themselves), but
-authors must know `==` in a `js` example is structural. Rollout safety net: switch
-the engine, run the full inline-doc-test (browser) suite, fix any example that
-relied on raw-JS `==`/coercion.
+So `dialect: 'js'` makes the engine swap behavior-neutral for today's `js`
+examples — no structural-`==` surprise — while `tjs`/`ts` opt into safety. (This
+supersedes the earlier note that `js` blocks would inherit tjs semantics; the
+explicit dialect lever, added at the source in 0.8.2, is the fix.) The no-tjs
+degraded mode is trivial: `dialect: 'js'` returns JS unchanged, so if tjs fails to
+load we just run the raw JS (TS blocks then error). Rollout safety net unchanged:
+switch engine, run the full inline-doc-test browser suite.
 
 Implementation shape: `loadTransform()` is replaced by a lazy `import('tjs-lang')`
 (+ lazy `fromTS` only for TS blocks); `execution.ts` threads the richer result
