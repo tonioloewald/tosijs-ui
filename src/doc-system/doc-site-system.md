@@ -102,11 +102,12 @@ tools installed alongside tosijs-ui. They're declared as optional peers, so
 install whichever the build reports missing:
 
 ```bash
-bun add -d happy-dom sucrase marked
+bun add -d happy-dom tjs-lang marked
 ```
 
 `happy-dom` powers the theme-stylesheet step (the build runs with no real DOM);
-`sucrase` transforms TypeScript live-examples; `marked` renders markdown. If one
+`tjs-lang` transpiles live-examples (vanilla JS via `dialect: 'js'`, plus real
+TypeScript); `marked` renders markdown. If one
 is absent the build fails mid-run with a `Cannot find package …` from inside
 `node_modules/tosijs-ui/dist/…` — that means a build-time peer isn't installed.
 

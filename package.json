@@ -40,7 +40,7 @@
     "happy-dom": "^20.7.0",
     "playwright": "^1.58.2",
     "prettier": "^2.8.8",
-    "sucrase": "3.35.0",
+    "tjs-lang": "0.8.2",
     "tosijs": "^1.6.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8"
@@ -48,14 +48,14 @@
   "peerDependencies": {
     "happy-dom": "^20.7.0",
     "marked": "^16.4.2",
-    "sucrase": "^3.35.0",
+    "tjs-lang": "^0.8.2",
     "tosijs": "^1.6.0"
   },
   "peerDependenciesMeta": {
     "happy-dom": {
       "optional": true
     },
-    "sucrase": {
+    "tjs-lang": {
       "optional": true
     }
   },

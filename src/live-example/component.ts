@@ -33,8 +33,9 @@ preview.append('Try editing some code and hitting refresh…')
 }
 ```
 
-You can also use Typescript. It will be stripped down to
-Javascript using [sucrase](https://github.com/alangpierce/sucrase).
+You can also use Typescript. It is transpiled to JavaScript using
+[tjs-lang](https://www.npmjs.com/package/tjs-lang) (plain `js` blocks pass
+through untouched via tjs's `dialect: 'js'`).
 
 ## CSS Isolation with `iframe`
 

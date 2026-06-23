@@ -106,10 +106,11 @@ await devServer(config, { build })   // ← watcher runs the full pipeline
 <p><strong>4. build-time dependencies.</strong> The build (not your shipped library) needs a few
 tools installed alongside tosijs-ui. They&#39;re declared as optional peers, so
 install whichever the build reports missing:</p>
-<pre><code class="language-bash">bun add -d happy-dom sucrase marked
+<pre><code class="language-bash">bun add -d happy-dom tjs-lang marked
 </code></pre>
 <p><code>happy-dom</code> powers the theme-stylesheet step (the build runs with no real DOM);
-<code>sucrase</code> transforms TypeScript live-examples; <code>marked</code> renders markdown. If one
+<code>tjs-lang</code> transpiles live-examples (vanilla JS via <code>dialect: &#39;js&#39;</code>, plus real
+TypeScript); <code>marked</code> renders markdown. If one
 is absent the build fails mid-run with a <code>Cannot find package …</code> from inside
 <code>node_modules/tosijs-ui/dist/…</code> — that means a build-time peer isn&#39;t installed.</p>
 <p><strong>5. dev-server TLS (once).</strong> <code>devServer</code> serves over HTTPS and looks for

@@ -48,8 +48,9 @@ preview.append(&#39;Try editing some code and hitting refresh…&#39;)
   to { color: red }
 }
 </code></pre>
-<p>You can also use Typescript. It will be stripped down to
-Javascript using <a href="https://github.com/alangpierce/sucrase">sucrase</a>.</p>
+<p>You can also use Typescript. It is transpiled to JavaScript using
+<a href="https://www.npmjs.com/package/tjs-lang">tjs-lang</a> (plain <code>js</code> blocks pass
+through untouched via tjs&#39;s <code>dialect: &#39;js&#39;</code>).</p>
 <h2>CSS Isolation with <code>iframe</code></h2>
 <p>Add the <code>iframe</code> attribute to render the preview inside an iframe for complete CSS isolation.</p>
 <h2>Test Blocks</h2>

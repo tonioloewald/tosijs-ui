@@ -55,43 +55,52 @@ export async function executeCode(code, context, transform) {
     const func = new AsyncFunction(...contextKeys, transformedCode);
     await func(...contextValues);
 }
-/**
- * Passthrough transform — returns code unchanged.
- * Used as fallback when sucrase isn't installed.
- */
-const passthroughTransform = (code, options) => {
-    if (options.transforms.includes('typescript')) {
-        throw new Error('TypeScript examples require the "sucrase" package. ' +
-            'Install it with: npm install sucrase');
+// tjs-lang/lang is the TS-compiler-free entry (the TypeScript path lives behind
+// tjs-lang/lang/from-ts and is not loaded here). The `+esm` form is required:
+// the prebuilt bundle imports `acorn`/`tosijs-schema`, which jsdelivr's esm
+// build resolves (a raw file load would fail on those bare imports). Pinned to
+// match the dev dep.
+const TJS_CDN = 'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.2/lang/+esm';
+async function loadTjs() {
+    // Installed peer (ESM consumers / dev build)
+    try {
+        const { tjs } = (await import('tjs-lang/lang'));
+        if (typeof tjs === 'function')
+            return tjs;
     }
-    return { code };
-};
-const SUCRASE_CDN = 'https://cdn.jsdelivr.net/npm/sucrase@3.35.0/+esm';
+    catch {
+        // not installed — try CDN
+    }
+    // CDN (IIFE consumers, or when tjs-lang isn't installed)
+    try {
+        const { tjs } = (await import(/* webpackIgnore: true */ TJS_CDN));
+        if (typeof tjs === 'function')
+            return tjs;
+    }
+    catch {
+        // unavailable — fall through to degraded mode
+    }
+    return null;
+}
 /**
- * Load sucrase transform function.
+ * Load the live-example transform.
  *
- * Tries three strategies in order:
- * 1. `import('sucrase')` — works for ESM consumers who installed the peer dep
- * 2. CDN import — works for IIFE consumers and when sucrase isn't installed
- * 3. Passthrough fallback — plain JS still works, TypeScript errors clearly
+ * tjs-lang is the engine: `js` blocks transpile with `dialect: 'js'`, which
+ * leaves vanilla JavaScript untouched (no footgun rewriting) — so swapping in
+ * tjs is behavior-neutral for plain-JS examples, while giving descriptive
+ * transpile errors and a path to real TS support.
+ *
+ * Degraded mode: if tjs-lang can't be loaded, plain JS still runs unchanged
+ * (`dialect: 'js'` is a no-op on it), so we just pass the code through.
  */
 export async function loadTransform() {
-    // Try installed package first
-    try {
-        const { transform } = await import('sucrase');
-        return transform;
+    const tjs = await loadTjs();
+    if (!tjs) {
+        console.warn('tjs-lang not available — live examples run as raw JavaScript ' +
+            '(TypeScript examples will not transpile). Install with: npm install tjs-lang');
+        return (code) => ({ code });
     }
-    catch {
-        // Not installed — try CDN
-    }
-    try {
-        const { transform } = await import(
-        /* webpackIgnore: true */ SUCRASE_CDN);
-        return transform;
-    }
-    catch {
-        console.warn('sucrase not available — TypeScript examples will not work. ' +
-            'Install with: npm install sucrase');
-        return passthroughTransform;
-    }
+    // runTests:false — examples must not run tjs inline tests at transpile time
+    // (the default throws on failure, which would break the example render).
+    return (code) => ({ code: tjs(code, { dialect: 'js', runTests: false }).code });
 }

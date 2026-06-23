@@ -23,11 +23,14 @@ export declare function rewriteImports(code: string, contextKeys: string[]): str
  */
 export declare function executeCode(code: string, context: ExampleContext, transform: TransformFn): Promise<void>;
 /**
- * Load sucrase transform function.
+ * Load the live-example transform.
  *
- * Tries three strategies in order:
- * 1. `import('sucrase')` — works for ESM consumers who installed the peer dep
- * 2. CDN import — works for IIFE consumers and when sucrase isn't installed
- * 3. Passthrough fallback — plain JS still works, TypeScript errors clearly
+ * tjs-lang is the engine: `js` blocks transpile with `dialect: 'js'`, which
+ * leaves vanilla JavaScript untouched (no footgun rewriting) — so swapping in
+ * tjs is behavior-neutral for plain-JS examples, while giving descriptive
+ * transpile errors and a path to real TS support.
+ *
+ * Degraded mode: if tjs-lang can't be loaded, plain JS still runs unchanged
+ * (`dialect: 'js'` is a no-op on it), so we just pass the code through.
  */
 export declare function loadTransform(): Promise<TransformFn>;

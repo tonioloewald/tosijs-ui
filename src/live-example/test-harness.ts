@@ -369,8 +369,8 @@ export async function runTests(
     const taggedCode = `${transformedCode}\n//# sourceURL=inline-test`
 
     // Capture the source so matchers can lift the failing line into the
-    // error message. rewriteImports + sucrase preserve line breaks, so
-    // line numbers in the stack match this source.
+    // error message. rewriteImports + tjs (dialect: 'js') leave plain JS
+    // untouched, preserving line breaks so stack line numbers match this source.
     currentTestSource = transformedCode
 
     // @ts-expect-error AsyncFunction constructor typing
