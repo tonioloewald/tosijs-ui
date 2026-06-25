@@ -264,11 +264,23 @@ per-book in the ePub/PDF).
 Deferred until there's a forcing function: **step zero** (`./docs` subpath) +
 **6b** (CodeMirror editor), **6c** (tjs-inline-test migration).
 
+**Re-prioritized (Jun 2026):** persisting experiments (**#3**) and editing
+source files (**#4**) are now ahead of finishing #6.2 (ts/tjs dialects + tabs)
+and perf fine-tuning. So after #6.1: build **Foundation B (source↔doc map +
+DocStore dev impl) → #4**, then **Foundation C → #3** — those are the priority.
+#6.2 polish and the SW→`/lib` resolver come after.
+
 ### Phase-2 tracks (named now so they're not retrofitted painfully)
 
 - **Importmap example resolution** — examples `import from 'lib'` resolving to a
   real ESM endpoint, enabling cross-library live examples. Keep inject-globals as
-  the offline fallback; add the resolver opt-in.
+  the offline fallback; add the resolver opt-in. **Seeded:** a minimal
+  module-cache service worker now ships (`demo/static/module-cache-sw.js`,
+  registered via `headExtra`) — it caches the CDN modules examples already load
+  (the tjs transpiler etc.) same-origin, shared across the background-test
+  iframes (fixes Firefox/Safari per-iframe re-fetch). Grow it into a
+  `/lib/<spec>` resolver (bare-import rewrite + IndexedDB-backed versioned
+  endpoint) — the same pattern tjs-lang (`/tfs/`) and b8rjs use.
 - **Versioned endpoints** — `version` is already in `ExampleKey` / `SourceRef`;
   this lights up per-version site output + a version switcher + version-pinned
   example imports.

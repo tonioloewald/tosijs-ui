@@ -41,6 +41,13 @@ export default defineSiteConfig({
   localizedStrings,
   favicon: '/favicon.svg',
 
+  // Register the module-cache service worker (demo/static/module-cache-sw.js) so
+  // live-example CDN modules (the tjs-lang transpiler, example imports) are
+  // cached same-origin and shared across the background-test iframes instead of
+  // re-fetched cross-origin per frame. See that file for the phase-2 direction.
+  headExtra:
+    "<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script>",
+
   // tosijs-ui's build also publishes the npm package, and bundles its own IIFE.
   emitLibrary: true,
   bundleEntry: './src/index-iife.ts',
