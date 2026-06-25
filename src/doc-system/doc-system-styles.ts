@@ -261,7 +261,10 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       overflow: 'hidden',
       position: 'relative',
     },
-    svg: {
+    // Scope the icon styling (currentColor fill, click-through) to actual icons
+    // and SVGs inside buttons — a blanket `svg` rule sets pointer-events:none on
+    // every SVG, which breaks interactive SVG-based UIs (maps, charts, diagrams).
+    'svg.tosi-icon, button svg': {
       fill: 'currentColor',
       pointerEvents: 'none',
     },
