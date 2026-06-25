@@ -163,8 +163,18 @@ The write target is a `DocStore` backend chosen by context/config, NOT a hard
 **The overlay applies on render:** before rendering a doc, the browser checks the
 IDB overlay for an edited version of that source and uses it if present.
 
+**Edit unit = the whole source file** (not the extracted `doc.text`): a `.md` →
+that markdown file; a `.ts`/`.tjs` → that whole file. Source is read from the
+**FS in dev** (read endpoint) and from **GitHub raw in prod** (derive the raw URL
+from the existing repo link + `doc.path`) — so "Edit page source" is **conditional
+on having a GitHub link** in prod. Preview: a `.md` renders directly; a `.ts`
+re-derives its markdown via a browser-runnable `/*# … */` extractor (factor the
+pure part out of `docs.ts`). In dev, saving instead triggers the existing chokidar
+rebuild → refresh, so the build itself is the preview — no in-browser extraction
+needed there.
+
 **UX — the existing "view source on GitHub" button becomes a `popMenu`:**
-- **Edit page source** → a `CodeEditor` that fills the content area (whole-doc).
+- **Edit page source** → a `CodeEditor` (whole file) that fills the content area.
 - **View on GitHub** (when a repo link applies).
 - **Save** (→ FS in dev / IDB overlay in prod) · **Download** (the file).
 - **View changes** (diff edited vs original) while editing.
