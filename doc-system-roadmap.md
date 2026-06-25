@@ -139,6 +139,17 @@ are the seam the whole thing pivots on.)
 
 ### Editing model — backend by context, one UX
 
+> **Status (dev FS path landed):** **#4 edit-page-source** and **#3 persist
+> live-example edits** both work in dev. `editableSources` dev endpoint
+> (`/__docstore/source` read/write, repo-jailed); the "view source" button is now
+> a `popMenu` (Edit page source / View on GitHub / Download); the content-area
+> editor previews in-browser (pure `/*# */` extractor) and saves to the file →
+> watcher rebuilds. Per-example "save changes to source" rewrites just that
+> example's blocks via the source↔doc map (`save-to-source.ts`, 7 tests).
+> **Still TODO:** the **production path** — IndexedDB *versioned overlay* (apply
+> on render; prod "save" persists there) — currently prod "save" just downloads;
+> and the **View changes (diff)** affordance.
+
 The write target is a `DocStore` backend chosen by context/config, NOT a hard
 "dev-only" rule:
 
