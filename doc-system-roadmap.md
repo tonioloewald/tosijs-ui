@@ -116,6 +116,26 @@ Implementations:
 - **IndexedDBStore**: per-browser scratchpad for `loadExample`/`saveExample`
   (no source writes). Always available; the offline default for tinkering.
 - **RestStore** (later): same calls against the AJS universal endpoint.
+- **DbStore** (the big one): `readSource`/`writeSource`/`createDoc` over a
+  **database** instead of the filesystem — docs and their source live as records,
+  not files. The `SourceRef.file` becomes a record id; there is no source tree.
+
+### When the store is a database, this is no longer "a doc system"
+
+A file-backed `DocStore` documents a codebase. A **database-backed** one inverts
+it: the docs/source ARE the content, edited in the browser, persisted to records,
+rendered + executed live. Compose that with what we already have —
+- live, editable examples (tjs transpiles in the browser),
+- whole-doc editing + create-new-doc (Foundation B),
+- versioned records + auth (the AJS universal endpoint),
+- pre-rendered, no-JS-readable, hydrating output,
+
+— and the result is a **CMS / online word-processor / unbundled web-based IDE**:
+write prose and runnable code in one surface, version it, publish it as a static
+endpoint, edit it from anywhere. The file-backed DevStore is just the local-dev
+face of the same contract; the DbStore is the product. (This is why the
+source↔doc map and `DocStore` are worth getting right now, before #3/#4 — they
+are the seam the whole thing pivots on.)
 
 ## #6 seam — validated against tjs-lang (spike, Jun 2026)
 
