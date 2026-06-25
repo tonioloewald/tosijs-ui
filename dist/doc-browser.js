@@ -660,6 +660,9 @@ export function createDocBrowser(options) {
             : '';
         popMenu({
             target,
+            // The trigger is position:fixed at the top-right; `auto` placement opens
+            // upward into zero space and collapses the menu, so open below-left.
+            position: 'sw',
             menuItems: [
                 { caption: 'Edit page source', icon: 'edit', action: () => enterEditSource(doc) },
                 ...(blobUrl
@@ -872,7 +875,11 @@ export function createDocBrowser(options) {
             event.currentTarget.style.opacity = '0.7';
         },
         onClick(event) {
-            openSourceMenu(event.currentTarget);
+            // tosijs delegates clicks, so event.currentTarget is the delegation
+            // root, not the button — resolve the real trigger for menu anchoring.
+            const btn = event.target.closest('.view-source');
+            if (btn)
+                openSourceMenu(btn);
         },
         bind: {
             value: app.currentDoc,
