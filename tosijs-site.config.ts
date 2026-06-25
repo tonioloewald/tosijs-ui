@@ -41,6 +41,10 @@ export default defineSiteConfig({
   localizedStrings,
   favicon: '/favicon.svg',
 
+  // Enable the dev-server source read/write endpoints for in-browser
+  // "edit page source" (local dev only).
+  editableSources: true,
+
   // Register the module-cache service worker (demo/static/module-cache-sw.js) so
   // live-example CDN modules (the tjs-lang transpiler, example imports) are
   // cached same-origin and shared across the background-test iframes instead of

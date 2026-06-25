@@ -115,6 +115,13 @@ export interface SiteConfig {
     port?: number;
     /** extra dev-server watch paths (added to docPaths + bundleEntry dir). */
     watchPaths?: string[];
+    /**
+     * Enable the dev-server source read/write endpoints (`/__docstore/source`) that
+     * back in-browser "edit page source". Local dev only — the dev server runs on
+     * your own machine over your own files, so there is nothing to secure; writes
+     * are confined to the repo root as correctness hygiene. Off by default; opt in.
+     */
+    editableSources?: boolean;
 }
 /** Identity helper that gives a site config module full type-checking + IDE help. */
 export declare function defineSiteConfig(config: SiteConfig): SiteConfig;

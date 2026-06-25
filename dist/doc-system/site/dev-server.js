@@ -43,6 +43,53 @@ export async function devServer(config, opts = {}) {
     const isSPA = true;
     const testMode = !!opts.test;
     let testReportResolve;
+    // Source read/write for in-browser "edit page source" (config.editableSources).
+    // Local dev only — your machine, your files — so the lone guard is correctness:
+    // confine paths to the repo root so a stray path can't escape it. No auth/token.
+    const PROJECT_ROOT = path.resolve('./');
+    const resolveInRepo = (rel) => {
+        const resolved = path.resolve(PROJECT_ROOT, rel.replace(/^\/+/, ''));
+        if (resolved !== PROJECT_ROOT &&
+            !resolved.startsWith(PROJECT_ROOT + path.sep)) {
+            return null;
+        }
+        return resolved;
+    };
+    async function handleReadSource(request) {
+        const rel = new URL(request.url).searchParams.get('file') ?? '';
+        const resolved = resolveInRepo(rel);
+        if (!resolved)
+            return new Response('path outside repo', { status: 400 });
+        const file = Bun.file(resolved);
+        if (!(await file.exists()))
+            return new Response('not found', { status: 404 });
+        return new Response(await file.text(), {
+            headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        });
+    }
+    async function handleWriteSource(request) {
+        try {
+            const { file, content } = (await request.json());
+            const resolved = resolveInRepo(file ?? '');
+            if (!resolved || typeof content !== 'string') {
+                return new Response(JSON.stringify({ error: 'bad request' }), {
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' },
+                });
+            }
+            await Bun.write(resolved, content);
+            console.log('wrote', resolved);
+            return new Response(JSON.stringify({ ok: true }), {
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
+        catch (e) {
+            return new Response(JSON.stringify({ error: String(e) }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
+    }
     await killStrayServer(PORT);
     function serveFromDir(cfg) {
         const basePath = path.join(cfg.directory, cfg.path);
@@ -152,6 +199,15 @@ export async function devServer(config, opts = {}) {
             console.log(request.method, reqPath);
             if (request.method === 'POST' && reqPath === '/report') {
                 return handleTestReport(request);
+            }
+            // Source read/write for in-browser "edit page source" (opt-in, dev only).
+            // A write lands in the repo file; the chokidar watcher then rebuilds and
+            // the page refreshes — the build itself is the preview.
+            if (config.editableSources && reqPath === '/__docstore/source') {
+                if (request.method === 'GET')
+                    return handleReadSource(request);
+                if (request.method === 'POST')
+                    return handleWriteSource(request);
             }
             if (reqPath === '/')
                 reqPath = '/index.html';
