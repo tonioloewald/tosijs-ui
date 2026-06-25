@@ -498,7 +498,7 @@ export function createDocBrowser(options) {
             docContent.innerHTML = renderDocMarkdown(doc.text);
         }
         // Stamp each example with its source file (for the source↔doc map). doc.path
-        // is the extracted file (.md, or a source file with /*# … */ comments).
+        // is the extracted file (.md, or a source file with doc comments).
         LiveExample.insertExamples(docContent, context, doc.path || undefined);
         if (routing === 'path') {
             document.title = projectName
@@ -541,7 +541,7 @@ export function createDocBrowser(options) {
                 ? 'typescript'
                 : 'javascript';
     // Pure mirror of docs.ts extraction: a .md *is* the markdown; a source file is
-    // the concatenation of its `/*# … */` blocks. Lets us preview an edit in the
+    // the concatenation of its doc-comment blocks. Lets us preview an edit in the
     // browser with no rebuild.
     const docMarkdownFromSource = (content, p) => {
         if (p.endsWith('.md'))

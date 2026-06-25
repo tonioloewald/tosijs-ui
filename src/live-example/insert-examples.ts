@@ -17,7 +17,7 @@ export function insertExamples(
   liveExampleCreator: ElementCreator<LiveExample>,
   liveExampleTagName: string,
   // The source file this doc was extracted from (a `.md`, or a `.ts`/`.js`/`.css`
-  // with `/*# … */` doc comments). Stamped onto each example as
+  // with extracted doc comments). Stamped onto each example as
   // `data-source-file` + `data-example-ordinal` so a DocStore can locate the
   // originating fenced block to save edits back. Read-only; the write path comes
   // with Foundation B. Omitted when there's no source (e.g. embedded corpora).

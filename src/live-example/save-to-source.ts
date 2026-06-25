@@ -1,5 +1,5 @@
-/*#
-# save-to-source
+/*
+save-to-source
 
 Rewrites the fenced code blocks of a single live example back into the doc source
 string, so an in-place example edit can be persisted to the file it came from.

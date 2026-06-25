@@ -35,7 +35,6 @@
   <url><loc>https://ui.tosijs.net/rating/</loc></url>
   <url><loc>https://ui.tosijs.net/rich-text/</loc></url>
   <url><loc>https://ui.tosijs.net/router/</loc></url>
-  <url><loc>https://ui.tosijs.net/save-to-source/</loc></url>
   <url><loc>https://ui.tosijs.net/via-tag/</loc></url>
   <url><loc>https://ui.tosijs.net/segmented/</loc></url>
   <url><loc>https://ui.tosijs.net/select/</loc></url>
@@ -48,7 +47,6 @@
   <url><loc>https://ui.tosijs.net/theme/</loc></url>
   <url><loc>https://ui.tosijs.net/tooltip/</loc></url>
   <url><loc>https://ui.tosijs.net/track-drag/</loc></url>
-  <url><loc>https://ui.tosijs.net/insert-examples/</loc></url>
   <url><loc>https://ui.tosijs.net/components/</loc></url>
   <url><loc>https://ui.tosijs.net/form-components/</loc></url>
   <url><loc>https://ui.tosijs.net/helper-libraries/</loc></url>
