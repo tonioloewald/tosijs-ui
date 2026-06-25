@@ -137,6 +137,49 @@ face of the same contract; the DbStore is the product. (This is why the
 source↔doc map and `DocStore` are worth getting right now, before #3/#4 — they
 are the seam the whole thing pivots on.)
 
+### Editing model — backend by context, one UX
+
+The write target is a `DocStore` backend chosen by context/config, NOT a hard
+"dev-only" rule:
+
+- **Dev** → **FS** backend: a dev-server write endpoint saves into the repo file.
+  **Security is a non-issue here** — it's all local (your machine, your files,
+  your browser). The only constraint is correctness hygiene: resolve writes
+  within the configured source roots so a bad path can't clobber something
+  outside the repo. No auth, no token, no LAN-gating to design.
+- **Production** → **IndexedDB personal overlay (versioned)** + **download-to-disk**.
+  No server write at all. A visitor fixes a page, the edit persists to their own
+  browser's versioned overlay, and they can download the edited file straight into
+  their checkout "in a pinch." The static doc is the base; the IDB layer is the
+  visitor's personal fork — the DB-backed-files idea in miniature (filesystem+git,
+  or a DB of versioned files).
+
+> **Security scope:** as long as the backend is local — IndexedDB or the dev FS —
+> there is nothing to secure. The hosted **data-endpoint** (RestStore / AJS) is
+> where auth/authz/versioning matter, and that is already worked out and partly
+> implemented in the **loewald-dot-com** repo — we adopt it wholesale when we get
+> there, rather than designing security here.
+
+**The overlay applies on render:** before rendering a doc, the browser checks the
+IDB overlay for an edited version of that source and uses it if present.
+
+**UX — the existing "view source on GitHub" button becomes a `popMenu`:**
+- **Edit page source** → a `CodeEditor` that fills the content area (whole-doc).
+- **View on GitHub** (when a repo link applies).
+- **Save** (→ FS in dev / IDB overlay in prod) · **Download** (the file).
+- **View changes** (diff edited vs original) while editing.
+
+Two granularities, both keyed by the source↔doc map (`data-source-file` +
+`data-example-ordinal`): **whole-page source**, and **per-live-example** (jump
+into the example, fix the block, save it back). Flow: see an error on a page →
+menu → edit → flip back to rendered → looks good → save/download.
+
+Building blocks already in hand: `popMenu`, `CodeEditor`, the source↔doc map,
+tjs-in-browser transpile. Lowest-risk first slice: the **client-side path**
+(edit → IDB overlay + download) — works in dev *and* prod, no server, no security
+surface. The dev **FS write endpoint** is a convenience layered on top (save to
+the real file instead of download).
+
 ## #6 seam — validated against tjs-lang (spike, Jun 2026)
 
 > **Status: #6.1 SHIPPED.** sucrase removed; `js` blocks transpile through
