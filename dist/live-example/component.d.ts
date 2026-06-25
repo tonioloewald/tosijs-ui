@@ -234,6 +234,7 @@ export declare class LiveExample extends Component<ExampleParts> {
     redo: () => void;
     get isMaximized(): boolean;
     flipLayout: () => void;
+    saveToSource: () => Promise<void>;
     exampleMenu: () => void;
     handleShortcuts: (event: KeyboardEvent) => void;
     content: () => any[];

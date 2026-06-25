@@ -131,6 +131,7 @@ import { loadTransform } from './code-transform';
 import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } from './remote-sync';
 import { executeInline, executeInIframe } from './execution';
 import { insertExamples } from './insert-examples';
+import { rewriteExampleBlocks } from './save-to-source';
 import { liveExampleStyleSpec } from './styles';
 import { runTests } from './test-harness';
 const { div, tosiSlot, style, button, pre, span } = elements;
@@ -312,6 +313,51 @@ export class LiveExample extends Component {
     flipLayout = () => {
         this.classList.toggle('-vertical');
     };
+    // Persist this example's edits back to the source file's fenced blocks, located
+    // by the source↔doc map (data-source-file + data-example-ordinal). Dev only —
+    // writes via the /__docstore/source endpoint; the watcher then rebuilds.
+    saveToSource = async () => {
+        const sourceFile = this.getAttribute('data-source-file');
+        const ordinalAttr = this.getAttribute('data-example-ordinal');
+        if (!sourceFile || ordinalAttr === null) {
+            window.alert('No source mapping for this example.');
+            return;
+        }
+        let content;
+        try {
+            const response = await fetch(`/__docstore/source?file=${encodeURIComponent(sourceFile)}`);
+            if (!response.ok)
+                throw new Error(String(response.status));
+            content = await response.text();
+        }
+        catch {
+            window.alert('Source endpoint unavailable — saving to source works in dev only.');
+            return;
+        }
+        const updated = rewriteExampleBlocks(content, Number(ordinalAttr), {
+            js: this.js,
+            html: this.html,
+            css: this.css,
+            test: this.test,
+        });
+        if (updated === null) {
+            window.alert('Nothing to save (no matching blocks or no changes).');
+            return;
+        }
+        try {
+            const response = await fetch('/__docstore/source', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file: sourceFile, content: updated }),
+            });
+            if (!response.ok)
+                throw new Error(String(response.status));
+            window.alert(`Saved to ${sourceFile}`);
+        }
+        catch {
+            window.alert('Save failed.');
+        }
+    };
     exampleMenu = () => {
         const testsOn = testManager.enabled.value;
         popMenu({
@@ -328,6 +374,15 @@ export class LiveExample extends Component {
                     caption: 'view/edit code in a new window',
                     action: this.openEditorWindow,
                 },
+                ...(this.getAttribute('data-source-file')
+                    ? [
+                        {
+                            icon: 'save',
+                            caption: 'save changes to source',
+                            action: this.saveToSource,
+                        },
+                    ]
+                    : []),
                 null,
                 {
                     icon: this.isMaximized ? 'minimize' : 'maximize',

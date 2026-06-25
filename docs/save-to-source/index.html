@@ -6,94 +6,33 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="/doc-system.css" data-tosi-doc-system />
-  <title>header — tosijs-ui</title>
-  <meta name="description" content="A simple flex header. Compose it with elastic() and spacer() from layout to arrange content however you like." />
-  <link rel="canonical" href="https://ui.tosijs.net/header/" />
+  <title>save-to-source — tosijs-ui</title>
+  <meta name="description" content="Rewrites the fenced code blocks of a single live example back into the doc source string, so an in-place example edit can be persisted to the file it came from." />
+  <link rel="canonical" href="https://ui.tosijs.net/save-to-source/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="header — tosijs-ui" />
-  <meta property="og:description" content="A simple flex header. Compose it with elastic() and spacer() from layout to arrange content however you like." />
-  <meta property="og:url" content="https://ui.tosijs.net/header/" />
+  <meta property="og:title" content="save-to-source — tosijs-ui" />
+  <meta property="og:description" content="Rewrites the fenced code blocks of a single live example back into the doc source string, so an in-place example edit can be persisted to the file it came from." />
+  <meta property="og:url" content="https://ui.tosijs.net/save-to-source/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"header","description":"A simple flex header. Compose it with elastic() and spacer() from layout to arrange content however you like.","url":"https://ui.tosijs.net/header/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"save-to-source","description":"Rewrites the fenced code blocks of a single live example back into the doc source string, so an in-place example edit can be persisted to the file it came from.","url":"https://ui.tosijs.net/save-to-source/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="/favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script>
 </head>
 <body>
   <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="/localized-strings.txt">
   <article class="doc-content">
-<h1>header</h1>
-<p>A simple flex header. Compose it with <code>elastic()</code> and <code>spacer()</code> from
-<code>layout</code> to arrange content however you like.</p>
-<h2>Basic Header</h2>
-<pre><code class="language-html">&lt;tosi-header&gt;
-  &lt;h2 class=&quot;header-part&quot;&gt;My App&lt;/h2&gt;
-&lt;/tosi-header&gt;
-</code></pre>
-<pre><code class="language-css">.header-part {
-  color: white;
-  margin: 0;
-  line-height: 32px;
-}
-</code></pre>
-<h2>Header with Menu</h2>
-<p>Use <code>elastic()</code> to push the menu to the right:</p>
-<pre><code class="language-js">import { elements } from &#39;tosijs&#39;
-import { tosiHeader, tosiMenu, elastic, icons } from &#39;tosijs-ui&#39;
-
-const menu = tosiMenu({ class: &#39;menu-demo&#39; }, icons.moreVertical())
-menu.menuItems = [
-  { caption: &#39;About&#39;, tooltip: &#39;Learn more about this app&#39;, action() { alert(&#39;About!&#39;) } },
-  { caption: &#39;Settings&#39;, icon: &#39;settings&#39;, tooltip: &#39;Appearance options&#39;, menuItems: [
-    { caption: &#39;Dark Mode&#39; },
-    { caption: &#39;High Contrast&#39; },
-  ]},
-]
-
-preview.append(
-  tosiHeader(
-    { class: &#39;menu-demo&#39; },
-    elements.h2({ class: &#39;menu-demo&#39; }, &#39;Demo&#39;),
-    elastic(),
-    menu,
-  )
-)
-</code></pre>
-<pre><code class="language-css">.menu-demo * {
-  color: white;
-  margin: 0;
-  --text-color: white;
-  --button-bg: transparent;
-}
-.menu-demo button:hover {
-  background: #fff4;
-}
-</code></pre>
-<h2>Header with Links</h2>
-<p>Use <code>elastic()</code> to push <code>&lt;tosi-header-links&gt;</code> to the right:</p>
-<pre><code class="language-js">import { elements } from &#39;tosijs&#39;
-import { tosiHeader, tosiHeaderLinks, elastic } from &#39;tosijs-ui&#39;
-
-preview.append(
-  tosiHeader(
-    { class: &#39;links-demo&#39; },
-    elements.h2({ class: &#39;links-demo&#39; }, &#39;My Project&#39;),
-    elastic(),
-    tosiHeaderLinks({
-      links: {
-        github: &#39;https://github.com/example/project&#39;,
-        npm: &#39;https://www.npmjs.com/package/example&#39;,
-        discord: &#39;https://discord.gg/example&#39;,
-      },
-    })
-  )
-)
-</code></pre>
-<pre><code class="language-css">.links-demo {
-  color: white;
-  margin: 0;
-}
-</code></pre>
+<h1>save-to-source</h1>
+<p>Rewrites the fenced code blocks of a single live example back into the doc source
+string, so an in-place example edit can be persisted to the file it came from.</p>
+<p>Operates on the <em>raw source</em> (the <code>.md</code>, or a <code>.ts</code>/<code>.js</code>/<code>.css</code> whose doc
+comments contain the markdown), located by the example&#39;s ordinal — the same
+grouping <code>insert-examples</code> uses: consecutive executable fenced blocks
+(<code>js</code>/<code>html</code>/<code>css</code>/<code>test</code>), separated only by whitespace, form one example; any
+other content (prose, a heading, or a non-executable block) starts a new one.</p>
+<p>Limitations (v1): only blocks already present in the source are updated — adding a
+new block type to an example isn&#39;t persisted. Replaces by block position, so it
+never depends on the rendered/entity-decoded text matching the source.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -101,9 +40,9 @@ preview.append(
     <li><a href="/">tosijs-ui</a></li>
     <li><a href="/bp-loader/">blueprint loading</a></li>
     <li><a href="/icons/">icons</a></li>
-    <li><a href="/save-to-source/">save-to-source</a></li>
+    <li><a href="/save-to-source/" aria-current="page" class="current">save-to-source</a></li>
     <li><a href="/insert-examples/">…</a></li>
-    <li><details open><summary><a href="/components/">Components</a></summary>
+    <li><details><summary><a href="/components/">Components</a></summary>
     <ul>
       <li><a href="/babylon-3d/">3d</a></li>
       <li><a href="/carousel/">carousel</a></li>
@@ -113,7 +52,7 @@ preview.append(
       <li><a href="/component/">example</a></li>
       <li><a href="/float/">float</a></li>
       <li><a href="/gamepad/">gamepads</a></li>
-      <li><a href="/header/" aria-current="page" class="current">header</a></li>
+      <li><a href="/header/">header</a></li>
       <li><a href="/layout/">layout</a></li>
       <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
       <li><a href="/mapbox/">map</a></li>
