@@ -160,6 +160,7 @@ import { tosiSidenav, TosiSidenav } from './side-nav';
 import { icons } from './icons';
 import { tosiLocalized } from './localize';
 import { popMenu } from './menu';
+import { codeEditor } from './code-editor';
 const { div, span, a, header, button, template, input, h2, details, summary, ul, li } = elements;
 // Test colors
 const testColor = {
@@ -526,6 +527,163 @@ export function createDocBrowser(options) {
         }
         navigateTo(filename);
     };
+    // ── Edit page source (Foundation B / #4) ──────────────────────────────────
+    // The "view source" affordance opens a menu: edit the whole source file in a
+    // code editor that fills the content area, preview the result in-browser, and
+    // save (dev: write the repo file via /__docstore/source; the watcher rebuilds)
+    // or download it. Source is read from the dev endpoint, falling back to GitHub
+    // raw, so editing works on the deployed site too (save there = download).
+    const editorModeFor = (p) => p.endsWith('.md')
+        ? 'markdown'
+        : p.endsWith('.css')
+            ? 'css'
+            : p.endsWith('.ts') || p.endsWith('.tjs')
+                ? 'typescript'
+                : 'javascript';
+    // Pure mirror of docs.ts extraction: a .md *is* the markdown; a source file is
+    // the concatenation of its `/*# … */` blocks. Lets us preview an edit in the
+    // browser with no rebuild.
+    const docMarkdownFromSource = (content, p) => {
+        if (p.endsWith('.md'))
+            return content;
+        const blocks = content.match(/\/\*#[\s\S]+?\*\//g) || [];
+        return blocks.map((s) => s.substring(3, s.length - 2).trim()).join('\n\n');
+    };
+    const githubRawUrl = (p) => {
+        const gh = projectLinks.github;
+        if (!gh || !p)
+            return null;
+        const m = gh.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?\/?$/);
+        return m ? `https://raw.githubusercontent.com/${m[1]}/${m[2]}/main/${p}` : null;
+    };
+    const loadSource = async (p) => {
+        try {
+            const r = await fetch(`/__docstore/source?file=${encodeURIComponent(p)}`);
+            if (r.ok)
+                return await r.text();
+        }
+        catch {
+            // dev endpoint not available — fall through to GitHub raw
+        }
+        const raw = githubRawUrl(p);
+        if (raw) {
+            try {
+                const r = await fetch(raw);
+                if (r.ok)
+                    return await r.text();
+            }
+            catch {
+                // offline / no network
+            }
+        }
+        return null;
+    };
+    const saveSourceToDisk = async (p, content) => {
+        try {
+            const r = await fetch('/__docstore/source', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file: p, content }),
+            });
+            return r.ok;
+        }
+        catch {
+            return false;
+        }
+    };
+    const downloadText = (filename, content) => {
+        const url = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
+        const link = a({ href: url, download: filename });
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    let editUI = null;
+    const showSourcePreview = (preview) => {
+        if (!editUI)
+            return;
+        if (preview) {
+            docContent.innerHTML = renderDocMarkdown(docMarkdownFromSource(editUI.editor.value, editUI.doc.path));
+            LiveExample.insertExamples(docContent, context, editUI.doc.path || undefined);
+        }
+        docContent.style.display = preview ? '' : 'none';
+        editUI.editor.style.display = preview ? 'none' : 'block';
+    };
+    const exitEditSource = () => {
+        if (!editUI)
+            return;
+        editUI.toolbar.remove();
+        editUI.editor.remove();
+        const filename = String(app.currentDoc.filename);
+        editUI = null;
+        docContent.style.display = '';
+        navigateTo(filename); // restore the canonical rendered doc
+    };
+    const saveSourceEdit = async () => {
+        if (!editUI)
+            return;
+        const { doc, editor } = editUI;
+        const ok = await saveSourceToDisk(doc.path, editor.value);
+        if (ok) {
+            showSourcePreview(true); // the watcher also rebuilds in the background
+        }
+        else {
+            // No write endpoint (deployed site) — hand the file back for the repo.
+            downloadText(doc.path.split('/').pop() || 'source.txt', editor.value);
+        }
+    };
+    const enterEditSource = async (doc) => {
+        if (editUI)
+            return;
+        const content = await loadSource(doc.path);
+        if (content === null) {
+            window.alert(`Could not load source for ${doc.path}`);
+            return;
+        }
+        const editor = codeEditor({ mode: editorModeFor(doc.path) });
+        editor.style.cssText =
+            'display:block; width:100%; height:calc(100% - 2.5em); border:none;';
+        editor.value = content;
+        const fileName = doc.path.split('/').pop() || doc.path;
+        const toolbar = div({ class: 'doc-source-toolbar row', style: { gap: '8px', padding: '6px' } }, span({ style: { flex: '1', opacity: '0.7' } }, fileName), button({ onClick: () => showSourcePreview(false) }, 'Edit'), button({ onClick: () => showSourcePreview(true) }, 'Preview'), button({ onClick: saveSourceEdit }, 'Save'), button({ onClick: () => downloadText(fileName, editor.value) }, 'Download'), button({ onClick: exitEditSource }, 'Done'));
+        const container = docContent.parentElement;
+        container.insertBefore(toolbar, docContent);
+        container.append(editor);
+        editUI = { editor, toolbar, doc };
+        showSourcePreview(false);
+    };
+    const openSourceMenu = (target) => {
+        const doc = docs.find((d) => String(d.filename) === String(app.currentDoc.filename));
+        if (!doc)
+            return;
+        const blobUrl = projectLinks.github && doc.path && doc.path !== 'README.md'
+            ? `${projectLinks.github}/blob/main/${doc.path}`
+            : '';
+        popMenu({
+            target,
+            menuItems: [
+                { caption: 'Edit page source', icon: 'edit', action: () => enterEditSource(doc) },
+                ...(blobUrl
+                    ? [
+                        {
+                            caption: 'View on GitHub',
+                            icon: 'github',
+                            action: () => {
+                                window.open(blobUrl, '_blank');
+                            },
+                        },
+                    ]
+                    : []),
+                {
+                    caption: 'Download source',
+                    icon: 'download',
+                    action: () => void loadSource(doc.path).then((c) => {
+                        if (c !== null)
+                            downloadText(doc.path.split('/').pop() || 'source', c);
+                    }),
+                },
+            ],
+        });
+    };
     // ── Hierarchical nav (path routing) ───────────────────────────────────────
     // Build nested <details> from the doc tree; current-highlight, test status,
     // search visibility, and auto-open are applied imperatively by refreshNav.
@@ -688,11 +846,10 @@ export function createDocBrowser(options) {
             overflowY: 'scroll',
             height: '100%',
         },
-    }, a({
+    }, button({
         class: 'view-source',
-        target: '_blank',
         style: {
-            display: projectLinks.github ? 'flex' : 'none',
+            display: 'flex',
             alignItems: 'center',
             gap: '6px',
             position: 'fixed',
@@ -700,37 +857,32 @@ export function createDocBrowser(options) {
             right: '5px',
             fontSize: '0.875em',
             color: 'var(--brand-color, inherit)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
             opacity: '0.7',
-            borderBottom: 'none',
             transition: 'opacity 0.2s ease',
         },
         onMouseenter(event) {
             ;
-            event.target.style.opacity = '0.9';
+            event.currentTarget.style.opacity = '0.9';
         },
         onMouseleave(event) {
             ;
-            event.target.style.opacity = '0.7';
+            event.currentTarget.style.opacity = '0.7';
+        },
+        onClick(event) {
+            openSourceMenu(event.currentTarget);
         },
         bind: {
             value: app.currentDoc,
             binding(element, doc) {
-                if (projectLinks.github &&
-                    doc.path &&
-                    doc.path !== 'README.md') {
-                    element.href = `${projectLinks.github}/blob/main/${doc.path}`;
-                    element.style.display = 'flex';
-                }
-                else {
-                    element.style.display = 'none';
-                }
+                // Show when there's a source file to edit/view (any doc with a
+                // path); the menu handles dev-vs-GitHub availability per item.
+                element.style.display = doc.path ? 'flex' : 'none';
             },
         },
-    }, icons.github({
-        style: {
-            _xinIconSize: 16,
-        },
-    }), 'View source on GitHub'), docContent)));
+    }, icons.code({ style: { _xinIconSize: 16 } }), 'Source'), docContent)));
     // Render the landing doc (adopts pre-rendered HTML when hydrating).
     showDoc(currentDoc);
     // Inject test indicator styles
