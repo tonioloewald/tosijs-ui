@@ -15,7 +15,13 @@ export function insertExamples(
   element: HTMLElement,
   context: ExampleContext,
   liveExampleCreator: ElementCreator<LiveExample>,
-  liveExampleTagName: string
+  liveExampleTagName: string,
+  // The source file this doc was extracted from (a `.md`, or a `.ts`/`.js`/`.css`
+  // with `/*# … */` doc comments). Stamped onto each example as
+  // `data-source-file` + `data-example-ordinal` so a DocStore can locate the
+  // originating fenced block to save edits back. Read-only; the write path comes
+  // with Foundation B. Omitted when there's no source (e.g. embedded corpora).
+  sourceFile?: string
 ): void {
   const sources: SourceBlock[] = [
     ...element.querySelectorAll(
@@ -29,6 +35,9 @@ export function insertExamples(
       code: (code as HTMLElement).innerText,
     }))
 
+  // Per-doc ordinal: the Nth live example on the page. Combined with sourceFile
+  // it's the key back to the originating fenced-block group in the source.
+  let ordinal = 0
   for (let index = 0; index < sources.length; index += 1) {
     const exampleSources = [sources[index]]
 
@@ -42,6 +51,11 @@ export function insertExamples(
     }
 
     const example = liveExampleCreator({ context })
+    if (sourceFile !== undefined) {
+      example.setAttribute('data-source-file', sourceFile)
+      example.setAttribute('data-example-ordinal', String(ordinal))
+    }
+    ordinal += 1
     const parent = exampleSources[0].block.parentElement as HTMLElement
     parent.insertBefore(example, exampleSources[0].block)
 

@@ -496,7 +496,9 @@ export function createDocBrowser(options) {
         else {
             docContent.innerHTML = renderDocMarkdown(doc.text);
         }
-        LiveExample.insertExamples(docContent, context);
+        // Stamp each example with its source file (for the source↔doc map). doc.path
+        // is the extracted file (.md, or a source file with /*# … */ comments).
+        LiveExample.insertExamples(docContent, context, doc.path || undefined);
         if (routing === 'path') {
             document.title = projectName
                 ? `${doc.title} — ${projectName}`

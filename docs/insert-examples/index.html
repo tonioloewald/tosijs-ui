@@ -6,97 +6,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="/doc-system.css" data-tosi-doc-system />
-  <title>docs — tosijs-ui</title>
-  <meta name="description" content="Utility for extracting documentation from markdown files and inline comments in source code." />
-  <link rel="canonical" href="https://ui.tosijs.net/docs/" />
+  <title>… — tosijs-ui</title>
+  <meta name="description" content="…" />
+  <link rel="canonical" href="https://ui.tosijs.net/insert-examples/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="docs — tosijs-ui" />
-  <meta property="og:description" content="Utility for extracting documentation from markdown files and inline comments in source code." />
-  <meta property="og:url" content="https://ui.tosijs.net/docs/" />
+  <meta property="og:title" content="… — tosijs-ui" />
+  <meta property="og:description" content="…" />
+  <meta property="og:url" content="https://ui.tosijs.net/insert-examples/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"docs","description":"Utility for extracting documentation from markdown files and inline comments in source code.","url":"https://ui.tosijs.net/docs/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"…","description":"…","url":"https://ui.tosijs.net/insert-examples/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="/favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script>
 </head>
 <body>
   <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="/localized-strings.txt">
   <article class="doc-content">
-<h1>docs</h1>
-<p>Utility for extracting documentation from markdown files and inline comments in source code.</p>
-<blockquote>
-<p><code>docs.ts</code> is intended to be run directly using <code>bun</code>. You can transpile it to javascript if you
-want to run it using node.</p>
-</blockquote>
-<p>This is used by the <code>doc-browser</code> component to build searchable, navigable documentation
-from your project&#39;s source files.</p>
-<h2>Usage</h2>
-<pre><code>import { extractDocs } from &#39;docs&#39;
-
-extractDocs({
-  paths: [&#39;src&#39;, &#39;README.md&#39;],
-  ignore: [&#39;node_modules&#39;, &#39;dist&#39;, &#39;build&#39;]
-  path: &#39;public/docs.json&#39;
-})
-</code></pre>
-<h2>API</h2>
-<h3><code>extractDocs(options)</code></h3>
-<p>Scans directories for markdown files and source code comments.</p>
-<p><strong>Options:</strong></p>
-<ul>
-<li><code>paths</code>: Array of directory paths or file paths to scan</li>
-<li><code>ignore</code>: Array of directory names to ignore (default: [&#39;node_modules&#39;, &#39;dist&#39;])</li>
-<li><code>output</code>: if provided, path to write json result.</li>
-</ul>
-<p><strong>Returns:</strong> Array of <code>Doc</code> objects</p>
-<h3><code>Doc</code> object structure</h3>
-<pre><code>{
-  text: string,        // Markdown content
-  title: string,       // First heading or filename
-  filename: string,    // Just the filename
-  path: string,        // Full file path
-  pin?: &#39;top&#39; | &#39;bottom&#39;  // Optional pinning for sort order
-}
-</code></pre>
-<h2>Documentation Format</h2>
-<h3>Markdown files</h3>
-<p>Any <code>.md</code> file will be included in its entirety.</p>
-<h3>Source code comments</h3>
-<p>Multi-line comments that start with <code>/*#</code> will be extracted as markdown:</p>
-<pre><code>/*#
-# My Component
-
-This is documentation for my component.
-
-```html
-&lt;my-component&gt;&lt;/my-component&gt;
-```
-```js
-console.log(&#39;hello world&#39;)
-```
-```css
-my-componet {
-  color: blue
-}
-```
-*‎/
-
-export class MyComponent extends Component {
-  // implementation
-}
-...
-</code></pre>
-<p>The <a href="/?doc-browser.ts">doc-browser</a> will render the output as a test-bed project with documentation and live examples.</p>
-<h3>Metadata</h3>
-<p>You can include JSON metadata in comments to control sorting:</p>
-<p>html:
-    <!--{ "pin": "bottom" }--></p>
-<p>ts, js, css:
-    /*{ &quot;pin&quot;: &quot;bottom&quot; }*‎/</p>
-<p>This pins the document to the top or bottom of the navigation list. Within a
-pin bucket, add <code>&quot;order&quot;</code> (a number, lower first; default 500) to rank items —
-e.g. <code>{ &quot;pin&quot;: &quot;top&quot;, &quot;order&quot;: 1 }</code> above <code>{ &quot;pin&quot;: &quot;top&quot;, &quot;order&quot;: 2 }</code>.</p>
-<p>...</p>
+<p>…</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -104,7 +30,7 @@ e.g. <code>{ &quot;pin&quot;: &quot;top&quot;, &quot;order&quot;: 1 }</code> abo
     <li><a href="/">tosijs-ui</a></li>
     <li><a href="/bp-loader/">blueprint loading</a></li>
     <li><a href="/icons/">icons</a></li>
-    <li><a href="/insert-examples/">…</a></li>
+    <li><a href="/insert-examples/" aria-current="page" class="current">…</a></li>
     <li><details><summary><a href="/components/">Components</a></summary>
     <ul>
       <li><a href="/babylon-3d/">3d</a></li>
@@ -158,14 +84,14 @@ e.g. <code>{ &quot;pin&quot;: &quot;top&quot;, &quot;order&quot;: 1 }</code> abo
       <li><a href="/track-drag/">trackDrag</a></li>
     </ul>
     </details></li>
-    <li><details open><summary><a href="/appendices/">Appendices</a></summary>
+    <li><details><summary><a href="/appendices/">Appendices</a></summary>
     <ul>
       <li><a href="/doc-system/">doc-system</a></li>
       <li><a href="/kitchen-sink/">kitchen sink</a></li>
       <li><a href="/make-icon-data/">make-icon-data</a></li>
       <li><a href="/doc-browser/">doc-browser</a></li>
       <li><a href="/doc-site-system/">Doc-Site System</a></li>
-      <li><a href="/docs/" aria-current="page" class="current">docs</a></li>
+      <li><a href="/docs/">docs</a></li>
       <li><a href="/icon-composition/">Icon Composition</a></li>
     </ul>
     </details></li>

@@ -204,8 +204,8 @@ export class LiveExample extends Component {
     pendingValues = {};
     pendingShowDefaultTab = false;
     beforeUnloadHandler;
-    static insertExamples(element, context = {}) {
-        insertExamples(element, context, liveExample, LiveExample.tagName);
+    static insertExamples(element, context = {}, sourceFile) {
+        insertExamples(element, context, liveExample, LiveExample.tagName, sourceFile);
     }
     get activeTab() {
         const { editors } = this.parts;

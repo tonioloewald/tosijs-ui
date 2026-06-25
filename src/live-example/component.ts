@@ -229,9 +229,16 @@ export class LiveExample extends Component<ExampleParts> {
 
   static insertExamples(
     element: HTMLElement,
-    context: ExampleContext = {}
+    context: ExampleContext = {},
+    sourceFile?: string
   ): void {
-    insertExamples(element, context, liveExample, LiveExample.tagName as string)
+    insertExamples(
+      element,
+      context,
+      liveExample,
+      LiveExample.tagName as string,
+      sourceFile
+    )
   }
 
   get activeTab(): Element | undefined {

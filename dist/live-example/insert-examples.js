@@ -1,7 +1,13 @@
 /**
  * Find and replace sequences of code blocks with live examples
  */
-export function insertExamples(element, context, liveExampleCreator, liveExampleTagName) {
+export function insertExamples(element, context, liveExampleCreator, liveExampleTagName, 
+// The source file this doc was extracted from (a `.md`, or a `.ts`/`.js`/`.css`
+// with `/*# … */` doc comments). Stamped onto each example as
+// `data-source-file` + `data-example-ordinal` so a DocStore can locate the
+// originating fenced block to save edits back. Read-only; the write path comes
+// with Foundation B. Omitted when there's no source (e.g. embedded corpora).
+sourceFile) {
     const sources = [
         ...element.querySelectorAll('.language-html,.language-js,.language-css,.language-test'),
     ]
@@ -11,6 +17,9 @@ export function insertExamples(element, context, liveExampleCreator, liveExample
         language: code.classList[0].split('-').pop(),
         code: code.innerText,
     }));
+    // Per-doc ordinal: the Nth live example on the page. Combined with sourceFile
+    // it's the key back to the originating fenced-block group in the source.
+    let ordinal = 0;
     for (let index = 0; index < sources.length; index += 1) {
         const exampleSources = [sources[index]];
         // Group consecutive code blocks
@@ -20,6 +29,11 @@ export function insertExamples(element, context, liveExampleCreator, liveExample
             index += 1;
         }
         const example = liveExampleCreator({ context });
+        if (sourceFile !== undefined) {
+            example.setAttribute('data-source-file', sourceFile);
+            example.setAttribute('data-example-ordinal', String(ordinal));
+        }
+        ordinal += 1;
         const parent = exampleSources[0].block.parentElement;
         parent.insertBefore(example, exampleSources[0].block);
         exampleSources.forEach((source) => {

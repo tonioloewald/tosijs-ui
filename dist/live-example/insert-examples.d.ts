@@ -4,4 +4,4 @@ import type { LiveExample } from './component';
 /**
  * Find and replace sequences of code blocks with live examples
  */
-export declare function insertExamples(element: HTMLElement, context: ExampleContext, liveExampleCreator: ElementCreator<LiveExample>, liveExampleTagName: string): void;
+export declare function insertExamples(element: HTMLElement, context: ExampleContext, liveExampleCreator: ElementCreator<LiveExample>, liveExampleTagName: string, sourceFile?: string): void;

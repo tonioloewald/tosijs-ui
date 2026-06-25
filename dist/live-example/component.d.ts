@@ -213,7 +213,7 @@ export declare class LiveExample extends Component<ExampleParts> {
     private pendingValues;
     private pendingShowDefaultTab;
     private beforeUnloadHandler?;
-    static insertExamples(element: HTMLElement, context?: ExampleContext): void;
+    static insertExamples(element: HTMLElement, context?: ExampleContext, sourceFile?: string): void;
     get activeTab(): Element | undefined;
     private get hydrated();
     private getEditorValue;
