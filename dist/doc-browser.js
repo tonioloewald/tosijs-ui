@@ -405,7 +405,27 @@ export function createDocBrowser(options) {
     // back/forward (the host owns history, if any).
     if (!memoryRouting) {
         window.addEventListener('popstate', () => {
+            // Back/forward while the source editor is open with unsaved changes: the
+            // URL already moved, so on "keep editing" we push it back to match the
+            // still-open editor; on discard we close the editor and navigate.
+            if (editUI) {
+                if (editorHasUnsavedChanges() &&
+                    !window.confirm('Discard unsaved changes to the source?')) {
+                    const href = hrefFor(String(editUI.doc.filename));
+                    window.history.pushState({ href }, '', href);
+                    return;
+                }
+                closeEditor();
+            }
             navigateTo(filenameFromLocation());
+        });
+        // Reload / tab-close / external navigation: native "leave site?" prompt when
+        // there are unsaved source edits (the only guard the browser allows here).
+        window.addEventListener('beforeunload', (event) => {
+            if (editorHasUnsavedChanges()) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
         });
     }
     const headerContent = [
