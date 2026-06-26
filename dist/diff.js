@@ -95,6 +95,11 @@ export class TosiDiff extends Component {
             background: 'var(--tosi-diff-bg, #fff)',
             color: 'var(--tosi-diff-color, #222)',
         },
+        // `:host{display:block}` would otherwise beat the UA `[hidden]` rule, so the
+        // element couldn't be hidden via the attribute — restore that.
+        ':host([hidden])': {
+            display: 'none',
+        },
         '.diff-line': {
             display: 'grid',
             gridTemplateColumns: '1.5em 1fr',

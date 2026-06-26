@@ -27,6 +27,9 @@ export declare class TosiDiff extends Component<DiffParts> {
             background: string;
             color: string;
         };
+        ':host([hidden])': {
+            display: string;
+        };
         '.diff-line': {
             display: string;
             gridTemplateColumns: string;
