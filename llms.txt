@@ -1,4 +1,4 @@
-# tosijs-ui v1.6.7
+# tosijs-ui v1.6.9
 
 Simple, robust web-components for use with tosijs or anything else.
 
