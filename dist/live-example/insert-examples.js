@@ -54,5 +54,8 @@ sourceFile) {
             source.block.remove();
         });
         example.showDefaultTab();
+        // Snapshot the original source, then restore any locally-saved edit on top
+        // (per-browser scratchpad, keyed by the data-source-file/ordinal stamps).
+        example.snapshotAndRestoreLocalEdit();
     }
 }

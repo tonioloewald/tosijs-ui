@@ -24,6 +24,9 @@ export declare class LiveExample extends Component<ExampleParts> {
             background: string;
             boxSizing: string;
         };
+        ':host.-locally-edited': {
+            boxShadow: string;
+        };
         ':host.-maximize': {
             position: string;
             left: string;
@@ -240,7 +243,16 @@ export declare class LiveExample extends Component<ExampleParts> {
     content: () => any[];
     connectedCallback(): void;
     disconnectedCallback(): void;
+    private exampleMarkdown;
     copy: () => void;
+    downloadExample: () => void;
+    private originalCode;
+    private localEditKey;
+    private applyEdit;
+    saveLocalEdit: () => void;
+    revertLocalEdit: () => void;
+    snapshotAndRestoreLocalEdit: () => void;
+    sourceMenu: (event: Event) => void;
     toggleMaximize: () => void;
     showCode: () => void;
     closeCode: () => void;

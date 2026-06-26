@@ -11,6 +11,9 @@ export declare const liveExampleStyleSpec: {
         background: string;
         boxSizing: string;
     };
+    ':host.-locally-edited': {
+        boxShadow: string;
+    };
     ':host.-maximize': {
         position: string;
         left: string;

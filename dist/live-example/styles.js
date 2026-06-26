@@ -11,6 +11,11 @@ export const liveExampleStyleSpec = {
         background: 'var(--background)',
         boxSizing: 'border-box',
     },
+    // Local-edit indicator: an inset accent stripe when this example is showing
+    // a locally-saved edit (restored from the per-browser scratchpad).
+    ':host.-locally-edited': {
+        boxShadow: 'inset 3px 0 0 var(--brand-color, #2e8b57)',
+    },
     ':host.-maximize': {
         position: 'fixed',
         left: '0',

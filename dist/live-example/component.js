@@ -132,6 +132,7 @@ import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } fr
 import { executeInline, executeInIframe } from './execution';
 import { insertExamples } from './insert-examples';
 import { rewriteExampleBlocks } from './save-to-source';
+import { exampleEditKey, saveExampleEdit, loadExampleEdit, clearExampleEdit, hasExampleEdit, } from './example-store';
 import { liveExampleStyleSpec } from './styles';
 import { runTests } from './test-harness';
 const { div, tosiSlot, style, button, pre, span } = elements;
@@ -459,9 +460,9 @@ export class LiveExample extends Component {
             class: 'transparent',
             onClick: this.flipLayout,
         }, icons.columns({ class: 'layout-indicator' })), button({
-            title: 'copy as markdown (⌘⇧C | ^⇧C)',
+            title: 'source: copy, download, save/revert local edits',
             class: 'transparent',
-            onClick: this.copy,
+            onClick: this.sourceMenu,
         }, icons.copy()), button({
             title: 'reload (⌘R | ^R)',
             class: 'transparent',
@@ -526,12 +527,119 @@ export class LiveExample extends Component {
             this.beforeUnloadHandler = undefined;
         }
     }
+    exampleMarkdown() {
+        const block = (lang, code) => code !== '' ? '```' + lang + '\n' + code.trim() + '\n```\n' : '';
+        return (block('js', this.js) +
+            block('html', this.html) +
+            block('css', this.css) +
+            block('test', this.test));
+    }
     copy = () => {
-        const js = this.js !== '' ? '```js\n' + this.js.trim() + '\n```\n' : '';
-        const html = this.html !== '' ? '```html\n' + this.html.trim() + '\n```\n' : '';
-        const css = this.css !== '' ? '```css\n' + this.css.trim() + '\n```\n' : '';
-        const test = this.test !== '' ? '```test\n' + this.test.trim() + '\n```\n' : '';
-        navigator.clipboard.writeText(js + html + css + test);
+        navigator.clipboard.writeText(this.exampleMarkdown());
+    };
+    downloadExample = () => {
+        const src = this.getAttribute('data-source-file') || 'example';
+        const ord = this.getAttribute('data-example-ordinal');
+        const name = (src.split('/').pop() || 'example').replace(/\.\w+$/, '') +
+            (ord !== null ? `-example-${ord}` : '') +
+            '.md';
+        const url = URL.createObjectURL(new Blob([this.exampleMarkdown()], { type: 'text/markdown' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = name;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    // ── Local edit scratchpad (per-browser; keyed by the source↔doc map) ───────
+    // The original source blocks, snapshotted at mount so "revert" can restore
+    // them after a locally-saved edit.
+    originalCode = null;
+    localEditKey() {
+        const src = this.getAttribute('data-source-file');
+        const ord = this.getAttribute('data-example-ordinal');
+        return src && ord !== null ? exampleEditKey(src, ord) : '';
+    }
+    applyEdit(edit) {
+        if (edit.js !== undefined)
+            this.js = edit.js;
+        if (edit.html !== undefined)
+            this.html = edit.html;
+        if (edit.css !== undefined)
+            this.css = edit.css;
+        if (edit.test !== undefined)
+            this.test = edit.test;
+    }
+    saveLocalEdit = () => {
+        const key = this.localEditKey();
+        if (!key) {
+            window.alert('This example has no source mapping to key a local save.');
+            return;
+        }
+        saveExampleEdit(key, {
+            js: this.js,
+            html: this.html,
+            css: this.css,
+            test: this.test,
+        });
+        this.classList.add('-locally-edited');
+    };
+    revertLocalEdit = () => {
+        const key = this.localEditKey();
+        if (key)
+            clearExampleEdit(key);
+        if (this.originalCode)
+            this.applyEdit(this.originalCode);
+        this.classList.remove('-locally-edited');
+        this.refresh();
+    };
+    // Called once by insert-examples after the source blocks + map attrs are set:
+    // snapshot the original, then restore any saved local edit on top.
+    snapshotAndRestoreLocalEdit = () => {
+        this.originalCode = {
+            js: this.js,
+            html: this.html,
+            css: this.css,
+            test: this.test,
+        };
+        const key = this.localEditKey();
+        if (!key || !hasExampleEdit(key))
+            return;
+        const edit = loadExampleEdit(key);
+        if (edit) {
+            this.applyEdit(edit);
+            this.classList.add('-locally-edited');
+            this.refresh();
+        }
+    };
+    sourceMenu = (event) => {
+        const key = this.localEditKey();
+        popMenu({
+            target: event.target.closest('button'),
+            width: 'auto',
+            menuItems: [
+                { icon: 'copy', caption: 'Copy as markdown', action: this.copy },
+                { icon: 'download', caption: 'Download', action: this.downloadExample },
+                ...(key
+                    ? [
+                        null,
+                        {
+                            icon: 'save',
+                            caption: 'Save changes (local)',
+                            action: this.saveLocalEdit,
+                        },
+                        ...(hasExampleEdit(key)
+                            ? [
+                                {
+                                    icon: 'x',
+                                    caption: 'Revert to original',
+                                    action: this.revertLocalEdit,
+                                },
+                            ]
+                            : []),
+                    ]
+                    : []),
+            ],
+        });
     };
     toggleMaximize = () => {
         this.classList.toggle('-maximize');
