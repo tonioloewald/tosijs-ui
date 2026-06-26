@@ -4,6 +4,12 @@ export declare class CodeEditor extends WebComponent {
     private source;
     get value(): string;
     set value(text: string);
+    private _original;
+    get original(): string;
+    set original(text: string);
+    private diffOverlay;
+    get showingDiff(): boolean;
+    showDiff(on: boolean): void;
     static initAttributes: {
         mode: string;
         theme: string;

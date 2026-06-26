@@ -25,6 +25,7 @@ and an `ace` property that returns the `ace` module, giving you complete access 
 
 import { Component as WebComponent, ElementCreator } from 'tosijs'
 import { scriptTag } from './via-tag'
+import { tosiDiff, TosiDiff } from './diff'
 
 const ACE_BASE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.2/'
 const DEFAULT_THEME = 'ace/theme/tomorrow'
@@ -73,6 +74,47 @@ export class CodeEditor extends WebComponent {
       this.editor.setValue(text)
       this.editor.clearSelection()
       this.editor.session.getUndoManager().reset()
+    }
+  }
+
+  // Baseline for `showDiff()` — the version to diff the current `value` against.
+  // Defaults to the current value (no diff) until a caller sets it.
+  private _original: string | undefined
+  get original(): string {
+    return this._original ?? this.value
+  }
+  set original(text: string) {
+    this._original = text
+  }
+
+  // Diff overlay — deliberately built only on the editor's public surface
+  // (`value` + `original`) and the tosi-diff component, never the underlying
+  // editor's API, so it survives a future Ace → CodeMirror swap untouched.
+  private diffOverlay: TosiDiff | undefined
+
+  get showingDiff(): boolean {
+    return this.diffOverlay !== undefined && !this.diffOverlay.hidden
+  }
+
+  showDiff(on: boolean): void {
+    if (on) {
+      if (this.diffOverlay === undefined) {
+        this.diffOverlay = tosiDiff({
+          style: {
+            position: 'absolute',
+            inset: '0',
+            zIndex: '5',
+            overflow: 'auto',
+            background: 'var(--tosi-diff-bg, var(--background, #fff))',
+          },
+        })
+        this.append(this.diffOverlay)
+      }
+      this.diffOverlay.original = this.original
+      this.diffOverlay.modified = this.value
+      this.diffOverlay.hidden = false
+    } else if (this.diffOverlay !== undefined) {
+      this.diffOverlay.hidden = true
     }
   }
 

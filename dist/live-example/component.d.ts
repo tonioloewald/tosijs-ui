@@ -258,6 +258,8 @@ export declare class LiveExample extends Component<ExampleParts> {
     saveLocalEdit: () => void;
     revertLocalEdit: () => void;
     snapshotAndRestoreLocalEdit: () => void;
+    viewingChanges: boolean;
+    viewChanges: () => void;
     sourceMenu: (event: Event) => void;
     toggleMaximize: () => void;
     showCode: () => void;

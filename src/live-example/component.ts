@@ -732,6 +732,10 @@ export class LiveExample extends Component<ExampleParts> {
   // Called once by insert-examples after the source blocks + map attrs are set:
   // snapshot the original, then restore any saved local edit on top.
   snapshotAndRestoreLocalEdit = () => {
+    // this.js/html/css/test are guarded (return '' before hydration). Do NOT
+    // touch this.parts.* directly here — that throws "elementRef does not exist"
+    // when the example isn't hydrated yet, which breaks the whole doc render.
+    // Editor diff baselines are applied later, in viewChanges().
     this.originalCode = {
       js: this.js,
       html: this.html,
@@ -745,6 +749,23 @@ export class LiveExample extends Component<ExampleParts> {
       this.applyEdit(edit)
       this.updateEditedIndicator()
       this.refresh()
+    }
+  }
+
+  // Toggle a per-tab diff (current vs original source) across the example's
+  // editors. Each editor diffs its own single text — no need to combine the
+  // html/css/js/test split — so switching tabs shows that tab's changes.
+  viewingChanges = false
+  viewChanges = () => {
+    if (!this.hydrated) return
+    this.viewingChanges = !this.viewingChanges
+    if (this.viewingChanges) this.showCode()
+    const originals = this.originalCode ?? {}
+    for (const tab of ['js', 'html', 'css', 'test'] as const) {
+      // Set the diff baseline (the source) right before showing the diff, now
+      // that the editors are hydrated.
+      this.parts[tab].original = originals[tab] ?? ''
+      this.parts[tab].showDiff(this.viewingChanges)
     }
   }
 
@@ -787,6 +808,14 @@ export class LiveExample extends Component<ExampleParts> {
         { icon: 'copy', caption: 'Copy as markdown', shortcut: '⌘⇧C', action: this.copy },
         { icon: 'download', caption: 'Download', action: this.downloadExample },
         null,
+        this.viewingChanges
+          ? { icon: 'edit', caption: 'Back to editing', action: this.viewChanges }
+          : {
+              icon: 'code',
+              caption: 'View changes',
+              action: this.viewChanges,
+              enabled: hasEdits,
+            },
         ...(key
           ? [
               {
