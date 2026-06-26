@@ -462,7 +462,7 @@ export class LiveExample extends Component<ExampleParts> {
       switch (event.key) {
         case 's':
         case 'r':
-          this.refresh()
+          this.doRefresh()
           block = true
           break
         case '/':
@@ -725,6 +725,8 @@ export class LiveExample extends Component<ExampleParts> {
     const key = this.localEditKey()
     if (key) clearExampleEdit(key)
     if (this.originalCode) this.applyEdit(this.originalCode)
+    // Reverting leaves nothing to diff — drop out of the diff view if we're in it.
+    if (this.viewingChanges) this.viewChanges()
     this.updateEditedIndicator()
     this.refresh()
   }
@@ -774,9 +776,23 @@ export class LiveExample extends Component<ExampleParts> {
   // when they could NEVER apply here (local save needs a source-map key; save to
   // source additionally needs the dev server). Shortcuts are display-only; the
   // keys are routed by handleShortcuts / the editor, not the menu.
+  // Refresh means different things in the two modes: the page-embedded example
+  // re-runs itself; the pop-out editor window (refresh() is a no-op there) pushes
+  // its code to the main window so IT re-runs.
+  doRefresh = () => {
+    if (this.remoteId !== '') {
+      this.refreshRemote()
+    } else {
+      void this.refresh()
+    }
+  }
+
   sourceMenu = (event: Event) => {
     const key = this.localEditKey()
     const hasEdits = () => this.hasLocalEdits()
+    // View changes / Revert need the source snapshot, which only the page-embedded
+    // example has — the pop-out editor window has no originalCode to compare to.
+    const hasSnapshot = this.originalCode != null
     popMenu({
       target: (event.target as HTMLElement).closest('button') as HTMLElement,
       width: 'auto',
@@ -785,9 +801,7 @@ export class LiveExample extends Component<ExampleParts> {
           icon: 'refreshCw',
           caption: 'Refresh',
           shortcut: '⌘R',
-          action: () => {
-            void this.refresh()
-          },
+          action: this.doRefresh,
         },
         { icon: 'columns', caption: 'Flip layout', shortcut: '⌘/', action: this.flipLayout },
         {
@@ -808,14 +822,18 @@ export class LiveExample extends Component<ExampleParts> {
         { icon: 'copy', caption: 'Copy as markdown', shortcut: '⌘⇧C', action: this.copy },
         { icon: 'download', caption: 'Download', action: this.downloadExample },
         null,
-        this.viewingChanges
-          ? { icon: 'edit', caption: 'Back to editing', action: this.viewChanges }
-          : {
-              icon: 'code',
-              caption: 'View changes',
-              action: this.viewChanges,
-              enabled: hasEdits,
-            },
+        ...(hasSnapshot
+          ? [
+              this.viewingChanges
+                ? { icon: 'edit', caption: 'Back to editing', action: this.viewChanges }
+                : {
+                    icon: 'code',
+                    caption: 'View changes',
+                    action: this.viewChanges,
+                    enabled: hasEdits,
+                  },
+            ]
+          : []),
         ...(key
           ? [
               {
@@ -838,12 +856,16 @@ export class LiveExample extends Component<ExampleParts> {
               },
             ]
           : []),
-        {
-          icon: 'rotateCcw',
-          caption: 'Revert to original',
-          action: this.revertLocalEdit,
-          enabled: hasEdits,
-        },
+        ...(hasSnapshot
+          ? [
+              {
+                icon: 'rotateCcw',
+                caption: 'Revert to original',
+                action: this.revertLocalEdit,
+                enabled: hasEdits,
+              },
+            ]
+          : []),
       ],
     })
   }
