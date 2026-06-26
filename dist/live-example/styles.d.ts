@@ -11,7 +11,7 @@ export declare const liveExampleStyleSpec: {
         background: string;
         boxSizing: string;
     };
-    ':host.-locally-edited .source-menu': {
+    ':host.-locally-edited [part="exampleWidgets"]': {
         outline: string;
         outlineOffset: string;
         borderRadius: string;

@@ -12,9 +12,10 @@ export const liveExampleStyleSpec = {
     boxSizing: 'border-box',
   },
 
-  // Local-edit indicator: an accent outline on the example's menu button when
-  // this example differs from its doc source (unsaved or locally-saved edits).
-  ':host.-locally-edited .source-menu': {
+  // Local-edit indicator: an accent outline on the always-visible `<>` example
+  // button (bottom-left) when this example differs from its doc source — visible
+  // whether or not the code editor is open (e.g. an auto-restored saved edit).
+  ':host.-locally-edited [part="exampleWidgets"]': {
     outline: '2px solid var(--brand-color, #da1167)',
     outlineOffset: '1px',
     borderRadius: '4px',

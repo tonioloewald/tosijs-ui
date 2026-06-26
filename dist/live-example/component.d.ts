@@ -24,7 +24,7 @@ export declare class LiveExample extends Component<ExampleParts> {
             background: string;
             boxSizing: string;
         };
-        ':host.-locally-edited .source-menu': {
+        ':host.-locally-edited [part="exampleWidgets"]': {
             outline: string;
             outlineOffset: string;
             borderRadius: string;
