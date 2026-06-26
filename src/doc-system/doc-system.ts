@@ -430,6 +430,15 @@ export class TosiDocSystem extends Component {
     }
 
     this.replaceChildren(this.browser)
+
+    // Hydration done: reveal the page (the generated <head> hid it to mask the
+    // static→live swap). Only the page-owning instance touches document.body;
+    // a nested demo must not. Next frame so the browser has painted first.
+    if (!nested && typeof document !== 'undefined') {
+      requestAnimationFrame(() => {
+        document.body.style.opacity = '1'
+      })
+    }
   }
 }
 
