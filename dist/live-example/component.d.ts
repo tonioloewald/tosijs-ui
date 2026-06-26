@@ -24,8 +24,10 @@ export declare class LiveExample extends Component<ExampleParts> {
             background: string;
             boxSizing: string;
         };
-        ':host.-locally-edited': {
-            boxShadow: string;
+        ':host.-locally-edited .source-menu': {
+            outline: string;
+            outlineOffset: string;
+            borderRadius: string;
         };
         ':host.-maximize': {
             position: string;
@@ -249,6 +251,10 @@ export declare class LiveExample extends Component<ExampleParts> {
     private originalCode;
     private localEditKey;
     private applyEdit;
+    hasLocalEdits(): boolean;
+    private updateEditedIndicator;
+    private canUndo;
+    private canRedo;
     saveLocalEdit: () => void;
     revertLocalEdit: () => void;
     snapshotAndRestoreLocalEdit: () => void;

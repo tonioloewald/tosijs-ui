@@ -12,10 +12,12 @@ export const liveExampleStyleSpec = {
     boxSizing: 'border-box',
   },
 
-  // Local-edit indicator: an inset accent stripe when this example is showing
-  // a locally-saved edit (restored from the per-browser scratchpad).
-  ':host.-locally-edited': {
-    boxShadow: 'inset 3px 0 0 var(--brand-color, #2e8b57)',
+  // Local-edit indicator: an accent outline on the example's menu button when
+  // this example differs from its doc source (unsaved or locally-saved edits).
+  ':host.-locally-edited .source-menu': {
+    outline: '2px solid var(--brand-color, #da1167)',
+    outlineOffset: '1px',
+    borderRadius: '4px',
   },
 
   ':host.-maximize': {

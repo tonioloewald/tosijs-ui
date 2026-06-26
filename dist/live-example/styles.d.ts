@@ -11,8 +11,10 @@ export declare const liveExampleStyleSpec: {
         background: string;
         boxSizing: string;
     };
-    ':host.-locally-edited': {
-        boxShadow: string;
+    ':host.-locally-edited .source-menu': {
+        outline: string;
+        outlineOffset: string;
+        borderRadius: string;
     };
     ':host.-maximize': {
         position: string;

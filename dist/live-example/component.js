@@ -285,6 +285,7 @@ export class LiveExample extends Component {
             undo.disabled = true;
             redo.disabled = true;
         }
+        this.updateEditedIndicator();
         this.updateTestResultsVisibility();
     };
     updateTestResultsVisibility() {
@@ -375,15 +376,6 @@ export class LiveExample extends Component {
                     caption: 'view/edit code in a new window',
                     action: this.openEditorWindow,
                 },
-                ...(this.getAttribute('data-source-file')
-                    ? [
-                        {
-                            icon: 'save',
-                            caption: 'save changes to source',
-                            action: this.saveToSource,
-                        },
-                    ]
-                    : []),
                 null,
                 {
                     icon: this.isMaximized ? 'minimize' : 'maximize',
@@ -460,10 +452,10 @@ export class LiveExample extends Component {
             class: 'transparent',
             onClick: this.flipLayout,
         }, icons.columns({ class: 'layout-indicator' })), button({
-            title: 'source: copy, download, save/revert local edits',
-            class: 'transparent',
+            title: 'example menu — refresh, undo, copy, save/revert edits',
+            class: 'transparent source-menu',
             onClick: this.sourceMenu,
-        }, icons.copy()), button({
+        }, icons.moreVertical()), button({
             title: 'reload (⌘R | ^R)',
             class: 'transparent',
             onClick: this.refreshRemote,
@@ -569,6 +561,34 @@ export class LiveExample extends Component {
         if (edit.test !== undefined)
             this.test = edit.test;
     }
+    // "Has edits" = current code differs from the snapshotted original (trailing
+    // whitespace ignored, since editors normalize it). Drives Save/Revert enabled
+    // state and the local-edit indicator.
+    hasLocalEdits() {
+        if (!this.originalCode)
+            return false;
+        const o = this.originalCode;
+        const t = (s) => (s ?? '').replace(/\s+$/, '');
+        return (t(this.js) !== t(o.js) ||
+            t(this.html) !== t(o.html) ||
+            t(this.css) !== t(o.css) ||
+            t(this.test) !== t(o.test));
+    }
+    updateEditedIndicator() {
+        this.classList.toggle('-locally-edited', this.hasLocalEdits());
+    }
+    canUndo() {
+        const t = this.activeTab;
+        return (t instanceof CodeEditor &&
+            t.editor !== undefined &&
+            t.editor.session.getUndoManager().hasUndo());
+    }
+    canRedo() {
+        const t = this.activeTab;
+        return (t instanceof CodeEditor &&
+            t.editor !== undefined &&
+            t.editor.session.getUndoManager().hasRedo());
+    }
     saveLocalEdit = () => {
         const key = this.localEditKey();
         if (!key) {
@@ -581,7 +601,7 @@ export class LiveExample extends Component {
             css: this.css,
             test: this.test,
         });
-        this.classList.add('-locally-edited');
+        this.updateEditedIndicator();
     };
     revertLocalEdit = () => {
         const key = this.localEditKey();
@@ -589,7 +609,7 @@ export class LiveExample extends Component {
             clearExampleEdit(key);
         if (this.originalCode)
             this.applyEdit(this.originalCode);
-        this.classList.remove('-locally-edited');
+        this.updateEditedIndicator();
         this.refresh();
     };
     // Called once by insert-examples after the source blocks + map attrs are set:
@@ -607,37 +627,77 @@ export class LiveExample extends Component {
         const edit = loadExampleEdit(key);
         if (edit) {
             this.applyEdit(edit);
-            this.classList.add('-locally-edited');
+            this.updateEditedIndicator();
             this.refresh();
         }
     };
+    // The example's overflow menu. Stable item set — actions stay put and toggle
+    // enabled (Save/Revert key off whether there are edits); items are only hidden
+    // when they could NEVER apply here (local save needs a source-map key; save to
+    // source additionally needs the dev server). Shortcuts are display-only; the
+    // keys are routed by handleShortcuts / the editor, not the menu.
     sourceMenu = (event) => {
         const key = this.localEditKey();
+        const hasEdits = () => this.hasLocalEdits();
         popMenu({
             target: event.target.closest('button'),
             width: 'auto',
             menuItems: [
-                { icon: 'copy', caption: 'Copy as markdown', action: this.copy },
+                {
+                    icon: 'refreshCw',
+                    caption: 'Refresh',
+                    shortcut: '⌘R',
+                    action: () => {
+                        void this.refresh();
+                    },
+                },
+                { icon: 'columns', caption: 'Flip layout', shortcut: '⌘/', action: this.flipLayout },
+                {
+                    icon: 'cornerUpLeft',
+                    caption: 'Undo',
+                    shortcut: '⌘Z',
+                    action: this.undo,
+                    enabled: () => this.canUndo(),
+                },
+                {
+                    icon: 'cornerUpRight',
+                    caption: 'Redo',
+                    shortcut: '⌘⇧Z',
+                    action: this.redo,
+                    enabled: () => this.canRedo(),
+                },
+                null,
+                { icon: 'copy', caption: 'Copy as markdown', shortcut: '⌘⇧C', action: this.copy },
                 { icon: 'download', caption: 'Download', action: this.downloadExample },
+                null,
                 ...(key
                     ? [
-                        null,
                         {
                             icon: 'save',
                             caption: 'Save changes (local)',
                             action: this.saveLocalEdit,
+                            enabled: hasEdits,
                         },
-                        ...(hasExampleEdit(key)
-                            ? [
-                                {
-                                    icon: 'x',
-                                    caption: 'Revert to original',
-                                    action: this.revertLocalEdit,
-                                },
-                            ]
-                            : []),
                     ]
                     : []),
+                ...(key && isLocalhost
+                    ? [
+                        {
+                            icon: 'upload',
+                            caption: 'Save to source',
+                            action: () => {
+                                void this.saveToSource();
+                            },
+                            enabled: hasEdits,
+                        },
+                    ]
+                    : []),
+                {
+                    icon: 'rotateCcw',
+                    caption: 'Revert to original',
+                    action: this.revertLocalEdit,
+                    enabled: hasEdits,
+                },
             ],
         });
     };
