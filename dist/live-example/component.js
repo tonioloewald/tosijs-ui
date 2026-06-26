@@ -448,18 +448,10 @@ export class LiveExample extends Component {
             class: 'transparent',
             onClick: this.redo,
         }, icons.cornerUpRight()), button({
-            title: 'flip direction (⌘/ | ^/)',
-            class: 'transparent',
-            onClick: this.flipLayout,
-        }, icons.columns({ class: 'layout-indicator' })), button({
-            title: 'example menu — refresh, undo, copy, save/revert edits',
+            title: 'example menu — refresh, flip, undo, copy, save/revert edits',
             class: 'transparent source-menu',
             onClick: this.sourceMenu,
         }, icons.moreVertical()), button({
-            title: 'reload (⌘R | ^R)',
-            class: 'transparent',
-            onClick: this.refreshRemote,
-        }, icons.refreshCw()), button({
             title: 'close code',
             class: 'transparent',
             onClick: this.closeCode,
