@@ -170,6 +170,8 @@ const testColor = {
 };
 // Test indicator styles - widget inherits button styles from base stylesheet
 const testIndicatorStyleSpec = {
+    '.view-source': { opacity: '0.7' },
+    '.view-source:hover': { opacity: '0.9' },
     '@keyframes test-pulse': {
         '0%, 100%': { opacity: '1' },
         '50%': { opacity: '0.7' },
@@ -601,6 +603,7 @@ export function createDocBrowser(options) {
     const showSourcePreview = (preview) => {
         if (!editUI)
             return;
+        editUI.previewing = preview;
         if (preview) {
             docContent.innerHTML = renderDocMarkdown(docMarkdownFromSource(editUI.editor.value, editUI.doc.path));
             LiveExample.insertExamples(docContent, context, editUI.doc.path || undefined);
@@ -611,7 +614,6 @@ export function createDocBrowser(options) {
     const exitEditSource = () => {
         if (!editUI)
             return;
-        editUI.toolbar.remove();
         editUI.editor.remove();
         const filename = String(app.currentDoc.filename);
         editUI = null;
@@ -640,38 +642,45 @@ export function createDocBrowser(options) {
             return;
         }
         const editor = codeEditor({ mode: editorModeFor(doc.path) });
-        editor.style.cssText =
-            'display:block; width:100%; height:calc(100% - 2.5em); border:none;';
+        // No toolbar — the Source menu carries the edit controls (it adapts while
+        // editing), so the editor fills the whole content area.
+        editor.style.cssText = 'display:block; width:100%; height:100%; border:none;';
         editor.value = content;
-        const fileName = doc.path.split('/').pop() || doc.path;
-        const toolbar = div({ class: 'doc-source-toolbar row', style: { gap: '8px', padding: '6px' } }, span({ style: { flex: '1', opacity: '0.7' } }, fileName), button({ onClick: () => showSourcePreview(false) }, 'Edit'), button({ onClick: () => showSourcePreview(true) }, 'Preview'), button({ onClick: saveSourceEdit }, 'Save'), button({ onClick: () => downloadText(fileName, editor.value) }, 'Download'), button({ onClick: exitEditSource }, 'Done'));
         const container = docContent.parentElement;
-        container.insertBefore(toolbar, docContent);
         container.append(editor);
-        editUI = { editor, toolbar, doc };
+        editUI = { editor, doc, previewing: false };
         showSourcePreview(false);
     };
     const openSourceMenu = (target) => {
         const doc = docs.find((d) => String(d.filename) === String(app.currentDoc.filename));
         if (!doc)
             return;
-        const blobUrl = projectLinks.github && doc.path && doc.path !== 'README.md'
-            ? `${projectLinks.github}/blob/main/${doc.path}`
-            : '';
-        popMenu({
-            target,
-            // The trigger is position:fixed at the top-right; `auto` placement opens
-            // upward into zero space and collapses the menu, so open below-left.
-            position: 'sw',
-            menuItems: [
-                { caption: 'Edit page source', icon: 'edit', action: () => enterEditSource(doc) },
-                ...(blobUrl
+        const fileName = (path) => path.split('/').pop() || path;
+        // While editing, the Source menu becomes the editor's controls (no separate
+        // toolbar). Otherwise it offers entry points: edit, view on GitHub, download.
+        const menuItems = editUI
+            ? [
+                editUI.previewing
+                    ? { caption: 'Back to editing', icon: 'edit', action: () => showSourcePreview(false) }
+                    : { caption: 'Preview changes', icon: 'eye', action: () => showSourcePreview(true) },
+                { caption: 'Save to source', icon: 'save', action: () => void saveSourceEdit() },
+                {
+                    caption: 'Download',
+                    icon: 'download',
+                    action: () => downloadText(fileName(editUI.doc.path), editUI.editor.value),
+                },
+                null,
+                { caption: 'Close editor', icon: 'x', action: exitEditSource },
+            ]
+            : [
+                { caption: 'Edit page source', icon: 'edit', action: () => void enterEditSource(doc) },
+                ...(projectLinks.github && doc.path && doc.path !== 'README.md'
                     ? [
                         {
                             caption: 'View on GitHub',
                             icon: 'github',
                             action: () => {
-                                window.open(blobUrl, '_blank');
+                                window.open(`${projectLinks.github}/blob/main/${doc.path}`, '_blank');
                             },
                         },
                     ]
@@ -681,10 +690,16 @@ export function createDocBrowser(options) {
                     icon: 'download',
                     action: () => void loadSource(doc.path).then((c) => {
                         if (c !== null)
-                            downloadText(doc.path.split('/').pop() || 'source', c);
+                            downloadText(fileName(doc.path), c);
                     }),
                 },
-            ],
+            ];
+        popMenu({
+            target,
+            // The trigger is position:fixed at the top-right; `auto` placement opens
+            // upward into zero space and collapses the menu, so open below-left.
+            position: 'sw',
+            menuItems,
         });
     };
     // ── Hierarchical nav (path routing) ───────────────────────────────────────
@@ -863,17 +878,10 @@ export function createDocBrowser(options) {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            opacity: '0.7',
             transition: 'opacity 0.2s ease',
         },
-        onMouseenter(event) {
-            ;
-            event.currentTarget.style.opacity = '0.9';
-        },
-        onMouseleave(event) {
-            ;
-            event.currentTarget.style.opacity = '0.7';
-        },
+        // Opacity + :hover live in CSS (.view-source) — a JS hover handler
+        // here would fade the delegation root (the whole page), not the button.
         onClick(event) {
             // tosijs delegates clicks, so event.currentTarget is the delegation
             // root, not the button — resolve the real trigger for menu anchoring.
