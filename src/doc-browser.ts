@@ -207,8 +207,8 @@ const testColor = {
 
 // Test indicator styles - widget inherits button styles from base stylesheet
 const testIndicatorStyleSpec: XinStyleSheet = {
-  '.view-source': { opacity: '0.7' },
-  '.view-source:hover': { opacity: '0.9' },
+  '.view-source': { opacity: '0.9' },
+  '.view-source:hover': { opacity: '1' },
   '@keyframes test-pulse': {
     '0%, 100%': { opacity: '1' },
     '50%': { opacity: '0.7' },
@@ -1105,10 +1105,17 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
               position: 'fixed',
               top: 'calc(var(--xin-header-height, 60px) + 5px)',
               right: '5px',
+              // Above the code editor (which fills the content area); below the
+              // popped menu (z 1002).
+              zIndex: '100',
               fontSize: '0.875em',
               color: 'var(--brand-color, inherit)',
-              background: 'none',
+              // Solid, theme-aware chip so it stays legible over the editor.
+              background: 'var(--background, white)',
               border: 'none',
+              borderRadius: '4px',
+              padding: '3px 8px',
+              boxShadow: '0 1px 4px #0003',
               cursor: 'pointer',
               transition: 'opacity 0.2s ease',
             },

@@ -47,6 +47,10 @@ const makeCodeEditor = async (
     tabSize: 2,
     useSoftTabs: true,
     useWorker: false,
+    // Wrap wide lines instead of scrolling horizontally; indentedSoftWrap keeps
+    // wrapped continuations aligned under the line's indent.
+    wrap: true,
+    indentedSoftWrap: true,
     ...options,
   })
   editor.setTheme(theme)
