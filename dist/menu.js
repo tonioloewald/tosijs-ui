@@ -877,7 +877,9 @@ const menuItemStyles = {
     alignItems: 'center',
     justifyContent: 'flex-start',
     textDecoration: 'none',
-    gridTemplateColumns: '0px 1fr 30px',
+    // Shortcut column sizes to its content (collapses to ~0 with no shortcut, fits
+    // compound chords like ⇧⌘Z without clipping).
+    gridTemplateColumns: '0px 1fr max-content',
     width: '100%',
     gap: 0,
     background: 'transparent',
@@ -935,8 +937,16 @@ StyleSheet('xin-menu-helper', {
     '.xin-menu-item, .tosi-menu-item': menuItemStyles,
     '.xin-menu-item, .xin-menu-item > span, .tosi-menu-item, .tosi-menu-item > span': menuItemColorStyles,
     '.xin-menu-with-icons .xin-menu-item, .tosi-menu-with-icons .tosi-menu-item': {
-        gridTemplateColumns: '24px 1fr 30px',
+        gridTemplateColumns: '24px 1fr max-content',
         gap: varDefault.menuItemGap('8px'),
+    },
+    // Keep compound shortcuts on one line and give them a little room from the
+    // caption (covers the no-icon menus too, whose column gap is 0).
+    '.xin-menu-shortcut, .tosi-menu-shortcut': {
+        whiteSpace: 'nowrap',
+        paddingLeft: '1em',
+        textAlign: 'right',
+        opacity: '0.65',
     },
     '.xin-menu-item > :first-child, .tosi-menu-item > :first-child': {
         justifySelf: 'center',
@@ -982,13 +992,13 @@ export const createMenuAction = (item, options) => {
         menuItem = a(props, {
             role: itemRole,
             href: item.action,
-        }, icon, options.localized ? span(localize(item.caption)) : span(item.caption), span(item.shortcut ? displayShortcut(item.shortcut) : ' '));
+        }, icon, options.localized ? span(localize(item.caption)) : span(item.caption), span({ class: 'tosi-menu-shortcut' }, item.shortcut ? displayShortcut(item.shortcut) : ' '));
     }
     else {
         menuItem = button(props, {
             role: itemRole,
             onClick: item.action,
-        }, icon, options.localized ? span(localize(item.caption)) : span(item.caption), span(item.shortcut ? displayShortcut(item.shortcut) : ' '));
+        }, icon, options.localized ? span(localize(item.caption)) : span(item.caption), span({ class: 'tosi-menu-shortcut' }, item.shortcut ? displayShortcut(item.shortcut) : ' '));
     }
     menuItem.classList.add('xin-menu-item', 'tosi-menu-item');
     menuItem.classList.toggle('xin-menu-item-checked', checked !== false);
