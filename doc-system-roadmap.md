@@ -146,9 +146,12 @@ are the seam the whole thing pivots on.)
 > editor previews in-browser (pure `/*# */` extractor) and saves to the file →
 > watcher rebuilds. Per-example "save changes to source" rewrites just that
 > example's blocks via the source↔doc map (`save-to-source.ts`, 7 tests).
+> **View changes (diff): DONE** — reusable `<tosi-diff>` (`src/diff.ts`, LCS line
+> diff) + the editor's Edit / Preview / **View changes** views. **Local
+> save/restore of examples: DONE** (`example-store.ts`, per-browser scratchpad
+> keyed by the source↔doc map; moreVertical example menu).
 > **Still TODO:** the **production path** — IndexedDB *versioned overlay* (apply
-> on render; prod "save" persists there) — currently prod "save" just downloads;
-> and the **View changes (diff)** affordance.
+> on render; prod "save" persists there) — currently prod "save" just downloads.
 
 The write target is a `DocStore` backend chosen by context/config, NOT a hard
 "dev-only" rule:
