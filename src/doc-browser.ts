@@ -700,6 +700,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   // the onRouteChange callback for memory) and then render the doc. Every nav
   // click funnels through here so memory mode never touches window.history.
   const go = (filename: string) => {
+    // If the source editor is open with unsaved changes, confirm before leaving;
+    // on confirm it discards + closes, otherwise navigation is aborted.
+    if (!confirmLeaveEditor()) return
     if (memoryRouting) {
       onRouteChange?.(slugFor(filename))
     } else {
@@ -779,7 +782,40 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
-  let editUI: { editor: CodeEditor; doc: Doc; previewing: boolean } | null = null
+  let editUI: {
+    editor: CodeEditor
+    doc: Doc
+    previewing: boolean
+    // The source as loaded (and re-baselined on save) — compared against the
+    // editor value to detect unsaved changes when navigating away.
+    original: string
+  } | null = null
+
+  const editorHasUnsavedChanges = (): boolean =>
+    editUI !== null && editUI.editor.value !== editUI.original
+
+  // Tear the editor down without re-rendering the current doc (the caller is
+  // about to navigate). exitEditSource() restores the current doc instead.
+  const closeEditor = (): void => {
+    if (!editUI) return
+    editUI.editor.remove()
+    editUI = null
+    docContent.style.display = ''
+  }
+
+  // Called before in-app navigation: if the editor is open with unsaved changes,
+  // confirm discarding them. Returns false to abort navigation.
+  const confirmLeaveEditor = (): boolean => {
+    if (!editUI) return true
+    if (
+      editorHasUnsavedChanges() &&
+      !window.confirm('Discard unsaved changes to the source?')
+    ) {
+      return false
+    }
+    closeEditor()
+    return true
+  }
 
   const showSourcePreview = (preview: boolean): void => {
     if (!editUI) return
@@ -796,10 +832,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
 
   const exitEditSource = (): void => {
     if (!editUI) return
-    editUI.editor.remove()
     const filename = String(app.currentDoc.filename)
-    editUI = null
-    docContent.style.display = ''
+    closeEditor()
     navigateTo(filename) // restore the canonical rendered doc
   }
 
@@ -808,6 +842,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     const { doc, editor } = editUI
     const ok = await saveSourceToDisk(doc.path, editor.value)
     if (ok) {
+      editUI.original = editor.value // saved — this is the new clean baseline
       showSourcePreview(true) // the watcher also rebuilds in the background
     } else {
       // No write endpoint (deployed site) — hand the file back for the repo.
@@ -829,7 +864,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     editor.value = content
     const container = docContent.parentElement as HTMLElement
     container.append(editor)
-    editUI = { editor, doc, previewing: false }
+    editUI = { editor, doc, previewing: false, original: content }
     showSourcePreview(false)
   }
 
