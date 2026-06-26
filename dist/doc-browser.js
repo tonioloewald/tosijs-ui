@@ -161,6 +161,7 @@ import { icons } from './icons';
 import { tosiLocalized } from './localize';
 import { popMenu } from './menu';
 import { codeEditor } from './code-editor';
+import { tosiDiff } from './diff';
 const { div, span, a, header, button, template, input, h2, details, summary, ul, li } = elements;
 // Test colors
 const testColor = {
@@ -646,16 +647,26 @@ export function createDocBrowser(options) {
         closeEditor();
         return true;
     };
-    const showSourcePreview = (preview) => {
+    // Switch the source editor between the raw editor, the rendered preview, and a
+    // diff of the edits against the loaded original. preview/diff render into the
+    // doc-content area; edit shows the CodeEditor.
+    const setSourceView = (view) => {
         if (!editUI)
             return;
-        editUI.previewing = preview;
-        if (preview) {
+        editUI.view = view;
+        if (view === 'preview') {
             docContent.innerHTML = renderDocMarkdown(docMarkdownFromSource(editUI.editor.value, editUI.doc.path));
             LiveExample.insertExamples(docContent, context, editUI.doc.path || undefined);
         }
-        docContent.style.display = preview ? '' : 'none';
-        editUI.editor.style.display = preview ? 'none' : 'block';
+        else if (view === 'diff') {
+            docContent.replaceChildren(tosiDiff({
+                original: editUI.original,
+                modified: editUI.editor.value,
+                style: { display: 'block', width: '100%', height: '100%' },
+            }));
+        }
+        docContent.style.display = view === 'edit' ? 'none' : '';
+        editUI.editor.style.display = view === 'edit' ? 'block' : 'none';
     };
     const exitEditSource = () => {
         if (!editUI)
@@ -671,7 +682,7 @@ export function createDocBrowser(options) {
         const ok = await saveSourceToDisk(doc.path, editor.value);
         if (ok) {
             editUI.original = editor.value; // saved — this is the new clean baseline
-            showSourcePreview(true); // the watcher also rebuilds in the background
+            setSourceView('preview'); // the watcher also rebuilds in the background
         }
         else {
             // No write endpoint (deployed site) — hand the file back for the repo.
@@ -693,8 +704,8 @@ export function createDocBrowser(options) {
         editor.value = content;
         const container = docContent.parentElement;
         container.append(editor);
-        editUI = { editor, doc, previewing: false, original: content };
-        showSourcePreview(false);
+        editUI = { editor, doc, view: 'edit', original: content };
+        setSourceView('edit');
     };
     const openSourceMenu = (target) => {
         const doc = docs.find((d) => String(d.filename) === String(app.currentDoc.filename));
@@ -705,9 +716,19 @@ export function createDocBrowser(options) {
         // toolbar). Otherwise it offers entry points: edit, view on GitHub, download.
         const menuItems = editUI
             ? [
-                editUI.previewing
-                    ? { caption: 'Back to editing', icon: 'edit', action: () => showSourcePreview(false) }
-                    : { caption: 'Preview changes', icon: 'eye', action: () => showSourcePreview(true) },
+                ...(editUI.view !== 'edit'
+                    ? [{ caption: 'Edit', icon: 'edit', action: () => setSourceView('edit') }]
+                    : []),
+                ...(editUI.view !== 'preview'
+                    ? [{ caption: 'Preview', icon: 'eye', action: () => setSourceView('preview') }]
+                    : []),
+                {
+                    caption: 'View changes',
+                    icon: 'code',
+                    action: () => setSourceView('diff'),
+                    enabled: () => editorHasUnsavedChanges(),
+                },
+                null,
                 { caption: 'Save to source', icon: 'save', action: () => void saveSourceEdit() },
                 {
                     caption: 'Download',

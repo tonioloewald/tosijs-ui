@@ -28,6 +28,8 @@ relevant dist/*.js file for complete docs, usage examples, and API.
   This is a color input field that supports opacity
 - dist/dialog.js — dialog
   `<tosi-dialog>` is a simple wrapper around the standard HTML `<dialog>` element designed
+- dist/diff.js — diff
+  `<tosi-diff>` renders a unified, line-by-line diff between two strings — the kind
 - dist/doc-browser.js — doc-browser
   The `tosijs-ui` library provides everything you need to create a self-documented testbed similar
 - dist/drag-and-drop.js — drag & drop

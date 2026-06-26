@@ -6,93 +6,44 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="/doc-system.css" data-tosi-doc-system />
-  <title>ab-test — tosijs-ui</title>
-  <meta name="description" content="&lt;tosi-ab&gt; provides a simple method for implementing A|B-testing." />
-  <link rel="canonical" href="https://ui.tosijs.net/ab-test/" />
+  <title>diff — tosijs-ui</title>
+  <meta name="description" content="&lt;tosi-diff&gt; renders a unified, line-by-line diff between two strings — the kind of view you&#39;d see in a code review, with removed lines marked - and added lines…" />
+  <link rel="canonical" href="https://ui.tosijs.net/diff/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="ab-test — tosijs-ui" />
-  <meta property="og:description" content="&lt;tosi-ab&gt; provides a simple method for implementing A|B-testing." />
-  <meta property="og:url" content="https://ui.tosijs.net/ab-test/" />
+  <meta property="og:title" content="diff — tosijs-ui" />
+  <meta property="og:description" content="&lt;tosi-diff&gt; renders a unified, line-by-line diff between two strings — the kind of view you&#39;d see in a code review, with removed lines marked - and added lines…" />
+  <meta property="og:url" content="https://ui.tosijs.net/diff/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"ab-test","description":"\u003ctosi-ab> provides a simple method for implementing A|B-testing.","url":"https://ui.tosijs.net/ab-test/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"diff","description":"\u003ctosi-diff> renders a unified, line-by-line diff between two strings — the kind of view you'd see in a code review, with removed lines marked - and added lines…","url":"https://ui.tosijs.net/diff/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="/favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script>
 </head>
 <body>
   <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="/localized-strings.txt">
   <article class="doc-content">
-<h1>ab-test</h1>
-<p><code>&lt;tosi-ab&gt;</code> provides a simple method for implementing A|B-testing.</p>
-<pre><code class="language-js">import { AbTest } from &#39;tosijs-ui&#39;
+<h1>diff</h1>
+<p><code>&lt;tosi-diff&gt;</code> renders a unified, line-by-line diff between two strings — the kind
+of view you&#39;d see in a code review, with removed lines marked <code>-</code> and added
+lines marked <code>+</code>.</p>
+<p>Set its <code>original</code> and <code>modified</code> properties (or attributes) to the two versions
+of the text; it recomputes and re-renders. (They&#39;re named <code>original</code>/<code>modified</code>
+rather than <code>before</code>/<code>after</code> to avoid the native <code>Element.before()</code>/<code>after()</code>
+methods.)</p>
+<pre><code class="language-js">const { tosiDiff } = tosijsui
 
-function randomize() {
-  const conditions = {
-    testA: Math.random() &lt; 0.5,
-    testB: Math.random() &lt; 0.5,
-    testC: Math.random() &lt; 0.5
-  }
-
-  AbTest.conditions = conditions
-
-  preview.querySelector(&#39;pre&#39;).innerText = JSON.stringify(conditions, null, 2)
-}
-
-preview.querySelector(&#39;.randomize-conditions&#39;).addEventListener(&#39;click&#39;, randomize)
-
-randomize()
+preview.append(
+  tosiDiff({
+    original: &#39;one\ntwo\nthree\nfour&#39;,
+    modified: &#39;one\nTWO\nthree\nfour\nfive&#39;,
+    style: { width: &#39;100%&#39;, height: &#39;100%&#39; },
+  })
+)
 </code></pre>
-<pre><code class="language-html">&lt;div style=&quot;display: flex; gap: 10px; align-items: center;&quot;&gt;
-  &lt;div style=&quot;display: flex; flex-direction: column; gap: 10px;&quot;&gt;
-    &lt;tosi-ab class=&quot;a&quot; condition=&quot;testA&quot;&gt;
-      &lt;p&gt;testA&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;not-a&quot; not condition=&quot;testA&quot;&gt;
-      &lt;p&gt;not testA&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;b&quot; condition=&quot;testB&quot;&gt;
-      &lt;p&gt;testB&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;not-b&quot; not condition=&quot;testB&quot;&gt;
-      &lt;p&gt;not testB&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;c&quot; condition=&quot;testC&quot;&gt;
-      &lt;p&gt;testC&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;not-c&quot; not condition=&quot;testC&quot;&gt;
-      &lt;p&gt;not testC&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-  &lt;/div&gt;
-  &lt;pre&gt;
-  &lt;/pre&gt;
-&lt;/div&gt;
-&lt;button class=&quot;randomize-conditions&quot;&gt;Randomize&lt;/button&gt;
-</code></pre>
-<pre><code class="language-css">.preview {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: flex-start;
-}
-.preview p {
-  background: #44c;
-  color: white;
-  display: block;
-  border-radius: 99px;
-  padding: 4px 10px;
-  margin: 0;
-}
-
-.preview tosi-ab[not] p {
-  background: red;
-}
-</code></pre>
-<ul>
-<li>Set <code>AbTest.conditions</code> to anything you like.</li>
-<li>Use <code>&lt;tosi-ab&gt;</code> elements to display conditional content.</li>
-<li><code>condition</code> attribute determines which value in <code>AbTest.conditions</code> controls the element</li>
-<li><code>not</code> reverses the condition (so <code>&lt;tosi-ab not condition=&quot;foo&quot;&gt;</code> will be visible if <code>conditions.foo</code> is <code>false</code>)</li>
-</ul>
+<p>The diff is computed with a longest-common-subsequence pass over the lines, so
+unchanged lines are shown as context and only genuine insertions/deletions are
+highlighted. The pure <code>diffLines(before, after)</code> function is exported too, if you
+just want the data.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -100,13 +51,13 @@ randomize()
     <li><a href="/">tosijs-ui</a></li>
     <li><a href="/bp-loader/">blueprint loading</a></li>
     <li><a href="/icons/">icons</a></li>
-    <li><details><summary><a href="/components/">Components</a></summary>
+    <li><details open><summary><a href="/components/">Components</a></summary>
     <ul>
       <li><a href="/babylon-3d/">3d</a></li>
       <li><a href="/carousel/">carousel</a></li>
       <li><a href="/code-editor/">code</a></li>
       <li><a href="/dialog/">dialog</a></li>
-      <li><a href="/diff/">diff</a></li>
+      <li><a href="/diff/" aria-current="page" class="current">diff</a></li>
       <li><a href="/editable-rect/">editable-rect</a></li>
       <li><a href="/component/">example</a></li>
       <li><a href="/float/">float</a></li>
@@ -141,9 +92,9 @@ randomize()
       <li><a href="/tag-list/">tag-list</a></li>
     </ul>
     </details></li>
-    <li><details open><summary><a href="/helper-libraries/">Helper Libraries</a></summary>
+    <li><details><summary><a href="/helper-libraries/">Helper Libraries</a></summary>
     <ul>
-      <li><a href="/ab-test/" aria-current="page" class="current">ab-test</a></li>
+      <li><a href="/ab-test/">ab-test</a></li>
       <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
       <li><a href="/live-theme/">live-theme</a></li>
       <li><a href="/localize/">localize</a></li>

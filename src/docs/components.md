@@ -12,6 +12,7 @@ tables, menus, layout, media, and more.
 - [carousel](/carousel/)
 - [code](/code-editor/)
 - [dialog](/dialog/)
+- [diff](/diff/)
 - [editable-rect](/editable-rect/)
 - [example](/component/)
 - [float](/float/)

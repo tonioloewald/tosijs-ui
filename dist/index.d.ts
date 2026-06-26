@@ -6,6 +6,7 @@ export * from './carousel';
 export * from './code-editor';
 export * from './color-input';
 export * from './data-table';
+export * from './diff';
 export * from './dialog';
 export * from './doc-browser';
 export * from './doc-system/doc-system';

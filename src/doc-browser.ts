@@ -174,6 +174,7 @@ import { icons } from './icons'
 import { tosiLocalized } from './localize'
 import { popMenu } from './menu'
 import { codeEditor, CodeEditor } from './code-editor'
+import { tosiDiff } from './diff'
 
 // Types for global test results
 export interface PageTestResults {
@@ -808,7 +809,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   let editUI: {
     editor: CodeEditor
     doc: Doc
-    previewing: boolean
+    view: 'edit' | 'preview' | 'diff'
     // The source as loaded (and re-baselined on save) — compared against the
     // editor value to detect unsaved changes when navigating away.
     original: string
@@ -840,17 +841,28 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     return true
   }
 
-  const showSourcePreview = (preview: boolean): void => {
+  // Switch the source editor between the raw editor, the rendered preview, and a
+  // diff of the edits against the loaded original. preview/diff render into the
+  // doc-content area; edit shows the CodeEditor.
+  const setSourceView = (view: 'edit' | 'preview' | 'diff'): void => {
     if (!editUI) return
-    editUI.previewing = preview
-    if (preview) {
+    editUI.view = view
+    if (view === 'preview') {
       docContent.innerHTML = renderDocMarkdown(
         docMarkdownFromSource(editUI.editor.value, editUI.doc.path)
       )
       LiveExample.insertExamples(docContent, context, editUI.doc.path || undefined)
+    } else if (view === 'diff') {
+      docContent.replaceChildren(
+        tosiDiff({
+          original: editUI.original,
+          modified: editUI.editor.value,
+          style: { display: 'block', width: '100%', height: '100%' },
+        })
+      )
     }
-    docContent.style.display = preview ? '' : 'none'
-    editUI.editor.style.display = preview ? 'none' : 'block'
+    docContent.style.display = view === 'edit' ? 'none' : ''
+    editUI.editor.style.display = view === 'edit' ? 'block' : 'none'
   }
 
   const exitEditSource = (): void => {
@@ -866,7 +878,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     const ok = await saveSourceToDisk(doc.path, editor.value)
     if (ok) {
       editUI.original = editor.value // saved — this is the new clean baseline
-      showSourcePreview(true) // the watcher also rebuilds in the background
+      setSourceView('preview') // the watcher also rebuilds in the background
     } else {
       // No write endpoint (deployed site) — hand the file back for the repo.
       downloadText(doc.path.split('/').pop() || 'source.txt', editor.value)
@@ -887,8 +899,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     editor.value = content
     const container = docContent.parentElement as HTMLElement
     container.append(editor)
-    editUI = { editor, doc, previewing: false, original: content }
-    showSourcePreview(false)
+    editUI = { editor, doc, view: 'edit', original: content }
+    setSourceView('edit')
   }
 
   const openSourceMenu = (target: HTMLElement): void => {
@@ -902,9 +914,19 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     // toolbar). Otherwise it offers entry points: edit, view on GitHub, download.
     const menuItems = editUI
       ? [
-          editUI.previewing
-            ? { caption: 'Back to editing', icon: 'edit', action: () => showSourcePreview(false) }
-            : { caption: 'Preview changes', icon: 'eye', action: () => showSourcePreview(true) },
+          ...(editUI.view !== 'edit'
+            ? [{ caption: 'Edit', icon: 'edit', action: () => setSourceView('edit') }]
+            : []),
+          ...(editUI.view !== 'preview'
+            ? [{ caption: 'Preview', icon: 'eye', action: () => setSourceView('preview') }]
+            : []),
+          {
+            caption: 'View changes',
+            icon: 'code',
+            action: () => setSourceView('diff'),
+            enabled: () => editorHasUnsavedChanges(),
+          },
+          null,
           { caption: 'Save to source', icon: 'save', action: () => void saveSourceEdit() },
           {
             caption: 'Download',
