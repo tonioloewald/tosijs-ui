@@ -981,7 +981,7 @@ const dragTargetHoverStyles = {
   )} 50%, transparent) !important`,
 }
 
-StyleSheet('xin-menu-helper', {
+const menuHelperStyleSpec = {
   '.xin-menu, .tosi-menu': menuStyles,
   '.xin-menu > div, .tosi-menu > div': {
     width: varDefault.menuWidth('auto'),
@@ -1050,7 +1050,18 @@ StyleSheet('xin-menu-helper', {
   '.xin-drop-over > span, .tosi-drop-over > span': dropOverSpanStyles,
   '.xin-drop-over svg, .tosi-drop-over svg': dropOverSvgStyles,
   '.drag-target': dragTargetHoverStyles,
-})
+}
+
+// Inject menu styles on first use (popMenu / popDropMenu / a <tosi-menu>
+// connecting) rather than at import, so importing this module has no side effect
+// and it can be tree-shaken when unused. StyleSheet() dedupes by id; the flag
+// just avoids re-calling it.
+let menuStylesInjected = false
+function ensureMenuStyles(): void {
+  if (menuStylesInjected) return
+  menuStylesInjected = true
+  StyleSheet('xin-menu-helper', menuHelperStyleSpec)
+}
 
 export const createMenuAction = (
   item: MenuAction,
@@ -1482,6 +1493,7 @@ document.body.addEventListener('keydown', (event: KeyboardEvent) => {
 })
 
 export const popMenu = (options: PopMenuOptions): void => {
+  ensureMenuStyles()
   options = Object.assign({ submenuDepth: 0 }, options)
   const { target, position, submenuDepth } = options
   if (lastPopped && !document.body.contains(lastPopped?.menu)) {
@@ -1528,6 +1540,7 @@ export const popMenu = (options: PopMenuOptions): void => {
 }
 
 export const popDropMenu = (options: PopDropMenuOptions): void => {
+  ensureMenuStyles()
   const { dataTypes, ...rest } = options
   const filtered = filterForDrop(
     options.menuItems,
@@ -1797,6 +1810,7 @@ export class TosiMenu extends Component<TosiMenuParts> {
 
   connectedCallback() {
     super.connectedCallback()
+    ensureMenuStyles()
     document.addEventListener('keydown', this.handleShortcut, true)
     if (this.acceptsDrop) {
       this.dataset.drop = this.acceptsDrop

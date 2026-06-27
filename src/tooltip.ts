@@ -60,7 +60,7 @@ let currentTarget: HTMLElement | null = null
 
 const TOOLTIP_CLASS = 'tosi-tooltip'
 
-StyleSheet('tosi-tooltip', {
+const tooltipStyleSpec = {
   [`.${TOOLTIP_CLASS}`]: {
     pointerEvents: 'none',
     padding: varDefault.tosiTooltipPadding('4px 10px'),
@@ -110,7 +110,17 @@ StyleSheet('tosi-tooltip', {
     right: '-4px',
     top: 'var(--tosi-tooltip-arrow)',
   },
-})
+}
+
+// Inject tooltip styles on first use (showTooltip / initTooltips) rather than at
+// import, so importing this module has no side effect and it tree-shakes when
+// unused. StyleSheet() dedupes by id; the flag avoids re-calling it.
+let tooltipStylesInjected = false
+function ensureTooltipStyles(): void {
+  if (tooltipStylesInjected) return
+  tooltipStylesInjected = true
+  StyleSheet('tosi-tooltip', tooltipStyleSpec)
+}
 
 function hideTooltip(): void {
   if (showTimeout !== null) {
@@ -167,6 +177,7 @@ function showTooltip(
   text: string,
   useLocalize: boolean
 ): void {
+  ensureTooltipStyles()
   hideTooltip()
   currentTarget = target
 
@@ -205,6 +216,7 @@ function findTooltipTarget(event: Event): HTMLElement | null {
 }
 
 export function initTooltips(options: TooltipOptions = {}): void {
+  ensureTooltipStyles()
   const {
     convertTitles = true,
     delay = 250,

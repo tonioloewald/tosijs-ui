@@ -47,7 +47,7 @@ let tooltipFloat = null;
 let showTimeout = null;
 let currentTarget = null;
 const TOOLTIP_CLASS = 'tosi-tooltip';
-StyleSheet('tosi-tooltip', {
+const tooltipStyleSpec = {
     [`.${TOOLTIP_CLASS}`]: {
         pointerEvents: 'none',
         padding: varDefault.tosiTooltipPadding('4px 10px'),
@@ -97,7 +97,17 @@ StyleSheet('tosi-tooltip', {
         right: '-4px',
         top: 'var(--tosi-tooltip-arrow)',
     },
-});
+};
+// Inject tooltip styles on first use (showTooltip / initTooltips) rather than at
+// import, so importing this module has no side effect and it tree-shakes when
+// unused. StyleSheet() dedupes by id; the flag avoids re-calling it.
+let tooltipStylesInjected = false;
+function ensureTooltipStyles() {
+    if (tooltipStylesInjected)
+        return;
+    tooltipStylesInjected = true;
+    StyleSheet('tosi-tooltip', tooltipStyleSpec);
+}
 function hideTooltip() {
     if (showTimeout !== null) {
         clearTimeout(showTimeout);
@@ -145,6 +155,7 @@ function renderText(text, useLocalize) {
     return el;
 }
 function showTooltip(target, text, useLocalize) {
+    ensureTooltipStyles();
     hideTooltip();
     currentTarget = target;
     const { top, left, width } = target.getBoundingClientRect();
@@ -177,6 +188,7 @@ function findTooltipTarget(event) {
     return null;
 }
 export function initTooltips(options = {}) {
+    ensureTooltipStyles();
     const { convertTitles = true, delay = 250, localize: useLocalize = false, } = options;
     document.addEventListener('pointermove', (event) => {
         if (convertTitles) {
