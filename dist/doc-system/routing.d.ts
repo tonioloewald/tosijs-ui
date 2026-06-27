@@ -13,6 +13,14 @@ export declare function buildSlugMap(docs: DocLike[]): Record<string, string>;
 /** site-root-relative path for a slug: '' -> '/', 'button' -> '/button/' */
 export declare function pathForSlug(slug: string): string;
 /**
+ * Rewrite legacy `?<filename>` (and `/?<filename>`) doc links in an HTML string
+ * to resolved hrefs. Used by the static generator so the pre-rendered pages have
+ * clean links for no-JS readers, crawlers, and the brief window before the
+ * doc-browser hydrates. `hrefFor` returns the target href for a known filename,
+ * or null to leave the link untouched (unknown filename / a real query string).
+ */
+export declare function rewriteDocLinks(html: string, hrefFor: (filename: string) => string | null): string;
+/**
  * Map a legacy `?<filename>` query (the old doc-browser's query-param routing,
  * e.g. `?button.ts`, `?README.md`) to the new slug path (`/button/`, `/`).
  *

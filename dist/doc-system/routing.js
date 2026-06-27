@@ -47,6 +47,19 @@ export function pathForSlug(slug) {
     return slug === '' ? '/' : `/${slug}/`;
 }
 /**
+ * Rewrite legacy `?<filename>` (and `/?<filename>`) doc links in an HTML string
+ * to resolved hrefs. Used by the static generator so the pre-rendered pages have
+ * clean links for no-JS readers, crawlers, and the brief window before the
+ * doc-browser hydrates. `hrefFor` returns the target href for a known filename,
+ * or null to leave the link untouched (unknown filename / a real query string).
+ */
+export function rewriteDocLinks(html, hrefFor) {
+    return html.replace(/href="\/?\?([^"&=]+)"/g, (match, query) => {
+        const href = hrefFor(decodeURIComponent(query));
+        return href === null ? match : `href="${href}"`;
+    });
+}
+/**
  * Map a legacy `?<filename>` query (the old doc-browser's query-param routing,
  * e.g. `?button.ts`, `?README.md`) to the new slug path (`/button/`, `/`).
  *

@@ -406,6 +406,37 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         : ''
   }
 
+  // Resolve a content-link anchor to one of our docs' filenames, in either the
+  // legacy `?filename` form or a clean `/slug/` path — or null for external
+  // links, in-page anchors, mailto:, downloads, etc. Used to navigate internal
+  // doc links client-side (via go()) instead of triggering a full page reload,
+  // and to canonicalize their hrefs for the current routing mode.
+  const docFilenameForHref = (anchor: HTMLAnchorElement): string | null => {
+    const raw = anchor.getAttribute('href') || ''
+    if (raw === '' || raw.startsWith('#')) return null
+    let url: URL
+    try {
+      url = new URL(raw, document.location.href)
+    } catch {
+      return null
+    }
+    if (url.origin !== document.location.origin) return null // external
+    const known = (filename: string): string | null =>
+      docs.some((doc) => doc.filename === filename) ? filename : null
+    // Legacy `?filename` form: a single bare filename, not a real query string.
+    const query = url.search.replace(/^\?/, '')
+    if (query !== '' && !query.includes('=') && !query.includes('&')) {
+      const filename = known(decodeURIComponent(query))
+      if (filename) return filename
+    }
+    // Clean `/slug/` path form (only meaningful when slugs are in play).
+    if (!memoryRouting && routing !== 'query') {
+      const filename = known(filenameForPath(url.pathname, slugMap))
+      if (filename) return filename
+    }
+    return null
+  }
+
   const docName = filenameFromLocation() || docs[0]?.filename || 'README.md'
 
   const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0]
@@ -695,6 +726,21 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   // matches the initial doc. A memory-routed embed's initial doc
   // (initialRoute/docs[0]) has no relation to whatever happens to sit inside the
   // host element (often an empty placeholder), so always render it fresh.
+  // Canonicalize internal content links to the current routing mode's href and
+  // tag them — so copy-link / right-click / no-JS land on the right page, and a
+  // left-click can be short-circuited to client-side nav. Authored docs use the
+  // routing-agnostic `?filename` form (the only one resolvable in every mode);
+  // this rewrites them to `/slug/` on the static path-routed site, etc.
+  const rewriteContentLinks = (): void => {
+    for (const anchor of docContent.querySelectorAll('a')) {
+      const filename = docFilenameForHref(anchor as HTMLAnchorElement)
+      if (filename !== null) {
+        anchor.setAttribute('href', hrefFor(filename))
+        ;(anchor as HTMLElement).dataset.docLink = filename
+      }
+    }
+  }
+
   let adoptInitialContent = contentElement !== undefined && !memoryRouting
   const showDoc = (doc: Doc) => {
     if (adoptInitialContent) {
@@ -702,6 +748,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     } else {
       docContent.innerHTML = renderDocMarkdown(doc.text)
     }
+    rewriteContentLinks()
     // Stamp each example with its source file (for the source↔doc map). doc.path
     // is the extracted file (.md, or a source file with doc comments).
     LiveExample.insertExamples(docContent, context, doc.path || undefined)
@@ -735,6 +782,32 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     }
     navigateTo(filename)
   }
+
+  // Intercept clicks on internal doc links anywhere in the rendered content so
+  // they navigate client-side instead of reloading the page. Plain left-clicks
+  // only — modified clicks / middle-clicks / new-tab / download links fall
+  // through to the browser. Works for both freshly-rendered and statically
+  // pre-rendered (adopted) content, resolving the href at click time.
+  docContent.addEventListener('click', (event: MouseEvent) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return
+    const anchor = (event.target as HTMLElement).closest(
+      'a'
+    ) as HTMLAnchorElement | null
+    if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download'))
+      return
+    const filename = docFilenameForHref(anchor)
+    if (filename === null) return
+    event.preventDefault()
+    go(filename)
+  })
 
   // ── Edit page source (Foundation B / #4) ──────────────────────────────────
   // The "view source" affordance opens a menu: edit the whole source file in a
@@ -851,6 +924,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       docContent.innerHTML = renderDocMarkdown(
         docMarkdownFromSource(editUI.editor.value, editUI.doc.path)
       )
+      rewriteContentLinks()
       LiveExample.insertExamples(docContent, context, editUI.doc.path || undefined)
     } else if (view === 'diff') {
       docContent.replaceChildren(

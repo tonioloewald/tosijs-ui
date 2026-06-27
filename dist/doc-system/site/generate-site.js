@@ -10,7 +10,7 @@ the IIFE bundle loads.
 Build-time only (uses Bun.write). Shares slug + markdown rendering with the runtime
 component (src/doc-system/*) so static and hydrated output agree.
 */
-import { buildSlugMap, pathForSlug } from '../routing';
+import { buildSlugMap, pathForSlug, rewriteDocLinks } from '../routing';
 import { buildNavTree, navOpenPath } from '../nav-tree';
 import { renderDocMarkdown, docDescription } from '../render';
 const escapeAttr = (s) => s
@@ -93,7 +93,12 @@ function pageHtml(doc, config, slugMap, configAttr) {
         : doc.keywords || '';
     const canonical = baseUrl + withBase(basePath, pathForSlug(slugMap[doc.filename]));
     const imageAbs = absUrl(baseUrl, withBase(basePath, doc.image || config.ogImage || ''));
-    const body = renderDocMarkdown(doc.text);
+    // Rewrite legacy `?filename` content links to clean `/slug/` paths so the
+    // static HTML is correct for no-JS readers and crawlers (the doc-browser also
+    // does this client-side after hydration).
+    const body = rewriteDocLinks(renderDocMarkdown(doc.text), (filename) => slugMap[filename] !== undefined
+        ? withBase(basePath, pathForSlug(slugMap[filename]))
+        : null);
     const nav = navHtml(config.docs, slugMap, doc.filename, basePath);
     const navbar = linkListHtml('doc-navbar', config.navbarLinks);
     const jsonLd = baseUrl

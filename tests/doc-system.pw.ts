@@ -47,3 +47,28 @@ test('static page hydrates and navigates client-side', async ({ page }) => {
   await page.waitForFunction(() => location.pathname === '/carousel/')
   await expect(page).toHaveTitle('carousel — tosijs-ui')
 })
+
+test('internal content links navigate client-side without reload', async ({
+  page,
+}) => {
+  await page.goto(`${BASE}/menu/`)
+  await page.waitForFunction(() => !!customElements.get('tosi-doc-system'))
+
+  // The menu doc links to the table example with the legacy `?data-table.ts`
+  // form; both the static generator and the hydrated browser rewrite it to the
+  // clean `/data-table/` path.
+  const contentLink = page
+    .locator('article.doc-content a[href="/data-table/"]')
+    .first()
+  await expect(contentLink).toBeVisible()
+
+  // Clicking it should navigate in-app, not reload the page.
+  await page.evaluate(() => ((window as any).__noReload = true))
+  await contentLink.click()
+
+  await page.waitForFunction(() => location.pathname === '/data-table/')
+  await expect(page).toHaveTitle('table — tosijs-ui')
+  await expect(page.locator('article.doc-content h1')).toHaveText('table')
+  // same document — no full reload happened
+  expect(await page.evaluate(() => (window as any).__noReload)).toBe(true)
+})
