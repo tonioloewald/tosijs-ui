@@ -41,7 +41,7 @@
     "playwright": "^1.58.2",
     "prettier": "^2.8.8",
     "tjs-lang": "0.8.2",
-    "tosijs": "^1.6.1",
+    "tosijs": "^1.6.4",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8"
   },
@@ -49,7 +49,7 @@
     "happy-dom": "^20.7.0",
     "marked": "^16.4.2",
     "tjs-lang": "^0.8.2",
-    "tosijs": "^1.6.0"
+    "tosijs": "^1.6.4"
   },
   "peerDependenciesMeta": {
     "happy-dom": {
