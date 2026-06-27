@@ -85,6 +85,36 @@
       "types": "./dist/doc-system/site/index.d.ts",
       "import": "./dist/doc-system/site/index.js",
       "default": "./dist/doc-system/site/index.js"
+    },
+    "./icons": {
+      "types": "./dist/icons.d.ts",
+      "import": "./dist/icons.js",
+      "default": "./dist/icons.js"
+    },
+    "./code-editor": {
+      "types": "./dist/code-editor.d.ts",
+      "import": "./dist/code-editor.js",
+      "default": "./dist/code-editor.js"
+    },
+    "./live-example": {
+      "types": "./dist/live-example/index.d.ts",
+      "import": "./dist/live-example/index.js",
+      "default": "./dist/live-example/index.js"
+    },
+    "./doc-browser": {
+      "types": "./dist/doc-browser.d.ts",
+      "import": "./dist/doc-browser.js",
+      "default": "./dist/doc-browser.js"
+    },
+    "./diff": {
+      "types": "./dist/diff.d.ts",
+      "import": "./dist/diff.js",
+      "default": "./dist/diff.js"
+    },
+    "./theme": {
+      "types": "./dist/theme.d.ts",
+      "import": "./dist/theme.js",
+      "default": "./dist/theme.js"
     }
   }
 }
