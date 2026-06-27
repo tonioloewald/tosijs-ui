@@ -1052,15 +1052,34 @@ const menuHelperStyleSpec = {
   '.drag-target': dragTargetHoverStyles,
 }
 
-// Inject menu styles on first use (popMenu / popDropMenu / a <tosi-menu>
+// Initialize the menu system on first use (popMenu / popDropMenu / a <tosi-menu>
 // connecting) rather than at import, so importing this module has no side effect
-// and it can be tree-shaken when unused. StyleSheet() dedupes by id; the flag
-// just avoids re-calling it.
-let menuStylesInjected = false
-function ensureMenuStyles(): void {
-  if (menuStylesInjected) return
-  menuStylesInjected = true
+// and it can be tree-shaken when unused. Injects the stylesheet and registers
+// the global dismiss handlers once. Both handlers early-out when no menu is
+// open, so registering them only once (no teardown) is harmless. poppedMenus /
+// removeLastMenu are resolved at call time (defined below; this only runs once a
+// menu actually opens).
+let menuInitialized = false
+function ensureMenu(): void {
+  if (menuInitialized) return
+  menuInitialized = true
   StyleSheet('xin-menu-helper', menuHelperStyleSpec)
+  document.addEventListener('mousedown', (event: Event) => {
+    if (poppedMenus.length === 0) return
+    const path = event.composedPath()
+    if (
+      !poppedMenus.find(
+        (popped) => path.includes(popped.target) || path.includes(popped.menu)
+      )
+    ) {
+      removeLastMenu(0)
+    }
+  })
+  document.body.addEventListener('keydown', (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      removeLastMenu(0)
+    }
+  })
 }
 
 export const createMenuAction = (
@@ -1475,25 +1494,8 @@ export interface PopDropMenuOptions
   dataTypes: readonly string[]
 }
 
-document.addEventListener('mousedown', (event: Event) => {
-  if (poppedMenus.length === 0) return
-  const path = event.composedPath()
-  if (
-    !poppedMenus.find(
-      (popped) => path.includes(popped.target) || path.includes(popped.menu)
-    )
-  ) {
-    removeLastMenu(0)
-  }
-})
-document.body.addEventListener('keydown', (event: KeyboardEvent) => {
-  if (event.key === 'Escape') {
-    removeLastMenu(0)
-  }
-})
-
 export const popMenu = (options: PopMenuOptions): void => {
-  ensureMenuStyles()
+  ensureMenu()
   options = Object.assign({ submenuDepth: 0 }, options)
   const { target, position, submenuDepth } = options
   if (lastPopped && !document.body.contains(lastPopped?.menu)) {
@@ -1540,7 +1542,7 @@ export const popMenu = (options: PopMenuOptions): void => {
 }
 
 export const popDropMenu = (options: PopDropMenuOptions): void => {
-  ensureMenuStyles()
+  ensureMenu()
   const { dataTypes, ...rest } = options
   const filtered = filterForDrop(
     options.menuItems,
@@ -1810,7 +1812,7 @@ export class TosiMenu extends Component<TosiMenuParts> {
 
   connectedCallback() {
     super.connectedCallback()
-    ensureMenuStyles()
+    ensureMenu()
     document.addEventListener('keydown', this.handleShortcut, true)
     if (this.acceptsDrop) {
       this.dataset.drop = this.acceptsDrop

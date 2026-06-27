@@ -149,6 +149,7 @@ export class TosiFloat extends WebComponent {
   connectedCallback(): void {
     super.connectedCallback()
 
+    ensureFloatListeners()
     TosiFloat.floats.add(this)
     const PASSIVE = { passive: true }
     this.addEventListener('touchstart', this.reposition, PASSIVE)
@@ -173,36 +174,45 @@ export const tosiFloat = TosiFloat.elementCreator() as ElementCreator<TosiFloat>
 /** @deprecated Use tosiFloat instead */
 export const xinFloat = tosiFloat
 
-window.addEventListener(
-  'resize',
-  () => {
-    Array.from(TosiFloat.floats).forEach((float: TosiFloat) => {
-      if (float.remainOnResize === 'hide') {
-        float.hidden = true
-      } else if (float.remainOnResize === 'remove') {
-        float.remove()
-      }
-    })
-  },
-  { passive: true }
-)
+// Register the global reposition/dismiss handlers on first float connecting,
+// not at import (keeps the module side-effect-free for tree-shaking). They
+// iterate TosiFloat.floats, so they're no-ops until a float exists — registered
+// once, no teardown needed.
+let floatListenersRegistered = false
+function ensureFloatListeners(): void {
+  if (floatListenersRegistered) return
+  floatListenersRegistered = true
+  window.addEventListener(
+    'resize',
+    () => {
+      Array.from(TosiFloat.floats).forEach((float: TosiFloat) => {
+        if (float.remainOnResize === 'hide') {
+          float.hidden = true
+        } else if (float.remainOnResize === 'remove') {
+          float.remove()
+        }
+      })
+    },
+    { passive: true }
+  )
 
-document.addEventListener(
-  'scroll',
-  (event: Event) => {
-    if (
-      event.target instanceof HTMLElement &&
-      event.target.closest(TosiFloat.tagName as string)
-    ) {
-      return
-    }
-    Array.from(TosiFloat.floats).forEach((float: TosiFloat) => {
-      if (float.remainOnScroll === 'hide') {
-        float.hidden = true
-      } else if (float.remainOnScroll === 'remove') {
-        float.remove()
+  document.addEventListener(
+    'scroll',
+    (event: Event) => {
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.closest(TosiFloat.tagName as string)
+      ) {
+        return
       }
-    })
-  },
-  { passive: true, capture: true }
-)
+      Array.from(TosiFloat.floats).forEach((float: TosiFloat) => {
+        if (float.remainOnScroll === 'hide') {
+          float.hidden = true
+        } else if (float.remainOnScroll === 'remove') {
+          float.remove()
+        }
+      })
+    },
+    { passive: true, capture: true }
+  )
+}

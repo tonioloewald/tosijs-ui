@@ -131,6 +131,7 @@ export class TosiFloat extends WebComponent {
     };
     connectedCallback() {
         super.connectedCallback();
+        ensureFloatListeners();
         TosiFloat.floats.add(this);
         const PASSIVE = { passive: true };
         this.addEventListener('touchstart', this.reposition, PASSIVE);
@@ -147,27 +148,37 @@ export const XinFloat = TosiFloat;
 export const tosiFloat = TosiFloat.elementCreator();
 /** @deprecated Use tosiFloat instead */
 export const xinFloat = tosiFloat;
-window.addEventListener('resize', () => {
-    Array.from(TosiFloat.floats).forEach((float) => {
-        if (float.remainOnResize === 'hide') {
-            float.hidden = true;
-        }
-        else if (float.remainOnResize === 'remove') {
-            float.remove();
-        }
-    });
-}, { passive: true });
-document.addEventListener('scroll', (event) => {
-    if (event.target instanceof HTMLElement &&
-        event.target.closest(TosiFloat.tagName)) {
+// Register the global reposition/dismiss handlers on first float connecting,
+// not at import (keeps the module side-effect-free for tree-shaking). They
+// iterate TosiFloat.floats, so they're no-ops until a float exists — registered
+// once, no teardown needed.
+let floatListenersRegistered = false;
+function ensureFloatListeners() {
+    if (floatListenersRegistered)
         return;
-    }
-    Array.from(TosiFloat.floats).forEach((float) => {
-        if (float.remainOnScroll === 'hide') {
-            float.hidden = true;
+    floatListenersRegistered = true;
+    window.addEventListener('resize', () => {
+        Array.from(TosiFloat.floats).forEach((float) => {
+            if (float.remainOnResize === 'hide') {
+                float.hidden = true;
+            }
+            else if (float.remainOnResize === 'remove') {
+                float.remove();
+            }
+        });
+    }, { passive: true });
+    document.addEventListener('scroll', (event) => {
+        if (event.target instanceof HTMLElement &&
+            event.target.closest(TosiFloat.tagName)) {
+            return;
         }
-        else if (float.remainOnScroll === 'remove') {
-            float.remove();
-        }
-    });
-}, { passive: true, capture: true });
+        Array.from(TosiFloat.floats).forEach((float) => {
+            if (float.remainOnScroll === 'hide') {
+                float.hidden = true;
+            }
+            else if (float.remainOnScroll === 'remove') {
+                float.remove();
+            }
+        });
+    }, { passive: true, capture: true });
+}
