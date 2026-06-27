@@ -8,97 +8,119 @@ Simple, robust web-components for use with tosijs or anything else.
 
 ## Documentation
 
-Each component's full documentation (with live code examples) is
-embedded in its distributed JS file as inline comments. Read the
-relevant dist/*.js file for complete docs, usage examples, and API.
+Full documentation, with live code examples, is at the links below.
 
-## Components and Utilities
+## Pages
 
-- dist/babylon-3d.js — 3d
+- https://ui.tosijs.net/babylon-3d/ — 3d
   A [babylonjs](https://www.babylonjs.com/) wrapper.
-- dist/ab-test.js — ab-test
+- https://ui.tosijs.net/ab-test/ — ab-test
   `<tosi-ab>` provides a simple method for implementing A|B-testing.
-- dist/bp-loader.js — blueprint loading
+- https://ui.tosijs.net/appendices/ — Appendices
+  Reference material on the library's own systems — the doc browser, the
+- https://ui.tosijs.net/bp-loader/ — blueprint loading
   `<xin-loader>` and `<xin-blueprint>` are simple elements provided by `tosijs` for the dynamic loading
-- dist/carousel.js — carousel
+- https://ui.tosijs.net/carousel/ — carousel
   This is a minimalist carousel component that supports the usual stuff.
-- dist/code-editor.js — code
+- https://ui.tosijs.net/code-editor/ — code
   An [ACE Editor](https://ace.c9.io/) wrapper.
-- dist/color-input.js — color input field
+- https://ui.tosijs.net/color-input/ — color input field
   This is a color input field that supports opacity
-- dist/dialog.js — dialog
+- https://ui.tosijs.net/components/ — Components
+  The goal of this library is not to replace HTML elements that already work very well, such as `<input>`, `<textarea>`...
+- https://ui.tosijs.net/dialog/ — dialog
   `<tosi-dialog>` is a simple wrapper around the standard HTML `<dialog>` element designed
-- dist/diff.js — diff
+- https://ui.tosijs.net/diff/ — diff
   `<tosi-diff>` renders a unified, line-by-line diff between two strings — the kind
-- dist/doc-browser.js — doc-browser
+- https://ui.tosijs.net/doc-browser/ — doc-browser
   The `tosijs-ui` library provides everything you need to create a self-documented testbed similar
-- dist/drag-and-drop.js — drag & drop
+- https://ui.tosijs.net/doc-site-system/ — Doc-Site System
+  How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.
+- https://ui.tosijs.net/doc-system/ — doc-system
+  `<tosi-doc-system>` turns a folder of pre-rendered, statically-served pages into a
+- https://ui.tosijs.net/docs/ — docs
+  Utility for extracting documentation from markdown files and inline comments in source code.
+- https://ui.tosijs.net/drag-and-drop/ — drag & drop
   A lightweight library that leverages HTML5 drag and drop behavior.
-- dist/editable-rect.js — editable-rect
+- https://ui.tosijs.net/editable-rect/ — editable-rect
   `<tosi-editable>` (`editableRect` is the `ElementCreator` and `EditableRect` is the class) is an element
-- dist/filter-builder.js — filter
+- https://ui.tosijs.net/component/ — example
+  `<tosi-example>` makes it easy to insert interactive code examples in a web page. It
+- https://ui.tosijs.net/filter-builder/ — filter
   Automatically creates `ArrayFilter` functions `(a: any[]) => any[]` based on the query you build using its
-- dist/float.js — float
+- https://ui.tosijs.net/float/ — float
   A floating, potentially draggable user interface element.
-- dist/form.js — forms
+- https://ui.tosijs.net/form-components/ — Form Components
+  Form-associated custom elements — inputs, selects, and editors that participate
+- https://ui.tosijs.net/form/ — forms
   `<tosi-form>` and `<tosi-field>` can be used to quickly create forms complete with
-- dist/gamepad.js — gamepads
+- https://ui.tosijs.net/gamepad/ — gamepads
   A couple of utility functions for dealing with gamepads and XRInputs.
-- dist/header.js — header
+- https://ui.tosijs.net/header/ — header
   A simple flex header. Compose it with `elastic()` and `spacer()` from
-- dist/icons.js — icons
+- https://ui.tosijs.net/helper-libraries/ — Helper Libraries
+  General purpose utilities and behaviors — routing, theming, localization, sorting, drag-and-drop, and other building ...
+- https://ui.tosijs.net/icon-composition/ — Icon Composition
+  This is a toy for playing with the icon composition language introduced in tosijs-ui 1.5.10. It's documented [here](/...
+- https://ui.tosijs.net/icons/ — icons
   `icons` is a proxy that generates an `ElementCreator` for a given icon on demand,
-- dist/layout.js — layout
+- https://ui.tosijs.net/kitchen-sink/ — kitchen sink
+  This is a testbed for checking styles
+- https://ui.tosijs.net/layout/ — layout
   Thin structural layout components that wrap CSS flexbox and grid.
-- dist/live-theme.js — live-theme
+- https://ui.tosijs.net/live-theme/ — live-theme
   A live theme editor that lets you tweak theme colors in real time.
-- dist/localize.js — localize
+- https://ui.tosijs.net/localize/ — localize
   `tosijs-ui` provides support for localization via the `localize` method and the `<tosi-locale-picker>`
-- dist/bodymovin-player.js — lottie / bodymovin
+- https://ui.tosijs.net/bodymovin-player/ — lottie / bodymovin
   A [lottie](https://airbnb.io/lottie/#/web) (a.k.a. **bodymovin**) player.
-- dist/make-sorter.js — makeSorter
+- https://ui.tosijs.net/make-icon-data/ — make-icon-data
+  Ingests SVG files from icon directories and generates an icon-data module
+- https://ui.tosijs.net/make-sorter/ — makeSorter
   I'm always confusing myself when writing sort functions, so I wrote `makeSorter()`. It's
-- dist/mapbox.js — map
+- https://ui.tosijs.net/mapbox/ — map
   A [mapboxgl](https://docs.mapbox.com/mapbox-gl-js/api/) wrapper.
-- dist/markdown-viewer.js — markdown
+- https://ui.tosijs.net/markdown-viewer/ — markdown
   `<tosi-md>` renders markdown using [marked](https://www.npmjs.com/package/marked).
-- dist/menu.js — menu
+- https://ui.tosijs.net/menu/ — menu
   Being able to pop a menu up anywhere is just so nice, and `tosijs-ui` allows menus
-- dist/month.js — month
+- https://ui.tosijs.net/month/ — month
   This is a component for displaying a month and selecting days within that month.
-- dist/notifications.js — notifications
+- https://ui.tosijs.net/notifications/ — notifications
   `TosiNotification` provides a singleton custom `<tosi-notification>` element that manages
-- dist/password-strength.js — password strength
+- https://ui.tosijs.net/password-strength/ — password strength
   Just wrap it a `<tosi-password-strength>` element around an `<input>`
-- dist/pop-float.js — popFloat
+- https://ui.tosijs.net/pop-float/ — popFloat
   There are so many cases in user-interfaces where it's useful to pop-up a floating
-- dist/rating.js — rating
+- https://ui.tosijs.net/rating/ — rating
   `TosiRating` / `<tosi-rating>` provides a drop-in replacement for an `<input>`
-- dist/rich-text.js — rich text
+- https://ui.tosijs.net/rich-text/ — rich text
   `<tosi-rich-text>` is a simple and easily extensible `document.execCommand` WYSIWYG editor with some conveniences.
-- dist/router.js — router
+- https://ui.tosijs.net/router/ — router
   A lightweight client-side router for single-page applications. Supports
-- dist/via-tag.js — scriptTag & styleSheet
+- https://ui.tosijs.net/via-tag/ — scriptTag & styleSheet
   If you need to load an old school (cjs) javascript or css library via cdn then use these two functions.
-- dist/segmented.js — segmented select
+- https://ui.tosijs.net/segmented/ — segmented select
   This is a fairly general-purpose segmented select control.
-- dist/select.js — select
+- https://ui.tosijs.net/select/ — select
   `<tosi-select>` (`tosiSelect` is the `ElementCreator`) is a replacement for the lamentable
-- dist/side-nav.js — sidebar
+- https://ui.tosijs.net/side-nav/ — sidebar
   The default layout for iOS / iPadOS apps is to hide the sidebar when displaying content on small
-- dist/size-break.js — size-break
+- https://ui.tosijs.net/size-break/ — size-break
   While we wait for enough browsers to implement [container-queries](https://www.w3.org/TR/css-contain-3/),
-- dist/sizer.js — sizer
+- https://ui.tosijs.net/sizer/ — sizer
   This is a super-simple component that you can put in a fixed size element allowing it to be resized
-- dist/data-table.js — table
+- https://ui.tosijs.net/data-table/ — table
   A virtual data-table, configurable via a `columns` array (which will automatically be generated if not provided),
-- dist/tab-selector.js — tabs
+- https://ui.tosijs.net/tab-selector/ — tabs
   `<tosi-tabs>` creates a `tabpanel` for its children, creating a `tab` for each based on its
-- dist/tag-list.js — tag-list
+- https://ui.tosijs.net/tag-list/ — tag-list
   Building a tag-list from standard HTML elements is a bit of a nightmare.
-- dist/theme.js — theme
+- https://ui.tosijs.net/theme/ — theme
   The theme system provides consistent CSS variables across all tosijs-ui components,
-- dist/tooltip.js — tooltip
+- https://ui.tosijs.net/tooltip/ — tooltip
   Automatic tooltips for any element with `data-tooltip` or `title` attributes.
-- dist/track-drag.js — trackDrag
+- https://ui.tosijs.net/ — tosijs-ui
+  A small, fast library of standards-based web components (data tables, dialogs, forms, rich text, carousels, and more) built on tosijs — smaller and faster than a React app, with no virtual DOM.
+- https://ui.tosijs.net/track-drag/ — trackDrag
   Sometimes you want to track a mouse-drag or touch-drag operation without messing around.

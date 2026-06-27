@@ -21,6 +21,7 @@ import { extractDocs } from './docs'
 import { ensureSections } from './sections'
 import { generateLlmsTxt } from './make-llms-txt'
 import { generateSite } from './generate-site'
+import { findOutputDirOverlap } from './output-guard'
 
 declare global {
   var Bun: any
@@ -50,11 +51,24 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
   // Project-specific codegen (version stamp, icon data, …) before anything else.
   await config.prebuild?.()
 
+  // Guard before the destructive `rm -rf`: if a docPath overlaps the output dir,
+  // wiping the output would delete the source docs we're about to extract.
+  const docPaths = config.docPaths ?? ['src', 'README.md']
+  const overlap = findOutputDirOverlap(docPaths, config.outputDir ?? 'docs', PROJECT_ROOT)
+  if (overlap) {
+    throw new Error(
+      `doc-site build: docPath "${overlap}" overlaps outputDir "${config.outputDir ?? 'docs'}". ` +
+        'buildSite() runs `rm -rf <outputDir>` before extracting docs, so this would ' +
+        'delete your source docs first (producing an empty site with no error). Move the ' +
+        "source docs out of the output dir, or set a different outputDir (e.g. outputDir: 'site')."
+    )
+  }
+
   await $`rm -rf ${PUBLIC}`.text()
   await $`mkdir ${PUBLIC}`.text()
   const extract = () =>
     extractDocs({
-      paths: config.docPaths ?? ['src', 'README.md'],
+      paths: docPaths,
       // Skip the build's own output dir by path (not by the name 'docs', so a
       // source dir like src/docs is still scanned).
       ignore: ['node_modules', 'dist', 'build', PUBLIC],
@@ -176,16 +190,23 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
   }
 
   if (config.llmsTxt !== false) {
+    // Drive llms.txt from the extracted corpus (every doc, by rendered URL) — not
+    // a re-scan of src/*.ts — so it works regardless of doc source (.md, etc.)
+    // and whether the project emits a dist/ library.
+    const corpus = JSON.parse(await Bun.file(DOCS_JSON).text())
     if (typeof config.llmsTxt === 'function') {
-      const corpus = JSON.parse(await Bun.file(DOCS_JSON).text())
       await Bun.write('llms.txt', config.llmsTxt(corpus))
     } else {
-      generateLlmsTxt('llms.txt', {
-        name: config.name,
-        description: config.description,
-        baseUrl: config.baseUrl,
-        projectLinks: config.projectLinks,
-      })
+      generateLlmsTxt(
+        'llms.txt',
+        {
+          name: config.name,
+          description: config.description,
+          baseUrl: config.baseUrl,
+          projectLinks: config.projectLinks,
+        },
+        corpus
+      )
     }
     // Also place it at the served web root so {baseUrl}/llms.txt resolves (the
     // root copy stays for the npm package's `files`).
