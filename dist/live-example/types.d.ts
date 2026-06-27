@@ -4,6 +4,7 @@ import { CodeEditor } from '../code-editor';
 export interface ExampleContext {
     [key: string]: any;
 }
+export type Dialect = 'js' | 'tjs' | 'ts';
 export interface ExampleParts extends PartsMap {
     codeEditors: HTMLElement;
     undo: HTMLButtonElement;
@@ -30,7 +31,7 @@ export interface RemotePayload {
     test?: string;
     close?: boolean;
 }
-export type TransformFn = (code: string, options: {
+export type TransformFn = (code: string, options?: {
     transforms: ('jsx' | 'typescript' | 'flow' | 'imports')[];
 }) => {
     code: string;

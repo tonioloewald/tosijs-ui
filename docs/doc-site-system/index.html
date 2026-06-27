@@ -70,7 +70,7 @@ host preset                      →  .nojekyll / CNAME / firebase.json
 (<code>src/doc-system/routing</code> + <code>render</code>) so the page never reflows on hydration.</p>
 <h2>Quick start (adopting in your project)</h2>
 <p><strong>1. <code>site.config.ts</code></strong> at your repo root:</p>
-<pre><code class="language-ts">import { defineSiteConfig } from &#39;tosijs-ui/site&#39;
+<pre><code class="language-typescript">import { defineSiteConfig } from &#39;tosijs-ui/site&#39;
 
 export default defineSiteConfig({
   name: &#39;my-lib&#39;,
@@ -84,7 +84,7 @@ export default defineSiteConfig({
 })
 </code></pre>
 <p><strong>2. <code>bin/site.ts</code></strong> — the only build file you write:</p>
-<pre><code class="language-ts">import { buildSite, devServer } from &#39;tosijs-ui/site&#39;
+<pre><code class="language-typescript">import { buildSite, devServer } from &#39;tosijs-ui/site&#39;
 import config from &#39;../site.config&#39;
 
 process.argv.includes(&#39;--build&#39;) ? buildSite(config) : devServer(config)
@@ -176,7 +176,7 @@ icons or <strong>overrides a default by reusing its name</strong>. Registered ic
 <code>icons.name()</code>, <code>&lt;tosi-icon icon=&quot;name&quot;&gt;</code>, and the composition language; an icon&#39;s
 <code>class=&quot;filled|stroked|color&quot;</code> sets its default styling. Do this in your bundle
 entry so the icons are available before the page renders:</p>
-<pre><code class="language-ts">// demo/site.ts
+<pre><code class="language-typescript">// demo/site.ts
 import { defineIcons } from &#39;tosijs-ui&#39;
 
 defineIcons({
@@ -189,7 +189,7 @@ defineIcons({
 CLI (it scales/rounds coordinates and emits <code>export default { name: &#39;&lt;svg&gt;&#39; }</code>):</p>
 <pre><code class="language-bash">bunx tosijs-make-icons --input ./my-icons --output ./src/my-icons.ts
 </code></pre>
-<pre><code class="language-ts">import { defineIcons } from &#39;tosijs-ui&#39;
+<pre><code class="language-typescript">import { defineIcons } from &#39;tosijs-ui&#39;
 import myIcons from &#39;./my-icons&#39;
 defineIcons(myIcons)
 </code></pre>

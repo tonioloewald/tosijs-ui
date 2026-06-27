@@ -33,9 +33,48 @@ preview.append('Try editing some code and hitting refresh…')
 }
 ```
 
-You can also use Typescript. It is transpiled to JavaScript using
-[tjs-lang](https://www.npmjs.com/package/tjs-lang) (plain `js` blocks pass
-through untouched via tjs's `dialect: 'js'`).
+## Source dialects: `js`, `tjs`, `ts`
+
+The executable block's fence language picks how the source is compiled before it
+runs, via [tjs-lang](https://www.npmjs.com/package/tjs-lang):
+
+- **`js`** — plain JavaScript, run as-is (tjs's `dialect: 'js'` leaves vanilla JS
+  untouched, so there's no surprise rewriting).
+- **`tjs`** — [tjs-lang](https://www.npmjs.com/package/tjs-lang) source, lowered to
+  JavaScript. Type annotations and tjs's safety transforms are compiled away.
+- **`ts`** — TypeScript, lowered to tjs (via `tjs-lang/lang/from-ts`) and then to
+  JavaScript. The TypeScript compiler loads lazily, only for pages that use it.
+
+A `tjs` block — note the type annotation (which a plain `js` block couldn't run)
+and the inline `test '…' { … }` unit test. Open the code panel: the source tab
+is labeled **tjs**, with read-only **JS** (the compiled output) and **tjs tests**
+(the inline-test results) tabs, alongside the **DOM tests** tab.
+
+```tjs
+import { div } from 'tosijs'.elements
+
+function badge(label: string, n: number) {
+  return `${label}: ${n}`
+}
+
+test 'badge formats label and number' {
+  expect(badge('count', 42)).toBe('count: 42')
+}
+
+preview.append(div({ class: 'badge' }, badge('count', 42)))
+```
+```test
+test('tjs example transpiled and ran', () => {
+  const badge = preview.querySelector('.badge')
+  expect(badge).not.toBe(null)
+  expect(badge.textContent).toBe('count: 42')
+})
+```
+
+The inline test above is tjs's native `test '…' { … }` syntax. In a *TypeScript*
+example the equivalent is written inside a comment (so it survives `tsc`) — but
+that comment form can't appear inside a doc comment like this one, since the
+test's own closing delimiter would end the doc comment.
 
 ## CSS Isolation with `iframe`
 
@@ -127,7 +166,7 @@ import { codeEditor, CodeEditor } from '../code-editor';
 import { tosiTabs } from '../tab-selector';
 import { icons } from '../icons';
 import { popMenu } from '../menu';
-import { loadTransform } from './code-transform';
+import { loadTransform, loadTjsTestApi, rewriteImports, contextVarName, AsyncFunction, } from './code-transform';
 import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } from './remote-sync';
 import { executeInline, executeInIframe } from './execution';
 import { insertExamples } from './insert-examples';
@@ -273,6 +312,130 @@ export class LiveExample extends Component {
     get remoteKey() {
         return createRemoteKey(this.prefix, this.uuid, this.remoteId);
     }
+    // The source block's dialect (js | tjs | ts). Set by insert-examples from the
+    // fenced-block language; persisted as an attribute so it survives a re-render.
+    // `js` is the default and keeps the original pass-through behavior.
+    get dialect() {
+        return this.getAttribute('data-dialect') || 'js';
+    }
+    set dialect(value) {
+        this.setAttribute('data-dialect', value);
+    }
+    // ── Read-only product tabs (tjs/ts only) ──────────────────────────────────
+    // A `tjs`/`ts` example's source is editable; the JavaScript it compiles to is
+    // shown read-only in an extra "JS" tab. The tab is added lazily (examples show
+    // every named editor as a tab, so a static child would pollute plain-`js`
+    // examples) the first time the code panel opens. `js` examples get nothing.
+    jsOutEditor;
+    tjsTestsView;
+    productTabsReady = false;
+    lastGeneratedJs = '';
+    inlineTjsTestCount = 0;
+    lastTjsTests;
+    // Run the example's inline tjs tests (the `/*test 'desc' { … }*/` comments in
+    // the tjs/ts source — distinct from the DOM-testing `test` block). Extract +
+    // strip the tests, transpile the rest the same way execution does, then run
+    // `execJs + testUtils + return testRunner` with the example context injected.
+    async runInlineTjsTests(transform) {
+        if (this.dialect === 'js') {
+            this.inlineTjsTestCount = 0;
+            return;
+        }
+        const api = await loadTjsTestApi();
+        if (!api) {
+            this.inlineTjsTestCount = 0;
+            return;
+        }
+        let extracted;
+        try {
+            extracted = api.extractTests(this.js);
+        }
+        catch {
+            this.inlineTjsTestCount = 0;
+            return;
+        }
+        this.inlineTjsTestCount = extracted.tests.length;
+        if (extracted.tests.length === 0) {
+            this.lastTjsTests = undefined;
+            this.renderTjsTests();
+            return;
+        }
+        try {
+            const execJs = transform(rewriteImports(extracted.code, Object.keys(this.context))).code;
+            const body = `${execJs}\n${api.testUtils}\nreturn ${extracted.testRunner}`;
+            // The test-stripped source still runs its top-level statements (to define
+            // the functions under test), which may touch `preview` — give them a
+            // throwaway one, mirroring execution's `{ preview, ...context }` scope.
+            const fullContext = { preview: div({ class: 'preview' }), ...this.context };
+            const keys = Object.keys(fullContext).map(contextVarName);
+            const values = Object.values(fullContext);
+            // @ts-expect-error AsyncFunction constructor typing
+            const fn = new AsyncFunction(...keys, body);
+            this.lastTjsTests = (await fn(...values));
+        }
+        catch (error) {
+            this.lastTjsTests = {
+                passed: 0,
+                failed: 1,
+                results: [
+                    {
+                        description: 'inline tests failed to run',
+                        passed: false,
+                        error: String(error),
+                    },
+                ],
+            };
+        }
+        this.renderTjsTests();
+    }
+    renderTjsTests() {
+        const view = this.tjsTestsView;
+        if (!view)
+            return;
+        const results = this.lastTjsTests;
+        if (!results || results.results.length === 0) {
+            view.replaceChildren(div({ class: 'tjs-test-empty' }, 'No inline tjs tests.'));
+            return;
+        }
+        view.replaceChildren(div({ class: 'tjs-test-summary' }, `${results.passed}/${results.results.length} passed`), ...results.results.map((r) => div({ class: r.passed ? 'test-pass' : 'test-fail' }, `${r.passed ? '✓' : '✗'} ${r.description}`, r.error ? span({ class: 'tjs-test-error' }, ` — ${r.error}`) : '')));
+    }
+    // The JavaScript `this.js` compiles to under the current dialect — the same
+    // pipeline execution runs (rewriteImports → dialect transform), so the tab
+    // shows what actually executes. Transpile errors render as a comment.
+    computeGeneratedJs(transform) {
+        if (this.dialect === 'js')
+            return '';
+        try {
+            return transform(rewriteImports(this.js, Object.keys(this.context))).code;
+        }
+        catch (error) {
+            return `// transpile error:\n// ${error.message}`;
+        }
+    }
+    ensureProductTabs() {
+        if (this.productTabsReady || this.dialect === 'js' || !this.hydrated)
+            return;
+        this.productTabsReady = true;
+        const { editors } = this.parts;
+        // Relabel the source tab from "js" to the actual dialect (the `part` stays
+        // `js`, so everything referencing this.parts.js / this.js is unaffected).
+        this.parts.js.setAttribute('name', this.dialect);
+        this.jsOutEditor = codeEditor({
+            name: 'JS',
+            mode: 'javascript',
+            disabled: true,
+        });
+        editors.append(this.jsOutEditor);
+        // Add a read-only "tjs tests" results tab only when the source has inline
+        // `/*test*/` tests (computed during refresh, which runs before first open).
+        if (this.inlineTjsTestCount > 0) {
+            this.tjsTestsView = div({ name: 'tjs tests', class: 'tjs-test-results' });
+            editors.append(this.tjsTestsView);
+        }
+        editors.setupTabs();
+        this.jsOutEditor.value = this.lastGeneratedJs;
+        this.renderTjsTests();
+    }
     updateUndo = () => {
         const { activeTab } = this;
         const { undo, redo } = this.parts;
@@ -291,7 +454,9 @@ export class LiveExample extends Component {
     updateTestResultsVisibility() {
         const { testResults: resultsEl } = this.parts;
         const results = this.testResults;
-        const isTestTabActive = this.activeTab?.getAttribute('name') === 'test';
+        // The "DOM tests" tab's editor is this.parts.test (the part stays `test`
+        // even though the tab label changed).
+        const isTestTabActive = this.activeTab === this.parts.test;
         const hasFailed = results && results.failed > 0;
         // Show results if: has results AND (test tab is active OR there are failures)
         resultsEl.hidden =
@@ -437,7 +602,11 @@ export class LiveExample extends Component {
         }, tosiTabs({
             part: 'editors',
             onChange: this.updateUndo,
-        }, codeEditor({ name: 'js', mode: 'javascript', part: 'js' }), codeEditor({ name: 'html', mode: 'html', part: 'html' }), codeEditor({ name: 'css', mode: 'css', part: 'css' }), codeEditor({ name: 'test', mode: 'javascript', part: 'test' }), div({ slot: 'after-tabs', class: 'row' }, button({
+        }, codeEditor({ name: 'js', mode: 'javascript', part: 'js' }), codeEditor({ name: 'html', mode: 'html', part: 'html' }), codeEditor({ name: 'css', mode: 'css', part: 'css' }), 
+        // The `test` block tests the rendered preview (DOM), so its tab is
+        // labeled "DOM tests" to distinguish it from inline tjs unit tests. The
+        // `part`/`name` stay `test`; only the displayed label differs.
+        codeEditor({ name: 'DOM tests', mode: 'javascript', part: 'test' }), div({ slot: 'after-tabs', class: 'row' }, button({
             title: 'undo',
             part: 'undo',
             class: 'transparent',
@@ -513,7 +682,7 @@ export class LiveExample extends Component {
     }
     exampleMarkdown() {
         const block = (lang, code) => code !== '' ? '```' + lang + '\n' + code.trim() + '\n```\n' : '';
-        return (block('js', this.js) +
+        return (block(this.dialect, this.js) +
             block('html', this.html) +
             block('css', this.css) +
             block('test', this.test));
@@ -753,6 +922,7 @@ export class LiveExample extends Component {
         this.classList.add('-maximize');
         this.classList.toggle('-vertical', this.offsetHeight > this.offsetWidth);
         this.parts.codeEditors.hidden = false;
+        this.ensureProductTabs();
     };
     closeCode = () => {
         if (this.remoteId !== '') {
@@ -803,8 +973,16 @@ export class LiveExample extends Component {
     refresh = async () => {
         if (this.remoteId !== '')
             return;
-        const transform = await loadTransform();
+        const transform = await loadTransform(this.dialect);
         const { example, style: styleEl, exampleWidgets } = this.parts;
+        // Keep the read-only generated-JS tab (tjs/ts) in sync with the source, and
+        // re-run any inline tjs tests for the "tjs tests" results tab.
+        if (this.dialect !== 'js') {
+            this.lastGeneratedJs = this.computeGeneratedJs(transform);
+            if (this.jsOutEditor)
+                this.jsOutEditor.value = this.lastGeneratedJs;
+            await this.runInlineTjsTests(transform);
+        }
         let preview;
         let executionError;
         const onError = (error) => {
@@ -844,8 +1022,11 @@ export class LiveExample extends Component {
             await new Promise((resolve) => requestAnimationFrame(resolve));
             this.classList.add('-has-tests', '-test-running');
             this.classList.remove('-test-passed', '-test-failed');
+            // `test` blocks are conventional JS/TS regardless of the example's dialect,
+            // so they're transpiled as plain js — never lowered through tjs/ts.
+            const testTransform = this.dialect === 'js' ? transform : await loadTransform('js');
             this.testResults = this.test
-                ? await runTests(this.test, preview, this.context, transform)
+                ? await runTests(this.test, preview, this.context, testTransform)
                 : { passed: 0, failed: 0, tests: [] };
             if (executionError) {
                 this.testResults.failed += 1;

@@ -15,7 +15,11 @@ new block type to an example isn't persisted. Replaces by block position, so it
 never depends on the rendered/entity-decoded text matching the source.
 */
 
-const EXECUTABLE = new Set(['js', 'html', 'css', 'test'])
+// `js`/`tjs`/`ts` are interchangeable "source" blocks (the example's executable
+// code); html/css/test are the rest. All count toward grouping so example
+// ordinals stay aligned with insert-examples.
+const SOURCE_LANGS = new Set(['js', 'tjs', 'ts'])
+const EXECUTABLE = new Set(['js', 'tjs', 'ts', 'html', 'css', 'test'])
 
 interface FencedBlock {
   lang: string
@@ -94,10 +98,16 @@ export function rewriteExampleBlocks(
   // changed — otherwise saving one block churns its unedited siblings.
   const trimEnd = (s: string): string => s.replace(/\s+$/, '')
   const replacements: { start: number; end: number; text: string }[] = []
+  // `edits.js` is the example's source code regardless of its dialect, so it maps
+  // to whichever js/tjs/ts block the group actually has.
+  const blockFor = (lang: 'js' | 'html' | 'css' | 'test') =>
+    lang === 'js'
+      ? group.find((b) => SOURCE_LANGS.has(b.lang))
+      : group.find((b) => b.lang === lang)
   for (const lang of ['js', 'html', 'css', 'test'] as const) {
     const next = edits[lang]
     if (next === undefined) continue
-    const block = group.find((b) => b.lang === lang)
+    const block = blockFor(lang)
     if (!block) continue
     const sourceCode = src.slice(block.codeStart, block.codeEnd)
     if (trimEnd(sourceCode) === trimEnd(next)) continue // unchanged (mod trailing ws)

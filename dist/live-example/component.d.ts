@@ -1,5 +1,5 @@
 import { Component, ElementCreator } from 'tosijs';
-import { ExampleContext, ExampleParts } from './types';
+import { Dialect, ExampleContext, ExampleParts } from './types';
 export declare const testManager: {
     enabled: import("tosijs").BoxedScalar<boolean>;
 } & import("tosijs").XinProps<{
@@ -202,6 +202,23 @@ export declare class LiveExample extends Component<ExampleParts> {
         ':host .test-fail': {
             color: string;
         };
+        ':host .tjs-test-results': {
+            padding: string;
+            fontSize: string;
+            fontFamily: string;
+            overflow: string;
+            lineHeight: string;
+        };
+        ':host .tjs-test-summary': {
+            fontWeight: string;
+            marginBottom: string;
+        };
+        ':host .tjs-test-empty': {
+            opacity: string;
+        };
+        ':host .tjs-test-error': {
+            opacity: string;
+        };
     };
     static initAttributes: {
         persistToDom: boolean;
@@ -233,6 +250,18 @@ export declare class LiveExample extends Component<ExampleParts> {
     get test(): string;
     set test(code: string);
     get remoteKey(): string;
+    get dialect(): Dialect;
+    set dialect(value: Dialect);
+    private jsOutEditor?;
+    private tjsTestsView?;
+    private productTabsReady;
+    private lastGeneratedJs;
+    private inlineTjsTestCount;
+    private lastTjsTests?;
+    private runInlineTjsTests;
+    private renderTjsTests;
+    private computeGeneratedJs;
+    private ensureProductTabs;
     updateUndo: () => void;
     private updateTestResultsVisibility;
     undo: () => void;

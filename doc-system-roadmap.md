@@ -211,8 +211,65 @@ the real file instead of download).
 > → jsdelivr `+esm` → degraded raw-JS). tsc clean, 455 unit tests, browser suite
 > 31/0. Known non-issue: the background-test iframe flashes *in haltija only*
 > (Chromium compositor) — invisible in Safari/Chrome, deemed not important.
-> Next: **#6.2** — `ts`/`tjs` executable block dialects (TS via `fromTS` behind
-> `tjs-lang/lang/from-ts`) + generated-JS / types tabs.
+>
+> **Status: #6.2 Phase 1 IMPLEMENTED — executable `tjs`/`ts` dialects.**
+> `insert-examples` recognizes `tjs`/`ts` as executable source blocks (alongside
+> `js`); the example carries a `dialect` (persisted as `data-dialect`);
+> `loadTransform(dialect)` routes `js`→`dialect:'js'`, `tjs`→`dialect:'tjs'`,
+> `ts`→`fromTS`(lazy, behind `tjs-lang/lang/from-ts` + `+esm` CDN)→`tjs`.
+> `test` blocks always transpile as plain `js` regardless of the example's
+> dialect. `save-to-source` counts `tjs`/`ts` toward grouping (ordinal alignment)
+> and maps the source edit to whichever js/tjs/ts block exists. Existing
+> display-only ` ```ts ` snippets migrated to ` ```typescript ` (display-only;
+> `typescript` is intentionally *not* an executable language). A runnable `tjs`
+> example added to the `example` doc. Convention finalized with the user:
+> | block | pipeline | products (Phase 2) |
+> | `js`  | run            | — |
+> | `tjs` | tjs → js       | JS · tests · docs (all read-only) |
+> | `ts`  | ts → tjs → js  | JS · tests · docs (intermediate tjs hidden; "convert to tjs" = future) |
+> `==` semantics (clarified by the author): tjs `==` is **not** structural — it
+> only removes the coercion footguns (`1 == '1'`). `[1] == [1]` / `{a:1} == {a:1}`
+> are `false` *by design* (structural `==` was dropped: `{a:1}=={a:1}` is its own
+> footgun, and structural array/object compares are a surprising perf shock). So
+> the array-`==`-returns-`false` I saw is correct, not a quirk. One genuine edge
+> bug in 0.8.2: an array-literal operand `==` in *top-level statement* position
+> throws `Unexpected token` (scalar top-level `==` round-trips fine; inside a
+> function it's fine) — minor, tjs-lang side. The demo leans on type-annotation
+> stripping (not `==`) to show tjs is engaged.
+>
+> **Status: #6.2 Phase 2 IMPLEMENTED — read-only product tabs.** For `tjs`/`ts`
+> examples, the source tab is relabeled to the dialect and product tabs are added
+> lazily on first code-panel open (examples render every named editor as a tab,
+> so static children would pollute plain-`js` examples — they're added via
+> `editors.append` + `setupTabs()`):
+> - **JS** — read-only generated JavaScript (`tjs().code`), the exact instrumented
+>   output that runs (kept honest per user; only of interest "if you're debugging
+>   something horrific"). Synced every refresh.
+> - **tjs tests** — read-only inline-test results, shown only when the source has
+>   inline tests. tjs inline tests are `test 'name' { … }` blocks written inside a
+>   comment (NOT `test()` calls); run via `extractTests(src)` →
+>   `eval(execJs + testUtils + 'return ' + testRunner)` → `{passed, failed,
+>   results}`. The test-stripped source still runs its top-level statements (to
+>   define the functions), so the runner injects a throwaway `preview`, mirroring
+>   execution's `{ preview, ...context }`.
+> The existing editable `test` block tab is renamed **DOM tests** (it tests the
+> rendered preview); `part`/`name` stay `test`, only the label changed
+> (`updateTestResultsVisibility` now compares `this.parts.test`, not the name).
+> **Docs tab dropped** (per user): `generateDocs` only ships in tjs-lang's heavy
+> top-level bundle, and nesting tjs docs inside docs is a can of worms.
+> The `tjs` demo (with a native inline `test '…' { … }` block exercising the
+> tjs-tests tab) lives in the `example` doc. tjs's native test syntax has no `*/`,
+> so it sits fine inside a `/*#*/` doc comment; only the *TypeScript* embedded
+> form (a test written inside a `/*…*/` comment, so it survives `tsc`) would close
+> the doc comment. Execution strips native `test` blocks (verified: the run code
+> has no `test '`/`expect(`), so the example runs clean while extractTests + the
+> tjs-tests tab pick the block up.
+> tsc clean · 477 unit tests · browser suite 32/0 · direct in-browser check:
+> tabs `tjs|html|css|DOM tests|JS|tjs tests`, inline tests run (1/2 w/ expected
+> fail).
+>
+> Next: production IndexedDB overlay; SW→`/lib` resolver; ePub/PDF; haltija-in-dev
+> widget (see roadmap items above).
 
 Empirically confirmed against `../tjs-lang` (`tjs-lang` npm). The seam:
 

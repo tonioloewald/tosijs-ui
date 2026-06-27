@@ -1,4 +1,4 @@
-import { ExampleContext, TransformFn } from './types'
+import { Dialect, ExampleContext, TransformFn } from './types'
 
 export const AsyncFunction = (async () => {
   /* placeholder */
@@ -84,12 +84,20 @@ type TjsFn = (
   options?: { dialect?: 'js' | 'tjs'; runTests?: boolean | 'only' | 'report' }
 ) => { code: string }
 
+/** The fromTS() entry from tjs-lang/lang/from-ts — lowers TypeScript to tjs. */
+type FromTsFn = (
+  source: string,
+  options?: { emitTJS?: boolean }
+) => { code: string }
+
 // tjs-lang/lang is the TS-compiler-free entry (the TypeScript path lives behind
-// tjs-lang/lang/from-ts and is not loaded here). The `+esm` form is required:
-// the prebuilt bundle imports `acorn`/`tosijs-schema`, which jsdelivr's esm
-// build resolves (a raw file load would fail on those bare imports). Pinned to
+// tjs-lang/lang/from-ts and is only loaded for `ts` examples). The `+esm` form is
+// required: the prebuilt bundle imports `acorn`/`tosijs-schema`, which jsdelivr's
+// esm build resolves (a raw file load would fail on those bare imports). Pinned to
 // match the dev dep.
 const TJS_CDN = 'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.2/lang/+esm'
+const FROM_TS_CDN =
+  'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.2/lang/from-ts/+esm'
 
 async function loadTjs(): Promise<TjsFn | null> {
   // Installed peer (ESM consumers / dev build)
@@ -111,43 +119,135 @@ async function loadTjs(): Promise<TjsFn | null> {
   return null
 }
 
+/**
+ * tjs inline-test API (from tjs-lang/lang):
+ *   extractTests(src) → { code (test-stripped), tests, testRunner }
+ *   testUtils — a string defining `expect`/`assert` etc. for the runner
+ * Run with: `new AsyncFunction(...ctx, execJs + testUtils + 'return ' + testRunner)`
+ * which resolves to `{ passed, failed, results }`.
+ */
+export interface TjsTestApi {
+  extractTests: (source: string) => {
+    code: string
+    tests: { description: string }[]
+    testRunner: string
+  }
+  testUtils: string
+}
+
+export interface TjsTestResult {
+  passed: number
+  failed: number
+  results: { description: string; passed: boolean; error?: string }[]
+}
+
+let testApiOnce: Promise<TjsTestApi | null> | undefined
+
+async function loadTjsTestApiImpl(): Promise<TjsTestApi | null> {
+  for (const mod of [
+    () => import('tjs-lang/lang'),
+    () => import(/* webpackIgnore: true */ TJS_CDN),
+  ]) {
+    try {
+      const m = (await mod()) as Partial<TjsTestApi>
+      if (typeof m.extractTests === 'function' && typeof m.testUtils === 'string') {
+        return { extractTests: m.extractTests, testUtils: m.testUtils }
+      }
+    } catch {
+      // try next source
+    }
+  }
+  return null
+}
+
+/** Load the tjs inline-test API (memoized). null if tjs-lang is unavailable. */
+export function loadTjsTestApi(): Promise<TjsTestApi | null> {
+  return (testApiOnce ??= loadTjsTestApiImpl())
+}
+
+// from-ts pulls in the TypeScript compiler, so it's loaded lazily and only when a
+// `ts` example is actually transformed — never for `js`/`tjs` pages.
+async function loadFromTs(): Promise<FromTsFn | null> {
+  try {
+    const { fromTS } = (await import('tjs-lang/lang/from-ts')) as {
+      fromTS: FromTsFn
+    }
+    if (typeof fromTS === 'function') return fromTS
+  } catch {
+    // not installed — try CDN
+  }
+  try {
+    const { fromTS } = (await import(
+      /* webpackIgnore: true */ FROM_TS_CDN
+    )) as { fromTS: FromTsFn }
+    if (typeof fromTS === 'function') return fromTS
+  } catch {
+    // unavailable — fall through to degraded mode
+  }
+  return null
+}
+
 // Load tjs once per page, not once per example. refresh() runs on every render
 // (and renders fire repeatedly while tests run), so a per-call import + parse
 // would re-pay tjs's cost each time and make every preview swap visibly lag —
-// the engine load is memoized and transform output is cached by source.
+// the engine load is memoized and transform output is cached by dialect+source.
 let tjsOnce: Promise<TjsFn | null> | undefined
+let fromTsOnce: Promise<FromTsFn | null> | undefined
 const resultCache = new Map<string, { code: string }>()
 let warnedNoTjs = false
+let warnedNoFromTs = false
 
 /**
- * Load the live-example transform.
+ * Load a live-example transform for a given source dialect.
  *
- * tjs-lang is the engine: `js` blocks transpile with `dialect: 'js'`, which
- * leaves vanilla JavaScript untouched (no footgun rewriting) — so swapping in
- * tjs is behavior-neutral for plain-JS examples, while giving descriptive
- * transpile errors and a path to real TS support.
+ * tjs-lang is the engine:
+ * - `js`  → `tjs(code, { dialect: 'js' })`, which leaves vanilla JavaScript
+ *           untouched (no footgun rewriting) — behavior-neutral for plain JS.
+ * - `tjs` → `tjs(code, { dialect: 'tjs' })`, the full tjs lowering (structural
+ *           `==`, type guards, runtime instrumentation).
+ * - `ts`  → `fromTS(code)` → tjs source → `tjs(…, { dialect: 'tjs' })`. The
+ *           TypeScript compiler is loaded lazily, only here.
+ *
+ * The dialect is baked into the returned closure, so callers just pass code.
  *
  * Degraded mode: if tjs-lang can't be loaded, plain JS still runs unchanged
- * (`dialect: 'js'` is a no-op on it), so we just pass the code through.
+ * (`dialect: 'js'` is a no-op on it), so we pass the code through. A `ts` page
+ * with no from-ts available likewise falls back to running the source as JS.
  */
-export async function loadTransform(): Promise<TransformFn> {
+export async function loadTransform(
+  dialect: Dialect = 'js'
+): Promise<TransformFn> {
   const tjs = await (tjsOnce ??= loadTjs())
   if (!tjs && !warnedNoTjs) {
     warnedNoTjs = true
     console.warn(
       'tjs-lang not available — live examples run as raw JavaScript ' +
-        '(TypeScript examples will not transpile). Install with: npm install tjs-lang'
+        '(tjs/TypeScript examples will not transpile). Install with: npm install tjs-lang'
+    )
+  }
+  const fromTS = dialect === 'ts' ? await (fromTsOnce ??= loadFromTs()) : null
+  if (dialect === 'ts' && !fromTS && !warnedNoFromTs) {
+    warnedNoFromTs = true
+    console.warn(
+      'tjs-lang/lang/from-ts not available — `ts` examples run as raw JavaScript.'
     )
   }
   return (code) => {
-    const cached = resultCache.get(code)
+    const cacheKey = `${dialect} ${code}`
+    const cached = resultCache.get(cacheKey)
     if (cached) return cached
     // runTests:false — examples must not run tjs inline tests at transpile time
     // (the default throws on failure, which would break the example render).
-    const result = tjs
-      ? { code: tjs(code, { dialect: 'js', runTests: false }).code }
-      : { code }
-    resultCache.set(code, result)
+    let result: { code: string }
+    if (!tjs) {
+      result = { code }
+    } else if (dialect === 'ts') {
+      const tjsSource = fromTS ? fromTS(code, { emitTJS: true }).code : code
+      result = { code: tjs(tjsSource, { dialect: 'tjs', runTests: false }).code }
+    } else {
+      result = { code: tjs(code, { dialect, runTests: false }).code }
+    }
+    resultCache.set(cacheKey, result)
     return result
   }
 }

@@ -56,9 +56,43 @@ preview.append(&#39;Try editing some code and hitting refresh…&#39;)
   to { color: red }
 }
 </code></pre>
-<p>You can also use Typescript. It is transpiled to JavaScript using
-<a href="https://www.npmjs.com/package/tjs-lang">tjs-lang</a> (plain <code>js</code> blocks pass
-through untouched via tjs&#39;s <code>dialect: &#39;js&#39;</code>).</p>
+<h2>Source dialects: <code>js</code>, <code>tjs</code>, <code>ts</code></h2>
+<p>The executable block&#39;s fence language picks how the source is compiled before it
+runs, via <a href="https://www.npmjs.com/package/tjs-lang">tjs-lang</a>:</p>
+<ul>
+<li><strong><code>js</code></strong> — plain JavaScript, run as-is (tjs&#39;s <code>dialect: &#39;js&#39;</code> leaves vanilla JS
+untouched, so there&#39;s no surprise rewriting).</li>
+<li><strong><code>tjs</code></strong> — <a href="https://www.npmjs.com/package/tjs-lang">tjs-lang</a> source, lowered to
+JavaScript. Type annotations and tjs&#39;s safety transforms are compiled away.</li>
+<li><strong><code>ts</code></strong> — TypeScript, lowered to tjs (via <code>tjs-lang/lang/from-ts</code>) and then to
+JavaScript. The TypeScript compiler loads lazily, only for pages that use it.</li>
+</ul>
+<p>A <code>tjs</code> block — note the type annotation (which a plain <code>js</code> block couldn&#39;t run)
+and the inline <code>test &#39;…&#39; { … }</code> unit test. Open the code panel: the source tab
+is labeled <strong>tjs</strong>, with read-only <strong>JS</strong> (the compiled output) and <strong>tjs tests</strong>
+(the inline-test results) tabs, alongside the <strong>DOM tests</strong> tab.</p>
+<pre><code class="language-tjs">import { div } from &#39;tosijs&#39;.elements
+
+function badge(label: string, n: number) {
+  return `${label}: ${n}`
+}
+
+test &#39;badge formats label and number&#39; {
+  expect(badge(&#39;count&#39;, 42)).toBe(&#39;count: 42&#39;)
+}
+
+preview.append(div({ class: &#39;badge&#39; }, badge(&#39;count&#39;, 42)))
+</code></pre>
+<pre><code class="language-test">test(&#39;tjs example transpiled and ran&#39;, () =&gt; {
+  const badge = preview.querySelector(&#39;.badge&#39;)
+  expect(badge).not.toBe(null)
+  expect(badge.textContent).toBe(&#39;count: 42&#39;)
+})
+</code></pre>
+<p>The inline test above is tjs&#39;s native <code>test &#39;…&#39; { … }</code> syntax. In a <em>TypeScript</em>
+example the equivalent is written inside a comment (so it survives <code>tsc</code>) — but
+that comment form can&#39;t appear inside a doc comment like this one, since the
+test&#39;s own closing delimiter would end the doc comment.</p>
 <h2>CSS Isolation with <code>iframe</code></h2>
 <p>Add the <code>iframe</code> attribute to render the preview inside an iframe for complete CSS isolation.</p>
 <h2>Test Blocks</h2>

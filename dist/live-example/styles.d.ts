@@ -189,4 +189,21 @@ export declare const liveExampleStyleSpec: {
     ':host .test-fail': {
         color: string;
     };
+    ':host .tjs-test-results': {
+        padding: string;
+        fontSize: string;
+        fontFamily: string;
+        overflow: string;
+        lineHeight: string;
+    };
+    ':host .tjs-test-summary': {
+        fontWeight: string;
+        marginBottom: string;
+    };
+    ':host .tjs-test-empty': {
+        opacity: string;
+    };
+    ':host .tjs-test-error': {
+        opacity: string;
+    };
 };

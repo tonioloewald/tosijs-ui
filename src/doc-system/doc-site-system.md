@@ -47,7 +47,7 @@ Static and hydrated output share the same slug + markdown rendering
 
 **1. `site.config.ts`** at your repo root:
 
-```ts
+```typescript
 import { defineSiteConfig } from 'tosijs-ui/site'
 
 export default defineSiteConfig({
@@ -64,7 +64,7 @@ export default defineSiteConfig({
 
 **2. `bin/site.ts`** — the only build file you write:
 
-```ts
+```typescript
 import { buildSite, devServer } from 'tosijs-ui/site'
 import config from '../site.config'
 
@@ -175,7 +175,7 @@ icons or **overrides a default by reusing its name**. Registered icons work with
 `class="filled|stroked|color"` sets its default styling. Do this in your bundle
 entry so the icons are available before the page renders:
 
-```ts
+```typescript
 // demo/site.ts
 import { defineIcons } from 'tosijs-ui'
 
@@ -193,7 +193,7 @@ CLI (it scales/rounds coordinates and emits `export default { name: '<svg>' }`):
 bunx tosijs-make-icons --input ./my-icons --output ./src/my-icons.ts
 ```
 
-```ts
+```typescript
 import { defineIcons } from 'tosijs-ui'
 import myIcons from './my-icons'
 defineIcons(myIcons)

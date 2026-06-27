@@ -183,4 +183,22 @@ export const liveExampleStyleSpec = {
     ':host .test-fail': {
         color: '#f00',
     },
+    // Read-only "tjs tests" results tab (inline /*test*/ results).
+    ':host .tjs-test-results': {
+        padding: '8px 12px',
+        fontSize: '14px',
+        fontFamily: 'var(--mono-font, monospace)',
+        overflow: 'auto',
+        lineHeight: '1.6',
+    },
+    ':host .tjs-test-summary': {
+        fontWeight: 'bold',
+        marginBottom: '6px',
+    },
+    ':host .tjs-test-empty': {
+        opacity: '0.6',
+    },
+    ':host .tjs-test-error': {
+        opacity: '0.7',
+    },
 };

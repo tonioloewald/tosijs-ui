@@ -67,7 +67,7 @@ npm add tosijs-ui
 Then import the component `elementCreator` and create elements. A `tosijs`
 `elementCreator` is syntax sugar around `document.createElement()`.
 
-```ts
+```typescript
 import { tosiTable } from 'tosijs-ui'
 
 document.body.append(tosiTable())

@@ -14,7 +14,11 @@ Limitations (v1): only blocks already present in the source are updated — addi
 new block type to an example isn't persisted. Replaces by block position, so it
 never depends on the rendered/entity-decoded text matching the source.
 */
-const EXECUTABLE = new Set(['js', 'html', 'css', 'test']);
+// `js`/`tjs`/`ts` are interchangeable "source" blocks (the example's executable
+// code); html/css/test are the rest. All count toward grouping so example
+// ordinals stay aligned with insert-examples.
+const SOURCE_LANGS = new Set(['js', 'tjs', 'ts']);
+const EXECUTABLE = new Set(['js', 'tjs', 'ts', 'html', 'css', 'test']);
 /** Find every ```lang …``` fenced block in document order, with positions. */
 export function findFencedBlocks(src) {
     const re = /```([\w-]*)[^\n]*\n([\s\S]*?)\n```/g;
@@ -71,11 +75,16 @@ export function rewriteExampleBlocks(src, ordinal, edits) {
     // changed — otherwise saving one block churns its unedited siblings.
     const trimEnd = (s) => s.replace(/\s+$/, '');
     const replacements = [];
+    // `edits.js` is the example's source code regardless of its dialect, so it maps
+    // to whichever js/tjs/ts block the group actually has.
+    const blockFor = (lang) => lang === 'js'
+        ? group.find((b) => SOURCE_LANGS.has(b.lang))
+        : group.find((b) => b.lang === lang);
     for (const lang of ['js', 'html', 'css', 'test']) {
         const next = edits[lang];
         if (next === undefined)
             continue;
-        const block = group.find((b) => b.lang === lang);
+        const block = blockFor(lang);
         if (!block)
             continue;
         const sourceCode = src.slice(block.codeStart, block.codeEnd);

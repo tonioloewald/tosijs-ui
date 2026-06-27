@@ -91,3 +91,48 @@ describe('save-to-source', () => {
     expect(out).not.toContain('.nope {}')
   })
 })
+
+const DIALECTS = `# dialects
+
+\`\`\`tjs
+const x == 1
+\`\`\`
+\`\`\`css
+.a { color: red }
+\`\`\`
+
+prose
+
+\`\`\`ts
+const y: number = 2
+\`\`\`
+
+\`\`\`typescript
+// display-only
+\`\`\`
+\`\`\`js
+const z = 3
+\`\`\`
+`
+
+describe('save-to-source dialects (tjs/ts)', () => {
+  test('tjs and ts count as source blocks for grouping/ordinals', () => {
+    const groups = groupExamples(DIALECTS, findFencedBlocks(DIALECTS))
+    // [tjs+css], [ts], [js] — typescript stays display-only and breaks the run
+    expect(groups.map((g) => g.map((b) => b.lang))).toEqual([
+      ['tjs', 'css'],
+      ['ts'],
+      ['js'],
+    ])
+  })
+
+  test('the source edit maps to the example’s tjs/ts block', () => {
+    const tjsOut = rewriteExampleBlocks(DIALECTS, 0, { js: 'const x == 999' })!
+    expect(tjsOut).toContain('const x == 999')
+    expect(tjsOut).toContain('.a { color: red }') // sibling css untouched
+
+    const tsOut = rewriteExampleBlocks(DIALECTS, 1, { js: 'const y: number = 22' })!
+    expect(tsOut).toContain('const y: number = 22')
+    expect(tsOut).toContain('const z = 3') // js example untouched
+  })
+})

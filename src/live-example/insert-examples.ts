@@ -25,7 +25,7 @@ export function insertExamples(
 ): void {
   const sources: SourceBlock[] = [
     ...element.querySelectorAll(
-      '.language-html,.language-js,.language-css,.language-test'
+      '.language-html,.language-js,.language-tjs,.language-ts,.language-css,.language-test'
     ),
   ]
     .filter((el) => !el.closest(liveExampleTagName))
@@ -62,7 +62,12 @@ export function insertExamples(
     exampleSources.forEach((source) => {
       switch (source.language) {
         case 'js':
+        case 'tjs':
+        case 'ts':
+          // All three are the example's executable "source" block; they land in
+          // the same editor and the dialect drives how it's transpiled/run.
           example.js = source.code
+          example.dialect = source.language
           break
         case 'html':
           example.html = source.code
