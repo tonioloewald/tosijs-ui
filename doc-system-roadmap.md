@@ -268,8 +268,9 @@ the real file instead of download).
 > tabs `tjs|html|css|DOM tests|JS|tjs tests`, inline tests run (1/2 w/ expected
 > fail).
 >
-> Next: production IndexedDB overlay; SW→`/lib` resolver; ePub/PDF; haltija-in-dev
-> widget (see roadmap items above).
+> ePub + PDF: ✅ SHIPPED (`site/epub.ts` + `site/pdf.ts`; see the publishing
+> table below). Next: production IndexedDB overlay; SW→`/lib` resolver;
+> haltija-in-dev widget (see roadmap items above).
 
 Empirically confirmed against `../tjs-lang` (`tjs-lang` npm). The seam:
 
@@ -380,8 +381,8 @@ Low-risk, high-leverage, and a prerequisite for #6. Ship it first, on its own.
 | 5 | **haltija widget in dev** | A | Wire-up, not build (beta 10 ships server + widget). Free-port discovery, localhost-only injection. |
 | 4 | **edit source files in dev (+ create new docs)** | B | A write endpoint is arbitrary-file-write unless localhost + dev-only + path-jailed. Security model first. |
 | 3 | **save/load per live example** | C (+ B for dev-source) | `uuid` is per-load → can't key persistence. Key by `version/slug/ordinal` (+ optional `id=`). IndexedDB = scratchpad (acknowledged weakness); REST is the real story. |
-| 1 | **ePub (build-time)** with TOC, images, index, footnotes | — (corpus) | Live examples render as **pretty-printed code listings, force-wrapped** (no JS in a book). XHTML well-formedness; mimetype-first STORED zip. |
-| 2 | **PDF (build-time)** | A | Reuse #1's per-doc XHTML+CSS, print-to-PDF via headless haltija. Same pipeline, second emitter. |
+| 1 | **ePub (build-time)** — ✅ SHIPPED | — (corpus) | `buildEpub(config, opts)` in `site/epub.ts`. One XHTML chapter/doc in nav-tree order, EPUB3 `nav.xhtml` + EPUB2 `toc.ncx`, customizable stylesheet (`opts.css`/`extraCss`, `DEFAULT_BOOK_CSS` force-wraps code). mimetype-first STORED via `zip -X0`/`-Xr9D`. XHTML well-formedness via happy-dom parse→XML re-serialize (fixes unquoted attrs / named entities / tag-like prose; per-doc regex fallback when it throws). Verified: 56 chapters, 0 well-formedness failures, 0 dangling manifest refs. |
+| 2 | **PDF (build-time)** — ✅ SHIPPED | — | `buildPdf(config, opts)` in `site/pdf.ts`. **Used Playwright (already a dev dep), not haltija** — no Foundation A needed: one combined print-CSS HTML (TOC + page-break-per-chapter) → headless Chromium `page.pdf()`. Verified: 184-page A4 PDF. Run both via `bun run book` / `book:pdf`. |
 
 ### Index & footnotes (for #1, and useful on the live site too)
 

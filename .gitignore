@@ -91,3 +91,8 @@ bun.lock
 *.csr
 .browser-tests.json
 .haltija/
+
+# generated book artifacts (regenerated on demand via `bun run book` / `--pdf`)
+docs/*.epub
+docs/*.pdf
+docs/.epub-build/
