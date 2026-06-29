@@ -92,7 +92,7 @@ bun.lock
 .browser-tests.json
 .haltija/
 
-# generated book artifacts (regenerated on demand via `bun run book` / `--pdf`)
-docs/*.epub
+# the ePub is built + committed with the site (linked in the nav); the PDF stays
+# an explicit local `bun run book:pdf` artifact (not deployed or linked).
 docs/*.pdf
 docs/.epub-build/
