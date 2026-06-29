@@ -91,7 +91,6 @@ const browser = createDocBrowser({
     npm: `https://www.npmjs.com/package/${PROJECT}`,
     discord: 'https://discord.com/invite/ramJ9rgky5',
     blog: 'https://loewald.com',
-    bundle: `https://bundlejs.com/?q=${PROJECT}`,
     cdn: `https://www.jsdelivr.com/package/npm/${PROJECT}`,
   },
 })
@@ -101,7 +100,7 @@ if (main) {
   if (header) {
     const { img, a, span, button } = elements
 
-    // Add bundle and cdn badges before the icon links
+    // Add the cdn badge before the icon links
     const sizeBreakElement = header.querySelector('tosi-sizebreak')
     if (sizeBreakElement) {
       const badges = span(
@@ -113,13 +112,6 @@ if (main) {
             gap: vars.spacing50,
           },
         },
-        a(
-          { href: `https://bundlejs.com/?q=${PROJECT}`, target: '_blank' },
-          img({
-            alt: 'bundlejs size badge',
-            src: `https://deno.bundlejs.com/?q=${PROJECT}&badge=`,
-          })
-        ),
         a(
           {
             href: `https://www.jsdelivr.com/package/npm/${PROJECT}`,

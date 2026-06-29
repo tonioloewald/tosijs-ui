@@ -68,8 +68,8 @@ the window's `resize` events and its own (via `ResizeObserver`).
 ```
 
 `<tosi-sizebreak>` supports both `min-width` and/or `min-height`, and you can of course target only one
-of the slots if you like. The demo site uses them to hide the [bundlejs](https://bundlejs.com/) badge when
-space is tight.
+of the slots if you like. The demo site uses them to hide the
+[jsdelivr](https://www.jsdelivr.com/) badge when space is tight.
 */
 
 /*{ "parent": "Components" }*/
