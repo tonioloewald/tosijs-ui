@@ -1,5 +1,46 @@
 # Changelog
 
+## 1.6.13
+
+The documentation system becomes a real publishing pipeline: every doc site can
+now emit an **ePub** of the whole corpus, **print to PDF** from the browser, and
+**deep-link every example from the book back to the live site**. All changes are
+**additive — no breaking changes** — and concern the doc-site tooling
+(`tosijs-ui/site`) and doc browser, not the components.
+
+### Added
+
+- **ePub of the whole doc site** (`tosijs-ui/site`). Set `epub: true` (or an
+  options object) in the site config and the build emits a valid EPUB 3 of the
+  corpus alongside the static pages, regenerated on every build:
+  - one chapter per doc in nav-tree order, a readable **Contents page** in the
+    reading flow plus the reader's Contents drawer (EPUB3 `nav.xhtml` + EPUB2
+    `toc.ncx`), and a customizable stylesheet (`epub.css` / default force-wraps
+    code listings)
+  - an **auto-generated cover** from the title + favicon (`epub.cover` /
+    `epub.coverColor` to override); needs the optional `@resvg/resvg-js`, and is
+    omitted gracefully if it's absent
+- **Print to PDF** from the doc browser — a "Print as PDF" item in the settings
+  menu assembles the whole corpus into a print-styled window and opens the print
+  dialog. No server, no headless browser. (A headless `buildPdf` is also available
+  for CI via `bun run book:pdf`, not deployed.)
+- **"Download ePub"** item in the settings menu (alongside Print), linking the
+  built book.
+- **Example anchors + book deep links.** Every live example gets a stable anchor
+  (`/{slug}/#example-1`, or a custom `id` via a ` ```js#my-id ` fence on any block
+  of the group). Arriving at such a URL scrolls the example into view with a brief
+  highlight. Each example in the ePub/PDF links back to its anchor on the live
+  site — a reader is one tap from the real, interactive, editable version.
+
+### Removed
+
+- The broken **bundlejs** size badge (bundlejs errors computing the bundle).
+
+### Notes
+
+- The ePub needs `happy-dom` (dev dep) + the `zip` CLI; the generated cover needs
+  the optional `@resvg/resvg-js`.
+
 ## 1.6.12
 
 Packaging improvements for independent, tree-shakeable consumption. All changes
