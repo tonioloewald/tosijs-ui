@@ -41,6 +41,9 @@ export default defineSiteConfig({
   localizedStrings,
   favicon: '/favicon.svg',
 
+  // Build + ship the ePub (the settings menu's "Download ePub" links to it).
+  epub: { author: 'Tonio Loewald' },
+
   // Enable the dev-server source read/write endpoints for in-browser
   // "edit page source" (local dev only).
   editableSources: true,

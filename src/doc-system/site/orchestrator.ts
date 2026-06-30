@@ -22,6 +22,7 @@ import { ensureSections } from './sections'
 import { generateLlmsTxt } from './make-llms-txt'
 import { generateSite } from './generate-site'
 import { findOutputDirOverlap } from './output-guard'
+import { buildEpub } from './epub'
 
 declare global {
   var Bun: any
@@ -271,6 +272,13 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
         2
       ) + '\n'
     )
+  }
+
+  // Emit the ePub into the output dir on every build, so it stays in sync with
+  // the corpus and survives the `rm -rf <outputDir>` at the top of the NEXT build
+  // (otherwise a dev rebuild would silently drop it). Cheap (~0.4s).
+  if (config.epub) {
+    await buildEpub(config, typeof config.epub === 'object' ? config.epub : {})
   }
 
   console.timeEnd('build')

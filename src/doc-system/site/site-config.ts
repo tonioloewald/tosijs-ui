@@ -137,6 +137,13 @@ export interface SiteConfig {
    * the file contents.
    */
   llmsTxt?: boolean | ((docs: Doc[]) => string)
+  /**
+   * Emit an ePub of the whole doc site into the output dir on every build (so it
+   * stays in sync with the corpus and is served alongside the static pages, e.g.
+   * for a "Download ePub" link). `true` uses defaults; pass options to customize.
+   * Default false. Requires `happy-dom` (dev dep) + the `zip` CLI.
+   */
+  epub?: boolean | { author?: string; title?: string; css?: string }
   /** served web-root output dir, default 'docs' */
   outputDir?: string
   /** dev-server port, default 8787 */

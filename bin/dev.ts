@@ -11,7 +11,7 @@ icon-data regeneration) is wired here.
 
 import { $ } from 'bun'
 import siteConfig from '../tosijs-site.config'
-import { buildSite, devServer, buildEpub } from '../src/doc-system/site'
+import { buildSite, devServer } from '../src/doc-system/site'
 
 declare global {
   var Bun: any
@@ -32,12 +32,6 @@ const config = {
 }
 
 const ok = await buildSite(config)
-if (buildOnly) {
-  // Generate + ship the ePub with the production build only (it's cheap; the dev
-  // watch skips it so rebuilds stay snappy). The PDF stays an explicit, local
-  // `bun run book:pdf` step — not deployed or linked.
-  await buildEpub(config, { author: 'Tonio Loewald' })
-  process.exit(ok ? 0 : 1)
-}
+if (buildOnly) process.exit(ok ? 0 : 1)
 
 await devServer(config, { test: testMode })
