@@ -261,7 +261,7 @@ export async function runTests(testCode, preview, context, transform) {
     };
     try {
         const code = rewriteImports(testCode, Object.keys(context));
-        const transformedCode = transform(code, { transforms: ['typescript'] }).code;
+        const transformedCode = (await transform(code, { transforms: ['typescript'] })).code;
         const contextKeys = Object.keys(fullContext).map((key) => key.replace(/-/g, ''));
         const contextValues = Object.values(fullContext);
         // Tag the AsyncFunction body with a sourceURL so stack traces report

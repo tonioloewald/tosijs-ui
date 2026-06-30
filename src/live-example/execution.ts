@@ -101,7 +101,9 @@ export async function executeInline(
 
   try {
     const code = rewriteImports(js, Object.keys(context))
-    const transformedCode = transform(code, { transforms: ['typescript'] }).code
+    const transformedCode = (
+      await transform(code, { transforms: ['typescript'] })
+    ).code
 
     const contextKeys = Object.keys(fullContext).map(contextVarName)
     const contextValues = Object.values(fullContext)
@@ -208,7 +210,9 @@ export async function executeInIframe(
 
   try {
     const code = rewriteImports(js, Object.keys(context))
-    const transformedCode = transform(code, { transforms: ['typescript'] }).code
+    const transformedCode = (
+      await transform(code, { transforms: ['typescript'] })
+    ).code
 
     // Create AsyncFunction in iframe's context
     const IframeAsyncFunction = (

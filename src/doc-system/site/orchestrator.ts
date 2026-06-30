@@ -131,7 +131,12 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
       naming: scriptName,
       // tjs-lang transpiles live examples; it's dynamically import()'d at
       // runtime (falling back to CDN), so keep it out of the bundle.
-      external: ['tjs-lang', 'tjs-lang/lang', ...(config.bundleExternals ?? [])],
+      external: [
+        'tjs-lang',
+        'tjs-lang/browser',
+        'tjs-lang/browser/from-ts',
+        ...(config.bundleExternals ?? []),
+      ],
     })
     if (!result.success) {
       console.error('bundle build failed')

@@ -35,4 +35,6 @@ export type TransformFn = (code: string, options?: {
     transforms: ('jsx' | 'typescript' | 'flow' | 'imports')[];
 }) => {
     code: string;
-};
+} | Promise<{
+    code: string;
+}>;

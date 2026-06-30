@@ -355,7 +355,9 @@ export async function runTests(
 
   try {
     const code = rewriteImports(testCode, Object.keys(context))
-    const transformedCode = transform(code, { transforms: ['typescript'] }).code
+    const transformedCode = (
+      await transform(code, { transforms: ['typescript'] })
+    ).code
 
     const contextKeys = Object.keys(fullContext).map((key) =>
       key.replace(/-/g, '')

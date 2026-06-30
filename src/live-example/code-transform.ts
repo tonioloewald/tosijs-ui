@@ -66,9 +66,11 @@ export async function executeCode(
   transform: TransformFn
 ): Promise<void> {
   const rewrittenCode = rewriteImports(code, Object.keys(context))
-  const transformedCode = transform(rewrittenCode, {
-    transforms: ['typescript'],
-  }).code
+  const transformedCode = (
+    await transform(rewrittenCode, {
+      transforms: ['typescript'],
+    })
+  ).code
 
   const contextKeys = Object.keys(context).map(contextVarName)
   const contextValues = Object.values(context)
@@ -84,25 +86,29 @@ type TjsFn = (
   options?: { dialect?: 'js' | 'tjs'; runTests?: boolean | 'only' | 'report' }
 ) => { code: string }
 
-/** The fromTS() entry from tjs-lang/lang/from-ts — lowers TypeScript to tjs. */
+/**
+ * The fromTS() entry from tjs-lang/browser/from-ts — lowers TypeScript to tjs.
+ * Async: it lazy-loads the TypeScript compiler (from a CDN) on first call.
+ */
 type FromTsFn = (
   source: string,
   options?: { emitTJS?: boolean }
-) => { code: string }
+) => Promise<{ code: string }>
 
-// tjs-lang/lang is the TS-compiler-free entry (the TypeScript path lives behind
-// tjs-lang/lang/from-ts and is only loaded for `ts` examples). The `+esm` form is
-// required: the prebuilt bundle imports `acorn`/`tosijs-schema`, which jsdelivr's
-// esm build resolves (a raw file load would fail on those bare imports). Pinned to
-// match the dev dep.
-const TJS_CDN = 'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.2/lang/+esm'
+// tjs-lang/browser is a SELF-CONTAINED transpiler bundle (acorn/tosijs-schema
+// inlined, zero bare imports), so it loads as a raw CDN file — no `+esm` rewrite
+// needed. The TypeScript path lives behind tjs-lang/browser/from-ts (also
+// self-contained) and is loaded only for `ts` examples; from-ts in turn fetches
+// the TypeScript compiler lazily at runtime, so tsc is never pulled in until a TS
+// example actually transforms. Pinned to match the dev dep.
+const TJS_CDN = 'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.5/dist/tjs-browser.js'
 const FROM_TS_CDN =
-  'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.2/lang/from-ts/+esm'
+  'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.5/dist/tjs-browser-from-ts.js'
 
 async function loadTjs(): Promise<TjsFn | null> {
   // Installed peer (ESM consumers / dev build)
   try {
-    const { tjs } = (await import('tjs-lang/lang')) as { tjs: TjsFn }
+    const { tjs } = (await import('tjs-lang/browser')) as { tjs: TjsFn }
     if (typeof tjs === 'function') return tjs
   } catch {
     // not installed — try CDN
@@ -145,7 +151,7 @@ let testApiOnce: Promise<TjsTestApi | null> | undefined
 
 async function loadTjsTestApiImpl(): Promise<TjsTestApi | null> {
   for (const mod of [
-    () => import('tjs-lang/lang'),
+    () => import('tjs-lang/browser'),
     () => import(/* webpackIgnore: true */ TJS_CDN),
   ]) {
     try {
@@ -169,7 +175,7 @@ export function loadTjsTestApi(): Promise<TjsTestApi | null> {
 // `ts` example is actually transformed — never for `js`/`tjs` pages.
 async function loadFromTs(): Promise<FromTsFn | null> {
   try {
-    const { fromTS } = (await import('tjs-lang/lang/from-ts')) as {
+    const { fromTS } = (await import('tjs-lang/browser/from-ts')) as {
       fromTS: FromTsFn
     }
     if (typeof fromTS === 'function') return fromTS
@@ -229,7 +235,7 @@ export async function loadTransform(
   if (dialect === 'ts' && !fromTS && !warnedNoFromTs) {
     warnedNoFromTs = true
     console.warn(
-      'tjs-lang/lang/from-ts not available — `ts` examples run as raw JavaScript.'
+      'tjs-lang/browser/from-ts not available — `ts` examples run as raw JavaScript.'
     )
   }
   return (code) => {
@@ -238,15 +244,23 @@ export async function loadTransform(
     if (cached) return cached
     // runTests:false — examples must not run tjs inline tests at transpile time
     // (the default throws on failure, which would break the example render).
-    let result: { code: string }
     if (!tjs) {
-      result = { code }
-    } else if (dialect === 'ts') {
-      const tjsSource = fromTS ? fromTS(code, { emitTJS: true }).code : code
-      result = { code: tjs(tjsSource, { dialect: 'tjs', runTests: false }).code }
-    } else {
-      result = { code: tjs(code, { dialect, runTests: false }).code }
+      const result = { code }
+      resultCache.set(cacheKey, result)
+      return result
     }
+    if (dialect === 'ts') {
+      // async: fromTS lazy-loads the TypeScript compiler on first use.
+      return (async () => {
+        const tjsSource = fromTS ? (await fromTS(code, { emitTJS: true })).code : code
+        const result = {
+          code: tjs(tjsSource, { dialect: 'tjs', runTests: false }).code,
+        }
+        resultCache.set(cacheKey, result)
+        return result
+      })()
+    }
+    const result = { code: tjs(code, { dialect, runTests: false }).code }
     resultCache.set(cacheKey, result)
     return result
   }

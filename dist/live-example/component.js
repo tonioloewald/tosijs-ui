@@ -42,7 +42,7 @@ runs, via [tjs-lang](https://www.npmjs.com/package/tjs-lang):
   untouched, so there's no surprise rewriting).
 - **`tjs`** — [tjs-lang](https://www.npmjs.com/package/tjs-lang) source, lowered to
   JavaScript. Type annotations and tjs's safety transforms are compiled away.
-- **`ts`** — TypeScript, lowered to tjs (via `tjs-lang/lang/from-ts`) and then to
+- **`ts`** — TypeScript, lowered to tjs (via `tjs-lang/browser/from-ts`) and then to
   JavaScript. The TypeScript compiler loads lazily, only for pages that use it.
 
 A `tjs` block — note the type annotation (which a plain `js` block couldn't run)
@@ -361,7 +361,7 @@ export class LiveExample extends Component {
             return;
         }
         try {
-            const execJs = transform(rewriteImports(extracted.code, Object.keys(this.context))).code;
+            const execJs = (await transform(rewriteImports(extracted.code, Object.keys(this.context)))).code;
             const body = `${execJs}\n${api.testUtils}\nreturn ${extracted.testRunner}`;
             // The test-stripped source still runs its top-level statements (to define
             // the functions under test), which may touch `preview` — give them a
@@ -402,11 +402,11 @@ export class LiveExample extends Component {
     // The JavaScript `this.js` compiles to under the current dialect — the same
     // pipeline execution runs (rewriteImports → dialect transform), so the tab
     // shows what actually executes. Transpile errors render as a comment.
-    computeGeneratedJs(transform) {
+    async computeGeneratedJs(transform) {
         if (this.dialect === 'js')
             return '';
         try {
-            return transform(rewriteImports(this.js, Object.keys(this.context))).code;
+            return (await transform(rewriteImports(this.js, Object.keys(this.context)))).code;
         }
         catch (error) {
             return `// transpile error:\n// ${error.message}`;
@@ -978,7 +978,7 @@ export class LiveExample extends Component {
         // Keep the read-only generated-JS tab (tjs/ts) in sync with the source, and
         // re-run any inline tjs tests for the "tjs tests" results tab.
         if (this.dialect !== 'js') {
-            this.lastGeneratedJs = this.computeGeneratedJs(transform);
+            this.lastGeneratedJs = await this.computeGeneratedJs(transform);
             if (this.jsOutEditor)
                 this.jsOutEditor.value = this.lastGeneratedJs;
             await this.runInlineTjsTests(transform);

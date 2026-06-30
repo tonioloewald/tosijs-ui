@@ -66,7 +66,7 @@ export async function executeInline(options) {
     const fullContext = { preview, ...context };
     try {
         const code = rewriteImports(js, Object.keys(context));
-        const transformedCode = transform(code, { transforms: ['typescript'] }).code;
+        const transformedCode = (await transform(code, { transforms: ['typescript'] })).code;
         const contextKeys = Object.keys(fullContext).map(contextVarName);
         const contextValues = Object.values(fullContext);
         // @ts-expect-error AsyncFunction constructor typing
@@ -142,7 +142,7 @@ export async function executeInIframe(options) {
     const fullContext = { preview, ...context };
     try {
         const code = rewriteImports(js, Object.keys(context));
-        const transformedCode = transform(code, { transforms: ['typescript'] }).code;
+        const transformedCode = (await transform(code, { transforms: ['typescript'] })).code;
         // Create AsyncFunction in iframe's context
         const IframeAsyncFunction = iframeWindow.eval('(async () => {}).constructor');
         const contextKeys = Object.keys(fullContext).map(contextVarName);

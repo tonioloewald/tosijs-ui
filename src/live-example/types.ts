@@ -46,4 +46,7 @@ export interface RemotePayload {
 export type TransformFn = (
   code: string,
   options?: { transforms: ('jsx' | 'typescript' | 'flow' | 'imports')[] }
-) => { code: string }
+  // `ts` examples resolve asynchronously (the TypeScript compiler lazy-loads on
+  // first use); `js`/`tjs` resolve synchronously. Callers `await` the result —
+  // awaiting a plain value is a no-op, so both forms work at every call site.
+) => { code: string } | Promise<{ code: string }>
