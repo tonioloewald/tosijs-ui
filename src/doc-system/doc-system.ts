@@ -61,6 +61,7 @@ A self-contained, controllable embed (e.g. docs in a floating panel):
 import { Component, ElementCreator, StyleSheet, elements, tosi, vars } from 'tosijs'
 import { createDocBrowser, Doc, ProjectLinks, LinkItem } from '../doc-browser'
 import { buildSlugMap, legacyQueryPath } from './routing'
+import { buildBookHtml, slugify } from './book-html'
 import { docSystemStyleSpec } from './doc-system-styles'
 import { icons } from '../icons'
 import { popMenu } from '../menu'
@@ -242,6 +243,46 @@ export class TosiDocSystem extends Component {
         title: 'settings',
         onClick: (event: Event) => {
           const menuItems: any[] = []
+
+          // Print / ePub of the whole corpus, before a separator + the prefs.
+          let projectName = ''
+          try {
+            projectName = JSON.parse(this.config || '{}').projectName || ''
+          } catch {
+            // ignore — fall through to document.title
+          }
+          const bookTitle = projectName || document.title || 'Documentation'
+          menuItems.push({
+            caption: 'Print as PDF',
+            icon: 'printer',
+            action: () => {
+              const win = window.open('', '_blank')
+              if (!win) {
+                window.alert('Allow pop-ups to print the documentation as a book.')
+                return
+              }
+              win.document.open()
+              win.document.write(
+                buildBookHtml(this.corpus as any, {
+                  title: bookTitle,
+                  autoPrint: true,
+                })
+              )
+              win.document.close()
+            },
+          })
+          menuItems.push({
+            caption: 'Download ePub',
+            icon: 'book',
+            action: () => {
+              const link = document.createElement('a')
+              link.href = `/${slugify(bookTitle)}.epub`
+              link.download = ''
+              link.click()
+            },
+          })
+          menuItems.push(null)
+
           const localeOptions = (i18n.localeOptions.value as any[]) || []
           if (localeOptions.length > 1) {
             menuItems.push({
