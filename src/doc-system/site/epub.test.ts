@@ -68,6 +68,12 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     const home = fs.readFileSync(path.join(dir, 'OEBPS/index.xhtml'), 'utf8')
     expect(home).toContain('Hello &amp; welcome.') // ampersand escaped
     expect(home).toContain('<?xml')
+
+    // a cover was generated (no cover image provided) and registered as cover-image
+    expect(fs.existsSync(path.join(dir, 'OEBPS/cover.png'))).toBe(true)
+    const opf = fs.readFileSync(path.join(dir, 'OEBPS/package.opf'), 'utf8')
+    expect(opf).toContain('properties="cover-image"')
+    expect(opf).toMatch(/<itemref idref="cover-page"\/>\s*<itemref/) // cover first in spine
   } finally {
     fs.rmSync(dir, { recursive: true, force: true })
   }

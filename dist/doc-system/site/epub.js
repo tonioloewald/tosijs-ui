@@ -127,14 +127,25 @@ function containerXml() {
 </container>
 `;
 }
-function packageOpf(meta, chapters) {
+function packageOpf(meta, chapters, cover) {
     const manifestItems = [
         `<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>`,
         `<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>`,
         `<item id="css" href="style.css" media-type="text/css"/>`,
+        ...(cover
+            ? [
+                `<item id="cover-image" href="${cover.file}" media-type="${cover.mediaType}" properties="cover-image"/>`,
+                `<item id="cover-page" href="cover.xhtml" media-type="application/xhtml+xml"/>`,
+            ]
+            : []),
         ...chapters.map((c) => `<item id="${c.id}" href="${c.href}" media-type="application/xhtml+xml"/>`),
     ];
-    const spine = chapters.map((c) => `<itemref idref="${c.id}"/>`);
+    const spine = [
+        ...(cover ? [`<itemref idref="cover-page"/>`] : []),
+        ...chapters.map((c) => `<itemref idref="${c.id}"/>`),
+    ];
+    // EPUB2 cover fallback (older readers find the thumbnail via this meta).
+    const coverMeta = cover ? `\n    <meta name="cover" content="cover-image"/>` : '';
     return `<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -142,7 +153,7 @@ function packageOpf(meta, chapters) {
     <dc:title>${escapeXml(meta.title)}</dc:title>
     <dc:language>${escapeXml(meta.language)}</dc:language>
     <dc:creator>${escapeXml(meta.author)}</dc:creator>
-    <meta property="dcterms:modified">${meta.modified}</meta>
+    <meta property="dcterms:modified">${meta.modified}</meta>${coverMeta}
   </metadata>
   <manifest>
     ${manifestItems.join('\n    ')}
@@ -222,6 +233,114 @@ async function zipEpub(buildDir, outputAbs) {
     // 2) everything else, deflated (-9), recursive (-r), no extra fields, no dir entries (-D)
     await $ `zip -Xr9D ${outputAbs} META-INF OEBPS -x mimetype`.cwd(buildDir).quiet();
 }
+/** Rasterize an SVG to a PNG buffer via @resvg/resvg-js (optional dep). */
+async function rasterizeSvg(svg, width) {
+    try {
+        const { Resvg } = (await import('@resvg/resvg-js'));
+        const resvg = new Resvg(svg, {
+            font: { loadSystemFonts: true, defaultFontFamily: 'Helvetica' },
+            fitTo: { mode: 'width', value: width },
+        });
+        return Buffer.from(resvg.render().asPng());
+    }
+    catch {
+        return null;
+    }
+}
+/** Greedy word-wrap into at most `maxLines` lines of ~`maxChars` each. */
+function wrapTitle(title, maxChars, maxLines) {
+    const lines = [];
+    let current = '';
+    for (const word of title.split(/\s+/)) {
+        if (current && (current + ' ' + word).length > maxChars) {
+            lines.push(current);
+            current = word;
+        }
+        else {
+            current = current ? current + ' ' + word : word;
+        }
+    }
+    if (current)
+        lines.push(current);
+    return lines.slice(0, maxLines);
+}
+/** A 600×800 cover SVG: brand background, favicon, title, author. */
+function coverSvg(title, author, faviconInner, bg) {
+    const W = 600;
+    const H = 800;
+    const titleLines = wrapTitle(title, 16, 4);
+    const fontSize = titleLines.length > 2 ? 44 : 56;
+    const block = (titleLines.length - 1) * fontSize * 1.2;
+    const startY = 540 - block / 2;
+    const titleText = titleLines
+        .map((line, i) => `<text x="${W / 2}" y="${startY + i * fontSize * 1.2}" text-anchor="middle" ` +
+        `font-family="Helvetica,Arial,sans-serif" font-size="${fontSize}" font-weight="bold" ` +
+        `fill="#ffffff">${escapeXml(line)}</text>`)
+        .join('\n  ');
+    const icon = faviconInner
+        ? `<svg x="190" y="150" width="220" height="220" viewBox="0 0 48 48">${faviconInner}</svg>`
+        : '';
+    const authorText = author
+        ? `<text x="${W / 2}" y="710" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" ` +
+            `font-size="26" fill="#ffffffcc">${escapeXml(author)}</text>`
+        : '';
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <rect width="${W}" height="${H}" fill="${bg}"/>
+  ${icon}
+  ${titleText}
+  ${authorText}
+</svg>`;
+}
+/** Cover page (first in spine) showing the cover image full-bleed. */
+function coverPageXhtml(title, coverFile) {
+    return `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Cover</title>
+  <style>html,body{margin:0;padding:0;height:100%}
+  .cover{display:flex;align-items:center;justify-content:center;height:100vh}
+  .cover img{max-width:100%;max-height:100%}</style>
+</head>
+<body><div class="cover"><img src="${coverFile}" alt="${escapeXml(title)} cover"/></div></body>
+</html>
+`;
+}
+/**
+ * Resolve the cover: an explicit image (opts.cover) if given, else a generated
+ * one from the title + site favicon. Returns null if neither is available.
+ */
+async function makeCover(config, opts, meta) {
+    if (opts.cover && fs.existsSync(opts.cover)) {
+        const ext = path.extname(opts.cover).toLowerCase();
+        const mediaType = ext === '.jpg' || ext === '.jpeg'
+            ? 'image/jpeg'
+            : ext === '.gif'
+                ? 'image/gif'
+                : 'image/png';
+        return { file: `cover${ext || '.png'}`, mediaType, data: fs.readFileSync(opts.cover) };
+    }
+    // Embed the favicon (svg) into the generated cover, if available.
+    let faviconInner = null;
+    const fav = config.favicon ?? '/favicon.svg';
+    if (fav.endsWith('.svg')) {
+        const favPath = path.resolve(config.outputDir ?? 'docs', fav.replace(/^\//, ''));
+        if (fs.existsSync(favPath)) {
+            faviconInner = fs
+                .readFileSync(favPath, 'utf8')
+                .replace(/<\?xml[^>]*\?>/, '')
+                .replace(/<svg[^>]*>/, '')
+                .replace(/<\/svg>\s*$/, '')
+                .trim();
+        }
+    }
+    const svg = coverSvg(meta.title, meta.author, faviconInner, opts.coverColor ?? '#1f2933');
+    const png = await rasterizeSvg(svg, 600);
+    if (!png)
+        return null;
+    return { file: 'cover.png', mediaType: 'image/png', data: png };
+}
 /**
  * Build an EPUB 3 book from the extracted corpus. Returns the output path.
  */
@@ -277,7 +396,13 @@ export async function buildEpub(config, opts = {}) {
             title: doc.title,
         });
     }
-    fs.writeFileSync(path.join(buildDir, 'OEBPS', 'package.opf'), packageOpf(meta, chapters));
+    // Cover (explicit image, or generated from the title + favicon).
+    const cover = await makeCover(config, opts, meta);
+    if (cover) {
+        fs.writeFileSync(path.join(buildDir, 'OEBPS', cover.file), cover.data);
+        fs.writeFileSync(path.join(buildDir, 'OEBPS', 'cover.xhtml'), coverPageXhtml(meta.title, cover.file));
+    }
+    fs.writeFileSync(path.join(buildDir, 'OEBPS', 'package.opf'), packageOpf(meta, chapters, cover));
     fs.writeFileSync(path.join(buildDir, 'OEBPS', 'nav.xhtml'), navXhtml(meta, roots, fileFor));
     fs.writeFileSync(path.join(buildDir, 'OEBPS', 'toc.ncx'), tocNcx(meta, roots, fileFor));
     const output = path.resolve(opts.output ?? path.join(outDir, `${slugify(meta.title)}.epub`));

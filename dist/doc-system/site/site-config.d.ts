@@ -119,6 +119,10 @@ export interface SiteConfig {
         author?: string;
         title?: string;
         css?: string;
+        /** cover image path; omit to generate one from the title + favicon */
+        cover?: string;
+        /** background color for the generated cover, default '#1f2933' */
+        coverColor?: string;
     };
     /** served web-root output dir, default 'docs' */
     outputDir?: string;

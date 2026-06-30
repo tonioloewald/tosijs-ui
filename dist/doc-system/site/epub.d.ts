@@ -30,6 +30,13 @@ export interface BuildEpubOptions {
     extraCss?: string;
     /** ISO timestamp for dcterms:modified; default now (seconds precision) */
     modified?: string;
+    /**
+     * Cover image path (png/jpeg/gif). If omitted, a cover is generated from the
+     * book title + the site favicon (rasterized to PNG via @resvg/resvg-js).
+     */
+    cover?: string;
+    /** background color for the generated cover, default '#1f2933' */
+    coverColor?: string;
 }
 export declare function escapeXml(s: string): string;
 /**
