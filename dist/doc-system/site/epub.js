@@ -18,6 +18,9 @@ import * as path from 'path';
 import { renderDocMarkdown } from '../render';
 import { buildSlugMap } from '../routing';
 import { buildNavTree } from '../nav-tree';
+import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html';
+// Re-exported for back-compat (tosijs-ui/site's public surface + tests).
+export { DEFAULT_BOOK_CSS, stripDocMeta };
 // ── XML / XHTML helpers ─────────────────────────────────────────────────────
 const VOID_ELEMENTS = [
     'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta',
@@ -100,10 +103,6 @@ function htmlToXhtml(html, win) {
     win.document.body.innerHTML = html;
     return Array.from(win.document.body.childNodes).map(serializeXml).join('');
 }
-/** Drop the `<!--{ … }-->` metadata directives the extractor leaves in the text. */
-export function stripDocMeta(text) {
-    return text.replace(/<!--\{[\s\S]*?\}-->\s*/g, '');
-}
 function xhtmlPage(title, bodyHtml) {
     return `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
@@ -119,57 +118,6 @@ ${bodyHtml}
 </html>
 `;
 }
-// ── Default stylesheet (force-wraps code; clean book typography) ─────────────
-export const DEFAULT_BOOK_CSS = `/* tosijs-ui ePub default stylesheet */
-html { font-size: 100%; }
-body {
-  font-family: Georgia, 'Times New Roman', serif;
-  line-height: 1.5;
-  margin: 0 1em;
-  color: #1a1a1a;
-}
-h1, h2, h3, h4, h5, h6 {
-  font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
-  line-height: 1.2;
-  margin: 1.4em 0 0.5em;
-}
-h1 { font-size: 1.8em; page-break-before: always; }
-h2 { font-size: 1.4em; }
-h3 { font-size: 1.2em; }
-p { margin: 0.6em 0; }
-a { color: #08c; text-decoration: none; }
-ul, ol { margin: 0.6em 0; padding-left: 1.4em; }
-blockquote {
-  margin: 0.8em 0;
-  padding: 0 0 0 1em;
-  border-left: 3px solid #ccc;
-  color: #555;
-}
-img { max-width: 100%; height: auto; }
-table { border-collapse: collapse; margin: 0.8em 0; font-size: 0.85em; }
-th, td { border: 1px solid #ccc; padding: 0.3em 0.6em; text-align: left; }
-/* Code: force-wrap so listings never overflow a page (no horizontal scroll in a book) */
-code, pre {
-  font-family: 'SF Mono', Menlo, Consolas, monospace;
-  font-size: 0.8em;
-}
-:not(pre) > code {
-  background: #f3f3f3;
-  padding: 0.1em 0.3em;
-  border-radius: 3px;
-}
-pre {
-  background: #f6f8fa;
-  border: 1px solid #e1e4e8;
-  border-radius: 4px;
-  padding: 0.7em 0.9em;
-  margin: 0.8em 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-pre code { background: none; padding: 0; }
-`;
 function containerXml() {
     return `<?xml version="1.0" encoding="utf-8"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
@@ -265,18 +213,6 @@ ${renderNavPoints(roots, hrefFor, { n: 0 })}
 `;
 }
 // ── Orchestration ───────────────────────────────────────────────────────────
-function slugify(s) {
-    return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
-/** Flatten a nav-tree depth-first into spine / reading order. */
-export function flatten(nodes) {
-    const out = [];
-    for (const node of nodes) {
-        out.push(node);
-        out.push(...flatten(node.children));
-    }
-    return out;
-}
 /** Two-step zip that guarantees mimetype is first + STORED (the ePub gotcha). */
 async function zipEpub(buildDir, outputAbs) {
     const $ = Bun.$;

@@ -167,6 +167,7 @@ import {
 import { buildSlugMap, pathForSlug, filenameForPath } from './doc-system/routing'
 import { buildNavTree, NavNode } from './doc-system/nav-tree'
 import { renderDocMarkdown } from './doc-system/render'
+import { buildBookHtml } from './doc-system/book-html'
 import { LiveExample, testManager } from './live-example'
 import { TestResults } from './live-example/test-harness'
 import { tosiSidenav, TosiSidenav } from './side-nav'
@@ -625,6 +626,25 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     })
   }
 
+  // Print the whole corpus as a book: assemble every doc into one print-styled
+  // HTML document in a new window, which opens its own print dialog — so the
+  // user gets a PDF (or paper) via their browser, no server or Chromium needed.
+  const printBook = (): void => {
+    const win = window.open('', '_blank')
+    if (!win) {
+      window.alert('Allow pop-ups to print the documentation as a book.')
+      return
+    }
+    win.document.open()
+    win.document.write(
+      buildBookHtml(docs as any, {
+        title: projectName || 'Documentation',
+        autoPrint: true,
+      })
+    )
+    win.document.close()
+  }
+
   const headerContent: any[] = [
     button(
       {
@@ -707,6 +727,17 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       if (href) headerContent.push(headerLink({ href, label, icon }))
     }
   }
+
+  headerContent.push(
+    button(
+      {
+        class: 'iconic',
+        title: 'Print / Save as PDF',
+        onClick: printBook,
+      },
+      icons.printer()
+    )
+  )
 
   // The rendered-markdown content area. When hydrating a static page we ADOPT the
   // pre-rendered node so the landing page's HTML is never re-rendered; otherwise we
