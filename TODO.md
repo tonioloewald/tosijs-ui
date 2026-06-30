@@ -13,10 +13,6 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 ## High Priority
 
 - **JSON Schema-driven form editor** - Integrate schema-based form generation
-- **Cut a release** — ePub (build-time, auto-cover), the in-browser Print button,
-  and the per-component tree-shaking subpaths all sit **unreleased on top of
-  v1.6.12**. They only deploy (and the "Download ePub" link only goes live) on the
-  next published version.
 
 ## Example captures (live-example → static images)
 
