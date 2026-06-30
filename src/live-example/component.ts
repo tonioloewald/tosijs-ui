@@ -82,7 +82,7 @@ Add the `iframe` attribute to render the preview inside an iframe for complete C
 
 ## Test Blocks
 
-Add `\`\`\`test` code blocks to write inline tests that run against the preview:
+Add \`\`\``test` code blocks to write inline tests that run against the preview:
 
 ```html
 <button class="demo-btn">Click me</button>

@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.6.14
+
+Lighter live-example transpilation. Additive; affects only how the live-example
+runner loads its (optional, lazy) transpiler.
+
+### Changed
+
+- **Live examples now use tjs-lang 0.8.5's self-contained browser bundles**
+  (`tjs-lang/browser` + `tjs-lang/browser/from-ts`). The transpiler is a single
+  self-contained chunk, and the TypeScript compiler is **lazy-loaded from a CDN at
+  runtime** only when a `ts` example actually transpiles — so `typescript` (~MB)
+  and the transpiler's own deps are never in a consumer's dependency graph. This
+  also fixes the `ts` example path, which previously tried to load the TypeScript
+  compiler through a CDN transform that timed out on its size.
+- `tjs-lang` optional peer bumped to `^0.8.5`.
+
+### Fixed
+
+- A garbled character in the first `example` doc snippet that made it throw.
+
 ## 1.6.13
 
 The documentation system becomes a real publishing pipeline: every doc site can
