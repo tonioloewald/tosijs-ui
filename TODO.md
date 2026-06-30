@@ -13,6 +13,32 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 ## High Priority
 
 - **JSON Schema-driven form editor** - Integrate schema-based form generation
+- **Cut a release** — ePub (build-time, auto-cover), the in-browser Print button,
+  and the per-component tree-shaking subpaths all sit **unreleased on top of
+  v1.6.12**. They only deploy (and the "Download ePub" link only goes live) on the
+  next published version.
+
+## Example captures (live-example → static images)
+
+Design landed; not built. See **"Example captures"** in
+[doc-system-roadmap.md](doc-system-roadmap.md). Capture is *exhaust from normal
+dev*: embedded **private haltija** (per-app socket, beta 10) holds a single
+`getDisplayMedia` stream and `grabFrame()`s on demand (crop to the example rect),
+so testing/posing an example self-captures; haltija puppeting fills gaps. Manual
+captures are sticky; organic ones refresh only when the example's **code hash**
+changes. One asset, three consumers: **ePub images**, **no-JS / pre-hydration
+placeholder**, optional ePub cover hero. Builds on `ExampleKey` + the dev-write
+endpoint (Foundations B/C). Depends on **#5 (haltija-in-dev widget)** landing the
+private-mode socket first.
+
+**Book ↔ live-site fidelity ladder** (phase-2, greenlit) — one example source, three
+tiers: (1) static captured image + code (every reader); (2) each book example
+**deep-links to its anchored spot on the live site** (ePub/PDF link + **QR for
+print**), version-pinned `/v{version}/{slug}/#{id}`, stable `id=` fences not
+ordinals; (3) **inline interactive** in Apple Books / Readium via scripted EPUB3
+(`properties="scripted"`, pre-transpiled + inlined, image fallback — NOT the dead
+iBooks Author format). Needs per-example **anchors + scroll-to/highlight on the
+live site** (independently useful). See roadmap "From book to live."
 
 ## Medium Priority
 

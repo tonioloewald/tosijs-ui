@@ -74,6 +74,15 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     const opf = fs.readFileSync(path.join(dir, 'OEBPS/package.opf'), 'utf8')
     expect(opf).toContain('properties="cover-image"')
     expect(opf).toMatch(/<itemref idref="cover-page"\/>\s*<itemref/) // cover first in spine
+
+    // a readable Contents page sits in the spine right after the cover
+    expect(fs.existsSync(path.join(dir, 'OEBPS/contents.xhtml'))).toBe(true)
+    expect(opf).toMatch(
+      /<itemref idref="cover-page"\/>\s*<itemref idref="toc-page"\/>/
+    )
+    const contents = fs.readFileSync(path.join(dir, 'OEBPS/contents.xhtml'), 'utf8')
+    expect(contents).toContain('<ol class="toc">')
+    expect(contents).toContain('>Home</a>') // links to a chapter
   } finally {
     fs.rmSync(dir, { recursive: true, force: true })
   }

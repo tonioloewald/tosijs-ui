@@ -68,6 +68,12 @@ pre {
   overflow-wrap: anywhere;
 }
 pre code { background: none; padding: 0; }
+/* the in-flow Contents page (ePub spine TOC) */
+.toc-title { text-align: center; }
+ol.toc, ol.toc ol { list-style: none; padding-left: 0; }
+ol.toc ol { padding-left: 1.2em; }
+ol.toc li { margin: 0.3em 0; }
+ol.toc > li > a { font-weight: bold; }
 `
 
 // Print-only layout: page margins, a chapter per page, an avoid-break TOC.

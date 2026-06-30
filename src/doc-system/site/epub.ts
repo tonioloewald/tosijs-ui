@@ -2,9 +2,10 @@
 Build-time ePub (EPUB 3) generator for the doc system.
 
 Walks the same extracted corpus the static site uses and emits a valid .epub:
-one XHTML chapter per doc (in nav-tree order), a nested table of contents
-(EPUB3 `nav.xhtml` + an EPUB2 `toc.ncx` fallback), a customizable stylesheet,
-and the package document. Live examples are NOT executed — their fenced blocks
+one XHTML chapter per doc (in nav-tree order), a readable Contents page in the
+spine (after the cover) plus the machine navigation (EPUB3 `nav.xhtml` +
+EPUB2 `toc.ncx` fallback) that powers the reader's Contents drawer, a
+customizable stylesheet, and the package document. Live examples are NOT executed — their fenced blocks
 render as pretty-printed, force-wrapped code listings (a book has no JS).
 
 The one ePub gotcha that breaks readers/validators is the zip layout: the
@@ -203,6 +204,7 @@ function packageOpf(
     `<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>`,
     `<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>`,
     `<item id="css" href="style.css" media-type="text/css"/>`,
+    `<item id="toc-page" href="contents.xhtml" media-type="application/xhtml+xml"/>`,
     ...(cover
       ? [
           `<item id="cover-image" href="${cover.file}" media-type="${cover.mediaType}" properties="cover-image"/>`,
@@ -215,6 +217,7 @@ function packageOpf(
   ]
   const spine = [
     ...(cover ? [`<itemref idref="cover-page"/>`] : []),
+    `<itemref idref="toc-page"/>`,
     ...chapters.map((c) => `<itemref idref="${c.id}"/>`),
   ]
   // EPUB2 cover fallback (older readers find the thumbnail via this meta).
@@ -250,6 +253,23 @@ function renderNavList(nodes: NavNode<Doc>[], hrefFor: (d: Doc) => string): stri
     })
     .join('\n')
   return items
+}
+
+/**
+ * A readable "Contents" page that sits IN the reading flow (spine), right after
+ * the cover. The EPUB3 `nav.xhtml` only powers the reader's Contents *drawer*;
+ * this is the visible TOC page a reader can actually page to (and what most
+ * people mean by "the book has no table of contents").
+ */
+function tocPageXhtml(
+  roots: NavNode<Doc>[],
+  hrefFor: (d: Doc) => string
+): string {
+  const body = `<h1 class="toc-title">Contents</h1>
+<ol class="toc">
+${renderNavList(roots, hrefFor)}
+</ol>`
+  return xhtmlPage('Contents', body)
 }
 
 function navXhtml(
@@ -541,6 +561,10 @@ export async function buildEpub(
   fs.writeFileSync(
     path.join(buildDir, 'OEBPS', 'package.opf'),
     packageOpf(meta, chapters, cover)
+  )
+  fs.writeFileSync(
+    path.join(buildDir, 'OEBPS', 'contents.xhtml'),
+    tocPageXhtml(roots, fileFor)
   )
   fs.writeFileSync(
     path.join(buildDir, 'OEBPS', 'nav.xhtml'),

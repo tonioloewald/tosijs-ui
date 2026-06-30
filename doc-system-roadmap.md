@@ -381,7 +381,7 @@ Low-risk, high-leverage, and a prerequisite for #6. Ship it first, on its own.
 | 5 | **haltija widget in dev** | A | Wire-up, not build (beta 10 ships server + widget). Free-port discovery, localhost-only injection. |
 | 4 | **edit source files in dev (+ create new docs)** | B | A write endpoint is arbitrary-file-write unless localhost + dev-only + path-jailed. Security model first. |
 | 3 | **save/load per live example** | C (+ B for dev-source) | `uuid` is per-load → can't key persistence. Key by `version/slug/ordinal` (+ optional `id=`). IndexedDB = scratchpad (acknowledged weakness); REST is the real story. |
-| 1 | **ePub (build-time)** — ✅ SHIPPED | — (corpus) | `buildEpub(config, opts)` in `site/epub.ts`. One XHTML chapter/doc in nav-tree order, EPUB3 `nav.xhtml` + EPUB2 `toc.ncx`, customizable stylesheet (`opts.css`/`extraCss`, `DEFAULT_BOOK_CSS` force-wraps code). mimetype-first STORED via `zip -X0`/`-Xr9D`. XHTML well-formedness via happy-dom parse→XML re-serialize (fixes unquoted attrs / named entities / tag-like prose; per-doc regex fallback when it throws). Verified: 56 chapters, 0 well-formedness failures, 0 dangling manifest refs. |
+| 1 | **ePub (build-time)** — ✅ SHIPPED | — (corpus) | `buildEpub(config, opts)` in `site/epub.ts`. One XHTML chapter/doc in nav-tree order, EPUB3 `nav.xhtml` + EPUB2 `toc.ncx`, customizable stylesheet (`opts.css`/`extraCss`, `DEFAULT_BOOK_CSS` force-wraps code). mimetype-first STORED via `zip -X0`/`-Xr9D`. XHTML well-formedness via happy-dom parse→XML re-serialize (fixes unquoted attrs / named entities / tag-like prose; per-doc regex fallback when it throws). Verified: 56 chapters, 0 well-formedness failures, 0 dangling manifest refs. **Regenerated inside `buildSite` behind `config.epub`** (every build, not just `--build-only`) so it never gets `rm -rf`'d out of `docs/`. **Auto-cover (✅ commit `333fb18f`):** when no `cover` given, generates a 600×800 cover from title + `config.favicon` on a solid bg (SVG→PNG via optional lazy `@resvg/resvg-js`), registered as EPUB3 `cover-image` + EPUB2 `meta name="cover"` + cover page first in spine; `epub: { cover, coverColor }` overrides; gracefully omitted if resvg absent. *Future:* use a captured example "hero" image as cover once example captures land (below). |
 | 2 | **PDF** — ✅ SHIPPED, two ways | — | **Primary: in-browser Print button** (doc-browser header). `buildBookHtml()` (`doc-system/book-html.ts`, browser-safe + shared) assembles the whole corpus into one print-styled HTML in a new window that opens its own print dialog → the user's browser saves the PDF. No server, no Chromium, no build-time cost. Verified: opens a 56-chapter window with TOC. **Secondary (headless/CI): `buildPdf`** (`site/pdf.ts`) prints the same `buildBookHtml` output via Playwright `page.pdf()` (184-page A4) — `bun run book:pdf`, not deployed/linked. Future: real pagination by measuring laid-out rectangles and reflowing content across page boundaries (the browser's print pagination covers the basic case for now). |
 
 ### Index & footnotes (for #1, and useful on the live site too)
@@ -394,6 +394,93 @@ Build the index automatically from:
 
 And support `<!-- footnote: … -->` markers, collected and rendered per-page (and
 per-book in the ePub/PDF).
+
+### Example captures — static images of live examples (informs #1, #5, no-JS)
+
+Design landed in discussion (Jun 2026); **not yet built.** Goal: a static image
+of each live example's rendered output, used in three places — the ePub/PDF, the
+**no-JS / pre-hydration placeholder** on the static pages, and optionally an ePub
+cover "hero" image.
+
+**Key decision — capture is *exhaust from normal dev*, not a build job.** We
+rejected the build-time Playwright batch (the `generate-og.ts` pattern,
+generalized): it churns multi-MB PNG blobs into git every build, a single
+~900ms-settle frame mis-represents animated/async examples, and it's the step
+nobody remembers to run. Instead:
+
+- **Embedded private haltija** (beta 10 ships a private server + embeddable
+  widget). Each dev app gets its *own* haltija server on its *own* socket, scoped
+  to the app's own tab (`preferCurrentTab`). This kills the shared-instance
+  contention (the "kith agent futzing with haltija" problem) **and** lets the
+  agent *see* the actual dev session. It's the richer form of **#5
+  (haltija-in-dev widget)** — one move, three payoffs: no contention, agent sight,
+  organic captures.
+- **Screen-share capture, not `element.screenshot`.** `getDisplayMedia` grabs the
+  actually-composited pixels (real fonts / GPU / sub-pixel layout), avoiding the
+  long tail of programmatic-screenshot quirks (shadow-DOM clipping, unloaded
+  fonts, DPR surprises). **Linchpin:** it prompts the user *once* → the returned
+  `MediaStream` is persistent → `ImageCapture.grabFrame()` captures on demand with
+  **no re-prompt**. The private haltija owns the held stream and, controlling the
+  browser, can pre-grant the surface — so even automated / puppeted capture skips
+  the gesture entirely. Crop the surface frame to the example's
+  `getBoundingClientRect` (mind DPR) — the widget already knows the geometry.
+- **"If you've ever tested an example and the browser has permission, you have a
+  screenshot."** The dev navigating/testing examples self-captures; haltija
+  puppeting the page fills the gaps (the automated baseline, same code path).
+  Because the dev can *pose* a dynamic example (carousel, async demo) into a
+  representative state before it captures, the which-frame problem is solved at the
+  source, not heuristically.
+- **Precedence + freshness policy.** A *manual* capture is sticky/locked
+  (authoritative); an *organic* capture only fills a gap (no image yet) or
+  refreshes a *stale auto* one — staleness defined by the example's **code hash**.
+  A few bytes of metadata next to each image (`source: manual|auto`, `codeHash`)
+  govern overwrite. This slots onto the existing **`ExampleKey` + dev-write
+  endpoint** (Foundations B/C) — the save path is existing plumbing, not new.
+
+**Build layer (small, once the private-mode socket lands):** capture-on-settle +
+hash-freshness + crop-to-rect against the held stream; save via the `DocStore`
+dev endpoint keyed by `ExampleKey`; the ePub builder embeds the cached image after
+each example's code listing (reuse `groupExamples` from `save-to-source.ts`). The
+same images feed the static no-JS placeholder and the zero-flash hydration
+placeholder.
+
+### From book to live — a three-tier fidelity ladder (phase-2; greenlit Jun 2026)
+
+One example source, rendered at the highest fidelity each reader supports.
+Degrades gracefully down to paper, enhances gracefully up to a scripting reader —
+**all from the same capture pipeline + build-time transpile, fanned out:**
+
+1. **Static — every reader, always.** Captured image + force-wrapped code listing.
+   Kindle, Kobo, print, Apple Books — universal.
+2. **Deep-link to live — any reader with a browser.** Each example in the ePub/PDF
+   is a hyperlink to its anchored spot on the live site (ePub external link / PDF
+   link annotation), and for **print/paper a small QR code** beside the example.
+   Tap/scan → the real interactive, editable example on the site.
+3. **Inline interactive — Apple Books / Readium (scripted EPUB3).** Progressive
+   enhancement: a `properties="scripted"` XHTML content doc runs the actual example
+   *in the book*, with the tier-1 image as the `<img>` fallback for non-scripting
+   readers. **No network in the reader** → inline **pre-transpiled** example JS (we
+   already transpile at build time) + the iife bundle; per-spine isolated context;
+   scope per chapter. **Don't target the dead iBooks Author `.ibooks`/`.iba`
+   format** — target the open `scripted` EPUB3 standard. Apple Books is WebKit, so
+   our web-component examples run there; Kindle/most others fall back to the image.
+
+**Example anchors (tier 2) — design notes:**
+- The site renders a stable anchor per example and **scrolls-to + briefly
+  highlights** on deep-link load (independently useful for sharing/deep-linking).
+- **Author-assigned `id=` fence overrides, not ordinals, for book links.** Ordinal
+  anchors (`#example-3`) shift when an example is inserted above — fine for casual
+  live-site deep-links, but anything frozen into a printed QR must use a stable
+  `id` (already part of `ExampleKey`).
+- **Version-pin the URL:** link to `/v{version}/{slug}/#{id}` (the example as it was
+  when the book was built), falling back to `/latest` only when there's no
+  versioned output. `version` is already in `ExampleKey`/`SourceRef` — free.
+
+All three tiers reuse one source: the capture gives tier 1's image (and tier 3's
+fallback), the build-time transpile gives tier 3's inlined JS, and the anchor +
+version axis give tier 2's link. Sequence: tier 1 (captures) first — it's the
+fallback 100% of readers need — then tier 2 (anchors/QR, cheap), then tier 3
+(scripted-EPUB enhancement, Apple Books).
 
 ## Sequence
 
