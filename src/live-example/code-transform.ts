@@ -101,9 +101,9 @@ type FromTsFn = (
 // self-contained) and is loaded only for `ts` examples; from-ts in turn fetches
 // the TypeScript compiler lazily at runtime, so tsc is never pulled in until a TS
 // example actually transforms. Pinned to match the dev dep.
-const TJS_CDN = 'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.5/dist/tjs-browser.js'
+const TJS_CDN = 'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.6/dist/tjs-browser.js'
 const FROM_TS_CDN =
-  'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.5/dist/tjs-browser-from-ts.js'
+  'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.6/dist/tjs-browser-from-ts.js'
 
 async function loadTjs(): Promise<TjsFn | null> {
   // Installed peer (ESM consumers / dev build)

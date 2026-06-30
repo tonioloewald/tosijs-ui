@@ -14,7 +14,7 @@ runner loads its (optional, lazy) transpiler.
   and the transpiler's own deps are never in a consumer's dependency graph. This
   also fixes the `ts` example path, which previously tried to load the TypeScript
   compiler through a CDN transform that timed out on its size.
-- `tjs-lang` optional peer bumped to `^0.8.5`.
+- `tjs-lang` optional peer bumped to `^0.8.6`.
 
 ### Fixed
 
