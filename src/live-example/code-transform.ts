@@ -101,28 +101,35 @@ type FromTsFn = (
 // self-contained) and is loaded only for `ts` examples; from-ts in turn fetches
 // the TypeScript compiler lazily at runtime, so tsc is never pulled in until a TS
 // example actually transforms. Pinned to match the dev dep.
-// Multiple CDNs, tried in order: a single CDN 404s a freshly-published version
-// until it caches it (jsdelivr lags npm by minutes–hours), and any one can have a
-// transient outage — relying on one breaks EVERY example until it recovers. The
-// module-cache service worker caches all three hosts.
 const TJS_VERSION = '0.8.6'
-const cdnUrls = (file: string): string[] => [
-  `https://cdn.jsdelivr.net/npm/tjs-lang@${TJS_VERSION}/dist/${file}`,
-  `https://unpkg.com/tjs-lang@${TJS_VERSION}/dist/${file}`,
-  `https://esm.sh/tjs-lang@${TJS_VERSION}/dist/${file}`,
-]
-const TJS_CDNS = cdnUrls('tjs-browser.js')
-const FROM_TS_CDNS = cdnUrls('tjs-browser-from-ts.js')
 
-/** Try each CDN URL in turn; return the first module that loads, else null. */
-async function importFromCdns(urls: string[]): Promise<any | null> {
+// Where to fetch a tjs-lang browser bundle from, in priority order:
+//  1. SAME-ORIGIN — the doc-site build copies the bundles next to the iife and
+//     sets `__TJS_LOCAL_BASE`, so the transpiler ships in lockstep with the page,
+//     works offline, and is immune to CDN propagation lag. Preferred when present.
+//  2. CDN chain (jsdelivr → unpkg → esm.sh) — for IIFE consumers who don't serve
+//     it same-origin. A freshly-published version 404s on one CDN until it caches
+//     it (minutes–hours) and any one can blip, so we try several. The module-cache
+//     service worker caches all three hosts.
+function bundleUrls(file: string): string[] {
+  const localBase = (globalThis as { __TJS_LOCAL_BASE?: string }).__TJS_LOCAL_BASE
+  return [
+    ...(typeof localBase === 'string' ? [`${localBase}${file}`] : []),
+    `https://cdn.jsdelivr.net/npm/tjs-lang@${TJS_VERSION}/dist/${file}`,
+    `https://unpkg.com/tjs-lang@${TJS_VERSION}/dist/${file}`,
+    `https://esm.sh/tjs-lang@${TJS_VERSION}/dist/${file}`,
+  ]
+}
+
+/** Try each URL in turn; return the first module that loads, else null. */
+async function importFirstAvailable(urls: string[]): Promise<any | null> {
   for (const url of urls) {
     try {
       // variable specifier → bundlers leave it as a runtime import (external)
       const m = await import(/* webpackIgnore: true */ /* @vite-ignore */ url)
       if (m) return m
     } catch {
-      // try the next CDN
+      // try the next source
     }
   }
   return null
@@ -135,10 +142,9 @@ async function loadTjs(): Promise<TjsFn | null> {
     const { tjs } = (await import('tjs-lang/browser')) as { tjs: TjsFn }
     if (typeof tjs === 'function') return tjs
   } catch {
-    // not installed — try CDNs
+    // not installed — try same-origin / CDN
   }
-  // CDN (IIFE consumers, or when tjs-lang isn't installed)
-  const m = await importFromCdns(TJS_CDNS)
+  const m = await importFirstAvailable(bundleUrls('tjs-browser.js'))
   if (m && typeof m.tjs === 'function') return m.tjs as TjsFn
   return null
 }
@@ -170,7 +176,7 @@ let testApiOnce: Promise<TjsTestApi | null> | undefined
 async function loadTjsTestApiImpl(): Promise<TjsTestApi | null> {
   const sources: Array<() => Promise<any>> = [
     () => import('tjs-lang/browser'),
-    () => importFromCdns(TJS_CDNS),
+    () => importFirstAvailable(bundleUrls('tjs-browser.js')),
   ]
   for (const load of sources) {
     try {
@@ -199,9 +205,9 @@ async function loadFromTs(): Promise<FromTsFn | null> {
     }
     if (typeof fromTS === 'function') return fromTS
   } catch {
-    // not installed — try CDNs
+    // not installed — try same-origin / CDN
   }
-  const m = await importFromCdns(FROM_TS_CDNS)
+  const m = await importFirstAvailable(bundleUrls('tjs-browser-from-ts.js'))
   if (m && typeof m.fromTS === 'function') return m.fromTS as FromTsFn
   return null
 }

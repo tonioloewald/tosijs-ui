@@ -219,6 +219,27 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     await $`cp llms.txt ${PUBLIC}/llms.txt`.text()
   }
 
+  // Serve the tjs-lang browser bundles SAME-ORIGIN so live examples never depend
+  // on a third-party CDN's propagation timing — a freshly-published tjs-lang
+  // version 404s on a CDN until it caches it (minutes–hours), which would break
+  // every example. We ship the exact bundles the build resolved, and a global
+  // tells the loader to prefer them (it falls back to the CDN chain if absent).
+  // Optional: skipped if tjs-lang isn't installed.
+  let tjsHead = ''
+  try {
+    const browser = Bun.resolveSync('tjs-lang/browser', PROJECT_ROOT)
+    const fromTs = Bun.resolveSync('tjs-lang/browser/from-ts', PROJECT_ROOT)
+    await $`mkdir -p ${PUBLIC}/tjs`.text()
+    await $`cp ${browser} ${PUBLIC}/tjs/tjs-browser.js`.text()
+    await $`cp ${fromTs} ${PUBLIC}/tjs/tjs-browser-from-ts.js`.text()
+    const bp = config.basePath
+    const base = !bp || bp === '/' ? '/tjs/' : bp.replace(/\/$/, '') + '/tjs/'
+    tjsHead = `<script>globalThis.__TJS_LOCAL_BASE=${JSON.stringify(base)}</script>`
+    console.log(`tjs-lang bundles served same-origin at ${base}`)
+  } catch {
+    // tjs-lang not installed — live examples fall back to the CDN chain
+  }
+
   // Generate the static, pre-rendered doc site (one /slug/index.html per doc).
   // Runs after the static-asset copy so the generated index.html (README) wins,
   // and after the bundle copy so every page's <script src> resolves.
@@ -235,7 +256,7 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     localizedStrings: config.localizedStrings,
     favicon: config.favicon,
     ogImage: config.ogImage,
-    headExtra: config.headExtra,
+    headExtra: [config.headExtra, tjsHead].filter(Boolean).join('') || undefined,
     scriptUrl: config.scriptUrl,
     basePath: config.basePath,
   })

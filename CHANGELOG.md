@@ -14,11 +14,20 @@ runner loads its (optional, lazy) transpiler.
   and the transpiler's own deps are never in a consumer's dependency graph. This
   also fixes the `ts` example path, which previously tried to load the TypeScript
   compiler through a CDN transform that timed out on its size.
+- **Robust transpiler loading.** The doc-site build now ships the tjs-lang browser
+  bundles **same-origin** (copied next to the iife under `/tjs/`, with a global
+  pointing the loader at them), so live examples never depend on a third-party
+  CDN's propagation timing or uptime. The loader prefers the same-origin copy,
+  then falls back through a multi-CDN chain (jsdelivr → unpkg → esm.sh). Installed
+  ESM consumers resolve the peer locally as before.
 - `tjs-lang` optional peer bumped to `^0.8.6`.
 
 ### Fixed
 
 - A garbled character in the first `example` doc snippet that made it throw.
+- Live examples could all break for the propagation window after a tjs-lang
+  release, when the single pinned CDN 404'd the just-published version (now
+  served same-origin + multi-CDN).
 
 ## 1.6.13
 
