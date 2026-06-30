@@ -1,21 +1,42 @@
 /*
 Shared markdown rendering for the static doc system.
 
-`renderDocMarkdown` MUST stay in lockstep with how <tosi-md> renders doc text
-(see src/markdown-viewer.ts: `marked(source, this.options)` with default options),
-so the build-time pre-render is byte-identical to what the component would produce
-on the client. Fenced code blocks are left as <pre><code class="language-*"> so the
-static page shows readable, indexable code AND the component can later upgrade
-consecutive blocks into <live-example> widgets via insertExamples().
+Both the build-time pre-render and the client (doc-browser) call THIS function, so
+the static page hydrates byte-identically. Fenced code blocks are left as
+<pre><code class="language-*"> so the static page shows readable, indexable code
+AND the component can later upgrade consecutive blocks into <live-example> widgets
+via insertExamples(). A fence info string may carry a `#id` (```js#my-example) to
+give that example a stable anchor — see the docMarked renderer below.
 */
 
-import { marked, MarkedOptions } from 'marked'
+import { Marked, Renderer } from 'marked'
 
-export const docMarkedOptions: MarkedOptions = {}
+const baseRenderer = new Renderer()
+
+// A doc-scoped marked instance. Its ONLY customization: a fenced code block whose
+// info string carries a `#id` suffix — e.g. ```js#my-example — renders the lang
+// clean (`language-js`, so all existing grouping/highlighting is unaffected) but
+// stamps `data-example-id="my-example"` on the <pre>. insertExamples (client) and
+// the book builders both read that to give the live example a stable anchor for
+// deep-linking. A block with no `#id` is byte-identical to default marked output.
+const docMarked = new Marked()
+docMarked.use({
+  renderer: {
+    code(token: any) {
+      const info = String(token.lang || '')
+      const hash = info.indexOf('#')
+      if (hash === -1) return false // default rendering
+      const id = info.slice(hash + 1).match(/^[A-Za-z0-9_-]+/)?.[0]
+      if (!id) return false
+      const html = baseRenderer.code({ ...token, lang: info.slice(0, hash) })
+      return html.replace(/^<pre>/, `<pre data-example-id="${id}">`)
+    },
+  },
+})
 
 /** Render a doc's markdown text to HTML (synchronous, default marked options). */
 export function renderDocMarkdown(text: string): string {
-  return marked(text, docMarkedOptions) as string
+  return docMarked.parse(text) as string
 }
 
 /**

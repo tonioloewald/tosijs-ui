@@ -44,11 +44,17 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
       JSON.stringify([
         { filename: 'README.md', title: 'Home', text: '# Home\n\nHello & welcome.', path: 'README.md' },
         { filename: 'a.ts', title: 'A', text: '# A\n\n```js\nconst x = 1\n```', path: 'a.ts' },
+        { filename: 'b.ts', title: 'B', text: '# B\n\n```js#cool\nconst y = 2\n```', path: 'b.ts' },
       ])
     )
     const out = path.join(dir, 'book.epub')
     await buildEpub(
-      { name: 'Test Book', outputDir: dir, docsJson: corpus } as any,
+      {
+        name: 'Test Book',
+        outputDir: dir,
+        docsJson: corpus,
+        baseUrl: 'https://example.test',
+      } as any,
       { output: out, author: 'Tester' }
     )
 
@@ -83,6 +89,13 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     const contents = fs.readFileSync(path.join(dir, 'OEBPS/contents.xhtml'), 'utf8')
     expect(contents).toContain('<ol class="toc">')
     expect(contents).toContain('>Home</a>') // links to a chapter
+
+    // each example links back to its anchor on the live site
+    const chA = fs.readFileSync(path.join(dir, 'OEBPS/a.xhtml'), 'utf8')
+    expect(chA).toContain('class="example-live-link"')
+    expect(chA).toContain('href="https://example.test/a/#example-1"') // auto id
+    const chB = fs.readFileSync(path.join(dir, 'OEBPS/b.xhtml'), 'utf8')
+    expect(chB).toContain('href="https://example.test/b/#cool"') // ```js#cool override
   } finally {
     fs.rmSync(dir, { recursive: true, force: true })
   }

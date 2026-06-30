@@ -55,6 +55,14 @@ export function insertExamples(
       example.setAttribute('data-source-file', sourceFile)
       example.setAttribute('data-example-ordinal', String(ordinal))
     }
+    // Stable anchor for deep-linking (and for book "run this live" links): an
+    // author override `data-example-id` (from a ```js#my-id fence on any block in
+    // the group) wins, else the 1-based positional `example-N`. The book builder
+    // derives the same id from the same rendered DOM, so the links line up.
+    const overrideId = exampleSources
+      .map((s) => s.block.getAttribute('data-example-id'))
+      .find((v): v is string => !!v)
+    example.id = overrideId || `example-${ordinal + 1}`
     ordinal += 1
     const parent = exampleSources[0].block.parentElement as HTMLElement
     parent.insertBefore(example, exampleSources[0].block)

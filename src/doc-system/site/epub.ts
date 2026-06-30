@@ -155,10 +155,85 @@ function loadHtmlParser(): Promise<any> {
     .catch(() => null))
 }
 
-/** Parse HTML in a real parser and re-emit strict XML, using a reused window. */
-function htmlToXhtml(html: string, win: any): string {
+/**
+ * Parse HTML in a real parser and re-emit strict XML, using a reused window. An
+ * optional `transform` runs on the parsed document before serialization (used to
+ * inject the per-example "run this live" links).
+ */
+function htmlToXhtml(
+  html: string,
+  win: any,
+  transform?: (doc: any) => void
+): string {
   win.document.body.innerHTML = html
+  if (transform) transform(win.document)
   return Array.from(win.document.body.childNodes).map(serializeXml).join('')
+}
+
+// ── Live-example deep links ─────────────────────────────────────────────────
+// Each example in the book gets a link to its anchored spot on the live site, so
+// a reader is one tap from the real, interactive, editable version. The grouping
+// + id derivation MUST match insertExamples (same rendered DOM, same rule) so the
+// links line up: consecutive example-language <pre> siblings form one example;
+// id = an author `data-example-id` override (```js#my-id) or the 1-based `example-N`.
+
+const EXAMPLE_LANGS = new Set(['js', 'tjs', 'ts', 'html', 'css', 'test'])
+
+// NB: traverse the DOM by hand (children / tagName / nextElementSibling) rather
+// than querySelector — happy-dom's selector engine throws an internal error on a
+// reused build-time window, even for a trivial selector like `pre`.
+
+function exampleLangOf(pre: any): string | null {
+  let code: any = null
+  for (const c of Array.from(pre.children || [])) {
+    if ((c as any).tagName === 'CODE') {
+      code = c
+      break
+    }
+  }
+  const cls = (code && code.getAttribute('class')) || ''
+  const m = cls.match(/language-([\w-]+)/)
+  return m && EXAMPLE_LANGS.has(m[1]) ? m[1] : null
+}
+
+/** Collect example <pre> blocks in document order (any depth), no selectors. */
+function collectExamplePres(el: any, out: any[]): void {
+  for (const child of Array.from(el.children || []) as any[]) {
+    if (child.tagName === 'PRE') {
+      if (exampleLangOf(child)) out.push(child)
+    } else {
+      collectExamplePres(child, out)
+    }
+  }
+}
+
+function injectExampleLinks(doc: any, baseUrl: string, slug: string): void {
+  const pres: any[] = []
+  collectExamplePres(doc.body, pres)
+  const base = baseUrl.replace(/\/+$/, '')
+  let ordinal = 0
+  for (let i = 0; i < pres.length; i += 1) {
+    const group: any[] = [pres[i]]
+    while (
+      i < pres.length - 1 &&
+      (pres[i] as any).nextElementSibling === pres[i + 1]
+    ) {
+      group.push(pres[i + 1])
+      i += 1
+    }
+    const overrideId = group
+      .map((p) => p.getAttribute('data-example-id'))
+      .find((v: any) => !!v)
+    const id = overrideId || `example-${ordinal + 1}`
+    ordinal += 1
+    const p = doc.createElement('p')
+    p.setAttribute('class', 'example-live-link')
+    const a = doc.createElement('a')
+    a.setAttribute('href', `${base}/${slug}/#${id}`)
+    a.textContent = '▶ Run this example live ↗'
+    p.appendChild(a)
+    group[0].parentNode.insertBefore(p, group[0])
+  }
 }
 
 function xhtmlPage(title: string, bodyHtml: string): string {
@@ -523,16 +598,22 @@ export async function buildEpub(
     )
   }
 
-  // One XHTML chapter per doc, in spine order.
+  // One XHTML chapter per doc, in spine order. When a baseUrl is configured, each
+  // example links back to its anchor on the live site.
+  const baseUrl = config.baseUrl
   const chapters: Chapter[] = []
   for (const node of flatten(roots)) {
     const doc = node.doc
+    const slug = slugMap[doc.filename] || 'index'
     const html = renderDocMarkdown(stripDocMeta(doc.text))
     // happy-dom occasionally throws on exotic content (e.g. an internal selector
     // bug); fall back to the regex pass for that doc rather than aborting.
     let bodyHtml: string
     try {
-      bodyHtml = win ? htmlToXhtml(html, win) : toXhtml(html)
+      const transform = win && baseUrl
+        ? (d: any) => injectExampleLinks(d, baseUrl, slug)
+        : undefined
+      bodyHtml = win ? htmlToXhtml(html, win, transform) : toXhtml(html)
     } catch {
       bodyHtml = toXhtml(html)
     }

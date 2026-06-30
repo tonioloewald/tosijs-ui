@@ -1,5 +1,3 @@
-import { MarkedOptions } from 'marked';
-export declare const docMarkedOptions: MarkedOptions;
 /** Render a doc's markdown text to HTML (synchronous, default marked options). */
 export declare function renderDocMarkdown(text: string): string;
 /**

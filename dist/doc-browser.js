@@ -241,6 +241,15 @@ const testIndicatorStyleSpec = {
         justifyContent: 'center',
         fontWeight: 'bold',
     },
+    // Deep-linked example (e.g. arriving at /slug/#example-2): brief highlight pulse
+    '@keyframes example-target-pulse': {
+        from: { boxShadow: `0 0 0 3px ${varDefault.accent('#007aff')}` },
+        to: { boxShadow: '0 0 0 3px transparent' },
+    },
+    '.example-target': {
+        animation: 'example-target-pulse 1.5s ease-out',
+        borderRadius: vars.roundedRadius,
+    },
 };
 export function createDocBrowser(options) {
     const { docs, context = {}, projectName = '', projectLinks = {}, navSize = 200, minSize = 600, routing = 'query', initialRoute, onRouteChange, navbarLinks, contentElement, } = options;
@@ -560,6 +569,31 @@ export function createDocBrowser(options) {
             }
         }
     };
+    // Deep-link to a specific live example: arriving at /slug/#example-2 (or a
+    // custom ```js#my-id anchor) scrolls it into view with a brief highlight. The
+    // example ids are set by insertExamples, so this runs after it. Skipped in
+    // memory routing (which must never touch window.location).
+    const scrollToHashExample = () => {
+        if (memoryRouting)
+            return;
+        const hash = location.hash.replace(/^#/, '');
+        if (!hash)
+            return;
+        requestAnimationFrame(() => {
+            let el = null;
+            try {
+                el = docContent.querySelector(`#${CSS.escape(hash)}`);
+            }
+            catch {
+                el = null;
+            }
+            if (!el)
+                return;
+            el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            el.classList.add('example-target');
+            setTimeout(() => el && el.classList.remove('example-target'), 1600);
+        });
+    };
     let adoptInitialContent = contentElement !== undefined && !memoryRouting;
     const showDoc = (doc) => {
         if (adoptInitialContent) {
@@ -572,6 +606,7 @@ export function createDocBrowser(options) {
         // Stamp each example with its source file (for the source↔doc map). doc.path
         // is the extracted file (.md, or a source file with doc comments).
         LiveExample.insertExamples(docContent, context, doc.path || undefined);
+        scrollToHashExample();
         if (routing === 'path') {
             document.title = projectName
                 ? `${doc.title} — ${projectName}`

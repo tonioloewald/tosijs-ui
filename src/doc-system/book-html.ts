@@ -74,6 +74,9 @@ ol.toc, ol.toc ol { list-style: none; padding-left: 0; }
 ol.toc ol { padding-left: 1.2em; }
 ol.toc li { margin: 0.3em 0; }
 ol.toc > li > a { font-weight: bold; }
+/* per-example "run this live" deep link */
+.example-live-link { margin: 0.6em 0 0; font-size: 0.85em; }
+.example-live-link a { color: #08c; font-weight: bold; }
 `
 
 // Print-only layout: page margins, a chapter per page, an avoid-break TOC.
