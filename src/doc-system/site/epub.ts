@@ -18,7 +18,7 @@ Build-time only (Bun APIs + the `zip` CLI); never import from browser code.
 import * as fs from 'fs'
 import * as path from 'path'
 import { renderDocMarkdown } from '../render'
-import { buildSlugMap } from '../routing'
+import { buildSlugMap, pathForSlug } from '../routing'
 import { buildNavTree, NavNode } from '../nav-tree'
 import type { Doc } from './docs'
 import type { SiteConfig } from './site-config'
@@ -207,10 +207,17 @@ function collectExamplePres(el: any, out: any[]): void {
   }
 }
 
-function injectExampleLinks(doc: any, baseUrl: string, slug: string): void {
+/** Prefix a root-relative path with basePath (mirrors generate-site's withBase). */
+function withBase(basePath: string | undefined, p: string): string {
+  if (!p || !basePath || basePath === '/' || /^(https?:)?\/\//.test(p)) return p
+  return basePath.replace(/\/$/, '') + (p.startsWith('/') ? p : '/' + p)
+}
+
+// `pageUrl` is the live-site URL of THIS doc (already including baseUrl, basePath
+// and the correct root for README → '/'); each example link just appends `#id`.
+function injectExampleLinks(doc: any, pageUrl: string): void {
   const pres: any[] = []
   collectExamplePres(doc.body, pres)
-  const base = baseUrl.replace(/\/+$/, '')
   let ordinal = 0
   for (let i = 0; i < pres.length; i += 1) {
     const group: any[] = [pres[i]]
@@ -229,7 +236,7 @@ function injectExampleLinks(doc: any, baseUrl: string, slug: string): void {
     const p = doc.createElement('p')
     p.setAttribute('class', 'example-live-link')
     const a = doc.createElement('a')
-    a.setAttribute('href', `${base}/${slug}/#${id}`)
+    a.setAttribute('href', `${pageUrl}#${id}`)
     a.textContent = '▶ Run this example live ↗'
     p.appendChild(a)
     group[0].parentNode.insertBefore(p, group[0])
@@ -600,18 +607,21 @@ export async function buildEpub(
 
   // One XHTML chapter per doc, in spine order. When a baseUrl is configured, each
   // example links back to its anchor on the live site.
-  const baseUrl = config.baseUrl
+  const baseUrl = config.baseUrl?.replace(/\/+$/, '')
   const chapters: Chapter[] = []
   for (const node of flatten(roots)) {
     const doc = node.doc
-    const slug = slugMap[doc.filename] || 'index'
+    // The doc's live-site URL, matching generate-site's canonical link: README
+    // maps to '/' (not '/index/'), others to '/slug/', with basePath applied.
+    const pageUrl =
+      baseUrl + withBase(config.basePath, pathForSlug(slugMap[doc.filename] ?? ''))
     const html = renderDocMarkdown(stripDocMeta(doc.text))
     // happy-dom occasionally throws on exotic content (e.g. an internal selector
     // bug); fall back to the regex pass for that doc rather than aborting.
     let bodyHtml: string
     try {
       const transform = win && baseUrl
-        ? (d: any) => injectExampleLinks(d, baseUrl, slug)
+        ? (d: any) => injectExampleLinks(d, pageUrl)
         : undefined
       bodyHtml = win ? htmlToXhtml(html, win, transform) : toXhtml(html)
     } catch {

@@ -42,7 +42,7 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     fs.writeFileSync(
       corpus,
       JSON.stringify([
-        { filename: 'README.md', title: 'Home', text: '# Home\n\nHello & welcome.', path: 'README.md' },
+        { filename: 'README.md', title: 'Home', text: '# Home\n\nHello & welcome.\n\n```js\nconst home = 1\n```', path: 'README.md' },
         { filename: 'a.ts', title: 'A', text: '# A\n\n```js\nconst x = 1\n```', path: 'a.ts' },
         { filename: 'b.ts', title: 'B', text: '# B\n\n```js#cool\nconst y = 2\n```', path: 'b.ts' },
       ])
@@ -96,6 +96,10 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     expect(chA).toContain('href="https://example.test/a/#example-1"') // auto id
     const chB = fs.readFileSync(path.join(dir, 'OEBPS/b.xhtml'), 'utf8')
     expect(chB).toContain('href="https://example.test/b/#cool"') // ```js#cool override
+    // the home doc (README) lives at the site root '/', NOT '/index/'
+    const homeCh = fs.readFileSync(path.join(dir, 'OEBPS/index.xhtml'), 'utf8')
+    expect(homeCh).toContain('href="https://example.test/#example-1"')
+    expect(homeCh).not.toContain('/index/#')
   } finally {
     fs.rmSync(dir, { recursive: true, force: true })
   }
