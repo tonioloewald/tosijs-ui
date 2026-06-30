@@ -101,27 +101,45 @@ type FromTsFn = (
 // self-contained) and is loaded only for `ts` examples; from-ts in turn fetches
 // the TypeScript compiler lazily at runtime, so tsc is never pulled in until a TS
 // example actually transforms. Pinned to match the dev dep.
-const TJS_CDN = 'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.6/dist/tjs-browser.js'
-const FROM_TS_CDN =
-  'https://cdn.jsdelivr.net/npm/tjs-lang@0.8.6/dist/tjs-browser-from-ts.js'
+// Multiple CDNs, tried in order: a single CDN 404s a freshly-published version
+// until it caches it (jsdelivr lags npm by minutes–hours), and any one can have a
+// transient outage — relying on one breaks EVERY example until it recovers. The
+// module-cache service worker caches all three hosts.
+const TJS_VERSION = '0.8.6'
+const cdnUrls = (file: string): string[] => [
+  `https://cdn.jsdelivr.net/npm/tjs-lang@${TJS_VERSION}/dist/${file}`,
+  `https://unpkg.com/tjs-lang@${TJS_VERSION}/dist/${file}`,
+  `https://esm.sh/tjs-lang@${TJS_VERSION}/dist/${file}`,
+]
+const TJS_CDNS = cdnUrls('tjs-browser.js')
+const FROM_TS_CDNS = cdnUrls('tjs-browser-from-ts.js')
+
+/** Try each CDN URL in turn; return the first module that loads, else null. */
+async function importFromCdns(urls: string[]): Promise<any | null> {
+  for (const url of urls) {
+    try {
+      // variable specifier → bundlers leave it as a runtime import (external)
+      const m = await import(/* webpackIgnore: true */ /* @vite-ignore */ url)
+      if (m) return m
+    } catch {
+      // try the next CDN
+    }
+  }
+  return null
+}
 
 async function loadTjs(): Promise<TjsFn | null> {
-  // Installed peer (ESM consumers / dev build)
+  // Installed peer (ESM consumers / dev build) — static specifier so bundlers
+  // resolve it to the local package.
   try {
     const { tjs } = (await import('tjs-lang/browser')) as { tjs: TjsFn }
     if (typeof tjs === 'function') return tjs
   } catch {
-    // not installed — try CDN
+    // not installed — try CDNs
   }
   // CDN (IIFE consumers, or when tjs-lang isn't installed)
-  try {
-    const { tjs } = (await import(/* webpackIgnore: true */ TJS_CDN)) as {
-      tjs: TjsFn
-    }
-    if (typeof tjs === 'function') return tjs
-  } catch {
-    // unavailable — fall through to degraded mode
-  }
+  const m = await importFromCdns(TJS_CDNS)
+  if (m && typeof m.tjs === 'function') return m.tjs as TjsFn
   return null
 }
 
@@ -150,13 +168,14 @@ export interface TjsTestResult {
 let testApiOnce: Promise<TjsTestApi | null> | undefined
 
 async function loadTjsTestApiImpl(): Promise<TjsTestApi | null> {
-  for (const mod of [
+  const sources: Array<() => Promise<any>> = [
     () => import('tjs-lang/browser'),
-    () => import(/* webpackIgnore: true */ TJS_CDN),
-  ]) {
+    () => importFromCdns(TJS_CDNS),
+  ]
+  for (const load of sources) {
     try {
-      const m = (await mod()) as Partial<TjsTestApi>
-      if (typeof m.extractTests === 'function' && typeof m.testUtils === 'string') {
+      const m = (await load()) as Partial<TjsTestApi> | null
+      if (m && typeof m.extractTests === 'function' && typeof m.testUtils === 'string') {
         return { extractTests: m.extractTests, testUtils: m.testUtils }
       }
     } catch {
@@ -180,16 +199,10 @@ async function loadFromTs(): Promise<FromTsFn | null> {
     }
     if (typeof fromTS === 'function') return fromTS
   } catch {
-    // not installed — try CDN
+    // not installed — try CDNs
   }
-  try {
-    const { fromTS } = (await import(
-      /* webpackIgnore: true */ FROM_TS_CDN
-    )) as { fromTS: FromTsFn }
-    if (typeof fromTS === 'function') return fromTS
-  } catch {
-    // unavailable — fall through to degraded mode
-  }
+  const m = await importFromCdns(FROM_TS_CDNS)
+  if (m && typeof m.fromTS === 'function') return m.fromTS as FromTsFn
   return null
 }
 
