@@ -112,6 +112,10 @@ function metadata(content, filePath) {
             console.error('bad metadata in doc', filePath);
         }
     }
+    // An empty/blank `title` must not override the H1 (it produced blank nav
+    // entries) — drop it so the H1-derived title wins.
+    if (typeof data.title === 'string' && data.title.trim() === '')
+        delete data.title;
     return data;
 }
 function findMarkdownFiles(paths, ignore) {
@@ -129,6 +133,11 @@ function findMarkdownFiles(paths, ignore) {
             return;
         }
         files.forEach((file) => {
+            // Skip scaffolding / working files (Jekyll-style `_`-prefix): a
+            // `_template.md` or `_drafting-log.md` shouldn't leak into the corpus or
+            // the book.
+            if (file.startsWith('_'))
+                return;
             const filePath = path.join(dir, file);
             let stats;
             try {

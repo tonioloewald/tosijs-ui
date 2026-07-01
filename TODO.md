@@ -14,6 +14,43 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 
 - **JSON Schema-driven form editor** - Integrate schema-based form generation
 
+## Book / prose adoption (from `falling-forward`, 1.6.15)
+
+The doc-system assumes a **code library with a `src/` tree**; a book has no code,
+uses different Markdown, and needs a *curated book artifact*, not just a site.
+Full write-up in the adopter's `TOSIJS-UI-FEEDBACK.md`.
+
+**Done (quick wins):**
+- ✅ #4 Auto-serve `/iife.js` when `bundleEntry` is omitted (copy tosijs-ui's own
+  iife into the output, version-matched) — pure-docs sites hydrate out of the box.
+- ✅ #7 Skip `_`-prefixed scaffolding files (`_template.md`, `_drafting-log.md`).
+- ✅ #12 Empty metadata `title` falls back to the H1 (was blanking nav entries).
+- ✅ #6 Warn when no ePub cover is generated (@resvg/resvg-js missing); title-only
+  cover already works when it's present.
+
+**Queued — P1 (high impact for prose):**
+- #1 **Markdown footnotes** (`[^id]`) — endnotes/popups in ePub, page-anchored
+  footnotes w/ cross-refs in PDF. Flagship prose gap; differentiator.
+- #2 **YAML frontmatter** — parse & strip a leading `---…---` block, map
+  `title`/`order`/`date`/`author`/`draft` onto doc metadata (or at least warn
+  instead of rendering "---" as the title).
+- #3 **First-class "book" corpus** — a manifest (`book: { include, order,
+  frontMatter, backMatter }`) so a project can serve a full site AND emit a
+  curated, ordered book with title/copyright/dedication/about pages.
+
+**Queued — P2:**
+- #5 Wikilink `[[slug]]` / `[[slug|label]]` resolution (basename match, toggleable).
+- #8 Order by filename/path within a section (natural sort), `order` as override.
+- #9 A `kind: 'book' | 'library'` preset with sane content-project defaults
+  (no `src/`/`demo/` assumptions).
+- #10 Folder structure implies nav sections (`chapters/book-1/*` → "Book 1").
+
+**Queued — P3:**
+- #11 Friendlier metadata entry (the planned metadata UI, or #2's YAML).
+- #13 Optional built-in epubcheck (or a documented validation pass).
+- #14 Smart typography (curly quotes, en/em dashes, ellipsis) opt-in; word-count
+  / reading-time per doc + total.
+
 ## Example captures (live-example → static images)
 
 Design landed; not built. See **"Example captures"** in

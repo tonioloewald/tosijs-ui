@@ -193,6 +193,25 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
         bundleGzip.length / 1024
       ).toFixed(1)}kb gzip)`
     )
+  } else if (!/^(https?:)?\/\//.test(config.scriptUrl ?? '/iife.js')) {
+    // No custom bundleEntry (the normal case for a pure-docs / book site) and a
+    // local scriptUrl: pages still load it to hydrate. Nothing emits it, so it
+    // 404s and the site never hydrates. Ship tosijs-ui's own published iife.js
+    // (version-matched, offline) so a no-code adopter works out of the box.
+    try {
+      const iife = Bun.resolveSync('tosijs-ui/iife', PROJECT_ROOT)
+      await $`cp ${iife} ${PUBLIC}/${scriptName}`.text()
+      if (existsSync(`${iife}.map`)) {
+        await $`cp ${iife}.map ${PUBLIC}/${scriptName}.map`.text()
+      }
+      console.log(`hydration bundle: tosijs-ui/iife.js → /${scriptName}`)
+    } catch {
+      console.warn(
+        `⚠️  No bundleEntry set and tosijs-ui's iife.js couldn't be resolved — pages\n` +
+          `    will 404 on /${scriptName} and won't hydrate. Install tosijs-ui, set\n` +
+          `    bundleEntry, or supply ${scriptName} via staticDirs / an absolute scriptUrl.`
+      )
+    }
   }
 
   if (config.llmsTxt !== false) {

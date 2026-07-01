@@ -553,9 +553,20 @@ async function makeCover(
     }
   }
 
+  // A missing favicon is fine — the cover renders title-only. The only reason we
+  // get here with nothing is @resvg/resvg-js being unavailable; don't fail silently
+  // (a book with no cover is a real problem — KDP/Apple require one).
   const svg = coverSvg(meta.title, meta.author, faviconInner, opts.coverColor ?? '#1f2933')
   const png = await rasterizeSvg(svg, 600)
-  if (!png) return null
+  if (!png) {
+    console.warn(
+      'epub: no cover generated — @resvg/resvg-js is unavailable. Install it\n' +
+        '      (e.g. `bun add -d @resvg/resvg-js`) to render one from the title' +
+        (faviconInner ? ' + favicon' : '') +
+        ',\n      or set epub.cover to your own image. Shipping without a cover.'
+    )
+    return null
+  }
   return { file: 'cover.png', mediaType: 'image/png', data: png }
 }
 
