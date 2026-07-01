@@ -1,4 +1,4 @@
-# tosijs-ui v1.6.14
+# tosijs-ui v1.6.15
 
 Simple, robust web-components for use with tosijs or anything else.
 
@@ -12,10 +12,6 @@ Full documentation, with live code examples, is at the links below.
 
 ## Pages
 
-- https://ui.tosijs.net/save-to-source.test/ — …
-  …
-- https://ui.tosijs.net/save-to-source/ — … *​/ doc comment is often
-  … *​/` doc comment is often
 - https://ui.tosijs.net/babylon-3d/ — 3d
   A [babylonjs](https://www.babylonjs.com/) wrapper.
 - https://ui.tosijs.net/ab-test/ — ab-test

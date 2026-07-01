@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.6.15
+
+Live-example fixes from tosijs-3d adoption. All fixes to the doc-system's
+editing surface; no API changes.
+
+### Fixed
+
+- **Save to source works when the doc comment is indented.** A `/*# … */` doc
+  comment is often indented in the source; the extractor dedents its fenced blocks
+  (so examples render with correct ordinals), but the raw scan required the closing
+  ` ``` ` right after a newline, so an indented file matched **zero** blocks and
+  every save failed with "no matching block". The scan is now indentation-aware,
+  and edits compare dedented / write re-indented so a block keeps its place. The
+  failure alert is also split into a precise message (page↔source ordinal mismatch
+  vs. a genuine no-op).
+- **The pop-out editor window ("view/edit code in a new window") now has the full
+  menu.** It previously opened as a bare instance, so View changes, Save changes
+  (local), and Save to source were hidden; the source↔doc key and the pristine
+  snapshot are now passed through, so the pop-out offers — and can execute — the
+  same actions as the main window.
+- **Opening the editor in a new window closes the inline code view** in the main
+  window if it was open (the pop-out owns editing).
+- **The doc extractor now only treats a `/*#` block as a doc when it starts a
+  line** (whitespace-only before the slash), so a `/*#` inside a `//` comment, a
+  string, or mid-line can't be scraped as a spurious doc page.
+
 ## 1.6.14
 
 Lighter live-example transpilation. Additive; affects only how the live-example

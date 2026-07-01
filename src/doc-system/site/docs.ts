@@ -131,8 +131,9 @@ const TRIM_REGEX = /^#+ |`/g
 
 function metadata(content: string, filePath: string): Partial<Doc> {
   // Ignore metadata-style comments INSIDE /*# ... */ doc blocks — those are
-  // documentation examples, not real directives.
-  const scannable = content.replace(/\/\*#[\s\S]*?\*\//g, '')
+  // documentation examples, not real directives. Only line-starting blocks count
+  // as docs (see findMarkdownFiles), so strip exactly those.
+  const scannable = content.replace(/^[ \t]*\/\*#[\s\S]*?\*\//gm, '')
   const source = scannable.match(/<!--(\{.*\})-->|\/\*(\{.*\})\*\//)
   let data: Partial<Doc> = {}
   if (source) {
@@ -186,7 +187,13 @@ function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
         })
       } else if (['.ts', '.js', '.css'].includes(path.extname(file))) {
         const content = fs.readFileSync(filePath, 'utf8')
-        const docs = content.match(/\/\*#[\s\S]+?\*\//g) || []
+        // A /*# … */ block is only a doc when it STARTS a line (whitespace-only
+        // before the slash). This keeps a `/*#` that appears inside a // comment,
+        // a string, or otherwise mid-line from being scraped as a spurious doc.
+        // m[1] is the block without its leading indentation.
+        const docs = [...content.matchAll(/^[ \t]*(\/\*#[\s\S]+?\*\/)/gm)].map(
+          (m) => m[1]
+        )
         if (docs.length) {
           const markdown = docs.map((s) => s.substring(3, s.length - 2).trim())
           const text = markdown.join('\n\n')

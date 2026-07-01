@@ -511,7 +511,7 @@ export class LiveExample extends Component {
             // Distinguish the two failure modes so a source↔doc mismatch is diagnosable
             // (vs. a genuine no-op). An ordinal past the source's group count means the
             // page and the file disagree on how many example groups exist — commonly a
-            // file with more than one `/*# */` doc, or fenced blocks the doc extractor
+            // file with more than one doc comment, or fenced blocks the doc extractor
             // treats differently from a raw scan (e.g. indented inside the comment).
             const ordinal = Number(ordinalAttr);
             const groups = groupExamples(content, findFencedBlocks(content));

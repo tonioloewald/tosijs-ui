@@ -136,7 +136,7 @@ describe('save-to-source dialects (tjs/ts)', () => {
     expect(tsOut).toContain('const z = 3') // js example untouched
   })
 
-  // A `/*# … */` doc comment is often indented in the source (code style), so its
+  // A doc comment is often indented in the source (code style), so its
   // fences are too. The extractor dedents them (examples render fine), but a raw
   // scan must still find them — else save-to-source fails with "no matching block".
   const INDENTED = [

@@ -22,8 +22,8 @@ const EXECUTABLE = new Set(['js', 'tjs', 'ts', 'html', 'css', 'test']);
 /**
  * Find every ```lang …``` fenced block in document order, with positions.
  *
- * `^([ \t]*)` captures the fence's indentation: a `/*# … *​/` doc comment is often
- * itself indented (some code styles indent block-comment bodies), so its fences —
+ * `^([ \t]*)` captures the fence's indentation: a doc comment is often itself
+ * indented (some code styles indent block-comment bodies), so its fences —
  * and their code lines — are indented in the raw source. The doc extractor dedents
  * them, so examples render with the right ordinals, but a raw scan must match them
  * where they actually sit (and re-indent on write-back). The old anchor-free regex
