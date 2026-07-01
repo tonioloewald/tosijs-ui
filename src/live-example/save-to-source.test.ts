@@ -135,4 +135,34 @@ describe('save-to-source dialects (tjs/ts)', () => {
     expect(tsOut).toContain('const y: number = 22')
     expect(tsOut).toContain('const z = 3') // js example untouched
   })
+
+  // A `/*# … */` doc comment is often indented in the source (code style), so its
+  // fences are too. The extractor dedents them (examples render fine), but a raw
+  // scan must still find them — else save-to-source fails with "no matching block".
+  const INDENTED = [
+    '  # Doc',
+    '',
+    '  ```js',
+    '  const a = 1',
+    '  const b = 2',
+    '  ```',
+  ].join('\n')
+
+  test('finds indented fences (indented doc comment)', () => {
+    const blocks = findFencedBlocks(INDENTED)
+    expect(blocks.length).toBe(1)
+    expect(blocks[0].indent).toBe('  ')
+    expect(groupExamples(INDENTED, blocks).length).toBe(1)
+  })
+
+  test('round-trips an indented example: compares dedented, writes re-indented', () => {
+    // the editor value is dedented; a real change must save and keep the indent
+    const out = rewriteExampleBlocks(INDENTED, 0, { js: 'const a = 1\nconst c = 3' })
+    expect(out).not.toBe(null)
+    expect(out).toContain('  const a = 1\n  const c = 3') // re-indented
+    // an unchanged (dedented) value is a no-op, not a spurious rewrite
+    expect(rewriteExampleBlocks(INDENTED, 0, { js: 'const a = 1\nconst b = 2' })).toBe(
+      null
+    )
+  })
 })

@@ -19,22 +19,51 @@ never depends on the rendered/entity-decoded text matching the source.
 // ordinals stay aligned with insert-examples.
 const SOURCE_LANGS = new Set(['js', 'tjs', 'ts']);
 const EXECUTABLE = new Set(['js', 'tjs', 'ts', 'html', 'css', 'test']);
-/** Find every ```lang …``` fenced block in document order, with positions. */
+/**
+ * Find every ```lang …``` fenced block in document order, with positions.
+ *
+ * `^([ \t]*)` captures the fence's indentation: a `/*# … *​/` doc comment is often
+ * itself indented (some code styles indent block-comment bodies), so its fences —
+ * and their code lines — are indented in the raw source. The doc extractor dedents
+ * them, so examples render with the right ordinals, but a raw scan must match them
+ * where they actually sit (and re-indent on write-back). The old anchor-free regex
+ * required the closing ``` immediately after a newline, so an indented file yielded
+ * ZERO blocks → save-to-source always failed with "no matching block".
+ */
 export function findFencedBlocks(src) {
-    const re = /```([\w-]*)[^\n]*\n([\s\S]*?)\n```/g;
+    const re = /^([ \t]*)```([\w-]*)[^\n]*\n([\s\S]*?)\n[ \t]*```/gm;
     const blocks = [];
     let m;
     while ((m = re.exec(src)) !== null) {
         const codeStart = m.index + m[0].indexOf('\n') + 1;
         blocks.push({
-            lang: m[1] || '',
+            lang: m[2] || '',
+            indent: m[1],
             start: m.index,
             end: m.index + m[0].length,
             codeStart,
-            codeEnd: codeStart + m[2].length,
+            codeEnd: codeStart + m[3].length,
         });
     }
     return blocks;
+}
+/** Re-indent each non-empty line of `text` by `indent` (inverse of dedentBy). */
+function indentBy(text, indent) {
+    if (!indent)
+        return text;
+    return text
+        .split('\n')
+        .map((line) => (line ? indent + line : line))
+        .join('\n');
+}
+/** Strip a leading `indent` from each line that has it (best-effort dedent). */
+function dedentBy(text, indent) {
+    if (!indent)
+        return text;
+    return text
+        .split('\n')
+        .map((line) => (line.startsWith(indent) ? line.slice(indent.length) : line))
+        .join('\n');
 }
 /** Group executable blocks into examples, mirroring insert-examples. */
 export function groupExamples(src, blocks) {
@@ -87,10 +116,17 @@ export function rewriteExampleBlocks(src, ordinal, edits) {
         const block = blockFor(lang);
         if (!block)
             continue;
+        // The source fence may be indented (inside an indented doc comment) while the
+        // editor value is dedented — compare dedented, and re-indent when writing back
+        // so the block keeps its place in the comment.
         const sourceCode = src.slice(block.codeStart, block.codeEnd);
-        if (trimEnd(sourceCode) === trimEnd(next))
-            continue; // unchanged (mod trailing ws)
-        replacements.push({ start: block.codeStart, end: block.codeEnd, text: next });
+        if (trimEnd(dedentBy(sourceCode, block.indent)) === trimEnd(next))
+            continue;
+        replacements.push({
+            start: block.codeStart,
+            end: block.codeEnd,
+            text: indentBy(next, block.indent),
+        });
     }
     if (replacements.length === 0)
         return null;

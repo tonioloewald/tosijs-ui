@@ -186,7 +186,11 @@ import {
 } from './remote-sync'
 import { executeInline, executeInIframe } from './execution'
 import { insertExamples } from './insert-examples'
-import { rewriteExampleBlocks } from './save-to-source'
+import {
+  rewriteExampleBlocks,
+  groupExamples,
+  findFencedBlocks,
+} from './save-to-source'
 import {
   exampleEditKey,
   saveExampleEdit,
@@ -590,7 +594,24 @@ export class LiveExample extends Component<ExampleParts> {
       test: this.test,
     })
     if (updated === null) {
-      window.alert('Nothing to save (no matching blocks or no changes).')
+      // Distinguish the two failure modes so a source↔doc mismatch is diagnosable
+      // (vs. a genuine no-op). An ordinal past the source's group count means the
+      // page and the file disagree on how many example groups exist — commonly a
+      // file with more than one `/*# */` doc, or fenced blocks the doc extractor
+      // treats differently from a raw scan (e.g. indented inside the comment).
+      const ordinal = Number(ordinalAttr)
+      const groups = groupExamples(content, findFencedBlocks(content))
+      if (ordinal >= groups.length) {
+        window.alert(
+          `Couldn't locate this example in ${sourceFile}: it's example ` +
+            `#${ordinal + 1} on the page, but a raw scan of the file finds only ` +
+            `${groups.length} fenced example group(s). The page↔source ordinals ` +
+            `disagree — likely multiple docs in one file, or indented fences. ` +
+            `(File a report with the source structure.)`
+        )
+      } else {
+        window.alert('No changes to save.')
+      }
       return
     }
     try {
@@ -1093,8 +1114,10 @@ export class LiveExample extends Component<ExampleParts> {
       js,
       test,
     })
-    // Maximize preview — the remote window handles code editing
+    // The pop-out window owns editing now — maximize the preview AND close the
+    // inline code view here (it stays open otherwise if it was already showing).
     this.classList.add('-maximize')
+    this.parts.codeEditors.hidden = true
   }
 
   refreshRemote = () => {
