@@ -119,6 +119,10 @@ export interface Doc {
   keywords?: string | string[]
   image?: string
   noindex?: boolean
+  // Common prose/frontmatter fields (carried through; author/date aren't consumed
+  // by the doc system yet, but a book pipeline can use them).
+  author?: string
+  date?: string
 }
 
 export interface ExtractDocsOptions {
@@ -128,6 +132,47 @@ export interface ExtractDocsOptions {
 }
 
 const TRIM_REGEX = /^#+ |`/g
+
+/**
+ * Parse & strip a leading YAML frontmatter block (`---\n…\n---`). Every prose
+ * toolchain (Jekyll/Hugo/Astro/Obsidian/Pandoc) uses it, so authors paste it in;
+ * without this the `---` was rendered as content (and became the doc title).
+ *
+ * A minimal, dependency-free subset: `key: value` lines mapped onto doc metadata
+ * (`title`, `order`→number, `author`, `date`, `draft: true`→hidden). Only strips
+ * when the block actually parses as ≥1 key/value pair, so a genuine leading `---`
+ * horizontal rule is left alone. Frontmatter wins over the JSON-comment metadata.
+ */
+export function parseFrontmatter(content: string): {
+  data: Partial<Doc>
+  body: string
+} {
+  const m = content.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*/)
+  if (!m) return { data: {}, body: content }
+  const data: Partial<Doc> = {}
+  let matched = false
+  for (const line of m[1].split(/\r?\n/)) {
+    const kv = line.match(/^([A-Za-z][\w-]*)\s*:\s*(.*)$/)
+    if (!kv) continue
+    matched = true
+    const key = kv[1].toLowerCase()
+    const val = kv[2].trim().replace(/^["']|["']$/g, '')
+    if (key === 'title') {
+      if (val) data.title = val // empty title falls back to the H1
+    } else if (key === 'order') {
+      const n = Number(val)
+      if (!Number.isNaN(n)) data.order = n
+    } else if (key === 'author') {
+      if (val) data.author = val
+    } else if (key === 'date') {
+      if (val) data.date = val
+    } else if (key === 'draft') {
+      if (/^(true|yes|1)$/i.test(val)) data.hidden = true // drafts don't ship
+    }
+  }
+  if (!matched) return { data: {}, body: content } // a bare `---`, not frontmatter
+  return { data, body: content.slice(m[0].length).replace(/^\r?\n+/, '') }
+}
 
 function metadata(content: string, filePath: string): Partial<Doc> {
   // Ignore metadata-style comments INSIDE /*# ... */ doc blocks — those are
@@ -184,13 +229,16 @@ function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
       if (stats.isDirectory()) {
         traverseDirectory(filePath, ignore)
       } else if (path.extname(file) === '.md') {
-        const content = fs.readFileSync(filePath, 'utf8')
+        const { data: fm, body: content } = parseFrontmatter(
+          fs.readFileSync(filePath, 'utf8')
+        )
         markdownFiles.push({
           text: content,
           title: content.split('\n')[0].replace(TRIM_REGEX, ''),
           filename: file,
           path: filePath,
           ...metadata(content, filePath),
+          ...fm, // frontmatter wins over JSON-comment metadata + the H1
         })
       } else if (['.ts', '.js', '.css'].includes(path.extname(file))) {
         const content = fs.readFileSync(filePath, 'utf8')
@@ -224,13 +272,16 @@ function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
       } else if (stats.isFile()) {
         const file = path.basename(dir)
         if (path.extname(file) === '.md') {
-          const content = fs.readFileSync(dir, 'utf8')
+          const { data: fm, body: content } = parseFrontmatter(
+            fs.readFileSync(dir, 'utf8')
+          )
           markdownFiles.push({
             text: content,
             title: content.split('\n')[0].replace(TRIM_REGEX, ''),
             filename: file,
             path: dir,
             ...metadata(content, dir),
+            ...fm,
           })
         }
       }

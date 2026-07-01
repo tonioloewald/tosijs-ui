@@ -28,18 +28,30 @@ Full write-up in the adopter's `TOSIJS-UI-FEEDBACK.md`.
 - ✅ #6 Warn when no ePub cover is generated (@resvg/resvg-js missing); title-only
   cover already works when it's present.
 
-**Queued — P1 (high impact for prose):**
-- #1 **Markdown footnotes** (`[^id]`) — endnotes/popups in ePub, page-anchored
-  footnotes w/ cross-refs in PDF. Flagship prose gap; differentiator.
-- #2 **YAML frontmatter** — parse & strip a leading `---…---` block, map
-  `title`/`order`/`date`/`author`/`draft` onto doc metadata (or at least warn
-  instead of rendering "---" as the title).
+**Batch A done (rendering pipeline, syntax-activated → safe default-on):**
+- ✅ #2 **YAML frontmatter** — `parseFrontmatter` in docs.ts parses & strips a
+  leading `---…---` block, maps `title`/`order`/`author`/`date`/`draft`→hidden;
+  frontmatter wins over JSON-comment metadata; empty title falls back to H1; a
+  bare `---` rule is left alone.
+- ✅ #5 **Wikilinks** `[[slug]]` / `[[slug|label]]` → `/slug/` (marked inline
+  extension; not matched inside code spans). *First cut resolves by slugifying the
+  target; a real corpus-basename match + unknown-target handling is a follow-up.*
+- ✅ #1 **Footnotes — ePub/web first cut**: `[^id]` refs (numbered by appearance)
+  + `[^id]: def` collected into an endnotes `<section>` with backrefs (marked
+  extensions). *Still TODO: page-anchored footnotes w/ cross-refs in **PDF** —
+  needs real pagination (roadmap "measured rectangles"); multi-line/paragraph
+  footnote definitions.*
+
+**Queued — P1:**
 - #3 **First-class "book" corpus** — a manifest (`book: { include, order,
   frontMatter, backMatter }`) so a project can serve a full site AND emit a
   curated, ordered book with title/copyright/dedication/about pages.
+- #14a **Smart typography** (curly quotes / en-em dashes / ellipsis) — deferred
+  from Batch A: unlike wikilinks/footnotes it rewrites ALL prose, so it must be
+  **opt-in** via config (pairs with #9's `kind: 'book'` preset; needs config
+  threaded to `renderDocMarkdown`).
 
 **Queued — P2:**
-- #5 Wikilink `[[slug]]` / `[[slug|label]]` resolution (basename match, toggleable).
 - #8 Order by filename/path within a section (natural sort), `order` as override.
 - #9 A `kind: 'book' | 'library'` preset with sane content-project defaults
   (no `src/`/`demo/` assumptions).

@@ -77,6 +77,13 @@ ol.toc > li > a { font-weight: bold; }
 /* per-example "run this live" deep link */
 .example-live-link { margin: 0.6em 0 0; font-size: 0.85em; }
 .example-live-link a { color: #08c; font-weight: bold; }
+/* footnotes / endnotes + wikilinks */
+sup.footnote-ref { font-size: 0.7em; line-height: 0; }
+sup.footnote-ref a { text-decoration: none; }
+.footnotes { margin-top: 2em; font-size: 0.9em; }
+.footnotes hr { border: none; border-top: 1px solid #ccc; margin: 1em 0; }
+.footnote-backref { text-decoration: none; }
+a.wikilink { text-decoration: none; border-bottom: 1px dotted currentColor; }
 `
 
 // Print-only layout: page margins, a chapter per page, an avoid-break TOC.
