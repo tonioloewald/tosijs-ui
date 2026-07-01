@@ -796,6 +796,11 @@ export class LiveExample extends Component<ExampleParts> {
         this.html = payload.html
         this.js = payload.js
         if (payload.test) this.test = payload.test
+        // Adopt the main window's pristine snapshot (once) so this pop-out can
+        // compute "has edits", diff View changes, and enable the Save actions.
+        if (this.remoteId !== '' && payload.original && !this.originalCode) {
+          this.originalCode = { ...payload.original }
+        }
         this.refresh()
       }
     )
@@ -1108,12 +1113,21 @@ export class LiveExample extends Component<ExampleParts> {
 
   openEditorWindow = () => {
     const { css, html, js, test } = this
-    openEditorWindow(this.prefix, this.uuid, this.storageKey, this.remoteKey, {
-      css,
-      html,
-      js,
-      test,
-    })
+    openEditorWindow(
+      this.prefix,
+      this.uuid,
+      this.storageKey,
+      this.remoteKey,
+      { css, html, js, test },
+      {
+        // Give the pop-out the same source↔doc key + pristine snapshot the main
+        // window has, so it offers the full menu (Save local / Save to source /
+        // View changes) instead of a reduced one.
+        sourceFile: this.getAttribute('data-source-file'),
+        ordinal: this.getAttribute('data-example-ordinal'),
+        original: this.originalCode ?? undefined,
+      }
+    )
     // The pop-out window owns editing now — maximize the preview AND close the
     // inline code view here (it stays open otherwise if it was already showing).
     this.classList.add('-maximize')
@@ -1363,5 +1377,14 @@ const remoteId = params.get('lx')
 if (remoteId) {
   document.title += ' [code editor]'
   document.body.textContent = ''
-  document.body.append(liveExample({ remoteId }))
+  const example = liveExample({ remoteId })
+  // Carry the source↔doc key through so the pop-out's Save local / Save to source
+  // menu items appear and work (the pristine snapshot arrives via the payload).
+  const sourceFile = params.get('sf')
+  const ordinal = params.get('ord')
+  if (sourceFile && ordinal !== null) {
+    example.setAttribute('data-source-file', sourceFile)
+    example.setAttribute('data-example-ordinal', ordinal)
+  }
+  document.body.append(example)
 }

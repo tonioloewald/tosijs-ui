@@ -20,12 +20,21 @@ export function parsePayload(data) {
         return null;
     }
 }
-export function openEditorWindow(prefix, uuid, storageKey, remoteKey, code) {
-    const href = location.href.split('?')[0] + `?${prefix}=${uuid}`;
+export function openEditorWindow(prefix, uuid, storageKey, remoteKey, code, 
+// Passed through so the pop-out window can offer the full menu (Save / View
+// changes): the source↔doc key rides the URL; the pristine snapshot the payload.
+meta) {
+    const params = new URLSearchParams({ [prefix]: uuid });
+    if (meta?.sourceFile && meta.ordinal != null) {
+        params.set('sf', meta.sourceFile);
+        params.set('ord', meta.ordinal);
+    }
+    const href = location.href.split('?')[0] + '?' + params.toString();
     sendPayload(storageKey, {
         remoteKey,
         sentAt: Date.now(),
         ...code,
+        original: meta?.original,
     });
     window.open(href);
 }

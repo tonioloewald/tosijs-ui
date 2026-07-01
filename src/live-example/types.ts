@@ -38,6 +38,9 @@ export interface RemotePayload {
   js: string
   test?: string
   close?: boolean
+  // The pristine source snapshot, so the pop-out editor window can offer the same
+  // "has edits" state, View changes, and Save actions the main window has.
+  original?: { js?: string; html?: string; css?: string; test?: string }
 }
 
 // A transform closure produced by `loadTransform(dialect)`. The dialect is baked

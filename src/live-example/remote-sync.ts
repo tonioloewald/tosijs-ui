@@ -32,13 +32,26 @@ export function openEditorWindow(
   uuid: string,
   storageKey: string,
   remoteKey: string,
-  code: { css: string; html: string; js: string; test?: string }
+  code: { css: string; html: string; js: string; test?: string },
+  // Passed through so the pop-out window can offer the full menu (Save / View
+  // changes): the source↔doc key rides the URL; the pristine snapshot the payload.
+  meta?: {
+    sourceFile?: string | null
+    ordinal?: string | null
+    original?: RemotePayload['original']
+  }
 ): void {
-  const href = location.href.split('?')[0] + `?${prefix}=${uuid}`
+  const params = new URLSearchParams({ [prefix]: uuid })
+  if (meta?.sourceFile && meta.ordinal != null) {
+    params.set('sf', meta.sourceFile)
+    params.set('ord', meta.ordinal)
+  }
+  const href = location.href.split('?')[0] + '?' + params.toString()
   sendPayload(storageKey, {
     remoteKey,
     sentAt: Date.now(),
     ...code,
+    original: meta?.original,
   })
   window.open(href)
 }

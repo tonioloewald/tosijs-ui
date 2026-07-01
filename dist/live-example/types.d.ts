@@ -30,6 +30,12 @@ export interface RemotePayload {
     js: string;
     test?: string;
     close?: boolean;
+    original?: {
+        js?: string;
+        html?: string;
+        css?: string;
+        test?: string;
+    };
 }
 export type TransformFn = (code: string, options?: {
     transforms: ('jsx' | 'typescript' | 'flow' | 'imports')[];

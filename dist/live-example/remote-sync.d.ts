@@ -8,6 +8,10 @@ export declare function openEditorWindow(prefix: string, uuid: string, storageKe
     html: string;
     js: string;
     test?: string;
+}, meta?: {
+    sourceFile?: string | null;
+    ordinal?: string | null;
+    original?: RemotePayload['original'];
 }): void;
 export declare function sendCloseSignal(storageKey: string, remoteKey: string): void;
 /**
