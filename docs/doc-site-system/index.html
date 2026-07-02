@@ -98,7 +98,7 @@ pass it to <code>devServer</code> as <code>{ build }</code>. <code>buildSite</co
 first file-change rebuild; without <code>build</code>, the watcher only re-runs
 <code>buildSite</code> and never regenerates it, so <code>/iife.js</code> 404s into the SPA fallback
 and &quot;loads as html&quot;. The initial build still runs your steps explicitly:</p>
-<pre><code class="language-ts">const build = async () =&gt; {
+<pre><code class="language-typescript">const build = async () =&gt; {
   if (!(await buildSite(config))) throw new Error(&#39;site build failed&#39;)
   await buildMyIifeBundle()   // re-create what buildSite&#39;s rm -rf removed
 }
@@ -142,7 +142,7 @@ components).</strong> The build bundles your entrypoint to IIFE and pages load i
 reference</strong>, and expose any custom modules to live examples by setting each
 <code>&lt;tosi-doc-system&gt;</code>&#39;s <code>context</code> property (live examples resolve
 <code>import { x } from &#39;my-lib&#39;</code> against <code>context[&#39;my-lib&#39;]</code>):</p>
-<pre><code class="language-ts">// demo/site.ts
+<pre><code class="language-typescript">// demo/site.ts
 import &#39;tosijs-ui&#39; // registers tosi-* elements + the doc-system component
 import * as mylib from &#39;../src/index&#39; // your own components/exports
 
@@ -479,7 +479,7 @@ front/back matter) add a <code>book</code> manifest. It shapes only the book art
 live-site nav is unchanged (one source, two outputs). Every field is an overlay
 on the defaults — it never adds a new ordering mechanism, it overlays each doc&#39;s
 <code>order</code> so the same nav sort sequences the book (pins/parents still apply):</p>
-<pre><code class="language-ts">book: {
+<pre><code class="language-typescript">book: {
   include: [&#39;chapters/**&#39;, &#39;front/**&#39;, &#39;back/**&#39;], // globs (path or filename); default: all
   exclude: [&#39;**/drafts/**&#39;],                        // removed after include
   order: [&#39;title&#39;, &#39;copyright&#39;, &#39;dedication&#39;],      // lead sequence; by filename/slug/title
@@ -626,6 +626,7 @@ which the build resets immediately after.</li>
   </article>
   <nav class="doc-nav" aria-label="Documentation">
   <ul>
+    <li><a href="/one-source-every-artifact/">One Source, Every Artifact</a></li>
     <li><a href="/">tosijs-ui</a></li>
     <li><a href="/bp-loader/">blueprint loading</a></li>
     <li><a href="/icons/">icons</a></li>

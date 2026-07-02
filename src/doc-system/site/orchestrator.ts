@@ -18,6 +18,7 @@ import { gzipSync } from 'zlib'
 import { $ } from 'bun'
 import type { SiteConfig } from './site-config'
 import { extractDocs } from './docs'
+import { checkExamples, formatExampleProblems } from './check-examples'
 import { ensureSections } from './sections'
 import { generateLlmsTxt } from './make-llms-txt'
 import { generateSite } from './generate-site'
@@ -84,6 +85,24 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     sectionsDir: config.sectionsDir ?? 'src/docs',
     reExtract: extract,
   })
+
+  // Fail fast on any live example that can't build — a real syntax/import error,
+  // or illustrative code mistakenly tagged executable (`js`/`ts`/…) instead of
+  // display-only `typescript`. Runs on the whole corpus, so it catches breakage
+  // on pages the browser test never navigates to.
+  if (config.checkExamples !== false) {
+    const corpus = JSON.parse(await Bun.file(DOCS_JSON).text())
+    const problems = await checkExamples(corpus)
+    if (problems.length) {
+      throw new Error(
+        `doc-site build: ${problems.length} live example(s) failed to build:\n\n` +
+          formatExampleProblems(problems) +
+          `\n\nFix the code, or — if a block is illustrative and not meant to run —` +
+          ` tag it with a display-only language like \`typescript\` instead of` +
+          ` \`js\`/\`ts\`. (Disable with checkExamples: false.)`
+      )
+    }
+  }
 
   // Copy static-asset dirs into the web root.
   const staticDirs =

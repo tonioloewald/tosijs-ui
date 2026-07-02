@@ -1210,8 +1210,10 @@ export class LiveExample extends Component<ExampleParts> {
       this.updateSources()
     }
 
-    // Run tests if enabled and there are any
-    if ((this.test || executionError) && preview && testManager.enabled.value) {
+    // Run tests when there are any — but a build/exec failure is a test failure
+    // in its own right, so surface it even when the example defines no `test`
+    // blocks (and even if the failure was hard enough to produce no preview).
+    if ((this.test || executionError) && testManager.enabled.value) {
       // Let queued renders (rAF) settle before running tests
       await new Promise((resolve) => requestAnimationFrame(resolve))
 
@@ -1221,9 +1223,12 @@ export class LiveExample extends Component<ExampleParts> {
       // so they're transpiled as plain js — never lowered through tjs/ts.
       const testTransform =
         this.dialect === 'js' ? transform : await loadTransform('js')
-      this.testResults = this.test
-        ? await runTests(this.test, preview, this.context, testTransform)
-        : { passed: 0, failed: 0, tests: [] }
+      // Only run `test` blocks if the example actually produced a preview to
+      // assert against; a failed build has nothing to test but still fails below.
+      this.testResults =
+        this.test && preview
+          ? await runTests(this.test, preview, this.context, testTransform)
+          : { passed: 0, failed: 0, tests: [] }
       if (executionError) {
         this.testResults.failed += 1
         this.testResults.tests.unshift({

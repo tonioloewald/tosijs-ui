@@ -143,6 +143,15 @@ export interface SiteConfig {
      * `sort: 'filename'` gives a folder of chapters natural order with no metadata.
      */
     book?: BookManifest;
+    /**
+     * Fail the build when a live example can't transpile — a real syntax/import
+     * error, or illustrative code mistakenly tagged with an executable language
+     * (`js`/`ts`/`tjs`/`test`) instead of the display-only `typescript`. Catches it
+     * at build time, on every page, instead of only when someone opens that page.
+     * Default true; assumes the default `tosijs` / `tosijs-ui` example context —
+     * set false if your examples import from a custom `context` the check can't see.
+     */
+    checkExamples?: boolean;
     /** served web-root output dir, default 'docs' */
     outputDir?: string;
     /** dev-server port, default 8787 */

@@ -88,6 +88,8 @@ Full documentation, with live code examples, is at the links below.
   This is a component for displaying a month and selecting days within that month.
 - https://ui.tosijs.net/notifications/ — notifications
   `TosiNotification` provides a singleton custom `<tosi-notification>` element that manages
+- https://ui.tosijs.net/one-source-every-artifact/ — One Source, Every Artifact
+  How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files.
 - https://ui.tosijs.net/password-strength/ — password strength
   Just wrap it a `<tosi-password-strength>` element around an `<input>`
 - https://ui.tosijs.net/pop-float/ — popFloat

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Hide the pre-rendered body until <tosi-doc-system> hydrates, then fade it
+       in — avoids the layout shift as the static markup is swapped for the live
+       doc browser. <noscript> keeps it visible for no-JS readers/crawlers; the
+       timeout is a safety net so a failed/slow hydration can't leave it blank. -->
+  <style>body{opacity:0;transition:opacity .25s ease}</style>
+  <noscript><style>body{opacity:1!important}</style></noscript>
+  <script>setTimeout(function(){if(document.body)document.body.style.opacity='1'},4000)</script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="/doc-system.css" data-tosi-doc-system />
+  <title>One Source, Every Artifact — tosijs-ui</title>
+  <meta name="description" content="How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files." />
+  <link rel="canonical" href="https://ui.tosijs.net/one-source-every-artifact/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="tosijs-ui" />
+  <meta property="og:title" content="One Source, Every Artifact — tosijs-ui" />
+  <meta property="og:description" content="How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files." />
+  <meta property="og:url" content="https://ui.tosijs.net/one-source-every-artifact/" />
+  <meta name="twitter:card" content="summary" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"One Source, Every Artifact","description":"How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files.","url":"https://ui.tosijs.net/one-source-every-artifact/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <link rel="icon" href="/favicon.svg" />
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script>
+</head>
+<body>
+  <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="/localized-strings.txt">
+  <article class="doc-content">
+<!--{"pin":"top","order":2,"title":"One Source, Every Artifact","description":"How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files."}-->
+
+<h1>One Source, Every Artifact</h1>
+<p>Here is an honest description of this documentation system, and it will sound
+like lying:</p>
+<p>It is a <strong>one-step build</strong> that produces a fast, SEO-friendly website; the same
+site is a <strong>test bed</strong> that runs and asserts its own examples; those examples are
+<strong>live and editable</strong>, and your edits <strong>save back to the source</strong>; the whole
+corpus also publishes as an <strong>ePub and a PDF</strong>, and the examples in the book
+<strong>link back</strong> to their live versions; a coding <strong>agent can drive the running
+page</strong> — read the DOM, run JS, screen-capture it; and the examples <strong>transpile
+TypeScript in your browser</strong>, with no server anywhere. The deploy target for all
+of it is <strong>a folder of static files.</strong></p>
+<p>That list reads like a pitch because each item is normally somebody&#39;s whole
+product, and products that claim seven things are usually bad at seven things.
+So here is <em>why it&#39;s true</em>, which is the only thing that makes it believable.</p>
+<h2>It&#39;s not seven features. It&#39;s one mechanism.</h2>
+<p>Every capability above is a <strong>projection of a single source</strong>. You write
+markdown files and <code>/*#</code> doc-comments in your code. One extraction pass reads
+that corpus, and everything else is a different way of <em>weaving</em> the same input:</p>
+<ul>
+<li>a hydrating single-page doc browser</li>
+<li>pre-rendered, per-page HTML for search engines, agents, and no-JS readers</li>
+<li>a browser test suite (the examples run and assert)</li>
+<li>an ePub and a PDF of the whole corpus</li>
+<li>live, editable examples that save back to source</li>
+<li>an agent-inspectable running page</li>
+</ul>
+<p>Nobody is <em>integrating</em> these outputs. They fall out of the same pass, so the
+marginal cost of each is roughly zero. Add a doc-comment and you have
+simultaneously written a web page, a test, a book chapter, and a playground.
+That&#39;s the tell that it&#39;s honest engineering rather than a kitchen sink: the
+things that are expensive to maintain separately are here <em>free</em>, because they
+are not separate.</p>
+<h2>…therefore what you get</h2>
+<p><strong>It&#39;s just static files.</strong> The site is pre-rendered — one real HTML page per
+doc, with proper <code>&lt;head&gt;</code> metadata, readable with JavaScript disabled, plus
+<code>sitemap.xml</code>, <code>robots.txt</code>, and an <code>llms.txt</code> index for agents. &quot;SEO&quot; here is
+just &quot;we wrote the page out as HTML,&quot; which is exactly why it is so effective and
+so boring to explain. When the bundle loads, the static page <strong>hydrates</strong> into
+the live doc browser with no flash.</p>
+<p><strong>The examples are live, and they test themselves.</strong> The code blocks you read
+are executed in the page; assertions in them become part of a browser test
+suite. The documentation cannot drift from the code, because the documentation
+<em>is</em> the code, and it runs.</p>
+<p><strong>They transpile TypeScript in the browser — with no backend.</strong> This is the
+keystone, because &quot;run my TypeScript examples&quot; is exactly where a doc site
+normally sprouts infrastructure: a sandbox service, a compile endpoint, a
+container to keep alive and pay for. Instead the transpiler ships as a
+self-contained browser bundle, and the TypeScript compiler loads as a <em>static
+asset</em> — lazily, cached same-origin, only when a <code>ts</code> example actually needs it.
+Nothing computes on a server. The example just below transpiled in your browser
+a moment ago:</p>
+<pre><code class="language-ts">// TypeScript — transpiled in your browser, no server, then run:
+const artifacts: string[] = [&#39;site&#39;, &#39;book&#39;, &#39;PDF&#39;, &#39;tests&#39;, &#39;live examples&#39;, &#39;agent&#39;]
+preview.append(
+  Object.assign(document.createElement(&#39;p&#39;), {
+    textContent: `${artifacts.length} artifacts from one source — ${artifacts.join(&#39;, &#39;)}`,
+  })
+)
+</code></pre>
+<p>Splitting the compiler out is a <em>payload optimization, not a dependency</em>: inline
+it and you have a fully offline build at ordinary single-page-app weight. Which
+sets up the comparison that does the damage — a stock front-end app ships several
+hundred kilobytes of framework and tooling exhaust <em>to render a page</em>; this ships
+comparable weight, and the payload <strong>is</strong> a TypeScript compiler, a test runner, a
+live-example engine, and a literate-programming environment. Same budget everyone
+already pays without blinking; an order of magnitude more in return.</p>
+<p><strong>You can edit the examples and save them.</strong> In dev, the running page can write
+an edited example back to its source file; the build rebuilds and the page
+refreshes. The preview <em>is</em> the edit loop.</p>
+<p><strong>It publishes as a book.</strong> The whole corpus becomes an ePub (with a generated
+cover) and, via the browser&#39;s Print, a PDF. Examples in the book <strong>deep-link back
+to their live, editable versions</strong> on the site — so a reader is one tap from
+running the thing they&#39;re reading about.</p>
+<p><strong>An agent can debug it.</strong> Turn on <code>haltijaDev</code> and the dev server gives a coding
+agent eyes and hands on the <em>actual running page</em> — live DOM, console, network,
+and screen capture — with no browser extension and nothing added to your bundle.</p>
+<h2>Literate programming that finally has somewhere to live</h2>
+<p>This is Knuth&#39;s idea — one source, woven into a document and tangled into a
+program — except the weave targets are a website, a book, and a test harness, and
+the substrate is the most widely deployed runtime on Earth. WEB, Oberon, Lilith:
+all real, all beautiful, all stranded on bespoke machines nobody could get to.
+The idea was never the problem. The address was. This is that idea shipped to a
+place everyone already is.</p>
+<p>So, once more, and it is all true at the same time:</p>
+<blockquote>
+<p><strong>One corpus → an SEO site, a book, a PDF, a self-testing live playground with
+in-browser TypeScript, and an agent that can drive it — deploying as static
+files.</strong></p>
+</blockquote>
+<p>It sounds like lying because each piece is someone&#39;s whole company, and you get
+them as side effects of writing a doc-comment.</p>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a href="/one-source-every-artifact/" aria-current="page" class="current">One Source, Every Artifact</a></li>
+    <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/bp-loader/">blueprint loading</a></li>
+    <li><a href="/icons/">icons</a></li>
+    <li><details><summary><a href="/components/">Components</a></summary>
+    <ul>
+      <li><a href="/babylon-3d/">3d</a></li>
+      <li><a href="/carousel/">carousel</a></li>
+      <li><a href="/code-editor/">code</a></li>
+      <li><a href="/dialog/">dialog</a></li>
+      <li><a href="/diff/">diff</a></li>
+      <li><a href="/editable-rect/">editable-rect</a></li>
+      <li><a href="/component/">example</a></li>
+      <li><a href="/float/">float</a></li>
+      <li><a href="/gamepad/">gamepads</a></li>
+      <li><a href="/header/">header</a></li>
+      <li><a href="/layout/">layout</a></li>
+      <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
+      <li><a href="/mapbox/">map</a></li>
+      <li><a href="/markdown-viewer/">markdown</a></li>
+      <li><a href="/menu/">menu</a></li>
+      <li><a href="/notifications/">notifications</a></li>
+      <li><a href="/pop-float/">popFloat</a></li>
+      <li><a href="/side-nav/">sidebar</a></li>
+      <li><a href="/size-break/">size-break</a></li>
+      <li><a href="/sizer/">sizer</a></li>
+      <li><a href="/data-table/">table</a></li>
+      <li><a href="/tab-selector/">tabs</a></li>
+      <li><a href="/tooltip/">tooltip</a></li>
+    </ul>
+    </details></li>
+    <li><details><summary><a href="/form-components/">Form Components</a></summary>
+    <ul>
+      <li><a href="/color-input/">color input field</a></li>
+      <li><a href="/filter-builder/">filter</a></li>
+      <li><a href="/form/">forms</a></li>
+      <li><a href="/month/">month</a></li>
+      <li><a href="/password-strength/">password strength</a></li>
+      <li><a href="/rating/">rating</a></li>
+      <li><a href="/rich-text/">rich text</a></li>
+      <li><a href="/segmented/">segmented select</a></li>
+      <li><a href="/select/">select</a></li>
+      <li><a href="/tag-list/">tag-list</a></li>
+    </ul>
+    </details></li>
+    <li><details><summary><a href="/helper-libraries/">Helper Libraries</a></summary>
+    <ul>
+      <li><a href="/ab-test/">ab-test</a></li>
+      <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
+      <li><a href="/live-theme/">live-theme</a></li>
+      <li><a href="/localize/">localize</a></li>
+      <li><a href="/make-sorter/">makeSorter</a></li>
+      <li><a href="/router/">router</a></li>
+      <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+      <li><a href="/theme/">theme</a></li>
+      <li><a href="/track-drag/">trackDrag</a></li>
+    </ul>
+    </details></li>
+    <li><details><summary><a href="/appendices/">Appendices</a></summary>
+    <ul>
+      <li><a href="/doc-system/">doc-system</a></li>
+      <li><a href="/kitchen-sink/">kitchen sink</a></li>
+      <li><a href="/make-icon-data/">make-icon-data</a></li>
+      <li><a href="/doc-browser/">doc-browser</a></li>
+      <li><a href="/doc-site-system/">Doc-Site System</a></li>
+      <li><a href="/docs/">docs</a></li>
+      <li><a href="/icon-composition/">Icon Composition</a></li>
+    </ul>
+    </details></li>
+  </ul>
+  </nav>
+  <ul class="doc-navbar">
+    <li><a href="https://tosijs.net" data-icon="tosi">tosijs</a></li>
+    <li><a href="https://discord.com/invite/ramJ9rgky5" data-icon="discord">discord</a></li>
+    <li><a href="https://loewald.com" data-icon="blog">blog</a></li>
+    <li><a href="https://github.com/tonioloewald/tosijs-ui" data-icon="github">github</a></li>
+    <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
+  </ul>
+  </tosi-doc-system>
+  <script src="/iife.js"></script>
+</body>
+</html>

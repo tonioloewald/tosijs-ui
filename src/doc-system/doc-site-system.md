@@ -80,7 +80,7 @@ process.argv.includes('--build') ? buildSite(config) : devServer(config)
 > `buildSite` and never regenerates it, so `/iife.js` 404s into the SPA fallback
 > and "loads as html". The initial build still runs your steps explicitly:
 >
-> ```ts
+> ```typescript
 > const build = async () => {
 >   if (!(await buildSite(config))) throw new Error('site build failed')
 >   await buildMyIifeBundle()   // re-create what buildSite's rm -rf removed
@@ -138,7 +138,7 @@ modes:
   `<tosi-doc-system>`'s `context` property (live examples resolve
   `import { x } from 'my-lib'` against `context['my-lib']`):
 
-  ```ts
+  ```typescript
   // demo/site.ts
   import 'tosijs-ui' // registers tosi-* elements + the doc-system component
   import * as mylib from '../src/index' // your own components/exports
@@ -325,7 +325,7 @@ live-site nav is unchanged (one source, two outputs). Every field is an overlay
 on the defaults — it never adds a new ordering mechanism, it overlays each doc's
 `order` so the same nav sort sequences the book (pins/parents still apply):
 
-```ts
+```typescript
 book: {
   include: ['chapters/**', 'front/**', 'back/**'], // globs (path or filename); default: all
   exclude: ['**/drafts/**'],                        // removed after include
