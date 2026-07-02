@@ -13,25 +13,26 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="/doc-system.css" data-tosi-doc-system />
-  <title>One Source, Every Artifact — tosijs-ui</title>
+  <title>One Source — tosijs-ui</title>
   <meta name="description" content="How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files." />
   <link rel="canonical" href="https://ui.tosijs.net/one-source-every-artifact/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="One Source, Every Artifact — tosijs-ui" />
+  <meta property="og:title" content="One Source — tosijs-ui" />
   <meta property="og:description" content="How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files." />
   <meta property="og:url" content="https://ui.tosijs.net/one-source-every-artifact/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"One Source, Every Artifact","description":"How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files.","url":"https://ui.tosijs.net/one-source-every-artifact/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"One Source","description":"How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files.","url":"https://ui.tosijs.net/one-source-every-artifact/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="/favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script>
 </head>
 <body>
   <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="/localized-strings.txt">
   <article class="doc-content">
-<!--{"pin":"top","order":2,"title":"One Source, Every Artifact","description":"How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files."}-->
+<!--{"pin":"top","order":600,"title":"One Source","description":"How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files."}-->
 
-<h1>One Source, Every Artifact</h1>
+<h1>One Source</h1>
+<h2>Every Artifact</h2>
 <p>Here is an honest description of this documentation system, and it will sound
 like lying:</p>
 <p>It is a <strong>one-step build</strong> that produces a fast, SEO-friendly website; the same
@@ -46,9 +47,9 @@ of it is <strong>a folder of static files.</strong></p>
 product, and products that claim seven things are usually bad at seven things.
 So here is <em>why it&#39;s true</em>, which is the only thing that makes it believable.</p>
 <h2>It&#39;s not seven features. It&#39;s one mechanism.</h2>
-<p>Every capability above is a <strong>projection of a single source</strong>. You write
-markdown files and <code>/*#</code> doc-comments in your code. One extraction pass reads
-that corpus, and everything else is a different way of <em>weaving</em> the same input:</p>
+<p>Every capability above is a <strong>projection of a single source</strong>. You write markdown
+files and <code>/*#</code> doc-comments in your code. One extraction pass reads that corpus,
+and everything else is a different way of <em>weaving</em> the same input:</p>
 <ul>
 <li>a hydrating single-page doc browser</li>
 <li>pre-rendered, per-page HTML for search engines, agents, and no-JS readers</li>
@@ -59,10 +60,19 @@ that corpus, and everything else is a different way of <em>weaving</em> the same
 </ul>
 <p>Nobody is <em>integrating</em> these outputs. They fall out of the same pass, so the
 marginal cost of each is roughly zero. Add a doc-comment and you have
-simultaneously written a web page, a test, a book chapter, and a playground.
-That&#39;s the tell that it&#39;s honest engineering rather than a kitchen sink: the
+simultaneously written a web page, a test, a book chapter, and a playground.</p>
+<h2>The whole thing, running inside itself</h2>
+<p>The clearest demo is the system embedded in its own page. Below is a complete,
+live <code>&lt;tosi-doc-system&gt;</code> — the same browser you&#39;re reading this in — loading the
+same corpus, in an isolated (memory-routed) instance. It runs its own live
+examples, transpiles their TypeScript in your browser, and needs no server:</p>
+<pre><code class="language-html">&lt;tosi-doc-system docs=&quot;/docs.json&quot; routing=&quot;memory&quot; route=&quot;data-table&quot;
+  style=&quot;display:block; height:520px; border-radius:8px; overflow:hidden; box-shadow:0 2px 16px #0004&quot;&gt;
+&lt;/tosi-doc-system&gt;
+</code></pre>
+<p>That is the tell that it&#39;s honest engineering rather than a kitchen sink: the
 things that are expensive to maintain separately are here <em>free</em>, because they
-are not separate.</p>
+are not separate — the page can contain the entire system.</p>
 <h2>…therefore what you get</h2>
 <p><strong>It&#39;s just static files.</strong> The site is pre-rendered — one real HTML page per
 doc, with proper <code>&lt;head&gt;</code> metadata, readable with JavaScript disabled, plus
@@ -70,50 +80,63 @@ doc, with proper <code>&lt;head&gt;</code> metadata, readable with JavaScript di
 just &quot;we wrote the page out as HTML,&quot; which is exactly why it is so effective and
 so boring to explain. When the bundle loads, the static page <strong>hydrates</strong> into
 the live doc browser with no flash.</p>
-<p><strong>The examples are live, and they test themselves.</strong> The code blocks you read
-are executed in the page; assertions in them become part of a browser test
-suite. The documentation cannot drift from the code, because the documentation
-<em>is</em> the code, and it runs.</p>
+<p><strong>The examples are live, and they test themselves.</strong> The code blocks you read are
+executed in the page; assertions in them become part of a browser test suite. The
+documentation cannot drift from the code, because the documentation <em>is</em> the code,
+and it runs.</p>
 <p><strong>They transpile TypeScript in the browser — with no backend.</strong> This is the
 keystone, because &quot;run my TypeScript examples&quot; is exactly where a doc site
 normally sprouts infrastructure: a sandbox service, a compile endpoint, a
 container to keep alive and pay for. Instead the transpiler ships as a
 self-contained browser bundle, and the TypeScript compiler loads as a <em>static
 asset</em> — lazily, cached same-origin, only when a <code>ts</code> example actually needs it.
-Nothing computes on a server. The example just below transpiled in your browser
-a moment ago:</p>
-<pre><code class="language-ts">// TypeScript — transpiled in your browser, no server, then run:
-const artifacts: string[] = [&#39;site&#39;, &#39;book&#39;, &#39;PDF&#39;, &#39;tests&#39;, &#39;live examples&#39;, &#39;agent&#39;]
-preview.append(
-  Object.assign(document.createElement(&#39;p&#39;), {
-    textContent: `${artifacts.length} artifacts from one source — ${artifacts.join(&#39;, &#39;)}`,
-  })
-)
-</code></pre>
-<p>Splitting the compiler out is a <em>payload optimization, not a dependency</em>: inline
-it and you have a fully offline build at ordinary single-page-app weight. Which
-sets up the comparison that does the damage — a stock front-end app ships several
-hundred kilobytes of framework and tooling exhaust <em>to render a page</em>; this ships
+Nothing computes on a server. Splitting the compiler out is a <em>payload
+optimization, not a dependency</em>: inline it and you have a fully offline build at
+ordinary single-page-app weight. A stock front-end app ships several hundred
+kilobytes of framework and tooling exhaust <em>to render a page</em>; this ships
 comparable weight, and the payload <strong>is</strong> a TypeScript compiler, a test runner, a
-live-example engine, and a literate-programming environment. Same budget everyone
-already pays without blinking; an order of magnitude more in return.</p>
-<p><strong>You can edit the examples and save them.</strong> In dev, the running page can write
-an edited example back to its source file; the build rebuilds and the page
-refreshes. The preview <em>is</em> the edit loop.</p>
+live-example engine, and a literate-programming environment.</p>
+<p><strong>You can edit the examples and save them.</strong> In dev, the running page can write an
+edited example back to its source file; the build rebuilds and the page refreshes.
+The preview <em>is</em> the edit loop.</p>
 <p><strong>It publishes as a book.</strong> The whole corpus becomes an ePub (with a generated
 cover) and, via the browser&#39;s Print, a PDF. Examples in the book <strong>deep-link back
-to their live, editable versions</strong> on the site — so a reader is one tap from
-running the thing they&#39;re reading about.</p>
+to their live, editable versions</strong> on the site.</p>
 <p><strong>An agent can debug it.</strong> Turn on <code>haltijaDev</code> and the dev server gives a coding
 agent eyes and hands on the <em>actual running page</em> — live DOM, console, network,
 and screen capture — with no browser extension and nothing added to your bundle.</p>
 <h2>Literate programming that finally has somewhere to live</h2>
-<p>This is Knuth&#39;s idea — one source, woven into a document and tangled into a
-program — except the weave targets are a website, a book, and a test harness, and
-the substrate is the most widely deployed runtime on Earth. WEB, Oberon, Lilith:
-all real, all beautiful, all stranded on bespoke machines nobody could get to.
-The idea was never the problem. The address was. This is that idea shipped to a
-place everyone already is.</p>
+<p>The idea is old and keeps getting reinvented, always brilliantly, always
+incompletely, always at the cost of a bespoke apparatus:</p>
+<ul>
+<li><strong>Donald Knuth&#39;s WEB</strong> (1984) gave us <em>literate programming</em>: one source, with
+<code>weave</code> producing typeset documentation and <code>tangle</code> producing compilable code.
+It needed the WEB toolchain and TeX, and the program lived in a format that was
+neither quite prose nor quite code.</li>
+<li><strong>Niklaus Wirth&#39;s Oberon</strong> — a language <em>and</em> an operating system published as a
+book (<em>Project Oberon</em>), a self-documenting, self-contained system — was as
+complete a realization of the dream as anyone has managed. It ran on bespoke
+hardware and its own environment; you could admire it, not deploy it.</li>
+<li><strong>Examples-as-tests</strong> — Python&#39;s <code>doctest</code>, Rust&#39;s <code>rustdoc</code> doctests, Elixir&#39;s
+doctests — run the code in your docs as part of the suite. Real, and narrow:
+compile/runtime-specific, and never <em>live and editable in the reader&#39;s browser</em>.</li>
+<li><strong>Storybook</strong> renders components in isolation with docs beside them — but it&#39;s a
+separate build and app, not your documentation, and not literate: the docs are
+not the source.</li>
+<li><strong>Docs-with-live-code</strong> (MDX, Docusaurus) marry markdown and components, but need
+a heavy build, and executable code still wants a sandbox service.</li>
+<li><strong>Notebooks</strong> — Jupyter (a bespoke kernel and runtime), Observable (reactive JS,
+but a hosted, bespoke format), <code>nbdev</code> (literate programming that emits a
+package, docs, and tests — atop the notebook toolchain) — get <em>closest</em> to
+&quot;one source, many artifacts,&quot; and each still stands on a platform of its own.</li>
+</ul>
+<p>Every one of these nailed a slice — weave/tangle, examples-as-tests, live editable
+code, component preview — and every one demanded special tooling, a bespoke
+runtime, or a machine you can&#39;t get to. This does what all of them do, <strong>at once,
+from one source</strong>, and it runs <strong>in a browser, in the languages you already know</strong>
+(HTML, CSS, JavaScript, TypeScript), deploying as static files to any host on the
+most widely deployed runtime on Earth. The idea was never the problem. The address
+was.</p>
 <p>So, once more, and it is all true at the same time:</p>
 <blockquote>
 <p><strong>One corpus → an SEO site, a book, a PDF, a self-testing live playground with
@@ -126,8 +149,8 @@ them as side effects of writing a doc-comment.</p>
   </article>
   <nav class="doc-nav" aria-label="Documentation">
   <ul>
-    <li><a href="/one-source-every-artifact/" aria-current="page" class="current">One Source, Every Artifact</a></li>
     <li><a href="/">tosijs-ui</a></li>
+    <li><a href="/one-source-every-artifact/" aria-current="page" class="current">One Source</a></li>
     <li><a href="/bp-loader/">blueprint loading</a></li>
     <li><a href="/icons/">icons</a></li>
     <li><details><summary><a href="/components/">Components</a></summary>

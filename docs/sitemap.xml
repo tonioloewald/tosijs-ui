@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://ui.tosijs.net/one-source-every-artifact/</loc></url>
   <url><loc>https://ui.tosijs.net/</loc></url>
+  <url><loc>https://ui.tosijs.net/one-source-every-artifact/</loc></url>
   <url><loc>https://ui.tosijs.net/babylon-3d/</loc></url>
   <url><loc>https://ui.tosijs.net/ab-test/</loc></url>
   <url><loc>https://ui.tosijs.net/bp-loader/</loc></url>

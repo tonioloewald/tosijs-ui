@@ -1250,7 +1250,11 @@ export function createDocBrowser(options) {
         if (isTestFrame)
             return; // Don't run background tests in test iframe
         backgroundTestsStarted = true;
-        // Find all docs that have test blocks
+        // Find all docs that have test blocks. (Pages with examples but no explicit
+        // tests are covered cheaply at BUILD time by the transpile check —
+        // src/doc-system/site/check-examples.ts — without loading them in a browser,
+        // so the runner doesn't have to render every heavy page just to notice a
+        // build error.)
         const docsWithTests = docs.filter((doc) => doc.text.includes('```test'));
         pagesWithTests = docsWithTests.length;
         if (pagesWithTests > 0) {
