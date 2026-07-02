@@ -249,7 +249,7 @@ See `package.json` for current versions. The notable ones:
 - `tosijs`: Core component framework (peer + dev dep)
 - `marked`: Markdown parsing (peer dep)
 - `tjs-lang`: live-example transpiler (optional peer dep, lazy-loaded — a plain component consumer never pulls it in). Live examples load its **self-contained browser bundles** (`tjs-lang/browser` + `tjs-lang/browser/from-ts`; the TypeScript compiler lazy-loads from a CDN only for `ts` examples). Load order: installed peer → **same-origin** copy the doc-site build ships under `/tjs/` (via `__TJS_LOCAL_BASE`) → CDN chain (jsdelivr → unpkg → esm.sh). The version is pinned by `TJS_VERSION` in `src/live-example/code-transform.ts` — **bump it in lockstep with the dep** when upgrading. (Replaced `sucrase`, which is gone.)
-- `happy-dom`: DOM simulation for unit tests (dev dep); also the ePub builder's HTML→XHTML pass. `@resvg/resvg-js` (optional dev dep): rasterizes the generated ePub cover.
+- `happy-dom`: DOM simulation for unit tests (dev dep); also the ePub builder's HTML→XHTML pass. `@resvg/resvg-js`: rasterizes the generated ePub cover. Both `happy-dom` and `@resvg/resvg-js` are **optional peer deps** (`peerDependenciesMeta.optional`) as well as dev deps — an adopter building ePubs via `tosijs-ui/site` needs them installed (both are lazy-loaded with a graceful fallback + warning when absent).
 - Components use custom HTML tags with `tosi-` prefix (e.g., `<tosi-select>`, `<tosi-dialog>`)
 - IIFE build (`src/index-iife.ts`) bundles tosijs + marked + tosijs-ui, exposes `xinjs` and `xinjsui` globals (legacy names kept for backward compatibility; `window.xinjs` = tosijs, `window.xinjsui` = tosijs-ui)
 

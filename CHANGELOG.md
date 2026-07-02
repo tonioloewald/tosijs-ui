@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.17
+
+### Fixed
+
+- **`@resvg/resvg-js` is now an optional peer dependency** (it was only a dev
+  dependency). It rasterizes the generated ePub cover and belongs to the same
+  doc-site pipeline as `happy-dom`, which was already an optional peer — so an
+  adopter building ePubs via `tosijs-ui/site` got `happy-dom` surfaced by their
+  package manager but not `resvg`, and their book's cover silently failed to
+  generate. Both are still lazy-loaded with a graceful warning when absent.
+
 ## 1.6.16
 
 Doc-system: prose/book adoption. Component APIs are unchanged; everything here is
