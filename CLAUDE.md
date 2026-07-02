@@ -201,6 +201,14 @@ The `createDocBrowser()` function renders documentation from extracted `docs.jso
 - `'path'`: clean per-page `/slug/` URLs, for the static pre-rendered site.
 - `'memory'`: self-contained — never reads/writes `window.history`/`location` or the `__docTestResults` global, so an embedded/nested browser can't hijack the host page's URL. Drive it via `initialRoute` + `onRouteChange` and the element's `.navigate(slug)` method.
 
+#### Doc extraction & Markdown (`src/doc-system/site/docs.ts`, `render.ts`)
+
+Extraction rules (learn these to avoid surprises):
+- A `/*# … */` block is a doc **only when it starts a line** (whitespace-only before the `/`). A `/*#` inside a `//` comment, a string, or mid-line is NOT scraped — so don't worry about writing `/*#` in prose/comments. (Regex: `/^[ \t]*(\/\*#[\s\S]+?\*\/)/gm`.)
+- Files whose name starts with `_` (`_template.md`, `_drafting-log.md`) are **skipped** — use the prefix for scaffolding/working files.
+- **YAML frontmatter** (a leading `---\n…\n---`) is parsed & stripped (`parseFrontmatter`): maps `title`/`order`/`author`/`date`/`draft`(→`hidden`). Frontmatter **wins** over the JSON-comment metadata; an empty `title` falls back to the H1; a bare `---` rule is left as content.
+- `renderDocMarkdown` (the ONE renderer for build + client) adds prose Markdown on top of marked, each activating **only on its own syntax** (code docs unaffected): `[[slug]]` / `[[slug|label]]` **wikilinks** → `/slug/` (not inside code spans), and `[^id]` **footnotes** → numbered refs + an endnotes `<section>`. A fence info string may carry `#id` (```` ```js#my-example ````) to give that live example a stable anchor.
+
 #### Static doc-site system (`tosijs-ui/site`)
 
 `src/doc-system/site/` (exported as `tosijs-ui/site`, with `defineSiteConfig`/`buildSite`/`devServer`) turns a project's markdown + `/*#` block comments into a **static, pre-rendered, hydrating** documentation site: one `/{slug}/index.html` per doc with real `<head>` metadata, no-JS readable, zero-flash hydration into the live `<tosi-doc-system>` browser, plus `sitemap.xml`/`robots.txt`. Output is a plain folder of static files for any static host. The canonical reference is `src/doc-system/doc-site-system.md` — read it before working on this system. Note (per memory): `devServer(config, { build })` takes the consumer's **full** build, not just `buildSite`, because `buildSite` does `rm -rf` on the output dir on watch rebuild and would otherwise drop sibling artifacts (e.g. a separate iife bundle).
@@ -237,8 +245,8 @@ See `package.json` for current versions. The notable ones:
 
 - `tosijs`: Core component framework (peer + dev dep)
 - `marked`: Markdown parsing (peer dep)
-- `sucrase`: TypeScript transform for live examples (optional peer dep)
-- `happy-dom`: DOM simulation for unit tests (dev dep)
+- `tjs-lang`: live-example transpiler (optional peer dep, lazy-loaded — a plain component consumer never pulls it in). Live examples load its **self-contained browser bundles** (`tjs-lang/browser` + `tjs-lang/browser/from-ts`; the TypeScript compiler lazy-loads from a CDN only for `ts` examples). Load order: installed peer → **same-origin** copy the doc-site build ships under `/tjs/` (via `__TJS_LOCAL_BASE`) → CDN chain (jsdelivr → unpkg → esm.sh). The version is pinned by `TJS_VERSION` in `src/live-example/code-transform.ts` — **bump it in lockstep with the dep** when upgrading. (Replaced `sucrase`, which is gone.)
+- `happy-dom`: DOM simulation for unit tests (dev dep); also the ePub builder's HTML→XHTML pass. `@resvg/resvg-js` (optional dev dep): rasterizes the generated ePub cover.
 - Components use custom HTML tags with `tosi-` prefix (e.g., `<tosi-select>`, `<tosi-dialog>`)
 - IIFE build (`src/index-iife.ts`) bundles tosijs + marked + tosijs-ui, exposes `xinjs` and `xinjsui` globals (legacy names kept for backward compatibility; `window.xinjs` = tosijs, `window.xinjsui` = tosijs-ui)
 
