@@ -21,7 +21,7 @@ preview.append(b3d({
     )
     camera.attachControl(element.parts.canvas, true)
 
-    new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0.25, 1, -0.5))
+    new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0.25, 1, -0.5), element.scene)
 
     this.loadScene('/', 'xin3d.glb')
 
@@ -129,7 +129,7 @@ preview.append(b3d({
     const { scene } = element
     const { createNoise2D } = await import('https://cdn.jsdelivr.net/npm/simplex-noise@4.0.1/+esm')
 
-    new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0.25, 1, 2))
+    new BABYLON.HemisphericLight('light', new BABYLON.Vector3(0.25, 1, 2), scene)
 
     const terrain = new BABYLON.Mesh('terrain', scene)
     const vertexData = new BABYLON.VertexData()
@@ -168,10 +168,38 @@ preview.append(b3d({
 }))
 ```
 
+## Pure-HTML scenes (attributes)
+
+`<tosi-3d>` can assemble a scene entirely from HTML attributes — no `sceneCreated`
+callback, no JavaScript — so a 3D hero can be dropped into a declarative page. Set
+`src` and it works like an `<img>`; a default camera and lighting are added when
+the scene doesn't provide its own, so a model shows up out of the box.
+
+- **`src`** — a `.glb` URL; loads on connect (calls `loadScene` for you).
+- **`hero-light`** — adds a directional key light (front-upper-left) over the soft
+  hemispheric fill, for a "product photography" look.
+- **`fov`** — field-of-view *multiplier* on the camera's natural lens: `1` (default)
+  leaves it alone, `<1` is a longer lens (less perspective distortion), `>1` wider.
+- **`clear-color`** — scene background: a css hex color, or `transparent` to
+  composite the 3D over the page (great for themed narrative pages).
+
+This loads the same scene as the example above, in plain HTML, with a hero key
+light and a slightly longer lens:
+
+```html
+<tosi-3d src="/xin3d.glb" hero-light fov="0.6"></tosi-3d>
+```
+```css
+.preview tosi-3d {
+  width: 100%;
+  height: 100%;
+}
+```
+
 ## loadScene
 
 `<tosi-3d>.loadScene(path: string, file: string, callBack(meshes: any[]): void)` can
-be used to load `.glb` files.
+be used to load `.glb` files. Setting `src` calls this for you on connect.
 
 ## loadUI
 
@@ -184,8 +212,42 @@ import { icons, svg2DataUrl } from './icons';
 const noop = () => {
     /* do not care */
 };
+/** Parse a css hex color (#rgb/#rrggbb/#rrggbbaa) or the keyword `transparent`
+ * into a BABYLON.Color4. */
+function toColor4(BABYLON, css) {
+    if (!css || css.trim() === 'transparent')
+        return new BABYLON.Color4(0, 0, 0, 0);
+    let hex = css.trim().replace(/^#/, '');
+    if (hex.length === 3)
+        hex = hex
+            .split('')
+            .map((c) => c + c)
+            .join('');
+    if (hex.length === 6)
+        hex += 'ff';
+    const n = parseInt(hex, 16);
+    if (Number.isNaN(n) || hex.length !== 8)
+        return new BABYLON.Color4(0, 0, 0, 1);
+    return new BABYLON.Color4(((n >>> 24) & 255) / 255, ((n >>> 16) & 255) / 255, ((n >>> 8) & 255) / 255, (n & 255) / 255);
+}
 export class B3d extends WebComponent {
     static preferredTagName = 'tosi-3d';
+    // Declarative config so a scene can be assembled purely in HTML (no JS):
+    //   <tosi-3d src="/model.glb" hero-light fov="0.5" clear-color="transparent">
+    static initAttributes = {
+        // `src` (a .glb URL) makes <tosi-3d> work like <img>: the scene loads on connect.
+        src: '',
+        // scene background: a css hex color, or `transparent` to composite the 3D
+        // over the page (e.g. themed narrative pages). Empty = Babylon default.
+        clearColor: '',
+        // field-of-view MULTIPLIER on the camera's natural lens. 1 = unchanged,
+        // <1 = longer lens / less perspective distortion, >1 = wider. Author-friendly:
+        // no need to know Babylon's default fov in radians.
+        fov: 1,
+        // add a directional key light (front-upper-left) for a product-photography
+        // look, on top of the soft hemispheric fill.
+        heroLight: false,
+    };
     babylonReady;
     BABYLON;
     static shadowStyleSpec = {
@@ -281,14 +343,46 @@ export class B3d extends WebComponent {
         const { canvas } = this.parts;
         this.babylonReady.then(async (BABYLON) => {
             this.BABYLON = BABYLON;
-            this.engine = new BABYLON.Engine(canvas, true);
+            // A `transparent` (alpha < 1) clear-color needs an alpha WebGL context so
+            // the canvas composites over the page.
+            const clearColor = this.clearColor ? toColor4(BABYLON, this.clearColor) : null;
+            this.engine = new BABYLON.Engine(canvas, true, clearColor && clearColor.a < 1
+                ? { alpha: true, premultipliedAlpha: false }
+                : undefined);
             this.scene = new BABYLON.Scene(this.engine);
+            if (clearColor)
+                this.scene.clearColor = clearColor;
             if (this.sceneCreated) {
                 await this.sceneCreated(this, BABYLON);
             }
+            // `src` (pure-HTML usage): auto-load the .glb. Split into the rootUrl +
+            // filename that BABYLON.SceneLoader.Append expects.
+            if (this.src) {
+                const slash = this.src.lastIndexOf('/');
+                await this.loadScene(this.src.slice(0, slash + 1) || '/', this.src.slice(slash + 1));
+            }
             if (this.scene.activeCamera === undefined) {
-                const camera = new BABYLON.ArcRotateCamera('default-camera', -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 0));
+                // Pass `this.scene` explicitly: with multiple <tosi-3d> on a page their
+                // scenes interleave, so BABYLON.Engine.LastCreatedScene (the implicit
+                // default) may point at another instance's scene.
+                const camera = new BABYLON.ArcRotateCamera('default-camera', -Math.PI / 2, Math.PI / 2.5, 3, new BABYLON.Vector3(0, 0, 0), this.scene);
                 camera.attachControl(this.parts.canvas, true);
+            }
+            // `fov` multiplier: <1 gives a long "product photography" lens (less
+            // distortion), >1 a wider one. 1 (default) leaves the camera untouched.
+            if (this.fov && this.fov !== 1 && this.scene.activeCamera) {
+                this.scene.activeCamera.fov *= this.fov;
+            }
+            // A model loaded via `src` needs a light or it renders black; add a soft
+            // hemispheric fill from above only when the scene has none of its own.
+            if (this.scene.lights.length === 0) {
+                const hemi = new BABYLON.HemisphericLight('hemi', new BABYLON.Vector3(0, 1, 0), this.scene);
+                hemi.intensity = 0.6;
+            }
+            // `hero-light`: a directional key light (front-upper-left) over the fill.
+            if (this.heroLight) {
+                const dir = new BABYLON.DirectionalLight('hero', new BABYLON.Vector3(-1, -2, 1), this.scene);
+                dir.intensity = 0.8;
             }
             this.engine.runRenderLoop(this._update);
         });

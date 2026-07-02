@@ -32,9 +32,17 @@ export interface BuildEpubOptions {
     modified?: string;
     /**
      * Cover image path (png/jpeg/gif). If omitted, a cover is generated from the
-     * book title + the site favicon (rasterized to PNG via @resvg/resvg-js).
+     * book title + a glyph (see `coverIcon`), rasterized to PNG via @resvg/resvg-js.
      */
     cover?: string;
+    /**
+     * SVG glyph embedded into the GENERATED cover, in place of the site favicon.
+     * A root-relative served path (e.g. '/tosi-book.svg', resolved from the output
+     * dir) or a repo-relative path. Must be a flat, self-contained SVG with
+     * concrete colors (no CSS vars / <foreignObject>), since resvg rasterizes plain
+     * SVG. Ignored when `cover` (a full image) is set.
+     */
+    coverIcon?: string;
     /** background color for the generated cover, default '#1f2933' */
     coverColor?: string;
 }

@@ -42,7 +42,8 @@ export default defineSiteConfig({
   favicon: '/favicon.svg',
 
   // Build + ship the ePub (the settings menu's "Download ePub" links to it).
-  epub: { author: 'Tonio Loewald' },
+  // coverIcon is embedded into the generated cover (served from demo/static).
+  epub: { author: 'Tonio Loewald', coverIcon: '/tosi-book.svg' },
 
   // Enable the dev-server source read/write endpoints for in-browser
   // "edit page source" (local dev only).

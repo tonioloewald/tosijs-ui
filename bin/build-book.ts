@@ -11,6 +11,5 @@ import { buildEpub } from '../src/doc-system/site'
 
 const config = { ...siteConfig }
 
-await buildEpub(config, {
-  author: 'Tonio Loewald',
-})
+// Mirror the orchestrator: the ePub options ARE config.epub (author, coverIcon…).
+await buildEpub(config, typeof config.epub === 'object' ? config.epub : {})

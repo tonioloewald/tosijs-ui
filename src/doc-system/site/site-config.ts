@@ -150,8 +150,15 @@ export interface SiteConfig {
         author?: string
         title?: string
         css?: string
-        /** cover image path; omit to generate one from the title + favicon */
+        /** cover image path; omit to generate one from the title + a glyph */
         cover?: string
+        /**
+         * SVG glyph embedded into the generated cover (in place of the favicon).
+         * Root-relative served path or a repo path; must be flat, self-contained
+         * SVG with concrete colors (resvg rasterizes plain SVG). Ignored when
+         * `cover` is set.
+         */
+        coverIcon?: string
         /** background color for the generated cover, default '#1f2933' */
         coverColor?: string
       }

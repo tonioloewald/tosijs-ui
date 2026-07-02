@@ -46,7 +46,7 @@ preview.append(b3d({
     )
     camera.attachControl(element.parts.canvas, true)
 
-    new BABYLON.HemisphericLight(&#39;light&#39;, new BABYLON.Vector3(0.25, 1, -0.5))
+    new BABYLON.HemisphericLight(&#39;light&#39;, new BABYLON.Vector3(0.25, 1, -0.5), element.scene)
 
     this.loadScene(&#39;/&#39;, &#39;xin3d.glb&#39;)
 
@@ -147,7 +147,7 @@ preview.append(b3d({
     const { scene } = element
     const { createNoise2D } = await import(&#39;https://cdn.jsdelivr.net/npm/simplex-noise@4.0.1/+esm&#39;)
 
-    new BABYLON.HemisphericLight(&#39;light&#39;, new BABYLON.Vector3(0.25, 1, 2))
+    new BABYLON.HemisphericLight(&#39;light&#39;, new BABYLON.Vector3(0.25, 1, 2), scene)
 
     const terrain = new BABYLON.Mesh(&#39;terrain&#39;, scene)
     const vertexData = new BABYLON.VertexData()
@@ -185,9 +185,32 @@ preview.append(b3d({
   },
 }))
 </code></pre>
+<h2>Pure-HTML scenes (attributes)</h2>
+<p><code>&lt;tosi-3d&gt;</code> can assemble a scene entirely from HTML attributes — no <code>sceneCreated</code>
+callback, no JavaScript — so a 3D hero can be dropped into a declarative page. Set
+<code>src</code> and it works like an <code>&lt;img&gt;</code>; a default camera and lighting are added when
+the scene doesn&#39;t provide its own, so a model shows up out of the box.</p>
+<ul>
+<li><strong><code>src</code></strong> — a <code>.glb</code> URL; loads on connect (calls <code>loadScene</code> for you).</li>
+<li><strong><code>hero-light</code></strong> — adds a directional key light (front-upper-left) over the soft
+hemispheric fill, for a &quot;product photography&quot; look.</li>
+<li><strong><code>fov</code></strong> — field-of-view <em>multiplier</em> on the camera&#39;s natural lens: <code>1</code> (default)
+leaves it alone, <code>&lt;1</code> is a longer lens (less perspective distortion), <code>&gt;1</code> wider.</li>
+<li><strong><code>clear-color</code></strong> — scene background: a css hex color, or <code>transparent</code> to
+composite the 3D over the page (great for themed narrative pages).</li>
+</ul>
+<p>This loads the same scene as the example above, in plain HTML, with a hero key
+light and a slightly longer lens:</p>
+<pre><code class="language-html">&lt;tosi-3d src=&quot;/xin3d.glb&quot; hero-light fov=&quot;0.6&quot;&gt;&lt;/tosi-3d&gt;
+</code></pre>
+<pre><code class="language-css">.preview tosi-3d {
+  width: 100%;
+  height: 100%;
+}
+</code></pre>
 <h2>loadScene</h2>
 <p><code>&lt;tosi-3d&gt;.loadScene(path: string, file: string, callBack(meshes: any[]): void)</code> can
-be used to load <code>.glb</code> files.</p>
+be used to load <code>.glb</code> files. Setting <code>src</code> calls this for you on connect.</p>
 <h2>loadUI</h2>
 <p><code>&lt;tosi-3d&gt;.loadUI(options: B3dUIOptions)</code> loads babylonjs guis, which you can create programmatically or using the <a href="https://gui.babylonjs.com/">babylonjs gui tool</a>.</p>
 

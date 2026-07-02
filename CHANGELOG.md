@@ -1,5 +1,64 @@
 # Changelog
 
+## 1.6.16
+
+Doc-system: prose/book adoption. Component APIs are unchanged; everything here is
+doc-site tooling (the `tosijs-ui/site` build system + live examples).
+
+### Added
+
+- **Book manifest — curate/reorder the book without touching site nav.** A new
+  `book` field on the site config (`BookManifest`) selects and sequences the ePub
+  (and, later, print) as a subset of the corpus while the live site still shows
+  everything — one source, two outputs. `include`/`exclude` globs pick docs,
+  `order: [...]` names the lead sequence (front/back matter are just docs you
+  name), and `sort: 'filename'` gives a folder of chapters natural order with no
+  metadata. It adds no new ordering mechanism — it overlays each doc's `order` so
+  the existing nav sort sequences the book (pins/parents still apply). Zero-config
+  is unchanged: the book is the whole visible corpus. Identity (title/author/
+  cover) still comes from `epub`.
+- **Prose Markdown (Batch A), activated only by its own syntax** so code docs are
+  byte-identical: **YAML frontmatter** (`title`/`order`/`author`/`date`/`draft`,
+  frontmatter wins over JSON-comment metadata), **wikilinks** `[[slug]]` /
+  `[[slug|label]]` → `/slug/`, and **footnotes** `[^id]` → numbered refs + an
+  endnotes section (ePub/web).
+- **Book/prose quick wins:** auto-serve `/iife.js` when `bundleEntry` is omitted;
+  skip `_`-prefixed scaffolding files; empty metadata `title` falls back to the
+  H1; warn when no ePub cover is generated.
+- **`epub.coverIcon`** — embed a custom flat SVG glyph into the generated ePub
+  cover (in place of the favicon); the source viewBox is preserved so any
+  square-ish icon scales correctly. tosijs-ui ships a `tosi-book` cover glyph.
+- **`<tosi-3d>` declarative attributes** — assemble a scene purely in HTML (no
+  `sceneCreated` callback): `src` (a `.glb` URL, auto-loads like `<img>`),
+  `hero-light` (a directional key light over a soft hemispheric fill), `fov` (a
+  field-of-view multiplier — `1` unchanged, `<1` a longer lens), and `clear-color`
+  (a hex color, or `transparent` to composite the 3D over the page). Aimed at
+  declarative narrative pages.
+
+### Fixed
+
+- **Multiple `<tosi-3d>` on one page.** Their scenes are created asynchronously and
+  interleave, so objects created without an explicit scene landed on Babylon's
+  `Engine.LastCreatedScene` (another instance's scene) — the built-in default
+  camera did this, leaving a scene with no camera and a blank canvas. The default
+  camera (and the doc examples' lights) now pass their scene explicitly.
+
+### Changed
+
+- **PDF is now the in-browser Print button, not a batch job.** The doc-browser's
+  Print action renders the shared book HTML (`book-html.ts`) and the browser
+  prints it to PDF. This is the single, supported PDF path going forward; a future
+  paginated/footnote-anchored PDF will build on it. (ePub is still generated at
+  build time and unaffected.)
+- **Live examples pinned to tjs-lang 0.8.7** (upstream subtle-bug fix).
+
+### Removed
+
+- **The headless PDF batch builder** (`buildPdf` / `BuildPdfOptions`, exported
+  from `tosijs-ui/site`, and the `book:pdf` / `--pdf` script) — a secondary code
+  path superseded by the Print button above. If you generated PDFs in a build,
+  print the book page to PDF (via the doc-browser) instead.
+
 ## 1.6.15
 
 Live-example fixes from tosijs-3d adoption. All fixes to the doc-system's

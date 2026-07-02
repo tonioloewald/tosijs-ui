@@ -9,6 +9,12 @@ interface B3dUIOptions {
 type MeshProcessCallback = (meshes: any[]) => void;
 export declare class B3d extends WebComponent {
     static preferredTagName: string;
+    static initAttributes: {
+        src: string;
+        clearColor: string;
+        fov: number;
+        heroLight: boolean;
+    };
     babylonReady: Promise<any>;
     BABYLON?: any;
     static shadowStyleSpec: {

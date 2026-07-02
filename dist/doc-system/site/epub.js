@@ -354,8 +354,8 @@ function wrapTitle(title, maxChars, maxLines) {
         lines.push(current);
     return lines.slice(0, maxLines);
 }
-/** A 600×800 cover SVG: brand background, favicon, title, author. */
-function coverSvg(title, author, faviconInner, bg) {
+/** A 600×800 cover SVG: brand background, glyph, title, author. */
+function coverSvg(title, author, glyph, bg) {
     const W = 600;
     const H = 800;
     const titleLines = wrapTitle(title, 16, 4);
@@ -367,8 +367,8 @@ function coverSvg(title, author, faviconInner, bg) {
         `font-family="Helvetica,Arial,sans-serif" font-size="${fontSize}" font-weight="bold" ` +
         `fill="#ffffff">${escapeXml(line)}</text>`)
         .join('\n  ');
-    const icon = faviconInner
-        ? `<svg x="190" y="150" width="220" height="220" viewBox="0 0 48 48">${faviconInner}</svg>`
+    const icon = glyph
+        ? `<svg x="190" y="150" width="220" height="220" viewBox="${glyph.viewBox}" preserveAspectRatio="xMidYMid meet">${glyph.inner}</svg>`
         : '';
     const authorText = author
         ? `<text x="${W / 2}" y="710" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" ` +
@@ -397,9 +397,23 @@ function coverPageXhtml(title, coverFile) {
 </html>
 `;
 }
+/** Read an SVG file and return its inner markup + viewBox, or null if unusable. */
+function loadSvgGlyph(absPath) {
+    if (!fs.existsSync(absPath))
+        return null;
+    const raw = fs.readFileSync(absPath, 'utf8');
+    const viewBox = (raw.match(/<svg[^>]*\bviewBox="([^"]+)"/i) || [])[1] || '0 0 48 48';
+    const inner = raw
+        .replace(/<\?xml[^>]*\?>/, '')
+        .replace(/<svg[^>]*>/, '')
+        .replace(/<\/svg>\s*$/, '')
+        .trim();
+    return inner ? { inner, viewBox } : null;
+}
 /**
  * Resolve the cover: an explicit image (opts.cover) if given, else a generated
- * one from the title + site favicon. Returns null if neither is available.
+ * one from the title + a glyph (opts.coverIcon or the site favicon). Returns null
+ * if neither is available.
  */
 async function makeCover(config, opts, meta) {
     if (opts.cover && fs.existsSync(opts.cover)) {
@@ -411,29 +425,33 @@ async function makeCover(config, opts, meta) {
                 : 'image/png';
         return { file: `cover${ext || '.png'}`, mediaType, data: fs.readFileSync(opts.cover) };
     }
-    // Embed the favicon (svg) into the generated cover, if available.
-    let faviconInner = null;
-    const fav = config.favicon ?? '/favicon.svg';
-    if (fav.endsWith('.svg')) {
-        const favPath = path.resolve(config.outputDir ?? 'docs', fav.replace(/^\//, ''));
-        if (fs.existsSync(favPath)) {
-            faviconInner = fs
-                .readFileSync(favPath, 'utf8')
-                .replace(/<\?xml[^>]*\?>/, '')
-                .replace(/<svg[^>]*>/, '')
-                .replace(/<\/svg>\s*$/, '')
-                .trim();
+    // Embed a glyph (svg) into the generated cover: prefer an explicit `coverIcon`,
+    // else the site favicon. Preserve the source viewBox so any square-ish icon
+    // scales correctly (not just a 48×48 favicon).
+    const iconSource = opts.coverIcon ?? config.favicon ?? '/favicon.svg';
+    let glyph = null;
+    if (iconSource.endsWith('.svg')) {
+        // A root-relative served path resolves from the output dir (like the
+        // favicon); a repo-relative path resolves from cwd. Try both.
+        const rel = iconSource.replace(/^\//, '');
+        for (const p of [
+            path.resolve(rel),
+            path.resolve(config.outputDir ?? 'docs', rel),
+        ]) {
+            glyph = loadSvgGlyph(p);
+            if (glyph)
+                break;
         }
     }
-    // A missing favicon is fine — the cover renders title-only. The only reason we
+    // A missing glyph is fine — the cover renders title-only. The only reason we
     // get here with nothing is @resvg/resvg-js being unavailable; don't fail silently
     // (a book with no cover is a real problem — KDP/Apple require one).
-    const svg = coverSvg(meta.title, meta.author, faviconInner, opts.coverColor ?? '#1f2933');
+    const svg = coverSvg(meta.title, meta.author, glyph, opts.coverColor ?? '#1f2933');
     const png = await rasterizeSvg(svg, 600);
     if (!png) {
         console.warn('epub: no cover generated — @resvg/resvg-js is unavailable. Install it\n' +
             '      (e.g. `bun add -d @resvg/resvg-js`) to render one from the title' +
-            (faviconInner ? ' + favicon' : '') +
+            (glyph ? ' + glyph' : '') +
             ',\n      or set epub.cover to your own image. Shipping without a cover.');
         return null;
     }
