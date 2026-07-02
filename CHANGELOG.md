@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.6.19
+
+Doc-system tooling; no component API changes.
+
+### Added
+
+- **Build-time example transpile check.** Every executable live-example block
+  (`js` / `tjs` / `ts` / `test`) across the whole corpus is run through the front
+  half of the runtime pipeline — `rewriteImports` → transform → `new
+  AsyncFunction` — at build time, **without executing it**, so a block that can't
+  build (a syntax/import error, or illustrative code mistakenly tagged with an
+  executable language instead of the display-only `typescript`) **fails the build**
+  with the offending doc/block named, on every page — including fences hidden in
+  blockquotes and lists. TypeScript is transpiled with bun's own transpiler
+  (network-free). Opt out with `checkExamples: false`.
+- **"One Source, Every Artifact"** doc page — how one corpus of doc-comments +
+  markdown projects into a static SEO site, a self-testing live playground with
+  in-browser TypeScript, an ePub/PDF, and an agent-debuggable page. Embeds a live
+  `<tosi-doc-system>` (the whole system running inside its own page).
+
+### Fixed
+
+- **A live example's build/exec failure is now a test failure whether or not it
+  defines `test` blocks.** So on any page the browser test runner loads, *all* of
+  its examples are checked for explosions — a no-test example that throws is
+  reported as a failed test — not just blocks with explicit assertions.
+
 ## 1.6.18
 
 Doc-site tooling; no component API changes.
