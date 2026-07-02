@@ -49,6 +49,11 @@ export default defineSiteConfig({
   // "edit page source" (local dev only).
   editableSources: true,
 
+  // Inject the haltija dev-channel so a coding agent (Claude) can drive the live
+  // dev page via `hj`. Dev-only, serve-time inject, never bundled / never in the
+  // built output. Spins up a server-only HTTPS channel on 8701 (mkcert-trusted).
+  haltijaDev: true,
+
   // Register the module-cache service worker (demo/static/module-cache-sw.js) so
   // live-example CDN modules (the tjs-lang transpiler, example imports) are
   // cached same-origin and shared across the background-test iframes instead of

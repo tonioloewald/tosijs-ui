@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.6.18
+
+Doc-site tooling; no component API changes.
+
+### Added
+
+- **`haltijaDev` — give a coding agent eyes + hands on your running dev page.**
+  Set `haltijaDev: true` (or `HALTIJA_DEV=1`) and `bun start` injects a tiny
+  localhost-gated loader into served HTML — a runtime `import()` of a local
+  [haltija](https://github.com/tonioloewald/haltija) channel's `dev.js` — and
+  spins up (or reuses) a server-only channel (no Electron app) in `--both` mode:
+  HTTP 8700 for the `hj` CLI, HTTPS 8701 for the injected widget (so an HTTPS page
+  has no mixed-content). An agent can then read the live DOM, click/type, run JS,
+  and **screen-capture** the rendered page (`hj screenshot`, via `getDisplayMedia`
+  — click the 🖥 widget button once to grant the share). Because the loader is
+  pulled from the local server at runtime it is **never bundled** (zero build
+  bytes) and self-disables off-localhost, and because it's injected at serve time
+  it never touches the built output. Certs are mkcert-signed (already required for
+  the dev server's HTTPS), so no browser warning. Local dev only; off by default.
+  The channel tracks haltija's `@beta` dist-tag (where the WebRTC capture lives).
+
 ## 1.6.17
 
 ### Fixed

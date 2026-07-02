@@ -187,6 +187,19 @@ export interface SiteConfig {
    * are confined to the repo root as correctness hygiene. Off by default; opt in.
    */
   editableSources?: boolean
+  /**
+   * Give a coding agent (Claude) eyes + hands on your running dev page via
+   * [haltija](https://github.com/tonioloewald/haltija). When on, the dev server
+   * injects a tiny localhost-gated loader into served HTML — a runtime
+   * `import()` of the local haltija channel's `dev.js` — and spins up (or reuses)
+   * a server-only HTTPS channel on port 8701. Because the loader is pulled from
+   * the local server at runtime, **haltija is never bundled** (zero build bytes)
+   * and self-disables off-localhost, and because injection happens at serve time
+   * it never touches the built output. Local dev only; off by default. Can also
+   * be toggled with `HALTIJA_DEV=1`. Requires mkcert (already needed for the dev
+   * server's HTTPS) so the 8701 cert is trusted with no browser warning.
+   */
+  haltijaDev?: boolean
 }
 
 /** Identity helper that gives a site config module full type-checking + IDE help. */

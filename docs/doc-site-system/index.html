@@ -416,7 +416,47 @@ authoritative typed definition.</p>
 <td>—</td>
 <td>extra dev-server watch dirs</td>
 </tr>
+<tr>
+<td><code>haltijaDev</code></td>
+<td><code>false</code></td>
+<td>give a coding agent eyes on your running dev page (see below); also <code>HALTIJA_DEV=1</code></td>
+</tr>
+<tr>
+<td><code>editableSources</code></td>
+<td><code>false</code></td>
+<td>dev-only in-browser &quot;edit page source&quot; endpoints</td>
+</tr>
 </tbody></table>
+<h4><code>haltijaDev</code> — Claude eyes on your running dev page</h4>
+<p>Set <code>haltijaDev: true</code> (or run with <code>HALTIJA_DEV=1</code>) and <code>bun start</code> gives a coding
+agent (Claude) eyes <strong>and hands</strong> on your actual running page via
+<a href="https://github.com/tonioloewald/haltija">haltija</a>: read the live DOM, click, type,
+run JS, watch console/network, and <strong>screen-capture</strong> the rendered page — on the
+real page you have open, with your real session state.</p>
+<p>How it stays clean:</p>
+<ul>
+<li>The dev server injects a <strong>one-line loader</strong> into served HTML — a localhost-gated
+runtime <code>import()</code> of the local haltija channel&#39;s <code>dev.js</code>. Because it&#39;s pulled
+from the local server at runtime, <strong>haltija is never bundled</strong> (zero build bytes),
+and the <code>localhost</code> guard means it <strong>self-disables</strong> anywhere else.</li>
+<li>Injection happens <strong>at serve time only</strong>, so it never lands in the built output —
+your deployed static site is untouched.</li>
+<li>The dev server also <strong>spins up (or reuses) a server-only haltija channel</strong>
+(no desktop app) in <code>--both</code> mode: <strong>HTTP 8700</strong> (which the <code>hj</code> CLI drives) and
+<strong>HTTPS 8701</strong> (which the injected widget loads, so an HTTPS page has no
+mixed-content). Both certs are mkcert-signed — mkcert is already required for the
+dev server&#39;s own HTTPS — so there&#39;s no browser warning.</li>
+</ul>
+<p>Then drive the page with the <code>hj</code> CLI (<code>hj tree</code>, <code>hj eval</code>, <code>hj click …</code>,
+<code>hj screenshot</code>). The widget shows itself when the channel is active (Option+Tab to
+toggle) — no silent snooping. For <strong>screen capture</strong> (<code>getDisplayMedia</code>, so no
+Electron app needed), click the 🖥 button in the widget once to grant the share;
+<code>hj screenshot</code> then writes a file and returns its path — no giant base64 in the
+agent&#39;s context (add <code>--format webp --scale 0.5</code> for a compact capture, <code>--chyron false</code> to drop the burned-in caption). Local dev only; off by default.</p>
+<blockquote>
+<p>The channel tracks haltija&#39;s <strong><code>@beta</code></strong> dist-tag, where the in-browser WebRTC
+screen capture landed ahead of <code>latest</code>.</p>
+</blockquote>
 <h4><code>llms.txt</code></h4>
 <p>The default index is built from your config — <code>name</code>, <code>description</code>, <code>baseUrl</code>
 (→ <code>Docs:</code> link), and <code>projectLinks.github</code>/<code>.npm</code> (→ <code>Source:</code>/<code>npm:</code> links;

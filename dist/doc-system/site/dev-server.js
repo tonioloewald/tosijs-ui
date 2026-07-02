@@ -21,6 +21,48 @@ async function killStrayServer(port) {
         // No process on port, that's fine
     }
 }
+/**
+ * Reuse-or-spawn a haltija dev-channel server (server-only, no desktop app) on
+ * `port` over HTTPS, so the loader injected into the dev pages has something to
+ * connect to. Best-effort: if the reachability check fails we still spawn, and
+ * if the spawn fails we just log — the injected loader degrades to a no-op, so
+ * dev startup is never blocked on haltija.
+ */
+async function ensureHaltijaChannel(port) {
+    const base = `https://localhost:${port}`;
+    const up = await fetch(`${base}/status`, {
+        // The 8701 cert is mkcert-signed, but don't let a TLS/availability hiccup
+        // in the probe stop us — we only care whether something is answering.
+        tls: { rejectUnauthorized: false },
+    })
+        .then((r) => r.ok)
+        .catch(() => false);
+    if (up) {
+        console.log(`Haltija dev-channel: reusing existing server at ${base}`);
+        return;
+    }
+    console.log(`Haltija dev-channel: starting server-only channel (HTTP 8700 + HTTPS ${port}) …`);
+    try {
+        // --server = channel server only (no Electron desktop app). --both = HTTP on
+        // 8700 AND HTTPS on 8701: the injected loader/widget use HTTPS 8701 (so an
+        // HTTPS dev page has no mixed-content), while the `hj` CLI drives over its
+        // default HTTP 8700 — one server, both transports, shared state. HTTPS cert
+        // is mkcert-trusted. Output quiet so it doesn't drown the dev log.
+        // Track the `@beta` tag: in-browser (widget-mode) WebRTC screen capture —
+        // which makes the Electron app CI-only — landed in the beta channel, ahead
+        // of the `latest` dist-tag.
+        spawn(['bunx', 'haltija@beta', '--server', '--both'], {
+            stdout: 'ignore',
+            stderr: 'ignore',
+        });
+        console.log(`Haltija dev-channel ready — drive this page with \`hj\` (e.g. \`hj tree\`). ` +
+            `The widget appears when the channel is active (Option+Tab to toggle).`);
+    }
+    catch (err) {
+        console.warn(`Haltija dev-channel: could not start (${String(err)}). The page loader ` +
+            `will no-op until you run \`bunx haltija --server --https\` yourself.`);
+    }
+}
 // The HTTPS dev server needs a cert in tls/. On a fresh clone/adopter there
 // isn't one, so warn with the exact command rather than serving a broken
 // server. We don't generate it automatically because it runs `mkcert -install`,
@@ -42,6 +84,18 @@ export async function devServer(config, opts = {}) {
     const PUBLIC = path.resolve('./', config.outputDir ?? 'docs');
     const isSPA = true;
     const testMode = !!opts.test;
+    // Haltija dev-channel — give a coding agent eyes on the running page. Opt-in
+    // (config.haltijaDev or HALTIJA_DEV=1), never in test mode. The loader is a
+    // localhost-gated runtime import() of the local channel's dev.js, so haltija
+    // is never bundled and self-disables off-localhost; it's injected only at
+    // serve time (below), so it never lands in the built output.
+    const HALTIJA_HTTPS_PORT = 8701;
+    const haltijaDev = !testMode &&
+        (config.haltijaDev === true ||
+            process.env.HALTIJA_DEV === '1' ||
+            process.env.HALTIJA_DEV === 'true');
+    const HALTIJA_SNIPPET = `<script>/^localhost$|^127\\./.test(location.hostname)` +
+        `&&import('https://localhost:${HALTIJA_HTTPS_PORT}/dev.js')</script>`;
     let testReportResolve;
     // Source read/write for in-browser "edit page source" (config.editableSources).
     // Local dev only — your machine, your files — so the lone guard is correctness:
@@ -91,7 +145,7 @@ export async function devServer(config, opts = {}) {
         }
     }
     await killStrayServer(PORT);
-    function serveFromDir(cfg) {
+    function resolveFile(cfg) {
         const basePath = path.join(cfg.directory, cfg.path);
         const suffixes = ['', '.html', 'index.html'];
         for (const suffix of suffixes) {
@@ -99,7 +153,7 @@ export async function devServer(config, opts = {}) {
                 const pathWithSuffix = path.join(basePath, suffix);
                 const stat = statSync(pathWithSuffix);
                 if (stat && stat.isFile()) {
-                    return new Response(Bun.file(pathWithSuffix));
+                    return pathWithSuffix;
                 }
             }
             catch {
@@ -107,6 +161,21 @@ export async function devServer(config, opts = {}) {
             }
         }
         return null;
+    }
+    // Serve a resolved file, injecting the haltija dev-channel loader into HTML
+    // pages when enabled. Serve-time only — the loader never touches the built
+    // output on disk, and non-HTML assets are streamed untouched.
+    async function respondFile(filePath) {
+        if (haltijaDev && filePath.endsWith('.html')) {
+            const html = await Bun.file(filePath).text();
+            const injected = html.includes('</body>')
+                ? html.replace('</body>', `${HALTIJA_SNIPPET}</body>`)
+                : html + HALTIJA_SNIPPET;
+            return new Response(injected, {
+                headers: { 'Content-Type': 'text/html; charset=utf-8' },
+            });
+        }
+        return new Response(Bun.file(filePath));
     }
     async function handleTestReport(request) {
         try {
@@ -211,22 +280,21 @@ export async function devServer(config, opts = {}) {
             }
             if (reqPath === '/')
                 reqPath = '/index.html';
-            const buildResponse = serveFromDir({ directory: PUBLIC, path: reqPath });
-            if (buildResponse)
-                return buildResponse;
+            const buildFile = resolveFile({ directory: PUBLIC, path: reqPath });
+            if (buildFile)
+                return await respondFile(buildFile);
             if (isSPA) {
-                const spaResponse = serveFromDir({
-                    directory: PUBLIC,
-                    path: '/index.html',
-                });
-                console.log(spaResponse);
-                if (spaResponse)
-                    return spaResponse;
+                const spaFile = resolveFile({ directory: PUBLIC, path: '/index.html' });
+                if (spaFile)
+                    return await respondFile(spaFile);
             }
             return new Response('File not found', { status: 404 });
         },
     });
     console.log(`Listening on https://localhost:${PORT}`);
+    if (haltijaDev) {
+        await ensureHaltijaChannel(HALTIJA_HTTPS_PORT);
+    }
     if (testMode) {
         const testTimeout = 120_000;
         const testResults = new Promise((resolve, reject) => {

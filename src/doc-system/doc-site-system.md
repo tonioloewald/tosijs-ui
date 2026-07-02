@@ -263,6 +263,40 @@ authoritative typed definition.
 | `outputDir` | `'docs'` | served web-root output dir |
 | `port` | `8787` | dev-server port |
 | `watchPaths` | — | extra dev-server watch dirs |
+| `haltijaDev` | `false` | give a coding agent eyes on your running dev page (see below); also `HALTIJA_DEV=1` |
+| `editableSources` | `false` | dev-only in-browser "edit page source" endpoints |
+
+#### `haltijaDev` — Claude eyes on your running dev page
+
+Set `haltijaDev: true` (or run with `HALTIJA_DEV=1`) and `bun start` gives a coding
+agent (Claude) eyes **and hands** on your actual running page via
+[haltija](https://github.com/tonioloewald/haltija): read the live DOM, click, type,
+run JS, watch console/network, and **screen-capture** the rendered page — on the
+real page you have open, with your real session state.
+
+How it stays clean:
+- The dev server injects a **one-line loader** into served HTML — a localhost-gated
+  runtime `import()` of the local haltija channel's `dev.js`. Because it's pulled
+  from the local server at runtime, **haltija is never bundled** (zero build bytes),
+  and the `localhost` guard means it **self-disables** anywhere else.
+- Injection happens **at serve time only**, so it never lands in the built output —
+  your deployed static site is untouched.
+- The dev server also **spins up (or reuses) a server-only haltija channel**
+  (no desktop app) in `--both` mode: **HTTP 8700** (which the `hj` CLI drives) and
+  **HTTPS 8701** (which the injected widget loads, so an HTTPS page has no
+  mixed-content). Both certs are mkcert-signed — mkcert is already required for the
+  dev server's own HTTPS — so there's no browser warning.
+
+Then drive the page with the `hj` CLI (`hj tree`, `hj eval`, `hj click …`,
+`hj screenshot`). The widget shows itself when the channel is active (Option+Tab to
+toggle) — no silent snooping. For **screen capture** (`getDisplayMedia`, so no
+Electron app needed), click the 🖥 button in the widget once to grant the share;
+`hj screenshot` then writes a file and returns its path — no giant base64 in the
+agent's context (add `--format webp --scale 0.5` for a compact capture, `--chyron
+false` to drop the burned-in caption). Local dev only; off by default.
+
+> The channel tracks haltija's **`@beta`** dist-tag, where the in-browser WebRTC
+> screen capture landed ahead of `latest`.
 
 #### `llms.txt`
 
