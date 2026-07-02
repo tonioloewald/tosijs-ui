@@ -16,7 +16,10 @@ bun tests              # Run unit tests + Playwright tests
 bun format             # ESLint + Prettier
 bun latest             # Clean install (removes node_modules + bun.lock, then bun update)
 bunx tsc --noEmit      # Type check without emitting (used in CI)
+bun book               # Build ePub of the doc corpus (run AFTER `bun run build`)
 ```
+
+`bun book` (`bin/build-book.ts`) reads the extracted `demo/docs.json`, so run a normal build first. Book identity/config comes from `tosijs-site.config.ts`. The doc-site build (`buildSite`) also regenerates the ePub on every build when `epub` is enabled in the site config. PDF output is the doc-browser's in-app **Print** button (`book-html.ts` → browser print-to-PDF), not a batch job.
 
 Running a single unit test:
 ```bash

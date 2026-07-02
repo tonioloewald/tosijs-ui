@@ -2,9 +2,9 @@
 Shared, browser-safe assembly of the whole doc corpus into one printable HTML
 "book": a title page, a generated table of contents, then every doc as a chapter
 that starts on a new page. Used by the client-side **Print** button in the
-doc-browser (the user's browser prints it to PDF) and by the headless PDF builder
-(site/pdf.ts). Pure rendering — no fs, no Node-only APIs — so it bundles into the
-iife. Live examples are pretty-printed, force-wrapped code listings, not executed.
+doc-browser (the user's browser prints it to PDF). Pure rendering — no fs, no
+Node-only APIs — so it bundles into the iife. Live examples are pretty-printed,
+force-wrapped code listings, not executed.
 */
 import { renderDocMarkdown } from './render';
 import { buildSlugMap } from './routing';

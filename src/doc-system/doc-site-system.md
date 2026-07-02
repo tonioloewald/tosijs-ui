@@ -258,6 +258,8 @@ authoritative typed definition.
 | `emitLibrary` | `false` | also build the library: `tsc --declaration --incremental --outDir dist` (for repos publishing a package + their docs) |
 | `libraryTsconfig` | — | run `tsc -p <path>` for the library build instead (handles root `noEmit`, `removeComments`, custom `outDir`); supersedes `emitLibrary` |
 | `llmsTxt` | `true` | emit the `llms.txt` index — `true`, `false`, or `(docs) => string` for a custom one (see below) |
+| `epub` | `false` | build + ship an ePub of the corpus every build — `true` or `{ author, title, css, cover, coverColor }` (see below) |
+| `book` | — | curate/reorder the book artifact without touching site nav (see below) |
 | `outputDir` | `'docs'` | served web-root output dir |
 | `port` | `8787` | dev-server port |
 | `watchPaths` | — | extra dev-server watch dirs |
@@ -271,6 +273,39 @@ with a `dist/*.js` pointer. It's written **both** to the project root (so you ca
 ship it in your package's `files`) **and** to the served output dir, so
 `{baseUrl}/llms.txt` resolves for crawlers/agents. Set `llmsTxt: false` to skip,
 or pass a function `(docs) => string` to generate your own from the corpus.
+
+#### The book (ePub) & the `book` manifest
+
+Set `epub: true` (or `{ author, title, css, cover, coverColor }`) and every build
+emits `{name}.epub` into the output dir, one chapter per doc in nav order, with a
+Contents page, EPUB3 nav + EPUB2 ncx, and a cover (an explicit `cover` image, or
+one generated from the title + your `favicon`; install `@resvg/resvg-js` to
+render the generated one). The doc-browser's settings menu links to it as
+"Download ePub". `bun bin/build-book.ts` builds it standalone. PDF is the
+in-browser **Print** button, not a batch job.
+
+By default **the book is the whole visible corpus** — zero config. To emit a
+*subset* in a *curated order* (a library that also ships a book, a novel with
+front/back matter) add a `book` manifest. It shapes only the book artifact; the
+live-site nav is unchanged (one source, two outputs). Every field is an overlay
+on the defaults — it never adds a new ordering mechanism, it overlays each doc's
+`order` so the same nav sort sequences the book (pins/parents still apply):
+
+```ts
+book: {
+  include: ['chapters/**', 'front/**', 'back/**'], // globs (path or filename); default: all
+  exclude: ['**/drafts/**'],                        // removed after include
+  order: ['title', 'copyright', 'dedication'],      // lead sequence; by filename/slug/title
+  sort: 'filename',                                 // 'nav' (default) | 'filename' natural sort
+}
+```
+
+- **Front/back matter** are just regular docs — name them in `order` (or give
+  them a per-doc `order` in frontmatter) to place them; there's no special
+  front-matter concept.
+- `sort: 'filename'` makes a folder of `01-*.md`, `02-*.md`, … sequence with no
+  metadata; a per-doc `order` still wins.
+- Identity (title / author / cover) comes from `epub`, not here.
 
 ## Host presets & custom domains
 

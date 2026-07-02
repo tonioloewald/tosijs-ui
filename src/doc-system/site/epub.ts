@@ -23,6 +23,7 @@ import { buildNavTree, NavNode } from '../nav-tree'
 import type { Doc } from './docs'
 import type { SiteConfig } from './site-config'
 import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html'
+import { selectBookDocs } from '../book-manifest'
 
 // Re-exported for back-compat (tosijs-ui/site's public surface + tests).
 export { DEFAULT_BOOK_CSS, stripDocMeta }
@@ -578,9 +579,11 @@ export async function buildEpub(
   opts: BuildEpubOptions = {}
 ): Promise<string> {
   const docsJson = opts.docsJson ?? config.docsJson ?? 'demo/docs.json'
-  const docs: Doc[] = JSON.parse(fs.readFileSync(docsJson, 'utf8')).filter(
+  const visible: Doc[] = JSON.parse(fs.readFileSync(docsJson, 'utf8')).filter(
     (d: Doc) => !d.hidden
   )
+  // Curate/reorder for the book (a no-op when config.book is absent).
+  const docs = selectBookDocs(visible, config.book)
   const slugMap = buildSlugMap(docs)
   const roots = buildNavTree(docs, slugMap)
 

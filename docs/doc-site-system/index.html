@@ -392,6 +392,16 @@ authoritative typed definition.</p>
 <td>emit the <code>llms.txt</code> index — <code>true</code>, <code>false</code>, or <code>(docs) =&gt; string</code> for a custom one (see below)</td>
 </tr>
 <tr>
+<td><code>epub</code></td>
+<td><code>false</code></td>
+<td>build + ship an ePub of the corpus every build — <code>true</code> or <code>{ author, title, css, cover, coverColor }</code> (see below)</td>
+</tr>
+<tr>
+<td><code>book</code></td>
+<td>—</td>
+<td>curate/reorder the book artifact without touching site nav (see below)</td>
+</tr>
+<tr>
 <td><code>outputDir</code></td>
 <td><code>&#39;docs&#39;</code></td>
 <td>served web-root output dir</td>
@@ -415,6 +425,35 @@ with a <code>dist/*.js</code> pointer. It&#39;s written <strong>both</strong> to
 ship it in your package&#39;s <code>files</code>) <strong>and</strong> to the served output dir, so
 <code>{baseUrl}/llms.txt</code> resolves for crawlers/agents. Set <code>llmsTxt: false</code> to skip,
 or pass a function <code>(docs) =&gt; string</code> to generate your own from the corpus.</p>
+<h4>The book (ePub) &amp; the <code>book</code> manifest</h4>
+<p>Set <code>epub: true</code> (or <code>{ author, title, css, cover, coverColor }</code>) and every build
+emits <code>{name}.epub</code> into the output dir, one chapter per doc in nav order, with a
+Contents page, EPUB3 nav + EPUB2 ncx, and a cover (an explicit <code>cover</code> image, or
+one generated from the title + your <code>favicon</code>; install <code>@resvg/resvg-js</code> to
+render the generated one). The doc-browser&#39;s settings menu links to it as
+&quot;Download ePub&quot;. <code>bun bin/build-book.ts</code> builds it standalone. PDF is the
+in-browser <strong>Print</strong> button, not a batch job.</p>
+<p>By default <strong>the book is the whole visible corpus</strong> — zero config. To emit a
+<em>subset</em> in a <em>curated order</em> (a library that also ships a book, a novel with
+front/back matter) add a <code>book</code> manifest. It shapes only the book artifact; the
+live-site nav is unchanged (one source, two outputs). Every field is an overlay
+on the defaults — it never adds a new ordering mechanism, it overlays each doc&#39;s
+<code>order</code> so the same nav sort sequences the book (pins/parents still apply):</p>
+<pre><code class="language-ts">book: {
+  include: [&#39;chapters/**&#39;, &#39;front/**&#39;, &#39;back/**&#39;], // globs (path or filename); default: all
+  exclude: [&#39;**/drafts/**&#39;],                        // removed after include
+  order: [&#39;title&#39;, &#39;copyright&#39;, &#39;dedication&#39;],      // lead sequence; by filename/slug/title
+  sort: &#39;filename&#39;,                                 // &#39;nav&#39; (default) | &#39;filename&#39; natural sort
+}
+</code></pre>
+<ul>
+<li><strong>Front/back matter</strong> are just regular docs — name them in <code>order</code> (or give
+them a per-doc <code>order</code> in frontmatter) to place them; there&#39;s no special
+front-matter concept.</li>
+<li><code>sort: &#39;filename&#39;</code> makes a folder of <code>01-*.md</code>, <code>02-*.md</code>, … sequence with no
+metadata; a per-doc <code>order</code> still wins.</li>
+<li>Identity (title / author / cover) comes from <code>epub</code>, not here.</li>
+</ul>
 <h2>Host presets &amp; custom domains</h2>
 <table>
 <thead>

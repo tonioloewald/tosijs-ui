@@ -38,14 +38,28 @@ Full write-up in the adopter's `TOSIJS-UI-FEEDBACK.md`.
   target; a real corpus-basename match + unknown-target handling is a follow-up.*
 - ✅ #1 **Footnotes — ePub/web first cut**: `[^id]` refs (numbered by appearance)
   + `[^id]: def` collected into an endnotes `<section>` with backrefs (marked
-  extensions). *Still TODO: page-anchored footnotes w/ cross-refs in **PDF** —
-  needs real pagination (roadmap "measured rectangles"); multi-line/paragraph
-  footnote definitions.*
+  extensions). *Still TODO: page-anchored footnotes w/ cross-refs — a
+  **print-to-PDF** feature (browser Print path, not a batch job): build the full
+  DOM, compute pagination, then settle page numbers + footnote positioning by
+  pushing content across page boundaries (roadmap "measured rectangles"). Also:
+  multi-line/paragraph footnote definitions.*
+
+**Batch B done (curation, overlay-on-defaults):**
+- ✅ #3 **First-class "book" corpus** — `book: BookManifest` in site config
+  (`src/doc-system/book-manifest.ts`, pure + unit-tested). Curates/reorders the
+  book artifact WITHOUT touching site nav (one source, two outputs). Zero-config
+  = whole visible corpus (unchanged). `include`/`exclude` globs select docs;
+  `order: [...]` names the lead sequence (front/back matter are just docs you
+  name); `sort: 'filename'` gives a folder of chapters natural order with no
+  metadata. Identity (title/author/cover) still comes from `epub`. It never adds
+  a new ordering mechanism — it overlays each doc's `order` so the shared
+  buildNavTree/flatten sequences the book (pins/parents still apply). Applied in
+  `buildEpub`; **print path (buildBookHtml, client Print button) still uses the
+  whole corpus** — wire the manifest there when print/PDF pagination lands.
+  *Deferred: a content-author YAML manifest file (`_book.md`) as an alt to the
+  typed config — per-doc frontmatter already covers per-doc metadata.*
 
 **Queued — P1:**
-- #3 **First-class "book" corpus** — a manifest (`book: { include, order,
-  frontMatter, backMatter }`) so a project can serve a full site AND emit a
-  curated, ordered book with title/copyright/dedication/about pages.
 - #14a **Smart typography** (curly quotes / en-em dashes / ellipsis) — deferred
   from Batch A: unlike wikilinks/footnotes it rewrites ALL prose, so it must be
   **opt-in** via config (pairs with #9's `kind: 'book'` preset; needs config

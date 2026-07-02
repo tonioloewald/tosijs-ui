@@ -8,5 +8,5 @@ export { generateSite } from './generate-site';
 export type { GenerateSiteConfig } from './generate-site';
 export { buildEpub, DEFAULT_BOOK_CSS } from './epub';
 export type { BuildEpubOptions, BookMeta } from './epub';
-export { buildPdf } from './pdf';
-export type { BuildPdfOptions } from './pdf';
+export { selectBookDocs } from '../book-manifest';
+export type { BookManifest } from '../book-manifest';

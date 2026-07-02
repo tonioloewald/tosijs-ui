@@ -14,6 +14,7 @@ Imports here are type-only so this module stays free of runtime/DOM dependencies
 import type { ProjectLinks, LinkItem } from '../../doc-browser'
 import type { DocSystemTheme } from '../doc-system-styles'
 import type { Doc } from './docs'
+import type { BookManifest } from '../book-manifest'
 
 export type SiteHost = 'github-pages' | 'firebase' | 'static'
 
@@ -154,6 +155,18 @@ export interface SiteConfig {
         /** background color for the generated cover, default '#1f2933' */
         coverColor?: string
       }
+  /**
+   * Curate the book artifact (ePub, and later print) as a subset / reordering of
+   * the corpus, WITHOUT changing the live-site nav — one source, two outputs.
+   * Omit it and the book is the whole visible corpus in normal nav order (the
+   * zero-config default). Book identity (title / author / cover) comes from
+   * `epub`; this only selects and sequences. Every field is an overlay on the
+   * defaults (see BookManifest): `include`/`exclude` globs pick docs, `order`
+   * lists the lead sequence (front/back matter are just docs you name), and
+   * `sort: 'filename'` gives a folder of chapters natural order with no metadata.
+   */
+  book?: BookManifest
+
   /** served web-root output dir, default 'docs' */
   outputDir?: string
   /** dev-server port, default 8787 */

@@ -20,6 +20,7 @@ import { renderDocMarkdown } from '../render';
 import { buildSlugMap, pathForSlug } from '../routing';
 import { buildNavTree } from '../nav-tree';
 import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html';
+import { selectBookDocs } from '../book-manifest';
 // Re-exported for back-compat (tosijs-ui/site's public surface + tests).
 export { DEFAULT_BOOK_CSS, stripDocMeta };
 // ── XML / XHTML helpers ─────────────────────────────────────────────────────
@@ -443,7 +444,9 @@ async function makeCover(config, opts, meta) {
  */
 export async function buildEpub(config, opts = {}) {
     const docsJson = opts.docsJson ?? config.docsJson ?? 'demo/docs.json';
-    const docs = JSON.parse(fs.readFileSync(docsJson, 'utf8')).filter((d) => !d.hidden);
+    const visible = JSON.parse(fs.readFileSync(docsJson, 'utf8')).filter((d) => !d.hidden);
+    // Curate/reorder for the book (a no-op when config.book is absent).
+    const docs = selectBookDocs(visible, config.book);
     const slugMap = buildSlugMap(docs);
     const roots = buildNavTree(docs, slugMap);
     const fileFor = (d) => `${slugMap[d.filename] || 'index'}.xhtml`;

@@ -9,4 +9,4 @@ export { devServer } from './dev-server';
 export { extractDocs, saveDocsJSON } from './docs';
 export { generateSite } from './generate-site';
 export { buildEpub, DEFAULT_BOOK_CSS } from './epub';
-export { buildPdf } from './pdf';
+export { selectBookDocs } from '../book-manifest';
