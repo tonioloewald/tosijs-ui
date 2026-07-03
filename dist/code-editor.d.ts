@@ -1,7 +1,15 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
-export declare class CodeEditor extends WebComponent {
+import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
+import type { CmHandle } from './code-editor-cm';
+interface CodeEditorParts extends PartsMap {
+    host: HTMLDivElement;
+}
+export declare class CodeEditor extends WebComponent<CodeEditorParts> {
     static preferredTagName: string;
     private source;
+    private _handle;
+    private _loadPromise;
+    private _appliedMode;
+    private _appliedDisabled;
     get value(): string;
     set value(text: string);
     private _original;
@@ -12,16 +20,16 @@ export declare class CodeEditor extends WebComponent {
     showDiff(on: boolean): void;
     static initAttributes: {
         mode: string;
-        theme: string;
         disabled: boolean;
     };
     role: string;
-    private _ace;
-    private _editor;
-    private _editorPromise;
-    options: any;
-    get ace(): any;
-    get editor(): any;
+    /** The underlying CodeMirror EditorView (undefined until loaded). */
+    get editor(): CmHandle['view'] | undefined;
+    undo(): void;
+    redo(): void;
+    canUndo(): boolean;
+    canRedo(): boolean;
+    content: () => HTMLDivElement[];
     static shadowStyleSpec: {
         ':host': {
             display: string;
@@ -29,9 +37,20 @@ export declare class CodeEditor extends WebComponent {
             width: string;
             height: string;
         };
+        '[part="host"]': {
+            height: string;
+        };
+        '.cm-editor': {
+            height: string;
+        };
+        '.cm-scroller': {
+            outline: string;
+            fontFamily: string;
+        };
     };
     onResize(): void;
     connectedCallback(): void;
     render(): void;
 }
 export declare const codeEditor: ElementCreator<CodeEditor>;
+export {};

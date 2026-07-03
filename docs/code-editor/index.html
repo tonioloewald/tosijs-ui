@@ -14,15 +14,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="/doc-system.css" data-tosi-doc-system />
   <title>code — tosijs-ui</title>
-  <meta name="description" content="An ACE Editor wrapper." />
+  <meta name="description" content="A CodeMirror 6 wrapper." />
   <link rel="canonical" href="https://ui.tosijs.net/code-editor/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="code — tosijs-ui" />
-  <meta property="og:description" content="An ACE Editor wrapper." />
+  <meta property="og:description" content="A CodeMirror 6 wrapper." />
   <meta property="og:url" content="https://ui.tosijs.net/code-editor/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"code","description":"An ACE Editor wrapper.","url":"https://ui.tosijs.net/code-editor/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"code","description":"A CodeMirror 6 wrapper.","url":"https://ui.tosijs.net/code-editor/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="/favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script>
 </head>
@@ -30,19 +30,21 @@
   <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="/localized-strings.txt">
   <article class="doc-content">
 <h1>code</h1>
-<p>An <a href="https://ace.c9.io/">ACE Editor</a> wrapper.</p>
+<p>A <a href="https://codemirror.net/">CodeMirror 6</a> wrapper.</p>
 <p>Sometimes, it&#39;s nice to be able to just toss a code-editor in a web-page.</p>
-<p><code>&lt;tosi-code&gt;</code>&#39;s <code>value</code> is the code it contains. Its <code>mode</code> attribute sets the language, and you can further configure
-the ACE editor instance via its <code>options</code> property.</p>
+<p><code>&lt;tosi-code&gt;</code>&#39;s <code>value</code> is the code it contains. Its <code>mode</code> attribute sets the
+language (<code>javascript</code>, <code>typescript</code>, <code>tjs</code>, <code>css</code>, <code>html</code>, <code>markdown</code>).</p>
 <pre><code class="language-html">&lt;tosi-code style=&quot;width: 100%; height: 100%&quot; mode=&quot;css&quot;&gt;
 body {
   box-sizing: border-box;
 }
 &lt;/tosi-code&gt;
 </code></pre>
-<p>The <code>&lt;tosi-code&gt;</code> element has an <code>editor</code> property that gives you its ACE editor instance,
-and an <code>ace</code> property that returns the <code>ace</code> module, giving you complete access to the
-<a href="https://ace.c9.io/api/index.html">Ace API</a>.</p>
+<p>The <code>&lt;tosi-code&gt;</code> element has an <code>editor</code> property that gives you its CodeMirror
+<a href="https://codemirror.net/docs/ref/#view.EditorView"><code>EditorView</code></a>, and
+<code>undo()</code> / <code>redo()</code> / <code>canUndo()</code> / <code>canRedo()</code> methods for history control.</p>
+<p>CodeMirror is loaded lazily on first use — a page with no <code>&lt;tosi-code&gt;</code> bundles
+none of it.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">

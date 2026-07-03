@@ -439,10 +439,9 @@ export class LiveExample extends Component {
     updateUndo = () => {
         const { activeTab } = this;
         const { undo, redo } = this.parts;
-        if (activeTab instanceof CodeEditor && activeTab.editor !== undefined) {
-            const undoManager = activeTab.editor.session.getUndoManager();
-            undo.disabled = !undoManager.hasUndo();
-            redo.disabled = !undoManager.hasRedo();
+        if (activeTab instanceof CodeEditor) {
+            undo.disabled = !activeTab.canUndo();
+            redo.disabled = !activeTab.canRedo();
         }
         else {
             undo.disabled = true;
@@ -465,13 +464,13 @@ export class LiveExample extends Component {
     undo = () => {
         const { activeTab } = this;
         if (activeTab instanceof CodeEditor) {
-            activeTab.editor.undo();
+            activeTab.undo();
         }
     };
     redo = () => {
         const { activeTab } = this;
         if (activeTab instanceof CodeEditor) {
-            activeTab.editor.redo();
+            activeTab.redo();
         }
     };
     get isMaximized() {
@@ -761,15 +760,11 @@ export class LiveExample extends Component {
     }
     canUndo() {
         const t = this.activeTab;
-        return (t instanceof CodeEditor &&
-            t.editor !== undefined &&
-            t.editor.session.getUndoManager().hasUndo());
+        return t instanceof CodeEditor && t.canUndo();
     }
     canRedo() {
         const t = this.activeTab;
-        return (t instanceof CodeEditor &&
-            t.editor !== undefined &&
-            t.editor.session.getUndoManager().hasRedo());
+        return t instanceof CodeEditor && t.canRedo();
     }
     saveLocalEdit = () => {
         const key = this.localEditKey();

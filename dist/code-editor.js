@@ -1,12 +1,12 @@
 /*#
 # code
 
-An [ACE Editor](https://ace.c9.io/) wrapper.
+A [CodeMirror 6](https://codemirror.net/) wrapper.
 
 Sometimes, it's nice to be able to just toss a code-editor in a web-page.
 
-`<tosi-code>`'s `value` is the code it contains. Its `mode` attribute sets the language, and you can further configure
-the ACE editor instance via its `options` property.
+`<tosi-code>`'s `value` is the code it contains. Its `mode` attribute sets the
+language (`javascript`, `typescript`, `tjs`, `css`, `html`, `markdown`).
 
 ```html
 <tosi-code style="width: 100%; height: 100%" mode="css">
@@ -16,51 +16,33 @@ body {
 </tosi-code>
 ```
 
-The `<tosi-code>` element has an `editor` property that gives you its ACE editor instance,
-and an `ace` property that returns the `ace` module, giving you complete access to the
-[Ace API](https://ace.c9.io/api/index.html).
+The `<tosi-code>` element has an `editor` property that gives you its CodeMirror
+[`EditorView`](https://codemirror.net/docs/ref/#view.EditorView), and
+`undo()` / `redo()` / `canUndo()` / `canRedo()` methods for history control.
+
+CodeMirror is loaded lazily on first use — a page with no `<tosi-code>` bundles
+none of it.
 */
 /*{ "parent": "Components" }*/
-import { Component as WebComponent } from 'tosijs';
-import { scriptTag } from './via-tag';
+import { Component as WebComponent, elements } from 'tosijs';
 import { tosiDiff } from './diff';
-const ACE_BASE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.2/';
-const DEFAULT_THEME = 'ace/theme/tomorrow';
-const getAce = async () => {
-    const { ace } = await scriptTag(`${ACE_BASE_URL}ace.min.js`);
-    return ace;
-};
-const makeCodeEditor = async (codeElement, mode = 'html', options = {}, theme = DEFAULT_THEME) => {
-    const ace = await getAce();
-    ace.config.set('basePath', ACE_BASE_URL);
-    const editor = ace.edit(codeElement, {
-        mode: `ace/mode/${mode}`,
-        tabSize: 2,
-        useSoftTabs: true,
-        useWorker: false,
-        // Wrap wide lines instead of scrolling horizontally; indentedSoftWrap keeps
-        // wrapped continuations aligned under the line's indent.
-        wrap: true,
-        indentedSoftWrap: true,
-        ...options,
-    });
-    editor.setTheme(theme);
-    return { ace, editor };
-};
+const { div } = elements;
 export class CodeEditor extends WebComponent {
     static preferredTagName = 'tosi-code';
     source = '';
+    _handle;
+    _loadPromise;
+    _appliedMode = '';
+    _appliedDisabled;
     get value() {
-        return this.editor === undefined ? this.source : this.editor.getValue();
+        return this._handle ? this._handle.getValue() : this.source;
     }
     set value(text) {
-        if (this.editor === undefined) {
-            this.source = text;
+        if (this._handle) {
+            this._handle.setValue(text);
         }
         else {
-            this.editor.setValue(text);
-            this.editor.clearSelection();
-            this.editor.session.getUndoManager().reset();
+            this.source = text;
         }
     }
     // Baseline for `showDiff()` — the version to diff the current `value` against.
@@ -72,9 +54,9 @@ export class CodeEditor extends WebComponent {
     set original(text) {
         this._original = text;
     }
-    // Diff overlay — deliberately built only on the editor's public surface
-    // (`value` + `original`) and the tosi-diff component, never the underlying
-    // editor's API, so it survives a future Ace → CodeMirror swap untouched.
+    // Diff overlay — built only on the editor's public surface (`value` + `original`)
+    // and the tosi-diff component, never the underlying editor's API, so it is
+    // editor-agnostic (this is why it survived the Ace → CodeMirror swap untouched).
     diffOverlay;
     get showingDiff() {
         return this.diffOverlay !== undefined && !this.diffOverlay.hidden;
@@ -103,20 +85,27 @@ export class CodeEditor extends WebComponent {
     }
     static initAttributes = {
         mode: 'javascript',
-        theme: DEFAULT_THEME,
         disabled: false,
     };
     role = 'code editor';
-    _ace;
-    _editor;
-    _editorPromise;
-    options = {};
-    get ace() {
-        return this._ace;
-    }
+    /** The underlying CodeMirror EditorView (undefined until loaded). */
     get editor() {
-        return this._editor;
+        return this._handle?.view;
     }
+    // History control — so consumers use these instead of reaching into `editor`.
+    undo() {
+        this._handle?.undo();
+    }
+    redo() {
+        this._handle?.redo();
+    }
+    canUndo() {
+        return this._handle?.canUndo() ?? false;
+    }
+    canRedo() {
+        return this._handle?.canRedo() ?? false;
+    }
+    content = () => [div({ part: 'host' })];
     static shadowStyleSpec = {
         ':host': {
             display: 'block',
@@ -124,32 +113,49 @@ export class CodeEditor extends WebComponent {
             width: '100%',
             height: '100%',
         },
+        '[part="host"]': { height: '100%' },
+        '.cm-editor': { height: '100%' },
+        '.cm-scroller': {
+            outline: 'none',
+            fontFamily: "Menlo, Monaco, Consolas, 'Courier New', monospace",
+        },
     };
     onResize() {
-        if (this.editor !== undefined) {
-            this.editor.resize(true);
-        }
+        this._handle?.refresh();
     }
     connectedCallback() {
         super.connectedCallback();
         if (this.source === '') {
             this.value = this.textContent !== null ? this.textContent.trim() : '';
         }
-        if (this._editorPromise === undefined) {
-            this._editorPromise = makeCodeEditor(this, this.mode, this.options, this.theme);
-            this._editorPromise.then(({ ace, editor }) => {
-                this._ace = ace;
-                this._editor = editor;
-                editor.setValue(this.source, 1);
-                editor.clearSelection();
-                editor.session.getUndoManager().reset();
+        if (this._loadPromise === undefined) {
+            // Lazy chunk — CodeMirror only enters the bundle here, on first editor use.
+            this._loadPromise = import('./code-editor-cm').then(({ createCmEditor }) => {
+                const handle = createCmEditor(this.parts.host, {
+                    value: this.source,
+                    mode: this.mode,
+                    readOnly: this.disabled,
+                    root: this.shadowRoot ?? undefined,
+                    onChange: (value) => this.dispatchEvent(new CustomEvent('change', { detail: { value } })),
+                });
+                this._handle = handle;
+                this._appliedMode = this.mode;
+                this._appliedDisabled = this.disabled;
+                return handle;
             });
         }
     }
     render() {
         super.render();
-        if (this._editorPromise !== undefined) {
-            this._editorPromise.then(({ editor }) => editor.setReadOnly(this.disabled));
+        if (this._handle) {
+            if (this.disabled !== this._appliedDisabled) {
+                this._handle.setReadOnly(this.disabled);
+                this._appliedDisabled = this.disabled;
+            }
+            if (this.mode !== this._appliedMode) {
+                this._handle.setMode(this.mode);
+                this._appliedMode = this.mode;
+            }
         }
     }
 }
