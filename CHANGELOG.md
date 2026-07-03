@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.6.20
+
+### Fixed
+
+- **`import 'tosijs-ui'` no longer resolves to the IIFE under browser bundlers.**
+  The `"."` export had a `"browser"` condition pointing at `dist/iife.js` — the
+  self-contained CDN/doc-site bundle that inlines tosijs + marked. Browser-targeted
+  bundlers (Vite, webpack, esbuild) picked it, so consumers **double-bundled tosijs**
+  instead of externalizing the peer, and named imports broke (the IIFE isn't an ESM
+  module). Removed the condition: every `import` now resolves to `dist/index.js`
+  (ESM, peers externalized). The IIFE stays for CDN `<script>` use and the naive
+  doc site — referenced by file path, never via `import 'tosijs-ui'`.
+
+### Changed
+
+- **tosijs peer + dev dependency bumped to `^1.6.6`** — picks up a subtle
+  component-lifecycle fix.
+
 ## 1.6.19
 
 Doc-system tooling; no component API changes.
