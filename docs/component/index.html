@@ -93,6 +93,120 @@ preview.append(div({ class: &#39;badge&#39; }, badge(&#39;count&#39;, 42)))
 example the equivalent is written inside a comment (so it survives <code>tsc</code>) — but
 that comment form can&#39;t appear inside a doc comment like this one, since the
 test&#39;s own closing delimiter would end the doc comment.</p>
+<h2>Inline WebAssembly (SIMD)</h2>
+<p>A <code>tjs</code> example can drop a hot loop into <strong>WebAssembly</strong> with a <code>wasm { … } fallback { … }</code> block — compiled to bytecode <em>at transpile time</em>, embedded as base64, and run
+in your browser. No Emscripten, no <code>.wasm</code> file, no build step, no server.</p>
+<p>WASM earns its keep with <strong>SIMD</strong>: scalar WASM roughly ties the JS JIT, but a
+branchless <code>f32x4</code> kernel does four values per instruction. Below, a few thousand
+particles are pulled toward your pointer, their positions updated four at a time in
+WASM SIMD. <strong>Click the button to toggle WASM ↔ JavaScript</strong> and watch the per-step
+time — the same code, one path compiled to SIMD bytecode:</p>
+<pre><code class="language-tjs">// One physics step for the whole field, 4 particles per iteration with f32x4 SIMD.
+// Pure arithmetic — no per-lane branches (tjs&#39;s f32x4 has no compare/select yet),
+// which is exactly what SIMD wants. `fallback { }` is the scalar-JS twin.
+function step(! px: Float32Array, py: Float32Array, vx: Float32Array, vy: Float32Array, n: 0, tx: 0.0, ty: 0.0) {
+  wasm {
+    let txv = f32x4_splat(tx)
+    let tyv = f32x4_splat(ty)
+    let damp = f32x4_splat(0.985)
+    let eps = f32x4_splat(0.001)
+    let pull = f32x4_splat(0.06)
+    for (let i = 0; i &lt; n; i = i + 4) {
+      let off = i * 4
+      let x = f32x4_load(px, off)
+      let y = f32x4_load(py, off)
+      let dx = f32x4_sub(txv, x)
+      let dy = f32x4_sub(tyv, y)
+      let inv = f32x4_div(pull, f32x4_add(f32x4_sqrt(f32x4_add(f32x4_mul(dx, dx), f32x4_mul(dy, dy))), eps))
+      let nvx = f32x4_mul(f32x4_add(f32x4_load(vx, off), f32x4_mul(dx, inv)), damp)
+      let nvy = f32x4_mul(f32x4_add(f32x4_load(vy, off), f32x4_mul(dy, inv)), damp)
+      f32x4_store(vx, off, nvx)
+      f32x4_store(vy, off, nvy)
+      f32x4_store(px, off, f32x4_add(x, nvx))
+      f32x4_store(py, off, f32x4_add(y, nvy))
+    }
+  } fallback {
+    for (let i = 0; i &lt; n; i++) {
+      const dx = tx - px[i], dy = ty - py[i]
+      const inv = 0.06 / (Math.sqrt(dx * dx + dy * dy) + 0.001)
+      const nvx = (vx[i] + dx * inv) * 0.985, nvy = (vy[i] + dy * inv) * 0.985
+      vx[i] = nvx; vy[i] = nvy; px[i] += nvx; py[i] += nvy
+    }
+  }
+}
+
+const W = 480, H = 300, N = 6000
+const px = new Float32Array(N), py = new Float32Array(N)
+const vx = new Float32Array(N), vy = new Float32Array(N)
+for (let i = 0; i &lt; N; i++) { px[i] = Math.random() * W; py[i] = Math.random() * H }
+
+const canvas = document.createElement(&#39;canvas&#39;)
+canvas.width = W
+canvas.height = H
+canvas.style.cssText = &#39;width:100%;max-width:480px;border-radius:8px;display:block;background:#0b0e14;touch-action:none;cursor:crosshair&#39;
+const ctx = canvas.getContext(&#39;2d&#39;)
+
+let tx = W / 2, ty = H / 2, idle = 0, frame = 0
+canvas.addEventListener(&#39;pointermove&#39;, (e) =&gt; {
+  const r = canvas.getBoundingClientRect()
+  tx = (e.clientX - r.left) / r.width * W
+  ty = (e.clientY - r.top) / r.height * H
+  idle = 0
+})
+
+// tjs registers the compiled function as globalThis.__tjs_wasm_0; nulling it makes
+// step() fall to its JS twin. (A public WASM on/off toggle would be tidier — noted
+// in TJS-FEEDBACK.md.)
+let useWasm = true, savedWasm = null
+const btn = document.createElement(&#39;button&#39;)
+btn.style.cssText = &#39;margin:8px 0;padding:6px 12px;border-radius:6px;cursor:pointer&#39;
+const readout = document.createElement(&#39;p&#39;)
+function applyMode() {
+  if (useWasm &amp;&amp; savedWasm) { globalThis.__tjs_wasm_0 = savedWasm; savedWasm = null }
+  if (!useWasm &amp;&amp; globalThis.__tjs_wasm_0) { savedWasm = globalThis.__tjs_wasm_0; globalThis.__tjs_wasm_0 = null }
+  btn.textContent = useWasm ? &#39;⚡ WebAssembly SIMD — click for JavaScript&#39; : &#39;🐢 JavaScript — click for WASM SIMD&#39;
+}
+btn.onclick = () =&gt; { useWasm = !useWasm; applyMode() }
+
+let acc = 0, frames = 0
+function loop() {
+  if (!document.body.contains(canvas)) return // example removed → stop
+  frame++
+  idle++
+  if (idle &gt; 45) {
+    tx = W / 2 + Math.cos(frame * 0.02) * W * 0.32
+    ty = H / 2 + Math.sin(frame * 0.031) * H * 0.32
+  }
+  const t0 = performance.now()
+  step(px, py, vx, vy, N, tx, ty)
+  acc += performance.now() - t0
+  frames++
+  ctx.fillStyle = &#39;rgba(11,14,20,0.3)&#39;
+  ctx.fillRect(0, 0, W, H)
+  ctx.fillStyle = useWasm ? &#39;#4fd1c5&#39; : &#39;#f6ad55&#39;
+  for (let i = 0; i &lt; N; i++) ctx.fillRect(px[i], py[i], 1.6, 1.6)
+  if (frames &gt;= 20) {
+    readout.textContent = N.toLocaleString() + &#39; particles · &#39; + (acc / frames).toFixed(3) +
+      &#39; ms/step (&#39; + (useWasm ? &#39;WASM SIMD&#39; : &#39;JS&#39;) + &#39;) · move the pointer&#39;
+    acc = 0
+    frames = 0
+  }
+  requestAnimationFrame(loop)
+}
+
+;(async () =&gt; {
+  // The wasm bootstrap is async — wait for the compiled function before starting,
+  // so the first frames run in WASM rather than the fallback.
+  const t0 = performance.now()
+  while (!globalThis.__tjs_wasm_0 &amp;&amp; performance.now() - t0 &lt; 3000) {
+    await new Promise((r) =&gt; setTimeout(r, 0))
+  }
+  applyMode()
+  requestAnimationFrame(loop)
+})()
+
+preview.append(canvas, btn, readout)
+</code></pre>
 <h2>CSS Isolation with <code>iframe</code></h2>
 <p>Add the <code>iframe</code> attribute to render the preview inside an iframe for complete CSS isolation.</p>
 <h2>Test Blocks</h2>

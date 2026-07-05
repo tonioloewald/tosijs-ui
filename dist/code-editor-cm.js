@@ -21,6 +21,17 @@ import { javascript } from '@codemirror/lang-javascript';
 import { css } from '@codemirror/lang-css';
 import { html } from '@codemirror/lang-html';
 import { markdown } from '@codemirror/lang-markdown';
+import { oneDarkHighlightStyle } from '@codemirror/theme-one-dark';
+// The doc-system flips dark mode with a `darkmode` class on <body> (which inverts
+// the luminance of --code-bg / --text-color, so the editor SURFACE adapts for
+// free). Only CM's syntax-token colors need swapping: the light defaultHighlightStyle
+// washes out on a dark surface, so use oneDark's brighter palette in dark mode.
+const isDarkMode = () => typeof document !== 'undefined' &&
+    !!document.body &&
+    document.body.classList.contains('darkmode');
+const highlightFor = (dark) => dark
+    ? syntaxHighlighting(oneDarkHighlightStyle)
+    : syntaxHighlighting(defaultHighlightStyle, { fallback: true });
 /** Map a `<tosi-code mode>` value to a CodeMirror language extension. */
 export function languageForMode(mode) {
     switch (mode) {
@@ -45,10 +56,33 @@ export function languageForMode(mode) {
             return javascript();
     }
 }
+// A minimal theme so the editor has a real surface instead of showing whatever is
+// behind it. It's applied as a CodeMirror theme (not shadow-DOM CSS) so it beats
+// CM's injected base styles. Colors come from the doc-system theme vars
+// (`--code-bg` / `--text-color`, which pierce the shadow root and adapt to dark
+// mode) with sensible standalone fallbacks.
+const editorTheme = EditorView.theme({
+    '&': {
+        height: '100%',
+        backgroundColor: 'var(--code-bg, var(--input-bg, #fdfdfd))',
+        color: 'var(--text-color, #222)',
+    },
+    '.cm-scroller': {
+        fontFamily: "Menlo, Monaco, Consolas, 'Courier New', monospace",
+    },
+    '.cm-gutters': {
+        backgroundColor: 'var(--code-bg, var(--input-bg, #fdfdfd))',
+        color: 'var(--text-color, #888)',
+        border: 'none',
+    },
+    '.cm-activeLine': { backgroundColor: 'transparent' },
+    '.cm-activeLineGutter': { backgroundColor: 'transparent' },
+});
 // A basicSetup-equivalent without a hard-coded color theme, so the host page's CSS
 // (and dark mode) controls the palette. Line-wrapping mirrors the old ACE `wrap:true`.
 function baseExtensions() {
     return [
+        editorTheme,
         lineNumbers(),
         highlightActiveLineGutter(),
         highlightSpecialChars(),
@@ -60,7 +94,7 @@ function baseExtensions() {
         indentOnInput(),
         indentUnit.of('  '),
         EditorState.tabSize.of(2),
-        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+        // syntax highlighting is applied per-instance via a compartment (dark-mode aware)
         bracketMatching(),
         closeBrackets(),
         autocompletion(),
@@ -85,6 +119,7 @@ function baseExtensions() {
 export function createCmEditor(parent, opts = {}) {
     const language = new Compartment();
     const readonly = new Compartment();
+    const highlight = new Compartment();
     const langExt = opts.languageExtension ?? languageForMode(opts.mode ?? 'javascript');
     const view = new EditorView({
         parent,
@@ -93,6 +128,7 @@ export function createCmEditor(parent, opts = {}) {
             doc: opts.value ?? '',
             extensions: [
                 baseExtensions(),
+                highlight.of(highlightFor(isDarkMode())),
                 language.of(langExt),
                 readonly.of(EditorState.readOnly.of(!!opts.readOnly)),
                 EditorView.updateListener.of((u) => {
@@ -102,6 +138,19 @@ export function createCmEditor(parent, opts = {}) {
             ],
         }),
     });
+    // Re-apply the right highlight palette when the doc-system toggles dark mode
+    // (it flips the `darkmode` class on <body>).
+    let dark = isDarkMode();
+    const darkObserver = typeof MutationObserver !== 'undefined' && typeof document !== 'undefined'
+        ? new MutationObserver(() => {
+            const nowDark = isDarkMode();
+            if (nowDark !== dark) {
+                dark = nowDark;
+                view.dispatch({ effects: highlight.reconfigure(highlightFor(dark)) });
+            }
+        })
+        : null;
+    darkObserver?.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     const handle = {
         view,
         getValue: () => view.state.doc.toString(),
@@ -126,7 +175,10 @@ export function createCmEditor(parent, opts = {}) {
         canRedo: () => redoDepth(view.state) > 0,
         focus: () => view.focus(),
         refresh: () => view.requestMeasure(),
-        destroy: () => view.destroy(),
+        destroy: () => {
+            darkObserver?.disconnect();
+            view.destroy();
+        },
     };
     return handle;
 }

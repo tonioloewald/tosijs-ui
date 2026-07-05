@@ -10,6 +10,16 @@ back end. Sequence: `./docs` subpath refactor → #6 tjs+CodeMirror → #5 halti
 widget → #4 edit source → #3 save/load examples → #1 ePub → #2 PDF. Phase-2:
 importmap example resolution, versioned endpoints, AJS RestStore.
 
+## Bugs (1.6.x)
+
+- **Memory-routed doc-system: compact side-nav toggle leaks to the outer instance.**
+  In an embedded, memory-routed `<tosi-doc-system>` (e.g. the "One Source" page's
+  live embed), toggling the compact side-nav collapse/expand affects the OUTER
+  (host) doc-system's nav instead of only the embedded instance. The toggle state
+  must be scoped to the instance, not global (likely a `document.body` class or a
+  shared observable that a memory-routed instance should keep local). Reported
+  2026-07; fix on the 1.6.x line.
+
 ## High Priority
 
 - **JSON Schema-driven form editor** - Integrate schema-based form generation
