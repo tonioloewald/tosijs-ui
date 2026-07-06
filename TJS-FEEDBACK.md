@@ -7,7 +7,13 @@ usually means the docs or a diagnostic could prevent the next person's stumble.
 
 Context: tosijs-ui uses tjs-lang as the live-example transpiler (`js`/`tjs`/`ts`
 dialects, browser bundles), and (v1.7 WIP) is building a first inline-WASM live
-example. Tested against **tjs-lang 0.8.7**.
+example. Originally filed against **tjs-lang 0.8.7**; re-checked against **0.9.0**.
+
+**0.9.0 status:** ✅ #7 (editor build) RESOLVED — unblocks the CodeMirror tjs
+autocomplete (workstream B). #4/#5 partly addressed via docs (WASM-QUICKSTART.md
+now has a Numeric Types table with `+0` for non-negative i32, and a Limitations
+list). Still open: #1 (silent fallback), #2 (ready signal), #3 (toggle), #6
+(f32x4 compare/select/min/max — docs confirm "SIMD is f32 only … no i32x4 yet").
 
 ## Inline WASM
 
@@ -77,7 +83,14 @@ kernels need a compare+select.
 
 ## Editor integration (CodeMirror)
 
-### 7. Published `editors/codemirror` build is STALE — missing `tjsEditorExtension` + `tjsCompletionSource` (blocks tjs autocomplete)
+### 7. ✅ RESOLVED in 0.9.0 — Published `editors/codemirror` build was STALE, missing `tjsEditorExtension` + `tjsCompletionSource` (blocked tjs autocomplete)
+**0.9.0:** the built `editors/codemirror/ajs-language.js` now exports both
+`tjsEditorExtension({ typescript?, jsx?, autocomplete?: AutocompleteConfig })` and
+`tjsCompletionSource(config)`, matching the source. `AutocompleteConfig` exposes
+`getMetadata` / `getImports` / `getLiveBindings` / `getMembers(path)` (async runtime
+introspection). tosijs-ui is adopting this in workstream B. Original report below.
+
+
 The source `editors/codemirror/ajs-language.ts` exports `tjsEditorExtension`,
 `tjsCompletionSource`, and the `AutocompleteConfig` interface (the runtime-value
 autocomplete — `getLiveBindings()` / `getMembers()`, the compelling feature). But
