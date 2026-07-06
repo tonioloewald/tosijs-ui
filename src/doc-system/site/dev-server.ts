@@ -58,10 +58,10 @@ async function ensureHaltijaChannel(port: number): Promise<void> {
     // HTTPS dev page has no mixed-content), while the `hj` CLI drives over its
     // default HTTP 8700 — one server, both transports, shared state. HTTPS cert
     // is mkcert-trusted. Output quiet so it doesn't drown the dev log.
-    // Track the `@beta` tag: in-browser (widget-mode) WebRTC screen capture —
-    // which makes the Electron app CI-only — landed in the beta channel, ahead
-    // of the `latest` dist-tag.
-    spawn(['bunx', 'haltija@beta', '--server', '--both'], {
+    // `@latest` (1.3.2+): the widget-mode WebRTC screen capture (which makes the
+    // Electron app CI-only) is on the stable channel now, along with the fix for
+    // an accidental Electron launch. (Was pinned to `@beta` before 1.3.2.)
+    spawn(['bunx', 'haltija@latest', '--server', '--both'], {
       stdout: 'ignore',
       stderr: 'ignore',
     })
