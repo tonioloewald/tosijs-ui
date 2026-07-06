@@ -75,6 +75,27 @@ kernels need a compare+select.
   a, b)` (or a v128 bitselect), and `f32x4_min/max`. That unlocks SIMD Mandelbrot,
   saturating math, and most real SIMD algorithms.
 
+## Editor integration (CodeMirror)
+
+### 7. Published `editors/codemirror` build is STALE — missing `tjsEditorExtension` + `tjsCompletionSource` (blocks tjs autocomplete)
+The source `editors/codemirror/ajs-language.ts` exports `tjsEditorExtension`,
+`tjsCompletionSource`, and the `AutocompleteConfig` interface (the runtime-value
+autocomplete — `getLiveBindings()` / `getMembers()`, the compelling feature). But
+the **published, built** `editors/codemirror/ajs-language.js` — which
+`tjs-lang/editors/codemirror` resolves to per package.json — **does not contain
+them at all** (grep count 0). It only exports the older `ajsEditorExtension`,
+`createAjsExtension({view,state,langJs})`, `ajsStyles`, `FORBIDDEN_KEYWORDS`. So
+`import { tjsEditorExtension, tjsCompletionSource } from 'tjs-lang/editors/codemirror'`
+is `undefined`, and the built entry uses a different (dependency-injection) API than
+the source.
+- **Impact:** blocks adopting the tjs runtime-value autocomplete in tosijs-ui
+  (workstream B of the CodeMirror migration). The feature exists in source but ships
+  nowhere consumable.
+- **Suggestion:** rebuild + republish `editors/codemirror` so the artifact matches
+  the source (export `tjsEditorExtension` / `tjsCompletionSource` / `AutocompleteConfig`).
+  Ideally also surface it with `types` so consumers get the `AutocompleteConfig` shape.
+  (Verified against tjs-lang 0.8.7.)
+
 ## Positive findings (data points)
 - **A compute-bound branchless `f32x4` kernel is genuinely faster** — a single-loop
   kernel with ~15 arithmetic ops/element measured **~2.0× vs the JS fallback**
