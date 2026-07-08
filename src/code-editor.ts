@@ -166,9 +166,31 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
         this._handle = handle
         this._appliedMode = this.mode
         this._appliedDisabled = this.disabled
+        this.applyTjsExtension()
         return handle
       })
     }
+  }
+
+  private isTjsMode(): boolean {
+    return this.mode === 'tjs' || this.mode === 'ajs'
+  }
+
+  /**
+   * When in tjs mode, lazily upgrade the editor to tjs-lang's CodeMirror language +
+   * autocomplete. No-op (keeps TS highlighting) if not tjs, if tjs-lang isn't
+   * installed, or if the mode/handle changed before the async load resolved.
+   */
+  private applyTjsExtension(): void {
+    const handle = this._handle
+    if (!handle || !this.isTjsMode()) return
+    import('./code-editor-cm')
+      .then(({ loadTjsExtension }) => loadTjsExtension())
+      .then((ext) => {
+        if (ext && this._handle === handle && this.isTjsMode()) {
+          handle.setLanguageExtension(ext)
+        }
+      })
   }
 
   render(): void {
@@ -182,6 +204,7 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
       if (this.mode !== this._appliedMode) {
         this._handle.setMode(this.mode)
         this._appliedMode = this.mode
+        this.applyTjsExtension()
       }
     }
   }

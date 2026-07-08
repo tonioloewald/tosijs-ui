@@ -32,6 +32,7 @@ const isDarkMode = () => typeof document !== 'undefined' &&
 const highlightFor = (dark) => dark
     ? syntaxHighlighting(oneDarkHighlightStyle)
     : syntaxHighlighting(defaultHighlightStyle, { fallback: true });
+const isTjsMode = (mode) => mode === 'tjs' || mode === 'ajs';
 /** Map a `<tosi-code mode>` value to a CodeMirror language extension. */
 export function languageForMode(mode) {
     switch (mode) {
@@ -40,8 +41,10 @@ export function languageForMode(mode) {
             return javascript();
         case 'ts':
         case 'typescript':
-        // tjs highlights fine as TypeScript until the tjs-lang language is wired
-        // (workstream B); this keeps `mode="tjs"` readable today.
+        // tjs highlights as TypeScript here (the sync default). First-class tjs — the
+        // tjs-lang language + autocomplete — is layered on asynchronously via
+        // `loadTjsExtension()` + `setLanguageExtension()`, since it lazy-loads the
+        // (optional) tjs-lang editor build; this keeps `mode="tjs"` readable meanwhile.
         case 'tjs':
         case 'ajs':
             return javascript({ typescript: true });
@@ -55,6 +58,34 @@ export function languageForMode(mode) {
         default:
             return javascript();
     }
+}
+// The language compartment carries the language AND its completion source, so
+// exactly ONE `autocompletion()` is ever active: standard modes use CM's built-in
+// (language-provided) completions here, while the tjs bundle brings its own
+// `autocompletion({ override: [tjsCompletionSource] })`. (This is why the base
+// extension set below does NOT include `autocompletion()`.)
+function standardLanguageBundle(mode) {
+    return [languageForMode(mode), autocompletion()];
+}
+/**
+ * Lazy-load tjs-lang's CodeMirror language + completion bundle. Returns a single
+ * CodeMirror `Extension` (tjs language, forbidden-keyword highlighting, theme, and
+ * `tjsCompletionSource`-driven autocomplete) suitable for `setLanguageExtension()`,
+ * or `null` when tjs-lang (an optional peer) isn't installed or its editor build
+ * lacks `tjsEditorExtension`. The dynamic import keeps it out of the bundle until a
+ * tjs editor actually mounts.
+ */
+export async function loadTjsExtension(autocomplete = {}) {
+    try {
+        const mod = (await import('tjs-lang/editors/codemirror'));
+        if (typeof mod.tjsEditorExtension === 'function') {
+            return mod.tjsEditorExtension({ typescript: true, autocomplete });
+        }
+    }
+    catch {
+        // tjs-lang absent or editor build unavailable — caller keeps TS highlighting.
+    }
+    return null;
 }
 // A minimal theme so the editor has a real surface instead of showing whatever is
 // behind it. It's applied as a CodeMirror theme (not shadow-DOM CSS) so it beats
@@ -97,7 +128,8 @@ function baseExtensions() {
         // syntax highlighting is applied per-instance via a compartment (dark-mode aware)
         bracketMatching(),
         closeBrackets(),
-        autocompletion(),
+        // NB: autocompletion() lives in the language compartment (see
+        // standardLanguageBundle) so tjs's own completion source never doubles up.
         rectangularSelection(),
         crosshairCursor(),
         highlightActiveLine(),
@@ -120,7 +152,7 @@ export function createCmEditor(parent, opts = {}) {
     const language = new Compartment();
     const readonly = new Compartment();
     const highlight = new Compartment();
-    const langExt = opts.languageExtension ?? languageForMode(opts.mode ?? 'javascript');
+    const langExt = opts.languageExtension ?? standardLanguageBundle(opts.mode ?? 'javascript');
     const view = new EditorView({
         parent,
         root: opts.root,
@@ -162,7 +194,10 @@ export function createCmEditor(parent, opts = {}) {
             });
         },
         setMode(mode) {
-            view.dispatch({ effects: language.reconfigure(languageForMode(mode)) });
+            view.dispatch({ effects: language.reconfigure(standardLanguageBundle(mode)) });
+        },
+        setLanguageExtension(ext) {
+            view.dispatch({ effects: language.reconfigure(ext) });
         },
         setReadOnly(ro) {
             view.dispatch({

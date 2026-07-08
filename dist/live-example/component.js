@@ -552,8 +552,11 @@ export class LiveExample extends Component {
         this.productTabsReady = true;
         const { editors } = this.parts;
         // Relabel the source tab from "js" to the actual dialect (the `part` stays
-        // `js`, so everything referencing this.parts.js / this.js is unaffected).
+        // `js`, so everything referencing this.parts.js / this.js is unaffected), and
+        // put the source editor in the dialect's mode — so a `tjs` example gets
+        // first-class tjs editing (highlighting + autocomplete), `ts` gets TypeScript.
         this.parts.js.setAttribute('name', this.dialect);
+        this.parts.js.mode = this.dialect;
         this.jsOutEditor = codeEditor({
             name: 'JS',
             mode: 'javascript',

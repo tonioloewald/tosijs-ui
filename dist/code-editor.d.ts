@@ -50,6 +50,13 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
     };
     onResize(): void;
     connectedCallback(): void;
+    private isTjsMode;
+    /**
+     * When in tjs mode, lazily upgrade the editor to tjs-lang's CodeMirror language +
+     * autocomplete. No-op (keeps TS highlighting) if not tjs, if tjs-lang isn't
+     * installed, or if the mode/handle changed before the async load resolved.
+     */
+    private applyTjsExtension;
     render(): void;
 }
 export declare const codeEditor: ElementCreator<CodeEditor>;
