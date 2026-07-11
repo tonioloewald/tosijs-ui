@@ -56,6 +56,35 @@ preview.append(&#39;Try editing some code and hitting refresh…&#39;)
   to { color: red }
 }
 </code></pre>
+<h2>How examples run: one shared page (read this)</h2>
+<p>By default every example on a page runs <strong>inline — in the page&#39;s own document and
+JavaScript realm</strong>, not in a sandbox. Each example gets its own <code>preview</code> element
+(and its <code>css</code> is scoped to that preview), but they all share the one <code>tosijs</code>
+module, so <strong><code>tosi()</code> state singletons are shared across every example on the page</strong>.</p>
+<p>This is a deliberate choice, and it buys two things:</p>
+<ol>
+<li>It&#39;s a live demonstration of how clean tosi&#39;s isolation is — many independent
+components mount into one page and coexist without stepping on each other&#39;s DOM.</li>
+<li>You can drive any demo from the console (or from another example) through the same
+global singleton — the state is right there, not walled off in a frame.</li>
+</ol>
+<p>The trade-off is the gotcha to know about: <strong>examples can see and clobber each
+other&#39;s state.</strong> Two examples that both do <code>tosi({ app: … })</code> bind to the <em>same</em>
+<code>app</code> singleton (the tosi registry is keyed by the top-level name), so one overwrites
+the other — and you get &quot;impossible&quot; bugs where an example misbehaves only when some
+<em>other</em> example happens to be on the same page. Worth it, but plan for it:</p>
+<ul>
+<li><strong>Namespace your state.</strong> Give each example a unique top-level key
+(<code>tosi({ ratingDemo: … })</code>, not a generic <code>tosi({ app: … })</code>).</li>
+<li>Prefer local variables and <code>preview</code>-scoped DOM over shared singletons when a demo
+doesn&#39;t need to be globally reachable.</li>
+<li>In <code>test</code> blocks, assert with <strong>counts / deltas</strong>, not presence/absence — other
+examples may have left their elements in the DOM.</li>
+</ul>
+<p>For real isolation of the <strong>DOM and CSS</strong>, add the <code>iframe</code> attribute (below). Note
+it does <strong>not</strong> isolate tosijs <em>state</em>: the <code>tosijs</code>/<code>tosijs-ui</code> handed to an iframe
+example are still the host page&#39;s module instances, so <code>tosi()</code> singletons stay
+shared. Namespacing is the fix for state; <code>iframe</code> is the fix for DOM/CSS bleed.</p>
 <h2>Source dialects: <code>js</code>, <code>tjs</code>, <code>ts</code></h2>
 <p>The executable block&#39;s fence language picks how the source is compiled before it
 runs, via <a href="https://www.npmjs.com/package/tjs-lang">tjs-lang</a>:</p>
@@ -222,7 +251,19 @@ function loop() {
 preview.append(canvas, btn, readout)
 </code></pre>
 <h2>CSS Isolation with <code>iframe</code></h2>
-<p>Add the <code>iframe</code> attribute to render the preview inside an iframe for complete CSS isolation.</p>
+<p>Add the <code>iframe</code> attribute to render the preview inside an iframe, giving the example
+its own document, CSS scope, and custom-element registry. Reach for it when a demo&#39;s
+styles would otherwise leak into (or get leaked on by) the rest of the page.</p>
+<p>It isolates <strong>DOM and CSS, not state.</strong> The <code>tosijs</code>/<code>tosijs-ui</code> modules injected
+into the iframe are the host page&#39;s own instances, so <code>tosi()</code> singletons remain
+shared across every example (see &quot;How examples run&quot; above). Namespace your state to
+keep examples from stomping each other; use <code>iframe</code> when you need visual/DOM
+isolation.</p>
+<p><em>Fully-isolated examples (a separate module realm, so even <code>tosi()</code> state and
+imported dependencies are sandboxed — the way tjs-lang&#39;s playgrounds do it with a
+service worker intercepting imports) are a possible future option. For <strong>actual
+examples</strong> the shared-page default is usually the nicer behavior: it shows off tosi&#39;s
+isolation and lets you poke demos through the live global state.</em></p>
 <h2>Test Blocks</h2>
 <p>Add ```<code>test</code> code blocks to write inline tests that run against the preview:</p>
 <pre><code class="language-html">&lt;button class=&quot;demo-btn&quot;&gt;Click me&lt;/button&gt;

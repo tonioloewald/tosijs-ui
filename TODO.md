@@ -99,6 +99,20 @@ ordinals; (3) **inline interactive** in Apple Books / Readium via scripted EPUB3
 iBooks Author format). Needs per-example **anchors + scroll-to/highlight on the
 live site** (independently useful). See roadmap "From book to live."
 
+## Live examples
+
+- **Fully-isolated example option (future, not default).** Live examples run inline
+  on the shared page by default — deliberate: it shows off tosi's isolation and lets
+  you drive demos through the global singleton. The `iframe` attribute isolates
+  DOM/CSS but NOT tosijs state (the `tosijs`/`tosijs-ui` modules injected into the
+  iframe are the host page's instances, so `tosi()` singletons stay shared). A
+  *totally* isolated mode — separate module realm so `tosi()` state and imported
+  deps are sandboxed too — would follow tjs-lang's playground approach: a **service
+  worker intercepting dependency imports**. Worth offering eventually as an opt-in;
+  the shared-page default stays the right behavior for real examples. Documented +
+  warned about in the `<tosi-example>` doc ("How examples run") and surfaced in
+  llms.txt.
+
 ## Medium Priority
 
 - **Vector similarity search for doc-browser** - Replace current search with vector-based approach

@@ -140,6 +140,23 @@ export function generateLlmsTxt(
 
   const entries = corpus ? entriesFromCorpus(corpus, meta) : entriesFromSrcScan()
 
+  // Only orient agents about the live-example execution model when the corpus
+  // actually has live examples (a book / pure-docs site has none).
+  const exampleFence = /```(js|tjs|ts|html|css)\b/
+  const hasLiveExamples =
+    !!corpus && corpus.some((d) => exampleFence.test(d.text ?? ''))
+  const liveExampleNote = hasLiveExamples
+    ? [
+        'Live examples run inline on the shared page by default (not sandboxed):',
+        'each has its own `preview` element, but they share one tosijs module, so',
+        '`tosi()` state singletons are shared across every example on a page. This is',
+        'deliberate (it shows tosi isolation and lets you drive demos via the global',
+        'singleton). Namespace example state with unique top-level keys so examples',
+        "don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.",
+        '',
+      ]
+    : []
+
   const name = meta.name ?? pkg.name ?? ''
   const description = meta.description ?? pkg.description ?? ''
   const links: string[] = []
@@ -162,6 +179,7 @@ export function generateLlmsTxt(
     '',
     'Full documentation, with live code examples, is at the links below.',
     '',
+    ...liveExampleNote,
     '## Pages',
     '',
   ]

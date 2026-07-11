@@ -33,6 +33,38 @@ preview.append('Try editing some code and hitting refresh…')
 }
 ```
 
+## How examples run: one shared page (read this)
+
+By default every example on a page runs **inline — in the page's own document and
+JavaScript realm**, not in a sandbox. Each example gets its own `preview` element
+(and its `css` is scoped to that preview), but they all share the one `tosijs`
+module, so **`tosi()` state singletons are shared across every example on the page**.
+
+This is a deliberate choice, and it buys two things:
+
+1. It's a live demonstration of how clean tosi's isolation is — many independent
+   components mount into one page and coexist without stepping on each other's DOM.
+2. You can drive any demo from the console (or from another example) through the same
+   global singleton — the state is right there, not walled off in a frame.
+
+The trade-off is the gotcha to know about: **examples can see and clobber each
+other's state.** Two examples that both do `tosi({ app: … })` bind to the *same*
+`app` singleton (the tosi registry is keyed by the top-level name), so one overwrites
+the other — and you get "impossible" bugs where an example misbehaves only when some
+*other* example happens to be on the same page. Worth it, but plan for it:
+
+- **Namespace your state.** Give each example a unique top-level key
+  (`tosi({ ratingDemo: … })`, not a generic `tosi({ app: … })`).
+- Prefer local variables and `preview`-scoped DOM over shared singletons when a demo
+  doesn't need to be globally reachable.
+- In `test` blocks, assert with **counts / deltas**, not presence/absence — other
+  examples may have left their elements in the DOM.
+
+For real isolation of the **DOM and CSS**, add the `iframe` attribute (below). Note
+it does **not** isolate tosijs *state*: the `tosijs`/`tosijs-ui` handed to an iframe
+example are still the host page's module instances, so `tosi()` singletons stay
+shared. Namespacing is the fix for state; `iframe` is the fix for DOM/CSS bleed.
+
 ## Source dialects: `js`, `tjs`, `ts`
 
 The executable block's fence language picks how the source is compiled before it
@@ -212,7 +244,21 @@ preview.append(canvas, btn, readout)
 
 ## CSS Isolation with `iframe`
 
-Add the `iframe` attribute to render the preview inside an iframe for complete CSS isolation.
+Add the `iframe` attribute to render the preview inside an iframe, giving the example
+its own document, CSS scope, and custom-element registry. Reach for it when a demo's
+styles would otherwise leak into (or get leaked on by) the rest of the page.
+
+It isolates **DOM and CSS, not state.** The `tosijs`/`tosijs-ui` modules injected
+into the iframe are the host page's own instances, so `tosi()` singletons remain
+shared across every example (see "How examples run" above). Namespace your state to
+keep examples from stomping each other; use `iframe` when you need visual/DOM
+isolation.
+
+*Fully-isolated examples (a separate module realm, so even `tosi()` state and
+imported dependencies are sandboxed — the way tjs-lang's playgrounds do it with a
+service worker intercepting imports) are a possible future option. For **actual
+examples** the shared-page default is usually the nicer behavior: it shows off tosi's
+isolation and lets you poke demos through the live global state.*
 
 ## Test Blocks
 
