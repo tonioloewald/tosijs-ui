@@ -7,13 +7,21 @@ usually means the docs or a diagnostic could prevent the next person's stumble.
 
 Context: tosijs-ui uses tjs-lang as the live-example transpiler (`js`/`tjs`/`ts`
 dialects, browser bundles), and (v1.7 WIP) is building a first inline-WASM live
-example. Originally filed against **tjs-lang 0.8.7**; re-checked against **0.9.0**.
+example. Originally filed against **tjs-lang 0.8.7**; re-checked against **0.9.0**,
+then **0.9.1**.
+
+**0.9.1 status:** ✅ #2, #3, #6 RESOLVED (see each item). The browser WASM emitter
+now pushes each block's instantiation into `globalThis.__tjs_wasm_pending` and
+exposes `globalThis.__tjs_wasm_ready = () => Promise.all(__tjs_wasm_pending)` (#2),
+gates execution on `globalThis.__tjs_wasm_enabled !== false` (#3), and emits
+`f32x4_lt/le/gt/ge/eq/select/min/max` (#6). Only **#1** (silent-fallback warning)
+remains open on the WASM side; #4/#5 are docs improvements.
 
 **0.9.0 status:** ✅ #7 (editor build) RESOLVED — unblocks the CodeMirror tjs
 autocomplete (workstream B). #4/#5 partly addressed via docs (WASM-QUICKSTART.md
 now has a Numeric Types table with `+0` for non-negative i32, and a Limitations
-list). Still open: #1 (silent fallback), #2 (ready signal), #3 (toggle), #6
-(f32x4 compare/select/min/max — docs confirm "SIMD is f32 only … no i32x4 yet").
+list). Still open then: #1 (silent fallback), #2 (ready signal), #3 (toggle), #6
+(f32x4 compare/select/min/max) — the last three now fixed in 0.9.1.
 
 ## Inline WASM
 
@@ -29,7 +37,12 @@ there's an (undocumented) complexity/nesting ceiling that degrades invisibly.
   and the unsupported construct. Silent fallback makes WASM look like it "works"
   when it isn't — the worst failure mode for a perf feature.
 
-### 2. WASM instantiation is async with no awaitable ready signal
+### 2. ✅ RESOLVED in 0.9.1 — WASM instantiation is async with no awaitable ready signal
+**0.9.1:** the emitter now registers a `globalThis.__tjs_wasm_pending` queue and
+`globalThis.__tjs_wasm_ready = () => Promise.all(__tjs_wasm_pending)` — await it
+before the first synchronous call and you get WASM, not the fallback. Original
+report below.
+
 The emitted bootstrap is `;(async()=>{ … globalThis.__tjs_wasm_0 = fn })()` —
 fire-and-forget. Any synchronous code that calls the function right after
 transpile+eval runs the **JS fallback**, because `__tjs_wasm_0` isn't set yet
@@ -41,7 +54,11 @@ This bit us hard: our first "it renders correctly!" checks were all the fallback
   `tjsWasmReady()` helper. Right now correct WASM use requires knowing an internal
   detail.
 
-### 3. No public WASM enable/disable toggle for benchmarking
+### 3. ✅ RESOLVED in 0.9.1 — No public WASM enable/disable toggle for benchmarking
+**0.9.1:** each emitted WASM wrapper is gated on `globalThis.__tjs_wasm_enabled !==
+false`, so setting `globalThis.__tjs_wasm_enabled = false` forces the JS fallback —
+a stable lever for the "WASM vs JS, N× faster" comparison. Original report below.
+
 tjs's own playground shows a WASM-vs-JS-fallback perf comparison, but there's no
 public API to force the fallback. The only lever is nulling `globalThis.__tjs_wasm_N`
 — an implementation detail whose name depends on module/function index, so it's
@@ -67,7 +84,12 @@ fill ✗ (silent fallback).
 - **Suggestion:** a "supported subset" section (grammar-level) in DOCS-WASM.md, and
   errors (not silent fallback) for anything outside it.
 
-### 6. `f32x4` has no compare / select / min / max — masked SIMD is impossible
+### 6. ✅ RESOLVED in 0.9.1 — `f32x4` has no compare / select / min / max — masked SIMD is impossible
+**0.9.1:** the browser bundle now emits `f32x4_lt/le/gt/ge/eq` (lane masks),
+`f32x4_select` (blend), and `f32x4_min/max` — so data-dependent SIMD kernels
+(SIMD Mandelbrot, saturating math, branch-free lane `if`) are now expressible.
+Original report below.
+
 The SIMD intrinsics are `add/sub/mul/div/neg/sqrt/splat/load/store/extract_lane/
 replace_lane` — arithmetic only. There is **no lane comparison** (`lt/le/gt/ge/eq`
 → mask), **no `select`/blend**, and no `min`/`max`/bitwise ops. That rules out the
