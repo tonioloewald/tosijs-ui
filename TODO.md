@@ -13,6 +13,7 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 ## High Priority
 
 - **JSON Schema-driven form editor** - Integrate schema-based form generation
+- **Doc-system: expose customization of the app/settings menu** — The `<tosi-doc-system>` settings button (the moreVertical/gear menu, `settingsButton()` in `src/doc-system/doc-system.ts`, `title="settings"`) builds its `menuItems` array inline (Print as PDF, Download ePub, Language, Color Theme, …). There's currently no public API for a doc-site consumer to add, remove, reorder, or override these items. Add a way to customize it — e.g. a `SiteConfig` hook or a `menuItems` prop/callback that receives the default items and returns the desired set — and surface/document it in `doc-site-system.md`.
 
 ## Book / prose adoption (from `falling-forward`, 1.6.15)
 
