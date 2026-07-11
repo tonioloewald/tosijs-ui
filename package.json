@@ -1,6 +1,6 @@
 {
   "name": "tosijs-ui",
-  "version": "1.6.20",
+  "version": "1.6.21",
   "description": "simple robust web-components for use with tosijs or anything else",
   "scripts": {
     "start": "bun --watch bin/dev.ts",
@@ -42,7 +42,7 @@
     "happy-dom": "^20.7.0",
     "playwright": "^1.58.2",
     "prettier": "^2.8.8",
-    "tjs-lang": "0.8.7",
+    "tjs-lang": "0.9.0",
     "tosijs": "^1.6.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8"
@@ -51,7 +51,7 @@
     "@resvg/resvg-js": "^2.6.2",
     "happy-dom": "^20.7.0",
     "marked": "^16.4.2",
-    "tjs-lang": "^0.8.7",
+    "tjs-lang": "^0.9.0",
     "tosijs": "^1.6.6"
   },
   "peerDependenciesMeta": {

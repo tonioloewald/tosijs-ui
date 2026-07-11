@@ -387,6 +387,16 @@ authoritative typed definition.</p>
 <td>run <code>tsc -p &lt;path&gt;</code> for the library build instead (handles root <code>noEmit</code>, <code>removeComments</code>, custom <code>outDir</code>); supersedes <code>emitLibrary</code></td>
 </tr>
 <tr>
+<td><code>libraryBuild</code></td>
+<td>—</td>
+<td><code>(ctx: { dist, root, tsconfig? }) =&gt; void | Promise&lt;void&gt;</code> — fully override the tsc library build; you emit <code>dist/*.js</code> + <code>*.d.ts</code> for ALL sources. For non-<code>.ts</code> sources tsc can&#39;t compile (native tjs-lang <code>.tjs</code>): run tsc for <code>.ts</code> + <code>tjs convert</code>/<code>generateDTS</code> for <code>.tjs</code>. Supersedes <code>libraryTsconfig</code>/<code>emitLibrary</code>. See <code>BUILD-TJS-HOOK.md</code></td>
+</tr>
+<tr>
+<td><code>generateCssPreload</code></td>
+<td>—</td>
+<td>module to <code>bun --preload</code> into the CSS-extraction subprocess (<code>generate-css</code> imports your library to burn the theme); needed when that graph reaches non-<code>.ts</code> sources (<code>.tjs</code>) requiring a Bun loader plugin — point it at a module that registers it. Pairs with <code>libraryBuild</code></td>
+</tr>
+<tr>
 <td><code>llmsTxt</code></td>
 <td><code>true</code></td>
 <td>emit the <code>llms.txt</code> index — <code>true</code>, <code>false</code>, or <code>(docs) =&gt; string</code> for a custom one (see below)</td>

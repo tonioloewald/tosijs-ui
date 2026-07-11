@@ -257,6 +257,8 @@ authoritative typed definition.
 | `prebuild` | — | `() => void \| Promise<void>` run first, for source-tree codegen (version stamp, icon data, …). Runs before `dist`/output are reset — don't write there |
 | `emitLibrary` | `false` | also build the library: `tsc --declaration --incremental --outDir dist` (for repos publishing a package + their docs) |
 | `libraryTsconfig` | — | run `tsc -p <path>` for the library build instead (handles root `noEmit`, `removeComments`, custom `outDir`); supersedes `emitLibrary` |
+| `libraryBuild` | — | `(ctx: { dist, root, tsconfig? }) => void \| Promise<void>` — fully override the tsc library build; you emit `dist/*.js` + `*.d.ts` for ALL sources. For non-`.ts` sources tsc can't compile (native tjs-lang `.tjs`): run tsc for `.ts` + `tjs convert`/`generateDTS` for `.tjs`. Supersedes `libraryTsconfig`/`emitLibrary`. See `BUILD-TJS-HOOK.md` |
+| `generateCssPreload` | — | module to `bun --preload` into the CSS-extraction subprocess (`generate-css` imports your library to burn the theme); needed when that graph reaches non-`.ts` sources (`.tjs`) requiring a Bun loader plugin — point it at a module that registers it. Pairs with `libraryBuild` |
 | `llmsTxt` | `true` | emit the `llms.txt` index — `true`, `false`, or `(docs) => string` for a custom one (see below) |
 | `epub` | `false` | build + ship an ePub of the corpus every build — `true` or `{ author, title, css, cover, coverColor }` (see below) |
 | `book` | — | curate/reorder the book artifact without touching site nav (see below) |

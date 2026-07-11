@@ -3,6 +3,15 @@ import type { DocSystemTheme } from '../doc-system-styles';
 import type { Doc } from './docs';
 import type { BookManifest } from '../book-manifest';
 export type SiteHost = 'github-pages' | 'firebase' | 'static';
+/** Resolved paths handed to a `libraryBuild` override (see SiteConfig). */
+export interface LibraryBuildContext {
+    /** absolute path to the `dist` output dir the artifacts must land in */
+    dist: string;
+    /** project root the build runs from */
+    root: string;
+    /** the configured `libraryTsconfig`, if any (so the override can still run tsc) */
+    tsconfig?: string;
+}
 export interface SiteConfig {
     /** project / brand name — header, <title> suffix, og:site_name */
     name: string;
@@ -103,6 +112,25 @@ export interface SiteConfig {
      * yourself (e.g. keep doc comments in the published JS for AI readers).
      */
     libraryTsconfig?: string;
+    /**
+     * Fully override the library build (the `tsc` step that `libraryTsconfig` /
+     * `emitLibrary` run). Receives the resolved paths and is responsible for emitting
+     * `dist/*.js` + `*.d.ts` for ALL sources. Use this when some sources aren't `.ts`
+     * — e.g. native tjs-lang `.tjs` modules, which `tsc` can't compile: run `tsc` for
+     * the `.ts` graph and `tjs convert` + `generateDTS` for the `.tjs` files, into the
+     * same `dist`. Takes precedence over `libraryTsconfig` and `emitLibrary`. Pairs
+     * with `generateCssPreload` (below) for the CSS-extraction eval. See
+     * BUILD-TJS-HOOK.md.
+     */
+    libraryBuild?: (ctx: LibraryBuildContext) => void | Promise<void>;
+    /**
+     * A module to `--preload` into the CSS-extraction subprocess (`generate-css`),
+     * which imports your library to burn the theme stylesheet. Needed when that import
+     * graph reaches non-`.ts` sources (e.g. `.tjs`) that require a Bun loader plugin
+     * to evaluate — point this at a module that registers it (via `Bun.plugin({...})`
+     * at import time). Without it the subprocess throws `Cannot find module './x.tjs'`.
+     */
+    generateCssPreload?: string;
     /**
      * Emit llms.txt agent-discoverability index. Default true (uses `name` /
      * `description` / `baseUrl` / `projectLinks`). Set false to skip, or pass a

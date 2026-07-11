@@ -120,7 +120,16 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
 
   // Optionally also build the library (ESM + type declarations) — for repos
   // whose single build publishes both an npm package and its doc site.
-  if (config.libraryTsconfig) {
+  if (config.libraryBuild) {
+    // Full override — the consumer owns emitting dist/*.js + *.d.ts for ALL
+    // sources (e.g. tsc for `.ts` + `tjs convert`/`generateDTS` for native `.tjs`
+    // that tsc can't compile). See BUILD-TJS-HOOK.md.
+    await config.libraryBuild({
+      dist: DIST,
+      root: path.resolve(PROJECT_ROOT),
+      tsconfig: config.libraryTsconfig,
+    })
+  } else if (config.libraryTsconfig) {
     // Consumer-controlled library build (handles root noEmit, removeComments,
     // outDir, etc.).
     try {
@@ -306,9 +315,14 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
   const genCss = existsSync(genCssTs)
     ? genCssTs
     : `${import.meta.dir}/generate-css.js`
-  await $`bun ${genCss} ${PUBLIC}/doc-system.css ${JSON.stringify(
-    config.theme || {}
-  )}`.text()
+  // generate-css imports the consumer's library to burn the theme; when that graph
+  // reaches non-`.ts` sources (e.g. `.tjs`), `--preload` a module that registers the
+  // Bun loader plugin so those modules evaluate. (See BUILD-TJS-HOOK.md.)
+  const themeArg = JSON.stringify(config.theme || {})
+  await (config.generateCssPreload
+    ? $`bun --preload ${config.generateCssPreload} ${genCss} ${PUBLIC}/doc-system.css ${themeArg}`
+    : $`bun ${genCss} ${PUBLIC}/doc-system.css ${themeArg}`
+  ).text()
   console.log(`generated ${pageCount} static pages`)
 
   // ── host preset files ──

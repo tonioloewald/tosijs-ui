@@ -635,6 +635,12 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     })
   }
 
+  // This instance's own sidenav. Captured from its own change event (below), so the
+  // header nav toggle drives THIS doc-browser — not `document.querySelector('tosi-
+  // sidenav')`, which returns the FIRST sidenav in the document (an OUTER instance
+  // when this one is an embedded, memory-routed browser).
+  let sidenav: TosiSidenav | null = null
+
   const headerContent: any[] = [
     button(
       {
@@ -653,10 +659,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
           },
         },
         onClick() {
-          const nav = document.querySelector(
-            TosiSidenav.tagName!
-          ) as TosiSidenav
-          nav.contentVisible = !nav.contentVisible
+          if (sidenav) sidenav.contentVisible = !sidenav.contentVisible
         },
       },
       icons.menu()
@@ -1265,11 +1268,13 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
           flex: '1 1 auto',
           overflow: 'hidden',
         },
-        onChange() {
-          const nav = document.querySelector(
+        onChange(event: Event) {
+          // Scope to the sidenav that fired — and capture it so the header toggle
+          // targets THIS instance, not the first sidenav in the document.
+          sidenav = (event.target as HTMLElement).closest(
             TosiSidenav.tagName!
-          ) as TosiSidenav
-          app.compact = nav.compact as any
+          ) as TosiSidenav | null
+          if (sidenav) app.compact = sidenav.compact as any
         },
       },
       searchField,
