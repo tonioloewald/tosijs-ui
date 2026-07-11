@@ -9,15 +9,17 @@ tosijs-ui (formerly xinjs-ui) is a web-component library built on [tosijs](https
 ## Common Commands
 
 ```bash
-bun start              # Dev server at https://localhost:8787 (hot reload, reports gzip sizes)
-bun run build          # Build only (no server), exits with 0/1
-bun run test-browser   # Build, launch haltija, run browser tests, exit with 0/1
-bun tests              # Run unit tests + Playwright tests
+bun start              # Dev server at https://localhost:8787 (hot reload, reports gzip sizes) — `bun --watch bin/dev.ts`
+bun run build          # Build only (no server), exits with 0/1 — `bin/dev.ts --build-only`
+bun run test-browser   # Build, launch haltija, run browser tests, exit with 0/1 — `bin/dev.ts --test`
+bun tests              # `bun test src/*.test.ts && bun playwright test` — see caveat below
 bun format             # ESLint + Prettier
 bun latest             # Clean install (removes node_modules + bun.lock, then bun update)
 bunx tsc --noEmit      # Type check without emitting (used in CI)
 bun book               # Build ePub of the doc corpus (run AFTER `bun run build`)
 ```
+
+The three test lanes are distinct: **`bun test src/*.test.ts`** is the fast happy-dom unit lane (this is all CI runs); **`bun run test-browser`** drives haltija over the inline `` ```test `` doc examples; **`bun playwright test`** is the `tests/*.pw.ts` end-to-end lane. **Caveat:** `bun tests` runs unit + Playwright, and the Playwright half needs the dev server **already running** at `https://localhost:8787` (the Playwright config does NOT auto-start it) — start `bun start` first or the Playwright tests fail to connect.
 
 `bun book` (`bin/build-book.ts`) reads the extracted `demo/docs.json`, so run a normal build first. Book identity/config comes from `tosijs-site.config.ts`. The doc-site build (`buildSite`) also regenerates the ePub on every build when `epub` is enabled in the site config. PDF output is the doc-browser's in-app **Print** button (`book-html.ts` → browser print-to-PDF), not a batch job.
 
@@ -193,6 +195,28 @@ Several components support native form integration via `static formAssociated = 
 - Integration with both native `<form>` and `<tosi-form>`
 
 To find form-associated components, grep `src/` for `formAssociated = true`.
+
+### Code Editor (CodeMirror 6)
+
+`<tosi-code>` (`src/code-editor.ts`) is a [CodeMirror 6](https://codemirror.net/) wrapper. The heavy CM code lives in `src/code-editor-cm.ts` and is loaded **lazily on first use** via a dynamic import — a page with no `<tosi-code>` bundles none of it.
+
+Public surface (this is the contract; the pre-1.7 ACE `theme`/`options` props were **dropped** — breaking):
+- `value` — the code; `mode` — language (`javascript`, `typescript`, `tjs`, `ajs`, `css`, `html`, `markdown`)
+- `disabled` → CM `readOnly`
+- `change` event fires on edits (`detail.value`)
+- `editor` property exposes the underlying CM `EditorView` (undefined until loaded)
+- `undo()` / `redo()` / `canUndo()` / `canRedo()` for history; `showDiff(on)` diffs `value` against a captured baseline via `tosi-diff`
+- Dark mode is driven by a `highlight` Compartment + a MutationObserver on `body.darkmode`; the editor background is themed from `--code-bg` / `--text-color` via `EditorView.theme`
+
+**tjs/ajs modes** async-load tjs-lang's CodeMirror language + completion extensions (`loadTjsExtension()` → `setLanguageExtension()`). **Critical packaging constraint:** the tjs CM extension MUST share the editor's single CodeMirror instance — a separately-loaded copy carries its own `@codemirror/state` and silently no-ops. The iife build therefore *bundles* the tjs-lang CM extension (it's a prefix-match exclusion from `external`, keeping only the two `/browser` transpiler subpaths external). See memory / `codemirror-tjs-1.7-plan.md` for the full migration context.
+
+### Subpath Exports & Tree-Shaking
+
+`package.json` `exports` expose stable subpaths — `tosijs-ui/site`, `/icons`, `/code-editor`, `/live-example`, `/doc-browser`, `/diff`, `/theme` — plus a `./*` wildcard so `import 'tosijs-ui/rating'` resolves to `dist/rating.js` and registers just that element.
+
+**Do NOT set a blanket `sideEffects: false`.** `elementCreator()` registers custom elements *eagerly at import time*, so a bare `import 'tosijs-ui'` tree-shakes to zero registrations under it. Per-component entry points (the Lit/Shoelace model) are the correct tree-shaking path. Components that inject global styles/listeners (menu/tooltip/float) do so on **first use** (`ensureMenu`/`ensureTooltipStyles`/`ensureFloatListeners`), not at import, to keep imports side-effect-light.
+
+**Never add a `browser` export condition pointing at the iife.** The iife (`dist/iife.js`) inlines tosijs + marked and is not ESM — it is for CDN `<script>` tags and naive doc-sites only, never reachable via `import`.
 
 ### Documentation System
 
