@@ -34,6 +34,21 @@ export class CodeEditor extends WebComponent {
     _loadPromise;
     _appliedMode = '';
     _appliedDisabled;
+    _tjsAutocomplete;
+    /**
+     * Runtime-introspection hooks for tjs autocomplete (`getLiveBindings` /
+     * `getMembers`) — lets completion suggest the REAL members of live values (e.g.
+     * a tosijs proxy or a DOM element) that static analysis can't see. Only used in
+     * tjs mode; setting it re-applies the tjs extension so it takes effect live.
+     */
+    get tjsAutocomplete() {
+        return this._tjsAutocomplete;
+    }
+    set tjsAutocomplete(config) {
+        this._tjsAutocomplete = config;
+        if (this._handle && this.isTjsMode())
+            this.applyTjsExtension();
+    }
     get value() {
         return this._handle ? this._handle.getValue() : this.source;
     }
@@ -159,7 +174,7 @@ export class CodeEditor extends WebComponent {
         if (!handle || !this.isTjsMode())
             return;
         import('./code-editor-cm')
-            .then(({ loadTjsExtension }) => loadTjsExtension())
+            .then(({ loadTjsExtension }) => loadTjsExtension(this._tjsAutocomplete ?? {}))
             .then((ext) => {
             if (ext && this._handle === handle && this.isTjsMode()) {
                 handle.setLanguageExtension(ext);

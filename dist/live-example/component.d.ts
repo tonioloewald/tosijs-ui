@@ -262,6 +262,13 @@ export declare class LiveExample extends Component<ExampleParts> {
     private renderTjsTests;
     private computeGeneratedJs;
     private ensureProductTabs;
+    /**
+     * Live bindings for tjs runtime-value autocomplete: the example's context modules
+     * (keyed by the identifier the rewritten code uses, e.g. `tosijs`, `tosijsui`)
+     * plus the currently-rendered `preview` element. Read lazily on each completion,
+     * so it reflects the latest run.
+     */
+    private liveBindings;
     updateUndo: () => void;
     private updateTestResultsVisibility;
     undo: () => void;

@@ -28,7 +28,8 @@ none of it.
 
 import { Component as WebComponent, ElementCreator, elements, PartsMap } from 'tosijs'
 import { tosiDiff, TosiDiff } from './diff'
-import type { CmHandle } from './code-editor-cm'
+import type { CmHandle, TjsAutocompleteConfig } from './code-editor-cm'
+export type { TjsAutocompleteConfig } from './code-editor-cm'
 
 const { div } = elements
 
@@ -44,6 +45,21 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
   private _loadPromise: Promise<CmHandle> | undefined
   private _appliedMode = ''
   private _appliedDisabled: boolean | undefined
+  private _tjsAutocomplete: TjsAutocompleteConfig | undefined
+
+  /**
+   * Runtime-introspection hooks for tjs autocomplete (`getLiveBindings` /
+   * `getMembers`) — lets completion suggest the REAL members of live values (e.g.
+   * a tosijs proxy or a DOM element) that static analysis can't see. Only used in
+   * tjs mode; setting it re-applies the tjs extension so it takes effect live.
+   */
+  get tjsAutocomplete(): TjsAutocompleteConfig | undefined {
+    return this._tjsAutocomplete
+  }
+  set tjsAutocomplete(config: TjsAutocompleteConfig | undefined) {
+    this._tjsAutocomplete = config
+    if (this._handle && this.isTjsMode()) this.applyTjsExtension()
+  }
 
   get value(): string {
     return this._handle ? this._handle.getValue() : this.source
@@ -185,7 +201,7 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
     const handle = this._handle
     if (!handle || !this.isTjsMode()) return
     import('./code-editor-cm')
-      .then(({ loadTjsExtension }) => loadTjsExtension())
+      .then(({ loadTjsExtension }) => loadTjsExtension(this._tjsAutocomplete ?? {}))
       .then((ext) => {
         if (ext && this._handle === handle && this.isTjsMode()) {
           handle.setLanguageExtension(ext)

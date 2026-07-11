@@ -1,5 +1,6 @@
 import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
-import type { CmHandle } from './code-editor-cm';
+import type { CmHandle, TjsAutocompleteConfig } from './code-editor-cm';
+export type { TjsAutocompleteConfig } from './code-editor-cm';
 interface CodeEditorParts extends PartsMap {
     host: HTMLDivElement;
 }
@@ -10,6 +11,15 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
     private _loadPromise;
     private _appliedMode;
     private _appliedDisabled;
+    private _tjsAutocomplete;
+    /**
+     * Runtime-introspection hooks for tjs autocomplete (`getLiveBindings` /
+     * `getMembers`) — lets completion suggest the REAL members of live values (e.g.
+     * a tosijs proxy or a DOM element) that static analysis can't see. Only used in
+     * tjs mode; setting it re-applies the tjs extension so it takes effect live.
+     */
+    get tjsAutocomplete(): TjsAutocompleteConfig | undefined;
+    set tjsAutocomplete(config: TjsAutocompleteConfig | undefined);
     get value(): string;
     set value(text: string);
     private _original;
@@ -60,4 +70,3 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
     render(): void;
 }
 export declare const codeEditor: ElementCreator<CodeEditor>;
-export {};

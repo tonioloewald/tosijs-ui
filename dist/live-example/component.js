@@ -602,6 +602,11 @@ export class LiveExample extends Component {
         // put the source editor in the dialect's mode — so a `tjs` example gets
         // first-class tjs editing (highlighting + autocomplete), `ts` gets TypeScript.
         this.parts.js.setAttribute('name', this.dialect);
+        // Runtime-value autocomplete: give the tjs completion source the example's live
+        // bindings (context modules + the rendered preview) so it can suggest their REAL
+        // members — including tosijs proxy members that static analysis can't see. Set
+        // before `.mode` so the tjs extension loads with the config in one shot.
+        this.parts.js.tjsAutocomplete = { getLiveBindings: () => this.liveBindings() };
         this.parts.js.mode = this.dialect;
         this.jsOutEditor = codeEditor({
             name: 'JS',
@@ -618,6 +623,22 @@ export class LiveExample extends Component {
         editors.setupTabs();
         this.jsOutEditor.value = this.lastGeneratedJs;
         this.renderTjsTests();
+    }
+    /**
+     * Live bindings for tjs runtime-value autocomplete: the example's context modules
+     * (keyed by the identifier the rewritten code uses, e.g. `tosijs`, `tosijsui`)
+     * plus the currently-rendered `preview` element. Read lazily on each completion,
+     * so it reflects the latest run.
+     */
+    liveBindings() {
+        const bindings = {};
+        for (const [key, value] of Object.entries(this.context)) {
+            bindings[contextVarName(key)] = value;
+        }
+        const preview = this.parts.example?.querySelector('.preview');
+        if (preview)
+            bindings.preview = preview;
+        return bindings;
     }
     updateUndo = () => {
         const { activeTab } = this;
