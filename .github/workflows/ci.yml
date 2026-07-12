@@ -26,3 +26,45 @@ jobs:
 
       - name: Run unit tests
         run: bun test
+
+  # The E2E lane. It used to run only when a human happened to have `bun start` up,
+  # so it rotted red for ~a month across ~20 tagged releases without anyone noticing.
+  # Playwright starts the dev server itself (see playwright.config.ts webServer).
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      # The dev server serves HTTPS and refuses to start without a cert. Locally that's
+      # an mkcert-trusted one; here a throwaway self-signed cert is enough, because the
+      # tests already run with ignoreHTTPSErrors (and mkcert would want sudo).
+      - name: Generate a throwaway dev TLS cert
+        run: |
+          mkdir -p tls
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+            -keyout tls/key.pem -out tls/certificate.pem \
+            -subj "/CN=localhost" \
+            -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: bunx playwright test --project=chromium
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

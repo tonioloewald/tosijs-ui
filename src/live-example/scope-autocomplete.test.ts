@@ -11,30 +11,32 @@ import { EditorState } from '@codemirror/state'
 import { CompletionContext } from '@codemirror/autocomplete'
 import { tjsCompletionSource } from 'tjs-lang/editors/codemirror'
 import { tosi } from 'tosijs'
-import {
-  AsyncFunction,
-  extractTopLevelBindingNames,
-  buildScopeCapture,
-  contextVarName,
-} from './code-transform'
+import { AsyncFunction, contextVarName } from './code-transform'
+import { withScopeCapture } from './execution'
 
-// Mirror how live-example runs an example and captures its top-level locals.
+/**
+ * Run an example the way live-example does, and return the locals it captured.
+ *
+ * This drives the SHIPPED `withScopeCapture` (the same call `executeInline` and
+ * `executeInIframe` make) rather than re-deriving the epilogue here. An earlier
+ * version of this test rebuilt the pipeline by hand — including a hard-coded copy of
+ * the private capture-variable name — so it imported nothing from `execution.ts` and
+ * no edit to the production chain could make it fail. Deleting the `withScopeCapture`
+ * call outright would have kept it green. If you find yourself re-implementing the
+ * thing under test, the guard is guarding nothing.
+ */
 async function runAndCapture(
   js: string,
   context: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
   let scope: Record<string, unknown> = {}
-  const capture = (s: Record<string, unknown>) => {
+  const { code, extraContext } = withScopeCapture(js, (s) => {
     scope = s
-  }
-  const epilogue = buildScopeCapture(
-    extractTopLevelBindingNames(js),
-    '__tosiCaptureScope'
-  )
-  const fullContext = { __tosiCaptureScope: capture, ...context }
+  })
+  const fullContext = { ...extraContext, ...context }
   const keys = Object.keys(fullContext).map(contextVarName)
   const values = Object.values(fullContext)
-  const fn = new AsyncFunction(...keys, js + epilogue)
+  const fn = new AsyncFunction(...keys, code)
   await fn(...values)
   return scope
 }

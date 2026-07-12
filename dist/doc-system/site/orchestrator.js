@@ -22,6 +22,7 @@ import { ensureSections } from './sections';
 import { generateLlmsTxt } from './make-llms-txt';
 import { generateSite } from './generate-site';
 import { findOutputDirOverlap } from './output-guard';
+import { tjsEditorExternal, tjsEditorLeakedAsExternal, classicScriptSyntaxError, } from './bundle-guard';
 // Module specifiers contain regex metacharacters (`/`, `.`, `@`, …), so escape
 // before interpolating into the require-shim detector below.
 /** Give up on a hung ePub child rather than wedge the dev server's rebuild. */
@@ -86,18 +87,6 @@ async function buildEpubInChild(config, opts) {
 // Module specifiers contain regex metacharacters (`/`, `.`, `@`, …), so escape
 // before interpolating into the require-shim detector below.
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-// Externalize the tjs CodeMirror editor extension ONLY when tjs-lang isn't
-// installed — otherwise it's bundled in so it shares the editor's CodeMirror
-// instance (see the `external` comment in buildSite). Returns [] when present.
-function tjsEditorExternal(root) {
-    try {
-        Bun.resolveSync('tjs-lang/editors/codemirror', root);
-        return [];
-    }
-    catch {
-        return ['tjs-lang/editors/codemirror'];
-    }
-}
 export async function buildSite(config) {
     const PROJECT_ROOT = './';
     const PUBLIC = path.resolve(PROJECT_ROOT, config.outputDir ?? 'docs');
@@ -269,12 +258,31 @@ export async function buildSite(config) {
                     `    or an importmap, not a static import.`);
             }
         }
-        // import.meta is illegal in a classic <script> — if it survived bundling
-        // (a branch the bundler couldn't eliminate) the IIFE will SyntaxError.
-        if (bundleJs.includes('import.meta')) {
-            console.warn(`⚠️  ${scriptName} contains \`import.meta\`, which is a SyntaxError in a classic <script>.\n` +
-                `    A dependency referenced it in a branch the bundler couldn't drop — mark that dep external\n` +
-                `    (+ importmap) or choose a browser-only entry point.`);
+        // The IIFE must parse as a classic <script>. `import.meta` is the usual way it
+        // doesn't (a branch the bundler couldn't eliminate) — and it's a SyntaxError, so
+        // the whole bundle fails to evaluate and the page never hydrates. Compile it
+        // (without running it) rather than grepping: the substring also occurs inside
+        // string literals — acorn's error messages contain it — which made the old grep
+        // fire on every build while the bundle was fine.
+        const syntaxError = classicScriptSyntaxError(bundleJs);
+        if (syntaxError) {
+            console.error(`⚠️  ${scriptName} does not parse as a classic <script>: ${syntaxError}\n` +
+                `    The page will not hydrate. If a dependency pulled in \`import.meta\`, mark it\n` +
+                `    external (+ importmap) or choose a browser-only entry point.`);
+            return false;
+        }
+        // tjs-lang's CodeMirror extension MUST be bundled, not externalized — a separate
+        // copy carries its own @codemirror/state and silently no-ops (tjs highlighting and
+        // autocomplete just stop working, with no error anywhere). If it was externalized,
+        // the bundler leaves its specifier behind. Failing the build is the only way this
+        // gets noticed; every test lane stays green when it regresses.
+        if (tjsEditorExternal(PROJECT_ROOT).length === 0 &&
+            tjsEditorLeakedAsExternal(bundleJs)) {
+            console.error(`⚠️  ${scriptName} externalized tjs-lang's CodeMirror extension instead of bundling it.\n` +
+                `    It must share the editor's single CodeMirror instance; a separately loaded copy\n` +
+                `    silently no-ops. Check the bundle's \`external\` list — entries are PREFIX matches,\n` +
+                `    so a bare 'tjs-lang' externalizes tjs-lang/editors/codemirror along with it.`);
+            return false;
         }
         const bundleGzip = gzipSync(Buffer.from(bundleFile));
         console.log(`${scriptName}: ${(bundleFile.byteLength / 1024).toFixed(1)}kb (${(bundleGzip.length / 1024).toFixed(1)}kb gzip)`);

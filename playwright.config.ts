@@ -76,10 +76,19 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://127.0.0.1:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  /*
+   * Start the dev server for the E2E lane. Without this the lane only ran when a
+   * human happened to have `bun start` up — which is how it rotted red for ~a month
+   * across ~20 tagged releases (stale selectors, not regressions; nobody was looking).
+   * reuseExistingServer keeps a local `bun start` in charge when you already have one.
+   */
+  webServer: {
+    command: 'bun start',
+    url: 'https://localhost:8787',
+    reuseExistingServer: !process.env.CI,
+    ignoreHTTPSErrors: true,
+    timeout: 180_000,
+    stdout: 'pipe',
+    stderr: 'pipe',
+  },
 })

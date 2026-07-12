@@ -89,8 +89,17 @@ export async function devServer(config, opts = {}) {
     // localhost-gated runtime import() of the local channel's dev.js, so haltija
     // is never bundled and self-disables off-localhost; it's injected only at
     // serve time (below), so it never lands in the built output.
+    //
+    // Explicitly OFF under `HALTIJA_DEV=0` and in CI, which both override a config
+    // `haltijaDev: true`: the E2E lane starts this server, and there is no agent on
+    // the other end of the channel there — spawning it would only download an Electron
+    // app into the runner for nobody to look at.
     const HALTIJA_HTTPS_PORT = 8701;
+    const haltijaOff = process.env.HALTIJA_DEV === '0' ||
+        process.env.HALTIJA_DEV === 'false' ||
+        process.env.CI === 'true';
     const haltijaDev = !testMode &&
+        !haltijaOff &&
         (config.haltijaDev === true ||
             process.env.HALTIJA_DEV === '1' ||
             process.env.HALTIJA_DEV === 'true');

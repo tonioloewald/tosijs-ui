@@ -56,7 +56,7 @@ export function registerComponentsInIframe(iframeWindow, context) {
  * consumer wants the run's locals. Returns the (possibly unchanged) code plus the
  * extra context entry to inject. The epilogue no-ops if the example binds nothing.
  */
-function withScopeCapture(transformedCode, onScope) {
+export function withScopeCapture(transformedCode, onScope) {
     if (!onScope)
         return { code: transformedCode, extraContext: {} };
     const epilogue = buildScopeCapture(extractTopLevelBindingNames(transformedCode), SCOPE_CAPTURE_VAR);
