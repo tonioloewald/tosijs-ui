@@ -40,11 +40,90 @@ body {
 }
 &lt;/tosi-code&gt;
 </code></pre>
-<p>The <code>&lt;tosi-code&gt;</code> element has an <code>editor</code> property that gives you its CodeMirror
-<a href="https://codemirror.net/docs/ref/#view.EditorView"><code>EditorView</code></a>, and
-<code>undo()</code> / <code>redo()</code> / <code>canUndo()</code> / <code>canRedo()</code> methods for history control.</p>
-<p>CodeMirror is loaded lazily on first use — a page with no <code>&lt;tosi-code&gt;</code> bundles
-none of it.</p>
+<h2>Properties &amp; events</h2>
+<table>
+<thead>
+<tr>
+<th>member</th>
+<th>what it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>value</code></td>
+<td>the code in the editor (get/set)</td>
+</tr>
+<tr>
+<td><code>mode</code></td>
+<td><code>javascript</code>, <code>typescript</code>, <code>tjs</code>, <code>ajs</code>, <code>css</code>, <code>html</code>, <code>markdown</code></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>makes the editor read-only</td>
+</tr>
+<tr>
+<td><code>original</code> + <code>showDiff(on)</code></td>
+<td>diff the current <code>value</code> against a baseline, as an overlay</td>
+</tr>
+<tr>
+<td><code>editor</code></td>
+<td>the underlying CodeMirror <a href="https://codemirror.net/docs/ref/#view.EditorView"><code>EditorView</code></a> (<code>undefined</code> until loaded)</td>
+</tr>
+<tr>
+<td><code>undo()</code> / <code>redo()</code> / <code>canUndo()</code> / <code>canRedo()</code></td>
+<td>history control</td>
+</tr>
+<tr>
+<td><code>tjsAutocomplete</code></td>
+<td>runtime-value autocomplete hooks (tjs mode) — see below</td>
+</tr>
+<tr>
+<td><code>change</code> event</td>
+<td>fires when the text changes; <code>event.detail.value</code> is the new text</td>
+</tr>
+</tbody></table>
+<p>In <code>tjs</code>/<code>ajs</code> mode the editor loads tjs-lang&#39;s CodeMirror language and completion
+source (if <code>tjs-lang</code> is installed — it&#39;s an optional peer). Set <code>tjsAutocomplete</code>
+to a <code>TjsAutocompleteConfig</code> and completion will suggest the <strong>real members of live
+runtime values</strong> — including proxy members no static analysis can see:</p>
+<pre><code class="language-typescript">codeEl.tjsAutocomplete = { getLiveBindings: () =&gt; ({ app, elements }) }
+</code></pre>
+<h2>Bundling</h2>
+<p>CodeMirror is a <strong>lazy chunk</strong>: with a bundler (ESM), a page that never uses
+<code>&lt;tosi-code&gt;</code> doesn&#39;t load it. <strong>This is not true of the IIFE</strong> (<code>dist/iife.js</code>) —
+bun&#39;s IIFE format cannot code-split, so CodeMirror is inlined there. That is a
+deliberate trade: the doc-system&#39;s editor (and its save-to-source flow) is the
+point of the IIFE, so it carries the editor. It costs ~376KB gzipped, up from
+~118KB in 1.6.x.</p>
+<h2>Migrating from the ACE editor (pre-1.7)</h2>
+<p>1.7 replaced ACE with CodeMirror 6. <code>value</code>, <code>original</code>/<code>showDiff()</code>, <code>mode</code> and
+<code>disabled</code> are unchanged. Removed (each warns once, then no-ops):</p>
+<table>
+<thead>
+<tr>
+<th>removed</th>
+<th>replacement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>theme</code></td>
+<td>style with <code>--code-bg</code> / <code>--text-color</code></td>
+</tr>
+<tr>
+<td><code>options</code> (ACE-shaped)</td>
+<td>configure via <code>editor</code> (an <code>EditorView</code>)</td>
+</tr>
+<tr>
+<td><code>ace</code></td>
+<td>there is no ACE global; use <code>editor</code></td>
+</tr>
+<tr>
+<td><code>editor.session.getUndoManager()</code></td>
+<td><code>undo()</code> / <code>redo()</code> / <code>canUndo()</code> / <code>canRedo()</code></td>
+</tr>
+</tbody></table>
+<p><code>editor</code> <strong>changed type in place</strong> — it was an ACE <code>Editor</code>, it is now a CodeMirror
+<code>EditorView</code>. Code that reached into it needs revisiting; a grep for removed names
+won&#39;t catch this one.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">

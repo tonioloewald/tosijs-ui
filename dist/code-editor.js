@@ -16,17 +16,66 @@ body {
 </tosi-code>
 ```
 
-The `<tosi-code>` element has an `editor` property that gives you its CodeMirror
-[`EditorView`](https://codemirror.net/docs/ref/#view.EditorView), and
-`undo()` / `redo()` / `canUndo()` / `canRedo()` methods for history control.
+## Properties & events
 
-CodeMirror is loaded lazily on first use — a page with no `<tosi-code>` bundles
-none of it.
+| member | what it does |
+| --- | --- |
+| `value` | the code in the editor (get/set) |
+| `mode` | `javascript`, `typescript`, `tjs`, `ajs`, `css`, `html`, `markdown` |
+| `disabled` | makes the editor read-only |
+| `original` + `showDiff(on)` | diff the current `value` against a baseline, as an overlay |
+| `editor` | the underlying CodeMirror [`EditorView`](https://codemirror.net/docs/ref/#view.EditorView) (`undefined` until loaded) |
+| `undo()` / `redo()` / `canUndo()` / `canRedo()` | history control |
+| `tjsAutocomplete` | runtime-value autocomplete hooks (tjs mode) — see below |
+| `change` event | fires when the text changes; `event.detail.value` is the new text |
+
+In `tjs`/`ajs` mode the editor loads tjs-lang's CodeMirror language and completion
+source (if `tjs-lang` is installed — it's an optional peer). Set `tjsAutocomplete`
+to a `TjsAutocompleteConfig` and completion will suggest the **real members of live
+runtime values** — including proxy members no static analysis can see:
+
+```typescript
+codeEl.tjsAutocomplete = { getLiveBindings: () => ({ app, elements }) }
+```
+
+## Bundling
+
+CodeMirror is a **lazy chunk**: with a bundler (ESM), a page that never uses
+`<tosi-code>` doesn't load it. **This is not true of the IIFE** (`dist/iife.js`) —
+bun's IIFE format cannot code-split, so CodeMirror is inlined there. That is a
+deliberate trade: the doc-system's editor (and its save-to-source flow) is the
+point of the IIFE, so it carries the editor. It costs ~376KB gzipped, up from
+~118KB in 1.6.x.
+
+## Migrating from the ACE editor (pre-1.7)
+
+1.7 replaced ACE with CodeMirror 6. `value`, `original`/`showDiff()`, `mode` and
+`disabled` are unchanged. Removed (each warns once, then no-ops):
+
+| removed | replacement |
+| --- | --- |
+| `theme` | style with `--code-bg` / `--text-color` |
+| `options` (ACE-shaped) | configure via `editor` (an `EditorView`) |
+| `ace` | there is no ACE global; use `editor` |
+| `editor.session.getUndoManager()` | `undo()` / `redo()` / `canUndo()` / `canRedo()` |
+
+`editor` **changed type in place** — it was an ACE `Editor`, it is now a CodeMirror
+`EditorView`. Code that reached into it needs revisiting; a grep for removed names
+won't catch this one.
 */
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements, varDefault, } from 'tosijs';
 import { tosiDiff } from './diff';
 const { div } = elements;
+// Warn once per removed member, not once per access — a live-example page holds
+// dozens of editors and a render-loop read would otherwise flood the console.
+const warned = new Set();
+const warnRemoved = (member, advice) => {
+    if (warned.has(member))
+        return;
+    warned.add(member);
+    console.warn(`<tosi-code>.${member} was removed in tosijs-ui 1.7 (the editor is now CodeMirror 6, not ACE) — ${advice}. See CHANGELOG 1.7.0.`);
+};
 export class CodeEditor extends WebComponent {
     static preferredTagName = 'tosi-code';
     source = '';
@@ -119,6 +168,32 @@ export class CodeEditor extends WebComponent {
     /** The underlying CodeMirror EditorView (undefined until loaded). */
     get editor() {
         return this._handle?.view;
+    }
+    // ── Removed in 1.7 (ACE → CodeMirror 6) ────────────────────────────────────
+    // `^1.6.x` resolves 1.7.0, so existing consumers auto-upgrade into this. Left as
+    // warn-once no-ops rather than simply deleted, so `theme`/`options`/`ace` fail
+    // with an actionable message instead of silently doing nothing (or, for `ace`,
+    // a bare `TypeError` on undefined). See CHANGELOG 1.7.0 → Breaking.
+    /** @deprecated Removed in 1.7 — CodeMirror themes via `--code-bg`/`--text-color`. */
+    get theme() {
+        warnRemoved('theme', 'style the editor with --code-bg / --text-color instead');
+        return '';
+    }
+    set theme(_) {
+        warnRemoved('theme', 'style the editor with --code-bg / --text-color instead');
+    }
+    /** @deprecated Removed in 1.7 — ACE-shaped options have no CodeMirror equivalent. */
+    get options() {
+        warnRemoved('options', 'configure CodeMirror via the `editor` (EditorView) instead');
+        return {};
+    }
+    set options(_) {
+        warnRemoved('options', 'configure CodeMirror via the `editor` (EditorView) instead');
+    }
+    /** @deprecated Removed in 1.7 — there is no ACE global; use `editor` (an EditorView). */
+    get ace() {
+        warnRemoved('ace', 'use `editor`, which is now a CodeMirror EditorView');
+        return undefined;
     }
     // History control — so consumers use these instead of reaching into `editor`.
     undo() {

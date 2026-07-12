@@ -31,7 +31,9 @@ bunx tsc --noEmit      # Type check without emitting (used in CI)
 bun book               # Build ePub of the doc corpus (run AFTER `bun run build`)
 ```
 
-The three test lanes are distinct: **`bun test src/*.test.ts`** is the fast happy-dom unit lane (this is all CI runs); **`bun run test-browser`** drives haltija over the inline `` ```test `` doc examples; **`bun playwright test`** is the `tests/*.pw.ts` end-to-end lane. **Caveat:** `bun tests` runs unit + Playwright, and the Playwright half needs the dev server **already running** at `https://localhost:8787` (the Playwright config does NOT auto-start it) — start `bun start` first or the Playwright tests fail to connect.
+The three test lanes are distinct: **`bun test`** is the fast happy-dom unit lane (this is all CI runs — 539 tests; it recurses into `src/*/`); **`bun run test-browser`** drives haltija over the inline `` ```test `` doc examples; **`bun playwright test`** is the `tests/*.pw.ts` end-to-end lane. **Caveat:** `bun tests` runs unit + Playwright, and the Playwright half needs the dev server **already running** at `https://localhost:8787` (the Playwright config does NOT auto-start it) — start `bun start` first or the Playwright tests fail to connect.
+
+**Run every lane before a release.** CI covers only the unit lane, so any lane the release gate doesn't run *will* rot silently — the Playwright lane sat red for ~a month before 1.7. Never scope the unit lane with a `src/*.test.ts` glob: it matches only the 16 top-level files and silently skips the 15 in subdirectories (126 tests).
 
 `bun book` (`bin/build-book.ts`) reads the extracted `demo/docs.json`, so run a normal build first. Book identity/config comes from `tosijs-site.config.ts`. The doc-site build (`buildSite`) also regenerates the ePub on every build when `epub` is enabled in the site config. PDF output is the doc-browser's in-app **Print** button (`book-html.ts` → browser print-to-PDF), not a batch job.
 

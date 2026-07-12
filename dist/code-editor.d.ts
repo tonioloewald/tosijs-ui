@@ -37,6 +37,14 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
     role: string;
     /** The underlying CodeMirror EditorView (undefined until loaded). */
     get editor(): CmHandle['view'] | undefined;
+    /** @deprecated Removed in 1.7 — CodeMirror themes via `--code-bg`/`--text-color`. */
+    get theme(): string;
+    set theme(_: string);
+    /** @deprecated Removed in 1.7 — ACE-shaped options have no CodeMirror equivalent. */
+    get options(): Record<string, unknown>;
+    set options(_: Record<string, unknown>);
+    /** @deprecated Removed in 1.7 — there is no ACE global; use `editor` (an EditorView). */
+    get ace(): undefined;
     undo(): void;
     redo(): void;
     canUndo(): boolean;

@@ -1,5 +1,63 @@
 # Changelog
 
+## 1.7.0
+
+The code editor moved from **ACE to [CodeMirror 6](https://codemirror.net/)**, `tjs`
+became a first-class editing mode with runtime-value autocomplete, and the doc-site
+builder gained the hooks that unblock the tosijs 2.0 TJS port.
+
+### Breaking
+
+`<tosi-code>` (ACE → CodeMirror 6). Each removed member now **warns once and no-ops**
+rather than failing silently, but they are gone:
+
+| removed | replacement |
+| --- | --- |
+| `theme` attribute | style the editor with `--code-bg` / `--text-color` |
+| `options` property (ACE-shaped) | configure via `editor` (a CodeMirror `EditorView`) |
+| `ace` getter | there is no ACE global; use `editor` |
+| `editor.session.getUndoManager()` | `undo()` / `redo()` / `canUndo()` / `canRedo()` |
+
+**`editor` changed type in place** — it was an ACE `Editor`, it is now a CodeMirror
+[`EditorView`](https://codemirror.net/docs/ref/#view.EditorView). A grep for the
+removed names will not catch this; any code reaching into `editor` needs revisiting.
+
+Unchanged: `value`, `original` / `showDiff()`, `mode`, `disabled`.
+
+Because `^1.6.x` resolves `1.7.0`, existing consumers will pick this up automatically.
+
+### Added
+
+- `<tosi-code>` gained a `change` event (`event.detail.value`), `undo()` / `redo()` /
+  `canUndo()` / `canRedo()`, and `tjs` / `ajs` modes.
+- **Runtime-value autocomplete** in `tjs` mode: set `tjsAutocomplete` and completion
+  suggests the *real members of live values* — including tosijs proxy members that no
+  static analysis can see. Live examples wire their own executed scope into it, so
+  `const { app } = tosi(…)` gives real `app.` / `app.items.` completions.
+- Inline **WebAssembly** live examples (tjs `wasm {}` blocks).
+- `buildSite`: `libraryBuild` and `generateCssPreload` hooks, for projects whose
+  library sources are native `.tjs` (this is what the tosijs 2.0 TJS port needs).
+
+### Changed
+
+- **`dist/iife.js` is ~376KB gzipped, up from ~118KB.** Bun's IIFE format cannot
+  code-split, so CodeMirror is inlined there. (Under a bundler/ESM it stays a lazy
+  chunk — a page with no `<tosi-code>` doesn't load it.) This is deliberate: the
+  in-page editor and its save-to-source flow are the point of the doc-system, so the
+  IIFE carries the editor.
+- The library now has runtime `dependencies` (13 `@codemirror/*` packages) where it
+  previously had none. They can't be optional peers: the tjs CodeMirror extension must
+  share this exact `@codemirror/state` instance or it silently no-ops.
+- `tjs-lang` peer: `^0.8.7` → `^0.9.1`.
+
+### Fixed
+
+- `showDiff()` rendered nothing. Giving `<tosi-code>` its own `content` displaced the
+  default `<slot>` that used to project the light-DOM diff overlay, so the overlay was
+  invisible (0×0) while `showingDiff` still reported `true`. It now renders inside the
+  shadow root. This is the review step of the doc-system's edit-and-save-to-source
+  flow, so a blank diff meant saving changes you never saw.
+
 ## 1.6.22
 
 ### Fixed
@@ -33,8 +91,19 @@
 
 ## 1.6.21
 
-- Memory-routed nav-toggle fix; `buildSite` `.tjs` hooks (`libraryBuild`,
-  `generateCssPreload` — see BUILD-TJS-HOOK.md); tjs-lang 0.9.0.
+### Fixed
+
+- Doc-system nav-toggle in `routing: 'memory'` mode drove the *outer* doc-browser
+  instance instead of its own (now scoped per-instance).
+
+### Added
+
+- `buildSite` `libraryBuild` + `generateCssPreload` hooks (also in 1.7.0 above), so a
+  project whose library source is native `.tjs` can build through the doc-site pipeline.
+
+### Changed
+
+- `tjs-lang` peer: `^0.8.7` → `^0.9.0`.
 
 ## 1.6.20
 
