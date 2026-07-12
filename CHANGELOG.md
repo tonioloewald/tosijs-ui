@@ -40,12 +40,12 @@ Because `^1.6.x` resolves `1.7.0`, existing consumers will pick this up automati
 
 ### Changed
 
-- **`dist/iife.js` is ~376KB gzipped, up from ~118KB.** Bun's IIFE format cannot
+- **`dist/iife.js` is ~384KB gzipped, up from ~120KB.** Bun's IIFE format cannot
   code-split, so CodeMirror is inlined there. (Under a bundler/ESM it stays a lazy
   chunk — a page with no `<tosi-code>` doesn't load it.) This is deliberate: the
   in-page editor and its save-to-source flow are the point of the doc-system, so the
   IIFE carries the editor.
-- The library now has runtime `dependencies` (13 `@codemirror/*` packages) where it
+- The library now has runtime `dependencies` (12 `@codemirror/*` packages) where it
   previously had none. They can't be optional peers: the tjs CodeMirror extension must
   share this exact `@codemirror/state` instance or it silently no-ops.
 - `tjs-lang` peer: `^0.8.7` → `^0.9.1`.

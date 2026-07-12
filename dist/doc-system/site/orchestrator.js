@@ -86,6 +86,18 @@ async function buildEpubInChild(config, opts) {
 // Module specifiers contain regex metacharacters (`/`, `.`, `@`, …), so escape
 // before interpolating into the require-shim detector below.
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// Externalize the tjs CodeMirror editor extension ONLY when tjs-lang isn't
+// installed — otherwise it's bundled in so it shares the editor's CodeMirror
+// instance (see the `external` comment in buildSite). Returns [] when present.
+function tjsEditorExternal(root) {
+    try {
+        Bun.resolveSync('tjs-lang/editors/codemirror', root);
+        return [];
+    }
+    catch {
+        return ['tjs-lang/editors/codemirror'];
+    }
+}
 export async function buildSite(config) {
     const PROJECT_ROOT = './';
     const PUBLIC = path.resolve(PROJECT_ROOT, config.outputDir ?? 'docs');
@@ -191,12 +203,23 @@ export async function buildSite(config) {
     // consumer supplies (e.g. via staticDirs or an absolute URL).
     const scriptName = (config.scriptUrl ?? '/iife.js').replace(/^\//, '');
     if (config.bundleEntry) {
-        // tjs-lang transpiles live examples; it's dynamically import()'d at
-        // runtime (falling back to CDN), so keep it out of the bundle.
+        // tjs-lang's TRANSPILER (browser bundles) is dynamically import()'d at
+        // runtime (same-origin `/tjs/` copy, else CDN), so keep it out of the bundle.
+        //
+        // `tjs-lang/editors/codemirror` (the CodeMirror language + autocomplete) is
+        // different: it MUST share the editor's CodeMirror instance, so it has to be
+        // bundled IN — a separately loaded copy carries its own `@codemirror/state`
+        // and silently no-ops. So we do NOT externalize it *when tjs-lang is
+        // installed*. But tjs-lang is an OPTIONAL peer; if it's absent, bundling would
+        // fail to resolve, so we externalize it in that case (the runtime import then
+        // no-ops to plain TS highlighting — graceful degradation).
+        //
+        // NB: bare `'tjs-lang'` must NOT appear here. Externals are PREFIX matches, so
+        // it would silently externalize tjs-lang/editors/codemirror along with it.
         const externals = [
-            'tjs-lang',
             'tjs-lang/browser',
             'tjs-lang/browser/from-ts',
+            ...tjsEditorExternal(PROJECT_ROOT),
             ...(config.bundleExternals ?? []),
         ];
         // Bundle in a CHILD PROCESS, not via Bun.build().
