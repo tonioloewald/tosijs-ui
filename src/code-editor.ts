@@ -26,7 +26,13 @@ none of it.
 
 /*{ "parent": "Components" }*/
 
-import { Component as WebComponent, ElementCreator, elements, PartsMap } from 'tosijs'
+import {
+  Component as WebComponent,
+  ElementCreator,
+  elements,
+  PartsMap,
+  varDefault,
+} from 'tosijs'
 import { tosiDiff, TosiDiff } from './diff'
 import type { CmHandle, TjsAutocompleteConfig } from './code-editor-cm'
 export type { TjsAutocompleteConfig } from './code-editor-cm'
@@ -35,6 +41,7 @@ const { div } = elements
 
 interface CodeEditorParts extends PartsMap {
   host: HTMLDivElement
+  diffHost: HTMLDivElement
 }
 
 export class CodeEditor extends WebComponent<CodeEditorParts> {
@@ -84,34 +91,47 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
   }
 
   // Diff overlay — built only on the editor's public surface (`value` + `original`)
-  // and the tosi-diff component, never the underlying editor's API, so it is
-  // editor-agnostic (this is why it survived the Ace → CodeMirror swap untouched).
+  // and the tosi-diff component, never the underlying editor's API, so it stays
+  // editor-agnostic.
+  //
+  // It lives in the SHADOW root (the `diffHost` part), not the light DOM. Under the
+  // old Ace editor this component had no `content`, so tosijs's default `slot()`
+  // filled the shadow root and Ace mounted into the light DOM — a light-DOM overlay
+  // projected through that slot. CodeMirror mounts into `[part=host]` inside the
+  // shadow root, and this component now declares its own `content`, so there is no
+  // slot: `this.append(overlay)` would put it in the light DOM where nothing renders
+  // it. (Re-adding a slot is NOT the fix — it would also project the element's
+  // textContent, i.e. the initial code, and double-render it under the editor.)
   private diffOverlay: TosiDiff | undefined
 
+  // tosijs exposes no public `hydrated` flag, and `this.parts.<name>` THROWS
+  // ("elementRef does not exist!") before hydration — so probe it, the way
+  // LiveExample does. Without this, reading `showingDiff` on a not-yet-connected
+  // editor throws instead of answering false.
+  private get partsReady(): boolean {
+    try {
+      return this.parts.diffHost !== undefined
+    } catch {
+      return false
+    }
+  }
+
   get showingDiff(): boolean {
-    return this.diffOverlay !== undefined && !this.diffOverlay.hidden
+    return this.partsReady && !this.parts.diffHost.hidden
   }
 
   showDiff(on: boolean): void {
+    if (!this.partsReady) return
+    const { diffHost } = this.parts
     if (on) {
       if (this.diffOverlay === undefined) {
-        this.diffOverlay = tosiDiff({
-          style: {
-            position: 'absolute',
-            inset: '0',
-            zIndex: '5',
-            overflow: 'auto',
-            background: 'var(--tosi-diff-bg, var(--background, #fff))',
-          },
-        })
-        this.append(this.diffOverlay)
+        this.diffOverlay = tosiDiff()
+        diffHost.append(this.diffOverlay)
       }
       this.diffOverlay.original = this.original
       this.diffOverlay.modified = this.value
-      this.diffOverlay.hidden = false
-    } else if (this.diffOverlay !== undefined) {
-      this.diffOverlay.hidden = true
     }
+    diffHost.hidden = !on
   }
 
   static initAttributes = {
@@ -140,7 +160,12 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
     return this._handle?.canRedo() ?? false
   }
 
-  content = () => [div({ part: 'host' })]
+  // `diffHost` starts hidden — an always-present absolutely-positioned overlay would
+  // otherwise sit on top of the editor and swallow every click.
+  content = () => [
+    div({ part: 'host' }),
+    div({ part: 'diffHost', hidden: true }),
+  ]
 
   static shadowStyleSpec = {
     ':host': {
@@ -150,6 +175,13 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
       height: '100%',
     },
     '[part="host"]': { height: '100%' },
+    '[part="diffHost"]': {
+      position: 'absolute',
+      inset: '0',
+      zIndex: '5',
+      overflow: 'auto',
+      background: varDefault.tosiDiffBg(varDefault.background('#fff')),
+    },
     '.cm-editor': { height: '100%' },
     '.cm-scroller': {
       outline: 'none',

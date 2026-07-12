@@ -126,3 +126,82 @@ test('tosi-code respects the disabled (read-only) attribute', async ({ page }) =
 
   await page.evaluate(() => document.getElementById('ro')?.remove())
 })
+
+// Regression for the v1.7 `showDiff()` blank-overlay bug: giving <tosi-code> its own
+// `content` displaced tosijs's default `slot()`, so the diff overlay — appended to the
+// LIGHT DOM, as it was under Ace (which mounted there) — was projected by nothing and
+// rendered at 0x0 while `showingDiff` still reported true. A state-only assertion passes
+// against that bug, so this asserts the overlay is ACTUALLY PAINTED.
+//
+// This surface is load-bearing: it is the review step of the doc-system's
+// edit-and-save-to-source flow (and of AI-proposed edits) — a silently-blank diff means
+// blind-saving changes you never saw.
+test('tosi-code showDiff() actually renders the diff overlay', async ({ page }) => {
+  await page.goto('https://localhost:8787/')
+  await page.waitForFunction(() => !!customElements.get('tosi-code'))
+
+  await page.evaluate(() => {
+    const el = document.createElement('tosi-code') as any
+    el.id = 'diff'
+    el.style.cssText = 'width: 600px; height: 300px; display: block'
+    el.textContent = 'const a = 1'
+    document.body.appendChild(el)
+  })
+  await page.waitForFunction(
+    () => !!(document.getElementById('diff') as any)?.shadowRoot?.querySelector('.cm-editor'),
+    { timeout: 8000 }
+  )
+
+  await page.evaluate(() => {
+    const el = document.getElementById('diff') as any
+    el.original = 'const a = 1'
+    el.value = 'const a = 2\nconst b = 3'
+    el.showDiff(true)
+  })
+
+  // tosi-diff paints on a queued (rAF) render, so wait for the paint rather than
+  // measuring synchronously — but assert on real geometry, not on state.
+  await page.waitForFunction(
+    () => {
+      const overlay = (
+        document.getElementById('diff') as any
+      )?.shadowRoot?.querySelector('tosi-diff')
+      return !!overlay && overlay.getBoundingClientRect().height > 0
+    },
+    { timeout: 5000 }
+  )
+
+  const shown = await page.evaluate(() => {
+    const el = document.getElementById('diff') as any
+    const overlay = el.shadowRoot.querySelector('tosi-diff') as HTMLElement | null
+    const r = overlay?.getBoundingClientRect()
+    return {
+      showingDiff: el.showingDiff,
+      inShadow: !!overlay,
+      visible: overlay ? overlay.checkVisibility() : false,
+      width: r ? Math.round(r.width) : 0,
+      height: r ? Math.round(r.height) : 0,
+      // the rendered diff must actually contain the changed lines
+      lines: overlay?.shadowRoot?.querySelectorAll('.diff-line').length ?? 0,
+    }
+  })
+
+  expect(shown.inShadow).toBe(true)
+  expect(shown.showingDiff).toBe(true)
+  expect(shown.visible).toBe(true)
+  // The bug rendered a 0x0 element — require real painted area.
+  expect(shown.width).toBeGreaterThan(0)
+  expect(shown.height).toBeGreaterThan(0)
+
+  // …and toggling it off hides it again (without destroying it).
+  const hidden = await page.evaluate(() => {
+    const el = document.getElementById('diff') as any
+    el.showDiff(false)
+    const overlay = el.shadowRoot.querySelector('tosi-diff') as HTMLElement | null
+    return { showingDiff: el.showingDiff, visible: overlay ? overlay.checkVisibility() : false }
+  })
+  expect(hidden.showingDiff).toBe(false)
+  expect(hidden.visible).toBe(false)
+
+  await page.evaluate(() => document.getElementById('diff')?.remove())
+})

@@ -3,6 +3,7 @@ import type { CmHandle, TjsAutocompleteConfig } from './code-editor-cm';
 export type { TjsAutocompleteConfig } from './code-editor-cm';
 interface CodeEditorParts extends PartsMap {
     host: HTMLDivElement;
+    diffHost: HTMLDivElement;
 }
 export declare class CodeEditor extends WebComponent<CodeEditorParts> {
     static preferredTagName: string;
@@ -26,6 +27,7 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
     get original(): string;
     set original(text: string);
     private diffOverlay;
+    private get partsReady();
     get showingDiff(): boolean;
     showDiff(on: boolean): void;
     static initAttributes: {
@@ -49,6 +51,13 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
         };
         '[part="host"]': {
             height: string;
+        };
+        '[part="diffHost"]': {
+            position: string;
+            inset: string;
+            zIndex: string;
+            overflow: string;
+            background: string;
         };
         '.cm-editor': {
             height: string;
