@@ -1,10 +1,24 @@
 # Changelog
 
-## 1.7.0
+## 1.7.0-beta.1
+
+**A beta, published under npm's `beta` tag** — `latest` stays on 1.6.x. A prerelease is not
+matched by `^1.6.x` (or by `^1.7.0`), so nobody is auto-upgraded into the editor swap; you get
+this only by asking for it:
+
+```
+npm i tosijs-ui@beta        # or tosijs-ui@1.7.0-beta.1
+```
 
 The code editor moved from **ACE to [CodeMirror 6](https://codemirror.net/)**, `tjs`
 became a first-class editing mode with runtime-value autocomplete, and the doc-site
 builder gained the hooks that unblock the tosijs 2.0 TJS port.
+
+**Known cost, deliberate for now.** `dist/iife.js` carries CodeMirror (bun's IIFE format cannot
+code-split), and generated doc pages hide the body until hydration — so on a cheap phone the
+blank-screen window is ~4.5s vs ~3.7s without the editor. The fix is to pre-render the page
+chrome so hydration is additive and the gate can go (then the bundle gates *editing*, not
+*reading*); that's the next doc-system release, not this one. Measurements in `TODO.md`.
 
 ### Breaking
 

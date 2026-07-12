@@ -12,6 +12,49 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 
 ## High Priority
 
+- **Doc-system: pre-render the chrome, hydrate in place — and drop the opacity gate.**
+  Generated pages currently hide the whole body (`body{opacity:0}`, 4s safety-net timeout)
+  until the bundle hydrates, because hydration injects the entire chrome (an undefined custom
+  element is `display:inline`, so the un-upgraded page stacks as bare text) and collapses each
+  example's `js`/`test`/`css` blocks into one live-example. That reflow is why the gate exists.
+
+  **The markup is already all there** — nav tree, header, content, code blocks, `<tosi-doc-system>`
+  host; a component page is 9.5KB of HTML. What's missing is CSS for the *un-upgraded* state.
+  Fix: a **size-gated layout** that tucks the unhydrated body into a scrolling rectangle
+  positioned as though the header and (on wide viewports) the sidebar were already there —
+  `tosi-doc-system:not(:defined)` + its light-DOM children, in the burned static stylesheet.
+  Hide the non-`js` blocks and reserve the preview's space so live-example replacement is
+  in-place. Then hydration is purely additive, nothing moves, and the gate can go.
+
+  Why it matters (measured on the built site, gzipped, CPU-throttled — 6x ≈ mid Android,
+  12x ≈ cheap phone / Pi4). "Visible" = the gate lifting, i.e. blank-screen duration:
+
+  | device | 1.7 (387KB gz) | editor-free (121KB gz) |
+  | --- | --- | --- |
+  | laptop, fast wifi | 685ms | 505ms |
+  | mid Android, 4G | 1976ms | 1316ms |
+  | cheap phone / Pi4, slow 4G | 4532ms | 3667ms |
+  | cheap phone / Pi4, 3G | 4837ms — *hits the 4s safety net* | 4831ms — *ditto* |
+
+  Note the 3G row: hydration loses to the safety net, so the reader gets 4s of blank **and**
+  the un-hydrated flash anyway. The gate only pays off while hydration is fast. With the chrome
+  pre-rendered, content is readable at FCP (~300–500ms) on every device, and the bundle gates
+  *editing* rather than *reading*.
+
+  Do NOT just delete the gate: that trades a clean blank→hydrated (2 states) for
+  blank→dead-page→hydrated (3 states) for everyone, i.e. a flash of content that then shifts.
+
+- **Split the editor out of the hydration bundle** (pairs with the above). The editor stack is
+  **66% of the bundle**: `@codemirror/*` (1061KB src), `@lezer/*` (384KB), `acorn` (296KB — it
+  arrives via the tjs *autocomplete* extension, not the transpiler), + the tjs CM extension. The
+  transpiler is already external (`tjs-lang/browser`, fetched at runtime), so **live examples
+  would still run** — only the code *panels* need CodeMirror. The lazy boundary
+  (`import('./code-editor-cm')`) already works under ESM; only `--format=iife` can't split.
+  Two halves: (1) emit the hydration bundle as ESM + `--splitting` + `<script type="module">`,
+  keeping the IIFE for the CDN path (`bundle-guard`'s classic-script check must go module-aware);
+  (2) defer editor *construction* until a code panel is first shown — otherwise live-example
+  eagerly builds 4–5 hidden editors per example and pulls the chunk anyway.
+
 - **Diff view: allow reverting changes from it.** `<tosi-code>`'s `showDiff(on)` overlay
   (`src/code-editor.ts` → `tosi-diff`) is read-only — you can see what changed against the
   baseline but not act on it. Let the reader revert from the diff: per-hunk revert at minimum,
