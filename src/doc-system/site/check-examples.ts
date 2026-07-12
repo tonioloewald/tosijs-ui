@@ -15,11 +15,17 @@ Build-time only (bun). Never import from browser code.
 */
 
 import { marked } from 'marked'
-import { rewriteImports, AsyncFunction, loadTransform } from '../../live-example/code-transform'
+import {
+  rewriteImports,
+  AsyncFunction,
+  loadTransform,
+} from '../../live-example/code-transform'
 import type { Doc } from './docs'
 
 declare const Bun: {
-  Transpiler: new (opts: { loader: string }) => { transformSync(code: string): string }
+  Transpiler: new (opts: { loader: string }) => {
+    transformSync(code: string): string
+  }
 }
 
 // The default live-example context (matches the IIFE globals the pages provide).
@@ -43,7 +49,9 @@ function dialectOf(info: string | undefined): string {
 }
 
 /** Collect every fenced code block in a doc (recursing into lists/quotes). */
-function collectCodeTokens(text: string): Array<{ lang: string; text: string }> {
+function collectCodeTokens(
+  text: string
+): Array<{ lang: string; text: string }> {
   const out: Array<{ lang: string; text: string }> = []
   const walk = (tokens: any[]): void => {
     for (const t of tokens) {
@@ -95,7 +103,7 @@ export async function checkExamples(
           js = rewritten // `js` / `test` are already JS
         }
         // Syntax-validate the way the component does before running it.
-        // eslint-disable-next-line no-new
+
         new (AsyncFunction as any)(js)
       } catch (err) {
         problems.push({

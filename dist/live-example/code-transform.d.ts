@@ -19,6 +19,24 @@ export declare function contextVarName(key: string): string;
  */
 export declare function rewriteImports(code: string, contextKeys: string[]): string;
 /**
+ * Blank out the CONTENTS of strings, template literals, comments and regex literals,
+ * preserving length and newlines so every index still lines up with the original.
+ *
+ * The scanner below counts brackets and matches `^const` over raw text, which made it
+ * wrong in two ways that both failed silently:
+ *
+ *   const label = 'Items ('      → an unbalanced '(' inside a string ran the depth
+ *                                  counter away, swallowing the REST OF THE FILE, so
+ *                                  every later binding vanished from completions.
+ *   `const in a template`        → matched at column 0 inside a template literal and
+ *                                  yielded the name `in`, and the epilogue then emitted
+ *                                  `try{__tosiScope.in=in}` — a PARSE error, which no
+ *                                  try/catch can absorb, killing the whole example.
+ *
+ * Identifiers never live inside literals, so masking loses nothing we want.
+ */
+export declare function maskLiterals(code: string): string;
+/**
  * Best-effort list of the identifiers a snippet binds at the TOP level (column 0, so
  * genuinely function-scope, not inside a block). Handles `const/let/var` — including
  * MULTI-LINE destructuring, MULTIPLE declarators (`const a = 1, b = 2`), nested

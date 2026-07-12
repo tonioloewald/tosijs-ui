@@ -1,6 +1,10 @@
 # Proposal: a pluggable library-build step in `buildSite` (for native `.tjs` sources)
 
-**Status:** ✅ **IMPLEMENTED** (tosijs-ui, 1.7 branch) — Option A + the preload half.
+**Status:** ✅ **SHIPPED in tosijs-ui `1.6.21`** (on npm; `latest` is ≥ 1.6.22) — Option A + the
+preload half. **Nothing is waiting on 1.7** — the seams, and their `.d.ts` types, are in the
+published tarball. (This line previously said "1.7 branch", which parked the tosijs 2.0 TJS
+port on an unreleased branch for no reason. If you are reading this to decide whether you can
+start: you can.)
 Raised from the tosijs 2.0 port (migrating tosijs modules from `.ts` to native TJS
 `.tjs`). Full context: `tosijs/TJS-PORT-DX.md`.
 

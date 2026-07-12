@@ -4,13 +4,13 @@ import { test, expect } from '@playwright/test'
 // its shadow root, honor the value get/set contract, edit via the keyboard, and
 // undo/redo through the new methods (which replaced reaching into the raw editor).
 //
-// Requires the dev server (https://localhost:8787). The Playwright config does not
-// start it; run `bun start` first.
+// The Playwright config starts its own dev server (its own port, haltija overlay off)
+// and tests address it via baseURL — just run `bun playwright test`.
 
 test('tosi-code (CodeMirror) renders, honors value, edits, and undoes', async ({
   page,
 }) => {
-  await page.goto('https://localhost:8787/')
+  await page.goto('/')
   await page.waitForFunction(() => !!customElements.get('tosi-code'))
 
   await page.evaluate(() => {
@@ -59,13 +59,17 @@ test('tosi-code (CodeMirror) renders, honors value, edits, and undoes', async ({
   })
 
   // Typing through the editor updates `value`.
-  await page.evaluate(() => (document.getElementById('repro') as any).editor.focus())
+  await page.evaluate(() =>
+    (document.getElementById('repro') as any).editor.focus()
+  )
   await page.keyboard.type(' + 3')
   await page.waitForFunction(() =>
     (document.getElementById('repro') as any).value.includes('+ 3')
   )
   expect(
-    await page.evaluate(() => (document.getElementById('repro') as any).canUndo())
+    await page.evaluate(() =>
+      (document.getElementById('repro') as any).canUndo()
+    )
   ).toBe(true)
 
   // undo() reverts the typed edit and enables redo(); redo() re-applies it. (CM
@@ -76,7 +80,9 @@ test('tosi-code (CodeMirror) renders, honors value, edits, and undoes', async ({
     () => !(document.getElementById('repro') as any).value.includes('+ 3')
   )
   expect(
-    await page.evaluate(() => (document.getElementById('repro') as any).canRedo())
+    await page.evaluate(() =>
+      (document.getElementById('repro') as any).canRedo()
+    )
   ).toBe(true)
 
   await page.evaluate(() => (document.getElementById('repro') as any).redo())
@@ -87,8 +93,10 @@ test('tosi-code (CodeMirror) renders, honors value, edits, and undoes', async ({
   await page.evaluate(() => document.getElementById('repro')?.remove())
 })
 
-test('tosi-code respects the disabled (read-only) attribute', async ({ page }) => {
-  await page.goto('https://localhost:8787/')
+test('tosi-code respects the disabled (read-only) attribute', async ({
+  page,
+}) => {
+  await page.goto('/')
   await page.waitForFunction(() => !!customElements.get('tosi-code'))
 
   await page.evaluate(() => {
@@ -101,7 +109,10 @@ test('tosi-code respects the disabled (read-only) attribute', async ({ page }) =
   })
 
   await page.waitForFunction(
-    () => !!(document.getElementById('ro') as any)?.shadowRoot?.querySelector('.cm-editor'),
+    () =>
+      !!(document.getElementById('ro') as any)?.shadowRoot?.querySelector(
+        '.cm-editor'
+      ),
     { timeout: 8000 }
   )
 
@@ -117,7 +128,9 @@ test('tosi-code respects the disabled (read-only) attribute', async ({ page }) =
   const before = await page.evaluate(
     () => (document.getElementById('ro') as any).value
   )
-  await page.evaluate(() => (document.getElementById('ro') as any).editor.focus())
+  await page.evaluate(() =>
+    (document.getElementById('ro') as any).editor.focus()
+  )
   await page.keyboard.type('XYZ')
   await page.waitForTimeout(150)
   expect(
@@ -136,8 +149,10 @@ test('tosi-code respects the disabled (read-only) attribute', async ({ page }) =
 // This surface is load-bearing: it is the review step of the doc-system's
 // edit-and-save-to-source flow (and of AI-proposed edits) — a silently-blank diff means
 // blind-saving changes you never saw.
-test('tosi-code showDiff() actually renders the diff overlay', async ({ page }) => {
-  await page.goto('https://localhost:8787/')
+test('tosi-code showDiff() actually renders the diff overlay', async ({
+  page,
+}) => {
+  await page.goto('/')
   await page.waitForFunction(() => !!customElements.get('tosi-code'))
 
   await page.evaluate(() => {
@@ -148,7 +163,10 @@ test('tosi-code showDiff() actually renders the diff overlay', async ({ page }) 
     document.body.appendChild(el)
   })
   await page.waitForFunction(
-    () => !!(document.getElementById('diff') as any)?.shadowRoot?.querySelector('.cm-editor'),
+    () =>
+      !!(document.getElementById('diff') as any)?.shadowRoot?.querySelector(
+        '.cm-editor'
+      ),
     { timeout: 8000 }
   )
 
@@ -173,7 +191,9 @@ test('tosi-code showDiff() actually renders the diff overlay', async ({ page }) 
 
   const shown = await page.evaluate(() => {
     const el = document.getElementById('diff') as any
-    const overlay = el.shadowRoot.querySelector('tosi-diff') as HTMLElement | null
+    const overlay = el.shadowRoot.querySelector(
+      'tosi-diff'
+    ) as HTMLElement | null
     const r = overlay?.getBoundingClientRect()
     return {
       showingDiff: el.showingDiff,
@@ -197,8 +217,13 @@ test('tosi-code showDiff() actually renders the diff overlay', async ({ page }) 
   const hidden = await page.evaluate(() => {
     const el = document.getElementById('diff') as any
     el.showDiff(false)
-    const overlay = el.shadowRoot.querySelector('tosi-diff') as HTMLElement | null
-    return { showingDiff: el.showingDiff, visible: overlay ? overlay.checkVisibility() : false }
+    const overlay = el.shadowRoot.querySelector(
+      'tosi-diff'
+    ) as HTMLElement | null
+    return {
+      showingDiff: el.showingDiff,
+      visible: overlay ? overlay.checkVisibility() : false,
+    }
   })
   expect(hidden.showingDiff).toBe(false)
   expect(hidden.visible).toBe(false)

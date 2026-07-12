@@ -99,6 +99,72 @@ describe('<tosi-code> (CodeMirror 6)', () => {
     expect(el.value).toBe('round trip')
   })
 
+  // ── The lazy-load window ──────────────────────────────────────────────────────
+  // Every other test here awaits the mount, which is exactly why the disconnect race
+  // slipped through. These deliberately do NOT await it: the chunk fetch is async and
+  // wide open on a cold load, and doc-browser navigation removes editors mid-flight.
+
+  test('remove-before-mount does not build an orphan editor', async () => {
+    const el = codeEditor() as CodeEditor
+    document.body.append(el)
+    el.remove() // still in the pre-load window — the chunk has not resolved
+    await mounted(el)
+
+    // A stale load that mounted anyway would build an EditorView into a detached
+    // shadow root, with no disconnectedCallback left to ever destroy it.
+    expect(el.editor).toBeUndefined()
+    expect(el.querySelectorAll('.cm-editor').length).toBe(0)
+    expect(el.shadowRoot?.querySelectorAll('.cm-editor').length ?? 0).toBe(0)
+  })
+
+  test('remove-then-readd before mount leaves exactly ONE editor', async () => {
+    const el = codeEditor() as CodeEditor
+    el.value = 'const a = 1'
+    document.body.append(el)
+    el.remove()
+    document.body.append(el) // second connect, second load, first still in flight
+    await mounted(el)
+
+    // The stale load must not mount alongside the live one: two views in the host with
+    // `_handle` pointing only at the second orphans the first (and its darkmode
+    // listener) forever — the very leak disconnectedCallback exists to prevent.
+    const views = el.shadowRoot?.querySelectorAll('.cm-editor').length ?? 0
+    expect(views).toBe(1)
+    expect(el.editor).toBeDefined()
+    expect(el.value).toBe('const a = 1')
+  })
+
+  // ── Pre-hydration access ──────────────────────────────────────────────────────
+
+  test('reading showingDiff before insertion does not brick the editor', async () => {
+    const el = codeEditor() as CodeEditor
+    // tosijs's `parts` proxy caches its query root on first access, so a pre-hydration
+    // probe used to root it at the light-DOM element permanently — after which
+    // `this.parts.host` throws and CodeMirror never mounts at all.
+    expect(el.showingDiff).toBe(false)
+
+    el.value = 'const a = 1'
+    document.body.append(el)
+    await mounted(el)
+
+    expect(el.editor).toBeDefined()
+    expect(el.value).toBe('const a = 1')
+  })
+
+  test('showDiff() before insertion is replayed after hydration, not dropped', async () => {
+    const el = codeEditor() as CodeEditor
+    el.original = 'const a = 1'
+    el.value = 'const a = 2'
+    el.showDiff(true) // pre-hydration: used to be silently dropped
+
+    document.body.append(el)
+    await mounted(el)
+
+    expect(el.editor).toBeDefined()
+    expect(el.showingDiff).toBe(true)
+    expect(el.shadowRoot?.querySelector('tosi-diff')).toBeTruthy()
+  })
+
   // The removed ACE surface must fail loudly-but-safely, not silently no-op.
   test('removed ACE members (theme/options/ace) warn instead of throwing', async () => {
     const el = codeEditor() as CodeEditor

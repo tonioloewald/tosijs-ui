@@ -58,7 +58,7 @@ export function entriesFromCorpus(corpus, meta) {
  */
 function entriesFromSrcScan() {
     const entries = [];
-    let files = [];
+    let files;
     try {
         files = fs.readdirSync(SRC).filter((f) => f.endsWith('.ts'));
     }

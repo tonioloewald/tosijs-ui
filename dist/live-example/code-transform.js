@@ -84,6 +84,125 @@ function splitAtDepth0(src) {
     parts.push(src.slice(start));
     return parts.filter((p) => p.trim() !== '');
 }
+/**
+ * Blank out the CONTENTS of strings, template literals, comments and regex literals,
+ * preserving length and newlines so every index still lines up with the original.
+ *
+ * The scanner below counts brackets and matches `^const` over raw text, which made it
+ * wrong in two ways that both failed silently:
+ *
+ *   const label = 'Items ('      → an unbalanced '(' inside a string ran the depth
+ *                                  counter away, swallowing the REST OF THE FILE, so
+ *                                  every later binding vanished from completions.
+ *   `const in a template`        → matched at column 0 inside a template literal and
+ *                                  yielded the name `in`, and the epilogue then emitted
+ *                                  `try{__tosiScope.in=in}` — a PARSE error, which no
+ *                                  try/catch can absorb, killing the whole example.
+ *
+ * Identifiers never live inside literals, so masking loses nothing we want.
+ */
+export function maskLiterals(code) {
+    const out = code.split('');
+    const blank = (from, to) => {
+        for (let i = from; i < to && i < out.length; i++) {
+            if (out[i] !== '\n')
+                out[i] = ' ';
+        }
+    };
+    // A `/` starts a regex (not division) only where a value can't precede it.
+    const regexAllowedAfter = /[=(,:[!&|?{};+\-*%~^<>]$/;
+    let i = 0;
+    while (i < code.length) {
+        const c = code[i];
+        const next = code[i + 1];
+        if (c === '/' && next === '/') {
+            const end = code.indexOf('\n', i);
+            blank(i, end === -1 ? code.length : end);
+            i = end === -1 ? code.length : end;
+        }
+        else if (c === '/' && next === '*') {
+            const end = code.indexOf('*/', i + 2);
+            blank(i, end === -1 ? code.length : end + 2);
+            i = end === -1 ? code.length : end + 2;
+        }
+        else if (c === "'" || c === '"') {
+            let j = i + 1;
+            while (j < code.length && code[j] !== c) {
+                if (code[j] === '\\')
+                    j++;
+                if (code[j] === '\n')
+                    break; // unterminated — don't run away
+                j++;
+            }
+            blank(i + 1, j); // keep the quotes — see NB below
+            i = j + 1;
+        }
+        else if (c === '`') {
+            // Template literal: skip to the matching backtick, stepping over ${…} (which can
+            // nest braces and contain more backticks).
+            let j = i + 1;
+            let braces = 0;
+            while (j < code.length) {
+                if (code[j] === '\\')
+                    j += 2;
+                else if (braces === 0 && code[j] === '`')
+                    break;
+                else if (code[j] === '$' && code[j + 1] === '{') {
+                    braces++;
+                    j += 2;
+                }
+                else if (braces > 0 && code[j] === '{') {
+                    braces++;
+                    j++;
+                }
+                else if (braces > 0 && code[j] === '}') {
+                    braces--;
+                    j++;
+                }
+                else
+                    j++;
+            }
+            blank(i + 1, j); // keep the backticks
+            i = j + 1;
+        }
+        else if (c === '/') {
+            const before = code.slice(0, i).replace(/\s+$/, '');
+            if (before === '' || regexAllowedAfter.test(before)) {
+                let j = i + 1;
+                let inClass = false;
+                while (j < code.length) {
+                    if (code[j] === '\\')
+                        j++;
+                    else if (code[j] === '[')
+                        inClass = true;
+                    else if (code[j] === ']')
+                        inClass = false;
+                    else if (code[j] === '/' && !inClass)
+                        break;
+                    else if (code[j] === '\n')
+                        break; // unterminated — it was division after all
+                    j++;
+                }
+                blank(i + 1, j); // keep the slashes
+                i = j + 1;
+            }
+            else
+                i++; // division
+        }
+        else
+            i++;
+    }
+    return out.join('');
+}
+// Reserved words are identifier-SHAPED but can't be read as one: emitting
+// `try{__tosiScope.in=in}` is a SyntaxError that no try/catch absorbs, and it takes the
+// whole example down with it. Masking should already prevent these from being matched;
+// this is the belt to that suspenders.
+const RESERVED = new Set(('break case catch class const continue debugger default delete do else enum export ' +
+    'extends false finally for function if import in instanceof new null return super ' +
+    'switch this throw true try typeof var void while with yield let static implements ' +
+    'interface package private protected public await').split(' '));
+const isCapturableName = (name) => /^[A-Za-z_$][\w$]*$/.test(name) && !RESERVED.has(name);
 /** Pull the bound identifiers out of one declaration's left-hand side. */
 function patternNames(lhs) {
     lhs = lhs.trim();
@@ -144,6 +263,15 @@ function readDeclaration(code, from) {
                 break;
         }
     }
+    // FAIL SAFE. Running to EOF with depth > 0 means the brackets never balanced, and
+    // consuming the tail would silently drop every binding after this point (the old
+    // behaviour, and the whole bug). Masking should make this unreachable; if it happens
+    // anyway, give up on THIS declaration only — take the first line and let the scan
+    // resume — rather than swallowing the rest of the example.
+    if (i >= code.length && depth > 0) {
+        const eol = code.indexOf('\n', from);
+        return code.slice(from, eol === -1 ? code.length : eol);
+    }
     return code.slice(from, i);
 }
 /**
@@ -159,19 +287,23 @@ function readDeclaration(code, from) {
  * degrades completions rather than breaking the example.
  */
 export function extractTopLevelBindingNames(code) {
+    // Scan MASKED source: literals and comments are blanked (same length, same newlines),
+    // so a stray bracket or a `const` inside a string can't derail the scan. Indices still
+    // line up with `code`, and identifiers only ever live outside literals.
+    const masked = maskLiterals(code);
     const names = new Set();
     const declRe = /^(?:export\s+)?(const|let|var|function\*?|class)\s+/gm;
     let m;
-    while ((m = declRe.exec(code)) !== null) {
+    while ((m = declRe.exec(masked)) !== null) {
         const kind = m[1];
         const from = m.index + m[0].length;
         if (kind === 'class' || kind.startsWith('function')) {
-            const id = code.slice(from).match(/^[A-Za-z_$][\w$]*/);
+            const id = masked.slice(from).match(/^[A-Za-z_$][\w$]*/);
             if (id)
                 names.add(id[0]);
             continue;
         }
-        const decl = readDeclaration(code, from);
+        const decl = readDeclaration(masked, from);
         // Each depth-0 comma starts another declarator (`const a = 1, b = 2`).
         for (const declarator of splitAtDepth0(decl)) {
             const eq = indexAtDepth0(declarator, '=');
@@ -182,7 +314,7 @@ export function extractTopLevelBindingNames(code) {
         // Don't rescan inside the declaration we just consumed.
         declRe.lastIndex = from + decl.length;
     }
-    return [...names];
+    return [...names].filter(isCapturableName);
 }
 /**
  * Build an epilogue that captures the values of `names` (as they stand at the end
@@ -192,9 +324,15 @@ export function extractTopLevelBindingNames(code) {
  * there's nothing to capture.
  */
 export function buildScopeCapture(names, captureVar) {
-    if (names.length === 0)
+    // Filter HERE too, not just at extraction. Every other guard in this file is a
+    // runtime try/catch, but an unreadable name (`in`, `class`, `2bad`) makes the
+    // epilogue itself unparseable — and a SyntaxError takes the whole example down
+    // before a single line of it runs. This is the last line of defence, so it must not
+    // trust its caller.
+    const capturable = names.filter(isCapturableName);
+    if (capturable.length === 0)
         return '';
-    const assigns = names
+    const assigns = capturable
         .map((n) => `try{__tosiScope.${n}=${n}}catch(_e){}`)
         .join('');
     return `\n;{const __tosiScope={};${assigns}${captureVar}(__tosiScope)}`;
@@ -229,7 +367,8 @@ const TJS_VERSION = '0.9.1';
 //     it (minutes–hours) and any one can blip, so we try several. The module-cache
 //     service worker caches all three hosts.
 function bundleUrls(file) {
-    const localBase = globalThis.__TJS_LOCAL_BASE;
+    const localBase = globalThis
+        .__TJS_LOCAL_BASE;
     return [
         ...(typeof localBase === 'string' ? [`${localBase}${file}`] : []),
         `https://cdn.jsdelivr.net/npm/tjs-lang@${TJS_VERSION}/dist/${file}`,
@@ -277,7 +416,9 @@ async function loadTjsTestApiImpl() {
     for (const load of sources) {
         try {
             const m = (await load());
-            if (m && typeof m.extractTests === 'function' && typeof m.testUtils === 'string') {
+            if (m &&
+                typeof m.extractTests === 'function' &&
+                typeof m.testUtils === 'string') {
                 return { extractTests: m.extractTests, testUtils: m.testUtils };
             }
         }
@@ -360,7 +501,9 @@ export async function loadTransform(dialect = 'js') {
         if (dialect === 'ts') {
             // async: fromTS lazy-loads the TypeScript compiler on first use.
             return (async () => {
-                const tjsSource = fromTS ? (await fromTS(code, { emitTJS: true })).code : code;
+                const tjsSource = fromTS
+                    ? (await fromTS(code, { emitTJS: true })).code
+                    : code;
                 const result = {
                     code: tjs(tjsSource, { dialect: 'tjs', runTests: false }).code,
                 };

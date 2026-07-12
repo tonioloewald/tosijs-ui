@@ -80,7 +80,10 @@ async function ensureDevCerts() {
     process.exit(1);
 }
 export async function devServer(config, opts = {}) {
-    const PORT = config.port ?? 8787;
+    // PORT env wins over the config, so a test harness can bring up its own instance on
+    // its own port instead of adopting (or killing — killStrayServer takes the port)
+    // the dev server you already have running.
+    const PORT = Number(process.env.PORT ?? config.port ?? 8787);
     const PUBLIC = path.resolve('./', config.outputDir ?? 'docs');
     const isSPA = true;
     const testMode = !!opts.test;
@@ -374,9 +377,13 @@ export async function devServer(config, opts = {}) {
         }
         if (!hjAvailable) {
             console.log('Starting haltija...');
+            // stdout/stderr are NOT inherited: `bunx haltija` launches an Electron app as a
+            // grandchild, and killing the bunx wrapper does not kill it. An orphaned Electron
+            // holding our inherited stdout keeps the pipe open forever, so a CI job or an
+            // agent capturing this command's output sees it hang long after it exited (0).
             haltija = spawn(['bunx', 'haltija@latest', '-f'], {
-                stdout: 'inherit',
-                stderr: 'inherit',
+                stdout: 'ignore',
+                stderr: 'ignore',
             });
             console.log('Waiting for browser...');
             for (let i = 0; i < 20; i++) {
@@ -404,18 +411,40 @@ export async function devServer(config, opts = {}) {
         }
         console.log('Opening demo site...');
         await $ `hj navigate https://localhost:${PORT}`;
+        /**
+         * Tear down the haltija WE started — including the Electron grandchild.
+         *
+         * `haltija.kill()` only signals the `bunx` wrapper; the Electron app it launched
+         * survives. A surviving instance leaves stale windows behind, and the next
+         * `--test` run reuses any haltija reporting `windows.length > 0` — so the run
+         * after this one navigates a dead window, never POSTs /report, and fails with
+         * "Browser tests timed out" on a perfectly good codebase. Only ever kills the
+         * instance this process spawned; a haltija you were already running is left alone.
+         */
+        const stopHaltija = async () => {
+            if (!haltija)
+                return;
+            haltija.kill();
+            // NB: interpolate the pattern — a quoted literal in a `$` template is passed to
+            // pkill WITH the quotes and matches nothing.
+            const electron = 'haltija/apps/desktop';
+            try {
+                await $ `pkill -f ${electron}`.quiet();
+            }
+            catch {
+                // nothing left to kill — fine
+            }
+        };
         try {
             const results = await testResults;
             const exitCode = results.failed > 0 ? 1 : 0;
-            if (haltija)
-                haltija.kill();
+            await stopHaltija();
             server.stop();
             process.exit(exitCode);
         }
         catch (e) {
             console.error(e.message);
-            if (haltija)
-                haltija.kill();
+            await stopHaltija();
             server.stop();
             process.exit(1);
         }

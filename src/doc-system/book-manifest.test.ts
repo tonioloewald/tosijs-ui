@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { selectBookDocs, type BookManifest } from './book-manifest'
+import { selectBookDocs } from './book-manifest'
 
 interface D {
   filename: string

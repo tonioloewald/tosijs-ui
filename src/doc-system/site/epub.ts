@@ -29,7 +29,6 @@ import { selectBookDocs } from '../book-manifest'
 export { DEFAULT_BOOK_CSS, stripDocMeta }
 
 declare global {
-  // eslint-disable-next-line no-var
   var Bun: any
 }
 
@@ -80,8 +79,20 @@ export interface BuildEpubOptions {
 // ── XML / XHTML helpers ─────────────────────────────────────────────────────
 
 const VOID_ELEMENTS = [
-  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta',
-  'param', 'source', 'track', 'wbr',
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr',
 ]
 
 export function escapeXml(s: string): string {
@@ -303,7 +314,8 @@ function packageOpf(
         ]
       : []),
     ...chapters.map(
-      (c) => `<item id="${c.id}" href="${c.href}" media-type="application/xhtml+xml"/>`
+      (c) =>
+        `<item id="${c.id}" href="${c.href}" media-type="application/xhtml+xml"/>`
     ),
   ]
   const spine = [
@@ -312,7 +324,9 @@ function packageOpf(
     ...chapters.map((c) => `<itemref idref="${c.id}"/>`),
   ]
   // EPUB2 cover fallback (older readers find the thumbnail via this meta).
-  const coverMeta = cover ? `\n    <meta name="cover" content="cover-image"/>` : ''
+  const coverMeta = cover
+    ? `\n    <meta name="cover" content="cover-image"/>`
+    : ''
   return `<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -332,7 +346,10 @@ function packageOpf(
 `
 }
 
-function renderNavList(nodes: NavNode<Doc>[], hrefFor: (d: Doc) => string): string {
+function renderNavList(
+  nodes: NavNode<Doc>[],
+  hrefFor: (d: Doc) => string
+): string {
   const items = nodes
     .map((node) => {
       const label = escapeXml(node.doc.title)
@@ -433,7 +450,9 @@ async function zipEpub(buildDir: string, outputAbs: string): Promise<void> {
   // 1) mimetype first, stored (-0), no extra fields (-X)
   await $`zip -X0 ${outputAbs} mimetype`.cwd(buildDir).quiet()
   // 2) everything else, deflated (-9), recursive (-r), no extra fields, no dir entries (-D)
-  await $`zip -Xr9D ${outputAbs} META-INF OEBPS -x mimetype`.cwd(buildDir).quiet()
+  await $`zip -Xr9D ${outputAbs} META-INF OEBPS -x mimetype`
+    .cwd(buildDir)
+    .quiet()
 }
 
 // ── Cover ───────────────────────────────────────────────────────────────────
@@ -445,7 +464,10 @@ interface Cover {
 }
 
 /** Rasterize an SVG to a PNG buffer via @resvg/resvg-js (optional dep). */
-async function rasterizeSvg(svg: string, width: number): Promise<Buffer | null> {
+async function rasterizeSvg(
+  svg: string,
+  width: number
+): Promise<Buffer | null> {
   try {
     const { Resvg } = (await import('@resvg/resvg-js')) as any
     const resvg = new Resvg(svg, {
@@ -459,7 +481,11 @@ async function rasterizeSvg(svg: string, width: number): Promise<Buffer | null> 
 }
 
 /** Greedy word-wrap into at most `maxLines` lines of ~`maxChars` each. */
-function wrapTitle(title: string, maxChars: number, maxLines: number): string[] {
+function wrapTitle(
+  title: string,
+  maxChars: number,
+  maxLines: number
+): string[] {
   const lines: string[] = []
   let current = ''
   for (const word of title.split(/\s+/)) {
@@ -495,7 +521,9 @@ function coverSvg(
   const titleText = titleLines
     .map(
       (line, i) =>
-        `<text x="${W / 2}" y="${startY + i * fontSize * 1.2}" text-anchor="middle" ` +
+        `<text x="${W / 2}" y="${
+          startY + i * fontSize * 1.2
+        }" text-anchor="middle" ` +
         `font-family="Helvetica,Arial,sans-serif" font-size="${fontSize}" font-weight="bold" ` +
         `fill="#ffffff">${escapeXml(line)}</text>`
     )
@@ -504,7 +532,9 @@ function coverSvg(
     ? `<svg x="190" y="150" width="220" height="220" viewBox="${glyph.viewBox}" preserveAspectRatio="xMidYMid meet">${glyph.inner}</svg>`
     : ''
   const authorText = author
-    ? `<text x="${W / 2}" y="710" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" ` +
+    ? `<text x="${
+        W / 2
+      }" y="710" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" ` +
       `font-size="26" fill="#ffffffcc">${escapeXml(author)}</text>`
     : ''
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
@@ -527,7 +557,9 @@ function coverPageXhtml(title: string, coverFile: string): string {
   .cover{display:flex;align-items:center;justify-content:center;height:100vh}
   .cover img{max-width:100%;max-height:100%}</style>
 </head>
-<body><div class="cover"><img src="${coverFile}" alt="${escapeXml(title)} cover"/></div></body>
+<body><div class="cover"><img src="${coverFile}" alt="${escapeXml(
+    title
+  )} cover"/></div></body>
 </html>
 `
 }
@@ -536,7 +568,8 @@ function coverPageXhtml(title: string, coverFile: string): string {
 function loadSvgGlyph(absPath: string): CoverGlyph | null {
   if (!fs.existsSync(absPath)) return null
   const raw = fs.readFileSync(absPath, 'utf8')
-  const viewBox = (raw.match(/<svg[^>]*\bviewBox="([^"]+)"/i) || [])[1] || '0 0 48 48'
+  const viewBox =
+    (raw.match(/<svg[^>]*\bviewBox="([^"]+)"/i) || [])[1] || '0 0 48 48'
   const inner = raw
     .replace(/<\?xml[^>]*\?>/, '')
     .replace(/<svg[^>]*>/, '')
@@ -561,9 +594,13 @@ async function makeCover(
       ext === '.jpg' || ext === '.jpeg'
         ? 'image/jpeg'
         : ext === '.gif'
-          ? 'image/gif'
-          : 'image/png'
-    return { file: `cover${ext || '.png'}`, mediaType, data: fs.readFileSync(opts.cover) }
+        ? 'image/gif'
+        : 'image/png'
+    return {
+      file: `cover${ext || '.png'}`,
+      mediaType,
+      data: fs.readFileSync(opts.cover),
+    }
   }
 
   // Embed a glyph (svg) into the generated cover: prefer an explicit `coverIcon`,
@@ -587,7 +624,12 @@ async function makeCover(
   // A missing glyph is fine — the cover renders title-only. The only reason we
   // get here with nothing is @resvg/resvg-js being unavailable; don't fail silently
   // (a book with no cover is a real problem — KDP/Apple require one).
-  const svg = coverSvg(meta.title, meta.author, glyph, opts.coverColor ?? '#1f2933')
+  const svg = coverSvg(
+    meta.title,
+    meta.author,
+    glyph,
+    opts.coverColor ?? '#1f2933'
+  )
   const png = await rasterizeSvg(svg, 600)
   if (!png) {
     console.warn(
@@ -624,9 +666,13 @@ export async function buildEpub(
     language: opts.language ?? config.lang ?? 'en',
     identifier:
       config.baseUrl || `urn:tosijs-book:${slugify(opts.title ?? config.name)}`,
-    modified: (opts.modified ?? new Date().toISOString()).replace(/\.\d+Z$/, 'Z'),
+    modified: (opts.modified ?? new Date().toISOString()).replace(
+      /\.\d+Z$/,
+      'Z'
+    ),
   }
-  const css = opts.css ?? DEFAULT_BOOK_CSS + (opts.extraCss ? '\n' + opts.extraCss : '')
+  const css =
+    opts.css ?? DEFAULT_BOOK_CSS + (opts.extraCss ? '\n' + opts.extraCss : '')
 
   // Stage the book in a temp dir, then zip it.
   const outDir = config.outputDir ?? 'docs'
@@ -636,7 +682,10 @@ export async function buildEpub(
   fs.mkdirSync(path.join(buildDir, 'OEBPS'), { recursive: true })
 
   fs.writeFileSync(path.join(buildDir, 'mimetype'), 'application/epub+zip')
-  fs.writeFileSync(path.join(buildDir, 'META-INF', 'container.xml'), containerXml())
+  fs.writeFileSync(
+    path.join(buildDir, 'META-INF', 'container.xml'),
+    containerXml()
+  )
   fs.writeFileSync(path.join(buildDir, 'OEBPS', 'style.css'), css)
 
   // Prefer a real HTML parser (happy-dom) for strict XHTML; regex fallback.
@@ -658,15 +707,15 @@ export async function buildEpub(
     // The doc's live-site URL, matching generate-site's canonical link: README
     // maps to '/' (not '/index/'), others to '/slug/', with basePath applied.
     const pageUrl =
-      baseUrl + withBase(config.basePath, pathForSlug(slugMap[doc.filename] ?? ''))
+      baseUrl +
+      withBase(config.basePath, pathForSlug(slugMap[doc.filename] ?? ''))
     const html = renderDocMarkdown(stripDocMeta(doc.text))
     // happy-dom occasionally throws on exotic content (e.g. an internal selector
     // bug); fall back to the regex pass for that doc rather than aborting.
     let bodyHtml: string
     try {
-      const transform = win && baseUrl
-        ? (d: any) => injectExampleLinks(d, pageUrl)
-        : undefined
+      const transform =
+        win && baseUrl ? (d: any) => injectExampleLinks(d, pageUrl) : undefined
       bodyHtml = win ? htmlToXhtml(html, win, transform) : toXhtml(html)
     } catch {
       bodyHtml = toXhtml(html)

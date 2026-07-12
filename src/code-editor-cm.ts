@@ -11,11 +11,44 @@ tjs (highlighting + runtime-value autocomplete via tjs-lang's editors/codemirror
 layered in separately and only when tjs-lang is installed.
 */
 
-import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view'
+import {
+  EditorView,
+  keymap,
+  lineNumbers,
+  highlightActiveLineGutter,
+  highlightSpecialChars,
+  drawSelection,
+  dropCursor,
+  rectangularSelection,
+  crosshairCursor,
+  highlightActiveLine,
+} from '@codemirror/view'
 import { EditorState, Compartment, Extension } from '@codemirror/state'
-import { indentWithTab, history, defaultKeymap, historyKeymap, undo, redo, undoDepth, redoDepth } from '@codemirror/commands'
-import { indentUnit, foldGutter, foldKeymap, indentOnInput, syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@codemirror/language'
-import { closeBrackets, closeBracketsKeymap, autocompletion, completionKeymap } from '@codemirror/autocomplete'
+import {
+  indentWithTab,
+  history,
+  defaultKeymap,
+  historyKeymap,
+  undo,
+  redo,
+  undoDepth,
+  redoDepth,
+} from '@codemirror/commands'
+import {
+  indentUnit,
+  foldGutter,
+  foldKeymap,
+  indentOnInput,
+  syntaxHighlighting,
+  defaultHighlightStyle,
+  bracketMatching,
+} from '@codemirror/language'
+import {
+  closeBrackets,
+  closeBracketsKeymap,
+  autocompletion,
+  completionKeymap,
+} from '@codemirror/autocomplete'
 import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
 import { lintKeymap } from '@codemirror/lint'
 import { javascript } from '@codemirror/lang-javascript'
@@ -38,8 +71,6 @@ const highlightFor = (dark: boolean): Extension =>
     ? syntaxHighlighting(oneDarkHighlightStyle)
     : syntaxHighlighting(defaultHighlightStyle, { fallback: true })
 
-const isTjsMode = (mode: string): boolean => mode === 'tjs' || mode === 'ajs'
-
 /** Map a `<tosi-code mode>` value to a CodeMirror language extension. */
 export function languageForMode(mode: string): Extension {
   switch (mode) {
@@ -52,6 +83,7 @@ export function languageForMode(mode: string): Extension {
     // tjs-lang language + autocomplete — is layered on asynchronously via
     // `loadTjsExtension()` + `setLanguageExtension()`, since it lazy-loads the
     // (optional) tjs-lang editor build; this keeps `mode="tjs"` readable meanwhile.
+    // falls through
     case 'tjs':
     case 'ajs':
       return javascript({ typescript: true })
@@ -239,7 +271,10 @@ function watchDarkMode(listener: DarkListener): () => void {
 }
 
 /** Create a CodeMirror editor mounted in `parent`, returning an editor-agnostic handle. */
-export function createCmEditor(parent: HTMLElement, opts: CmOptions = {}): CmHandle {
+export function createCmEditor(
+  parent: HTMLElement,
+  opts: CmOptions = {}
+): CmHandle {
   const language = new Compartment()
   const readonly = new Compartment()
   const highlight = new Compartment()
@@ -258,7 +293,8 @@ export function createCmEditor(parent: HTMLElement, opts: CmOptions = {}): CmHan
         language.of(langExt),
         readonly.of(EditorState.readOnly.of(!!opts.readOnly)),
         EditorView.updateListener.of((u) => {
-          if (u.docChanged && opts.onChange) opts.onChange(u.state.doc.toString())
+          if (u.docChanged && opts.onChange)
+            opts.onChange(u.state.doc.toString())
         }),
       ],
     }),
@@ -285,7 +321,9 @@ export function createCmEditor(parent: HTMLElement, opts: CmOptions = {}): CmHan
       })
     },
     setMode(mode: string) {
-      view.dispatch({ effects: language.reconfigure(standardLanguageBundle(mode)) })
+      view.dispatch({
+        effects: language.reconfigure(standardLanguageBundle(mode)),
+      })
     },
     setLanguageExtension(ext: Extension) {
       view.dispatch({ effects: language.reconfigure(ext) })

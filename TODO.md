@@ -12,6 +12,11 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 
 ## High Priority
 
+- **Diff view: allow reverting changes from it.** `<tosi-code>`'s `showDiff(on)` overlay
+  (`src/code-editor.ts` → `tosi-diff`) is read-only — you can see what changed against the
+  baseline but not act on it. Let the reader revert from the diff: per-hunk revert at minimum,
+  and revert-all. This is the review step of the doc-system's edit-and-save-to-source flow, so
+  "I see the change and I don't want it" currently means retyping it by hand.
 - **JSON Schema-driven form editor** - Integrate schema-based form generation
 - **Doc-system: expose customization of the app/settings menu** — The `<tosi-doc-system>` settings button (the moreVertical/gear menu, `settingsButton()` in `src/doc-system/doc-system.ts`, `title="settings"`) builds its `menuItems` array inline (Print as PDF, Download ePub, Language, Color Theme, …). There's currently no public API for a doc-site consumer to add, remove, reorder, or override these items. Add a way to customize it — e.g. a `SiteConfig` hook or a `menuItems` prop/callback that receives the default items and returns the desired set — and surface/document it in `doc-site-system.md`.
 

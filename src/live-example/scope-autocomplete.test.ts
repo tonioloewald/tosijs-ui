@@ -47,7 +47,9 @@ const labelsAfter = async (
 ): Promise<string[]> => {
   const state = EditorState.create({ doc: source })
   const ctx = new CompletionContext(state, source.length, true)
-  const result = await tjsCompletionSource({ getLiveBindings: () => liveBindings })(ctx)
+  const result = await tjsCompletionSource({
+    getLiveBindings: () => liveBindings,
+  })(ctx)
   return (result?.options ?? []).map((o) => o.label)
 }
 

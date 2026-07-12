@@ -100,7 +100,11 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
 
   private source = ''
   private _handle: CmHandle | undefined
-  private _loadPromise: Promise<CmHandle> | undefined
+  private _loadPromise: Promise<CmHandle | undefined> | undefined
+  // Bumped on every connect. The lazy chunk resolves asynchronously, so by the time it
+  // does, this element may have been removed — or removed and re-added, starting a newer
+  // load. Mounting a stale load would build an EditorView nothing ever destroys.
+  private _loadGeneration = 0
   private _appliedMode = ''
   private _appliedDisabled: boolean | undefined
   private _tjsAutocomplete: TjsAutocompleteConfig | undefined
@@ -155,24 +159,34 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
   // textContent, i.e. the initial code, and double-render it under the editor.)
   private diffOverlay: TosiDiff | undefined
 
-  // tosijs exposes no public `hydrated` flag, and `this.parts.<name>` THROWS
-  // ("elementRef does not exist!") before hydration — so probe it, the way
-  // LiveExample does. Without this, reading `showingDiff` on a not-yet-connected
-  // editor throws instead of answering false.
+  // Set once hydration has actually happened (end of connectedCallback).
+  //
+  // This CANNOT be a `try { this.parts.x } catch` probe, which is what it used to be.
+  // tosijs's `parts` proxy caches its query root on FIRST access — so touching it before
+  // hydration permanently roots the proxy at the light-DOM element, and every later
+  // `this.parts.*` throws, including the `this.parts.host` that mounts CodeMirror. The
+  // editor then never mounts at all. Merely reading `el.showingDiff` on a constructed,
+  // not-yet-inserted element was enough to brick it — silently, and unrecoverably.
+  private _partsHydrated = false
+
+  // A showDiff() call made before hydration, replayed once we're ready (rather than
+  // silently dropped, which is what used to happen).
+  private _pendingDiff: boolean | undefined
+
   private get partsReady(): boolean {
-    try {
-      return this.parts.diffHost !== undefined
-    } catch {
-      return false
-    }
+    return this._partsHydrated
   }
 
   get showingDiff(): boolean {
-    return this.partsReady && !this.parts.diffHost.hidden
+    if (!this.partsReady) return this._pendingDiff ?? false
+    return !this.parts.diffHost.hidden
   }
 
   showDiff(on: boolean): void {
-    if (!this.partsReady) return
+    if (!this.partsReady) {
+      this._pendingDiff = on
+      return
+    }
     const { diffHost } = this.parts
     if (on) {
       if (this.diffOverlay === undefined) {
@@ -205,20 +219,32 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
 
   /** @deprecated Removed in 1.7 — CodeMirror themes via `--code-bg`/`--text-color`. */
   get theme(): string {
-    warnRemoved('theme', 'style the editor with --code-bg / --text-color instead')
+    warnRemoved(
+      'theme',
+      'style the editor with --code-bg / --text-color instead'
+    )
     return ''
   }
   set theme(_: string) {
-    warnRemoved('theme', 'style the editor with --code-bg / --text-color instead')
+    warnRemoved(
+      'theme',
+      'style the editor with --code-bg / --text-color instead'
+    )
   }
 
   /** @deprecated Removed in 1.7 — ACE-shaped options have no CodeMirror equivalent. */
   get options(): Record<string, unknown> {
-    warnRemoved('options', 'configure CodeMirror via the `editor` (EditorView) instead')
+    warnRemoved(
+      'options',
+      'configure CodeMirror via the `editor` (EditorView) instead'
+    )
     return {}
   }
   set options(_: Record<string, unknown>) {
-    warnRemoved('options', 'configure CodeMirror via the `editor` (EditorView) instead')
+    warnRemoved(
+      'options',
+      'configure CodeMirror via the `editor` (EditorView) instead'
+    )
   }
 
   /** @deprecated Removed in 1.7 — there is no ACE global; use `editor` (an EditorView). */
@@ -276,28 +302,54 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
 
   connectedCallback() {
     super.connectedCallback()
+    // super.connectedCallback() hydrates, so `this.parts` is safe from here on.
+    this._partsHydrated = true
 
     if (this.source === '') {
       this.value = this.textContent !== null ? this.textContent.trim() : ''
     }
 
+    // Replay a showDiff() that arrived before we were hydrated.
+    if (this._pendingDiff !== undefined) {
+      const pending = this._pendingDiff
+      this._pendingDiff = undefined
+      this.showDiff(pending)
+    }
+
     if (this._loadPromise === undefined) {
       // Lazy chunk — CodeMirror only enters the bundle here, on first editor use.
-      this._loadPromise = import('./code-editor-cm').then(({ createCmEditor }) => {
-        const handle = createCmEditor(this.parts.host, {
-          value: this.source,
-          mode: this.mode,
-          readOnly: this.disabled,
-          root: this.shadowRoot ?? undefined,
-          onChange: (value) =>
-            this.dispatchEvent(new CustomEvent('change', { detail: { value } })),
-        })
-        this._handle = handle
-        this._appliedMode = this.mode
-        this._appliedDisabled = this.disabled
-        this.applyTjsExtension()
-        return handle
-      })
+      const generation = ++this._loadGeneration
+      this._loadPromise = import('./code-editor-cm').then(
+        ({ createCmEditor }) => {
+          // The chunk fetch is async, and the pre-load window is WIDE on a cold fetch —
+          // doc-browser navigation and closeEditor() both remove editors mid-flight. If we
+          // mounted regardless:
+          //   append → remove          → an EditorView built into a detached shadow root,
+          //                              with no disconnectedCallback left to destroy it.
+          //   append → remove → append → TWO views in the host; `_handle` points only at
+          //                              the second, so the first (and its darkmode
+          //                              listener) is retained forever.
+          // That is precisely the leak disconnectedCallback exists to prevent, relocated
+          // into the load window. Bail if a newer connect superseded us, or we're detached.
+          if (generation !== this._loadGeneration || !this.isConnected)
+            return undefined
+          const handle = createCmEditor(this.parts.host, {
+            value: this.source,
+            mode: this.mode,
+            readOnly: this.disabled,
+            root: this.shadowRoot ?? undefined,
+            onChange: (value) =>
+              this.dispatchEvent(
+                new CustomEvent('change', { detail: { value } })
+              ),
+          })
+          this._handle = handle
+          this._appliedMode = this.mode
+          this._appliedDisabled = this.disabled
+          this.applyTjsExtension()
+          return handle
+        }
+      )
     }
   }
 
@@ -335,7 +387,9 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
     const handle = this._handle
     if (!handle || !this.isTjsMode()) return
     import('./code-editor-cm')
-      .then(({ loadTjsExtension }) => loadTjsExtension(this._tjsAutocomplete ?? {}))
+      .then(({ loadTjsExtension }) =>
+        loadTjsExtension(this._tjsAutocomplete ?? {})
+      )
       .then((ext) => {
         if (ext && this._handle === handle && this.isTjsMode()) {
           handle.setLanguageExtension(ext)
@@ -360,4 +414,5 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
   }
 }
 
-export const codeEditor = CodeEditor.elementCreator() as ElementCreator<CodeEditor>
+export const codeEditor =
+  CodeEditor.elementCreator() as ElementCreator<CodeEditor>

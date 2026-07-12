@@ -24,7 +24,18 @@ removed names will not catch this; any code reaching into `editor` needs revisit
 
 Unchanged: `value`, `original` / `showDiff()`, `mode`, `disabled`.
 
-Because `^1.6.x` resolves `1.7.0`, existing consumers will pick this up automatically.
+**Semver stance (deliberate, not an oversight).** This library breaks in minors before 2.0 —
+**`2.0` is reserved for the tjs-native rewrite**, not for this. So `^1.6.x` resolves `1.7.0` and
+existing consumers pick this up on their next install.
+
+**If you use `<tosi-code>`, pin `~1.6` and upgrade deliberately.** Everything else in the library
+is untouched, so a consumer of (say) `<tosi-rating>` can take 1.7 without changes — but note it
+now installs 12 `@codemirror/*` runtime dependencies where the library previously had none.
+
+The trap to know about: **`editor` changed type in place** and no shim can catch it. The removed
+`theme` / `options` / `ace` members warn once and no-op, but `el.editor` still exists — it is
+simply a CodeMirror `EditorView` now, so `el.editor.session.*` is a runtime `TypeError`. A grep
+for the removed names will not find it.
 
 ### Added
 
@@ -37,6 +48,8 @@ Because `^1.6.x` resolves `1.7.0`, existing consumers will pick this up automati
 - Inline **WebAssembly** live examples (tjs `wasm {}` blocks).
 - `buildSite`: `libraryBuild` and `generateCssPreload` hooks, for projects whose
   library sources are native `.tjs` (this is what the tosijs 2.0 TJS port needs).
+  **These actually shipped in 1.6.21** — they are listed here only because they landed on this
+  branch first. Nothing needs 1.7 to use them.
 
 ### Changed
 

@@ -4,6 +4,7 @@ import {
   AsyncFunction,
   extractTopLevelBindingNames,
   buildScopeCapture,
+  maskLiterals,
 } from './code-transform'
 
 describe('rewriteImports', () => {
@@ -63,9 +64,9 @@ describe('rewriteImports', () => {
   })
 
   test('throws a clear error on a non-context import', () => {
-    expect(() => rewriteImports("import { foo } from 'bar'", ['tosijs'])).toThrow(
-      /unsupported import/
-    )
+    expect(() =>
+      rewriteImports("import { foo } from 'bar'", ['tosijs'])
+    ).toThrow(/unsupported import/)
   })
 
   test('handles dot-access imports', () => {
@@ -140,11 +141,9 @@ describe('extractTopLevelBindingNames', () => {
   })
 
   test('multiple declarators in one statement (regression)', () => {
-    expect(extractTopLevelBindingNames('const a = 1, b = 2, c = 3').sort()).toEqual([
-      'a',
-      'b',
-      'c',
-    ])
+    expect(
+      extractTopLevelBindingNames('const a = 1, b = 2, c = 3').sort()
+    ).toEqual(['a', 'b', 'c'])
   })
 
   test('declarators with no initializer', () => {
@@ -152,10 +151,9 @@ describe('extractTopLevelBindingNames', () => {
   })
 
   test('nested destructuring recurses to the bound name', () => {
-    expect(extractTopLevelBindingNames('const { a: { b }, c } = x').sort()).toEqual([
-      'b',
-      'c',
-    ])
+    expect(
+      extractTopLevelBindingNames('const { a: { b }, c } = x').sort()
+    ).toEqual(['b', 'c'])
   })
 
   test('commas inside a call are not declarator separators', () => {
@@ -193,5 +191,79 @@ describe('buildScopeCapture', () => {
     expect(captured.n).toBe(3)
     // an over-matched / undefined name is silently skipped, not thrown
     expect('missing' in captured).toBe(false)
+  })
+})
+
+// ── Literals, comments and regexes ────────────────────────────────────────────
+// The scanner used to read RAW text, so a bracket or a `const` inside a string
+// silently corrupted the whole scan. None of the tests above contains a single
+// string, comment or regex — which is exactly why it shipped twice.
+describe('extractTopLevelBindingNames: literal- and comment-awareness', () => {
+  test('an unbalanced bracket in a string does not swallow the rest of the file', () => {
+    const src = [
+      "const label = 'Items ('",
+      'const count = 2',
+      'const addItem = () => {}',
+      'class Widget {}',
+    ].join('\n')
+    // Previously: depth ran away at the '(' inside the string and `count`, `addItem`
+    // and `Widget` all vanished — so runtime autocomplete returned NOTHING, silently.
+    expect(extractTopLevelBindingNames(src).sort()).toEqual([
+      'Widget',
+      'addItem',
+      'count',
+      'label',
+    ])
+  })
+
+  test('brackets in comments and regexes do not corrupt the scan', () => {
+    const src = [
+      'const re = /[(]{2}/g',
+      '// a sad face :-(',
+      '/* an unbalanced { in a block comment */',
+      'const after = 1',
+    ].join('\n')
+    expect(extractTopLevelBindingNames(src).sort()).toEqual(['after', 're'])
+  })
+
+  test('a declaration inside a template literal is not harvested', () => {
+    // This one was worse than a miss: it yielded the name `in`, and the epilogue then
+    // emitted `try{__tosiScope.in=in}` — a SyntaxError that kills the entire example.
+    const src = [
+      'const tpl = `',
+      'const in a template is just prose',
+      '`',
+      'const real = 1',
+    ].join('\n')
+    const names = extractTopLevelBindingNames(src)
+    expect(names).toContain('tpl')
+    expect(names).toContain('real')
+    expect(names).not.toContain('in')
+  })
+
+  test('reserved words never reach the epilogue', () => {
+    // Belt to the masking suspenders: whatever leaks through, the epilogue must stay
+    // parseable, because a parse error cannot be caught at runtime.
+    const epilogue = buildScopeCapture(
+      ['ok', 'in', 'class', 'return', '2bad', 'also_ok'],
+      '__cap'
+    )
+    expect(epilogue).toContain('__tosiScope.ok=ok')
+    expect(epilogue).toContain('__tosiScope.also_ok=also_ok')
+    for (const bad of ['in', 'class', 'return', '2bad']) {
+      expect(epilogue).not.toContain(`__tosiScope.${bad}=`)
+    }
+    // and it must actually parse
+    expect(
+      () => new AsyncFunction('__cap', `const ok=1, also_ok=2${epilogue}`)
+    ).not.toThrow()
+  })
+
+  test('string content is masked but code positions are preserved', () => {
+    const masked = maskLiterals("const a = 'x(' // )\nconst b = 2")
+    expect(masked.length).toBe("const a = 'x(' // )\nconst b = 2".length)
+    expect(masked).toContain('const a =')
+    expect(masked).toContain('const b = 2')
+    expect(masked).not.toContain('x(')
   })
 })

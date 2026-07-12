@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-const BASE = 'https://localhost:8787'
+// Paths are relative to playwright.config.ts's baseURL (the E2E lane's own server).
+const BASE = ''
 
 test('static page hydrates and navigates client-side', async ({ page }) => {
   // 1. Static page loads with correct SEO head + pre-rendered content

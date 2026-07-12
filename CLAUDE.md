@@ -31,7 +31,7 @@ bunx tsc --noEmit      # Type check without emitting (used in CI)
 bun book               # Build ePub of the doc corpus (run AFTER `bun run build`)
 ```
 
-The three test lanes are distinct: **`bun test`** is the fast happy-dom unit lane (this is all CI runs — ~550 tests across 32 files; it recurses into `src/*/`); **`bun run test-browser`** drives haltija over the inline `` ```test `` doc examples; **`bun playwright test`** is the `tests/*.pw.ts` end-to-end lane. **Caveat:** `bun tests` runs unit + Playwright, and the Playwright half needs the dev server **already running** at `https://localhost:8787` (the Playwright config does NOT auto-start it) — start `bun start` first or the Playwright tests fail to connect.
+The three test lanes are distinct: **`bun test`** is the fast happy-dom unit lane (~570 tests across 33 files; it recurses into `src/*/`); **`bun run test-browser`** drives haltija over the inline `` ```test `` doc examples; **`bun playwright test`** is the `tests/*.pw.ts` end-to-end lane. **Playwright starts its own dev server** (`webServer` in `playwright.config.ts`) on **its own port (8799)** with the haltija overlay off — so it neither adopts nor kills the `bun start` you have on 8787, and it asserts against the same DOM CI does. Tests address it through `baseURL`; never hard-code a port in a test.
 
 **Run every lane before a release.** CI covers only the unit lane, so any lane the release gate doesn't run *will* rot silently — the Playwright lane sat red for ~a month before 1.7. Never scope the unit lane with a `src/*.test.ts` glob: it matches only the top-level test files and silently skips the ones in subdirectories (`src/doc-system/`, `src/live-example/`, `src/icons/`, …) — about 126 tests, including whole features' entire coverage. Bare `bun test` recurses; keep it bare.
 
@@ -42,7 +42,7 @@ Running a single unit test:
 bun test src/make-sorter.test.ts
 ```
 
-Running a single Playwright test (dev server must be running first):
+Running a single Playwright test (it starts its own dev server):
 ```bash
 bun playwright test tests/form.pw.ts
 ```
@@ -50,8 +50,8 @@ bun playwright test tests/form.pw.ts
 ### Testing Setup
 
 - **Unit tests** (`src/*.test.ts`): Run with `bun test`. Use `happy-dom` for DOM simulation (preloaded via `bunfig.toml` → `test-setup.ts`). Import from `bun:test`.
-- **Browser tests** (`bun run test-browser`): Builds the project, starts the dev server, launches [haltija](https://github.com/nicholasgasior/haltija) headless browser, navigates to the demo site, waits for inline doc tests to run and POST results to `/report`, then exits with pass/fail. Uses `hj` CLI commands (`hj windows`, `hj navigate`). Reuses an existing haltija instance if one is running, otherwise spawns `bunx haltija@latest -f`. Results saved to `.browser-tests.json`.
-- **Playwright tests** (`tests/*.pw.ts`): Require the dev server running at `https://localhost:8787`. The Playwright config does NOT auto-start the server. Tests run against Chromium, Firefox, and WebKit.
+- **Browser tests** (`bun run test-browser`): Builds the project, starts the dev server, launches [haltija](https://github.com/nicholasgasior/haltija) headless browser, navigates to the demo site, waits for inline doc tests to run and POST results to `/report`, then exits with pass/fail. Uses `hj` CLI commands (`hj windows`, `hj navigate`). Reuses an existing haltija instance if one is running, otherwise spawns `bunx haltija@latest -f` — and **tears that one down on exit, Electron grandchild included**. (`kill()` on the `bunx` wrapper does not kill Electron; a survivor holds the inherited stdout open so the command *looks* hung after it has exited, and leaves stale windows that make the NEXT run navigate a dead window and time out.) Results saved to `.browser-tests.json`.
+- **Playwright tests** (`tests/*.pw.ts`): The config's `webServer` starts a dedicated dev server on port **8799** with `HALTIJA_DEV=0`, and never reuses an existing one. That isolation is deliberate: the site config sets `haltijaDev: true`, so a reused/shared server injects the haltija dev overlay, and the lane would assert against a DOM CI never sees (it also registered stale haltija windows that made `bun run test-browser` time out). Tests use `baseURL` — no hard-coded ports. Chromium, Firefox, and WebKit.
 
 #### Inline doc tests
 
@@ -65,7 +65,11 @@ The dev server runs HTTPS using certs in `tls/` (`key.pem` + `certificate.pem`, 
 
 ### CI
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on push/PR to `main`: `bun install` → `bunx tsc --noEmit` → `bun test` (unit tests only, no browser or Playwright tests in CI).
+GitHub Actions (`.github/workflows/ci.yml`) runs on push/PR to `main`, in two jobs:
+- **test** — `bun install` → `bunx tsc --noEmit` → `bun test` (the unit lane).
+- **e2e** — generates a throwaway self-signed cert (the dev server refuses to start without one; mkcert would want sudo, and the tests already set `ignoreHTTPSErrors`), installs chromium, and runs `bunx playwright test --project=chromium`. Playwright brings up its own dev server.
+
+The haltija doc-test lane (`bun run test-browser`) is still **not** in CI — run it locally before a release.
 
 ### Code Style
 
@@ -561,7 +565,7 @@ For the consumer-facing mental model — element-creator pattern, value/change/a
 ## Publishing
 
 1. Update version in `package.json` (bump **before** building — `src/version.ts` is generated from it)
-2. Start the dev server (`bun start`) — the Playwright lane needs it
+2. (No need to start a dev server — every lane brings up its own now)
 3. Run **all three lanes**: `bun test` → `bun run test-browser` → `bun playwright test`. `bun tests` covers only two of them; a lane the gate skips rots silently.
 4. Build: `bun run build`
 5. Commit changes including `dist/` and `docs/`

@@ -71,7 +71,9 @@ async function ensureHaltijaChannel(port: number): Promise<void> {
     )
   } catch (err) {
     console.warn(
-      `Haltija dev-channel: could not start (${String(err)}). The page loader ` +
+      `Haltija dev-channel: could not start (${String(
+        err
+      )}). The page loader ` +
         `will no-op until you run \`bunx haltija --server --https\` yourself.`
     )
   }
@@ -100,7 +102,10 @@ export async function devServer(
   config: SiteConfig,
   opts: { test?: boolean; build?: () => unknown | Promise<unknown> } = {}
 ): Promise<void> {
-  const PORT = config.port ?? 8787
+  // PORT env wins over the config, so a test harness can bring up its own instance on
+  // its own port instead of adopting (or killing — killStrayServer takes the port)
+  // the dev server you already have running.
+  const PORT = Number(process.env.PORT ?? config.port ?? 8787)
   const PUBLIC = path.resolve('./', config.outputDir ?? 'docs')
   const isSPA = true
   const testMode = !!opts.test
@@ -187,7 +192,10 @@ export async function devServer(
 
   await killStrayServer(PORT)
 
-  function resolveFile(cfg: { directory: string; path: string }): string | null {
+  function resolveFile(cfg: {
+    directory: string
+    path: string
+  }): string | null {
     const basePath = path.join(cfg.directory, cfg.path)
     const suffixes = ['', '.html', 'index.html']
     for (const suffix of suffixes) {
@@ -327,7 +335,9 @@ export async function devServer(
         warned = true
         console.warn(
           `⚠️  dev server at ${mb}MB RSS after ${rebuilds} rebuilds (+${growth}MB, ` +
-            `~${each.toFixed(1)}MB each; limit ${limitMb}MB). Growth per rebuild ` +
+            `~${each.toFixed(
+              1
+            )}MB each; limit ${limitMb}MB). Growth per rebuild ` +
             `should be ~0 — if this keeps climbing, restart and report it.`
         )
       }
@@ -364,8 +374,9 @@ export async function devServer(
       './icons',
       ...(config.watchPaths ?? []),
     ]
-    watch(watchPaths, { ignored, ignoreInitial: true }).on('all', () =>
-      void rebuild()
+    watch(watchPaths, { ignored, ignoreInitial: true }).on(
+      'all',
+      () => void rebuild()
     )
   }
 
@@ -435,9 +446,13 @@ export async function devServer(
 
     if (!hjAvailable) {
       console.log('Starting haltija...')
+      // stdout/stderr are NOT inherited: `bunx haltija` launches an Electron app as a
+      // grandchild, and killing the bunx wrapper does not kill it. An orphaned Electron
+      // holding our inherited stdout keeps the pipe open forever, so a CI job or an
+      // agent capturing this command's output sees it hang long after it exited (0).
       haltija = spawn(['bunx', 'haltija@latest', '-f'], {
-        stdout: 'inherit',
-        stderr: 'inherit',
+        stdout: 'ignore',
+        stderr: 'ignore',
       })
 
       console.log('Waiting for browser...')
@@ -466,15 +481,38 @@ export async function devServer(
     console.log('Opening demo site...')
     await $`hj navigate https://localhost:${PORT}`
 
+    /**
+     * Tear down the haltija WE started — including the Electron grandchild.
+     *
+     * `haltija.kill()` only signals the `bunx` wrapper; the Electron app it launched
+     * survives. A surviving instance leaves stale windows behind, and the next
+     * `--test` run reuses any haltija reporting `windows.length > 0` — so the run
+     * after this one navigates a dead window, never POSTs /report, and fails with
+     * "Browser tests timed out" on a perfectly good codebase. Only ever kills the
+     * instance this process spawned; a haltija you were already running is left alone.
+     */
+    const stopHaltija = async (): Promise<void> => {
+      if (!haltija) return
+      haltija.kill()
+      // NB: interpolate the pattern — a quoted literal in a `$` template is passed to
+      // pkill WITH the quotes and matches nothing.
+      const electron = 'haltija/apps/desktop'
+      try {
+        await $`pkill -f ${electron}`.quiet()
+      } catch {
+        // nothing left to kill — fine
+      }
+    }
+
     try {
       const results = await testResults
       const exitCode = results.failed > 0 ? 1 : 0
-      if (haltija) haltija.kill()
+      await stopHaltija()
       server.stop()
       process.exit(exitCode)
     } catch (e: any) {
       console.error(e.message)
-      if (haltija) haltija.kill()
+      await stopHaltija()
       server.stop()
       process.exit(1)
     }

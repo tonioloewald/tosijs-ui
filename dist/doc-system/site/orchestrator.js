@@ -64,8 +64,7 @@ async function buildEpubInChild(config, opts) {
         stderr: 'inherit',
     });
     const killer = setTimeout(() => {
-        console.warn(`⚠️  epub build exceeded ${EPUB_TIMEOUT_MS / 1000}s — killing it. The site is\n` +
-            `    fine; the .epub may be stale.`);
+        console.warn(`⚠️  epub build exceeded ${EPUB_TIMEOUT_MS / 1000}s — killing it. The site is\n` + `    fine; the .epub may be stale.`);
         child.kill();
     }, EPUB_TIMEOUT_MS);
     try {
@@ -147,7 +146,8 @@ export async function buildSite(config) {
         }
     }
     // Copy static-asset dirs into the web root.
-    const staticDirs = config.staticDirs ?? (existsSync('demo/static') ? ['demo/static'] : ['static']);
+    const staticDirs = config.staticDirs ??
+        (existsSync('demo/static') ? ['demo/static'] : ['static']);
     for (const dir of staticDirs) {
         if (existsSync(dir))
             await $ `cp -R ${dir}/. ${PUBLIC}`.text();

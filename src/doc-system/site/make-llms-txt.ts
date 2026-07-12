@@ -94,7 +94,7 @@ export function entriesFromCorpus(
  */
 function entriesFromSrcScan(): LlmsEntry[] {
   const entries: LlmsEntry[] = []
-  let files: string[] = []
+  let files: string[]
   try {
     files = fs.readdirSync(SRC).filter((f) => f.endsWith('.ts'))
   } catch {

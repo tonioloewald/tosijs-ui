@@ -81,8 +81,9 @@ async function buildEpubInChild(
   })
   const killer = setTimeout(() => {
     console.warn(
-      `⚠️  epub build exceeded ${EPUB_TIMEOUT_MS / 1000}s — killing it. The site is\n` +
-        `    fine; the .epub may be stale.`
+      `⚠️  epub build exceeded ${
+        EPUB_TIMEOUT_MS / 1000
+      }s — killing it. The site is\n` + `    fine; the .epub may be stale.`
     )
     child.kill()
   }, EPUB_TIMEOUT_MS)
@@ -130,10 +131,16 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
   // Guard before the destructive `rm -rf`: if a docPath overlaps the output dir,
   // wiping the output would delete the source docs we're about to extract.
   const docPaths = config.docPaths ?? ['src', 'README.md']
-  const overlap = findOutputDirOverlap(docPaths, config.outputDir ?? 'docs', PROJECT_ROOT)
+  const overlap = findOutputDirOverlap(
+    docPaths,
+    config.outputDir ?? 'docs',
+    PROJECT_ROOT
+  )
   if (overlap) {
     throw new Error(
-      `doc-site build: docPath "${overlap}" overlaps outputDir "${config.outputDir ?? 'docs'}". ` +
+      `doc-site build: docPath "${overlap}" overlaps outputDir "${
+        config.outputDir ?? 'docs'
+      }". ` +
         'buildSite() runs `rm -rf <outputDir>` before extracting docs, so this would ' +
         'delete your source docs first (producing an empty site with no error). Move the ' +
         "source docs out of the output dir, or set a different outputDir (e.g. outputDir: 'site')."
@@ -180,7 +187,8 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
 
   // Copy static-asset dirs into the web root.
   const staticDirs =
-    config.staticDirs ?? (existsSync('demo/static') ? ['demo/static'] : ['static'])
+    config.staticDirs ??
+    (existsSync('demo/static') ? ['demo/static'] : ['static'])
   for (const dir of staticDirs) {
     if (existsSync(dir)) await $`cp -R ${dir}/. ${PUBLIC}`.text()
   }
@@ -407,7 +415,9 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     await $`cp ${fromTs} ${PUBLIC}/tjs/tjs-browser-from-ts.js`.text()
     const bp = config.basePath
     const base = !bp || bp === '/' ? '/tjs/' : bp.replace(/\/$/, '') + '/tjs/'
-    tjsHead = `<script>globalThis.__TJS_LOCAL_BASE=${JSON.stringify(base)}</script>`
+    tjsHead = `<script>globalThis.__TJS_LOCAL_BASE=${JSON.stringify(
+      base
+    )}</script>`
     console.log(`tjs-lang bundles served same-origin at ${base}`)
   } catch {
     // tjs-lang not installed — live examples fall back to the CDN chain
@@ -429,7 +439,8 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     localizedStrings: config.localizedStrings,
     favicon: config.favicon,
     ogImage: config.ogImage,
-    headExtra: [config.headExtra, tjsHead].filter(Boolean).join('') || undefined,
+    headExtra:
+      [config.headExtra, tjsHead].filter(Boolean).join('') || undefined,
     scriptUrl: config.scriptUrl,
     basePath: config.basePath,
   })

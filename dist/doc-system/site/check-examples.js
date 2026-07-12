@@ -14,7 +14,7 @@ are not executed, so they're skipped.
 Build-time only (bun). Never import from browser code.
 */
 import { marked } from 'marked';
-import { rewriteImports, AsyncFunction, loadTransform } from '../../live-example/code-transform';
+import { rewriteImports, AsyncFunction, loadTransform, } from '../../live-example/code-transform';
 // The default live-example context (matches the IIFE globals the pages provide).
 // A project that sets a custom `context` on its <tosi-doc-system> can pass its
 // own keys; these are the tosijs-ui defaults.
@@ -77,7 +77,6 @@ export async function checkExamples(docs, opts = {}) {
                     js = rewritten; // `js` / `test` are already JS
                 }
                 // Syntax-validate the way the component does before running it.
-                // eslint-disable-next-line no-new
                 new AsyncFunction(js);
             }
             catch (err) {

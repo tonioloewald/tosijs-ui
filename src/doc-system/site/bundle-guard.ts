@@ -66,7 +66,6 @@ export function tjsEditorLeakedAsExternal(bundleJs: string): boolean {
  */
 export function classicScriptSyntaxError(bundleJs: string): string | null {
   try {
-    // eslint-disable-next-line no-new-func
     new Function(bundleJs)
     return null
   } catch (e) {
@@ -102,9 +101,7 @@ export async function classicScriptSyntaxErrorInChild(
     new Response(child.stderr).text(),
   ])
   if (code === 0) return null
-  return (
-    message.trim() || 'the bundle does not parse as a classic <script>'
-  )
+  return message.trim() || 'the bundle does not parse as a classic <script>'
 }
 
 // CLI entry (the child above): `bun bundle-guard.ts <bundle.js>` — exits 1 with the
