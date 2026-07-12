@@ -73,3 +73,51 @@ export function classicScriptSyntaxError(bundleJs: string): string | null {
     return e instanceof SyntaxError ? e.message : null
   }
 }
+
+/**
+ * The same check, run in a CHILD process — this is what the build calls.
+ *
+ * Compiling the bundle strands memory in the parent: JSC caches the compiled code, so
+ * `new Function()` over a 1.2MB bundle retains ~378KB *per call* even after a forced
+ * GC. The build runs on every dev rebuild in a process that lives for days, so that is
+ * exactly the shape of leak this release just fixed elsewhere — parsing to guard
+ * against a leak while leaking would be a poor joke. The child hands it all back on
+ * exit. (Cost: one ~30ms process. See oven-sh/bun#34053 for the family.)
+ */
+export async function classicScriptSyntaxErrorInChild(
+  bundlePath: string
+): Promise<string | null> {
+  const self = `${import.meta.dir}/bundle-guard.ts`
+  const cli = (await Bun.file(self).exists())
+    ? self
+    : `${import.meta.dir}/bundle-guard.js`
+  const child = Bun.spawn(['bun', cli, bundlePath], {
+    stdout: 'ignore',
+    stderr: 'pipe',
+  })
+  // ALWAYS drain stderr, not just on failure: an unconsumed pipe stays open and its
+  // buffer is retained, which turns this guard into a per-rebuild leak of its own.
+  const [code, message] = await Promise.all([
+    child.exited,
+    new Response(child.stderr).text(),
+  ])
+  if (code === 0) return null
+  return (
+    message.trim() || 'the bundle does not parse as a classic <script>'
+  )
+}
+
+// CLI entry (the child above): `bun bundle-guard.ts <bundle.js>` — exits 1 with the
+// syntax error on stderr, 0 if the bundle is a valid classic script.
+if (import.meta.main) {
+  const file = process.argv[2]
+  if (!file) {
+    console.error('bundle-guard: expected a bundle path')
+    process.exit(1)
+  }
+  const error = classicScriptSyntaxError(await Bun.file(file).text())
+  if (error) {
+    console.error(error)
+    process.exit(1)
+  }
+}

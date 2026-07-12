@@ -27,7 +27,7 @@ import { findOutputDirOverlap } from './output-guard'
 import {
   tjsEditorExternal,
   tjsEditorLeakedAsExternal,
-  classicScriptSyntaxError,
+  classicScriptSyntaxErrorInChild,
 } from './bundle-guard'
 
 declare global {
@@ -311,7 +311,9 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     // (without running it) rather than grepping: the substring also occurs inside
     // string literals — acorn's error messages contain it — which made the old grep
     // fire on every build while the bundle was fine.
-    const syntaxError = classicScriptSyntaxError(bundleJs)
+    const syntaxError = await classicScriptSyntaxErrorInChild(
+      `${DIST}/${scriptName}`
+    )
     if (syntaxError) {
       console.error(
         `⚠️  ${scriptName} does not parse as a classic <script>: ${syntaxError}\n` +

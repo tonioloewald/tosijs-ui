@@ -64,6 +64,15 @@ export async function checkExamples(
   const contextKeys = opts.contextKeys ?? DEFAULT_CONTEXT_KEYS
   const problems: ExampleProblem[] = []
 
+  // ONE transpiler for the whole corpus, not one per example. It's stateless, and
+  // it's a native object that strands ~40KB of RSS per construction — invisible to
+  // the JS heap, so nothing GCs it. checkExamples runs on every dev rebuild, over
+  // every `ts` example in the corpus, in a process that lives for days: constructing
+  // it in the loop was leaking ~40KB × (ts examples) per rebuild. Reusing one drops
+  // that to ~1.6KB per call. (Same family as the Bun.build arena leak — oven-sh/bun#34053.)
+  // Lazily created so a corpus with no `ts` examples never makes one.
+  let tsTranspiler: { transformSync(code: string): string } | undefined
+
   for (const doc of docs) {
     for (const block of collectCodeTokens(doc.text)) {
       if (!EXECUTABLE.has(block.lang)) continue
@@ -77,7 +86,8 @@ export async function checkExamples(
           // fetches the TypeScript compiler from a CDN, which can't run here).
           // We only need to validate that the source builds, not reproduce tjs
           // lowering exactly.
-          js = new Bun.Transpiler({ loader: 'ts' }).transformSync(rewritten)
+          tsTranspiler ??= new Bun.Transpiler({ loader: 'ts' })
+          js = tsTranspiler.transformSync(rewritten)
         } else if (dialect === 'tjs') {
           const transform = await loadTransform('tjs')
           js = (await transform(rewritten, { transforms: ['typescript'] })).code

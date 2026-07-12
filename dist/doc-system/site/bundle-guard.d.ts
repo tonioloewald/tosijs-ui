@@ -37,3 +37,14 @@ export declare function tjsEditorLeakedAsExternal(bundleJs: string): boolean;
  * the real hit.
  */
 export declare function classicScriptSyntaxError(bundleJs: string): string | null;
+/**
+ * The same check, run in a CHILD process — this is what the build calls.
+ *
+ * Compiling the bundle strands memory in the parent: JSC caches the compiled code, so
+ * `new Function()` over a 1.2MB bundle retains ~378KB *per call* even after a forced
+ * GC. The build runs on every dev rebuild in a process that lives for days, so that is
+ * exactly the shape of leak this release just fixed elsewhere — parsing to guard
+ * against a leak while leaking would be a poor joke. The child hands it all back on
+ * exit. (Cost: one ~30ms process. See oven-sh/bun#34053 for the family.)
+ */
+export declare function classicScriptSyntaxErrorInChild(bundlePath: string): Promise<string | null>;

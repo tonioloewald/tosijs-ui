@@ -22,7 +22,7 @@ import { ensureSections } from './sections';
 import { generateLlmsTxt } from './make-llms-txt';
 import { generateSite } from './generate-site';
 import { findOutputDirOverlap } from './output-guard';
-import { tjsEditorExternal, tjsEditorLeakedAsExternal, classicScriptSyntaxError, } from './bundle-guard';
+import { tjsEditorExternal, tjsEditorLeakedAsExternal, classicScriptSyntaxErrorInChild, } from './bundle-guard';
 // Module specifiers contain regex metacharacters (`/`, `.`, `@`, …), so escape
 // before interpolating into the require-shim detector below.
 /** Give up on a hung ePub child rather than wedge the dev server's rebuild. */
@@ -264,7 +264,7 @@ export async function buildSite(config) {
         // (without running it) rather than grepping: the substring also occurs inside
         // string literals — acorn's error messages contain it — which made the old grep
         // fire on every build while the bundle was fine.
-        const syntaxError = classicScriptSyntaxError(bundleJs);
+        const syntaxError = await classicScriptSyntaxErrorInChild(`${DIST}/${scriptName}`);
         if (syntaxError) {
             console.error(`⚠️  ${scriptName} does not parse as a classic <script>: ${syntaxError}\n` +
                 `    The page will not hydrate. If a dependency pulled in \`import.meta\`, mark it\n` +
