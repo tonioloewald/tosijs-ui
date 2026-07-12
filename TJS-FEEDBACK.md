@@ -131,6 +131,76 @@ the source.
   Ideally also surface it with `types` so consumers get the `AutocompleteConfig` shape.
   (Verified against tjs-lang 0.8.7.)
 
+### 8. The transpiler should be able to EMIT the scope capture (it already has the AST)
+*(Filed against 0.9.1, while completing tosijs-ui's runtime-value autocomplete.)*
+
+To feed `getLiveBindings()` with an example's **live locals** (`const { app } = tosi(…)`
+→ real `app.` / `app.items.` completions) we had to capture the values of the top-level
+bindings after a run. There's no tjs API for this, so we hand-rolled:
+1. a **regex** extractor for top-level bound identifiers (`const/let/var` incl.
+   destructuring w/ aliases/defaults/rest, `function`, `class`), and
+2. an epilogue appended to the transpiled code that assigns each name into a capture
+   object (each read behind its own `try/catch`).
+
+That regex is a strictly worse duplicate of code tjs **already has**: `collectScopeSymbols()`
+(`editors/scope-symbols.ts`) is **AST-based** (acorn) and handles multi-line destructuring,
+multiple declarators (`const a = 1, b = 2`), and nested patterns — all of which our regex
+misses. It isn't reachable: `editors/scope-symbols` has no `exports` entry, and only
+`./editors/codemirror` is published.
+- **Impact:** every consumer wiring the *advertised* runtime-value autocomplete must
+  re-implement scope extraction, worse than tjs's own, against a moving target.
+- **Suggestion (best):** a transpile option that emits the capture, e.g.
+  `tjs(code, { captureScope: '__fn' })` → appends a guarded epilogue reporting the run's
+  top-level bindings. tjs owns the parse; it can do this exactly right, once. That closes
+  the loop on runtime-value autocomplete instead of leaving the hardest half to consumers.
+- **Suggestion (minimum):** export `collectScopeSymbols` (and `ScopeSymbol`) from a public
+  subpath so consumers can at least reuse the AST extractor.
+
+### 9. `editors/codemirror` ships **no types** — `AutocompleteConfig` must be re-declared
+The `"./editors/codemirror"` export is a bare `.js` path with no `types` condition, and
+there is **not one `.d.ts`** under `editors/`. So `import { tjsEditorExtension } from
+'tjs-lang/editors/codemirror'` is untyped: we re-declared `AutocompleteConfig` locally
+(as `TjsAutocompleteConfig`) and learned `IntrospectMember`'s shape by reading the
+**`.ts` sources shipped inside `node_modules`**. Flagged as an aside in #7; now it's the
+main remaining editor-integration friction.
+- **Suggestion:** emit + publish declarations and add a `types` condition to the
+  `./editors/*` exports. `AutocompleteConfig`, `IntrospectMember`, and `ScopeSymbol` are
+  the consumer-facing shapes.
+
+### 10. The completion source is reachable ONLY via `autocompletion({ override })` — `languageDataAt` silently returns the wrong source
+`tjsEditorExtension` installs completions as `autocompletion({ override: [tjsCompletionSource] })`.
+So from a live `EditorView`, `state.languageDataAt('autocomplete', pos)` does **not** return
+the tjs source — it returns the base JS language's, which answers `null` for `app.`. That
+looks exactly like "runtime autocomplete is broken", and cost real debugging time before we
+realised the probe was wrong (the feature was fine).
+- **Suggestion:** also register the source via `languageData`, or export a helper
+  (`tjsCompletionSourceFor(state)`) so a consumer can obtain the *configured* source from a
+  live editor — for testing, for verification, and for composing with other sources.
+  Failing that, document loudly that `languageDataAt` is not the way to reach it.
+
+### 11. `AutocompleteConfig`: `getLiveBindings` already covers nested paths — `getMembers`'s role is unclear
+We built toward `getMembers(path)` (the async "introspection bridge") assuming it was
+required for `app.items.`. It isn't: `getCompletionsFromPath` → `resolvePath` →
+`introspectObject` already walks the **full dotted path** through the sync bindings, so
+providing `getLiveBindings()` alone yields `app.` *and* `app.items.` (array methods, proxy
+members and all). We never needed `getMembers`.
+- **Suggestion:** document the division — `getLiveBindings` for anything reachable in the
+  host realm (covers nested paths); `getMembers` only for scopes you *can't* hand over
+  synchronously (a worker/VM/remote sandbox). As written, the `getMembers` docstring
+  ("the value's REAL runtime members … including proxy-generated ones nothing static can
+  see") reads like the *only* way to get real members, which sends adopters down the harder
+  path first.
+
+### 12. WASM #2/#3 shipped as `__`-prefixed globals, not a public API
+0.9.1 resolves the ready-signal (#2) and the enable/disable toggle (#3) — but as
+`globalThis.__tjs_wasm_ready` / `globalThis.__tjs_wasm_enabled` / `__tjs_wasm_pending`.
+They work, and we're using them. But #3 asked for a *public* toggle precisely because
+poking `__`-prefixed globals is an implementation detail; the fix keeps consumers writing
+against internals (and `__tjs_wasm_ready` is a *function returning* a promise, which its
+name doesn't suggest).
+- **Suggestion:** export `tjsWasmReady(): Promise<void>` and `setWasmEnabled(on: boolean)`
+  from the browser bundle, backed by those globals. Same capability, supported surface.
+
 ## Positive findings (data points)
 - **A compute-bound branchless `f32x4` kernel is genuinely faster** — a single-loop
   kernel with ~15 arithmetic ops/element measured **~2.0× vs the JS fallback**
@@ -139,3 +209,10 @@ the source.
   the leverage is.
 - Multi-array marshaling (4 `Float32Array` params into one `wasm{}` call) works
   correctly, no copy surprises.
+- **Runtime-value autocomplete delivers on its promise.** Once fed real live bindings, the
+  completion source resolves nested paths through a **tosijs proxy** and returns the actual
+  members (`app.` → `items`/`newItem`; `app.items.` → `push`/`map`) — including proxy-generated
+  ones no static analysis could see. That is the genuinely differentiated feature; #8–#11 are
+  all about making it *reachable*, not about the idea.
+- `tjsCompletionSource` is **DOM-free**, so it drives headlessly with a real
+  `CompletionContext` — excellent for testing (this is how we verified the chain end-to-end).
