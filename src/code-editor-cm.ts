@@ -202,6 +202,42 @@ export interface CmOptions {
   root?: Document | ShadowRoot
 }
 
+// ONE darkmode observer for the whole module, with a registry of live editors —
+// not one MutationObserver per editor. A registered observer is strongly held by the
+// node it observes, so a per-editor `observe(document.body)` pins document.body →
+// observer → closure → EditorView, and the editor survives detachment forever. A doc
+// page mounts ~20 editors, so every SPA navigation used to leak all of them (and each
+// darkmode toggle then dispatched into every editor ever created).
+// Same pattern as localize.ts / drag-and-drop.ts.
+type DarkListener = () => void
+const darkListeners = new Set<DarkListener>()
+let darkObserver: MutationObserver | undefined
+
+function watchDarkMode(listener: DarkListener): () => void {
+  darkListeners.add(listener)
+  if (
+    darkObserver === undefined &&
+    typeof MutationObserver !== 'undefined' &&
+    typeof document !== 'undefined' &&
+    document.body
+  ) {
+    darkObserver = new MutationObserver(() => {
+      for (const l of darkListeners) l()
+    })
+    darkObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+  }
+  return () => {
+    darkListeners.delete(listener)
+    if (darkListeners.size === 0) {
+      darkObserver?.disconnect()
+      darkObserver = undefined
+    }
+  }
+}
+
 /** Create a CodeMirror editor mounted in `parent`, returning an editor-agnostic handle. */
 export function createCmEditor(parent: HTMLElement, opts: CmOptions = {}): CmHandle {
   const language = new Compartment()
@@ -231,17 +267,13 @@ export function createCmEditor(parent: HTMLElement, opts: CmOptions = {}): CmHan
   // Re-apply the right highlight palette when the doc-system toggles dark mode
   // (it flips the `darkmode` class on <body>).
   let dark = isDarkMode()
-  const darkObserver =
-    typeof MutationObserver !== 'undefined' && typeof document !== 'undefined'
-      ? new MutationObserver(() => {
-          const nowDark = isDarkMode()
-          if (nowDark !== dark) {
-            dark = nowDark
-            view.dispatch({ effects: highlight.reconfigure(highlightFor(dark)) })
-          }
-        })
-      : null
-  darkObserver?.observe(document.body, { attributes: true, attributeFilter: ['class'] })
+  const unwatchDark = watchDarkMode(() => {
+    const nowDark = isDarkMode()
+    if (nowDark !== dark) {
+      dark = nowDark
+      view.dispatch({ effects: highlight.reconfigure(highlightFor(dark)) })
+    }
+  })
 
   const handle: CmHandle = {
     view,
@@ -270,7 +302,7 @@ export function createCmEditor(parent: HTMLElement, opts: CmOptions = {}): CmHan
     focus: () => view.focus(),
     refresh: () => view.requestMeasure(),
     destroy: () => {
-      darkObserver?.disconnect()
+      unwatchDark()
       view.destroy()
     },
   }

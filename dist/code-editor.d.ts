@@ -77,6 +77,7 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
     };
     onResize(): void;
     connectedCallback(): void;
+    disconnectedCallback(): void;
     private isTjsMode;
     /**
      * When in tjs mode, lazily upgrade the editor to tjs-lang's CodeMirror language +

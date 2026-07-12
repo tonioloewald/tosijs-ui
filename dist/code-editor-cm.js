@@ -147,6 +147,31 @@ function baseExtensions() {
         ]),
     ];
 }
+const darkListeners = new Set();
+let darkObserver;
+function watchDarkMode(listener) {
+    darkListeners.add(listener);
+    if (darkObserver === undefined &&
+        typeof MutationObserver !== 'undefined' &&
+        typeof document !== 'undefined' &&
+        document.body) {
+        darkObserver = new MutationObserver(() => {
+            for (const l of darkListeners)
+                l();
+        });
+        darkObserver.observe(document.body, {
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+    }
+    return () => {
+        darkListeners.delete(listener);
+        if (darkListeners.size === 0) {
+            darkObserver?.disconnect();
+            darkObserver = undefined;
+        }
+    };
+}
 /** Create a CodeMirror editor mounted in `parent`, returning an editor-agnostic handle. */
 export function createCmEditor(parent, opts = {}) {
     const language = new Compartment();
@@ -173,16 +198,13 @@ export function createCmEditor(parent, opts = {}) {
     // Re-apply the right highlight palette when the doc-system toggles dark mode
     // (it flips the `darkmode` class on <body>).
     let dark = isDarkMode();
-    const darkObserver = typeof MutationObserver !== 'undefined' && typeof document !== 'undefined'
-        ? new MutationObserver(() => {
-            const nowDark = isDarkMode();
-            if (nowDark !== dark) {
-                dark = nowDark;
-                view.dispatch({ effects: highlight.reconfigure(highlightFor(dark)) });
-            }
-        })
-        : null;
-    darkObserver?.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    const unwatchDark = watchDarkMode(() => {
+        const nowDark = isDarkMode();
+        if (nowDark !== dark) {
+            dark = nowDark;
+            view.dispatch({ effects: highlight.reconfigure(highlightFor(dark)) });
+        }
+    });
     const handle = {
         view,
         getValue: () => view.state.doc.toString(),
@@ -211,7 +233,7 @@ export function createCmEditor(parent, opts = {}) {
         focus: () => view.focus(),
         refresh: () => view.requestMeasure(),
         destroy: () => {
-            darkObserver?.disconnect();
+            unwatchDark();
             view.destroy();
         },
     };

@@ -301,6 +301,27 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
     }
   }
 
+  disconnectedCallback(): void {
+    super.disconnectedCallback()
+    // Without this, `CmHandle.destroy()` has no call sites: the EditorView (and its
+    // darkmode listener) outlive the element, so every doc-page navigation leaked all
+    // ~20 editors on the page.
+    if (this._handle) {
+      // Preserve the live text first — `value` falls back to `source` once the handle
+      // is gone, and `source` would otherwise hold a stale pre-edit value.
+      this.source = this._handle.getValue()
+      this._handle.destroy()
+      this._handle = undefined
+    }
+    // Re-connecting rebuilds the editor (a destroyed view can't be reused).
+    this._loadPromise = undefined
+    this._appliedMode = ''
+    this._appliedDisabled = undefined
+    // NB: do NOT clear `diffOverlay` — hydrate() runs once, so the shadow DOM (and the
+    // overlay inside `diffHost`) survives disconnect. Clearing it would append a second
+    // overlay on reconnect.
+  }
+
   private isTjsMode(): boolean {
     return this.mode === 'tjs' || this.mode === 'ajs'
   }
