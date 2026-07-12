@@ -57,22 +57,70 @@ export function rewriteImports(code: string, contextKeys: string[]): string {
   return result
 }
 
+const OPEN = '([{'
+const CLOSE = ')]}'
+
+/** Index of the first `ch` at bracket depth 0, or -1. */
+function indexAtDepth0(src: string, ch: string): number {
+  let depth = 0
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i]
+    if (OPEN.includes(c)) depth++
+    else if (CLOSE.includes(c)) depth--
+    else if (c === ch && depth === 0) {
+      if (ch === '=') {
+        // Only a bare assignment counts — skip ==, =>, <=, >=, !=.
+        const next = src[i + 1]
+        const prev = src[i - 1]
+        if (next === '=' || next === '>' || (prev && '=!<>'.includes(prev))) continue
+      }
+      return i
+    }
+  }
+  return -1
+}
+
+/** Split on `,` at bracket depth 0, so nested commas (`{ a: { b, c } }`) don't split. */
+function splitAtDepth0(src: string): string[] {
+  const parts: string[] = []
+  let depth = 0
+  let start = 0
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i]
+    if (OPEN.includes(c)) depth++
+    else if (CLOSE.includes(c)) depth--
+    else if (c === ',' && depth === 0) {
+      parts.push(src.slice(start, i))
+      start = i + 1
+    }
+  }
+  parts.push(src.slice(start))
+  return parts.filter((p) => p.trim() !== '')
+}
+
 /** Pull the bound identifiers out of one declaration's left-hand side. */
 function patternNames(lhs: string): string[] {
   lhs = lhs.trim()
+  if (!lhs) return []
   if (/^[{[]/.test(lhs)) {
-    // Object/array destructuring — strip the outer bracket pair and split on
-    // top-level commas (nested patterns aren't unpacked; per-name guards below
-    // make an over/under-match harmless).
-    const inner = lhs.slice(1, -1)
+    // Object/array destructuring. Split depth-0 commas (NOT a naive `split(',')`,
+    // which shreds `{ a: { b, c } }`), then per element: drop a rest `...`, take the
+    // TARGET of `key: target` (the target is what's bound, and may itself be a
+    // pattern), drop any `= default`, and recurse into nested patterns.
     const names: string[] = []
-    for (let part of inner.split(',')) {
-      part = part.trim().replace(/^\.\.\./, '') // rest element
+    for (let part of splitAtDepth0(lhs.slice(1, -1))) {
+      part = part.trim().replace(/^\.\.\./, '')
       if (!part) continue
-      if (part.includes(':')) part = part.split(':')[1].trim() // key: alias → alias
-      part = part.split('=')[0].trim() // strip default
-      const m = part.match(/^[A-Za-z_$][\w$]*/)
-      if (m) names.push(m[0])
+      const colon = indexAtDepth0(part, ':')
+      if (colon !== -1) part = part.slice(colon + 1).trim()
+      const eq = indexAtDepth0(part, '=')
+      if (eq !== -1) part = part.slice(0, eq).trim()
+      if (/^[{[]/.test(part)) {
+        names.push(...patternNames(part))
+      } else {
+        const m = part.match(/^[A-Za-z_$][\w$]*/)
+        if (m) names.push(m[0])
+      }
     }
     return names
   }
@@ -80,48 +128,63 @@ function patternNames(lhs: string): string[] {
   return m ? [m[0]] : []
 }
 
-/** The declaration target — everything up to the initializer `=` at bracket depth 0
- * (so a `{ count = 0 }` default `=` inside the pattern doesn't end it early). */
-function declarationTarget(rest: string): string {
+/**
+ * Read a `const/let/var` declaration starting at `from` — across newlines, so a
+ * wrapped destructure (`const {\n  app,\n} = …`) is captured whole. Ends at a depth-0
+ * `;`, or at a newline where the statement is plainly complete (the previous
+ * non-space char isn't an operator/comma continuing it). Anything unbalanced keeps
+ * reading, because depth > 0.
+ */
+function readDeclaration(code: string, from: number): string {
   let depth = 0
-  for (let i = 0; i < rest.length; i++) {
-    const c = rest[i]
-    if (c === '(' || c === '[' || c === '{') depth++
-    else if (c === ')' || c === ']' || c === '}') depth--
-    else if (c === '=' && depth === 0) {
-      const next = rest[i + 1]
-      const prev = rest[i - 1]
-      // Skip ==, =>, <=, >=, != — only a bare assignment ends the LHS.
-      if (next !== '=' && next !== '>' && !'=!<>'.includes(prev)) {
-        return rest.slice(0, i)
-      }
-    } else if (c === ';' && depth === 0) {
-      return rest.slice(0, i)
+  let i = from
+  for (; i < code.length; i++) {
+    const c = code[i]
+    if (OPEN.includes(c)) depth++
+    else if (CLOSE.includes(c)) depth--
+    else if (depth === 0 && c === ';') break
+    else if (depth === 0 && c === '\n') {
+      const soFar = code.slice(from, i).trimEnd()
+      const last = soFar[soFar.length - 1]
+      if (last !== undefined && !',=+-*/%&|?:<>!~^'.includes(last)) break
     }
   }
-  return rest
+  return code.slice(from, i)
 }
 
 /**
- * Best-effort list of the identifiers a snippet binds at the TOP level (column 0,
- * so genuinely function-scope, not inside a block). Handles `const/let/var` incl.
- * single-line destructuring, and `function`/`class` declarations. Used to introspect
- * an example's live locals for tjs autocomplete — imperfect is fine, since the
- * capture epilogue guards every name individually.
+ * Best-effort list of the identifiers a snippet binds at the TOP level (column 0, so
+ * genuinely function-scope, not inside a block). Handles `const/let/var` — including
+ * MULTI-LINE destructuring, MULTIPLE declarators (`const a = 1, b = 2`), nested
+ * patterns, aliases, defaults and rest — plus `function`/`class` declarations.
+ *
+ * This is a scanner, not a parse. tjs-lang already owns an acorn-based
+ * `collectScopeSymbols()` that does this properly, but it has no public export
+ * (filed upstream); when it lands, drive this off it. Meanwhile imperfect is safe:
+ * the capture epilogue guards every name individually, so an over- or under-match
+ * degrades completions rather than breaking the example.
  */
 export function extractTopLevelBindingNames(code: string): string[] {
   const names = new Set<string>()
-  const declRe = /^(?:export\s+)?(const|let|var|function\*?|class)\s+(.*)$/gm
+  const declRe = /^(?:export\s+)?(const|let|var|function\*?|class)\s+/gm
   let m: RegExpExecArray | null
   while ((m = declRe.exec(code)) !== null) {
     const kind = m[1]
-    const rest = m[2]
+    const from = m.index + m[0].length
     if (kind === 'class' || kind.startsWith('function')) {
-      const id = rest.match(/^[A-Za-z_$][\w$]*/)
+      const id = code.slice(from).match(/^[A-Za-z_$][\w$]*/)
       if (id) names.add(id[0])
-    } else {
-      for (const n of patternNames(declarationTarget(rest))) names.add(n)
+      continue
     }
+    const decl = readDeclaration(code, from)
+    // Each depth-0 comma starts another declarator (`const a = 1, b = 2`).
+    for (const declarator of splitAtDepth0(decl)) {
+      const eq = indexAtDepth0(declarator, '=')
+      const lhs = eq === -1 ? declarator : declarator.slice(0, eq)
+      for (const n of patternNames(lhs)) names.add(n)
+    }
+    // Don't rescan inside the declaration we just consumed.
+    declRe.lastIndex = from + decl.length
   }
   return [...names]
 }

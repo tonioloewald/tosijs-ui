@@ -171,10 +171,22 @@ function step(! px: Float32Array, py: Float32Array, vx: Float32Array, vy: Float3
   }
 }
 
-const W = 480, H = 300, cols = 100, rows = 60, N = cols * rows
-const px = new Float32Array(N), py = new Float32Array(N)
-const vx = new Float32Array(N), vy = new Float32Array(N)
-const hx = new Float32Array(N), hy = new Float32Array(N)
+// 100k particles, not 6k. At 6k each step took ~0.02ms — right at the resolution floor
+// of performance.now(), so the readout was mostly measuring the timer. At this size both
+// paths land in the hundreds of microseconds and the comparison actually means something.
+const W = 480, H = 300, cols = 400, rows = 250, N = cols * rows
+
+// Allocate the particle arrays INSIDE wasm memory. This is the whole ballgame: if a
+// typed array&#39;s buffer isn&#39;t the wasm memory, every call copies it in and out again —
+// six 6,000-float arrays per frame — and you end up timing memcpy, not SIMD. (With
+// plain `new Float32Array(N)` this demo measured ~4x SLOWER than its own JS fallback.)
+// `wasmBuffer` is a bump allocator handing out views into the shared wasm memory, so
+// the wrapper passes a byte offset and copies nothing. Fall back gracefully if the
+// wasm block didn&#39;t compile, so the JS twin still runs.
+const f32 = (n) =&gt; globalThis.wasmBuffer ? wasmBuffer(Float32Array, n) : new Float32Array(n)
+const px = f32(N), py = f32(N)
+const vx = f32(N), vy = f32(N)
+const hx = f32(N), hy = f32(N)
 for (let i = 0; i &lt; N; i++) {
   const c = i % cols, r = (i / cols) | 0
   hx[i] = (c + 0.5) * W / cols
@@ -189,6 +201,15 @@ canvas.height = H
 canvas.style.cssText = &#39;width:100%;max-width:480px;border-radius:8px;display:block;background:#0b0e14;touch-action:none;cursor:crosshair&#39;
 const ctx = canvas.getContext(&#39;2d&#39;)
 
+// Plot straight into an ImageData buffer (one 32-bit store per particle) instead of
+// 100k fillRect() calls — otherwise the DRAW would dominate and we&#39;d be benchmarking
+// canvas, not the kernel.
+const img = ctx.createImageData(W, H)
+const pix = new Uint32Array(img.data.buffer)
+const BG = 0xff140e0b        // #0b0e14, little-endian ABGR
+const TEAL = 0xffc5d14f      // #4fd1c5
+const AMBER = 0xff55adf6     // #f6ad55
+
 let tx = W / 2, ty = H / 2, idle = 0, frame = 0
 canvas.addEventListener(&#39;pointermove&#39;, (e) =&gt; {
   const r = canvas.getBoundingClientRect()
@@ -197,21 +218,35 @@ canvas.addEventListener(&#39;pointermove&#39;, (e) =&gt; {
   idle = 0
 })
 
-// tjs registers the compiled function as globalThis.__tjs_wasm_0; nulling it makes
-// step() fall to its JS twin. (A public WASM on/off toggle would be tidier — noted
-// in TJS-FEEDBACK.md.)
-let useWasm = true, savedWasm = null
+// tjs-lang 0.9.1+ gates every wasm call on `globalThis.__tjs_wasm_enabled`, so this
+// flips the kernel between WASM and its JS twin without touching tjs internals.
+// (Don&#39;t reach for `__tjs_wasm_0` — it&#39;s private AND index-keyed per transpile, so
+// a second wasm example on the page registers the same name and you&#39;d clobber it.)
+let useWasm = true
 const btn = document.createElement(&#39;button&#39;)
 btn.style.cssText = &#39;margin:8px 0;padding:6px 12px;border-radius:6px;cursor:pointer&#39;
 const readout = document.createElement(&#39;p&#39;)
+let acc = 0, frames = 0
 function applyMode() {
-  if (useWasm &amp;&amp; savedWasm) { globalThis.__tjs_wasm_0 = savedWasm; savedWasm = null }
-  if (!useWasm &amp;&amp; globalThis.__tjs_wasm_0) { savedWasm = globalThis.__tjs_wasm_0; globalThis.__tjs_wasm_0 = null }
+  globalThis.__tjs_wasm_enabled = useWasm
+  acc = 0; frames = 0 // don&#39;t average across a mode switch
   btn.textContent = useWasm ? &#39;⚡ WebAssembly SIMD — click for JavaScript&#39; : &#39;🐢 JavaScript — click for WASM SIMD&#39;
 }
 btn.onclick = () =&gt; { useWasm = !useWasm; applyMode() }
 
-let acc = 0, frames = 0
+// Warm BOTH paths before timing anything. The JS twin never executes until you click
+// over to it, so an un-warmed comparison times cold, un-JITed JavaScript and flatters
+// WASM (it read ~2x too good). A warmed V8 does this kernel in ~0.024 ms/step; the
+// zero-copy SIMD kernel does ~0.015 — a real but modest ~1.6x, which is the honest
+// number this demo should show.
+function warmUp() {
+  for (const on of [false, true]) {
+    globalThis.__tjs_wasm_enabled = on
+    for (let i = 0; i &lt; 150; i++) step(px, py, vx, vy, hx, hy, N, W / 2, H / 2)
+  }
+  // the warm-up perturbed the particles — put them back on the grid
+  for (let i = 0; i &lt; N; i++) { px[i] = hx[i]; py[i] = hy[i]; vx[i] = 0; vy[i] = 0 }
+}
 function loop() {
   if (!document.body.contains(canvas)) return // example removed → stop
   frame++
@@ -224,10 +259,15 @@ function loop() {
   step(px, py, vx, vy, hx, hy, N, tx, ty)
   acc += performance.now() - t0
   frames++
-  ctx.fillStyle = &#39;rgba(11,14,20,0.3)&#39;
-  ctx.fillRect(0, 0, W, H)
-  ctx.fillStyle = useWasm ? &#39;#4fd1c5&#39; : &#39;#f6ad55&#39;
-  for (let i = 0; i &lt; N; i++) ctx.fillRect(px[i], py[i], 1.6, 1.6)
+
+  pix.fill(BG)
+  const dot = useWasm ? TEAL : AMBER
+  for (let i = 0; i &lt; N; i++) {
+    const x = px[i] | 0, y = py[i] | 0
+    if (x &gt;= 0 &amp;&amp; x &lt; W &amp;&amp; y &gt;= 0 &amp;&amp; y &lt; H) pix[y * W + x] = dot
+  }
+  ctx.putImageData(img, 0, 0)
+
   if (frames &gt;= 20) {
     readout.textContent = N.toLocaleString() + &#39; particles · &#39; + (acc / frames).toFixed(3) +
       &#39; ms/step (&#39; + (useWasm ? &#39;WASM SIMD&#39; : &#39;JS&#39;) + &#39;) · move the pointer&#39;
@@ -238,17 +278,25 @@ function loop() {
 }
 
 ;(async () =&gt; {
-  // The wasm bootstrap is async — wait for the compiled function before starting,
-  // so the first frames run in WASM rather than the fallback.
-  const t0 = performance.now()
-  while (!globalThis.__tjs_wasm_0 &amp;&amp; performance.now() - t0 &lt; 3000) {
-    await new Promise((r) =&gt; setTimeout(r, 0))
-  }
+  // The wasm bootstrap is async. tjs-lang 0.9.1+ exposes an awaitable ready signal,
+  // so we start only once the kernel is instantiated — otherwise the first frames
+  // silently run the JS fallback while the button claims &quot;WebAssembly SIMD&quot;.
+  await globalThis.__tjs_wasm_ready?.()
+  warmUp()
   applyMode()
   requestAnimationFrame(loop)
 })()
 
 preview.append(canvas, btn, readout)
+</code></pre>
+<pre><code class="language-test">// Guard the claim the button makes. A `wasm {}` block that fails to compile falls
+// back to JS *silently*, so without this the demo can advertise &quot;⚡ WebAssembly SIMD&quot;
+// while running the JS twin, and every test stays green.
+test(&#39;the wasm kernel actually compiled (no silent fallback to JS)&#39;, async () =&gt; {
+  await globalThis.__tjs_wasm_ready?.()
+  expect(typeof globalThis.__tjs_wasm_ready).toBe(&#39;function&#39;)
+  expect(globalThis.__tjs_wasm_0).toBeTruthy()
+})
 </code></pre>
 <h2>CSS Isolation with <code>iframe</code></h2>
 <p>Add the <code>iframe</code> attribute to render the preview inside an iframe, giving the example

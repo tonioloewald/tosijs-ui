@@ -19,11 +19,16 @@ export declare function contextVarName(key: string): string;
  */
 export declare function rewriteImports(code: string, contextKeys: string[]): string;
 /**
- * Best-effort list of the identifiers a snippet binds at the TOP level (column 0,
- * so genuinely function-scope, not inside a block). Handles `const/let/var` incl.
- * single-line destructuring, and `function`/`class` declarations. Used to introspect
- * an example's live locals for tjs autocomplete — imperfect is fine, since the
- * capture epilogue guards every name individually.
+ * Best-effort list of the identifiers a snippet binds at the TOP level (column 0, so
+ * genuinely function-scope, not inside a block). Handles `const/let/var` — including
+ * MULTI-LINE destructuring, MULTIPLE declarators (`const a = 1, b = 2`), nested
+ * patterns, aliases, defaults and rest — plus `function`/`class` declarations.
+ *
+ * This is a scanner, not a parse. tjs-lang already owns an acorn-based
+ * `collectScopeSymbols()` that does this properly, but it has no public export
+ * (filed upstream); when it lands, drive this off it. Meanwhile imperfect is safe:
+ * the capture epilogue guards every name individually, so an over- or under-match
+ * degrades completions rather than breaking the example.
  */
 export declare function extractTopLevelBindingNames(code: string): string[];
 /**

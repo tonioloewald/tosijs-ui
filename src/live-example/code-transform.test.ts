@@ -129,6 +129,39 @@ describe('extractTopLevelBindingNames', () => {
     expect(extractTopLevelBindingNames(code)).toEqual(['top'])
   })
 
+  // The shapes the first (line-anchored, first-`=`) implementation silently missed.
+  // Each produced ZERO or partial completions with no error — the worst failure mode
+  // for the feature, and it hit the release's own SIMD/WASM demo (12 of 26 bindings).
+  test('multi-line destructuring (regression)', () => {
+    const names = extractTopLevelBindingNames(
+      'const {\n  app,\n  todos,\n} = tosi({})'
+    )
+    expect(names.sort()).toEqual(['app', 'todos'])
+  })
+
+  test('multiple declarators in one statement (regression)', () => {
+    expect(extractTopLevelBindingNames('const a = 1, b = 2, c = 3').sort()).toEqual([
+      'a',
+      'b',
+      'c',
+    ])
+  })
+
+  test('declarators with no initializer', () => {
+    expect(extractTopLevelBindingNames('let a, b').sort()).toEqual(['a', 'b'])
+  })
+
+  test('nested destructuring recurses to the bound name', () => {
+    expect(extractTopLevelBindingNames('const { a: { b }, c } = x').sort()).toEqual([
+      'b',
+      'c',
+    ])
+  })
+
+  test('commas inside a call are not declarator separators', () => {
+    expect(extractTopLevelBindingNames('const x = foo(1, 2, 3)')).toEqual(['x'])
+  })
+
   test('no bindings → empty', () => {
     expect(extractTopLevelBindingNames('preview.append(div())')).toEqual([])
   })
