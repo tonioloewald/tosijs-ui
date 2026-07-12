@@ -24,16 +24,16 @@ tosijs-ui (formerly xinjs-ui) is a web-component library built on [tosijs](https
 bun start              # Dev server at https://localhost:8787 (hot reload, reports gzip sizes) — `bun --watch bin/dev.ts`
 bun run build          # Build only (no server), exits with 0/1 — `bin/dev.ts --build-only`
 bun run test-browser   # Build, launch haltija, run browser tests, exit with 0/1 — `bin/dev.ts --test`
-bun tests              # `bun test src/*.test.ts && bun playwright test` — see caveat below
+bun tests              # `bun test && bun playwright test` — see caveat below
 bun format             # ESLint + Prettier
 bun latest             # Clean install (removes node_modules + bun.lock, then bun update)
 bunx tsc --noEmit      # Type check without emitting (used in CI)
 bun book               # Build ePub of the doc corpus (run AFTER `bun run build`)
 ```
 
-The three test lanes are distinct: **`bun test`** is the fast happy-dom unit lane (this is all CI runs — 539 tests; it recurses into `src/*/`); **`bun run test-browser`** drives haltija over the inline `` ```test `` doc examples; **`bun playwright test`** is the `tests/*.pw.ts` end-to-end lane. **Caveat:** `bun tests` runs unit + Playwright, and the Playwright half needs the dev server **already running** at `https://localhost:8787` (the Playwright config does NOT auto-start it) — start `bun start` first or the Playwright tests fail to connect.
+The three test lanes are distinct: **`bun test`** is the fast happy-dom unit lane (this is all CI runs — ~550 tests across 32 files; it recurses into `src/*/`); **`bun run test-browser`** drives haltija over the inline `` ```test `` doc examples; **`bun playwright test`** is the `tests/*.pw.ts` end-to-end lane. **Caveat:** `bun tests` runs unit + Playwright, and the Playwright half needs the dev server **already running** at `https://localhost:8787` (the Playwright config does NOT auto-start it) — start `bun start` first or the Playwright tests fail to connect.
 
-**Run every lane before a release.** CI covers only the unit lane, so any lane the release gate doesn't run *will* rot silently — the Playwright lane sat red for ~a month before 1.7. Never scope the unit lane with a `src/*.test.ts` glob: it matches only the 16 top-level files and silently skips the 15 in subdirectories (126 tests).
+**Run every lane before a release.** CI covers only the unit lane, so any lane the release gate doesn't run *will* rot silently — the Playwright lane sat red for ~a month before 1.7. Never scope the unit lane with a `src/*.test.ts` glob: it matches only the top-level test files and silently skips the ones in subdirectories (`src/doc-system/`, `src/live-example/`, `src/icons/`, …) — about 126 tests, including whole features' entire coverage. Bare `bun test` recurses; keep it bare.
 
 `bun book` (`bin/build-book.ts`) reads the extracted `demo/docs.json`, so run a normal build first. Book identity/config comes from `tosijs-site.config.ts`. The doc-site build (`buildSite`) also regenerates the ePub on every build when `epub` is enabled in the site config. PDF output is the doc-browser's in-app **Print** button (`book-html.ts` → browser print-to-PDF), not a batch job.
 
@@ -105,10 +105,12 @@ After a rebase/merge that touched generated files, run `bun run build` to regene
 
 ### Directory Structure
 
-- `src/` - Library source code and unit tests (`*.test.ts`)
+- `src/` - Library source code and unit tests (`*.test.ts`, recursing into subdirs)
+- `src/docs/` - Hand-written markdown pages of the doc corpus (the rest is scraped from `/*#` comments)
 - `tests/` - Playwright end-to-end tests (`*.pw.ts`)
 - `demo/src/` - Demo site source (separate from library)
 - `demo/static/` - Static assets copied to `docs/`
+- `demo/docs.json` - Extracted doc corpus (generated; consumed by the site build and `bun book`)
 - `dist/` - Built library output (ESM + IIFE + types)
 - `docs/` - Built demo site (served at https://localhost:8787)
 
@@ -212,7 +214,9 @@ To find form-associated components, grep `src/` for `formAssociated = true`.
 
 ### Code Editor (CodeMirror 6)
 
-`<tosi-code>` (`src/code-editor.ts`) is a [CodeMirror 6](https://codemirror.net/) wrapper. The heavy CM code lives in `src/code-editor-cm.ts` and is loaded **lazily on first use** via a dynamic import — a page with no `<tosi-code>` bundles none of it.
+`<tosi-code>` (`src/code-editor.ts`) is a [CodeMirror 6](https://codemirror.net/) wrapper. The heavy CM code lives in `src/code-editor-cm.ts` and is loaded **lazily on first use** via a dynamic import.
+
+**The lazy split only holds for ESM consumers.** `bun build --format iife` cannot code-split, so the `import('./code-editor-cm')` is flattened into `dist/iife.js` — CodeMirror + lezer + acorn + the tjs CM extension are all in there whether or not the page uses an editor (121KB → 386KB gzip at 1.7). Don't repeat the "a page with no `<tosi-code>` bundles none of it" claim without that caveat: the iife is the *most*-loaded artifact (every generated doc page, the CDN `<script>` path, and every `tosijs-ui/site` adopter that omits `bundleEntry`). `dist/code-editor-cm.js` *is* a real ~9.5KB lazy chunk for bundler consumers.
 
 Public surface (this is the contract; the pre-1.7 ACE `theme`/`options` props were **dropped** — breaking):
 - `value` — the code; `mode` — language (`javascript`, `typescript`, `tjs`, `ajs`, `css`, `html`, `markdown`)
@@ -258,12 +262,12 @@ Extraction rules (learn these to avoid surprises):
 
 #### Live example code blocks
 
-**Consecutive** code blocks with languages `js`, `html`, `css`, or `test` are grouped into a single live example by `src/live-example/insert-examples.ts`. Any non-code-block content (headings, paragraphs, etc.) between blocks breaks the group — the blocks become separate examples.
+**Consecutive** code blocks with languages `js`, `tjs`, `ts`, `html`, `css`, or `test` are grouped into a single live example by `src/live-example/insert-examples.ts`. Any non-code-block content (headings, paragraphs, etc.) between blocks breaks the group — the blocks become separate examples. (` ```typescript ` is the *display-only* fence; ` ```ts ` is executable and goes through the tjs-lang transpiler.)
 
 How grouping works (`insert-examples.ts`):
-1. Finds all `.language-{js,html,css,test}` elements not already inside a live-example
+1. Finds all `.language-{js,tjs,ts,html,css,test}` elements not already inside a live-example
 2. Groups consecutive `<pre>` siblings (checked via `nextElementSibling`)
-3. Creates one `<live-example>` per group, setting `.js`, `.html`, `.css`, `.test` properties
+3. Creates one `<live-example>` per group, setting `.html`, `.css`, `.test` properties — and, for a `js`/`tjs`/`ts` block, `.js` (the source) plus `.dialect` (which drives how it's transpiled). All three dialects are the *same* slot: one executable block per example.
 
 **Execution model** (`src/live-example/execution.ts`):
 - Each code block type (`js`, `test`) runs as a **separate** `AsyncFunction` invocation
@@ -274,7 +278,7 @@ How grouping works (`insert-examples.ts`):
 - If execution throws, it's reported as a test failure: "example loads without error"
 
 **Writing doc examples**:
-- Use ` ```js ` for executable JavaScript, ` ```typescript ` (or any other language) for display-only code
+- Use ` ```js ` (or ` ```tjs ` / ` ```ts `) for executable code, ` ```typescript ` (or any other language) for display-only code
 - Each `js` block must import everything it needs — no sharing between blocks
 - Consecutive html/js/css/test blocks form ONE example. Put markdown between them to create separate examples.
 - **Do not put both `html` and `js` blocks for the same demo** — if an `html` block creates a `<tosi-widget>` and the `js` block also appends one, you get duplicates. Pick one approach per example.
@@ -286,6 +290,7 @@ How grouping works (`insert-examples.ts`):
 
 See `package.json` for current versions. The notable ones:
 
+- `@codemirror/*` (12 packages): the **only hard runtime `dependencies`** — everything else is a peer or dev dep. This is a deliberate 1.7 divergence from the shared practices' "zero runtime dependencies in core libraries" rule (CodeMirror can't be a naive optional peer: the editor, its language modes, and the tjs extension must all share one `@codemirror/state` instance). Don't "fix" it by demoting them to peers. The gate on a new runtime dep here is the printed gzip delta, not the dependency count.
 - `tosijs`: Core component framework (peer + dev dep)
 - `marked`: Markdown parsing (peer dep)
 - `tjs-lang`: live-example transpiler (optional peer dep, lazy-loaded — a plain component consumer never pulls it in). Live examples load its **self-contained browser bundles** (`tjs-lang/browser` + `tjs-lang/browser/from-ts`; the TypeScript compiler lazy-loads from a CDN only for `ts` examples). Load order: installed peer → **same-origin** copy the doc-site build ships under `/tjs/` (via `__TJS_LOCAL_BASE`) → CDN chain (jsdelivr → unpkg → esm.sh). The version is pinned by `TJS_VERSION` in `src/live-example/code-transform.ts` — **bump it in lockstep with the dep** when upgrading. (Replaced `sucrase`, which is gone.)
@@ -555,13 +560,30 @@ For the consumer-facing mental model — element-creator pattern, value/change/a
 
 ## Publishing
 
-1. Update version in `package.json`
-2. Run `bun tests` to verify all tests pass
-3. Build: `bun run build`
-4. Commit changes including `dist/` and `docs/`
-5. Tag release: `git tag v1.x.x`
-6. Push: `git push --tags`
+1. Update version in `package.json` (bump **before** building — `src/version.ts` is generated from it)
+2. Start the dev server (`bun start`) — the Playwright lane needs it
+3. Run **all three lanes**: `bun test` → `bun run test-browser` → `bun playwright test`. `bun tests` covers only two of them; a lane the gate skips rots silently.
+4. Build: `bun run build`
+5. Commit changes including `dist/` and `docs/`
+6. Tag release: `git tag v1.x.x`
+7. Push: `git push --tags` (the user publishes to npm)
+
+Kill any background `bun start` before doing release git surgery (`pkill -f bin/dev.ts`, free :8787) — otherwise it rebuilds mid-operation and races the greps and git commands.
 
 ## Task Tracking
 
 Open tasks and planned work are tracked in `TODO.md` at the project root.
+
+## Where the design docs live
+
+Root-level markdown that is *not* published to the doc site — read the relevant one before touching its subsystem, and add findings to it rather than starting a parallel document:
+
+- `TODO.md` — open tasks and planned work (the index; start here)
+- `Using-Components.md` — consumer-facing mental model for using the components
+- `doc-system-roadmap.md` — north star for the doc system (library-as-endpoint)
+- `codemirror-tjs-1.7-plan.md` — the ACE→CodeMirror 6 + first-class-tjs migration
+- `BUILD-TJS-HOOK.md` — the `libraryBuild` / preload seams in `SiteConfig` (shipped), for consumers with native `.tjs` sources
+- `UPSTREAM.md` — findings and asks filed against tjs-lang / tosijs
+- `RELEASE-REVIEW-1.7.md` — the 1.7 pre-release review (blockers + follow-ups)
+- `src/doc-system/doc-site-system.md` — the canonical reference for `tosijs-ui/site`
+- `icons/icon-composition.md` — the icon composition grammar
