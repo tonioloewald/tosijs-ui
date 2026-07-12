@@ -716,6 +716,13 @@ export async function buildEpub(
   await zipEpub(buildDir, output)
   fs.rmSync(buildDir, { recursive: true, force: true })
 
+  // Release the parser window: an unclosed happy-dom Window holds its whole
+  // document (every chapter parsed) plus its timers. Hygiene, not a proven win —
+  // buildEpub still grows ~1.5MB per call with this in place, so something here
+  // is still retained. buildEpub now runs in a child process (see orchestrator),
+  // which is what actually bounds it.
+  win?.close?.()
+
   console.log(`epub: ${output} (${chapters.length} chapters)`)
   return output
 }

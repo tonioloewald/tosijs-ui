@@ -12,16 +12,77 @@ the icon system here would put src/icon-data.ts into `bun --watch`'s graph and
 cause an endless rebuild loop.
 */
 import * as path from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, unlinkSync } from 'fs';
+import { tmpdir } from 'os';
 import { gzipSync } from 'zlib';
-import { $ } from 'bun';
+import { $, spawn } from 'bun';
 import { extractDocs } from './docs';
 import { checkExamples, formatExampleProblems } from './check-examples';
 import { ensureSections } from './sections';
 import { generateLlmsTxt } from './make-llms-txt';
 import { generateSite } from './generate-site';
 import { findOutputDirOverlap } from './output-guard';
-import { buildEpub } from './epub';
+// Module specifiers contain regex metacharacters (`/`, `.`, `@`, …), so escape
+// before interpolating into the require-shim detector below.
+/** Give up on a hung ePub child rather than wedge the dev server's rebuild. */
+const EPUB_TIMEOUT_MS = 120_000;
+/**
+ * Run buildEpub() in a child process.
+ *
+ * buildEpub drives happy-dom (HTML→XHTML for every chapter) and @resvg/resvg-js
+ * (cover raster) — both native, both retaining — and it runs on EVERY dev rebuild,
+ * so in-process it strands memory in a watch process that lives for days. The child
+ * hands it all back on exit. If it hangs we kill it, and if it fails we warn: the
+ * ePub is a side artifact, so neither should block the page you're trying to look at.
+ *
+ * Only the data buildEpub reads is forwarded — SiteConfig also carries functions
+ * (llmsTxt, libraryBuild, prebuild) that don't survive JSON.
+ */
+async function buildEpubInChild(config, opts) {
+    // Resolve the sibling relative to THIS module so it works both in-repo (.ts)
+    // and when shipped (compiled .js) — same trick as generate-css below.
+    const cliTs = `${import.meta.dir}/epub-cli.ts`;
+    const cli = existsSync(cliTs) ? cliTs : `${import.meta.dir}/epub-cli.js`;
+    const payload = {
+        config: {
+            basePath: config.basePath,
+            baseUrl: config.baseUrl,
+            book: config.book,
+            docsJson: config.docsJson,
+            favicon: config.favicon,
+            lang: config.lang,
+            name: config.name,
+            outputDir: config.outputDir,
+        },
+        opts,
+    };
+    const payloadPath = path.join(tmpdir(), `tosijs-epub-${process.pid}.json`);
+    await Bun.write(payloadPath, JSON.stringify(payload));
+    const child = spawn(['bun', cli, payloadPath], {
+        stdout: 'inherit',
+        stderr: 'inherit',
+    });
+    const killer = setTimeout(() => {
+        console.warn(`⚠️  epub build exceeded ${EPUB_TIMEOUT_MS / 1000}s — killing it. The site is\n` +
+            `    fine; the .epub may be stale.`);
+        child.kill();
+    }, EPUB_TIMEOUT_MS);
+    try {
+        const code = await child.exited;
+        if (code !== 0) {
+            console.warn(`⚠️  epub build failed (exit ${code}). The site is fine; the .epub may be stale.`);
+        }
+    }
+    finally {
+        clearTimeout(killer);
+        try {
+            unlinkSync(payloadPath);
+        }
+        catch {
+            // already gone — fine
+        }
+    }
+}
 // Module specifiers contain regex metacharacters (`/`, `.`, `@`, …), so escape
 // before interpolating into the require-shim detector below.
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -130,28 +191,47 @@ export async function buildSite(config) {
     // consumer supplies (e.g. via staticDirs or an absolute URL).
     const scriptName = (config.scriptUrl ?? '/iife.js').replace(/^\//, '');
     if (config.bundleEntry) {
-        const result = await Bun.build({
-            entrypoints: [config.bundleEntry],
-            outdir: DIST,
-            sourcemap: 'linked',
-            format: 'iife',
-            minify: true,
-            naming: scriptName,
-            // tjs-lang transpiles live examples; it's dynamically import()'d at
-            // runtime (falling back to CDN), so keep it out of the bundle.
-            external: [
-                'tjs-lang',
-                'tjs-lang/browser',
-                'tjs-lang/browser/from-ts',
-                ...(config.bundleExternals ?? []),
-            ],
-        });
-        if (!result.success) {
+        // tjs-lang transpiles live examples; it's dynamically import()'d at
+        // runtime (falling back to CDN), so keep it out of the bundle.
+        const externals = [
+            'tjs-lang',
+            'tjs-lang/browser',
+            'tjs-lang/browser/from-ts',
+            ...(config.bundleExternals ?? []),
+        ];
+        // Bundle in a CHILD PROCESS, not via Bun.build().
+        //
+        // Bun.build() never gives back the bundler's native arena: measured at ~9MB
+        // of RSS per call and rising, monotonic, with no plateau (40 sequential
+        // builds of one real entry = +367MB, still climbing ~5MB/build at the end),
+        // while the JS heap stays flat — so it is invisible to Bun.gc() and to any
+        // heap profiler. devServer() calls this once per rebuild in a process that
+        // lives for DAYS, so it compounds: a ~2-day watch session reached 136GB RSS
+        // and took the machine down with it. Filed as oven-sh/bun#34053.
+        //
+        // The CLI does identical work in a child whose memory the OS reclaims on
+        // exit: the same 15 bundles leave the parent +0.5MB instead of +192MB.
+        // Keep these flags in sync with the Bun.build() options they replace.
+        const bundle = spawn([
+            'bun',
+            'build',
+            config.bundleEntry,
+            '--outdir',
+            DIST,
+            '--sourcemap=linked',
+            '--format=iife',
+            '--minify',
+            '--entry-naming',
+            scriptName,
+            ...externals.flatMap((ext) => ['--external', ext]),
+        ], { stdout: 'inherit', stderr: 'inherit' });
+        if ((await bundle.exited) !== 0) {
             console.error('bundle build failed');
-            for (const message of result.logs)
-                console.error(message);
             return false;
         }
+        await $ `cp ${DIST}/${scriptName} ${PUBLIC}`.text();
+        const bundleFile = await Bun.file(`${DIST}/${scriptName}`).arrayBuffer();
+        const bundleJs = Buffer.from(bundleFile).toString('utf8');
         // Warn only when an external actually compiled to a synchronous require()
         // shim, which throws at module-eval ("Dynamic require of … is not
         // supported"). That only happens for a *static* `import x from 'ext'`. A
@@ -160,20 +240,15 @@ export async function buildSite(config) {
         // stay silent. The config alone can't tell the two apart; the emitted
         // bundle can, so we inspect the actual output.
         if (config.bundleExternals && config.bundleExternals.length > 0) {
-            const js = (await Promise.all(result.outputs
-                .filter((o) => o.kind === 'entry-point' || o.path.endsWith('.js'))
-                .map((o) => o.text()))).join('\n');
-            const broken = config.bundleExternals.filter((ext) => new RegExp(`(?:__require|\\brequire)\\(\\s*["'\`]${escapeRegExp(ext)}["'\`]`).test(js));
+            const broken = config.bundleExternals.filter((ext) => new RegExp(`(?:__require|\\brequire)\\(\\s*["'\`]${escapeRegExp(ext)}["'\`]`).test(bundleJs));
             if (broken.length > 0) {
                 console.warn(`⚠️  bundleExternals compiled to a synchronous require() shim that throws at runtime (${broken.join(', ')}). Reference these via a dynamic import() (kept async by the bundler)\n` +
                     `    or an importmap, not a static import.`);
             }
         }
-        await $ `cp ${DIST}/${scriptName} ${PUBLIC}`.text();
-        const bundleFile = await Bun.file(`${DIST}/${scriptName}`).arrayBuffer();
         // import.meta is illegal in a classic <script> — if it survived bundling
         // (a branch the bundler couldn't eliminate) the IIFE will SyntaxError.
-        if (Buffer.from(bundleFile).toString('utf8').includes('import.meta')) {
+        if (bundleJs.includes('import.meta')) {
             console.warn(`⚠️  ${scriptName} contains \`import.meta\`, which is a SyntaxError in a classic <script>.\n` +
                 `    A dependency referenced it in a branch the bundler couldn't drop — mark that dep external\n` +
                 `    (+ importmap) or choose a browser-only entry point.`);
@@ -299,7 +374,7 @@ export async function buildSite(config) {
     // the corpus and survives the `rm -rf <outputDir>` at the top of the NEXT build
     // (otherwise a dev rebuild would silently drop it). Cheap (~0.4s).
     if (config.epub) {
-        await buildEpub(config, typeof config.epub === 'object' ? config.epub : {});
+        await buildEpubInChild(config, typeof config.epub === 'object' ? config.epub : {});
     }
     console.timeEnd('build');
     return true;

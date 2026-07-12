@@ -223,6 +223,57 @@ export async function devServer(config, opts = {}) {
         // never regenerated — leaving the page's /iife.js to 404 into the SPA
         // fallback (it "loads as html"). Serialize builds and coalesce bursts.
         const runBuild = opts.build ?? (() => buildSite(config));
+        // Memory watchdog.
+        //
+        // The build hands work to native code (the bundler, the HTML parser, the SVG
+        // rasterizer) which can strand memory the JS heap never sees — so nothing
+        // here can GC it away, and `heapUsed` stays flat while RSS climbs. A watch
+        // process lives for DAYS across thousands of rebuilds, so a per-rebuild leak
+        // compounds until the machine swaps itself to death. That is not
+        // hypothetical: a 2-day session reached 136GB RSS and took the machine down
+        // (Bun.build's native arena — see orchestrator.ts and oven-sh/bun#34053).
+        // Dying loudly beats being the reason a laptop overheats: the dev server is
+        // one keystroke to restart, the machine is not.
+        const rssMb = () => Math.round(process.memoryUsage().rss / 1e6);
+        const limitMb = Number(process.env.DEV_MEMORY_LIMIT_MB ?? config.memoryLimitMb ?? 4096);
+        let baselineMb = 0;
+        let rebuilds = 0;
+        let warned = false;
+        const checkMemory = () => {
+            const mb = rssMb();
+            rebuilds += 1;
+            if (!baselineMb)
+                baselineMb = mb;
+            const growth = mb - baselineMb;
+            const each = rebuilds > 1 ? growth / (rebuilds - 1) : 0;
+            if (mb >= limitMb) {
+                // Distinguish the two ways to get here, because the advice is opposite:
+                // memory that GREW across rebuilds is a leak (report it); a build that was
+                // simply born bigger than the ceiling just needs a bigger ceiling.
+                const leaking = rebuilds > 1 && each >= 1;
+                const diagnosis = leaking
+                    ? `   ${rebuilds} rebuilds, +${growth}MB since the first ` +
+                        `(~${each.toFixed(1)}MB per rebuild).\n\n` +
+                        `   Growth per rebuild should be ~0, so this is a leak, not your project\n` +
+                        `   getting bigger. Restarting reclaims it — please report the numbers\n` +
+                        `   above. If this build genuinely needs the headroom, raise the ceiling\n` +
+                        `   with DEV_MEMORY_LIMIT_MB=<mb> or memoryLimitMb in your site config.\n`
+                    : `   ${rebuilds} rebuild${rebuilds === 1 ? '' : 's'}, ` +
+                        `+${growth}MB since the first — i.e. it is not growing.\n\n` +
+                        `   This build's baseline footprint is simply above the ceiling, which is\n` +
+                        `   not a leak. Raise it with DEV_MEMORY_LIMIT_MB=<mb> or memoryLimitMb in\n` +
+                        `   your site config.\n`;
+                console.error(`\n🛑 dev server stopping: ${mb}MB RSS, over the ${limitMb}MB limit.\n\n` +
+                    diagnosis);
+                process.exit(1);
+            }
+            if (!warned && mb > limitMb * 0.6) {
+                warned = true;
+                console.warn(`⚠️  dev server at ${mb}MB RSS after ${rebuilds} rebuilds (+${growth}MB, ` +
+                    `~${each.toFixed(1)}MB each; limit ${limitMb}MB). Growth per rebuild ` +
+                    `should be ~0 — if this keeps climbing, restart and report it.`);
+            }
+        };
         let building = false;
         let pending = false;
         const rebuild = async () => {
@@ -239,6 +290,7 @@ export async function devServer(config, opts = {}) {
             }
             finally {
                 building = false;
+                checkMemory();
                 if (pending) {
                     pending = false;
                     void rebuild();

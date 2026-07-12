@@ -1,5 +1,41 @@
 # Changelog
 
+## 1.6.22
+
+### Fixed
+
+- **The dev server no longer leaks memory on every rebuild — update as a priority if
+  you use `tosijs-ui/site`.** `buildSite()` called `Bun.build()` in-process, and Bun's
+  bundler never returns its native arena: RSS grows monotonically per call with no
+  plateau (40 sequential builds of one entry = **+367MB**, still climbing ~5MB/build at
+  the end), while the JS heap stays flat — so it is invisible to `Bun.gc()` and to any
+  heap profiler. `devServer()` calls it once per rebuild in a process that runs for
+  days, so it compounds: a ~2-day watch session reached **136GB RSS** and took the
+  machine down with it. Filed upstream as
+  [oven-sh/bun#34053](https://github.com/oven-sh/bun/issues/34053).
+
+  The bundle now builds in a **child process** (`bun build`), whose memory the OS
+  reclaims on exit — the same 15 bundles leave the parent **+0.5MB** instead of +192MB.
+  `buildEpub()` moved to a child too (happy-dom + `@resvg/resvg-js` are both native and
+  retaining, and it runs on every rebuild), with a 120s timeout kill so a hung or failed
+  ePub warns instead of wedging the rebuild. Measured on this repo's own dev server:
+  **baseline RSS 503MB → 150MB, and per-rebuild growth 26–59MB → ~2.7MB.**
+
+  Bundle output is byte-for-byte identical; this is purely where the work runs.
+
+### Added
+
+- **Dev-server memory watchdog.** `devServer()` now samples RSS after each rebuild and,
+  past a ceiling (`memoryLimitMb` in the site config, or `DEV_MEMORY_LIMIT_MB`; default
+  4096), prints the growth-per-rebuild and exits rather than let a leak thrash the
+  machine. It distinguishes real growth (a leak — report it) from a build whose baseline
+  simply exceeds the ceiling (raise the ceiling).
+
+## 1.6.21
+
+- Memory-routed nav-toggle fix; `buildSite` `.tjs` hooks (`libraryBuild`,
+  `generateCssPreload` — see BUILD-TJS-HOOK.md); tjs-lang 0.9.0.
+
 ## 1.6.20
 
 ### Fixed

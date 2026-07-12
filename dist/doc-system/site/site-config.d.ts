@@ -187,6 +187,16 @@ export interface SiteConfig {
     /** extra dev-server watch paths (added to docPaths + bundleEntry dir). */
     watchPaths?: string[];
     /**
+     * RSS ceiling (MB) for the dev server, default 4096. A watch process lives for
+     * days across thousands of rebuilds, so anything the build strands per rebuild
+     * compounds until the machine swaps itself to death. Past this, the server
+     * prints the growth-per-rebuild and exits rather than take the machine with it.
+     * Overridden by the DEV_MEMORY_LIMIT_MB env var. Raise it if a genuinely large
+     * build needs the headroom — but sustained growth per rebuild is a leak, not a
+     * ceiling that's too low.
+     */
+    memoryLimitMb?: number;
+    /**
      * Enable the dev-server source read/write endpoints (`/__docstore/source`) that
      * back in-browser "edit page source". Local dev only — the dev server runs on
      * your own machine over your own files, so there is nothing to secure; writes
