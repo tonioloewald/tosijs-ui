@@ -19,6 +19,22 @@ export declare function contextVarName(key: string): string;
  */
 export declare function rewriteImports(code: string, contextKeys: string[]): string;
 /**
+ * Best-effort list of the identifiers a snippet binds at the TOP level (column 0,
+ * so genuinely function-scope, not inside a block). Handles `const/let/var` incl.
+ * single-line destructuring, and `function`/`class` declarations. Used to introspect
+ * an example's live locals for tjs autocomplete — imperfect is fine, since the
+ * capture epilogue guards every name individually.
+ */
+export declare function extractTopLevelBindingNames(code: string): string[];
+/**
+ * Build an epilogue that captures the values of `names` (as they stand at the end
+ * of a run) into `captureVar(scopeObject)`. Each binding is read behind its own
+ * try/catch so a stale/over-matched name can't abort the whole capture, and the
+ * whole thing is a trailing block so it never shadows user code. Returns '' when
+ * there's nothing to capture.
+ */
+export declare function buildScopeCapture(names: string[], captureVar: string): string;
+/**
  * Execute code as an async function with injected context
  */
 export declare function executeCode(code: string, context: ExampleContext, transform: TransformFn): Promise<void>;

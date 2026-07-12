@@ -456,6 +456,9 @@ export class LiveExample extends Component<ExampleParts> {
   prefix = 'lx'
   storageKey = STORAGE_KEY
   context: ExampleContext = {}
+  // The example's top-level locals from the latest run, captured in-run for tjs
+  // runtime-value autocomplete (see `liveBindings`). Populated via `onScope`.
+  private capturedScope: Record<string, unknown> = {}
   uuid: string = crypto.randomUUID()
   remoteId = ''
 
@@ -702,11 +705,18 @@ export class LiveExample extends Component<ExampleParts> {
     this.renderTjsTests()
   }
 
+  // Capture the latest run's top-level locals (arrow property so `this` is bound
+  // when passed as execution's `onScope`).
+  private captureScope = (scope: Record<string, unknown>): void => {
+    this.capturedScope = scope
+  }
+
   /**
    * Live bindings for tjs runtime-value autocomplete: the example's context modules
-   * (keyed by the identifier the rewritten code uses, e.g. `tosijs`, `tosijsui`)
-   * plus the currently-rendered `preview` element. Read lazily on each completion,
-   * so it reflects the latest run.
+   * (keyed by the identifier the rewritten code uses, e.g. `tosijs`, `tosijsui`),
+   * the currently-rendered `preview` element, and the latest run's top-level locals
+   * (so `const app = tosi(…)` gives real `app.` / `app.items.` completions, proxy
+   * members and all). Read lazily on each completion, so it reflects the latest run.
    */
   private liveBindings(): Record<string, unknown> {
     const bindings: Record<string, unknown> = {}
@@ -715,6 +725,8 @@ export class LiveExample extends Component<ExampleParts> {
     }
     const preview = this.parts.example?.querySelector('.preview')
     if (preview) bindings.preview = preview
+    // Run locals last so they win over same-named context entries.
+    Object.assign(bindings, this.capturedScope)
     return bindings
   }
 
@@ -1386,6 +1398,7 @@ export class LiveExample extends Component<ExampleParts> {
         exampleElement: example,
         widgetsElement: exampleWidgets,
         onError,
+        onScope: this.captureScope,
       })
     } else {
       preview = await executeInline({
@@ -1398,6 +1411,7 @@ export class LiveExample extends Component<ExampleParts> {
         styleElement: styleEl,
         widgetsElement: exampleWidgets,
         onError,
+        onScope: this.captureScope,
       })
     }
 

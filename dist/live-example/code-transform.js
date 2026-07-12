@@ -41,6 +41,96 @@ export function rewriteImports(code, contextKeys) {
     }
     return result;
 }
+/** Pull the bound identifiers out of one declaration's left-hand side. */
+function patternNames(lhs) {
+    lhs = lhs.trim();
+    if (/^[{[]/.test(lhs)) {
+        // Object/array destructuring — strip the outer bracket pair and split on
+        // top-level commas (nested patterns aren't unpacked; per-name guards below
+        // make an over/under-match harmless).
+        const inner = lhs.slice(1, -1);
+        const names = [];
+        for (let part of inner.split(',')) {
+            part = part.trim().replace(/^\.\.\./, ''); // rest element
+            if (!part)
+                continue;
+            if (part.includes(':'))
+                part = part.split(':')[1].trim(); // key: alias → alias
+            part = part.split('=')[0].trim(); // strip default
+            const m = part.match(/^[A-Za-z_$][\w$]*/);
+            if (m)
+                names.push(m[0]);
+        }
+        return names;
+    }
+    const m = lhs.match(/^[A-Za-z_$][\w$]*/);
+    return m ? [m[0]] : [];
+}
+/** The declaration target — everything up to the initializer `=` at bracket depth 0
+ * (so a `{ count = 0 }` default `=` inside the pattern doesn't end it early). */
+function declarationTarget(rest) {
+    let depth = 0;
+    for (let i = 0; i < rest.length; i++) {
+        const c = rest[i];
+        if (c === '(' || c === '[' || c === '{')
+            depth++;
+        else if (c === ')' || c === ']' || c === '}')
+            depth--;
+        else if (c === '=' && depth === 0) {
+            const next = rest[i + 1];
+            const prev = rest[i - 1];
+            // Skip ==, =>, <=, >=, != — only a bare assignment ends the LHS.
+            if (next !== '=' && next !== '>' && !'=!<>'.includes(prev)) {
+                return rest.slice(0, i);
+            }
+        }
+        else if (c === ';' && depth === 0) {
+            return rest.slice(0, i);
+        }
+    }
+    return rest;
+}
+/**
+ * Best-effort list of the identifiers a snippet binds at the TOP level (column 0,
+ * so genuinely function-scope, not inside a block). Handles `const/let/var` incl.
+ * single-line destructuring, and `function`/`class` declarations. Used to introspect
+ * an example's live locals for tjs autocomplete — imperfect is fine, since the
+ * capture epilogue guards every name individually.
+ */
+export function extractTopLevelBindingNames(code) {
+    const names = new Set();
+    const declRe = /^(?:export\s+)?(const|let|var|function\*?|class)\s+(.*)$/gm;
+    let m;
+    while ((m = declRe.exec(code)) !== null) {
+        const kind = m[1];
+        const rest = m[2];
+        if (kind === 'class' || kind.startsWith('function')) {
+            const id = rest.match(/^[A-Za-z_$][\w$]*/);
+            if (id)
+                names.add(id[0]);
+        }
+        else {
+            for (const n of patternNames(declarationTarget(rest)))
+                names.add(n);
+        }
+    }
+    return [...names];
+}
+/**
+ * Build an epilogue that captures the values of `names` (as they stand at the end
+ * of a run) into `captureVar(scopeObject)`. Each binding is read behind its own
+ * try/catch so a stale/over-matched name can't abort the whole capture, and the
+ * whole thing is a trailing block so it never shadows user code. Returns '' when
+ * there's nothing to capture.
+ */
+export function buildScopeCapture(names, captureVar) {
+    if (names.length === 0)
+        return '';
+    const assigns = names
+        .map((n) => `try{__tosiScope.${n}=${n}}catch(_e){}`)
+        .join('');
+    return `\n;{const __tosiScope={};${assigns}${captureVar}(__tosiScope)}`;
+}
 /**
  * Execute code as an async function with injected context
  */

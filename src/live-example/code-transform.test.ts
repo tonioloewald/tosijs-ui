@@ -1,5 +1,10 @@
 import { test, expect, describe } from 'bun:test'
-import { rewriteImports, AsyncFunction } from './code-transform'
+import {
+  rewriteImports,
+  AsyncFunction,
+  extractTopLevelBindingNames,
+  buildScopeCapture,
+} from './code-transform'
 
 describe('rewriteImports', () => {
   test('rewrites named imports to destructuring', () => {
@@ -88,5 +93,72 @@ describe('AsyncFunction', () => {
     const fn = new AsyncFunction('a', 'b', 'return a + b')
     const result = await fn(3, 4)
     expect(result).toBe(7)
+  })
+})
+
+describe('extractTopLevelBindingNames', () => {
+  test('plain const/let/var', () => {
+    const names = extractTopLevelBindingNames(
+      'const a = 1\nlet b = 2\nvar c = 3'
+    )
+    expect(names.sort()).toEqual(['a', 'b', 'c'])
+  })
+
+  test('object destructuring, aliases, defaults, rest', () => {
+    const names = extractTopLevelBindingNames(
+      'const { app, user: u, count = 0, ...rest } = tosi({})'
+    )
+    expect(names.sort()).toEqual(['app', 'count', 'rest', 'u'])
+  })
+
+  test('array destructuring', () => {
+    expect(
+      extractTopLevelBindingNames('const [first, second] = list').sort()
+    ).toEqual(['first', 'second'])
+  })
+
+  test('function and class declarations', () => {
+    const names = extractTopLevelBindingNames(
+      'function greet() {}\nclass Widget {}'
+    )
+    expect(names.sort()).toEqual(['Widget', 'greet'])
+  })
+
+  test('ignores indented (block-scoped) declarations', () => {
+    const code = 'const top = 1\nif (x) {\n  const inner = 2\n}'
+    expect(extractTopLevelBindingNames(code)).toEqual(['top'])
+  })
+
+  test('no bindings → empty', () => {
+    expect(extractTopLevelBindingNames('preview.append(div())')).toEqual([])
+  })
+})
+
+describe('buildScopeCapture', () => {
+  test('empty names → empty epilogue', () => {
+    expect(buildScopeCapture([], '__cap')).toBe('')
+  })
+
+  test('captures each name behind its own guard', () => {
+    const epilogue = buildScopeCapture(['app', 'count'], '__cap')
+    expect(epilogue).toContain('try{__tosiScope.app=app}catch(_e){}')
+    expect(epilogue).toContain('try{__tosiScope.count=count}catch(_e){}')
+    expect(epilogue).toContain('__cap(__tosiScope)')
+  })
+
+  test('runs and captures live values in an AsyncFunction body', async () => {
+    let captured: Record<string, unknown> = {}
+    const capture = (s: Record<string, unknown>) => {
+      captured = s
+    }
+    const body =
+      'const app = { items: [1, 2] }\nconst n = 3' +
+      buildScopeCapture(['app', 'n', 'missing'], '__cap')
+    const fn = new AsyncFunction('__cap', body)
+    await fn(capture)
+    expect(captured.app).toEqual({ items: [1, 2] })
+    expect(captured.n).toBe(3)
+    // an over-matched / undefined name is silently skipped, not thrown
+    expect('missing' in captured).toBe(false)
   })
 })

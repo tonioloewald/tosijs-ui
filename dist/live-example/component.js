@@ -417,6 +417,9 @@ export class LiveExample extends Component {
     prefix = 'lx';
     storageKey = STORAGE_KEY;
     context = {};
+    // The example's top-level locals from the latest run, captured in-run for tjs
+    // runtime-value autocomplete (see `liveBindings`). Populated via `onScope`.
+    capturedScope = {};
     uuid = crypto.randomUUID();
     remoteId = '';
     remoteSync;
@@ -624,11 +627,17 @@ export class LiveExample extends Component {
         this.jsOutEditor.value = this.lastGeneratedJs;
         this.renderTjsTests();
     }
+    // Capture the latest run's top-level locals (arrow property so `this` is bound
+    // when passed as execution's `onScope`).
+    captureScope = (scope) => {
+        this.capturedScope = scope;
+    };
     /**
      * Live bindings for tjs runtime-value autocomplete: the example's context modules
-     * (keyed by the identifier the rewritten code uses, e.g. `tosijs`, `tosijsui`)
-     * plus the currently-rendered `preview` element. Read lazily on each completion,
-     * so it reflects the latest run.
+     * (keyed by the identifier the rewritten code uses, e.g. `tosijs`, `tosijsui`),
+     * the currently-rendered `preview` element, and the latest run's top-level locals
+     * (so `const app = tosi(…)` gives real `app.` / `app.items.` completions, proxy
+     * members and all). Read lazily on each completion, so it reflects the latest run.
      */
     liveBindings() {
         const bindings = {};
@@ -638,6 +647,8 @@ export class LiveExample extends Component {
         const preview = this.parts.example?.querySelector('.preview');
         if (preview)
             bindings.preview = preview;
+        // Run locals last so they win over same-named context entries.
+        Object.assign(bindings, this.capturedScope);
         return bindings;
     }
     updateUndo = () => {
@@ -1222,6 +1233,7 @@ export class LiveExample extends Component {
                 exampleElement: example,
                 widgetsElement: exampleWidgets,
                 onError,
+                onScope: this.captureScope,
             });
         }
         else {
@@ -1235,6 +1247,7 @@ export class LiveExample extends Component {
                 styleElement: styleEl,
                 widgetsElement: exampleWidgets,
                 onError,
+                onScope: this.captureScope,
             });
         }
         if (this.persistToDom) {

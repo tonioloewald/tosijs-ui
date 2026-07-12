@@ -15,6 +15,13 @@ export interface ExecutionOptions {
     context: ExampleContext;
     transform: TransformFn;
     onError?: (error: Error) => void;
+    /**
+     * Receives the example's top-level locals after a successful run, so tjs
+     * autocomplete can introspect the REAL values (e.g. a `const app = tosi(…)`
+     * proxy) the user just created. Captured in-run — no re-execution, so no
+     * doubled side effects.
+     */
+    onScope?: (scope: Record<string, unknown>) => void;
 }
 /**
  * Execute code inline (directly in the page)

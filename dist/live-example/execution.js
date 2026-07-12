@@ -1,5 +1,8 @@
 import { elements } from 'tosijs';
-import { rewriteImports, AsyncFunction, contextVarName } from './code-transform';
+import { rewriteImports, AsyncFunction, contextVarName, extractTopLevelBindingNames, buildScopeCapture, } from './code-transform';
+// Injected context name for the scope-capture callback (see `onScope`). Chosen to
+// not collide with anything an example would plausibly declare.
+const SCOPE_CAPTURE_VAR = '__tosiCaptureScope';
 const { div } = elements;
 /**
  * Register web components in an iframe's customElements registry.
@@ -49,10 +52,26 @@ export function registerComponentsInIframe(iframeWindow, context) {
     }
 }
 /**
+ * Append a scope-capture epilogue to already-transformed example code when a
+ * consumer wants the run's locals. Returns the (possibly unchanged) code plus the
+ * extra context entry to inject. The epilogue no-ops if the example binds nothing.
+ */
+function withScopeCapture(transformedCode, onScope) {
+    if (!onScope)
+        return { code: transformedCode, extraContext: {} };
+    const epilogue = buildScopeCapture(extractTopLevelBindingNames(transformedCode), SCOPE_CAPTURE_VAR);
+    if (!epilogue)
+        return { code: transformedCode, extraContext: {} };
+    return {
+        code: transformedCode + epilogue,
+        extraContext: { [SCOPE_CAPTURE_VAR]: onScope },
+    };
+}
+/**
  * Execute code inline (directly in the page)
  */
 export async function executeInline(options) {
-    const { html, css, js, context, transform, exampleElement, styleElement, widgetsElement, onError, } = options;
+    const { html, css, js, context, transform, exampleElement, styleElement, widgetsElement, onError, onScope, } = options;
     const preview = div({ class: 'preview' });
     preview.innerHTML = html;
     styleElement.innerText = css;
@@ -63,14 +82,15 @@ export async function executeInline(options) {
     else {
         exampleElement.insertBefore(preview, widgetsElement);
     }
-    const fullContext = { preview, ...context };
     try {
         const code = rewriteImports(js, Object.keys(context));
         const transformedCode = (await transform(code, { transforms: ['typescript'] })).code;
+        const { code: finalCode, extraContext } = withScopeCapture(transformedCode, onScope);
+        const fullContext = { preview, ...context, ...extraContext };
         const contextKeys = Object.keys(fullContext).map(contextVarName);
         const contextValues = Object.values(fullContext);
         // @ts-expect-error AsyncFunction constructor typing
-        const func = new AsyncFunction(...contextKeys, transformedCode);
+        const func = new AsyncFunction(...contextKeys, finalCode);
         await func(...contextValues);
     }
     catch (e) {
@@ -87,7 +107,7 @@ export async function executeInline(options) {
  * Execute code in an isolated iframe
  */
 export async function executeInIframe(options) {
-    const { html, css, js, context, transform, exampleElement, widgetsElement, onError, } = options;
+    const { html, css, js, context, transform, exampleElement, widgetsElement, onError, onScope, } = options;
     // Create or reuse iframe
     let iframe = exampleElement.querySelector('iframe.preview-iframe');
     if (!iframe) {
@@ -138,16 +158,17 @@ export async function executeInIframe(options) {
         console.error('Could not find preview element in iframe');
         return null;
     }
-    // Execute JS in iframe context
-    const fullContext = { preview, ...context };
     try {
         const code = rewriteImports(js, Object.keys(context));
         const transformedCode = (await transform(code, { transforms: ['typescript'] })).code;
+        const { code: finalCode, extraContext } = withScopeCapture(transformedCode, onScope);
+        // Execute JS in iframe context
+        const fullContext = { preview, ...context, ...extraContext };
         // Create AsyncFunction in iframe's context
         const IframeAsyncFunction = iframeWindow.eval('(async () => {}).constructor');
         const contextKeys = Object.keys(fullContext).map(contextVarName);
         const contextValues = Object.values(fullContext);
-        const func = new IframeAsyncFunction(...contextKeys, transformedCode);
+        const func = new IframeAsyncFunction(...contextKeys, finalCode);
         await func(...contextValues);
     }
     catch (e) {

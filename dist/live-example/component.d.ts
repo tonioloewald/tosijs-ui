@@ -227,6 +227,7 @@ export declare class LiveExample extends Component<ExampleParts> {
     prefix: string;
     storageKey: string;
     context: ExampleContext;
+    private capturedScope;
     uuid: string;
     remoteId: string;
     private remoteSync?;
@@ -262,11 +263,13 @@ export declare class LiveExample extends Component<ExampleParts> {
     private renderTjsTests;
     private computeGeneratedJs;
     private ensureProductTabs;
+    private captureScope;
     /**
      * Live bindings for tjs runtime-value autocomplete: the example's context modules
-     * (keyed by the identifier the rewritten code uses, e.g. `tosijs`, `tosijsui`)
-     * plus the currently-rendered `preview` element. Read lazily on each completion,
-     * so it reflects the latest run.
+     * (keyed by the identifier the rewritten code uses, e.g. `tosijs`, `tosijsui`),
+     * the currently-rendered `preview` element, and the latest run's top-level locals
+     * (so `const app = tosi(…)` gives real `app.` / `app.items.` completions, proxy
+     * members and all). Read lazily on each completion, so it reflects the latest run.
      */
     private liveBindings;
     updateUndo: () => void;
