@@ -728,7 +728,11 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   docContent.classList.add('doc-content')
   Object.assign(docContent.style, {
     display: 'block',
-    maxWidth: '44em',
+    // Same var the pre-hydration `:not(:defined)` layout uses (doc-system-styles.ts).
+    // This node is ADOPTED from the pre-rendered page, so if the two boxes disagree
+    // the content jumps the instant we hydrate. The fallback keeps a standalone
+    // doc-browser (no doc-system stylesheet) working.
+    maxWidth: 'var(--doc-content-max-width, 44em)',
     margin: 'auto',
     padding: '0 1em',
     overflow: 'hidden',

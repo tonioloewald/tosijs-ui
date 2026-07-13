@@ -20,6 +20,13 @@ import {
 } from 'tosijs'
 import { icons, svg2DataUrl } from '../icons'
 
+// The sidebar's geometry, shared by the hydrated layout and the pre-hydration one.
+// These mirror what <tosi-sidenav> is given by doc-browser (navSize / minSize): the
+// sidebar is `SIDEBAR_WIDTH` wide and collapses behind a toggle below
+// `SIDEBAR_BREAKPOINT`. Keep them in step, or the page jumps as it hydrates.
+export const SIDEBAR_WIDTH = 200
+export const SIDEBAR_BREAKPOINT = 600
+
 export interface DocSystemTheme {
   /** brand / accent color — most of the palette is derived from this */
   accent?: string
@@ -83,6 +90,10 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       _touchSize: '32px',
       _headerHeight:
         'calc( var(--line-height) * var(--h2-scale) + var(--spacing) * 2 )',
+      // The content column's width. ONE definition, read by both the hydrated
+      // doc-browser (doc-browser.ts) and the pre-hydration `:not(:defined)` layout
+      // below — if these two ever disagree, the page jumps on hydration.
+      _docContentMaxWidth: '44em',
     },
     '.darkmode': {
       ...invertLuminance(colors),
@@ -116,6 +127,108 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
     },
     'tosi-doc-system tosi-sidenav::part(nav)': {
       background: vars.navBg,
+    },
+
+    // ── Pre-hydration layout (`:not(:defined)`) ──────────────────────────────
+    //
+    // An UNDEFINED custom element is `display: inline`, so before the bundle loads
+    // the pre-rendered page — which already contains the nav tree, the content and
+    // the code blocks — stacks as bare text with no chrome. That reflow-on-hydrate
+    // is why the page used to hide its own body (`body{opacity:0}`) until the
+    // bundle arrived: on a cheap phone that's ~4.5s of blank screen for content
+    // that was in the HTML at ~300ms.
+    //
+    // Instead, lay the static page out AS THOUGH the chrome were already there:
+    // the content sits in a scrolling rectangle inset by the header, and by the
+    // sidebar once the viewport is wide enough. Hydration then only ADDS the
+    // chrome — and `doc-browser` ADOPTS this very `.doc-content` node rather than
+    // re-rendering it, so with the same box metrics below, nothing moves at all.
+    //
+    // These rules evaporate by themselves the moment the element upgrades.
+    'tosi-doc-system:not(:defined)': {
+      display: 'block',
+      position: 'fixed',
+      inset: `${vars.headerHeight} 0 0 0`,
+      overflow: 'auto',
+    },
+    // The header bar: painted, not populated — its contents (brand, links) arrive
+    // with hydration, in this exact space.
+    'tosi-doc-system:not(:defined)::before': {
+      content: '""',
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      right: '0',
+      height: vars.headerHeight,
+      background: vars.brandColor,
+    },
+    // Same box the hydrated doc-browser gives this node (see doc-browser.ts), so
+    // adoption is a no-op geometrically.
+    'tosi-doc-system:not(:defined) .doc-content': {
+      display: 'block',
+      maxWidth: vars.docContentMaxWidth,
+      margin: 'auto',
+      padding: '0 1em',
+      // Must match doc-browser's inline style EXACTLY, `overflow` included: it
+      // establishes a block formatting context, which stops the <h1>'s top margin
+      // collapsing out of the box. Without it the static content sits 10px lower
+      // than the hydrated content, and the page nudges as it comes alive.
+      overflow: 'hidden',
+    },
+    // The header-bar links are icon links; without the icon font they'd render as
+    // stray text in the bar. They arrive with hydration.
+    'tosi-doc-system:not(:defined) .doc-navbar': {
+      display: 'none',
+    },
+    // A `test` block is an example's ASSERTIONS. The live example keeps them behind
+    // a tab — a reader is never shown them — so rendering them statically both
+    // misrepresents the page and adds height that disappears the moment the example
+    // mounts. (`:has()` is a progressive enhancement: where it isn't supported the
+    // block simply stays visible, which is what happens today anyway.)
+    'tosi-doc-system:not(:defined) pre:has(> code.language-test)': {
+      display: 'none',
+    },
+    // Below the sidebar breakpoint (side-nav goes compact under
+    // `doc-browser`'s minSize) the nav is behind a toggle, so it isn't shown.
+    'tosi-doc-system:not(:defined) .doc-nav': {
+      display: 'none',
+    },
+    // Wide enough for the sidebar: reserve its column, and show the REAL nav tree
+    // in it. It's a plain <ul> with native <details> groups, so it navigates and
+    // collapses without a line of JavaScript — a no-JS reader gets a working site,
+    // and hydration merely upgrades it in place.
+    [`@media (min-width: ${SIDEBAR_BREAKPOINT}px)`]: {
+      'tosi-doc-system:not(:defined)': {
+        left: `${SIDEBAR_WIDTH}px`,
+      },
+      'tosi-doc-system:not(:defined) .doc-nav': {
+        display: 'block',
+        position: 'fixed',
+        left: '0',
+        top: vars.headerHeight,
+        bottom: '0',
+        width: `${SIDEBAR_WIDTH}px`,
+        overflow: 'auto',
+        background: vars.navBg,
+        padding: vars.spacing,
+      },
+      'tosi-doc-system:not(:defined) .doc-nav ul': {
+        listStyle: 'none',
+        margin: '0',
+        padding: '0 0 0 var(--spacing)',
+      },
+      'tosi-doc-system:not(:defined) .doc-nav > ul': {
+        paddingLeft: '0',
+      },
+      'tosi-doc-system:not(:defined) .doc-nav a': {
+        display: 'block',
+        padding: 'calc(var(--spacing) * 0.25) 0',
+        color: vars.textColor,
+        textDecoration: 'none',
+      },
+      'tosi-doc-system:not(:defined) .doc-nav summary': {
+        cursor: 'pointer',
+      },
     },
     '.center': {
       display: 'flex',

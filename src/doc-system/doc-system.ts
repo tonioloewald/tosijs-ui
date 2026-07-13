@@ -164,8 +164,18 @@ export class TosiDocSystem extends Component {
       theme === 'dark' ||
       (theme === 'system' &&
         matchMedia('(prefers-color-scheme: dark)').matches)
+    const contrast = this.prefs.highContrast.value
     document.body.classList.toggle('darkmode', dark)
-    document.body.classList.toggle('high-contrast', this.prefs.highContrast.value)
+    document.body.classList.toggle('high-contrast', contrast)
+    // Also on <html>, because the generated pages set it there BEFORE first paint
+    // (a static page is now painted, not hidden, so a dark reader would otherwise
+    // see a flash of the light theme — and only a head script can read the stored
+    // preference). If we left that class alone, switching to light would clear it
+    // from <body> while <html> still supplied the dark vars, and the page would be
+    // stuck dark. Other code watches `body.darkmode` (e.g. the code editor), so the
+    // body class stays authoritative — this just keeps the two from disagreeing.
+    document.documentElement.classList.toggle('darkmode', dark)
+    document.documentElement.classList.toggle('high-contrast', contrast)
   }
 
   private persistPrefs(): void {
