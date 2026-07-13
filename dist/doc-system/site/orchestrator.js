@@ -211,6 +211,15 @@ export async function buildSite(config) {
             ...tjsEditorExternal(PROJECT_ROOT),
             ...(config.bundleExternals ?? []),
         ];
+        // UPSTREAM STATUS (2026-07-13): confirmed by Bun and a fix is in flight —
+        // oven-sh/bun#34054, still OPEN/unmerged, so no released Bun has it. Root cause
+        // is not a malloc leak (LSAN sees ~5KB unreachable): the memory is freed but
+        // mimalloc never purges it back to the OS. Revisit going back in-process only
+        // once that lands in a version we require — and even then the child is ~30ms and
+        // immune to the whole class, so the bar for reverting is "measurably worth it",
+        // not "the bug is fixed". The Bun.Transpiler half (see check-examples.ts) is not
+        // covered by that PR at all.
+        //
         // Bundle in a CHILD PROCESS, not via Bun.build().
         //
         // Bun.build() never gives back the bundler's native arena: measured at ~9MB
