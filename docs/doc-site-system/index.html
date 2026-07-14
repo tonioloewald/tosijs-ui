@@ -55,12 +55,9 @@ works with no JavaScript and then upgrades itself into the interactive
 <p>The output is a plain folder of static files — drop it on GitHub Pages,
 Firebase Hosting, or any static host.</p>
 <blockquote>
-<p><strong>Status:</strong> extraction in progress. The runtime component lives here in
-<code>src/doc-system/</code>; the build tooling still lives in <code>bin/</code> (<code>site-config.ts</code>,
-<code>generate-site.ts</code>, <code>generate-css.ts</code>, <code>generate-og.ts</code>, <code>build-dom-shim.ts</code>,
-<code>docs.ts</code>) and is being consolidated into <code>src/doc-system/</code> behind the
-importable <code>tosijs-ui/site</code> entry described here. See &quot;Current layout&quot; at the
-bottom.</p>
+<p><strong>Status:</strong> shipped. The whole system — build tooling and runtime component —
+lives in <code>src/doc-system/</code> and is importable as <code>tosijs-ui/site</code>. See
+&quot;Where the code lives&quot; at the bottom.</p>
 </blockquote>
 <h2>What you get</h2>
 <ul>
@@ -92,8 +89,8 @@ export default defineSiteConfig({
   name: &#39;my-lib&#39;,
   description: &#39;What my library does.&#39;,
   baseUrl: &#39;https://my-lib.example.com&#39;,
-  host: &#39;github-pages&#39;,          // emits .nojekyll + CNAME (domain from baseUrl)
-  bundleEntry: &#39;demo/site.ts&#39;,   // omit to use tosijs-ui&#39;s published iife.js
+  host: &#39;github-pages&#39;, // emits .nojekyll + CNAME (domain from baseUrl)
+  bundleEntry: &#39;demo/site.ts&#39;, // omit to use tosijs-ui&#39;s published iife.js
   navbarLinks: [
     { href: &#39;https://github.com/me/my-lib&#39;, label: &#39;github&#39;, icon: &#39;github&#39; },
   ],
@@ -116,16 +113,18 @@ first file-change rebuild; without <code>build</code>, the watcher only re-runs
 and &quot;loads as html&quot;. The initial build still runs your steps explicitly:</p>
 <pre><code class="language-typescript">const build = async () =&gt; {
   if (!(await buildSite(config))) throw new Error(&#39;site build failed&#39;)
-  await buildMyIifeBundle()   // re-create what buildSite&#39;s rm -rf removed
+  await buildMyIifeBundle() // re-create what buildSite&#39;s rm -rf removed
 }
 if (!(await buildSite(config))) process.exit(1)
 await buildMyIifeBundle()
 if (process.argv.includes(&#39;--build&#39;)) process.exit(0)
-await devServer(config, { build })   // ← watcher runs the full pipeline
+await devServer(config, { build }) // ← watcher runs the full pipeline
 </code></pre>
 </blockquote>
 <p><strong>3. scripts</strong> in <code>package.json</code>:</p>
-<pre><code class="language-json">{ &quot;scripts&quot;: { &quot;start&quot;: &quot;bun bin/site.ts&quot;, &quot;build&quot;: &quot;bun bin/site.ts --build&quot; } }
+<pre><code class="language-json">{
+  &quot;scripts&quot;: { &quot;start&quot;: &quot;bun bin/site.ts&quot;, &quot;build&quot;: &quot;bun bin/site.ts --build&quot; }
+}
 </code></pre>
 <p><strong>4. build-time dependencies.</strong> The build (not your shipped library) needs a few
 tools installed alongside tosijs-ui. They&#39;re declared as optional peers, so
@@ -211,8 +210,8 @@ defineIcons(myIcons)
 </code></pre>
 <p>(Each SVG file&#39;s <code>class</code> attribute — <code>filled</code> / <code>stroked</code> / <code>color</code> — is preserved.)</p>
 <h2>Configuration reference</h2>
-<p>All fields are optional except <code>name</code>. See <code>bin/site-config.ts</code> for the
-authoritative typed definition.</p>
+<p>All fields are optional except <code>name</code>. See <code>src/doc-system/site/site-config.ts</code>
+for the authoritative typed definition.</p>
 <h3>Identity &amp; SEO</h3>
 <table>
 <thead>
@@ -452,7 +451,62 @@ authoritative typed definition.</p>
 <td><code>false</code></td>
 <td>dev-only in-browser &quot;edit page source&quot; endpoints</td>
 </tr>
+<tr>
+<td><code>memoryLimitMb</code></td>
+<td><code>4096</code></td>
+<td>RSS ceiling for the dev server; past it, print growth-per-rebuild and exit (see below); also <code>DEV_MEMORY_LIMIT_MB</code></td>
+</tr>
+<tr>
+<td><code>idleTimeoutHours</code></td>
+<td><code>8</code></td>
+<td>exit after this long with no request and no rebuild; <code>0</code> disables (see below); also <code>DEV_IDLE_TIMEOUT_HOURS</code></td>
+</tr>
 </tbody></table>
+<h4>Not taking the machine down with you</h4>
+<p>A dev server is a process that lives for <strong>days</strong>, rebuilding thousands of times.
+Three things follow from that, and the build system enforces all three — because a
+forgotten dev server is not inert, it is a days-old process <strong>still running the code
+it loaded at launch</strong>. Updating the package does nothing for one that is already
+running.</p>
+<p>This is not hypothetical. Three such servers, left over from before a memory-leak
+fix landed, grew to 103GB, 57GB and 49GB of RSS on a 32GB machine: ~210GB of demand
+against 32GB of RAM, the compressor at 18GB, 14MB of free memory, and the page-out
+scanner reclaiming <em>zero</em> pages. macOS&#39;s jetsam never intervened — it let the box
+thrash for twenty minutes until it was power-cycled.</p>
+<ul>
+<li><strong>Never call <code>Bun.build()</code> (or any native-heavy step) in the long-lived process.</strong>
+Its native arena is never returned — ~30MB of RSS per call, monotonic, invisible to
+the JS heap and to <code>Bun.gc()</code> (<a href="https://github.com/oven-sh/bun/issues/34053">oven-sh/bun#34053</a>).
+The build shells out to the <code>bun build</code> CLI instead, and the ePub step (happy-dom +
+<code>@resvg/resvg-js</code>, also native) runs in a child. The OS reclaims a child&#39;s memory on
+exit; the same 15 bundles cost <strong>+0.5MB</strong> in-parent instead of <strong>+192MB</strong>.</li>
+<li><strong><code>memoryLimitMb</code></strong> — the dev server samples its own RSS after every rebuild and, past
+the ceiling, prints the growth-per-rebuild and exits. Growth per rebuild should be ~0;
+sustained growth is a leak, not a ceiling that is too low.</li>
+<li><strong><code>idleTimeoutHours</code></strong> — the dev server exits after 8 idle hours (no request, no
+rebuild). The ceiling bounds how bad <em>one</em> server gets; this bounds <em>how many there
+are</em>. An idle server has no value to weigh against being tomorrow&#39;s runaway.</li>
+<li><strong>Preflight</strong> — every build and every dev-server launch samples the process table
+first and <strong>refuses to start</strong> if the machine is already in trouble: any process over
+half of physical RAM, or a <code>bun</code> dev process over the RSS ceiling that has been alive
+for more than an hour. It names the PIDs, their sizes, their ages, their project dirs,
+and the <code>kill</code> command. Nothing noticed the runaways because nothing ever looked.
+Override with <code>DEV_SKIP_PREFLIGHT=1</code>.</li>
+<li><strong>A health tick, not just events.</strong> Every other check here is edge-triggered — the RSS
+sample fires after a rebuild, the preflight at launch — and all of them are blind to the
+state that actually kills machines: a server nobody is touching, sitting on gigabytes,
+on a box quietly filling up around it. <em>Nothing rebuilds, so nothing looks.</em> So the dev
+server also checks on a <strong>timer</strong>: the RSS ceiling every minute, and a full machine
+preflight every five. If the box is dying — even because of someone else&#39;s runaway — it
+exits and prints the PIDs on the way out.</li>
+<li><strong>A rebuild-storm detector.</strong> The other way to eat a machine is not a leak but a <strong>loop</strong>:
+if the build writes a file the watcher watches, every rebuild triggers the next, forever —
+spawning a bundler each time. A loop is a leak with the throttle removed. The known
+self-writes (<code>version.ts</code>, <code>icon-data.ts</code>) are ignored by the watcher, but <strong><code>prebuild</code> is
+arbitrary consumer code</strong>, and anything it writes into a watched path loops. Nobody types
+20 times in a minute: past that, the server names the files that keep firing — which <em>is</em>
+the diagnosis — and stops.</li>
+</ul>
 <h4><code>haltijaDev</code> — Claude eyes on your running dev page</h4>
 <p>Set <code>haltijaDev: true</code> (or run with <code>HALTIJA_DEV=1</code>) and <code>bun start</code> gives a coding
 agent (Claude) eyes <strong>and hands</strong> on your actual running page via
@@ -602,50 +656,104 @@ resolves under that slug, not the site root. Use <strong>root-absolute</strong> 
 <code>prebuild</code> hook for source-tree codegen (version stamp, icon data, …) and
 write into a <code>staticDirs</code> folder for assets — not <code>dist/</code> or the output dir,
 which the build resets immediately after.</li>
+<li><strong>Anything <code>prebuild</code> writes into a watched path is an infinite rebuild loop.</strong> The
+file it writes triggers the watcher, which rebuilds, which writes it again. The dev
+server&#39;s storm detector will stop you (and name the file), but the fix is on your side:
+write outside the watched paths, or add the file to the watcher&#39;s ignore list. This is
+why <code>version.ts</code> and <code>icon-data.ts</code> — both written by tosijs-ui&#39;s own <code>prebuild</code> — are
+ignored by the watcher.</li>
 </ul>
-<h2>Current layout (extraction in progress)</h2>
+<h2>Where the code lives</h2>
+<p>The extraction is <strong>done</strong>: everything below is in <code>src/doc-system/</code>, and the build
+half is what <code>tosijs-ui/site</code> exports. Nothing here is imported from <code>bin/</code> any more.</p>
 <table>
 <thead>
 <tr>
 <th>concern</th>
-<th>today</th>
-<th>target</th>
+<th>module</th>
 </tr>
 </thead>
 <tbody><tr>
 <td>config type + <code>defineSiteConfig</code></td>
-<td><code>bin/site-config.ts</code></td>
-<td><code>src/site/</code></td>
+<td><code>site/site-config.ts</code></td>
 </tr>
 <tr>
-<td>orchestrator (prebuild/build/serve)</td>
-<td><code>bin/dev.ts</code></td>
-<td><code>src/site/</code> (<code>buildSite</code>/<code>devServer</code>)</td>
+<td>orchestrator (<code>buildSite</code>)</td>
+<td><code>site/orchestrator.ts</code></td>
 </tr>
 <tr>
-<td>static page generator</td>
-<td><code>bin/generate-site.ts</code></td>
-<td><code>src/site/</code></td>
+<td>dev server (<code>devServer</code>)</td>
+<td><code>site/dev-server.ts</code></td>
 </tr>
 <tr>
-<td>theme → static CSS</td>
-<td><code>bin/generate-css.ts</code></td>
-<td><code>src/site/</code></td>
-</tr>
-<tr>
-<td>OG image generation</td>
-<td><code>bin/generate-og.ts</code></td>
-<td><code>src/site/</code></td>
+<td>machine-health preflight</td>
+<td><code>site/preflight.ts</code></td>
 </tr>
 <tr>
 <td>doc extraction</td>
-<td><code>bin/docs.ts</code></td>
-<td><code>src/site/</code></td>
+<td><code>site/docs.ts</code></td>
+</tr>
+<tr>
+<td>section docs + TOC blocks</td>
+<td><code>site/sections.ts</code></td>
+</tr>
+<tr>
+<td>static page generator</td>
+<td><code>site/generate-site.ts</code></td>
+</tr>
+<tr>
+<td>theme → static CSS (subprocess)</td>
+<td><code>site/generate-css.ts</code></td>
+</tr>
+<tr>
+<td>DOM shim for the CSS subprocess</td>
+<td><code>site/build-dom-shim.ts</code></td>
+</tr>
+<tr>
+<td>ePub (+ its child-process CLI)</td>
+<td><code>site/epub.ts</code>, <code>site/epub-cli.ts</code></td>
+</tr>
+<tr>
+<td><code>llms.txt</code></td>
+<td><code>site/make-llms-txt.ts</code></td>
+</tr>
+<tr>
+<td>build guards (bundle, output dir, examples)</td>
+<td><code>site/bundle-guard.ts</code>, <code>site/output-guard.ts</code>, <code>site/check-examples.ts</code></td>
 </tr>
 <tr>
 <td>runtime component</td>
-<td><code>src/doc-system/</code></td>
-<td>unchanged (ships in the bundle)</td>
+<td><code>src/doc-system/</code> (ships in the bundle)</td>
+</tr>
+</tbody></table>
+<p>What remains in <code>bin/</code> is <strong>not</strong> part of the system — it is this project&#39;s own
+wiring, plus one tool that hasn&#39;t been generalized:</p>
+<table>
+<thead>
+<tr>
+<th>file</th>
+<th>what it is</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>bin/dev.ts</code></td>
+<td>tosijs-ui&#39;s own build entry — a thin wrapper over <code>buildSite</code>/<code>devServer</code> (declarative config in <code>tosijs-site.config.ts</code>, imperative prebuild codegen here)</td>
+</tr>
+<tr>
+<td><code>bin/build-book.ts</code></td>
+<td>standalone ePub CLI (<code>bun book</code>) — a wrapper over the exported <code>buildEpub</code></td>
+</tr>
+<tr>
+<td><code>bin/docs.ts</code></td>
+<td><strong>back-compat shim</strong>, re-exports <code>site/docs.ts</code>; kept because <code>package.json#files</code> ships it and <code>import … from &#39;tosijs-ui/bin/docs&#39;</code> consumers exist</td>
+</tr>
+<tr>
+<td><code>bin/generate-og.ts</code></td>
+<td><strong>not extracted.</strong> Per-page Open Graph cards (<code>bun run og</code>). Opt-in and rarely re-run: it needs Playwright, ffmpeg, and a <em>running</em> dev server to screenshot live examples, so it is a manual step, not part of <code>buildSite</code></td>
+</tr>
+<tr>
+<td><code>bin/make-icon-data.js</code></td>
+<td>icon codegen (<code>icons/</code> → <code>src/icon-data.ts</code>); also shipped as the <code>tosijs-make-icons</code> bin</td>
 </tr>
 </tbody></table>
 

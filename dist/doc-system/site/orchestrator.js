@@ -14,14 +14,14 @@ cause an endless rebuild loop.
 import * as path from 'path';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { tmpdir } from 'os';
-import { gzipSync } from 'zlib';
 import { $, spawn } from 'bun';
 import { extractDocs } from './docs';
-import { checkExamples, formatExampleProblems } from './check-examples';
+import { checkExamples, formatExampleProblems, } from './check-examples';
 import { ensureSections } from './sections';
 import { generateLlmsTxt } from './make-llms-txt';
 import { generateSite } from './generate-site';
 import { findOutputDirOverlap } from './output-guard';
+import { preflight } from './preflight';
 import { tjsEditorExternal, tjsEditorLeakedAsExternal, classicScriptSyntaxErrorInChild, } from './bundle-guard';
 // Module specifiers contain regex metacharacters (`/`, `.`, `@`, …), so escape
 // before interpolating into the require-shim detector below.
@@ -86,7 +86,62 @@ async function buildEpubInChild(config, opts) {
 // Module specifiers contain regex metacharacters (`/`, `.`, `@`, …), so escape
 // before interpolating into the require-shim detector below.
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/**
+ * Run checkExamples() in a child process.
+ *
+ * It compiles every executable block in the corpus with `new AsyncFunction` on every
+ * rebuild, and JSC caches compiled code keyed by source text — so it retains, and
+ * (because a rebuild only happens when a file CHANGED) the source is fresh every time
+ * and nothing dedups. Measured at +7.1MB over 40 rebuilds with fresh sources, still
+ * climbing. It also constructs a `Bun.Transpiler` for `ts` blocks (~40KB stranded per
+ * construction). The child gives all of it back on exit. See check-examples-cli.ts.
+ *
+ * Falls back to in-process on any failure to *run* the child: a build must not break
+ * because the health-conscious path is unavailable. A child that runs and reports
+ * problems is not a failure — that is the whole point of it.
+ */
+async function checkExamplesInChild(docsJson) {
+    const cliTs = `${import.meta.dir}/check-examples-cli.ts`;
+    const cli = existsSync(cliTs)
+        ? cliTs
+        : `${import.meta.dir}/check-examples-cli.js`;
+    try {
+        const child = spawn(['bun', cli, docsJson], {
+            stdout: 'pipe',
+            stderr: 'pipe',
+        });
+        // Drain BOTH pipes while awaiting exit. An undrained pipe fills its buffer, the
+        // child blocks writing to it, and we deadlock waiting for an exit that can't come
+        // — and the undrained buffer leaks besides.
+        const [out, err, code] = await Promise.all([
+            new Response(child.stdout).text(),
+            new Response(child.stderr).text(),
+            child.exited,
+        ]);
+        if (err.trim())
+            console.warn(err.trim());
+        if (code !== 0)
+            throw new Error(`check-examples exited ${code}`);
+        return JSON.parse(out);
+    }
+    catch (e) {
+        console.warn(`⚠️  example check: could not run it in a child (${String(e)}) — ` +
+            `falling back to in-process.`);
+        const corpus = JSON.parse(await Bun.file(docsJson).text());
+        return checkExamples(corpus);
+    }
+}
 export async function buildSite(config) {
+    // Look at the machine before adding load to it. Runs on every build, including
+    // each watch rebuild, because the danger is not present at launch and then
+    // absent — it accumulates across a long session, in OTHER processes this build
+    // knows nothing about. One `ps` against a multi-second build is free, and it is
+    // the only point where anything looks at all. Exits rather than returning false:
+    // a machine 6x oversubscribed on RAM is not a failed build, it is an emergency,
+    // and the watch loop would swallow a `false` and keep right on rebuilding.
+    if (!(await preflight({ label: 'Build', devLimitMb: config.memoryLimitMb }))) {
+        process.exit(1);
+    }
     const PROJECT_ROOT = './';
     const PUBLIC = path.resolve(PROJECT_ROOT, config.outputDir ?? 'docs');
     const DIST = path.resolve(PROJECT_ROOT, 'dist');
@@ -135,8 +190,7 @@ export async function buildSite(config) {
     // display-only `typescript`. Runs on the whole corpus, so it catches breakage
     // on pages the browser test never navigates to.
     if (config.checkExamples !== false) {
-        const corpus = JSON.parse(await Bun.file(DOCS_JSON).text());
-        const problems = await checkExamples(corpus);
+        const problems = await checkExamplesInChild(DOCS_JSON);
         if (problems.length) {
             throw new Error(`doc-site build: ${problems.length} live example(s) failed to build:\n\n` +
                 formatExampleProblems(problems) +
@@ -293,8 +347,29 @@ export async function buildSite(config) {
                 `    so a bare 'tjs-lang' externalizes tjs-lang/editors/codemirror along with it.`);
             return false;
         }
-        const bundleGzip = gzipSync(Buffer.from(bundleFile));
-        console.log(`${scriptName}: ${(bundleFile.byteLength / 1024).toFixed(1)}kb (${(bundleGzip.length / 1024).toFixed(1)}kb gzip)`);
+        // Gzip in a CHILD, not in-process.
+        //
+        // This runs on every rebuild, over a 1.2MB bundle, to print ONE size line — and
+        // zlib's gzip is native, so it strands memory the JS heap never sees, in the
+        // process that lives for days. Measured at ~81KB per rebuild and still creeping at
+        // 40: the last native call left in the parent's hot path. The child gives it all
+        // back on exit, for a few ms on a step that already took seconds.
+        //
+        // Deliberately zlib-in-a-child rather than the `gzip` CLI: the two disagree by
+        // ~1.6% (378.6kb vs 384.9kb here), and this number is quoted in the docs and
+        // tracked across releases. Moving the work must not silently move the measurement.
+        let gzipKb = '';
+        try {
+            const bytes = Number((await $ `bun -e ${`const {gzipSync}=require('zlib');const b=await Bun.file(${JSON.stringify(`${DIST}/${scriptName}`)}).arrayBuffer();process.stdout.write(String(gzipSync(Buffer.from(b)).length))`}`
+                .quiet()
+                .text()).trim());
+            if (bytes > 0)
+                gzipKb = ` (${(bytes / 1024).toFixed(1)}kb gzip)`;
+        }
+        catch {
+            // couldn't measure — report the raw size alone rather than fail a build over a log line
+        }
+        console.log(`${scriptName}: ${(bundleFile.byteLength / 1024).toFixed(1)}kb${gzipKb}`);
     }
     else if (!/^(https?:)?\/\//.test(config.scriptUrl ?? '/iife.js')) {
         // No custom bundleEntry (the normal case for a pure-docs / book site) and a

@@ -35,7 +35,7 @@ export interface GenerateSiteConfig {
     docsUrl?: string;
     /** path to the IIFE bundle script (default /iife.js) */
     scriptUrl?: string;
-    /** URL of the burned-in theme stylesheet (written by bin/generate-css.ts) */
+    /** URL of the burned-in theme stylesheet (written by ./generate-css.ts) */
     stylesUrl?: string;
     /** extra lines injected into every <head> (favicon, analytics, etc.) */
     headExtra?: string;

@@ -20,6 +20,17 @@ import { rewriteImports, AsyncFunction, loadTransform, } from '../../live-exampl
 // own keys; these are the tosijs-ui defaults.
 const DEFAULT_CONTEXT_KEYS = ['tosijs', 'tosijs-ui'];
 const EXECUTABLE = new Set(['js', 'tjs', 'ts', 'test']);
+// ONE transpiler for the whole PROCESS, not one per corpus and certainly not one per
+// example. It's stateless, and it's a native object that strands ~40KB of RSS per
+// CONSTRUCTION — invisible to the JS heap, so nothing GCs it (same family as the
+// Bun.build arena leak, oven-sh/bun#34053).
+//
+// This lived inside checkExamples() as a `let` — which made the comment above it true
+// of a single call and false of the process: checkExamples runs once per dev rebuild,
+// so it was reconstructed thousands of times over a days-long watch session. Module
+// scope is the difference between "once" and "once per rebuild". Lazily created, so a
+// corpus with no `ts` examples never makes one at all.
+let tsTranspiler;
 /** The bare dialect from a fence info string ('js#my-id' → 'js'); '' if none. */
 function dialectOf(info) {
     return (info ?? '').match(/^[a-z]+/)?.[0] ?? '';
@@ -44,14 +55,6 @@ function collectCodeTokens(text) {
 export async function checkExamples(docs, opts = {}) {
     const contextKeys = opts.contextKeys ?? DEFAULT_CONTEXT_KEYS;
     const problems = [];
-    // ONE transpiler for the whole corpus, not one per example. It's stateless, and
-    // it's a native object that strands ~40KB of RSS per construction — invisible to
-    // the JS heap, so nothing GCs it. checkExamples runs on every dev rebuild, over
-    // every `ts` example in the corpus, in a process that lives for days: constructing
-    // it in the loop was leaking ~40KB × (ts examples) per rebuild. Reusing one drops
-    // that to ~1.6KB per call. (Same family as the Bun.build arena leak — oven-sh/bun#34053.)
-    // Lazily created so a corpus with no `ts` examples never makes one.
-    let tsTranspiler;
     for (const doc of docs) {
         for (const block of collectCodeTokens(doc.text)) {
             if (!EXECUTABLE.has(block.lang))

@@ -147,12 +147,12 @@ interface ProjectLinks {
 The `tosijs-ui` demo is a complete working example. See:
 
 - `/demo/src/index.ts` - How the doc browser is set up
-- `/bin/docs.ts` - The extraction tool
+- `/src/doc-system/site/docs.ts` - The extraction tool (`extractDocs`, exported from `tosijs-ui/site`)
 - `/src/doc-browser.ts` - The createDocBrowser implementation
 */
 /*{"pin":"bottom","parent":"Appendices"}*/
 import { elements, vars, varDefault, bindings, touch, getListItem, debounce, tosi, StyleSheet, } from 'tosijs';
-import { buildSlugMap, pathForSlug, filenameForPath } from './doc-system/routing';
+import { buildSlugMap, pathForSlug, filenameForPath, } from './doc-system/routing';
 import { buildNavTree } from './doc-system/nav-tree';
 import { renderDocMarkdown } from './doc-system/render';
 import { LiveExample, testManager } from './live-example';
@@ -162,7 +162,7 @@ import { tosiLocalized } from './localize';
 import { popMenu } from './menu';
 import { codeEditor } from './code-editor';
 import { tosiDiff } from './diff';
-const { div, span, a, header, button, template, input, h2, details, summary, ul, li } = elements;
+const { div, span, a, header, button, template, input, h2, details, summary, ul, li, } = elements;
 // Test colors
 const testColor = {
     pass: varDefault.testColorPass('#0a0'),
@@ -617,9 +617,7 @@ export function createDocBrowser(options) {
         LiveExample.insertExamples(docContent, context, doc.path || undefined);
         scrollToHashExample();
         if (routing === 'path') {
-            document.title = projectName
-                ? `${doc.title} — ${projectName}`
-                : doc.title;
+            document.title = projectName ? `${doc.title} — ${projectName}` : doc.title;
         }
     };
     // Always resolve to the RAW doc from the original array — docs reached via the
@@ -661,7 +659,9 @@ export function createDocBrowser(options) {
             event.altKey)
             return;
         const anchor = event.target.closest('a');
-        if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download'))
+        if (!anchor ||
+            anchor.target === '_blank' ||
+            anchor.hasAttribute('download'))
             return;
         const filename = docFilenameForHref(anchor);
         if (filename === null)
@@ -696,7 +696,9 @@ export function createDocBrowser(options) {
         if (!gh || !p)
             return null;
         const m = gh.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?\/?$/);
-        return m ? `https://raw.githubusercontent.com/${m[1]}/${m[2]}/main/${p}` : null;
+        return m
+            ? `https://raw.githubusercontent.com/${m[1]}/${m[2]}/main/${p}`
+            : null;
     };
     const loadSource = async (p) => {
         try {
@@ -816,7 +818,8 @@ export function createDocBrowser(options) {
         const editor = codeEditor({ mode: editorModeFor(doc.path) });
         // No toolbar — the Source menu carries the edit controls (it adapts while
         // editing), so the editor fills the whole content area.
-        editor.style.cssText = 'display:block; width:100%; height:100%; border:none;';
+        editor.style.cssText =
+            'display:block; width:100%; height:100%; border:none;';
         editor.value = content;
         const container = docContent.parentElement;
         container.append(editor);
@@ -833,10 +836,22 @@ export function createDocBrowser(options) {
         const menuItems = editUI
             ? [
                 ...(editUI.view !== 'edit'
-                    ? [{ caption: 'Edit', icon: 'edit', action: () => setSourceView('edit') }]
+                    ? [
+                        {
+                            caption: 'Edit',
+                            icon: 'edit',
+                            action: () => setSourceView('edit'),
+                        },
+                    ]
                     : []),
                 ...(editUI.view !== 'preview'
-                    ? [{ caption: 'Preview', icon: 'eye', action: () => setSourceView('preview') }]
+                    ? [
+                        {
+                            caption: 'Preview',
+                            icon: 'eye',
+                            action: () => setSourceView('preview'),
+                        },
+                    ]
                     : []),
                 {
                     caption: 'View changes',
@@ -845,7 +860,11 @@ export function createDocBrowser(options) {
                     enabled: () => editorHasUnsavedChanges(),
                 },
                 null,
-                { caption: 'Save to source', icon: 'save', action: () => void saveSourceEdit() },
+                {
+                    caption: 'Save to source',
+                    icon: 'save',
+                    action: () => void saveSourceEdit(),
+                },
                 {
                     caption: 'Download',
                     icon: 'download',
@@ -855,7 +874,11 @@ export function createDocBrowser(options) {
                 { caption: 'Close editor', icon: 'x', action: exitEditSource },
             ]
             : [
-                { caption: 'Edit page source', icon: 'edit', action: () => void enterEditSource(doc) },
+                {
+                    caption: 'Edit page source',
+                    icon: 'edit',
+                    action: () => void enterEditSource(doc),
+                },
                 ...(projectLinks.github && doc.path && doc.path !== 'README.md'
                     ? [
                         {

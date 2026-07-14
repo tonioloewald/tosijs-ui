@@ -122,18 +122,32 @@ function pageHtml(doc, config, slugMap, configAttr) {
         // Burned-in theme: styles the page with no JS and with zero flash on hydration.
         `  <link rel="stylesheet" href="${escapeAttr(withBase(basePath, stylesUrl))}" data-tosi-doc-system />`,
         `  <title>${escapeText(title)}</title>`,
-        description ? `  <meta name="description" content="${escapeAttr(description)}" />` : '',
-        keywords ? `  <meta name="keywords" content="${escapeAttr(keywords)}" />` : '',
+        description
+            ? `  <meta name="description" content="${escapeAttr(description)}" />`
+            : '',
+        keywords
+            ? `  <meta name="keywords" content="${escapeAttr(keywords)}" />`
+            : '',
         doc.noindex ? '  <meta name="robots" content="noindex, follow" />' : '',
         baseUrl ? `  <link rel="canonical" href="${escapeAttr(canonical)}" />` : '',
         '  <meta property="og:type" content="article" />',
-        projectName ? `  <meta property="og:site_name" content="${escapeAttr(projectName)}" />` : '',
+        projectName
+            ? `  <meta property="og:site_name" content="${escapeAttr(projectName)}" />`
+            : '',
         `  <meta property="og:title" content="${escapeAttr(title)}" />`,
-        description ? `  <meta property="og:description" content="${escapeAttr(description)}" />` : '',
-        baseUrl ? `  <meta property="og:url" content="${escapeAttr(canonical)}" />` : '',
-        imageAbs ? `  <meta property="og:image" content="${escapeAttr(imageAbs)}" />` : '',
+        description
+            ? `  <meta property="og:description" content="${escapeAttr(description)}" />`
+            : '',
+        baseUrl
+            ? `  <meta property="og:url" content="${escapeAttr(canonical)}" />`
+            : '',
+        imageAbs
+            ? `  <meta property="og:image" content="${escapeAttr(imageAbs)}" />`
+            : '',
         `  <meta name="twitter:card" content="${imageAbs ? 'summary_large_image' : 'summary'}" />`,
-        imageAbs ? `  <meta name="twitter:image" content="${escapeAttr(imageAbs)}" />` : '',
+        imageAbs
+            ? `  <meta name="twitter:image" content="${escapeAttr(imageAbs)}" />`
+            : '',
         jsonLd,
         `  <link rel="icon" href="${escapeAttr(withBase(basePath, favicon))}" />`,
         headExtra,
@@ -199,7 +213,7 @@ export async function generateSite(config) {
         projectLinks: config.projectLinks,
     }));
     // The theme stylesheet (config.stylesUrl) is written separately by
-    // bin/generate-css.ts; pages here just <link> to it.
+    // ./generate-css.ts; pages here just <link> to it.
     let count = 0;
     for (const doc of docs) {
         const slug = slugMap[doc.filename];
@@ -232,7 +246,9 @@ export async function generateSite(config) {
             /* no robots.txt copied — start from a permissive default */
         }
         if (!robots.includes('Sitemap:')) {
-            const base = robots.trim() ? robots.trim() + '\n' : 'User-agent: *\nAllow: /\n';
+            const base = robots.trim()
+                ? robots.trim() + '\n'
+                : 'User-agent: *\nAllow: /\n';
             await Bun.write(robotsPath, `${base}Sitemap: ${config.baseUrl}/sitemap.xml\n`);
         }
     }

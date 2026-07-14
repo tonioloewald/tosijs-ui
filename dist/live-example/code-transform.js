@@ -454,7 +454,32 @@ async function loadFromTs() {
 // the engine load is memoized and transform output is cached by dialect+source.
 let tjsOnce;
 let fromTsOnce;
+/**
+ * Memoized transform output, keyed by dialect + full source text.
+ *
+ * BOUNDED, and it has to be. The key contains the whole source, so a *changed*
+ * example is a new entry and the superseded one is never looked up again — the cache
+ * only ever grows, one entry per version of every example ever transformed. On a page
+ * you merely read, that is a handful of entries. But this module is also imported by
+ * the doc-site BUILD (check-examples), and — more to the point — the doc system is an
+ * *authoring* system: in an edit-in-place session, every keystroke-to-save produces a
+ * fresh source string, so an unbounded map grows for as long as the page is open,
+ * holding both the source and its transpiled output forever.
+ *
+ * A plain insertion-ordered eviction is enough here: re-transforming a cold example
+ * costs a few ms, and the working set is "the examples on this page".
+ */
+const RESULT_CACHE_MAX = 256;
 const resultCache = new Map();
+const cacheResult = (key, result) => {
+    if (resultCache.size >= RESULT_CACHE_MAX) {
+        // Map preserves insertion order, so the first key is the oldest.
+        const oldest = resultCache.keys().next().value;
+        if (oldest !== undefined)
+            resultCache.delete(oldest);
+    }
+    resultCache.set(key, result);
+};
 let warnedNoTjs = false;
 let warnedNoFromTs = false;
 /**
@@ -487,7 +512,7 @@ export async function loadTransform(dialect = 'js') {
         console.warn('tjs-lang/browser/from-ts not available — `ts` examples run as raw JavaScript.');
     }
     return (code) => {
-        const cacheKey = `${dialect} ${code}`;
+        const cacheKey = `${dialect}\0${code}`;
         const cached = resultCache.get(cacheKey);
         if (cached)
             return cached;
@@ -495,7 +520,7 @@ export async function loadTransform(dialect = 'js') {
         // (the default throws on failure, which would break the example render).
         if (!tjs) {
             const result = { code };
-            resultCache.set(cacheKey, result);
+            cacheResult(cacheKey, result);
             return result;
         }
         if (dialect === 'ts') {
@@ -507,12 +532,12 @@ export async function loadTransform(dialect = 'js') {
                 const result = {
                     code: tjs(tjsSource, { dialect: 'tjs', runTests: false }).code,
                 };
-                resultCache.set(cacheKey, result);
+                cacheResult(cacheKey, result);
                 return result;
             })();
         }
         const result = { code: tjs(code, { dialect, runTests: false }).code };
-        resultCache.set(cacheKey, result);
+        cacheResult(cacheKey, result);
         return result;
     };
 }

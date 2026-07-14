@@ -12,7 +12,41 @@ import { statSync } from 'fs';
 import { watch } from 'chokidar';
 import { $, spawn } from 'bun';
 import { buildSite } from './orchestrator';
+import { preflight } from './preflight';
 const TEST_RESULTS_FILE = '.browser-tests.json';
+const DEFAULT_IDLE_HOURS = 8;
+/**
+ * The haltija the dev server spawns (`bunx <this>`).
+ *
+ * Pinned to a **range with a floor**, not `@latest`. This is library code: every
+ * adopter's dev server runs whatever this string resolves to, so `@latest` means a
+ * floating executable fetch — the tool can change under every consumer overnight,
+ * with haltija in nobody's lockfile and no version contract. A caret range still
+ * picks up fixes without letting a major land unannounced.
+ *
+ * Override with `HALTIJA_VERSION` (e.g. `HALTIJA_VERSION=haltija@beta` to test a
+ * pre-release, or a local path/tarball) — you should not have to edit library code
+ * to try a different haltija.
+ *
+ * Floor rationale: 1.3.2 is the first release where `hj` does not auto-launch an
+ * Electron app for private/targeted instances, and 1.3.3 makes focus follow the
+ * visible tab so an untargeted `hj eval` hits the right one.
+ */
+const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.3.4';
+/**
+ * Resolve the idle-exit timeout to milliseconds (0 = disabled).
+ *
+ * Env wins over config, config over the default. An unparseable value falls back
+ * to the default rather than to 0: a typo'd `DEV_IDLE_TIMEOUT_HOURS=8h` must not
+ * silently turn the guard OFF — that is the exact failure it exists to prevent.
+ * Only an explicit non-positive number disables it.
+ */
+export function resolveIdleMs(configHours, envHours) {
+    const env = envHours?.trim();
+    const raw = env ? Number(env) : configHours ?? DEFAULT_IDLE_HOURS;
+    const hours = Number.isFinite(raw) ? raw : DEFAULT_IDLE_HOURS;
+    return hours > 0 ? hours * 3600_000 : 0;
+}
 async function killStrayServer(port) {
     try {
         await $ `lsof -ti:${port} | xargs kill -9 2>/dev/null`.quiet();
@@ -48,10 +82,8 @@ async function ensureHaltijaChannel(port) {
         // HTTPS dev page has no mixed-content), while the `hj` CLI drives over its
         // default HTTP 8700 — one server, both transports, shared state. HTTPS cert
         // is mkcert-trusted. Output quiet so it doesn't drown the dev log.
-        // `@latest` (1.3.2+): the widget-mode WebRTC screen capture (which makes the
-        // Electron app CI-only) is on the stable channel now, along with the fix for
-        // an accidental Electron launch. (Was pinned to `@beta` before 1.3.2.)
-        spawn(['bunx', 'haltija@latest', '--server', '--both'], {
+        // Version comes from HALTIJA_PKG — a pinned range, not `@latest`; see above.
+        spawn(['bunx', HALTIJA_PKG, '--server', '--both'], {
             stdout: 'ignore',
             stderr: 'ignore',
         });
@@ -87,6 +119,16 @@ export async function devServer(config, opts = {}) {
     const PUBLIC = path.resolve('./', config.outputDir ?? 'docs');
     const isSPA = true;
     const testMode = !!opts.test;
+    // Don't add a days-long watch process to a machine that is already drowning —
+    // and don't quietly become the fourth stale dev server. `buildSite` preflights
+    // too, but a consumer's custom `build` need not go through it, and "on launch"
+    // is the moment a human is actually looking at the terminal.
+    if (!(await preflight({
+        label: 'Dev server',
+        devLimitMb: config.memoryLimitMb,
+    }))) {
+        process.exit(1);
+    }
     // Haltija dev-channel — give a coding agent eyes on the running page. Opt-in
     // (config.haltijaDev or HALTIJA_DEV=1), never in test mode. The loader is a
     // localhost-gated runtime import() of the local channel's dev.js, so haltija
@@ -225,6 +267,83 @@ export async function devServer(config, opts = {}) {
             });
         }
     }
+    // Idle self-exit.
+    //
+    // The memory ceiling below bounds how bad one server gets; this bounds how many
+    // there are. A dev server is trivially forgotten — and a forgotten one is not
+    // inert, it is a days-old process still running the code it loaded at launch,
+    // leaking whatever that code leaked (updating the package does nothing for a
+    // process that is already running). Three of those, left over from before a leak
+    // fix landed, wedged a 32GB machine at ~210GB of demand. An idle server has no
+    // value to weigh against that, so it exits and lets you start a current one.
+    //
+    // Activity is a request served or a rebuild — i.e. someone is actually reading or
+    // editing. Off in test mode, which has its own timeout and exits on its own.
+    const idleMs = resolveIdleMs(config.idleTimeoutHours, process.env.DEV_IDLE_TIMEOUT_HOURS);
+    let lastActivity = Date.now();
+    const touch = () => {
+        lastActivity = Date.now();
+    };
+    // Memory watchdog.
+    //
+    // The build hands work to native code (the bundler, the HTML parser, the SVG
+    // rasterizer) which can strand memory the JS heap never sees — so nothing
+    // here can GC it away, and `heapUsed` stays flat while RSS climbs. A watch
+    // process lives for DAYS across thousands of rebuilds, so a per-rebuild leak
+    // compounds until the machine swaps itself to death. That is not
+    // hypothetical: a 2-day session reached 136GB RSS and took the machine down
+    // (Bun.build's native arena — see orchestrator.ts and oven-sh/bun#34053).
+    // Dying loudly beats being the reason a laptop overheats: the dev server is
+    // one keystroke to restart, the machine is not.
+    //
+    // Sampled after every rebuild AND on the periodic health tick below. The tick
+    // matters: a rebuild-only check is blind to a process that is already over the
+    // ceiling but has stopped rebuilding — which is exactly the shape of a server
+    // you have walked away from, i.e. the one that kills the machine.
+    const rssMb = () => Math.round(process.memoryUsage().rss / 1e6);
+    const limitMb = Number(process.env.DEV_MEMORY_LIMIT_MB ?? config.memoryLimitMb ?? 4096);
+    let baselineMb = 0;
+    let rebuilds = 0;
+    let warned = false;
+    const checkMemory = (fromRebuild = true) => {
+        const mb = rssMb();
+        if (fromRebuild) {
+            rebuilds += 1;
+            if (!baselineMb)
+                baselineMb = mb;
+        }
+        if (!baselineMb)
+            baselineMb = mb;
+        const growth = mb - baselineMb;
+        const each = rebuilds > 1 ? growth / (rebuilds - 1) : 0;
+        if (mb >= limitMb) {
+            // Distinguish the two ways to get here, because the advice is opposite:
+            // memory that GREW across rebuilds is a leak (report it); a build that was
+            // simply born bigger than the ceiling just needs a bigger ceiling.
+            const leaking = rebuilds > 1 && each >= 1;
+            const diagnosis = leaking
+                ? `   ${rebuilds} rebuilds, +${growth}MB since the first ` +
+                    `(~${each.toFixed(1)}MB per rebuild).\n\n` +
+                    `   Growth per rebuild should be ~0, so this is a leak, not your project\n` +
+                    `   getting bigger. Restarting reclaims it — please report the numbers\n` +
+                    `   above. If this build genuinely needs the headroom, raise the ceiling\n` +
+                    `   with DEV_MEMORY_LIMIT_MB=<mb> or memoryLimitMb in your site config.\n`
+                : `   ${rebuilds} rebuild${rebuilds === 1 ? '' : 's'}, ` +
+                    `+${growth}MB since the first — i.e. it is not growing.\n\n` +
+                    `   This build's baseline footprint is simply above the ceiling, which is\n` +
+                    `   not a leak. Raise it with DEV_MEMORY_LIMIT_MB=<mb> or memoryLimitMb in\n` +
+                    `   your site config.\n`;
+            console.error(`\n🛑 dev server stopping: ${mb}MB RSS, over the ${limitMb}MB limit.\n\n` +
+                diagnosis);
+            process.exit(1);
+        }
+        if (!warned && mb > limitMb * 0.6) {
+            warned = true;
+            console.warn(`⚠️  dev server at ${mb}MB RSS after ${rebuilds} rebuilds (+${growth}MB, ` +
+                `~${each.toFixed(1)}MB each; limit ${limitMb}MB). Growth per rebuild ` +
+                `should be ~0 — if this keeps climbing, restart and report it.`);
+        }
+    };
     if (!testMode) {
         // Rebuild on any source change. By default that's just buildSite(), but a
         // consumer whose full build has steps BEYOND buildSite — e.g. a custom IIFE
@@ -235,57 +354,40 @@ export async function devServer(config, opts = {}) {
         // never regenerated — leaving the page's /iife.js to 404 into the SPA
         // fallback (it "loads as html"). Serialize builds and coalesce bursts.
         const runBuild = opts.build ?? (() => buildSite(config));
-        // Memory watchdog.
+        // Rebuild-storm detector.
         //
-        // The build hands work to native code (the bundler, the HTML parser, the SVG
-        // rasterizer) which can strand memory the JS heap never sees — so nothing
-        // here can GC it away, and `heapUsed` stays flat while RSS climbs. A watch
-        // process lives for DAYS across thousands of rebuilds, so a per-rebuild leak
-        // compounds until the machine swaps itself to death. That is not
-        // hypothetical: a 2-day session reached 136GB RSS and took the machine down
-        // (Bun.build's native arena — see orchestrator.ts and oven-sh/bun#34053).
-        // Dying loudly beats being the reason a laptop overheats: the dev server is
-        // one keystroke to restart, the machine is not.
-        const rssMb = () => Math.round(process.memoryUsage().rss / 1e6);
-        const limitMb = Number(process.env.DEV_MEMORY_LIMIT_MB ?? config.memoryLimitMb ?? 4096);
-        let baselineMb = 0;
-        let rebuilds = 0;
-        let warned = false;
-        const checkMemory = () => {
-            const mb = rssMb();
-            rebuilds += 1;
-            if (!baselineMb)
-                baselineMb = mb;
-            const growth = mb - baselineMb;
-            const each = rebuilds > 1 ? growth / (rebuilds - 1) : 0;
-            if (mb >= limitMb) {
-                // Distinguish the two ways to get here, because the advice is opposite:
-                // memory that GREW across rebuilds is a leak (report it); a build that was
-                // simply born bigger than the ceiling just needs a bigger ceiling.
-                const leaking = rebuilds > 1 && each >= 1;
-                const diagnosis = leaking
-                    ? `   ${rebuilds} rebuilds, +${growth}MB since the first ` +
-                        `(~${each.toFixed(1)}MB per rebuild).\n\n` +
-                        `   Growth per rebuild should be ~0, so this is a leak, not your project\n` +
-                        `   getting bigger. Restarting reclaims it — please report the numbers\n` +
-                        `   above. If this build genuinely needs the headroom, raise the ceiling\n` +
-                        `   with DEV_MEMORY_LIMIT_MB=<mb> or memoryLimitMb in your site config.\n`
-                    : `   ${rebuilds} rebuild${rebuilds === 1 ? '' : 's'}, ` +
-                        `+${growth}MB since the first — i.e. it is not growing.\n\n` +
-                        `   This build's baseline footprint is simply above the ceiling, which is\n` +
-                        `   not a leak. Raise it with DEV_MEMORY_LIMIT_MB=<mb> or memoryLimitMb in\n` +
-                        `   your site config.\n`;
-                console.error(`\n🛑 dev server stopping: ${mb}MB RSS, over the ${limitMb}MB limit.\n\n` +
-                    diagnosis);
-                process.exit(1);
-            }
-            if (!warned && mb > limitMb * 0.6) {
-                warned = true;
-                console.warn(`⚠️  dev server at ${mb}MB RSS after ${rebuilds} rebuilds (+${growth}MB, ` +
-                    `~${each.toFixed(1)}MB each; limit ${limitMb}MB). Growth per rebuild ` +
-                    `should be ~0 — if this keeps climbing, restart and report it.`);
-            }
-        };
+        // The other way this process eats the machine is not a leak but a LOOP: if the
+        // build writes a file that the watcher watches, every rebuild triggers the next
+        // one, forever. Each iteration spawns children (bundler, css, ePub), pegs the
+        // CPU, and adds the per-rebuild residual — so a loop is a leak with a throttle
+        // removed. The known self-writes (`version.ts`, `icon-data.ts`) are in `ignored`
+        // below, but `config.prebuild` is arbitrary consumer code: anything it writes
+        // into a watched path loops, and the failure looks like "my fan is on" rather
+        // than like a bug.
+        //
+        // RATE is the wrong signal, and it is worth saying why, because it is the obvious
+        // thing to reach for and it does not work: this project's build takes ~3s, so a
+        // real loop can only manage ~19 rebuilds a minute — under any "20 a minute" limit
+        // you would think to set. Meanwhile a 200ms build loops at 300 a minute. No single
+        // rate threshold is both blind to human editing and sensitive to a slow-build loop.
+        //
+        // The signal that actually separates them is that a loop is SELF-SUSTAINING: the
+        // next rebuild is always already queued the instant the current one ends. There is
+        // never a human-scale pause, because no human is involved. So count *consecutive
+        // immediate* rebuilds, and let any ordinary gap — someone pausing to think, even
+        // for two seconds — reset the count.
+        const IMMEDIATE_MS = 1500;
+        const LOOP_STREAK = 30; // fatal: 30 rebuilds with no human-scale gap between any
+        const LOOP_WARN = 15;
+        let lastBuildEnd = 0;
+        let streak = 0;
+        let stormWarned = false;
+        const triggers = new Map();
+        const topTriggers = () => [...triggers.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([p, n]) => `   ${String(n).padStart(4)}x  ${p}`)
+            .join('\n');
         let building = false;
         let pending = false;
         const rebuild = async () => {
@@ -294,6 +396,11 @@ export async function devServer(config, opts = {}) {
                 return;
             }
             building = true;
+            // "Immediate" covers both shapes a loop takes: for a SLOW build the self-write
+            // lands mid-build and `pending` is already set when it ends (so the next rebuild
+            // starts at once); for a FAST build the watcher event arrives just after the end.
+            // Both look like: started again with no gap.
+            const immediate = lastBuildEnd > 0 && Date.now() - lastBuildEnd < IMMEDIATE_MS;
             try {
                 await runBuild();
             }
@@ -302,7 +409,26 @@ export async function devServer(config, opts = {}) {
             }
             finally {
                 building = false;
+                lastBuildEnd = Date.now();
+                streak = immediate ? streak + 1 : 0;
+                touch();
                 checkMemory();
+                if (streak >= LOOP_STREAK) {
+                    console.error(`\n🛑 dev server stopping: rebuild loop — ${streak} rebuilds back to back, ` +
+                        `with no pause between any of them.\n\n` +
+                        `   The files that keep triggering it:\n\n${topTriggers()}\n\n` +
+                        `   A build that writes a file it also watches rebuilds forever, spawning a\n` +
+                        `   bundler every time until the machine gives up — a loop is a leak with the\n` +
+                        `   throttle removed. If a file above is generated by your build, stop writing\n` +
+                        `   it into a watched path, or add it to the watcher's ignore list (\`ignored\`\n` +
+                        `   in dev-server.ts; see the \`prebuild\` notes in the doc-site-system docs).\n`);
+                    process.exit(1);
+                }
+                if (streak >= LOOP_WARN && !stormWarned) {
+                    stormWarned = true;
+                    console.warn(`⚠️  ${streak} rebuilds back to back with no pause — this looks like a rebuild\n` +
+                        `    loop (a build writing a file it also watches). Top triggers:\n${topTriggers()}`);
+                }
                 if (pending) {
                     pending = false;
                     void rebuild();
@@ -318,7 +444,12 @@ export async function devServer(config, opts = {}) {
             './icons',
             ...(config.watchPaths ?? []),
         ];
-        watch(watchPaths, { ignored, ignoreInitial: true }).on('all', () => void rebuild());
+        watch(watchPaths, { ignored, ignoreInitial: true }).on('all', (_event, changedPath) => {
+            if (changedPath) {
+                triggers.set(changedPath, (triggers.get(changedPath) ?? 0) + 1);
+            }
+            void rebuild();
+        });
     }
     await ensureDevCerts();
     const server = Bun.serve({
@@ -328,6 +459,7 @@ export async function devServer(config, opts = {}) {
             cert: Bun.file('./tls/certificate.pem'),
         },
         async fetch(request) {
+            touch();
             let reqPath = new URL(request.url).pathname;
             console.log(request.method, reqPath);
             if (request.method === 'POST' && reqPath === '/report') {
@@ -356,6 +488,57 @@ export async function devServer(config, opts = {}) {
         },
     });
     console.log(`Listening on https://localhost:${PORT}`);
+    // ── health tick ───────────────────────────────────────────────────────────
+    //
+    // Everything else in this file is edge-triggered: the RSS check fires after a
+    // rebuild, the preflight fires at launch. Both are blind to the state that
+    // actually kills machines — a server nobody is touching any more, sitting on
+    // gigabytes, on a box that is quietly filling up around it. Nothing rebuilds,
+    // so nothing looks. So look on a timer, not only on an event.
+    //
+    // Three checks, cheapest first:
+    //   1. RSS ceiling — catches a process already over the line that has stopped
+    //      rebuilding (the walked-away-from server).
+    //   2. Idle exit — bounds how MANY servers exist, not just how big one gets.
+    //   3. Machine preflight (every 5th tick) — catches the box going bad around
+    //      us, including other projects' runaways. If the machine is dying we exit
+    //      too, and print the PIDs and the kill command on the way out.
+    if (!testMode) {
+        if (idleMs > 0) {
+            console.log(`Exits after ${idleMs / 3600_000}h idle (DEV_IDLE_TIMEOUT_HOURS=0 to disable).`);
+        }
+        // Every minute, not every five. The runaway that killed the machine went 0→100GB
+        // in about twenty minutes; on a box whose dev budget is a fraction of its RAM
+        // (most of it held by a resident model), the trip from healthy to unrecoverable
+        // fits comfortably inside a five-minute window — and with swap on a fast, large
+        // disk, macOS will thrash for a very long time before it gives up, which is more
+        // rope to hang the machine with, not less. A `ps` + `vm_stat` per minute is free.
+        const TICK_MS = 60_000;
+        const timer = setInterval(async () => {
+            checkMemory(false); // exits if we are over the ceiling
+            const idleFor = Date.now() - lastActivity;
+            if (idleMs > 0 && idleFor >= idleMs) {
+                console.log(`\n💤 dev server exiting: idle for ${Math.round(idleFor / 3600_000)}h — no requests, no rebuilds.\n\n` +
+                    `   Restart it when you need it; a fresh one also picks up any dependency\n` +
+                    `   updates, which a long-running process never does. Disable with\n` +
+                    `   DEV_IDLE_TIMEOUT_HOURS=0 or idleTimeoutHours in your site config.\n`);
+                clearInterval(timer);
+                server.stop();
+                process.exit(0);
+            }
+            const ok = await preflight({
+                label: 'Dev server',
+                devLimitMb: config.memoryLimitMb,
+            });
+            if (!ok) {
+                clearInterval(timer);
+                server.stop();
+                process.exit(1);
+            }
+        }, TICK_MS);
+        // Never let the health check itself be the thing keeping the process alive.
+        timer.unref?.();
+    }
     if (haltijaDev) {
         await ensureHaltijaChannel(HALTIJA_HTTPS_PORT);
     }
@@ -381,7 +564,7 @@ export async function devServer(config, opts = {}) {
             // grandchild, and killing the bunx wrapper does not kill it. An orphaned Electron
             // holding our inherited stdout keeps the pipe open forever, so a CI job or an
             // agent capturing this command's output sees it hang long after it exited (0).
-            haltija = spawn(['bunx', 'haltija@latest', '-f'], {
+            haltija = spawn(['bunx', HALTIJA_PKG, '-f'], {
                 stdout: 'ignore',
                 stderr: 'ignore',
             });
@@ -418,21 +601,49 @@ export async function devServer(config, opts = {}) {
          * survives. A surviving instance leaves stale windows behind, and the next
          * `--test` run reuses any haltija reporting `windows.length > 0` — so the run
          * after this one navigates a dead window, never POSTs /report, and fails with
-         * "Browser tests timed out" on a perfectly good codebase. Only ever kills the
-         * instance this process spawned; a haltija you were already running is left alone.
+         * "Browser tests timed out" on a perfectly good codebase.
+         *
+         * The predicate is **descendants of the process we spawned** — NOT `pkill -f
+         * haltija/apps/desktop`, which is what this used to do while claiming in this very
+         * comment to leave your own haltija alone. `pkill -f` matches every process on the
+         * machine whose command line contains that string, so it killed the haltija YOU
+         * were running too. And it is the *test suite* that runs this: we spawn our own
+         * whenever yours reports zero windows, so "haltija open, no windows, run the doc
+         * tests" silently killed your browser. A test lane that reaches outside the repo
+         * and kills the developer's tools presents as "my tools got weird", never as a red
+         * test.
+         *
+         * The tree is collected BEFORE the wrapper dies: once it is gone, Electron is
+         * reparented to init and `pgrep -P` can no longer find it.
          */
+        const descendantsOf = async (pid) => {
+            const out = await $ `pgrep -P ${pid}`
+                .quiet()
+                .text()
+                .catch(() => '');
+            const kids = out
+                .trim()
+                .split('\n')
+                .filter(Boolean)
+                .map(Number)
+                .filter((n) => Number.isInteger(n) && n > 0);
+            const all = [...kids];
+            for (const kid of kids)
+                all.push(...(await descendantsOf(kid)));
+            return all;
+        };
         const stopHaltija = async () => {
-            if (!haltija)
+            if (!haltija?.pid)
                 return;
+            const tree = await descendantsOf(haltija.pid);
             haltija.kill();
-            // NB: interpolate the pattern — a quoted literal in a `$` template is passed to
-            // pkill WITH the quotes and matches nothing.
-            const electron = 'haltija/apps/desktop';
-            try {
-                await $ `pkill -f ${electron}`.quiet();
-            }
-            catch {
-                // nothing left to kill — fine
+            for (const pid of tree) {
+                try {
+                    process.kill(pid, 'SIGTERM');
+                }
+                catch {
+                    // already gone — fine
+                }
             }
         };
         try {

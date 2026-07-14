@@ -9,6 +9,33 @@ Mark `✅ RESOLVED (fixed in <pkg>@<version>)` when it lands, and close the issu
 
 ---
 
+## bun
+
+- **[oven-sh/bun#34053](https://github.com/oven-sh/bun/issues/34053)** — `Bun.build()` leaks
+  native memory per call (RSS unbounded, `heapUsed` flat), which kills long-lived watch/dev
+  processes. **This has taken the machine down twice.** ~30MB per call, monotonic, invisible
+  to `Bun.gc()` and to any JS heap profiler.
+
+  **Status checked 2026-07-14: issue OPEN, [PR #34054](https://github.com/oven-sh/bun/pull/34054)
+  OPEN and UNMERGED (last touched 2026-07-12). Latest released Bun is 1.3.14 — the same version
+  we run — so NO released Bun has the fix.** Bun reproduced it, and their diagnosis is sharper
+  than ours: it is not a malloc leak (LSAN sees ~5KB unreachable) — the memory _is_ freed, but
+  **mimalloc never purges it back to the OS** (all growth lands in `[anon:mimalloc]` mappings).
+
+  Two things to hold onto when it does merge:
+
+  - **The PR does not cover `new Bun.Transpiler()`**, which leaks ~40KB per _construction_
+    (scales with constructions, not code volume). Construct once, reuse.
+  - **Do not revert our workarounds.** The child process costs ~30ms and is immune to the whole
+    class of native-arena bugs; the bar for going back in-process is "measurably worth it", not
+    "the bug is fixed."
+
+  Our side is defended in `src/doc-system/site/` — shelled-out `bun build`, child-process ePub,
+  an RSS ceiling, an idle exit, and a machine-health preflight. See "Not taking the machine down
+  with you" in `doc-site-system.md`.
+
+---
+
 ## tjs-lang
 
 Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), against
@@ -19,10 +46,10 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
 - **[#9](https://github.com/tonioloewald/tjs-lang/issues/9) — Passing a non-`wasmBuffer`
   typed array silently copies it on every call.** The wrapper only takes the zero-copy
   path when `array.buffer === wasmMemory.buffer`; otherwise it copies every array in
-  *and* back out per call. Our 100k-particle SIMD demo was **4.4× SLOWER than its own JS
+  _and_ back out per call. Our 100k-particle SIMD demo was **4.4× SLOWER than its own JS
   fallback** — we were benchmarking `memcpy`, not SIMD. Allocating via `wasmBuffer()`
-  took the kernel 0.105 → 0.015 ms/step (7×), flipping the result to ~5.9× *faster*.
-  *Ask:* warn in dev when a wasm param receives a non-wasm-memory array.
+  took the kernel 0.105 → 0.015 ms/step (7×), flipping the result to ~5.9× _faster_.
+  _Ask:_ warn in dev when a wasm param receives a non-wasm-memory array.
   **Our workaround:** allocate everything crossing the boundary with `wasmBuffer(...)`,
   guarded (`globalThis.wasmBuffer ? … : new Float32Array(n)`).
 
@@ -33,16 +60,16 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
   entry, so we hand-rolled a strictly worse scanner to feed `getLiveBindings`. Our first
   cut silently returned `[]` for wrapped destructures and dropped all but the first
   declarator, which cost our own WASM demo 12 of its 26 bindings.
-  *Ask:* `tjs(code, { captureScope: '__fn' })`; minimum, export `collectScopeSymbols`.
+  _Ask:_ `tjs(code, { captureScope: '__fn' })`; minimum, export `collectScopeSymbols`.
   **Our workaround:** `extractTopLevelBindingNames` + `buildScopeCapture` in
   `src/live-example/code-transform.ts` (~130 lines). Delete when this lands.
 
 - **[#11](https://github.com/tonioloewald/tjs-lang/issues/11) — WASM ready/enable are
   `__`-prefixed globals, not a public API.** 0.9.1 delivered the capability but kept the
-  coupling: `__tjs_wasm_ready` (a *function* returning a promise), `__tjs_wasm_enabled`,
+  coupling: `__tjs_wasm_ready` (a _function_ returning a promise), `__tjs_wasm_enabled`,
   `__tjs_wasm_pending`. Also `__tjs_wasm_N` is **index-keyed per transpile**, so two wasm
   examples on one page alias each other.
-  *Ask:* export `tjsWasmReady()` / `setWasmEnabled()`; make the artifact name collision-free.
+  _Ask:_ export `tjsWasmReady()` / `setWasmEnabled()`; make the artifact name collision-free.
   **Our workaround:** we write against the globals (non-destructively).
 
 - **[#12](https://github.com/tonioloewald/tjs-lang/issues/12) — `editors/codemirror` ships
@@ -56,10 +83,10 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
   which answers `null` for `app.` — so a working feature looks broken. Nearly filed a bug
   against a feature that was fine.
   **Our workaround / the right probe:** drive `tjsCompletionSource(config)(new
-  CompletionContext(state, pos, true))` headlessly. Never trust `languageDataAt` here.
+CompletionContext(state, pos, true))` headlessly. Never trust `languageDataAt` here.
 
 - **[#14](https://github.com/tonioloewald/tjs-lang/issues/14) — `getMembers` is
-  mis-signposted.** `getLiveBindings` already resolves *nested* paths
+  mis-signposted.** `getLiveBindings` already resolves _nested_ paths
   (`app.items.` → array methods), so `getMembers` is only for scopes you can't hand over
   synchronously. We built toward it unnecessarily.
 
@@ -74,7 +101,7 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
 - **[#16](https://github.com/tonioloewald/tjs-lang/issues/16) — `editors/codemirror`
   imports `@codemirror/*` as bare specifiers with no declared `peerDependencies`.** Only
   resolves because tosijs-ui hoists CodeMirror; hard-fails (`Could not resolve
-  "@codemirror/state"`) under an isolated tree.
+"@codemirror/state"`) under an isolated tree.
   **Our workaround:** `tjsEditorExternal()` probes resolution and externalizes the
   extension when it can't, degrading to TS highlighting instead of exploding the build.
 
@@ -101,14 +128,15 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
 
 - **NOT YET FILED** — haltija's window fires **no animation frames** when backgrounded
   (verified: an `rAF` callback never runs). tosijs's entire render pipeline is rAF-driven,
-  so under `hj eval` a *correct* component never calls `render()`, leaving parts empty and
+  so under `hj eval` a _correct_ component never calls `render()`, leaving parts empty and
   measuring 0×0 — indistinguishable from a broken one. This nearly caused a false
   diagnosis of a correct fix during 1.7.
   **Our rule:** `hj` is for **state**, never for **paint**. Use Playwright for anything
   about rendered output, and wait for the frame before measuring.
-  *(Needs sign-off to file against a repo outside the current task's scope.)*
+  _(Needs sign-off to file against a repo outside the current task's scope.)_
 
-- Shipped dev server spawns an **unpinned** `bunx haltija@latest` (`dev-server.ts`) — a
-  floating executable fetch from library code, with haltija in no lockfile. Wants a
-  documented CLI/version contract for embedders; locally we should pin a floor and make it
-  overridable.
+- ~~Shipped dev server spawns an **unpinned** `bunx haltija@latest`~~ — **fixed on our side
+  (2026-07-14).** `dev-server.ts` now spawns `HALTIJA_PKG` = `haltija@^1.3.4`, overridable via
+  the `HALTIJA_VERSION` env var. A floating `@latest` in _library_ code meant every adopter's
+  dev server fetched whatever haltija shipped that morning, with haltija in nobody's lockfile.
+  The upstream ask stands: **a documented CLI/version contract for embedders.**
