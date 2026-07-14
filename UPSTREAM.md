@@ -43,9 +43,10 @@ Mark `✅ RESOLVED (fixed in <pkg>@<version>)` when it lands, and close the issu
 > everything is built on. Friction against tosijs has been silently absorbed into hand-rolls
 > instead of being reported.
 
-- **NOT YET FILED (drafted, awaiting sign-off)** — **(a) the `parts` proxy permanently poisons
-  itself on a pre-hydration access, and (b) there is no paved way for a component to know
-  whether it is hydrated yet.** (b) is the deeper one; (a) is what makes it bite.
+- **[#13](https://github.com/tonioloewald/tosijs/issues/13)** — **(a) the `parts` proxy
+  permanently poisons itself on a pre-hydration access, and (b) there is no paved way for a
+  component to know whether it is hydrated yet.** (b) is the deeper one; (a) is what makes it
+  bite.
 
   **The lifecycle (verified, because it is easy to assume otherwise):** content is **not**
   injected at construction. `connectedCallback()` calls `hydrate()`, and `hydrate()` is what
