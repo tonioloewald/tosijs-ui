@@ -495,14 +495,11 @@ export class TosiDocSystem extends Component {
 
     this.replaceChildren(this.browser)
 
-    // Hydration done: reveal the page (the generated <head> hid it to mask the
-    // static→live swap). Only the page-owning instance touches document.body;
-    // a nested demo must not. Next frame so the browser has painted first.
-    if (!nested && typeof document !== 'undefined') {
-      requestAnimationFrame(() => {
-        document.body.style.opacity = '1'
-      })
-    }
+    // (The `document.body.style.opacity = '1'` that used to live here is gone. It was
+    // the other half of an opacity gate the generated <head> no longer emits — the page
+    // is pre-rendered and readable before any JS runs, so there is nothing to reveal.
+    // Setting opacity on a body that was never hidden did nothing but keep a stale
+    // comment alive, claiming a behavior the release had already removed.)
   }
 }
 

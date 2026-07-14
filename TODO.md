@@ -12,6 +12,40 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 
 ## High Priority
 
+### Deferred from the 1.7 nine-lens review (`RELEASE-REVIEW-1.7-pass3.md`)
+
+Everything else from that review is fixed. These two are deliberately deferred, and this is
+the record of that decision — _"reviewed and fine"_ and _"reviewed, deferred, tracked"_ are
+different outcomes.
+
+- [ ] **M8 — the haltija doc-test lane is RED and is the only automated guard on inline WASM.**
+      `bun run test-browser` cannot start from a common ambient state (haltija running with
+      _zero_ windows: the reuse check is `windows.length > 0`, so it declines to adopt it, races
+      a second instance, and times out), and the timeout path uses the naive `haltija.kill()`
+      that leaks the Electron grandchild — so each failed run makes the next one likelier to
+      fail. **Deferred until haltija 1.4 ships**, because the fix depends on how 1.4 handles
+      zero-window reuse and its own teardown. When it lands: 1. call `stopHaltija()` on the timeout path so a failed launch stops poisoning the next; 2. adopt an existing haltija even with zero windows (or force-restart it); 3. **add `tests/doc-tests.pw.ts`** — navigate to `/`, await `window.__docTestResults`,
+      assert `failed === 0`. That runs the whole doc tier in ~30s inside the existing CI e2e
+      job, putting the inline-WASM guard (`live-example/component.ts`'s
+      `test('the wasm kernel actually compiled…')`) behind the release gate for the first
+      time. Today `grep -i wasm` across `tests/*.pw.ts` and every `*.test.ts` finds nothing.
+
+- [ ] **M10 — the IIFE tripled: 121KB → 388KB gzip, and it is ~100% CodeMirror.**
+      `bun build --format iife` cannot code-split, so `<tosi-code>`'s lazy
+      `import('./code-editor-cm')` is flattened in. ESM consumers are fine (`dist/code-editor-cm.js`
+      is a real 3.4KB chunk). It lands hardest on the case this project calls its killer feature:
+      a **pure-docs / book site** with no `bundleEntry` serves tosijs-ui's published `iife.js`, so
+      prose with zero code examples ships CodeMirror + lezer + acorn on every page.
+      **Fix:** build the doc-site hydration bundle `--format esm --splitting` and emit
+      `<script type="module">` — bun _does_ code-split ESM, so `code-editor-cm` becomes the same
+      lazy chunk it already is for bundler consumers (the entry can still assign
+      `window.xinjs`/`window.xinjsui`). Keep `dist/iife.js` as-is for the CDN path. Fallback: emit
+      a second IIFE pulled in on first `<tosi-code>` connect — the on-demand pattern the ACE build
+      had and this migration dropped.
+      **Do NOT gate the editor on "does this corpus have code examples"** — the doc system is an
+      _authoring_ system, and prose/book sites need the editor most. That would amputate the
+      feature from exactly the wrong sites.
+
 - **Doc-system: pre-render the chrome, hydrate in place — and drop the opacity gate.**
   Generated pages currently hide the whole body (`body{opacity:0}`, 4s safety-net timeout)
   until the bundle hydrates, because hydration injects the entire chrome (an undefined custom

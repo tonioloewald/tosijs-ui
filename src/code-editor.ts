@@ -95,6 +95,10 @@ interface CodeEditorParts extends PartsMap {
   diffHost: HTMLDivElement
 }
 
+// One warning per page, not per element — see the `editor` getter.
+let warnedEditor = false
+let warnedTjs = false
+
 export class CodeEditor extends WebComponent<CodeEditorParts> {
   static preferredTagName = 'tosi-code'
 
@@ -206,8 +210,32 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
 
   role = 'code editor'
 
-  /** The underlying CodeMirror EditorView (undefined until loaded). */
+  /**
+   * The underlying CodeMirror `EditorView` (undefined until loaded).
+   *
+   * **Changed in 1.7 (ACE → CodeMirror 6).** In 1.6 this was an ACE editor, and
+   * `editor.session.getUndoManager()` was documented public API. `^1.6.x` resolves
+   * 1.7.0, so an app that never changed a line auto-upgrades into a `TypeError` on the
+   * next install — and this is the ONE break the warn-once shims below cannot catch,
+   * because the property still exists and still returns an object; it is simply a
+   * different object. TS consumers get a compile error (1.6 typed this `any`); vanilla
+   * JS and CDN consumers — the audience this component's own docs court — would get the
+   * bare TypeError with no explanation at all.
+   *
+   * So: say it once, on first access. One line in the console beats a stack trace in a
+   * library the reader has never opened. Use `undo()`/`redo()`/`canUndo()`/`canRedo()`
+   * for history — they are the supported surface and they survived the migration.
+   */
   get editor(): CmHandle['view'] | undefined {
+    if (!warnedEditor) {
+      warnedEditor = true
+      console.warn(
+        '<tosi-code>.editor is a CodeMirror EditorView as of 1.7 (it was an ACE editor ' +
+          'in 1.6) — `editor.session`, `editor.getSession()`, `editor.setOption()` and ' +
+          '`editor.session.getUndoManager()` no longer exist. Use undo()/redo()/' +
+          'canUndo()/canRedo() for history; see the CodeMirror 6 docs for the rest.'
+      )
+    }
     return this._handle?.view
   }
 
@@ -393,9 +421,38 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
       .then((ext) => {
         if (ext && this._handle === handle && this.isTjsMode()) {
           handle.setLanguageExtension(ext)
+          this._tjsExtensionApplied = true
+          return
+        }
+        // Degrade LOUDLY. `loadTjsExtension` swallows everything and returns null by
+        // design, and the guard is `typeof mod.tjsEditorExtension === 'function'` — so
+        // an upstream export rename returns null without even throwing, and every tjs
+        // editor on the page silently falls back to plain TypeScript highlighting with
+        // no autocomplete. Nothing goes red; the feature just quietly isn't there.
+        if (!ext && this._handle === handle && this.isTjsMode() && !warnedTjs) {
+          warnedTjs = true
+          console.warn(
+            `<tosi-code mode="${this.mode}">: tjs-lang's CodeMirror extension did not load — ` +
+              `falling back to TypeScript highlighting (no tjs autocomplete). Install the ` +
+              `optional peer \`tjs-lang\`, or check that tjs-lang/editors/codemirror still ` +
+              `exports \`tjsEditorExtension\`.`
+          )
+        }
+      })
+      .catch((e) => {
+        // The chain had no .catch(), so any throw here was an unhandled rejection.
+        if (!warnedTjs) {
+          warnedTjs = true
+          console.warn(`<tosi-code>: failed to apply the tjs extension —`, e)
         }
       })
   }
+
+  /** True once tjs-lang's CM language+autocomplete is actually live (test seam). */
+  get tjsExtensionApplied(): boolean {
+    return this._tjsExtensionApplied
+  }
+  private _tjsExtensionApplied = false
 
   render(): void {
     super.render()

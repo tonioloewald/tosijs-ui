@@ -5,11 +5,31 @@ test.beforeEach(async ({ page }) => {
   // await page.goto('https://ui.tosijs.net/')
 })
 
-test('has title', async ({ page }) => {
-  // The doc-browser rewrites document.title per-doc (`<doc> — tosijs-ui`) once it
-  // hydrates, and the background inline-test runner cycles docs, so only the
-  // project name is stable — assert it's present rather than an exact match.
-  await expect(page).toHaveTitle(/tosijs-ui/)
+test('the title survives hydration unchanged', async ({ page, browser }) => {
+  // This asserted /^tosijs-ui$/, went red on the real bug (issue #6: the browser
+  // re-derived the title on hydration, ignoring `headTitle`, so the home page flipped
+  // to "tosijs-ui — tosijs-ui"), and was then loosened to /tosijs-ui/ — a regex that
+  // passes on the doubled value. A guard relaxed to accommodate the bug it exists to
+  // catch is not a guard.
+  //
+  // Assert the INVARIANT, not a literal: whatever the no-JS reader sees in <title> is
+  // what must still be there after hydration. (A hard-coded string would only pin
+  // today's copy — and did: changing `headTitle` in the README broke it.)
+  const noJs = await browser.newContext({ javaScriptEnabled: false })
+  const staticPage = await noJs.newPage()
+  await staticPage.goto('/')
+  const staticTitle = await staticPage.title()
+  await noJs.close()
+
+  expect(staticTitle.length).toBeGreaterThan(0)
+  // The bug's signature: the project name appearing twice.
+  expect(staticTitle).not.toMatch(/tosijs-ui.*tosijs-ui/)
+
+  await page.goto('/')
+  await expect(page).toHaveTitle(staticTitle) // pre-hydration
+  await page.locator('tosi-doc-system').waitFor({ state: 'attached' })
+  await expect(page.locator('.doc-nav .doc-link').first()).toBeVisible()
+  await expect(page).toHaveTitle(staticTitle) // post-hydration: unchanged
 })
 
 test('localize works', async ({ page }) => {

@@ -71,3 +71,34 @@ describe('classicScriptSyntaxError', () => {
     expect(classicScriptSyntaxError('function (){')).not.toBeNull()
   })
 })
+
+// ── the guard must not fire on a STRING LITERAL ─────────────────────────────
+// A substring is not a semantic. This guard was `bundleJs.includes(SPECIFIER)`, and it
+// failed the build the moment a source file merely MENTIONED the specifier — a
+// console.warn telling a developer to check that tjs-lang still exports
+// `tjsEditorExtension` was enough. Its sibling guard in this file already learned the
+// same lesson the hard way (`includes('import.meta')` fired on acorn's error strings).
+
+test('a mention of the specifier inside a string does NOT count as externalized', () => {
+  const bundled = `
+    console.warn("check that tjs-lang/editors/codemirror still exports tjsEditorExtension")
+    var tjsEditorExtension = function () { /* inlined module body */ }
+  `
+  expect(tjsEditorLeakedAsExternal(bundled)).toBe(false)
+})
+
+test('a real external import IS caught', () => {
+  expect(
+    tjsEditorLeakedAsExternal(`await import("tjs-lang/editors/codemirror")`)
+  ).toBe(true)
+  expect(
+    tjsEditorLeakedAsExternal(`__require("tjs-lang/editors/codemirror")`)
+  ).toBe(true)
+  expect(
+    tjsEditorLeakedAsExternal(`require( 'tjs-lang/editors/codemirror' )`)
+  ).toBe(true)
+})
+
+test('a bundle that never mentions it at all is fine', () => {
+  expect(tjsEditorLeakedAsExternal('var a = 1')).toBe(false)
+})

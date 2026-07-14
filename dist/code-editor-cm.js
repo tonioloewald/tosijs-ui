@@ -11,7 +11,7 @@ tjs (highlighting + runtime-value autocomplete via tjs-lang's editors/codemirror
 layered in separately and only when tjs-lang is installed.
 */
 import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, } from '@codemirror/view';
-import { EditorState, Compartment } from '@codemirror/state';
+import { EditorState, Compartment, Annotation, Transaction, } from '@codemirror/state';
 import { indentWithTab, history, defaultKeymap, historyKeymap, undo, redo, undoDepth, redoDepth, } from '@codemirror/commands';
 import { indentUnit, foldGutter, foldKeymap, indentOnInput, syntaxHighlighting, defaultHighlightStyle, bracketMatching, } from '@codemirror/language';
 import { closeBrackets, closeBracketsKeymap, autocompletion, completionKeymap, } from '@codemirror/autocomplete';
@@ -29,6 +29,21 @@ import { oneDarkHighlightStyle } from '@codemirror/theme-one-dark';
 const isDarkMode = () => typeof document !== 'undefined' &&
     !!document.body &&
     document.body.classList.contains('darkmode');
+/**
+ * Marks a transaction as OURS — a programmatic `value` set, not a user edit.
+ *
+ * `change` is documented as "fires when the text changes", and consumers write
+ * `code.addEventListener('change', e => save(e.detail.value))`. Without this, `el.value
+ * = doc` — merely LOADING a document — dispatches a CM transaction, `docChanged` is
+ * true, and the app records a spurious save/dirty-flag every time it populates the
+ * editor. A `disabled` (read-only) editor fired it too: `EditorState.readOnly` gates
+ * user input, not `view.dispatch`. The library itself does this in five places,
+ * including writing results into a read-only *output* editor after every example run.
+ *
+ * The event is new in 1.7 (the ACE build dispatched nothing), so there is no prior
+ * semantic to preserve — and tightening it after 1.7 is on `latest` would be breaking.
+ */
+const programmatic = Annotation.define();
 const highlightFor = (dark) => dark
     ? syntaxHighlighting(oneDarkHighlightStyle)
     : syntaxHighlighting(defaultHighlightStyle, { fallback: true });
@@ -189,8 +204,12 @@ export function createCmEditor(parent, opts = {}) {
                 language.of(langExt),
                 readonly.of(EditorState.readOnly.of(!!opts.readOnly)),
                 EditorView.updateListener.of((u) => {
-                    if (u.docChanged && opts.onChange)
-                        opts.onChange(u.state.doc.toString());
+                    if (!u.docChanged || !opts.onChange)
+                        return;
+                    // A programmatic `value` set is not a change the USER made. See `programmatic`.
+                    if (u.transactions.some((t) => t.annotation(programmatic)))
+                        return;
+                    opts.onChange(u.state.doc.toString());
                 }),
             ],
         }),
@@ -213,6 +232,12 @@ export function createCmEditor(parent, opts = {}) {
                 return;
             view.dispatch({
                 changes: { from: 0, to: view.state.doc.length, insert: text },
+                annotations: [
+                    programmatic.of(true),
+                    // Loading a document is not an edit to undo back out of. (The ACE wrapper
+                    // called `getUndoManager().reset()` at this point, for the same reason.)
+                    Transaction.addToHistory.of(false),
+                ],
             });
         },
         setMode(mode) {

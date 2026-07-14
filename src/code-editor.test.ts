@@ -44,8 +44,14 @@ describe('<tosi-code> (CodeMirror 6)', () => {
     document.body.append(el)
     await mounted(el)
 
+    // Undo history tracks USER edits. It used to be exercised here with `el.value =
+    // 'second'`, but a programmatic set is no longer undoable — loading a document is
+    // not an edit you Ctrl+Z back out of (see "the `change` event" tests below). So
+    // make a real edit, the way a user does.
     expect(el.canUndo()).toBe(false)
-    el.value = 'second'
+    el.editor!.dispatch({
+      changes: { from: 0, to: el.editor!.state.doc.length, insert: 'second' },
+    })
     expect(el.canUndo()).toBe(true)
 
     el.undo()
@@ -183,5 +189,128 @@ describe('<tosi-code> (CodeMirror 6)', () => {
     }
     expect(warnings.length).toBeGreaterThan(0)
     expect(warnings.join('\n')).toContain('removed in tosijs-ui 1.7')
+  })
+})
+
+describe('the `change` event means the USER changed it', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  test('a programmatic `value` set does NOT fire `change`', async () => {
+    // The documented contract is `code.addEventListener('change', e => save(e.detail.value))`.
+    // If merely LOADING a document fires it, every app that populates an editor records a
+    // spurious save / dirty-flag on open.
+    const el = codeEditor({ mode: 'javascript' }) as CodeEditor
+    document.body.append(el)
+    await mounted(el)
+
+    let fired = 0
+    el.addEventListener('change', () => (fired += 1))
+    el.value = 'const loadedFromDisk = 1'
+    await new Promise((r) => setTimeout(r, 20))
+
+    expect(el.value).toBe('const loadedFromDisk = 1') // it DID change the doc…
+    expect(fired).toBe(0) // …but it was not the user
+  })
+
+  test('a read-only editor never fires `change` when written to', async () => {
+    // `EditorState.readOnly` gates USER input, not `view.dispatch` — so a disabled
+    // editor happily emitted `change`. The library writes into a read-only *output*
+    // editor after every example run.
+    const el = codeEditor({ mode: 'javascript', disabled: true }) as CodeEditor
+    document.body.append(el)
+    await mounted(el)
+
+    let fired = 0
+    el.addEventListener('change', () => (fired += 1))
+    el.value = 'the example output'
+    await new Promise((r) => setTimeout(r, 20))
+
+    expect(fired).toBe(0)
+  })
+
+  test('a real user edit DOES fire `change` — the fix did not mute the event', async () => {
+    const el = codeEditor({ mode: 'javascript' }) as CodeEditor
+    document.body.append(el)
+    await mounted(el)
+
+    const detail: string[] = []
+    el.addEventListener('change', (e) =>
+      detail.push((e as CustomEvent).detail.value)
+    )
+    // Type, the way a user does: a CM transaction with no programmatic annotation.
+    el.editor!.dispatch({ changes: { from: 0, insert: 'typed()' } })
+    await new Promise((r) => setTimeout(r, 20))
+
+    expect(detail).toEqual(['typed()'])
+  })
+
+  test('a programmatic set is not undoable — loading a document is not an edit', async () => {
+    const el = codeEditor({ mode: 'javascript' }) as CodeEditor
+    document.body.append(el)
+    await mounted(el)
+    el.value = 'const loaded = 1'
+    await new Promise((r) => setTimeout(r, 20))
+    expect(el.canUndo()).toBe(false)
+  })
+})
+
+describe('mode="tjs" — the headline 1.7 feature', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  // The failure mode here is a SILENT no-op: loadTjsExtension() swallows every error
+  // and returns null by design, and its guard is `typeof mod.tjsEditorExtension ===
+  // 'function'` — so an upstream export RENAME returns null without even throwing.
+  // Every tjs editor on the doc site then degrades to plain TypeScript highlighting
+  // with no autocomplete, and all three test lanes stay green. Nothing else covers this.
+
+  test('tjs-lang still exports tjsEditorExtension (an upstream rename would be silent)', async () => {
+    const mod = await import('tjs-lang/editors/codemirror')
+    expect(typeof (mod as any).tjsEditorExtension).toBe('function')
+  })
+
+  test('loadTjsExtension() actually returns an extension, not null', async () => {
+    const { loadTjsExtension } = await import('./code-editor-cm')
+    expect(await loadTjsExtension({})).not.toBe(null)
+  })
+
+  test('a tjs editor really applies the tjs language extension', async () => {
+    const el = codeEditor({ mode: 'tjs' }) as CodeEditor
+    el.value = 'const x = 1'
+    document.body.append(el)
+    await mounted(el)
+    for (let i = 0; i < 50 && !el.tjsExtensionApplied; i++) {
+      await new Promise((r) => setTimeout(r, 10))
+    }
+    expect(el.tjsExtensionApplied).toBe(true)
+  })
+
+  test('ajs mode applies it too', async () => {
+    const el = codeEditor({ mode: 'ajs' }) as CodeEditor
+    document.body.append(el)
+    await mounted(el)
+    for (let i = 0; i < 50 && !el.tjsExtensionApplied; i++) {
+      await new Promise((r) => setTimeout(r, 10))
+    }
+    expect(el.tjsExtensionApplied).toBe(true)
+  })
+
+  test('a NON-tjs editor does not load it', async () => {
+    const el = codeEditor({ mode: 'javascript' }) as CodeEditor
+    document.body.append(el)
+    await mounted(el)
+    await new Promise((r) => setTimeout(r, 100))
+    expect(el.tjsExtensionApplied).toBe(false)
+  })
+
+  test('tjs falls back to readable TypeScript highlighting synchronously', async () => {
+    // The async tjs upgrade may never arrive (tjs-lang is an optional peer). The editor
+    // must still be usable in the meantime — not blank, not plain text.
+    const { languageForMode } = await import('./code-editor-cm')
+    expect(languageForMode('tjs')).toBeDefined()
+    expect(languageForMode('ajs')).toBeDefined()
   })
 })

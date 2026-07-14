@@ -38,7 +38,22 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
         disabled: boolean;
     };
     role: string;
-    /** The underlying CodeMirror EditorView (undefined until loaded). */
+    /**
+     * The underlying CodeMirror `EditorView` (undefined until loaded).
+     *
+     * **Changed in 1.7 (ACE → CodeMirror 6).** In 1.6 this was an ACE editor, and
+     * `editor.session.getUndoManager()` was documented public API. `^1.6.x` resolves
+     * 1.7.0, so an app that never changed a line auto-upgrades into a `TypeError` on the
+     * next install — and this is the ONE break the warn-once shims below cannot catch,
+     * because the property still exists and still returns an object; it is simply a
+     * different object. TS consumers get a compile error (1.6 typed this `any`); vanilla
+     * JS and CDN consumers — the audience this component's own docs court — would get the
+     * bare TypeError with no explanation at all.
+     *
+     * So: say it once, on first access. One line in the console beats a stack trace in a
+     * library the reader has never opened. Use `undo()`/`redo()`/`canUndo()`/`canRedo()`
+     * for history — they are the supported surface and they survived the migration.
+     */
     get editor(): CmHandle['view'] | undefined;
     /** @deprecated Removed in 1.7 — CodeMirror themes via `--code-bg`/`--text-color`. */
     get theme(): string;
@@ -88,6 +103,9 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
      * installed, or if the mode/handle changed before the async load resolved.
      */
     private applyTjsExtension;
+    /** True once tjs-lang's CM language+autocomplete is actually live (test seam). */
+    get tjsExtensionApplied(): boolean;
+    private _tjsExtensionApplied;
     render(): void;
 }
 export declare const codeEditor: ElementCreator<CodeEditor>;

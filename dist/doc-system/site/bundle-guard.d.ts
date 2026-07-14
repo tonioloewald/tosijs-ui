@@ -16,9 +16,18 @@ export declare function tjsEditorExternal(root: string): string[];
 /**
  * Did the tjs CodeMirror extension get externalized out of the bundle?
  *
- * If it was bundled, its specifier is gone (the module's code is inlined). If it was
- * externalized, the bundler leaves the specifier behind in an `import("…")`. So the
- * presence of the specifier in the emitted JS means the invariant is broken.
+ * If it was bundled, the module's code is inlined and nothing IMPORTS the specifier. If
+ * it was externalized, the bundler leaves behind a live `import("…")` / `require("…")`
+ * call. So look for the *call*, not for the string.
+ *
+ * This used to be a bare `bundleJs.includes(TJS_EDITOR_SPECIFIER)` — and it false-
+ * positived the moment a source file mentioned the specifier in a **string literal**
+ * (a `console.warn` telling the developer to check that tjs-lang still exports
+ * `tjsEditorExtension` was enough to fail the build). That is precisely the bug the
+ * sibling guard below already learned: its own comment records that
+ * `includes('import.meta')` fired on every build that bundled a JS parser, because
+ * acorn's error messages contain the string. Same lesson, other half of the file —
+ * **a substring is not a semantic.**
  *
  * Checking the identifier (`tjsCompletionSource`) instead would be useless: the import
  * SITE names it either way, so that grep passes in exactly the broken case.

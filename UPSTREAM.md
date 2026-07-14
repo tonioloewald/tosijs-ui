@@ -36,6 +36,42 @@ Mark `✅ RESOLVED (fixed in <pkg>@<version>)` when it lands, and close the issu
 
 ---
 
+## tosijs
+
+> **The foundational dependency, and the one we have never filed against.** That is itself the
+> finding: three sections here for bun, tjs-lang and haltija, and none for the library
+> everything is built on. Friction against tosijs has been silently absorbed into hand-rolls
+> instead of being reported.
+
+- **NOT YET FILED (drafted, awaiting sign-off)** — `Component`'s **`parts` proxy permanently
+  poisons itself on a pre-hydration access.** Reading `this.parts.<anything>` before hydration
+  roots the proxy at the light-DOM element _forever_: after insertion the shadow DOM is correct,
+  but `el.parts.host` still throws `elementRef "host" does not exist!`, silently, for the life
+  of the element.
+
+  **This is the normal usage shape.** `elementCreator()` returns an _uninserted_ element, so
+  `const el = tosiCode({…}); el.showingDiff` is idiomatic — and that single read bricked
+  `<tosi-code>` (CodeMirror never mounted into `parts.host`). The cruelty is that the poisoning
+  read is usually inside a `try { … } catch {}` **probe**: code trying to _detect_ whether it is
+  safe is the very thing that makes it permanently unsafe.
+
+  **There is no public seam.** `Component` has `private _hydrated` / `private _parts`, and
+  `get parts(): T` is the only door — a subclass cannot ask "am I hydrated yet?" without an
+  `any` cast. So we now carry **two independent hand-rolls in this repo** (`code-editor.ts`'s
+  `_partsHydrated` + `_pendingDiff` replay, and `live-example/component.ts`'s separate `hydrated`
+  getter + `pendingValues` replay) — and live-example _still_ uses the `try { this.parts.js }
+catch` probe that `code-editor.ts` explicitly documents as unusable. It survives only by
+  accident of being light-DOM. **20 files in `src/` declare `shadowStyleSpec`**; copying that
+  idiom into any of them silently bricks it, and neither the types nor a lint rule prevents it.
+
+  **Asks (any one closes it):** (1) don't cache the query root until hydrated — or invalidate it
+  on `connectedCallback` — so the bug simply cannot happen; (2) expose `hydrated: boolean` (or
+  `whenHydrated: Promise<void>`) so a subclass can guard without an `any` cast; (3) at minimum,
+  **throw** on pre-hydration `parts` access instead of silently poisoning the proxy. (1)+(2)
+  together would let us delete both hand-rolls.
+
+---
+
 ## tjs-lang
 
 Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), against

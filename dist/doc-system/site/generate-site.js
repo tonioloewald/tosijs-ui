@@ -10,6 +10,7 @@ the IIFE bundle loads.
 Build-time only (uses Bun.write). Shares slug + markdown rendering with the runtime
 component (src/doc-system/*) so static and hydrated output agree.
 */
+import { pageTitle } from '../doc-title';
 import { buildSlugMap, pathForSlug, rewriteDocLinks } from '../routing';
 import { buildNavTree, navOpenPath } from '../nav-tree';
 import { renderDocMarkdown, docDescription } from '../render';
@@ -32,7 +33,15 @@ function navHtml(docs, slugMap, currentFilename, basePath) {
     const renderNode = (node, indent) => {
         const href = withBase(basePath, pathForSlug(node.slug));
         const current = node.doc.filename === currentFilename;
-        const link = `<a href="${escapeAttr(href)}"${current ? ' aria-current="page" class="current"' : ''}>${escapeText(node.doc.title)}</a>`;
+        // `doc-link` is what the HYDRATED nav emits, and the shared nav CSS is written
+        // against it. Emitting a bare <a> here forced a second, hand-copied rule set under
+        // `tosi-doc-system:not(:defined)` — which promptly drifted, so every generated page
+        // painted its nav with brand-coloured underlines and 2.5px padding, then reflowed
+        // (~4px per row, ~230px cumulative) into 5px/15px padding the moment the bundle
+        // loaded. That flash is the exact thing "pre-render the chrome, hydrate in place"
+        // exists to eliminate, and dropping the opacity gate made it VISIBLE instead of
+        // merely masked. Same class → same CSS → nothing moves.
+        const link = `<a class="doc-link${current ? ' current' : ''}" href="${escapeAttr(href)}"${current ? ' aria-current="page"' : ''}>${escapeText(node.doc.title)}</a>`;
         if (node.children.length === 0) {
             return `${indent}<li>${link}</li>`;
         }
@@ -80,12 +89,9 @@ function pageHtml(doc, config, slugMap, configAttr) {
     const localizedAttr = config.localizedStrings
         ? ` localized="${escapeAttr(withBase(basePath, localizedUrl))}"`
         : '';
-    // `headTitle` is the verbatim <title>; otherwise suffix the project name (unless
-    // the doc title already includes it).
-    const title = doc.headTitle ||
-        (projectName && !doc.title.includes(projectName)
-            ? `${doc.title} — ${projectName}`
-            : doc.title);
+    // ONE rule, shared with the doc-browser's hydration path — see doc-title.ts. Writing
+    // it twice is what made the title change on hydration (issue #6).
+    const title = pageTitle(doc, projectName);
     // Per-page metadata (from the doc's JSON block) wins; else derive, else site default.
     const description = doc.description || docDescription(doc.text) || config.description || '';
     const keywords = Array.isArray(doc.keywords)

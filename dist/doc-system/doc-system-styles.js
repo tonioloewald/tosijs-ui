@@ -188,22 +188,23 @@ export function docSystemStyleSpec(theme = {}) {
                 width: `${SIDEBAR_WIDTH}px`,
                 overflow: 'auto',
                 background: vars.navBg,
-                padding: vars.spacing,
+                // NO padding. The hydrated nav sits in a <tosi-sidenav> whose own padding is 0 —
+                // the visual inset comes from `.doc-link`'s padding, which both states share. A
+                // `padding: spacing` here shifted every static nav link 10px right, so the whole
+                // column jumped left the instant the bundle loaded. Whatever this block sets, the
+                // upgraded component must already set too, or hydration is not "purely additive".
+                padding: '0',
             },
-            'tosi-doc-system:not(:defined) .doc-nav ul': {
-                listStyle: 'none',
-                margin: '0',
-                padding: '0 0 0 var(--spacing)',
-            },
-            'tosi-doc-system:not(:defined) .doc-nav > ul': {
-                paddingLeft: '0',
-            },
-            'tosi-doc-system:not(:defined) .doc-nav a': {
-                display: 'block',
-                padding: 'calc(var(--spacing) * 0.25) 0',
-                color: vars.textColor,
-                textDecoration: 'none',
-            },
+            // NOTE: no `a` / `ul` rules here on purpose. There used to be a second,
+            // hand-authored copy of the nav's link styling under `:not(:defined)`, because
+            // the static generator emitted a bare <a> while the hydrated nav emits
+            // <a class="doc-link">. It drifted (2.5px vs 5px/15px padding, a brand-coloured
+            // underline that only the static copy had), so every page painted one nav and
+            // then reflowed into a different one. The generator now emits `doc-link` too, so
+            // the SHARED rules below style both states and nothing moves on hydration.
+            //
+            // Only genuinely pre-hydration-specific rules belong in this block — the fixed
+            // positioning above, which the upgraded component takes over itself.
             'tosi-doc-system:not(:defined) .doc-nav summary': {
                 cursor: 'pointer',
             },

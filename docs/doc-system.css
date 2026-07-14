@@ -149,21 +149,7 @@ tosi-doc-system:not(:defined) .doc-nav {
     width: 200px;
     overflow: auto;
     background: var(--nav-bg);
-    padding: var(--spacing);
-  }
-  tosi-doc-system:not(:defined) .doc-nav ul {
-    list-style: none;
-    margin: 0;
-    padding: 0 0 0 var(--spacing);
-  }
-  tosi-doc-system:not(:defined) .doc-nav > ul {
-    padding-left: 0;
-  }
-  tosi-doc-system:not(:defined) .doc-nav a {
-    display: block;
-    padding: calc(var(--spacing) * 0.25) 0;
-    color: var(--text-color);
-    text-decoration: none;
+    padding: 0;
   }
   tosi-doc-system:not(:defined) .doc-nav summary {
     cursor: pointer;

@@ -1,24 +1,79 @@
 # Changelog
 
-## 1.7.0-beta.1
+## 1.7.0-beta.2
+
+The code editor moved from **ACE to [CodeMirror 6](https://codemirror.net/)**, `tjs`
+became a first-class editing mode with runtime-value autocomplete, the doc-site builder
+gained the hooks that unblock the tosijs 2.0 TJS port — and generated doc pages are now
+**readable before any JavaScript runs**.
 
 **A beta, published under npm's `beta` tag** — `latest` stays on 1.6.x. A prerelease is not
 matched by `^1.6.x` (or by `^1.7.0`), so nobody is auto-upgraded into the editor swap; you get
 this only by asking for it:
 
 ```
-npm i tosijs-ui@beta        # or tosijs-ui@1.7.0-beta.1
+npm i tosijs-ui@beta        # or tosijs-ui@1.7.0-beta.2
 ```
 
-The code editor moved from **ACE to [CodeMirror 6](https://codemirror.net/)**, `tjs`
-became a first-class editing mode with runtime-value autocomplete, and the doc-site
-builder gained the hooks that unblock the tosijs 2.0 TJS port.
+### Doc pages no longer wait for the bundle
 
-**Known cost, deliberate for now.** `dist/iife.js` carries CodeMirror (bun's IIFE format cannot
-code-split), and generated doc pages hide the body until hydration — so on a cheap phone the
-blank-screen window is ~4.5s vs ~3.7s without the editor. The fix is to pre-render the page
-chrome so hydration is additive and the gate can go (then the bundle gates _editing_, not
-_reading_); that's the next doc-system release, not this one. Measurements in `TODO.md`.
+Generated pages used to hide the body (`opacity: 0`, with a 4s safety-net timeout) until
+hydration, because hydration injected the whole page chrome and the reflow would have been
+ugly. **That gate is gone.** The chrome is pre-rendered, so the page is styled, readable and
+navigable — real `<a>` links, real headings — before a byte of JS executes, and hydration is
+purely additive: nothing moves.
+
+Measured on the built site, gzipped, CPU-throttled — blank-screen duration:
+
+| device                     | before                           | after      |
+| -------------------------- | -------------------------------- | ---------- |
+| cheap phone / Pi4, slow 4G | 4532ms                           | **1635ms** |
+| cheap phone / Pi4, 3G      | 4837ms — _hit the 4s safety net_ | **1635ms** |
+
+The bundle now gates **editing**, not **reading** — which was the point.
+
+Two regressions against that promise were caught in review and fixed here: the nav was styled
+by two hand-copied rule sets that had drifted (so it reflowed ~4px per row on hydration), and
+the page `<title>` was derived twice (so the home page flipped from its real title to
+`tosijs-ui — tosijs-ui`, [#6](https://github.com/tonioloewald/tosijs-ui/issues/6)). Both are
+now single, shared rules, and `tests/hydration.pw.ts` asserts that a no-JS page and a hydrated
+page agree — geometry, styling and title.
+
+### Known cost: the IIFE carries CodeMirror
+
+`dist/iife.js` went **121KB → 388KB gzip**, essentially all of it CodeMirror + lezer + acorn:
+`bun build --format iife` cannot code-split, so the editor's lazy `import()` is flattened in.
+ESM consumers are unaffected — `dist/code-editor-cm.js` is a real 3.4KB lazy chunk, and a page
+with no `<tosi-code>` never loads it.
+
+This lands hardest on a **pure-docs or book site** that sets no `bundleEntry` and therefore
+serves tosijs-ui's published `iife.js`: prose with no code examples still ships CodeMirror for
+an editor most readers never open. Tracked in `TODO.md` — the fix is to emit the doc-site
+hydration bundle as ESM with `--splitting` (bun _does_ code-split ESM), which restores the lazy
+chunk without taking the editor away from anyone. **The editor must not be gated on "does this
+corpus have code examples"** — the doc system is an authoring system, and prose sites need the
+editor most.
+
+### Dev-server safety (also in 1.6.23)
+
+A leaking dev server took a machine down twice. The guards, all in `tosijs-ui/site`:
+
+- **Machine-health preflight** before every build and dev-server launch: refuses to add load to
+  a machine that is already dying, and names the offending PIDs, sizes, ages and project dirs.
+  `preflight: 'fail' | 'warn' | false` in the site config; `DEV_SKIP_PREFLIGHT=1` to skip. Warns
+  rather than refuses in CI.
+- **`idleTimeoutHours` (default 8)** — ⚠️ **a behavior change**: your dev server now exits after
+  8 idle hours (no request, no rebuild). A forgotten dev server is not inert — it is a days-old
+  process still running the code it loaded at launch. Set `idleTimeoutHours: 0` to disable.
+- **RSS ceiling** (`memoryLimitMb`, default 4096) sampled every 60s, not just after a rebuild.
+- **Rebuild-loop detector** — a build that writes a file it also watches now stops, and names
+  the file, instead of spawning a bundler forever.
+- The example check, the ePub build, and the bundle gzip all moved into **child processes**;
+  `Bun.build()` strands ~30MB of native arena per call ([oven-sh/bun#34053](https://github.com/oven-sh/bun/issues/34053), still open).
+- **`killStrayServer` no longer `kill -9`s every process _connected to_ the dev port** — it used
+  `lsof -ti:PORT`, which matches clients as well as the listener, so it could kill your browser.
+- haltija is spawned as a **pinned range** (`haltija@^1.3.4`, override with `HALTIJA_VERSION`),
+  not a floating `@latest`, and its teardown kills only its own process tree.
 
 ### Breaking
 
@@ -33,8 +88,18 @@ rather than failing silently, but they are gone:
 | `editor.session.getUndoManager()` | `undo()` / `redo()` / `canUndo()` / `canRedo()`    |
 
 **`editor` changed type in place** — it was an ACE `Editor`, it is now a CodeMirror
-[`EditorView`](https://codemirror.net/docs/ref/#view.EditorView). A grep for the
-removed names will not catch this; any code reaching into `editor` needs revisiting.
+[`EditorView`](https://codemirror.net/docs/ref/#view.EditorView). A grep for the removed
+names will not catch this, and the warn-once shims above **cannot** catch it either: the
+property still exists and still returns an object; it is simply a different object. So
+**`editor` now warns once on first access**, naming what moved — one line in the console
+beats a `TypeError` from inside a library you have never opened. TypeScript users get a
+compile error instead (1.6 typed it `any`; 1.7 types it `EditorView | undefined`).
+
+**`change` now means the _user_ changed it.** The event is new in 1.7, and it fires only
+on user edits — a programmatic `el.value = doc` (loading a document) does not fire it, and
+neither does writing into a `disabled` editor. Without that, every app that populates an
+editor would record a spurious save/dirty-flag on open. Programmatic sets are also not
+undoable: loading a document is not an edit to Ctrl+Z back out of.
 
 Unchanged: `value`, `original` / `showDiff()`, `mode`, `disabled`.
 
@@ -45,6 +110,21 @@ existing consumers pick this up on their next install.
 **If you use `<tosi-code>`, pin `~1.6` and upgrade deliberately.** Everything else in the library
 is untouched, so a consumer of (say) `<tosi-rating>` can take 1.7 without changes — but note it
 now installs 12 `@codemirror/*` runtime dependencies where the library previously had none.
+
+## 1.6.23
+
+**Dev-server safety.** Everything under "Dev-server safety" above, backported — this is the
+release every `tosijs-ui/site` consumer wants, and it needs no code changes.
+
+The one to know about: **`killStrayServer` was `kill -9`ing every process _connected to_ the
+dev port, not just the listener.** `lsof -i:PORT` matches sockets whose local _or remote_ port
+is `PORT`, so `bun start` could SIGKILL the browser reading your page, Playwright's browsers,
+or an editor's language server. Now it signals only the listening process, only if it is a JS
+runtime, SIGTERM first.
+
+⚠️ **Behavior change:** the dev server now exits after **8 idle hours** (`idleTimeoutHours: 0`
+to disable), and refuses to start on a machine that is already out of memory
+(`DEV_SKIP_PREFLIGHT=1`, or `preflight: 'warn' | false`).
 
 The trap to know about: **`editor` changed type in place** and no shim can catch it. The removed
 `theme` / `options` / `ace` members warn once and no-op, but `el.editor` still exists — it is
