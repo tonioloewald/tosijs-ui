@@ -485,13 +485,23 @@ export class LiveExample extends Component {
         const { editors } = this.parts;
         return [...editors.children].find((elt) => elt.getAttribute('hidden') === null);
     }
+    // Set at the end of connectedCallback — NOT probed via `parts`.
+    //
+    // This used to be `try { return this.parts.js !== undefined } catch { return false }`, which
+    // is the one thing you must never do. tosijs's `parts` proxy caches its query root on FIRST
+    // access: read it before hydration and the proxy is bound to the light-DOM element
+    // permanently, so every later `this.parts.*` throws — including the ones that mount the
+    // editors. The probe that asks "am I hydrated yet?" is precisely what makes the answer "no,
+    // and never will be." (`code-editor.ts` documents this and guards against it; this file was
+    // still doing it, and survived only by accident of being light-DOM, where the root never
+    // flips to a shadow root. Anyone adding `shadowStyleSpec` here — or copying this idiom into
+    // any of the 20 components that already have one — would have silently bricked it.)
+    //
+    // Filed upstream: tosijs should invalidate the cached proxy on hydrate, and expose a real
+    // `hydrated` seam so a component can know its own lifecycle. See UPSTREAM.md.
+    _partsHydrated = false;
     get hydrated() {
-        try {
-            return this.parts.js !== undefined;
-        }
-        catch {
-            return false;
-        }
+        return this._partsHydrated;
     }
     getEditorValue(which) {
         if (!this.hydrated)
@@ -914,6 +924,9 @@ export class LiveExample extends Component {
     ];
     connectedCallback() {
         super.connectedCallback();
+        // super.connectedCallback() ran hydrate(), so `parts` is now safe to touch. Set this
+        // BEFORE flushing, since the flush is what reads `parts`.
+        this._partsHydrated = true;
         // Flush any values set before the shadow DOM was ready
         this.flushPendingValues();
         const { sources } = this.parts;

@@ -43,32 +43,64 @@ Mark `✅ RESOLVED (fixed in <pkg>@<version>)` when it lands, and close the issu
 > everything is built on. Friction against tosijs has been silently absorbed into hand-rolls
 > instead of being reported.
 
-- **NOT YET FILED (drafted, awaiting sign-off)** — `Component`'s **`parts` proxy permanently
-  poisons itself on a pre-hydration access.** Reading `this.parts.<anything>` before hydration
-  roots the proxy at the light-DOM element _forever_: after insertion the shadow DOM is correct,
-  but `el.parts.host` still throws `elementRef "host" does not exist!`, silently, for the life
-  of the element.
+- **NOT YET FILED (drafted, awaiting sign-off)** — **(a) the `parts` proxy permanently poisons
+  itself on a pre-hydration access, and (b) there is no paved way for a component to know
+  whether it is hydrated yet.** (b) is the deeper one; (a) is what makes it bite.
 
-  **This is the normal usage shape.** `elementCreator()` returns an _uninserted_ element, so
-  `const el = tosiCode({…}); el.showingDiff` is idiomatic — and that single read bricked
-  `<tosi-code>` (CodeMirror never mounted into `parts.host`). The cruelty is that the poisoning
-  read is usually inside a `try { … } catch {}` **probe**: code trying to _detect_ whether it is
-  safe is the very thing that makes it permanently unsafe.
+  **The lifecycle (verified, because it is easy to assume otherwise):** content is **not**
+  injected at construction. `connectedCallback()` calls `hydrate()`, and `hydrate()` is what
+  instantiates `content` and attaches the shadow root. On a constructed-but-uninserted element:
+  `shadowRoot === null`, `childNodes.length === 0`, and `parts.<anything>` throws. There is no
+  parts DOM at all before insertion.
 
-  **There is no public seam.** `Component` has `private _hydrated` / `private _parts`, and
-  `get parts(): T` is the only door — a subclass cannot ask "am I hydrated yet?" without an
-  `any` cast. So we now carry **two independent hand-rolls in this repo** (`code-editor.ts`'s
-  `_partsHydrated` + `_pendingDiff` replay, and `live-example/component.ts`'s separate `hydrated`
-  getter + `pendingValues` replay) — and live-example _still_ uses the `try { this.parts.js }
-catch` probe that `code-editor.ts` explicitly documents as unusable. It survives only by
-  accident of being light-DOM. **20 files in `src/` declare `shadowStyleSpec`**; copying that
-  idiom into any of them silently bricks it, and neither the types nor a lint rule prevents it.
+  **The poisoning.** From the shipped source:
 
-  **Asks (any one closes it):** (1) don't cache the query root until hydrated — or invalidate it
-  on `connectedCallback` — so the bug simply cannot happen; (2) expose `hydrated: boolean` (or
-  `whenHydrated: Promise<void>`) so a subclass can guard without an `any` cast; (3) at minimum,
-  **throw** on pre-hydration `parts` access instead of silently poisoning the proxy. (1)+(2)
-  together would let us delete both hand-rolls.
+  ```js
+  get parts() {
+    let E = this.shadowRoot != null ? this.shadowRoot : this   // recomputed each call…
+    if (this._parts == null) this._parts = new Proxy({}, { get(M, f) { /* …E.querySelector… */ } })
+    // …but the Proxy CLOSES OVER the `E` from the FIRST call, and memoizes resolved nodes.
+  }
+  ```
+
+  So one read before hydration binds the proxy to the light-DOM element **forever**. After
+  insertion the shadow DOM is correct, yet `el.parts.host` still throws
+  `elementRef "host" does not exist!` — silently, for the life of the element. (Control: an
+  element never touched before insertion resolves `parts.host` fine. It is the early read, not
+  the timing.)
+
+  **Nobody was "futzing with parts".** `elementCreator()` returns an _uninserted_ element, so
+  `const el = tosiCode({…}); el.showingDiff` is idiomatic — and `showingDiff` is an ordinary
+  public getter that _internally_ reads `this.parts.diffHost`. That single read bricked
+  `<tosi-code>`: CodeMirror never mounted, no error, ever. **The component's own public API
+  forces the read**, so "consumers shouldn't touch parts" cannot be the answer — the component
+  needs a supported way to know it isn't ready.
+
+  And the obvious way to find out is the trap: a `try { this.parts.x } catch {}` **probe** —
+  code trying to _detect_ whether it is safe is the very thing that makes it permanently unsafe.
+
+  **No public seam.** `_hydrated` and `_parts` are both `private`, and `get parts(): T` is the
+  only door, so a subclass cannot ask "am I hydrated?" without an `any` cast. We therefore carry
+  **two independent hand-rolls in one repo** (`code-editor.ts`'s `_partsHydrated` + `_pendingDiff`
+  replay; `live-example/component.ts`'s own `hydrated` getter + `pendingValues` replay). **20
+  files in `src/` declare `shadowStyleSpec`**; the idiom silently bricks any of them, and neither
+  the types nor a lint rule prevents it.
+
+  **The precedent is already in tosijs.** `connectedCallback` calls `_drainPendingAttrOps()` —
+  attributes set before insertion are queued and replayed on connect. That is exactly the shape
+  both of our hand-rolls reinvented. The paved path is half-built; it just isn't exposed.
+
+  **Asks:**
+
+  1. **Make the bug impossible.** Invalidate `this._parts` in `hydrate()` (or don't cache the
+     proxy until hydrated). Roughly one line, and no consumer has to know anything.
+  2. **Pave the hydration check** — a public/protected `hydrated: boolean` (and ideally
+     `whenHydrated: Promise<void>`, so parts-dependent work can be awaited rather than
+     hand-queued). A component should understand its own lifecycle without an `any` cast.
+  3. Failing (1): **throw a clear error** on pre-hydration `parts` access rather than silently
+     poisoning the proxy — a loud failure at the point of misuse beats a silent one at a distance.
+
+  (1) + (2) would let us delete both hand-rolls.
 
 ---
 

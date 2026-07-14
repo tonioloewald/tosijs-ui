@@ -238,6 +238,7 @@ export declare class LiveExample extends Component<ExampleParts> {
     private beforeUnloadHandler?;
     static insertExamples(element: HTMLElement, context?: ExampleContext, sourceFile?: string): void;
     get activeTab(): Element | undefined;
+    private _partsHydrated;
     private get hydrated();
     private getEditorValue;
     private setEditorValue;
