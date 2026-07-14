@@ -170,10 +170,7 @@ test('data-tosi-localized: walk finds elements nested under a fresh parent', asy
 test('data-tosi-localized: ellipsis is preserved through the directive', () => {
   i18n.locale.value = 'fr'
   const btn = document.createElement('button')
-  btn.setAttribute(
-    'data-tosi-localized',
-    JSON.stringify({ title: 'Cancel…' })
-  )
+  btn.setAttribute('data-tosi-localized', JSON.stringify({ title: 'Cancel…' }))
   applyLocalized(btn)
   expect(btn.getAttribute('title')).toBe('Annuler…')
 })

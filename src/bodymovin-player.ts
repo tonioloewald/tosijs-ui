@@ -209,4 +209,5 @@ export class BodymovinPlayer extends WebComponent {
   }
 }
 
-export const bodymovinPlayer = BodymovinPlayer.elementCreator() as ElementCreator<BodymovinPlayer>
+export const bodymovinPlayer =
+  BodymovinPlayer.elementCreator() as ElementCreator<BodymovinPlayer>

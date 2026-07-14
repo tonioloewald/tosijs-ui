@@ -19,7 +19,7 @@ importmap example resolution, versioned endpoints, AJS RestStore.
   example's `js`/`test`/`css` blocks into one live-example. That reflow is why the gate exists.
 
   **The markup is already all there** — nav tree, header, content, code blocks, `<tosi-doc-system>`
-  host; a component page is 9.5KB of HTML. What's missing is CSS for the *un-upgraded* state.
+  host; a component page is 9.5KB of HTML. What's missing is CSS for the _un-upgraded_ state.
   Fix: a **size-gated layout** that tucks the unhydrated body into a scrolling rectangle
   positioned as though the header and (on wide viewports) the sidebar were already there —
   `tosi-doc-system:not(:defined)` + its light-DOM children, in the burned static stylesheet.
@@ -29,30 +29,30 @@ importmap example resolution, versioned endpoints, AJS RestStore.
   Why it matters (measured on the built site, gzipped, CPU-throttled — 6x ≈ mid Android,
   12x ≈ cheap phone / Pi4). "Visible" = the gate lifting, i.e. blank-screen duration:
 
-  | device | 1.7 (387KB gz) | editor-free (121KB gz) |
-  | --- | --- | --- |
-  | laptop, fast wifi | 685ms | 505ms |
-  | mid Android, 4G | 1976ms | 1316ms |
-  | cheap phone / Pi4, slow 4G | 4532ms | 3667ms |
-  | cheap phone / Pi4, 3G | 4837ms — *hits the 4s safety net* | 4831ms — *ditto* |
+  | device                     | 1.7 (387KB gz)                    | editor-free (121KB gz) |
+  | -------------------------- | --------------------------------- | ---------------------- |
+  | laptop, fast wifi          | 685ms                             | 505ms                  |
+  | mid Android, 4G            | 1976ms                            | 1316ms                 |
+  | cheap phone / Pi4, slow 4G | 4532ms                            | 3667ms                 |
+  | cheap phone / Pi4, 3G      | 4837ms — _hits the 4s safety net_ | 4831ms — _ditto_       |
 
   Note the 3G row: hydration loses to the safety net, so the reader gets 4s of blank **and**
   the un-hydrated flash anyway. The gate only pays off while hydration is fast. With the chrome
   pre-rendered, content is readable at FCP (~300–500ms) on every device, and the bundle gates
-  *editing* rather than *reading*.
+  _editing_ rather than _reading_.
 
   Do NOT just delete the gate: that trades a clean blank→hydrated (2 states) for
   blank→dead-page→hydrated (3 states) for everyone, i.e. a flash of content that then shifts.
 
 - **Split the editor out of the hydration bundle** (pairs with the above). The editor stack is
   **66% of the bundle**: `@codemirror/*` (1061KB src), `@lezer/*` (384KB), `acorn` (296KB — it
-  arrives via the tjs *autocomplete* extension, not the transpiler), + the tjs CM extension. The
+  arrives via the tjs _autocomplete_ extension, not the transpiler), + the tjs CM extension. The
   transpiler is already external (`tjs-lang/browser`, fetched at runtime), so **live examples
-  would still run** — only the code *panels* need CodeMirror. The lazy boundary
+  would still run** — only the code _panels_ need CodeMirror. The lazy boundary
   (`import('./code-editor-cm')`) already works under ESM; only `--format=iife` can't split.
   Two halves: (1) emit the hydration bundle as ESM + `--splitting` + `<script type="module">`,
   keeping the IIFE for the CDN path (`bundle-guard`'s classic-script check must go module-aware);
-  (2) defer editor *construction* until a code panel is first shown — otherwise live-example
+  (2) defer editor _construction_ until a code panel is first shown — otherwise live-example
   eagerly builds 4–5 hidden editors per example and pulls the chunk anyway.
 
 - **Diff view: allow reverting changes from it.** `<tosi-code>`'s `showDiff(on)` overlay
@@ -66,10 +66,11 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 ## Book / prose adoption (from `falling-forward`, 1.6.15)
 
 The doc-system assumes a **code library with a `src/` tree**; a book has no code,
-uses different Markdown, and needs a *curated book artifact*, not just a site.
+uses different Markdown, and needs a _curated book artifact_, not just a site.
 Full write-up in the adopter's `TOSIJS-UI-FEEDBACK.md`.
 
 **Done (quick wins):**
+
 - ✅ #4 Auto-serve `/iife.js` when `bundleEntry` is omitted (copy tosijs-ui's own
   iife into the output, version-matched) — pure-docs sites hydrate out of the box.
 - ✅ #7 Skip `_`-prefixed scaffolding files (`_template.md`, `_drafting-log.md`).
@@ -78,22 +79,24 @@ Full write-up in the adopter's `TOSIJS-UI-FEEDBACK.md`.
   cover already works when it's present.
 
 **Batch A done (rendering pipeline, syntax-activated → safe default-on):**
+
 - ✅ #2 **YAML frontmatter** — `parseFrontmatter` in docs.ts parses & strips a
   leading `---…---` block, maps `title`/`order`/`author`/`date`/`draft`→hidden;
   frontmatter wins over JSON-comment metadata; empty title falls back to H1; a
   bare `---` rule is left alone.
 - ✅ #5 **Wikilinks** `[[slug]]` / `[[slug|label]]` → `/slug/` (marked inline
-  extension; not matched inside code spans). *First cut resolves by slugifying the
-  target; a real corpus-basename match + unknown-target handling is a follow-up.*
+  extension; not matched inside code spans). _First cut resolves by slugifying the
+  target; a real corpus-basename match + unknown-target handling is a follow-up._
 - ✅ #1 **Footnotes — ePub/web first cut**: `[^id]` refs (numbered by appearance)
-  + `[^id]: def` collected into an endnotes `<section>` with backrefs (marked
-  extensions). *Still TODO: page-anchored footnotes w/ cross-refs — a
-  **print-to-PDF** feature (browser Print path, not a batch job): build the full
-  DOM, compute pagination, then settle page numbers + footnote positioning by
-  pushing content across page boundaries (roadmap "measured rectangles"). Also:
-  multi-line/paragraph footnote definitions.*
+  - `[^id]: def` collected into an endnotes `<section>` with backrefs (marked
+    extensions). _Still TODO: page-anchored footnotes w/ cross-refs — a
+    **print-to-PDF** feature (browser Print path, not a batch job): build the full
+    DOM, compute pagination, then settle page numbers + footnote positioning by
+    pushing content across page boundaries (roadmap "measured rectangles"). Also:
+    multi-line/paragraph footnote definitions._
 
 **Batch B done (curation, overlay-on-defaults):**
+
 - ✅ #3 **First-class "book" corpus** — `book: BookManifest` in site config
   (`src/doc-system/book-manifest.ts`, pure + unit-tested). Curates/reorders the
   book artifact WITHOUT touching site nav (one source, two outputs). Zero-config
@@ -105,22 +108,25 @@ Full write-up in the adopter's `TOSIJS-UI-FEEDBACK.md`.
   buildNavTree/flatten sequences the book (pins/parents still apply). Applied in
   `buildEpub`; **print path (buildBookHtml, client Print button) still uses the
   whole corpus** — wire the manifest there when print/PDF pagination lands.
-  *Deferred: a content-author YAML manifest file (`_book.md`) as an alt to the
-  typed config — per-doc frontmatter already covers per-doc metadata.*
+  _Deferred: a content-author YAML manifest file (`_book.md`) as an alt to the
+  typed config — per-doc frontmatter already covers per-doc metadata._
 
 **Queued — P1:**
+
 - #14a **Smart typography** (curly quotes / en-em dashes / ellipsis) — deferred
   from Batch A: unlike wikilinks/footnotes it rewrites ALL prose, so it must be
   **opt-in** via config (pairs with #9's `kind: 'book'` preset; needs config
   threaded to `renderDocMarkdown`).
 
 **Queued — P2:**
+
 - #8 Order by filename/path within a section (natural sort), `order` as override.
 - #9 A `kind: 'book' | 'library'` preset with sane content-project defaults
   (no `src/`/`demo/` assumptions).
 - #10 Folder structure implies nav sections (`chapters/book-1/*` → "Book 1").
 
 **Queued — P3:**
+
 - #11 Friendlier metadata entry (the planned metadata UI, or #2's YAML).
 - #13 Optional built-in epubcheck (or a documented validation pass).
 - #14 Smart typography (curly quotes, en/em dashes, ellipsis) opt-in; word-count
@@ -129,8 +135,8 @@ Full write-up in the adopter's `TOSIJS-UI-FEEDBACK.md`.
 ## Example captures (live-example → static images)
 
 Design landed; not built. See **"Example captures"** in
-[doc-system-roadmap.md](doc-system-roadmap.md). Capture is *exhaust from normal
-dev*: embedded **private haltija** (per-app socket, beta 10) holds a single
+[doc-system-roadmap.md](doc-system-roadmap.md). Capture is _exhaust from normal
+dev_: embedded **private haltija** (per-app socket, beta 10) holds a single
 `getDisplayMedia` stream and `grabFrame()`s on demand (crop to the example rect),
 so testing/posing an example self-captures; haltija puppeting fills gaps. Manual
 captures are sticky; organic ones refresh only when the example's **code hash**
@@ -155,7 +161,7 @@ live site** (independently useful). See roadmap "From book to live."
   you drive demos through the global singleton. The `iframe` attribute isolates
   DOM/CSS but NOT tosijs state (the `tosijs`/`tosijs-ui` modules injected into the
   iframe are the host page's instances, so `tosi()` singletons stay shared). A
-  *totally* isolated mode — separate module realm so `tosi()` state and imported
+  _totally_ isolated mode — separate module realm so `tosi()` state and imported
   deps are sandboxed too — would follow tjs-lang's playground approach: a **service
   worker intercepting dependency imports**. Worth offering eventually as an opt-in;
   the shared-page default stays the right behavior for real examples. Documented +
@@ -177,14 +183,17 @@ live site** (independently useful). See roadmap "From book to live."
 ## Components
 
 ### `<tosi-b3d>`
+
 - Converting this to a blueprint
 
 ### `<tosi-filter>`
+
 - Leverage `<tosi-select>` for picking fields etc.
 - Leverage `<tosi-tag-list>` for displaying filters compactly
 - Leverage `popFloat` for disclosing filter-editor
 
 ### `<tosi-editable>`
+
 - Add support for disabling / enabling options
 - Hide lock icons while resizing
 - Maybe show lines under locks indicating the parent

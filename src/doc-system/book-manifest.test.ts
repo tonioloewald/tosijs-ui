@@ -10,9 +10,21 @@ interface D {
 
 const corpus: D[] = [
   { filename: 'README.md', path: 'README.md', title: 'Home' },
-  { filename: '02-chapter-two.md', path: 'chapters/02-chapter-two.md', title: 'Two' },
-  { filename: '10-chapter-ten.md', path: 'chapters/10-chapter-ten.md', title: 'Ten' },
-  { filename: '01-chapter-one.md', path: 'chapters/01-chapter-one.md', title: 'One' },
+  {
+    filename: '02-chapter-two.md',
+    path: 'chapters/02-chapter-two.md',
+    title: 'Two',
+  },
+  {
+    filename: '10-chapter-ten.md',
+    path: 'chapters/10-chapter-ten.md',
+    title: 'Ten',
+  },
+  {
+    filename: '01-chapter-one.md',
+    path: 'chapters/01-chapter-one.md',
+    title: 'One',
+  },
   { filename: 'draft.md', path: 'drafts/draft.md', title: 'Draft' },
   { filename: 'about.md', path: 'about.md', title: 'About' },
 ]

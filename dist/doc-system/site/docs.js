@@ -258,7 +258,7 @@ function findMarkdownFiles(paths, ignore) {
     return markdownFiles.sort(pinnedSort);
 }
 export function extractDocs(options) {
-    const { paths, ignore = ['node_modules', 'dist', 'build'], output, } = options;
+    const { paths, ignore = ['node_modules', 'dist', 'build'], output } = options;
     const docs = findMarkdownFiles(paths, ignore);
     if (output) {
         saveDocsJSON(docs, output);

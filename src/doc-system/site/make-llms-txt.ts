@@ -82,7 +82,8 @@ export function entriesFromCorpus(
     .filter((doc) => doc.title && !doc.hidden)
     .map((doc) => ({
       title: doc.title as string,
-      description: doc.description?.trim() || extractDescription(doc.text ?? ''),
+      description:
+        doc.description?.trim() || extractDescription(doc.text ?? ''),
       link: base + pathForSlug(slugMap[doc.filename]),
     }))
     .sort((a, b) => a.title.localeCompare(b.title))
@@ -135,10 +136,14 @@ export function generateLlmsTxt(
   try {
     pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
   } catch {
-    console.warn('llms.txt: no readable package.json — using config values only')
+    console.warn(
+      'llms.txt: no readable package.json — using config values only'
+    )
   }
 
-  const entries = corpus ? entriesFromCorpus(corpus, meta) : entriesFromSrcScan()
+  const entries = corpus
+    ? entriesFromCorpus(corpus, meta)
+    : entriesFromSrcScan()
 
   // Only orient agents about the live-example execution model when the corpus
   // actually has live examples (a book / pure-docs site has none).
@@ -161,7 +166,8 @@ export function generateLlmsTxt(
   const description = meta.description ?? pkg.description ?? ''
   const links: string[] = []
   if (meta.baseUrl) links.push(`- Docs: ${meta.baseUrl}`)
-  if (meta.projectLinks?.github) links.push(`- Source: ${meta.projectLinks.github}`)
+  if (meta.projectLinks?.github)
+    links.push(`- Source: ${meta.projectLinks.github}`)
   const npm =
     meta.projectLinks?.npm ??
     (pkg.name ? `https://www.npmjs.com/package/${pkg.name}` : undefined)

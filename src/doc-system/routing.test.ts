@@ -68,7 +68,10 @@ test('rewriteDocLinks: collisions, README, and url-encoding resolve', () => {
     '<a href="/">home</a>'
   )
   expect(
-    rewriteDocLinks('<a href="?' + encodeURIComponent('foo.ts') + '">f</a>', hrefFor)
+    rewriteDocLinks(
+      '<a href="?' + encodeURIComponent('foo.ts') + '">f</a>',
+      hrefFor
+    )
   ).toBe('<a href="/foo/">f</a>')
 })
 

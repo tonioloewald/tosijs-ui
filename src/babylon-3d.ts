@@ -231,7 +231,8 @@ const noop = () => {
 /** Parse a css hex color (#rgb/#rrggbb/#rrggbbaa) or the keyword `transparent`
  * into a BABYLON.Color4. */
 function toColor4(BABYLON: any, css: string): any {
-  if (!css || css.trim() === 'transparent') return new BABYLON.Color4(0, 0, 0, 0)
+  if (!css || css.trim() === 'transparent')
+    return new BABYLON.Color4(0, 0, 0, 0)
   let hex = css.trim().replace(/^#/, '')
   if (hex.length === 3)
     hex = hex
@@ -400,7 +401,9 @@ export class B3d extends WebComponent {
       this.BABYLON = BABYLON
       // A `transparent` (alpha < 1) clear-color needs an alpha WebGL context so
       // the canvas composites over the page.
-      const clearColor = this.clearColor ? toColor4(BABYLON, this.clearColor) : null
+      const clearColor = this.clearColor
+        ? toColor4(BABYLON, this.clearColor)
+        : null
       this.engine = new BABYLON.Engine(
         canvas,
         true,

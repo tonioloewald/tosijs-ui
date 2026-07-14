@@ -132,15 +132,23 @@ async function checkExamplesInChild(docsJson) {
     }
 }
 export async function buildSite(config) {
-    // Look at the machine before adding load to it. Runs on every build, including
-    // each watch rebuild, because the danger is not present at launch and then
-    // absent — it accumulates across a long session, in OTHER processes this build
-    // knows nothing about. One `ps` against a multi-second build is free, and it is
-    // the only point where anything looks at all. Exits rather than returning false:
-    // a machine 6x oversubscribed on RAM is not a failed build, it is an emergency,
-    // and the watch loop would swallow a `false` and keep right on rebuilding.
-    if (!(await preflight({ label: 'Build', devLimitMb: config.memoryLimitMb }))) {
-        process.exit(1);
+    // Look at the machine before adding load to it. Runs on every build, including each
+    // watch rebuild, because the danger is not present at launch and then absent — it
+    // accumulates across a long session, in OTHER processes this build knows nothing
+    // about. One `ps` against a multi-second build is free, and it is the only point
+    // where anything looks at all.
+    //
+    // Returns `false`; does NOT `process.exit`. This is a public export of
+    // `tosijs-ui/site`, and an adopter's `await buildSite(cfg); await publishToS3()` must
+    // not be killed from inside a health check they never asked for. `bin/dev.ts` already
+    // treats a `false` as a failed build and exits — that is the app's call to make, not
+    // the library's.
+    if (!(await preflight({
+        label: 'Build',
+        devLimitMb: config.memoryLimitMb,
+        mode: config.preflight,
+    }))) {
+        return false;
     }
     const PROJECT_ROOT = './';
     const PUBLIC = path.resolve(PROJECT_ROOT, config.outputDir ?? 'docs');

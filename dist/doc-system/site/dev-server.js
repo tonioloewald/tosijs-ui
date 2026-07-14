@@ -47,12 +47,99 @@ export function resolveIdleMs(configHours, envHours) {
     const hours = Number.isFinite(raw) ? raw : DEFAULT_IDLE_HOURS;
     return hours > 0 ? hours * 3600_000 : 0;
 }
+const DEFAULT_LIMIT_MB = 4096;
+/**
+ * Resolve the RSS ceiling in MB (0 = disabled).
+ *
+ * Same rule as `resolveIdleMs`, and it was NOT being applied: the ceiling was read as
+ * `Number(env ?? config ?? 4096)`, which fails in both directions at once —
+ *
+ *   DEV_MEMORY_LIMIT_MB=''   → `??` passes '' through → Number('') === 0 → the ceiling
+ *                              is ZERO, so `rss >= limit` is true on the first sample
+ *                              and the dev server kills itself on every rebuild.
+ *   DEV_MEMORY_LIMIT_MB=4gb  → NaN → every `>=` comparison is false → the guard is
+ *                              silently OFF, on the machine of someone who was
+ *                              explicitly trying to configure it.
+ *
+ * An empty env var is *unset*, not zero. Garbage falls back to the default, never to
+ * off. Only an explicit non-positive number disables the ceiling.
+ */
+export function resolveLimitMb(configMb, envMb) {
+    const env = envMb?.trim();
+    const raw = env ? Number(env) : configMb ?? DEFAULT_LIMIT_MB;
+    const mb = Number.isFinite(raw) ? raw : DEFAULT_LIMIT_MB;
+    return mb > 0 ? mb : 0;
+}
+/**
+ * Reclaim the port we are about to bind, from the process LISTENING on it.
+ *
+ * That sentence is the predicate, and the old code did not implement it. It ran
+ * `lsof -ti:${port} | xargs kill -9`, and **`lsof -i:PORT` matches sockets whose
+ * LOCAL *or REMOTE* port is PORT** — so it returned every process merely *connected*
+ * to that port and SIGKILLed them all. Not theoretical: on this machine
+ * `lsof -ti:443` returns GitHub Desktop, Proton Bridge and two `claude` processes,
+ * none of which listen on 443. Aimed at our own dev port it would take out the
+ * browser reading the page, Playwright's browsers, the haltija Electron — anything
+ * with an open connection.
+ *
+ * We shipped that reasoning in this very file for `pkill -f haltija` ("a test lane
+ * that reaches outside the repo and kills the developer's tools presents as 'my tools
+ * got weird', never as a red test") and then failed to apply it here.
+ *
+ * So: listeners only; confirm each pid is actually a JS runtime before signalling
+ * (if something else owns our port, that is the user's business — say so, don't shoot
+ * it); SIGTERM first and give it a moment; SIGKILL only what refuses to die.
+ */
 async function killStrayServer(port) {
-    try {
-        await $ `lsof -ti:${port} | xargs kill -9 2>/dev/null`.quiet();
-    }
-    catch {
-        // No process on port, that's fine
+    // Number('') is 0, and `lsof -ti:0` matches sockets with an UNBOUND port — on this
+    // machine, system daemons. Never let a bad port become a kill list.
+    if (!Number.isInteger(port) || port <= 0 || port > 65535)
+        return;
+    const pids = await $ `lsof -ti:${port} -sTCP:LISTEN`
+        .quiet()
+        .text()
+        .then((out) => out
+        .trim()
+        .split('\n')
+        .filter(Boolean)
+        .map(Number)
+        .filter((p) => Number.isInteger(p) && p > 0 && p !== process.pid))
+        .catch(() => []); // nothing listening — the normal case
+    for (const pid of pids) {
+        const comm = await $ `ps -p ${pid} -o comm=`
+            .quiet()
+            .text()
+            .then((s) => s.trim())
+            .catch(() => '');
+        if (!/\b(bun|node|deno)\b/.test(comm)) {
+            console.warn(`⚠️  port ${port} is held by pid ${pid} (${comm || 'unknown'}), which is not a\n` +
+                `    dev server — leaving it alone. Free the port, or set PORT to another one.`);
+            continue;
+        }
+        try {
+            process.kill(pid, 'SIGTERM');
+        }
+        catch {
+            continue; // already gone
+        }
+        // Give it a moment to close the listener, then insist.
+        for (let i = 0; i < 20; i++) {
+            await Bun.sleep(50);
+            try {
+                process.kill(pid, 0);
+            }
+            catch {
+                break; // exited
+            }
+            if (i === 19) {
+                try {
+                    process.kill(pid, 'SIGKILL');
+                }
+                catch {
+                    // gone between the check and the signal — fine
+                }
+            }
+        }
     }
 }
 /**
@@ -115,19 +202,31 @@ export async function devServer(config, opts = {}) {
     // PORT env wins over the config, so a test harness can bring up its own instance on
     // its own port instead of adopting (or killing — killStrayServer takes the port)
     // the dev server you already have running.
-    const PORT = Number(process.env.PORT ?? config.port ?? 8787);
+    // `||`, not `??`: an EMPTY `PORT=` is unset, not "port zero". `??` only catches
+    // null/undefined, so `PORT=''` yielded `Number('') === 0` — and port 0 fed
+    // killStrayServer, whose `lsof -ti:0` matches sockets with an unbound port (system
+    // daemons, on this machine). An env var set to empty is the most ordinary shell
+    // accident there is; it must not become a kill list.
+    const PORT = Number(process.env.PORT || config.port || 8787);
     const PUBLIC = path.resolve('./', config.outputDir ?? 'docs');
     const isSPA = true;
     const testMode = !!opts.test;
-    // Don't add a days-long watch process to a machine that is already drowning —
-    // and don't quietly become the fourth stale dev server. `buildSite` preflights
-    // too, but a consumer's custom `build` need not go through it, and "on launch"
-    // is the moment a human is actually looking at the terminal.
+    // Don't add a days-long watch process to a machine that is already drowning — and
+    // don't quietly become the fourth stale dev server. `buildSite` preflights too, but a
+    // consumer's custom `build` need not go through it, and "on launch" is the moment a
+    // human is actually looking at the terminal.
+    //
+    // THROWS; does not `process.exit`. `devServer` is a public export, and library code
+    // killing the host process is not ours to do — the caller catches and decides. (The
+    // health tick below is different: by then we own a running server on a dying machine,
+    // and stopping it is the entire point of the guard.)
     if (!(await preflight({
         label: 'Dev server',
         devLimitMb: config.memoryLimitMb,
+        mode: config.preflight,
     }))) {
-        process.exit(1);
+        throw new Error('dev server: refusing to start — see the machine-health report above. ' +
+            'Override with DEV_SKIP_PREFLIGHT=1, or set `preflight: "warn"` in your site config.');
     }
     // Haltija dev-channel — give a coding agent eyes on the running page. Opt-in
     // (config.haltijaDev or HALTIJA_DEV=1), never in test mode. The loader is a
@@ -301,11 +400,13 @@ export async function devServer(config, opts = {}) {
     // ceiling but has stopped rebuilding — which is exactly the shape of a server
     // you have walked away from, i.e. the one that kills the machine.
     const rssMb = () => Math.round(process.memoryUsage().rss / 1e6);
-    const limitMb = Number(process.env.DEV_MEMORY_LIMIT_MB ?? config.memoryLimitMb ?? 4096);
+    const limitMb = resolveLimitMb(config.memoryLimitMb, process.env.DEV_MEMORY_LIMIT_MB);
     let baselineMb = 0;
     let rebuilds = 0;
     let warned = false;
     const checkMemory = (fromRebuild = true) => {
+        if (limitMb <= 0)
+            return; // explicitly disabled
         const mb = rssMb();
         if (fromRebuild) {
             rebuilds += 1;
@@ -500,9 +601,11 @@ export async function devServer(config, opts = {}) {
     //   1. RSS ceiling — catches a process already over the line that has stopped
     //      rebuilding (the walked-away-from server).
     //   2. Idle exit — bounds how MANY servers exist, not just how big one gets.
-    //   3. Machine preflight (every 5th tick) — catches the box going bad around
-    //      us, including other projects' runaways. If the machine is dying we exit
-    //      too, and print the PIDs and the kill command on the way out.
+    //   3. Machine preflight (every tick) — catches the box going bad around us,
+    //      including other projects' runaways. If the machine is dying we exit too, and
+    //      print the PIDs and the kill command on the way out. Exiting IS the guard here,
+    //      unlike at launch where we throw: by now we own a running server on a dying
+    //      machine, and the whole point is to stop being part of the problem.
     if (!testMode) {
         if (idleMs > 0) {
             console.log(`Exits after ${idleMs / 3600_000}h idle (DEV_IDLE_TIMEOUT_HOURS=0 to disable).`);
@@ -529,6 +632,7 @@ export async function devServer(config, opts = {}) {
             const ok = await preflight({
                 label: 'Dev server',
                 devLimitMb: config.memoryLimitMb,
+                mode: config.preflight,
             });
             if (!ok) {
                 clearInterval(timer);

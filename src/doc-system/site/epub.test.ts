@@ -2,7 +2,13 @@ import { test, expect } from 'bun:test'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
-import { toXhtml, escapeXml, stripDocMeta, DEFAULT_BOOK_CSS, buildEpub } from './epub'
+import {
+  toXhtml,
+  escapeXml,
+  stripDocMeta,
+  DEFAULT_BOOK_CSS,
+  buildEpub,
+} from './epub'
 
 // ── pure helpers ────────────────────────────────────────────────────────────
 
@@ -42,9 +48,24 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     fs.writeFileSync(
       corpus,
       JSON.stringify([
-        { filename: 'README.md', title: 'Home', text: '# Home\n\nHello & welcome.\n\n```js\nconst home = 1\n```', path: 'README.md' },
-        { filename: 'a.ts', title: 'A', text: '# A\n\n```js\nconst x = 1\n```', path: 'a.ts' },
-        { filename: 'b.ts', title: 'B', text: '# B\n\n```js#cool\nconst y = 2\n```', path: 'b.ts' },
+        {
+          filename: 'README.md',
+          title: 'Home',
+          text: '# Home\n\nHello & welcome.\n\n```js\nconst home = 1\n```',
+          path: 'README.md',
+        },
+        {
+          filename: 'a.ts',
+          title: 'A',
+          text: '# A\n\n```js\nconst x = 1\n```',
+          path: 'a.ts',
+        },
+        {
+          filename: 'b.ts',
+          title: 'B',
+          text: '# B\n\n```js#cool\nconst y = 2\n```',
+          path: 'b.ts',
+        },
       ])
     )
     const out = path.join(dir, 'book.epub')
@@ -67,7 +88,13 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
 
     // Unzip and confirm structure + chapter well-formedness.
     Bun.spawnSync(['unzip', '-o', '-q', out, '-d', dir])
-    for (const f of ['META-INF/container.xml', 'OEBPS/package.opf', 'OEBPS/nav.xhtml', 'OEBPS/index.xhtml', 'OEBPS/a.xhtml']) {
+    for (const f of [
+      'META-INF/container.xml',
+      'OEBPS/package.opf',
+      'OEBPS/nav.xhtml',
+      'OEBPS/index.xhtml',
+      'OEBPS/a.xhtml',
+    ]) {
       expect(fs.existsSync(path.join(dir, f))).toBe(true)
     }
     // chapters parse as XML (the build-time DOMParser would reject malformed XHTML)
@@ -86,7 +113,10 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     expect(opf).toMatch(
       /<itemref idref="cover-page"\/>\s*<itemref idref="toc-page"\/>/
     )
-    const contents = fs.readFileSync(path.join(dir, 'OEBPS/contents.xhtml'), 'utf8')
+    const contents = fs.readFileSync(
+      path.join(dir, 'OEBPS/contents.xhtml'),
+      'utf8'
+    )
     expect(contents).toContain('<ol class="toc">')
     expect(contents).toContain('>Home</a>') // links to a chapter
 

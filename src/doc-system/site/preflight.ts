@@ -81,11 +81,21 @@ export function etimeHours(etime: string): number {
  *
  * `bun install`/`test`/`x` and friends are one-shot commands, not servers.
  */
-const isDevProcess = (command: string) =>
-  /\b(bun|deno)\b/.test(command) &&
-  !/\bbun (test|install|add|remove|update|pm|x|create|init|link|outdated|publish|upgrade)\b/.test(
-    command
+const isDevProcess = (command: string) => {
+  // Match the EXECUTABLE, not any occurrence of "bun" in the command line. `/\b(bun|deno)\b/`
+  // matched `node ~/.bun/install/global/…/cli.js` — a real line from this machine's process
+  // table — because the word boundary happily lands inside a path.
+  const argv0 = command.trim().split(/\s+/)[0] ?? ''
+  const exe = argv0.split('/').pop() ?? ''
+  if (!/^(bun|deno)$/.test(exe)) return false
+  // One-shot subcommands are not servers. `build` is here because WE spawn it: the
+  // bundler child is a `bun build`, and a build peaking mid-run must never look like a
+  // runaway dev server — least of all to its own parent.
+  const sub = command.trim().split(/\s+/)[1] ?? ''
+  return !/^(test|install|add|remove|update|pm|x|create|init|link|outdated|publish|upgrade|build|run)$/.test(
+    sub
   )
+}
 
 /**
  * Processes whose enormous RSS is the POINT of the machine, not a symptom.
@@ -225,43 +235,42 @@ export function assessProcesses(
       etimeHours(p.etime) >= minAgeHours
   )
 
-  if (catastrophic.length) {
+  // A DEV process this big is a runaway, and we refuse. A NON-dev process this big is
+  // very often the machine doing its actual job — Docker Desktop's VM, a `java -Xmx8g`,
+  // an Xcode Simulator, a Parallels guest, a database. Failing someone's build and
+  // telling them to `kill` their database is how a guard gets switched off forever, so
+  // those only ever WARN. The honest "this machine is dying" signal is VM pressure,
+  // which stays fail-closed precisely because it doesn't care what the memory is for.
+  const catastrophicDev = catastrophic.filter((p) => isDevProcess(p.command))
+  const catastrophicOther = catastrophic.filter((p) => !isDevProcess(p.command))
+  const devOffenders = [
+    ...catastrophicDev,
+    ...hugeDev,
+    ...staleDevServers,
+  ].sort(bySize)
+
+  if (devOffenders.length) {
+    const worst = devOffenders[0]
     return {
       level: 'fail',
-      offenders: [...catastrophic, ...hugeDev, ...staleDevServers].sort(bySize),
+      offenders: devOffenders,
       reason:
-        `${catastrophic.length} process${
-          catastrophic.length === 1 ? ' is' : 'es are'
-        } over ${gb(
-          catastrophicMb
-        )} — more than ${catastrophicPct}% of the memory ` +
-        `available for dev work${budgetNote}`,
+        `${devOffenders.length} dev process${
+          devOffenders.length === 1 ? ' is' : 'es are'
+        } too big to be healthy — the largest is ${gb(worst.rssMb)}, against ` +
+        `${gb(budgetMb)} of memory available for dev work${budgetNote}`,
     }
   }
-  if (hugeDev.length) {
+  if (catastrophicOther.length) {
     return {
-      level: 'fail',
-      offenders: [...hugeDev, ...staleDevServers].sort(bySize),
+      level: 'warn',
+      offenders: catastrophicOther.sort(bySize),
       reason:
-        `${hugeDev.length} dev process${
-          hugeDev.length === 1 ? ' is' : 'es are'
-        } over ${gb(
-          hugeDevMb
-        )} — a quarter of the memory available for dev work — ` +
-        `which no build legitimately needs${budgetNote}`,
-    }
-  }
-  if (staleDevServers.length) {
-    return {
-      level: 'fail',
-      offenders: staleDevServers.sort(bySize),
-      reason:
-        `${staleDevServers.length} long-running dev process${
-          staleDevServers.length === 1 ? '' : 'es'
-        } ` +
-        `${staleDevServers.length === 1 ? 'is' : 'are'} over ${gb(
-          devLimitMb
-        )} of RSS`,
+        `${catastrophicOther.length} process${
+          catastrophicOther.length === 1 ? ' is' : 'es are'
+        } using more than ${catastrophicPct}% of the memory available for dev work — ` +
+        `which may be entirely deliberate (a VM, a simulator, a database), so this is a ` +
+        `warning, not a refusal${budgetNote}`,
     }
   }
   return { level: 'ok', offenders: [], reason: '' }
@@ -392,20 +401,64 @@ async function snapshot(): Promise<ProcInfo[]> {
   return parsePs(out)
 }
 
+/** pids descended from `pid` — our own build children, which we must never judge. */
+async function descendantsOf(pid: number): Promise<number[]> {
+  const out = await $`pgrep -P ${pid}`
+    .quiet()
+    .text()
+    .catch(() => '')
+  const kids = out
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .map(Number)
+    .filter((n) => Number.isInteger(n) && n > 0)
+  const all = [...kids]
+  for (const kid of kids) all.push(...(await descendantsOf(kid)))
+  return all
+}
+
 /**
- * Check the machine before adding load to it. Returns true when it is safe to
- * proceed; on `fail` it prints the offending processes (with their project dirs
- * and a ready-to-paste kill command) and returns false — the caller decides
- * whether to exit.
+ * Is a hard failure appropriate here, or only a warning?
  *
- * Best-effort and non-fatal by construction: `ps` is POSIX-only, and a health
- * check that breaks the build when IT fails is worse than no health check. Skip
- * entirely with `DEV_SKIP_PREFLIGHT=1`.
+ * **Warn in CI, and ONLY in CI.** A runner is a fresh box thrown away in four minutes:
+ * there is no walked-away-from dev server on it, nobody to read the advice, and nothing
+ * to kill — but a busy runner would turn a green suite into a mystery "webServer
+ * exited", and a guard that flakes the test lane is a guard someone disables globally.
+ *
+ * It is tempting to also downgrade when stdout is not a TTY ("nobody is watching"), and
+ * that is a trap: **a piped dev server is not an unattended one, it is an AGENT'S one**
+ * — `bun start > dev.log` is exactly how a coding agent launches it, and
+ * agent-launched servers are the precise population that left three runaways on this
+ * machine and took it down. Disabling the guard where there is no terminal would
+ * disable it exactly where it has already failed once.
  */
+const hardFailAppropriate = (): boolean =>
+  !process.env.CI && !process.env.GITHUB_ACTIONS
+
+/**
+ * Check the machine before adding load to it.
+ *
+ * Returns **true when it is safe to proceed**. It never calls `process.exit` — this is
+ * library code (`buildSite`/`devServer` are public exports of `tosijs-ui/site`), and an
+ * adopter's `await buildSite(cfg); await publishToS3()` must not be killed from inside
+ * a health check it did not ask for. The caller decides what a `false` means.
+ *
+ * Modes (`mode`, or `preflight` in SiteConfig):
+ *   'fail' — refuse (return false). Auto-downgraded to 'warn' in CI / non-TTY.
+ *   'warn' — print and proceed.
+ *   'off'  — skip entirely. Also `DEV_SKIP_PREFLIGHT=1`.
+ *
+ * Best-effort by construction: `ps` is POSIX-only, and a health check that breaks the
+ * build when IT fails is worse than no health check at all.
+ */
+export type PreflightMode = 'off' | 'warn' | 'fail'
+
 export async function preflight(
   opts: {
     devLimitMb?: number
     label?: string
+    mode?: PreflightMode | false
     /** injected for tests; defaults to a real `ps` snapshot */
     procs?: ProcInfo[]
     /** injected for tests; defaults to this machine's physical RAM */
@@ -414,9 +467,13 @@ export async function preflight(
     vm?: VmPressure | null
   } = {}
 ): Promise<boolean> {
-  if (process.env.DEV_SKIP_PREFLIGHT === '1' || process.platform === 'win32') {
-    return true
-  }
+  const configured = opts.mode === false ? 'off' : opts.mode ?? 'fail'
+  const mode: PreflightMode =
+    process.env.DEV_SKIP_PREFLIGHT === '1' ? 'off' : configured
+  if (mode === 'off' || process.platform === 'win32') return true
+
+  // A `fail` that nobody is watching is a `warn` that breaks the build.
+  const canFail = mode === 'fail' && hardFailAppropriate()
   const totalRamMb = opts.totalRamMb ?? Math.round(os.totalmem() / 1024 / 1024)
 
   // VM pressure first: it is the only check that speaks to whether the MACHINE is
@@ -427,9 +484,7 @@ export async function preflight(
     const pressure = assessMemoryPressure(vm, { totalRamMb })
     if (pressure.level === 'fail') {
       console.error(
-        `\n🛑 ${
-          opts.label ?? 'Build'
-        } stopped: this machine is out of memory.\n\n` +
+        `\n🛑 ${opts.label ?? 'Build'}: this machine is out of memory.\n\n` +
           `   ${pressure.reason}.\n\n` +
           `   The page-out scanner has nothing left to reclaim, so the machine is about\n` +
           `   to spend its time swapping instead of working — and macOS will thrash\n` +
@@ -437,18 +492,28 @@ export async function preflight(
           `   servers — \`ps -eo pid,rss,args | sort -k2 -rn | head\`) and try again.\n\n` +
           `   Override with DEV_SKIP_PREFLIGHT=1.\n`
       )
-      return false
+      // VM pressure is fail-closed even in CI: it is not a heuristic about someone
+      // else's process, it is the machine reporting that it has nothing left to give.
+      if (mode === 'fail') return false
     }
   }
 
   let assessment: Assessment
   try {
-    assessment = assessProcesses(opts.procs ?? (await snapshot()), {
+    // Never judge our OWN children. buildSite spawns `bun build`, the example-check,
+    // tsc, the ePub child and a gzip child — and the dev server's health tick fires
+    // every 60s, so it can easily land mid-rebuild and see the bundler we ourselves
+    // started. A build peaking mid-run must not look like a runaway to its own parent.
+    const mine = new Set([process.pid, ...(await descendantsOf(process.pid))])
+    const procs = (opts.procs ?? (await snapshot())).filter(
+      (p) => !mine.has(p.pid)
+    )
+    assessment = assessProcesses(procs, {
       totalRamMb,
       selfPid: process.pid,
       devLimitMb: opts.devLimitMb,
       // Hold back RAM for known-heavy non-dev work the exempt list can't name.
-      reservedMb: Number(process.env.DEV_RESERVED_MB ?? 0) || 0,
+      reservedMb: Number(process.env.DEV_RESERVED_MB || 0) || 0,
     })
   } catch {
     return true // couldn't look — never block the build on the check itself
@@ -464,6 +529,19 @@ export async function preflight(
         (cwd ? `\n${' '.repeat(10)}in ${cwd}` : '')
     )
   }
+  // A warn-level assessment (a big NON-dev process — a VM, a simulator, a database)
+  // never refuses. Say it once and get out of the way.
+  if (assessment.level === 'warn' || !canFail) {
+    console.warn(
+      `\n⚠️  ${opts.label ?? 'Build'}: ${assessment.reason}.\n\n` +
+        `      PID      RSS       AGE  COMMAND\n${lines.join('\n')}\n` +
+        (canFail
+          ? ''
+          : `\n   (Proceeding anyway: CI. Nothing here to kill, nobody here to read this.)\n`)
+    )
+    return true
+  }
+
   console.error(
     `\n🛑 ${opts.label ?? 'Build'} stopped: this machine is in trouble.\n\n` +
       `   ${assessment.reason}.\n\n` +

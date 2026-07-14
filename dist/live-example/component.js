@@ -599,7 +599,10 @@ export class LiveExample extends Component {
             // The test-stripped source still runs its top-level statements (to define
             // the functions under test), which may touch `preview` — give them a
             // throwaway one, mirroring execution's `{ preview, ...context }` scope.
-            const fullContext = { preview: div({ class: 'preview' }), ...this.context };
+            const fullContext = {
+                preview: div({ class: 'preview' }),
+                ...this.context,
+            };
             const keys = Object.keys(fullContext).map(contextVarName);
             const values = Object.values(fullContext);
             // @ts-expect-error AsyncFunction constructor typing
@@ -659,7 +662,9 @@ export class LiveExample extends Component {
         // bindings (context modules + the rendered preview) so it can suggest their REAL
         // members — including tosijs proxy members that static analysis can't see. Set
         // before `.mode` so the tjs extension loads with the config in one shot.
-        this.parts.js.tjsAutocomplete = { getLiveBindings: () => this.liveBindings() };
+        this.parts.js.tjsAutocomplete = {
+            getLiveBindings: () => this.liveBindings(),
+        };
         this.parts.js.mode = this.dialect;
         this.jsOutEditor = codeEditor({
             name: 'JS',
@@ -1130,7 +1135,12 @@ export class LiveExample extends Component {
                     shortcut: '⌘R',
                     action: this.doRefresh,
                 },
-                { icon: 'columns', caption: 'Flip layout', shortcut: '⌘/', action: this.flipLayout },
+                {
+                    icon: 'columns',
+                    caption: 'Flip layout',
+                    shortcut: '⌘/',
+                    action: this.flipLayout,
+                },
                 {
                     icon: 'cornerUpLeft',
                     caption: 'Undo',
@@ -1146,13 +1156,22 @@ export class LiveExample extends Component {
                     enabled: () => this.canRedo(),
                 },
                 null,
-                { icon: 'copy', caption: 'Copy as markdown', shortcut: '⌘⇧C', action: this.copy },
+                {
+                    icon: 'copy',
+                    caption: 'Copy as markdown',
+                    shortcut: '⌘⇧C',
+                    action: this.copy,
+                },
                 { icon: 'download', caption: 'Download', action: this.downloadExample },
                 null,
                 ...(hasSnapshot
                     ? [
                         this.viewingChanges
-                            ? { icon: 'edit', caption: 'Back to editing', action: this.viewChanges }
+                            ? {
+                                icon: 'edit',
+                                caption: 'Back to editing',
+                                action: this.viewChanges,
+                            }
                             : {
                                 icon: 'code',
                                 caption: 'View changes',

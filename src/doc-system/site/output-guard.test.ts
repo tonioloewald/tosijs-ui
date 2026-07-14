@@ -27,5 +27,7 @@ test('a file docPath never overlaps a directory', () => {
 })
 
 test('returns the first offending docPath', () => {
-  expect(findOutputDirOverlap(['src', 'docs', 'README.md'], 'docs')).toBe('docs')
+  expect(findOutputDirOverlap(['src', 'docs', 'README.md'], 'docs')).toBe(
+    'docs'
+  )
 })

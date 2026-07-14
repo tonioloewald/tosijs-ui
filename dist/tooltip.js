@@ -193,7 +193,9 @@ export function initTooltips(options = {}) {
     document.addEventListener('pointermove', (event) => {
         if (convertTitles) {
             for (const node of event.composedPath()) {
-                if (node instanceof HTMLElement && node.title && !node.dataset.tooltip) {
+                if (node instanceof HTMLElement &&
+                    node.title &&
+                    !node.dataset.tooltip) {
                     node.dataset.tooltip = node.title;
                     node.removeAttribute('title');
                     break;

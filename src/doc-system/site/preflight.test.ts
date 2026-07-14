@@ -54,7 +54,7 @@ test('the incident: three stale servers over half the RAM fail, worst first', ()
   expect(level).toBe('fail')
   // Both giants, not the healthy 164MB server and not Safari.
   expect(offenders.map((p) => p.pid)).toEqual([15661, 15894])
-  expect(reason).toContain('50%')
+  expect(reason).toContain('dev process')
 })
 
 test('a stale dev server over the RSS ceiling fails even when it is not half the RAM', () => {
@@ -70,10 +70,14 @@ test('a big BUILD is not a stale server — age gates the dev-process trigger', 
   expect(assessProcesses(procs, { totalRamMb: RAM }).level).toBe('ok')
 })
 
-test('a non-dev hog over half the RAM still fails — the machine is dying either way', () => {
+test('a non-dev hog over half the RAM WARNS — it is very often the machine doing its job', () => {
+  // Docker Desktop's VM, a `java -Xmx8g`, an Xcode Simulator, a Parallels guest, a
+  // database. Refusing the build and printing `kill <pid>` of someone's database is how
+  // this guard gets DEV_SKIP_PREFLIGHT=1'd into a shell profile and lost forever.
+  // (A machine genuinely dying is caught by VM pressure, which stays fail-closed.)
   const procs = parsePs('  892 20971520  10-00:00:01 /Applications/Xcode.app\n')
   const { level, offenders } = assessProcesses(procs, { totalRamMb: RAM })
-  expect(level).toBe('fail')
+  expect(level).toBe('warn')
   expect(offenders[0].pid).toBe(892)
 })
 
@@ -98,11 +102,11 @@ test('a fat long-lived node process is NOT flagged as a stale dev server', () =>
   expect(assessProcesses(procs, { totalRamMb: RAM }).level).toBe('ok')
 })
 
-test('…but a node process over half the RAM is still an emergency', () => {
+test("…and a fat node process only ever warns — we do not refuse over someone else's editor", () => {
   const procs = parsePs(
     '  4242 20971520  08:00:00 node /usr/local/lib/claude-code/cli.js\n'
   )
-  expect(assessProcesses(procs, { totalRamMb: RAM }).level).toBe('fail')
+  expect(assessProcesses(procs, { totalRamMb: RAM }).level).toBe('warn')
 })
 
 test('a young runaway is caught mid-climb, not only once it is half the machine', () => {
@@ -112,7 +116,7 @@ test('a young runaway is caught mid-climb, not only once it is half the machine'
   const procs = parsePs('  101 9437184  00:04:00 bun bin/site.ts\n')
   const { level, reason } = assessProcesses(procs, { totalRamMb: RAM })
   expect(level).toBe('fail')
-  expect(reason).toContain('quarter')
+  expect(reason).toContain('too big to be healthy')
 })
 
 test('several mid-size dev servers are NOT summed — RSS arithmetic is not a signal', () => {
@@ -148,7 +152,7 @@ test('the ceiling scales with the machine, not a hard-coded 32GB', () => {
   // 9GB on a 16GB box is over half of it; on a 64GB box it is not (and it is
   // under the 4GB dev ceiling check only by virtue of being a non-dev process).
   const procs = parsePs('  892 9437184  10-00:00:01 /Applications/Xcode.app\n')
-  expect(assessProcesses(procs, { totalRamMb: 16384 }).level).toBe('fail')
+  expect(assessProcesses(procs, { totalRamMb: 16384 }).level).toBe('warn')
   expect(assessProcesses(procs, { totalRamMb: 65536 }).level).toBe('ok')
 })
 
@@ -292,4 +296,46 @@ test('devLimitMb stays ABSOLUTE — it survives a hardware upgrade', () => {
   expect(assessProcesses(parsePs(stale), { totalRamMb: RAM_128 }).level).toBe(
     'fail'
   )
+})
+
+// ── false positives are THE failure mode ────────────────────────────────────
+// A guard that wrongly fails a healthy build gets DEV_SKIP_PREFLIGHT=1'd into a shell
+// profile, and then it is gone everywhere, forever. These are the machines the review
+// reproduced a spurious `fail` on.
+
+test('Docker Desktop, a JVM and an Xcode Simulator do not fail the build', () => {
+  const procs = parsePs(`
+  501 8598323  10-00:00:01 /Applications/Docker.app/Contents/MacOS/com.docker.virtualization
+  502 8388608  04:00:00 java -Xmx8g -jar gradle-launcher.jar
+  503 9437184  02:00:00 /Applications/Xcode.app/Contents/Developer/CoreSimulator.app
+`)
+  // 16GB machine: each is over half the budget — but none of them is a runaway build,
+  // and telling this developer to `kill` their Docker VM is unforgivable.
+  expect(assessProcesses(procs, { totalRamMb: 16384 }).level).toBe('warn')
+})
+
+test('our OWN bundler child is not a runaway dev server', () => {
+  // buildSite shells out to `bun build`, and the health tick fires every 60s — so it
+  // lands mid-rebuild and sees the bundler we ourselves spawned. A build peaking mid-run
+  // must never look like a runaway to its own parent.
+  const procs = parsePs(
+    '  4242 6291456  02:00:00 bun build demo/index.ts --outdir dist\n'
+  )
+  expect(assessProcesses(procs, { totalRamMb: RAM }).level).toBe('ok')
+})
+
+test('"bun" inside a PATH does not make a process a dev server', () => {
+  // A real line from this machine's process table. `/\b(bun|deno)\b/` matched it,
+  // because the word boundary lands happily inside a path — so a 6GB TypeScript server
+  // was classified as a stale dev server and FAILED the build. It is a fat node process
+  // under the catastrophic bar: not our business at all.
+  const procs = parsePs(
+    '  4242 6291456  08:00:00 node /Users/x/.bun/install/global/node_modules/typescript/cli.js\n'
+  )
+  expect(assessProcesses(procs, { totalRamMb: RAM }).level).toBe('ok')
+})
+
+test('a real stale dev server is still caught — the fixes did not defang it', () => {
+  const procs = parsePs('  4242 6291456  08:00:00 bun --watch bin/dev.ts\n')
+  expect(assessProcesses(procs, { totalRamMb: RAM }).level).toBe('fail')
 })

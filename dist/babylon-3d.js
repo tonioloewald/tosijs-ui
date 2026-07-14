@@ -345,7 +345,9 @@ export class B3d extends WebComponent {
             this.BABYLON = BABYLON;
             // A `transparent` (alpha < 1) clear-color needs an alpha WebGL context so
             // the canvas composites over the page.
-            const clearColor = this.clearColor ? toColor4(BABYLON, this.clearColor) : null;
+            const clearColor = this.clearColor
+                ? toColor4(BABYLON, this.clearColor)
+                : null;
             this.engine = new BABYLON.Engine(canvas, true, clearColor && clearColor.a < 1
                 ? { alpha: true, premultipliedAlpha: false }
                 : undefined);

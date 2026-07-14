@@ -36,8 +36,12 @@ test('footnotes: refs number by appearance and render as endnotes', () => {
     'A note[^1] and another[^b].\n\n[^1]: First with *emphasis*.\n[^b]: Second.'
   )
   // ref superscripts, numbered 1,2 by first appearance
-  expect(html).toContain('<sup class="footnote-ref"><a href="#fn-1" id="fnref-1">1</a></sup>')
-  expect(html).toContain('<sup class="footnote-ref"><a href="#fn-b" id="fnref-b">2</a></sup>')
+  expect(html).toContain(
+    '<sup class="footnote-ref"><a href="#fn-1" id="fnref-1">1</a></sup>'
+  )
+  expect(html).toContain(
+    '<sup class="footnote-ref"><a href="#fn-b" id="fnref-b">2</a></sup>'
+  )
   // endnotes section with rendered definition markdown + backref
   expect(html).toContain('<section class="footnotes"')
   expect(html).toContain('<li id="fn-1"><p>First with <em>emphasis</em>.')

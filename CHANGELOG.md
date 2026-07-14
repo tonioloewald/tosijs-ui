@@ -17,20 +17,20 @@ builder gained the hooks that unblock the tosijs 2.0 TJS port.
 **Known cost, deliberate for now.** `dist/iife.js` carries CodeMirror (bun's IIFE format cannot
 code-split), and generated doc pages hide the body until hydration — so on a cheap phone the
 blank-screen window is ~4.5s vs ~3.7s without the editor. The fix is to pre-render the page
-chrome so hydration is additive and the gate can go (then the bundle gates *editing*, not
-*reading*); that's the next doc-system release, not this one. Measurements in `TODO.md`.
+chrome so hydration is additive and the gate can go (then the bundle gates _editing_, not
+_reading_); that's the next doc-system release, not this one. Measurements in `TODO.md`.
 
 ### Breaking
 
 `<tosi-code>` (ACE → CodeMirror 6). Each removed member now **warns once and no-ops**
 rather than failing silently, but they are gone:
 
-| removed | replacement |
-| --- | --- |
-| `theme` attribute | style the editor with `--code-bg` / `--text-color` |
-| `options` property (ACE-shaped) | configure via `editor` (a CodeMirror `EditorView`) |
-| `ace` getter | there is no ACE global; use `editor` |
-| `editor.session.getUndoManager()` | `undo()` / `redo()` / `canUndo()` / `canRedo()` |
+| removed                           | replacement                                        |
+| --------------------------------- | -------------------------------------------------- |
+| `theme` attribute                 | style the editor with `--code-bg` / `--text-color` |
+| `options` property (ACE-shaped)   | configure via `editor` (a CodeMirror `EditorView`) |
+| `ace` getter                      | there is no ACE global; use `editor`               |
+| `editor.session.getUndoManager()` | `undo()` / `redo()` / `canUndo()` / `canRedo()`    |
 
 **`editor` changed type in place** — it was an ACE `Editor`, it is now a CodeMirror
 [`EditorView`](https://codemirror.net/docs/ref/#view.EditorView). A grep for the
@@ -56,7 +56,7 @@ for the removed names will not find it.
 - `<tosi-code>` gained a `change` event (`event.detail.value`), `undo()` / `redo()` /
   `canUndo()` / `canRedo()`, and `tjs` / `ajs` modes.
 - **Runtime-value autocomplete** in `tjs` mode: set `tjsAutocomplete` and completion
-  suggests the *real members of live values* — including tosijs proxy members that no
+  suggests the _real members of live values_ — including tosijs proxy members that no
   static analysis can see. Live examples wire their own executed scope into it, so
   `const { app } = tosi(…)` gives real `app.` / `app.items.` completions.
 - Inline **WebAssembly** live examples (tjs `wasm {}` blocks).
@@ -120,7 +120,7 @@ for the removed names will not find it.
 
 ### Fixed
 
-- Doc-system nav-toggle in `routing: 'memory'` mode drove the *outer* doc-browser
+- Doc-system nav-toggle in `routing: 'memory'` mode drove the _outer_ doc-browser
   instance instead of its own (now scoped per-instance).
 
 ### Added
@@ -159,7 +159,7 @@ Doc-system tooling; no component API changes.
 - **Build-time example transpile check.** Every executable live-example block
   (`js` / `tjs` / `ts` / `test`) across the whole corpus is run through the front
   half of the runtime pipeline — `rewriteImports` → transform → `new
-  AsyncFunction` — at build time, **without executing it**, so a block that can't
+AsyncFunction` — at build time, **without executing it**, so a block that can't
   build (a syntax/import error, or illustrative code mistakenly tagged with an
   executable language instead of the display-only `typescript`) **fails the build**
   with the offending doc/block named, on every page — including fences hidden in
@@ -173,7 +173,7 @@ Doc-system tooling; no component API changes.
 ### Fixed
 
 - **A live example's build/exec failure is now a test failure whether or not it
-  defines `test` blocks.** So on any page the browser test runner loads, *all* of
+  defines `test` blocks.** So on any page the browser test runner loads, _all_ of
   its examples are checked for explosions — a no-test example that throws is
   reported as a failed test — not just blocks with explicit assertions.
 
@@ -374,6 +374,7 @@ below.
 
 - **Subpath exports**, so an app can import only what it needs without the barrel
   dragging in dev tools:
+
   - curated: `tosijs-ui/icons`, `tosijs-ui/code-editor`, `tosijs-ui/live-example`,
     `tosijs-ui/doc-browser`, `tosijs-ui/diff`, `tosijs-ui/theme`
   - per-component wildcard: `import { tosiRating } from 'tosijs-ui/rating'`

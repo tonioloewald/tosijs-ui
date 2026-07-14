@@ -40,7 +40,10 @@ docMarked.use({
 // docs use neither). marked core supports neither; both are common in prose.
 
 function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -65,7 +68,9 @@ docMarked.use({
       if (footnoteOrder.length === 0) return html
       const items = footnoteOrder
         .map((id) => {
-          const body = plainMarked.parseInline(footnoteDefs.get(id) ?? '') as string
+          const body = plainMarked.parseInline(
+            footnoteDefs.get(id) ?? ''
+          ) as string
           const eid = slugify(id)
           return `<li id="fn-${eid}"><p>${body} <a href="#fnref-${eid}" class="footnote-backref" aria-label="Back to reference">↩</a></p></li>`
         })
@@ -93,7 +98,9 @@ docMarked.use({
         }
       },
       renderer(token: any) {
-        return `<a href="/${slugify(token.target)}/" class="wikilink">${escapeHtml(token.label)}</a>`
+        return `<a href="/${slugify(
+          token.target
+        )}/" class="wikilink">${escapeHtml(token.label)}</a>`
       },
     },
     {
@@ -190,7 +197,13 @@ export function docDescription(text: string, maxLength = 160): string {
     slice.lastIndexOf('! '),
     slice.lastIndexOf('? ')
   )
-  if (sentenceEnd > maxLength * 0.6) return slice.slice(0, sentenceEnd + 1).trim()
+  if (sentenceEnd > maxLength * 0.6)
+    return slice.slice(0, sentenceEnd + 1).trim()
   const wordEnd = slice.lastIndexOf(' ')
-  return slice.slice(0, wordEnd).replace(/[,;:.\s]+$/, '').trim() + '…'
+  return (
+    slice
+      .slice(0, wordEnd)
+      .replace(/[,;:.\s]+$/, '')
+      .trim() + '…'
+  )
 }

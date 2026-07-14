@@ -56,7 +56,7 @@ A self-contained, controllable embed (e.g. docs in a floating panel):
 ```
 */
 /*{ "parent": "Appendices" }*/
-import { Component, StyleSheet, elements, tosi, vars } from 'tosijs';
+import { Component, StyleSheet, elements, tosi, vars, } from 'tosijs';
 import { createDocBrowser } from '../doc-browser';
 import { buildSlugMap, legacyQueryPath } from './routing';
 import { buildBookHtml, slugify } from './book-html';
@@ -137,8 +137,7 @@ export class TosiDocSystem extends Component {
     applyThemePrefs = () => {
         const theme = this.prefs.theme.value;
         const dark = theme === 'dark' ||
-            (theme === 'system' &&
-                matchMedia('(prefers-color-scheme: dark)').matches);
+            (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
         const contrast = this.prefs.highContrast.value;
         document.body.classList.toggle('darkmode', dark);
         document.body.classList.toggle('high-contrast', contrast);
@@ -291,7 +290,8 @@ export class TosiDocSystem extends Component {
                         {
                             caption: 'High Contrast',
                             checked: () => this.prefs.highContrast.value,
-                            action: () => (this.prefs.highContrast.value = !this.prefs.highContrast.value),
+                            action: () => (this.prefs.highContrast.value =
+                                !this.prefs.highContrast.value),
                         },
                     ],
                 });

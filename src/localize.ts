@@ -404,9 +404,7 @@ export function applyLocalized(el: Element): void {
   }
 }
 
-function* walkLocalizedRoots(
-  root: Document | ShadowRoot
-): Generator<Element> {
+function* walkLocalizedRoots(root: Document | ShadowRoot): Generator<Element> {
   for (const el of Array.from(root.querySelectorAll(`[${LOCALIZED_ATTR}]`))) {
     yield el
   }
@@ -429,7 +427,10 @@ function applyLocalizedEverywhere(): void {
 // between test runs and silently stop firing.
 let localizedObserver: MutationObserver | null = null
 
-if (typeof document !== 'undefined' && typeof MutationObserver !== 'undefined') {
+if (
+  typeof document !== 'undefined' &&
+  typeof MutationObserver !== 'undefined'
+) {
   const startObserver = (): void => {
     if (!document.body) {
       queueMicrotask(startObserver)

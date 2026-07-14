@@ -658,13 +658,18 @@ export class LiveExample extends Component<ExampleParts> {
     }
     try {
       const execJs = (
-        await transform(rewriteImports(extracted.code, Object.keys(this.context)))
+        await transform(
+          rewriteImports(extracted.code, Object.keys(this.context))
+        )
       ).code
       const body = `${execJs}\n${api.testUtils}\nreturn ${extracted.testRunner}`
       // The test-stripped source still runs its top-level statements (to define
       // the functions under test), which may touch `preview` — give them a
       // throwaway one, mirroring execution's `{ preview, ...context }` scope.
-      const fullContext = { preview: div({ class: 'preview' }), ...this.context }
+      const fullContext = {
+        preview: div({ class: 'preview' }),
+        ...this.context,
+      }
       const keys = Object.keys(fullContext).map(contextVarName)
       const values = Object.values(fullContext)
       // @ts-expect-error AsyncFunction constructor typing
@@ -691,7 +696,9 @@ export class LiveExample extends Component<ExampleParts> {
     if (!view) return
     const results = this.lastTjsTests
     if (!results || results.results.length === 0) {
-      view.replaceChildren(div({ class: 'tjs-test-empty' }, 'No inline tjs tests.'))
+      view.replaceChildren(
+        div({ class: 'tjs-test-empty' }, 'No inline tjs tests.')
+      )
       return
     }
     view.replaceChildren(
@@ -736,7 +743,9 @@ export class LiveExample extends Component<ExampleParts> {
     // bindings (context modules + the rendered preview) so it can suggest their REAL
     // members — including tosijs proxy members that static analysis can't see. Set
     // before `.mode` so the tjs extension loads with the config in one shot.
-    this.parts.js.tjsAutocomplete = { getLiveBindings: () => this.liveBindings() }
+    this.parts.js.tjsAutocomplete = {
+      getLiveBindings: () => this.liveBindings(),
+    }
     this.parts.js.mode = this.dialect
     this.jsOutEditor = codeEditor({
       name: 'JS',
@@ -869,7 +878,9 @@ export class LiveExample extends Component<ExampleParts> {
       if (ordinal >= groups.length) {
         window.alert(
           `Couldn't locate this example in ${sourceFile}: it's example ` +
-            `#${ordinal + 1} on the page, but a raw scan of the file finds only ` +
+            `#${
+              ordinal + 1
+            } on the page, but a raw scan of the file finds only ` +
             `${groups.length} fenced example group(s). The page↔source ordinals ` +
             `disagree — likely multiple docs in one file, or indented fences. ` +
             `(File a report with the source structure.)`
@@ -1012,7 +1023,8 @@ export class LiveExample extends Component<ExampleParts> {
           ),
           button(
             {
-              title: 'example menu — refresh, flip, undo, copy, save/revert edits',
+              title:
+                'example menu — refresh, flip, undo, copy, save/revert edits',
               class: 'transparent source-menu',
               onClick: this.sourceMenu,
             },
@@ -1277,7 +1289,12 @@ export class LiveExample extends Component<ExampleParts> {
           shortcut: '⌘R',
           action: this.doRefresh,
         },
-        { icon: 'columns', caption: 'Flip layout', shortcut: '⌘/', action: this.flipLayout },
+        {
+          icon: 'columns',
+          caption: 'Flip layout',
+          shortcut: '⌘/',
+          action: this.flipLayout,
+        },
         {
           icon: 'cornerUpLeft',
           caption: 'Undo',
@@ -1293,13 +1310,22 @@ export class LiveExample extends Component<ExampleParts> {
           enabled: () => this.canRedo(),
         },
         null,
-        { icon: 'copy', caption: 'Copy as markdown', shortcut: '⌘⇧C', action: this.copy },
+        {
+          icon: 'copy',
+          caption: 'Copy as markdown',
+          shortcut: '⌘⇧C',
+          action: this.copy,
+        },
         { icon: 'download', caption: 'Download', action: this.downloadExample },
         null,
         ...(hasSnapshot
           ? [
               this.viewingChanges
-                ? { icon: 'edit', caption: 'Back to editing', action: this.viewChanges }
+                ? {
+                    icon: 'edit',
+                    caption: 'Back to editing',
+                    action: this.viewChanges,
+                  }
                 : {
                     icon: 'code',
                     caption: 'View changes',
@@ -1633,7 +1659,8 @@ export class LiveExample extends Component<ExampleParts> {
   }
 }
 
-export const liveExample = LiveExample.elementCreator() as ElementCreator<LiveExample>
+export const liveExample =
+  LiveExample.elementCreator() as ElementCreator<LiveExample>
 
 // Auto-initialize remote editor window
 const params = new URL(window.location.href).searchParams

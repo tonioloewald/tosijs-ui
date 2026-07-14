@@ -58,7 +58,14 @@ A self-contained, controllable embed (e.g. docs in a floating panel):
 
 /*{ "parent": "Appendices" }*/
 
-import { Component, ElementCreator, StyleSheet, elements, tosi, vars } from 'tosijs'
+import {
+  Component,
+  ElementCreator,
+  StyleSheet,
+  elements,
+  tosi,
+  vars,
+} from 'tosijs'
 import { createDocBrowser, Doc, ProjectLinks, LinkItem } from '../doc-browser'
 import { buildSlugMap, legacyQueryPath } from './routing'
 import { buildBookHtml, slugify } from './book-html'
@@ -162,8 +169,7 @@ export class TosiDocSystem extends Component {
     const theme = this.prefs.theme.value
     const dark =
       theme === 'dark' ||
-      (theme === 'system' &&
-        matchMedia('(prefers-color-scheme: dark)').matches)
+      (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
     const contrast = this.prefs.highContrast.value
     document.body.classList.toggle('darkmode', dark)
     document.body.classList.toggle('high-contrast', contrast)
@@ -268,7 +274,9 @@ export class TosiDocSystem extends Component {
             action: () => {
               const win = window.open('', '_blank')
               if (!win) {
-                window.alert('Allow pop-ups to print the documentation as a book.')
+                window.alert(
+                  'Allow pop-ups to print the documentation as a book.'
+                )
                 return
               }
               win.document.open()
@@ -333,7 +341,8 @@ export class TosiDocSystem extends Component {
                 caption: 'High Contrast',
                 checked: () => this.prefs.highContrast.value,
                 action: () =>
-                  (this.prefs.highContrast.value = !this.prefs.highContrast.value),
+                  (this.prefs.highContrast.value =
+                    !this.prefs.highContrast.value),
               },
             ],
           })
@@ -403,7 +412,11 @@ export class TosiDocSystem extends Component {
           this.queueRender()
         })
         .catch((error) =>
-          console.error('<tosi-doc-system> could not load docs from', url, error)
+          console.error(
+            '<tosi-doc-system> could not load docs from',
+            url,
+            error
+          )
         )
     }
   }

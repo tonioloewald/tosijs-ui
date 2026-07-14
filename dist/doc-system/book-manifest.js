@@ -70,9 +70,7 @@ export function selectBookDocs(docs, manifest) {
     // 2) baseline order overlay ─────────────────────────────────────────────────
     // 'filename' fills only docs with no explicit `order`, so metadata still wins.
     if (manifest.sort === 'filename') {
-        const natural = copies
-            .slice()
-            .sort((a, b) => (a.path ?? a.filename).localeCompare(b.path ?? b.filename, undefined, {
+        const natural = copies.slice().sort((a, b) => (a.path ?? a.filename).localeCompare(b.path ?? b.filename, undefined, {
             numeric: true,
             sensitivity: 'base',
         }));

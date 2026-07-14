@@ -37,7 +37,10 @@ docMarked.use({
 // [^id]) — a doc that doesn't use them renders byte-identically (tosijs-ui's own
 // docs use neither). marked core supports neither; both are common in prose.
 function slugify(s) {
-    return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return s
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 }
 function escapeHtml(s) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -195,5 +198,8 @@ export function docDescription(text, maxLength = 160) {
     if (sentenceEnd > maxLength * 0.6)
         return slice.slice(0, sentenceEnd + 1).trim();
     const wordEnd = slice.lastIndexOf(' ');
-    return slice.slice(0, wordEnd).replace(/[,;:.\s]+$/, '').trim() + '…';
+    return (slice
+        .slice(0, wordEnd)
+        .replace(/[,;:.\s]+$/, '')
+        .trim() + '…');
 }

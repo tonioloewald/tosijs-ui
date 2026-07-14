@@ -36,9 +36,7 @@ export function buildSlugMap(docs) {
         const base = baseSlug(doc.filename);
         // README ('' base) is unique by construction; never disambiguate it.
         map[doc.filename] =
-            base !== '' && counts[base] > 1
-                ? doc.filename.replace(/\./g, '-')
-                : base;
+            base !== '' && counts[base] > 1 ? doc.filename.replace(/\./g, '-') : base;
     }
     return map;
 }
@@ -81,7 +79,10 @@ export function legacyQueryPath(search, slugMap) {
 }
 /** strip a pathname down to its slug: '/button/' -> 'button', '/' -> '' */
 export function slugForPath(pathname) {
-    return pathname.replace(/^\/+/, '').replace(/\/+$/, '').replace(/\/index\.html$/i, '');
+    return pathname
+        .replace(/^\/+/, '')
+        .replace(/\/+$/, '')
+        .replace(/\/index\.html$/i, '');
 }
 /**
  * Resolve a browser location.pathname to a doc filename, using a slug map.

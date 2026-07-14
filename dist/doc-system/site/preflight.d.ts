@@ -123,18 +123,26 @@ export declare function assessMemoryPressure(vm: VmPressure, opts: {
     reason: string;
 };
 /**
- * Check the machine before adding load to it. Returns true when it is safe to
- * proceed; on `fail` it prints the offending processes (with their project dirs
- * and a ready-to-paste kill command) and returns false — the caller decides
- * whether to exit.
+ * Check the machine before adding load to it.
  *
- * Best-effort and non-fatal by construction: `ps` is POSIX-only, and a health
- * check that breaks the build when IT fails is worse than no health check. Skip
- * entirely with `DEV_SKIP_PREFLIGHT=1`.
+ * Returns **true when it is safe to proceed**. It never calls `process.exit` — this is
+ * library code (`buildSite`/`devServer` are public exports of `tosijs-ui/site`), and an
+ * adopter's `await buildSite(cfg); await publishToS3()` must not be killed from inside
+ * a health check it did not ask for. The caller decides what a `false` means.
+ *
+ * Modes (`mode`, or `preflight` in SiteConfig):
+ *   'fail' — refuse (return false). Auto-downgraded to 'warn' in CI / non-TTY.
+ *   'warn' — print and proceed.
+ *   'off'  — skip entirely. Also `DEV_SKIP_PREFLIGHT=1`.
+ *
+ * Best-effort by construction: `ps` is POSIX-only, and a health check that breaks the
+ * build when IT fails is worse than no health check at all.
  */
+export type PreflightMode = 'off' | 'warn' | 'fail';
 export declare function preflight(opts?: {
     devLimitMb?: number;
     label?: string;
+    mode?: PreflightMode | false;
     /** injected for tests; defaults to a real `ps` snapshot */
     procs?: ProcInfo[];
     /** injected for tests; defaults to this machine's physical RAM */

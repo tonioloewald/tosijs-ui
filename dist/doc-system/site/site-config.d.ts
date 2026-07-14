@@ -1,6 +1,7 @@
 import type { ProjectLinks, LinkItem } from '../../doc-browser';
 import type { DocSystemTheme } from '../doc-system-styles';
 import type { Doc } from './docs';
+import type { PreflightMode } from './preflight';
 import type { BookManifest } from '../book-manifest';
 export type SiteHost = 'github-pages' | 'firebase' | 'static';
 /** Resolved paths handed to a `libraryBuild` override (see SiteConfig). */
@@ -208,6 +209,17 @@ export interface SiteConfig {
      * already running). An idle server has no value to trade against that, so it goes.
      */
     idleTimeoutHours?: number;
+    /**
+     * Machine-health preflight before each build and at dev-server launch: refuse to add
+     * load to a machine that is already dying (a runaway dev server, a VM stall).
+     *
+     * `'fail'` (default) refuses; `'warn'` prints and proceeds; `false`/`'off'` skips it.
+     * Also `DEV_SKIP_PREFLIGHT=1`. A hard failure is **automatically downgraded to a
+     * warning in CI and when stdout is not a TTY** — the guard is there to stop a human
+     * from making a bad situation worse, and on a throwaway runner there is no human, no
+     * stale dev server, and nothing to kill.
+     */
+    preflight?: PreflightMode | false;
     /**
      * Enable the dev-server source read/write endpoints (`/__docstore/source`) that
      * back in-browser "edit page source". Local dev only — the dev server runs on

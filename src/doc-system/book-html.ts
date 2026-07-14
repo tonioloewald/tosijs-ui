@@ -103,7 +103,10 @@ export function escapeHtml(s: string): string {
 }
 
 export function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
 /** Drop the `<!--{ … }-->` metadata directives the extractor leaves in the text. */
@@ -127,7 +130,9 @@ function tocHtml(nodes: NavNode<BookDoc>[]): string {
       (node) =>
         `<li><a href="#${slugify(node.doc.filename)}">${escapeHtml(
           node.doc.title
-        )}</a>${node.children.length ? `<ol>${tocHtml(node.children)}</ol>` : ''}</li>`
+        )}</a>${
+          node.children.length ? `<ol>${tocHtml(node.children)}</ol>` : ''
+        }</li>`
     )
     .join('')
 }
@@ -151,9 +156,9 @@ export function buildBookHtml(docs: BookDoc[], opts: BookHtmlOptions): string {
   const chapters = flatten(roots)
     .map(
       (node) =>
-        `<section class="chapter" id="${slugify(node.doc.filename)}">\n${renderDocMarkdown(
-          stripDocMeta(node.doc.text)
-        )}\n</section>`
+        `<section class="chapter" id="${slugify(
+          node.doc.filename
+        )}">\n${renderDocMarkdown(stripDocMeta(node.doc.text))}\n</section>`
     )
     .join('\n')
 
@@ -168,7 +173,11 @@ export function buildBookHtml(docs: BookDoc[], opts: BookHtmlOptions): string {
 <h1 class="book-title">${escapeHtml(opts.title)}</h1>
 <nav class="book-toc"><h2>Contents</h2><ol>${tocHtml(roots)}</ol></nav>
 ${chapters}
-${opts.autoPrint ? '<script>addEventListener("load",function(){setTimeout(function(){print()},300)})</script>' : ''}
+${
+  opts.autoPrint
+    ? '<script>addEventListener("load",function(){setTimeout(function(){print()},300)})</script>'
+    : ''
+}
 </body>
 </html>`
 }

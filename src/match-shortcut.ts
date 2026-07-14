@@ -73,7 +73,7 @@ export const parseShortcut = (shortcut: string): ParsedShortcut => {
 
 export const matchShortcut = (
   event: KeyboardEventLike,
-  shortcut: string,
+  shortcut: string
 ): boolean => {
   const parsed = parseShortcut(shortcut)
 

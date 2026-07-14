@@ -483,7 +483,8 @@ export type XinSegmented = TosiSegmented
 /** @deprecated Use TosiSegmented instead */
 export const XinSegmented: typeof TosiSegmented = TosiSegmented
 
-export const tosiSegmented = TosiSegmented.elementCreator() as ElementCreator<TosiSegmented>
+export const tosiSegmented =
+  TosiSegmented.elementCreator() as ElementCreator<TosiSegmented>
 
 /** @deprecated Use tosiSegmented instead (tag is now tosi-segmented) */
 export const xinSegmented = deprecated(

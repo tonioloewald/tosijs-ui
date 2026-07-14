@@ -82,8 +82,12 @@ simultaneously written a web page, a test, a book chapter, and a playground.</p>
 live <code>&lt;tosi-doc-system&gt;</code> — the same browser you&#39;re reading this in — loading the
 same corpus, in an isolated (memory-routed) instance. It runs its own live
 examples, transpiles their TypeScript in your browser, and needs no server:</p>
-<pre><code class="language-html">&lt;tosi-doc-system docs=&quot;/docs.json&quot; routing=&quot;memory&quot; route=&quot;data-table&quot;
-  style=&quot;display:block; height:520px; border-radius:8px; overflow:hidden; box-shadow:0 2px 16px #0004&quot;&gt;
+<pre><code class="language-html">&lt;tosi-doc-system
+  docs=&quot;/docs.json&quot;
+  routing=&quot;memory&quot;
+  route=&quot;data-table&quot;
+  style=&quot;display:block; height:520px; border-radius:8px; overflow:hidden; box-shadow:0 2px 16px #0004&quot;
+&gt;
 &lt;/tosi-doc-system&gt;
 </code></pre>
 <p>That is the tell that it&#39;s honest engineering rather than a kitchen sink: the

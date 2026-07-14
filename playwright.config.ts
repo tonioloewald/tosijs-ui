@@ -12,7 +12,10 @@ import { defineConfig, devices } from '@playwright/test'
  * never collides with the `bun start` you have open on 8787. Tests address it through
  * `baseURL` — never hard-code a port in a test.
  */
-const E2E_PORT = Number(process.env.E2E_PORT ?? 8799)
+// `||`, not `??`: `E2E_PORT=` (set but empty) is unset, not port 0. `??` passes the
+// empty string through to `Number('') === 0`, and the dev server this config starts
+// reclaims its port by killing whatever holds it — see killStrayServer.
+const E2E_PORT = Number(process.env.E2E_PORT || 8799)
 const E2E_BASE_URL = `https://localhost:${E2E_PORT}`
 
 /**
@@ -105,7 +108,16 @@ export default defineConfig({
    */
   webServer: {
     command: 'bun start',
-    env: { HALTIJA_DEV: '0', PORT: String(E2E_PORT) },
+    // DEV_SKIP_PREFLIGHT: the machine-health guard exists to stop a HUMAN from adding
+    // load to a dying machine. Inside our own release gate there is no human to read it
+    // and no stale dev server to kill — but a busy laptop would turn a green suite into
+    // a mystery "webServer exited". A guard that flakes the test lane is a guard someone
+    // disables globally, and then it is gone everywhere.
+    env: {
+      HALTIJA_DEV: '0',
+      PORT: String(E2E_PORT),
+      DEV_SKIP_PREFLIGHT: '1',
+    },
     url: E2E_BASE_URL,
     reuseExistingServer: false,
     ignoreHTTPSErrors: true,

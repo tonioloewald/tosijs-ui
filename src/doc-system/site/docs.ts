@@ -190,10 +190,10 @@ function metadata(content: string, filePath: string): Partial<Doc> {
   }
   // An empty/blank `title` must not override the H1 (it produced blank nav
   // entries) — drop it so the H1-derived title wins.
-  if (typeof data.title === 'string' && data.title.trim() === '') delete data.title
+  if (typeof data.title === 'string' && data.title.trim() === '')
+    delete data.title
   return data
 }
-
 
 function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
   const markdownFiles: Doc[] = []
@@ -294,11 +294,7 @@ function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
 }
 
 export function extractDocs(options: ExtractDocsOptions): Doc[] {
-  const {
-    paths,
-    ignore = ['node_modules', 'dist', 'build'],
-    output,
-  } = options
+  const { paths, ignore = ['node_modules', 'dist', 'build'], output } = options
   const docs = findMarkdownFiles(paths, ignore)
   if (output) {
     saveDocsJSON(docs, output)

@@ -18,8 +18,8 @@ Status: **planning / viability assessment** (not started). Potentially breaking 
 ## Verdict
 
 **Highly viable, medium effort — because tjs-lang has already done the hard parts.**
-tjs-lang (0.8.7) ships a CodeMirror 6 language for tjs/ajs *with runtime-value
-autocomplete*, and its browser transpiler bundle already compiles inline WASM.
+tjs-lang (0.8.7) ships a CodeMirror 6 language for tjs/ajs _with runtime-value
+autocomplete_, and its browser transpiler bundle already compiles inline WASM.
 tosijs-ui's work is integration, API adaptation, packaging, and demos — not
 building a language server or a WASM compiler.
 
@@ -28,29 +28,30 @@ and wiring the autocomplete introspection to the live-example sandbox.
 
 ## What tjs-lang gives us (checked against installed 0.8.7)
 
-| piece | state | export |
-|---|---|---|
-| tjs/ajs CM6 **language + editor extensions** (`ajsEditorExtension`, `tjsEditorExtension`) | ✅ built, published | `tjs-lang/editors/codemirror` (`ajs-language.js`) |
-| **Autocomplete** `tjsCompletionSource(config)` + `AutocompleteConfig` | ✅ built, published | same |
-| **`<code-mirror>` web component** (tosijs `Component`, modes ajs/tjs/js/css/html/md, value/editor, change event) | ⚠️ **source-only** (`component.ts`), NOT built/exported | — |
-| ACE mode for tjs (`ajs-mode`), Monaco monarch, VSCode ext | ✅ | `tjs-lang/editors/ace|monaco` |
-| **Inline WASM** compiler (`wasm function` / `wasm{}` → bytecode) | ✅ in the **browser** bundle (`tjs-browser.js` references WebAssembly) | via the normal transpile path |
+| piece                                                                                                            | state                                                                  | export                                            |
+| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------- | ------- |
+| tjs/ajs CM6 **language + editor extensions** (`ajsEditorExtension`, `tjsEditorExtension`)                        | ✅ built, published                                                    | `tjs-lang/editors/codemirror` (`ajs-language.js`) |
+| **Autocomplete** `tjsCompletionSource(config)` + `AutocompleteConfig`                                            | ✅ built, published                                                    | same                                              |
+| **`<code-mirror>` web component** (tosijs `Component`, modes ajs/tjs/js/css/html/md, value/editor, change event) | ⚠️ **source-only** (`component.ts`), NOT built/exported                | —                                                 |
+| ACE mode for tjs (`ajs-mode`), Monaco monarch, VSCode ext                                                        | ✅                                                                     | `tjs-lang/editors/ace                             | monaco` |
+| **Inline WASM** compiler (`wasm function` / `wasm{}` → bytecode)                                                 | ✅ in the **browser** bundle (`tjs-browser.js` references WebAssembly) | via the normal transpile path                     |
 
 The **autocomplete is the compelling bit.** `AutocompleteConfig` can introspect
-*actual runtime values*:
+_actual runtime values_:
+
 - `getLiveBindings()` → map import names to real values (`{ elements: Proxy, div: … }`)
 - `getMembers(path)` → async, returns the value's **real runtime members from the
   executed sandbox scope — including proxy-generated ones nothing static can see.**
 
 The live-example component already has the example's context and executes it, so it
-can feed those — autocomplete against the *actual* `tosijs`/`tosijs-ui` objects the
+can feed those — autocomplete against the _actual_ `tosijs`/`tosijs-ui` objects the
 example uses, proxy members and all. Nobody else can do that.
 
 **Packaging caveat:** the published `ajs-language.js` imports CodeMirror via a mix of
 bare (`@codemirror/state`) and CDN (`https://esm.sh/codemirror`) specifiers — CM6 is
 **not bundled**. And the `<code-mirror>` component is **source-only** (not exported
 built). So "just use tjs-lang's editor" means either (a) get tjs-lang to publish its
-component built, or (b) build our own thin CM6 component reusing tjs-lang's *language*
+component built, or (b) build our own thin CM6 component reusing tjs-lang's _language_
 export (its `component.ts` is a ready reference to adapt).
 
 ## Current state (ACE) — from the audit
@@ -68,7 +69,8 @@ export (its `component.ts` is a ready reference to adapt).
 
 ## Workstreams
 
-### A. ACE → CodeMirror  (~2–4 days)
+### A. ACE → CodeMirror (~2–4 days)
+
 - Rewrite `code-editor.ts` on CM6, adapting tjs-lang's `component.ts` as the base and
   its `ajs-language` for languages. Keep `value`/`original`/`showDiff`/`mode`/
   `disabled` stable.
@@ -83,7 +85,8 @@ export (its `component.ts` is a ready reference to adapt).
   `ace` getter (remove), `editor` getter (now a CM `EditorView`). No event contract
   breaks (editor emits none today).
 
-### B. First-class tjs + autocomplete  (~1–2 days)
+### B. First-class tjs + autocomplete (~1–2 days)
+
 - Add a **`tjs` editor mode** using tjs-lang's `tjsEditorExtension` + a `tjs` tab in
   live-example (execution dialect already exists).
 - Wire `tjsCompletionSource` with an `AutocompleteConfig` fed from the live-example:
@@ -92,7 +95,8 @@ export (its `component.ts` is a ready reference to adapt).
 - Gate all of this behind tjs-lang being present (it's already the optional peer the
   live-example lazy-loads for transpilation) — plain CM (js/css/html) works without it.
 
-### C. Inline WASM in live examples  (~1–2 days, mostly verification)
+### C. Inline WASM in live examples (~1–2 days, mostly verification)
+
 - The browser transpiler **already compiles inline WASM**, so a `tjs` example with
   `export wasm function dot(a: Float32Array, …): f64 { … }` or a `wasm{}` block should
   transpile through the existing path. **Key unknown to verify:** the execution wiring
@@ -109,9 +113,9 @@ Your instinct is right — reuse, don't rebuild. Two shapes:
 
 1. **Adopt tjs-lang's `<code-mirror>` component** — least code, but needs tjs-lang to
    publish it built + couples the editor tightly to tjs-lang (and pulls CM6 through it).
-2. **tosijs-ui owns a thin CM6 `<tosi-code>`, reusing tjs-lang's *language* export**
+2. **tosijs-ui owns a thin CM6 `<tosi-code>`, reusing tjs-lang's _language_ export**
    (recommended) — self-contained, stable `<tosi-code>` API, tjs autocomplete layered
-   in *when tjs-lang is present*, plain js/css/html/md when it isn't. tjs-lang's
+   in _when tjs-lang is present_, plain js/css/html/md when it isn't. tjs-lang's
    `component.ts` is the reference to adapt (~a few hundred lines).
 
 **"Configurable" fits (2) cleanly as progressive enhancement:** tjs-lang present → CM6
@@ -119,6 +123,7 @@ with tjs highlighting + runtime autocomplete; absent → CM6 with plain js/css/h
 editor adapts to what's installed, exactly like the transpiler already does.
 
 ## Open questions / risks
+
 - **Bundle size**: ACE is CDN (0 bytes today). CM6 core + a few languages is ~150–300KB.
   Peer-dep-and-bundle grows the doc-site iife; CDN-load keeps it 0 but adds a waterfall.
   Measure both; decide.
@@ -130,6 +135,7 @@ editor adapts to what's installed, exactly like the transpiler already does.
   or a stable editor entry). You own both, so coordinated, but it's a release dance.
 
 ## Suggested sequencing
+
 1. **Spike (½ day):** run a tjs live example with an inline `wasm function` today — does
    it execute? That de-risks C and tells us how much of the transform path is ready.
 2. **A** (CM6 `<tosi-code>` + undo/redo methods + mode mapping, CM packaging decision).

@@ -101,7 +101,9 @@ export function generateLlmsTxt(outputPath, meta = {}, corpus) {
     catch {
         console.warn('llms.txt: no readable package.json — using config values only');
     }
-    const entries = corpus ? entriesFromCorpus(corpus, meta) : entriesFromSrcScan();
+    const entries = corpus
+        ? entriesFromCorpus(corpus, meta)
+        : entriesFromSrcScan();
     // Only orient agents about the live-example execution model when the corpus
     // actually has live examples (a book / pure-docs site has none).
     const exampleFence = /```(js|tjs|ts|html|css)\b/;

@@ -240,10 +240,7 @@ export class TosiThemeEditor extends Component<ThemeEditorParts> {
         'Button'
       )
     ),
-    div(
-      { class: 'actions' },
-      button({ part: 'reset' }, 'Reset')
-    ),
+    div({ class: 'actions' }, button({ part: 'reset' }, 'Reset')),
   ]
 
   connectedCallback(): void {

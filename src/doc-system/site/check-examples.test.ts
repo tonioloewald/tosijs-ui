@@ -12,7 +12,10 @@ const doc = (filename: string, text: string): Doc => ({
 describe('checkExamples', () => {
   test('clean js example produces no problems', async () => {
     const problems = await checkExamples([
-      doc('ok.md', "# ok\n\n```js\nimport { elements } from 'tosijs'\nconst { div } = elements\n```\n"),
+      doc(
+        'ok.md',
+        "# ok\n\n```js\nimport { elements } from 'tosijs'\nconst { div } = elements\n```\n"
+      ),
     ])
     expect(problems).toHaveLength(0)
   })
@@ -47,7 +50,10 @@ describe('checkExamples', () => {
       // `typescript` (not `ts`) is illustrative — a bare object fragment that
       // would never build as a statement is fine because it never runs.
       doc('display.md', '```typescript\nbook: { include: ["**"] }\n```\n'),
-      doc('markup.md', '```html\n<tosi-widget></tosi-widget>\n```\n```css\n.x { color: red }\n```\n'),
+      doc(
+        'markup.md',
+        '```html\n<tosi-widget></tosi-widget>\n```\n```css\n.x { color: red }\n```\n'
+      ),
     ])
     expect(problems).toHaveLength(0)
   })

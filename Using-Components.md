@@ -21,7 +21,7 @@ const picker = tosiSelect({
   options: 'apple,banana,cherry',
   onChange(event) {
     console.log(event.target.value)
-  }
+  },
 })
 document.body.append(picker)
 ```
@@ -55,7 +55,7 @@ Don't do this:
 // WRONG — fighting the framework
 const el = document.querySelector('[data-role="size-picker"]')
 if (el && el.tagName === 'TOSI-SELECT') {
-  (el as any).value = 'md'
+  ;(el as any).value = 'md'
 }
 ```
 
@@ -81,7 +81,9 @@ universe.
 ```typescript
 const rating = tosiRating({
   max: 5,
-  onChange() { console.log(rating.value) }
+  onChange() {
+    console.log(rating.value)
+  },
 })
 ```
 
@@ -108,11 +110,15 @@ Several components — `tosiSelect`, `tosiRating`, `tosiSegmented`,
 const { form, label } = elements
 
 form(
-  { onSubmit(e) { e.preventDefault(); /* read FormData */ } },
+  {
+    onSubmit(e) {
+      e.preventDefault() /* read FormData */
+    },
+  },
   label('Size'),
   tosiSelect({ name: 'size', options: 'sm,md,lg', required: true }),
   label('Rating'),
-  tosiRating({ name: 'rating', required: true }),
+  tosiRating({ name: 'rating', required: true })
 )
 ```
 
@@ -127,7 +133,7 @@ tosiForm(
     value: { name: '', size: 'md', rating: 3 },
     submitCallback(value, isValid) {
       if (isValid) saveReview(value)
-    }
+    },
   },
   tosiField({ caption: 'Name', key: 'name' }),
   tosiField(
@@ -137,7 +143,7 @@ tosiForm(
   tosiField(
     { caption: 'Rating', key: 'rating' },
     tosiRating({ slot: 'input', max: 5 })
-  ),
+  )
 )
 ```
 
@@ -166,12 +172,15 @@ tosiSelect({
   options: [
     { caption: 'Small', value: 'sm', icon: 'minimize' },
     { caption: 'Large', value: 'lg', icon: 'maximize' },
-    null,  // separator
-    { caption: 'Custom...', value: async () => {
-      const size = await TosiDialog.prompt('Enter size:')
-      return size ?? undefined  // undefined = cancel
-    }}
-  ]
+    null, // separator
+    {
+      caption: 'Custom...',
+      value: async () => {
+        const size = await TosiDialog.prompt('Enter size:')
+        return size ?? undefined // undefined = cancel
+      },
+    },
+  ],
 })
 
 // Editable — user can type
@@ -192,16 +201,29 @@ const name = await TosiDialog.prompt('Enter name:', 'New Item', 'Untitled')
 const dialog = tosiDialog(
   { removeOnClose: true },
   div({ slot: 'header' }, 'Pick a Color'),
+  div(tosiSelect({ options: 'red,green,blue' })),
   div(
-    tosiSelect({ options: 'red,green,blue' }),
-  ),
-  div({ slot: 'footer' },
-    button({ onClick() { dialog.close('cancel') } }, 'Cancel'),
-    button({ onClick() { dialog.ok() } }, 'OK'),
+    { slot: 'footer' },
+    button(
+      {
+        onClick() {
+          dialog.close('cancel')
+        },
+      },
+      'Cancel'
+    ),
+    button(
+      {
+        onClick() {
+          dialog.ok()
+        },
+      },
+      'OK'
+    )
   )
 )
 document.body.append(dialog)
-const result = await dialog.showModal()  // 'confirm' or 'cancel'
+const result = await dialog.showModal() // 'confirm' or 'cancel'
 ```
 
 ### Notifications
@@ -216,14 +238,14 @@ postNotification('File saved')
 postNotification({
   message: 'Upload complete',
   type: 'success',
-  duration: 3,  // seconds; omit for persistent
+  duration: 3, // seconds; omit for persistent
 })
 
 // Progress
 const close = postNotification({
   message: 'Uploading...',
   type: 'progress',
-  progress: () => uploadPercent,  // return 0-100; 100+ auto-closes
+  progress: () => uploadPercent, // return 0-100; 100+ auto-closes
 })
 
 // Close programmatically
@@ -241,8 +263,8 @@ tosiTable({
     array: [
       { id: 1, name: 'Alice', score: 95 },
       { id: 2, name: 'Bob', score: 87 },
-    ]
-  }
+    ],
+  },
 })
 
 // With column config
@@ -259,8 +281,8 @@ tosiTable({
       { prop: 'name', name: 'Name', width: 200 },
       { prop: 'score', name: 'Score', width: 100, align: 'right' },
     ],
-    filter: (rows) => rows.filter(r => r.score > 50),
-  }
+    filter: (rows) => rows.filter((r) => r.score > 50),
+  },
 })
 ```
 
@@ -275,7 +297,7 @@ import { tosiTabs } from 'tosijs-ui'
 tosiTabs(
   div({ name: 'Code' }, codeEditor({ mode: 'javascript' })),
   div({ name: 'Preview' }, previewContainer),
-  div({ name: 'Tests', 'data-close': '' }, testResults),  // closeable tab
+  div({ name: 'Tests', 'data-close': '' }, testResults) // closeable tab
 )
 ```
 
@@ -295,7 +317,7 @@ tosiSegmented({ options: 'sm,md,lg', bindValue: app.size })
 tosiSegmented({
   multiple: true,
   options: 'bold,italic,underline',
-  bindValue: app.formatting,  // comma-delimited: "bold,italic"
+  bindValue: app.formatting, // comma-delimited: "bold,italic"
 })
 ```
 
@@ -316,7 +338,7 @@ import { tosiTagList } from 'tosijs-ui'
 tosiTagList({
   textEntry: true,
   availableTags: 'javascript,typescript,python,rust,go',
-  bindValue: app.post.tags,  // comma-delimited: "javascript,rust"
+  bindValue: app.post.tags, // comma-delimited: "javascript,rust"
 })
 ```
 
@@ -326,7 +348,7 @@ tosiTagList({
 import { icons } from 'tosijs-ui'
 
 // icons is a proxy — any property returns an SVG element factory
-icons.star()           // <svg class="tosi-icon">...</svg>
+icons.star() // <svg class="tosi-icon">...</svg>
 icons.chevronDown()
 icons.heart()
 
@@ -344,24 +366,29 @@ error at runtime if an icon doesn't exist.
 ```typescript
 import { popMenu } from 'tosijs-ui'
 
-button({
-  onClick(event) {
-    popMenu({
-      target: event.target,
-      menuItems: [
-        { caption: 'Cut', shortcut: '⌘X', action: cut },
-        { caption: 'Copy', shortcut: '⌘C', action: copy },
-        null,  // separator
-        { caption: 'Format',
-          menuItems: [  // submenu
-            { caption: 'Bold', action: bold },
-            { caption: 'Italic', action: italic },
-          ]
-        },
-      ]
-    })
-  }
-}, 'Options')
+button(
+  {
+    onClick(event) {
+      popMenu({
+        target: event.target,
+        menuItems: [
+          { caption: 'Cut', shortcut: '⌘X', action: cut },
+          { caption: 'Copy', shortcut: '⌘C', action: copy },
+          null, // separator
+          {
+            caption: 'Format',
+            menuItems: [
+              // submenu
+              { caption: 'Bold', action: bold },
+              { caption: 'Italic', action: italic },
+            ],
+          },
+        ],
+      })
+    },
+  },
+  'Options'
+)
 ```
 
 `popMenu` creates a floating menu anchored to the target element.
@@ -422,7 +449,7 @@ Ok\tD'accord\tOk
 Cancel\tAnnuler\tPeruuttaa`)
 
 setLocale('fr')
-console.log(localize('Cancel'))  // "Annuler"
+console.log(localize('Cancel')) // "Annuler"
 ```
 
 Components with `localized: true` (select, tabs, segmented, etc.)

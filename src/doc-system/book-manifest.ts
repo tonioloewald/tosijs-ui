@@ -110,14 +110,12 @@ export function selectBookDocs<T extends BookDocLike>(
   // 2) baseline order overlay ─────────────────────────────────────────────────
   // 'filename' fills only docs with no explicit `order`, so metadata still wins.
   if (manifest.sort === 'filename') {
-    const natural = copies
-      .slice()
-      .sort((a, b) =>
-        (a.path ?? a.filename).localeCompare(b.path ?? b.filename, undefined, {
-          numeric: true,
-          sensitivity: 'base',
-        })
-      )
+    const natural = copies.slice().sort((a, b) =>
+      (a.path ?? a.filename).localeCompare(b.path ?? b.filename, undefined, {
+        numeric: true,
+        sensitivity: 'base',
+      })
+    )
     natural.forEach((d, i) => {
       if (d.order === undefined) d.order = i * 10
     })

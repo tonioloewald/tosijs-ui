@@ -78,7 +78,10 @@ function dedentBy(text: string, indent: string): string {
 }
 
 /** Group executable blocks into examples, mirroring insert-examples. */
-export function groupExamples(src: string, blocks: FencedBlock[]): FencedBlock[][] {
+export function groupExamples(
+  src: string,
+  blocks: FencedBlock[]
+): FencedBlock[][] {
   const groups: FencedBlock[][] = []
   let current: FencedBlock[] | null = null
   for (let i = 0; i < blocks.length; i += 1) {
