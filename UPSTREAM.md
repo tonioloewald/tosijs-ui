@@ -43,9 +43,17 @@ Mark `✅ RESOLVED (fixed in <pkg>@<version>)` when it lands, and close the issu
 > everything is built on. Friction against tosijs has been silently absorbed into hand-rolls
 > instead of being reported.
 
-- **[#13](https://github.com/tonioloewald/tosijs/issues/13)** — **(a) the `parts` proxy
-  permanently poisons itself on a pre-hydration access, and (b) there is no paved way for a
-  component to know whether it is hydrated yet.** (b) is the deeper one; (a) is what makes it
+- **[#13](https://github.com/tonioloewald/tosijs/issues/13)** — ✅ **RESOLVED (fixed in
+  tosijs 1.6.9).** Both asks landed: `hydrate()` now ends with `_hydrated = true, _parts =
+  undefined, _resolveHydrated?.()` — it **invalidates the cached proxy** (so a pre-hydration
+  read can no longer poison it) AND exposes the seam (`get hydrated`, `get whenHydrated`). We
+  bumped the floor to `^1.6.9` and **deleted both hand-rolls** — `code-editor.ts` and
+  `live-example/component.ts` now use the inherited `this.hydrated`. Verified: a pre-hydration
+  `parts` read no longer bricks the editor; 628 unit + 39 Playwright green. Original finding:
+
+  **(a) the `parts` proxy permanently poisons itself on a pre-hydration access, and (b) there
+  is no paved way for a component to know whether it is hydrated yet.** (b) is the deeper one;
+  (a) is what makes it
   bite.
 
   **The lifecycle (verified, because it is easy to assume otherwise):** content is **not**

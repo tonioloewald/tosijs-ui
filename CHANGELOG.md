@@ -106,6 +106,13 @@ undoable: loading a document is not an edit to Ctrl+Z back out of.
 
 Unchanged: `value`, `original` / `showDiff()`, `mode`, `disabled`.
 
+**tosijs floor is now `^1.6.9`.** 1.6.9 fixes the `parts` proxy so a pre-hydration access no
+longer poisons it, and adds public `hydrated` / `whenHydrated` seams
+([tosijs#13](https://github.com/tonioloewald/tosijs/issues/13)). Two internal hand-rolled
+hydration guards (`<tosi-code>`, `<tosi-example>`) were deleted in favor of the official
+`this.hydrated` — so any component that reaches into `parts` from a getter is safe against the
+old "read it once and it's bricked forever" trap.
+
 **Semver stance (deliberate, not an oversight).** This library breaks in minors before 2.0 —
 **`2.0` is reserved for the tjs-native rewrite**, not for this. So `^1.6.x` resolves `1.7.0` and
 existing consumers pick this up on their next install.

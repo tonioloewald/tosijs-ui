@@ -138,28 +138,24 @@ export class CodeEditor extends WebComponent {
     // it. (Re-adding a slot is NOT the fix — it would also project the element's
     // textContent, i.e. the initial code, and double-render it under the editor.)
     diffOverlay;
-    // Set once hydration has actually happened (end of connectedCallback).
-    //
-    // This CANNOT be a `try { this.parts.x } catch` probe, which is what it used to be.
-    // tosijs's `parts` proxy caches its query root on FIRST access — so touching it before
-    // hydration permanently roots the proxy at the light-DOM element, and every later
-    // `this.parts.*` throws, including the `this.parts.host` that mounts CodeMirror. The
-    // editor then never mounts at all. Merely reading `el.showingDiff` on a constructed,
-    // not-yet-inserted element was enough to brick it — silently, and unrecoverably.
-    _partsHydrated = false;
-    // A showDiff() call made before hydration, replayed once we're ready (rather than
-    // silently dropped, which is what used to happen).
+    // Hydration state comes from the base class (`this.hydrated`), as of tosijs 1.6.9.
+    // This used to be a hand-rolled `_partsHydrated` flag — because before 1.6.9 the
+    // `parts` proxy poisoned itself on any pre-hydration read (touching it once rooted
+    // the proxy at the light-DOM element forever, so the editor never mounted), and
+    // there was no public way to ask "am I hydrated yet?" without triggering exactly
+    // that. 1.6.9 fixed both — it invalidates the cached proxy at hydrate AND exposes
+    // `hydrated`/`whenHydrated` — so the flag is gone. (tonioloewald/tosijs#13.)
+    // A showDiff() call made before hydration, replayed once we're ready. Still needed:
+    // `parts` genuinely doesn't exist before hydration (content is injected at connect),
+    // so work that touches it is legitimately deferred — that is not the poisoning bug.
     _pendingDiff;
-    get partsReady() {
-        return this._partsHydrated;
-    }
     get showingDiff() {
-        if (!this.partsReady)
+        if (!this.hydrated)
             return this._pendingDiff ?? false;
         return !this.parts.diffHost.hidden;
     }
     showDiff(on) {
-        if (!this.partsReady) {
+        if (!this.hydrated) {
             this._pendingDiff = on;
             return;
         }
@@ -276,8 +272,8 @@ export class CodeEditor extends WebComponent {
     }
     connectedCallback() {
         super.connectedCallback();
-        // super.connectedCallback() hydrates, so `this.parts` is safe from here on.
-        this._partsHydrated = true;
+        // super.connectedCallback() hydrated us, so `this.hydrated` is now true and
+        // `this.parts` is safe from here on.
         if (this.source === '') {
             this.value = this.textContent !== null ? this.textContent.trim() : '';
         }

@@ -28,9 +28,7 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
     get original(): string;
     set original(text: string);
     private diffOverlay;
-    private _partsHydrated;
     private _pendingDiff;
-    private get partsReady();
     get showingDiff(): boolean;
     showDiff(on: boolean): void;
     static initAttributes: {
