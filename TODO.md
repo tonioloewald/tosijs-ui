@@ -1,5 +1,18 @@
 # TODO
 
+## Scheduled for 1.6.24
+
+- [ ] **`localization.pw.ts` › `localize works` — webkit-only timeout** waiting for the
+      settings-menu button. Passes on chromium + firefox, so a webkit timing/rendering
+      flake, not a logic bug. Investigate the menu's webkit render timing; may just need a
+      longer wait or a settle. (The sibling `has title` red — issue #6 — was FIXED in 1.6.23.)
+
+Also consider wiring main's Playwright lane into CI (its `webServer` block is commented
+out and CI doesn't run it) so this stops rotting silently. And once main's Playwright has a
+`webServer`, add a `doc-tests.pw.ts` that runs the inline doc-test tier through Playwright
+(navigate to `/`, await `window.__docTestResults`, assert `failed === 0`) — the M8 idea, which
+gates the doc corpus without depending on the haltija CLI.
+
 ## Doc-System Roadmap
 
 See [doc-system-roadmap.md](doc-system-roadmap.md) for the full plan. North star:

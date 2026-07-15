@@ -10,6 +10,7 @@ the IIFE bundle loads.
 Build-time only (uses Bun.write). Shares slug + markdown rendering with the runtime
 component (src/doc-system/*) so static and hydrated output agree.
 */
+import { pageTitle } from '../doc-title';
 import { buildSlugMap, pathForSlug, rewriteDocLinks } from '../routing';
 import { buildNavTree, navOpenPath } from '../nav-tree';
 import { renderDocMarkdown, docDescription } from '../render';
@@ -80,12 +81,9 @@ function pageHtml(doc, config, slugMap, configAttr) {
     const localizedAttr = config.localizedStrings
         ? ` localized="${escapeAttr(withBase(basePath, localizedUrl))}"`
         : '';
-    // `headTitle` is the verbatim <title>; otherwise suffix the project name (unless
-    // the doc title already includes it).
-    const title = doc.headTitle ||
-        (projectName && !doc.title.includes(projectName)
-            ? `${doc.title} — ${projectName}`
-            : doc.title);
+    // ONE rule, shared with the doc-browser's hydration path — see doc-title.ts. Writing
+    // it twice is what made the title change on hydration (issue #6).
+    const title = pageTitle(doc, projectName);
     // Per-page metadata (from the doc's JSON block) wins; else derive, else site default.
     const description = doc.description || docDescription(doc.text) || config.description || '';
     const keywords = Array.isArray(doc.keywords)

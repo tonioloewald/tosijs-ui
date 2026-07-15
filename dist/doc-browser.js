@@ -155,6 +155,7 @@ import { elements, vars, varDefault, bindings, touch, getListItem, debounce, tos
 import { buildSlugMap, pathForSlug, filenameForPath } from './doc-system/routing';
 import { buildNavTree } from './doc-system/nav-tree';
 import { renderDocMarkdown } from './doc-system/render';
+import { pageTitle } from './doc-system/doc-title';
 import { LiveExample, testManager } from './live-example';
 import { tosiSidenav, TosiSidenav } from './side-nav';
 import { icons } from './icons';
@@ -613,9 +614,11 @@ export function createDocBrowser(options) {
         LiveExample.insertExamples(docContent, context, doc.path || undefined);
         scrollToHashExample();
         if (routing === 'path') {
-            document.title = projectName
-                ? `${doc.title} — ${projectName}`
-                : doc.title;
+            // The SAME rule the static generator used for this page's <head> (doc-title.ts).
+            // This used to re-derive it — ignoring `headTitle` and re-suffixing a title that
+            // already ended in the project name — so the home page's title flipped to
+            // "tosijs-ui — tosijs-ui" the moment the bundle loaded (issue #6).
+            document.title = pageTitle(doc, projectName);
         }
     };
     // Always resolve to the RAW doc from the original array — docs reached via the

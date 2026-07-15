@@ -15,6 +15,7 @@ import type { ProjectLinks, LinkItem } from '../../doc-browser'
 import type { DocSystemTheme } from '../doc-system-styles'
 import type { Doc } from './docs'
 import type { BookManifest } from '../book-manifest'
+import type { PreflightMode } from './preflight'
 
 export type SiteHost = 'github-pages' | 'firebase' | 'static'
 
@@ -229,6 +230,29 @@ export interface SiteConfig {
    * ceiling that's too low.
    */
   memoryLimitMb?: number
+  /**
+   * Hours of idleness (no request served, no rebuild) after which the dev server
+   * exits, default 8. Zero or negative disables it. Overridden by the
+   * DEV_IDLE_TIMEOUT_HOURS env var.
+   *
+   * The memory ceiling above bounds how bad ONE server gets; this bounds how many
+   * there are. A dev server is trivially forgotten — the failure that motivated
+   * both guards was three servers left running for days, still executing the code
+   * they loaded at launch (updating the package does nothing for a process that is
+   * already running). An idle server has no value to trade against that, so it goes.
+   */
+  idleTimeoutHours?: number
+  /**
+   * Machine-health preflight before each build and at dev-server launch: refuse to add
+   * load to a machine that is already dying (a runaway dev server, a VM stall).
+   *
+   * `'fail'` (default) refuses; `'warn'` prints and proceeds; `false`/`'off'` skips it.
+   * Also `DEV_SKIP_PREFLIGHT=1`. A hard failure is **automatically downgraded to a
+   * warning in CI** — the guard is there to stop a human from making a bad situation
+   * worse, and on a throwaway runner there is no human, no stale dev server, and
+   * nothing to kill.
+   */
+  preflight?: PreflightMode | false
   /**
    * Enable the dev-server source read/write endpoints (`/__docstore/source`) that
    * back in-browser "edit page source". Local dev only — the dev server runs on

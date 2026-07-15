@@ -1,5 +1,66 @@
 # Changelog
 
+## 1.6.23
+
+**The two biggest sources of ecosystem-wide friction — runaway dev servers and haltija
+conflicts — fixed in the version people actually run.** If you use `tosijs-ui/site`, update.
+
+### Machine-safety guards (a leaking/forgotten dev server took a machine down twice)
+
+- **`killStrayServer` no longer `kill -9`s processes merely _connected_ to its port.** It freed
+  its port with `lsof -ti:PORT | xargs kill -9`, and `lsof -i:PORT` matches sockets whose local
+  **or remote** port is PORT — so it SIGKILLed every _client_ of that port, not just the
+  listener: the browser reading your page, an editor's language server, anything with a
+  connection. It now signals **only the process listening** on the port, only after confirming
+  it is a JS runtime, SIGTERM first and SIGKILL only as a fallback.
+
+- **Machine-health preflight** before each build and at dev-server launch (and on a 60s tick):
+  refuses to add load to a machine that is already dying — a runaway dev server, a VM stall.
+  Names the offending PIDs, sizes, ages and project dirs. **Local LLM runtimes (LM Studio,
+  ollama, llama.cpp, mlx_lm, vLLM, …) are exempt** — their memory shrinks the dev budget rather
+  than tripping the guard, and a big _non-dev_ process (Docker, a JVM, a database) only warns,
+  never fails. It never kills anything; it declines to _start_. `preflight: 'fail' | 'warn' |
+  false` in the site config, or `DEV_SKIP_PREFLIGHT=1`; auto-downgraded to a warning in CI.
+
+- **`idleTimeoutHours` (default 8)** — ⚠️ **behavior change:** the dev server now exits after 8
+  idle hours (no request, no rebuild). A forgotten dev server is not inert — it is a days-old
+  process still running the code it loaded at launch (updating the package does nothing for it).
+  `idleTimeoutHours: 0` disables it.
+
+- **RSS ceiling** (`memoryLimitMb`) sampled every 60s, and a **rebuild-loop detector** that
+  stops a build which writes a file it also watches instead of spawning a bundler forever.
+
+### haltija
+
+- Spawned as a **pinned range (`haltija@^1.4.0`)**, overridable with `HALTIJA_VERSION`, instead
+  of a floating `@latest` fetched fresh on every adopter's machine. The 1.4.0 floor is
+  deliberate: it routes `hj` by working directory (so a project's dev server drives its own
+  browser, not whichever was focused), never overwrites a newer machine-wide `hj`, and exits
+  non-zero on a failed command — which the doc-test lane now checks instead of racing to a
+  timeout. Teardown kills only its own process tree, never a haltija you were already running.
+
+### Also fixed
+
+- **Builds again against tosijs 1.6.9.** `<tosi-example>` detected hydration with a
+  `try { this.parts.js } catch` probe, which before tosijs 1.6.9 permanently poisoned the
+  `parts` proxy on the pre-hydration read it performed (it could blank the whole doc page), and
+  whose `private get hydrated()` collided with 1.6.9's new public `hydrated` (a `tsc` error, so
+  the package could not build against current tosijs). The probe is gone — it uses the base
+  class's `this.hydrated` now — and the tosijs floor moves to **`^1.6.9`**
+  ([tosijs#13](https://github.com/tonioloewald/tosijs/issues/13)).
+
+- **The doc-browser no longer double-suffixes the page `<title>`.** On path routing it re-derived
+  the title on hydration, ignoring `headTitle` and re-appending the project name to a title that
+  already contained it — so the home page flipped from its real title to `tosijs-ui — tosijs-ui`
+  the moment the bundle loaded. The static generator and the runtime now share **one**
+  `pageTitle` rule (case-insensitive, both-directions containment check; whitespace-only titles
+  and project names handled). Fixes [#6](https://github.com/tonioloewald/tosijs-ui/issues/6).
+
+- **Two more per-rebuild build leaks moved to child processes** (the dev server lives for days):
+  the live-example **check** (`new AsyncFunction` per block + a `Bun.Transpiler` per `ts` block)
+  and the bundle **gzip** (native zlib). Both now run in a child whose memory the OS reclaims on
+  exit; the gzip stays zlib-in-a-child (not the `gzip` CLI) so the reported size doesn't drift.
+
 ## 1.6.22
 
 ### Fixed

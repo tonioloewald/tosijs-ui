@@ -307,13 +307,14 @@ export class LiveExample extends Component<ExampleParts> {
     )
   }
 
-  private get hydrated(): boolean {
-    try {
-      return this.parts.js !== undefined
-    } catch {
-      return false
-    }
-  }
+  // Hydration state is the base class's `this.hydrated` (tosijs 1.6.9+). This used to
+  // be `try { return this.parts.js !== undefined } catch { return false }` — a probe
+  // that, before 1.6.9, PERMANENTLY poisoned the `parts` proxy on the pre-hydration
+  // read it performs (rooting it at the light-DOM element, so every later `parts.*`
+  // threw — it could blank the whole doc page). It survived only by being light-DOM.
+  // 1.6.9 invalidates the proxy at hydrate AND exposes a public `get hydrated()`, so
+  // the probe is gone and the private override that collided with it (TS2415) with it.
+  // (tosijs#13.)
 
   private getEditorValue(which: string): string {
     if (!this.hydrated) return this.pendingValues[which] ?? ''

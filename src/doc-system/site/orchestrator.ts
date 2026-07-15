@@ -15,11 +15,15 @@ cause an endless rebuild loop.
 import * as path from 'path'
 import { existsSync, mkdirSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'
-import { gzipSync } from 'zlib'
 import { $, spawn } from 'bun'
 import type { SiteConfig } from './site-config'
 import { extractDocs } from './docs'
-import { checkExamples, formatExampleProblems } from './check-examples'
+import { preflight } from './preflight'
+import {
+  checkExamples,
+  formatExampleProblems,
+  type ExampleProblem,
+} from './check-examples'
 import { ensureSections } from './sections'
 import { generateLlmsTxt } from './make-llms-txt'
 import { generateSite } from './generate-site'
@@ -103,7 +107,66 @@ async function buildEpubInChild(
 const escapeRegExp = (s: string): string =>
   s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
+/**
+ * Run checkExamples() in a child process.
+ *
+ * It compiles every executable block in the corpus with `new AsyncFunction` on every
+ * rebuild — and JSC caches compiled code keyed by source text, so it retains, and
+ * (because a rebuild only happens when a file CHANGED) the source is fresh every time
+ * and nothing dedups. It also constructs a `Bun.Transpiler` per `ts` block (~40KB
+ * stranded per construction — oven-sh/bun#34053). Both accumulate in a watch process
+ * that lives for days; the child gives it all back on exit. Falls back to in-process
+ * if the child can't run — a build must not break because the leak-safe path is
+ * unavailable.
+ */
+async function checkExamplesInChild(
+  docsJson: string
+): Promise<ExampleProblem[]> {
+  const cliTs = `${import.meta.dir}/check-examples-cli.ts`
+  const cli = existsSync(cliTs)
+    ? cliTs
+    : `${import.meta.dir}/check-examples-cli.js`
+  try {
+    const child = spawn(['bun', cli, docsJson], {
+      stdout: 'pipe',
+      stderr: 'pipe',
+    })
+    // Drain BOTH pipes while awaiting exit. An undrained pipe fills its buffer, the
+    // child blocks writing to it, and we deadlock waiting for an exit that can't come.
+    const [out, err, code] = await Promise.all([
+      new Response(child.stdout).text(),
+      new Response(child.stderr).text(),
+      child.exited,
+    ])
+    if (err.trim()) console.warn(err.trim())
+    if (code !== 0) throw new Error(`check-examples exited ${code}`)
+    return JSON.parse(out) as ExampleProblem[]
+  } catch (e) {
+    console.warn(
+      `⚠️  example check: could not run it in a child (${String(e)}) — ` +
+        `falling back to in-process.`
+    )
+    const corpus = JSON.parse(await Bun.file(docsJson).text())
+    return checkExamples(corpus)
+  }
+}
+
 export async function buildSite(config: SiteConfig): Promise<boolean> {
+  // Look at the machine before adding load to it — a build runs on every watch
+  // rebuild, so a dying box (a runaway dev server elsewhere, a VM stall) is caught
+  // here too, not just at dev-server launch. Returns false rather than exiting: this
+  // is a public export, and an adopter's `await buildSite(cfg); await deploy()` must
+  // not be killed from inside a health check they never asked for.
+  if (
+    !(await preflight({
+      label: 'Build',
+      devLimitMb: config.memoryLimitMb,
+      mode: config.preflight,
+    }))
+  ) {
+    return false
+  }
+
   const PROJECT_ROOT = './'
   const PUBLIC = path.resolve(PROJECT_ROOT, config.outputDir ?? 'docs')
   const DIST = path.resolve(PROJECT_ROOT, 'dist')
@@ -160,8 +223,7 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
   // display-only `typescript`. Runs on the whole corpus, so it catches breakage
   // on pages the browser test never navigates to.
   if (config.checkExamples !== false) {
-    const corpus = JSON.parse(await Bun.file(DOCS_JSON).text())
-    const problems = await checkExamples(corpus)
+    const problems = await checkExamplesInChild(DOCS_JSON)
     if (problems.length) {
       throw new Error(
         `doc-site build: ${problems.length} live example(s) failed to build:\n\n` +
@@ -298,11 +360,29 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
           `    (+ importmap) or choose a browser-only entry point.`
       )
     }
-    const bundleGzip = gzipSync(Buffer.from(bundleFile))
+    // Gzip in a CHILD, not in-process. zlib's gzip is native, so it strands memory the
+    // JS heap never sees; this runs on every rebuild over a ~1MB bundle to print ONE
+    // size line, in a process that lives for days. Deliberately zlib-in-a-child rather
+    // than the `gzip` CLI: the two disagree by ~1.6%, and this number is tracked across
+    // releases, so moving the work must not move the measurement. Best-effort — a
+    // missing size line must never fail a build.
+    let gzipKb = ''
+    try {
+      const bytes = Number(
+        (
+          await $`bun -e ${`const {gzipSync}=require('zlib');const b=await Bun.file(${JSON.stringify(
+            `${DIST}/${scriptName}`
+          )}).arrayBuffer();process.stdout.write(String(gzipSync(Buffer.from(b)).length))`}`
+            .quiet()
+            .text()
+        ).trim()
+      )
+      if (bytes > 0) gzipKb = ` (${(bytes / 1024).toFixed(1)}kb gzip)`
+    } catch {
+      // couldn't measure — report the raw size alone
+    }
     console.log(
-      `${scriptName}: ${(bundleFile.byteLength / 1024).toFixed(1)}kb (${(
-        bundleGzip.length / 1024
-      ).toFixed(1)}kb gzip)`
+      `${scriptName}: ${(bundleFile.byteLength / 1024).toFixed(1)}kb${gzipKb}`
     )
   } else if (!/^(https?:)?\/\//.test(config.scriptUrl ?? '/iife.js')) {
     // No custom bundleEntry (the normal case for a pure-docs / book site) and a
