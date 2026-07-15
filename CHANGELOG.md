@@ -72,8 +72,11 @@ A leaking dev server took a machine down twice. The guards, all in `tosijs-ui/si
   `Bun.build()` strands ~30MB of native arena per call ([oven-sh/bun#34053](https://github.com/oven-sh/bun/issues/34053), still open).
 - **`killStrayServer` no longer `kill -9`s every process _connected to_ the dev port** — it used
   `lsof -ti:PORT`, which matches clients as well as the listener, so it could kill your browser.
-- haltija is spawned as a **pinned range** (`haltija@^1.3.4`, override with `HALTIJA_VERSION`),
-  not a floating `@latest`, and its teardown kills only its own process tree.
+- haltija is spawned as a **pinned range** (`haltija@^1.4.0`, override with `HALTIJA_VERSION`),
+  not a floating `@latest`, and its teardown kills only its own process tree. The 1.4.0 floor
+  is deliberate: it is the first haltija that routes `hj` by working directory, never overwrites
+  a newer machine-wide `hj`, and exits non-zero on a failed command — so a project's dev server
+  drives its own browser and can't silently downgrade another project's CLI.
 
 ### Breaking
 

@@ -28,11 +28,19 @@ const DEFAULT_IDLE_HOURS = 8;
  * pre-release, or a local path/tarball) — you should not have to edit library code
  * to try a different haltija.
  *
- * Floor rationale: 1.3.2 is the first release where `hj` does not auto-launch an
- * Electron app for private/targeted instances, and 1.3.3 makes focus follow the
- * visible tab so an untargeted `hj eval` hits the right one.
+ * Floor is **1.4.0** — the first release whose behavior this integration can rely on:
+ *   - `hj` routes to the server owning the current directory, so `hj` inside a project
+ *     drives THAT project's browser instead of falling back to a shared port and
+ *     silently driving whoever was focused there.
+ *   - a haltija server no longer overwrites the machine-wide `hj` binary with an older
+ *     copy on startup — so OUR spawning one can't downgrade the CLI for an unrelated,
+ *     up-to-date project (the exact "unpinned executable fetch from library code"
+ *     hazard this pin exists to bound).
+ *   - HTTPS-only servers stopped advertising an HTTP port they weren't listening on.
+ *   - `hj` action commands (`navigate`, `click`, …) exit NON-ZERO on failure, so the
+ *     test lane below can trust an exit code instead of racing to a timeout.
  */
-const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.3.4';
+const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.4.0';
 /**
  * Resolve the idle-exit timeout to milliseconds (0 = disabled).
  *
@@ -696,8 +704,6 @@ export async function devServer(config, opts = {}) {
         else {
             console.log('Using existing haltija browser');
         }
-        console.log('Opening demo site...');
-        await $ `hj navigate https://localhost:${PORT}`;
         /**
          * Tear down the haltija WE started — including the Electron grandchild.
          *
@@ -750,6 +756,20 @@ export async function devServer(config, opts = {}) {
                 }
             }
         };
+        console.log('Opening demo site...');
+        // haltija 1.4: `hj navigate` exits NON-ZERO on failure (no browser reachable, a
+        // window that didn't take the URL, …). Before 1.4 it exited 0 regardless, so a
+        // failed navigate silently sailed on and the run died 120s later at the test
+        // timeout with a misleading "Browser tests timed out". Now we can read the exit
+        // code: fail immediately, say why, and tear down the haltija we spawned so the
+        // next run isn't inheriting a half-navigated browser.
+        const nav = await $ `hj navigate https://localhost:${PORT}`.nothrow().quiet();
+        if (nav.exitCode !== 0) {
+            console.error(`hj navigate failed (exit ${nav.exitCode}): ${nav.stderr.toString().trim() || 'no browser reachable'}`);
+            await stopHaltija();
+            server.stop();
+            process.exit(1);
+        }
         try {
             const results = await testResults;
             const exitCode = results.failed > 0 ? 1 : 0;

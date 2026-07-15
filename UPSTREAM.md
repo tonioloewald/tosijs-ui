@@ -204,8 +204,11 @@ CompletionContext(state, pos, true))` headlessly. Never trust `languageDataAt` h
   about rendered output, and wait for the frame before measuring.
   _(Needs sign-off to file against a repo outside the current task's scope.)_
 
-- ~~Shipped dev server spawns an **unpinned** `bunx haltija@latest`~~ — **fixed on our side
-  (2026-07-14).** `dev-server.ts` now spawns `HALTIJA_PKG` = `haltija@^1.3.4`, overridable via
-  the `HALTIJA_VERSION` env var. A floating `@latest` in _library_ code meant every adopter's
-  dev server fetched whatever haltija shipped that morning, with haltija in nobody's lockfile.
-  The upstream ask stands: **a documented CLI/version contract for embedders.**
+- ~~Shipped dev server spawns an **unpinned** `bunx haltija@latest`~~ — **✅ RESOLVED both
+  sides.** Our side (2026-07-14): `dev-server.ts` spawns `HALTIJA_PKG` = `haltija@^1.4.0`,
+  overridable via `HALTIJA_VERSION`. Upstream: **haltija 1.4.0 delivers the version contract we
+  asked for** — every REST response carries `X-Haltija-Version`, `hj --version` exists and warns
+  when it differs from the server it drives, a server never overwrites a newer/ symlinked `hj`,
+  and pre-1.4.0 servers are retired via `POST /shutdown` on startup (opt out with
+  `HALTIJA_NO_INSTALL` / `HALTIJA_NO_RETIRE`). So an embedder's `bunx haltija@<pin>` can no
+  longer silently downgrade an unrelated project's CLI — which was the whole hazard.
