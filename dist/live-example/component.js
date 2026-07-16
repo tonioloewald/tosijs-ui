@@ -478,10 +478,18 @@ export class LiveExample extends Component {
     pendingValues = {};
     pendingShowDefaultTab = false;
     beforeUnloadHandler;
+    // The code-editor panel (the 4 <tosi-code> editors + toolbar) is built LAZILY on
+    // first showCode, NOT in content() — so a reader who never opens a panel never
+    // pulls the CodeMirror chunk. Until then, values live in `pendingValues` (the same
+    // cache used pre-hydration) and the preview runs from them. See
+    // self-contained-examples-plan.md slice 3.
+    editorsBuilt = false;
     static insertExamples(element, context = {}, sourceFile) {
         insertExamples(element, context, liveExample, LiveExample.tagName, sourceFile);
     }
     get activeTab() {
+        if (!this.editorsBuilt)
+            return undefined;
         const { editors } = this.parts;
         return [...editors.children].find((elt) => elt.getAttribute('hidden') === null);
     }
@@ -492,12 +500,14 @@ export class LiveExample extends Component {
     // being light-DOM, where the root never flips). 1.6.9 invalidates the proxy at hydrate
     // and exposes `hydrated`/`whenHydrated`, so the hand-roll is gone. (tosijs#13.)
     getEditorValue(which) {
-        if (!this.hydrated)
+        // Until the editors are built (a reader who never opens a panel, or pre-
+        // hydration) the string cache is the source of truth.
+        if (!this.editorsBuilt)
             return this.pendingValues[which] ?? '';
         return this.parts[which].value;
     }
     setEditorValue(which, code) {
-        if (!this.hydrated) {
+        if (!this.editorsBuilt) {
             this.pendingValues[which] = code;
             return;
         }
@@ -656,7 +666,11 @@ export class LiveExample extends Component {
         }
     }
     ensureProductTabs() {
-        if (this.productTabsReady || this.dialect === 'js' || !this.hydrated)
+        if (this.productTabsReady ||
+            this.dialect === 'js' ||
+            !this.hydrated ||
+            !this.editorsBuilt // the editors it relabels don't exist yet
+        )
             return;
         this.productTabsReady = true;
         const { editors } = this.parts;
@@ -714,15 +728,20 @@ export class LiveExample extends Component {
         return bindings;
     }
     updateUndo = () => {
-        const { activeTab } = this;
-        const { undo, redo } = this.parts;
-        if (activeTab instanceof CodeEditor) {
-            undo.disabled = !activeTab.canUndo();
-            redo.disabled = !activeTab.canRedo();
-        }
-        else {
-            undo.disabled = true;
-            redo.disabled = true;
+        // The undo/redo buttons live in the lazy editor panel; only touch them once it's
+        // built. The edited-indicator and test-results visibility work without editors
+        // (they read the cached values / test state), so they always run.
+        if (this.editorsBuilt) {
+            const { activeTab } = this;
+            const { undo, redo } = this.parts;
+            if (activeTab instanceof CodeEditor) {
+                undo.disabled = !activeTab.canUndo();
+                redo.disabled = !activeTab.canRedo();
+            }
+            else {
+                undo.disabled = true;
+                redo.disabled = true;
+            }
         }
         this.updateEditedIndicator();
         this.updateTestResultsVisibility();
@@ -731,8 +750,8 @@ export class LiveExample extends Component {
         const { testResults: resultsEl } = this.parts;
         const results = this.testResults;
         // The "DOM tests" tab's editor is this.parts.test (the part stays `test`
-        // even though the tab label changed).
-        const isTestTabActive = this.activeTab === this.parts.test;
+        // even though the tab label changed). No tab is active until the panel exists.
+        const isTestTabActive = this.editorsBuilt && this.activeTab === this.parts.test;
         const hasFailed = results && results.failed > 0;
         // Show results if: has results AND (test tab is active OR there are failures)
         resultsEl.hidden =
@@ -886,12 +905,24 @@ export class LiveExample extends Component {
             part: 'exampleWidgets',
             onClick: this.exampleMenu,
         }, icons.code())),
+        // Empty until first showCode. buildEditorPanel() fills it lazily so a reader
+        // who never opens a panel never constructs a <tosi-code> (and never pulls the
+        // CodeMirror chunk). See ensureEditors().
         div({
             class: 'code-editors',
             part: 'codeEditors',
             onKeydown: this.handleShortcuts,
             hidden: true,
-        }, tosiTabs({
+        }),
+        tosiSlot({ part: 'sources', hidden: true }),
+    ];
+    // The editor panel (4 <tosi-code> editors + toolbar). Built on demand by
+    // ensureEditors(), NOT in content() — constructing a <tosi-code> is what imports
+    // the CodeMirror chunk, so keeping it out of the reader's mount path is the whole
+    // point of slice 3. The `part` names match what content() used, so every
+    // this.parts.{js,html,css,test,editors,undo,redo} reference resolves once built.
+    buildEditorPanel() {
+        return tosiTabs({
             part: 'editors',
             onChange: this.updateUndo,
         }, codeEditor({ name: 'js', mode: 'javascript', part: 'js' }), codeEditor({ name: 'html', mode: 'html', part: 'html' }), codeEditor({ name: 'css', mode: 'css', part: 'css' }), 
@@ -916,15 +947,27 @@ export class LiveExample extends Component {
             title: 'close code',
             class: 'transparent',
             onClick: this.closeCode,
-        }, icons.x())))),
-        tosiSlot({ part: 'sources', hidden: true }),
-    ];
+        }, icons.x())));
+    }
+    // Build the editor panel the first time a code panel is opened, flush the cached
+    // values into the now-real editors, and wire the tjs/ts read-only JS tab. Idempotent.
+    ensureEditors() {
+        if (this.editorsBuilt || !this.hydrated)
+            return;
+        this.parts.codeEditors.append(this.buildEditorPanel());
+        this.editorsBuilt = true;
+        // pendingValues → the real editors, then pick the default tab and product tabs.
+        this.flushPendingValues();
+        this.ensureProductTabs();
+        this.showDefaultTab();
+        this.updateUndo();
+    }
     connectedCallback() {
         super.connectedCallback();
         // super.connectedCallback() ran hydrate(), so `this.hydrated` is now true and
-        // `parts` is safe to touch — which is what flushPendingValues reads.
-        // Flush any values set before the shadow DOM was ready
-        this.flushPendingValues();
+        // `parts` is safe to touch. The editor panel is NOT built here — values stay in
+        // `pendingValues` and are flushed into the editors when ensureEditors() builds
+        // them (first showCode). The preview runs from `pendingValues` meanwhile.
         const { sources } = this.parts;
         this.initFromElements([...sources.children]);
         // Set up remote sync
@@ -1101,6 +1144,7 @@ export class LiveExample extends Component {
     viewChanges = () => {
         if (!this.hydrated)
             return;
+        this.ensureEditors(); // diffing reaches into this.parts[tab] — build them first
         this.viewingChanges = !this.viewingChanges;
         if (this.viewingChanges)
             this.showCode();
@@ -1228,6 +1272,7 @@ export class LiveExample extends Component {
         this.classList.toggle('-maximize');
     };
     showCode = () => {
+        this.ensureEditors(); // first open builds the CodeMirror panel (and pulls the chunk)
         this.classList.add('-maximize');
         this.classList.toggle('-vertical', this.offsetHeight > this.offsetWidth);
         this.parts.codeEditors.hidden = false;
@@ -1437,7 +1482,8 @@ export class LiveExample extends Component {
         }
     }
     showDefaultTab() {
-        if (!this.hydrated) {
+        // No tab strip until the panel is built; remember to pick the tab then.
+        if (!this.hydrated || !this.editorsBuilt) {
             this.pendingShowDefaultTab = true;
             return;
         }
@@ -1468,6 +1514,9 @@ export class LiveExample extends Component {
                 this.js = payload.js;
                 if (payload.test)
                     this.test = payload.test;
+                // The pop-out editor window IS the editor — build the panel and flush the
+                // values above into it (they went to pendingValues since it wasn't built yet).
+                this.ensureEditors();
                 this.parts.example.hidden = true;
                 this.parts.codeEditors.hidden = false;
                 this.classList.add('-maximize');

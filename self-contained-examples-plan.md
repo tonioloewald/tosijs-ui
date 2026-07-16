@@ -97,8 +97,18 @@ custom example stays self-contained (runnable with zero runtime deps).
    transpiler); client-side navigation re-renders markdown without bakes → runtime-transpile
    fallback. So the bake pays off on direct/first-paint loads (the SEO/blank-screen case). Shipping
    bakes in `docs.json` to cover SPA-nav too is a deferred follow-up (below).
-3. **Defer editors.** Editors construct on first `showCode` (not in `content`), so a page with examples
-   ships zero CodeMirror until a panel opens. Must not break unit/doc tests that mount editors.
+3. **Defer editors. ✅ DONE.** The editor panel (4 `<tosi-code>` + toolbar) is built by `ensureEditors()`
+   on first `showCode`/`viewChanges`/remote-popout, NOT in `content()` — constructing a `<tosi-code>`
+   is what imports the CodeMirror chunk. Approach (a): values live in the existing `pendingValues`
+   string cache until the panel is built (extended from "until hydration" to "until editors built"),
+   and the preview runs from them; the parts proxy resolves the dynamically-appended editors (it
+   queries `this` live and caches on first success). Guarded every editor-subtree part access
+   (`activeTab`, `updateUndo`, `updateTestResultsVisibility`, `showDefaultTab`, `ensureProductTabs`)
+   on `editorsBuilt`. **Verified:** a Playwright test asserts zero `code-editor-cm` requests and zero
+   `<tosi-code>` in the DOM on first paint, then a working editor (with source text) after `showCode`;
+   the full 17-spec Playwright lane (incl. `code-editor`, `doc-system`, `hydration`) and the doc-tests
+   lane stay green. **Net across slices 2+3: a reader page loads NEITHER the transpiler NOR CodeMirror
+   on first paint** — the M10 goal.
 4. **Save.** Re-transpile on save; persist source + fresh bake.
 
 ## Open items to resolve during implementation

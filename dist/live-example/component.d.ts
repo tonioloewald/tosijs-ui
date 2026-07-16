@@ -236,6 +236,7 @@ export declare class LiveExample extends Component<ExampleParts> {
     private pendingValues;
     private pendingShowDefaultTab;
     private beforeUnloadHandler?;
+    private editorsBuilt;
     static insertExamples(element: HTMLElement, context?: ExampleContext, sourceFile?: string): void;
     get activeTab(): Element | undefined;
     private getEditorValue;
@@ -282,6 +283,8 @@ export declare class LiveExample extends Component<ExampleParts> {
     exampleMenu: () => void;
     handleShortcuts: (event: KeyboardEvent) => void;
     content: () => any[];
+    private buildEditorPanel;
+    private ensureEditors;
     connectedCallback(): void;
     disconnectedCallback(): void;
     private exampleMarkdown;

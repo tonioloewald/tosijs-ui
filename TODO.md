@@ -51,11 +51,14 @@ importmap example resolution, versioned endpoints, AJS RestStore.
       and 2 DONE:** tjs examples bake into hidden scripts and RUN from them on the reader path, and
       `loadTransform('js')` is now identity — so a reader page runs all its js+tjs examples with the
       tjs transpiler never requested on first paint (verified by a reader-path Playwright test + the
-      doc-tests lane). **Remaining: slice 3 (defer editor/CodeMirror construction until a panel opens)
-      and slice 4 (persist source+bake on save), plus slice 2b — ship bakes in `docs.json` so SPA-nav
-      pages get them too (today only the adopted landing page does). 2b adds ZERO bytes to prose/book
-      sites: bakes exist only for code (tjs/ts) examples, so a corpus with none is unchanged — it's a
-      clean win, not the "bloat" first worried about.** **Do NOT gate the editor
+      doc-tests lane). **Slice 3 DONE too:** the `<tosi-code>` panels build lazily on first
+      showCode (via `ensureEditors()`, not `content()`), so a reader page loads NEITHER the transpiler
+      NOR CodeMirror on first paint — the M10 goal. Verified by a chunk-not-loaded-until-showCode
+      Playwright test + the full 17-spec lane. **Remaining: slice 4 (persist source+bake on save) and
+      slice 2b — ship bakes in `docs.json` so SPA-nav pages get them too (today only the adopted
+      landing page does). 2b adds ZERO bytes to prose/book sites: bakes exist only for code (tjs/ts)
+      examples, so a corpus with none is unchanged — a clean win, not the "bloat" first worried
+      about.** **Do NOT gate the editor
       on "does this corpus have code examples"** — the doc system is an _authoring_ system; prose/book
       sites need the editor most.
 
