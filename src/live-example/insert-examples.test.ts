@@ -38,6 +38,8 @@ describe('insertExamples grouping across the baked <script>', () => {
     expect(created[0].js).toBe('SRC')
     expect(created[0].dialect).toBe('tjs')
     expect(created[0].test).toBe('TST')
+    // The baked <script> (JSON "x") is read onto the example as compiledJs.
+    expect(created[0].compiledJs).toBe('x')
   })
 
   test('same pair groups identically with no script present (behavior unchanged)', () => {
@@ -45,6 +47,8 @@ describe('insertExamples grouping across the baked <script>', () => {
     expect(created).toHaveLength(1)
     expect(created[0].js).toBe('SRC')
     expect(created[0].test).toBe('TST')
+    // No bake present → compiledJs stays unset (SPA-nav / older-build fallback).
+    expect(created[0].compiledJs).toBeUndefined()
   })
 
   test('the skip is narrow: a plain <script> or prose between blocks still SPLITS them', () => {

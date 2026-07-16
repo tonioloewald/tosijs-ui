@@ -70,7 +70,19 @@ export interface ExecutionOptions {
   css: string
   js: string
   context: ExampleContext
-  transform: TransformFn
+  /**
+   * The tjs/ts transpiler. Optional ONLY when `compiledJs` is supplied — then the
+   * source is already transpiled and no transpiler is loaded or called.
+   */
+  transform?: TransformFn
+  /**
+   * Build-time transpiled JS for the source block (the bake — see
+   * self-contained-examples-plan.md). When present it is run VERBATIM: the
+   * `rewriteImports` + `transform` step is skipped entirely, so a page runs the
+   * example without loading the tjs transpiler. Already equals
+   * `transform(rewriteImports(js, contextKeys))`, so scope-capture still applies.
+   */
+  compiledJs?: string
   onError?: (error: Error) => void
   /**
    * Receives the example's top-level locals after a successful run, so tjs
@@ -118,6 +130,7 @@ export async function executeInline(
     js,
     context,
     transform,
+    compiledJs,
     exampleElement,
     styleElement,
     widgetsElement,
@@ -137,10 +150,13 @@ export async function executeInline(
   }
 
   try {
-    const code = rewriteImports(js, Object.keys(context))
-    const transformedCode = (
-      await transform(code, { transforms: ['typescript'] })
-    ).code
+    const transformedCode =
+      compiledJs ??
+      (
+        await transform!(rewriteImports(js, Object.keys(context)), {
+          transforms: ['typescript'],
+        })
+      ).code
 
     const { code: finalCode, extraContext } = withScopeCapture(
       transformedCode,
@@ -181,6 +197,7 @@ export async function executeInIframe(
     js,
     context,
     transform,
+    compiledJs,
     exampleElement,
     widgetsElement,
     onError,
@@ -250,10 +267,13 @@ export async function executeInIframe(
   }
 
   try {
-    const code = rewriteImports(js, Object.keys(context))
-    const transformedCode = (
-      await transform(code, { transforms: ['typescript'] })
-    ).code
+    const transformedCode =
+      compiledJs ??
+      (
+        await transform!(rewriteImports(js, Object.keys(context)), {
+          transforms: ['typescript'],
+        })
+      ).code
 
     const { code: finalCode, extraContext } = withScopeCapture(
       transformedCode,

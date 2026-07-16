@@ -6,6 +6,8 @@ interface SourceBlock {
   block: HTMLPreElement
   language: string | undefined
   code: string
+  // Build-time transpiled JS from the block's baked `<script>` sibling, if any.
+  compiled?: string
 }
 
 // A block's `<pre>` may be followed by a hidden `<script type="application/tosi-
@@ -22,6 +24,26 @@ function nextGroupableSibling(el: Element | null): Element | null {
     n = n.nextElementSibling
   }
   return n
+}
+
+// The block's build-time transpiled JS, from the baked `<script>` immediately after
+// its `<pre>` (JSON-encoded so a `</script>` in the JS can't break out). Absent on
+// client-rendered pages (SPA nav re-renders markdown without bakes); the example then
+// transpiles on demand at run time.
+function bakedJsForBlock(block: Element): string | undefined {
+  const n = block.nextElementSibling
+  if (
+    n?.tagName !== 'SCRIPT' ||
+    n.getAttribute('type') !== 'application/tosi-transpiled'
+  ) {
+    return undefined
+  }
+  try {
+    const parsed = JSON.parse(n.textContent || '')
+    return typeof parsed === 'string' ? parsed : undefined
+  } catch {
+    return undefined
+  }
 }
 
 /**
@@ -49,6 +71,7 @@ export function insertExamples(
       block: code.parentElement as HTMLPreElement,
       language: code.classList[0].split('-').pop(),
       code: (code as HTMLElement).innerText,
+      compiled: bakedJsForBlock(code.parentElement as HTMLPreElement),
     }))
 
   // Per-doc ordinal: the Nth live example on the page. Combined with sourceFile
@@ -92,6 +115,9 @@ export function insertExamples(
           // the same editor and the dialect drives how it's transpiled/run.
           example.js = source.code
           example.dialect = source.language
+          // The build-time bake (tjs only today) lets refresh() run the preview
+          // without loading the transpiler — see self-contained-examples-plan.md.
+          if (source.compiled !== undefined) example.compiledJs = source.compiled
           break
         case 'html':
           example.html = source.code

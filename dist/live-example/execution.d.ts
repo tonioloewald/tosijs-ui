@@ -13,7 +13,19 @@ export interface ExecutionOptions {
     css: string;
     js: string;
     context: ExampleContext;
-    transform: TransformFn;
+    /**
+     * The tjs/ts transpiler. Optional ONLY when `compiledJs` is supplied — then the
+     * source is already transpiled and no transpiler is loaded or called.
+     */
+    transform?: TransformFn;
+    /**
+     * Build-time transpiled JS for the source block (the bake — see
+     * self-contained-examples-plan.md). When present it is run VERBATIM: the
+     * `rewriteImports` + `transform` step is skipped entirely, so a page runs the
+     * example without loading the tjs transpiler. Already equals
+     * `transform(rewriteImports(js, contextKeys))`, so scope-capture still applies.
+     */
+    compiledJs?: string;
     onError?: (error: Error) => void;
     /**
      * Receives the example's top-level locals after a successful run, so tjs

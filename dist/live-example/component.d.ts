@@ -252,6 +252,7 @@ export declare class LiveExample extends Component<ExampleParts> {
     get remoteKey(): string;
     get dialect(): Dialect;
     set dialect(value: Dialect);
+    compiledJs?: string;
     private jsOutEditor?;
     private tjsTestsView?;
     private productTabsReady;

@@ -552,6 +552,15 @@ export class LiveExample extends Component {
     set dialect(value) {
         this.setAttribute('data-dialect', value);
     }
+    // Build-time transpiled JS for the source block, set by insert-examples from the
+    // page's baked `<script type="application/tosi-transpiled">` (see
+    // self-contained-examples-plan.md). When present AND tests are off (the deployed
+    // reader), refresh() runs it directly and never loads the tjs transpiler. When
+    // tests are on (localhost / the doc-test harness) it's ignored and refresh() takes
+    // the original full-transform path — so the harness can't be regressed. Runtime
+    // data only (not reflected to an attribute); absent on client-rendered SPA nav,
+    // where refresh() falls back to transpiling on demand.
+    compiledJs;
     // ── Read-only product tabs (tjs/ts only) ──────────────────────────────────
     // A `tjs`/`ts` example's source is editable; the JavaScript it compiles to is
     // shown read-only in an extra "JS" tab. The tab is added lazily (examples show
@@ -1277,15 +1286,26 @@ export class LiveExample extends Component {
     refresh = async () => {
         if (this.remoteId !== '')
             return;
-        const transform = await loadTransform(this.dialect);
+        // Reader fast path: with the build-time bake AND tests off (the deployed
+        // reader — tests default off outside localhost), run the example WITHOUT
+        // loading the tjs transpiler. When tests are on (localhost / the doc-test
+        // harness) `bake` is undefined and this is the original full-transform path,
+        // so the harness is untouched. The bake is byte-identical to what the
+        // transform would produce (it IS `transform(rewriteImports(js))`).
+        const bake = this.dialect !== 'js' && !testManager.enabled.value
+            ? this.compiledJs
+            : undefined;
+        const transform = bake === undefined ? await loadTransform(this.dialect) : undefined;
         const { example, style: styleEl, exampleWidgets } = this.parts;
         // Keep the read-only generated-JS tab (tjs/ts) in sync with the source, and
-        // re-run any inline tjs tests for the "tjs tests" results tab.
+        // re-run any inline tjs tests for the "tjs tests" results tab. With the bake we
+        // already have the generated JS and skip the transpiler-bound inline-test run.
         if (this.dialect !== 'js') {
-            this.lastGeneratedJs = await this.computeGeneratedJs(transform);
+            this.lastGeneratedJs = bake ?? (await this.computeGeneratedJs(transform));
             if (this.jsOutEditor)
                 this.jsOutEditor.value = this.lastGeneratedJs;
-            await this.runInlineTjsTests(transform);
+            if (bake === undefined)
+                await this.runInlineTjsTests(transform);
         }
         let preview;
         let executionError;
@@ -1299,6 +1319,7 @@ export class LiveExample extends Component {
                 js: this.js,
                 context: this.context,
                 transform,
+                compiledJs: bake,
                 exampleElement: example,
                 widgetsElement: exampleWidgets,
                 onError,
@@ -1312,6 +1333,7 @@ export class LiveExample extends Component {
                 js: this.js,
                 context: this.context,
                 transform,
+                compiledJs: bake,
                 exampleElement: example,
                 styleElement: styleEl,
                 widgetsElement: exampleWidgets,
@@ -1332,6 +1354,8 @@ export class LiveExample extends Component {
             this.classList.remove('-test-passed', '-test-failed');
             // `test` blocks are conventional JS/TS regardless of the example's dialect,
             // so they're transpiled as plain js — never lowered through tjs/ts.
+            // This block only runs when tests are enabled, and `bake` only exists when
+            // they're off — so `transform` was loaded above and is defined here.
             const testTransform = this.dialect === 'js' ? transform : await loadTransform('js');
             // Only run `test` blocks if the example actually produced a preview to
             // assert against; a failed build has nothing to test but still fails below.

@@ -11,6 +11,24 @@ function nextGroupableSibling(el) {
     }
     return n;
 }
+// The block's build-time transpiled JS, from the baked `<script>` immediately after
+// its `<pre>` (JSON-encoded so a `</script>` in the JS can't break out). Absent on
+// client-rendered pages (SPA nav re-renders markdown without bakes); the example then
+// transpiles on demand at run time.
+function bakedJsForBlock(block) {
+    const n = block.nextElementSibling;
+    if (n?.tagName !== 'SCRIPT' ||
+        n.getAttribute('type') !== 'application/tosi-transpiled') {
+        return undefined;
+    }
+    try {
+        const parsed = JSON.parse(n.textContent || '');
+        return typeof parsed === 'string' ? parsed : undefined;
+    }
+    catch {
+        return undefined;
+    }
+}
 /**
  * Find and replace sequences of code blocks with live examples
  */
@@ -29,6 +47,7 @@ sourceFile) {
         block: code.parentElement,
         language: code.classList[0].split('-').pop(),
         code: code.innerText,
+        compiled: bakedJsForBlock(code.parentElement),
     }));
     // Per-doc ordinal: the Nth live example on the page. Combined with sourceFile
     // it's the key back to the originating fenced-block group in the source.
@@ -66,6 +85,10 @@ sourceFile) {
                     // the same editor and the dialect drives how it's transpiled/run.
                     example.js = source.code;
                     example.dialect = source.language;
+                    // The build-time bake (tjs only today) lets refresh() run the preview
+                    // without loading the transpiler — see self-contained-examples-plan.md.
+                    if (source.compiled !== undefined)
+                        example.compiledJs = source.compiled;
                     break;
                 case 'html':
                     example.html = source.code;

@@ -47,9 +47,15 @@ importmap example resolution, versioned endpoints, AJS RestStore.
       and makes a saved example runnable with zero runtime deps. The bake artifact is exactly what
       `check-examples` already computes per block; embed it as a hidden non-executing
       `<script type="application/tosi-transpiled">` co-located with the `<pre>`, keyed by source text.
-      Four committable slices (build-side inert → runtime consume → defer editors → save); slice 1
-      is next. **Do NOT gate the editor on "does this corpus have code examples"** — the doc system is
-      an _authoring_ system; prose/book sites need the editor most.
+      Four committable slices (build-side inert → runtime consume → defer editors → save). **Slices 1
+      and 2 DONE:** tjs examples bake into hidden scripts and RUN from them on the reader path, and
+      `loadTransform('js')` is now identity — so a reader page runs all its js+tjs examples with the
+      tjs transpiler never requested on first paint (verified by a reader-path Playwright test + the
+      doc-tests lane). **Remaining: slice 3 (defer editor/CodeMirror construction until a panel opens)
+      and slice 4 (persist source+bake on save).** Deferred follow-up: ship bakes in `docs.json` so
+      SPA-nav pages get them too (today only the adopted landing page does). **Do NOT gate the editor
+      on "does this corpus have code examples"** — the doc system is an _authoring_ system; prose/book
+      sites need the editor most.
 
 - **Doc-system: pre-render the chrome, hydrate in place — and drop the opacity gate.**
   Generated pages currently hide the whole body (`body{opacity:0}`, 4s safety-net timeout)

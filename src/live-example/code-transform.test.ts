@@ -5,7 +5,17 @@ import {
   extractTopLevelBindingNames,
   buildScopeCapture,
   maskLiterals,
+  loadTransform,
 } from './code-transform'
+
+describe("loadTransform('js')", () => {
+  test('returns identity without loading the tjs transpiler', async () => {
+    const transform = await loadTransform('js')
+    const src = "const x = 1 // arbitrary vanilla JS\nconsole.log('hi')"
+    // Identity: the code is returned byte-for-byte, no transpiler involved.
+    expect((await transform(src, { transforms: ['typescript'] })).code).toBe(src)
+  })
+})
 
 describe('rewriteImports', () => {
   test('rewrites named imports to destructuring', () => {

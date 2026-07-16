@@ -500,6 +500,13 @@ let warnedNoFromTs = false;
  * with no from-ts available likewise falls back to running the source as JS.
  */
 export async function loadTransform(dialect = 'js') {
+    // `js` needs no transpiler. tjs's `js` dialect leaves vanilla JS untouched, and
+    // the build check guarantees js/`test` blocks ARE vanilla JS (a TS-typed one
+    // fails `new AsyncFunction` at build). So identity is behaviorally exact — and it
+    // keeps the tjs bundle off the first-paint path for the common all-`js`-examples
+    // page. `tjs`/`ts` still load it. See self-contained-examples-plan.md.
+    if (dialect === 'js')
+        return (code) => ({ code });
     const tjs = await (tjsOnce ??= loadTjs());
     if (!tjs && !warnedNoTjs) {
         warnedNoTjs = true;

@@ -71,7 +71,7 @@ export function withScopeCapture(transformedCode, onScope) {
  * Execute code inline (directly in the page)
  */
 export async function executeInline(options) {
-    const { html, css, js, context, transform, exampleElement, styleElement, widgetsElement, onError, onScope, } = options;
+    const { html, css, js, context, transform, compiledJs, exampleElement, styleElement, widgetsElement, onError, onScope, } = options;
     const preview = div({ class: 'preview' });
     preview.innerHTML = html;
     styleElement.innerText = css;
@@ -83,8 +83,10 @@ export async function executeInline(options) {
         exampleElement.insertBefore(preview, widgetsElement);
     }
     try {
-        const code = rewriteImports(js, Object.keys(context));
-        const transformedCode = (await transform(code, { transforms: ['typescript'] })).code;
+        const transformedCode = compiledJs ??
+            (await transform(rewriteImports(js, Object.keys(context)), {
+                transforms: ['typescript'],
+            })).code;
         const { code: finalCode, extraContext } = withScopeCapture(transformedCode, onScope);
         const fullContext = { preview, ...context, ...extraContext };
         const contextKeys = Object.keys(fullContext).map(contextVarName);
@@ -107,7 +109,7 @@ export async function executeInline(options) {
  * Execute code in an isolated iframe
  */
 export async function executeInIframe(options) {
-    const { html, css, js, context, transform, exampleElement, widgetsElement, onError, onScope, } = options;
+    const { html, css, js, context, transform, compiledJs, exampleElement, widgetsElement, onError, onScope, } = options;
     // Create or reuse iframe
     let iframe = exampleElement.querySelector('iframe.preview-iframe');
     if (!iframe) {
@@ -159,8 +161,10 @@ export async function executeInIframe(options) {
         return null;
     }
     try {
-        const code = rewriteImports(js, Object.keys(context));
-        const transformedCode = (await transform(code, { transforms: ['typescript'] })).code;
+        const transformedCode = compiledJs ??
+            (await transform(rewriteImports(js, Object.keys(context)), {
+                transforms: ['typescript'],
+            })).code;
         const { code: finalCode, extraContext } = withScopeCapture(transformedCode, onScope);
         // Execute JS in iframe context
         const fullContext = { preview, ...context, ...extraContext };

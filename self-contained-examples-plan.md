@@ -78,19 +78,36 @@ custom example stays self-contained (runnable with zero runtime deps).
    to `generate-site`; `renderDocMarkdown(text, { bakes })` emits the co-located `<script>`. Nothing
    reads it yet ⇒ cannot break execution. **Test:** build, grep a generated page for the `<script>`,
    assert its JSON parses to valid JS. ← START HERE
-2. **Runtime consume.** `insert-examples` absorbs the sibling → `example.compiledJs`; execution uses it
-   and skips `loadTransform`. **Test:** Playwright — a `tjs` example renders its preview with the
-   transpiler chunk NOT requested on first paint; editing still works (falls back / loads on edit).
+2. **Runtime consume. ✅ DONE.** `insert-examples` reads each block's baked `<script>` →
+   `example.compiledJs`; `executeInline`/`executeInIframe` run it verbatim (skip `rewriteImports` +
+   `transform`). `refresh()` uses the bake ONLY when tests are off (`bake = dialect!=='js' &&
+   !testManager.enabled.value ? compiledJs : undefined`) — so localhost / the doc-test harness (tests
+   ON, default off-localhost) take the ORIGINAL full-transform path unchanged and the harness can't
+   regress. **Plus a second, larger win found while verifying:** every js example was calling
+   `loadTransform('js')`, which loaded the whole tjs bundle even though tjs's `js` dialect is a no-op
+   and the build check guarantees js/`test` blocks are vanilla JS — so `loadTransform('js')` now
+   returns identity and loads nothing. Net: a reader page runs ALL its examples (js via identity, tjs
+   via bake) with the tjs transpiler NEVER requested on first paint.
+   **Verified:** the doc-tests lane (all examples, js-identity behaviorally exact); a reader-path
+   Playwright test (tests seeded off) asserting the tjs previews render from the bake AND zero
+   `/tjs/tjs-browser.js`, with a tests-on control that proves the probe (transpiler DOES load then);
+   unit tests for `executeInline`+bake, `insert-examples`→`compiledJs`, and `loadTransform('js')`
+   identity.
+   **SPA-nav resolution:** the landing page ADOPTS the pre-rendered DOM (bakes present → no
+   transpiler); client-side navigation re-renders markdown without bakes → runtime-transpile
+   fallback. So the bake pays off on direct/first-paint loads (the SEO/blank-screen case). Shipping
+   bakes in `docs.json` to cover SPA-nav too is a deferred follow-up (below).
 3. **Defer editors.** Editors construct on first `showCode` (not in `content`), so a page with examples
    ships zero CodeMirror until a panel opens. Must not break unit/doc tests that mount editors.
 4. **Save.** Re-transpile on save; persist source + fresh bake.
 
 ## Open items to resolve during implementation
 
-- **Client re-render on SPA nav.** `renderDocMarkdown` is shared with the client (doc-browser). On
-  client-side navigation the client has no bake map ⇒ no `<script>` ⇒ live-example falls back to
-  runtime transpile (loads tjs). Acceptable as a first-paint optimization; to make it universal, ship
-  the bake map in `docs.json` and let the client render with it. Decide in slice 2.
+- **Client re-render on SPA nav — RESOLVED for slice 2, follow-up open.** The landing page adopts
+  the pre-rendered DOM (bakes present); SPA nav re-renders markdown client-side without bakes and
+  falls back to runtime transpile. Good enough for the first-paint/SEO case. To make it universal,
+  ship the bake map in `docs.json` and pass it to the client's `renderDocMarkdown(doc.text, { bakes })`
+  — deferred (it bloats `docs.json` for prose/book sites; weigh per-site).
 - **Hydrate-in-place reconciliation.** Confirm the "pre-render the chrome, hydrate in place" path
   adopts the pre-rendered `<script>` siblings rather than re-rendering markdown over them.
 - **`ts` via bun vs CDN.** `check-examples` transpiles `ts` with `Bun.Transpiler` (network-free);
