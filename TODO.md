@@ -12,23 +12,25 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 
 ## High Priority
 
-### Deferred from the 1.7 nine-lens review (`RELEASE-REVIEW-1.7-pass3.md`)
+### From the 1.7 nine-lens review (`RELEASE-REVIEW-1.7-pass3.md`)
 
-Everything else from that review is fixed. These two are deliberately deferred, and this is
-the record of that decision — _"reviewed and fine"_ and _"reviewed, deferred, tracked"_ are
-different outcomes.
-
-- [ ] **M8 — the haltija doc-test lane is RED and is the only automated guard on inline WASM.**
-      `bun run test-browser` cannot start from a common ambient state (haltija running with
-      _zero_ windows: the reuse check is `windows.length > 0`, so it declines to adopt it, races
-      a second instance, and times out), and the timeout path uses the naive `haltija.kill()`
-      that leaks the Electron grandchild — so each failed run makes the next one likelier to
-      fail. **Deferred until haltija 1.4 ships**, because the fix depends on how 1.4 handles
-      zero-window reuse and its own teardown. When it lands: 1. call `stopHaltija()` on the timeout path so a failed launch stops poisoning the next; 2. adopt an existing haltija even with zero windows (or force-restart it); 3. **add `tests/doc-tests.pw.ts`** — navigate to `/`, await `window.__docTestResults`,
-      assert `failed === 0`. That runs the whole doc tier in ~30s inside the existing CI e2e
-      job, putting the inline-WASM guard (`live-example/component.ts`'s
-      `test('the wasm kernel actually compiled…')`) behind the release gate for the first
-      time. Today `grep -i wasm` across `tests/*.pw.ts` and every `*.test.ts` finds nothing.
+- [x] **M8 — gate the inline doc tests (incl. the inline-WASM guard) in CI.** ✅ DONE via
+      **`tests/doc-tests.pw.ts`**: it navigates to `/`, awaits `window.__docTestResults` (the
+      doc-browser's background runner iframes every page-with-tests on localhost and resolves it
+      with the totals), and asserts `failed === 0`. Runs in the existing e2e job
+      (`playwright test --project=chromium`) with **zero haltija** — so the WASM guard is behind
+      the release gate for the first time. Also hardened the interactive haltija lane
+      (`bun run test-browser`): the start-timeout path now calls `stopHaltija()` (was the naive
+      `haltija.kill()` that leaked the Electron grandchild and poisoned the next run), and it
+      adopts a *reachable* haltija regardless of window count (no more racing a second instance
+      next to a zero-window one).
+      **Residuals (minor):** (a) WebKit is skipped in `doc-tests.pw.ts` — its iframe runner never
+      posts per-page `tosi-tests-done`, so pages wait out the 30s per-page timeout and the corpus
+      blows past budget; investigate the WebKit postMessage/iframe path. (b) `bun run test-browser`
+      still **reuses/navigates a running haltija** (hijacks whatever window is open, another
+      project's session included) — the clean fix is a dedicated instance via
+      `HALTIJA_REGISTRY_DIR`/`--name` so it never touches the user's session. `doc-tests.pw.ts`
+      already sidesteps both by using an isolated Playwright browser.
 
 - [ ] **M10 — the IIFE tripled: 121KB → 388KB gzip, and it is ~100% CodeMirror.**
       `bun build --format iife` cannot code-split, so `<tosi-code>`'s lazy
