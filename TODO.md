@@ -32,21 +32,25 @@ importmap example resolution, versioned endpoints, AJS RestStore.
       `HALTIJA_REGISTRY_DIR`/`--name` so it never touches the user's session. `doc-tests.pw.ts`
       already sidesteps both by using an isolated Playwright browser.
 
-- [ ] **M10 — the IIFE tripled: 121KB → 388KB gzip, and it is ~100% CodeMirror.**
-      `bun build --format iife` cannot code-split, so `<tosi-code>`'s lazy
-      `import('./code-editor-cm')` is flattened in. ESM consumers are fine (`dist/code-editor-cm.js`
-      is a real 3.4KB chunk). It lands hardest on the case this project calls its killer feature:
-      a **pure-docs / book site** with no `bundleEntry` serves tosijs-ui's published `iife.js`, so
-      prose with zero code examples ships CodeMirror + lezer + acorn on every page.
-      **Fix:** build the doc-site hydration bundle `--format esm --splitting` and emit
-      `<script type="module">` — bun _does_ code-split ESM, so `code-editor-cm` becomes the same
-      lazy chunk it already is for bundler consumers (the entry can still assign
-      `window.xinjs`/`window.xinjsui`). Keep `dist/iife.js` as-is for the CDN path. Fallback: emit
-      a second IIFE pulled in on first `<tosi-code>` connect — the on-demand pattern the ACE build
-      had and this migration dropped.
+- [~] **M10 — the IIFE tripled: 121KB → 388KB gzip, ~100% CodeMirror.** HALF 1 DONE.
+      The doc-site build now emits an **ESM `--splitting` hydration bundle** (`hydrate.js` + hashed
+      chunks) that the served pages load as `<script type="module">`; `dist/iife.js` (classic) is
+      kept for the CDN `<script>` path. Result: the always-loaded entry is **122.7kb gzip** (was
+      388kb), and CodeMirror rides a lazy chunk. The tjs CM extension stays bundled and splitting
+      preserves the shared single `@codemirror/state` (it and `code-editor-cm` import the same
+      shared chunk). Verified: 41 Playwright green, pages hydrate via the module, editors work when
+      loaded. **A page with no code examples now ships zero CodeMirror** — the headline case.
+      **HALF 2 REMAINING — defer editor CONSTRUCTION.** `<tosi-example>` builds 4–5 `<tosi-code>`
+      panels in its content (`component.ts:986` — `hidden:true`, but a hidden custom element still
+      connects, so it pulls the chunk). So a page WITH examples still eager-loads CodeMirror even if
+      the reader never opens a code panel — measured on the home page. The example must still
+      EXECUTE (preview + inline tests don't need the editors); only the code PANELS should defer.
+      Two approaches: (a) refactor live-example to create the editors on first `showCode`; or
+      (b) make `<tosi-code>` itself defer the `code-editor-cm` import until it's visible (an
+      IntersectionObserver) — cleaner and general, but changes the "editor ready on mount" contract
+      and must not break the unit tests / doc-tests that mount editors.
       **Do NOT gate the editor on "does this corpus have code examples"** — the doc system is an
-      _authoring_ system, and prose/book sites need the editor most. That would amputate the
-      feature from exactly the wrong sites.
+      _authoring_ system; prose/book sites need the editor most.
 
 - **Doc-system: pre-render the chrome, hydrate in place — and drop the opacity gate.**
   Generated pages currently hide the whole body (`body{opacity:0}`, 4s safety-net timeout)

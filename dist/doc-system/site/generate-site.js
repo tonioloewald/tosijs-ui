@@ -85,7 +85,7 @@ function withBase(basePath, p) {
     return basePath.replace(/\/$/, '') + (p.startsWith('/') ? p : '/' + p);
 }
 function pageHtml(doc, config, slugMap, configAttr) {
-    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', stylesUrl = '/doc-system.css', localizedUrl = '/localized-strings.txt', basePath, headExtra = '', } = config;
+    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', localizedUrl = '/localized-strings.txt', basePath, headExtra = '', } = config;
     const localizedAttr = config.localizedStrings
         ? ` localized="${escapeAttr(withBase(basePath, localizedUrl))}"`
         : '';
@@ -196,7 +196,9 @@ ${body}
 ${nav}
 ${navbar}
   </tosi-doc-system>
-  <script src="${escapeAttr(withBase(basePath, scriptUrl))}"></script>
+  ${hydrateUrl
+        ? `<script type="module" src="${escapeAttr(withBase(basePath, hydrateUrl))}"></script>`
+        : `<script src="${escapeAttr(withBase(basePath, scriptUrl))}"></script>`}
 </body>
 </html>
 `;

@@ -302,6 +302,10 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
   // load config.scriptUrl (default /iife.js) — a prebuilt/CDN bundle the
   // consumer supplies (e.g. via staticDirs or an absolute URL).
   const scriptName = (config.scriptUrl ?? '/iife.js').replace(/^\//, '')
+  // Set once the ESM+splitting hydration bundle is emitted (bundleEntry projects);
+  // when set, pages load IT as a `<script type="module">` instead of the classic IIFE,
+  // so CodeMirror rides a lazy chunk instead of every page.
+  let hydrateName: string | undefined
   if (config.bundleEntry) {
     // tjs-lang's TRANSPILER (browser bundles) is dynamically import()'d at
     // runtime (same-origin `/tjs/` copy, else CDN), so keep it out of the bundle.
@@ -458,6 +462,69 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     console.log(
       `${scriptName}: ${(bundleFile.byteLength / 1024).toFixed(1)}kb${gzipKb}`
     )
+
+    // ── ESM hydration bundle (the doc pages load THIS, not the IIFE above) ──────
+    //
+    // The IIFE can't code-split, so `<tosi-code>`'s lazy `import('./code-editor-cm')`
+    // is flattened into it — CodeMirror + lezer + acorn (~265KB gz) ride every page
+    // whether or not it has an editor. Bun DOES code-split ESM, so we emit a second
+    // bundle as `--format=esm --splitting`: the entry gzips to roughly the pre-editor
+    // size and CodeMirror becomes a lazy chunk pulled only when an editor mounts.
+    //
+    // The tjs CM extension MUST share the editor's single `@codemirror/state` (a
+    // separately-loaded copy no-ops) — which is why it's bundled, not external. Splitting
+    // PRESERVES the sharing: it and `code-editor-cm` both statically import the same
+    // shared CodeMirror chunk. The IIFE (dist/${scriptName}) stays for the CDN <script>
+    // path; only the served pages move to the module.
+    const HYDRATE_DIR = `${DIST}/hydrate`
+    await $`rm -rf ${HYDRATE_DIR}`.text().catch(() => {})
+    const esm = spawn(
+      [
+        'bun',
+        'build',
+        config.bundleEntry,
+        '--outdir',
+        HYDRATE_DIR,
+        '--sourcemap=linked',
+        '--format=esm',
+        '--splitting',
+        '--minify',
+        '--entry-naming',
+        'hydrate.js',
+        ...externals.flatMap((ext) => ['--external', ext]),
+      ],
+      { stdout: 'inherit', stderr: 'inherit' }
+    )
+    if ((await esm.exited) !== 0) {
+      console.error('ESM hydration bundle build failed')
+      return false
+    }
+    // Copy the whole ESM output (entry + hashed chunks) to the served root — the entry
+    // imports its chunks by RELATIVE path, so they must sit right beside it.
+    await $`cp -R ${HYDRATE_DIR}/. ${PUBLIC}/`.text()
+    hydrateName = 'hydrate.js'
+
+    // Report the always-loaded weight (entry, not the lazy editor chunks) so a
+    // regression that pulls CodeMirror back into the entry is visible.
+    try {
+      const entryBytes = Number(
+        (
+          await $`bun -e ${`const {gzipSync}=require('zlib');const b=await Bun.file(${JSON.stringify(
+            `${HYDRATE_DIR}/hydrate.js`
+          )}).arrayBuffer();process.stdout.write(String(gzipSync(Buffer.from(b)).length))`}`
+            .quiet()
+            .text()
+        ).trim()
+      )
+      if (entryBytes > 0)
+        console.log(
+          `hydrate.js (module, editor lazy): ${(entryBytes / 1024).toFixed(
+            1
+          )}kb gzip entry`
+        )
+    } catch {
+      // size line only — never fail a build over it
+    }
   } else if (!/^(https?:)?\/\//.test(config.scriptUrl ?? '/iife.js')) {
     // No custom bundleEntry (the normal case for a pure-docs / book site) and a
     // local scriptUrl: pages still load it to hydrate. Nothing emits it, so it
@@ -542,6 +609,9 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     localizedStrings: config.localizedStrings,
     favicon: config.favicon,
     ogImage: config.ogImage,
+    // When set, pages load this as a `<script type="module">` (editor lazy-split)
+    // instead of the classic IIFE. See the ESM hydration bundle above.
+    hydrateUrl: hydrateName ? `/${hydrateName}` : undefined,
     headExtra:
       [config.headExtra, tjsHead].filter(Boolean).join('') || undefined,
     scriptUrl: config.scriptUrl,

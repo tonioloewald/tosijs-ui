@@ -57,8 +57,14 @@ export interface GenerateSiteConfig {
   basePath?: string
   /** URL the component fetches the corpus from (default /docs.json) */
   docsUrl?: string
-  /** path to the IIFE bundle script (default /iife.js) */
+  /** path to the IIFE bundle script (default /iife.js) — the CDN/classic-script path */
   scriptUrl?: string
+  /**
+   * path to an ESM hydration bundle. When set, pages load THIS as a
+   * `<script type="module">` instead of the classic IIFE `scriptUrl`, so
+   * code-split chunks (the CodeMirror editor) load lazily instead of on every page.
+   */
+  hydrateUrl?: string
   /** URL of the burned-in theme stylesheet (written by ./generate-css.ts) */
   stylesUrl?: string
   /** extra lines injected into every <head> (favicon, analytics, etc.) */
@@ -175,6 +181,7 @@ function pageHtml(
     favicon = '/favicon.svg',
     docsUrl = '/docs.json',
     scriptUrl = '/iife.js',
+    hydrateUrl,
     stylesUrl = '/doc-system.css',
     localizedUrl = '/localized-strings.txt',
     basePath,
@@ -311,7 +318,13 @@ ${body}
 ${nav}
 ${navbar}
   </tosi-doc-system>
-  <script src="${escapeAttr(withBase(basePath, scriptUrl))}"></script>
+  ${
+    hydrateUrl
+      ? `<script type="module" src="${escapeAttr(
+          withBase(basePath, hydrateUrl)
+        )}"></script>`
+      : `<script src="${escapeAttr(withBase(basePath, scriptUrl))}"></script>`
+  }
 </body>
 </html>
 `

@@ -39,20 +39,21 @@ the page `<title>` was derived twice (so the home page flipped from its real tit
 now single, shared rules, and `tests/hydration.pw.ts` asserts that a no-JS page and a hydrated
 page agree — geometry, styling and title.
 
-### Known cost: the IIFE carries CodeMirror
+### Doc pages no longer ship CodeMirror to readers who don't open an editor
 
-`dist/iife.js` went **121KB → 388KB gzip**, essentially all of it CodeMirror + lezer + acorn:
-`bun build --format iife` cannot code-split, so the editor's lazy `import()` is flattened in.
-ESM consumers are unaffected — `dist/code-editor-cm.js` is a real 3.4KB lazy chunk, and a page
-with no `<tosi-code>` never loads it.
+`dist/iife.js` can't code-split (bun's IIFE format), so `<tosi-code>`'s lazy `import()` is
+flattened in — CodeMirror + lezer + acorn on every page whether or not it has an editor
+(121KB → 388KB gzip). The generated **doc pages now load an ESM `--splitting` hydration bundle**
+(`<script type="module">`) instead: the always-loaded entry is **~123KB gzip** and CodeMirror
+rides a lazy chunk pulled only when an editor mounts. The tjs CM extension stays bundled, and
+splitting preserves the shared single `@codemirror/state`. **`dist/iife.js` is unchanged and
+still shipped for the CDN `<script>` path.** So a **pure-docs / book site with no code
+examples now ships zero CodeMirror** — the case that was hurt worst.
 
-This lands hardest on a **pure-docs or book site** that sets no `bundleEntry` and therefore
-serves tosijs-ui's published `iife.js`: prose with no code examples still ships CodeMirror for
-an editor most readers never open. Tracked in `TODO.md` — the fix is to emit the doc-site
-hydration bundle as ESM with `--splitting` (bun _does_ code-split ESM), which restores the lazy
-chunk without taking the editor away from anyone. **The editor must not be gated on "does this
-corpus have code examples"** — the doc system is an authoring system, and prose sites need the
-editor most.
+Remaining (tracked in `TODO.md`): a page that DOES have live examples still eager-loads the
+editor chunk, because `<tosi-example>` builds its code panels up front even while hidden. The
+next step defers that construction until the reader opens a panel; the example still runs (the
+preview and inline tests don't need the editors) — only the code view waits.
 
 ### Dev-server safety (also in 1.6.23)
 
