@@ -103,11 +103,15 @@ custom example stays self-contained (runnable with zero runtime deps).
 
 ## Open items to resolve during implementation
 
-- **Client re-render on SPA nav — RESOLVED for slice 2, follow-up open.** The landing page adopts
-  the pre-rendered DOM (bakes present); SPA nav re-renders markdown client-side without bakes and
-  falls back to runtime transpile. Good enough for the first-paint/SEO case. To make it universal,
-  ship the bake map in `docs.json` and pass it to the client's `renderDocMarkdown(doc.text, { bakes })`
-  — deferred (it bloats `docs.json` for prose/book sites; weigh per-site).
+- **Client re-render on SPA nav — RESOLVED for slice 2, universal coverage worth doing (slice 2b).**
+  The landing page adopts the pre-rendered DOM (bakes present); SPA nav re-renders markdown
+  client-side without bakes and falls back to runtime transpile. To make it universal, ship the bakes
+  in `docs.json` and pass them to the client's `renderDocMarkdown(doc.text, { bakes })`. This does NOT
+  bloat prose/book sites: bakes exist only for code examples (tjs today; ts once its build-vs-CDN
+  equivalence is settled), so a corpus with none adds zero bytes; the cost scales with code-example
+  count — exactly the sites that benefit. Cheap, clean,
+  no downside — do it (the only reason it's a separate slice is that it touches the docs.json shape +
+  the client render path).
 - **Hydrate-in-place reconciliation.** Confirm the "pre-render the chrome, hydrate in place" path
   adopts the pre-rendered `<script>` siblings rather than re-rendering markdown over them.
 - **`ts` via bun vs CDN.** `check-examples` transpiles `ts` with `Bun.Transpiler` (network-free);

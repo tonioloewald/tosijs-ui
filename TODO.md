@@ -52,8 +52,10 @@ importmap example resolution, versioned endpoints, AJS RestStore.
       `loadTransform('js')` is now identity — so a reader page runs all its js+tjs examples with the
       tjs transpiler never requested on first paint (verified by a reader-path Playwright test + the
       doc-tests lane). **Remaining: slice 3 (defer editor/CodeMirror construction until a panel opens)
-      and slice 4 (persist source+bake on save).** Deferred follow-up: ship bakes in `docs.json` so
-      SPA-nav pages get them too (today only the adopted landing page does). **Do NOT gate the editor
+      and slice 4 (persist source+bake on save), plus slice 2b — ship bakes in `docs.json` so SPA-nav
+      pages get them too (today only the adopted landing page does). 2b adds ZERO bytes to prose/book
+      sites: bakes exist only for code (tjs/ts) examples, so a corpus with none is unchanged — it's a
+      clean win, not the "bloat" first worried about.** **Do NOT gate the editor
       on "does this corpus have code examples"** — the doc system is an _authoring_ system; prose/book
       sites need the editor most.
 
