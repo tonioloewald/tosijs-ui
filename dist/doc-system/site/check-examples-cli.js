@@ -33,7 +33,8 @@ if (!docsJson) {
 }
 const contextKeys = process.argv.slice(3);
 const corpus = JSON.parse(await Bun.file(docsJson).text());
-const problems = await checkExamples(corpus, contextKeys.length ? { contextKeys } : {});
+const { problems, bakes } = await checkExamples(corpus, contextKeys.length ? { contextKeys } : {});
 // stdout is the channel — the parent parses this. Anything else this process prints
 // (warnings from the transform, say) goes to stderr so it can't corrupt the payload.
-process.stdout.write(JSON.stringify(problems));
+// A Map can't JSON-roundtrip, so bakes go over as [source, {dialect, js}] entries.
+process.stdout.write(JSON.stringify({ problems, bakes: Array.from(bakes.entries()) }));

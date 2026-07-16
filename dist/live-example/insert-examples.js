@@ -1,3 +1,16 @@
+// A block's `<pre>` may be followed by a hidden `<script type="application/tosi-
+// transpiled">` carrying its build-time transpiled JS (see
+// self-contained-examples-plan.md). It sits BETWEEN consecutive code blocks, so the
+// grouping walk must step over it — otherwise a tjs+test pair stops grouping. Returns
+// the next element sibling that isn't such a script.
+function nextGroupableSibling(el) {
+    let n = el?.nextElementSibling ?? null;
+    while (n instanceof HTMLScriptElement &&
+        n.type === 'application/tosi-transpiled') {
+        n = n.nextElementSibling;
+    }
+    return n;
+}
 /**
  * Find and replace sequences of code blocks with live examples
  */
@@ -24,7 +37,7 @@ sourceFile) {
         const exampleSources = [sources[index]];
         // Group consecutive code blocks
         while (index < sources.length - 1 &&
-            sources[index].block.nextElementSibling === sources[index + 1].block) {
+            nextGroupableSibling(sources[index].block) === sources[index + 1].block) {
             exampleSources.push(sources[index + 1]);
             index += 1;
         }

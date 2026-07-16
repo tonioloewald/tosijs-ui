@@ -21,7 +21,7 @@ import { pageTitle } from '../doc-title'
 import type { ProjectLinks, LinkItem } from '../../doc-browser'
 import { buildSlugMap, pathForSlug, rewriteDocLinks } from '../routing'
 import { buildNavTree, navOpenPath, NavNode } from '../nav-tree'
-import { renderDocMarkdown, docDescription } from '../render'
+import { renderDocMarkdown, docDescription, type ExampleBakes } from '../render'
 
 declare global {
   var Bun: any
@@ -65,6 +65,13 @@ export interface GenerateSiteConfig {
    * code-split chunks (the CodeMirror editor) load lazily instead of on every page.
    */
   hydrateUrl?: string
+  /**
+   * Build-time transpiled JS for `tjs` examples, keyed by source text. When a
+   * block's source is present, the renderer embeds a hidden
+   * `<script type="application/tosi-transpiled">` so the page RUNS the example
+   * without loading the tjs transpiler. See self-contained-examples-plan.md.
+   */
+  bakes?: ExampleBakes
   /** URL of the burned-in theme stylesheet (written by ./generate-css.ts) */
   stylesUrl?: string
   /** extra lines injected into every <head> (favicon, analytics, etc.) */
@@ -186,6 +193,7 @@ function pageHtml(
     localizedUrl = '/localized-strings.txt',
     basePath,
     headExtra = '',
+    bakes,
   } = config
   const localizedAttr = config.localizedStrings
     ? ` localized="${escapeAttr(withBase(basePath, localizedUrl))}"`
@@ -209,7 +217,7 @@ function pageHtml(
   // Rewrite legacy `?filename` content links to clean `/slug/` paths so the
   // static HTML is correct for no-JS readers and crawlers (the doc-browser also
   // does this client-side after hydration).
-  const body = rewriteDocLinks(renderDocMarkdown(doc.text), (filename) =>
+  const body = rewriteDocLinks(renderDocMarkdown(doc.text, { bakes }), (filename) =>
     slugMap[filename] !== undefined
       ? withBase(basePath, pathForSlug(slugMap[filename]))
       : null

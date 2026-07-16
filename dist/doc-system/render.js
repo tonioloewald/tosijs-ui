@@ -10,25 +10,32 @@ give that example a stable anchor — see the docMarked renderer below.
 */
 import { Marked, Renderer } from 'marked';
 const baseRenderer = new Renderer();
-// A doc-scoped marked instance. Its ONLY customization: a fenced code block whose
-// info string carries a `#id` suffix — e.g. ```js#my-example — renders the lang
-// clean (`language-js`, so all existing grouping/highlighting is unaffected) but
-// stamps `data-example-id="my-example"` on the <pre>. insertExamples (client) and
-// the book builders both read that to give the live example a stable anchor for
-// deep-linking. A block with no `#id` is byte-identical to default marked output.
+let currentBakes;
 const docMarked = new Marked();
 docMarked.use({
     renderer: {
         code(token) {
             const info = String(token.lang || '');
             const hash = info.indexOf('#');
-            if (hash === -1)
-                return false; // default rendering
-            const id = info.slice(hash + 1).match(/^[A-Za-z0-9_-]+/)?.[0];
-            if (!id)
-                return false;
-            const html = baseRenderer.code({ ...token, lang: info.slice(0, hash) });
-            return html.replace(/^<pre>/, `<pre data-example-id="${id}">`);
+            const id = hash === -1
+                ? ''
+                : (info.slice(hash + 1).match(/^[A-Za-z0-9_-]+/)?.[0] ?? '');
+            const bake = currentBakes?.get(token.text);
+            if (!id && !bake)
+                return false; // default rendering — byte-identical
+            let html = baseRenderer.code({
+                ...token,
+                lang: hash === -1 ? info : info.slice(0, hash),
+            });
+            if (id)
+                html = html.replace(/^<pre>/, `<pre data-example-id="${id}">`);
+            if (bake) {
+                // `<` → < prevents a `</script>` inside the JS from breaking the tag;
+                // JSON.parse decodes it unchanged at hydration.
+                const json = JSON.stringify(bake.js).replace(/</g, '\\u003c');
+                html += `<script type="application/tosi-transpiled" data-dialect="${bake.dialect}">${json}</script>`;
+            }
+            return html;
         },
     },
 });
@@ -139,8 +146,14 @@ docMarked.use({
     ],
 });
 /** Render a doc's markdown text to HTML (synchronous, default marked options). */
-export function renderDocMarkdown(text) {
-    return docMarked.parse(text);
+export function renderDocMarkdown(text, opts = {}) {
+    currentBakes = opts.bakes;
+    try {
+        return docMarked.parse(text);
+    }
+    finally {
+        currentBakes = undefined;
+    }
 }
 /**
  * Derive a clean <meta name="description"> from a doc's first prose paragraph.

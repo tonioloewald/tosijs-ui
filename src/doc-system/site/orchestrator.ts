@@ -22,7 +22,9 @@ import {
   checkExamples,
   formatExampleProblems,
   type ExampleProblem,
+  type ExampleCheck,
 } from './check-examples'
+import type { ExampleBakes } from '../render'
 import { ensureSections } from './sections'
 import { generateLlmsTxt } from './make-llms-txt'
 import { generateSite } from './generate-site'
@@ -129,7 +131,7 @@ const escapeRegExp = (s: string): string =>
  */
 async function checkExamplesInChild(
   docsJson: string
-): Promise<ExampleProblem[]> {
+): Promise<ExampleCheck> {
   const cliTs = `${import.meta.dir}/check-examples-cli.ts`
   const cli = existsSync(cliTs)
     ? cliTs
@@ -149,7 +151,13 @@ async function checkExamplesInChild(
     ])
     if (err.trim()) console.warn(err.trim())
     if (code !== 0) throw new Error(`check-examples exited ${code}`)
-    return JSON.parse(out) as ExampleProblem[]
+    // The child serializes bakes as [source, {dialect, js}] entries (a Map can't
+    // JSON-roundtrip); rebuild the Map here.
+    const payload = JSON.parse(out) as {
+      problems: ExampleProblem[]
+      bakes: Array<[string, { dialect: string; js: string }]>
+    }
+    return { problems: payload.problems, bakes: new Map(payload.bakes) }
   } catch (e) {
     console.warn(
       `⚠️  example check: could not run it in a child (${String(e)}) — ` +
@@ -243,8 +251,15 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
   // or illustrative code mistakenly tagged executable (`js`/`ts`/…) instead of
   // display-only `typescript`. Runs on the whole corpus, so it catches breakage
   // on pages the browser test never navigates to.
+  // Build-time transpiled JS for `tjs` examples, keyed by source text — computed
+  // by the example check (it transpiles anyway) and embedded by generateSite so
+  // pages RUN without the tjs transpiler. Empty when checkExamples is disabled;
+  // the runtime then falls back to transpiling on demand. See
+  // self-contained-examples-plan.md.
+  let exampleBakes: ExampleBakes | undefined
   if (config.checkExamples !== false) {
-    const problems = await checkExamplesInChild(DOCS_JSON)
+    const { problems, bakes } = await checkExamplesInChild(DOCS_JSON)
+    exampleBakes = bakes
     if (problems.length) {
       throw new Error(
         `doc-site build: ${problems.length} live example(s) failed to build:\n\n` +
@@ -612,6 +627,7 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     // When set, pages load this as a `<script type="module">` (editor lazy-split)
     // instead of the classic IIFE. See the ESM hydration bundle above.
     hydrateUrl: hydrateName ? `/${hydrateName}` : undefined,
+    bakes: exampleBakes,
     headExtra:
       [config.headExtra, tjsHead].filter(Boolean).join('') || undefined,
     scriptUrl: config.scriptUrl,

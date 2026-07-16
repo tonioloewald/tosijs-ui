@@ -85,7 +85,7 @@ function withBase(basePath, p) {
     return basePath.replace(/\/$/, '') + (p.startsWith('/') ? p : '/' + p);
 }
 function pageHtml(doc, config, slugMap, configAttr) {
-    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', localizedUrl = '/localized-strings.txt', basePath, headExtra = '', } = config;
+    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', localizedUrl = '/localized-strings.txt', basePath, headExtra = '', bakes, } = config;
     const localizedAttr = config.localizedStrings
         ? ` localized="${escapeAttr(withBase(basePath, localizedUrl))}"`
         : '';
@@ -102,7 +102,7 @@ function pageHtml(doc, config, slugMap, configAttr) {
     // Rewrite legacy `?filename` content links to clean `/slug/` paths so the
     // static HTML is correct for no-JS readers and crawlers (the doc-browser also
     // does this client-side after hydration).
-    const body = rewriteDocLinks(renderDocMarkdown(doc.text), (filename) => slugMap[filename] !== undefined
+    const body = rewriteDocLinks(renderDocMarkdown(doc.text, { bakes }), (filename) => slugMap[filename] !== undefined
         ? withBase(basePath, pathForSlug(slugMap[filename]))
         : null);
     const nav = navHtml(config.docs, slugMap, doc.filename, basePath);

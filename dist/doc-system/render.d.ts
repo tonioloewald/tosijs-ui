@@ -1,5 +1,12 @@
+export interface ExampleBake {
+    dialect: string;
+    js: string;
+}
+export type ExampleBakes = Map<string, ExampleBake>;
 /** Render a doc's markdown text to HTML (synchronous, default marked options). */
-export declare function renderDocMarkdown(text: string): string;
+export declare function renderDocMarkdown(text: string, opts?: {
+    bakes?: ExampleBakes;
+}): string;
 /**
  * Derive a clean <meta name="description"> from a doc's first prose paragraph.
  * Skips the title heading, code fences, tables, quotes, html and image/link-only

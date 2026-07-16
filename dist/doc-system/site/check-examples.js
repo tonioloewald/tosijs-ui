@@ -51,10 +51,14 @@ function collectCodeTokens(text) {
     walk(marked.lexer(text));
     return out;
 }
-/** Transpile-check every executable block in the corpus. Returns the problems. */
+/**
+ * Transpile-check every executable block in the corpus. Returns the problems and
+ * the `tjs` bakes (which it computes anyway while checking — no double transpile).
+ */
 export async function checkExamples(docs, opts = {}) {
     const contextKeys = opts.contextKeys ?? DEFAULT_CONTEXT_KEYS;
     const problems = [];
+    const bakes = new Map();
     for (const doc of docs) {
         for (const block of collectCodeTokens(doc.text)) {
             if (!EXECUTABLE.has(block.lang))
@@ -81,6 +85,12 @@ export async function checkExamples(docs, opts = {}) {
                 }
                 // Syntax-validate the way the component does before running it.
                 new AsyncFunction(js);
+                // Bake only tjs: build and runtime share the SAME tjs transform, so the
+                // baked JS is byte-identical to what the page produces at runtime. (`ts`
+                // is transpiled here with bun but at runtime by the CDN TS compiler, so it
+                // stays on the runtime path — see self-contained-examples-plan.md.)
+                if (dialect === 'tjs')
+                    bakes.set(block.text, { dialect: 'tjs', js });
             }
             catch (err) {
                 problems.push({
@@ -93,7 +103,7 @@ export async function checkExamples(docs, opts = {}) {
             }
         }
     }
-    return problems;
+    return { problems, bakes };
 }
 /** Format problems for a build log. */
 export function formatExampleProblems(problems) {

@@ -19,17 +19,43 @@ const baseRenderer = new Renderer()
 // stamps `data-example-id="my-example"` on the <pre>. insertExamples (client) and
 // the book builders both read that to give the live example a stable anchor for
 // deep-linking. A block with no `#id` is byte-identical to default marked output.
+// Build-time transpiled JS for executable blocks, keyed by exact source text (see
+// `renderDocMarkdown`). When present for a block, the renderer emits a hidden,
+// non-executing `<script type="application/tosi-transpiled">` sibling carrying the
+// baked JS so the page can RUN the example without loading the tjs/ts transpiler —
+// see self-contained-examples-plan.md. Per-parse module state, safe because
+// `docMarked.parse` is synchronous (same pattern as the footnote state below).
+export interface ExampleBake {
+  dialect: string
+  js: string
+}
+export type ExampleBakes = Map<string, ExampleBake>
+let currentBakes: ExampleBakes | undefined
+
 const docMarked = new Marked()
 docMarked.use({
   renderer: {
     code(token: any) {
       const info = String(token.lang || '')
       const hash = info.indexOf('#')
-      if (hash === -1) return false // default rendering
-      const id = info.slice(hash + 1).match(/^[A-Za-z0-9_-]+/)?.[0]
-      if (!id) return false
-      const html = baseRenderer.code({ ...token, lang: info.slice(0, hash) })
-      return html.replace(/^<pre>/, `<pre data-example-id="${id}">`)
+      const id =
+        hash === -1
+          ? ''
+          : (info.slice(hash + 1).match(/^[A-Za-z0-9_-]+/)?.[0] ?? '')
+      const bake = currentBakes?.get(token.text)
+      if (!id && !bake) return false // default rendering — byte-identical
+      let html = baseRenderer.code({
+        ...token,
+        lang: hash === -1 ? info : info.slice(0, hash),
+      })
+      if (id) html = html.replace(/^<pre>/, `<pre data-example-id="${id}">`)
+      if (bake) {
+        // `<` → < prevents a `</script>` inside the JS from breaking the tag;
+        // JSON.parse decodes it unchanged at hydration.
+        const json = JSON.stringify(bake.js).replace(/</g, '\\u003c')
+        html += `<script type="application/tosi-transpiled" data-dialect="${bake.dialect}">${json}</script>`
+      }
+      return html
     },
   },
 })
@@ -144,8 +170,16 @@ docMarked.use({
 })
 
 /** Render a doc's markdown text to HTML (synchronous, default marked options). */
-export function renderDocMarkdown(text: string): string {
-  return docMarked.parse(text) as string
+export function renderDocMarkdown(
+  text: string,
+  opts: { bakes?: ExampleBakes } = {}
+): string {
+  currentBakes = opts.bakes
+  try {
+    return docMarked.parse(text) as string
+  } finally {
+    currentBakes = undefined
+  }
 }
 
 /**

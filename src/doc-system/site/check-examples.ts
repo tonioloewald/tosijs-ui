@@ -21,6 +21,7 @@ import {
   loadTransform,
 } from '../../live-example/code-transform'
 import type { Doc } from './docs'
+import type { ExampleBakes } from '../render'
 
 declare const Bun: {
   Transpiler: new (opts: { loader: string }) => {
@@ -76,13 +77,28 @@ function collectCodeTokens(
   return out
 }
 
-/** Transpile-check every executable block in the corpus. Returns the problems. */
+export interface ExampleCheck {
+  problems: ExampleProblem[]
+  /**
+   * Build-time transpiled JS for `tjs` blocks, keyed by exact source text. The
+   * renderer embeds these so a page can RUN an example without loading the tjs
+   * transpiler (see self-contained-examples-plan.md). Only `tjs` is baked: its
+   * build transform is identical to the runtime one, so the bytes match.
+   */
+  bakes: ExampleBakes
+}
+
+/**
+ * Transpile-check every executable block in the corpus. Returns the problems and
+ * the `tjs` bakes (which it computes anyway while checking — no double transpile).
+ */
 export async function checkExamples(
   docs: Doc[],
   opts: { contextKeys?: string[] } = {}
-): Promise<ExampleProblem[]> {
+): Promise<ExampleCheck> {
   const contextKeys = opts.contextKeys ?? DEFAULT_CONTEXT_KEYS
   const problems: ExampleProblem[] = []
+  const bakes: ExampleBakes = new Map()
 
   for (const doc of docs) {
     for (const block of collectCodeTokens(doc.text)) {
@@ -108,6 +124,11 @@ export async function checkExamples(
         // Syntax-validate the way the component does before running it.
 
         new (AsyncFunction as any)(js)
+        // Bake only tjs: build and runtime share the SAME tjs transform, so the
+        // baked JS is byte-identical to what the page produces at runtime. (`ts`
+        // is transpiled here with bun but at runtime by the CDN TS compiler, so it
+        // stays on the runtime path — see self-contained-examples-plan.md.)
+        if (dialect === 'tjs') bakes.set(block.text, { dialect: 'tjs', js })
       } catch (err) {
         problems.push({
           filename: doc.filename,
@@ -119,7 +140,7 @@ export async function checkExamples(
       }
     }
   }
-  return problems
+  return { problems, bakes }
 }
 
 /** Format problems for a build log. */

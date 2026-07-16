@@ -53,3 +53,33 @@ test('a doc using neither footnotes nor wikilinks is unaffected', () => {
   expect(html).not.toContain('footnotes')
   expect(html).not.toContain('wikilink')
 })
+
+test('bakes: a matching source emits a hidden transpiled <script>; no bakes → unchanged', () => {
+  const src = 'const n = 1\nvoid n'
+  const bakes = new Map([[src, { dialect: 'tjs', js: 'const n=1;void n;' }]])
+  const html = renderDocMarkdown('```tjs\n' + src + '\n```', { bakes })
+  expect(html).toContain(
+    '<script type="application/tosi-transpiled" data-dialect="tjs">'
+  )
+  // The JS is JSON-encoded so it round-trips through JSON.parse at hydration.
+  expect(html).toContain(JSON.stringify('const n=1;void n;'))
+  // A block whose source isn't in the map renders byte-identically to no-bakes.
+  const other = renderDocMarkdown('```tjs\nconst z = 2\n```', { bakes })
+  expect(other).not.toContain('tosi-transpiled')
+  expect(other).toBe(renderDocMarkdown('```tjs\nconst z = 2\n```'))
+})
+
+test('bakes: a </script> in the transpiled JS cannot break out of the tag', () => {
+  const src = 'x'
+  const js = 'const s = "</script><img>"'
+  const bakes = new Map([[src, { dialect: 'tjs', js }]])
+  const html = renderDocMarkdown('```tjs\n' + src + '\n```', { bakes })
+  // The raw closing tag must NOT appear before our own </script>; it's escaped.
+  const open = html.indexOf('application/tosi-transpiled')
+  const close = html.indexOf('</script>', open)
+  expect(html.slice(open, close)).not.toContain('</script>')
+  expect(html.slice(open, close)).toContain('\\u003c/script>')
+  // And it decodes back to the exact JS.
+  const json = html.slice(html.indexOf('>', open) + 1, close)
+  expect(JSON.parse(json)).toBe(js)
+})
