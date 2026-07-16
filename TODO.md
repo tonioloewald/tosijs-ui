@@ -40,17 +40,16 @@ importmap example resolution, versioned endpoints, AJS RestStore.
       preserves the shared single `@codemirror/state` (it and `code-editor-cm` import the same
       shared chunk). Verified: 41 Playwright green, pages hydrate via the module, editors work when
       loaded. **A page with no code examples now ships zero CodeMirror** — the headline case.
-      **HALF 2 REMAINING — defer editor CONSTRUCTION.** `<tosi-example>` builds 4–5 `<tosi-code>`
-      panels in its content (`component.ts:986` — `hidden:true`, but a hidden custom element still
-      connects, so it pulls the chunk). So a page WITH examples still eager-loads CodeMirror even if
-      the reader never opens a code panel — measured on the home page. The example must still
-      EXECUTE (preview + inline tests don't need the editors); only the code PANELS should defer.
-      Two approaches: (a) refactor live-example to create the editors on first `showCode`; or
-      (b) make `<tosi-code>` itself defer the `code-editor-cm` import until it's visible (an
-      IntersectionObserver) — cleaner and general, but changes the "editor ready on mount" contract
-      and must not break the unit tests / doc-tests that mount editors.
-      **Do NOT gate the editor on "does this corpus have code examples"** — the doc system is an
-      _authoring_ system; prose/book sites need the editor most.
+      **HALF 2 REMAINING — self-contained examples (bake the transpiled JS into the page).**
+      Chosen approach, fully designed in [`self-contained-examples-plan.md`](self-contained-examples-plan.md).
+      Supersedes the earlier "defer editor construction" idea: baking removes BOTH CodeMirror AND the
+      tjs transpiler from first paint (deferring only editors still loads tjs to run a `tjs` preview),
+      and makes a saved example runnable with zero runtime deps. The bake artifact is exactly what
+      `check-examples` already computes per block; embed it as a hidden non-executing
+      `<script type="application/tosi-transpiled">` co-located with the `<pre>`, keyed by source text.
+      Four committable slices (build-side inert → runtime consume → defer editors → save); slice 1
+      is next. **Do NOT gate the editor on "does this corpus have code examples"** — the doc system is
+      an _authoring_ system; prose/book sites need the editor most.
 
 - **Doc-system: pre-render the chrome, hydrate in place — and drop the opacity gate.**
   Generated pages currently hide the whole body (`body{opacity:0}`, 4s safety-net timeout)
