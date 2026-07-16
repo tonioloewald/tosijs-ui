@@ -12,6 +12,31 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 
 ## High Priority
 
+- [ ] **Bump tjs-lang 0.9.1 → ^0.10.0 and delete the unblocked hand-rolls.** 0.10.0 closed four
+      of our upstream issues (see UPSTREAM.md → tjs-lang). Not just a version bump: it lets us
+      **delete** `extractTopLevelBindingNames` + `buildScopeCapture` (~130 lines, import
+      `collectScopeSymbols`/`scopeCaptureEpilogue` from `tjs-lang/editors` — #10) and the
+      hand-declared `TjsAutocompleteConfig` (#12), and likely simplify `tjsEditorExternal` (#16)
+      and the inline-WASM guard (#15 → `__tjs.records({source:'wasm'})`). **Bump `TJS_VERSION` in
+      `code-transform.ts` in lockstep**, then run ALL lanes (unit + doc-tests + full Playwright).
+
+- [ ] **RFC: language-plugin registry for live-example (tosijs-ui#12, from the tjs-lang side).**
+      Invert the hardcoded `js|ts|tjs` dialect switch in `code-transform.ts` into a plugin
+      contract (`transform`+diagnostics, optional `run`, optional output `panels`) so tjs-lang can
+      register its AJS playground without tosijs-ui depending on `tjs-lang/vm`. The abstraction is
+      only real if js/ts/tjs re-express as built-in plugins. A design task — coordinate with the
+      language-plugins direction in doc-system-roadmap.md. Consumes tjs-lang#20 (TFS import
+      resolver) + #18 (worker-ready WASM).
+
+- [ ] **Remote dev-server access — one-command tunnel spike (queued after M10; the "dynamic DNS"
+      ask).** Where we landed: a reverse **tunnel (`cloudflared`)** beats port-forward + dynamic
+      DNS — no router/firewall changes, works behind CGNAT, HTTPS + a stable hostname for free, and
+      nothing inbound is exposed. Spike a one-command `cloudflared tunnel` in front of the dev
+      server with auth (Cloudflare Access, or Basic-Auth at the edge). If it's clean, productize as
+      a `devServer` `remote: { tunnel, auth }` option so any tosijs-ui doc-system project gets
+      "share what I'm working on" for free. **Never expose the dev server directly** (it shells out
+      to `bun build`, reads the process table, binds ports — see the machine-health guards).
+
 ### From the 1.7 nine-lens review (`RELEASE-REVIEW-1.7-pass3.md`)
 
 - [x] **M8 — gate the inline doc tests (incl. the inline-WASM guard) in CI.** ✅ DONE via

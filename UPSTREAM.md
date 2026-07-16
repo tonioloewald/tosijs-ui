@@ -118,7 +118,24 @@ Mark `✅ RESOLVED (fixed in <pkg>@<version>)` when it lands, and close the issu
 Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), against
 **tjs-lang 0.9.1**.
 
-### Open
+> **Reconciled 2026-07-16.** We ship **0.9.1**; **0.10.0 is released** and closed four of
+> these (#10, #12, #15, #16). **Bumping to `^0.10.0` is a tracked follow-up** — it's not just
+> a version change, it lets us **delete hand-rolls**: the ~130-line scope scanner (#10 → import
+> `collectScopeSymbols`/`scopeCaptureEpilogue` from `tjs-lang/editors`), the re-declared
+> `TjsAutocompleteConfig` (#12 → real `.d.ts`), and can simplify the `tjsEditorExternal` probe
+> (#16 → real optional peerDeps). Bump `TJS_VERSION` in `code-transform.ts` in lockstep, then
+> run all lanes. See TODO.md.
+>
+> **Two open asks OF us (cross-repo), filed from the tjs-lang side:**
+> - **tosijs-ui#12** — RFC: a **language-plugin registry** for live-example (invert the hardcoded
+>   `js|ts|tjs` switch) so tjs-lang can drop its AJS playground into doc pages without tosijs-ui
+>   depending on `tjs-lang/vm`. Touches `code-transform.ts`/`checkExamples` directly; the test of
+>   the abstraction is re-expressing js/ts/tjs as built-in plugins. A real design task, not a fix.
+> - tjs-lang **#20** (promote the TFS service-worker bare-import resolver to a real export) and
+>   **#18** (worker-ready WASM) are the newer asks our live examples would consume — the
+>   service-worker work the maintainer is on now.
+
+### Open (waiting on tjs-lang)
 
 - **[#9](https://github.com/tonioloewald/tjs-lang/issues/9) — Passing a non-`wasmBuffer`
   typed array silently copies it on every call.** The wrapper only takes the zero-copy
@@ -130,17 +147,6 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
   **Our workaround:** allocate everything crossing the boundary with `wasmBuffer(...)`,
   guarded (`globalThis.wasmBuffer ? … : new Float32Array(n)`).
 
-- **[#10](https://github.com/tonioloewald/tjs-lang/issues/10) — Export the AST scope
-  extractor, or emit scope capture from the transpiler.** tjs already has an acorn-based
-  `collectScopeSymbols()` (`editors/scope-symbols.ts`) that handles multi-line
-  destructuring, multiple declarators and nested patterns — but it has no `exports`
-  entry, so we hand-rolled a strictly worse scanner to feed `getLiveBindings`. Our first
-  cut silently returned `[]` for wrapped destructures and dropped all but the first
-  declarator, which cost our own WASM demo 12 of its 26 bindings.
-  _Ask:_ `tjs(code, { captureScope: '__fn' })`; minimum, export `collectScopeSymbols`.
-  **Our workaround:** `extractTopLevelBindingNames` + `buildScopeCapture` in
-  `src/live-example/code-transform.ts` (~130 lines). Delete when this lands.
-
 - **[#11](https://github.com/tonioloewald/tjs-lang/issues/11) — WASM ready/enable are
   `__`-prefixed globals, not a public API.** 0.9.1 delivered the capability but kept the
   coupling: `__tjs_wasm_ready` (a _function_ returning a promise), `__tjs_wasm_enabled`,
@@ -148,11 +154,6 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
   examples on one page alias each other.
   _Ask:_ export `tjsWasmReady()` / `setWasmEnabled()`; make the artifact name collision-free.
   **Our workaround:** we write against the globals (non-destructively).
-
-- **[#12](https://github.com/tonioloewald/tjs-lang/issues/12) — `editors/codemirror` ships
-  no `.d.ts` and no `types` export condition.** We re-declared `AutocompleteConfig` by
-  hand (as `TjsAutocompleteConfig` in `src/code-editor-cm.ts`) and learned
-  `IntrospectMember` by reading the `.ts` sources inside `node_modules`. Our copy will drift.
 
 - **[#13](https://github.com/tonioloewald/tjs-lang/issues/13) —
   `tjsCompletionSource` is only reachable via `autocompletion({override})`.**
@@ -167,22 +168,24 @@ CompletionContext(state, pos, true))` headlessly. Never trust `languageDataAt` h
   (`app.items.` → array methods), so `getMembers` is only for scopes you can't hand over
   synchronously. We built toward it unnecessarily.
 
-- **[#15](https://github.com/tonioloewald/tjs-lang/issues/15) — A `wasm{}` block that
-  can't compile falls back to JS silently.** Every WASM failure mode in tjs is quiet
-  (won't compile → quiet; non-wasmBuffer array → quiet 4× slowdown; not awaited → quiet
-  fallback). Together they let you ship a page claiming "⚡ WebAssembly SIMD" that runs
-  JavaScript, with every test green. We did exactly that.
-  **Our workaround:** an inline test asserting `globalThis.__tjs_wasm_0` exists after
-  `__tjs_wasm_ready()` — i.e. reaching into internals to prove WASM actually happened.
-
-- **[#16](https://github.com/tonioloewald/tjs-lang/issues/16) — `editors/codemirror`
-  imports `@codemirror/*` as bare specifiers with no declared `peerDependencies`.** Only
-  resolves because tosijs-ui hoists CodeMirror; hard-fails (`Could not resolve
-"@codemirror/state"`) under an isolated tree.
-  **Our workaround:** `tjsEditorExternal()` probes resolution and externalizes the
-  extension when it can't, degrading to TS highlighting instead of exploding the build.
-
 ### ✅ Resolved
+
+_Fixed in tjs-lang **0.10.0** (we still ship 0.9.1 — the workarounds stay until we bump; see
+the reconciled note above):_
+
+- **[#10](https://github.com/tonioloewald/tjs-lang/issues/10) — Export the AST scope
+  extractor.** ✅ 0.10.0 exports `collectScopeSymbols` (+ `introspectValue`,
+  `scopeCaptureEpilogue`) from the framework-free `tjs-lang/editors` entry. **On bump, delete**
+  `extractTopLevelBindingNames` + `buildScopeCapture` (~130 lines) in `code-transform.ts`.
+- **[#12](https://github.com/tonioloewald/tjs-lang/issues/12) — `editors/codemirror` ships no
+  `.d.ts` / `types` condition.** ✅ 0.10.0 emits `.d.ts` and declares `types`. **On bump, drop**
+  the hand-declared `TjsAutocompleteConfig` in `code-editor-cm.ts` for the real import.
+- **[#15](https://github.com/tonioloewald/tjs-lang/issues/15) — silent `wasm{}`→JS fallback.**
+  ✅ 0.10.0 records it as a `source:'wasm'` warning (`__tjs.records({ source:'wasm' })`), once
+  per site. **On bump,** consider replacing the internals-poking inline WASM guard with this.
+- **[#16](https://github.com/tonioloewald/tjs-lang/issues/16) — `@codemirror/*` bare imports,
+  no peerDeps.** ✅ 0.10.0 declares them optional `peerDependencies`. **On bump,** the
+  `tjsEditorExternal()` probe can likely simplify (keep as a belt-and-suspenders until verified).
 
 - **Stale `editors/codemirror` build** (missing `tjsEditorExtension` /
   `tjsCompletionSource`) — ✅ **fixed in tjs-lang@0.9.0**. Unblocked first-class tjs.
