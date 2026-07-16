@@ -89,8 +89,12 @@ export async function checkExamples(docs, opts = {}) {
                 // baked JS is byte-identical to what the page produces at runtime. (`ts`
                 // is transpiled here with bun but at runtime by the CDN TS compiler, so it
                 // stays on the runtime path — see self-contained-examples-plan.md.)
-                if (dialect === 'tjs')
-                    bakes.set(block.text, { dialect: 'tjs', js });
+                if (dialect === 'tjs') {
+                    let docBakes = bakes.get(doc.filename);
+                    if (!docBakes)
+                        bakes.set(doc.filename, (docBakes = new Map()));
+                    docBakes.set(block.text, { dialect: 'tjs', js });
+                }
             }
             catch (err) {
                 problems.push({

@@ -79,11 +79,10 @@ importmap example resolution, versioned endpoints, AJS RestStore.
       doc-tests lane). **Slice 3 DONE too:** the `<tosi-code>` panels build lazily on first
       showCode (via `ensureEditors()`, not `content()`), so a reader page loads NEITHER the transpiler
       NOR CodeMirror on first paint — the M10 goal. Verified by a chunk-not-loaded-until-showCode
-      Playwright test + the full 17-spec lane. **Remaining: slice 4 (persist source+bake on save) and
-      slice 2b — ship bakes in `docs.json` so SPA-nav pages get them too (today only the adopted
-      landing page does). 2b adds ZERO bytes to prose/book sites: bakes exist only for code (tjs/ts)
-      examples, so a corpus with none is unchanged — a clean win, not the "bloat" first worried
-      about.** **Do NOT gate the editor
+      Playwright test + the full 17-spec lane. **Slice 2b DONE:** bakes are grouped per doc and
+      attached to each Doc in `docs.json`, so client-side SPA navigation runs baked tjs examples
+      without the transpiler too (verified: only the 1 doc with tjs examples carries bakes; the other
+      56 add zero bytes). **Remaining: slice 4 (persist source+bake on save).** **Do NOT gate the editor
       on "does this corpus have code examples"** — the doc system is an _authoring_ system; prose/book
       sites need the editor most.
 

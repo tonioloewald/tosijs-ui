@@ -80,12 +80,14 @@ function collectCodeTokens(
 export interface ExampleCheck {
   problems: ExampleProblem[]
   /**
-   * Build-time transpiled JS for `tjs` blocks, keyed by exact source text. The
-   * renderer embeds these so a page can RUN an example without loading the tjs
-   * transpiler (see self-contained-examples-plan.md). Only `tjs` is baked: its
-   * build transform is identical to the runtime one, so the bytes match.
+   * Build-time transpiled JS for `tjs` blocks, grouped by doc filename, each keyed
+   * by exact source text. The renderer embeds a doc's bakes as hidden scripts (so
+   * the pre-rendered page RUNS without the tjs transpiler), and they're attached to
+   * each Doc in docs.json so client-side SPA navigation gets them too. Only `tjs` is
+   * baked: its build transform is identical to the runtime one, so the bytes match.
+   * See self-contained-examples-plan.md.
    */
-  bakes: ExampleBakes
+  bakes: Map<string, ExampleBakes>
 }
 
 /**
@@ -98,7 +100,7 @@ export async function checkExamples(
 ): Promise<ExampleCheck> {
   const contextKeys = opts.contextKeys ?? DEFAULT_CONTEXT_KEYS
   const problems: ExampleProblem[] = []
-  const bakes: ExampleBakes = new Map()
+  const bakes = new Map<string, ExampleBakes>()
 
   for (const doc of docs) {
     for (const block of collectCodeTokens(doc.text)) {
@@ -128,7 +130,11 @@ export async function checkExamples(
         // baked JS is byte-identical to what the page produces at runtime. (`ts`
         // is transpiled here with bun but at runtime by the CDN TS compiler, so it
         // stays on the runtime path — see self-contained-examples-plan.md.)
-        if (dialect === 'tjs') bakes.set(block.text, { dialect: 'tjs', js })
+        if (dialect === 'tjs') {
+          let docBakes = bakes.get(doc.filename)
+          if (!docBakes) bakes.set(doc.filename, (docBakes = new Map()))
+          docBakes.set(block.text, { dialect: 'tjs', js })
+        }
       } catch (err) {
         problems.push({
           filename: doc.filename,

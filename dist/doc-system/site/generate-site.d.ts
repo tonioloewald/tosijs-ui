@@ -43,12 +43,14 @@ export interface GenerateSiteConfig {
      */
     hydrateUrl?: string;
     /**
-     * Build-time transpiled JS for `tjs` examples, keyed by source text. When a
-     * block's source is present, the renderer embeds a hidden
-     * `<script type="application/tosi-transpiled">` so the page RUNS the example
-     * without loading the tjs transpiler. See self-contained-examples-plan.md.
+     * Build-time transpiled JS for `tjs` examples, per doc filename (each keyed by
+     * source text). The renderer embeds a doc's bakes as hidden
+     * `<script type="application/tosi-transpiled">` siblings (pre-rendered page runs
+     * without the tjs transpiler), and they're attached to each Doc in the emitted
+     * docs.json so client-side SPA navigation gets them too. See
+     * self-contained-examples-plan.md.
      */
-    bakes?: ExampleBakes;
+    bakes?: Map<string, ExampleBakes>;
     /** URL of the burned-in theme stylesheet (written by ./generate-css.ts) */
     stylesUrl?: string;
     /** extra lines injected into every <head> (favicon, analytics, etc.) */

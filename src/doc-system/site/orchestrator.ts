@@ -151,13 +151,16 @@ async function checkExamplesInChild(
     ])
     if (err.trim()) console.warn(err.trim())
     if (code !== 0) throw new Error(`check-examples exited ${code}`)
-    // The child serializes bakes as [source, {dialect, js}] entries (a Map can't
-    // JSON-roundtrip); rebuild the Map here.
+    // The child serializes bakes as [filename, [source, {dialect,js}][]][] (Maps
+    // can't JSON-roundtrip); rebuild the nested Map here.
     const payload = JSON.parse(out) as {
       problems: ExampleProblem[]
-      bakes: Array<[string, { dialect: string; js: string }]>
+      bakes: Array<[string, Array<[string, { dialect: string; js: string }]>]>
     }
-    return { problems: payload.problems, bakes: new Map(payload.bakes) }
+    return {
+      problems: payload.problems,
+      bakes: new Map(payload.bakes.map(([file, e]) => [file, new Map(e)])),
+    }
   } catch (e) {
     console.warn(
       `⚠️  example check: could not run it in a child (${String(e)}) — ` +
@@ -251,12 +254,13 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
   // or illustrative code mistakenly tagged executable (`js`/`ts`/…) instead of
   // display-only `typescript`. Runs on the whole corpus, so it catches breakage
   // on pages the browser test never navigates to.
-  // Build-time transpiled JS for `tjs` examples, keyed by source text — computed
-  // by the example check (it transpiles anyway) and embedded by generateSite so
-  // pages RUN without the tjs transpiler. Empty when checkExamples is disabled;
-  // the runtime then falls back to transpiling on demand. See
+  // Build-time transpiled JS for `tjs` examples, per doc filename (each keyed by
+  // source text) — computed by the example check (it transpiles anyway) and used by
+  // generateSite to embed hidden scripts AND attach per-doc bakes to docs.json, so
+  // pages RUN without the tjs transpiler on both first paint and SPA nav. Empty when
+  // checkExamples is disabled; the runtime then transpiles on demand. See
   // self-contained-examples-plan.md.
-  let exampleBakes: ExampleBakes | undefined
+  let exampleBakes: Map<string, ExampleBakes> | undefined
   if (config.checkExamples !== false) {
     const { problems, bakes } = await checkExamplesInChild(DOCS_JSON)
     exampleBakes = bakes

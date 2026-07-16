@@ -321,6 +321,10 @@ export interface Doc {
   pin?: string
   hidden?: boolean
   testStatus?: 'passed' | 'failed' | 'pending'
+  // Build-time transpiled JS for this doc's `tjs` examples ([source, {dialect, js}]
+  // entries), attached to docs.json by generate-site so client-side navigation runs
+  // examples without the tjs transpiler. See self-contained-examples-plan.md.
+  bakes?: Array<[string, { dialect: string; js: string }]>
 }
 
 export interface ProjectLinks {
@@ -802,7 +806,12 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     if (adoptInitialContent) {
       adoptInitialContent = false // leave the pre-rendered HTML untouched
     } else {
-      docContent.innerHTML = renderDocMarkdown(doc.text)
+      // Pass the doc's build-time tjs bakes so this client-rendered page embeds the
+      // same hidden transpiled <script>s the pre-rendered page has — examples run
+      // without loading the tjs transpiler. See self-contained-examples-plan.md.
+      docContent.innerHTML = renderDocMarkdown(doc.text, {
+        bakes: doc.bakes ? new Map(doc.bakes) : undefined,
+      })
     }
     rewriteContentLinks()
     // Stamp each example with its source file (for the source↔doc map). doc.path

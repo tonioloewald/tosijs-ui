@@ -66,12 +66,14 @@ export interface GenerateSiteConfig {
    */
   hydrateUrl?: string
   /**
-   * Build-time transpiled JS for `tjs` examples, keyed by source text. When a
-   * block's source is present, the renderer embeds a hidden
-   * `<script type="application/tosi-transpiled">` so the page RUNS the example
-   * without loading the tjs transpiler. See self-contained-examples-plan.md.
+   * Build-time transpiled JS for `tjs` examples, per doc filename (each keyed by
+   * source text). The renderer embeds a doc's bakes as hidden
+   * `<script type="application/tosi-transpiled">` siblings (pre-rendered page runs
+   * without the tjs transpiler), and they're attached to each Doc in the emitted
+   * docs.json so client-side SPA navigation gets them too. See
+   * self-contained-examples-plan.md.
    */
-  bakes?: ExampleBakes
+  bakes?: Map<string, ExampleBakes>
   /** URL of the burned-in theme stylesheet (written by ./generate-css.ts) */
   stylesUrl?: string
   /** extra lines injected into every <head> (favicon, analytics, etc.) */
@@ -217,7 +219,9 @@ function pageHtml(
   // Rewrite legacy `?filename` content links to clean `/slug/` paths so the
   // static HTML is correct for no-JS readers and crawlers (the doc-browser also
   // does this client-side after hydration).
-  const body = rewriteDocLinks(renderDocMarkdown(doc.text, { bakes }), (filename) =>
+  const body = rewriteDocLinks(
+    renderDocMarkdown(doc.text, { bakes: bakes?.get(doc.filename) }),
+    (filename) =>
     slugMap[filename] !== undefined
       ? withBase(basePath, pathForSlug(slugMap[filename]))
       : null
@@ -381,7 +385,20 @@ export async function generateSite(
   }
 
   // The corpus the component fetches for nav + client-side rendering of other pages.
-  await Bun.write(`${outputDir}/docs.json`, JSON.stringify(docs))
+  // Attach each doc's tjs bakes so client-side SPA navigation renders the same hidden
+  // <script type="application/tosi-transpiled"> the pre-rendered page has, and runs
+  // examples without the transpiler. Docs with no tjs examples add nothing. Attached
+  // to a copy — never mutate the caller's docs. See self-contained-examples-plan.md.
+  const { bakes } = config
+  const corpus = bakes
+    ? docs.map((doc) => {
+        const docBakes = bakes.get(doc.filename)
+        return docBakes && docBakes.size
+          ? { ...doc, bakes: [...docBakes.entries()] }
+          : doc
+      })
+    : docs
+  await Bun.write(`${outputDir}/docs.json`, JSON.stringify(corpus))
 
   // Translation table for the settings menu's language picker.
   if (config.localizedStrings) {

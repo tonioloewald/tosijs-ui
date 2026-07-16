@@ -65,6 +65,62 @@ test('a reader (tests off) runs a baked tjs example without loading the transpil
   ).toHaveLength(0)
 })
 
+test('slice 2b: a SPA-navigated page runs its baked tjs examples without the transpiler', async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem('tosijs-ui-tests-enabled', 'false')
+  )
+
+  const transpilerRequests: string[] = []
+  page.on('request', (req) => {
+    if (/tjs-browser/.test(req.url())) transpilerRequests.push(req.url())
+  })
+
+  // Land on the home page (NOT the component page) so the component page is reached
+  // by client-side navigation — which re-renders markdown from docs.json (where the
+  // bakes now live), not the adopted pre-rendered DOM.
+  await page.goto('/')
+  await expect(page.locator('tosi-example').first()).toBeVisible()
+
+  // SPA-navigate to the component page (has the tjs examples) by clicking its nav
+  // link — the doc-browser intercepts internal links and re-renders client-side. The
+  // link lives in a collapsed nav, so click it in-page (the delegated handler still
+  // catches the bubbling event) rather than via a visibility-gated Playwright click.
+  await page.evaluate(() =>
+    (
+      document.querySelector('a.doc-link[href="/component/"]') as HTMLElement
+    )?.click()
+  )
+
+  // Its tjs examples render from the docs.json bakes.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            [...document.querySelectorAll('tosi-example')].filter(
+              (e: any) => e.dialect === 'tjs'
+            ).length
+        ),
+      { timeout: 15_000 }
+    )
+    .toBeGreaterThan(0)
+  const tjsRendered = await page.evaluate(() =>
+    [...document.querySelectorAll('tosi-example')]
+      .filter((e: any) => e.dialect === 'tjs')
+      .map((e) => (e.querySelector('.preview')?.textContent || '').trim())
+  )
+  for (const text of tjsRendered) expect(text.length).toBeGreaterThan(0)
+  await expect(page.locator('tosi-example .preview-error')).toHaveCount(0)
+
+  await page.waitForTimeout(500)
+  expect(
+    transpilerRequests,
+    `transpiler should not load on the SPA-nav reader path, got: ${transpilerRequests.join(', ')}`
+  ).toHaveLength(0)
+})
+
 test('control: with tests enabled the transpiler DOES load (proves the probe works)', async ({
   page,
 }) => {

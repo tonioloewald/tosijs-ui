@@ -43,7 +43,13 @@ const { problems, bakes } = await checkExamples(
 
 // stdout is the channel — the parent parses this. Anything else this process prints
 // (warnings from the transform, say) goes to stderr so it can't corrupt the payload.
-// A Map can't JSON-roundtrip, so bakes go over as [source, {dialect, js}] entries.
+// Maps can't JSON-roundtrip, so bakes go over as [filename, [source, {dialect,js}][]][].
 process.stdout.write(
-  JSON.stringify({ problems, bakes: Array.from(bakes.entries()) })
+  JSON.stringify({
+    problems,
+    bakes: Array.from(bakes.entries()).map(([filename, docBakes]) => [
+      filename,
+      Array.from(docBakes.entries()),
+    ]),
+  })
 )

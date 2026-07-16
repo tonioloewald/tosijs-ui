@@ -102,7 +102,7 @@ function pageHtml(doc, config, slugMap, configAttr) {
     // Rewrite legacy `?filename` content links to clean `/slug/` paths so the
     // static HTML is correct for no-JS readers and crawlers (the doc-browser also
     // does this client-side after hydration).
-    const body = rewriteDocLinks(renderDocMarkdown(doc.text, { bakes }), (filename) => slugMap[filename] !== undefined
+    const body = rewriteDocLinks(renderDocMarkdown(doc.text, { bakes: bakes?.get(doc.filename) }), (filename) => slugMap[filename] !== undefined
         ? withBase(basePath, pathForSlug(slugMap[filename]))
         : null);
     const nav = navHtml(config.docs, slugMap, doc.filename, basePath);
@@ -230,7 +230,20 @@ export async function generateSite(config) {
         count += 1;
     }
     // The corpus the component fetches for nav + client-side rendering of other pages.
-    await Bun.write(`${outputDir}/docs.json`, JSON.stringify(docs));
+    // Attach each doc's tjs bakes so client-side SPA navigation renders the same hidden
+    // <script type="application/tosi-transpiled"> the pre-rendered page has, and runs
+    // examples without the transpiler. Docs with no tjs examples add nothing. Attached
+    // to a copy — never mutate the caller's docs. See self-contained-examples-plan.md.
+    const { bakes } = config;
+    const corpus = bakes
+        ? docs.map((doc) => {
+            const docBakes = bakes.get(doc.filename);
+            return docBakes && docBakes.size
+                ? { ...doc, bakes: [...docBakes.entries()] }
+                : doc;
+        })
+        : docs;
+    await Bun.write(`${outputDir}/docs.json`, JSON.stringify(corpus));
     // Translation table for the settings menu's language picker.
     if (config.localizedStrings) {
         const localizedPath = (config.localizedUrl || '/localized-strings.txt').replace(/^\//, '');

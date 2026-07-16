@@ -76,11 +76,11 @@ describe('checkExamples', () => {
       doc('ts.md', '```ts\n' + tsSrc + '\n```\n'),
     ])
     expect(problems).toHaveLength(0)
-    // Only tjs is baked (build and runtime share its transform); js needs no
-    // transpiler and ts is left to the runtime CDN compiler.
-    expect(bakes.has(jsSrc)).toBe(false)
-    expect(bakes.has(tsSrc)).toBe(false)
-    const bake = bakes.get(tjsSrc)
+    // Bakes are grouped per doc filename. Only tjs is baked (build and runtime share
+    // its transform); js needs no transpiler and ts is left to the runtime compiler.
+    expect(bakes.has('js.md')).toBe(false)
+    expect(bakes.has('ts.md')).toBe(false)
+    const bake = bakes.get('tjs.md')?.get(tjsSrc)
     expect(bake?.dialect).toBe('tjs')
     expect(bake?.js).toContain('const n = 1')
   })

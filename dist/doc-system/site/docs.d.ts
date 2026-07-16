@@ -14,6 +14,10 @@ export interface Doc {
     keywords?: string | string[];
     image?: string;
     noindex?: boolean;
+    bakes?: Array<[string, {
+        dialect: string;
+        js: string;
+    }]>;
     author?: string;
     date?: string;
 }

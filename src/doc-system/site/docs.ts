@@ -119,6 +119,11 @@ export interface Doc {
   keywords?: string | string[]
   image?: string
   noindex?: boolean
+  // Build-time transpiled JS for this doc's `tjs` examples, as [source, {dialect, js}]
+  // entries (a Map can't JSON-roundtrip). Attached by generate-site so client-side SPA
+  // navigation renders the hidden `<script type="application/tosi-transpiled">` and runs
+  // examples without the tjs transpiler. Absent when the doc has no tjs examples.
+  bakes?: Array<[string, { dialect: string; js: string }]>
   // Common prose/frontmatter fields (carried through; author/date aren't consumed
   // by the doc system yet, but a book pipeline can use them).
   author?: string

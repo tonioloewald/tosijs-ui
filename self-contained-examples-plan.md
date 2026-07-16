@@ -113,15 +113,15 @@ custom example stays self-contained (runnable with zero runtime deps).
 
 ## Open items to resolve during implementation
 
-- **Client re-render on SPA nav — RESOLVED for slice 2, universal coverage worth doing (slice 2b).**
-  The landing page adopts the pre-rendered DOM (bakes present); SPA nav re-renders markdown
-  client-side without bakes and falls back to runtime transpile. To make it universal, ship the bakes
-  in `docs.json` and pass them to the client's `renderDocMarkdown(doc.text, { bakes })`. This does NOT
-  bloat prose/book sites: bakes exist only for code examples (tjs today; ts once its build-vs-CDN
-  equivalence is settled), so a corpus with none adds zero bytes; the cost scales with code-example
-  count — exactly the sites that benefit. Cheap, clean,
-  no downside — do it (the only reason it's a separate slice is that it touches the docs.json shape +
-  the client render path).
+- **Client re-render on SPA nav — RESOLVED (slice 2b ✅ DONE).** The landing page adopts the
+  pre-rendered DOM; SPA nav now re-renders with the doc's bakes too. `checkExamples` groups bakes
+  **per doc filename**; `generateSite` attaches each doc's bakes to its `Doc` in the emitted
+  `docs.json` (`doc.bakes` = `[source, {dialect,js}]` entries) AND renders the static page from the
+  same per-doc map; the client passes `doc.bakes` into `renderDocMarkdown(doc.text, { bakes })` on
+  every non-adopted render. Confirmed zero-cost for prose: only the one doc with tjs examples carries
+  bakes; the other 56 add nothing. **Verified:** a Playwright test lands on `/`, clicks through to the
+  component page (client-side), and asserts the tjs examples render from the docs.json bakes with zero
+  `/tjs/tjs-browser.js`.
 - **Hydrate-in-place reconciliation.** Confirm the "pre-render the chrome, hydrate in place" path
   adopts the pre-rendered `<script>` siblings rather than re-rendering markdown over them.
 - **`ts` via bun vs CDN.** `check-examples` transpiles `ts` with `Bun.Transpiler` (network-free);

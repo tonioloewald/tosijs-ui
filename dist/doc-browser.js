@@ -610,7 +610,12 @@ export function createDocBrowser(options) {
             adoptInitialContent = false; // leave the pre-rendered HTML untouched
         }
         else {
-            docContent.innerHTML = renderDocMarkdown(doc.text);
+            // Pass the doc's build-time tjs bakes so this client-rendered page embeds the
+            // same hidden transpiled <script>s the pre-rendered page has — examples run
+            // without loading the tjs transpiler. See self-contained-examples-plan.md.
+            docContent.innerHTML = renderDocMarkdown(doc.text, {
+                bakes: doc.bakes ? new Map(doc.bakes) : undefined,
+            });
         }
         rewriteContentLinks();
         // Stamp each example with its source file (for the source↔doc map). doc.path
