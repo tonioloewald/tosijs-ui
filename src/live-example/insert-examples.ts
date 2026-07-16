@@ -16,8 +16,8 @@ interface SourceBlock {
 function nextGroupableSibling(el: Element | null): Element | null {
   let n = el?.nextElementSibling ?? null
   while (
-    n instanceof HTMLScriptElement &&
-    n.type === 'application/tosi-transpiled'
+    n?.tagName === 'SCRIPT' &&
+    n.getAttribute('type') === 'application/tosi-transpiled'
   ) {
     n = n.nextElementSibling
   }

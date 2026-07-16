@@ -5,8 +5,8 @@
 // the next element sibling that isn't such a script.
 function nextGroupableSibling(el) {
     let n = el?.nextElementSibling ?? null;
-    while (n instanceof HTMLScriptElement &&
-        n.type === 'application/tosi-transpiled') {
+    while (n?.tagName === 'SCRIPT' &&
+        n.getAttribute('type') === 'application/tosi-transpiled') {
         n = n.nextElementSibling;
     }
     return n;
