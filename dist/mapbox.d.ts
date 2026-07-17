@@ -16,6 +16,7 @@ export declare class MapBox extends WebComponent {
     static mapboxCSSAvailable: Promise<void>;
     static mapboxAvailable?: Promise<any>;
     private _map;
+    private _mapPending;
     static shadowStyleSpec: {
         ':host': {
             display: string;
