@@ -118,21 +118,23 @@ Mark `✅ RESOLVED (fixed in <pkg>@<version>)` when it lands, and close the issu
 Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), against
 **tjs-lang 0.9.1**.
 
-> **Reconciled 2026-07-16.** We ship **0.9.1**; **0.10.0 is released** and closed four of
-> these (#10, #12, #15, #16).
+> **Reconciled 2026-07-16; bumped 2026-07-17.** We now ship **0.10.1** (0.9.1 → 0.10.1, skipping
+> 0.10.0 — it triggered a **memory-storm** rooted in a **bun** bug tripped by something in tjs-lang,
+> same native-memory family as bun#34053 below; 0.10.1 carries the fix). 0.10.0/0.10.1 closed four
+> of our issues (#10, #12, #15, #16).
 >
-> ⚠️ **We are HOLDING at 0.9.1 on purpose — do NOT bump to 0.10.0.** 0.10.0 triggers a
-> **memory-storm** whose root cause is deep inside **bun** (a bun bug, tripped by something in
-> tjs-lang — same family of native-memory pathology as bun#34053 in the bun section below). The
-> fix lands in **tjs-lang 0.10.1**; bump straight to that when it ships. Until then the bump — and
-> the hand-roll deletions it unblocks — waits.
+> **Done in the bump:** #12 hand-roll deleted (`TjsAutocompleteConfig` → real `AutocompleteConfig`
+> from `tjs-lang/editors/codemirror`, `import type` → zero bundle cost); #15's inline-WASM guard
+> rewritten (0.10.x renamed the compiled export `__tjs_wasm_0` → collision-free
+> `__tjs_wasm_<hash>_<n>` per #11 — guard matches by pattern now, and the `__tjs.records` recorder is
+> NOT reachable in the doc-system's inline-test scope, so pattern-match is the way).
 >
-> When 0.10.1 is out: the bump is not just a version change, it lets us **delete hand-rolls**: the
-> ~130-line scope scanner (#10 → import `collectScopeSymbols`/`scopeCaptureEpilogue` from
-> `tjs-lang/editors`), the re-declared `TjsAutocompleteConfig` (#12 → real `.d.ts`), and can
-> simplify the `tjsEditorExternal` probe (#16 → real optional peerDeps). Bump `TJS_VERSION` in
-> `code-transform.ts` in lockstep, run all lanes, and watch RSS over a long watch session (the
-> storm being gone is the reason for the version). See TODO.md.
+> **Still to do (see TODO.md):** #10's ~130-line scope scanner CAN be replaced by
+> `scopeCaptureEpilogue`/`collectScopeSymbols` from `tjs-lang/editors`, but those are acorn-based and
+> `withScopeCapture` runs on every example execution — a static import bundles acorn onto the reader
+> path, so it needs a lazy-load / edit-time gate first (don't regress slices 2/3). #16's
+> `tjsEditorExternal` probe stays as belt-and-suspenders until an isolated-tree build is verified
+> without it. And watch RSS over a real multi-day watch session (the storm being gone is the point).
 >
 > **Two open asks OF us (cross-repo), filed from the tjs-lang side:**
 > - **tosijs-ui#12** — RFC: a **language-plugin registry** for live-example (invert the hardcoded

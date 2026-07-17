@@ -12,17 +12,25 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 
 ## High Priority
 
-- [ ] **Bump tjs-lang → ^0.10.1 (NOT 0.10.0) and delete the unblocked hand-rolls.** ⚠️ **HOLDING at
-      0.9.1 on purpose:** 0.10.0 triggers a **memory-storm** whose root cause is deep inside bun (bun
-      bug, triggered by something in tjs-lang); the fix lands in **tjs-lang 0.10.1**. Do NOT bump to
-      0.10.0 — wait for 0.10.1, then bump straight to it. 0.10.0 already closed four of our upstream
-      issues (see UPSTREAM.md → tjs-lang), so the bump is not just a version change: it lets us
-      **delete** `extractTopLevelBindingNames` + `buildScopeCapture` (~130 lines, import
-      `collectScopeSymbols`/`scopeCaptureEpilogue` from `tjs-lang/editors` — #10) and the
-      hand-declared `TjsAutocompleteConfig` (#12), and likely simplify `tjsEditorExternal` (#16)
-      and the inline-WASM guard (#15 → `__tjs.records({source:'wasm'})`). **Bump `TJS_VERSION` in
-      `code-transform.ts` in lockstep**, then run ALL lanes (unit + doc-tests + full Playwright +
-      haltija) — and watch RSS across a long watch session, since the whole point is the storm is gone.
+- [x] **Bumped tjs-lang 0.9.1 → 0.10.1** (2026-07-17, memory-storm fix). All three refs in lockstep
+      (package.json dev+peer, `TJS_VERSION`). Required the inline-WASM guard update (0.10.x renamed
+      the compiled export `__tjs_wasm_0` → collision-free `__tjs_wasm_<hash>_<n>`, tjs-lang#11 — guard
+      now matches by pattern). #12 hand-roll deleted (`TjsAutocompleteConfig` → real `AutocompleteConfig`
+      from `tjs-lang/editors/codemirror`, `import type` so zero bundle cost). All lanes green
+      (unit + doc-tests + full Playwright).
+      - [ ] **Still watch RSS over a real multi-day watch session** — the storm being gone is the whole
+            point of the version; builds/lanes alone don't exercise a long-lived process.
+      - [ ] **#10 hand-roll deletion needs a lazy-load first — DON'T just swap it.**
+            `scopeCaptureEpilogue`/`collectScopeSymbols` from `tjs-lang/editors` map cleanly onto our
+            `extractTopLevelBindingNames`+`buildScopeCapture` (~130 lines), BUT they're **acorn-based**
+            and `withScopeCapture` runs on **every** example execution incl. the reader path — a static
+            import would bundle acorn onto exactly the path slices 2/3 cleared. Do it only alongside
+            gating scope-capture to edit-time (or a dynamic import), else it regresses first paint.
+            (Behavioral note: tjs's epilogue wraps the whole `{a,b}` capture in one try/catch; ours is
+            per-binding — a coarser failure mode, verify against `scope-autocomplete.test.ts`.)
+      - [ ] **#16 `tjsEditorExternal` — leave as belt-and-suspenders.** 0.10.x declares the
+            `@codemirror/*` optional peerDeps, so the hard-fail it guarded is gone, but keep the probe
+            until an isolated-tree build is actually verified without it.
 
 - [ ] **RFC: language-plugin registry for live-example (tosijs-ui#12, from the tjs-lang side).**
       Invert the hardcoded `js|ts|tjs` dialect switch in `code-transform.ts` into a plugin

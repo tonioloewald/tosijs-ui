@@ -2,13 +2,14 @@ import { EditorView } from '@codemirror/view';
 import { Extension } from '@codemirror/state';
 /** Map a `<tosi-code mode>` value to a CodeMirror language extension. */
 export declare function languageForMode(mode: string): Extension;
-/** Runtime-introspection hooks for tjs autocomplete (all optional). */
-export interface TjsAutocompleteConfig {
-    getMetadata?: () => Record<string, unknown> | undefined;
-    getImports?: () => Record<string, Record<string, unknown>> | undefined;
-    getLiveBindings?: () => Record<string, unknown> | undefined;
-    getMembers?: (path: string) => Promise<unknown[] | undefined>;
-}
+/**
+ * Runtime-introspection hooks for tjs autocomplete (all optional). tjs-lang 0.10.0+
+ * ships this type (tjs-lang#12 — we used to hand-declare it); aliased so the public
+ * `TjsAutocompleteConfig` name stays stable. `import type` is erased at build, so this
+ * adds nothing to the bundle.
+ */
+import type { AutocompleteConfig } from 'tjs-lang/editors/codemirror';
+export type TjsAutocompleteConfig = AutocompleteConfig;
 /**
  * Lazy-load tjs-lang's CodeMirror language + completion bundle. Returns a single
  * CodeMirror `Extension` (tjs language, forbidden-keyword highlighting, theme, and
