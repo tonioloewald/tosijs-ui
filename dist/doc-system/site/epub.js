@@ -17,7 +17,7 @@ Build-time only (Bun APIs + the `zip` CLI); never import from browser code.
 import * as fs from 'fs';
 import * as path from 'path';
 import { renderDocMarkdown } from '../render';
-import { buildSlugMap, pathForSlug } from '../routing';
+import { buildSlugMap, pathForSlug, slugForPath } from '../routing';
 import { buildNavTree } from '../nav-tree';
 import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html';
 import { selectBookDocs } from '../book-manifest';
@@ -162,6 +162,40 @@ function withBase(basePath, p) {
     if (!p || !basePath || basePath === '/' || /^(https?:)?\/\//.test(p))
         return p;
     return basePath.replace(/\/$/, '') + (p.startsWith('/') ? p : '/' + p);
+}
+/**
+ * Rewrite in-book cross-links so they resolve INSIDE the EPUB (#15). renderDocMarkdown
+ * emits site paths — `/slug/` (wikilinks + the auto-generated section TOCs) and legacy
+ * `?filename` — which an e-reader can't follow. Any link pointing at a doc that IS in
+ * this book becomes its `<slug>.xhtml` chapter (README → `index.xhtml`), preserving a
+ * trailing `#anchor`. External, protocol, relative, and out-of-book links are left
+ * untouched. `bookFiles` maps in-book slug → chapter filename.
+ */
+export function rewriteInBookLinks(html, bookFiles, slugMap, basePath) {
+    const bp = basePath && basePath !== '/' ? basePath.replace(/\/$/, '') : '';
+    return html.replace(/href="([^"]*)"/g, (match, href) => {
+        // Leave protocol (http:, mailto:), pure-anchor (#…) and relative (./…) links.
+        if (href === '' || /^(?:[a-z][a-z0-9+.-]*:|#|\.)/i.test(href))
+            return match;
+        const hashIdx = href.indexOf('#');
+        const path = hashIdx === -1 ? href : href.slice(0, hashIdx);
+        const hash = hashIdx === -1 ? '' : href.slice(hashIdx);
+        let slug = null;
+        const legacy = path.match(/^\/?\?([^&=]+)$/); // legacy ?filename
+        if (legacy) {
+            slug = slugMap[decodeURIComponent(legacy[1])] ?? null;
+        }
+        else if (path.startsWith('/')) {
+            let p = path;
+            if (bp && (p === bp || p.startsWith(bp + '/')))
+                p = p.slice(bp.length) || '/';
+            slug = slugForPath(p);
+        }
+        if (slug === null)
+            return match;
+        const file = bookFiles.get(slug);
+        return file ? `href="${file}${hash}"` : match;
+    });
 }
 // `pageUrl` is the live-site URL of THIS doc (already including baseUrl, basePath
 // and the correct root for README → '/'); each example link just appends `#id`.
@@ -488,6 +522,9 @@ export async function buildEpub(config, opts = {}) {
     const slugMap = buildSlugMap(docs);
     const roots = buildNavTree(docs, slugMap);
     const fileFor = (d) => `${slugMap[d.filename] || 'index'}.xhtml`;
+    // slug → chapter filename, for the docs actually IN this book — the target set for
+    // in-book cross-link rewriting (#15). Out-of-book `/slug/` links stay untouched.
+    const bookFiles = new Map(flatten(roots).map((n) => [slugMap[n.doc.filename] ?? '', fileFor(n.doc)]));
     const meta = {
         title: opts.title ?? config.name,
         author: opts.author ?? config.name,
@@ -522,7 +559,7 @@ export async function buildEpub(config, opts = {}) {
         // maps to '/' (not '/index/'), others to '/slug/', with basePath applied.
         const pageUrl = baseUrl +
             withBase(config.basePath, pathForSlug(slugMap[doc.filename] ?? ''));
-        const html = renderDocMarkdown(stripDocMeta(doc.text));
+        const html = rewriteInBookLinks(renderDocMarkdown(stripDocMeta(doc.text)), bookFiles, slugMap, config.basePath);
         // happy-dom occasionally throws on exotic content (e.g. an internal selector
         // bug); fall back to the regex pass for that doc rather than aborting.
         let bodyHtml;

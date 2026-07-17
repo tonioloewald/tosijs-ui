@@ -53,6 +53,15 @@ export declare function escapeXml(s: string): string;
  */
 export declare function toXhtml(html: string): string;
 /**
+ * Rewrite in-book cross-links so they resolve INSIDE the EPUB (#15). renderDocMarkdown
+ * emits site paths — `/slug/` (wikilinks + the auto-generated section TOCs) and legacy
+ * `?filename` — which an e-reader can't follow. Any link pointing at a doc that IS in
+ * this book becomes its `<slug>.xhtml` chapter (README → `index.xhtml`), preserving a
+ * trailing `#anchor`. External, protocol, relative, and out-of-book links are left
+ * untouched. `bookFiles` maps in-book slug → chapter filename.
+ */
+export declare function rewriteInBookLinks(html: string, bookFiles: Map<string, string>, slugMap: Record<string, string>, basePath?: string): string;
+/**
  * Build an EPUB 3 book from the extracted corpus. Returns the output path.
  */
 export declare function buildEpub(config: SiteConfig, opts?: BuildEpubOptions): Promise<string>;

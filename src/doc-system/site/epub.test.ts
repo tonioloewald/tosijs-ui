@@ -1,4 +1,4 @@
-import { test, expect } from 'bun:test'
+import { test, expect, describe } from 'bun:test'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
@@ -8,7 +8,60 @@ import {
   stripDocMeta,
   DEFAULT_BOOK_CSS,
   buildEpub,
+  rewriteInBookLinks,
 } from './epub'
+
+// ── #15: in-book cross-links (/slug/ and ?filename → <slug>.xhtml) ────────────
+
+describe('rewriteInBookLinks', () => {
+  // combat.md → 'combat' → combat.xhtml; README → '' → index.xhtml.
+  const bookFiles = new Map([
+    ['combat', 'combat.xhtml'],
+    ['', 'index.xhtml'],
+  ])
+  const slugMap = { 'combat.md': 'combat', 'README.md': '' }
+  const rw = (html: string, basePath?: string) =>
+    rewriteInBookLinks(html, bookFiles, slugMap, basePath)
+
+  test('a `/slug/` link to an in-book chapter becomes <slug>.xhtml', () => {
+    expect(rw('<a href="/combat/">Combat</a>')).toBe(
+      '<a href="combat.xhtml">Combat</a>'
+    )
+  })
+
+  test('the home path maps to index.xhtml (README)', () => {
+    expect(rw('<a href="/">Home</a>')).toBe('<a href="index.xhtml">Home</a>')
+  })
+
+  test('a trailing #anchor is preserved', () => {
+    expect(rw('<a href="/combat/#stealth">x</a>')).toBe(
+      '<a href="combat.xhtml#stealth">x</a>'
+    )
+  })
+
+  test('legacy ?filename links resolve via the slug map', () => {
+    expect(rw('<a href="?combat.md">x</a>')).toBe(
+      '<a href="combat.xhtml">x</a>'
+    )
+  })
+
+  test('basePath is stripped before matching', () => {
+    expect(rw('<a href="/foresight/combat/">x</a>', '/foresight')).toBe(
+      '<a href="combat.xhtml">x</a>'
+    )
+  })
+
+  test('external, out-of-book, relative and anchor links are untouched', () => {
+    const untouched = [
+      '<a href="https://example.com/combat/">ext</a>',
+      '<a href="mailto:x@y.z">mail</a>',
+      '<a href="/not-in-book/">gone</a>', // no chapter → left as-is
+      '<a href="./local.html">rel</a>',
+      '<a href="#section">anchor</a>',
+    ]
+    for (const html of untouched) expect(rw(html)).toBe(html)
+  })
+})
 
 // ── pure helpers ────────────────────────────────────────────────────────────
 
