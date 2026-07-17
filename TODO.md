@@ -12,6 +12,50 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 
 ## High Priority
 
+### From the 1.7.0-beta.3 nine-lens review (`RELEASE-REVIEW-1.7-beta3.md`)
+
+Full report in that file. Recommendation was **BLOCK** on one finding, now **fixed**:
+- [x] **BLOCKER FIXED** — eager static `tjs-lang/editors` import + scope-capture on every reader
+      example. Now a dynamic import gated to `dialect!=='js' && editorsBuilt`; optional-peer contract
+      restored, scope code is a lazy 1.3KB chunk fetched only at edit-time.
+
+Non-blocking follow-ups (do before the FINAL 1.7.0 tag):
+- [x] **CHANGELOG** — added `1.7.0-beta.3` section, fixed the peer line to `^0.10.1`, annotated the
+      beta.2 "Remaining… defers construction" note as delivered.
+- [x] **CLAUDE.md/MEMORY.md `haltija@latest` → `^1.4.0`** (code pins `HALTIJA_PKG=haltija@^1.4.0`).
+- [ ] **DECISION: breaking `<tosi-code>` under a MINOR bump.** `^1.6` consumers auto-update into the
+      ACE→CM break. Deliberate + documented (tosijs 2.0 sequencing) — ratify explicitly and make the
+      semver deviation loud atop CHANGELOG + README, or go 2.0.0. Confirm before the final tag.
+- [ ] **`el.editor` getter warns on the documented-correct path** (`code-editor.ts:224`) — narrow to
+      fire only on genuinely-removed ACE members, or reword so it doesn't imply `editor` is deprecated.
+- [ ] **CI e2e is Chromium-only** (`.github/workflows/ci.yml`) — the headline browser features have no
+      automated Firefox/WebKit gate (only the manual local lane, which "rots silently"). Add a Firefox
+      project OR a release-checklist step that fails if all-project `bun playwright test` wasn't run.
+      Also: the 4 new specs `test.skip` WebKit unconditionally — track that permanent gap.
+- [ ] **`killStrayServer` prints no kill receipt** (`dev-server.ts:153`) — log pid/`comm`/port per
+      signalled pid so a wrong reclaim is traceable.
+- [ ] **ePub build is non-deterministic** — re-zips with varying bytes, so the build-then-`git diff`
+      staleness gate can't be clean. Fixed mtimes/ordering, or exclude the path from the gate.
+- [ ] **DRY (non-blocking):** extract `gzipSizeInChild` (orchestrator.ts ×2); extract one
+      `runBunChild(argv)` owning the drain-both-pipes invariant (orchestrator ×2 + bundle-guard — the
+      leak class this release fights); extract `prepareExecutable()` shared by executeInline/Iframe;
+      delete the now-dead `demo/src/style.ts` palette (+ `demo/src/index.ts` import + `doc-browser.ts:149`
+      ref) — a near-duplicate of `doc-system-styles.ts`.
+- [ ] **GitHub issues + `UPSTREAM.md` (ecosystem):** #15 (ePub `/slug/` cross-links dead in the book —
+      STILL OPEN, not fixed); #14 (throwing example — PARTIAL: `check-examples` compiles but never
+      *runs*, so a `ReferenceError` in a mislabeled `js` snippet still passes a consumer's build; only
+      the doc-test lane catches it); file a GH issue for the WebKit doc-test-runner skip; confirm
+      dispositions of #8/#3/#9/#12/#13 (and keep this repo's same-numbered issues distinct from the
+      closed tjs-lang ones); keep bun#34053 note current (native-leak shell-out now spans 4 sites).
+- [ ] **Shared `tosijs-coding-practices` (practices lens):** `testing.md` Playwright "server already
+      running" claim is now FALSE (this release inverted it — dedicated port 8799, `reuseExistingServer:false`);
+      `00-stack.md` zero-runtime-dep rule contradicted by 12 `@codemirror/*` runtime deps (add a
+      Known-divergences entry — an agent reading the KB would demote them to peers and break tjs
+      highlighting); add the "never scope the suite with a glob" lesson; add a lens-7/8 write-back
+      receipt requirement; `README.md` "eight-lens" → "nine-lens".
+
+
+
 - [x] **Bumped tjs-lang 0.9.1 → 0.10.1** (2026-07-17, memory-storm fix). All three refs in lockstep
       (package.json dev+peer, `TJS_VERSION`). Required the inline-WASM guard update (0.10.x renamed
       the compiled export `__tjs_wasm_0` → collision-free `__tjs_wasm_<hash>_<n>`, tjs-lang#11 — guard

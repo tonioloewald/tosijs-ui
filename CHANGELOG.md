@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.7.0-beta.3
+
+**Self-contained examples, and CodeMirror + the tjs transpiler are now edit-time only.** A
+reader loading a doc page — directly or via client-side navigation — runs every example with
+**neither the tjs transpiler nor CodeMirror on first paint**. Both load only when you open a
+code panel to edit.
+
+Still a beta under the `beta` tag (`latest` stays 1.6.x): `npm i tosijs-ui@beta`.
+
+### Examples run without the transpiler
+
+Each `tjs` example is transpiled at build time and its JavaScript is baked into the page as a
+hidden, non-executing `<script type="application/tosi-transpiled">`; the example runs from that
+bake. Plain `js` examples need no transpiler at all (`loadTransform('js')` is now identity). The
+bakes also ship per-doc in `docs.json`, so client-side navigation gets them too — at **zero
+added bytes for prose/book sites** (only docs with code examples carry bakes). Editing an
+example drops the stale bake and transpiles on demand; a saved local edit keeps its own
+transpiled code so it reloads without the transpiler.
+
+### CodeMirror panels build lazily
+
+`<tosi-example>` no longer constructs its `<tosi-code>` panels up front (this delivers the
+beta.2 "Remaining" note above): the panel — and the CodeMirror chunk — is built on first
+`showCode`. A page with examples now ships zero CodeMirror until a reader opens a panel.
+
+### tjs-lang 0.9.1 → 0.10.1
+
+Bumped the transpiler, **skipping 0.10.0** (it triggered a memory storm rooted in a bun bug;
+0.10.1 carries the fix). 0.10.x closed four upstream issues, letting this release **delete ~272
+lines** of hand-rolled scope-scanning and a hand-declared autocomplete-config type in favor of
+tjs-lang's own exports. The inline-WASM guard was updated for 0.10.x's renamed compiled export.
+
+- `tjs-lang` peer: `^0.9.1` → `^0.10.1` (and the `TJS_VERSION` CDN-fallback pin, in lockstep).
+
 ## 1.7.0-beta.2
 
 The code editor moved from **ACE to [CodeMirror 6](https://codemirror.net/)**, `tjs`
@@ -53,7 +87,8 @@ examples now ships zero CodeMirror** — the case that was hurt worst.
 Remaining (tracked in `TODO.md`): a page that DOES have live examples still eager-loads the
 editor chunk, because `<tosi-example>` builds its code panels up front even while hidden. The
 next step defers that construction until the reader opens a panel; the example still runs (the
-preview and inline tests don't need the editors) — only the code view waits.
+preview and inline tests don't need the editors) — only the code view waits. **(Delivered in
+1.7.0-beta.3 — see below.)**
 
 ### Dev-server safety (also in 1.6.23)
 
