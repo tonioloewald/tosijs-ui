@@ -30,7 +30,7 @@ async function runAndCapture(
   context: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
   let scope: Record<string, unknown> = {}
-  const { code, extraContext } = withScopeCapture(js, (s) => {
+  const { code, extraContext } = await withScopeCapture(js, (s) => {
     scope = s
   })
   const fullContext = { ...extraContext, ...context }

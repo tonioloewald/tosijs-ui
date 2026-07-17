@@ -1570,6 +1570,13 @@ export class LiveExample extends Component<ExampleParts> {
       executionError = error
     }
 
+    // Scope capture feeds tjs autocomplete (getLiveBindings), which is only consulted
+    // for tjs/ts examples once a code panel is open. Gating it here keeps the optional
+    // tjs-lang/editors bundle (and its AST parse) off the reader path — it loads only
+    // when someone actually edits a tjs/ts example. `js` never needs it.
+    const onScope =
+      this.dialect !== 'js' && this.editorsBuilt ? this.captureScope : undefined
+
     if (this.iframe) {
       preview = await executeInIframe({
         html: this.html,
@@ -1581,7 +1588,7 @@ export class LiveExample extends Component<ExampleParts> {
         exampleElement: example,
         widgetsElement: exampleWidgets,
         onError,
-        onScope: this.captureScope,
+        onScope,
       })
     } else {
       preview = await executeInline({
@@ -1595,7 +1602,7 @@ export class LiveExample extends Component<ExampleParts> {
         styleElement: styleEl,
         widgetsElement: exampleWidgets,
         onError,
-        onScope: this.captureScope,
+        onScope,
       })
     }
 

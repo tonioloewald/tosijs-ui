@@ -40,10 +40,10 @@ export interface ExecutionOptions {
  * consumer wants the run's locals. Returns the (possibly unchanged) code plus the
  * extra context entry to inject. The epilogue no-ops if the example binds nothing.
  */
-export declare function withScopeCapture(transformedCode: string, onScope?: (scope: Record<string, unknown>) => void): {
+export declare function withScopeCapture(transformedCode: string, onScope?: (scope: Record<string, unknown>) => void): Promise<{
     code: string;
     extraContext: Record<string, unknown>;
-};
+}>;
 /**
  * Execute code inline (directly in the page)
  */

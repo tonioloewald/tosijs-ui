@@ -1,5 +1,4 @@
 import { elements } from 'tosijs';
-import { scopeCaptureEpilogue } from 'tjs-lang/editors';
 import { rewriteImports, AsyncFunction, contextVarName } from './code-transform';
 // Injected context name for the scope-capture callback (see `onScope`). Chosen to
 // not collide with anything an example would plausibly declare.
@@ -57,13 +56,24 @@ export function registerComponentsInIframe(iframeWindow, context) {
  * consumer wants the run's locals. Returns the (possibly unchanged) code plus the
  * extra context entry to inject. The epilogue no-ops if the example binds nothing.
  */
-export function withScopeCapture(transformedCode, onScope) {
+export async function withScopeCapture(transformedCode, onScope) {
     if (!onScope)
         return { code: transformedCode, extraContext: {} };
     // tjs-lang 0.10.x's real AST-based scope extractor (tjs-lang#10) — replaced our
-    // hand-rolled scanner. It emits `try { <captureVar>({ a, b, … }) } catch {}`, the
-    // same object-of-bindings contract onScope already expects. The `tjs-lang/editors`
-    // entry is ~5KB and self-contained (no acorn), so this is a negligible bundle add.
+    // hand-rolled scanner. Loaded via DYNAMIC import so the OPTIONAL `tjs-lang` peer
+    // never enters the static live-example/doc-browser graph (a plain-`js` doc site
+    // that omits the peer must still bundle): absent tjs-lang → skip capture, keep the
+    // example running. Callers gate `onScope` to edit-time tjs/ts, so on the reader
+    // path this import never fires. It emits `try { <captureVar>({ a, b }) } catch {}`,
+    // the object-of-bindings contract onScope already expects.
+    let scopeCaptureEpilogue;
+    try {
+        ;
+        ({ scopeCaptureEpilogue } = await import('tjs-lang/editors'));
+    }
+    catch {
+        return { code: transformedCode, extraContext: {} };
+    }
     const epilogue = scopeCaptureEpilogue(transformedCode, SCOPE_CAPTURE_VAR);
     if (!epilogue)
         return { code: transformedCode, extraContext: {} };
@@ -92,7 +102,7 @@ export async function executeInline(options) {
             (await transform(rewriteImports(js, Object.keys(context)), {
                 transforms: ['typescript'],
             })).code;
-        const { code: finalCode, extraContext } = withScopeCapture(transformedCode, onScope);
+        const { code: finalCode, extraContext } = await withScopeCapture(transformedCode, onScope);
         const fullContext = { preview, ...context, ...extraContext };
         const contextKeys = Object.keys(fullContext).map(contextVarName);
         const contextValues = Object.values(fullContext);
@@ -170,7 +180,7 @@ export async function executeInIframe(options) {
             (await transform(rewriteImports(js, Object.keys(context)), {
                 transforms: ['typescript'],
             })).code;
-        const { code: finalCode, extraContext } = withScopeCapture(transformedCode, onScope);
+        const { code: finalCode, extraContext } = await withScopeCapture(transformedCode, onScope);
         // Execute JS in iframe context
         const fullContext = { preview, ...context, ...extraContext };
         // Create AsyncFunction in iframe's context
