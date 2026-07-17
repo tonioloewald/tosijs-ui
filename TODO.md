@@ -26,21 +26,28 @@ Non-blocking follow-ups (do before the FINAL 1.7.0 tag):
 - [ ] **DECISION: breaking `<tosi-code>` under a MINOR bump.** `^1.6` consumers auto-update into the
       ACE→CM break. Deliberate + documented (tosijs 2.0 sequencing) — ratify explicitly and make the
       semver deviation loud atop CHANGELOG + README, or go 2.0.0. Confirm before the final tag.
-- [ ] **`el.editor` getter warns on the documented-correct path** (`code-editor.ts:224`) — narrow to
-      fire only on genuinely-removed ACE members, or reword so it doesn't imply `editor` is deprecated.
+- [x] **`el.editor` getter warning** — downgraded to `console.info`, leads with "it IS the supported
+      CM6 accessor" so correct use isn't scolded.
 - [ ] **CI e2e is Chromium-only** (`.github/workflows/ci.yml`) — the headline browser features have no
       automated Firefox/WebKit gate (only the manual local lane, which "rots silently"). Add a Firefox
       project OR a release-checklist step that fails if all-project `bun playwright test` wasn't run.
       Also: the 4 new specs `test.skip` WebKit unconditionally — track that permanent gap.
-- [ ] **`killStrayServer` prints no kill receipt** (`dev-server.ts:153`) — log pid/`comm`/port per
-      signalled pid so a wrong reclaim is traceable.
+- [x] **`killStrayServer` kill receipt** — now logs SIGTERM → pid/comm/port (and SIGKILL escalation).
 - [ ] **ePub build is non-deterministic** — re-zips with varying bytes, so the build-then-`git diff`
       staleness gate can't be clean. Fixed mtimes/ordering, or exclude the path from the gate.
-- [ ] **DRY (non-blocking):** extract `gzipSizeInChild` (orchestrator.ts ×2); extract one
-      `runBunChild(argv)` owning the drain-both-pipes invariant (orchestrator ×2 + bundle-guard — the
-      leak class this release fights); extract `prepareExecutable()` shared by executeInline/Iframe;
-      delete the now-dead `demo/src/style.ts` palette (+ `demo/src/index.ts` import + `doc-browser.ts:149`
-      ref) — a near-duplicate of `doc-system-styles.ts`.
+- [x] **DRY: `gzipSizeInChild`** extracted (orchestrator, was inline ×2).
+- [ ] **DRY (remaining):** extract one `runBunChild(argv)` owning the drain-both-pipes invariant
+      (orchestrator ×2 + bundle-guard — the leak class this release fights); extract
+      `prepareExecutable()` shared by executeInline/Iframe (touches the core run path — do carefully).
+- [ ] **`demo/src` dead-entry tangle (surfaced while attempting the `demo/src/style.ts` delete —
+      needs a DECISION, not a quick delete).** `demo/src/index.ts` is an UN-BUILT dead entry (bundleEntry
+      is `src/index-iife.ts`; 0 `demo-style` in built docs), and it is the ONLY registrar of
+      `<tosi-css-var-editor>` — so that dev tool is already **absent from the shipped bundles** and the
+      `<tosi-css-var-editor>` usages in carousel/form/color-input/sizer docs are **no-ops in the built
+      site** (pre-existing). Decide: (a) css-var-editor is a real doc affordance → register it in the
+      build (src/index.ts or the site config) and keep it; or (b) it's dead → remove `demo/src/index.ts`
+      + `style.ts` + `css-var-editor.ts` AND the `<tosi-css-var-editor>` usages + the `doc-browser.ts:149`
+      ref. `demo/src/localized-strings.ts` stays either way (still used by the site config).
 - [x] **#13 `<tosi-map>`** — fixed (one map, not one per render during CDN load) + regression test.
 - [x] **#8 hydration console errors** — verified fixed by the 1.6.9 parts adoption, closed, guarded
       (`hydration.pw.ts` console-clean test).
