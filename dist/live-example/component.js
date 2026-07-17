@@ -288,7 +288,15 @@ preview.append(canvas, btn, readout)
 test('the wasm kernel actually compiled (no silent fallback to JS)', async () => {
   await globalThis.__tjs_wasm_ready?.()
   expect(typeof globalThis.__tjs_wasm_ready).toBe('function')
-  expect(globalThis.__tjs_wasm_0).toBeTruthy()
+  // 0.10.x names each compiled wasm export `__tjs_wasm_<hash>_<n>` on globalThis — the
+  // hash makes it collision-free across examples (tjs-lang#11). The kernel calls that
+  // global when present and falls back to its JS twin when it's not, so a truthy one
+  // means the wasm really compiled. Matched by pattern (the hash is per-transpile), and
+  // asserting >0 keeps the guard from ever passing vacuously.
+  const compiled = Object.keys(globalThis).filter(
+    (k) => /^__tjs_wasm_[a-z0-9]+_\d+$/.test(k) && globalThis[k]
+  )
+  expect(compiled.length).toBeGreaterThan(0)
 })
 ```
 
