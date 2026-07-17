@@ -217,18 +217,18 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
    * JS and CDN consumers — the audience this component's own docs court — would get the
    * bare TypeError with no explanation at all.
    *
-   * So: say it once, on first access. One line in the console beats a stack trace in a
-   * library the reader has never opened. Use `undo()`/`redo()`/`canUndo()`/`canRedo()`
-   * for history — they are the supported surface and they survived the migration.
+   * So: one neutral note on first access. `editor` is NOT deprecated — it is the
+   * supported CM6 accessor — so this is `console.info` (not `warn`) and leads with that,
+   * to help a 1.6→1.7 migrator without scolding correct CM6 use. Use
+   * `undo()`/`redo()`/`canUndo()`/`canRedo()` for history — they survived the migration.
    */
   get editor(): CmHandle['view'] | undefined {
     if (!warnedEditor) {
       warnedEditor = true
-      console.warn(
-        '<tosi-code>.editor is a CodeMirror EditorView as of 1.7 (it was an ACE editor ' +
-          'in 1.6) — `editor.session`, `editor.getSession()`, `editor.setOption()` and ' +
-          '`editor.session.getUndoManager()` no longer exist. Use undo()/redo()/' +
-          'canUndo()/canRedo() for history; see the CodeMirror 6 docs for the rest.'
+      console.info(
+        '<tosi-code>.editor is the CodeMirror 6 EditorView (the supported accessor; it ' +
+          'was an ACE editor in 1.6). ACE-era `editor.session` / `getSession()` / ' +
+          '`setOption()` are gone — use undo()/redo()/canUndo()/canRedo() for history.'
       )
     }
     return this._handle?.view

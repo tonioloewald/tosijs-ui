@@ -155,6 +155,9 @@ async function killStrayServer(port: number) {
     } catch {
       continue // already gone
     }
+    // Leave a receipt: reclaiming a port is destructive, so if it ever hits a server
+    // the developer actually wanted, the log says exactly which pid/comm on which port.
+    console.warn(`↻ reclaimed port ${port}: SIGTERM → pid ${pid} (${comm || 'unknown'})`)
     // Give it a moment to close the listener, then insist.
     for (let i = 0; i < 20; i++) {
       await Bun.sleep(50)
@@ -166,6 +169,7 @@ async function killStrayServer(port: number) {
       if (i === 19) {
         try {
           process.kill(pid, 'SIGKILL')
+          console.warn(`   pid ${pid} ignored SIGTERM — sent SIGKILL`)
         } catch {
           // gone between the check and the signal — fine
         }

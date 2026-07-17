@@ -171,6 +171,26 @@ async function checkExamplesInChild(
   }
 }
 
+/**
+ * Gzip-size a file IN A CHILD. zlib's gzip is native and strands memory the JS heap
+ * never sees; a child hands it all back on exit (same reasoning as the bundle/ePub
+ * steps — see the Bun.build note). Returns the gzipped byte count, or 0 if it couldn't
+ * measure — a size log must never fail a build.
+ */
+async function gzipSizeInChild(file: string): Promise<number> {
+  try {
+    const out =
+      await $`bun -e ${`const {gzipSync}=require('zlib');const b=await Bun.file(${JSON.stringify(
+        file
+      )}).arrayBuffer();process.stdout.write(String(gzipSync(Buffer.from(b)).length))`}`
+        .quiet()
+        .text()
+    return Number(out.trim()) || 0
+  } catch {
+    return 0
+  }
+}
+
 export async function buildSite(config: SiteConfig): Promise<boolean> {
   // Look at the machine before adding load to it. Runs on every build, including each
   // watch rebuild, because the danger is not present at launch and then absent — it
@@ -463,21 +483,8 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     // Deliberately zlib-in-a-child rather than the `gzip` CLI: the two disagree by
     // ~1.6% (378.6kb vs 384.9kb here), and this number is quoted in the docs and
     // tracked across releases. Moving the work must not silently move the measurement.
-    let gzipKb = ''
-    try {
-      const bytes = Number(
-        (
-          await $`bun -e ${`const {gzipSync}=require('zlib');const b=await Bun.file(${JSON.stringify(
-            `${DIST}/${scriptName}`
-          )}).arrayBuffer();process.stdout.write(String(gzipSync(Buffer.from(b)).length))`}`
-            .quiet()
-            .text()
-        ).trim()
-      )
-      if (bytes > 0) gzipKb = ` (${(bytes / 1024).toFixed(1)}kb gzip)`
-    } catch {
-      // couldn't measure — report the raw size alone rather than fail a build over a log line
-    }
+    const bytes = await gzipSizeInChild(`${DIST}/${scriptName}`)
+    const gzipKb = bytes > 0 ? ` (${(bytes / 1024).toFixed(1)}kb gzip)` : ''
     console.log(
       `${scriptName}: ${(bundleFile.byteLength / 1024).toFixed(1)}kb${gzipKb}`
     )
@@ -525,24 +532,14 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
 
     // Report the always-loaded weight (entry, not the lazy editor chunks) so a
     // regression that pulls CodeMirror back into the entry is visible.
-    try {
-      const entryBytes = Number(
-        (
-          await $`bun -e ${`const {gzipSync}=require('zlib');const b=await Bun.file(${JSON.stringify(
-            `${HYDRATE_DIR}/hydrate.js`
-          )}).arrayBuffer();process.stdout.write(String(gzipSync(Buffer.from(b)).length))`}`
-            .quiet()
-            .text()
-        ).trim()
-      )
+    {
+      const entryBytes = await gzipSizeInChild(`${HYDRATE_DIR}/hydrate.js`)
       if (entryBytes > 0)
         console.log(
           `hydrate.js (module, editor lazy): ${(entryBytes / 1024).toFixed(
             1
           )}kb gzip entry`
         )
-    } catch {
-      // size line only — never fail a build over it
     }
   } else if (!/^(https?:)?\/\//.test(config.scriptUrl ?? '/iife.js')) {
     // No custom bundleEntry (the normal case for a pure-docs / book site) and a

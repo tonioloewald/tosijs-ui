@@ -48,9 +48,10 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
      * JS and CDN consumers — the audience this component's own docs court — would get the
      * bare TypeError with no explanation at all.
      *
-     * So: say it once, on first access. One line in the console beats a stack trace in a
-     * library the reader has never opened. Use `undo()`/`redo()`/`canUndo()`/`canRedo()`
-     * for history — they are the supported surface and they survived the migration.
+     * So: one neutral note on first access. `editor` is NOT deprecated — it is the
+     * supported CM6 accessor — so this is `console.info` (not `warn`) and leads with that,
+     * to help a 1.6→1.7 migrator without scolding correct CM6 use. Use
+     * `undo()`/`redo()`/`canUndo()`/`canRedo()` for history — they survived the migration.
      */
     get editor(): CmHandle['view'] | undefined;
     /** @deprecated Removed in 1.7 — CodeMirror themes via `--code-bg`/`--text-color`. */
