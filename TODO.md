@@ -41,12 +41,16 @@ Non-blocking follow-ups (do before the FINAL 1.7.0 tag):
       leak class this release fights); extract `prepareExecutable()` shared by executeInline/Iframe;
       delete the now-dead `demo/src/style.ts` palette (+ `demo/src/index.ts` import + `doc-browser.ts:149`
       ref) — a near-duplicate of `doc-system-styles.ts`.
-- [ ] **GitHub issues + `UPSTREAM.md` (ecosystem):** #15 (ePub `/slug/` cross-links dead in the book —
-      STILL OPEN, not fixed); #14 (throwing example — PARTIAL: `check-examples` compiles but never
-      *runs*, so a `ReferenceError` in a mislabeled `js` snippet still passes a consumer's build; only
-      the doc-test lane catches it); file a GH issue for the WebKit doc-test-runner skip; confirm
-      dispositions of #8/#3/#9/#12/#13 (and keep this repo's same-numbered issues distinct from the
-      closed tjs-lang ones); keep bun#34053 note current (native-leak shell-out now spans 4 sites).
+- [x] **#13 `<tosi-map>`** — fixed (one map, not one per render during CDN load) + regression test.
+- [x] **#8 hydration console errors** — verified fixed by the 1.6.9 parts adoption, closed, guarded
+      (`hydration.pw.ts` console-clean test).
+- [x] **#15 ePub cross-links** — fixed (`rewriteInBookLinks`), closed, 6 unit cases + real-ePub verified.
+- [ ] **GitHub issues + `UPSTREAM.md` (ecosystem), remaining:** #14 (throwing example — PARTIAL:
+      `check-examples` compiles but never *runs*, so a `ReferenceError` in a mislabeled `js` snippet
+      still passes a consumer's build; only the doc-test lane catches it); #9 (document the
+      cinematic-landing-page pattern — content-bound); file a GH issue for the WebKit doc-test-runner
+      skip; keep bun#34053 note current (native-leak shell-out now spans 4 sites). **#12** (language-
+      plugin hooks) is the strategic platform work, not a cleanup — see the platform sequence below.
 - [ ] **Shared `tosijs-coding-practices` (practices lens):** `testing.md` Playwright "server already
       running" claim is now FALSE (this release inverted it — dedicated port 8799, `reuseExistingServer:false`);
       `00-stack.md` zero-runtime-dep rule contradicted by 12 `@codemirror/*` runtime deps (add a
