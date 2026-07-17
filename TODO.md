@@ -12,13 +12,17 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 
 ## High Priority
 
-- [ ] **Bump tjs-lang 0.9.1 → ^0.10.0 and delete the unblocked hand-rolls.** 0.10.0 closed four
-      of our upstream issues (see UPSTREAM.md → tjs-lang). Not just a version bump: it lets us
+- [ ] **Bump tjs-lang → ^0.10.1 (NOT 0.10.0) and delete the unblocked hand-rolls.** ⚠️ **HOLDING at
+      0.9.1 on purpose:** 0.10.0 triggers a **memory-storm** whose root cause is deep inside bun (bun
+      bug, triggered by something in tjs-lang); the fix lands in **tjs-lang 0.10.1**. Do NOT bump to
+      0.10.0 — wait for 0.10.1, then bump straight to it. 0.10.0 already closed four of our upstream
+      issues (see UPSTREAM.md → tjs-lang), so the bump is not just a version change: it lets us
       **delete** `extractTopLevelBindingNames` + `buildScopeCapture` (~130 lines, import
       `collectScopeSymbols`/`scopeCaptureEpilogue` from `tjs-lang/editors` — #10) and the
       hand-declared `TjsAutocompleteConfig` (#12), and likely simplify `tjsEditorExternal` (#16)
       and the inline-WASM guard (#15 → `__tjs.records({source:'wasm'})`). **Bump `TJS_VERSION` in
-      `code-transform.ts` in lockstep**, then run ALL lanes (unit + doc-tests + full Playwright).
+      `code-transform.ts` in lockstep**, then run ALL lanes (unit + doc-tests + full Playwright +
+      haltija) — and watch RSS across a long watch session, since the whole point is the storm is gone.
 
 - [ ] **RFC: language-plugin registry for live-example (tosijs-ui#12, from the tjs-lang side).**
       Invert the hardcoded `js|ts|tjs` dialect switch in `code-transform.ts` into a plugin

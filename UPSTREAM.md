@@ -119,12 +119,20 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
 **tjs-lang 0.9.1**.
 
 > **Reconciled 2026-07-16.** We ship **0.9.1**; **0.10.0 is released** and closed four of
-> these (#10, #12, #15, #16). **Bumping to `^0.10.0` is a tracked follow-up** — it's not just
-> a version change, it lets us **delete hand-rolls**: the ~130-line scope scanner (#10 → import
-> `collectScopeSymbols`/`scopeCaptureEpilogue` from `tjs-lang/editors`), the re-declared
-> `TjsAutocompleteConfig` (#12 → real `.d.ts`), and can simplify the `tjsEditorExternal` probe
-> (#16 → real optional peerDeps). Bump `TJS_VERSION` in `code-transform.ts` in lockstep, then
-> run all lanes. See TODO.md.
+> these (#10, #12, #15, #16).
+>
+> ⚠️ **We are HOLDING at 0.9.1 on purpose — do NOT bump to 0.10.0.** 0.10.0 triggers a
+> **memory-storm** whose root cause is deep inside **bun** (a bun bug, tripped by something in
+> tjs-lang — same family of native-memory pathology as bun#34053 in the bun section below). The
+> fix lands in **tjs-lang 0.10.1**; bump straight to that when it ships. Until then the bump — and
+> the hand-roll deletions it unblocks — waits.
+>
+> When 0.10.1 is out: the bump is not just a version change, it lets us **delete hand-rolls**: the
+> ~130-line scope scanner (#10 → import `collectScopeSymbols`/`scopeCaptureEpilogue` from
+> `tjs-lang/editors`), the re-declared `TjsAutocompleteConfig` (#12 → real `.d.ts`), and can
+> simplify the `tjsEditorExternal` probe (#16 → real optional peerDeps). Bump `TJS_VERSION` in
+> `code-transform.ts` in lockstep, run all lanes, and watch RSS over a long watch session (the
+> storm being gone is the reason for the version). See TODO.md.
 >
 > **Two open asks OF us (cross-repo), filed from the tjs-lang side:**
 > - **tosijs-ui#12** — RFC: a **language-plugin registry** for live-example (invert the hardcoded
