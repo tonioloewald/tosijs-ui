@@ -90,3 +90,27 @@ test('the page is readable with no JavaScript at all', async ({ browser }) => {
   expect(hrefs.every((h) => !!h && h !== '#')).toBe(true)
   await noJs.close()
 })
+
+/*
+#8 (from tosijs-product): a doc page that only *references* a custom element in prose
+threw `Cannot read properties of undefined (reading 'toggleAttribute')` during
+hydration. tosijs-ui adopted the tosijs 1.6.9 parts fix (the class of bug behind it),
+so our own doc pages must hydrate with a clean console — a stub upgrade running a
+part-reading render() before hydration is exactly what would break this.
+*/
+test('doc pages hydrate with no console errors', async ({ page }) => {
+  const errors: string[] = []
+  page.on('console', (m) => {
+    if (m.type() === 'error') errors.push(m.text())
+  })
+  page.on('pageerror', (e) => errors.push(`PAGEERROR: ${e.message}`))
+
+  // A spread of pages: home, a component page, a prose-heavy page, a data component.
+  for (const path of ['/', '/component/', '/doc-browser/', '/data-table/']) {
+    await page.goto(path)
+    await page.waitForTimeout(1500)
+  }
+  expect(errors, `console errors during hydration:\n${errors.join('\n')}`).toEqual(
+    []
+  )
+})
