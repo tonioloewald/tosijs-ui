@@ -123,18 +123,23 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
 > same native-memory family as bun#34053 below; 0.10.1 carries the fix). 0.10.0/0.10.1 closed four
 > of our issues (#10, #12, #15, #16).
 >
-> **Done in the bump:** #12 hand-roll deleted (`TjsAutocompleteConfig` → real `AutocompleteConfig`
-> from `tjs-lang/editors/codemirror`, `import type` → zero bundle cost); #15's inline-WASM guard
-> rewritten (0.10.x renamed the compiled export `__tjs_wasm_0` → collision-free
-> `__tjs_wasm_<hash>_<n>` per #11 — guard matches by pattern now, and the `__tjs.records` recorder is
-> NOT reachable in the doc-system's inline-test scope, so pattern-match is the way).
+> **Done in the bump:** #10, #12, #15 hand-rolls all deleted.
+> - **#10** — replaced our ~272-line scope scanner (`extractTopLevelBindingNames` +
+>   `buildScopeCapture` + `maskLiterals`/`patternNames`/… helpers) with `scopeCaptureEpilogue` from
+>   `tjs-lang/editors`. The earlier "acorn bloat" worry was WRONG: the `tjs-lang/editors` entry is a
+>   self-contained ~5KB file with **no** imports (no acorn), so the static import is negligible —
+>   measured, the hydrate entry went 121.9 → 121.8KB gzip (net smaller). Verified via the real
+>   `tjsCompletionSource` in `scope-autocomplete.test.ts`.
+> - **#12** — `TjsAutocompleteConfig` → real `AutocompleteConfig` from `tjs-lang/editors/codemirror`
+>   (`import type` → zero bundle cost).
+> - **#15** — inline-WASM guard rewritten. 0.10.x renamed the compiled export `__tjs_wasm_0` →
+>   collision-free `__tjs_wasm_<hash>_<n>` (per #11), so the guard matches by pattern now. NB the
+>   `__tjs.records` recorder is NOT reachable in the doc-system's inline-`test()` scope (only tjs's
+>   native test runner sets `globalThis.__tjs`), so pattern-match is the way.
 >
-> **Still to do (see TODO.md):** #10's ~130-line scope scanner CAN be replaced by
-> `scopeCaptureEpilogue`/`collectScopeSymbols` from `tjs-lang/editors`, but those are acorn-based and
-> `withScopeCapture` runs on every example execution — a static import bundles acorn onto the reader
-> path, so it needs a lazy-load / edit-time gate first (don't regress slices 2/3). #16's
-> `tjsEditorExternal` probe stays as belt-and-suspenders until an isolated-tree build is verified
-> without it. And watch RSS over a real multi-day watch session (the storm being gone is the point).
+> **Still to do (see TODO.md):** #16's `tjsEditorExternal` probe stays as belt-and-suspenders until an
+> isolated-tree build is verified without it. And watch RSS over a real multi-day watch session (the
+> storm being gone is the point of the version).
 >
 > **Two open asks OF us (cross-repo), filed from the tjs-lang side:**
 > - **tosijs-ui#12** — RFC: a **language-plugin registry** for live-example (invert the hardcoded

@@ -19,45 +19,6 @@ export declare function contextVarName(key: string): string;
  */
 export declare function rewriteImports(code: string, contextKeys: string[]): string;
 /**
- * Blank out the CONTENTS of strings, template literals, comments and regex literals,
- * preserving length and newlines so every index still lines up with the original.
- *
- * The scanner below counts brackets and matches `^const` over raw text, which made it
- * wrong in two ways that both failed silently:
- *
- *   const label = 'Items ('      → an unbalanced '(' inside a string ran the depth
- *                                  counter away, swallowing the REST OF THE FILE, so
- *                                  every later binding vanished from completions.
- *   `const in a template`        → matched at column 0 inside a template literal and
- *                                  yielded the name `in`, and the epilogue then emitted
- *                                  `try{__tosiScope.in=in}` — a PARSE error, which no
- *                                  try/catch can absorb, killing the whole example.
- *
- * Identifiers never live inside literals, so masking loses nothing we want.
- */
-export declare function maskLiterals(code: string): string;
-/**
- * Best-effort list of the identifiers a snippet binds at the TOP level (column 0, so
- * genuinely function-scope, not inside a block). Handles `const/let/var` — including
- * MULTI-LINE destructuring, MULTIPLE declarators (`const a = 1, b = 2`), nested
- * patterns, aliases, defaults and rest — plus `function`/`class` declarations.
- *
- * This is a scanner, not a parse. tjs-lang already owns an acorn-based
- * `collectScopeSymbols()` that does this properly, but it has no public export
- * (filed upstream); when it lands, drive this off it. Meanwhile imperfect is safe:
- * the capture epilogue guards every name individually, so an over- or under-match
- * degrades completions rather than breaking the example.
- */
-export declare function extractTopLevelBindingNames(code: string): string[];
-/**
- * Build an epilogue that captures the values of `names` (as they stand at the end
- * of a run) into `captureVar(scopeObject)`. Each binding is read behind its own
- * try/catch so a stale/over-matched name can't abort the whole capture, and the
- * whole thing is a trailing block so it never shadows user code. Returns '' when
- * there's nothing to capture.
- */
-export declare function buildScopeCapture(names: string[], captureVar: string): string;
-/**
  * Execute code as an async function with injected context
  */
 export declare function executeCode(code: string, context: ExampleContext, transform: TransformFn): Promise<void>;

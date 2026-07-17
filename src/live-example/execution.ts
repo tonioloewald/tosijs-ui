@@ -1,12 +1,7 @@
 import { elements } from 'tosijs'
+import { scopeCaptureEpilogue } from 'tjs-lang/editors'
 import { ExampleContext, TransformFn } from './types'
-import {
-  rewriteImports,
-  AsyncFunction,
-  contextVarName,
-  extractTopLevelBindingNames,
-  buildScopeCapture,
-} from './code-transform'
+import { rewriteImports, AsyncFunction, contextVarName } from './code-transform'
 
 // Injected context name for the scope-capture callback (see `onScope`). Chosen to
 // not collide with anything an example would plausibly declare.
@@ -103,10 +98,11 @@ export function withScopeCapture(
   onScope?: (scope: Record<string, unknown>) => void
 ): { code: string; extraContext: Record<string, unknown> } {
   if (!onScope) return { code: transformedCode, extraContext: {} }
-  const epilogue = buildScopeCapture(
-    extractTopLevelBindingNames(transformedCode),
-    SCOPE_CAPTURE_VAR
-  )
+  // tjs-lang 0.10.x's real AST-based scope extractor (tjs-lang#10) — replaced our
+  // hand-rolled scanner. It emits `try { <captureVar>({ a, b, … }) } catch {}`, the
+  // same object-of-bindings contract onScope already expects. The `tjs-lang/editors`
+  // entry is ~5KB and self-contained (no acorn), so this is a negligible bundle add.
+  const epilogue = scopeCaptureEpilogue(transformedCode, SCOPE_CAPTURE_VAR)
   if (!epilogue) return { code: transformedCode, extraContext: {} }
   return {
     code: transformedCode + epilogue,

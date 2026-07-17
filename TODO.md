@@ -20,14 +20,10 @@ importmap example resolution, versioned endpoints, AJS RestStore.
       (unit + doc-tests + full Playwright).
       - [ ] **Still watch RSS over a real multi-day watch session** — the storm being gone is the whole
             point of the version; builds/lanes alone don't exercise a long-lived process.
-      - [ ] **#10 hand-roll deletion needs a lazy-load first — DON'T just swap it.**
-            `scopeCaptureEpilogue`/`collectScopeSymbols` from `tjs-lang/editors` map cleanly onto our
-            `extractTopLevelBindingNames`+`buildScopeCapture` (~130 lines), BUT they're **acorn-based**
-            and `withScopeCapture` runs on **every** example execution incl. the reader path — a static
-            import would bundle acorn onto exactly the path slices 2/3 cleared. Do it only alongside
-            gating scope-capture to edit-time (or a dynamic import), else it regresses first paint.
-            (Behavioral note: tjs's epilogue wraps the whole `{a,b}` capture in one try/catch; ours is
-            per-binding — a coarser failure mode, verify against `scope-autocomplete.test.ts`.)
+      - [x] **#10 scope scanner deleted** — replaced ~272 lines (`extractTopLevelBindingNames` +
+            `buildScopeCapture` + helpers) with `scopeCaptureEpilogue` from `tjs-lang/editors`. The
+            "acorn bloat" worry was WRONG: that entry is a self-contained ~5KB file (no acorn), so the
+            static import is negligible (hydrate 121.9→121.8KB gzip). Verified via `scope-autocomplete.test.ts`.
       - [ ] **#16 `tjsEditorExternal` — leave as belt-and-suspenders.** 0.10.x declares the
             `@codemirror/*` optional peerDeps, so the hard-fail it guarded is gone, but keep the probe
             until an isolated-tree build is actually verified without it.
