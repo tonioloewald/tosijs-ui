@@ -254,6 +254,7 @@ export declare class LiveExample extends Component<ExampleParts> {
     get dialect(): Dialect;
     set dialect(value: Dialect);
     compiledJs?: string;
+    compiledJsSource?: string;
     private jsOutEditor?;
     private tjsTestsView?;
     private productTabsReady;

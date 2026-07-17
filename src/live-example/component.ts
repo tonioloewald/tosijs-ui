@@ -634,6 +634,11 @@ export class LiveExample extends Component<ExampleParts> {
   // data only (not reflected to an attribute); absent on client-rendered SPA nav,
   // where refresh() falls back to transpiling on demand.
   compiledJs?: string
+  // The source `compiledJs` was transpiled FROM. refresh() runs the bake only while it
+  // still matches `this.js`, so the moment the user edits a tjs example the (now stale)
+  // original bake is dropped and the edit transpiles on demand. Re-paired to the edited
+  // source when a saved local edit carries its own bake (slice 4).
+  compiledJsSource?: string
 
   // ── Read-only product tabs (tjs/ts only) ──────────────────────────────────
   // A `tjs`/`ts` example's source is editable; the JavaScript it compiles to is
@@ -1213,6 +1218,13 @@ export class LiveExample extends Component<ExampleParts> {
     if (edit.html !== undefined) this.html = edit.html
     if (edit.css !== undefined) this.css = edit.css
     if (edit.test !== undefined) this.test = edit.test
+    // If the saved edit carried its own bake, re-pair it to the edited source so a
+    // reader reload runs the edit without the transpiler. Otherwise leave compiledJs
+    // as-is; the source→bake mismatch makes refresh() transpile on demand (correct).
+    if (edit.compiledJs !== undefined && edit.js !== undefined) {
+      this.compiledJs = edit.compiledJs
+      this.compiledJsSource = edit.js
+    }
   }
 
   // "Has edits" = current code differs from the snapshotted original (trailing
@@ -1255,6 +1267,14 @@ export class LiveExample extends Component<ExampleParts> {
       html: this.html,
       css: this.css,
       test: this.test,
+      // Keep the transpiled code alongside the source so a restored edit runs without
+      // reloading the transpiler. refresh() keeps compiledJs paired with the current
+      // source, so persist it only when it still matches (never a stale value). `js`
+      // needs no transpiler.
+      compiledJs:
+        this.dialect !== 'js' && this.compiledJsSource === this.js
+          ? this.compiledJs
+          : undefined,
     })
     this.updateEditedIndicator()
   }
@@ -1506,8 +1526,13 @@ export class LiveExample extends Component<ExampleParts> {
     // harness) `bake` is undefined and this is the original full-transform path,
     // so the harness is untouched. The bake is byte-identical to what the
     // transform would produce (it IS `transform(rewriteImports(js))`).
+    // ...and only while the bake still matches the current source — an edit drops the
+    // stale original bake and transpiles the edit on demand (slice 4).
     const bake =
-      this.dialect !== 'js' && !testManager.enabled.value
+      this.dialect !== 'js' &&
+      !testManager.enabled.value &&
+      this.compiledJs !== undefined &&
+      this.compiledJsSource === this.js
         ? this.compiledJs
         : undefined
     const transform = bake === undefined ? await loadTransform(this.dialect) : undefined
@@ -1519,7 +1544,15 @@ export class LiveExample extends Component<ExampleParts> {
     if (this.dialect !== 'js') {
       this.lastGeneratedJs = bake ?? (await this.computeGeneratedJs(transform!))
       if (this.jsOutEditor) this.jsOutEditor.value = this.lastGeneratedJs
-      if (bake === undefined) await this.runInlineTjsTests(transform!)
+      if (bake === undefined) {
+        // Freshly transpiled (edited source, or a dialect the build didn't bake):
+        // cache it AS the bake, paired with the source it came from. So saveLocalEdit
+        // can persist it and later refreshes of the same source skip re-transpiling —
+        // the transpiler is already loaded at this point, so this costs nothing.
+        this.compiledJs = this.lastGeneratedJs
+        this.compiledJsSource = this.js
+        await this.runInlineTjsTests(transform!)
+      }
     }
 
     let preview: HTMLElement | null

@@ -15,6 +15,10 @@ export interface ExampleEdit {
   html?: string
   css?: string
   test?: string
+  // The transpiled JS for `js` (tjs/ts dialects), so a restored local edit runs
+  // without reloading the transpiler — see self-contained-examples-plan.md slice 4.
+  // Absent for `js`-dialect examples (they need no transpiler) and older saves.
+  compiledJs?: string
 }
 
 /** Stable key for an example, from its source↔doc map attributes. */

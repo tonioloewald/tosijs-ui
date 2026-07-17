@@ -117,7 +117,12 @@ export function insertExamples(
           example.dialect = source.language
           // The build-time bake (tjs only today) lets refresh() run the preview
           // without loading the transpiler — see self-contained-examples-plan.md.
-          if (source.compiled !== undefined) example.compiledJs = source.compiled
+          // Pair it with the source it was transpiled from so refresh() drops it the
+          // moment the example is edited.
+          if (source.compiled !== undefined) {
+            example.compiledJs = source.compiled
+            example.compiledJsSource = source.code
+          }
           break
         case 'html':
           example.html = source.code

@@ -109,7 +109,16 @@ custom example stays self-contained (runnable with zero runtime deps).
    the full 17-spec Playwright lane (incl. `code-editor`, `doc-system`, `hydration`) and the doc-tests
    lane stay green. **Net across slices 2+3: a reader page loads NEITHER the transpiler NOR CodeMirror
    on first paint** — the M10 goal.
-4. **Save.** Re-transpile on save; persist source + fresh bake.
+4. **Save. ✅ DONE.** Correctness first: the build bake is for the ORIGINAL source, so
+   `refresh()` now runs it only while `compiledJsSource === this.js` — the moment a tjs example is
+   edited the stale bake is dropped and the edit transpiles on demand (fixes a latent slice-2 bug
+   where an edited/locally-restored tjs example would run the original baked output on the reader
+   path). refresh() caches each fresh transpile as the new bake (paired with its source), so
+   `saveLocalEdit` persists it in the `ExampleEdit` (`compiledJs`), and `applyEdit` re-pairs it on
+   restore — a saved edit runs WITHOUT reloading the transpiler. Save-to-source needs no bake: the
+   dev-server rebuild regenerates it (the interim transpiles on demand). **Verified:** a Playwright
+   test proves an edited tjs example runs the edit (not the stale bake), and another proves a saved
+   local edit restores AND runs with zero `/tjs/tjs-browser.js` on reload.
 
 ## Open items to resolve during implementation
 
