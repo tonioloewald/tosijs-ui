@@ -1,0 +1,90 @@
+# Import resolver — live examples that import code from anywhere
+
+**Status:** spike. **1.7.0 does NOT depend on this** — it ships with or without it. Keep the
+consumption isolated/optional (a config flag + a build step that no-ops when unset) so it can
+be cut cleanly if it gets problematic.
+
+**Enabler:** tjs-lang **0.11.0** ships `tjs-lang/import-resolver` — a same-origin service worker
+that intercepts `/<prefix>/<spec>` requests and resolves them to real modules (jsdelivr/esm.sh),
+cached. `/lib/` is earmarked as tosijs-ui's prefix. This is the front edge of the platform
+vision (doc-system + tjs + SW imports + plugin hooks + SPA mode = an in-browser literate-dev
+platform).
+
+## The core insight: the "fake" system is essential, not legacy
+
+Today live-example rewrites `import { x } from 'tosijs'` → `const { x } = tosijs` (context
+injection). That is NOT a hack to retire — it is **load-bearing for the doc-system-as-authoring
+-tool use case**: when you're developing a library, an example must exercise your **in-page
+working copy** (the live, hot-reloading `context` instance you're editing), NOT the CDN-resolved
+*published* version. Real imports would pull the shipped library; context injection gives you the
+one under your cursor.
+
+So real imports are **additive**, and there are two modes plus a side-by-side default.
+
+## Two modes
+
+### 1. Default — library-dev (context injection + real imports side by side)
+
+The core doc-system case. Natural split, already sitting in front of us:
+
+- **In `context` (the library under development)** → stays fake/const-injected (your working copy).
+- **Not in `context`** → a **real bare import the SW resolves** via `/lib/<spec>`.
+
+So `import { tosiWidget } from 'tosijs-ui'` uses your working copy while
+`import confetti from 'canvas-confetti'` is fetched for real — in the SAME example. Keeps the
+authoring value; adds npm-from-anywhere. Runs in the existing `AsyncFunction` engine: context
+specifiers → const; the rest → `const x = await import('/lib/<spec>')` (the SW intercepts the
+dynamic-import fetch).
+
+### 2. IDE / unbundled — real everything, iframe-isolated
+
+Real module imports for ALL specifiers (including the library, resolved from the SW = the
+published version), running isolated in an iframe. The CodeSandbox/app-building case where you
+WANT the real published deps, not the in-page instance. Maps onto the **`iframe` attribute we
+already have** (`executeInIframe`) — extend that path to run as a real module with SW-resolved
+imports, rather than a whole new engine. A deliberate SECOND phase, once the SW is proven.
+
+- `<tosi-example>` (default) → your library + real npm side by side (test your working copy).
+- `<tosi-example iframe>` / `mode="ide"` → fully real, isolated (build an app from arbitrary pkgs).
+
+## We already have the seed
+
+`demo/static/module-cache-sw.js`'s own header says *"DIRECTION (roadmap phase-2): grow this into
+a `/lib/<spec>` resolver."* TFS **is** that — so consuming it **retires** our hand-rolled caching
+SW (the import-resolver caches too, via `cacheName`).
+
+## The API (0.11.0)
+
+- `registerImportResolver({ prefix: '/lib/', workerUrl, scope, defaultCdn, esmShPackages, cacheName })`
+  — registers the SW; config reaches the worker as a query string on its script URL (client
+  rewrite + worker routing can't disagree; round-trip-tested upstream).
+- `tjs-lang/import-resolver/worker` — the SW as a raw classic-script asset
+  (`dist/import-resolver-worker.js`, ~2.9KB IIFE). **Must be copied to the origin's public root**
+  (SWs are same-origin). Subdir hosting needs `Service-Worker-Allowed: /`.
+- `rewriteImports(source, prefix)` — tjs-lang's client rewrite (`import x from 'pkg'` →
+  `import x from '/lib/pkg'`, keeping import statements). NB it assumes ES-module execution; our
+  default (AsyncFunction) needs the dynamic-import variant instead.
+
+## Spike steps (default mode)
+
+1. **Bump tjs-lang 0.10.1 → 0.11.0**, verify compat (all lanes, like the tosijs-beta check).
+2. **Serve + register the worker.** Emit `import-resolver-worker.js` into the doc-site public
+   root (like the `/tjs/` bundles); register it (`prefix: '/lib/'`) when the doc-system loads;
+   retire `module-cache-sw.js`. **Gate behind a `SiteConfig` flag** (default off for 1.7.0) so
+   it's optional. ← steps 1–2 are the plumbing that proves the SW end-to-end, no execution-model change.
+3. **Extend our `rewriteImports`:** context specifiers → const-injection (unchanged); everything
+   else → `const x = await import('/lib/<spec>')`. Handle named/default/namespace forms.
+4. **Prove it:** a doc example importing a real npm package renders (both dev server + built site).
+
+## Open questions / to resolve during the spike
+
+- **Dev vs prod SW.** Registration timing, scope, and the dev server (does `bin/dev.ts` serve the
+  worker + the `Service-Worker-Allowed` header?). tjs-lang's `bin/dev.ts` fallback resolves
+  identically to the worker — mirror that seam if needed.
+- **Caching / versioning.** `cacheName` + versioned specifiers (`pkg@1.2.3`). Persistent cache so
+  offline/repeat loads are same-origin hits (the module-cache-sw win, kept).
+- **The doc-test lane.** Examples that import npm must not make the CI lane network-dependent —
+  pin/allowlist, or keep import-examples out of the gated inline-`test` tier.
+- **IDE mode (phase 2).** How to opt in (`iframe` vs a new `mode`), and the isolation contract
+  (real published library vs in-page context).
+- **Named exports from CDN modules.** esm.sh/jsdelivr interop with `import { x } from` vs default.

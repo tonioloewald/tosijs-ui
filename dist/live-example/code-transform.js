@@ -61,7 +61,7 @@ export async function executeCode(code, context, transform) {
 // self-contained) and is loaded only for `ts` examples; from-ts in turn fetches
 // the TypeScript compiler lazily at runtime, so tsc is never pulled in until a TS
 // example actually transforms. Pinned to match the dev dep.
-const TJS_VERSION = '0.10.1';
+const TJS_VERSION = '0.11.0';
 // Where to fetch a tjs-lang browser bundle from, in priority order:
 //  1. SAME-ORIGIN — the doc-site build copies the bundles next to the iife and
 //     sets `__TJS_LOCAL_BASE`, so the transpiler ships in lockstep with the page,
