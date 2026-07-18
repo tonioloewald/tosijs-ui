@@ -130,7 +130,8 @@ const escapeRegExp = (s: string): string =>
  * problems is not a failure — that is the whole point of it.
  */
 async function checkExamplesInChild(
-  docsJson: string
+  docsJson: string,
+  importPrefix?: string
 ): Promise<ExampleCheck> {
   const cliTs = `${import.meta.dir}/check-examples-cli.ts`
   const cli = existsSync(cliTs)
@@ -140,6 +141,11 @@ async function checkExamplesInChild(
     const child = spawn(['bun', cli, docsJson], {
       stdout: 'pipe',
       stderr: 'pipe',
+      // When the resolver's on, let the check accept non-context imports (they validate
+      // as dynamic `<prefix><spec>` imports rather than throwing "unsupported").
+      env: importPrefix
+        ? { ...process.env, TOSI_IMPORT_PREFIX: importPrefix }
+        : process.env,
     })
     // Drain BOTH pipes while awaiting exit. An undrained pipe fills its buffer, the
     // child blocks writing to it, and we deadlock waiting for an exit that can't come
@@ -167,7 +173,7 @@ async function checkExamplesInChild(
         `falling back to in-process.`
     )
     const corpus = JSON.parse(await Bun.file(docsJson).text())
-    return checkExamples(corpus)
+    return checkExamples(corpus, importPrefix ? { importPrefix } : {})
   }
 }
 
@@ -280,9 +286,18 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
   // pages RUN without the tjs transpiler on both first paint and SPA nav. Empty when
   // checkExamples is disabled; the runtime then transpiles on demand. See
   // self-contained-examples-plan.md.
+  // If the import-resolver is on, the example check accepts non-context imports.
+  const resolverPrefix = config.importResolver
+    ? (config.importResolver === true
+        ? undefined
+        : config.importResolver.prefix) ?? '/lib/'
+    : undefined
   let exampleBakes: Map<string, ExampleBakes> | undefined
   if (config.checkExamples !== false) {
-    const { problems, bakes } = await checkExamplesInChild(DOCS_JSON)
+    const { problems, bakes } = await checkExamplesInChild(
+      DOCS_JSON,
+      resolverPrefix
+    )
     exampleBakes = bakes
     if (problems.length) {
       throw new Error(

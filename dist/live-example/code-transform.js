@@ -20,7 +20,58 @@ export function contextVarName(key) {
  * unsupported form) throws a clear error rather than becoming a SyntaxError in
  * the AsyncFunction body.
  */
-export function rewriteImports(code, contextKeys) {
+/**
+ * Turn the import specifiers a `X as Y` clause carries into destructuring pairs:
+ * `a, b as c` → `a, b: c`.
+ */
+function destructureClause(names) {
+    return names
+        .split(',')
+        .map((n) => {
+        const as = n.trim().match(/^(\w+)\s+as\s+(\w+)$/);
+        return as ? `${as[1]}: ${as[2]}` : n.trim();
+    })
+        .filter(Boolean)
+        .join(', ');
+}
+/**
+ * Rewrite the import statements the context DIDN'T inject into dynamic imports the
+ * import-resolver service worker can fulfil — a bare specifier `pkg` becomes
+ * `await import('<prefix>pkg')`, a `./x` / `https://…` specifier a direct dynamic
+ * import. This is what lets a live example pull real npm code from anywhere; it only
+ * runs when the resolver is enabled (a `prefix` is known). See import-resolver-plan.md.
+ */
+function rewriteBareImportsToDynamic(code, prefix) {
+    const urlFor = (spec) => /^(\.|\/|https?:)/.test(spec) ? spec : prefix + spec;
+    return (code
+        // import <clause> from '<spec>'   ({ a, b } | * as X | X | X, { a })
+        // NB the trailing `[ \t]*;?` must NOT eat the newline, or the next line glues on.
+        .replace(/import\s+([^;'"]+?)\s+from\s+(['"])([^'"]+)\2[ \t]*;?/g, (match, clause, q, spec) => {
+        const imp = `await import(${q}${urlFor(spec)}${q})`;
+        const c = clause.trim();
+        let m;
+        if ((m = c.match(/^\{([^}]*)\}$/)))
+            return `const { ${destructureClause(m[1])} } = ${imp}`;
+        if ((m = c.match(/^\*\s+as\s+(\w+)$/)))
+            return `const ${m[1]} = ${imp}`;
+        if ((m = c.match(/^(\w+)$/)))
+            return `const ${m[1]} = (${imp}).default`;
+        if ((m = c.match(/^(\w+)\s*,\s*\{([^}]*)\}$/)))
+            return `const { default: ${m[1]}, ${destructureClause(m[2])} } = ${imp}`;
+        return match; // unhandled form — left to fail loudly below
+    })
+        // side-effect only: import '<spec>'
+        .replace(/import\s+(['"])([^'"]+)\1[ \t]*;?/g, (_m, q, spec) => `await import(${q}${urlFor(spec)}${q})`));
+}
+/** The import-resolver prefix, if the SW was registered on this page (runtime). */
+function resolverPrefix() {
+    return globalThis.__TOSI_IMPORT_RESOLVER?.prefix;
+}
+export function rewriteImports(code, contextKeys, 
+// The import-resolver prefix (e.g. '/lib/'). When set — or when the SW is registered
+// on the page — non-context imports become dynamic imports the worker resolves.
+// Omitted + no SW → the old behavior: a non-context import is unsupported.
+importPrefix = resolverPrefix()) {
     let result = code;
     for (const moduleName of contextKeys) {
         const js = contextVarName(moduleName);
@@ -32,12 +83,19 @@ export function rewriteImports(code, contextKeys) {
         // import X from 'mod'  (default)
         result = result.replace(new RegExp(`import\\s+(\\w+)\\s+from\\s*'${m}'`, 'g'), (_, name) => `const ${name} = ${js}`);
     }
+    // With the resolver on, route the imports the context didn't inject to the SW.
+    if (importPrefix) {
+        result = rewriteBareImportsToDynamic(result, importPrefix);
+    }
     // Anything still a static import is unsupported — fail loudly with the line.
     const leftover = result.match(/^\s*import\s+['"{*\w][^\n]*/m);
     if (leftover) {
-        throw new Error(`live example: unsupported import \`${leftover[0].trim()}\` — only imports ` +
-            `from the example context (${contextKeys.join(', ')}) are supported, in ` +
-            `{ named }, * as ns, or default form.`);
+        throw new Error(`live example: unsupported import \`${leftover[0].trim()}\` — imports ` +
+            `from the example context (${contextKeys.join(', ')}) are supported in ` +
+            `{ named }, * as ns, or default form` +
+            (importPrefix
+                ? `, and other packages resolve via the import-resolver.`
+                : ` (enable importResolver to import other packages).`));
     }
     return result;
 }

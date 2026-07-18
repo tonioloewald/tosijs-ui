@@ -32,8 +32,14 @@ if (!docsJson) {
     process.exit(1);
 }
 const contextKeys = process.argv.slice(3);
+// When the site enables the import-resolver, the parent passes its prefix so
+// non-context imports validate as dynamic `<prefix><spec>` imports rather than failing.
+const importPrefix = process.env.TOSI_IMPORT_PREFIX || undefined;
 const corpus = JSON.parse(await Bun.file(docsJson).text());
-const { problems, bakes } = await checkExamples(corpus, contextKeys.length ? { contextKeys } : {});
+const { problems, bakes } = await checkExamples(corpus, {
+    ...(contextKeys.length ? { contextKeys } : {}),
+    ...(importPrefix ? { importPrefix } : {}),
+});
 // stdout is the channel — the parent parses this. Anything else this process prints
 // (warnings from the transform, say) goes to stderr so it can't corrupt the payload.
 // Maps can't JSON-roundtrip, so bakes go over as [filename, [source, {dialect,js}][]][].

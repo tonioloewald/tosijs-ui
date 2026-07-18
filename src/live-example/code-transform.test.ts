@@ -103,3 +103,52 @@ describe('AsyncFunction', () => {
     expect(result).toBe(7)
   })
 })
+
+describe('rewriteImports → import-resolver (non-context imports)', () => {
+  const P = '/lib/'
+  test('named/default/namespace/side-effect + `as` rename', () => {
+    expect(rewriteImports("import confetti from 'canvas-confetti'", [], P)).toBe(
+      "const confetti = (await import('/lib/canvas-confetti')).default"
+    )
+    expect(rewriteImports("import { nanoid } from 'nanoid'", [], P)).toBe(
+      "const { nanoid } = await import('/lib/nanoid')"
+    )
+    expect(rewriteImports("import { a as x, b } from 'pkg'", [], P)).toBe(
+      "const { a: x, b } = await import('/lib/pkg')"
+    )
+    expect(rewriteImports("import * as ns from 'pkg'", [], P)).toBe(
+      "const ns = await import('/lib/pkg')"
+    )
+    expect(rewriteImports("import def, { a } from 'pkg'", [], P)).toBe(
+      "const { default: def, a } = await import('/lib/pkg')"
+    )
+    expect(rewriteImports("import 'side-effect'", [], P)).toBe(
+      "await import('/lib/side-effect')"
+    )
+  })
+  test('context imports still const-inject; only the rest hit /lib/', () => {
+    const out = rewriteImports(
+      "import { tosi } from 'tosijs'\nimport confetti from 'canvas-confetti'",
+      ['tosijs'],
+      P
+    )
+    expect(out).toContain('const { tosi } = tosijs')
+    expect(out).toContain("await import('/lib/canvas-confetti')")
+  })
+  test('preserves the newline — does not glue the next statement on', () => {
+    expect(
+      rewriteImports(
+        "import { nanoid } from 'nanoid'\npreview.textContent = nanoid()",
+        [],
+        P
+      )
+    ).toBe(
+      "const { nanoid } = await import('/lib/nanoid')\npreview.textContent = nanoid()"
+    )
+  })
+  test('without a prefix, a non-context import is still unsupported', () => {
+    expect(() => rewriteImports("import x from 'pkg'", [])).toThrow(
+      /unsupported import/
+    )
+  })
+})

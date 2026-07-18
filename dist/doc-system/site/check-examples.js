@@ -66,7 +66,7 @@ export async function checkExamples(docs, opts = {}) {
             // `test` blocks are conventional JS/TS, transpiled as plain js.
             const dialect = block.lang === 'test' ? 'js' : block.lang;
             try {
-                const rewritten = rewriteImports(block.text, contextKeys);
+                const rewritten = rewriteImports(block.text, contextKeys, opts.importPrefix);
                 let js;
                 if (dialect === 'ts') {
                     // Use bun's own transpiler — network-free (the runtime `ts` path

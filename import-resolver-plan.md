@@ -76,9 +76,18 @@ SW (the import-resolver caches too, via `cacheName`).
    **PROVEN:** with the flag on, the SW controls the page (scope `/`) and
    `await import('/lib/canvas-confetti@1.9.3')` returns the real module;
    `fetch('/lib/nanoid')` → `200 text/javascript`. All lanes green with it enabled.
-3. **NEXT — extend our `rewriteImports`:** context specifiers → const-injection (unchanged);
-   everything else → `const x = await import('/lib/<spec>')`. Handle named/default/namespace forms.
-4. **Prove it:** a doc example importing a real npm package renders (dev server + built site).
+3. **✅ Extend `rewriteImports`.** Context specifiers → const-injection (unchanged); everything
+   else → dynamic `await import('<prefix><spec>')` (named / default / `* as ns` / `X, { a }` /
+   side-effect / `a as b` rename forms), gated on the prefix. Runtime auto-reads the
+   `__TOSI_IMPORT_RESOLVER.prefix` global; the build threads it to `check-examples` via a
+   `TOSI_IMPORT_PREFIX` env so npm-importing examples VALIDATE (rewrite to a dynamic import,
+   syntax-check, don't run). (Gotcha fixed: the trailing `;?` must not eat the newline.)
+4. **✅ PROVEN end-to-end.** A doc example `import { nanoid } from 'nanoid'` builds (check-examples
+   validates it) and renders "ID: &lt;nanoid&gt;" — the rewrite → SW-resolve → execute chain works.
+   638 unit + 21 Playwright green.
+
+**Default mode is DONE. A live example can import any npm package.** Next: the IDE/iframe mode
+(phase 2) + the open items below.
 
 ### Still open from steps 1–2
 - **Retire `module-cache-sw.js`** — the import-resolver supersedes its stated roadmap (it caches

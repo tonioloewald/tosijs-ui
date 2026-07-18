@@ -96,7 +96,7 @@ export interface ExampleCheck {
  */
 export async function checkExamples(
   docs: Doc[],
-  opts: { contextKeys?: string[] } = {}
+  opts: { contextKeys?: string[]; importPrefix?: string } = {}
 ): Promise<ExampleCheck> {
   const contextKeys = opts.contextKeys ?? DEFAULT_CONTEXT_KEYS
   const problems: ExampleProblem[] = []
@@ -108,7 +108,11 @@ export async function checkExamples(
       // `test` blocks are conventional JS/TS, transpiled as plain js.
       const dialect = block.lang === 'test' ? 'js' : block.lang
       try {
-        const rewritten = rewriteImports(block.text, contextKeys)
+        const rewritten = rewriteImports(
+          block.text,
+          contextKeys,
+          opts.importPrefix
+        )
         let js: string
         if (dialect === 'ts') {
           // Use bun's own transpiler — network-free (the runtime `ts` path

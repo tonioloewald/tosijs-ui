@@ -25,6 +25,7 @@ export interface ExampleCheck {
  */
 export declare function checkExamples(docs: Doc[], opts?: {
     contextKeys?: string[];
+    importPrefix?: string;
 }): Promise<ExampleCheck>;
 /** Format problems for a build log. */
 export declare function formatExampleProblems(problems: ExampleProblem[]): string;
