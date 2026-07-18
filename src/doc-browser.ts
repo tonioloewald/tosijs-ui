@@ -146,7 +146,7 @@ interface ProjectLinks {
 
 The `tosijs-ui` demo is a complete working example. See:
 
-- `/demo/src/index.ts` - How the doc browser is set up
+- `/tosijs-site.config.ts` - How this repo configures its doc site (`defineSiteConfig` / `tosijs-ui/site`)
 - `/src/doc-system/site/docs.ts` - The extraction tool (`extractDocs`, exported from `tosijs-ui/site`)
 - `/src/doc-browser.ts` - The createDocBrowser implementation
 */

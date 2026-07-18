@@ -64,6 +64,9 @@ import { docSystemStyleSpec } from './doc-system-styles';
 import { icons } from '../icons';
 import { popMenu } from '../menu';
 import { i18n, setLocale, initLocalization } from '../localize';
+// Side-effect: register <tosi-css-var-editor> so doc pages can drop the live CSS-var
+// tweaker under an example. Part of the doc-system, NOT re-exported from tosijs-ui.
+import './css-var-editor';
 const { button, div } = elements;
 const PREFS_KEY = 'tosi-doc-system-prefs';
 export class TosiDocSystem extends Component {
