@@ -181,6 +181,22 @@ export interface SiteConfig {
      * set false if your examples import from a custom `context` the check can't see.
      */
     checkExamples?: boolean;
+    /**
+     * Opt in to the import-resolver service worker (tjs-lang 0.11+): live examples can
+     * import real npm packages from anywhere — bare specifiers the doc-system doesn't
+     * inject become `/<prefix>/<spec>` requests the worker resolves + caches. Copies the
+     * worker to the web root and registers it client-side. `true` uses defaults
+     * (`prefix: '/lib/'`); pass an object to configure. OFF by default — experimental.
+     * See import-resolver-plan.md.
+     */
+    importResolver?: boolean | {
+        /** same-origin path prefix bare imports are rewritten to (default '/lib/') */
+        prefix?: string;
+        /** default CDN for unlisted packages */
+        defaultCdn?: 'jsdelivr' | 'esmsh';
+        /** packages forced through esm.sh (e.g. ones needing its interop) */
+        esmShPackages?: string[];
+    };
     /** served web-root output dir, default 'docs' */
     outputDir?: string;
     /** dev-server port, default 8787 */

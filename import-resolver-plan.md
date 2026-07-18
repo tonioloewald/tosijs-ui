@@ -67,14 +67,30 @@ SW (the import-resolver caches too, via `cacheName`).
 
 ## Spike steps (default mode)
 
-1. **Bump tjs-lang 0.10.1 → 0.11.0**, verify compat (all lanes, like the tosijs-beta check).
-2. **Serve + register the worker.** Emit `import-resolver-worker.js` into the doc-site public
-   root (like the `/tjs/` bundles); register it (`prefix: '/lib/'`) when the doc-system loads;
-   retire `module-cache-sw.js`. **Gate behind a `SiteConfig` flag** (default off for 1.7.0) so
-   it's optional. ← steps 1–2 are the plumbing that proves the SW end-to-end, no execution-model change.
-3. **Extend our `rewriteImports`:** context specifiers → const-injection (unchanged); everything
-   else → `const x = await import('/lib/<spec>')`. Handle named/default/namespace forms.
-4. **Prove it:** a doc example importing a real npm package renders (both dev server + built site).
+1. **✅ Bump tjs-lang 0.10.1 → 0.11.0** — done, verified compatible (all lanes).
+2. **✅ Serve + register the worker.** `SiteConfig.importResolver` (off by default) →
+   orchestrator copies `import-resolver-worker.js` to the web root + injects a
+   `__TOSI_IMPORT_RESOLVER` config global; the doc-system client dynamic-imports
+   `tjs-lang/import-resolver` (a 3.9KB lazy chunk, out of a plain component consumer's graph)
+   and `registerImportResolver`s it (`reloadOnFirstInstall: false` — no reader reload).
+   **PROVEN:** with the flag on, the SW controls the page (scope `/`) and
+   `await import('/lib/canvas-confetti@1.9.3')` returns the real module;
+   `fetch('/lib/nanoid')` → `200 text/javascript`. All lanes green with it enabled.
+3. **NEXT — extend our `rewriteImports`:** context specifiers → const-injection (unchanged);
+   everything else → `const x = await import('/lib/<spec>')`. Handle named/default/namespace forms.
+4. **Prove it:** a doc example importing a real npm package renders (dev server + built site).
+
+### Still open from steps 1–2
+- **Retire `module-cache-sw.js`** — the import-resolver supersedes its stated roadmap (it caches
+  too). Not yet removed; do it once the resolver is the default caching path.
+- **First-visit control timing.** With `reloadOnFirstInstall: false`, the SW controls on the NEXT
+  navigation — so a first-ever visitor's `/lib/` import (once step 3 lands) resolves only after
+  the SW activates. Decide the UX (a targeted reload only when an example actually needs `/lib/`,
+  or an "installing…" state) in step 3/4.
+- **basePath / subdir hosting** needs `Service-Worker-Allowed: /` on the worker response (the dev
+  server + host must send it); only the root case is wired so far.
+- **CI network dependency** — the step-4 proof hits a real CDN; keep npm-import examples out of the
+  gated inline-`test` tier, or pin/mock.
 
 ## Open questions / to resolve during the spike
 

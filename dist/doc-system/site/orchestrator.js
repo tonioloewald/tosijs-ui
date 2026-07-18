@@ -509,6 +509,38 @@ export async function buildSite(config) {
     catch {
         // tjs-lang not installed — live examples fall back to the CDN chain
     }
+    // Optional (tjs-lang 0.11+): the import-resolver service worker. Lets live examples
+    // import real npm packages from anywhere — bare specifiers the doc-system doesn't
+    // inject become `/<prefix>/<spec>` requests the worker resolves + caches. GATED behind
+    // `config.importResolver` (OFF by default; 1.7.0 ships without it). Copies the worker
+    // to the public root and hands the client a config global to register it from (see the
+    // doc-system client's registration). See import-resolver-plan.md.
+    let importResolverHead = '';
+    if (config.importResolver) {
+        try {
+            const opts = config.importResolver === true ? {} : config.importResolver;
+            const worker = Bun.resolveSync('tjs-lang/import-resolver/worker', PROJECT_ROOT);
+            await $ `cp ${worker} ${PUBLIC}/import-resolver-worker.js`.text();
+            const bp = config.basePath;
+            const root = !bp || bp === '/' ? '' : bp.replace(/\/$/, '');
+            const clientConfig = {
+                prefix: opts.prefix ?? '/lib/',
+                workerUrl: `${root}/import-resolver-worker.js`,
+                // Don't reload a reader's page on first install — the SW takes control on the
+                // next navigation, and nothing needs it before an example imports from /lib/.
+                reloadOnFirstInstall: false,
+            };
+            if (opts.defaultCdn)
+                clientConfig.defaultCdn = opts.defaultCdn;
+            if (opts.esmShPackages)
+                clientConfig.esmShPackages = opts.esmShPackages;
+            importResolverHead = `<script>globalThis.__TOSI_IMPORT_RESOLVER=${JSON.stringify(clientConfig)}</script>`;
+            console.log(`import-resolver worker at ${root}/import-resolver-worker.js (prefix ${clientConfig.prefix})`);
+        }
+        catch (e) {
+            console.warn(`import-resolver: could not set it up (${String(e)}) — skipping`);
+        }
+    }
     // Generate the static, pre-rendered doc site (one /slug/index.html per doc).
     // Runs after the static-asset copy so the generated index.html (README) wins,
     // and after the bundle copy so every page's <script src> resolves.
@@ -529,7 +561,9 @@ export async function buildSite(config) {
         // instead of the classic IIFE. See the ESM hydration bundle above.
         hydrateUrl: hydrateName ? `/${hydrateName}` : undefined,
         bakes: exampleBakes,
-        headExtra: [config.headExtra, tjsHead].filter(Boolean).join('') || undefined,
+        headExtra: [config.headExtra, tjsHead, importResolverHead]
+            .filter(Boolean)
+            .join('') || undefined,
         scriptUrl: config.scriptUrl,
         basePath: config.basePath,
     });

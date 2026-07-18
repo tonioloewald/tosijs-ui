@@ -508,3 +508,19 @@ export class TosiDocSystem extends Component {
 
 export const tosiDocSystem =
   TosiDocSystem.elementCreator() as ElementCreator<TosiDocSystem>
+
+// Register the import-resolver service worker when the build opted in — the config
+// global is injected into the page head by orchestrator's importResolverHead (gated on
+// SiteConfig.importResolver). Dynamic import keeps tjs-lang/import-resolver out of the
+// bundle unless a site actually enables it, and out of a plain component consumer's
+// graph entirely. Experimental; 1.7.0 ships with the flag off. See import-resolver-plan.md.
+function initImportResolver(): void {
+  if (typeof document === 'undefined') return
+  const cfg = (globalThis as unknown as { __TOSI_IMPORT_RESOLVER?: object })
+    .__TOSI_IMPORT_RESOLVER
+  if (!cfg) return
+  void import('tjs-lang/import-resolver')
+    .then(({ registerImportResolver }) => registerImportResolver(cfg))
+    .catch((e) => console.warn('import-resolver: registration failed', e))
+}
+initImportResolver()
