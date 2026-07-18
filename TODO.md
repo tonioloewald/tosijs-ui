@@ -39,15 +39,11 @@ Non-blocking follow-ups (do before the FINAL 1.7.0 tag):
 - [ ] **DRY (remaining):** extract one `runBunChild(argv)` owning the drain-both-pipes invariant
       (orchestrator ×2 + bundle-guard — the leak class this release fights); extract
       `prepareExecutable()` shared by executeInline/Iframe (touches the core run path — do carefully).
-- [ ] **`demo/src` dead-entry tangle (surfaced while attempting the `demo/src/style.ts` delete —
-      needs a DECISION, not a quick delete).** `demo/src/index.ts` is an UN-BUILT dead entry (bundleEntry
-      is `src/index-iife.ts`; 0 `demo-style` in built docs), and it is the ONLY registrar of
-      `<tosi-css-var-editor>` — so that dev tool is already **absent from the shipped bundles** and the
-      `<tosi-css-var-editor>` usages in carousel/form/color-input/sizer docs are **no-ops in the built
-      site** (pre-existing). Decide: (a) css-var-editor is a real doc affordance → register it in the
-      build (src/index.ts or the site config) and keep it; or (b) it's dead → remove `demo/src/index.ts`
-      + `style.ts` + `css-var-editor.ts` AND the `<tosi-css-var-editor>` usages + the `doc-browser.ts:149`
-      ref. `demo/src/localized-strings.ts` stays either way (still used by the site config).
+- [x] **`demo/src` dead-entry tangle — RESOLVED via option (a).** `<tosi-css-var-editor>` was dead in
+      the build (only registered by the un-built `demo/src/index.ts`). Moved it into the doc-system
+      (`src/doc-system/css-var-editor.ts`), registered via a side-effect import in `doc-system.ts` (NOT
+      a public export), fixed its rgb-color detection + unbounded retry, and deleted the whole dead demo
+      entry. Live on the component pages now (verified on /carousel/).
 - [x] **#13 `<tosi-map>`** — fixed (one map, not one per render during CDN load) + regression test.
 - [x] **#8 hydration console errors** — verified fixed by the 1.6.9 parts adoption, closed, guarded
       (`hydration.pw.ts` console-clean test).
