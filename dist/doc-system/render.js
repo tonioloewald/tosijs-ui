@@ -15,21 +15,16 @@ const docMarked = new Marked();
 docMarked.use({
     renderer: {
         code(token) {
-            // Fence info grammar: `<lang>[:<mode>][#<id>]` — e.g. `js`, `css#anchor`,
-            // `js:iframe`, `ts:ide#demo`. `:mode` (inline | iframe | ide) sets the live
-            // example's execution mode; `#id` gives it a stable anchor. Both are stripped so
-            // the language stays clean (`language-js`) for grouping/highlighting.
+            // Fence info grammar: `<lang>` optionally with a `:<mode>` and/or `#<id>` in
+            // EITHER order — `js`, `css#anchor`, `js:iframe`, `ts:ide#demo`, `ts#demo:ide`.
+            // `:mode` (inline | iframe | ide) sets the live example's execution mode; `#id`
+            // gives it a stable anchor. `#id` is `[A-Za-z0-9_-]+` and `:mode` is `[a-z]+`, so
+            // the two can't overlap — parse each independently, order-free. Both are stripped
+            // so the language stays clean (`language-js`) for grouping/highlighting.
             const info = String(token.lang || '');
-            const hash = info.indexOf('#');
-            const id = hash === -1
-                ? ''
-                : (info.slice(hash + 1).match(/^[A-Za-z0-9_-]+/)?.[0] ?? '');
-            const beforeHash = hash === -1 ? info : info.slice(0, hash);
-            const colon = beforeHash.indexOf(':');
-            const lang = colon === -1 ? beforeHash : beforeHash.slice(0, colon);
-            const mode = colon === -1
-                ? ''
-                : (beforeHash.slice(colon + 1).match(/^[a-z]+/)?.[0] ?? '');
+            const lang = info.match(/^[a-z]+/)?.[0] ?? '';
+            const id = info.match(/#([A-Za-z0-9_-]+)/)?.[1] ?? '';
+            const mode = info.match(/:([a-z]+)/)?.[1] ?? '';
             const bake = currentBakes?.get(token.text);
             if (!id && !mode && !bake)
                 return false; // default rendering — byte-identical

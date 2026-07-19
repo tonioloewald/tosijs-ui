@@ -97,3 +97,10 @@ test('```lang:mode#id carries BOTH the mode and the anchor', () => {
   expect(html).toContain('data-example-mode="ide"')
   expect(html).toContain('class="language-ts"')
 })
+
+test('```lang#id:mode works too — mode and id are order-free', () => {
+  const html = renderDocMarkdown('```ts#demo:ide\nconst z = 3\n```')
+  expect(html).toContain('data-example-id="demo"')
+  expect(html).toContain('data-example-mode="ide"')
+  expect(html).toContain('class="language-ts"')
+})
