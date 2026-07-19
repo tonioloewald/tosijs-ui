@@ -4,8 +4,7 @@
 
 ## Every Artifact
 
-Here is an honest description of this documentation system, and it will sound
-like lying:
+Here is a description of this documentation system. It may sound like it's either insanely impractical or a wish list:
 
 It is a **one-step build** that produces a fast, SEO-friendly website; the same
 site is a **test bed** that runs and asserts its own examples; those examples are

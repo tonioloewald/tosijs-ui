@@ -252,6 +252,9 @@ const testIndicatorStyleSpec = {
         borderRadius: vars.roundedRadius,
     },
 };
+// Monotonic per-page counter so each createDocBrowser() call gets a distinct
+// tosi() registry key (see stateKey below) and two browsers can't share state.
+let docBrowserSeq = 0;
 export function createDocBrowser(options) {
     const { docs, context = {}, projectName = '', projectLinks = {}, navSize = 200, minSize = 600, routing = 'query', initialRoute, onRouteChange, navbarLinks, contentElement, } = options;
     // Memory routing is fully self-contained: it never reads or writes
@@ -320,13 +323,21 @@ export function createDocBrowser(options) {
     };
     const docName = filenameFromLocation() || docs[0]?.filename || 'README.md';
     const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0];
-    const { app } = tosi({
-        app: {
+    // tosi() registers its top-level keys in a GLOBAL observable registry, so two
+    // doc browsers on one page (e.g. a page whose live example embeds a nested
+    // <tosi-doc-system>) would BOTH register `app` and share it — the second wins,
+    // so the outer browser's nav / currentDoc / edit-source silently read the
+    // nested one's doc. Give each instance its own key. (This is the same collision
+    // the live-example docs warn about: never register a generic `app`.)
+    const stateKey = `docBrowser${docBrowserSeq++}`;
+    const state = tosi({
+        [stateKey]: {
             docs,
             currentDoc,
             compact: false,
         },
     });
+    const app = state[stateKey];
     // Assigned by the hierarchical nav builder (path routing); re-applies current
     // highlight, test status, search visibility, and auto-open imperatively.
     // resetOpen=true collapses every section except the current doc's.
@@ -1044,7 +1055,7 @@ export function createDocBrowser(options) {
             },
         }, template(a({
             class: 'doc-link',
-            bindCurrent: 'app.currentDoc.filename',
+            bindCurrent: `${stateKey}.currentDoc.filename`,
             bindDocLink: '^.filename',
             bindTestStatus: '^.testStatus',
             onClick(event) {
