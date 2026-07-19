@@ -8,6 +8,8 @@ interface SourceBlock {
   code: string
   // Build-time transpiled JS from the block's baked `<script>` sibling, if any.
   compiled?: string
+  // Execution mode from a `<lang>:<mode>` fence (inline | iframe | ide), if any.
+  mode?: string
 }
 
 // A block's `<pre>` may be followed by a hidden `<script type="application/tosi-
@@ -72,6 +74,10 @@ export function insertExamples(
       language: code.classList[0].split('-').pop(),
       code: (code as HTMLElement).innerText,
       compiled: bakedJsForBlock(code.parentElement as HTMLPreElement),
+      mode:
+        (code.parentElement as HTMLElement).getAttribute(
+          'data-example-mode'
+        ) || undefined,
     }))
 
   // Per-doc ordinal: the Nth live example on the page. Combined with sourceFile
@@ -93,6 +99,25 @@ export function insertExamples(
     if (sourceFile !== undefined) {
       example.setAttribute('data-source-file', sourceFile)
       example.setAttribute('data-example-ordinal', String(ordinal))
+    }
+    // Execution mode from a `<lang>:<mode>` fence — take the FIRST mode in the group.
+    // Contradictory modes across the group's blocks are an authoring error: shout in the
+    // console (which the doc-tests console-clean guard also catches) but obey the first.
+    const modes = exampleSources
+      .map((s) => s.mode)
+      .filter((m): m is string => !!m)
+    if (modes.length) {
+      const distinct = [...new Set(modes)]
+      if (distinct.length > 1) {
+        console.error(
+          `live example ${ordinal + 1}${
+            sourceFile ? ` (${sourceFile})` : ''
+          }: contradictory modes [${distinct.join(
+            ', '
+          )}] — using the first, "${modes[0]}".`
+        )
+      }
+      example.setAttribute('mode', modes[0])
     }
     // Stable anchor for deep-linking (and for book "run this live" links): an
     // author override `data-example-id` (from a ```js#my-id fence on any block in

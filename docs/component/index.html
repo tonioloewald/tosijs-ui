@@ -322,15 +322,27 @@ test(&#39;the wasm kernel actually compiled (no silent fallback to JS)&#39;, asy
   expect(compiled.length).toBeGreaterThan(0)
 })
 </code></pre>
-<h2>CSS Isolation with <code>iframe</code></h2>
-<p>Add the <code>iframe</code> attribute to render the preview inside an iframe, giving the example
-its own document, CSS scope, and custom-element registry. Reach for it when a demo&#39;s
-styles would otherwise leak into (or get leaked on by) the rest of the page.</p>
-<p>It isolates <strong>DOM and CSS, not state.</strong> The <code>tosijs</code>/<code>tosijs-ui</code> modules injected
-into the iframe are the host page&#39;s own instances, so <code>tosi()</code> singletons remain
-shared across every example (see &quot;How examples run&quot; above). Namespace your state to
-keep examples from stomping each other; use <code>iframe</code> when you need visual/DOM
-isolation.</p>
+<h2>Execution modes</h2>
+<p>An example runs in one of three modes. Signal the mode on a code fence with
+<code>```&lt;lang&gt;:&lt;mode&gt;</code> — <code>```js:iframe</code>, <code>```css:ide</code> — on <strong>any</strong> block in the
+group; the first mode in the group wins (contradictory modes across a group are an
+authoring error: they log to the console and the first is used). Or set the <code>mode</code>
+attribute directly.</p>
+<ul>
+<li><strong><code>inline</code></strong> (default) — runs in the page, against the <strong>library you&#39;re building</strong>
+(your in-page working copy). Real npm imports resolve alongside it (with the
+import-resolver enabled). Shares the page&#39;s DOM, CSS, and <code>tosi()</code> state.</li>
+<li><strong><code>iframe</code></strong> — same working-copy library, but the preview gets its own document, CSS
+scope, and custom-element registry, so a demo&#39;s styles can&#39;t leak into (or be leaked
+on by) the rest of the page. It isolates <strong>DOM and CSS, not state</strong> — the injected
+<code>tosijs</code>/<code>tosijs-ui</code> are the host&#39;s own instances, so <code>tosi()</code> singletons stay shared;
+namespace your state to keep examples from stomping each other. (The boolean <code>iframe</code>
+attribute is a back-compat alias for <code>mode=&quot;iframe&quot;</code>.)</li>
+<li><strong><code>ide</code></strong> — fully sandboxed: real, <strong>published</strong> dependencies (all imports resolved by
+the import-resolver, not your working copy) in an isolated realm — the standalone-app
+mode, for running arbitrary code rather than demoing the library under development.
+<em>(Recognized now; its distinct real-module execution is in progress.)</em></li>
+</ul>
 <p><em>Fully-isolated examples (a separate module realm, so even <code>tosi()</code> state and
 imported dependencies are sandboxed — the way tjs-lang&#39;s playgrounds do it with a
 service worker intercepting imports) are a possible future option. For <strong>actual

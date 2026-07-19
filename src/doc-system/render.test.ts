@@ -83,3 +83,17 @@ test('bakes: a </script> in the transpiled JS cannot break out of the tag', () =
   const json = html.slice(html.indexOf('>', open) + 1, close)
   expect(JSON.parse(json)).toBe(js)
 })
+
+test('a ```lang:mode fence stamps data-example-mode and keeps the language clean', () => {
+  const html = renderDocMarkdown('```js:iframe\nconst x = 1\n```')
+  expect(html).toContain('data-example-mode="iframe"')
+  expect(html).toContain('class="language-js"') // language stays clean for grouping
+  expect(html).not.toContain('js:iframe')
+})
+
+test('```lang:mode#id carries BOTH the mode and the anchor', () => {
+  const html = renderDocMarkdown('```ts:ide#demo\nconst y = 2\n```')
+  expect(html).toContain('data-example-id="demo"')
+  expect(html).toContain('data-example-mode="ide"')
+  expect(html).toContain('class="language-ts"')
+})

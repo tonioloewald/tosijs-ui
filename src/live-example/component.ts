@@ -300,17 +300,27 @@ test('the wasm kernel actually compiled (no silent fallback to JS)', async () =>
 })
 ```
 
-## CSS Isolation with `iframe`
+## Execution modes
 
-Add the `iframe` attribute to render the preview inside an iframe, giving the example
-its own document, CSS scope, and custom-element registry. Reach for it when a demo's
-styles would otherwise leak into (or get leaked on by) the rest of the page.
+An example runs in one of three modes. Signal the mode on a code fence with
+`` ```<lang>:<mode> `` — `` ```js:iframe ``, `` ```css:ide `` — on **any** block in the
+group; the first mode in the group wins (contradictory modes across a group are an
+authoring error: they log to the console and the first is used). Or set the `mode`
+attribute directly.
 
-It isolates **DOM and CSS, not state.** The `tosijs`/`tosijs-ui` modules injected
-into the iframe are the host page's own instances, so `tosi()` singletons remain
-shared across every example (see "How examples run" above). Namespace your state to
-keep examples from stomping each other; use `iframe` when you need visual/DOM
-isolation.
+- **`inline`** (default) — runs in the page, against the **library you're building**
+  (your in-page working copy). Real npm imports resolve alongside it (with the
+  import-resolver enabled). Shares the page's DOM, CSS, and `tosi()` state.
+- **`iframe`** — same working-copy library, but the preview gets its own document, CSS
+  scope, and custom-element registry, so a demo's styles can't leak into (or be leaked
+  on by) the rest of the page. It isolates **DOM and CSS, not state** — the injected
+  `tosijs`/`tosijs-ui` are the host's own instances, so `tosi()` singletons stay shared;
+  namespace your state to keep examples from stomping each other. (The boolean `iframe`
+  attribute is a back-compat alias for `mode="iframe"`.)
+- **`ide`** — fully sandboxed: real, **published** dependencies (all imports resolved by
+  the import-resolver, not your working copy) in an isolated realm — the standalone-app
+  mode, for running arbitrary code rather than demoing the library under development.
+  *(Recognized now; its distinct real-module execution is in progress.)*
 
 *Fully-isolated examples (a separate module realm, so even `tosi()` state and
 imported dependencies are sandboxed — the way tjs-lang's playgrounds do it with a
@@ -509,6 +519,19 @@ export class LiveExample extends Component<ExampleParts> {
   static initAttributes = {
     persistToDom: false,
     iframe: false,
+    // Execution mode: 'inline' (default — runs in the page against your working
+    // library), 'iframe' (DOM/CSS isolation, still your working library), or 'ide'
+    // (fully sandboxed, real published deps — the standalone-app mode). Set from a
+    // `<lang>:<mode>` fence by insert-examples; `iframe` boolean is a back-compat alias.
+    mode: '',
+  }
+
+  /** Resolved execution mode — `mode` attribute wins; `iframe` boolean is the alias. */
+  get effectiveMode(): 'inline' | 'iframe' | 'ide' {
+    const m = this.mode
+    if (m === 'iframe' || m === 'ide' || m === 'inline') return m
+    if (m) console.warn(`<tosi-example>: unknown mode "${m}" — running inline`)
+    return this.iframe ? 'iframe' : 'inline'
   }
 
   prefix = 'lx'
@@ -1577,7 +1600,12 @@ export class LiveExample extends Component<ExampleParts> {
     const onScope =
       this.dialect !== 'js' && this.editorsBuilt ? this.captureScope : undefined
 
-    if (this.iframe) {
+    // 'iframe' and (for now) 'ide' both run in an isolated iframe. 'ide' — the fully
+    // sandboxed real-published-deps mode — is a recognized flag; its distinct
+    // real-module execution is a follow-up (import-resolver-plan.md phase 2), so it
+    // currently uses the iframe path.
+    const mode = this.effectiveMode
+    if (mode === 'iframe' || mode === 'ide') {
       preview = await executeInIframe({
         html: this.html,
         css: this.css,

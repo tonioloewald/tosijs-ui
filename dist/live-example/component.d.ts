@@ -223,7 +223,10 @@ export declare class LiveExample extends Component<ExampleParts> {
     static initAttributes: {
         persistToDom: boolean;
         iframe: boolean;
+        mode: string;
     };
+    /** Resolved execution mode — `mode` attribute wins; `iframe` boolean is the alias. */
+    get effectiveMode(): 'inline' | 'iframe' | 'ide';
     prefix: string;
     storageKey: string;
     context: ExampleContext;

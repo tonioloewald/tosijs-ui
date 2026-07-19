@@ -16,8 +16,9 @@ function makeCreator() {
   return { creator, created }
 }
 
-function pre(lang: string, code: string): string {
-  return `<pre><code class="language-${lang}">${code}</code></pre>`
+function pre(lang: string, code: string, mode?: string): string {
+  const attr = mode ? ` data-example-mode="${mode}"` : ''
+  return `<pre${attr}><code class="language-${lang}">${code}</code></pre>`
 }
 
 function run(inner: string) {
@@ -58,5 +59,34 @@ describe('insertExamples grouping across the baked <script>', () => {
     expect(withPlainScript).toHaveLength(2)
     const withProse = run(pre('tjs', 'SRC') + '<p>note</p>' + pre('test', 'TST'))
     expect(withProse).toHaveLength(2)
+  })
+})
+
+describe('insertExamples fenced execution mode (:mode)', () => {
+  test('the group takes the first fenced mode', () => {
+    const created = run(pre('css', '.x{}', 'iframe') + pre('js', 'SRC'))
+    expect(created).toHaveLength(1)
+    expect(created[0].getAttribute('mode')).toBe('iframe')
+  })
+
+  test('no mode → the example gets no mode attribute (inline default)', () => {
+    const created = run(pre('js', 'SRC'))
+    expect(created[0].getAttribute('mode')).toBe(null)
+  })
+
+  test('contradictory modes: console.error, but obey the FIRST', () => {
+    const orig = console.error
+    let msg = ''
+    console.error = (m: string) => {
+      msg = String(m)
+    }
+    try {
+      const created = run(pre('js', 'SRC', 'iframe') + pre('test', 'T', 'ide'))
+      expect(created[0].getAttribute('mode')).toBe('iframe') // first wins
+      expect(msg).toMatch(/contradictory modes/)
+      expect(msg).toMatch(/iframe/)
+    } finally {
+      console.error = orig
+    }
   })
 })

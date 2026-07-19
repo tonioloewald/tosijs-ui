@@ -36,7 +36,17 @@ authoring value; adds npm-from-anywhere. Runs in the existing `AsyncFunction` en
 specifiers → const; the rest → `const x = await import('/lib/<spec>')` (the SW intercepts the
 dynamic-import fetch).
 
-### 2. IDE / unbundled — real everything, iframe-isolated
+### Three modes, flagged on the fence
+
+`inline` (default), `iframe` (DOM/CSS isolation, working copy), `ide` (fully sandboxed, real
+**published** deps). Signalled by a `` ```<lang>:<mode> `` fence — first mode in the group wins;
+contradictory modes across a group log a console error (which the doc-tests console-clean guard
+catches) and the first is obeyed. The `iframe` boolean attribute aliases `mode="iframe"`. **DONE:**
+the flagging (render parse → `data-example-mode`, insert-examples first-wins + contradiction error,
+`mode` attribute + `effectiveMode` routing); `inline`/`iframe` execute; `ide` is recognized and
+currently uses the iframe path. **NEXT:** `ide`'s distinct real-module execution (below).
+
+### `ide` — real everything, iframe-isolated (execution still to build)
 
 Real module imports for ALL specifiers (including the library, resolved from the SW = the
 published version), running isolated in an iframe. The CodeSandbox/app-building case where you

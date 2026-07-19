@@ -48,6 +48,7 @@ sourceFile) {
         language: code.classList[0].split('-').pop(),
         code: code.innerText,
         compiled: bakedJsForBlock(code.parentElement),
+        mode: code.parentElement.getAttribute('data-example-mode') || undefined,
     }));
     // Per-doc ordinal: the Nth live example on the page. Combined with sourceFile
     // it's the key back to the originating fenced-block group in the source.
@@ -64,6 +65,19 @@ sourceFile) {
         if (sourceFile !== undefined) {
             example.setAttribute('data-source-file', sourceFile);
             example.setAttribute('data-example-ordinal', String(ordinal));
+        }
+        // Execution mode from a `<lang>:<mode>` fence — take the FIRST mode in the group.
+        // Contradictory modes across the group's blocks are an authoring error: shout in the
+        // console (which the doc-tests console-clean guard also catches) but obey the first.
+        const modes = exampleSources
+            .map((s) => s.mode)
+            .filter((m) => !!m);
+        if (modes.length) {
+            const distinct = [...new Set(modes)];
+            if (distinct.length > 1) {
+                console.error(`live example ${ordinal + 1}${sourceFile ? ` (${sourceFile})` : ''}: contradictory modes [${distinct.join(', ')}] — using the first, "${modes[0]}".`);
+            }
+            example.setAttribute('mode', modes[0]);
         }
         // Stable anchor for deep-linking (and for book "run this live" links): an
         // author override `data-example-id` (from a ```js#my-id fence on any block in

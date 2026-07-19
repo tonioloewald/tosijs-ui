@@ -36,19 +36,33 @@ const docMarked = new Marked()
 docMarked.use({
   renderer: {
     code(token: any) {
+      // Fence info grammar: `<lang>[:<mode>][#<id>]` — e.g. `js`, `css#anchor`,
+      // `js:iframe`, `ts:ide#demo`. `:mode` (inline | iframe | ide) sets the live
+      // example's execution mode; `#id` gives it a stable anchor. Both are stripped so
+      // the language stays clean (`language-js`) for grouping/highlighting.
       const info = String(token.lang || '')
       const hash = info.indexOf('#')
       const id =
         hash === -1
           ? ''
           : (info.slice(hash + 1).match(/^[A-Za-z0-9_-]+/)?.[0] ?? '')
+      const beforeHash = hash === -1 ? info : info.slice(0, hash)
+      const colon = beforeHash.indexOf(':')
+      const lang = colon === -1 ? beforeHash : beforeHash.slice(0, colon)
+      const mode =
+        colon === -1
+          ? ''
+          : (beforeHash.slice(colon + 1).match(/^[a-z]+/)?.[0] ?? '')
       const bake = currentBakes?.get(token.text)
-      if (!id && !bake) return false // default rendering — byte-identical
-      let html = baseRenderer.code({
-        ...token,
-        lang: hash === -1 ? info : info.slice(0, hash),
-      })
-      if (id) html = html.replace(/^<pre>/, `<pre data-example-id="${id}">`)
+      if (!id && !mode && !bake) return false // default rendering — byte-identical
+      let html = baseRenderer.code({ ...token, lang })
+      const attrs = [
+        id && `data-example-id="${id}"`,
+        mode && `data-example-mode="${mode}"`,
+      ]
+        .filter(Boolean)
+        .join(' ')
+      if (attrs) html = html.replace(/^<pre>/, `<pre ${attrs}>`)
       if (bake) {
         // `<` → < prevents a `</script>` inside the JS from breaking the tag;
         // JSON.parse decodes it unchanged at hydration.
