@@ -7,6 +7,14 @@ ever read. See `tosijs-coding-practices/practices/cross-project.md`.
 
 Mark `✅ RESOLVED (fixed in <pkg>@<version>)` when it lands, and close the issue.
 
+**Review cadence — weekly.** Issues filed outside our control (the ones linked below)
+get re-polled **once a week**: check each linked issue/PR for state changes, a merge, or
+a released version that carries the fix, then refresh its `Status checked <date>` line
+with what moved. A passive tracking doc rots; the heartbeat is what keeps it honest. Any
+session that opens this file and sees a `Status checked` line older than ~a week should
+re-poll before relying on it. (An in-session weekly cron can nudge this, but crons are
+session-only + expire in 7 days — this line is the durable reminder.)
+
 ---
 
 ## bun
@@ -16,9 +24,16 @@ Mark `✅ RESOLVED (fixed in <pkg>@<version>)` when it lands, and close the issu
   processes. **This has taken the machine down twice.** ~30MB per call, monotonic, invisible
   to `Bun.gc()` and to any JS heap profiler.
 
-  **Status checked 2026-07-14: issue OPEN, [PR #34054](https://github.com/oven-sh/bun/pull/34054)
-  OPEN and UNMERGED (last touched 2026-07-12). Latest released Bun is 1.3.14 — the same version
-  we run — so NO released Bun has the fix.** Bun reproduced it, and their diagnosis is sharper
+  **Status checked 2026-07-20: still NO movement (issue + PR both untouched since 2026-07-12;
+  latest release still 1.3.14 / 2026-05-13, the version we run). PR remains OPEN/unmerged —
+  GitHub currently reports `mergeable: UNKNOWN` (recomputing) after showing `CONFLICTING` on
+  07-19; either way it has not landed.** Prior detail from 2026-07-19:
+  **NO movement, PR now stale. Issue OPEN (last touched 2026-07-12);
+  [PR #34054](https://github.com/oven-sh/bun/pull/34054) still OPEN/UNMERGED and has gone
+  `CONFLICTING`/`DIRTY` — it now has merge conflicts with base and needs a rebase before it can
+  land. Latest released Bun is still 1.3.14 (2026-05-13) — the version we run — so NO released
+  Bun has the fix.** (Prior check 2026-07-14 was the same modulo the PR not yet conflicting.)
+  Bun reproduced it, and their diagnosis is sharper
   than ours: it is not a malloc leak (LSAN sees ~5KB unreachable) — the memory _is_ freed, but
   **mimalloc never purges it back to the OS** (all growth lands in `[anon:mimalloc]` mappings).
 
@@ -185,8 +200,32 @@ CompletionContext(state, pos, true))` headlessly. Never trust `languageDataAt` h
 
 ### ✅ Resolved
 
-_Fixed in tjs-lang **0.10.0** (we still ship 0.9.1 — the workarounds stay until we bump; see
-the reconciled note above):_
+_Fixed in tjs-lang **0.10.0**. **Status checked 2026-07-20: all four are CLOSED upstream
+(closed 2026-07-16) and we now ship 0.11.0 — the bump happened, so the "on bump" actions below
+are RECONCILED against the code:**_
+
+- **#10 ✅ done** — `extractTopLevelBindingNames` / `buildScopeCapture` are gone from
+  `code-transform.ts`; we use the upstream `tjs-lang/editors` entry.
+- **#12 ✅ done** — `code-editor-cm.ts` now `import type { AutocompleteConfig } from
+  'tjs-lang/editors/codemirror'`; `TjsAutocompleteConfig` is a deliberate stable *alias* over
+  the real type (name stability for our public surface), not a hand-declaration.
+- **#15 ✅ decided, NOT adopted** — we kept the pattern-match guard
+  (`/^__tjs_wasm_[a-z0-9]+_\d+$/`) rather than `__tjs.records({source:'wasm'})`, because
+  `__tjs.records` is not reachable in the doc-system inline-test scope. Deliberate, keep.
+- **#16 ✅ CLOSED OUT 2026-07-20 — the probe STAYS; the "can likely simplify" guess was wrong.**
+  Verified empirically: `tjs-lang` is an **optional** peer of tosijs-ui
+  (`peerDependenciesMeta.tjs-lang.optional = true`), and bundling
+  `tjs-lang/editors/codemirror` when it isn't installed is a hard build failure
+  (`error: Could not resolve`). `tjsEditorExternal()` guards **"is tjs-lang itself
+  present?"** — orthogonal to what #16 fixed (**"does tjs-lang declare its `@codemirror/*`
+  peerDeps?"**, its own hygiene, which is what keeps the hoisted CodeMirror copy single).
+  Deleting the probe would break every adopter who skips the optional peer — the same
+  optional-peer regression class that blocked a prior review. **Do not retry this.**
+  Only change made: the two call sites now share ONE probe result
+  (`tjsEditorExternals` / `tjsEditorIsBundled`) so the externals list and the post-build
+  guard cannot disagree. Rationale is recorded in `orchestrator.ts` at the probe.
+
+_Original per-issue notes:_
 
 - **[#10](https://github.com/tonioloewald/tjs-lang/issues/10) — Export the AST scope
   extractor.** ✅ 0.10.0 exports `collectScopeSymbols` (+ `introspectValue`,

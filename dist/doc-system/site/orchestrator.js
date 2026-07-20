@@ -313,10 +313,22 @@ export async function buildSite(config) {
         //
         // NB: bare `'tjs-lang'` must NOT appear here. Externals are PREFIX matches, so
         // it would silently externalize tjs-lang/editors/codemirror along with it.
+        // Probe ONCE. Both the `external` list and the post-build guard below must agree
+        // on whether tjs-lang resolved; two independent probes could in principle disagree
+        // and misfire the guard.
+        //
+        // This probe is NOT redundant with tjs-lang#16 (which made tjs-lang declare
+        // `@codemirror/*` as optional peerDeps — its own dependency hygiene, and what keeps
+        // the hoisted CodeMirror copy single). This asks a DIFFERENT question: is tjs-lang
+        // ITSELF installed? It's an OPTIONAL peer of tosijs-ui, and bundling
+        // `tjs-lang/editors/codemirror` when it's absent is a hard build failure
+        // ("Could not resolve"). Verified 2026-07-20 — do not "simplify" this away.
+        const tjsEditorExternals = tjsEditorExternal(PROJECT_ROOT);
+        const tjsEditorIsBundled = tjsEditorExternals.length === 0;
         const externals = [
             'tjs-lang/browser',
             'tjs-lang/browser/from-ts',
-            ...tjsEditorExternal(PROJECT_ROOT),
+            ...tjsEditorExternals,
             ...(config.bundleExternals ?? []),
         ];
         // UPSTREAM STATUS (2026-07-13): confirmed by Bun and a fix is in flight —
@@ -393,8 +405,7 @@ export async function buildSite(config) {
         // autocomplete just stop working, with no error anywhere). If it was externalized,
         // the bundler leaves its specifier behind. Failing the build is the only way this
         // gets noticed; every test lane stays green when it regresses.
-        if (tjsEditorExternal(PROJECT_ROOT).length === 0 &&
-            tjsEditorLeakedAsExternal(bundleJs)) {
+        if (tjsEditorIsBundled && tjsEditorLeakedAsExternal(bundleJs)) {
             console.error(`⚠️  ${scriptName} externalized tjs-lang's CodeMirror extension instead of bundling it.\n` +
                 `    It must share the editor's single CodeMirror instance; a separately loaded copy\n` +
                 `    silently no-ops. Check the bundle's \`external\` list — entries are PREFIX matches,\n` +
