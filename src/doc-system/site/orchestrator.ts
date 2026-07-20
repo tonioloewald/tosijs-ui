@@ -327,10 +327,22 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
 
   // Optionally also build the library (ESM + type declarations) — for repos
   // whose single build publishes both an npm package and its doc site.
+  //
+  // These paths emit SHIPPABLE `dist/*.d.ts`. A failed `tsc` must fail the build:
+  // `tsc` still writes declarations when it errors (unless `noEmitOnError`), so a
+  // swallowed failure publishes declarations that don't match the source. This bit
+  // tosijs 1.7.0-beta.1 — a real type error rode into the release because the branch
+  // caught the failure and logged a success-sounding line (tosijs-ui#22). We surface
+  // it loudly and mark the build failed (so a one-shot `--build` exits non-zero), but
+  // do NOT abort the rest: a watch rebuild should still refresh the pages/bundle while
+  // the developer fixes the type error — the loud message + non-zero one-shot exit are
+  // what matter.
+  let libraryBuildFailed = false
   if (config.libraryBuild) {
     // Full override — the consumer owns emitting dist/*.js + *.d.ts for ALL
     // sources (e.g. tsc for `.ts` + `tjs convert`/`generateDTS` for native `.tjs`
-    // that tsc can't compile). See BUILD-TJS-HOOK.md.
+    // that tsc can't compile). See BUILD-TJS-HOOK.md. Throws propagate (one-shot
+    // crashes non-zero; watch's rebuild wrapper logs it) — already fails hard.
     await config.libraryBuild({
       dist: DIST,
       root: path.resolve(PROJECT_ROOT),
@@ -338,17 +350,23 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     })
   } else if (config.libraryTsconfig) {
     // Consumer-controlled library build (handles root noEmit, removeComments,
-    // outDir, etc.).
-    try {
-      await $`bun tsc -p ${config.libraryTsconfig}`
-    } catch {
-      console.log('library (tsc -p) build finished')
+    // outDir, etc.). tsc output is left visible so the errors are readable.
+    const r = await $`bun tsc -p ${config.libraryTsconfig}`.nothrow()
+    if (r.exitCode !== 0) {
+      console.error(
+        `❌ tsc -p ${config.libraryTsconfig} FAILED (exit ${r.exitCode}) — ` +
+          `published declarations may be stale or contain type errors. Build marked failed.`
+      )
+      libraryBuildFailed = true
     }
   } else if (config.emitLibrary) {
-    try {
-      await $`bun tsc --declaration --incremental --outDir dist`
-    } catch {
-      console.log('esm + types created')
+    const r = await $`bun tsc --declaration --incremental --outDir dist`.nothrow()
+    if (r.exitCode !== 0) {
+      console.error(
+        `❌ tsc --declaration FAILED (exit ${r.exitCode}) — emitted dist/*.d.ts may ` +
+          `be stale or contain type errors. Build marked failed.`
+      )
+      libraryBuildFailed = true
     }
   }
 
@@ -753,5 +771,7 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
   }
 
   console.timeEnd('build')
-  return true
+  // A failed library typecheck (above) marks the whole build failed so a one-shot
+  // `--build` exits non-zero and never publishes declarations from a red tsc.
+  return !libraryBuildFailed
 }
