@@ -49,7 +49,7 @@ const DEFAULT_IDLE_HOURS = 8
  *   - `hj` action commands (`navigate`, `click`, …) exit NON-ZERO on failure, so the
  *     test lane below can trust an exit code instead of racing to a timeout.
  */
-const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.4.0'
+const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.5.0'
 
 /**
  * Resolve the idle-exit timeout to milliseconds (0 = disabled).
