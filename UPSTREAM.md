@@ -284,6 +284,21 @@ _Original per-issue notes:_
 
 ## haltija
 
+- **[tosijs-ui#21](https://github.com/tonioloewald/tosijs-ui/issues/21)** (consumer-side tracker;
+  haltija-side asks in the comment) — the doc-test lane's `--private` migration is **blocked in a
+  plain `bunx haltija` runtime.** Checked 2026-07-20 against **haltija 1.5.0**. The `--private`
+  server + port-file + `HALTIJA_PORT` routing all work; launching a browser under it does not:
+  - **`--headless` needs Playwright bunx-haltija can't resolve** — logs "Playwright not installed",
+    launches nothing. We have `playwright@1.58.2` + chromium, but bunx resolves from its own cache
+    and **ignores `NODE_PATH`**.
+  - **`--private --app` hits Electron's single-instance lock** ("Another instance is already
+    running") whenever another haltija Electron is up — i.e. exactly the scenario the migration
+    exists for. Works only when no other haltija Electron exists (the case that never needed it).
+  - **Status:** reverted the lane to shared-adopt; kept the `haltija@^1.5.0` pin. Not the CI gate
+    (that's `doc-tests.pw.ts`), so no release impact. Two haltija-side asks filed in the #21
+    comment (honor an ambient Playwright for `--headless`; per-private Electron `userData` +
+    single-instance-lock scope). Revisit when either lands.
+
 - **NOT YET FILED** — haltija's window fires **no animation frames** when backgrounded
   (verified: an `rAF` callback never runs). tosijs's entire render pipeline is rAF-driven,
   so under `hj eval` a _correct_ component never calls `render()`, leaving parts empty and
