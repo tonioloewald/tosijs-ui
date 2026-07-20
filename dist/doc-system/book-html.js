@@ -90,7 +90,10 @@ export function escapeHtml(s) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 export function slugify(s) {
-    return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return s
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 }
 /** Drop the `<!--{ … }-->` metadata directives the extractor leaves in the text. */
 export function stripDocMeta(text) {
@@ -130,7 +133,9 @@ export function buildBookHtml(docs, opts) {
 <h1 class="book-title">${escapeHtml(opts.title)}</h1>
 <nav class="book-toc"><h2>Contents</h2><ol>${tocHtml(roots)}</ol></nav>
 ${chapters}
-${opts.autoPrint ? '<script>addEventListener("load",function(){setTimeout(function(){print()},300)})</script>' : ''}
+${opts.autoPrint
+        ? '<script>addEventListener("load",function(){setTimeout(function(){print()},300)})</script>'
+        : ''}
 </body>
 </html>`;
 }

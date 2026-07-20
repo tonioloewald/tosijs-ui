@@ -50,22 +50,38 @@ fi
 # Trust the local CA (idempotent — safe to run every time).
 mkcert -install
 
-# Bonjour/mDNS name of this machine, so the same cert works when another
-# device on the LAN hits https://<name>.local:8787.
+# Bonjour/mDNS name of this machine, so the same cert works when another device
+# on the LAN hits https://<name>.local:8787. On macOS the advertised name is the
+# LocalHostName (`scutil --get LocalHostName`), e.g. "Persiflex" → persiflex.local.
+#
+# Hardened: lowercase it (the mDNS convention, and dodges any case-sensitive
+# client), strip a `.local` the source may already carry (no `foo.local.local`),
+# and only add it when we actually have a usable name — so a machine with no
+# LocalHostName never gets a bare ".local" SAN.
 if [[ "$(uname)" == "Darwin" ]]; then
-  LOCAL_NAME="$(scutil --get LocalHostName 2>/dev/null || hostname -s).local"
+  MDNS="$(scutil --get LocalHostName 2>/dev/null || true)"
+  [[ -z "$MDNS" ]] && MDNS="$(hostname -s 2>/dev/null || true)"
 else
-  LOCAL_NAME="$(hostname -s).local"
+  MDNS="$(hostname -s 2>/dev/null || true)"
+fi
+MDNS="$(printf '%s' "$MDNS" | tr '[:upper:]' '[:lower:]' | sed -E 's/\.local$//')"
+
+NAMES=(localhost 127.0.0.1 ::1)
+LOCAL_NAME=""
+if [[ -n "$MDNS" && "$MDNS" != "localhost" ]]; then
+  LOCAL_NAME="${MDNS}.local"
+  NAMES+=("$LOCAL_NAME")
 fi
 
-mkcert \
-  -key-file key.pem \
-  -cert-file certificate.pem \
-  localhost 127.0.0.1 ::1 "$LOCAL_NAME"
+mkcert -key-file key.pem -cert-file certificate.pem "${NAMES[@]}"
 
 echo
 echo "Wrote tls/key.pem and tls/certificate.pem"
-echo "Valid for: localhost, 127.0.0.1, ::1, $LOCAL_NAME"
+echo "Valid for: ${NAMES[*]}"
+if [[ -z "$LOCAL_NAME" ]]; then
+  echo "(No Bonjour/.local name detected — set one in System Settings > Sharing"
+  echo " > Local hostname, then re-run to cover https://<name>.local.)"
+fi
 echo
 echo "Local browsers: no warnings."
 echo "Other devices (phone, another laptop): copy the CA root to each and trust it —"

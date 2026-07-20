@@ -15,11 +15,18 @@ Build-time only (bun). Never import from browser code.
 */
 
 import { marked } from 'marked'
-import { rewriteImports, AsyncFunction, loadTransform } from '../../live-example/code-transform'
+import {
+  rewriteImports,
+  AsyncFunction,
+  loadTransform,
+} from '../../live-example/code-transform'
 import type { Doc } from './docs'
+import type { ExampleBakes } from '../render'
 
 declare const Bun: {
-  Transpiler: new (opts: { loader: string }) => { transformSync(code: string): string }
+  Transpiler: new (opts: { loader: string }) => {
+    transformSync(code: string): string
+  }
 }
 
 // The default live-example context (matches the IIFE globals the pages provide).
@@ -28,6 +35,18 @@ declare const Bun: {
 const DEFAULT_CONTEXT_KEYS = ['tosijs', 'tosijs-ui']
 
 const EXECUTABLE = new Set(['js', 'tjs', 'ts', 'test'])
+
+// ONE transpiler for the whole PROCESS, not one per corpus and certainly not one per
+// example. It's stateless, and it's a native object that strands ~40KB of RSS per
+// CONSTRUCTION — invisible to the JS heap, so nothing GCs it (same family as the
+// Bun.build arena leak, oven-sh/bun#34053).
+//
+// This lived inside checkExamples() as a `let` — which made the comment above it true
+// of a single call and false of the process: checkExamples runs once per dev rebuild,
+// so it was reconstructed thousands of times over a days-long watch session. Module
+// scope is the difference between "once" and "once per rebuild". Lazily created, so a
+// corpus with no `ts` examples never makes one at all.
+let tsTranspiler: { transformSync(code: string): string } | undefined
 
 export interface ExampleProblem {
   filename: string
@@ -43,7 +62,9 @@ function dialectOf(info: string | undefined): string {
 }
 
 /** Collect every fenced code block in a doc (recursing into lists/quotes). */
-function collectCodeTokens(text: string): Array<{ lang: string; text: string }> {
+function collectCodeTokens(
+  text: string
+): Array<{ lang: string; text: string }> {
   const out: Array<{ lang: string; text: string }> = []
   const walk = (tokens: any[]): void => {
     for (const t of tokens) {
@@ -56,13 +77,30 @@ function collectCodeTokens(text: string): Array<{ lang: string; text: string }> 
   return out
 }
 
-/** Transpile-check every executable block in the corpus. Returns the problems. */
+export interface ExampleCheck {
+  problems: ExampleProblem[]
+  /**
+   * Build-time transpiled JS for `tjs` blocks, grouped by doc filename, each keyed
+   * by exact source text. The renderer embeds a doc's bakes as hidden scripts (so
+   * the pre-rendered page RUNS without the tjs transpiler), and they're attached to
+   * each Doc in docs.json so client-side SPA navigation gets them too. Only `tjs` is
+   * baked: its build transform is identical to the runtime one, so the bytes match.
+   * See self-contained-examples-plan.md.
+   */
+  bakes: Map<string, ExampleBakes>
+}
+
+/**
+ * Transpile-check every executable block in the corpus. Returns the problems and
+ * the `tjs` bakes (which it computes anyway while checking — no double transpile).
+ */
 export async function checkExamples(
   docs: Doc[],
-  opts: { contextKeys?: string[] } = {}
-): Promise<ExampleProblem[]> {
+  opts: { contextKeys?: string[]; importPrefix?: string } = {}
+): Promise<ExampleCheck> {
   const contextKeys = opts.contextKeys ?? DEFAULT_CONTEXT_KEYS
   const problems: ExampleProblem[] = []
+  const bakes = new Map<string, ExampleBakes>()
 
   for (const doc of docs) {
     for (const block of collectCodeTokens(doc.text)) {
@@ -70,14 +108,19 @@ export async function checkExamples(
       // `test` blocks are conventional JS/TS, transpiled as plain js.
       const dialect = block.lang === 'test' ? 'js' : block.lang
       try {
-        const rewritten = rewriteImports(block.text, contextKeys)
+        const rewritten = rewriteImports(
+          block.text,
+          contextKeys,
+          opts.importPrefix
+        )
         let js: string
         if (dialect === 'ts') {
           // Use bun's own transpiler — network-free (the runtime `ts` path
           // fetches the TypeScript compiler from a CDN, which can't run here).
           // We only need to validate that the source builds, not reproduce tjs
           // lowering exactly.
-          js = new Bun.Transpiler({ loader: 'ts' }).transformSync(rewritten)
+          tsTranspiler ??= new Bun.Transpiler({ loader: 'ts' })
+          js = tsTranspiler.transformSync(rewritten)
         } else if (dialect === 'tjs') {
           const transform = await loadTransform('tjs')
           js = (await transform(rewritten, { transforms: ['typescript'] })).code
@@ -85,8 +128,17 @@ export async function checkExamples(
           js = rewritten // `js` / `test` are already JS
         }
         // Syntax-validate the way the component does before running it.
-        // eslint-disable-next-line no-new
+
         new (AsyncFunction as any)(js)
+        // Bake only tjs: build and runtime share the SAME tjs transform, so the
+        // baked JS is byte-identical to what the page produces at runtime. (`ts`
+        // is transpiled here with bun but at runtime by the CDN TS compiler, so it
+        // stays on the runtime path — see self-contained-examples-plan.md.)
+        if (dialect === 'tjs') {
+          let docBakes = bakes.get(doc.filename)
+          if (!docBakes) bakes.set(doc.filename, (docBakes = new Map()))
+          docBakes.set(block.text, { dialect: 'tjs', js })
+        }
       } catch (err) {
         problems.push({
           filename: doc.filename,
@@ -98,7 +150,7 @@ export async function checkExamples(
       }
     }
   }
-  return problems
+  return { problems, bakes }
 }
 
 /** Format problems for a build log. */

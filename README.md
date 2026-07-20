@@ -1,6 +1,6 @@
 # tosijs-ui
 
-<!--{ "pin": "top", "headTitle": "tosijs-ui — robust, dependency-free web components", "description": "A small, fast library of standards-based web components (data tables, dialogs, forms, rich text, carousels, and more) built on tosijs — smaller and faster than a React app, with no virtual DOM.", "keywords": "web components, custom elements, tosijs, data table, dialog, form, rich text, no virtual dom" }-->
+<!--{ "pin": "top", "headTitle": "tosijs-ui — robust, standards-based web components", "description": "A small, fast library of standards-based web components (data tables, dialogs, forms, rich text, carousels, and more) built on tosijs — smaller and faster than a React app, with no virtual DOM.", "keywords": "web components, custom elements, tosijs, data table, dialog, form, rich text, no virtual dom" }-->
 
 [ui.tosijs.net live demo](https://ui.tosijs.net) | [tosijs](https://tosijs.net) | [discord](https://discord.gg/ramJ9rgky5) | [github](https://github.com/tonioloewald/tosijs-ui#readme) | [npm](https://www.npmjs.com/package/tosijs-ui)
 
@@ -15,6 +15,16 @@
 </center>
 
 Copyright ©2023-2025 Tonio Loewald
+
+## ⚠️ Breaking change in 1.7.0 — `<tosi-code>` (ACE → CodeMirror 6)
+
+**1.7.0 is a breaking release shipping under a minor version, deliberately.** `<tosi-code>`
+moved from ACE to CodeMirror 6. `value`, `mode`, the `change` event, `disabled`, and
+`undo`/`redo` are unchanged; the ACE-era **`theme`** and **`options`** props are **removed** with
+no shim. Dark mode is now automatic (`body.darkmode`) and styling comes from `--code-bg` /
+`--text-color`. The `2.0` name is reserved for the tjs-native tosijs port, so this ships as
+1.7.0 — **pin `tosijs-ui@1.6` to defer.** Full detail and rationale in
+[CHANGELOG.md](./CHANGELOG.md).
 
 ## the tosijs-ui library
 
@@ -74,9 +84,15 @@ document.body.append(tosiTable())
 
 ### Using the iife via cdn
 
-The `tosijs-ui` iife build bundles `tosijs`, `tosijs-ui`, and `marked` into
-a single minified javascript source file. You can access `xinjs` and `xinjsui`
-as globals which contain all the things exported by `tosijs` and `tosijs-ui`.
+The `tosijs-ui` iife build bundles `tosijs`, `tosijs-ui`, `marked` and — as of 1.7 —
+**CodeMirror** into a single minified javascript source file. You can access `xinjs` and
+`xinjsui` as globals which contain all the things exported by `tosijs` and `tosijs-ui`.
+
+> **Size (1.7):** ~385KB gzip, up from ~120KB in 1.6. `bun build --format iife` cannot
+> code-split, so `<tosi-code>`'s lazy CodeMirror import is flattened into this bundle
+> whether or not the page uses an editor. **If you don't need `<tosi-code>`, use the ESM
+> build** (`import 'tosijs-ui'` via a bundler), where CodeMirror stays a separate lazy
+> chunk and a page with no editor never downloads it.
 
 ```
 <script src="https://ui.tosijs.net/iife.js"></script>

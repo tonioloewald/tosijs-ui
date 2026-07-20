@@ -1457,9 +1457,7 @@ export const removeLastMenu = (depth = 0): PoppedMenu | undefined => {
   if (depth === 0) {
     document
       .querySelectorAll('tosi-menu.xin-drop-over, tosi-menu.tosi-drop-over')
-      .forEach((el) =>
-        el.classList.remove('xin-drop-over', 'tosi-drop-over')
-      )
+      .forEach((el) => el.classList.remove('xin-drop-over', 'tosi-drop-over'))
   }
   const toBeRemoved = poppedMenus.splice(depth)
   for (const popped of toBeRemoved) {
@@ -1790,7 +1788,10 @@ export class TosiMenu extends Component<TosiMenuParts> {
     if (lastFloat) {
       const itemEl = this.findMenuItemByCaption(lastFloat, action.caption)
       if (itemEl) {
-        itemEl.classList.add('xin-menu-item-highlight', 'tosi-menu-item-highlight')
+        itemEl.classList.add(
+          'xin-menu-item-highlight',
+          'tosi-menu-item-highlight'
+        )
       }
     }
 

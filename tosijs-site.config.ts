@@ -54,6 +54,11 @@ export default defineSiteConfig({
   // built output. Spins up a server-only HTTPS channel on 8701 (mkcert-trusted).
   haltijaDev: true,
 
+  // EXPERIMENTAL (import-resolver-plan.md): the import-resolver service worker, so live
+  // examples can import real npm packages from anywhere. Off for 1.7.0; enabled here to
+  // exercise the spike on this repo's own doc site.
+  importResolver: true,
+
   // Register the module-cache service worker (demo/static/module-cache-sw.js) so
   // live-example CDN modules (the tjs-lang transpiler, example imports) are
   // cached same-origin and shared across the background-test iframes instead of

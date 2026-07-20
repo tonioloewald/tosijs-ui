@@ -9,7 +9,12 @@ const corpus = [
     text: '# button\n\nA nice button.\n',
     description: '',
   },
-  { filename: 'guide.md', title: 'Guide', description: 'How to use it.', text: '' },
+  {
+    filename: 'guide.md',
+    title: 'Guide',
+    description: 'How to use it.',
+    text: '',
+  },
   { filename: 'secret.md', title: 'Secret', text: 'hidden', hidden: true },
   { filename: 'untitled.md', title: '', text: 'no title here' },
 ]

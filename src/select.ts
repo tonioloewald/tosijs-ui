@@ -630,7 +630,8 @@ export type XinSelect = TosiSelect
 /** @deprecated Use TosiSelect instead */
 export const XinSelect: typeof TosiSelect = TosiSelect
 
-export const tosiSelect = TosiSelect.elementCreator() as ElementCreator<TosiSelect>
+export const tosiSelect =
+  TosiSelect.elementCreator() as ElementCreator<TosiSelect>
 
 /** @deprecated Use tosiSelect instead (tag is now tosi-select) */
 export const xinSelect = deprecated(

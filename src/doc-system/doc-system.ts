@@ -58,7 +58,14 @@ A self-contained, controllable embed (e.g. docs in a floating panel):
 
 /*{ "parent": "Appendices" }*/
 
-import { Component, ElementCreator, StyleSheet, elements, tosi, vars } from 'tosijs'
+import {
+  Component,
+  ElementCreator,
+  StyleSheet,
+  elements,
+  tosi,
+  vars,
+} from 'tosijs'
 import { createDocBrowser, Doc, ProjectLinks, LinkItem } from '../doc-browser'
 import { buildSlugMap, legacyQueryPath } from './routing'
 import { buildBookHtml, slugify } from './book-html'
@@ -66,6 +73,9 @@ import { docSystemStyleSpec } from './doc-system-styles'
 import { icons } from '../icons'
 import { popMenu } from '../menu'
 import { i18n, setLocale, initLocalization } from '../localize'
+// Side-effect: register <tosi-css-var-editor> so doc pages can drop the live CSS-var
+// tweaker under an example. Part of the doc-system, NOT re-exported from tosijs-ui.
+import './css-var-editor'
 
 const { button, div } = elements
 
@@ -162,10 +172,19 @@ export class TosiDocSystem extends Component {
     const theme = this.prefs.theme.value
     const dark =
       theme === 'dark' ||
-      (theme === 'system' &&
-        matchMedia('(prefers-color-scheme: dark)').matches)
+      (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
+    const contrast = this.prefs.highContrast.value
     document.body.classList.toggle('darkmode', dark)
-    document.body.classList.toggle('high-contrast', this.prefs.highContrast.value)
+    document.body.classList.toggle('high-contrast', contrast)
+    // Also on <html>, because the generated pages set it there BEFORE first paint
+    // (a static page is now painted, not hidden, so a dark reader would otherwise
+    // see a flash of the light theme — and only a head script can read the stored
+    // preference). If we left that class alone, switching to light would clear it
+    // from <body> while <html> still supplied the dark vars, and the page would be
+    // stuck dark. Other code watches `body.darkmode` (e.g. the code editor), so the
+    // body class stays authoritative — this just keeps the two from disagreeing.
+    document.documentElement.classList.toggle('darkmode', dark)
+    document.documentElement.classList.toggle('high-contrast', contrast)
   }
 
   private persistPrefs(): void {
@@ -258,7 +277,9 @@ export class TosiDocSystem extends Component {
             action: () => {
               const win = window.open('', '_blank')
               if (!win) {
-                window.alert('Allow pop-ups to print the documentation as a book.')
+                window.alert(
+                  'Allow pop-ups to print the documentation as a book.'
+                )
                 return
               }
               win.document.open()
@@ -323,7 +344,8 @@ export class TosiDocSystem extends Component {
                 caption: 'High Contrast',
                 checked: () => this.prefs.highContrast.value,
                 action: () =>
-                  (this.prefs.highContrast.value = !this.prefs.highContrast.value),
+                  (this.prefs.highContrast.value =
+                    !this.prefs.highContrast.value),
               },
             ],
           })
@@ -393,7 +415,11 @@ export class TosiDocSystem extends Component {
           this.queueRender()
         })
         .catch((error) =>
-          console.error('<tosi-doc-system> could not load docs from', url, error)
+          console.error(
+            '<tosi-doc-system> could not load docs from',
+            url,
+            error
+          )
         )
     }
   }
@@ -472,16 +498,29 @@ export class TosiDocSystem extends Component {
 
     this.replaceChildren(this.browser)
 
-    // Hydration done: reveal the page (the generated <head> hid it to mask the
-    // static→live swap). Only the page-owning instance touches document.body;
-    // a nested demo must not. Next frame so the browser has painted first.
-    if (!nested && typeof document !== 'undefined') {
-      requestAnimationFrame(() => {
-        document.body.style.opacity = '1'
-      })
-    }
+    // (The `document.body.style.opacity = '1'` that used to live here is gone. It was
+    // the other half of an opacity gate the generated <head> no longer emits — the page
+    // is pre-rendered and readable before any JS runs, so there is nothing to reveal.
+    // Setting opacity on a body that was never hidden did nothing but keep a stale
+    // comment alive, claiming a behavior the release had already removed.)
   }
 }
 
 export const tosiDocSystem =
   TosiDocSystem.elementCreator() as ElementCreator<TosiDocSystem>
+
+// Register the import-resolver service worker when the build opted in — the config
+// global is injected into the page head by orchestrator's importResolverHead (gated on
+// SiteConfig.importResolver). Dynamic import keeps tjs-lang/import-resolver out of the
+// bundle unless a site actually enables it, and out of a plain component consumer's
+// graph entirely. Experimental; 1.7.0 ships with the flag off. See import-resolver-plan.md.
+function initImportResolver(): void {
+  if (typeof document === 'undefined') return
+  const cfg = (globalThis as unknown as { __TOSI_IMPORT_RESOLVER?: object })
+    .__TOSI_IMPORT_RESOLVER
+  if (!cfg) return
+  void import('tjs-lang/import-resolver')
+    .then(({ registerImportResolver }) => registerImportResolver(cfg))
+    .catch((e) => console.warn('import-resolver: registration failed', e))
+}
+initImportResolver()

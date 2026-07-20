@@ -33,7 +33,15 @@ function navHtml(docs, slugMap, currentFilename, basePath) {
     const renderNode = (node, indent) => {
         const href = withBase(basePath, pathForSlug(node.slug));
         const current = node.doc.filename === currentFilename;
-        const link = `<a href="${escapeAttr(href)}"${current ? ' aria-current="page" class="current"' : ''}>${escapeText(node.doc.title)}</a>`;
+        // `doc-link` is what the HYDRATED nav emits, and the shared nav CSS is written
+        // against it. Emitting a bare <a> here forced a second, hand-copied rule set under
+        // `tosi-doc-system:not(:defined)` — which promptly drifted, so every generated page
+        // painted its nav with brand-coloured underlines and 2.5px padding, then reflowed
+        // (~4px per row, ~230px cumulative) into 5px/15px padding the moment the bundle
+        // loaded. That flash is the exact thing "pre-render the chrome, hydrate in place"
+        // exists to eliminate, and dropping the opacity gate made it VISIBLE instead of
+        // merely masked. Same class → same CSS → nothing moves.
+        const link = `<a class="doc-link${current ? ' current' : ''}" href="${escapeAttr(href)}"${current ? ' aria-current="page"' : ''}>${escapeText(node.doc.title)}</a>`;
         if (node.children.length === 0) {
             return `${indent}<li>${link}</li>`;
         }
@@ -77,7 +85,7 @@ function withBase(basePath, p) {
     return basePath.replace(/\/$/, '') + (p.startsWith('/') ? p : '/' + p);
 }
 function pageHtml(doc, config, slugMap, configAttr) {
-    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', stylesUrl = '/doc-system.css', localizedUrl = '/localized-strings.txt', basePath, headExtra = '', } = config;
+    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', localizedUrl = '/localized-strings.txt', basePath, headExtra = '', bakes, } = config;
     const localizedAttr = config.localizedStrings
         ? ` localized="${escapeAttr(withBase(basePath, localizedUrl))}"`
         : '';
@@ -94,7 +102,7 @@ function pageHtml(doc, config, slugMap, configAttr) {
     // Rewrite legacy `?filename` content links to clean `/slug/` paths so the
     // static HTML is correct for no-JS readers and crawlers (the doc-browser also
     // does this client-side after hydration).
-    const body = rewriteDocLinks(renderDocMarkdown(doc.text), (filename) => slugMap[filename] !== undefined
+    const body = rewriteDocLinks(renderDocMarkdown(doc.text, { bakes: bakes?.get(doc.filename) }), (filename) => slugMap[filename] !== undefined
         ? withBase(basePath, pathForSlug(slugMap[filename]))
         : null);
     const nav = navHtml(config.docs, slugMap, doc.filename, basePath);
@@ -120,18 +128,32 @@ function pageHtml(doc, config, slugMap, configAttr) {
         // Burned-in theme: styles the page with no JS and with zero flash on hydration.
         `  <link rel="stylesheet" href="${escapeAttr(withBase(basePath, stylesUrl))}" data-tosi-doc-system />`,
         `  <title>${escapeText(title)}</title>`,
-        description ? `  <meta name="description" content="${escapeAttr(description)}" />` : '',
-        keywords ? `  <meta name="keywords" content="${escapeAttr(keywords)}" />` : '',
+        description
+            ? `  <meta name="description" content="${escapeAttr(description)}" />`
+            : '',
+        keywords
+            ? `  <meta name="keywords" content="${escapeAttr(keywords)}" />`
+            : '',
         doc.noindex ? '  <meta name="robots" content="noindex, follow" />' : '',
         baseUrl ? `  <link rel="canonical" href="${escapeAttr(canonical)}" />` : '',
         '  <meta property="og:type" content="article" />',
-        projectName ? `  <meta property="og:site_name" content="${escapeAttr(projectName)}" />` : '',
+        projectName
+            ? `  <meta property="og:site_name" content="${escapeAttr(projectName)}" />`
+            : '',
         `  <meta property="og:title" content="${escapeAttr(title)}" />`,
-        description ? `  <meta property="og:description" content="${escapeAttr(description)}" />` : '',
-        baseUrl ? `  <meta property="og:url" content="${escapeAttr(canonical)}" />` : '',
-        imageAbs ? `  <meta property="og:image" content="${escapeAttr(imageAbs)}" />` : '',
+        description
+            ? `  <meta property="og:description" content="${escapeAttr(description)}" />`
+            : '',
+        baseUrl
+            ? `  <meta property="og:url" content="${escapeAttr(canonical)}" />`
+            : '',
+        imageAbs
+            ? `  <meta property="og:image" content="${escapeAttr(imageAbs)}" />`
+            : '',
         `  <meta name="twitter:card" content="${imageAbs ? 'summary_large_image' : 'summary'}" />`,
-        imageAbs ? `  <meta name="twitter:image" content="${escapeAttr(imageAbs)}" />` : '',
+        imageAbs
+            ? `  <meta name="twitter:image" content="${escapeAttr(imageAbs)}" />`
+            : '',
         jsonLd,
         `  <link rel="icon" href="${escapeAttr(withBase(basePath, favicon))}" />`,
         headExtra,
@@ -141,13 +163,29 @@ function pageHtml(doc, config, slugMap, configAttr) {
     return `<!DOCTYPE html>
 <html lang="${escapeAttr(lang)}">
 <head>
-  <!-- Hide the pre-rendered body until <tosi-doc-system> hydrates, then fade it
-       in — avoids the layout shift as the static markup is swapped for the live
-       doc browser. <noscript> keeps it visible for no-JS readers/crawlers; the
-       timeout is a safety net so a failed/slow hydration can't leave it blank. -->
-  <style>body{opacity:0;transition:opacity .25s ease}</style>
-  <noscript><style>body{opacity:1!important}</style></noscript>
-  <script>setTimeout(function(){if(document.body)document.body.style.opacity='1'},4000)</script>
+  <!-- NB: the body is NOT hidden until hydration. It used to be (body opacity 0 +
+       a 4s safety-net timeout), because an undefined custom element is
+       display:inline, so the pre-rendered page stacked as bare text and hydration
+       reflowed the whole thing. The cost was a blank screen for as long as the
+       bundle took — ~4.5s on a cheap phone, for content already in the HTML. The
+       tosi-doc-system:not(:defined) rules in the stylesheet now lay the static page
+       out as though the chrome were there, so hydration only ADDS the chrome and
+       nothing moves. Paint immediately; don't hide readable content. -->
+  <!-- Theme, applied BEFORE first paint. Now that we paint the static page rather
+       than hiding it, a dark-mode reader would otherwise get a flash of the light
+       theme until the bundle lands and sets body.darkmode. CSS alone can't do this:
+       an explicit theme choice lives in localStorage. Mirrors applyThemePrefs()
+       (doc-system.ts) — keep the two in step. Fails safe: any error leaves the
+       light default, exactly as before. -->
+  <script>
+    try {
+      var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
+      var t = p.theme || 'system'
+      if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('darkmode')
+      if (p.highContrast) document.documentElement.classList.add('high-contrast')
+    } catch (e) {}
+  </script>
 ${head}
 </head>
 <body>
@@ -158,7 +196,9 @@ ${body}
 ${nav}
 ${navbar}
   </tosi-doc-system>
-  <script src="${escapeAttr(withBase(basePath, scriptUrl))}"></script>
+  ${hydrateUrl
+        ? `<script type="module" src="${escapeAttr(withBase(basePath, hydrateUrl))}"></script>`
+        : `<script src="${escapeAttr(withBase(basePath, scriptUrl))}"></script>`}
 </body>
 </html>
 `;
@@ -181,7 +221,7 @@ export async function generateSite(config) {
         projectLinks: config.projectLinks,
     }));
     // The theme stylesheet (config.stylesUrl) is written separately by
-    // bin/generate-css.ts; pages here just <link> to it.
+    // ./generate-css.ts; pages here just <link> to it.
     let count = 0;
     for (const doc of docs) {
         const slug = slugMap[doc.filename];
@@ -190,7 +230,20 @@ export async function generateSite(config) {
         count += 1;
     }
     // The corpus the component fetches for nav + client-side rendering of other pages.
-    await Bun.write(`${outputDir}/docs.json`, JSON.stringify(docs));
+    // Attach each doc's tjs bakes so client-side SPA navigation renders the same hidden
+    // <script type="application/tosi-transpiled"> the pre-rendered page has, and runs
+    // examples without the transpiler. Docs with no tjs examples add nothing. Attached
+    // to a copy — never mutate the caller's docs. See self-contained-examples-plan.md.
+    const { bakes } = config;
+    const corpus = bakes
+        ? docs.map((doc) => {
+            const docBakes = bakes.get(doc.filename);
+            return docBakes && docBakes.size
+                ? { ...doc, bakes: [...docBakes.entries()] }
+                : doc;
+        })
+        : docs;
+    await Bun.write(`${outputDir}/docs.json`, JSON.stringify(corpus));
     // Translation table for the settings menu's language picker.
     if (config.localizedStrings) {
         const localizedPath = (config.localizedUrl || '/localized-strings.txt').replace(/^\//, '');
@@ -214,7 +267,9 @@ export async function generateSite(config) {
             /* no robots.txt copied — start from a permissive default */
         }
         if (!robots.includes('Sitemap:')) {
-            const base = robots.trim() ? robots.trim() + '\n' : 'User-agent: *\nAllow: /\n';
+            const base = robots.trim()
+                ? robots.trim() + '\n'
+                : 'User-agent: *\nAllow: /\n';
             await Bun.write(robotsPath, `${base}Sitemap: ${config.baseUrl}/sitemap.xml\n`);
         }
     }

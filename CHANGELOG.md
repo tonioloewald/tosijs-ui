@@ -1,65 +1,293 @@
 # Changelog
 
+## 1.7.0
+
+> ### ⚠️ BREAKING CHANGE — `<tosi-code>` moved from ACE to CodeMirror 6
+>
+> This is a **breaking change shipping under a minor version**, deliberately. `<tosi-code>`
+> (and the `<tosi-code>`-backed code panels in live examples / the doc browser) is now a
+> CodeMirror 6 wrapper instead of ACE. The public contract that **survives** is unchanged:
+> `value`, `mode`, the `change` event, `disabled`, and `undo`/`redo`. What is **removed**:
+> the ACE-era **`theme`** and **`options`** props — there is no compatibility shim for them
+> (CodeMirror's theming model is different in kind, so a shim would silently no-op). If you set
+> either, migrate: dark mode is now automatic (driven by `body.darkmode`), and editor styling
+> comes from the `--code-bg` / `--text-color` CSS variables. The `editor` property now exposes
+> a CodeMirror `EditorView` rather than an ACE editor.
+>
+> **Why a minor, not 2.0.0:** the `2.0` name is reserved for the tjs-native tosijs port that
+> follows tosijs 2.0; spending it on an editor swap now would missignal that larger change.
+> The deviation from strict semver is intentional and called out here + in the README. **To
+> defer the change, pin `tosijs-ui@1.6`.** Everything else in 1.7.0 is additive.
+
+The headline: the editor became first-class for **tjs** and **WebAssembly**, and doc pages got
+dramatically lighter — a reader loads a page with **neither the tjs transpiler nor CodeMirror on
+first paint**, both arriving only when a code panel is opened to edit.
+
+### CodeMirror 6 editor (replaces ACE)
+
+`<tosi-code>` is a CodeMirror 6 wrapper. The heavy CM code (`code-editor-cm.ts`) is a **lazy
+chunk** loaded on first edit — for ESM/bundler consumers a page with no editor bundles none of
+it. (The IIFE build cannot code-split, so the CDN `<script>` path still inlines it.) Modes:
+`javascript`, `typescript`, `tjs`, `ajs`, `css`, `html`, `markdown`. New: `undo()`/`redo()`/
+`canUndo()`/`canRedo()`, `showDiff(on)` (diffs against a captured baseline via `tosi-diff`), and
+automatic dark mode via a `highlight` compartment + a `body.darkmode` observer.
+
+### First-class tjs + inline WebAssembly in live examples
+
+`tjs`/`ajs` example blocks get tjs-lang's CodeMirror language + **runtime-value autocomplete**
+(completion resolves the live values of an example's locals). Inline `wasm{}` examples run — the
+WASM kernel actually compiles, guarded in CI so a silent fall-back to JS is caught. tjs-lang
+bumped **0.9.0 → 0.12.0** across the release (memory-storm fix in 0.10.1; import-resolver in
+0.11.0; VM security-review fixes in 0.12.0).
+
+### Self-contained, transpiler-free example pages
+
+Each `tjs` example is transpiled **at build time** and its JS baked into the page as a hidden,
+non-executing `<script type="application/tosi-transpiled">`; the example runs from that bake, so
+no transpiler loads for a reader. The bakes ship per-doc in `docs.json` too, so client-side
+navigation gets them at zero extra first-paint cost. Editing an example drops the bake and loads
+the real transpiler + editor on demand; saving keeps the transpiled JS.
+
+### Live examples can import real npm packages (experimental)
+
+With `importResolver` enabled, a live example can `import` any npm package — resolved through a
+same-origin service worker (tjs-lang's import-resolver). Three execution modes are flaggable on
+the fence: `inline` (default), `iframe` (DOM/CSS isolation), `ide` (recognized; iframe path for
+now). Fence grammar is order-free: `` ```ts:ide#demo `` and `` ```ts#demo:ide `` both parse.
+
+### Doc-system & build
+
+Pre-rendered, hydrating doc pages (the chrome renders server-side and hydrates in place — no
+opacity gate on first paint). The hydration bundle ESM-splits CodeMirror off the critical path.
+Machine-safety guards for the long-lived dev server: an RSS ceiling, an 8-hour idle exit, and a
+preflight that refuses to build on an already-dying machine (Bun's `Bun.build()` native leak,
+oven-sh/bun#34053, is worked around by shelling out to the `bun build` CLI). A live
+`<tosi-css-var-editor>` on component pages. Nested `<tosi-doc-system>` instances no longer share
+state (each gets its own observable registry key).
+
+### Peers
+
+`tosijs` peer floor `^1.7.0` — the 1.7 line is a co-released, lockstep stack, and this is the
+version tosijs-ui is built, tested, and (in the iife) bundled against; we don't verify against
+older tosijs, so the declared floor matches what's actually tested. `tjs-lang` `^0.12.0` — a lazy, optional
+peer (a plain component consumer never pulls it in). `@codemirror/*` are the only hard runtime
+dependencies (a deliberate divergence from the zero-runtime-dep rule; they must share one
+`@codemirror/state` instance).
+
+---
+
+_The beta changelogs below are retained for detail; 1.7.0 consolidates betas 1–5 + rc.1. Built on tosijs 1.7.0._
+
+## 1.7.0-beta.3
+
+**Self-contained examples, and CodeMirror + the tjs transpiler are now edit-time only.** A
+reader loading a doc page — directly or via client-side navigation — runs every example with
+**neither the tjs transpiler nor CodeMirror on first paint**. Both load only when you open a
+code panel to edit.
+
+Still a beta under the `beta` tag (`latest` stays 1.6.x): `npm i tosijs-ui@beta`.
+
+### Examples run without the transpiler
+
+Each `tjs` example is transpiled at build time and its JavaScript is baked into the page as a
+hidden, non-executing `<script type="application/tosi-transpiled">`; the example runs from that
+bake. Plain `js` examples need no transpiler at all (`loadTransform('js')` is now identity). The
+bakes also ship per-doc in `docs.json`, so client-side navigation gets them too — at **zero
+added bytes for prose/book sites** (only docs with code examples carry bakes). Editing an
+example drops the stale bake and transpiles on demand; a saved local edit keeps its own
+transpiled code so it reloads without the transpiler.
+
+### CodeMirror panels build lazily
+
+`<tosi-example>` no longer constructs its `<tosi-code>` panels up front (this delivers the
+beta.2 "Remaining" note above): the panel — and the CodeMirror chunk — is built on first
+`showCode`. A page with examples now ships zero CodeMirror until a reader opens a panel.
+
+### tjs-lang 0.9.1 → 0.10.1
+
+Bumped the transpiler, **skipping 0.10.0** (it triggered a memory storm rooted in a bun bug;
+0.10.1 carries the fix). 0.10.x closed four upstream issues, letting this release **delete ~272
+lines** of hand-rolled scope-scanning and a hand-declared autocomplete-config type in favor of
+tjs-lang's own exports. The inline-WASM guard was updated for 0.10.x's renamed compiled export.
+
+- `tjs-lang` peer: `^0.9.1` → `^0.10.1` (and the `TJS_VERSION` CDN-fallback pin, in lockstep).
+
+## 1.7.0-beta.2
+
+The code editor moved from **ACE to [CodeMirror 6](https://codemirror.net/)**, `tjs`
+became a first-class editing mode with runtime-value autocomplete, the doc-site builder
+gained the hooks that unblock the tosijs 2.0 TJS port — and generated doc pages are now
+**readable before any JavaScript runs**.
+
+**A beta, published under npm's `beta` tag** — `latest` stays on 1.6.x. A prerelease is not
+matched by `^1.6.x` (or by `^1.7.0`), so nobody is auto-upgraded into the editor swap; you get
+this only by asking for it:
+
+```
+npm i tosijs-ui@beta        # or tosijs-ui@1.7.0-beta.2
+```
+
+### Doc pages no longer wait for the bundle
+
+Generated pages used to hide the body (`opacity: 0`, with a 4s safety-net timeout) until
+hydration, because hydration injected the whole page chrome and the reflow would have been
+ugly. **That gate is gone.** The chrome is pre-rendered, so the page is styled, readable and
+navigable — real `<a>` links, real headings — before a byte of JS executes, and hydration is
+purely additive: nothing moves.
+
+Measured on the built site, gzipped, CPU-throttled — blank-screen duration:
+
+| device                     | before                           | after      |
+| -------------------------- | -------------------------------- | ---------- |
+| cheap phone / Pi4, slow 4G | 4532ms                           | **1635ms** |
+| cheap phone / Pi4, 3G      | 4837ms — _hit the 4s safety net_ | **1635ms** |
+
+The bundle now gates **editing**, not **reading** — which was the point.
+
+Two regressions against that promise were caught in review and fixed here: the nav was styled
+by two hand-copied rule sets that had drifted (so it reflowed ~4px per row on hydration), and
+the page `<title>` was derived twice (so the home page flipped from its real title to
+`tosijs-ui — tosijs-ui`, [#6](https://github.com/tonioloewald/tosijs-ui/issues/6)). Both are
+now single, shared rules, and `tests/hydration.pw.ts` asserts that a no-JS page and a hydrated
+page agree — geometry, styling and title.
+
+### Doc pages no longer ship CodeMirror to readers who don't open an editor
+
+`dist/iife.js` can't code-split (bun's IIFE format), so `<tosi-code>`'s lazy `import()` is
+flattened in — CodeMirror + lezer + acorn on every page whether or not it has an editor
+(121KB → 388KB gzip). The generated **doc pages now load an ESM `--splitting` hydration bundle**
+(`<script type="module">`) instead: the always-loaded entry is **~123KB gzip** and CodeMirror
+rides a lazy chunk pulled only when an editor mounts. The tjs CM extension stays bundled, and
+splitting preserves the shared single `@codemirror/state`. **`dist/iife.js` is unchanged and
+still shipped for the CDN `<script>` path.** So a **pure-docs / book site with no code
+examples now ships zero CodeMirror** — the case that was hurt worst.
+
+Remaining (tracked in `TODO.md`): a page that DOES have live examples still eager-loads the
+editor chunk, because `<tosi-example>` builds its code panels up front even while hidden. The
+next step defers that construction until the reader opens a panel; the example still runs (the
+preview and inline tests don't need the editors) — only the code view waits. **(Delivered in
+1.7.0-beta.3 — see below.)**
+
+### Dev-server safety (also in 1.6.23)
+
+A leaking dev server took a machine down twice. The guards, all in `tosijs-ui/site`:
+
+- **Machine-health preflight** before every build and dev-server launch: refuses to add load to
+  a machine that is already dying, and names the offending PIDs, sizes, ages and project dirs.
+  `preflight: 'fail' | 'warn' | false` in the site config; `DEV_SKIP_PREFLIGHT=1` to skip. Warns
+  rather than refuses in CI.
+- **`idleTimeoutHours` (default 8)** — ⚠️ **a behavior change**: your dev server now exits after
+  8 idle hours (no request, no rebuild). A forgotten dev server is not inert — it is a days-old
+  process still running the code it loaded at launch. Set `idleTimeoutHours: 0` to disable.
+- **RSS ceiling** (`memoryLimitMb`, default 4096) sampled every 60s, not just after a rebuild.
+- **Rebuild-loop detector** — a build that writes a file it also watches now stops, and names
+  the file, instead of spawning a bundler forever.
+- The example check, the ePub build, and the bundle gzip all moved into **child processes**;
+  `Bun.build()` strands ~30MB of native arena per call ([oven-sh/bun#34053](https://github.com/oven-sh/bun/issues/34053), still open).
+- **`killStrayServer` no longer `kill -9`s every process _connected to_ the dev port** — it used
+  `lsof -ti:PORT`, which matches clients as well as the listener, so it could kill your browser.
+- haltija is spawned as a **pinned range** (`haltija@^1.4.0`, override with `HALTIJA_VERSION`),
+  not a floating `@latest`, and its teardown kills only its own process tree. The 1.4.0 floor
+  is deliberate: it is the first haltija that routes `hj` by working directory, never overwrites
+  a newer machine-wide `hj`, and exits non-zero on a failed command — so a project's dev server
+  drives its own browser and can't silently downgrade another project's CLI.
+
+### Breaking
+
+`<tosi-code>` (ACE → CodeMirror 6). Each removed member now **warns once and no-ops**
+rather than failing silently, but they are gone:
+
+| removed                           | replacement                                        |
+| --------------------------------- | -------------------------------------------------- |
+| `theme` attribute                 | style the editor with `--code-bg` / `--text-color` |
+| `options` property (ACE-shaped)   | configure via `editor` (a CodeMirror `EditorView`) |
+| `ace` getter                      | there is no ACE global; use `editor`               |
+| `editor.session.getUndoManager()` | `undo()` / `redo()` / `canUndo()` / `canRedo()`    |
+
+**`editor` changed type in place** — it was an ACE `Editor`, it is now a CodeMirror
+[`EditorView`](https://codemirror.net/docs/ref/#view.EditorView). A grep for the removed
+names will not catch this, and the warn-once shims above **cannot** catch it either: the
+property still exists and still returns an object; it is simply a different object. So
+**`editor` now warns once on first access**, naming what moved — one line in the console
+beats a `TypeError` from inside a library you have never opened. TypeScript users get a
+compile error instead (1.6 typed it `any`; 1.7 types it `EditorView | undefined`).
+
+**`change` now means the _user_ changed it.** The event is new in 1.7, and it fires only
+on user edits — a programmatic `el.value = doc` (loading a document) does not fire it, and
+neither does writing into a `disabled` editor. Without that, every app that populates an
+editor would record a spurious save/dirty-flag on open. Programmatic sets are also not
+undoable: loading a document is not an edit to Ctrl+Z back out of.
+
+Unchanged: `value`, `original` / `showDiff()`, `mode`, `disabled`.
+
+**tosijs floor is now `^1.6.9`.** 1.6.9 fixes the `parts` proxy so a pre-hydration access no
+longer poisons it, and adds public `hydrated` / `whenHydrated` seams
+([tosijs#13](https://github.com/tonioloewald/tosijs/issues/13)). Two internal hand-rolled
+hydration guards (`<tosi-code>`, `<tosi-example>`) were deleted in favor of the official
+`this.hydrated` — so any component that reaches into `parts` from a getter is safe against the
+old "read it once and it's bricked forever" trap.
+
+**Semver stance (deliberate, not an oversight).** This library breaks in minors before 2.0 —
+**`2.0` is reserved for the tjs-native rewrite**, not for this. So `^1.6.x` resolves `1.7.0` and
+existing consumers pick this up on their next install.
+
+**If you use `<tosi-code>`, pin `~1.6` and upgrade deliberately.** Everything else in the library
+is untouched, so a consumer of (say) `<tosi-rating>` can take 1.7 without changes — but note it
+now installs 12 `@codemirror/*` runtime dependencies where the library previously had none.
+
 ## 1.6.23
 
-**The two biggest sources of ecosystem-wide friction — runaway dev servers and haltija
-conflicts — fixed in the version people actually run.** If you use `tosijs-ui/site`, update.
+**Dev-server safety.** Everything under "Dev-server safety" above, backported — this is the
+release every `tosijs-ui/site` consumer wants, and it needs no code changes.
 
-### Machine-safety guards (a leaking/forgotten dev server took a machine down twice)
+The one to know about: **`killStrayServer` was `kill -9`ing every process _connected to_ the
+dev port, not just the listener.** `lsof -i:PORT` matches sockets whose local _or remote_ port
+is `PORT`, so `bun start` could SIGKILL the browser reading your page, Playwright's browsers,
+or an editor's language server. Now it signals only the listening process, only if it is a JS
+runtime, SIGTERM first.
 
-- **`killStrayServer` no longer `kill -9`s processes merely _connected_ to its port.** It freed
-  its port with `lsof -ti:PORT | xargs kill -9`, and `lsof -i:PORT` matches sockets whose local
-  **or remote** port is PORT — so it SIGKILLed every _client_ of that port, not just the
-  listener: the browser reading your page, an editor's language server, anything with a
-  connection. It now signals **only the process listening** on the port, only after confirming
-  it is a JS runtime, SIGTERM first and SIGKILL only as a fallback.
+⚠️ **Behavior change:** the dev server now exits after **8 idle hours** (`idleTimeoutHours: 0`
+to disable), and refuses to start on a machine that is already out of memory
+(`DEV_SKIP_PREFLIGHT=1`, or `preflight: 'warn' | false`).
 
-- **Machine-health preflight** before each build and at dev-server launch (and on a 60s tick):
-  refuses to add load to a machine that is already dying — a runaway dev server, a VM stall.
-  Names the offending PIDs, sizes, ages and project dirs. **Local LLM runtimes (LM Studio,
-  ollama, llama.cpp, mlx_lm, vLLM, …) are exempt** — their memory shrinks the dev budget rather
-  than tripping the guard, and a big _non-dev_ process (Docker, a JVM, a database) only warns,
-  never fails. It never kills anything; it declines to _start_. `preflight: 'fail' | 'warn' |
-  false` in the site config, or `DEV_SKIP_PREFLIGHT=1`; auto-downgraded to a warning in CI.
+The trap to know about: **`editor` changed type in place** and no shim can catch it. The removed
+`theme` / `options` / `ace` members warn once and no-op, but `el.editor` still exists — it is
+simply a CodeMirror `EditorView` now, so `el.editor.session.*` is a runtime `TypeError`. A grep
+for the removed names will not find it.
 
-- **`idleTimeoutHours` (default 8)** — ⚠️ **behavior change:** the dev server now exits after 8
-  idle hours (no request, no rebuild). A forgotten dev server is not inert — it is a days-old
-  process still running the code it loaded at launch (updating the package does nothing for it).
-  `idleTimeoutHours: 0` disables it.
+### Added
 
-- **RSS ceiling** (`memoryLimitMb`) sampled every 60s, and a **rebuild-loop detector** that
-  stops a build which writes a file it also watches instead of spawning a bundler forever.
+- `<tosi-code>` gained a `change` event (`event.detail.value`), `undo()` / `redo()` /
+  `canUndo()` / `canRedo()`, and `tjs` / `ajs` modes.
+- **Runtime-value autocomplete** in `tjs` mode: set `tjsAutocomplete` and completion
+  suggests the _real members of live values_ — including tosijs proxy members that no
+  static analysis can see. Live examples wire their own executed scope into it, so
+  `const { app } = tosi(…)` gives real `app.` / `app.items.` completions.
+- Inline **WebAssembly** live examples (tjs `wasm {}` blocks).
+- `buildSite`: `libraryBuild` and `generateCssPreload` hooks, for projects whose
+  library sources are native `.tjs` (this is what the tosijs 2.0 TJS port needs).
+  **These actually shipped in 1.6.21** — they are listed here only because they landed on this
+  branch first. Nothing needs 1.7 to use them.
 
-### haltija
+### Changed
 
-- Spawned as a **pinned range (`haltija@^1.4.0`)**, overridable with `HALTIJA_VERSION`, instead
-  of a floating `@latest` fetched fresh on every adopter's machine. The 1.4.0 floor is
-  deliberate: it routes `hj` by working directory (so a project's dev server drives its own
-  browser, not whichever was focused), never overwrites a newer machine-wide `hj`, and exits
-  non-zero on a failed command — which the doc-test lane now checks instead of racing to a
-  timeout. Teardown kills only its own process tree, never a haltija you were already running.
+- **`dist/iife.js` is ~384KB gzipped, up from ~120KB.** Bun's IIFE format cannot
+  code-split, so CodeMirror is inlined there. (Under a bundler/ESM it stays a lazy
+  chunk — a page with no `<tosi-code>` doesn't load it.) This is deliberate: the
+  in-page editor and its save-to-source flow are the point of the doc-system, so the
+  IIFE carries the editor.
+- The library now has runtime `dependencies` (12 `@codemirror/*` packages) where it
+  previously had none. They can't be optional peers: the tjs CodeMirror extension must
+  share this exact `@codemirror/state` instance or it silently no-ops.
+- `tjs-lang` peer: `^0.8.7` → `^0.9.1`.
 
-### Also fixed
+### Fixed
 
-- **Builds again against tosijs 1.6.9.** `<tosi-example>` detected hydration with a
-  `try { this.parts.js } catch` probe, which before tosijs 1.6.9 permanently poisoned the
-  `parts` proxy on the pre-hydration read it performed (it could blank the whole doc page), and
-  whose `private get hydrated()` collided with 1.6.9's new public `hydrated` (a `tsc` error, so
-  the package could not build against current tosijs). The probe is gone — it uses the base
-  class's `this.hydrated` now — and the tosijs floor moves to **`^1.6.9`**
-  ([tosijs#13](https://github.com/tonioloewald/tosijs/issues/13)).
-
-- **The doc-browser no longer double-suffixes the page `<title>`.** On path routing it re-derived
-  the title on hydration, ignoring `headTitle` and re-appending the project name to a title that
-  already contained it — so the home page flipped from its real title to `tosijs-ui — tosijs-ui`
-  the moment the bundle loaded. The static generator and the runtime now share **one**
-  `pageTitle` rule (case-insensitive, both-directions containment check; whitespace-only titles
-  and project names handled). Fixes [#6](https://github.com/tonioloewald/tosijs-ui/issues/6).
-
-- **Two more per-rebuild build leaks moved to child processes** (the dev server lives for days):
-  the live-example **check** (`new AsyncFunction` per block + a `Bun.Transpiler` per `ts` block)
-  and the bundle **gzip** (native zlib). Both now run in a child whose memory the OS reclaims on
-  exit; the gzip stays zlib-in-a-child (not the `gzip` CLI) so the reported size doesn't drift.
+- `showDiff()` rendered nothing. Giving `<tosi-code>` its own `content` displaced the
+  default `<slot>` that used to project the light-DOM diff overlay, so the overlay was
+  invisible (0×0) while `showingDiff` still reported `true`. It now renders inside the
+  shadow root. This is the review step of the doc-system's edit-and-save-to-source
+  flow, so a blank diff meant saving changes you never saw.
 
 ## 1.6.22
 
@@ -94,8 +322,19 @@ conflicts — fixed in the version people actually run.** If you use `tosijs-ui/
 
 ## 1.6.21
 
-- Memory-routed nav-toggle fix; `buildSite` `.tjs` hooks (`libraryBuild`,
-  `generateCssPreload` — see BUILD-TJS-HOOK.md); tjs-lang 0.9.0.
+### Fixed
+
+- Doc-system nav-toggle in `routing: 'memory'` mode drove the _outer_ doc-browser
+  instance instead of its own (now scoped per-instance).
+
+### Added
+
+- `buildSite` `libraryBuild` + `generateCssPreload` hooks (also in 1.7.0 above), so a
+  project whose library source is native `.tjs` can build through the doc-site pipeline.
+
+### Changed
+
+- `tjs-lang` peer: `^0.8.7` → `^0.9.0`.
 
 ## 1.6.20
 
@@ -124,7 +363,7 @@ Doc-system tooling; no component API changes.
 - **Build-time example transpile check.** Every executable live-example block
   (`js` / `tjs` / `ts` / `test`) across the whole corpus is run through the front
   half of the runtime pipeline — `rewriteImports` → transform → `new
-  AsyncFunction` — at build time, **without executing it**, so a block that can't
+AsyncFunction` — at build time, **without executing it**, so a block that can't
   build (a syntax/import error, or illustrative code mistakenly tagged with an
   executable language instead of the display-only `typescript`) **fails the build**
   with the offending doc/block named, on every page — including fences hidden in
@@ -138,7 +377,7 @@ Doc-system tooling; no component API changes.
 ### Fixed
 
 - **A live example's build/exec failure is now a test failure whether or not it
-  defines `test` blocks.** So on any page the browser test runner loads, *all* of
+  defines `test` blocks.** So on any page the browser test runner loads, _all_ of
   its examples are checked for explosions — a no-test example that throws is
   reported as a failed test — not just blocks with explicit assertions.
 
@@ -339,6 +578,7 @@ below.
 
 - **Subpath exports**, so an app can import only what it needs without the barrel
   dragging in dev tools:
+
   - curated: `tosijs-ui/icons`, `tosijs-ui/code-editor`, `tosijs-ui/live-example`,
     `tosijs-ui/doc-browser`, `tosijs-ui/diff`, `tosijs-ui/theme`
   - per-component wildcard: `import { tosiRating } from 'tosijs-ui/rating'`

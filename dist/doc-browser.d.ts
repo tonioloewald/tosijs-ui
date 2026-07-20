@@ -23,6 +23,10 @@ export interface Doc {
     pin?: string;
     hidden?: boolean;
     testStatus?: 'passed' | 'failed' | 'pending';
+    bakes?: Array<[string, {
+        dialect: string;
+        js: string;
+    }]>;
 }
 export interface ProjectLinks {
     github?: string;

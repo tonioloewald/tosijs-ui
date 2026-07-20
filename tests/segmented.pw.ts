@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test'
 test('clicking a different segment moves the highlight (single-select)', async ({
   page,
 }) => {
-  await page.goto('https://localhost:8787/')
+  await page.goto('/')
   await page.waitForFunction(() => !!customElements.get('tosi-segmented'))
 
   await page.evaluate(() => {
@@ -72,7 +72,7 @@ test('clicking a different segment moves the highlight (single-select)', async (
 test('toggling checkboxes adds and removes highlights (multiple)', async ({
   page,
 }) => {
-  await page.goto('https://localhost:8787/')
+  await page.goto('/')
   await page.waitForFunction(() => !!customElements.get('tosi-segmented'))
 
   await page.evaluate(() => {

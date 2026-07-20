@@ -131,7 +131,9 @@ describe('save-to-source dialects (tjs/ts)', () => {
     expect(tjsOut).toContain('const x == 999')
     expect(tjsOut).toContain('.a { color: red }') // sibling css untouched
 
-    const tsOut = rewriteExampleBlocks(DIALECTS, 1, { js: 'const y: number = 22' })!
+    const tsOut = rewriteExampleBlocks(DIALECTS, 1, {
+      js: 'const y: number = 22',
+    })!
     expect(tsOut).toContain('const y: number = 22')
     expect(tsOut).toContain('const z = 3') // js example untouched
   })
@@ -157,12 +159,14 @@ describe('save-to-source dialects (tjs/ts)', () => {
 
   test('round-trips an indented example: compares dedented, writes re-indented', () => {
     // the editor value is dedented; a real change must save and keep the indent
-    const out = rewriteExampleBlocks(INDENTED, 0, { js: 'const a = 1\nconst c = 3' })
+    const out = rewriteExampleBlocks(INDENTED, 0, {
+      js: 'const a = 1\nconst c = 3',
+    })
     expect(out).not.toBe(null)
     expect(out).toContain('  const a = 1\n  const c = 3') // re-indented
     // an unchanged (dedented) value is a no-op, not a spurious rewrite
-    expect(rewriteExampleBlocks(INDENTED, 0, { js: 'const a = 1\nconst b = 2' })).toBe(
-      null
-    )
+    expect(
+      rewriteExampleBlocks(INDENTED, 0, { js: 'const a = 1\nconst b = 2' })
+    ).toBe(null)
   })
 })

@@ -4,7 +4,7 @@ test.beforeEach(async ({ page }) => {
   // Go straight to the form doc. Its nav link lives inside a collapsed nav
   // section, and this test is about the form component, not navigation —
   // nav-link navigation is covered by doc-system.pw.ts.
-  await page.goto('https://localhost:8787/form/')
+  await page.goto('/form/')
   // await page.goto('https://ui.tosijs.net/form/')
 })
 

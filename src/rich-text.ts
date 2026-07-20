@@ -485,7 +485,8 @@ export type XinWord = RichText
 /** @deprecated Use RichText instead */
 export const XinWord: typeof RichText = RichText
 
-export const tosiRichText = RichText.elementCreator() as ElementCreator<RichText>
+export const tosiRichText =
+  RichText.elementCreator() as ElementCreator<RichText>
 
 /** @deprecated Use tosiRichText instead (tag is now <tosi-rich-text>) */
 export const richText = deprecated(

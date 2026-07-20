@@ -223,10 +223,14 @@ export declare class LiveExample extends Component<ExampleParts> {
     static initAttributes: {
         persistToDom: boolean;
         iframe: boolean;
+        mode: string;
     };
+    /** Resolved execution mode — `mode` attribute wins; `iframe` boolean is the alias. */
+    get effectiveMode(): 'inline' | 'iframe' | 'ide';
     prefix: string;
     storageKey: string;
     context: ExampleContext;
+    private capturedScope;
     uuid: string;
     remoteId: string;
     private remoteSync?;
@@ -235,6 +239,7 @@ export declare class LiveExample extends Component<ExampleParts> {
     private pendingValues;
     private pendingShowDefaultTab;
     private beforeUnloadHandler?;
+    private editorsBuilt;
     static insertExamples(element: HTMLElement, context?: ExampleContext, sourceFile?: string): void;
     get activeTab(): Element | undefined;
     private getEditorValue;
@@ -251,6 +256,8 @@ export declare class LiveExample extends Component<ExampleParts> {
     get remoteKey(): string;
     get dialect(): Dialect;
     set dialect(value: Dialect);
+    compiledJs?: string;
+    compiledJsSource?: string;
     private jsOutEditor?;
     private tjsTestsView?;
     private productTabsReady;
@@ -261,6 +268,15 @@ export declare class LiveExample extends Component<ExampleParts> {
     private renderTjsTests;
     private computeGeneratedJs;
     private ensureProductTabs;
+    private captureScope;
+    /**
+     * Live bindings for tjs runtime-value autocomplete: the example's context modules
+     * (keyed by the identifier the rewritten code uses, e.g. `tosijs`, `tosijsui`),
+     * the currently-rendered `preview` element, and the latest run's top-level locals
+     * (so `const app = tosi(…)` gives real `app.` / `app.items.` completions, proxy
+     * members and all). Read lazily on each completion, so it reflects the latest run.
+     */
+    private liveBindings;
     updateUndo: () => void;
     private updateTestResultsVisibility;
     undo: () => void;
@@ -271,6 +287,8 @@ export declare class LiveExample extends Component<ExampleParts> {
     exampleMenu: () => void;
     handleShortcuts: (event: KeyboardEvent) => void;
     content: () => any[];
+    private buildEditorPanel;
+    private ensureEditors;
     connectedCallback(): void;
     disconnectedCallback(): void;
     private exampleMarkdown;

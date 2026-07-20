@@ -439,7 +439,8 @@ export class FilterPart extends WebComponent<FilterPartParts> {
   }
 }
 
-export const filterPart = FilterPart.elementCreator() as ElementCreator<FilterPart>
+export const filterPart =
+  FilterPart.elementCreator() as ElementCreator<FilterPart>
 
 export type FilterState = FilterPartState[]
 
@@ -588,4 +589,5 @@ export class FilterBuilder extends WebComponent<FilterBuilderParts> {
   }
 }
 
-export const filterBuilder = FilterBuilder.elementCreator() as ElementCreator<FilterBuilder>
+export const filterBuilder =
+  FilterBuilder.elementCreator() as ElementCreator<FilterBuilder>

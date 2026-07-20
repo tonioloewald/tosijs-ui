@@ -1,8 +1,67 @@
-import { test, expect } from 'bun:test'
+import { test, expect, describe } from 'bun:test'
 import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
-import { toXhtml, escapeXml, stripDocMeta, DEFAULT_BOOK_CSS, buildEpub } from './epub'
+import {
+  toXhtml,
+  escapeXml,
+  stripDocMeta,
+  DEFAULT_BOOK_CSS,
+  buildEpub,
+  rewriteInBookLinks,
+} from './epub'
+
+// ── #15: in-book cross-links (/slug/ and ?filename → <slug>.xhtml) ────────────
+
+describe('rewriteInBookLinks', () => {
+  // combat.md → 'combat' → combat.xhtml; README → '' → index.xhtml.
+  const bookFiles = new Map([
+    ['combat', 'combat.xhtml'],
+    ['', 'index.xhtml'],
+  ])
+  const slugMap = { 'combat.md': 'combat', 'README.md': '' }
+  const rw = (html: string, basePath?: string) =>
+    rewriteInBookLinks(html, bookFiles, slugMap, basePath)
+
+  test('a `/slug/` link to an in-book chapter becomes <slug>.xhtml', () => {
+    expect(rw('<a href="/combat/">Combat</a>')).toBe(
+      '<a href="combat.xhtml">Combat</a>'
+    )
+  })
+
+  test('the home path maps to index.xhtml (README)', () => {
+    expect(rw('<a href="/">Home</a>')).toBe('<a href="index.xhtml">Home</a>')
+  })
+
+  test('a trailing #anchor is preserved', () => {
+    expect(rw('<a href="/combat/#stealth">x</a>')).toBe(
+      '<a href="combat.xhtml#stealth">x</a>'
+    )
+  })
+
+  test('legacy ?filename links resolve via the slug map', () => {
+    expect(rw('<a href="?combat.md">x</a>')).toBe(
+      '<a href="combat.xhtml">x</a>'
+    )
+  })
+
+  test('basePath is stripped before matching', () => {
+    expect(rw('<a href="/foresight/combat/">x</a>', '/foresight')).toBe(
+      '<a href="combat.xhtml">x</a>'
+    )
+  })
+
+  test('external, out-of-book, relative and anchor links are untouched', () => {
+    const untouched = [
+      '<a href="https://example.com/combat/">ext</a>',
+      '<a href="mailto:x@y.z">mail</a>',
+      '<a href="/not-in-book/">gone</a>', // no chapter → left as-is
+      '<a href="./local.html">rel</a>',
+      '<a href="#section">anchor</a>',
+    ]
+    for (const html of untouched) expect(rw(html)).toBe(html)
+  })
+})
 
 // ── pure helpers ────────────────────────────────────────────────────────────
 
@@ -42,9 +101,24 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     fs.writeFileSync(
       corpus,
       JSON.stringify([
-        { filename: 'README.md', title: 'Home', text: '# Home\n\nHello & welcome.\n\n```js\nconst home = 1\n```', path: 'README.md' },
-        { filename: 'a.ts', title: 'A', text: '# A\n\n```js\nconst x = 1\n```', path: 'a.ts' },
-        { filename: 'b.ts', title: 'B', text: '# B\n\n```js#cool\nconst y = 2\n```', path: 'b.ts' },
+        {
+          filename: 'README.md',
+          title: 'Home',
+          text: '# Home\n\nHello & welcome.\n\n```js\nconst home = 1\n```',
+          path: 'README.md',
+        },
+        {
+          filename: 'a.ts',
+          title: 'A',
+          text: '# A\n\n```js\nconst x = 1\n```',
+          path: 'a.ts',
+        },
+        {
+          filename: 'b.ts',
+          title: 'B',
+          text: '# B\n\n```js#cool\nconst y = 2\n```',
+          path: 'b.ts',
+        },
       ])
     )
     const out = path.join(dir, 'book.epub')
@@ -67,7 +141,13 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
 
     // Unzip and confirm structure + chapter well-formedness.
     Bun.spawnSync(['unzip', '-o', '-q', out, '-d', dir])
-    for (const f of ['META-INF/container.xml', 'OEBPS/package.opf', 'OEBPS/nav.xhtml', 'OEBPS/index.xhtml', 'OEBPS/a.xhtml']) {
+    for (const f of [
+      'META-INF/container.xml',
+      'OEBPS/package.opf',
+      'OEBPS/nav.xhtml',
+      'OEBPS/index.xhtml',
+      'OEBPS/a.xhtml',
+    ]) {
       expect(fs.existsSync(path.join(dir, f))).toBe(true)
     }
     // chapters parse as XML (the build-time DOMParser would reject malformed XHTML)
@@ -86,7 +166,10 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     expect(opf).toMatch(
       /<itemref idref="cover-page"\/>\s*<itemref idref="toc-page"\/>/
     )
-    const contents = fs.readFileSync(path.join(dir, 'OEBPS/contents.xhtml'), 'utf8')
+    const contents = fs.readFileSync(
+      path.join(dir, 'OEBPS/contents.xhtml'),
+      'utf8'
+    )
     expect(contents).toContain('<ol class="toc">')
     expect(contents).toContain('>Home</a>') // links to a chapter
 

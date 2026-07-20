@@ -12,7 +12,8 @@ test('every concrete export target resolves to an existing file', () => {
       conditions as Record<string, string>
     )) {
       if (target.includes('*')) continue // wildcard pattern — checked below
-      if (!fs.existsSync(target)) missing.push(`${subpath} (${condition}) -> ${target}`)
+      if (!fs.existsSync(target))
+        missing.push(`${subpath} (${condition}) -> ${target}`)
     }
   }
   expect(missing).toEqual([])

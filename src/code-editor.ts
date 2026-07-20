@@ -1,12 +1,12 @@
 /*#
 # code
 
-An [ACE Editor](https://ace.c9.io/) wrapper.
+A [CodeMirror 6](https://codemirror.net/) wrapper.
 
 Sometimes, it's nice to be able to just toss a code-editor in a web-page.
 
-`<tosi-code>`'s `value` is the code it contains. Its `mode` attribute sets the language, and you can further configure
-the ACE editor instance via its `options` property.
+`<tosi-code>`'s `value` is the code it contains. Its `mode` attribute sets the
+language (`javascript`, `typescript`, `tjs`, `css`, `html`, `markdown`).
 
 ```html
 <tosi-code style="width: 100%; height: 100%" mode="css">
@@ -16,64 +16,126 @@ body {
 </tosi-code>
 ```
 
-The `<tosi-code>` element has an `editor` property that gives you its ACE editor instance,
-and an `ace` property that returns the `ace` module, giving you complete access to the
-[Ace API](https://ace.c9.io/api/index.html).
+## Properties & events
+
+| member | what it does |
+| --- | --- |
+| `value` | the code in the editor (get/set) |
+| `mode` | `javascript`, `typescript`, `tjs`, `ajs`, `css`, `html`, `markdown` |
+| `disabled` | makes the editor read-only |
+| `original` + `showDiff(on)` | diff the current `value` against a baseline, as an overlay |
+| `editor` | the underlying CodeMirror [`EditorView`](https://codemirror.net/docs/ref/#view.EditorView) (`undefined` until loaded) |
+| `undo()` / `redo()` / `canUndo()` / `canRedo()` | history control |
+| `tjsAutocomplete` | runtime-value autocomplete hooks (tjs mode) — see below |
+| `change` event | fires when the text changes; `event.detail.value` is the new text |
+
+In `tjs`/`ajs` mode the editor loads tjs-lang's CodeMirror language and completion
+source (if `tjs-lang` is installed — it's an optional peer). Set `tjsAutocomplete`
+to a `TjsAutocompleteConfig` and completion will suggest the **real members of live
+runtime values** — including proxy members no static analysis can see:
+
+```typescript
+codeEl.tjsAutocomplete = { getLiveBindings: () => ({ app, elements }) }
+```
+
+## Bundling
+
+CodeMirror is a **lazy chunk**: with a bundler (ESM), a page that never uses
+`<tosi-code>` doesn't load it. **This is not true of the IIFE** (`dist/iife.js`) —
+bun's IIFE format cannot code-split, so CodeMirror is inlined there. That is a
+deliberate trade: the doc-system's editor (and its save-to-source flow) is the
+point of the IIFE, so it carries the editor. It costs ~376KB gzipped, up from
+~118KB in 1.6.x.
+
+## Migrating from the ACE editor (pre-1.7)
+
+1.7 replaced ACE with CodeMirror 6. `value`, `original`/`showDiff()`, `mode` and
+`disabled` are unchanged. Removed (each warns once, then no-ops):
+
+| removed | replacement |
+| --- | --- |
+| `theme` | style with `--code-bg` / `--text-color` |
+| `options` (ACE-shaped) | configure via `editor` (an `EditorView`) |
+| `ace` | there is no ACE global; use `editor` |
+| `editor.session.getUndoManager()` | `undo()` / `redo()` / `canUndo()` / `canRedo()` |
+
+`editor` **changed type in place** — it was an ACE `Editor`, it is now a CodeMirror
+`EditorView`. Code that reached into it needs revisiting; a grep for removed names
+won't catch this one.
 */
 
 /*{ "parent": "Components" }*/
 
-import { Component as WebComponent, ElementCreator } from 'tosijs'
-import { scriptTag } from './via-tag'
+import {
+  Component as WebComponent,
+  ElementCreator,
+  elements,
+  PartsMap,
+  varDefault,
+} from 'tosijs'
 import { tosiDiff, TosiDiff } from './diff'
+import type { CmHandle, TjsAutocompleteConfig } from './code-editor-cm'
+export type { TjsAutocompleteConfig } from './code-editor-cm'
 
-const ACE_BASE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.2/'
-const DEFAULT_THEME = 'ace/theme/tomorrow'
+const { div } = elements
 
-const getAce = async (): Promise<any> => {
-  const { ace } = await scriptTag(`${ACE_BASE_URL}ace.min.js`)
-  return ace
+// Warn once per removed member, not once per access — a live-example page holds
+// dozens of editors and a render-loop read would otherwise flood the console.
+const warned = new Set<string>()
+const warnRemoved = (member: string, advice: string): void => {
+  if (warned.has(member)) return
+  warned.add(member)
+  console.warn(
+    `<tosi-code>.${member} was removed in tosijs-ui 1.7 (the editor is now CodeMirror 6, not ACE) — ${advice}. See CHANGELOG 1.7.0.`
+  )
 }
 
-const makeCodeEditor = async (
-  codeElement: any,
-  mode = 'html',
-  options = {},
-  theme = DEFAULT_THEME
-) => {
-  const ace = await getAce()
-  ace.config.set('basePath', ACE_BASE_URL)
-  const editor = ace.edit(codeElement, {
-    mode: `ace/mode/${mode}`,
-    tabSize: 2,
-    useSoftTabs: true,
-    useWorker: false,
-    // Wrap wide lines instead of scrolling horizontally; indentedSoftWrap keeps
-    // wrapped continuations aligned under the line's indent.
-    wrap: true,
-    indentedSoftWrap: true,
-    ...options,
-  })
-  editor.setTheme(theme)
-  return { ace, editor }
+interface CodeEditorParts extends PartsMap {
+  host: HTMLDivElement
+  diffHost: HTMLDivElement
 }
 
-export class CodeEditor extends WebComponent {
+// One warning per page, not per element — see the `editor` getter.
+let warnedEditor = false
+let warnedTjs = false
+
+export class CodeEditor extends WebComponent<CodeEditorParts> {
   static preferredTagName = 'tosi-code'
 
   private source = ''
+  private _handle: CmHandle | undefined
+  private _loadPromise: Promise<CmHandle | undefined> | undefined
+  // Bumped on every connect. The lazy chunk resolves asynchronously, so by the time it
+  // does, this element may have been removed — or removed and re-added, starting a newer
+  // load. Mounting a stale load would build an EditorView nothing ever destroys.
+  private _loadGeneration = 0
+  private _appliedMode = ''
+  private _appliedDisabled: boolean | undefined
+  private _tjsAutocomplete: TjsAutocompleteConfig | undefined
+
+  /**
+   * Runtime-introspection hooks for tjs autocomplete (`getLiveBindings` /
+   * `getMembers`) — lets completion suggest the REAL members of live values (e.g.
+   * a tosijs proxy or a DOM element) that static analysis can't see. Only used in
+   * tjs mode; setting it re-applies the tjs extension so it takes effect live.
+   */
+  get tjsAutocomplete(): TjsAutocompleteConfig | undefined {
+    return this._tjsAutocomplete
+  }
+  set tjsAutocomplete(config: TjsAutocompleteConfig | undefined) {
+    this._tjsAutocomplete = config
+    if (this._handle && this.isTjsMode()) this.applyTjsExtension()
+  }
 
   get value(): string {
-    return this.editor === undefined ? this.source : this.editor.getValue()
+    return this._handle ? this._handle.getValue() : this.source
   }
 
   set value(text: string) {
-    if (this.editor === undefined) {
-      this.source = text
+    if (this._handle) {
+      this._handle.setValue(text)
     } else {
-      this.editor.setValue(text)
-      this.editor.clearSelection()
-      this.editor.session.getUndoManager().reset()
+      this.source = text
     }
   }
 
@@ -87,57 +149,153 @@ export class CodeEditor extends WebComponent {
     this._original = text
   }
 
-  // Diff overlay — deliberately built only on the editor's public surface
-  // (`value` + `original`) and the tosi-diff component, never the underlying
-  // editor's API, so it survives a future Ace → CodeMirror swap untouched.
+  // Diff overlay — built only on the editor's public surface (`value` + `original`)
+  // and the tosi-diff component, never the underlying editor's API, so it stays
+  // editor-agnostic.
+  //
+  // It lives in the SHADOW root (the `diffHost` part), not the light DOM. Under the
+  // old Ace editor this component had no `content`, so tosijs's default `slot()`
+  // filled the shadow root and Ace mounted into the light DOM — a light-DOM overlay
+  // projected through that slot. CodeMirror mounts into `[part=host]` inside the
+  // shadow root, and this component now declares its own `content`, so there is no
+  // slot: `this.append(overlay)` would put it in the light DOM where nothing renders
+  // it. (Re-adding a slot is NOT the fix — it would also project the element's
+  // textContent, i.e. the initial code, and double-render it under the editor.)
   private diffOverlay: TosiDiff | undefined
 
+  // Hydration state comes from the base class (`this.hydrated`), as of tosijs 1.6.9.
+  // This used to be a hand-rolled `_partsHydrated` flag — because before 1.6.9 the
+  // `parts` proxy poisoned itself on any pre-hydration read (touching it once rooted
+  // the proxy at the light-DOM element forever, so the editor never mounted), and
+  // there was no public way to ask "am I hydrated yet?" without triggering exactly
+  // that. 1.6.9 fixed both — it invalidates the cached proxy at hydrate AND exposes
+  // `hydrated`/`whenHydrated` — so the flag is gone. (tonioloewald/tosijs#13.)
+
+  // A showDiff() call made before hydration, replayed once we're ready. Still needed:
+  // `parts` genuinely doesn't exist before hydration (content is injected at connect),
+  // so work that touches it is legitimately deferred — that is not the poisoning bug.
+  private _pendingDiff: boolean | undefined
+
   get showingDiff(): boolean {
-    return this.diffOverlay !== undefined && !this.diffOverlay.hidden
+    if (!this.hydrated) return this._pendingDiff ?? false
+    return !this.parts.diffHost.hidden
   }
 
   showDiff(on: boolean): void {
+    if (!this.hydrated) {
+      this._pendingDiff = on
+      return
+    }
+    const { diffHost } = this.parts
     if (on) {
       if (this.diffOverlay === undefined) {
-        this.diffOverlay = tosiDiff({
-          style: {
-            position: 'absolute',
-            inset: '0',
-            zIndex: '5',
-            overflow: 'auto',
-            background: 'var(--tosi-diff-bg, var(--background, #fff))',
-          },
-        })
-        this.append(this.diffOverlay)
+        this.diffOverlay = tosiDiff()
+        diffHost.append(this.diffOverlay)
       }
       this.diffOverlay.original = this.original
       this.diffOverlay.modified = this.value
-      this.diffOverlay.hidden = false
-    } else if (this.diffOverlay !== undefined) {
-      this.diffOverlay.hidden = true
     }
+    diffHost.hidden = !on
   }
 
   static initAttributes = {
     mode: 'javascript',
-    theme: DEFAULT_THEME,
     disabled: false,
   }
 
   role = 'code editor'
 
-  private _ace: any | undefined
-  private _editor: any | undefined
-  private _editorPromise: Promise<any> | undefined
-  options: any = {}
-
-  get ace(): any {
-    return this._ace
+  /**
+   * The underlying CodeMirror `EditorView` (undefined until loaded).
+   *
+   * **Changed in 1.7 (ACE → CodeMirror 6).** In 1.6 this was an ACE editor, and
+   * `editor.session.getUndoManager()` was documented public API. `^1.6.x` resolves
+   * 1.7.0, so an app that never changed a line auto-upgrades into a `TypeError` on the
+   * next install — and this is the ONE break the warn-once shims below cannot catch,
+   * because the property still exists and still returns an object; it is simply a
+   * different object. TS consumers get a compile error (1.6 typed this `any`); vanilla
+   * JS and CDN consumers — the audience this component's own docs court — would get the
+   * bare TypeError with no explanation at all.
+   *
+   * So: one neutral note on first access. `editor` is NOT deprecated — it is the
+   * supported CM6 accessor — so this is `console.info` (not `warn`) and leads with that,
+   * to help a 1.6→1.7 migrator without scolding correct CM6 use. Use
+   * `undo()`/`redo()`/`canUndo()`/`canRedo()` for history — they survived the migration.
+   */
+  get editor(): CmHandle['view'] | undefined {
+    if (!warnedEditor) {
+      warnedEditor = true
+      console.info(
+        '<tosi-code>.editor is the CodeMirror 6 EditorView (the supported accessor; it ' +
+          'was an ACE editor in 1.6). ACE-era `editor.session` / `getSession()` / ' +
+          '`setOption()` are gone — use undo()/redo()/canUndo()/canRedo() for history.'
+      )
+    }
+    return this._handle?.view
   }
 
-  get editor(): any {
-    return this._editor
+  // ── Removed in 1.7 (ACE → CodeMirror 6) ────────────────────────────────────
+  // `^1.6.x` resolves 1.7.0, so existing consumers auto-upgrade into this. Left as
+  // warn-once no-ops rather than simply deleted, so `theme`/`options`/`ace` fail
+  // with an actionable message instead of silently doing nothing (or, for `ace`,
+  // a bare `TypeError` on undefined). See CHANGELOG 1.7.0 → Breaking.
+
+  /** @deprecated Removed in 1.7 — CodeMirror themes via `--code-bg`/`--text-color`. */
+  get theme(): string {
+    warnRemoved(
+      'theme',
+      'style the editor with --code-bg / --text-color instead'
+    )
+    return ''
   }
+  set theme(_: string) {
+    warnRemoved(
+      'theme',
+      'style the editor with --code-bg / --text-color instead'
+    )
+  }
+
+  /** @deprecated Removed in 1.7 — ACE-shaped options have no CodeMirror equivalent. */
+  get options(): Record<string, unknown> {
+    warnRemoved(
+      'options',
+      'configure CodeMirror via the `editor` (EditorView) instead'
+    )
+    return {}
+  }
+  set options(_: Record<string, unknown>) {
+    warnRemoved(
+      'options',
+      'configure CodeMirror via the `editor` (EditorView) instead'
+    )
+  }
+
+  /** @deprecated Removed in 1.7 — there is no ACE global; use `editor` (an EditorView). */
+  get ace(): undefined {
+    warnRemoved('ace', 'use `editor`, which is now a CodeMirror EditorView')
+    return undefined
+  }
+
+  // History control — so consumers use these instead of reaching into `editor`.
+  undo(): void {
+    this._handle?.undo()
+  }
+  redo(): void {
+    this._handle?.redo()
+  }
+  canUndo(): boolean {
+    return this._handle?.canUndo() ?? false
+  }
+  canRedo(): boolean {
+    return this._handle?.canRedo() ?? false
+  }
+
+  // `diffHost` starts hidden — an always-present absolutely-positioned overlay would
+  // otherwise sit on top of the editor and swallow every click.
+  content = () => [
+    div({ part: 'host' }),
+    div({ part: 'diffHost', hidden: true }),
+  ]
 
   static shadowStyleSpec = {
     ':host': {
@@ -146,47 +304,167 @@ export class CodeEditor extends WebComponent {
       width: '100%',
       height: '100%',
     },
+    '[part="host"]': { height: '100%' },
+    '[part="diffHost"]': {
+      position: 'absolute',
+      inset: '0',
+      zIndex: '5',
+      overflow: 'auto',
+      background: varDefault.tosiDiffBg(varDefault.background('#fff')),
+    },
+    '.cm-editor': { height: '100%' },
+    '.cm-scroller': {
+      outline: 'none',
+      fontFamily: "Menlo, Monaco, Consolas, 'Courier New', monospace",
+    },
   }
 
   onResize() {
-    if (this.editor !== undefined) {
-      this.editor.resize(true)
-    }
+    this._handle?.refresh()
   }
 
   connectedCallback() {
     super.connectedCallback()
+    // super.connectedCallback() hydrated us, so `this.hydrated` is now true and
+    // `this.parts` is safe from here on.
 
     if (this.source === '') {
       this.value = this.textContent !== null ? this.textContent.trim() : ''
     }
 
-    if (this._editorPromise === undefined) {
-      this._editorPromise = makeCodeEditor(
-        this,
-        this.mode,
-        this.options,
-        this.theme
+    // Replay a showDiff() that arrived before we were hydrated.
+    if (this._pendingDiff !== undefined) {
+      const pending = this._pendingDiff
+      this._pendingDiff = undefined
+      this.showDiff(pending)
+    }
+
+    if (this._loadPromise === undefined) {
+      // Lazy chunk — CodeMirror only enters the bundle here, on first editor use.
+      const generation = ++this._loadGeneration
+      this._loadPromise = import('./code-editor-cm').then(
+        ({ createCmEditor }) => {
+          // The chunk fetch is async, and the pre-load window is WIDE on a cold fetch —
+          // doc-browser navigation and closeEditor() both remove editors mid-flight. If we
+          // mounted regardless:
+          //   append → remove          → an EditorView built into a detached shadow root,
+          //                              with no disconnectedCallback left to destroy it.
+          //   append → remove → append → TWO views in the host; `_handle` points only at
+          //                              the second, so the first (and its darkmode
+          //                              listener) is retained forever.
+          // That is precisely the leak disconnectedCallback exists to prevent, relocated
+          // into the load window. Bail if a newer connect superseded us, or we're detached.
+          if (generation !== this._loadGeneration || !this.isConnected)
+            return undefined
+          const handle = createCmEditor(this.parts.host, {
+            value: this.source,
+            mode: this.mode,
+            readOnly: this.disabled,
+            root: this.shadowRoot ?? undefined,
+            onChange: (value) =>
+              this.dispatchEvent(
+                new CustomEvent('change', { detail: { value } })
+              ),
+          })
+          this._handle = handle
+          this._appliedMode = this.mode
+          this._appliedDisabled = this.disabled
+          this.applyTjsExtension()
+          return handle
+        }
       )
-      this._editorPromise.then(({ ace, editor }) => {
-        this._ace = ace
-        this._editor = editor
-        editor.setValue(this.source, 1)
-        editor.clearSelection()
-        editor.session.getUndoManager().reset()
-      })
     }
   }
+
+  disconnectedCallback(): void {
+    super.disconnectedCallback()
+    // Without this, `CmHandle.destroy()` has no call sites: the EditorView (and its
+    // darkmode listener) outlive the element, so every doc-page navigation leaked all
+    // ~20 editors on the page.
+    if (this._handle) {
+      // Preserve the live text first — `value` falls back to `source` once the handle
+      // is gone, and `source` would otherwise hold a stale pre-edit value.
+      this.source = this._handle.getValue()
+      this._handle.destroy()
+      this._handle = undefined
+    }
+    // Re-connecting rebuilds the editor (a destroyed view can't be reused).
+    this._loadPromise = undefined
+    this._appliedMode = ''
+    this._appliedDisabled = undefined
+    // NB: do NOT clear `diffOverlay` — hydrate() runs once, so the shadow DOM (and the
+    // overlay inside `diffHost`) survives disconnect. Clearing it would append a second
+    // overlay on reconnect.
+  }
+
+  private isTjsMode(): boolean {
+    return this.mode === 'tjs' || this.mode === 'ajs'
+  }
+
+  /**
+   * When in tjs mode, lazily upgrade the editor to tjs-lang's CodeMirror language +
+   * autocomplete. No-op (keeps TS highlighting) if not tjs, if tjs-lang isn't
+   * installed, or if the mode/handle changed before the async load resolved.
+   */
+  private applyTjsExtension(): void {
+    const handle = this._handle
+    if (!handle || !this.isTjsMode()) return
+    import('./code-editor-cm')
+      .then(({ loadTjsExtension }) =>
+        loadTjsExtension(this._tjsAutocomplete ?? {})
+      )
+      .then((ext) => {
+        if (ext && this._handle === handle && this.isTjsMode()) {
+          handle.setLanguageExtension(ext)
+          this._tjsExtensionApplied = true
+          return
+        }
+        // Degrade LOUDLY. `loadTjsExtension` swallows everything and returns null by
+        // design, and the guard is `typeof mod.tjsEditorExtension === 'function'` — so
+        // an upstream export rename returns null without even throwing, and every tjs
+        // editor on the page silently falls back to plain TypeScript highlighting with
+        // no autocomplete. Nothing goes red; the feature just quietly isn't there.
+        if (!ext && this._handle === handle && this.isTjsMode() && !warnedTjs) {
+          warnedTjs = true
+          console.warn(
+            `<tosi-code mode="${this.mode}">: tjs-lang's CodeMirror extension did not load — ` +
+              `falling back to TypeScript highlighting (no tjs autocomplete). Install the ` +
+              `optional peer \`tjs-lang\`, or check that tjs-lang/editors/codemirror still ` +
+              `exports \`tjsEditorExtension\`.`
+          )
+        }
+      })
+      .catch((e) => {
+        // The chain had no .catch(), so any throw here was an unhandled rejection.
+        if (!warnedTjs) {
+          warnedTjs = true
+          console.warn(`<tosi-code>: failed to apply the tjs extension —`, e)
+        }
+      })
+  }
+
+  /** True once tjs-lang's CM language+autocomplete is actually live (test seam). */
+  get tjsExtensionApplied(): boolean {
+    return this._tjsExtensionApplied
+  }
+  private _tjsExtensionApplied = false
 
   render(): void {
     super.render()
 
-    if (this._editorPromise !== undefined) {
-      this._editorPromise.then(({ editor }) =>
-        editor.setReadOnly(this.disabled)
-      )
+    if (this._handle) {
+      if (this.disabled !== this._appliedDisabled) {
+        this._handle.setReadOnly(this.disabled)
+        this._appliedDisabled = this.disabled
+      }
+      if (this.mode !== this._appliedMode) {
+        this._handle.setMode(this.mode)
+        this._appliedMode = this.mode
+        this.applyTjsExtension()
+      }
     }
   }
 }
 
-export const codeEditor = CodeEditor.elementCreator() as ElementCreator<CodeEditor>
+export const codeEditor =
+  CodeEditor.elementCreator() as ElementCreator<CodeEditor>

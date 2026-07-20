@@ -146,8 +146,8 @@ interface ProjectLinks {
 
 The `tosijs-ui` demo is a complete working example. See:
 
-- `/demo/src/index.ts` - How the doc browser is set up
-- `/bin/docs.ts` - The extraction tool
+- `/tosijs-site.config.ts` - How this repo configures its doc site (`defineSiteConfig` / `tosijs-ui/site`)
+- `/src/doc-system/site/docs.ts` - The extraction tool (`extractDocs`, exported from `tosijs-ui/site`)
 - `/src/doc-browser.ts` - The createDocBrowser implementation
 */
 /*{"pin":"bottom","parent":"Appendices"}*/
@@ -164,7 +164,11 @@ import {
   StyleSheet,
   XinStyleSheet,
 } from 'tosijs'
-import { buildSlugMap, pathForSlug, filenameForPath } from './doc-system/routing'
+import {
+  buildSlugMap,
+  pathForSlug,
+  filenameForPath,
+} from './doc-system/routing'
 import { buildNavTree, NavNode } from './doc-system/nav-tree'
 import { renderDocMarkdown } from './doc-system/render'
 import { pageTitle } from './doc-system/doc-title'
@@ -197,8 +201,20 @@ declare global {
   }
 }
 
-const { div, span, a, header, button, template, input, h2, details, summary, ul, li } =
-  elements
+const {
+  div,
+  span,
+  a,
+  header,
+  button,
+  template,
+  input,
+  h2,
+  details,
+  summary,
+  ul,
+  li,
+} = elements
 
 // Test colors
 const testColor = {
@@ -305,6 +321,10 @@ export interface Doc {
   pin?: string
   hidden?: boolean
   testStatus?: 'passed' | 'failed' | 'pending'
+  // Build-time transpiled JS for this doc's `tjs` examples ([source, {dialect, js}]
+  // entries), attached to docs.json by generate-site so client-side navigation runs
+  // examples without the tjs transpiler. See self-contained-examples-plan.md.
+  bakes?: Array<[string, { dialect: string; js: string }]>
 }
 
 export interface ProjectLinks {
@@ -371,6 +391,10 @@ export interface DocBrowserOptions {
   contentElement?: HTMLElement
 }
 
+// Monotonic per-page counter so each createDocBrowser() call gets a distinct
+// tosi() registry key (see stateKey below) and two browsers can't share state.
+let docBrowserSeq = 0
+
 export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   const {
     docs,
@@ -413,8 +437,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     return routing === 'path'
       ? filenameForPath(document.location.pathname, slugMap)
       : document.location.search !== ''
-        ? document.location.search.substring(1).split('&')[0]
-        : ''
+      ? document.location.search.substring(1).split('&')[0]
+      : ''
   }
 
   // Resolve a content-link anchor to one of our docs' filenames, in either the
@@ -452,13 +476,21 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
 
   const currentDoc = docs.find((doc) => doc.filename === docName) || docs[0]
 
-  const { app } = tosi({
-    app: {
+  // tosi() registers its top-level keys in a GLOBAL observable registry, so two
+  // doc browsers on one page (e.g. a page whose live example embeds a nested
+  // <tosi-doc-system>) would BOTH register `app` and share it — the second wins,
+  // so the outer browser's nav / currentDoc / edit-source silently read the
+  // nested one's doc. Give each instance its own key. (This is the same collision
+  // the live-example docs warn about: never register a generic `app`.)
+  const stateKey = `docBrowser${docBrowserSeq++}`
+  const state = tosi({
+    [stateKey]: {
       docs,
       currentDoc,
       compact: false,
     },
   })
+  const app = state[stateKey]
 
   // Assigned by the hierarchical nav builder (path routing); re-applies current
   // highlight, test status, search visibility, and auto-open imperatively.
@@ -729,7 +761,11 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   docContent.classList.add('doc-content')
   Object.assign(docContent.style, {
     display: 'block',
-    maxWidth: '44em',
+    // Same var the pre-hydration `:not(:defined)` layout uses (doc-system-styles.ts).
+    // This node is ADOPTED from the pre-rendered page, so if the two boxes disagree
+    // the content jumps the instant we hydrate. The fallback keeps a standalone
+    // doc-browser (no doc-system stylesheet) working.
+    maxWidth: 'var(--doc-content-max-width, 44em)',
     margin: 'auto',
     padding: '0 1em',
     overflow: 'hidden',
@@ -782,7 +818,12 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     if (adoptInitialContent) {
       adoptInitialContent = false // leave the pre-rendered HTML untouched
     } else {
-      docContent.innerHTML = renderDocMarkdown(doc.text)
+      // Pass the doc's build-time tjs bakes so this client-rendered page embeds the
+      // same hidden transpiled <script>s the pre-rendered page has — examples run
+      // without loading the tjs transpiler. See self-contained-examples-plan.md.
+      docContent.innerHTML = renderDocMarkdown(doc.text, {
+        bakes: doc.bakes ? new Map(doc.bakes) : undefined,
+      })
     }
     rewriteContentLinks()
     // Stamp each example with its source file (for the source↔doc map). doc.path
@@ -792,8 +833,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     if (routing === 'path') {
       // The SAME rule the static generator used for this page's <head> (doc-title.ts).
       // This used to re-derive it — ignoring `headTitle` and re-suffixing a title that
-      // already ended in the project name — so the home page's title flipped to
-      // "tosijs-ui — tosijs-ui" the moment the bundle loaded (issue #6).
+      // already ended in the project name — so the home page's title flipped from
+      // "tosijs-ui — robust, dependency-free web components" to "tosijs-ui — tosijs-ui"
+      // the moment the bundle loaded. Issue #6, and the only thing on the page that
+      // visibly moved on hydration.
       document.title = pageTitle(doc, projectName)
     }
   }
@@ -840,7 +883,11 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     const anchor = (event.target as HTMLElement).closest(
       'a'
     ) as HTMLAnchorElement | null
-    if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download'))
+    if (
+      !anchor ||
+      anchor.target === '_blank' ||
+      anchor.hasAttribute('download')
+    )
       return
     const filename = docFilenameForHref(anchor)
     if (filename === null) return
@@ -858,10 +905,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     p.endsWith('.md')
       ? 'markdown'
       : p.endsWith('.css')
-        ? 'css'
-        : p.endsWith('.ts') || p.endsWith('.tjs')
-          ? 'typescript'
-          : 'javascript'
+      ? 'css'
+      : p.endsWith('.ts') || p.endsWith('.tjs')
+      ? 'typescript'
+      : 'javascript'
 
   // Pure mirror of docs.ts extraction: a .md *is* the markdown; a source file is
   // the concatenation of its doc-comment blocks. Lets us preview an edit in the
@@ -876,7 +923,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     const gh = projectLinks.github
     if (!gh || !p) return null
     const m = gh.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?\/?$/)
-    return m ? `https://raw.githubusercontent.com/${m[1]}/${m[2]}/main/${p}` : null
+    return m
+      ? `https://raw.githubusercontent.com/${m[1]}/${m[2]}/main/${p}`
+      : null
   }
 
   const loadSource = async (p: string): Promise<string | null> => {
@@ -898,7 +947,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     return null
   }
 
-  const saveSourceToDisk = async (p: string, content: string): Promise<boolean> => {
+  const saveSourceToDisk = async (
+    p: string,
+    content: string
+  ): Promise<boolean> => {
     try {
       const r = await fetch('/__docstore/source', {
         method: 'POST',
@@ -964,7 +1016,11 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         docMarkdownFromSource(editUI.editor.value, editUI.doc.path)
       )
       rewriteContentLinks()
-      LiveExample.insertExamples(docContent, context, editUI.doc.path || undefined)
+      LiveExample.insertExamples(
+        docContent,
+        context,
+        editUI.doc.path || undefined
+      )
     } else if (view === 'diff') {
       docContent.replaceChildren(
         tosiDiff({
@@ -1008,7 +1064,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     const editor = codeEditor({ mode: editorModeFor(doc.path) }) as CodeEditor
     // No toolbar — the Source menu carries the edit controls (it adapts while
     // editing), so the editor fills the whole content area.
-    editor.style.cssText = 'display:block; width:100%; height:100%; border:none;'
+    editor.style.cssText =
+      'display:block; width:100%; height:100%; border:none;'
     editor.value = content
     const container = docContent.parentElement as HTMLElement
     container.append(editor)
@@ -1028,10 +1085,22 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     const menuItems = editUI
       ? [
           ...(editUI.view !== 'edit'
-            ? [{ caption: 'Edit', icon: 'edit', action: () => setSourceView('edit') }]
+            ? [
+                {
+                  caption: 'Edit',
+                  icon: 'edit',
+                  action: () => setSourceView('edit'),
+                },
+              ]
             : []),
           ...(editUI.view !== 'preview'
-            ? [{ caption: 'Preview', icon: 'eye', action: () => setSourceView('preview') }]
+            ? [
+                {
+                  caption: 'Preview',
+                  icon: 'eye',
+                  action: () => setSourceView('preview'),
+                },
+              ]
             : []),
           {
             caption: 'View changes',
@@ -1040,24 +1109,36 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
             enabled: () => editorHasUnsavedChanges(),
           },
           null,
-          { caption: 'Save to source', icon: 'save', action: () => void saveSourceEdit() },
+          {
+            caption: 'Save to source',
+            icon: 'save',
+            action: () => void saveSourceEdit(),
+          },
           {
             caption: 'Download',
             icon: 'download',
-            action: () => downloadText(fileName(editUI!.doc.path), editUI!.editor.value),
+            action: () =>
+              downloadText(fileName(editUI!.doc.path), editUI!.editor.value),
           },
           null,
           { caption: 'Close editor', icon: 'x', action: exitEditSource },
         ]
       : [
-          { caption: 'Edit page source', icon: 'edit', action: () => void enterEditSource(doc) },
+          {
+            caption: 'Edit page source',
+            icon: 'edit',
+            action: () => void enterEditSource(doc),
+          },
           ...(projectLinks.github && doc.path && doc.path !== 'README.md'
             ? [
                 {
                   caption: 'View on GitHub',
                   icon: 'github',
                   action: () => {
-                    window.open(`${projectLinks.github}/blob/main/${doc.path}`, '_blank')
+                    window.open(
+                      `${projectLinks.github}/blob/main/${doc.path}`,
+                      '_blank'
+                    )
                   },
                 },
               ]
@@ -1177,7 +1258,11 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
           String(doc.text).toLocaleLowerCase().includes(needle))
       )
     }
-    const applyStatus = (link: HTMLElement, filename: string, current: string) => {
+    const applyStatus = (
+      link: HTMLElement,
+      filename: string,
+      current: string
+    ) => {
       link.classList.toggle('current', filename === current)
       const r = pageTestResults[filename]
       link.classList.toggle('-test-passed', !!r && r.passed)
@@ -1201,7 +1286,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         const visible =
           matchesSearch(filename, needle) ||
           subtree.some(
-            (fn) => leaves.has(fn) && leaves.get(fn)!.li.style.display !== 'none'
+            (fn) =>
+              leaves.has(fn) && leaves.get(fn)!.li.style.display !== 'none'
           )
         item.style.display = visible ? '' : 'none'
         applyStatus(link, filename, current)
@@ -1233,7 +1319,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
             a(
               {
                 class: 'doc-link',
-                bindCurrent: 'app.currentDoc.filename',
+                bindCurrent: `${stateKey}.currentDoc.filename`,
                 bindDocLink: '^.filename',
                 bindTestStatus: '^.testStatus',
                 onClick(event: Event) {

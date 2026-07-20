@@ -42,9 +42,7 @@ export function buildSlugMap(docs: DocLike[]): Record<string, string> {
     const base = baseSlug(doc.filename)
     // README ('' base) is unique by construction; never disambiguate it.
     map[doc.filename] =
-      base !== '' && counts[base] > 1
-        ? doc.filename.replace(/\./g, '-')
-        : base
+      base !== '' && counts[base] > 1 ? doc.filename.replace(/\./g, '-') : base
   }
   return map
 }
@@ -95,7 +93,10 @@ export function legacyQueryPath(
 
 /** strip a pathname down to its slug: '/button/' -> 'button', '/' -> '' */
 export function slugForPath(pathname: string): string {
-  return pathname.replace(/^\/+/, '').replace(/\/+$/, '').replace(/\/index\.html$/i, '')
+  return pathname
+    .replace(/^\/+/, '')
+    .replace(/\/+$/, '')
+    .replace(/\/index\.html$/i, '')
 }
 
 /**
@@ -135,9 +136,11 @@ export function resolveParent(
 ): string {
   if (!parentValue) return ''
   for (const d of docs) if (d.filename === parentValue) return d.filename
-  for (const d of docs) if (slugMap[d.filename] === parentValue) return d.filename
+  for (const d of docs)
+    if (slugMap[d.filename] === parentValue) return d.filename
   const target = slugify(parentValue)
   for (const d of docs) if (slugMap[d.filename] === target) return d.filename
-  for (const d of docs) if (d.title && slugify(d.title) === target) return d.filename
+  for (const d of docs)
+    if (d.title && slugify(d.title) === target) return d.filename
   return ''
 }

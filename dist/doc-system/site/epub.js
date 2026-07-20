@@ -17,7 +17,7 @@ Build-time only (Bun APIs + the `zip` CLI); never import from browser code.
 import * as fs from 'fs';
 import * as path from 'path';
 import { renderDocMarkdown } from '../render';
-import { buildSlugMap, pathForSlug } from '../routing';
+import { buildSlugMap, pathForSlug, slugForPath } from '../routing';
 import { buildNavTree } from '../nav-tree';
 import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html';
 import { selectBookDocs } from '../book-manifest';
@@ -25,8 +25,20 @@ import { selectBookDocs } from '../book-manifest';
 export { DEFAULT_BOOK_CSS, stripDocMeta };
 // ── XML / XHTML helpers ─────────────────────────────────────────────────────
 const VOID_ELEMENTS = [
-    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta',
-    'param', 'source', 'track', 'wbr',
+    'area',
+    'base',
+    'br',
+    'col',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'param',
+    'source',
+    'track',
+    'wbr',
 ];
 export function escapeXml(s) {
     return s
@@ -151,6 +163,40 @@ function withBase(basePath, p) {
         return p;
     return basePath.replace(/\/$/, '') + (p.startsWith('/') ? p : '/' + p);
 }
+/**
+ * Rewrite in-book cross-links so they resolve INSIDE the EPUB (#15). renderDocMarkdown
+ * emits site paths — `/slug/` (wikilinks + the auto-generated section TOCs) and legacy
+ * `?filename` — which an e-reader can't follow. Any link pointing at a doc that IS in
+ * this book becomes its `<slug>.xhtml` chapter (README → `index.xhtml`), preserving a
+ * trailing `#anchor`. External, protocol, relative, and out-of-book links are left
+ * untouched. `bookFiles` maps in-book slug → chapter filename.
+ */
+export function rewriteInBookLinks(html, bookFiles, slugMap, basePath) {
+    const bp = basePath && basePath !== '/' ? basePath.replace(/\/$/, '') : '';
+    return html.replace(/href="([^"]*)"/g, (match, href) => {
+        // Leave protocol (http:, mailto:), pure-anchor (#…) and relative (./…) links.
+        if (href === '' || /^(?:[a-z][a-z0-9+.-]*:|#|\.)/i.test(href))
+            return match;
+        const hashIdx = href.indexOf('#');
+        const path = hashIdx === -1 ? href : href.slice(0, hashIdx);
+        const hash = hashIdx === -1 ? '' : href.slice(hashIdx);
+        let slug = null;
+        const legacy = path.match(/^\/?\?([^&=]+)$/); // legacy ?filename
+        if (legacy) {
+            slug = slugMap[decodeURIComponent(legacy[1])] ?? null;
+        }
+        else if (path.startsWith('/')) {
+            let p = path;
+            if (bp && (p === bp || p.startsWith(bp + '/')))
+                p = p.slice(bp.length) || '/';
+            slug = slugForPath(p);
+        }
+        if (slug === null)
+            return match;
+        const file = bookFiles.get(slug);
+        return file ? `href="${file}${hash}"` : match;
+    });
+}
 // `pageUrl` is the live-site URL of THIS doc (already including baseUrl, basePath
 // and the correct root for README → '/'); each example link just appends `#id`.
 function injectExampleLinks(doc, pageUrl) {
@@ -222,7 +268,9 @@ function packageOpf(meta, chapters, cover) {
         ...chapters.map((c) => `<itemref idref="${c.id}"/>`),
     ];
     // EPUB2 cover fallback (older readers find the thumbnail via this meta).
-    const coverMeta = cover ? `\n    <meta name="cover" content="cover-image"/>` : '';
+    const coverMeta = cover
+        ? `\n    <meta name="cover" content="cover-image"/>`
+        : '';
     return `<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -321,7 +369,9 @@ async function zipEpub(buildDir, outputAbs) {
     // 1) mimetype first, stored (-0), no extra fields (-X)
     await $ `zip -X0 ${outputAbs} mimetype`.cwd(buildDir).quiet();
     // 2) everything else, deflated (-9), recursive (-r), no extra fields, no dir entries (-D)
-    await $ `zip -Xr9D ${outputAbs} META-INF OEBPS -x mimetype`.cwd(buildDir).quiet();
+    await $ `zip -Xr9D ${outputAbs} META-INF OEBPS -x mimetype`
+        .cwd(buildDir)
+        .quiet();
 }
 /** Rasterize an SVG to a PNG buffer via @resvg/resvg-js (optional dep). */
 async function rasterizeSvg(svg, width) {
@@ -423,7 +473,11 @@ async function makeCover(config, opts, meta) {
             : ext === '.gif'
                 ? 'image/gif'
                 : 'image/png';
-        return { file: `cover${ext || '.png'}`, mediaType, data: fs.readFileSync(opts.cover) };
+        return {
+            file: `cover${ext || '.png'}`,
+            mediaType,
+            data: fs.readFileSync(opts.cover),
+        };
     }
     // Embed a glyph (svg) into the generated cover: prefer an explicit `coverIcon`,
     // else the site favicon. Preserve the source viewBox so any square-ish icon
@@ -468,6 +522,9 @@ export async function buildEpub(config, opts = {}) {
     const slugMap = buildSlugMap(docs);
     const roots = buildNavTree(docs, slugMap);
     const fileFor = (d) => `${slugMap[d.filename] || 'index'}.xhtml`;
+    // slug → chapter filename, for the docs actually IN this book — the target set for
+    // in-book cross-link rewriting (#15). Out-of-book `/slug/` links stay untouched.
+    const bookFiles = new Map(flatten(roots).map((n) => [slugMap[n.doc.filename] ?? '', fileFor(n.doc)]));
     const meta = {
         title: opts.title ?? config.name,
         author: opts.author ?? config.name,
@@ -500,15 +557,14 @@ export async function buildEpub(config, opts = {}) {
         const doc = node.doc;
         // The doc's live-site URL, matching generate-site's canonical link: README
         // maps to '/' (not '/index/'), others to '/slug/', with basePath applied.
-        const pageUrl = baseUrl + withBase(config.basePath, pathForSlug(slugMap[doc.filename] ?? ''));
-        const html = renderDocMarkdown(stripDocMeta(doc.text));
+        const pageUrl = baseUrl +
+            withBase(config.basePath, pathForSlug(slugMap[doc.filename] ?? ''));
+        const html = rewriteInBookLinks(renderDocMarkdown(stripDocMeta(doc.text)), bookFiles, slugMap, config.basePath);
         // happy-dom occasionally throws on exotic content (e.g. an internal selector
         // bug); fall back to the regex pass for that doc rather than aborting.
         let bodyHtml;
         try {
-            const transform = win && baseUrl
-                ? (d) => injectExampleLinks(d, pageUrl)
-                : undefined;
+            const transform = win && baseUrl ? (d) => injectExampleLinks(d, pageUrl) : undefined;
             bodyHtml = win ? htmlToXhtml(html, win, transform) : toXhtml(html);
         }
         catch {

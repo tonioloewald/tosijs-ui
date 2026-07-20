@@ -1,4 +1,6 @@
 import { XinStyleSheet, XinStyleRule } from 'tosijs';
+export declare const SIDEBAR_WIDTH = 200;
+export declare const SIDEBAR_BREAKPOINT = 600;
 export interface DocSystemTheme {
     /** brand / accent color — most of the palette is derived from this */
     accent?: string;

@@ -16,7 +16,7 @@ const evt = (
     alt?: boolean
     shift?: boolean
     code?: string
-  } = {},
+  } = {}
 ) => ({
   key,
   code: mods.code,
@@ -66,29 +66,39 @@ describe('matchShortcut', () => {
   })
 
   test('chorded modifiers', () => {
-    expect(
-      matchShortcut(evt('x', { meta: true, alt: true }), '⌘⌥x'),
-    ).toBe(true)
+    expect(matchShortcut(evt('x', { meta: true, alt: true }), '⌘⌥x')).toBe(true)
     expect(matchShortcut(evt('x', { meta: true }), '⌘⌥x')).toBe(false)
     expect(matchShortcut(evt('x', { meta: true }), 'alt-meta-x')).toBe(false)
     expect(matchShortcut(evt('x', { alt: true }), '⌘⌥x')).toBe(false)
-    expect(
-      matchShortcut(evt('x', { shift: true, alt: true }), '⌘⌥x'),
-    ).toBe(false)
+    expect(matchShortcut(evt('x', { shift: true, alt: true }), '⌘⌥x')).toBe(
+      false
+    )
   })
 
   test('multi-character key names', () => {
     expect(
       matchShortcut(
-        { key: 'Escape', ctrlKey: false, metaKey: false, altKey: false, shiftKey: false },
-        'Escape',
-      ),
+        {
+          key: 'Escape',
+          ctrlKey: false,
+          metaKey: false,
+          altKey: false,
+          shiftKey: false,
+        },
+        'Escape'
+      )
     ).toBe(true)
     expect(
       matchShortcut(
-        { key: 'Enter', ctrlKey: false, metaKey: true, altKey: false, shiftKey: false },
-        '⌘Enter',
-      ),
+        {
+          key: 'Enter',
+          ctrlKey: false,
+          metaKey: true,
+          altKey: false,
+          shiftKey: false,
+        },
+        '⌘Enter'
+      )
     ).toBe(true)
   })
 })
@@ -122,15 +132,21 @@ describe('keystroke', () => {
 
   test('modifiers in alphabetical order', () => {
     expect(keystroke(evt('a', { code: 'KeyA', alt: true, ctrl: true }))).toBe(
-      'alt-ctrl-A',
+      'alt-ctrl-A'
+    )
+    expect(keystroke(evt('a', { code: 'KeyA', meta: true, shift: true }))).toBe(
+      'meta-shift-A'
     )
     expect(
-      keystroke(evt('a', { code: 'KeyA', meta: true, shift: true })),
-    ).toBe('meta-shift-A')
-    expect(
       keystroke(
-        evt('a', { code: 'KeyA', alt: true, ctrl: true, meta: true, shift: true }),
-      ),
+        evt('a', {
+          code: 'KeyA',
+          alt: true,
+          ctrl: true,
+          meta: true,
+          shift: true,
+        })
+      )
     ).toBe('alt-ctrl-meta-shift-A')
   })
 })

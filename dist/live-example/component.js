@@ -33,6 +33,38 @@ preview.append('Try editing some code and hitting refresh…')
 }
 ```
 
+## How examples run: one shared page (read this)
+
+By default every example on a page runs **inline — in the page's own document and
+JavaScript realm**, not in a sandbox. Each example gets its own `preview` element
+(and its `css` is scoped to that preview), but they all share the one `tosijs`
+module, so **`tosi()` state singletons are shared across every example on the page**.
+
+This is a deliberate choice, and it buys two things:
+
+1. It's a live demonstration of how clean tosi's isolation is — many independent
+   components mount into one page and coexist without stepping on each other's DOM.
+2. You can drive any demo from the console (or from another example) through the same
+   global singleton — the state is right there, not walled off in a frame.
+
+The trade-off is the gotcha to know about: **examples can see and clobber each
+other's state.** Two examples that both do `tosi({ app: … })` bind to the *same*
+`app` singleton (the tosi registry is keyed by the top-level name), so one overwrites
+the other — and you get "impossible" bugs where an example misbehaves only when some
+*other* example happens to be on the same page. Worth it, but plan for it:
+
+- **Namespace your state.** Give each example a unique top-level key
+  (`tosi({ ratingDemo: … })`, not a generic `tosi({ app: … })`).
+- Prefer local variables and `preview`-scoped DOM over shared singletons when a demo
+  doesn't need to be globally reachable.
+- In `test` blocks, assert with **counts / deltas**, not presence/absence — other
+  examples may have left their elements in the DOM.
+
+For real isolation of the **DOM and CSS**, add the `iframe` attribute (below). Note
+it does **not** isolate tosijs *state*: the `tosijs`/`tosijs-ui` handed to an iframe
+example are still the host page's module instances, so `tosi()` singletons stay
+shared. Namespacing is the fix for state; `iframe` is the fix for DOM/CSS bleed.
+
 ## Source dialects: `js`, `tjs`, `ts`
 
 The executable block's fence language picks how the source is compiled before it
@@ -76,9 +108,225 @@ example the equivalent is written inside a comment (so it survives `tsc`) — bu
 that comment form can't appear inside a doc comment like this one, since the
 test's own closing delimiter would end the doc comment.
 
-## CSS Isolation with `iframe`
+## Inline WebAssembly (SIMD)
 
-Add the `iframe` attribute to render the preview inside an iframe for complete CSS isolation.
+A `tjs` example can drop a hot loop into **WebAssembly** with a `wasm { … } fallback
+{ … }` block — compiled to bytecode *at transpile time*, embedded as base64, and run
+in your browser. No Emscripten, no `.wasm` file, no build step, no server.
+
+WASM earns its keep with **SIMD**: scalar WASM roughly ties the JS JIT, but a
+branchless `f32x4` kernel does four values per instruction. Below, a field of a few
+thousand particles is held on a grid by springs and pushed aside by your pointer —
+every particle's position updated four at a time in WASM SIMD. **Click the button to
+toggle WASM ↔ JavaScript** and watch the per-step time — the same code, one path
+compiled to SIMD bytecode:
+
+```tjs
+// One physics step for the whole field, 4 particles per iteration with f32x4 SIMD:
+// a spring pulls each particle to its home cell, and an inverse-square push shoves
+// it away from the pointer. Pure arithmetic — no per-lane branches (tjs's f32x4 has
+// no compare/select yet), which is exactly what SIMD wants. `fallback { }` is the
+// scalar-JS twin.
+function step(! px: Float32Array, py: Float32Array, vx: Float32Array, vy: Float32Array, hx: Float32Array, hy: Float32Array, n: 0, tx: 0.0, ty: 0.0) {
+  wasm {
+    let txv = f32x4_splat(tx)
+    let tyv = f32x4_splat(ty)
+    let spring = f32x4_splat(0.03)
+    let damp = f32x4_splat(0.86)
+    let repel = f32x4_splat(1600.0)
+    let soft = f32x4_splat(140.0)
+    for (let i = 0; i < n; i = i + 4) {
+      let off = i * 4
+      let x = f32x4_load(px, off)
+      let y = f32x4_load(py, off)
+      let sx = f32x4_mul(f32x4_sub(f32x4_load(hx, off), x), spring)
+      let sy = f32x4_mul(f32x4_sub(f32x4_load(hy, off), y), spring)
+      let rx = f32x4_sub(x, txv)
+      let ry = f32x4_sub(y, tyv)
+      let push = f32x4_div(repel, f32x4_add(f32x4_add(f32x4_mul(rx, rx), f32x4_mul(ry, ry)), soft))
+      let nvx = f32x4_mul(f32x4_add(f32x4_load(vx, off), f32x4_add(sx, f32x4_mul(rx, push))), damp)
+      let nvy = f32x4_mul(f32x4_add(f32x4_load(vy, off), f32x4_add(sy, f32x4_mul(ry, push))), damp)
+      f32x4_store(vx, off, nvx)
+      f32x4_store(vy, off, nvy)
+      f32x4_store(px, off, f32x4_add(x, nvx))
+      f32x4_store(py, off, f32x4_add(y, nvy))
+    }
+  } fallback {
+    for (let i = 0; i < n; i++) {
+      const sx = (hx[i] - px[i]) * 0.03, sy = (hy[i] - py[i]) * 0.03
+      const rx = px[i] - tx, ry = py[i] - ty
+      const push = 1600.0 / (rx * rx + ry * ry + 140.0)
+      const nvx = (vx[i] + sx + rx * push) * 0.86, nvy = (vy[i] + sy + ry * push) * 0.86
+      vx[i] = nvx; vy[i] = nvy; px[i] += nvx; py[i] += nvy
+    }
+  }
+}
+
+// 100k particles, not 6k. At 6k each step took ~0.02ms — right at the resolution floor
+// of performance.now(), so the readout was mostly measuring the timer. At this size both
+// paths land in the hundreds of microseconds and the comparison actually means something.
+const W = 480, H = 300, cols = 400, rows = 250, N = cols * rows
+
+// Allocate the particle arrays INSIDE wasm memory. This is the whole ballgame: if a
+// typed array's buffer isn't the wasm memory, every call copies it in and out again —
+// six 6,000-float arrays per frame — and you end up timing memcpy, not SIMD. (With
+// plain `new Float32Array(N)` this demo measured ~4x SLOWER than its own JS fallback.)
+// `wasmBuffer` is a bump allocator handing out views into the shared wasm memory, so
+// the wrapper passes a byte offset and copies nothing. Fall back gracefully if the
+// wasm block didn't compile, so the JS twin still runs.
+const f32 = (n) => globalThis.wasmBuffer ? wasmBuffer(Float32Array, n) : new Float32Array(n)
+const px = f32(N), py = f32(N)
+const vx = f32(N), vy = f32(N)
+const hx = f32(N), hy = f32(N)
+for (let i = 0; i < N; i++) {
+  const c = i % cols, r = (i / cols) | 0
+  hx[i] = (c + 0.5) * W / cols
+  hy[i] = (r + 0.5) * H / rows
+  px[i] = hx[i]
+  py[i] = hy[i]
+}
+
+const canvas = document.createElement('canvas')
+canvas.width = W
+canvas.height = H
+canvas.style.cssText = 'width:100%;max-width:480px;border-radius:8px;display:block;background:#0b0e14;touch-action:none;cursor:crosshair'
+const ctx = canvas.getContext('2d')
+
+// Plot straight into an ImageData buffer (one 32-bit store per particle) instead of
+// 100k fillRect() calls — otherwise the DRAW would dominate and we'd be benchmarking
+// canvas, not the kernel.
+const img = ctx.createImageData(W, H)
+const pix = new Uint32Array(img.data.buffer)
+const BG = 0xff140e0b        // #0b0e14, little-endian ABGR
+const TEAL = 0xffc5d14f      // #4fd1c5
+const AMBER = 0xff55adf6     // #f6ad55
+
+let tx = W / 2, ty = H / 2, idle = 0, frame = 0
+canvas.addEventListener('pointermove', (e) => {
+  const r = canvas.getBoundingClientRect()
+  tx = (e.clientX - r.left) / r.width * W
+  ty = (e.clientY - r.top) / r.height * H
+  idle = 0
+})
+
+// tjs-lang 0.9.1+ gates every wasm call on `globalThis.__tjs_wasm_enabled`, so this
+// flips the kernel between WASM and its JS twin without touching tjs internals.
+// (Don't reach for `__tjs_wasm_0` — it's private AND index-keyed per transpile, so
+// a second wasm example on the page registers the same name and you'd clobber it.)
+let useWasm = true
+const btn = document.createElement('button')
+btn.style.cssText = 'margin:8px 0;padding:6px 12px;border-radius:6px;cursor:pointer'
+const readout = document.createElement('p')
+let acc = 0, frames = 0
+function applyMode() {
+  globalThis.__tjs_wasm_enabled = useWasm
+  acc = 0; frames = 0 // don't average across a mode switch
+  btn.textContent = useWasm ? '⚡ WebAssembly SIMD — click for JavaScript' : '🐢 JavaScript — click for WASM SIMD'
+}
+btn.onclick = () => { useWasm = !useWasm; applyMode() }
+
+// Warm BOTH paths before timing anything. The JS twin never executes until you click
+// over to it, so an un-warmed comparison times cold, un-JITed JavaScript and flatters
+// WASM (it read ~2x too good). A warmed V8 does this kernel in ~0.024 ms/step; the
+// zero-copy SIMD kernel does ~0.015 — a real but modest ~1.6x, which is the honest
+// number this demo should show.
+function warmUp() {
+  for (const on of [false, true]) {
+    globalThis.__tjs_wasm_enabled = on
+    for (let i = 0; i < 150; i++) step(px, py, vx, vy, hx, hy, N, W / 2, H / 2)
+  }
+  // the warm-up perturbed the particles — put them back on the grid
+  for (let i = 0; i < N; i++) { px[i] = hx[i]; py[i] = hy[i]; vx[i] = 0; vy[i] = 0 }
+}
+function loop() {
+  if (!document.body.contains(canvas)) return // example removed → stop
+  frame++
+  idle++
+  if (idle > 45) {
+    tx = W / 2 + Math.cos(frame * 0.02) * W * 0.32
+    ty = H / 2 + Math.sin(frame * 0.031) * H * 0.32
+  }
+  const t0 = performance.now()
+  step(px, py, vx, vy, hx, hy, N, tx, ty)
+  acc += performance.now() - t0
+  frames++
+
+  pix.fill(BG)
+  const dot = useWasm ? TEAL : AMBER
+  for (let i = 0; i < N; i++) {
+    const x = px[i] | 0, y = py[i] | 0
+    if (x >= 0 && x < W && y >= 0 && y < H) pix[y * W + x] = dot
+  }
+  ctx.putImageData(img, 0, 0)
+
+  if (frames >= 20) {
+    readout.textContent = N.toLocaleString() + ' particles · ' + (acc / frames).toFixed(3) +
+      ' ms/step (' + (useWasm ? 'WASM SIMD' : 'JS') + ') · move the pointer'
+    acc = 0
+    frames = 0
+  }
+  requestAnimationFrame(loop)
+}
+
+;(async () => {
+  // The wasm bootstrap is async. tjs-lang 0.9.1+ exposes an awaitable ready signal,
+  // so we start only once the kernel is instantiated — otherwise the first frames
+  // silently run the JS fallback while the button claims "WebAssembly SIMD".
+  await globalThis.__tjs_wasm_ready?.()
+  warmUp()
+  applyMode()
+  requestAnimationFrame(loop)
+})()
+
+preview.append(canvas, btn, readout)
+```
+
+```test
+// Guard the claim the button makes. A `wasm {}` block that fails to compile falls
+// back to JS *silently*, so without this the demo can advertise "⚡ WebAssembly SIMD"
+// while running the JS twin, and every test stays green.
+test('the wasm kernel actually compiled (no silent fallback to JS)', async () => {
+  await globalThis.__tjs_wasm_ready?.()
+  expect(typeof globalThis.__tjs_wasm_ready).toBe('function')
+  // 0.10.x names each compiled wasm export `__tjs_wasm_<hash>_<n>` on globalThis — the
+  // hash makes it collision-free across examples (tjs-lang#11). The kernel calls that
+  // global when present and falls back to its JS twin when it's not, so a truthy one
+  // means the wasm really compiled. Matched by pattern (the hash is per-transpile), and
+  // asserting >0 keeps the guard from ever passing vacuously.
+  const compiled = Object.keys(globalThis).filter(
+    (k) => /^__tjs_wasm_[a-z0-9]+_\d+$/.test(k) && globalThis[k]
+  )
+  expect(compiled.length).toBeGreaterThan(0)
+})
+```
+
+## Execution modes
+
+An example runs in one of three modes. Signal the mode on a code fence with
+`` ```<lang>:<mode> `` — `` ```js:iframe ``, `` ```css:ide `` — on **any** block in the
+group; the first mode in the group wins (contradictory modes across a group are an
+authoring error: they log to the console and the first is used). Or set the `mode`
+attribute directly.
+
+- **`inline`** (default) — runs in the page, against the **library you're building**
+  (your in-page working copy). Real npm imports resolve alongside it (with the
+  import-resolver enabled). Shares the page's DOM, CSS, and `tosi()` state.
+- **`iframe`** — same working-copy library, but the preview gets its own document, CSS
+  scope, and custom-element registry, so a demo's styles can't leak into (or be leaked
+  on by) the rest of the page. It isolates **DOM and CSS, not state** — the injected
+  `tosijs`/`tosijs-ui` are the host's own instances, so `tosi()` singletons stay shared;
+  namespace your state to keep examples from stomping each other. (The boolean `iframe`
+  attribute is a back-compat alias for `mode="iframe"`.)
+- **`ide`** — fully sandboxed: real, **published** dependencies (all imports resolved by
+  the import-resolver, not your working copy) in an isolated realm — the standalone-app
+  mode, for running arbitrary code rather than demoing the library under development.
+  *(Recognized now; its distinct real-module execution is in progress.)*
+
+*Fully-isolated examples (a separate module realm, so even `tosi()` state and
+imported dependencies are sandboxed — the way tjs-lang's playgrounds do it with a
+service worker intercepting imports) are a possible future option. For **actual
+examples** the shared-page default is usually the nicer behavior: it shows off tosi's
+isolation and lets you poke demos through the live global state.*
 
 ## Test Blocks
 
@@ -233,10 +481,27 @@ export class LiveExample extends Component {
     static initAttributes = {
         persistToDom: false,
         iframe: false,
+        // Execution mode: 'inline' (default — runs in the page against your working
+        // library), 'iframe' (DOM/CSS isolation, still your working library), or 'ide'
+        // (fully sandboxed, real published deps — the standalone-app mode). Set from a
+        // `<lang>:<mode>` fence by insert-examples; `iframe` boolean is a back-compat alias.
+        mode: '',
     };
+    /** Resolved execution mode — `mode` attribute wins; `iframe` boolean is the alias. */
+    get effectiveMode() {
+        const m = this.mode;
+        if (m === 'iframe' || m === 'ide' || m === 'inline')
+            return m;
+        if (m)
+            console.warn(`<tosi-example>: unknown mode "${m}" — running inline`);
+        return this.iframe ? 'iframe' : 'inline';
+    }
     prefix = 'lx';
     storageKey = STORAGE_KEY;
     context = {};
+    // The example's top-level locals from the latest run, captured in-run for tjs
+    // runtime-value autocomplete (see `liveBindings`). Populated via `onScope`.
+    capturedScope = {};
     uuid = crypto.randomUUID();
     remoteId = '';
     remoteSync;
@@ -245,28 +510,36 @@ export class LiveExample extends Component {
     pendingValues = {};
     pendingShowDefaultTab = false;
     beforeUnloadHandler;
+    // The code-editor panel (the 4 <tosi-code> editors + toolbar) is built LAZILY on
+    // first showCode, NOT in content() — so a reader who never opens a panel never
+    // pulls the CodeMirror chunk. Until then, values live in `pendingValues` (the same
+    // cache used pre-hydration) and the preview runs from them. See
+    // self-contained-examples-plan.md slice 3.
+    editorsBuilt = false;
     static insertExamples(element, context = {}, sourceFile) {
         insertExamples(element, context, liveExample, LiveExample.tagName, sourceFile);
     }
     get activeTab() {
+        if (!this.editorsBuilt)
+            return undefined;
         const { editors } = this.parts;
         return [...editors.children].find((elt) => elt.getAttribute('hidden') === null);
     }
-    // Hydration state is the base class's `this.hydrated` (tosijs 1.6.9+). This used to
-    // be `try { return this.parts.js !== undefined } catch { return false }` — a probe
-    // that, before 1.6.9, PERMANENTLY poisoned the `parts` proxy on the pre-hydration
-    // read it performs (rooting it at the light-DOM element, so every later `parts.*`
-    // threw — it could blank the whole doc page). It survived only by being light-DOM.
-    // 1.6.9 invalidates the proxy at hydrate AND exposes a public `get hydrated()`, so
-    // the probe is gone and the private override that collided with it (TS2415) with it.
-    // (tosijs#13.)
+    // Hydration state is the base class's `this.hydrated`, as of tosijs 1.6.9. This file
+    // used to hand-roll it as `try { return this.parts.js !== undefined } catch { false }`
+    // — the one probe you must never write, since reading `parts` before hydration bound
+    // the proxy to the light-DOM element permanently (it survived only by accident of
+    // being light-DOM, where the root never flips). 1.6.9 invalidates the proxy at hydrate
+    // and exposes `hydrated`/`whenHydrated`, so the hand-roll is gone. (tosijs#13.)
     getEditorValue(which) {
-        if (!this.hydrated)
+        // Until the editors are built (a reader who never opens a panel, or pre-
+        // hydration) the string cache is the source of truth.
+        if (!this.editorsBuilt)
             return this.pendingValues[which] ?? '';
         return this.parts[which].value;
     }
     setEditorValue(which, code) {
-        if (!this.hydrated) {
+        if (!this.editorsBuilt) {
             this.pendingValues[which] = code;
             return;
         }
@@ -321,6 +594,20 @@ export class LiveExample extends Component {
     set dialect(value) {
         this.setAttribute('data-dialect', value);
     }
+    // Build-time transpiled JS for the source block, set by insert-examples from the
+    // page's baked `<script type="application/tosi-transpiled">` (see
+    // self-contained-examples-plan.md). When present AND tests are off (the deployed
+    // reader), refresh() runs it directly and never loads the tjs transpiler. When
+    // tests are on (localhost / the doc-test harness) it's ignored and refresh() takes
+    // the original full-transform path — so the harness can't be regressed. Runtime
+    // data only (not reflected to an attribute); absent on client-rendered SPA nav,
+    // where refresh() falls back to transpiling on demand.
+    compiledJs;
+    // The source `compiledJs` was transpiled FROM. refresh() runs the bake only while it
+    // still matches `this.js`, so the moment the user edits a tjs example the (now stale)
+    // original bake is dropped and the edit transpiles on demand. Re-paired to the edited
+    // source when a saved local edit carries its own bake (slice 4).
+    compiledJsSource;
     // ── Read-only product tabs (tjs/ts only) ──────────────────────────────────
     // A `tjs`/`ts` example's source is editable; the JavaScript it compiles to is
     // shown read-only in an extra "JS" tab. The tab is added lazily (examples show
@@ -366,7 +653,10 @@ export class LiveExample extends Component {
             // The test-stripped source still runs its top-level statements (to define
             // the functions under test), which may touch `preview` — give them a
             // throwaway one, mirroring execution's `{ preview, ...context }` scope.
-            const fullContext = { preview: div({ class: 'preview' }), ...this.context };
+            const fullContext = {
+                preview: div({ class: 'preview' }),
+                ...this.context,
+            };
             const keys = Object.keys(fullContext).map(contextVarName);
             const values = Object.values(fullContext);
             // @ts-expect-error AsyncFunction constructor typing
@@ -413,13 +703,27 @@ export class LiveExample extends Component {
         }
     }
     ensureProductTabs() {
-        if (this.productTabsReady || this.dialect === 'js' || !this.hydrated)
+        if (this.productTabsReady ||
+            this.dialect === 'js' ||
+            !this.hydrated ||
+            !this.editorsBuilt // the editors it relabels don't exist yet
+        )
             return;
         this.productTabsReady = true;
         const { editors } = this.parts;
         // Relabel the source tab from "js" to the actual dialect (the `part` stays
-        // `js`, so everything referencing this.parts.js / this.js is unaffected).
+        // `js`, so everything referencing this.parts.js / this.js is unaffected), and
+        // put the source editor in the dialect's mode — so a `tjs` example gets
+        // first-class tjs editing (highlighting + autocomplete), `ts` gets TypeScript.
         this.parts.js.setAttribute('name', this.dialect);
+        // Runtime-value autocomplete: give the tjs completion source the example's live
+        // bindings (context modules + the rendered preview) so it can suggest their REAL
+        // members — including tosijs proxy members that static analysis can't see. Set
+        // before `.mode` so the tjs extension loads with the config in one shot.
+        this.parts.js.tjsAutocomplete = {
+            getLiveBindings: () => this.liveBindings(),
+        };
+        this.parts.js.mode = this.dialect;
         this.jsOutEditor = codeEditor({
             name: 'JS',
             mode: 'javascript',
@@ -436,17 +740,45 @@ export class LiveExample extends Component {
         this.jsOutEditor.value = this.lastGeneratedJs;
         this.renderTjsTests();
     }
-    updateUndo = () => {
-        const { activeTab } = this;
-        const { undo, redo } = this.parts;
-        if (activeTab instanceof CodeEditor && activeTab.editor !== undefined) {
-            const undoManager = activeTab.editor.session.getUndoManager();
-            undo.disabled = !undoManager.hasUndo();
-            redo.disabled = !undoManager.hasRedo();
+    // Capture the latest run's top-level locals (arrow property so `this` is bound
+    // when passed as execution's `onScope`).
+    captureScope = (scope) => {
+        this.capturedScope = scope;
+    };
+    /**
+     * Live bindings for tjs runtime-value autocomplete: the example's context modules
+     * (keyed by the identifier the rewritten code uses, e.g. `tosijs`, `tosijsui`),
+     * the currently-rendered `preview` element, and the latest run's top-level locals
+     * (so `const app = tosi(…)` gives real `app.` / `app.items.` completions, proxy
+     * members and all). Read lazily on each completion, so it reflects the latest run.
+     */
+    liveBindings() {
+        const bindings = {};
+        for (const [key, value] of Object.entries(this.context)) {
+            bindings[contextVarName(key)] = value;
         }
-        else {
-            undo.disabled = true;
-            redo.disabled = true;
+        const preview = this.parts.example?.querySelector('.preview');
+        if (preview)
+            bindings.preview = preview;
+        // Run locals last so they win over same-named context entries.
+        Object.assign(bindings, this.capturedScope);
+        return bindings;
+    }
+    updateUndo = () => {
+        // The undo/redo buttons live in the lazy editor panel; only touch them once it's
+        // built. The edited-indicator and test-results visibility work without editors
+        // (they read the cached values / test state), so they always run.
+        if (this.editorsBuilt) {
+            const { activeTab } = this;
+            const { undo, redo } = this.parts;
+            if (activeTab instanceof CodeEditor) {
+                undo.disabled = !activeTab.canUndo();
+                redo.disabled = !activeTab.canRedo();
+            }
+            else {
+                undo.disabled = true;
+                redo.disabled = true;
+            }
         }
         this.updateEditedIndicator();
         this.updateTestResultsVisibility();
@@ -455,8 +787,8 @@ export class LiveExample extends Component {
         const { testResults: resultsEl } = this.parts;
         const results = this.testResults;
         // The "DOM tests" tab's editor is this.parts.test (the part stays `test`
-        // even though the tab label changed).
-        const isTestTabActive = this.activeTab === this.parts.test;
+        // even though the tab label changed). No tab is active until the panel exists.
+        const isTestTabActive = this.editorsBuilt && this.activeTab === this.parts.test;
         const hasFailed = results && results.failed > 0;
         // Show results if: has results AND (test tab is active OR there are failures)
         resultsEl.hidden =
@@ -465,13 +797,13 @@ export class LiveExample extends Component {
     undo = () => {
         const { activeTab } = this;
         if (activeTab instanceof CodeEditor) {
-            activeTab.editor.undo();
+            activeTab.undo();
         }
     };
     redo = () => {
         const { activeTab } = this;
         if (activeTab instanceof CodeEditor) {
-            activeTab.editor.redo();
+            activeTab.redo();
         }
     };
     get isMaximized() {
@@ -610,12 +942,24 @@ export class LiveExample extends Component {
             part: 'exampleWidgets',
             onClick: this.exampleMenu,
         }, icons.code())),
+        // Empty until first showCode. buildEditorPanel() fills it lazily so a reader
+        // who never opens a panel never constructs a <tosi-code> (and never pulls the
+        // CodeMirror chunk). See ensureEditors().
         div({
             class: 'code-editors',
             part: 'codeEditors',
             onKeydown: this.handleShortcuts,
             hidden: true,
-        }, tosiTabs({
+        }),
+        tosiSlot({ part: 'sources', hidden: true }),
+    ];
+    // The editor panel (4 <tosi-code> editors + toolbar). Built on demand by
+    // ensureEditors(), NOT in content() — constructing a <tosi-code> is what imports
+    // the CodeMirror chunk, so keeping it out of the reader's mount path is the whole
+    // point of slice 3. The `part` names match what content() used, so every
+    // this.parts.{js,html,css,test,editors,undo,redo} reference resolves once built.
+    buildEditorPanel() {
+        return tosiTabs({
             part: 'editors',
             onChange: this.updateUndo,
         }, codeEditor({ name: 'js', mode: 'javascript', part: 'js' }), codeEditor({ name: 'html', mode: 'html', part: 'html' }), codeEditor({ name: 'css', mode: 'css', part: 'css' }), 
@@ -640,13 +984,27 @@ export class LiveExample extends Component {
             title: 'close code',
             class: 'transparent',
             onClick: this.closeCode,
-        }, icons.x())))),
-        tosiSlot({ part: 'sources', hidden: true }),
-    ];
+        }, icons.x())));
+    }
+    // Build the editor panel the first time a code panel is opened, flush the cached
+    // values into the now-real editors, and wire the tjs/ts read-only JS tab. Idempotent.
+    ensureEditors() {
+        if (this.editorsBuilt || !this.hydrated)
+            return;
+        this.parts.codeEditors.append(this.buildEditorPanel());
+        this.editorsBuilt = true;
+        // pendingValues → the real editors, then pick the default tab and product tabs.
+        this.flushPendingValues();
+        this.ensureProductTabs();
+        this.showDefaultTab();
+        this.updateUndo();
+    }
     connectedCallback() {
         super.connectedCallback();
-        // Flush any values set before the shadow DOM was ready
-        this.flushPendingValues();
+        // super.connectedCallback() ran hydrate(), so `this.hydrated` is now true and
+        // `parts` is safe to touch. The editor panel is NOT built here — values stay in
+        // `pendingValues` and are flushed into the editors when ensureEditors() builds
+        // them (first showCode). The preview runs from `pendingValues` meanwhile.
         const { sources } = this.parts;
         this.initFromElements([...sources.children]);
         // Set up remote sync
@@ -742,6 +1100,13 @@ export class LiveExample extends Component {
             this.css = edit.css;
         if (edit.test !== undefined)
             this.test = edit.test;
+        // If the saved edit carried its own bake, re-pair it to the edited source so a
+        // reader reload runs the edit without the transpiler. Otherwise leave compiledJs
+        // as-is; the source→bake mismatch makes refresh() transpile on demand (correct).
+        if (edit.compiledJs !== undefined && edit.js !== undefined) {
+            this.compiledJs = edit.compiledJs;
+            this.compiledJsSource = edit.js;
+        }
     }
     // "Has edits" = current code differs from the snapshotted original (trailing
     // whitespace ignored, since editors normalize it). Drives Save/Revert enabled
@@ -761,15 +1126,11 @@ export class LiveExample extends Component {
     }
     canUndo() {
         const t = this.activeTab;
-        return (t instanceof CodeEditor &&
-            t.editor !== undefined &&
-            t.editor.session.getUndoManager().hasUndo());
+        return t instanceof CodeEditor && t.canUndo();
     }
     canRedo() {
         const t = this.activeTab;
-        return (t instanceof CodeEditor &&
-            t.editor !== undefined &&
-            t.editor.session.getUndoManager().hasRedo());
+        return t instanceof CodeEditor && t.canRedo();
     }
     saveLocalEdit = () => {
         const key = this.localEditKey();
@@ -782,6 +1143,13 @@ export class LiveExample extends Component {
             html: this.html,
             css: this.css,
             test: this.test,
+            // Keep the transpiled code alongside the source so a restored edit runs without
+            // reloading the transpiler. refresh() keeps compiledJs paired with the current
+            // source, so persist it only when it still matches (never a stale value). `js`
+            // needs no transpiler.
+            compiledJs: this.dialect !== 'js' && this.compiledJsSource === this.js
+                ? this.compiledJs
+                : undefined,
         });
         this.updateEditedIndicator();
     };
@@ -827,6 +1195,7 @@ export class LiveExample extends Component {
     viewChanges = () => {
         if (!this.hydrated)
             return;
+        this.ensureEditors(); // diffing reaches into this.parts[tab] — build them first
         this.viewingChanges = !this.viewingChanges;
         if (this.viewingChanges)
             this.showCode();
@@ -870,7 +1239,12 @@ export class LiveExample extends Component {
                     shortcut: '⌘R',
                     action: this.doRefresh,
                 },
-                { icon: 'columns', caption: 'Flip layout', shortcut: '⌘/', action: this.flipLayout },
+                {
+                    icon: 'columns',
+                    caption: 'Flip layout',
+                    shortcut: '⌘/',
+                    action: this.flipLayout,
+                },
                 {
                     icon: 'cornerUpLeft',
                     caption: 'Undo',
@@ -886,13 +1260,22 @@ export class LiveExample extends Component {
                     enabled: () => this.canRedo(),
                 },
                 null,
-                { icon: 'copy', caption: 'Copy as markdown', shortcut: '⌘⇧C', action: this.copy },
+                {
+                    icon: 'copy',
+                    caption: 'Copy as markdown',
+                    shortcut: '⌘⇧C',
+                    action: this.copy,
+                },
                 { icon: 'download', caption: 'Download', action: this.downloadExample },
                 null,
                 ...(hasSnapshot
                     ? [
                         this.viewingChanges
-                            ? { icon: 'edit', caption: 'Back to editing', action: this.viewChanges }
+                            ? {
+                                icon: 'edit',
+                                caption: 'Back to editing',
+                                action: this.viewChanges,
+                            }
                             : {
                                 icon: 'code',
                                 caption: 'View changes',
@@ -940,6 +1323,7 @@ export class LiveExample extends Component {
         this.classList.toggle('-maximize');
     };
     showCode = () => {
+        this.ensureEditors(); // first open builds the CodeMirror panel (and pulls the chunk)
         this.classList.add('-maximize');
         this.classList.toggle('-vertical', this.offsetHeight > this.offsetWidth);
         this.parts.codeEditors.hidden = false;
@@ -998,31 +1382,66 @@ export class LiveExample extends Component {
     refresh = async () => {
         if (this.remoteId !== '')
             return;
-        const transform = await loadTransform(this.dialect);
+        // Reader fast path: with the build-time bake AND tests off (the deployed
+        // reader — tests default off outside localhost), run the example WITHOUT
+        // loading the tjs transpiler. When tests are on (localhost / the doc-test
+        // harness) `bake` is undefined and this is the original full-transform path,
+        // so the harness is untouched. The bake is byte-identical to what the
+        // transform would produce (it IS `transform(rewriteImports(js))`).
+        // ...and only while the bake still matches the current source — an edit drops the
+        // stale original bake and transpiles the edit on demand (slice 4).
+        const bake = this.dialect !== 'js' &&
+            !testManager.enabled.value &&
+            this.compiledJs !== undefined &&
+            this.compiledJsSource === this.js
+            ? this.compiledJs
+            : undefined;
+        const transform = bake === undefined ? await loadTransform(this.dialect) : undefined;
         const { example, style: styleEl, exampleWidgets } = this.parts;
         // Keep the read-only generated-JS tab (tjs/ts) in sync with the source, and
-        // re-run any inline tjs tests for the "tjs tests" results tab.
+        // re-run any inline tjs tests for the "tjs tests" results tab. With the bake we
+        // already have the generated JS and skip the transpiler-bound inline-test run.
         if (this.dialect !== 'js') {
-            this.lastGeneratedJs = await this.computeGeneratedJs(transform);
+            this.lastGeneratedJs = bake ?? (await this.computeGeneratedJs(transform));
             if (this.jsOutEditor)
                 this.jsOutEditor.value = this.lastGeneratedJs;
-            await this.runInlineTjsTests(transform);
+            if (bake === undefined) {
+                // Freshly transpiled (edited source, or a dialect the build didn't bake):
+                // cache it AS the bake, paired with the source it came from. So saveLocalEdit
+                // can persist it and later refreshes of the same source skip re-transpiling —
+                // the transpiler is already loaded at this point, so this costs nothing.
+                this.compiledJs = this.lastGeneratedJs;
+                this.compiledJsSource = this.js;
+                await this.runInlineTjsTests(transform);
+            }
         }
         let preview;
         let executionError;
         const onError = (error) => {
             executionError = error;
         };
-        if (this.iframe) {
+        // Scope capture feeds tjs autocomplete (getLiveBindings), which is only consulted
+        // for tjs/ts examples once a code panel is open. Gating it here keeps the optional
+        // tjs-lang/editors bundle (and its AST parse) off the reader path — it loads only
+        // when someone actually edits a tjs/ts example. `js` never needs it.
+        const onScope = this.dialect !== 'js' && this.editorsBuilt ? this.captureScope : undefined;
+        // 'iframe' and (for now) 'ide' both run in an isolated iframe. 'ide' — the fully
+        // sandboxed real-published-deps mode — is a recognized flag; its distinct
+        // real-module execution is a follow-up (import-resolver-plan.md phase 2), so it
+        // currently uses the iframe path.
+        const mode = this.effectiveMode;
+        if (mode === 'iframe' || mode === 'ide') {
             preview = await executeInIframe({
                 html: this.html,
                 css: this.css,
                 js: this.js,
                 context: this.context,
                 transform,
+                compiledJs: bake,
                 exampleElement: example,
                 widgetsElement: exampleWidgets,
                 onError,
+                onScope,
             });
         }
         else {
@@ -1032,10 +1451,12 @@ export class LiveExample extends Component {
                 js: this.js,
                 context: this.context,
                 transform,
+                compiledJs: bake,
                 exampleElement: example,
                 styleElement: styleEl,
                 widgetsElement: exampleWidgets,
                 onError,
+                onScope,
             });
         }
         if (this.persistToDom) {
@@ -1051,6 +1472,8 @@ export class LiveExample extends Component {
             this.classList.remove('-test-passed', '-test-failed');
             // `test` blocks are conventional JS/TS regardless of the example's dialect,
             // so they're transpiled as plain js — never lowered through tjs/ts.
+            // This block only runs when tests are enabled, and `bake` only exists when
+            // they're off — so `transform` was loaded above and is defined here.
             const testTransform = this.dialect === 'js' ? transform : await loadTransform('js');
             // Only run `test` blocks if the example actually produced a preview to
             // assert against; a failed build has nothing to test but still fails below.
@@ -1132,7 +1555,8 @@ export class LiveExample extends Component {
         }
     }
     showDefaultTab() {
-        if (!this.hydrated) {
+        // No tab strip until the panel is built; remember to pick the tab then.
+        if (!this.hydrated || !this.editorsBuilt) {
             this.pendingShowDefaultTab = true;
             return;
         }
@@ -1163,6 +1587,9 @@ export class LiveExample extends Component {
                 this.js = payload.js;
                 if (payload.test)
                     this.test = payload.test;
+                // The pop-out editor window IS the editor — build the panel and flush the
+                // values above into it (they went to pendingValues since it wasn't built yet).
+                this.ensureEditors();
                 this.parts.example.hidden = true;
                 this.parts.codeEditors.hidden = false;
                 this.classList.add('-maximize');

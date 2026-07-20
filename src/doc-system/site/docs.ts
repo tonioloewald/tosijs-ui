@@ -119,6 +119,11 @@ export interface Doc {
   keywords?: string | string[]
   image?: string
   noindex?: boolean
+  // Build-time transpiled JS for this doc's `tjs` examples, as [source, {dialect, js}]
+  // entries (a Map can't JSON-roundtrip). Attached by generate-site so client-side SPA
+  // navigation renders the hidden `<script type="application/tosi-transpiled">` and runs
+  // examples without the tjs transpiler. Absent when the doc has no tjs examples.
+  bakes?: Array<[string, { dialect: string; js: string }]>
   // Common prose/frontmatter fields (carried through; author/date aren't consumed
   // by the doc system yet, but a book pipeline can use them).
   author?: string
@@ -190,10 +195,10 @@ function metadata(content: string, filePath: string): Partial<Doc> {
   }
   // An empty/blank `title` must not override the H1 (it produced blank nav
   // entries) — drop it so the H1-derived title wins.
-  if (typeof data.title === 'string' && data.title.trim() === '') delete data.title
+  if (typeof data.title === 'string' && data.title.trim() === '')
+    delete data.title
   return data
 }
-
 
 function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
   const markdownFiles: Doc[] = []
@@ -294,11 +299,7 @@ function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
 }
 
 export function extractDocs(options: ExtractDocsOptions): Doc[] {
-  const {
-    paths,
-    ignore = ['node_modules', 'dist', 'build'],
-    output,
-  } = options
+  const { paths, ignore = ['node_modules', 'dist', 'build'], output } = options
   const docs = findMarkdownFiles(paths, ignore)
   if (output) {
     saveDocsJSON(docs, output)

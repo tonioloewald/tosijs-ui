@@ -20,15 +20,15 @@ endpoint becomes the unit of distribution, documentation, and authoring at once.
 
 ### The full stack this converges on
 
-| Layer | Technology | Role |
-|---|---|---|
-| Front end / build / docs | **tosijs-ui doc system** (`tosijs-ui/site`) | static-site generator, live examples, doc browser, ePub/PDF |
-| Transpiler | **tjs-lang** | browser-native TS/TJS→JS for live examples (and, separately/eventually, the build) |
-| Back end | **AJS VM universal endpoint** on cloud storage | the `DocStore` REST implementation — fine-grained security + auth, no container |
+| Layer                    | Technology                                     | Role                                                                               |
+| ------------------------ | ---------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Front end / build / docs | **tosijs-ui doc system** (`tosijs-ui/site`)    | static-site generator, live examples, doc browser, ePub/PDF                        |
+| Transpiler               | **tjs-lang**                                   | browser-native TS/TJS→JS for live examples (and, separately/eventually, the build) |
+| Back end                 | **AJS VM universal endpoint** on cloud storage | the `DocStore` REST implementation — fine-grained security + auth, no container    |
 
-The back end is "the missing piece," but it isn't a *new* piece: tjs-lang's AJS
+The back end is "the missing piece," but it isn't a _new_ piece: tjs-lang's AJS
 virtual machine already provides a gas-metered universal endpoint over cloud
-storage. So the REST flavor of `DocStore` (below) *is* an AJS endpoint. The same
+storage. So the REST flavor of `DocStore` (below) _is_ an AJS endpoint. The same
 language that transpiles examples in the browser backs the persistence/auth
 layer. Closed loop.
 
@@ -36,7 +36,7 @@ layer. Closed loop.
 
 - **Fix at the source, where the leverage is.** We control the whole stack —
   down to the JS engine and the browser. When a limitation really belongs to
-  another layer, fix it *there*, not with a workaround here. The doc system stays
+  another layer, fix it _there_, not with a workaround here. The doc system stays
   thin; leverage compounds at the lowest layer that owns the problem.
   - Corollary: **import resolution for live examples is tjs-lang's problem, not
     the doc system's.** We keep only the minimal fake-import for our own libs (so
@@ -56,8 +56,8 @@ layer. Closed loop.
   lazy-loaded exactly like sucrase is today. A consumer who never renders a live
   example never downloads it.
 - **Build-time static artifacts.** The site, ePub, and PDF are emitted by the
-  build and served as static files. No server is needed to *read* an endpoint;
-  the REST `DocStore` exists only to *write* one.
+  build and served as static files. No server is needed to _read_ an endpoint;
+  the REST `DocStore` exists only to _write_ one.
 - **Tree-shakeable by construction.** The library-as-ESM must be importable
   without dragging in the editor, example runner, or doc browser.
 
@@ -105,11 +105,17 @@ interface DocStore {
   createDoc(meta: DocMeta, body: string): Promise<SourceRef>
 }
 
-type ExampleKey = { version: string; slug: string; ordinal: number; id?: string }
-type SourceRef  = { version: string; file: string; block?: number }
+type ExampleKey = {
+  version: string
+  slug: string
+  ordinal: number
+  id?: string
+}
+type SourceRef = { version: string; file: string; block?: number }
 ```
 
 Implementations:
+
 - **DevStore** (first): talks to the localhost dev server, which writes to disk.
   Jailed to configured watch dirs, dev-mode + localhost-bound only, rejects
   `..` / symlink escapes. Writes trigger the existing chokidar rebuild.
@@ -125,6 +131,7 @@ Implementations:
 A file-backed `DocStore` documents a codebase. A **database-backed** one inverts
 it: the docs/source ARE the content, edited in the browser, persisted to records,
 rendered + executed live. Compose that with what we already have —
+
 - live, editable examples (tjs transpiles in the browser),
 - whole-doc editing + create-new-doc (Foundation B),
 - versioned records + auth (the AJS universal endpoint),
@@ -150,7 +157,7 @@ are the seam the whole thing pivots on.)
 > diff) + the editor's Edit / Preview / **View changes** views. **Local
 > save/restore of examples: DONE** (`example-store.ts`, per-browser scratchpad
 > keyed by the source↔doc map; moreVertical example menu).
-> **Still TODO:** the **production path** — IndexedDB *versioned overlay* (apply
+> **Still TODO:** the **production path** — IndexedDB _versioned overlay_ (apply
 > on render; prod "save" persists there) — currently prod "save" just downloads.
 
 The write target is a `DocStore` backend chosen by context/config, NOT a hard
@@ -188,6 +195,7 @@ rebuild → refresh, so the build itself is the preview — no in-browser extrac
 needed there.
 
 **UX — the existing "view source on GitHub" button becomes a `popMenu`:**
+
 - **Edit page source** → a `CodeEditor` (whole file) that fills the content area.
 - **View on GitHub** (when a repo link applies).
 - **Save** (→ FS in dev / IDB overlay in prod) · **Download** (the file).
@@ -200,7 +208,7 @@ menu → edit → flip back to rendered → looks good → save/download.
 
 Building blocks already in hand: `popMenu`, `CodeEditor`, the source↔doc map,
 tjs-in-browser transpile. Lowest-risk first slice: the **client-side path**
-(edit → IDB overlay + download) — works in dev *and* prod, no server, no security
+(edit → IDB overlay + download) — works in dev _and_ prod, no server, no security
 surface. The dev **FS write endpoint** is a convenience layered on top (save to
 the real file instead of download).
 
@@ -209,11 +217,10 @@ the real file instead of download).
 > **Status: #6.1 SHIPPED.** sucrase removed; `js` blocks transpile through
 > tjs-lang `dialect: 'js'` (behavior-neutral), tjs lazy-loaded (`tjs-lang/lang`
 > → jsdelivr `+esm` → degraded raw-JS). tsc clean, 455 unit tests, browser suite
-> 31/0. Known non-issue: the background-test iframe flashes *in haltija only*
+> 31/0. Known non-issue: the background-test iframe flashes _in haltija only_
 > (Chromium compositor) — invisible in Safari/Chrome, deemed not important.
 >
-> **Status: #6.2 Phase 1 IMPLEMENTED — executable `tjs`/`ts` dialects.**
-> `insert-examples` recognizes `tjs`/`ts` as executable source blocks (alongside
+> **Status: #6.2 Phase 1 IMPLEMENTED — executable `tjs`/`ts` dialects.** > `insert-examples` recognizes `tjs`/`ts` as executable source blocks (alongside
 > `js`); the example carries a `dialect` (persisted as `data-dialect`);
 > `loadTransform(dialect)` routes `js`→`dialect:'js'`, `tjs`→`dialect:'tjs'`,
 > `ts`→`fromTS`(lazy, behind `tjs-lang/lang/from-ts` + `+esm` CDN)→`tjs`.
@@ -221,18 +228,18 @@ the real file instead of download).
 > dialect. `save-to-source` counts `tjs`/`ts` toward grouping (ordinal alignment)
 > and maps the source edit to whichever js/tjs/ts block exists. Existing
 > display-only ` ```ts ` snippets migrated to ` ```typescript ` (display-only;
-> `typescript` is intentionally *not* an executable language). A runnable `tjs`
+> `typescript` is intentionally _not_ an executable language). A runnable `tjs`
 > example added to the `example` doc. Convention finalized with the user:
 > | block | pipeline | products (Phase 2) |
-> | `js`  | run            | — |
-> | `tjs` | tjs → js       | JS · tests · docs (all read-only) |
-> | `ts`  | ts → tjs → js  | JS · tests · docs (intermediate tjs hidden; "convert to tjs" = future) |
+> | `js` | run | — |
+> | `tjs` | tjs → js | JS · tests · docs (all read-only) |
+> | `ts` | ts → tjs → js | JS · tests · docs (intermediate tjs hidden; "convert to tjs" = future) |
 > `==` semantics (clarified by the author): tjs `==` is **not** structural — it
 > only removes the coercion footguns (`1 == '1'`). `[1] == [1]` / `{a:1} == {a:1}`
-> are `false` *by design* (structural `==` was dropped: `{a:1}=={a:1}` is its own
+> are `false` _by design_ (structural `==` was dropped: `{a:1}=={a:1}` is its own
 > footgun, and structural array/object compares are a surprising perf shock). So
 > the array-`==`-returns-`false` I saw is correct, not a quirk. One genuine edge
-> bug in 0.8.2: an array-literal operand `==` in *top-level statement* position
+> bug in 0.8.2: an array-literal operand `==` in _top-level statement_ position
 > throws `Unexpected token` (scalar top-level `==` round-trips fine; inside a
 > function it's fine) — minor, tjs-lang side. The demo leans on type-annotation
 > stripping (not `==`) to show tjs is engaged.
@@ -242,6 +249,7 @@ the real file instead of download).
 > lazily on first code-panel open (examples render every named editor as a tab,
 > so static children would pollute plain-`js` examples — they're added via
 > `editors.append` + `setupTabs()`):
+>
 > - **JS** — read-only generated JavaScript (`tjs().code`), the exact instrumented
 >   output that runs (kept honest per user; only of interest "if you're debugging
 >   something horrific"). Synced every refresh.
@@ -249,24 +257,24 @@ the real file instead of download).
 >   inline tests. tjs inline tests are `test 'name' { … }` blocks written inside a
 >   comment (NOT `test()` calls); run via `extractTests(src)` →
 >   `eval(execJs + testUtils + 'return ' + testRunner)` → `{passed, failed,
->   results}`. The test-stripped source still runs its top-level statements (to
+results}`. The test-stripped source still runs its top-level statements (to
 >   define the functions), so the runner injects a throwaway `preview`, mirroring
 >   execution's `{ preview, ...context }`.
-> The existing editable `test` block tab is renamed **DOM tests** (it tests the
-> rendered preview); `part`/`name` stay `test`, only the label changed
-> (`updateTestResultsVisibility` now compares `this.parts.test`, not the name).
-> **Docs tab dropped** (per user): `generateDocs` only ships in tjs-lang's heavy
-> top-level bundle, and nesting tjs docs inside docs is a can of worms.
-> The `tjs` demo (with a native inline `test '…' { … }` block exercising the
-> tjs-tests tab) lives in the `example` doc. tjs's native test syntax has no `*/`,
-> so it sits fine inside a `/*#*/` doc comment; only the *TypeScript* embedded
-> form (a test written inside a `/*…*/` comment, so it survives `tsc`) would close
-> the doc comment. Execution strips native `test` blocks (verified: the run code
-> has no `test '`/`expect(`), so the example runs clean while extractTests + the
-> tjs-tests tab pick the block up.
-> tsc clean · 477 unit tests · browser suite 32/0 · direct in-browser check:
-> tabs `tjs|html|css|DOM tests|JS|tjs tests`, inline tests run (1/2 w/ expected
-> fail).
+>   The existing editable `test` block tab is renamed **DOM tests** (it tests the
+>   rendered preview); `part`/`name` stay `test`, only the label changed
+>   (`updateTestResultsVisibility` now compares `this.parts.test`, not the name).
+>   **Docs tab dropped** (per user): `generateDocs` only ships in tjs-lang's heavy
+>   top-level bundle, and nesting tjs docs inside docs is a can of worms.
+>   The `tjs` demo (with a native inline `test '…' { … }` block exercising the
+>   tjs-tests tab) lives in the `example` doc. tjs's native test syntax has no `*/`,
+>   so it sits fine inside a `/*#*/` doc comment; only the _TypeScript_ embedded
+>   form (a test written inside a `/*…*/` comment, so it survives `tsc`) would close
+>   the doc comment. Execution strips native `test` blocks (verified: the run code
+>   has no `test '`/`expect(`), so the example runs clean while extractTests + the
+>   tjs-tests tab pick the block up.
+>   tsc clean · 477 unit tests · browser suite 32/0 · direct in-browser check:
+>   tabs `tjs|html|css|DOM tests|JS|tjs tests`, inline tests run (1/2 w/ expected
+>   fail).
 >
 > ePub + PDF: ✅ SHIPPED (`site/epub.ts` + `site/pdf.ts`; see the publishing
 > table below). Next: production IndexedDB overlay; SW→`/lib` resolver;
@@ -281,7 +289,7 @@ Empirically confirmed against `../tjs-lang` (`tjs-lang` npm). The seam:
   `wasmCompiled`.
 - **Options that matter:** `mode: 'dev' | 'strict' | 'production'` (the
   strictness levels), `runTests: false` — **must set this for examples**;
-  default `true` *runs inline tests at transpile time and throws on failure*,
+  default `true` _runs inline tests at transpile time and throws on failure_,
   which would break an example render. `debug: true` for source locations.
 - **Plain/imperative JS examples** transpile cleanly (verified) — examples are
   top-level scripts, not function declarations, and that's fine (JS superset).
@@ -311,6 +319,7 @@ a terse `SyntaxError` — better "what's broken" reporting, which was the point.
 Every executable block routes through tjs, **keyed by the block's dialect**
 (tjs-lang ≥ 0.8.2 added an explicit `dialect` option — `feat(lang): explicit
 source dialect`; see `TJS-FOR-JS.md`'s js|ts|tjs recipe):
+
 - `js` → `tjs(code, { dialect: 'js', runTests: false }).code` — **vanilla JS,
   untouched.** Verified: `if (1 == '1') x = typeof y` round-trips identically.
 - `tjs` → `tjs(code, { dialect: 'tjs', … }).code` — full TJS (structural `==`,
@@ -332,7 +341,7 @@ Implementation shape: `loadTransform()` is replaced by a lazy `import('tjs-lang'
 (`code` + `types` + `warnings`) back so the component renders the generated-JS and
 types tabs and surfaces `warnings` / thrown `TranspileError`s. tjs is lazy-loaded
 only when an example renders — a plain component consumer never pulls it in — so
-it's never a runtime `dependency`, but it *is* required for the doc system.
+it's never a runtime `dependency`, but it _is_ required for the doc system.
 Optional degraded mode (if tjs fails to load): run `js` blocks raw, TS blocks
 error. **Sucrase is removed** from deps, CDN load, and the passthrough fallback.
 
@@ -355,12 +364,11 @@ error. **Sucrase is removed** from deps, CDN load, and the passthrough fallback.
   lazy-load tjs-lang; add "generated JS" and "types/docs" tabs; surface tjs
   warnings as editor markers. Live examples only. Serves **#6**.
 
-## Step zero — the `./docs` subpath refactor *(deferred — see Resolved Decision #2)*
+## Step zero — the `./docs` subpath refactor _(deferred — see Resolved Decision #2)_
 
 > Deferred along with the CodeMirror migration: while the editor stays
 > Ace-from-CDN (zero bundle), there's no urgency to split the doc machinery out
 > of the `.` entry. Keep this as the prerequisite for 6b, not for 6.
-
 
 Before the CodeMirror migration: move `code-editor`, `live-example`,
 `doc-browser`, and `doc-system` **out of the default `.` entry** into a `./docs`
@@ -373,20 +381,21 @@ Low-risk, high-leverage, and a prerequisite for #6. Ship it first, on its own.
 
 ## The six features
 
-| # | Feature | Foundation(s) | Key decision / risk |
-|---|---|---|---|
-| 6 | **replace sucrase with tjs-lang in live examples** (drop sucrase entirely) + generated-JS / types tabs + graceful tjs errors | D | tjs for every executable block (js/tjs direct, ts via fromTS). Lazy-loaded, doc-system-only. `js` blocks gain tjs semantics (structural `==`) — accepted. Keep fake-imports for our libs; others fail. |
-| 6b | *(deferred)* migrate editor Ace → **CodeMirror** | D, step-zero | Wait for a componentized CM export from tjs-lang. CodeMirror can't be CDN-`import()`'d → must bundle → needs the `./docs` subpath first. |
-| 6c | *(deferred)* migrate in-browser doc tests → tjs inline tests | D | Tests are JS now and stay JS; no forcing function. Revisit post-#6. |
-| 5 | **haltija widget in dev** | A | Wire-up, not build (beta 10 ships server + widget). Free-port discovery, localhost-only injection. |
-| 4 | **edit source files in dev (+ create new docs)** | B | A write endpoint is arbitrary-file-write unless localhost + dev-only + path-jailed. Security model first. |
-| 3 | **save/load per live example** | C (+ B for dev-source) | `uuid` is per-load → can't key persistence. Key by `version/slug/ordinal` (+ optional `id=`). IndexedDB = scratchpad (acknowledged weakness); REST is the real story. |
-| 1 | **ePub (build-time)** — ✅ SHIPPED | — (corpus) | `buildEpub(config, opts)` in `site/epub.ts`. One XHTML chapter/doc in nav-tree order, EPUB3 `nav.xhtml` + EPUB2 `toc.ncx`, customizable stylesheet (`opts.css`/`extraCss`, `DEFAULT_BOOK_CSS` force-wraps code). mimetype-first STORED via `zip -X0`/`-Xr9D`. XHTML well-formedness via happy-dom parse→XML re-serialize (fixes unquoted attrs / named entities / tag-like prose; per-doc regex fallback when it throws). Verified: 56 chapters, 0 well-formedness failures, 0 dangling manifest refs. **Regenerated inside `buildSite` behind `config.epub`** (every build, not just `--build-only`) so it never gets `rm -rf`'d out of `docs/`. **Auto-cover (✅ commit `333fb18f`):** when no `cover` given, generates a 600×800 cover from title + `config.favicon` on a solid bg (SVG→PNG via optional lazy `@resvg/resvg-js`), registered as EPUB3 `cover-image` + EPUB2 `meta name="cover"` + cover page first in spine; `epub: { cover, coverColor }` overrides; gracefully omitted if resvg absent. *Future:* use a captured example "hero" image as cover once example captures land (below). |
-| 2 | **PDF** — ✅ SHIPPED, two ways | — | **Primary: in-browser Print button** (doc-browser header). `buildBookHtml()` (`doc-system/book-html.ts`, browser-safe + shared) assembles the whole corpus into one print-styled HTML in a new window that opens its own print dialog → the user's browser saves the PDF. No server, no Chromium, no build-time cost. Verified: opens a 56-chapter window with TOC. **Secondary (headless/CI): `buildPdf`** (`site/pdf.ts`) prints the same `buildBookHtml` output via Playwright `page.pdf()` (184-page A4) — `bun run book:pdf`, not deployed/linked. Future: real pagination by measuring laid-out rectangles and reflowing content across page boundaries (the browser's print pagination covers the basic case for now). |
+| #   | Feature                                                                                                                      | Foundation(s)          | Key decision / risk                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 6   | **replace sucrase with tjs-lang in live examples** (drop sucrase entirely) + generated-JS / types tabs + graceful tjs errors | D                      | tjs for every executable block (js/tjs direct, ts via fromTS). Lazy-loaded, doc-system-only. `js` blocks gain tjs semantics (structural `==`) — accepted. Keep fake-imports for our libs; others fail.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 6b  | _(deferred)_ migrate editor Ace → **CodeMirror**                                                                             | D, step-zero           | Wait for a componentized CM export from tjs-lang. CodeMirror can't be CDN-`import()`'d → must bundle → needs the `./docs` subpath first.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 6c  | _(deferred)_ migrate in-browser doc tests → tjs inline tests                                                                 | D                      | Tests are JS now and stay JS; no forcing function. Revisit post-#6.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 5   | **haltija widget in dev**                                                                                                    | A                      | Wire-up, not build (beta 10 ships server + widget). Free-port discovery, localhost-only injection.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 4   | **edit source files in dev (+ create new docs)**                                                                             | B                      | A write endpoint is arbitrary-file-write unless localhost + dev-only + path-jailed. Security model first.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 3   | **save/load per live example**                                                                                               | C (+ B for dev-source) | `uuid` is per-load → can't key persistence. Key by `version/slug/ordinal` (+ optional `id=`). IndexedDB = scratchpad (acknowledged weakness); REST is the real story.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 1   | **ePub (build-time)** — ✅ SHIPPED                                                                                           | — (corpus)             | `buildEpub(config, opts)` in `site/epub.ts`. One XHTML chapter/doc in nav-tree order, EPUB3 `nav.xhtml` + EPUB2 `toc.ncx`, customizable stylesheet (`opts.css`/`extraCss`, `DEFAULT_BOOK_CSS` force-wraps code). mimetype-first STORED via `zip -X0`/`-Xr9D`. XHTML well-formedness via happy-dom parse→XML re-serialize (fixes unquoted attrs / named entities / tag-like prose; per-doc regex fallback when it throws). Verified: 56 chapters, 0 well-formedness failures, 0 dangling manifest refs. **Regenerated inside `buildSite` behind `config.epub`** (every build, not just `--build-only`) so it never gets `rm -rf`'d out of `docs/`. **Auto-cover (✅ commit `333fb18f`):** when no `cover` given, generates a 600×800 cover from title + `config.favicon` on a solid bg (SVG→PNG via optional lazy `@resvg/resvg-js`), registered as EPUB3 `cover-image` + EPUB2 `meta name="cover"` + cover page first in spine; `epub: { cover, coverColor }` overrides; gracefully omitted if resvg absent. _Future:_ use a captured example "hero" image as cover once example captures land (below). |
+| 2   | **PDF** — ✅ SHIPPED, two ways                                                                                               | —                      | **Primary: in-browser Print button** (doc-browser header). `buildBookHtml()` (`doc-system/book-html.ts`, browser-safe + shared) assembles the whole corpus into one print-styled HTML in a new window that opens its own print dialog → the user's browser saves the PDF. No server, no Chromium, no build-time cost. Verified: opens a 56-chapter window with TOC. **Secondary (headless/CI): `buildPdf`** (`site/pdf.ts`) prints the same `buildBookHtml` output via Playwright `page.pdf()` (184-page A4) — `bun run book:pdf`, not deployed/linked. Future: real pagination by measuring laid-out rectangles and reflowing content across page boundaries (the browser's print pagination covers the basic case for now).                                                                                                                                                                                                                                                                                                                                                                           |
 
 ### Index & footnotes (for #1, and useful on the live site too)
 
 Build the index automatically from:
+
 - exported **classes / functions / types** (we own the build + source↔doc map),
 - **headings**,
 - other obvious symbols,
@@ -402,23 +411,23 @@ of each live example's rendered output, used in three places — the ePub/PDF, t
 **no-JS / pre-hydration placeholder** on the static pages, and optionally an ePub
 cover "hero" image.
 
-**Key decision — capture is *exhaust from normal dev*, not a build job.** We
+**Key decision — capture is _exhaust from normal dev_, not a build job.** We
 rejected the build-time Playwright batch (the `generate-og.ts` pattern,
 generalized): it churns multi-MB PNG blobs into git every build, a single
 ~900ms-settle frame mis-represents animated/async examples, and it's the step
 nobody remembers to run. Instead:
 
 - **Embedded private haltija** (beta 10 ships a private server + embeddable
-  widget). Each dev app gets its *own* haltija server on its *own* socket, scoped
+  widget). Each dev app gets its _own_ haltija server on its _own_ socket, scoped
   to the app's own tab (`preferCurrentTab`). This kills the shared-instance
   contention (the "kith agent futzing with haltija" problem) **and** lets the
-  agent *see* the actual dev session. It's the richer form of **#5
+  agent _see_ the actual dev session. It's the richer form of **#5
   (haltija-in-dev widget)** — one move, three payoffs: no contention, agent sight,
   organic captures.
 - **Screen-share capture, not `element.screenshot`.** `getDisplayMedia` grabs the
   actually-composited pixels (real fonts / GPU / sub-pixel layout), avoiding the
   long tail of programmatic-screenshot quirks (shadow-DOM clipping, unloaded
-  fonts, DPR surprises). **Linchpin:** it prompts the user *once* → the returned
+  fonts, DPR surprises). **Linchpin:** it prompts the user _once_ → the returned
   `MediaStream` is persistent → `ImageCapture.grabFrame()` captures on demand with
   **no re-prompt**. The private haltija owns the held stream and, controlling the
   browser, can pre-grant the surface — so even automated / puppeted capture skips
@@ -427,12 +436,12 @@ nobody remembers to run. Instead:
 - **"If you've ever tested an example and the browser has permission, you have a
   screenshot."** The dev navigating/testing examples self-captures; haltija
   puppeting the page fills the gaps (the automated baseline, same code path).
-  Because the dev can *pose* a dynamic example (carousel, async demo) into a
+  Because the dev can _pose_ a dynamic example (carousel, async demo) into a
   representative state before it captures, the which-frame problem is solved at the
   source, not heuristically.
-- **Precedence + freshness policy.** A *manual* capture is sticky/locked
-  (authoritative); an *organic* capture only fills a gap (no image yet) or
-  refreshes a *stale auto* one — staleness defined by the example's **code hash**.
+- **Precedence + freshness policy.** A _manual_ capture is sticky/locked
+  (authoritative); an _organic_ capture only fills a gap (no image yet) or
+  refreshes a _stale auto_ one — staleness defined by the example's **code hash**.
   A few bytes of metadata next to each image (`source: manual|auto`, `codeHash`)
   govern overwrite. This slots onto the existing **`ExampleKey` + dev-write
   endpoint** (Foundations B/C) — the save path is existing plumbing, not new.
@@ -458,7 +467,7 @@ Degrades gracefully down to paper, enhances gracefully up to a scripting reader 
    Tap/scan → the real interactive, editable example on the site.
 3. **Inline interactive — Apple Books / Readium (scripted EPUB3).** Progressive
    enhancement: a `properties="scripted"` XHTML content doc runs the actual example
-   *in the book*, with the tier-1 image as the `<img>` fallback for non-scripting
+   _in the book_, with the tier-1 image as the `<img>` fallback for non-scripting
    readers. **No network in the reader** → inline **pre-transpiled** example JS (we
    already transpile at build time) + the iife bundle; per-spine isolated context;
    scope per chapter. **Don't target the dead iBooks Author `.ibooks`/`.iba`
@@ -466,6 +475,7 @@ Degrades gracefully down to paper, enhances gracefully up to a scripting reader 
    our web-component examples run there; Kindle/most others fall back to the image.
 
 **Example anchors (tier 2) — design notes:**
+
 - The site renders a stable anchor per example and **scrolls-to + briefly
   highlights** on deep-link load (independently useful for sharing/deep-linking).
 - **Author-assigned `id=` fence overrides, not ordinals, for book links.** Ordinal
@@ -522,7 +532,7 @@ DocStore dev impl) → #4**, then **Foundation C → #3** — those are the prio
 ## Resolved decisions (Jun 2026)
 
 1. **Import resolution is tjs-lang's problem, not ours** (fix-at-the-source).
-   The fake-import rewrite for `tosijs` / `tosijs-ui` is the *only* thing the doc
+   The fake-import rewrite for `tosijs` / `tosijs-ui` is the _only_ thing the doc
    system owns — examples and tests must run against the code we may have just
    changed, so those resolve to in-page globals. Everything else is delegated to
    tjs's transform: whatever it resolves (its playground already does real ESM
@@ -548,7 +558,7 @@ DocStore dev impl) → #4**, then **Foundation C → #3** — those are the prio
 #6 shrinks to **swap the transform seam (sucrase → tjs-lang), lazy-loaded and
 optional**, plus the generated-JS / types tabs and graceful tjs error handling —
 **no editor migration, no subpath refactor, no test rewrite** required first.
-First concrete task under #6: spike *what tjs-lang gives us for free* (import
+First concrete task under #6: spike _what tjs-lang gives us for free_ (import
 resolution, diagnostics, doc/type metadata) against the live-example use case.
 
 ## Build approach

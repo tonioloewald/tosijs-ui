@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
-const BASE = 'https://localhost:8787'
+// Paths are relative to playwright.config.ts's baseURL (the E2E lane's own server).
+const BASE = ''
 
 test('static page hydrates and navigates client-side', async ({ page }) => {
   // 1. Static page loads with correct SEO head + pre-rendered content
@@ -71,4 +72,31 @@ test('internal content links navigate client-side without reload', async ({
   await expect(page.locator('article.doc-content h1')).toHaveText('table')
   // same document — no full reload happened
   expect(await page.evaluate(() => (window as any).__noReload)).toBe(true)
+})
+
+test('a nested <tosi-doc-system> demo does not hijack the host browser state', async ({
+  page,
+}) => {
+  // The one-source page embeds a live <tosi-doc-system> demo (memory-routed to
+  // "data-table"). tosi() registers top-level keys in a GLOBAL registry, so both
+  // browsers once collided on `app` — the nested one won, and the OUTER browser's
+  // edit-source loaded the nested demo's doc (data-table) instead of this page.
+  // Each browser now gets a unique registry key; this guards that isolation.
+  await page.goto(`${BASE}/one-source-every-artifact/`)
+  await page.waitForFunction(
+    () => document.querySelectorAll('tosi-doc-system').length >= 2
+  )
+  // Open the OUTER browser's Source menu → Edit page source.
+  await page.evaluate(() => {
+    const outer = document.querySelector('.view-source') as HTMLElement
+    outer.click()
+  })
+  await page.getByText('Edit page source', { exact: true }).last().click()
+
+  // The editor must hold THIS page's markdown, not the nested demo's data-table.
+  const editor = page.locator('tosi-code').first()
+  await expect(editor).toBeAttached()
+  const value = await editor.evaluate((el: any) => el.value as string)
+  expect(value).toContain('One Source') // the one-source page's frontmatter title
+  expect(value).not.toContain('A virtual data-table') // the nested demo's doc
 })

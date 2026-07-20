@@ -6,6 +6,46 @@ interface SourceBlock {
   block: HTMLPreElement
   language: string | undefined
   code: string
+  // Build-time transpiled JS from the block's baked `<script>` sibling, if any.
+  compiled?: string
+  // Execution mode from a `<lang>:<mode>` fence (inline | iframe | ide), if any.
+  mode?: string
+}
+
+// A block's `<pre>` may be followed by a hidden `<script type="application/tosi-
+// transpiled">` carrying its build-time transpiled JS (see
+// self-contained-examples-plan.md). It sits BETWEEN consecutive code blocks, so the
+// grouping walk must step over it — otherwise a tjs+test pair stops grouping. Returns
+// the next element sibling that isn't such a script.
+function nextGroupableSibling(el: Element | null): Element | null {
+  let n = el?.nextElementSibling ?? null
+  while (
+    n?.tagName === 'SCRIPT' &&
+    n.getAttribute('type') === 'application/tosi-transpiled'
+  ) {
+    n = n.nextElementSibling
+  }
+  return n
+}
+
+// The block's build-time transpiled JS, from the baked `<script>` immediately after
+// its `<pre>` (JSON-encoded so a `</script>` in the JS can't break out). Absent on
+// client-rendered pages (SPA nav re-renders markdown without bakes); the example then
+// transpiles on demand at run time.
+function bakedJsForBlock(block: Element): string | undefined {
+  const n = block.nextElementSibling
+  if (
+    n?.tagName !== 'SCRIPT' ||
+    n.getAttribute('type') !== 'application/tosi-transpiled'
+  ) {
+    return undefined
+  }
+  try {
+    const parsed = JSON.parse(n.textContent || '')
+    return typeof parsed === 'string' ? parsed : undefined
+  } catch {
+    return undefined
+  }
 }
 
 /**
@@ -33,6 +73,11 @@ export function insertExamples(
       block: code.parentElement as HTMLPreElement,
       language: code.classList[0].split('-').pop(),
       code: (code as HTMLElement).innerText,
+      compiled: bakedJsForBlock(code.parentElement as HTMLPreElement),
+      mode:
+        (code.parentElement as HTMLElement).getAttribute(
+          'data-example-mode'
+        ) || undefined,
     }))
 
   // Per-doc ordinal: the Nth live example on the page. Combined with sourceFile
@@ -44,7 +89,7 @@ export function insertExamples(
     // Group consecutive code blocks
     while (
       index < sources.length - 1 &&
-      sources[index].block.nextElementSibling === sources[index + 1].block
+      nextGroupableSibling(sources[index].block) === sources[index + 1].block
     ) {
       exampleSources.push(sources[index + 1])
       index += 1
@@ -54,6 +99,25 @@ export function insertExamples(
     if (sourceFile !== undefined) {
       example.setAttribute('data-source-file', sourceFile)
       example.setAttribute('data-example-ordinal', String(ordinal))
+    }
+    // Execution mode from a `<lang>:<mode>` fence — take the FIRST mode in the group.
+    // Contradictory modes across the group's blocks are an authoring error: shout in the
+    // console (which the doc-tests console-clean guard also catches) but obey the first.
+    const modes = exampleSources
+      .map((s) => s.mode)
+      .filter((m): m is string => !!m)
+    if (modes.length) {
+      const distinct = [...new Set(modes)]
+      if (distinct.length > 1) {
+        console.error(
+          `live example ${ordinal + 1}${
+            sourceFile ? ` (${sourceFile})` : ''
+          }: contradictory modes [${distinct.join(
+            ', '
+          )}] — using the first, "${modes[0]}".`
+        )
+      }
+      example.setAttribute('mode', modes[0])
     }
     // Stable anchor for deep-linking (and for book "run this live" links): an
     // author override `data-example-id` (from a ```js#my-id fence on any block in
@@ -76,6 +140,14 @@ export function insertExamples(
           // the same editor and the dialect drives how it's transpiled/run.
           example.js = source.code
           example.dialect = source.language
+          // The build-time bake (tjs only today) lets refresh() run the preview
+          // without loading the transpiler — see self-contained-examples-plan.md.
+          // Pair it with the source it was transpiled from so refresh() drops it the
+          // moment the example is edited.
+          if (source.compiled !== undefined) {
+            example.compiledJs = source.compiled
+            example.compiledJsSource = source.code
+          }
           break
         case 'html':
           example.html = source.code

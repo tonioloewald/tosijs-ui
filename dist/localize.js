@@ -415,7 +415,8 @@ function applyLocalizedEverywhere() {
 // holds mutation listeners via WeakRef, so a locally-scoped instance can get GC'd
 // between test runs and silently stop firing.
 let localizedObserver = null;
-if (typeof document !== 'undefined' && typeof MutationObserver !== 'undefined') {
+if (typeof document !== 'undefined' &&
+    typeof MutationObserver !== 'undefined') {
     const startObserver = () => {
         if (!document.body) {
             queueMicrotask(startObserver);

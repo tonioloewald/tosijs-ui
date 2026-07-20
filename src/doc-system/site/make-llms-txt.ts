@@ -82,7 +82,8 @@ export function entriesFromCorpus(
     .filter((doc) => doc.title && !doc.hidden)
     .map((doc) => ({
       title: doc.title as string,
-      description: doc.description?.trim() || extractDescription(doc.text ?? ''),
+      description:
+        doc.description?.trim() || extractDescription(doc.text ?? ''),
       link: base + pathForSlug(slugMap[doc.filename]),
     }))
     .sort((a, b) => a.title.localeCompare(b.title))
@@ -94,7 +95,7 @@ export function entriesFromCorpus(
  */
 function entriesFromSrcScan(): LlmsEntry[] {
   const entries: LlmsEntry[] = []
-  let files: string[] = []
+  let files: string[]
   try {
     files = fs.readdirSync(SRC).filter((f) => f.endsWith('.ts'))
   } catch {
@@ -135,16 +136,38 @@ export function generateLlmsTxt(
   try {
     pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
   } catch {
-    console.warn('llms.txt: no readable package.json — using config values only')
+    console.warn(
+      'llms.txt: no readable package.json — using config values only'
+    )
   }
 
-  const entries = corpus ? entriesFromCorpus(corpus, meta) : entriesFromSrcScan()
+  const entries = corpus
+    ? entriesFromCorpus(corpus, meta)
+    : entriesFromSrcScan()
+
+  // Only orient agents about the live-example execution model when the corpus
+  // actually has live examples (a book / pure-docs site has none).
+  const exampleFence = /```(js|tjs|ts|html|css)\b/
+  const hasLiveExamples =
+    !!corpus && corpus.some((d) => exampleFence.test(d.text ?? ''))
+  const liveExampleNote = hasLiveExamples
+    ? [
+        'Live examples run inline on the shared page by default (not sandboxed):',
+        'each has its own `preview` element, but they share one tosijs module, so',
+        '`tosi()` state singletons are shared across every example on a page. This is',
+        'deliberate (it shows tosi isolation and lets you drive demos via the global',
+        'singleton). Namespace example state with unique top-level keys so examples',
+        "don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.",
+        '',
+      ]
+    : []
 
   const name = meta.name ?? pkg.name ?? ''
   const description = meta.description ?? pkg.description ?? ''
   const links: string[] = []
   if (meta.baseUrl) links.push(`- Docs: ${meta.baseUrl}`)
-  if (meta.projectLinks?.github) links.push(`- Source: ${meta.projectLinks.github}`)
+  if (meta.projectLinks?.github)
+    links.push(`- Source: ${meta.projectLinks.github}`)
   const npm =
     meta.projectLinks?.npm ??
     (pkg.name ? `https://www.npmjs.com/package/${pkg.name}` : undefined)
@@ -162,6 +185,7 @@ export function generateLlmsTxt(
     '',
     'Full documentation, with live code examples, is at the links below.',
     '',
+    ...liveExampleNote,
     '## Pages',
     '',
   ]

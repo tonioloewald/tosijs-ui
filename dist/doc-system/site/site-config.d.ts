@@ -1,8 +1,8 @@
 import type { ProjectLinks, LinkItem } from '../../doc-browser';
 import type { DocSystemTheme } from '../doc-system-styles';
 import type { Doc } from './docs';
-import type { BookManifest } from '../book-manifest';
 import type { PreflightMode } from './preflight';
+import type { BookManifest } from '../book-manifest';
 export type SiteHost = 'github-pages' | 'firebase' | 'static';
 /** Resolved paths handed to a `libraryBuild` override (see SiteConfig). */
 export interface LibraryBuildContext {
@@ -181,6 +181,22 @@ export interface SiteConfig {
      * set false if your examples import from a custom `context` the check can't see.
      */
     checkExamples?: boolean;
+    /**
+     * Opt in to the import-resolver service worker (tjs-lang 0.11+): live examples can
+     * import real npm packages from anywhere — bare specifiers the doc-system doesn't
+     * inject become `/<prefix>/<spec>` requests the worker resolves + caches. Copies the
+     * worker to the web root and registers it client-side. `true` uses defaults
+     * (`prefix: '/lib/'`); pass an object to configure. OFF by default — experimental.
+     * See import-resolver-plan.md.
+     */
+    importResolver?: boolean | {
+        /** same-origin path prefix bare imports are rewritten to (default '/lib/') */
+        prefix?: string;
+        /** default CDN for unlisted packages */
+        defaultCdn?: 'jsdelivr' | 'esmsh';
+        /** packages forced through esm.sh (e.g. ones needing its interop) */
+        esmShPackages?: string[];
+    };
     /** served web-root output dir, default 'docs' */
     outputDir?: string;
     /** dev-server port, default 8787 */
@@ -215,9 +231,9 @@ export interface SiteConfig {
      *
      * `'fail'` (default) refuses; `'warn'` prints and proceeds; `false`/`'off'` skips it.
      * Also `DEV_SKIP_PREFLIGHT=1`. A hard failure is **automatically downgraded to a
-     * warning in CI** — the guard is there to stop a human from making a bad situation
-     * worse, and on a throwaway runner there is no human, no stale dev server, and
-     * nothing to kill.
+     * warning in CI and when stdout is not a TTY** — the guard is there to stop a human
+     * from making a bad situation worse, and on a throwaway runner there is no human, no
+     * stale dev server, and nothing to kill.
      */
     preflight?: PreflightMode | false;
     /**

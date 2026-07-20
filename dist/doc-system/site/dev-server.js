@@ -40,7 +40,7 @@ const DEFAULT_IDLE_HOURS = 8;
  *   - `hj` action commands (`navigate`, `click`, …) exit NON-ZERO on failure, so the
  *     test lane below can trust an exit code instead of racing to a timeout.
  */
-const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.4.0';
+const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.5.0';
 /**
  * Resolve the idle-exit timeout to milliseconds (0 = disabled).
  *
@@ -130,6 +130,9 @@ async function killStrayServer(port) {
         catch {
             continue; // already gone
         }
+        // Leave a receipt: reclaiming a port is destructive, so if it ever hits a server
+        // the developer actually wanted, the log says exactly which pid/comm on which port.
+        console.warn(`↻ reclaimed port ${port}: SIGTERM → pid ${pid} (${comm || 'unknown'})`);
         // Give it a moment to close the listener, then insist.
         for (let i = 0; i < 20; i++) {
             await Bun.sleep(50);
@@ -142,6 +145,7 @@ async function killStrayServer(port) {
             if (i === 19) {
                 try {
                     process.kill(pid, 'SIGKILL');
+                    console.warn(`   pid ${pid} ignored SIGTERM — sent SIGKILL`);
                 }
                 catch {
                     // gone between the check and the signal — fine
@@ -661,70 +665,17 @@ export async function devServer(config, opts = {}) {
             setTimeout(() => reject(new Error('Browser tests timed out')), testTimeout);
         });
         let haltija;
-        let hjAvailable = false;
-        try {
-            const result = await $ `hj windows`.quiet();
-            const { windows } = JSON.parse(result.stdout.toString());
-            hjAvailable = windows.length > 0;
-        }
-        catch {
-            // haltija not running
-        }
-        if (!hjAvailable) {
-            console.log('Starting haltija...');
-            // stdout/stderr are NOT inherited: `bunx haltija` launches an Electron app as a
-            // grandchild, and killing the bunx wrapper does not kill it. An orphaned Electron
-            // holding our inherited stdout keeps the pipe open forever, so a CI job or an
-            // agent capturing this command's output sees it hang long after it exited (0).
-            haltija = spawn(['bunx', HALTIJA_PKG, '-f'], {
-                stdout: 'ignore',
-                stderr: 'ignore',
-            });
-            console.log('Waiting for browser...');
-            for (let i = 0; i < 20; i++) {
-                await new Promise((resolve) => setTimeout(resolve, 500));
-                try {
-                    const result = await $ `hj windows`.quiet();
-                    const { windows } = JSON.parse(result.stdout.toString());
-                    if (windows.length > 0 && windows[0].url !== 'about:blank') {
-                        break;
-                    }
-                }
-                catch {
-                    // not ready yet
-                }
-                if (i === 19) {
-                    console.error('Haltija browser did not become available within 10s');
-                    haltija.kill();
-                    server.stop();
-                    process.exit(1);
-                }
-            }
-        }
-        else {
-            console.log('Using existing haltija browser');
-        }
         /**
-         * Tear down the haltija WE started — including the Electron grandchild.
-         *
-         * `haltija.kill()` only signals the `bunx` wrapper; the Electron app it launched
-         * survives. A surviving instance leaves stale windows behind, and the next
-         * `--test` run reuses any haltija reporting `windows.length > 0` — so the run
-         * after this one navigates a dead window, never POSTs /report, and fails with
-         * "Browser tests timed out" on a perfectly good codebase.
+         * Tear down the haltija WE started — including the Electron grandchild. Defined up
+         * front so EVERY failure path can call it, including the start-timeout below, which
+         * used to call the naive `haltija.kill()` — that only signals the `bunx` wrapper and
+         * leaves the Electron alive, so a failed run left an orphan that poisoned the next.
          *
          * The predicate is **descendants of the process we spawned** — NOT `pkill -f
-         * haltija/apps/desktop`, which is what this used to do while claiming in this very
-         * comment to leave your own haltija alone. `pkill -f` matches every process on the
-         * machine whose command line contains that string, so it killed the haltija YOU
-         * were running too. And it is the *test suite* that runs this: we spawn our own
-         * whenever yours reports zero windows, so "haltija open, no windows, run the doc
-         * tests" silently killed your browser. A test lane that reaches outside the repo
-         * and kills the developer's tools presents as "my tools got weird", never as a red
-         * test.
-         *
-         * The tree is collected BEFORE the wrapper dies: once it is gone, Electron is
-         * reparented to init and `pgrep -P` can no longer find it.
+         * haltija/apps/desktop`, which matches every haltija on the machine and would kill
+         * the one YOU are running. And it is the *test suite* that runs this. The tree is
+         * collected BEFORE the wrapper dies: once it's gone, Electron is reparented to init
+         * and `pgrep -P` can no longer find it.
          */
         const descendantsOf = async (pid) => {
             const out = await $ `pgrep -P ${pid}`
@@ -756,6 +707,51 @@ export async function devServer(config, opts = {}) {
                 }
             }
         };
+        // "Reachable" = the haltija SERVER answers `hj windows`, regardless of how many
+        // windows it has. This used to require `windows.length > 0`, so against a
+        // running-but-zero-window haltija (the normal state after you close a tab) it
+        // DECLINED to adopt it and raced a SECOND instance beside it — which never came up
+        // in the budget and timed out (then leaked its Electron via the old `haltija.kill`).
+        // `hj navigate` below creates/uses a window, so a zero-window server is fine to
+        // adopt; we only need the server up.
+        const haltijaReachable = async () => {
+            try {
+                await $ `hj windows`.quiet();
+                return true;
+            }
+            catch {
+                return false;
+            }
+        };
+        if (await haltijaReachable()) {
+            console.log('Using existing haltija browser');
+        }
+        else {
+            console.log('Starting haltija...');
+            // stdout/stderr are NOT inherited: `bunx haltija` launches an Electron app as a
+            // grandchild, and killing the bunx wrapper does not kill it. An orphaned Electron
+            // holding our inherited stdout keeps the pipe open forever, so a CI job or an
+            // agent capturing this command's output sees it hang long after it exited (0).
+            haltija = spawn(['bunx', HALTIJA_PKG, '-f'], {
+                stdout: 'ignore',
+                stderr: 'ignore',
+            });
+            console.log('Waiting for haltija…');
+            let up = false;
+            for (let i = 0; i < 20; i++) {
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                if (await haltijaReachable()) {
+                    up = true;
+                    break;
+                }
+            }
+            if (!up) {
+                console.error('haltija did not become reachable within 10s');
+                await stopHaltija();
+                server.stop();
+                process.exit(1);
+            }
+        }
         console.log('Opening demo site...');
         // haltija 1.4: `hj navigate` exits NON-ZERO on failure (no browser reachable, a
         // window that didn't take the URL, …). Before 1.4 it exited 0 regardless, so a

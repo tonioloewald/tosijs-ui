@@ -212,9 +212,13 @@ function findIcons(dirs, ignore = []) {
       } else if (path.extname(file) === '.svg') {
         const content = fs.readFileSync(filePath, 'utf8')
         const rawName = file.split('.')[0]
-        const names = rawName.split(',').map((n) =>
-          n.trim().replace(/-([a-z0-9])/g, (_, char) => char.toLocaleUpperCase())
-        )
+        const names = rawName
+          .split(',')
+          .map((n) =>
+            n
+              .trim()
+              .replace(/-([a-z0-9])/g, (_, char) => char.toLocaleUpperCase())
+          )
         const name = names[0]
         let svgSource = content
           .replace(/(<\?xml.*?>|<!DOCTYPE.*?>)\s?/g, '')

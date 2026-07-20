@@ -134,4 +134,5 @@ class ColorInput extends Component<ColorParts> {
   }
 }
 
-export const colorInput = ColorInput.elementCreator() as ElementCreator<ColorInput>
+export const colorInput =
+  ColorInput.elementCreator() as ElementCreator<ColorInput>

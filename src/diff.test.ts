@@ -6,9 +6,9 @@ const ops = (before: string, after: string) =>
 
 describe('diffLines', () => {
   test('identical text is all context', () => {
-    expect(diffLines('a\nb\nc', 'a\nb\nc').every((l) => l.op === 'context')).toBe(
-      true
-    )
+    expect(
+      diffLines('a\nb\nc', 'a\nb\nc').every((l) => l.op === 'context')
+    ).toBe(true)
   })
 
   test('a changed line is a remove + add around context', () => {
@@ -38,9 +38,9 @@ describe('diffLines', () => {
 
   test('empty before = all adds; empty after = all removes', () => {
     expect(diffLines('', 'a\nb').filter((l) => l.op === 'add').length).toBe(2)
-    expect(
-      diffLines('a\nb', '').filter((l) => l.op === 'remove').length
-    ).toBe(2)
+    expect(diffLines('a\nb', '').filter((l) => l.op === 'remove').length).toBe(
+      2
+    )
   })
 
   test('preserves unchanged lines as context, not churn', () => {

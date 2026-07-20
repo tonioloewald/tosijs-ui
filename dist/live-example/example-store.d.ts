@@ -3,6 +3,7 @@ export interface ExampleEdit {
     html?: string;
     css?: string;
     test?: string;
+    compiledJs?: string;
 }
 /** Stable key for an example, from its source↔doc map attributes. */
 export declare function exampleEditKey(sourceFile: string, ordinal: string | number): string;

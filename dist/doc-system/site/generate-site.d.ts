@@ -1,5 +1,6 @@
 import type { Doc } from './docs';
 import type { ProjectLinks, LinkItem } from '../../doc-browser';
+import { type ExampleBakes } from '../render';
 declare global {
     var Bun: any;
 }
@@ -33,9 +34,24 @@ export interface GenerateSiteConfig {
     basePath?: string;
     /** URL the component fetches the corpus from (default /docs.json) */
     docsUrl?: string;
-    /** path to the IIFE bundle script (default /iife.js) */
+    /** path to the IIFE bundle script (default /iife.js) — the CDN/classic-script path */
     scriptUrl?: string;
-    /** URL of the burned-in theme stylesheet (written by bin/generate-css.ts) */
+    /**
+     * path to an ESM hydration bundle. When set, pages load THIS as a
+     * `<script type="module">` instead of the classic IIFE `scriptUrl`, so
+     * code-split chunks (the CodeMirror editor) load lazily instead of on every page.
+     */
+    hydrateUrl?: string;
+    /**
+     * Build-time transpiled JS for `tjs` examples, per doc filename (each keyed by
+     * source text). The renderer embeds a doc's bakes as hidden
+     * `<script type="application/tosi-transpiled">` siblings (pre-rendered page runs
+     * without the tjs transpiler), and they're attached to each Doc in the emitted
+     * docs.json so client-side SPA navigation gets them too. See
+     * self-contained-examples-plan.md.
+     */
+    bakes?: Map<string, ExampleBakes>;
+    /** URL of the burned-in theme stylesheet (written by ./generate-css.ts) */
     stylesUrl?: string;
     /** extra lines injected into every <head> (favicon, analytics, etc.) */
     headExtra?: string;

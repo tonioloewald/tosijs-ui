@@ -1,6 +1,10 @@
 # Proposal: a pluggable library-build step in `buildSite` (for native `.tjs` sources)
 
-**Status:** ✅ **IMPLEMENTED** (tosijs-ui, 1.7 branch) — Option A + the preload half.
+**Status:** ✅ **SHIPPED in tosijs-ui `1.6.21`** (on npm; `latest` is ≥ 1.6.22) — Option A + the
+preload half. **Nothing is waiting on 1.7** — the seams, and their `.d.ts` types, are in the
+published tarball. (This line previously said "1.7 branch", which parked the tosijs 2.0 TJS
+port on an unreleased branch for no reason. If you are reading this to decide whether you can
+start: you can.)
 Raised from the tosijs 2.0 port (migrating tosijs modules from `.ts` to native TJS
 `.tjs`). Full context: `tosijs/TJS-PORT-DX.md`.
 
@@ -34,11 +38,11 @@ export default defineSiteConfig({
   // …
   libraryTsconfig: 'tsconfig.build.json',
   libraryBuild: async ({ dist, tsconfig }) => {
-    await $`bun tsc -p ${tsconfig}`                 // .ts → dist
-    await $`bun x tjs convert --emit-js src --out ${dist}`  // .tjs → dist/*.js
+    await $`bun tsc -p ${tsconfig}` // .ts → dist
+    await $`bun x tjs convert --emit-js src --out ${dist}` // .tjs → dist/*.js
     // + generateDTS(...) for the .tjs → dist/*.d.ts
   },
-  generateCssPreload: './build/tjs-preload.ts',      // Bun.plugin({ name, setup })
+  generateCssPreload: './build/tjs-preload.ts', // Bun.plugin({ name, setup })
 })
 ```
 
@@ -71,8 +75,8 @@ then fails:
 error: Cannot find module './by-path.tjs' from '.../dist/xin-proxy.js'
 ```
 
-The consumer *can* transpile `.tjs` for the shipped bundles (a `Bun.build` plugin
-handles that fine), and *can* express-control the `.d.ts` — but it has **no way to
+The consumer _can_ transpile `.tjs` for the shipped bundles (a `Bun.build` plugin
+handles that fine), and _can_ express-control the `.d.ts` — but it has **no way to
 participate in the tsc step** that buildSite owns, nor in the module-eval context
 CSS extraction uses. So a native-`.tjs` module can be validated in parallel but
 cannot become the shipped source. This blocks the whole incremental migration for
@@ -84,18 +88,18 @@ A consumer adopting TJS will pick one of two paths, and **buildSite should not
 utterly block either**:
 
 1. **Incremental / conservative (mixed `.ts` + `.tjs`).** Migrate one module at a
-   time, keep the rest TypeScript. This is the *sensible default* for a large
+   time, keep the rest TypeScript. This is the _sensible default_ for a large
    existing codebase — small, reviewable steps, easy rollback. It is **the one
    blocked today**: the tsc step can't see `.tjs`, and the CSS-eval step can't load
    it. A consumer who prefers this shouldn't have to go all-in to get unblocked.
 2. **Bulk / wholesale (all `.tjs`).** Convert everything at once
-   (`tjs convert --emit-tjs src/`) and retire tsc. This *sidesteps* the mixed-graph
+   (`tjs convert --emit-tjs src/`) and retire tsc. This _sidesteps_ the mixed-graph
    resolution issues and has been proven to build + smoke-test in tosijs. It still
    needs buildSite to run a tjs build instead of `tsc -p`.
 
 The friction of mode (1) is real and worth removing regardless of where it's
 addressed (Bun runtime `onResolve`, tjs tooling, or here). The hook below should
-support **both** — augmenting tsc for a mixed graph *and* replacing it wholesale.
+support **both** — augmenting tsc for a mixed graph _and_ replacing it wholesale.
 
 ## What would fix it: make the library-build step pluggable
 
@@ -117,7 +121,11 @@ interface SiteConfig {
    * sources. Default runs the current tsc command. A TJS consumer runs tsc for
    * `.ts` and `tjs convert` + `generateDTS` for `.tjs`, into the same `dist`.
    */
-  libraryBuild?: (ctx: { dist: string; srcRoot: string; tsconfig: string }) => Promise<void>
+  libraryBuild?: (ctx: {
+    dist: string
+    srcRoot: string
+    tsconfig: string
+  }) => Promise<void>
 }
 ```
 
@@ -149,7 +157,7 @@ clean ways:
 
 If a full hook is heavy, even an `afterLibraryEmit?(dist)` hook — called after tsc,
 before CSS extraction — would let a consumer inject transpiled `.tjs` artifacts and
-their `.d.ts` into `dist`. Combined with generate-css evaluating the *bundled*
+their `.d.ts` into `dist`. Combined with generate-css evaluating the _bundled_
 module (eval-context fix #2), that unblocks native-`.tjs` modules.
 
 ## Why this matters

@@ -24,7 +24,74 @@ export function contextVarName(key: string): string {
  * unsupported form) throws a clear error rather than becoming a SyntaxError in
  * the AsyncFunction body.
  */
-export function rewriteImports(code: string, contextKeys: string[]): string {
+/**
+ * Turn the import specifiers a `X as Y` clause carries into destructuring pairs:
+ * `a, b as c` → `a, b: c`.
+ */
+function destructureClause(names: string): string {
+  return names
+    .split(',')
+    .map((n) => {
+      const as = n.trim().match(/^(\w+)\s+as\s+(\w+)$/)
+      return as ? `${as[1]}: ${as[2]}` : n.trim()
+    })
+    .filter(Boolean)
+    .join(', ')
+}
+
+/**
+ * Rewrite the import statements the context DIDN'T inject into dynamic imports the
+ * import-resolver service worker can fulfil — a bare specifier `pkg` becomes
+ * `await import('<prefix>pkg')`, a `./x` / `https://…` specifier a direct dynamic
+ * import. This is what lets a live example pull real npm code from anywhere; it only
+ * runs when the resolver is enabled (a `prefix` is known). See import-resolver-plan.md.
+ */
+function rewriteBareImportsToDynamic(code: string, prefix: string): string {
+  const urlFor = (spec: string) =>
+    /^(\.|\/|https?:)/.test(spec) ? spec : prefix + spec
+  return (
+    code
+      // import <clause> from '<spec>'   ({ a, b } | * as X | X | X, { a })
+      // NB the trailing `[ \t]*;?` must NOT eat the newline, or the next line glues on.
+      .replace(
+        /import\s+([^;'"]+?)\s+from\s+(['"])([^'"]+)\2[ \t]*;?/g,
+        (match, clause: string, q: string, spec: string) => {
+          const imp = `await import(${q}${urlFor(spec)}${q})`
+          const c = clause.trim()
+          let m
+          if ((m = c.match(/^\{([^}]*)\}$/)))
+            return `const { ${destructureClause(m[1])} } = ${imp}`
+          if ((m = c.match(/^\*\s+as\s+(\w+)$/))) return `const ${m[1]} = ${imp}`
+          if ((m = c.match(/^(\w+)$/)))
+            return `const ${m[1]} = (${imp}).default`
+          if ((m = c.match(/^(\w+)\s*,\s*\{([^}]*)\}$/)))
+            return `const { default: ${m[1]}, ${destructureClause(m[2])} } = ${imp}`
+          return match // unhandled form — left to fail loudly below
+        }
+      )
+      // side-effect only: import '<spec>'
+      .replace(
+        /import\s+(['"])([^'"]+)\1[ \t]*;?/g,
+        (_m, q: string, spec: string) => `await import(${q}${urlFor(spec)}${q})`
+      )
+  )
+}
+
+/** The import-resolver prefix, if the SW was registered on this page (runtime). */
+function resolverPrefix(): string | undefined {
+  return (
+    globalThis as unknown as { __TOSI_IMPORT_RESOLVER?: { prefix?: string } }
+  ).__TOSI_IMPORT_RESOLVER?.prefix
+}
+
+export function rewriteImports(
+  code: string,
+  contextKeys: string[],
+  // The import-resolver prefix (e.g. '/lib/'). When set — or when the SW is registered
+  // on the page — non-context imports become dynamic imports the worker resolves.
+  // Omitted + no SW → the old behavior: a non-context import is unsupported.
+  importPrefix: string | undefined = resolverPrefix()
+): string {
   let result = code
   for (const moduleName of contextKeys) {
     const js = contextVarName(moduleName)
@@ -32,7 +99,8 @@ export function rewriteImports(code: string, contextKeys: string[]): string {
     // import { a, b } from 'mod'
     result = result.replace(
       new RegExp(`import\\s*\\{([^}]*)\\}\\s*from\\s*'${m}'`, 'g'),
-      (_, names: string) => `const { ${names.replace(/\s+/g, ' ').trim()} } = ${js}`
+      (_, names: string) =>
+        `const { ${names.replace(/\s+/g, ' ').trim()} } = ${js}`
     )
     // import * as X from 'mod'
     result = result.replace(
@@ -45,13 +113,20 @@ export function rewriteImports(code: string, contextKeys: string[]): string {
       (_, name: string) => `const ${name} = ${js}`
     )
   }
+  // With the resolver on, route the imports the context didn't inject to the SW.
+  if (importPrefix) {
+    result = rewriteBareImportsToDynamic(result, importPrefix)
+  }
   // Anything still a static import is unsupported — fail loudly with the line.
   const leftover = result.match(/^\s*import\s+['"{*\w][^\n]*/m)
   if (leftover) {
     throw new Error(
-      `live example: unsupported import \`${leftover[0].trim()}\` — only imports ` +
-        `from the example context (${contextKeys.join(', ')}) are supported, in ` +
-        `{ named }, * as ns, or default form.`
+      `live example: unsupported import \`${leftover[0].trim()}\` — imports ` +
+        `from the example context (${contextKeys.join(', ')}) are supported in ` +
+        `{ named }, * as ns, or default form` +
+        (importPrefix
+          ? `, and other packages resolve via the import-resolver.`
+          : ` (enable importResolver to import other packages).`)
     )
   }
   return result
@@ -101,7 +176,7 @@ type FromTsFn = (
 // self-contained) and is loaded only for `ts` examples; from-ts in turn fetches
 // the TypeScript compiler lazily at runtime, so tsc is never pulled in until a TS
 // example actually transforms. Pinned to match the dev dep.
-const TJS_VERSION = '0.9.0'
+const TJS_VERSION = '0.12.0'
 
 // Where to fetch a tjs-lang browser bundle from, in priority order:
 //  1. SAME-ORIGIN — the doc-site build copies the bundles next to the iife and
@@ -112,7 +187,8 @@ const TJS_VERSION = '0.9.0'
 //     it (minutes–hours) and any one can blip, so we try several. The module-cache
 //     service worker caches all three hosts.
 function bundleUrls(file: string): string[] {
-  const localBase = (globalThis as { __TJS_LOCAL_BASE?: string }).__TJS_LOCAL_BASE
+  const localBase = (globalThis as { __TJS_LOCAL_BASE?: string })
+    .__TJS_LOCAL_BASE
   return [
     ...(typeof localBase === 'string' ? [`${localBase}${file}`] : []),
     `https://cdn.jsdelivr.net/npm/tjs-lang@${TJS_VERSION}/dist/${file}`,
@@ -181,7 +257,11 @@ async function loadTjsTestApiImpl(): Promise<TjsTestApi | null> {
   for (const load of sources) {
     try {
       const m = (await load()) as Partial<TjsTestApi> | null
-      if (m && typeof m.extractTests === 'function' && typeof m.testUtils === 'string') {
+      if (
+        m &&
+        typeof m.extractTests === 'function' &&
+        typeof m.testUtils === 'string'
+      ) {
         return { extractTests: m.extractTests, testUtils: m.testUtils }
       }
     } catch {
@@ -218,7 +298,31 @@ async function loadFromTs(): Promise<FromTsFn | null> {
 // the engine load is memoized and transform output is cached by dialect+source.
 let tjsOnce: Promise<TjsFn | null> | undefined
 let fromTsOnce: Promise<FromTsFn | null> | undefined
+/**
+ * Memoized transform output, keyed by dialect + full source text.
+ *
+ * BOUNDED, and it has to be. The key contains the whole source, so a *changed*
+ * example is a new entry and the superseded one is never looked up again — the cache
+ * only ever grows, one entry per version of every example ever transformed. On a page
+ * you merely read, that is a handful of entries. But this module is also imported by
+ * the doc-site BUILD (check-examples), and — more to the point — the doc system is an
+ * *authoring* system: in an edit-in-place session, every keystroke-to-save produces a
+ * fresh source string, so an unbounded map grows for as long as the page is open,
+ * holding both the source and its transpiled output forever.
+ *
+ * A plain insertion-ordered eviction is enough here: re-transforming a cold example
+ * costs a few ms, and the working set is "the examples on this page".
+ */
+const RESULT_CACHE_MAX = 256
 const resultCache = new Map<string, { code: string }>()
+const cacheResult = (key: string, result: { code: string }) => {
+  if (resultCache.size >= RESULT_CACHE_MAX) {
+    // Map preserves insertion order, so the first key is the oldest.
+    const oldest = resultCache.keys().next().value
+    if (oldest !== undefined) resultCache.delete(oldest)
+  }
+  resultCache.set(key, result)
+}
 let warnedNoTjs = false
 let warnedNoFromTs = false
 
@@ -242,6 +346,12 @@ let warnedNoFromTs = false
 export async function loadTransform(
   dialect: Dialect = 'js'
 ): Promise<TransformFn> {
+  // `js` needs no transpiler. tjs's `js` dialect leaves vanilla JS untouched, and
+  // the build check guarantees js/`test` blocks ARE vanilla JS (a TS-typed one
+  // fails `new AsyncFunction` at build). So identity is behaviorally exact — and it
+  // keeps the tjs bundle off the first-paint path for the common all-`js`-examples
+  // page. `tjs`/`ts` still load it. See self-contained-examples-plan.md.
+  if (dialect === 'js') return (code) => ({ code })
   const tjs = await (tjsOnce ??= loadTjs())
   if (!tjs && !warnedNoTjs) {
     warnedNoTjs = true
@@ -258,29 +368,31 @@ export async function loadTransform(
     )
   }
   return (code) => {
-    const cacheKey = `${dialect} ${code}`
+    const cacheKey = `${dialect}\0${code}`
     const cached = resultCache.get(cacheKey)
     if (cached) return cached
     // runTests:false — examples must not run tjs inline tests at transpile time
     // (the default throws on failure, which would break the example render).
     if (!tjs) {
       const result = { code }
-      resultCache.set(cacheKey, result)
+      cacheResult(cacheKey, result)
       return result
     }
     if (dialect === 'ts') {
       // async: fromTS lazy-loads the TypeScript compiler on first use.
       return (async () => {
-        const tjsSource = fromTS ? (await fromTS(code, { emitTJS: true })).code : code
+        const tjsSource = fromTS
+          ? (await fromTS(code, { emitTJS: true })).code
+          : code
         const result = {
           code: tjs(tjsSource, { dialect: 'tjs', runTests: false }).code,
         }
-        resultCache.set(cacheKey, result)
+        cacheResult(cacheKey, result)
         return result
       })()
     }
     const result = { code: tjs(code, { dialect, runTests: false }).code }
-    resultCache.set(cacheKey, result)
+    cacheResult(cacheKey, result)
     return result
   }
 }

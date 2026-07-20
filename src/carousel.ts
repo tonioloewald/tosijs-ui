@@ -372,7 +372,8 @@ export type XinCarousel = TosiCarousel
 /** @deprecated Use TosiCarousel instead */
 export const XinCarousel: typeof TosiCarousel = TosiCarousel
 
-export const tosiCarousel = TosiCarousel.elementCreator() as ElementCreator<TosiCarousel>
+export const tosiCarousel =
+  TosiCarousel.elementCreator() as ElementCreator<TosiCarousel>
 
 /** @deprecated Use tosiCarousel instead */
 export const xinCarousel = tosiCarousel

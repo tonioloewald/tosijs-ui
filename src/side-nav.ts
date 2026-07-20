@@ -133,7 +133,8 @@ export type SideNav = TosiSidenav
 /** @deprecated Use TosiSidenav instead */
 export const SideNav: typeof TosiSidenav = TosiSidenav
 
-export const tosiSidenav = TosiSidenav.elementCreator() as ElementCreator<TosiSidenav>
+export const tosiSidenav =
+  TosiSidenav.elementCreator() as ElementCreator<TosiSidenav>
 
 /** @deprecated Use tosiSidenav instead */
 export const sideNav = tosiSidenav

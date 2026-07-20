@@ -163,6 +163,10 @@ export class MapBox extends WebComponent {
     static mapboxCSSAvailable;
     static mapboxAvailable;
     _map;
+    // True while the (async, CDN-loaded) mapboxgl.Map is being constructed. `_map`
+    // isn't assigned until mapboxAvailable resolves, so without this a render() per
+    // `coords` write during that window starts a NEW map each time (#13). Guards to one.
+    _mapPending = false;
     static shadowStyleSpec = {
         ':host': {
             display: 'inline-block',
@@ -212,14 +216,20 @@ export class MapBox extends WebComponent {
             }
             return;
         }
+        // No map yet, and mapboxAvailable is async — build exactly one. A construction
+        // already in flight bails here, so a burst of `coords` writes during the CDN
+        // load can't stack a map per render (#13).
+        if (this._mapPending)
+            return;
+        this._mapPending = true;
         const { div } = this.parts;
-        const [long, lat, zoom] = this.coords
-            .split(',')
-            .map((x) => Number(x));
-        this._lastCoords = this.coords;
-        this._lastStyle = this.mapStyle;
         MapBox.mapboxAvailable.then(({ mapboxgl }) => {
             console.log("%cmapbox may complain about missing css -- don't panic!", 'background: orange; color: black; padding: 0 5px;');
+            // Read coords/style NOW, not at the first render — a scroll-driven page may
+            // have written a new position while the CDN script was loading.
+            const [long, lat, zoom] = this.coords
+                .split(',')
+                .map((x) => Number(x));
             mapboxgl.accessToken = this.token;
             this._map = new mapboxgl.Map({
                 container: div,
@@ -227,6 +237,9 @@ export class MapBox extends WebComponent {
                 zoom,
                 center: [lat, long],
             });
+            this._lastCoords = this.coords;
+            this._lastStyle = this.mapStyle;
+            this._mapPending = false;
             this._map.on('render', () => this._map.resize());
             // Update value when map is moved (for form integration)
             this._map.on('moveend', () => {
@@ -240,6 +253,12 @@ export class MapBox extends WebComponent {
                     }
                 }
             });
+        })
+            .catch((err) => {
+            // CDN load / construction failed — clear the flag so a later render can retry
+            // rather than leaving the element permanently unable to build its map.
+            this._mapPending = false;
+            console.error('tosi-map: mapbox failed to load', err);
         });
     }
 }

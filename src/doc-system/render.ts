@@ -19,17 +19,50 @@ const baseRenderer = new Renderer()
 // stamps `data-example-id="my-example"` on the <pre>. insertExamples (client) and
 // the book builders both read that to give the live example a stable anchor for
 // deep-linking. A block with no `#id` is byte-identical to default marked output.
+// Build-time transpiled JS for executable blocks, keyed by exact source text (see
+// `renderDocMarkdown`). When present for a block, the renderer emits a hidden,
+// non-executing `<script type="application/tosi-transpiled">` sibling carrying the
+// baked JS so the page can RUN the example without loading the tjs/ts transpiler —
+// see self-contained-examples-plan.md. Per-parse module state, safe because
+// `docMarked.parse` is synchronous (same pattern as the footnote state below).
+export interface ExampleBake {
+  dialect: string
+  js: string
+}
+export type ExampleBakes = Map<string, ExampleBake>
+let currentBakes: ExampleBakes | undefined
+
 const docMarked = new Marked()
 docMarked.use({
   renderer: {
     code(token: any) {
+      // Fence info grammar: `<lang>` optionally with a `:<mode>` and/or `#<id>` in
+      // EITHER order — `js`, `css#anchor`, `js:iframe`, `ts:ide#demo`, `ts#demo:ide`.
+      // `:mode` (inline | iframe | ide) sets the live example's execution mode; `#id`
+      // gives it a stable anchor. `#id` is `[A-Za-z0-9_-]+` and `:mode` is `[a-z]+`, so
+      // the two can't overlap — parse each independently, order-free. Both are stripped
+      // so the language stays clean (`language-js`) for grouping/highlighting.
       const info = String(token.lang || '')
-      const hash = info.indexOf('#')
-      if (hash === -1) return false // default rendering
-      const id = info.slice(hash + 1).match(/^[A-Za-z0-9_-]+/)?.[0]
-      if (!id) return false
-      const html = baseRenderer.code({ ...token, lang: info.slice(0, hash) })
-      return html.replace(/^<pre>/, `<pre data-example-id="${id}">`)
+      const lang = info.match(/^[a-z]+/)?.[0] ?? ''
+      const id = info.match(/#([A-Za-z0-9_-]+)/)?.[1] ?? ''
+      const mode = info.match(/:([a-z]+)/)?.[1] ?? ''
+      const bake = currentBakes?.get(token.text)
+      if (!id && !mode && !bake) return false // default rendering — byte-identical
+      let html = baseRenderer.code({ ...token, lang })
+      const attrs = [
+        id && `data-example-id="${id}"`,
+        mode && `data-example-mode="${mode}"`,
+      ]
+        .filter(Boolean)
+        .join(' ')
+      if (attrs) html = html.replace(/^<pre>/, `<pre ${attrs}>`)
+      if (bake) {
+        // `<` → < prevents a `</script>` inside the JS from breaking the tag;
+        // JSON.parse decodes it unchanged at hydration.
+        const json = JSON.stringify(bake.js).replace(/</g, '\\u003c')
+        html += `<script type="application/tosi-transpiled" data-dialect="${bake.dialect}">${json}</script>`
+      }
+      return html
     },
   },
 })
@@ -40,7 +73,10 @@ docMarked.use({
 // docs use neither). marked core supports neither; both are common in prose.
 
 function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -65,7 +101,9 @@ docMarked.use({
       if (footnoteOrder.length === 0) return html
       const items = footnoteOrder
         .map((id) => {
-          const body = plainMarked.parseInline(footnoteDefs.get(id) ?? '') as string
+          const body = plainMarked.parseInline(
+            footnoteDefs.get(id) ?? ''
+          ) as string
           const eid = slugify(id)
           return `<li id="fn-${eid}"><p>${body} <a href="#fnref-${eid}" class="footnote-backref" aria-label="Back to reference">↩</a></p></li>`
         })
@@ -93,7 +131,9 @@ docMarked.use({
         }
       },
       renderer(token: any) {
-        return `<a href="/${slugify(token.target)}/" class="wikilink">${escapeHtml(token.label)}</a>`
+        return `<a href="/${slugify(
+          token.target
+        )}/" class="wikilink">${escapeHtml(token.label)}</a>`
       },
     },
     {
@@ -137,8 +177,16 @@ docMarked.use({
 })
 
 /** Render a doc's markdown text to HTML (synchronous, default marked options). */
-export function renderDocMarkdown(text: string): string {
-  return docMarked.parse(text) as string
+export function renderDocMarkdown(
+  text: string,
+  opts: { bakes?: ExampleBakes } = {}
+): string {
+  currentBakes = opts.bakes
+  try {
+    return docMarked.parse(text) as string
+  } finally {
+    currentBakes = undefined
+  }
 }
 
 /**
@@ -190,7 +238,13 @@ export function docDescription(text: string, maxLength = 160): string {
     slice.lastIndexOf('! '),
     slice.lastIndexOf('? ')
   )
-  if (sentenceEnd > maxLength * 0.6) return slice.slice(0, sentenceEnd + 1).trim()
+  if (sentenceEnd > maxLength * 0.6)
+    return slice.slice(0, sentenceEnd + 1).trim()
   const wordEnd = slice.lastIndexOf(' ')
-  return slice.slice(0, wordEnd).replace(/[,;:.\s]+$/, '').trim() + '…'
+  return (
+    slice
+      .slice(0, wordEnd)
+      .replace(/[,;:.\s]+$/, '')
+      .trim() + '…'
+  )
 }

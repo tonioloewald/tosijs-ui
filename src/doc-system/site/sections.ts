@@ -40,7 +40,9 @@ export function ensureSections(opts: EnsureSectionsOptions): void {
 
   // 1. Auto-create a stub .md for any referenced-but-missing parent.
   let created = false
-  for (const ref of new Set(docs.map((d) => d.parent).filter(Boolean) as string[])) {
+  for (const ref of new Set(
+    docs.map((d) => d.parent).filter(Boolean) as string[]
+  )) {
     if (resolveParent(ref, docs, slugMap)) continue // already exists
     const file = path.join(sectionsDir, slugify(ref) + '.md')
     if (existsSync(file)) continue
@@ -72,7 +74,8 @@ export function ensureSections(opts: EnsureSectionsOptions): void {
   for (const [parentFilename, kids] of childrenOf) {
     const parent = docs.find((d) => d.filename === parentFilename)
     // Only .md parents get an auto-TOC in their body (a .ts parent is code).
-    if (!parent || !parent.path.endsWith('.md') || !existsSync(parent.path)) continue
+    if (!parent || !parent.path.endsWith('.md') || !existsSync(parent.path))
+      continue
 
     kids.sort(pinnedSort)
     const list = kids

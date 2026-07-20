@@ -291,7 +291,8 @@ export type XinRating = TosiRating
 /** @deprecated Use TosiRating instead */
 export const XinRating: typeof TosiRating = TosiRating
 
-export const tosiRating = TosiRating.elementCreator() as ElementCreator<TosiRating>
+export const tosiRating =
+  TosiRating.elementCreator() as ElementCreator<TosiRating>
 
 /** @deprecated Use tosiRating instead (tag is now tosi-rating) */
 export const xinRating = deprecated(

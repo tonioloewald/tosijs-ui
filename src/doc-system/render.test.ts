@@ -36,8 +36,12 @@ test('footnotes: refs number by appearance and render as endnotes', () => {
     'A note[^1] and another[^b].\n\n[^1]: First with *emphasis*.\n[^b]: Second.'
   )
   // ref superscripts, numbered 1,2 by first appearance
-  expect(html).toContain('<sup class="footnote-ref"><a href="#fn-1" id="fnref-1">1</a></sup>')
-  expect(html).toContain('<sup class="footnote-ref"><a href="#fn-b" id="fnref-b">2</a></sup>')
+  expect(html).toContain(
+    '<sup class="footnote-ref"><a href="#fn-1" id="fnref-1">1</a></sup>'
+  )
+  expect(html).toContain(
+    '<sup class="footnote-ref"><a href="#fn-b" id="fnref-b">2</a></sup>'
+  )
   // endnotes section with rendered definition markdown + backref
   expect(html).toContain('<section class="footnotes"')
   expect(html).toContain('<li id="fn-1"><p>First with <em>emphasis</em>.')
@@ -48,4 +52,55 @@ test('a doc using neither footnotes nor wikilinks is unaffected', () => {
   const html = renderDocMarkdown('# T\n\nJust `code` and a [link](/x/).')
   expect(html).not.toContain('footnotes')
   expect(html).not.toContain('wikilink')
+})
+
+test('bakes: a matching source emits a hidden transpiled <script>; no bakes → unchanged', () => {
+  const src = 'const n = 1\nvoid n'
+  const bakes = new Map([[src, { dialect: 'tjs', js: 'const n=1;void n;' }]])
+  const html = renderDocMarkdown('```tjs\n' + src + '\n```', { bakes })
+  expect(html).toContain(
+    '<script type="application/tosi-transpiled" data-dialect="tjs">'
+  )
+  // The JS is JSON-encoded so it round-trips through JSON.parse at hydration.
+  expect(html).toContain(JSON.stringify('const n=1;void n;'))
+  // A block whose source isn't in the map renders byte-identically to no-bakes.
+  const other = renderDocMarkdown('```tjs\nconst z = 2\n```', { bakes })
+  expect(other).not.toContain('tosi-transpiled')
+  expect(other).toBe(renderDocMarkdown('```tjs\nconst z = 2\n```'))
+})
+
+test('bakes: a </script> in the transpiled JS cannot break out of the tag', () => {
+  const src = 'x'
+  const js = 'const s = "</script><img>"'
+  const bakes = new Map([[src, { dialect: 'tjs', js }]])
+  const html = renderDocMarkdown('```tjs\n' + src + '\n```', { bakes })
+  // The raw closing tag must NOT appear before our own </script>; it's escaped.
+  const open = html.indexOf('application/tosi-transpiled')
+  const close = html.indexOf('</script>', open)
+  expect(html.slice(open, close)).not.toContain('</script>')
+  expect(html.slice(open, close)).toContain('\\u003c/script>')
+  // And it decodes back to the exact JS.
+  const json = html.slice(html.indexOf('>', open) + 1, close)
+  expect(JSON.parse(json)).toBe(js)
+})
+
+test('a ```lang:mode fence stamps data-example-mode and keeps the language clean', () => {
+  const html = renderDocMarkdown('```js:iframe\nconst x = 1\n```')
+  expect(html).toContain('data-example-mode="iframe"')
+  expect(html).toContain('class="language-js"') // language stays clean for grouping
+  expect(html).not.toContain('js:iframe')
+})
+
+test('```lang:mode#id carries BOTH the mode and the anchor', () => {
+  const html = renderDocMarkdown('```ts:ide#demo\nconst y = 2\n```')
+  expect(html).toContain('data-example-id="demo"')
+  expect(html).toContain('data-example-mode="ide"')
+  expect(html).toContain('class="language-ts"')
+})
+
+test('```lang#id:mode works too — mode and id are order-free', () => {
+  const html = renderDocMarkdown('```ts#demo:ide\nconst z = 3\n```')
+  expect(html).toContain('data-example-id="demo"')
+  expect(html).toContain('data-example-mode="ide"')
+  expect(html).toContain('class="language-ts"')
 })

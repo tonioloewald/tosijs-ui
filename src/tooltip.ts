@@ -226,7 +226,11 @@ export function initTooltips(options: TooltipOptions = {}): void {
   document.addEventListener('pointermove', (event: PointerEvent) => {
     if (convertTitles) {
       for (const node of event.composedPath()) {
-        if (node instanceof HTMLElement && node.title && !node.dataset.tooltip) {
+        if (
+          node instanceof HTMLElement &&
+          node.title &&
+          !node.dataset.tooltip
+        ) {
           node.dataset.tooltip = node.title
           node.removeAttribute('title')
           break
@@ -246,7 +250,7 @@ export function initTooltips(options: TooltipOptions = {}): void {
 
     showTimeout = setTimeout(
       () => showTooltip(target, text, useLocalize),
-      delay,
+      delay
     )
   })
 

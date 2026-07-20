@@ -1,12 +1,15 @@
 import { test, expect } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('https://localhost:8787/')
+  await page.goto('/')
   // await page.goto('https://ui.tosijs.net/')
 })
 
 test('carousel works', async ({ page }) => {
-  await page.getByText('carousel').click()
+  // Go straight to the carousel doc — the nav entry now lives under a
+  // collapsed "Components" group, and this test is about the component, not
+  // nav disclosure. Path routing serves a real pre-rendered page that hydrates.
+  await page.goto('/carousel/')
   await expect(page.locator('h1')).toHaveText('carousel')
 
   // the constructor needs to have run successfully for these to be true

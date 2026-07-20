@@ -1,119 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Hide the pre-rendered body until <tosi-doc-system> hydrates, then fade it
-       in — avoids the layout shift as the static markup is swapped for the live
-       doc browser. <noscript> keeps it visible for no-JS readers/crawlers; the
-       timeout is a safety net so a failed/slow hydration can't leave it blank. -->
-  <style>body{opacity:0;transition:opacity .25s ease}</style>
-  <noscript><style>body{opacity:1!important}</style></noscript>
-  <script>setTimeout(function(){if(document.body)document.body.style.opacity='1'},4000)</script>
+  <!-- NB: the body is NOT hidden until hydration. It used to be (body opacity 0 +
+       a 4s safety-net timeout), because an undefined custom element is
+       display:inline, so the pre-rendered page stacked as bare text and hydration
+       reflowed the whole thing. The cost was a blank screen for as long as the
+       bundle took — ~4.5s on a cheap phone, for content already in the HTML. The
+       tosi-doc-system:not(:defined) rules in the stylesheet now lay the static page
+       out as though the chrome were there, so hydration only ADDS the chrome and
+       nothing moves. Paint immediately; don't hide readable content. -->
+  <!-- Theme, applied BEFORE first paint. Now that we paint the static page rather
+       than hiding it, a dark-mode reader would otherwise get a flash of the light
+       theme until the bundle lands and sets body.darkmode. CSS alone can't do this:
+       an explicit theme choice lives in localStorage. Mirrors applyThemePrefs()
+       (doc-system.ts) — keep the two in step. Fails safe: any error leaves the
+       light default, exactly as before. -->
+  <script>
+    try {
+      var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
+      var t = p.theme || 'system'
+      if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('darkmode')
+      if (p.highContrast) document.documentElement.classList.add('high-contrast')
+    } catch (e) {}
+  </script>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="/doc-system.css" data-tosi-doc-system />
   <title>code — tosijs-ui</title>
-  <meta name="description" content="An ACE Editor wrapper." />
+  <meta name="description" content="A CodeMirror 6 wrapper." />
   <link rel="canonical" href="https://ui.tosijs.net/code-editor/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="code — tosijs-ui" />
-  <meta property="og:description" content="An ACE Editor wrapper." />
+  <meta property="og:description" content="A CodeMirror 6 wrapper." />
   <meta property="og:url" content="https://ui.tosijs.net/code-editor/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"code","description":"An ACE Editor wrapper.","url":"https://ui.tosijs.net/code-editor/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"code","description":"A CodeMirror 6 wrapper.","url":"https://ui.tosijs.net/code-editor/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="/favicon.svg" />
-<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script>
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
   <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="/localized-strings.txt">
   <article class="doc-content">
 <h1>code</h1>
-<p>An <a href="https://ace.c9.io/">ACE Editor</a> wrapper.</p>
+<p>A <a href="https://codemirror.net/">CodeMirror 6</a> wrapper.</p>
 <p>Sometimes, it&#39;s nice to be able to just toss a code-editor in a web-page.</p>
-<p><code>&lt;tosi-code&gt;</code>&#39;s <code>value</code> is the code it contains. Its <code>mode</code> attribute sets the language, and you can further configure
-the ACE editor instance via its <code>options</code> property.</p>
+<p><code>&lt;tosi-code&gt;</code>&#39;s <code>value</code> is the code it contains. Its <code>mode</code> attribute sets the
+language (<code>javascript</code>, <code>typescript</code>, <code>tjs</code>, <code>css</code>, <code>html</code>, <code>markdown</code>).</p>
 <pre><code class="language-html">&lt;tosi-code style=&quot;width: 100%; height: 100%&quot; mode=&quot;css&quot;&gt;
 body {
   box-sizing: border-box;
 }
 &lt;/tosi-code&gt;
 </code></pre>
-<p>The <code>&lt;tosi-code&gt;</code> element has an <code>editor</code> property that gives you its ACE editor instance,
-and an <code>ace</code> property that returns the <code>ace</code> module, giving you complete access to the
-<a href="https://ace.c9.io/api/index.html">Ace API</a>.</p>
+<h2>Properties &amp; events</h2>
+<table>
+<thead>
+<tr>
+<th>member</th>
+<th>what it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>value</code></td>
+<td>the code in the editor (get/set)</td>
+</tr>
+<tr>
+<td><code>mode</code></td>
+<td><code>javascript</code>, <code>typescript</code>, <code>tjs</code>, <code>ajs</code>, <code>css</code>, <code>html</code>, <code>markdown</code></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>makes the editor read-only</td>
+</tr>
+<tr>
+<td><code>original</code> + <code>showDiff(on)</code></td>
+<td>diff the current <code>value</code> against a baseline, as an overlay</td>
+</tr>
+<tr>
+<td><code>editor</code></td>
+<td>the underlying CodeMirror <a href="https://codemirror.net/docs/ref/#view.EditorView"><code>EditorView</code></a> (<code>undefined</code> until loaded)</td>
+</tr>
+<tr>
+<td><code>undo()</code> / <code>redo()</code> / <code>canUndo()</code> / <code>canRedo()</code></td>
+<td>history control</td>
+</tr>
+<tr>
+<td><code>tjsAutocomplete</code></td>
+<td>runtime-value autocomplete hooks (tjs mode) — see below</td>
+</tr>
+<tr>
+<td><code>change</code> event</td>
+<td>fires when the text changes; <code>event.detail.value</code> is the new text</td>
+</tr>
+</tbody></table>
+<p>In <code>tjs</code>/<code>ajs</code> mode the editor loads tjs-lang&#39;s CodeMirror language and completion
+source (if <code>tjs-lang</code> is installed — it&#39;s an optional peer). Set <code>tjsAutocomplete</code>
+to a <code>TjsAutocompleteConfig</code> and completion will suggest the <strong>real members of live
+runtime values</strong> — including proxy members no static analysis can see:</p>
+<pre><code class="language-typescript">codeEl.tjsAutocomplete = { getLiveBindings: () =&gt; ({ app, elements }) }
+</code></pre>
+<h2>Bundling</h2>
+<p>CodeMirror is a <strong>lazy chunk</strong>: with a bundler (ESM), a page that never uses
+<code>&lt;tosi-code&gt;</code> doesn&#39;t load it. <strong>This is not true of the IIFE</strong> (<code>dist/iife.js</code>) —
+bun&#39;s IIFE format cannot code-split, so CodeMirror is inlined there. That is a
+deliberate trade: the doc-system&#39;s editor (and its save-to-source flow) is the
+point of the IIFE, so it carries the editor. It costs ~376KB gzipped, up from
+~118KB in 1.6.x.</p>
+<h2>Migrating from the ACE editor (pre-1.7)</h2>
+<p>1.7 replaced ACE with CodeMirror 6. <code>value</code>, <code>original</code>/<code>showDiff()</code>, <code>mode</code> and
+<code>disabled</code> are unchanged. Removed (each warns once, then no-ops):</p>
+<table>
+<thead>
+<tr>
+<th>removed</th>
+<th>replacement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>theme</code></td>
+<td>style with <code>--code-bg</code> / <code>--text-color</code></td>
+</tr>
+<tr>
+<td><code>options</code> (ACE-shaped)</td>
+<td>configure via <code>editor</code> (an <code>EditorView</code>)</td>
+</tr>
+<tr>
+<td><code>ace</code></td>
+<td>there is no ACE global; use <code>editor</code></td>
+</tr>
+<tr>
+<td><code>editor.session.getUndoManager()</code></td>
+<td><code>undo()</code> / <code>redo()</code> / <code>canUndo()</code> / <code>canRedo()</code></td>
+</tr>
+</tbody></table>
+<p><code>editor</code> <strong>changed type in place</strong> — it was an ACE <code>Editor</code>, it is now a CodeMirror
+<code>EditorView</code>. Code that reached into it needs revisiting; a grep for removed names
+won&#39;t catch this one.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
   <ul>
-    <li><a href="/">tosijs-ui</a></li>
-    <li><a href="/one-source-every-artifact/">One Source</a></li>
-    <li><a href="/bp-loader/">blueprint loading</a></li>
-    <li><a href="/icons/">icons</a></li>
-    <li><details open><summary><a href="/components/">Components</a></summary>
+    <li><a class="doc-link" href="/">tosijs-ui</a></li>
+    <li><a class="doc-link" href="/one-source-every-artifact/">One Source</a></li>
+    <li><a class="doc-link" href="/bp-loader/">blueprint loading</a></li>
+    <li><a class="doc-link" href="/icons/">icons</a></li>
+    <li><details open><summary><a class="doc-link" href="/components/">Components</a></summary>
     <ul>
-      <li><a href="/babylon-3d/">3d</a></li>
-      <li><a href="/carousel/">carousel</a></li>
-      <li><a href="/code-editor/" aria-current="page" class="current">code</a></li>
-      <li><a href="/dialog/">dialog</a></li>
-      <li><a href="/diff/">diff</a></li>
-      <li><a href="/editable-rect/">editable-rect</a></li>
-      <li><a href="/component/">example</a></li>
-      <li><a href="/float/">float</a></li>
-      <li><a href="/gamepad/">gamepads</a></li>
-      <li><a href="/header/">header</a></li>
-      <li><a href="/layout/">layout</a></li>
-      <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
-      <li><a href="/mapbox/">map</a></li>
-      <li><a href="/markdown-viewer/">markdown</a></li>
-      <li><a href="/menu/">menu</a></li>
-      <li><a href="/notifications/">notifications</a></li>
-      <li><a href="/pop-float/">popFloat</a></li>
-      <li><a href="/side-nav/">sidebar</a></li>
-      <li><a href="/size-break/">size-break</a></li>
-      <li><a href="/sizer/">sizer</a></li>
-      <li><a href="/data-table/">table</a></li>
-      <li><a href="/tab-selector/">tabs</a></li>
-      <li><a href="/tooltip/">tooltip</a></li>
+      <li><a class="doc-link" href="/babylon-3d/">3d</a></li>
+      <li><a class="doc-link" href="/carousel/">carousel</a></li>
+      <li><a class="doc-link current" href="/code-editor/" aria-current="page">code</a></li>
+      <li><a class="doc-link" href="/dialog/">dialog</a></li>
+      <li><a class="doc-link" href="/diff/">diff</a></li>
+      <li><a class="doc-link" href="/editable-rect/">editable-rect</a></li>
+      <li><a class="doc-link" href="/component/">example</a></li>
+      <li><a class="doc-link" href="/float/">float</a></li>
+      <li><a class="doc-link" href="/gamepad/">gamepads</a></li>
+      <li><a class="doc-link" href="/header/">header</a></li>
+      <li><a class="doc-link" href="/layout/">layout</a></li>
+      <li><a class="doc-link" href="/bodymovin-player/">lottie / bodymovin</a></li>
+      <li><a class="doc-link" href="/mapbox/">map</a></li>
+      <li><a class="doc-link" href="/markdown-viewer/">markdown</a></li>
+      <li><a class="doc-link" href="/menu/">menu</a></li>
+      <li><a class="doc-link" href="/notifications/">notifications</a></li>
+      <li><a class="doc-link" href="/pop-float/">popFloat</a></li>
+      <li><a class="doc-link" href="/side-nav/">sidebar</a></li>
+      <li><a class="doc-link" href="/size-break/">size-break</a></li>
+      <li><a class="doc-link" href="/sizer/">sizer</a></li>
+      <li><a class="doc-link" href="/data-table/">table</a></li>
+      <li><a class="doc-link" href="/tab-selector/">tabs</a></li>
+      <li><a class="doc-link" href="/tooltip/">tooltip</a></li>
     </ul>
     </details></li>
-    <li><details><summary><a href="/form-components/">Form Components</a></summary>
+    <li><details><summary><a class="doc-link" href="/form-components/">Form Components</a></summary>
     <ul>
-      <li><a href="/color-input/">color input field</a></li>
-      <li><a href="/filter-builder/">filter</a></li>
-      <li><a href="/form/">forms</a></li>
-      <li><a href="/month/">month</a></li>
-      <li><a href="/password-strength/">password strength</a></li>
-      <li><a href="/rating/">rating</a></li>
-      <li><a href="/rich-text/">rich text</a></li>
-      <li><a href="/segmented/">segmented select</a></li>
-      <li><a href="/select/">select</a></li>
-      <li><a href="/tag-list/">tag-list</a></li>
+      <li><a class="doc-link" href="/color-input/">color input field</a></li>
+      <li><a class="doc-link" href="/filter-builder/">filter</a></li>
+      <li><a class="doc-link" href="/form/">forms</a></li>
+      <li><a class="doc-link" href="/month/">month</a></li>
+      <li><a class="doc-link" href="/password-strength/">password strength</a></li>
+      <li><a class="doc-link" href="/rating/">rating</a></li>
+      <li><a class="doc-link" href="/rich-text/">rich text</a></li>
+      <li><a class="doc-link" href="/segmented/">segmented select</a></li>
+      <li><a class="doc-link" href="/select/">select</a></li>
+      <li><a class="doc-link" href="/tag-list/">tag-list</a></li>
     </ul>
     </details></li>
-    <li><details><summary><a href="/helper-libraries/">Helper Libraries</a></summary>
+    <li><details><summary><a class="doc-link" href="/helper-libraries/">Helper Libraries</a></summary>
     <ul>
-      <li><a href="/ab-test/">ab-test</a></li>
-      <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
-      <li><a href="/live-theme/">live-theme</a></li>
-      <li><a href="/localize/">localize</a></li>
-      <li><a href="/make-sorter/">makeSorter</a></li>
-      <li><a href="/router/">router</a></li>
-      <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
-      <li><a href="/theme/">theme</a></li>
-      <li><a href="/track-drag/">trackDrag</a></li>
+      <li><a class="doc-link" href="/ab-test/">ab-test</a></li>
+      <li><a class="doc-link" href="/drag-and-drop/">drag &amp; drop</a></li>
+      <li><a class="doc-link" href="/live-theme/">live-theme</a></li>
+      <li><a class="doc-link" href="/localize/">localize</a></li>
+      <li><a class="doc-link" href="/make-sorter/">makeSorter</a></li>
+      <li><a class="doc-link" href="/router/">router</a></li>
+      <li><a class="doc-link" href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+      <li><a class="doc-link" href="/theme/">theme</a></li>
+      <li><a class="doc-link" href="/track-drag/">trackDrag</a></li>
     </ul>
     </details></li>
-    <li><details><summary><a href="/appendices/">Appendices</a></summary>
+    <li><details><summary><a class="doc-link" href="/appendices/">Appendices</a></summary>
     <ul>
-      <li><a href="/doc-system/">doc-system</a></li>
-      <li><a href="/kitchen-sink/">kitchen sink</a></li>
-      <li><a href="/make-icon-data/">make-icon-data</a></li>
-      <li><a href="/doc-browser/">doc-browser</a></li>
-      <li><a href="/doc-site-system/">Doc-Site System</a></li>
-      <li><a href="/docs/">docs</a></li>
-      <li><a href="/icon-composition/">Icon Composition</a></li>
+      <li><a class="doc-link" href="/doc-system/">doc-system</a></li>
+      <li><a class="doc-link" href="/kitchen-sink/">kitchen sink</a></li>
+      <li><a class="doc-link" href="/make-icon-data/">make-icon-data</a></li>
+      <li><a class="doc-link" href="/doc-browser/">doc-browser</a></li>
+      <li><a class="doc-link" href="/doc-site-system/">Doc-Site System</a></li>
+      <li><a class="doc-link" href="/docs/">docs</a></li>
+      <li><a class="doc-link" href="/icon-composition/">Icon Composition</a></li>
     </ul>
     </details></li>
   </ul>
@@ -126,6 +223,6 @@ and an <code>ace</code> property that returns the <code>ace</code> module, givin
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script src="/iife.js"></script>
+  <script type="module" src="/hydrate.js"></script>
 </body>
 </html>

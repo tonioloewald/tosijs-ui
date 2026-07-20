@@ -1,13 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Hide the pre-rendered body until <tosi-doc-system> hydrates, then fade it
-       in — avoids the layout shift as the static markup is swapped for the live
-       doc browser. <noscript> keeps it visible for no-JS readers/crawlers; the
-       timeout is a safety net so a failed/slow hydration can't leave it blank. -->
-  <style>body{opacity:0;transition:opacity .25s ease}</style>
-  <noscript><style>body{opacity:1!important}</style></noscript>
-  <script>setTimeout(function(){if(document.body)document.body.style.opacity='1'},4000)</script>
+  <!-- NB: the body is NOT hidden until hydration. It used to be (body opacity 0 +
+       a 4s safety-net timeout), because an undefined custom element is
+       display:inline, so the pre-rendered page stacked as bare text and hydration
+       reflowed the whole thing. The cost was a blank screen for as long as the
+       bundle took — ~4.5s on a cheap phone, for content already in the HTML. The
+       tosi-doc-system:not(:defined) rules in the stylesheet now lay the static page
+       out as though the chrome were there, so hydration only ADDS the chrome and
+       nothing moves. Paint immediately; don't hide readable content. -->
+  <!-- Theme, applied BEFORE first paint. Now that we paint the static page rather
+       than hiding it, a dark-mode reader would otherwise get a flash of the light
+       theme until the bundle lands and sets body.darkmode. CSS alone can't do this:
+       an explicit theme choice lives in localStorage. Mirrors applyThemePrefs()
+       (doc-system.ts) — keep the two in step. Fails safe: any error leaves the
+       light default, exactly as before. -->
+  <script>
+    try {
+      var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
+      var t = p.theme || 'system'
+      if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('darkmode')
+      if (p.highContrast) document.documentElement.classList.add('high-contrast')
+    } catch (e) {}
+  </script>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -24,7 +40,7 @@
   <meta name="twitter:card" content="summary" />
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"tag-list","description":"Building a tag-list from standard HTML elements is a bit of a nightmare.","url":"https://ui.tosijs.net/tag-list/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="/favicon.svg" />
-<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script>
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
   <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="/localized-strings.txt">
@@ -139,73 +155,73 @@ comma inside a tag must be escaped as <code>\,</code> when set via the attribute
   </article>
   <nav class="doc-nav" aria-label="Documentation">
   <ul>
-    <li><a href="/">tosijs-ui</a></li>
-    <li><a href="/one-source-every-artifact/">One Source</a></li>
-    <li><a href="/bp-loader/">blueprint loading</a></li>
-    <li><a href="/icons/">icons</a></li>
-    <li><details><summary><a href="/components/">Components</a></summary>
+    <li><a class="doc-link" href="/">tosijs-ui</a></li>
+    <li><a class="doc-link" href="/one-source-every-artifact/">One Source</a></li>
+    <li><a class="doc-link" href="/bp-loader/">blueprint loading</a></li>
+    <li><a class="doc-link" href="/icons/">icons</a></li>
+    <li><details><summary><a class="doc-link" href="/components/">Components</a></summary>
     <ul>
-      <li><a href="/babylon-3d/">3d</a></li>
-      <li><a href="/carousel/">carousel</a></li>
-      <li><a href="/code-editor/">code</a></li>
-      <li><a href="/dialog/">dialog</a></li>
-      <li><a href="/diff/">diff</a></li>
-      <li><a href="/editable-rect/">editable-rect</a></li>
-      <li><a href="/component/">example</a></li>
-      <li><a href="/float/">float</a></li>
-      <li><a href="/gamepad/">gamepads</a></li>
-      <li><a href="/header/">header</a></li>
-      <li><a href="/layout/">layout</a></li>
-      <li><a href="/bodymovin-player/">lottie / bodymovin</a></li>
-      <li><a href="/mapbox/">map</a></li>
-      <li><a href="/markdown-viewer/">markdown</a></li>
-      <li><a href="/menu/">menu</a></li>
-      <li><a href="/notifications/">notifications</a></li>
-      <li><a href="/pop-float/">popFloat</a></li>
-      <li><a href="/side-nav/">sidebar</a></li>
-      <li><a href="/size-break/">size-break</a></li>
-      <li><a href="/sizer/">sizer</a></li>
-      <li><a href="/data-table/">table</a></li>
-      <li><a href="/tab-selector/">tabs</a></li>
-      <li><a href="/tooltip/">tooltip</a></li>
+      <li><a class="doc-link" href="/babylon-3d/">3d</a></li>
+      <li><a class="doc-link" href="/carousel/">carousel</a></li>
+      <li><a class="doc-link" href="/code-editor/">code</a></li>
+      <li><a class="doc-link" href="/dialog/">dialog</a></li>
+      <li><a class="doc-link" href="/diff/">diff</a></li>
+      <li><a class="doc-link" href="/editable-rect/">editable-rect</a></li>
+      <li><a class="doc-link" href="/component/">example</a></li>
+      <li><a class="doc-link" href="/float/">float</a></li>
+      <li><a class="doc-link" href="/gamepad/">gamepads</a></li>
+      <li><a class="doc-link" href="/header/">header</a></li>
+      <li><a class="doc-link" href="/layout/">layout</a></li>
+      <li><a class="doc-link" href="/bodymovin-player/">lottie / bodymovin</a></li>
+      <li><a class="doc-link" href="/mapbox/">map</a></li>
+      <li><a class="doc-link" href="/markdown-viewer/">markdown</a></li>
+      <li><a class="doc-link" href="/menu/">menu</a></li>
+      <li><a class="doc-link" href="/notifications/">notifications</a></li>
+      <li><a class="doc-link" href="/pop-float/">popFloat</a></li>
+      <li><a class="doc-link" href="/side-nav/">sidebar</a></li>
+      <li><a class="doc-link" href="/size-break/">size-break</a></li>
+      <li><a class="doc-link" href="/sizer/">sizer</a></li>
+      <li><a class="doc-link" href="/data-table/">table</a></li>
+      <li><a class="doc-link" href="/tab-selector/">tabs</a></li>
+      <li><a class="doc-link" href="/tooltip/">tooltip</a></li>
     </ul>
     </details></li>
-    <li><details open><summary><a href="/form-components/">Form Components</a></summary>
+    <li><details open><summary><a class="doc-link" href="/form-components/">Form Components</a></summary>
     <ul>
-      <li><a href="/color-input/">color input field</a></li>
-      <li><a href="/filter-builder/">filter</a></li>
-      <li><a href="/form/">forms</a></li>
-      <li><a href="/month/">month</a></li>
-      <li><a href="/password-strength/">password strength</a></li>
-      <li><a href="/rating/">rating</a></li>
-      <li><a href="/rich-text/">rich text</a></li>
-      <li><a href="/segmented/">segmented select</a></li>
-      <li><a href="/select/">select</a></li>
-      <li><a href="/tag-list/" aria-current="page" class="current">tag-list</a></li>
+      <li><a class="doc-link" href="/color-input/">color input field</a></li>
+      <li><a class="doc-link" href="/filter-builder/">filter</a></li>
+      <li><a class="doc-link" href="/form/">forms</a></li>
+      <li><a class="doc-link" href="/month/">month</a></li>
+      <li><a class="doc-link" href="/password-strength/">password strength</a></li>
+      <li><a class="doc-link" href="/rating/">rating</a></li>
+      <li><a class="doc-link" href="/rich-text/">rich text</a></li>
+      <li><a class="doc-link" href="/segmented/">segmented select</a></li>
+      <li><a class="doc-link" href="/select/">select</a></li>
+      <li><a class="doc-link current" href="/tag-list/" aria-current="page">tag-list</a></li>
     </ul>
     </details></li>
-    <li><details><summary><a href="/helper-libraries/">Helper Libraries</a></summary>
+    <li><details><summary><a class="doc-link" href="/helper-libraries/">Helper Libraries</a></summary>
     <ul>
-      <li><a href="/ab-test/">ab-test</a></li>
-      <li><a href="/drag-and-drop/">drag &amp; drop</a></li>
-      <li><a href="/live-theme/">live-theme</a></li>
-      <li><a href="/localize/">localize</a></li>
-      <li><a href="/make-sorter/">makeSorter</a></li>
-      <li><a href="/router/">router</a></li>
-      <li><a href="/via-tag/">scriptTag &amp; styleSheet</a></li>
-      <li><a href="/theme/">theme</a></li>
-      <li><a href="/track-drag/">trackDrag</a></li>
+      <li><a class="doc-link" href="/ab-test/">ab-test</a></li>
+      <li><a class="doc-link" href="/drag-and-drop/">drag &amp; drop</a></li>
+      <li><a class="doc-link" href="/live-theme/">live-theme</a></li>
+      <li><a class="doc-link" href="/localize/">localize</a></li>
+      <li><a class="doc-link" href="/make-sorter/">makeSorter</a></li>
+      <li><a class="doc-link" href="/router/">router</a></li>
+      <li><a class="doc-link" href="/via-tag/">scriptTag &amp; styleSheet</a></li>
+      <li><a class="doc-link" href="/theme/">theme</a></li>
+      <li><a class="doc-link" href="/track-drag/">trackDrag</a></li>
     </ul>
     </details></li>
-    <li><details><summary><a href="/appendices/">Appendices</a></summary>
+    <li><details><summary><a class="doc-link" href="/appendices/">Appendices</a></summary>
     <ul>
-      <li><a href="/doc-system/">doc-system</a></li>
-      <li><a href="/kitchen-sink/">kitchen sink</a></li>
-      <li><a href="/make-icon-data/">make-icon-data</a></li>
-      <li><a href="/doc-browser/">doc-browser</a></li>
-      <li><a href="/doc-site-system/">Doc-Site System</a></li>
-      <li><a href="/docs/">docs</a></li>
-      <li><a href="/icon-composition/">Icon Composition</a></li>
+      <li><a class="doc-link" href="/doc-system/">doc-system</a></li>
+      <li><a class="doc-link" href="/kitchen-sink/">kitchen sink</a></li>
+      <li><a class="doc-link" href="/make-icon-data/">make-icon-data</a></li>
+      <li><a class="doc-link" href="/doc-browser/">doc-browser</a></li>
+      <li><a class="doc-link" href="/doc-site-system/">Doc-Site System</a></li>
+      <li><a class="doc-link" href="/docs/">docs</a></li>
+      <li><a class="doc-link" href="/icon-composition/">Icon Composition</a></li>
     </ul>
     </details></li>
   </ul>
@@ -218,6 +234,6 @@ comma inside a tag must be escaped as <code>\,</code> when set via the attribute
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script src="/iife.js"></script>
+  <script type="module" src="/hydrate.js"></script>
 </body>
 </html>

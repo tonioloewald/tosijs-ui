@@ -104,9 +104,7 @@ describe('live-example/code-transform', () => {
 
 describe('live-example/test-harness', () => {
   test('expect and matchers work', async () => {
-    const { expect: testExpect } = await import(
-      './live-example/test-harness'
-    )
+    const { expect: testExpect } = await import('./live-example/test-harness')
     expect(() => testExpect(1).toBe(1)).not.toThrow()
     expect(() => testExpect(1).toBe(2)).toThrow()
     expect(() => testExpect('hello').toContain('ell')).not.toThrow()
@@ -123,17 +121,13 @@ describe('live-example/test-harness', () => {
   })
 
   test('expect.not negates matchers', async () => {
-    const { expect: testExpect } = await import(
-      './live-example/test-harness'
-    )
+    const { expect: testExpect } = await import('./live-example/test-harness')
     expect(() => testExpect(1).not.toBe(2)).not.toThrow()
     expect(() => testExpect(1).not.toBe(1)).toThrow()
   })
 
   test('createTestContext collects results', async () => {
-    const { createTestContext } = await import(
-      './live-example/test-harness'
-    )
+    const { createTestContext } = await import('./live-example/test-harness')
     const results: any[] = []
     const ctx = createTestContext(results)
     ctx.test('sync pass', () => {

@@ -378,13 +378,29 @@ describe('icons', () => {
 
   describe('directional redirects', () => {
     const redirected = [
-      'arrowDown', 'arrowUp', 'arrowLeft',
-      'arrowDownCircle', 'arrowUpCircle', 'arrowLeftCircle',
-      'chevronDown', 'chevronUp', 'chevronLeft',
-      'chevronsDown', 'chevronsUp', 'chevronsLeft',
-      'toggleLeft', 'skipBack', 'refreshCcw', 'rotateCcw',
-      'arrowDownRight', 'arrowDownLeft', 'arrowUpLeft',
-      'cornerDownLeft', 'cornerUpLeft', 'cornerLeftDown', 'cornerLeftUp',
+      'arrowDown',
+      'arrowUp',
+      'arrowLeft',
+      'arrowDownCircle',
+      'arrowUpCircle',
+      'arrowLeftCircle',
+      'chevronDown',
+      'chevronUp',
+      'chevronLeft',
+      'chevronsDown',
+      'chevronsUp',
+      'chevronsLeft',
+      'toggleLeft',
+      'skipBack',
+      'refreshCcw',
+      'rotateCcw',
+      'arrowDownRight',
+      'arrowDownLeft',
+      'arrowUpLeft',
+      'cornerDownLeft',
+      'cornerUpLeft',
+      'cornerLeftDown',
+      'cornerLeftUp',
     ]
     for (const name of redirected) {
       test(`${name} resolves to an icon (not square)`, () => {
