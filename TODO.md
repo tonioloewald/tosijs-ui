@@ -23,9 +23,11 @@ Non-blocking follow-ups (do before the FINAL 1.7.0 tag):
 - [x] **CHANGELOG** — added `1.7.0-beta.3` section, fixed the peer line to `^0.10.1`, annotated the
       beta.2 "Remaining… defers construction" note as delivered.
 - [x] **CLAUDE.md/MEMORY.md `haltija@latest` → `^1.4.0`** (code pins `HALTIJA_PKG=haltija@^1.4.0`).
-- [ ] **DECISION: breaking `<tosi-code>` under a MINOR bump.** `^1.6` consumers auto-update into the
-      ACE→CM break. Deliberate + documented (tosijs 2.0 sequencing) — ratify explicitly and make the
-      semver deviation loud atop CHANGELOG + README, or go 2.0.0. Confirm before the final tag.
+- [x] **DECISION MADE (2026-07-20): breaking `<tosi-code>` ships as 1.7.0 MINOR, documented loudly.**
+      Rationale: the `2.0` name is reserved for the tjs-native tosijs port. Loud BREAKING notice added
+      atop CHANGELOG (new consolidated `## 1.7.0` section) and README (⚠️ section before the intro):
+      ACE→CM6, `theme`/`options` dropped with no shim, `value`/`mode`/`change`/`disabled`/undo-redo
+      unchanged, pin `@1.6` to defer. **Final tag waits on haltija 1.5.0 (being nine-lensed).**
 - [x] **`el.editor` getter warning** — downgraded to `console.info`, leads with "it IS the supported
       CM6 accessor" so correct use isn't scolded.
 - [ ] **CI e2e is Chromium-only** (`.github/workflows/ci.yml`) — the headline browser features have no
@@ -48,18 +50,21 @@ Non-blocking follow-ups (do before the FINAL 1.7.0 tag):
 - [x] **#8 hydration console errors** — verified fixed by the 1.6.9 parts adoption, closed, guarded
       (`hydration.pw.ts` console-clean test).
 - [x] **#15 ePub cross-links** — fixed (`rewriteInBookLinks`), closed, 6 unit cases + real-ePub verified.
-- [ ] **GitHub issues + `UPSTREAM.md` (ecosystem), remaining:** #14 (throwing example — PARTIAL:
-      `check-examples` compiles but never *runs*, so a `ReferenceError` in a mislabeled `js` snippet
-      still passes a consumer's build; only the doc-test lane catches it); #9 (document the
-      cinematic-landing-page pattern — content-bound); file a GH issue for the WebKit doc-test-runner
-      skip; keep bun#34053 note current (native-leak shell-out now spans 4 sites). **#12** (language-
-      plugin hooks) is the strategic platform work, not a cleanup — see the platform sequence below.
-- [ ] **Shared `tosijs-coding-practices` (practices lens):** `testing.md` Playwright "server already
-      running" claim is now FALSE (this release inverted it — dedicated port 8799, `reuseExistingServer:false`);
-      `00-stack.md` zero-runtime-dep rule contradicted by 12 `@codemirror/*` runtime deps (add a
-      Known-divergences entry — an agent reading the KB would demote them to peers and break tjs
-      highlighting); add the "never scope the suite with a glob" lesson; add a lens-7/8 write-back
-      receipt requirement; `README.md` "eight-lens" → "nine-lens".
+- [~] **GitHub issues + `UPSTREAM.md` (ecosystem), remaining:**
+      - [x] #14 (throwing example) already filed + open (tosijs-ui#14) — tracked, not a new filing.
+      - [x] **WebKit doc-test-runner skip filed as tosijs-ui#19** (2026-07-20) — the 4 specs that
+            `test.skip` WebKit + root cause (iframe runner never posts per-page `tosi-tests-done`).
+      - [x] bun#34053 note kept current (weekly poll 2026-07-20; PR still unmerged, still 1.3.14).
+      - [ ] **#13 (`<tosi-map>`) — CLOSE ON TAG.** Fixed on-branch (`c7c1e63e`) but the issue is still
+            OPEN; close it naming 1.7.0 when the tag lands.
+      - [ ] #9 (document the cinematic-landing-page pattern — content-bound). **#12** (language-plugin
+            hooks) is strategic platform work, not a cleanup — see the platform sequence below.
+- [x] **Shared `tosijs-coding-practices` (practices lens) — DONE (2026-07-20).** On review, most were
+      already landed by the earlier practices commit: `testing.md` Playwright claim already inverted
+      (dedicated 8799, `reuseExistingServer:false`); `00-stack.md` already has the 12-`@codemirror/*`
+      Known-divergence entry; `README.md` already "nine-lens"; lens-7/8 write-back covered by review.md's
+      "Done when: filed upstream". The one genuinely-missing lesson — **"never scope the unit lane with a
+      `*.test.ts` glob" (skips subdirs, ~126 tests) — added to `testing.md`** (commit `417ce9e`, unpushed).
 
 
 

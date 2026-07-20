@@ -60,6 +60,14 @@
 </center>
 
 <p>Copyright ©2023-2025 Tonio Loewald</p>
+<h2>⚠️ Breaking change in 1.7.0 — <code>&lt;tosi-code&gt;</code> (ACE → CodeMirror 6)</h2>
+<p><strong>1.7.0 is a breaking release shipping under a minor version, deliberately.</strong> <code>&lt;tosi-code&gt;</code>
+moved from ACE to CodeMirror 6. <code>value</code>, <code>mode</code>, the <code>change</code> event, <code>disabled</code>, and
+<code>undo</code>/<code>redo</code> are unchanged; the ACE-era <strong><code>theme</code></strong> and <strong><code>options</code></strong> props are <strong>removed</strong> with
+no shim. Dark mode is now automatic (<code>body.darkmode</code>) and styling comes from <code>--code-bg</code> /
+<code>--text-color</code>. The <code>2.0</code> name is reserved for the tjs-native tosijs port, so this ships as
+1.7.0 — <strong>pin <code>tosijs-ui@1.6</code> to defer.</strong> Full detail and rationale in
+<a href="./CHANGELOG.md">CHANGELOG.md</a>.</p>
 <h2>the tosijs-ui library</h2>
 <p>A set of <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components">web-components</a>
 created with <a href="https://tosijs.net">tosijs</a>, designed to augment what the browser gives you

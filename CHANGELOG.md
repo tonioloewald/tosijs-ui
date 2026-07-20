@@ -1,5 +1,81 @@
 # Changelog
 
+## 1.7.0
+
+> ### ⚠️ BREAKING CHANGE — `<tosi-code>` moved from ACE to CodeMirror 6
+>
+> This is a **breaking change shipping under a minor version**, deliberately. `<tosi-code>`
+> (and the `<tosi-code>`-backed code panels in live examples / the doc browser) is now a
+> CodeMirror 6 wrapper instead of ACE. The public contract that **survives** is unchanged:
+> `value`, `mode`, the `change` event, `disabled`, and `undo`/`redo`. What is **removed**:
+> the ACE-era **`theme`** and **`options`** props — there is no compatibility shim for them
+> (CodeMirror's theming model is different in kind, so a shim would silently no-op). If you set
+> either, migrate: dark mode is now automatic (driven by `body.darkmode`), and editor styling
+> comes from the `--code-bg` / `--text-color` CSS variables. The `editor` property now exposes
+> a CodeMirror `EditorView` rather than an ACE editor.
+>
+> **Why a minor, not 2.0.0:** the `2.0` name is reserved for the tjs-native tosijs port that
+> follows tosijs 2.0; spending it on an editor swap now would missignal that larger change.
+> The deviation from strict semver is intentional and called out here + in the README. **To
+> defer the change, pin `tosijs-ui@1.6`.** Everything else in 1.7.0 is additive.
+
+The headline: the editor became first-class for **tjs** and **WebAssembly**, and doc pages got
+dramatically lighter — a reader loads a page with **neither the tjs transpiler nor CodeMirror on
+first paint**, both arriving only when a code panel is opened to edit.
+
+### CodeMirror 6 editor (replaces ACE)
+
+`<tosi-code>` is a CodeMirror 6 wrapper. The heavy CM code (`code-editor-cm.ts`) is a **lazy
+chunk** loaded on first edit — for ESM/bundler consumers a page with no editor bundles none of
+it. (The IIFE build cannot code-split, so the CDN `<script>` path still inlines it.) Modes:
+`javascript`, `typescript`, `tjs`, `ajs`, `css`, `html`, `markdown`. New: `undo()`/`redo()`/
+`canUndo()`/`canRedo()`, `showDiff(on)` (diffs against a captured baseline via `tosi-diff`), and
+automatic dark mode via a `highlight` compartment + a `body.darkmode` observer.
+
+### First-class tjs + inline WebAssembly in live examples
+
+`tjs`/`ajs` example blocks get tjs-lang's CodeMirror language + **runtime-value autocomplete**
+(completion resolves the live values of an example's locals). Inline `wasm{}` examples run — the
+WASM kernel actually compiles, guarded in CI so a silent fall-back to JS is caught. tjs-lang
+bumped **0.9.0 → 0.11.0** across the release (memory-storm fix in 0.10.1; import-resolver in
+0.11.0).
+
+### Self-contained, transpiler-free example pages
+
+Each `tjs` example is transpiled **at build time** and its JS baked into the page as a hidden,
+non-executing `<script type="application/tosi-transpiled">`; the example runs from that bake, so
+no transpiler loads for a reader. The bakes ship per-doc in `docs.json` too, so client-side
+navigation gets them at zero extra first-paint cost. Editing an example drops the bake and loads
+the real transpiler + editor on demand; saving keeps the transpiled JS.
+
+### Live examples can import real npm packages (experimental)
+
+With `importResolver` enabled, a live example can `import` any npm package — resolved through a
+same-origin service worker (tjs-lang's import-resolver). Three execution modes are flaggable on
+the fence: `inline` (default), `iframe` (DOM/CSS isolation), `ide` (recognized; iframe path for
+now). Fence grammar is order-free: `` ```ts:ide#demo `` and `` ```ts#demo:ide `` both parse.
+
+### Doc-system & build
+
+Pre-rendered, hydrating doc pages (the chrome renders server-side and hydrates in place — no
+opacity gate on first paint). The hydration bundle ESM-splits CodeMirror off the critical path.
+Machine-safety guards for the long-lived dev server: an RSS ceiling, an 8-hour idle exit, and a
+preflight that refuses to build on an already-dying machine (Bun's `Bun.build()` native leak,
+oven-sh/bun#34053, is worked around by shelling out to the `bun build` CLI). A live
+`<tosi-css-var-editor>` on component pages. Nested `<tosi-doc-system>` instances no longer share
+state (each gets its own observable registry key).
+
+### Peers
+
+`tosijs` peer floor `^1.6.9` (the parts-hydration fix). `tjs-lang` `^0.11.0` — a lazy, optional
+peer (a plain component consumer never pulls it in). `@codemirror/*` are the only hard runtime
+dependencies (a deliberate divergence from the zero-runtime-dep rule; they must share one
+`@codemirror/state` instance).
+
+---
+
+_The beta changelogs below are retained for detail; 1.7.0 consolidates betas 1–5._
+
 ## 1.7.0-beta.3
 
 **Self-contained examples, and CodeMirror + the tjs transpiler are now edit-time only.** A
