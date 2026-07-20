@@ -67,14 +67,16 @@ state (each gets its own observable registry key).
 
 ### Peers
 
-`tosijs` peer floor `^1.6.9` (the parts-hydration fix). `tjs-lang` `^0.12.0` — a lazy, optional
+`tosijs` peer floor `^1.7.0` — the 1.7 line is a co-released, lockstep stack, and this is the
+version tosijs-ui is built, tested, and (in the iife) bundled against; we don't verify against
+older tosijs, so the declared floor matches what's actually tested. `tjs-lang` `^0.12.0` — a lazy, optional
 peer (a plain component consumer never pulls it in). `@codemirror/*` are the only hard runtime
 dependencies (a deliberate divergence from the zero-runtime-dep rule; they must share one
 `@codemirror/state` instance).
 
 ---
 
-_The beta changelogs below are retained for detail; 1.7.0 consolidates betas 1–5._
+_The beta changelogs below are retained for detail; 1.7.0 consolidates betas 1–5 + rc.1. Built on tosijs 1.7.0._
 
 ## 1.7.0-beta.3
 
