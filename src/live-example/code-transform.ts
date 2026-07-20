@@ -176,7 +176,7 @@ type FromTsFn = (
 // self-contained) and is loaded only for `ts` examples; from-ts in turn fetches
 // the TypeScript compiler lazily at runtime, so tsc is never pulled in until a TS
 // example actually transforms. Pinned to match the dev dep.
-const TJS_VERSION = '0.11.0'
+const TJS_VERSION = '0.12.0'
 
 // Where to fetch a tjs-lang browser bundle from, in priority order:
 //  1. SAME-ORIGIN — the doc-site build copies the bundles next to the iife and

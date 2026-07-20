@@ -43,7 +43,7 @@
     "happy-dom": "^20.7.0",
     "playwright": "^1.58.2",
     "prettier": "^2.8.8",
-    "tjs-lang": "0.11.0",
+    "tjs-lang": "0.12.0",
     "tosijs": "1.7.0-beta.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8"
@@ -52,7 +52,7 @@
     "@resvg/resvg-js": "^2.6.2",
     "happy-dom": "^20.7.0",
     "marked": "^16.4.2",
-    "tjs-lang": "^0.11.0",
+    "tjs-lang": "^0.12.0",
     "tosijs": "^1.6.9"
   },
   "peerDependenciesMeta": {

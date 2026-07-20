@@ -37,8 +37,8 @@ automatic dark mode via a `highlight` compartment + a `body.darkmode` observer.
 `tjs`/`ajs` example blocks get tjs-lang's CodeMirror language + **runtime-value autocomplete**
 (completion resolves the live values of an example's locals). Inline `wasm{}` examples run — the
 WASM kernel actually compiles, guarded in CI so a silent fall-back to JS is caught. tjs-lang
-bumped **0.9.0 → 0.11.0** across the release (memory-storm fix in 0.10.1; import-resolver in
-0.11.0).
+bumped **0.9.0 → 0.12.0** across the release (memory-storm fix in 0.10.1; import-resolver in
+0.11.0; VM security-review fixes in 0.12.0).
 
 ### Self-contained, transpiler-free example pages
 
@@ -67,7 +67,7 @@ state (each gets its own observable registry key).
 
 ### Peers
 
-`tosijs` peer floor `^1.6.9` (the parts-hydration fix). `tjs-lang` `^0.11.0` — a lazy, optional
+`tosijs` peer floor `^1.6.9` (the parts-hydration fix). `tjs-lang` `^0.12.0` — a lazy, optional
 peer (a plain component consumer never pulls it in). `@codemirror/*` are the only hard runtime
 dependencies (a deliberate divergence from the zero-runtime-dep rule; they must share one
 `@codemirror/state` instance).
