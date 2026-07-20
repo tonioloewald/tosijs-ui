@@ -58,6 +58,30 @@ session-only + expire in 7 days — this line is the durable reminder.)
 > everything is built on. Friction against tosijs has been silently absorbed into hand-rolls
 > instead of being reported.
 
+### Note — experimental `tosijs/debug` + `tosijs/safe` builds are METADATA-ONLY in 1.7.0
+
+Checked 2026-07-20 against tosijs **1.7.0-beta.1**. tosijs ships two experimental tjs-built
+bundles — `tosijs/debug` (`configure({throwTypeErrors:true, logTypeErrors:true})` + a console
+banner) and `tosijs/safe` (same, flags `false`). **Verified empirically that they check
+NOTHING yet**: with `tjs-lang/runtime` installed first (`installRuntime()` — importing the
+module alone does NOT self-install `globalThis.__tjs`) and config maxed to `safety:'all',
+throwTypeErrors:true`, assigning a string to a numeric observable neither threw, recorded, nor
+errored (`records=0 errors=0`, value silently became the string). Confirmed structurally: the
+debug bundle contains ZERO enforcement-call markers (`checkType`/`checkFnShape`/`emitRuntimeWrapper`)
+— config can't switch on code that wasn't compiled in. The bundle's own banner says so:
+"Ships runtime type metadata (`__tjs`) per function; **runtime type enforcement arrives as
+modules move to native TJS (tosijs 2.0)**." The state-update type-checking + flight-recorder
+integration lives on the **tosijs 2.0 branch**, not 1.7.0.
+
+**Consequence:** do NOT build `tosijs-ui/debug` / `/safe` parallel distributions yet — they'd
+cost ~1.4MB tarball (one mirrored ESM tree, since debug/safe differ only by a `configure()`
+call + banner — same build) and find zero bugs. Revisit when 2.0 wires enforcement; the two
+prerequisites are already scoped: (1) a single-tosijs-instance mirror so tosijs-ui can consume
+the experimental build without dual-registry collisions, and (2) tosijs-ui feeding
+`__tjs.record()` for things WE control (live-example failures, wasm fallbacks). The recorder
+API itself works today (`record()` → `records({source,severity})` round-trips). Not filed —
+it's a roadmap sequencing note, not a bug.
+
 - **[#13](https://github.com/tonioloewald/tosijs/issues/13)** — ✅ **RESOLVED (fixed in
   tosijs 1.6.9).** Both asks landed: `hydrate()` now ends with `_hydrated = true, _parts =
   undefined, _resolveHydrated?.()` — it **invalidates the cached proxy** (so a pre-hydration
