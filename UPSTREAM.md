@@ -301,10 +301,10 @@ _Original per-issue notes:_
     reliably reap it (it reparents; even a manual early-tree reap left survivors). Each run leaves
     an Electron that (a) holds the single-instance lock → next run fails, (b) accumulates (the
     machine-exhaustion hazard). Won't hand-roll a flaky reaper into a safety-critical lane.
-    **Remaining haltija ask:** reliable `--private` teardown — an `hj --port quit`/shutdown, or
-    `--private` killing its whole process group (Electron incl.) on spawner-death / wrapper
-    SIGTERM. With that, the migration is a few lines. (Blocker A — `--headless` needs Playwright —
-    is moot: `--ci` uses Electron.)
+    **Filed upstream: [tonioloewald/haltija#7](https://github.com/tonioloewald/haltija/issues/7)** —
+    reliable `--private` teardown (an `hj --port quit`/shutdown, or `--private` killing its whole
+    process group incl. Electron on spawner-death / wrapper SIGTERM). With that, the migration is a
+    few lines. (Blocker A — `--headless` needs Playwright — is moot: `--ci` uses Electron.)
   - **Status:** reverted the lane to shared-adopt; kept the `haltija@^1.5.0` pin. Not the CI gate
     (that's `doc-tests.pw.ts`), so no release impact. Revisit when the teardown ask lands.
 
