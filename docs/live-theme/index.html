@@ -70,6 +70,100 @@ preview.append(tosiThemeEditor())
 // Set values programmatically (triggers immediate theme update)
 // liveTheme.accent.value = &#39;#007AFF&#39;
 </code></pre>
+<h2>CSS canary</h2>
+<p>A smoke test for the whole styling chain — <code>StyleSheet()</code> injection → the <code>vars</code>
+proxy → scaled-var math → <code>createTheme</code>/<code>applyTheme</code> → the cascade → real
+<code>getComputedStyle</code>. Each link is <strong>silent when it breaks</strong> (no throw, no unit-test
+failure — happy-dom can&#39;t resolve <code>var()</code> or the cascade), so it needs a real
+browser, which is exactly where this inline test runs. Green here means &quot;styling is
+fundamentally working&quot;; a red means a <strong>system-level</strong> CSS break, not a component
+quirk — the signal that keeps a debugging session out of a blind alley.</p>
+<pre><code class="language-test">import { StyleSheet, vars, Color } from &#39;tosijs&#39;
+import { createTheme, createDarkTheme } from &#39;tosijs-ui&#39;
+
+// Let the style/layout system apply an injected StyleSheet before we measure.
+const raf = () =&gt; new Promise((r) =&gt; requestAnimationFrame(() =&gt; r(null)))
+
+test(&#39;css canary: StyleSheet injects and vars (incl. scaled) resolve to computed px&#39;, async () =&gt; {
+  // Define our OWN var so the check is deterministic, not hostage to the page theme.
+  StyleSheet(&#39;css-canary-vars&#39;, {
+    &#39;.css-canary-vars&#39;: {
+      _canarySpace: &#39;20px&#39;, // → --canary-space: 20px
+      padding: vars.canarySpace, // var(--canary-space) → 20px
+      marginLeft: vars.canarySpace50, // calc(var(--canary-space) * 0.5) → 10px
+    },
+  })
+  const box = document.createElement(&#39;div&#39;)
+  box.className = &#39;css-canary-vars&#39;
+  preview.append(box)
+  await raf()
+  const cs = getComputedStyle(box)
+  expect(cs.paddingTop).toBe(&#39;20px&#39;) // StyleSheet injected + vars proxy resolved
+  expect(cs.marginLeft).toBe(&#39;10px&#39;) // scaled-var calc() machinery works
+})
+
+test(&#39;css canary: a theme color change reaches computed style&#39;, async () =&gt; {
+  const scope = document.createElement(&#39;div&#39;)
+  scope.className = &#39;css-canary-scope&#39;
+  const swatch = document.createElement(&#39;div&#39;)
+  swatch.className = &#39;css-canary-swatch&#39;
+  scope.append(swatch)
+  preview.append(scope)
+  StyleSheet(&#39;css-canary-swatch&#39;, {
+    &#39;.css-canary-swatch&#39;: { color: vars.tosiAccent }, // var(--tosi-accent)
+  })
+  // Scope each theme&#39;s :root vars onto our container (not the whole page); the later
+  // sheet wins by cascade order, so this is robust to StyleSheet&#39;s dedup behavior.
+  const applyAccent = (hex, id) =&gt; {
+    const theme = createTheme({
+      accent: Color.fromCss(hex),
+      background: Color.fromCss(&#39;#ffffff&#39;),
+      text: Color.fromCss(&#39;#000000&#39;),
+    })
+    StyleSheet(id, { &#39;.css-canary-scope&#39;: theme[&#39;:root&#39;] })
+  }
+  applyAccent(&#39;#ff0000&#39;, &#39;css-canary-theme-1&#39;)
+  await raf()
+  const red = getComputedStyle(swatch).color
+  applyAccent(&#39;#0000ff&#39;, &#39;css-canary-theme-2&#39;)
+  await raf()
+  const blue = getComputedStyle(swatch).color
+  expect(red).toMatch(/^rgb/) // resolved to a real color, not an unresolved var()
+  expect(red).not.toBe(blue) // the bound color change propagated to computed style
+})
+
+test(&#39;css canary: dark mode recomputes the background&#39;, async () =&gt; {
+  const el = document.createElement(&#39;div&#39;)
+  el.className = &#39;css-canary-dark&#39;
+  preview.append(el)
+  StyleSheet(&#39;css-canary-dark-bg&#39;, {
+    &#39;.css-canary-dark&#39;: { background: vars.tosiBg }, // var(--tosi-bg)
+  })
+  const colors = {
+    accent: Color.fromCss(&#39;#ee257b&#39;),
+    background: Color.fromCss(&#39;#ffffff&#39;),
+    text: Color.fromCss(&#39;#111111&#39;),
+  }
+  StyleSheet(&#39;css-canary-light-theme&#39;, {
+    &#39;.css-canary-dark&#39;: createTheme(colors)[&#39;:root&#39;],
+  })
+  await raf()
+  const light = getComputedStyle(el).backgroundColor
+  StyleSheet(&#39;css-canary-dark-theme&#39;, {
+    &#39;.css-canary-dark&#39;: createDarkTheme(colors)[&#39;:root&#39;],
+  })
+  await raf()
+  const dark = getComputedStyle(el).backgroundColor
+  expect(light).not.toBe(dark) // luminance inversion actually recomputed the value
+})
+
+test(&#39;css canary: Color math (inverseLuminance) yields a distinct valid color&#39;, () =&gt; {
+  const white = Color.fromCss(&#39;#ffffff&#39;)
+  const inv = white.inverseLuminance
+  expect(inv).toBeInstanceOf(Color)
+  expect(String(inv)).not.toBe(String(white)) // the color polyfill computed something
+})
+</code></pre>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">

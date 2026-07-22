@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased (1.7.1)
+
+- **CSS canary** — an inline doc-test on the `live-theme` page that smoke-tests the whole
+  styling chain in a real browser (`StyleSheet()` → the `vars` proxy → scaled-var `calc()` →
+  `createTheme`/`applyTheme` → cascade → `getComputedStyle`), plus a theme color-change
+  propagating to computed style, dark-mode luminance inversion, and `Color.inverseLuminance`.
+  Each link is silent when it breaks (happy-dom can't resolve `var()`/the cascade), so a red
+  now means a system-level CSS break, not a component quirk. Runs in the `doc-tests.pw.ts` CI
+  gate.
+
 ## 1.7.0
 
 > ### ⚠️ BREAKING CHANGE — `<tosi-code>` moved from ACE to CodeMirror 6
