@@ -78,7 +78,16 @@ export declare class TosiTabs extends WebComponent {
             height: string;
         };
     };
-    onCloseTab: TabCloseHandler | null;
+    handleCloseTab: TabCloseHandler | null;
+    /**
+     * @deprecated Use `handleCloseTab`. The `on<Event>` prefix is reserved for the
+     * elements-factory event-handler sugar (`tosiTabs({ onCloseTab })` would attach a
+     * dead `closetab` listener instead of setting the callback), and tosijs warns when a
+     * component defines such a property. This alias keeps existing `el.onCloseTab = fn`
+     * code working; migrate to `handleCloseTab`.
+     */
+    get onCloseTab(): TabCloseHandler | null;
+    set onCloseTab(handler: TabCloseHandler | null);
     content: (HTMLSlotElement | HTMLDivElement)[];
     addTabBody(body: HTMLElement, selectTab?: boolean): void;
     removeTabBody(body: HTMLElement): void;

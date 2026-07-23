@@ -55,7 +55,7 @@
 import { div, button } from &#39;tosijs&#39;.elements
 const tabSelector = preview.querySelector(&#39;tosi-tabs&#39;)
 
-tabSelector.onCloseTab = body =&gt; {
+tabSelector.handleCloseTab = body =&gt; {
   if (!confirm(`Are you sure you want to close the ${body.getAttribute(&#39;name&#39;)} tab?`)) {
     return false
   }
@@ -120,8 +120,8 @@ preview.querySelector(&#39;.add&#39;).addEventListener(&#39;click&#39;, () =&gt;
 <p>You can also just insert or remove tab bodies directly and call <code>setupTabs()</code>.</p>
 <h2>Closeable Tabs</h2>
 <p>Adding the <code>data-close</code> attribute to a tab will make it closeable.</p>
-<p>When a tab is closed, the <code>&lt;tosi-tabs&gt;</code> element&#39;s <code>onCloseTab: (tabBody: Element) =&gt; boolean | undefined | void</code>
-will be called. If you override this method and return <code>false</code>, the tab will
+<p>When a tab is closed, the <code>&lt;tosi-tabs&gt;</code> element&#39;s <code>handleCloseTab: (tabBody: Element) =&gt; boolean | undefined | void</code>
+will be called (the old <code>onCloseTab</code> name still works but is deprecated). If you set this and return <code>false</code>, the tab will
 not be closed (e.g. if you want to implement save/cancel behavior).</p>
 <h2>Custom Tab Content</h2>
 <p>You can specify the exact content of the tab for a given body by

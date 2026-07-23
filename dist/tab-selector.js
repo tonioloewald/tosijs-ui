@@ -12,7 +12,7 @@
 import { div, button } from 'tosijs'.elements
 const tabSelector = preview.querySelector('tosi-tabs')
 
-tabSelector.onCloseTab = body => {
+tabSelector.handleCloseTab = body => {
   if (!confirm(`Are you sure you want to close the ${body.getAttribute('name')} tab?`)) {
     return false
   }
@@ -85,8 +85,8 @@ You can also just insert or remove tab bodies directly and call `setupTabs()`.
 
 Adding the `data-close` attribute to a tab will make it closeable.
 
-When a tab is closed, the `<tosi-tabs>` element's `onCloseTab: (tabBody: Element) => boolean | undefined | void`
-will be called. If you override this method and return `false`, the tab will
+When a tab is closed, the `<tosi-tabs>` element's `handleCloseTab: (tabBody: Element) => boolean | undefined | void`
+will be called (the old `onCloseTab` name still works but is deprecated). If you set this and return `false`, the tab will
 not be closed (e.g. if you want to implement save/cancel behavior).
 
 ## Custom Tab Content
@@ -238,7 +238,20 @@ export class TosiTabs extends WebComponent {
             height: '12px',
         },
     };
-    onCloseTab = null;
+    handleCloseTab = null;
+    /**
+     * @deprecated Use `handleCloseTab`. The `on<Event>` prefix is reserved for the
+     * elements-factory event-handler sugar (`tosiTabs({ onCloseTab })` would attach a
+     * dead `closetab` listener instead of setting the callback), and tosijs warns when a
+     * component defines such a property. This alias keeps existing `el.onCloseTab = fn`
+     * code working; migrate to `handleCloseTab`.
+     */
+    get onCloseTab() {
+        return this.handleCloseTab;
+    }
+    set onCloseTab(handler) {
+        this.handleCloseTab = handler;
+    }
     content = [
         div({ role: 'tabpanel', part: 'tabpanel' }, div({ part: 'tabrow' }, div({ class: 'tabs', part: 'tabs' }), div({ class: 'elastic' }), slot({ name: 'after-tabs' })), div({ class: 'border' }, div({ class: 'selected', part: 'selected' }))),
         slot(),
@@ -294,7 +307,7 @@ export class TosiTabs extends WebComponent {
         const tabIndex = [...tabs.children].indexOf(tab);
         if (isCloseEvent) {
             const body = this.bodies[tabIndex];
-            if (!this.onCloseTab || this.onCloseTab(body) !== false) {
+            if (!this.handleCloseTab || this.handleCloseTab(body) !== false) {
                 this.removeTabBody(this.bodies[tabIndex]);
             }
         }
