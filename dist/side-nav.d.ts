@@ -29,7 +29,7 @@ export declare class TosiSidenav extends Component {
             display: string;
         };
     };
-    onResize: () => void;
+    handleResize: () => void;
     private observer;
     connectedCallback(): void;
     disconnectedCallback(): void;

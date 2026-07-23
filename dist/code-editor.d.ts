@@ -92,7 +92,7 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
             fontFamily: string;
         };
     };
-    onResize(): void;
+    handleResize(): void;
     connectedCallback(): void;
     disconnectedCallback(): void;
     private isTjsMode;

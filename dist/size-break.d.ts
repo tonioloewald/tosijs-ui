@@ -13,7 +13,7 @@ export declare class SizeBreak extends WebComponent {
             position: string;
         };
     };
-    onResize: () => void;
+    handleResize: () => void;
     connectedCallback(): void;
     disconnectedCallback(): void;
 }

@@ -267,7 +267,7 @@ export class CodeEditor extends WebComponent {
             fontFamily: "Menlo, Monaco, Consolas, 'Courier New', monospace",
         },
     };
-    onResize() {
+    handleResize() {
         this._handle?.refresh();
     }
     connectedCallback() {

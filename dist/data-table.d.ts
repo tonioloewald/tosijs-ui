@@ -201,7 +201,7 @@ export declare class TosiTable extends WebComponent {
     private updateSelection;
     private findCell;
     private _pendingFocus;
-    private onScrollEnd;
+    private handleScrollEnd;
     private focusCell;
     private handleKeyNav;
     connectedCallback(): void;

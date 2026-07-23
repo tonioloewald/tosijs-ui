@@ -332,7 +332,7 @@ export class B3d extends WebComponent {
     }
   }
 
-  onResize() {
+  handleResize() {
     if (this.engine) {
       this.engine.resize()
     }

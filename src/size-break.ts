@@ -93,7 +93,7 @@ export class SizeBreak extends WebComponent {
     },
   }
 
-  onResize = () => {
+  handleResize = () => {
     const { normal, small } = this.parts as { [key: string]: HTMLElement }
     const parent = this.offsetParent as HTMLElement | null
     if (!(parent instanceof HTMLElement)) {
@@ -116,12 +116,12 @@ export class SizeBreak extends WebComponent {
   // is inserted or moved into the DOM.
   connectedCallback(): void {
     super.connectedCallback()
-    globalThis.addEventListener('resize', this.onResize)
+    globalThis.addEventListener('resize', this.handleResize)
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback()
-    globalThis.removeEventListener('resize', this.onResize)
+    globalThis.removeEventListener('resize', this.handleResize)
   }
 }
 

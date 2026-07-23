@@ -1472,7 +1472,7 @@ export class TosiTable extends WebComponent {
 
   private _pendingFocus: { row: number; col: number } | null = null
 
-  private onScrollEnd = () => {
+  private handleScrollEnd = () => {
     if (!this._pendingFocus) return
     const { row, col } = this._pendingFocus
     this._pendingFocus = null
@@ -1893,7 +1893,7 @@ export class TosiTable extends WebComponent {
         this._tbodyBottom,
       ].filter(Boolean)
     )
-    this._scrollArea.addEventListener('scrollend', this.onScrollEnd)
+    this._scrollArea.addEventListener('scrollend', this.handleScrollEnd)
 
     this.append(this._scrollArea)
 

@@ -56,7 +56,7 @@ export class TosiSidenav extends Component {
     },
   }
 
-  onResize = () => {
+  handleResize = () => {
     const { content } = this.parts
     const parent = this.offsetParent as HTMLElement | null
     if (parent === null) {
@@ -107,9 +107,9 @@ export class TosiSidenav extends Component {
   connectedCallback(): void {
     super.connectedCallback()
     this.contentVisible = this.parts.content.childNodes.length === 0
-    globalThis.addEventListener('resize', this.onResize)
+    globalThis.addEventListener('resize', this.handleResize)
 
-    this.observer = new MutationObserver(this.onResize)
+    this.observer = new MutationObserver(this.handleResize)
     this.observer.observe(this, { childList: true })
     this.style.setProperty('--side-nav-transition', '0s')
     setTimeout(() => {
@@ -124,7 +124,7 @@ export class TosiSidenav extends Component {
 
   render(): void {
     super.render()
-    this.onResize()
+    this.handleResize()
   }
 }
 

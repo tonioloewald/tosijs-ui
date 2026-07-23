@@ -51,7 +51,7 @@ export declare class B3d extends WebComponent {
     sceneCreated: B3dCallback;
     update: B3dCallback;
     private _update;
-    onResize(): void;
+    handleResize(): void;
     loadScene: (path: string, file: string, processCallback?: MeshProcessCallback) => Promise<void>;
     loadUI: (options: B3dUIOptions) => Promise<any>;
     connectedCallback(): void;

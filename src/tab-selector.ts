@@ -390,7 +390,7 @@ export class TosiTabs extends WebComponent {
     this.queueRender()
   }
 
-  onResize(): void {
+  handleResize(): void {
     this.queueRender()
   }
 

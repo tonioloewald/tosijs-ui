@@ -89,7 +89,7 @@ export declare class TosiTabs extends WebComponent {
     connectedCallback(): void;
     disconnectedCallback(): void;
     localeChanged: () => void;
-    onResize(): void;
+    handleResize(): void;
     render(): void;
 }
 /** @deprecated Use TosiTabs instead */

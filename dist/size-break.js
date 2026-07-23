@@ -84,7 +84,7 @@ export class SizeBreak extends WebComponent {
             position: 'relative',
         },
     };
-    onResize = () => {
+    handleResize = () => {
         const { normal, small } = this.parts;
         const parent = this.offsetParent;
         if (!(parent instanceof HTMLElement)) {
@@ -106,11 +106,11 @@ export class SizeBreak extends WebComponent {
     // is inserted or moved into the DOM.
     connectedCallback() {
         super.connectedCallback();
-        globalThis.addEventListener('resize', this.onResize);
+        globalThis.addEventListener('resize', this.handleResize);
     }
     disconnectedCallback() {
         super.disconnectedCallback();
-        globalThis.removeEventListener('resize', this.onResize);
+        globalThis.removeEventListener('resize', this.handleResize);
     }
 }
 export const sizeBreak = SizeBreak.elementCreator();

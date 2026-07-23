@@ -319,7 +319,7 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
     },
   }
 
-  onResize() {
+  handleResize() {
     this._handle?.refresh()
   }
 

@@ -334,7 +334,7 @@ export class TosiTabs extends WebComponent {
     localeChanged = () => {
         this.queueRender();
     };
-    onResize() {
+    handleResize() {
         this.queueRender();
     }
     render() {

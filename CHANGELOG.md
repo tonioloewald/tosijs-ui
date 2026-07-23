@@ -2,6 +2,15 @@
 
 ## Unreleased (1.7.1)
 
+- **Deprecation cleanup: `on<Event>` component callbacks → `handle<Event>`.** tosijs reserves the
+  `on<Event>` prefix for elements-factory event-handler sugar and now warns when a component
+  *defines* such a property. Renamed the internal ones: `onResize` → `handleResize` (`size-break`,
+  `side-nav`, `code-editor`, `babylon-3d`, `tab-selector`) and `onScrollEnd` → `handleScrollEnd`
+  (`data-table`). Verified: those pages now load with zero `on<Event>` deprecation warnings.
+  (`<tosi-tabs>`'s public `onCloseTab` still uses the old name — a breaking rename deferred to a
+  deprecation-alias pass; and the `tosiValue()`/`tosiPath()` accessor deprecation is a separate,
+  larger cleanup — both tracked.)
+
 - **CSS canary** — an inline doc-test on the `live-theme` page that smoke-tests the whole
   styling chain in a real browser (`StyleSheet()` → the `vars` proxy → scaled-var `calc()` →
   `createTheme`/`applyTheme` → cascade → `getComputedStyle`), plus a theme color-change

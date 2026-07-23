@@ -43,7 +43,7 @@ export class TosiSidenav extends Component {
             display: 'block',
         },
     };
-    onResize = () => {
+    handleResize = () => {
         const { content } = this.parts;
         const parent = this.offsetParent;
         if (parent === null) {
@@ -85,8 +85,8 @@ export class TosiSidenav extends Component {
     connectedCallback() {
         super.connectedCallback();
         this.contentVisible = this.parts.content.childNodes.length === 0;
-        globalThis.addEventListener('resize', this.onResize);
-        this.observer = new MutationObserver(this.onResize);
+        globalThis.addEventListener('resize', this.handleResize);
+        this.observer = new MutationObserver(this.handleResize);
         this.observer.observe(this, { childList: true });
         this.style.setProperty('--side-nav-transition', '0s');
         setTimeout(() => {
@@ -99,7 +99,7 @@ export class TosiSidenav extends Component {
     }
     render() {
         super.render();
-        this.onResize();
+        this.handleResize();
     }
 }
 /** @deprecated Use TosiSidenav instead */
