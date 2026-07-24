@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (1.7.1)
+## 1.7.1
 
 - **Fix: components looked wrong in the doc site's dark mode** (e.g. `<tosi-table>` stayed
   white). The doc-system theme drives the legacy `--background`/`--text-color` family and never
