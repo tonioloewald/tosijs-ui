@@ -726,7 +726,12 @@ export function createDocBrowser(options) {
     const loadSource = async (p) => {
         try {
             const r = await fetch(`/__docstore/source?file=${encodeURIComponent(p)}`);
-            if (r.ok)
+            // Accept only a genuine source response. A misconfigured dev server (no
+            // editableSources) or a SPA-rewrite host answers an unknown path with
+            // index.html at status 200 — taking that would load the PAGE as the source.
+            // Reject HTML and fall through to the GitHub raw source instead.
+            const contentType = r.headers.get('content-type') || '';
+            if (r.ok && !/text\/html/i.test(contentType))
                 return await r.text();
         }
         catch {

@@ -413,6 +413,7 @@ import { Component, elements, tosi } from 'tosijs';
 import { codeEditor, CodeEditor } from '../code-editor';
 import { tosiTabs } from '../tab-selector';
 import { icons } from '../icons';
+import { postNotification } from '../notifications';
 import { popMenu } from '../menu';
 import { loadTransform, loadTjsTestApi, rewriteImports, contextVarName, AsyncFunction, } from './code-transform';
 import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } from './remote-sync';
@@ -1152,6 +1153,13 @@ export class LiveExample extends Component {
                 : undefined,
         });
         this.updateEditedIndicator();
+        // A local save is a per-browser scratchpad, not a file write — say so, or it
+        // reads as a no-op ("I saved but the file didn't change"). "Save to source"
+        // (localhost + editableSources) is the one that writes the file.
+        postNotification({
+            type: 'success',
+            message: 'Saved to this browser only — use “Save to source” to write the file.',
+        });
     };
     revertLocalEdit = () => {
         const key = this.localEditKey();

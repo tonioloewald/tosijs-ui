@@ -449,7 +449,7 @@ for the authoritative typed definition.</p>
 <tr>
 <td><code>editableSources</code></td>
 <td><code>false</code></td>
-<td>dev-only in-browser &quot;edit page source&quot; endpoints</td>
+<td>Enables the dev server&#39;s <code>/__docstore/source</code> read+write endpoints, so &quot;edit page source&quot; and a live example&#39;s &quot;Save to source&quot; write the actual file. <strong>Off</strong> by default (writing files is opt-in): editing still works read-only — the client falls back to the GitHub raw source — but saving hands back a download. Set <code>true</code> to author in place. (The endpoint always answers <code>/__docstore/source</code> with a real status; it never serves the SPA <code>index.html</code>, so a disabled/misconfigured server can&#39;t leak the rendered page as the &quot;source&quot;.)</td>
 </tr>
 <tr>
 <td><code>memoryLimitMb</code></td>

@@ -2,6 +2,20 @@
 
 ## Unreleased (1.7.1)
 
+- **Fix: "edit page source" showed HTML instead of source in a dev server without
+  `editableSources`.** The `/__docstore/source` endpoint was only routed when
+  `editableSources` was on; otherwise the request fell through to the SPA `index.html`
+  fallback and returned the rendered page at status 200 — so the client loaded HTML *as* the
+  source (and save read HTML). The endpoint is now handled unconditionally and answers a clean
+  `501` when editing is disabled, so `loadSource` falls back to the GitHub raw source (read-only
+  editing, matching the deployed site). Belt-and-suspenders: the client also rejects any
+  `text/html` response from that endpoint (guards SPA-rewrite hosts too). Documented the option
+  more fully in `doc-site-system.md`.
+- **Local example save now gives feedback.** "Save changes (local)" writes a per-browser
+  scratchpad (not the file) — it used to do so silently, reading as a no-op. It now posts a
+  toast (`postNotification`): *"Saved to this browser only — use 'Save to source' to write the
+  file."*
+
 - **`valueRenderer(type)` + declarative `<tosi-table>` column `type`.** A new exported helper
   turns a compact type string into a reusable, locale-aware renderer with a sensible default
   alignment: `number`, `currency`/`currency(USD)`, `fixed`/`fixed(n)` (default 2),

@@ -677,9 +677,22 @@ export async function devServer(
       // Source read/write for in-browser "edit page source" (opt-in, dev only).
       // A write lands in the repo file; the chokidar watcher then rebuilds and
       // the page refreshes — the build itself is the preview.
-      if (config.editableSources && reqPath === '/__docstore/source') {
+      if (reqPath === '/__docstore/source') {
+        // Handle this endpoint UNCONDITIONALLY so it never falls through to the SPA
+        // index.html fallback below. A 200-with-HTML there is silently corrupting:
+        // the client loads the PAGE as the "source" (edit-page-source shows HTML;
+        // save-to-source reads HTML). When editing isn't enabled, answer with a clean
+        // status so `loadSource` falls back to the GitHub raw source (read-only), which
+        // is what the deployed static site already does.
+        if (!config.editableSources) {
+          return new Response(
+            'editableSources is not enabled in this doc-site config (set editableSources: true to edit/save source in dev)',
+            { status: 501, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
+          )
+        }
         if (request.method === 'GET') return handleReadSource(request)
         if (request.method === 'POST') return handleWriteSource(request)
+        return new Response('method not allowed', { status: 405 })
       }
 
       if (reqPath === '/') reqPath = '/index.html'
