@@ -14,4 +14,5 @@ General purpose utilities and behaviors — routing, theming, localization, sort
 - [scriptTag & styleSheet](/via-tag/)
 - [theme](/theme/)
 - [trackDrag](/track-drag/)
+- [valueRenderer](/value-renderer/)
 <!-- /toc -->

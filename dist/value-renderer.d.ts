@@ -6,7 +6,7 @@ export type Alignment = 'left' | 'right' | 'center';
  * but tjs-lang validates the full string. The `& {}` keeps the literal suggestions
  * from being widened away by the `string` member.
  */
-export type ValueRendererType = 'number' | 'currency' | 'fixed' | 'sci' | 'eng' | 'bytes' | 'boolean' | (string & {});
+export type ValueRendererType = 'number' | 'currency' | 'fixed' | 'percent' | 'sci' | 'eng' | 'bytes' | 'boolean' | (string & {});
 export interface ValueRenderer {
     /** Default alignment for the type — 'right' for numerics, 'center' for booleans. */
     align?: Alignment;

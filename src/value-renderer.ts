@@ -22,9 +22,10 @@ Arguments go in parentheses, comma-separated.
 | `number` | localized number | right |
 | `currency` / `currency(USD)` | localized currency (default `USD`) | right |
 | `fixed` / `fixed(2)` | localized, N decimals (`fixed` = `fixed(2)`) | right |
+| `percent` / `percent(1)` | localized percent of a **fraction** (`0.5` → `50%`; `percent` = 0 decimals) | right |
 | `sci` | scientific notation | right |
 | `eng` | engineering notation | right |
-| `bytes` | standardized SI byte units (`kB`, `MB`, `GB`, …; ÷1000) | right |
+| `bytes` / `bytes(iec)` | SI byte units (`kB`, `MB`, …; ÷1000), or IEC binary (`KiB`, `MiB`, …; ÷1024) | right |
 | `boolean` / `boolean(t)` / `boolean(t,f)` | icons via the `icons` proxy (default `checkSquare`/`square`; `boolean(t)` shows nothing when false) | center |
 
 Formatting follows the app's current locale (`i18n.locale`, i.e. `setLocale()`); it
@@ -40,6 +41,8 @@ preview.append(
 )
 ```
 */
+
+/*{ "parent": "Helper Libraries" }*/
 
 import { i18n } from './localize'
 import { icons } from './icons'
@@ -57,6 +60,7 @@ export type ValueRendererType =
   | 'number'
   | 'currency'
   | 'fixed'
+  | 'percent'
   | 'sci'
   | 'eng'
   | 'bytes'
@@ -125,22 +129,26 @@ function toNumber(value: unknown): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-const BYTE_UNITS = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+// SI (decimal, \u00f71000, `kB`) vs IEC (binary, \u00f71024, `KiB`) \u2014 `bytes` is SI, `bytes(iec)` is IEC.
+const BYTE_UNITS_SI = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+const BYTE_UNITS_IEC = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
 
 function formatBytes(
   n: number,
+  base: 1000 | 1024,
+  units: string[],
   scaled: Intl.NumberFormat,
   whole: Intl.NumberFormat
 ): string {
   const neg = n < 0
   let x = Math.abs(n)
   let i = 0
-  while (x >= 1000 && i < BYTE_UNITS.length - 1) {
-    x /= 1000
+  while (x >= base && i < units.length - 1) {
+    x /= base
     i += 1
   }
   const num = (i === 0 ? whole : scaled).format(x)
-  return `${neg ? '-' : ''}${num}\u00a0${BYTE_UNITS[i]}`
+  return `${neg ? '-' : ''}${num}\u00a0${units[i]}`
 }
 
 function textRenderer(
@@ -190,6 +198,21 @@ export function valueRenderer(type: ValueRendererType): ValueRenderer {
           })
       )
     }
+    case 'percent': {
+      // Value is a fraction (0.5 → "50%"). `percent` = 0 decimals; `percent(n)` = n.
+      const d =
+        args[0] !== undefined
+          ? Math.max(0, Math.min(20, Math.trunc(Number(args[0])) || 0))
+          : 0
+      return numeric(
+        (l) =>
+          new Intl.NumberFormat(l, {
+            style: 'percent',
+            minimumFractionDigits: d,
+            maximumFractionDigits: d,
+          })
+      )
+    }
     case 'sci':
       return numeric((l) => new Intl.NumberFormat(l, { notation: 'scientific' }))
     case 'eng':
@@ -197,6 +220,9 @@ export function valueRenderer(type: ValueRendererType): ValueRenderer {
         (l) => new Intl.NumberFormat(l, { notation: 'engineering' })
       )
     case 'bytes': {
+      const iec = (args[0] || '').toLowerCase() === 'iec'
+      const base = iec ? 1024 : 1000
+      const units = iec ? BYTE_UNITS_IEC : BYTE_UNITS_SI
       const scaled = byLocale(
         (l) => new Intl.NumberFormat(l, { maximumFractionDigits: 1 })
       )
@@ -205,7 +231,7 @@ export function valueRenderer(type: ValueRendererType): ValueRenderer {
       )
       return textRenderer('right', (v) => {
         const n = toNumber(v)
-        return n === null ? '' : formatBytes(n, scaled(), whole())
+        return n === null ? '' : formatBytes(n, base, units, scaled(), whole())
       })
     }
     case 'boolean': {

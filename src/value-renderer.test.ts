@@ -40,6 +40,18 @@ describe('numeric formatters', () => {
     expect(fmt('fixed(0)', 1.6)).toBe('2')
     expect(fmt('fixed(3)', 1.5)).toBe('1.500')
   })
+  test('percent of a fraction; default 0 decimals, percent(n) sets precision', () => {
+    expect(fmt('percent', 0.5)).toBe('50%')
+    expect(fmt('percent', 0.1234)).toBe('12%')
+    expect(fmt('percent(1)', 0.1234)).toBe('12.3%')
+    expect(fmt('percent(2)', 0.5)).toBe('50.00%')
+  })
+  test('bytes(iec) uses binary units (÷1024)', () => {
+    const nb = (s: string) => s.replace(/\u00a0/g, ' ')
+    expect(nb(fmt('bytes(iec)', 1024))).toBe('1 KiB')
+    expect(nb(fmt('bytes(iec)', 1048576))).toBe('1 MiB')
+    expect(nb(fmt('bytes(iec)', 500))).toBe('500 B')
+  })
   test('scientific and engineering notation', () => {
     expect(fmt('sci', 1234)).toContain('E3')
     // engineering keeps the exponent a multiple of 3
