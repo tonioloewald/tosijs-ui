@@ -110,6 +110,9 @@ you can render a typed value consistently anywhere.</p>
 </tbody></table>
 <p>Formatting follows the app&#39;s current locale (<code>i18n.locale</code>, i.e. <code>setLocale()</code>); it
 falls back to the runtime default.</p>
+<p>Numeric cells also get a <strong><code>-negative</code></strong> or <strong><code>-zero</code></strong> state class by value sign, so you
+can style them in CSS without a custom cell — e.g. <code>.-negative { color: #e44 }</code> for red
+negatives. The renderer only marks the sign; CSS decides the look.</p>
 <pre><code class="language-js">import { valueRenderer } from &#39;tosijs-ui&#39;
 
 const money = valueRenderer(&#39;currency(EUR)&#39;)

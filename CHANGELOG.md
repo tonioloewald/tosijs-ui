@@ -32,7 +32,9 @@
   alignment: `number`, `currency`/`currency(USD)`, `fixed`/`fixed(n)` (default 2),
   `percent`/`percent(n)` (of a fraction; default 0), `sci`, `eng`, `bytes`/`bytes(iec)` (SI ÷1000
   or IEC ÷1024 units, right-aligned), and `boolean`/`boolean(t)`/`boolean(t,f)` (icons via the
-  `icons` proxy, centered; default `checkSquare`/`square`). Data-table columns take a `type`
+  `icons` proxy, centered; default `checkSquare`/`square`). Numeric cells also get a
+  `-negative` / `-zero` **state class** by value sign, so you get red negatives (etc.) from one
+  CSS rule — no custom cell renderer. Data-table columns take a `type`
   (`ValueRendererType`) and format + align automatically — no hand-rolled `dataCell`; an explicit
   `align`/`dataCell` still wins. Formatting follows `setLocale()`. Verified end-to-end (unit +
   browser).

@@ -73,6 +73,39 @@ describe('numeric formatters', () => {
   })
 })
 
+describe('numeric cells get -negative / -zero state classes', () => {
+  const cell = () => document.createElement('span')
+  test('toggles -negative below zero, -zero at zero, neither above', () => {
+    const r = valueRenderer('currency(USD)')
+    const neg = cell()
+    r.toDOM(neg, -5)
+    const zero = cell()
+    r.toDOM(zero, 0)
+    const pos = cell()
+    r.toDOM(pos, 5)
+    expect(neg.classList.contains('-negative')).toBe(true)
+    expect(neg.classList.contains('-zero')).toBe(false)
+    expect(zero.classList.contains('-zero')).toBe(true)
+    expect(zero.classList.contains('-negative')).toBe(false)
+    expect(pos.classList.contains('-negative')).toBe(false)
+    expect(pos.classList.contains('-zero')).toBe(false)
+  })
+  test('bytes participates; re-render clears a stale class', () => {
+    const r = valueRenderer('bytes')
+    const el = cell()
+    r.toDOM(el, -1024)
+    expect(el.classList.contains('-negative')).toBe(true)
+    r.toDOM(el, 2048) // now positive — the stale -negative must clear
+    expect(el.classList.contains('-negative')).toBe(false)
+  })
+  test('non-numeric / null values carry no sign class', () => {
+    const el = cell()
+    valueRenderer('number').toDOM(el, null)
+    expect(el.classList.contains('-negative')).toBe(false)
+    expect(el.classList.contains('-zero')).toBe(false)
+  })
+})
+
 describe('default alignment', () => {
   test('numerics right, boolean center, unknown undefined', () => {
     for (const t of ['number', 'currency', 'fixed', 'sci', 'eng', 'bytes'])

@@ -31,6 +31,10 @@ Arguments go in parentheses, comma-separated.
 Formatting follows the app's current locale (`i18n.locale`, i.e. `setLocale()`); it
 falls back to the runtime default.
 
+Numeric cells also get a **`-negative`** or **`-zero`** state class by value sign, so you
+can style them in CSS without a custom cell — e.g. `.-negative { color: #e44 }` for red
+negatives. The renderer only marks the sign; CSS decides the look.
+
 ```js
 import { valueRenderer } from 'tosijs-ui'
 
@@ -168,12 +172,29 @@ function textRenderer(
 export function valueRenderer(type: ValueRendererType): ValueRenderer {
   const { base, args } = parseValueType(type)
 
+  // Numeric types right-align AND tag the cell with a `-negative` or `-zero` state
+  // class, so CSS can style them (red negatives, muted zeros, …) with no custom
+  // dataCell. The renderer stays presentation-agnostic — it marks the value's sign,
+  // CSS decides the look.
+  const numericRenderer = (
+    formatNumber: (n: number) => string
+  ): ValueRenderer => ({
+    align: 'right',
+    format: (v) => {
+      const n = toNumber(v)
+      return n === null ? '' : formatNumber(n)
+    },
+    toDOM(element, v) {
+      const n = toNumber(v)
+      element.textContent = n === null ? '' : formatNumber(n)
+      element.classList.toggle('-negative', n !== null && n < 0)
+      element.classList.toggle('-zero', n === 0)
+    },
+  })
+
   const numeric = (build: (l: string | undefined) => Intl.NumberFormat) => {
     const nf = byLocale(build)
-    return textRenderer('right', (v) => {
-      const n = toNumber(v)
-      return n === null ? '' : nf().format(n)
-    })
+    return numericRenderer((n) => nf().format(n))
   }
 
   switch (base) {
@@ -229,10 +250,7 @@ export function valueRenderer(type: ValueRendererType): ValueRenderer {
       const whole = byLocale(
         (l) => new Intl.NumberFormat(l, { maximumFractionDigits: 0 })
       )
-      return textRenderer('right', (v) => {
-        const n = toNumber(v)
-        return n === null ? '' : formatBytes(n, base, units, scaled(), whole())
-      })
+      return numericRenderer((n) => formatBytes(n, base, units, scaled(), whole()))
     }
     case 'boolean': {
       // boolean            → true: checkSquare, false: square

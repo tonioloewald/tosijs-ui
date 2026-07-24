@@ -219,16 +219,18 @@ Give a column a `type` and it's formatted (and aligned) automatically — no han
 
 Numeric types (`number`, `currency`, `fixed`, `percent`, `sci`, `eng`, `bytes`) right-align
 by default; `boolean` centers and renders icons. An explicit `align` — or a `dataCell` —
-always wins. Formatting follows the app locale (`setLocale()`).
+always wins. Formatting follows the app locale (`setLocale()`). Numeric cells also get a
+`-negative` or `-zero` state class by value sign, so the red "Change" values above come from
+one CSS rule (`.-negative { color: #e44 }`), no cell renderer.
 
 ```js
 import { tosiTable } from 'tosijs-ui'
 
 const rows = [
-  { item: 'Alpha Widget', price: 12.5, qty: 1240, rate: 0.075, mass: 1.23456, size: 1_536_000, active: true, flagged: false },
-  { item: 'Beta Gadget', price: 4.99, qty: 42, rate: 0.2, mass: 0.5, size: 512, active: false, flagged: true },
-  { item: 'Gamma Sprocket', price: 199, qty: 8, rate: 1.5, mass: 12.005, size: 2_500_000_000, active: true, flagged: true },
-  { item: 'Delta Cog', price: 0.75, qty: 99999, rate: 0.004, mass: 0.001, size: 48_200, active: false, flagged: false },
+  { item: 'Alpha Widget', price: 12.5, qty: 1240, change: 3.25, rate: 0.075, mass: 1.23456, size: 1_536_000, active: true, flagged: false },
+  { item: 'Beta Gadget', price: 4.99, qty: 42, change: -1.5, rate: 0.2, mass: 0.5, size: 512, active: false, flagged: true },
+  { item: 'Gamma Sprocket', price: 199, qty: 8, change: 0, rate: 1.5, mass: 12.005, size: 2_500_000_000, active: true, flagged: true },
+  { item: 'Delta Cog', price: 0.75, qty: 99999, change: -0.12, rate: 0.004, mass: 0.001, size: 48_200, active: false, flagged: false },
 ]
 
 const table = tosiTable({ style: { display: 'block', height: '240px' } })
@@ -237,6 +239,7 @@ table.value = {
   columns: [
     { prop: 'item', name: 'Item', width: 150 },
     { prop: 'price', name: 'Price', width: 110, type: 'currency(USD)' },
+    { prop: 'change', name: 'Change', width: 100, type: 'currency(USD)' }, // red negatives via CSS
     { prop: 'qty', name: 'Qty', width: 90, type: 'number' },
     { prop: 'rate', name: 'Rate', width: 80, type: 'percent(1)' },
     { prop: 'mass', name: 'Mass', width: 90, type: 'fixed(2)' },
@@ -246,6 +249,10 @@ table.value = {
   ],
 }
 preview.append(table)
+```
+```css
+.preview .-negative { color: #e44; }
+.preview .-zero { opacity: 0.45; }
 ```
 
 ## Pinned Columns and Rows
