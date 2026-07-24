@@ -543,6 +543,20 @@ DocStore dev impl) → #4**, then **Foundation C → #3** — those are the prio
   doc-system chrome (`--tosi-docs-*`); the bridge goes away. A mechanical but broad rename
   across `doc-system-styles.ts`, the markdown/doc-browser CSS, and the pre-hydration layout —
   do it as its own pass so a diff isn't buried, and grep the KB for the legacy names.
+- **Dynamic theme system — retire the `.darkmode` class for a bound stylesheet.** _(Direction,
+  not scheduled.)_ Today dark mode is a static `.darkmode` class toggled on `<body>` (plus a
+  `high-contrast` class). Once the palette is unified (above), replace that with a **`StyleSheet()`
+  bound to observable theme state** — the natural generalization of the `liveTheme` observable +
+  `TosiThemeEditor` + `applyTheme()` already in `live-theme.ts`. Light/dark stops being a class and
+  becomes just two points in a continuous, observable theme (accent, bg, text, spacing, font,
+  radius, …) that recomputes the whole `--tosi-*` set live via `Color` math. Payoffs:
+  - **Play before you adopt** — a visitor tweaks the site's theme live and sees every component
+    react, before copying the values into their own project.
+  - **A drop-in customization widget** — a consumer injects the theme editor into *their* dev
+    environment and tunes spacing/fonts/colors against their real UI, live.
+  - **Proven leverage** — react-tosijs / ngx-tosijs ship a home page approximating Apple's "glass
+    UI" entirely in CSS: a strong demonstration of how far a handful of well-chosen CSS variables
+    (+ `Color` math) reaches. This makes that the default authoring surface, not a bespoke one-off.
 
 ## Resolved decisions (Jun 2026)
 
