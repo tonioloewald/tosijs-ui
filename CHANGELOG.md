@@ -2,6 +2,15 @@
 
 ## Unreleased (1.7.1)
 
+- **`valueRenderer(type)` + declarative `<tosi-table>` column `type`.** A new exported helper
+  turns a compact type string into a reusable, locale-aware renderer with a sensible default
+  alignment: `number`, `currency`/`currency(USD)`, `fixed`/`fixed(n)` (default 2), `sci`, `eng`,
+  `bytes` (SI units, right-aligned), and `boolean`/`boolean(t)`/`boolean(t,f)` (icons via the
+  `icons` proxy, centered; default `checkSquare`/`square`). Data-table columns take a `type`
+  (`ValueRendererType`) and format + align automatically — no hand-rolled `dataCell`; an explicit
+  `align`/`dataCell` still wins. Formatting follows `setLocale()`. Verified end-to-end (unit +
+  browser).
+
 - **Deprecation cleanup: `on<Event>` component callbacks → `handle<Event>`.** tosijs reserves the
   `on<Event>` prefix for elements-factory event-handler sugar and now warns when a component
   *defines* such a property. Renamed the internal ones: `onResize` → `handleResize` (`size-break`,

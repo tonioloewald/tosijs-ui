@@ -46,4 +46,5 @@ export { version } from './version';
 export { scriptTag, styleSheet } from './via-tag';
 export * from './theme';
 export * from './tooltip';
+export * from './value-renderer';
 export * as tosijs from 'tosijs';

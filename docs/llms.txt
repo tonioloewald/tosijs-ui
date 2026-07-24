@@ -133,3 +133,5 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
   A small, fast library of standards-based web components (data tables, dialogs, forms, rich text, carousels, and more) built on tosijs — smaller and faster than a React app, with no virtual DOM.
 - https://ui.tosijs.net/track-drag/ — trackDrag
   Sometimes you want to track a mouse-drag or touch-drag operation without messing around.
+- https://ui.tosijs.net/value-renderer/ — valueRenderer
+  `valueRenderer(type)` turns a compact **type string** into a reusable renderer for

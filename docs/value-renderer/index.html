@@ -29,51 +29,89 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="/doc-system.css" data-tosi-doc-system />
-  <title>tooltip — tosijs-ui</title>
-  <meta name="description" content="Automatic tooltips for any element with data-tooltip or title attributes. Call initTooltips() once to activate." />
-  <link rel="canonical" href="https://ui.tosijs.net/tooltip/" />
+  <title>valueRenderer — tosijs-ui</title>
+  <meta name="description" content="ValueRenderer(type) turns a compact type string into a reusable renderer for displaying a value — localized number / currency / byte formatting, scientific or" />
+  <link rel="canonical" href="https://ui.tosijs.net/value-renderer/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="tooltip — tosijs-ui" />
-  <meta property="og:description" content="Automatic tooltips for any element with data-tooltip or title attributes. Call initTooltips() once to activate." />
-  <meta property="og:url" content="https://ui.tosijs.net/tooltip/" />
+  <meta property="og:title" content="valueRenderer — tosijs-ui" />
+  <meta property="og:description" content="ValueRenderer(type) turns a compact type string into a reusable renderer for displaying a value — localized number / currency / byte formatting, scientific or" />
+  <meta property="og:url" content="https://ui.tosijs.net/value-renderer/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"tooltip","description":"Automatic tooltips for any element with data-tooltip or title attributes. Call initTooltips() once to activate.","url":"https://ui.tosijs.net/tooltip/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"valueRenderer","description":"ValueRenderer(type) turns a compact type string into a reusable renderer for displaying a value — localized number / currency / byte formatting, scientific or","url":"https://ui.tosijs.net/value-renderer/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="/favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
   <tosi-doc-system docs="/docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="/localized-strings.txt">
   <article class="doc-content">
-<h1>tooltip</h1>
-<p>Automatic tooltips for any element with <code>data-tooltip</code> or <code>title</code> attributes.
-Call <code>initTooltips()</code> once to activate. By default, <code>title</code> attributes are
-converted to <code>data-tooltip</code> on hover so the browser&#39;s native tooltip is
-replaced.</p>
-<p>Tooltip text is parsed as <strong>markdown</strong> (if <code>marked</code> is available), so you
-can use <code>*bold*</code>, <code>`code`</code>, links, etc.</p>
-<pre><code class="language-js">import { elements } from &#39;tosijs&#39;
-import { initTooltips } from &#39;tosijs-ui&#39;
+<h1>valueRenderer</h1>
+<p><code>valueRenderer(type)</code> turns a compact <strong>type string</strong> into a reusable renderer for
+displaying a value — localized number / currency / byte formatting, scientific or
+engineering notation, fixed precision, or a boolean-as-icon — each with a sensible
+<strong>default alignment</strong>. <code>&lt;tosi-table&gt;</code> uses it for column <code>type</code>, and it&#39;s exported so
+you can render a typed value consistently anywhere.</p>
+<p>A renderer exposes three things:</p>
+<ul>
+<li><code>format(value)</code> → a <code>string</code> (numeric types) or a <code>Node</code> (icon types), locale-reactive.</li>
+<li><code>toDOM(element, value)</code> → writes the formatted value into an element.</li>
+<li><code>align</code> → the type&#39;s default alignment (<code>&#39;right&#39;</code> numeric, <code>&#39;center&#39;</code> boolean, else undefined).</li>
+</ul>
+<h2>Type strings</h2>
+<p>Arguments go in parentheses, comma-separated.</p>
+<table>
+<thead>
+<tr>
+<th>type</th>
+<th>renders</th>
+<th>align</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>number</code></td>
+<td>localized number</td>
+<td>right</td>
+</tr>
+<tr>
+<td><code>currency</code> / <code>currency(USD)</code></td>
+<td>localized currency (default <code>USD</code>)</td>
+<td>right</td>
+</tr>
+<tr>
+<td><code>fixed</code> / <code>fixed(2)</code></td>
+<td>localized, N decimals (<code>fixed</code> = <code>fixed(2)</code>)</td>
+<td>right</td>
+</tr>
+<tr>
+<td><code>sci</code></td>
+<td>scientific notation</td>
+<td>right</td>
+</tr>
+<tr>
+<td><code>eng</code></td>
+<td>engineering notation</td>
+<td>right</td>
+</tr>
+<tr>
+<td><code>bytes</code></td>
+<td>standardized SI byte units (<code>kB</code>, <code>MB</code>, <code>GB</code>, …; ÷1000)</td>
+<td>right</td>
+</tr>
+<tr>
+<td><code>boolean</code> / <code>boolean(t)</code> / <code>boolean(t,f)</code></td>
+<td>icons via the <code>icons</code> proxy (default <code>checkSquare</code>/<code>square</code>; <code>boolean(t)</code> shows nothing when false)</td>
+<td>center</td>
+</tr>
+</tbody></table>
+<p>Formatting follows the app&#39;s current locale (<code>i18n.locale</code>, i.e. <code>setLocale()</code>); it
+falls back to the runtime default.</p>
+<pre><code class="language-js">import { valueRenderer } from &#39;tosijs-ui&#39;
 
-const { button, div } = elements
-
-initTooltips()
-
+const money = valueRenderer(&#39;currency(EUR)&#39;)
+const size = valueRenderer(&#39;bytes&#39;)
 preview.append(
-  div(
-    { style: { display: &#39;flex&#39;, gap: &#39;12px&#39;, flexWrap: &#39;wrap&#39;, alignItems: &#39;center&#39; } },
-    button({ dataTooltip: &#39;Save your work&#39; }, &#39;Save&#39;),
-    button({ dataTooltip: &#39;**Bold** and `code` work&#39; }, &#39;Markdown&#39;),
-    button({ title: &#39;This was a title attribute&#39; }, &#39;Title → Tooltip&#39;),
-  )
+  document.createTextNode(`${money.format(1234.5)} · ${size.format(1500000)}`)
 )
-</code></pre>
-<h2>Options</h2>
-<pre><code>initTooltips({
-  convertTitles: true,  // convert title attrs to data-tooltip (default true)
-  delay: 250,           // ms before showing (default 250)
-  localize: false,      // pass tooltip text through localize() (default false)
-})
 </code></pre>
 
   </article>
@@ -83,8 +121,8 @@ preview.append(
     <li><a class="doc-link" href="/one-source-every-artifact/">One Source</a></li>
     <li><a class="doc-link" href="/bp-loader/">blueprint loading</a></li>
     <li><a class="doc-link" href="/icons/">icons</a></li>
-    <li><a class="doc-link" href="/value-renderer/">valueRenderer</a></li>
-    <li><details open><summary><a class="doc-link" href="/components/">Components</a></summary>
+    <li><a class="doc-link current" href="/value-renderer/" aria-current="page">valueRenderer</a></li>
+    <li><details><summary><a class="doc-link" href="/components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="/babylon-3d/">3d</a></li>
       <li><a class="doc-link" href="/carousel/">carousel</a></li>
@@ -108,7 +146,7 @@ preview.append(
       <li><a class="doc-link" href="/sizer/">sizer</a></li>
       <li><a class="doc-link" href="/data-table/">table</a></li>
       <li><a class="doc-link" href="/tab-selector/">tabs</a></li>
-      <li><a class="doc-link current" href="/tooltip/" aria-current="page">tooltip</a></li>
+      <li><a class="doc-link" href="/tooltip/">tooltip</a></li>
     </ul>
     </details></li>
     <li><details><summary><a class="doc-link" href="/form-components/">Form Components</a></summary>

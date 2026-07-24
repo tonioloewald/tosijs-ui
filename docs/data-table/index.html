@@ -229,12 +229,27 @@ and $(&#39;tosi-table&#39;).selectedRows`.</p>
   width: number
   visible?: boolean
   align?: string
+  type?: string // valueRenderer type: &#39;currency(USD)&#39;, &#39;fixed(2)&#39;, &#39;bytes&#39;, &#39;boolean(check,x)&#39;, …
   pinned?: &#39;left&#39; | &#39;right&#39;
   sort?: false | &#39;ascending&#39; | &#39;descending&#39;
   headerCell?: (options: ColumnOptions) =&gt; HTMLElement
   dataCell?: (options: ColumnOptions) =&gt; HTMLElement
 }
 </code></pre>
+<h2>Column value types</h2>
+<p>Give a column a <code>type</code> and it&#39;s formatted (and aligned) automatically — no hand-rolled
+<code>dataCell</code>. The <code>type</code> is a <a href="value-renderer"><code>valueRenderer</code></a> string:</p>
+<pre><code>[
+  { prop: &#39;name&#39;,    width: 160 },
+  { prop: &#39;price&#39;,   width: 100, type: &#39;currency(USD)&#39; }, // localized $, right-aligned
+  { prop: &#39;weight&#39;,  width: 100, type: &#39;fixed(3)&#39; },      // 3 decimals, right-aligned
+  { prop: &#39;size&#39;,    width: 100, type: &#39;bytes&#39; },         // 1.5 MB, right-aligned
+  { prop: &#39;active&#39;,  width: 60,  type: &#39;boolean&#39; },       // checkSquare / square, centered
+]
+</code></pre>
+<p>Numeric types (<code>number</code>, <code>currency</code>, <code>fixed</code>, <code>sci</code>, <code>eng</code>, <code>bytes</code>) right-align by
+default; <code>boolean</code> centers and renders icons. An explicit <code>align</code> — or a <code>dataCell</code> —
+always wins. Formatting follows the app locale (<code>setLocale()</code>).</p>
 <h2>Pinned Columns and Rows</h2>
 <p>Set <code>pinned: &#39;left&#39;</code> or <code>pinned: &#39;right&#39;</code> on individual columns to pin
 them during horizontal scroll. Pinned columns are sorted to the edges
@@ -514,6 +529,7 @@ popup menu.</p>
     <li><a class="doc-link" href="/one-source-every-artifact/">One Source</a></li>
     <li><a class="doc-link" href="/bp-loader/">blueprint loading</a></li>
     <li><a class="doc-link" href="/icons/">icons</a></li>
+    <li><a class="doc-link" href="/value-renderer/">valueRenderer</a></li>
     <li><details open><summary><a class="doc-link" href="/components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="/babylon-3d/">3d</a></li>

@@ -1,11 +1,13 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 import { SortCallback } from './make-sorter';
+import { ValueRendererType } from './value-renderer';
 export interface ColumnOptions {
     name?: string;
     prop: string;
     width: number;
     visible?: boolean;
     align?: string;
+    type?: ValueRendererType;
     pinned?: 'left' | 'right';
     sort?: false | 'ascending' | 'descending';
     headerCell?: (options: ColumnOptions) => HTMLElement;

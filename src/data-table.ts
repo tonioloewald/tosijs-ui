@@ -194,12 +194,32 @@ export interface ColumnOptions {
   width: number
   visible?: boolean
   align?: string
+  type?: string // valueRenderer type: 'currency(USD)', 'fixed(2)', 'bytes', 'boolean(check,x)', …
   pinned?: 'left' | 'right'
   sort?: false | 'ascending' | 'descending'
   headerCell?: (options: ColumnOptions) => HTMLElement
   dataCell?: (options: ColumnOptions) => HTMLElement
 }
 ```
+
+## Column value types
+
+Give a column a `type` and it's formatted (and aligned) automatically — no hand-rolled
+`dataCell`. The `type` is a [`valueRenderer`](value-renderer) string:
+
+```
+[
+  { prop: 'name',    width: 160 },
+  { prop: 'price',   width: 100, type: 'currency(USD)' }, // localized $, right-aligned
+  { prop: 'weight',  width: 100, type: 'fixed(3)' },      // 3 decimals, right-aligned
+  { prop: 'size',    width: 100, type: 'bytes' },         // 1.5 MB, right-aligned
+  { prop: 'active',  width: 60,  type: 'boolean' },       // checkSquare / square, centered
+]
+```
+
+Numeric types (`number`, `currency`, `fixed`, `sci`, `eng`, `bytes`) right-align by
+default; `boolean` centers and renders icons. An explicit `align` — or a `dataCell` —
+always wins. Formatting follows the app locale (`setLocale()`).
 
 ## Pinned Columns and Rows
 
@@ -526,6 +546,7 @@ import {
 import { trackDrag } from './track-drag'
 import { SortCallback } from './make-sorter'
 import { icons } from './icons'
+import { valueRenderer, ValueRenderer, ValueRendererType } from './value-renderer'
 import { popMenu, MenuItem } from './menu'
 import * as dragAndDrop from './drag-and-drop'
 import { tosiLocalized, localize } from './localize'
@@ -570,6 +591,11 @@ export interface ColumnOptions {
   width: number
   visible?: boolean
   align?: string
+  // A `valueRenderer` type string — e.g. `'currency(USD)'`, `'fixed(2)'`, `'bytes'`,
+  // `'boolean(check,x)'`. When set (and `dataCell` is not), the cell is formatted by
+  // that renderer and the column takes the renderer's default alignment (numerics
+  // right, booleans center) unless `align` is set explicitly. See `valueRenderer`.
+  type?: ValueRendererType
   pinned?: 'left' | 'right'
   sort?: false | 'ascending' | 'descending'
   headerCell?: (options: ColumnOptions) => HTMLElement
@@ -592,6 +618,20 @@ interface StickyInfo {
   left?: string
   right?: string
   edgeClass?: string
+}
+
+// One ValueRenderer per typed column, cached: `Intl.*Format` construction is the
+// expensive part and a column's renderer is stable for its lifetime. Returns null
+// when the column has no `type` or supplies its own `dataCell` (which always wins).
+const columnRenderers = new WeakMap<ColumnOptions, ValueRenderer>()
+function columnRenderer(col: ColumnOptions): ValueRenderer | null {
+  if (!col.type || col.dataCell) return null
+  let renderer = columnRenderers.get(col)
+  if (!renderer) {
+    renderer = valueRenderer(col.type)
+    columnRenderers.set(col, renderer)
+  }
+  return renderer
 }
 
 export class TosiTable extends WebComponent {
@@ -1071,7 +1111,9 @@ export class TosiTable extends WebComponent {
     // position: sticky lives in `.col-pinned` (added by cellClasses), so only
     // the per-cell offsets need to be set inline here.
     const style: Record<string, string> = {
-      justifyContent: col.align || 'left',
+      // Explicit align wins; else the column type's default (numerics right,
+      // booleans center); else left.
+      justifyContent: col.align || columnRenderer(col)?.align || 'left',
       ...extra,
     }
     if (si.left != null) style.left = si.left
@@ -1105,6 +1147,27 @@ export class TosiTable extends WebComponent {
       const cell = col.dataCell(col) as HTMLElement
       this.applyGridCellAttrs(cell, colIndex, si, style)
       return cell
+    }
+    // A `type` column formats through its cached ValueRenderer. The binding's toDOM
+    // runs per stamped row, so it stays locale-reactive and works for icon cells
+    // (which replace children) as well as text.
+    const renderer = columnRenderer(col)
+    if (renderer) {
+      return span({
+        class: this.cellClasses('td', si),
+        role: 'gridcell',
+        tabindex: -1,
+        ariaColindex: String(colIndex + 1),
+        style,
+        bind: {
+          value: item[col.prop],
+          binding: {
+            toDOM(el: HTMLElement, val: unknown) {
+              renderer.toDOM(el, val)
+            },
+          },
+        },
+      } as any)
     }
     return span({
       class: this.cellClasses('td', si),
