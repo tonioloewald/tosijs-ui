@@ -82,6 +82,17 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       _fontSize: '16px',
       _codeFontSize: '14px',
       ...colors,
+      // Bridge the tosijs component palette (`--tosi-*`) onto the doc-system's color
+      // family. Defined as REFERENCES, so a component reading `var(--tosi-bg)` follows
+      // the site theme automatically — including dark mode, where `invertLuminance()`
+      // flips the referenced `--background`/`--text-color`/… in `.darkmode`. Without
+      // this the doc-system never set `--tosi-*`, so components fell back to their
+      // baked-in light defaults (e.g. `var(--tosi-bg, #fff)` → white <tosi-table> in
+      // dark mode). Colors only — component metrics keep their own defaults.
+      _tosiAccent: vars.brandColor,
+      _tosiBg: vars.background,
+      _tosiText: vars.textColor,
+      _tosiBgInset: vars.insetBg,
       _spacing: '10px',
       _lineHeight: 'calc(var(--font-size) * 1.6)',
       _h1Scale: '2',

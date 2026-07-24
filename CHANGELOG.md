@@ -2,6 +2,17 @@
 
 ## Unreleased (1.7.1)
 
+- **Fix: components looked wrong in the doc site's dark mode** (e.g. `<tosi-table>` stayed
+  white). The doc-system theme drives the legacy `--background`/`--text-color` family and never
+  set the `--tosi-*` component palette, so components fell back to their baked-in light defaults
+  (`var(--tosi-bg, #fff)`). The doc-system now bridges `--tosi-accent`/`--tosi-bg`/`--tosi-text`/
+  `--tosi-bg-inset` onto its own colors **as references**, so every `--tosi-*` component follows
+  the site theme automatically — including dark mode (the referenced vars flip via
+  `invertLuminance`). The data-table pinned-row example now uses `var(--tosi-table-bg)` instead of
+  a hardwired `#eee`.
+- **Data-table `type` example** demonstrating the new column types (currency, number, percent,
+  fixed, bytes, boolean) added to the docs.
+
 - **Fix: "edit page source" showed HTML instead of source in a dev server without
   `editableSources`.** The `/__docstore/source` endpoint was only routed when
   `editableSources` was on; otherwise the request fell through to the SPA `index.html`

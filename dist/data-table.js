@@ -217,9 +217,36 @@ Give a column a `type` and it's formatted (and aligned) automatically — no han
 ]
 ```
 
-Numeric types (`number`, `currency`, `fixed`, `sci`, `eng`, `bytes`) right-align by
-default; `boolean` centers and renders icons. An explicit `align` — or a `dataCell` —
+Numeric types (`number`, `currency`, `fixed`, `percent`, `sci`, `eng`, `bytes`) right-align
+by default; `boolean` centers and renders icons. An explicit `align` — or a `dataCell` —
 always wins. Formatting follows the app locale (`setLocale()`).
+
+```js
+import { tosiTable } from 'tosijs-ui'
+
+const rows = [
+  { item: 'Alpha Widget', price: 12.5, qty: 1240, rate: 0.075, mass: 1.23456, size: 1_536_000, active: true, flagged: false },
+  { item: 'Beta Gadget', price: 4.99, qty: 42, rate: 0.2, mass: 0.5, size: 512, active: false, flagged: true },
+  { item: 'Gamma Sprocket', price: 199, qty: 8, rate: 1.5, mass: 12.005, size: 2_500_000_000, active: true, flagged: true },
+  { item: 'Delta Cog', price: 0.75, qty: 99999, rate: 0.004, mass: 0.001, size: 48_200, active: false, flagged: false },
+]
+
+const table = tosiTable({ style: { display: 'block', height: '240px' } })
+table.value = {
+  array: rows,
+  columns: [
+    { prop: 'item', name: 'Item', width: 150 },
+    { prop: 'price', name: 'Price', width: 110, type: 'currency(USD)' },
+    { prop: 'qty', name: 'Qty', width: 90, type: 'number' },
+    { prop: 'rate', name: 'Rate', width: 80, type: 'percent(1)' },
+    { prop: 'mass', name: 'Mass', width: 90, type: 'fixed(2)' },
+    { prop: 'size', name: 'Size', width: 100, type: 'bytes' },
+    { prop: 'active', name: 'Active', width: 80, type: 'boolean' },
+    { prop: 'flagged', name: 'Flag', width: 80, type: 'boolean(check, x)' },
+  ],
+}
+preview.append(table)
+```
 
 ## Pinned Columns and Rows
 
@@ -334,11 +361,11 @@ preview.append(table)
   width: 100%;
 }
 .preview tosi-table .pinned-bottom {
-  background: #eee;
+  background: var(--tosi-table-bg, var(--tosi-bg, #fff));
   font-weight: bold;
 }
 .preview .row-pinned .td {
-  background: #eee;
+  background: var(--tosi-table-bg, var(--tosi-bg, #fff));
 }
 .preview .num-cell {
   font-variant-numeric: tabular-nums;

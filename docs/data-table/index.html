@@ -247,9 +247,34 @@ and $(&#39;tosi-table&#39;).selectedRows`.</p>
   { prop: &#39;active&#39;,  width: 60,  type: &#39;boolean&#39; },       // checkSquare / square, centered
 ]
 </code></pre>
-<p>Numeric types (<code>number</code>, <code>currency</code>, <code>fixed</code>, <code>sci</code>, <code>eng</code>, <code>bytes</code>) right-align by
-default; <code>boolean</code> centers and renders icons. An explicit <code>align</code> — or a <code>dataCell</code> —
+<p>Numeric types (<code>number</code>, <code>currency</code>, <code>fixed</code>, <code>percent</code>, <code>sci</code>, <code>eng</code>, <code>bytes</code>) right-align
+by default; <code>boolean</code> centers and renders icons. An explicit <code>align</code> — or a <code>dataCell</code> —
 always wins. Formatting follows the app locale (<code>setLocale()</code>).</p>
+<pre><code class="language-js">import { tosiTable } from &#39;tosijs-ui&#39;
+
+const rows = [
+  { item: &#39;Alpha Widget&#39;, price: 12.5, qty: 1240, rate: 0.075, mass: 1.23456, size: 1_536_000, active: true, flagged: false },
+  { item: &#39;Beta Gadget&#39;, price: 4.99, qty: 42, rate: 0.2, mass: 0.5, size: 512, active: false, flagged: true },
+  { item: &#39;Gamma Sprocket&#39;, price: 199, qty: 8, rate: 1.5, mass: 12.005, size: 2_500_000_000, active: true, flagged: true },
+  { item: &#39;Delta Cog&#39;, price: 0.75, qty: 99999, rate: 0.004, mass: 0.001, size: 48_200, active: false, flagged: false },
+]
+
+const table = tosiTable({ style: { display: &#39;block&#39;, height: &#39;240px&#39; } })
+table.value = {
+  array: rows,
+  columns: [
+    { prop: &#39;item&#39;, name: &#39;Item&#39;, width: 150 },
+    { prop: &#39;price&#39;, name: &#39;Price&#39;, width: 110, type: &#39;currency(USD)&#39; },
+    { prop: &#39;qty&#39;, name: &#39;Qty&#39;, width: 90, type: &#39;number&#39; },
+    { prop: &#39;rate&#39;, name: &#39;Rate&#39;, width: 80, type: &#39;percent(1)&#39; },
+    { prop: &#39;mass&#39;, name: &#39;Mass&#39;, width: 90, type: &#39;fixed(2)&#39; },
+    { prop: &#39;size&#39;, name: &#39;Size&#39;, width: 100, type: &#39;bytes&#39; },
+    { prop: &#39;active&#39;, name: &#39;Active&#39;, width: 80, type: &#39;boolean&#39; },
+    { prop: &#39;flagged&#39;, name: &#39;Flag&#39;, width: 80, type: &#39;boolean(check, x)&#39; },
+  ],
+}
+preview.append(table)
+</code></pre>
 <h2>Pinned Columns and Rows</h2>
 <p>Set <code>pinned: &#39;left&#39;</code> or <code>pinned: &#39;right&#39;</code> on individual columns to pin
 them during horizontal scroll. Pinned columns are sorted to the edges
@@ -357,11 +382,11 @@ preview.append(table)
   width: 100%;
 }
 .preview tosi-table .pinned-bottom {
-  background: #eee;
+  background: var(--tosi-table-bg, var(--tosi-bg, #fff));
   font-weight: bold;
 }
 .preview .row-pinned .td {
-  background: #eee;
+  background: var(--tosi-table-bg, var(--tosi-bg, #fff));
 }
 .preview .num-cell {
   font-variant-numeric: tabular-nums;
