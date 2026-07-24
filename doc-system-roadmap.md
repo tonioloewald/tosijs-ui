@@ -528,6 +528,21 @@ DocStore dev impl) → #4**, then **Foundation C → #3** — those are the prio
   example imports.
 - **AJS-VM RestStore back end** — the `DocStore` REST implementation as an AJS
   universal endpoint over cloud storage (security + auth).
+- **CSS-variable namespace unification** — the doc-system is themed in a *legacy*
+  variable family (`--background`, `--text-color`, `--brand-color`, `--nav-bg`,
+  `--doc-content-max-width`, …) while the components it hosts read the `--tosi-*`
+  palette (`--tosi-bg`, `--tosi-accent`, …). The two silently drifted: the doc-system
+  set none of `--tosi-*`, so `<tosi-table>` (and any `--tosi-*` component) fell back to
+  its baked-in light default and rendered a **white block in dark mode**. **Interim fix
+  shipped** (`d62a3ab3`): `doc-system-styles.ts` `:root` bridges `--tosi-accent/-bg/
+  -text/-bg-inset` onto the legacy vars *as references*, so components follow the theme
+  (and flip in `.darkmode`) automatically. **End-state:** theme the doc-system *in*
+  `--tosi-*` directly — retire the legacy family — and namespace doc-system-*specific*
+  variables as **`--tosi-docs-*`** (e.g. `--tosi-docs-nav-bg`, `--tosi-docs-content-max-width`,
+  `--tosi-docs-code-bg`). One namespace, two tiers: shared component palette (`--tosi-*`) +
+  doc-system chrome (`--tosi-docs-*`); the bridge goes away. A mechanical but broad rename
+  across `doc-system-styles.ts`, the markdown/doc-browser CSS, and the pre-hydration layout —
+  do it as its own pass so a diff isn't buried, and grep the KB for the legacy names.
 
 ## Resolved decisions (Jun 2026)
 
