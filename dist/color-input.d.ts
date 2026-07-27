@@ -33,7 +33,6 @@ declare class ColorInput extends Component<ColorParts> {
         };
     };
     content: HTMLInputElement[];
-    private valueChanged;
     update: (event: Event) => void;
     connectedCallback(): void;
     render(): void;

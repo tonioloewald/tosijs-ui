@@ -71,7 +71,6 @@ class ColorInput extends Component {
         }),
         input({ title: 'css color spec', part: 'css' }),
     ];
-    valueChanged = false;
     update = (event) => {
         const { rgb, alpha, css } = this.parts;
         if (event.type === 'input') {
@@ -86,7 +85,6 @@ class ColorInput extends Component {
         }
         rgb.style.opacity = String(this.color.a);
         this.value = this.color.rgba;
-        this.valueChanged = true;
     };
     connectedCallback() {
         super.connectedCallback();
@@ -96,16 +94,32 @@ class ColorInput extends Component {
         css.addEventListener('change', this.update);
     }
     render() {
-        if (this.valueChanged) {
-            this.valueChanged = false;
-            return;
-        }
         const { rgb, alpha, css } = this.parts;
         this.color = Color.fromCss(this.value);
-        rgb.value = this.color.html.substring(0, 7);
-        rgb.style.opacity = String(this.color.a);
-        alpha.value = String(this.color.a);
-        css.value = this.color.html;
+        const rgba = this.color.rgba;
+        const alphaStr = String(this.color.a);
+        // Idempotent: only WRITE an input whose value doesn't already represent this
+        // colour. Compare the PARSED colour, not the string — `#rrggbb` and `rgba(...)`
+        // are the same colour, so a string compare (or a blind write) would clobber the
+        // caret / selection and re-round-trip the user's format on the field they're
+        // editing, every render. Skipping provably-redundant work is right; a `valueChanged`
+        // timing flag to decide it was the fragile part (broke under tosijs 1.7.7).
+        const sameColor = (v) => {
+            try {
+                return Color.fromCss(v).rgba === rgba;
+            }
+            catch {
+                return false;
+            }
+        };
+        if (!sameColor(rgb.value))
+            rgb.value = this.color.html.substring(0, 7);
+        if (rgb.style.opacity !== alphaStr)
+            rgb.style.opacity = alphaStr;
+        if (alpha.value !== alphaStr)
+            alpha.value = alphaStr;
+        if (!sameColor(css.value))
+            css.value = this.color.html;
     }
 }
 export const colorInput = ColorInput.elementCreator();

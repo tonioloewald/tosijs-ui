@@ -45,7 +45,6 @@ export declare class TosiField extends XinComponent {
     };
     value: any;
     content: HTMLLabelElement;
-    private valueChanged;
     handleChange: () => void;
     connectedCallback(): void;
     render(): void;

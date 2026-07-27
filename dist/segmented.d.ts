@@ -87,7 +87,6 @@ export declare class TosiSegmented extends WebComponent {
         };
     };
     private syncCurrent;
-    private valueChanged;
     handleChange: () => void;
     handleKey: (event: KeyboardEvent) => void;
     connectedCallback(): void;

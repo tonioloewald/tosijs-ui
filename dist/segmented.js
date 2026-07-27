@@ -276,7 +276,6 @@ export class TosiSegmented extends WebComponent {
             label.classList.toggle('current', values.includes(val) || (val === '' && isOtherValue));
         });
     }
-    valueChanged = false;
     handleChange = () => {
         const { options, custom } = this.parts;
         if (this.multiple) {
@@ -302,7 +301,6 @@ export class TosiSegmented extends WebComponent {
             }
         }
         this.syncCurrent();
-        this.valueChanged = true;
     };
     handleKey = (event) => {
         let blockEvent = false;
@@ -382,29 +380,45 @@ export class TosiSegmented extends WebComponent {
     }
     render() {
         super.render();
-        if (this.valueChanged) {
-            this.valueChanged = false;
-            return;
-        }
         const { options, custom } = this.parts;
-        options.textContent = '';
         const type = this.multiple ? 'checkbox' : 'radio';
         const { values, isOtherValue } = this;
-        options.append(...this._choicesWithOther.map((choice) => {
-            return label({ tabindex: 0 }, input({
+        const choices = this._choicesWithOther;
+        const isChecked = (value) => values.includes(value) || (value === '' && isOtherValue);
+        // Idempotent: rebuild the <label>s ONLY when the choice set changed; otherwise
+        // reconcile `checked` in place. Re-creating them every render (previously avoided
+        // by a `valueChanged` timing flag) dropped focus from the segment you just
+        // clicked and is provably redundant when the labels already match the choices —
+        // so render is now safe to run any number of times, any time.
+        const labels = [...options.querySelectorAll('label')];
+        const structureMatches = labels.length === choices.length &&
+            labels.every((l, i) => l.querySelector('input')?.value === choices[i].value);
+        if (structureMatches) {
+            labels.forEach((label) => {
+                const input = label.querySelector('input');
+                if (input && input.checked !== isChecked(input.value)) {
+                    input.checked = isChecked(input.value);
+                }
+            });
+        }
+        else {
+            options.textContent = '';
+            options.append(...choices.map((choice) => label({ tabindex: 0 }, input({
                 type,
                 name: this.name,
                 value: choice.value,
-                checked: values.includes(choice.value) ||
-                    (choice.value === '' && isOtherValue),
+                checked: isChecked(choice.value),
                 tabIndex: -1,
-            }), choice.icon || { class: 'no-icon' }, this.localized ? tosiLocalized(choice.caption) : span(choice.caption));
-        }));
+            }), choice.icon || { class: 'no-icon' }, this.localized ? tosiLocalized(choice.caption) : span(choice.caption))));
+        }
         if (this.other && !this.multiple) {
             custom.hidden = !isOtherValue;
-            custom.value = isOtherValue ? this.value : '';
+            const customValue = isOtherValue ? this.value : '';
+            if (custom.value !== customValue)
+                custom.value = customValue;
             custom.placeholder = this.placeholder;
-            options.append(custom);
+            if (custom.parentElement !== options)
+                options.append(custom);
         }
         this.syncCurrent();
     }

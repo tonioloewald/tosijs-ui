@@ -443,24 +443,31 @@ function getInputValue(input: HTMLInputElement): any {
   }
 }
 
+// Idempotent: write only when the value actually differs. Blindly re-assigning
+// `input.value` (even the same string) moves the caret / drops the selection of a
+// field being edited, so render must not do it as redundant work — and it lets
+// render run any number of times without side-effects.
 function setElementValue(input: HTMLElement | null | undefined, value: any) {
   if (!(input instanceof HTMLElement)) {
     // do nothing
   } else if (input instanceof HTMLInputElement) {
     switch (input.type) {
       case 'checkbox':
-        input.checked = value
+        if (input.checked !== Boolean(value)) input.checked = value
         break
-      case 'radio':
-        input.checked = value === input.value
+      case 'radio': {
+        const checked = value === input.value
+        if (input.checked !== checked) input.checked = checked
         break
-      default:
-        input.value = String(value || '')
+      }
+      default: {
+        const v = String(value || '')
+        if (input.value !== v) input.value = v
+      }
     }
-  } else {
-    if (value != null || (input as HTMLInputElement).value != null) {
-      ;(input as HTMLInputElement).value = String(value || '')
-    }
+  } else if (value != null || (input as HTMLInputElement).value != null) {
+    const v = String(value || '')
+    if ((input as HTMLInputElement).value !== v) (input as HTMLInputElement).value = v
   }
 }
 
@@ -529,7 +536,6 @@ export class TosiField extends XinComponent {
     )
   )
 
-  private valueChanged = false
   handleChange = () => {
     const { input, valueHolder } = this.parts as {
       input: HTMLElement
@@ -540,7 +546,6 @@ export class TosiField extends XinComponent {
       valueHolder.value = inputElement.value
     }
     this.value = getInputValue(inputElement)
-    this.valueChanged = true
     const form = this.closest('tosi-form') as TosiForm
     if (form && this.key !== '') {
       switch (this.type) {
@@ -578,10 +583,6 @@ export class TosiField extends XinComponent {
   }
 
   render() {
-    if (this.valueChanged) {
-      this.valueChanged = false
-      return
-    }
     const { input, caption, valueHolder, field } = this.parts as {
       input: HTMLElement
       field: HTMLElement
@@ -591,16 +592,26 @@ export class TosiField extends XinComponent {
     if (caption.textContent?.trim() === '') {
       caption.append(this.caption !== '' ? this.caption : this.key)
     }
+    // Build the type-specific child ONCE and reuse it. Re-creating the <textarea> /
+    // <tosi-color> every render (the old behavior, only avoided by a `valueChanged`
+    // timing flag) destroyed focus, caret and selection mid-edit — provably redundant
+    // when the child of the right kind already exists. The value is reconciled
+    // idempotently by setElementValue below.
     if (this.type === 'text') {
-      input.textContent = ''
-      const textarea = elements.textarea({ value: this.value })
+      let textarea = input.children[0]
+      if (!(textarea instanceof HTMLTextAreaElement)) {
+        input.textContent = ''
+        textarea = elements.textarea({ value: this.value })
+        input.append(textarea)
+      }
       if (this.placeholder) {
         textarea.setAttribute('placeholder', this.placeholder)
       }
-      input.append(textarea)
     } else if (this.type === 'color') {
-      input.textContent = ''
-      input.append(colorInput({ value: this.value }))
+      if (!input.children[0]?.matches('tosi-color')) {
+        input.textContent = ''
+        input.append(colorInput({ value: this.value }))
+      }
     } else if (input.children.length === 0) {
       attr(valueHolder, 'placeholder', this.placeholder)
       attr(valueHolder, 'type', this.type)
