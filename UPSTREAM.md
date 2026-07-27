@@ -111,7 +111,10 @@ session-only + expire in 7 days — this line is the durable reminder.)
   correct (`['no']`) yet **`this.value` is STALE (`'yes'`)** — the **change handler** commits a stale
   value, not a render-skip issue. So **un-deprecating 1.7.7 as-is would STILL break segmented** even
   with hardened components. tosijs needs to fix the change-event/render interaction (value staleness
-  in the handler) in addition to the parts fix, before 1.7.7 (or a successor) is safe.
+  in the handler) in addition to the parts fix, before 1.7.7 (or a successor) is safe. **Filed as
+  [tonioloewald/tosijs#21](https://github.com/tonioloewald/tosijs/issues/21)** with concrete repro
+  steps (`segmented.pw.ts:7` on webkit/firefox: `input.checked` correct, `this.value` stale). The
+  user is adding test coverage tosijs-side.
 
   **CSS half — DONE.** The live-example's state-class rules now use
   `:host.-STATE > [part="example"] > [part="exampleWidgets"]` child chains (a container example's
