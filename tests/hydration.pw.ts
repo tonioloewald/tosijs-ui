@@ -99,11 +99,29 @@ so our own doc pages must hydrate with a clean console — a stub upgrade runnin
 part-reading render() before hydration is exactly what would break this.
 */
 test('doc pages hydrate with no console errors', async ({ page }) => {
+  // Benign browser notifications that are not code errors: the ResizeObserver
+  // "loop" message is fired by spec when a callback resizes and the browser defers
+  // delivery to the next frame (WebKit surfaces it as a window error; Chromium
+  // suppresses it). Not a hydration failure — the industry-standard thing to ignore.
+  const BENIGN =
+    /ResizeObserver loop (limit exceeded|completed with undelivered notifications)/
   const errors: string[] = []
   page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(m.text())
+    if (m.type() !== 'error') return
+    // Only count errors from OUR pages/scripts. Third-party resources (e.g. the
+    // README's badge.fury.io version badge) emit console errors of their own —
+    // Firefox and WebKit log a cross-site SameSite-cookie rejection for that SVG
+    // that Chromium doesn't — and those are not hydration failures. Same-origin
+    // (localhost) messages, and anything with no location, still count.
+    const url = m.location()?.url || ''
+    if (url && !/^https?:\/\/(localhost|127\.0\.0\.1)[:/]/.test(url)) return
+    if (BENIGN.test(m.text())) return
+    errors.push(m.text())
   })
-  page.on('pageerror', (e) => errors.push(`PAGEERROR: ${e.message}`))
+  page.on('pageerror', (e) => {
+    if (BENIGN.test(e.message)) return
+    errors.push(`PAGEERROR: ${e.message}`)
+  })
 
   // A spread of pages: home, a component page, a prose-heavy page, a data component.
   for (const path of ['/', '/component/', '/doc-browser/', '/data-table/']) {

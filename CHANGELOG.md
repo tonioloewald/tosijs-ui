@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.7.2
+
+- **Fix: doc sites are now mount-point-agnostic** (issue #25). The build baked `basePath` into
+  every functional URL (nav/content links, `scriptUrl`, `stylesUrl`, favicon, `docsUrl`), so a
+  build was locked to one mount — adding a custom domain to a GitHub project page flipped the
+  live site to the root while `docs/` still pointed at `/repo`, 404ing every asset into a bare,
+  unstyled shell with no warning. Functional URLs are now emitted **relative to each page**, so
+  one build works at `/repo`, a custom-domain root, or a moved mount with no rebuild. *Metadata*
+  URLs (`canonical`, `og:url`, `og:image`, `sitemap.xml`) stay absolute via `baseUrl`+`basePath`
+  — so `basePath` now only affects metadata, never the page's assets. (The hydrated SPA's own
+  nav/`pushState` and `__TJS_LOCAL_BASE` remain root-relative — tracked in #16.)
+- **Fix: the haltija dev channel loaded once per background-test iframe.** The doc-browser's
+  background test runner loads every page-with-tests in a hidden iframe, each served the injected
+  dev-channel loader — so `dev.js` was imported N times into throwaway frames. The loader is now
+  gated to the top window (`self===top`).
+- **Live examples get a rounded, padded card.** `.preview` gains `padding` (breathing room around
+  rendered content) and its first child's top margin is dropped; the inset border moves to the
+  example's `:host` with a `border-radius`, so the whole example (preview + editors) reads as one
+  bordered card. CodeMirror tooltips render fixed-positioned so autocomplete isn't clipped by the
+  card's `overflow: hidden`.
+- **Removed the "blueprint loading" doc page.** It documented tosijs's own
+  `<xin-loader>`/`<xin-blueprint>` elements (no tosijs-ui component), so it belongs in tosijs's
+  docs. The generic `blueprint` icon stays.
+
 ## 1.7.1
 
 - **Fix: components looked wrong in the doc site's dark mode** (e.g. `<tosi-table>` stayed
