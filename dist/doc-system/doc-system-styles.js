@@ -34,7 +34,9 @@ export function docSystemColors(theme = {}) {
         _placeholderColor: brandColor.opacity(0.4),
         _brandTextColor: brandColor.rotate(30).brighten(0.9),
         _insetBg: brandColor.rotate(45).brighten(0.8),
-        _codeBg: brandColor.rotate(-15).desaturate(0.5).brighten(0.9),
+        // Neutral off-white (not brand-tinted); dark mode inverts its luminance to
+        // off-black, so the editor surface stays a clean neutral in both themes.
+        _codeBg: theme.codeBg ?? '#fdfdfd',
         _linkColor: brandColor.rotate(-30).darken(0.5),
         _shadowColor: '#0004',
         _menuBg: '#fafafa',

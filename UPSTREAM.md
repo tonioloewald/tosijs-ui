@@ -84,12 +84,26 @@ session-only + expire in 7 days — this line is the durable reminder.)
   editor / view-edit-code / edit-in-window broke (plain-HTML examples, which don't open an editor,
   were unaffected). The user is **deprecating 1.7.6 and re-fixing** the scoping (it must exclude a
   nested component's *own* parts but keep parts the parent assigned to slotted/placed content).
-  **We pinned tosijs `1.7.5` (dev + peer `^1.7.5`)** — the last solid version — verified green
-  (editor works, doc-test gate 37/37). Re-bump when the corrected tosijs ships; only then is the
-  nested mis-routing (the original #20) actually fixed. **Sibling CSS half (our side):** light-DOM
-  `:host …` rules become global `tag …` *descendant* selectors that bleed across nested instances;
-  child combinators fix that half here, tracked in `TODO.md`. On 1.7.5 the original nested
-  mis-routing remains (the demo self-isolates enough that it's not user-visible right now).
+  **We pinned tosijs `1.7.5` (dev + peer `^1.7.5`)** — the last solid version.
+
+  **Update 2026-07-27 — 1.7.7 ALSO deprecated (a second, different regression).** 1.7.7 re-fixed the
+  parts scoping correctly (self-healing parts: seed from content pre-hydration, absorb lazily-added
+  parts on access — verified all three cases: editor-in-tabs, the original nested mis-routing, and
+  inline default). BUT 1.7.7's **render-timing / computed-getter change broke `<tosi-segmented>`** on
+  **Firefox + WebKit** (Chromium fine): after clicking a segment the value updates but the highlight
+  stays on the previously-selected one. Mechanism — segmented's `render()` rebuilds its `<label>`s
+  from the `values`/`isOtherValue` getters and relies on a one-shot `valueChanged` flag to *skip*
+  that rebuild right after a click; on 1.7.7 the skip no longer holds on FF/WebKit and a rebuild
+  re-derives `checked` from a stale getter. Passed on 1.7.0; broke on 1.7.7. **Handed to tosijs; the
+  user is deprecating 1.7.7 too and fixing the render timing** (likely affects more than segmented —
+  any interaction-vs-render assumption). **Still pinned `1.7.5`.** Re-bump to the next corrected
+  tosijs, then re-run the FULL Playwright lane (Chromium-only CI would have shipped this).
+
+  **CSS half — DONE.** The live-example's state-class rules now use
+  `:host.-STATE > [part="example"] > [part="exampleWidgets"]` child chains (a container example's
+  state can't tint a nested handle). Kept across the version churn; independent of the tosijs fix.
+  On 1.7.5 the original nested mis-routing itself remains until the fixed tosijs lands (the demo
+  self-isolates enough that it's not user-visible right now).
 
 ### Note — experimental `tosijs/debug` + `tosijs/safe` builds are METADATA-ONLY in 1.7.0
 

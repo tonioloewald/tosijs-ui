@@ -27,7 +27,7 @@ export declare class LiveExample extends Component<ExampleParts> {
             boxShadow: string;
             overflow: string;
         };
-        ':host.-locally-edited [part="exampleWidgets"]': {
+        ':host.-locally-edited > [part="example"] > [part="exampleWidgets"]': {
             outline: string;
             outlineOffset: string;
             borderRadius: string;
@@ -53,7 +53,7 @@ export declare class LiveExample extends Component<ExampleParts> {
         ':host.-vertical .layout-indicator': {
             transform: string;
         };
-        ':host.-maximize .hide-if-maximized, :host:not(.-maximize) .show-if-maximized': {
+        ':host.-maximize > [part="example"] > [part="exampleWidgets"] .hide-if-maximized, :host:not(.-maximize) > [part="example"] > [part="exampleWidgets"] .show-if-maximized': {
             display: string;
         };
         ':host [part="example"]': {
@@ -148,14 +148,14 @@ export declare class LiveExample extends Component<ExampleParts> {
                 opacity: string;
             };
         };
-        ':host.-test-running [part="exampleWidgets"]': {
+        ':host.-test-running > [part="example"] > [part="exampleWidgets"]': {
             '--widget-color': string;
             animation: string;
         };
-        ':host.-test-passed [part="exampleWidgets"]': {
+        ':host.-test-passed > [part="example"] > [part="exampleWidgets"]': {
             '--widget-color': string;
         };
-        ':host.-test-failed [part="exampleWidgets"]': {
+        ':host.-test-failed > [part="example"] > [part="exampleWidgets"]': {
             '--widget-color': string;
         };
         ':host [part="testResults"]': {

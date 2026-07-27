@@ -19,10 +19,14 @@ export const liveExampleStyleSpec = {
         boxShadow: 'inset 0 0 0 2px #8883',
         overflow: 'hidden',
     },
-    // Local-edit indicator: an accent outline on the always-visible `<>` example
-    // button (bottom-left) when this example differs from its doc source — visible
-    // whether or not the code editor is open (e.g. an auto-restored saved edit).
-    ':host.-locally-edited [part="exampleWidgets"]': {
+    // Local-edit indicator: an accent outline on the always-visible `<>` handle when
+    // this example differs from its doc source. NB every `:host.STATE [part=…]` rule
+    // in this file uses `> [part="example"] > [part="exampleWidgets"]`, not a bare
+    // descendant: a light-DOM `:host` is a global `tosi-example …` selector, so a
+    // descendant combinator would leak a CONTAINER example's state class onto a
+    // NESTED example's widget (the self-hosting demo). The child chain pins each rule
+    // to the example's own direct toolbar.
+    ':host.-locally-edited > [part="example"] > [part="exampleWidgets"]': {
         outline: '2px solid var(--brand-color, #da1167)',
         outlineOffset: '1px',
         borderRadius: '4px',
@@ -48,7 +52,9 @@ export const liveExampleStyleSpec = {
     ':host.-vertical .layout-indicator': {
         transform: 'rotateZ(180deg)',
     },
-    ':host.-maximize .hide-if-maximized, :host:not(.-maximize) .show-if-maximized': {
+    // Maximize/restore icon toggle — scoped to the example's own toolbar so a
+    // container example's -maximize doesn't hide a nested example's maximize icon.
+    ':host.-maximize > [part="example"] > [part="exampleWidgets"] .hide-if-maximized, :host:not(.-maximize) > [part="example"] > [part="exampleWidgets"] .show-if-maximized': {
         display: 'none',
     },
     ':host [part="example"]': {
@@ -119,7 +125,9 @@ export const liveExampleStyleSpec = {
     },
     ':host .code-editors': {
         overflow: 'hidden',
-        background: 'white',
+        // Match the editor surface (neutral off-white; off-black in dark mode) instead
+        // of a hardcoded white that wouldn't adapt.
+        background: 'var(--code-bg, #fdfdfd)',
         position: 'relative',
         top: '0',
         right: '0',
@@ -157,14 +165,14 @@ export const liveExampleStyleSpec = {
     // Test status colours the `<>` handle (via --widget-color → the pocket bar's
     // --tosi-pocket-handle-color). The handle is translucent at rest, so the colour
     // reads as a subtle tint until you hover.
-    ':host.-test-running [part="exampleWidgets"]': {
+    ':host.-test-running > [part="example"] > [part="exampleWidgets"]': {
         '--widget-color': '#fa0',
         animation: 'test-pulse 0.75s ease-in-out infinite',
     },
-    ':host.-test-passed [part="exampleWidgets"]': {
+    ':host.-test-passed > [part="example"] > [part="exampleWidgets"]': {
         '--widget-color': '#0a0',
     },
-    ':host.-test-failed [part="exampleWidgets"]': {
+    ':host.-test-failed > [part="example"] > [part="exampleWidgets"]': {
         '--widget-color': '#f00',
     },
     ':host [part="testResults"]': {

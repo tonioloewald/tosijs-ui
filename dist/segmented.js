@@ -262,14 +262,18 @@ export class TosiSegmented extends WebComponent {
             opacity: varDefault.segmentedPlaceholderOpacity(0.75),
         },
     };
-    // Reflects each radio/checkbox's checked state onto its containing label as a
-    // `.current` class so the selection highlight updates reliably (see note on the
-    // `.current` style rule).
+    // Reflects the selection onto each label as a `.current` class so the highlight
+    // updates reliably (see note on the `.current` style rule). Derived from
+    // `this.value` (the authoritative selection, matching render()'s `checked` logic),
+    // NOT from re-reading each `input.checked`: on Firefox/WebKit that live read can
+    // lag the native radio update at change time, leaving `.current` on the previous
+    // segment while `input.checked` (and `value`) are already correct.
     syncCurrent() {
         const { options } = this.parts;
+        const { values, isOtherValue } = this;
         options.querySelectorAll('label').forEach((label) => {
-            const input = label.querySelector('input');
-            label.classList.toggle('current', Boolean(input && input.checked));
+            const val = label.querySelector('input')?.value ?? '';
+            label.classList.toggle('current', values.includes(val) || (val === '' && isOtherValue));
         });
     }
     valueChanged = false;

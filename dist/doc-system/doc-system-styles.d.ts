@@ -8,6 +8,8 @@ export interface DocSystemTheme {
     text?: string;
     buttonBg?: string;
     inputBg?: string;
+    /** code-editor surface (`--code-bg`); neutral off-white by default, not brand-tinted. */
+    codeBg?: string;
 }
 /** Compute the full set of `:root` color variables from a few base colors. */
 export declare function docSystemColors(theme?: DocSystemTheme): XinStyleRule;
