@@ -413,6 +413,7 @@ import { Component, elements, tosi } from 'tosijs';
 import { codeEditor, CodeEditor } from '../code-editor';
 import { tosiTabs } from '../tab-selector';
 import { icons } from '../icons';
+import { tosiPocketBar } from '../pocket-bar';
 import { postNotification } from '../notifications';
 import { popMenu } from '../menu';
 import { loadTransform, loadTjsTestApi, rewriteImports, contextVarName, AsyncFunction, } from './code-transform';
@@ -423,7 +424,7 @@ import { rewriteExampleBlocks, groupExamples, findFencedBlocks, } from './save-t
 import { exampleEditKey, saveExampleEdit, loadExampleEdit, clearExampleEdit, hasExampleEdit, } from './example-store';
 import { liveExampleStyleSpec } from './styles';
 import { runTests } from './test-harness';
-const { div, tosiSlot, style, button, pre, span } = elements;
+const { div, tosiSlot, style, button, pre, span, label, input } = elements;
 // Test mode: controlled by localStorage, defaults to enabled on localhost
 const TESTS_ENABLED_KEY = 'tosijs-ui-tests-enabled';
 const isLocalhost = typeof window !== 'undefined' &&
@@ -874,43 +875,21 @@ export class LiveExample extends Component {
             window.alert('Save failed.');
         }
     };
-    exampleMenu = () => {
-        const testsOn = testManager.enabled.value;
-        popMenu({
-            target: this.parts.exampleWidgets,
-            width: 'auto',
-            menuItems: [
-                {
-                    icon: 'edit2',
-                    caption: 'view/edit code',
-                    action: this.showCode,
-                },
-                {
-                    icon: 'edit',
-                    caption: 'view/edit code in a new window',
-                    action: this.openEditorWindow,
-                },
-                null,
-                {
-                    icon: this.isMaximized ? 'minimize' : 'maximize',
-                    caption: this.isMaximized ? 'restore preview' : 'maximize preview',
-                    action: this.toggleMaximize,
-                },
-                null,
-                {
-                    icon: testsOn ? 'check' : '',
-                    caption: 'Run tests',
-                    action: () => {
-                        if (testsOn) {
-                            disableTests();
-                        }
-                        else {
-                            enableTests();
-                        }
-                    },
-                },
-            ],
-        });
+    handleTestsToggle = (event) => {
+        if (event.target.checked)
+            enableTests();
+        else
+            disableTests();
+    };
+    // The maximize icon + title toggle purely in CSS (.hide-if-maximized /
+    // .show-if-maximized); only the run-tests checkbox needs a JS sync so its state
+    // is correct on first paint and after the global flag changes. (Its greyed /
+    // monochrome look keys off the --tests-enabled CSS var, which is global.)
+    updateExampleWidgets = () => {
+        if (!this.hydrated)
+            return;
+        if (this.parts.testsCheckbox)
+            this.parts.testsCheckbox.checked = testManager.enabled.value;
     };
     handleShortcuts = (event) => {
         if (event.metaKey || event.ctrlKey) {
@@ -938,11 +917,14 @@ export class LiveExample extends Component {
         }
     };
     content = () => [
-        div({ part: 'example' }, style({ part: 'style' }), div({ part: 'testIndicator', title: 'test status' }), pre({ part: 'testResults', hidden: true }), button({
-            title: 'example menu',
-            part: 'exampleWidgets',
-            onClick: this.exampleMenu,
-        }, icons.code())),
+        div({ part: 'example' }, style({ part: 'style' }), pre({ part: 'testResults', hidden: true }), 
+        // The example toolbar: a pocket bar whose collapsed `<>` handle carries the
+        // test-status colour (via --widget-color). Pinned top-right, growing left, so
+        // it never covers the editor in side-by-side mode.
+        tosiPocketBar({ part: 'exampleWidgets', icon: 'code', direction: 'w' }, button({ title: 'view/edit code', onClick: this.showCode }, icons.edit2()), button({ title: 'view/edit code in a new window', onClick: this.openEditorWindow }, icons.edit()), button({ title: 'toggle preview size', onClick: this.toggleMaximize }, 
+        // Both icons render; the existing .hide-if-maximized / .show-if-maximized
+        // CSS shows the right one for the current state — no JS icon swap.
+        icons.maximize({ class: 'hide-if-maximized' }), icons.minimize({ class: 'show-if-maximized' })), label({ class: 'tests-toggle', title: 'run tests' }, input({ type: 'checkbox', part: 'testsCheckbox', onChange: this.handleTestsToggle }), icons.check()))),
         // Empty until first showCode. buildEditorPanel() fills it lazily so a reader
         // who never opens a panel never constructs a <tosi-code> (and never pulls the
         // CodeMirror chunk). See ensureEditors().
@@ -1046,6 +1028,10 @@ export class LiveExample extends Component {
         // does not fire reliably during page unload.
         this.beforeUnloadHandler = () => this.remoteSync?.sendClose();
         addEventListener('beforeunload', this.beforeUnloadHandler);
+        // Reflect maximize state + tests-enabled on the pocket-bar controls. The
+        // run-tests icon greys globally via the --tests-enabled CSS var (maintained on
+        // <body>), so no per-instance observer is needed to keep examples in sync.
+        this.updateExampleWidgets();
     }
     disconnectedCallback() {
         super.disconnectedCallback();
@@ -1505,12 +1491,13 @@ export class LiveExample extends Component {
         }
     };
     displayTestResults() {
-        const { testResults: resultsEl, testIndicator } = this.parts;
+        const { testResults: resultsEl, exampleWidgets } = this.parts;
         const results = this.testResults;
         if (!results || results.tests.length === 0) {
             resultsEl.hidden = true;
             this.classList.remove('-test-passed', '-test-failed');
-            testIndicator.title = 'no tests';
+            if (exampleWidgets)
+                exampleWidgets.title = 'no tests';
             return;
         }
         resultsEl.innerHTML = '';
@@ -1526,11 +1513,12 @@ export class LiveExample extends Component {
         }
         this.classList.toggle('-test-passed', results.failed === 0);
         this.classList.toggle('-test-failed', results.failed > 0);
-        // Update indicator title
-        testIndicator.title =
-            results.failed === 0
-                ? `${results.passed} tests passed`
-                : `${results.failed}/${results.tests.length} tests failed`;
+        // The `<>` handle colour shows pass/fail; its tooltip carries the detail.
+        if (exampleWidgets)
+            exampleWidgets.title =
+                results.failed === 0
+                    ? `${results.passed} tests passed`
+                    : `${results.failed}/${results.tests.length} tests failed`;
         // Update visibility based on tab and failure status
         this.updateTestResultsVisibility();
         // Dispatch event for doc-browser to track results
@@ -1584,6 +1572,7 @@ export class LiveExample extends Component {
     }
     render() {
         super.render();
+        this.updateExampleWidgets();
         if (this.remoteId !== '') {
             const data = localStorage.getItem(this.storageKey);
             if (data !== null) {

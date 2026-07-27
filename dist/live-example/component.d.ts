@@ -89,17 +89,23 @@ export declare class LiveExample extends Component<ExampleParts> {
         };
         ':host [part="exampleWidgets"]': {
             position: string;
-            left: string;
-            bottom: string;
-            '--widget-color': string;
-            borderRadius: string;
-            width: string;
-            height: string;
-            lineHeight: string;
+            top: string;
+            right: string;
             zIndex: string;
+            color: string;
+            '--widget-color': string;
+            '--tosi-pocket-handle-color': string;
         };
-        ':host [part="exampleWidgets"] svg': {
-            stroke: string;
+        ':host [part="exampleWidgets"] button': {
+            '--text-color': string;
+        };
+        ':host [part="exampleWidgets"] .tests-toggle input': {
+            display: string;
+        };
+        ':host [part="exampleWidgets"] .tests-toggle': {
+            opacity: string;
+            filter: string;
+            transition: string;
         };
         ':host .code-editors': {
             overflow: string;
@@ -134,33 +140,6 @@ export declare class LiveExample extends Component<ExampleParts> {
         ':host .sizer': {
             cursor: string;
         };
-        ':host [part="testIndicator"]': {
-            position: string;
-            top: string;
-            right: string;
-            width: string;
-            height: string;
-            borderRadius: string;
-            background: string;
-            zIndex: string;
-            display: string;
-        };
-        ':host.-has-tests [part="testIndicator"]': {
-            display: string;
-            opacity: string;
-        };
-        ':host.-test-running [part="testIndicator"]': {
-            background: string;
-            animation: string;
-        };
-        ':host.-test-passed [part="testIndicator"]': {
-            background: string;
-            animation: string;
-        };
-        ':host.-test-failed [part="testIndicator"]': {
-            background: string;
-            animation: string;
-        };
         '@keyframes test-pulse': {
             '0%, 100%': {
                 opacity: string;
@@ -169,16 +148,9 @@ export declare class LiveExample extends Component<ExampleParts> {
                 opacity: string;
             };
         };
-        '@keyframes test-fade': {
-            '0%': {
-                opacity: string;
-            };
-            '50%': {
-                opacity: string;
-            };
-            '100%': {
-                opacity: string;
-            };
+        ':host.-test-running [part="exampleWidgets"]': {
+            '--widget-color': string;
+            animation: string;
         };
         ':host.-test-passed [part="exampleWidgets"]': {
             '--widget-color': string;
@@ -291,7 +263,8 @@ export declare class LiveExample extends Component<ExampleParts> {
     get isMaximized(): boolean;
     flipLayout: () => void;
     saveToSource: () => Promise<void>;
-    exampleMenu: () => void;
+    handleTestsToggle: (event: Event) => void;
+    updateExampleWidgets: () => void;
     handleShortcuts: (event: KeyboardEvent) => void;
     content: () => any[];
     private buildEditorPanel;

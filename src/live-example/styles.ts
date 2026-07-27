@@ -101,20 +101,38 @@ export const liveExampleStyleSpec = {
     position: 'relative',
   },
 
+  // The example toolbar (a <tosi-pocket-bar>), pinned top-right so it never covers
+  // the editor in side-by-side mode. Only the collapsed `<>` handle carries the
+  // test-status colour — the action buttons stay neutral — via the pocket bar's
+  // --tosi-pocket-handle-color (the -test-* rules below drive --widget-color).
   ':host [part="exampleWidgets"]': {
     position: 'absolute',
-    left: '5px',
-    bottom: '5px',
-    '--widget-color': 'var(--brand-color)',
-    borderRadius: '5px',
-    width: '44px',
-    height: '44px',
-    lineHeight: '44px',
+    top: '5px',
+    right: '5px',
     zIndex: '100',
+    // Action controls are neutral (text colour); only the handle carries status.
+    color: 'var(--text-color)',
+    '--widget-color': 'var(--brand-color)',
+    '--tosi-pocket-handle-color': 'var(--widget-color)',
   },
 
-  ':host [part="exampleWidgets"] svg': {
-    stroke: 'var(--widget-color)',
+  // The doc site brand-colours bare <button>s by overriding --text-color ON the
+  // button (a link affordance). Revert it here so the toolbar's icon buttons are
+  // neutral, matching the check <label> (which the button rule never touched).
+  ':host [part="exampleWidgets"] button': {
+    '--text-color': 'inherit',
+  },
+
+  // Run-tests toggle: the native checkbox is hidden; its icon is full-colour when
+  // tests are on and greyed + monochrome when off. --tests-enabled (0|1, set on
+  // <body>) is global, so every example's toggle stays in sync with no JS.
+  ':host [part="exampleWidgets"] .tests-toggle input': {
+    display: 'none',
+  },
+  ':host [part="exampleWidgets"] .tests-toggle': {
+    opacity: 'calc(0.4 + 0.6 * var(--tests-enabled, 0))',
+    filter: 'grayscale(calc(1 - var(--tests-enabled, 0)))',
+    transition: 'opacity 0.2s, filter 0.2s',
   },
 
   ':host .code-editors': {
@@ -155,48 +173,17 @@ export const liveExampleStyleSpec = {
     cursor: 'nwse-resize',
   },
 
-  // Test status indicator (--tests-enabled CSS var pierces shadow DOM)
-  ':host [part="testIndicator"]': {
-    position: 'absolute',
-    top: '8px',
-    right: '8px',
-    width: '12px',
-    height: '12px',
-    borderRadius: '50%',
-    background: '#888',
-    zIndex: '100',
-    display: 'none',
-  },
-
-  ':host.-has-tests [part="testIndicator"]': {
-    display: 'block',
-    opacity: 'var(--tests-enabled, 1)',
-  },
-
-  ':host.-test-running [part="testIndicator"]': {
-    background: '#fa0',
-    animation: 'test-pulse 0.5s ease-in-out infinite',
-  },
-
-  ':host.-test-passed [part="testIndicator"]': {
-    background: '#0a0',
-    animation: 'test-fade 2s ease-out forwards',
-  },
-
-  ':host.-test-failed [part="testIndicator"]': {
-    background: '#c00',
-    animation: 'test-pulse 1s ease-in-out infinite',
-  },
-
   '@keyframes test-pulse': {
     '0%, 100%': { opacity: '1' },
     '50%': { opacity: '0.4' },
   },
 
-  '@keyframes test-fade': {
-    '0%': { opacity: '1' },
-    '50%': { opacity: '1' },
-    '100%': { opacity: '0' },
+  // Test status colours the `<>` handle (via --widget-color → the pocket bar's
+  // --tosi-pocket-handle-color). The handle is translucent at rest, so the colour
+  // reads as a subtle tint until you hover.
+  ':host.-test-running [part="exampleWidgets"]': {
+    '--widget-color': '#fa0',
+    animation: 'test-pulse 0.75s ease-in-out infinite',
   },
 
   ':host.-test-passed [part="exampleWidgets"]': {

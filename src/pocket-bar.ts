@@ -82,9 +82,20 @@ them to see the bar grow in its `direction`.
 - `open` — reflects the open state. Hover / focus / tap peek it open; clicking the
   handle keeps it open until you click the handle again or click outside.
 
-The handle is translucent at rest (`--tosi-pocket-opacity`, default `0.45`) and opaque
-while open. The bar's glass background is `--tosi-pocket-bg` (a translucent tint of
-`--tosi-bg`, so it follows the theme, light or dark).
+The handle is slightly translucent at rest (`--tosi-pocket-opacity`, default `0.75`)
+and opaque while open; it keeps a blurred glass chip (`--tosi-pocket-bg`, a translucent
+tint of `--tosi-bg`, so it follows the theme) so it stays legible over busy content.
+
+### Styling hooks
+
+- `--tosi-pocket-opacity` — resting opacity of the whole widget (default `0.75`).
+- `--tosi-pocket-bg` — the glass background (a translucent tint of `--tosi-bg`).
+- `--tosi-pocket-handle-color` — colour of just the collapsed handle icon, independent
+  of the bar's controls (e.g. to flag status on the handle alone). Default `inherit`.
+
+Slotted `<button>`s and `<label>`s get flat icon-button styling by default. A
+checkbox-as-icon — a `<label>` wrapping an `<input type=checkbox>` and an icon — greys
+and desaturates until checked, so a toggle needs no extra CSS.
 */
 
 /*{ "parent": "Components" }*/
@@ -220,7 +231,10 @@ export class TosiPocketBar extends WebComponent<PocketBarParts> {
     ':host': {
       display: 'inline-flex',
       position: 'relative',
-      opacity: varDefault.tosiPocketOpacity('0.45'),
+      // Slightly translucent at rest so it stays out of the way, fully opaque when
+      // open. The handle keeps a blurred glass chip even at rest (below), so it
+      // stays legible over busy content instead of a bare, hard-to-see icon.
+      opacity: varDefault.tosiPocketOpacity('0.75'),
       transition: 'opacity 0.15s ease-out',
     },
     ':host([open])': {
@@ -234,18 +248,17 @@ export class TosiPocketBar extends WebComponent<PocketBarParts> {
       border: '0',
       margin: '0',
       cursor: 'pointer',
-      color: 'inherit',
-      background: 'transparent',
-      borderRadius: vars.spacing,
-      transition: 'background 0.15s ease-out',
-    },
-    // A translucent, blurred "glass" surface tinted from --tosi-bg, so it follows the
-    // theme (light or dark) instead of a flat grey chip.
-    ':host([open]) [part="handle"]': {
+      // The handle's colour is independently settable (the bar's controls stay
+      // neutral), so a consumer can e.g. flag status on just the collapsed icon.
+      color: varDefault.tosiPocketHandleColor('inherit'),
+      // A blurred "glass" chip tinted from --tosi-bg (theme-aware, light or dark).
+      // The backdrop blur keeps the icon readable over any background.
       background: varDefault.tosiPocketBg(
-        'color-mix(in srgb, var(--tosi-bg, #fff) 82%, transparent)'
+        'color-mix(in srgb, var(--tosi-bg, #fff) 85%, transparent)'
       ),
       backdropFilter: 'blur(12px)',
+      borderRadius: vars.spacing,
+      transition: 'background 0.15s ease-out',
     },
     ':host [part="bar"]': {
       position: 'fixed',
@@ -268,6 +281,33 @@ export class TosiPocketBar extends WebComponent<PocketBarParts> {
       opacity: '1',
       pointerEvents: 'auto',
       transform: 'scale(1)',
+    },
+
+    // Sensible defaults for slotted controls so a bar of icon-buttons needs no
+    // extra CSS: flat icon-buttons with a subtle hover tint. A checkbox-as-icon
+    // (label wrapping an <input type=checkbox> + an icon) greys and desaturates
+    // until it's checked — the easy way to build a toggle. Consumers override any
+    // of this from the light DOM (higher specificity) or hide the native checkbox.
+    '::slotted(button), ::slotted(label)': {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: vars.spacing25,
+      padding: vars.spacing50,
+      margin: '0',
+      border: '0',
+      background: 'transparent',
+      color: 'inherit',
+      font: 'inherit',
+      cursor: 'pointer',
+      borderRadius: vars.spacing25,
+      transition: 'background 0.15s ease-out, opacity 0.15s, filter 0.15s',
+    },
+    '::slotted(button:hover), ::slotted(label:hover)': {
+      background: 'color-mix(in srgb, currentColor 15%, transparent)',
+    },
+    '::slotted(label:has(input[type="checkbox"]:not(:checked)))': {
+      opacity: '0.45',
+      filter: 'grayscale(1)',
     },
   }
 

@@ -46,12 +46,9 @@ export declare class TosiPocketBar extends WebComponent<PocketBarParts> {
             cursor: string;
             color: string;
             background: string;
+            backdropFilter: string;
             borderRadius: string;
             transition: string;
-        };
-        ':host([open]) [part="handle"]': {
-            background: string;
-            backdropFilter: string;
         };
         ':host [part="bar"]': {
             position: string;
@@ -71,6 +68,27 @@ export declare class TosiPocketBar extends WebComponent<PocketBarParts> {
             opacity: string;
             pointerEvents: string;
             transform: string;
+        };
+        '::slotted(button), ::slotted(label)': {
+            display: string;
+            alignItems: string;
+            gap: string;
+            padding: string;
+            margin: string;
+            border: string;
+            background: string;
+            color: string;
+            font: string;
+            cursor: string;
+            borderRadius: string;
+            transition: string;
+        };
+        '::slotted(button:hover), ::slotted(label:hover)': {
+            background: string;
+        };
+        '::slotted(label:has(input[type="checkbox"]:not(:checked)))': {
+            opacity: string;
+            filter: string;
         };
     };
     connectedCallback(): void;
