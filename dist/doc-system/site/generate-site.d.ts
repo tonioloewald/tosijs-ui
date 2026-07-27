@@ -56,4 +56,22 @@ export interface GenerateSiteConfig {
     /** extra lines injected into every <head> (favicon, analytics, etc.) */
     headExtra?: string;
 }
+/**
+ * Depth of a page below the site root: 0 for the root index (served at the mount
+ * root), 1 for every `/slug/` page. The generator only ever emits a flat `/slug/`
+ * tree (see `pathForSlug`), so a non-root page is always exactly one directory deep.
+ */
+export declare function pageDepth(slug: string): number;
+/**
+ * Rewrite a root-relative *functional* URL (asset ref, nav / content link) to be
+ * relative to a page at `depth`, so ONE build works at ANY mount point — a GitHub
+ * project page under `/repo`, a custom-domain root, or a moved mount — with no
+ * `basePath` rebuild. Relative URLs resolve against wherever the page is actually
+ * served, so `basePath` is deliberately NOT applied here: a page at `/repo/x/`
+ * gets `../styles.css` → `/repo/styles.css`, the same page at `/x/` gets it at
+ * `/styles.css`. External (`https://…`, `//…`) and already-relative refs pass
+ * through untouched. (Metadata URLs still use `withBase` — they need the absolute
+ * origin.) See issue #25; the runtime/SPA-navigation half is issue #16.
+ */
+export declare function relativeUrl(depth: number, p: string): string;
 export declare function generateSite(config: GenerateSiteConfig): Promise<number>;

@@ -415,6 +415,29 @@ explicitly to override (apex vs `www`, or a domain that differs from the
 canonical origin). A custom domain always serves from root, so it forces
 `basePath: '/'`.
 
+### Mount-agnostic builds (`basePath` only affects metadata)
+
+The build emits every **functional** URL — nav / content links, `scriptUrl`,
+`stylesUrl`, favicon, `docsUrl` — **relative to each page**, so a single build
+works at a `/repo` project page, a custom-domain root, or a moved mount with **no
+rebuild**. `basePath` now affects only **metadata** URLs (`canonical`, `og:url`,
+`og:image`, `sitemap.xml`), which need the real absolute served path for SEO.
+
+The practical payoff: adding a custom domain to a project page — GitHub flips the
+site to the domain root the instant you set it — no longer serves a broken,
+unstyled shell in the window before you rebuild with `basePath: '/'`. The assets
+resolve at whatever mount the page is served from. (Keep `basePath` correct anyway
+so crawlers see canonical URLs at the real path; a stale `basePath` now only
+mis-states metadata, it doesn't 404 the page.)
+
+Two runtime pieces are still mount-locked (tracked in issue #16): the hydrated
+SPA's own nav/`pushState` hrefs (they use a root-absolute `/slug/`, correct at a
+root mount, drifting under `/repo`) and the same-origin tjs-lang loader base
+(`__TJS_LOCAL_BASE`). Body-content **wikilinks** (`[[slug]]` → `/slug/`) are
+likewise absolute, since they come from the renderer shared with the client. None
+of these affect first paint or the no-JS asset load — the custom-domain-cutover
+case is fully covered.
+
 ## Doc format
 
 - **`.md` files** are included whole.

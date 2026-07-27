@@ -27,11 +27,11 @@ const escapeText = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace
  * <details> on the path to `currentFilename` opened. `currentFilename` gets
  * aria-current. Crawlable + no-JS: every node is a real <a>.
  */
-function navHtml(docs, slugMap, currentFilename, basePath) {
+function navHtml(docs, slugMap, currentFilename, depth) {
     const roots = buildNavTree(docs, slugMap);
     const open = navOpenPath(roots, currentFilename);
     const renderNode = (node, indent) => {
-        const href = withBase(basePath, pathForSlug(node.slug));
+        const href = relativeUrl(depth, pathForSlug(node.slug));
         const current = node.doc.filename === currentFilename;
         // `doc-link` is what the HYDRATED nav emits, and the shared nav CSS is written
         // against it. Emitting a bare <a> here forced a second, hand-copied rule set under
@@ -78,16 +78,48 @@ function absUrl(baseUrl, pathOrUrl) {
 /**
  * Prefix a root-relative path with basePath. No-op for '/', empty, protocol-
  * relative (`//…`), or absolute (`https://…`) URLs.
+ *
+ * Used ONLY for *metadata* URLs now (canonical, og:url, og:image, sitemap) — they
+ * legitimately need the real absolute origin+path. *Functional* URLs go through
+ * `relativeUrl` instead, so the artifact is mount-agnostic. See `relativeUrl`.
  */
 function withBase(basePath, p) {
     if (!p || !basePath || basePath === '/' || /^(https?:)?\/\//.test(p))
         return p;
     return basePath.replace(/\/$/, '') + (p.startsWith('/') ? p : '/' + p);
 }
+/**
+ * Depth of a page below the site root: 0 for the root index (served at the mount
+ * root), 1 for every `/slug/` page. The generator only ever emits a flat `/slug/`
+ * tree (see `pathForSlug`), so a non-root page is always exactly one directory deep.
+ */
+export function pageDepth(slug) {
+    return slug === '' ? 0 : 1;
+}
+/**
+ * Rewrite a root-relative *functional* URL (asset ref, nav / content link) to be
+ * relative to a page at `depth`, so ONE build works at ANY mount point — a GitHub
+ * project page under `/repo`, a custom-domain root, or a moved mount — with no
+ * `basePath` rebuild. Relative URLs resolve against wherever the page is actually
+ * served, so `basePath` is deliberately NOT applied here: a page at `/repo/x/`
+ * gets `../styles.css` → `/repo/styles.css`, the same page at `/x/` gets it at
+ * `/styles.css`. External (`https://…`, `//…`) and already-relative refs pass
+ * through untouched. (Metadata URLs still use `withBase` — they need the absolute
+ * origin.) See issue #25; the runtime/SPA-navigation half is issue #16.
+ */
+export function relativeUrl(depth, p) {
+    if (!p || /^(https?:)?\/\//.test(p) || !p.startsWith('/'))
+        return p;
+    const rel = '../'.repeat(depth) + p.slice(1);
+    return rel === '' ? './' : rel;
+}
 function pageHtml(doc, config, slugMap, configAttr) {
     const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', localizedUrl = '/localized-strings.txt', basePath, headExtra = '', bakes, } = config;
+    // Functional URLs are emitted relative to THIS page's depth so the build is
+    // mount-agnostic (issue #25); metadata URLs below stay absolute via withBase.
+    const depth = pageDepth(slugMap[doc.filename] ?? '');
     const localizedAttr = config.localizedStrings
-        ? ` localized="${escapeAttr(withBase(basePath, localizedUrl))}"`
+        ? ` localized="${escapeAttr(relativeUrl(depth, localizedUrl))}"`
         : '';
     // ONE rule, shared with the doc-browser's hydration path — see doc-title.ts. Writing
     // it twice is what made the title change on hydration (issue #6).
@@ -103,9 +135,9 @@ function pageHtml(doc, config, slugMap, configAttr) {
     // static HTML is correct for no-JS readers and crawlers (the doc-browser also
     // does this client-side after hydration).
     const body = rewriteDocLinks(renderDocMarkdown(doc.text, { bakes: bakes?.get(doc.filename) }), (filename) => slugMap[filename] !== undefined
-        ? withBase(basePath, pathForSlug(slugMap[filename]))
+        ? relativeUrl(depth, pathForSlug(slugMap[filename]))
         : null);
-    const nav = navHtml(config.docs, slugMap, doc.filename, basePath);
+    const nav = navHtml(config.docs, slugMap, doc.filename, depth);
     const navbar = linkListHtml('doc-navbar', config.navbarLinks);
     const jsonLd = baseUrl
         ? jsonLdScript({
@@ -126,7 +158,7 @@ function pageHtml(doc, config, slugMap, configAttr) {
         '  <link rel="preconnect" href="https://fonts.googleapis.com" />',
         '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
         // Burned-in theme: styles the page with no JS and with zero flash on hydration.
-        `  <link rel="stylesheet" href="${escapeAttr(withBase(basePath, stylesUrl))}" data-tosi-doc-system />`,
+        `  <link rel="stylesheet" href="${escapeAttr(relativeUrl(depth, stylesUrl))}" data-tosi-doc-system />`,
         `  <title>${escapeText(title)}</title>`,
         description
             ? `  <meta name="description" content="${escapeAttr(description)}" />`
@@ -155,7 +187,7 @@ function pageHtml(doc, config, slugMap, configAttr) {
             ? `  <meta name="twitter:image" content="${escapeAttr(imageAbs)}" />`
             : '',
         jsonLd,
-        `  <link rel="icon" href="${escapeAttr(withBase(basePath, favicon))}" />`,
+        `  <link rel="icon" href="${escapeAttr(relativeUrl(depth, favicon))}" />`,
         headExtra,
     ]
         .filter(Boolean)
@@ -189,7 +221,7 @@ function pageHtml(doc, config, slugMap, configAttr) {
 ${head}
 </head>
 <body>
-  <tosi-doc-system docs="${escapeAttr(withBase(basePath, docsUrl))}" config="${configAttr}"${localizedAttr}>
+  <tosi-doc-system docs="${escapeAttr(relativeUrl(depth, docsUrl))}" config="${configAttr}"${localizedAttr}>
   <article class="doc-content">
 ${body}
   </article>
@@ -197,8 +229,8 @@ ${nav}
 ${navbar}
   </tosi-doc-system>
   ${hydrateUrl
-        ? `<script type="module" src="${escapeAttr(withBase(basePath, hydrateUrl))}"></script>`
-        : `<script src="${escapeAttr(withBase(basePath, scriptUrl))}"></script>`}
+        ? `<script type="module" src="${escapeAttr(relativeUrl(depth, hydrateUrl))}"></script>`
+        : `<script src="${escapeAttr(relativeUrl(depth, scriptUrl))}"></script>`}
 </body>
 </html>
 `;

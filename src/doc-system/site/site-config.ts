@@ -115,9 +115,16 @@ export interface SiteConfig {
   domain?: string
   /**
    * URL prefix the site is served under, default '/'. Set to '/<repo>' for a
-   * GitHub project page without a custom domain; every absolute URL the
-   * generator emits (links, canonical, sitemap, scriptUrl, stylesUrl) is
-   * rewritten under it.
+   * GitHub project page without a custom domain.
+   *
+   * As of the mount-agnostic build (issue #25), `basePath` only affects
+   * *metadata* URLs — `canonical`, `og:url`, `og:image`, and `sitemap.xml` —
+   * which need the real absolute served path for SEO. *Functional* URLs (nav /
+   * content links, `scriptUrl`, `stylesUrl`, favicon, `docsUrl`) are emitted
+   * **relative to each page**, so one build works at `/repo`, at a custom-domain
+   * root, or a moved mount with no rebuild. You still want `basePath` correct so
+   * search engines see canonical URLs at the real path; getting it wrong now only
+   * mis-states metadata, it no longer 404s the page's assets.
    */
   basePath?: string
 
