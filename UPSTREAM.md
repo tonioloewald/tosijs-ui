@@ -72,12 +72,24 @@ session-only + expire in 7 days — this line is the durable reminder.)
   self-hosting `one-source-every-artifact` demo, the container `<tosi-example>`'s
   `parts.codeEditors.closest('tosi-example') !== itself`, so its `showCode()` un-hides a nested
   example's editor (actions pipe to the wrong component). Pre-existing — surfaced, not caused, by
-  the pocket-bar toolbar move to top-right. **The user owns tosijs and will fix it there** (part
-  collection should stop at nested custom-element boundaries). Shadow-DOM components are naturally
-  scoped, so this is light-DOM-only. **Sibling CSS half (our side):** light-DOM `:host …` rules
-  become global `tag …` *descendant* selectors that bleed across nested instances (a container's
-  state class tints a nested part); child combinators fix that half here, tracked in `TODO.md`.
-  Until the tosijs fix ships + we bump the dep, the self-hosting demo mis-routes edit clicks.
+  the pocket-bar toolbar move to top-right. Shadow-DOM components are naturally scoped, so this is
+  light-DOM-only.
+
+  **Update 2026-07-27 — tosijs 1.7.6's fix was OVER-AGGRESSIVE; DEPRECATED, pinned to 1.7.5.** The
+  1.7.6 fix stopped part collection at *every* nested custom element — which also excludes elements
+  the parent legitimately **assigned** a part to but placed *inside* a nested component. tosijs-ui
+  does exactly that: the `<tosi-code>` editors carry `part="js|html|css|test"` but live inside a
+  `<tosi-tabs>`, and `testsCheckbox` lives inside `<tosi-pocket-bar>`. On 1.7.6 `this.parts.js`
+  went undefined and `showCode()` threw **`elementRef "js" does not exist!`** — every code
+  editor / view-edit-code / edit-in-window broke (plain-HTML examples, which don't open an editor,
+  were unaffected). The user is **deprecating 1.7.6 and re-fixing** the scoping (it must exclude a
+  nested component's *own* parts but keep parts the parent assigned to slotted/placed content).
+  **We pinned tosijs `1.7.5` (dev + peer `^1.7.5`)** — the last solid version — verified green
+  (editor works, doc-test gate 37/37). Re-bump when the corrected tosijs ships; only then is the
+  nested mis-routing (the original #20) actually fixed. **Sibling CSS half (our side):** light-DOM
+  `:host …` rules become global `tag …` *descendant* selectors that bleed across nested instances;
+  child combinators fix that half here, tracked in `TODO.md`. On 1.7.5 the original nested
+  mis-routing remains (the demo self-isolates enough that it's not user-visible right now).
 
 ### Note — experimental `tosijs/debug` + `tosijs/safe` builds are METADATA-ONLY in 1.7.0
 

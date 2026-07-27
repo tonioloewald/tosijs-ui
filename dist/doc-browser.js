@@ -206,12 +206,14 @@ const testIndicatorStyleSpec = {
         background: testColor.fail,
         animation: 'test-pulse 2s ease-in-out infinite',
     },
-    // Floating widget - position and colors only, inherits button structure
+    // Floating widget - position and colors only, inherits button structure.
+    // Bottom-LEFT: bottom-right is where the injected haltija dev widget sits, and it
+    // was overlaying this.
     '.test-widget': {
         _testBg: testColor.running,
         position: 'fixed',
         bottom: vars.spacing,
-        right: vars.spacing,
+        left: vars.spacing,
         zIndex: '1000',
         background: vars.testBg,
         color: 'white',

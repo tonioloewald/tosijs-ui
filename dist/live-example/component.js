@@ -496,7 +496,11 @@ export class LiveExample extends Component {
             return m;
         if (m)
             console.warn(`<tosi-example>: unknown mode "${m}" — running inline`);
-        return this.iframe ? 'iframe' : 'inline';
+        // STRICT boolean: only an explicit `true` means iframe. `iframe` is a
+        // presence-only boolean attribute aliasing mode; a loose `this.iframe ?` would
+        // treat a stray non-boolean value ('', 'false', an attribute string) as truthy
+        // and silently force EVERY example into an iframe. Default is inline.
+        return this.iframe === true ? 'iframe' : 'inline';
     }
     prefix = 'lx';
     storageKey = STORAGE_KEY;
