@@ -161,10 +161,12 @@ async function checkExamplesInChild(
     // can't JSON-roundtrip); rebuild the nested Map here.
     const payload = JSON.parse(out) as {
       problems: ExampleProblem[]
+      warnings?: ExampleProblem[]
       bakes: Array<[string, Array<[string, { dialect: string; js: string }]>]>
     }
     return {
       problems: payload.problems,
+      warnings: payload.warnings ?? [],
       bakes: new Map(payload.bakes.map(([file, e]) => [file, new Map(e)])),
     }
   } catch (e) {
@@ -294,18 +296,32 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     : undefined
   let exampleBakes: Map<string, ExampleBakes> | undefined
   if (config.checkExamples !== false) {
-    const { problems, bakes } = await checkExamplesInChild(
+    const { problems, warnings, bakes } = await checkExamplesInChild(
       DOCS_JSON,
       resolverPrefix
     )
     exampleBakes = bakes
+    // Unsupported imports don't fail the build — the code isn't broken, it just
+    // can't run in the doc environment (almost always illustrative code that
+    // should be tagged `typescript`). Warn loudly, treat the block as display-only,
+    // and keep going. Only real syntax/transpile errors below are fatal.
+    if (warnings.length) {
+      console.warn(
+        `⚠️  doc-site build: ${warnings.length} live example block(s) can't run ` +
+          `here and were left as display-only:\n\n` +
+          formatExampleProblems(warnings) +
+          `\n\nTag each with a display-only language like \`typescript\` (instead of` +
+          ` \`js\`/\`ts\`) to silence this, or enable \`importResolver\` to import` +
+          ` other packages.\n`
+      )
+    }
     if (problems.length) {
       throw new Error(
         `doc-site build: ${problems.length} live example(s) failed to build:\n\n` +
           formatExampleProblems(problems) +
           `\n\nFix the code, or — if a block is illustrative and not meant to run —` +
           ` tag it with a display-only language like \`typescript\` instead of` +
-          ` \`js\`/\`ts\`. (Disable with checkExamples: false.)`
+          ` \`js\`/\`ts\`. (Disable all checking with checkExamples: false.)`
       )
     }
   }

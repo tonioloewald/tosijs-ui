@@ -20,22 +20,35 @@ describe('checkExamples', () => {
     expect(problems).toHaveLength(0)
   })
 
-  test('flags an unsupported (non-context) import', async () => {
-    const { problems } = await checkExamples([
+  test('an unsupported (non-context) import WARNS, not fails — display-only, build survives', async () => {
+    const { problems, warnings } = await checkExamples([
       doc('bad.md', "```js\nimport { x } from './relative'\n```\n"),
     ])
-    expect(problems).toHaveLength(1)
-    expect(problems[0].filename).toBe('bad.md')
-    expect(problems[0].lang).toBe('js')
-    expect(problems[0].error).toMatch(/unsupported import/)
+    // Not a code defect — the environment just can't provide the dep. Warn, don't
+    // fail the build (this is the fragility fix: illustrative snippets don't break it).
+    expect(problems).toHaveLength(0)
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0].filename).toBe('bad.md')
+    expect(warnings[0].lang).toBe('js')
+    expect(warnings[0].error).toMatch(/unsupported import/)
   })
 
-  test('flags a syntax error', async () => {
-    const { problems } = await checkExamples([
+  test('a syntax error FAILS — real breakage stays fatal', async () => {
+    const { problems, warnings } = await checkExamples([
       doc('syntax.md', '```js\nconst broken = (\n```\n'),
     ])
     expect(problems).toHaveLength(1)
     expect(problems[0].lang).toBe('js')
+    expect(warnings).toHaveLength(0)
+  })
+
+  test('the two are separated: a syntax error fails while an unsupported import only warns', async () => {
+    const { problems, warnings } = await checkExamples([
+      doc('syntax.md', '```js\nconst broken = (\n```\n'),
+      doc('import.md', "```ts\nimport { x } from 'ngx-tosijs'\n```\n"),
+    ])
+    expect(problems.map((p) => p.filename)).toEqual(['syntax.md'])
+    expect(warnings.map((w) => w.filename)).toEqual(['import.md'])
   })
 
   test('valid TypeScript (type annotations) transpiles clean — no false positive', async () => {

@@ -20,8 +20,9 @@ the bundle step, the ePub step, and generate-css; see the Bun.build note in
 orchestrator.ts.
 
   bun check-examples-cli.ts <docs.json> [contextKey ...]
-  → writes ExampleProblem[] as JSON to stdout; exit 0 whether or not problems were
-    found (a problem is data, not a crash — only a real failure exits non-zero).
+  → writes { problems, warnings, bakes } as JSON to stdout; exit 0 whether or not
+    problems were found (a problem is data, not a crash — only a real failure exits
+    non-zero). The parent fails the build on `problems`, warns on `warnings`.
 
 Build-time only. Never import this from browser code.
 */
@@ -36,7 +37,7 @@ const contextKeys = process.argv.slice(3);
 // non-context imports validate as dynamic `<prefix><spec>` imports rather than failing.
 const importPrefix = process.env.TOSI_IMPORT_PREFIX || undefined;
 const corpus = JSON.parse(await Bun.file(docsJson).text());
-const { problems, bakes } = await checkExamples(corpus, {
+const { problems, warnings, bakes } = await checkExamples(corpus, {
     ...(contextKeys.length ? { contextKeys } : {}),
     ...(importPrefix ? { importPrefix } : {}),
 });
@@ -45,6 +46,7 @@ const { problems, bakes } = await checkExamples(corpus, {
 // Maps can't JSON-roundtrip, so bakes go over as [filename, [source, {dialect,js}][]][].
 process.stdout.write(JSON.stringify({
     problems,
+    warnings,
     bakes: Array.from(bakes.entries()).map(([filename, docBakes]) => [
         filename,
         Array.from(docBakes.entries()),

@@ -4,17 +4,25 @@ Build-time transpile check for live examples.
 Every executable code block in the corpus (`js` / `tjs` / `ts` / `test`) is put
 through the SAME front half of the runtime pipeline the live-example component
 uses — `rewriteImports` → the tjs-lang transform → `new AsyncFunction(...)` — so a
-block that can't build (a tjs/TS syntax error, an unsupported import, or
-illustrative config mistakenly tagged with an executable language like `ts`
-instead of the display-only `typescript`) fails the build *at authoring time*,
-on every page, instead of silently rendering an error only when someone opens
-that page. `html` / `css` and display-only languages (`typescript`, `json`, …)
-are not executed, so they're skipped.
+block that can't build is caught *at authoring time*, on every page, instead of
+silently rendering an error only when someone opens that page. The two outcomes
+are graded differently (this is the point):
+
+  - a real **syntax / transpile error** is broken code → a `problem` that FAILS
+    the build;
+  - an **unsupported import** (a non-context package, no import-resolver) is fine
+    code the doc environment just can't run → a `warning`: the block is treated as
+    display-only and the build survives. It's almost always illustrative code that
+    should have been tagged `typescript` instead of `ts` — a mistagging shouldn't
+    take the whole build down with it.
+
+`html` / `css` and display-only languages (`typescript`, `json`, …) are not
+executed, so they're skipped.
 
 Build-time only (bun). Never import from browser code.
 */
 import { marked } from 'marked';
-import { rewriteImports, AsyncFunction, loadTransform, } from '../../live-example/code-transform';
+import { rewriteImports, AsyncFunction, loadTransform, UnsupportedImportError, } from '../../live-example/code-transform';
 // The default live-example context (matches the IIFE globals the pages provide).
 // A project that sets a custom `context` on its <tosi-doc-system> can pass its
 // own keys; these are the tosijs-ui defaults.
@@ -58,6 +66,7 @@ function collectCodeTokens(text) {
 export async function checkExamples(docs, opts = {}) {
     const contextKeys = opts.contextKeys ?? DEFAULT_CONTEXT_KEYS;
     const problems = [];
+    const warnings = [];
     const bakes = new Map();
     for (const doc of docs) {
         for (const block of collectCodeTokens(doc.text)) {
@@ -97,17 +106,24 @@ export async function checkExamples(docs, opts = {}) {
                 }
             }
             catch (err) {
-                problems.push({
+                const entry = {
                     filename: doc.filename,
                     title: doc.title,
                     lang: block.lang,
                     error: err.message || String(err),
                     snippet: block.text.split('\n').slice(0, 3).join('\n'),
-                });
+                };
+                // An unsupported import means the block references deps the environment
+                // can't provide — not broken code. Warn (display-only), don't fail the
+                // build. A real syntax/transpile error is a genuine problem.
+                if (err instanceof UnsupportedImportError)
+                    warnings.push(entry);
+                else
+                    problems.push(entry);
             }
         }
     }
-    return { problems, bakes };
+    return { problems, warnings, bakes };
 }
 /** Format problems for a build log. */
 export function formatExampleProblems(problems) {

@@ -8,7 +8,20 @@ export interface ExampleProblem {
     snippet: string;
 }
 export interface ExampleCheck {
+    /**
+     * Blocks that failed to build for a real reason (a tjs/TS syntax error, a
+     * transpile failure). These FAIL the build — broken code shouldn't ship.
+     */
     problems: ExampleProblem[];
+    /**
+     * Blocks that reference a package the environment can't provide (a non-context
+     * import, no import-resolver). The code isn't broken, it just can't run here —
+     * almost always illustrative code that should be tagged `typescript` (display-
+     * only) rather than `ts`. These WARN and are treated as display-only; they do
+     * NOT fail the build. (Enable `importResolver`, or tag the block display-only,
+     * to silence the warning.)
+     */
+    warnings: ExampleProblem[];
     /**
      * Build-time transpiled JS for `tjs` blocks, grouped by doc filename, each keyed
      * by exact source text. The renderer embeds a doc's bakes as hidden scripts (so

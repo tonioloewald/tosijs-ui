@@ -1,6 +1,20 @@
 import { Dialect, ExampleContext, TransformFn } from './types';
 export declare const AsyncFunction: Function;
 /**
+ * Thrown by `rewriteImports` when an example has a static import the environment
+ * can't satisfy (a non-context package with no import-resolver). This is NOT a code
+ * defect — the code is fine, the doc environment just doesn't provide the dependency
+ * — so the build check treats it as a *warning* (the block is display-only) rather
+ * than a fatal error, and can tell it apart from a real syntax/transpile error.
+ */
+export declare class UnsupportedImportError extends Error {
+    /** The offending `import …` statement. */
+    readonly statement: string;
+    constructor(message: string, 
+    /** The offending `import …` statement. */
+    statement: string);
+}
+/**
  * Sanitize a context module key into a JS identifier used as the binding name
  * in rewritten imports and as the AsyncFunction parameter. Must be applied
  * consistently on both sides. e.g. 'tosijs-ui' -> 'tosijsui',

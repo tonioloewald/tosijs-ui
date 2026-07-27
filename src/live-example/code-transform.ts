@@ -5,6 +5,24 @@ export const AsyncFunction = (async () => {
 }).constructor
 
 /**
+ * Thrown by `rewriteImports` when an example has a static import the environment
+ * can't satisfy (a non-context package with no import-resolver). This is NOT a code
+ * defect — the code is fine, the doc environment just doesn't provide the dependency
+ * — so the build check treats it as a *warning* (the block is display-only) rather
+ * than a fatal error, and can tell it apart from a real syntax/transpile error.
+ */
+export class UnsupportedImportError extends Error {
+  constructor(
+    message: string,
+    /** The offending `import …` statement. */
+    readonly statement: string
+  ) {
+    super(message)
+    this.name = 'UnsupportedImportError'
+  }
+}
+
+/**
  * Sanitize a context module key into a JS identifier used as the binding name
  * in rewritten imports and as the AsyncFunction parameter. Must be applied
  * consistently on both sides. e.g. 'tosijs-ui' -> 'tosijsui',
@@ -120,13 +138,15 @@ export function rewriteImports(
   // Anything still a static import is unsupported — fail loudly with the line.
   const leftover = result.match(/^\s*import\s+['"{*\w][^\n]*/m)
   if (leftover) {
-    throw new Error(
-      `live example: unsupported import \`${leftover[0].trim()}\` — imports ` +
+    const statement = leftover[0].trim()
+    throw new UnsupportedImportError(
+      `live example: unsupported import \`${statement}\` — imports ` +
         `from the example context (${contextKeys.join(', ')}) are supported in ` +
         `{ named }, * as ns, or default form` +
         (importPrefix
           ? `, and other packages resolve via the import-resolver.`
-          : ` (enable importResolver to import other packages).`)
+          : ` (enable importResolver to import other packages).`),
+      statement
     )
   }
   return result
