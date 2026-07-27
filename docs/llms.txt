@@ -25,8 +25,6 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
   `<tosi-ab>` provides a simple method for implementing A|B-testing.
 - https://ui.tosijs.net/appendices/ — Appendices
   Reference material on the library's own systems — the doc browser, the
-- https://ui.tosijs.net/bp-loader/ — blueprint loading
-  `<xin-loader>` and `<xin-blueprint>` are simple elements provided by `tosijs` for the dynamic loading
 - https://ui.tosijs.net/carousel/ — carousel
   This is a minimalist carousel component that supports the usual stuff.
 - https://ui.tosijs.net/code-editor/ — code

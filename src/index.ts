@@ -1,6 +1,5 @@
 export * from './ab-test'
 export * from './babylon-3d'
-export * from './bp-loader'
 export * from './bodymovin-player'
 export * from './carousel'
 export * from './code-editor'
