@@ -1,7 +1,22 @@
 import { test, expect } from 'bun:test'
-import { resolveIdleMs, resolveLimitMb } from './dev-server'
+import {
+  resolveIdleMs,
+  resolveLimitMb,
+  haltijaLoaderSnippet,
+} from './dev-server'
 
 const HOUR = 3600_000
+
+test('haltija loader is gated to the top window — never nested test iframes', () => {
+  const s = haltijaLoaderSnippet(8701)
+  // The load-bearing guard: without `self===top` the background test runner's
+  // per-page hidden iframes each import dev.js. Regressing this reintroduces the
+  // N-redundant-loads annoyance, so assert it explicitly.
+  expect(s).toContain('self===top')
+  // Still localhost-gated and pointed at the passed channel port.
+  expect(s).toContain("import('https://localhost:8701/dev.js')")
+  expect(s).toContain('location.hostname')
+})
 
 test('defaults to 8 hours when neither config nor env says otherwise', () => {
   expect(resolveIdleMs(undefined, undefined)).toBe(8 * HOUR)

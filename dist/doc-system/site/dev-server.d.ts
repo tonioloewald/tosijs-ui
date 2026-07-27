@@ -28,6 +28,17 @@ export declare function resolveIdleMs(configHours: number | undefined, envHours:
  * off. Only an explicit non-positive number disables the ceiling.
  */
 export declare function resolveLimitMb(configMb: number | undefined, envMb: string | undefined): number;
+/**
+ * The localhost-gated haltija dev-channel loader injected into served HTML at
+ * serve time (never bundled, never in the built output).
+ *
+ * `self===top` keeps it in the TOP window only. The doc-browser's background test
+ * runner loads every page-with-tests in a hidden iframe (`?_testMode=1`), each
+ * served this same HTML — without the guard, haltija's `dev.js` gets imported
+ * once per test page (N redundant loads in throwaway frames). An agent only ever
+ * drives the top page, so nested frames never need the channel.
+ */
+export declare function haltijaLoaderSnippet(httpsPort: number): string;
 export declare function devServer(config: SiteConfig, opts?: {
     test?: boolean;
     build?: () => unknown | Promise<unknown>;

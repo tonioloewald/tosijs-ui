@@ -79,6 +79,20 @@ export function resolveLimitMb(configMb, envMb) {
     return mb > 0 ? mb : 0;
 }
 /**
+ * The localhost-gated haltija dev-channel loader injected into served HTML at
+ * serve time (never bundled, never in the built output).
+ *
+ * `self===top` keeps it in the TOP window only. The doc-browser's background test
+ * runner loads every page-with-tests in a hidden iframe (`?_testMode=1`), each
+ * served this same HTML — without the guard, haltija's `dev.js` gets imported
+ * once per test page (N redundant loads in throwaway frames). An agent only ever
+ * drives the top page, so nested frames never need the channel.
+ */
+export function haltijaLoaderSnippet(httpsPort) {
+    return (`<script>self===top&&/^localhost$|^127\\./.test(location.hostname)` +
+        `&&import('https://localhost:${httpsPort}/dev.js')</script>`);
+}
+/**
  * Reclaim the port we are about to bind, from the process LISTENING on it.
  *
  * That sentence is the predicate, and the old code did not implement it. It ran
@@ -259,8 +273,7 @@ export async function devServer(config, opts = {}) {
         (config.haltijaDev === true ||
             process.env.HALTIJA_DEV === '1' ||
             process.env.HALTIJA_DEV === 'true');
-    const HALTIJA_SNIPPET = `<script>/^localhost$|^127\\./.test(location.hostname)` +
-        `&&import('https://localhost:${HALTIJA_HTTPS_PORT}/dev.js')</script>`;
+    const HALTIJA_SNIPPET = haltijaLoaderSnippet(HALTIJA_HTTPS_PORT);
     let testReportResolve;
     // Source read/write for in-browser "edit page source" (config.editableSources).
     // Local dev only — your machine, your files — so the lone guard is correctness:
