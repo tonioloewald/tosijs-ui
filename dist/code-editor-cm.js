@@ -10,7 +10,7 @@ Languages here are the always-available set (js/ts/css/html/markdown). First-cla
 tjs (highlighting + runtime-value autocomplete via tjs-lang's editors/codemirror) is
 layered in separately and only when tjs-lang is installed.
 */
-import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, } from '@codemirror/view';
+import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, tooltips, } from '@codemirror/view';
 import { EditorState, Compartment, Annotation, Transaction, } from '@codemirror/state';
 import { indentWithTab, history, defaultKeymap, historyKeymap, undo, redo, undoDepth, redoDepth, } from '@codemirror/commands';
 import { indentUnit, foldGutter, foldKeymap, indentOnInput, syntaxHighlighting, defaultHighlightStyle, bracketMatching, } from '@codemirror/language';
@@ -129,6 +129,10 @@ const editorTheme = EditorView.theme({
 function baseExtensions() {
     return [
         editorTheme,
+        // Render autocomplete / hover tooltips in a fixed layer so they escape the
+        // live-example's `:host { overflow: hidden }` (the rounded card clip) instead
+        // of being cut off at the editor's bottom edge in a short example.
+        tooltips({ position: 'fixed' }),
         lineNumbers(),
         highlightActiveLineGutter(),
         highlightSpecialChars(),

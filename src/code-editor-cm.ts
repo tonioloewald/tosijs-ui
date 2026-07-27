@@ -22,6 +22,7 @@ import {
   rectangularSelection,
   crosshairCursor,
   highlightActiveLine,
+  tooltips,
 } from '@codemirror/view'
 import {
   EditorState,
@@ -196,6 +197,10 @@ const editorTheme = EditorView.theme({
 function baseExtensions(): Extension {
   return [
     editorTheme,
+    // Render autocomplete / hover tooltips in a fixed layer so they escape the
+    // live-example's `:host { overflow: hidden }` (the rounded card clip) instead
+    // of being cut off at the editor's bottom edge in a short example.
+    tooltips({ position: 'fixed' }),
     lineNumbers(),
     highlightActiveLineGutter(),
     highlightSpecialChars(),

@@ -1,3 +1,4 @@
+import { vars } from 'tosijs';
 export const liveExampleStyleSpec = {
     ':host': {
         '--tosi-example-height': '320px',
@@ -10,6 +11,13 @@ export const liveExampleStyleSpec = {
         height: 'var(--tosi-example-height)',
         background: 'var(--background)',
         boxSizing: 'border-box',
+        // The bordered, rounded card wraps the whole example (preview + editors).
+        // overflow:hidden clips the inner split to the radius; the inset box-shadow
+        // (moved here from .preview) draws the border over both panes. CM tooltips
+        // escape this clip via tooltips({position:'fixed'}) in code-editor-cm.ts.
+        borderRadius: vars.spacing25,
+        boxShadow: 'inset 0 0 0 2px #8883',
+        overflow: 'hidden',
     },
     // Local-edit indicator: an accent outline on the always-visible `<>` example
     // button (bottom-left) when this example differs from its doc source — visible
@@ -53,7 +61,15 @@ export const liveExampleStyleSpec = {
         height: '100%',
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: 'inset 0 0 0 2px #8883',
+        boxSizing: 'border-box',
+        // Breathing room around rendered example content (border-box so height:100%
+        // still fits). The border/radius now live on :host.
+        padding: vars.spacing,
+    },
+    // The first rendered child often carries its own top margin (a heading, a
+    // paragraph); drop it so it doesn't stack on top of the new padding.
+    ':host .preview > :first-child': {
+        marginTop: '0',
     },
     ':host .preview-error': {
         padding: '8px 12px',

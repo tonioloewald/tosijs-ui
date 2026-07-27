@@ -10,6 +10,9 @@ export declare const liveExampleStyleSpec: {
         height: string;
         background: string;
         boxSizing: string;
+        borderRadius: string;
+        boxShadow: string;
+        overflow: string;
     };
     ':host.-locally-edited [part="exampleWidgets"]': {
         outline: string;
@@ -50,7 +53,11 @@ export declare const liveExampleStyleSpec: {
         height: string;
         position: string;
         overflow: string;
-        boxShadow: string;
+        boxSizing: string;
+        padding: string;
+    };
+    ':host .preview > :first-child': {
+        marginTop: string;
     };
     ':host .preview-error': {
         padding: string;
