@@ -99,6 +99,20 @@ session-only + expire in 7 days — this line is the durable reminder.)
   any interaction-vs-render assumption). **Still pinned `1.7.5`.** Re-bump to the next corrected
   tosijs, then re-run the FULL Playwright lane (Chromium-only CI would have shipped this).
 
+  **Update 2026-07-27 (part 2) — 1.7.7 has TWO distinct problems; the anti-pattern half is now
+  fixed our side, the other is still tosijs's.** tosijs argued (correctly) that the components were
+  depending on `render()` being **skipped** (the one-shot `valueChanged` flag) — an anti-pattern
+  1.7.7 merely exposed. We removed it from all three offenders (`segmented`, `color-input`, `form`):
+  `render()` is now idempotent (reconcile-in-place / check-before-write, skipping only *provably
+  redundant* work — colours compared parsed so `#rrggbb ↔ rgba()` doesn't clobber the caret). That
+  hardening is committed and green **9/9 on 1.7.5** (all browsers) and fixed pre-existing FF
+  flakiness + focus-loss-on-click. **BUT** re-testing the hardened components against **1.7.7** shows
+  a *second, deeper* regression the hardening cannot touch: after a click, `input.checked` is
+  correct (`['no']`) yet **`this.value` is STALE (`'yes'`)** — the **change handler** commits a stale
+  value, not a render-skip issue. So **un-deprecating 1.7.7 as-is would STILL break segmented** even
+  with hardened components. tosijs needs to fix the change-event/render interaction (value staleness
+  in the handler) in addition to the parts fix, before 1.7.7 (or a successor) is safe.
+
   **CSS half — DONE.** The live-example's state-class rules now use
   `:host.-STATE > [part="example"] > [part="exampleWidgets"]` child chains (a container example's
   state can't tint a nested handle). Kept across the version churn; independent of the tosijs fix.
