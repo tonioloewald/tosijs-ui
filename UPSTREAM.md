@@ -24,10 +24,16 @@ session-only + expire in 7 days — this line is the durable reminder.)
   processes. **This has taken the machine down twice.** ~30MB per call, monotonic, invisible
   to `Bun.gc()` and to any JS heap profiler.
 
-  **Status checked 2026-07-20: still NO movement (issue + PR both untouched since 2026-07-12;
-  latest release still 1.3.14 / 2026-05-13, the version we run). PR remains OPEN/unmerged —
-  GitHub currently reports `mergeable: UNKNOWN` (recomputing) after showing `CONFLICTING` on
-  07-19; either way it has not landed.** Prior detail from 2026-07-19:
+  **Status checked 2026-07-27: FIXED UPSTREAM — but not yet in a released bun.** The issue is
+  **CLOSED (completed 07-24)**; PR #34054 was closed unmerged and the fix landed via a different
+  PR, **[#34502](https://github.com/oven-sh/bun/pull/34502)** — "Verified on main at `df84f8db1`:
+  sequential `Bun.build()` calls now plateau instead of growing RSS unbounded — freed memory is
+  returned to the OS between builds." **BUT the latest released bun is still 1.3.14 (2026-05-13),
+  the version we run — so no version we can `bun install` carries the fix yet.** Action: watch for
+  the next bun release; when it lands, MEASURE (see the two caveats below — Transpiler still not
+  covered) before considering reverting any workaround. Until then, **everything stays as-is.**
+  Prior detail from 2026-07-20:
+  **still NO movement; PR OPEN/unmerged, CONFLICTING.** Prior detail from 2026-07-19:
   **NO movement, PR now stale. Issue OPEN (last touched 2026-07-12);
   [PR #34054](https://github.com/oven-sh/bun/pull/34054) still OPEN/UNMERGED and has gone
   `CONFLICTING`/`DIRTY` — it now has merge conflicts with base and needs a rebase before it can
@@ -191,6 +197,10 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
 
 ### Open (waiting on tjs-lang)
 
+_**Status checked 2026-07-27: no movement.** #9, #11, #13, #14 all still OPEN; latest published
+tjs-lang is **0.12.0** (2026-07-20) — the version we ship — so no new release carries a fix. Our
+workarounds (documented per-issue below) stay._
+
 - **[#9](https://github.com/tonioloewald/tjs-lang/issues/9) — Passing a non-`wasmBuffer`
   typed array silently copies it on every call.** The wrapper only takes the zero-copy
   path when `array.buffer === wasmMemory.buffer`; otherwise it copies every array in
@@ -305,8 +315,13 @@ _Original per-issue notes:_
     reliable `--private` teardown (an `hj --port quit`/shutdown, or `--private` killing its whole
     process group incl. Electron on spawner-death / wrapper SIGTERM). With that, the migration is a
     few lines. (Blocker A — `--headless` needs Playwright — is moot: `--ci` uses Electron.)
-  - **Status:** reverted the lane to shared-adopt; kept the `haltija@^1.5.0` pin. Not the CI gate
-    (that's `doc-tests.pw.ts`), so no release impact. Revisit when the teardown ask lands.
+  - **Status checked 2026-07-27: UNBLOCKED — haltija#7 is FIXED in v1.5.5** (latest v1.5.7). The
+    private instance now tears *itself* down: a private run never takes the single-instance lock
+    (`gotTheLock = IS_PRIVATE ? true : requestSingleInstanceLock()`) and self-cleans on exit — so
+    the orphan/lock cycle that blocked us is gone, and consumers no longer hand-reap a reparented
+    tree. tosijs-ui#21 is now **actionable**: redo the `--private --ci` doc-test-lane migration
+    (proven green pre-teardown-bug), and **bump the floor `haltija@^1.5.0` → `^1.5.5`** so the fix
+    is guaranteed. Prior status (07-21): reverted to shared-adopt, blocked on haltija#7.
 
 - **NOT YET FILED** — haltija's window fires **no animation frames** when backgrounded
   (verified: an `rAF` callback never runs). tosijs's entire render pipeline is rAF-driven,
