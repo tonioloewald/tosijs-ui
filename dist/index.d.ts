@@ -29,6 +29,7 @@ export * from './menu';
 export * from './month';
 export * from './notifications';
 export * from './password-strength';
+export * from './pocket-bar';
 export * from './pop-float';
 export * from './rating';
 export * from './rich-text';

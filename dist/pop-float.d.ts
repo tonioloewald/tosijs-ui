@@ -11,4 +11,4 @@ export interface PopFloatOptions {
     draggable?: boolean;
 }
 export declare const popFloat: (options: PopFloatOptions) => TosiFloat;
-export declare const positionFloat: (element: TosiFloat, target: HTMLElement, position?: FloatPosition, remainOnScroll?: "hide" | "remove" | "remain", remainOnResize?: "hide" | "remove" | "remain", draggable?: boolean) => void;
+export declare const positionFloat: (element: HTMLElement, target: HTMLElement, position?: FloatPosition, remainOnScroll?: "hide" | "remove" | "remain", remainOnResize?: "hide" | "remove" | "remain", draggable?: boolean) => void;

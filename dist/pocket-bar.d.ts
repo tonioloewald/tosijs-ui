@@ -1,0 +1,81 @@
+import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
+import { SvgIcon } from './icons';
+interface PocketBarParts extends PartsMap {
+    handle: HTMLButtonElement;
+    handleIcon: SvgIcon;
+    bar: HTMLDivElement;
+}
+export declare class TosiPocketBar extends WebComponent<PocketBarParts> {
+    static preferredTagName: string;
+    static initAttributes: {
+        icon: string;
+        direction: string;
+        open: boolean;
+    };
+    private pinned;
+    private get vertical();
+    private get resolvedIcon();
+    private get floatPosition();
+    reposition: () => void;
+    private setOpen;
+    private handlePointerEnter;
+    private handlePointerLeave;
+    private handleFocusIn;
+    private handleFocusOut;
+    toggle: (event?: Event) => void;
+    private handleOutsidePointer;
+    private handleScrollResize;
+    content: () => (HTMLDivElement | HTMLButtonElement)[];
+    static shadowStyleSpec: {
+        ':host': {
+            display: string;
+            position: string;
+            opacity: string;
+            transition: string;
+        };
+        ':host([open])': {
+            opacity: string;
+        };
+        ':host [part="handle"]': {
+            display: string;
+            alignItems: string;
+            justifyContent: string;
+            padding: string;
+            border: string;
+            margin: string;
+            cursor: string;
+            color: string;
+            background: string;
+            borderRadius: string;
+            transition: string;
+        };
+        ':host([open]) [part="handle"]': {
+            background: string;
+            backdropFilter: string;
+        };
+        ':host [part="bar"]': {
+            position: string;
+            display: string;
+            gap: string;
+            padding: string;
+            background: string;
+            backdropFilter: string;
+            borderRadius: string;
+            boxShadow: string;
+            opacity: string;
+            pointerEvents: string;
+            transform: string;
+            transition: string;
+        };
+        ':host([open]) [part="bar"]': {
+            opacity: string;
+            pointerEvents: string;
+            transform: string;
+        };
+    };
+    connectedCallback(): void;
+    disconnectedCallback(): void;
+    render(): void;
+}
+export declare const tosiPocketBar: ElementCreator<TosiPocketBar>;
+export {};

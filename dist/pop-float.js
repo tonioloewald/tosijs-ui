@@ -241,7 +241,7 @@ preview.append(button(
 ```
 
 */
-import { tosiFloat } from './float';
+import { tosiFloat, TosiFloat } from './float';
 import { bringToFront } from './track-drag';
 export const popFloat = (options) => {
     const { content, target, position, remainOnScroll, remainOnResize, draggable, } = options;
@@ -255,19 +255,25 @@ export const popFloat = (options) => {
     document.body.append(float);
     return float;
 };
-export const positionFloat = (element, target, position, remainOnScroll, remainOnResize, draggable = false) => {
+export const positionFloat = (
+// Any element can be positioned relative to a target — only the remain-on-* /
+// drag behaviors below are TosiFloat-specific (guarded), the geometry is not.
+// (A `<tosi-pocket-bar>` positions its plain bar element this way.)
+element, target, position, remainOnScroll, remainOnResize, draggable = false) => {
     {
         const { position } = getComputedStyle(element);
         if (position !== 'fixed') {
             element.style.position = 'fixed';
         }
-        if (remainOnResize)
-            element.remainOnResize = remainOnResize;
-        if (remainOnScroll)
-            element.remainOnScroll = remainOnScroll;
+        if (element instanceof TosiFloat) {
+            if (remainOnResize)
+                element.remainOnResize = remainOnResize;
+            if (remainOnScroll)
+                element.remainOnScroll = remainOnScroll;
+            element.drag = draggable;
+        }
         bringToFront(element);
     }
-    element.drag = draggable;
     const { left, top, width, height } = target.getBoundingClientRect();
     const cx = left + width * 0.5;
     const cy = top + height * 0.5;

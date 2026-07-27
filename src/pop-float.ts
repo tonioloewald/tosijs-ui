@@ -303,7 +303,10 @@ export const popFloat = (options: PopFloatOptions): TosiFloat => {
 }
 
 export const positionFloat = (
-  element: TosiFloat,
+  // Any element can be positioned relative to a target — only the remain-on-* /
+  // drag behaviors below are TosiFloat-specific (guarded), the geometry is not.
+  // (A `<tosi-pocket-bar>` positions its plain bar element this way.)
+  element: HTMLElement,
   target: HTMLElement,
   position?: FloatPosition,
   remainOnScroll?: 'hide' | 'remove' | 'remain',
@@ -315,11 +318,13 @@ export const positionFloat = (
     if (position !== 'fixed') {
       element.style.position = 'fixed'
     }
-    if (remainOnResize) element.remainOnResize = remainOnResize
-    if (remainOnScroll) element.remainOnScroll = remainOnScroll
+    if (element instanceof TosiFloat) {
+      if (remainOnResize) element.remainOnResize = remainOnResize
+      if (remainOnScroll) element.remainOnScroll = remainOnScroll
+      element.drag = draggable
+    }
     bringToFront(element)
   }
-  element.drag = draggable
   const { left, top, width, height } = target.getBoundingClientRect()
   const cx = left + width * 0.5
   const cy = top + height * 0.5

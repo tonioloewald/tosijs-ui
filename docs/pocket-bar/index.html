@@ -29,143 +29,100 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="../doc-system.css" data-tosi-doc-system />
-  <title>segmented select — tosijs-ui</title>
-  <meta name="description" content="Fairly general-purpose segmented select control." />
-  <link rel="canonical" href="https://ui.tosijs.net/segmented/" />
+  <title>pocket bar — tosijs-ui</title>
+  <meta name="description" content="A pocket toolbar: a single icon at rest that expands into a bar of your controls on hover or tap, then tucks away again." />
+  <link rel="canonical" href="https://ui.tosijs.net/pocket-bar/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="segmented select — tosijs-ui" />
-  <meta property="og:description" content="Fairly general-purpose segmented select control." />
-  <meta property="og:url" content="https://ui.tosijs.net/segmented/" />
+  <meta property="og:title" content="pocket bar — tosijs-ui" />
+  <meta property="og:description" content="A pocket toolbar: a single icon at rest that expands into a bar of your controls on hover or tap, then tucks away again." />
+  <meta property="og:url" content="https://ui.tosijs.net/pocket-bar/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"segmented select","description":"Fairly general-purpose segmented select control.","url":"https://ui.tosijs.net/segmented/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"pocket bar","description":"A pocket toolbar: a single icon at rest that expands into a bar of your controls on hover or tap, then tucks away again.","url":"https://ui.tosijs.net/pocket-bar/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
   <tosi-doc-system docs="../docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>segmented select</h1>
-<p>This is a fairly general-purpose segmented select control.</p>
-<pre><code class="language-html">&lt;div class=&quot;grid&quot;&gt;
-  &lt;tosi-segmented value=&quot;yes&quot; choices=&quot;yes, no, don&#39;t care&quot;&gt;
-    Should we?
-  &lt;/tosi-segmented&gt;
+<h1>pocket bar</h1>
+<p>A <strong>pocket toolbar</strong>: a single icon at rest that expands into a bar of your controls
+on hover or tap, then tucks away again. It&#39;s translucent until you touch it, so it
+stays out of the way when pinned over content.</p>
+<p>Whatever you put inside is the toolbar — they&#39;re your light-DOM children, so <em>any</em>
+control works: buttons, a checkbox, a segmented control. The component only supplies
+the handle, the reveal, and the positioning.</p>
+<p>Hover (or focus, or tap) peeks it open; <strong>click the handle to keep it open</strong>, and
+click the handle again — or anywhere outside — to dismiss it.</p>
+<pre><code class="language-html">&lt;div class=&quot;pocket-demo&quot;&gt;
+  &lt;tosi-pocket-bar direction=&quot;e&quot;&gt;
+    &lt;button title=&quot;Cut&quot;&gt;&lt;tosi-icon icon=&quot;scissors&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
+    &lt;button title=&quot;Copy&quot;&gt;&lt;tosi-icon icon=&quot;copy&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
+    &lt;button title=&quot;Paste&quot;&gt;&lt;tosi-icon icon=&quot;clipboard&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
+  &lt;/tosi-pocket-bar&gt;
 
-  &lt;div&gt;
-    &lt;b&gt;Localized!&lt;/b&gt;&lt;br&gt;
-    &lt;tosi-segmented
-      localized
-      title=&quot;do you like?&quot;
-      choices=&quot;yes=Yes:thumbsUp, no=No:thumbsDown&quot;
-    &gt;&lt;/tosi-segmented&gt;
-  &lt;/div&gt;
+  &lt;tosi-pocket-bar direction=&quot;s&quot;&gt;
+    &lt;button title=&quot;Bold&quot;&gt;&lt;tosi-icon icon=&quot;bold&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
+    &lt;button title=&quot;Italic&quot;&gt;&lt;tosi-icon icon=&quot;italic&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
+    &lt;button title=&quot;Underline&quot;&gt;&lt;tosi-icon icon=&quot;underline&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
+  &lt;/tosi-pocket-bar&gt;
 
-  &lt;tosi-segmented
-    style=&quot;--segmented-direction: column; --segmented-align-items: stretch&quot;
-    choices=&quot;in a relationship, single&quot;
-    other=&quot;it&#39;s complicated...&quot;
-    placeholder=&quot;please elaborate&quot;
-    value=&quot;separated&quot;
-  &gt;
-    Relationship Status
-  &lt;/tosi-segmented&gt;
+  &lt;tosi-pocket-bar direction=&quot;w&quot;&gt;
+    &lt;button title=&quot;Zoom in&quot;&gt;&lt;tosi-icon icon=&quot;zoomIn&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
+    &lt;button title=&quot;Zoom out&quot;&gt;&lt;tosi-icon icon=&quot;zoomOut&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
+  &lt;/tosi-pocket-bar&gt;
 
-  &lt;tosi-segmented
-    multiple
-    style=&quot;--segmented-direction: column; --segmented-align-items: start; --segmented-option-grid-columns: 24px 24px 100px; --segmented-input-visibility: visible;&quot;
-    choices=&quot;star=Star:star, game=Game:game, bug=Bug:bug, camera=Camera:camera&quot;
-    value=&quot;star,bug&quot;
-  &gt;
-    Pick all that apply
-  &lt;/tosi-segmented&gt;
+  &lt;tosi-pocket-bar direction=&quot;n&quot; icon=&quot;settings&quot;&gt;
+    &lt;label title=&quot;Snap to grid&quot;&gt;&lt;input type=&quot;checkbox&quot; checked /&gt;&lt;tosi-icon icon=&quot;grid&quot;&gt;&lt;/tosi-icon&gt;&lt;/label&gt;
+    &lt;button title=&quot;Undo&quot;&gt;&lt;tosi-icon icon=&quot;cornerUpLeft&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
+    &lt;button title=&quot;Redo&quot;&gt;&lt;tosi-icon icon=&quot;cornerUpRight&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
+  &lt;/tosi-pocket-bar&gt;
 &lt;/div&gt;
 </code></pre>
-<pre><code class="language-css">.preview .grid {
-  --segmented-option-current-background: var(--brand-color);
-  --segmented-option-current-color: var(--brand-text-color);
-  padding: 16px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+<pre><code class="language-css">.preview .pocket-demo {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 260px;
+  padding: 60px 20px;
+}
+.preview .pocket-demo tosi-pocket-bar button,
+.preview .pocket-demo tosi-pocket-bar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.preview .pocket-demo tosi-pocket-bar button:hover,
+.preview .pocket-demo tosi-pocket-bar label:hover {
+  background: #8882;
 }
 </code></pre>
-<pre><code class="language-js">function logEvent(event) {
-  const { target } = event
-  if (target.matches(&#39;tosi-segmented&#39;)) {
-    console.log((target.textContent || target.title).trim(), target.value)
-  }
-}
-preview.addEventListener(&#39;change&#39;, logEvent, true)
-</code></pre>
-<pre><code class="language-test">const segmented = preview.querySelectorAll(&#39;tosi-segmented&#39;)
-test(&#39;segmented controls render&#39;, () =&gt; {
-  expect(segmented.length).toBe(4)
-})
-test(&#39;first segmented has value &quot;yes&quot;&#39;, () =&gt; {
-  expect(segmented[0].value).toBe(&#39;yes&#39;)
-})
-test(&#39;multiple segmented has array value&#39;, () =&gt; {
-  expect(segmented[3].value).toBe(&#39;star,bug&#39;)
-})
-</code></pre>
-<blockquote>
-<p>Check the console to see the values being set.</p>
-</blockquote>
-<h2>Form Integration</h2>
-<p><code>&lt;tosi-segmented&gt;</code> is form-associated, meaning it works directly in native <code>&lt;form&gt;</code> elements:</p>
-<pre><code class="language-html">&lt;form class=&quot;segmented-form&quot;&gt;
-  &lt;tosi-segmented name=&quot;choice&quot; choices=&quot;a,b,c&quot; required&gt;&lt;/tosi-segmented&gt;
-  &lt;button type=&quot;submit&quot;&gt;Submit&lt;/button&gt;
-  &lt;span class=&quot;output&quot;&gt;&lt;/span&gt;
-&lt;/form&gt;
-</code></pre>
-<pre><code class="language-js">const form = preview.querySelector(&#39;.segmented-form&#39;)
-form.addEventListener(&#39;submit&#39;, (e) =&gt; {
-  e.preventDefault()
-  const data = new FormData(form)
-  form.querySelector(&#39;.output&#39;).textContent = &#39;Submitted: &#39; + data.get(&#39;choice&#39;)
-})
-</code></pre>
-<h2>Properties</h2>
-<ul>
-<li><code>values</code> is an array of values (only really useful if <code>multiple</code> is set to true)</li>
-</ul>
-<p>You can set <code>choices</code> programmatically to an array of <code>Choice</code> objects:</p>
-<pre><code>interface Choice {
-  icon?: string | SVGElement
-  value: string
-  caption: string
-}
-</code></pre>
+<p>Each handle above hints its axis — <code>⋯</code> for the horizontal bars (<code>e</code>, <code>w</code>), <code>⋮</code> for the
+vertical ones (<code>n</code>, <code>s</code>) — and the fourth uses an explicit <code>settings</code> icon. Hover any of
+them to see the bar grow in its <code>direction</code>.</p>
 <h2>Attributes</h2>
 <ul>
-<li><code>choices</code> is a string of comma-delimited options of the form <code>value=caption:icon</code>,
-where caption and icon are optional</li>
-<li><code>multiple</code> allows multiple selection</li>
-<li><code>name</code> the form field name (for formAssociated support)</li>
-<li><code>other</code> (default &#39;&#39;, meaning other is not allowed) is the caption for other options, allowing
-the user to input their choice. It will be reset to &#39;&#39; if <code>multiple</code> is set.</li>
-<li><code>placeholder</code> is the placeholder displayed in the <code>&lt;input&gt;</code> field for <strong>other</strong> responses</li>
-<li><code>localized</code> automatically localizes captions</li>
-<li><code>required</code> marks the field as required for form validation</li>
+<li><code>icon</code> — the handle icon (any icon name or <a href="icon-composition">composition</a>). By
+default it hints the growth axis: <code>moreHorizontal</code> (⋯) for a horizontal bar,
+<code>moreVertical</code> (⋮) for a vertical one.</li>
+<li><code>direction</code> — where the bar grows, using the <code>FloatPosition</code> vocabulary
+(<code>n | e | s | w | ne | nw | se | sw | en | wn | es | ws | side | auto</code>). <code>auto</code>
+(the default) grows a <strong>horizontal</strong> bar toward the nearer edge of the screen.
+<code>e</code> / <code>w</code> (and <code>en</code> / <code>es</code> / <code>wn</code> / <code>ws</code>) grow a horizontal bar; <code>n</code> / <code>s</code> (and
+<code>ne</code> / <code>nw</code> / <code>se</code> / <code>sw</code>) grow a <strong>vertical</strong> one. The bar is placed
+edge-contiguous with the handle via <a href="popFloat">positionFloat</a>.</li>
+<li><code>open</code> — reflects the open state. Hover / focus / tap peek it open; clicking the
+handle keeps it open until you click the handle again or click outside.</li>
 </ul>
-<h2>Styling</h2>
-<p>The following CSS variables can be used to control customize the <code>&lt;tosi-segmented&gt;</code> component.</p>
-<pre><code>--segmented-align-items
---segmented-direction
---segmented-option-color
---segmented-option-current-background
---segmented-option-current-color
---segmented-option-font
---segmented-option-gap
---segmented-option-grid-columns
---segmented-option-icon-color
---segmented-option-padding
---segmented-options-background
---segmented-options-border-radius
---segmented-placeholder-opacity
-</code></pre>
+<p>The handle is translucent at rest (<code>--tosi-pocket-opacity</code>, default <code>0.45</code>) and opaque
+while open. The bar&#39;s glass background is <code>--tosi-pocket-bg</code> (a translucent tint of
+<code>--tosi-bg</code>, so it follows the theme, light or dark).</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -173,7 +130,7 @@ the user to input their choice. It will be reset to &#39;&#39; if <code>multiple
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
     <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
     <li><a class="doc-link" href="../icons/">icons</a></li>
-    <li><details><summary><a class="doc-link" href="../components/">Components</a></summary>
+    <li><details open><summary><a class="doc-link" href="../components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
       <li><a class="doc-link" href="../carousel/">carousel</a></li>
@@ -191,7 +148,7 @@ the user to input their choice. It will be reset to &#39;&#39; if <code>multiple
       <li><a class="doc-link" href="../markdown-viewer/">markdown</a></li>
       <li><a class="doc-link" href="../menu/">menu</a></li>
       <li><a class="doc-link" href="../notifications/">notifications</a></li>
-      <li><a class="doc-link" href="../pocket-bar/">pocket bar</a></li>
+      <li><a class="doc-link current" href="../pocket-bar/" aria-current="page">pocket bar</a></li>
       <li><a class="doc-link" href="../pop-float/">popFloat</a></li>
       <li><a class="doc-link" href="../side-nav/">sidebar</a></li>
       <li><a class="doc-link" href="../size-break/">size-break</a></li>
@@ -201,7 +158,7 @@ the user to input their choice. It will be reset to &#39;&#39; if <code>multiple
       <li><a class="doc-link" href="../tooltip/">tooltip</a></li>
     </ul>
     </details></li>
-    <li><details open><summary><a class="doc-link" href="../form-components/">Form Components</a></summary>
+    <li><details><summary><a class="doc-link" href="../form-components/">Form Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../color-input/">color input field</a></li>
       <li><a class="doc-link" href="../filter-builder/">filter</a></li>
@@ -210,7 +167,7 @@ the user to input their choice. It will be reset to &#39;&#39; if <code>multiple
       <li><a class="doc-link" href="../password-strength/">password strength</a></li>
       <li><a class="doc-link" href="../rating/">rating</a></li>
       <li><a class="doc-link" href="../rich-text/">rich text</a></li>
-      <li><a class="doc-link current" href="../segmented/" aria-current="page">segmented select</a></li>
+      <li><a class="doc-link" href="../segmented/">segmented select</a></li>
       <li><a class="doc-link" href="../select/">select</a></li>
       <li><a class="doc-link" href="../tag-list/">tag-list</a></li>
     </ul>

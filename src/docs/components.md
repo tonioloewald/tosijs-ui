@@ -24,6 +24,7 @@ tables, menus, layout, media, and more.
 - [markdown](/markdown-viewer/)
 - [menu](/menu/)
 - [notifications](/notifications/)
+- [pocket bar](/pocket-bar/)
 - [popFloat](/pop-float/)
 - [sidebar](/side-nav/)
 - [size-break](/size-break/)

@@ -97,6 +97,8 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
   How the tosijs doc system turns a single corpus of doc-comments and markdown into a static SEO site, a self-testing live playground with in-browser TypeScript, an ePub and PDF, and an agent-debuggable page — all deploying as static files.
 - https://ui.tosijs.net/password-strength/ — password strength
   Just wrap it a `<tosi-password-strength>` element around an `<input>`
+- https://ui.tosijs.net/pocket-bar/ — pocket bar
+  A **pocket toolbar**: a single icon at rest that expands into a bar of your controls
 - https://ui.tosijs.net/pop-float/ — popFloat
   There are so many cases in user-interfaces where it's useful to pop-up a floating
 - https://ui.tosijs.net/rating/ — rating
