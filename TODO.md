@@ -12,6 +12,17 @@ importmap example resolution, versioned endpoints, AJS RestStore.
 
 ## High Priority
 
+### Nested live-examples mis-route (self-hosting demo) — CSS half
+
+- [ ] **Tighten the live-example's light-DOM CSS to child combinators** so a container example's
+      state classes / part rules don't bleed onto **nested** examples' parts (the
+      `one-source-every-artifact` self-hosting demo). E.g. `:host.-test-passed [part="exampleWidgets"]`
+      → `:host.-test-passed > [part="example"] > [part="exampleWidgets"]`. The functional half (the
+      `this.parts` proxy resolving to a nested instance's parts) is a **tosijs** bug — filed as
+      [tonioloewald/tosijs#20](https://github.com/tonioloewald/tosijs/issues/20), see `UPSTREAM.md`;
+      the user is fixing it in tosijs. Revisit this CSS half after bumping the tosijs dep with the fix.
+
+
 ### From the 1.7.0-beta.3 nine-lens review (`RELEASE-REVIEW-1.7-beta3.md`)
 
 Full report in that file. Recommendation was **BLOCK** on one finding, now **fixed**:

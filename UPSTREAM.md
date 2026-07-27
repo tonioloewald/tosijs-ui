@@ -59,10 +59,25 @@ session-only + expire in 7 days — this line is the durable reminder.)
 
 ## tosijs
 
-> **The foundational dependency, and the one we have never filed against.** That is itself the
-> finding: three sections here for bun, tjs-lang and haltija, and none for the library
-> everything is built on. Friction against tosijs has been silently absorbed into hand-rolls
-> instead of being reported.
+> **The foundational dependency — long unreported against, now no longer.** For most of this
+> project friction against tosijs was silently absorbed into hand-rolls instead of being filed;
+> #20 (below) is the first real bug filed upstream. Keep the habit: file, don't hand-roll around.
+
+### Open (waiting on tosijs)
+
+- **[tonioloewald/tosijs#20](https://github.com/tonioloewald/tosijs/issues/20)** — a **light-DOM
+  component's `this.parts` resolves to a NESTED instance's parts** (unscoped `querySelector`). A
+  light-DOM (`lightStyleSpec`) component that contains nested instances of itself gets the first
+  `[part=x]` in DOM order — a child's — instead of its own. **Confirmed 2026-07-27**: on the
+  self-hosting `one-source-every-artifact` demo, the container `<tosi-example>`'s
+  `parts.codeEditors.closest('tosi-example') !== itself`, so its `showCode()` un-hides a nested
+  example's editor (actions pipe to the wrong component). Pre-existing — surfaced, not caused, by
+  the pocket-bar toolbar move to top-right. **The user owns tosijs and will fix it there** (part
+  collection should stop at nested custom-element boundaries). Shadow-DOM components are naturally
+  scoped, so this is light-DOM-only. **Sibling CSS half (our side):** light-DOM `:host …` rules
+  become global `tag …` *descendant* selectors that bleed across nested instances (a container's
+  state class tints a nested part); child combinators fix that half here, tracked in `TODO.md`.
+  Until the tosijs fix ships + we bump the dep, the self-hosting demo mis-routes edit clicks.
 
 ### Note — experimental `tosijs/debug` + `tosijs/safe` builds are METADATA-ONLY in 1.7.0
 
