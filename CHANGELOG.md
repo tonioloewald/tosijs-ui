@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.7.3
+
+- **New `<tosi-pocket-bar>` component.** A "pocket buttonbar": a single translucent icon at
+  rest that expands into a bar of slotted icon-button controls on hover/tap, then collapses
+  again. `direction` (the full `FloatPosition` vocabulary, `auto` by default) determines both
+  layout and growth direction; the handle stays put and toggles the bar; touch counts as hover.
+  Built as a thin wrapper around `positionFloat`.
+- **The live-example toolbar is now a pocket bar**, pinned to the top-right of the preview (so
+  it never sits over the code editors in side-by-side mode). The collapsed handle carries the
+  example's pass/fail color, "run tests" is a checkbox that greys when off, and the bar stays
+  visible when the example is maximized.
+- **Build system is fragility-tolerant.** An *unsupported import* in a live example (a bare
+  specifier the runtime can't resolve) now downgrades that block to display-only with a warning
+  instead of failing the whole build; genuine syntax errors still fail the build.
+- **Removed a render-skip anti-pattern** from `<tosi-segmented>`, `<tosi-color>`, and
+  `<tosi-form>`. They previously depended on `render()` being *skipped* after interaction via a
+  `valueChanged` flag — fragile timing that broke under tosijs's parts changes. Renders are now
+  idempotent: they skip only *provably-redundant* writes by comparing values (colors compared
+  **parsed**, so a `#rrggbb ↔ rgba()` round-trip no longer clobbers the caret/selection in the
+  field being edited).
+- **Code editor background is now a neutral off-white** (off-black in dark mode) instead of a
+  brand-tinted color — both the default `<tosi-code>` and live examples.
+- **Fix: nav flickered on refresh / reflowed on hydration.** The static no-JS nav relied on the
+  browser's native `<details>` collapse (`::details-content { content-visibility: hidden }`),
+  which Chromium applies lazily and non-deterministically on first paint — a closed section
+  could render at full height for a frame before snapping shut. Closed sections now collapse
+  synchronously via `display: none` (still opening on a no-JS `<summary>` toggle). Enforced by
+  `tests/hydration.pw.ts`.
+- **Moved the doc-browser test-counter widget to the bottom-left** so it no longer sits under
+  the haltija dev overlay.
+- **tosijs bumped to `^1.7.8`**, which fixes the `this.parts` proxy crossing into nested
+  component instances (tosijs#20 — surfaced by the self-hosting doc demo, where clicking "edit"
+  on one example opened the editor in the wrong one) and change-handler value staleness
+  (tosijs#21).
+
 ## 1.7.2
 
 - **Fix: doc sites are now mount-point-agnostic** (issue #25). The build baked `basePath` into

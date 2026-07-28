@@ -478,6 +478,18 @@ export function docSystemStyleSpec(theme = {}) {
         '.doc-nav details > ul': {
             paddingLeft: vars.spacing,
         },
+        // Collapse a closed section's list SYNCHRONOUSLY. The UA collapses <details>
+        // via `::details-content { content-visibility: hidden }`, which is applied
+        // lazily and — for this static tree — non-deterministically on first paint:
+        // sometimes the closed section is still laid out at full height for a frame
+        // before it snaps shut. That frame is a visible flicker on refresh, and it made
+        // the "nav does not move on hydration" test measure a 36px row that hydration
+        // then collapses to 0. An explicit display:none collapses it in the first layout
+        // pass with no content-visibility race, and still opens on a no-JS <summary>
+        // toggle (the UA adds [open], so this rule stops matching).
+        '.doc-nav details:not([open]) > ul': {
+            display: 'none',
+        },
         // <summary> is the section header (its triangle toggles; the link navigates).
         '.doc-nav summary': {
             cursor: 'pointer',

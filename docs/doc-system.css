@@ -462,6 +462,10 @@ th, td {
   padding-left: var(--spacing);
 }
 
+.doc-nav details:not([open]) > ul {
+  display: none;
+}
+
 .doc-nav summary {
   cursor: pointer;
   padding-left: calc(var(--spacing) * 0.5);
