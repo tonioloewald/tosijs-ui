@@ -50,6 +50,122 @@ export interface AuditAdvisory {
   vulnerableVersions?: string
   /** GHSA id parsed from `url`, e.g. 'GHSA-25h7-pfq9-p65f' (if present) */
   ghsa?: string
+  /** what KIND of harm this is — annotation only, never changes whether it blocks */
+  risk?: Classification
+}
+
+/*
+Classifying the NATURE of an advisory (not the risk).
+
+The CVSS vector's impact triad is a formal, machine-parseable statement of what
+kind of harm is possible, so "can this leak/alter data?" vs "can this only exhaust
+resources?" IS deterministic. What is NOT deterministic is whether the vulnerable
+path is reachable in OUR usage — CVSS scores the worst case, context-free, and no
+field encodes "we only feed this our own globs."
+
+So this classifies, and NOTHING ELSE. Every finding at/above the threshold still
+blocks; the label just lets a developer triage in seconds instead of opening four
+browser tabs. That matters more than it sounds: measured against a real 44-advisory
+set, 20% carried NO CVSS vector at all — and those skewed severe (4 high, 2
+critical). A design that auto-softened on classification would have been flying
+blind on exactly the worst ones. Annotating costs nothing when it can't classify;
+softening would have.
+*/
+
+export type RiskNature =
+  /** C or I impact — can leak or alter data / execute code */
+  | 'compromise'
+  /** availability-only — resource exhaustion, hang, crash */
+  | 'dos'
+  /** no or unparseable vector, or an escalatable CWE — assume the worst */
+  | 'unknown'
+
+export interface Classification {
+  nature: RiskNature
+  /** short label for the report line */
+  label: string
+  /** what drove the call, so the reader can second-guess it */
+  basis: string
+}
+
+/*
+CWEs that routinely escalate beyond what the vector admits. Prototype pollution is
+the canonical case and it is not hypothetical: in the sample set, protobufjs had an
+advisory scored A:H (availability-only) tagged CWE-1321, AND a separate C:H/I:H
+advisory titled "code generation gadget AFTER prototype pollution" — the escalation
+chain the first vector does not encode. A vector-only reading calls that benign.
+*/
+const ESCALATABLE_CWE = new Set(['1321', '915', '502', '94', '78', '77'])
+
+function parseVector(v: string): Record<string, string> | null {
+  if (!v) return null
+  const out: Record<string, string> = {}
+  let version = ''
+  for (const part of v.split('/')) {
+    const [k, val] = part.split(':')
+    if (!k || !val) continue
+    if (k === 'CVSS') version = val
+    else out[k] = val
+  }
+  if (!Object.keys(out).length) return null
+  out.__version = version || '?'
+  return out
+}
+
+/** Classify one advisory's nature from its CVSS vector + CWEs. Fails CLOSED. */
+export function classifyRisk(raw: {
+  cvss?: { vectorString?: string } | null
+  cwe?: string[] | null
+}): Classification {
+  const vec = parseVector(raw.cvss?.vectorString ?? '')
+  const cwes = (raw.cwe ?? []).map((c) => String(c).replace(/^CWE-/i, ''))
+  const escalatable = cwes.some((c) => ESCALATABLE_CWE.has(c))
+
+  if (!vec) {
+    return {
+      nature: 'unknown',
+      label: 'UNCLASSIFIED',
+      basis: 'no CVSS vector in advisory — treat as worst case',
+    }
+  }
+
+  // CVSS 4.0 renamed the impact metrics: VC/VI/VA (vulnerable system) and
+  // SC/SI/SA (subsequent system). 2.0/3.x use plain C/I/A. Support both; any
+  // other shape is unknown rather than assumed benign.
+  const v = vec.__version
+  const isV4 = v.startsWith('4')
+  const conf = isV4 ? vec.VC ?? vec.SC : vec.C
+  const integ = isV4 ? vec.VI ?? vec.SI : vec.I
+  const avail = isV4 ? vec.VA ?? vec.SA : vec.A
+
+  if (conf === undefined || integ === undefined || avail === undefined) {
+    return {
+      nature: 'unknown',
+      label: 'UNCLASSIFIED',
+      basis: `CVSS ${v} vector missing impact metrics — treat as worst case`,
+    }
+  }
+
+  const hit = (x: string) => x === 'L' || x === 'H'
+  if (hit(conf) || hit(integ)) {
+    return {
+      nature: 'compromise',
+      label: 'LEAK/ALTER',
+      basis: `CVSS ${v} C:${conf} I:${integ}`,
+    }
+  }
+  if (escalatable) {
+    return {
+      nature: 'unknown',
+      label: 'DoS?+ESCALATABLE',
+      basis: `CVSS ${v} A:${avail} only, but CWE-${cwes.join('/')} can escalate`,
+    }
+  }
+  return {
+    nature: 'dos',
+    label: 'DoS-only',
+    basis: `CVSS ${v} C:N I:N A:${avail}`,
+  }
 }
 
 /**
@@ -109,10 +225,30 @@ export interface AuditResult {
 /** Injectable subprocess seam for tests. */
 export type AuditRunner = () => Promise<string>
 
+/*
+The audit is FAST — sub-second even on a large tree, because the dependency
+resolution is local and it is one registry round-trip. That is why it runs
+synchronously everywhere (see buildSite / devServer): a gate you wait for is a gate
+that cannot be raced, and it removes a whole class of "it printed after I'd already
+started working" edge cases.
+
+What sync DOES introduce is a hang: a captive portal, a VPN coming up, or a
+registry black-holing the connection makes a fetch that never returns, and a build
+that hangs forever is worse than one that skips a check. So bound it — on timeout
+we fail OPEN (same as offline), because an advisory we could not fetch must not
+ground someone on a plane.
+*/
+export const AUDIT_TIMEOUT_MS = 20_000
+
 const defaultRunner: AuditRunner = async () => {
   // Both 0 (clean) and 1 (vulnerabilities found) produce valid JSON on stdout; any
   // other exit is treated as "couldn't check" via a parse failure below.
-  const r = await $`bun audit --json`.nothrow().quiet()
+  const proc = $`bun audit --json`.nothrow().quiet()
+  const timeout = new Promise<null>((resolve) =>
+    setTimeout(() => resolve(null), AUDIT_TIMEOUT_MS).unref?.()
+  )
+  const r = await Promise.race([proc, timeout])
+  if (r === null) throw new Error('bun audit timed out')
   return r.stdout.toString()
 }
 
@@ -155,6 +291,10 @@ export function parseAuditJson(text: string): AuditAdvisory[] | null {
             ? String(adv.vulnerable_versions)
             : undefined,
         ghsa: parseGhsa(String(adv.url ?? '')),
+        risk: classifyRisk({
+          cvss: adv.cvss as { vectorString?: string } | null | undefined,
+          cwe: Array.isArray(adv.cwe) ? (adv.cwe as string[]) : null,
+        }),
       })
     }
   }
@@ -306,10 +446,13 @@ const DUE_DILIGENCE = [
 ].join('\n')
 
 function line(adv: AuditAdvisory): string {
+  // The risk label is triage sugar, not a verdict — this finding blocks either way.
+  const risk = adv.risk ? `  [${adv.risk.label}]` : ''
+  const basis = adv.risk ? `\n            ${adv.risk.basis}` : ''
   return (
     `   ${adv.severity.toUpperCase().padEnd(8)} ${adv.package}` +
-    `${adv.vulnerableVersions ? ` (${adv.vulnerableVersions})` : ''}\n` +
-    `            ${adv.title}\n` +
+    `${adv.vulnerableVersions ? ` (${adv.vulnerableVersions})` : ''}${risk}\n` +
+    `            ${adv.title}${basis}\n` +
     `            ${adv.ghsa ?? adv.id} — ${adv.url}`
   )
 }

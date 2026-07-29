@@ -31,12 +31,19 @@ const config = {
   },
 }
 
-// One-shot builds (`--build-only`, `--test`) run the dependency audit synchronously
-// so a high+ advisory fails the build. The interactive dev server (`bun start`)
-// skips it here and audits asynchronously after launch, so startup isn't blocked on
-// a registry round-trip. Watch rebuilds skip it too (see dev-server.ts).
+// The dependency audit runs synchronously in every mode — it is sub-second, and a
+// gate you wait for cannot be raced. One-shot builds (`--build-only`, `--test`)
+// audit inside buildSite; the interactive dev server skips it here and audits in
+// devServer() just before it binds the port, so `bun start` audits exactly once.
+// Watch rebuilds skip it (see dev-server.ts).
 const interactive = !buildOnly && !testMode
 const ok = await buildSite(config, { skipAudit: interactive })
-if (buildOnly) process.exit(ok ? 0 : 1)
+
+// A failed one-shot build is fatal — including `--test`, which used to compute this
+// and then launch the test run anyway, so a blocking advisory (or any build failure)
+// still went green. Interactive keeps serving on a failed build: you want the server
+// up to fix it, and devServer() gates the audit itself.
+if (!ok && !interactive) process.exit(1)
+if (buildOnly) process.exit(0)
 
 await devServer(config, { test: testMode })

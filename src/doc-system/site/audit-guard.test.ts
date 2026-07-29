@@ -1,6 +1,7 @@
 import { test, expect } from 'bun:test'
 import {
   auditDependencies,
+  classifyRisk,
   parseAuditJson,
   resolveAuditMode,
   type AuditRunner,
@@ -206,4 +207,121 @@ test('resolveAuditMode: default on, boolean off, TOSIJS_AUDIT env wins', () => {
     if (prev === undefined) delete process.env.TOSIJS_AUDIT
     else process.env.TOSIJS_AUDIT = prev
   }
+})
+
+// ── risk classification (annotation only — never changes whether a finding blocks) ──
+//
+// Vectors below are real shapes taken from a 44-advisory sample harvested across
+// several projects. The sample is why this fails CLOSED: 20% of real advisories
+// carried NO CVSS vector, and those skewed severe (4 high, 2 critical).
+
+test('classifyRisk: C or I impact is a compromise (CVSS 3.1)', () => {
+  // happy-dom: unsanitized export names interpolated as executable code
+  const c = classifyRisk({
+    cvss: { vectorString: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H' },
+    cwe: ['CWE-94'],
+  })
+  expect(c.nature).toBe('compromise')
+  expect(c.label).toBe('LEAK/ALTER')
+
+  // Confidentiality alone is enough (happy-dom cookie leak: C:H I:N A:N)
+  expect(
+    classifyRisk({
+      cvss: { vectorString: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N' },
+    }).nature
+  ).toBe('compromise')
+
+  // ...and so is a LOW integrity impact (js-yaml prototype pollution in merge)
+  expect(
+    classifyRisk({
+      cvss: { vectorString: 'CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:N' },
+    }).nature
+  ).toBe('compromise')
+})
+
+test('classifyRisk: availability-only is DoS (brace-expansion, the real case)', () => {
+  const c = classifyRisk({
+    cvss: { vectorString: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H' },
+    cwe: ['CWE-400', 'CWE-770'],
+  })
+  expect(c.nature).toBe('dos')
+  expect(c.label).toBe('DoS-only')
+})
+
+test('classifyRisk: CVSS 4.0 impact metrics (VC/VI/VA) are understood', () => {
+  expect(
+    classifyRisk({
+      cvss: {
+        vectorString:
+          'CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N',
+      },
+    }).nature
+  ).toBe('compromise')
+
+  expect(
+    classifyRisk({
+      cvss: {
+        vectorString:
+          'CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N',
+      },
+      cwe: ['CWE-400'],
+    }).nature
+  ).toBe('dos')
+})
+
+test('classifyRisk: fails CLOSED on a missing or unparseable vector', () => {
+  // 20% of the real sample looked like this — and skewed high/critical.
+  for (const raw of [
+    {},
+    { cvss: null },
+    { cvss: { vectorString: '' } },
+    { cvss: { vectorString: 'not-a-vector' } },
+  ]) {
+    const c = classifyRisk(raw as any)
+    expect(c.nature).toBe('unknown')
+    expect(c.label).toBe('UNCLASSIFIED')
+  }
+  // A vector missing its impact metrics is also unknown, not benign.
+  expect(
+    classifyRisk({ cvss: { vectorString: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N' } })
+      .nature
+  ).toBe('unknown')
+})
+
+test('classifyRisk: an escalatable CWE overrides a DoS-only vector', () => {
+  // Real case: protobufjs had an A:H advisory tagged CWE-1321, AND a separate
+  // C:H/I:H "code generation gadget AFTER prototype pollution" advisory. The
+  // vector alone would have called the first one benign.
+  const c = classifyRisk({
+    cvss: { vectorString: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H' },
+    cwe: ['CWE-1321'],
+  })
+  expect(c.nature).toBe('unknown')
+  expect(c.label).toBe('DoS?+ESCALATABLE')
+})
+
+test('classification rides along on parsed advisories but never gates them', async () => {
+  const dosJson = JSON.stringify({
+    'brace-expansion': [
+      {
+        id: 1124334,
+        url: 'https://github.com/advisories/GHSA-mh99-v99m-4gvg',
+        title: 'brace-expansion: DoS via unbounded expansion',
+        severity: 'high',
+        vulnerable_versions: '<=5.0.7',
+        cvss: { vectorString: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H' },
+        cwe: ['CWE-400'],
+      },
+    ],
+  })
+  const advisories = parseAuditJson(dosJson)!
+  expect(advisories[0].risk?.nature).toBe('dos')
+
+  // ...and a DoS-only high STILL blocks. Classification informs, it does not soften.
+  const result = await auditDependencies(undefined, {
+    now: NOW,
+    runAudit: runner(dosJson),
+  })
+  expect(result.ok).toBe(false)
+  expect(result.blocking).toHaveLength(1)
 })

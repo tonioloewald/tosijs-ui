@@ -34,10 +34,103 @@ const SEVERITY_RANK = {
     high: 3,
     critical: 4,
 };
+/*
+CWEs that routinely escalate beyond what the vector admits. Prototype pollution is
+the canonical case and it is not hypothetical: in the sample set, protobufjs had an
+advisory scored A:H (availability-only) tagged CWE-1321, AND a separate C:H/I:H
+advisory titled "code generation gadget AFTER prototype pollution" — the escalation
+chain the first vector does not encode. A vector-only reading calls that benign.
+*/
+const ESCALATABLE_CWE = new Set(['1321', '915', '502', '94', '78', '77']);
+function parseVector(v) {
+    if (!v)
+        return null;
+    const out = {};
+    let version = '';
+    for (const part of v.split('/')) {
+        const [k, val] = part.split(':');
+        if (!k || !val)
+            continue;
+        if (k === 'CVSS')
+            version = val;
+        else
+            out[k] = val;
+    }
+    if (!Object.keys(out).length)
+        return null;
+    out.__version = version || '?';
+    return out;
+}
+/** Classify one advisory's nature from its CVSS vector + CWEs. Fails CLOSED. */
+export function classifyRisk(raw) {
+    const vec = parseVector(raw.cvss?.vectorString ?? '');
+    const cwes = (raw.cwe ?? []).map((c) => String(c).replace(/^CWE-/i, ''));
+    const escalatable = cwes.some((c) => ESCALATABLE_CWE.has(c));
+    if (!vec) {
+        return {
+            nature: 'unknown',
+            label: 'UNCLASSIFIED',
+            basis: 'no CVSS vector in advisory — treat as worst case',
+        };
+    }
+    // CVSS 4.0 renamed the impact metrics: VC/VI/VA (vulnerable system) and
+    // SC/SI/SA (subsequent system). 2.0/3.x use plain C/I/A. Support both; any
+    // other shape is unknown rather than assumed benign.
+    const v = vec.__version;
+    const isV4 = v.startsWith('4');
+    const conf = isV4 ? vec.VC ?? vec.SC : vec.C;
+    const integ = isV4 ? vec.VI ?? vec.SI : vec.I;
+    const avail = isV4 ? vec.VA ?? vec.SA : vec.A;
+    if (conf === undefined || integ === undefined || avail === undefined) {
+        return {
+            nature: 'unknown',
+            label: 'UNCLASSIFIED',
+            basis: `CVSS ${v} vector missing impact metrics — treat as worst case`,
+        };
+    }
+    const hit = (x) => x === 'L' || x === 'H';
+    if (hit(conf) || hit(integ)) {
+        return {
+            nature: 'compromise',
+            label: 'LEAK/ALTER',
+            basis: `CVSS ${v} C:${conf} I:${integ}`,
+        };
+    }
+    if (escalatable) {
+        return {
+            nature: 'unknown',
+            label: 'DoS?+ESCALATABLE',
+            basis: `CVSS ${v} A:${avail} only, but CWE-${cwes.join('/')} can escalate`,
+        };
+    }
+    return {
+        nature: 'dos',
+        label: 'DoS-only',
+        basis: `CVSS ${v} C:N I:N A:${avail}`,
+    };
+}
+/*
+The audit is FAST — sub-second even on a large tree, because the dependency
+resolution is local and it is one registry round-trip. That is why it runs
+synchronously everywhere (see buildSite / devServer): a gate you wait for is a gate
+that cannot be raced, and it removes a whole class of "it printed after I'd already
+started working" edge cases.
+
+What sync DOES introduce is a hang: a captive portal, a VPN coming up, or a
+registry black-holing the connection makes a fetch that never returns, and a build
+that hangs forever is worse than one that skips a check. So bound it — on timeout
+we fail OPEN (same as offline), because an advisory we could not fetch must not
+ground someone on a plane.
+*/
+export const AUDIT_TIMEOUT_MS = 20_000;
 const defaultRunner = async () => {
     // Both 0 (clean) and 1 (vulnerabilities found) produce valid JSON on stdout; any
     // other exit is treated as "couldn't check" via a parse failure below.
-    const r = await $ `bun audit --json`.nothrow().quiet();
+    const proc = $ `bun audit --json`.nothrow().quiet();
+    const timeout = new Promise((resolve) => setTimeout(() => resolve(null), AUDIT_TIMEOUT_MS).unref?.());
+    const r = await Promise.race([proc, timeout]);
+    if (r === null)
+        throw new Error('bun audit timed out');
     return r.stdout.toString();
 };
 /** Extract a GHSA id from an advisory URL, if the URL carries one. */
@@ -82,6 +175,10 @@ export function parseAuditJson(text) {
                     ? String(adv.vulnerable_versions)
                     : undefined,
                 ghsa: parseGhsa(String(adv.url ?? '')),
+                risk: classifyRisk({
+                    cvss: adv.cvss,
+                    cwe: Array.isArray(adv.cwe) ? adv.cwe : null,
+                }),
             });
         }
     }
@@ -226,9 +323,12 @@ const DUE_DILIGENCE = [
     '  • If you can’t patch now, GATE it (reason + near-term expiry) — don’t silence it.',
 ].join('\n');
 function line(adv) {
+    // The risk label is triage sugar, not a verdict — this finding blocks either way.
+    const risk = adv.risk ? `  [${adv.risk.label}]` : '';
+    const basis = adv.risk ? `\n            ${adv.risk.basis}` : '';
     return (`   ${adv.severity.toUpperCase().padEnd(8)} ${adv.package}` +
-        `${adv.vulnerableVersions ? ` (${adv.vulnerableVersions})` : ''}\n` +
-        `            ${adv.title}\n` +
+        `${adv.vulnerableVersions ? ` (${adv.vulnerableVersions})` : ''}${risk}\n` +
+        `            ${adv.title}${basis}\n` +
         `            ${adv.ghsa ?? adv.id} — ${adv.url}`);
 }
 /**

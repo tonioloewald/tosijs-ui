@@ -288,7 +288,7 @@ build: `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (defaul
 | `editableSources`    | `false`  | Enables the dev server's `/__docstore/source` read+write endpoints, so "edit page source" and a live example's "Save to source" write the actual file. **Off** by default (writing files is opt-in): editing still works read-only — the client falls back to the GitHub raw source — but saving hands back a download. Set `true` to author in place. (The endpoint always answers `/__docstore/source` with a real status; it never serves the SPA `index.html`, so a disabled/misconfigured server can't leak the rendered page as the "source".)                                                                                                                                                                                                                                                                                                       |
 | `memoryLimitMb`      | `4096`   | RSS ceiling for the dev server; past it, print growth-per-rebuild and exit (see below); also `DEV_MEMORY_LIMIT_MB`                                                                                                                                                                                                                                     |
 | `idleTimeoutHours`   | `8`      | exit after this long with no request and no rebuild; `0` disables (see below); also `DEV_IDLE_TIMEOUT_HOURS`                                                                                                                                                                                                                                           |
-| `audit`              | `true`   | dependency-audit gate — `bun audit` on the initial build; ungated high+ advisories fail the build. `true`/omitted = `{ mode: 'fail', level: 'high' }`; `false`/`{ mode: 'off' }` disables; also `TOSIJS_AUDIT=off\|warn\|fail`. Time-box exceptions via `{ allow: [{ advisory, reason, expires }] }` (see below)                                          |
+| `audit`              | `true`   | dependency-audit gate — `bun audit` synchronously on the initial build and before the dev server binds its port; ungated high+ advisories fail the build (findings annotated with the nature of the risk). `true`/omitted = `{ mode: 'fail', level: 'high' }`; `false`/`{ mode: 'off' }` disables; also `TOSIJS_AUDIT=off\|warn\|fail`. Time-box exceptions via `{ allow: [{ advisory, reason, expires }] }` (see below)                                          |
 
 #### Dependency audit gate
 
@@ -296,18 +296,46 @@ build: `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (defaul
 asks it, so a high-severity advisory in a transitive dep stays invisible until
 someone runs it by hand. The gate asks once, at the point a human is looking:
 
-- **When it runs.** The **initial** build only — `bun run build` (synchronously,
-  fails the build) and, at dev-server launch, **asynchronously** so the page isn't
-  held up by a registry round-trip (a high+ finding then prints and **kills the dev
-  server**, same precedent as the memory watchdog). **Watch rebuilds never audit** —
-  it would put a network call in your edit loop and break offline dev.
+- **When it runs.** The **initial** build only, and always **synchronously**:
+  `bun run build` / `--test` audit inside `buildSite` (a finding fails the build),
+  and `devServer` audits just **before it binds the port** (a finding throws, so the
+  server never comes up). The audit is sub-second — local dependency resolution plus
+  one registry round-trip — so waiting for it costs nothing next to the alternative:
+  an async audit spikes a server that is already listening and possibly already in
+  use, which reads as a crash and races whatever you'd started doing. A gate you wait
+  for cannot be raced. **Watch rebuilds never audit** — that would put a network call
+  in your edit loop and break offline dev.
 - **What blocks.** Any advisory at or above `level` (default `high`, so `high` +
   `critical`) that isn't gated. `moderate`/`low` are reported, never fatal.
-- **Fails open, not closed, when it can't check.** Offline, registry down, or a
-  `bun` too old → it warns and proceeds. It fails **closed** only on a real finding.
+  Consumer-facing and developer-facing advisories block **alike**: a dev-only
+  dependency still runs on your machine, and the time-boxed gate below is the escape
+  hatch, so the cost of over-blocking is a two-minute gate entry while the cost of
+  under-blocking is a miss.
+- **Fails open, not closed, when it can't check.** Offline, registry down, a `bun`
+  too old, or the audit exceeding its 20s timeout → it warns and proceeds. It fails
+  **closed** only on a real finding.
 - **Not downgraded in CI.** Unlike the machine-health preflight (a heuristic about
   someone's local box), an advisory is deterministic and environment-independent, so
   CI is exactly where you want it enforced.
+
+**Each finding is annotated with the _nature_ of the risk** — parsed from the
+advisory's CVSS vector (3.x `C/I/A` and 4.0 `VC/VI/VA` both understood) and its CWEs:
+
+| label              | meaning                                                    |
+| ------------------ | ---------------------------------------------------------- |
+| `LEAK/ALTER`       | confidentiality or integrity impact — can leak data or execute code |
+| `DoS-only`         | availability impact only — resource exhaustion, hang, crash |
+| `DoS?+ESCALATABLE` | scored availability-only, but an escalatable CWE (e.g. prototype pollution) means the vector may understate it |
+| `UNCLASSIFIED`     | no or unparseable vector — **treat as worst case**          |
+
+This is **annotation, not policy**: it never changes whether a finding blocks, it
+just lets you triage in seconds instead of opening four browser tabs. Classification
+deliberately fails **closed**, because it has to — measured against a real
+44-advisory sample, **20% carried no CVSS vector at all, and those skewed severe**
+(4 high, 2 critical). Anything that auto-softened on classification would have been
+blind on exactly the worst ones. Whether a vulnerable path is reachable _in your
+usage_ is not encoded anywhere and is not knowable from the data — that judgment is
+yours, and the time-boxed gate is where it belongs.
 
 **Gating an accepted risk — with a deadline.** You can't always patch immediately.
 Instead of silencing a finding forever, gate it with a reason and an **expiry**:

@@ -483,7 +483,7 @@ build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-m
 <tr>
 <td><code>audit</code></td>
 <td><code>true</code></td>
-<td>dependency-audit gate — <code>bun audit</code> on the initial build; ungated high+ advisories fail the build. <code>true</code>/omitted = <code>{ mode: &#39;fail&#39;, level: &#39;high&#39; }</code>; <code>false</code>/<code>{ mode: &#39;off&#39; }</code> disables; also <code>TOSIJS_AUDIT=off|warn|fail</code>. Time-box exceptions via <code>{ allow: [{ advisory, reason, expires }] }</code> (see below)</td>
+<td>dependency-audit gate — <code>bun audit</code> synchronously on the initial build and before the dev server binds its port; ungated high+ advisories fail the build (findings annotated with the nature of the risk). <code>true</code>/omitted = <code>{ mode: &#39;fail&#39;, level: &#39;high&#39; }</code>; <code>false</code>/<code>{ mode: &#39;off&#39; }</code> disables; also <code>TOSIJS_AUDIT=off|warn|fail</code>. Time-box exceptions via <code>{ allow: [{ advisory, reason, expires }] }</code> (see below)</td>
 </tr>
 </tbody></table>
 <h4>Dependency audit gate</h4>
@@ -491,19 +491,62 @@ build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-m
 asks it, so a high-severity advisory in a transitive dep stays invisible until
 someone runs it by hand. The gate asks once, at the point a human is looking:</p>
 <ul>
-<li><strong>When it runs.</strong> The <strong>initial</strong> build only — <code>bun run build</code> (synchronously,
-fails the build) and, at dev-server launch, <strong>asynchronously</strong> so the page isn&#39;t
-held up by a registry round-trip (a high+ finding then prints and <strong>kills the dev
-server</strong>, same precedent as the memory watchdog). <strong>Watch rebuilds never audit</strong> —
-it would put a network call in your edit loop and break offline dev.</li>
+<li><strong>When it runs.</strong> The <strong>initial</strong> build only, and always <strong>synchronously</strong>:
+<code>bun run build</code> / <code>--test</code> audit inside <code>buildSite</code> (a finding fails the build),
+and <code>devServer</code> audits just <strong>before it binds the port</strong> (a finding throws, so the
+server never comes up). The audit is sub-second — local dependency resolution plus
+one registry round-trip — so waiting for it costs nothing next to the alternative:
+an async audit spikes a server that is already listening and possibly already in
+use, which reads as a crash and races whatever you&#39;d started doing. A gate you wait
+for cannot be raced. <strong>Watch rebuilds never audit</strong> — that would put a network call
+in your edit loop and break offline dev.</li>
 <li><strong>What blocks.</strong> Any advisory at or above <code>level</code> (default <code>high</code>, so <code>high</code> +
-<code>critical</code>) that isn&#39;t gated. <code>moderate</code>/<code>low</code> are reported, never fatal.</li>
-<li><strong>Fails open, not closed, when it can&#39;t check.</strong> Offline, registry down, or a
-<code>bun</code> too old → it warns and proceeds. It fails <strong>closed</strong> only on a real finding.</li>
+<code>critical</code>) that isn&#39;t gated. <code>moderate</code>/<code>low</code> are reported, never fatal.
+Consumer-facing and developer-facing advisories block <strong>alike</strong>: a dev-only
+dependency still runs on your machine, and the time-boxed gate below is the escape
+hatch, so the cost of over-blocking is a two-minute gate entry while the cost of
+under-blocking is a miss.</li>
+<li><strong>Fails open, not closed, when it can&#39;t check.</strong> Offline, registry down, a <code>bun</code>
+too old, or the audit exceeding its 20s timeout → it warns and proceeds. It fails
+<strong>closed</strong> only on a real finding.</li>
 <li><strong>Not downgraded in CI.</strong> Unlike the machine-health preflight (a heuristic about
 someone&#39;s local box), an advisory is deterministic and environment-independent, so
 CI is exactly where you want it enforced.</li>
 </ul>
+<p><strong>Each finding is annotated with the <em>nature</em> of the risk</strong> — parsed from the
+advisory&#39;s CVSS vector (3.x <code>C/I/A</code> and 4.0 <code>VC/VI/VA</code> both understood) and its CWEs:</p>
+<table>
+<thead>
+<tr>
+<th>label</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>LEAK/ALTER</code></td>
+<td>confidentiality or integrity impact — can leak data or execute code</td>
+</tr>
+<tr>
+<td><code>DoS-only</code></td>
+<td>availability impact only — resource exhaustion, hang, crash</td>
+</tr>
+<tr>
+<td><code>DoS?+ESCALATABLE</code></td>
+<td>scored availability-only, but an escalatable CWE (e.g. prototype pollution) means the vector may understate it</td>
+</tr>
+<tr>
+<td><code>UNCLASSIFIED</code></td>
+<td>no or unparseable vector — <strong>treat as worst case</strong></td>
+</tr>
+</tbody></table>
+<p>This is <strong>annotation, not policy</strong>: it never changes whether a finding blocks, it
+just lets you triage in seconds instead of opening four browser tabs. Classification
+deliberately fails <strong>closed</strong>, because it has to — measured against a real
+44-advisory sample, <strong>20% carried no CVSS vector at all, and those skewed severe</strong>
+(4 high, 2 critical). Anything that auto-softened on classification would have been
+blind on exactly the worst ones. Whether a vulnerable path is reachable <em>in your
+usage</em> is not encoded anywhere and is not knowable from the data — that judgment is
+yours, and the time-boxed gate is where it belongs.</p>
 <p><strong>Gating an accepted risk — with a deadline.</strong> You can&#39;t always patch immediately.
 Instead of silencing a finding forever, gate it with a reason and an <strong>expiry</strong>:</p>
 <pre><code class="language-typescript">audit: {

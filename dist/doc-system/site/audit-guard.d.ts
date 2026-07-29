@@ -10,7 +10,30 @@ export interface AuditAdvisory {
     vulnerableVersions?: string;
     /** GHSA id parsed from `url`, e.g. 'GHSA-25h7-pfq9-p65f' (if present) */
     ghsa?: string;
+    /** what KIND of harm this is — annotation only, never changes whether it blocks */
+    risk?: Classification;
 }
+export type RiskNature = 
+/** C or I impact — can leak or alter data / execute code */
+'compromise'
+/** availability-only — resource exhaustion, hang, crash */
+ | 'dos'
+/** no or unparseable vector, or an escalatable CWE — assume the worst */
+ | 'unknown';
+export interface Classification {
+    nature: RiskNature;
+    /** short label for the report line */
+    label: string;
+    /** what drove the call, so the reader can second-guess it */
+    basis: string;
+}
+/** Classify one advisory's nature from its CVSS vector + CWEs. Fails CLOSED. */
+export declare function classifyRisk(raw: {
+    cvss?: {
+        vectorString?: string;
+    } | null;
+    cwe?: string[] | null;
+}): Classification;
 /**
  * A time-boxed exception. A gate suppresses a matching advisory ONLY while it is
  * valid and unexpired — after `expires` it stops suppressing and the build fails
@@ -66,6 +89,7 @@ export interface AuditResult {
 }
 /** Injectable subprocess seam for tests. */
 export type AuditRunner = () => Promise<string>;
+export declare const AUDIT_TIMEOUT_MS = 20000;
 /**
  * Parse `bun audit --json` output — `{ "<pkg>": [advisory, …] }` — into a flat
  * advisory list. Returns null when the text is not a JSON object (offline, an

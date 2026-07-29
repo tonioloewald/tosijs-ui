@@ -677,6 +677,32 @@ export async function devServer(
     )
   }
 
+  // ── dependency audit (synchronous, before we bind the port) ─────────────────
+  //
+  // Runs BEFORE the server comes up, not after. The audit is sub-second (local
+  // resolution + one registry round-trip, bounded by AUDIT_TIMEOUT_MS and failing
+  // open on timeout), so the wait costs nothing next to the alternative: an async
+  // audit spikes a server that is already listening and possibly already in use,
+  // which reads as a crash and races whatever the developer started doing in the
+  // meantime. A gate you wait for cannot be raced.
+  //
+  // THROWS rather than exits: `devServer` is a public export of `tosijs-ui/site`,
+  // and refusing to start is the caller's business to handle — same contract as the
+  // launch-time preflight above. (The health tick below still exits, because by then
+  // we own a running server and stopping it IS the guard.)
+  // Interactive only — `--test` gates synchronously in buildSite().
+  if (!testMode) {
+    const audit = await auditDependencies(config.audit)
+    if (audit.mode !== 'off') reportAudit(audit, 'Dev server')
+    if (!audit.ok && audit.mode === 'fail') {
+      throw new Error(
+        'dev server: refusing to start — unaddressed dependency advisory (see above). ' +
+          'Fix it, gate it with a reason + expiry in `audit.allow`, set `audit: "warn"`, ' +
+          'or TOSIJS_AUDIT=off.'
+      )
+    }
+  }
+
   await ensureDevCerts()
 
   const server = Bun.serve({
@@ -741,30 +767,6 @@ export async function devServer(
       url: `https://localhost:${PORT}/`,
       setting: config.openBrowser,
       name: config.name,
-    })
-  }
-
-  // ── dependency audit (async, off the serve path) ────────────────────────────
-  //
-  // Don't make a human wait on a registry round-trip before the page comes up. Fire
-  // `bun audit` in the background (it's a child process, so nothing leaks into this
-  // days-long server) and act on the result a beat later. On an ungated high+
-  // finding at `mode: 'fail'` we print the report and EXIT — same precedent as the
-  // health tick below: by now we own a running server, and stopping it is the whole
-  // point of the guard, not the forbidden "library kills a caller mid-call". `warn`
-  // says it loudly and keeps serving; a failed-to-run audit is silent-safe.
-  // Interactive only — `--test` already gated synchronously in buildSite().
-  if (!testMode) {
-    void auditDependencies(config.audit).then((audit) => {
-      if (audit.mode === 'off' || !audit.ran) return
-      reportAudit(audit, 'Dev server')
-      if (!audit.ok && audit.mode === 'fail') {
-        console.error(
-          '\n🛑 Dev server: exiting on an unaddressed dependency advisory ' +
-            '(above). Fix or gate it, set `audit: "warn"`, or TOSIJS_AUDIT=off.\n'
-        )
-        process.exit(1)
-      }
     })
   }
 
