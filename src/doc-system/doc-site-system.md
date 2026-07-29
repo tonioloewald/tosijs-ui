@@ -233,7 +233,10 @@ explicit `logo` — the name of an icon (from `tosijs-ui`'s `icons`, e.g.
 `'tosiUi'`), an image URL / `data:` URI, or a raw inline `<svg>…</svg>` string —
 otherwise the tosijs-ui logo when `projectLinks.tosijs` is set, otherwise no mark.
 The same `logo` is accepted by `createDocBrowser({ logo })` and by an embedded
-`<tosi-doc-system config='{"logo":"…"}'>`.
+`<tosi-doc-system config='{"logo":"…"}'>`. Its size and spacing are class-driven
+(`.logo-mark`), so retune them with one CSS variable each rather than editing the
+build: `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (default
+10px).
 
 ### Doc sources
 

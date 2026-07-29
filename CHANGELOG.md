@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.5
+
+- **Header logo size/spacing are now CSS-tunable** (follow-up to 1.7.4). The brand mark no
+  longer hard-wires a pixel height inline; it carries a `.logo-mark` class driven by two
+  variables — `--tosi-logo-mark-size` (default **32px**, was a fixed 40px) and
+  `--tosi-logo-mark-gap` (default 10px) — for icon, `<img>`, and inline-`<svg>` logos alike.
+  (Icon `<svg>`s take their height from `--tosi-icon-size`, set inline by `makeIcon()`, so the
+  class points that knob at the same variable rather than fighting the inline height.) Retune a
+  logo from CSS instead of editing the build.
+
 ## 1.7.4
 
 - **Configurable header logo.** A new `logo` option lets a doc site set the brand mark shown

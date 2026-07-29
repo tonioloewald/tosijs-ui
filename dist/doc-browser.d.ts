@@ -67,7 +67,9 @@ export interface DocBrowserOptions {
      * - an image URL / path / data: URI (rendered as an `<img>`)
      * - a raw inline `<svg …>…</svg>` string
      * Omit to fall back to the tosijs-ui logo when `projectLinks.tosijs` is set,
-     * or to no mark at all otherwise.
+     * or to no mark at all otherwise. Size and spacing are CSS-tunable via
+     * `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (default
+     * 10px) on the `.logo-mark` element.
      */
     logo?: string;
     navSize?: number;

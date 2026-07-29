@@ -372,7 +372,9 @@ export interface DocBrowserOptions {
    * - an image URL / path / data: URI (rendered as an `<img>`)
    * - a raw inline `<svg …>…</svg>` string
    * Omit to fall back to the tosijs-ui logo when `projectLinks.tosijs` is set,
-   * or to no mark at all otherwise.
+   * or to no mark at all otherwise. Size and spacing are CSS-tunable via
+   * `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (default
+   * 10px) on the `.logo-mark` element.
    */
   logo?: string
   navSize?: number
@@ -406,9 +408,10 @@ export interface DocBrowserOptions {
 // The brand mark shown left of the site title. `logo` (from config) may name a
 // known icon, be an inline `<svg>` string, or be an image URL; when absent we
 // keep the legacy behavior — the tosijs-ui logo iff this is a tosijs project,
-// else nothing. Sized to match the header height so hydration doesn't reflow.
-const LOGO_SIZE = 40
-const LOGO_GAP = 10
+// else nothing. Size and spacing are class-driven (`.logo-mark`, see
+// logoMarkStyleSpec) so a consumer retunes them with one CSS variable each,
+// rather than a hard-wired pixel value.
+
 // `icons` is a Proxy that returns a factory for ANY string (unknown names get a
 // placeholder glyph), so we can't ask it whether a name is real — we route by the
 // shape of the string instead: an inline `<svg>` renders as-is, a URL/path/data:
@@ -428,32 +431,40 @@ function logoMark(
   logo: string | undefined,
   projectLinks: ProjectLinks
 ): Element {
+  let mark: Element | null = null
   if (logo) {
     if (logo.trimStart().startsWith('<')) {
-      const holder = span({
-        style: {
-          display: 'inline-flex',
-          height: `${LOGO_SIZE}px`,
-          marginRight: `${LOGO_GAP}px`,
-        },
-      })
-      holder.innerHTML = logo
-      return holder
+      // Inline <svg>: wrap in a flex holder so `.logo-mark`'s height sizes it.
+      mark = span({ style: { display: 'inline-flex', alignItems: 'center' } })
+      mark.innerHTML = logo
+    } else if (looksLikeImageUrl(logo)) {
+      mark = img({ src: logo, alt: '' })
+    } else {
+      mark = (icons as any)[logo]()
     }
-    if (looksLikeImageUrl(logo)) {
-      return img({
-        src: logo,
-        alt: '',
-        style: { height: `${LOGO_SIZE}px`, marginRight: `${LOGO_GAP}px` },
-      })
-    }
-    return (icons as any)[logo]({
-      style: { _xinIconSize: LOGO_SIZE, marginRight: LOGO_GAP },
-    })
+  } else if (projectLinks.tosijs) {
+    mark = icons.tosiUi()
   }
-  return projectLinks.tosijs
-    ? icons.tosiUi({ style: { _xinIconSize: LOGO_SIZE, marginRight: LOGO_GAP } })
-    : span()
+  // No mark → an empty span with NO class, so it carries no margin (the title
+  // stays flush; a flex `gap` on the header link couldn't do that).
+  if (!mark) return span()
+  mark.classList.add('logo-mark')
+  return mark
+}
+
+const logoMarkStyleSpec: XinStyleSheet = {
+  '.logo-mark': {
+    height: 'var(--tosi-logo-mark-size, 32px)',
+    // An icon <svg> takes its height from --tosi-icon-size, set INLINE on the svg
+    // by makeIcon() — which beats a class `height` rule. Point that knob at the
+    // same variable so one --tosi-logo-mark-size drives an icon, an <img>, or an
+    // inline <svg> alike.
+    _tosiIconSize: 'var(--tosi-logo-mark-size, 32px)',
+    marginRight: 'var(--tosi-logo-mark-gap, 10px)',
+    flexShrink: '0',
+  },
+  // Inline-<svg> logos are wrapped in a flex holder; scale the embedded svg to it.
+  '.logo-mark > svg': { height: '100%', width: 'auto' },
 }
 
 // Monotonic per-page counter so each createDocBrowser() call gets a distinct
@@ -1499,6 +1510,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
 
   // Inject test indicator styles
   StyleSheet('test-indicators', testIndicatorStyleSpec)
+
+  // Header brand-mark sizing (icon / <img> / inline-<svg>), one CSS var each.
+  StyleSheet('doc-logo-mark', logoMarkStyleSpec)
 
   // Floating widget for test status
   const testWidget = button(

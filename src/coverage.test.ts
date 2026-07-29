@@ -18,7 +18,7 @@ describe('doc-browser', () => {
     },
   ]
 
-  test('logo: icon name renders an <svg> brand mark', async () => {
+  test('logo: icon name renders an <svg> brand mark with .logo-mark class', async () => {
     const { createDocBrowser } = await import('./doc-browser')
     const el = createDocBrowser({
       docs: makeDocs() as any,
@@ -27,11 +27,14 @@ describe('doc-browser', () => {
       logo: 'bookOpen',
     })
     const brand = el.querySelector('header a')
-    expect(brand?.querySelector('svg')).toBeTruthy()
+    const svg = brand?.querySelector('svg') as SVGElement | null
+    expect(svg).toBeTruthy()
     expect(brand?.querySelector('img')).toBeNull()
+    // Size is class/CSS-var driven, not a hard-wired px on the element.
+    expect(svg?.classList.contains('logo-mark')).toBe(true)
   })
 
-  test('logo: image URL renders an <img> brand mark', async () => {
+  test('logo: image URL renders an <img> brand mark, size via class not inline', async () => {
     const { createDocBrowser } = await import('./doc-browser')
     const el = createDocBrowser({
       docs: makeDocs() as any,
@@ -42,6 +45,9 @@ describe('doc-browser', () => {
     const img = el.querySelector('header a img') as HTMLImageElement | null
     expect(img).toBeTruthy()
     expect(img?.getAttribute('src')).toBe('/brand.png')
+    expect(img?.classList.contains('logo-mark')).toBe(true)
+    // No hard-wired height inline — the .logo-mark class + CSS var drives it.
+    expect(img?.style.height).toBe('')
   })
 
   test('logo: falls back to tosiUi only when projectLinks.tosijs is set', async () => {

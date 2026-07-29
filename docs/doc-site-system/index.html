@@ -297,7 +297,10 @@ explicit <code>logo</code> — the name of an icon (from <code>tosijs-ui</code>&
 <code>&#39;tosiUi&#39;</code>), an image URL / <code>data:</code> URI, or a raw inline <code>&lt;svg&gt;…&lt;/svg&gt;</code> string —
 otherwise the tosijs-ui logo when <code>projectLinks.tosijs</code> is set, otherwise no mark.
 The same <code>logo</code> is accepted by <code>createDocBrowser({ logo })</code> and by an embedded
-<code>&lt;tosi-doc-system config=&#39;{&quot;logo&quot;:&quot;…&quot;}&#39;&gt;</code>.</p>
+<code>&lt;tosi-doc-system config=&#39;{&quot;logo&quot;:&quot;…&quot;}&#39;&gt;</code>. Its size and spacing are class-driven
+(<code>.logo-mark</code>), so retune them with one CSS variable each rather than editing the
+build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-mark-gap</code> (default
+10px).</p>
 <h3>Doc sources</h3>
 <table>
 <thead>

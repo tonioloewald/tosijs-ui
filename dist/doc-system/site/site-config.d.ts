@@ -35,6 +35,8 @@ export interface SiteConfig {
      * known icon (from `tosijs-ui`'s `icons`, e.g. `'tosiUi'`), an image URL / path
      * / `data:` URI, or a raw inline `<svg …>…</svg>` string. Omit to fall back to
      * the tosijs-ui logo when `projectLinks.tosijs` is set, or to no mark otherwise.
+     * Size/spacing are CSS-tunable via `--tosi-logo-mark-size` (default 32px) and
+     * `--tosi-logo-mark-gap` (default 10px) on the `.logo-mark` element.
      */
     logo?: string;
     /** header-bar icon links */
