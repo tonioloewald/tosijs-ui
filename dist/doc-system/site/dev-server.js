@@ -602,7 +602,7 @@ export async function devServer(config, opts = {}) {
             reportAudit(audit, 'Dev server');
         if (!audit.ok && audit.mode === 'fail') {
             throw new Error('dev server: refusing to start — unaddressed dependency advisory (see above). ' +
-                'Fix it, gate it with a reason + expiry in `audit.allow`, set `audit: "warn"`, ' +
+                "Fix it, gate it with a reason + expiry in `audit.allow`, set `audit: { mode: 'warn' }`, " +
                 'or TOSIJS_AUDIT=off.');
         }
     }

@@ -1,5 +1,55 @@
 # Changelog
 
+## 1.8.0
+
+> **Read this first if you use `tosijs-ui/site`.** This release adds a **dependency-audit
+> gate that is ON BY DEFAULT and can fail your build** — on advisories in _your_ dependency
+> tree, not ours. That is deliberate, and there are three ways out (below). Minor, not patch,
+> precisely because `bun run build` can now exit 1 where it previously didn't.
+
+- **New: dependency-audit gate** (`src/doc-system/site/audit-guard.ts`, exported from
+  `tosijs-ui/site`). `bun audit` knows the registry advisory database; nothing in a normal
+  build ever asked it, so a high-severity advisory in a transitive dep stayed invisible until
+  someone ran it by hand. Now it's asked at the point a human is looking.
+  - **Runs synchronously in every mode** — inside `buildSite` for `bun run build` / `--test`,
+    and in `devServer` **just before it binds the port** (it throws, so the server never comes
+    up). Sub-second in practice; a gate you wait for can't be raced. **Watch rebuilds never
+    audit** — that would put a network call in your edit loop and break offline dev.
+  - **What blocks:** any advisory at or above `level` (default `high`) that isn't gated.
+    Consumer-facing and developer-facing advisories block **alike** — a dev-only dependency
+    still runs on your machine, and the escape hatch makes over-blocking cheap.
+  - **Three ways out:** `audit: { allow: [{ advisory, reason, expires }] }` to accept a risk
+    **on a deadline** (an expired or malformed gate stops suppressing, so it comes back for
+    review instead of living in an allowlist nobody re-reads); `audit: { mode: 'warn' }` to
+    report without failing; `audit: false` or `TOSIJS_AUDIT=off` to disable.
+  - **Fails open, never closed, when it can't check** — offline, registry down, `bun` too old,
+    or past its 20s timeout: it warns and proceeds. It fails **closed** only on a real finding.
+  - **Not downgraded in CI.** Unlike the machine-health preflight (a heuristic about someone's
+    local box), an advisory is deterministic and environment-independent.
+  - **Findings are grouped, sorted worst-first, and annotated** with the _nature_ of the risk
+    (`LEAK/ALTER` / `DoS-only` / `DoS?+ESCALATABLE` / `UNCLASSIFIED`), parsed from the CVSS
+    vector (3.x and 4.0) plus CWEs. Annotation only — it never changes what blocks, and it
+    fails **closed**: ~20% of real advisories carry no CVSS vector at all, and those skew
+    severe. Sub-threshold advisories are listed compactly (previously collected and never
+    shown), plus an **advisories-per-package tally** — a dependency that keeps producing them
+    is a code smell worth replacing rather than patching.
+- **New: `openBrowser`** site-config option — opens the doc site on dev-server start, reusing
+  an existing tab on macOS rather than piling up new ones.
+- **New public API on `tosijs-ui/site`:** `auditDependencies`, `reportAudit`,
+  `resolveAuditMode`, `classifyRisk`, `groupAdvisories`, `openBrowser`, plus their types.
+  `buildSite` takes an optional second argument (`{ skipAudit }`).
+- **Fix: `bun run test-browser` no longer reports success on a failed build.** It computed the
+  build result and launched the test run regardless, so a failing build (or a blocking
+  advisory) still went green. One-shot modes now exit 1.
+- **Fix: the E2E lane can register ServiceWorkers over the dev cert.** `ignoreHTTPSErrors` is a
+  browser-_context_ option and never covered a ServiceWorker's own script fetch, so the
+  import-resolver worker failed to register and `hydration.pw.ts` caught it as a console error.
+  Chromium now launches with `--ignore-certificate-errors`.
+- **Dependency pins:** `overrides` for `flatted` (`>=3.4.2`) and `brace-expansion` (`>=5.0.8`)
+  clear live high-severity advisories. Added `.github/dependabot.yml` so advisories published
+  later against an unchanged lockfile still surface.
+- Includes the unpublished 1.7.5 (header-logo sizing) — npm goes 1.7.4 → 1.8.0.
+
 ## 1.7.5
 
 - **Header logo size/spacing are now CSS-tunable** (follow-up to 1.7.4). The brand mark no

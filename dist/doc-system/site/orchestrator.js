@@ -180,10 +180,10 @@ export async function buildSite(config, opts = {}) {
     }))) {
         return false;
     }
-    // Dependency-audit gate. Runs on the initial build only — the dev server audits
-    // asynchronously at launch, and `opts.skipAudit` keeps watch rebuilds off the
-    // network. Fails the build (before the destructive rm -rf) on an ungated high+
-    // advisory; fails open if the audit itself can't run. Never on watch rebuilds.
+    // Dependency-audit gate. Runs on the initial build only — the dev server runs its
+    // own synchronous audit just before binding the port, and `opts.skipAudit` keeps
+    // watch rebuilds off the network. Fails the build (before the destructive rm -rf)
+    // on an ungated high+ advisory; fails open if the audit itself can't run.
     if (!opts.skipAudit) {
         const audit = await auditDependencies(config.audit);
         if (audit.mode !== 'off')
