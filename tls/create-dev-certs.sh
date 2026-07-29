@@ -52,7 +52,7 @@ mkcert -install
 
 # Bonjour/mDNS name of this machine, so the same cert works when another device
 # on the LAN hits https://<name>.local:8787. On macOS the advertised name is the
-# LocalHostName (`scutil --get LocalHostName`), e.g. "Persiflex" → persiflex.local.
+# LocalHostName (`scutil --get LocalHostName`), e.g. "MyMac" → mymac.local.
 #
 # Hardened: lowercase it (the mDNS convention, and dodges any case-sensitive
 # client), strip a `.local` the source may already carry (no `foo.local.local`),
