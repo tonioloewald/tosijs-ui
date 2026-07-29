@@ -122,7 +122,12 @@ export default defineConfig({
    * timing out. Turning the overlay off here fixes that too.
    */
   webServer: {
-    command: 'bun start',
+    // NOT `bun start` — that is `bun --watch bin/dev.ts`, so a file watcher stayed
+    // live for the whole run and could `rm -rf docs/` + regenerate underneath a test
+    // mid-navigation. The lane flaked against its own build system, which presents as
+    // a product bug and is the worst kind of red. Plain `bun bin/dev.ts` drops bun's
+    // watcher; `DEV_NO_WATCH=1` (below) drops the dev server's internal chokidar one.
+    command: 'bun bin/dev.ts',
     // DEV_SKIP_PREFLIGHT: the machine-health guard exists to stop a HUMAN from adding
     // load to a dying machine. Inside our own release gate there is no human to read it
     // and no stale dev server to kill — but a busy laptop would turn a green suite into
@@ -132,6 +137,8 @@ export default defineConfig({
       HALTIJA_DEV: '0',
       PORT: String(E2E_PORT),
       DEV_SKIP_PREFLIGHT: '1',
+      // Serve the build; don't rebuild it under the running suite. See `command`.
+      DEV_NO_WATCH: '1',
     },
     url: E2E_BASE_URL,
     reuseExistingServer: false,

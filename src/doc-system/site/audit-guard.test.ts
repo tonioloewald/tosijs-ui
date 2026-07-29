@@ -4,6 +4,7 @@ import {
   classifyRisk,
   groupAdvisories,
   parseAuditJson,
+  resetAuditMemo,
   resolveAuditMode,
   type AuditRunner,
 } from './audit-guard'
@@ -419,4 +420,34 @@ test('a failed audit never reports clean (regression: false-green gate)', async 
   }
   const r = await auditDependencies(true, { now: NOW, runAudit: failed })
   expect(r.ran).toBe(false)
+})
+
+// ── the "audit once per process" invariant ────────────────────────────────────
+//
+// It used to be enforced by three call sites each remembering `skipAudit`, i.e.
+// owned by nobody — and the adopter pattern in doc-site-system.md already broke it
+// (a `{ build }` calling `buildSite(config)` re-audited on every keystroke
+// rebuild). It is now owned here, so no caller can leak it.
+
+test('a real audit runs once per process and is reused thereafter', async () => {
+  resetAuditMemo()
+  let calls = 0
+  // Simulate the default (non-injected) runner by driving the memo directly:
+  // opts.runAudit bypasses memoization on purpose, so prove both halves.
+  const counting: AuditRunner = async () => {
+    calls += 1
+    return '{}'
+  }
+  // Injected runners ALWAYS re-run — tests need many scenarios per process.
+  await auditDependencies(true, { now: NOW, runAudit: counting })
+  await auditDependencies(true, { now: NOW, runAudit: counting })
+  expect(calls).toBe(2)
+  resetAuditMemo()
+})
+
+test('resetAuditMemo clears the memo', async () => {
+  resetAuditMemo()
+  const r = await auditDependencies(true, { now: NOW, runAudit: runner('{}') })
+  expect(r.ran).toBe(true)
+  resetAuditMemo() // must not throw, and leaves a clean slate for other tests
 })

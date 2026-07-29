@@ -554,7 +554,22 @@ export async function devServer(
     }
   }
 
-  if (!testMode) {
+  /*
+  Serve WITHOUT watching (`DEV_NO_WATCH=1`).
+
+  An automated suite wants a server, not a rebuilder. Playwright's `webServer` ran
+  `bun start`, so a watcher sat live for the whole run and `rm -rf docs/` +
+  regenerate could land underneath a test that was mid-navigation — the lane
+  flaked against its own build system, which reads as a product bug and is the
+  worst kind of red. `testMode` already implied this, but that flag also means
+  "drive haltija", so it could not be reused. Pair this with dropping `--watch`
+  from the command to silence bun's own watcher too.
+  */
+  const noWatch =
+    process.env.DEV_NO_WATCH === '1' || process.env.DEV_NO_WATCH === 'true'
+  if (noWatch) console.log('Watching disabled (DEV_NO_WATCH) — serving only.')
+
+  if (!testMode && !noWatch) {
     // Rebuild on any source change. By default that's just buildSite(), but a
     // consumer whose full build has steps BEYOND buildSite — e.g. a custom IIFE
     // bundle built separately (because it needs a Bun plugin buildSite can't

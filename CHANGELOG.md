@@ -33,8 +33,26 @@
     severe. Sub-threshold advisories are listed compactly (previously collected and never
     shown), plus an **advisories-per-package tally** — a dependency that keeps producing them
     is a code smell worth replacing rather than patching.
+- **Fix (issue #24, reported by a consumer): nav `order` now sorts numerically.** Section nav
+  and the generated `<!-- toc -->` built a zero-padded *string* key and compared it lexically,
+  so a fractional order silently sorted to the **end** of its section — `order: 1.5` landed
+  after `2`, `3`, … because `"01.5" > "0002"` as text. "Insert a page at N.5" reads like a
+  supported idiom and did the opposite with no warning. The same padding capped `order` at 4
+  digits (10000+ overflowed the width) and mis-sorted negatives. `pinnedSort` is now a
+  multi-key comparator (pin bucket → numeric order → title → filename), which fixes all three.
+  **Removed `navSortKey`** (the string-key builder) — it was never in a public index, but was
+  reachable via the `./*` subpath, so: technically breaking. A string key cannot express this
+  ordering, so there is no corrected version of it.
+- **`src/doc-system/nav-tree.ts` was a binary file.** The old sort key joined title and
+  filename with a raw NUL byte, which makes macOS `grep` silently match **nothing** in that
+  file (exit 1, no message) — so searching it for any symbol came back empty and the sort bug
+  above was effectively unfindable. The comparator needs no delimiter; the NUL is gone.
 - **New: `openBrowser`** site-config option — opens the doc site on dev-server start, reusing
   an existing tab on macOS rather than piling up new ones.
+- **New: `DEV_NO_WATCH=1`** serves the built site without watching. The E2E lane used to run
+  `bun start`, so a file watcher stayed live for the whole suite and could `rm -rf docs/` and
+  regenerate underneath a test mid-navigation — the lane flaked against its own build system,
+  which presents as a product bug.
 - **New public API on `tosijs-ui/site`:** `auditDependencies`, `reportAudit`,
   `resolveAuditMode`, `classifyRisk`, `groupAdvisories`, `openBrowser`, plus their types.
   `buildSite` takes an optional second argument (`{ skipAudit }`).

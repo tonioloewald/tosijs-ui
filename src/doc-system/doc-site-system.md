@@ -305,6 +305,11 @@ someone runs it by hand. The gate asks once, at the point a human is looking:
   use, which reads as a crash and races whatever you'd started doing. A gate you wait
   for cannot be raced. **Watch rebuilds never audit** — that would put a network call
   in your edit loop and break offline dev.
+- **It audits once per process**, however many callers there are. That invariant lives
+  inside `auditDependencies` (the result is memoized), not in each call site
+  remembering to pass `skipAudit`. It has to: the `{ build }` pattern above re-calls
+  `buildSite` on every rebuild, so when the flag was the only guard, anyone following
+  these docs got a registry round-trip on every keystroke — and offline dev broke.
 - **What blocks.** Any advisory at or above `level` (default `high`, so `high` +
   `critical`) that isn't gated. `moderate`/`low` are reported, never fatal.
   Consumer-facing and developer-facing advisories block **alike**: a dev-only

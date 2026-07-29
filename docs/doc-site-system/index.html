@@ -500,6 +500,11 @@ an async audit spikes a server that is already listening and possibly already in
 use, which reads as a crash and races whatever you&#39;d started doing. A gate you wait
 for cannot be raced. <strong>Watch rebuilds never audit</strong> — that would put a network call
 in your edit loop and break offline dev.</li>
+<li><strong>It audits once per process</strong>, however many callers there are. That invariant lives
+inside <code>auditDependencies</code> (the result is memoized), not in each call site
+remembering to pass <code>skipAudit</code>. It has to: the <code>{ build }</code> pattern above re-calls
+<code>buildSite</code> on every rebuild, so when the flag was the only guard, anyone following
+these docs got a registry round-trip on every keystroke — and offline dev broke.</li>
 <li><strong>What blocks.</strong> Any advisory at or above <code>level</code> (default <code>high</code>, so <code>high</code> +
 <code>critical</code>) that isn&#39;t gated. <code>moderate</code>/<code>low</code> are reported, never fatal.
 Consumer-facing and developer-facing advisories block <strong>alike</strong>: a dev-only

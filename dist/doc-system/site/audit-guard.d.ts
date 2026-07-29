@@ -98,9 +98,13 @@ export declare const AUDIT_TIMEOUT_MS = 20000;
 export declare function parseAuditJson(text: string): AuditAdvisory[] | null;
 /** Resolve the effective mode from config + the TOSIJS_AUDIT env override. */
 export declare function resolveAuditMode(config: boolean | AuditConfig | undefined): AuditMode;
+/** Test-only: forget the per-process audit memo. */
+export declare function resetAuditMemo(): void;
 /**
  * Run `bun audit`, classify findings against the configured threshold and the
  * time-boxed allowlist, and return a structured verdict. Never exits.
+ *
+ * Memoized per process (see above) unless `opts.runAudit` is injected.
  */
 export declare function auditDependencies(config: boolean | AuditConfig | undefined, opts?: {
     now?: Date;

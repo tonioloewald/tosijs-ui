@@ -247,11 +247,41 @@ export function resolveAuditMode(config) {
         return 'fail'; // on by default
     return config.mode ?? 'fail';
 }
+/*
+"Audit ONCE per process, never on a watch rebuild" is the real invariant, and it
+used to be enforced by three separate call sites remembering to pass `skipAudit`
+— which means it was owned by nobody. The documented adopter pattern already broke
+it: `doc-site-system.md` tells you to hand `devServer` a `{ build }` that calls
+`buildSite(config)`, with no `skipAudit`, so every keystroke rebuild fired a
+registry round-trip — a network call in the edit loop, and offline dev broken, for
+anyone who followed the docs.
+
+Own it here instead. The first real audit in a process is remembered and every
+later call returns it, so the invariant holds no matter how many callers there are
+or which of them forgot a flag. `skipAudit` still short-circuits earlier (it avoids
+even the first call), and an injected `runAudit` always re-runs — tests need to
+drive many scenarios in one process, and memoizing those would make them lie.
+*/
+let processAudit = null;
+/** Test-only: forget the per-process audit memo. */
+export function resetAuditMemo() {
+    processAudit = null;
+}
+/** Remember a real (non-injected) audit so later callers reuse it. */
+function memo(result, injected) {
+    if (!injected)
+        processAudit = result;
+    return result;
+}
 /**
  * Run `bun audit`, classify findings against the configured threshold and the
  * time-boxed allowlist, and return a structured verdict. Never exits.
+ *
+ * Memoized per process (see above) unless `opts.runAudit` is injected.
  */
 export async function auditDependencies(config, opts = {}) {
+    if (!opts.runAudit && processAudit)
+        return processAudit;
     const mode = resolveAuditMode(config);
     const cfg = config && typeof config === 'object' ? config : {};
     const level = cfg.level ?? 'high';
@@ -269,6 +299,7 @@ export async function auditDependencies(config, opts = {}) {
         stale: [],
         belowThreshold: [],
     };
+    // Not memoized: nothing ran, so there is no result to reuse.
     if (mode === 'off')
         return base;
     let text;
@@ -276,11 +307,13 @@ export async function auditDependencies(config, opts = {}) {
         text = await (opts.runAudit ?? defaultRunner)();
     }
     catch {
-        return base; // couldn't even spawn — fail open
+        return memo(base, !!opts.runAudit); // couldn't even spawn — fail open
     }
     const advisories = parseAuditJson(text);
+    // Unparseable/empty => couldn't check. Memoized so a watch session doesn't
+    // retry the registry on every rebuild while offline.
     if (advisories === null)
-        return base; // unparseable — fail open
+        return memo(base, !!opts.runAudit);
     const result = { ...base, ran: true };
     const threshold = SEVERITY_RANK[level];
     // Validate gates once; an invalid gate (no reason / no valid date) never
@@ -339,7 +372,7 @@ export async function auditDependencies(config, opts = {}) {
     // Valid gates that suppressed nothing this run — the advisory is gone; delete them.
     result.stale = validGates.filter((g) => !usedGates.has(g));
     result.ok = result.blocking.length === 0;
-    return result;
+    return memo(result, !!opts.runAudit);
 }
 const DUE_DILIGENCE = [
     'Before adopting a patch:',

@@ -86,3 +86,56 @@ test('parent cycles are broken (node falls back to root)', () => {
   const t = buildNavTree(cyclic, sm)
   expect(t.length).toBeGreaterThan(0)
 })
+
+// ── issue #24: `order` must sort numerically, not lexically ──────────────────
+// Reported by a consumer (foresight-2026 @ 1.7.0-beta.5): a fractional order like
+// 1.5 silently sorted to the END of its section, because the sort key stringified
+// and zero-padded the number and then compared it as text.
+
+test('fractional order sorts between its integer neighbours (#24)', () => {
+  const docs = [
+    mk('two.md', 'Two', { order: 2 }),
+    mk('onepointfive.md', 'One And A Half', { order: 1.5 }),
+    mk('one.md', 'One', { order: 1 }),
+  ]
+  const sorted = docs.slice().sort(pinnedSort)
+  expect(sorted.map((d) => d.order)).toEqual([1, 1.5, 2])
+})
+
+test('order is not capped at 4 digits, and negatives sort first (#24)', () => {
+  const docs = [
+    mk('big.md', 'Big', { order: 10000 }),
+    mk('small.md', 'Small', { order: 9999 }),
+    mk('neg.md', 'Neg', { order: -5 }),
+  ]
+  expect(
+    docs
+      .slice()
+      .sort(pinnedSort)
+      .map((d) => d.order)
+  ).toEqual([-5, 9999, 10000])
+})
+
+test('pin buckets still outrank order (#24 fix keeps bucket precedence)', () => {
+  const docs = [
+    mk('b.md', 'B', { pin: 'bottom', order: 1 }),
+    mk('t.md', 'T', { pin: 'top', order: 999 }),
+    mk('n.md', 'N', { order: 500 }),
+  ]
+  expect(
+    docs
+      .slice()
+      .sort(pinnedSort)
+      .map((d) => d.filename)
+  ).toEqual(['t.md', 'n.md', 'b.md'])
+})
+
+test('docs with no order share the 500 default and fall back to title', () => {
+  const docs = [mk('z.md', 'Zebra'), mk('a.md', 'Apple')]
+  expect(
+    docs
+      .slice()
+      .sort(pinnedSort)
+      .map((d) => d.title)
+  ).toEqual(['Apple', 'Zebra'])
+})
