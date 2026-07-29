@@ -19,6 +19,31 @@ session-only + expire in 7 days — this line is the durable reminder.)
 
 ## bun
 
+- **[oven-sh/bun#36377](https://github.com/oven-sh/bun/issues/36377)** — `bun audit` can't be
+  scoped by dependency class (no `--production` / `--omit=dev`, and the JSON carries no
+  dev/prod flag or dependency path), and `overrides` can't express a **nested/path-scoped**
+  constraint the way npm's `{"foo": {"bar": "1.2.3"}}` / `"baz > qux"` forms do.
+
+  **Why we care.** Both are the same need: *act on a specific dependency path, not a package
+  name globally.* Our audit gate (`src/doc-system/site/audit-guard.ts`) deliberately blocks on
+  every high+ advisory regardless of dep class — the time-boxed gate makes over-blocking cheap
+  and a dev-only dep still runs on the developer's machine — so **we are not blocked on the
+  `--production` half**. It would only let a consumer of `tosijs-ui/site` express a different
+  policy. The **nested-overrides** half is the one that bites: remediating one transitive path
+  currently forces a global pin, which is exactly the broad churn our own gate's due-diligence
+  output warns against (every extra package that moves is fresh supply-chain surface).
+
+  **Where it shows up in this repo.** `package.json` `overrides` (`flatted`,
+  `brace-expansion`) are global pins for precisely this reason. When nested overrides land,
+  revisit them — and any `audit.allow` gate whose reason is "can't pin narrowly" can convert
+  from a time-boxed suppression into a real fix.
+
+  **Verified working today (don't regress):** `bun audit` reports on **resolved** versions, not
+  declared manifest ranges — an override genuinely clears a finding instead of needing a bogus
+  gate. And it is sub-second even on a large tree, which is what makes our synchronous
+  blocking gate practical. Related, previously closed: bun#30439 (nested overrides/resolutions).
+  Status: **filed 2026-07-29, open.**
+
 - **[oven-sh/bun#34053](https://github.com/oven-sh/bun/issues/34053)** — `Bun.build()` leaks
   native memory per call (RSS unbounded, `heapUsed` flat), which kills long-lived watch/dev
   processes. **This has taken the machine down twice.** ~30MB per call, monotonic, invisible
