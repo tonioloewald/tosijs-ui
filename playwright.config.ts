@@ -53,7 +53,22 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // `ignoreHTTPSErrors` (above) is a browser-CONTEXT option: it makes
+        // Playwright accept our self-signed dev cert for page and fetch requests.
+        // It does NOT cover a ServiceWorker's own script fetch — the browser
+        // registers a worker over its own network stack, which the context option
+        // never sees. So the import-resolver ServiceWorker failed to register with
+        // "An SSL certificate error occurred when fetching the script," and the
+        // "no console errors" hydration test caught it. `--ignore-certificate-errors`
+        // is the browser-PROCESS-level equivalent — it extends the same cert
+        // tolerance to the SW fetch. Chromium-only flag; scoped to this project.
+        // (This is independent of which dev cert is installed: Playwright's bundled
+        // Chromium never trusts the machine's mkcert CA, so regenerating certs
+        // wouldn't fix it — this flag is the actual fix.)
+        launchOptions: { args: ['--ignore-certificate-errors'] },
+      },
     },
 
     {
