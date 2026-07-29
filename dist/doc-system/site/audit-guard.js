@@ -123,15 +123,41 @@ we fail OPEN (same as offline), because an advisory we could not fetch must not
 ground someone on a plane.
 */
 export const AUDIT_TIMEOUT_MS = 20_000;
+/*
+The runner MUST read the exit code. Measured on bun 1.3.14:
+
+  clean tree            → exit 0, stdout `{}`      (3 bytes — never empty)
+  advisories found      → exit 1, stdout `{...}`
+  no lockfile           → exit 1, stdout EMPTY, stderr `error: Lockfile not found`
+  offline / registry
+    refused / old bun   → exit 1, stdout EMPTY
+
+so **empty stdout means the audit FAILED — it never means "clean"**. An earlier
+version returned stdout blind and let `parseAuditJson('')` answer `[]`, which the
+caller read as `ran: true, ok: true` and printed "✅ dependency audit clean" — a
+green checkmark for a check that never contacted the registry, on every build,
+forever, for anyone behind a proxy or on a non-bun lockfile. A security gate that
+reports a pass it did not earn is worse than no gate: it converts an unknown into a
+false assurance. Exit code first, then content.
+*/
 const defaultRunner = async () => {
-    // Both 0 (clean) and 1 (vulnerabilities found) produce valid JSON on stdout; any
-    // other exit is treated as "couldn't check" via a parse failure below.
     const proc = $ `bun audit --json`.nothrow().quiet();
     const timeout = new Promise((resolve) => setTimeout(() => resolve(null), AUDIT_TIMEOUT_MS).unref?.());
     const r = await Promise.race([proc, timeout]);
     if (r === null)
         throw new Error('bun audit timed out');
-    return r.stdout.toString();
+    const stdout = r.stdout.toString();
+    // 0 = clean, 1 = advisories found. Both print JSON. Anything else — or a
+    // "success" with no output at all — is a failed run, not a clean one: throw so
+    // the caller takes the honest fail-OPEN path (ran:false) and warns.
+    if (r.exitCode !== 0 && r.exitCode !== 1) {
+        throw new Error(`bun audit exited ${r.exitCode}: ${r.stderr.toString().trim().slice(0, 300)}`);
+    }
+    if (stdout.trim() === '') {
+        throw new Error(`bun audit produced no output (exit ${r.exitCode}): ` +
+            `${r.stderr.toString().trim().slice(0, 300) || 'no stderr'}`);
+    }
+    return stdout;
 };
 /** Extract a GHSA id from an advisory URL, if the URL carries one. */
 function parseGhsa(url) {
@@ -145,8 +171,11 @@ function parseGhsa(url) {
  */
 export function parseAuditJson(text) {
     const trimmed = text.trim();
+    // Empty is NOT "clean" — a clean tree prints `{}`. Empty stdout only happens
+    // when the audit failed (no lockfile, offline, registry refused, bun too old),
+    // so answering `[]` here manufactured a green result out of a failed check.
     if (trimmed === '')
-        return []; // clean tree can print nothing
+        return null;
     let data;
     try {
         data = JSON.parse(trimmed);

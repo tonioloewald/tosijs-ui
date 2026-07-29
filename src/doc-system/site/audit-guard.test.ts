@@ -45,8 +45,13 @@ test('parseAuditJson flattens packages and parses the GHSA id', () => {
 })
 
 test('parseAuditJson returns [] for a clean tree and null for garbage', () => {
-  expect(parseAuditJson('{}')).toEqual([])
-  expect(parseAuditJson('')).toEqual([])
+  expect(parseAuditJson('{}')).toEqual([]) // a CLEAN tree prints `{}`, exit 0
+  // Empty stdout is NEVER "clean" — measured on bun 1.3.14, it only happens when
+  // the audit FAILED (no lockfile / offline / registry refused / bun too old).
+  // Answering `[]` here printed "✅ dependency audit clean" for a check that never
+  // ran. It must read as "couldn't check" so the caller fails OPEN and warns.
+  expect(parseAuditJson('')).toBe(null)
+  expect(parseAuditJson('   ')).toBe(null)
   expect(parseAuditJson('not json')).toBe(null)
   expect(parseAuditJson('[]')).toBe(null) // array, not the expected object
 })
@@ -396,4 +401,22 @@ test('below-threshold findings are still collected when the build blocks', async
   // These used to be collected and never surfaced; reportAudit now prints them.
   expect(r.belowThreshold).toHaveLength(1)
   expect(r.belowThreshold[0].severity).toBe('moderate')
+})
+
+test('a failed audit never reports clean (regression: false-green gate)', async () => {
+  // The exact shape `bun audit` produces with no lockfile / offline: exit 1, no
+  // stdout. This used to yield ran:true ok:true → "✅ dependency audit clean".
+  const emptyOut = await auditDependencies(true, {
+    now: NOW,
+    runAudit: runner(''),
+  })
+  expect(emptyOut.ran).toBe(false) // "couldn't check", NOT "clean"
+  expect(emptyOut.ok).toBe(true) // still fails OPEN — we just don't claim a pass
+
+  // And the runner itself must surface a failed exit rather than returning ''.
+  const failed: AuditRunner = async () => {
+    throw new Error('bun audit produced no output (exit 1): Lockfile not found')
+  }
+  const r = await auditDependencies(true, { now: NOW, runAudit: failed })
+  expect(r.ran).toBe(false)
 })
