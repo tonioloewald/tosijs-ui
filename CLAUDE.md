@@ -20,7 +20,7 @@ tosijs-ui (formerly xinjs-ui) is a web-component library built on [tosijs](https
 ## Common Commands
 
 ```bash
-bun start              # Dev server at https://localhost:8787 (hot reload, reports gzip sizes) — `bun --watch bin/dev.ts`
+bun start              # Dev server at https://localhost:8787 (hot reload, reports gzip sizes) — `bun --watch bin/dev.ts`. Opens/reuses this project's browser tab (openBrowser; BROWSER=none to skip)
 bun run build          # Build only (no server), exits with 0/1 — `bin/dev.ts --build-only`
 bun run test-browser   # Build, launch haltija, run browser tests, exit with 0/1 — `bin/dev.ts --test`
 bun tests              # `bun test && bun playwright test` — see caveat below
@@ -33,7 +33,7 @@ bun run og             # Regenerate Open Graph cards — manual, needs a RUNNING
 
 `bun run og` (`bin/generate-og.ts`) is a separate opt-in step, not part of the build: it drives Playwright against a **running** dev server to screenshot each page's first live example, and encodes webp via ffmpeg. Output lands in `demo/static/og/` (so it survives the build's `rm -rf docs`) and is committed like any other static asset. Re-run it only when pages or their examples change materially.
 
-The test lanes are distinct: **`bun test`** is the fast happy-dom unit lane (~640 tests across 36 files; it recurses into `src/*/`); **`bun playwright test`** is the `tests/*.pw.ts` end-to-end lane, and **`tests/doc-tests.pw.ts` inside it runs the whole inline ` ```test ` doc tier** (including the inline-WASM guard) through Playwright — the doc-browser's background runner executes every page-with-tests in hidden iframes and resolves `window.__docTestResults`, which that spec awaits and asserts is failure-free. **This is the doc-test gate, and it runs in CI** (the e2e job's `playwright test --project=chromium` picks it up). WebKit is skipped there (its iframe runner never signals per-page completion — see TODO). **Playwright starts its own dev server** on **its own port (8799)** with the haltija overlay off — so it neither adopts nor kills the `bun start` you have on 8787.
+The test lanes are distinct: **`bun test`** is the fast happy-dom unit lane (hundreds of tests across ~40+ `*.test.ts` files; it recurses into `src/*/`); **`bun playwright test`** is the `tests/*.pw.ts` end-to-end lane, and **`tests/doc-tests.pw.ts` inside it runs the whole inline ` ```test ` doc tier** (including the inline-WASM guard) through Playwright — the doc-browser's background runner executes every page-with-tests in hidden iframes and resolves `window.__docTestResults`, which that spec awaits and asserts is failure-free. **This is the doc-test gate, and it runs in CI** (the e2e job's `playwright test --project=chromium` picks it up). WebKit is skipped there (its iframe runner never signals per-page completion — see TODO). **Playwright starts its own dev server** on **its own port (8799)** with the haltija overlay off — so it neither adopts nor kills the `bun start` you have on 8787.
 
 **`bun run test-browser`** is the *interactive* haltija lane: it drives a real haltija Electron over the same inline tests. It **reuses a running haltija if one is up — which navigates whatever window you have open** (a different project's session included), so prefer `tests/doc-tests.pw.ts` for a clean, isolated run and reach for `test-browser` only when you specifically want eyes on the real page. It is **not** the CI gate anymore; `doc-tests.pw.ts` is.
 
@@ -107,6 +107,8 @@ No semicolons, single quotes, 2-space indent, trailing commas (es5). Enforced by
 7. Reports gzipped bundle sizes
 8. Builds demo site → `docs/`
 9. Generates `llms.txt` (agent-discoverability index, shipped in the published package) via `bin/make-llms-txt.ts`
+
+Before any of that, `buildSite` runs a **dependency-audit gate** (`src/doc-system/site/audit-guard.ts`, exported from `tosijs-ui/site`): `bun audit` on the initial build, failing on any **high+** advisory not explicitly gated. It's **on by default**, fails **open** when the audit can't run (offline), and is **not** downgraded in CI. `bun run build` gates synchronously; `bun start` audits asynchronously after launch and **kills the dev server** on a finding; **watch rebuilds never audit** (no network call in the edit loop). Opt out with `audit: false` / `{ mode: 'off' }` in the site config, or `TOSIJS_AUDIT=off`. Time-box an accepted risk (never silence it) with `audit: { allow: [{ advisory, reason, expires }] }` — an expired/malformed gate stops suppressing and the build fails again. Fix findings with a **minimal** targeted `overrides` pin, not a broad `bun update --latest` (e.g. `overrides: { "flatted": ">=3.4.2" }`). Full reference + due-diligence checklist: `doc-site-system.md` → "Dependency audit gate". GitHub Dependabot (`.github/dependabot.yml`) covers advisories published later against an unchanged lockfile.
 
 The dev server watches:
 
@@ -623,7 +625,7 @@ For the consumer-facing mental model — element-creator pattern, value/change/a
 1. Update version in `package.json` (bump **before** building — `src/version.ts` is generated from it)
 2. (No need to start a dev server — every lane brings up its own now)
 3. Run **all three lanes**: `bun test` → `bun run test-browser` → `bun playwright test`. `bun tests` covers only two of them; a lane the gate skips rots silently.
-4. Build: `bun run build`
+4. Build: `bun run build` (this also runs the dependency-audit gate — a high+ advisory here fails the build; fix or time-box it before releasing, don't `TOSIJS_AUDIT=off` past it)
 5. Commit changes including `dist/` and `docs/`
 6. Tag release: `git tag v1.x.x`
 7. Push: `git push --tags` (the user publishes to npm)

@@ -284,9 +284,68 @@ build: `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (defaul
 | `port`               | `8787`   | dev-server port                                                                                                                                                                                                                                                                                                                                        |
 | `watchPaths`         | —        | extra dev-server watch dirs                                                                                                                                                                                                                                                                                                                            |
 | `haltijaDev`         | `false`  | give a coding agent eyes on your running dev page (see below); also `HALTIJA_DEV=1`                                                                                                                                                                                                                                                                    |
+| `openBrowser`        | `false`  | on `bun start`, open (or bring to front) this project's browser tab once the server is up — reused per project via the dev origin, so restarts don't pile up tabs. `true` = auto-detect; a string names the browser; `BROWSER=<name>`/`BROWSER=none` override. macOS reuse via AppleScript; other platforms open (no reuse). Skipped in CI / non-TTY (see below) |
 | `editableSources`    | `false`  | Enables the dev server's `/__docstore/source` read+write endpoints, so "edit page source" and a live example's "Save to source" write the actual file. **Off** by default (writing files is opt-in): editing still works read-only — the client falls back to the GitHub raw source — but saving hands back a download. Set `true` to author in place. (The endpoint always answers `/__docstore/source` with a real status; it never serves the SPA `index.html`, so a disabled/misconfigured server can't leak the rendered page as the "source".)                                                                                                                                                                                                                                                                                                       |
 | `memoryLimitMb`      | `4096`   | RSS ceiling for the dev server; past it, print growth-per-rebuild and exit (see below); also `DEV_MEMORY_LIMIT_MB`                                                                                                                                                                                                                                     |
 | `idleTimeoutHours`   | `8`      | exit after this long with no request and no rebuild; `0` disables (see below); also `DEV_IDLE_TIMEOUT_HOURS`                                                                                                                                                                                                                                           |
+| `audit`              | `true`   | dependency-audit gate — `bun audit` on the initial build; ungated high+ advisories fail the build. `true`/omitted = `{ mode: 'fail', level: 'high' }`; `false`/`{ mode: 'off' }` disables; also `TOSIJS_AUDIT=off\|warn\|fail`. Time-box exceptions via `{ allow: [{ advisory, reason, expires }] }` (see below)                                          |
+
+#### Dependency audit gate
+
+`bun audit` knows the registry advisory database; nothing in a normal build ever
+asks it, so a high-severity advisory in a transitive dep stays invisible until
+someone runs it by hand. The gate asks once, at the point a human is looking:
+
+- **When it runs.** The **initial** build only — `bun run build` (synchronously,
+  fails the build) and, at dev-server launch, **asynchronously** so the page isn't
+  held up by a registry round-trip (a high+ finding then prints and **kills the dev
+  server**, same precedent as the memory watchdog). **Watch rebuilds never audit** —
+  it would put a network call in your edit loop and break offline dev.
+- **What blocks.** Any advisory at or above `level` (default `high`, so `high` +
+  `critical`) that isn't gated. `moderate`/`low` are reported, never fatal.
+- **Fails open, not closed, when it can't check.** Offline, registry down, or a
+  `bun` too old → it warns and proceeds. It fails **closed** only on a real finding.
+- **Not downgraded in CI.** Unlike the machine-health preflight (a heuristic about
+  someone's local box), an advisory is deterministic and environment-independent, so
+  CI is exactly where you want it enforced.
+
+**Gating an accepted risk — with a deadline.** You can't always patch immediately.
+Instead of silencing a finding forever, gate it with a reason and an **expiry**:
+
+```typescript
+audit: {
+  allow: [
+    {
+      advisory: 'GHSA-25h7-pfq9-p65f', // GHSA id, the numeric id, or a package name
+      reason: 'no untrusted parse path reaches it; patch tracked in #123',
+      expires: '2026-08-15', // YYYY-MM-DD — after this the gate stops suppressing
+    },
+  ],
+}
+```
+
+On/after `expires` the gate stops working and the build fails again — the risk is
+forced back onto the table rather than living in an allowlist nobody re-reads. A
+gate missing a `reason` or a valid `expires` is **ignored** (fail-closed): "gated"
+means _explicitly and specifically_ gated. Stale gates (matching no current
+advisory) are reported so you delete them.
+
+**Due diligence when you do adopt a patch** (the gate prints this when it blocks):
+
+- Read the advisory. Confirm the patched version actually fixes it and is published
+  by the package's real maintainers — a fresh release is also how a hijacked package
+  ships.
+- Prefer the **minimal** fix: a targeted `overrides`/`resolutions` pin to the patched
+  version beats a broad `bun update --latest` that churns dozens of transitive deps,
+  each a new supply-chain surface. (This repo's own `flatted` advisory was fixed with
+  a one-line `overrides: { "flatted": ">=3.4.2" }`.)
+- Treat large churn in a "patch" as itself suspicious; review what moved.
+
+**Continuous drift is GitHub's job, not the gate's.** The gate catches advisories at
+build time; advisories published later against an unchanged lockfile are caught by
+GitHub Dependabot (alerts are automatic on public repos; add `.github/dependabot.yml`
+to also get fix PRs). The two are complementary: Dependabot _notifies_, the gate makes
+it _un-ignorable_.
 
 #### Not taking the machine down with you
 
@@ -367,6 +426,32 @@ false` to drop the burned-in caption). Local dev only; off by default.
 
 > The channel tracks haltija's **`@beta`** dist-tag, where the in-browser WebRTC
 > screen capture landed ahead of `latest`.
+
+#### `openBrowser` — one dev tab per project
+
+Set `openBrowser: true` and `bun start`, once the server is listening, opens the dev
+page in your browser — and on the **next** launch or restart it brings that **same
+tab** forward instead of stacking up a new one. This is create-react-app's "open the
+tab" trick, adapted:
+
+- **The tab's identity is the dev origin** — `https://localhost:<port>`. Because each
+  project runs its own dev port, that yields exactly **one tab per project**: restart
+  a project and its tab returns; start a sibling on another port and it gets its own;
+  two runs of the same project never spawn a second tab. (The origin is the key on
+  purpose — a name/hash marker in the URL would be dropped by the doc-browser SPA on
+  the first in-page navigation and couldn't identify the tab later. The origin
+  survives every navigation.)
+- **macOS** does the reuse via AppleScript, auto-detecting a **running** Chrome / Brave
+  / Edge / Chromium / Safari (so it never launches a browser you don't use). Driving
+  another app by AppleScript triggers a **one-time** "…wants to control <Browser>"
+  automation prompt — approve it once. Other platforms open via `open` / `xdg-open` /
+  `start` (a normal new tab, no reuse).
+- **Choosing the browser:** pass a string (`openBrowser: 'Google Chrome'`, `'safari'`,
+  `'brave'`, …), or set `BROWSER=<name>` at the shell (which wins). `BROWSER=none`
+  disables it for one run.
+- **When it's skipped:** off by default; in **CI**; when stdout isn't a **TTY**; and
+  on **watch rebuilds** (it only fires at launch). Best-effort throughout — a failure
+  degrades to a plain open or a no-op and never blocks or crashes the server.
 
 #### `llms.txt`
 
@@ -504,6 +589,8 @@ half is what `tosijs-ui/site` exports. Nothing here is imported from `bin/` any 
 | orchestrator (`buildSite`)                  | `site/orchestrator.ts`                                                   |
 | dev server (`devServer`)                    | `site/dev-server.ts`                                                     |
 | machine-health preflight                    | `site/preflight.ts`                                                      |
+| dependency audit gate                       | `site/audit-guard.ts`                                                    |
+| open dev browser tab (reuse per project)    | `site/open-browser.ts`                                                   |
 | doc extraction                              | `site/docs.ts`                                                           |
 | section docs + TOC blocks                   | `site/sections.ts`                                                       |
 | static page generator                       | `site/generate-site.ts`                                                  |

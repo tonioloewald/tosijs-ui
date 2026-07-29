@@ -8,6 +8,17 @@ export { defineSiteConfig } from './site-config'
 export type { SiteConfig, SiteHost, LibraryBuildContext } from './site-config'
 export { buildSite } from './orchestrator'
 export { devServer } from './dev-server'
+export { auditDependencies, reportAudit, resolveAuditMode } from './audit-guard'
+export type {
+  AuditConfig,
+  AuditGate,
+  AuditResult,
+  AuditSeverity,
+  AuditMode,
+  AuditAdvisory,
+} from './audit-guard'
+export { openDevBrowser, buildOpenPlan } from './open-browser'
+export type { OpenPlan, OpenPlanInput } from './open-browser'
 export { extractDocs, saveDocsJSON } from './docs'
 export type { Doc } from './docs'
 export { generateSite } from './generate-site'

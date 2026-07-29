@@ -6,6 +6,8 @@ browser code. See ./README is at ../doc-site-system.md and the repo docs.
 export { defineSiteConfig } from './site-config';
 export { buildSite } from './orchestrator';
 export { devServer } from './dev-server';
+export { auditDependencies, reportAudit, resolveAuditMode } from './audit-guard';
+export { openDevBrowser, buildOpenPlan } from './open-browser';
 export { extractDocs, saveDocsJSON } from './docs';
 export { generateSite } from './generate-site';
 export { buildEpub, DEFAULT_BOOK_CSS } from './epub';

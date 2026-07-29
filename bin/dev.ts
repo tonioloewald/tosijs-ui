@@ -31,7 +31,12 @@ const config = {
   },
 }
 
-const ok = await buildSite(config)
+// One-shot builds (`--build-only`, `--test`) run the dependency audit synchronously
+// so a high+ advisory fails the build. The interactive dev server (`bun start`)
+// skips it here and audits asynchronously after launch, so startup isn't blocked on
+// a registry round-trip. Watch rebuilds skip it too (see dev-server.ts).
+const interactive = !buildOnly && !testMode
+const ok = await buildSite(config, { skipAudit: interactive })
 if (buildOnly) process.exit(ok ? 0 : 1)
 
 await devServer(config, { test: testMode })

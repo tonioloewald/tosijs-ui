@@ -30,6 +30,7 @@ import { generateLlmsTxt } from './make-llms-txt'
 import { generateSite } from './generate-site'
 import { findOutputDirOverlap } from './output-guard'
 import { preflight } from './preflight'
+import { auditDependencies, reportAudit } from './audit-guard'
 import {
   tjsEditorExternal,
   tjsEditorLeakedAsExternal,
@@ -199,7 +200,10 @@ async function gzipSizeInChild(file: string): Promise<number> {
   }
 }
 
-export async function buildSite(config: SiteConfig): Promise<boolean> {
+export async function buildSite(
+  config: SiteConfig,
+  opts: { skipAudit?: boolean } = {}
+): Promise<boolean> {
   // Look at the machine before adding load to it. Runs on every build, including each
   // watch rebuild, because the danger is not present at launch and then absent — it
   // accumulates across a long session, in OTHER processes this build knows nothing
@@ -219,6 +223,16 @@ export async function buildSite(config: SiteConfig): Promise<boolean> {
     }))
   ) {
     return false
+  }
+
+  // Dependency-audit gate. Runs on the initial build only — the dev server audits
+  // asynchronously at launch, and `opts.skipAudit` keeps watch rebuilds off the
+  // network. Fails the build (before the destructive rm -rf) on an ungated high+
+  // advisory; fails open if the audit itself can't run. Never on watch rebuilds.
+  if (!opts.skipAudit) {
+    const audit = await auditDependencies(config.audit)
+    if (audit.mode !== 'off') reportAudit(audit, 'Build')
+    if (!audit.ok && audit.mode === 'fail') return false
   }
 
   const PROJECT_ROOT = './'

@@ -461,6 +461,11 @@ build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-m
 <td>give a coding agent eyes on your running dev page (see below); also <code>HALTIJA_DEV=1</code></td>
 </tr>
 <tr>
+<td><code>openBrowser</code></td>
+<td><code>false</code></td>
+<td>on <code>bun start</code>, open (or bring to front) this project&#39;s browser tab once the server is up — reused per project via the dev origin, so restarts don&#39;t pile up tabs. <code>true</code> = auto-detect; a string names the browser; <code>BROWSER=&lt;name&gt;</code>/<code>BROWSER=none</code> override. macOS reuse via AppleScript; other platforms open (no reuse). Skipped in CI / non-TTY (see below)</td>
+</tr>
+<tr>
 <td><code>editableSources</code></td>
 <td><code>false</code></td>
 <td>Enables the dev server&#39;s <code>/__docstore/source</code> read+write endpoints, so &quot;edit page source&quot; and a live example&#39;s &quot;Save to source&quot; write the actual file. <strong>Off</strong> by default (writing files is opt-in): editing still works read-only — the client falls back to the GitHub raw source — but saving hands back a download. Set <code>true</code> to author in place. (The endpoint always answers <code>/__docstore/source</code> with a real status; it never serves the SPA <code>index.html</code>, so a disabled/misconfigured server can&#39;t leak the rendered page as the &quot;source&quot;.)</td>
@@ -475,7 +480,63 @@ build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-m
 <td><code>8</code></td>
 <td>exit after this long with no request and no rebuild; <code>0</code> disables (see below); also <code>DEV_IDLE_TIMEOUT_HOURS</code></td>
 </tr>
+<tr>
+<td><code>audit</code></td>
+<td><code>true</code></td>
+<td>dependency-audit gate — <code>bun audit</code> on the initial build; ungated high+ advisories fail the build. <code>true</code>/omitted = <code>{ mode: &#39;fail&#39;, level: &#39;high&#39; }</code>; <code>false</code>/<code>{ mode: &#39;off&#39; }</code> disables; also <code>TOSIJS_AUDIT=off|warn|fail</code>. Time-box exceptions via <code>{ allow: [{ advisory, reason, expires }] }</code> (see below)</td>
+</tr>
 </tbody></table>
+<h4>Dependency audit gate</h4>
+<p><code>bun audit</code> knows the registry advisory database; nothing in a normal build ever
+asks it, so a high-severity advisory in a transitive dep stays invisible until
+someone runs it by hand. The gate asks once, at the point a human is looking:</p>
+<ul>
+<li><strong>When it runs.</strong> The <strong>initial</strong> build only — <code>bun run build</code> (synchronously,
+fails the build) and, at dev-server launch, <strong>asynchronously</strong> so the page isn&#39;t
+held up by a registry round-trip (a high+ finding then prints and <strong>kills the dev
+server</strong>, same precedent as the memory watchdog). <strong>Watch rebuilds never audit</strong> —
+it would put a network call in your edit loop and break offline dev.</li>
+<li><strong>What blocks.</strong> Any advisory at or above <code>level</code> (default <code>high</code>, so <code>high</code> +
+<code>critical</code>) that isn&#39;t gated. <code>moderate</code>/<code>low</code> are reported, never fatal.</li>
+<li><strong>Fails open, not closed, when it can&#39;t check.</strong> Offline, registry down, or a
+<code>bun</code> too old → it warns and proceeds. It fails <strong>closed</strong> only on a real finding.</li>
+<li><strong>Not downgraded in CI.</strong> Unlike the machine-health preflight (a heuristic about
+someone&#39;s local box), an advisory is deterministic and environment-independent, so
+CI is exactly where you want it enforced.</li>
+</ul>
+<p><strong>Gating an accepted risk — with a deadline.</strong> You can&#39;t always patch immediately.
+Instead of silencing a finding forever, gate it with a reason and an <strong>expiry</strong>:</p>
+<pre><code class="language-typescript">audit: {
+  allow: [
+    {
+      advisory: &#39;GHSA-25h7-pfq9-p65f&#39;, // GHSA id, the numeric id, or a package name
+      reason: &#39;no untrusted parse path reaches it; patch tracked in #123&#39;,
+      expires: &#39;2026-08-15&#39;, // YYYY-MM-DD — after this the gate stops suppressing
+    },
+  ],
+}
+</code></pre>
+<p>On/after <code>expires</code> the gate stops working and the build fails again — the risk is
+forced back onto the table rather than living in an allowlist nobody re-reads. A
+gate missing a <code>reason</code> or a valid <code>expires</code> is <strong>ignored</strong> (fail-closed): &quot;gated&quot;
+means <em>explicitly and specifically</em> gated. Stale gates (matching no current
+advisory) are reported so you delete them.</p>
+<p><strong>Due diligence when you do adopt a patch</strong> (the gate prints this when it blocks):</p>
+<ul>
+<li>Read the advisory. Confirm the patched version actually fixes it and is published
+by the package&#39;s real maintainers — a fresh release is also how a hijacked package
+ships.</li>
+<li>Prefer the <strong>minimal</strong> fix: a targeted <code>overrides</code>/<code>resolutions</code> pin to the patched
+version beats a broad <code>bun update --latest</code> that churns dozens of transitive deps,
+each a new supply-chain surface. (This repo&#39;s own <code>flatted</code> advisory was fixed with
+a one-line <code>overrides: { &quot;flatted&quot;: &quot;&gt;=3.4.2&quot; }</code>.)</li>
+<li>Treat large churn in a &quot;patch&quot; as itself suspicious; review what moved.</li>
+</ul>
+<p><strong>Continuous drift is GitHub&#39;s job, not the gate&#39;s.</strong> The gate catches advisories at
+build time; advisories published later against an unchanged lockfile are caught by
+GitHub Dependabot (alerts are automatic on public repos; add <code>.github/dependabot.yml</code>
+to also get fix PRs). The two are complementary: Dependabot <em>notifies</em>, the gate makes
+it <em>un-ignorable</em>.</p>
 <h4>Not taking the machine down with you</h4>
 <p>A dev server is a process that lives for <strong>days</strong>, rebuilding thousands of times.
 Three things follow from that, and the build system enforces all three — because a
@@ -551,6 +612,31 @@ agent&#39;s context (add <code>--format webp --scale 0.5</code> for a compact ca
 <p>The channel tracks haltija&#39;s <strong><code>@beta</code></strong> dist-tag, where the in-browser WebRTC
 screen capture landed ahead of <code>latest</code>.</p>
 </blockquote>
+<h4><code>openBrowser</code> — one dev tab per project</h4>
+<p>Set <code>openBrowser: true</code> and <code>bun start</code>, once the server is listening, opens the dev
+page in your browser — and on the <strong>next</strong> launch or restart it brings that <strong>same
+tab</strong> forward instead of stacking up a new one. This is create-react-app&#39;s &quot;open the
+tab&quot; trick, adapted:</p>
+<ul>
+<li><strong>The tab&#39;s identity is the dev origin</strong> — <code>https://localhost:&lt;port&gt;</code>. Because each
+project runs its own dev port, that yields exactly <strong>one tab per project</strong>: restart
+a project and its tab returns; start a sibling on another port and it gets its own;
+two runs of the same project never spawn a second tab. (The origin is the key on
+purpose — a name/hash marker in the URL would be dropped by the doc-browser SPA on
+the first in-page navigation and couldn&#39;t identify the tab later. The origin
+survives every navigation.)</li>
+<li><strong>macOS</strong> does the reuse via AppleScript, auto-detecting a <strong>running</strong> Chrome / Brave
+/ Edge / Chromium / Safari (so it never launches a browser you don&#39;t use). Driving
+another app by AppleScript triggers a <strong>one-time</strong> &quot;…wants to control <Browser>&quot;
+automation prompt — approve it once. Other platforms open via <code>open</code> / <code>xdg-open</code> /
+<code>start</code> (a normal new tab, no reuse).</li>
+<li><strong>Choosing the browser:</strong> pass a string (<code>openBrowser: &#39;Google Chrome&#39;</code>, <code>&#39;safari&#39;</code>,
+<code>&#39;brave&#39;</code>, …), or set <code>BROWSER=&lt;name&gt;</code> at the shell (which wins). <code>BROWSER=none</code>
+disables it for one run.</li>
+<li><strong>When it&#39;s skipped:</strong> off by default; in <strong>CI</strong>; when stdout isn&#39;t a <strong>TTY</strong>; and
+on <strong>watch rebuilds</strong> (it only fires at launch). Best-effort throughout — a failure
+degrades to a plain open or a no-op and never blocks or crashes the server.</li>
+</ul>
 <h4><code>llms.txt</code></h4>
 <p>The default index is built from your config — <code>name</code>, <code>description</code>, <code>baseUrl</code>
 (→ <code>Docs:</code> link), and <code>projectLinks.github</code>/<code>.npm</code> (→ <code>Source:</code>/<code>npm:</code> links;
@@ -721,6 +807,14 @@ half is what <code>tosijs-ui/site</code> exports. Nothing here is imported from 
 <tr>
 <td>machine-health preflight</td>
 <td><code>site/preflight.ts</code></td>
+</tr>
+<tr>
+<td>dependency audit gate</td>
+<td><code>site/audit-guard.ts</code></td>
+</tr>
+<tr>
+<td>open dev browser tab (reuse per project)</td>
+<td><code>site/open-browser.ts</code></td>
 </tr>
 <tr>
 <td>doc extraction</td>

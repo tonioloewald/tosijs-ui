@@ -1,0 +1,26 @@
+# Dependabot config. Alerts are already on automatically for this public repo;
+# this enables GitHub's native fix behavior so a new advisory against the
+# UNCHANGED lockfile is turned into a PR without waiting for someone to rebuild.
+#
+# This is the continuous-drift complement to the build-time audit gate
+# (src/doc-system/site/audit-guard.ts): Dependabot notifies + opens PRs; the gate
+# makes an unaddressed high+ advisory fail the build so it can't be ignored.
+#
+# Grouped + capped to keep the churn reviewable — a "patch" that moves dozens of
+# transitive deps is itself a supply-chain surface worth eyeing (see the gate's
+# due-diligence note).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    # Security fixes flow regardless of these; this bounds routine version bumps.
+    groups:
+      codemirror:
+        patterns:
+          - '@codemirror/*'
+          - '@lezer/*'
+      dev-dependencies:
+        dependency-type: development

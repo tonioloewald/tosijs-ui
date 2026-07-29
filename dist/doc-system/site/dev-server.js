@@ -13,6 +13,8 @@ import { watch } from 'chokidar';
 import { $, spawn } from 'bun';
 import { buildSite } from './orchestrator';
 import { preflight } from './preflight';
+import { auditDependencies, reportAudit } from './audit-guard';
+import { openDevBrowser } from './open-browser';
 const TEST_RESULTS_FILE = '.browser-tests.json';
 const DEFAULT_IDLE_HOURS = 8;
 /**
@@ -374,7 +376,7 @@ export async function devServer(config, opts = {}) {
                 console.error('');
             }
             else if (results.passed > 0) {
-                console.log(`\n✓ Browser tests: ${results.passed} passed\n`);
+                console.log(`\n✅ Browser tests: ${results.passed} passed\n`);
             }
             if (testReportResolve && (results.passed > 0 || results.failed > 0)) {
                 testReportResolve(results);
@@ -479,7 +481,10 @@ export async function devServer(config, opts = {}) {
         // (iife.js, etc.) is deleted on the first rebuild and, without opts.build,
         // never regenerated — leaving the page's /iife.js to 404 into the SPA
         // fallback (it "loads as html"). Serialize builds and coalesce bursts.
-        const runBuild = opts.build ?? (() => buildSite(config));
+        // Watch rebuilds skip the dependency audit: it hits the registry over the
+        // network, and re-running it on every hot-reload save would add latency to the
+        // edit loop and break offline dev. The audit ran once at launch (below).
+        const runBuild = opts.build ?? (() => buildSite(config, { skipAudit: true }));
         // Rebuild-storm detector.
         //
         // The other way this process eats the machine is not a leak but a LOOP: if the
@@ -624,6 +629,41 @@ export async function devServer(config, opts = {}) {
         },
     });
     console.log(`Listening on https://localhost:${PORT}`);
+    // ── open (or bring to front) this project's browser tab ─────────────────────
+    //
+    // create-react-app's "open the tab" trick: reuse the project's existing tab
+    // instead of spawning a new one on every launch/restart. Interactive only, off
+    // by default (config.openBrowser), and self-skips in CI / non-TTY. Best-effort,
+    // fire-and-forget — never blocks startup, never throws. See open-browser.ts.
+    if (!testMode) {
+        void openDevBrowser({
+            url: `https://localhost:${PORT}/`,
+            setting: config.openBrowser,
+            name: config.name,
+        });
+    }
+    // ── dependency audit (async, off the serve path) ────────────────────────────
+    //
+    // Don't make a human wait on a registry round-trip before the page comes up. Fire
+    // `bun audit` in the background (it's a child process, so nothing leaks into this
+    // days-long server) and act on the result a beat later. On an ungated high+
+    // finding at `mode: 'fail'` we print the report and EXIT — same precedent as the
+    // health tick below: by now we own a running server, and stopping it is the whole
+    // point of the guard, not the forbidden "library kills a caller mid-call". `warn`
+    // says it loudly and keeps serving; a failed-to-run audit is silent-safe.
+    // Interactive only — `--test` already gated synchronously in buildSite().
+    if (!testMode) {
+        void auditDependencies(config.audit).then((audit) => {
+            if (audit.mode === 'off' || !audit.ran)
+                return;
+            reportAudit(audit, 'Dev server');
+            if (!audit.ok && audit.mode === 'fail') {
+                console.error('\n🛑 Dev server: exiting on an unaddressed dependency advisory ' +
+                    '(above). Fix or gate it, set `audit: "warn"`, or TOSIJS_AUDIT=off.\n');
+                process.exit(1);
+            }
+        });
+    }
     // ── health tick ───────────────────────────────────────────────────────────
     //
     // Everything else in this file is edge-triggered: the RSS check fires after a

@@ -15,6 +15,7 @@ import type { ProjectLinks, LinkItem } from '../../doc-browser'
 import type { DocSystemTheme } from '../doc-system-styles'
 import type { Doc } from './docs'
 import type { PreflightMode } from './preflight'
+import type { AuditConfig } from './audit-guard'
 import type { BookManifest } from '../book-manifest'
 
 export type SiteHost = 'github-pages' | 'firebase' | 'static'
@@ -288,6 +289,44 @@ export interface SiteConfig {
    * stale dev server, and nothing to kill.
    */
   preflight?: PreflightMode | false
+  /**
+   * Dependency-audit gate. Runs `bun audit` on the INITIAL build (`bun run build`
+   * and, asynchronously, at dev-server launch — never on watch rebuilds) and fails
+   * the build on any advisory at or above `level` (default 'high') that is not
+   * explicitly gated with a reason AND a future expiry date.
+   *
+   * On by default (`true` / omitted → `mode: 'fail'`). Opt out with `false`,
+   * `{ mode: 'off' }`, or the `TOSIJS_AUDIT=off|warn|fail` env var. Unlike
+   * `preflight`, it is NOT downgraded in CI — a dependency advisory is deterministic
+   * and environment-independent, so CI is exactly where you want it enforced. It
+   * fails OPEN when the audit itself can't run (offline, registry down).
+   *
+   * Time-box accepted risks instead of silencing them:
+   *   audit: { allow: [{ advisory: 'GHSA-…', reason: '…', expires: '2026-08-15' }] }
+   * An expired or malformed gate stops suppressing, so the build fails again and the
+   * risk is re-evaluated. See `doc-site-system.md` → "Dependency audit gate".
+   */
+  audit?: boolean | AuditConfig
+  /**
+   * Open the dev page in a browser once the server is listening, REUSING the
+   * project's tab instead of piling up a new one on every launch/restart (the
+   * create-react-app "open a specific tab" trick). On macOS the server drives the
+   * browser by AppleScript: it finds a tab already at this project's dev origin
+   * (`https://localhost:<port>`) and brings it to front, else opens a new one. The
+   * origin is the per-project "frame id" — because each project runs its own dev
+   * port, you get exactly one tab per project (and it survives in-page navigation,
+   * which a URL name/hash marker would not).
+   *
+   * Off by default. `true` = on (auto-detect a running Chrome/Brave/Edge/Chromium/
+   * Safari, else hand off to the default browser). A string names the browser
+   * (`'Google Chrome'`, `'safari'`, `'brave'`, …). The `BROWSER` env var overrides
+   * (`BROWSER=none` disables for one run). Skipped in CI and when stdout isn't a
+   * TTY. Reuse is macOS-only; other platforms open via `xdg-open`/`start` (no reuse).
+   *
+   * macOS note: driving another app by AppleScript triggers a one-time automation
+   * permission prompt ("<runtime> wants to control <Browser>") — approve it once.
+   */
+  openBrowser?: boolean | string
   /**
    * Enable the dev-server source read/write endpoints (`/__docstore/source`) that
    * back in-browser "edit page source". Local dev only — the dev server runs on

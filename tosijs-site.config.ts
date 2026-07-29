@@ -49,6 +49,12 @@ export default defineSiteConfig({
   // "edit page source" (local dev only).
   editableSources: true,
 
+  // On `bun start`, open (or bring to front) this project's browser tab once the
+  // server is up — reusing the tab keyed on the dev origin, so restarts don't pile
+  // up tabs. macOS reuse is via AppleScript (one-time automation prompt). Override
+  // the browser with BROWSER=<name>, or BROWSER=none to disable for a run.
+  openBrowser: true,
+
   // Inject the haltija dev-channel so a coding agent (Claude) can drive the live
   // dev page via `hj`. Dev-only, serve-time inject, never bundled / never in the
   // built output. Spins up a server-only HTTPS channel on 8701 (mkcert-trusted).
