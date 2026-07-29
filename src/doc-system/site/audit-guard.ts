@@ -445,15 +445,94 @@ const DUE_DILIGENCE = [
   '  • If you can’t patch now, GATE it (reason + near-term expiry) — don’t silence it.',
 ].join('\n')
 
-function line(adv: AuditAdvisory): string {
+/*
+`bun audit` reports one entry per (package, vulnerable-range) pair, so ONE advisory
+against a package that appears at several versions in the tree arrives as several
+entries. Measured on a real tree: 16 entries were 12 distinct advisories across 6
+packages — minimatch alone printed 6 lines for 3 advisories. Reporting the raw
+count over-states the workload by a third and buries the findings that matter, so
+group by (package, advisory) for display and list the affected ranges together.
+
+Grouping is presentation-only: `result.blocking` stays the flat list, because it is
+what `ok` is computed from and what a caller may want to inspect.
+*/
+export interface GroupedAdvisory {
+  advisory: AuditAdvisory
+  /** every vulnerable range this advisory matched for this package */
+  ranges: string[]
+}
+
+export function groupAdvisories(advisories: AuditAdvisory[]): GroupedAdvisory[] {
+  const groups = new Map<string, GroupedAdvisory>()
+  for (const adv of advisories) {
+    // Same package AND same advisory → one entry. Different packages stay
+    // separate even under a shared advisory id (they're genuinely different fixes).
+    const key = `${adv.package}::${adv.ghsa ?? adv.id}`
+    const existing = groups.get(key)
+    if (existing) {
+      if (adv.vulnerableVersions && !existing.ranges.includes(adv.vulnerableVersions)) {
+        existing.ranges.push(adv.vulnerableVersions)
+      }
+    } else {
+      groups.set(key, {
+        advisory: adv,
+        ranges: adv.vulnerableVersions ? [adv.vulnerableVersions] : [],
+      })
+    }
+  }
+  return Array.from(groups.values())
+}
+
+/*
+Order by what a reader must act on FIRST. Severity descending, then by nature —
+`compromise` and `unknown` ahead of `dos`, because "can execute code" outranks "can
+be made slow". On the real tree this was not cosmetic: the ONE critical (a happy-dom
+VM-context-escape → RCE) printed sixth, wedged between ReDoS entries, purely because
+`bun audit` emits in package order.
+*/
+const NATURE_RANK: Record<RiskNature, number> = {
+  compromise: 0,
+  unknown: 1,
+  dos: 2,
+}
+
+function bySeverityThenNature(a: AuditAdvisory, b: AuditAdvisory): number {
+  const sev = SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]
+  if (sev !== 0) return sev
+  const nature =
+    NATURE_RANK[a.risk?.nature ?? 'unknown'] -
+    NATURE_RANK[b.risk?.nature ?? 'unknown']
+  if (nature !== 0) return nature
+  return a.package.localeCompare(b.package)
+}
+
+function line(group: GroupedAdvisory): string {
+  const adv = group.advisory
   // The risk label is triage sugar, not a verdict — this finding blocks either way.
   const risk = adv.risk ? `  [${adv.risk.label}]` : ''
   const basis = adv.risk ? `\n            ${adv.risk.basis}` : ''
+  const ranges = group.ranges.length
+    ? `\n            affects ${group.ranges.join(', ')}`
+    : ''
   return (
-    `   ${adv.severity.toUpperCase().padEnd(8)} ${adv.package}` +
-    `${adv.vulnerableVersions ? ` (${adv.vulnerableVersions})` : ''}${risk}\n` +
-    `            ${adv.title}${basis}\n` +
+    `   ${adv.severity.toUpperCase().padEnd(8)} ${adv.package}${risk}\n` +
+    `            ${adv.title}${basis}${ranges}\n` +
     `            ${adv.ghsa ?? adv.id} — ${adv.url}`
+  )
+}
+
+/*
+Below-threshold findings used to be collected and never shown, which made them
+invisible: a moderate today is a high the day someone re-scores it, and you want to
+have seen it coming. They get ONE line each — severity, package, id, truncated title
+— so the whole tail is scannable without competing with what actually blocks.
+*/
+function compactLine(group: GroupedAdvisory): string {
+  const adv = group.advisory
+  const title = adv.title.length > 68 ? adv.title.slice(0, 67) + '…' : adv.title
+  return (
+    `   ${adv.severity.padEnd(8)} ${adv.package.padEnd(22)} ` +
+    `${(adv.ghsa ?? String(adv.id)).padEnd(22)} ${title}`
   )
 }
 
@@ -494,6 +573,50 @@ export function reportAudit(result: AuditResult, label = 'Build'): void {
     )
   }
 
+  // Everything below the blocking threshold, one line each, severity-sorted. These
+  // used to be collected and never printed — invisible until the day one is
+  // re-scored upward. Shown whether or not the build is failing.
+  if (result.belowThreshold.length) {
+    const groups = groupAdvisories(result.belowThreshold).sort((a, b) =>
+      bySeverityThenNature(a.advisory, b.advisory)
+    )
+    console.warn(
+      `\nℹ️  ${label}: ${groups.length} advisory(ies) below the ${result.level} ` +
+        `threshold — not blocking:\n` +
+        groups.map(compactLine).join('\n')
+    )
+  }
+
+  /*
+  Advisory COUNT PER PACKAGE, across every severity — the code-smell signal.
+
+  A single moderate advisory is noise; a dependency that keeps generating them is
+  telling you something the per-finding view cannot. Deciding to drop a library
+  with a long tail of quasi-flaky advisories is a legitimate engineering call, and
+  it needs the aggregate, which is exactly what a threshold-filtered report hides.
+  Only printed when something actually repeats, so a healthy tree stays silent.
+  */
+  const perPackage = new Map<string, number>()
+  for (const adv of [...result.blocking, ...result.belowThreshold]) {
+    const key = `${adv.package}::${adv.ghsa ?? adv.id}`
+    if (!perPackage.has(key)) perPackage.set(key, 0)
+  }
+  const tally = new Map<string, number>()
+  for (const key of perPackage.keys()) {
+    const pkg = key.split('::')[0]
+    tally.set(pkg, (tally.get(pkg) ?? 0) + 1)
+  }
+  const repeat = Array.from(tally.entries())
+    .filter(([, n]) => n > 1)
+    .sort((a, b) => b[1] - a[1])
+  if (repeat.length) {
+    console.warn(
+      `\n📊 ${label}: advisories per package — a package that keeps producing them ` +
+        `may be worth replacing, not just patching:\n` +
+        repeat.map(([pkg, n]) => `   ${String(n).padStart(3)}  ${pkg}`).join('\n')
+    )
+  }
+
   if (result.ok) {
     if (result.blocking.length === 0 && result.ran) {
       // Quiet success line so the build log shows the gate ran.
@@ -519,10 +642,22 @@ export function reportAudit(result: AuditResult, label = 'Build'): void {
 
   const verb = result.mode === 'warn' ? 'proceeding anyway' : 'failing the build'
   const emoji = result.mode === 'warn' ? '⚠️' : '🛑'
+  // Group + sort so the count is the real workload and the worst thing is first.
+  const groups = groupAdvisories(result.blocking).sort((a, b) =>
+    bySeverityThenNature(a.advisory, b.advisory)
+  )
+  const packages = new Set(result.blocking.map((a) => a.package)).size
+  // Only mention the raw finding count when grouping actually collapsed something,
+  // so the usual case stays quiet.
+  const spread =
+    groups.length === result.blocking.length
+      ? `in ${packages} package${packages === 1 ? '' : 's'}`
+      : `in ${packages} package${packages === 1 ? '' : 's'}, ` +
+        `from ${result.blocking.length} findings`
   console.error(
-    `\n${emoji}  ${label}: ${result.blocking.length} unaddressed ` +
-      `${result.level}+ dependency advisory(ies) — ${verb}.\n\n` +
-      result.blocking.map(line).join('\n\n') +
+    `\n${emoji}  ${label}: ${groups.length} unaddressed ` +
+      `${result.level}+ dependency advisory(ies) ${spread} — ${verb}.\n\n` +
+      groups.map(line).join('\n\n') +
       expiredNote +
       invalidNote +
       `\n\n${DUE_DILIGENCE}\n\n` +

@@ -328,6 +328,26 @@ advisory's CVSS vector (3.x `C/I/A` and 4.0 `VC/VI/VA` both understood) and its 
 | `DoS?+ESCALATABLE` | scored availability-only, but an escalatable CWE (e.g. prototype pollution) means the vector may understate it |
 | `UNCLASSIFIED`     | no or unparseable vector — **treat as worst case**          |
 
+**The report is grouped, sorted, and complete.** `bun audit` emits one entry per
+(package, vulnerable-range) pair, so a single advisory against a package present at
+several versions arrives several times — on a real tree, **16 entries were 12
+advisories across 6 packages**, and the lone `critical` (a VM-context escape leading
+to RCE) printed *sixth*, purely because the raw output is in package order. So the
+gate:
+
+- **groups by advisory**, listing the affected ranges together (`affects <3.1.3,
+  >=9.0.0 <9.0.6`), and reports the honest count (`12 … in 6 packages, from 16
+  findings`) rather than over-stating the workload;
+- **sorts worst-first** — severity descending, then by nature, so `LEAK/ALTER` and
+  `UNCLASSIFIED` come before `DoS-only` and the thing you must read is line one;
+- **lists sub-threshold advisories compactly** (one line each, severity-sorted).
+  These are never fatal, but they used to be invisible — and a `moderate` today is a
+  `high` the day someone re-scores it;
+- **tallies advisories per package** whenever any package produces more than one.
+  A single moderate is noise; a dependency that keeps generating them is a **code
+  smell**, and dropping a library with a long tail of quasi-flaky advisories is a
+  legitimate call that needs the aggregate the per-finding view hides.
+
 This is **annotation, not policy**: it never changes whether a finding blocks, it
 just lets you triage in seconds instead of opening four browser tabs. Classification
 deliberately fails **closed**, because it has to — measured against a real

@@ -539,6 +539,28 @@ advisory&#39;s CVSS vector (3.x <code>C/I/A</code> and 4.0 <code>VC/VI/VA</code>
 <td>no or unparseable vector — <strong>treat as worst case</strong></td>
 </tr>
 </tbody></table>
+<p><strong>The report is grouped, sorted, and complete.</strong> <code>bun audit</code> emits one entry per
+(package, vulnerable-range) pair, so a single advisory against a package present at
+several versions arrives several times — on a real tree, <strong>16 entries were 12
+advisories across 6 packages</strong>, and the lone <code>critical</code> (a VM-context escape leading
+to RCE) printed <em>sixth</em>, purely because the raw output is in package order. So the
+gate:</p>
+<ul>
+<li><strong>groups by advisory</strong>, listing the affected ranges together (`affects &lt;3.1.3,<blockquote>
+<p>=9.0.0 &lt;9.0.6<code>), and reports the honest count (</code>12 … in 6 packages, from 16
+findings`) rather than over-stating the workload;</p>
+</blockquote>
+</li>
+<li><strong>sorts worst-first</strong> — severity descending, then by nature, so <code>LEAK/ALTER</code> and
+<code>UNCLASSIFIED</code> come before <code>DoS-only</code> and the thing you must read is line one;</li>
+<li><strong>lists sub-threshold advisories compactly</strong> (one line each, severity-sorted).
+These are never fatal, but they used to be invisible — and a <code>moderate</code> today is a
+<code>high</code> the day someone re-scores it;</li>
+<li><strong>tallies advisories per package</strong> whenever any package produces more than one.
+A single moderate is noise; a dependency that keeps generating them is a <strong>code
+smell</strong>, and dropping a library with a long tail of quasi-flaky advisories is a
+legitimate call that needs the aggregate the per-finding view hides.</li>
+</ul>
 <p>This is <strong>annotation, not policy</strong>: it never changes whether a finding blocks, it
 just lets you triage in seconds instead of opening four browser tabs. Classification
 deliberately fails <strong>closed</strong>, because it has to — measured against a real

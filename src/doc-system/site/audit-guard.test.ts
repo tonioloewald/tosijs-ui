@@ -2,6 +2,7 @@ import { test, expect } from 'bun:test'
 import {
   auditDependencies,
   classifyRisk,
+  groupAdvisories,
   parseAuditJson,
   resolveAuditMode,
   type AuditRunner,
@@ -324,4 +325,75 @@ test('classification rides along on parsed advisories but never gates them', asy
   })
   expect(result.ok).toBe(false)
   expect(result.blocking).toHaveLength(1)
+})
+
+// ── reporting: grouping + ordering ────────────────────────────────────────────
+//
+// `bun audit` emits one entry per (package, vulnerable-range), so one advisory
+// against a package present at several versions arrives several times. Measured on
+// a real tree: 16 entries were 12 advisories across 6 packages.
+
+const dupJson = JSON.stringify({
+  minimatch: [
+    {
+      id: 1,
+      url: 'https://github.com/advisories/GHSA-3ppc-4f35-3m26',
+      title: 'minimatch ReDoS',
+      severity: 'high',
+      vulnerable_versions: '<3.1.3',
+    },
+    {
+      id: 1,
+      url: 'https://github.com/advisories/GHSA-3ppc-4f35-3m26',
+      title: 'minimatch ReDoS',
+      severity: 'high',
+      vulnerable_versions: '>=9.0.0 <9.0.6',
+    },
+  ],
+})
+
+test('groupAdvisories collapses one advisory across several ranges', () => {
+  const groups = groupAdvisories(parseAuditJson(dupJson)!)
+  expect(groups).toHaveLength(1)
+  expect(groups[0].ranges).toEqual(['<3.1.3', '>=9.0.0 <9.0.6'])
+})
+
+test('groupAdvisories keeps different packages separate under one advisory id', () => {
+  const shared = JSON.stringify({
+    'pkg-a': [
+      { id: 7, url: 'https://x/GHSA-aaaa-bbbb-cccc', title: 't', severity: 'high' },
+    ],
+    'pkg-b': [
+      { id: 7, url: 'https://x/GHSA-aaaa-bbbb-cccc', title: 't', severity: 'high' },
+    ],
+  })
+  expect(groupAdvisories(parseAuditJson(shared)!)).toHaveLength(2)
+})
+
+test('grouping is presentation-only — blocking stays the flat list', async () => {
+  const r = await auditDependencies(true, { now: NOW, runAudit: runner(dupJson) })
+  expect(r.blocking).toHaveLength(2) // the raw findings
+  expect(groupAdvisories(r.blocking)).toHaveLength(1) // what gets printed
+  expect(r.ok).toBe(false)
+})
+
+test('below-threshold findings are still collected when the build blocks', async () => {
+  const mixed = JSON.stringify({
+    bad: [
+      { id: 1, url: 'https://x/GHSA-1111-1111-1111', title: 'h', severity: 'high' },
+    ],
+    meh: [
+      {
+        id: 2,
+        url: 'https://x/GHSA-2222-2222-2222',
+        title: 'm',
+        severity: 'moderate',
+      },
+    ],
+  })
+  const r = await auditDependencies(true, { now: NOW, runAudit: runner(mixed) })
+  expect(r.blocking).toHaveLength(1)
+  // These used to be collected and never surfaced; reportAudit now prints them.
+  expect(r.belowThreshold).toHaveLength(1)
+  expect(r.belowThreshold[0].severity).toBe('moderate')
 })

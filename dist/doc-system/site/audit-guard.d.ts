@@ -106,6 +106,12 @@ export declare function auditDependencies(config: boolean | AuditConfig | undefi
     now?: Date;
     runAudit?: AuditRunner;
 }): Promise<AuditResult>;
+export interface GroupedAdvisory {
+    advisory: AuditAdvisory;
+    /** every vulnerable range this advisory matched for this package */
+    ranges: string[];
+}
+export declare function groupAdvisories(advisories: AuditAdvisory[]): GroupedAdvisory[];
 /**
  * Print the verdict. Blocking findings first (why the build is failing), then
  * active gates, expired/invalid gates, stale gates, and — when blocking — the
