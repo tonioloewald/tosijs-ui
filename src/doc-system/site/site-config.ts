@@ -49,6 +49,13 @@ export interface SiteConfig {
   // ── Branding & chrome ─────────────────────────────────────────────────────
   /** logo + view-source links (createDocBrowser projectLinks) */
   projectLinks?: ProjectLinks
+  /**
+   * Brand mark shown left of the site title in the header. One of: the name of a
+   * known icon (from `tosijs-ui`'s `icons`, e.g. `'tosiUi'`), an image URL / path
+   * / `data:` URI, or a raw inline `<svg …>…</svg>` string. Omit to fall back to
+   * the tosijs-ui logo when `projectLinks.tosijs` is set, or to no mark otherwise.
+   */
+  logo?: string
   /** header-bar icon links */
   navbarLinks?: LinkItem[]
   /** base theme colors — most of the palette is derived from `accent` */

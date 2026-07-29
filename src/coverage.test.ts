@@ -7,6 +7,61 @@ describe('doc-browser', () => {
     const { createDocBrowser } = await import('./doc-browser')
     expect(typeof createDocBrowser).toBe('function')
   })
+
+  const makeDocs = () => [
+    {
+      name: 'Home',
+      title: 'Home',
+      filename: 'README.md',
+      path: 'README.md',
+      text: '# Home\n',
+    },
+  ]
+
+  test('logo: icon name renders an <svg> brand mark', async () => {
+    const { createDocBrowser } = await import('./doc-browser')
+    const el = createDocBrowser({
+      docs: makeDocs() as any,
+      projectName: 'Demo',
+      routing: 'memory',
+      logo: 'bookOpen',
+    })
+    const brand = el.querySelector('header a')
+    expect(brand?.querySelector('svg')).toBeTruthy()
+    expect(brand?.querySelector('img')).toBeNull()
+  })
+
+  test('logo: image URL renders an <img> brand mark', async () => {
+    const { createDocBrowser } = await import('./doc-browser')
+    const el = createDocBrowser({
+      docs: makeDocs() as any,
+      projectName: 'Demo',
+      routing: 'memory',
+      logo: '/brand.png',
+    })
+    const img = el.querySelector('header a img') as HTMLImageElement | null
+    expect(img).toBeTruthy()
+    expect(img?.getAttribute('src')).toBe('/brand.png')
+  })
+
+  test('logo: falls back to tosiUi only when projectLinks.tosijs is set', async () => {
+    const { createDocBrowser } = await import('./doc-browser')
+    const withTosi = createDocBrowser({
+      docs: makeDocs() as any,
+      projectName: 'Demo',
+      routing: 'memory',
+      projectLinks: { tosijs: 'https://tosijs.net' },
+    })
+    expect(withTosi.querySelector('header a svg')).toBeTruthy()
+
+    const bare = createDocBrowser({
+      docs: makeDocs() as any,
+      projectName: 'Demo',
+      routing: 'memory',
+    })
+    expect(bare.querySelector('header a svg')).toBeNull()
+    expect(bare.querySelector('header a img')).toBeNull()
+  })
 })
 
 describe('gamepad', () => {

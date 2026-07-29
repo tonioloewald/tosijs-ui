@@ -163,7 +163,7 @@ import { tosiLocalized } from './localize';
 import { popMenu } from './menu';
 import { codeEditor } from './code-editor';
 import { tosiDiff } from './diff';
-const { div, span, a, header, button, template, input, h2, details, summary, ul, li, } = elements;
+const { div, span, a, header, button, template, input, h2, img, details, summary, ul, li, } = elements;
 // Test colors
 const testColor = {
     pass: varDefault.testColorPass('#0a0'),
@@ -254,11 +254,58 @@ const testIndicatorStyleSpec = {
         borderRadius: vars.roundedRadius,
     },
 };
+// The brand mark shown left of the site title. `logo` (from config) may name a
+// known icon, be an inline `<svg>` string, or be an image URL; when absent we
+// keep the legacy behavior — the tosijs-ui logo iff this is a tosijs project,
+// else nothing. Sized to match the header height so hydration doesn't reflow.
+const LOGO_SIZE = 40;
+const LOGO_GAP = 10;
+// `icons` is a Proxy that returns a factory for ANY string (unknown names get a
+// placeholder glyph), so we can't ask it whether a name is real — we route by the
+// shape of the string instead: an inline `<svg>` renders as-is, a URL/path/data:
+// URI renders as an <img>, and anything else is treated as an icon(-composition)
+// name.
+function looksLikeImageUrl(s) {
+    return (/^(https?:)?\/\//.test(s) ||
+        s.startsWith('data:') ||
+        s.startsWith('/') ||
+        s.startsWith('./') ||
+        s.startsWith('../') ||
+        /\.(png|jpe?g|gif|webp|avif|svg|ico)(\?.*)?$/i.test(s));
+}
+function logoMark(logo, projectLinks) {
+    if (logo) {
+        if (logo.trimStart().startsWith('<')) {
+            const holder = span({
+                style: {
+                    display: 'inline-flex',
+                    height: `${LOGO_SIZE}px`,
+                    marginRight: `${LOGO_GAP}px`,
+                },
+            });
+            holder.innerHTML = logo;
+            return holder;
+        }
+        if (looksLikeImageUrl(logo)) {
+            return img({
+                src: logo,
+                alt: '',
+                style: { height: `${LOGO_SIZE}px`, marginRight: `${LOGO_GAP}px` },
+            });
+        }
+        return icons[logo]({
+            style: { _xinIconSize: LOGO_SIZE, marginRight: LOGO_GAP },
+        });
+    }
+    return projectLinks.tosijs
+        ? icons.tosiUi({ style: { _xinIconSize: LOGO_SIZE, marginRight: LOGO_GAP } })
+        : span();
+}
 // Monotonic per-page counter so each createDocBrowser() call gets a distinct
 // tosi() registry key (see stateKey below) and two browsers can't share state.
 let docBrowserSeq = 0;
 export function createDocBrowser(options) {
-    const { docs, context = {}, projectName = '', projectLinks = {}, navSize = 200, minSize = 600, routing = 'query', initialRoute, onRouteChange, navbarLinks, contentElement, } = options;
+    const { docs, context = {}, projectName = '', projectLinks = {}, logo, navSize = 200, minSize = 600, routing = 'query', initialRoute, onRouteChange, navbarLinks, contentElement, } = options;
     // Memory routing is fully self-contained: it never reads or writes
     // window.history/location, so an embedded or nested browser can't hijack the
     // host page's URL (or recurse into it).
@@ -522,11 +569,7 @@ export function createDocBrowser(options) {
                 alignItems: 'center',
                 borderBottom: 'none',
             },
-        }, projectLinks.tosijs
-            ? icons.tosiUi({
-                style: { _xinIconSize: 40, marginRight: 10 },
-            })
-            : span(), h2(projectName)));
+        }, logoMark(logo, projectLinks), h2(projectName)));
     }
     headerContent.push(span({ class: 'elastic' }));
     // A header link renders as an icon (if `icon` names a known icon) or its label.

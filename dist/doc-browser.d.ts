@@ -61,6 +61,15 @@ export interface DocBrowserOptions {
     context?: Record<string, any>;
     projectName?: string;
     projectLinks?: ProjectLinks;
+    /**
+     * The brand mark shown left of the site title in the header. One of:
+     * - the name of a known icon (from `icons`), e.g. `'tosiUi'`
+     * - an image URL / path / data: URI (rendered as an `<img>`)
+     * - a raw inline `<svg …>…</svg>` string
+     * Omit to fall back to the tosijs-ui logo when `projectLinks.tosijs` is set,
+     * or to no mark at all otherwise.
+     */
+    logo?: string;
     navSize?: number;
     minSize?: number;
     routing?: DocRoutingMode;

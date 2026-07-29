@@ -251,6 +251,7 @@ export async function generateSite(config) {
     const configAttr = escapeAttr(JSON.stringify({
         projectName: config.projectName,
         projectLinks: config.projectLinks,
+        logo: config.logo,
     }));
     // The theme stylesheet (config.stylesUrl) is written separately by
     // ./generate-css.ts; pages here just <link> to it.

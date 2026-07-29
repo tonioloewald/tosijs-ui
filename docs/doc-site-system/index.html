@@ -269,7 +269,12 @@ for the authoritative typed definition.</p>
 <tbody><tr>
 <td><code>projectLinks</code></td>
 <td>—</td>
-<td>logo + view-source links</td>
+<td>view-source links; <code>tosijs</code> key also gates the default logo</td>
+</tr>
+<tr>
+<td><code>logo</code></td>
+<td>—</td>
+<td>brand mark left of the title: icon name, image URL, or inline <code>&lt;svg&gt;</code></td>
 </tr>
 <tr>
 <td><code>navbarLinks</code></td>
@@ -287,6 +292,12 @@ for the authoritative typed definition.</p>
 <td>TSV table for the language picker</td>
 </tr>
 </tbody></table>
+<p>The header <strong>brand mark</strong> (left of the site title) resolves in this order: an
+explicit <code>logo</code> — the name of an icon (from <code>tosijs-ui</code>&#39;s <code>icons</code>, e.g.
+<code>&#39;tosiUi&#39;</code>), an image URL / <code>data:</code> URI, or a raw inline <code>&lt;svg&gt;…&lt;/svg&gt;</code> string —
+otherwise the tosijs-ui logo when <code>projectLinks.tosijs</code> is set, otherwise no mark.
+The same <code>logo</code> is accepted by <code>createDocBrowser({ logo })</code> and by an embedded
+<code>&lt;tosi-doc-system config=&#39;{&quot;logo&quot;:&quot;…&quot;}&#39;&gt;</code>.</p>
 <h3>Doc sources</h3>
 <table>
 <thead>

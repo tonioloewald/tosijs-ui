@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.4
+
+- **Configurable header logo.** A new `logo` option lets a doc site set the brand mark shown
+  left of the site title, instead of always inheriting the tosijs-ui logo. Accepts the name of a
+  known icon (from `tosijs-ui`'s `icons`, e.g. `'tosiUi'`), an image URL / path / `data:` URI
+  (rendered as an `<img>`), or a raw inline `<svg>…</svg>` string. Threaded through
+  `SiteConfig.logo` (`tosijs-ui/site`), `createDocBrowser({ logo })`, and an embedded
+  `<tosi-doc-system config='{"logo":"…"}'>`. Omit it to keep the prior behavior: the tosijs-ui
+  logo when `projectLinks.tosijs` is set, otherwise no mark. Previously the header logo was
+  hard-wired to the tosijs-ui mark — the one branding element `SiteConfig` couldn't override.
+
 ## 1.7.3
 
 - **New `<tosi-pocket-bar>` component.** A "pocket buttonbar": a single translucent icon at

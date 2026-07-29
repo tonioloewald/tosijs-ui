@@ -82,6 +82,7 @@ const { button, div } = elements
 interface DocSystemConfig {
   projectName?: string
   projectLinks?: ProjectLinks
+  logo?: string
 }
 
 const PREFS_KEY = 'tosi-doc-system-prefs'
@@ -485,6 +486,7 @@ export class TosiDocSystem extends Component {
       },
       projectName: config.projectName,
       projectLinks: config.projectLinks,
+      logo: config.logo,
       navbarLinks: navbarLinks.length ? navbarLinks : undefined,
       contentElement,
     })

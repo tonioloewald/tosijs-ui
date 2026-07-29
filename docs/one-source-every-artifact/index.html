@@ -79,12 +79,17 @@ simultaneously written a web page, a test, a book chapter, and a playground.</p>
 <h2>The whole thing, running inside itself</h2>
 <p>The clearest demo is the system embedded in its own page. Below is a complete,
 live <code>&lt;tosi-doc-system&gt;</code> — the same browser you&#39;re reading this in — loading the
-same corpus, in an isolated (memory-routed) instance. It runs its own live
-examples, transpiles their TypeScript in your browser, and needs no server:</p>
+same corpus, in an isolated (memory-routed) instance. Note the <code>config</code> attribute:
+it gives this embedded instance its own header title (<strong>Embedded Example</strong>) and a
+custom brand mark left of it (the <code>bookOpen</code> icon instead of the tosijs-ui logo) —
+<code>projectName</code> and <code>logo</code> are how a site adopting <code>tosijs-ui/site</code> brands its own
+header. It runs its own live examples, transpiles their TypeScript in your
+browser, and needs no server:</p>
 <pre><code class="language-html">&lt;tosi-doc-system
   docs=&quot;/docs.json&quot;
   routing=&quot;memory&quot;
   route=&quot;data-table&quot;
+  config=&#39;{&quot;projectName&quot;:&quot;Embedded Example&quot;,&quot;logo&quot;:&quot;bookOpen&quot;}&#39;
   style=&quot;display:block; height:520px; border-radius:8px; overflow:hidden; box-shadow:0 2px 16px #0004&quot;
 &gt;
 &lt;/tosi-doc-system&gt;

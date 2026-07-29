@@ -409,6 +409,7 @@ export class TosiDocSystem extends Component {
             },
             projectName: config.projectName,
             projectLinks: config.projectLinks,
+            logo: config.logo,
             navbarLinks: navbarLinks.length ? navbarLinks : undefined,
             contentElement,
         });

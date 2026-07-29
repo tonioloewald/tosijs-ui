@@ -600,6 +600,7 @@ export async function buildSite(config) {
         baseUrl: config.baseUrl,
         lang: config.lang,
         projectLinks: config.projectLinks,
+        logo: config.logo,
         navbarLinks: config.navbarLinks,
         localizedStrings: config.localizedStrings,
         favicon: config.favicon,

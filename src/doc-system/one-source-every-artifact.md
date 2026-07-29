@@ -40,14 +40,19 @@ simultaneously written a web page, a test, a book chapter, and a playground.
 
 The clearest demo is the system embedded in its own page. Below is a complete,
 live `<tosi-doc-system>` — the same browser you're reading this in — loading the
-same corpus, in an isolated (memory-routed) instance. It runs its own live
-examples, transpiles their TypeScript in your browser, and needs no server:
+same corpus, in an isolated (memory-routed) instance. Note the `config` attribute:
+it gives this embedded instance its own header title (**Embedded Example**) and a
+custom brand mark left of it (the `bookOpen` icon instead of the tosijs-ui logo) —
+`projectName` and `logo` are how a site adopting `tosijs-ui/site` brands its own
+header. It runs its own live examples, transpiles their TypeScript in your
+browser, and needs no server:
 
 ```html
 <tosi-doc-system
   docs="/docs.json"
   routing="memory"
   route="data-table"
+  config='{"projectName":"Embedded Example","logo":"bookOpen"}'
   style="display:block; height:520px; border-radius:8px; overflow:hidden; box-shadow:0 2px 16px #0004"
 >
 </tosi-doc-system>

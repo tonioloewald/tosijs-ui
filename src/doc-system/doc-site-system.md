@@ -220,12 +220,20 @@ for the authoritative typed definition.
 
 ### Branding & chrome
 
-| field              | default | purpose                                     |
-| ------------------ | ------- | ------------------------------------------- |
-| `projectLinks`     | —       | logo + view-source links                    |
-| `navbarLinks`      | —       | header-bar icon links                       |
-| `theme`            | —       | base colors (palette derived from `accent`) |
-| `localizedStrings` | —       | TSV table for the language picker           |
+| field              | default | purpose                                                    |
+| ------------------ | ------- | ---------------------------------------------------------- |
+| `projectLinks`     | —       | view-source links; `tosijs` key also gates the default logo |
+| `logo`             | —       | brand mark left of the title: icon name, image URL, or inline `<svg>` |
+| `navbarLinks`      | —       | header-bar icon links                                      |
+| `theme`            | —       | base colors (palette derived from `accent`)                |
+| `localizedStrings` | —       | TSV table for the language picker                          |
+
+The header **brand mark** (left of the site title) resolves in this order: an
+explicit `logo` — the name of an icon (from `tosijs-ui`'s `icons`, e.g.
+`'tosiUi'`), an image URL / `data:` URI, or a raw inline `<svg>…</svg>` string —
+otherwise the tosijs-ui logo when `projectLinks.tosijs` is set, otherwise no mark.
+The same `logo` is accepted by `createDocBrowser({ logo })` and by an embedded
+`<tosi-doc-system config='{"logo":"…"}'>`.
 
 ### Doc sources
 

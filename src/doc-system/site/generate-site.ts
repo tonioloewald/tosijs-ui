@@ -41,6 +41,8 @@ export interface GenerateSiteConfig {
   /** default og:image (per-page overridable via doc metadata) */
   ogImage?: string
   projectLinks?: ProjectLinks
+  /** brand mark left of the title: icon name, image URL, or inline <svg> */
+  logo?: string
   /** header-bar links (rendered as real <a> for no-JS, upgraded on hydration) */
   navbarLinks?: LinkItem[]
   /** translation table (TSV) for the settings menu's language picker */
@@ -400,6 +402,7 @@ export async function generateSite(
     JSON.stringify({
       projectName: config.projectName,
       projectLinks: config.projectLinks,
+      logo: config.logo,
     })
   )
 

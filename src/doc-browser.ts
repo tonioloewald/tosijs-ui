@@ -210,6 +210,7 @@ const {
   template,
   input,
   h2,
+  img,
   details,
   summary,
   ul,
@@ -365,6 +366,15 @@ export interface DocBrowserOptions {
   context?: Record<string, any>
   projectName?: string
   projectLinks?: ProjectLinks
+  /**
+   * The brand mark shown left of the site title in the header. One of:
+   * - the name of a known icon (from `icons`), e.g. `'tosiUi'`
+   * - an image URL / path / data: URI (rendered as an `<img>`)
+   * - a raw inline `<svg …>…</svg>` string
+   * Omit to fall back to the tosijs-ui logo when `projectLinks.tosijs` is set,
+   * or to no mark at all otherwise.
+   */
+  logo?: string
   navSize?: number
   minSize?: number
   routing?: DocRoutingMode
@@ -393,6 +403,59 @@ export interface DocBrowserOptions {
   contentElement?: HTMLElement
 }
 
+// The brand mark shown left of the site title. `logo` (from config) may name a
+// known icon, be an inline `<svg>` string, or be an image URL; when absent we
+// keep the legacy behavior — the tosijs-ui logo iff this is a tosijs project,
+// else nothing. Sized to match the header height so hydration doesn't reflow.
+const LOGO_SIZE = 40
+const LOGO_GAP = 10
+// `icons` is a Proxy that returns a factory for ANY string (unknown names get a
+// placeholder glyph), so we can't ask it whether a name is real — we route by the
+// shape of the string instead: an inline `<svg>` renders as-is, a URL/path/data:
+// URI renders as an <img>, and anything else is treated as an icon(-composition)
+// name.
+function looksLikeImageUrl(s: string): boolean {
+  return (
+    /^(https?:)?\/\//.test(s) ||
+    s.startsWith('data:') ||
+    s.startsWith('/') ||
+    s.startsWith('./') ||
+    s.startsWith('../') ||
+    /\.(png|jpe?g|gif|webp|avif|svg|ico)(\?.*)?$/i.test(s)
+  )
+}
+function logoMark(
+  logo: string | undefined,
+  projectLinks: ProjectLinks
+): Element {
+  if (logo) {
+    if (logo.trimStart().startsWith('<')) {
+      const holder = span({
+        style: {
+          display: 'inline-flex',
+          height: `${LOGO_SIZE}px`,
+          marginRight: `${LOGO_GAP}px`,
+        },
+      })
+      holder.innerHTML = logo
+      return holder
+    }
+    if (looksLikeImageUrl(logo)) {
+      return img({
+        src: logo,
+        alt: '',
+        style: { height: `${LOGO_SIZE}px`, marginRight: `${LOGO_GAP}px` },
+      })
+    }
+    return (icons as any)[logo]({
+      style: { _xinIconSize: LOGO_SIZE, marginRight: LOGO_GAP },
+    })
+  }
+  return projectLinks.tosijs
+    ? icons.tosiUi({ style: { _xinIconSize: LOGO_SIZE, marginRight: LOGO_GAP } })
+    : span()
+}
+
 // Monotonic per-page counter so each createDocBrowser() call gets a distinct
 // tosi() registry key (see stateKey below) and two browsers can't share state.
 let docBrowserSeq = 0
@@ -403,6 +466,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     context = {},
     projectName = '',
     projectLinks = {},
+    logo,
     navSize = 200,
     minSize = 600,
     routing = 'query',
@@ -713,11 +777,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
             borderBottom: 'none',
           },
         },
-        projectLinks.tosijs
-          ? icons.tosiUi({
-              style: { _xinIconSize: 40, marginRight: 10 },
-            })
-          : span(),
+        logoMark(logo, projectLinks),
         h2(projectName)
       )
     )
