@@ -16,14 +16,14 @@
 
 Copyright ©2023-2025 Tonio Loewald
 
-## ⚠️ Breaking change in 1.7.0 — `<tosi-code>` (ACE → CodeMirror 6)
-
-**1.7.0 is a breaking release shipping under a minor version, deliberately.** `<tosi-code>`
-moved from ACE to CodeMirror 6. `value`, `mode`, the `change` event, `disabled`, and
-`undo`/`redo` are unchanged; the ACE-era **`theme`** and **`options`** props are **removed** with
-no shim. Dark mode is now automatic (`body.darkmode`) and styling comes from `--code-bg` /
-`--text-color`. The `2.0` name is reserved for the tjs-native tosijs port, so this ships as
-1.7.0 — **pin `tosijs-ui@1.6` to defer.** Full detail and rationale in
+> ## ⚠️ Breaking change in 1.7.0 — `<tosi-code>` (ACE → CodeMirror 6)
+>
+> **1.7.0 is a breaking release shipping under a minor version, deliberately.** `<tosi-code>`
+> moved from ACE to CodeMirror 6. `value`, `mode`, the `change` event, `disabled`, and
+> `undo`/`redo` are unchanged; the ACE-era **`theme`** and **`options`** props are **removed** with
+> no shim. Dark mode is now automatic (`body.darkmode`) and styling comes from `--code-bg` /
+> `--text-color`. The `2.0` name is reserved for the tjs-native tosijs port, so this ships as
+> 1.7.0 — **pin `tosijs-ui@1.6` to defer.** Full detail and rationale in
 [CHANGELOG.md](./CHANGELOG.md).
 
 ## the tosijs-ui library
