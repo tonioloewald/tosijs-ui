@@ -764,19 +764,19 @@ export async function devServer(config, opts = {}) {
                 if (!config.editableSources) {
                     return new Response('editableSources is not enabled in this doc-site config (set editableSources: true to edit/save source in dev)', { status: 501, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
                 }
-                // LOOPBACK BY DEFAULT — see isLoopbackAddress. Reading exposes any repo file;
-                // writing is remote code execution (write, watcher rebuilds, build runs it).
-                // Checked on the PEER ADDRESS, not a header: Origin/Host are attacker-supplied.
+                // LOOPBACK ONLY. Reading exposes any file in the repo; writing is remote code
+                // execution (write a file, the watcher rebuilds, the build runs it). Checked on
+                // the PEER ADDRESS, never on Origin/Host, which are attacker-supplied.
                 //
-                // `DEV_ALLOW_REMOTE_EDIT=1` opts out, for when something in FRONT of this
-                // server already authenticates the caller (a tunnel with basic auth, a
-                // reverse proxy). It is deliberately an env var and not a config option: it
-                // is a property of how you are RUNNING the server today, not of the project,
-                // so it must not be committable. It grants file-write-plus-execute to anyone
-                // who can reach the port — never set it on an unauthenticated listener.
+                // There is deliberately NO override. An env var that re-enables this would have
+                // no legitimate use today — nothing authenticates in front of this server — and
+                // it is exactly the shape of guard that gets set once in a shell profile and
+                // stays off forever. Remote editing is not a flag to flip; it needs real
+                // authentication, and that is Phase 3 of REMOTE-ACCESS-PLAN.md, where the
+                // schema is the authorization boundary and a session (not a location, and not
+                // an env var) decides who may write. Until then: view remotely, edit locally.
                 const peer = srv?.requestIP?.(request)?.address;
-                const allowRemoteEdit = process.env.DEV_ALLOW_REMOTE_EDIT === '1';
-                if (!allowRemoteEdit && !isLoopbackAddress(peer)) {
+                if (!isLoopbackAddress(peer)) {
                     console.warn(`⚠️  refused ${request.method} /__docstore/source from ${peer ?? 'unknown'} — ` +
                         `source editing is local-only.`);
                     return new Response('source editing is restricted to this machine', {

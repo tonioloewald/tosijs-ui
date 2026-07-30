@@ -136,6 +136,27 @@ surprising list into one mechanism: static reads, live push, save-to-source for 
 authoring story, `POST /report` test results, multi-viewer sharing, and remote agent
 access (the 1.8 surface over a socket instead of in-page).
 
+### Remote editing is deliberately NOT available yet
+
+`editableSources` powers "edit page source" and "save to source", and it works — but the
+endpoints are **loopback-only**, so today the split is *view from anywhere, edit from
+this machine*. That is a stopgap, not a design, and it is stated here so nobody
+"fixes" it with a flag.
+
+A location check is the wrong axis. The right one is authentication, and it has to
+cover the **page** as well as the endpoint: anything injected into a page to authorise
+edits is available to anyone who can load that page, so page access and edit access must
+be the same boundary. Bolting a token onto the dev server would look like progress and
+would not be.
+
+So remote editing waits for Phase 3, where the schema is the authorization boundary and
+a **session** decides who may write — not a location, not an env var. Until then the
+preview host is static *precisely because static has no write endpoint*, which is why
+locking it down cost one `basicauth` line instead of a threat model.
+
+The interim cost is real and small: more copy-paste. Being able to *see* the work from
+anywhere was the win; editing can wait to be done properly.
+
 ### The safety rule, stated once, up front
 
 **A generic write endpoint is the same shape as the RCE we just designed around.**
