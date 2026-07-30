@@ -25,6 +25,20 @@ feature, plus a rebuild loop the review did not catch because nothing automated 
 - **The decision guarding that RCE had no tests**, while its own comment claimed a
   regression test that did not exist. It is now `mayWriteSource()` — pure, exported, and
   covered including a named regression case for the fail-open above.
+- **The remote-access tooling now ships** as `tosijs-tunnel` and `tosijs-deploy` bins
+  (tosijs-ui#27, and independently the review's ecosystem lens). Previously `SiteConfig`
+  exposed `preview`/`tunnel` as typed public API while the ~390 lines of
+  security-sensitive glue that implement them lived only in this repo — so every adopter
+  hand-copied them and owned the drift. They resolve the consumer's site config
+  (`--config=`, `TOSIJS_SITE_CONFIG`, then `./tosijs-site.config.ts` / `./site.config.ts`)
+  and deliberately do **not** walk up the tree: these commands deploy and expose a
+  workspace, so silently adopting a neighbour's config would publish the wrong project.
+- **Fix: the tunnel probed the wrong port**, so forwarding to a dead listener failed
+  silently with a 502 and a healthy-looking dev server (tosijs-ui#28). `ssh -R` can't
+  catch it — the *remote* bind succeeds, so `ExitOnForwardFailure` stays quiet; it's the
+  local end that connects to nothing. It now probes the port it actually forwards to and
+  **refuses to open**, naming the likely cause (including "your tosijs-ui predates the
+  tunnel listener").
 - **Fix: `bun start` was in a rebuild loop** (measured at 899 restarts in ~40s), which made
   the documented dev command unusable. The build stamp imported the *generated*
   `src/version.ts`, putting it in `bun --watch`'s module graph while prebuild rewrote it every

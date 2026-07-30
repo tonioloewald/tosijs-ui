@@ -25,7 +25,9 @@ So: closed by default, open only through something that authenticates.
 */
 
 import { $ } from 'bun'
-import siteConfig from '../tosijs-site.config'
+import { resolveSiteConfig } from './resolve-site-config'
+
+const siteConfig = await resolveSiteConfig()
 
 const args = process.argv.slice(2)
 const has = (n: string) => args.includes(`--${n}`)
@@ -141,49 +143,38 @@ if (existing.length) {
   process.exit(0)
 }
 
-// Is the dev server actually up? A tunnel to nothing yields a confusing 502 at the
-// far end rather than an obvious local error.
-const alive =
-  await $`curl -sk --max-time 4 -o /dev/null https://localhost:${localPort}/`
-    .nothrow()
-    .quiet()
-if (alive.exitCode !== 0) {
-  console.warn(
-    `⚠️  Nothing answering on https://localhost:${localPort} — start \`bun start\` first,\n` +
-      `   or the public URL will 502.\n`
-  )
-}
-
 /*
-VERIFY the remote binding rather than assuming it.
+Probe the port the tunnel ACTUALLY forwards to, and refuse rather than warn.
 
-The safety argument used to rest entirely on the box running `GatewayPorts no` — remote
-configuration this tool could not see, did not check, and would not complain about. If
-that box ever says `yes`, the forwarded port binds 0.0.0.0 and the workspace is exposed
-to the internet with no proxy in front of it.
+This checked the TLS dev port (`localPort`) while forwarding the plain-HTTP tunnel
+listener (`tunnelLocalPort`), so a dev server that was up but had no tunnel listener —
+exactly what happens on a published version that predates the two-listener design —
+passed the check and then 502'd at the public URL with nothing in the logs. `ssh -R`
+cannot catch it either: the REMOTE bind succeeds, so `ExitOnForwardFailure` is silent;
+it is the local end that connects to nothing. (Reported from a real adoption:
+tosijs-ui#28.)
 
-The listener split means an exposed port still cannot write without a session, so this
-is defence in depth rather than the only wall — but "your workspace is readable by the
-internet" deserves to be said out loud, not inferred.
+Fail hard. Forwarding to a closed port is not a degraded mode, it is a guaranteed 502,
+and a loud local error beats a mystery at the far end.
 */
-const bind =
-  await $`ssh ${host} ${`ss -ltn 2>/dev/null | grep -w ${remotePort} || true`}`
+const tunnelUp =
+  await $`curl -s --max-time 4 -o /dev/null http://127.0.0.1:${tunnelLocalPort}/`
     .nothrow()
     .quiet()
-    .text()
-if (bind.trim() && !/127\.0\.0\.1:|\[::1\]:/.test(bind)) {
-  console.warn(
-    `\n⚠️  Remote port ${remotePort} is NOT bound to loopback on ${host}:\n` +
-      bind
-        .trim()
-        .split('\n')
-        .map((l) => '     ' + l.trim())
-        .join('\n') +
-      `\n   That means sshd has GatewayPorts enabled and this port is reachable from\n` +
-      `   the internet WITHOUT the authenticating proxy in front of it. Writes still\n` +
-      `   require a session, but anyone can read the workspace.\n` +
-      `   Fix: set \`GatewayPorts no\` in the box's sshd_config and reload sshd.\n`
+if (tunnelUp.exitCode !== 0) {
+  console.error(
+    `\n🛑 Nothing is listening on http://127.0.0.1:${tunnelLocalPort} — the port this\n` +
+      `   tunnel forwards to. Opening it anyway would give you a 502 at ${
+        publicUrl ?? 'the public URL'
+      }\n` +
+      `   with a healthy-looking dev server locally.\n\n` +
+      `   Check that:\n` +
+      `     • \`bun start\` is running, and\n` +
+      `     • your site config sets \`preview.tunnel.localPort\` (default 8788), and\n` +
+      `     • your installed tosijs-ui is new enough to bind a tunnel listener —\n` +
+      `       versions before 1.9.0-beta.3 served only one TLS port and had no such listener.\n`
   )
+  process.exit(1)
 }
 
 console.log(`\n🔌 ${host}  :${remotePort} → localhost:${tunnelLocalPort}`)

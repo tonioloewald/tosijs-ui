@@ -26,7 +26,9 @@ Two deliberate safety properties:
 import { $ } from 'bun'
 import { existsSync } from 'fs'
 import { tmpdir } from 'os'
-import siteConfig from '../tosijs-site.config'
+import { resolveSiteConfig } from './resolve-site-config'
+
+const siteConfig = await resolveSiteConfig()
 
 const args = process.argv.slice(2)
 const flag = (name: string): string | undefined => {
@@ -37,8 +39,9 @@ const has = (name: string): boolean => args.includes(`--${name}`)
 
 const OUT = siteConfig.outputDir ?? 'docs'
 const PROJECT = siteConfig.name ?? 'site'
-const preview = (siteConfig as { preview?: { host?: string; path?: string; url?: string } })
-  .preview
+const preview = (
+  siteConfig as { preview?: { host?: string; path?: string; url?: string } }
+).preview
 
 // Precedence: explicit flag > env > site config. The config is the "just works"
 // default; the flag exists so you can push a one-off somewhere else without editing
@@ -66,7 +69,10 @@ if (!host) {
 
 // Never let a typo'd path become `rsync --delete` against something important.
 // The remote path must be absolute and more than one level deep.
-if (!remotePath.startsWith('/') || remotePath.split('/').filter(Boolean).length < 2) {
+if (
+  !remotePath.startsWith('/') ||
+  remotePath.split('/').filter(Boolean).length < 2
+) {
   console.error(
     `\n🛑 Refusing to deploy to "${remotePath}".\n\n` +
       `   This runs \`rsync --delete\`, so the target must be an absolute path at\n` +
@@ -89,7 +95,9 @@ if (!existsSync(OUT) || !existsSync(`${OUT}/index.html`)) {
 let stamp = '(no version.json — build with a current tosijs-ui)'
 try {
   const v = JSON.parse(await Bun.file(`${OUT}/version.json`).text())
-  stamp = `${v.commit ?? '?'} — ${v.commitTime ?? '?'} (generator ${v.generator})`
+  stamp = `${v.commit ?? '?'} — ${v.commitTime ?? '?'} (generator ${
+    v.generator
+  })`
 } catch {
   // best effort; never block a deploy on the stamp
 }
@@ -152,7 +160,9 @@ async function registerSite(): Promise<void> {
   try {
     hostname = new URL(publicUrl).hostname
   } catch {
-    console.warn(`⚠️  preview.url is not a URL (${publicUrl}) — skipping registration.`)
+    console.warn(
+      `⚠️  preview.url is not a URL (${publicUrl}) — skipping registration.`
+    )
     return
   }
 
@@ -168,9 +178,13 @@ async function registerSite(): Promise<void> {
 
   const mk = await $`ssh ${host} mkdir -p /srv/preview/_sites`.nothrow().quiet()
   const put =
-    await $`scp -q ${local} ${`${host}:/srv/preview/_sites/${PROJECT}.caddy`}`.nothrow().quiet()
+    await $`scp -q ${local} ${`${host}:/srv/preview/_sites/${PROJECT}.caddy`}`
+      .nothrow()
+      .quiet()
   if (mk.exitCode !== 0 || put.exitCode !== 0) {
-    console.warn(`⚠️  could not register ${hostname} — site deployed, routing unchanged.`)
+    console.warn(
+      `⚠️  could not register ${hostname} — site deployed, routing unchanged.`
+    )
     return
   }
 
@@ -190,7 +204,11 @@ async function registerSite(): Promise<void> {
       `\n🛑 Caddy config invalid after registering ${hostname} — NOT reloading.\n` +
         `   The previous config keeps serving. Fix or remove\n` +
         `   /srv/preview/_sites/${PROJECT}.caddy on the host.\n` +
-        (check.stderr.toString() || check.stdout.toString()).trim().split('\n').slice(-4).join('\n')
+        (check.stderr.toString() || check.stdout.toString())
+          .trim()
+          .split('\n')
+          .slice(-4)
+          .join('\n')
     )
     return
   }
@@ -201,7 +219,9 @@ async function registerSite(): Promise<void> {
 /** Refresh the host's index so this deploy shows up immediately. */
 async function refreshIndex(): Promise<void> {
   const remote = `/tmp/tosi-build-index-${process.pid}.sh`
-  const put = await $`scp -q ${'deploy/build-index.sh'} ${`${host}:${remote}`}`.nothrow().quiet()
+  const put = await $`scp -q ${'deploy/build-index.sh'} ${`${host}:${remote}`}`
+    .nothrow()
+    .quiet()
   if (put.exitCode !== 0) return
   const run = await $`ssh ${host} bash ${remote}`.nothrow().quiet()
   await $`ssh ${host} rm -f ${remote}`.nothrow().quiet()
