@@ -58,6 +58,7 @@ export default defineSiteConfig({
   preview: {
     host: 'root@212.147.248.15',
     url: 'https://ui.dev.tosijs.net',
+    tunnel: { remotePort: 9787, url: 'https://edit.dev.tosijs.net' },
   },
 
   // Inject the haltija dev-channel so a coding agent (Claude) can drive the live

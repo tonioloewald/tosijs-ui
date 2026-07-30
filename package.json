@@ -11,6 +11,7 @@
     "deploy": "bun bin/deploy-preview.ts",
     "deploy:caddy": "scp deploy/Caddyfile $PREVIEW_SSH:/etc/caddy/Caddyfile && ssh $PREVIEW_SSH 'caddy fmt --overwrite /etc/caddy/Caddyfile && set -a && . /etc/caddy/preview.env && set +a && caddy validate --config /etc/caddy/Caddyfile && systemctl reload caddy'",
     "deploy:index": "ssh $PREVIEW_SSH 'bash -s' < deploy/build-index.sh",
+    "tunnel": "bun bin/tunnel.ts",
     "test-browser": "bun bin/dev.ts --test",
     "format": "bun eslint src demo --fix && bun prettier --write .",
     "tests": "bun test && bun playwright test",

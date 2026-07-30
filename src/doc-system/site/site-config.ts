@@ -351,6 +351,25 @@ export interface SiteConfig {
     path?: string
     /** public URL, printed after a successful deploy (e.g. `https://dev.example.com`) */
     url?: string
+    /**
+     * Expose THIS machine's dev server at an authenticated public URL, via an SSH
+     * reverse tunnel to `host` (`bun run tunnel`).
+     *
+     * The box does no compute — it terminates TLS and checks a password. The work
+     * stays where the data is, which is what lets one small VPS serve many projects.
+     *
+     * Safe to expose despite the dev server's source endpoints being loopback-only:
+     * the box's sshd runs `GatewayPorts no`, so the forwarded port is bound to its
+     * loopback and only the authenticating proxy can reach it — and `ssh -R` delivers
+     * to `localhost` here, so the dev server sees a loopback peer. Reaching that
+     * socket at all required passing the front door.
+     */
+    tunnel?: {
+      /** port to bind on the remote box (loopback there); default 9787 */
+      remotePort?: number
+      /** the authenticated public URL that fronts it */
+      url?: string
+    }
   }
   /**
    * Enable the dev-server source read/write endpoints (`/__docstore/source`) that

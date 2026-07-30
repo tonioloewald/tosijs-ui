@@ -128,6 +128,48 @@ dev.tosijs.net {
 	import preview_site
 }
 
+# ── Authenticated live workspace (edit.dev.tosijs.net) ───────────────────────
+#
+# Proxies to an SSH reverse tunnel that terminates at a developer's OWN machine, where
+# the repo and the dev server live. THE BOX DOES NO COMPUTE — it terminates TLS and
+# checks a password. That is what makes it scale: N projects tunnel their own
+# workspace to a EUR3 VPS, instead of the VPS trying to be a build farm. Do the work
+# where the data is.
+#
+# Open the tunnel from the workspace machine with:
+#   ssh -f -N -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 \
+#       -R 9787:localhost:8787 root@<box>
+#
+# WHY THIS IS SAFE TO EXPOSE, when the dev server's source endpoints are otherwise
+# loopback-only:
+#   - sshd runs `GatewayPorts no`, so the tunnel's listener is bound to 127.0.0.1 on
+#     the box and is NOT reachable from the internet. Caddy is the only thing that can
+#     talk to it, and Caddy demands basicauth first.
+#   - `ssh -R` delivers to `localhost` on the workspace machine, so the dev server sees
+#     a LOOPBACK peer and its source read/write endpoints work — which is correct here,
+#     because reaching that socket at all required passing the front door. The location
+#     check and the authentication check compose instead of fighting.
+#
+# tls_insecure_skip_verify: the backend is the dev server's own mkcert certificate,
+# which Caddy has no reason to trust. The hop is inside the SSH tunnel already, so the
+# TLS there is redundant belt-and-braces, not the thing protecting the traffic.
+edit.dev.tosijs.net {
+	basicauth {
+		dev {env.PREVIEW_HASH}
+	}
+	reverse_proxy https://127.0.0.1:9787 {
+		transport http {
+			tls_insecure_skip_verify
+		}
+	}
+	log {
+		output file /var/log/caddy/preview.log {
+			roll_size 10MiB
+			roll_keep 3
+		}
+	}
+}
+
 # ── Projects register THEMSELVES ─────────────────────────────────────────────
 # Each project's deploy writes /srv/preview/_sites/<name>.caddy declaring its own
 # hostname and root, and this glob picks it up. So adding a project touches no
