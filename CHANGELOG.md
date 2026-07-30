@@ -47,6 +47,16 @@
   filename with a raw NUL byte, which makes macOS `grep` silently match **nothing** in that
   file (exit 1, no message) — so searching it for any symbol came back empty and the sort bug
   above was effectively unfindable. The comparator needs no delimiter; the NUL is gone.
+  - **Adopting the gate — budget for one upgrade, not one pin.** From the first real
+    adoption (`tosijs`, which went from 12 blocking advisories to zero): if the gate flags
+    **`brace-expansion`**, note that `GHSA-mh99-v99m-4gvg` marks *every* version below
+    **5.0.8** affected, so the override is mandatory — and `brace-expansion@5` breaks
+    **eslint 8**'s bundled `minimatch@3` with `expand is not a function`. In practice that
+    means **an eslint 8 → 10 migration** (flat config + typescript-eslint 8), not a one-line
+    pin. The upside is that it clears the whole `minimatch`/`js-yaml`/`flatted` cluster at
+    once — which is exactly what the advisories-per-package tally is telling you when it
+    fingers a stale toolchain. Expect "replace, don't patch" to be the right answer more
+    often than a targeted override.
 - **New: `openBrowser`** site-config option — opens the doc site on dev-server start, reusing
   an existing tab on macOS rather than piling up new ones.
 - **New: `DEV_NO_WATCH=1`** serves the built site without watching. The E2E lane used to run

@@ -574,6 +574,29 @@ deliberately fails <strong>closed</strong>, because it has to — measured again
 blind on exactly the worst ones. Whether a vulnerable path is reachable <em>in your
 usage</em> is not encoded anywhere and is not knowable from the data — that judgment is
 yours, and the time-boxed gate is where it belongs.</p>
+<p><strong>What to expect the first time you turn it on.</strong> The first real adoption (<code>tosijs</code>,
+12 blocking advisories → zero, <strong>no allowlist entries</strong>) is a good model for the shape
+of the work:</p>
+<ul>
+<li><strong>The findings will be concentrated, not scattered.</strong> Twelve advisories across four
+packages turned out to be <em>one</em> stale toolchain. Read the per-package tally before
+you start patching — it usually names the real culprit, and fixing that clears a
+cluster.</li>
+<li><strong>Budget for an upgrade, not a pin.</strong> If <code>brace-expansion</code> is flagged,
+<code>GHSA-mh99-v99m-4gvg</code> marks <em>every</em> version below <strong>5.0.8</strong> affected, so an override
+is mandatory — and <code>brace-expansion@5</code> breaks <strong>eslint 8</strong>&#39;s bundled <code>minimatch@3</code>
+with <code>expand is not a function</code>. So that one pin forces an <strong>eslint 8 → 10</strong>
+migration (flat config + typescript-eslint 8). It also clears the whole
+<code>minimatch</code>/<code>js-yaml</code>/<code>flatted</code> cluster, which is the tally&#39;s point.</li>
+<li><strong>&quot;Prefer the minimal fix&quot; has a limit.</strong> When the minimal fix is blocked by a
+transitive incompatibility like that one, the larger replacement <em>is</em> the correct
+fix, not a failure of discipline.</li>
+<li><strong>Expect the worst finding to be in a dev dependency.</strong> <code>tosijs</code> ships <strong>zero</strong>
+runtime dependencies, and its critical finding — a happy-dom VM-context escape
+leading to RCE — was dev-only, and carried <em>no CVSS vector at all</em>. This is why the
+gate blocks regardless of dependency class and why classification never softens a
+verdict: filtering on either would have downgraded exactly that finding to a warning.</li>
+</ul>
 <p><strong>Gating an accepted risk — with a deadline.</strong> You can&#39;t always patch immediately.
 Instead of silencing a finding forever, gate it with a reason and an <strong>expiry</strong>:</p>
 <pre><code class="language-typescript">audit: {

@@ -362,6 +362,29 @@ blind on exactly the worst ones. Whether a vulnerable path is reachable _in your
 usage_ is not encoded anywhere and is not knowable from the data — that judgment is
 yours, and the time-boxed gate is where it belongs.
 
+**What to expect the first time you turn it on.** The first real adoption (`tosijs`,
+12 blocking advisories → zero, **no allowlist entries**) is a good model for the shape
+of the work:
+
+- **The findings will be concentrated, not scattered.** Twelve advisories across four
+  packages turned out to be *one* stale toolchain. Read the per-package tally before
+  you start patching — it usually names the real culprit, and fixing that clears a
+  cluster.
+- **Budget for an upgrade, not a pin.** If `brace-expansion` is flagged,
+  `GHSA-mh99-v99m-4gvg` marks *every* version below **5.0.8** affected, so an override
+  is mandatory — and `brace-expansion@5` breaks **eslint 8**'s bundled `minimatch@3`
+  with `expand is not a function`. So that one pin forces an **eslint 8 → 10**
+  migration (flat config + typescript-eslint 8). It also clears the whole
+  `minimatch`/`js-yaml`/`flatted` cluster, which is the tally's point.
+- **"Prefer the minimal fix" has a limit.** When the minimal fix is blocked by a
+  transitive incompatibility like that one, the larger replacement *is* the correct
+  fix, not a failure of discipline.
+- **Expect the worst finding to be in a dev dependency.** `tosijs` ships **zero**
+  runtime dependencies, and its critical finding — a happy-dom VM-context escape
+  leading to RCE — was dev-only, and carried *no CVSS vector at all*. This is why the
+  gate blocks regardless of dependency class and why classification never softens a
+  verdict: filtering on either would have downgraded exactly that finding to a warning.
+
 **Gating an accepted risk — with a deadline.** You can't always patch immediately.
 Instead of silencing a finding forever, gate it with a reason and an **expiry**:
 
