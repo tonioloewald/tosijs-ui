@@ -95,3 +95,32 @@ export async function resolveSiteConfig(
     process.exit(1)
   }
 }
+
+/*
+Is this a safe target for `rsync --delete`?
+
+The original guard was "absolute and at least two segments deep", which happily admits
+/usr/lib, /var/www, /etc/caddy and /home/deploy — all of which would be MIRRORED to a
+doc-site build, i.e. emptied of everything else. A depth heuristic cannot express
+"somewhere set aside for previews"; an allowlist of roots can.
+
+Exported and pure so it is testable — the previous version was top-level script code
+inside the deploy, which is exactly why nothing pinned it.
+*/
+const SAFE_ROOTS = [
+  '/srv/preview',
+  '/srv/www',
+  '/var/www/preview',
+  '/opt/preview',
+]
+
+export function isSafeRemotePath(p: string): boolean {
+  if (!p.startsWith('/')) return false
+  // No traversal, no trailing weirdness that could re-root the path.
+  if (p.includes('..')) return false
+  const norm = p.replace(/\/+$/, '')
+  if (norm.split('/').filter(Boolean).length < 2) return false
+  return SAFE_ROOTS.some((root) => norm === root || norm.startsWith(root + '/'))
+}
+
+export const safeRemoteRoots = (): string[] => [...SAFE_ROOTS]

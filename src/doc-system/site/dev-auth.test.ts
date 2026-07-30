@@ -222,3 +222,42 @@ test('isProxiedRequest is NOT what authorizes writes', () => {
     })
   ).toBe(false)
 })
+
+// ── rsync --delete target safety ─────────────────────────────────────────────
+//
+// The old rule was "absolute, at least two segments" — which admits /usr/lib and
+// /etc/caddy. `rsync --delete` MIRRORS, so deploying a doc site into either empties it.
+
+import { isSafeRemotePath } from '../../../bin/resolve-site-config'
+
+test('isSafeRemotePath accepts preview roots', () => {
+  for (const p of [
+    '/srv/preview/x',
+    '/srv/preview/a/b',
+    '/srv/www/site',
+    '/opt/preview/p',
+  ]) {
+    expect(isSafeRemotePath(p)).toBe(true)
+  }
+})
+
+test('isSafeRemotePath refuses system directories the depth rule allowed', () => {
+  for (const p of [
+    '/usr/lib',
+    '/var/www',
+    '/etc/caddy',
+    '/home/deploy',
+    '/srv',
+    '/',
+    '',
+  ]) {
+    expect(isSafeRemotePath(p)).toBe(false)
+  }
+})
+
+test('isSafeRemotePath refuses traversal and relative paths', () => {
+  expect(isSafeRemotePath('/srv/preview/../../etc')).toBe(false)
+  expect(isSafeRemotePath('srv/preview/x')).toBe(false)
+  // A prefix match must not admit a sibling: /srv/previewX is not under /srv/preview
+  expect(isSafeRemotePath('/srv/previewX/y')).toBe(false)
+})

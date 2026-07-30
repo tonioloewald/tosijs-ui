@@ -26,7 +26,11 @@ Two deliberate safety properties:
 import { $ } from 'bun'
 import { existsSync } from 'fs'
 import { tmpdir } from 'os'
-import { resolveSiteConfig } from './resolve-site-config'
+import {
+  resolveSiteConfig,
+  isSafeRemotePath,
+  safeRemoteRoots,
+} from './resolve-site-config'
 
 const siteConfig = await resolveSiteConfig()
 
@@ -68,16 +72,17 @@ if (!host) {
 }
 
 // Never let a typo'd path become `rsync --delete` against something important.
-// The remote path must be absolute and more than one level deep.
-if (
-  !remotePath.startsWith('/') ||
-  remotePath.split('/').filter(Boolean).length < 2
-) {
+// An allowlist of preview roots, not a depth heuristic — "two segments deep" admits
+// /usr/lib and /etc/caddy, and mirroring a doc-site build into either would empty it.
+if (!isSafeRemotePath(remotePath)) {
   console.error(
     `\n🛑 Refusing to deploy to "${remotePath}".\n\n` +
-      `   This runs \`rsync --delete\`, so the target must be an absolute path at\n` +
-      `   least two levels deep (e.g. /srv/preview/${PROJECT}) — not a root or a\n` +
-      `   top-level directory.\n`
+      `   This runs \`rsync --delete\`, which mirrors — anything already at the target\n` +
+      `   that isn't in the build gets removed. Targets must live under one of:\n` +
+      safeRemoteRoots()
+        .map((r) => `     ${r}/…`)
+        .join('\n') +
+      `\n`
   )
   process.exit(1)
 }

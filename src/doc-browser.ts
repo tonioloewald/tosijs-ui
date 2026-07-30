@@ -1627,6 +1627,15 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   }
 
   function updateTestWidgetDisplay() {
+    /*
+    A broken build outranks test results, HERE too.
+
+    The guard existed only in setTestWidgetRunning(), but this function rewrites the
+    label unconditionally — so seconds after a failed rebuild the chip read "Passed" in
+    red: the colour said one thing and the text another, and the actual news (your build
+    is broken) was gone. The tests very likely failed BECAUSE the build did.
+    */
+    if (devStatusShown) return
     const labelEl = testWidget.querySelector('[part="label"]')
     const countEl = testWidget.querySelector('[part="count"]')
 
