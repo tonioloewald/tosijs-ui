@@ -705,6 +705,30 @@ agent&#39;s context (add <code>--format webp --scale 0.5</code> for a compact ca
 <p>The channel tracks haltija&#39;s <strong><code>@beta</code></strong> dist-tag, where the in-browser WebRTC
 screen capture landed ahead of <code>latest</code>.</p>
 </blockquote>
+<h4><code>/version.json</code> — what am I looking at?</h4>
+<p>Every build writes a small build-identity file to the web root:</p>
+<pre><code class="language-json">{
+  &quot;generator&quot;: &quot;1.8.0&quot;,
+  &quot;site&quot;: &quot;tosijs-ui&quot;,
+  &quot;commit&quot;: &quot;66fbc589&quot;,
+  &quot;commitTime&quot;: &quot;2026-07-30T09:10:52+03:00&quot;
+}
+</code></pre>
+<p><code>generator</code> is the <code>tosijs-ui</code> version that produced the site; <code>commit</code> /<code>commitTime</code>
+identify <strong>your project&#39;s</strong> source. Nothing exposed this before — <code>src/version.ts</code> is
+the library version and says nothing about which commit built a given deploy.</p>
+<p>It matters most where a deploy is a <em>snapshot</em>: a preview host serves whatever was
+last pushed to it, so a reviewer can report a bug you fixed this morning with no way to
+tell from the page which of you is stale. Same after a partial deploy of a live site.</p>
+<p><strong>Deliberately deterministic — there is no build timestamp.</strong> <code>docs/</code> is committed in
+these projects, so anything that varied per build would diff on every commit and train
+everyone to ignore it. Identity comes from the commit, so rebuilding the same source
+twice is byte-identical. There is likewise no <code>dirty</code> flag: a build from a dirty tree
+reports its last commit, which may not describe what was built, so that warning belongs
+at deploy time where a human can act on it — not baked into a committed file that would
+then be permanently wrong.</p>
+<p>Git fields are <strong>omitted</strong> (never blank) when git isn&#39;t available — an adopter need not
+be in a repo, and a build must not fail for want of git metadata.</p>
 <h4><code>openBrowser</code> — one dev tab per project</h4>
 <p>Set <code>openBrowser: true</code> and <code>bun start</code>, once the server is listening, opens the dev
 page in your browser — and on the <strong>next</strong> launch or restart it brings that <strong>same

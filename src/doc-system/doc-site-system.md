@@ -503,6 +503,38 @@ false` to drop the burned-in caption). Local dev only; off by default.
 > The channel tracks haltija's **`@beta`** dist-tag, where the in-browser WebRTC
 > screen capture landed ahead of `latest`.
 
+#### `/version.json` — what am I looking at?
+
+Every build writes a small build-identity file to the web root:
+
+```json
+{
+  "generator": "1.8.0",
+  "site": "tosijs-ui",
+  "commit": "66fbc589",
+  "commitTime": "2026-07-30T09:10:52+03:00"
+}
+```
+
+`generator` is the `tosijs-ui` version that produced the site; `commit` /`commitTime`
+identify **your project's** source. Nothing exposed this before — `src/version.ts` is
+the library version and says nothing about which commit built a given deploy.
+
+It matters most where a deploy is a *snapshot*: a preview host serves whatever was
+last pushed to it, so a reviewer can report a bug you fixed this morning with no way to
+tell from the page which of you is stale. Same after a partial deploy of a live site.
+
+**Deliberately deterministic — there is no build timestamp.** `docs/` is committed in
+these projects, so anything that varied per build would diff on every commit and train
+everyone to ignore it. Identity comes from the commit, so rebuilding the same source
+twice is byte-identical. There is likewise no `dirty` flag: a build from a dirty tree
+reports its last commit, which may not describe what was built, so that warning belongs
+at deploy time where a human can act on it — not baked into a committed file that would
+then be permanently wrong.
+
+Git fields are **omitted** (never blank) when git isn't available — an adopter need not
+be in a repo, and a build must not fail for want of git metadata.
+
 #### `openBrowser` — one dev tab per project
 
 Set `openBrowser: true` and `bun start`, once the server is listening, opens the dev
