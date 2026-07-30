@@ -831,6 +831,13 @@ export class LiveExample extends Component {
         let content;
         try {
             const response = await fetch(`/__docstore/source?file=${encodeURIComponent(sourceFile)}`);
+            // 401/403 is "you need an invite link", NOT "this is a deployed site".
+            // Conflating them sent people looking for a dev-mode problem that wasn't there.
+            if (response.status === 401 || response.status === 403) {
+                window.alert('This workspace needs an invite link before you can save.\n\n' +
+                    'Run `tosijs-tunnel --link` on the machine hosting it and open the link once.');
+                return;
+            }
             if (!response.ok)
                 throw new Error(String(response.status));
             content = await response.text();
@@ -871,6 +878,12 @@ export class LiveExample extends Component {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ file: sourceFile, content: updated }),
             });
+            if (response.status === 401 || response.status === 403) {
+                window.alert('This workspace needs an invite link before it can save.\n\n' +
+                    'Run `tosijs-tunnel --link` on the machine hosting it, open the link once, ' +
+                    'then try again. Your edit is still here.');
+                return;
+            }
             if (!response.ok)
                 throw new Error(String(response.status));
             window.alert(`Saved to ${sourceFile}`);
@@ -925,10 +938,17 @@ export class LiveExample extends Component {
         // The example toolbar: a pocket bar whose collapsed `<>` handle carries the
         // test-status colour (via --widget-color). Pinned top-right, growing left, so
         // it never covers the editor in side-by-side mode.
-        tosiPocketBar({ part: 'exampleWidgets', icon: 'code', direction: 'w' }, button({ title: 'view/edit code', onClick: this.showCode }, icons.edit2()), button({ title: 'view/edit code in a new window', onClick: this.openEditorWindow }, icons.edit()), button({ title: 'toggle preview size', onClick: this.toggleMaximize }, 
+        tosiPocketBar({ part: 'exampleWidgets', icon: 'code', direction: 'w' }, button({ title: 'view/edit code', onClick: this.showCode }, icons.edit2()), button({
+            title: 'view/edit code in a new window',
+            onClick: this.openEditorWindow,
+        }, icons.edit()), button({ title: 'toggle preview size', onClick: this.toggleMaximize }, 
         // Both icons render; the existing .hide-if-maximized / .show-if-maximized
         // CSS shows the right one for the current state — no JS icon swap.
-        icons.maximize({ class: 'hide-if-maximized' }), icons.minimize({ class: 'show-if-maximized' })), label({ class: 'tests-toggle', title: 'run tests' }, input({ type: 'checkbox', part: 'testsCheckbox', onChange: this.handleTestsToggle }), icons.check()))),
+        icons.maximize({ class: 'hide-if-maximized' }), icons.minimize({ class: 'show-if-maximized' })), label({ class: 'tests-toggle', title: 'run tests' }, input({
+            type: 'checkbox',
+            part: 'testsCheckbox',
+            onChange: this.handleTestsToggle,
+        }), icons.check()))),
         // Empty until first showCode. buildEditorPanel() fills it lazily so a reader
         // who never opens a panel never constructs a <tosi-code> (and never pulls the
         // CodeMirror chunk). See ensureEditors().

@@ -8,7 +8,7 @@ headless browser through the inline doc tests and exits with their pass/fail.
 Build-time only (Bun APIs). Never import this from browser code.
 */
 import * as path from 'path';
-import { statSync, existsSync } from 'fs';
+import { statSync } from 'fs';
 import { $, spawn } from 'bun';
 import { buildSite } from './orchestrator';
 import { preflight } from './preflight';
@@ -607,59 +607,27 @@ export async function devServer(config, opts = {}) {
         // edit loop and break offline dev. The audit ran once at launch (below).
         const runBuild = opts.build ?? (() => buildSite(config, { skipAudit: true }));
         /*
-        A FAILED REBUILD MUST NOT DESTROY THE SITE YOU ARE LOOKING AT.
-    
-        `buildSite()` begins with `rm -rf <outputDir>` — it has to, since it regenerates
-        the tree — so a build that fails anywhere after that leaves an empty or partial
-        output directory. Before this, the sequence was: save a typo, the rebuild throws,
-        the error scrolls past in a terminal you may not be watching, and the next refresh
-        serves nothing. The site was gone until you noticed and fixed it, and the page
-        gave you no clue why.
-    
-        So: move the working site aside first (a rename — atomic and instant on the same
-        filesystem, and ~9MB of extra disk we will never notice), then build. On success,
-        drop the spare. On failure, put it back and record WHY, so the page keeps working
-        and the widget can say what broke.
-    
-        Deliberately wraps `runBuild`, not `buildSite`: a consumer's custom `{ build }`
-        pipeline gets the same protection without knowing about it.
+        The last-good stash/restore now lives in `buildSite` (orchestrator.ts), next to the
+        `rm -rf` that makes it necessary — so `bun run build`, CI, adopters and this
+        server's own INITIAL build are protected too, not just watch rebuilds. This wrapper
+        only records status for the page widget.
         */
-        const LAST_GOOD = `${PUBLIC}.last-good`;
-        const runBuildPreservingLastGood = async () => {
-            const hadSite = existsSync(PUBLIC);
-            if (hadSite) {
-                await $ `rm -rf ${LAST_GOOD}`.nothrow().quiet();
-                await $ `mv ${PUBLIC} ${LAST_GOOD}`.nothrow().quiet();
-            }
-            const restore = async () => {
-                if (!hadSite)
-                    return;
-                await $ `rm -rf ${PUBLIC}`.nothrow().quiet();
-                await $ `mv ${LAST_GOOD} ${PUBLIC}`.nothrow().quiet();
-            };
+        const runBuildReporting = async () => {
             try {
-                // buildSite REPORTS failure by returning false (a blocking advisory, an
-                // output-dir overlap) and THROWS for everything else, so treat both as
-                // failure — a falsy return that we ignored would silently ship a wiped site.
                 const result = await runBuild();
                 if (result === false)
                     throw new Error('build reported failure');
-                if (hadSite)
-                    await $ `rm -rf ${LAST_GOOD}`.nothrow().quiet();
                 if (!buildStatus.ok)
                     console.log('✅ build recovered — serving fresh output');
                 buildStatus = { ok: true, at: Date.now() };
             }
             catch (error) {
-                await restore();
                 buildStatus = {
                     ok: false,
                     label: 'Build failed',
                     detail: String(error instanceof Error ? error.message : error).slice(0, 2000),
                     at: Date.now(),
                 };
-                console.error(`\n🛑 Rebuild failed — still serving the last good build.\n` +
-                    `   Fix the error above; the next successful build clears this.\n`);
                 throw error;
             }
         };
@@ -711,7 +679,7 @@ export async function devServer(config, opts = {}) {
             // Both look like: started again with no gap.
             const immediate = lastBuildEnd > 0 && Date.now() - lastBuildEnd < IMMEDIATE_MS;
             try {
-                await runBuildPreservingLastGood();
+                await runBuildReporting();
             }
             catch (error) {
                 console.error('rebuild failed:', error);

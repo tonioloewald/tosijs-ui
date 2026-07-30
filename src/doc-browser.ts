@@ -1005,9 +1005,27 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       : null
   }
 
+  /*
+  UNAUTHORIZED IS NOT "NO ENDPOINT".
+
+  This treated any non-2xx the same and fell through to GitHub raw `main` — so an
+  unauthorized reader silently got the PUBLISHED file instead of the working copy the
+  page was rendered from, edited that, and then (see saveSourceEdit) was handed a
+  download of it. Applying that download to the repo clobbers uncommitted work. A
+  wrong answer delivered confidently is worse than an error.
+
+  401/403 now means "you need an invite link", not "this must be a deployed site".
+  */
+  let sourceUnauthorized = false
+
   const loadSource = async (p: string): Promise<string | null> => {
+    sourceUnauthorized = false
     try {
       const r = await fetch(`/__docstore/source?file=${encodeURIComponent(p)}`)
+      if (r.status === 401 || r.status === 403) {
+        sourceUnauthorized = true
+        return null
+      }
       // Accept only a genuine source response. A misconfigured dev server (no
       // editableSources) or a SPA-rewrite host answers an unknown path with
       // index.html at status 200 — taking that would load the PAGE as the source.
@@ -1029,19 +1047,27 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     return null
   }
 
+  /**
+   * Returns the HTTP status, not a boolean.
+   *
+   * A bare boolean made the caller read 403 ("you are not authorized") as 501 ("this
+   * is a deployed site with no write endpoint") and silently download the file — the
+   * one outcome that can destroy work if the user later applies it over their repo.
+   * 0 means the request never completed.
+   */
   const saveSourceToDisk = async (
     p: string,
     content: string
-  ): Promise<boolean> => {
+  ): Promise<number> => {
     try {
       const r = await fetch('/__docstore/source', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file: p, content }),
       })
-      return r.ok
+      return r.status
     } catch {
-      return false
+      return 0
     }
   }
 
@@ -1126,12 +1152,24 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   const saveSourceEdit = async (): Promise<void> => {
     if (!editUI) return
     const { doc, editor } = editUI
-    const ok = await saveSourceToDisk(doc.path, editor.value)
-    if (ok) {
+    const status = await saveSourceToDisk(doc.path, editor.value)
+    if (status >= 200 && status < 300) {
       editUI.original = editor.value // saved — this is the new clean baseline
       setSourceView('preview') // the watcher also rebuilds in the background
+    } else if (status === 401 || status === 403) {
+      /*
+      Do NOT download here. Downloading says "there is nowhere to save this, here is
+      the file" — but the file we would hand back was loaded from GitHub `main`, not
+      from the working copy, so applying it over the repo silently reverts uncommitted
+      work. Say what is actually true and let the user get a link.
+      */
+      window.alert(
+        'This workspace needs an invite link before it can save.\n\n' +
+          'Run `tosijs-tunnel --link` on the machine hosting it, open the link once, ' +
+          'then try again. Your edit is still here.'
+      )
     } else {
-      // No write endpoint (deployed site) — hand the file back for the repo.
+      // Genuinely no write endpoint (a deployed static site) — hand the file back.
       downloadText(doc.path.split('/').pop() || 'source.txt', editor.value)
     }
   }
@@ -1140,7 +1178,12 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     if (editUI) return
     const content = await loadSource(doc.path)
     if (content === null) {
-      window.alert(`Could not load source for ${doc.path}`)
+      window.alert(
+        sourceUnauthorized
+          ? 'This workspace needs an invite link before you can edit.\n\n' +
+              'Run `tosijs-tunnel --link` on the machine hosting it and open the link once.'
+          : `Could not load source for ${doc.path}`
+      )
       return
     }
     const editor = codeEditor({ mode: editorModeFor(doc.path) }) as CodeEditor
@@ -1564,8 +1607,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     // it rather than the wreckage of the failed one — so say so plainly in the
     // console, where the detail is readable and copyable.
     console.error(
-      `[tosi] ${devStatus.label || 'Build failed'} — showing the last good build.\n` +
-        (devStatus.detail || '')
+      `[tosi] ${
+        devStatus.label || 'Build failed'
+      } — showing the last good build.\n` + (devStatus.detail || '')
     )
   }
 

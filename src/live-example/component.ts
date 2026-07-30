@@ -925,6 +925,15 @@ export class LiveExample extends Component<ExampleParts> {
       const response = await fetch(
         `/__docstore/source?file=${encodeURIComponent(sourceFile)}`
       )
+      // 401/403 is "you need an invite link", NOT "this is a deployed site".
+      // Conflating them sent people looking for a dev-mode problem that wasn't there.
+      if (response.status === 401 || response.status === 403) {
+        window.alert(
+          'This workspace needs an invite link before you can save.\n\n' +
+            'Run `tosijs-tunnel --link` on the machine hosting it and open the link once.'
+        )
+        return
+      }
       if (!response.ok) throw new Error(String(response.status))
       content = await response.text()
     } catch {
@@ -968,6 +977,14 @@ export class LiveExample extends Component<ExampleParts> {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file: sourceFile, content: updated }),
       })
+      if (response.status === 401 || response.status === 403) {
+        window.alert(
+          'This workspace needs an invite link before it can save.\n\n' +
+            'Run `tosijs-tunnel --link` on the machine hosting it, open the link once, ' +
+            'then try again. Your edit is still here.'
+        )
+        return
+      }
       if (!response.ok) throw new Error(String(response.status))
       window.alert(`Saved to ${sourceFile}`)
     } catch {
@@ -1031,7 +1048,10 @@ export class LiveExample extends Component<ExampleParts> {
           icons.edit2()
         ),
         button(
-          { title: 'view/edit code in a new window', onClick: this.openEditorWindow },
+          {
+            title: 'view/edit code in a new window',
+            onClick: this.openEditorWindow,
+          },
           icons.edit()
         ),
         button(
@@ -1043,7 +1063,11 @@ export class LiveExample extends Component<ExampleParts> {
         ),
         label(
           { class: 'tests-toggle', title: 'run tests' },
-          input({ type: 'checkbox', part: 'testsCheckbox', onChange: this.handleTestsToggle }),
+          input({
+            type: 'checkbox',
+            part: 'testsCheckbox',
+            onChange: this.handleTestsToggle,
+          }),
           icons.check()
         )
       )
@@ -1100,7 +1124,8 @@ export class LiveExample extends Component<ExampleParts> {
         ),
         button(
           {
-            title: 'example menu — refresh, flip, undo, copy, save/revert edits',
+            title:
+              'example menu — refresh, flip, undo, copy, save/revert edits',
             class: 'transparent source-menu',
             onClick: this.sourceMenu,
           },
@@ -1579,7 +1604,8 @@ export class LiveExample extends Component<ExampleParts> {
       this.compiledJsSource === this.js
         ? this.compiledJs
         : undefined
-    const transform = bake === undefined ? await loadTransform(this.dialect) : undefined
+    const transform =
+      bake === undefined ? await loadTransform(this.dialect) : undefined
     const { example, style: styleEl, exampleWidgets } = this.parts
 
     // Keep the read-only generated-JS tab (tjs/ts) in sync with the source, and
