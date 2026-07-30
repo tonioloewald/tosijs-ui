@@ -8,6 +8,7 @@
     "build": "bun bin/dev.ts --build-only",
     "book": "bun bin/build-book.ts",
     "og": "bun bin/generate-og.ts",
+    "deploy": "bun bin/deploy-preview.ts",
     "test-browser": "bun bin/dev.ts --test",
     "format": "bun eslint src demo --fix && bun prettier --write .",
     "tests": "bun test && bun playwright test",

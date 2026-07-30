@@ -1,0 +1,97 @@
+# Preview host — Caddy config.
+#
+# Committed on purpose: server config in git beats server config in someone's shell
+# history. Deploy with `bun run deploy:caddy` (or scp it to /etc/caddy/Caddyfile and
+# `systemctl reload caddy`).
+#
+# STAGE 1 (current): plain HTTP on the bare IP, because no DNS points here yet. That
+# is fine for tosijs-ui, whose docs are public anyway, and it proves the rsync →
+# serve pipeline before adding a name. It is NOT fine for anything unreleased — add
+# the domain and the TLS block below before previewing private work.
+#
+# STAGE 2: point a name (or a wildcard, e.g. *.dev.example.com) at this box, swap the
+# `:80` block for the named one below, and Caddy provisions Let's Encrypt certs
+# automatically on first request. No certbot, no cron, no renewal to forget.
+
+{
+	# Where ACME notices go once TLS is on. Harmless before then.
+	# email you@example.com
+}
+
+# ── Stage 1: bare IP, HTTP only ──────────────────────────────────────────────
+:80 {
+	root * /srv/preview/tosijs-ui
+	file_server
+
+	# The doc site is pre-rendered to /slug/index.html, so this is mostly a no-op —
+	# but it makes a missing page render the site's own 404 rather than Caddy's.
+	handle_errors {
+		rewrite * /index.html
+		file_server
+	}
+
+	encode gzip zstd
+
+	# Cache policy in three mutually-exclusive buckets.
+	#
+	# These MUST NOT overlap. A bare `header Cache-Control ...` with no matcher
+	# applies to every request and, being evaluated later, silently overwrites the
+	# specific rules above it — which is exactly what happened on the first deploy:
+	# /version.json came back `no-cache` instead of `no-store`, i.e. the one file
+	# whose entire job is answering "what am I looking at" was the one getting a
+	# weaker guarantee than intended. Hence the explicit `not` matcher for the
+	# fallthrough rather than a bare directive.
+
+	# Build identity — never cache. A stale commit here is worse than no answer.
+	@version path /version.json
+	header @version Cache-Control "no-store"
+
+	# Hashed filenames are content-addressed, so they can be cached forever.
+	@hashed path_regexp \-[a-z0-9]{8}\.(js|css|map)$
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+	# Everything else: revalidate, so a deploy is visible on reload.
+	#
+	# The exclusion repeats the regex verbatim rather than naming it: a named
+	# `path_regexp <name> <pattern>` names a CAPTURE GROUP, it does not create a
+	# reusable matcher, so `not path_regexp hashed` reads "not matching /hashed/" —
+	# true for nearly every request. That made this rule match hashed assets too and
+	# overwrite their immutable header with no-cache. Verified against the live host.
+	@rest {
+		not path /version.json
+		not path_regexp \-[a-z0-9]{8}\.(js|css|map)$
+	}
+	header @rest Cache-Control "no-cache"
+
+	log {
+		output file /var/log/caddy/preview.log {
+			roll_size 10MiB
+			roll_keep 3
+		}
+	}
+}
+
+# ── Stage 2: named host with automatic HTTPS ─────────────────────────────────
+# Replace the :80 block above with this once DNS points at the box.
+#
+# preview.example.com {
+# 	root * /srv/preview/tosijs-ui
+# 	file_server
+# 	encode gzip zstd
+#
+# 	# Uncomment to keep unreleased work off the open internet. The stakes here are
+# 	# DISCLOSURE, not code execution — a static host has no write endpoint — so one
+# 	# line is a proportionate access-control design.
+# 	# Generate the hash with: caddy hash-password
+# 	# NOTE: Caddy 2.6 (Debian trixie) spells this `basicauth`; 2.8+ uses `basic_auth`.
+# 	# basicauth {
+# 	# 	dev <bcrypt-hash>
+# 	# }
+#
+# 	@version path /version.json
+# 	header @version Cache-Control "no-store"
+# }
+#
+# For per-project previews, add one block per subdomain pointing at
+# /srv/preview/<project>, or use a wildcard with map — but only once more than one
+# project actually needs it.
