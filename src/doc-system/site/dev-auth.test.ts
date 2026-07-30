@@ -101,6 +101,90 @@ test('the redirect target has the token stripped', () => {
   // If the token survived the redirect it would land in history and Referer anyway,
   // which is the entire thing the exchange exists to prevent.
   expect(urlWithoutToken('https://x.dev/foo/?t=SECRET', 't')).toBe('/foo/')
-  expect(urlWithoutToken('https://x.dev/?t=SECRET&keep=1', 't')).toBe('/?keep=1')
+  expect(urlWithoutToken('https://x.dev/?t=SECRET&keep=1', 't')).toBe(
+    '/?keep=1'
+  )
   expect(urlWithoutToken('https://x.dev/a/b/?t=S#frag', 't')).toBe('/a/b/#frag')
+})
+
+// ── who may write source ─────────────────────────────────────────────────────
+//
+// This is the decision that stands between a tunnelled request and arbitrary repo
+// writes, which the watcher rebuilds and RUNS. It previously lived as an inline
+// expression inside a TLS-requiring server closure with NO tests at any tier — while
+// a comment claimed a regression test that did not exist.
+
+import { mayWriteSource, isLoopbackAddressForAuth } from './dev-auth'
+
+test('tunnel traffic ALWAYS needs a session — loopback is no shortcut', () => {
+  // The whole point: a tunnel counterfeits "local", so a loopback peer proves nothing.
+  expect(
+    mayWriteSource({
+      viaTunnel: true,
+      peer: '127.0.0.1',
+      hasValidSession: false,
+    })
+  ).toBe(false)
+  expect(
+    mayWriteSource({ viaTunnel: true, peer: '::1', hasValidSession: false })
+  ).toBe(false)
+  expect(
+    mayWriteSource({
+      viaTunnel: true,
+      peer: '127.0.0.1',
+      hasValidSession: true,
+    })
+  ).toBe(true)
+})
+
+test('direct traffic is authorized by a loopback peer', () => {
+  expect(
+    mayWriteSource({
+      viaTunnel: false,
+      peer: '127.0.0.1',
+      hasValidSession: false,
+    })
+  ).toBe(true)
+  expect(
+    mayWriteSource({
+      viaTunnel: false,
+      peer: '::ffff:127.0.0.1',
+      hasValidSession: false,
+    })
+  ).toBe(true)
+})
+
+test('direct traffic from the LAN is refused — the coffee-shop RCE', () => {
+  for (const peer of [
+    '192.168.1.50',
+    '10.0.0.7',
+    '::ffff:192.168.1.50',
+    '',
+    undefined,
+  ]) {
+    expect(
+      mayWriteSource({ viaTunnel: false, peer, hasValidSession: false })
+    ).toBe(false)
+  }
+})
+
+test('REGRESSION: an off-machine caller that reaches loopback without X-Forwarded-* cannot write', () => {
+  // The exact fail-open this replaced. `ssh -R` with GatewayPorts yes, ngrok tcp,
+  // socat, iptables DNAT, nginx proxy_pass without forwardfor — all deliver
+  // {peer: 127.0.0.1, no forwarded headers}. Under the old header-sniffing rule that
+  // authorized an arbitrary repo write. Arriving on the tunnel listener now decides it,
+  // and a listener is not something a client can forge.
+  expect(
+    mayWriteSource({
+      viaTunnel: true,
+      peer: '127.0.0.1',
+      hasValidSession: false,
+    })
+  ).toBe(false)
+})
+
+test('isLoopbackAddressForAuth matches the server-side predicate', () => {
+  expect(isLoopbackAddressForAuth('127.0.0.1')).toBe(true)
+  expect(isLoopbackAddressForAuth('10.127.0.1')).toBe(false)
+  expect(isLoopbackAddressForAuth('127.0.0.1.evil.com')).toBe(false)
 })

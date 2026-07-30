@@ -32,7 +32,6 @@ import { findOutputDirOverlap } from './output-guard'
 import { preflight } from './preflight'
 import { auditDependencies, reportAudit } from './audit-guard'
 import { gatherBuildStamp, serializeBuildStamp } from './build-stamp'
-import { version } from '../../version'
 import {
   tjsEditorExternal,
   tjsEditorLeakedAsExternal,
@@ -392,7 +391,8 @@ export async function buildSite(
       libraryBuildFailed = true
     }
   } else if (config.emitLibrary) {
-    const r = await $`bun tsc --declaration --incremental --outDir dist`.nothrow()
+    const r =
+      await $`bun tsc --declaration --incremental --outDir dist`.nothrow()
     if (r.exitCode !== 0) {
       console.error(
         `❌ tsc --declaration FAILED (exit ${r.exitCode}) — emitted dist/*.d.ts may ` +
@@ -692,9 +692,11 @@ export async function buildSite(
   let importResolverHead = ''
   if (config.importResolver) {
     try {
-      const opts =
-        config.importResolver === true ? {} : config.importResolver
-      const worker = Bun.resolveSync('tjs-lang/import-resolver/worker', PROJECT_ROOT)
+      const opts = config.importResolver === true ? {} : config.importResolver
+      const worker = Bun.resolveSync(
+        'tjs-lang/import-resolver/worker',
+        PROJECT_ROOT
+      )
       await $`cp ${worker} ${PUBLIC}/import-resolver-worker.js`.text()
       const bp = config.basePath
       const root = !bp || bp === '/' ? '' : bp.replace(/\/$/, '')
@@ -755,7 +757,22 @@ export async function buildSite(
   await Bun.write(
     `${PUBLIC}/version.json`,
     serializeBuildStamp(
-      await gatherBuildStamp({ generator: version, site: config.name })
+      await gatherBuildStamp({
+        // Read from package.json rather than importing src/version.ts.
+        //
+        // That import put a GENERATED file into bin/dev.ts's module graph, and
+        // `bun --watch` restarts the process when any graph file changes — while
+        // prebuild rewrites version.ts on every build. Result: build → rewrite →
+        // restart → build, forever. Observed at 899 restarts in ~40 seconds, and it
+        // makes `bun start` (the documented dev command) completely unusable.
+        //
+        // Never import generated source from the build. Read the data instead.
+        generator: await Bun.file('package.json')
+          .json()
+          .then((p: { version?: string }) => p.version ?? 'unknown')
+          .catch(() => 'unknown'),
+        site: config.name,
+      })
     )
   )
 

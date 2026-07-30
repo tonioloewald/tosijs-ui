@@ -15,7 +15,7 @@ import { buildSite } from './orchestrator';
 import { preflight } from './preflight';
 import { auditDependencies, reportAudit } from './audit-guard';
 import { openDevBrowser } from './open-browser';
-import { createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, SESSION_COOKIE, } from './dev-auth';
+import { createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, mayWriteSource, SESSION_COOKIE, } from './dev-auth';
 const TEST_RESULTS_FILE = '.browser-tests.json';
 const DEFAULT_IDLE_HOURS = 8;
 /**
@@ -111,7 +111,10 @@ export function resolveLimitMb(configMb, envMb) {
 export function isLoopbackAddress(address) {
     if (!address)
         return false;
-    const a = address.trim().toLowerCase().replace(/^\[|\]$/g, '');
+    const a = address
+        .trim()
+        .toLowerCase()
+        .replace(/^\[|\]$/g, '');
     if (a === '::1' || a === 'localhost')
         return true;
     // ::ffff:127.0.0.1 — IPv4-mapped IPv6
@@ -331,7 +334,17 @@ export async function devServer(config, opts = {}) {
         console.log(`\n🔗 Single-use edit link (valid 15 min, then it is spent):\n   ${url}\n`);
         return url;
     };
-    // `kill -USR2 <pid>` prints a fresh link without restarting the server.
+    /*
+    `kill -USR2` still works for a human at the terminal, but it is NOT how `--link`
+    finds us any more. That used `pgrep -f 'bun bin/dev.ts'`, which never matches the
+    documented start command (`bun --watch bin/dev.ts`) — so the release's headline flow
+    was unreachable — while it DID match `bun bin/dev.ts --build-only`, whose process
+    exits before this handler is registered, so the default SIGUSR2 disposition killed
+    in-flight builds. Broadcasting a signal at a guessed pattern was the whole mistake.
+  
+    `--link` now asks over HTTP on the loopback listener, which is unambiguous, needs no
+    process discovery, and cannot signal a sibling project.
+    */
     process.on('SIGUSR2', () => printLink());
     let testReportResolve;
     // Source read/write for in-browser "edit page source" (config.editableSources).
@@ -761,183 +774,204 @@ export async function devServer(config, opts = {}) {
         }
     }
     await ensureDevCerts();
+    /*
+    ONE handler, TWO listeners.
+  
+    `viaTunnel` says which socket the request arrived on, and that is the whole point: a
+    client cannot forge which port it connected to, whereas it can forge (or a proxy can
+    omit) any header. The previous design inferred "local" from the ABSENCE of
+    X-Forwarded-*, which fails OPEN for every forwarder that doesn't set it.
+    */
+    const handleRequest = async (request, srv, viaTunnel) => {
+        /*
+          TWO POSTURES, because projects differ.
+    
+          DEFAULT — read open, write gated. Without a session the site RENDERS: read the
+          docs, click around, run live examples. You just cannot change anything. This is
+          usually what you want, for two reasons: the read-only view is the thing you most
+          often hand someone, and an expired link degrades to a readable page rather than a
+          wall — which matters when you already hold a session and open a second window or
+          a second device.
+    
+          `tunnel.requireToken: true` — locked. No session, nothing at all, including the
+          page. For work that must not be readable by whoever finds the hostname.
+    
+          Either way WRITES always need a session (see /__docstore/source below). The
+          option only moves where READING sits.
+          */
+        /*
+          Magic-link exchange. A `?t=` on ANY path is spent immediately for a session
+          cookie, then we 302 to the same URL with the token stripped.
+    
+          Redirecting is not cosmetic: it is what stops the token existing in the address
+          bar, in history, and in the Referer of anything the page subsequently loads.
+          `Referrer-Policy: no-referrer` covers the one request that DID carry it.
+    
+          An invalid or already-spent token is not an error — it just falls through
+          unauthenticated, so a stale link behaves like no link rather than leaking whether
+          that token was ever real.
+          */
+        const reqUrl = new URL(request.url);
+        const linkToken = reqUrl.searchParams.get(LINK_PARAM);
+        /*
+          PROXIED REQUESTS NEED A SESSION FOR EVERYTHING, not just for writing.
+    
+          The workspace mirrors dev, so it carries unreleased work — viewing it is as
+          private as editing it. Gating only the write endpoint would have left the whole
+          site readable to anyone who found the hostname.
+    
+          This is also what removes the basic-auth dialog. Putting basicauth in front
+          defeated the point of a magic link: you clicked the link and the browser asked
+          for a password anyway. One credential, one prompt-free click.
+    
+          Redemption itself must stay reachable without a session — it is how you GET one.
+          Direct (unproxied) requests are unaffected: at this keyboard, the site is just
+          the dev server it has always been.
+          */
+        const viaProxy = request.headers.get('x-forwarded-for') !== null ||
+            request.headers.get('x-forwarded-host') !== null;
+        const lockedDown = config.preview?.tunnel?.requireToken === true;
+        if (lockedDown && viaProxy && !linkToken) {
+            const cookie = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
+            if (!validSession(auth, cookie, Date.now())) {
+                return new Response(`<!doctype html><meta charset=utf-8>` +
+                    `<title>Link required</title>` +
+                    `<style>body{font:16px/1.6 system-ui;margin:15vh auto;max-width:30rem;padding:0 1.5rem;color:#222}` +
+                    `@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}` +
+                    `code{background:#8881;padding:.1em .4em;border-radius:4px}</style>` +
+                    `<h1>This workspace needs an invite link</h1>` +
+                    `<p>Ask for a fresh one — they are single-use and expire after 15 minutes.</p>` +
+                    `<p><code>bun run tunnel --link</code></p>`, {
+                    status: 401,
+                    headers: {
+                        'Content-Type': 'text/html; charset=utf-8',
+                        'Cache-Control': 'no-store',
+                        'Referrer-Policy': 'no-referrer',
+                    },
+                });
+            }
+        }
+        if (linkToken) {
+            const session = redeemLink(auth, linkToken, Date.now());
+            const clean = urlWithoutToken(request.url, LINK_PARAM);
+            const headers = {
+                Location: clean,
+                'Referrer-Policy': 'no-referrer',
+                'Cache-Control': 'no-store',
+            };
+            if (session) {
+                headers['Set-Cookie'] = sessionCookie(session);
+                console.log('🔓 edit link redeemed — session issued');
+            }
+            return new Response(null, { status: 302, headers });
+        }
+        let reqPath = new URL(request.url).pathname;
+        console.log(request.method, reqPath);
+        if (request.method === 'POST' && reqPath === '/report') {
+            return handleTestReport(request);
+        }
+        // Source read/write for in-browser "edit page source" (opt-in, dev only).
+        // A write lands in the repo file; the chokidar watcher then rebuilds and
+        // the page refreshes — the build itself is the preview.
+        if (reqPath === '/__docstore/source') {
+            // Handle this endpoint UNCONDITIONALLY so it never falls through to the SPA
+            // index.html fallback below. A 200-with-HTML there is silently corrupting:
+            // the client loads the PAGE as the "source" (edit-page-source shows HTML;
+            // save-to-source reads HTML). When editing isn't enabled, answer with a clean
+            // status so `loadSource` falls back to the GitHub raw source (read-only), which
+            // is what the deployed static site already does.
+            if (!config.editableSources) {
+                return new Response('editableSources is not enabled in this doc-site config (set editableSources: true to edit/save source in dev)', {
+                    status: 501,
+                    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+                });
+            }
+            /*
+              WHO MAY WRITE — decided by mayWriteSource() in dev-auth.ts, which is pure and
+              tested. The signal is the LISTENER this arrived on, not a header: tunnel
+              traffic lands on a dedicated loopback port and always needs a session, because
+              "looks local" is precisely what a tunnel counterfeits.
+              */
+            const peer = srv?.requestIP?.(request)?.address;
+            const session = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
+            const authorized = mayWriteSource({
+                viaTunnel,
+                peer,
+                hasValidSession: validSession(auth, session, Date.now()),
+            });
+            if (!authorized) {
+                console.warn(`⚠️  refused ${request.method} /__docstore/source from ${peer ?? 'unknown'} — ` + `no session (use \`bun run tunnel --link\` for an edit link).`);
+                return new Response('not authorized to edit source', {
+                    status: 403,
+                    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+                });
+            }
+            if (request.method === 'GET')
+                return handleReadSource(request);
+            if (request.method === 'POST')
+                return handleWriteSource(request);
+            return new Response('method not allowed', { status: 405 });
+        }
+        /*
+          Mint an invite link. Loopback and NOT via the tunnel: you must already be at this
+          keyboard to hand out access. Reachable over the tunnel it would be a privilege
+          escalation — a read-only visitor minting themselves a write session.
+          */
+        if (reqPath === '/__devlink') {
+            const peer = srv?.requestIP?.(request)?.address;
+            if (viaTunnel || !isLoopbackAddress(peer)) {
+                return new Response('not available', { status: 404 });
+            }
+            return new Response(JSON.stringify({ url: printLink() }), {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-store',
+                },
+            });
+        }
+        if (reqPath === '/')
+            reqPath = '/index.html';
+        const buildFile = resolveFile({ directory: PUBLIC, path: reqPath });
+        if (buildFile)
+            return await respondFile(buildFile);
+        if (isSPA) {
+            const spaFile = resolveFile({ directory: PUBLIC, path: '/index.html' });
+            if (spaFile)
+                return await respondFile(spaFile);
+        }
+        return new Response('File not found', { status: 404 });
+    };
     const server = Bun.serve({
         port: PORT,
         tls: {
             key: Bun.file('./tls/key.pem'),
             cert: Bun.file('./tls/certificate.pem'),
         },
-        async fetch(request, srv) {
-            touch();
-            /*
-            TWO POSTURES, because projects differ.
-      
-            DEFAULT — read open, write gated. Without a session the site RENDERS: read the
-            docs, click around, run live examples. You just cannot change anything. This is
-            usually what you want, for two reasons: the read-only view is the thing you most
-            often hand someone, and an expired link degrades to a readable page rather than a
-            wall — which matters when you already hold a session and open a second window or
-            a second device.
-      
-            `tunnel.requireToken: true` — locked. No session, nothing at all, including the
-            page. For work that must not be readable by whoever finds the hostname.
-      
-            Either way WRITES always need a session (see /__docstore/source below). The
-            option only moves where READING sits.
-            */
-            /*
-            Magic-link exchange. A `?t=` on ANY path is spent immediately for a session
-            cookie, then we 302 to the same URL with the token stripped.
-      
-            Redirecting is not cosmetic: it is what stops the token existing in the address
-            bar, in history, and in the Referer of anything the page subsequently loads.
-            `Referrer-Policy: no-referrer` covers the one request that DID carry it.
-      
-            An invalid or already-spent token is not an error — it just falls through
-            unauthenticated, so a stale link behaves like no link rather than leaking whether
-            that token was ever real.
-            */
-            const reqUrl = new URL(request.url);
-            const linkToken = reqUrl.searchParams.get(LINK_PARAM);
-            /*
-            PROXIED REQUESTS NEED A SESSION FOR EVERYTHING, not just for writing.
-      
-            The workspace mirrors dev, so it carries unreleased work — viewing it is as
-            private as editing it. Gating only the write endpoint would have left the whole
-            site readable to anyone who found the hostname.
-      
-            This is also what removes the basic-auth dialog. Putting basicauth in front
-            defeated the point of a magic link: you clicked the link and the browser asked
-            for a password anyway. One credential, one prompt-free click.
-      
-            Redemption itself must stay reachable without a session — it is how you GET one.
-            Direct (unproxied) requests are unaffected: at this keyboard, the site is just
-            the dev server it has always been.
-            */
-            const viaProxy = request.headers.get('x-forwarded-for') !== null ||
-                request.headers.get('x-forwarded-host') !== null;
-            const lockedDown = config.preview?.tunnel?.requireToken === true;
-            if (lockedDown && viaProxy && !linkToken) {
-                const cookie = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
-                if (!validSession(auth, cookie, Date.now())) {
-                    return new Response(`<!doctype html><meta charset=utf-8>` +
-                        `<title>Link required</title>` +
-                        `<style>body{font:16px/1.6 system-ui;margin:15vh auto;max-width:30rem;padding:0 1.5rem;color:#222}` +
-                        `@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}` +
-                        `code{background:#8881;padding:.1em .4em;border-radius:4px}</style>` +
-                        `<h1>This workspace needs an invite link</h1>` +
-                        `<p>Ask for a fresh one — they are single-use and expire after 15 minutes.</p>` +
-                        `<p><code>bun run tunnel --link</code></p>`, {
-                        status: 401,
-                        headers: {
-                            'Content-Type': 'text/html; charset=utf-8',
-                            'Cache-Control': 'no-store',
-                            'Referrer-Policy': 'no-referrer',
-                        },
-                    });
-                }
-            }
-            if (linkToken) {
-                const session = redeemLink(auth, linkToken, Date.now());
-                const clean = urlWithoutToken(request.url, LINK_PARAM);
-                const headers = {
-                    Location: clean,
-                    'Referrer-Policy': 'no-referrer',
-                    'Cache-Control': 'no-store',
-                };
-                if (session) {
-                    headers['Set-Cookie'] = sessionCookie(session);
-                    console.log('🔓 edit link redeemed — session issued');
-                }
-                return new Response(null, { status: 302, headers });
-            }
-            let reqPath = new URL(request.url).pathname;
-            console.log(request.method, reqPath);
-            if (request.method === 'POST' && reqPath === '/report') {
-                return handleTestReport(request);
-            }
-            // Source read/write for in-browser "edit page source" (opt-in, dev only).
-            // A write lands in the repo file; the chokidar watcher then rebuilds and
-            // the page refreshes — the build itself is the preview.
-            if (reqPath === '/__docstore/source') {
-                // Handle this endpoint UNCONDITIONALLY so it never falls through to the SPA
-                // index.html fallback below. A 200-with-HTML there is silently corrupting:
-                // the client loads the PAGE as the "source" (edit-page-source shows HTML;
-                // save-to-source reads HTML). When editing isn't enabled, answer with a clean
-                // status so `loadSource` falls back to the GitHub raw source (read-only), which
-                // is what the deployed static site already does.
-                if (!config.editableSources) {
-                    return new Response('editableSources is not enabled in this doc-site config (set editableSources: true to edit/save source in dev)', { status: 501, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
-                }
-                /*
-                LOOPBACK **OR** AN AUTHENTICATED SESSION.
-        
-                Reading serves any file in the repo; writing is remote code execution (write a
-                file, the watcher rebuilds, the build runs it). So the caller must be one of:
-        
-                  - physically local (you, at this keyboard), or
-                  - holding a session cookie earned by spending a single-use link.
-        
-                Note there is still no env-var override and no token read from a URL or a
-                header a page could forge: the session arrives as an HttpOnly cookie the
-                browser attaches itself, and SameSite=Lax means another origin cannot make
-                your browser POST here with it. A location check alone was a stopgap; this is
-                the actual authorization.
-                */
-                const peer = srv?.requestIP?.(request)?.address;
-                const session = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
-                /*
-                A TUNNELLED REQUEST LOOKS LOOPBACK, so the peer address alone cannot be trusted
-                here. `ssh -R` delivers to localhost, so every remote request arriving through
-                the tunnel has a 127.0.0.1 peer — meaning a naive `loopback OR session` lets
-                anyone past the proxy write files WITHOUT a session, and the cookie buys
-                nothing. (Caught by a test that did exactly that.)
-        
-                So split on whether the request was PROXIED. Caddy's reverse_proxy sets
-                X-Forwarded-*; a browser on this machine talking to the dev server directly
-                does not. Therefore:
-        
-                  proxied  → a valid session is REQUIRED (loopback is meaningless here)
-                  direct   → loopback peer is sufficient (you are at this keyboard)
-        
-                Trusting a header is normally a mistake, and it is safe here only because of
-                the topology: the tunnel's remote end is bound to the box's loopback
-                (`GatewayPorts no`), so nothing reaches this socket from outside except through
-                Caddy — which sets the header itself. A remote caller cannot arrive without it.
-                And forging it can only ever make the check STRICTER, never weaker.
-                */
-                const proxied = request.headers.get('x-forwarded-for') !== null ||
-                    request.headers.get('x-forwarded-host') !== null;
-                const authorized = proxied
-                    ? validSession(auth, session, Date.now())
-                    : isLoopbackAddress(peer);
-                if (!authorized) {
-                    console.warn(`⚠️  refused ${request.method} /__docstore/source from ${peer ?? 'unknown'} — ` +
-                        `no session (use \`bun run tunnel --link\` for an edit link).`);
-                    return new Response('not authorized to edit source', {
-                        status: 403,
-                        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-                    });
-                }
-                if (request.method === 'GET')
-                    return handleReadSource(request);
-                if (request.method === 'POST')
-                    return handleWriteSource(request);
-                return new Response('method not allowed', { status: 405 });
-            }
-            if (reqPath === '/')
-                reqPath = '/index.html';
-            const buildFile = resolveFile({ directory: PUBLIC, path: reqPath });
-            if (buildFile)
-                return await respondFile(buildFile);
-            if (isSPA) {
-                const spaFile = resolveFile({ directory: PUBLIC, path: '/index.html' });
-                if (spaFile)
-                    return await respondFile(spaFile);
-            }
-            return new Response('File not found', { status: 404 });
-        },
+        fetch: (request, srv) => handleRequest(request, srv, false),
     });
+    /*
+    The TUNNEL listener: plain HTTP, bound to loopback, and the ONLY thing `ssh -R`
+    should forward to.
+  
+    Separate from the main port on purpose. Arriving here is what marks a request as
+    remote — an unforgeable fact, unlike a header — so writes through it always require
+    a session even though the peer address is 127.0.0.1.
+  
+    Plain HTTP is fine and simpler: the hop is inside the SSH tunnel already, and it
+    removes the `tls_insecure_skip_verify` the proxy previously needed to talk to a
+    self-signed dev cert. `hostname: '127.0.0.1'` is load-bearing — on 0.0.0.0 this
+    would be an unauthenticated plaintext copy of the dev server on the LAN.
+    */
+    const tunnelPort = config.preview?.tunnel?.localPort;
+    let tunnelServer;
+    if (tunnelPort && !testMode) {
+        tunnelServer = Bun.serve({
+            port: tunnelPort,
+            hostname: '127.0.0.1',
+            fetch: (request, srv) => handleRequest(request, srv, true),
+        });
+        console.log(`Tunnel listener on http://127.0.0.1:${tunnelPort} (loopback only; writes require a session)`);
+    }
     console.log(`Listening on https://localhost:${PORT}`);
     // ── open (or bring to front) this project's browser tab ─────────────────────
     //

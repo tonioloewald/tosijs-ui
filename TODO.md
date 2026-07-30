@@ -44,15 +44,16 @@ migration under time pressure. Tracked so they are chosen, not discovered.
       [tonioloewald/tosijs#20](https://github.com/tonioloewald/tosijs/issues/20), see `UPSTREAM.md`;
       the user is fixing it in tosijs. Revisit this CSS half after bumping the tosijs dep with the fix.
 
-
 ### From the 1.7.0-beta.3 nine-lens review (`RELEASE-REVIEW-1.7-beta3.md`)
 
 Full report in that file. Recommendation was **BLOCK** on one finding, now **fixed**:
+
 - [x] **BLOCKER FIXED** — eager static `tjs-lang/editors` import + scope-capture on every reader
       example. Now a dynamic import gated to `dialect!=='js' && editorsBuilt`; optional-peer contract
       restored, scope code is a lazy 1.3KB chunk fetched only at edit-time.
 
 Non-blocking follow-ups (do before the FINAL 1.7.0 tag):
+
 - [x] **CHANGELOG** — added `1.7.0-beta.3` section, fixed the peer line to `^0.10.1`, annotated the
       beta.2 "Remaining… defers construction" note as delivered.
 - [x] **CLAUDE.md/MEMORY.md `haltija@latest` → `^1.4.0`** (code pins `HALTIJA_PKG=haltija@^1.4.0`).
@@ -83,15 +84,10 @@ Non-blocking follow-ups (do before the FINAL 1.7.0 tag):
 - [x] **#8 hydration console errors** — verified fixed by the 1.6.9 parts adoption, closed, guarded
       (`hydration.pw.ts` console-clean test).
 - [x] **#15 ePub cross-links** — fixed (`rewriteInBookLinks`), closed, 6 unit cases + real-ePub verified.
-- [~] **GitHub issues + `UPSTREAM.md` (ecosystem), remaining:**
-      - [x] #14 (throwing example) already filed + open (tosijs-ui#14) — tracked, not a new filing.
-      - [x] **WebKit doc-test-runner skip filed as tosijs-ui#19** (2026-07-20) — the 4 specs that
-            `test.skip` WebKit + root cause (iframe runner never posts per-page `tosi-tests-done`).
-      - [x] bun#34053 note kept current (weekly poll 2026-07-20; PR still unmerged, still 1.3.14).
-      - [ ] **#13 (`<tosi-map>`) — CLOSE ON TAG.** Fixed on-branch (`c7c1e63e`) but the issue is still
-            OPEN; close it naming 1.7.0 when the tag lands.
-      - [ ] #9 (document the cinematic-landing-page pattern — content-bound). **#12** (language-plugin
-            hooks) is strategic platform work, not a cleanup — see the platform sequence below.
+- [~] **GitHub issues + `UPSTREAM.md` (ecosystem), remaining:** - [x] #14 (throwing example) already filed + open (tosijs-ui#14) — tracked, not a new filing. - [x] **WebKit doc-test-runner skip filed as tosijs-ui#19** (2026-07-20) — the 4 specs that
+  `test.skip` WebKit + root cause (iframe runner never posts per-page `tosi-tests-done`). - [x] bun#34053 note kept current (weekly poll 2026-07-20; PR still unmerged, still 1.3.14). - [ ] **#13 (`<tosi-map>`) — CLOSE ON TAG.** Fixed on-branch (`c7c1e63e`) but the issue is still
+  OPEN; close it naming 1.7.0 when the tag lands. - [ ] #9 (document the cinematic-landing-page pattern — content-bound). **#12** (language-plugin
+  hooks) is strategic platform work, not a cleanup — see the platform sequence below.
 - [x] **Shared `tosijs-coding-practices` (practices lens) — DONE (2026-07-20).** On review, most were
       already landed by the earlier practices commit: `testing.md` Playwright claim already inverted
       (dedicated 8799, `reuseExistingServer:false`); `00-stack.md` already has the 12-`@codemirror/*`
@@ -99,23 +95,18 @@ Non-blocking follow-ups (do before the FINAL 1.7.0 tag):
       "Done when: filed upstream". The one genuinely-missing lesson — **"never scope the unit lane with a
       `*.test.ts` glob" (skips subdirs, ~126 tests) — added to `testing.md`** (commit `417ce9e`, unpushed).
 
-
-
 - [x] **Bumped tjs-lang 0.9.1 → 0.10.1** (2026-07-17, memory-storm fix). All three refs in lockstep
       (package.json dev+peer, `TJS_VERSION`). Required the inline-WASM guard update (0.10.x renamed
       the compiled export `__tjs_wasm_0` → collision-free `__tjs_wasm_<hash>_<n>`, tjs-lang#11 — guard
       now matches by pattern). #12 hand-roll deleted (`TjsAutocompleteConfig` → real `AutocompleteConfig`
       from `tjs-lang/editors/codemirror`, `import type` so zero bundle cost). All lanes green
-      (unit + doc-tests + full Playwright).
-      - [ ] **Still watch RSS over a real multi-day watch session** — the storm being gone is the whole
-            point of the version; builds/lanes alone don't exercise a long-lived process.
-      - [x] **#10 scope scanner deleted** — replaced ~272 lines (`extractTopLevelBindingNames` +
-            `buildScopeCapture` + helpers) with `scopeCaptureEpilogue` from `tjs-lang/editors`. The
-            "acorn bloat" worry was WRONG: that entry is a self-contained ~5KB file (no acorn), so the
-            static import is negligible (hydrate 121.9→121.8KB gzip). Verified via `scope-autocomplete.test.ts`.
-      - [ ] **#16 `tjsEditorExternal` — leave as belt-and-suspenders.** 0.10.x declares the
-            `@codemirror/*` optional peerDeps, so the hard-fail it guarded is gone, but keep the probe
-            until an isolated-tree build is actually verified without it.
+      (unit + doc-tests + full Playwright). - [ ] **Still watch RSS over a real multi-day watch session** — the storm being gone is the whole
+      point of the version; builds/lanes alone don't exercise a long-lived process. - [x] **#10 scope scanner deleted** — replaced ~272 lines (`extractTopLevelBindingNames` +
+      `buildScopeCapture` + helpers) with `scopeCaptureEpilogue` from `tjs-lang/editors`. The
+      "acorn bloat" worry was WRONG: that entry is a self-contained ~5KB file (no acorn), so the
+      static import is negligible (hydrate 121.9→121.8KB gzip). Verified via `scope-autocomplete.test.ts`. - [ ] **#16 `tjsEditorExternal` — leave as belt-and-suspenders.** 0.10.x declares the
+      `@codemirror/*` optional peerDeps, so the hard-fail it guarded is gone, but keep the probe
+      until an isolated-tree build is actually verified without it.
 
 - [ ] **RFC: language-plugin registry for live-example (tosijs-ui#12, from the tjs-lang side).**
       Invert the hardcoded `js|ts|tjs` dialect switch in `code-transform.ts` into a plugin
@@ -144,7 +135,7 @@ Non-blocking follow-ups (do before the FINAL 1.7.0 tag):
       the release gate for the first time. Also hardened the interactive haltija lane
       (`bun run test-browser`): the start-timeout path now calls `stopHaltija()` (was the naive
       `haltija.kill()` that leaked the Electron grandchild and poisoned the next run), and it
-      adopts a *reachable* haltija regardless of window count (no more racing a second instance
+      adopts a _reachable_ haltija regardless of window count (no more racing a second instance
       next to a zero-window one).
       **Residuals (minor):** (a) WebKit is skipped in `doc-tests.pw.ts` — its iframe runner never
       posts per-page `tosi-tests-done`, so pages wait out the 30s per-page timeout and the corpus
@@ -155,35 +146,35 @@ Non-blocking follow-ups (do before the FINAL 1.7.0 tag):
       already sidesteps both by using an isolated Playwright browser.
 
 - [~] **M10 — the IIFE tripled: 121KB → 388KB gzip, ~100% CodeMirror.** HALF 1 DONE.
-      The doc-site build now emits an **ESM `--splitting` hydration bundle** (`hydrate.js` + hashed
-      chunks) that the served pages load as `<script type="module">`; `dist/iife.js` (classic) is
-      kept for the CDN `<script>` path. Result: the always-loaded entry is **122.7kb gzip** (was
-      388kb), and CodeMirror rides a lazy chunk. The tjs CM extension stays bundled and splitting
-      preserves the shared single `@codemirror/state` (it and `code-editor-cm` import the same
-      shared chunk). Verified: 41 Playwright green, pages hydrate via the module, editors work when
-      loaded. **A page with no code examples now ships zero CodeMirror** — the headline case.
-      **HALF 2 REMAINING — self-contained examples (bake the transpiled JS into the page).**
-      Chosen approach, fully designed in [`self-contained-examples-plan.md`](self-contained-examples-plan.md).
-      Supersedes the earlier "defer editor construction" idea: baking removes BOTH CodeMirror AND the
-      tjs transpiler from first paint (deferring only editors still loads tjs to run a `tjs` preview),
-      and makes a saved example runnable with zero runtime deps. The bake artifact is exactly what
-      `check-examples` already computes per block; embed it as a hidden non-executing
-      `<script type="application/tosi-transpiled">` co-located with the `<pre>`, keyed by source text.
-      Four committable slices (build-side inert → runtime consume → defer editors → save). **Slices 1
-      and 2 DONE:** tjs examples bake into hidden scripts and RUN from them on the reader path, and
-      `loadTransform('js')` is now identity — so a reader page runs all its js+tjs examples with the
-      tjs transpiler never requested on first paint (verified by a reader-path Playwright test + the
-      doc-tests lane). **Slice 3 DONE too:** the `<tosi-code>` panels build lazily on first
-      showCode (via `ensureEditors()`, not `content()`), so a reader page loads NEITHER the transpiler
-      NOR CodeMirror on first paint — the M10 goal. Verified by a chunk-not-loaded-until-showCode
-      Playwright test + the full 17-spec lane. **Slices 2b + 4 DONE:** 2b groups bakes per doc and
-      attaches them to each Doc in `docs.json` (SPA-nav runs baked tjs examples too; only the 1 doc
-      with tjs examples carries bakes, the other 56 add zero bytes). Slice 4 makes `refresh()` run a
-      bake only while it matches the current source (an edit drops the stale bake and transpiles),
-      and persists the transpiled code with a saved local edit so a restore runs transpiler-free.
-      **M10 half 2 is COMPLETE.** **Do NOT gate the editor
-      on "does this corpus have code examples"** — the doc system is an _authoring_ system; prose/book
-      sites need the editor most.
+  The doc-site build now emits an **ESM `--splitting` hydration bundle** (`hydrate.js` + hashed
+  chunks) that the served pages load as `<script type="module">`; `dist/iife.js` (classic) is
+  kept for the CDN `<script>` path. Result: the always-loaded entry is **122.7kb gzip** (was
+  388kb), and CodeMirror rides a lazy chunk. The tjs CM extension stays bundled and splitting
+  preserves the shared single `@codemirror/state` (it and `code-editor-cm` import the same
+  shared chunk). Verified: 41 Playwright green, pages hydrate via the module, editors work when
+  loaded. **A page with no code examples now ships zero CodeMirror** — the headline case.
+  **HALF 2 REMAINING — self-contained examples (bake the transpiled JS into the page).**
+  Chosen approach, fully designed in [`self-contained-examples-plan.md`](self-contained-examples-plan.md).
+  Supersedes the earlier "defer editor construction" idea: baking removes BOTH CodeMirror AND the
+  tjs transpiler from first paint (deferring only editors still loads tjs to run a `tjs` preview),
+  and makes a saved example runnable with zero runtime deps. The bake artifact is exactly what
+  `check-examples` already computes per block; embed it as a hidden non-executing
+  `<script type="application/tosi-transpiled">` co-located with the `<pre>`, keyed by source text.
+  Four committable slices (build-side inert → runtime consume → defer editors → save). **Slices 1
+  and 2 DONE:** tjs examples bake into hidden scripts and RUN from them on the reader path, and
+  `loadTransform('js')` is now identity — so a reader page runs all its js+tjs examples with the
+  tjs transpiler never requested on first paint (verified by a reader-path Playwright test + the
+  doc-tests lane). **Slice 3 DONE too:** the `<tosi-code>` panels build lazily on first
+  showCode (via `ensureEditors()`, not `content()`), so a reader page loads NEITHER the transpiler
+  NOR CodeMirror on first paint — the M10 goal. Verified by a chunk-not-loaded-until-showCode
+  Playwright test + the full 17-spec lane. **Slices 2b + 4 DONE:** 2b groups bakes per doc and
+  attaches them to each Doc in `docs.json` (SPA-nav runs baked tjs examples too; only the 1 doc
+  with tjs examples carries bakes, the other 56 add zero bytes). Slice 4 makes `refresh()` run a
+  bake only while it matches the current source (an edit drops the stale bake and transpiles),
+  and persists the transpiled code with a saved local edit so a restore runs transpiler-free.
+  **M10 half 2 is COMPLETE.** **Do NOT gate the editor
+  on "does this corpus have code examples"** — the doc system is an _authoring_ system; prose/book
+  sites need the editor most.
 
 - **Doc-system: pre-render the chrome, hydrate in place — and drop the opacity gate.**
   Generated pages currently hide the whole body (`body{opacity:0}`, 4s safety-net timeout)

@@ -24,8 +24,8 @@ session-only + expire in 7 days — this line is the durable reminder.)
   dev/prod flag or dependency path), and `overrides` can't express a **nested/path-scoped**
   constraint the way npm's `{"foo": {"bar": "1.2.3"}}` / `"baz > qux"` forms do.
 
-  **Why we care.** Both are the same need: *act on a specific dependency path, not a package
-  name globally.* Our audit gate (`src/doc-system/site/audit-guard.ts`) deliberately blocks on
+  **Why we care.** Both are the same need: _act on a specific dependency path, not a package
+  name globally._ Our audit gate (`src/doc-system/site/audit-guard.ts`) deliberately blocks on
   every high+ advisory regardless of dep class — the time-boxed gate makes over-blocking cheap
   and a dev-only dep still runs on the developer's machine — so **we are not blocked on the
   `--production` half**. It would only let a consumer of `tosijs-ui/site` express a different
@@ -101,14 +101,14 @@ session-only + expire in 7 days — this line is the durable reminder.)
   light-DOM-only.
 
   **Update 2026-07-27 — tosijs 1.7.6's fix was OVER-AGGRESSIVE; DEPRECATED, pinned to 1.7.5.** The
-  1.7.6 fix stopped part collection at *every* nested custom element — which also excludes elements
-  the parent legitimately **assigned** a part to but placed *inside* a nested component. tosijs-ui
+  1.7.6 fix stopped part collection at _every_ nested custom element — which also excludes elements
+  the parent legitimately **assigned** a part to but placed _inside_ a nested component. tosijs-ui
   does exactly that: the `<tosi-code>` editors carry `part="js|html|css|test"` but live inside a
   `<tosi-tabs>`, and `testsCheckbox` lives inside `<tosi-pocket-bar>`. On 1.7.6 `this.parts.js`
   went undefined and `showCode()` threw **`elementRef "js" does not exist!`** — every code
   editor / view-edit-code / edit-in-window broke (plain-HTML examples, which don't open an editor,
   were unaffected). The user is **deprecating 1.7.6 and re-fixing** the scoping (it must exclude a
-  nested component's *own* parts but keep parts the parent assigned to slotted/placed content).
+  nested component's _own_ parts but keep parts the parent assigned to slotted/placed content).
   **We pinned tosijs `1.7.5` (dev + peer `^1.7.5`)** — the last solid version.
 
   **Update 2026-07-27 — 1.7.7 ALSO deprecated (a second, different regression).** 1.7.7 re-fixed the
@@ -117,7 +117,7 @@ session-only + expire in 7 days — this line is the durable reminder.)
   inline default). BUT 1.7.7's **render-timing / computed-getter change broke `<tosi-segmented>`** on
   **Firefox + WebKit** (Chromium fine): after clicking a segment the value updates but the highlight
   stays on the previously-selected one. Mechanism — segmented's `render()` rebuilds its `<label>`s
-  from the `values`/`isOtherValue` getters and relies on a one-shot `valueChanged` flag to *skip*
+  from the `values`/`isOtherValue` getters and relies on a one-shot `valueChanged` flag to _skip_
   that rebuild right after a click; on 1.7.7 the skip no longer holds on FF/WebKit and a rebuild
   re-derives `checked` from a stale getter. Passed on 1.7.0; broke on 1.7.7. **Handed to tosijs; the
   user is deprecating 1.7.7 too and fixing the render timing** (likely affects more than segmented —
@@ -128,11 +128,11 @@ session-only + expire in 7 days — this line is the durable reminder.)
   fixed our side, the other is still tosijs's.** tosijs argued (correctly) that the components were
   depending on `render()` being **skipped** (the one-shot `valueChanged` flag) — an anti-pattern
   1.7.7 merely exposed. We removed it from all three offenders (`segmented`, `color-input`, `form`):
-  `render()` is now idempotent (reconcile-in-place / check-before-write, skipping only *provably
-  redundant* work — colours compared parsed so `#rrggbb ↔ rgba()` doesn't clobber the caret). That
+  `render()` is now idempotent (reconcile-in-place / check-before-write, skipping only _provably
+  redundant_ work — colours compared parsed so `#rrggbb ↔ rgba()` doesn't clobber the caret). That
   hardening is committed and green **9/9 on 1.7.5** (all browsers) and fixed pre-existing FF
   flakiness + focus-loss-on-click. **BUT** re-testing the hardened components against **1.7.7** shows
-  a *second, deeper* regression the hardening cannot touch: after a click, `input.checked` is
+  a _second, deeper_ regression the hardening cannot touch: after a click, `input.checked` is
   correct (`['no']`) yet **`this.value` is STALE (`'yes'`)** — the **change handler** commits a stale
   value, not a render-skip issue. So **un-deprecating 1.7.7 as-is would STILL break segmented** even
   with hardened components. tosijs needs to fix the change-event/render interaction (value staleness
@@ -173,7 +173,7 @@ it's a roadmap sequencing note, not a bug.
 
 - **[#13](https://github.com/tonioloewald/tosijs/issues/13)** — ✅ **RESOLVED (fixed in
   tosijs 1.6.9).** Both asks landed: `hydrate()` now ends with `_hydrated = true, _parts =
-  undefined, _resolveHydrated?.()` — it **invalidates the cached proxy** (so a pre-hydration
+undefined, _resolveHydrated?.()` — it **invalidates the cached proxy** (so a pre-hydration
   read can no longer poison it) AND exposes the seam (`get hydrated`, `get whenHydrated`). We
   bumped the floor to `^1.6.9` and **deleted both hand-rolls** — `code-editor.ts` and
   `live-example/component.ts` now use the inherited `this.hydrated`. Verified: a pre-hydration
@@ -252,6 +252,7 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
 > of our issues (#10, #12, #15, #16).
 >
 > **Done in the bump:** #10, #12, #15 hand-rolls all deleted.
+>
 > - **#10** — replaced our ~272-line scope scanner (`extractTopLevelBindingNames` +
 >   `buildScopeCapture` + `maskLiterals`/`patternNames`/… helpers) with `scopeCaptureEpilogue` from
 >   `tjs-lang/editors`. The earlier "acorn bloat" worry was WRONG: the `tjs-lang/editors` entry is a
@@ -270,6 +271,7 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
 > storm being gone is the point of the version).
 >
 > **Two open asks OF us (cross-repo), filed from the tjs-lang side:**
+>
 > - **tosijs-ui#12** — RFC: a **language-plugin registry** for live-example (invert the hardcoded
 >   `js|ts|tjs` switch) so tjs-lang can drop its AJS playground into doc pages without tosijs-ui
 >   depending on `tjs-lang/vm`. Touches `code-transform.ts`/`checkExamples` directly; the test of
@@ -324,7 +326,7 @@ are RECONCILED against the code:**_
 - **#10 ✅ done** — `extractTopLevelBindingNames` / `buildScopeCapture` are gone from
   `code-transform.ts`; we use the upstream `tjs-lang/editors` entry.
 - **#12 ✅ done** — `code-editor-cm.ts` now `import type { AutocompleteConfig } from
-  'tjs-lang/editors/codemirror'`; `TjsAutocompleteConfig` is a deliberate stable *alias* over
+'tjs-lang/editors/codemirror'`; `TjsAutocompleteConfig` is a deliberate stable _alias_ over
   the real type (name stability for our public surface), not a hand-declaration.
 - **#15 ✅ decided, NOT adopted** — we kept the pattern-match guard
   (`/^__tjs_wasm_[a-z0-9]+_\d+$/`) rather than `__tjs.records({source:'wasm'})`, because
@@ -381,6 +383,7 @@ _Original per-issue notes:_
   haltija-side asks in the comment) — the doc-test lane's `--private` migration is **blocked in a
   plain `bunx haltija` runtime.** Checked 2026-07-20 against **haltija 1.5.0**. The `--private`
   server + port-file + `HALTIJA_PORT` routing all work; launching a browser under it does not:
+
   - **`--headless` needs Playwright bunx-haltija can't resolve** — logs "Playwright not installed",
     launches nothing. We have `playwright@1.58.2` + chromium, but bunx resolves from its own cache
     and **ignores `NODE_PATH`**.
@@ -399,7 +402,7 @@ _Original per-issue notes:_
     process group incl. Electron on spawner-death / wrapper SIGTERM). With that, the migration is a
     few lines. (Blocker A — `--headless` needs Playwright — is moot: `--ci` uses Electron.)
   - **Status checked 2026-07-27: UNBLOCKED — haltija#7 is FIXED in v1.5.5** (latest v1.5.7). The
-    private instance now tears *itself* down: a private run never takes the single-instance lock
+    private instance now tears _itself_ down: a private run never takes the single-instance lock
     (`gotTheLock = IS_PRIVATE ? true : requestSingleInstanceLock()`) and self-cleans on exit — so
     the orphan/lock cycle that blocked us is gone, and consumers no longer hand-reap a reparented
     tree. tosijs-ui#21 is now **actionable**: redo the `--private --ci` doc-test-lane migration

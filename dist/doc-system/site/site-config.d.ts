@@ -331,6 +331,12 @@ export interface SiteConfig {
         tunnel?: {
             /** port to bind on the remote box (loopback there); default 9787 */
             remotePort?: number;
+            /**
+             * Local loopback port the tunnel forwards TO. Requests arriving here are treated
+             * as remote — writes always require a session — because which socket a request
+             * landed on is not something a client can forge, unlike a header. Default 8788.
+             */
+            localPort?: number;
             /** the authenticated public URL that fronts it */
             url?: string;
             /**

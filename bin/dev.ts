@@ -25,7 +25,22 @@ const config = {
   // tosijs-ui-specific codegen, run before doc extraction + build.
   prebuild: async () => {
     const pkg = JSON.parse(await Bun.file('package.json').text())
-    await Bun.write('src/version.ts', `export const version = '${pkg.version}'`)
+    // Write ONLY if the content actually changed.
+    //
+    // `bun --watch` restarts on any change to a file in the module graph, so an
+    // unconditional rewrite of a generated file that something imports is a rebuild
+    // loop — build → rewrite → restart → build. We hit exactly that (899 restarts in
+    // ~40s) the moment the build stamp imported src/version.ts. The import is gone,
+    // but idempotent writes are the durable fix: they make the whole class of
+    // self-write loops impossible rather than relying on nobody ever importing a
+    // generated file again.
+    const versionSrc = `export const version = '${pkg.version}'`
+    const existing = await Bun.file('src/version.ts')
+      .text()
+      .catch(() => '')
+    if (existing.trim() !== versionSrc.trim()) {
+      await Bun.write('src/version.ts', versionSrc)
+    }
     console.log(pkg.version)
     await $`bun ./bin/make-icon-data.js`.text()
   },

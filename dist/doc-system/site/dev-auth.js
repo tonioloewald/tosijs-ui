@@ -132,3 +132,50 @@ export function urlWithoutToken(rawUrl, param) {
     const qs = url.searchParams.toString();
     return url.pathname + (qs ? `?${qs}` : '') + url.hash;
 }
+/*
+WHO MAY WRITE SOURCE.
+
+Extracted and pure because the previous version was an inline expression inside a
+closure behind a TLS-requiring `Bun.serve` — untestable in practice, and it is the
+single decision standing between a tunnelled request and arbitrary repo writes (which
+the watcher then rebuilds and RUNS). A decision that guards code execution must be
+reachable from a test.
+
+It also fixes a fail-OPEN. The previous rule inferred "is this request local?" from the
+ABSENCE of `X-Forwarded-*`:
+
+    proxied ? validSession(...) : isLoopbackAddress(peer)
+
+Absence of a header is not evidence of presence at the keyboard. Any path that delivers
+to loopback without setting those headers — `ssh -R` against a box with
+`GatewayPorts yes`, `ngrok tcp`, `socat`, iptables DNAT, bare nginx `proxy_pass` or
+HAProxy without `option forwardfor` — produced `{peer:127.0.0.1, xff:null}` for an
+off-machine caller and authorized it. The safety argument rested on remote sshd
+configuration the tool could not see and did not check.
+
+So the signal is now the LISTENER the request arrived on, which is not forgeable by a
+client: the dev server binds a separate loopback-only port for tunnel traffic, and
+anything arriving there is treated as remote no matter what it claims.
+
+  viaTunnel  → a valid session is REQUIRED. Always. There is no local shortcut,
+               because "local" is exactly what a tunnel counterfeits.
+  direct     → a loopback peer is sufficient; you are at this keyboard.
+*/
+export function mayWriteSource(opts) {
+    if (opts.viaTunnel)
+        return opts.hasValidSession;
+    return isLoopbackAddressForAuth(opts.peer);
+}
+/** Local copy of the loopback test so this module stays self-contained and testable. */
+export function isLoopbackAddressForAuth(address) {
+    if (!address)
+        return false;
+    const a = address
+        .trim()
+        .toLowerCase()
+        .replace(/^\[|\]$/g, '');
+    if (a === '::1' || a === 'localhost')
+        return true;
+    const mapped = a.startsWith('::ffff:') ? a.slice(7) : a;
+    return /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(mapped);
+}

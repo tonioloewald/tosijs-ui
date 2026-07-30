@@ -39,3 +39,13 @@ export declare function sessionCookie(token: string, maxAgeMs?: number): string;
  * defeat the entire design.
  */
 export declare function urlWithoutToken(rawUrl: string, param: string): string;
+export declare function mayWriteSource(opts: {
+    /** did this arrive on the loopback listener dedicated to the tunnel? */
+    viaTunnel: boolean;
+    /** peer address as reported by the server, for the direct case */
+    peer?: string | null;
+    /** does the request carry a live session cookie? */
+    hasValidSession: boolean;
+}): boolean;
+/** Local copy of the loopback test so this module stays self-contained and testable. */
+export declare function isLoopbackAddressForAuth(address: string | undefined | null): boolean;

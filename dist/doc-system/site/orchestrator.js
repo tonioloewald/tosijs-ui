@@ -24,7 +24,6 @@ import { findOutputDirOverlap } from './output-guard';
 import { preflight } from './preflight';
 import { auditDependencies, reportAudit } from './audit-guard';
 import { gatherBuildStamp, serializeBuildStamp } from './build-stamp';
-import { version } from '../../version';
 import { tjsEditorExternal, tjsEditorLeakedAsExternal, classicScriptSyntaxErrorInChild, } from './bundle-guard';
 // Module specifiers contain regex metacharacters (`/`, `.`, `@`, …), so escape
 // before interpolating into the require-shim detector below.
@@ -632,7 +631,22 @@ export async function buildSite(config, opts = {}) {
     // Build identity at /version.json — "what am I looking at?" for any deployed copy.
     // Deterministic (commit-derived, no wall clock) so a committed outputDir doesn't
     // churn on every build. See build-stamp.ts.
-    await Bun.write(`${PUBLIC}/version.json`, serializeBuildStamp(await gatherBuildStamp({ generator: version, site: config.name })));
+    await Bun.write(`${PUBLIC}/version.json`, serializeBuildStamp(await gatherBuildStamp({
+        // Read from package.json rather than importing src/version.ts.
+        //
+        // That import put a GENERATED file into bin/dev.ts's module graph, and
+        // `bun --watch` restarts the process when any graph file changes — while
+        // prebuild rewrites version.ts on every build. Result: build → rewrite →
+        // restart → build, forever. Observed at 899 restarts in ~40 seconds, and it
+        // makes `bun start` (the documented dev command) completely unusable.
+        //
+        // Never import generated source from the build. Read the data instead.
+        generator: await Bun.file('package.json')
+            .json()
+            .then((p) => p.version ?? 'unknown')
+            .catch(() => 'unknown'),
+        site: config.name,
+    })));
     // Burn the theme into a static stylesheet (separate subprocess — see
     // generate-css.ts). Resolve the sibling relative to THIS module so it works
     // both in-repo (.ts) and when shipped (compiled .js).

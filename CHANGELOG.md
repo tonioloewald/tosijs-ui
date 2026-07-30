@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.9.0-beta.3
+
+Fixes three blockers found by the nine-lens review of beta.2, all in the remote-editing
+feature, plus a rebuild loop the review did not catch because nothing automated runs
+`bun start`.
+
+- **`bun run tunnel --link` never worked.** It ran `pgrep -f 'bun bin/dev.ts'`, which does
+  not match the documented start command (`bun --watch bin/dev.ts`) — so the headline flow
+  was unreachable. Worse, it *did* match `bun bin/dev.ts --build-only`, whose process exits
+  before the signal handler is registered, so the default SIGUSR2 disposition **killed
+  in-flight builds**. Now it asks the dev server over a loopback-only `/__devlink` endpoint:
+  no process guessing, no signals, and it cannot touch a sibling project. (`/__devlink` is
+  refused over the tunnel — a read-only visitor minting a write session would be privilege
+  escalation.)
+- **Write authorization failed OPEN.** It inferred "this is local" from the *absence* of
+  `X-Forwarded-*`, so any forwarder that doesn't set them — `ssh -R` with `GatewayPorts yes`,
+  `ngrok tcp`, `socat`, iptables DNAT, nginx without `forwardfor` — delivered an off-machine
+  request as `{peer: 127.0.0.1, no headers}` and got an **arbitrary repo write**, which the
+  watcher rebuilds and runs. The dev server now binds a **separate loopback-only port** for
+  tunnel traffic; arriving there always requires a session. Which socket you connected to is
+  not something a client can forge. `bun run tunnel` also verifies the remote port is bound
+  to loopback and says so loudly if it isn't.
+- **The decision guarding that RCE had no tests**, while its own comment claimed a
+  regression test that did not exist. It is now `mayWriteSource()` — pure, exported, and
+  covered including a named regression case for the fail-open above.
+- **Fix: `bun start` was in a rebuild loop** (measured at 899 restarts in ~40s), which made
+  the documented dev command unusable. The build stamp imported the *generated*
+  `src/version.ts`, putting it in `bun --watch`'s module graph while prebuild rewrote it every
+  build. The import is gone, and generated files are now written **only when the content
+  changes**, which makes the whole class of self-write loops impossible.
+
+
 ## 1.9.0-beta.2
 
 > Prerelease — install with `tosijs-ui@beta`. `latest` stays on 1.8.0.

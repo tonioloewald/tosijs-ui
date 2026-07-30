@@ -176,11 +176,12 @@ dev.tosijs.net {
 # The static preview hosts below still use basicauth, because static files have no
 # session logic to run — there is nothing there to hold a cookie.
 edit.dev.tosijs.net {
-	reverse_proxy https://127.0.0.1:9787 {
-		transport http {
-			tls_insecure_skip_verify
-		}
-	}
+	# Plain HTTP to the tunnel's dedicated loopback listener. No tls_insecure_skip_verify
+	# any more: the dev server exposes a separate non-TLS port for tunnel traffic, the
+	# hop is inside SSH regardless, and — the point — arriving on THAT listener is what
+	# marks a request as remote, so writes always require a session. A listener is not
+	# something a client can forge; a header is.
+	reverse_proxy http://127.0.0.1:9787
 	log {
 		output file /var/log/caddy/preview.log {
 			roll_size 10MiB
