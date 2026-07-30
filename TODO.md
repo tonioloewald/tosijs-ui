@@ -10,6 +10,28 @@ back end. Sequence: `./docs` subpath refactor → #6 tjs+CodeMirror → #5 halti
 widget → #4 edit source → #3 save/load examples → #1 ePub → #2 PDF. Phase-2:
 importmap example resolution, versioned endpoints, AJS RestStore.
 
+## Dependency majors — decide, don't drift
+
+Minors and patches are current (`bun outdated` shows Update == Current for everything),
+so there is no hygiene backlog. These are **major** jumps, which are decisions rather
+than routine upgrades — but per `tosijs-coding-practices/practices/dependencies.md` §11,
+letting them sit for years is how a five-minute security pin turns into a forced
+migration under time pressure. Tracked so they are chosen, not discovered.
+
+- **`marked` 16 → 18** — highest priority, because it is a **peer dependency**: the
+  version consumers install is their problem, so a major we have not tested against is
+  a support burden we cannot see. Verify rendering across the doc corpus.
+- **`prettier` 2 → 3** — will reformat the entire repo in one commit. Cheap in effort,
+  expensive in diff noise; do it alone, never alongside a feature, and ideally right
+  after a release so blame stays readable.
+- **`typescript` 5 → 7** — check for removed compiler options first. Note the root
+  tsconfig already had `downlevelIteration` removed under a newer tsc, so this jump is
+  not free.
+- **`chokidar` 4 → 5** — the dev server's watcher; test the rebuild-storm detector and
+  the ignore list specifically.
+- **`@types/node` 22 → 26**, **`@types/jsdom` 21 → 28** — types only, but they can
+  surface real errors in a strict build.
+
 ## High Priority
 
 ### Nested live-examples mis-route (self-hosting demo) — CSS half

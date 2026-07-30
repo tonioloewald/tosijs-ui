@@ -89,6 +89,8 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
   `<tosi-md>` renders markdown using [marked](https://www.npmjs.com/package/marked).
 - https://ui.tosijs.net/menu/ — menu
   Being able to pop a menu up anywhere is just so nice, and `tosijs-ui` allows menus
+- https://ui.tosijs.net/migrating/ — Migrating from older versions
+  Breaking changes and migration checklists for older tosijs-ui releases — 1.7.0's editor change and the 1.3.0 xinjs-ui rename.
 - https://ui.tosijs.net/month/ — month
   This is a component for displaying a month and selecting days within that month.
 - https://ui.tosijs.net/notifications/ — notifications

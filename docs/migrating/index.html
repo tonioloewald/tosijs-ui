@@ -29,120 +29,61 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="../doc-system.css" data-tosi-doc-system />
-  <title>rich text — tosijs-ui</title>
-  <meta name="description" content="&lt;tosi-rich-text&gt; is a simple and easily extensible document.execCommand WYSIWYG editor with some conveniences." />
-  <link rel="canonical" href="https://ui.tosijs.net/rich-text/" />
+  <title>Migrating from older versions — tosijs-ui</title>
+  <meta name="description" content="Breaking changes and migration checklists for older tosijs-ui releases — 1.7.0&#39;s editor change and the 1.3.0 xinjs-ui rename." />
+  <link rel="canonical" href="https://ui.tosijs.net/migrating/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="rich text — tosijs-ui" />
-  <meta property="og:description" content="&lt;tosi-rich-text&gt; is a simple and easily extensible document.execCommand WYSIWYG editor with some conveniences." />
-  <meta property="og:url" content="https://ui.tosijs.net/rich-text/" />
+  <meta property="og:title" content="Migrating from older versions — tosijs-ui" />
+  <meta property="og:description" content="Breaking changes and migration checklists for older tosijs-ui releases — 1.7.0&#39;s editor change and the 1.3.0 xinjs-ui rename." />
+  <meta property="og:url" content="https://ui.tosijs.net/migrating/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"rich text","description":"\u003ctosi-rich-text> is a simple and easily extensible document.execCommand WYSIWYG editor with some conveniences.","url":"https://ui.tosijs.net/rich-text/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Migrating from older versions","description":"Breaking changes and migration checklists for older tosijs-ui releases — 1.7.0's editor change and the 1.3.0 xinjs-ui rename.","url":"https://ui.tosijs.net/migrating/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
   <tosi-doc-system docs="../docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>rich text</h1>
-<p><code>&lt;tosi-rich-text&gt;</code> is a simple and easily extensible <code>document.execCommand</code> WYSIWYG editor with some conveniences.
-The class name is <code>RichText</code> and the ElementCreator is <code>tosiRichText</code>.</p>
-<h3><code>default</code> widgets</h3>
-<pre><code class="language-html">&lt;tosi-rich-text&gt;
-&lt;h3&gt;Heading&lt;/h3&gt;
-&lt;p&gt;And some &lt;b&gt;text&lt;/b&gt;&lt;/p&gt;
-&lt;/tosi-rich-text&gt;
-</code></pre>
-<pre><code class="language-css">tosi-rich-text {
-  background: white;
-}
+<h1>Migrating from older versions</h1>
+<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for older tosijs-ui releases — 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
 
-tosi-rich-text [part=&quot;toolbar&quot;] {
-  background: #f8f8f8;
-}
-
-tosi-rich-text [part=&quot;doc&quot;] {
-  padding: 20px;
-}
-</code></pre>
-<h3><code>minimal</code> widgets</h3>
-<pre><code class="language-html">&lt;tosi-rich-text widgets=&quot;minimal&quot;&gt;
-&lt;h3&gt;Heading&lt;/h3&gt;
-&lt;p&gt;And some &lt;b&gt;text&lt;/b&gt;&lt;/p&gt;
-&lt;/tosi-rich-text&gt;
-</code></pre>
-<pre><code class="language-css">tosi-rich-text {
-  background: white;
-}
-
-tosi-rich-text [part=&quot;toolbar&quot;] {
-  background: #f8f8f8;
-}
-
-tosi-rich-text [part=&quot;doc&quot;] {
-  padding: 20px;
-}
-</code></pre>
-<p>By default, <code>&lt;tosi-rich-text&gt;</code> treats its initial contents as its document, but you can also set (and get)
-its <code>value</code>.</p>
-<h2>toolbar</h2>
-<p><code>&lt;tosi-rich-text&gt;</code> elements have a <code>toolbar</code> slot (actually a tosi-slot because it doesn&#39;t use
-the shadowDOM).</p>
-<p>If you set the <code>widgets</code> attribute to <code>default</code> or <code>minimal</code> you will get a toolbar
-for free. Or you can add your own custom widgets.</p>
-<h2>helper functions</h2>
-<p>A number of helper functions are available, including:</p>
+<p>Notices for releases you may be upgrading <em>past</em>. If you are starting fresh, none of
+this applies — go to the <a href="/">Quick Start</a> instead.</p>
+<p>Current releases are described in <a href="https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
+<h2>⚠️ Breaking change in 1.7.0 — <code>&lt;tosi-code&gt;</code> (ACE → CodeMirror 6)</h2>
+<p><strong>1.7.0 is a breaking release shipping under a minor version, deliberately.</strong> <code>&lt;tosi-code&gt;</code>
+moved from ACE to CodeMirror 6. <code>value</code>, <code>mode</code>, the <code>change</code> event, <code>disabled</code>, and
+<code>undo</code>/<code>redo</code> are unchanged; the ACE-era <strong><code>theme</code></strong> and <strong><code>options</code></strong> props are <strong>removed</strong> with
+no shim. Dark mode is now automatic (<code>body.darkmode</code>) and styling comes from <code>--code-bg</code> /
+<code>--text-color</code>. The <code>2.0</code> name is reserved for the tjs-native tosijs port, so this ships as
+1.7.0 — <strong>pin <code>tosijs-ui@1.6</code> to defer.</strong> Full detail and rationale in
+<a href="./CHANGELOG.md">CHANGELOG.md</a>.</p>
+<h2>Migrating to v1.3.0</h2>
+<p>v1.3.0 completes the rename from <code>xinjs-ui</code> to <code>tosijs-ui</code>. All custom element
+tags now use the <code>tosi-</code> prefix and all exports use <code>Tosi*</code>/<code>tosi*</code> names.</p>
+<h3>Breaking changes</h3>
 <ul>
-<li><code>commandButton(title: string, command: string, iconClass: string)</code></li>
-<li><code>blockStyle(options: Array&lt;{caption: string, tagType: string}&gt;)</code></li>
-<li><code>spacer(width = &#39;10px&#39;)</code></li>
-<li><code>elastic(width = &#39;10px&#39;)</code></li>
+<li><strong>Custom element tags</strong> have changed from <code>&lt;xin-*&gt;</code> to <code>&lt;tosi-*&gt;</code>.
+For example: <code>&lt;xin-select&gt;</code> is now <code>&lt;tosi-select&gt;</code>, <code>&lt;xin-icon&gt;</code> is now
+<code>&lt;tosi-icon&gt;</code>, <code>&lt;xin-example&gt;</code> is now <code>&lt;tosi-example&gt;</code>, etc.</li>
+<li><strong>CSS selectors</strong> targeting old tag names (e.g. <code>xin-select { ... }</code>) must
+be updated.</li>
+<li><strong>CSS custom properties</strong> in component <code>styleSpec</code> objects retain <code>--xin-*</code>
+fallbacks for backward compatibility, but new code should use <code>--tosi-*</code>.</li>
 </ul>
-<p>These each create a toolbar widget. A <code>blockStyle</code>-generated <code>&lt;select&gt;</code> element will
-automatically have its value changed based on the current selection.</p>
-<h2>properties</h2>
-<p>A <code>&lt;tosi-rich-text&gt;</code> element also has <code>selectedText</code> and <code>selectedBlocks</code> properties, allowing
-you to easily perform operations on text selections, and a <code>selectionChange</code> callback (which
-simply passes through document <code>selectionchange</code> events, but also passes a reference to
-the <code>&lt;tosi-rich-text&gt;</code> component).</p>
-<h2>Form Integration</h2>
-<p><code>&lt;tosi-rich-text&gt;</code> is form-associated, making it work directly in native forms:</p>
-<pre><code class="language-html">&lt;form class=&quot;richtext-form&quot;&gt;
-  &lt;label&gt;
-    &lt;b&gt;Compose message (required):&lt;/b&gt;
-    &lt;tosi-rich-text name=&quot;content&quot; widgets=&quot;minimal&quot; required style=&quot;height: 150px&quot;&gt;
-    &lt;/tosi-rich-text&gt;
-  &lt;/label&gt;
-  &lt;button type=&quot;submit&quot;&gt;Submit&lt;/button&gt;
-  &lt;button type=&quot;reset&quot;&gt;Reset&lt;/button&gt;
-  &lt;pre class=&quot;output&quot; style=&quot;max-height: 100px; overflow: auto&quot;&gt;&lt;/pre&gt;
-&lt;/form&gt;
-</code></pre>
-<pre><code class="language-css">.preview .richtext-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.preview .richtext-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.preview tosi-rich-text {
-  background: white;
-}
-.preview tosi-rich-text [part=&quot;toolbar&quot;] {
-  background: #f8f8f8;
-}
-</code></pre>
-<pre><code class="language-js">const form = preview.querySelector(&#39;.richtext-form&#39;)
-form.addEventListener(&#39;submit&#39;, (e) =&gt; {
-  e.preventDefault()
-  const data = new FormData(form)
-  form.querySelector(&#39;.output&#39;).textContent = &#39;Content: &#39; + data.get(&#39;content&#39;)
-})
-</code></pre>
+<h3>Deprecated exports still work</h3>
+<p>The old <code>xin*</code> JavaScript exports (<code>xinSelect</code>, <code>xinTabs</code>, <code>xinTable</code>, etc.)
+remain available and will continue to work. Most log a runtime deprecation
+warning; a few are silent aliases marked with JSDoc <code>@deprecated</code>. They will
+be removed in a future major version.</p>
+<h3>Migration checklist</h3>
+<ol>
+<li>Search your HTML for <code>&lt;xin-</code> and replace with <code>&lt;tosi-</code></li>
+<li>Search your CSS for <code>xin-</code> selectors and update to <code>tosi-</code></li>
+<li>Search your JS/TS for <code>xinSelect</code>, <code>xinTabs</code>, etc. and switch to <code>tosiSelect</code>, <code>tosiTabs</code>, etc.</li>
+<li>Search for <code>--xin-</code> CSS variable overrides and switch to <code>--tosi-</code></li>
+</ol>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -178,7 +119,7 @@ form.addEventListener(&#39;submit&#39;, (e) =&gt; {
       <li><a class="doc-link" href="../tooltip/">tooltip</a></li>
     </ul>
     </details></li>
-    <li><details open><summary><a class="doc-link" href="../form-components/">Form Components</a></summary>
+    <li><details><summary><a class="doc-link" href="../form-components/">Form Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../color-input/">color input field</a></li>
       <li><a class="doc-link" href="../filter-builder/">filter</a></li>
@@ -186,7 +127,7 @@ form.addEventListener(&#39;submit&#39;, (e) =&gt; {
       <li><a class="doc-link" href="../month/">month</a></li>
       <li><a class="doc-link" href="../password-strength/">password strength</a></li>
       <li><a class="doc-link" href="../rating/">rating</a></li>
-      <li><a class="doc-link current" href="../rich-text/" aria-current="page">rich text</a></li>
+      <li><a class="doc-link" href="../rich-text/">rich text</a></li>
       <li><a class="doc-link" href="../segmented/">segmented select</a></li>
       <li><a class="doc-link" href="../select/">select</a></li>
       <li><a class="doc-link" href="../tag-list/">tag-list</a></li>
@@ -206,12 +147,12 @@ form.addEventListener(&#39;submit&#39;, (e) =&gt; {
       <li><a class="doc-link" href="../value-renderer/">valueRenderer</a></li>
     </ul>
     </details></li>
-    <li><details><summary><a class="doc-link" href="../appendices/">Appendices</a></summary>
+    <li><details open><summary><a class="doc-link" href="../appendices/">Appendices</a></summary>
     <ul>
       <li><a class="doc-link" href="../doc-system/">doc-system</a></li>
       <li><a class="doc-link" href="../kitchen-sink/">kitchen sink</a></li>
       <li><a class="doc-link" href="../make-icon-data/">make-icon-data</a></li>
-      <li><a class="doc-link" href="../migrating/">Migrating from older versions</a></li>
+      <li><a class="doc-link current" href="../migrating/" aria-current="page">Migrating from older versions</a></li>
       <li><a class="doc-link" href="../doc-browser/">doc-browser</a></li>
       <li><a class="doc-link" href="../doc-site-system/">Doc-Site System</a></li>
       <li><a class="doc-link" href="../docs/">docs</a></li>

@@ -9,6 +9,7 @@ doc-site build system, doc extraction, and icon tooling.
 - [doc-system](/doc-system/)
 - [kitchen sink](/kitchen-sink/)
 - [make-icon-data](/make-icon-data/)
+- [Migrating from older versions](/migrating/)
 - [doc-browser](/doc-browser/)
 - [Doc-Site System](/doc-site-system/)
 - [docs](/docs/)
