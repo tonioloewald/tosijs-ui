@@ -770,6 +770,22 @@ export async function devServer(config, opts = {}) {
         async fetch(request, srv) {
             touch();
             /*
+            TWO POSTURES, because projects differ.
+      
+            DEFAULT — read open, write gated. Without a session the site RENDERS: read the
+            docs, click around, run live examples. You just cannot change anything. This is
+            usually what you want, for two reasons: the read-only view is the thing you most
+            often hand someone, and an expired link degrades to a readable page rather than a
+            wall — which matters when you already hold a session and open a second window or
+            a second device.
+      
+            `tunnel.requireToken: true` — locked. No session, nothing at all, including the
+            page. For work that must not be readable by whoever finds the hostname.
+      
+            Either way WRITES always need a session (see /__docstore/source below). The
+            option only moves where READING sits.
+            */
+            /*
             Magic-link exchange. A `?t=` on ANY path is spent immediately for a session
             cookie, then we 302 to the same URL with the token stripped.
       
@@ -800,7 +816,8 @@ export async function devServer(config, opts = {}) {
             */
             const viaProxy = request.headers.get('x-forwarded-for') !== null ||
                 request.headers.get('x-forwarded-host') !== null;
-            if (viaProxy && !linkToken) {
+            const lockedDown = config.preview?.tunnel?.requireToken === true;
+            if (lockedDown && viaProxy && !linkToken) {
                 const cookie = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
                 if (!validSession(auth, cookie, Date.now())) {
                     return new Response(`<!doctype html><meta charset=utf-8>` +

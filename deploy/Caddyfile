@@ -21,27 +21,41 @@
 # `root` is the only thing that varies, keeping it in the caller costs one line per
 # project and makes this file work on any Caddy 2.x.
 (preview_site) {
-	# THE PREVIEW HOST IS PRIVATE.
+	# THE PREVIEW HOST IS PRIVATE — but gated by a LINK, not a password dialog.
 	#
-	# It mirrors dev, so it carries whatever you are working on — including unreleased
-	# work. That makes it the opposite of the production doc site, and the default has
-	# to be closed rather than open.
+	# basicauth used to guard these hosts, and it worked, but it makes the browser throw
+	# a credentials dialog — which is exactly the friction the magic link exists to
+	# remove on the workspace host. So static previews use the same shape: visit
+	# `?t=<token>` once, get a cookie, browse normally forever after. No dialog.
 	#
-	# The credential hash lives in /etc/caddy/preview.env on the box (mode 640,
-	# root:caddy) and reaches Caddy via a systemd EnvironmentFile drop-in — NOT in this
-	# file, because this file is committed to a public repo. A bcrypt hash of a strong
-	# random password is not realistically crackable, but publishing one is still a
-	# free gift to an attacker and there is no reason to.
+	# WEAKER THAN THE WORKSPACE'S AUTH, deliberately and knowingly. This is a shared
+	# bearer secret in a cookie, not a single-use link exchanged for a per-client
+	# session — Caddy serving static files has no session store to keep, and adding a
+	# process to hold one would cost more than these previews are worth. It is
+	# equivalent in strength to the basicauth it replaces (one shared secret), with
+	# better ergonomics. The workspace host, where WRITES happen, keeps the real thing.
 	#
-	# Note the spelling: Caddy 2.6 (Debian trixie) is `basicauth`; 2.8+ renamed it to
-	# `basic_auth`. Regenerate with `caddy hash-password`.
-	#
-	# The stakes here are DISCLOSURE, not code execution — a static host has no write
-	# endpoint — which is why one line is a proportionate design rather than the full
-	# threat model an exposed dev server would need.
-	#
-	basicauth {
-		dev {env.PREVIEW_HASH}
+	# `__PREVIEW_TOKEN__` is substituted at deploy time from /etc/caddy/preview.env
+	# (640 root:caddy), so the real token never lands in this file, which is committed
+	# to a public repo. It is a placeholder rather than `{env.PREVIEW_TOKEN}` because
+	# Caddy does NOT expand env placeholders inside MATCHER arguments — the config
+	# validates and loads happily and then simply never matches, which presents as
+	# "my link 401s" with nothing in the logs.
+	@link query t=__PREVIEW_TOKEN__
+	handle @link {
+		# Domain= so ONE link covers every preview subdomain. Without it the cookie is
+		# scoped to the exact host you clicked, and the next project 401s at you.
+		header Set-Cookie "tosi_preview=__PREVIEW_TOKEN__; Domain=.dev.tosijs.net; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax"
+		header Referrer-Policy "no-referrer"
+		header Cache-Control "no-store"
+		redir * / 302
+	}
+
+	@unauthed not header_regexp Cookie "tosi_preview=__PREVIEW_TOKEN__"
+	handle @unauthed {
+		header Content-Type "text/html; charset=utf-8"
+		header Cache-Control "no-store"
+		respond "<!doctype html><meta charset=utf-8><title>Link required</title><style>body{font:16px/1.6 system-ui;margin:15vh auto;max-width:30rem;padding:0 1.5rem;color:#222}@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}</style><h1>This preview needs an invite link</h1><p>Ask for one — it sets a cookie and then you can browse normally.</p>" 401
 	}
 
 	file_server

@@ -333,6 +333,19 @@ export interface SiteConfig {
             remotePort?: number;
             /** the authenticated public URL that fronts it */
             url?: string;
+            /**
+             * Require a valid session even to VIEW the tunnelled workspace.
+             *
+             * Default `false`: the site renders for anyone who has the URL, but **writes
+             * always need a session** — so a stranger sees a read-only page and cannot
+             * change anything. That is usually right, and it means an expired link degrades
+             * to a readable page instead of a wall (which matters when you already hold a
+             * session and open a second window or another device).
+             *
+             * Set `true` for maximum security: no session, nothing at all — not even the
+             * page. Use it when the work must not be readable by whoever finds the hostname.
+             */
+            requireToken?: boolean;
         };
     };
     /**
