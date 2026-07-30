@@ -292,6 +292,31 @@ export interface SiteConfig {
      */
     openBrowser?: boolean | string;
     /**
+     * Preview host for `bun bin/deploy-preview.ts` — rsync the built site to a box you
+     * control, so a phone, a client, or a reviewer can see it without your dev server
+     * (or your laptop) being up.
+     *
+     * Only `host` is required; everything else has a sensible default:
+     *
+     * ```ts
+     * preview: { host: 'root@203.0.113.10' }
+     * // → rsyncs <outputDir>/ to /srv/preview/<name>/ on that box
+     * ```
+     *
+     * The deploy is a plain `rsync --delete` of static files — the whole artifact is a
+     * few MB — so there is no pipeline, no build service, and (because static files
+     * have no write endpoint) no meaningful attack surface to design around. See
+     * REMOTE-ACCESS-PLAN.md.
+     */
+    preview?: {
+        /** ssh target, e.g. `root@203.0.113.10` or `deploy@preview.example.com` */
+        host: string;
+        /** remote directory; defaults to `/srv/preview/<name>` */
+        path?: string;
+        /** public URL, printed after a successful deploy (e.g. `https://dev.example.com`) */
+        url?: string;
+    };
+    /**
      * Enable the dev-server source read/write endpoints (`/__docstore/source`) that
      * back in-browser "edit page source". Local dev only — the dev server runs on
      * your own machine over your own files, so there is nothing to secure; writes

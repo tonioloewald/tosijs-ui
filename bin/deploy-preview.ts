@@ -36,15 +36,29 @@ const has = (name: string): boolean => args.includes(`--${name}`)
 
 const OUT = siteConfig.outputDir ?? 'docs'
 const PROJECT = siteConfig.name ?? 'site'
-const host = flag('host') ?? process.env.PREVIEW_HOST
-const remotePath = flag('path') ?? process.env.PREVIEW_PATH ?? `/srv/preview/${PROJECT}`
+const preview = (siteConfig as { preview?: { host?: string; path?: string; url?: string } })
+  .preview
+
+// Precedence: explicit flag > env > site config. The config is the "just works"
+// default; the flag exists so you can push a one-off somewhere else without editing
+// (and committing) a config file.
+const host = flag('host') ?? process.env.PREVIEW_HOST ?? preview?.host
+const remotePath =
+  flag('path') ??
+  process.env.PREVIEW_PATH ??
+  preview?.path ??
+  `/srv/preview/${PROJECT}`
+const publicUrl = flag('url') ?? preview?.url
 const go = has('go')
 
 if (!host) {
   console.error(
     `\nNo preview host.\n\n` +
-      `  bun bin/deploy-preview.ts --host=user@example.com [--path=/srv/preview/x] [--go]\n` +
-      `  PREVIEW_HOST=user@example.com bun bin/deploy-preview.ts\n`
+      `  Set one once in your site config:\n` +
+      `      preview: { host: 'user@example.com' }\n\n` +
+      `  ...or pass it per-run:\n` +
+      `      bun bin/deploy-preview.ts --host=user@example.com [--path=/srv/preview/x] [--go]\n` +
+      `      PREVIEW_HOST=user@example.com bun bin/deploy-preview.ts\n`
   )
   process.exit(1)
 }
@@ -116,6 +130,6 @@ if (result.exitCode !== 0) {
 
 console.log(
   go
-    ? `\n✅ Deployed. ${stamp}\n`
+    ? `\n✅ Deployed. ${stamp}` + (publicUrl ? `\n   ${publicUrl}\n` : '\n')
     : `\nDry run complete — re-run with --go to apply.\n`
 )
