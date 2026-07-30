@@ -110,7 +110,7 @@ cat > "$OUT/index.html" <<HTML
 	$(if [ "$count" -eq 0 ]; then echo '<p class="empty">Nothing deployed yet.</p>'; else echo "<ul>$rows
 	</ul>"; fi)
 	$(if [ -n "$unlinked" ]; then echo "<p class=\"empty\">Deployed but not routed:$unlinked</p>"; fi)
-	<footer>Previews only — not production. Regenerated on every deploy.</footer>
+	<footer>Previews only — not production. Each entry updates when that project deploys (<code>bun run deploy --go</code>), not when it builds.</footer>
 </main>
 <script>
 	// Absolute time is always correct; relative time is what you actually want to
