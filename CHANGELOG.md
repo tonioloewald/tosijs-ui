@@ -39,6 +39,23 @@ feature, plus a rebuild loop the review did not catch because nothing automated 
   local end that connects to nothing. It now probes the port it actually forwards to and
   **refuses to open**, naming the likely cause (including "your tosijs-ui predates the
   tunnel listener").
+- **Tunnelled workspaces self-register too** (tosijs-ui#29). Static previews have
+  self-registered since beta.1, but a tunnelled host still needed a block hand-added to
+  the *shared* Caddyfile — so the one remaining manual edit was the **riskier** one: a
+  typo there breaks routing for every project on the box, which is exactly what the
+  fragment design set out to abolish. `tosijs-tunnel` now writes its own fragment with
+  the same validate-before-reload discipline, and the shared file names no hostnames at
+  all.
+- **`tunnel.remotePort` is allocated per project** instead of defaulting to 9787 for
+  everyone (tosijs-ui#29). Two projects taking the default collided, quietly and in the
+  direction that matters. The default is now derived from the project name — stable, and
+  nobody has to allocate it — while an explicit `remotePort` still wins.
+- **Fix: `chokidar` is no longer a hard runtime dependency of the build** (tosijs-ui#32).
+  `dev-server.js` had a top-level `import { watch } from 'chokidar'`, and a consumer's
+  `bin/site.ts` loads that module even in `--build` mode — so adopters hit
+  `Cannot find package 'chokidar'` on a plain build. It is now imported lazily inside the
+  watcher path and declared an **optional peer**, so building needs nothing extra and the
+  watching dev server explains itself if it is missing.
 - **Fix: `bun start` was in a rebuild loop** (measured at 899 restarts in ~40s), which made
   the documented dev command unusable. The build stamp imported the *generated*
   `src/version.ts`, putting it in `bun --watch`'s module graph while prebuild rewrote it every

@@ -57,7 +57,8 @@
     "happy-dom": "^20.7.0",
     "marked": "^16.4.2",
     "tjs-lang": "^0.12.0",
-    "tosijs": "^1.7.8"
+    "tosijs": "^1.7.8",
+    "chokidar": "^4.0.3"
   },
   "peerDependenciesMeta": {
     "@resvg/resvg-js": {
@@ -67,6 +68,9 @@
       "optional": true
     },
     "tjs-lang": {
+      "optional": true
+    },
+    "chokidar": {
       "optional": true
     }
   },

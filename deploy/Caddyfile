@@ -142,46 +142,19 @@ dev.tosijs.net {
 	import preview_site
 }
 
-# ── Authenticated live workspace (edit.dev.tosijs.net) ───────────────────────
+# ── Tunnelled workspaces register themselves too ─────────────────────────────
 #
-# Proxies to an SSH reverse tunnel that terminates at a developer's OWN machine, where
-# the repo and the dev server live. THE BOX DOES NO COMPUTE — it terminates TLS and
-# checks a password. That is what makes it scale: N projects tunnel their own
-# workspace to a EUR3 VPS, instead of the VPS trying to be a build farm. Do the work
-# where the data is.
+# Static previews self-registered from beta.1, but a tunnelled workspace still needed a
+# block hand-added HERE — so the one remaining manual edit was the RISKIER one: a typo in
+# this shared file breaks routing for every project on the box, which is exactly what the
+# fragment design set out to abolish (tosijs-ui#29).
 #
-# Open the tunnel from the workspace machine with:
-#   ssh -f -N -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 \
-#       -R 9787:localhost:8787 root@<box>
-#
-# WHY THIS IS SAFE TO EXPOSE, when the dev server's source endpoints are otherwise
-# loopback-only:
-#   - sshd runs `GatewayPorts no`, so the tunnel's listener is bound to 127.0.0.1 on
-#     the box and is NOT reachable from the internet. Caddy is the only thing that can
-#     talk to it, and Caddy demands basicauth first.
-#   - `ssh -R` delivers to `localhost` on the workspace machine, so the dev server sees
-#     a LOOPBACK peer and its source read/write endpoints work — which is correct here,
-#     because reaching that socket at all required passing the front door. The location
-#     check and the authentication check compose instead of fighting.
-#
-# tls_insecure_skip_verify: the backend is the dev server's own mkcert certificate,
-# which Caddy has no reason to trust. The hop is inside the SSH tunnel already, so the
-# TLS there is redundant belt-and-braces, not the thing protecting the traffic.
-# NO basicauth here, deliberately. The dev server behind this does magic-link auth
-# (single-use link -> durable HttpOnly session cookie) and requires a session for
-# EVERY proxied request, not just for writes. Stacking basicauth in front would mean
-# clicking your invite link and then being asked for a password anyway, which defeats
-# the point of the link. One credential, one prompt-free click.
-#
-# The static preview hosts below still use basicauth, because static files have no
-# session logic to run — there is nothing there to hold a cookie.
-edit.dev.tosijs.net {
-	# Plain HTTP to the tunnel's dedicated loopback listener. No tls_insecure_skip_verify
-	# any more: the dev server exposes a separate non-TLS port for tunnel traffic, the
-	# hop is inside SSH regardless, and — the point — arriving on THAT listener is what
-	# marks a request as remote, so writes always require a session. A listener is not
-	# something a client can forge; a header is.
-	reverse_proxy http://127.0.0.1:9787
+# Now `tosijs-tunnel` writes /srv/preview/_sites/<name>-tunnel.caddy the same way the
+# deploy writes a static one, with the same validate-before-reload discipline. Adding a
+# tunnelled project is symmetric with adding a static one, and this file stops changing.
+(tunnel_site) {
+	# `reverse_proxy` is supplied by the fragment, which knows its own remote port.
+	encode gzip zstd
 	log {
 		output file /var/log/caddy/preview.log {
 			roll_size 10MiB

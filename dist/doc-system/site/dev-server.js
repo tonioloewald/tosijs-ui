@@ -9,7 +9,6 @@ Build-time only (Bun APIs). Never import this from browser code.
 */
 import * as path from 'path';
 import { statSync, existsSync } from 'fs';
-import { watch } from 'chokidar';
 import { $, spawn } from 'bun';
 import { buildSite } from './orchestrator';
 import { preflight } from './preflight';
@@ -742,6 +741,29 @@ export async function devServer(config, opts = {}) {
             './icons',
             ...(config.watchPaths ?? []),
         ];
+        /*
+        Lazy — a BUILD must not pull in a file watcher.
+    
+        This was a top-level `import { watch } from 'chokidar'`, and dev-server.js is part of
+        the shipped `tosijs-ui/site` pipeline that a consumer's `bin/site.ts` loads even in
+        `--build` mode. chokidar was declared only in devDependencies, so every adopter hit
+        `Cannot find package 'chokidar'` on a plain build and had to add it themselves
+        (tosijs-ui#32). Importing it here means the build path never touches it, and it is now
+        an OPTIONAL peer with a clear message rather than a hard runtime dependency inflicted
+        on everyone who only wanted to build a site.
+        */
+        let watch;
+        try {
+            ;
+            ({ watch } = await import('chokidar'));
+        }
+        catch {
+            console.error(`\n🛑 The dev server watches for changes with \`chokidar\`, which is not installed.\n\n` +
+                `   bun add -d chokidar\n\n` +
+                `   It is an OPTIONAL peer: only the watching dev server needs it, so\n` +
+                `   \`bun run build\` and DEV_NO_WATCH=1 work without it.\n`);
+            process.exit(1);
+        }
         watch(watchPaths, { ignored, ignoreInitial: true }).on('all', (_event, changedPath) => {
             if (changedPath) {
                 triggers.set(changedPath, (triggers.get(changedPath) ?? 0) + 1);
