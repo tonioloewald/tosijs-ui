@@ -57,7 +57,7 @@ export default defineSiteConfig({
   // Preview host — `bun run deploy` (dry run) / `bun run deploy --go`.
   preview: {
     host: 'root@212.147.248.15',
-    url: 'https://dev.tosijs.net',
+    url: 'https://ui.dev.tosijs.net',
   },
 
   // Inject the haltija dev-channel so a coding agent (Claude) can drive the live

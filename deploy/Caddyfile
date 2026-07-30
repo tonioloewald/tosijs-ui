@@ -94,20 +94,44 @@
 # project — in git, reviewable — is a much better trade than a DNS credential here.
 # The DNS wildcard still does its job: no registrar visit when a project is added.
 #
+# The ROOT is the index — a generated list of what is actually deployed, with the
+# commit each preview is serving (deploy/build-index.sh). Deliberately NOT a redirect
+# to the most-recently-deployed project: that would make one URL mean different things
+# at different times depending on invisible state, which is the "what am I looking at"
+# problem /version.json exists to kill, reintroduced at the routing layer. A link you
+# send someone should still show what you meant an hour later.
 dev.tosijs.net {
-	root * /srv/preview/tosijs-ui
+	root * /srv/preview/_index
 	import preview_site
 }
 
-# Add a project: 3 lines, and no DNS change (the *.dev wildcard already resolves).
+# ── Projects register THEMSELVES ─────────────────────────────────────────────
+# Each project's deploy writes /srv/preview/_sites/<name>.caddy declaring its own
+# hostname and root, and this glob picks it up. So adding a project touches no
+# central file: `bun run deploy --go` from that project is the whole ceremony, and
+# no DNS change is needed either (the *.dev wildcard already resolves).
 #
-# 3d.dev.tosijs.net {
-# 	root * /srv/preview/tosijs-3d
+# The fragment is the SINGLE SOURCE OF TRUTH for "which hostname serves which
+# directory" — build-index.sh reads these same files to write its links, so the
+# index cannot disagree with the router.
+#
+# Two consequences worth being explicit about:
+#   - A project that can write a fragment can declare any hostname and serve any
+#     path. Every project here already deploys with the same ssh key, so this grants
+#     no new privilege — but it means this box trusts everything that can deploy to it.
+#   - A malformed fragment fails the reload for EVERY project. The deploy therefore
+#     validates before reloading and refuses to reload on invalid config, so a bad
+#     fragment leaves the previous good config serving. Same rule as the dev server's
+#     last-good build: never leave it broken.
+import /srv/preview/_sites/*.caddy
+#
+# tosijs.dev.tosijs.net {
+# 	root * /srv/preview/tosijs
 # 	import preview_site
 # }
 #
-# schema.dev.tosijs.net {
-# 	root * /srv/preview/tosijs-schema
+# 3d.dev.tosijs.net {
+# 	root * /srv/preview/tosijs-3d
 # 	import preview_site
 # }
 #

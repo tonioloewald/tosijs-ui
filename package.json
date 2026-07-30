@@ -9,6 +9,8 @@
     "book": "bun bin/build-book.ts",
     "og": "bun bin/generate-og.ts",
     "deploy": "bun bin/deploy-preview.ts",
+    "deploy:caddy": "scp deploy/Caddyfile $PREVIEW_SSH:/etc/caddy/Caddyfile && ssh $PREVIEW_SSH 'caddy fmt --overwrite /etc/caddy/Caddyfile && systemctl reload caddy'",
+    "deploy:index": "ssh $PREVIEW_SSH 'bash -s' < deploy/build-index.sh",
     "test-browser": "bun bin/dev.ts --test",
     "format": "bun eslint src demo --fix && bun prettier --write .",
     "tests": "bun test && bun playwright test",
