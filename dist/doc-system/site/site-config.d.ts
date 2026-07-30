@@ -342,14 +342,34 @@ export interface SiteConfig {
             /**
              * Require a valid session even to VIEW the tunnelled workspace.
              *
-             * Default `false`: the site renders for anyone who has the URL, but **writes
-             * always need a session** — so a stranger sees a read-only page and cannot
-             * change anything. That is usually right, and it means an expired link degrades
-             * to a readable page instead of a wall (which matters when you already hold a
-             * session and open a second window or another device).
+             * **Defaults to `true`**, because an edit host is yours, not an audience's. If
+             * you want to show someone the site, point them at the static preview host —
+             * that is what it is for, and it has its own shareable link.
+             *
+             * The naming convention makes the posture legible without reading config:
+             *
+             *     <project>.dev.example.com        read-only preview, shareable
+             *     <project>.edit.dev.example.com   live workspace, session required
+             *
+             * The earlier default was `false`, on the reasoning that an expired link should
+             * degrade to a readable page rather than a wall "when you open a second window".
+             * That reasoning was wrong: a second window **shares the session cookie**, so a
+             * holder is never walled. The wall only appears for someone genuinely not
+             * authenticated — which is the correct answer for a workspace mirroring an
+             * uncommitted tree. Note also that the hostname is not a secret: Let's Encrypt
+             * publishes every certificate it issues to public Certificate Transparency logs.
+             *
+             * Set `false` deliberately if you actually want a live read-only audience.
              *
              * Set `true` for maximum security: no session, nothing at all — not even the
-             * page. Use it when the work must not be readable by whoever finds the hostname.
+             * page.
+             *
+             * Worth knowing when you decide: **the hostname is not a secret.** Let's Encrypt
+             * publishes every certificate it issues to Certificate Transparency logs, which
+             * are public and searchable, so a tunnelled workspace's hostname is discoverable
+             * by construction rather than obscure. If the tree it mirrors contains anything
+             * you would not publish — and an uncommitted working tree usually does — set this
+             * to `true`.
              */
             requireToken?: boolean;
         };

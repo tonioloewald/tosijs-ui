@@ -976,7 +976,8 @@ export async function devServer(
     const viaProxy =
       request.headers.get('x-forwarded-for') !== null ||
       request.headers.get('x-forwarded-host') !== null
-    const lockedDown = config.preview?.tunnel?.requireToken === true
+    // Defaults to TRUE: an edit host is yours. Share the static preview host instead.
+    const lockedDown = config.preview?.tunnel?.requireToken !== false
     if (lockedDown && viaProxy && !linkToken) {
       const cookie = readCookie(request.headers.get('cookie'), SESSION_COOKIE)
       if (!validSession(auth, cookie, Date.now())) {
@@ -1011,8 +1012,36 @@ export async function devServer(
       if (session) {
         headers['Set-Cookie'] = sessionCookie(session)
         console.log('🔓 edit link redeemed — session issued')
+        return new Response(null, { status: 302, headers })
       }
-      return new Response(null, { status: 302, headers })
+      /*
+      Invalid or ALREADY SPENT — and the likely culprit is not an attacker but a
+      chat-app link-preview bot, whose GET *is* the first use. dev-auth.ts names
+      unfurlers as a reason for single-use without handling the consequence: you click
+      a dead link, get silently redirected, and the next signal is a save failing.
+
+      An anonymous reader who already holds a session never lands here (their cookie is
+      sent automatically), so saying this out loud costs nothing and saves a confusing
+      hunt.
+      */
+      const spent =
+        `<!doctype html><meta charset=utf-8><title>Link already used</title>` +
+        `<style>body{font:16px/1.6 system-ui;margin:15vh auto;max-width:32rem;padding:0 1.5rem;color:#222}` +
+        `@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}` +
+        `code{background:#8881;padding:.1em .4em;border-radius:4px}</style>` +
+        `<h1>That invite link has been used</h1>` +
+        `<p>Invite links are single-use and expire after 15 minutes. If you pasted this ` +
+        `link into a chat app, its link preview may have spent it before you clicked — ` +
+        `which is exactly why they are single-use.</p>` +
+        `<p>Ask for a fresh one: <code>tosijs-tunnel --link</code></p>`
+      return new Response(spent, {
+        status: 401,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-store',
+          'Referrer-Policy': 'no-referrer',
+        },
+      })
     }
     let reqPath = new URL(request.url).pathname
     console.log(request.method, reqPath)

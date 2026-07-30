@@ -61,7 +61,7 @@ export default defineSiteConfig({
     tunnel: {
       remotePort: 9787, // explicit: predates per-project allocation, and DNS points here
       localPort: 8788,
-      url: 'https://edit.dev.tosijs.net',
+      url: 'https://ui.edit.dev.tosijs.net',
     },
   },
 

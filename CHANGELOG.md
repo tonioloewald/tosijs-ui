@@ -1,5 +1,60 @@
 # Changelog
 
+## 1.9.0-rc.1
+
+Release candidate. Everything the nine-lens review and the first adopters raised is
+addressed; no features are pending. Install with `tosijs-ui@rc`.
+
+**Edit and view are now separate hostnames**, which makes the security posture legible
+without reading config:
+
+| host | what it is | gate |
+| --- | --- | --- |
+| `<project>.dev.example.com` | read-only static preview — shareable | invite cookie |
+| `<project>.edit.dev.example.com` | live editable workspace — yours | session, always |
+
+- **`tunnel.requireToken` now defaults to `true`.** The old default (read-open) was
+  justified by "an expired link should degrade to a readable page when you open a second
+  window" — but a second window **shares the session cookie**, so a holder is never
+  walled. The wall only appears for someone genuinely unauthenticated, which is the right
+  answer for a workspace mirroring an uncommitted tree. Note the hostname is not a
+  secret: Let's Encrypt publishes every certificate to public CT logs. Set `false`
+  deliberately if you want a live read-only audience.
+- **An edit host with no tunnel behind it explains itself** — a 503 saying the workspace
+  is offline, with a link to the static preview, instead of a bare 502. It deliberately
+  does *not* fall back to serving the snapshot: you would think you were looking at live
+  work when you were not.
+- **A spent invite link says so.** The likely culprit is a chat-app link-preview bot,
+  whose GET *is* the first use; previously you got a silent redirect and discovered it
+  when a save failed.
+
+**Security fixes** (all found by review or adopters, none reported in the wild):
+
+- `POST /report` was unauthenticated and reachable through the tunnel — a stranger could
+  fabricate `{passed:N, failed:0}` and make the test lane **exit green on a suite that
+  never ran**. Now local-only.
+- Build-error text (absolute paths from your machine) was injected into every served page
+  with no auth check. The label stays public; the detail needs a session.
+- `rsync --delete` accepted any absolute path two segments deep — including `/usr/lib`
+  and `/etc/caddy`, which it would have *mirrored*, i.e. emptied. Now an allowlist of
+  preview roots, extracted and tested.
+
+**Correctness:**
+
+- **A 403 could destroy uncommitted work.** An unauthorized read fell through to GitHub
+  `main`, so you edited the *published* file, and the save then handed you a download of
+  it — applying which silently reverts your working copy. 401/403 is now its own case in
+  both editors.
+- **The last-good build protection moved to where the wipe is.** It lived in the dev
+  server's watch branch, so `bun run build`, CI, adopters, and `bun start`'s own initial
+  build had none of it. Now in `buildSite`, in a `finally` covering both a throw and a
+  `return false`, with exit codes checked (the old restore could fail while still logging
+  that it had succeeded).
+- "Build failed" is no longer overwritten by test results seconds later.
+- `?t=` is only intercepted when a tunnel is configured, and only on GET — `t` is the
+  classic cache-buster name, and a 302'd POST loses its body.
+
+
 ## 1.9.0-beta.3
 
 Fixes three blockers found by the nine-lens review of beta.2, all in the remote-editing
