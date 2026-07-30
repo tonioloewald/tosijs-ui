@@ -783,6 +783,43 @@ export async function devServer(config, opts = {}) {
             */
             const reqUrl = new URL(request.url);
             const linkToken = reqUrl.searchParams.get(LINK_PARAM);
+            /*
+            PROXIED REQUESTS NEED A SESSION FOR EVERYTHING, not just for writing.
+      
+            The workspace mirrors dev, so it carries unreleased work — viewing it is as
+            private as editing it. Gating only the write endpoint would have left the whole
+            site readable to anyone who found the hostname.
+      
+            This is also what removes the basic-auth dialog. Putting basicauth in front
+            defeated the point of a magic link: you clicked the link and the browser asked
+            for a password anyway. One credential, one prompt-free click.
+      
+            Redemption itself must stay reachable without a session — it is how you GET one.
+            Direct (unproxied) requests are unaffected: at this keyboard, the site is just
+            the dev server it has always been.
+            */
+            const viaProxy = request.headers.get('x-forwarded-for') !== null ||
+                request.headers.get('x-forwarded-host') !== null;
+            if (viaProxy && !linkToken) {
+                const cookie = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
+                if (!validSession(auth, cookie, Date.now())) {
+                    return new Response(`<!doctype html><meta charset=utf-8>` +
+                        `<title>Link required</title>` +
+                        `<style>body{font:16px/1.6 system-ui;margin:15vh auto;max-width:30rem;padding:0 1.5rem;color:#222}` +
+                        `@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}` +
+                        `code{background:#8881;padding:.1em .4em;border-radius:4px}</style>` +
+                        `<h1>This workspace needs an invite link</h1>` +
+                        `<p>Ask for a fresh one — they are single-use and expire after 15 minutes.</p>` +
+                        `<p><code>bun run tunnel --link</code></p>`, {
+                        status: 401,
+                        headers: {
+                            'Content-Type': 'text/html; charset=utf-8',
+                            'Cache-Control': 'no-store',
+                            'Referrer-Policy': 'no-referrer',
+                        },
+                    });
+                }
+            }
             if (linkToken) {
                 const session = redeemLink(auth, linkToken, Date.now());
                 const clean = urlWithoutToken(request.url, LINK_PARAM);

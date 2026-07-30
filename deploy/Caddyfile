@@ -153,10 +153,15 @@ dev.tosijs.net {
 # tls_insecure_skip_verify: the backend is the dev server's own mkcert certificate,
 # which Caddy has no reason to trust. The hop is inside the SSH tunnel already, so the
 # TLS there is redundant belt-and-braces, not the thing protecting the traffic.
+# NO basicauth here, deliberately. The dev server behind this does magic-link auth
+# (single-use link -> durable HttpOnly session cookie) and requires a session for
+# EVERY proxied request, not just for writes. Stacking basicauth in front would mean
+# clicking your invite link and then being asked for a password anyway, which defeats
+# the point of the link. One credential, one prompt-free click.
+#
+# The static preview hosts below still use basicauth, because static files have no
+# session logic to run — there is nothing there to hold a cookie.
 edit.dev.tosijs.net {
-	basicauth {
-		dev {env.PREVIEW_HASH}
-	}
 	reverse_proxy https://127.0.0.1:9787 {
 		transport http {
 			tls_insecure_skip_verify
