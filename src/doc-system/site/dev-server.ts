@@ -9,7 +9,7 @@ Build-time only (Bun APIs). Never import this from browser code.
 */
 
 import * as path from 'path'
-import { statSync } from 'fs'
+import { statSync, existsSync } from 'fs'
 import { watch } from 'chokidar'
 import { $, spawn } from 'bun'
 import type { SiteConfig } from './site-config'
@@ -326,6 +326,19 @@ export async function devServer(
       process.env.HALTIJA_DEV === 'true')
   const HALTIJA_SNIPPET = haltijaLoaderSnippet(HALTIJA_HTTPS_PORT)
 
+  /*
+  What the far end has to tell you. `ok: true` means nothing to report and nothing
+  is injected into served pages. A failed rebuild sets it; the next good build
+  clears it. Surfaced through the page's existing floating widget — see
+  statusSnippet() below and the `__tosiDevStatus` reader in doc-browser.ts.
+  */
+  let buildStatus: {
+    ok: boolean
+    label?: string
+    detail?: string
+    at?: number
+  } = { ok: true }
+
   let testReportResolve: ((results: any) => void) | undefined
 
   // Source read/write for in-browser "edit page source" (config.editableSources).
@@ -403,15 +416,42 @@ export async function devServer(
     return null
   }
 
-  // Serve a resolved file, injecting the haltija dev-channel loader into HTML
-  // pages when enabled. Serve-time only — the loader never touches the built
-  // output on disk, and non-HTML assets are streamed untouched.
+  /*
+  Serve-time status for the page's floating widget.
+
+  The widget already exists and already means "the far end has something to tell
+  you" — it is how browser-test results surface. A failed rebuild is the same kind
+  of news, so it uses the same surface rather than inventing a second one.
+
+  Injected as a plain global rather than pushed over a socket: the case that matters
+  is "the build broke and I hit refresh", and a refresh re-reads this. (When Phase 2
+  of REMOTE-ACCESS-PLAN.md adds a socket, it can update the same global live.)
+
+  Only emitted when there IS something to say, so a healthy dev server injects
+  nothing at all.
+  */
+  function statusSnippet(): string {
+    if (buildStatus.ok) return ''
+    const payload = JSON.stringify({
+      ok: false,
+      label: buildStatus.label,
+      detail: buildStatus.detail,
+      at: buildStatus.at,
+    })
+    return `<script>window.__tosiDevStatus=${payload}</script>`
+  }
+
+  // Serve a resolved file, injecting the haltija dev-channel loader and/or a build
+  // status into HTML pages. Serve-time only — neither touches the built output on
+  // disk, and non-HTML assets are streamed untouched.
   async function respondFile(filePath: string): Promise<Response> {
-    if (haltijaDev && filePath.endsWith('.html')) {
+    const extras =
+      (haltijaDev ? HALTIJA_SNIPPET : '') + (testMode ? '' : statusSnippet())
+    if (extras && filePath.endsWith('.html')) {
       const html = await Bun.file(filePath).text()
       const injected = html.includes('</body>')
-        ? html.replace('</body>', `${HALTIJA_SNIPPET}</body>`)
-        : html + HALTIJA_SNIPPET
+        ? html.replace('</body>', `${extras}</body>`)
+        : html + extras
       return new Response(injected, {
         headers: { 'Content-Type': 'text/html; charset=utf-8' },
       })
@@ -583,6 +623,61 @@ export async function devServer(
     // edit loop and break offline dev. The audit ran once at launch (below).
     const runBuild = opts.build ?? (() => buildSite(config, { skipAudit: true }))
 
+    /*
+    A FAILED REBUILD MUST NOT DESTROY THE SITE YOU ARE LOOKING AT.
+
+    `buildSite()` begins with `rm -rf <outputDir>` — it has to, since it regenerates
+    the tree — so a build that fails anywhere after that leaves an empty or partial
+    output directory. Before this, the sequence was: save a typo, the rebuild throws,
+    the error scrolls past in a terminal you may not be watching, and the next refresh
+    serves nothing. The site was gone until you noticed and fixed it, and the page
+    gave you no clue why.
+
+    So: move the working site aside first (a rename — atomic and instant on the same
+    filesystem, and ~9MB of extra disk we will never notice), then build. On success,
+    drop the spare. On failure, put it back and record WHY, so the page keeps working
+    and the widget can say what broke.
+
+    Deliberately wraps `runBuild`, not `buildSite`: a consumer's custom `{ build }`
+    pipeline gets the same protection without knowing about it.
+    */
+    const LAST_GOOD = `${PUBLIC}.last-good`
+    const runBuildPreservingLastGood = async (): Promise<void> => {
+      const hadSite = existsSync(PUBLIC)
+      if (hadSite) {
+        await $`rm -rf ${LAST_GOOD}`.nothrow().quiet()
+        await $`mv ${PUBLIC} ${LAST_GOOD}`.nothrow().quiet()
+      }
+      const restore = async () => {
+        if (!hadSite) return
+        await $`rm -rf ${PUBLIC}`.nothrow().quiet()
+        await $`mv ${LAST_GOOD} ${PUBLIC}`.nothrow().quiet()
+      }
+      try {
+        // buildSite REPORTS failure by returning false (a blocking advisory, an
+        // output-dir overlap) and THROWS for everything else, so treat both as
+        // failure — a falsy return that we ignored would silently ship a wiped site.
+        const result = await runBuild()
+        if (result === false) throw new Error('build reported failure')
+        if (hadSite) await $`rm -rf ${LAST_GOOD}`.nothrow().quiet()
+        if (!buildStatus.ok) console.log('✅ build recovered — serving fresh output')
+        buildStatus = { ok: true, at: Date.now() }
+      } catch (error) {
+        await restore()
+        buildStatus = {
+          ok: false,
+          label: 'Build failed',
+          detail: String(error instanceof Error ? error.message : error).slice(0, 2000),
+          at: Date.now(),
+        }
+        console.error(
+          `\n🛑 Rebuild failed — still serving the last good build.\n` +
+            `   Fix the error above; the next successful build clears this.\n`
+        )
+        throw error
+      }
+    }
+
     // Rebuild-storm detector.
     //
     // The other way this process eats the machine is not a leak but a LOOP: if the
@@ -634,7 +729,7 @@ export async function devServer(
       const immediate =
         lastBuildEnd > 0 && Date.now() - lastBuildEnd < IMMEDIATE_MS
       try {
-        await runBuild()
+        await runBuildPreservingLastGood()
       } catch (error) {
         console.error('rebuild failed:', error)
       } finally {

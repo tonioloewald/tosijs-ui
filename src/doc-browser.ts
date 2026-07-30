@@ -247,6 +247,10 @@ const testIndicatorStyleSpec: XinStyleSheet = {
     {
       display: 'none !important',
     },
+  // ...EXCEPT a far-end status (a failed build). That is not a test result, so the
+  // "show test indicators" preference must not suppress it — otherwise the one
+  // person who turned tests off is the one who never learns their build is broken.
+  'body .test-widget.-dev-status': { display: 'flex !important' },
 
   // Nav link dot indicators
   '.doc-link.-test-passed::after, .doc-link.-test-failed::after': {
@@ -1526,9 +1530,51 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   )
   container.appendChild(testWidget)
 
+  /*
+  The far end has something to tell you.
+
+  The dev server injects `window.__tosiDevStatus` at serve time when a rebuild has
+  FAILED — see statusSnippet() in site/dev-server.ts. That is the same kind of news
+  as a failing browser test (something broke; here is what), so it uses the same
+  floating widget rather than a second overlay competing for the same corner.
+
+  Two differences from a test run, both deliberate:
+    - it does NOT auto-fade. A passing test run is over; a broken build is a standing
+      condition you have to act on, and it stays until a good build clears it.
+    - it wins ties. If tests also failed, the build failure is the more useful thing
+      to read first — the tests probably failed BECAUSE the build did.
+
+  Nothing is injected when the server is healthy, so this is inert in production and
+  in a normal session.
+  */
+  const devStatus = (globalThis as any).__tosiDevStatus as
+    | { ok: boolean; label?: string; detail?: string }
+    | undefined
+  let devStatusShown = false
+  if (devStatus && devStatus.ok === false) {
+    devStatusShown = true
+    const labelEl = testWidget.querySelector('[part="label"]')
+    const countEl = testWidget.querySelector('[part="count"]')
+    if (labelEl) labelEl.textContent = devStatus.label || 'Build failed'
+    if (countEl) (countEl as HTMLElement).hidden = true
+    testWidget.classList.add('-failed', '-dev-status')
+    testWidget.hidden = false
+    testWidget.title = devStatus.detail || ''
+    // The page you are reading is the LAST GOOD build — the dev server keeps serving
+    // it rather than the wreckage of the failed one — so say so plainly in the
+    // console, where the detail is readable and copyable.
+    console.error(
+      `[tosi] ${devStatus.label || 'Build failed'} — showing the last good build.\n` +
+        (devStatus.detail || '')
+    )
+  }
+
   let testsRunning = false
 
   function setTestWidgetRunning() {
+    // A broken build outranks a test run: the tests very likely failed BECAUSE the
+    // build did, so replacing "Build failed" with "Tests" would hide the cause.
+    if (devStatusShown) return
     testsRunning = true
     testWidget.hidden = false
     testWidget.classList.remove('-passed', '-failed')

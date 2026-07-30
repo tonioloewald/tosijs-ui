@@ -96,3 +96,7 @@ bun.lock
 # an explicit local `bun run book:pdf` artifact (not deployed or linked).
 docs/*.pdf
 docs/.epub-build/
+
+# Transient copy of the previous good build, kept only while a rebuild runs so a
+# failed build cannot destroy the site being served (see dev-server.ts).
+*.last-good/
