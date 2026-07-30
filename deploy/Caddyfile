@@ -21,6 +21,29 @@
 # `root` is the only thing that varies, keeping it in the caller costs one line per
 # project and makes this file work on any Caddy 2.x.
 (preview_site) {
+	# THE PREVIEW HOST IS PRIVATE.
+	#
+	# It mirrors dev, so it carries whatever you are working on — including unreleased
+	# work. That makes it the opposite of the production doc site, and the default has
+	# to be closed rather than open.
+	#
+	# The credential hash lives in /etc/caddy/preview.env on the box (mode 640,
+	# root:caddy) and reaches Caddy via a systemd EnvironmentFile drop-in — NOT in this
+	# file, because this file is committed to a public repo. A bcrypt hash of a strong
+	# random password is not realistically crackable, but publishing one is still a
+	# free gift to an attacker and there is no reason to.
+	#
+	# Note the spelling: Caddy 2.6 (Debian trixie) is `basicauth`; 2.8+ renamed it to
+	# `basic_auth`. Regenerate with `caddy hash-password`.
+	#
+	# The stakes here are DISCLOSURE, not code execution — a static host has no write
+	# endpoint — which is why one line is a proportionate design rather than the full
+	# threat model an exposed dev server would need.
+	#
+	basicauth {
+		dev {env.PREVIEW_HASH}
+	}
+
 	file_server
 	encode gzip zstd
 

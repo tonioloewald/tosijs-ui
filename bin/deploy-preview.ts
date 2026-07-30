@@ -174,9 +174,15 @@ async function registerSite(): Promise<void> {
     return
   }
 
-  const check = await $`ssh ${host} caddy validate --config /etc/caddy/Caddyfile`
-    .nothrow()
-    .quiet()
+  // Validate with the SAME environment systemd gives Caddy. The basicauth hash comes
+  // from an EnvironmentFile (kept out of this public repo), and a bare `caddy validate`
+  // does not load it — so {env.PREVIEW_HASH} resolves empty and validation fails with
+  // "username and password are required" on a config that is actually fine. That would
+  // fail CLOSED forever: every deploy would decline to reload and routing would freeze.
+  const check =
+    await $`ssh ${host} ${'set -a; . /etc/caddy/preview.env 2>/dev/null; set +a; caddy validate --config /etc/caddy/Caddyfile'}`
+      .nothrow()
+      .quiet()
   if (check.exitCode !== 0) {
     // Leave the fragment so the error is inspectable, but do NOT reload: one bad
     // fragment would fail the reload for EVERY project on the box.
