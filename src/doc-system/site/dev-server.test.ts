@@ -1,9 +1,5 @@
 import { test, expect } from 'bun:test'
-import {
-  resolveIdleMs,
-  resolveLimitMb,
-  haltijaLoaderSnippet,
-} from './dev-server'
+import { haltijaLoaderSnippet, isLoopbackAddress, resolveIdleMs, resolveLimitMb } from './dev-server'
 
 const HOUR = 3600_000
 
@@ -78,4 +74,41 @@ test('a garbage ceiling falls back to the default — never silently OFF', () =>
 test('only an explicit non-positive number disables the ceiling', () => {
   expect(resolveLimitMb(undefined, '0')).toBe(0)
   expect(resolveLimitMb(0, undefined)).toBe(0)
+})
+
+// ── source endpoints are loopback-only ───────────────────────────────────────
+//
+// The dev server binds every interface on purpose (the mkcert cert covers
+// <host>.local so you can open the site on a phone). But an unauthenticated
+// POST /__docstore/source from the LAN is remote code execution: it writes a repo
+// file, the watcher rebuilds, and the build runs it. Reading is bad too — it serves
+// any file in the repo. So those endpoints check the PEER address.
+
+test('isLoopbackAddress accepts this machine', () => {
+  for (const a of ['127.0.0.1', '127.1.2.3', '::1', '[::1]', 'localhost', '::ffff:127.0.0.1']) {
+    expect(isLoopbackAddress(a)).toBe(true)
+  }
+})
+
+test('isLoopbackAddress rejects everything else', () => {
+  for (const a of [
+    '192.168.1.50', // the LAN — the case that matters
+    '10.0.0.7',
+    '172.16.4.2',
+    '212.147.248.15', // a public address
+    '::ffff:192.168.1.50', // v4-mapped LAN address must NOT sneak through
+    '2a04:3540:1000:310::1',
+    '',
+    undefined,
+    null,
+  ]) {
+    expect(isLoopbackAddress(a as any)).toBe(false)
+  }
+})
+
+test('isLoopbackAddress is not fooled by a lookalike', () => {
+  // Not loopback: 127 must be the FIRST octet.
+  expect(isLoopbackAddress('10.127.0.1')).toBe(false)
+  expect(isLoopbackAddress('127.0.0.1.evil.com')).toBe(false)
+  expect(isLoopbackAddress('1127.0.0.1')).toBe(false)
 })

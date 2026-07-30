@@ -38,6 +38,24 @@ export declare function resolveLimitMb(configMb: number | undefined, envMb: stri
  * once per test page (N redundant loads in throwaway frames). An agent only ever
  * drives the top page, so nested frames never need the channel.
  */
+/**
+ * Is this request coming from THIS machine?
+ *
+ * The dev server binds every interface (`Bun.serve` with no `hostname`), which is
+ * deliberate — the mkcert dev cert covers `<host>.local` precisely so you can open the
+ * site on a phone or a second laptop. But "anyone on this network may READ the preview"
+ * and "anyone on this network may REWRITE my source files" are wildly different
+ * propositions, and the source endpoints were getting the first one's treatment.
+ *
+ * On any shared network — a café, a conference, a hotel — an unauthenticated
+ * `POST /__docstore/source` is remote code execution: it writes a file in the repo, the
+ * watcher rebuilds, and the build runs what was written. So those endpoints are
+ * loopback-only, while the site itself stays reachable from your other devices.
+ *
+ * IPv4-mapped IPv6 (`::ffff:127.0.0.1`) counts — that is how a v4 client shows up on a
+ * dual-stack listener, and missing it would lock out the local machine on some setups.
+ */
+export declare function isLoopbackAddress(address: string | undefined | null): boolean;
 export declare function haltijaLoaderSnippet(httpsPort: number): string;
 export declare function devServer(config: SiteConfig, opts?: {
     test?: boolean;

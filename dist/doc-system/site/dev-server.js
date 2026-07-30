@@ -90,6 +90,33 @@ export function resolveLimitMb(configMb, envMb) {
  * once per test page (N redundant loads in throwaway frames). An agent only ever
  * drives the top page, so nested frames never need the channel.
  */
+/**
+ * Is this request coming from THIS machine?
+ *
+ * The dev server binds every interface (`Bun.serve` with no `hostname`), which is
+ * deliberate — the mkcert dev cert covers `<host>.local` precisely so you can open the
+ * site on a phone or a second laptop. But "anyone on this network may READ the preview"
+ * and "anyone on this network may REWRITE my source files" are wildly different
+ * propositions, and the source endpoints were getting the first one's treatment.
+ *
+ * On any shared network — a café, a conference, a hotel — an unauthenticated
+ * `POST /__docstore/source` is remote code execution: it writes a file in the repo, the
+ * watcher rebuilds, and the build runs what was written. So those endpoints are
+ * loopback-only, while the site itself stays reachable from your other devices.
+ *
+ * IPv4-mapped IPv6 (`::ffff:127.0.0.1`) counts — that is how a v4 client shows up on a
+ * dual-stack listener, and missing it would lock out the local machine on some setups.
+ */
+export function isLoopbackAddress(address) {
+    if (!address)
+        return false;
+    const a = address.trim().toLowerCase().replace(/^\[|\]$/g, '');
+    if (a === '::1' || a === 'localhost')
+        return true;
+    // ::ffff:127.0.0.1 — IPv4-mapped IPv6
+    const mapped = a.startsWith('::ffff:') ? a.slice(7) : a;
+    return /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(mapped);
+}
 export function haltijaLoaderSnippet(httpsPort) {
     return (`<script>self===top&&/^localhost$|^127\\./.test(location.hostname)` +
         `&&import('https://localhost:${httpsPort}/dev.js')</script>`);
@@ -717,7 +744,7 @@ export async function devServer(config, opts = {}) {
             key: Bun.file('./tls/key.pem'),
             cert: Bun.file('./tls/certificate.pem'),
         },
-        async fetch(request) {
+        async fetch(request, srv) {
             touch();
             let reqPath = new URL(request.url).pathname;
             console.log(request.method, reqPath);
@@ -736,6 +763,26 @@ export async function devServer(config, opts = {}) {
                 // is what the deployed static site already does.
                 if (!config.editableSources) {
                     return new Response('editableSources is not enabled in this doc-site config (set editableSources: true to edit/save source in dev)', { status: 501, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+                }
+                // LOOPBACK BY DEFAULT — see isLoopbackAddress. Reading exposes any repo file;
+                // writing is remote code execution (write, watcher rebuilds, build runs it).
+                // Checked on the PEER ADDRESS, not a header: Origin/Host are attacker-supplied.
+                //
+                // `DEV_ALLOW_REMOTE_EDIT=1` opts out, for when something in FRONT of this
+                // server already authenticates the caller (a tunnel with basic auth, a
+                // reverse proxy). It is deliberately an env var and not a config option: it
+                // is a property of how you are RUNNING the server today, not of the project,
+                // so it must not be committable. It grants file-write-plus-execute to anyone
+                // who can reach the port — never set it on an unauthenticated listener.
+                const peer = srv?.requestIP?.(request)?.address;
+                const allowRemoteEdit = process.env.DEV_ALLOW_REMOTE_EDIT === '1';
+                if (!allowRemoteEdit && !isLoopbackAddress(peer)) {
+                    console.warn(`⚠️  refused ${request.method} /__docstore/source from ${peer ?? 'unknown'} — ` +
+                        `source editing is local-only.`);
+                    return new Response('source editing is restricted to this machine', {
+                        status: 403,
+                        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+                    });
                 }
                 if (request.method === 'GET')
                     return handleReadSource(request);
