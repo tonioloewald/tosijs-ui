@@ -285,6 +285,7 @@ build: `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (defaul
 | `watchPaths`         | —        | extra dev-server watch dirs                                                                                                                                                                                                                                                                                                                            |
 | `haltijaDev`         | `false`  | give a coding agent eyes on your running dev page (see below); also `HALTIJA_DEV=1`                                                                                                                                                                                                                                                                    |
 | `openBrowser`        | `false`  | on `bun start`, open (or bring to front) this project's browser tab once the server is up — reused per project via the dev origin, so restarts don't pile up tabs. `true` = auto-detect; a string names the browser; `BROWSER=<name>`/`BROWSER=none` override. macOS reuse via AppleScript; other platforms open (no reuse). Skipped in CI / non-TTY (see below) |
+| `preview`            | —        | preview-host target for `bun run deploy` — `{ host, path?, url? }`. Only `host` is required; `path` defaults to `/srv/preview/<name>`. Deploying rsyncs the built site and self-registers its own route, so no shared server config and no DNS change (see below) |
 | `editableSources`    | `false`  | Enables the dev server's `/__docstore/source` read+write endpoints, so "edit page source" and a live example's "Save to source" write the actual file. **Off** by default (writing files is opt-in): editing still works read-only — the client falls back to the GitHub raw source — but saving hands back a download. Set `true` to author in place. (The endpoint always answers `/__docstore/source` with a real status; it never serves the SPA `index.html`, so a disabled/misconfigured server can't leak the rendered page as the "source".)                                                                                                                                                                                                                                                                                                       |
 | `memoryLimitMb`      | `4096`   | RSS ceiling for the dev server; past it, print growth-per-rebuild and exit (see below); also `DEV_MEMORY_LIMIT_MB`                                                                                                                                                                                                                                     |
 | `idleTimeoutHours`   | `8`      | exit after this long with no request and no rebuild; `0` disables (see below); also `DEV_IDLE_TIMEOUT_HOURS`                                                                                                                                                                                                                                           |
@@ -502,6 +503,45 @@ false` to drop the burned-in caption). Local dev only; off by default.
 
 > The channel tracks haltija's **`@beta`** dist-tag, where the in-browser WebRTC
 > screen capture landed ahead of `latest`.
+
+#### `preview` — deploy the built site to a host you control
+
+A doc site is a folder of static files, so sharing one is a copy, not a pipeline. Set a
+host and deploy:
+
+```ts
+preview: {
+  host: 'root@203.0.113.10',        // ssh target
+  url: 'https://ui.dev.example.com', // optional; also names the route to register
+}
+```
+
+```bash
+bun run deploy        # DRY RUN — shows exactly what would change
+bun run deploy --go   # sync, self-register, refresh the host's index
+```
+
+**Dry run is the default** because this is `rsync --delete` — the remote must mirror the
+build so stale pages can't linger, which is destructive if aimed wrong. It also refuses
+any target that isn't an absolute path at least two levels deep, and **warns when your
+working tree is dirty**, since `/version.json` records the last *commit* and a build from
+a dirty tree may not match it.
+
+**Projects register themselves.** With `url` set, the deploy writes a small Caddy
+fragment declaring its hostname and root; the server glob-imports
+`/srv/preview/_sites/*.caddy`. So adding a project touches no shared file, and with a
+wildcard DNS record it needs no DNS change either. The deploy **validates the server
+config before reloading** and refuses to reload if invalid — one malformed fragment would
+otherwise break routing for every project on that host.
+
+The host's root can serve a generated index of everything deployed (see
+`deploy/build-index.sh` in the tosijs-ui repo), which makes it self-describing: what is
+on it, and which commit each preview is serving.
+
+> A static host has **no write endpoint**, so the security question is disclosure rather
+> than code execution — a single `basicauth` line is a proportionate design for keeping
+> unreleased work private. Do not confuse this with exposing a *dev server*, which is a
+> much bigger question; see `REMOTE-ACCESS-PLAN.md`.
 
 #### `/version.json` — what am I looking at?
 
