@@ -114,7 +114,11 @@ test('the redirect target has the token stripped', () => {
 // expression inside a TLS-requiring server closure with NO tests at any tier — while
 // a comment claimed a regression test that did not exist.
 
-import { mayWriteSource, isLoopbackAddressForAuth } from './dev-auth'
+import {
+  mayWriteSource,
+  isLoopbackAddressForAuth,
+  isProxiedRequest,
+} from './dev-auth'
 
 test('tunnel traffic ALWAYS needs a session — loopback is no shortcut', () => {
   // The whole point: a tunnel counterfeits "local", so a loopback peer proves nothing.
@@ -187,4 +191,34 @@ test('isLoopbackAddressForAuth matches the server-side predicate', () => {
   expect(isLoopbackAddressForAuth('127.0.0.1')).toBe(true)
   expect(isLoopbackAddressForAuth('10.127.0.1')).toBe(false)
   expect(isLoopbackAddressForAuth('127.0.0.1.evil.com')).toBe(false)
+})
+
+// ── proxy detection ──────────────────────────────────────────────────────────
+//
+// Extracted because the predicate was duplicated character-for-character at two call
+// sites, only one of which was load-bearing — a "tidy-up" of the other would have
+// silently changed the write model.
+
+test('isProxiedRequest sees either forwarded header, and neither means direct', () => {
+  const h = (o: Record<string, string>) => ({
+    get: (n: string) => o[n] ?? null,
+  })
+  expect(isProxiedRequest(h({ 'x-forwarded-for': '1.2.3.4' }))).toBe(true)
+  expect(isProxiedRequest(h({ 'x-forwarded-host': 'x.example' }))).toBe(true)
+  expect(isProxiedRequest(h({}))).toBe(false)
+})
+
+test('isProxiedRequest is NOT what authorizes writes', () => {
+  // Deliberate: a forwarder that omits these headers would look direct. Write
+  // authorization uses the LISTENER (mayWriteSource), which a client cannot forge.
+  // This test exists so nobody "improves" mayWriteSource to use the header again.
+  const noHeaders = { get: () => null }
+  expect(isProxiedRequest(noHeaders)).toBe(false)
+  expect(
+    mayWriteSource({
+      viaTunnel: true,
+      peer: '127.0.0.1',
+      hasValidSession: false,
+    })
+  ).toBe(false)
 })

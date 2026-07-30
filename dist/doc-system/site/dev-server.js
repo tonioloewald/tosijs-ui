@@ -425,13 +425,24 @@ export async function devServer(config, opts = {}) {
     Only emitted when there IS something to say, so a healthy dev server injects
     nothing at all.
     */
-    function statusSnippet() {
+    function statusSnippet(request, viaTunnel = false) {
         if (buildStatus.ok)
             return '';
+        /*
+        The LABEL is safe to publish; the DETAIL is not.
+    
+        `detail` is up to 2000 characters of build error — in practice absolute paths from
+        this machine, and sometimes source excerpts. It was injected into every served page
+        with no auth check, so anyone who could load the workspace read it. Anonymous
+        visitors get "Build failed" and nothing else; the person holding a session, or
+        sitting at the keyboard, gets the text they actually need.
+        */
+        const trusted = !viaTunnel ||
+            validSession(auth, readCookie(request?.headers.get('cookie'), SESSION_COOKIE), Date.now());
         const payload = JSON.stringify({
             ok: false,
             label: buildStatus.label,
-            detail: buildStatus.detail,
+            detail: trusted ? buildStatus.detail : undefined,
             at: buildStatus.at,
         });
         return `<script>window.__tosiDevStatus=${payload}</script>`;
@@ -439,8 +450,9 @@ export async function devServer(config, opts = {}) {
     // Serve a resolved file, injecting the haltija dev-channel loader and/or a build
     // status into HTML pages. Serve-time only — neither touches the built output on
     // disk, and non-HTML assets are streamed untouched.
-    async function respondFile(filePath) {
-        const extras = (haltijaDev ? HALTIJA_SNIPPET : '') + (testMode ? '' : statusSnippet());
+    async function respondFile(filePath, request, viaTunnel = false) {
+        const extras = (haltijaDev ? HALTIJA_SNIPPET : '') +
+            (testMode ? '' : statusSnippet(request, viaTunnel));
         if (extras && filePath.endsWith('.html')) {
             const html = await Bun.file(filePath).text();
             const injected = html.includes('</body>')
@@ -889,7 +901,24 @@ export async function devServer(config, opts = {}) {
         }
         let reqPath = new URL(request.url).pathname;
         console.log(request.method, reqPath);
+        /*
+        Test results are LOCAL-ONLY.
+    
+        This sat above the hardened source endpoint and inherited none of its gating: a
+        stranger reaching the tunnel could POST arbitrary JSON into `.browser-tests.json`
+        and, in `--test` mode, resolve the lane with a fabricated `{passed: N, failed: 0}` —
+        a green exit code for a suite that never ran. That is a worse failure than a leak:
+        it makes the gate lie. It was LAN-reachable with no tunnel at all, too.
+    
+        Same rule as source writes, for the same reason — arriving on the tunnel listener
+        means remote, whatever the peer address claims.
+        */
         if (request.method === 'POST' && reqPath === '/report') {
+            const peer = srv?.requestIP?.(request)?.address;
+            if (viaTunnel || !isLoopbackAddress(peer)) {
+                console.warn(`⚠️  refused POST /report from ${peer ?? 'unknown'} — test results are local-only.`);
+                return new Response('not authorized', { status: 403 });
+            }
             return handleTestReport(request);
         }
         // Source read/write for in-browser "edit page source" (opt-in, dev only).
@@ -955,11 +984,11 @@ export async function devServer(config, opts = {}) {
             reqPath = '/index.html';
         const buildFile = resolveFile({ directory: PUBLIC, path: reqPath });
         if (buildFile)
-            return await respondFile(buildFile);
+            return await respondFile(buildFile, request, viaTunnel);
         if (isSPA) {
             const spaFile = resolveFile({ directory: PUBLIC, path: '/index.html' });
             if (spaFile)
-                return await respondFile(spaFile);
+                return await respondFile(spaFile, request, viaTunnel);
         }
         return new Response('File not found', { status: 404 });
     };

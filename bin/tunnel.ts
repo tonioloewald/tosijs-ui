@@ -11,17 +11,19 @@ watcher all stay here; the box terminates TLS and checks a password and does no
 compute at all. That is what makes it scale — N projects tunnel their own workspace
 to one small VPS, rather than the VPS trying to be a build farm.
 
-WHY THIS IS SAFE, given the dev server's source endpoints are otherwise loopback-only:
+WHY THIS IS SAFE — and note the guarantee does NOT rest on the proxy:
 
-  - The box runs sshd with `GatewayPorts no`, so the forwarded port is bound to
-    127.0.0.1 THERE and is not reachable from the internet. Caddy is the only thing
-    that can talk to it, and Caddy demands basicauth first.
-  - `ssh -R` delivers to `localhost` HERE, so the dev server sees a loopback peer and
-    its read/write endpoints work — correctly, because reaching that socket at all
-    required passing the front door. The location check and the authentication check
-    compose rather than fight.
+  - The dev server binds a SEPARATE loopback-only port for tunnel traffic. Anything
+    arriving there is treated as remote and needs a valid session to write, whatever
+    its peer address says. Which listener a request landed on is not something a
+    client can forge; a header is. (An earlier version inferred "local" from missing
+    X-Forwarded-* headers and therefore failed OPEN for any forwarder that omits them.)
+  - The box should also run sshd with `GatewayPorts no` so the forwarded port binds
+    127.0.0.1 there rather than the internet. This command VERIFIES that after
+    connecting and warns loudly if not — but it is defence in depth, not the wall.
 
-So: closed by default, open only through something that authenticates.
+So: reading is open to whoever has the URL (unless `tunnel.requireToken`), writing
+always requires a session.
 */
 
 import { $ } from 'bun'

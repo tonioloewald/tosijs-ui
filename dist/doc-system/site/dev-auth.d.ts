@@ -49,3 +49,6 @@ export declare function mayWriteSource(opts: {
 }): boolean;
 /** Local copy of the loopback test so this module stays self-contained and testable. */
 export declare function isLoopbackAddressForAuth(address: string | undefined | null): boolean;
+export declare function isProxiedRequest(headers: {
+    get(name: string): string | null;
+}): boolean;

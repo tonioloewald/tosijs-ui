@@ -360,7 +360,7 @@ export interface SiteConfig {
      *
      * Safe to expose despite the dev server's source endpoints being loopback-only:
      * the box's sshd runs `GatewayPorts no`, so the forwarded port is bound to its
-     * loopback and only the authenticating proxy can reach it — and `ssh -R` delivers
+     * loopback and only the proxy can reach it — and `ssh -R` delivers
      * to `localhost` here, so the dev server sees a loopback peer. Reaching that
      * socket at all required passing the front door.
      */

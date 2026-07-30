@@ -213,3 +213,25 @@ export function isLoopbackAddressForAuth(
   const mapped = a.startsWith('::ffff:') ? a.slice(7) : a
   return /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(mapped)
 }
+
+/*
+Was this request proxied (i.e. did it arrive through something in front of us)?
+
+Extracted because the predicate was duplicated character-for-character at two call
+sites, only ONE of which was load-bearing — so a future tidy-up that "simplified" the
+other would have silently changed the write model. One definition, one meaning.
+
+Note this is a WEAK signal used only where a false negative is harmless. Write
+authorization deliberately does NOT use it (see mayWriteSource): a forwarder that omits
+these headers would otherwise look local. Which listener a request arrived on is the
+strong signal; this one just answers "is a browser reaching us through a proxy?" for
+things like deciding how much detail to put in an error page.
+*/
+export function isProxiedRequest(headers: {
+  get(name: string): string | null
+}): boolean {
+  return (
+    headers.get('x-forwarded-for') !== null ||
+    headers.get('x-forwarded-host') !== null
+  )
+}
