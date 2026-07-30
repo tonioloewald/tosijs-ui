@@ -8,8 +8,9 @@
 # (`*.dev.tosijs.net`), so a new project never needs a registrar visit.
 
 {
-	# ACME contact once TLS is on. Harmless before then.
-	# email you@example.com
+	# Where Let's Encrypt sends expiry/problem notices. Caddy renews automatically, so
+	# this is a safety net rather than an operational dependency.
+	email tonio@loewald.com
 }
 
 # ── The shared site definition ───────────────────────────────────────────────
@@ -78,18 +79,13 @@
 	}
 }
 
-# ── Stage 1: bare IP, HTTP only (current) ────────────────────────────────────
-# No DNS points here yet. Fine for tosijs-ui, whose docs are public anyway, and it
-# proves the rsync → serve pipeline. NOT fine for unreleased work — go to Stage 2
-# before previewing anything private.
-:80 {
-	root * /srv/preview/tosijs-ui
-	import preview_site
-}
-
-# ── Stage 2: named hosts with automatic HTTPS ────────────────────────────────
-# Once the DNS records exist, delete the `:80` block above and uncomment these.
-# Caddy provisions a Let's Encrypt cert per hostname on first request via HTTP-01.
+# ── Named hosts with automatic HTTPS (current) ───────────────────────────────
+# Caddy provisions a Let's Encrypt cert per hostname on first request via HTTP-01 and
+# renews it automatically — no certbot, no cron, nothing to forget. It also redirects
+# :80 → :443 for each name on its own.
+#
+# NOTE: with only named blocks, requests to the bare IP no longer match anything and
+# get a 404 by design — use the hostname.
 #
 # WHY EXPLICIT HOSTNAMES RATHER THAN A `*.dev.tosijs.net` BLOCK:
 # a true wildcard CERTIFICATE can only be issued over the DNS-01 challenge, which
@@ -98,10 +94,12 @@
 # project — in git, reviewable — is a much better trade than a DNS credential here.
 # The DNS wildcard still does its job: no registrar visit when a project is added.
 #
-# dev.tosijs.net {
-# 	root * /srv/preview/tosijs-ui
-# 	import preview_site
-# }
+dev.tosijs.net {
+	root * /srv/preview/tosijs-ui
+	import preview_site
+}
+
+# Add a project: 3 lines, and no DNS change (the *.dev wildcard already resolves).
 #
 # 3d.dev.tosijs.net {
 # 	root * /srv/preview/tosijs-3d

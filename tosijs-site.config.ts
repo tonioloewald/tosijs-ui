@@ -55,8 +55,10 @@ export default defineSiteConfig({
   // the browser with BROWSER=<name>, or BROWSER=none to disable for a run.
   openBrowser: true,
   // Preview host — `bun run deploy` (dry run) / `bun run deploy --go`.
-  // Stage 1 is HTTP on the bare IP; add `url` once dev.tosijs.net resolves.
-  preview: { host: 'root@212.147.248.15' },
+  preview: {
+    host: 'root@212.147.248.15',
+    url: 'https://dev.tosijs.net',
+  },
 
   // Inject the haltija dev-channel so a coding agent (Claude) can drive the live
   // dev page via `hj`. Dev-only, serve-time inject, never bundled / never in the
