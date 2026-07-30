@@ -13,6 +13,7 @@
     "deploy:index": "ssh $PREVIEW_SSH 'bash -s' < deploy/build-index.sh",
     "tunnel": "bun bin/tunnel.ts",
     "test-browser": "bun bin/dev.ts --test",
+    "test-consumer": "bun bin/smoke-consumer.ts",
     "format": "bun eslint src demo --fix && bun prettier --write .",
     "tests": "bun test && bun playwright test",
     "latest": "rm -rf node_modules bun.lock && bun update"

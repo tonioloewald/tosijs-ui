@@ -689,7 +689,13 @@ export async function buildSite(config, opts = {}) {
         // Deterministic (commit-derived, no wall clock) so a committed outputDir doesn't
         // churn on every build. See build-stamp.ts.
         await Bun.write(`${PUBLIC}/version.json`, serializeBuildStamp(await gatherBuildStamp({
-            // Read from package.json rather than importing src/version.ts.
+            // Read package.json rather than importing the generated src/version.ts —
+            // that import put a generated file in `bun --watch`'s module graph while
+            // prebuild rewrote it every build, i.e. a rebuild loop (899 restarts in
+            // ~40s). But resolve it from THIS MODULE, not the cwd: cwd is the ADOPTER's
+            // repo, so a cwd-relative read stamped THEIR version as the generator —
+            // the one field whose job is answering "which tosijs-ui built this?"
+            // (tosijs-ui#37, and caught for real by the consumer smoke test).
             //
             // That import put a GENERATED file into bin/dev.ts's module graph, and
             // `bun --watch` restarts the process when any graph file changes — while
@@ -698,7 +704,8 @@ export async function buildSite(config, opts = {}) {
             // makes `bun start` (the documented dev command) completely unusable.
             //
             // Never import generated source from the build. Read the data instead.
-            generator: await Bun.file('package.json')
+            // Resolved from THIS module, never the cwd — see the note above.
+            generator: await Bun.file(`${import.meta.dir}/../../../package.json`)
                 .json()
                 .then((p) => p.version ?? 'unknown')
                 .catch(() => 'unknown'),

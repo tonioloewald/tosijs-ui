@@ -23,6 +23,7 @@ tosijs-ui (formerly xinjs-ui) is a web-component library built on [tosijs](https
 bun start              # Dev server at https://localhost:8787 (hot reload, reports gzip sizes) — `bun --watch bin/dev.ts`. Opens/reuses this project's browser tab (openBrowser; BROWSER=none to skip)
 bun run build          # Build only (no server), exits with 0/1 — `bin/dev.ts --build-only`
 bun run test-browser   # Build, launch haltija, run browser tests, exit with 0/1 — `bin/dev.ts --test`
+bun run test-consumer  # Pack, install into a scratch project, run the bins, build from a foreign cwd
 bun tests              # `bun test && bun playwright test` — see caveat below
 bun format             # ESLint + Prettier
 bun latest             # Clean install (removes node_modules + bun.lock, then bun update)
@@ -36,6 +37,18 @@ bun run og             # Regenerate Open Graph cards — manual, needs a RUNNING
 The test lanes are distinct: **`bun test`** is the fast happy-dom unit lane (hundreds of tests across ~40+ `*.test.ts` files; it recurses into `src/*/`); **`bun playwright test`** is the `tests/*.pw.ts` end-to-end lane, and **`tests/doc-tests.pw.ts` inside it runs the whole inline ` ```test ` doc tier** (including the inline-WASM guard) through Playwright — the doc-browser's background runner executes every page-with-tests in hidden iframes and resolves `window.__docTestResults`, which that spec awaits and asserts is failure-free. **This is the doc-test gate, and it runs in CI** (the e2e job's `playwright test --project=chromium` picks it up). WebKit is skipped there (its iframe runner never signals per-page completion — see TODO). **Playwright starts its own dev server** on **its own port (8799)** with the haltija overlay off — so it neither adopts nor kills the `bun start` you have on 8787.
 
 **`bun run test-browser`** is the *interactive* haltija lane: it drives a real haltija Electron over the same inline tests. It **reuses a running haltija if one is up — which navigates whatever window you have open** (a different project's session included), so prefer `tests/doc-tests.pw.ts` for a clean, isolated run and reach for `test-browser` only when you specifically want eyes on the real page. It is **not** the CI gate anymore; `doc-tests.pw.ts` is.
+
+**`bun run test-consumer` is the lane that tests the package as an ADOPTER sees it** — it
+`npm pack`s, installs the tarball into a throwaway project, runs every bin through the
+`node_modules/.bin` shims, and builds a site from that project's cwd. It exists because
+every other lane runs *in this repo, from this repo, with one dev server*, and four
+regressions shipped from outside exactly that envelope: bins with no shebang (needs an
+install), `/version.json` stamping the consumer's version (needs a foreign cwd), a
+top-level `chokidar` import in shipped code (needs a consumer build), and the doc-site
+hydrate bundle shipping to everyone (needs to read `npm pack`). Two consumers found three
+of them within minutes of a release. More unit tests would have caught none — the gap was
+never depth, it was context. It is slow (pack + install + build), so it is not part of
+`bun test`; run it before every release.
 
 **Run every lane before a release.** CI covers only the unit lane, so any lane the release gate doesn't run _will_ rot silently — the Playwright lane sat red for ~a month before 1.7. Never scope the unit lane with a `src/*.test.ts` glob: it matches only the top-level test files and silently skips the ones in subdirectories (`src/doc-system/`, `src/live-example/`, `src/icons/`, …) — about 126 tests, including whole features' entire coverage. Bare `bun test` recurses; keep it bare.
 
@@ -624,7 +637,7 @@ For the consumer-facing mental model — element-creator pattern, value/change/a
 
 1. Update version in `package.json` (bump **before** building — `src/version.ts` is generated from it)
 2. (No need to start a dev server — every lane brings up its own now)
-3. Run **all three lanes**: `bun test` → `bun run test-browser` → `bun playwright test`. `bun tests` covers only two of them; a lane the gate skips rots silently.
+3. Run **all four lanes**: `bun test` → `bun run test-browser` → `bun playwright test` → `bun run test-consumer`. `bun tests` covers only two of them; a lane the gate skips rots silently.
 4. Build: `bun run build` (this also runs the dependency-audit gate — a high+ advisory here fails the build; fix or time-box it before releasing, don't `TOSIJS_AUDIT=off` past it)
 5. Commit changes including `dist/` and `docs/`
 6. Tag release: `git tag v1.x.x`

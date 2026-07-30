@@ -19,6 +19,11 @@ introduced by rc.1 itself.
   port warns instead of taking the whole server down: it is an optional extra, and
   refusing to start over it turns "another instance is running" into "my dev server is
   broken".
+- **New lane: `bun run test-consumer`** — packs the tarball, installs it into a scratch
+  project, runs every bin through the `node_modules/.bin` shims, and builds a site from
+  that project's cwd. Every other lane runs *in this repo, from this repo, with one dev
+  server*, and all four rc.1-era regressions lived outside that envelope. It found a real
+  bug on its first run.
 - **A failed "save to source" now says why** (#34). The endpoint answers 501 with an
   actionable sentence ("editableSources is not enabled…") and the client threw it away
   for a generic "Save failed.", so an unconfigured server was indistinguishable from a
