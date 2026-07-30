@@ -509,7 +509,7 @@ false` to drop the burned-in caption). Local dev only; off by default.
 A doc site is a folder of static files, so sharing one is a copy, not a pipeline. Set a
 host and deploy:
 
-```ts
+```typescript
 preview: {
   host: 'root@203.0.113.10',        // ssh target
   url: 'https://ui.dev.example.com', // optional; also names the route to register
