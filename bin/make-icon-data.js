@@ -249,16 +249,32 @@ function findIcons(dirs, ignore = []) {
         if (dir.includes('color')) {
           classes.push('color')
         } else {
-          // If not a color icon, remove fill/stroke styles
-          svgSource = svgSource.replace(/(fill|stroke)(-\w+)?:[^;]+;?/g, '')
+          /*
+          Strip fill/stroke COLOUR so a monochrome icon can be tinted — but keep
+          `fill-rule` and `clip-rule`, which are fill TOPOLOGY and take no part in
+          tinting.
+
+          Removing them reverts a compound path to `nonzero`, so an icon that punches
+          holes with `evenodd` — a keyboard drawn as one path, body with key-shaped
+          holes — renders the holes SOLID. The workaround was to move such icons into
+          `color/` with `fill:currentColor`, which keeps them themeable but opts them
+          out of the tinting path for an unrelated reason (tosijs-ui#30).
+          */
+          svgSource = svgSource.replace(
+            /(fill|stroke)(?!-rule)(-\w+)?:[^;]+;?/g,
+            ''
+          )
         }
+        // Same rule as above, and the reason it took two goes to fix: `fill-rule` was
+        // stripped in THREE places, not one. `-rule` is topology, never colour, so it
+        // survives every strip. `clip-rule` likewise.
         if (dir.includes('stroked')) {
           classes.push('stroked')
-          svgSource = svgSource.replace(/(fill)(-\w+)?:[^;]+;?/g, '')
+          svgSource = svgSource.replace(/(fill)(?!-rule)(-\w+)?:[^;]+;?/g, '')
         }
         if (dir.includes('filled')) {
           classes.push('filled')
-          svgSource = svgSource.replace(/(stroke)(-\w+)?:[^;]+;?/g, '')
+          svgSource = svgSource.replace(/(stroke)(?!-rule)(-\w+)?:[^;]+;?/g, '')
         }
         if (classes.length) {
           svgSource = svgSource.replace(

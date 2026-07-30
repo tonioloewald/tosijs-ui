@@ -39,6 +39,25 @@ without reading config:
   and `/etc/caddy`, which it would have *mirrored*, i.e. emptied. Now an allowlist of
   preview roots, extracted and tested.
 
+**Adopter-reported fixes** (all from tosijs-3d, all consumer-facing):
+
+- **`tosijs-make-icons` stripped `fill-rule`** (#30), so a compound path using `evenodd`
+  for holes — a keyboard drawn as one path — rendered the holes solid. `fill-rule` is
+  fill *topology*, not colour, and takes no part in the tinting the strip exists for.
+  It turned out to be stripped in **three** places, not one; the `stroked/` branch is the
+  one that bit. This ships as a bin, so it affects anyone generating their own icon data.
+- **The doc-site hydrate bundle was written into the library `dist/`** (#31) and shipped
+  to every consumer, though nothing references it — one adopter's package went from
+  0.62 MB / 398 files to **10.2 MB / 2888 files**, caught only by reading `npm pack`
+  output. It now builds in a temp dir; tosijs-ui's own package drops 16 files and 5.2 MB
+  of uncompressed payload.
+- **New: `iconSvg(name)` and `iconNames()`** (#33), from `tosijs-ui/icon-svg` — raw SVG
+  markup with **no DOM required**. `defineIcons()` could write to the icon map but
+  nothing could read it, and `icons.foo()` returns an `SVGElement`, so a build script,
+  ePub pass or server-rendered template had no way to get markup except parsing the
+  package's source. Deliberately a separate module: `icons.ts` imports tosijs and throws
+  on `HTMLElement` outside a browser, which is the exact context that wanted it.
+
 **Correctness:**
 
 - **A 403 could destroy uncommitted work.** An unauthorized read fell through to GitHub

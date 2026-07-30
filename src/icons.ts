@@ -548,6 +548,9 @@ export const defineIcons = (newIcons: { [key: string]: string }): void => {
   Object.assign(iconData, newIcons)
 }
 
+// Raw-markup accessors live in ./icon-svg (DOM-free) and are re-exported here.
+export { iconSvg, iconNames } from './icon-svg'
+
 export const svg2DataUrl = (
   icon: Element,
   fill?: string,

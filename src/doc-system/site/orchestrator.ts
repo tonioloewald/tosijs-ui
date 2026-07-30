@@ -620,7 +620,21 @@ export async function buildSite(
       // PRESERVES the sharing: it and `code-editor-cm` both statically import the same
       // shared CodeMirror chunk. The IIFE (dist/${scriptName}) stays for the CDN <script>
       // path; only the served pages move to the module.
-      const HYDRATE_DIR = `${DIST}/hydrate`
+      /*
+      The hydrate bundle is DOC-SITE output, so it must not live under the LIBRARY dist.
+
+      It used to build into `${DIST}/hydrate`, get copied into the site output, and then
+      just… stay there — nothing references it, but `files: ['/dist']` shipped it to
+      every consumer. For a project whose site bundles something heavy the effect is
+      brutal: one adopter's package went from 0.62MB/398 files to 10.2MB/2888 files
+      (tosijs-ui#31), and they only caught it by reading `npm pack` output before
+      publishing. tosijs-ui was shipping 5.2MB of its own.
+
+      Build it in a temp dir instead. The only consumer is the copy into PUBLIC on the
+      next line, so nothing needs it to persist — and a temp dir cannot be swept into a
+      published tarball by a broad `files` entry.
+      */
+      const HYDRATE_DIR = `${tmpdir()}/tosijs-hydrate-${process.pid}`
       await $`rm -rf ${HYDRATE_DIR}`.text().catch(() => {})
       const esm = spawn(
         [
@@ -652,6 +666,7 @@ export async function buildSite(
       // regression that pulls CodeMirror back into the entry is visible.
       {
         const entryBytes = await gzipSizeInChild(`${HYDRATE_DIR}/hydrate.js`)
+        await $`rm -rf ${HYDRATE_DIR}`.nothrow().quiet()
         if (entryBytes > 0)
           console.log(
             `hydrate.js (module, editor lazy): ${(entryBytes / 1024).toFixed(

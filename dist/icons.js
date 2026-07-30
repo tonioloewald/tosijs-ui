@@ -534,6 +534,8 @@ import iconData from './icon-data';
 export const defineIcons = (newIcons) => {
     Object.assign(iconData, newIcons);
 };
+// Raw-markup accessors live in ./icon-svg (DOM-free) and are re-exported here.
+export { iconSvg, iconNames } from './icon-svg';
 export const svg2DataUrl = (icon, fill, stroke, strokeWidth) => {
     // Handle composite icons (span wrappers) by finding the inner SVG(s)
     const svgs = icon instanceof SVGElement
