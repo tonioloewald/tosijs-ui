@@ -1,0 +1,134 @@
+/*
+Magic-link auth for the dev server, so a workspace exposed through `bun run tunnel`
+can be edited from anywhere.
+
+TWO TOKENS, ON PURPOSE.
+
+  LINK token   — travels in a URL (`https://…/?t=…`). Therefore it is the one that
+                 LEAKS: browser history, Referer headers, reverse-proxy access logs,
+                 link previews in chat apps that fetch what you paste, and anyone
+                 reading over your shoulder. So it is SINGLE-USE and short-lived: the
+                 first request spends it, and a copy scraped out of a log later is
+                 worthless.
+
+  SESSION token — never appears in a URL. Set as an HttpOnly cookie by the exchange
+                 and sent automatically thereafter, so it can be durable without being
+                 exposed. This is the one that actually authorises writes.
+
+That asymmetry is the whole design. A single durable token pasted into a URL would be
+strictly WORSE than basic auth: it would sit in five different logs forever. Exchanging
+it immediately for a cookie, then redirecting to a clean URL, is what makes "just send
+me a link" both convenient and defensible.
+
+Cookie flags, and why each:
+  HttpOnly          — script cannot read it, so an XSS in a rendered doc cannot exfil it
+  Secure            — never sent over plaintext
+  SameSite=Lax      — sent on top-level GET navigation (so clicking your link works),
+                      NOT on cross-site POST. That last part is free CSRF protection for
+                      the write endpoint: another origin cannot make your browser POST
+                      to /__docstore/source with your cookie attached.
+  Path=/            — the whole workspace, since editing spans the site
+
+Build-time only. Never import this from browser code.
+*/
+import { randomBytes, timingSafeEqual } from 'node:crypto';
+/** A URL token is spent on first use, but must also age out if never used. */
+export const LINK_TOKEN_TTL_MS = 15 * 60 * 1000;
+/** Sessions are the durable half — long enough that you are not re-linking daily. */
+export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+export const SESSION_COOKIE = 'tosi_dev_session';
+/** 128 bits, base64url — long enough that guessing is not a threat model. */
+export function mintToken() {
+    return randomBytes(16).toString('base64url');
+}
+/** Constant-time compare that tolerates unequal lengths without throwing. */
+export function safeEqual(a, b) {
+    const ab = Buffer.from(a);
+    const bb = Buffer.from(b);
+    if (ab.length !== bb.length)
+        return false;
+    return timingSafeEqual(ab, bb);
+}
+export function createAuthState() {
+    return { links: new Map(), sessions: new Map() };
+}
+/** Drop anything expired. Called on every use so the maps cannot grow without bound. */
+export function prune(state, now) {
+    for (const [t, exp] of state.links)
+        if (exp <= now)
+            state.links.delete(t);
+    for (const [t, exp] of state.sessions)
+        if (exp <= now)
+            state.sessions.delete(t);
+}
+/** Issue a link token to put in a URL. */
+export function issueLink(state, now) {
+    prune(state, now);
+    const token = mintToken();
+    state.links.set(token, now + LINK_TOKEN_TTL_MS);
+    return token;
+}
+/**
+ * Spend a link token for a session token, or return null.
+ *
+ * Deleting BEFORE returning is what makes it single-use — and the delete happens
+ * whether or not the token had expired, so a replay of an expired token cannot linger.
+ */
+export function redeemLink(state, token, now) {
+    prune(state, now);
+    // Constant-time lookup over the (tiny) set rather than Map.get, so a timing signal
+    // can't distinguish "no such token" from "wrong token".
+    let matched = null;
+    for (const candidate of state.links.keys()) {
+        if (safeEqual(candidate, token))
+            matched = candidate;
+    }
+    if (matched === null)
+        return null;
+    state.links.delete(matched);
+    const session = mintToken();
+    state.sessions.set(session, now + SESSION_TTL_MS);
+    return session;
+}
+/** Is this session token live? */
+export function validSession(state, token, now) {
+    if (!token)
+        return false;
+    prune(state, now);
+    for (const candidate of state.sessions.keys()) {
+        if (safeEqual(candidate, token))
+            return true;
+    }
+    return false;
+}
+/** Pull one cookie out of a Cookie header. */
+export function readCookie(header, name) {
+    if (!header)
+        return undefined;
+    for (const part of header.split(';')) {
+        const eq = part.indexOf('=');
+        if (eq < 0)
+            continue;
+        if (part.slice(0, eq).trim() === name)
+            return part.slice(eq + 1).trim();
+    }
+    return undefined;
+}
+/** The Set-Cookie value for a freshly minted session. See the header comment. */
+export function sessionCookie(token, maxAgeMs = SESSION_TTL_MS) {
+    return (`${SESSION_COOKIE}=${token}; Max-Age=${Math.floor(maxAgeMs / 1000)}; ` +
+        `Path=/; HttpOnly; Secure; SameSite=Lax`);
+}
+/**
+ * Strip the link token from a URL so the redirect target is clean.
+ *
+ * The point of the exchange is that the token stops existing in the address bar, in
+ * history, and in anything the browser sends onward. Leaving it on the redirect would
+ * defeat the entire design.
+ */
+export function urlWithoutToken(rawUrl, param) {
+    const url = new URL(rawUrl);
+    url.searchParams.delete(param);
+    const qs = url.searchParams.toString();
+    return url.pathname + (qs ? `?${qs}` : '') + url.hash;
+}

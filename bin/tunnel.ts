@@ -4,6 +4,7 @@ Expose THIS machine's dev server at an authenticated public URL.
   bun run tunnel          # open the tunnel (foreground; Ctrl-C closes it)
   bun run tunnel --status # is one already up?
   bun run tunnel --close  # close any tunnel this project opened
+  bun run tunnel --link   # ask the dev server to print a fresh single-use edit link
 
 The work happens where the data is. The repo, the dev server, the build and the
 watcher all stay here; the box terminates TLS and checks a password and does no
@@ -52,6 +53,30 @@ const pattern = `ssh .*-R ${remotePort}:localhost:${localPort} ${host}`
 async function running(): Promise<number[]> {
   const out = await $`pgrep -f ${pattern}`.nothrow().quiet().text()
   return out.trim().split('\n').filter(Boolean).map(Number)
+}
+
+if (has('link')) {
+  // The running dev server owns the token store, so ask IT for a link rather than
+  // minting one here — a token this process invented would not be recognised.
+  // SIGUSR2 makes the server print a fresh single-use link to its own stdout.
+  const pids = (await $`pgrep -f ${'bun bin/dev.ts'}`.nothrow().quiet().text())
+    .trim().split('\n').filter(Boolean)
+  if (!pids.length) {
+    console.error('\nNo dev server running — start `bun start` first.\n')
+    process.exit(1)
+  }
+  for (const pid of pids) {
+    try {
+      process.kill(Number(pid), 'SIGUSR2')
+    } catch {
+      /* gone */
+    }
+  }
+  console.log(
+    `\nAsked the dev server (pid ${pids.join(', ')}) to print a fresh edit link —\n` +
+      `see its terminal. Valid 15 minutes, single use.\n`
+  )
+  process.exit(0)
 }
 
 if (has('status')) {

@@ -15,6 +15,7 @@ import { buildSite } from './orchestrator';
 import { preflight } from './preflight';
 import { auditDependencies, reportAudit } from './audit-guard';
 import { openDevBrowser } from './open-browser';
+import { createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, SESSION_COOKIE, } from './dev-auth';
 const TEST_RESULTS_FILE = '.browser-tests.json';
 const DEFAULT_IDLE_HOURS = 8;
 /**
@@ -310,6 +311,28 @@ export async function devServer(config, opts = {}) {
     statusSnippet() below and the `__tosiDevStatus` reader in doc-browser.ts.
     */
     let buildStatus = { ok: true };
+    /*
+    Magic-link auth, so a workspace exposed via `bun run tunnel` can be edited from
+    anywhere. A LINK token rides in a URL and is spent on first use; it is exchanged for
+    a durable SESSION cookie that never appears in a URL. See dev-auth.ts for why that
+    asymmetry is the whole design.
+  
+    In memory on purpose: a dev server restart invalidating sessions is a feature, not a
+    gap — the credential's lifetime should not outlive the process that granted it, and
+    re-linking is one command.
+    */
+    const auth = createAuthState();
+    const LINK_PARAM = 't';
+    /** Print a fresh single-use link. Called on demand (SIGUSR2) and by --link. */
+    const printLink = () => {
+        const token = issueLink(auth, Date.now());
+        const base = config.preview?.tunnel?.url ?? `https://localhost:${PORT}`;
+        const url = `${base}/?${LINK_PARAM}=${token}`;
+        console.log(`\n🔗 Single-use edit link (valid 15 min, then it is spent):\n   ${url}\n`);
+        return url;
+    };
+    // `kill -USR2 <pid>` prints a fresh link without restarting the server.
+    process.on('SIGUSR2', () => printLink());
     let testReportResolve;
     // Source read/write for in-browser "edit page source" (config.editableSources).
     // Local dev only — your machine, your files — so the lone guard is correctness:
@@ -746,6 +769,34 @@ export async function devServer(config, opts = {}) {
         },
         async fetch(request, srv) {
             touch();
+            /*
+            Magic-link exchange. A `?t=` on ANY path is spent immediately for a session
+            cookie, then we 302 to the same URL with the token stripped.
+      
+            Redirecting is not cosmetic: it is what stops the token existing in the address
+            bar, in history, and in the Referer of anything the page subsequently loads.
+            `Referrer-Policy: no-referrer` covers the one request that DID carry it.
+      
+            An invalid or already-spent token is not an error — it just falls through
+            unauthenticated, so a stale link behaves like no link rather than leaking whether
+            that token was ever real.
+            */
+            const reqUrl = new URL(request.url);
+            const linkToken = reqUrl.searchParams.get(LINK_PARAM);
+            if (linkToken) {
+                const session = redeemLink(auth, linkToken, Date.now());
+                const clean = urlWithoutToken(request.url, LINK_PARAM);
+                const headers = {
+                    Location: clean,
+                    'Referrer-Policy': 'no-referrer',
+                    'Cache-Control': 'no-store',
+                };
+                if (session) {
+                    headers['Set-Cookie'] = sessionCookie(session);
+                    console.log('🔓 edit link redeemed — session issued');
+                }
+                return new Response(null, { status: 302, headers });
+            }
             let reqPath = new URL(request.url).pathname;
             console.log(request.method, reqPath);
             if (request.method === 'POST' && reqPath === '/report') {
@@ -764,22 +815,52 @@ export async function devServer(config, opts = {}) {
                 if (!config.editableSources) {
                     return new Response('editableSources is not enabled in this doc-site config (set editableSources: true to edit/save source in dev)', { status: 501, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
                 }
-                // LOOPBACK ONLY. Reading exposes any file in the repo; writing is remote code
-                // execution (write a file, the watcher rebuilds, the build runs it). Checked on
-                // the PEER ADDRESS, never on Origin/Host, which are attacker-supplied.
-                //
-                // There is deliberately NO override. An env var that re-enables this would have
-                // no legitimate use today — nothing authenticates in front of this server — and
-                // it is exactly the shape of guard that gets set once in a shell profile and
-                // stays off forever. Remote editing is not a flag to flip; it needs real
-                // authentication, and that is Phase 3 of REMOTE-ACCESS-PLAN.md, where the
-                // schema is the authorization boundary and a session (not a location, and not
-                // an env var) decides who may write. Until then: view remotely, edit locally.
+                /*
+                LOOPBACK **OR** AN AUTHENTICATED SESSION.
+        
+                Reading serves any file in the repo; writing is remote code execution (write a
+                file, the watcher rebuilds, the build runs it). So the caller must be one of:
+        
+                  - physically local (you, at this keyboard), or
+                  - holding a session cookie earned by spending a single-use link.
+        
+                Note there is still no env-var override and no token read from a URL or a
+                header a page could forge: the session arrives as an HttpOnly cookie the
+                browser attaches itself, and SameSite=Lax means another origin cannot make
+                your browser POST here with it. A location check alone was a stopgap; this is
+                the actual authorization.
+                */
                 const peer = srv?.requestIP?.(request)?.address;
-                if (!isLoopbackAddress(peer)) {
+                const session = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
+                /*
+                A TUNNELLED REQUEST LOOKS LOOPBACK, so the peer address alone cannot be trusted
+                here. `ssh -R` delivers to localhost, so every remote request arriving through
+                the tunnel has a 127.0.0.1 peer — meaning a naive `loopback OR session` lets
+                anyone past the proxy write files WITHOUT a session, and the cookie buys
+                nothing. (Caught by a test that did exactly that.)
+        
+                So split on whether the request was PROXIED. Caddy's reverse_proxy sets
+                X-Forwarded-*; a browser on this machine talking to the dev server directly
+                does not. Therefore:
+        
+                  proxied  → a valid session is REQUIRED (loopback is meaningless here)
+                  direct   → loopback peer is sufficient (you are at this keyboard)
+        
+                Trusting a header is normally a mistake, and it is safe here only because of
+                the topology: the tunnel's remote end is bound to the box's loopback
+                (`GatewayPorts no`), so nothing reaches this socket from outside except through
+                Caddy — which sets the header itself. A remote caller cannot arrive without it.
+                And forging it can only ever make the check STRICTER, never weaker.
+                */
+                const proxied = request.headers.get('x-forwarded-for') !== null ||
+                    request.headers.get('x-forwarded-host') !== null;
+                const authorized = proxied
+                    ? validSession(auth, session, Date.now())
+                    : isLoopbackAddress(peer);
+                if (!authorized) {
                     console.warn(`⚠️  refused ${request.method} /__docstore/source from ${peer ?? 'unknown'} — ` +
-                        `source editing is local-only.`);
-                    return new Response('source editing is restricted to this machine', {
+                        `no session (use \`bun run tunnel --link\` for an edit link).`);
+                    return new Response('not authorized to edit source', {
                         status: 403,
                         headers: { 'Content-Type': 'text/plain; charset=utf-8' },
                     });
