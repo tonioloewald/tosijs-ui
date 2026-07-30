@@ -630,6 +630,29 @@ For the consumer-facing mental model — element-creator pattern, value/change/a
 6. Tag release: `git tag v1.x.x`
 7. Push: `git push --tags` (the user publishes to npm)
 
+### Prereleases — iterate on betas, gate the final
+
+A feature that adds public API is a **minor**, however unfinished it feels — semver
+tracks the shape of a change, not how done it is. So a big in-progress feature ships as
+`1.x.0-beta.N`, not as a patch pretending to be small. Cut betas freely: the three lanes
+plus `bun run build` are the whole gate, and the point is to iterate fast against real
+use.
+
+**Run the nine-lens review (`/pre-release-review`) once, before the FINAL `1.x.0`** —
+not on every beta. It costs ~40 minutes and dozens of agents; spending that per
+iteration would stop you iterating, which is the opposite of what a beta line is for.
+
+**Publish a prerelease under a dist-tag:**
+
+```bash
+bun publish --tag beta      # NOT a bare `bun publish`
+```
+
+A bare publish makes the prerelease **`latest`**, so everyone doing a fresh
+`bun add tosijs-ui` gets a beta. Consumers opt in with `tosijs-ui@beta`; `latest` stays
+on the last stable. (`npm dist-tag ls tosijs-ui` shows the current state.) When the
+final ships, publish it normally so `latest` moves.
+
 Kill any background `bun start` before doing release git surgery (`pkill -f bin/dev.ts`, free :8787) — otherwise it rebuilds mid-operation and races the greps and git commands.
 
 ## Task Tracking

@@ -1,5 +1,49 @@
 # Changelog
 
+## 1.9.0-beta.1
+
+> **Prerelease.** The preview-host system works end to end and is in daily use, but the
+> plan it belongs to (`REMOTE-ACCESS-PLAN.md`) has two more phases. Published under the
+> `beta` dist-tag — **install with `tosijs-ui@beta`**; `latest` stays on 1.8.0.
+>
+> It's a **minor**, not a patch, despite being unfinished: it adds public API
+> (`SiteConfig.preview`), emits a new artifact into every adopter's output
+> (`/version.json`), and changes what happens when a build fails. Semver tracks the
+> shape of a change, not how done it feels.
+
+- **New: preview hosting.** `bun run deploy` rsyncs the built site to a box you control,
+  so a phone, a client, or a reviewer can see it without your dev server — or your
+  laptop — being up. The whole artifact is a few MB, so this is a copy, not a pipeline.
+  - **`preview: { host, path?, url? }`** in the site config. Only `host` is required;
+    `path` defaults to `/srv/preview/<name>`. Flag > env > config, so a one-off push
+    elsewhere doesn't need a config edit.
+  - **Dry run by default.** It runs `rsync --delete` (the remote must mirror the build,
+    stale pages must not linger), so the destructive form has to be typed: `--go`. It
+    also refuses any target that isn't an absolute path at least two levels deep.
+  - **Projects self-register.** Each deploy writes its own Caddy fragment; the server
+    glob-imports them. Adding a project touches no shared config and needs no DNS
+    change. The deploy **validates before reloading** and refuses to reload on invalid
+    config, so one bad fragment can't take down every project on the box.
+  - `deploy/Caddyfile` and `deploy/build-index.sh` are committed — server config in git
+    beats server config in someone's shell history.
+- **New: `/version.json`** in every build — `{ generator, site, commit, commitTime }`.
+  Nothing exposed which commit produced a given site before. It matters wherever a
+  deploy is a snapshot: a reviewer can otherwise report a bug you fixed this morning
+  with no way to tell from the page which of you is stale.
+  **Deliberately deterministic** — no build timestamp, no dirty flag — so a committed
+  output dir doesn't churn on every build. Git fields are omitted (never blank) when
+  git isn't available.
+- **Fix: a failed rebuild no longer destroys the site.** `buildSite()` opens with
+  `rm -rf <outputDir>`, so a build failing after that left nothing to serve — save a
+  typo, and the next refresh was a dead site. The dev server now moves the working
+  build aside first and restores it on failure, **and says so on the page**: the
+  existing floating widget (which already means "the far end has something to tell
+  you") shows the failure until a good build clears it, with detail in the console.
+  Note it survives the "tests disabled" preference — otherwise the one person who
+  turned test indicators off is the one who never learns their build is broken.
+- **New: `DEV_NO_WATCH=1`** serves the built site without watching, for automated
+  suites that want a server rather than a rebuilder.
+
 ## 1.8.0
 
 > **Read this first if you use `tosijs-ui/site`.** This release adds a **dependency-audit
