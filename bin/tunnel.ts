@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 /*
 Expose THIS machine's dev server at an authenticated public URL.
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 /*
 Deploy the built site to a preview host.
 

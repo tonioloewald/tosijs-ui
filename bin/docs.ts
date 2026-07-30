@@ -1,3 +1,4 @@
+#!/usr/bin/env bun
 // Back-compat shim. The doc-extraction implementation now lives in the
 // importable doc-site system at src/doc-system/site/docs.ts (shipped as
 // `tosijs-ui/site`). This path is kept (package.json#files lists /bin/docs.ts)

@@ -884,12 +884,26 @@ export class LiveExample extends Component {
                     'then try again. Your edit is still here.');
                 return;
             }
-            if (!response.ok)
-                throw new Error(String(response.status));
+            if (!response.ok) {
+                /*
+                Surface the SERVER'S reason, not just "Save failed."
+        
+                The endpoint answers 501 with "editableSources is not enabled in this doc-site
+                config" — an actionable sentence — and this threw it away for a generic
+                failure, so the user could not tell an unconfigured server from a broken one
+                and their edit appeared to vanish (tosijs-ui#34). Read the body.
+                */
+                const reason = await response.text().catch(() => '');
+                window.alert(`Could not save to ${sourceFile}.\n\n` +
+                    (reason.trim() || `The server answered ${response.status}.`) +
+                    `\n\nYour edit is still in the editor.`);
+                return;
+            }
             window.alert(`Saved to ${sourceFile}`);
         }
-        catch {
-            window.alert('Save failed.');
+        catch (e) {
+            window.alert(`Save failed: ${e instanceof Error ? e.message : String(e)}\n\n` +
+                'Your edit is still in the editor.');
         }
     };
     handleTestsToggle = (event) => {

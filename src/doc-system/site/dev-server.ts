@@ -1171,17 +1171,48 @@ export async function devServer(
   self-signed dev cert. `hostname: '127.0.0.1'` is load-bearing — on 0.0.0.0 this
   would be an unauthenticated plaintext copy of the dev server on the LAN.
   */
-  const tunnelPort = config.preview?.tunnel?.localPort
+  /*
+  Default the tunnel listener to PORT + 1, not a constant.
+
+  A fixed `localPort` ignores PORT, so a second dev server on another port still tried
+  to bind the SAME tunnel port and died with EADDRINUSE — which is exactly what happened
+  to this repo's own Playwright lane (its server runs on 8799, and it collided with the
+  8788 held by a `bun start` on 8787). Any adopter running two projects, or a test lane
+  beside a dev server, hits it. Deriving it from PORT keeps them disjoint by
+  construction; an explicit `tunnel.localPort` still wins for the machine that actually
+  tunnels.
+  */
+  const tunnelPort =
+    config.preview?.tunnel?.localPort ??
+    (config.preview?.tunnel ? PORT + 1 : undefined)
+  const configuredTunnelPort = config.preview?.tunnel?.localPort
   let tunnelServer: { stop: () => void } | undefined
   if (tunnelPort && !testMode) {
-    tunnelServer = Bun.serve({
-      port: tunnelPort,
-      hostname: '127.0.0.1',
-      fetch: (request: Request, srv: any) => handleRequest(request, srv, true),
-    })
-    console.log(
-      `Tunnel listener on http://127.0.0.1:${tunnelPort} (loopback only; writes require a session)`
-    )
+    try {
+      tunnelServer = Bun.serve({
+        port: tunnelPort,
+        hostname: '127.0.0.1',
+        fetch: (request: Request, srv: any) =>
+          handleRequest(request, srv, true),
+      })
+      console.log(
+        `Tunnel listener on http://127.0.0.1:${tunnelPort} (loopback only; writes require a session)`
+      )
+    } catch (e) {
+      /*
+      A busy tunnel port must not take the dev server down. It is an optional extra —
+      you only need it if you are actually tunnelling — and killing the whole server
+      over it turns "another instance is running" into "my dev server won't start".
+      `tosijs-tunnel` already refuses loudly when nothing is listening, so the failure
+      still surfaces at the moment it matters.
+      */
+      console.warn(
+        `⚠️  Could not bind the tunnel listener on 127.0.0.1:${tunnelPort} ` +
+          `(${e instanceof Error ? e.message : String(e)}).\n` +
+          `   Serving normally; \`tosijs-tunnel\` will not work until this is free` +
+          `${configuredTunnelPort ? '' : ' — it defaults to PORT + 1'}.`
+      )
+    }
   }
 
   console.log(`Listening on https://localhost:${PORT}`)

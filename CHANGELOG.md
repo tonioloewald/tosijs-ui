@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.9.0-rc.2
+
+Fixes everything both consumers hit within minutes of `rc.1`. Three were regressions
+introduced by rc.1 itself.
+
+- **The `tosijs-tunnel` / `tosijs-deploy` bins had no shebang** (#35, #36 — reported
+  independently by both consumers), so `node_modules/.bin` shims handed them to the
+  shell, which ran TypeScript as a shell script. Added to every shipped bin.
+- **`/version.json`'s `generator` reported the CONSUMER's version** (#37). rc.1 replaced
+  an import of the generated `src/version.ts` (which caused a `bun --watch` rebuild loop)
+  with a read of `package.json` — but that resolves against the **cwd**, i.e. the
+  adopter's repo. So the one field you consult to answer "which tosijs-ui built this?"
+  answered with the wrong package entirely. Now resolved relative to the module.
+- **Two dev servers could not coexist.** The tunnel listener bound a fixed port
+  regardless of `PORT`, so a second server — or this repo's own Playwright lane beside a
+  `bun start` — died with `EADDRINUSE`. It now defaults to `PORT + 1`, and a busy tunnel
+  port warns instead of taking the whole server down: it is an optional extra, and
+  refusing to start over it turns "another instance is running" into "my dev server is
+  broken".
+- **A failed "save to source" now says why** (#34). The endpoint answers 501 with an
+  actionable sentence ("editableSources is not enabled…") and the client threw it away
+  for a generic "Save failed.", so an unconfigured server was indistinguishable from a
+  broken one and the edit appeared to vanish. The server's reason is surfaced, and every
+  failure path now states that the edit is still in the editor.
+
+
 ## 1.9.0-rc.1
 
 Release candidate. Everything the nine-lens review and the first adopters raised is
