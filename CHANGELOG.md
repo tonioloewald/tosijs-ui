@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.9.0-beta.2
+
+> Prerelease — install with `tosijs-ui@beta`. `latest` stays on 1.8.0.
+
+**Remote editing, authenticated.** `bun run tunnel` exposes this machine's dev server at
+a public URL; a single-use invite link is exchanged for a durable session cookie, and
+editing through it is indistinguishable from sitting at the keyboard — same dev server,
+same watcher, same files.
+
+- **`bun run tunnel`** (`--status` / `--close` / `--link`). An SSH reverse tunnel to your
+  preview box. **The box does no compute** — it terminates TLS and checks a credential —
+  which is what lets one small VPS serve many projects. The work stays where the data is.
+- **Magic-link auth.** Two tokens on purpose: the **link** rides in a URL so it is the
+  one that leaks (history, `Referer`, proxy logs, chat-app link previews) and is
+  therefore *single-use and 15 minutes*; the **session** never appears in a URL, arrives
+  as an `HttpOnly` cookie, and is durable. A durable token pasted into a URL would be
+  strictly worse than basic auth. `SameSite=Lax` gives the write endpoint free CSRF
+  protection.
+- **`tunnel.requireToken`** — default `false`: the workspace renders for anyone with the
+  URL but **writes always need a session**, so a stranger gets a read-only page. Set
+  `true` to require a session even to view. The default means an expired link degrades
+  to a readable page rather than a wall — which is what you hit when you already hold a
+  session and open a second window.
+- **Security fix: source endpoints are no longer exposed to your LAN.** `Bun.serve` binds
+  every interface, so on any shared network an unauthenticated `POST /__docstore/source`
+  was **remote code execution** — write a repo file, the watcher rebuilds, the build runs
+  it. Now: loopback, or a valid session.
+- **Multi-project preview host.** Projects **self-register** — each deploy writes its own
+  Caddy fragment, so adding one touches no shared config and needs no DNS change. The
+  deploy validates before reloading and refuses on invalid config, so one bad fragment
+  can't break routing for everyone. The root serves a **generated index** of what's
+  deployed and which commit each is serving.
+- **Invite links replace basic-auth dialogs** on the static preview hosts too. Knowingly
+  weaker than the workspace's auth (a shared bearer secret in a cookie, not a per-client
+  session) — Caddy serving static files has no session store — but equivalent to the
+  basicauth it replaces, with no dialog.
+
+
 ## 1.9.0-beta.1
 
 > **Prerelease.** The preview-host system works end to end and is in daily use, but the
