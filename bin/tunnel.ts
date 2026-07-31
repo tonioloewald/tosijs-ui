@@ -32,7 +32,10 @@ always requires a session.
 
 import { $ } from 'bun'
 import { tmpdir } from 'os'
-import { resolveSiteConfig } from './resolve-site-config'
+import {
+  resolveSiteConfig,
+  resolveTunnelLocalPort,
+} from './resolve-site-config'
 
 const siteConfig = await resolveSiteConfig()
 
@@ -77,12 +80,10 @@ const remotePort = Number(
 // what marks a request as remote, so writes require a session — an unforgeable signal,
 // unlike a header. It is plain HTTP, which also removes the proxy's need to skip TLS
 // verification against a self-signed dev cert.
-// Derived the SAME way as dev-server.ts (PORT + 1), not hardcoded to 8788 — they only
-// agreed when PORT was 8787, and this repo sets localPort explicitly so no lane ever
-// exercised the default. An adopter on port 3000 got a hard exit telling them to
-// upgrade tosijs-ui, which was already current.
+// ONE resolver, shared with the dev server (#39) — a matching-but-separate copy is how
+// these drifted in the first place. An explicit --local-port still wins.
 const tunnelLocalPort = Number(
-  flag('local-port') ?? preview?.tunnel?.localPort ?? localPort + 1
+  flag('local-port') ?? resolveTunnelLocalPort(siteConfig, {})
 )
 const publicUrl = flag('url') ?? preview?.tunnel?.url
 
@@ -141,6 +142,20 @@ if (has('status')) {
           publicUrl ?? `remote :${remotePort}`
         }`
       : 'tunnel down'
+  )
+  /*
+  Always say which ports this would use.
+
+  "tunnel down" alone is unfalsifiable: it looks identical whether the tunnel is really
+  down or whether this command is simply looking at the wrong port — which is exactly
+  what #39 was (server on PORT+1, bin probing a hard-coded 8788, and the advice naming
+  the stale default). Printing the numbers makes a mismatch visible at a glance, and
+  gives the consumer smoke lane something real to assert on.
+  */
+  console.log(
+    `  forwards localhost:${tunnelLocalPort} → ${
+      host ?? '<no host configured>'
+    } :${remotePort}  (dev server on :${localPort})`
   )
   process.exit(0)
 }

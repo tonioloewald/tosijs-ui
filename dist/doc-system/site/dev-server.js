@@ -14,6 +14,7 @@ import { buildSite } from './orchestrator';
 import { preflight } from './preflight';
 import { auditDependencies, reportAudit } from './audit-guard';
 import { openDevBrowser } from './open-browser';
+import { resolveTunnelLocalPort } from './site-config';
 import { TUNNEL_LINK_CMD, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth';
 const TEST_RESULTS_FILE = '.browser-tests.json';
 const DEFAULT_IDLE_HOURS = 8;
@@ -1062,8 +1063,9 @@ export async function devServer(config, opts = {}) {
     construction; an explicit `tunnel.localPort` still wins for the machine that actually
     tunnels.
     */
-    const tunnelPort = config.preview?.tunnel?.localPort ??
-        (config.preview?.tunnel ? PORT + 1 : undefined);
+    const tunnelPort = config.preview?.tunnel
+        ? resolveTunnelLocalPort(config, process.env)
+        : undefined;
     const configuredTunnelPort = config.preview?.tunnel?.localPort;
     let tunnelServer;
     if (tunnelPort && !testMode && !process.env.DEV_NO_TUNNEL) {

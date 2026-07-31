@@ -16,6 +16,7 @@ import { buildSite } from './orchestrator'
 import { preflight } from './preflight'
 import { auditDependencies, reportAudit } from './audit-guard'
 import { openDevBrowser } from './open-browser'
+import { resolveTunnelLocalPort } from './site-config'
 import {
   TUNNEL_LINK_CMD,
   isLoopbackAddressForAuth as isLoopbackAddress,
@@ -1230,9 +1231,9 @@ export async function devServer(
   construction; an explicit `tunnel.localPort` still wins for the machine that actually
   tunnels.
   */
-  const tunnelPort =
-    config.preview?.tunnel?.localPort ??
-    (config.preview?.tunnel ? PORT + 1 : undefined)
+  const tunnelPort = config.preview?.tunnel
+    ? resolveTunnelLocalPort(config, process.env)
+    : undefined
   const configuredTunnelPort = config.preview?.tunnel?.localPort
   let tunnelServer: { stop: () => void } | undefined
   if (tunnelPort && !testMode && !process.env.DEV_NO_TUNNEL) {

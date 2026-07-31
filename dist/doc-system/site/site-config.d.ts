@@ -398,3 +398,17 @@ export interface SiteConfig {
 }
 /** Identity helper that gives a site config module full type-checking + IDE help. */
 export declare function defineSiteConfig(config: SiteConfig): SiteConfig;
+export interface PortResolvable {
+    port?: number;
+    preview?: {
+        tunnel?: {
+            localPort?: number;
+        };
+    };
+}
+export declare function resolveDevPort(config: PortResolvable, env?: Record<string, string | undefined>): number;
+/**
+ * The loopback port the tunnel forwards to. Defaults to `devPort + 1` so two projects —
+ * or a dev server and a test lane — stay disjoint by construction.
+ */
+export declare function resolveTunnelLocalPort(config: PortResolvable, env?: Record<string, string | undefined>): number;

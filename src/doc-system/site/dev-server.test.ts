@@ -112,3 +112,43 @@ test('isLoopbackAddress is not fooled by a lookalike', () => {
   expect(isLoopbackAddress('127.0.0.1.evil.com')).toBe(false)
   expect(isLoopbackAddress('1127.0.0.1')).toBe(false)
 })
+
+// ── tunnel port resolution (tosijs-ui#39) ────────────────────────────────────
+//
+// The dev server derived the tunnel listener from PORT+1 while `bin/tunnel.ts` fell back
+// to a hard-coded 8788. Those agree ONLY when PORT is 8787 — i.e. only on this repo — so
+// every other adopter ran a server on one port and a tunnel probing another. tosijs hit
+// it on their first session (PORT 8018 → listener 8019 → bin probed 8788). Both sides now
+// call the same function; these pin its behaviour.
+
+import { resolveDevPort, resolveTunnelLocalPort } from './site-config'
+
+test('the tunnel port follows the dev port, not a constant', () => {
+  // The exact case that broke: a project on its own port, no explicit localPort.
+  expect(resolveTunnelLocalPort({ port: 8018 }, {})).toBe(8019)
+  expect(resolveTunnelLocalPort({ port: 3000 }, {})).toBe(3001)
+  // This repo's own numbers — the coincidence that hid the bug.
+  expect(resolveTunnelLocalPort({ port: 8787 }, {})).toBe(8788)
+})
+
+test('an explicit localPort always wins', () => {
+  expect(
+    resolveTunnelLocalPort(
+      { port: 8018, preview: { tunnel: { localPort: 9999 } } },
+      {}
+    )
+  ).toBe(9999)
+  // …even when PORT would say otherwise.
+  expect(
+    resolveTunnelLocalPort(
+      { port: 8018, preview: { tunnel: { localPort: 9999 } } },
+      { PORT: '4000' }
+    )
+  ).toBe(9999)
+})
+
+test('env PORT outranks the config, and both sides see it the same way', () => {
+  expect(resolveDevPort({ port: 8018 }, { PORT: '4000' })).toBe(4000)
+  expect(resolveTunnelLocalPort({ port: 8018 }, { PORT: '4000' })).toBe(4001)
+  expect(resolveDevPort({}, {})).toBe(8787)
+})

@@ -89,10 +89,19 @@ try {
       2
     )
   )
+  // A NON-8787 port, and deliberately NO tunnel.localPort: the bin must derive the same
+  // default the dev server does. It used to fall back to a hard-coded 8788, which agreed
+  // with the server only on tosijs-ui itself — every other adopter got a server on one
+  // port and a tunnel probing another (tosijs-ui#39, hit by tosijs on its first run).
   await Bun.write(
     `${proj}/site.config.ts`,
     `import { defineSiteConfig } from 'tosijs-ui/site'\n` +
-      `export default defineSiteConfig({ name: 'consumer-smoke', docPaths: ['src'] })\n`
+      `export default defineSiteConfig({\n` +
+      `  name: 'consumer-smoke',\n` +
+      `  docPaths: ['src'],\n` +
+      `  port: 8018,\n` +
+      `  preview: { host: 'nobody@example.invalid', tunnel: {} },\n` +
+      `})\n`
   )
   await Bun.write(`${proj}/src/index.md`, `# Consumer Smoke\n\nHello.\n`)
   await Bun.write(
@@ -160,6 +169,22 @@ try {
       `bin runs via node_modules/.bin: ${name}`,
       !/syntax error|cannot execute|Exec format/i.test(err),
       err.slice(0, 200)
+    )
+  }
+
+  // ── the tunnel bin agrees with the server about ports ─────────────────────
+  const tunnelShim = path.join(proj, 'node_modules', '.bin', 'tosijs-tunnel')
+  if (existsSync(tunnelShim)) {
+    const st = await $`${tunnelShim} --status`.cwd(proj).nothrow().quiet()
+    const said = st.stdout.toString() + st.stderr.toString()
+    // Must POSITIVELY name 8019. An `||` fallback here would pass vacuously — the bin
+    // printed only "tunnel down" until --status was made to report its ports.
+    check(
+      'tosijs-tunnel derives localPort from the config port (8019, not 8788)',
+      /localhost:8019\b/.test(said),
+      `expected the bin to target 8019 for a project on port 8018; it said:\n       ${said
+        .trim()
+        .slice(0, 300)}`
     )
   }
 

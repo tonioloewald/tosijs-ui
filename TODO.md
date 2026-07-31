@@ -7,6 +7,18 @@ the lint/typecheck gates, `touch()`, the red-tsc site discard, port defaults,
 per-project `remotePort`, the deploy asset path, the mutating smoke test, and the stale
 security prose. What is left:
 
+**Post-1.9.0:**
+
+- [ ] **[#40](https://github.com/tonioloewald/tosijs-ui/issues/40) — generate the per-icon
+      modules from canonical data.** `src/icons/data/*` (313 modules) is the fine-grained
+      tree-shakeable surface, which is a real feature — but it's a frozen 2024 snapshot no
+      generator maintains: 47 have drifted from `icon-data.ts` (24 froze pre-redirect, 23
+      differ in SVG content) and `pin` has no module at all. Generate them at build time
+      instead, **resolving redirects when emitting** (`arrowUp` is the redirect string
+      `arrowRight270r` in canon, so a naive emit would ship a token where markup is
+      expected). Emitting to `dist/` directly would also drop 314 files from `src/`.
+      Not carrying the #30 `fill-rule` bug — verified.
+
 **Before the 1.9.0 tag:**
 
 - [ ] Write a consolidated `## 1.9.0` CHANGELOG section, leading with the **consumer

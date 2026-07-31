@@ -839,6 +839,29 @@ omits them.</p>
 hostname is not a secret — Let&#39;s Encrypt publishes every certificate it issues to public
 Certificate Transparency logs, so the URL is discoverable by construction. If you want to
 show someone the site, point them at the static preview; that is what it is for.</p>
+<p><strong>What the hostname discloses, and what to do about it.</strong> The edit host&#39;s <em>existence and
+name</em> are public by construction, even though its content is session-gated. Choose
+accordingly:</p>
+<ul>
+<li><strong>Project name public, content private</strong> — the normal case. Nothing to do; the session
+gate carries the weight. This is the posture the defaults assume.</li>
+<li><strong>Project <em>name</em> sensitive</strong> — use a random string as the subdomain. <code>tunnel.url</code> is
+arbitrary and self-registration doesn&#39;t care: <code>https://khx7q2mwp4.edit.dev.example.com</code>.
+CT logs then show only that something unnamed exists.</li>
+<li><strong>Project <em>existence</em> sensitive</strong> — don&#39;t use this feature. A public hostname whose
+existence must be secret is a contradiction, and no naming scheme fixes it.</li>
+</ul>
+<p>A random-string hostname is a <strong>capability</strong>, and hostnames leak through different
+channels than links do — DNS queries, browser history, <code>Referer</code>. It buys obscurity of
+the name; it is never a substitute for the session gate.</p>
+<blockquote>
+<p>Not recommended: a wildcard certificate (<code>*.edit.dev.example.com</code> via DNS-01) would
+keep individual names out of CT entirely, but it puts a DNS API credential on the
+preview box — escalating a box compromise from &quot;the previews it serves&quot; to
+&quot;cert-minting for the whole zone&quot;. That is the wrong trade for a convenience feature,
+and needing no credentials at all is exactly what makes on-demand HTTP certs and
+self-registration clean.</p>
+</blockquote>
 <p>Writing source additionally requires <a href="#build-toggles--dev-server"><code>editableSources</code></a> to be
 enabled. Note the two gates compose but are not the same: <code>editableSources</code> says <em>this
 server may write to disk at all</em>; the session says <em>you may ask it to</em>.</p>

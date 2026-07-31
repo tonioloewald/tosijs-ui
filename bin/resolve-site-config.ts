@@ -133,3 +133,17 @@ export function isSafeRemotePath(p: string): boolean {
 }
 
 export const safeRemoteRoots = (): string[] => [...SAFE_ROOTS]
+
+/*
+Re-exported so the bins and the dev server cannot drift apart on port defaults (#39).
+
+Imported from `dist/`, not `src/`: `src` is not in package `files`, so a bin resolving
+into it works in this checkout and breaks the moment anyone installs the package — the
+exact class of bug that put four packaging regressions into published prereleases.
+`site-config.js` is ~700 bytes of pure functions and type-only imports, so this costs a
+bin nothing.
+*/
+export {
+  resolveDevPort,
+  resolveTunnelLocalPort,
+} from '../dist/doc-system/site/site-config.js'

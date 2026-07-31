@@ -612,6 +612,29 @@ hostname is not a secret — Let's Encrypt publishes every certificate it issues
 Certificate Transparency logs, so the URL is discoverable by construction. If you want to
 show someone the site, point them at the static preview; that is what it is for.
 
+**What the hostname discloses, and what to do about it.** The edit host's *existence and
+name* are public by construction, even though its content is session-gated. Choose
+accordingly:
+
+- **Project name public, content private** — the normal case. Nothing to do; the session
+  gate carries the weight. This is the posture the defaults assume.
+- **Project *name* sensitive** — use a random string as the subdomain. `tunnel.url` is
+  arbitrary and self-registration doesn't care: `https://khx7q2mwp4.edit.dev.example.com`.
+  CT logs then show only that something unnamed exists.
+- **Project *existence* sensitive** — don't use this feature. A public hostname whose
+  existence must be secret is a contradiction, and no naming scheme fixes it.
+
+A random-string hostname is a **capability**, and hostnames leak through different
+channels than links do — DNS queries, browser history, `Referer`. It buys obscurity of
+the name; it is never a substitute for the session gate.
+
+> Not recommended: a wildcard certificate (`*.edit.dev.example.com` via DNS-01) would
+> keep individual names out of CT entirely, but it puts a DNS API credential on the
+> preview box — escalating a box compromise from "the previews it serves" to
+> "cert-minting for the whole zone". That is the wrong trade for a convenience feature,
+> and needing no credentials at all is exactly what makes on-demand HTTP certs and
+> self-registration clean.
+
 Writing source additionally requires [`editableSources`](#build-toggles--dev-server) to be
 enabled. Note the two gates compose but are not the same: `editableSources` says _this
 server may write to disk at all_; the session says _you may ask it to_.

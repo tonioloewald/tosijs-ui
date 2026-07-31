@@ -437,3 +437,42 @@ export interface SiteConfig {
 export function defineSiteConfig(config: SiteConfig): SiteConfig {
   return config
 }
+
+/*
+Port resolution — ONE definition, shared by the dev server and the `tosijs-tunnel` bin.
+
+These lived separately: the server derived the tunnel listener from `PORT + 1` while the
+bin fell back to a hard-coded 8788. They agree only when PORT is 8787 — i.e. only on
+tosijs-ui itself — so every other adopter got a server listening on one port and a tunnel
+probing another. tosijs hit it on their first run (PORT 8018 → listener 8019 → bin probed
+8788), and the advice in the failure message documented the bin's stale default rather
+than the server's real one.
+
+Deliberately takes a minimal structural shape rather than the full SiteConfig, so the
+bins can import it without dragging in the type graph, and `env` is a parameter so it is
+testable without touching process state.
+*/
+export interface PortResolvable {
+  port?: number
+  preview?: { tunnel?: { localPort?: number } }
+}
+
+export function resolveDevPort(
+  config: PortResolvable,
+  env: Record<string, string | undefined> = process.env
+): number {
+  return Number(env.PORT || config.port || 8787)
+}
+
+/**
+ * The loopback port the tunnel forwards to. Defaults to `devPort + 1` so two projects —
+ * or a dev server and a test lane — stay disjoint by construction.
+ */
+export function resolveTunnelLocalPort(
+  config: PortResolvable,
+  env: Record<string, string | undefined> = process.env
+): number {
+  return Number(
+    config.preview?.tunnel?.localPort ?? resolveDevPort(config, env) + 1
+  )
+}

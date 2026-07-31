@@ -14,3 +14,13 @@ Imports here are type-only so this module stays free of runtime/DOM dependencies
 export function defineSiteConfig(config) {
     return config;
 }
+export function resolveDevPort(config, env = process.env) {
+    return Number(env.PORT || config.port || 8787);
+}
+/**
+ * The loopback port the tunnel forwards to. Defaults to `devPort + 1` so two projects —
+ * or a dev server and a test lane — stay disjoint by construction.
+ */
+export function resolveTunnelLocalPort(config, env = process.env) {
+    return Number(config.preview?.tunnel?.localPort ?? resolveDevPort(config, env) + 1);
+}
