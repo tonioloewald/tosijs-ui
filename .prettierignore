@@ -3,3 +3,29 @@ dist
 www
 docs
 cdn
+
+# GENERATED CODE — do not format it.
+#
+# The build rewrites these from source data in its own style, so formatting them just
+# means the next build reverts the formatting: a permanent two-way diff that shows up in
+# every `git status` and buries real changes. `bun format` was rewriting 315 generated
+# files (the icon data alone is ~300), which is what made a release diff unreadable.
+#
+# If a generated file's style bothers you, change the GENERATOR (bin/make-icon-data.js),
+# not the output.
+src/icons/data/
+src/icon-data.ts
+src/version.ts
+demo/docs.json
+llms.txt
+
+# test/report output
+.browser-tests.json
+playwright-report/
+test-results/
+
+# vendored third-party — upstream's formatting, so diffs against upstream stay readable
+demo/xinjs-icon-font/
+
+# editor state
+.nova/
