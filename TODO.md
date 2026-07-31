@@ -19,6 +19,28 @@ security prose. What is left:
       expected). Emitting to `dist/` directly would also drop 314 files from `src/`.
       Not carrying the #30 `fill-rule` bug — verified.
 
+**From the THIRD 1.9.0 review round (pass 2 follow-ups not yet done):**
+
+- [ ] **Integration test that the tunnel listener is handed `viaTunnel = true`.** The
+      fail-open shipped through beta.1/2 and rc.1/2 because the decision was inline in the
+      server closure. Extraction made the *predicate* testable; the call site still isn't,
+      and flipping `true`→`false` at `dev-server.ts:1245` is unobservable by every lane
+      (`testMode` and `DEV_NO_TUNNEL=1` both skip the bind). Export a
+      `createRequestHandler` factory so both bindings are assertable without TLS.
+- [ ] **`tosijs-tunnel`: ask the host for the remote port, and register the route AFTER
+      the forward succeeds.** `derivePort` is FNV-1a into 900 slots with no occupancy
+      check, while `site-config.ts` (shipped in `dist/*.d.ts`) and `doc-site-system.md`
+      both promise two projects "can't collide". The fragment write + `systemctl reload`
+      run *before* `ssh -R`, so a collision leaves B's public hostname routing at A's live
+      workspace, with no `--unregister`. **Soften the shipped claim to "collisions are
+      detected and refused" — it is another guarantee the code does not provide.**
+- [ ] `bin/make-icon-data.js` — one bare `catch {}` covers "prettier not installed", a
+      prettier *parse* error, and an API change, so a malformed generated module is
+      written and reported as "Successfully generated" with exit 0. Split it: silent
+      fallback only for module resolution. Also escape `\r`/`\t` in `quote()` (a raw
+      control byte makes grep silently lie), and move `quote`/`emitObject` into `src/`
+      where `bun test` can reach them.
+
 **Before the 1.9.0 tag:**
 
 - [ ] Write a consolidated `## 1.9.0` CHANGELOG section, leading with the **consumer
