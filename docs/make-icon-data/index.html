@@ -100,6 +100,22 @@ variant suffixes in order.</p>
 <li>Rounds coordinates based on viewBox size (larger viewBox = fewer decimals)</li>
 <li>Converts filenames to camelCase (<code>arrow-right.svg</code> → <code>arrowRight</code>)</li>
 </ul>
+<h2>Output formatting</h2>
+<p>The generated module is written as ordinary, readable source: single-quoted strings (SVG
+markup is full of <code>class=&quot;stroked&quot;</code>, so single quotes mean no escaping), one icon per
+line. <strong>If <code>prettier</code> is resolvable from the output path, the module is formatted through
+it in memory before being written, using <em>your</em> prettier config</strong> — so generated data
+matches the rest of your project rather than ours. Prettier is entirely optional; without
+it the output is already clean.</p>
+<p>The generator&#39;s output is <strong>stable</strong>: running it twice on the same icons produces
+byte-identical files, so it never shows up as spurious diff noise.</p>
+<blockquote>
+<p><strong>Add your generated icon data to <code>.prettierignore</code>.</strong></p>
+<p>Even with matching output, treat generated files as generated: a formatter run that
+rewrites them means the next build reverts the formatting, which is a permanent two-way
+diff in every <code>git status</code>. If the style bothers you, change the generator&#39;s config (or
+your prettier config, which it now honours) — not the output.</p>
+</blockquote>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">

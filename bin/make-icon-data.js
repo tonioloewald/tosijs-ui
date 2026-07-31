@@ -65,6 +65,25 @@ The tool automatically:
 - Collapses whitespace
 - Rounds coordinates based on viewBox size (larger viewBox = fewer decimals)
 - Converts filenames to camelCase (`arrow-right.svg` → `arrowRight`)
+
+## Output formatting
+
+The generated module is written as ordinary, readable source: single-quoted strings (SVG
+markup is full of `class="stroked"`, so single quotes mean no escaping), one icon per
+line. **If `prettier` is resolvable from the output path, the module is formatted through
+it in memory before being written, using *your* prettier config** — so generated data
+matches the rest of your project rather than ours. Prettier is entirely optional; without
+it the output is already clean.
+
+The generator's output is **stable**: running it twice on the same icons produces
+byte-identical files, so it never shows up as spurious diff noise.
+
+> **Add your generated icon data to `.prettierignore`.**
+>
+> Even with matching output, treat generated files as generated: a formatter run that
+> rewrites them means the next build reverts the formatting, which is a permanent two-way
+> diff in every `git status`. If the style bothers you, change the generator's config (or
+> your prettier config, which it now honours) — not the output.
 */
 
 /*{ "parent": "Appendices" }*/
@@ -336,11 +355,82 @@ if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true })
 }
 
-const source =
+/*
+Emit code in the style a formatter would already have produced.
+
+`JSON.stringify` gives double-quoted strings, and every icon body is full of
+`class="stroked"` — so each value arrived pre-escaped (`\"stroked\"`) on one long line.
+Run a formatter over the repo and all ~300 of them get rewritten; run the generator again
+and they all revert. That two-way diff shows up in every `git status`, buries real
+changes, and made a release diff unreadable here until it was reverted file by file.
+
+Ignoring generated files in `.prettierignore` stops the churn; emitting clean code in the
+first place means there is nothing to ignore, and the output is readable when someone
+opens it. Both are worth having, and consumers of `tosijs-make-icons` get this one for
+free — they may not think to add an ignore rule, and it isn't their code to style.
+
+What this does NOT do is try to match prettier's layout. Emit one simple, valid property
+per line and hand the string to prettier in memory (below) to lay out — reimplementing
+its line-breaking would mean tracking a moving target, and a first attempt at exactly
+that got the rule wrong (prettier does not break these the way a naive width test
+predicts). Quote choice stays here because it is what makes the output readable at all
+when prettier is absent: prefer single quotes, switch to double when that means fewer
+escapes (`"it's here"`).
+*/
+function quote(str) {
+  const singles = (str.match(/'/g) || []).length
+  const doubles = (str.match(/"/g) || []).length
+  const q = doubles < singles ? '"' : "'"
+  const escaped = str
+    .replace(/\\/g, '\\\\')
+    .replace(new RegExp(q, 'g'), '\\' + q)
+    .replace(/\n/g, '\\n')
+  return q + escaped + q
+}
+
+function emitObject(data) {
+  const lines = ['{']
+  for (const [key, value] of Object.entries(data)) {
+    // A bare identifier needs no quoting; anything else does (quoteProps: as-needed).
+    const k = /^[A-Za-z_$][\w$]*$/.test(key) ? key : quote(key)
+    lines.push(`  ${k}: ${quote(value)},`)
+  }
+  lines.push('}')
+  return lines.join('\n')
+}
+
+let source =
   (typeDeclaration ? typeDeclaration + '\n\n' : '') +
   'export default ' +
-  JSON.stringify(iconData, null, 2).replace(/"(\w+)":/g, '$1:') +
+  emitObject(iconData) +
   (isTypescript ? ' as IconData\n' : '\n')
+
+/*
+If prettier is resolvable, let it have the last word — it picks up the CONSUMER's own
+config (semicolons, quotes, print width), so generated data matches the surrounding
+project rather than this one. Entirely optional: prettier is a devDependency here and
+consumers of the bin generally will not have it, hence the hand-emitted output above
+being correct on its own.
+
+Config resolution is deliberately keyed on the OUTPUT path, so a consumer's own
+.prettierrc governs. `.prettierignore` is not consulted — this is generation, not
+formatting, and the file being ignored is the point.
+
+`await import` rather than `require` (this module is ESM), and everything is awaited so
+the same code works against prettier 2 — where `format` is sync — and prettier 3, where
+it returns a promise. Awaiting a non-promise is a no-op.
+*/
+try {
+  const mod = await import('prettier')
+  const prettier = mod.default ?? mod
+  const config = (await prettier.resolveConfig(path.resolve(outputFilePath))) || {}
+  source = await prettier.format(source, {
+    ...config,
+    parser: isTypescript ? 'typescript' : 'babel',
+  })
+} catch {
+  // No prettier, or a version whose API differs — the emitted source is already clean.
+}
 
 fs.writeFileSync(outputFilePath, source, 'utf8')
 
