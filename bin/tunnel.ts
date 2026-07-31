@@ -31,10 +31,12 @@ always requires a session.
 */
 
 import { $ } from 'bun'
-import { tmpdir } from 'os'
 import {
   resolveSiteConfig,
+  resolveDevPort,
   resolveTunnelLocalPort,
+  registerCaddyFragment,
+  previewRootFor,
 } from './resolve-site-config'
 
 const siteConfig = await resolveSiteConfig()
@@ -48,9 +50,7 @@ const flag = (n: string) => {
 
 const preview = siteConfig.preview
 const host = flag('host') ?? process.env.PREVIEW_HOST ?? preview?.host
-const localPort = Number(
-  flag('port') ?? process.env.PORT ?? siteConfig.port ?? 8787
-)
+const localPort = Number(flag('port') ?? resolveDevPort(siteConfig, process.env))
 const projectName = String(siteConfig.name ?? 'site')
 
 /*
@@ -82,8 +82,21 @@ const remotePort = Number(
 // verification against a self-signed dev cert.
 // ONE resolver, shared with the dev server (#39) — a matching-but-separate copy is how
 // these drifted in the first place. An explicit --local-port still wins.
+/*
+`process.env`, NOT `{}`.
+
+The empty object was written to silence a type error and quietly defeated the resolver's
+own `process.env` default — so the bin ignored `PORT` (and `--port=`) while the dev server
+honoured it, re-creating the exact drift the shared resolver was introduced to abolish,
+inside the commit that claimed it could not happen again. `--status` printed two
+inconsistent numbers because the line above DID read the env.
+*/
 const tunnelLocalPort = Number(
-  flag('local-port') ?? resolveTunnelLocalPort(siteConfig, {})
+  flag('local-port') ??
+    resolveTunnelLocalPort(
+      { ...siteConfig, port: localPort },
+      {}
+    )
 )
 const publicUrl = flag('url') ?? preview?.tunnel?.url
 
@@ -273,28 +286,16 @@ if (publicUrl) {
       `\t}\n` +
       `\timport tunnel_site\n` +
       `}\n`
-    const local = `${tmpdir()}/${projectName}-tunnel.caddy`
-    await Bun.write(local, fragment)
-    const put =
-      await $`scp -q ${local} ${`${host}:/srv/preview/_sites/${projectName}-tunnel.caddy`}`
-        .nothrow()
-        .quiet()
-    if (put.exitCode === 0) {
-      const check =
-        await $`ssh ${host} ${'set -a; . /etc/caddy/preview.env 2>/dev/null; set +a; caddy validate --config /etc/caddy/Caddyfile'}`
-          .nothrow()
-          .quiet()
-      if (check.exitCode === 0) {
-        await $`ssh ${host} systemctl reload caddy`.nothrow().quiet()
-        console.log(`   registered ${hostname} → :${remotePort}`)
-      } else {
-        console.error(
-          `\n🛑 Caddy config invalid after registering ${hostname} — NOT reloading.\n` +
-            `   The previous config keeps serving. Fix or remove\n` +
-            `   /srv/preview/_sites/${projectName}-tunnel.caddy on the host.\n`
-        )
-      }
-    }
+    const previewRoot = previewRootFor(
+      preview?.path ?? '/srv/preview/placeholder'
+    )
+    await registerCaddyFragment({
+      host: host!,
+      previewRoot,
+      name: `${projectName}-tunnel`,
+      describe: `${hostname} → this workspace`,
+      body: fragment,
+    })
   }
 }
 

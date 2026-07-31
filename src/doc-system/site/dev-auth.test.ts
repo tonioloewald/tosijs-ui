@@ -360,3 +360,26 @@ test('REGRESSION: `?t=` is not touched without a tunnel, or on a non-GET', () =>
     shouldInterceptLinkToken({ tunnelConfigured: true, method: 'GET' })
   ).toBe(true)
 })
+
+test('REGRESSION: with NO preview.tunnel configured, an invite link is still redeemable', () => {
+  // The lock armed off a config block that does not exist: `requireToken !== false` is
+  // true when `preview.tunnel` is undefined, so the read gate denied every proxied
+  // request without a session while shouldInterceptLinkToken — correctly gated on the
+  // tunnel block — refused to read `?t=`. The link became unredeemable and the 401's own
+  // advice was unrunnable. Every prior lockedDown case passed viaTunnel:true, which is
+  // exactly why this was invisible.
+  const config: { preview?: { tunnel?: { requireToken?: boolean } } } = {}
+  const lockedDown =
+    Boolean(config.preview?.tunnel) &&
+    config.preview?.tunnel?.requireToken !== false
+  expect(lockedDown).toBe(false)
+  expect(
+    mayReadSite({
+      lockedDown,
+      viaTunnel: false,
+      proxied: true,
+      hasLinkToken: false,
+      hasValidSession: false,
+    })
+  ).toBe(true)
+})

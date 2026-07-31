@@ -99,9 +99,24 @@ export function isDocsOnly(files: string[]): boolean {
   )
 }
 
+/** A tag like v1.2.3-rc.1 / 1.2.3-beta.2 — notes accumulate ACROSS these. */
+export function isPrereleaseTag(tag: string): boolean {
+  return /\d+\.\d+\.\d+-/.test(tag)
+}
+
+/**
+ * The last STABLE release tag.
+ *
+ * A bare `git describe --tags` returns the nearest tag including prereleases, so on a
+ * prerelease line the baseline became the previous rc — and `release-check` reported
+ * "0 annotations, all accounted for" over an empty range at exactly the boundary it
+ * exists to guard. Release notes accumulate from the last thing users actually got.
+ */
 export async function lastVersionTag(): Promise<string> {
-  const r = await $`git describe --tags --abbrev=0`.nothrow().quiet()
-  return r.exitCode === 0 ? r.stdout.toString().trim() : ''
+  const r = await $`git tag --sort=-creatordate`.nothrow().quiet()
+  if (r.exitCode !== 0) return ''
+  const tags = r.stdout.toString().split('\n').map((t) => t.trim()).filter(Boolean)
+  return tags.find((t) => !isPrereleaseTag(t)) ?? ''
 }
 
 export async function collect(since: string): Promise<CommitRecord[]> {

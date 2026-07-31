@@ -755,6 +755,21 @@ and one shared secret is no stronger. Do not confuse this with exposing a <em>de
 — that has a write endpoint, and is gated by a per-session magic link; see
 <a href="#previewtunnel--the-live-workspace"><code>preview.tunnel</code></a> below.</p>
 </blockquote>
+<h4>Host bootstrap — do this once per box</h4>
+<p>Both <code>tosijs-deploy</code> and <code>tosijs-tunnel</code> write a Caddy fragment ending in
+<code>import preview_site</code> / <code>import tunnel_site</code>. <strong>Those snippets have to exist first</strong>, or
+<code>caddy validate</code> fails on every deploy forever — and the failure is per-project, so
+nothing routes.</p>
+<p>The package ships a template at <code>node_modules/tosijs-ui/deploy/Caddyfile</code>. It is a
+<em>template</em>, not a drop-in: substitute <code>{{ACME_EMAIL}}</code> (your Let&#39;s Encrypt account) and
+<code>{{PREVIEW_DOMAIN}}</code> (the domain your preview hosts live under), and put the shared invite
+secret in <code>/etc/caddy/preview.env</code> as <code>PREVIEW_TOKEN=…</code> rather than in the file.</p>
+<p>Installing it with the placeholders intact would give you a preview host whose invite gate
+is a literal string published in a public repo, issuing certificates under someone else&#39;s
+account — so the registration step refuses rather than guessing, and names the missing
+snippet when validation fails for that reason.</p>
+<p>You also want a wildcard DNS record (<code>*.dev.example.com</code>) pointing at the box, so a new
+project needs no registrar visit, and sshd running <code>GatewayPorts no</code>.</p>
 <h4><code>preview.tunnel</code> — the live workspace</h4>
 <p>The static preview publishes a <em>snapshot</em>. <code>preview.tunnel</code> publishes the <strong>running dev
 server on your machine</strong>, at an authenticated public URL, so you can read and edit real

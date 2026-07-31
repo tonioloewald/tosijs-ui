@@ -864,8 +864,18 @@ export async function devServer(config, opts = {}) {
         `viaTunnel` cannot be forged by a client; the header check stays only as a
         belt-and-braces OR for a proxy in front of the MAIN listener.
         */
-        // Defaults to TRUE: an edit host is yours. Share the static preview host instead.
-        const lockedDown = config.preview?.tunnel?.requireToken !== false;
+        /*
+        Defaults to TRUE **when a tunnel is configured** — and only then.
+    
+        Reading `requireToken !== false` off an absent `preview.tunnel` armed the lock on
+        servers that have no tunnel at all. The read gate then denied every proxied request
+        without a session, while `shouldInterceptLinkToken` (correctly gated on the tunnel
+        block) refused to read `?t=` — so the invite link could never be redeemed, and the
+        401's own advice was unrunnable. Two gates, two different predicates for the same
+        question. One predicate now.
+        */
+        const lockedDown = Boolean(config.preview?.tunnel) &&
+            config.preview?.tunnel?.requireToken !== false;
         {
             const cookie = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
             if (!mayReadSite({

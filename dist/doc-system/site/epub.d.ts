@@ -27,6 +27,8 @@ export interface BuildEpubOptions {
     bookTarget?: string;
     /** book title; default config.name */
     title?: string;
+    /** per-volume titles, keyed by `book` name — for volumes with real book names */
+    volumeTitles?: Record<string, string>;
     /** author / publisher line */
     author?: string;
     /** BCP-47 language; default 'en' */

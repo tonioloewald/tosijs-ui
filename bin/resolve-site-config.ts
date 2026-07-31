@@ -147,3 +147,97 @@ export {
   resolveDevPort,
   resolveTunnelLocalPort,
 } from '../dist/doc-system/site/site-config.js'
+
+/*
+Register a Caddy fragment on the preview host — ONE implementation.
+
+This existed twice, ~40 lines each, in `tosijs-deploy` and `tosijs-tunnel`, and had
+already drifted: the tunnel copy lost the `mkdir -p _sites` AND the failure warning, so a
+failed scp produced literally no output and the bin went on to print the public URL as
+though routing were live. Both copies also hardcoded `/srv/preview` while the config and
+docs advertise four possible roots.
+
+Every step's exit code is read and every failure says so. A partial success that prints ✅
+is the specific failure this project refuses to ship.
+*/
+export async function registerCaddyFragment(opts: {
+  host: string
+  /** absolute path of the preview root on the host, e.g. /srv/preview */
+  previewRoot: string
+  /** fragment basename without .caddy, e.g. "my-project" or "my-project-tunnel" */
+  name: string
+  body: string
+  /** what this fragment routes, for the success line */
+  describe: string
+}): Promise<boolean> {
+  const { $ } = await import('bun')
+  const { tmpdir } = await import('os')
+  const sitesDir = `${opts.previewRoot}/_sites`
+  const remote = `${sitesDir}/${opts.name}.caddy`
+  const local = `${tmpdir()}/${opts.name}.caddy`
+  await Bun.write(local, opts.body)
+
+  const mk = await $`ssh ${opts.host} mkdir -p ${sitesDir}`.nothrow().quiet()
+  if (mk.exitCode !== 0) {
+    console.warn(
+      `⚠️  could not create ${sitesDir} on ${opts.host} — routing unchanged.\n` +
+        `   ${mk.stderr.toString().trim().slice(0, 200)}`
+    )
+    return false
+  }
+  const put = await $`scp -q ${local} ${`${opts.host}:${remote}`}`
+    .nothrow()
+    .quiet()
+  if (put.exitCode !== 0) {
+    console.warn(
+      `⚠️  could not copy the Caddy fragment to ${remote} — routing unchanged.\n` +
+        `   ${put.stderr.toString().trim().slice(0, 200)}`
+    )
+    return false
+  }
+
+  /*
+  Validate with the SAME environment systemd gives Caddy — a bare `caddy validate` does
+  not load the EnvironmentFile, so `{env.…}` placeholders resolve empty and a config that
+  is actually fine fails to validate. That would fail CLOSED forever.
+  */
+  const check =
+    await $`ssh ${opts.host} ${'set -a; . /etc/caddy/preview.env 2>/dev/null; set +a; caddy validate --config /etc/caddy/Caddyfile'}`
+      .nothrow()
+      .quiet()
+  if (check.exitCode !== 0) {
+    const detail = (check.stderr.toString() || check.stdout.toString()).trim()
+    // Leave the fragment so the error is inspectable, but do NOT reload: one bad
+    // fragment would fail the reload for EVERY project on the box.
+    console.error(
+      `\n🛑 Caddy config invalid after registering ${opts.describe} — NOT reloading.\n` +
+        `   The previous config keeps serving. Fix or remove ${remote} on the host.\n` +
+        (/unrecognized directive|unknown snippet|not defined/i.test(detail)
+          ? `   Likely cause: this host has not been bootstrapped — the fragment imports a\n` +
+            `   snippet (preview_site / tunnel_site) that only exists once you have installed\n` +
+            `   a Caddyfile defining it. See "Host bootstrap" in the doc-site-system docs.\n`
+          : '') +
+        detail.split('\n').slice(-4).join('\n')
+    )
+    return false
+  }
+
+  const reload = await $`ssh ${opts.host} systemctl reload caddy`
+    .nothrow()
+    .quiet()
+  if (reload.exitCode !== 0) {
+    console.warn(
+      `⚠️  fragment written, but \`systemctl reload caddy\` failed — the route is NOT live.\n` +
+        `   ${reload.stderr.toString().trim().slice(0, 200)}`
+    )
+    return false
+  }
+  console.log(`   registered ${opts.describe}`)
+  return true
+}
+
+/** The preview root a remote path lives under, for locating `_sites/`. */
+export function previewRootFor(remotePath: string): string {
+  const root = safeRemoteRoots().find((r) => remotePath.startsWith(r + '/'))
+  return root ?? remotePath.replace(/\/[^/]+\/?$/, '')
+}

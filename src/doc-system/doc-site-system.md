@@ -554,6 +554,26 @@ on it, and which commit each preview is serving.
 > — that has a write endpoint, and is gated by a per-session magic link; see
 > [`preview.tunnel`](#previewtunnel--the-live-workspace) below.
 
+#### Host bootstrap — do this once per box
+
+Both `tosijs-deploy` and `tosijs-tunnel` write a Caddy fragment ending in
+`import preview_site` / `import tunnel_site`. **Those snippets have to exist first**, or
+`caddy validate` fails on every deploy forever — and the failure is per-project, so
+nothing routes.
+
+The package ships a template at `node_modules/tosijs-ui/deploy/Caddyfile`. It is a
+*template*, not a drop-in: substitute `{{ACME_EMAIL}}` (your Let's Encrypt account) and
+`{{PREVIEW_DOMAIN}}` (the domain your preview hosts live under), and put the shared invite
+secret in `/etc/caddy/preview.env` as `PREVIEW_TOKEN=…` rather than in the file.
+
+Installing it with the placeholders intact would give you a preview host whose invite gate
+is a literal string published in a public repo, issuing certificates under someone else's
+account — so the registration step refuses rather than guessing, and names the missing
+snippet when validation fails for that reason.
+
+You also want a wildcard DNS record (`*.dev.example.com`) pointing at the box, so a new
+project needs no registrar visit, and sshd running `GatewayPorts no`.
+
 #### `preview.tunnel` — the live workspace
 
 The static preview publishes a _snapshot_. `preview.tunnel` publishes the **running dev

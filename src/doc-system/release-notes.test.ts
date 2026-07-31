@@ -5,6 +5,7 @@ import {
   renderSection,
   uncovered,
   unsupportedClaims,
+  isPrereleaseTag,
 } from './release-notes'
 
 test('one bullet per thing — the reason a type: prefix is not enough', () => {
@@ -156,4 +157,15 @@ test('REGRESSION: a bullet in the SUBJECT does not swallow the commit body', () 
 The grid rewrite skipped selectBinding for cells produced by a custom dataCell factory,
 so they never received the attribute.`)
   expect(b.text).toBe('aria-selected on custom cells')
+})
+
+test('REGRESSION: prerelease tags are not release baselines', () => {
+  // `git describe --tags` returns the NEAREST tag, prereleases included — so on an rc
+  // line the baseline became the previous rc and `release-check` reported "0 annotations,
+  // all accounted for" over an empty range, at exactly the boundary it exists to guard.
+  expect(isPrereleaseTag('v1.9.0-rc.3')).toBe(true)
+  expect(isPrereleaseTag('v1.9.0-beta.1')).toBe(true)
+  expect(isPrereleaseTag('1.10.0-alpha.0')).toBe(true)
+  expect(isPrereleaseTag('v1.9.0')).toBe(false)
+  expect(isPrereleaseTag('v1.10.0')).toBe(false)
 })

@@ -1,3 +1,15 @@
+# TEMPLATE — substitute before installing. This is NOT ready to scp as-is.
+#
+#   {{ACME_EMAIL}}      your Let's Encrypt account email
+#   {{PREVIEW_DOMAIN}}  the domain your preview hosts live under (e.g. dev.example.com)
+#   __PREVIEW_TOKEN__   the shared invite secret, substituted at install time from
+#                       /etc/caddy/preview.env — NEVER commit a real value here
+#
+# Installing this file with the placeholders intact gives you a preview host whose entire
+# invite gate is a literal string published in a public repo and in every npm tarball, and
+# issues certificates under someone else's ACME account. `tosijs-deploy` does the
+# substitution for you; if you install by hand, do it by hand.
+#
 # Preview host — Caddy config.
 #
 # Committed on purpose: server config in git beats server config in someone's shell
@@ -10,7 +22,7 @@
 {
 	# Where Let's Encrypt sends expiry/problem notices. Caddy renews automatically, so
 	# this is a safety net rather than an operational dependency.
-	email tonio@loewald.com
+	email {{ACME_EMAIL}}
 }
 
 # ── The shared site definition ───────────────────────────────────────────────
@@ -45,7 +57,7 @@
 	handle @link {
 		# Domain= so ONE link covers every preview subdomain. Without it the cookie is
 		# scoped to the exact host you clicked, and the next project 401s at you.
-		header Set-Cookie "tosi_preview=__PREVIEW_TOKEN__; Domain=.dev.tosijs.net; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax"
+		header Set-Cookie "tosi_preview=__PREVIEW_TOKEN__; Domain=.{{PREVIEW_DOMAIN}}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax"
 		header Referrer-Policy "no-referrer"
 		header Cache-Control "no-store"
 		redir * / 302

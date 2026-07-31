@@ -525,7 +525,23 @@ export async function buildEpub(config, opts = {}) {
     docs and anything marked `book: "none"`, so a doc that belongs to no volume cannot leak
     into the default one just by not naming a book.
     */
-    const visible = partitionByBook(corpus, buildSlugMap(corpus)).get(opts.bookTarget ?? DEFAULT_BOOK) ?? [];
+    const volumes = partitionByBook(corpus, buildSlugMap(corpus));
+    const visible = volumes.get(opts.bookTarget ?? DEFAULT_BOOK) ?? [];
+    /*
+    A volume with no chapters is a failure, not a book.
+  
+    Without this, a one-character typo in a `book` name produced a structurally valid ~10KB
+    EPUB containing a cover, a nav, and nothing else — and the build exited 0 and logged a
+    success line. That is precisely the "never a success log on red" rule this repo runs on.
+    Naming the volumes that DO exist turns the typo into a two-second fix.
+    */
+    if (visible.length === 0) {
+        const known = [...volumes.keys()].map((k) => k || '(default)').sort();
+        throw new Error(`ePub volume ${JSON.stringify(opts.bookTarget ?? '(default)')} has no documents.\n` +
+            `   Volumes present in the corpus: ${known.join(', ') || '(none)'}\n` +
+            `   A doc joins a volume with \`{"book": "<name>"}\` (inherited by its children).\n` +
+            `   If this is a typo, note that book names are case- and space-sensitive.`);
+    }
     // Curate/reorder for the book (a no-op when config.book is absent).
     const docs = selectBookDocs(visible, config.book);
     const slugMap = buildSlugMap(docs);
@@ -534,11 +550,31 @@ export async function buildEpub(config, opts = {}) {
     // slug → chapter filename, for the docs actually IN this book — the target set for
     // in-book cross-link rewriting (#15). Out-of-book `/slug/` links stay untouched.
     const bookFiles = new Map(flatten(roots).map((n) => [slugMap[n.doc.filename] ?? '', fileFor(n.doc)]));
+    /*
+    Each volume needs its OWN identity.
+  
+    `bookTarget` used to reach the output filename and nothing else, so every volume from
+    one corpus shipped byte-identical `dc:identifier`, `dc:title`, TOC heading and cover
+    art. `unique-identifier` is EPUB3's primary key: import two such volumes into Apple
+    Books, Calibre or Kobo and the second replaces or merges with the first — the reader
+    silently loses a book. The cover renders from `meta.title`, so titling fixes that too.
+  
+    A volume title defaults to "<project> — <volume>"; set `epub.title` to override the
+    base. `epub.volumeTitles` overrides individual volumes for real book names.
+    */
+    const volumeLabel = opts.bookTarget;
+    const baseTitle = opts.title ?? config.name;
+    const volumeTitle = volumeLabel
+        ? opts.volumeTitles?.[volumeLabel] ?? `${baseTitle} — ${volumeLabel}`
+        : baseTitle;
+    const baseIdentifier = config.baseUrl || `urn:tosijs-book:${slugify(baseTitle)}`;
     const meta = {
-        title: opts.title ?? config.name,
+        title: volumeTitle,
         author: opts.author ?? config.name,
         language: opts.language ?? config.lang ?? 'en',
-        identifier: config.baseUrl || `urn:tosijs-book:${slugify(opts.title ?? config.name)}`,
+        identifier: volumeLabel
+            ? `${baseIdentifier}#${slugify(volumeLabel)}`
+            : baseIdentifier,
         modified: (opts.modified ?? new Date().toISOString()).replace(/\.\d+Z$/, 'Z'),
     };
     const css = opts.css ?? DEFAULT_BOOK_CSS + (opts.extraCss ? '\n' + opts.extraCss : '');
@@ -597,13 +633,13 @@ export async function buildEpub(config, opts = {}) {
     fs.writeFileSync(path.join(buildDir, 'OEBPS', 'contents.xhtml'), tocPageXhtml(roots, fileFor));
     fs.writeFileSync(path.join(buildDir, 'OEBPS', 'nav.xhtml'), navXhtml(meta, roots, fileFor));
     fs.writeFileSync(path.join(buildDir, 'OEBPS', 'toc.ncx'), tocNcx(meta, roots, fileFor));
-    const output = path.resolve(opts.output ??
-        path.join(outDir, 
-        // A named volume gets its own file — otherwise every book would overwrite the
-        // default one and you would ship whichever bound last.
-        opts.bookTarget
-            ? `${slugify(meta.title)}-${slugify(opts.bookTarget)}.epub`
-            : `${slugify(meta.title)}.epub`));
+    const output = path.resolve(
+    // An explicit `output` names ONE file, so it can only apply to the default volume —
+    // otherwise every volume writes to it and you ship whichever bound last.
+    (opts.bookTarget ? undefined : opts.output) ??
+        path.join(outDir, opts.bookTarget
+            ? `${slugify(baseTitle)}-${slugify(opts.bookTarget)}.epub`
+            : `${slugify(baseTitle)}.epub`));
     await zipEpub(buildDir, output);
     fs.rmSync(buildDir, { recursive: true, force: true });
     // Release the parser window: an unclosed happy-dom Window holds its whole
