@@ -44,9 +44,15 @@ for dir in "$ROOT"/*/; do
 	# router reads — so this listing cannot disagree with what actually serves. An
 	# earlier version derived it from the directory name and confidently linked
 	# tosijs-ui.dev.tosijs.net at a site served from ui.dev.tosijs.net.
-	frag="$ROOT/_sites/$name.caddy"
+	# Either fragment may route this project: deploy-preview writes <name>.caddy, and
+	# tosijs-tunnel writes <name>-tunnel.caddy. Checking only the first reported every
+	# tunnelled workspace as "deployed but not routed".
 	host=""
-	[ -f "$frag" ] && host=$(sed -n 's/^\([A-Za-z0-9.-]*\) *{.*/\1/p' "$frag" | head -1)
+	for frag in "$ROOT/_sites/$name.caddy" "$ROOT/_sites/$name-tunnel.caddy"; do
+		[ -f "$frag" ] || continue
+		host=$(sed -n 's/^\([A-Za-z0-9.-]*\) *{.*/\1/p' "$frag" | head -1)
+		[ -n "$host" ] && break
+	done
 	# Not registered (no fragment, or one we cannot parse) means nothing is routing to
 	# it — list it, but do not invent a link that would 404.
 	[ -n "$host" ] || { unlinked="$unlinked $site"; continue; }

@@ -47,8 +47,26 @@ export declare function mayWriteSource(opts: {
     /** does the request carry a live session cookie? */
     hasValidSession: boolean;
 }): boolean;
-/** Local copy of the loopback test so this module stays self-contained and testable. */
+/**
+ * THE loopback test. dev-server re-exports this as `isLoopbackAddress`; it used to
+ * carry its own byte-identical copy.
+ *
+ * IPv4-mapped IPv6 (`::ffff:127.0.0.1`) counts — that is how a v4 client shows up on a
+ * dual-stack listener, and missing it would lock out the local machine on some setups.
+ */
 export declare function isLoopbackAddressForAuth(address: string | undefined | null): boolean;
 export declare function isProxiedRequest(headers: {
     get(name: string): string | null;
 }): boolean;
+export declare function mayReadSite(opts: {
+    lockedDown: boolean;
+    viaTunnel: boolean;
+    proxied: boolean;
+    hasLinkToken: boolean;
+    hasValidSession: boolean;
+}): boolean;
+export declare function shouldInterceptLinkToken(opts: {
+    tunnelConfigured: boolean;
+    method: string;
+}): boolean;
+export declare const TUNNEL_LINK_CMD = "tosijs-tunnel --link";

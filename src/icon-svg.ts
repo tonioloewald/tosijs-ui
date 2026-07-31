@@ -1,5 +1,23 @@
-/*
-Raw SVG markup for icons, WITHOUT pulling in a DOM.
+/*{"parent":"Appendices","order":600}*/
+/*#
+# `iconSvg` — icon markup without a DOM
+
+```js
+import { iconSvg, iconNames } from 'tosijs-ui'
+
+const markup = iconSvg('tosi') // '<svg …>…</svg>' | undefined
+preview.innerHTML =
+  `<p>${iconNames().length} icons registered.</p>` +
+  `<div style="width:48px">${markup}</div>`
+```
+
+(The subpath `tosijs-ui/icon-svg` is the DOM-free entry point — import it that way in a
+build script or server template. The example above uses the package root because that is
+what the live-example runner can rewrite.)
+
+`iconSvg(name)` returns an icon's raw SVG **markup** as a string; `iconNames()` lists what
+is registered. Neither touches the DOM, so both work in a build script, a server-rendered
+template, or an ePub pass.
 
 Deliberately a separate module from `icons.ts`: that one imports tosijs to build
 elements, so importing it drags in code that needs `HTMLElement` and throws in a build

@@ -15,7 +15,7 @@ moved from ACE to CodeMirror 6. `value`, `mode`, the `change` event, `disabled`,
 no shim. Dark mode is now automatic (`body.darkmode`) and styling comes from `--code-bg` /
 `--text-color`. The `2.0` name is reserved for the tjs-native tosijs port, so this ships as
 1.7.0 — **pin `tosijs-ui@1.6` to defer.** Full detail and rationale in
-[CHANGELOG.md](./CHANGELOG.md).
+[CHANGELOG.md](https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md).
 
 ## Migrating to v1.3.0
 

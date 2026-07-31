@@ -981,7 +981,8 @@ export class LiveExample extends Component<ExampleParts> {
         window.alert(
           'This workspace needs an invite link before it can save.\n\n' +
             'Run `tosijs-tunnel --link` on the machine hosting it, open the link once, ' +
-            'then try again. Your edit is still here.'
+            'then try again. Your edit is still here.\n\n' +
+            'If you opened this over the LAN (a `.local` address), saving will keep failing however many links you redeem — reach the workspace through its tunnel URL instead.'
         )
         return
       }

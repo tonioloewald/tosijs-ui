@@ -23,7 +23,9 @@ const suffixes = [
   '50o', '75s', '_ff0000F', '_00fS', '4W',
 ]
 
-const iconNames = Object.keys(icons).sort()
+// Named distinctly from the re-exported `iconNames()` FUNCTION at the bottom of this
+// file — same word, different thing, and the collision reads like a bug.
+const sortedIconNames = Object.keys(icons).sort()
 
 const { iconDemo } = tosi({
   iconDemo: {
@@ -46,7 +48,7 @@ function rebuildGrid() {
   const prefix = iconDemo.prefix.value
   const suffix = iconDemo.suffix.value
   scroller.textContent = ''
-  for (const iconName of iconNames) {
+  for (const iconName of sortedIconNames) {
     const composed = composeName(prefix, suffix, iconName)
     scroller.append(div(
       {

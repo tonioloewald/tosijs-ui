@@ -137,6 +137,10 @@ export default defineConfig({
       HALTIJA_DEV: '0',
       PORT: String(E2E_PORT),
       DEV_SKIP_PREFLIGHT: '1',
+      // Don't bind the tunnel listener. `testMode` is set only by `--test`, so this
+      // lane's server otherwise races `bun start` for the same localPort — whoever
+      // boots first wins, and the loser's tunnel 502s with no obvious cause.
+      DEV_NO_TUNNEL: '1',
       // Serve the build; don't rebuild it under the running suite. See `command`.
       DEV_NO_WATCH: '1',
     },

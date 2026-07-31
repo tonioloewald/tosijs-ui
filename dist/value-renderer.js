@@ -95,7 +95,17 @@ function toNumber(value) {
 }
 // SI (decimal, \u00f71000, `kB`) vs IEC (binary, \u00f71024, `KiB`) \u2014 `bytes` is SI, `bytes(iec)` is IEC.
 const BYTE_UNITS_SI = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-const BYTE_UNITS_IEC = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+const BYTE_UNITS_IEC = [
+    'B',
+    'KiB',
+    'MiB',
+    'GiB',
+    'TiB',
+    'PiB',
+    'EiB',
+    'ZiB',
+    'YiB',
+];
 function formatBytes(n, base, units, scaled, whole) {
     const neg = n < 0;
     let x = Math.abs(n);

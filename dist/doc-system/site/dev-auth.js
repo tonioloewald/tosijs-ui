@@ -166,7 +166,13 @@ export function mayWriteSource(opts) {
         return opts.hasValidSession;
     return isLoopbackAddressForAuth(opts.peer);
 }
-/** Local copy of the loopback test so this module stays self-contained and testable. */
+/**
+ * THE loopback test. dev-server re-exports this as `isLoopbackAddress`; it used to
+ * carry its own byte-identical copy.
+ *
+ * IPv4-mapped IPv6 (`::ffff:127.0.0.1`) counts — that is how a v4 client shows up on a
+ * dual-stack listener, and missing it would lock out the local machine on some setups.
+ */
 export function isLoopbackAddressForAuth(address) {
     if (!address)
         return false;
@@ -196,3 +202,47 @@ export function isProxiedRequest(headers) {
     return (headers.get('x-forwarded-for') !== null ||
         headers.get('x-forwarded-host') !== null);
 }
+/*
+May this request READ the site at all?
+
+Extracted from an inline expression inside the server closure — which is precisely why it
+shipped a fail-open through two releases with no test able to see it. It is the same shape
+as mayWriteSource and belongs beside it.
+
+The signal that decides is `viaTunnel`: which LISTENER the request arrived on, which a
+client cannot forge. The header check is a belt-and-braces OR for a reverse proxy placed in
+front of the MAIN listener; it must never be the ONLY signal, because every forwarder in
+the list above omits those headers and would then read the whole uncommitted tree.
+*/
+export function mayReadSite(opts) {
+    if (!opts.lockedDown)
+        return true;
+    // Direct traffic at this keyboard is the dev server it has always been.
+    if (!opts.viaTunnel && !opts.proxied)
+        return true;
+    // Redemption must stay reachable without a session — it is how you GET one.
+    if (opts.hasLinkToken)
+        return true;
+    return opts.hasValidSession;
+}
+/*
+Should `?t=` be treated as an invite link on this request?
+
+`t` is the classic cache-buster name, so claiming it unconditionally means ANY adopter's
+dev server answers `GET /?t=12345` with "that invite link has been used" instead of the
+page, and 401s a POST that happens to carry `t` — losing its body to a redirect. Only a
+server that actually has a tunnel configured has any business reading it, and only on GET.
+*/
+export function shouldInterceptLinkToken(opts) {
+    return opts.tunnelConfigured && opts.method === 'GET';
+}
+/*
+The command an adopter actually has.
+
+`bun run tunnel` is a script in THIS repo's package.json; the installed package exposes
+the bin. The 401 pages — the one thing a locked-out collaborator reads — named the script,
+so the instruction was unrunnable for everyone outside this checkout. The client-side
+copies in doc-browser/live-example already said the right thing, which is how the drift
+went unnoticed: the message you saw while developing was not the message they saw.
+*/
+export const TUNNEL_LINK_CMD = 'tosijs-tunnel --link';

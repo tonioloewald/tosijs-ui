@@ -69,7 +69,10 @@ export type ValueRendererType =
   | 'eng'
   | 'bytes'
   | 'boolean'
-  // eslint-disable-next-line @typescript-eslint/ban-types
+  // `string & {}` keeps the union's literal autocomplete while still accepting any
+  // string. (The ban-types disable that used to sit here named a rule removed in
+  // typescript-eslint v8 — a disable for a nonexistent rule is itself an error, which is
+  // what kept `bunx eslint src` red and unusable as a gate.)
   | (string & {})
 
 export interface ValueRenderer {
@@ -135,7 +138,17 @@ function toNumber(value: unknown): number | null {
 
 // SI (decimal, \u00f71000, `kB`) vs IEC (binary, \u00f71024, `KiB`) \u2014 `bytes` is SI, `bytes(iec)` is IEC.
 const BYTE_UNITS_SI = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-const BYTE_UNITS_IEC = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+const BYTE_UNITS_IEC = [
+  'B',
+  'KiB',
+  'MiB',
+  'GiB',
+  'TiB',
+  'PiB',
+  'EiB',
+  'ZiB',
+  'YiB',
+]
 
 function formatBytes(
   n: number,
@@ -235,7 +248,9 @@ export function valueRenderer(type: ValueRendererType): ValueRenderer {
       )
     }
     case 'sci':
-      return numeric((l) => new Intl.NumberFormat(l, { notation: 'scientific' }))
+      return numeric(
+        (l) => new Intl.NumberFormat(l, { notation: 'scientific' })
+      )
     case 'eng':
       return numeric(
         (l) => new Intl.NumberFormat(l, { notation: 'engineering' })
@@ -250,7 +265,9 @@ export function valueRenderer(type: ValueRendererType): ValueRenderer {
       const whole = byLocale(
         (l) => new Intl.NumberFormat(l, { maximumFractionDigits: 0 })
       )
-      return numericRenderer((n) => formatBytes(n, base, units, scaled(), whole()))
+      return numericRenderer((n) =>
+        formatBytes(n, base, units, scaled(), whole())
+      )
     }
     case 'boolean': {
       // boolean            → true: checkSquare, false: square

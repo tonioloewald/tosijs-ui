@@ -114,6 +114,7 @@ test('the redirect target has the token stripped', () => {
 // expression inside a TLS-requiring server closure with NO tests at any tier — while
 // a comment claimed a regression test that did not exist.
 
+import { isLoopbackAddress as serverSideLoopback } from './dev-server'
 import {
   mayWriteSource,
   isLoopbackAddressForAuth,
@@ -187,10 +188,14 @@ test('REGRESSION: an off-machine caller that reaches loopback without X-Forwarde
   ).toBe(false)
 })
 
-test('isLoopbackAddressForAuth matches the server-side predicate', () => {
+test('isLoopbackAddressForAuth IS the server-side predicate', () => {
   expect(isLoopbackAddressForAuth('127.0.0.1')).toBe(true)
   expect(isLoopbackAddressForAuth('10.127.0.1')).toBe(false)
   expect(isLoopbackAddressForAuth('127.0.0.1.evil.com')).toBe(false)
+  // This test was titled "matches the server-side predicate" while importing nothing
+  // from dev-server — it pinned the duplication rather than checking it. They are now
+  // one function, and this asserts that rather than hoping.
+  expect(serverSideLoopback).toBe(isLoopbackAddressForAuth)
 })
 
 // ── proxy detection ──────────────────────────────────────────────────────────
@@ -228,7 +233,10 @@ test('isProxiedRequest is NOT what authorizes writes', () => {
 // The old rule was "absolute, at least two segments" — which admits /usr/lib and
 // /etc/caddy. `rsync --delete` MIRRORS, so deploying a doc site into either empties it.
 
-import { isSafeRemotePath } from '../../../bin/resolve-site-config'
+import {
+  isSafeRemotePath,
+  safeRemoteRoots,
+} from '../../../bin/resolve-site-config'
 
 test('isSafeRemotePath accepts preview roots', () => {
   for (const p of [
@@ -255,9 +263,100 @@ test('isSafeRemotePath refuses system directories the depth rule allowed', () =>
   }
 })
 
+test('REGRESSION: the preview ROOT itself is not a deploy target', () => {
+  // `rsync --delete` MIRRORS. One dropped path segment (`--path=/srv/preview`) deleted
+  // every other project on the shared box, the generated index, and all of
+  // /srv/preview/_sites/*.caddy — the fragments the Caddyfile glob-imports — and then
+  // reloaded Caddy, so every preview lost its route at once.
+  for (const root of safeRemoteRoots()) {
+    expect(isSafeRemotePath(root)).toBe(false)
+    expect(isSafeRemotePath(root + '/')).toBe(false)
+    expect(isSafeRemotePath(root + '/a-project')).toBe(true)
+  }
+})
+
 test('isSafeRemotePath refuses traversal and relative paths', () => {
   expect(isSafeRemotePath('/srv/preview/../../etc')).toBe(false)
   expect(isSafeRemotePath('srv/preview/x')).toBe(false)
   // A prefix match must not admit a sibling: /srv/previewX is not under /srv/preview
   expect(isSafeRemotePath('/srv/previewX/y')).toBe(false)
+})
+
+// ── who may READ the site ────────────────────────────────────────────────────
+//
+// This gate shipped a fail-open through 1.9.0-beta.1, beta.2, rc.1 and rc.2: it keyed on
+// X-Forwarded-*, while the WRITE path beside it had already been moved onto the listener
+// for exactly the reason these headers cannot be trusted. Untestable inline in a
+// TLS-requiring closure, so nothing could see it.
+
+import { mayReadSite, shouldInterceptLinkToken } from './dev-auth'
+
+test('REGRESSION: a forwarder that omits X-Forwarded-* cannot read a locked-down workspace', () => {
+  // `ssh -R` with GatewayPorts yes, ngrok tcp, socat, iptables DNAT, nginx proxy_pass,
+  // HAProxy without `option forwardfor` — all arrive with NO forwarding headers. Keyed on
+  // the header, every one of them read the entire uncommitted working tree anonymously,
+  // while requireToken promised "nothing at all — not even the page".
+  expect(
+    mayReadSite({
+      lockedDown: true,
+      viaTunnel: true,
+      proxied: false,
+      hasLinkToken: false,
+      hasValidSession: false,
+    })
+  ).toBe(false)
+})
+
+test('a locked-down workspace opens for a session, or for a link being redeemed', () => {
+  const base = { lockedDown: true, viaTunnel: true, proxied: true }
+  expect(
+    mayReadSite({ ...base, hasLinkToken: false, hasValidSession: true })
+  ).toBe(true)
+  // Redemption must stay reachable without a session — it is how you GET one.
+  expect(
+    mayReadSite({ ...base, hasLinkToken: true, hasValidSession: false })
+  ).toBe(true)
+  expect(
+    mayReadSite({ ...base, hasLinkToken: false, hasValidSession: false })
+  ).toBe(false)
+})
+
+test('direct traffic at this keyboard is never gated', () => {
+  expect(
+    mayReadSite({
+      lockedDown: true,
+      viaTunnel: false,
+      proxied: false,
+      hasLinkToken: false,
+      hasValidSession: false,
+    })
+  ).toBe(true)
+})
+
+test('requireToken: false opens the workspace to the tunnel deliberately', () => {
+  expect(
+    mayReadSite({
+      lockedDown: false,
+      viaTunnel: true,
+      proxied: true,
+      hasLinkToken: false,
+      hasValidSession: false,
+    })
+  ).toBe(true)
+})
+
+test('REGRESSION: `?t=` is not touched without a tunnel, or on a non-GET', () => {
+  // `t` is the classic cache-buster. Ungated, EVERY adopter's dev server answered
+  // `GET /?t=12345` with a 401 "that invite link has been used" instead of the page, and
+  // 401'd POSTs carrying `t` — losing the body to a redirect. Two releases shipped a
+  // CHANGELOG entry claiming this gate before the gate was written.
+  expect(
+    shouldInterceptLinkToken({ tunnelConfigured: false, method: 'GET' })
+  ).toBe(false)
+  expect(
+    shouldInterceptLinkToken({ tunnelConfigured: true, method: 'POST' })
+  ).toBe(false)
+  expect(
+    shouldInterceptLinkToken({ tunnelConfigured: true, method: 'GET' })
+  ).toBe(true)
 })

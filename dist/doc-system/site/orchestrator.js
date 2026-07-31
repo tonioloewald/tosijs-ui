@@ -260,7 +260,23 @@ export async function buildSite(config, opts = {}) {
         return back.exitCode === 0;
     };
     await $ `mkdir -p ${PUBLIC}`.text();
-    let buildSucceeded = false;
+    /*
+    TWO different questions, deliberately separate.
+  
+    `siteOk` — did the site output get generated? It alone decides whether the freshly
+    built directory is kept or thrown away for the last-good spare.
+  
+    The RETURN VALUE — should a one-shot build exit zero? That additionally requires a
+    clean library typecheck, so it is `siteOk && !libraryBuildFailed`.
+  
+    Conflating them (one flag, `!libraryBuildFailed`, also driving the restore) meant one
+    unrelated type error anywhere in src/ deleted a perfectly good site and pinned the
+    output to the last-good copy for the WHOLE editing session — the exact opposite of the
+    contract stated below ("a watch rebuild should still refresh the pages/bundle while the
+    developer fixes the type error"). It was also asymmetric: dist/ kept its red-tsc
+    declarations while docs/ reverted.
+    */
+    let siteOk = false;
     try {
         const extract = () => extractDocs({
             paths: docPaths,
@@ -754,8 +770,9 @@ export async function buildSite(config, opts = {}) {
         console.timeEnd('build');
         // A failed library typecheck (above) marks the whole build failed so a one-shot
         // `--build` exits non-zero and never publishes declarations from a red tsc.
-        buildSucceeded = !libraryBuildFailed;
-        return buildSucceeded;
+        // Reaching here means the site generated. The typecheck only gates the exit code.
+        siteOk = true;
+        return !libraryBuildFailed;
     }
     finally {
         /*
@@ -765,7 +782,7 @@ export async function buildSite(config, opts = {}) {
         `return false` — because buildSite reports some failures each way and a caller
         that only handled one would still be left with a wiped output directory.
         */
-        if (buildSucceeded) {
+        if (siteOk) {
             if (hadPrevious)
                 await $ `rm -rf ${LAST_GOOD}`.nothrow().quiet();
         }

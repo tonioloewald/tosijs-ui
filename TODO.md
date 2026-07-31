@@ -1,5 +1,73 @@
 # TODO
 
+## From the 1.9.0 nine-lens review (deferred — the blockers and easy fixes are done)
+
+Full report: [RELEASE-REVIEW-1.9.md](RELEASE-REVIEW-1.9.md). Fixed already: 3 blockers,
+the lint/typecheck gates, `touch()`, the red-tsc site discard, port defaults,
+per-project `remotePort`, the deploy asset path, the mutating smoke test, and the stale
+security prose. What is left:
+
+**Before the 1.9.0 tag:**
+
+- [ ] Write a consolidated `## 1.9.0` CHANGELOG section, leading with the **consumer
+      repairs**, not remote editing — 1.8.0's `tosijs-ui/site` does not import at all in a
+      clean install (`index.js` re-exports `devServer`, which top-level-imports `chokidar`,
+      a devDependency), and 1.8.0 is still npm `latest`. Say plainly that anyone on 1.8.0
+      should upgrade regardless. Name the issues closed.
+- [ ] Close the 13 already-fixed issues naming their version: **v1.9.0** — #27 (partially),
+      #28–#37; **v1.8.0** — #24; **v1.7.2** — #25 (open two cycles). Close #3 as stale. Leave
+      #9/#12/#14/#16/#17/#18/#19/#21/#23 open with "considered, deferred for 1.9.0".
+- [ ] Refresh `UPSTREAM.md`: tosijs#20 and #21 are CLOSED upstream (2026-07-27) but still
+      listed open; three "still pinned 1.7.5" statements contradict `package.json` (1.7.8);
+      the rAF entry should name haltija#3 (filed + closed) instead of "NOT YET FILED"; add
+      the five open tosijs issues absent from the file (#22, #18, #17, #16, #9).
+- [ ] #27 is only **half** closed — the bins ship, but the host-side bootstrap
+      (`preview_site`/`tunnel_site` snippets, `preview.env`, `build-index.sh`) is still
+      "copy it out of the tosijs-ui repo", so an adopter's `tosijs-deploy --go` writes a
+      fragment referencing an undefined snippet and `caddy validate` fails forever. Ship a
+      bootstrap bin or document the prerequisite and name it in the failure message.
+
+**Correctness / coverage (not blocking):**
+
+- [ ] `buildStatus` never reflects the INITIAL build (`dev-server.ts`) — it is initialised
+      `{ok:true}` and only written by the watch debounce, while `bin/dev.ts` runs the first
+      build itself. Start `bun start` on a red tree and the restored last-good site serves
+      with no failure widget until the first save. Needs an `initialBuild` seam.
+- [ ] Extract and unit-test `stashLastGood()` / `restoreLastGood()` — `rm -rf` + `mv` over a
+      committed directory with no test at any tier, and it already regressed once inside
+      this cycle. Two known gaps: the `mkdir -p ${PUBLIC}` sits _outside_ the `try`, and a
+      stranded `docs.last-good` survives a later successful build when `docs/` was absent.
+- [ ] The client auth-aware save/edit paths — including the 403→download **data-loss** fix —
+      have no test at any tier. `src/coverage.test.ts` already builds a doc-browser under
+      happy-dom; add stubbed-fetch cases (403 → alert, no download; 501 → download; 200 →
+      new baseline) and the `loadSource` 401/403 case.
+- [ ] Add `bun run test-consumer` to CI — it needs only network and a temp dir (no certs,
+      no display, no haltija), and this repo's own docs say an ungated lane always rots.
+- [ ] Fold the six copy-pasted `server.stop(); process.exit(…)` sites into one `shutdown()`.
+
+**Shared practices (`tosijs-coding-practices`):**
+
+- [ ] `practices/deployment.md` still prescribes Caddy `basicauth` and asserts the box has
+      "no write endpoint" — the design 1.9.0 rejected, on a box that now fronts an
+      authenticated tunnel exposing `POST /__docstore/source`. Update it, add the
+      view-vs-edit hostname convention, and note `requireToken` defaults `true`.
+      (`grep -rn tunnel practices/*.md` currently returns zero hits.)
+- [ ] Add a **packaging-verification** practice: `releasing.md` → "audit the tarball before
+      you publish" (`npm pack --dry-run`, compare file count/size to the previous release,
+      assert every bin has a shebang, grep for cwd-relative package-asset resolution);
+      `testing.md` → a pack-and-install smoke lane naming `bin/smoke-consumer.ts`. Four
+      packaging regressions reached published prereleases; more unit tests would have caught
+      none — the gap was context, not depth.
+- [ ] Update the practices README scoreboard (still says tosijs-ui 1.7.1, three releases
+      stale) and add "update the scoreboard" to this repo's Publishing checklist.
+
+**Smaller / unverified leads** — see the report's "Unverified leads" list; notable ones:
+the mid-build 404 window (fall back to `.last-good` in `resolveFile`), a
+`tosijs-ui/site/config` subpath so the bins don't pull the whole build graph,
+`tosijs-tunnel --close` killing `pgrep` matches with no identity confirmation, and
+`deploy/` shipping with `dev.tosijs.net` / a personal email hardcoded and no adopter
+substitution guide.
+
 ## Doc-System Roadmap
 
 See [doc-system-roadmap.md](doc-system-roadmap.md) for the full plan. North star:
@@ -84,10 +152,16 @@ Non-blocking follow-ups (do before the FINAL 1.7.0 tag):
 - [x] **#8 hydration console errors** — verified fixed by the 1.6.9 parts adoption, closed, guarded
       (`hydration.pw.ts` console-clean test).
 - [x] **#15 ePub cross-links** — fixed (`rewriteInBookLinks`), closed, 6 unit cases + real-ePub verified.
-- [~] **GitHub issues + `UPSTREAM.md` (ecosystem), remaining:** - [x] #14 (throwing example) already filed + open (tosijs-ui#14) — tracked, not a new filing. - [x] **WebKit doc-test-runner skip filed as tosijs-ui#19** (2026-07-20) — the 4 specs that
-  `test.skip` WebKit + root cause (iframe runner never posts per-page `tosi-tests-done`). - [x] bun#34053 note kept current (weekly poll 2026-07-20; PR still unmerged, still 1.3.14). - [ ] **#13 (`<tosi-map>`) — CLOSE ON TAG.** Fixed on-branch (`c7c1e63e`) but the issue is still
-  OPEN; close it naming 1.7.0 when the tag lands. - [ ] #9 (document the cinematic-landing-page pattern — content-bound). **#12** (language-plugin
-  hooks) is strategic platform work, not a cleanup — see the platform sequence below.
+- [~] **GitHub issues + `UPSTREAM.md` (ecosystem), remaining:**
+  - [x] #14 (throwing example) already filed + open (tosijs-ui#14) — tracked, not a new filing.
+  - [x] **WebKit doc-test-runner skip filed as tosijs-ui#19** (2026-07-20) — the 4 specs that
+        `test.skip` WebKit + root cause (iframe runner never posts per-page `tosi-tests-done`).
+  - [x] bun#34053 note kept current (weekly poll 2026-07-20; PR still unmerged, still 1.3.14).
+  - [ ] **#13 (`<tosi-map>`) — CLOSE ON TAG.** Fixed on-branch (`c7c1e63e`) but the issue is
+        still OPEN; close it naming 1.7.0 when the tag lands.
+  - [ ] #9 (document the cinematic-landing-page pattern — content-bound). **#12**
+        (language-plugin hooks) is strategic platform work, not a cleanup — see the platform
+        sequence below.
 - [x] **Shared `tosijs-coding-practices` (practices lens) — DONE (2026-07-20).** On review, most were
       already landed by the earlier practices commit: `testing.md` Playwright claim already inverted
       (dedicated 8799, `reuseExistingServer:false`); `00-stack.md` already has the 12-`@codemirror/*`

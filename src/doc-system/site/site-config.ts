@@ -353,24 +353,33 @@ export interface SiteConfig {
     url?: string
     /**
      * Expose THIS machine's dev server at an authenticated public URL, via an SSH
-     * reverse tunnel to `host` (`bun run tunnel`).
+     * reverse tunnel to `host` (`tosijs-tunnel`).
      *
-     * The box does no compute — it terminates TLS and checks a password. The work
-     * stays where the data is, which is what lets one small VPS serve many projects.
+     * The box does no compute — it terminates TLS and routes. The work stays where the
+     * data is, which is what lets one small VPS serve many projects.
      *
-     * Safe to expose despite the dev server's source endpoints being loopback-only:
-     * the box's sshd runs `GatewayPorts no`, so the forwarded port is bound to its
-     * loopback and only the proxy can reach it — and `ssh -R` delivers
-     * to `localhost` here, so the dev server sees a loopback peer. Reaching that
-     * socket at all required passing the front door.
+     * Authorization keys on the LISTENER, not on the peer address or any header.
+     * Requests forwarded by the tunnel arrive on a dedicated loopback listener, and
+     * anything arriving there needs a valid session to write — and, by default, even to
+     * read. Which socket a request landed on is not something a client can forge.
+     *
+     * This deliberately replaces an earlier "the peer looks like loopback, so it must be
+     * local" rule. A tunnel counterfeits loopback by construction, so that reasoning
+     * authorized remote writes; see `mayWriteSource` in dev-auth.ts.
      */
     tunnel?: {
-      /** port to bind on the remote box (loopback there); default 9787 */
+      /**
+       * Port to bind on the remote box (loopback there). Defaults to a value derived
+       * from the project name (FNV-1a into 9000-9899) so two projects sharing a host do
+       * not collide — a flat default meant the second project's tunnel silently
+       * attached to the first one's.
+       */
       remotePort?: number
       /**
        * Local loopback port the tunnel forwards TO. Requests arriving here are treated
        * as remote — writes always require a session — because which socket a request
-       * landed on is not something a client can forge, unlike a header. Default 8788.
+       * landed on is not something a client can forge, unlike a header. Defaults to
+       * `port + 1`.
        */
       localPort?: number
       /** the authenticated public URL that fronts it */
@@ -395,17 +404,9 @@ export interface SiteConfig {
        * uncommitted tree. Note also that the hostname is not a secret: Let's Encrypt
        * publishes every certificate it issues to public Certificate Transparency logs.
        *
-       * Set `false` deliberately if you actually want a live read-only audience.
-       *
-       * Set `true` for maximum security: no session, nothing at all — not even the
-       * page.
-       *
-       * Worth knowing when you decide: **the hostname is not a secret.** Let's Encrypt
-       * publishes every certificate it issues to Certificate Transparency logs, which
-       * are public and searchable, so a tunnelled workspace's hostname is discoverable
-       * by construction rather than obscure. If the tree it mirrors contains anything
-       * you would not publish — and an uncommitted working tree usually does — set this
-       * to `true`.
+       * Set `false` deliberately if you actually want a live read-only audience: the
+       * page becomes readable to anyone with the URL, while writes still require a
+       * session.
        */
       requireToken?: boolean
     }

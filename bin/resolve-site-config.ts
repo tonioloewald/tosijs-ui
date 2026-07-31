@@ -120,7 +120,16 @@ export function isSafeRemotePath(p: string): boolean {
   if (p.includes('..')) return false
   const norm = p.replace(/\/+$/, '')
   if (norm.split('/').filter(Boolean).length < 2) return false
-  return SAFE_ROOTS.some((root) => norm === root || norm.startsWith(root + '/'))
+  /*
+  The ROOT ITSELF is not a safe target — only something INSIDE it.
+
+  `rsync --delete` mirrors, so `--path=/srv/preview` (one dropped path segment) deletes
+  every OTHER project's directory, the generated index, and all of
+  /srv/preview/_sites/*.caddy — the fragments the Caddyfile glob-imports. The deploy then
+  reloads Caddy in the same breath, so every preview on the box loses its route at once.
+  One missing segment should not be able to do that.
+  */
+  return SAFE_ROOTS.some((root) => norm.startsWith(root + '/'))
 }
 
 export const safeRemoteRoots = (): string[] => [...SAFE_ROOTS]

@@ -1,4 +1,5 @@
 import type { SiteConfig } from './site-config';
+import { isLoopbackAddressForAuth as isLoopbackAddress } from './dev-auth';
 declare global {
     var Bun: any;
 }
@@ -54,8 +55,13 @@ export declare function resolveLimitMb(configMb: number | undefined, envMb: stri
  *
  * IPv4-mapped IPv6 (`::ffff:127.0.0.1`) counts — that is how a v4 client shows up on a
  * dual-stack listener, and missing it would lock out the local machine on some setups.
+ *
+ * ONE definition, in dev-auth. This existed twice — character for character — with each
+ * copy guarding a different authorization door (`/report` + `/__devlink` here, the
+ * RCE-class `POST /__docstore/source` there), so a "tidy-up" of either would silently
+ * have changed a security boundary while every test stayed green.
  */
-export declare function isLoopbackAddress(address: string | undefined | null): boolean;
+export { isLoopbackAddress };
 export declare function haltijaLoaderSnippet(httpsPort: number): string;
 export declare function devServer(config: SiteConfig, opts?: {
     test?: boolean;

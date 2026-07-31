@@ -21,15 +21,14 @@ introduced by rc.1 itself.
   broken".
 - **New lane: `bun run test-consumer`** — packs the tarball, installs it into a scratch
   project, runs every bin through the `node_modules/.bin` shims, and builds a site from
-  that project's cwd. Every other lane runs *in this repo, from this repo, with one dev
-  server*, and all four rc.1-era regressions lived outside that envelope. It found a real
+  that project's cwd. Every other lane runs _in this repo, from this repo, with one dev
+  server_, and all four rc.1-era regressions lived outside that envelope. It found a real
   bug on its first run.
 - **A failed "save to source" now says why** (#34). The endpoint answers 501 with an
   actionable sentence ("editableSources is not enabled…") and the client threw it away
   for a generic "Save failed.", so an unconfigured server was indistinguishable from a
   broken one and the edit appeared to vanish. The server's reason is surfaced, and every
   failure path now states that the edit is still in the editor.
-
 
 ## 1.9.0-rc.1
 
@@ -39,10 +38,10 @@ addressed; no features are pending. Install with `tosijs-ui@rc`.
 **Edit and view are now separate hostnames**, which makes the security posture legible
 without reading config:
 
-| host | what it is | gate |
-| --- | --- | --- |
-| `<project>.dev.example.com` | read-only static preview — shareable | invite cookie |
-| `<project>.edit.dev.example.com` | live editable workspace — yours | session, always |
+| host                             | what it is                           | gate            |
+| -------------------------------- | ------------------------------------ | --------------- |
+| `<project>.dev.example.com`      | read-only static preview — shareable | invite cookie   |
+| `<project>.edit.dev.example.com` | live editable workspace — yours      | session, always |
 
 - **`tunnel.requireToken` now defaults to `true`.** The old default (read-open) was
   justified by "an expired link should degrade to a readable page when you open a second
@@ -53,10 +52,10 @@ without reading config:
   deliberately if you want a live read-only audience.
 - **An edit host with no tunnel behind it explains itself** — a 503 saying the workspace
   is offline, with a link to the static preview, instead of a bare 502. It deliberately
-  does *not* fall back to serving the snapshot: you would think you were looking at live
+  does _not_ fall back to serving the snapshot: you would think you were looking at live
   work when you were not.
 - **A spent invite link says so.** The likely culprit is a chat-app link-preview bot,
-  whose GET *is* the first use; previously you got a silent redirect and discovered it
+  whose GET _is_ the first use; previously you got a silent redirect and discovered it
   when a save failed.
 
 **Security fixes** (all found by review or adopters, none reported in the wild):
@@ -67,14 +66,14 @@ without reading config:
 - Build-error text (absolute paths from your machine) was injected into every served page
   with no auth check. The label stays public; the detail needs a session.
 - `rsync --delete` accepted any absolute path two segments deep — including `/usr/lib`
-  and `/etc/caddy`, which it would have *mirrored*, i.e. emptied. Now an allowlist of
+  and `/etc/caddy`, which it would have _mirrored_, i.e. emptied. Now an allowlist of
   preview roots, extracted and tested.
 
 **Adopter-reported fixes** (all from tosijs-3d, all consumer-facing):
 
 - **`tosijs-make-icons` stripped `fill-rule`** (#30), so a compound path using `evenodd`
   for holes — a keyboard drawn as one path — rendered the holes solid. `fill-rule` is
-  fill *topology*, not colour, and takes no part in the tinting the strip exists for.
+  fill _topology_, not colour, and takes no part in the tinting the strip exists for.
   It turned out to be stripped in **three** places, not one; the `stroked/` branch is the
   one that bit. This ships as a bin, so it affects anyone generating their own icon data.
 - **The doc-site hydrate bundle was written into the library `dist/`** (#31) and shipped
@@ -92,7 +91,7 @@ without reading config:
 **Correctness:**
 
 - **A 403 could destroy uncommitted work.** An unauthorized read fell through to GitHub
-  `main`, so you edited the *published* file, and the save then handed you a download of
+  `main`, so you edited the _published_ file, and the save then handed you a download of
   it — applying which silently reverts your working copy. 401/403 is now its own case in
   both editors.
 - **The last-good build protection moved to where the wipe is.** It lived in the dev
@@ -104,7 +103,6 @@ without reading config:
 - `?t=` is only intercepted when a tunnel is configured, and only on GET — `t` is the
   classic cache-buster name, and a 302'd POST loses its body.
 
-
 ## 1.9.0-beta.3
 
 Fixes three blockers found by the nine-lens review of beta.2, all in the remote-editing
@@ -113,20 +111,19 @@ feature, plus a rebuild loop the review did not catch because nothing automated 
 
 - **`bun run tunnel --link` never worked.** It ran `pgrep -f 'bun bin/dev.ts'`, which does
   not match the documented start command (`bun --watch bin/dev.ts`) — so the headline flow
-  was unreachable. Worse, it *did* match `bun bin/dev.ts --build-only`, whose process exits
+  was unreachable. Worse, it _did_ match `bun bin/dev.ts --build-only`, whose process exits
   before the signal handler is registered, so the default SIGUSR2 disposition **killed
   in-flight builds**. Now it asks the dev server over a loopback-only `/__devlink` endpoint:
   no process guessing, no signals, and it cannot touch a sibling project. (`/__devlink` is
   refused over the tunnel — a read-only visitor minting a write session would be privilege
   escalation.)
-- **Write authorization failed OPEN.** It inferred "this is local" from the *absence* of
+- **Write authorization failed OPEN.** It inferred "this is local" from the _absence_ of
   `X-Forwarded-*`, so any forwarder that doesn't set them — `ssh -R` with `GatewayPorts yes`,
   `ngrok tcp`, `socat`, iptables DNAT, nginx without `forwardfor` — delivered an off-machine
   request as `{peer: 127.0.0.1, no headers}` and got an **arbitrary repo write**, which the
   watcher rebuilds and runs. The dev server now binds a **separate loopback-only port** for
   tunnel traffic; arriving there always requires a session. Which socket you connected to is
-  not something a client can forge. `bun run tunnel` also verifies the remote port is bound
-  to loopback and says so loudly if it isn't.
+  not something a client can forge.
 - **The decision guarding that RCE had no tests**, while its own comment claimed a
   regression test that did not exist. It is now `mayWriteSource()` — pure, exported, and
   covered including a named regression case for the fail-open above.
@@ -140,13 +137,13 @@ feature, plus a rebuild loop the review did not catch because nothing automated 
   workspace, so silently adopting a neighbour's config would publish the wrong project.
 - **Fix: the tunnel probed the wrong port**, so forwarding to a dead listener failed
   silently with a 502 and a healthy-looking dev server (tosijs-ui#28). `ssh -R` can't
-  catch it — the *remote* bind succeeds, so `ExitOnForwardFailure` stays quiet; it's the
+  catch it — the _remote_ bind succeeds, so `ExitOnForwardFailure` stays quiet; it's the
   local end that connects to nothing. It now probes the port it actually forwards to and
   **refuses to open**, naming the likely cause (including "your tosijs-ui predates the
   tunnel listener").
 - **Tunnelled workspaces self-register too** (tosijs-ui#29). Static previews have
   self-registered since beta.1, but a tunnelled host still needed a block hand-added to
-  the *shared* Caddyfile — so the one remaining manual edit was the **riskier** one: a
+  the _shared_ Caddyfile — so the one remaining manual edit was the **riskier** one: a
   typo there breaks routing for every project on the box, which is exactly what the
   fragment design set out to abolish. `tosijs-tunnel` now writes its own fragment with
   the same validate-before-reload discipline, and the shared file names no hostnames at
@@ -162,11 +159,10 @@ feature, plus a rebuild loop the review did not catch because nothing automated 
   watcher path and declared an **optional peer**, so building needs nothing extra and the
   watching dev server explains itself if it is missing.
 - **Fix: `bun start` was in a rebuild loop** (measured at 899 restarts in ~40s), which made
-  the documented dev command unusable. The build stamp imported the *generated*
+  the documented dev command unusable. The build stamp imported the _generated_
   `src/version.ts`, putting it in `bun --watch`'s module graph while prebuild rewrote it every
   build. The import is gone, and generated files are now written **only when the content
   changes**, which makes the whole class of self-write loops impossible.
-
 
 ## 1.9.0-beta.2
 
@@ -182,7 +178,7 @@ same watcher, same files.
   which is what lets one small VPS serve many projects. The work stays where the data is.
 - **Magic-link auth.** Two tokens on purpose: the **link** rides in a URL so it is the
   one that leaks (history, `Referer`, proxy logs, chat-app link previews) and is
-  therefore *single-use and 15 minutes*; the **session** never appears in a URL, arrives
+  therefore _single-use and 15 minutes_; the **session** never appears in a URL, arrives
   as an `HttpOnly` cookie, and is durable. A durable token pasted into a URL would be
   strictly worse than basic auth. `SameSite=Lax` gives the write endpoint free CSRF
   protection.
@@ -204,7 +200,6 @@ same watcher, same files.
   weaker than the workspace's auth (a shared bearer secret in a cookie, not a per-client
   session) — Caddy serving static files has no session store — but equivalent to the
   basicauth it replaces, with no dialog.
-
 
 ## 1.9.0-beta.1
 
@@ -284,7 +279,7 @@ same watcher, same files.
     shown), plus an **advisories-per-package tally** — a dependency that keeps producing them
     is a code smell worth replacing rather than patching.
 - **Fix (issue #24, reported by a consumer): nav `order` now sorts numerically.** Section nav
-  and the generated `<!-- toc -->` built a zero-padded *string* key and compared it lexically,
+  and the generated `<!-- toc -->` built a zero-padded _string_ key and compared it lexically,
   so a fractional order silently sorted to the **end** of its section — `order: 1.5` landed
   after `2`, `3`, … because `"01.5" > "0002"` as text. "Insert a page at N.5" reads like a
   supported idiom and did the opposite with no warning. The same padding capped `order` at 4
@@ -299,7 +294,7 @@ same watcher, same files.
   above was effectively unfindable. The comparator needs no delimiter; the NUL is gone.
   - **Adopting the gate — budget for one upgrade, not one pin.** From the first real
     adoption (`tosijs`, which went from 12 blocking advisories to zero): if the gate flags
-    **`brace-expansion`**, note that `GHSA-mh99-v99m-4gvg` marks *every* version below
+    **`brace-expansion`**, note that `GHSA-mh99-v99m-4gvg` marks _every_ version below
     **5.0.8** affected, so the override is mandatory — and `brace-expansion@5` breaks
     **eslint 8**'s bundled `minimatch@3` with `expand is not a function`. In practice that
     means **an eslint 8 → 10 migration** (flat config + typescript-eslint 8), not a one-line
@@ -360,13 +355,13 @@ same watcher, same files.
   it never sits over the code editors in side-by-side mode). The collapsed handle carries the
   example's pass/fail color, "run tests" is a checkbox that greys when off, and the bar stays
   visible when the example is maximized.
-- **Build system is fragility-tolerant.** An *unsupported import* in a live example (a bare
+- **Build system is fragility-tolerant.** An _unsupported import_ in a live example (a bare
   specifier the runtime can't resolve) now downgrades that block to display-only with a warning
   instead of failing the whole build; genuine syntax errors still fail the build.
 - **Removed a render-skip anti-pattern** from `<tosi-segmented>`, `<tosi-color>`, and
-  `<tosi-form>`. They previously depended on `render()` being *skipped* after interaction via a
+  `<tosi-form>`. They previously depended on `render()` being _skipped_ after interaction via a
   `valueChanged` flag — fragile timing that broke under tosijs's parts changes. Renders are now
-  idempotent: they skip only *provably-redundant* writes by comparing values (colors compared
+  idempotent: they skip only _provably-redundant_ writes by comparing values (colors compared
   **parsed**, so a `#rrggbb ↔ rgba()` round-trip no longer clobbers the caret/selection in the
   field being edited).
 - **Code editor background is now a neutral off-white** (off-black in dark mode) instead of a
@@ -391,7 +386,7 @@ same watcher, same files.
   build was locked to one mount — adding a custom domain to a GitHub project page flipped the
   live site to the root while `docs/` still pointed at `/repo`, 404ing every asset into a bare,
   unstyled shell with no warning. Functional URLs are now emitted **relative to each page**, so
-  one build works at `/repo`, a custom-domain root, or a moved mount with no rebuild. *Metadata*
+  one build works at `/repo`, a custom-domain root, or a moved mount with no rebuild. _Metadata_
   URLs (`canonical`, `og:url`, `og:image`, `sitemap.xml`) stay absolute via `baseUrl`+`basePath`
   — so `basePath` now only affects metadata, never the page's assets. (The hydrated SPA's own
   nav/`pushState` and `__TJS_LOCAL_BASE` remain root-relative — tracked in #16.)
@@ -424,7 +419,7 @@ same watcher, same files.
 - **Fix: "edit page source" showed HTML instead of source in a dev server without
   `editableSources`.** The `/__docstore/source` endpoint was only routed when
   `editableSources` was on; otherwise the request fell through to the SPA `index.html`
-  fallback and returned the rendered page at status 200 — so the client loaded HTML *as* the
+  fallback and returned the rendered page at status 200 — so the client loaded HTML _as_ the
   source (and save read HTML). The endpoint is now handled unconditionally and answers a clean
   `501` when editing is disabled, so `loadSource` falls back to the GitHub raw source (read-only
   editing, matching the deployed site). Belt-and-suspenders: the client also rejects any
@@ -432,8 +427,8 @@ same watcher, same files.
   more fully in `doc-site-system.md`.
 - **Local example save now gives feedback.** "Save changes (local)" writes a per-browser
   scratchpad (not the file) — it used to do so silently, reading as a no-op. It now posts a
-  toast (`postNotification`): *"Saved to this browser only — use 'Save to source' to write the
-  file."*
+  toast (`postNotification`): _"Saved to this browser only — use 'Save to source' to write the
+  file."_
 
 - **`valueRenderer(type)` + declarative `<tosi-table>` column `type`.** A new exported helper
   turns a compact type string into a reusable, locale-aware renderer with a sensible default
@@ -449,7 +444,7 @@ same watcher, same files.
 
 - **Deprecation cleanup: `on<Event>` component callbacks → `handle<Event>`.** tosijs reserves the
   `on<Event>` prefix for elements-factory event-handler sugar and now warns when a component
-  *defines* such a property. Renamed the internal ones: `onResize` → `handleResize` (`size-break`,
+  _defines_ such a property. Renamed the internal ones: `onResize` → `handleResize` (`size-break`,
   `side-nav`, `code-editor`, `babylon-3d`, `tab-selector`) and `onScrollEnd` → `handleScrollEnd`
   (`data-table`). Verified: those pages now load with zero `on<Event>` deprecation warnings.
   (`<tosi-tabs>`'s public `onCloseTab` still uses the old name — a breaking rename deferred to a
@@ -517,7 +512,7 @@ the real transpiler + editor on demand; saving keeps the transpiled JS.
 With `importResolver` enabled, a live example can `import` any npm package — resolved through a
 same-origin service worker (tjs-lang's import-resolver). Three execution modes are flaggable on
 the fence: `inline` (default), `iframe` (DOM/CSS isolation), `ide` (recognized; iframe path for
-now). Fence grammar is order-free: `` ```ts:ide#demo `` and `` ```ts#demo:ide `` both parse.
+now). Fence grammar is order-free: ` ```ts:ide#demo ` and ` ```ts#demo:ide ` both parse.
 
 ### Doc-system & build
 

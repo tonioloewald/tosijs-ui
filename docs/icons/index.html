@@ -66,7 +66,9 @@ const suffixes = [
   &#39;50o&#39;, &#39;75s&#39;, &#39;_ff0000F&#39;, &#39;_00fS&#39;, &#39;4W&#39;,
 ]
 
-const iconNames = Object.keys(icons).sort()
+// Named distinctly from the re-exported `iconNames()` FUNCTION at the bottom of this
+// file — same word, different thing, and the collision reads like a bug.
+const sortedIconNames = Object.keys(icons).sort()
 
 const { iconDemo } = tosi({
   iconDemo: {
@@ -89,7 +91,7 @@ function rebuildGrid() {
   const prefix = iconDemo.prefix.value
   const suffix = iconDemo.suffix.value
   scroller.textContent = &#39;&#39;
-  for (const iconName of iconNames) {
+  for (const iconName of sortedIconNames) {
     const composed = composeName(prefix, suffix, iconName)
     scroller.append(div(
       {
@@ -580,6 +582,7 @@ copies or substantial portions of the Software.</p>
       <li><a class="doc-link" href="../doc-system/">doc-system</a></li>
       <li><a class="doc-link" href="../kitchen-sink/">kitchen sink</a></li>
       <li><a class="doc-link" href="../make-icon-data/">make-icon-data</a></li>
+      <li><a class="doc-link" href="../icon-svg/">iconSvg — icon markup without a DOM</a></li>
       <li><a class="doc-link" href="../migrating/">Migrating from older versions</a></li>
       <li><a class="doc-link" href="../doc-browser/">doc-browser</a></li>
       <li><a class="doc-link" href="../doc-site-system/">Doc-Site System</a></li>

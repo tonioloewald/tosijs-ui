@@ -1,0 +1,19 @@
+{
+  // Type-check bin/ WITHOUT touching the emit.
+  //
+  // bin/ sat outside the gate and had accumulated two real type errors. The obvious fix
+  // — adding the bin glob to tsconfig.json's `include` — silently repoints tsc's
+  // inferred common root from src/ to the repo root, so declarations move from
+  // dist/*.d.ts to dist/src/*.d.ts and every published subpath export breaks. (Tried it;
+  // it relocated the entire shipped dist layout.) A separate no-emit project gets the
+  // coverage with none of that.
+  //
+  // Line comments, not a block comment: the bin glob contains a star-slash, which
+  // terminates a block comment early and makes this file invalid JSON.
+  //
+  // Listing only bin/ is deliberate: tsc follows the imports into src/ by itself, while
+  // naming src/ here would also drag in the *.test.ts files the parent config excludes.
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true },
+  "include": ["bin/**/*.ts"]
+}

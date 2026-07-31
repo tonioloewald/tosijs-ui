@@ -14,7 +14,7 @@ import { buildSite } from './orchestrator';
 import { preflight } from './preflight';
 import { auditDependencies, reportAudit } from './audit-guard';
 import { openDevBrowser } from './open-browser';
-import { createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, mayWriteSource, SESSION_COOKIE, } from './dev-auth';
+import { TUNNEL_LINK_CMD, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth';
 const TEST_RESULTS_FILE = '.browser-tests.json';
 const DEFAULT_IDLE_HOURS = 8;
 /**
@@ -42,7 +42,10 @@ const DEFAULT_IDLE_HOURS = 8;
  *   - `hj` action commands (`navigate`, `click`, …) exit NON-ZERO on failure, so the
  *     test lane below can trust an exit code instead of racing to a timeout.
  */
-const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.5.0';
+// ^1.5.5, not ^1.5.0: haltija#7 (teardown leaving Electron grandchildren alive) is fixed
+// in 1.5.5, and a bunx cache holding 1.5.0-1.5.4 satisfies the looser range — silently
+// reintroducing the Electron accumulation this pin exists to prevent.
+const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.5.5';
 /**
  * Resolve the idle-exit timeout to milliseconds (0 = disabled).
  *
@@ -106,20 +109,13 @@ export function resolveLimitMb(configMb, envMb) {
  *
  * IPv4-mapped IPv6 (`::ffff:127.0.0.1`) counts — that is how a v4 client shows up on a
  * dual-stack listener, and missing it would lock out the local machine on some setups.
+ *
+ * ONE definition, in dev-auth. This existed twice — character for character — with each
+ * copy guarding a different authorization door (`/report` + `/__devlink` here, the
+ * RCE-class `POST /__docstore/source` there), so a "tidy-up" of either would silently
+ * have changed a security boundary while every test stayed green.
  */
-export function isLoopbackAddress(address) {
-    if (!address)
-        return false;
-    const a = address
-        .trim()
-        .toLowerCase()
-        .replace(/^\[|\]$/g, '');
-    if (a === '::1' || a === 'localhost')
-        return true;
-    // ::ffff:127.0.0.1 — IPv4-mapped IPv6
-    const mapped = a.startsWith('::ffff:') ? a.slice(7) : a;
-    return /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(mapped);
-}
+export { isLoopbackAddress };
 export function haltijaLoaderSnippet(httpsPort) {
     return (`<script>self===top&&/^localhost$|^127\\./.test(location.hostname)` +
         `&&import('https://localhost:${httpsPort}/dev.js')</script>`);
@@ -314,7 +310,7 @@ export async function devServer(config, opts = {}) {
     */
     let buildStatus = { ok: true };
     /*
-    Magic-link auth, so a workspace exposed via `bun run tunnel` can be edited from
+    Magic-link auth, so a workspace exposed via `tosijs-tunnel` can be edited from
     anywhere. A LINK token rides in a URL and is spent on first use; it is exchanged for
     a durable SESSION cookie that never appears in a URL. See dev-auth.ts for why that
     asymmetry is the whole design.
@@ -513,6 +509,7 @@ export async function devServer(config, opts = {}) {
     // Activity is a request served or a rebuild — i.e. someone is actually reading or
     // editing. Off in test mode, which has its own timeout and exits on its own.
     const idleMs = resolveIdleMs(config.idleTimeoutHours, process.env.DEV_IDLE_TIMEOUT_HOURS);
+    const verboseLog = process.env.DEV_VERBOSE === '1';
     let lastActivity = Date.now();
     const touch = () => {
         lastActivity = Date.now();
@@ -786,6 +783,13 @@ export async function devServer(config, opts = {}) {
     */
     const handleRequest = async (request, srv, viaTunnel) => {
         /*
+        A REQUEST is activity. This was lost in the two-listener refactor, leaving the only
+        touch() in the rebuild `finally` — so the 8h idle-exit measured time since the last
+        BUILD. Someone reading the tunnelled workspace all day got the server killed under
+        them, with a message ("no requests, no rebuilds") that was flatly untrue.
+        */
+        touch();
+        /*
           TWO POSTURES, because projects differ.
     
           DEFAULT — read open, write gated. Without a session the site RENDERS: read the
@@ -814,7 +818,21 @@ export async function devServer(config, opts = {}) {
           that token was ever real.
           */
         const reqUrl = new URL(request.url);
-        const linkToken = reqUrl.searchParams.get(LINK_PARAM);
+        /*
+        Only intercept `?t=` when a tunnel is configured, and only on GET.
+    
+        `t` is the classic cache-buster name. Ungated, ANY adopter's dev server answered
+        `GET /?t=12345` with "That invite link has been used" instead of the page, and 401'd
+        POSTs carrying a `t` param. This gate was claimed in the rc.1 CHANGELOG and in commit
+        52286147 — which never touched this file. Two published releases asserted a fix that
+        did not exist.
+        */
+        const linkToken = shouldInterceptLinkToken({
+            tunnelConfigured: Boolean(config.preview?.tunnel),
+            method: request.method,
+        })
+            ? reqUrl.searchParams.get(LINK_PARAM)
+            : null;
         /*
           PROXIED REQUESTS NEED A SESSION FOR EVERYTHING, not just for writing.
     
@@ -830,13 +848,32 @@ export async function devServer(config, opts = {}) {
           Direct (unproxied) requests are unaffected: at this keyboard, the site is just
           the dev server it has always been.
           */
-        const viaProxy = request.headers.get('x-forwarded-for') !== null ||
-            request.headers.get('x-forwarded-host') !== null;
+        /*
+        Key on the LISTENER first, exactly like every other gate in this file.
+    
+        This read gate was left on `X-Forwarded-*` when the WRITE path was moved off
+        headers — so the two halves of the same door used different signals. Any forwarder
+        that omits those headers (`ssh -R` with GatewayPorts yes, ngrok tcp, socat, iptables
+        DNAT, nginx proxy_pass, HAProxy without `option forwardfor` — the list dev-auth.ts
+        enumerates as the reason writes moved) arrived with viaProxy === false and read the
+        entire uncommitted working tree, while `requireToken` promises "nothing at all, not
+        even the page". Invisible in testing because the blessed path is Caddy, which sets
+        XFF by default.
+    
+        `viaTunnel` cannot be forged by a client; the header check stays only as a
+        belt-and-braces OR for a proxy in front of the MAIN listener.
+        */
         // Defaults to TRUE: an edit host is yours. Share the static preview host instead.
         const lockedDown = config.preview?.tunnel?.requireToken !== false;
-        if (lockedDown && viaProxy && !linkToken) {
+        {
             const cookie = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
-            if (!validSession(auth, cookie, Date.now())) {
+            if (!mayReadSite({
+                lockedDown,
+                viaTunnel,
+                proxied: isProxiedRequest(request.headers),
+                hasLinkToken: Boolean(linkToken),
+                hasValidSession: validSession(auth, cookie, Date.now()),
+            })) {
                 return new Response(`<!doctype html><meta charset=utf-8>` +
                     `<title>Link required</title>` +
                     `<style>body{font:16px/1.6 system-ui;margin:15vh auto;max-width:30rem;padding:0 1.5rem;color:#222}` +
@@ -844,7 +881,7 @@ export async function devServer(config, opts = {}) {
                     `code{background:#8881;padding:.1em .4em;border-radius:4px}</style>` +
                     `<h1>This workspace needs an invite link</h1>` +
                     `<p>Ask for a fresh one — they are single-use and expire after 15 minutes.</p>` +
-                    `<p><code>bun run tunnel --link</code></p>`, {
+                    `<p><code>${TUNNEL_LINK_CMD}</code></p>`, {
                     status: 401,
                     headers: {
                         'Content-Type': 'text/html; charset=utf-8',
@@ -885,7 +922,7 @@ export async function devServer(config, opts = {}) {
                 `<p>Invite links are single-use and expire after 15 minutes. If you pasted this ` +
                 `link into a chat app, its link preview may have spent it before you clicked — ` +
                 `which is exactly why they are single-use.</p>` +
-                `<p>Ask for a fresh one: <code>tosijs-tunnel --link</code></p>`;
+                `<p>Ask for a fresh one: <code>${TUNNEL_LINK_CMD}</code></p>`;
             return new Response(spent, {
                 status: 401,
                 headers: {
@@ -896,7 +933,12 @@ export async function devServer(config, opts = {}) {
             });
         }
         let reqPath = new URL(request.url).pathname;
-        console.log(request.method, reqPath);
+        // Every request, unconditionally, was drowning the warnings this release added.
+        // Keep the two kinds that carry information: anything off the tunnel, and anything
+        // that is not a plain success (logged at the response, below). DEV_VERBOSE=1 brings
+        // back the firehose.
+        if (verboseLog || viaTunnel)
+            console.log(request.method, reqPath);
         /*
         Test results are LOCAL-ONLY.
     
@@ -947,7 +989,7 @@ export async function devServer(config, opts = {}) {
                 hasValidSession: validSession(auth, session, Date.now()),
             });
             if (!authorized) {
-                console.warn(`⚠️  refused ${request.method} /__docstore/source from ${peer ?? 'unknown'} — ` + `no session (use \`bun run tunnel --link\` for an edit link).`);
+                console.warn(`⚠️  refused ${request.method} /__docstore/source from ${peer ?? 'unknown'} — ` + `no session (use \`${TUNNEL_LINK_CMD}\` for an edit link).`);
                 return new Response('not authorized to edit source', {
                     status: 403,
                     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
@@ -1024,7 +1066,7 @@ export async function devServer(config, opts = {}) {
         (config.preview?.tunnel ? PORT + 1 : undefined);
     const configuredTunnelPort = config.preview?.tunnel?.localPort;
     let tunnelServer;
-    if (tunnelPort && !testMode) {
+    if (tunnelPort && !testMode && !process.env.DEV_NO_TUNNEL) {
         try {
             tunnelServer = Bun.serve({
                 port: tunnelPort,
@@ -1099,6 +1141,7 @@ export async function devServer(config, opts = {}) {
                     `   DEV_IDLE_TIMEOUT_HOURS=0 or idleTimeoutHours in your site config.\n`);
                 clearInterval(timer);
                 server.stop();
+                tunnelServer?.stop();
                 process.exit(0);
             }
             const ok = await preflight({
@@ -1109,6 +1152,7 @@ export async function devServer(config, opts = {}) {
             if (!ok) {
                 clearInterval(timer);
                 server.stop();
+                tunnelServer?.stop();
                 process.exit(1);
             }
         }, TICK_MS);

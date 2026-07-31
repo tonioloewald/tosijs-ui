@@ -42,12 +42,14 @@ function check(name: string, ok: boolean, detail = '') {
 const repo = process.cwd()
 const pkg = await Bun.file(`${repo}/package.json`).json()
 const work = mkdtempSync(path.join(tmpdir(), 'tosijs-consumer-'))
-let tarball = ''
 
 try {
   console.log(`\n📦 packing ${pkg.name}@${pkg.version} …`)
   const packed = await $`npm pack --pack-destination ${work}`.cwd(repo).quiet()
-  tarball = path.join(work, packed.stdout.toString().trim().split('\n').pop()!)
+  const tarball = path.join(
+    work,
+    packed.stdout.toString().trim().split('\n').pop()!
+  )
   check('npm pack produced a tarball', existsSync(tarball))
 
   // ── tarball contents ──────────────────────────────────────────────────────
@@ -56,6 +58,16 @@ try {
     'doc-site hydrate bundle is NOT shipped',
     !listing.some((f) => f.includes('dist/hydrate/')),
     'dist/hydrate is site output; shipping it once took an adopter from 0.62MB to 10.2MB'
+  )
+  // A size ceiling catches the NEXT dist/hydrate, whatever it gets called. 5.2MB of
+  // hydrate bundle shipped to every consumer behind an exact-path guard that would not
+  // have seen it under a different name.
+  const bytes = Bun.file(tarball).size
+  check(
+    `tarball is under 3MB (is ${(bytes / 1e6).toFixed(2)}MB, ${
+      listing.length
+    } files)`,
+    bytes < 3_000_000
   )
   for (const bin of Object.values(pkg.bin ?? {}) as string[]) {
     check(
@@ -104,14 +116,44 @@ try {
   )
 
   // ── the bins, through the .bin shims ──────────────────────────────────────
-  for (const name of Object.keys(pkg.bin ?? {})) {
+  //
+  // NEVER invoke an unknown bin just to see its exit code. The first version of this
+  // loop ran `${shim} --status` for ALL of them — and `tosijs-dev-certs` ignores argv
+  // and runs `mkcert -install`, which writes a root CA into the system and NSS trust
+  // stores (sudo-prompting inside a .quiet() call), while `tosijs-make-icons` runs the
+  // real generator against the scratch project. A test that mutates the machine it runs
+  // on is worse than the regression it was written to catch.
+  //
+  // The regression this must catch is a MISSING SHEBANG (the .bin shim feeds the file
+  // to the shell, which then chokes on TypeScript). That is a property of the first two
+  // bytes, so read them — no execution required, and it works for every bin including
+  // the destructive ones.
+  const SAFE_TO_RUN = new Set(['tosijs-tunnel', 'tosijs-deploy'])
+  for (const [name, rel] of Object.entries(pkg.bin ?? {}) as [
+    string,
+    string
+  ][]) {
     const shim = path.join(proj, 'node_modules', '.bin', name)
     if (!existsSync(shim)) {
       check(`bin shim exists: ${name}`, false)
       continue
     }
-    // `--help`-ish invocation: we only care that the SHELL can run it. A missing
-    // shebang shows up as a shell syntax error, not a clean exit code.
+    const target = path.join(proj, 'node_modules', pkg.name, rel)
+    const firstLine = (
+      await Bun.file(target)
+        .text()
+        .catch(() => '')
+    ).split('\n')[0]
+    check(
+      `bin starts with a shebang: ${name}`,
+      firstLine.startsWith('#!'),
+      `first line was ${JSON.stringify(
+        firstLine.slice(0, 60)
+      )} — the .bin shim will ` + `hand this to the shell`
+    )
+    // Only the read-only bins are actually executed. Both exit non-zero without a
+    // config, which is fine: we are looking for shell-level "cannot execute" noise.
+    if (!SAFE_TO_RUN.has(name)) continue
     const run = await $`${shim} --status`.cwd(proj).nothrow().quiet()
     const err = run.stderr.toString()
     check(

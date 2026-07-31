@@ -69,6 +69,8 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
   This is a toy for playing with the icon composition language introduced in tosijs-ui 1.5.10. It's documented [here](/...
 - https://ui.tosijs.net/icons/ — icons
   `icons` is a proxy that generates an `ElementCreator` for a given icon on demand,
+- https://ui.tosijs.net/icon-svg/ — iconSvg — icon markup without a DOM
+  (The subpath `tosijs-ui/icon-svg` is the DOM-free entry point — import it that way in a
 - https://ui.tosijs.net/kitchen-sink/ — kitchen sink
   This is a testbed for checking styles
 - https://ui.tosijs.net/layout/ — layout

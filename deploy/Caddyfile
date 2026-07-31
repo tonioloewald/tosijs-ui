@@ -193,12 +193,10 @@ import /srv/preview/_sites/*.caddy
 # 	import preview_site
 # }
 #
-# To keep unreleased work off the open internet, add to any block above. The stakes
-# for a STATIC host are disclosure, not code execution — there is no write endpoint —
-# so one line is a proportionate access-control design.
-# Generate the hash with: caddy hash-password
-# NOTE: Caddy 2.6 (Debian trixie) spells this `basicauth`; 2.8+ uses `basic_auth`.
+# To keep unreleased work off the open internet, the `preview_site` snippet above
+# already gates on the invite-link cookie — you do not need to add anything here.
 #
-# 	basicauth {
-# 		dev <bcrypt-hash>
-# 	}
+# basicauth is NOT the recommendation any more (it was, earlier in this file's history):
+# it makes the browser throw a credentials dialog at every visitor, which defeats the
+# point of a link you can just send someone, and one shared password is no stronger than
+# the one shared cookie. Left here only so the earlier advice is not silently rewritten.

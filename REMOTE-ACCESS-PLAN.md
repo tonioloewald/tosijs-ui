@@ -1,10 +1,9 @@
 # Remote Access Plan
 
-How to see, share, and eventually *edit* a `tosijs-ui` project from somewhere that
+How to see, share, and eventually _edit_ a `tosijs-ui` project from somewhere that
 isn't the machine it lives on.
 
-> **Revision history.**
-> **v1** proposed an SSH reverse tunnel (`sish`) exposing the local dev server.
+> **Revision history.** > **v1** proposed an SSH reverse tunnel (`sish`) exposing the local dev server.
 > **v2** corrected it against the actual dev server (Bun.serve, HTTPS-only, ships a
 > source-write endpoint).
 > **v3 — this one** — reverses the priority. A **preview host** is the primary path;
@@ -20,12 +19,12 @@ isn't the machine it lives on.
 Three phases, each independently useful, each a strict superset of the last. **You can
 stop after any of them.**
 
-| Phase | What it is | Write surface | Needs the laptop on? |
-| --- | --- | --- | --- |
-| **1. Static preview** | rsync the built site to a VPS | none | no |
-| **2. Live preview** | + a WebSocket that says "rebuilt, reload" | none | no |
-| **3. Schema-mediated endpoint** | + typed REST/WS reads and writes | schema-declared paths only | no |
-| *(aside)* **SSH tunnel** | expose the running dev server itself | the dev server's, in full | **yes** |
+| Phase                           | What it is                                | Write surface              | Needs the laptop on? |
+| ------------------------------- | ----------------------------------------- | -------------------------- | -------------------- |
+| **1. Static preview**           | rsync the built site to a VPS             | none                       | no                   |
+| **2. Live preview**             | + a WebSocket that says "rebuilt, reload" | none                       | no                   |
+| **3. Schema-mediated endpoint** | + typed REST/WS reads and writes          | schema-declared paths only | no                   |
+| _(aside)_ **SSH tunnel**        | expose the running dev server itself      | the dev server's, in full  | **yes**              |
 
 Note the last column. The tunnel requires your machine to be on, awake and connected —
 which is exactly the condition that fails when you're travelling, i.e. the situation
@@ -34,8 +33,8 @@ that prompted this. Phases 1–3 don't care where you are.
 ### Prior art: this is CitC, minus the infrastructure
 
 The shape is Google's cloud dev environment — **Piper + CitC** (Clients in the Cloud):
-your workspace lives centrally rather than on a laptop, it is stored as a *delta
-against a snapshot*, it is reachable from anywhere, and build/test/preview run where
+your workspace lives centrally rather than on a laptop, it is stored as a _delta
+against a snapshot_, it is reachable from anywhere, and build/test/preview run where
 the workspace lives. Machine loss stops being a category of problem.
 
 The reason we can have that for €3/month is that **git is already a content-addressed
@@ -46,13 +45,13 @@ cheap workspaces sharing one object store.
 
 The mapping is almost embarrassingly direct:
 
-| Google | here |
-| --- | --- |
-| Piper + CitC workspace | a git checkout (or worktree) per host |
-| lazy VFS materialisation | unnecessary — the whole repo is small |
+| Google                                    | here                                                        |
+| ----------------------------------------- | ----------------------------------------------------------- |
+| Piper + CitC workspace                    | a git checkout (or worktree) per host                       |
+| lazy VFS materialisation                  | unnecessary — the whole repo is small                       |
 | Cider / Cloud Workstations (cloud editor) | **the doc-system's own in-browser editor + save-to-source** |
-| distributed build cache | unnecessary — a full build is ~2s |
-| code review | a GitHub PR |
+| distributed build cache                   | unnecessary — a full build is ~2s                           |
+| code review                               | a GitHub PR                                                 |
 
 The third row is the one worth noticing: the "cloud editor" component, usually the
 expensive part, **already exists** and is the doc-system itself. That is why Phase 3 is
@@ -60,7 +59,7 @@ a fifth face on an existing thing rather than a new product — and why the auth
 story ("edit in place, save to source") is the feature this whole architecture is
 actually in service of.
 
-What we *don't* get: lazy materialisation of a huge repo, and a shared build cache.
+What we _don't_ get: lazy materialisation of a huge repo, and a shared build cache.
 Both are solutions to scale problems we do not have. If either ever starts to matter,
 that is a good problem and a different document.
 
@@ -87,11 +86,11 @@ need it.
 **The security story collapses to almost nothing**, and this is the headline. Every
 hard requirement in the tunnel design — force-disabling `editableSources`, a
 loopback-only listener, 128-bit ephemeral secrets, timing-safe comparison — exists
-*solely* because a dev server exposes `POST /__docstore/source`, which writes repo
+_solely_ because a dev server exposes `POST /__docstore/source`, which writes repo
 files that the watcher then rebuilds and **runs**. Static files have no write endpoint.
 The dangerous capability does not exist, so there is nothing to protect carefully.
 
-Auth, if you want it, is now about *disclosure* rather than code execution:
+Auth, if you want it, is now about _disclosure_ rather than code execution:
 
 ```
 # Caddyfile — that's the entire access-control design for Phase 1
@@ -102,14 +101,14 @@ preview.example.com {
 }
 ```
 
-**Stamp the build.** A static deploy is a *snapshot*, and a stale preview that looks
+**Stamp the build.** A static deploy is a _snapshot_, and a stale preview that looks
 live is a real footgun — someone reports a bug you fixed this morning. Emit the commit
 SHA and build time into `/version.json` and the page footer so "what am I looking at"
 is always answerable. (Phase 3 gets this for free; see below.)
 
 ## Phase 2 — live preview (read-only)
 
-Add one WebSocket that carries a single message: *rebuilt, here's the new SHA, reload.*
+Add one WebSocket that carries a single message: _rebuilt, here's the new SHA, reload._
 
 That's the 90% of what the tunnel was actually for — seeing your change appear — with
 **zero write surface and no auth design at all**. Deploy triggers a broadcast; open
@@ -123,12 +122,12 @@ The interesting one, and the reason the host is a path rather than a destination
 
 You have already built the four hard parts; none of them are pointed at a socket yet:
 
-| piece | status |
-| --- | --- |
-| observable state, addressable by path | tosijs (one global registry + id-path escape) |
-| a *description* of that state | `tosijs-schema` (1.4.0) |
-| state → UI, automatically | bindings |
-| state + callable methods as a first-class surface | the tosijs 1.8 feature |
+| piece                                             | status                                        |
+| ------------------------------------------------- | --------------------------------------------- |
+| observable state, addressable by path             | tosijs (one global registry + id-path escape) |
+| a _description_ of that state                     | `tosijs-schema` (1.4.0)                       |
+| state → UI, automatically                         | bindings                                      |
+| state + callable methods as a first-class surface | the tosijs 1.8 feature                        |
 
 A generic REST/WS endpoint over a schema-described state tree is therefore not a new
 subsystem — it is a **fifth face on a thing that already has four**. And it collapses a
@@ -136,11 +135,18 @@ surprising list into one mechanism: static reads, live push, save-to-source for 
 authoring story, `POST /report` test results, multi-viewer sharing, and remote agent
 access (the 1.8 surface over a socket instead of in-page).
 
-### Remote editing is deliberately NOT available yet
+### Remote editing — SHIPPED in 1.9.0 (this section is history)
+
+> **Superseded.** This described the state before 1.9.0 and is kept for the reasoning,
+> not as current guidance. It was solved with magic-link auth: a single-use token in a
+> URL is exchanged for a durable HttpOnly session cookie, and write authorization keys on
+> which _listener_ a request arrived on (a dedicated loopback port for tunnel traffic)
+> rather than on a peer address or header — see `preview.tunnel` in
+> `src/doc-system/doc-site-system.md` and `src/doc-system/site/dev-auth.ts`.
 
 `editableSources` powers "edit page source" and "save to source", and it works — but the
-endpoints are **loopback-only**, so today the split is *view from anywhere, edit from
-this machine*. That is a stopgap, not a design, and it is stated here so nobody
+endpoints are **loopback-only**, so today the split is _view from anywhere, edit from
+this machine_. That is a stopgap, not a design, and it is stated here so nobody
 "fixes" it with a flag.
 
 A location check is the wrong axis. The right one is authentication, and it has to
@@ -151,10 +157,10 @@ would not be.
 
 So remote editing waits for Phase 3, where the schema is the authorization boundary and
 a **session** decides who may write — not a location, not an env var. Until then the
-preview host is static *precisely because static has no write endpoint*, which is why
+preview host is static _precisely because static has no write endpoint_, which is why
 locking it down cost one `basicauth` line instead of a threat model.
 
-The interim cost is real and small: more copy-paste. Being able to *see* the work from
+The interim cost is real and small: more copy-paste. Being able to _see_ the work from
 anywhere was the win; editing can wait to be done properly.
 
 ### The safety rule, stated once, up front
@@ -176,7 +182,7 @@ its own checkout, so there is exactly one writer, and reconciliation between hos
 `git merge` performed by a human.
 
 This works because of an alignment that was already true: **the doc-system's state is
-already files in a repo.** Save-to-source already means "write a file"; the corpus *is*
+already files in a repo.** Save-to-source already means "write a file"; the corpus _is_
 the source tree. Git isn't being imposed on an object graph — it is being recognised as
 the store the data model already had. Which buys, free: history, attribution, review,
 revert, bisect, and a SHA that answers "what am I looking at."
@@ -190,19 +196,19 @@ almost nothing — Vercel-style preview deployments in about ten lines of shell.
 > writer. Reconciliation is a git merge performed by a human.**
 
 That sentence forecloses the year-eating version of this project. Multi-writer
-real-time collaboration is a *different* project (CRDTs, not a weekend); if it ever
+real-time collaboration is a _different_ project (CRDTs, not a weekend); if it ever
 happens it should be a deliberate decision, not something that accretes because "it
 already syncs, so why not two people."
 
 ### Four decisions to make early
 
 1. **Draw the line between persisted and session state.** Files-in-repo is a clean
-   store for *documents*. The 1.8 surface exposes the whole observable tree, and much
+   store for _documents_. The 1.8 surface exposes the whole observable tree, and much
    of it is runtime junk — scroll positions, open panels, transient selection. Rule:
-   *persisted state is schema-declared and file-backed; everything else is
-   session-only.* Draw it late and you will be writing a `.gitignore` for state, which
+   _persisted state is schema-declared and file-backed; everything else is
+   session-only._ Draw it late and you will be writing a `.gitignore` for state, which
    is the smell that says you drew it late.
-2. **"One writer" still needs enforcing *within* a host.** Two browser tabs on one
+2. **"One writer" still needs enforcing _within_ a host.** Two browser tabs on one
    preview are two writers. Cheap to fix — serialize writes in the single server
    process — but not automatic, and it is the class of bug that works in testing and
    corrupts on a bad day.
@@ -210,17 +216,17 @@ already syncs, so why not two people."
    review. Debounce and squash on idle, or amend-until-idle. Decide before the first
    implementation makes it a habit.
 4. **A push credential on a €3 VPS is the same class of asset as an npm token.** We are
-   simultaneously working to get a publish credential *off* a laptop; do not casually
+   simultaneously working to get a publish credential _off_ a laptop; do not casually
    put a repo-push credential on a public box. Preference order:
    **(a)** the host never pushes — you `git pull` from it, so a compromised host can
-   only be *read*; **(b)** if it must push, a deploy key scoped to one repo and one
+   only be _read_; **(b)** if it must push, a deploy key scoped to one repo and one
    branch namespace (`preview/*`). The merge should happen where a human already is.
 
 ---
 
 ## Appendix — the SSH tunnel (specialist tool)
 
-Still the right answer for **one** thing: when you need the *live dev server itself* —
+Still the right answer for **one** thing: when you need the _live dev server itself_ —
 live editing, view-source, watching a change land without a rebuild. Not for "show a
 client the current state" or "check this on my phone," which Phase 1 does better and
 without your laptop.
@@ -229,12 +235,12 @@ If you build it, these corrections from v2 all still apply:
 
 - **It cannot connect as originally drawn.** The tunnel forwards **plain HTTP** to
   `localhost`, but this dev server is **HTTPS-only** (`ensureDevCerts()` refuses to
-  start without certs). Bind a **loopback-only** (`127.0.0.1`, *never* `0.0.0.0`)
+  start without certs). Bind a **loopback-only** (`127.0.0.1`, _never_ `0.0.0.0`)
   plain-HTTP listener used solely by the tunnel; public TLS terminates at `sish` with a
   real Let's Encrypt certificate, and local HTTPS is untouched.
 - **Force-disable source writing in remote mode.** `POST /__docstore/source` takes a
   repo-relative path and arbitrary content, and the watcher rebuilds and runs what it
-  writes. Path traversal *is* blocked (`resolveInRepo` confines to `PROJECT_ROOT`), but
+  writes. Path traversal _is_ blocked (`resolveInRepo` confines to `PROJECT_ROOT`), but
   "any file in the repo" includes `package.json` scripts. Disable the **capability**,
   not just the route — sharing a preview and editing source from a café are different
   features.
@@ -246,7 +252,7 @@ If you build it, these corrections from v2 all still apply:
   haltija's Electron grandchild. Reuse `descendantsOf()`. Add
   `ExitOnForwardFailure=yes` so a taken subdomain fails loudly instead of serving a
   silent 404.
-- **haltija does *not* come along.** The injected dev-channel loader is localhost-gated
+- **haltija does _not_ come along.** The injected dev-channel loader is localhost-gated
   (`/^localhost$|^127\./`), so it never loads over a public hostname — deliberate, and
   unfixable anyway since the remote browser cannot reach your machine's `:8701`. Keep
   haltija local and point `hj` at `https://localhost:8787`. **Do not "fix" that gate**;

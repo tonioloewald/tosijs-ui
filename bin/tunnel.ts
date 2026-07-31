@@ -2,10 +2,12 @@
 /*
 Expose THIS machine's dev server at an authenticated public URL.
 
-  bun run tunnel          # open the tunnel (foreground; Ctrl-C closes it)
-  bun run tunnel --status # is one already up?
-  bun run tunnel --close  # close any tunnel this project opened
-  bun run tunnel --link   # ask the dev server to print a fresh single-use edit link
+  tosijs-tunnel          # open the tunnel (foreground; Ctrl-C closes it)
+  tosijs-tunnel --status # is one already up?
+  tosijs-tunnel --close  # close any tunnel this project opened
+  tosijs-tunnel --link   # ask the dev server to print a fresh single-use edit link
+
+(In this repo `bun run tunnel` is a shortcut for the same thing.)
 
 The work happens where the data is. The repo, the dev server, the build and the
 watcher all stay here; the box terminates TLS and checks a password and does no
@@ -20,8 +22,9 @@ WHY THIS IS SAFE — and note the guarantee does NOT rest on the proxy:
     client can forge; a header is. (An earlier version inferred "local" from missing
     X-Forwarded-* headers and therefore failed OPEN for any forwarder that omits them.)
   - The box should also run sshd with `GatewayPorts no` so the forwarded port binds
-    127.0.0.1 there rather than the internet. This command VERIFIES that after
-    connecting and warns loudly if not — but it is defence in depth, not the wall.
+    127.0.0.1 there rather than the internet. That is defence in depth, not the wall —
+    and this command does NOT check it, so verify it on the host yourself:
+    `sshd -T | grep gatewayports` should say `gatewayports no`.
 
 So: reading is open to whoever has the URL (unless `tunnel.requireToken`), writing
 always requires a session.
@@ -40,24 +43,46 @@ const flag = (n: string) => {
   return hit ? hit.slice(n.length + 3) : undefined
 }
 
-const preview = (
-  siteConfig as {
-    preview?: { host?: string; tunnel?: { remotePort?: number; url?: string } }
-  }
-).preview
+const preview = siteConfig.preview
 const host = flag('host') ?? process.env.PREVIEW_HOST ?? preview?.host
 const localPort = Number(
   flag('port') ?? process.env.PORT ?? siteConfig.port ?? 8787
 )
+const projectName = String(siteConfig.name ?? 'site')
+
+/*
+Derive a per-project remote port instead of defaulting every project to 9787.
+
+A flat default collides the moment two projects share a host: B's `tosijs-tunnel` sees
+A's forward, prints "tunnel already up" and exits 0 having exposed nothing — and B's
+`--close` kills A's tunnel. Where the local ports differ it is worse: B's Caddy fragment
+routes B's public hostname at A's workspace.
+
+FNV-1a over the project name into 9000-9899. Deterministic (the same project gets the
+same port on every machine and across restarts, so a stale fragment still matches), and
+an explicit `remotePort` always wins.
+*/
+function derivePort(name: string): number {
+  let h = 0x811c9dc5
+  for (let i = 0; i < name.length; i++) {
+    h ^= name.charCodeAt(i)
+    h = Math.imul(h, 0x01000193) >>> 0
+  }
+  return 9000 + (h % 900)
+}
 const remotePort = Number(
-  flag('remote-port') ?? preview?.tunnel?.remotePort ?? 9787
+  flag('remote-port') ?? preview?.tunnel?.remotePort ?? derivePort(projectName)
 )
 // Forward to the dedicated LOOPBACK listener, not the TLS dev port. Arriving there is
 // what marks a request as remote, so writes require a session — an unforgeable signal,
 // unlike a header. It is plain HTTP, which also removes the proxy's need to skip TLS
 // verification against a self-signed dev cert.
+// Derived the SAME way as dev-server.ts (PORT + 1), not hardcoded to 8788 — they only
+// agreed when PORT was 8787, and this repo sets localPort explicitly so no lane ever
+// exercised the default. An adopter on port 3000 got a hard exit telling them to
+// upgrade tosijs-ui, which was already current.
 const tunnelLocalPort = Number(
-  flag('local-port') ?? preview?.tunnel?.localPort ?? 8788
+  flag('local-port') ?? preview?.tunnel?.localPort ?? localPort + 1
 )
 const publicUrl = flag('url') ?? preview?.tunnel?.url
 
@@ -174,7 +199,7 @@ if (tunnelUp.exitCode !== 0) {
       `   with a healthy-looking dev server locally.\n\n` +
       `   Check that:\n` +
       `     • \`bun start\` is running, and\n` +
-      `     • your site config sets \`preview.tunnel.localPort\` (default 8788), and\n` +
+      `     • your site config sets \`preview.tunnel.localPort\` (defaults to PORT + 1), and\n` +
       `     • your installed tosijs-ui is new enough to bind a tunnel listener —\n` +
       `       versions before 1.9.0-beta.3 served only one TLS port and had no such listener.\n`
   )
@@ -197,7 +222,6 @@ if (publicUrl) {
     /* not a URL — skip registration rather than write nonsense */
   }
   if (hostname) {
-    const projectName = String(siteConfig.name ?? 'site')
     /*
     An edit host with no tunnel behind it must EXPLAIN itself, not 502 and not quietly
     serve something else.
@@ -219,7 +243,7 @@ if (publicUrl) {
       `<p>This is a <em>live</em> workspace — it only answers while its dev server and ` +
       `tunnel are running. Nothing is being served from here right now.</p>` +
       (staticUrl
-        ? `<p>The last deployed snapshot is at <a href=\"${staticUrl}\">${staticUrl}</a>.</p>`
+        ? `<p>The last deployed snapshot is at <a href="${staticUrl}">${staticUrl}</a>.</p>`
         : '') +
       `<p>To bring it back, on the machine that hosts it: <code>bun start</code> then ` +
       `<code>tosijs-tunnel</code>.</p>`
@@ -228,8 +252,8 @@ if (publicUrl) {
       `${hostname} {\n` +
       `\treverse_proxy http://127.0.0.1:${remotePort}\n` +
       `\thandle_errors {\n` +
-      `\t\theader Content-Type \"text/html; charset=utf-8\"\n` +
-      `\t\theader Cache-Control \"no-store\"\n` +
+      `\t\theader Content-Type "text/html; charset=utf-8"\n` +
+      `\t\theader Cache-Control "no-store"\n` +
       `\t\trespond ${JSON.stringify(offline)} 503\n` +
       `\t}\n` +
       `\timport tunnel_site\n` +

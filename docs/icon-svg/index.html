@@ -29,30 +29,46 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="../doc-system.css" data-tosi-doc-system />
-  <title>sidebar — tosijs-ui</title>
-  <meta name="description" content="The default layout for iOS / iPadOS apps is to hide the sidebar when displaying content on small screens, and display the sidebar when space is available (with…" />
-  <link rel="canonical" href="https://ui.tosijs.net/side-nav/" />
+  <title>iconSvg — icon markup without a DOM — tosijs-ui</title>
+  <meta name="description" content="(The subpath tosijs-ui/icon-svg is the DOM-free entry point — import it that way in a build script or server template." />
+  <link rel="canonical" href="https://ui.tosijs.net/icon-svg/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="sidebar — tosijs-ui" />
-  <meta property="og:description" content="The default layout for iOS / iPadOS apps is to hide the sidebar when displaying content on small screens, and display the sidebar when space is available (with…" />
-  <meta property="og:url" content="https://ui.tosijs.net/side-nav/" />
+  <meta property="og:title" content="iconSvg — icon markup without a DOM — tosijs-ui" />
+  <meta property="og:description" content="(The subpath tosijs-ui/icon-svg is the DOM-free entry point — import it that way in a build script or server template." />
+  <meta property="og:url" content="https://ui.tosijs.net/icon-svg/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"sidebar","description":"The default layout for iOS / iPadOS apps is to hide the sidebar when displaying content on small screens, and display the sidebar when space is available (with…","url":"https://ui.tosijs.net/side-nav/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"iconSvg — icon markup without a DOM","description":"(The subpath tosijs-ui/icon-svg is the DOM-free entry point — import it that way in a build script or server template.","url":"https://ui.tosijs.net/icon-svg/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
   <tosi-doc-system docs="../docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>sidebar</h1>
-<p>The default layout for iOS / iPadOS apps is to hide the sidebar when displaying content on small
-screens, and display the sidebar when space is available (with the user able to explicitly hide
-the sidebar if so desired). <code>&lt;tosi-sidenav&gt;</code> provides this functionality.</p>
-<p><code>&lt;tosi-sidenav&gt;</code> is used to handle the layout of the documentation tab panel.</p>
-<p><code>&lt;tosi-sidenav&gt;</code>&#39;s behavior is controlled by two attributes, <code>minSize</code> is the point at which it will toggle between showing the navigation
-sidebar and content, while <code>navSize</code> is the width of the sidebar. You can interrogate its <code>compact</code> property to find out if it&#39;s
-currently in <code>compact</code> form.</p>
+<h1><code>iconSvg</code> — icon markup without a DOM</h1>
+<pre><code class="language-js">import { iconSvg, iconNames } from &#39;tosijs-ui&#39;
+
+const markup = iconSvg(&#39;tosi&#39;) // &#39;&lt;svg …&gt;…&lt;/svg&gt;&#39; | undefined
+preview.innerHTML =
+  `&lt;p&gt;${iconNames().length} icons registered.&lt;/p&gt;` +
+  `&lt;div style=&quot;width:48px&quot;&gt;${markup}&lt;/div&gt;`
+</code></pre>
+<p>(The subpath <code>tosijs-ui/icon-svg</code> is the DOM-free entry point — import it that way in a
+build script or server template. The example above uses the package root because that is
+what the live-example runner can rewrite.)</p>
+<p><code>iconSvg(name)</code> returns an icon&#39;s raw SVG <strong>markup</strong> as a string; <code>iconNames()</code> lists what
+is registered. Neither touches the DOM, so both work in a build script, a server-rendered
+template, or an ePub pass.</p>
+<p>Deliberately a separate module from <code>icons.ts</code>: that one imports tosijs to build
+elements, so importing it drags in code that needs <code>HTMLElement</code> and throws in a build
+script — the exact context that wanted the markup in the first place. This module
+imports nothing but the data.</p>
+<p>Background: <code>defineIcons()</code> could write to the icon map but nothing could read it, and
+<code>icons.foo()</code> returns a DOM <code>SVGElement</code>. So a static-page generator, an ePub pass or a
+server-rendered template had no way to get markup except by parsing
+<code>src/icons/data/*.ts</code> out of the installed package — which is exactly what this project
+resorted to when putting its own logo on a generated page. There is nothing to protect:
+the map ships in the bundle either way.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -60,7 +76,7 @@ currently in <code>compact</code> form.</p>
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
     <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
     <li><a class="doc-link" href="../icons/">icons</a></li>
-    <li><details open><summary><a class="doc-link" href="../components/">Components</a></summary>
+    <li><details><summary><a class="doc-link" href="../components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
       <li><a class="doc-link" href="../carousel/">carousel</a></li>
@@ -80,7 +96,7 @@ currently in <code>compact</code> form.</p>
       <li><a class="doc-link" href="../notifications/">notifications</a></li>
       <li><a class="doc-link" href="../pocket-bar/">pocket bar</a></li>
       <li><a class="doc-link" href="../pop-float/">popFloat</a></li>
-      <li><a class="doc-link current" href="../side-nav/" aria-current="page">sidebar</a></li>
+      <li><a class="doc-link" href="../side-nav/">sidebar</a></li>
       <li><a class="doc-link" href="../size-break/">size-break</a></li>
       <li><a class="doc-link" href="../sizer/">sizer</a></li>
       <li><a class="doc-link" href="../data-table/">table</a></li>
@@ -116,12 +132,12 @@ currently in <code>compact</code> form.</p>
       <li><a class="doc-link" href="../value-renderer/">valueRenderer</a></li>
     </ul>
     </details></li>
-    <li><details><summary><a class="doc-link" href="../appendices/">Appendices</a></summary>
+    <li><details open><summary><a class="doc-link" href="../appendices/">Appendices</a></summary>
     <ul>
       <li><a class="doc-link" href="../doc-system/">doc-system</a></li>
       <li><a class="doc-link" href="../kitchen-sink/">kitchen sink</a></li>
       <li><a class="doc-link" href="../make-icon-data/">make-icon-data</a></li>
-      <li><a class="doc-link" href="../icon-svg/">iconSvg — icon markup without a DOM</a></li>
+      <li><a class="doc-link current" href="../icon-svg/" aria-current="page">iconSvg — icon markup without a DOM</a></li>
       <li><a class="doc-link" href="../migrating/">Migrating from older versions</a></li>
       <li><a class="doc-link" href="../doc-browser/">doc-browser</a></li>
       <li><a class="doc-link" href="../doc-site-system/">Doc-Site System</a></li>

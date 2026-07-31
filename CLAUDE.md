@@ -36,12 +36,12 @@ bun run og             # Regenerate Open Graph cards — manual, needs a RUNNING
 
 The test lanes are distinct: **`bun test`** is the fast happy-dom unit lane (hundreds of tests across ~40+ `*.test.ts` files; it recurses into `src/*/`); **`bun playwright test`** is the `tests/*.pw.ts` end-to-end lane, and **`tests/doc-tests.pw.ts` inside it runs the whole inline ` ```test ` doc tier** (including the inline-WASM guard) through Playwright — the doc-browser's background runner executes every page-with-tests in hidden iframes and resolves `window.__docTestResults`, which that spec awaits and asserts is failure-free. **This is the doc-test gate, and it runs in CI** (the e2e job's `playwright test --project=chromium` picks it up). WebKit is skipped there (its iframe runner never signals per-page completion — see TODO). **Playwright starts its own dev server** on **its own port (8799)** with the haltija overlay off — so it neither adopts nor kills the `bun start` you have on 8787.
 
-**`bun run test-browser`** is the *interactive* haltija lane: it drives a real haltija Electron over the same inline tests. It **reuses a running haltija if one is up — which navigates whatever window you have open** (a different project's session included), so prefer `tests/doc-tests.pw.ts` for a clean, isolated run and reach for `test-browser` only when you specifically want eyes on the real page. It is **not** the CI gate anymore; `doc-tests.pw.ts` is.
+**`bun run test-browser`** is the _interactive_ haltija lane: it drives a real haltija Electron over the same inline tests. It **reuses a running haltija if one is up — which navigates whatever window you have open** (a different project's session included), so prefer `tests/doc-tests.pw.ts` for a clean, isolated run and reach for `test-browser` only when you specifically want eyes on the real page. It is **not** the CI gate anymore; `doc-tests.pw.ts` is.
 
 **`bun run test-consumer` is the lane that tests the package as an ADOPTER sees it** — it
 `npm pack`s, installs the tarball into a throwaway project, runs every bin through the
 `node_modules/.bin` shims, and builds a site from that project's cwd. It exists because
-every other lane runs *in this repo, from this repo, with one dev server*, and four
+every other lane runs _in this repo, from this repo, with one dev server_, and four
 regressions shipped from outside exactly that envelope: bins with no shebang (needs an
 install), `/version.json` stamping the consumer's version (needs a foreign cwd), a
 top-level `chokidar` import in shipped code (needs a consumer build), and the doc-site
@@ -69,7 +69,7 @@ bun playwright test tests/form.pw.ts
 ### Testing Setup
 
 - **Unit tests** (`src/*.test.ts`): Run with `bun test`. Use `happy-dom` for DOM simulation (preloaded via `bunfig.toml` → `test-setup.ts`). Import from `bun:test`.
-- **Browser tests** (`bun run test-browser`): Builds the project, starts the dev server, launches [haltija](https://github.com/tonioloewald/haltija) headless browser, navigates to the demo site, waits for inline doc tests to run and POST results to `/report`, then exits with pass/fail. Uses `hj` CLI commands (`hj windows`, `hj navigate`). Reuses an existing haltija instance if one is running, otherwise spawns `bunx haltija@^1.4.0 -f` (the pinned `HALTIJA_PKG`; override with `HALTIJA_VERSION`, e.g. `HALTIJA_VERSION=haltija@beta`) — and **tears that one down on exit, Electron grandchild included**. (`kill()` on the `bunx` wrapper does not kill Electron; a survivor holds the inherited stdout open so the command _looks_ hung after it has exited, and leaves stale windows that make the NEXT run navigate a dead window and time out.) Results saved to `.browser-tests.json`.
+- **Browser tests** (`bun run test-browser`): Builds the project, starts the dev server, launches [haltija](https://github.com/tonioloewald/haltija) headless browser, navigates to the demo site, waits for inline doc tests to run and POST results to `/report`, then exits with pass/fail. Uses `hj` CLI commands (`hj windows`, `hj navigate`). Reuses an existing haltija instance if one is running, otherwise spawns `bunx haltija@^1.5.5 -f` (the pinned `HALTIJA_PKG`; override with `HALTIJA_VERSION`, e.g. `HALTIJA_VERSION=haltija@beta`) — and **tears that one down on exit, Electron grandchild included**. (`kill()` on the `bunx` wrapper does not kill Electron; a survivor holds the inherited stdout open so the command _looks_ hung after it has exited, and leaves stale windows that make the NEXT run navigate a dead window and time out.) Results saved to `.browser-tests.json`.
 - **Playwright tests** (`tests/*.pw.ts`): The config's `webServer` starts a dedicated dev server on port **8799** with `HALTIJA_DEV=0`, and never reuses an existing one. That isolation is deliberate: the site config sets `haltijaDev: true`, so a reused/shared server injects the haltija dev overlay, and the lane would assert against a DOM CI never sees (it also registered stale haltija windows that made `bun run test-browser` time out). Tests use `baseURL` — no hard-coded ports. Chromium, Firefox, and WebKit.
 
 #### Inline doc tests
@@ -647,9 +647,11 @@ For the consumer-facing mental model — element-creator pattern, value/change/a
 
 A feature that adds public API is a **minor**, however unfinished it feels — semver
 tracks the shape of a change, not how done it is. So a big in-progress feature ships as
-`1.x.0-beta.N`, not as a patch pretending to be small. Cut betas freely: the three lanes
-plus `bun run build` are the whole gate, and the point is to iterate fast against real
-use.
+`1.x.0-beta.N`, not as a patch pretending to be small. Cut betas freely — but a
+prerelease published under a dist-tag is something consumers _install_, so the gate is
+**all four lanes** plus `bun run build`, same as a final. `test-consumer` especially:
+every packaging regression that ever reached an adopter was invisible to the other three,
+and it caught a live one (an rc.2 fix that had silently never applied) on its first run.
 
 **Run the nine-lens review (`/pre-release-review`) once, before the FINAL `1.x.0`** —
 not on every beta. It costs ~40 minutes and dozens of agents; spending that per

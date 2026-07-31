@@ -24,6 +24,11 @@ jobs:
       - name: Type check
         run: bunx tsc --noEmit
 
+      # bin/ ships as four executables and was outside the gate entirely — it had
+      # accumulated two real type errors by the time a review looked.
+      - name: Type check bin/
+        run: bunx tsc -p tsconfig.bin.json
+
       - name: Run unit tests
         run: bun test
 
