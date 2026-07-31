@@ -1,6 +1,109 @@
 # Changelog
 
-## 1.9.0-rc.2
+## 1.9.0
+
+**Anyone on 1.8.0 should upgrade, whether or not they want the new remote-editing
+feature.** 1.8.0's `tosijs-ui/site` entry point does not import at all in a clean
+install — `index.js` statically re-exports `devServer`, which imports `chokidar` at top
+level, and `chokidar` was declared only in `devDependencies` (#32). 1.8.0 also shipped
+5.2 MB / 16 files of doc-site hydrate bundle into every consumer's `dist/` (#31), and
+broke the `tosijs-make-icons` bin (#30). All three are fixed here.
+
+### Consumer repairs
+
+- **`tosijs-ui/site` imports in a clean install again** (#32). `chokidar` is now an
+  optional peer, imported lazily by the watch path only — a plain `buildSite()` never
+  reaches for it.
+- **The library package no longer carries the doc-site hydrate bundle** (#31). It built
+  into `dist/hydrate/` and shipped to everyone though nothing references it; one adopter's
+  package went from 0.62 MB / 398 files to **10.2 MB / 2888 files**. It now builds in a
+  temp dir. Caught only by reading `npm pack` output, which is why there is now a lane
+  that does exactly that (`bun run test-consumer`).
+- **`tosijs-make-icons` no longer strips `fill-rule`** (#30), which rendered holes in
+  compound `evenodd` paths solid — a keyboard drawn as one path came out filled. It was
+  stripped in **three** places, not one. `fill-rule` is fill *topology*, not colour, and
+  takes no part in the tinting the strip exists for. Ships as a bin, so it affects anyone
+  generating their own icon data.
+- **The shipped bins have shebangs** (#35, #36 — reported independently by both adopters).
+  Without one, `node_modules/.bin` shims hand TypeScript to the shell.
+- **`/version.json`'s `generator` reports tosijs-ui's version, not the consumer's** (#37).
+  It read `package.json` from the *cwd*, so the one field that answers "which tosijs-ui
+  built this?" named the wrong package entirely.
+- **A failed "save to source" says why** (#34). The server answers 501 with an actionable
+  reason and the client discarded it for a generic "Save failed.", so an unconfigured
+  server was indistinguishable from a broken one and the edit appeared to vanish.
+- **New: `iconSvg(name)` / `iconNames()`** (#33) — raw SVG markup with **no DOM
+  required**, for build scripts, ePub passes and server-rendered templates. `defineIcons()`
+  could write to the icon map but nothing could read it.
+
+### Remote access — view and edit your dev server from anywhere
+
+`preview.tunnel` exposes the dev server running on your machine at an authenticated public
+URL over an SSH reverse tunnel, so you can read and edit real source from a phone or a
+borrowed laptop. The box does no compute — it terminates TLS and routes — which is what
+lets one small VPS front many projects. Two hostnames make the posture legible:
+
+| host | what it is | gate |
+| --- | --- | --- |
+| `<project>.dev.example.com` | read-only snapshot, shareable | invite cookie |
+| `<project>.edit.dev.example.com` | live workspace, yours | session, always |
+
+`tosijs-tunnel --link` prints a single-use link; opening it once exchanges the token for a
+durable `HttpOnly; Secure; SameSite=Lax` session cookie and redirects with the token
+stripped, so it never lands in history or a `Referer`. `tosijs-deploy` publishes the static
+snapshot and self-registers a Caddy fragment, so adding a project edits no shared file.
+
+**Write authorization keys on the LISTENER, never on a peer address or a header.** Tunnel
+traffic arrives on a dedicated loopback listener, and anything arriving there needs a valid
+session — because a reverse tunnel counterfeits "local" by construction.
+
+### Security
+
+- The tunnelled workspace's **read** gate keyed on `X-Forwarded-*` rather than the
+  listener, so any forwarder that omits those headers — `ssh -R` with `GatewayPorts yes`,
+  `ngrok tcp`, `socat`, iptables DNAT, nginx `proxy_pass`, HAProxy without
+  `option forwardfor` — read the entire uncommitted working tree unauthenticated, while
+  `requireToken` promised "nothing at all, not even the page". Now keyed on the listener,
+  like every other gate.
+- `POST /report` was unauthenticated and reachable through the tunnel — a stranger could
+  fabricate `{passed:N, failed:0}` and make the test lane **exit green on a suite that
+  never ran**. Now local-only.
+- Build-error text (absolute paths from your machine) was injected into every served page
+  with no auth check. The label stays public; the detail needs a session.
+- `rsync --delete` accepted any absolute path two segments deep — including `/usr/lib` and
+  `/etc/caddy`, which it would have *mirrored*, i.e. emptied. Now an allowlist of preview
+  roots, and never the root itself: one dropped path segment would otherwise have deleted
+  every other project on a shared box, including the Caddy fragments that route them.
+- `tunnel.requireToken` defaults to **`true`**. The hostname is not a secret — Let's
+  Encrypt publishes every certificate to public CT logs — so the session gate carries the
+  weight. See the docs for what the hostname discloses and what to do about it (#38).
+
+### Fixed
+
+- **A 403 could destroy uncommitted work.** An unauthorized read fell through to GitHub
+  `main`, so you edited the *published* file, and the save then handed you a download of
+  it — applying which silently reverts your working copy.
+- **`?t=` was intercepted on every request and method**, so any dev server answered
+  `GET /?t=12345` with "that invite link has been used" instead of the page, and 401'd
+  POSTs carrying `t`. (`t` is the classic cache-buster name.)
+- **Tunnel ports are derived, not fixed** (#39). The bin fell back to a hard-coded 8788
+  while the server used `PORT + 1`; they agreed only when `PORT` was 8787. `remotePort` is
+  now derived per project too, so two projects on one host cannot collide. One resolver
+  serves both, and `tosijs-tunnel --status` reports the ports it would use.
+- **The last-good build protection moved to where the wipe is** — it lived in the dev
+  server's watch branch, so `bun run build`, CI, adopters and `bun start`'s own initial
+  build had none of it. A red `tsc` no longer discards a freshly generated site either.
+- Two dev servers can coexist; the idle-exit timer counts requests again, not just builds;
+  "Build failed" is no longer overwritten by test results seconds later.
+
+### For maintainers of adopting projects
+
+`bun run test-consumer` packs the tarball, installs it into a scratch project, and builds
+from that project's cwd. Every other lane runs *in this repo, from this repo, with one dev
+server* — and four regressions shipped anyway, each living outside exactly that envelope.
+More unit tests would have caught none of them; the gap was context, not depth.
+
+### 1.9.0-rc.2 (prerelease detail)
 
 Fixes everything both consumers hit within minutes of `rc.1`. Three were regressions
 introduced by rc.1 itself.
@@ -30,7 +133,7 @@ introduced by rc.1 itself.
   broken one and the edit appeared to vanish. The server's reason is surfaced, and every
   failure path now states that the edit is still in the editor.
 
-## 1.9.0-rc.1
+### 1.9.0-rc.1 (prerelease detail)
 
 Release candidate. Everything the nine-lens review and the first adopters raised is
 addressed; no features are pending. Install with `tosijs-ui@rc`.
@@ -103,7 +206,7 @@ without reading config:
 - `?t=` is only intercepted when a tunnel is configured, and only on GET — `t` is the
   classic cache-buster name, and a 302'd POST loses its body.
 
-## 1.9.0-beta.3
+### 1.9.0-beta.3 (prerelease detail)
 
 Fixes three blockers found by the nine-lens review of beta.2, all in the remote-editing
 feature, plus a rebuild loop the review did not catch because nothing automated runs
@@ -164,7 +267,7 @@ feature, plus a rebuild loop the review did not catch because nothing automated 
   build. The import is gone, and generated files are now written **only when the content
   changes**, which makes the whole class of self-write loops impossible.
 
-## 1.9.0-beta.2
+### 1.9.0-beta.2 (prerelease detail)
 
 > Prerelease — install with `tosijs-ui@beta`. `latest` stays on 1.8.0.
 
@@ -201,7 +304,7 @@ same watcher, same files.
   session) — Caddy serving static files has no session store — but equivalent to the
   basicauth it replaces, with no dialog.
 
-## 1.9.0-beta.1
+### 1.9.0-beta.1 (prerelease detail)
 
 > **Prerelease.** The preview-host system works end to end and is in daily use, but the
 > plan it belongs to (`REMOTE-ACCESS-PLAN.md`) has two more phases. Published under the
