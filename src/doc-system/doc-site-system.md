@@ -650,20 +650,29 @@ published at all**. Both are inherited down the `parent` chain, so you mark a se
 rather than every leaf.
 
 ```html
-<!--{ "book": "field-guide" }-->     bind into a volume called "field-guide"
-<!--{ "book": "none" }-->            on the site, in NO book
-<!--{ "hidden": true }-->            not published at all
+<!--{ "book": "field-guide" }-->                bind into a volume called "field-guide"
+<!--{ "book": ["default", "field-guide"] }-->   bind into BOTH
+<!--{ "book": "none" }-->                       on the site, in NO book
+<!--{ "hidden": true }-->                       not published at all
 ```
 
 | `book` | result |
 | --- | --- |
 | *(unset)* | the default volume — `<name>.epub` |
 | `"some-name"` | its own volume — `<name>-some-name.epub` |
+| `["a", "b"]` | bound into both volumes |
+| `"default"` | the main volume, named so a list can include it |
 | `"none"` | on the site, in no volume |
 
-**The nearest declaration wins.** A section can set `book: "field-guide"` and one chapter
-inside it can still divert (`book: "other"`) or opt out (`"none"`) — which is what you
-want when a single chapter of an otherwise-bound section isn't ready.
+A list is what gets you shared front matter — a glossary, a licence page, a copyright
+notice — bound into several volumes from one source file rather than copied per book.
+`"none"` anywhere in a list wins: `["default", "none"]` is a contradiction, and the
+reading that withholds is the safe one.
+
+**The nearest declaration wins, outright.** A section can set `book: "field-guide"` and a
+chapter inside it can still divert (`book: "other"`), join several volumes, or opt out
+(`"none"`). A list *replaces* an inherited value rather than adding to it, so a child is
+never surprised by a volume it did not name.
 
 **`hidden: true` means not published anywhere**: absent from `docs.json`, from the
 generated pages, from every book, and from `llms.txt`. It is inherited, and a child

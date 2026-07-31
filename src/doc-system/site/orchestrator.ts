@@ -922,7 +922,7 @@ export async function buildSite(
         filename: string
         title?: string
         parent?: string
-        book?: string
+        book?: string | string[]
         hidden?: boolean
       }> = JSON.parse(
         await Bun.file(config.docsJson ?? 'demo/docs.json')

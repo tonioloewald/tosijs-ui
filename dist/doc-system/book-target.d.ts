@@ -1,12 +1,18 @@
-/** The main book — what a doc with no `book` (and no ancestor with one) lands in. */
+/** The main book's internal key — what a doc with no `book` lands in. */
 export declare const DEFAULT_BOOK = "";
 /** `book: "none"` — on the site, in no book. */
 export declare const NO_BOOK = "none";
+/**
+ * The writable name for the default volume, so an array can include it:
+ * `book: ["default", "field-guide"]` binds the doc into both.
+ */
+export declare const DEFAULT_BOOK_NAME = "default";
 export interface BookTargetDoc {
     filename: string;
     title?: string;
     parent?: string;
-    book?: string;
+    /** one book, several books, or `'none'` */
+    book?: string | string[];
     hidden?: boolean;
 }
 type SlugMap = Record<string, string>;
@@ -16,13 +22,13 @@ type SlugMap = Record<string, string>;
  */
 export declare function chain<T extends BookTargetDoc>(doc: T, docs: T[], slugMap?: SlugMap): T[];
 /**
- * The book this doc belongs to, or `null` when it belongs to none.
+ * Every book this doc belongs to. Empty means none.
  *
- * The NEAREST declaration wins, so a child can opt out of a section's book (`"none"`) or
- * divert into another one, which is the behaviour you want when one chapter of an
- * otherwise-published section isn't ready to bind.
+ * The NEAREST declaration wins outright — an array replaces an inherited value rather
+ * than adding to it, so a child can opt out of a section's book (`"none"`), divert into
+ * another, or bind into several (`["default", "appendices"]`).
  */
-export declare function resolveBook<T extends BookTargetDoc>(doc: T, docs: T[], slugMap?: SlugMap): string | null;
+export declare function resolveBooks<T extends BookTargetDoc>(doc: T, docs: T[], slugMap?: SlugMap): string[];
 /**
  * Hidden here or anywhere above.
  *

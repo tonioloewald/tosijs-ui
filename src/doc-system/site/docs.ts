@@ -125,13 +125,16 @@ export interface Doc {
    */
   hidden?: boolean
   /**
-   * Which book this doc binds into: a name, or `'none'` to keep it on the site but out
-   * of every book. Unset means the default book.
+   * Which book(s) this doc binds into. A name, a list of names, or `'none'` to keep it
+   * on the site and out of every book. Unset means the default book; `'default'` names
+   * the default book so a list can include it — `["default", "appendices"]` binds the
+   * doc into both, which is how shared front matter or a glossary works.
    *
-   * Inherited down the `parent` chain, nearest declaration winning — so you mark a
-   * section, and an individual chapter can still divert to another volume or opt out.
+   * Inherited down the `parent` chain, nearest declaration winning outright (a list
+   * replaces an inherited value rather than adding to it) — so you mark a section, and an
+   * individual chapter can still divert, join several volumes, or opt out.
    */
-  book?: string
+  book?: string | string[]
   // Opt-in SEO / agent metadata, provided in the doc's JSON block alongside `pin`:
   //   <!--{ "headTitle": "...", "description": "...", "keywords": "a, b", "image": "/og/x.webp" }-->
   // `title` (if provided) also renames the nav item + heading; `headTitle` sets only
