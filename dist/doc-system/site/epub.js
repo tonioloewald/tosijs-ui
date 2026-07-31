@@ -19,6 +19,7 @@ import * as path from 'path';
 import { renderDocMarkdown } from '../render';
 import { buildSlugMap, pathForSlug, slugForPath } from '../routing';
 import { buildNavTree } from '../nav-tree';
+import { partitionByBook, DEFAULT_BOOK } from '../book-target';
 import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html';
 import { selectBookDocs } from '../book-manifest';
 // Re-exported for back-compat (tosijs-ui/site's public surface + tests).
@@ -516,7 +517,15 @@ async function makeCover(config, opts, meta) {
  */
 export async function buildEpub(config, opts = {}) {
     const docsJson = opts.docsJson ?? config.docsJson ?? 'demo/docs.json';
-    const visible = JSON.parse(fs.readFileSync(docsJson, 'utf8')).filter((d) => !d.hidden);
+    const corpus = JSON.parse(fs.readFileSync(docsJson, 'utf8'));
+    /*
+    Select the volume first, then curate within it.
+  
+    partitionByBook resolves each doc's `book` up the parent chain and drops both hidden
+    docs and anything marked `book: "none"`, so a doc that belongs to no volume cannot leak
+    into the default one just by not naming a book.
+    */
+    const visible = partitionByBook(corpus, buildSlugMap(corpus)).get(opts.bookTarget ?? DEFAULT_BOOK) ?? [];
     // Curate/reorder for the book (a no-op when config.book is absent).
     const docs = selectBookDocs(visible, config.book);
     const slugMap = buildSlugMap(docs);
@@ -588,7 +597,13 @@ export async function buildEpub(config, opts = {}) {
     fs.writeFileSync(path.join(buildDir, 'OEBPS', 'contents.xhtml'), tocPageXhtml(roots, fileFor));
     fs.writeFileSync(path.join(buildDir, 'OEBPS', 'nav.xhtml'), navXhtml(meta, roots, fileFor));
     fs.writeFileSync(path.join(buildDir, 'OEBPS', 'toc.ncx'), tocNcx(meta, roots, fileFor));
-    const output = path.resolve(opts.output ?? path.join(outDir, `${slugify(meta.title)}.epub`));
+    const output = path.resolve(opts.output ??
+        path.join(outDir, 
+        // A named volume gets its own file — otherwise every book would overwrite the
+        // default one and you would ship whichever bound last.
+        opts.bookTarget
+            ? `${slugify(meta.title)}-${slugify(opts.bookTarget)}.epub`
+            : `${slugify(meta.title)}.epub`));
     await zipEpub(buildDir, output);
     fs.rmSync(buildDir, { recursive: true, force: true });
     // Release the parser window: an unclosed happy-dom Window holds its whole

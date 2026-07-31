@@ -12,6 +12,8 @@ the icon system here would put src/icon-data.ts into `bun --watch`'s graph and
 cause an endless rebuild loop.
 */
 import * as path from 'path';
+import { namedBooks } from '../book-target';
+import { buildSlugMap } from '../routing';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { tmpdir } from 'os';
 import { $, spawn } from 'bun';
@@ -765,7 +767,26 @@ export async function buildSite(config, opts = {}) {
         // the corpus and survives the `rm -rf <outputDir>` at the top of the NEXT build
         // (otherwise a dev rebuild would silently drop it). Cheap (~0.4s).
         if (config.epub) {
-            await buildEpubInChild(config, typeof config.epub === 'object' ? config.epub : {});
+            const epubOpts = typeof config.epub === 'object' ? config.epub : {};
+            /*
+            One volume per `book` name, plus the default.
+      
+            A corpus can declare `book: "appendices"` on a section and get a second .epub
+            without a second config; `book: "none"` keeps a doc on the site and out of every
+            volume. Each runs in its own child process — the ePub build strands native memory
+            (happy-dom + resvg), which is exactly why it was moved out-of-process, and that
+            reasoning applies per volume rather than per build.
+            */
+            const corpus = JSON.parse(await Bun.file(config.docsJson ?? 'demo/docs.json')
+                .text()
+                .catch(() => '[]'));
+            const volumes = [
+                undefined,
+                ...namedBooks(corpus, buildSlugMap(corpus)),
+            ];
+            for (const bookTarget of volumes) {
+                await buildEpubInChild(config, { ...epubOpts, bookTarget });
+            }
         }
         console.timeEnd('build');
         // A failed library typecheck (above) marks the whole build failed so a one-shot

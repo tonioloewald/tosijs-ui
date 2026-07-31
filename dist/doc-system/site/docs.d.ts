@@ -8,7 +8,27 @@ export interface Doc {
     order?: number;
     /** parent doc name or slug — groups this doc into a nav section */
     parent?: string;
+    /**
+     * Not published AT ALL — absent from docs.json, from the generated pages, from every
+     * book, and from llms.txt. For incomplete chapters and working notes.
+     *
+     * Inherited by descendants: hiding a section hides what is inside it. A child cannot
+     * un-hide itself, because accidentally publishing one chapter of a withheld section is
+     * the failure worth preventing.
+     *
+     * (`draft: true` in YAML frontmatter sets this.) Previously this only removed a doc
+     * from the nav and books while leaving its full text in docs.json AND giving it a
+     * pre-rendered public page — so "drafts don't ship" was false twice over.
+     */
     hidden?: boolean;
+    /**
+     * Which book this doc binds into: a name, or `'none'` to keep it on the site but out
+     * of every book. Unset means the default book.
+     *
+     * Inherited down the `parent` chain, nearest declaration winning — so you mark a
+     * section, and an individual chapter can still divert to another volume or opt out.
+     */
+    book?: string;
     headTitle?: string;
     description?: string;
     keywords?: string | string[];

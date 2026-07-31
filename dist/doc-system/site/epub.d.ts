@@ -18,6 +18,13 @@ export interface BuildEpubOptions {
     docsJson?: string;
     /** output .epub path; default `${outputDir}/${slug(name)}.epub` */
     output?: string;
+    /**
+     * Which book to bind: a doc `book` name, or omitted for the default volume.
+     *
+     * Distinct from `config.book`, which is the MANIFEST (include/exclude/order) applied
+     * within a volume. This selects WHICH volume; that shapes it.
+     */
+    bookTarget?: string;
     /** book title; default config.name */
     title?: string;
     /** author / publisher line */

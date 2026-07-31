@@ -21,6 +21,7 @@ import { renderDocMarkdown } from '../render'
 import { buildSlugMap, pathForSlug, slugForPath } from '../routing'
 import { buildNavTree, NavNode } from '../nav-tree'
 import type { Doc } from './docs'
+import { partitionByBook, DEFAULT_BOOK } from '../book-target'
 import type { SiteConfig } from './site-config'
 import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html'
 import { selectBookDocs } from '../book-manifest'
@@ -47,6 +48,13 @@ export interface BuildEpubOptions {
   docsJson?: string
   /** output .epub path; default `${outputDir}/${slug(name)}.epub` */
   output?: string
+  /**
+   * Which book to bind: a doc `book` name, or omitted for the default volume.
+   *
+   * Distinct from `config.book`, which is the MANIFEST (include/exclude/order) applied
+   * within a volume. This selects WHICH volume; that shapes it.
+   */
+  bookTarget?: string
   /** book title; default config.name */
   title?: string
   /** author / publisher line */
@@ -687,9 +695,18 @@ export async function buildEpub(
   opts: BuildEpubOptions = {}
 ): Promise<string> {
   const docsJson = opts.docsJson ?? config.docsJson ?? 'demo/docs.json'
-  const visible: Doc[] = JSON.parse(fs.readFileSync(docsJson, 'utf8')).filter(
-    (d: Doc) => !d.hidden
-  )
+  const corpus: Doc[] = JSON.parse(fs.readFileSync(docsJson, 'utf8'))
+  /*
+  Select the volume first, then curate within it.
+
+  partitionByBook resolves each doc's `book` up the parent chain and drops both hidden
+  docs and anything marked `book: "none"`, so a doc that belongs to no volume cannot leak
+  into the default one just by not naming a book.
+  */
+  const visible: Doc[] =
+    partitionByBook(corpus, buildSlugMap(corpus)).get(
+      opts.bookTarget ?? DEFAULT_BOOK
+    ) ?? []
   // Curate/reorder for the book (a no-op when config.book is absent).
   const docs = selectBookDocs(visible, config.book)
   const slugMap = buildSlugMap(docs)
@@ -806,7 +823,15 @@ export async function buildEpub(
   )
 
   const output = path.resolve(
-    opts.output ?? path.join(outDir, `${slugify(meta.title)}.epub`)
+    opts.output ??
+    path.join(
+      outDir,
+      // A named volume gets its own file — otherwise every book would overwrite the
+      // default one and you would ship whichever bound last.
+      opts.bookTarget
+        ? `${slugify(meta.title)}-${slugify(opts.bookTarget)}.epub`
+        : `${slugify(meta.title)}.epub`
+    )
   )
   await zipEpub(buildDir, output)
   fs.rmSync(buildDir, { recursive: true, force: true })

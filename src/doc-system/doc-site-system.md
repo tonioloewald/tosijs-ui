@@ -643,6 +643,43 @@ The box should also run sshd with `GatewayPorts no`, so the forwarded port binds
 box's loopback rather than the internet. That is defence in depth, not the wall — verify
 it yourself with `sshd -T | grep gatewayports`.
 
+#### `book` and `hidden` — multiple volumes from one corpus
+
+Two pieces of doc metadata decide **which book a page binds into, and whether it is
+published at all**. Both are inherited down the `parent` chain, so you mark a section
+rather than every leaf.
+
+```html
+<!--{ "book": "field-guide" }-->     bind into a volume called "field-guide"
+<!--{ "book": "none" }-->            on the site, in NO book
+<!--{ "hidden": true }-->            not published at all
+```
+
+| `book` | result |
+| --- | --- |
+| *(unset)* | the default volume — `<name>.epub` |
+| `"some-name"` | its own volume — `<name>-some-name.epub` |
+| `"none"` | on the site, in no volume |
+
+**The nearest declaration wins.** A section can set `book: "field-guide"` and one chapter
+inside it can still divert (`book: "other"`) or opt out (`"none"`) — which is what you
+want when a single chapter of an otherwise-bound section isn't ready.
+
+**`hidden: true` means not published anywhere**: absent from `docs.json`, from the
+generated pages, from every book, and from `llms.txt`. It is inherited, and a child
+*cannot* un-hide itself — accidentally publishing one chapter of a withheld section is
+the failure worth preventing. `draft: true` in YAML frontmatter sets it.
+
+> Before 1.9.0 `hidden` only removed a doc from the nav and the book, while its full text
+> was still written into `docs.json` **and** it still got a pre-rendered page at its own
+> URL. If you have been using `draft:` for working notes, they were public. They are not
+> any more.
+
+Volumes are discovered from the corpus — no extra configuration. Each is built in its own
+child process, and `epub` settings (title, author, css, the `book` manifest) apply to all
+of them. Note the two senses of the word: `config.book` is the **manifest** that curates
+and orders docs *within* a volume; a doc's `book` metadata selects **which** volume.
+
 #### `/version.json` — what am I looking at?
 
 Every build writes a small build-identity file to the web root:

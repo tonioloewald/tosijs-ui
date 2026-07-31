@@ -868,6 +868,51 @@ server may write to disk at all</em>; the session says <em>you may ask it to</em
 <p>The box should also run sshd with <code>GatewayPorts no</code>, so the forwarded port binds the
 box&#39;s loopback rather than the internet. That is defence in depth, not the wall — verify
 it yourself with <code>sshd -T | grep gatewayports</code>.</p>
+<h4><code>book</code> and <code>hidden</code> — multiple volumes from one corpus</h4>
+<p>Two pieces of doc metadata decide <strong>which book a page binds into, and whether it is
+published at all</strong>. Both are inherited down the <code>parent</code> chain, so you mark a section
+rather than every leaf.</p>
+<pre><code class="language-html">&lt;!--{ &quot;book&quot;: &quot;field-guide&quot; }--&gt;     bind into a volume called &quot;field-guide&quot;
+&lt;!--{ &quot;book&quot;: &quot;none&quot; }--&gt;            on the site, in NO book
+&lt;!--{ &quot;hidden&quot;: true }--&gt;            not published at all
+</code></pre>
+<table>
+<thead>
+<tr>
+<th><code>book</code></th>
+<th>result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><em>(unset)</em></td>
+<td>the default volume — <code>&lt;name&gt;.epub</code></td>
+</tr>
+<tr>
+<td><code>&quot;some-name&quot;</code></td>
+<td>its own volume — <code>&lt;name&gt;-some-name.epub</code></td>
+</tr>
+<tr>
+<td><code>&quot;none&quot;</code></td>
+<td>on the site, in no volume</td>
+</tr>
+</tbody></table>
+<p><strong>The nearest declaration wins.</strong> A section can set <code>book: &quot;field-guide&quot;</code> and one chapter
+inside it can still divert (<code>book: &quot;other&quot;</code>) or opt out (<code>&quot;none&quot;</code>) — which is what you
+want when a single chapter of an otherwise-bound section isn&#39;t ready.</p>
+<p><strong><code>hidden: true</code> means not published anywhere</strong>: absent from <code>docs.json</code>, from the
+generated pages, from every book, and from <code>llms.txt</code>. It is inherited, and a child
+<em>cannot</em> un-hide itself — accidentally publishing one chapter of a withheld section is
+the failure worth preventing. <code>draft: true</code> in YAML frontmatter sets it.</p>
+<blockquote>
+<p>Before 1.9.0 <code>hidden</code> only removed a doc from the nav and the book, while its full text
+was still written into <code>docs.json</code> <strong>and</strong> it still got a pre-rendered page at its own
+URL. If you have been using <code>draft:</code> for working notes, they were public. They are not
+any more.</p>
+</blockquote>
+<p>Volumes are discovered from the corpus — no extra configuration. Each is built in its own
+child process, and <code>epub</code> settings (title, author, css, the <code>book</code> manifest) apply to all
+of them. Note the two senses of the word: <code>config.book</code> is the <strong>manifest</strong> that curates
+and orders docs <em>within</em> a volume; a doc&#39;s <code>book</code> metadata selects <strong>which</strong> volume.</p>
 <h4><code>/version.json</code> — what am I looking at?</h4>
 <p>Every build writes a small build-identity file to the web root:</p>
 <pre><code class="language-json">{

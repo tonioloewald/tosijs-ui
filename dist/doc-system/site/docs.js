@@ -96,6 +96,8 @@ e.g. `{ "pin": "top", "order": 1 }` above `{ "pin": "top", "order": 2 }`.
 import * as fs from 'fs';
 import * as path from 'path';
 import { pinnedSort } from '../nav-tree';
+import { buildSlugMap } from '../routing';
+import { withoutHidden } from '../book-target';
 const TRIM_REGEX = /^#+ |`/g;
 /**
  * Parse & strip a leading YAML frontmatter block (`---\n…\n---`). Every prose
@@ -259,7 +261,21 @@ function findMarkdownFiles(paths, ignore) {
 }
 export function extractDocs(options) {
     const { paths, ignore = ['node_modules', 'dist', 'build'], output } = options;
-    const docs = findMarkdownFiles(paths, ignore);
+    const found = findMarkdownFiles(paths, ignore);
+    /*
+    Drop hidden docs HERE, before anything else sees them.
+  
+    `hidden` used to be applied by each consumer — the nav, the book, llms.txt — which
+    meant a doc marked `hidden` (or `draft: true`) still had its full text written into
+    docs.json and still got its own pre-rendered page at /its-slug/. Verified: a probe doc
+    with `draft: true` landed in both. For an unfinished chapter or a working note that is
+    the whole failure, and no amount of filtering downstream fixes it, because the corpus
+    is the thing that ships.
+  
+    Filtering at extraction makes it structural: hidden docs do not exist as far as the
+    rest of the pipeline is concerned. Descendants of a hidden doc go with it.
+    */
+    const docs = withoutHidden(found, buildSlugMap(found));
     if (output) {
         saveDocsJSON(docs, output);
     }
