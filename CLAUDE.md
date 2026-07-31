@@ -114,7 +114,7 @@ No semicolons, single quotes, 2-space indent, trailing commas (es5). Enforced by
 1. Writes version from `package.json` to `src/version.ts`
 2. Extracts `/*#` doc comments from `src/` and `README.md` → `demo/docs.json`
 3. Generates icon data via `bin/make-icon-data.js`
-4. Compiles TypeScript → ESM in `dist/`
+9. Compiles TypeScript → ESM in `dist/`
 5. Generates type declarations → `dist/*.d.ts`
 6. Bundles IIFE version (tosijs + marked included) → `dist/iife.js`
 7. Reports gzipped bundle sizes
@@ -633,11 +633,50 @@ The edge-class name describes which side of the pinned group the boundary is on,
 
 For the consumer-facing mental model — element-creator pattern, value/change/action contract, form association, theming, localization, and a "fighting the framework" anti-pattern checklist — see `Using-Components.md` at the repo root. Read it before answering questions about how a component should be used.
 
+## Commit annotations → CHANGELOG
+
+Put one `[tag]` bullet in the commit **body** per separately-interesting thing. This is
+the single source of truth for release notes:
+
+```
+fix(tunnel): one port resolver for server and bin
+
+[fix] the tunnel bin derived localPort as a fixed 8788 while the server used PORT+1 —
+      they agreed only when PORT was 8787. closes #39
+[new] `--status` reports the ports it would use
+[note] extracted resolveTunnelLocalPort so the two cannot drift again
+```
+
+`[break]` `[new]` `[fix]` `[change]` publish; `[note]` is internal and withheld.
+
+**One bullet per thing, not one per commit.** That is the point, and the reason the
+`type:` prefix alone is not enough: a commit that fixes three things has three bullets,
+while a conventional-commit prefix can only represent one. Keep the conventional subject —
+the two are complementary, not alternatives.
+
+```bash
+bun run release-notes    # assemble the section for the current version
+bun run release-check    # gate: every annotation accounted for (exit 1 if not)
+```
+
+`release-check` fails when an annotation since the last tag appears nowhere in
+`CHANGELOG.md`, and separately reports any commit whose `[fix]`/`[new]` bullets are
+contradicted by a **markdown-only diff**. That second check is not pedantry: three entries
+in the 1.9.0 notes described fixes that were never written, and the worst — an auth gate —
+was asserted by a commit whose diff never touched the file it named.
+
+The tool assembles a **skeleton**, not the prose. The sentence worth reading ("1.8.0's
+site entry point does not import at all in a clean install — upgrade regardless") cannot
+be derived from a diff. Write that; the gate only ensures nothing is silently dropped.
+
+Ships as `tosijs-release-notes` so adopters get the same workflow.
+
 ## Publishing
 
 1. Update version in `package.json` (bump **before** building — `src/version.ts` is generated from it)
 2. (No need to start a dev server — every lane brings up its own now)
-3. Run **all four lanes**: `bun test` → `bun run test-browser` → `bun playwright test` → `bun run test-consumer`. `bun tests` covers only two of them; a lane the gate skips rots silently.
+3. `bun run release-check` — every annotation since the last tag is written up
+4. Run **all four lanes**: `bun test` → `bun run test-browser` → `bun playwright test` → `bun run test-consumer`. `bun tests` covers only two of them; a lane the gate skips rots silently.
 4. Build: `bun run build` (this also runs the dependency-audit gate — a high+ advisory here fails the build; fix or time-box it before releasing, don't `TOSIJS_AUDIT=off` past it)
 5. Commit changes including `dist/` and `docs/`
 6. Tag release: `git tag v1.x.x`

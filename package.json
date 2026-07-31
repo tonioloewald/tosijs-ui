@@ -16,7 +16,9 @@
     "test-consumer": "bun bin/smoke-consumer.ts",
     "format": "bun eslint src demo --fix && bun prettier --write .",
     "tests": "bun test && bun playwright test",
-    "latest": "rm -rf node_modules bun.lock && bun update"
+    "latest": "rm -rf node_modules bun.lock && bun update",
+    "release-notes": "bun bin/release-notes.ts",
+    "release-check": "bun bin/release-notes.ts --check"
   },
   "keywords": [
     "tosijs",
@@ -76,24 +78,26 @@
     }
   },
   "files": [
-    "/dist",
-    "/bin/docs.ts",
-    "/bin/make-icon-data.js",
-    "/tls/create-dev-certs.sh",
+    "/CHANGELOG.md",
     "/LICENSE",
     "/README.md",
-    "/CHANGELOG.md",
-    "/llms.txt",
-    "/bin/tunnel.ts",
     "/bin/deploy-preview.ts",
+    "/bin/docs.ts",
+    "/bin/make-icon-data.js",
+    "/bin/release-notes.ts",
     "/bin/resolve-site-config.ts",
-    "/deploy"
+    "/bin/tunnel.ts",
+    "/deploy",
+    "/dist",
+    "/llms.txt",
+    "/tls/create-dev-certs.sh"
   ],
   "bin": {
     "tosijs-make-icons": "bin/make-icon-data.js",
     "tosijs-dev-certs": "tls/create-dev-certs.sh",
     "tosijs-tunnel": "bin/tunnel.ts",
-    "tosijs-deploy": "bin/deploy-preview.ts"
+    "tosijs-deploy": "bin/deploy-preview.ts",
+    "tosijs-release-notes": "bin/release-notes.ts"
   },
   "source": "src/index.ts",
   "types": "dist/index.d.ts",

@@ -29,145 +29,96 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="../doc-system.css" data-tosi-doc-system />
-  <title>notifications — tosijs-ui</title>
-  <meta name="description" content="TosiNotification provides a singleton custom &lt;tosi-notification&gt; element that manages a list of notifications." />
-  <link rel="canonical" href="https://ui.tosijs.net/notifications/" />
+  <title>release-notes — tosijs-ui</title>
+  <meta name="description" content="Assembles a CHANGELOG section from annotations in commit messages, so release notes stop being something you write from memory at the end — and stop being…" />
+  <link rel="canonical" href="https://ui.tosijs.net/release-notes/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="notifications — tosijs-ui" />
-  <meta property="og:description" content="TosiNotification provides a singleton custom &lt;tosi-notification&gt; element that manages a list of notifications." />
-  <meta property="og:url" content="https://ui.tosijs.net/notifications/" />
+  <meta property="og:title" content="release-notes — tosijs-ui" />
+  <meta property="og:description" content="Assembles a CHANGELOG section from annotations in commit messages, so release notes stop being something you write from memory at the end — and stop being…" />
+  <meta property="og:url" content="https://ui.tosijs.net/release-notes/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"notifications","description":"TosiNotification provides a singleton custom \u003ctosi-notification> element that manages a list of notifications.","url":"https://ui.tosijs.net/notifications/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"release-notes","description":"Assembles a CHANGELOG section from annotations in commit messages, so release notes stop being something you write from memory at the end — and stop being…","url":"https://ui.tosijs.net/release-notes/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
   <tosi-doc-system docs="../docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>notifications</h1>
-<p><code>TosiNotification</code> provides a singleton custom <code>&lt;tosi-notification&gt;</code> element that manages
-a list of notifications.</p>
-<p>The notifications are displayed most-recent first. If the notifications would take more than
-half the height of the display, they are scrolled.</p>
-<p>You can post a notification simply with <code>TosiNotification.post()</code> or <code>postNotification()</code>.</p>
-<pre><code>interface NotificationSpec {
-  message: string
-  type?: &#39;success&#39; | &#39;info&#39; | &#39;log&#39; | &#39;warn&#39; | &#39;error&#39; | &#39;progress&#39; // default &#39;info&#39;
-  icon?: SVGElement | string // defaults to an info icon
-  duration?: number
-  progress?: () =&gt; number    // return percentage completion
-  close?: () =&gt; void
-  color?: string             // specify color
-}
+<h1>release-notes</h1>
+<!--{ "parent": "Appendices" }-->
+
+<p>Assembles a CHANGELOG section from <strong>annotations in commit messages</strong>, so release notes
+stop being something you write from memory at the end — and stop being something you can
+forget.</p>
+<pre><code>tosijs-release-notes               # notes since the last version tag
+tosijs-release-notes --check       # verify every annotation is accounted for (exit 1 if not)
+tosijs-release-notes --since=v1.8.0
+tosijs-release-notes --write       # prepend the section to CHANGELOG.md
 </code></pre>
-<p>If you provide a <code>progress</code> callback (which is assumed to return a number from <code>0-100</code>, with
-100+ indicating completion) then <code>TosiNotification</code> will poll it every second until the
-task completes or the notification is closed. Returning 100 or more will automatically close
-the notification.</p>
-<p>If you configure a notification&#39;s <code>type = &quot;progress&quot;</code> but don&#39;t provide a <code>progress</code> callback
-then an indefinite <code>&lt;progress&gt;</code> element will be displayed.</p>
-<p>If you provide a <code>close</code> callback, it will be fired if the user closes the notification.</p>
-<p><code>postNotification</code> returns a callback function that closes the note programmatically (e.g.
-when an operation completes). This will <em>also</em> call any <code>close</code> callback function you
-provided. (The progress demos in the example exercise this functionality.)</p>
-<pre><code class="language-js">import { postNotification, icons } from &#39;tosijs-ui&#39;
+<h2>The annotation</h2>
+<p>Put one bullet in the commit body per <strong>separately interesting</strong> thing:</p>
+<pre><code>fix(tunnel): one port resolver for server and bin
 
-const form = preview.querySelector(&#39;tosi-form&#39;)
-const submit = preview.querySelector(&#39;.submit&#39;)
-const closeButton = preview.querySelector(&#39;.close&#39;)
-
-let close
-
-form.submitCallback = (value, isValid) =&gt; {
-  if (!isValid) return
-  if (value.type.startsWith(&#39;progress&#39;)) {
-    startTime = Date.now()
-    const { message, duration, icon } = value
-    close = postNotification({
-      message,
-      type: &#39;progress&#39;,
-      icon,
-      progress: value.type === &#39;progress&#39; ? () =&gt; (Date.now() - startTime) / (10 * duration) : undefined,
-      close: () =&gt; { postNotification(`${value.message} cancelled`) },
-    })
-  } else {
-    close = postNotification(value)
-  }
-  closeButton.disabled = false
-}
-
-submit.addEventListener(&#39;click&#39;, form.submit)
-closeButton.addEventListener(&#39;click&#39;, () =&gt; {
-  if (close) {
-    close()
-  }
-})
-
-postNotification({
-  message: &#39;Welcome to tosijs-ui notifications, this message will disappear in 2s&#39;,
-  duration: 2
-})
+[fix] tunnel bin derived localPort as a fixed 8788 while the server used PORT+1 —
+      they agreed only when PORT was 8787. closes #39
+[new] `--status` reports the ports it would use
+[note] extracted resolveTunnelLocalPort so the two cannot drift again
 </code></pre>
-<pre><code class="language-html">&lt;tosi-form&gt;
-  &lt;h3 slot=&quot;header&quot;&gt;Notification Test&lt;/h3&gt;
-  &lt;tosi-field caption=&quot;Message&quot; key=&quot;message&quot; type=&quot;string&quot; value=&quot;This is a test…&quot;&gt;&lt;/tosi-field&gt;
-  &lt;tosi-field caption=&quot;Type&quot; key=&quot;type&quot; value=&quot;info&quot;&gt;
-    &lt;tosi-select slot=&quot;input&quot;
-      options=&quot;error,warn,info,success,log,,progress,progress (indefinite)&quot;
-    &gt;&lt;/tosi-select&gt;
-  &lt;/tosi-field&gt;
-  &lt;tosi-field caption=&quot;Icon&quot; key=&quot;icon&quot; value=&quot;info&quot;&gt;
-    &lt;tosi-select slot=&quot;input&quot;
-      options=&quot;info,bug,thumbsUp,thumbsDown,message,spin120Loader&quot;
-    &gt;&lt;/tosi-select&gt;
-  &lt;/tosi-field&gt;
-  &lt;tosi-field caption=&quot;Duration&quot; key=&quot;duration&quot; type=&quot;number&quot; value=&quot;2&quot;&gt;&lt;/tosi-field&gt;
-  &lt;button slot=&quot;footer&quot; class=&quot;close&quot; disabled&gt;Close Last Notification&lt;/button&gt;
-  &lt;span slot=&quot;footer&quot; class=&quot;elastic&quot;&gt;&lt;/span&gt;
-  &lt;button slot=&quot;footer&quot; class=&quot;submit&quot;&gt;Post Notification&lt;/button&gt;
-&lt;/tosi-form&gt;
-</code></pre>
-<pre><code class="language-css">tosi-form {
-  height: 100%;
-}
-
-tosi-form::part(content) {
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-  gap: 10px;
-  background: var(--background);
-}
-
-tosi-form::part(header),
-tosi-form::part(footer) {
-  background: #eee;
-  justify-content: center;
-  padding: 10px;
-}
-
-tosi-form h3 {
-  margin: 0;
-}
-
-tosi-form label {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-}
-</code></pre>
-<pre><code class="language-test">test(&#39;notification singleton exists&#39;, async () =&gt; {
-  await waitMs(100)
-  const notification = document.querySelector(&#39;tosi-notification&#39;)
-  expect(notification).toBeTruthy()
-})
-test(&#39;form renders&#39;, () =&gt; {
-  const form = preview.querySelector(&#39;tosi-form&#39;)
-  expect(form).toBeTruthy()
-})
-</code></pre>
-<h2><code>postNotification(spec: NotificationSpec | string)</code></h2>
-<p>This is simply a wrapper for <code>TosiNotification.post()</code>.</p>
+<p><code>[note]</code> is internal: recorded, never published.</p>
+<p><strong>One bullet per thing, not one per commit</strong> — this is the whole point, and the reason a
+<code>type:</code> prefix alone is not enough. The subject line says what kind of commit it is; the
+bullets say what a <em>reader of the release</em> gets. A commit that fixes three things has
+three bullets, and a conventional-commit prefix can only ever represent one of them.</p>
+<table>
+<thead>
+<tr>
+<th>tag</th>
+<th>goes in</th>
+<th>means</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>[break]</code></td>
+<td>Breaking</td>
+<td>requires action from an adopter</td>
+</tr>
+<tr>
+<td><code>[new]</code></td>
+<td>Added</td>
+<td>new capability</td>
+</tr>
+<tr>
+<td><code>[fix]</code></td>
+<td>Fixed</td>
+<td>it was broken</td>
+</tr>
+<tr>
+<td><code>[change]</code></td>
+<td>Changed</td>
+<td>behaves differently, nothing to do</td>
+</tr>
+<tr>
+<td><code>[note]</code></td>
+<td><em>(withheld)</em></td>
+<td>internal; refactors, tests, chores</td>
+</tr>
+</tbody></table>
+<p><code>closes #12</code> / <code>fixes #12</code> anywhere in a bullet is collected, so the release step knows
+which issues to close.</p>
+<h2>Why not generate the prose too</h2>
+<p>Because the sentence worth reading is <em>&quot;1.8.0&#39;s site entry point does not import at all in
+a clean install — upgrade whether or not you want the new feature&quot;</em>, and nothing derives
+that from a diff. So this assembles a <strong>skeleton and a coverage gate</strong>, and a human (or
+agent) writes the paragraph that says who should care. <code>--check</code> fails when an annotation
+since the last tag appears nowhere in the new section, which kills forgetting without
+pretending to automate judgement.</p>
+<h2><code>--check</code> also flags claims a diff does not support</h2>
+<p>A commit whose bullets claim <code>[fix]</code> or <code>[new]</code> while its diff touches only markdown is
+reported. This is not a style rule: three entries in tosijs-ui&#39;s own 1.9.0 notes described
+fixes that were never written, and the worst of them — an auth gate — was asserted by a
+commit whose diff never touched the file it named. Cheap to detect, and the failure it
+catches is expensive.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -175,7 +126,7 @@ test(&#39;form renders&#39;, () =&gt; {
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
     <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
     <li><a class="doc-link" href="../icons/">icons</a></li>
-    <li><details open><summary><a class="doc-link" href="../components/">Components</a></summary>
+    <li><details><summary><a class="doc-link" href="../components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
       <li><a class="doc-link" href="../carousel/">carousel</a></li>
@@ -192,7 +143,7 @@ test(&#39;form renders&#39;, () =&gt; {
       <li><a class="doc-link" href="../mapbox/">map</a></li>
       <li><a class="doc-link" href="../markdown-viewer/">markdown</a></li>
       <li><a class="doc-link" href="../menu/">menu</a></li>
-      <li><a class="doc-link current" href="../notifications/" aria-current="page">notifications</a></li>
+      <li><a class="doc-link" href="../notifications/">notifications</a></li>
       <li><a class="doc-link" href="../pocket-bar/">pocket bar</a></li>
       <li><a class="doc-link" href="../pop-float/">popFloat</a></li>
       <li><a class="doc-link" href="../side-nav/">sidebar</a></li>
@@ -231,12 +182,12 @@ test(&#39;form renders&#39;, () =&gt; {
       <li><a class="doc-link" href="../value-renderer/">valueRenderer</a></li>
     </ul>
     </details></li>
-    <li><details><summary><a class="doc-link" href="../appendices/">Appendices</a></summary>
+    <li><details open><summary><a class="doc-link" href="../appendices/">Appendices</a></summary>
     <ul>
       <li><a class="doc-link" href="../doc-system/">doc-system</a></li>
       <li><a class="doc-link" href="../kitchen-sink/">kitchen sink</a></li>
       <li><a class="doc-link" href="../make-icon-data/">make-icon-data</a></li>
-      <li><a class="doc-link" href="../release-notes/">release-notes</a></li>
+      <li><a class="doc-link current" href="../release-notes/" aria-current="page">release-notes</a></li>
       <li><a class="doc-link" href="../icon-svg/">iconSvg — icon markup without a DOM</a></li>
       <li><a class="doc-link" href="../migrating/">Migrating from older versions</a></li>
       <li><a class="doc-link" href="../doc-browser/">doc-browser</a></li>
