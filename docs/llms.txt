@@ -1,4 +1,4 @@
-# tosijs-ui v1.9.0
+# tosijs-ui v1.9.0-rc.3
 
 Simple, robust web-components for use with tosijs or anything else.
 
@@ -107,6 +107,8 @@ don't clobber each other; the `iframe` attribute isolates DOM/CSS, not state.
   There are so many cases in user-interfaces where it's useful to pop-up a floating
 - https://ui.tosijs.net/rating/ — rating
   `TosiRating` / `<tosi-rating>` provides a drop-in replacement for an `<input>`
+- https://ui.tosijs.net/release-notes/ — release-notes
+  Assembles a CHANGELOG section from **annotations in commit messages**, so release notes
 - https://ui.tosijs.net/rich-text/ — rich text
   `<tosi-rich-text>` is a simple and easily extensible `document.execCommand` WYSIWYG editor with some conveniences.
 - https://ui.tosijs.net/router/ — router

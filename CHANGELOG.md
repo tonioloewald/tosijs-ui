@@ -2,6 +2,8 @@
 
 ## 1.9.0
 
+Consumer repairs, remote access, and **authoring: many books from one corpus**.
+
 **Anyone on 1.8.0 should upgrade, whether or not they want the new remote-editing
 feature.** 1.8.0's `tosijs-ui/site` entry point does not import at all in a clean
 install — `index.js` statically re-exports `devServer`, which imports `chokidar` at top
@@ -95,6 +97,78 @@ session — because a reverse tunnel counterfeits "local" by construction.
   build had none of it. A red `tsc` no longer discards a freshly generated site either.
 - Two dev servers can coexist; the idle-exit timer counts requests again, not just builds;
   "Build failed" is no longer overwritten by test results seconds later.
+
+
+### ⚠️ `hidden` now actually withholds
+
+**If you have been using `draft: true` or `hidden: true` for working notes or unfinished
+chapters, they were public.** `hidden` only removed a doc from the nav and the book — its
+full text was still written into `docs.json`, and it still got a pre-rendered page at its
+own URL. The code comment claimed "drafts don't ship"; a probe confirmed they did, twice
+over.
+
+`hidden: true` now means **not published at all**: absent from `docs.json`, from the
+generated pages, from every book, and from `llms.txt`. It is filtered at *extraction*,
+because the corpus is the thing that gets published and any filter applied after it is
+written is too late.
+
+It is inherited, and a child **cannot** un-hide itself from a hidden parent — accidentally
+publishing one chapter of a withheld section is the failure worth preventing.
+
+### Books
+
+A `book` value on a doc selects which volume it binds into. Volumes are discovered from
+the corpus, so a second book needs no configuration:
+
+```html
+<!--{ "book": "field-guide" }-->                its own volume
+<!--{ "book": ["default", "field-guide"] }-->   bound into both
+<!--{ "book": "none" }-->                       on the site, in no book
+```
+
+Like `hidden`, it is inherited down the `parent` chain — you mark a section, not every
+leaf — with the **nearest declaration winning outright**, so a chapter can divert to
+another volume, join several, or opt out. A list is what gets you shared front matter: a
+glossary or licence page bound into every volume from one source file rather than copied
+per book. `"none"` anywhere in a list wins, because a contradiction should resolve to
+withholding. `"default"` exists as a writable name for the main volume precisely so a list
+can include it — without one, an array could only ever express "not the default".
+
+`config.book` (the manifest that curates and orders docs *within* a volume) and a doc's
+`book` metadata (*which* volume) are different things that share a word; both are
+documented.
+
+### Release notes assemble themselves
+
+`tosijs-release-notes` builds a CHANGELOG section from `[tag]` bullets in commit bodies,
+so notes are written next to the diff rather than reconstructed from memory at the end —
+which is where three false claims in the 1.9.0 notes came from. One bullet per
+separately-interesting *thing*, layered on the conventional subject rather than replacing
+it: a `type:` prefix can only ever represent one change, and the 1.9.0 review commit did
+ten things.
+
+    tosijs-release-notes            # assemble the section
+    tosijs-release-notes --check    # gate: nothing since the last tag is unaccounted for
+
+`--check` fails when an annotation is missing from the changelog, and separately reports
+any commit whose `[fix]`/`[new]` bullets are contradicted by a **markdown-only diff** —
+the shape of the worst 1.9.0 bug, where an auth-gate fix was asserted by a commit whose
+diff never touched the file it named. Matching is deliberately loose: rewriting a bullet
+into prose is the intent, and demanding a literal match would only train people to paste.
+
+This section was assembled by the tool and then written up by hand, which is the intended
+workflow — it generates a skeleton and a coverage gate, never the prose. The gate then
+caught two things this very section had dropped, including a bug found by running the tool
+over this repo's own 2026-04/05 history: a bullet used as the commit *subject* swallowed
+the entire body as continuation text, so one note came out as three paragraphs of
+implementation detail.
+
+### Also
+
+- `tosijs-make-icons` emits clean, stable, formatter-conformant output, and honours your
+  prettier config if prettier is resolvable. Generated icon data no longer churns against
+  a formatter (and should still be added to `.prettierignore`).
+- `resolveBook` → `resolveBooks`, returning a list. New in this release; no migration.
 
 ### For maintainers of adopting projects
 
