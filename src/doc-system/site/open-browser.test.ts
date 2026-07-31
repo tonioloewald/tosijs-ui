@@ -111,7 +111,10 @@ describe('buildOpenPlan — darwin browser resolution', () => {
   })
 
   it('no supported browser running and no name → default browser via `open`', () => {
-    const p = buildOpenPlan({ ...base, running: ['some-daemon', 'kernel_task'] })
+    const p = buildOpenPlan({
+      ...base,
+      running: ['some-daemon', 'kernel_task'],
+    })
     expect(p).toEqual({
       action: 'exec',
       cmd: ['open', 'https://localhost:8787/'],

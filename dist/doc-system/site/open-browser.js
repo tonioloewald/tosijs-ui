@@ -172,11 +172,19 @@ export function buildOpenPlan(input) {
         // A named-but-unrecognized app: open in it (no reuse). Nothing supported running
         // and no name given: open in the default browser (no reuse).
         return requestedName
-            ? { action: 'exec', cmd: ['open', '-a', requestedName, url], reuse: false }
+            ? {
+                action: 'exec',
+                cmd: ['open', '-a', requestedName, url],
+                reuse: false,
+            }
             : { action: 'exec', cmd: ['open', url], reuse: false };
     }
     if (platform === 'win32') {
-        return { action: 'exec', cmd: ['cmd', '/c', 'start', '', url], reuse: false };
+        return {
+            action: 'exec',
+            cmd: ['cmd', '/c', 'start', '', url],
+            reuse: false,
+        };
     }
     // linux / other unix
     return { action: 'exec', cmd: ['xdg-open', url], reuse: false };

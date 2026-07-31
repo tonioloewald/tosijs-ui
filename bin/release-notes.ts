@@ -98,7 +98,9 @@ if (has('check')) {
   if (missed.length) {
     bad += missed.length
     console.error(
-      `\n🛑 ${missed.length} annotation(s) since ${since || 'the start'} are not mentioned in CHANGELOG.md:\n`
+      `\n🛑 ${missed.length} annotation(s) since ${
+        since || 'the start'
+      } are not mentioned in CHANGELOG.md:\n`
     )
     for (const b of missed)
       console.error(`   [${b.tag}] ${b.text}  (${b.sha.slice(0, 8)})`)
@@ -122,7 +124,9 @@ if (has('check')) {
 
   if (bad) process.exit(1)
   console.log(
-    `✅ ${publishable.length} annotation(s) since ${since || 'the start'}, all accounted for`
+    `✅ ${publishable.length} annotation(s) since ${
+      since || 'the start'
+    }, all accounted for`
   )
   process.exit(0)
 }
@@ -136,7 +140,9 @@ if (has('write')) {
   const [head, ...rest] = existing.split('\n## ')
   await Bun.write(
     path,
-    `${head.trimEnd()}\n\n${section}\n${rest.length ? '## ' + rest.join('\n## ') : ''}`
+    `${head.trimEnd()}\n\n${section}\n${
+      rest.length ? '## ' + rest.join('\n## ') : ''
+    }`
   )
   console.log(`Prepended ${publishable.length} note(s) to ${path}`)
 } else {

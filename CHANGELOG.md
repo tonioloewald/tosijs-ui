@@ -170,6 +170,56 @@ implementation detail.
   a formatter (and should still be added to `.prettierignore`).
 - `resolveBook` → `resolveBooks`, returning a list. New in this release; no migration.
 
+### Late fixes (rc.3 → rc.4)
+
+Three review passes ran against this release. The last two found defects **introduced by
+the previous pass's fixes**, which is why these are listed separately rather than folded
+in silently.
+
+**⚠️ `deploy/Caddyfile` is now a TEMPLATE — action required if you installed it.** It
+shipped in every tarball carrying a real ACME email, a specific preview domain, and a
+literal `__PREVIEW_TOKEN__`, while its own header told you to `scp` it to `/etc/caddy`.
+Following that gave you a preview host whose entire invite gate was a string published in
+a public repo, issuing certificates under someone else's Let's Encrypt account. Set
+`PREVIEW_TOKEN`, `ACME_EMAIL` and `PREVIEW_DOMAIN` in `/etc/caddy/preview.env` and
+re-install with `deploy:caddy`, which now substitutes all three, **refuses to install if
+any placeholder survives**, and validates into a temp file before replacing the live
+config rather than after.
+
+- **Every ePub volume shipped an identical `dc:identifier`, `dc:title` and cover.**
+  `unique-identifier` is EPUB3's primary key, so importing two volumes into Apple Books
+  or Calibre made the second replace the first — you would silently lose a book. Volumes
+  now derive their own identity; `epub.volumeTitles` names them properly.
+- **An ePub volume matching no documents shipped as a success** — a typo'd book name
+  produced a valid ~10KB book with a cover, a nav and no chapters, at exit 0. It now fails
+  and lists the volumes that do exist. Relatedly, a corpus where *every* doc names a
+  volume no longer errors on its empty default bucket.
+- **An invite link was unredeemable** on a proxied dev server with no `preview.tunnel`
+  block: the lock armed off a config section that did not exist while the `?t=` reader,
+  correctly gated on it, refused to look. One predicate now, exported and tested.
+- **`tosijs-tunnel` ignored `PORT` and `--port`**, targeting one port while the server
+  listened on another — the drift #39 was meant to end, reintroduced by the commit that
+  claimed to end it.
+- **The deploy and tunnel bins printed ✅ over failed remote steps.** `tosijs-deploy` now
+  distinguishes *deployed* from *routed* and exits non-zero when the files landed but
+  nothing serves them; `tosijs-tunnel` marks a public URL that is not routed.
+- **Preview roots other than `/srv/preview` registered successfully and routed nothing** —
+  the write side was de-hardcoded while the Caddyfile glob and index script still named
+  the default. One place decides now, and a mismatch says so. Override with
+  `preview.caddySitesDir`.
+- **`release-check` cleared an empty range** at exactly the release boundary, because
+  `git describe` returns the nearest tag including prereleases. It now baselines on the
+  last stable release *this commit descends from*, so a hotfix tagged out of order or a
+  maintenance branch cannot mislead it.
+- **New "Host bootstrap" docs**, because the preview host needs setting up once before
+  any project can register. Both bins write fragments that `import preview_site` /
+  `import tunnel_site` — snippets that only exist once the host has a Caddyfile — so an
+  un-bootstrapped box failed `caddy validate` forever, for every project, silently. That
+  failure now names the missing prerequisite.
+- `epub.volumeTitles` is now accepted by `defineSiteConfig` — it was documented and
+  type-rejected. `extractDocs`'s hidden-filtering gained tests at the tier that matters:
+  real files, real entry point, verified by mutation.
+
 ### For maintainers of adopting projects
 
 `bun run test-consumer` packs the tarball, installs it into a scratch project, and builds

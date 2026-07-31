@@ -69,10 +69,18 @@ test('DETERMINISTIC: same commit ⇒ byte-identical output', async () => {
   // per build (a wall-clock timestamp) would diff on every commit and train everyone
   // to ignore it — the nuisance the non-reproducible ePub already causes.
   const once = serializeBuildStamp(
-    await gatherBuildStamp({ generator: '1.8.0', site: 's', git: fakeGit(REPO) })
+    await gatherBuildStamp({
+      generator: '1.8.0',
+      site: 's',
+      git: fakeGit(REPO),
+    })
   )
   const twice = serializeBuildStamp(
-    await gatherBuildStamp({ generator: '1.8.0', site: 's', git: fakeGit(REPO) })
+    await gatherBuildStamp({
+      generator: '1.8.0',
+      site: 's',
+      git: fakeGit(REPO),
+    })
   )
   expect(once).toBe(twice)
   // Explicitly: no build timestamp of any kind.

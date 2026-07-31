@@ -70,3 +70,16 @@ export declare function shouldInterceptLinkToken(opts: {
     method: string;
 }): boolean;
 export declare const TUNNEL_LINK_CMD = "tosijs-tunnel --link";
+export declare function isLockedDown(config: {
+    preview?: {
+        tunnel?: {
+            requireToken?: boolean;
+        };
+    };
+}): boolean;
+/** Does this config have a tunnel at all? The `?t=` interception gate. */
+export declare function hasTunnel(config: {
+    preview?: {
+        tunnel?: unknown;
+    };
+}): boolean;

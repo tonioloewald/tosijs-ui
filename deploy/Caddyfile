@@ -13,8 +13,9 @@
 # Preview host — Caddy config.
 #
 # Committed on purpose: server config in git beats server config in someone's shell
-# history. Install with `bun run deploy:caddy`, or scp to /etc/caddy/Caddyfile and
-# `systemctl reload caddy`.
+# history. Install with `bun run deploy:caddy`, which substitutes the placeholders
+# above from /etc/caddy/preview.env and refuses to install if any remain. Do NOT scp this
+# file directly — see the banner at the top.
 #
 # ADDING A PROJECT IS ONE LINE (see the bottom). DNS is a wildcard set once
 # (`*.dev.tosijs.net`), so a new project never needs a registrar visit.
@@ -149,7 +150,7 @@
 # at different times depending on invisible state, which is the "what am I looking at"
 # problem /version.json exists to kill, reintroduced at the routing layer. A link you
 # send someone should still show what you meant an hour later.
-dev.tosijs.net {
+{{PREVIEW_DOMAIN}} {
 	root * /srv/preview/_index
 	import preview_site
 }

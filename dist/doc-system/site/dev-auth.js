@@ -246,3 +246,23 @@ copies in doc-browser/live-example already said the right thing, which is how th
 went unnoticed: the message you saw while developing was not the message they saw.
 */
 export const TUNNEL_LINK_CMD = 'tosijs-tunnel --link';
+/*
+Is this server's workspace locked down?
+
+Extracted because the predicate existed three times — twice in dev-server, once
+*recomputed inside its own regression test*, which meant the test asserted a copy and
+could not fail. Reverting the fix left all 822 tests green. That is the second time this
+shape has appeared in this file; `isLoopbackAddressForAuth` was collapsed for exactly the
+same reason, and its test asserts function identity so it cannot recur.
+
+Locked down requires a tunnel to be configured at all: arming off an absent
+`preview.tunnel` denied proxied reads while nothing could redeem a link.
+*/
+export function isLockedDown(config) {
+    return (Boolean(config.preview?.tunnel) &&
+        config.preview?.tunnel?.requireToken !== false);
+}
+/** Does this config have a tunnel at all? The `?t=` interception gate. */
+export function hasTunnel(config) {
+    return Boolean(config.preview?.tunnel);
+}

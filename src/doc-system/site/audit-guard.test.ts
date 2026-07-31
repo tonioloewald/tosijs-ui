@@ -34,7 +34,10 @@ const moderateJson = JSON.stringify({
   ],
 })
 
-const runner = (text: string): AuditRunner => async () => text
+const runner =
+  (text: string): AuditRunner =>
+  async () =>
+    text
 const NOW = new Date('2026-07-28T12:00:00Z')
 
 test('parseAuditJson flattens packages and parses the GHSA id', () => {
@@ -58,7 +61,10 @@ test('parseAuditJson returns [] for a clean tree and null for garbage', () => {
 })
 
 test('a high advisory blocks by default', async () => {
-  const r = await auditDependencies(true, { now: NOW, runAudit: runner(flattedJson) })
+  const r = await auditDependencies(true, {
+    now: NOW,
+    runAudit: runner(flattedJson),
+  })
   expect(r.ran).toBe(true)
   expect(r.ok).toBe(false)
   expect(r.blocking).toHaveLength(1)
@@ -101,7 +107,11 @@ test('an EXPIRED gate does not suppress — it blocks and is reported', async ()
   const r = await auditDependencies(
     {
       allow: [
-        { advisory: 'GHSA-25h7-pfq9-p65f', reason: 'old', expires: '2026-07-01' },
+        {
+          advisory: 'GHSA-25h7-pfq9-p65f',
+          reason: 'old',
+          expires: '2026-07-01',
+        },
       ],
     },
     { now: NOW, runAudit: runner(flattedJson) }
@@ -160,7 +170,11 @@ test('a valid gate that matches nothing is reported as stale', async () => {
   const r = await auditDependencies(
     {
       allow: [
-        { advisory: 'GHSA-zzzz-zzzz-zzzz', reason: 'gone', expires: '2026-12-31' },
+        {
+          advisory: 'GHSA-zzzz-zzzz-zzzz',
+          reason: 'gone',
+          expires: '2026-12-31',
+        },
       ],
     },
     { now: NOW, runAudit: runner('{}') }
@@ -367,17 +381,30 @@ test('groupAdvisories collapses one advisory across several ranges', () => {
 test('groupAdvisories keeps different packages separate under one advisory id', () => {
   const shared = JSON.stringify({
     'pkg-a': [
-      { id: 7, url: 'https://x/GHSA-aaaa-bbbb-cccc', title: 't', severity: 'high' },
+      {
+        id: 7,
+        url: 'https://x/GHSA-aaaa-bbbb-cccc',
+        title: 't',
+        severity: 'high',
+      },
     ],
     'pkg-b': [
-      { id: 7, url: 'https://x/GHSA-aaaa-bbbb-cccc', title: 't', severity: 'high' },
+      {
+        id: 7,
+        url: 'https://x/GHSA-aaaa-bbbb-cccc',
+        title: 't',
+        severity: 'high',
+      },
     ],
   })
   expect(groupAdvisories(parseAuditJson(shared)!)).toHaveLength(2)
 })
 
 test('grouping is presentation-only — blocking stays the flat list', async () => {
-  const r = await auditDependencies(true, { now: NOW, runAudit: runner(dupJson) })
+  const r = await auditDependencies(true, {
+    now: NOW,
+    runAudit: runner(dupJson),
+  })
   expect(r.blocking).toHaveLength(2) // the raw findings
   expect(groupAdvisories(r.blocking)).toHaveLength(1) // what gets printed
   expect(r.ok).toBe(false)
@@ -386,7 +413,12 @@ test('grouping is presentation-only — blocking stays the flat list', async () 
 test('below-threshold findings are still collected when the build blocks', async () => {
   const mixed = JSON.stringify({
     bad: [
-      { id: 1, url: 'https://x/GHSA-1111-1111-1111', title: 'h', severity: 'high' },
+      {
+        id: 1,
+        url: 'https://x/GHSA-1111-1111-1111',
+        title: 'h',
+        severity: 'high',
+      },
     ],
     meh: [
       {

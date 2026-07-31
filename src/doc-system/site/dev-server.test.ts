@@ -1,5 +1,10 @@
 import { test, expect } from 'bun:test'
-import { haltijaLoaderSnippet, isLoopbackAddress, resolveIdleMs, resolveLimitMb } from './dev-server'
+import {
+  haltijaLoaderSnippet,
+  isLoopbackAddress,
+  resolveIdleMs,
+  resolveLimitMb,
+} from './dev-server'
 
 const HOUR = 3600_000
 
@@ -85,7 +90,14 @@ test('only an explicit non-positive number disables the ceiling', () => {
 // any file in the repo. So those endpoints check the PEER address.
 
 test('isLoopbackAddress accepts this machine', () => {
-  for (const a of ['127.0.0.1', '127.1.2.3', '::1', '[::1]', 'localhost', '::ffff:127.0.0.1']) {
+  for (const a of [
+    '127.0.0.1',
+    '127.1.2.3',
+    '::1',
+    '[::1]',
+    'localhost',
+    '::ffff:127.0.0.1',
+  ]) {
     expect(isLoopbackAddress(a)).toBe(true)
   }
 })

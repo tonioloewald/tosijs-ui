@@ -3,7 +3,10 @@ import { pageTitle } from './doc-title'
 
 test('headTitle wins verbatim, no suffix', () => {
   expect(
-    pageTitle({ title: 'Home', headTitle: 'My Project — fast web components' }, 'My Project')
+    pageTitle(
+      { title: 'Home', headTitle: 'My Project — fast web components' },
+      'My Project'
+    )
   ).toBe('My Project — fast web components')
 })
 
@@ -16,7 +19,9 @@ test('a whitespace-only headTitle is not an override — falls through to the de
     'Rating — tosijs-ui'
   )
   // and a padded one is trimmed
-  expect(pageTitle({ title: 'x', headTitle: '  Exact Title  ' })).toBe('Exact Title')
+  expect(pageTitle({ title: 'x', headTitle: '  Exact Title  ' })).toBe(
+    'Exact Title'
+  )
 })
 
 test('a distinct doc title gets the project suffix', () => {
@@ -54,6 +59,8 @@ test('a whitespace-only project name is treated as absent, not appended', () => 
 })
 
 test('a padded project name is trimmed before use', () => {
-  expect(pageTitle({ title: 'Rating' }, '  tosijs-ui  ')).toBe('Rating — tosijs-ui')
+  expect(pageTitle({ title: 'Rating' }, '  tosijs-ui  ')).toBe(
+    'Rating — tosijs-ui'
+  )
   expect(pageTitle({ title: 'tosijs-ui' }, ' tosijs-ui ')).toBe('tosijs-ui')
 })

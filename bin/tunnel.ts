@@ -50,7 +50,9 @@ const flag = (n: string) => {
 
 const preview = siteConfig.preview
 const host = flag('host') ?? process.env.PREVIEW_HOST ?? preview?.host
-const localPort = Number(flag('port') ?? resolveDevPort(siteConfig, process.env))
+const localPort = Number(
+  flag('port') ?? resolveDevPort(siteConfig, process.env)
+)
 const projectName = String(siteConfig.name ?? 'site')
 
 /*
@@ -93,12 +95,11 @@ inconsistent numbers because the line above DID read the env.
 */
 const tunnelLocalPort = Number(
   flag('local-port') ??
-    resolveTunnelLocalPort(
-      { ...siteConfig, port: localPort },
-      {}
-    )
+    resolveTunnelLocalPort({ ...siteConfig, port: localPort }, {})
 )
 const publicUrl = flag('url') ?? preview?.tunnel?.url
+// Set by the registration step below; no public URL means there is no route to fail.
+let routed = true
 
 if (!host) {
   console.error(
@@ -287,9 +288,10 @@ if (publicUrl) {
       `\timport tunnel_site\n` +
       `}\n`
     const previewRoot = previewRootFor(
-      preview?.path ?? '/srv/preview/placeholder'
+      preview?.path ?? '/srv/preview/placeholder',
+      preview?.caddySitesDir
     )
-    await registerCaddyFragment({
+    routed = await registerCaddyFragment({
       host: host!,
       previewRoot,
       name: `${projectName}-tunnel`,
@@ -300,7 +302,20 @@ if (publicUrl) {
 }
 
 console.log(`\n🔌 ${host}  :${remotePort} → localhost:${tunnelLocalPort}`)
-if (publicUrl) console.log(`   ${publicUrl}`)
+/*
+Only claim the URL works if the route was actually registered.
+
+Printing a public URL over a failed registration is the same lie as printing ✅ over a
+failed deploy: it sends you to a hostname that will not resolve to this workspace, and the
+natural conclusion is that the tunnel is broken rather than the routing.
+*/
+if (publicUrl) {
+  console.log(
+    routed
+      ? `   ${publicUrl}`
+      : `   ${publicUrl}  ⚠️  NOT routed — registration failed above; this URL will not reach here`
+  )
+}
 console.log(`   Ctrl-C to close.\n`)
 
 // -N: forwarding only, no remote command.

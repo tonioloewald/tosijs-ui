@@ -270,7 +270,8 @@ export function rewriteInBookLinks(
       slug = slugMap[decodeURIComponent(legacy[1])] ?? null
     } else if (path.startsWith('/')) {
       let p = path
-      if (bp && (p === bp || p.startsWith(bp + '/'))) p = p.slice(bp.length) || '/'
+      if (bp && (p === bp || p.startsWith(bp + '/')))
+        p = p.slice(bp.length) || '/'
       slug = slugForPath(p)
     }
     if (slug === null) return match
@@ -865,12 +866,12 @@ export async function buildEpub(
     // An explicit `output` names ONE file, so it can only apply to the default volume —
     // otherwise every volume writes to it and you ship whichever bound last.
     (opts.bookTarget ? undefined : opts.output) ??
-    path.join(
-      outDir,
-      opts.bookTarget
-        ? `${slugify(baseTitle)}-${slugify(opts.bookTarget)}.epub`
-        : `${slugify(baseTitle)}.epub`
-    )
+      path.join(
+        outDir,
+        opts.bookTarget
+          ? `${slugify(baseTitle)}-${slugify(opts.bookTarget)}.epub`
+          : `${slugify(baseTitle)}.epub`
+      )
   )
   await zipEpub(buildDir, output)
   fs.rmSync(buildDir, { recursive: true, force: true })

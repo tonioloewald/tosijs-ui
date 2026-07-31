@@ -887,10 +887,14 @@ it yourself with <code>sshd -T | grep gatewayports</code>.</p>
 <p>Two pieces of doc metadata decide <strong>which book a page binds into, and whether it is
 published at all</strong>. Both are inherited down the <code>parent</code> chain, so you mark a section
 rather than every leaf.</p>
-<pre><code class="language-html">&lt;!--{ &quot;book&quot;: &quot;field-guide&quot; }--&gt;                bind into a volume called &quot;field-guide&quot;
-&lt;!--{ &quot;book&quot;: [&quot;default&quot;, &quot;field-guide&quot;] }--&gt;   bind into BOTH
-&lt;!--{ &quot;book&quot;: &quot;none&quot; }--&gt;                       on the site, in NO book
-&lt;!--{ &quot;hidden&quot;: true }--&gt;                       not published at all
+<pre><code class="language-html">&lt;!--{ &quot;book&quot;: &quot;field-guide&quot; }--&gt;
+bind into a volume called &quot;field-guide&quot;
+&lt;!--{ &quot;book&quot;: [&quot;default&quot;, &quot;field-guide&quot;] }--&gt;
+bind into BOTH
+&lt;!--{ &quot;book&quot;: &quot;none&quot; }--&gt;
+on the site, in NO book
+&lt;!--{ &quot;hidden&quot;: true }--&gt;
+not published at all
 </code></pre>
 <table>
 <thead>

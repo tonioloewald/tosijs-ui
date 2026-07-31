@@ -26,6 +26,8 @@ export interface PreviewConfig {
   host?: string
   path?: string
   url?: string
+  /** where the host's Caddyfile globs fragments from; default /srv/preview/_sites */
+  caddySitesDir?: string
   tunnel?: {
     remotePort?: number
     localPort?: number
@@ -201,10 +203,11 @@ export async function registerCaddyFragment(opts: {
   not load the EnvironmentFile, so `{env.…}` placeholders resolve empty and a config that
   is actually fine fails to validate. That would fail CLOSED forever.
   */
-  const check =
-    await $`ssh ${opts.host} ${'set -a; . /etc/caddy/preview.env 2>/dev/null; set +a; caddy validate --config /etc/caddy/Caddyfile'}`
-      .nothrow()
-      .quiet()
+  const check = await $`ssh ${
+    opts.host
+  } ${'set -a; . /etc/caddy/preview.env 2>/dev/null; set +a; caddy validate --config /etc/caddy/Caddyfile'}`
+    .nothrow()
+    .quiet()
   if (check.exitCode !== 0) {
     const detail = (check.stderr.toString() || check.stdout.toString()).trim()
     // Leave the fragment so the error is inspectable, but do NOT reload: one bad
@@ -236,8 +239,38 @@ export async function registerCaddyFragment(opts: {
   return true
 }
 
-/** The preview root a remote path lives under, for locating `_sites/`. */
-export function previewRootFor(remotePath: string): string {
+/*
+Where the installed Caddyfile actually looks for fragments.
+
+`previewRootFor` used to derive this from the project's own `remotePath`, which
+de-hardcoded the WRITE side only: `deploy/Caddyfile` globs `/srv/preview/_sites/*.caddy`
+and `build-index.sh` sets `ROOT=/srv/preview`. So deploying to `/opt/preview/foo` wrote a
+fragment somewhere nothing imports — `caddy validate` passed trivially, `systemctl reload`
+succeeded, and the bin printed `registered … → /opt/preview/foo` over a dead route. That
+was a REGRESSION: before, both bins hardcoded `/srv/preview/_sites` and every root worked.
+
+One place decides, and a mismatch is refused rather than silently written. Override with
+`preview.caddySitesDir` if your host's Caddyfile imports somewhere else.
+*/
+export const DEFAULT_CADDY_ROOT = '/srv/preview'
+
+export function previewRootFor(
+  remotePath: string,
+  caddySitesRoot?: string
+): string {
+  if (caddySitesRoot) return caddySitesRoot.replace(/\/_sites\/?$/, '')
   const root = safeRemoteRoots().find((r) => remotePath.startsWith(r + '/'))
-  return root ?? remotePath.replace(/\/[^/]+\/?$/, '')
+  /*
+  A path under a non-default root is only routable if the host's Caddyfile imports from
+  there — which the shipped template does not. Refuse loudly instead of registering into
+  a directory nothing reads.
+  */
+  if (root && root !== DEFAULT_CADDY_ROOT) {
+    console.warn(
+      `⚠️  ${remotePath} is under ${root}, but the shipped Caddyfile imports\n` +
+        `   ${DEFAULT_CADDY_ROOT}/_sites/*.caddy. Registering there instead.\n` +
+        `   If your host imports elsewhere, set \`preview.caddySitesDir\`.`
+    )
+  }
+  return DEFAULT_CADDY_ROOT
 }

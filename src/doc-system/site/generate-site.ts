@@ -257,9 +257,9 @@ function pageHtml(
   const body = rewriteDocLinks(
     renderDocMarkdown(doc.text, { bakes: bakes?.get(doc.filename) }),
     (filename) =>
-    slugMap[filename] !== undefined
-      ? relativeUrl(depth, pathForSlug(slugMap[filename]))
-      : null
+      slugMap[filename] !== undefined
+        ? relativeUrl(depth, pathForSlug(slugMap[filename]))
+        : null
   )
   const nav = navHtml(config.docs, slugMap, doc.filename, depth)
   const navbar = linkListHtml('doc-navbar', config.navbarLinks)

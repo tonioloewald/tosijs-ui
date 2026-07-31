@@ -55,9 +55,9 @@ export function parseBullets(message: string, sha = ''): Bullet[] {
       current.text = current.text.trim().replace(/\s+/g, ' ')
       current.issues = [
         ...new Set(
-          [...current.text.matchAll(/(?:closes|fixes|resolves)\s+#(\d+)/gi)].map(
-            (m) => Number(m[1])
-          )
+          [
+            ...current.text.matchAll(/(?:closes|fixes|resolves)\s+#(\d+)/gi),
+          ].map((m) => Number(m[1]))
         ),
       ]
       out.push(current)
@@ -113,9 +113,26 @@ export function isPrereleaseTag(tag: string): boolean {
  * exists to guard. Release notes accumulate from the last thing users actually got.
  */
 export async function lastVersionTag(): Promise<string> {
-  const r = await $`git tag --sort=-creatordate`.nothrow().quiet()
-  if (r.exitCode !== 0) return ''
-  const tags = r.stdout.toString().split('\n').map((t) => t.trim()).filter(Boolean)
+  /*
+  `--exclude='*-*'` skips prereleases while `describe` keeps ANCESTRY — it answers "the
+  last stable release this commit descends from".
+
+  A repo-wide `git tag --sort=-creatordate` scan gets both wrong: a `v1.7.6` hotfix tagged
+  after `v1.8.0` becomes the baseline and re-emits already-published notes, and a
+  maintenance branch baselines on a tag it does not descend from at all.
+  */
+  const described = await $`git describe --tags --abbrev=0 --exclude=*-*`
+    .nothrow()
+    .quiet()
+  if (described.exitCode === 0) return described.stdout.toString().trim()
+  // No reachable stable tag (a fresh repo, or a branch before the first release).
+  const all = await $`git tag --sort=-creatordate`.nothrow().quiet()
+  if (all.exitCode !== 0) return ''
+  const tags = all.stdout
+    .toString()
+    .split('\n')
+    .map((t) => t.trim())
+    .filter(Boolean)
   return tags.find((t) => !isPrereleaseTag(t)) ?? ''
 }
 
@@ -165,7 +182,9 @@ export function renderSection(
     lines.push('')
   }
 
-  const issues = [...new Set(all.flatMap((b) => b.issues))].sort((a, b) => a - b)
+  const issues = [...new Set(all.flatMap((b) => b.issues))].sort(
+    (a, b) => a - b
+  )
   if (issues.length) {
     lines.push(`Closes ${issues.map((n) => `#${n}`).join(', ')}.`, '')
   }
@@ -180,17 +199,31 @@ without mentioning it. Matching is deliberately loose (a distinctive run of word
 bullet, normalized) because the whole point is that a human REWRITES these into prose —
 demanding a literal match would just train people to paste.
 */
-export function uncovered(records: CommitRecord[], changelog: string): Bullet[] {
-  const hay = changelog.toLowerCase().replace(/[^a-z0-9]+/g, ' ')
+export function uncovered(
+  records: CommitRecord[],
+  changelog: string
+): Bullet[] {
+  /*
+  Normalize the haystack the SAME way as the needle.
+
+  Filtering short words out of the bullet but not the changelog meant a run like
+  "exactly release boundary" could never match "exactly the release boundary" — so the
+  gate reported entries that were plainly written up, which is how a gate teaches people
+  to ignore it. Found by using it: 2 of the 9 it flagged were false.
+  */
+  const norm = (t: string) =>
+    t
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .split(' ')
+      .filter((w) => w.length > 3)
+      .join(' ')
+  const hay = norm(changelog)
   return records
     .flatMap((r) => r.bullets)
     .filter((b) => b.tag !== 'note')
     .filter((b) => {
-      const words = b.text
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, ' ')
-        .split(' ')
-        .filter((w) => w.length > 3)
+      const words = norm(b.text).split(' ').filter(Boolean)
       if (!words.length) return false
       // Covered if a distinctive 3-word run from the bullet survives into the prose,
       // or if it names an issue the section names.
@@ -209,4 +242,3 @@ export function unsupportedClaims(records: CommitRecord[]): CommitRecord[] {
       isDocsOnly(r.files)
   )
 }
-

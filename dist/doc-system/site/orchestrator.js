@@ -12,7 +12,7 @@ the icon system here would put src/icon-data.ts into `bun --watch`'s graph and
 cause an endless rebuild loop.
 */
 import * as path from 'path';
-import { namedBooks } from '../book-target';
+import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target';
 import { buildSlugMap } from '../routing';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { tmpdir } from 'os';
@@ -780,10 +780,24 @@ export async function buildSite(config, opts = {}) {
             const corpus = JSON.parse(await Bun.file(config.docsJson ?? 'demo/docs.json')
                 .text()
                 .catch(() => '[]'));
+            /*
+            Only build the default volume if anything is actually in it.
+      
+            A book corpus where EVERY doc names a volume — the two-volumes-from-one-corpus case
+            this release is for — has an empty default bucket. Building it unconditionally threw
+            on every build and every watch rebuild, with no opt-out, so the headline feature
+            broke the moment you used it thoroughly. An explicitly requested `bookTarget` that
+            matches nothing is still a hard error: that one is a typo, not a shape.
+            */
+            const slugs = buildSlugMap(corpus);
+            const partitioned = partitionByBook(corpus, slugs);
             const volumes = [
-                undefined,
-                ...namedBooks(corpus, buildSlugMap(corpus)),
+                ...(partitioned.get(DEFAULT_BOOK)?.length ? [undefined] : []),
+                ...namedBooks(corpus, slugs),
             ];
+            if (!volumes.length) {
+                console.warn(`⚠️  epub: no documents in any volume — skipping. (Every doc is hidden or \`book: "none"\`.)`);
+            }
             for (const bookTarget of volumes) {
                 await buildEpubInChild(config, { ...epubOpts, bookTarget });
             }

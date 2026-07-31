@@ -158,7 +158,9 @@ export function classifyRisk(raw: {
     return {
       nature: 'unknown',
       label: 'DoS?+ESCALATABLE',
-      basis: `CVSS ${v} A:${avail} only, but CWE-${cwes.join('/')} can escalate`,
+      basis: `CVSS ${v} A:${avail} only, but CWE-${cwes.join(
+        '/'
+      )} can escalate`,
     }
   }
   return {
@@ -270,7 +272,10 @@ const defaultRunner: AuditRunner = async () => {
   // the caller takes the honest fail-OPEN path (ran:false) and warns.
   if (r.exitCode !== 0 && r.exitCode !== 1) {
     throw new Error(
-      `bun audit exited ${r.exitCode}: ${r.stderr.toString().trim().slice(0, 300)}`
+      `bun audit exited ${r.exitCode}: ${r.stderr
+        .toString()
+        .trim()
+        .slice(0, 300)}`
     )
   }
   if (stdout.trim() === '') {
@@ -305,14 +310,19 @@ export function parseAuditJson(text: string): AuditAdvisory[] | null {
   } catch {
     return null
   }
-  if (data === null || typeof data !== 'object' || Array.isArray(data)) return null
+  if (data === null || typeof data !== 'object' || Array.isArray(data))
+    return null
   const out: AuditAdvisory[] = []
-  for (const [pkg, advisories] of Object.entries(data as Record<string, unknown>)) {
+  for (const [pkg, advisories] of Object.entries(
+    data as Record<string, unknown>
+  )) {
     if (!Array.isArray(advisories)) continue
     for (const a of advisories) {
       if (!a || typeof a !== 'object') continue
       const adv = a as Record<string, unknown>
-      const severity = String(adv.severity ?? 'info').toLowerCase() as AuditSeverity
+      const severity = String(
+        adv.severity ?? 'info'
+      ).toLowerCase() as AuditSeverity
       out.push({
         package: pkg,
         id: Number(adv.id) || 0,
@@ -391,10 +401,7 @@ export function resetAuditMemo(): void {
 }
 
 /** Remember a real (non-injected) audit so later callers reuse it. */
-function memo(
-  result: AuditResult,
-  injected: boolean | undefined
-): AuditResult {
+function memo(result: AuditResult, injected: boolean | undefined): AuditResult {
   if (!injected) processAudit = result
   return result
 }
@@ -411,8 +418,7 @@ export async function auditDependencies(
 ): Promise<AuditResult> {
   if (!opts.runAudit && processAudit) return processAudit
   const mode = resolveAuditMode(config)
-  const cfg: AuditConfig =
-    config && typeof config === 'object' ? config : {}
+  const cfg: AuditConfig = config && typeof config === 'object' ? config : {}
   const level: AuditSeverity = cfg.level ?? 'high'
   const now = opts.now ?? new Date()
   const today = isoDay(now)
@@ -532,7 +538,9 @@ export interface GroupedAdvisory {
   ranges: string[]
 }
 
-export function groupAdvisories(advisories: AuditAdvisory[]): GroupedAdvisory[] {
+export function groupAdvisories(
+  advisories: AuditAdvisory[]
+): GroupedAdvisory[] {
   const groups = new Map<string, GroupedAdvisory>()
   for (const adv of advisories) {
     // Same package AND same advisory → one entry. Different packages stay
@@ -540,7 +548,10 @@ export function groupAdvisories(advisories: AuditAdvisory[]): GroupedAdvisory[] 
     const key = `${adv.package}::${adv.ghsa ?? adv.id}`
     const existing = groups.get(key)
     if (existing) {
-      if (adv.vulnerableVersions && !existing.ranges.includes(adv.vulnerableVersions)) {
+      if (
+        adv.vulnerableVersions &&
+        !existing.ranges.includes(adv.vulnerableVersions)
+      ) {
         existing.ranges.push(adv.vulnerableVersions)
       }
     } else {
@@ -683,34 +694,42 @@ export function reportAudit(result: AuditResult, label = 'Build'): void {
     console.warn(
       `\n📊 ${label}: advisories per package — a package that keeps producing them ` +
         `may be worth replacing, not just patching:\n` +
-        repeat.map(([pkg, n]) => `   ${String(n).padStart(3)}  ${pkg}`).join('\n')
+        repeat
+          .map(([pkg, n]) => `   ${String(n).padStart(3)}  ${pkg}`)
+          .join('\n')
     )
   }
 
   if (result.ok) {
     if (result.blocking.length === 0 && result.ran) {
       // Quiet success line so the build log shows the gate ran.
-      console.log(`✅ ${label}: dependency audit clean (level: ${result.level}).`)
+      console.log(
+        `✅ ${label}: dependency audit clean (level: ${result.level}).`
+      )
     }
     return
   }
 
   const invalidNote = result.invalid.length
     ? `\n\n   ${result.invalid.length} gate(s) ignored as invalid:\n` +
-      result.invalid.map((i) => `   • ${i.gate.advisory}: ${i.problem}`).join('\n')
+      result.invalid
+        .map((i) => `   • ${i.gate.advisory}: ${i.problem}`)
+        .join('\n')
     : ''
   const expiredNote = result.expired.length
     ? `\n\n   ${result.expired.length} gate(s) have EXPIRED (re-evaluate):\n` +
       result.expired
         .map(
           (g) =>
-            `   • ${g.advisory.package} (${g.advisory.ghsa ?? g.advisory.id}) — ` +
-            `expired ${g.daysAgo}d ago; was: ${g.reason}`
+            `   • ${g.advisory.package} (${
+              g.advisory.ghsa ?? g.advisory.id
+            }) — ` + `expired ${g.daysAgo}d ago; was: ${g.reason}`
         )
         .join('\n')
     : ''
 
-  const verb = result.mode === 'warn' ? 'proceeding anyway' : 'failing the build'
+  const verb =
+    result.mode === 'warn' ? 'proceeding anyway' : 'failing the build'
   const emoji = result.mode === 'warn' ? '⚠️' : '🛑'
   // Group + sort so the count is the real workload and the worst thing is first.
   const groups = groupAdvisories(result.blocking).sort((a, b) =>

@@ -195,7 +195,15 @@ export interface SiteConfig {
     | boolean
     | {
         author?: string
+        /** base title; a named volume becomes "<title> — <volume>" unless overridden */
         title?: string
+        /**
+         * Per-volume titles, keyed by `book` name — for volumes with real book names
+         * rather than "<project> — <volume>". Each volume also gets its own
+         * `dc:identifier` and cover art, because a shared identifier makes readers
+         * treat two volumes as one book and silently replace it.
+         */
+        volumeTitles?: Record<string, string>
         css?: string
         /** cover image path; omit to generate one from the title + a glyph */
         cover?: string

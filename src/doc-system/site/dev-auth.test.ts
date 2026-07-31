@@ -289,7 +289,12 @@ test('isSafeRemotePath refuses traversal and relative paths', () => {
 // for exactly the reason these headers cannot be trusted. Untestable inline in a
 // TLS-requiring closure, so nothing could see it.
 
-import { mayReadSite, shouldInterceptLinkToken } from './dev-auth'
+import {
+  mayReadSite,
+  shouldInterceptLinkToken,
+  isLockedDown,
+  hasTunnel,
+} from './dev-auth'
 
 test('REGRESSION: a forwarder that omits X-Forwarded-* cannot read a locked-down workspace', () => {
   // `ssh -R` with GatewayPorts yes, ngrok tcp, socat, iptables DNAT, nginx proxy_pass,
@@ -362,24 +367,37 @@ test('REGRESSION: `?t=` is not touched without a tunnel, or on a non-GET', () =>
 })
 
 test('REGRESSION: with NO preview.tunnel configured, an invite link is still redeemable', () => {
-  // The lock armed off a config block that does not exist: `requireToken !== false` is
-  // true when `preview.tunnel` is undefined, so the read gate denied every proxied
-  // request without a session while shouldInterceptLinkToken — correctly gated on the
-  // tunnel block — refused to read `?t=`. The link became unredeemable and the 401's own
-  // advice was unrunnable. Every prior lockedDown case passed viaTunnel:true, which is
-  // exactly why this was invisible.
-  const config: { preview?: { tunnel?: { requireToken?: boolean } } } = {}
-  const lockedDown =
-    Boolean(config.preview?.tunnel) &&
-    config.preview?.tunnel?.requireToken !== false
-  expect(lockedDown).toBe(false)
+  // The lock armed off a config block that does not exist, so the read gate denied every
+  // proxied request without a session while shouldInterceptLinkToken — correctly gated on
+  // the tunnel block — refused to read `?t=`. The link became unredeemable.
+  //
+  // This asserts the REAL predicate. The first version of this test retyped the
+  // expression locally, so reverting the fix left all 822 tests green — a test that
+  // recomputes what it is checking cannot fail. Same trap `isLoopbackAddressForAuth` fell
+  // into, which is why that one asserts function identity.
+  expect(isLockedDown({})).toBe(false)
+  expect(isLockedDown({ preview: {} })).toBe(false)
+  expect(isLockedDown({ preview: { tunnel: {} } })).toBe(true)
+  expect(isLockedDown({ preview: { tunnel: { requireToken: false } } })).toBe(
+    false
+  )
   expect(
     mayReadSite({
-      lockedDown,
+      lockedDown: isLockedDown({}),
       viaTunnel: false,
       proxied: true,
       hasLinkToken: false,
       hasValidSession: false,
     })
   ).toBe(true)
+})
+
+test('the server and the ?t= gate agree on what "has a tunnel" means', () => {
+  // These were two hand-written copies of the same question; disagreeing is what made the
+  // link unredeemable in the first place.
+  for (const config of [{}, { preview: {} }, { preview: { tunnel: {} } }]) {
+    expect(isLockedDown(config)).toBe(hasTunnel(config) && isLockedDown(config))
+  }
+  expect(hasTunnel({})).toBe(false)
+  expect(hasTunnel({ preview: { tunnel: {} } })).toBe(true)
 })

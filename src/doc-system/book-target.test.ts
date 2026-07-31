@@ -141,9 +141,11 @@ test('partition separates the default book, named books, and none', () => {
 
 test('input order is preserved within each book', () => {
   const docs = [doc('c.md'), doc('a.md'), doc('b.md')]
-  expect(partitionByBook(docs).get(DEFAULT_BOOK)!.map((d) => d.filename)).toEqual(
-    ['c.md', 'a.md', 'b.md']
-  )
+  expect(
+    partitionByBook(docs)
+      .get(DEFAULT_BOOK)!
+      .map((d) => d.filename)
+  ).toEqual(['c.md', 'a.md', 'b.md'])
 })
 
 // ── robustness ───────────────────────────────────────────────────────────────
@@ -164,7 +166,10 @@ test('a parent cycle does not hang', () => {
 })
 
 test('an empty book string is treated as unset, not as a book named ""', () => {
-  const docs = [doc('sec.md', { book: 'vol2' }), doc('a.md', { parent: 'sec.md', book: '' })]
+  const docs = [
+    doc('sec.md', { book: 'vol2' }),
+    doc('a.md', { parent: 'sec.md', book: '' }),
+  ]
   expect(resolveBooks(docs[1], docs)).toEqual(['vol2'])
 })
 
@@ -204,7 +209,10 @@ test('an array is inherited whole, and replaces rather than adds', () => {
 })
 
 test('an empty array says nothing, so inheritance continues', () => {
-  const docs = [doc('sec.md', { book: 'vol2' }), doc('a.md', { parent: 'sec.md', book: [] })]
+  const docs = [
+    doc('sec.md', { book: 'vol2' }),
+    doc('a.md', { parent: 'sec.md', book: [] }),
+  ]
   expect(resolveBooks(docs[1], docs)).toEqual(['vol2'])
 })
 

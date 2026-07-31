@@ -423,7 +423,8 @@ it returns a promise. Awaiting a non-promise is a no-op.
 try {
   const mod = await import('prettier')
   const prettier = mod.default ?? mod
-  const config = (await prettier.resolveConfig(path.resolve(outputFilePath))) || {}
+  const config =
+    (await prettier.resolveConfig(path.resolve(outputFilePath))) || {}
   source = await prettier.format(source, {
     ...config,
     parser: isTypescript ? 'typescript' : 'babel',

@@ -562,7 +562,7 @@ Both `tosijs-deploy` and `tosijs-tunnel` write a Caddy fragment ending in
 nothing routes.
 
 The package ships a template at `node_modules/tosijs-ui/deploy/Caddyfile`. It is a
-*template*, not a drop-in: substitute `{{ACME_EMAIL}}` (your Let's Encrypt account) and
+_template_, not a drop-in: substitute `{{ACME_EMAIL}}` (your Let's Encrypt account) and
 `{{PREVIEW_DOMAIN}}` (the domain your preview hosts live under), and put the shared invite
 secret in `/etc/caddy/preview.env` as `PREVIEW_TOKEN=…` rather than in the file.
 
@@ -632,16 +632,16 @@ hostname is not a secret — Let's Encrypt publishes every certificate it issues
 Certificate Transparency logs, so the URL is discoverable by construction. If you want to
 show someone the site, point them at the static preview; that is what it is for.
 
-**What the hostname discloses, and what to do about it.** The edit host's *existence and
-name* are public by construction, even though its content is session-gated. Choose
+**What the hostname discloses, and what to do about it.** The edit host's _existence and
+name_ are public by construction, even though its content is session-gated. Choose
 accordingly:
 
 - **Project name public, content private** — the normal case. Nothing to do; the session
   gate carries the weight. This is the posture the defaults assume.
-- **Project *name* sensitive** — use a random string as the subdomain. `tunnel.url` is
+- **Project _name_ sensitive** — use a random string as the subdomain. `tunnel.url` is
   arbitrary and self-registration doesn't care: `https://khx7q2mwp4.edit.dev.example.com`.
   CT logs then show only that something unnamed exists.
-- **Project *existence* sensitive** — don't use this feature. A public hostname whose
+- **Project _existence_ sensitive** — don't use this feature. A public hostname whose
   existence must be secret is a contradiction, and no naming scheme fixes it.
 
 A random-string hostname is a **capability**, and hostnames leak through different
@@ -670,19 +670,23 @@ published at all**. Both are inherited down the `parent` chain, so you mark a se
 rather than every leaf.
 
 ```html
-<!--{ "book": "field-guide" }-->                bind into a volume called "field-guide"
-<!--{ "book": ["default", "field-guide"] }-->   bind into BOTH
-<!--{ "book": "none" }-->                       on the site, in NO book
-<!--{ "hidden": true }-->                       not published at all
+<!--{ "book": "field-guide" }-->
+bind into a volume called "field-guide"
+<!--{ "book": ["default", "field-guide"] }-->
+bind into BOTH
+<!--{ "book": "none" }-->
+on the site, in NO book
+<!--{ "hidden": true }-->
+not published at all
 ```
 
-| `book` | result |
-| --- | --- |
-| *(unset)* | the default volume — `<name>.epub` |
-| `"some-name"` | its own volume — `<name>-some-name.epub` |
-| `["a", "b"]` | bound into both volumes |
-| `"default"` | the main volume, named so a list can include it |
-| `"none"` | on the site, in no volume |
+| `book`        | result                                          |
+| ------------- | ----------------------------------------------- |
+| _(unset)_     | the default volume — `<name>.epub`              |
+| `"some-name"` | its own volume — `<name>-some-name.epub`        |
+| `["a", "b"]`  | bound into both volumes                         |
+| `"default"`   | the main volume, named so a list can include it |
+| `"none"`      | on the site, in no volume                       |
 
 A list is what gets you shared front matter — a glossary, a licence page, a copyright
 notice — bound into several volumes from one source file rather than copied per book.
@@ -691,12 +695,12 @@ reading that withholds is the safe one.
 
 **The nearest declaration wins, outright.** A section can set `book: "field-guide"` and a
 chapter inside it can still divert (`book: "other"`), join several volumes, or opt out
-(`"none"`). A list *replaces* an inherited value rather than adding to it, so a child is
+(`"none"`). A list _replaces_ an inherited value rather than adding to it, so a child is
 never surprised by a volume it did not name.
 
 **`hidden: true` means not published anywhere**: absent from `docs.json`, from the
 generated pages, from every book, and from `llms.txt`. It is inherited, and a child
-*cannot* un-hide itself — accidentally publishing one chapter of a withheld section is
+_cannot_ un-hide itself — accidentally publishing one chapter of a withheld section is
 the failure worth preventing. `draft: true` in YAML frontmatter sets it.
 
 > Before 1.9.0 `hidden` only removed a doc from the nav and the book, while its full text
@@ -707,7 +711,7 @@ the failure worth preventing. `draft: true` in YAML frontmatter sets it.
 Volumes are discovered from the corpus — no extra configuration. Each is built in its own
 child process, and `epub` settings (title, author, css, the `book` manifest) apply to all
 of them. Note the two senses of the word: `config.book` is the **manifest** that curates
-and orders docs *within* a volume; a doc's `book` metadata selects **which** volume.
+and orders docs _within_ a volume; a doc's `book` metadata selects **which** volume.
 
 #### `/version.json` — what am I looking at?
 

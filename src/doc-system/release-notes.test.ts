@@ -96,8 +96,9 @@ test('prose that REWROTE the bullet still counts as covered', () => {
   // The gate must not force paste-matching — rewriting is the point.
   const changelog =
     '## 1.9.0\n\nThe tunnel port defaults disagreed between the bin and the server, so ...'
-  expect(uncovered(rec('[fix] the tunnel port defaults disagreed'), changelog))
-    .toHaveLength(0)
+  expect(
+    uncovered(rec('[fix] the tunnel port defaults disagreed'), changelog)
+  ).toHaveLength(0)
 })
 
 test('naming the issue counts as covering it', () => {
@@ -168,4 +169,25 @@ test('REGRESSION: prerelease tags are not release baselines', () => {
   expect(isPrereleaseTag('1.10.0-alpha.0')).toBe(true)
   expect(isPrereleaseTag('v1.9.0')).toBe(false)
   expect(isPrereleaseTag('v1.10.0')).toBe(false)
+})
+
+test('REGRESSION: prose that reworded around short words still counts as covered', () => {
+  // The needle was filtered to words >3 chars while the haystack kept everything, so a
+  // run like "exactly release boundary" could not match "exactly the release boundary".
+  // The gate then flagged entries that were plainly written up — which is exactly how a
+  // gate trains people to ignore it. Found by using it on this release.
+  const records = [
+    {
+      sha: 'd'.repeat(40),
+      subject: 's',
+      files: ['src/x.ts'],
+      bullets: parseBullets(
+        '[fix] reported an unearned pass at exactly the release boundary',
+        'd'
+      ),
+    },
+  ]
+  const changelog =
+    '## 1.9.0\n\nIt cleared an empty range at exactly the release boundary.'
+  expect(uncovered(records, changelog)).toHaveLength(0)
 })

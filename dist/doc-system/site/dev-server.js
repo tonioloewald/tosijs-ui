@@ -15,7 +15,7 @@ import { preflight } from './preflight';
 import { auditDependencies, reportAudit } from './audit-guard';
 import { openDevBrowser } from './open-browser';
 import { resolveTunnelLocalPort } from './site-config';
-import { TUNNEL_LINK_CMD, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth';
+import { TUNNEL_LINK_CMD, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth';
 const TEST_RESULTS_FILE = '.browser-tests.json';
 const DEFAULT_IDLE_HOURS = 8;
 /**
@@ -829,7 +829,7 @@ export async function devServer(config, opts = {}) {
         did not exist.
         */
         const linkToken = shouldInterceptLinkToken({
-            tunnelConfigured: Boolean(config.preview?.tunnel),
+            tunnelConfigured: hasTunnel(config),
             method: request.method,
         })
             ? reqUrl.searchParams.get(LINK_PARAM)
@@ -874,8 +874,7 @@ export async function devServer(config, opts = {}) {
         401's own advice was unrunnable. Two gates, two different predicates for the same
         question. One predicate now.
         */
-        const lockedDown = Boolean(config.preview?.tunnel) &&
-            config.preview?.tunnel?.requireToken !== false;
+        const lockedDown = isLockedDown(config);
         {
             const cookie = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
             if (!mayReadSite({

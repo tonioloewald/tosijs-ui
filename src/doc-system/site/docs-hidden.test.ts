@@ -12,13 +12,7 @@ never in the pure resolver — it was in whether anything called it.
 */
 
 import { test, expect, afterAll } from 'bun:test'
-import {
-  mkdtempSync,
-  rmSync,
-  writeFileSync,
-  mkdirSync,
-  readFileSync,
-} from 'fs'
+import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
 import { extractDocs } from './docs'
