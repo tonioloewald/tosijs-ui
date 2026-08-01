@@ -119,13 +119,10 @@ publishing one chapter of a withheld section is the failure worth preventing.
 A `book` value on a doc selects which volume it binds into. Volumes are discovered from
 the corpus, so a second book needs no configuration:
 
-```html
-<!--{ "book": "field-guide" }-->
-its own volume
-<!--{ "book": ["default", "field-guide"] }-->
-bound into both
-<!--{ "book": "none" }-->
-on the site, in no book
+```text
+<!--{ "book": "field-guide" }-->              → its own volume
+<!--{ "book": ["default", "field-guide"] }--> → bound into both
+<!--{ "book": "none" }-->                     → on the site, in no book
 ```
 
 Like `hidden`, it is inherited down the `parent` chain — you mark a section, not every

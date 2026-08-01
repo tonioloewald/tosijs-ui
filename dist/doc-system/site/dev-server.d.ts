@@ -62,6 +62,7 @@ export declare function resolveLimitMb(configMb: number | undefined, envMb: stri
  * have changed a security boundary while every test stayed green.
  */
 export { isLoopbackAddress };
+export declare function haltijaIsDrivable(stdout: string): boolean;
 export declare function haltijaLoaderSnippet(httpsPort: number): string;
 export declare function devServer(config: SiteConfig, opts?: {
     test?: boolean;

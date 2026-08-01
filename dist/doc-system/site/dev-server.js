@@ -123,6 +123,31 @@ export function resolveLimitMb(configMb, envMb) {
  * have changed a security boundary while every test stayed green.
  */
 export { isLoopbackAddress };
+/*
+Is a haltija server DRIVABLE, from the CLI's stdout?
+
+Pure, and exported, because the live probe cannot be trusted to represent an adopter: a
+standalone `hj` bundle emits clean JSON while an npm-installed one appends a dim hint line
+to stdout. Verifying against a local binary proved a fix that was inert everywhere else.
+Fixtures can hold both shapes; a machine can only hold its own.
+
+`ready` (haltija >= 1.6.1) is server-up AND a tab connected. Older CLIs lack it, so fall
+back to counting windows. Anything unparseable is NOT drivable — failing closed just means
+spawning a fresh instance with `-f`.
+*/
+export function haltijaIsDrivable(stdout) {
+    try {
+        const status = JSON.parse(stdout);
+        if (typeof status.ready === 'boolean')
+            return status.ready;
+        if (Array.isArray(status.windows))
+            return status.windows.length > 0;
+        return false;
+    }
+    catch {
+        return false;
+    }
+}
 export function haltijaLoaderSnippet(httpsPort) {
     return (`<script>self===top&&/^localhost$|^127\\./.test(location.hostname)` +
         `&&import('https://localhost:${httpsPort}/dev.js')</script>`);
@@ -1247,24 +1272,39 @@ export async function devServer(config, opts = {}) {
         */
         const haltijaReachable = async () => {
             try {
-                const out = await $ `hj windows`.quiet().text();
-                try {
-                    const status = JSON.parse(out);
-                    if (typeof status.ready === 'boolean')
-                        return status.ready;
-                    if (Array.isArray(status.windows))
-                        return status.windows.length > 0;
-                }
-                catch {
-                    /* older CLI, or non-JSON output — fall through */
-                }
-                return true;
+                /*
+                `--json`, and fail CLOSED.
+        
+                Bare `hj windows` appends a dim hint line to STDOUT after the JSON, so
+                `JSON.parse` throws and a `catch` that fell through to `return true` adopted the
+                very dead server this check exists to reject — the gate was inert on every
+                npm-installed CLI. It passed verification here only because this machine's `hj` is
+                a standalone bundle with no `hints.json` beside it, so the hint was never emitted:
+                a real behavioural test, run against an environment adopters do not have.
+        
+                Failing closed costs nothing: the spawn below uses `-f`, which stomps a stale
+                instance. Adopting a server we could not read is the expensive direction.
+                */
+                const out = await $ `hj windows --json`.quiet().text();
+                return haltijaIsDrivable(out);
             }
             catch {
                 return false;
             }
         };
-        if (await haltijaReachable()) {
+        const adoptable = await haltijaReachable();
+        if (!adoptable) {
+            /*
+            Leave a receipt: spawning with `-f` reclaims haltija's shared default port, which
+            SIGTERMs whatever was there — frequently another project's session, or the
+            developer's own. This file already sets that norm for killStrayServer; declining to
+            adopt makes the stomp MORE frequent, so it must be at least as loud.
+            */
+            console.log(`No drivable haltija (server absent, or up with no connected tab).\n` +
+                `  Starting one with -f, which reclaims the shared haltija port — any other\n` +
+                `  project's session on it will be stopped.  (cwd: ${process.cwd()})`);
+        }
+        if (adoptable) {
             console.log('Using existing haltija browser');
         }
         else {
@@ -1277,6 +1317,7 @@ export async function devServer(config, opts = {}) {
                 stdout: 'ignore',
                 stderr: 'ignore',
             });
+            const waitStarted = Date.now();
             console.log('Waiting for haltija…');
             let up = false;
             for (let i = 0; i < 20; i++) {
@@ -1287,7 +1328,9 @@ export async function devServer(config, opts = {}) {
                 }
             }
             if (!up) {
-                console.error('haltija did not become reachable within 10s');
+                console.error(`haltija did not become drivable within ${Math.round((Date.now() - waitStarted) / 1000)}s.\n` +
+                    `  A single \`hj windows\` can block for several seconds when a server is up\n` +
+                    `  with no tab, so this can take much longer than the poll count suggests.`);
                 await stopHaltija();
                 server.stop();
                 process.exit(1);

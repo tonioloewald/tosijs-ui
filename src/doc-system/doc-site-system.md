@@ -669,15 +669,11 @@ Two pieces of doc metadata decide **which book a page binds into, and whether it
 published at all**. Both are inherited down the `parent` chain, so you mark a section
 rather than every leaf.
 
-```html
-<!--{ "book": "field-guide" }-->
-bind into a volume called "field-guide"
-<!--{ "book": ["default", "field-guide"] }-->
-bind into BOTH
-<!--{ "book": "none" }-->
-on the site, in NO book
-<!--{ "hidden": true }-->
-not published at all
+```text
+<!--{ "book": "field-guide" }-->              → bind into a volume called "field-guide"
+<!--{ "book": ["default", "field-guide"] }--> → bind into BOTH
+<!--{ "book": "none" }-->                     → on the site, in NO book
+<!--{ "hidden": true }-->                     → not published at all
 ```
 
 | `book`        | result                                          |

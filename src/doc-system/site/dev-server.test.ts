@@ -164,3 +164,46 @@ test('env PORT outranks the config, and both sides see it the same way', () => {
   expect(resolveTunnelLocalPort({ port: 8018 }, { PORT: '4000' })).toBe(4001)
   expect(resolveDevPort({}, {})).toBe(8787)
 })
+
+// ── is a haltija server drivable? ────────────────────────────────────────────
+
+import { haltijaIsDrivable } from './dev-server'
+
+const HINT = '\n\x1b[2m\nhj windows : --json | see: tabs-open, tabs-close\x1b[0m'
+
+test('a server with no connected tab is NOT drivable', () => {
+  expect(
+    haltijaIsDrivable(JSON.stringify({ windows: [], count: 0, ready: false }))
+  ).toBe(false)
+})
+
+test('a server with a tab is drivable', () => {
+  expect(
+    haltijaIsDrivable(JSON.stringify({ windows: [{ id: 1 }], ready: true }))
+  ).toBe(true)
+})
+
+test('REGRESSION: a trailing CLI hint line must not make a dead server look drivable', () => {
+  /*
+  Bare `hj windows` appends a dim hint to STDOUT after the JSON on any npm-installed CLI.
+  The first version of this check parsed bare output and fell through to `return true` on
+  a parse error — so the gate was inert everywhere except this machine, whose `hj` is a
+  standalone bundle with no hints.json and therefore never emits the hint. The fix passes
+  `--json`; this pins the parser against the hinted shape regardless.
+  */
+  expect(
+    haltijaIsDrivable(JSON.stringify({ windows: [], ready: false }) + HINT)
+  ).toBe(false)
+  expect(haltijaIsDrivable('not json at all')).toBe(false)
+  expect(haltijaIsDrivable('')).toBe(false)
+})
+
+test('an older CLI with no `ready` falls back to counting windows', () => {
+  expect(haltijaIsDrivable(JSON.stringify({ windows: [] }))).toBe(false)
+  expect(haltijaIsDrivable(JSON.stringify({ windows: [{ id: 1 }] }))).toBe(true)
+})
+
+test('unrecognised JSON is not drivable', () => {
+  // A future shape we cannot read is a reason to spawn our own, not to adopt blindly.
+  expect(haltijaIsDrivable(JSON.stringify({ something: 'else' }))).toBe(false)
+})
