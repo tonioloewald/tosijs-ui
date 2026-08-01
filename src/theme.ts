@@ -33,7 +33,7 @@ import { Color } from 'tosijs'
 import { createTheme, applyTheme } from 'tosijs-ui'
 
 const myTheme = createTheme({
-  accent: Color.fromCss('#007AFF'),
+  accent: Color.fromCss('#0064d2'),
   background: Color.fromCss('#ffffff'),
   text: Color.fromCss('#1a1a1a'),
 })
@@ -78,7 +78,7 @@ import { Color } from 'tosijs'
 import { createTheme, createDarkTheme } from 'tosijs-ui'
 
 const colors = {
-  accent: Color.fromCss('#007AFF'),
+  accent: Color.fromCss('#0064d2'),
   background: Color.fromCss('#ffffff'),
   text: Color.fromCss('#1a1a1a'),
 }

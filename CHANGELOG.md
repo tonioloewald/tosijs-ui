@@ -17,6 +17,14 @@ node — none of these were visible as wrong to the eye.
 and it was the only value that clears AA in *both* directions — as text on the page, and
 as a fill carrying white text. Override `--tosi-accent` if you want the original.
 
+Two more, found by sweeping wider — both in **example code we publish**, which matters
+more than a component default because people copy it: the `.-negative { color: #e44 }` we
+document for negative numbers in tables sat at **3.63:1** (now `#d32f2f`, 4.77:1), and
+`#007AFF` — the accent in every theming example in our docs — was **4.02:1** under white
+text (now `#0064d2`, 5.59:1).
+
+Verified across 8 pages in both themes on haltija 1.11.2: **0 failures, 0 uncertain**.
+
 The test widget's text color is now **paired** with its background rather than hardcoded
 to white. Amber is a genuinely light color: darkening it enough for white text turns it
 brown and stops reading as "in progress", so it keeps its hue and takes dark text, which

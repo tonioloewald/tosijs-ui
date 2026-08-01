@@ -221,7 +221,7 @@ Numeric types (`number`, `currency`, `fixed`, `percent`, `sci`, `eng`, `bytes`) 
 by default; `boolean` centers and renders icons. An explicit `align` — or a `dataCell` —
 always wins. Formatting follows the app locale (`setLocale()`). Numeric cells also get a
 `-negative` or `-zero` state class by value sign, so the red "Change" values above come from
-one CSS rule (`.-negative { color: #e44 }`), no cell renderer.
+one CSS rule (`.-negative { color: #d32f2f }`), no cell renderer.
 
 ```js
 import { tosiTable } from 'tosijs-ui'
@@ -251,7 +251,7 @@ table.value = {
 preview.append(table)
 ```
 ```css
-.preview .-negative { color: #e44; }
+.preview .-negative { color: #d32f2f; }
 .preview .-zero { opacity: 0.45; }
 ```
 
@@ -747,11 +747,11 @@ export class TosiTable extends WebComponent {
     },
     ':host .tr[aria-selected] .td': {
       background: varDefault.tosiTableSelectedBg(
-        'var(--tosi-accent, #007AFF22)'
+        'var(--tosi-accent, #0064d222)'
       ),
     },
     ':host .td:focus, :host .th:focus': {
-      outline: '2px solid var(--tosi-accent, #007AFF)',
+      outline: '2px solid var(--tosi-accent, #0064d2)',
       outlineOffset: '-2px',
       zIndex: '1',
     },

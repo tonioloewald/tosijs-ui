@@ -32,7 +32,7 @@ Formatting follows the app's current locale (`i18n.locale`, i.e. `setLocale()`);
 falls back to the runtime default.
 
 Numeric cells also get a **`-negative`** or **`-zero`** state class by value sign, so you
-can style them in CSS without a custom cell — e.g. `.-negative { color: #e44 }` for red
+can style them in CSS without a custom cell — e.g. `.-negative { color: #d32f2f }` for red
 negatives. The renderer only marks the sign; CSS decides the look.
 
 ```js

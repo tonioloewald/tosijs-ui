@@ -251,7 +251,7 @@ and $(&#39;tosi-table&#39;).selectedRows`.</p>
 by default; <code>boolean</code> centers and renders icons. An explicit <code>align</code> — or a <code>dataCell</code> —
 always wins. Formatting follows the app locale (<code>setLocale()</code>). Numeric cells also get a
 <code>-negative</code> or <code>-zero</code> state class by value sign, so the red &quot;Change&quot; values above come from
-one CSS rule (<code>.-negative { color: #e44 }</code>), no cell renderer.</p>
+one CSS rule (<code>.-negative { color: #d32f2f }</code>), no cell renderer.</p>
 <pre><code class="language-js">import { tosiTable } from &#39;tosijs-ui&#39;
 
 const rows = [
@@ -278,7 +278,7 @@ table.value = {
 }
 preview.append(table)
 </code></pre>
-<pre><code class="language-css">.preview .-negative { color: #e44; }
+<pre><code class="language-css">.preview .-negative { color: #d32f2f; }
 .preview .-zero { opacity: 0.45; }
 </code></pre>
 <h2>Pinned Columns and Rows</h2>

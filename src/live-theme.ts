@@ -30,7 +30,7 @@ import { liveTheme } from 'tosijs-ui'
 // liveTheme.dark.value     // false
 
 // Set values programmatically (triggers immediate theme update)
-// liveTheme.accent.value = '#007AFF'
+// liveTheme.accent.value = '#0064d2'
 ```
 
 ## CSS canary

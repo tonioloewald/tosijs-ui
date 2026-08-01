@@ -73,7 +73,7 @@ describe('theme', () => {
 
     test('accepts custom colors', () => {
       const customColors: ThemeColors = {
-        accent: Color.fromCss('#007AFF'),
+        accent: Color.fromCss('#0064d2'),
         background: Color.fromCss('#ffffff'),
         text: Color.fromCss('#000000'),
       }

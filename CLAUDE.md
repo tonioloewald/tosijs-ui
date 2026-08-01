@@ -548,7 +548,7 @@ import { Color } from 'tosijs'
 import { createTheme, createDarkTheme, applyTheme } from 'tosijs-ui'
 
 const colors = {
-  accent: Color.fromCss('#007AFF'),
+  accent: Color.fromCss('#0064d2'),
   background: Color.fromCss('#ffffff'),
   text: Color.fromCss('#1a1a1a'),
 }
