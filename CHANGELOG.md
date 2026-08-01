@@ -23,13 +23,13 @@ broke the `tosijs-make-icons` bin (#30). All three are fixed here.
   that does exactly that (`bun run test-consumer`).
 - **`tosijs-make-icons` no longer strips `fill-rule`** (#30), which rendered holes in
   compound `evenodd` paths solid — a keyboard drawn as one path came out filled. It was
-  stripped in **three** places, not one. `fill-rule` is fill *topology*, not colour, and
+  stripped in **three** places, not one. `fill-rule` is fill _topology_, not colour, and
   takes no part in the tinting the strip exists for. Ships as a bin, so it affects anyone
   generating their own icon data.
 - **The shipped bins have shebangs** (#35, #36 — reported independently by both adopters).
   Without one, `node_modules/.bin` shims hand TypeScript to the shell.
 - **`/version.json`'s `generator` reports tosijs-ui's version, not the consumer's** (#37).
-  It read `package.json` from the *cwd*, so the one field that answers "which tosijs-ui
+  It read `package.json` from the _cwd_, so the one field that answers "which tosijs-ui
   built this?" named the wrong package entirely.
 - **A failed "save to source" says why** (#34). The server answers 501 with an actionable
   reason and the client discarded it for a generic "Save failed.", so an unconfigured
@@ -45,10 +45,10 @@ URL over an SSH reverse tunnel, so you can read and edit real source from a phon
 borrowed laptop. The box does no compute — it terminates TLS and routes — which is what
 lets one small VPS front many projects. Two hostnames make the posture legible:
 
-| host | what it is | gate |
-| --- | --- | --- |
-| `<project>.dev.example.com` | read-only snapshot, shareable | invite cookie |
-| `<project>.edit.dev.example.com` | live workspace, yours | session, always |
+| host                             | what it is                    | gate            |
+| -------------------------------- | ----------------------------- | --------------- |
+| `<project>.dev.example.com`      | read-only snapshot, shareable | invite cookie   |
+| `<project>.edit.dev.example.com` | live workspace, yours         | session, always |
 
 `tosijs-tunnel --link` prints a single-use link; opening it once exchanges the token for a
 durable `HttpOnly; Secure; SameSite=Lax` session cookie and redirects with the token
@@ -73,7 +73,7 @@ session — because a reverse tunnel counterfeits "local" by construction.
 - Build-error text (absolute paths from your machine) was injected into every served page
   with no auth check. The label stays public; the detail needs a session.
 - `rsync --delete` accepted any absolute path two segments deep — including `/usr/lib` and
-  `/etc/caddy`, which it would have *mirrored*, i.e. emptied. Now an allowlist of preview
+  `/etc/caddy`, which it would have _mirrored_, i.e. emptied. Now an allowlist of preview
   roots, and never the root itself: one dropped path segment would otherwise have deleted
   every other project on a shared box, including the Caddy fragments that route them.
 - `tunnel.requireToken` defaults to **`true`**. The hostname is not a secret — Let's
@@ -83,7 +83,7 @@ session — because a reverse tunnel counterfeits "local" by construction.
 ### Fixed
 
 - **A 403 could destroy uncommitted work.** An unauthorized read fell through to GitHub
-  `main`, so you edited the *published* file, and the save then handed you a download of
+  `main`, so you edited the _published_ file, and the save then handed you a download of
   it — applying which silently reverts your working copy.
 - **`?t=` was intercepted on every request and method**, so any dev server answered
   `GET /?t=12345` with "that invite link has been used" instead of the page, and 401'd
@@ -98,7 +98,6 @@ session — because a reverse tunnel counterfeits "local" by construction.
 - Two dev servers can coexist; the idle-exit timer counts requests again, not just builds;
   "Build failed" is no longer overwritten by test results seconds later.
 
-
 ### ⚠️ `hidden` now actually withholds
 
 **If you have been using `draft: true` or `hidden: true` for working notes or unfinished
@@ -108,7 +107,7 @@ own URL. The code comment claimed "drafts don't ship"; a probe confirmed they di
 over.
 
 `hidden: true` now means **not published at all**: absent from `docs.json`, from the
-generated pages, from every book, and from `llms.txt`. It is filtered at *extraction*,
+generated pages, from every book, and from `llms.txt`. It is filtered at _extraction_,
 because the corpus is the thing that gets published and any filter applied after it is
 written is too late.
 
@@ -121,9 +120,12 @@ A `book` value on a doc selects which volume it binds into. Volumes are discover
 the corpus, so a second book needs no configuration:
 
 ```html
-<!--{ "book": "field-guide" }-->                its own volume
-<!--{ "book": ["default", "field-guide"] }-->   bound into both
-<!--{ "book": "none" }-->                       on the site, in no book
+<!--{ "book": "field-guide" }-->
+its own volume
+<!--{ "book": ["default", "field-guide"] }-->
+bound into both
+<!--{ "book": "none" }-->
+on the site, in no book
 ```
 
 Like `hidden`, it is inherited down the `parent` chain — you mark a section, not every
@@ -134,8 +136,8 @@ per book. `"none"` anywhere in a list wins, because a contradiction should resol
 withholding. `"default"` exists as a writable name for the main volume precisely so a list
 can include it — without one, an array could only ever express "not the default".
 
-`config.book` (the manifest that curates and orders docs *within* a volume) and a doc's
-`book` metadata (*which* volume) are different things that share a word; both are
+`config.book` (the manifest that curates and orders docs _within_ a volume) and a doc's
+`book` metadata (_which_ volume) are different things that share a word; both are
 documented.
 
 ### Release notes assemble themselves
@@ -143,7 +145,7 @@ documented.
 `tosijs-release-notes` builds a CHANGELOG section from `[tag]` bullets in commit bodies,
 so notes are written next to the diff rather than reconstructed from memory at the end —
 which is where three false claims in the 1.9.0 notes came from. One bullet per
-separately-interesting *thing*, layered on the conventional subject rather than replacing
+separately-interesting _thing_, layered on the conventional subject rather than replacing
 it: a `type:` prefix can only ever represent one change, and the 1.9.0 review commit did
 ten things.
 
@@ -159,7 +161,7 @@ into prose is the intent, and demanding a literal match would only train people 
 This section was assembled by the tool and then written up by hand, which is the intended
 workflow — it generates a skeleton and a coverage gate, never the prose. The gate then
 caught two things this very section had dropped, including a bug found by running the tool
-over this repo's own 2026-04/05 history: a bullet used as the commit *subject* swallowed
+over this repo's own 2026-04/05 history: a bullet used as the commit _subject_ swallowed
 the entire body as continuation text, so one note came out as three paragraphs of
 implementation detail.
 
@@ -192,7 +194,7 @@ config rather than after.
   now derive their own identity; `epub.volumeTitles` names them properly.
 - **An ePub volume matching no documents shipped as a success** — a typo'd book name
   produced a valid ~10KB book with a cover, a nav and no chapters, at exit 0. It now fails
-  and lists the volumes that do exist. Relatedly, a corpus where *every* doc names a
+  and lists the volumes that do exist. Relatedly, a corpus where _every_ doc names a
   volume no longer errors on its empty default bucket.
 - **An invite link was unredeemable** on a proxied dev server with no `preview.tunnel`
   block: the lock armed off a config section that did not exist while the `?t=` reader,
@@ -201,7 +203,7 @@ config rather than after.
   listened on another — the drift #39 was meant to end, reintroduced by the commit that
   claimed to end it.
 - **The deploy and tunnel bins printed ✅ over failed remote steps.** `tosijs-deploy` now
-  distinguishes *deployed* from *routed* and exits non-zero when the files landed but
+  distinguishes _deployed_ from _routed_ and exits non-zero when the files landed but
   nothing serves them; `tosijs-tunnel` marks a public URL that is not routed.
 - **Preview roots other than `/srv/preview` registered successfully and routed nothing** —
   the write side was de-hardcoded while the Caddyfile glob and index script still named
@@ -209,8 +211,25 @@ config rather than after.
   `preview.caddySitesDir`.
 - **`release-check` cleared an empty range** at exactly the release boundary, because
   `git describe` returns the nearest tag including prereleases. It now baselines on the
-  last stable release *this commit descends from*, so a hotfix tagged out of order or a
+  last stable release _this commit descends from_, so a hotfix tagged out of order or a
   maintenance branch cannot mislead it.
+- **Publishing now gates on `release-check`.** It was added mid-cycle, and the first thing
+  it caught was nine unrecorded annotations including a `[break]` — the `deploy/Caddyfile`
+  change above, which would otherwise have shipped with no migration note at all.
+- **The release gate hardened against itself.** `release-check` is now baselined on the
+  last stable release this commit _descends from_ (`git describe --exclude`), so a hotfix
+  tagged after a later release, or a maintenance branch, cannot mislead it — a repo-wide
+  tag scan got both wrong. Its coverage matcher also stopped crying wolf: it filtered
+  short words out of the annotation but not out of the changelog, so entries that were
+  plainly written up got reported as missing.
+- **`isLockedDown()` and `hasTunnel()` are exported** from the auth module. The predicate
+  existed in three places, one of them recomputed inside its own regression test — so
+  reverting the fix left the entire suite green. The test imports the real function now.
+- **The browser-test lane keys on haltija's `ready` signal** (haltija ≥ 1.6.1, added in
+  response to us filing it): a server that is up but has no connected tab is no longer
+  adopted, because `hj navigate` then fails with "no browser reachable". That cost three
+  lane runs in a day, each needing a manual `pkill`. The floor also named 1.5.5, a version
+  that was never published.
 - **New "Host bootstrap" docs**, because the preview host needs setting up once before
   any project can register. Both bins write fragments that `import preview_site` /
   `import tunnel_site` — snippets that only exist once the host has a Caddyfile — so an
@@ -223,8 +242,8 @@ config rather than after.
 ### For maintainers of adopting projects
 
 `bun run test-consumer` packs the tarball, installs it into a scratch project, and builds
-from that project's cwd. Every other lane runs *in this repo, from this repo, with one dev
-server* — and four regressions shipped anyway, each living outside exactly that envelope.
+from that project's cwd. Every other lane runs _in this repo, from this repo, with one dev
+server_ — and four regressions shipped anyway, each living outside exactly that envelope.
 More unit tests would have caught none of them; the gap was context, not depth.
 
 ### 1.9.0-rc.2 (prerelease detail)

@@ -69,10 +69,16 @@ const DEFAULT_IDLE_HOURS = 8
  *   - `hj` action commands (`navigate`, `click`, …) exit NON-ZERO on failure, so the
  *     test lane below can trust an exit code instead of racing to a timeout.
  */
-// ^1.5.5, not ^1.5.0: haltija#7 (teardown leaving Electron grandchildren alive) is fixed
-// in 1.5.5, and a bunx cache holding 1.5.0-1.5.4 satisfies the looser range — silently
-// reintroducing the Electron accumulation this pin exists to prevent.
-const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.5.5'
+/*
+^1.6.1 — the first version reporting `ready` (haltija#11), which is what lets the lane
+tell "server up" from "there is a tab to drive".
+
+The previous floor said ^1.5.5 and cited the teardown fix landing there. **1.5.5 was never
+published** — the published line goes 1.5.4 → 1.6.0 — so that floor named a version that
+does not exist and silently resolved to whatever 1.6+ shipped. A pin whose justification
+cannot be checked is not a pin.
+*/
+const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.6.1'
 
 /**
  * Resolve the idle-exit timeout to milliseconds (0 = disabled).
@@ -1415,16 +1421,33 @@ export async function devServer(
       }
     }
 
-    // "Reachable" = the haltija SERVER answers `hj windows`, regardless of how many
-    // windows it has. This used to require `windows.length > 0`, so against a
-    // running-but-zero-window haltija (the normal state after you close a tab) it
-    // DECLINED to adopt it and raced a SECOND instance beside it — which never came up
-    // in the budget and timed out (then leaked its Electron via the old `haltija.kill`).
-    // `hj navigate` below creates/uses a window, so a zero-window server is fine to
-    // adopt; we only need the server up.
+    /*
+    Adoptable means DRIVABLE, not merely "the server answered".
+
+    This used to adopt any server that answered `hj windows`, on the reasoning that
+    `hj navigate` creates a window if there is none. That is not what happens: a server
+    with `windows: []` answers fine and then `hj navigate` fails with "no browser
+    reachable" — three times in one release here, each needing a manual `pkill` before
+    the lane would pass. (The rule before THAT required `windows.length > 0` and raced a
+    second instance; the honest signal is neither of those.)
+
+    haltija >= 1.6.1 reports `ready` — server up AND a tab connected — which is exactly
+    this distinction, added in response to tosijs-ui filing it (haltija#11). Older CLIs
+    have no such field, so fall back to counting windows, which is closer to right than
+    assuming.
+
+    Declining to adopt is safe: we spawn with `-f`, which stomps the stale instance.
+    */
     const haltijaReachable = async (): Promise<boolean> => {
       try {
-        await $`hj windows`.quiet()
+        const out = await $`hj windows`.quiet().text()
+        try {
+          const status = JSON.parse(out)
+          if (typeof status.ready === 'boolean') return status.ready
+          if (Array.isArray(status.windows)) return status.windows.length > 0
+        } catch {
+          /* older CLI, or non-JSON output — fall through */
+        }
         return true
       } catch {
         return false
