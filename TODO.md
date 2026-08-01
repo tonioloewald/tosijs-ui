@@ -7,6 +7,25 @@ the lint/typecheck gates, `touch()`, the red-tsc site discard, port defaults,
 per-project `remotePort`, the deploy asset path, the mutating smoke test, and the stale
 security prose. What is left:
 
+**Post-1.9.0 — adopt more of haltija (1.6.1–1.11.0):**
+
+- [ ] **Replace the hand-rolled wait loop with `hj doctor`.** We adopted the `ready` field
+      but not the command built for this: it exits non-zero and checks reachable → tab
+      connected → target unambiguous → tabs-not-all-hidden → version skew, *in the order
+      they bite*, with `--json` for machine use. haltija's `CI-INTEGRATION.md` now shows it
+      as the wait-loop condition, replacing exactly the DIY loop we still have. Also
+      `--strict`/`HALTIJA_STRICT=1` turns their advisory warnings into non-zero exits, so
+      a lane fails on the real cause instead of a downstream symptom.
+- [ ] **`hj map` instead of `hj tree` for driving live examples** (relates to haltija#10).
+      Structural and deterministic — no font/theme/viewport/animation variance — and a few
+      hundred bytes vs ~1–1.5k vision tokens for a screenshot. It also degrades honestly
+      against our rAF limitation: if nothing painted, the map is empty rather than
+      plausible.
+- [ ] **`hj screenshot --canvas`** for any WebGL/canvas doc example — real pixels, no
+      screen-share grant, works with the tab backgrounded. Mostly a tosijs-3d win; worth
+      telling them. It also warns on the `preserveDrawingBuffer` blank-image trap rather
+      than returning an empty picture.
+
 **Post-1.9.0:**
 
 - [ ] **[#40](https://github.com/tonioloewald/tosijs-ui/issues/40) — generate the per-icon
