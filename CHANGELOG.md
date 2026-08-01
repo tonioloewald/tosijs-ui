@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.9.2
+
+**Accessibility: every default color pair now meets WCAG AA.** Found by running
+`hj map` (haltija 1.11) over the doc site, which reports a measured contrast ratio per
+node — none of these were visible as wrong to the eye.
+
+| pair | was | now |
+| --- | --- | --- |
+| test widget, running | white on `#fa0` — **1.9:1** | `#2b1a00` on `#fa0` — 8.8:1 |
+| test widget, passed | white on `#0a0` — **3.1:1** | white on `#008a00` — 4.5:1 |
+| `--tosi-accent` as text | `#EE257B` — **4.05:1** on white, 4.3:1 on the page | `#d92270` — 4.6:1 |
+| `--tosi-accent` as a fill | white on `#EE257B` — **4.05:1** | white on `#d92270` — 4.8:1 |
+
+**The brand pink is 9% darker** (`#EE257B` → `#d92270`). It is imperceptible side by side
+and it was the only value that clears AA in *both* directions — as text on the page, and
+as a fill carrying white text. Override `--tosi-accent` if you want the original.
+
+The test widget's text color is now **paired** with its background rather than hardcoded
+to white. Amber is a genuinely light color: darkening it enough for white text turns it
+brown and stops reading as "in progress", so it keeps its hue and takes dark text, which
+is the conventional warning-badge treatment. New `--tosi-test-text-color-{pass,fail,running}`
+variables if you theme these.
+
+In dark mode the brand color is **brightened** rather than reused: `invertLuminance` flips
+the neutrals but leaves a saturated hue roughly where it was, so a pink dark enough for a
+near-white page landed at 4.4:1 on a near-black one. The hue is the brand; the luminance
+belongs to whatever it sits on.
+
 ## 1.9.1
 
 **`tosijs-ui` did not import under Node.** Shipped `dist/` used extensionless relative

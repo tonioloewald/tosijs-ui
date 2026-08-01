@@ -18,7 +18,7 @@ All components use these foundational CSS variables with the `--tosi-` prefix:
 | `--tosi-bg` | #fafafa | Background color |
 | `--tosi-bg-inset` | derived | Inset/recessed background |
 | `--tosi-text` | #222 | Text color |
-| `--tosi-accent` | #EE257B | Accent/brand color |
+| `--tosi-accent` | #d92270 | Accent/brand color (9% darker than the original #EE257B, from 1.9.2. The brand pink sat at 4.05:1 against white and 4.3:1 against the `#fafafa` page background — both under WCAG AA's 4.5:1 for normal text. This value clears AA in BOTH directions: as text on the page, and as a fill carrying white text.) |
 | `--tosi-accent-text` | derived | Text on accent background |
 | `--tosi-font-family` | system-ui | Font family |
 | `--tosi-font-size` | 16px | Base font size |
@@ -142,7 +142,7 @@ export interface ThemeColors {
 // ============================================================================
 
 export const defaultColors: ThemeColors = {
-  accent: Color.fromCss('#EE257B'),
+  accent: Color.fromCss('#d92270'),
   background: Color.fromCss('#fafafa'),
   text: Color.fromCss('#222222'),
 }

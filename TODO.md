@@ -9,6 +9,13 @@ security prose. What is left:
 
 **Post-1.9.0 — adopt more of haltija (1.6.1–1.11.0):**
 
+- [ ] **Expose `globalThis.tosiAgent`** so `hj map` carries binding provenance instead of
+      reconstructing from the DOM. haltija's map output names this seam explicitly, and it
+      is the general answer to their (now-closed) #10: agents currently drive our
+      live-example menu via `button.source-menu → .xin-menu-item`, which breaks every time
+      we restyle it. Surface toggle-source / refresh / set-code as wiring rather than
+      selectors.
+
 - [ ] **Replace the hand-rolled wait loop with `hj doctor`.** We adopted the `ready` field
       but not the command built for this: it exits non-zero and checks reachable → tab
       connected → target unambiguous → tabs-not-all-hidden → version skew, *in the order

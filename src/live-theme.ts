@@ -106,7 +106,7 @@ test('css canary: dark mode recomputes the background', async () => {
     '.css-canary-dark': { background: vars.tosiBg }, // var(--tosi-bg)
   })
   const colors = {
-    accent: Color.fromCss('#ee257b'),
+    accent: Color.fromCss('#d92270'),
     background: Color.fromCss('#ffffff'),
     text: Color.fromCss('#111111'),
   }
@@ -331,7 +331,7 @@ export class TosiThemeEditor extends Component<ThemeEditorParts> {
         {
           class: 'preview-button',
           style: {
-            background: 'var(--tosi-accent, #EE257B)',
+            background: 'var(--tosi-accent, #d92270)',
             color: 'var(--tosi-accent-text, white)',
           },
         },

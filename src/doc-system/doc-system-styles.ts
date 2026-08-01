@@ -40,7 +40,7 @@ export interface DocSystemTheme {
 
 /** Compute the full set of `:root` color variables from a few base colors. */
 export function docSystemColors(theme: DocSystemTheme = {}): XinStyleRule {
-  const brandColor = Color.fromCss(theme.accent ?? '#EE257B')
+  const brandColor = Color.fromCss(theme.accent ?? '#d92270')
   return {
     _textColor: theme.text ?? '#222',
     _brandColor: brandColor,
@@ -76,7 +76,7 @@ export function docSystemColors(theme: DocSystemTheme = {}): XinStyleRule {
 /** Build the full doc-system stylesheet for a given base theme. */
 export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
   const colors = docSystemColors(theme)
-  const brandColor = Color.fromCss(theme.accent ?? '#EE257B')
+  const brandColor = Color.fromCss(theme.accent ?? '#d92270')
   return {
     '@import':
       'https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,100..900;1,100..900&famiSpline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap',
@@ -112,6 +112,16 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
     },
     '.darkmode': {
       ...invertLuminance(colors),
+      /*
+      Lift the brand color for dark backgrounds.
+
+      `invertLuminance` flips the neutrals but leaves a saturated brand hue roughly where
+      it was, so one accent has to serve both a near-white and a near-black page — and a
+      pink dark enough to clear AA on `#fafafa` (4.56:1) lands at 4.4:1 on `#050505`,
+      just under. Brightening it in dark mode is the standard resolution: the hue is the
+      brand, the luminance belongs to the background it sits on.
+      */
+      _brandColor: brandColor.brighten(0.18),
       _shadowColor: brandColor.opacity(0.5),
       _menuShadow: `0 0 0 2px ${brandColor.opacity(0.75)}`,
       _menuSeparatorColor: brandColor.opacity(0.5),

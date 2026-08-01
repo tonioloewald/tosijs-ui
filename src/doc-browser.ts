@@ -217,11 +217,28 @@ const {
   li,
 } = elements
 
-// Test colors
+/*
+Test colors, and the text color that goes ON each — because contrast is a PAIR.
+
+The widget used one hardcoded `color: white` and swapped only the background, so the
+amber running state rendered white-on-#fa0 at **1.9:1** and the green pass state at
+**3.1:1**, both well under WCAG AA's 4.5:1. (Found by `hj map`, which reports a
+`contrast` ratio per node — invisible to the eye until measured.)
+
+Amber is a genuinely light color: darkening it far enough for white text turns it brown
+(63% brightness) and stops reading as "in progress". So it keeps its hue and takes dark
+text at 11:1, which is the conventional warning-badge treatment. Green only needed a
+nudge (81% brightness) to carry white.
+*/
 const testColor = {
-  pass: varDefault.testColorPass('#0a0'),
+  pass: varDefault.testColorPass('#008a00'),
   fail: varDefault.testColorFail('#c00'),
   running: varDefault.testColorRunning('#fa0'),
+}
+const testTextColor = {
+  pass: varDefault.testTextColorPass('#fff'),
+  fail: varDefault.testTextColorFail('#fff'),
+  running: varDefault.testTextColorRunning('#2b1a00'),
 }
 
 // Test indicator styles - widget inherits button styles from base stylesheet
@@ -273,26 +290,31 @@ const testIndicatorStyleSpec: XinStyleSheet = {
   // was overlaying this.
   '.test-widget': {
     _testBg: testColor.running,
+    _testFg: testTextColor.running,
     position: 'fixed',
     bottom: vars.spacing,
     left: vars.spacing,
     zIndex: '1000',
     background: vars.testBg,
-    color: 'white',
+    // Paired with the background, not fixed to white — see testTextColor above.
+    color: vars.testFg,
     gap: vars.spacing50,
   },
   '.test-widget[hidden]': { display: 'none' },
   '.test-widget.-running': {
     _testBg: testColor.running,
+    _testFg: testTextColor.running,
     animation:
       'test-appear 0.3s ease-out, test-pulse 2s ease-in-out 0.3s infinite',
   },
   '.test-widget.-passed': {
     _testBg: testColor.pass,
+    _testFg: testTextColor.pass,
     animation: 'test-fade 3s ease-out forwards',
   },
   '.test-widget.-failed': {
     _testBg: testColor.fail,
+    _testFg: testTextColor.fail,
     animation: 'test-pulse 2s ease-in-out infinite',
   },
 
