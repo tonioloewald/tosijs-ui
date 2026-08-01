@@ -76,7 +76,7 @@ and (in my opinion) common sense, but  not like [MUI's rating widget](https://mu
 */
 /*{ "parent": "Form Components" }*/
 import { Component, elements, deprecated, } from 'tosijs';
-import { icons } from './icons';
+import { icons } from './icons.js';
 const { span } = elements;
 export class TosiRating extends Component {
     static preferredTagName = 'tosi-rating';

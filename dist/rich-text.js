@@ -123,9 +123,9 @@ form.addEventListener('submit', (e) => {
 */
 /*{ "parent": "Form Components" }*/
 import { Component as WebComponent, elements, deprecated, } from 'tosijs';
-import { icons } from './icons';
-import { tosiSelect, TosiSelect } from './select';
-import { spacer as layoutSpacer } from './layout';
+import { icons } from './icons.js';
+import { tosiSelect, TosiSelect } from './select.js';
+import { spacer as layoutSpacer } from './layout.js';
 const { tosiSlot, div, button } = elements;
 const blockStyles = [
     {

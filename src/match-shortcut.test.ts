@@ -6,7 +6,7 @@ import {
   parseShortcut,
   canonicalShortcut,
   displayShortcut,
-} from './match-shortcut'
+} from './match-shortcut.js'
 
 const evt = (
   key: string,

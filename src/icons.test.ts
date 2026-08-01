@@ -6,7 +6,7 @@ import {
   defineIcons,
   resolveIcon,
   wrapIcon,
-} from './icons'
+} from './icons.js'
 
 describe('icons', () => {
   describe('icons proxy', () => {

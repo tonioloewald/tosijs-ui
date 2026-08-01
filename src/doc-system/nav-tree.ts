@@ -12,7 +12,7 @@ exist as real docs by the time the tree is built (the build auto-creates any
 missing section docs first), so this module never synthesizes.
 */
 
-import { resolveParent } from './routing'
+import { resolveParent } from './routing.js'
 
 export interface NavDoc {
   filename: string

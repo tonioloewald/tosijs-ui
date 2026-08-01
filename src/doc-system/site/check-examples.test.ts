@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
-import { checkExamples } from './check-examples'
-import type { Doc } from './docs'
+import { checkExamples } from './check-examples.js'
+import type { Doc } from './docs.js'
 
 const doc = (filename: string, text: string): Doc => ({
   filename,

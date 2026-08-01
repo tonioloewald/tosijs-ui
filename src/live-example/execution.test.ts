@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { executeInline } from './execution'
+import { executeInline } from './execution.js'
 
 // A transform that MUST NOT be called on the bake path. If it runs, the test fails
 // loudly instead of silently transpiling — proving the transpiler stays untouched.

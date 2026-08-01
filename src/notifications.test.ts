@@ -3,7 +3,7 @@ import {
   TosiNotification,
   tosiNotification,
   postNotification,
-} from './notifications'
+} from './notifications.js'
 
 describe('notifications', () => {
   beforeEach(() => {

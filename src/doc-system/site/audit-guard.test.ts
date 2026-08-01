@@ -7,7 +7,7 @@ import {
   resetAuditMemo,
   resolveAuditMode,
   type AuditRunner,
-} from './audit-guard'
+} from './audit-guard.js'
 
 // A real-shaped `bun audit --json` payload: keyed by package, each an advisory[].
 const flattedJson = JSON.stringify({

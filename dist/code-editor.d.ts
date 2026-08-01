@@ -1,6 +1,6 @@
 import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
-import type { CmHandle, TjsAutocompleteConfig } from './code-editor-cm';
-export type { TjsAutocompleteConfig } from './code-editor-cm';
+import type { CmHandle, TjsAutocompleteConfig } from './code-editor-cm.js';
+export type { TjsAutocompleteConfig } from './code-editor-cm.js';
 interface CodeEditorParts extends PartsMap {
     host: HTMLDivElement;
     diffHost: HTMLDivElement;

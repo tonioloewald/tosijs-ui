@@ -7,7 +7,7 @@ import {
   withoutHidden,
   partitionByBook,
   namedBooks,
-} from './book-target'
+} from './book-target.js'
 
 type D = {
   filename: string

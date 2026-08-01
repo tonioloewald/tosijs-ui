@@ -1,5 +1,5 @@
 import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
-import { SvgIcon } from './icons';
+import { SvgIcon } from './icons.js';
 interface PocketBarParts extends PartsMap {
     handle: HTMLButtonElement;
     handleIcon: SvgIcon;

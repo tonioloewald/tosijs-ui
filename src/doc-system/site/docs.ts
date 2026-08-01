@@ -97,9 +97,9 @@ e.g. `{ "pin": "top", "order": 1 }` above `{ "pin": "top", "order": 2 }`.
 
 import * as fs from 'fs'
 import * as path from 'path'
-import { pinnedSort } from '../nav-tree'
-import { buildSlugMap } from '../routing'
-import { withoutHidden } from '../book-target'
+import { pinnedSort } from '../nav-tree.js'
+import { buildSlugMap } from '../routing.js'
+import { withoutHidden } from '../book-target.js'
 
 export interface Doc {
   text: string

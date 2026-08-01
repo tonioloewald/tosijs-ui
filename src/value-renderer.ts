@@ -48,8 +48,8 @@ preview.append(
 
 /*{ "parent": "Helper Libraries" }*/
 
-import { i18n } from './localize'
-import { icons } from './icons'
+import { i18n } from './localize.js'
+import { icons } from './icons.js'
 
 export type Alignment = 'left' | 'right' | 'center'
 

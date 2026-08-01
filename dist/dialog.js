@@ -119,7 +119,7 @@ preview.append(
 */
 /*{ "parent": "Components" }*/
 import { Component, elements, on, vars, varDefault } from 'tosijs';
-import { findHighestZ } from './track-drag';
+import { findHighestZ } from './track-drag.js';
 const { dialog, button, header, footer, tosiSlot, h3, p, label, input, div } = elements;
 export class TosiDialog extends Component {
     static preferredTagName = 'tosi-dialog';

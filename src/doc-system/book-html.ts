@@ -7,9 +7,9 @@ Node-only APIs — so it bundles into the iife. Live examples are pretty-printed
 force-wrapped code listings, not executed.
 */
 
-import { renderDocMarkdown } from './render'
-import { buildSlugMap } from './routing'
-import { buildNavTree, NavNode, NavDoc } from './nav-tree'
+import { renderDocMarkdown } from './render.js'
+import { buildSlugMap } from './routing.js'
+import { buildNavTree, NavNode, NavDoc } from './nav-tree.js'
 
 export interface BookDoc {
   filename: string

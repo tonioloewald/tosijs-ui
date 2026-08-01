@@ -145,8 +145,8 @@ interface FilterMaker {
 */
 /*{ "parent": "Form Components" }*/
 import { Component as WebComponent, elements, } from 'tosijs';
-import { icons } from './icons';
-import { tosiSelect } from './select';
+import { icons } from './icons.js';
+import { tosiSelect } from './select.js';
 const { div, input, button, span } = elements;
 const passThru = (array) => array;
 const NULL_FILTER_DESCRIPTION = 'null filter, everything matches';

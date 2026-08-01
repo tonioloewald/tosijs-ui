@@ -168,18 +168,18 @@ import {
   buildSlugMap,
   pathForSlug,
   filenameForPath,
-} from './doc-system/routing'
-import { buildNavTree, NavNode } from './doc-system/nav-tree'
-import { renderDocMarkdown } from './doc-system/render'
-import { pageTitle } from './doc-system/doc-title'
-import { LiveExample, testManager } from './live-example'
-import { TestResults } from './live-example/test-harness'
-import { tosiSidenav, TosiSidenav } from './side-nav'
-import { icons } from './icons'
-import { tosiLocalized } from './localize'
-import { popMenu } from './menu'
-import { codeEditor, CodeEditor } from './code-editor'
-import { tosiDiff } from './diff'
+} from './doc-system/routing.js'
+import { buildNavTree, NavNode } from './doc-system/nav-tree.js'
+import { renderDocMarkdown } from './doc-system/render.js'
+import { pageTitle } from './doc-system/doc-title.js'
+import { LiveExample, testManager } from './live-example.js'
+import { TestResults } from './live-example/test-harness.js'
+import { tosiSidenav, TosiSidenav } from './side-nav.js'
+import { icons } from './icons.js'
+import { tosiLocalized } from './localize.js'
+import { popMenu } from './menu.js'
+import { codeEditor, CodeEditor } from './code-editor.js'
+import { tosiDiff } from './diff.js'
 
 // Types for global test results
 export interface PageTestResults {

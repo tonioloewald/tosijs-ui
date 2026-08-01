@@ -565,12 +565,12 @@ As well as any column names you want localized.
 */
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements, vars, varDefault, tosiValue, getListItem, getListBinding, tosi, } from 'tosijs';
-import { trackDrag } from './track-drag';
-import { icons } from './icons';
-import { valueRenderer } from './value-renderer';
-import { popMenu } from './menu';
-import * as dragAndDrop from './drag-and-drop';
-import { tosiLocalized, localize } from './localize';
+import { trackDrag } from './track-drag.js';
+import { icons } from './icons.js';
+import { valueRenderer } from './value-renderer.js';
+import { popMenu } from './menu.js';
+import * as dragAndDrop from './drag-and-drop.js';
+import { tosiLocalized, localize } from './localize.js';
 function defaultWidth(array, prop, charWidth) {
     const example = array.find((item) => item[prop] !== undefined && item[prop] !== null);
     if (example !== undefined) {

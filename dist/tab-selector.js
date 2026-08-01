@@ -136,8 +136,8 @@ initTooltips()
 */
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements, vars, } from 'tosijs';
-import { tosiLocalized, TosiLocalized } from './localize';
-import { icons } from './icons';
+import { tosiLocalized, TosiLocalized } from './localize.js';
+import { icons } from './icons.js';
 const { div, slot, span, button } = elements;
 export class TosiTabs extends WebComponent {
     static preferredTagName = 'tosi-tabs';

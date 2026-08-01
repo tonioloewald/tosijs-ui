@@ -99,8 +99,8 @@ and desaturates until checked, so a toggle needs no extra CSS.
 */
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements, vars, varDefault, } from 'tosijs';
-import { svgIcon } from './icons';
-import { positionFloat } from './pop-float';
+import { svgIcon } from './icons.js';
+import { positionFloat } from './pop-float.js';
 const { button, div, slot } = elements;
 export class TosiPocketBar extends WebComponent {
     static preferredTagName = 'tosi-pocket-bar';

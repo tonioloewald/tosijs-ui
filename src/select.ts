@@ -214,15 +214,15 @@ import {
   throttle,
   deprecated,
 } from 'tosijs'
-import { icons } from './icons'
+import { icons } from './icons.js'
 import {
   popMenu,
   MenuItem,
   SubMenu,
   removeLastMenu,
   resolveMenuItems,
-} from './menu'
-import { localize, XinLocalized } from './localize'
+} from './menu.js'
+import { localize, XinLocalized } from './localize.js'
 
 const { button, span, input } = elements
 

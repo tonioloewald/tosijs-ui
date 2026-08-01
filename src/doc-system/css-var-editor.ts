@@ -12,7 +12,7 @@ import {
   elements,
   Color,
 } from 'tosijs'
-import { tosiForm, TosiForm, tosiField } from '../form'
+import { tosiForm, TosiForm, tosiField } from '../form.js'
 
 const { h2, code } = elements
 

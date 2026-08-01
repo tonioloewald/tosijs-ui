@@ -9,7 +9,7 @@ import {
   DEFAULT_BOOK_CSS,
   buildEpub,
   rewriteInBookLinks,
-} from './epub'
+} from './epub.js'
 
 // ── #15: in-book cross-links (/slug/ and ?filename → <slug>.xhtml) ────────────
 

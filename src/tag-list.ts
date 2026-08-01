@@ -140,8 +140,8 @@ import {
   deprecated,
   XinStyleSheet,
 } from 'tosijs'
-import { popMenu, MenuItem } from './menu'
-import { icons } from './icons'
+import { popMenu, MenuItem } from './menu.js'
+import { icons } from './icons.js'
 
 const { div, input, span, button } = elements
 

@@ -1,4 +1,4 @@
-import { RemotePayload } from './types';
+import { RemotePayload } from './types.js';
 export declare const STORAGE_KEY = "live-example-payload";
 export declare function createRemoteKey(prefix: string, uuid: string, remoteId: string): string;
 export declare function sendPayload(storageKey: string, payload: RemotePayload): void;

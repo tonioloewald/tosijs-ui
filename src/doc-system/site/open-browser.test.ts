@@ -5,7 +5,7 @@ import {
   appleScript,
   osascriptArgv,
   type OpenPlanInput,
-} from './open-browser'
+} from './open-browser.js'
 
 const base: OpenPlanInput = {
   url: 'https://localhost:8787/',

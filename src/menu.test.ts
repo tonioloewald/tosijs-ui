@@ -14,7 +14,7 @@ import {
   MenuAction,
   SubMenu,
   PopMenuOptions,
-} from './menu'
+} from './menu.js'
 
 const noop = () => {}
 

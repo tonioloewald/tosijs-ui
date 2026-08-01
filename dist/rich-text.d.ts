@@ -1,5 +1,5 @@
 import { Component as WebComponent, ElementCreator, PartsMap, XinStyleSheet } from 'tosijs';
-import { TosiSelect } from './select';
+import { TosiSelect } from './select.js';
 export declare function blockStyle(options?: {
     caption: string;
     tagType: string;

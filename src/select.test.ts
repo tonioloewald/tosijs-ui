@@ -1,5 +1,5 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
-import { TosiSelect, tosiSelect } from './select'
+import { TosiSelect, tosiSelect } from './select.js'
 
 describe('TosiSelect', () => {
   let container: HTMLElement

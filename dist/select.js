@@ -203,9 +203,9 @@ preview.append(
 */
 /*{ "parent": "Form Components" }*/
 import { Component, elements, vars, throttle, deprecated, } from 'tosijs';
-import { icons } from './icons';
-import { popMenu, removeLastMenu, resolveMenuItems, } from './menu';
-import { localize, XinLocalized } from './localize';
+import { icons } from './icons.js';
+import { popMenu, removeLastMenu, resolveMenuItems, } from './menu.js';
+import { localize, XinLocalized } from './localize.js';
 const { button, span, input } = elements;
 const hasValue = (options, value) => {
     return !!options.find((option) => {

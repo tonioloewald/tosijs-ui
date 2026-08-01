@@ -7,7 +7,7 @@ import {
   parseVmStat,
   parseSwapUsage,
   assessMemoryPressure,
-} from './preflight'
+} from './preflight.js'
 
 const RAM = 32768 // a 32GB machine, as in the incident
 

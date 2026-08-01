@@ -412,14 +412,14 @@ context = {
 /*{ "parent": "Components" }*/
 
 import { Component, ElementCreator, elements, tosi } from 'tosijs'
-import { codeEditor, CodeEditor } from '../code-editor'
-import { tosiTabs } from '../tab-selector'
-import { icons } from '../icons'
-import { tosiPocketBar } from '../pocket-bar'
-import { postNotification } from '../notifications'
-import { popMenu } from '../menu'
+import { codeEditor, CodeEditor } from '../code-editor.js'
+import { tosiTabs } from '../tab-selector.js'
+import { icons } from '../icons.js'
+import { tosiPocketBar } from '../pocket-bar.js'
+import { postNotification } from '../notifications.js'
+import { popMenu } from '../menu.js'
 
-import { Dialect, ExampleContext, ExampleParts, TransformFn } from './types'
+import { Dialect, ExampleContext, ExampleParts, TransformFn } from './types.js'
 import {
   loadTransform,
   loadTjsTestApi,
@@ -427,20 +427,20 @@ import {
   contextVarName,
   AsyncFunction,
   TjsTestResult,
-} from './code-transform'
+} from './code-transform.js'
 import {
   STORAGE_KEY,
   createRemoteKey,
   RemoteSyncManager,
   openEditorWindow,
-} from './remote-sync'
-import { executeInline, executeInIframe } from './execution'
-import { insertExamples } from './insert-examples'
+} from './remote-sync.js'
+import { executeInline, executeInIframe } from './execution.js'
+import { insertExamples } from './insert-examples.js'
 import {
   rewriteExampleBlocks,
   groupExamples,
   findFencedBlocks,
-} from './save-to-source'
+} from './save-to-source.js'
 import {
   exampleEditKey,
   saveExampleEdit,
@@ -448,9 +448,9 @@ import {
   clearExampleEdit,
   hasExampleEdit,
   ExampleEdit,
-} from './example-store'
-import { liveExampleStyleSpec } from './styles'
-import { runTests, TestResults } from './test-harness'
+} from './example-store.js'
+import { liveExampleStyleSpec } from './styles.js'
+import { runTests, TestResults } from './test-harness.js'
 
 const { div, tosiSlot, style, button, pre, span, label, input } = elements
 

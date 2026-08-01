@@ -52,7 +52,7 @@ import {
   TosiSidenav,
   TosiTabs,
   TosiLocalized,
-} from './index'
+} from './index.js'
 
 // Type-level tests: these lines verify that each alias works as a type.
 // If the export is only `const Foo = Bar` without a matching `type Foo = Bar`,

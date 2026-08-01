@@ -411,7 +411,7 @@ import {
   varDefault,
 } from 'tosijs'
 
-import { colorInput } from './color-input'
+import { colorInput } from './color-input.js'
 
 const { form, slot, tosiSlot, label, input, span } = elements
 

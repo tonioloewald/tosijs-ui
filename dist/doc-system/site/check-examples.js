@@ -22,7 +22,7 @@ executed, so they're skipped.
 Build-time only (bun). Never import from browser code.
 */
 import { marked } from 'marked';
-import { rewriteImports, AsyncFunction, loadTransform, UnsupportedImportError, } from '../../live-example/code-transform';
+import { rewriteImports, AsyncFunction, loadTransform, UnsupportedImportError, } from '../../live-example/code-transform.js';
 // The default live-example context (matches the IIFE globals the pages provide).
 // A project that sets a custom `context` on its <tosi-doc-system> can pass its
 // own keys; these are the tosijs-ui defaults.

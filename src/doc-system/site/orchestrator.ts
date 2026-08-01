@@ -13,32 +13,32 @@ cause an endless rebuild loop.
 */
 
 import * as path from 'path'
-import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target'
-import { buildSlugMap } from '../routing'
+import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js'
+import { buildSlugMap } from '../routing.js'
 import { existsSync, mkdirSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'
 import { $, spawn } from 'bun'
-import type { SiteConfig } from './site-config'
-import { extractDocs } from './docs'
+import type { SiteConfig } from './site-config.js'
+import { extractDocs } from './docs.js'
 import {
   checkExamples,
   formatExampleProblems,
   type ExampleProblem,
   type ExampleCheck,
-} from './check-examples'
-import type { ExampleBakes } from '../render'
-import { ensureSections } from './sections'
-import { generateLlmsTxt } from './make-llms-txt'
-import { generateSite } from './generate-site'
-import { findOutputDirOverlap } from './output-guard'
-import { preflight } from './preflight'
-import { auditDependencies, reportAudit } from './audit-guard'
-import { gatherBuildStamp, serializeBuildStamp } from './build-stamp'
+} from './check-examples.js'
+import type { ExampleBakes } from '../render.js'
+import { ensureSections } from './sections.js'
+import { generateLlmsTxt } from './make-llms-txt.js'
+import { generateSite } from './generate-site.js'
+import { findOutputDirOverlap } from './output-guard.js'
+import { preflight } from './preflight.js'
+import { auditDependencies, reportAudit } from './audit-guard.js'
+import { gatherBuildStamp, serializeBuildStamp } from './build-stamp.js'
 import {
   tjsEditorExternal,
   tjsEditorLeakedAsExternal,
   classicScriptSyntaxErrorInChild,
-} from './bundle-guard'
+} from './bundle-guard.js'
 
 declare global {
   var Bun: any

@@ -6,9 +6,9 @@ doc-browser (the user's browser prints it to PDF). Pure rendering — no fs, no
 Node-only APIs — so it bundles into the iife. Live examples are pretty-printed,
 force-wrapped code listings, not executed.
 */
-import { renderDocMarkdown } from './render';
-import { buildSlugMap } from './routing';
-import { buildNavTree } from './nav-tree';
+import { renderDocMarkdown } from './render.js';
+import { buildSlugMap } from './routing.js';
+import { buildNavTree } from './nav-tree.js';
 // Clean book typography; force-wraps code so listings never overflow a page.
 export const DEFAULT_BOOK_CSS = `/* doc-system book stylesheet */
 html { font-size: 100%; }

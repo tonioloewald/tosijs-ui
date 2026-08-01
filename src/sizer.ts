@@ -27,8 +27,8 @@ from the bottom-right.
 /*{ "parent": "Components" }*/
 
 import { Component as XinComponent, ElementCreator, vars } from 'tosijs'
-import { icons } from './icons'
-import { trackDrag } from './track-drag'
+import { icons } from './icons.js'
+import { trackDrag } from './track-drag.js'
 
 export class TosiSizer extends XinComponent {
   static preferredTagName = 'tosi-sizer'

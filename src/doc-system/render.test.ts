@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test'
-import { renderDocMarkdown } from './render'
+import { renderDocMarkdown } from './render.js'
 
 test('a ```lang#id fence stamps data-example-id and keeps the language clean', () => {
   const html = renderDocMarkdown('```js#my-demo\nconst x = 1\n```')

@@ -5,7 +5,7 @@ import {
   loadExampleEdit,
   clearExampleEdit,
   hasExampleEdit,
-} from './example-store'
+} from './example-store.js'
 
 describe('example-store', () => {
   beforeEach(() => localStorage.clear())

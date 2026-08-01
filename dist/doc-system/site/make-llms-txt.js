@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { buildSlugMap, pathForSlug } from '../routing';
+import { buildSlugMap, pathForSlug } from '../routing.js';
 const SRC = 'src';
 const DIST = 'dist';
 function extractTitle(text) {

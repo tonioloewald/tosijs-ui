@@ -1,5 +1,5 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
-import { TosiDialog, tosiDialog } from './dialog'
+import { TosiDialog, tosiDialog } from './dialog.js'
 
 describe('TosiDialog', () => {
   let container: HTMLElement

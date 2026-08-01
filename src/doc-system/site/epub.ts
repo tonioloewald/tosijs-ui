@@ -17,14 +17,14 @@ Build-time only (Bun APIs + the `zip` CLI); never import from browser code.
 
 import * as fs from 'fs'
 import * as path from 'path'
-import { renderDocMarkdown } from '../render'
-import { buildSlugMap, pathForSlug, slugForPath } from '../routing'
-import { buildNavTree, NavNode } from '../nav-tree'
-import type { Doc } from './docs'
-import { partitionByBook, DEFAULT_BOOK } from '../book-target'
-import type { SiteConfig } from './site-config'
-import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html'
-import { selectBookDocs } from '../book-manifest'
+import { renderDocMarkdown } from '../render.js'
+import { buildSlugMap, pathForSlug, slugForPath } from '../routing.js'
+import { buildNavTree, NavNode } from '../nav-tree.js'
+import type { Doc } from './docs.js'
+import { partitionByBook, DEFAULT_BOOK } from '../book-target.js'
+import type { SiteConfig } from './site-config.js'
+import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html.js'
+import { selectBookDocs } from '../book-manifest.js'
 
 // Re-exported for back-compat (tosijs-ui/site's public surface + tests).
 export { DEFAULT_BOOK_CSS, stripDocMeta }

@@ -1,4 +1,4 @@
-import { Dialect, ExampleContext, TransformFn } from './types'
+import { Dialect, ExampleContext, TransformFn } from './types.js'
 
 export const AsyncFunction = (async () => {
   /* placeholder */

@@ -16,12 +16,12 @@ Build-time only (Bun APIs + the `zip` CLI); never import from browser code.
 */
 import * as fs from 'fs';
 import * as path from 'path';
-import { renderDocMarkdown } from '../render';
-import { buildSlugMap, pathForSlug, slugForPath } from '../routing';
-import { buildNavTree } from '../nav-tree';
-import { partitionByBook, DEFAULT_BOOK } from '../book-target';
-import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html';
-import { selectBookDocs } from '../book-manifest';
+import { renderDocMarkdown } from '../render.js';
+import { buildSlugMap, pathForSlug, slugForPath } from '../routing.js';
+import { buildNavTree } from '../nav-tree.js';
+import { partitionByBook, DEFAULT_BOOK } from '../book-target.js';
+import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html.js';
+import { selectBookDocs } from '../book-manifest.js';
 // Re-exported for back-compat (tosijs-ui/site's public surface + tests).
 export { DEFAULT_BOOK_CSS, stripDocMeta };
 // ── XML / XHTML helpers ─────────────────────────────────────────────────────

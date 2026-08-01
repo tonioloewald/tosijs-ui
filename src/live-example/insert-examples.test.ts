@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { insertExamples } from './insert-examples'
+import { insertExamples } from './insert-examples.js'
 
 // A minimal stand-in for the live-example element: insertExamples only sets
 // js/html/css/test/dialect + id on it and calls two lifecycle no-ops, so a plain

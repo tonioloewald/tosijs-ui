@@ -4,7 +4,7 @@ import {
   tjsEditorExternal,
   tjsEditorLeakedAsExternal,
   classicScriptSyntaxError,
-} from './bundle-guard'
+} from './bundle-guard.js'
 
 describe('tjsEditorExternal', () => {
   test('bundles the extension in (returns no externals) when tjs-lang resolves', () => {

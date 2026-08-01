@@ -3,7 +3,7 @@ import {
   findFencedBlocks,
   groupExamples,
   rewriteExampleBlocks,
-} from './save-to-source'
+} from './save-to-source.js'
 
 const SRC = `# demo
 

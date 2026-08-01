@@ -18,7 +18,7 @@ import {
   Color,
   invertLuminance,
 } from 'tosijs'
-import { icons, svg2DataUrl } from '../icons'
+import { icons, svg2DataUrl } from '../icons.js'
 
 // The sidebar's geometry, shared by the hydrated layout and the pre-hydration one.
 // These mirror what <tosi-sidenav> is given by doc-browser (navSize / minSize): the

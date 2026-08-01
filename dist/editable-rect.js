@@ -69,8 +69,8 @@ After an element's position, size, or rotation are adjusted a `change` event is 
 */
 /*{ "parent": "Components" }*/
 import { Component, elements, vars } from 'tosijs';
-import { icons } from './icons';
-import { trackDrag } from './track-drag';
+import { icons } from './icons.js';
+import { trackDrag } from './track-drag.js';
 const { div, slot } = elements;
 export class EditableRect extends Component {
     static preferredTagName = 'tosi-editable';

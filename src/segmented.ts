@@ -144,8 +144,8 @@ import {
   varDefault,
   deprecated,
 } from 'tosijs'
-import { icons } from './icons'
-import { tosiLocalized } from './localize'
+import { icons } from './icons.js'
+import { tosiLocalized } from './localize.js'
 
 const { div, slot, label, span, input } = elements
 

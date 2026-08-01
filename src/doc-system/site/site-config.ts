@@ -11,12 +11,12 @@ Imports here are type-only so this module stays free of runtime/DOM dependencies
 (it is loaded by the build, which has no DOM).
 */
 
-import type { ProjectLinks, LinkItem } from '../../doc-browser'
-import type { DocSystemTheme } from '../doc-system-styles'
-import type { Doc } from './docs'
-import type { PreflightMode } from './preflight'
-import type { AuditConfig } from './audit-guard'
-import type { BookManifest } from '../book-manifest'
+import type { ProjectLinks, LinkItem } from '../../doc-browser.js'
+import type { DocSystemTheme } from '../doc-system-styles.js'
+import type { Doc } from './docs.js'
+import type { PreflightMode } from './preflight.js'
+import type { AuditConfig } from './audit-guard.js'
+import type { BookManifest } from '../book-manifest.js'
 
 export type SiteHost = 'github-pages' | 'firebase' | 'static'
 

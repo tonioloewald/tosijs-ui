@@ -4,7 +4,7 @@ import {
   pathForSlug,
   legacyQueryPath,
   rewriteDocLinks,
-} from './routing'
+} from './routing.js'
 
 const docs = [
   { filename: 'README.md' },

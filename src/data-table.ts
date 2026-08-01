@@ -577,13 +577,13 @@ import {
   getListBinding,
   tosi,
 } from 'tosijs'
-import { trackDrag } from './track-drag'
-import { SortCallback } from './make-sorter'
-import { icons } from './icons'
-import { valueRenderer, ValueRenderer, ValueRendererType } from './value-renderer'
-import { popMenu, MenuItem } from './menu'
-import * as dragAndDrop from './drag-and-drop'
-import { tosiLocalized, localize } from './localize'
+import { trackDrag } from './track-drag.js'
+import { SortCallback } from './make-sorter.js'
+import { icons } from './icons.js'
+import { valueRenderer, ValueRenderer, ValueRendererType } from './value-renderer.js'
+import { popMenu, MenuItem } from './menu.js'
+import * as dragAndDrop from './drag-and-drop.js'
+import { tosiLocalized, localize } from './localize.js'
 
 function defaultWidth(
   array: any[],

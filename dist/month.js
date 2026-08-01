@@ -147,9 +147,9 @@ form.addEventListener('reset', () => {
 */
 /*{ "parent": "Form Components" }*/
 import { Component, elements, varDefault } from 'tosijs';
-import { tosiSelect } from './select';
-import { icons } from './icons';
-import { popMenu } from './menu';
+import { tosiSelect } from './select.js';
+import { icons } from './icons.js';
+import { popMenu } from './menu.js';
 const { div, span, button } = elements;
 const DAY_MS = 24 * 3600 * 1000;
 const WEEK = [0, 1, 2, 3, 4, 5, 6];

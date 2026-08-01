@@ -73,9 +73,9 @@ import {
   PartsMap,
   varDefault,
 } from 'tosijs'
-import { tosiDiff, TosiDiff } from './diff'
-import type { CmHandle, TjsAutocompleteConfig } from './code-editor-cm'
-export type { TjsAutocompleteConfig } from './code-editor-cm'
+import { tosiDiff, TosiDiff } from './diff.js'
+import type { CmHandle, TjsAutocompleteConfig } from './code-editor-cm.js'
+export type { TjsAutocompleteConfig } from './code-editor-cm.js'
 
 const { div } = elements
 
@@ -342,7 +342,7 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
     if (this._loadPromise === undefined) {
       // Lazy chunk — CodeMirror only enters the bundle here, on first editor use.
       const generation = ++this._loadGeneration
-      this._loadPromise = import('./code-editor-cm').then(
+      this._loadPromise = import('./code-editor-cm.js').then(
         ({ createCmEditor }) => {
           // The chunk fetch is async, and the pre-load window is WIDE on a cold fetch —
           // doc-browser navigation and closeEditor() both remove editors mid-flight. If we
@@ -409,7 +409,7 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
   private applyTjsExtension(): void {
     const handle = this._handle
     if (!handle || !this.isTjsMode()) return
-    import('./code-editor-cm')
+    import('./code-editor-cm.js')
       .then(({ loadTjsExtension }) =>
         loadTjsExtension(this._tjsAutocomplete ?? {})
       )

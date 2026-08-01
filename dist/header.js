@@ -89,7 +89,7 @@ preview.append(
 */
 /*{ "parent": "Components" }*/
 import { Component, elements, varDefault } from 'tosijs';
-import { icons } from './icons';
+import { icons } from './icons.js';
 const { a } = elements;
 // ============================================================================
 // Header Component

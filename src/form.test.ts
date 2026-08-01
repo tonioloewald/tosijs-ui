@@ -1,9 +1,9 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
-import { TosiForm, tosiForm, TosiField, tosiField } from './form'
-import { tosiRating } from './rating'
-import { tosiSelect } from './select'
-import { tosiSegmented } from './segmented'
-import { tosiTagList } from './tag-list'
+import { TosiForm, tosiForm, TosiField, tosiField } from './form.js'
+import { tosiRating } from './rating.js'
+import { tosiSelect } from './select.js'
+import { tosiSegmented } from './segmented.js'
+import { tosiTagList } from './tag-list.js'
 
 describe('TosiForm', () => {
   let container: HTMLElement

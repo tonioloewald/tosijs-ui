@@ -31,7 +31,7 @@ server-rendered template had no way to get markup except by parsing
 resorted to when putting its own logo on a generated page. There is nothing to protect:
 the map ships in the bundle either way.
 */
-import iconData from './icon-data';
+import iconData from './icon-data.js';
 export function iconSvg(name) {
     const data = iconData;
     let key = name.endsWith('_') ? name.slice(0, -1) : name;

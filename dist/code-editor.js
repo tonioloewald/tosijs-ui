@@ -65,7 +65,7 @@ won't catch this one.
 */
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements, varDefault, } from 'tosijs';
-import { tosiDiff } from './diff';
+import { tosiDiff } from './diff.js';
 const { div } = elements;
 // Warn once per removed member, not once per access — a live-example page holds
 // dozens of editors and a render-loop read would otherwise flood the console.
@@ -286,7 +286,7 @@ export class CodeEditor extends WebComponent {
         if (this._loadPromise === undefined) {
             // Lazy chunk — CodeMirror only enters the bundle here, on first editor use.
             const generation = ++this._loadGeneration;
-            this._loadPromise = import('./code-editor-cm').then(({ createCmEditor }) => {
+            this._loadPromise = import('./code-editor-cm.js').then(({ createCmEditor }) => {
                 // The chunk fetch is async, and the pre-load window is WIDE on a cold fetch —
                 // doc-browser navigation and closeEditor() both remove editors mid-flight. If we
                 // mounted regardless:
@@ -346,7 +346,7 @@ export class CodeEditor extends WebComponent {
         const handle = this._handle;
         if (!handle || !this.isTjsMode())
             return;
-        import('./code-editor-cm')
+        import('./code-editor-cm.js')
             .then(({ loadTjsExtension }) => loadTjsExtension(this._tjsAutocomplete ?? {}))
             .then((ext) => {
             if (ext && this._handle === handle && this.isTjsMode()) {

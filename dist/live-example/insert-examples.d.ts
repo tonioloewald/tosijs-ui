@@ -1,6 +1,6 @@
 import { ElementCreator } from 'tosijs';
-import { ExampleContext } from './types';
-import type { LiveExample } from './component';
+import { ExampleContext } from './types.js';
+import type { LiveExample } from './component.js';
 /**
  * Find and replace sequences of code blocks with live examples
  */

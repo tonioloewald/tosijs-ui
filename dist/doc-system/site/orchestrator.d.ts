@@ -1,4 +1,4 @@
-import type { SiteConfig } from './site-config';
+import type { SiteConfig } from './site-config.js';
 declare global {
     var Bun: any;
 }

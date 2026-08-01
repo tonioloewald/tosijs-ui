@@ -403,7 +403,7 @@ preview.querySelector('.set-values-btn').addEventListener('click', () => {
 */
 /*{ "parent": "Form Components" }*/
 import { Component as XinComponent, elements, varDefault, } from 'tosijs';
-import { colorInput } from './color-input';
+import { colorInput } from './color-input.js';
 const { form, slot, tosiSlot, label, input, span } = elements;
 function attr(element, name, value) {
     if (value !== '' && value !== false) {

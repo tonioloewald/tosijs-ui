@@ -57,7 +57,7 @@ This is a minimalist carousel component that supports the usual stuff.
 */
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements, vars, } from 'tosijs';
-import { icons } from './icons';
+import { icons } from './icons.js';
 const { button, slot, div } = elements;
 export class TosiCarousel extends WebComponent {
     static preferredTagName = 'tosi-carousel';

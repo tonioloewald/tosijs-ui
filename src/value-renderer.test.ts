@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll } from 'bun:test'
-import { valueRenderer, parseValueType } from './value-renderer'
-import { i18n } from './localize'
+import { valueRenderer, parseValueType } from './value-renderer.js'
+import { i18n } from './localize.js'
 
 // Pin the locale so Intl output is deterministic across environments.
 beforeAll(() => {

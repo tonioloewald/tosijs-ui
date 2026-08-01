@@ -11,7 +11,7 @@ import {
   LINK_TOKEN_TTL_MS,
   SESSION_TTL_MS,
   SESSION_COOKIE,
-} from './dev-auth'
+} from './dev-auth.js'
 
 const NOW = 1_700_000_000_000
 
@@ -114,12 +114,12 @@ test('the redirect target has the token stripped', () => {
 // expression inside a TLS-requiring server closure with NO tests at any tier — while
 // a comment claimed a regression test that did not exist.
 
-import { isLoopbackAddress as serverSideLoopback } from './dev-server'
+import { isLoopbackAddress as serverSideLoopback } from './dev-server.js'
 import {
   mayWriteSource,
   isLoopbackAddressForAuth,
   isProxiedRequest,
-} from './dev-auth'
+} from './dev-auth.js'
 
 test('tunnel traffic ALWAYS needs a session — loopback is no shortcut', () => {
   // The whole point: a tunnel counterfeits "local", so a loopback peer proves nothing.
@@ -236,7 +236,7 @@ test('isProxiedRequest is NOT what authorizes writes', () => {
 import {
   isSafeRemotePath,
   safeRemoteRoots,
-} from '../../../bin/resolve-site-config'
+} from '../../../bin/resolve-site-config.js'
 
 test('isSafeRemotePath accepts preview roots', () => {
   for (const p of [
@@ -294,7 +294,7 @@ import {
   shouldInterceptLinkToken,
   isLockedDown,
   hasTunnel,
-} from './dev-auth'
+} from './dev-auth.js'
 
 test('REGRESSION: a forwarder that omits X-Forwarded-* cannot read a locked-down workspace', () => {
   // `ssh -R` with GatewayPorts yes, ngrok tcp, socat, iptables DNAT, nginx proxy_pass,

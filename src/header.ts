@@ -92,7 +92,7 @@ preview.append(
 
 import { Component, ElementCreator, elements, varDefault } from 'tosijs'
 
-import { icons } from './icons'
+import { icons } from './icons.js'
 
 const { a } = elements
 

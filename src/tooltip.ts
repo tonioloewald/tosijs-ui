@@ -42,9 +42,9 @@ initTooltips({
 
 import { elements, StyleSheet, varDefault } from 'tosijs'
 import { marked } from 'marked'
-import { popFloat, FloatPosition } from './pop-float'
-import { TosiFloat } from './float'
-import { localize } from './localize'
+import { popFloat, FloatPosition } from './pop-float.js'
+import { TosiFloat } from './float.js'
+import { localize } from './localize.js'
 
 const { span } = elements
 

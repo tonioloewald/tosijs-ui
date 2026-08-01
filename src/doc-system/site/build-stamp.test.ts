@@ -3,7 +3,7 @@ import {
   gatherBuildStamp,
   serializeBuildStamp,
   type GitReader,
-} from './build-stamp'
+} from './build-stamp.js'
 
 const fakeGit =
   (map: Record<string, string>): GitReader =>

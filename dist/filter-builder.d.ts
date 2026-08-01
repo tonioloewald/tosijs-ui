@@ -1,5 +1,5 @@
 import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
-import { TosiSelect } from './select';
+import { TosiSelect } from './select.js';
 type ObjectTest = (obj: any) => boolean;
 type ArrayFilter = (array: any[]) => any[];
 interface FilterMaker {

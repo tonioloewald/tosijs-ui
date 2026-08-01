@@ -144,8 +144,8 @@ This is simply a wrapper for `TosiNotification.post()`.
 /*{ "parent": "Components" }*/
 
 import { Component, elements, vars } from 'tosijs'
-import { icons } from './icons'
-import { findHighestZ } from './track-drag'
+import { icons } from './icons.js'
+import { findHighestZ } from './track-drag.js'
 const { div, button } = elements
 
 interface NotificationSpec {

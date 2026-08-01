@@ -105,7 +105,7 @@ Also see the [documentation for advanced interactions](https://lottiefiles.githu
 /*{ "parent": "Components" }*/
 
 import { Component as WebComponent, ElementCreator } from 'tosijs'
-import { scriptTag } from './via-tag'
+import { scriptTag } from './via-tag.js'
 
 export interface LottieConfig {
   container?: HTMLElement | ShadowRoot

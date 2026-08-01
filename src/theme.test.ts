@@ -7,7 +7,7 @@ import {
   defaultColors,
   baseVariables,
   ThemeColors,
-} from './theme'
+} from './theme.js'
 
 describe('theme', () => {
   describe('defaultColors', () => {

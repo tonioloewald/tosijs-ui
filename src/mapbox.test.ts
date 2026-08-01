@@ -1,5 +1,5 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
-import { MapBox, mapBox } from './mapbox'
+import { MapBox, mapBox } from './mapbox.js'
 
 /*
 #13: <tosi-map> constructed one mapboxgl.Map PER render while mapbox-gl.js was still

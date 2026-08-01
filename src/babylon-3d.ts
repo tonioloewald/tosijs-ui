@@ -208,8 +208,8 @@ be used to load `.glb` files. Setting `src` calls this for you on connect.
 
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, ElementCreator, elements } from 'tosijs'
-import { scriptTag } from './via-tag'
-import { icons, svg2DataUrl } from './icons'
+import { scriptTag } from './via-tag.js'
+import { icons, svg2DataUrl } from './icons.js'
 
 type B3dCallback =
   | ((element: B3d, BABYLON: any) => void)

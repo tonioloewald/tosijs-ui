@@ -90,7 +90,7 @@ just add the `no-drag` class to an element or its container.
 */
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements } from 'tosijs';
-import { trackDrag, bringToFront } from './track-drag';
+import { trackDrag, bringToFront } from './track-drag.js';
 const { slot } = elements;
 export class TosiFloat extends WebComponent {
     static preferredTagName = 'tosi-float';

@@ -1,5 +1,5 @@
 import { Component, ElementCreator, ElementProps, PartsMap } from 'tosijs';
-import { MenuItem } from './menu';
+import { MenuItem } from './menu.js';
 type OptionRequest = () => Promise<string | undefined>;
 export interface SelectOption {
     icon?: string | HTMLElement;

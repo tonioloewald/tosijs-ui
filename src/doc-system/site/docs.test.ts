@@ -1,5 +1,5 @@
 import { test, expect, describe } from 'bun:test'
-import { parseFrontmatter } from './docs'
+import { parseFrontmatter } from './docs.js'
 
 describe('parseFrontmatter', () => {
   test('parses & strips YAML frontmatter, maps keys, body starts at the H1', () => {

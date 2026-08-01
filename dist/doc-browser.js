@@ -152,17 +152,17 @@ The `tosijs-ui` demo is a complete working example. See:
 */
 /*{"pin":"bottom","parent":"Appendices"}*/
 import { elements, vars, varDefault, bindings, touch, getListItem, debounce, tosi, StyleSheet, } from 'tosijs';
-import { buildSlugMap, pathForSlug, filenameForPath, } from './doc-system/routing';
-import { buildNavTree } from './doc-system/nav-tree';
-import { renderDocMarkdown } from './doc-system/render';
-import { pageTitle } from './doc-system/doc-title';
-import { LiveExample, testManager } from './live-example';
-import { tosiSidenav, TosiSidenav } from './side-nav';
-import { icons } from './icons';
-import { tosiLocalized } from './localize';
-import { popMenu } from './menu';
-import { codeEditor } from './code-editor';
-import { tosiDiff } from './diff';
+import { buildSlugMap, pathForSlug, filenameForPath, } from './doc-system/routing.js';
+import { buildNavTree } from './doc-system/nav-tree.js';
+import { renderDocMarkdown } from './doc-system/render.js';
+import { pageTitle } from './doc-system/doc-title.js';
+import { LiveExample, testManager } from './live-example.js';
+import { tosiSidenav, TosiSidenav } from './side-nav.js';
+import { icons } from './icons.js';
+import { tosiLocalized } from './localize.js';
+import { popMenu } from './menu.js';
+import { codeEditor } from './code-editor.js';
+import { tosiDiff } from './diff.js';
 const { div, span, a, header, button, template, input, h2, img, details, summary, ul, li, } = elements;
 // Test colors
 const testColor = {

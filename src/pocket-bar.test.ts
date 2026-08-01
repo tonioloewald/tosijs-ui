@@ -1,5 +1,5 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
-import { TosiPocketBar, tosiPocketBar } from './pocket-bar'
+import { TosiPocketBar, tosiPocketBar } from './pocket-bar.js'
 
 describe('TosiPocketBar', () => {
   let container: HTMLElement

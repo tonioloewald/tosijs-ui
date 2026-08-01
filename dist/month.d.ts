@@ -1,6 +1,6 @@
 import { Component, PartsMap } from 'tosijs';
-import { TosiSelect } from './select';
-import { MenuItem } from './menu';
+import { TosiSelect } from './select.js';
+import { MenuItem } from './menu.js';
 interface MonthParts extends PartsMap {
     jump: HTMLButtonElement;
     month: TosiSelect;

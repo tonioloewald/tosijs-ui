@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test'
-import { iconSvg, iconNames } from './icon-svg'
+import { iconSvg, iconNames } from './icon-svg.js'
 
 // The point of this module is that it works with NO DOM — a build script, an ePub
 // pass, a server-rendered template. `icons.ts` imports tosijs and throws on

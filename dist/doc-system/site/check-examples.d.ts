@@ -1,5 +1,5 @@
-import type { Doc } from './docs';
-import type { ExampleBakes } from '../render';
+import type { Doc } from './docs.js';
+import type { ExampleBakes } from '../render.js';
 export interface ExampleProblem {
     filename: string;
     title: string;

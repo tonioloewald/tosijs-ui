@@ -1,6 +1,6 @@
 import { PartsMap } from 'tosijs'
-import { TosiTabs } from '../tab-selector'
-import { CodeEditor } from '../code-editor'
+import { TosiTabs } from '../tab-selector.js'
+import { CodeEditor } from '../code-editor.js'
 
 export interface ExampleContext {
   [key: string]: any

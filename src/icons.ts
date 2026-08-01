@@ -543,15 +543,15 @@ import {
   vars,
   varDefault,
 } from 'tosijs'
-import { SVGIconMap } from './icon-types'
-import iconData from './icon-data'
+import { SVGIconMap } from './icon-types.js'
+import iconData from './icon-data.js'
 
 export const defineIcons = (newIcons: { [key: string]: string }): void => {
   Object.assign(iconData, newIcons)
 }
 
 // Raw-markup accessors live in ./icon-svg (DOM-free) and are re-exported here.
-export { iconSvg, iconNames } from './icon-svg'
+export { iconSvg, iconNames } from './icon-svg.js'
 
 export const svg2DataUrl = (
   icon: Element,

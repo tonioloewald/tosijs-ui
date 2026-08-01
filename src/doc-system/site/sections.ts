@@ -14,9 +14,9 @@ doesn't loop. TOC links are root-relative (basePath-agnostic source).
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import * as path from 'path'
-import { buildSlugMap, pathForSlug, slugify, resolveParent } from '../routing'
-import { pinnedSort } from '../nav-tree'
-import type { Doc } from './docs'
+import { buildSlugMap, pathForSlug, slugify, resolveParent } from '../routing.js'
+import { pinnedSort } from '../nav-tree.js'
+import type { Doc } from './docs.js'
 
 const TOC_RE = /<!-- toc -->[\s\S]*?<!-- \/toc -->/
 

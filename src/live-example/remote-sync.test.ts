@@ -5,7 +5,7 @@ import {
   sendPayload,
   parsePayload,
   RemoteSyncManager,
-} from './remote-sync'
+} from './remote-sync.js'
 
 describe('createRemoteKey', () => {
   test('uses remoteId when set', () => {

@@ -1,5 +1,5 @@
-import './build-dom-shim';
-import { DocSystemTheme } from '../doc-system-styles';
+import './build-dom-shim.js';
+import { DocSystemTheme } from '../doc-system-styles.js';
 declare global {
     var Bun: any;
 }

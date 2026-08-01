@@ -1,4 +1,4 @@
-import { Dialect, ExampleContext, TransformFn } from './types';
+import { Dialect, ExampleContext, TransformFn } from './types.js';
 export declare const AsyncFunction: Function;
 /**
  * Thrown by `rewriteImports` when an example has a static import the environment

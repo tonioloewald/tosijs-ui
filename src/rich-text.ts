@@ -132,10 +132,10 @@ import {
   deprecated,
   XinStyleSheet,
 } from 'tosijs'
-import { icons } from './icons'
+import { icons } from './icons.js'
 
-import { tosiSelect, TosiSelect } from './select'
-import { spacer as layoutSpacer } from './layout'
+import { tosiSelect, TosiSelect } from './select.js'
+import { spacer as layoutSpacer } from './layout.js'
 
 const { tosiSlot, div, button } = elements
 

@@ -152,8 +152,8 @@ import {
   elements,
   PartsMap,
 } from 'tosijs'
-import { icons } from './icons'
-import { tosiSelect, TosiSelect, SelectOption } from './select'
+import { icons } from './icons.js'
+import { tosiSelect, TosiSelect, SelectOption } from './select.js'
 
 const { div, input, button, span } = elements
 

@@ -1,4 +1,4 @@
-import { ExampleContext, TransformFn } from './types';
+import { ExampleContext, TransformFn } from './types.js';
 export interface TestResult {
     name: string;
     passed: boolean;

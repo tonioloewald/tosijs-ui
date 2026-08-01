@@ -1,4 +1,4 @@
-import { rewriteImports, AsyncFunction } from './code-transform';
+import { rewriteImports, AsyncFunction } from './code-transform.js';
 class AssertionError extends Error {
     constructor(message) {
         super(message);

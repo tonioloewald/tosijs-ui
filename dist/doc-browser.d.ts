@@ -1,4 +1,4 @@
-import { TestResults } from './live-example/test-harness';
+import { TestResults } from './live-example/test-harness.js';
 export interface PageTestResults {
     passed: boolean;
     tests: TestResults['tests'];

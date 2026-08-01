@@ -11,8 +11,8 @@ import { EditorState } from '@codemirror/state'
 import { CompletionContext } from '@codemirror/autocomplete'
 import { tjsCompletionSource } from 'tjs-lang/editors/codemirror'
 import { tosi } from 'tosijs'
-import { AsyncFunction, contextVarName } from './code-transform'
-import { withScopeCapture } from './execution'
+import { AsyncFunction, contextVarName } from './code-transform.js'
+import { withScopeCapture } from './execution.js'
 
 /**
  * Run an example the way live-example does, and return the locals it captured.

@@ -6,7 +6,7 @@ import {
   uncovered,
   unsupportedClaims,
   isPrereleaseTag,
-} from './release-notes'
+} from './release-notes.js'
 
 test('one bullet per thing — the reason a type: prefix is not enough', () => {
   // The commit that motivated this: subject says `fix(...)`, body does five things.

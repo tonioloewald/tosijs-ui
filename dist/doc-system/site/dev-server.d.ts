@@ -1,5 +1,5 @@
-import type { SiteConfig } from './site-config';
-import { isLoopbackAddressForAuth as isLoopbackAddress } from './dev-auth';
+import type { SiteConfig } from './site-config.js';
+import { isLoopbackAddressForAuth as isLoopbackAddress } from './dev-auth.js';
 declare global {
     var Bun: any;
 }

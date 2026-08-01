@@ -137,7 +137,7 @@ form.addEventListener('submit', (e) => {
 /*{ "parent": "Components" }*/
 
 import { Component as WebComponent, ElementCreator, elements } from 'tosijs'
-import { styleSheet, scriptTag } from './via-tag'
+import { styleSheet, scriptTag } from './via-tag.js'
 
 const { div } = elements
 

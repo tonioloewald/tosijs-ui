@@ -1,9 +1,9 @@
 import { ElementCreator, ElementPart, Component as WebComponent } from 'tosijs';
-import { SVGIconMap } from './icon-types';
+import { SVGIconMap } from './icon-types.js';
 export declare const defineIcons: (newIcons: {
     [key: string]: string;
 }) => void;
-export { iconSvg, iconNames } from './icon-svg';
+export { iconSvg, iconNames } from './icon-svg.js';
 export declare const svg2DataUrl: (icon: Element, fill?: string, stroke?: string, strokeWidth?: number) => string;
 export interface IconRule {
     prefix: string | RegExp;

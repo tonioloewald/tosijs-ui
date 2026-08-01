@@ -1,4 +1,4 @@
-import { RemotePayload } from './types'
+import { RemotePayload } from './types.js'
 
 export const STORAGE_KEY = 'live-example-payload'
 

@@ -1,5 +1,5 @@
-import { ExampleContext, TransformFn } from './types'
-import { rewriteImports, AsyncFunction } from './code-transform'
+import { ExampleContext, TransformFn } from './types.js'
+import { rewriteImports, AsyncFunction } from './code-transform.js'
 
 export interface TestResult {
   name: string

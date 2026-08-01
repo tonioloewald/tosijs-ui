@@ -10,9 +10,9 @@ would trigger an endless watch->rebuild loop.
 Usage: bun src/doc-system/site/generate-css.ts [outputPath]
 Default output: docs/doc-system.css
 */
-import './build-dom-shim'; // must precede any tosijs import (build has no DOM)
+import './build-dom-shim.js'; // must precede any tosijs import (build has no DOM)
 import { css } from 'tosijs';
-import { docSystemStyleSpec } from '../doc-system-styles';
+import { docSystemStyleSpec } from '../doc-system-styles.js';
 export async function generateCss(outputPath = 'docs/doc-system.css', theme = {}) {
     await Bun.write(outputPath, css(docSystemStyleSpec(theme)));
 }

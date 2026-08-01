@@ -11,12 +11,12 @@ Build-time only (Bun APIs). Never import this from browser code.
 import * as path from 'path'
 import { statSync } from 'fs'
 import { $, spawn } from 'bun'
-import type { SiteConfig } from './site-config'
-import { buildSite } from './orchestrator'
-import { preflight } from './preflight'
-import { auditDependencies, reportAudit } from './audit-guard'
-import { openDevBrowser } from './open-browser'
-import { resolveTunnelLocalPort } from './site-config'
+import type { SiteConfig } from './site-config.js'
+import { buildSite } from './orchestrator.js'
+import { preflight } from './preflight.js'
+import { auditDependencies, reportAudit } from './audit-guard.js'
+import { openDevBrowser } from './open-browser.js'
+import { resolveTunnelLocalPort } from './site-config.js'
 import {
   TUNNEL_LINK_CMD,
   isLockedDown,
@@ -34,7 +34,7 @@ import {
   mayWriteSource,
   isProxiedRequest,
   SESSION_COOKIE,
-} from './dev-auth'
+} from './dev-auth.js'
 
 declare global {
   var Bun: any

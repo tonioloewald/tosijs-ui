@@ -130,8 +130,8 @@ Placeholder shown on input field.
 */
 /*{ "parent": "Form Components" }*/
 import { Component as WebComponent, elements, vars, varDefault, deprecated, } from 'tosijs';
-import { popMenu } from './menu';
-import { icons } from './icons';
+import { popMenu } from './menu.js';
+import { icons } from './icons.js';
 const { div, input, span, button } = elements;
 // Tags are serialised as a comma-delimited string (the form `value`). A
 // literal comma inside a tag is escaped as `\,` so it survives the

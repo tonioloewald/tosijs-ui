@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { selectBookDocs } from './book-manifest'
+import { selectBookDocs } from './book-manifest.js'
 
 interface D {
   filename: string

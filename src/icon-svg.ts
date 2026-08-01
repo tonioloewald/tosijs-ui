@@ -32,7 +32,7 @@ resorted to when putting its own logo on a generated page. There is nothing to p
 the map ships in the bundle either way.
 */
 
-import iconData from './icon-data'
+import iconData from './icon-data.js'
 
 export function iconSvg(name: string): string | undefined {
   const data = iconData as Record<string, string>

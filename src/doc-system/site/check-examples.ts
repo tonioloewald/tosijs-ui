@@ -28,9 +28,9 @@ import {
   AsyncFunction,
   loadTransform,
   UnsupportedImportError,
-} from '../../live-example/code-transform'
-import type { Doc } from './docs'
-import type { ExampleBakes } from '../render'
+} from '../../live-example/code-transform.js'
+import type { Doc } from './docs.js'
+import type { ExampleBakes } from '../render.js'
 
 declare const Bun: {
   Transpiler: new (opts: { loader: string }) => {

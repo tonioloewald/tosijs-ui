@@ -1,5 +1,5 @@
 import { Component } from 'tosijs';
-import { TosiSelect } from './select';
+import { TosiSelect } from './select.js';
 interface TranslationMap {
     [key: string]: string[];
 }

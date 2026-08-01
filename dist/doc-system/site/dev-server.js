@@ -10,12 +10,12 @@ Build-time only (Bun APIs). Never import this from browser code.
 import * as path from 'path';
 import { statSync } from 'fs';
 import { $, spawn } from 'bun';
-import { buildSite } from './orchestrator';
-import { preflight } from './preflight';
-import { auditDependencies, reportAudit } from './audit-guard';
-import { openDevBrowser } from './open-browser';
-import { resolveTunnelLocalPort } from './site-config';
-import { TUNNEL_LINK_CMD, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth';
+import { buildSite } from './orchestrator.js';
+import { preflight } from './preflight.js';
+import { auditDependencies, reportAudit } from './audit-guard.js';
+import { openDevBrowser } from './open-browser.js';
+import { resolveTunnelLocalPort } from './site-config.js';
+import { TUNNEL_LINK_CMD, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
 const TEST_RESULTS_FILE = '.browser-tests.json';
 const DEFAULT_IDLE_HOURS = 8;
 /**

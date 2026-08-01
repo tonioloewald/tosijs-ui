@@ -4,7 +4,7 @@ import {
   isLoopbackAddress,
   resolveIdleMs,
   resolveLimitMb,
-} from './dev-server'
+} from './dev-server.js'
 
 const HOUR = 3600_000
 
@@ -133,7 +133,7 @@ test('isLoopbackAddress is not fooled by a lookalike', () => {
 // it on their first session (PORT 8018 → listener 8019 → bin probed 8788). Both sides now
 // call the same function; these pin its behaviour.
 
-import { resolveDevPort, resolveTunnelLocalPort } from './site-config'
+import { resolveDevPort, resolveTunnelLocalPort } from './site-config.js'
 
 test('the tunnel port follows the dev port, not a constant', () => {
   // The exact case that broke: a project on its own port, no explicit localPort.
@@ -167,7 +167,7 @@ test('env PORT outranks the config, and both sides see it the same way', () => {
 
 // ── is a haltija server drivable? ────────────────────────────────────────────
 
-import { haltijaIsDrivable } from './dev-server'
+import { haltijaIsDrivable } from './dev-server.js'
 
 const HINT = '\n\x1b[2m\nhj windows : --json | see: tabs-open, tabs-close\x1b[0m'
 

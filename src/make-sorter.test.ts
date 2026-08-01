@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test'
-import { makeSorter } from './make-sorter'
+import { makeSorter } from './make-sorter.js'
 
 test('sorts simple values', () => {
   const simpleSort = makeSorter((a: number | string) => [a])

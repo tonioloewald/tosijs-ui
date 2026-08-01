@@ -1,5 +1,5 @@
 import { ElementPart } from 'tosijs';
-import { TosiFloat } from './float';
+import { TosiFloat } from './float.js';
 export type FloatPosition = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' | 'en' | 'wn' | 'es' | 'ws' | 'side' | 'auto';
 export interface PopFloatOptions {
     class?: string;

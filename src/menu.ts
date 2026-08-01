@@ -766,11 +766,11 @@ import {
   Component,
   PartsMap,
 } from 'tosijs'
-import { popFloat, FloatPosition } from './pop-float'
-import { icons, SvgIcon } from './icons'
-import { localize } from './localize'
-import { matchShortcut, displayShortcut } from './match-shortcut'
-import { isTypeAllowed, stringToTypes } from './drag-and-drop'
+import { popFloat, FloatPosition } from './pop-float.js'
+import { icons, SvgIcon } from './icons.js'
+import { localize } from './localize.js'
+import { matchShortcut, displayShortcut } from './match-shortcut.js'
+import { isTypeAllowed, stringToTypes } from './drag-and-drop.js'
 
 export type ActionCallback = () => void | Promise<void>
 

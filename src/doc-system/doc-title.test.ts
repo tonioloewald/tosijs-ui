@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test'
-import { pageTitle } from './doc-title'
+import { pageTitle } from './doc-title.js'
 
 test('headTitle wins verbatim, no suffix', () => {
   expect(

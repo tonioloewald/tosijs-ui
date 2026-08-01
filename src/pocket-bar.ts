@@ -108,8 +108,8 @@ import {
   vars,
   varDefault,
 } from 'tosijs'
-import { svgIcon, SvgIcon } from './icons'
-import { positionFloat, FloatPosition } from './pop-float'
+import { svgIcon, SvgIcon } from './icons.js'
+import { positionFloat, FloatPosition } from './pop-float.js'
 
 const { button, div, slot } = elements
 

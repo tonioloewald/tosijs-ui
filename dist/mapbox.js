@@ -135,7 +135,7 @@ form.addEventListener('submit', (e) => {
 */
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements } from 'tosijs';
-import { styleSheet, scriptTag } from './via-tag';
+import { styleSheet, scriptTag } from './via-tag.js';
 const { div } = elements;
 export class MapBox extends WebComponent {
     static preferredTagName = 'tosi-map';

@@ -324,8 +324,8 @@ class MyLocalizedComponent extends Component {
 /*{ "parent": "Helper Libraries" }*/
 
 import { Component, tosi, tosiValue, elements, bindings } from 'tosijs'
-import { makeSorter } from './make-sorter'
-import { tosiSelect, TosiSelect } from './select'
+import { makeSorter } from './make-sorter.js'
+import { tosiSelect, TosiSelect } from './select.js'
 
 interface TranslationMap {
   [key: string]: string[]

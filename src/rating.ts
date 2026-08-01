@@ -84,7 +84,7 @@ import {
   PartsMap,
   deprecated,
 } from 'tosijs'
-import { icons } from './icons'
+import { icons } from './icons.js'
 
 const { span } = elements
 

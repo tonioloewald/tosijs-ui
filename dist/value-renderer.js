@@ -46,8 +46,8 @@ preview.append(
 ```
 */
 /*{ "parent": "Helper Libraries" }*/
-import { i18n } from './localize';
-import { icons } from './icons';
+import { i18n } from './localize.js';
+import { icons } from './icons.js';
 /** Parse `base(arg1, arg2)` — the type-string mini-syntax. */
 export function parseValueType(type) {
     const m = /^\s*([a-zA-Z]+)\s*(?:\(([^)]*)\))?\s*$/.exec(type);

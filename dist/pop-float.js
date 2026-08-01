@@ -241,8 +241,8 @@ preview.append(button(
 ```
 
 */
-import { tosiFloat, TosiFloat } from './float';
-import { bringToFront } from './track-drag';
+import { tosiFloat, TosiFloat } from './float.js';
+import { bringToFront } from './track-drag.js';
 export const popFloat = (options) => {
     const { content, target, position, remainOnScroll, remainOnResize, draggable, } = options;
     const float = Array.isArray(content)

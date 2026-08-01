@@ -1,6 +1,6 @@
-import type { Doc } from './docs';
-import type { ProjectLinks, LinkItem } from '../../doc-browser';
-import { type ExampleBakes } from '../render';
+import type { Doc } from './docs.js';
+import type { ProjectLinks, LinkItem } from '../../doc-browser.js';
+import { type ExampleBakes } from '../render.js';
 declare global {
     var Bun: any;
 }

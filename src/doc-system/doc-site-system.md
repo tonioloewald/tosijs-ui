@@ -554,6 +554,25 @@ on it, and which commit each preview is serving.
 > — that has a write endpoint, and is gated by a per-session magic link; see
 > [`preview.tunnel`](#previewtunnel--the-live-workspace) below.
 
+#### Runtimes — what runs where
+
+The doc-site system is a **bun** tool: it shells out (`Bun.$`), builds (`bun build`), and
+spawns child processes. `import { buildSite } from 'tosijs-ui/site'` under plain Node
+fails with `Cannot find package 'bun'`, which names a symptom rather than the cause — so
+to be explicit:
+
+| entry point | runtime |
+| --- | --- |
+| `tosijs-ui/site` | **bun** — build/CLI only, never bundled into a page |
+| `tosijs-ui`, `tosijs-ui/<component>` | a **browser** (or a bundler targeting one); bare Node has no `HTMLElement` |
+| `tosijs-ui/icon-svg` | anything — deliberately DOM-free, which is why it exists |
+
+Module *resolution* works everywhere as of 1.9.1: shipped code uses explicit `.js`
+specifiers, which Node ESM requires and bundlers accept. Before that, `dist/` carried
+extensionless relative imports that only bun could resolve — so a Node consumer got
+`Cannot find module` on entry points that had nothing to do with bun. That was invisible
+here because every lane ran under bun; the consumer lane now imports through Node too.
+
 #### Host bootstrap — do this once per box
 
 Both `tosijs-deploy` and `tosijs-tunnel` write a Caddy fragment ending in

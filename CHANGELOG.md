@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.9.1
+
+**`tosijs-ui` did not import under Node.** Shipped `dist/` used extensionless relative
+imports (`from './site-config'`), which bun resolves and Node ESM does not — so a Node
+consumer got `Cannot find module` on entry points that had nothing to do with bun. Every
+entry point is affected, and this goes back well before 1.8.0.
+
+Everything shipped now uses explicit `.js` specifiers, which Node requires and every
+bundler accepts. **If you are on Node, upgrade; 1.9.0 and earlier will not resolve.**
+
+Two runtime requirements are unchanged, and are now documented rather than implied — they
+are honest constraints, not bugs, but the failure messages named symptoms rather than
+causes:
+
+| entry point | runtime |
+| --- | --- |
+| `tosijs-ui/site` | **bun** — it shells out, builds and spawns |
+| `tosijs-ui`, `tosijs-ui/<component>` | a **browser** or a bundler targeting one |
+| `tosijs-ui/icon-svg` | anything — deliberately DOM-free |
+
+`engines` now declares bun, and `doc-site-system.md` has a "Runtimes — what runs where"
+section.
+
+**Why four test lanes missed it:** all four run under bun. `test-consumer` packs the real
+tarball, installs it and builds from a foreign cwd — but with bun, so it proved the
+package works for people exactly like us. It now imports every entry point through **Node**
+and asserts the absence of module-resolution errors specifically, separating "packaging is
+broken" from "this needs a DOM / needs bun". Verified against the published 1.9.0: all
+three checks fail on it.
+
 ## 1.9.0
 
 Consumer repairs, remote access, and **authoring: many books from one corpus**.

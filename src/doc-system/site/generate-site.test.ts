@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { pageDepth, relativeUrl } from './generate-site'
+import { pageDepth, relativeUrl } from './generate-site.js'
 
 describe('pageDepth', () => {
   test('root index is depth 0, every /slug/ page is depth 1', () => {

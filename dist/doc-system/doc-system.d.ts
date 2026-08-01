@@ -1,5 +1,5 @@
 import { Component, ElementCreator } from 'tosijs';
-import './css-var-editor';
+import './css-var-editor.js';
 export declare class TosiDocSystem extends Component {
     static preferredTagName: string;
     static initAttributes: {

@@ -7,7 +7,7 @@ can drop `<tosi-css-var-editor element-selector="tosi-widget">` under an example
 deliberately not exported from `tosijs-ui`.
 */
 import { Component as WebComponent, elements, Color, } from 'tosijs';
-import { tosiForm, tosiField } from '../form';
+import { tosiForm, tosiField } from '../form.js';
 const { h2, code } = elements;
 // A value is a color if it's a hex literal or an rgb()/hsl() (with or without alpha)
 // functional notation — the forms getComputedStyle / getPropertyValue return. The old

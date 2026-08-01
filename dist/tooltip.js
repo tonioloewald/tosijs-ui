@@ -40,8 +40,8 @@ initTooltips({
 /*{ "parent": "Components" }*/
 import { elements, StyleSheet, varDefault } from 'tosijs';
 import { marked } from 'marked';
-import { popFloat } from './pop-float';
-import { localize } from './localize';
+import { popFloat } from './pop-float.js';
+import { localize } from './localize.js';
 const { span } = elements;
 let tooltipFloat = null;
 let showTimeout = null;

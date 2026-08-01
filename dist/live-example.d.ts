@@ -1,1 +1,1 @@
-export * from './live-example/index';
+export * from './live-example/index.js';

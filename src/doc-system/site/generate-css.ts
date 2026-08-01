@@ -11,9 +11,9 @@ Usage: bun src/doc-system/site/generate-css.ts [outputPath]
 Default output: docs/doc-system.css
 */
 
-import './build-dom-shim' // must precede any tosijs import (build has no DOM)
+import './build-dom-shim.js' // must precede any tosijs import (build has no DOM)
 import { css } from 'tosijs'
-import { docSystemStyleSpec, DocSystemTheme } from '../doc-system-styles'
+import { docSystemStyleSpec, DocSystemTheme } from '../doc-system-styles.js'
 
 declare global {
   var Bun: any

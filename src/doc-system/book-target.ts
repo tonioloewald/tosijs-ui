@@ -20,7 +20,7 @@ Cycles are survivable by construction: `parent` is author-written and nav-tree a
 guards against loops, so this walks with a seen-set rather than trusting the data.
 */
 
-import { resolveParent } from './routing'
+import { resolveParent } from './routing.js'
 
 /** The main book's internal key — what a doc with no `book` lands in. */
 export const DEFAULT_BOOK = ''

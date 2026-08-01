@@ -133,7 +133,7 @@ test('css canary: Color math (inverseLuminance) yields a distinct valid color', 
 */
 /*{ "parent": "Helper Libraries" }*/
 import { Color, Component, elements, tosi, } from 'tosijs';
-import { createTheme, createDarkTheme, applyTheme, defaultColors, } from './theme';
+import { createTheme, createDarkTheme, applyTheme, defaultColors, } from './theme.js';
 const { div, label, input, span, button } = elements;
 // ============================================================================
 // Live Theme Observable

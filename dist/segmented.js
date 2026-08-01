@@ -136,8 +136,8 @@ The following CSS variables can be used to control customize the `<tosi-segmente
 */
 /*{ "parent": "Form Components" }*/
 import { Component as WebComponent, elements, varDefault, deprecated, } from 'tosijs';
-import { icons } from './icons';
-import { tosiLocalized } from './localize';
+import { icons } from './icons.js';
+import { tosiLocalized } from './localize.js';
 const { div, slot, label, span, input } = elements;
 export class TosiSegmented extends WebComponent {
     static preferredTagName = 'tosi-segmented';

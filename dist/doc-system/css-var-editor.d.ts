@@ -1,5 +1,5 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
-import { TosiForm } from '../form';
+import { TosiForm } from '../form.js';
 declare class TosiCssVarEditor extends WebComponent {
     static preferredTagName: string;
     static initAttributes: {

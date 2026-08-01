@@ -1,6 +1,6 @@
 import { test, expect } from 'bun:test'
-import { buildSlugMap } from './routing'
-import { buildNavTree, navOpenPath, pinnedSort } from './nav-tree'
+import { buildSlugMap } from './routing.js'
+import { buildNavTree, navOpenPath, pinnedSort } from './nav-tree.js'
 
 // filename + the fields nav cares about
 const mk = (filename: string, title: string, extra: Partial<any> = {}) => ({

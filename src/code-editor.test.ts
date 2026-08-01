@@ -10,7 +10,7 @@
  * CodeMirror does mount under happy-dom, so the editor contract is testable here.
  */
 import { test, expect, describe, beforeEach } from 'bun:test'
-import { codeEditor, CodeEditor } from './code-editor'
+import { codeEditor, CodeEditor } from './code-editor.js'
 
 // The editor is a lazy dynamic import; give it a turn to resolve and mount.
 async function mounted(el: CodeEditor): Promise<CodeEditor> {
@@ -273,7 +273,7 @@ describe('mode="tjs" — the headline 1.7 feature', () => {
   })
 
   test('loadTjsExtension() actually returns an extension, not null', async () => {
-    const { loadTjsExtension } = await import('./code-editor-cm')
+    const { loadTjsExtension } = await import('./code-editor-cm.js')
     expect(await loadTjsExtension({})).not.toBe(null)
   })
 
@@ -309,7 +309,7 @@ describe('mode="tjs" — the headline 1.7 feature', () => {
   test('tjs falls back to readable TypeScript highlighting synchronously', async () => {
     // The async tjs upgrade may never arrive (tjs-lang is an optional peer). The editor
     // must still be usable in the meantime — not blank, not plain text.
-    const { languageForMode } = await import('./code-editor-cm')
+    const { languageForMode } = await import('./code-editor-cm.js')
     expect(languageForMode('tjs')).toBeDefined()
     expect(languageForMode('ajs')).toBeDefined()
   })

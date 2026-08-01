@@ -1,5 +1,5 @@
 import { expect, test, describe } from 'bun:test'
-import { diffLines } from './diff'
+import { diffLines } from './diff.js'
 
 const ops = (before: string, after: string) =>
   diffLines(before, after).map((l) => `${l.op[0]} ${l.text}`)

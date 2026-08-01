@@ -755,6 +755,36 @@ and one shared secret is no stronger. Do not confuse this with exposing a <em>de
 — that has a write endpoint, and is gated by a per-session magic link; see
 <a href="#previewtunnel--the-live-workspace"><code>preview.tunnel</code></a> below.</p>
 </blockquote>
+<h4>Runtimes — what runs where</h4>
+<p>The doc-site system is a <strong>bun</strong> tool: it shells out (<code>Bun.$</code>), builds (<code>bun build</code>), and
+spawns child processes. <code>import { buildSite } from &#39;tosijs-ui/site&#39;</code> under plain Node
+fails with <code>Cannot find package &#39;bun&#39;</code>, which names a symptom rather than the cause — so
+to be explicit:</p>
+<table>
+<thead>
+<tr>
+<th>entry point</th>
+<th>runtime</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>tosijs-ui/site</code></td>
+<td><strong>bun</strong> — build/CLI only, never bundled into a page</td>
+</tr>
+<tr>
+<td><code>tosijs-ui</code>, <code>tosijs-ui/&lt;component&gt;</code></td>
+<td>a <strong>browser</strong> (or a bundler targeting one); bare Node has no <code>HTMLElement</code></td>
+</tr>
+<tr>
+<td><code>tosijs-ui/icon-svg</code></td>
+<td>anything — deliberately DOM-free, which is why it exists</td>
+</tr>
+</tbody></table>
+<p>Module <em>resolution</em> works everywhere as of 1.9.1: shipped code uses explicit <code>.js</code>
+specifiers, which Node ESM requires and bundlers accept. Before that, <code>dist/</code> carried
+extensionless relative imports that only bun could resolve — so a Node consumer got
+<code>Cannot find module</code> on entry points that had nothing to do with bun. That was invisible
+here because every lane ran under bun; the consumer lane now imports through Node too.</p>
 <h4>Host bootstrap — do this once per box</h4>
 <p>Both <code>tosijs-deploy</code> and <code>tosijs-tunnel</code> write a Caddy fragment ending in
 <code>import preview_site</code> / <code>import tunnel_site</code>. <strong>Those snippets have to exist first</strong>, or

@@ -26,7 +26,7 @@ orchestrator.ts.
 
 Build-time only. Never import this from browser code.
 */
-import { checkExamples } from './check-examples';
+import { checkExamples } from './check-examples.js';
 const docsJson = process.argv[2];
 if (!docsJson) {
     console.error('check-examples-cli: expected a docs.json path');

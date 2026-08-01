@@ -1,6 +1,6 @@
 import { ElementCreator } from 'tosijs'
-import { ExampleContext } from './types'
-import type { LiveExample } from './component'
+import { ExampleContext } from './types.js'
+import type { LiveExample } from './component.js'
 
 interface SourceBlock {
   block: HTMLPreElement

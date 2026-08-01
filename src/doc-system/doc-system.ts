@@ -66,16 +66,16 @@ import {
   tosi,
   vars,
 } from 'tosijs'
-import { createDocBrowser, Doc, ProjectLinks, LinkItem } from '../doc-browser'
-import { buildSlugMap, legacyQueryPath } from './routing'
-import { buildBookHtml, slugify } from './book-html'
-import { docSystemStyleSpec } from './doc-system-styles'
-import { icons } from '../icons'
-import { popMenu } from '../menu'
-import { i18n, setLocale, initLocalization } from '../localize'
+import { createDocBrowser, Doc, ProjectLinks, LinkItem } from '../doc-browser.js'
+import { buildSlugMap, legacyQueryPath } from './routing.js'
+import { buildBookHtml, slugify } from './book-html.js'
+import { docSystemStyleSpec } from './doc-system-styles.js'
+import { icons } from '../icons.js'
+import { popMenu } from '../menu.js'
+import { i18n, setLocale, initLocalization } from '../localize.js'
 // Side-effect: register <tosi-css-var-editor> so doc pages can drop the live CSS-var
 // tweaker under an example. Part of the doc-system, NOT re-exported from tosijs-ui.
-import './css-var-editor'
+import './css-var-editor.js'
 
 const { button, div } = elements
 

@@ -1,4 +1,4 @@
-import { ExampleContext, TransformFn } from './types';
+import { ExampleContext, TransformFn } from './types.js';
 /**
  * Register web components in an iframe's customElements registry.
  *

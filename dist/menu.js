@@ -756,11 +756,11 @@ preview.append(btn)
 */
 /*{ "parent": "Components" }*/
 import { elements, varDefault, vars, StyleSheet, Component, } from 'tosijs';
-import { popFloat } from './pop-float';
-import { icons } from './icons';
-import { localize } from './localize';
-import { matchShortcut, displayShortcut } from './match-shortcut';
-import { isTypeAllowed, stringToTypes } from './drag-and-drop';
+import { popFloat } from './pop-float.js';
+import { icons } from './icons.js';
+import { localize } from './localize.js';
+import { matchShortcut, displayShortcut } from './match-shortcut.js';
+import { isTypeAllowed, stringToTypes } from './drag-and-drop.js';
 export const resolveMenuItems = (provider) => typeof provider === 'function' ? provider() : provider;
 const { div, button, span, a, tosiSlot } = elements;
 const cleanSeparators = (items) => {

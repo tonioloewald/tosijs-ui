@@ -1,6 +1,6 @@
 import { elements } from 'tosijs'
-import { ExampleContext, TransformFn } from './types'
-import { rewriteImports, AsyncFunction, contextVarName } from './code-transform'
+import { ExampleContext, TransformFn } from './types.js'
+import { rewriteImports, AsyncFunction, contextVarName } from './code-transform.js'
 
 // Injected context name for the scope-capture callback (see `onScope`). Chosen to
 // not collide with anything an example would plausibly declare.

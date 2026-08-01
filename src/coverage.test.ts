@@ -4,7 +4,7 @@ import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
 
 describe('doc-browser', () => {
   test('createDocBrowser is a function', async () => {
-    const { createDocBrowser } = await import('./doc-browser')
+    const { createDocBrowser } = await import('./doc-browser.js')
     expect(typeof createDocBrowser).toBe('function')
   })
 
@@ -19,7 +19,7 @@ describe('doc-browser', () => {
   ]
 
   test('logo: icon name renders an <svg> brand mark with .logo-mark class', async () => {
-    const { createDocBrowser } = await import('./doc-browser')
+    const { createDocBrowser } = await import('./doc-browser.js')
     const el = createDocBrowser({
       docs: makeDocs() as any,
       projectName: 'Demo',
@@ -35,7 +35,7 @@ describe('doc-browser', () => {
   })
 
   test('logo: image URL renders an <img> brand mark, size via class not inline', async () => {
-    const { createDocBrowser } = await import('./doc-browser')
+    const { createDocBrowser } = await import('./doc-browser.js')
     const el = createDocBrowser({
       docs: makeDocs() as any,
       projectName: 'Demo',
@@ -51,7 +51,7 @@ describe('doc-browser', () => {
   })
 
   test('logo: falls back to tosiUi only when projectLinks.tosijs is set', async () => {
-    const { createDocBrowser } = await import('./doc-browser')
+    const { createDocBrowser } = await import('./doc-browser.js')
     const withTosi = createDocBrowser({
       docs: makeDocs() as any,
       projectName: 'Demo',
@@ -73,7 +73,7 @@ describe('doc-browser', () => {
 describe('gamepad', () => {
   test('gamepad functions exist', async () => {
     const { gamepadState, gamepadText, xrControllers, xrControllersText } =
-      await import('./gamepad')
+      await import('./gamepad.js')
     expect(typeof gamepadState).toBe('function')
     expect(typeof gamepadText).toBe('function')
     expect(typeof xrControllers).toBe('function')
@@ -81,7 +81,7 @@ describe('gamepad', () => {
   })
 
   test('gamepadState handles missing API gracefully', async () => {
-    const { gamepadState } = await import('./gamepad')
+    const { gamepadState } = await import('./gamepad.js')
     // happy-dom doesn't have navigator.getGamepads
     if (!navigator.getGamepads) {
       expect(() => gamepadState()).toThrow()
@@ -104,7 +104,7 @@ describe('pop-float', () => {
   })
 
   test('popFloat creates a floating element', async () => {
-    const { popFloat } = await import('./pop-float')
+    const { popFloat } = await import('./pop-float.js')
     const anchor = document.createElement('div')
     anchor.style.cssText =
       'position: absolute; top: 100px; left: 100px; width: 50px; height: 50px;'
@@ -130,12 +130,12 @@ describe('tooltip', () => {
   })
 
   test('initTooltips does not throw', async () => {
-    const { initTooltips } = await import('./tooltip')
+    const { initTooltips } = await import('./tooltip.js')
     expect(() => initTooltips()).not.toThrow()
   })
 
   test('tooltip shows on hover of titled element', async () => {
-    const { initTooltips } = await import('./tooltip')
+    const { initTooltips } = await import('./tooltip.js')
     initTooltips()
     const el = document.createElement('div')
     el.setAttribute('data-tooltip', 'test tooltip')
@@ -148,7 +148,7 @@ describe('tooltip', () => {
 
 describe('live-example/code-transform', () => {
   test('rewriteImports rewrites tosijs imports', async () => {
-    const { rewriteImports } = await import('./live-example/code-transform')
+    const { rewriteImports } = await import('./live-example/code-transform.js')
     const input = "import { tosi } from 'tosijs'"
     const result = rewriteImports(input, ['tosijs'])
     expect(result).toContain('tosijs')
@@ -156,7 +156,7 @@ describe('live-example/code-transform', () => {
   })
 
   test('rewriteImports handles tosijs-ui', async () => {
-    const { rewriteImports } = await import('./live-example/code-transform')
+    const { rewriteImports } = await import('./live-example/code-transform.js')
     const input = "import { icons } from 'tosijs-ui'"
     const result = rewriteImports(input, ['tosijs-ui'])
     expect(result).not.toContain("from 'tosijs-ui'")
@@ -165,7 +165,7 @@ describe('live-example/code-transform', () => {
 
 describe('live-example/test-harness', () => {
   test('expect and matchers work', async () => {
-    const { expect: testExpect } = await import('./live-example/test-harness')
+    const { expect: testExpect } = await import('./live-example/test-harness.js')
     expect(() => testExpect(1).toBe(1)).not.toThrow()
     expect(() => testExpect(1).toBe(2)).toThrow()
     expect(() => testExpect('hello').toContain('ell')).not.toThrow()
@@ -182,13 +182,13 @@ describe('live-example/test-harness', () => {
   })
 
   test('expect.not negates matchers', async () => {
-    const { expect: testExpect } = await import('./live-example/test-harness')
+    const { expect: testExpect } = await import('./live-example/test-harness.js')
     expect(() => testExpect(1).not.toBe(2)).not.toThrow()
     expect(() => testExpect(1).not.toBe(1)).toThrow()
   })
 
   test('createTestContext collects results', async () => {
-    const { createTestContext } = await import('./live-example/test-harness')
+    const { createTestContext } = await import('./live-example/test-harness.js')
     const results: any[] = []
     const ctx = createTestContext(results)
     ctx.test('sync pass', () => {
@@ -203,7 +203,7 @@ describe('live-example/test-harness', () => {
   })
 
   test('waitMs resolves after delay', async () => {
-    const { waitMs } = await import('./live-example/test-harness')
+    const { waitMs } = await import('./live-example/test-harness.js')
     const start = Date.now()
     await waitMs(50)
     expect(Date.now() - start).toBeGreaterThan(40)
@@ -212,7 +212,7 @@ describe('live-example/test-harness', () => {
 
 describe('live-example/insert-examples', () => {
   test('insertExamples runs on empty container', async () => {
-    const { insertExamples } = await import('./live-example/insert-examples')
+    const { insertExamples } = await import('./live-example/insert-examples.js')
     const container = document.createElement('div')
     document.body.appendChild(container)
     // Should not throw on empty container
@@ -225,13 +225,13 @@ describe('live-example/insert-examples', () => {
 
 describe('live-example/remote-sync', () => {
   test('createRemoteKey generates key', async () => {
-    const { createRemoteKey } = await import('./live-example/remote-sync')
+    const { createRemoteKey } = await import('./live-example/remote-sync.js')
     const key = createRemoteKey('lx', 'test-uuid', '')
     expect(key).toContain('test-uuid')
   })
 
   test('RemoteSyncManager can be constructed', async () => {
-    const { RemoteSyncManager } = await import('./live-example/remote-sync')
+    const { RemoteSyncManager } = await import('./live-example/remote-sync.js')
     const manager = new RemoteSyncManager('test-key', 'test-remote', () => {})
     expect(manager).toBeDefined()
     manager.stopListening()
@@ -240,7 +240,7 @@ describe('live-example/remote-sync', () => {
 
 describe('live-example/execution', () => {
   test('executeInline runs with empty code', async () => {
-    const { executeInline } = await import('./live-example/execution')
+    const { executeInline } = await import('./live-example/execution.js')
     const example = document.createElement('div')
     const styleEl = document.createElement('style')
     const widgets = document.createElement('div')
@@ -264,7 +264,7 @@ describe('live-example/execution', () => {
 
 describe('drag-and-drop', () => {
   test('init does not throw', async () => {
-    const { init } = await import('./drag-and-drop')
+    const { init } = await import('./drag-and-drop.js')
     expect(() => init()).not.toThrow()
   })
 })
@@ -272,7 +272,7 @@ describe('drag-and-drop', () => {
 describe('track-drag', () => {
   test('trackDrag is callable', async () => {
     const { trackDrag, findHighestZ, bringToFront } = await import(
-      './track-drag'
+      './track-drag.js'
     )
     expect(typeof trackDrag).toBe('function')
     expect(typeof findHighestZ).toBe('function')

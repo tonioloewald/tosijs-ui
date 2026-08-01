@@ -1,5 +1,5 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
-import { TosiTag, tosiTag, TosiTagList, tosiTagList } from './tag-list'
+import { TosiTag, tosiTag, TosiTagList, tosiTagList } from './tag-list.js'
 
 describe('TosiTag', () => {
   let container: HTMLElement

@@ -145,9 +145,9 @@ import {
   PartsMap,
 } from 'tosijs'
 
-import { tosiLocalized, TosiLocalized } from './localize'
+import { tosiLocalized, TosiLocalized } from './localize.js'
 
-import { icons } from './icons'
+import { icons } from './icons.js'
 
 const { div, slot, span, button } = elements
 

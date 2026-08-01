@@ -1,6 +1,6 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
-import { SortCallback } from './make-sorter';
-import { ValueRendererType } from './value-renderer';
+import { SortCallback } from './make-sorter.js';
+import { ValueRendererType } from './value-renderer.js';
 export interface ColumnOptions {
     name?: string;
     prop: string;

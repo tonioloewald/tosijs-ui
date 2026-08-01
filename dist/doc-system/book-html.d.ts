@@ -1,4 +1,4 @@
-import { NavNode, NavDoc } from './nav-tree';
+import { NavNode, NavDoc } from './nav-tree.js';
 export interface BookDoc {
     filename: string;
     title: string;

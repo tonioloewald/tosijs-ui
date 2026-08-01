@@ -64,7 +64,7 @@ import {
   elements,
   vars,
 } from 'tosijs'
-import { icons } from './icons'
+import { icons } from './icons.js'
 
 const { button, slot, div } = elements
 

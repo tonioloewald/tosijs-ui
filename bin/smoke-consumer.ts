@@ -188,6 +188,42 @@ try {
     )
   }
 
+  // ── module resolution under NODE, not just bun ────────────────────────────
+  //
+  // The blind spot this lane was built to close, one layer down. It packed, installed and
+  // built the tarball — all with bun — so `dist/`'s extensionless relative imports
+  // (`from './site-config'`) went unnoticed for at least two releases. Bun resolves them;
+  // Node ESM does not, and requires the extension. A Node consumer got
+  // `Cannot find module` on entry points that have nothing to do with bun.
+  //
+  // Resolution is what is asserted here, deliberately — NOT that the modules run. The
+  // component library needs a DOM and the site builder needs bun; both are honest runtime
+  // requirements. A `Cannot find module` is a packaging bug, and that is the difference
+  // this distinguishes.
+  const nodeResolves = async (entry: string) => {
+    const probe = `import('${entry}').then(()=>console.log('OK')).catch(e=>console.log(e.message))`
+    const r = await $`node -e ${probe}`.cwd(proj).nothrow().quiet()
+    const said = r.stdout.toString() + r.stderr.toString()
+    return !/Cannot find module|Cannot find package '\.\/|ERR_MODULE_NOT_FOUND/.test(
+      said
+    )
+  }
+  for (const entry of ['tosijs-ui', 'tosijs-ui/site', 'tosijs-ui/icon-svg']) {
+    check(`node resolves ${entry} (no missing-module error)`, await nodeResolves(entry))
+  }
+  // The DOM-free entry must actually RUN under node — it exists precisely for build
+  // scripts and server-rendered templates.
+  const iconRun =
+    await $`node -e ${"import('tosijs-ui/icon-svg').then(m=>{if(typeof m.iconSvg!=='function')throw new Error('no iconSvg');console.log('OK')})"}`
+      .cwd(proj)
+      .nothrow()
+      .quiet()
+  check(
+    'tosijs-ui/icon-svg actually runs under node',
+    iconRun.stdout.toString().includes('OK'),
+    iconRun.stderr.toString().slice(0, 200)
+  )
+
   // ── a build, from the consumer's cwd ──────────────────────────────────────
   console.log('🔨 building as the consumer …')
   const build = await $`bun build.ts`.cwd(proj).nothrow().quiet()

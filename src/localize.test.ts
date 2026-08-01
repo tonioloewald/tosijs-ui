@@ -1,5 +1,5 @@
 import { test, expect, beforeEach } from 'bun:test'
-import { initLocalization, localize, i18n, applyLocalized } from './localize'
+import { initLocalization, localize, i18n, applyLocalized } from './localize.js'
 
 // Wait long enough for the MutationObserver to flush its records.
 const flushMutations = (): Promise<void> =>

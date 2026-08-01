@@ -1,5 +1,5 @@
-import type { SiteConfig } from './site-config';
-import { DEFAULT_BOOK_CSS, stripDocMeta } from '../book-html';
+import type { SiteConfig } from './site-config.js';
+import { DEFAULT_BOOK_CSS, stripDocMeta } from '../book-html.js';
 export { DEFAULT_BOOK_CSS, stripDocMeta };
 declare global {
     var Bun: any;

@@ -5,7 +5,7 @@ export {
   enableTests,
   disableTests,
   testManager,
-} from './component'
+} from './component.js'
 
 // Types
 export type {
@@ -13,14 +13,14 @@ export type {
   ExampleParts,
   RemotePayload,
   TransformFn,
-} from './types'
+} from './types.js'
 
 // Test harness (for doc-browser integration)
-export { runTests, createTestContext, expect } from './test-harness'
-export type { TestResult, TestResults, TestContext } from './test-harness'
+export { runTests, createTestContext, expect } from './test-harness.js'
+export type { TestResult, TestResults, TestContext } from './test-harness.js'
 
 // Utilities (for advanced usage)
-export { insertExamples } from './insert-examples'
-export { loadTransform, rewriteImports, executeCode } from './code-transform'
-export { executeInline, executeInIframe } from './execution'
-export { RemoteSyncManager, STORAGE_KEY } from './remote-sync'
+export { insertExamples } from './insert-examples.js'
+export { loadTransform, rewriteImports, executeCode } from './code-transform.js'
+export { executeInline, executeInIframe } from './execution.js'
+export { RemoteSyncManager, STORAGE_KEY } from './remote-sync.js'

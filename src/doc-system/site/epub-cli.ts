@@ -13,7 +13,7 @@ the Bun.build note in orchestrator.ts.
 Build-time only. Never import this from browser code.
 */
 
-import { buildEpub } from './epub'
+import { buildEpub } from './epub.js'
 
 const payloadPath = process.argv[2]
 if (!payloadPath) {

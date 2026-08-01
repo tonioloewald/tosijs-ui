@@ -15,7 +15,7 @@ import { test, expect, afterAll } from 'bun:test'
 import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
-import { extractDocs } from './docs'
+import { extractDocs } from './docs.js'
 
 const work = mkdtempSync(path.join(tmpdir(), 'tosi-hidden-'))
 afterAll(() => rmSync(work, { recursive: true, force: true }))

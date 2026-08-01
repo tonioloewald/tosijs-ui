@@ -12,21 +12,21 @@ the icon system here would put src/icon-data.ts into `bun --watch`'s graph and
 cause an endless rebuild loop.
 */
 import * as path from 'path';
-import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target';
-import { buildSlugMap } from '../routing';
+import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js';
+import { buildSlugMap } from '../routing.js';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { tmpdir } from 'os';
 import { $, spawn } from 'bun';
-import { extractDocs } from './docs';
-import { checkExamples, formatExampleProblems, } from './check-examples';
-import { ensureSections } from './sections';
-import { generateLlmsTxt } from './make-llms-txt';
-import { generateSite } from './generate-site';
-import { findOutputDirOverlap } from './output-guard';
-import { preflight } from './preflight';
-import { auditDependencies, reportAudit } from './audit-guard';
-import { gatherBuildStamp, serializeBuildStamp } from './build-stamp';
-import { tjsEditorExternal, tjsEditorLeakedAsExternal, classicScriptSyntaxErrorInChild, } from './bundle-guard';
+import { extractDocs } from './docs.js';
+import { checkExamples, formatExampleProblems, } from './check-examples.js';
+import { ensureSections } from './sections.js';
+import { generateLlmsTxt } from './make-llms-txt.js';
+import { generateSite } from './generate-site.js';
+import { findOutputDirOverlap } from './output-guard.js';
+import { preflight } from './preflight.js';
+import { auditDependencies, reportAudit } from './audit-guard.js';
+import { gatherBuildStamp, serializeBuildStamp } from './build-stamp.js';
+import { tjsEditorExternal, tjsEditorLeakedAsExternal, classicScriptSyntaxErrorInChild, } from './bundle-guard.js';
 // Module specifiers contain regex metacharacters (`/`, `.`, `@`, …), so escape
 // before interpolating into the require-shim detector below.
 /** Give up on a hung ePub child rather than wedge the dev server's rebuild. */

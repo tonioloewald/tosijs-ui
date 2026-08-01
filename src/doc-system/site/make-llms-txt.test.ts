@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test'
-import { entriesFromCorpus } from './make-llms-txt'
+import { entriesFromCorpus } from './make-llms-txt.js'
 
 const corpus = [
   { filename: 'README.md', title: 'Home', text: 'Welcome to the project.\n' },

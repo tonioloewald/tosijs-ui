@@ -11,7 +11,7 @@ parent form a nav section, nested arbitrarily deep. Parents are expected to
 exist as real docs by the time the tree is built (the build auto-creates any
 missing section docs first), so this module never synthesizes.
 */
-import { resolveParent } from './routing';
+import { resolveParent } from './routing.js';
 /** Pin buckets sort top < none < bottom. */
 function pinRank(doc) {
     return doc.pin === 'top' ? 0 : doc.pin === 'bottom' ? 2 : 1;

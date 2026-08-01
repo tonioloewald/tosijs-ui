@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test'
-import { findOutputDirOverlap } from './output-guard'
+import { findOutputDirOverlap } from './output-guard.js'
 
 test('the default config (src + README.md vs docs) does not overlap', () => {
   expect(findOutputDirOverlap(['src', 'README.md'], 'docs')).toBe(null)

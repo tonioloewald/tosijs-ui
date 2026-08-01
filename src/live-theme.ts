@@ -149,7 +149,7 @@ import {
   applyTheme,
   ThemeColors,
   defaultColors,
-} from './theme'
+} from './theme.js'
 
 const { div, label, input, span, button } = elements
 

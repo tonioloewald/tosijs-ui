@@ -1,5 +1,5 @@
 import { Component, ElementCreator } from 'tosijs';
-import { Dialect, ExampleContext, ExampleParts } from './types';
+import { Dialect, ExampleContext, ExampleParts } from './types.js';
 export declare const testManager: {
     enabled: import("tosijs").BoxedScalar<boolean>;
 } & import("tosijs").XinProps<{

@@ -5,7 +5,7 @@ import {
   waitMs,
   TEST_TIMEOUT,
   TestResult,
-} from './test-harness'
+} from './test-harness.js'
 
 describe('expect matchers', () => {
   test('toBe checks strict equality', () => {

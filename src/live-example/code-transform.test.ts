@@ -3,7 +3,7 @@ import {
   rewriteImports,
   AsyncFunction,
   loadTransform,
-} from './code-transform'
+} from './code-transform.js'
 
 describe("loadTransform('js')", () => {
   test('returns identity without loading the tjs transpiler', async () => {
