@@ -1,5 +1,61 @@
 # Changelog
 
+## 1.9.3
+
+Two adopter-reported fixes, both with the diagnosis largely done by the reporter.
+
+### The dev server crashed instead of exiting (#47)
+
+A long-lived `bun start` **segfaulted at the 8-hour idle timeout** rather than exiting —
+so a workspace left up for a working day went offline silently, and the first sign was a
+tunnel link failing. All six exit paths called `server.stop()` immediately before
+`process.exit()`; that buys nothing (the OS closes the sockets) and was exactly where it
+died. They now just exit.
+
+Note for anyone hitting this elsewhere: **`try/catch` is not a mitigation** — a segfault
+is not a catchable exception, so the only workaround is not calling the API. Filed
+upstream as [oven-sh/bun#36788](https://github.com/oven-sh/bun/issues/36788).
+
+### ePub volumes are now linkable (#46)
+
+The build wrote an ePub per volume and linked to none of them, so a reader had no route
+to a book that existed. The filename is *derived* (`<project>-<volume>.epub`), so
+hand-written links rot silently when a volume is renamed.
+
+Three ways to surface them, and the ePub build now names its output through the same
+helper, so a link cannot point at a name nothing wrote:
+
+```text
+<!-- epub-downloads -->        drop in any page → a link per volume
+/epub-volumes.json             manifest: book, title, filename, url
+listEpubVolumes()              exported from tosijs-ui/site
+```
+
+`epub.volumeTitles` renames what humans read without moving what published links point
+at.
+
+### Also
+
+- **A valid session now trumps a stale invite link** (#45). Clicking an older link while
+  already signed in — a second window, a link scrolled back to in chat, a bookmark —
+  walled you with "that invite link has been used". The stale token is simply irrelevant
+  to someone who already holds a session.
+- **`tosijs-tunnel --close` confirms identity before signalling.** It SIGTERMed every
+  `pgrep -f` match, and `pgrep -f` matches an argv *substring* — a shell echoing the
+  command or an editor holding a log path both matched. It now checks the process really
+  is `ssh`, says what it signalled, and names what it skipped. It also interpolated `host`
+  into a REGEX unescaped, so `me@a.b` matched `me@axb` and a host containing `+`, `(` or
+  `*` changed the pattern's meaning outright.
+
+### Internals, for anyone reading the source
+
+- One `shutdown(code)` helper replaces the six copy-pasted exit sites. The 1.9.0 review
+  had flagged that duplication as a tidiness follow-up; it turned out not to be untidy but
+  to be six copies of the crash above — you cannot fix a bug once if it exists six times.
+- `resolveLinkArrival()` joins `mayReadSite` / `isLockedDown` as a decision extracted from
+  the dev server's request closure, where nothing could test it. Each of these was
+  extracted only after shipping a bug in it.
+
 ## 1.9.2
 
 **Accessibility: every default color pair now meets WCAG AA.** Found by running
