@@ -9,7 +9,7 @@ Build-time only (Bun APIs). Never import this from browser code.
 */
 
 import * as path from 'path'
-import { statSync } from 'fs'
+import { statSync, existsSync, readFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { $, spawn } from 'bun'
 import type { SiteConfig } from './site-config.js'
@@ -72,15 +72,67 @@ const DEFAULT_IDLE_HOURS = 8
  *     test lane below can trust an exit code instead of racing to a timeout.
  */
 /*
-^1.6.1 — the first version reporting `ready` (haltija#11), which is what lets the lane
-tell "server up" from "there is a tab to drive".
+The FALLBACK channel, used only when the project has no haltija of its own.
 
-The previous floor said ^1.5.5 and cited the teardown fix landing there. **1.5.5 was never
-published** — the published line goes 1.5.4 → 1.6.0 — so that floor named a version that
-does not exist and silently resolved to whatever 1.6+ shipped. A pin whose justification
-cannot be checked is not a pin.
+`^1.11.2` because that is where the agent-facing fixes people upgrade for currently live;
+the floor's practical job is to make bunx re-resolve rather than to express a minimum. The
+floor before this was `^1.6.1`, and an adopter with `haltija@^1.11.2` in their own
+devDependencies still got **1.11.0** — new enough to look current, old enough to lack the
+fix they had just upgraded for (tosijs-ui#48).
+
+Two things conspired, and the second is the nasty one:
+
+  - we spawned our own channel and ignored theirs entirely, and
+  - **`bunx` caches the resolution**, so a range that resolves forward does not RE-resolve
+    once its cache key is populated. `^1.6.1` froze at whatever satisfied it first.
+
+That is the stale-but-satisfying-cache hazard this project filed against haltija (#11) and
+then shipped an instance of. A range is not a pin, and a cached range is not even a range.
+
+`resolveHaltijaChannel()` below prefers the project's own installed haltija, so the version
+is something an adopter controls with the tool they already use. `HALTIJA_VERSION` still
+overrides everything.
 */
-const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.6.1'
+const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.11.2'
+
+/*
+Which haltija do we actually run, and can we say so out loud?
+
+Prefer the one in the project's own node_modules. An adopter who bumps their haltija
+devDependency to get a fix expects that to be the haltija they get; anything else makes
+the upgrade look like it did nothing — with `hj where` agreeing, since it reports the
+SPAWNED server's version and therefore looks authoritative.
+
+Returns the argv prefix plus a human description, because an invisible divergence is the
+whole bug: one startup line naming the channel and where it came from turns "the fix
+doesn't work" into "oh, it's running a different one".
+*/
+export function resolveHaltijaChannel(
+  cwd = process.cwd(),
+  env: Record<string, string | undefined> = process.env
+): { argv: string[]; describe: string } {
+  // An explicit override always wins, and is worth saying so.
+  if (env.HALTIJA_VERSION) {
+    return {
+      argv: ['bunx', env.HALTIJA_VERSION],
+      describe: `${env.HALTIJA_VERSION} (HALTIJA_VERSION)`,
+    }
+  }
+  const local = `${cwd}/node_modules/.bin/haltija`
+  if (existsSync(local)) {
+    let version = 'unknown version'
+    try {
+      version =
+        JSON.parse(
+          readFileSync(`${cwd}/node_modules/haltija/package.json`, 'utf8')
+        ).version ?? version
+    } catch {
+      /* installed but unreadable manifest — still prefer it, just unnamed */
+    }
+    return { argv: [local], describe: `${version} (this project's dependency)` }
+  }
+  return { argv: ['bunx', HALTIJA_PKG], describe: `${HALTIJA_PKG} (bunx)` }
+}
 
 /**
  * Resolve the idle-exit timeout to milliseconds (0 = disabled).
@@ -305,8 +357,11 @@ async function ensureHaltijaChannel(port: number): Promise<void> {
     // HTTPS dev page has no mixed-content), while the `hj` CLI drives over its
     // default HTTP 8700 — one server, both transports, shared state. HTTPS cert
     // is mkcert-trusted. Output quiet so it doesn't drown the dev log.
-    // Version comes from HALTIJA_PKG — a pinned range, not `@latest`; see above.
-    spawn(['bunx', HALTIJA_PKG, '--server', '--both'], {
+    const channel = resolveHaltijaChannel()
+    // Name the channel: an adopter who upgraded their own haltija and got ours instead
+    // sees the divergence here rather than concluding the fix does not work (#48).
+    console.log(`haltija channel: ${channel.describe}`)
+    spawn([...channel.argv, '--server', '--both'], {
       stdout: 'ignore',
       stderr: 'ignore',
     })
@@ -1522,9 +1577,10 @@ export async function devServer(
     (tosijs-ui#18, #21.)
     */
     const portFile = `${tmpdir()}/tosijs-haltija-${process.pid}.json`
-    console.log('Starting a private haltija…')
+    const channel = resolveHaltijaChannel()
+    console.log(`Starting a private haltija… (${channel.describe})`)
     const haltija = spawn(
-      ['bunx', HALTIJA_PKG, '--private', '--port-file', portFile],
+      [...channel.argv, '--private', '--port-file', portFile],
       {
         // stdout/stderr are NOT inherited: `bunx haltija` launches Electron as a
         // grandchild, and killing the bunx wrapper does not kill it. An orphan holding
@@ -1550,7 +1606,7 @@ export async function devServer(
     if (!hjPort) {
       console.error(
         `haltija did not report a private port within 30s (${portFile}).\n` +
-          `  Is \`bunx ${HALTIJA_PKG}\` able to run? Try it by hand.`
+          `  Is \`${channel.argv.join(' ')}\` able to run? Try it by hand.`
       )
       await stopHaltija()
       shutdown(1)

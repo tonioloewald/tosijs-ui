@@ -3,6 +3,10 @@ import { isLoopbackAddressForAuth as isLoopbackAddress } from './dev-auth.js';
 declare global {
     var Bun: any;
 }
+export declare function resolveHaltijaChannel(cwd?: string, env?: Record<string, string | undefined>): {
+    argv: string[];
+    describe: string;
+};
 /**
  * Resolve the idle-exit timeout to milliseconds (0 = disabled).
  *

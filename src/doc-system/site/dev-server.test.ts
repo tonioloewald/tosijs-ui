@@ -207,3 +207,69 @@ test('unrecognised JSON is not drivable', () => {
   // A future shape we cannot read is a reason to spawn our own, not to adopt blindly.
   expect(haltijaIsDrivable(JSON.stringify({ something: 'else' }))).toBe(false)
 })
+
+// ── which haltija do we spawn? ───────────────────────────────────────────────
+
+import { resolveHaltijaChannel } from './dev-server'
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'fs'
+import { tmpdir as osTmpdir } from 'os'
+import * as nodePath from 'path'
+
+function projectWithHaltija(version?: string): string {
+  const dir = mkdtempSync(nodePath.join(osTmpdir(), 'tosi-hj-'))
+  if (version) {
+    mkdirSync(nodePath.join(dir, 'node_modules', '.bin'), { recursive: true })
+    mkdirSync(nodePath.join(dir, 'node_modules', 'haltija'), { recursive: true })
+    writeFileSync(nodePath.join(dir, 'node_modules', '.bin', 'haltija'), '#!/bin/sh\n')
+    writeFileSync(
+      nodePath.join(dir, 'node_modules', 'haltija', 'package.json'),
+      JSON.stringify({ name: 'haltija', version })
+    )
+  }
+  return dir
+}
+
+test("REGRESSION: the project's OWN haltija wins over our bunx fallback", () => {
+  /*
+  An adopter bumped `haltija` to ^1.11.2 for a fix, restarted, and still got 1.11.0 —
+  because we spawned our own channel via `bunx haltija@^1.6.1` and bunx CACHES the
+  resolution, so a range that resolves forward never re-resolves. `hj where` reported the
+  spawned server, so the version indicator agreed with them. (tosijs-ui#48)
+  */
+  const dir = projectWithHaltija('1.11.2')
+  const { argv, describe } = resolveHaltijaChannel(dir, {})
+  expect(argv[0]).toContain('node_modules/.bin/haltija')
+  expect(describe).toContain('1.11.2')
+  expect(describe).toContain("this project's dependency")
+  rmSync(dir, { recursive: true, force: true })
+})
+
+test('with no local haltija we fall back to bunx, and say so', () => {
+  const dir = projectWithHaltija()
+  const { argv, describe } = resolveHaltijaChannel(dir, {})
+  expect(argv[0]).toBe('bunx')
+  expect(describe).toContain('bunx')
+  rmSync(dir, { recursive: true, force: true })
+})
+
+test('HALTIJA_VERSION overrides even a local install, and names itself', () => {
+  const dir = projectWithHaltija('1.11.2')
+  const { argv, describe } = resolveHaltijaChannel(dir, {
+    HALTIJA_VERSION: 'haltija@beta',
+  })
+  expect(argv).toEqual(['bunx', 'haltija@beta'])
+  expect(describe).toContain('HALTIJA_VERSION')
+  rmSync(dir, { recursive: true, force: true })
+})
+
+test('a local install with an unreadable manifest is still preferred', () => {
+  // Prefer the adopter's copy even when we cannot name its version — getting the right
+  // binary matters more than labelling it.
+  const dir = mkdtempSync(nodePath.join(osTmpdir(), 'tosi-hj-'))
+  mkdirSync(nodePath.join(dir, 'node_modules', '.bin'), { recursive: true })
+  writeFileSync(nodePath.join(dir, 'node_modules', '.bin', 'haltija'), '#!/bin/sh\n')
+  const { argv, describe } = resolveHaltijaChannel(dir, {})
+  expect(argv[0]).toContain('node_modules/.bin/haltija')
+  expect(describe).toContain('unknown version')
+  rmSync(dir, { recursive: true, force: true })
+})
