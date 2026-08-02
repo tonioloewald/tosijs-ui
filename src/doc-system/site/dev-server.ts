@@ -1261,7 +1261,12 @@ export async function devServer(
     return new Response('File not found', { status: 404 })
   }
 
-  const server = Bun.serve({
+  /*
+  Not bound to a name: nothing stops these listeners. `process.exit()` ends the process
+  and the OS closes the sockets, and calling `.stop()` first is what segfaulted on the
+  idle path (#47). A handle we would never legitimately use is an invitation to use it.
+  */
+  Bun.serve({
     port: PORT,
     tls: {
       key: Bun.file('./tls/key.pem'),
@@ -1298,10 +1303,9 @@ export async function devServer(
     ? resolveTunnelLocalPort(config, process.env)
     : undefined
   const configuredTunnelPort = config.preview?.tunnel?.localPort
-  let tunnelServer: { stop: () => void } | undefined
   if (tunnelPort && !testMode && !process.env.DEV_NO_TUNNEL) {
     try {
-      tunnelServer = Bun.serve({
+      Bun.serve({
         port: tunnelPort,
         hostname: '127.0.0.1',
         fetch: (request: Request, srv: any) =>
@@ -1325,6 +1329,28 @@ export async function devServer(
           `${configuredTunnelPort ? '' : ' — it defaults to PORT + 1'}.`
       )
     }
+  }
+
+    /*
+  Exit WITHOUT stopping the listeners first.
+
+  Every one of these six sites called `server.stop()` (and `tunnelServer?.stop()`)
+  immediately before `process.exit()`. That buys nothing — `process.exit` terminates the
+  process and the OS closes the listening sockets — and it is where the process was
+  dying: tosijs-3d reported a reproducible **segfault at ~7.95h** against the 8h idle
+  timer, twice, on the shutdown path, with flat 0.34GB RSS (so not the Bun.build native
+  leak) and a faulting address that decodes to ASCII text rather than a null — the shape
+  of a use-after-free inside Bun's own teardown. tosijs-ui#47.
+
+  A `try/catch` around the stops would NOT help: a segfault is not a JS exception. Not
+  making the call is the only fix available to us. Filed upstream separately, because
+  Bun should not crash here either.
+
+  Child processes we spawned are a different matter — those we must still reap, since the
+  OS will not do it for a detached Electron grandchild. Callers do that before calling in.
+  */
+  const shutdown = (code: number): never => {
+    process.exit(code)
   }
 
   console.log(`Listening on https://localhost:${PORT}`)
@@ -1389,9 +1415,7 @@ export async function devServer(
             `   DEV_IDLE_TIMEOUT_HOURS=0 or idleTimeoutHours in your site config.\n`
         )
         clearInterval(timer)
-        server.stop()
-        tunnelServer?.stop()
-        process.exit(0)
+        shutdown(0)
       }
 
       const ok = await preflight({
@@ -1401,9 +1425,7 @@ export async function devServer(
       })
       if (!ok) {
         clearInterval(timer)
-        server.stop()
-        tunnelServer?.stop()
-        process.exit(1)
+        shutdown(1)
       }
     }, TICK_MS)
     // Never let the health check itself be the thing keeping the process alive.
@@ -1531,8 +1553,7 @@ export async function devServer(
           `  Is \`bunx ${HALTIJA_PKG}\` able to run? Try it by hand.`
       )
       await stopHaltija()
-      server.stop()
-      process.exit(1)
+      shutdown(1)
     }
     console.log(`  private haltija on port ${hjPort}`)
 
@@ -1553,21 +1574,18 @@ export async function devServer(
         }`
       )
       await stopHaltija()
-      server.stop()
-      process.exit(1)
+      shutdown(1)
     }
 
     try {
       const results = await testResults
       const exitCode = results.failed > 0 ? 1 : 0
       await stopHaltija()
-      server.stop()
-      process.exit(exitCode)
+      shutdown(exitCode)
     } catch (e: any) {
       console.error(e.message)
       await stopHaltija()
-      server.stop()
-      process.exit(1)
+      shutdown(1)
     }
   }
 }
