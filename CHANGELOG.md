@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.9.4
+
+**The dev server now uses your own installed `haltija`** (#48, reported by tosijs-3d).
+
+It spawned its own channel via `bunx haltija@^1.6.1` and ignored the project's dependency
+entirely — and because **bunx caches the resolution**, a range that resolves forward never
+*re*-resolves once its cache key exists. So an adopter who bumped `haltija` to `^1.11.2`
+for a fix, restarted, and still didn't have the fix was running a cached 1.11.0: new
+enough to look current, old enough to lack it. `hj where` reports the *spawned* server, so
+the version indicator agreed with them.
+
+- Your `node_modules/.bin/haltija` is preferred when present. `HALTIJA_VERSION` still
+  overrides everything.
+- The fallback floor moves `^1.6.1` → `^1.11.2`. Its practical job is to make bunx
+  re-resolve, not to express a minimum — a stale cache key was half the bug.
+- **Both spawn sites now print which channel they used and where it came from** —
+  `1.11.2 (this project's dependency)`, `haltija@^1.11.2 (bunx)`,
+  `haltija@beta (HALTIJA_VERSION)`. The failure was never that a wrong version ran; it
+  was that nothing said so.
+
+If you were working around this with `HALTIJA_VERSION`, you can drop it.
+
 ## 1.9.3
 
 Two adopter-reported fixes, both with the diagnosis largely done by the reporter.
