@@ -14,6 +14,10 @@ cause an endless rebuild loop.
 
 import * as path from 'path'
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js'
+import {
+  listEpubVolumes,
+  renderEpubDownloads,
+} from './epub-volumes.js'
 import { buildSlugMap } from '../routing.js'
 import { existsSync, mkdirSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'
@@ -346,6 +350,40 @@ export async function buildSite(
         output: DOCS_JSON,
       })
     extract()
+
+    /*
+    Fill `<!-- epub-downloads -->` and publish a manifest of the volumes this build makes.
+
+    Substituted into the corpus HERE, before pages are generated, so the static page and
+    the hydrated SPA render the same list and the client needs no new data source. The
+    volume set is computed from the corpus itself, so it is known before the ePubs are
+    built — the links and the files derive from one function and cannot disagree.
+
+    Why this exists: the build produced a valid ePub and linked to nothing, so a reader had
+    no route to it. A build that makes an artifact should be able to say where it is
+    (tosijs-ui#46).
+    */
+    const publishVolumeLinks = async () => {
+      if (!config.epub) return
+      const corpus = JSON.parse(await Bun.file(DOCS_JSON).text())
+      const volumes = listEpubVolumes(corpus, config)
+      if (!volumes.length) return
+      let touched = 0
+      for (const doc of corpus) {
+        const filled = renderEpubDownloads(doc.text ?? '', volumes)
+        if (filled !== doc.text) {
+          doc.text = filled
+          touched++
+        }
+      }
+      if (touched) await Bun.write(DOCS_JSON, JSON.stringify(corpus, null, 2))
+      // A stable, machine-readable list so a consumer can link the books without
+      // re-deriving the filename — the "documented helper" half of #46.
+      await Bun.write(
+        `${PUBLIC}/epub-volumes.json`,
+        JSON.stringify(volumes, null, 2)
+      )
+    }
 
     // Auto-create missing section docs + regenerate their TOC blocks, then
     // re-extract so the corpus reflects the on-disk changes.
@@ -798,6 +836,10 @@ export async function buildSite(
         )
       }
     }
+
+    // Fill the download marker and write the volume manifest before pages are rendered,
+    // so the static HTML and the SPA agree. PUBLIC exists by now (static assets copied).
+    await publishVolumeLinks()
 
     // Generate the static, pre-rendered doc site (one /slug/index.html per doc).
     // Runs after the static-asset copy so the generated index.html (README) wins,

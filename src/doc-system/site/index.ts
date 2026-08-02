@@ -27,3 +27,10 @@ export { buildEpub, DEFAULT_BOOK_CSS } from './epub.js'
 export type { BuildEpubOptions, BookMeta } from './epub.js'
 export { selectBookDocs } from '../book-manifest.js'
 export type { BookManifest } from '../book-manifest.js'
+
+export {
+  listEpubVolumes,
+  epubVolumeIdentity,
+  renderEpubDownloads,
+  type EpubVolume,
+} from './epub-volumes.js'

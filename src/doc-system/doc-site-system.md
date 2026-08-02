@@ -593,6 +593,46 @@ snippet when validation fails for that reason.
 You also want a wildcard DNS record (`*.dev.example.com`) pointing at the box, so a new
 project needs no registrar visit, and sshd running `GatewayPorts no`.
 
+#### Linking the books the build produces
+
+The build writes an ePub per volume — but a file nobody links to is a file nobody can
+download. Three ways to surface them, cheapest first.
+
+**A marker in any page.** Drop this where you want the list:
+
+```text
+<!-- epub-downloads -->
+```
+
+It is replaced at build time with one markdown link per volume, using each volume's title
+and its real output URL. Substituted into the corpus before pages render, so the static
+HTML and the hydrated SPA show the same thing.
+
+**A manifest.** Every build writes `/epub-volumes.json` to the output dir:
+
+```json
+[
+  { "book": "", "title": "my-project", "filename": "my-project.epub", "url": "/my-project.epub" },
+  { "book": "field-guide", "title": "my-project — field-guide",
+    "filename": "my-project-field-guide.epub", "url": "/my-project-field-guide.epub" }
+]
+```
+
+**The helper**, if you are generating links in your own code:
+
+```typescript
+import { listEpubVolumes, epubVolumeIdentity } from 'tosijs-ui/site'
+```
+
+> **Do not hard-code the filename.** It is *derived* — `<project>-<volume>.epub` — so a
+> hand-written link rots the moment a volume is renamed, and rots silently, since nothing
+> checks that a link points at a file the build made. That is exactly how a project ships a
+> valid ePub that nobody can download. The marker, the manifest and the helper all derive
+> the name from the same function the ePub build uses, so they cannot disagree.
+
+Note the title is for humans and the filename is an identifier: `epub.volumeTitles` renames
+the former without moving the latter, so published links survive a retitle.
+
 #### `preview.tunnel` — the live workspace
 
 The static preview publishes a _snapshot_. `preview.tunnel` publishes the **running dev

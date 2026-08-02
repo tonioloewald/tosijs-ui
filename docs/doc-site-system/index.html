@@ -800,6 +800,34 @@ account — so the registration step refuses rather than guessing, and names the
 snippet when validation fails for that reason.</p>
 <p>You also want a wildcard DNS record (<code>*.dev.example.com</code>) pointing at the box, so a new
 project needs no registrar visit, and sshd running <code>GatewayPorts no</code>.</p>
+<h4>Linking the books the build produces</h4>
+<p>The build writes an ePub per volume — but a file nobody links to is a file nobody can
+download. Three ways to surface them, cheapest first.</p>
+<p><strong>A marker in any page.</strong> Drop this where you want the list:</p>
+<pre><code class="language-text">- [tosijs-ui](/tosijs-ui.epub) *(ePub)*
+</code></pre>
+<p>It is replaced at build time with one markdown link per volume, using each volume&#39;s title
+and its real output URL. Substituted into the corpus before pages render, so the static
+HTML and the hydrated SPA show the same thing.</p>
+<p><strong>A manifest.</strong> Every build writes <code>/epub-volumes.json</code> to the output dir:</p>
+<pre><code class="language-json">[
+  { &quot;book&quot;: &quot;&quot;, &quot;title&quot;: &quot;my-project&quot;, &quot;filename&quot;: &quot;my-project.epub&quot;, &quot;url&quot;: &quot;/my-project.epub&quot; },
+  { &quot;book&quot;: &quot;field-guide&quot;, &quot;title&quot;: &quot;my-project — field-guide&quot;,
+    &quot;filename&quot;: &quot;my-project-field-guide.epub&quot;, &quot;url&quot;: &quot;/my-project-field-guide.epub&quot; }
+]
+</code></pre>
+<p><strong>The helper</strong>, if you are generating links in your own code:</p>
+<pre><code class="language-typescript">import { listEpubVolumes, epubVolumeIdentity } from &#39;tosijs-ui/site&#39;
+</code></pre>
+<blockquote>
+<p><strong>Do not hard-code the filename.</strong> It is <em>derived</em> — <code>&lt;project&gt;-&lt;volume&gt;.epub</code> — so a
+hand-written link rots the moment a volume is renamed, and rots silently, since nothing
+checks that a link points at a file the build made. That is exactly how a project ships a
+valid ePub that nobody can download. The marker, the manifest and the helper all derive
+the name from the same function the ePub build uses, so they cannot disagree.</p>
+</blockquote>
+<p>Note the title is for humans and the filename is an identifier: <code>epub.volumeTitles</code> renames
+the former without moving the latter, so published links survive a retitle.</p>
 <h4><code>preview.tunnel</code> — the live workspace</h4>
 <p>The static preview publishes a <em>snapshot</em>. <code>preview.tunnel</code> publishes the <strong>running dev
 server on your machine</strong>, at an authenticated public URL, so you can read and edit real

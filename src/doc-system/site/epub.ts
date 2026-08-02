@@ -22,6 +22,7 @@ import { buildSlugMap, pathForSlug, slugForPath } from '../routing.js'
 import { buildNavTree, NavNode } from '../nav-tree.js'
 import type { Doc } from './docs.js'
 import { partitionByBook, DEFAULT_BOOK } from '../book-target.js'
+import { epubVolumeIdentity } from './epub-volumes.js'
 import type { SiteConfig } from './site-config.js'
 import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html.js'
 import { selectBookDocs } from '../book-manifest.js'
@@ -866,11 +867,14 @@ export async function buildEpub(
     // An explicit `output` names ONE file, so it can only apply to the default volume —
     // otherwise every volume writes to it and you ship whichever bound last.
     (opts.bookTarget ? undefined : opts.output) ??
+      // Named through the SHARED helper, so the manifest, the download links and the file
+      // on disk all derive from one function. A link cannot point at a name nothing wrote.
       path.join(
         outDir,
-        opts.bookTarget
-          ? `${slugify(baseTitle)}-${slugify(opts.bookTarget)}.epub`
-          : `${slugify(baseTitle)}.epub`
+        epubVolumeIdentity(
+          { name: baseTitle, epub: { title: baseTitle } },
+          opts.bookTarget
+        ).filename
       )
   )
   await zipEpub(buildDir, output)

@@ -12,3 +12,4 @@ export { extractDocs, saveDocsJSON } from './docs.js';
 export { generateSite } from './generate-site.js';
 export { buildEpub, DEFAULT_BOOK_CSS } from './epub.js';
 export { selectBookDocs } from '../book-manifest.js';
+export { listEpubVolumes, epubVolumeIdentity, renderEpubDownloads, } from './epub-volumes.js';

@@ -20,6 +20,7 @@ import { renderDocMarkdown } from '../render.js';
 import { buildSlugMap, pathForSlug, slugForPath } from '../routing.js';
 import { buildNavTree } from '../nav-tree.js';
 import { partitionByBook, DEFAULT_BOOK } from '../book-target.js';
+import { epubVolumeIdentity } from './epub-volumes.js';
 import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html.js';
 import { selectBookDocs } from '../book-manifest.js';
 // Re-exported for back-compat (tosijs-ui/site's public surface + tests).
@@ -637,9 +638,9 @@ export async function buildEpub(config, opts = {}) {
     // An explicit `output` names ONE file, so it can only apply to the default volume —
     // otherwise every volume writes to it and you ship whichever bound last.
     (opts.bookTarget ? undefined : opts.output) ??
-        path.join(outDir, opts.bookTarget
-            ? `${slugify(baseTitle)}-${slugify(opts.bookTarget)}.epub`
-            : `${slugify(baseTitle)}.epub`));
+        // Named through the SHARED helper, so the manifest, the download links and the file
+        // on disk all derive from one function. A link cannot point at a name nothing wrote.
+        path.join(outDir, epubVolumeIdentity({ name: baseTitle, epub: { title: baseTitle } }, opts.bookTarget).filename));
     await zipEpub(buildDir, output);
     fs.rmSync(buildDir, { recursive: true, force: true });
     // Release the parser window: an unclosed happy-dom Window holds its whole
