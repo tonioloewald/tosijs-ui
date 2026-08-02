@@ -71,7 +71,29 @@ session-only + expire in 7 days — this line is the durable reminder.)
   returned to the OS between builds." **BUT the latest released bun is still 1.3.14 (2026-05-13),
   the version we run — so no version we can `bun install` carries the fix yet.**
   (Re-checked 2026-08-02: `npm view bun version` → still **1.3.14**. No release in ~3 months;
-  the fix remains main-only. Everything stays as-is.) Action: watch for
+  the fix remains main-only. Everything stays as-is.)
+
+  **2026-08-02 — what the next release actually is, and why that changes the plan.** bun is
+  pushing hard on **1.4, which is the Rust port**: canary is being revved frequently, and the
+  remaining work is edge-case bugs concentrated in **OS integrations**. Two consequences:
+
+  1. **Do NOT spend time on 1.4 canary yet.** Decided explicitly — it is too early, and
+     chasing a moving canary on a project that ships a dev server and a build system is how you
+     spend a week debugging someone else's port. Revisit when 1.4 is released, not before.
+  2. **"Measure when the fix ships" now means measure against a REWRITE.** The #34053 fix landed
+     on `main` in the Zig codebase; 1.4 is a different implementation. Its allocator behaviour is
+     not a delta on what we measured — it is wholesale new, so every threshold in
+     `memoryLimitMb` / `preflight.ts` is calibrated against a runtime being replaced. Re-measure
+     rather than assume the guards are either still needed or safely removable.
+
+  **The guards stay regardless, and not because we distrust 1.4.** They are not a workaround for
+  one bug — they are an *instrument* for a class: native memory invisible to the JS heap and to
+  `Bun.gc()`, in a process that lives for days. A rewrite can fix every current instance of that
+  class and still admit new ones, and the failure mode is a machine that swaps itself to death
+  with nothing in a heap profile. An instrument that measures outlives the bug that motivated it;
+  the cost is a 60s tick. (The Rust port is reportedly aimed squarely at the class of problem we
+  keep hitting as bleeding-edge users — which is a reason to expect *better*, not a reason to
+  stop measuring.) Action: watch for
   the next bun release; when it lands, MEASURE (see the two caveats below — Transpiler still not
   covered) before considering reverting any workaround. Until then, **everything stays as-is.**
   Prior detail from 2026-07-20:
