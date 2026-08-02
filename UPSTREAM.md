@@ -19,6 +19,21 @@ session-only + expire in 7 days — this line is the durable reminder.)
 
 ## bun
 
+- **[oven-sh/bun#36788](https://github.com/oven-sh/bun/issues/36788)** — `Bun.serve()`
+  `.stop()` **segfaults** during shutdown of a long-lived server (~8h), faulting on an
+  address that decodes to ASCII text (`0x632D656475616C63` → `"claude-c"`) — a string
+  dereferenced as a pointer, i.e. use-after-free or type confusion in teardown, not a null
+  deref. RSS was flat at 0.34GB, so **not** the `Bun.build` arena growth of #34053.
+
+  **Reported to us by tosijs-3d as tosijs-ui#47**, with the diagnosis essentially done:
+  elapsed 28624428ms = 7.95h against our 8h idle timer pinned it to the shutdown branch,
+  twice.
+
+  **Not blocking — fixed on our side by not calling it.** `process.exit()` ends the
+  process and the OS closes the sockets, so `.stop()` first bought nothing. Worth knowing
+  that **`try/catch` is not a mitigation** for anyone who does need a graceful stop: a
+  segfault is not a catchable exception, so the only workaround is to avoid the API.
+
 - **Status 2026-08-02: #36377 was AUTO-CLOSED as a duplicate and the ask is now split in two.**
   A dedupe bot flagged it on 07-29 ("add a comment to prevent auto-closure"), nobody did, and it
   closed on 08-02. The dedupe was half right — it bundled two asks and the bot matched one:
