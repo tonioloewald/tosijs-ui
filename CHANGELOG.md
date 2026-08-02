@@ -25,6 +25,16 @@ text (now `#0064d2`, 5.59:1).
 
 Verified across 8 pages in both themes on haltija 1.11.2: **0 failures, 0 uncertain**.
 
+**The browser-test lane now runs its own private haltija.** It used to reuse any running
+instance and otherwise spawn with `-f`, which reclaims haltija's shared default port and
+kills whatever held it. Both halves were wrong: adopting meant inheriting the *desktop
+app's* window, whose visibility depends on whatever else is on screen — and `hj` rightly
+refuses to drive a hidden tab, since a backgrounded tab throttles `requestAnimationFrame`
+and would produce plausible-but-wrong results. The lane failed roughly two runs in three
+with no programmatic way out. It now takes an isolated instance on an ephemeral port:
+**4/4 runs green**, and a concurrent haltija belonging to someone else survives untouched
+(verified both). Closes #18 and #21.
+
 The test widget's text color is now **paired** with its background rather than hardcoded
 to white. Amber is a genuinely light color: darkening it enough for white text turns it
 brown and stops reading as "in progress", so it keeps its hue and takes dark text, which

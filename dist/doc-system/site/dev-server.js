@@ -9,6 +9,7 @@ Build-time only (Bun APIs). Never import this from browser code.
 */
 import * as path from 'path';
 import { statSync } from 'fs';
+import { tmpdir } from 'os';
 import { $, spawn } from 'bun';
 import { buildSite } from './orchestrator.js';
 import { preflight } from './preflight.js';
@@ -1210,7 +1211,6 @@ export async function devServer(config, opts = {}) {
             testReportResolve = resolve;
             setTimeout(() => reject(new Error('Browser tests timed out')), testTimeout);
         });
-        let haltija;
         /**
          * Tear down the haltija WE started — including the Electron grandchild. Defined up
          * front so EVERY failure path can call it, including the start-timeout below, which
@@ -1270,72 +1270,55 @@ export async function devServer(config, opts = {}) {
     
         Declining to adopt is safe: we spawn with `-f`, which stomps the stale instance.
         */
-        const haltijaReachable = async () => {
+        /*
+        ALWAYS an isolated instance. Never adopt, never stomp.
+    
+        The lane used to reuse any reachable haltija and otherwise spawn with `-f`, which
+        reclaims the shared default port and SIGTERMs whatever held it — often another
+        project's session. Both halves were a problem:
+    
+          - adopting meant inheriting the DESKTOP app's window, whose visibility depends on
+            whatever else is on screen. `hj` refuses to drive a hidden tab (rightly — a
+            backgrounded tab throttles rAF, so results are plausible-but-wrong), so the lane
+            failed intermittently, roughly two runs in three, with no programmatic way out.
+          - `-f` made this project's test run destructive to everyone else's.
+    
+        `--private` gives us our own server on an EPHEMERAL port, so there is nothing to
+        contend for and nothing to kill. The port is written to a file rather than guessed.
+        (tosijs-ui#18, #21.)
+        */
+        const portFile = `${tmpdir()}/tosijs-haltija-${process.pid}.json`;
+        console.log('Starting a private haltija…');
+        const haltija = spawn(['bunx', HALTIJA_PKG, '--private', '--port-file', portFile], {
+            // stdout/stderr are NOT inherited: `bunx haltija` launches Electron as a
+            // grandchild, and killing the bunx wrapper does not kill it. An orphan holding
+            // our inherited stdout keeps the pipe open forever, so the command looks hung
+            // long after it exited.
+            stdout: 'ignore',
+            stderr: 'ignore',
+        });
+        // Read the port it actually bound, rather than assuming one.
+        let hjPort = '';
+        for (let i = 0; i < 60; i++) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
             try {
-                /*
-                `--json`, and fail CLOSED.
-        
-                Bare `hj windows` appends a dim hint line to STDOUT after the JSON, so
-                `JSON.parse` throws and a `catch` that fell through to `return true` adopted the
-                very dead server this check exists to reject — the gate was inert on every
-                npm-installed CLI. It passed verification here only because this machine's `hj` is
-                a standalone bundle with no `hints.json` beside it, so the hint was never emitted:
-                a real behavioural test, run against an environment adopters do not have.
-        
-                Failing closed costs nothing: the spawn below uses `-f`, which stomps a stale
-                instance. Adopting a server we could not read is the expensive direction.
-                */
-                const out = await $ `hj windows --json`.quiet().text();
-                return haltijaIsDrivable(out);
+                const info = JSON.parse(await Bun.file(portFile).text());
+                hjPort = String(info.port ?? info.address?.port ?? '');
+                if (hjPort)
+                    break;
             }
             catch {
-                return false;
-            }
-        };
-        const adoptable = await haltijaReachable();
-        if (!adoptable) {
-            /*
-            Leave a receipt: spawning with `-f` reclaims haltija's shared default port, which
-            SIGTERMs whatever was there — frequently another project's session, or the
-            developer's own. This file already sets that norm for killStrayServer; declining to
-            adopt makes the stomp MORE frequent, so it must be at least as loud.
-            */
-            console.log(`No drivable haltija (server absent, or up with no connected tab).\n` +
-                `  Starting one with -f, which reclaims the shared haltija port — any other\n` +
-                `  project's session on it will be stopped.  (cwd: ${process.cwd()})`);
-        }
-        if (adoptable) {
-            console.log('Using existing haltija browser');
-        }
-        else {
-            console.log('Starting haltija...');
-            // stdout/stderr are NOT inherited: `bunx haltija` launches an Electron app as a
-            // grandchild, and killing the bunx wrapper does not kill it. An orphaned Electron
-            // holding our inherited stdout keeps the pipe open forever, so a CI job or an
-            // agent capturing this command's output sees it hang long after it exited (0).
-            haltija = spawn(['bunx', HALTIJA_PKG, '-f'], {
-                stdout: 'ignore',
-                stderr: 'ignore',
-            });
-            const waitStarted = Date.now();
-            console.log('Waiting for haltija…');
-            let up = false;
-            for (let i = 0; i < 20; i++) {
-                await new Promise((resolve) => setTimeout(resolve, 500));
-                if (await haltijaReachable()) {
-                    up = true;
-                    break;
-                }
-            }
-            if (!up) {
-                console.error(`haltija did not become drivable within ${Math.round((Date.now() - waitStarted) / 1000)}s.\n` +
-                    `  A single \`hj windows\` can block for several seconds when a server is up\n` +
-                    `  with no tab, so this can take much longer than the poll count suggests.`);
-                await stopHaltija();
-                server.stop();
-                process.exit(1);
+                /* not written yet */
             }
         }
+        if (!hjPort) {
+            console.error(`haltija did not report a private port within 30s (${portFile}).\n` +
+                `  Is \`bunx ${HALTIJA_PKG}\` able to run? Try it by hand.`);
+            await stopHaltija();
+            server.stop();
+            process.exit(1);
+        }
+        console.log(`  private haltija on port ${hjPort}`);
         console.log('Opening demo site...');
         // haltija 1.4: `hj navigate` exits NON-ZERO on failure (no browser reachable, a
         // window that didn't take the URL, …). Before 1.4 it exited 0 regardless, so a
@@ -1343,7 +1326,9 @@ export async function devServer(config, opts = {}) {
         // timeout with a misleading "Browser tests timed out". Now we can read the exit
         // code: fail immediately, say why, and tear down the haltija we spawned so the
         // next run isn't inheriting a half-navigated browser.
-        const nav = await $ `hj navigate https://localhost:${PORT}`.nothrow().quiet();
+        const nav = await $ `hj --port ${hjPort} navigate https://localhost:${PORT}`
+            .nothrow()
+            .quiet();
         if (nav.exitCode !== 0) {
             console.error(`hj navigate failed (exit ${nav.exitCode}): ${nav.stderr.toString().trim() || 'no browser reachable'}`);
             await stopHaltija();
