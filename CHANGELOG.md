@@ -23,6 +23,13 @@ document for negative numbers in tables sat at **3.63:1** (now `#d32f2f`, 4.77:1
 `#007AFF` — the accent in every theming example in our docs — was **4.02:1** under white
 text (now `#0064d2`, 5.59:1).
 
+Also fixed: the doc-site brand bar's text was a hand-tuned warm off-white
+(`brandColor.rotate(30).brighten(0.9)` → `#fbeae9`) sitting at **4.09:1** on the brand —
+under AA for the normal-size nav links in it. Every brighten value short of pure white
+also misses, so it now uses `contrasting()`, which picks the readable extreme for whatever
+the brand currently is and cannot drift when the brand moves. Three stale `#EE257B` /
+`#007AFF` fallbacks were still live in `header.ts` and `doc-browser.ts` and now match.
+
 Verified across 8 pages in both themes on haltija 1.11.2: **0 failures, 0 uncertain**.
 
 **The browser-test lane now runs its own private haltija.** It used to reuse any running

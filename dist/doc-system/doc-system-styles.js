@@ -32,7 +32,18 @@ export function docSystemColors(theme = {}) {
         _barColor: brandColor.opacity(0.4),
         _focusColor: brandColor.opacity(0.7),
         _placeholderColor: brandColor.opacity(0.4),
-        _brandTextColor: brandColor.rotate(30).brighten(0.9),
+        /*
+        `contrasting()` rather than a hand-tuned tint.
+    
+        `brandColor.rotate(30).brighten(0.9)` produced a warm off-white (#fbeae9) that sat at
+        **4.09:1** on the brand bar — under AA for the normal-size nav links in it. Every
+        brighten value short of pure white also misses (0.96 lands at 4.49), so the tint had
+        to go; it was imperceptible anyway. `contrasting()` picks the readable extreme for
+        whatever the brand currently is, so this cannot drift the next time the brand moves.
+        Dark mode is unaffected: invertLuminance flips this to near-black on the brightened
+        bar, which is already high-contrast.
+        */
+        _brandTextColor: brandColor.contrasting(),
         _insetBg: brandColor.rotate(45).brighten(0.8),
         // Neutral off-white (not brand-tinted); dark mode inverts its luminance to
         // off-black, so the editor surface stays a clean neutral in both themes.

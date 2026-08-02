@@ -108,7 +108,7 @@ export class TosiHeader extends Component {
       display: 'flex',
       alignItems: 'center',
       padding: varDefault.tosiHeaderPadding('12px 24px'),
-      background: varDefault.tosiHeaderBg('var(--tosi-accent, #EE257B)'),
+      background: varDefault.tosiHeaderBg('var(--tosi-accent, #d92270)'),
       lineHeight: varDefault.tosiHeaderLineHeight('32px'),
       gap: varDefault.tosiHeaderGap('8px'),
     },

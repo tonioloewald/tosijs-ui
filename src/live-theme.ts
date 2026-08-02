@@ -26,7 +26,7 @@ The `liveTheme` observable lets you read and write theme values from code:
 import { liveTheme } from 'tosijs-ui'
 
 // Read current values
-// liveTheme.accent.value   // '#EE257B'
+// liveTheme.accent.value   // '#d92270'
 // liveTheme.dark.value     // false
 
 // Set values programmatically (triggers immediate theme update)

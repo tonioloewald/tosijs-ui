@@ -272,7 +272,7 @@ const testIndicatorStyleSpec = {
     },
     // Deep-linked example (e.g. arriving at /slug/#example-2): brief highlight pulse
     '@keyframes example-target-pulse': {
-        from: { boxShadow: `0 0 0 3px ${varDefault.accent('#007aff')}` },
+        from: { boxShadow: `0 0 0 3px ${varDefault.accent('#0064d2')}` },
         to: { boxShadow: '0 0 0 3px transparent' },
     },
     '.example-target': {
