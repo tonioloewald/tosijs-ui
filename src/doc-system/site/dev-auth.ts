@@ -320,3 +320,27 @@ export function isLockedDown(config: {
 export function hasTunnel(config: { preview?: { tunnel?: unknown } }): boolean {
   return Boolean(config.preview?.tunnel)
 }
+
+/*
+What should happen when a request arrives carrying a `?t=` link token?
+
+Three outcomes, and the middle one is the whole point: a stale token in the hands of
+someone who is ALREADY signed in is irrelevant, not a reason to wall them. That case is
+ordinary — a second window, a link scrolled back to in a chat, a bookmark — and it was
+previously rejected, because the token was examined before the cookie and a comment
+asserted (without enforcing) that a session holder could never reach it.
+
+No session is re-issued on a spent token: they already have one, and minting a fresh
+session from a dead link would make expiry meaningless.
+*/
+export type LinkArrival = 'issue-session' | 'already-authenticated' | 'reject'
+
+export function resolveLinkArrival(opts: {
+  /** the session redeemLink() minted, or null if the token was invalid/spent */
+  redeemed: string | null
+  hasValidSession: boolean
+}): LinkArrival {
+  if (opts.redeemed) return 'issue-session'
+  if (opts.hasValidSession) return 'already-authenticated'
+  return 'reject'
+}

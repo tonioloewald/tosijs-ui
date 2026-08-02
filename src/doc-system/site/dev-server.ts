@@ -20,6 +20,7 @@ import { openDevBrowser } from './open-browser.js'
 import { resolveTunnelLocalPort } from './site-config.js'
 import {
   TUNNEL_LINK_CMD,
+  resolveLinkArrival,
   isLockedDown,
   hasTunnel,
   isLoopbackAddressForAuth as isLoopbackAddress,
@@ -1096,20 +1097,40 @@ export async function devServer(
         'Referrer-Policy': 'no-referrer',
         'Cache-Control': 'no-store',
       }
-      if (session) {
-        headers['Set-Cookie'] = sessionCookie(session)
+      const heldCookie = readCookie(
+        request.headers.get('cookie'),
+        SESSION_COOKIE
+      )
+      const arrival = resolveLinkArrival({
+        redeemed: session,
+        hasValidSession: validSession(auth, heldCookie, Date.now()),
+      })
+      if (arrival === 'issue-session') {
+        headers['Set-Cookie'] = sessionCookie(session!)
         console.log('🔓 edit link redeemed — session issued')
         return new Response(null, { status: 302, headers })
       }
       /*
-      Invalid or ALREADY SPENT — and the likely culprit is not an attacker but a
+      A VALID SESSION TRUMPS A STALE LINK.
+
+      The comment that used to sit here asserted that a session holder "never lands
+      here, their cookie is sent automatically" — and nothing enforced it. The token is
+      read before any session check, so anyone already signed in who clicks an older link
+      (a second window, a link scrolled back to in chat, a bookmark) got walled with
+      "that invite link has been used" while holding a perfectly good session. The stale
+      token is simply irrelevant to them.
+
+      Strip it and carry on. No new session is issued: they already have one, and
+      re-issuing on a spent token would make expiry meaningless.
+      */
+      if (arrival === 'already-authenticated') {
+        return new Response(null, { status: 302, headers })
+      }
+      /*
+      Genuinely unauthenticated, and the likely culprit is not an attacker but a
       chat-app link-preview bot, whose GET *is* the first use. dev-auth.ts names
       unfurlers as a reason for single-use without handling the consequence: you click
       a dead link, get silently redirected, and the next signal is a save failing.
-
-      An anonymous reader who already holds a session never lands here (their cookie is
-      sent automatically), so saying this out loud costs nothing and saves a confusing
-      hunt.
       */
       const spent =
         `<!doctype html><meta charset=utf-8><title>Link already used</title>` +

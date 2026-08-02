@@ -83,3 +83,9 @@ export declare function hasTunnel(config: {
         tunnel?: unknown;
     };
 }): boolean;
+export type LinkArrival = 'issue-session' | 'already-authenticated' | 'reject';
+export declare function resolveLinkArrival(opts: {
+    /** the session redeemLink() minted, or null if the token was invalid/spent */
+    redeemed: string | null;
+    hasValidSession: boolean;
+}): LinkArrival;

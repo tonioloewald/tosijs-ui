@@ -16,7 +16,7 @@ import { preflight } from './preflight.js';
 import { auditDependencies, reportAudit } from './audit-guard.js';
 import { openDevBrowser } from './open-browser.js';
 import { resolveTunnelLocalPort } from './site-config.js';
-import { TUNNEL_LINK_CMD, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
 const TEST_RESULTS_FILE = '.browser-tests.json';
 const DEFAULT_IDLE_HOURS = 8;
 /**
@@ -941,20 +941,37 @@ export async function devServer(config, opts = {}) {
                 'Referrer-Policy': 'no-referrer',
                 'Cache-Control': 'no-store',
             };
-            if (session) {
+            const heldCookie = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
+            const arrival = resolveLinkArrival({
+                redeemed: session,
+                hasValidSession: validSession(auth, heldCookie, Date.now()),
+            });
+            if (arrival === 'issue-session') {
                 headers['Set-Cookie'] = sessionCookie(session);
                 console.log('🔓 edit link redeemed — session issued');
                 return new Response(null, { status: 302, headers });
             }
             /*
-            Invalid or ALREADY SPENT — and the likely culprit is not an attacker but a
+            A VALID SESSION TRUMPS A STALE LINK.
+      
+            The comment that used to sit here asserted that a session holder "never lands
+            here, their cookie is sent automatically" — and nothing enforced it. The token is
+            read before any session check, so anyone already signed in who clicks an older link
+            (a second window, a link scrolled back to in chat, a bookmark) got walled with
+            "that invite link has been used" while holding a perfectly good session. The stale
+            token is simply irrelevant to them.
+      
+            Strip it and carry on. No new session is issued: they already have one, and
+            re-issuing on a spent token would make expiry meaningless.
+            */
+            if (arrival === 'already-authenticated') {
+                return new Response(null, { status: 302, headers });
+            }
+            /*
+            Genuinely unauthenticated, and the likely culprit is not an attacker but a
             chat-app link-preview bot, whose GET *is* the first use. dev-auth.ts names
             unfurlers as a reason for single-use without handling the consequence: you click
             a dead link, get silently redirected, and the next signal is a save failing.
-      
-            An anonymous reader who already holds a session never lands here (their cookie is
-            sent automatically), so saying this out loud costs nothing and saves a confusing
-            hunt.
             */
             const spent = `<!doctype html><meta charset=utf-8><title>Link already used</title>` +
                 `<style>body{font:16px/1.6 system-ui;margin:15vh auto;max-width:32rem;padding:0 1.5rem;color:#222}` +

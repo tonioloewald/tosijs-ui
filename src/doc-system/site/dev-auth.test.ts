@@ -401,3 +401,38 @@ test('the server and the ?t= gate agree on what "has a tunnel" means', () => {
   expect(hasTunnel({})).toBe(false)
   expect(hasTunnel({ preview: { tunnel: {} } })).toBe(true)
 })
+
+// ── arriving with a link token ───────────────────────────────────────────────
+
+import { resolveLinkArrival } from './dev-auth'
+
+test('a good token issues a session', () => {
+  expect(
+    resolveLinkArrival({ redeemed: 'sess-abc', hasValidSession: false })
+  ).toBe('issue-session')
+})
+
+test('REGRESSION: a valid session trumps a stale link', () => {
+  // Someone already signed in who clicks an older link — a second window, a link
+  // scrolled back to in chat, a bookmark — was walled with "that invite link has been
+  // used" while holding a perfectly good session. The token is read before the cookie,
+  // and a comment asserted (without enforcing) that a session holder could never get
+  // here. The stale token is simply irrelevant to them.
+  expect(
+    resolveLinkArrival({ redeemed: null, hasValidSession: true })
+  ).toBe('already-authenticated')
+})
+
+test('a stale link with no session is still refused', () => {
+  expect(resolveLinkArrival({ redeemed: null, hasValidSession: false })).toBe(
+    'reject'
+  )
+})
+
+test('a fresh redemption wins even if a session is already held', () => {
+  // Redeeming spends the token either way, so honour it rather than leaving a spent
+  // token behind with the old session still running its original clock.
+  expect(
+    resolveLinkArrival({ redeemed: 'sess-new', hasValidSession: true })
+  ).toBe('issue-session')
+})

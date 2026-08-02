@@ -108,8 +108,17 @@ if (!host) {
   process.exit(1)
 }
 
-/** pgrep pattern that matches only OUR forward, so --close can't kill someone else's. */
-const pattern = `ssh .*-R ${remotePort}:localhost:${tunnelLocalPort} ${host}`
+/*
+pgrep pattern that matches only OUR forward, so --close can't kill someone else's.
+
+`host` is interpolated into a REGEX, so it must be escaped: it is user config
+(`user@box.example.com`), and an unescaped `.` matches any character while `+`, `(` or
+`*` change the pattern's meaning outright. Unescaped, `me@a.b` also matches `me@axb`.
+*/
+const rx = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const pattern = `ssh .*-R ${remotePort}:localhost:${tunnelLocalPort} ${rx(
+  String(host)
+)}`
 
 async function running(): Promise<number[]> {
   const out = await $`pgrep -f ${pattern}`.nothrow().quiet().text()
@@ -175,16 +184,43 @@ if (has('status')) {
 }
 
 if (has('close')) {
+  /*
+  Confirm identity before signalling, and leave a receipt.
+
+  `pgrep -f` matches an argv SUBSTRING, so anything whose command line happens to contain
+  this pattern matches — a shell running an `echo` of the command, an editor holding a log
+  path, another agent tailing output. Signalling on a substring match alone is how a tool
+  kills something it never started.
+
+  `killStrayServer` in dev-server.ts already set this norm ("reclaiming a port is
+  destructive, so the log says exactly which pid/comm"), but the discipline lived in
+  another file and did not travel. Same rule here: check `comm` is really ssh, say what
+  was signalled, and name what was skipped and why.
+  */
   const pids = await running()
+  const closed: number[] = []
   for (const pid of pids) {
+    const comm = (
+      await $`ps -p ${pid} -o comm=`.nothrow().quiet().text()
+    ).trim()
+    if (!/(^|\/)ssh$/.test(comm)) {
+      console.warn(
+        `⚠️  pid ${pid} matched the tunnel pattern but is ${
+          comm || 'unknown'
+        }, not ssh — leaving it alone.`
+      )
+      continue
+    }
     try {
       process.kill(pid, 'SIGTERM')
+      closed.push(pid)
+      console.log(`  SIGTERM → pid ${pid} (${comm})`)
     } catch {
-      /* already gone */
+      /* already gone between pgrep and here */
     }
   }
   console.log(
-    pids.length ? `closed (pid ${pids.join(', ')})` : 'nothing to close'
+    closed.length ? `closed (pid ${closed.join(', ')})` : 'nothing to close'
   )
   process.exit(0)
 }

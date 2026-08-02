@@ -266,3 +266,10 @@ export function isLockedDown(config) {
 export function hasTunnel(config) {
     return Boolean(config.preview?.tunnel);
 }
+export function resolveLinkArrival(opts) {
+    if (opts.redeemed)
+        return 'issue-session';
+    if (opts.hasValidSession)
+        return 'already-authenticated';
+    return 'reject';
+}
