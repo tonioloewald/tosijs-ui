@@ -19,7 +19,22 @@ session-only + expire in 7 days — this line is the durable reminder.)
 
 ## bun
 
-- **[oven-sh/bun#36377](https://github.com/oven-sh/bun/issues/36377)** — `bun audit` can't be
+- **Status 2026-08-02: #36377 was AUTO-CLOSED as a duplicate and the ask is now split in two.**
+  A dedupe bot flagged it on 07-29 ("add a comment to prevent auto-closure"), nobody did, and it
+  closed on 08-02. The dedupe was half right — it bundled two asks and the bot matched one:
+
+  - **Nested / path-scoped `overrides`** → **[oven-sh/bun#6608](https://github.com/oven-sh/bun/issues/6608)**
+    (OPEN since 2023-10-19, 24 comments). Genuinely the same ask; our remediation use case is
+    added there as a comment. **This is the half that bites us.**
+  - **`bun audit` scoping by dependency class** → refiled tightly scoped as
+    **[oven-sh/bun#36773](https://github.com/oven-sh/bun/issues/36773)**. NOT covered by #6608,
+    which is about install-time resolutions.
+
+  Both closed/refiled issues carry pointers to each other so the trail survives.
+  **Lesson worth keeping: one ask per issue.** A two-ask issue is one a bot can close by matching
+  half of it, and the other half goes with it silently.
+
+- **(historical, now closed) [oven-sh/bun#36377](https://github.com/oven-sh/bun/issues/36377)** — `bun audit` can't be
   scoped by dependency class (no `--production` / `--omit=dev`, and the JSON carries no
   dev/prod flag or dependency path), and `overrides` can't express a **nested/path-scoped**
   constraint the way npm's `{"foo": {"bar": "1.2.3"}}` / `"baz > qux"` forms do.
@@ -54,7 +69,9 @@ session-only + expire in 7 days — this line is the durable reminder.)
   PR, **[#34502](https://github.com/oven-sh/bun/pull/34502)** — "Verified on main at `df84f8db1`:
   sequential `Bun.build()` calls now plateau instead of growing RSS unbounded — freed memory is
   returned to the OS between builds." **BUT the latest released bun is still 1.3.14 (2026-05-13),
-  the version we run — so no version we can `bun install` carries the fix yet.** Action: watch for
+  the version we run — so no version we can `bun install` carries the fix yet.**
+  (Re-checked 2026-08-02: `npm view bun version` → still **1.3.14**. No release in ~3 months;
+  the fix remains main-only. Everything stays as-is.) Action: watch for
   the next bun release; when it lands, MEASURE (see the two caveats below — Transpiler still not
   covered) before considering reverting any workaround. Until then, **everything stays as-is.**
   Prior detail from 2026-07-20:
