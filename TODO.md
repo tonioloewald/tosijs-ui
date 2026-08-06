@@ -7,6 +7,23 @@ the lint/typecheck gates, `touch()`, the red-tsc site discard, port defaults,
 per-project `remotePort`, the deploy asset path, the mutating smoke test, and the stale
 security prose. What is left:
 
+**From snowfox's build-system reports (deferred — the cheap halves are done):**
+
+- [ ] **[#56](https://github.com/tonioloewald/tosijs-ui/issues/56) — label build-only
+      advisories in the audit verdict.** NOT a change to what blocks: blocking on every
+      high+ regardless of dep class is a deliberate decision (a compromised linter has your
+      source, credentials and shell), and the time-boxed `audit.allow` gate is the intended
+      release valve. The additive half is worth it — the gate already annotates *nature*
+      (`LEAK/ALTER` / `DoS-only`), so adding *reach* lets a reader judge whether a red build
+      is proportionate. Deferred because it is a `bun.lock` + workspace-manifest walk, not a
+      flag — snowfox says so themselves — and a classifier that mislabels a runtime dep as
+      build-only is worse than none. Advisory labelling first; policy only if it earns it.
+      They offered a write-up of their reachability walk; take it before implementing.
+- [ ] **[#58](https://github.com/tonioloewald/tosijs-ui/issues/58) — CodeMirror's 12 hard
+      deps.** Cost documented in CLAUDE.md rather than fixed. Revisit only if a CodeMirror
+      advisory actually fails an adopter's build; the exit is extracting `<tosi-code>` into
+      its own package, which is a breaking change and needs a reason.
+
 **Post-1.9.0 — adopt more of haltija (1.6.1–1.11.0):**
 
 - [ ] **Expose `globalThis.tosiAgent`** so `hj map` carries binding provenance instead of

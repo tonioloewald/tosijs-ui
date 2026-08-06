@@ -344,6 +344,17 @@ How grouping works (`insert-examples.ts`):
 See `package.json` for current versions. The notable ones:
 
 - `@codemirror/*` (12 packages): the **only hard runtime `dependencies`** — everything else is a peer or dev dep. This is a deliberate 1.7 divergence from the shared practices' "zero runtime dependencies in core libraries" rule (CodeMirror can't be a naive optional peer: the editor, its language modes, and the tjs extension must all share one `@codemirror/state` instance). Don't "fix" it by demoting them to peers. The gate on a new runtime dep here is the printed gzip delta, not the dependency count.
+
+  **The known cost, so it is not rediscovered as a bug (#58):** those 12 packages enter every
+  consumer's lockfile and therefore their audit surface, even though the editor is lazy at the
+  bundle level and its bytes never reach a page that has no `<tosi-code>`. An advisory against
+  any of them can fail an adopter's gate. That is a real cost and it is accepted, because the
+  alternatives are worse: optional peers turn a working component into one that silently does
+  nothing until you install 12 packages, and the pre-1.7 arrangement — ACE loaded from a CDN —
+  was worse on every axis at once (a runtime network dependency, no version pinning, no audit
+  visibility at all, and a worse editor). Revisit if a CodeMirror advisory actually fails
+  someone's build; extracting `<tosi-code>` into its own package is the exit, and it is a
+  breaking change that needs a reason.
 - `tosijs`: Core component framework (peer + dev dep). The peer floor **encodes specific
   upstream fixes, not a date** — `^1.7.8` is required for tosijs#20 (the `this.parts` proxy
   crossing into nested component instances, which made "edit" on one live example open the
