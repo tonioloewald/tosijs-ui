@@ -344,7 +344,12 @@ How grouping works (`insert-examples.ts`):
 See `package.json` for current versions. The notable ones:
 
 - `@codemirror/*` (12 packages): the **only hard runtime `dependencies`** — everything else is a peer or dev dep. This is a deliberate 1.7 divergence from the shared practices' "zero runtime dependencies in core libraries" rule (CodeMirror can't be a naive optional peer: the editor, its language modes, and the tjs extension must all share one `@codemirror/state` instance). Don't "fix" it by demoting them to peers. The gate on a new runtime dep here is the printed gzip delta, not the dependency count.
-- `tosijs`: Core component framework (peer + dev dep)
+- `tosijs`: Core component framework (peer + dev dep). The peer floor **encodes specific
+  upstream fixes, not a date** — `^1.7.8` is required for tosijs#20 (the `this.parts` proxy
+  crossing into nested component instances, which made "edit" on one live example open the
+  editor in another) and tosijs#21 (change-handler value staleness). Raise it only with a
+  reason recorded here; `bun run test-consumer` asserts the devDep satisfies the declared
+  peer range, so the two cannot drift apart silently (#57).
 - `marked`: Markdown parsing (peer dep)
 - `tjs-lang`: live-example transpiler (optional peer dep, lazy-loaded — a plain component consumer never pulls it in). Live examples load its **self-contained browser bundles** (`tjs-lang/browser` + `tjs-lang/browser/from-ts`; the TypeScript compiler lazy-loads from a CDN only for `ts` examples). Load order: installed peer → **same-origin** copy the doc-site build ships under `/tjs/` (via `__TJS_LOCAL_BASE`) → CDN chain (jsdelivr → unpkg → esm.sh). The version is pinned by `TJS_VERSION` in `src/live-example/code-transform.ts` — **bump it in lockstep with the dep** when upgrading. (Replaced `sucrase`, which is gone.)
 - `happy-dom`: DOM simulation for unit tests (dev dep); also the ePub builder's HTML→XHTML pass. `@resvg/resvg-js`: rasterizes the generated ePub cover. Both `happy-dom` and `@resvg/resvg-js` are **optional peer deps** (`peerDependenciesMeta.optional`) as well as dev deps — an adopter building ePubs via `tosijs-ui/site` needs them installed (both are lazy-loaded with a graceful fallback + warning when absent).

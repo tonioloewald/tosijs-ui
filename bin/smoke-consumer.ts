@@ -224,6 +224,27 @@ try {
     iconRun.stderr.toString().slice(0, 200)
   )
 
+  // ── the manifest's own consistency ────────────────────────────────────────
+  //
+  // A peer floor the library is not itself developed against is a contract nobody tests.
+  // This drifted historically — a `tosijs` devDep pinned BELOW the declared peer range —
+  // and the only signal was an adopter's install warning (#57). Cheap to assert, and the
+  // tarball is the right place: it is the manifest consumers actually resolve against.
+  const manifest = await Bun.file(
+    path.join(proj, 'node_modules', pkg.name, 'package.json')
+  ).json()
+  for (const [dep, range] of Object.entries(
+    (manifest.peerDependencies ?? {}) as Record<string, string>
+  )) {
+    const dev = (manifest.devDependencies ?? {})[dep]
+    if (!dev) continue // not developed against it at all — nothing to check
+    check(
+      `devDependency ${dep}@${dev} satisfies its own peer range "${range}"`,
+      Bun.semver.satisfies(dev.replace(/^[\^~]/, ''), range),
+      `the library declares a floor it does not build against`
+    )
+  }
+
   // ── a build, from the consumer's cwd ──────────────────────────────────────
   console.log('🔨 building as the consumer …')
   const build = await $`bun build.ts`.cwd(proj).nothrow().quiet()
