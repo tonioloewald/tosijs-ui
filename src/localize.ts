@@ -225,6 +225,26 @@ Use `#` annotations to create context-specific variants:
   (or the cell is empty), it falls back to the base `OK` translation.
 - The `#` annotation is always stripped from the output — the user never sees it.
 
+### Literal `#`
+
+An annotation is a **suffix identifier**, so only a `#` that looks like one is treated as
+one: immediately preceded by a non-space, followed by letters/digits/`_`/`-`, running to
+the end of the string. Everything else is literal:
+
+| string | read as |
+| --- | --- |
+| `Okay#confirm` | annotation |
+| `C# Tutorial` | literal — space after the `#` |
+| `Issue #42` | literal — space before the `#` |
+| `#hashtag` | literal — nothing before the `#` |
+| `C#` | literal — no annotation after the `#` |
+
+Escape with `\#` for a literal that genuinely looks like an annotation (`tag\#42` →
+`tag#42`).
+
+Translations are never scanned for annotations — an annotation belongs to the lookup key,
+not to the translated text, so a translation may contain `#` freely.
+
 Example TSV rows:
 ```
 OK	D'accord	Ok	好的
@@ -504,6 +524,39 @@ export function initLocalization(localizedStrings: string) {
   }
 }
 
+/*
+Where does an annotation start — and is there one at all?
+
+`#` separates a string from a context annotation (`Okay#confirm`). It used to be treated
+as an annotation marker EVERYWHERE, so any literal `#` was destroyed: `'C# Tutorial'`
+became `'C'` and `'#hashtag'` became `''` (tosijs-ui#55).
+
+An annotation is a **suffix identifier**, so require it to look like one: `#` immediately
+preceded by a non-space, followed by identifier characters, running to the end. That makes
+every prose `#` literal with no author action and no data migration, while every documented
+annotation form keeps working:
+
+    Okay#confirm   → annotation        C# Tutorial → literal (space after)
+    tag#42         → annotation        Issue #42   → literal (space before)
+                                       #hashtag    → literal (nothing before)
+                                       C#          → literal (empty annotation)
+
+`\#` escapes the residue — a literal that genuinely looks like a suffix annotation.
+*/
+const ANNOTATION = /(?<=[^\s\\])#[A-Za-z0-9_-]+$/
+
+/** Index of the annotation's `#`, or -1 when the string has none. */
+export function annotationIndex(ref: string): number {
+  const m = ANNOTATION.exec(ref)
+  return m ? m.index : -1
+}
+
+/** The string without its annotation, and with `\#` collapsed to a literal `#`. */
+export function stripAnnotation(ref: string): string {
+  const at = annotationIndex(ref)
+  return (at === -1 ? ref : ref.slice(0, at)).replace(/\\#/g, '#')
+}
+
 export function localize(ref: string): string {
   if (ref.endsWith('…')) {
     return localize(ref.substring(0, ref.length - 1)) + '…'
@@ -517,22 +570,42 @@ export function localize(ref: string): string {
     const map = stringMapValue[lowerRef]
     let localized = map && map[index]
     // fall back to base string for ditto marks (") and missing annotations
-    if ((!localized || localized === '"') && lowerRef.includes('#')) {
-      const baseMap =
-        stringMapValue[lowerRef.substring(0, lowerRef.indexOf('#'))]
+    const at = annotationIndex(lowerRef)
+    if ((!localized || localized === '"') && at > -1) {
+      const baseMap = stringMapValue[lowerRef.substring(0, at)]
       localized = baseMap && baseMap[index]
     }
     if (localized) {
-      localized = localized.split('#', 2)[0]
+      /*
+      Strip the annotation from the value ONLY when the value is the key echoed back.
+
+      `initLocalization` fills the reference-locale column with the key itself, annotation
+      and all (`okay#confirm → ["Okay#confirm", …]`), so that one case does need stripping.
+      Everything else must not be touched: the previous code ran
+      `localized.split('#', 2)[0]` unconditionally, which truncated genuine translations
+      containing `#` even when the source string had none — `'Sharp'` → `'Dièse #1'` came
+      back as `'Dièse '` (tosijs-ui#55).
+
+      Matching on the exact annotation suffix, rather than on any `#`, is what separates
+      the two: an echoed key ends with the same `#annotation` the key does; a translation
+      that happens to contain `#` does not.
+      */
+      if (at > -1) {
+        const suffix = lowerRef.slice(at)
+        if (localized.toLocaleLowerCase().endsWith(suffix)) {
+          localized = localized.slice(0, -suffix.length)
+        }
+      }
+      localized = localized.replace(/\\#/g, '#')
       ref =
         ref.toLocaleLowerCase() === ref
           ? localized.toLocaleLowerCase()
           : localized
     } else {
-      ref = ref.split('#', 2)[0]
+      ref = stripAnnotation(ref)
     }
   } else {
-    ref = ref.split('#', 2)[0]
+    ref = stripAnnotation(ref)
   }
   return ref
 }

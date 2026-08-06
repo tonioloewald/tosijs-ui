@@ -201,3 +201,73 @@ test('ditto resolution works regardless of row order', () => {
   i18n.locale.value = 'fr'
   expect(localize('Okay#confirm')).toBe("D'accord")
 })
+
+// ── literal '#' (tosijs-ui#55, reported by snowfox) ──────────────────────────
+//
+// `#` separates a string from its annotation (`Okay#confirm`), and every `#` used to be
+// stripped — so any literal `#` was destroyed. The suite covered annotations thoroughly
+// and had no fixture with a literal `#` on either side, which is why this survived: the
+// tests encoded the feature, not its boundary.
+
+const literalTSV = [
+  'en-US\tfr',
+  'English\tFrench',
+  'English\tFrançais',
+  '🇺🇸\t🇫🇷',
+  'C# Tutorial\tTutoriel C#',
+  'Sharp\tDièse #1',
+  'Issue #42\tProblème #42',
+  'Okay#confirm\t"',
+].join('\n')
+
+test('a literal # in the SOURCE survives, unlocalized', () => {
+  // The reported case. An annotation is a suffix identifier — "# Tutorial" contains a
+  // space, so it is prose, not an annotation.
+  expect(localize('C# Tutorial')).toBe('C# Tutorial')
+  expect(localize('Issue #42')).toBe('Issue #42') // space BEFORE the #
+  expect(localize('#hashtag')).toBe('#hashtag') // nothing before the #
+  expect(localize('C#')).toBe('C#') // empty annotation
+})
+
+test('REGRESSION: a literal # in the TRANSLATION survives even when the source has none', () => {
+  /*
+  The worse half. Annotations were stripped from the translated VALUE too, so a translator
+  writing an ordinary string containing `#` had it silently truncated — with nothing in the
+  source to hint why. Escaping cannot fix this: it would require every translator, in every
+  language, to escape a marker that is meaningless to them.
+
+  An annotation cannot appear in a translation, because the translation is what the
+  annotation resolved TO.
+  */
+  initLocalization(literalTSV)
+  i18n.locale.value = 'fr'
+  expect(localize('Sharp')).toBe('Dièse #1') // source has NO '#'
+  expect(localize('C# Tutorial')).toBe('Tutoriel C#')
+  expect(localize('Issue #42')).toBe('Problème #42')
+})
+
+test('real annotations still resolve and are still stripped from the key', () => {
+  initLocalization(literalTSV)
+  i18n.locale.value = 'fr'
+  // ditto mark inherits the base translation; the annotation never reaches the output
+  expect(localize('Okay#confirm')).toBe('Okay')
+  i18n.locale.value = 'en-US'
+  expect(localize('Okay#confirm')).toBe('Okay')
+})
+
+test('an unmatched annotation falls back to the bare string', () => {
+  initLocalization(literalTSV)
+  i18n.locale.value = 'fr'
+  expect(localize('Sharp#nosuch')).toBe('Dièse #1')
+})
+
+test('\\# escapes a # that would otherwise read as an annotation', () => {
+  // The residue: a literal that genuinely looks like a suffix annotation.
+  expect(localize('tag\\#42')).toBe('tag#42')
+  expect(localize('issue\\#7')).toBe('issue#7')
+})
+
+test('the ellipsis path keeps literal # too', () => {
+  // `…` recurses before annotation handling, so it has to survive the same treatment.
+  expect(localize('C# Tutorial…')).toBe('C# Tutorial…')
+})

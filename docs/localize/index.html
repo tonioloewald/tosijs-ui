@@ -225,6 +225,42 @@ This avoids duplicating translations for languages that don&#39;t need a variant
 (or the cell is empty), it falls back to the base <code>OK</code> translation.</li>
 <li>The <code>#</code> annotation is always stripped from the output — the user never sees it.</li>
 </ul>
+<h3>Literal <code>#</code></h3>
+<p>An annotation is a <strong>suffix identifier</strong>, so only a <code>#</code> that looks like one is treated as
+one: immediately preceded by a non-space, followed by letters/digits/<code>_</code>/<code>-</code>, running to
+the end of the string. Everything else is literal:</p>
+<table>
+<thead>
+<tr>
+<th>string</th>
+<th>read as</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Okay#confirm</code></td>
+<td>annotation</td>
+</tr>
+<tr>
+<td><code>C# Tutorial</code></td>
+<td>literal — space after the <code>#</code></td>
+</tr>
+<tr>
+<td><code>Issue #42</code></td>
+<td>literal — space before the <code>#</code></td>
+</tr>
+<tr>
+<td><code>#hashtag</code></td>
+<td>literal — nothing before the <code>#</code></td>
+</tr>
+<tr>
+<td><code>C#</code></td>
+<td>literal — no annotation after the <code>#</code></td>
+</tr>
+</tbody></table>
+<p>Escape with <code>\#</code> for a literal that genuinely looks like an annotation (<code>tag\#42</code> →
+<code>tag#42</code>).</p>
+<p>Translations are never scanned for annotations — an annotation belongs to the lookup key,
+not to the translated text, so a translation may contain <code>#</code> freely.</p>
 <p>Example TSV rows:</p>
 <pre><code>OK	D&#39;accord	Ok	好的
 OK#confirm	&quot;	&quot;	&quot;
