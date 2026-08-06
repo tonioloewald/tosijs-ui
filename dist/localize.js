@@ -522,12 +522,12 @@ annotation form keeps working:
 */
 const ANNOTATION = /(?<=[^\s\\])#[A-Za-z0-9_-]+$/;
 /** Index of the annotation's `#`, or -1 when the string has none. */
-export function annotationIndex(ref) {
+function annotationIndex(ref) {
     const m = ANNOTATION.exec(ref);
     return m ? m.index : -1;
 }
 /** The string without its annotation, and with `\#` collapsed to a literal `#`. */
-export function stripAnnotation(ref) {
+function stripAnnotation(ref) {
     const at = annotationIndex(ref);
     return (at === -1 ? ref : ref.slice(0, at)).replace(/\\#/g, '#');
 }

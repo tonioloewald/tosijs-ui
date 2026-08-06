@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.9.5
+
+**`localize()` no longer destroys literal `#`** (#55, reported by snowfox).
+
+`#` separates a string from a context annotation (`Okay#confirm`) and every `#` was
+stripped, so any literal one was lost: `'C# Tutorial'` became `'C'`, `'Issue #42'` became
+`'Issue '`, and `'#hashtag'` became `''` — an empty string, which renders as a blank label
+rather than an obvious error.
+
+An annotation is a **suffix identifier**, so only a `#` that looks like one is treated as
+one — immediately preceded by a non-space, followed by letters/digits/`_`/`-`, at the end
+of the string:
+
+| string | read as |
+| --- | --- |
+| `Okay#confirm` | annotation |
+| `C# Tutorial` | literal — space after |
+| `Issue #42` | literal — space before |
+| `#hashtag` | literal — nothing before |
+| `C#` | literal — no annotation after |
+
+No author action and no data migration; every documented annotation form is unchanged.
+Escape with `\#` for a literal that genuinely looks like an annotation (`tag\#42`).
+
+**The worse half:** annotations were stripped from the *translated value* too, so a
+translation containing `#` was truncated **even when the source string had none** —
+`'Sharp'` → `'Dièse #1'` came back as `'Dièse '`. A translator writing an ordinary string
+had it silently cut, with nothing in the source to hint why. Translations are no longer
+scanned for annotations at all: an annotation belongs to the lookup key, not to the text
+it resolves to.
+
+### Also
+
+- **`brace-expansion` pinned to `>=5.0.9`** (GHSA-rgw5-rvv9-x895, HIGH, DoS-only). A
+  follow-up advisory against a package already pinned at `>=5.0.8` for the previous one —
+  the new advisory covers `<5.0.9`. The audit gate blocked the build on it, which is the
+  case a one-time fix misses and a gate does not.
+
 ## 1.9.4
 
 **The dev server now uses your own installed `haltija`** (#48, reported by tosijs-3d).
