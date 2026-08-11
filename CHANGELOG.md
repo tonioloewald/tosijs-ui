@@ -1,5 +1,61 @@
 # Changelog
 
+## 1.9.6
+
+**`<tosi-table>` sorts correctly** (#62, reported by snowfox). Two independent defects, one
+in each half of the column comparator.
+
+**Numeric strings sorted by first digit.** The comparator used a raw `>`, which compares
+strings lexically — so `'9'` sorted after `'399'`, and `'1200'` before `'3.5'`. Real data
+is full of numeric strings: CSV and TSV imports, BigQuery exports, JSON where numbers
+arrived as text, anything id-shaped. Sorting now compares naturally:
+
+- numeric values (including numeric strings) compare as numbers, decimals and negatives
+  included
+- very long integers stay exact — two 20-digit ids differing in the last digit order
+  correctly, where a plain `parseFloat` comparison calls them equal
+- text compares with a locale collator, so accented letters order the way the reader
+  expects rather than the way ASCII does
+- blank cells sort **last in both directions** — a descending sort that opens on a
+  screenful of empty cells is never what was clicked for
+
+The old comparator also never returned `0`, so two *equal* values each claimed to be
+greater than the other. `Array.sort` is entitled to turn an inconsistent comparator into
+arbitrary output, not merely wrong output.
+
+**New `ColumnOptions.sortValue`** — sort by what the cell *shows*, when that differs from
+what the row stores. A column with a custom `dataCell` renders whatever it likes while the
+sort keyed on `prop`, so the rows reordered by an invisible value:
+
+```typescript
+{
+  name: 'Invoice #',
+  prop: 'Customer invoice ID',   // what the row stores — CSV export, lookups
+  dataCell: invoiceCell,          // what the reader sees
+  sortValue: (row) => row['Invoice number'] || row['Customer invoice ID'],
+}
+```
+
+Purely additive; `table.sort` still overrides everything for cases a per-column value
+cannot express.
+
+**New `naturalCompare` / `naturalSorter` / `isBlank`** exported from `tosijs-ui`, since the
+same comparison is wanted outside tables.
+
+### Also
+
+- **The release lane now checks, against the packed manifest, that each peer dependency we
+  also develop against is pinned within the range we publish** (#57). A floor the library
+  is not itself built against is a contract nobody tests, and the only signal was an
+  adopter's install warning. `tosijs`'s `^1.7.8` floor is not arbitrary — it encodes
+  tosijs#20 (the `parts` proxy crossing into nested components) and #21 — and that reason
+  is now recorded in `CLAUDE.md` rather than only in an old changelog entry.
+
+`makeSorter` deliberately keeps its existing comparison: switching it would change *case*
+ordering (`'Zed'` before `'alice'` today) in a general-purpose utility where that has not
+been reported as a problem. Coerce numeric strings in the valuator, or pass values through
+`naturalCompare` yourself.
+
 ## 1.9.5
 
 **`localize()` no longer destroys literal `#`** (#55, reported by snowfox).
