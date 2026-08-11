@@ -115,6 +115,21 @@ export function makeSorter<T>(
         const isAscending = Array.isArray(ascending)
           ? ascending[i] !== false
           : ascending
+        /*
+        Deliberately still `>`, not `naturalCompare` — see tosijs-ui#62.
+
+        This has the same lexical-compare defect as the table's comparator, so
+        `makeSorter(p => [p.invoiceNumber])` on numeric STRINGS sorts by first digit. But
+        swapping in a locale collator also changes CASE ordering: `>` puts 'Zed' before
+        'alice' (code-unit order), a collator puts it after, and this module's own tests
+        document the former — with a companion lowercase valuator provided precisely
+        because callers were expected to opt in to case-insensitivity.
+
+        That is a behaviour change nobody reported, in a general-purpose utility, so it
+        wants its own decision rather than riding along with a table fix. Callers who want
+        natural ordering today can pass values through `naturalCompare` themselves, or
+        coerce numeric strings with `Number()` in the valuator.
+        */
         return isAscending
           ? pSort[i] > qSort[i]
             ? 1

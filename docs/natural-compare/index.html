@@ -29,110 +29,45 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="../doc-system.css" data-tosi-doc-system />
-  <title>pocket bar — tosijs-ui</title>
-  <meta name="description" content="A pocket toolbar: a single icon at rest that expands into a bar of your controls on hover or tap, then tucks away again." />
-  <link rel="canonical" href="https://ui.tosijs.net/pocket-bar/" />
+  <title>naturalCompare — tosijs-ui</title>
+  <meta name="description" content="Comparing values the way a reader expects, for sorting tables, navs and lists." />
+  <link rel="canonical" href="https://ui.tosijs.net/natural-compare/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="pocket bar — tosijs-ui" />
-  <meta property="og:description" content="A pocket toolbar: a single icon at rest that expands into a bar of your controls on hover or tap, then tucks away again." />
-  <meta property="og:url" content="https://ui.tosijs.net/pocket-bar/" />
+  <meta property="og:title" content="naturalCompare — tosijs-ui" />
+  <meta property="og:description" content="Comparing values the way a reader expects, for sorting tables, navs and lists." />
+  <meta property="og:url" content="https://ui.tosijs.net/natural-compare/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"pocket bar","description":"A pocket toolbar: a single icon at rest that expands into a bar of your controls on hover or tap, then tucks away again.","url":"https://ui.tosijs.net/pocket-bar/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"naturalCompare","description":"Comparing values the way a reader expects, for sorting tables, navs and lists.","url":"https://ui.tosijs.net/natural-compare/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
   <tosi-doc-system docs="../docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>pocket bar</h1>
-<p>A <strong>pocket toolbar</strong>: a single icon at rest that expands into a bar of your controls
-on hover or tap, then tucks away again. It&#39;s translucent until you touch it, so it
-stays out of the way when pinned over content.</p>
-<p>Whatever you put inside is the toolbar — they&#39;re your light-DOM children, so <em>any</em>
-control works: buttons, a checkbox, a segmented control. The component only supplies
-the handle, the reveal, and the positioning.</p>
-<p>Hover (or focus, or tap) peeks it open; <strong>click the handle to keep it open</strong>, and
-click the handle again — or anywhere outside — to dismiss it.</p>
-<pre><code class="language-html">&lt;div class=&quot;pocket-demo&quot;&gt;
-  &lt;tosi-pocket-bar direction=&quot;e&quot;&gt;
-    &lt;button title=&quot;Cut&quot;&gt;&lt;tosi-icon icon=&quot;scissors&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
-    &lt;button title=&quot;Copy&quot;&gt;&lt;tosi-icon icon=&quot;copy&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
-    &lt;button title=&quot;Paste&quot;&gt;&lt;tosi-icon icon=&quot;clipboard&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
-  &lt;/tosi-pocket-bar&gt;
+<h1>naturalCompare</h1>
+<!--{ "parent": "Helper Libraries" }-->
 
-  &lt;tosi-pocket-bar direction=&quot;s&quot;&gt;
-    &lt;button title=&quot;Bold&quot;&gt;&lt;tosi-icon icon=&quot;bold&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
-    &lt;button title=&quot;Italic&quot;&gt;&lt;tosi-icon icon=&quot;italic&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
-    &lt;button title=&quot;Underline&quot;&gt;&lt;tosi-icon icon=&quot;underline&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
-  &lt;/tosi-pocket-bar&gt;
+<p>Comparing values the way a reader expects, for sorting tables, navs and lists.</p>
+<pre><code class="language-js">import { naturalCompare } from &#39;tosijs-ui&#39;
 
-  &lt;tosi-pocket-bar direction=&quot;w&quot;&gt;
-    &lt;button title=&quot;Zoom in&quot;&gt;&lt;tosi-icon icon=&quot;zoomIn&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
-    &lt;button title=&quot;Zoom out&quot;&gt;&lt;tosi-icon icon=&quot;zoomOut&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
-  &lt;/tosi-pocket-bar&gt;
-
-  &lt;tosi-pocket-bar direction=&quot;n&quot; icon=&quot;settings&quot;&gt;
-    &lt;label title=&quot;Snap to grid&quot;&gt;&lt;input type=&quot;checkbox&quot; checked /&gt;&lt;tosi-icon icon=&quot;grid&quot;&gt;&lt;/tosi-icon&gt;&lt;/label&gt;
-    &lt;button title=&quot;Undo&quot;&gt;&lt;tosi-icon icon=&quot;cornerUpLeft&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
-    &lt;button title=&quot;Redo&quot;&gt;&lt;tosi-icon icon=&quot;cornerUpRight&quot;&gt;&lt;/tosi-icon&gt;&lt;/button&gt;
-  &lt;/tosi-pocket-bar&gt;
-&lt;/div&gt;
+const rows = [&#39;9&#39;, &#39;399&#39;, &#39;1200&#39;, &#39;3.5&#39;, &#39;40&#39;]
+preview.textContent = rows.slice().sort(naturalCompare).join(&#39;, &#39;)
+// 3.5, 9, 40, 399, 1200   — not 1200, 3.5, 399, 40, 9
 </code></pre>
-<pre><code class="language-css">.preview .pocket-demo {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  height: 260px;
-  padding: 60px 20px;
-}
-.preview .pocket-demo tosi-pocket-bar button,
-.preview .pocket-demo tosi-pocket-bar label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-.preview .pocket-demo tosi-pocket-bar button:hover,
-.preview .pocket-demo tosi-pocket-bar label:hover {
-  background: #8882;
-}
-</code></pre>
-<p>Each handle above hints its axis — <code>⋯</code> for the horizontal bars (<code>e</code>, <code>w</code>), <code>⋮</code> for the
-vertical ones (<code>n</code>, <code>s</code>) — and the fourth uses an explicit <code>settings</code> icon. Hover any of
-them to see the bar grow in its <code>direction</code>.</p>
-<h2>Attributes</h2>
+<p>A raw <code>&gt;</code> compares strings <strong>lexically</strong>, so any column of numeric strings sorts by first
+digit — and real data is full of them: CSV and TSV imports, BigQuery exports, JSON where
+numbers arrived as strings, anything id-shaped. <code>&#39;9&#39; &gt; &#39;399&#39;</code> is <code>true</code>.</p>
+<p><code>naturalCompare</code> handles three things a naive comparator gets wrong:</p>
 <ul>
-<li><code>icon</code> — the handle icon (any icon name or <a href="icon-composition">composition</a>). By
-default it hints the growth axis: <code>moreHorizontal</code> (⋯) for a horizontal bar,
-<code>moreVertical</code> (⋮) for a vertical one.</li>
-<li><code>direction</code> — where the bar grows, using the <code>FloatPosition</code> vocabulary
-(<code>n | e | s | w | ne | nw | se | sw | en | wn | es | ws | side | auto</code>). <code>auto</code>
-(the default) grows a <strong>horizontal</strong> bar toward the nearer edge of the screen.
-<code>e</code> / <code>w</code> (and <code>en</code> / <code>es</code> / <code>wn</code> / <code>ws</code>) grow a horizontal bar; <code>n</code> / <code>s</code> (and
-<code>ne</code> / <code>nw</code> / <code>se</code> / <code>sw</code>) grow a <strong>vertical</strong> one. The bar is placed
-edge-contiguous with the handle via <a href="popFloat">positionFloat</a>.</li>
-<li><code>open</code> — reflects the open state. Hover / focus / tap peek it open; clicking the
-handle keeps it open until you click the handle again or click outside.</li>
+<li><strong>numeric strings</strong> sort numerically, including decimals and negatives</li>
+<li><strong>very long integers</strong> stay exact — two 20-digit ids differing in the last digit compare
+correctly, where <code>parseFloat</code> would round both to the same double</li>
+<li><strong>accented letters</strong> follow the reader&#39;s locale, so Finnish and Swedish order them the way
+their readers expect rather than the way ASCII does</li>
 </ul>
-<p>The handle is slightly translucent at rest (<code>--tosi-pocket-opacity</code>, default <code>0.75</code>)
-and opaque while open; it keeps a blurred glass chip (<code>--tosi-pocket-bg</code>, a translucent
-tint of <code>--tosi-bg</code>, so it follows the theme) so it stays legible over busy content.</p>
-<h3>Styling hooks</h3>
-<ul>
-<li><code>--tosi-pocket-opacity</code> — resting opacity of the whole widget (default <code>0.75</code>).</li>
-<li><code>--tosi-pocket-bg</code> — the glass background (a translucent tint of <code>--tosi-bg</code>).</li>
-<li><code>--tosi-pocket-handle-color</code> — colour of just the collapsed handle icon, independent
-of the bar&#39;s controls (e.g. to flag status on the handle alone). Default <code>inherit</code>.</li>
-</ul>
-<p>Slotted <code>&lt;button&gt;</code>s and <code>&lt;label&gt;</code>s get flat icon-button styling by default. A
-checkbox-as-icon — a <code>&lt;label&gt;</code> wrapping an <code>&lt;input type=checkbox&gt;</code> and an icon — greys
-and desaturates until checked, so a toggle needs no extra CSS.</p>
+<p>Blank values (<code>null</code>, <code>undefined</code>, <code>&#39;&#39;</code>) sort <strong>last in both directions</strong> — a descending
+sort that opens on a screenful of empty cells is never what was clicked for.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -140,8 +75,8 @@ and desaturates until checked, so a toggle needs no extra CSS.</p>
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
     <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
     <li><a class="doc-link" href="../icons/">icons</a></li>
-    <li><a class="doc-link" href="../natural-compare/">naturalCompare</a></li>
-    <li><details open><summary><a class="doc-link" href="../components/">Components</a></summary>
+    <li><a class="doc-link current" href="../natural-compare/" aria-current="page">naturalCompare</a></li>
+    <li><details><summary><a class="doc-link" href="../components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
       <li><a class="doc-link" href="../carousel/">carousel</a></li>
@@ -159,7 +94,7 @@ and desaturates until checked, so a toggle needs no extra CSS.</p>
       <li><a class="doc-link" href="../markdown-viewer/">markdown</a></li>
       <li><a class="doc-link" href="../menu/">menu</a></li>
       <li><a class="doc-link" href="../notifications/">notifications</a></li>
-      <li><a class="doc-link current" href="../pocket-bar/" aria-current="page">pocket bar</a></li>
+      <li><a class="doc-link" href="../pocket-bar/">pocket bar</a></li>
       <li><a class="doc-link" href="../pop-float/">popFloat</a></li>
       <li><a class="doc-link" href="../side-nav/">sidebar</a></li>
       <li><a class="doc-link" href="../size-break/">size-break</a></li>

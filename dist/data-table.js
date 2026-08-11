@@ -566,6 +566,7 @@ As well as any column names you want localized.
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements, vars, varDefault, tosiValue, getListItem, getListBinding, tosi, } from 'tosijs';
 import { trackDrag } from './track-drag.js';
+import { naturalSorter } from './natural-compare.js';
 import { icons } from './icons.js';
 import { valueRenderer } from './value-renderer.js';
 import { popMenu } from './menu.js';
@@ -889,10 +890,19 @@ export class TosiTable extends WebComponent {
         if (!sortColumn) {
             return undefined;
         }
-        const { prop } = sortColumn;
-        return sortColumn.sort === 'ascending'
-            ? (a, b) => (a[prop] > b[prop] ? 1 : -1)
-            : (a, b) => (a[prop] > b[prop] ? -1 : 1);
+        /*
+        Two defects lived in these three lines (tosijs-ui#62).
+    
+        It keyed on `prop`, so a column whose `dataCell` shows something else sorted by a value
+        the reader cannot see. And `>` is a LEXICAL compare, so any column of numeric strings
+        sorted by first digit — `'9' > '399'` is true, and real data is full of numeric strings
+        from CSV, BigQuery and JSON. Worse, `a > b ? 1 : -1` never returns 0, so two equal
+        values each claimed to be greater than the other; `Array.sort` is entitled to turn an
+        inconsistent comparator into arbitrary output rather than merely wrong output.
+        */
+        const { prop, sortValue } = sortColumn;
+        const key = sortValue ?? ((row) => row[prop]);
+        return naturalSorter(key, sortColumn.sort === 'ascending');
     }
     set sort(sortFunc) {
         if (this._sort !== sortFunc) {

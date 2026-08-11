@@ -579,6 +579,7 @@ import {
 } from 'tosijs'
 import { trackDrag } from './track-drag.js'
 import { SortCallback } from './make-sorter.js'
+import { naturalSorter } from './natural-compare.js'
 import { icons } from './icons.js'
 import { valueRenderer, ValueRenderer, ValueRendererType } from './value-renderer.js'
 import { popMenu, MenuItem } from './menu.js'
@@ -632,6 +633,23 @@ export interface ColumnOptions {
   type?: ValueRendererType
   pinned?: 'left' | 'right'
   sort?: false | 'ascending' | 'descending'
+  /**
+   * What this column SORTS by, when that differs from what it stores.
+   *
+   * Defaults to `row[prop]`. A column with a custom `dataCell` renders whatever it likes
+   * while the sort keys on `prop` — so when those differ, clicking "Sort Ascending"
+   * reorders rows by a value the reader cannot see, which reads as "sorting is broken"
+   * rather than "sorting a different field" (tosijs-ui#62).
+   *
+   *     { name: 'Invoice #', prop: 'Customer invoice ID', dataCell: invoiceCell,
+   *       sortValue: (row) => row['Invoice number'] || row['Customer invoice ID'] }
+   *
+   * Every other escape hatch costs more: `table.sort` is table-wide (one derived column
+   * means reimplementing sorting for all of them), replacing `headerCell` means
+   * reimplementing the header menu, and changing `prop` breaks CSV export and anything
+   * else keyed on it.
+   */
+  sortValue?: (row: any) => unknown
   headerCell?: (options: ColumnOptions) => HTMLElement
   dataCell?: (options: ColumnOptions) => HTMLElement
 }
@@ -977,11 +995,19 @@ export class TosiTable extends WebComponent {
     if (!sortColumn) {
       return undefined
     }
-    const { prop } = sortColumn
+    /*
+    Two defects lived in these three lines (tosijs-ui#62).
 
-    return sortColumn.sort === 'ascending'
-      ? (a: any, b: any) => (a[prop] > b[prop] ? 1 : -1)
-      : (a: any, b: any) => (a[prop] > b[prop] ? -1 : 1)
+    It keyed on `prop`, so a column whose `dataCell` shows something else sorted by a value
+    the reader cannot see. And `>` is a LEXICAL compare, so any column of numeric strings
+    sorted by first digit — `'9' > '399'` is true, and real data is full of numeric strings
+    from CSV, BigQuery and JSON. Worse, `a > b ? 1 : -1` never returns 0, so two equal
+    values each claimed to be greater than the other; `Array.sort` is entitled to turn an
+    inconsistent comparator into arbitrary output rather than merely wrong output.
+    */
+    const { prop, sortValue } = sortColumn
+    const key = sortValue ?? ((row: any) => row[prop])
+    return naturalSorter(key, sortColumn.sort === 'ascending')
   }
 
   set sort(sortFunc: SortCallback | undefined) {

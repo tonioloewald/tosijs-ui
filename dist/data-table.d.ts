@@ -10,6 +10,23 @@ export interface ColumnOptions {
     type?: ValueRendererType;
     pinned?: 'left' | 'right';
     sort?: false | 'ascending' | 'descending';
+    /**
+     * What this column SORTS by, when that differs from what it stores.
+     *
+     * Defaults to `row[prop]`. A column with a custom `dataCell` renders whatever it likes
+     * while the sort keys on `prop` — so when those differ, clicking "Sort Ascending"
+     * reorders rows by a value the reader cannot see, which reads as "sorting is broken"
+     * rather than "sorting a different field" (tosijs-ui#62).
+     *
+     *     { name: 'Invoice #', prop: 'Customer invoice ID', dataCell: invoiceCell,
+     *       sortValue: (row) => row['Invoice number'] || row['Customer invoice ID'] }
+     *
+     * Every other escape hatch costs more: `table.sort` is table-wide (one derived column
+     * means reimplementing sorting for all of them), replacing `headerCell` means
+     * reimplementing the header menu, and changing `prop` breaks CSV export and anything
+     * else keyed on it.
+     */
+    sortValue?: (row: any) => unknown;
     headerCell?: (options: ColumnOptions) => HTMLElement;
     dataCell?: (options: ColumnOptions) => HTMLElement;
 }
