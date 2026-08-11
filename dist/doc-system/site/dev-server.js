@@ -66,6 +66,12 @@ then shipped an instance of. A range is not a pin, and a cached range is not eve
 is something an adopter controls with the tool they already use. `HALTIJA_VERSION` still
 overrides everything.
 */
+/**
+ * Seconds `Bun.serve` will wait on a slow transfer before closing it. Bun's default is 10,
+ * sized for API responses rather than multi-MB bundles over LAN wifi (#63). Override with
+ * `DEV_REQUEST_TIMEOUT_SECONDS`; Bun caps this at 255.
+ */
+const DEV_IDLE_TIMEOUT_SECONDS = Math.min(255, Number(process.env.DEV_REQUEST_TIMEOUT_SECONDS) || 120);
 const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.11.2';
 /*
 Which haltija do we actually run, and can we say so out loud?
@@ -1144,8 +1150,22 @@ export async function devServer(config, opts = {}) {
     and the OS closes the sockets, and calling `.stop()` first is what segfaulted on the
     idle path (#47). A handle we would never legitimately use is an invitation to use it.
     */
+    /*
+    A generous idleTimeout, because this serves BUNDLES to REAL DEVICES.
+  
+    `Bun.serve` defaults to 10s, which is sized for small API responses. A doc site's iife
+    can be multiple MB — tosijs-3d ships ~10MB unminified on purpose, so its source stays
+    browseable — and over LAN wifi to a phone or a second laptop that legitimately takes
+    longer than 10s. Bun then closes the connection mid-transfer and the page half-loads.
+  
+    It never reproduces on loopback, so it presents as a mysterious client-side stall; the
+    reporter first suspected a bundle-size regression (tosijs-ui#63). Serving real devices
+    over the LAN is exactly what the mkcert cert covers `<host>.local` FOR, so the default
+    is wrong for this server specifically.
+    */
     Bun.serve({
         port: PORT,
+        idleTimeout: DEV_IDLE_TIMEOUT_SECONDS,
         tls: {
             key: Bun.file('./tls/key.pem'),
             cert: Bun.file('./tls/certificate.pem'),
@@ -1184,6 +1204,8 @@ export async function devServer(config, opts = {}) {
         try {
             Bun.serve({
                 port: tunnelPort,
+                // Same reasoning as the main listener — a tunnelled load is slower, not faster.
+                idleTimeout: DEV_IDLE_TIMEOUT_SECONDS,
                 hostname: '127.0.0.1',
                 fetch: (request, srv) => handleRequest(request, srv, true),
             });

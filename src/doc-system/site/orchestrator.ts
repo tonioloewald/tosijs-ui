@@ -705,6 +705,25 @@ export async function buildSite(
           '--minify',
           '--entry-naming',
           'hydrate.js',
+          /*
+          Code-split chunks go in a SUBDIRECTORY, not the web root.
+
+          `--splitting` emits one hashed chunk per dynamic import, and they landed flat
+          beside `index.html`. For a corpus that pulls something large — Babylon's glTF
+          extensions, shader chunks, audio engines — that is thousands of files in the root:
+          tosijs-3d reported **2,473 hashed chunks** among 2,604 files (tosijs-ui#64).
+
+          Three costs, and the second is the dangerous one. `ls docs` stops being usable.
+          Any dependency bump rewrites every hash, so a Babylon upgrade becomes a
+          multi-thousand-file commit — which makes the standing "don't commit docs/ from a
+          feature push" hazard far worse, because a stray `git add -A` now moves thousands
+          of files and the diff is unreviewable. (They took their doc site down exactly that
+          way.) And a genuinely stale or missing artifact is invisible among the lookalikes.
+          */
+          '--chunk-naming',
+          '_chunks/[name]-[hash].[ext]',
+          '--asset-naming',
+          '_assets/[name]-[hash].[ext]',
           ...externals.flatMap((ext) => ['--external', ext]),
         ],
         { stdout: 'inherit', stderr: 'inherit' }
