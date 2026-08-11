@@ -42,6 +42,27 @@ cannot express.
 **New `naturalCompare` / `naturalSorter` / `isBlank`** exported from `tosijs-ui`, since the
 same comparison is wanted outside tables.
 
+### Build system
+
+- **Code-split chunks land in `_chunks/` instead of the web root** (#64). `--splitting`
+  emits one hashed chunk per dynamic import, flat beside `index.html` — for a corpus that
+  pulls something large, that is thousands of files: tosijs-3d reported **2,473 hashed
+  chunks among 2,604 files**, all tracked in git because `docs/` is the Pages source.
+
+  The cost that hurts is not legibility. Any dependency bump rewrites every hash, so
+  upgrading one package became a multi-thousand-file commit — which makes the standing
+  "never commit `docs/` from a feature push" hazard far worse, since a stray `git add -A`
+  moves thousands of files and the diff is unreviewable. Assets move to `_assets/` for the
+  same reason.
+
+- **The dev server no longer times out mid-transfer on LAN loads** (#63). `Bun.serve`
+  defaults to a 10s `idleTimeout`, sized for small API responses — but a doc site's bundle
+  can be multiple MB, and over wifi to a phone or a second laptop that legitimately takes
+  longer, so the connection closed part-way. It never reproduces on loopback, which makes
+  it look like a client-side stall. Now 120s, overridable with
+  `DEV_REQUEST_TIMEOUT_SECONDS`. Testing on real devices over the LAN is exactly what the
+  dev cert covers `<host>.local` for.
+
 ### Also
 
 - **The release lane now checks, against the packed manifest, that each peer dependency we
