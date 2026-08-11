@@ -7,6 +7,28 @@ the lint/typecheck gates, `touch()`, the red-tsc site discard, port defaults,
 per-project `remotePort`, the deploy asset path, the mutating smoke test, and the stale
 security prose. What is left:
 
+- [ ] **Consider moving INTERACTION tests to haltija — but not the cross-engine ones.**
+      The instinct is right: when a harness flakes, owning it beats trusting it, and
+      haltija has turned reports around in a day. But haltija is **Chromium only**
+      (Electron, or headless via Playwright *Chromium*), so the move would drop firefox and
+      webkit entirely — and `doc-tests.pw.ts` explicitly calls two engines "a real gate",
+      noting that *"the old haltija lane only ever drove one Chromium-based engine, so
+      WebKit doc-tests never ran at all"*. Moving back would undo a deliberate improvement.
+
+      The evidence splits the two engines, though:
+
+      - **firefox** is load-bearing — it runs the whole doc-test tier green alongside
+        chromium, and is the only non-Chromium signal we have.
+      - **webkit** is already skipped for the doc-test tier (#19, its iframe runner never
+        signals completion), has no source commit attributable to a webkit-specific bug,
+        and is where the click flake concentrates.
+
+      So the shape worth considering is narrower than "move it to haltija": keep Playwright
+      for cross-engine coverage, drop or quarantine **webkit** for interaction specs where
+      it is producing flakes rather than findings, and use haltija for what it is uniquely
+      good at — agent-driven inspection of a real page. Decide it as a coverage question,
+      not as a reaction to a flake.
+
 - [ ] **Flaky: `segmented.pw.ts` click timeouts on webkit/firefox under parallel load.**
       Measured 2026-08-11: **3/3 pass in isolation**, but intermittently 1–4 failures inside
       a full `bun playwright test` (all three browsers in parallel), always
