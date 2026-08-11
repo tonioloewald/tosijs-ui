@@ -88,6 +88,27 @@ The load-bearing fact: **a running dev server keeps executing the code it loaded
 - Three guards now enforce this, all in `src/doc-system/site/` — `memoryLimitMb` (RSS ceiling, exits with growth-per-rebuild), `idleTimeoutHours` (exits after 8 idle hours — bounds _how many_ servers exist, not just how big one gets), and `preflight.ts` (every build and launch reads the process table and refuses to start on a machine that is already dying). See "Not taking the machine down with you" in `src/doc-system/doc-site-system.md`.
 - **Kill background dev servers before release git surgery** (`pkill -f bin/dev.ts`, free :8787) — otherwise one rebuilds mid-operation and races your greps and git commands.
 
+### Dev server compression
+
+Text-shaped assets (`js`, `css`, `html`, `json`, `svg`, `map`, `wasm`, …) are served
+**brotli or gzip** per the client's `Accept-Encoding`; already-compressed formats stream
+untouched. Measured on this repo: `iife.js` 1236KB → **366KB** brotli / 396KB gzip.
+
+Brotli runs at **quality 5, not 11** — measured, q5 is 19ms for 0.36MB while q11 is
+**1169ms** for 0.32MB. Sixty times the cost for four percent.
+
+Compressed bytes are cached, keyed on path + mtime so a rebuild invalidates them, with a
+**64MB ceiling and oldest-out eviction**. The bound is not optional: this is a process that
+lives for days, and an unbounded cache here is the same failure class that took the
+machine down twice.
+
+**Dev server only, deliberately.** The build emits nothing precompressed — distribution is
+a host's job, and Cloudflare/Firebase do it better and for free. This exists because the
+dev server serves real devices over the LAN, which is what the mkcert cert covers
+`<host>.local` for; it is also the proper fix for the timeouts behind #63, where raising
+`idleTimeout` stopped the connection dying and this stops it needing the extra time. The
+tunnel gets it automatically — both listeners share one request handler.
+
 ### Dev Server TLS
 
 The dev server runs HTTPS using certs in `tls/` (`key.pem` + `certificate.pem`, both gitignored). If they're missing (e.g. a fresh clone), `bin/dev.ts` exits with a message telling you to run `bun tls` (`tls/create-dev-certs.sh`) — it doesn't auto-generate, because the script runs `mkcert -install` which prompts for sudo. The script uses [mkcert](https://github.com/FiloSottile/mkcert) to install a locally-trusted CA, so browsers show **no** certificate warnings (unlike a bare self-signed cert). If mkcert isn't installed the script prints platform-specific install instructions and exits; install it, then re-run. Certs cover `localhost`, `127.0.0.1`, `::1`, and `<hostname>.local` (for LAN device testing).

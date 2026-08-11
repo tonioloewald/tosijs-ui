@@ -68,6 +68,10 @@ export declare function resolveLimitMb(configMb: number | undefined, envMb: stri
 export { isLoopbackAddress };
 export declare function haltijaIsDrivable(stdout: string): boolean;
 export declare function haltijaLoaderSnippet(httpsPort: number): string;
+/** br if the client takes it, else gzip, else nothing. */
+export declare function negotiateEncoding(accept: string | null): 'br' | 'gzip' | null;
+/** Is this worth compressing? Already-compressed formats only get bigger. */
+export declare function isCompressible(filePath: string): boolean;
 export declare function devServer(config: SiteConfig, opts?: {
     test?: boolean;
     build?: () => unknown | Promise<unknown>;

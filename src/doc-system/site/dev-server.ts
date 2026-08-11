@@ -11,7 +11,8 @@ Build-time only (Bun APIs). Never import this from browser code.
 import * as path from 'path'
 import { statSync, existsSync, readFileSync } from 'fs'
 import { tmpdir } from 'os'
-import { $, spawn } from 'bun'
+import { $, spawn, gzipSync } from 'bun'
+import { brotliCompressSync, constants as zlibConstants } from 'node:zlib'
 import type { SiteConfig } from './site-config.js'
 import { buildSite } from './orchestrator.js'
 import { preflight } from './preflight.js'
@@ -408,6 +409,79 @@ async function ensureDevCerts() {
   process.exit(1)
 }
 
+/*
+Compress text-shaped assets on the way out.
+
+The dev server serves REAL DEVICES over the LAN — that is what the mkcert cert covers
+`<host>.local` for — and a doc site's bundle can be multiple MB. Everything text-shaped
+here compresses to about 30%: this repo's 1.21MB iife goes to 0.39MB gzipped, 0.36MB
+brotli; tosijs-3d's 10MB one goes to roughly 3MB. That is the real fix for the LAN stalls
+behind #63 — raising `idleTimeout` stopped the connection dying, this stops it needing the
+extra time.
+
+Deliberately DEV-SERVER ONLY. Distribution is a host's job — Cloudflare, Firebase and
+friends do this better and for free — so the build emits nothing precompressed.
+
+Brotli at quality 5, not 11: measured on the 1.21MB iife, q5 takes 19ms for 0.36MB while
+q11 takes **1169ms** for 0.32MB. Sixty times the cost for four percent.
+*/
+const COMPRESSIBLE = /\.(js|mjs|css|html|json|svg|map|txt|xml|md|wasm)$/i
+
+/*
+A BOUNDED cache, because this process lives for days.
+
+Recompressing a 10MB bundle per request would cost more than it saves, so the bytes have
+to be kept — but an unbounded cache in a long-lived dev server is precisely the failure
+that took this machine down twice, and it is invisible to the JS heap until it is not.
+Keyed on path + mtime so a rebuild invalidates naturally; capped in total bytes with
+oldest-out eviction.
+*/
+const COMPRESS_CACHE_MAX_BYTES = 64 * 1024 * 1024
+const compressCache = new Map<string, Uint8Array<ArrayBuffer>>()
+let compressCacheBytes = 0
+
+function cacheCompressed(key: string, bytes: Uint8Array<ArrayBuffer>): void {
+  // A single asset bigger than the whole budget is not worth evicting everything for.
+  if (bytes.byteLength > COMPRESS_CACHE_MAX_BYTES / 2) return
+  while (
+    compressCacheBytes + bytes.byteLength > COMPRESS_CACHE_MAX_BYTES &&
+    compressCache.size
+  ) {
+    const oldest = compressCache.keys().next().value as string
+    compressCacheBytes -= compressCache.get(oldest)!.byteLength
+    compressCache.delete(oldest)
+  }
+  compressCache.set(key, bytes)
+  compressCacheBytes += bytes.byteLength
+}
+
+function compressBytes(
+  bytes: Uint8Array,
+  encoding: 'br' | 'gzip'
+): Uint8Array<ArrayBuffer> {
+  return encoding === 'br'
+    ? (new Uint8Array(
+        brotliCompressSync(bytes, {
+          params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 },
+        })
+      ) as Uint8Array<ArrayBuffer>)
+    : gzipSync(bytes as Uint8Array<ArrayBuffer>)
+}
+
+/** br if the client takes it, else gzip, else nothing. */
+export function negotiateEncoding(accept: string | null): 'br' | 'gzip' | null {
+  if (!accept) return null
+  const a = accept.toLowerCase()
+  if (a.includes('br')) return 'br'
+  if (a.includes('gzip')) return 'gzip'
+  return null
+}
+
+/** Is this worth compressing? Already-compressed formats only get bigger. */
+export function isCompressible(filePath: string): boolean {
+  return COMPRESSIBLE.test(filePath)
+}
+
 export async function devServer(
   config: SiteConfig,
   opts: { test?: boolean; build?: () => unknown | Promise<unknown> } = {}
@@ -648,15 +722,50 @@ export async function devServer(
     const extras =
       (haltijaDev ? HALTIJA_SNIPPET : '') +
       (testMode ? '' : statusSnippet(request, viaTunnel))
+    const encoding = negotiateEncoding(
+      request?.headers.get('accept-encoding') ?? null
+    )
+
     if (extras && filePath.endsWith('.html')) {
       const html = await Bun.file(filePath).text()
       const injected = html.includes('</body>')
         ? html.replace('</body>', `${extras}</body>`)
         : html + extras
-      return new Response(injected, {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      // Injected HTML is built per request, so it is compressed but never cached — the
+      // cache key would have to include the injected extras, and HTML is small anyway.
+      const body = encoding
+        ? compressBytes(new TextEncoder().encode(injected), encoding)
+        : injected
+      return new Response(body, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          ...(encoding ? { 'Content-Encoding': encoding, Vary: 'Accept-Encoding' } : {}),
+        },
       })
     }
+
+    if (encoding && isCompressible(filePath)) {
+      const file = Bun.file(filePath)
+      const key = `${encoding}:${filePath}:${file.lastModified}`
+      let bytes = compressCache.get(key)
+      if (!bytes) {
+        bytes = compressBytes(
+          new Uint8Array(await file.arrayBuffer()),
+          encoding
+        )
+        cacheCompressed(key, bytes)
+      }
+      return new Response(bytes, {
+        headers: {
+          'Content-Type': file.type || 'application/octet-stream',
+          'Content-Encoding': encoding,
+          Vary: 'Accept-Encoding',
+        },
+      })
+    }
+
+    // Everything else streams untouched — images, fonts, epubs and glb are already
+    // compressed, and re-encoding them only makes them bigger.
     return new Response(Bun.file(filePath))
   }
 

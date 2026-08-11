@@ -273,3 +273,23 @@ test('a local install with an unreadable manifest is still preferred', () => {
   expect(describe).toContain('unknown version')
   rmSync(dir, { recursive: true, force: true })
 })
+
+// ── asset compression ────────────────────────────────────────────────────────
+
+import { negotiateEncoding, isCompressible } from './dev-server'
+
+test('brotli is preferred, gzip is the fallback, neither is forced', () => {
+  expect(negotiateEncoding('br, gzip, deflate')).toBe('br')
+  expect(negotiateEncoding('gzip, deflate')).toBe('gzip')
+  expect(negotiateEncoding('deflate')).toBe(null)
+  expect(negotiateEncoding(null)).toBe(null)
+  expect(negotiateEncoding('')).toBe(null)
+})
+
+test('only text-shaped assets are compressed', () => {
+  for (const f of ['/a.js', '/a.css', '/a.html', '/a.json', '/a.svg', '/a.map', '/a.wasm'])
+    expect(isCompressible(f)).toBe(true)
+  // Already compressed — re-encoding these only makes them bigger, and wastes the cache.
+  for (const f of ['/a.png', '/a.jpg', '/a.woff2', '/a.epub', '/a.glb', '/a.mp4'])
+    expect(isCompressible(f)).toBe(false)
+})
