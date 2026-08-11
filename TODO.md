@@ -7,6 +7,17 @@ the lint/typecheck gates, `touch()`, the red-tsc site discard, port defaults,
 per-project `remotePort`, the deploy asset path, the mutating smoke test, and the stale
 security prose. What is left:
 
+- [ ] **Flaky: `segmented.pw.ts` click timeouts on webkit/firefox under parallel load.**
+      Measured 2026-08-11: **3/3 pass in isolation**, but intermittently 1–4 failures inside
+      a full `bun playwright test` (all three browsers in parallel), always
+      `locator.click: Test timeout of 30000ms exceeded`. NOT a regression — verified by
+      reverting the chunk-layout change and reproducing anyway — and NOT in CI, which runs
+      chromium only. Likely cause: Playwright's click waits for the element to be
+      animation-STABLE, and the segmented highlight animates, so under erratic rAF timing
+      the stability check never settles. Fix by waiting for the transition rather than
+      `force: true`, which would hide a real un-clickable state. Reproduce with the full
+      suite plus background load, not in isolation.
+
 **From snowfox's build-system reports (deferred — the cheap halves are done):**
 
 - [ ] **[#56](https://github.com/tonioloewald/tosijs-ui/issues/56) — label build-only
