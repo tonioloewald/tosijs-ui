@@ -7,7 +7,23 @@ the lint/typecheck gates, `touch()`, the red-tsc site discard, port defaults,
 per-project `remotePort`, the deploy asset path, the mutating smoke test, and the stale
 security prose. What is left:
 
-- [ ] **Consider moving INTERACTION tests to haltija — but not the cross-engine ones.**
+- [ ] **Hybrid lane: Playwright launches the browser, haltija drives it.** VERIFIED
+      2026-08-12 — the haltija widget attaches and connects in **WebKit and Firefox**, not
+      just Chromium. Loaded our dev server (with `haltijaDev`) in Playwright-launched
+      webkit and firefox; both printed `🧝 Haltija connected` / `[haltija] Injected`. The
+      loader is a plain dynamic `import()` of an ES module, so there is nothing
+      engine-specific in it. haltija's README row "Cross-browser: ⚠️ Chromium only"
+      describes the browser it SPAWNS, not the widget's reach — worth telling them, since
+      it understates the product.
+
+      This gets both properties: engine coverage from Playwright's binaries, and a driving
+      layer that is **ours to fix** when it flakes — which is the whole argument, given the
+      current `segmented.pw.ts` flake is Playwright's actionability check rather than our
+      component. Caveat before migrating: attachment is proven, per-verb parity is not.
+      Exercise click, type and `map` on WebKit first; anything that misbehaves is a haltija
+      fix rather than a blocker.
+
+- [ ] **(superseded by the above, kept for the evidence) Moving interaction tests to haltija wholesale.**
       The instinct is right: when a harness flakes, owning it beats trusting it, and
       haltija has turned reports around in a day. But haltija is **Chromium only**
       (Electron, or headless via Playwright *Chromium*), so the move would drop firefox and
