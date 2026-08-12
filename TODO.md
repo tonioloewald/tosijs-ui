@@ -45,6 +45,17 @@ security prose. What is left:
       good at — agent-driven inspection of a real page. Decide it as a coverage question,
       not as a reaction to a flake.
 
+- [ ] **The haltija doc-test lane reports 34 where Playwright reports 37.** Measured
+      2026-08-12, same corpus, same engine family: `bun playwright test` prints
+      chromium 37 / firefox 37 / webkit 34, while `bun run test-browser` (haltija,
+      Chromium) prints 34. **Zero failures in either** — three pages are not being reached,
+      not failing. Ruled out: the last-good fallback (v1.9.6 also gives 34) and asset
+      compression (disabling it still gives 34). Most likely the background runner's
+      per-page budget under haltija's slower rAF, since the runner iframes each
+      page-with-tests in turn. Worth pinning the expected count so a silent drop cannot
+      pass as green — a lane that reports "34 passed / 0 failed" looks identical whether
+      three tests were skipped or never existed.
+
 - [ ] **Flaky: `segmented.pw.ts` click timeouts on webkit/firefox under parallel load.**
       Measured 2026-08-11: **3/3 pass in isolation**, but intermittently 1–4 failures inside
       a full `bun playwright test` (all three browsers in parallel), always

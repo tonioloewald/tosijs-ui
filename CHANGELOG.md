@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.9.7
+
+**The dev server no longer 404s while it rebuilds** — the actual cause behind the LAN
+stalls in #63, traced by tosijs-3d.
+
+`buildSite` moves the output directory aside (`mv docs docs.last-good`) and repopulates it
+from empty, so for the length of every build **every served path is simply absent**. Two
+failures follow:
+
+- a request that *starts* in that window gets a plain 404 — the page loads and never
+  hydrates
+- a request already *in flight* has its file vanish underneath it, stops producing data,
+  and idles until something closes it — the "loads then stalls" symptom
+
+It only ever bit over the LAN because a loopback transfer finishes in ~22 ms and almost
+never overlaps the hole, while a multi-MB transfer to a phone or a second machine is
+easily still running two seconds later. It also explains why reloading never helped while
+you were actively editing: every save reopened the window.
+
+The dev server now falls back to the last-good tree for any path missing from the live
+one. That copy exists for exactly the window's duration — created by the stash at the
+start of a build, removed on success — so the fallback is self-scoping, and no stale
+content can be served outside a rebuild.
+
+Measured across real rebuilds: **2 failed requests before, 0 after**.
+
+> The `idleTimeout` raise and asset compression in 1.9.6 both help, but neither closes this
+> window — compression shortens the exposure, and `idleTimeout` only decides how long a
+> stalled request waits before failing. If you are on 1.9.6 and still seeing LAN stalls,
+> this is the release that fixes them.
+
 ## 1.9.6
 
 **`<tosi-table>` sorts correctly** (#62, reported by snowfox). Two independent defects, one
