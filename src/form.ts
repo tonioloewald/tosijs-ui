@@ -467,7 +467,8 @@ function setElementValue(input: HTMLElement | null | undefined, value: any) {
     }
   } else if (value != null || (input as HTMLInputElement).value != null) {
     const v = String(value || '')
-    if ((input as HTMLInputElement).value !== v) (input as HTMLInputElement).value = v
+    if ((input as HTMLInputElement).value !== v)
+      (input as HTMLInputElement).value = v
   }
 }
 

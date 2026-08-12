@@ -61,7 +61,9 @@ test('a reader (tests off) runs a baked tjs example without loading the transpil
   await page.waitForTimeout(500)
   expect(
     transpilerRequests,
-    `transpiler should not load on the reader path, got: ${transpilerRequests.join(', ')}`
+    `transpiler should not load on the reader path, got: ${transpilerRequests.join(
+      ', '
+    )}`
   ).toHaveLength(0)
 })
 
@@ -117,7 +119,9 @@ test('slice 2b: a SPA-navigated page runs its baked tjs examples without the tra
   await page.waitForTimeout(500)
   expect(
     transpilerRequests,
-    `transpiler should not load on the SPA-nav reader path, got: ${transpilerRequests.join(', ')}`
+    `transpiler should not load on the SPA-nav reader path, got: ${transpilerRequests.join(
+      ', '
+    )}`
   ).toHaveLength(0)
 })
 

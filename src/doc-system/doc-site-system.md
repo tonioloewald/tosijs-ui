@@ -561,13 +561,13 @@ spawns child processes. `import { buildSite } from 'tosijs-ui/site'` under plain
 fails with `Cannot find package 'bun'`, which names a symptom rather than the cause — so
 to be explicit:
 
-| entry point | runtime |
-| --- | --- |
-| `tosijs-ui/site` | **bun** — build/CLI only, never bundled into a page |
+| entry point                          | runtime                                                                    |
+| ------------------------------------ | -------------------------------------------------------------------------- |
+| `tosijs-ui/site`                     | **bun** — build/CLI only, never bundled into a page                        |
 | `tosijs-ui`, `tosijs-ui/<component>` | a **browser** (or a bundler targeting one); bare Node has no `HTMLElement` |
-| `tosijs-ui/icon-svg` | anything — deliberately DOM-free, which is why it exists |
+| `tosijs-ui/icon-svg`                 | anything — deliberately DOM-free, which is why it exists                   |
 
-Module *resolution* works everywhere as of 1.9.1: shipped code uses explicit `.js`
+Module _resolution_ works everywhere as of 1.9.1: shipped code uses explicit `.js`
 specifiers, which Node ESM requires and bundlers accept. Before that, `dist/` carried
 extensionless relative imports that only bun could resolve — so a Node consumer got
 `Cannot find module` on entry points that had nothing to do with bun. That was invisible
@@ -624,7 +624,7 @@ HTML and the hydrated SPA show the same thing.
 import { listEpubVolumes, epubVolumeIdentity } from 'tosijs-ui/site'
 ```
 
-> **Do not hard-code the filename.** It is *derived* — `<project>-<volume>.epub` — so a
+> **Do not hard-code the filename.** It is _derived_ — `<project>-<volume>.epub` — so a
 > hand-written link rots the moment a volume is renamed, and rots silently, since nothing
 > checks that a link points at a file the build made. That is exactly how a project ships a
 > valid ePub that nobody can download. The marker, the manifest and the helper all derive

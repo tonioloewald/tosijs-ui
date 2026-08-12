@@ -5,10 +5,18 @@ browser code. See ./README is at ../doc-site-system.md and the repo docs.
 */
 
 export { defineSiteConfig } from './site-config.js'
-export type { SiteConfig, SiteHost, LibraryBuildContext } from './site-config.js'
+export type {
+  SiteConfig,
+  SiteHost,
+  LibraryBuildContext,
+} from './site-config.js'
 export { buildSite } from './orchestrator.js'
 export { devServer } from './dev-server.js'
-export { auditDependencies, reportAudit, resolveAuditMode } from './audit-guard.js'
+export {
+  auditDependencies,
+  reportAudit,
+  resolveAuditMode,
+} from './audit-guard.js'
 export type {
   AuditConfig,
   AuditGate,

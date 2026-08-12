@@ -79,11 +79,14 @@ function rewriteBareImportsToDynamic(code: string, prefix: string): string {
           let m
           if ((m = c.match(/^\{([^}]*)\}$/)))
             return `const { ${destructureClause(m[1])} } = ${imp}`
-          if ((m = c.match(/^\*\s+as\s+(\w+)$/))) return `const ${m[1]} = ${imp}`
+          if ((m = c.match(/^\*\s+as\s+(\w+)$/)))
+            return `const ${m[1]} = ${imp}`
           if ((m = c.match(/^(\w+)$/)))
             return `const ${m[1]} = (${imp}).default`
           if ((m = c.match(/^(\w+)\s*,\s*\{([^}]*)\}$/)))
-            return `const { default: ${m[1]}, ${destructureClause(m[2])} } = ${imp}`
+            return `const { default: ${m[1]}, ${destructureClause(
+              m[2]
+            )} } = ${imp}`
           return match // unhandled form — left to fail loudly below
         }
       )
@@ -141,7 +144,9 @@ export function rewriteImports(
     const statement = leftover[0].trim()
     throw new UnsupportedImportError(
       `live example: unsupported import \`${statement}\` — imports ` +
-        `from the example context (${contextKeys.join(', ')}) are supported in ` +
+        `from the example context (${contextKeys.join(
+          ', '
+        )}) are supported in ` +
         `{ named }, * as ns, or default form` +
         (importPrefix
           ? `, and other packages resolve via the import-resolver.`

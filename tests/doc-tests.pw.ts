@@ -57,7 +57,10 @@ test('every inline doc test passes (the whole ```test tier)', async ({
   // A corpus with real tests must actually have run some — a silent "0 tested" would
   // let this pass vacuously while gating nothing.
   const ran = results.passed + results.failed
-  expect(ran, 'no inline doc tests ran — the runner never started').toBeGreaterThan(0)
+  expect(
+    ran,
+    'no inline doc tests ran — the runner never started'
+  ).toBeGreaterThan(0)
 
   if (results.failed > 0) {
     const detail = Object.entries(results.pages)

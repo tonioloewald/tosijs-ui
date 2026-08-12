@@ -41,7 +41,9 @@ test('CodeMirror chunk is NOT loaded on first paint, and loads + works on showCo
   // The whole point: no editor panel was built, so no CodeMirror.
   expect(
     cmRequests,
-    `CodeMirror must not load before a panel opens, got: ${cmRequests.join(', ')}`
+    `CodeMirror must not load before a panel opens, got: ${cmRequests.join(
+      ', '
+    )}`
   ).toHaveLength(0)
   // And there are no <tosi-code> elements in the DOM yet.
   expect(await page.locator('tosi-example tosi-code').count()).toBe(0)
@@ -53,7 +55,9 @@ test('CodeMirror chunk is NOT loaded on first paint, and loads + works on showCo
   })
 
   // Now CodeMirror loads and a real editor mounts with the source text.
-  await expect.poll(() => cmRequests.length, { timeout: 15_000 }).toBeGreaterThan(0)
+  await expect
+    .poll(() => cmRequests.length, { timeout: 15_000 })
+    .toBeGreaterThan(0)
   const editor = firstExample.locator('tosi-code').first()
   await expect(editor).toBeVisible()
   await expect(editor.locator('.cm-content')).toBeVisible({ timeout: 15_000 })

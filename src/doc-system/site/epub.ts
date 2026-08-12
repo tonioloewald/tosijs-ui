@@ -24,7 +24,12 @@ import type { Doc } from './docs.js'
 import { partitionByBook, DEFAULT_BOOK } from '../book-target.js'
 import { epubVolumeIdentity } from './epub-volumes.js'
 import type { SiteConfig } from './site-config.js'
-import { DEFAULT_BOOK_CSS, stripDocMeta, flatten, slugify } from '../book-html.js'
+import {
+  DEFAULT_BOOK_CSS,
+  stripDocMeta,
+  flatten,
+  slugify,
+} from '../book-html.js'
 import { selectBookDocs } from '../book-manifest.js'
 
 // Re-exported for back-compat (tosijs-ui/site's public surface + tests).

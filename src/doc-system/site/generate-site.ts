@@ -21,7 +21,11 @@ import { pageTitle } from '../doc-title.js'
 import type { ProjectLinks, LinkItem } from '../../doc-browser.js'
 import { buildSlugMap, pathForSlug, rewriteDocLinks } from '../routing.js'
 import { buildNavTree, navOpenPath, NavNode } from '../nav-tree.js'
-import { renderDocMarkdown, docDescription, type ExampleBakes } from '../render.js'
+import {
+  renderDocMarkdown,
+  docDescription,
+  type ExampleBakes,
+} from '../render.js'
 
 declare global {
   var Bun: any

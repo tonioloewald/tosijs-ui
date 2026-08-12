@@ -29,7 +29,10 @@ test('volumeTitles overrides the derived title but not the filename', () => {
   // The filename is an identifier; the title is for humans. Renaming the display title
   // must not move the file a published link points at.
   const v = epubVolumeIdentity(
-    { ...cfg, epub: { volumeTitles: { 'foresight-1986': 'The 1986 Restoration' } } },
+    {
+      ...cfg,
+      epub: { volumeTitles: { 'foresight-1986': 'The 1986 Restoration' } },
+    },
     'foresight-1986'
   )
   expect(v.title).toBe('The 1986 Restoration')
@@ -37,7 +40,10 @@ test('volumeTitles overrides the derived title but not the filename', () => {
 })
 
 test('epub.title replaces the base for both title and filename', () => {
-  const v = epubVolumeIdentity({ ...cfg, epub: { title: 'Foresight' } }, 'appendices')
+  const v = epubVolumeIdentity(
+    { ...cfg, epub: { title: 'Foresight' } },
+    'appendices'
+  )
   expect(v.title).toBe('Foresight — appendices')
   expect(v.filename).toBe('foresight-appendices.epub')
 })
@@ -56,7 +62,9 @@ test('basePath is honoured in the URL', () => {
 const doc = (filename: string, extra = {}) => ({ filename, ...extra })
 
 test('a plain corpus produces exactly the default volume', () => {
-  expect(listEpubVolumes([doc('a.md'), doc('b.md')], cfg).map((v) => v.book)).toEqual([''])
+  expect(
+    listEpubVolumes([doc('a.md'), doc('b.md')], cfg).map((v) => v.book)
+  ).toEqual([''])
 })
 
 test('named volumes are listed after the default, and inherit through parents', () => {
@@ -75,7 +83,10 @@ test('a corpus where every doc names a volume has NO default volume', () => {
   // Building one anyway is how an empty book ships — and it would appear in the download
   // list as a link to a book with no chapters.
   const corpus = [doc('a.md', { book: 'one' }), doc('b.md', { book: 'two' })]
-  expect(listEpubVolumes(corpus, cfg).map((v) => v.book)).toEqual(['one', 'two'])
+  expect(listEpubVolumes(corpus, cfg).map((v) => v.book)).toEqual([
+    'one',
+    'two',
+  ])
 })
 
 test('a corpus with nothing publishable produces no volumes at all', () => {
@@ -90,7 +101,10 @@ test('the marker becomes a list of every volume', () => {
     [doc('a.md'), doc('g.md', { book: 'field-guide' })],
     cfg
   )
-  const out = renderEpubDownloads('Grab a book:\n\n<!-- epub-downloads -->\n', volumes)
+  const out = renderEpubDownloads(
+    'Grab a book:\n\n<!-- epub-downloads -->\n',
+    volumes
+  )
   expect(out).toContain('[foresight-rpg](/foresight-rpg.epub)')
   expect(out).toContain(
     '[foresight-rpg — field-guide](/foresight-rpg-field-guide.epub)'
@@ -101,7 +115,9 @@ test('the marker becomes a list of every volume', () => {
 test('whitespace inside the marker is tolerated', () => {
   const v = listEpubVolumes([doc('a.md')], cfg)
   expect(renderEpubDownloads('<!--epub-downloads-->', v)).toContain('.epub')
-  expect(renderEpubDownloads('<!--   epub-downloads   -->', v)).toContain('.epub')
+  expect(renderEpubDownloads('<!--   epub-downloads   -->', v)).toContain(
+    '.epub'
+  )
 })
 
 test('text without the marker is returned untouched', () => {
@@ -126,6 +142,8 @@ test('substitution is stateless across repeated calls', () => {
   const short = '<!-- epub-downloads -->'
   for (let i = 0; i < 12; i++) {
     expect(renderEpubDownloads(short, v)).toContain('.epub')
-    expect(renderEpubDownloads(long, v).match(/foresight-rpg\.epub/g)).toHaveLength(2)
+    expect(
+      renderEpubDownloads(long, v).match(/foresight-rpg\.epub/g)
+    ).toHaveLength(2)
   }
 })

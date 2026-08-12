@@ -117,7 +117,10 @@ The dev server runs HTTPS using certs in `tls/` (`key.pem` + `certificate.pem`, 
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on push/PR to `main`, in two jobs:
 
-- **test** — `bun install` → `bunx tsc --noEmit` → `bun test` (the unit lane).
+- **test** — `bun install` → `bunx tsc --noEmit` → `bun run format-check` → `bun test` (the unit lane).
+
+  **Why formatting is gated.** `bun format` was manual and named in no gate, so drift only ever grew — 24 unformatted files at v1.9.0, 39 by v1.9.3, 40 by v1.9.7. The cost lands on whoever runs `bun format` next: three dozen unrelated files land in their feature diff, and either they ship the churn or they spend the time separating it. Prettier is the sole formatter (ESLint carries no stylistic rules) and reaches a fixed point in one pass, so the check is deterministic and cheap. Run `bun format` before committing.
+
 - **e2e** — generates a throwaway self-signed cert (the dev server refuses to start without one; mkcert would want sudo, and the tests already set `ignoreHTTPSErrors`), installs chromium, and runs `bunx playwright test --project=chromium`. Playwright brings up its own dev server.
 
 The haltija doc-test lane (`bun run test-browser`) is still **not** in CI — run it locally before a release.
@@ -135,7 +138,7 @@ No semicolons, single quotes, 2-space indent, trailing commas (es5). Enforced by
 1. Writes version from `package.json` to `src/version.ts`
 2. Extracts `/*#` doc comments from `src/` and `README.md` → `demo/docs.json`
 3. Generates icon data via `bin/make-icon-data.js`
-9. Compiles TypeScript → ESM in `dist/`
+4. Compiles TypeScript → ESM in `dist/`
 5. Generates type declarations → `dist/*.d.ts`
 6. Bundles IIFE version (tosijs + marked included) → `dist/iife.js`
 7. Reports gzipped bundle sizes
@@ -376,6 +379,7 @@ See `package.json` for current versions. The notable ones:
   visibility at all, and a worse editor). Revisit if a CodeMirror advisory actually fails
   someone's build; extracting `<tosi-code>` into its own package is the exit, and it is a
   breaking change that needs a reason.
+
 - `tosijs`: Core component framework (peer + dev dep). The peer floor **encodes specific
   upstream fixes, not a date** — `^1.7.8` is required for tosijs#20 (the `this.parts` proxy
   crossing into nested component instances, which made "edit" on one live example open the
@@ -714,10 +718,11 @@ Ships as `tosijs-release-notes` so adopters get the same workflow.
 2. (No need to start a dev server — every lane brings up its own now)
 3. `bun run release-check` — every annotation since the last tag is written up
 4. Run **all four lanes**: `bun test` → `bun run test-browser` → `bun playwright test` → `bun run test-consumer`. `bun tests` covers only two of them; a lane the gate skips rots silently.
-4. Build: `bun run build` (this also runs the dependency-audit gate — a high+ advisory here fails the build; fix or time-box it before releasing, don't `TOSIJS_AUDIT=off` past it)
-5. Commit changes including `dist/` and `docs/`
-6. Tag release: `git tag v1.x.x`
-7. Push: `git push --tags` (the user publishes to npm)
+5. `bun format` — CI now runs `bun run format-check`, so an unformatted tree fails the gate
+6. Build: `bun run build` (this also runs the dependency-audit gate — a high+ advisory here fails the build; fix or time-box it before releasing, don't `TOSIJS_AUDIT=off` past it)
+7. Commit changes including `dist/` and `docs/`
+8. Tag release: `git tag v1.x.x`
+9. Push: `git push --tags` (the user publishes to npm)
 
 ### Prereleases — iterate on betas, gate the final
 

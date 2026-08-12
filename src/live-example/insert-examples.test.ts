@@ -57,7 +57,9 @@ describe('insertExamples grouping across the baked <script>', () => {
       pre('tjs', 'SRC') + '<script>void 0</script>' + pre('test', 'TST')
     )
     expect(withPlainScript).toHaveLength(2)
-    const withProse = run(pre('tjs', 'SRC') + '<p>note</p>' + pre('test', 'TST'))
+    const withProse = run(
+      pre('tjs', 'SRC') + '<p>note</p>' + pre('test', 'TST')
+    )
     expect(withProse).toHaveLength(2)
   })
 })

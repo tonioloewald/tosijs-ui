@@ -643,7 +643,9 @@ export async function devServer(config, opts = {}) {
             return new Response(body, {
                 headers: {
                     'Content-Type': 'text/html; charset=utf-8',
-                    ...(encoding ? { 'Content-Encoding': encoding, Vary: 'Accept-Encoding' } : {}),
+                    ...(encoding
+                        ? { 'Content-Encoding': encoding, Vary: 'Accept-Encoding' }
+                        : {}),
                 },
             });
         }
@@ -1344,23 +1346,23 @@ export async function devServer(config, opts = {}) {
         }
     }
     /*
-  Exit WITHOUT stopping the listeners first.
-
-  Every one of these six sites called `server.stop()` (and `tunnelServer?.stop()`)
-  immediately before `process.exit()`. That buys nothing — `process.exit` terminates the
-  process and the OS closes the listening sockets — and it is where the process was
-  dying: tosijs-3d reported a reproducible **segfault at ~7.95h** against the 8h idle
-  timer, twice, on the shutdown path, with flat 0.34GB RSS (so not the Bun.build native
-  leak) and a faulting address that decodes to ASCII text rather than a null — the shape
-  of a use-after-free inside Bun's own teardown. tosijs-ui#47.
-
-  A `try/catch` around the stops would NOT help: a segfault is not a JS exception. Not
-  making the call is the only fix available to us. Filed upstream separately, because
-  Bun should not crash here either.
-
-  Child processes we spawned are a different matter — those we must still reap, since the
-  OS will not do it for a detached Electron grandchild. Callers do that before calling in.
-  */
+    Exit WITHOUT stopping the listeners first.
+  
+    Every one of these six sites called `server.stop()` (and `tunnelServer?.stop()`)
+    immediately before `process.exit()`. That buys nothing — `process.exit` terminates the
+    process and the OS closes the listening sockets — and it is where the process was
+    dying: tosijs-3d reported a reproducible **segfault at ~7.95h** against the 8h idle
+    timer, twice, on the shutdown path, with flat 0.34GB RSS (so not the Bun.build native
+    leak) and a faulting address that decodes to ASCII text rather than a null — the shape
+    of a use-after-free inside Bun's own teardown. tosijs-ui#47.
+  
+    A `try/catch` around the stops would NOT help: a segfault is not a JS exception. Not
+    making the call is the only fix available to us. Filed upstream separately, because
+    Bun should not crash here either.
+  
+    Child processes we spawned are a different matter — those we must still reap, since the
+    OS will not do it for a detached Electron grandchild. Callers do that before calling in.
+    */
     const shutdown = (code) => {
         process.exit(code);
     };

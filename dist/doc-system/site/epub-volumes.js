@@ -35,13 +35,18 @@ export function epubVolumeIdentity(config, bookTarget) {
     const epub = typeof config.epub === 'object' ? config.epub : {};
     const baseTitle = epub.title ?? config.name ?? 'book';
     const title = bookTarget
-        ? (epub.volumeTitles?.[bookTarget] ?? `${baseTitle} — ${bookTarget}`)
+        ? epub.volumeTitles?.[bookTarget] ?? `${baseTitle} — ${bookTarget}`
         : baseTitle;
     const filename = bookTarget
         ? `${slugify(baseTitle)}-${slugify(bookTarget)}.epub`
         : `${slugify(baseTitle)}.epub`;
     const base = (config.basePath ?? '/').replace(/\/+$/, '');
-    return { book: bookTarget ?? DEFAULT_BOOK, title, filename, url: `${base}/${filename}` };
+    return {
+        book: bookTarget ?? DEFAULT_BOOK,
+        title,
+        filename,
+        url: `${base}/${filename}`,
+    };
 }
 /**
  * Every volume this corpus will produce, default first.

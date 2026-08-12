@@ -14,10 +14,7 @@ cause an endless rebuild loop.
 
 import * as path from 'path'
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js'
-import {
-  listEpubVolumes,
-  renderEpubDownloads,
-} from './epub-volumes.js'
+import { listEpubVolumes, renderEpubDownloads } from './epub-volumes.js'
 import { buildSlugMap } from '../routing.js'
 import { existsSync, mkdirSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'

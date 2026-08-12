@@ -169,7 +169,8 @@ test('env PORT outranks the config, and both sides see it the same way', () => {
 
 import { haltijaIsDrivable } from './dev-server.js'
 
-const HINT = '\n\x1b[2m\nhj windows : --json | see: tabs-open, tabs-close\x1b[0m'
+const HINT =
+  '\n\x1b[2m\nhj windows : --json | see: tabs-open, tabs-close\x1b[0m'
 
 test('a server with no connected tab is NOT drivable', () => {
   expect(
@@ -219,8 +220,13 @@ function projectWithHaltija(version?: string): string {
   const dir = mkdtempSync(nodePath.join(osTmpdir(), 'tosi-hj-'))
   if (version) {
     mkdirSync(nodePath.join(dir, 'node_modules', '.bin'), { recursive: true })
-    mkdirSync(nodePath.join(dir, 'node_modules', 'haltija'), { recursive: true })
-    writeFileSync(nodePath.join(dir, 'node_modules', '.bin', 'haltija'), '#!/bin/sh\n')
+    mkdirSync(nodePath.join(dir, 'node_modules', 'haltija'), {
+      recursive: true,
+    })
+    writeFileSync(
+      nodePath.join(dir, 'node_modules', '.bin', 'haltija'),
+      '#!/bin/sh\n'
+    )
     writeFileSync(
       nodePath.join(dir, 'node_modules', 'haltija', 'package.json'),
       JSON.stringify({ name: 'haltija', version })
@@ -267,7 +273,10 @@ test('a local install with an unreadable manifest is still preferred', () => {
   // binary matters more than labelling it.
   const dir = mkdtempSync(nodePath.join(osTmpdir(), 'tosi-hj-'))
   mkdirSync(nodePath.join(dir, 'node_modules', '.bin'), { recursive: true })
-  writeFileSync(nodePath.join(dir, 'node_modules', '.bin', 'haltija'), '#!/bin/sh\n')
+  writeFileSync(
+    nodePath.join(dir, 'node_modules', '.bin', 'haltija'),
+    '#!/bin/sh\n'
+  )
   const { argv, describe } = resolveHaltijaChannel(dir, {})
   expect(argv[0]).toContain('node_modules/.bin/haltija')
   expect(describe).toContain('unknown version')
@@ -287,9 +296,24 @@ test('brotli is preferred, gzip is the fallback, neither is forced', () => {
 })
 
 test('only text-shaped assets are compressed', () => {
-  for (const f of ['/a.js', '/a.css', '/a.html', '/a.json', '/a.svg', '/a.map', '/a.wasm'])
+  for (const f of [
+    '/a.js',
+    '/a.css',
+    '/a.html',
+    '/a.json',
+    '/a.svg',
+    '/a.map',
+    '/a.wasm',
+  ])
     expect(isCompressible(f)).toBe(true)
   // Already compressed — re-encoding these only makes them bigger, and wastes the cache.
-  for (const f of ['/a.png', '/a.jpg', '/a.woff2', '/a.epub', '/a.glb', '/a.mp4'])
+  for (const f of [
+    '/a.png',
+    '/a.jpg',
+    '/a.woff2',
+    '/a.epub',
+    '/a.glb',
+    '/a.mp4',
+  ])
     expect(isCompressible(f)).toBe(false)
 })

@@ -9,9 +9,9 @@ stalls in #63, traced by tosijs-3d.
 from empty, so for the length of every build **every served path is simply absent**. Two
 failures follow:
 
-- a request that *starts* in that window gets a plain 404 — the page loads and never
+- a request that _starts_ in that window gets a plain 404 — the page loads and never
   hydrates
-- a request already *in flight* has its file vanish underneath it, stops producing data,
+- a request already _in flight_ has its file vanish underneath it, stops producing data,
   and idles until something closes it — the "loads then stalls" symptom
 
 It only ever bit over the LAN because a loopback transfer finishes in ~22 ms and almost
@@ -50,11 +50,11 @@ arrived as text, anything id-shaped. Sorting now compares naturally:
 - blank cells sort **last in both directions** — a descending sort that opens on a
   screenful of empty cells is never what was clicked for
 
-The old comparator also never returned `0`, so two *equal* values each claimed to be
+The old comparator also never returned `0`, so two _equal_ values each claimed to be
 greater than the other. `Array.sort` is entitled to turn an inconsistent comparator into
 arbitrary output, not merely wrong output.
 
-**New `ColumnOptions.sortValue`** — sort by what the cell *shows*, when that differs from
+**New `ColumnOptions.sortValue`** — sort by what the cell _shows_, when that differs from
 what the row stores. A column with a custom `dataCell` renders whatever it likes while the
 sort keyed on `prop`, so the rows reordered by an invisible value:
 
@@ -103,7 +103,7 @@ same comparison is wanted outside tables.
   tosijs#20 (the `parts` proxy crossing into nested components) and #21 — and that reason
   is now recorded in `CLAUDE.md` rather than only in an old changelog entry.
 
-`makeSorter` deliberately keeps its existing comparison: switching it would change *case*
+`makeSorter` deliberately keeps its existing comparison: switching it would change _case_
 ordering (`'Zed'` before `'alice'` today) in a general-purpose utility where that has not
 been reported as a problem. Coerce numeric strings in the valuator, or pass values through
 `naturalCompare` yourself.
@@ -121,18 +121,18 @@ An annotation is a **suffix identifier**, so only a `#` that looks like one is t
 one — immediately preceded by a non-space, followed by letters/digits/`_`/`-`, at the end
 of the string:
 
-| string | read as |
-| --- | --- |
-| `Okay#confirm` | annotation |
-| `C# Tutorial` | literal — space after |
-| `Issue #42` | literal — space before |
-| `#hashtag` | literal — nothing before |
-| `C#` | literal — no annotation after |
+| string         | read as                       |
+| -------------- | ----------------------------- |
+| `Okay#confirm` | annotation                    |
+| `C# Tutorial`  | literal — space after         |
+| `Issue #42`    | literal — space before        |
+| `#hashtag`     | literal — nothing before      |
+| `C#`           | literal — no annotation after |
 
 No author action and no data migration; every documented annotation form is unchanged.
 Escape with `\#` for a literal that genuinely looks like an annotation (`tag\#42`).
 
-**The worse half:** annotations were stripped from the *translated value* too, so a
+**The worse half:** annotations were stripped from the _translated value_ too, so a
 translation containing `#` was truncated **even when the source string had none** —
 `'Sharp'` → `'Dièse #1'` came back as `'Dièse '`. A translator writing an ordinary string
 had it silently cut, with nothing in the source to hint why. Translations are no longer
@@ -152,9 +152,9 @@ it resolves to.
 
 It spawned its own channel via `bunx haltija@^1.6.1` and ignored the project's dependency
 entirely — and because **bunx caches the resolution**, a range that resolves forward never
-*re*-resolves once its cache key exists. So an adopter who bumped `haltija` to `^1.11.2`
+_re_-resolves once its cache key exists. So an adopter who bumped `haltija` to `^1.11.2`
 for a fix, restarted, and still didn't have the fix was running a cached 1.11.0: new
-enough to look current, old enough to lack it. `hj where` reports the *spawned* server, so
+enough to look current, old enough to lack it. `hj where` reports the _spawned_ server, so
 the version indicator agreed with them.
 
 - Your `node_modules/.bin/haltija` is preferred when present. `HALTIJA_VERSION` still
@@ -187,7 +187,7 @@ upstream as [oven-sh/bun#36788](https://github.com/oven-sh/bun/issues/36788).
 ### ePub volumes are now linkable (#46)
 
 The build wrote an ePub per volume and linked to none of them, so a reader had no route
-to a book that existed. The filename is *derived* (`<project>-<volume>.epub`), so
+to a book that existed. The filename is _derived_ (`<project>-<volume>.epub`), so
 hand-written links rot silently when a volume is renamed.
 
 Three ways to surface them, and the ePub build now names its output through the same
@@ -209,7 +209,7 @@ at.
   walled you with "that invite link has been used". The stale token is simply irrelevant
   to someone who already holds a session.
 - **`tosijs-tunnel --close` confirms identity before signalling.** It SIGTERMed every
-  `pgrep -f` match, and `pgrep -f` matches an argv *substring* — a shell echoing the
+  `pgrep -f` match, and `pgrep -f` matches an argv _substring_ — a shell echoing the
   command or an editor holding a log path both matched. It now checks the process really
   is `ssh`, says what it signalled, and names what it skipped. It also interpolated `host`
   into a REGEX unescaped, so `me@a.b` matched `me@axb` and a host containing `+`, `(` or
@@ -230,15 +230,15 @@ at.
 `hj map` (haltija 1.11) over the doc site, which reports a measured contrast ratio per
 node — none of these were visible as wrong to the eye.
 
-| pair | was | now |
-| --- | --- | --- |
-| test widget, running | white on `#fa0` — **1.9:1** | `#2b1a00` on `#fa0` — 8.8:1 |
-| test widget, passed | white on `#0a0` — **3.1:1** | white on `#008a00` — 4.5:1 |
-| `--tosi-accent` as text | `#EE257B` — **4.05:1** on white, 4.3:1 on the page | `#d92270` — 4.6:1 |
-| `--tosi-accent` as a fill | white on `#EE257B` — **4.05:1** | white on `#d92270` — 4.8:1 |
+| pair                      | was                                                | now                         |
+| ------------------------- | -------------------------------------------------- | --------------------------- |
+| test widget, running      | white on `#fa0` — **1.9:1**                        | `#2b1a00` on `#fa0` — 8.8:1 |
+| test widget, passed       | white on `#0a0` — **3.1:1**                        | white on `#008a00` — 4.5:1  |
+| `--tosi-accent` as text   | `#EE257B` — **4.05:1** on white, 4.3:1 on the page | `#d92270` — 4.6:1           |
+| `--tosi-accent` as a fill | white on `#EE257B` — **4.05:1**                    | white on `#d92270` — 4.8:1  |
 
 **The brand pink is 9% darker** (`#EE257B` → `#d92270`). It is imperceptible side by side
-and it was the only value that clears AA in *both* directions — as text on the page, and
+and it was the only value that clears AA in _both_ directions — as text on the page, and
 as a fill carrying white text. Override `--tosi-accent` if you want the original.
 
 Two more, found by sweeping wider — both in **example code we publish**, which matters
@@ -258,8 +258,8 @@ Verified across 8 pages in both themes on haltija 1.11.2: **0 failures, 0 uncert
 
 **The browser-test lane now runs its own private haltija.** It used to reuse any running
 instance and otherwise spawn with `-f`, which reclaims haltija's shared default port and
-kills whatever held it. Both halves were wrong: adopting meant inheriting the *desktop
-app's* window, whose visibility depends on whatever else is on screen — and `hj` rightly
+kills whatever held it. Both halves were wrong: adopting meant inheriting the _desktop
+app's_ window, whose visibility depends on whatever else is on screen — and `hj` rightly
 refuses to drive a hidden tab, since a backgrounded tab throttles `requestAnimationFrame`
 and would produce plausible-but-wrong results. The lane failed roughly two runs in three
 with no programmatic way out. It now takes an isolated instance on an ephemeral port:
@@ -291,11 +291,11 @@ Two runtime requirements are unchanged, and are now documented rather than impli
 are honest constraints, not bugs, but the failure messages named symptoms rather than
 causes:
 
-| entry point | runtime |
-| --- | --- |
-| `tosijs-ui/site` | **bun** — it shells out, builds and spawns |
-| `tosijs-ui`, `tosijs-ui/<component>` | a **browser** or a bundler targeting one |
-| `tosijs-ui/icon-svg` | anything — deliberately DOM-free |
+| entry point                          | runtime                                    |
+| ------------------------------------ | ------------------------------------------ |
+| `tosijs-ui/site`                     | **bun** — it shells out, builds and spawns |
+| `tosijs-ui`, `tosijs-ui/<component>` | a **browser** or a bundler targeting one   |
+| `tosijs-ui/icon-svg`                 | anything — deliberately DOM-free           |
 
 `engines` now declares bun, and `doc-site-system.md` has a "Runtimes — what runs where"
 section.

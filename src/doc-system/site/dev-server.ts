@@ -225,7 +225,6 @@ export function resolveLimitMb(
  */
 export { isLoopbackAddress }
 
-
 /*
 Is a haltija server DRIVABLE, from the CLI's stdout?
 
@@ -768,7 +767,9 @@ export async function devServer(
       return new Response(body, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
-          ...(encoding ? { 'Content-Encoding': encoding, Vary: 'Accept-Encoding' } : {}),
+          ...(encoding
+            ? { 'Content-Encoding': encoding, Vary: 'Accept-Encoding' }
+            : {}),
         },
       })
     }
@@ -1550,7 +1551,7 @@ export async function devServer(
     }
   }
 
-    /*
+  /*
   Exit WITHOUT stopping the listeners first.
 
   Every one of these six sites called `server.stop()` (and `tunnelServer?.stop()`)

@@ -16,7 +16,7 @@ Today live-example rewrites `import { x } from 'tosijs'` → `const { x } = tosi
 injection). That is NOT a hack to retire — it is **load-bearing for the doc-system-as-authoring
 -tool use case**: when you're developing a library, an example must exercise your **in-page
 working copy** (the live, hot-reloading `context` instance you're editing), NOT the CDN-resolved
-*published* version. Real imports would pull the shipped library; context injection gives you the
+_published_ version. Real imports would pull the shipped library; context injection gives you the
 one under your cursor.
 
 So real imports are **additive**, and there are two modes plus a side-by-side default.
@@ -39,7 +39,7 @@ dynamic-import fetch).
 ### Three modes, flagged on the fence
 
 `inline` (default), `iframe` (DOM/CSS isolation, working copy), `ide` (fully sandboxed, real
-**published** deps). Signalled by a `` ```<lang>:<mode> `` fence — first mode in the group wins;
+**published** deps). Signalled by a ` ```<lang>:<mode> ` fence — first mode in the group wins;
 contradictory modes across a group log a console error (which the doc-tests console-clean guard
 catches) and the first is obeyed. The `iframe` boolean attribute aliases `mode="iframe"`. **DONE:**
 the flagging (render parse → `data-example-mode`, insert-examples first-wins + contradiction error,
@@ -59,8 +59,8 @@ imports, rather than a whole new engine. A deliberate SECOND phase, once the SW 
 
 ## We already have the seed
 
-`demo/static/module-cache-sw.js`'s own header says *"DIRECTION (roadmap phase-2): grow this into
-a `/lib/<spec>` resolver."* TFS **is** that — so consuming it **retires** our hand-rolled caching
+`demo/static/module-cache-sw.js`'s own header says _"DIRECTION (roadmap phase-2): grow this into
+a `/lib/<spec>` resolver."_ TFS **is** that — so consuming it **retires** our hand-rolled caching
 SW (the import-resolver caches too, via `cacheName`).
 
 ## The API (0.11.0)
@@ -100,6 +100,7 @@ SW (the import-resolver caches too, via `cacheName`).
 (phase 2) + the open items below.
 
 ### Still open from steps 1–2
+
 - **Retire `module-cache-sw.js`** — the import-resolver supersedes its stated roadmap (it caches
   too). Not yet removed; do it once the resolver is the default caching path.
 - **First-visit control timing.** With `reloadOnFirstInstall: false`, the SW controls on the NEXT

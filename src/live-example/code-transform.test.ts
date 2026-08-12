@@ -10,7 +10,9 @@ describe("loadTransform('js')", () => {
     const transform = await loadTransform('js')
     const src = "const x = 1 // arbitrary vanilla JS\nconsole.log('hi')"
     // Identity: the code is returned byte-for-byte, no transpiler involved.
-    expect((await transform(src, { transforms: ['typescript'] })).code).toBe(src)
+    expect((await transform(src, { transforms: ['typescript'] })).code).toBe(
+      src
+    )
   })
 })
 
@@ -107,9 +109,9 @@ describe('AsyncFunction', () => {
 describe('rewriteImports → import-resolver (non-context imports)', () => {
   const P = '/lib/'
   test('named/default/namespace/side-effect + `as` rename', () => {
-    expect(rewriteImports("import confetti from 'canvas-confetti'", [], P)).toBe(
-      "const confetti = (await import('/lib/canvas-confetti')).default"
-    )
+    expect(
+      rewriteImports("import confetti from 'canvas-confetti'", [], P)
+    ).toBe("const confetti = (await import('/lib/canvas-confetti')).default")
     expect(rewriteImports("import { nanoid } from 'nanoid'", [], P)).toBe(
       "const { nanoid } = await import('/lib/nanoid')"
     )

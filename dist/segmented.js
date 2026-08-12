@@ -409,7 +409,9 @@ export class TosiSegmented extends WebComponent {
                 value: choice.value,
                 checked: isChecked(choice.value),
                 tabIndex: -1,
-            }), choice.icon || { class: 'no-icon' }, this.localized ? tosiLocalized(choice.caption) : span(choice.caption))));
+            }), choice.icon || { class: 'no-icon' }, this.localized
+                ? tosiLocalized(choice.caption)
+                : span(choice.caption))));
         }
         if (this.other && !this.multiple) {
             custom.hidden = !isOtherValue;

@@ -418,9 +418,9 @@ test('REGRESSION: a valid session trumps a stale link', () => {
   // used" while holding a perfectly good session. The token is read before the cookie,
   // and a comment asserted (without enforcing) that a session holder could never get
   // here. The stale token is simply irrelevant to them.
-  expect(
-    resolveLinkArrival({ redeemed: null, hasValidSession: true })
-  ).toBe('already-authenticated')
+  expect(resolveLinkArrival({ redeemed: null, hasValidSession: true })).toBe(
+    'already-authenticated'
+  )
 })
 
 test('a stale link with no session is still refused', () => {

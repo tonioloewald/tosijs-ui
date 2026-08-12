@@ -322,7 +322,9 @@ export class TosiPocketBar extends WebComponent<PocketBarParts> {
       passive: true,
       capture: true,
     })
-    window.addEventListener('resize', this.handleScrollResize, { passive: true })
+    window.addEventListener('resize', this.handleScrollResize, {
+      passive: true,
+    })
   }
 
   disconnectedCallback(): void {

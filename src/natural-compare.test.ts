@@ -64,10 +64,16 @@ test('blanks sort last, whichever way you sort', () => {
   // A descending sort that opens on a screenful of empty cells is never what was clicked.
   const rows = [{ v: 'b' }, { v: '' }, { v: 'a' }, { v: null }]
   expect(
-    rows.slice().sort(naturalSorter((r: any) => r.v, true)).map((r: any) => r.v)
+    rows
+      .slice()
+      .sort(naturalSorter((r: any) => r.v, true))
+      .map((r: any) => r.v)
   ).toEqual(['a', 'b', '', null])
   expect(
-    rows.slice().sort(naturalSorter((r: any) => r.v, false)).map((r: any) => r.v)
+    rows
+      .slice()
+      .sort(naturalSorter((r: any) => r.v, false))
+      .map((r: any) => r.v)
   ).toEqual(['b', 'a', '', null])
 })
 
@@ -144,12 +150,12 @@ function tableWith(columns: any[], rows: any[]): any {
 test("REGRESSION: a column's numeric strings sort numerically", () => {
   const rows = [{ n: '9' }, { n: '399' }, { n: '1200' }, { n: '3.5' }]
   const t = tableWith([{ prop: 'n', width: 80, sort: 'ascending' }], rows)
-  expect(rows.slice().sort(t.sort).map((r) => r.n)).toEqual([
-    '3.5',
-    '9',
-    '399',
-    '1200',
-  ])
+  expect(
+    rows
+      .slice()
+      .sort(t.sort)
+      .map((r) => r.n)
+  ).toEqual(['3.5', '9', '399', '1200'])
 })
 
 test('REGRESSION: sortValue sorts by what the cell shows, not by prop', () => {
@@ -173,17 +179,23 @@ test('REGRESSION: sortValue sorts by what the cell shows, not by prop', () => {
     ],
     rows
   )
-  expect(rows.slice().sort(t.sort).map((r) => r.shown)).toEqual([
-    '9',
-    '399',
-    '1177',
-  ])
+  expect(
+    rows
+      .slice()
+      .sort(t.sort)
+      .map((r) => r.shown)
+  ).toEqual(['9', '399', '1177'])
 })
 
 test('without sortValue the column still sorts by prop', () => {
   const rows = [{ n: 'b' }, { n: 'a' }]
   const t = tableWith([{ prop: 'n', width: 80, sort: 'descending' }], rows)
-  expect(rows.slice().sort(t.sort).map((r) => r.n)).toEqual(['b', 'a'])
+  expect(
+    rows
+      .slice()
+      .sort(t.sort)
+      .map((r) => r.n)
+  ).toEqual(['b', 'a'])
 })
 
 test('an explicit table.sort still overrides the column comparator', () => {

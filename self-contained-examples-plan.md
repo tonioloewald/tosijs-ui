@@ -1,8 +1,8 @@
 # Self-contained examples (M10 half 2)
 
-**Goal.** Make a doc page *runnable* with nothing but the ~123KB hydration entry. CodeMirror and
+**Goal.** Make a doc page _runnable_ with nothing but the ~123KB hydration entry. CodeMirror and
 the tjs transpiler become pure **edit-time** enhancements — they load only when the reader opens or
-edits a code panel, never on first paint, and never to merely *run* a `tjs`/`ts` example's preview.
+edits a code panel, never on first paint, and never to merely _run_ a `tjs`/`ts` example's preview.
 
 This supersedes the earlier "defer editor construction" framing (approaches a/b in the M10 TODO).
 Those only defer **CodeMirror**; a `tjs` example still pulls the **transpiler** to render its preview.
@@ -23,7 +23,7 @@ post-`transform` string** — which is precisely what `check-examples.ts` alread
 executable block on every build (`js = transform(rewriteImports(block.text, contextKeys))`). So the
 build already produces the bytes we want to embed; today it just throws them away after syntax-checking.
 
-Runtime *with* a bake: `withScopeCapture(bakedCode, …)` + `AsyncFunction` — **no transpiler loaded.**
+Runtime _with_ a bake: `withScopeCapture(bakedCode, …)` + `AsyncFunction` — **no transpiler loaded.**
 `js`-dialect blocks need no bake at all: `rewriteImports` alone is the whole pipeline (no transform),
 so runtime just skips the transform step.
 
@@ -31,7 +31,7 @@ so runtime just skips the transform step.
 
 Three independent passes enumerate the code blocks — `check-examples` (walks `marked.lexer`, recursing
 into lists), `generate-site` (renders via `renderDocMarkdown`), and `insert-examples` (groups
-consecutive `<pre>` DOM siblings). If they disagree on *which block is which*, a bake attaches to the
+consecutive `<pre>` DOM siblings). If they disagree on _which block is which_, a bake attaches to the
 wrong example — silent, confusing breakage.
 
 **Solution: key by exact source text** — `Map<sourceText, { dialect, js }>`. Identical source ⇒
@@ -81,7 +81,7 @@ custom example stays self-contained (runnable with zero runtime deps).
 2. **Runtime consume. ✅ DONE.** `insert-examples` reads each block's baked `<script>` →
    `example.compiledJs`; `executeInline`/`executeInIframe` run it verbatim (skip `rewriteImports` +
    `transform`). `refresh()` uses the bake ONLY when tests are off (`bake = dialect!=='js' &&
-   !testManager.enabled.value ? compiledJs : undefined`) — so localhost / the doc-test harness (tests
+!testManager.enabled.value ? compiledJs : undefined`) — so localhost / the doc-test harness (tests
    ON, default off-localhost) take the ORIGINAL full-transform path unchanged and the harness can't
    regress. **Plus a second, larger win found while verifying:** every js example was calling
    `loadTransform('js')`, which loaded the whole tjs bundle even though tjs's `js` dialect is a no-op
@@ -141,6 +141,6 @@ custom example stays self-contained (runnable with zero runtime deps).
 ## Do NOT
 
 - Gate the editor/transpiler on "does this corpus have code examples" — the doc system is an
-  *authoring* system; prose/book sites need the editor most.
+  _authoring_ system; prose/book sites need the editor most.
 - Make `renderDocMarkdown` async (it is shared by generate-site, book-html, epub) — pass bakes as
   precomputed data via module-level per-parse state, the same pattern the footnote renderer uses.

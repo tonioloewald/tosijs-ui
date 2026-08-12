@@ -286,8 +286,7 @@ export class MapBox extends WebComponent {
           }
         }
       })
-    })
-    .catch((err: unknown) => {
+    }).catch((err: unknown) => {
       // CDN load / construction failed — clear the flag so a later render can retry
       // rather than leaving the element permanently unable to build its map.
       this._mapPending = false

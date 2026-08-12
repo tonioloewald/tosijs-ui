@@ -48,7 +48,8 @@ sourceFile) {
         language: code.classList[0].split('-').pop(),
         code: code.innerText,
         compiled: bakedJsForBlock(code.parentElement),
-        mode: code.parentElement.getAttribute('data-example-mode') || undefined,
+        mode: code.parentElement.getAttribute('data-example-mode') ||
+            undefined,
     }));
     // Per-doc ordinal: the Nth live example on the page. Combined with sourceFile
     // it's the key back to the originating fenced-block group in the source.

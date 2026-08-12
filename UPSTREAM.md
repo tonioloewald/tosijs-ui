@@ -102,12 +102,12 @@ session-only + expire in 7 days — this line is the durable reminder.)
      rather than assume the guards are either still needed or safely removable.
 
   **The guards stay regardless, and not because we distrust 1.4.** They are not a workaround for
-  one bug — they are an *instrument* for a class: native memory invisible to the JS heap and to
+  one bug — they are an _instrument_ for a class: native memory invisible to the JS heap and to
   `Bun.gc()`, in a process that lives for days. A rewrite can fix every current instance of that
   class and still admit new ones, and the failure mode is a machine that swaps itself to death
   with nothing in a heap profile. An instrument that measures outlives the bug that motivated it;
   the cost is a 60s tick. (The Rust port is reportedly aimed squarely at the class of problem we
-  keep hitting as bleeding-edge users — which is a reason to expect *better*, not a reason to
+  keep hitting as bleeding-edge users — which is a reason to expect _better_, not a reason to
   stop measuring.) Action: watch for
   the next bun release; when it lands, MEASURE (see the two caveats below — Transpiler still not
   covered) before considering reverting any workaround. Until then, **everything stays as-is.**

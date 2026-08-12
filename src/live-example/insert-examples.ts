@@ -75,9 +75,8 @@ export function insertExamples(
       code: (code as HTMLElement).innerText,
       compiled: bakedJsForBlock(code.parentElement as HTMLPreElement),
       mode:
-        (code.parentElement as HTMLElement).getAttribute(
-          'data-example-mode'
-        ) || undefined,
+        (code.parentElement as HTMLElement).getAttribute('data-example-mode') ||
+        undefined,
     }))
 
   // Per-doc ordinal: the Nth live example on the page. Combined with sourceFile
@@ -112,9 +111,9 @@ export function insertExamples(
         console.error(
           `live example ${ordinal + 1}${
             sourceFile ? ` (${sourceFile})` : ''
-          }: contradictory modes [${distinct.join(
-            ', '
-          )}] — using the first, "${modes[0]}".`
+          }: contradictory modes [${distinct.join(', ')}] — using the first, "${
+            modes[0]
+          }".`
         )
       }
       example.setAttribute('mode', modes[0])

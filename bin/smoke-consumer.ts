@@ -209,7 +209,10 @@ try {
     )
   }
   for (const entry of ['tosijs-ui', 'tosijs-ui/site', 'tosijs-ui/icon-svg']) {
-    check(`node resolves ${entry} (no missing-module error)`, await nodeResolves(entry))
+    check(
+      `node resolves ${entry} (no missing-module error)`,
+      await nodeResolves(entry)
+    )
   }
   // The DOM-free entry must actually RUN under node — it exists precisely for build
   // scripts and server-rendered templates.

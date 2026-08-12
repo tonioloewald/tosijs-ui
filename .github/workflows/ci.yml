@@ -29,6 +29,14 @@ jobs:
       - name: Type check bin/
         run: bunx tsc -p tsconfig.bin.json
 
+      # `bun format` was manual and in no gate, so drift only ever accumulated: 24
+      # unformatted files at v1.9.0, 40 by v1.9.7. Nobody sees it until someone runs
+      # `bun format` and gets three dozen unrelated files mixed into their feature diff.
+      # Prettier reaches a fixed point in one pass and is the sole formatter (ESLint
+      # carries no stylistic rules), so this check is deterministic.
+      - name: Check formatting
+        run: bun run format-check
+
       - name: Run unit tests
         run: bun test
 

@@ -486,7 +486,9 @@ export class TosiSegmented extends WebComponent {
               tabIndex: -1,
             }),
             choice.icon || { class: 'no-icon' },
-            this.localized ? tosiLocalized(choice.caption) : span(choice.caption)
+            this.localized
+              ? tosiLocalized(choice.caption)
+              : span(choice.caption)
           )
         )
       )

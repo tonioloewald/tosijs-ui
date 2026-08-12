@@ -128,7 +128,8 @@ test('doc pages hydrate with no console errors', async ({ page }) => {
     await page.goto(path)
     await page.waitForTimeout(1500)
   }
-  expect(errors, `console errors during hydration:\n${errors.join('\n')}`).toEqual(
-    []
-  )
+  expect(
+    errors,
+    `console errors during hydration:\n${errors.join('\n')}`
+  ).toEqual([])
 })

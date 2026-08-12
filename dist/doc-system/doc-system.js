@@ -57,7 +57,7 @@ A self-contained, controllable embed (e.g. docs in a floating panel):
 */
 /*{ "parent": "Appendices" }*/
 import { Component, StyleSheet, elements, tosi, vars, } from 'tosijs';
-import { createDocBrowser } from '../doc-browser.js';
+import { createDocBrowser, } from '../doc-browser.js';
 import { buildSlugMap, legacyQueryPath } from './routing.js';
 import { buildBookHtml, slugify } from './book-html.js';
 import { docSystemStyleSpec } from './doc-system-styles.js';

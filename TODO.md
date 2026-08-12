@@ -26,10 +26,10 @@ security prose. What is left:
 - [ ] **(superseded by the above, kept for the evidence) Moving interaction tests to haltija wholesale.**
       The instinct is right: when a harness flakes, owning it beats trusting it, and
       haltija has turned reports around in a day. But haltija is **Chromium only**
-      (Electron, or headless via Playwright *Chromium*), so the move would drop firefox and
+      (Electron, or headless via Playwright _Chromium_), so the move would drop firefox and
       webkit entirely — and `doc-tests.pw.ts` explicitly calls two engines "a real gate",
-      noting that *"the old haltija lane only ever drove one Chromium-based engine, so
-      WebKit doc-tests never ran at all"*. Moving back would undo a deliberate improvement.
+      noting that _"the old haltija lane only ever drove one Chromium-based engine, so
+      WebKit doc-tests never ran at all"_. Moving back would undo a deliberate improvement.
 
       The evidence splits the two engines, though:
 
@@ -73,8 +73,8 @@ security prose. What is left:
       advisories in the audit verdict.** NOT a change to what blocks: blocking on every
       high+ regardless of dep class is a deliberate decision (a compromised linter has your
       source, credentials and shell), and the time-boxed `audit.allow` gate is the intended
-      release valve. The additive half is worth it — the gate already annotates *nature*
-      (`LEAK/ALTER` / `DoS-only`), so adding *reach* lets a reader judge whether a red build
+      release valve. The additive half is worth it — the gate already annotates _nature_
+      (`LEAK/ALTER` / `DoS-only`), so adding _reach_ lets a reader judge whether a red build
       is proportionate. Deferred because it is a `bun.lock` + workspace-manifest walk, not a
       flag — snowfox says so themselves — and a classifier that mislabels a runtime dep as
       build-only is worse than none. Advisory labelling first; policy only if it earns it.
@@ -95,8 +95,8 @@ security prose. What is left:
 
 - [ ] **Replace the hand-rolled wait loop with `hj doctor`.** We adopted the `ready` field
       but not the command built for this: it exits non-zero and checks reachable → tab
-      connected → target unambiguous → tabs-not-all-hidden → version skew, *in the order
-      they bite*, with `--json` for machine use. haltija's `CI-INTEGRATION.md` now shows it
+      connected → target unambiguous → tabs-not-all-hidden → version skew, _in the order
+      they bite_, with `--json` for machine use. haltija's `CI-INTEGRATION.md` now shows it
       as the wait-loop condition, replacing exactly the DIY loop we still have. Also
       `--strict`/`HALTIJA_STRICT=1` turns their advisory warnings into non-zero exits, so
       a lane fails on the real cause instead of a downstream symptom.
@@ -126,7 +126,7 @@ security prose. What is left:
 
 - [ ] **Integration test that the tunnel listener is handed `viaTunnel = true`.** The
       fail-open shipped through beta.1/2 and rc.1/2 because the decision was inline in the
-      server closure. Extraction made the *predicate* testable; the call site still isn't,
+      server closure. Extraction made the _predicate_ testable; the call site still isn't,
       and flipping `true`→`false` at `dev-server.ts:1245` is unobservable by every lane
       (`testMode` and `DEV_NO_TUNNEL=1` both skip the bind). Export a
       `createRequestHandler` factory so both bindings are assertable without TLS.
@@ -134,11 +134,11 @@ security prose. What is left:
       the forward succeeds.** `derivePort` is FNV-1a into 900 slots with no occupancy
       check, while `site-config.ts` (shipped in `dist/*.d.ts`) and `doc-site-system.md`
       both promise two projects "can't collide". The fragment write + `systemctl reload`
-      run *before* `ssh -R`, so a collision leaves B's public hostname routing at A's live
+      run _before_ `ssh -R`, so a collision leaves B's public hostname routing at A's live
       workspace, with no `--unregister`. **Soften the shipped claim to "collisions are
       detected and refused" — it is another guarantee the code does not provide.**
 - [ ] `bin/make-icon-data.js` — one bare `catch {}` covers "prettier not installed", a
-      prettier *parse* error, and an API change, so a malformed generated module is
+      prettier _parse_ error, and an API change, so a malformed generated module is
       written and reported as "Successfully generated" with exit 0. Split it: silent
       fallback only for module resolution. Also escape `\r`/`\t` in `quote()` (a raw
       control byte makes grep silently lie), and move `quote`/`emitObject` into `src/`

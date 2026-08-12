@@ -90,9 +90,9 @@ test('a saved local edit keeps its transpiled code — restores and runs it WITH
     .poll(
       () =>
         page.evaluate(() => {
-          const ex: any = [
-            ...document.querySelectorAll('tosi-example'),
-          ].find((e: any) => e.dialect === 'tjs')
+          const ex: any = [...document.querySelectorAll('tosi-example')].find(
+            (e: any) => e.dialect === 'tjs'
+          )
           return (ex?.querySelector('.preview')?.textContent || '').trim()
         }),
       { timeout: 15_000 }
@@ -102,6 +102,8 @@ test('a saved local edit keeps its transpiled code — restores and runs it WITH
   await page.waitForTimeout(500)
   expect(
     transpilerLoadsAfterReload,
-    `a saved edit carries its bake, so no transpiler should load on reload, got: ${transpilerLoadsAfterReload.join(', ')}`
+    `a saved edit carries its bake, so no transpiler should load on reload, got: ${transpilerLoadsAfterReload.join(
+      ', '
+    )}`
   ).toHaveLength(0)
 })

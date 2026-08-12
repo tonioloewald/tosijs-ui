@@ -66,7 +66,12 @@ import {
   tosi,
   vars,
 } from 'tosijs'
-import { createDocBrowser, Doc, ProjectLinks, LinkItem } from '../doc-browser.js'
+import {
+  createDocBrowser,
+  Doc,
+  ProjectLinks,
+  LinkItem,
+} from '../doc-browser.js'
 import { buildSlugMap, legacyQueryPath } from './routing.js'
 import { buildBookHtml, slugify } from './book-html.js'
 import { docSystemStyleSpec } from './doc-system-styles.js'

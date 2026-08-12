@@ -13,7 +13,7 @@ component (src/doc-system/*) so static and hydrated output agree.
 import { pageTitle } from '../doc-title.js';
 import { buildSlugMap, pathForSlug, rewriteDocLinks } from '../routing.js';
 import { buildNavTree, navOpenPath } from '../nav-tree.js';
-import { renderDocMarkdown, docDescription } from '../render.js';
+import { renderDocMarkdown, docDescription, } from '../render.js';
 const escapeAttr = (s) => s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
