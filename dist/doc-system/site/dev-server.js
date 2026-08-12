@@ -544,8 +544,8 @@ export async function devServer(config, opts = {}) {
         }
     }
     await killStrayServer(PORT);
-    function resolveFile(cfg) {
-        const basePath = path.join(cfg.directory, cfg.path);
+    function resolveUnder(directory, reqPath) {
+        const basePath = path.join(directory, reqPath);
         const suffixes = ['', '.html', 'index.html'];
         for (const suffix of suffixes) {
             try {
@@ -560,6 +560,32 @@ export async function devServer(config, opts = {}) {
             }
         }
         return null;
+    }
+    /*
+    Fall back to the last good build while a rebuild is repopulating the tree.
+  
+    `buildSite` moves the output dir ASIDE (`mv docs docs.last-good`) and repopulates from
+    empty, so for the length of a build every served path is simply absent. Two failures
+    follow, both reported as a mysterious LAN-only stall (#63): a request that STARTS in the
+    window gets a plain 404 and the page never hydrates, and a request already IN FLIGHT has
+    its file vanish underneath it, so the response stops producing data and idles until
+    something kills it.
+  
+    Measured here: continuous requests across one rebuild returned 2 non-200s, and at the
+    moment of each, `docs/iife.js` was absent while `docs.last-good/iife.js` existed.
+  
+    Neither earlier fix touches this. Compression shortens the exposure; `idleTimeout` only
+    decides how long a stalled request waits before failing — raising it actually made the
+    in-flight case wait LONGER for the same failure.
+  
+    The fallback is self-scoping: the last-good copy is created by the stash at the start of
+    a build and removed on success, so outside a build there is nothing to fall back to and
+    no stale content can be served by accident. Serving one-build-old bytes for two seconds
+    beats 404ing a page mid-edit.
+    */
+    function resolveFile(cfg) {
+        return (resolveUnder(cfg.directory, cfg.path) ??
+            resolveUnder(`${cfg.directory}.last-good`, cfg.path));
     }
     /*
     Serve-time status for the page's floating widget.
