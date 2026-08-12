@@ -509,6 +509,170 @@ or <code>descending</code>.</p>
 to whatever you like, and you can replace the <code>headerCell</code> or set the <code>sort</code> of each column
 to <code>false</code> if you have some specific sorting in mind.</p>
 <p>You can disable sorting controls by adding the <code>nosort</code> attribute to the <code>&lt;tosi-table&gt;</code>.</p>
+<h2>Row Grouping</h2>
+<p>Rows that belong together — the lines of one invoice, the episodes of one series — can be
+<strong>clustered</strong>, striped as a unit, and stripped of the values they all repeat.</p>
+<p>Set <code>rowGroupId</code>, a function from a row to its group&#39;s id:</p>
+<pre><code class="language-typescript">table.rowGroupId = (row) =&gt; `${row.invoice}/${row.buyer}`
+</code></pre>
+<p>With it set, three things change:</p>
+<ul>
+<li><strong>Rows are clustered.</strong> Any other sort is applied first and survives <em>within</em> each group;
+clustering then brings each group together. Groups appear in <strong>first-appearance order</strong>,
+so a group goes wherever its best-sorted row went — sort by amount and the biggest invoice
+is still first. (Ordering the groups by their <em>id</em> would have thrown the sort away.)</li>
+<li>Each row gets <strong><code>table-cluster-even</code></strong> or <strong><code>table-cluster-odd</code></strong>, alternating per <em>group</em>,
+not per row. A five-line invoice is one stripe.</li>
+<li>The classes are applied from the data, so they survive virtual scrolling. There is no
+<code>:nth-child</code> equivalent — only a screenful of rows exists at a time.</li>
+</ul>
+<p>The default styling tints odd groups via <code>--tosi-table-cluster-odd-bg</code>; override that
+variable, or the classes, to taste.</p>
+<h3><code>visibleGroupedRowIds</code></h3>
+<p>An array of group ids that are shown <strong>regardless of the filter</strong>:</p>
+<pre><code class="language-typescript">table.visibleGroupedRowIds = [&#39;INV-1001/Acme&#39;]
+</code></pre>
+<p>A search that matches one line of an invoice can then open the whole invoice, without the
+filter having to know anything about grouping. Forced rows are added to the filter&#39;s result
+rather than replacing it, so a filter that ranks as well as selects keeps its ranking.</p>
+<h3><code>nonRepeatingGroupedRowCells</code></h3>
+<p>An array of property names whose columns render <strong>only in the first row of each group</strong>:</p>
+<pre><code class="language-typescript">table.nonRepeatingGroupedRowCells = [&#39;invoice&#39;, &#39;buyer&#39;]
+</code></pre>
+<p>Set this <strong>without</strong> <code>rowGroupId</code> and the grouping is inferred: rows group by exactly those
+values. So the common case — &quot;show the invoice and buyer once per invoice&quot; — is a single
+line of configuration.</p>
+<p>Pinned rows (<code>pinnedTopRows</code> / <code>pinnedBottomRows</code>) are deliberately exempt from grouping
+altogether — they sit outside the clustering, so they are never striped and never hidden.</p>
+<p><strong>How it works, and how to change it.</strong> These cells render normally and are hidden by one
+CSS rule: the row that heads a group gets <code>table-cluster-first</code>, those cells get
+<code>cluster-repeat</code>, and the rest follows.</p>
+<pre><code class="language-typescript">.tr:not(.table-cluster-first) .cluster-repeat { visibility: hidden }
+</code></pre>
+<p>Because it is only a rule about classes, a column with a custom <code>dataCell</code> is covered too —
+the table tags the cell whoever built it. It also means you can override the effect
+wholesale: dim the repeats instead of hiding them, show them on hover, or scope the rule to
+one column.</p>
+<p><strong>Use <code>visibility</code>, never <code>display: none</code>.</strong> Every cell is an item of the row&#39;s grid, so
+removing one does not leave a gap — it pulls each later cell one column to the left and the
+row renders under the wrong headers. <code>visibility: hidden</code> keeps the cell in its track, stops
+it painting, and takes it out of the accessibility tree, which is right for a value the group
+already stated once.</p>
+<p>For the same decision in JavaScript — inside a <code>dataCell</code> binding or a <code>rowRendered</code>
+callback — <strong><code>table.isFirstInGroup(row)</code></strong> answers it directly. It is always <code>true</code> when the
+table is ungrouped.</p>
+<h3>Example</h3>
+<p>Grouping the emoji table by category and subcategory. It is grouped by <em>inference</em> — only
+<code>nonRepeatingGroupedRowCells</code> is set — so each subcategory is named once and striped as a
+block. Scroll it: the table is virtual, so these rows are created and destroyed as you go,
+and the stripes stay attached to the right groups because they are computed from the data
+rather than from the DOM.</p>
+<pre><code class="language-js">import { tosiTable } from &#39;tosijs-ui&#39;
+
+const emojiRequest = await fetch(&#39;https://raw.githubusercontent.com/tonioloewald/emoji-metadata/master/emoji-metadata.json&#39;)
+const emojiData = await emojiRequest.json()
+
+const table = tosiTable({
+  array: emojiData,
+  rowHeight: 32,
+  columns: [
+    { prop: &#39;category&#39;, width: 170, sort: &#39;ascending&#39; },
+    { prop: &#39;subcategory&#39;, width: 170 },
+    { prop: &#39;chars&#39;, name: &#39;emoji&#39;, width: 70, align: &#39;center&#39;, sort: false },
+    { prop: &#39;name&#39;, width: 260 },
+  ],
+})
+
+// no rowGroupId needed — grouping is inferred from these two columns
+table.nonRepeatingGroupedRowCells = [&#39;category&#39;, &#39;subcategory&#39;]
+
+preview.append(table)
+</code></pre>
+<pre><code class="language-css">.preview tosi-table {
+  height: 100%;
+}
+</code></pre>
+<pre><code class="language-test">const table = await waitFor(&#39;tosi-table&#39;)
+await new Promise(resolve =&gt; {
+  const check = () =&gt; {
+    if (table.visibleRows.length &amp;&amp; table.getCells(table.visibleRows[0])) return resolve()
+    setTimeout(check, 100)
+  }
+  check()
+})
+
+const rows = table.visibleRows
+const groupOf = (row) =&gt; `${row.category}/${row.subcategory}`
+
+// What the table SHOULD have concluded, derived independently from the data.
+const groupIndex = new Map()
+const firstOfGroup = new Set()
+for (const row of rows) {
+  const g = groupOf(row)
+  if (groupIndex.has(g)) continue
+  groupIndex.set(g, groupIndex.size)
+  firstOfGroup.add(row)
+}
+
+test(&#39;grouping is inferred from nonRepeatingGroupedRowCells alone&#39;, () =&gt; {
+  expect(table.rowGroupId).toBe(null)
+  expect(rows.length).toBeGreaterThan(100)
+  expect(groupIndex.size).toBeGreaterThan(2)
+})
+
+test(&#39;every group is one contiguous run — no group restarts&#39;, () =&gt; {
+  // The clustering invariant, asserted on real data rather than a fixture.
+  const started = new Set()
+  let previous = null
+  for (const row of rows) {
+    const g = groupOf(row)
+    if (g === previous) continue
+    expect(started.has(g)).toBe(false)
+    started.add(g)
+    previous = g
+  }
+})
+
+test(&#39;stripes are per group and survive virtualisation&#39;, () =&gt; {
+  // Only a screenful is stamped — that IS the point. Asserting fewer stamped rows than
+  // data rows is what makes this a test of virtual rendering and not of a static list.
+  const stamped = rows.filter(row =&gt; table.getCells(row))
+  expect(stamped.length).toBeGreaterThan(0)
+  expect(stamped.length).toBeLessThan(rows.length)
+  for (const row of stamped) {
+    const classes = table.getCells(row)[0].closest(&#39;.tr&#39;).classList
+    const even = groupIndex.get(groupOf(row)) % 2 === 0
+    expect(classes.contains(even ? &#39;table-cluster-even&#39; : &#39;table-cluster-odd&#39;)).toBe(true)
+    // …and exactly one of the two, so a recycled row never keeps a stale stripe.
+    expect(classes.contains(&#39;table-cluster-even&#39;)).toBe(!classes.contains(&#39;table-cluster-odd&#39;))
+  }
+})
+
+test(&#39;category and subcategory are shown once per group, and nothing else is hidden&#39;, () =&gt; {
+  const visible = (cell) =&gt; getComputedStyle(cell).visibility !== &#39;hidden&#39;
+  let shown = 0
+  let hidden = 0
+  for (const row of rows) {
+    const cells = table.getCells(row)
+    if (!cells) continue
+    const isFirst = firstOfGroup.has(row)
+    expect(table.isFirstInGroup(row)).toBe(isFirst)
+    expect(cells[0].closest(&#39;.tr&#39;).classList.contains(&#39;table-cluster-first&#39;)).toBe(isFirst)
+    // The grouped columns are hidden, not emptied — the value stays in the DOM and the
+    // cell keeps its grid track, so later columns cannot shift left into it.
+    expect(cells[0].textContent).not.toBe(&#39;&#39;)
+    expect(visible(cells[0])).toBe(isFirst)
+    expect(visible(cells[1])).toBe(isFirst)
+    isFirst ? shown++ : hidden++
+    // Columns that did NOT opt in stay visible everywhere — this catches a rule that hides
+    // the whole row rather than the repeated cells.
+    expect(visible(cells[2])).toBe(true)
+    expect(visible(cells[3])).toBe(true)
+  }
+  expect(shown).toBeGreaterThan(0)
+  expect(hidden).toBeGreaterThan(0)
+})
+</code></pre>
 <h2>Hiding (and Showing) Columns</h2>
 <p>By default, the user can show / hide columns by clicking via the column header menu.
 You can remove this option by adding the <code>nohide</code> attribute to the <code>&lt;tosi-table&gt;</code></p>

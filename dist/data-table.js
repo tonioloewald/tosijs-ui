@@ -509,6 +509,199 @@ to `false` if you have some specific sorting in mind.
 
 You can disable sorting controls by adding the `nosort` attribute to the `<tosi-table>`.
 
+## Row Grouping
+
+Rows that belong together — the lines of one invoice, the episodes of one series — can be
+**clustered**, striped as a unit, and stripped of the values they all repeat.
+
+Set `rowGroupId`, a function from a row to its group's id:
+
+```typescript
+table.rowGroupId = (row) => `${row.invoice}/${row.buyer}`
+```
+
+With it set, three things change:
+
+- **Rows are clustered.** Any other sort is applied first and survives *within* each group;
+  clustering then brings each group together. Groups appear in **first-appearance order**,
+  so a group goes wherever its best-sorted row went — sort by amount and the biggest invoice
+  is still first. (Ordering the groups by their *id* would have thrown the sort away.)
+- Each row gets **`table-cluster-even`** or **`table-cluster-odd`**, alternating per *group*,
+  not per row. A five-line invoice is one stripe.
+- The classes are applied from the data, so they survive virtual scrolling. There is no
+  `:nth-child` equivalent — only a screenful of rows exists at a time.
+
+The default styling tints odd groups via `--tosi-table-cluster-odd-bg`; override that
+variable, or the classes, to taste.
+
+### `visibleGroupedRowIds`
+
+An array of group ids that are shown **regardless of the filter**:
+
+```typescript
+table.visibleGroupedRowIds = ['INV-1001/Acme']
+```
+
+A search that matches one line of an invoice can then open the whole invoice, without the
+filter having to know anything about grouping. Forced rows are added to the filter's result
+rather than replacing it, so a filter that ranks as well as selects keeps its ranking.
+
+### `nonRepeatingGroupedRowCells`
+
+An array of property names whose columns render **only in the first row of each group**:
+
+```typescript
+table.nonRepeatingGroupedRowCells = ['invoice', 'buyer']
+```
+
+Set this **without** `rowGroupId` and the grouping is inferred: rows group by exactly those
+values. So the common case — "show the invoice and buyer once per invoice" — is a single
+line of configuration.
+
+Pinned rows (`pinnedTopRows` / `pinnedBottomRows`) are deliberately exempt from grouping
+altogether — they sit outside the clustering, so they are never striped and never hidden.
+
+**How it works, and how to change it.** These cells render normally and are hidden by one
+CSS rule: the row that heads a group gets `table-cluster-first`, those cells get
+`cluster-repeat`, and the rest follows.
+
+```typescript
+.tr:not(.table-cluster-first) .cluster-repeat { visibility: hidden }
+```
+
+Because it is only a rule about classes, a column with a custom `dataCell` is covered too —
+the table tags the cell whoever built it. It also means you can override the effect
+wholesale: dim the repeats instead of hiding them, show them on hover, or scope the rule to
+one column.
+
+**Use `visibility`, never `display: none`.** Every cell is an item of the row's grid, so
+removing one does not leave a gap — it pulls each later cell one column to the left and the
+row renders under the wrong headers. `visibility: hidden` keeps the cell in its track, stops
+it painting, and takes it out of the accessibility tree, which is right for a value the group
+already stated once.
+
+For the same decision in JavaScript — inside a `dataCell` binding or a `rowRendered`
+callback — **`table.isFirstInGroup(row)`** answers it directly. It is always `true` when the
+table is ungrouped.
+
+### Example
+
+Grouping the emoji table by category and subcategory. It is grouped by *inference* — only
+`nonRepeatingGroupedRowCells` is set — so each subcategory is named once and striped as a
+block. Scroll it: the table is virtual, so these rows are created and destroyed as you go,
+and the stripes stay attached to the right groups because they are computed from the data
+rather than from the DOM.
+
+```js
+import { tosiTable } from 'tosijs-ui'
+
+const emojiRequest = await fetch('https://raw.githubusercontent.com/tonioloewald/emoji-metadata/master/emoji-metadata.json')
+const emojiData = await emojiRequest.json()
+
+const table = tosiTable({
+  array: emojiData,
+  rowHeight: 32,
+  columns: [
+    { prop: 'category', width: 170, sort: 'ascending' },
+    { prop: 'subcategory', width: 170 },
+    { prop: 'chars', name: 'emoji', width: 70, align: 'center', sort: false },
+    { prop: 'name', width: 260 },
+  ],
+})
+
+// no rowGroupId needed — grouping is inferred from these two columns
+table.nonRepeatingGroupedRowCells = ['category', 'subcategory']
+
+preview.append(table)
+```
+```css
+.preview tosi-table {
+  height: 100%;
+}
+```
+```test
+const table = await waitFor('tosi-table')
+await new Promise(resolve => {
+  const check = () => {
+    if (table.visibleRows.length && table.getCells(table.visibleRows[0])) return resolve()
+    setTimeout(check, 100)
+  }
+  check()
+})
+
+const rows = table.visibleRows
+const groupOf = (row) => `${row.category}/${row.subcategory}`
+
+// What the table SHOULD have concluded, derived independently from the data.
+const groupIndex = new Map()
+const firstOfGroup = new Set()
+for (const row of rows) {
+  const g = groupOf(row)
+  if (groupIndex.has(g)) continue
+  groupIndex.set(g, groupIndex.size)
+  firstOfGroup.add(row)
+}
+
+test('grouping is inferred from nonRepeatingGroupedRowCells alone', () => {
+  expect(table.rowGroupId).toBe(null)
+  expect(rows.length).toBeGreaterThan(100)
+  expect(groupIndex.size).toBeGreaterThan(2)
+})
+
+test('every group is one contiguous run — no group restarts', () => {
+  // The clustering invariant, asserted on real data rather than a fixture.
+  const started = new Set()
+  let previous = null
+  for (const row of rows) {
+    const g = groupOf(row)
+    if (g === previous) continue
+    expect(started.has(g)).toBe(false)
+    started.add(g)
+    previous = g
+  }
+})
+
+test('stripes are per group and survive virtualisation', () => {
+  // Only a screenful is stamped — that IS the point. Asserting fewer stamped rows than
+  // data rows is what makes this a test of virtual rendering and not of a static list.
+  const stamped = rows.filter(row => table.getCells(row))
+  expect(stamped.length).toBeGreaterThan(0)
+  expect(stamped.length).toBeLessThan(rows.length)
+  for (const row of stamped) {
+    const classes = table.getCells(row)[0].closest('.tr').classList
+    const even = groupIndex.get(groupOf(row)) % 2 === 0
+    expect(classes.contains(even ? 'table-cluster-even' : 'table-cluster-odd')).toBe(true)
+    // …and exactly one of the two, so a recycled row never keeps a stale stripe.
+    expect(classes.contains('table-cluster-even')).toBe(!classes.contains('table-cluster-odd'))
+  }
+})
+
+test('category and subcategory are shown once per group, and nothing else is hidden', () => {
+  const visible = (cell) => getComputedStyle(cell).visibility !== 'hidden'
+  let shown = 0
+  let hidden = 0
+  for (const row of rows) {
+    const cells = table.getCells(row)
+    if (!cells) continue
+    const isFirst = firstOfGroup.has(row)
+    expect(table.isFirstInGroup(row)).toBe(isFirst)
+    expect(cells[0].closest('.tr').classList.contains('table-cluster-first')).toBe(isFirst)
+    // The grouped columns are hidden, not emptied — the value stays in the DOM and the
+    // cell keeps its grid track, so later columns cannot shift left into it.
+    expect(cells[0].textContent).not.toBe('')
+    expect(visible(cells[0])).toBe(isFirst)
+    expect(visible(cells[1])).toBe(isFirst)
+    isFirst ? shown++ : hidden++
+    // Columns that did NOT opt in stay visible everywhere — this catches a rule that hides
+    // the whole row rather than the repeated cells.
+    expect(visible(cells[2])).toBe(true)
+    expect(visible(cells[3])).toBe(true)
+  }
+  expect(shown).toBeGreaterThan(0)
+  expect(hidden).toBeGreaterThan(0)
+})
+```
+
 ## Hiding (and Showing) Columns
 
 By default, the user can show / hide columns by clicking via the column header menu.
@@ -567,8 +760,9 @@ As well as any column names you want localized.
 import { Component as WebComponent, elements, vars, varDefault, tosiValue, getListItem, getListBinding, tosi, } from 'tosijs';
 import { trackDrag } from './track-drag.js';
 import { naturalSorter } from './natural-compare.js';
+import { resolveRowGroupId, withForcedGroups, clusterByGroup, groupRenderMeta, } from './row-grouping.js';
 import { icons } from './icons.js';
-import { valueRenderer } from './value-renderer.js';
+import { valueRenderer, } from './value-renderer.js';
 import { popMenu } from './menu.js';
 import * as dragAndDrop from './drag-and-drop.js';
 import { tosiLocalized, localize } from './localize.js';
@@ -686,6 +880,33 @@ export class TosiTable extends WebComponent {
         ':host .th.col-pinned': {
             zIndex: '3',
             background: varDefault.tosiTableHeaderBg(varDefault.tosiTableBg('var(--tosi-bg, #fff)')),
+        },
+        /*
+        Alternating cluster backgrounds, applied by REDEFINING the table background variable on
+        the row rather than by setting `background` on it.
+    
+        Two things fall out of that, and both are the reason for it. `.col-pinned` cells carry
+        their own opaque background — they have to, they scroll over other cells — so a plain
+        row background would leave a pinned column reading as a hole through every other group;
+        inheriting the variable stripes them automatically. And it keeps the stripe out of the
+        specificity contest with `.tr[aria-selected] .td`, which sets `background` directly and
+        must keep winning — a selected row that renders as merely striped is unusable.
+    
+        Only odd groups are tinted, so the default is a stripe over the table's own background
+        rather than two competing colours.
+        */
+        /*
+        Cells of a `nonRepeatingGroupedRowCells` column, on every row but the first of its
+        group. `visibility` — NOT `display: none`: every cell is an item of the row's grid, so
+        removing one pulls each later cell a column to the left and the row renders under the
+        wrong headers. Hidden cells hold their track and drop out of the accessibility tree,
+        which is what is wanted for a value the group already stated once.
+        */
+        ':host .tr:not(.table-cluster-first) .cluster-repeat': {
+            visibility: 'hidden',
+        },
+        ':host .tr.table-cluster-odd': {
+            _tosiTableBg: varDefault.tosiTableClusterOddBg('color-mix(in srgb, var(--tosi-text, #000) 6%, var(--tosi-bg, #fff))'),
         },
         ':host .tr[aria-selected] .td': {
             background: varDefault.tosiTableSelectedBg('var(--tosi-accent, #0064d222)'),
@@ -822,6 +1043,9 @@ export class TosiTable extends WebComponent {
     _columns = null;
     _filter = passThru;
     _sort;
+    _rowGroupId = null;
+    _visibleGroupedRowIds = null;
+    _nonRepeatingGroupedRowCells = null;
     // Optional explicit arrays of pinned items. When set, they are managed
     // separately from `array` and override the `pinnedTop` / `pinnedBottom`
     // count-based slicing.
@@ -882,6 +1106,41 @@ export class TosiTable extends WebComponent {
             this.queueRender();
         }
     }
+    get rowGroupId() {
+        return this._rowGroupId;
+    }
+    set rowGroupId(fn) {
+        if (this._rowGroupId !== fn) {
+            this._rowGroupId = fn;
+            this.queueRender();
+        }
+    }
+    get visibleGroupedRowIds() {
+        return this._visibleGroupedRowIds;
+    }
+    set visibleGroupedRowIds(ids) {
+        this._visibleGroupedRowIds = ids ? tosiValue(ids) : null;
+        this.queueRender();
+    }
+    get nonRepeatingGroupedRowCells() {
+        return this._nonRepeatingGroupedRowCells;
+    }
+    set nonRepeatingGroupedRowCells(props) {
+        this._nonRepeatingGroupedRowCells = props ? tosiValue(props) : null;
+        this.queueRender();
+    }
+    /** The grouping function in force, or null when the table is ungrouped. */
+    get groupIdFn() {
+        return resolveRowGroupId(this._rowGroupId, this._nonRepeatingGroupedRowCells);
+    }
+    /*
+    Grouping facts for the CURRENT visible rows, recomputed each render.
+  
+    The table is virtual-scrolled, so a stamped row cannot ask the DOM which group it is in or
+    whether it is the first of one — it asks this instead. Null whenever the table is
+    ungrouped, which is also what makes every grouping code path below a single null check.
+    */
+    _grouping = null;
     get sort() {
         if (this._sort) {
             return this._sort;
@@ -1004,12 +1263,14 @@ export class TosiTable extends WebComponent {
         }
         return info;
     }
-    cellClasses(base, si) {
+    cellClasses(base, si, repeats = false) {
         let cls = base;
         if (si.left != null || si.right != null)
             cls += ' col-pinned';
         if (si.edgeClass)
             cls += ' ' + si.edgeClass;
+        if (repeats)
+            cls += ' cluster-repeat';
         return cls;
     }
     rowClasses(region) {
@@ -1058,20 +1319,35 @@ export class TosiTable extends WebComponent {
             style.right = si.right;
         return style;
     }
-    applyGridCellAttrs(cell, colIndex, si, style) {
+    applyGridCellAttrs(cell, colIndex, si, style, repeats = false) {
         cell.setAttribute('aria-colindex', String(colIndex + 1));
         cell.tabIndex = -1;
-        cell.classList.add(...this.cellClasses('td', si).split(' '));
+        cell.classList.add(...this.cellClasses('td', si, repeats).split(' '));
         Object.assign(cell.style, style);
     }
     // Build a single data cell for a column. Cells live inside list-bound `.tr`
     // rows, so path-based bindings inside col.dataCell() (e.g. bindText:'^.prop')
     // resolve against the row's list-instance automatically.
-    buildCell(col, colIndex, si, item) {
+    buildCell(col, colIndex, si, item, grouped = true) {
         const style = this.cellStyle(col, si);
+        /*
+        A non-repeating cell renders completely normally and is HIDDEN BY CSS on rows that are
+        not the first of their group — `.tr:not(.table-cluster-first) .cluster-repeat`.
+    
+        The alternative was to bind these cells to the row rather than to their own value, so a
+        toDOM could decide whether to write anything. That worked, but it special-cased the
+        binding, re-rendered the cell whenever any property of the row changed, and could not
+        touch a `dataCell` column at all — a custom cell builds and binds itself. A class costs
+        one string and covers every kind of cell identically, including custom ones.
+    
+        It must be `visibility`, never `display: none`: rows are CSS grids and every cell is a
+        grid item, so removing one shifts every later cell a column left and the row renders
+        under the wrong headers.
+        */
+        const repeats = grouped && this._nonRepeatingGroupedRowCells?.includes(col.prop) === true;
         if (col.dataCell !== undefined) {
             const cell = col.dataCell(col);
-            this.applyGridCellAttrs(cell, colIndex, si, style);
+            this.applyGridCellAttrs(cell, colIndex, si, style, repeats);
             return cell;
         }
         // A `type` column formats through its cached ValueRenderer. The binding's toDOM
@@ -1080,7 +1356,7 @@ export class TosiTable extends WebComponent {
         const renderer = columnRenderer(col);
         if (renderer) {
             return span({
-                class: this.cellClasses('td', si),
+                class: this.cellClasses('td', si, repeats),
                 role: 'gridcell',
                 tabindex: -1,
                 ariaColindex: String(colIndex + 1),
@@ -1096,7 +1372,7 @@ export class TosiTable extends WebComponent {
             });
         }
         return span({
-            class: this.cellClasses('td', si),
+            class: this.cellClasses('td', si, repeats),
             role: 'gridcell',
             tabindex: -1,
             ariaColindex: String(colIndex + 1),
@@ -1104,12 +1380,58 @@ export class TosiTable extends WebComponent {
             bindText: item[col.prop],
         });
     }
+    /*
+    Alternating cluster classes, resolved from the row's own group id.
+  
+    Parity is a fact about the GROUP, so a row only has to recompute its id to find it — no
+    index, no DOM position, and therefore no dependence on which rows the virtual scroller
+    happens to have stamped. Both classes are removed when ungrouped because listBinding
+    RECYCLES row elements: a row that keeps a stale `table-cluster-odd` after grouping is
+    turned off (or after a re-render moves it to the other parity) is the obvious bug here.
+    */
+    tagClusterParity(rowEl, value) {
+        const grouping = this._grouping;
+        const parity = grouping
+            ? grouping.parity.get(this.groupIdFn(value))
+            : undefined;
+        rowEl.classList.toggle('table-cluster-even', parity === 'even');
+        rowEl.classList.toggle('table-cluster-odd', parity === 'odd');
+        /*
+        `table-cluster-first` is how a custom `dataCell` opts into the same behaviour without
+        any new API: it builds and binds its own element, so the table cannot blank it, but a
+        `.tr:not(.table-cluster-first) .my-cell` rule can. Tagging the row costs nothing and
+        covers the case in CSS rather than in a callback.
+        */
+        rowEl.classList.toggle('table-cluster-first', parity !== undefined && !this.isRepeatedGroupRow(value));
+    }
+    /**
+     * Is this row the first of its group? Always true when the table is ungrouped.
+     *
+     * Exposed for custom `dataCell` columns, which render themselves and so have to decide
+     * for themselves whether to show a value the rest of the group repeats.
+     */
+    isFirstInGroup(row) {
+        return !this.isRepeatedGroupRow(row);
+    }
+    /*
+    Is this row a repeat within its group — i.e. should its non-repeating cells be blank?
+  
+    `tosiValue` is the identity unwrap: a stamped row's item arrives as a proxy, while the
+    set was built from the raw rows. This is the same key tosijs itself uses for
+    `binding.itemToElement`, so matching it is what makes the lookup hit.
+    */
+    isRepeatedGroupRow(value) {
+        const grouping = this._grouping;
+        if (!grouping)
+            return false;
+        return !grouping.firstRows.has(tosiValue(value));
+    }
     // Build a `.tr` row element with all cells for a single item. The row is
     // bound to the item so selection state and rowRendered fire correctly.
     // Note: listBinding sets role="listitem" on stamped elements; that's good
     // enough — selectors throughout this file use `.tr` for row matching.
-    buildRow(item, cols, stickyInfo, rowClass = 'tr') {
-        const cells = cols.map((col, i) => this.buildCell(col, i, stickyInfo[i], item));
+    buildRow(item, cols, stickyInfo, rowClass = 'tr', grouped = true) {
+        const cells = cols.map((col, i) => this.buildCell(col, i, stickyInfo[i], item, grouped));
         const selectBindingFn = this.selectBinding;
         const props = { class: rowClass };
         // `item` here is the placeholder proxy from template-build time. The
@@ -1121,6 +1443,8 @@ export class TosiTable extends WebComponent {
             binding: {
                 toDOM: (rowEl, value) => {
                     selectBindingFn(rowEl, value);
+                    if (grouped)
+                        this.tagClusterParity(rowEl, value);
                     const fn = this.rowRendered;
                     if (fn) {
                         fn(value, Array.from(rowEl.children));
@@ -1201,7 +1525,13 @@ export class TosiTable extends WebComponent {
             return null;
         const part = region === 'pinned-top' ? 'pinnedTopRows' : 'pinnedBottomRows';
         const rowClass = this.rowClasses(region);
-        const binding = rowsProxy.listBinding((_elements, item) => this.buildRow(item, cols, stickyInfo, rowClass), {});
+        const binding = rowsProxy.listBinding(
+        /*
+        `grouped: false` — pinned rows sit outside the clustering entirely. They are not in
+        the visible data, so they have no parity, and blanking their non-repeating cells
+        would empty a pinned header/summary row purely because it is not in `firstRows`.
+        */
+        (_elements, item) => this.buildRow(item, cols, stickyInfo, rowClass, false), {});
         return div({
             class: `tbody tbody-${region}`,
             role: 'rowgroup',
@@ -1729,10 +2059,28 @@ export class TosiTable extends WebComponent {
         const pinnedBottomData = this.effectivePinnedBottomData;
         const baseData = this.effectiveBaseData;
         const cap = Math.min(baseData.length, this.maxVisibleRows);
-        const visibleData = this.filter(baseData.slice(0, cap));
+        const scope = baseData.slice(0, cap);
+        const groupId = this.groupIdFn;
+        let visibleData = this.filter(scope);
+        /*
+        Forcing runs BEFORE the sort, so a row re-admitted by `visibleGroupedRowIds` is ordered
+        like any other row rather than being tacked on the end.
+        */
+        if (groupId) {
+            visibleData = withForcedGroups(visibleData, scope, groupId, this._visibleGroupedRowIds);
+        }
         const { sort } = this;
         if (sort)
             visibleData.sort(sort);
+        // Clustering LAST — the spec is "grouped, then sorted within the grouping", so any
+        // other sort is applied first and survives inside each group.
+        if (groupId) {
+            visibleData = clusterByGroup(visibleData, groupId);
+            this._grouping = groupRenderMeta(visibleData, groupId);
+        }
+        else {
+            this._grouping = null;
+        }
         this.rowData.pinnedTopData = pinnedTopData;
         this.rowData.pinnedBottomData = pinnedBottomData;
         this.rowData.visible = visibleData;

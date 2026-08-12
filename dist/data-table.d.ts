@@ -1,5 +1,6 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 import { SortCallback } from './make-sorter.js';
+import { RowGroupIdFn } from './row-grouping.js';
 import { ValueRendererType } from './value-renderer.js';
 export interface ColumnOptions {
     name?: string;
@@ -94,6 +95,12 @@ export declare class TosiTable extends WebComponent {
             zIndex: string;
             background: string;
         };
+        ':host .tr:not(.table-cluster-first) .cluster-repeat': {
+            visibility: string;
+        };
+        ':host .tr.table-cluster-odd': {
+            _tosiTableBg: string;
+        };
         ':host .tr[aria-selected] .td': {
             background: string;
         };
@@ -169,6 +176,9 @@ export declare class TosiTable extends WebComponent {
     private _columns;
     private _filter;
     private _sort?;
+    private _rowGroupId;
+    private _visibleGroupedRowIds;
+    private _nonRepeatingGroupedRowCells;
     private _pinnedTopRows?;
     private _pinnedBottomRows?;
     get pinnedTopRows(): any[] | undefined;
@@ -183,6 +193,15 @@ export declare class TosiTable extends WebComponent {
     set array(newArray: any[]);
     get filter(): ArrayFilter;
     set filter(filterFunc: ArrayFilter);
+    get rowGroupId(): RowGroupIdFn | null;
+    set rowGroupId(fn: RowGroupIdFn | null);
+    get visibleGroupedRowIds(): string[] | null;
+    set visibleGroupedRowIds(ids: string[] | null);
+    get nonRepeatingGroupedRowCells(): string[] | null;
+    set nonRepeatingGroupedRowCells(props: string[] | null);
+    /** The grouping function in force, or null when the table is ungrouped. */
+    private get groupIdFn();
+    private _grouping;
     get sort(): SortCallback | undefined;
     set sort(sortFunc: SortCallback | undefined);
     get columns(): ColumnOptions[];
@@ -205,6 +224,15 @@ export declare class TosiTable extends WebComponent {
     private cellStyle;
     private applyGridCellAttrs;
     private buildCell;
+    private tagClusterParity;
+    /**
+     * Is this row the first of its group? Always true when the table is ungrouped.
+     *
+     * Exposed for custom `dataCell` columns, which render themselves and so have to decide
+     * for themselves whether to show a value the rest of the group repeats.
+     */
+    isFirstInGroup(row: any): boolean;
+    private isRepeatedGroupRow;
     private buildRow;
     private buildHeaderCell;
     private buildHeader;
