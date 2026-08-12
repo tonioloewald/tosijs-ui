@@ -172,6 +172,7 @@ import {
 import { buildNavTree, NavNode } from './doc-system/nav-tree.js'
 import { renderDocMarkdown } from './doc-system/render.js'
 import { pageTitle } from './doc-system/doc-title.js'
+import { unsettledExamples } from './doc-system/test-completion.js'
 import { LiveExample, testManager } from './live-example.js'
 import { TestResults } from './live-example/test-harness.js'
 import { tosiSidenav, TosiSidenav } from './side-nav.js'
@@ -1825,26 +1826,72 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     }
   }) as EventListener)
 
-  // If running as test iframe, signal when all tests on this page are done
+  /*
+  If running as a test iframe, signal when all tests on this page are done.
+
+  What counts as "done" is decided from each example's `test` SOURCE, which exists as soon
+  as the example element does — never from `-has-tests`, which the example only gains after
+  its `js` block has finished running.
+
+  That distinction is the whole bug this replaced. The old check was "at least one example
+  has tests and none is currently running", so a page reported done the moment its FIRST
+  example settled — while any example still awaiting a slow `js` block (a `fetch`, say) had
+  neither class yet and was simply not counted. Its tests never ran, were never reported,
+  and the lane stayed GREEN: `data-table.ts` silently went from 8 tests to 1 when a second
+  fetching example was added to the page, and the suite reported "34 passed" either way.
+  A lane that quietly tests less than it claims is worse than one that fails.
+  */
   if (isTestFrame && testFrameFilename) {
+    // Generous: this bounds a hung example, it does not pace a slow one.
+    const STALL_TIMEOUT_MS = 30000
+    const startedAt = Date.now()
+
     const signalDone = () => {
-      const examples = container.querySelectorAll('tosi-example')
-      const withTests = [...examples].filter((ex) =>
-        ex.classList.contains('-has-tests')
+      const stalled = unsettledExamples(
+        [...container.querySelectorAll('tosi-example')].map((ex) => ({
+          element: ex,
+          test: (ex as any).test,
+          hasTests: ex.classList.contains('-has-tests'),
+          testRunning: ex.classList.contains('-test-running'),
+        }))
       )
-      const running = withTests.filter((ex) =>
-        ex.classList.contains('-test-running')
-      )
-      if (withTests.length > 0 && running.length === 0) {
+
+      if (stalled.length > 0 && Date.now() - startedAt < STALL_TIMEOUT_MS) {
+        setTimeout(signalDone, 100)
+        return
+      }
+      /*
+      Past the deadline with examples still unsettled: report them as failures rather than
+      signalling a done that omits them. An example that never finishes is a real defect —
+      usually a `js` block awaiting something that never resolves — and the one thing it
+      must not do is disappear.
+      */
+      if (stalled.length > 0) {
         window.parent.postMessage(
-          { type: 'tosi-tests-done', filename: testFrameFilename },
+          {
+            type: 'tosi-test-results',
+            filename: testFrameFilename,
+            results: {
+              passed: 0,
+              failed: stalled.length,
+              tests: stalled.map(({ element }) => ({
+                name: `example never finished running (${STALL_TIMEOUT_MS}ms)`,
+                passed: false,
+                error: `The example's code did not complete, so its test block never ran. Its source begins: ${String(
+                  (element as any).js ?? ''
+                ).slice(0, 120)}`,
+              })),
+            },
+          },
           '*'
         )
-      } else {
-        setTimeout(signalDone, 100)
       }
+      window.parent.postMessage(
+        { type: 'tosi-tests-done', filename: testFrameFilename },
+        '*'
+      )
     }
-    // Give time for examples to start running
+    // Give the page a moment to insert its examples before taking the census.
     setTimeout(signalDone, 500)
   }
 
