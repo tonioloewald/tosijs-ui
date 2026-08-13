@@ -20,6 +20,26 @@ test('clicking a different segment moves the highlight (single-select)', async (
       '--segmented-option-current-background',
       'rgb(255, 0, 0)'
     )
+    /*
+    Pin the fixture above the site's own floating chrome.
+
+    Appended plainly, it lands at the end of <body> — the bottom of the page, which is
+    exactly where the doc-site's test-status badge sits (`position: fixed; bottom; left;
+    z-index: 1000`). Playwright would scroll the fixture into view, land it under that
+    badge, and refuse the click: "element is visible, enabled and stable … <span
+    part='label'>Running</span> from <tosi-doc-system> subtree intercepts pointer events",
+    retrying to the 30s timeout. It bit only on webkit/firefox and only under load, because
+    the badge reads "Running" for exactly as long as the background doc-test runner works —
+    which is longer on a busy machine. Nothing about <tosi-segmented> was involved.
+
+    This is not `force: true` in disguise. The click stays a real pointer click on a real
+    element, and Playwright's actionability checks all still apply — the fixture is simply
+    no longer underneath an unrelated overlay.
+    */
+    el.style.position = 'fixed'
+    el.style.top = '0'
+    el.style.left = '0'
+    el.style.zIndex = '2000'
     document.body.appendChild(el)
   })
 
@@ -85,6 +105,11 @@ test('toggling checkboxes adds and removes highlights (multiple)', async ({
       '--segmented-option-current-background',
       'rgb(255, 0, 0)'
     )
+    // Pinned above the floating test-status badge — see the note in the first test.
+    el.style.position = 'fixed'
+    el.style.top = '0'
+    el.style.left = '0'
+    el.style.zIndex = '2000'
     document.body.appendChild(el)
   })
 

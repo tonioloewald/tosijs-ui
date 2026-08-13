@@ -56,31 +56,38 @@ security prose. What is left:
       pass as green — a lane that reports "34 passed / 0 failed" looks identical whether
       three tests were skipped or never existed.
 
-- [ ] **Flaky: `segmented.pw.ts` click timeouts on webkit/firefox under parallel load.**
-      Measured 2026-08-11: **3/3 pass in isolation**, but intermittently 1–4 failures inside
-      a full `bun playwright test` (all three browsers in parallel), always
-      `locator.click: Test timeout of 30000ms exceeded`. NOT a regression — verified by
-      reverting the chunk-layout change and reproducing anyway — and NOT in CI, which runs
-      chromium only.
+- [x] **FIXED 2026-08-13 — `segmented.pw.ts` click timeouts on webkit/firefox.**
+      Symptom: intermittently 1–4 failures in a full `bun playwright test`, always
+      `locator.click: Test timeout of 30000ms exceeded`, never in CI (chromium only).
 
-      **Cause identified 2026-08-13, and it is NOT the animation-stability theory recorded
-      here before.** Playwright's own retry log names the blocker outright: the element is
-      "visible, enabled and stable", and the click is refused because
-      `<span part="label">Running</span> from <tosi-doc-system> subtree intercepts pointer
-      events`. It is the doc-test **status badge** — floating page chrome — sitting over the
-      click target, not the segmented highlight failing to settle. That also explains the
-      correlation with parallel load: the badge reads "Running" for as long as the
-      background test runner is working, which is longer when the machine is busy.
+      **Cause — and it was neither theory recorded here.** Playwright's retry log named the
+      blocker outright: the element is "visible, enabled and stable", and the click is
+      refused because `<span part="label">Running</span> from <tosi-doc-system> subtree
+      intercepts pointer events`. Not the segmented highlight failing to settle
+      (the animation-stability guess), and not the doc-runner changes in 1.9.7 (verified by
+      reverting the census gate and reproducing anyway).
 
-      Two corrections to the note above while we are here. It **does** reproduce in
-      isolation (`segmented.pw.ts` alone, firefox+webkit: 4 passed, then 3 failed on the
-      very next run), so "3/3 pass in isolation" no longer holds. And it is independent of
-      the 1.9.7 doc-runner changes — verified by reverting the census gate and reproducing
-      anyway.
+      Both tests appended their repro element plainly to `document.body`, so it landed at the
+      **bottom of the page** — exactly where the doc-site's test-status badge is pinned
+      (`position: fixed; bottom; left; z-index: 1000`). Playwright scrolled the fixture into
+      view, put it under the badge, and retried until timeout. That is also why it correlated
+      with load: the badge reads "Running" for as long as the background doc-test runner
+      works, which is longer on a busy machine — the overlap was always there, the badge just
+      lingered long enough to be hit.
 
-      Fix at the source: the status badge should not be a pointer target while it is merely
-      reporting status. Do NOT reach for `force: true`, which would hide exactly the
-      real un-clickable state this is.
+      Fix: the fixtures are pinned `position: fixed; top: 0; left: 0; z-index: 2000`, above
+      the chrome. The click stays a real pointer click with all actionability checks intact —
+      the fixture simply is not under an unrelated overlay. Explicitly **not** `force: true`,
+      which would have masked a genuine un-clickable state.
+
+      Verified: 6/6 clean runs of the spec on firefox+webkit, and **3/3 clean full-suite runs
+      at 59/59** (the configuration that used to lose 2–4). Also corrects the earlier claim
+      that it "passes 3/3 in isolation" — it reproduced in isolation too.
+
+      Left alone deliberately: the badge itself. A fixed corner badge legitimately owns its
+      corner, and it is a real `<button>` opening the test menu, so making it transparent to
+      pointer events (as this entry previously suggested) would break it to fix a test's
+      fixture placement.
 
 **From snowfox's build-system reports (deferred — the cheap halves are done):**
 
