@@ -38,6 +38,24 @@ export declare function withForcedGroups<T>(filtered: T[], scope: T[], groupId: 
  * sort is set. Within a group, the incoming relative order is preserved.
  */
 export declare function clusterByGroup<T>(rows: T[], groupId: RowGroupIdFn): T[];
+export interface GroupCount {
+    /** rows of this group currently rendered */
+    visible: number;
+    /** rows of this group in the table's data, before filtering */
+    total: number;
+}
+/**
+ * How many rows each group has, and how many of them survived the filter.
+ *
+ * The table is the only thing that sees both sides of the filter at once — a consumer has
+ * the rendered rows and nothing to compare them against — so a cell that wants to say
+ * "showing 2 of 7" or offer a "show all" toggle cannot work this out for itself without
+ * re-running the filter. Computing it here costs two passes over data already in hand.
+ *
+ * Groups filtered out entirely are still present, with `visible: 0`, so the map describes
+ * the whole dataset rather than just what happens to be on screen.
+ */
+export declare function groupCounts<T>(scope: T[], visible: T[], groupId: RowGroupIdFn): Map<string, GroupCount>;
 export interface GroupRenderMeta<T> {
     /** group id → `'even'` or `'odd'`, alternating in group order */
     parity: Map<string, 'even' | 'odd'>;

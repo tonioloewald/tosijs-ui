@@ -587,6 +587,36 @@ For the same decision in JavaScript — inside a `dataCell` binding or a `rowRen
 callback — **`table.isFirstInGroup(row)`** answers it directly. It is always `true` when the
 table is ungrouped.
 
+### `rowGroupCounts` — how much of each group is showing
+
+A cell that reports on its group ("showing 2 of 7") or offers a **show-all** toggle needs to
+know how many rows the group has, not just how many are on screen. That comparison is the
+one thing a cell renderer cannot make for itself: the filter has already run, so a consumer
+sees the survivors and has nothing to measure them against.
+
+**`table.rowGroupCounts`** is a `Map` from group id to `{ visible, total }` — rendered rows
+against rows before filtering — recomputed each render and available while cells render.
+**`table.groupIdFor(row)`** gives a row's group id, which matters when the grouping was
+*inferred* from `nonRepeatingGroupedRowCells`: you never wrote that function, so its ids are
+otherwise unreproducible.
+
+```typescript
+// inside a dataCell binding, or rowRendered
+const id = table.groupIdFor(row)
+const { visible, total } = table.rowGroupCounts.get(id) ?? { visible: 0, total: 0 }
+cell.textContent = visible < total ? `showing ${visible} of ${total}` : `${total} lines`
+
+// …and the toggle is just a set of ids handed back to the table
+expanded.has(id) ? expanded.delete(id) : expanded.add(id)
+table.visibleGroupedRowIds = [...expanded]
+```
+
+Groups the filter removed **entirely** are still in the map, with `visible: 0` — otherwise
+"nothing in this group matched" would be indistinguishable from "no such group", and the
+first is precisely when a show-all toggle is worth offering. The map is always a `Map`
+(empty when ungrouped), so `.get()` needs no null check. Pinned rows sit outside grouping
+and are not counted.
+
 ### Example
 
 Grouping the emoji table by category and subcategory. It is grouped by *inference* — only
@@ -677,6 +707,26 @@ test('stripes are per group and survive virtualisation', () => {
     // …and exactly one of the two, so a recycled row never keeps a stale stripe.
     expect(classes.contains('table-cluster-even')).toBe(!classes.contains('table-cluster-odd'))
   }
+})
+
+test('rowGroupCounts is keyed by groupIdFor, and totals the whole dataset', () => {
+  // The integration that matters: the grouping here is INFERRED, so `groupIdFor` is the
+  // only way to produce a key, and a mismatch between the two would make the map useless
+  // while both halves still looked fine on their own.
+  const counts = table.rowGroupCounts
+  expect(counts.size).toBe(groupIndex.size)
+  for (const row of rows) {
+    expect(counts.has(table.groupIdFor(row))).toBe(true)
+  }
+  // No filter is set on this example, so every group is fully visible…
+  let summed = 0
+  for (const { visible, total } of counts.values()) {
+    expect(visible).toBe(total)
+    expect(total).toBeGreaterThan(0)
+    summed += total
+  }
+  // …and the totals account for every row, rather than just the stamped ones.
+  expect(summed).toBe(rows.length)
 })
 
 test('category and subcategory are shown once per group, and nothing else is hidden', () => {
@@ -779,10 +829,12 @@ import { naturalSorter } from './natural-compare.js'
 import {
   RowGroupIdFn,
   GroupRenderMeta,
+  GroupCount,
   resolveRowGroupId,
   withForcedGroups,
   clusterByGroup,
   groupRenderMeta,
+  groupCounts,
 } from './row-grouping.js'
 import { icons } from './icons.js'
 import {
@@ -1262,6 +1314,33 @@ export class TosiTable extends WebComponent {
     )
   }
 
+  /**
+   * This row's group id, or null when the table is ungrouped.
+   *
+   * Public because the grouping may be INFERRED from `nonRepeatingGroupedRowCells`, in which
+   * case the consumer never wrote the function and cannot reproduce its ids — which would
+   * leave `rowGroupCounts` keyed by strings they have no way to construct.
+   */
+  groupIdFor(row: any): string | null {
+    const groupId = this.groupIdFn
+    return groupId ? groupId(row) : null
+  }
+
+  /**
+   * Per-group `{ visible, total }` counts — rendered rows against rows before filtering.
+   *
+   * For cells that report or control their own group: "showing 2 of 7", or a toggle that
+   * adds the group to `visibleGroupedRowIds`. The table is the only thing that sees both
+   * sides of the filter, so this is the piece a custom cell renderer cannot derive itself.
+   *
+   * Recomputed each render, and always a Map — empty when ungrouped — so callers can `.get()`
+   * without a null check. Groups filtered away entirely are present with `visible: 0`;
+   * pinned rows sit outside grouping and are not counted.
+   */
+  get rowGroupCounts(): Map<string, GroupCount> {
+    return this._rowGroupCounts
+  }
+
   /*
   Grouping facts for the CURRENT visible rows, recomputed each render.
 
@@ -1270,6 +1349,7 @@ export class TosiTable extends WebComponent {
   ungrouped, which is also what makes every grouping code path below a single null check.
   */
   private _grouping: GroupRenderMeta<any> | null = null
+  private _rowGroupCounts: Map<string, GroupCount> = new Map()
 
   get sort(): SortCallback | undefined {
     if (this._sort) {
@@ -2346,8 +2426,12 @@ export class TosiTable extends WebComponent {
     if (groupId) {
       visibleData = clusterByGroup(visibleData, groupId)
       this._grouping = groupRenderMeta(visibleData, groupId)
+      // Counted from `scope` (pre-filter) against the final rendered set, and assigned
+      // BEFORE the rows below are stamped, so a cell renderer can read it as it renders.
+      this._rowGroupCounts = groupCounts(scope, visibleData, groupId)
     } else {
       this._grouping = null
+      this._rowGroupCounts = new Map()
     }
 
     this.rowData.pinnedTopData = pinnedTopData

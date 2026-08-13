@@ -1,6 +1,6 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 import { SortCallback } from './make-sorter.js';
-import { RowGroupIdFn } from './row-grouping.js';
+import { RowGroupIdFn, GroupCount } from './row-grouping.js';
 import { ValueRendererType } from './value-renderer.js';
 export interface ColumnOptions {
     name?: string;
@@ -201,7 +201,28 @@ export declare class TosiTable extends WebComponent {
     set nonRepeatingGroupedRowCells(props: string[] | null);
     /** The grouping function in force, or null when the table is ungrouped. */
     private get groupIdFn();
+    /**
+     * This row's group id, or null when the table is ungrouped.
+     *
+     * Public because the grouping may be INFERRED from `nonRepeatingGroupedRowCells`, in which
+     * case the consumer never wrote the function and cannot reproduce its ids — which would
+     * leave `rowGroupCounts` keyed by strings they have no way to construct.
+     */
+    groupIdFor(row: any): string | null;
+    /**
+     * Per-group `{ visible, total }` counts — rendered rows against rows before filtering.
+     *
+     * For cells that report or control their own group: "showing 2 of 7", or a toggle that
+     * adds the group to `visibleGroupedRowIds`. The table is the only thing that sees both
+     * sides of the filter, so this is the piece a custom cell renderer cannot derive itself.
+     *
+     * Recomputed each render, and always a Map — empty when ungrouped — so callers can `.get()`
+     * without a null check. Groups filtered away entirely are present with `visible: 0`;
+     * pinned rows sit outside grouping and are not counted.
+     */
+    get rowGroupCounts(): Map<string, GroupCount>;
     private _grouping;
+    private _rowGroupCounts;
     get sort(): SortCallback | undefined;
     set sort(sortFunc: SortCallback | undefined);
     get columns(): ColumnOptions[];

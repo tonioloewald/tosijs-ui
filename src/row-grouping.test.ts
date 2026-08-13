@@ -5,6 +5,7 @@ import {
   withForcedGroups,
   clusterByGroup,
   groupRenderMeta,
+  groupCounts,
 } from './row-grouping'
 
 // The worked example from the feature request: invoice lines grouped by invoice + buyer.
@@ -258,6 +259,53 @@ test('an unmatched forced id adds nothing rather than throwing', () => {
 test('forcing several groups at once', () => {
   const out = withForcedGroups([], scope, byInvoice, ['A/x', 'C/x'])
   expect(out.map((r) => r.sku)).toEqual(['a1', 'a2', 'c1'])
+})
+
+// ── per-group counts ─────────────────────────────────────────────────────────
+
+test('counts report rendered rows against rows before filtering', () => {
+  // The "showing 2 of 7" case: this is the number a cell cannot work out for itself,
+  // because a consumer only ever sees the rows that survived.
+  const visible = scope.filter((r) => r.sku === 'a1' || r.sku === 'b1')
+  const counts = groupCounts(scope, visible, byInvoice)
+  expect(counts.get('A/x')).toEqual({ visible: 1, total: 2 })
+  expect(counts.get('B/x')).toEqual({ visible: 1, total: 1 })
+})
+
+test('a group filtered away entirely is still reported, with visible 0', () => {
+  // Dropping it would make "no rows matched in this group" indistinguishable from "this
+  // group does not exist" — and the first is exactly when a show-all toggle is wanted.
+  const counts = groupCounts(scope, [], byInvoice)
+  expect(counts.get('A/x')).toEqual({ visible: 0, total: 2 })
+  expect([...counts.keys()].sort()).toEqual(['A/x', 'B/x', 'C/x'])
+})
+
+test('with no filtering at all, visible equals total everywhere', () => {
+  for (const count of groupCounts(scope, scope, byInvoice).values()) {
+    expect(count.visible).toBe(count.total)
+  }
+})
+
+test('counts follow forced groups, so a re-admitted group reads as fully visible', () => {
+  // Composed the way the table composes it: filter, then force, then count.
+  const filtered = scope.filter((r) => r.sku === 'c1')
+  const forced = withForcedGroups(filtered, scope, byInvoice, ['A/x'])
+  const counts = groupCounts(scope, forced, byInvoice)
+  expect(counts.get('A/x')).toEqual({ visible: 2, total: 2 })
+  expect(counts.get('B/x')).toEqual({ visible: 0, total: 1 })
+})
+
+test('each group gets its own count object, not a shared one', () => {
+  // A single mutable object reused across keys would make every group report the last
+  // group's numbers — and would look right for a one-group fixture.
+  const counts = groupCounts(scope, scope, byInvoice)
+  expect(counts.get('A/x')).not.toBe(counts.get('B/x'))
+  expect(counts.get('A/x')!.total).toBe(2)
+  expect(counts.get('B/x')!.total).toBe(1)
+})
+
+test('an empty table produces an empty map rather than throwing', () => {
+  expect(groupCounts([], [], byInvoice).size).toBe(0)
 })
 
 // ── the pipeline, composed the way the table composes it ─────────────────────

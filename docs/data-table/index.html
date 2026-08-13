@@ -564,6 +564,30 @@ already stated once.</p>
 <p>For the same decision in JavaScript — inside a <code>dataCell</code> binding or a <code>rowRendered</code>
 callback — <strong><code>table.isFirstInGroup(row)</code></strong> answers it directly. It is always <code>true</code> when the
 table is ungrouped.</p>
+<h3><code>rowGroupCounts</code> — how much of each group is showing</h3>
+<p>A cell that reports on its group (&quot;showing 2 of 7&quot;) or offers a <strong>show-all</strong> toggle needs to
+know how many rows the group has, not just how many are on screen. That comparison is the
+one thing a cell renderer cannot make for itself: the filter has already run, so a consumer
+sees the survivors and has nothing to measure them against.</p>
+<p><strong><code>table.rowGroupCounts</code></strong> is a <code>Map</code> from group id to <code>{ visible, total }</code> — rendered rows
+against rows before filtering — recomputed each render and available while cells render.
+<strong><code>table.groupIdFor(row)</code></strong> gives a row&#39;s group id, which matters when the grouping was
+<em>inferred</em> from <code>nonRepeatingGroupedRowCells</code>: you never wrote that function, so its ids are
+otherwise unreproducible.</p>
+<pre><code class="language-typescript">// inside a dataCell binding, or rowRendered
+const id = table.groupIdFor(row)
+const { visible, total } = table.rowGroupCounts.get(id) ?? { visible: 0, total: 0 }
+cell.textContent = visible &lt; total ? `showing ${visible} of ${total}` : `${total} lines`
+
+// …and the toggle is just a set of ids handed back to the table
+expanded.has(id) ? expanded.delete(id) : expanded.add(id)
+table.visibleGroupedRowIds = [...expanded]
+</code></pre>
+<p>Groups the filter removed <strong>entirely</strong> are still in the map, with <code>visible: 0</code> — otherwise
+&quot;nothing in this group matched&quot; would be indistinguishable from &quot;no such group&quot;, and the
+first is precisely when a show-all toggle is worth offering. The map is always a <code>Map</code>
+(empty when ungrouped), so <code>.get()</code> needs no null check. Pinned rows sit outside grouping
+and are not counted.</p>
 <h3>Example</h3>
 <p>Grouping the emoji table by category and subcategory. It is grouped by <em>inference</em> — only
 <code>nonRepeatingGroupedRowCells</code> is set — so each subcategory is named once and striped as a
@@ -649,6 +673,26 @@ test(&#39;stripes are per group and survive virtualisation&#39;, () =&gt; {
     // …and exactly one of the two, so a recycled row never keeps a stale stripe.
     expect(classes.contains(&#39;table-cluster-even&#39;)).toBe(!classes.contains(&#39;table-cluster-odd&#39;))
   }
+})
+
+test(&#39;rowGroupCounts is keyed by groupIdFor, and totals the whole dataset&#39;, () =&gt; {
+  // The integration that matters: the grouping here is INFERRED, so `groupIdFor` is the
+  // only way to produce a key, and a mismatch between the two would make the map useless
+  // while both halves still looked fine on their own.
+  const counts = table.rowGroupCounts
+  expect(counts.size).toBe(groupIndex.size)
+  for (const row of rows) {
+    expect(counts.has(table.groupIdFor(row))).toBe(true)
+  }
+  // No filter is set on this example, so every group is fully visible…
+  let summed = 0
+  for (const { visible, total } of counts.values()) {
+    expect(visible).toBe(total)
+    expect(total).toBeGreaterThan(0)
+    summed += total
+  }
+  // …and the totals account for every row, rather than just the stamped ones.
+  expect(summed).toBe(rows.length)
 })
 
 test(&#39;category and subcategory are shown once per group, and nothing else is hidden&#39;, () =&gt; {
