@@ -729,6 +729,29 @@ by adding the <code>noreorder</code> attribute to the <code>&lt;tosi-table&gt;</
 <h2>Row Height</h2>
 <p>If you set the <code>&lt;tosi-table&gt;</code>&#39;s <code>rowHeight</code> to <code>0</code> it will render all its elements (i.e. not be virtual). This is
 useful for smaller tables, or tables with variable row-heights.</p>
+<h2>Scroll Stability</h2>
+<p>Sorting, filtering, or toggling <code>visibleGroupedRowIds</code> re-renders the table — and the reader
+stays where they were. The table anchors on the <strong>topmost visible row</strong>, not on <code>scrollTop</code>,
+and puts that row back at the same offset afterwards.</p>
+<p>The distinction matters as soon as the row count changes. Expand a group above the viewport
+and the same <code>scrollTop</code> shows entirely different rows, because everything below the
+insertion has moved down; the same <em>row</em> at the same offset is what &quot;where I was&quot; actually
+means. Sorting is the clearest case — the intent is &quot;reorder what I am looking at&quot;, and
+jumping to row 0 is close to the opposite.</p>
+<p>If the anchor row is gone after the re-render — filtered away, or a wholly new dataset — the
+table starts at the top, because there is nothing left to be faithful to.</p>
+<p>Set <strong><code>preserveScroll = false</code></strong> to always start at the top, which is the right answer when a
+render means &quot;here is a different dataset&quot; rather than &quot;here is the same data, re-viewed&quot;:</p>
+<pre><code class="language-typescript">table.preserveScroll = false
+</code></pre>
+<blockquote>
+<p>Consumers previously had to do this from outside, and it is harder than it looks
+(<a href="https://github.com/tonioloewald/tosijs-ui/issues/67">#67</a>). Writing <code>scrollTop</code> in a
+single <code>requestAnimationFrame</code> after the change <strong>silently fails</strong>: the virtualising list
+sizes the spacer that gives the scroll container its height a frame later, so the write is
+clamped against a container that is momentarily one viewport tall. Any correct version had
+to re-apply across frames until it took. That now lives in the component.</p>
+</blockquote>
 <h2>Styling</h2>
 <p>The component uses a flat CSS grid layout where every cell (header, data, pinned)
 is a direct child of the grid container. This means standard CSS works for styling,

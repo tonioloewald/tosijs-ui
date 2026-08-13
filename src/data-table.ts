@@ -770,6 +770,35 @@ by adding the `noreorder` attribute to the `<tosi-table>`.
 If you set the `<tosi-table>`'s `rowHeight` to `0` it will render all its elements (i.e. not be virtual). This is
 useful for smaller tables, or tables with variable row-heights.
 
+## Scroll Stability
+
+Sorting, filtering, or toggling `visibleGroupedRowIds` re-renders the table — and the reader
+stays where they were. The table anchors on the **topmost visible row**, not on `scrollTop`,
+and puts that row back at the same offset afterwards.
+
+The distinction matters as soon as the row count changes. Expand a group above the viewport
+and the same `scrollTop` shows entirely different rows, because everything below the
+insertion has moved down; the same *row* at the same offset is what "where I was" actually
+means. Sorting is the clearest case — the intent is "reorder what I am looking at", and
+jumping to row 0 is close to the opposite.
+
+If the anchor row is gone after the re-render — filtered away, or a wholly new dataset — the
+table starts at the top, because there is nothing left to be faithful to.
+
+Set **`preserveScroll = false`** to always start at the top, which is the right answer when a
+render means "here is a different dataset" rather than "here is the same data, re-viewed":
+
+```typescript
+table.preserveScroll = false
+```
+
+> Consumers previously had to do this from outside, and it is harder than it looks
+> ([#67](https://github.com/tonioloewald/tosijs-ui/issues/67)). Writing `scrollTop` in a
+> single `requestAnimationFrame` after the change **silently fails**: the virtualising list
+> sizes the spacer that gives the scroll container its height a frame later, so the write is
+> clamped against a container that is momentarily one viewport tall. Any correct version had
+> to re-apply across frames until it took. That now lives in the component.
+
 ## Styling
 
 The component uses a flat CSS grid layout where every cell (header, data, pinned)
@@ -1350,6 +1379,29 @@ export class TosiTable extends WebComponent {
   */
   private _grouping: GroupRenderMeta<any> | null = null
   private _rowGroupCounts: Map<string, GroupCount> = new Map()
+
+  /**
+   * Keep the reader in place across a re-render (default `true`).
+   *
+   * Set `false` when a render means "here is a different dataset" rather than "here is the
+   * same data, re-viewed" — then starting at the top is the correct answer.
+   */
+  preserveScroll = true
+
+  /*
+  The row the reader was looking at, captured before the DOM is thrown away.
+
+  Anchored to a ROW rather than to `scrollTop`, because the pixel is not what anyone means by
+  "where I was". Expand a group above the viewport and the same `scrollTop` shows entirely
+  different rows; the same row at the same offset is what stays put.
+  */
+  private _scrollAnchor: {
+    item: any
+    /** pixels from the top edge of the scroll container */
+    offset: number
+    scrollTop: number
+    index: number
+  } | null = null
 
   get sort(): SortCallback | undefined {
     if (this._sort) {
@@ -2038,6 +2090,88 @@ export class TosiTable extends WebComponent {
 
   private _pendingFocus: { row: number; col: number } | null = null
 
+  /*
+  Note the topmost row the reader can see, and how far down the container it sits.
+
+  Runs before `render()` empties the table. The header is skipped because it is STICKY — it
+  intersects the top of the viewport at every scroll position, so anchoring to it would
+  answer "where am I" identically no matter where you are.
+  */
+  private captureScrollAnchor(): void {
+    this._scrollAnchor = null
+    const area = this._scrollArea
+    if (!this.preserveScroll || !area || area.scrollTop <= 0) return
+    const areaTop = area.getBoundingClientRect().top
+    const previous = (tosiValue(this.rowData.visible) as any[]) ?? []
+    for (const el of area.querySelectorAll('.tr')) {
+      if (el.closest('.thead') || el.classList.contains('row-pinned')) continue
+      const rect = el.getBoundingClientRect()
+      if (rect.height === 0 || rect.bottom <= areaTop) continue
+      const item = tosiValue(getListItem(el))
+      const index = previous.indexOf(item)
+      if (index < 0) continue
+      this._scrollAnchor = {
+        item,
+        offset: rect.top - areaTop,
+        scrollTop: area.scrollTop,
+        index,
+      }
+      return
+    }
+  }
+
+  /*
+  Put the anchor row back where it was.
+
+  Why this converges rather than simply assigning a number: the virtualising `listBinding`
+  sizes the spacer that gives `.scroll-area` its height a frame AFTER render returns, so a
+  scrollTop written immediately is silently CLAMPED against a container that is momentarily
+  one viewport tall (measured in #67: scrollHeight 812 at frame 0, 137920 at frame 1). It is
+  also why a consumer cannot fix this from outside without reimplementing this loop.
+
+  Two strategies, and the second is what makes the first self-correcting:
+  - the anchor's element is not stamped yet (virtual, far from the current position), so
+    estimate arithmetically — with a fixed `rowHeight` the content shifts by exactly the
+    change in the row's index — which scrolls close enough for it to be stamped;
+  - the element IS present, so measure the real gap and close it exactly. This is also the
+    whole answer when `rowHeight` is 0 and every row is already in the DOM.
+
+  Bounded, because a target the container genuinely cannot reach (collapsing a group near the
+  bottom really does shorten the content) must terminate rather than spin.
+  */
+  private restoreScrollAnchor(newData: any[]): void {
+    const anchor = this._scrollAnchor
+    this._scrollAnchor = null
+    if (!anchor) return
+    const newIndex = newData.indexOf(anchor.item)
+    // The anchor row is gone — filtered away, or a wholly new dataset. Nothing to be
+    // faithful to, so leave the fresh view at the top.
+    if (newIndex < 0) return
+
+    let framesLeft = 8
+    const step = () => {
+      const area = this._scrollArea
+      if (!area) return
+      const row = this.getCells(anchor.item)?.[0]?.closest('.tr')
+      if (row) {
+        const delta =
+          row.getBoundingClientRect().top -
+          area.getBoundingClientRect().top -
+          anchor.offset
+        // Sub-pixel: scrollTop reads back fractionally on a scaled display, so an equality
+        // test would never be satisfied and this would burn every frame it has.
+        if (Math.abs(delta) < 1) return
+        area.scrollTop += delta
+      } else if (this.rowHeight > 0) {
+        area.scrollTop =
+          anchor.scrollTop + (newIndex - anchor.index) * this.rowHeight
+      }
+      if (--framesLeft > 0) requestAnimationFrame(step)
+    }
+    step()
+    requestAnimationFrame(step)
+  }
+
   private handleScrollEnd = () => {
     if (!this._pendingFocus) return
     const { row, col } = this._pendingFocus
@@ -2397,6 +2531,8 @@ export class TosiTable extends WebComponent {
 
   render() {
     super.render()
+    // Before the DOM the reader was scrolling ceases to exist.
+    this.captureScrollAnchor()
     this.textContent = ''
 
     // Resolve data sources
@@ -2491,6 +2627,7 @@ export class TosiTable extends WebComponent {
 
     this.observePinnedRowMutations()
     this.tagPinnedRows()
+    this.restoreScrollAnchor(visibleData)
   }
 
   // Edge classes need to track listBinding mutations (pinned data may change

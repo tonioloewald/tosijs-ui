@@ -223,6 +223,14 @@ export declare class TosiTable extends WebComponent {
     get rowGroupCounts(): Map<string, GroupCount>;
     private _grouping;
     private _rowGroupCounts;
+    /**
+     * Keep the reader in place across a re-render (default `true`).
+     *
+     * Set `false` when a render means "here is a different dataset" rather than "here is the
+     * same data, re-viewed" — then starting at the top is the correct answer.
+     */
+    preserveScroll: boolean;
+    private _scrollAnchor;
     get sort(): SortCallback | undefined;
     set sort(sortFunc: SortCallback | undefined);
     get columns(): ColumnOptions[];
@@ -269,6 +277,8 @@ export declare class TosiTable extends WebComponent {
     private updateSelection;
     private findCell;
     private _pendingFocus;
+    private captureScrollAnchor;
+    private restoreScrollAnchor;
     private handleScrollEnd;
     private focusCell;
     private handleKeyNav;
