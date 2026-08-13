@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.9.8
+
+**Grouped tables can now say how much of a group is showing.** The piece missing from 1.9.7's
+row grouping: a cell that reports on its group ("showing 2 of 7") or offers a **show-all**
+toggle needs to compare what is rendered against what exists — and that is the one comparison
+a cell renderer cannot make for itself. The filter has already run by then, so a consumer
+sees the survivors with nothing to measure them against. The table sees both sides.
+
+```js
+const id = table.groupIdFor(row)
+const { visible, total } = table.rowGroupCounts.get(id) ?? { visible: 0, total: 0 }
+cell.textContent = visible < total ? `showing ${visible} of ${total}` : `${total} lines`
+
+// the toggle is just a set of ids handed back to the table
+expanded.has(id) ? expanded.delete(id) : expanded.add(id)
+table.visibleGroupedRowIds = [...expanded]
+```
+
+- **`table.rowGroupCounts`** — a `Map` from group id to `{ visible, total }`, rendered rows
+  against rows before filtering. Recomputed each render and readable while cells render.
+- **`table.groupIdFor(row)`** — a row's group id, or `null` when ungrouped. This matters when
+  the grouping was **inferred** from `nonRepeatingGroupedRowCells`: you never wrote that
+  function, so its ids are otherwise unreproducible and the map would be keyed by strings you
+  could not construct.
+
+Groups the filter removed **entirely** stay in the map with `visible: 0`, so "nothing here
+matched" stays distinguishable from "no such group" — the first being exactly when a show-all
+toggle is worth offering. `rowGroupCounts` is always a `Map` (empty when ungrouped), so
+`.get()` needs no null check. Pinned rows sit outside grouping and are not counted.
+
+Additive only; ungrouped tables are unaffected.
+
 ## 1.9.7
 
 **`<tosi-table>` can group rows.** The motivating shape is invoice lines: rows that belong
