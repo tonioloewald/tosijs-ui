@@ -398,8 +398,11 @@ preview.append(table)
   font-variant-numeric: tabular-nums;
 }
 </code></pre>
-<pre><code class="language-test">const tables = document.querySelectorAll(&#39;tosi-table&#39;)
-const table = tables[tables.length - 1]
+<pre><code class="language-test">// `waitFor` is scoped to THIS example&#39;s preview. The previous version took the last
+// `tosi-table` in the whole document, which silently meant &quot;whichever example most
+// recently finished appending one&quot; — so adding an example further down the page could
+// hand this test somebody else&#39;s table, and the wait below would then never resolve.
+const table = await waitFor(&#39;tosi-table&#39;)
 // Wait until the pinned row has been stamped AND its bindings have settled
 // (numeric cells show their text, the actions button is in place).
 await new Promise(resolve =&gt; {

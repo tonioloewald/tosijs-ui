@@ -61,11 +61,26 @@ security prose. What is left:
       a full `bun playwright test` (all three browsers in parallel), always
       `locator.click: Test timeout of 30000ms exceeded`. NOT a regression — verified by
       reverting the chunk-layout change and reproducing anyway — and NOT in CI, which runs
-      chromium only. Likely cause: Playwright's click waits for the element to be
-      animation-STABLE, and the segmented highlight animates, so under erratic rAF timing
-      the stability check never settles. Fix by waiting for the transition rather than
-      `force: true`, which would hide a real un-clickable state. Reproduce with the full
-      suite plus background load, not in isolation.
+      chromium only.
+
+      **Cause identified 2026-08-13, and it is NOT the animation-stability theory recorded
+      here before.** Playwright's own retry log names the blocker outright: the element is
+      "visible, enabled and stable", and the click is refused because
+      `<span part="label">Running</span> from <tosi-doc-system> subtree intercepts pointer
+      events`. It is the doc-test **status badge** — floating page chrome — sitting over the
+      click target, not the segmented highlight failing to settle. That also explains the
+      correlation with parallel load: the badge reads "Running" for as long as the
+      background test runner is working, which is longer when the machine is busy.
+
+      Two corrections to the note above while we are here. It **does** reproduce in
+      isolation (`segmented.pw.ts` alone, firefox+webkit: 4 passed, then 3 failed on the
+      very next run), so "3/3 pass in isolation" no longer holds. And it is independent of
+      the 1.9.7 doc-runner changes — verified by reverting the census gate and reproducing
+      anyway.
+
+      Fix at the source: the status badge should not be a pointer target while it is merely
+      reporting status. Do NOT reach for `force: true`, which would hide exactly the
+      real un-clickable state this is.
 
 **From snowfox's build-system reports (deferred — the cheap halves are done):**
 

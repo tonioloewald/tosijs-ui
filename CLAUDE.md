@@ -726,9 +726,26 @@ Ships as `tosijs-release-notes` so adopters get the same workflow.
 
 ### Prereleases — iterate on betas, gate the final
 
-A feature that adds public API is a **minor**, however unfinished it feels — semver
-tracks the shape of a change, not how done it is. So a big in-progress feature ships as
-`1.x.0-beta.N`, not as a patch pretending to be small. Cut betas freely — but a
+**What earns a minor.** A **breaking change** or a **feature rollout** — something announced,
+documented as new capability, and worth a consumer's attention. An **additive, non-breaking
+extension of an existing component** ships as a **patch**, even though it adds public API.
+
+This is a deliberate divergence from strict semver, and from what this file said before
+("a feature that adds public API is a minor, however unfinished it feels"). Two costs drove
+the change. A minor carries a **review tax** — the nine-lens review before every final
+`1.x.0` is ~40 minutes and dozens of agents — and paying it for a new optional property on
+one component buys nothing, so the real effect was to discourage shipping the property at
+all. And a version line that jumps a minor for every additive tweak reads to adopters as
+**thrash**: it signals churn where there is none, and it devalues the signal for the
+releases that genuinely warrant it.
+
+The contract adopters actually get is the one that matters, and it is unchanged: **a patch
+never breaks you.** Additive-only means additive-only — a new property, a new class, a new
+export. The moment a change removes, renames, or alters existing behaviour it is a minor
+(or a major), regardless of how small it looks.
+
+So a big in-progress feature still ships as `1.x.0-beta.N`, not as a patch pretending to be
+small. Cut betas freely — but a
 prerelease published under a dist-tag is something consumers _install_, so the gate is
 **all four lanes** plus `bun run build`, same as a final. `test-consumer` especially:
 every packaging regression that ever reached an adopter was invisible to the other three,

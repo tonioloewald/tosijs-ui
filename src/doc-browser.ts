@@ -1845,10 +1845,26 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     // Generous: this bounds a hung example, it does not pace a slow one.
     const STALL_TIMEOUT_MS = 30000
     const startedAt = Date.now()
+    /*
+    The census is only as good as the DOM it reads. Examples are inserted into the page as
+    it renders, so a census taken while insertion is still in progress sees FEWER examples
+    than the page has — and an example that appears afterwards was never waited on, never
+    reported, and never missed. That is the same silent-loss failure as the bug above, one
+    step earlier, so the count must be observed to STOP GROWING before "done" means
+    anything. Two consecutive equal censuses is enough; a third example arriving later
+    restarts the requirement.
+    */
+    let previousCount = -1
+    let stableCensuses = 0
 
     const signalDone = () => {
+      const examples = [...container.querySelectorAll('tosi-example')]
+      if (examples.length === previousCount) stableCensuses++
+      else stableCensuses = 0
+      previousCount = examples.length
+
       const stalled = unsettledExamples(
-        [...container.querySelectorAll('tosi-example')].map((ex) => ({
+        examples.map((ex) => ({
           element: ex,
           test: (ex as any).test,
           hasTests: ex.classList.contains('-has-tests'),
@@ -1856,7 +1872,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         }))
       )
 
-      if (stalled.length > 0 && Date.now() - startedAt < STALL_TIMEOUT_MS) {
+      const settling = stalled.length > 0 || stableCensuses < 2
+      if (settling && Date.now() - startedAt < STALL_TIMEOUT_MS) {
         setTimeout(signalDone, 100)
         return
       }

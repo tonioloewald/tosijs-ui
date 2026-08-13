@@ -2,6 +2,53 @@
 
 ## 1.9.7
 
+**`<tosi-table>` can group rows.** The motivating shape is invoice lines: rows that belong
+together, striped as a unit, with the values they all repeat shown once.
+
+```js
+table.rowGroupId = (row) => `${row.invoice}/${row.buyer}`
+table.nonRepeatingGroupedRowCells = ['invoice', 'buyer'] // shown once per group
+table.visibleGroupedRowIds = ['INV-1001/Acme'] // stays visible past the filter
+```
+
+Set `nonRepeatingGroupedRowCells` on its own and the grouping is **inferred** from exactly
+those columns, so the common case is one line. Grouped rows get `table-cluster-even` /
+`table-cluster-odd`, alternating **per group** — a five-line invoice is one stripe, not
+five.
+
+`visibleGroupedRowIds` keeps whole groups visible regardless of the filter, so a search
+matching one line of an invoice can open the whole invoice without the filter needing to
+know anything about grouping. It is additive to the filter's own result, so a filter that
+ranks as well as selects keeps its ranking.
+
+Two details worth knowing. **Clusters keep your sort**: groups appear in first-appearance
+order, so a group lands wherever its best-sorted row landed. Sorting the clusters by their
+id instead would have quietly thrown away the sort the user just clicked. And repeated
+cells are **hidden, not emptied** — `.tr:not(.table-cluster-first) .cluster-repeat
+{ visibility: hidden }`. If you write your own rule for a custom `dataCell`, use
+`visibility`, never `display: none`: every cell is an item of the row's grid, so removing
+one pulls each later cell a column left and the row renders under the wrong headers.
+`table.isFirstInGroup(row)` answers the same question in JavaScript.
+
+Ungrouped tables are unaffected — all three properties default to off.
+
+**The inline doc-test lane was under-reporting, and staying green about it.** If you use
+`tosijs-ui/site` and have doc pages whose examples do async work, **your test counts may
+have been wrong.** A test iframe reported "page done" as soon as its _first_ example
+settled, so any example still awaiting a slow `js` block — a `fetch`, typically — never ran
+its tests, and they were omitted rather than failed. On this repo's own table page that was
+8 tests silently becoming 1, with the suite reporting "passed" either way.
+
+Completion is now decided by which examples have `test` **source**, which is known before
+anything executes, so an example that has not started yet is waited on instead of
+overlooked. An example that never finishes now fails by name with an excerpt of its source.
+The rule itself is exported as `unsettledExamples()` / `isSettled()` from
+`src/doc-system/test-completion.ts`, pure and unit-tested — a bug whose symptom is a
+_missing_ test cannot be caught by the browser lane it breaks.
+
+Check your own counts against what your pages actually contain; a number that goes **up**
+after upgrading is this bug, not a new one.
+
 **The dev server no longer 404s while it rebuilds** — the actual cause behind the LAN
 stalls in #63, traced by tosijs-3d.
 
@@ -25,6 +72,17 @@ start of a build, removed on success — so the fallback is self-scoping, and no
 content can be served outside a rebuild.
 
 Measured across real rebuilds: **2 failed requests before, 0 after**.
+
+**Formatting is gated.** `bun format` was named in no gate, so drift only accumulated — 24
+unformatted files at 1.9.0, 40 by now — and the cost always landed on whoever next ran it,
+as three dozen unrelated files in their feature diff. New `bun run format-check`
+(`prettier --check .`), run in CI. Adopters get the script; nothing about the published
+package changes.
+
+> **On versioning.** This is a patch that adds public API, which the project's own rule
+> previously called a minor. The rule has changed: minors are for **breaking changes and
+> feature rollouts**, while additive, non-breaking extensions ship as patches. The contract
+> you rely on is unchanged and is the whole point — **a patch never breaks you.**
 
 > The `idleTimeout` raise and asset compression in 1.9.6 both help, but neither closes this
 > window — compression shortens the exposure, and `idleTimeout` only decides how long a

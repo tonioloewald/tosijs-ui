@@ -379,8 +379,11 @@ preview.append(table)
 }
 ```
 ```test
-const tables = document.querySelectorAll('tosi-table')
-const table = tables[tables.length - 1]
+// `waitFor` is scoped to THIS example's preview. The previous version took the last
+// `tosi-table` in the whole document, which silently meant "whichever example most
+// recently finished appending one" — so adding an example further down the page could
+// hand this test somebody else's table, and the wait below would then never resolve.
+const table = await waitFor('tosi-table')
 // Wait until the pinned row has been stamped AND its bindings have settled
 // (numeric cells show their text, the actions button is in place).
 await new Promise(resolve => {
