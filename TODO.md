@@ -261,6 +261,58 @@ migration under time pressure. Tracked so they are chosen, not discovered.
 
 ## High Priority
 
+### `<tosi-table>` scroll preservation — the two parts deliberately NOT done (#67)
+
+Scroll stability across re-render shipped in `601d3ee1` (anchors on the topmost visible row,
+`preserveScroll` opts out). Two things #67 raised were considered and left alone **on
+purpose**; this is the reasoning, so neither gets re-proposed as an oversight or silently
+dropped.
+
+- [ ] **Reuse `.scroll-area` instead of rebuilding it** (#67's "related nicety" — `scrollend`
+      is re-bound every render). **Deferred, and the case for it is weaker than it looks.**
+
+      1. It is **not a leak.** Each render builds a new `.scroll-area` and discards the old
+         one, which takes its listener with it. #67 is right that the listener count is only
+         fine *because* the element is discarded — but it is discarded.
+      2. It would **not remove the retry loop**, which is the actual complexity. That loop
+         exists because the virtual spacer is sized a frame late, and reuse does not change
+         that: at frame 0 the content is one viewport tall (measured below), so the browser
+         clamps `scrollTop` to ~0 whether the element is new or reused. Reuse buys the
+         *appearance* of a simpler fix without the substance.
+      3. The cost lands in the **riskiest place** — `render()` would go from
+         `this.textContent = ''` to "preserve one specific child, replace the rest", in the
+         most complex component in the library.
+
+      Net: one element allocation and one `addEventListener` per render, against structural
+      surgery that fixes no observed defect. Revisit only as part of the flicker fix below,
+      where holding scrollable height across the swap would give reuse an actual purpose.
+
+- [ ] **Eliminate the one-frame flicker.** The table paints once at the top before the
+      correction lands. **Measured** on a 400-row × 40px table (chromium), sampling each frame
+      after a filter change:
+
+      | frame | `scrollHeight` | `scrollTop` |
+      | --- | --- | --- |
+      | 0 | 400 (== `clientHeight`, no spacer yet) | 0 |
+      | 1 | 16040 | 4000 |
+
+      So it is exactly one frame (~16ms), self-correcting, and only in virtual mode —
+      with `rowHeight: 0` every row is stamped during render, so the height is real at frame
+      0 and there is nothing to correct.
+
+      The cheap fix, if it is judged worth it: append a **temporary spacer** of
+      `visibleData.length * rowHeight` to `.scroll-area` before the first paint so the
+      container is immediately scrollable, write the target `scrollTop`, then drop the spacer
+      on the next frame once the real one exists. ~10 lines, confined to virtual mode, and the
+      existing retry already re-asserts the position when the spacer is removed.
+
+      The structural fix, which retires this whole class: **stop rebuilding the DOM when only
+      the data changed.** `filter` / `sort` / `visibleGroupedRowIds` change what
+      `rowData.visible` holds, not the shape of the table — assigning the new array and
+      letting `listBinding` reconcile would leave the scroll container untouched, so there is
+      no clamp, no retry, and no flicker. Bigger job (the header's sort indicators still need
+      a structural update), but it also makes #67's nicety fall out for free.
+
 ### Nested live-examples mis-route (self-hosting demo) — CSS half
 
 - [ ] **Tighten the live-example's light-DOM CSS to child combinators** so a container example's
