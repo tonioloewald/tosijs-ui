@@ -31,7 +31,7 @@ import type { ExampleBakes } from '../render.js'
 import { ensureSections } from './sections.js'
 import { generateLlmsTxt } from './make-llms-txt.js'
 import { generateSite } from './generate-site.js'
-import { findOutputDirOverlap } from './output-guard.js'
+import { findOutputDirOverlap, resolveBundleDir } from './output-guard.js'
 import { preflight } from './preflight.js'
 import { auditDependencies, reportAudit } from './audit-guard.js'
 import { gatherBuildStamp, serializeBuildStamp } from './build-stamp.js'
@@ -242,6 +242,26 @@ export async function buildSite(
   const PROJECT_ROOT = './'
   const PUBLIC = path.resolve(PROJECT_ROOT, config.outputDir ?? 'docs')
   const DIST = path.resolve(PROJECT_ROOT, 'dist')
+  /*
+  Where the hydration bundle is BUILT. Defaults to the site output, not to `dist` (#69).
+
+  It used to be built into `dist` unconditionally — the same directory `emitLibrary` /
+  `libraryTsconfig` use for the LIBRARY — and only the `.js` was copied across to the site.
+  The sourcemap stayed behind, in a tree the project publishes to npm and commits to git,
+  never served and never reachable by a consumer. In tosijs-3d that came to `iife.js.map` at
+  65 MiB across 216 packed blobs — about 35% of the whole repo's packed blob store — for a
+  file nothing could ever load, plus a `dist/iife.js` byte-identical to the served one.
+
+  Building into the site output instead means the map lands NEXT TO the script it describes,
+  where a browser can actually use it, and the library tree holds only library output. Set
+  `bundleOutDir` when the bundle is itself a published artifact (this repo does: `dist/iife.js`
+  is the CDN `<script>` target an npm consumer reaches through unpkg/jsdelivr).
+  */
+  const { dir: BUNDLE_DIR, copyToPublic: BUNDLE_NEEDS_COPY } = resolveBundleDir(
+    config.bundleOutDir,
+    PUBLIC,
+    PROJECT_ROOT
+  )
   // Intermediate corpus the build extracts to and re-reads. Default keeps the
   // legacy 'demo/docs.json' location, but we mkdir -p its directory so a project
   // without a demo/ folder doesn't fail with ENOENT on the very first write
@@ -568,7 +588,7 @@ export async function buildSite(
           'build',
           config.bundleEntry,
           '--outdir',
-          DIST,
+          BUNDLE_DIR,
           '--sourcemap=linked',
           '--format=iife',
           '--minify',
@@ -582,9 +602,15 @@ export async function buildSite(
         console.error('bundle build failed')
         return false
       }
-      await $`cp ${DIST}/${scriptName} ${PUBLIC}`.text()
+      // Only a copy when the bundle was deliberately built elsewhere; by default it is
+      // already in the site output and copying it onto itself would truncate the file.
+      if (BUNDLE_NEEDS_COPY) {
+        await $`cp ${BUNDLE_DIR}/${scriptName} ${PUBLIC}`.text()
+      }
 
-      const bundleFile = await Bun.file(`${DIST}/${scriptName}`).arrayBuffer()
+      const bundleFile = await Bun.file(
+        `${BUNDLE_DIR}/${scriptName}`
+      ).arrayBuffer()
       const bundleJs = Buffer.from(bundleFile).toString('utf8')
 
       // Warn only when an external actually compiled to a synchronous require()
@@ -617,7 +643,7 @@ export async function buildSite(
       // string literals — acorn's error messages contain it — which made the old grep
       // fire on every build while the bundle was fine.
       const syntaxError = await classicScriptSyntaxErrorInChild(
-        `${DIST}/${scriptName}`
+        `${BUNDLE_DIR}/${scriptName}`
       )
       if (syntaxError) {
         console.error(
@@ -654,7 +680,7 @@ export async function buildSite(
       // Deliberately zlib-in-a-child rather than the `gzip` CLI: the two disagree by
       // ~1.6% (378.6kb vs 384.9kb here), and this number is quoted in the docs and
       // tracked across releases. Moving the work must not silently move the measurement.
-      const bytes = await gzipSizeInChild(`${DIST}/${scriptName}`)
+      const bytes = await gzipSizeInChild(`${BUNDLE_DIR}/${scriptName}`)
       const gzipKb = bytes > 0 ? ` (${(bytes / 1024).toFixed(1)}kb gzip)` : ''
       console.log(
         `${scriptName}: ${(bundleFile.byteLength / 1024).toFixed(1)}kb${gzipKb}`

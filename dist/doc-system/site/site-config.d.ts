@@ -77,6 +77,23 @@ export interface SiteConfig {
     /** modules to leave external in the bundle, e.g. ['jolt-physics'] */
     bundleExternals?: string[];
     /**
+     * Where to BUILD the hydration bundle. Defaults to the site output (`outputDir`).
+     *
+     * Set it only when the bundle is itself a **published** artifact — e.g. tosijs-ui writes
+     * its iife to `dist` because `dist/iife.js` is the CDN `<script>` target consumers reach
+     * through unpkg/jsdelivr. When set, the `.js` is copied into the site output as well, so
+     * pages load it either way.
+     *
+     * It used to be `dist` unconditionally, which put SITE output in the LIBRARY tree — the
+     * same directory `emitLibrary` / `libraryTsconfig` write to. Only the `.js` was copied
+     * out, so the sourcemap stayed behind in a directory the project publishes and commits,
+     * never served and unreachable by any consumer: 65 MiB across 216 packed blobs in one
+     * adopter, ~35% of that repo's entire packed blob store, for a file nothing could load
+     * (tosijs-ui#69). Defaulting to the site output also puts the map beside the script it
+     * describes, where a browser can use it.
+     */
+    bundleOutDir?: string;
+    /**
      * URL of the JS bundle pages load. Default '/iife.js'. Used as the fallback
      * when `bundleEntry` is omitted (point it at a prebuilt/CDN bundle), and as
      * the output name when `bundleEntry` is set.

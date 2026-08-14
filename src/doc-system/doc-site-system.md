@@ -149,6 +149,23 @@ modes:
   }
   ```
 
+  **Where it lands.** The bundle and its sourcemap are written into your **site output**
+  (`outputDir`, default `docs/`), so the map sits beside the script it describes and a
+  browser can load it.
+
+  Set `bundleOutDir` only when the bundle is itself a _published_ artifact — tosijs-ui does,
+  because `dist/iife.js` is the CDN `<script>` target consumers reach via unpkg/jsdelivr.
+  When set, the `.js` is also copied into the site output, so pages load it either way.
+
+  > Before 1.9.9 the bundle was written into `dist/` unconditionally — the same directory
+  > `emitLibrary` / `libraryTsconfig` use for your **library** — and only the `.js` was
+  > copied out. The sourcemap stayed behind in a tree you publish and commit but never
+  > serve, unreachable by any consumer. One adopter accumulated `iife.js.map` at **65 MiB
+  > across 216 packed blobs, about 35% of the repository's entire packed blob store**, for a
+  > file nothing could load ([#69](https://github.com/tonioloewald/tosijs-ui/issues/69)). If
+  > you have that history, `git rm --cached dist/iife.js dist/iife.js.map` and gitignore
+  > them; new builds will not put them back.
+
   Without the `import` your custom elements won't upgrade; without the
   `context` entry, `import … from 'my-lib'` in a live example won't resolve.
 

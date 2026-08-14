@@ -85,6 +85,12 @@ export default defineSiteConfig({
   // tosijs-ui's build also publishes the npm package, and bundles its own IIFE.
   emitLibrary: true,
   bundleEntry: './src/index-iife.ts',
+  // Opt IN to building the bundle into the library tree — the default is the site output
+  // (#69). This project is the exception the option exists for: `dist/iife.js` is published
+  // in the npm tarball and is the CDN `<script>` target consumers reach via unpkg/jsdelivr,
+  // so it has to keep landing there. A project whose bundle only serves its own doc site
+  // should leave this unset and keep site output out of `dist`.
+  bundleOutDir: 'dist',
   docPaths: ['src', 'README.md', 'bin', 'icons'],
   staticDirs: ['demo/static'],
   // Served from GitHub Pages at the apex custom domain (CNAME in demo/static;

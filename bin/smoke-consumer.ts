@@ -99,11 +99,15 @@ try {
       `export default defineSiteConfig({\n` +
       `  name: 'consumer-smoke',\n` +
       `  docPaths: ['src'],\n` +
+      // Exercises the hydration-bundle path with NO `bundleOutDir` — the default an
+      // adopter gets. Without this the bundle step never ran here at all (#69).
+      `  bundleEntry: './src/entry.ts',\n` +
       `  port: 8018,\n` +
       `  preview: { host: 'nobody@example.invalid', tunnel: {} },\n` +
       `})\n`
   )
   await Bun.write(`${proj}/src/index.md`, `# Consumer Smoke\n\nHello.\n`)
+  await Bun.write(`${proj}/src/entry.ts`, `export const hello = 'hi'\n`)
   await Bun.write(
     `${proj}/build.ts`,
     `import { buildSite } from 'tosijs-ui/site'\n` +
@@ -293,6 +297,30 @@ try {
     'a plain build succeeds without chokidar installed',
     build.exitCode === 0,
     (build.stderr.toString() || build.stdout.toString()).slice(0, 400)
+  )
+
+  /*
+  The hydration bundle must land in the SITE output, and the library tree must stay clean.
+
+  It used to be built into `dist` unconditionally with only the `.js` copied out, so an
+  adopter's `dist/` accumulated an `iife.js` identical to the served one plus a sourcemap
+  nothing could ever load — 65 MiB across 216 packed blobs in one repo, about 35% of its
+  packed blob store, committed and published forever (#69). This project has no
+  `bundleOutDir`, so it must get the default.
+  */
+  check(
+    'the hydration bundle lands in the site output',
+    existsSync(path.join(proj, 'docs', 'iife.js'))
+  )
+  check(
+    'its sourcemap lands beside it, where a browser can load it',
+    existsSync(path.join(proj, 'docs', 'iife.js.map'))
+  )
+  check(
+    'nothing from the site build leaks into the library tree (dist/)',
+    !existsSync(path.join(proj, 'dist', 'iife.js')) &&
+      !existsSync(path.join(proj, 'dist', 'iife.js.map')),
+    'site output in dist/ — the #69 regression'
   )
 
   const versionJson = `${proj}/docs/version.json`

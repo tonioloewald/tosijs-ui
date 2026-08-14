@@ -167,6 +167,22 @@ for (const el of document.querySelectorAll(&#39;tosi-doc-system&#39;)) {
   ;(el as any).context = { &#39;my-lib&#39;: mylib }
 }
 </code></pre>
+<p><strong>Where it lands.</strong> The bundle and its sourcemap are written into your <strong>site output</strong>
+(<code>outputDir</code>, default <code>docs/</code>), so the map sits beside the script it describes and a
+browser can load it.</p>
+<p>Set <code>bundleOutDir</code> only when the bundle is itself a <em>published</em> artifact — tosijs-ui does,
+because <code>dist/iife.js</code> is the CDN <code>&lt;script&gt;</code> target consumers reach via unpkg/jsdelivr.
+When set, the <code>.js</code> is also copied into the site output, so pages load it either way.</p>
+<blockquote>
+<p>Before 1.9.9 the bundle was written into <code>dist/</code> unconditionally — the same directory
+<code>emitLibrary</code> / <code>libraryTsconfig</code> use for your <strong>library</strong> — and only the <code>.js</code> was
+copied out. The sourcemap stayed behind in a tree you publish and commit but never
+serve, unreachable by any consumer. One adopter accumulated <code>iife.js.map</code> at <strong>65 MiB
+across 216 packed blobs, about 35% of the repository&#39;s entire packed blob store</strong>, for a
+file nothing could load (<a href="https://github.com/tonioloewald/tosijs-ui/issues/69">#69</a>). If
+you have that history, <code>git rm --cached dist/iife.js dist/iife.js.map</code> and gitignore
+them; new builds will not put them back.</p>
+</blockquote>
 <p>Without the <code>import</code> your custom elements won&#39;t upgrade; without the
 <code>context</code> entry, <code>import … from &#39;my-lib&#39;</code> in a live example won&#39;t resolve.</p>
 </li>
