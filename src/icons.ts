@@ -574,6 +574,39 @@ export const svg2DataUrl = (
 
   const svg = svgs[0]
   svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+
+  /*
+  Bake inline `style` into presentation ATTRIBUTES first, then let the explicit arguments
+  overwrite them.
+
+  A data-URL image is its own document, so the icons' `var(--tosi-icon-*)` styling resolves
+  to nothing inside it — the values have to be written on as attributes to survive.
+
+  Both halves of that were wrong (tosijs-ui#68):
+
+  - the names were camelCase. SVG presentation attributes are kebab-case, so `strokeWidth`
+    is not an attribute at all; the browser ignored it and fell back to UA defaults — 1px
+    strokes and mitred corners where the icon asked for 2px and round. Easy to miss because
+    the icon still renders, just wrong.
+  - this loop ran AFTER the explicit `fill`/`stroke`/`strokeWidth` arguments were applied, so
+    it clobbered them. `stroke: '#f00'` came out `#000000`. Renaming alone would have made
+    that worse rather than better: `stroke-width` from the style would then have overwritten
+    an explicit `strokeWidth` too, breaking the one path that was working.
+
+  Hence the order: computed styling is the baseline, the caller's arguments win over it.
+  */
+  const styled = svg.querySelectorAll('[style]')
+  svg.removeAttribute('style')
+  for (const item of [...styled] as HTMLElement[]) {
+    const s = item.style
+    if (s.fill) item.setAttribute('fill', Color.fromCss(s.fill).html)
+    if (s.stroke) item.setAttribute('stroke', Color.fromCss(s.stroke).html)
+    if (s.strokeWidth) item.setAttribute('stroke-width', s.strokeWidth)
+    if (s.strokeLinecap) item.setAttribute('stroke-linecap', s.strokeLinecap)
+    if (s.strokeLinejoin) item.setAttribute('stroke-linejoin', s.strokeLinejoin)
+    item.removeAttribute('style')
+  }
+
   for (const path of svg.querySelectorAll(
     'path, polygon, line, circle, rect, ellipse, polyline'
   )) {
@@ -581,18 +614,6 @@ export const svg2DataUrl = (
     if (stroke !== undefined) path.setAttribute('stroke', stroke)
     if (strokeWidth !== undefined)
       path.setAttribute('stroke-width', String(strokeWidth))
-  }
-
-  const styled = svg.querySelectorAll('[style]')
-  svg.removeAttribute('style')
-  for (const item of [...styled] as HTMLElement[]) {
-    const s = item.style
-    if (s.fill) item.setAttribute('fill', Color.fromCss(s.fill).html)
-    if (s.stroke) item.setAttribute('stroke', Color.fromCss(s.stroke).html)
-    if (s.strokeWidth) item.setAttribute('strokeWidth', s.strokeWidth)
-    if (s.strokeLinecap) item.setAttribute('strokeLinecap', s.strokeLinecap)
-    if (s.strokeLinejoin) item.setAttribute('strokeLinejoin', s.strokeLinejoin)
-    item.removeAttribute('style')
   }
 
   const text = encodeURIComponent(svg.outerHTML)
