@@ -353,8 +353,17 @@ export interface SiteConfig {
    * REMOTE-ACCESS-PLAN.md.
    */
   preview?: {
-    /** ssh target, e.g. `root@203.0.113.10` or `deploy@preview.example.com` */
-    host: string
+    /**
+     * ssh target, e.g. `root@203.0.113.10` or `deploy@preview.example.com`.
+     *
+     * OPTIONAL, because the documented practice is to keep it out of a committed config and
+     * supply it from `PREVIEW_HOST` — which is also the bins' own resolution order
+     * (`--host=` > `PREVIEW_HOST` > this). Typing it as required made a config that followed
+     * the practice fail typecheck, and the workaround (`host: process.env.PREVIEW_HOST ?? ''`)
+     * is noise that means nothing at runtime. Every bin that needs a host already checks for
+     * one and prints how to supply it, so absence is handled where it is felt (#72).
+     */
+    host?: string
     /** remote directory; defaults to `/srv/preview/<name>` */
     path?: string
     /** public URL, printed after a successful deploy (e.g. `https://dev.example.com`) */
