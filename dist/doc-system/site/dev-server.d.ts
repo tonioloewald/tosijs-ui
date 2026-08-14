@@ -1,5 +1,22 @@
 import type { SiteConfig } from './site-config.js';
 import { isLoopbackAddressForAuth as isLoopbackAddress } from './dev-auth.js';
+/**
+ * Every path the dev server watches for changes.
+ *
+ * `docPaths` is included because that is where an adopter DECLARES their documentation —
+ * omitting it meant a root-level doc (`Migration.md`, say) was served and rendered but never
+ * watched: edit, save, refresh, stale page, no rebuild, and no message anywhere. The failure
+ * is indistinguishable from the other stale-page causes (bunx cache, browser cache, a
+ * restored last-good build), which is what made it cost several sessions to pin (#49).
+ *
+ * The built-in defaults stay for projects that declare no `docPaths`. `watchPaths` remains
+ * the additive override. Deduped by RESOLVED path, so `src`, `./src` and an absolute form
+ * collapse to one watcher rather than three firing three rebuilds for one keystroke.
+ */
+export declare function resolveWatchPaths(config: {
+    docPaths?: string[];
+    watchPaths?: string[];
+}, root?: string): string[];
 declare global {
     var Bun: any;
 }

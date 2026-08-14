@@ -317,3 +317,55 @@ test('only text-shaped assets are compressed', () => {
   ])
     expect(isCompressible(f)).toBe(false)
 })
+
+// ── what the dev server watches (tosijs-ui#49) ───────────────────────────────
+
+import { resolveWatchPaths } from './dev-server.js'
+import * as nodePath from 'path'
+
+/** How many watched entries resolve to the same directory — `./demo/src` also ends in
+ * 'src', so a suffix test counts the wrong things. */
+const timesResolvingTo = (watched: string[], target: string, root = '.') =>
+  watched.filter(
+    (p) => nodePath.resolve(root, p) === nodePath.resolve(root, target)
+  ).length
+
+test('REGRESSION: docPaths are watched — a root-level doc is not served-but-stale', () => {
+  /*
+  The watch list was hardcoded defaults plus an opt-in `watchPaths`, while adopters declare
+  their docs in `docPaths`. A root-level doc was therefore served and rendered but never
+  watched: edit, save, refresh, stale page, no rebuild, no message. Indistinguishable from
+  bunx cache / browser cache / a restored last-good build, which is why it cost the reporter
+  several sessions.
+  */
+  const watched = resolveWatchPaths({ docPaths: ['Migration.md', 'guide'] })
+  expect(watched).toContain('Migration.md')
+  expect(watched).toContain('guide')
+})
+
+test('the built-in defaults survive for projects that declare no docPaths', () => {
+  const watched = resolveWatchPaths({})
+  expect(watched).toContain('README.md')
+  expect(watched).toContain('./src')
+})
+
+test('watchPaths remains an additive override', () => {
+  const watched = resolveWatchPaths({ watchPaths: ['extra'] })
+  expect(watched).toContain('extra')
+  expect(watched).toContain('README.md')
+})
+
+test('paths are deduped by RESOLVED path, so one keystroke is one rebuild', () => {
+  // `src` and `./src` are the same directory. Watching it twice means two change events
+  // and two rebuilds for one save — on a build that already does `rm -rf` on its output.
+  const watched = resolveWatchPaths({
+    docPaths: ['src', './src'],
+    watchPaths: ['./src'],
+  })
+  expect(timesResolvingTo(watched, 'src')).toBe(1)
+})
+
+test('an absolute docPath collapses against its relative form', () => {
+  const watched = resolveWatchPaths({ docPaths: ['/proj/src'] }, '/proj')
+  expect(timesResolvingTo(watched, '/proj/src', '/proj')).toBe(1)
+})

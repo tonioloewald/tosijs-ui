@@ -17,7 +17,40 @@ import { preflight } from './preflight.js';
 import { auditDependencies, reportAudit } from './audit-guard.js';
 import { openDevBrowser } from './open-browser.js';
 import { resolveTunnelLocalPort } from './site-config.js';
+import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
+/**
+ * Every path the dev server watches for changes.
+ *
+ * `docPaths` is included because that is where an adopter DECLARES their documentation —
+ * omitting it meant a root-level doc (`Migration.md`, say) was served and rendered but never
+ * watched: edit, save, refresh, stale page, no rebuild, and no message anywhere. The failure
+ * is indistinguishable from the other stale-page causes (bunx cache, browser cache, a
+ * restored last-good build), which is what made it cost several sessions to pin (#49).
+ *
+ * The built-in defaults stay for projects that declare no `docPaths`. `watchPaths` remains
+ * the additive override. Deduped by RESOLVED path, so `src`, `./src` and an absolute form
+ * collapse to one watcher rather than three firing three rebuilds for one keystroke.
+ */
+export function resolveWatchPaths(config, root = '.') {
+    const seen = new Set();
+    const out = [];
+    for (const p of [
+        'README.md',
+        './src',
+        './demo/src',
+        './icons',
+        ...(config.docPaths ?? []),
+        ...(config.watchPaths ?? []),
+    ]) {
+        const key = path.resolve(root, p);
+        if (seen.has(key))
+            continue;
+        seen.add(key);
+        out.push(p);
+    }
+    return out;
+}
 const TEST_RESULTS_FILE = '.browser-tests.json';
 const DEFAULT_IDLE_HOURS = 8;
 /**
@@ -416,6 +449,30 @@ export async function devServer(config, opts = {}) {
     // daemons, on this machine). An env var set to empty is the most ordinary shell
     // accident there is; it must not become a kill list.
     const PORT = Number(process.env.PORT || config.port || 8787);
+    /*
+    Own the output tree for this server's lifetime (#51).
+  
+    A standalone `buildSite()` in the same repo while this is watching means two writers on
+    one tree: each `rm -rf`s the directory the other is writing into. That silently killed a
+    dev server and left `docs/` at 16 entries instead of ~2600, with nothing anywhere saying
+    why — the cost was never the crash, it was that "the server is gone" was a forensic
+    exercise.
+  
+    Held for the whole session rather than per rebuild, because the hazard is the WATCHER: it
+    reacts to the other builder's thousands of file events between our own builds. Our own
+    rebuilds re-enter it (same pid), so this does not block us.
+  
+    Released on exit rather than in a `finally` — this process leaves via `process.exit`,
+    which skips them. A lock that outlived its process would still be harmless (the next
+    acquirer sees a dead pid and takes it), but leaving debris that LOOKS like a held lock is
+    the sort of thing that costs someone an hour.
+    */
+    const treeLock = acquireBuildLock('.', 'dev-server', { port: PORT });
+    if (!treeLock.ok) {
+        console.error(describeHolder(treeLock.holder));
+        process.exit(1);
+    }
+    process.on('exit', () => treeLock.release());
     const PUBLIC = path.resolve('./', config.outputDir ?? 'docs');
     const isSPA = true;
     const testMode = !!opts.test;
@@ -920,13 +977,7 @@ export async function devServer(config, opts = {}) {
         };
         // Ignore the files the build itself writes, or the watch would loop.
         const ignored = (p) => /node_modules|(^|[/\\])(version|icon-data)\.ts$/.test(p);
-        const watchPaths = [
-            'README.md',
-            './src',
-            './demo/src',
-            './icons',
-            ...(config.watchPaths ?? []),
-        ];
+        const watchPaths = resolveWatchPaths(config);
         /*
         Lazy — a BUILD must not pull in a file watcher.
     
