@@ -261,6 +261,37 @@ migration under time pressure. Tracked so they are chosen, not discovered.
 
 ## High Priority
 
+### `<tosi-table>` loses FOCUS on re-render (same class as #67)
+
+- [ ] **Focus does not survive a re-render, and it should.** Verified 2026-08-14: focus a
+      `.td`, change `filter`, and `document.activeElement` is `<body>`.
+
+      ```
+      before: SPAN "row 2"     ← focused cell
+      after:  BODY             ← filter changed
+      ```
+
+      Same cause as the scroll bug — `render()` does `this.textContent = ''` and destroys the
+      state — but a worse symptom: scroll position is where you were *looking*, focus is where
+      you were *working*. A keyboard user mid-navigation is dropped out of the table entirely
+      and has to tab back in. A desktop list view keeps the focused row focused through a
+      re-sort, and this is exactly the bar tosijs-ui is aiming at, so "the mouse still works"
+      is not an answer. Invisible to anyone testing with a mouse, which is why it survived
+      this long.
+
+      **Migrate, don't just restore.** If the focused row is still present, put focus back on
+      the same row/column. If it is GONE — filtered out, or the sort dropped it — focus must
+      move to the next logical place rather than vanishing: the nearest surviving row at the
+      same column, preferring the row that took its position, falling back to the last row
+      when it was the end of the list, and to the table itself when nothing survives. Dropping
+      focus to `<body>` is the one outcome that is always wrong.
+
+      The pieces exist: `_pendingFocus` / `focusCell` / `findCell` already do restore-after-
+      scroll for keyboard nav, and #67's anchor capture is the same shape (capture before
+      teardown, resolve after). Best done in the same pass as the structural fix below — one
+      "what was the user doing" capture covering scroll, focus and flicker beats three
+      separate anchors bolted onto a teardown.
+
 ### `<tosi-table>` scroll preservation — the two parts deliberately NOT done (#67)
 
 Scroll stability across re-render shipped in `601d3ee1` (anchors on the topmost visible row,
