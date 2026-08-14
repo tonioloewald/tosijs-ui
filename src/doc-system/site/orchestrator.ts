@@ -782,6 +782,7 @@ export async function buildSite(
             description: config.description,
             baseUrl: config.baseUrl,
             projectLinks: config.projectLinks,
+            haltijaDev: config.haltijaDev,
           },
           corpus
         )

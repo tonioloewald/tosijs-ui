@@ -1,5 +1,8 @@
 import { test, expect } from 'bun:test'
-import { entriesFromCorpus } from './make-llms-txt.js'
+import { entriesFromCorpus, generateLlmsTxt } from './make-llms-txt.js'
+import { mkdtempSync, readFileSync } from 'fs'
+import { tmpdir } from 'os'
+import { join } from 'path'
 
 const corpus = [
   { filename: 'README.md', title: 'Home', text: 'Welcome to the project.\n' },
@@ -46,4 +49,36 @@ test('description prefers metadata, else first prose line of the doc', () => {
   expect(entries.find((e) => e.title === 'button')!.description).toBe(
     'A nice button.'
   )
+})
+
+// ── the agent-affordance note (tosijs-ui#18) ─────────────────────────────────
+
+function written(meta: Record<string, unknown>): string {
+  const out = join(mkdtempSync(join(tmpdir(), 'llms-')), 'llms.txt')
+  generateLlmsTxt(out, meta, corpus)
+  return readFileSync(out, 'utf8')
+}
+
+test('haltijaDev tells an agent it can drive the running page', () => {
+  // The point of llms.txt is what an agent learns without reading everything. Browser
+  // control was documented only inside the doc-site-system page, i.e. exactly where an
+  // agent triaging some other component would never look.
+  const text = written({ name: 'x', haltijaDev: true })
+  expect(text).toContain('hj navigate')
+  expect(text).toContain('DRIVE the live page')
+})
+
+test('REGRESSION: the note is absent when the project has NOT opted in', () => {
+  // A wrong affordance costs more than a missing one — an agent told to drive a page with
+  // no dev channel spends its time on a capability that will never answer.
+  const text = written({ name: 'x' })
+  expect(text).not.toContain('hj navigate')
+  expect(text).not.toContain('DRIVE the live page')
+})
+
+test('the rAF caveat travels with the affordance, not separately', () => {
+  // Without it an agent concludes "the component does not render" from an hj eval that was
+  // never going to paint — the exact wrong conclusion this project has drawn before.
+  const text = written({ name: 'x', haltijaDev: true })
+  expect(text).toContain('requestAnimationFrame')
 })

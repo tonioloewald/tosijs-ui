@@ -21,6 +21,13 @@ export interface LlmsTxtMeta {
     projectLinks?: Record<string, string | undefined>;
     /** optional framing line(s) under the description */
     tagline?: string;
+    /**
+     * Mirrors `SiteConfig.haltijaDev`. When set, `llms.txt` tells an agent it can DRIVE the
+     * running page rather than reason about it from source — which is the single most useful
+     * thing an agent can know about a project it is working on, and was previously discoverable
+     * only by reading the doc-site-system page in full.
+     */
+    haltijaDev?: boolean;
 }
 /**
  * Build entries from the extracted corpus — every doc that was actually

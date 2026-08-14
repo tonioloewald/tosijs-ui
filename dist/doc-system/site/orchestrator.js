@@ -670,6 +670,7 @@ export async function buildSite(config, opts = {}) {
                     description: config.description,
                     baseUrl: config.baseUrl,
                     projectLinks: config.projectLinks,
+                    haltijaDev: config.haltijaDev,
                 }, corpus);
             }
             // Also place it at the served web root so {baseUrl}/llms.txt resolves (the

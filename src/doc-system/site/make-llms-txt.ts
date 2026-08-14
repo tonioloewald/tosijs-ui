@@ -64,6 +64,13 @@ export interface LlmsTxtMeta {
   projectLinks?: Record<string, string | undefined>
   /** optional framing line(s) under the description */
   tagline?: string
+  /**
+   * Mirrors `SiteConfig.haltijaDev`. When set, `llms.txt` tells an agent it can DRIVE the
+   * running page rather than reason about it from source — which is the single most useful
+   * thing an agent can know about a project it is working on, and was previously discoverable
+   * only by reading the doc-site-system page in full.
+   */
+  haltijaDev?: boolean
 }
 
 /**
@@ -162,6 +169,23 @@ export function generateLlmsTxt(
       ]
     : []
 
+  /*
+  Only advertise browser control when the project has actually opted in. Telling an agent to
+  drive a page that has no dev channel sends it after a capability that will not answer, and
+  a wrong affordance costs more than a missing one.
+  */
+  const haltijaNote = meta.haltijaDev
+    ? [
+        'Running this project locally (`bun start`), the dev server injects a',
+        'localhost-gated dev channel, so an agent can DRIVE the live page with the `hj`',
+        'CLI — `hj navigate`, `hj eval`, `hj tree` — instead of inferring behaviour from',
+        'source. Injected at serve time only, never in the built output. Note that no',
+        'requestAnimationFrame runs under `hj eval`, and tosijs renders are rAF-driven, so',
+        'use it to inspect STATE; a painted-output check needs a real test lane.',
+        '',
+      ]
+    : []
+
   const name = meta.name ?? pkg.name ?? ''
   const description = meta.description ?? pkg.description ?? ''
   const links: string[] = []
@@ -186,6 +210,7 @@ export function generateLlmsTxt(
     'Full documentation, with live code examples, is at the links below.',
     '',
     ...liveExampleNote,
+    ...haltijaNote,
     '## Pages',
     '',
   ]
