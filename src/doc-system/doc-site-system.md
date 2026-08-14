@@ -581,14 +581,45 @@ Both `tosijs-deploy` and `tosijs-tunnel` write a Caddy fragment ending in
 nothing routes.
 
 The package ships a template at `node_modules/tosijs-ui/deploy/Caddyfile`. It is a
-_template_, not a drop-in: substitute `{{ACME_EMAIL}}` (your Let's Encrypt account) and
-`{{PREVIEW_DOMAIN}}` (the domain your preview hosts live under), and put the shared invite
-secret in `/etc/caddy/preview.env` as `PREVIEW_TOKEN=…` rather than in the file.
+_template_, not a drop-in: `{{ACME_EMAIL}}` (your Let's Encrypt account),
+`{{PREVIEW_DOMAIN}}` (the domain your preview hosts live under) and `__PREVIEW_TOKEN__` (the
+shared invite secret) have to be filled in.
 
 Installing it with the placeholders intact would give you a preview host whose invite gate
 is a literal string published in a public repo, issuing certificates under someone else's
-account — so the registration step refuses rather than guessing, and names the missing
-snippet when validation fails for that reason.
+account. So don't do it by hand — **`tosijs-caddy-install` does it and refuses when it would
+go wrong**:
+
+```bash
+# 1. on the box, once: the values the template needs
+#    (a secret you invent; never in the Caddyfile, never in git)
+cat > /etc/caddy/preview.env <<'EOF'
+PREVIEW_TOKEN=<a long random string>
+ACME_EMAIL=you@example.com
+PREVIEW_DOMAIN=dev.example.com
+EOF
+
+# 2. from your project — DRY RUN, prints a diff against the live config, changes nothing
+tosijs-caddy-install
+
+# 3. once the diff looks right
+tosijs-caddy-install --go
+```
+
+It reads `preview.host` from your site config (or `--host=user@box`, or `PREVIEW_HOST`), and:
+
+- **substitutes on the box**, reading `/etc/caddy/preview.env` — so `PREVIEW_TOKEN` never
+  travels to your laptop, never appears in your shell history, and is redacted out of the
+  diff before it is printed;
+- **refuses to install** if any placeholder survived substitution, naming the line — the
+  guard that a hand-rolled `sed` pipeline does not have;
+- **validates before swapping**: `caddy fmt` then `caddy validate` against a scratch file,
+  and the live config is replaced by an atomic `mv` only once it parses, so a bad template
+  leaves the running site untouched;
+- is **dry-run by default**, because it replaces `/etc/caddy/Caddyfile` wholesale — if the
+  box serves anything else through Caddy, read that diff before `--go`.
+
+Bring your own template with `--template=./path/to/Caddyfile`; the same guards apply.
 
 You also want a wildcard DNS record (`*.dev.example.com`) pointing at the box, so a new
 project needs no registrar visit, and sshd running `GatewayPorts no`.

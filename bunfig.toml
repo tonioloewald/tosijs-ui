@@ -1,3 +1,9 @@
 [test]
 preload = ["./test-setup.ts"]
-root = "./src"
+# Root is the REPO, not `src`, so `bin/` is inside the unit lane.
+#
+# It was `./src`, which meant a test file added anywhere else — `bin/`, most obviously —
+# was silently never run. `bin/` ships four executables that adopters invoke directly and
+# had already accumulated two type errors before anything looked at it; a test that exists
+# but is never collected is worse than no test, because it reads as coverage.
+root = "."

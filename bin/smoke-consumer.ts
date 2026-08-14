@@ -137,7 +137,13 @@ try {
   // to the shell, which then chokes on TypeScript). That is a property of the first two
   // bytes, so read them — no execution required, and it works for every bin including
   // the destructive ones.
-  const SAFE_TO_RUN = new Set(['tosijs-tunnel', 'tosijs-deploy'])
+  // `tosijs-caddy-install` is safe to run: it is dry-run by default and exits before it
+  // spawns ssh when no host is configured, which is the state of a throwaway project.
+  const SAFE_TO_RUN = new Set([
+    'tosijs-tunnel',
+    'tosijs-deploy',
+    'tosijs-caddy-install',
+  ])
   for (const [name, rel] of Object.entries(pkg.bin ?? {}) as [
     string,
     string
@@ -171,6 +177,38 @@ try {
       err.slice(0, 200)
     )
   }
+
+  /*
+  The Caddy template has to reach the adopter, at the path the bin looks for it.
+
+  `tosijs-caddy-install` resolves `../deploy/Caddyfile` relative to its own file, so a
+  packaging change that drops `/deploy` from `files` breaks host bootstrap for every adopter
+  while every in-repo lane stays green — the repo has the file either way. It also has to
+  still CONTAIN its placeholders: bake real values in and the install-time guard that refuses
+  to publish a public repo's invite token goes quiet.
+  */
+  const caddyTemplate = path.join(
+    proj,
+    'node_modules',
+    pkg.name,
+    'deploy',
+    'Caddyfile'
+  )
+  const templateText = await Bun.file(caddyTemplate)
+    .text()
+    .catch(() => '')
+  check(
+    'the Caddy template ships where tosijs-caddy-install looks for it',
+    templateText.length > 0,
+    `missing ${caddyTemplate} — check "files" includes /deploy`
+  )
+  check(
+    'the shipped Caddy template still has its placeholders',
+    ['{{ACME_EMAIL}}', '{{PREVIEW_DOMAIN}}', '__PREVIEW_TOKEN__'].every((p) =>
+      templateText.includes(p)
+    ),
+    'a placeholder was baked out — the install-time refusal guard would go quiet'
+  )
 
   // ── the tunnel bin agrees with the server about ports ─────────────────────
   const tunnelShim = path.join(proj, 'node_modules', '.bin', 'tosijs-tunnel')

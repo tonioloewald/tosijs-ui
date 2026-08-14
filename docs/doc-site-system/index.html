@@ -791,13 +791,41 @@ here because every lane ran under bun; the consumer lane now imports through Nod
 <code>caddy validate</code> fails on every deploy forever — and the failure is per-project, so
 nothing routes.</p>
 <p>The package ships a template at <code>node_modules/tosijs-ui/deploy/Caddyfile</code>. It is a
-<em>template</em>, not a drop-in: substitute <code>{{ACME_EMAIL}}</code> (your Let&#39;s Encrypt account) and
-<code>{{PREVIEW_DOMAIN}}</code> (the domain your preview hosts live under), and put the shared invite
-secret in <code>/etc/caddy/preview.env</code> as <code>PREVIEW_TOKEN=…</code> rather than in the file.</p>
+<em>template</em>, not a drop-in: <code>{{ACME_EMAIL}}</code> (your Let&#39;s Encrypt account),
+<code>{{PREVIEW_DOMAIN}}</code> (the domain your preview hosts live under) and <code>__PREVIEW_TOKEN__</code> (the
+shared invite secret) have to be filled in.</p>
 <p>Installing it with the placeholders intact would give you a preview host whose invite gate
 is a literal string published in a public repo, issuing certificates under someone else&#39;s
-account — so the registration step refuses rather than guessing, and names the missing
-snippet when validation fails for that reason.</p>
+account. So don&#39;t do it by hand — <strong><code>tosijs-caddy-install</code> does it and refuses when it would
+go wrong</strong>:</p>
+<pre><code class="language-bash"># 1. on the box, once: the values the template needs
+#    (a secret you invent; never in the Caddyfile, never in git)
+cat &gt; /etc/caddy/preview.env &lt;&lt;&#39;EOF&#39;
+PREVIEW_TOKEN=&lt;a long random string&gt;
+ACME_EMAIL=you@example.com
+PREVIEW_DOMAIN=dev.example.com
+EOF
+
+# 2. from your project — DRY RUN, prints a diff against the live config, changes nothing
+tosijs-caddy-install
+
+# 3. once the diff looks right
+tosijs-caddy-install --go
+</code></pre>
+<p>It reads <code>preview.host</code> from your site config (or <code>--host=user@box</code>, or <code>PREVIEW_HOST</code>), and:</p>
+<ul>
+<li><strong>substitutes on the box</strong>, reading <code>/etc/caddy/preview.env</code> — so <code>PREVIEW_TOKEN</code> never
+travels to your laptop, never appears in your shell history, and is redacted out of the
+diff before it is printed;</li>
+<li><strong>refuses to install</strong> if any placeholder survived substitution, naming the line — the
+guard that a hand-rolled <code>sed</code> pipeline does not have;</li>
+<li><strong>validates before swapping</strong>: <code>caddy fmt</code> then <code>caddy validate</code> against a scratch file,
+and the live config is replaced by an atomic <code>mv</code> only once it parses, so a bad template
+leaves the running site untouched;</li>
+<li>is <strong>dry-run by default</strong>, because it replaces <code>/etc/caddy/Caddyfile</code> wholesale — if the
+box serves anything else through Caddy, read that diff before <code>--go</code>.</li>
+</ul>
+<p>Bring your own template with <code>--template=./path/to/Caddyfile</code>; the same guards apply.</p>
 <p>You also want a wildcard DNS record (<code>*.dev.example.com</code>) pointing at the box, so a new
 project needs no registrar visit, and sshd running <code>GatewayPorts no</code>.</p>
 <h4>Linking the books the build produces</h4>
