@@ -377,6 +377,33 @@ test(&#39;slow test shows running state&#39;, async () =&gt; {
 <li><code>waitFor(selector, timeout?)</code> - wait for an element to appear (default 1s timeout)</li>
 <li>All context libraries (tosijs, tosijs-ui, etc.)</li>
 </ul>
+<h3>Tests run CONCURRENTLY — one <code>test()</code> per flow</h3>
+<p>Each <code>test()</code> body is invoked <strong>as it is registered</strong>, and async bodies are gathered with
+<code>Promise.all</code>. So test 2&#39;s synchronous body runs while test 1 is sitting at its first
+<code>await</code>, and tests in <em>other examples on the same page</em> overlap too.</p>
+<p>This matters because splitting one flow across two <code>test()</code> blocks that share state is a
+<strong>latent race that can pass for months</strong>. It passes whenever the first block&#39;s <code>await</code>
+resolves on the next microtask with nothing pending, and fails the day some unrelated
+activity makes that await wait out a real settling round — one that now includes the second
+block&#39;s mutation. Nothing about the code changed; the timing did.</p>
+<p>So: <strong>steps that depend on each other belong in a single <code>test()</code>.</strong></p>
+<pre><code class="language-typescript">// WRONG — two blocks sharing state; they interleave
+test(&#39;it hydrates&#39;, async () =&gt; { await updates(); expect(input.value).toBe(&#39;a&#39;) })
+test(&#39;it responds to input&#39;, async () =&gt; { input.value = &#39;b&#39;; await updates() })
+
+// RIGHT — one flow, one test
+test(&#39;it hydrates, then responds to input&#39;, async () =&gt; {
+  await updates()
+  expect(input.value).toBe(&#39;a&#39;)
+  input.value = &#39;b&#39;
+  await updates()
+  expect(state.value).toBe(&#39;b&#39;)
+})
+</code></pre>
+<p>Two consequences worth knowing. Assertions about <strong>counts</strong> should be deltas rather than
+absolutes, since another example may be adding elements while you look. And a test that
+leaves global state behind can perturb a concurrent one — clean up inside the test that made
+the mess.</p>
 <h3>Async Tests</h3>
 <p>Tests can be async functions. Use <code>waitMs</code> for simple delays and <code>waitFor</code> to wait
 for dynamically created elements:</p>

@@ -59,7 +59,7 @@
   "peerDependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "happy-dom": "^20.7.0",
-    "marked": "^16.4.2",
+    "marked": "^16.4.2 || ^17.0.0 || ^18.0.0",
     "tjs-lang": "^0.12.0",
     "tosijs": "^1.7.8",
     "chokidar": "^4.0.3"

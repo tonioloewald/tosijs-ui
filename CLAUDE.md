@@ -386,7 +386,13 @@ See `package.json` for current versions. The notable ones:
   editor in another) and tosijs#21 (change-handler value staleness). Raise it only with a
   reason recorded here; `bun run test-consumer` asserts the devDep satisfies the declared
   peer range, so the two cannot drift apart silently (#57).
-- `marked`: Markdown parsing (peer dep)
+- `marked`: Markdown parsing (peer dep). Range is `^16.4.2 || ^17.0.0 || ^18.0.0` — an
+  explicit union of majors that were **actually tested**, not a `>=` that would claim majors
+  nobody has run. The consumed surface is three things (`marked(text, options)`,
+  `marked.parseInline(text)`, and the `MarkedOptions` type), which is why the majors are
+  drop-in: verified byte-identical output on 16.4.2 / 17.0.6 / 18.0.9, plus a full
+  unit+Playwright+doc-test run with 18 swapped in (#60, reported by snowfox). When marked 19
+  lands, run that same swap before extending the union.
 - `tjs-lang`: live-example transpiler (optional peer dep, lazy-loaded — a plain component consumer never pulls it in). Live examples load its **self-contained browser bundles** (`tjs-lang/browser` + `tjs-lang/browser/from-ts`; the TypeScript compiler lazy-loads from a CDN only for `ts` examples). Load order: installed peer → **same-origin** copy the doc-site build ships under `/tjs/` (via `__TJS_LOCAL_BASE`) → CDN chain (jsdelivr → unpkg → esm.sh). The version is pinned by `TJS_VERSION` in `src/live-example/code-transform.ts` — **bump it in lockstep with the dep** when upgrading. (Replaced `sucrase`, which is gone.)
 - `happy-dom`: DOM simulation for unit tests (dev dep); also the ePub builder's HTML→XHTML pass. `@resvg/resvg-js`: rasterizes the generated ePub cover. Both `happy-dom` and `@resvg/resvg-js` are **optional peer deps** (`peerDependenciesMeta.optional`) as well as dev deps — an adopter building ePubs via `tosijs-ui/site` needs them installed (both are lazy-loaded with a graceful fallback + warning when absent).
 - Components use custom HTML tags with `tosi-` prefix (e.g., `<tosi-select>`, `<tosi-dialog>`)

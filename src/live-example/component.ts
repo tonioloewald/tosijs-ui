@@ -362,6 +362,40 @@ Tests have access to:
 - `waitFor(selector, timeout?)` - wait for an element to appear (default 1s timeout)
 - All context libraries (tosijs, tosijs-ui, etc.)
 
+### Tests run CONCURRENTLY — one `test()` per flow
+
+Each `test()` body is invoked **as it is registered**, and async bodies are gathered with
+`Promise.all`. So test 2's synchronous body runs while test 1 is sitting at its first
+`await`, and tests in *other examples on the same page* overlap too.
+
+This matters because splitting one flow across two `test()` blocks that share state is a
+**latent race that can pass for months**. It passes whenever the first block's `await`
+resolves on the next microtask with nothing pending, and fails the day some unrelated
+activity makes that await wait out a real settling round — one that now includes the second
+block's mutation. Nothing about the code changed; the timing did.
+
+So: **steps that depend on each other belong in a single `test()`.**
+
+```typescript
+// WRONG — two blocks sharing state; they interleave
+test('it hydrates', async () => { await updates(); expect(input.value).toBe('a') })
+test('it responds to input', async () => { input.value = 'b'; await updates() })
+
+// RIGHT — one flow, one test
+test('it hydrates, then responds to input', async () => {
+  await updates()
+  expect(input.value).toBe('a')
+  input.value = 'b'
+  await updates()
+  expect(state.value).toBe('b')
+})
+```
+
+Two consequences worth knowing. Assertions about **counts** should be deltas rather than
+absolutes, since another example may be adding elements while you look. And a test that
+leaves global state behind can perturb a concurrent one — clean up inside the test that made
+the mess.
+
 ### Async Tests
 
 Tests can be async functions. Use `waitMs` for simple delays and `waitFor` to wait
