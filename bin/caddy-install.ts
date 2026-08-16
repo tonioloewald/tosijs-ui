@@ -45,6 +45,30 @@ const flag = (name: string): string | undefined => {
 }
 const has = (name: string): boolean => args.includes(`--${name}`)
 
+/*
+Reject anything we do not understand, BEFORE reaching the network.
+
+An unrecognised flag used to be ignored, so `--status` — which this bin has never had — read
+as "no flags at all" and the bin went straight on to ssh into the configured host. A tool
+that contacts someone's server must not treat an unknown instruction as consent to proceed.
+*/
+const KNOWN = ['--go', '--help']
+const unknown = args.filter(
+  (a) => !KNOWN.includes(a) && !/^--(host|template)=/.test(a)
+)
+if (unknown.length || has('help')) {
+  const bad = unknown.length
+  console.error(
+    (bad ? `\nUnknown option(s): ${unknown.join(' ')}\n` : '') +
+      `\ntosijs-caddy-install — install the Caddy snippets the deploy/tunnel bins need\n\n` +
+      `  tosijs-caddy-install                 DRY RUN — shows the diff, changes nothing\n` +
+      `  tosijs-caddy-install --go            substitute, validate, install, reload\n` +
+      `  --host=user@box                      override the configured preview host\n` +
+      `  --template=./path/to/Caddyfile       use your own template\n`
+  )
+  process.exit(bad ? 1 : 0)
+}
+
 const host =
   flag('host') ?? process.env.PREVIEW_HOST ?? siteConfig.preview?.host
 const go = has('go')
@@ -124,9 +148,15 @@ caddy fmt --overwrite /etc/caddy/Caddyfile.new
 caddy validate --config /etc/caddy/Caddyfile.new
 
 if [ "${go ? '1' : '0'}" = "1" ]; then
+  # Keep the outgoing config. This replaces a file that may be serving OTHER sites, and
+  # "validated" only means it parses — it does not mean it is the config you wanted.
+  if [ -f /etc/caddy/Caddyfile ]; then
+    cp -p /etc/caddy/Caddyfile /etc/caddy/Caddyfile.bak
+  fi
   mv /etc/caddy/Caddyfile.new /etc/caddy/Caddyfile
   systemctl reload caddy
   echo "Installed /etc/caddy/Caddyfile and reloaded caddy."
+  echo "Previous config saved as /etc/caddy/Caddyfile.bak"
 else
   echo "--- would change /etc/caddy/Caddyfile (token redacted) ---"
   if [ -f /etc/caddy/Caddyfile ]; then

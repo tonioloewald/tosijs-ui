@@ -552,10 +552,43 @@ export async function devServer(
   */
   const treeLock = acquireBuildLock('.', 'dev-server', { port: PORT })
   if (!treeLock.ok) {
-    console.error(describeHolder(treeLock.holder!))
-    process.exit(1)
+    /*
+    WARN, do not exit.
+
+    Exiting here broke two of the four documented release lanes: `bun playwright test` and
+    `bun run test-browser` each bring up their OWN dev server, so with one already running
+    the second was refused and the lane died — a guard against racing builders killing the
+    very lanes it was added to protect.
+
+    A standalone `buildSite()` still REFUSES (see orchestrator), which is the case #51
+    actually reported: a one-shot build wiping the tree under a live watcher. Two dev servers
+    is the milder shape — each rebuilds its own way and the loser is a stale page, not a
+    half-populated site — and it was the status quo before this lock existed, so warning
+    restores previous behaviour instead of inventing a new failure.
+
+    Also: `devServer` is a public export. Library code that calls `process.exit` on a
+    condition the caller did not ask about is the pattern this file already argues against
+    fifteen lines below, for `preflight`.
+    */
+    console.warn(
+      describeHolder(treeLock.holder!) +
+        `   Continuing anyway — two dev servers race less destructively than a\n` +
+        `   standalone build does, and refusing here would break the test lanes.\n`
+    )
   }
-  process.on('exit', () => treeLock.release())
+  const releaseTreeLock = () => treeLock.release()
+  process.on('exit', releaseTreeLock)
+  // `process.exit` runs 'exit' handlers, but a bare Ctrl-C does NOT — the default SIGINT
+  // action terminates without them, leaving a lock whose owner is gone. Harmless (the next
+  // acquirer sees a dead pid) but it looks like a held lock, which costs someone a minute.
+  process.on('SIGINT', () => {
+    releaseTreeLock()
+    process.exit(130)
+  })
+  process.on('SIGTERM', () => {
+    releaseTreeLock()
+    process.exit(143)
+  })
   const PUBLIC = path.resolve('./', config.outputDir ?? 'docs')
   const isSPA = true
   const testMode = !!opts.test
@@ -620,7 +653,8 @@ export async function devServer(
 
   /*
   Magic-link auth, so a workspace exposed via `tosijs-tunnel` can be edited from
-  anywhere. A LINK token rides in a URL and is spent on first use; it is exchanged for
+  anywhere. A LINK token rides in a URL and is redeemable until it expires (or once, under
+  `linkPolicy: 'single-use'`); it is exchanged for
   a durable SESSION cookie that never appears in a URL. See dev-auth.ts for why that
   asymmetry is the whole design.
 
@@ -631,17 +665,24 @@ export async function devServer(
   const auth = createAuthState()
   const LINK_PARAM = 't'
 
-  /** Print a fresh single-use link. Called on demand (SIGUSR2) and by --link. */
+  /**
+   * Print a fresh edit link. Called on demand (SIGUSR2) and by --link.
+   *
+   * The wording is derived from the POLICY IN FORCE. It used to say "single-use … then it is
+   * spent" unconditionally, and kept saying it after the default became a reusable window —
+   * a false statement printed at the exact moment someone decides who to share a link with,
+   * which is the worst possible place to be wrong about a credential.
+   */
   const printLink = (): string => {
-    const token = issueLink(
-      auth,
-      Date.now(),
-      resolveLinkSettings(config.preview?.tunnel).ttlMs
-    )
+    const { policy, ttlMs } = resolveLinkSettings(config.preview?.tunnel)
+    const token = issueLink(auth, Date.now(), ttlMs)
     const base = config.preview?.tunnel?.url ?? `https://localhost:${PORT}`
     const url = `${base}/?${LINK_PARAM}=${token}`
+    const minutes = Math.round(ttlMs / 60000)
     console.log(
-      `\n🔗 Single-use edit link (valid 15 min, then it is spent):\n   ${url}\n`
+      policy === 'single-use'
+        ? `\n🔗 Single-use edit link (valid ${minutes} min, and spent once redeemed):\n   ${url}\n`
+        : `\n🔗 Edit link — usable on more than one device for ${minutes} min, then it expires:\n   ${url}\n`
     )
     return url
   }
@@ -1340,7 +1381,7 @@ export async function devServer(
             `@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}` +
             `code{background:#8881;padding:.1em .4em;border-radius:4px}</style>` +
             `<h1>This workspace needs an invite link</h1>` +
-            `<p>Ask for a fresh one — they are single-use and expire after 15 minutes.</p>` +
+            `<p>Ask for a fresh one — invite links expire.</p>` +
             `<p><code>${TUNNEL_LINK_CMD}</code></p>`,
           {
             status: 401,
@@ -1407,9 +1448,9 @@ export async function devServer(
         `@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}` +
         `code{background:#8881;padding:.1em .4em;border-radius:4px}</style>` +
         `<h1>That invite link has been used</h1>` +
-        `<p>Invite links are single-use and expire after 15 minutes. If you pasted this ` +
+        `<p>Invite links expire. If you pasted this ` +
         `link into a chat app, its link preview may have spent it before you clicked — ` +
-        `which is exactly why they are single-use.</p>` +
+        `which is exactly why they expire.</p>` +
         `<p>Ask for a fresh one: <code>${TUNNEL_LINK_CMD}</code></p>`
       return new Response(spent, {
         status: 401,

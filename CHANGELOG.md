@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.9.9
+## 1.10.0
 
 Mostly a **silent-failure** release: several things that were quietly not working, or quietly
 not being checked, now say so. If you use `tosijs-ui/site`, three of these have probably cost
@@ -14,12 +14,6 @@ you time already.
 distinction matters as soon as the row count changes, because the same pixel offset then
 shows entirely different rows. Set `preserveScroll = false` for the case where a render means
 "here is a different dataset" and starting at the top is right.
-
-**Per-group counts.** `table.rowGroupCounts` is a `Map` from group id to `{ visible, total }`
-— rendered rows against rows before filtering — so a cell can say "showing 2 of 7" or offer a
-show-all toggle. Only the table sees both sides of the filter. `table.groupIdFor(row)` gives
-a row's group id, which matters when the grouping was _inferred_ from
-`nonRepeatingGroupedRowCells`.
 
 ### The tunnel: links now work on a second device
 
@@ -86,8 +80,6 @@ bundle is itself a published artifact. If you have that history:
   self-documenting library keeps the guard on. (#71)
 - **`preview.tunnel.linkPolicy`** (`'window'` | `'single-use'`) and
   **`preview.tunnel.linkTtlMinutes`** (default 15) set the link security level.
-- **`acquireBuildLock` / `lockDecision`** (`build-lock.ts`) — the output-tree lock behind the
-  concurrent-build refusal, exported for anyone coordinating their own build steps.
 - **`SiteConfig.preview.host` is optional.** The documented practice supplies it from
   `PREVIEW_HOST`, so a correct config used to fail typecheck. (#72)
 - **`marked` peer is `^16.4.2 || ^17.0.0 || ^18.0.0`** — it was two majors behind `latest`, so
@@ -100,10 +92,21 @@ bundle is itself a published artifact. If you have that history:
   (#18)
 - **Host bootstrap in `doc-site-system.md` now gives the actual commands** rather than
   describing the danger and leaving the dangerous step as an exercise.
-- **`svg2DataUrl` writes `stroke-width` / `stroke-linecap` / `stroke-linejoin` in kebab-case.**
-  It wrote `strokeWidth` / `strokeLinecap` / `strokeLinejoin`, which SVG ignores, so serialized
-  icons fell back to 1px mitred UA defaults. Explicit `fill` / `stroke` /
-  `strokeWidth` arguments now win over the baked-in style instead of being clobbered. (#68)
+- **`svg2DataUrl`: two real fixes, and one that is NOT done.** It wrote `strokeWidth` /
+  `strokeLinecap` / `strokeLinejoin` — names SVG ignores — on any element carrying inline
+  style, and explicit `fill` / `stroke` / `strokeWidth` arguments were clobbered by the style
+  pass. Both fixed.
+
+  **[#68](https://github.com/tonioloewald/tosijs-ui/issues/68) is NOT closed by this.** Most
+  icons carry their styling on the **root** `<svg>`, which this does not touch, so a
+  `stroked` icon — about 280 of ~287 — still serializes with no stroke at all and renders as
+  a solid black wedge. Verified after the fix: `svg2DataUrl(icons.chevronRight())` emits no
+  `stroke` and no `stroke-width`. Prefer inline `<svg>` over a data URL for stroked icons
+  until this lands.
+
+- **`acquireBuildLock` / `lockDecision`** in `build-lock.ts` — the
+  output-tree lock behind the concurrent-build refusal. **Internal**: not exported from
+  `tosijs-ui/site`, so do not build on it yet. Say so if you want it public.
 - **`bunfig.toml` root is the repo, not `src`** — tests outside `src/` were silently never
   collected, so `bin/` (four executables adopters invoke directly) was outside the unit lane.
 

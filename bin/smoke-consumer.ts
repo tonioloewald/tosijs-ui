@@ -152,13 +152,23 @@ try {
   // to the shell, which then chokes on TypeScript). That is a property of the first two
   // bytes, so read them — no execution required, and it works for every bin including
   // the destructive ones.
-  // `tosijs-caddy-install` is safe to run: it is dry-run by default and exits before it
-  // spawns ssh when no host is configured, which is the state of a throwaway project.
-  const SAFE_TO_RUN = new Set([
-    'tosijs-tunnel',
-    'tosijs-deploy',
-    'tosijs-caddy-install',
-  ])
+  /*
+  `tosijs-caddy-install` is NOT run here, and the reasoning that put it here was wrong.
+
+  The comment used to say it "exits before it spawns ssh when no host is configured, which
+  is the state of a throwaway project" — but the scratch config forty lines above sets
+  `preview.host`, so a host IS configured. `--status` is not a flag the bin parses, so it was
+  ignored and the bin proceeded to `ssh <host> bash -s`, whose remote script opens with an
+  unconditional `cat > /etc/caddy/Caddyfile.tpl` — before the `--go` check. With
+  `PREVIEW_HOST` set (which this release documents as the recommended way to supply it, and
+  which Bun auto-loads from `.env`), a MANDATORY release lane would write to /etc on the
+  maintainer's real preview box.
+
+  The regression this loop exists for is a missing shebang, and that is read from the first
+  two bytes below — no execution required. So bins that reach the network do not need to run
+  at all, and the env is scrubbed besides.
+  */
+  const SAFE_TO_RUN = new Set(['tosijs-tunnel', 'tosijs-deploy'])
   for (const [name, rel] of Object.entries(pkg.bin ?? {}) as [
     string,
     string
@@ -184,7 +194,18 @@ try {
     // Only the read-only bins are actually executed. Both exit non-zero without a
     // config, which is fine: we are looking for shell-level "cannot execute" noise.
     if (!SAFE_TO_RUN.has(name)) continue
-    const run = await $`${shim} --status`.cwd(proj).nothrow().quiet()
+    // Scrub the ambient preview host. `tosijs-deploy --status` reaches the configured host
+    // (an rsync --dry-run), so an exported PREVIEW_HOST would point a release lane at a real
+    // server. The scratch config's `nobody@example.invalid` does not resolve, which is the
+    // point.
+    const scrubbed = { ...process.env }
+    delete scrubbed.PREVIEW_HOST
+    delete scrubbed.PREVIEW_SSH
+    const run = await $`${shim} --status`
+      .cwd(proj)
+      .env(scrubbed)
+      .nothrow()
+      .quiet()
     const err = run.stderr.toString()
     check(
       `bin runs via node_modules/.bin: ${name}`,

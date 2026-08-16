@@ -17,7 +17,7 @@ const NOW = 1_700_000_000_000
 
 test('a link token is spent on first use — under the single-use policy', () => {
   /*
-  This was the DEFAULT until #74, and the property it protects is real: a token scraped from
+  This was the DEFAULT until 1.10.0, and the property it protects is real: a token scraped from
   a log, a history entry or a chat preview is worthless because the first redemption consumed
   it. It is now opt-in rather than automatic.
 
@@ -449,7 +449,7 @@ test('a fresh redemption wins even if a session is already held', () => {
   ).toBe('issue-session')
 })
 
-// ── link redemption policy (tosijs-ui#74) ────────────────────────────────────
+// ── link redemption policy ───────────────────────────────────────────────────
 
 import {
   issueLink,

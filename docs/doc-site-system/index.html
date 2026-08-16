@@ -911,7 +911,7 @@ tosijs-tunnel --status   # is one already up?
 tosijs-tunnel --link     # print a fresh edit link (redeemable for 15 min)
 tosijs-tunnel --close    # close any tunnel this project opened
 </code></pre>
-<p><strong>How the gate works.</strong> <code>--link</code> prints a URL carrying a single-use token. Opening it
+<p><strong>How the gate works.</strong> <code>--link</code> prints a URL carrying a short-lived token (see <em>Link security</em> below). Opening it
 once exchanges the token for a durable <code>HttpOnly; Secure; SameSite=Lax</code> session cookie
 and redirects to the same URL with the token stripped — so the token never lands in
 history, in the address bar, or in a <code>Referer</code>. A second window shares the cookie. A link

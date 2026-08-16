@@ -5,7 +5,7 @@ Expose THIS machine's dev server at an authenticated public URL.
   tosijs-tunnel          # open the tunnel (foreground; Ctrl-C closes it)
   tosijs-tunnel --status # is one already up?
   tosijs-tunnel --close  # close any tunnel this project opened
-  tosijs-tunnel --link   # ask the dev server to print a fresh single-use edit link
+  tosijs-tunnel --link   # ask the dev server to print a fresh edit link
 
 (In this repo `bun run tunnel` is a shortcut for the same thing.)
 

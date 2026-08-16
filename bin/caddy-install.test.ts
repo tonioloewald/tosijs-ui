@@ -165,3 +165,34 @@ test('the shipped template still carries the placeholders the guard looks for', 
   expect(shipped).toContain('{{PREVIEW_DOMAIN}}')
   expect(shipped).toContain('__PREVIEW_TOKEN__')
 })
+
+test('--go keeps the outgoing config as .bak', () => {
+  // It replaces a file that may be serving OTHER sites, and "validated" only means it
+  // parses — not that it is the config you meant.
+  writeEnv(FULL_ENV)
+  const tpl = join(sandbox, 'Ok')
+  writeFileSync(tpl, 'x.{{PREVIEW_DOMAIN}} {\n  respond "hi"\n}\n')
+  writeFileSync(etc('Caddyfile'), 'the previous config\n')
+  return run(['--go'], tpl).then(({ code }) => {
+    expect(code).toBe(0)
+    expect(readFileSync(etc('Caddyfile.bak'), 'utf8')).toBe(
+      'the previous config\n'
+    )
+  })
+})
+
+test('an unknown flag is refused before anything reaches the network', async () => {
+  /*
+  `--status` was not a flag this bin parses, so it was IGNORED — and the bin went straight on
+  to ssh into the configured host, whose remote script opens with an unconditional
+  `cat > /etc/caddy/Caddyfile.tpl`. That turned a release lane into a writer on someone's
+  real server. A tool that contacts a machine must not read an instruction it does not
+  understand as consent to proceed.
+  */
+  writeEnv(FULL_ENV)
+  const { code, out } = await run(['--status'])
+  expect(code).not.toBe(0)
+  expect(out).toContain('Unknown option')
+  // Nothing was written, because nothing was run.
+  expect(existsSync(etc('Caddyfile.tpl'))).toBe(false)
+})
