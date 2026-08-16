@@ -98,3 +98,46 @@ describe('checkExamples', () => {
     expect(bake?.js).toContain('const n = 1')
   })
 })
+
+// ── contextKeys reach the check from config (tosijs-ui#71) ───────────────────
+
+test('REGRESSION: a library documenting ITSELF can keep the guard on', async () => {
+  /*
+  The check resolves example imports against the doc-system's example context, which
+  defaults to tosijs / tosijs-ui. A library whose own pages `import … from 'my-lib'` failed
+  every example, and the only escape was `checkExamples: false`.
+
+  With the guard off, broken snippets ship. One adopter published a page teaching its own
+  core contract with a hard SyntaxError in the example, and ten pages importing a symbol
+  their barrel did not export — exactly what this check exists to catch.
+  */
+  const corpus = [
+    {
+      filename: 'guide.md',
+      title: 'Guide',
+      text: "# Guide\n\n```js\nimport { thing } from 'my-lib'\nconsole.log(thing)\n```\n",
+    },
+  ]
+  const withoutKey = await checkExamples(corpus as any)
+  expect(
+    withoutKey.problems.length + withoutKey.warnings.length
+  ).toBeGreaterThan(0)
+
+  const withKey = await checkExamples(corpus as any, {
+    contextKeys: ['tosijs', 'tosijs-ui', 'my-lib'],
+  })
+  expect(withKey.problems).toEqual([])
+  expect(withKey.warnings).toEqual([])
+})
+
+test('the default context is still tosijs / tosijs-ui', async () => {
+  const corpus = [
+    {
+      filename: 'g.md',
+      title: 'G',
+      text: "# G\n\n```js\nimport { tosi } from 'tosijs'\nvoid tosi\n```\n",
+    },
+  ]
+  const out = await checkExamples(corpus as any)
+  expect(out.problems).toEqual([])
+})

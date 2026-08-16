@@ -102,11 +102,22 @@ try {
       // Exercises the hydration-bundle path with NO `bundleOutDir` — the default an
       // adopter gets. Without this the bundle step never ran here at all (#69).
       `  bundleEntry: './src/entry.ts',\n` +
+      // A self-documenting library: the example imports the project's OWN package name,
+      // which is not in the default tosijs/tosijs-ui context. Without contextKeys reaching
+      // the checker the build fails — and that plumbing is invisible to unit tests (#71).
+      `  checkExamples: { contextKeys: ['tosijs', 'tosijs-ui', 'consumer-smoke'] },\n` +
       `  port: 8018,\n` +
       `  preview: { host: 'nobody@example.invalid', tunnel: {} },\n` +
       `})\n`
   )
-  await Bun.write(`${proj}/src/index.md`, `# Consumer Smoke\n\nHello.\n`)
+  await Bun.write(
+    `${proj}/src/index.md`,
+    `# Consumer Smoke\n\nHello.\n\n` +
+      '```js\n' +
+      `import { hello } from 'consumer-smoke'\n` +
+      `preview.textContent = hello\n` +
+      '```\n'
+  )
   await Bun.write(`${proj}/src/entry.ts`, `export const hello = 'hi'\n`)
   await Bun.write(
     `${proj}/build.ts`,
@@ -297,6 +308,22 @@ try {
     'a plain build succeeds without chokidar installed',
     build.exitCode === 0,
     (build.stderr.toString() || build.stdout.toString()).slice(0, 400)
+  )
+
+  /*
+  `contextKeys` must actually REACH the example checker.
+
+  The scratch project documents itself — its example imports `consumer-smoke`, its own
+  package name — which is not in the default tosijs/tosijs-ui context. An unresolvable
+  import does not fail the build; it WARNS and demotes the block to display-only. So the
+  signal is the warning, not the exit code, and asserting on the exit code alone detected
+  nothing when the plumbing was deliberately broken (#71).
+  */
+  const buildOut = build.stdout.toString() + build.stderr.toString()
+  check(
+    'checkExamples.contextKeys reaches the checker (self-import still runnable)',
+    !/display-only/.test(buildOut),
+    buildOut.slice(-500)
   )
 
   /*

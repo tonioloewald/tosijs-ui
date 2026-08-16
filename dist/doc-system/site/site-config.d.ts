@@ -219,10 +219,24 @@ export interface SiteConfig {
      * error, or illustrative code mistakenly tagged with an executable language
      * (`js`/`ts`/`tjs`/`test`) instead of the display-only `typescript`. Catches it
      * at build time, on every page, instead of only when someone opens that page.
-     * Default true; assumes the default `tosijs` / `tosijs-ui` example context —
-     * set false if your examples import from a custom `context` the check can't see.
+     * Default true.
+     *
+     * The check resolves example imports against the doc-system's example context, which is
+     * `tosijs` / `tosijs-ui` by default. A library that documents ITSELF imports its own
+     * package name, so pass `contextKeys` rather than turning the guard off:
+     *
+     * ```ts
+     * checkExamples: { contextKeys: ['tosijs', 'tosijs-ui', 'my-lib'] }
+     * ```
+     *
+     * `false` disables it entirely, which used to be the only option for a self-documenting
+     * library — and with the guard off, broken snippets ship: one adopter published a page
+     * teaching its own core contract with a hard `SyntaxError` in the example, plus ten pages
+     * importing a symbol their barrel did not export (tosijs-ui#71).
      */
-    checkExamples?: boolean;
+    checkExamples?: boolean | {
+        contextKeys?: string[];
+    };
     /**
      * Opt in to the import-resolver service worker (tjs-lang 0.11+): live examples can
      * import real npm packages from anywhere — bare specifiers the doc-system doesn't

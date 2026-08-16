@@ -106,13 +106,13 @@ const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
  * because the health-conscious path is unavailable. A child that runs and reports
  * problems is not a failure — that is the whole point of it.
  */
-async function checkExamplesInChild(docsJson, importPrefix) {
+async function checkExamplesInChild(docsJson, importPrefix, contextKeys = []) {
     const cliTs = `${import.meta.dir}/check-examples-cli.ts`;
     const cli = existsSync(cliTs)
         ? cliTs
         : `${import.meta.dir}/check-examples-cli.js`;
     try {
-        const child = spawn(['bun', cli, docsJson], {
+        const child = spawn(['bun', cli, docsJson, ...contextKeys], {
             stdout: 'pipe',
             stderr: 'pipe',
             // When the resolver's on, let the check accept non-context imports (they validate
@@ -146,7 +146,10 @@ async function checkExamplesInChild(docsJson, importPrefix) {
         console.warn(`⚠️  example check: could not run it in a child (${String(e)}) — ` +
             `falling back to in-process.`);
         const corpus = JSON.parse(await Bun.file(docsJson).text());
-        return checkExamples(corpus, importPrefix ? { importPrefix } : {});
+        return checkExamples(corpus, {
+            ...(importPrefix ? { importPrefix } : {}),
+            ...(contextKeys.length ? { contextKeys } : {}),
+        });
     }
 }
 /**
@@ -381,7 +384,9 @@ export async function buildSite(config, opts = {}) {
                 : undefined;
             let exampleBakes;
             if (config.checkExamples !== false) {
-                const { problems, warnings, bakes } = await checkExamplesInChild(DOCS_JSON, resolverPrefix);
+                const { problems, warnings, bakes } = await checkExamplesInChild(DOCS_JSON, resolverPrefix, typeof config.checkExamples === 'object'
+                    ? config.checkExamples.contextKeys ?? []
+                    : []);
                 exampleBakes = bakes;
                 // Unsupported imports don't fail the build — the code isn't broken, it just
                 // can't run in the doc environment (almost always illustrative code that

@@ -137,14 +137,15 @@ const escapeRegExp = (s: string): string =>
  */
 async function checkExamplesInChild(
   docsJson: string,
-  importPrefix?: string
+  importPrefix?: string,
+  contextKeys: string[] = []
 ): Promise<ExampleCheck> {
   const cliTs = `${import.meta.dir}/check-examples-cli.ts`
   const cli = existsSync(cliTs)
     ? cliTs
     : `${import.meta.dir}/check-examples-cli.js`
   try {
-    const child = spawn(['bun', cli, docsJson], {
+    const child = spawn(['bun', cli, docsJson, ...contextKeys], {
       stdout: 'pipe',
       stderr: 'pipe',
       // When the resolver's on, let the check accept non-context imports (they validate
@@ -181,7 +182,10 @@ async function checkExamplesInChild(
         `falling back to in-process.`
     )
     const corpus = JSON.parse(await Bun.file(docsJson).text())
-    return checkExamples(corpus, importPrefix ? { importPrefix } : {})
+    return checkExamples(corpus, {
+      ...(importPrefix ? { importPrefix } : {}),
+      ...(contextKeys.length ? { contextKeys } : {}),
+    })
   }
 }
 
@@ -448,7 +452,10 @@ export async function buildSite(
       if (config.checkExamples !== false) {
         const { problems, warnings, bakes } = await checkExamplesInChild(
           DOCS_JSON,
-          resolverPrefix
+          resolverPrefix,
+          typeof config.checkExamples === 'object'
+            ? config.checkExamples.contextKeys ?? []
+            : []
         )
         exampleBakes = bakes
         // Unsupported imports don't fail the build — the code isn't broken, it just
