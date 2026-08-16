@@ -32,6 +32,7 @@ import {
   issueLink,
   readCookie,
   redeemLink,
+  resolveLinkSettings,
   sessionCookie,
   urlWithoutToken,
   validSession,
@@ -632,7 +633,11 @@ export async function devServer(
 
   /** Print a fresh single-use link. Called on demand (SIGUSR2) and by --link. */
   const printLink = (): string => {
-    const token = issueLink(auth, Date.now())
+    const token = issueLink(
+      auth,
+      Date.now(),
+      resolveLinkSettings(config.preview?.tunnel).ttlMs
+    )
     const base = config.preview?.tunnel?.url ?? `https://localhost:${PORT}`
     const url = `${base}/?${LINK_PARAM}=${token}`
     console.log(
@@ -1349,7 +1354,12 @@ export async function devServer(
       }
     }
     if (linkToken) {
-      const session = redeemLink(auth, linkToken, Date.now())
+      const session = redeemLink(
+        auth,
+        linkToken,
+        Date.now(),
+        resolveLinkSettings(config.preview?.tunnel).policy
+      )
       const clean = urlWithoutToken(request.url, LINK_PARAM)
       const headers: Record<string, string> = {
         Location: clean,

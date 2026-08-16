@@ -1,5 +1,24 @@
-/** A URL token is spent on first use, but must also age out if never used. */
+/** How long a link is redeemable. Overridable per project — see `LinkPolicy`. */
 export declare const LINK_TOKEN_TTL_MS: number;
+/**
+ * How a magic link may be redeemed.
+ *
+ * - `'window'` (default) — redeemable REPEATEDLY until it ages out.
+ * - `'single-use'` — spent on first redemption, the strict form.
+ *
+ * The default was `'single-use'`, and it was wrong in practice. A link that dies on first
+ * use means: glance at it and close the tab, you need a new link; open it on the laptop then
+ * reach for your phone, dead link. The workspace is meant to be the thing you read on a
+ * phone, so the mode collided with the feature's own purpose.
+ *
+ * What settled it was an adopter (manta) replacing it with a never-expiring link of their
+ * own. Security that people route around is not security — it is friction plus a worse
+ * system built next to it. A 15-minute window in which you can open the same link on both
+ * your devices is a smaller concession than the homemade permanent token it was provoking,
+ * and the durable credential was always the session cookie anyway: the link is only the
+ * thing that hands one over.
+ */
+export type LinkPolicy = 'window' | 'single-use';
 /** Sessions are the durable half — long enough that you are not re-linking daily. */
 export declare const SESSION_TTL_MS: number;
 export declare const SESSION_COOKIE = "tosi_dev_session";
@@ -16,15 +35,33 @@ export interface AuthState {
 export declare function createAuthState(): AuthState;
 /** Drop anything expired. Called on every use so the maps cannot grow without bound. */
 export declare function prune(state: AuthState, now: number): void;
-/** Issue a link token to put in a URL. */
-export declare function issueLink(state: AuthState, now: number): string;
+/** Issue a link token to put in a URL. `ttlMs` overrides the 15-minute default. */
+export declare function issueLink(state: AuthState, now: number, ttlMs?: number): string;
 /**
- * Spend a link token for a session token, or return null.
+ * Read the link settings off a site config, with the defaults applied.
  *
- * Deleting BEFORE returning is what makes it single-use — and the delete happens
- * whether or not the token had expired, so a replay of an expired token cannot linger.
+ * A non-finite or non-positive `linkTtlMinutes` falls back to the default rather than
+ * minting a token that is already expired — a config typo should not silently produce links
+ * that never work, which reads as "the tunnel is broken".
  */
-export declare function redeemLink(state: AuthState, token: string, now: number): string | null;
+export declare function resolveLinkSettings(tunnel?: {
+    linkPolicy?: LinkPolicy;
+    linkTtlMinutes?: number;
+}): {
+    policy: LinkPolicy;
+    ttlMs: number;
+};
+/**
+ * Redeem a link token for a session token, or return null.
+ *
+ * Under `'single-use'` the token is deleted BEFORE returning — and deleted whether or not it
+ * had expired, so a replay of an expired token cannot linger. Under `'window'` it survives
+ * until `prune` ages it out, so the same link works on a second device inside its lifetime.
+ *
+ * Either way an EXPIRED token is refused: `prune` runs first, so a stale link is gone from
+ * the set before the lookup. Widening reuse must not widen lifetime.
+ */
+export declare function redeemLink(state: AuthState, token: string, now: number, policy?: LinkPolicy): string | null;
 /** Is this session token live? */
 export declare function validSession(state: AuthState, token: string | undefined | null, now: number): boolean;
 /** Pull one cookie out of a Cookie header. */

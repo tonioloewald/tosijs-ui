@@ -18,7 +18,7 @@ import { auditDependencies, reportAudit } from './audit-guard.js';
 import { openDevBrowser } from './open-browser.js';
 import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, resolveLinkSettings, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
 /**
  * Every path the dev server watches for changes.
  *
@@ -534,7 +534,7 @@ export async function devServer(config, opts = {}) {
     const LINK_PARAM = 't';
     /** Print a fresh single-use link. Called on demand (SIGUSR2) and by --link. */
     const printLink = () => {
-        const token = issueLink(auth, Date.now());
+        const token = issueLink(auth, Date.now(), resolveLinkSettings(config.preview?.tunnel).ttlMs);
         const base = config.preview?.tunnel?.url ?? `https://localhost:${PORT}`;
         const url = `${base}/?${LINK_PARAM}=${token}`;
         console.log(`\n🔗 Single-use edit link (valid 15 min, then it is spent):\n   ${url}\n`);
@@ -1161,7 +1161,7 @@ export async function devServer(config, opts = {}) {
             }
         }
         if (linkToken) {
-            const session = redeemLink(auth, linkToken, Date.now());
+            const session = redeemLink(auth, linkToken, Date.now(), resolveLinkSettings(config.preview?.tunnel).policy);
             const clean = urlWithoutToken(request.url, LINK_PARAM);
             const headers = {
                 Location: clean,

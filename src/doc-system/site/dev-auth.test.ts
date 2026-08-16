@@ -15,14 +15,26 @@ import {
 
 const NOW = 1_700_000_000_000
 
-test('a link token is spent on first use', () => {
+test('a link token is spent on first use — under the single-use policy', () => {
+  /*
+  This was the DEFAULT until #74, and the property it protects is real: a token scraped from
+  a log, a history entry or a chat preview is worthless because the first redemption consumed
+  it. It is now opt-in rather than automatic.
+
+  The default traded it knowingly. Single-use made the link die when you glanced at it and
+  closed the tab, or when you opened it on a laptop and reached for your phone — in a feature
+  whose purpose is reading your workspace on a phone. An adopter had already replaced it with
+  a never-expiring link of their own, so the strict default was not buying the security it
+  looked like; it was buying a weaker homemade one next to it.
+
+  What replaces it is a bound on TIME rather than on uses: a scraped token is worthless once
+  the window closes, and the window is short and configurable. Anyone whose links travel
+  somewhere they do not control sets `linkPolicy: 'single-use'` and gets this back.
+  */
   const s = createAuthState()
   const link = issueLink(s, NOW)
-  const session = redeemLink(s, link, NOW)
-  expect(session).toBeTruthy()
-  // THE property: a token scraped from a log, history entry or chat preview is
-  // worthless because the first redemption consumed it.
-  expect(redeemLink(s, link, NOW)).toBe(null)
+  expect(redeemLink(s, link, NOW, 'single-use')).toBeTruthy()
+  expect(redeemLink(s, link, NOW, 'single-use')).toBe(null)
 })
 
 test('a link token expires even if never used', () => {
@@ -435,4 +447,77 @@ test('a fresh redemption wins even if a session is already held', () => {
   expect(
     resolveLinkArrival({ redeemed: 'sess-new', hasValidSession: true })
   ).toBe('issue-session')
+})
+
+// ── link redemption policy (tosijs-ui#74) ────────────────────────────────────
+
+import {
+  issueLink,
+  redeemLink,
+  validSession,
+  resolveLinkSettings,
+  createAuthState,
+} from './dev-auth.js'
+
+test('REGRESSION: by default a link works on a SECOND device inside its window', () => {
+  /*
+  The link was spent on first redemption. So: glance at it and close the tab, you need a new
+  link; open it on a laptop then reach for your phone, dead link — in a feature whose whole
+  point is reading your workspace on a phone. One adopter replaced it with a never-expiring
+  link of their own, which is the tell. Security people route around is friction plus a worse
+  system built beside it.
+  */
+  const state = createAuthState()
+  const token = issueLink(state, 1000)
+  const laptop = redeemLink(state, token, 2000)
+  const phone = redeemLink(state, token, 3000)
+  expect(laptop).toBeTruthy()
+  expect(phone).toBeTruthy()
+  expect(phone).not.toBe(laptop) // a distinct session each, not a shared one
+  expect(validSession(state, laptop, 4000)).toBe(true)
+  expect(validSession(state, phone, 4000)).toBe(true)
+})
+
+test("'single-use' still spends the token on first redemption", () => {
+  const state = createAuthState()
+  const token = issueLink(state, 1000)
+  expect(redeemLink(state, token, 2000, 'single-use')).toBeTruthy()
+  expect(redeemLink(state, token, 2500, 'single-use')).toBe(null)
+})
+
+test('REGRESSION: reuse does not widen LIFETIME — an expired link is still refused', () => {
+  // The whole safety of the looser default rests on this. A window that never closed would
+  // be the never-expiring token we are trying to make unnecessary.
+  const state = createAuthState()
+  const token = issueLink(state, 0)
+  const { ttlMs } = resolveLinkSettings()
+  expect(redeemLink(state, token, ttlMs - 1)).toBeTruthy()
+  expect(redeemLink(state, token, ttlMs + 1)).toBe(null)
+})
+
+test('linkTtlMinutes widens the window, and bounds it', () => {
+  const state = createAuthState()
+  const { ttlMs } = resolveLinkSettings({ linkTtlMinutes: 60 })
+  expect(ttlMs).toBe(60 * 60 * 1000)
+  const token = issueLink(state, 0, ttlMs)
+  expect(redeemLink(state, token, 59 * 60 * 1000)).toBeTruthy()
+  expect(redeemLink(state, token, 61 * 60 * 1000)).toBe(null)
+})
+
+test('defaults are window/15min, and a nonsense TTL falls back rather than expiring instantly', () => {
+  expect(resolveLinkSettings()).toEqual({ policy: 'window', ttlMs: 900_000 })
+  expect(resolveLinkSettings({}).policy).toBe('window')
+  for (const bad of [0, -5, NaN, Infinity]) {
+    // A typo must not mint links that never work — that reads as "the tunnel is broken".
+    expect(resolveLinkSettings({ linkTtlMinutes: bad }).ttlMs).toBe(900_000)
+  }
+})
+
+test('a session outlives the link that issued it', () => {
+  // The link is only the thing that hands over a credential; the cookie is the durable half.
+  const state = createAuthState()
+  const token = issueLink(state, 0)
+  const session = redeemLink(state, token, 1000)!
+  expect(redeemLink(state, token, 20 * 60 * 1000)).toBe(null) // link aged out
+  expect(validSession(state, session, 20 * 60 * 1000)).toBe(true) // session did not
 })

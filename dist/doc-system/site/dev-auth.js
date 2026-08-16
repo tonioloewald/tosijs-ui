@@ -32,7 +32,7 @@ Cookie flags, and why each:
 Build-time only. Never import this from browser code.
 */
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-/** A URL token is spent on first use, but must also age out if never used. */
+/** How long a link is redeemable. Overridable per project — see `LinkPolicy`. */
 export const LINK_TOKEN_TTL_MS = 15 * 60 * 1000;
 /** Sessions are the durable half — long enough that you are not re-linking daily. */
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -61,20 +61,38 @@ export function prune(state, now) {
         if (exp <= now)
             state.sessions.delete(t);
 }
-/** Issue a link token to put in a URL. */
-export function issueLink(state, now) {
+/** Issue a link token to put in a URL. `ttlMs` overrides the 15-minute default. */
+export function issueLink(state, now, ttlMs = LINK_TOKEN_TTL_MS) {
     prune(state, now);
     const token = mintToken();
-    state.links.set(token, now + LINK_TOKEN_TTL_MS);
+    state.links.set(token, now + ttlMs);
     return token;
 }
 /**
- * Spend a link token for a session token, or return null.
+ * Read the link settings off a site config, with the defaults applied.
  *
- * Deleting BEFORE returning is what makes it single-use — and the delete happens
- * whether or not the token had expired, so a replay of an expired token cannot linger.
+ * A non-finite or non-positive `linkTtlMinutes` falls back to the default rather than
+ * minting a token that is already expired — a config typo should not silently produce links
+ * that never work, which reads as "the tunnel is broken".
  */
-export function redeemLink(state, token, now) {
+export function resolveLinkSettings(tunnel) {
+    const minutes = tunnel?.linkTtlMinutes;
+    const ttlMs = typeof minutes === 'number' && Number.isFinite(minutes) && minutes > 0
+        ? minutes * 60 * 1000
+        : LINK_TOKEN_TTL_MS;
+    return { policy: tunnel?.linkPolicy ?? 'window', ttlMs };
+}
+/**
+ * Redeem a link token for a session token, or return null.
+ *
+ * Under `'single-use'` the token is deleted BEFORE returning — and deleted whether or not it
+ * had expired, so a replay of an expired token cannot linger. Under `'window'` it survives
+ * until `prune` ages it out, so the same link works on a second device inside its lifetime.
+ *
+ * Either way an EXPIRED token is refused: `prune` runs first, so a stale link is gone from
+ * the set before the lookup. Widening reuse must not widen lifetime.
+ */
+export function redeemLink(state, token, now, policy = 'window') {
     prune(state, now);
     // Constant-time lookup over the (tiny) set rather than Map.get, so a timing signal
     // can't distinguish "no such token" from "wrong token".
@@ -85,7 +103,8 @@ export function redeemLink(state, token, now) {
     }
     if (matched === null)
         return null;
-    state.links.delete(matched);
+    if (policy === 'single-use')
+        state.links.delete(matched);
     const session = mintToken();
     state.sessions.set(session, now + SESSION_TTL_MS);
     return session;

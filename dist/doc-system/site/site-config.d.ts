@@ -407,6 +407,30 @@ export interface SiteConfig {
              * session.
              */
             requireToken?: boolean;
+            /**
+             * How a magic link may be redeemed. Default `'window'`.
+             *
+             * - `'window'` — redeemable repeatedly until `linkTtlMinutes` elapses, so the same
+             *   link opens on your laptop AND your phone.
+             * - `'single-use'` — spent on first redemption. Ratchet up to this when the link
+             *   travels somewhere you do not control, e.g. pasted into a chat that others read.
+             *
+             * `'single-use'` was the default and it was wrong in practice: glance at a link and
+             * close the tab and you need a new one; open it on a laptop then reach for a phone
+             * and it is dead — in a feature whose whole point is reading your workspace on a
+             * phone. One adopter replaced it with a never-expiring link of their own, which is
+             * the tell: security people route around is friction plus a worse system built beside
+             * it.
+             */
+            linkPolicy?: 'window' | 'single-use';
+            /**
+             * How long a link stays redeemable, in minutes. Default 15.
+             *
+             * Raise it for a long-lived share; lower it (or use `'single-use'`) to tighten. This
+             * bounds the LINK, never the session it hands over — the session cookie is the
+             * durable credential and has its own lifetime.
+             */
+            linkTtlMinutes?: number;
         };
     };
     /**

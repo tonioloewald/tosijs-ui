@@ -494,7 +494,7 @@ build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-m
 <tr>
 <td><code>editableSources</code></td>
 <td><code>false</code></td>
-<td>Enables the dev server&#39;s <code>/__docstore/source</code> read+write endpoints, so &quot;edit page source&quot; and a live example&#39;s &quot;Save to source&quot; write the actual file. <strong>Off</strong> by default (writing files is opt-in): editing still works read-only — the client falls back to the GitHub raw source — but saving hands back a download. Set <code>true</code> to author in place. <strong>Authorization depends on how the request arrived.</strong> The dev server binds every interface (so you can view the site from a phone), but reading serves any file in the repo and writing is remote code execution. So: a request that arrived <strong>directly</strong> is authorized only by a <strong>loopback peer</strong> — you, at this keyboard. A request that arrived <strong>through the tunnel</strong> is authorized only by a <strong>valid session</strong>, earned by redeeming a single-use invite link (<code>tosijs-tunnel --link</code>), because &quot;looks local&quot; is exactly what a tunnel counterfeits. Note what this means in practice: a phone on <code>https://&lt;host&gt;.local:8787</code> can <em>view</em> the site but cannot save, session or not — reach the workspace through the tunnel URL instead, which is the path the session is for. There is no env-var override. (The endpoint always answers <code>/__docstore/source</code> with a real status; it never serves the SPA <code>index.html</code>, so a disabled/misconfigured server can&#39;t leak the rendered page as the &quot;source&quot;.)</td>
+<td>Enables the dev server&#39;s <code>/__docstore/source</code> read+write endpoints, so &quot;edit page source&quot; and a live example&#39;s &quot;Save to source&quot; write the actual file. <strong>Off</strong> by default (writing files is opt-in): editing still works read-only — the client falls back to the GitHub raw source — but saving hands back a download. Set <code>true</code> to author in place. <strong>Authorization depends on how the request arrived.</strong> The dev server binds every interface (so you can view the site from a phone), but reading serves any file in the repo and writing is remote code execution. So: a request that arrived <strong>directly</strong> is authorized only by a <strong>loopback peer</strong> — you, at this keyboard. A request that arrived <strong>through the tunnel</strong> is authorized only by a <strong>valid session</strong>, earned by redeeming an invite link (<code>tosijs-tunnel --link</code>), because &quot;looks local&quot; is exactly what a tunnel counterfeits. Note what this means in practice: a phone on <code>https://&lt;host&gt;.local:8787</code> can <em>view</em> the site but cannot save, session or not — reach the workspace through the tunnel URL instead, which is the path the session is for. There is no env-var override. (The endpoint always answers <code>/__docstore/source</code> with a real status; it never serves the SPA <code>index.html</code>, so a disabled/misconfigured server can&#39;t leak the rendered page as the &quot;source&quot;.)</td>
 </tr>
 <tr>
 <td><code>memoryLimitMb</code></td>
@@ -908,7 +908,7 @@ routes — which is what lets one small VPS front many projects.</p>
 </tbody></table>
 <pre><code class="language-bash">tosijs-tunnel            # open the tunnel (foreground; Ctrl-C closes it)
 tosijs-tunnel --status   # is one already up?
-tosijs-tunnel --link     # print a fresh single-use edit link
+tosijs-tunnel --link     # print a fresh edit link (redeemable for 15 min)
 tosijs-tunnel --close    # close any tunnel this project opened
 </code></pre>
 <p><strong>How the gate works.</strong> <code>--link</code> prints a URL carrying a single-use token. Opening it
@@ -942,6 +942,16 @@ omits them.</p>
 <td>require a session even to VIEW; set <code>false</code> for a live read-only audience</td>
 </tr>
 <tr>
+<td><code>tunnel.linkPolicy</code></td>
+<td><code>&#39;window&#39;</code></td>
+<td><code>&#39;window&#39;</code> — a link is redeemable repeatedly until it ages out; <code>&#39;single-use&#39;</code> — spent on first redemption</td>
+</tr>
+<tr>
+<td><code>tunnel.linkTtlMinutes</code></td>
+<td><code>15</code></td>
+<td>how long a link stays redeemable</td>
+</tr>
+<tr>
 <td><code>tunnel.remotePort</code></td>
 <td>derived from the project name</td>
 <td>loopback port on the box; derived (FNV-1a into 9000-9899) so two projects can&#39;t collide</td>
@@ -952,6 +962,27 @@ omits them.</p>
 <td>the loopback port the tunnel forwards to</td>
 </tr>
 </tbody></table>
+<h4>Link security — pick your level</h4>
+<p>A link is redeemable for <strong>15 minutes</strong>, as many times as you like, and hands over a session
+cookie. The cookie is the durable credential; the link only delivers it.</p>
+<pre><code class="language-typescript">tunnel: {
+  linkPolicy: &#39;single-use&#39;,  // spend it on first redemption
+  linkTtlMinutes: 2,         // …and narrow the window
+}
+</code></pre>
+<p><strong>This default was deliberately loosened.</strong> Links used to be single-use, and that collided
+with the feature&#39;s own purpose: glance at a link and close the tab and you need a new one;
+open it on your laptop, then reach for your phone, and it is dead — in a workspace built for
+reading your uncommitted tree <em>on a phone</em>. One project replaced it with a never-expiring
+link of their own. That is the argument: security people route around is not security, it is
+friction plus a weaker system built beside it.</p>
+<p>So the bound moved from <em>uses</em> to <em>time</em>. A token scraped from a log or a chat preview is
+still worthless — after the window closes rather than after the first redemption — and the
+window is short and configurable.</p>
+<p><strong>Ratchet up</strong> with <code>linkPolicy: &#39;single-use&#39;</code> when a link travels somewhere you do not
+control (pasted into a shared channel, say), and shorten <code>linkTtlMinutes</code>. <strong>Ratchet down</strong>
+with a longer TTL for a link you want to keep working across a session. Widening reuse never
+widens lifetime: an expired link is refused under either policy.</p>
 <p><code>requireToken</code> defaults to <strong><code>true</code></strong>: a workspace mirrors an uncommitted tree, and the
 hostname is not a secret — Let&#39;s Encrypt publishes every certificate it issues to public
 Certificate Transparency logs, so the URL is discoverable by construction. If you want to
