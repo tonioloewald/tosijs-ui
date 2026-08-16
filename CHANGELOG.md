@@ -1,5 +1,116 @@
 # Changelog
 
+## 1.9.9
+
+Mostly a **silent-failure** release: several things that were quietly not working, or quietly
+not being checked, now say so. If you use `tosijs-ui/site`, three of these have probably cost
+you time already.
+
+### `<tosi-table>`
+
+**Scroll position survives a re-render.** Sorting, filtering, or toggling
+`visibleGroupedRowIds` no longer throws you back to the top. The table anchors on the
+**topmost visible row**, not on `scrollTop`, and restores that row to the same offset — the
+distinction matters as soon as the row count changes, because the same pixel offset then
+shows entirely different rows. Set `preserveScroll = false` for the case where a render means
+"here is a different dataset" and starting at the top is right.
+
+**Per-group counts.** `table.rowGroupCounts` is a `Map` from group id to `{ visible, total }`
+— rendered rows against rows before filtering — so a cell can say "showing 2 of 7" or offer a
+show-all toggle. Only the table sees both sides of the filter. `table.groupIdFor(row)` gives
+a row's group id, which matters when the grouping was _inferred_ from
+`nonRepeatingGroupedRowCells`.
+
+### The tunnel: links now work on a second device
+
+A magic link is redeemable **repeatedly for 15 minutes** instead of dying on first use. The
+old behaviour collided with the feature's own purpose: glance at a link and close the tab and
+you need a new one; open it on a laptop then reach for your phone and it is dead — in a
+workspace built for reading your uncommitted tree _on a phone_. One project had already
+replaced it with a never-expiring link of their own, which is the tell.
+
+The bound moved from _uses_ to _time_, not away. Set the level per project:
+
+```typescript
+tunnel: { linkPolicy: 'single-use', linkTtlMinutes: 2 }   // ratchet up
+```
+
+An expired link is refused under either policy — widening reuse never widens lifetime.
+
+### Silent failures, now loud
+
+- **`docPaths` are watched.** A root-level doc was served and rendered but never watched:
+  edit, save, refresh, stale page, no rebuild, no message — indistinguishable from a browser
+  cache. (#49)
+- **Two builders on one output tree are refused,** naming the holder's pid and port. Both
+  wipe-then-repopulate `docs/`, so running a standalone build against a live dev server meant
+  each deleted what the other was writing; it killed a dev server with no error anywhere and
+  left `docs/` a fraction populated. The lock is stale-safe (a dead holder's lock is debris),
+  re-entrant, and fails open. (#51)
+- **A truncated `/*#` doc block warns, by name.** Block comments cannot nest, so a `*/`
+  inside a doc demo ends the doc there — previously surfacing as parse errors pointing at
+  _prose_, never at the delimiter responsible. (#70)
+- **Inline doc tests no longer under-report.** A page could report "done" before its examples
+  had run, so their tests were omitted rather than failed — silently, with the suite green.
+  **If you use `tosijs-ui/site` with async examples, your counts may have been wrong;** a
+  number that goes UP after upgrading is this fix.
+
+### Build output
+
+**The hydration bundle now builds into your site output, not `dist/`.** It was written into
+the library tree with only the `.js` copied out, stranding the sourcemap in a directory you
+publish and commit but never serve — 65 MiB across 216 packed blobs in one adopter, ~35% of
+that repo's packed blob store, for a file nothing could load. Set `bundleOutDir` if your
+bundle is itself a published artifact. If you have that history:
+`git rm --cached dist/iife.js dist/iife.js.map` and gitignore them. (#69)
+
+### Smaller things
+
+- `checkExamples: { contextKeys: [...] }` — a library that documents **itself** can keep the
+  guard on instead of disabling it. With it off, broken snippets ship. (#71)
+- `marked` peer widened to `^16.4.2 || ^17.0.0 || ^18.0.0` — an explicit union of majors
+  actually tested, verified byte-identical on the API this library uses. (#60)
+- `svg2DataUrl` baked stroke styling under camelCase names SVG ignores, so serialized icons
+  fell back to 1px mitred defaults. Explicit `fill`/`stroke`/`strokeWidth` arguments were
+  also being clobbered by the style pass. (#68)
+- `preview.host` is optional, matching how it is actually supplied (`PREVIEW_HOST`). (#72)
+- New `tosijs-caddy-install` bin — installs the Caddy snippets the deploy/tunnel bins need,
+  and **refuses** to install a template with placeholders left in it. That guard was the
+  reason this existed as a private script; shipping the template without it was the wrong
+  half to keep.
+- Formatting is gated in CI (`bun run format-check`), and the unit lane now covers `bin/`.
+
+### Also in this release
+
+- **`checkExamples` accepts `{ contextKeys: [...] }`** as well as a boolean, so a
+  self-documenting library keeps the guard on. (#71)
+- **`preview.tunnel.linkPolicy`** (`'window'` | `'single-use'`) and
+  **`preview.tunnel.linkTtlMinutes`** (default 15) set the link security level.
+- **`acquireBuildLock` / `lockDecision`** (`build-lock.ts`) — the output-tree lock behind the
+  concurrent-build refusal, exported for anyone coordinating their own build steps.
+- **`SiteConfig.preview.host` is optional.** The documented practice supplies it from
+  `PREVIEW_HOST`, so a correct config used to fail typecheck. (#72)
+- **`marked` peer is `^16.4.2 || ^17.0.0 || ^18.0.0`** — it was two majors behind `latest`, so
+  a consumer on a current marked got a peer violation on a fresh install. (#60)
+- **The live-example docs now state that `test()` bodies run concurrently** within a fence,
+  and give the rule that follows: steps that depend on each other belong in one `test()`.
+  (#43)
+- **`llms.txt` carries the browser-control affordance** when a project sets `haltijaDev`, so
+  an agent learns it can drive the running page instead of inferring behaviour from source.
+  (#18)
+- **Host bootstrap in `doc-site-system.md` now gives the actual commands** rather than
+  describing the danger and leaving the dangerous step as an exercise.
+- **`svg2DataUrl` writes `stroke-width` / `stroke-linecap` / `stroke-linejoin` in kebab-case.**
+  It wrote `strokeWidth` / `strokeLinecap` / `strokeLinejoin`, which SVG ignores, so serialized
+  icons fell back to 1px mitred UA defaults. Explicit `fill` / `stroke` /
+  `strokeWidth` arguments now win over the baked-in style instead of being clobbered. (#68)
+- **`bunfig.toml` root is the repo, not `src`** — tests outside `src/` were silently never
+  collected, so `bin/` (four executables adopters invoke directly) was outside the unit lane.
+
+> **Versioning note.** This is a patch that adds public API. Minors are for breaking changes
+> and feature rollouts; additive, non-breaking extensions ship as patches. The contract you
+> rely on is unchanged: **a patch never breaks you.**
+
 ## 1.9.8
 
 **Grouped tables can now say how much of a group is showing.** The piece missing from 1.9.7's
