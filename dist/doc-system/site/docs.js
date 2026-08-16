@@ -95,6 +95,7 @@ e.g. `{ "pin": "top", "order": 1 }` above `{ "pin": "top", "order": 2 }`.
 // TODO CLI options
 import * as fs from 'fs';
 import * as path from 'path';
+import { truncationWarnings, formatTruncationWarnings, } from './truncated-doc.js';
 import { pinnedSort } from '../nav-tree.js';
 import { buildSlugMap } from '../routing.js';
 import { withoutHidden } from '../book-target.js';
@@ -171,6 +172,7 @@ function metadata(content, filePath) {
 }
 function findMarkdownFiles(paths, ignore) {
     const markdownFiles = [];
+    const truncationFound = [];
     function traverseDirectory(dir, ignore) {
         console.log(dir);
         const files = fs.readdirSync(dir);
@@ -220,6 +222,12 @@ function findMarkdownFiles(paths, ignore) {
                 const docs = [...content.matchAll(/^[ \t]*(\/\*#[\s\S]+?\*\/)/gm)].map((m) => m[1]);
                 if (docs.length) {
                     const markdown = docs.map((s) => s.substring(3, s.length - 2).trim());
+                    // A doc block that ended early drops the rest of the documentation silently, and
+                    // turns the code after it back into source — which surfaces as parse errors
+                    // pointing at prose rather than at the delimiter responsible (#70).
+                    for (const block of markdown) {
+                        truncationFound.push(...truncationWarnings(file, block));
+                    }
                     const text = markdown.join('\n\n');
                     markdownFiles.push({
                         text,
@@ -257,6 +265,12 @@ function findMarkdownFiles(paths, ignore) {
             console.error(`Could not read ${dir}:`, err);
         }
     });
+    // Warn, never fail. A truncated block is a real defect, but a build that dies on a
+    // heuristic would be worse than the silence it replaces — and either way the author sees
+    // the message and fixes it in the same minute.
+    if (truncationFound.length) {
+        console.warn('\n' + formatTruncationWarnings(truncationFound));
+    }
     return markdownFiles.sort(pinnedSort);
 }
 export function extractDocs(options) {
