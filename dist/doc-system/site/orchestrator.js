@@ -545,6 +545,12 @@ export async function buildSite(config, opts = {}) {
                 // already in the site output and copying it onto itself would truncate the file.
                 if (BUNDLE_NEEDS_COPY) {
                     await $ `cp ${BUNDLE_DIR}/${scriptName} ${PUBLIC}`.text();
+                    // …and its sourcemap. The bundle ends `//# sourceMappingURL=<name>.map`, so
+                    // copying only the `.js` leaves every consumer following the CDN quick-start
+                    // with a 404 in devtools. Best-effort — a missing map must not fail a build.
+                    const map = `${BUNDLE_DIR}/${scriptName}.map`;
+                    if (existsSync(map))
+                        await $ `cp ${map} ${PUBLIC}`.nothrow().quiet();
                 }
                 const bundleFile = await Bun.file(`${BUNDLE_DIR}/${scriptName}`).arrayBuffer();
                 const bundleJs = Buffer.from(bundleFile).toString('utf8');

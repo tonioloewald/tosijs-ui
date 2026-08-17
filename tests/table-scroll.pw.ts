@@ -190,8 +190,17 @@ test('preserveScroll={false} restores the old reset-to-top behaviour', async ({
 }) => {
   await makeTable(page)
   await page.evaluate(() => {
-    ;(document.getElementById('scroller') as any).preserveScroll = false
+    // Set through the ATTRIBUTE, which is the surface markup has. The property is a
+    // getter/setter over it, so this covers both — and would catch the two drifting apart.
+    document
+      .getElementById('scroller')!
+      .toggleAttribute('nopreservescroll', true)
   })
+  expect(
+    await page.evaluate(
+      () => (document.getElementById('scroller') as any).preserveScroll
+    )
+  ).toBe(false)
   await scrollTo(page, 4000)
   await settle(page)
 

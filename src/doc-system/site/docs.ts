@@ -235,7 +235,6 @@ function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
   const truncationFound: TruncationWarning[] = []
 
   function traverseDirectory(dir: string, ignore: string[]) {
-    console.log(dir)
     const files = fs.readdirSync(dir)
     const baseName = path.basename(dir)
 

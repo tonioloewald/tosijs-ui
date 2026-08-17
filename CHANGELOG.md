@@ -31,6 +31,9 @@ tunnel: { linkPolicy: 'single-use', linkTtlMinutes: 2 }   // ratchet up
 
 An expired link is refused under either policy — widening reuse never widens lifetime.
 
+Every user-facing string — including the line the CLI prints at the moment you share a link
+— is derived from the policy in force, rather than asserting "single-use" regardless.
+
 ### Silent failures, now loud
 
 - **`docPaths` are watched.** A root-level doc was served and rendered but never watched:
@@ -39,8 +42,11 @@ An expired link is refused under either policy — widening reuse never widens l
 - **Two builders on one output tree are refused,** naming the holder's pid and port. Both
   wipe-then-repopulate `docs/`, so running a standalone build against a live dev server meant
   each deleted what the other was writing; it killed a dev server with no error anywhere and
-  left `docs/` a fraction populated. The lock is stale-safe (a dead holder's lock is debris),
-  re-entrant, and fails open. (#51)
+  left `docs/` a fraction populated. A standalone `buildSite()` refuses; a second **dev
+  server** only warns and continues, because `bun playwright test` and `bun run test-browser`
+  each start their own and a hard failure there would break the lanes this protects. The lock
+  is stale-safe (a dead holder's lock is debris), re-entrant, released on Ctrl-C, and fails
+  open. (#51)
 - **A truncated `/*#` doc block warns, by name.** Block comments cannot nest, so a `*/`
   inside a doc demo ends the doc there — previously surfacing as parse errors pointing at
   _prose_, never at the delimiter responsible. (#70)
@@ -58,26 +64,12 @@ that repo's packed blob store, for a file nothing could load. Set `bundleOutDir`
 bundle is itself a published artifact. If you have that history:
 `git rm --cached dist/iife.js dist/iife.js.map` and gitignore them. (#69)
 
-### Smaller things
-
-- `checkExamples: { contextKeys: [...] }` — a library that documents **itself** can keep the
-  guard on instead of disabling it. With it off, broken snippets ship. (#71)
-- `marked` peer widened to `^16.4.2 || ^17.0.0 || ^18.0.0` — an explicit union of majors
-  actually tested, verified byte-identical on the API this library uses. (#60)
-- `svg2DataUrl` baked stroke styling under camelCase names SVG ignores, so serialized icons
-  fell back to 1px mitred defaults. Explicit `fill`/`stroke`/`strokeWidth` arguments were
-  also being clobbered by the style pass. (#68)
-- `preview.host` is optional, matching how it is actually supplied (`PREVIEW_HOST`). (#72)
-- New `tosijs-caddy-install` bin — installs the Caddy snippets the deploy/tunnel bins need,
-  and **refuses** to install a template with placeholders left in it. That guard was the
-  reason this existed as a private script; shipping the template without it was the wrong
-  half to keep.
-- Formatting is gated in CI (`bun run format-check`), and the unit lane now covers `bin/`.
-
 ### Also in this release
 
-- **`checkExamples` accepts `{ contextKeys: [...] }`** as well as a boolean, so a
-  self-documenting library keeps the guard on. (#71)
+- **`checkExamples` accepts `{ contextKeys: [...] }`** as well as a boolean, so a library
+  that documents ITSELF — whose examples import its own package name — keeps the guard on
+  instead of disabling it. The keys are **added to** the `tosijs` / `tosijs-ui` defaults, not
+  substituted for them. (#71)
 - **`preview.tunnel.linkPolicy`** (`'window'` | `'single-use'`) and
   **`preview.tunnel.linkTtlMinutes`** (default 15) set the link security level.
 - **`SiteConfig.preview.host` is optional.** The documented practice supplies it from
@@ -107,8 +99,12 @@ bundle is itself a published artifact. If you have that history:
 - **`acquireBuildLock` / `lockDecision`** in `build-lock.ts` — the
   output-tree lock behind the concurrent-build refusal. **Internal**: not exported from
   `tosijs-ui/site`, so do not build on it yet. Say so if you want it public.
-- **`bunfig.toml` root is the repo, not `src`** — tests outside `src/` were silently never
-  collected, so `bin/` (four executables adopters invoke directly) was outside the unit lane.
+- New **`tosijs-caddy-install`** bin — installs the Caddy snippets the deploy/tunnel bins
+  need, **refuses** to install a template with placeholders left in it, keeps the outgoing
+  config as `Caddyfile.bak`, and is dry-run by default. That refusal was the reason this
+  existed as a private script; shipping the template without it was the wrong half to keep.
+- The unit lane now covers `bin/` — `bunfig.toml`'s test root was `./src`, so tests anywhere
+  else were silently never collected.
 
 > **Versioning note.** This is a patch that adds public API. Minors are for breaking changes
 > and feature rollouts; additive, non-breaking extensions ship as patches. The contract you
@@ -168,12 +164,16 @@ know anything about grouping. It is additive to the filter's own result, so a fi
 ranks as well as selects keeps its ranking.
 
 Two details worth knowing. **Clusters keep your sort**: groups appear in first-appearance
-order, so a group lands wherever its best-sorted row landed. Sorting the clusters by their
-id instead would have quietly thrown away the sort the user just clicked. And repeated
-cells are **hidden, not emptied** — `.tr:not(.table-cluster-first) .cluster-repeat
-{ visibility: hidden }`. If you write your own rule for a custom `dataCell`, use
-`visibility`, never `display: none`: every cell is an item of the row's grid, so removing
-one pulls each later cell a column left and the row renders under the wrong headers.
+order, so a group lands wherever its best-sorted row landed. Sorting the clusters by their id
+instead would have quietly thrown away the sort the user just clicked.
+
+And repeated cells are **hidden, not emptied** — transparent text plus `display: none` on
+element children, via `.tr:not(.table-cluster-first) .cluster-repeat`. Deliberately not
+`visibility: hidden`, which also stops the cell painting its **background**: a pinned
+column's background is the only thing masking the columns scrolling underneath it, so
+repeated cells there became windows onto the scrolled content. And never `display: none` on
+the cell itself — every cell is an item of the row's grid, so removing one pulls each later
+cell a column left and the row renders under the wrong headers.
 `table.isFirstInGroup(row)` answers the same question in JavaScript.
 
 Ungrouped tables are unaffected — all three properties default to off.

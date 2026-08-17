@@ -569,7 +569,13 @@ CSS rule: the row that heads a group gets `table-cluster-first`, those cells get
 `cluster-repeat`, and the rest follows.
 
 ```typescript
-.tr:not(.table-cluster-first) .cluster-repeat { visibility: hidden }
+.tr:not(.table-cluster-first) .cluster-repeat {
+  color: transparent;
+  user-select: none;
+}
+.tr:not(.table-cluster-first) .cluster-repeat > * {
+  display: none;
+}
 ```
 
 Because it is only a rule about classes, a column with a custom `dataCell` is covered too —
@@ -577,11 +583,16 @@ the table tags the cell whoever built it. It also means you can override the eff
 wholesale: dim the repeats instead of hiding them, show them on hover, or scope the rule to
 one column.
 
-**Use `visibility`, never `display: none`.** Every cell is an item of the row's grid, so
-removing one does not leave a gap — it pulls each later cell one column to the left and the
-row renders under the wrong headers. `visibility: hidden` keeps the cell in its track, stops
-it painting, and takes it out of the accessibility tree, which is right for a value the group
-already stated once.
+**Never `display: none` on the cell itself, and not `visibility: hidden` either.** Every cell
+is an item of the row's grid, so removing one does not leave a gap — it pulls each later cell
+one column to the left and the row renders under the wrong headers. `visibility: hidden`
+keeps the track but stops the cell painting its **background**, and a pinned column's opaque
+background is the only thing masking the columns scrolling underneath it: repeated cells
+become windows onto the scrolled content behind them.
+
+So hide the content and keep the box — transparent text, `display: none` on element children
+(which transparency does not reach), and `user-select: none` so what you copy matches what
+you see.
 
 For the same decision in JavaScript — inside a `dataCell` binding or a `rowRendered`
 callback — **`table.isFirstInGroup(row)`** answers it directly. It is always `true` when the
@@ -730,9 +741,17 @@ test('rowGroupCounts is keyed by groupIdFor, and totals the whole dataset', () =
 })
 
 test('category and subcategory are shown once per group, and nothing else is hidden', () => {
-  const visible = (cell) => getComputedStyle(cell).visibility !== 'hidden'
-  let shown = 0
-  let hidden = 0
+  // Transparent text, not `visibility: hidden` — a hidden cell stops painting its
+  // BACKGROUND, and a pinned column's background is what masks the columns scrolling
+  // underneath it. Asserting on `visibility` is what let that ship.
+  const shown = (cell) => {
+    const s = getComputedStyle(cell)
+    return !/rgba\(\d+, \d+, \d+, 0\)/.test(s.color)
+  }
+  const paintsBackground = (cell) =>
+    getComputedStyle(cell).visibility !== 'hidden'
+  let first = 0
+  let repeated = 0
   for (const row of rows) {
     const cells = table.getCells(row)
     if (!cells) continue
@@ -742,16 +761,21 @@ test('category and subcategory are shown once per group, and nothing else is hid
     // The grouped columns are hidden, not emptied — the value stays in the DOM and the
     // cell keeps its grid track, so later columns cannot shift left into it.
     expect(cells[0].textContent).not.toBe('')
-    expect(visible(cells[0])).toBe(isFirst)
-    expect(visible(cells[1])).toBe(isFirst)
-    isFirst ? shown++ : hidden++
-    // Columns that did NOT opt in stay visible everywhere — this catches a rule that hides
+    expect(shown(cells[0])).toBe(isFirst)
+    expect(shown(cells[1])).toBe(isFirst)
+    // REGRESSION: every cell must keep painting, repeated or not. A repeated cell in a
+    // PINNED column that stops painting becomes a window onto the horizontally-scrolled
+    // columns behind it.
+    expect(paintsBackground(cells[0])).toBe(true)
+    expect(paintsBackground(cells[1])).toBe(true)
+    isFirst ? first++ : repeated++
+    // Columns that did NOT opt in stay legible everywhere — this catches a rule that hides
     // the whole row rather than the repeated cells.
-    expect(visible(cells[2])).toBe(true)
-    expect(visible(cells[3])).toBe(true)
+    expect(shown(cells[2])).toBe(true)
+    expect(shown(cells[3])).toBe(true)
   }
-  expect(shown).toBeGreaterThan(0)
-  expect(hidden).toBeGreaterThan(0)
+  expect(first).toBeGreaterThan(0)
+  expect(repeated).toBeGreaterThan(0)
 })
 ```
 
@@ -1068,13 +1092,36 @@ export class TosiTable extends WebComponent {
     */
     /*
     Cells of a `nonRepeatingGroupedRowCells` column, on every row but the first of its
-    group. `visibility` — NOT `display: none`: every cell is an item of the row's grid, so
+    group. Never `display: none` on the cell: every cell is an item of the row's grid, so
     removing one pulls each later cell a column to the left and the row renders under the
     wrong headers. Hidden cells hold their track and drop out of the accessibility tree,
     which is what is wanted for a value the group already stated once.
     */
+    /*
+    Hide the CONTENT, keep the BOX.
+
+    This was `visibility: hidden`, which also stops the cell painting its background — and a
+    `.col-pinned` cell's opaque background is the only thing masking the columns sliding
+    underneath it when the table is scrolled horizontally. So repeated cells in a pinned
+    column became windows onto the scrolled content behind them (reported against 1.10.0's
+    row grouping).
+
+    `color: transparent` leaves the box painted, so the background still masks. Element
+    children (an icon renderer, a custom `dataCell`'s input) need `display: none` — they are
+    not text and transparency does not reach them. `user-select: none` keeps the invisible
+    text out of a selection, so what you copy matches what you see.
+
+    Note this is deliberately NOT hidden from assistive technology, unlike the old rule. A
+    screen-reader user has no visual grouping cue, so hearing the invoice number on each row
+    of its group is more useful than silence — the value really is that row's data, and only
+    the visual repetition was worth removing.
+    */
     ':host .tr:not(.table-cluster-first) .cluster-repeat': {
-      visibility: 'hidden',
+      color: 'transparent',
+      userSelect: 'none',
+    },
+    ':host .tr:not(.table-cluster-first) .cluster-repeat > *': {
+      display: 'none',
     },
     ':host .tr.table-cluster-odd': {
       _tosiTableBg: varDefault.tosiTableClusterOddBg(
@@ -1138,6 +1185,7 @@ export class TosiTable extends WebComponent {
     nohide: false,
     noreorder: false,
     localized: false,
+    nopreservescroll: false,
   }
 
   selectionChanged: SelectCallback = () => {
@@ -1336,11 +1384,37 @@ export class TosiTable extends WebComponent {
   }
 
   /** The grouping function in force, or null when the table is ungrouped. */
+  /*
+  Per-RENDER memo of row -> group id.
+
+  The id is computed several times for the same row in one pass — clustering, parity,
+  first-of-group, the counts, then again per stamped row for its classes — and the inferred
+  form does a `JSON.stringify` each time. On a few thousand grouped rows that adds up.
+
+  Replaced on every render rather than kept, and that is the whole safety argument: a cached
+  id must never outlive the values it was derived from. Mutate a row and the next render
+  starts a fresh map, so a stale id cannot survive into a grouping that disagrees with the
+  data. Keeping one across renders would buy a little more and risk exactly the bug this
+  feature is about — rows silently clustered by what they used to say.
+  */
+  private _groupIdMemo = new WeakMap<object, string>()
+
   private get groupIdFn(): RowGroupIdFn | null {
-    return resolveRowGroupId(
+    const groupId = resolveRowGroupId(
       this._rowGroupId,
       this._nonRepeatingGroupedRowCells
     )
+    if (!groupId) return null
+    const memo = this._groupIdMemo
+    return (row: any): string => {
+      // WeakMap keys must be objects; a primitive row is rare but must not throw.
+      if (row === null || typeof row !== 'object') return groupId(row)
+      const hit = memo.get(row)
+      if (hit !== undefined) return hit
+      const id = groupId(row)
+      memo.set(row, id)
+      return id
+    }
   }
 
   /**
@@ -1385,8 +1459,21 @@ export class TosiTable extends WebComponent {
    *
    * Set `false` when a render means "here is a different dataset" rather than "here is the
    * same data, re-viewed" — then starting at the top is the correct answer.
+   *
+   * Backed by the `nopreservescroll` ATTRIBUTE so it is settable from markup like every
+   * other boolean here (`nosort`, `nohide`, `noreorder`). The inverted name is not
+   * gratuitous: this defaults to `true`, and a presence-only attribute can only ever turn
+   * something ON — so a `preservescroll` attribute could never express "off", which is the
+   * only thing anyone needs to say. Getting this wrong is unfixable after release without a
+   * rename, so it is settled here rather than later.
    */
-  preserveScroll = true
+  get preserveScroll(): boolean {
+    return !this.nopreservescroll
+  }
+
+  set preserveScroll(value: boolean) {
+    this.nopreservescroll = !value
+  }
 
   /*
   The row the reader was looking at, captured before the DOM is thrown away.
@@ -2168,8 +2255,13 @@ export class TosiTable extends WebComponent {
       }
       if (--framesLeft > 0) requestAnimationFrame(step)
     }
+    /*
+    ONE chain. `step` re-arms itself, so calling it here starts the loop; the extra
+    `requestAnimationFrame(step)` that used to sit below started a SECOND chain against the
+    same `framesLeft`, spending the 8-frame budget in about four real frames — on exactly the
+    slow machine that needs them most.
+    */
     step()
-    requestAnimationFrame(step)
   }
 
   private handleScrollEnd = () => {
@@ -2541,6 +2633,8 @@ export class TosiTable extends WebComponent {
     const baseData = this.effectiveBaseData
     const cap = Math.min(baseData.length, this.maxVisibleRows)
     const scope = baseData.slice(0, cap)
+    // Fresh per render — see `_groupIdMemo`. Must happen before `groupIdFn` is read.
+    this._groupIdMemo = new WeakMap()
     const groupId = this.groupIdFn
     let visibleData = this.filter(scope)
     /*

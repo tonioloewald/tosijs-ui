@@ -117,7 +117,7 @@ The dev server runs HTTPS using certs in `tls/` (`key.pem` + `certificate.pem`, 
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on push/PR to `main`, in two jobs:
 
-- **test** — `bun install` → `bunx tsc --noEmit` → `bun run format-check` → `bun test` (the unit lane).
+- **test** — `bun install` → `bunx tsc --noEmit` → `bunx tsc -p tsconfig.bin.json` → `bun run format-check` → `bun test` (the unit lane; `bunfig.toml` roots it at the repo, so `bin/` tests are collected too).
 
   **Why formatting is gated.** `bun format` was manual and named in no gate, so drift only ever grew — 24 unformatted files at v1.9.0, 39 by v1.9.3, 40 by v1.9.7. The cost lands on whoever runs `bun format` next: three dozen unrelated files land in their feature diff, and either they ship the churn or they spend the time separating it. Prettier is the sole formatter (ESLint carries no stylistic rules) and reaches a fixed point in one pass, so the check is deterministic and cheap. Run `bun format` before committing.
 

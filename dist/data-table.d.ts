@@ -96,7 +96,11 @@ export declare class TosiTable extends WebComponent {
             background: string;
         };
         ':host .tr:not(.table-cluster-first) .cluster-repeat': {
-            visibility: string;
+            color: string;
+            userSelect: string;
+        };
+        ':host .tr:not(.table-cluster-first) .cluster-repeat > *': {
+            display: string;
         };
         ':host .tr.table-cluster-odd': {
             _tosiTableBg: string;
@@ -155,6 +159,7 @@ export declare class TosiTable extends WebComponent {
         nohide: boolean;
         noreorder: boolean;
         localized: boolean;
+        nopreservescroll: boolean;
     };
     selectionChanged: SelectCallback;
     rowRendered: ((item: any, cells: HTMLElement[]) => void) | null;
@@ -200,6 +205,7 @@ export declare class TosiTable extends WebComponent {
     get nonRepeatingGroupedRowCells(): string[] | null;
     set nonRepeatingGroupedRowCells(props: string[] | null);
     /** The grouping function in force, or null when the table is ungrouped. */
+    private _groupIdMemo;
     private get groupIdFn();
     /**
      * This row's group id, or null when the table is ungrouped.
@@ -228,8 +234,16 @@ export declare class TosiTable extends WebComponent {
      *
      * Set `false` when a render means "here is a different dataset" rather than "here is the
      * same data, re-viewed" — then starting at the top is the correct answer.
+     *
+     * Backed by the `nopreservescroll` ATTRIBUTE so it is settable from markup like every
+     * other boolean here (`nosort`, `nohide`, `noreorder`). The inverted name is not
+     * gratuitous: this defaults to `true`, and a presence-only attribute can only ever turn
+     * something ON — so a `preservescroll` attribute could never express "off", which is the
+     * only thing anyone needs to say. Getting this wrong is unfixable after release without a
+     * rename, so it is settled here rather than later.
      */
-    preserveScroll: boolean;
+    get preserveScroll(): boolean;
+    set preserveScroll(value: boolean);
     private _scrollAnchor;
     get sort(): SortCallback | undefined;
     set sort(sortFunc: SortCallback | undefined);

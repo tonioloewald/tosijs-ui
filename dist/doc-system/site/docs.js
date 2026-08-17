@@ -174,7 +174,6 @@ function findMarkdownFiles(paths, ignore) {
     const markdownFiles = [];
     const truncationFound = [];
     function traverseDirectory(dir, ignore) {
-        console.log(dir);
         const files = fs.readdirSync(dir);
         const baseName = path.basename(dir);
         // Each ignore entry matches either by basename (node_modules, dist, build —

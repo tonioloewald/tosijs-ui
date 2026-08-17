@@ -550,17 +550,27 @@ altogether — they sit outside the clustering, so they are never striped and ne
 <p><strong>How it works, and how to change it.</strong> These cells render normally and are hidden by one
 CSS rule: the row that heads a group gets <code>table-cluster-first</code>, those cells get
 <code>cluster-repeat</code>, and the rest follows.</p>
-<pre><code class="language-typescript">.tr:not(.table-cluster-first) .cluster-repeat { visibility: hidden }
+<pre><code class="language-typescript">.tr:not(.table-cluster-first) .cluster-repeat {
+  color: transparent;
+  user-select: none;
+}
+.tr:not(.table-cluster-first) .cluster-repeat &gt; * {
+  display: none;
+}
 </code></pre>
 <p>Because it is only a rule about classes, a column with a custom <code>dataCell</code> is covered too —
 the table tags the cell whoever built it. It also means you can override the effect
 wholesale: dim the repeats instead of hiding them, show them on hover, or scope the rule to
 one column.</p>
-<p><strong>Use <code>visibility</code>, never <code>display: none</code>.</strong> Every cell is an item of the row&#39;s grid, so
-removing one does not leave a gap — it pulls each later cell one column to the left and the
-row renders under the wrong headers. <code>visibility: hidden</code> keeps the cell in its track, stops
-it painting, and takes it out of the accessibility tree, which is right for a value the group
-already stated once.</p>
+<p><strong>Never <code>display: none</code> on the cell itself, and not <code>visibility: hidden</code> either.</strong> Every cell
+is an item of the row&#39;s grid, so removing one does not leave a gap — it pulls each later cell
+one column to the left and the row renders under the wrong headers. <code>visibility: hidden</code>
+keeps the track but stops the cell painting its <strong>background</strong>, and a pinned column&#39;s opaque
+background is the only thing masking the columns scrolling underneath it: repeated cells
+become windows onto the scrolled content behind them.</p>
+<p>So hide the content and keep the box — transparent text, <code>display: none</code> on element children
+(which transparency does not reach), and <code>user-select: none</code> so what you copy matches what
+you see.</p>
 <p>For the same decision in JavaScript — inside a <code>dataCell</code> binding or a <code>rowRendered</code>
 callback — <strong><code>table.isFirstInGroup(row)</code></strong> answers it directly. It is always <code>true</code> when the
 table is ungrouped.</p>
@@ -696,9 +706,17 @@ test(&#39;rowGroupCounts is keyed by groupIdFor, and totals the whole dataset&#3
 })
 
 test(&#39;category and subcategory are shown once per group, and nothing else is hidden&#39;, () =&gt; {
-  const visible = (cell) =&gt; getComputedStyle(cell).visibility !== &#39;hidden&#39;
-  let shown = 0
-  let hidden = 0
+  // Transparent text, not `visibility: hidden` — a hidden cell stops painting its
+  // BACKGROUND, and a pinned column&#39;s background is what masks the columns scrolling
+  // underneath it. Asserting on `visibility` is what let that ship.
+  const shown = (cell) =&gt; {
+    const s = getComputedStyle(cell)
+    return !/rgba\(\d+, \d+, \d+, 0\)/.test(s.color)
+  }
+  const paintsBackground = (cell) =&gt;
+    getComputedStyle(cell).visibility !== &#39;hidden&#39;
+  let first = 0
+  let repeated = 0
   for (const row of rows) {
     const cells = table.getCells(row)
     if (!cells) continue
@@ -708,16 +726,21 @@ test(&#39;category and subcategory are shown once per group, and nothing else is
     // The grouped columns are hidden, not emptied — the value stays in the DOM and the
     // cell keeps its grid track, so later columns cannot shift left into it.
     expect(cells[0].textContent).not.toBe(&#39;&#39;)
-    expect(visible(cells[0])).toBe(isFirst)
-    expect(visible(cells[1])).toBe(isFirst)
-    isFirst ? shown++ : hidden++
-    // Columns that did NOT opt in stay visible everywhere — this catches a rule that hides
+    expect(shown(cells[0])).toBe(isFirst)
+    expect(shown(cells[1])).toBe(isFirst)
+    // REGRESSION: every cell must keep painting, repeated or not. A repeated cell in a
+    // PINNED column that stops painting becomes a window onto the horizontally-scrolled
+    // columns behind it.
+    expect(paintsBackground(cells[0])).toBe(true)
+    expect(paintsBackground(cells[1])).toBe(true)
+    isFirst ? first++ : repeated++
+    // Columns that did NOT opt in stay legible everywhere — this catches a rule that hides
     // the whole row rather than the repeated cells.
-    expect(visible(cells[2])).toBe(true)
-    expect(visible(cells[3])).toBe(true)
+    expect(shown(cells[2])).toBe(true)
+    expect(shown(cells[3])).toBe(true)
   }
-  expect(shown).toBeGreaterThan(0)
-  expect(hidden).toBeGreaterThan(0)
+  expect(first).toBeGreaterThan(0)
+  expect(repeated).toBeGreaterThan(0)
 })
 </code></pre>
 <h2>Hiding (and Showing) Columns</h2>

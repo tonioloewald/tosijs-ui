@@ -64,7 +64,18 @@ function collectCodeTokens(text) {
  * the `tjs` bakes (which it computes anyway while checking — no double transpile).
  */
 export async function checkExamples(docs, opts = {}) {
-    const contextKeys = opts.contextKeys ?? DEFAULT_CONTEXT_KEYS;
+    /*
+    ADDITIVE, not replacing.
+  
+    The obvious call is `contextKeys: ['my-lib']`, and replacing would silently drop `tosijs` /
+    `tosijs-ui` — demoting every framework example on the site to display-only, with a GREEN
+    build, because an unresolvable import warns rather than fails. The failure mode of this
+    option is exactly the failure mode it exists to prevent.
+    */
+    const contextKeys = [
+        ...DEFAULT_CONTEXT_KEYS,
+        ...(opts.contextKeys ?? []),
+    ].filter((key, i, all) => all.indexOf(key) === i);
     const problems = [];
     const warnings = [];
     const bakes = new Map();
