@@ -244,6 +244,8 @@ export declare class TosiTable extends WebComponent {
      */
     get preserveScroll(): boolean;
     set preserveScroll(value: boolean);
+    /** In-flight scroll restore, so a newer one supersedes it and gestures can cancel it. */
+    private _scrollRestore;
     private _scrollAnchor;
     get sort(): SortCallback | undefined;
     set sort(sortFunc: SortCallback | undefined);

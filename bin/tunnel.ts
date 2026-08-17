@@ -49,7 +49,14 @@ const flag = (n: string) => {
 }
 
 const preview = siteConfig.preview
-const host = flag('host') ?? process.env.PREVIEW_HOST ?? preview?.host
+const host =
+  flag('host') ??
+  process.env.PREVIEW_HOST ??
+  // Legacy alias. This repo's own `deploy:index` script still asks for PREVIEW_SSH,
+  // so someone who exported the only variable it ever mentioned would otherwise be
+  // told "No preview host" with nothing pointing at why.
+  process.env.PREVIEW_SSH ??
+  preview?.host
 const localPort = Number(
   flag('port') ?? resolveDevPort(siteConfig, process.env)
 )

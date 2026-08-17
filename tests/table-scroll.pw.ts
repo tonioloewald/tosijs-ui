@@ -212,3 +212,17 @@ test('preserveScroll={false} restores the old reset-to-top behaviour', async ({
 
   expect(await scrollTop(page)).toBe(0)
 })
+
+/*
+NOT TESTED HERE, deliberately: that a user gesture during the restore wins.
+
+The guard exists (`restoreScrollAnchor` aborts on wheel/touchstart/pointerdown, and a newer
+restore supersedes an older one), but the restore CONVERGES IN ABOUT TWO FRAMES — an estimate
+frame and an exact one — so by the time a test can inject a gesture there is nothing left to
+fight. Two attempts at a test here passed with the guard removed, which makes them worse than
+no test: they would have read as coverage.
+
+The guard is kept as cheap defence for the case the window does stretch — a slow machine, or
+an anchor far from the stamped window so the estimate branch iterates — and is honestly
+recorded as unproven rather than dressed up.
+*/

@@ -51,7 +51,14 @@ const preview = siteConfig.preview
 // Precedence: explicit flag > env > site config. The config is the "just works"
 // default; the flag exists so you can push a one-off somewhere else without editing
 // (and committing) a config file.
-const host = flag('host') ?? process.env.PREVIEW_HOST ?? preview?.host
+const host =
+  flag('host') ??
+  process.env.PREVIEW_HOST ??
+  // Legacy alias. This repo's own `deploy:index` script still asks for PREVIEW_SSH,
+  // so someone who exported the only variable it ever mentioned would otherwise be
+  // told "No preview host" with nothing pointing at why.
+  process.env.PREVIEW_SSH ??
+  preview?.host
 const remotePath =
   flag('path') ??
   process.env.PREVIEW_PATH ??

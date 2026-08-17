@@ -176,6 +176,11 @@ the cell itself — every cell is an item of the row's grid, so removing one pul
 cell a column left and the row renders under the wrong headers.
 `table.isFirstInGroup(row)` answers the same question in JavaScript.
 
+Group ids are **memoized per render** in a `WeakMap` — the id is computed several times for
+one row in a single pass (clustering, parity, first-of-group, counts, then again per stamped
+row), and the inferred form does a `JSON.stringify` each time. The map is replaced on every
+render rather than kept, so a cached id can never outlive the values it came from.
+
 Ungrouped tables are unaffected — all three properties default to off.
 
 **The inline doc-test lane was under-reporting, and staying green about it.** If you use

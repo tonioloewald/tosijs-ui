@@ -70,7 +70,13 @@ if (unknown.length || has('help')) {
 }
 
 const host =
-  flag('host') ?? process.env.PREVIEW_HOST ?? siteConfig.preview?.host
+  flag('host') ??
+  process.env.PREVIEW_HOST ??
+  // Legacy alias. This repo's own `deploy:index` script still asks for PREVIEW_SSH,
+  // so someone who exported the only variable it ever mentioned would otherwise be
+  // told "No preview host" with nothing pointing at why.
+  process.env.PREVIEW_SSH ??
+  siteConfig.preview?.host
 const go = has('go')
 
 if (!host) {

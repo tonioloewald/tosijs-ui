@@ -1482,6 +1482,9 @@ export class TosiTable extends WebComponent {
   "where I was". Expand a group above the viewport and the same `scrollTop` shows entirely
   different rows; the same row at the same offset is what stays put.
   */
+  /** In-flight scroll restore, so a newer one supersedes it and gestures can cancel it. */
+  private _scrollRestore: AbortController | null = null
+
   private _scrollAnchor: {
     item: any
     /** pixels from the top edge of the scroll container */
@@ -2235,8 +2238,34 @@ export class TosiTable extends WebComponent {
     // faithful to, so leave the fresh view at the top.
     if (newIndex < 0) return
 
+    /*
+    The restore must yield to the user, and to itself.
+
+    It writes `scrollTop` on every frame of its budget, and `preserveScroll` defaults true —
+    so this runs after EVERY sort, filter and group toggle. Without these two guards a wheel
+    or touch gesture during that window is dragged back to the anchor, and a second sort
+    while the first restore is still converging leaves two chains fighting over the same
+    container.
+
+    An `AbortController` covers both: the listeners come off when the restore finishes, and
+    a newer restore aborts the older one. Passive listeners, so watching for a gesture cannot
+    itself delay scrolling.
+    */
+    this._scrollRestore?.abort()
+    const restore = new AbortController()
+    this._scrollRestore = restore
+    for (const kind of ['wheel', 'touchstart', 'pointerdown']) {
+      this._scrollArea?.addEventListener(kind, () => restore.abort(), {
+        once: true,
+        passive: true,
+        signal: restore.signal,
+      })
+    }
+
     let framesLeft = 8
     const step = () => {
+      // The user took over, or a newer render started its own restore.
+      if (restore.signal.aborted) return
       const area = this._scrollArea
       if (!area) return
       const row = this.getCells(anchor.item)?.[0]?.closest('.tr')
@@ -2247,13 +2276,17 @@ export class TosiTable extends WebComponent {
           anchor.offset
         // Sub-pixel: scrollTop reads back fractionally on a scaled display, so an equality
         // test would never be satisfied and this would burn every frame it has.
-        if (Math.abs(delta) < 1) return
+        if (Math.abs(delta) < 1) {
+          restore.abort() // settled — drop the gesture listeners
+          return
+        }
         area.scrollTop += delta
       } else if (this.rowHeight > 0) {
         area.scrollTop =
           anchor.scrollTop + (newIndex - anchor.index) * this.rowHeight
       }
       if (--framesLeft > 0) requestAnimationFrame(step)
+      else restore.abort() // budget spent — drop the gesture listeners
     }
     /*
     ONE chain. `step` re-arms itself, so calling it here starts the loop; the extra
