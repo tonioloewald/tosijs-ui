@@ -480,3 +480,43 @@ _Original per-issue notes:_
   and pre-1.4.0 servers are retired via `POST /shutdown` on startup (opt out with
   `HALTIJA_NO_INSTALL` / `HALTIJA_NO_RETIRE`). So an embedder's `bunx haltija@<pin>` can no
   longer silently downgrade an unrelated project's CLI — which was the whole hazard.
+
+## tosijs-schema
+
+Filed while designing the schema-driven editing work (`SCHEMA-FORM-PLAN.md`, branch
+`schema-form`), against **tosijs-schema 1.4.0** (what `tjs-lang` pulls in transitively;
+npm is at 1.5.1).
+
+### Open (waiting on tosijs-schema)
+
+- **[#6](https://github.com/tonioloewald/tosijs-schema/issues/6) — `inferSchema(sample)`:
+  derive a schema from example data.** `Infer<S>` goes schema → TS type; this is the
+  runtime inverse. Requested here rather than built locally because it is a schema
+  operation — dependency-free, testable without a DOM — and because **one** inference pass
+  would then serve both consumers we have in mind: a `data-table`'s columns and a
+  schema-driven form's fields, instead of two that drift.
+
+  It also fixes a latent bug on our side. `data-table` infers columns from
+  `Object.keys(array[0])`, so a key absent from the FIRST row loses its column silently.
+  Unifying across the whole array is requirement #1 in the issue.
+
+  The requirements worth repeating, because they are where these tools go wrong:
+  **structure only** — never infer `minimum`/`maxLength` from a sample, since a sample's
+  extremes are not the domain's and inferred constraints reject valid future data;
+  `format` and `enum` sniffing **off by default**; deterministic output, because these
+  schemas get committed and diffed. Acceptance test: `validate(rows, inferSchema(rows))`
+  must pass for the very data it came from.
+
+- **Blocked on [#5](https://github.com/tonioloewald/tosijs-schema/issues/5)** (no spelling
+  for an intentionally OPEN object). Inferred schemas describe a _sample_, not a contract,
+  so they must be `additionalProperties: true` — otherwise `filter()` strips any field that
+  happened not to appear. That is not hypothetical: the snowfox `schema-form` we are
+  learning from rebuilds output from a schema-shaped view and silently discards timestamps
+  and provenance on every save (its `SF-2`). Closed-by-default inference would build that
+  same failure in.
+
+### Watching
+
+- **[#4](https://github.com/tonioloewald/tosijs-schema/issues/4)** — 1.5.0 tightened
+  validation in a MINOR and broke published consumers on install. Relevant when we take a
+  version floor: decide deliberately rather than inheriting whatever `tjs-lang` resolves.
