@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.10.1
+
+Two fixes to 1.10.0's row grouping and scroll preservation, both reported by snowfox against
+a real wide, grouped, pinned table.
+
+**A pinned column that repeats a group value is no longer a hole.** A column that is both
+`pinned` and listed in `nonRepeatingGroupedRowCells` used `visibility: hidden` on its repeated
+cells — which suppresses _everything the cell paints_, including the opaque background
+`.col-pinned` exists to provide. On every row but the first of its group, horizontally
+scrolled cells showed through the sticky column **and were clickable there**: a visual hole
+and a hit-testing hole from one rule. Repeated cells now hide their _content_ (transparent
+text, `display: none` on element children, `user-select: none`) and keep painting their box.
+(#83)
+
+**`preserveScroll` now restores horizontal position too.** It restored `scrollTop` alone, and
+the tables that most need it are the wide ones — normally read scrolled sideways, with pinned
+columns as the identity and the interesting columns off to the right. Sorting or toggling a
+group snapped back to column 0, so the row stayed put while appearing to say something
+completely different. `scrollLeft` is captured independently of the row anchor, so it also
+survives on a table that is scrolled sideways but still at the top — which used to return
+early and lose the columns. (#86)
+
+Group ids are memoized per render in a `WeakMap`; the map is replaced each render, so a
+cached id can never outlive the values it came from.
+
 ## 1.10.0
 
 Mostly a **silent-failure** release: several things that were quietly not working, or quietly

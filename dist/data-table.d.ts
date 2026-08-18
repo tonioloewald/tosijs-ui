@@ -244,6 +244,8 @@ export declare class TosiTable extends WebComponent {
      */
     get preserveScroll(): boolean;
     set preserveScroll(value: boolean);
+    /** Horizontal scroll offset to put back after a re-render. */
+    private _scrollLeft;
     /** In-flight scroll restore, so a newer one supersedes it and gestures can cancel it. */
     private _scrollRestore;
     private _scrollAnchor;

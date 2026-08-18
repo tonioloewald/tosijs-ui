@@ -32,9 +32,15 @@ async function makeTable(page: any, opts: { group?: boolean } = {}) {
         name: `row ${i}`,
       }))
       table.columns = [
-        { prop: 'group', width: 120 },
+        { prop: 'group', width: 120, pinned: 'left' },
         { prop: 'name', width: 200 },
         { prop: 'id', width: 80 },
+        // Enough width to actually scroll sideways — #86's case is a WIDE table.
+        ...Array.from({ length: 8 }, (_, i) => ({
+          prop: 'name',
+          name: `extra${i}`,
+          width: 200,
+        })),
       ]
       table.rowHeight = ROW_HEIGHT
       if (group) table.rowGroupId = (row: any) => row.group
@@ -226,3 +232,64 @@ The guard is kept as cheap defence for the case the window does stretch — a sl
 an anchor far from the stamped window so the estimate branch iterates — and is honestly
 recorded as unproven rather than dressed up.
 */
+
+const scrollLeftOf = (page: any) =>
+  page.evaluate(
+    () =>
+      (
+        document
+          .getElementById('scroller')!
+          .querySelector('[part="visibleRows"]') as HTMLElement
+      ).scrollLeft
+  )
+
+test('REGRESSION: horizontal position survives a re-render too (#86)', async ({
+  page,
+}) => {
+  /*
+  `preserveScroll` restored `scrollTop` alone. The tables that most need it are the WIDE
+  ones, normally read scrolled sideways with pinned columns as the identity — so snapping
+  back to column 0 makes the row appear to change under the pinned columns, which reads as a
+  bigger jump than losing the row.
+  */
+  await makeTable(page)
+  await page.evaluate(() => {
+    const area = document
+      .getElementById('scroller')!
+      .querySelector('[part="visibleRows"]') as HTMLElement
+    area.scrollLeft = 600
+  })
+  await settle(page)
+  expect(await scrollLeftOf(page)).toBeGreaterThan(400)
+
+  await page.evaluate(() => {
+    ;(document.getElementById('scroller') as any).filter = (rows: any[]) =>
+      rows.filter(() => true)
+  })
+  await expect
+    .poll(() => scrollLeftOf(page), { timeout: 5000 })
+    .toBeGreaterThan(400)
+})
+
+test('horizontal position is kept even when the table is at the TOP', async ({
+  page,
+}) => {
+  // The capture used to return early when `scrollTop` was 0, losing the columns for a table
+  // scrolled sideways but not down — the commonest shape of all.
+  await makeTable(page)
+  await page.evaluate(() => {
+    const area = document
+      .getElementById('scroller')!
+      .querySelector('[part="visibleRows"]') as HTMLElement
+    area.scrollTop = 0
+    area.scrollLeft = 600
+  })
+  await settle(page)
+  await page.evaluate(() => {
+    ;(document.getElementById('scroller') as any).sort = (a: any, b: any) =>
+      b.id - a.id
+  })
+  await expect
+    .poll(() => scrollLeftOf(page), { timeout: 5000 })
+    .toBeGreaterThan(400)
+})

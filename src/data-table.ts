@@ -1482,6 +1482,9 @@ export class TosiTable extends WebComponent {
   "where I was". Expand a group above the viewport and the same `scrollTop` shows entirely
   different rows; the same row at the same offset is what stays put.
   */
+  /** Horizontal scroll offset to put back after a re-render. */
+  private _scrollLeft = 0
+
   /** In-flight scroll restore, so a newer one supersedes it and gestures can cancel it. */
   private _scrollRestore: AbortController | null = null
 
@@ -2189,8 +2192,25 @@ export class TosiTable extends WebComponent {
   */
   private captureScrollAnchor(): void {
     this._scrollAnchor = null
+    this._scrollLeft = 0
     const area = this._scrollArea
-    if (!this.preserveScroll || !area || area.scrollTop <= 0) return
+    if (!this.preserveScroll || !area) return
+    /*
+    Horizontal position is captured SEPARATELY, and before the vertical early-return.
+
+    It needs no anchor row: columns keep their identity across a data re-render, so the
+    pixel offset means the same thing afterwards — unlike `scrollTop`, where inserting rows
+    above moves everything. Capturing it inside the row loop would also have missed the case
+    that matters most: a table scrolled sideways but still at the TOP, which used to return
+    early here and lose its columns.
+
+    The wide tables are the ones that need this. A wide table with pinned columns is read
+    scrolled sideways — the pinned columns are the identity, the interesting ones are off to
+    the right — so snapping back to column 0 changes what the row appears to say while the
+    pinned columns sit still. (#86)
+    */
+    this._scrollLeft = area.scrollLeft
+    if (area.scrollTop <= 0) return
     const areaTop = area.getBoundingClientRect().top
     const previous = (tosiValue(this.rowData.visible) as any[]) ?? []
     for (const el of area.querySelectorAll('.tr')) {
@@ -2231,12 +2251,15 @@ export class TosiTable extends WebComponent {
   */
   private restoreScrollAnchor(newData: any[]): void {
     const anchor = this._scrollAnchor
+    const left = this._scrollLeft
     this._scrollAnchor = null
-    if (!anchor) return
-    const newIndex = newData.indexOf(anchor.item)
-    // The anchor row is gone — filtered away, or a wholly new dataset. Nothing to be
-    // faithful to, so leave the fresh view at the top.
-    if (newIndex < 0) return
+    this._scrollLeft = 0
+    // The anchor row may be gone — filtered away, or a wholly new dataset — and there is
+    // then nothing vertical to be faithful to. The COLUMNS are still there either way, so
+    // the horizontal position is restored independently (#86).
+    const newIndex = anchor ? newData.indexOf(anchor.item) : -1
+    const restoreRow = !!anchor && newIndex >= 0
+    if (!restoreRow && !left) return
 
     /*
     The restore must yield to the user, and to itself.
@@ -2268,12 +2291,21 @@ export class TosiTable extends WebComponent {
       if (restore.signal.aborted) return
       const area = this._scrollArea
       if (!area) return
-      const row = this.getCells(anchor.item)?.[0]?.closest('.tr')
+      // Re-asserted each frame for the same reason the vertical value is: the grid's width
+      // is not final when render returns, so an early write is clamped to a narrow content
+      // box and silently lost.
+      if (left && area.scrollLeft !== left) area.scrollLeft = left
+      if (!restoreRow) {
+        if (--framesLeft > 0) requestAnimationFrame(step)
+        else restore.abort()
+        return
+      }
+      const row = this.getCells(anchor!.item)?.[0]?.closest('.tr')
       if (row) {
         const delta =
           row.getBoundingClientRect().top -
           area.getBoundingClientRect().top -
-          anchor.offset
+          anchor!.offset
         // Sub-pixel: scrollTop reads back fractionally on a scaled display, so an equality
         // test would never be satisfied and this would burn every frame it has.
         if (Math.abs(delta) < 1) {
@@ -2283,7 +2315,7 @@ export class TosiTable extends WebComponent {
         area.scrollTop += delta
       } else if (this.rowHeight > 0) {
         area.scrollTop =
-          anchor.scrollTop + (newIndex - anchor.index) * this.rowHeight
+          anchor!.scrollTop + (newIndex - anchor!.index) * this.rowHeight
       }
       if (--framesLeft > 0) requestAnimationFrame(step)
       else restore.abort() // budget spent — drop the gesture listeners
