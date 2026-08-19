@@ -265,11 +265,37 @@ build: `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (defaul
 
 ### Bundle
 
-| field             | default    | purpose                                               |
-| ----------------- | ---------- | ----------------------------------------------------- |
-| `bundleEntry`     | —          | your IIFE entrypoint; omit to use the fallback bundle |
-| `bundleExternals` | —          | modules left external, e.g. `['jolt-physics']`        |
-| `scriptUrl`       | `/iife.js` | bundle URL pages load (fallback + output name)        |
+| field             | default     | purpose                                                                    |
+| ----------------- | ----------- | -------------------------------------------------------------------------- |
+| `bundleEntry`     | —           | your IIFE entrypoint; omit to use the fallback bundle                      |
+| `bundleExternals` | —           | modules left external, e.g. `['jolt-physics']`                             |
+| `scriptUrl`       | `/iife.js`  | bundle URL pages load (fallback + output name)                             |
+| `bundleOutDir`    | `outputDir` | where the bundle is BUILT; set only when it is itself a published artifact |
+
+### Example checking
+
+| field           | default | purpose                                                                                                   |
+| --------------- | ------- | --------------------------------------------------------------------------------------------------------- |
+| `checkExamples` | `true`  | transpile every executable example at build time; `{ contextKeys: [...] }` extends the resolvable imports |
+
+Every ` ```js ` / ` ```ts ` / ` ```tjs ` / ` ```test ` block is compiled during the build, on
+every page, so a syntax error or a bad import is caught once rather than when a reader opens
+that page. Illustrative code mistakenly fenced as executable is the commonest catch.
+
+**An unresolvable import warns; it does not fail the build.** The block is demoted to
+display-only and the build stays green — which matters when you read the next paragraph.
+
+Example imports resolve against the doc-system's example context, which is `tosijs` and
+`tosijs-ui` by default. A library that documents **itself** imports its own package name, so
+extend the context rather than turning the check off:
+
+```typescript
+checkExamples: { contextKeys: ['my-lib'] }   // ADDED to the defaults, not substituted
+```
+
+`checkExamples: false` disables it entirely. Worth knowing what that costs: with the guard
+off, one adopter published a page teaching its own core contract with a hard `SyntaxError` in
+the example, plus ten pages importing a symbol their barrel did not export.
 
 ### Static assets
 

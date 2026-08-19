@@ -62,10 +62,13 @@ catches is expensive.
 
 /*{ "parent": "Appendices" }*/
 
+import { $ } from 'bun'
 import {
   collect,
   renderSection,
   uncovered,
+  classifyBump,
+  bumpConcerns,
   unsupportedClaims,
   lastVersionTag,
 } from '../dist/doc-system/release-notes.js'
@@ -119,6 +122,46 @@ if (has('check')) {
     console.error(
       `\n   A claim whose diff cannot support it is how three fixes that were never\n` +
         `   written got published. Check each one against the code.\n`
+    )
+  }
+
+  /*
+  Does the version match what actually changed?
+
+  The nine-lens review triggers on the version LETTER, so it only fires when the letter is
+  already right — which is exactly the judgement most in need of review. 1.9.9 was prepared,
+  gated, tagged and pushed as a patch while relocating a build artifact and loosening a
+  security default, and was caught only because a human asked for a review anyway (#78, #79).
+
+  So this keys on the diff and the annotations rather than on what the release was called.
+  */
+  const version = (await Bun.file('package.json').json()).version as string
+  const changedPaths = since
+    ? (await $`git diff --name-only ${since}...HEAD`.nothrow().quiet().text())
+        .split('\n')
+        .filter(Boolean)
+    : []
+  const concerns = since
+    ? bumpConcerns({
+        bump: classifyBump(since, version),
+        bullets: total,
+        changedPaths,
+      })
+    : []
+
+  for (const c of concerns) {
+    const blocking = c.level === 'block'
+    if (blocking) bad += 1
+    console.error(
+      `\n${blocking ? '🛑' : '⚠️ '} ${version} looks like a patch, but ${
+        c.reason
+      }:\n`
+    )
+    for (const e of c.evidence) console.error(`   ${e}`)
+    console.error(
+      blocking
+        ? `\n   Cut a minor, or explain in the notes why this does not reach anyone.\n`
+        : `\n   Check it is genuinely additive.\n`
     )
   }
 

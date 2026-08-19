@@ -191,3 +191,91 @@ test('REGRESSION: prose that reworded around short words still counts as covered
     '## 1.9.0\n\nIt cleared an empty range at exactly the release boundary.'
   expect(uncovered(records, changelog)).toHaveLength(0)
 })
+
+// ── does the version match what changed? (#78, #79) ──────────────────────────
+
+import { classifyBump, bumpConcerns, SENSITIVE_PATHS } from './release-notes'
+
+const bullet = (tag: any, text = 'x', sha = 'abc1234') => ({
+  tag,
+  text,
+  sha,
+  issues: [],
+})
+
+test('classifyBump reads the component that moved', () => {
+  expect(classifyBump('1.9.8', '1.9.9')).toBe('patch')
+  expect(classifyBump('1.9.8', '1.10.0')).toBe('minor')
+  expect(classifyBump('1.9.8', '2.0.0')).toBe('major')
+  expect(classifyBump('v1.9.8', 'v1.10.0')).toBe('minor')
+  expect(classifyBump('1.9.8', '1.10.0-beta.1')).toBe('prerelease')
+})
+
+test('REGRESSION: a [break] in a patch is blocked', () => {
+  /*
+  1.9.9 was prepared, gated, tagged and pushed as a PATCH while containing a relocated build
+  artifact and a loosened security default. It was caught because a human asked for a review
+  anyway — the review's own trigger keys on the version letter, so it only fires when the
+  letter is already right (#78).
+  */
+  const [concern] = bumpConcerns({
+    bump: 'patch',
+    bullets: [bullet('break', 'bundle output moved out of dist')],
+    changedPaths: ['src/thing.ts'],
+  })
+  expect(concern.level).toBe('block')
+  expect(concern.reason).toContain('never breaks')
+})
+
+test('REGRESSION: touching a security path in a patch is blocked', () => {
+  // The rule was written down two releases before it was mis-applied, by its author.
+  // Knowing a rule and applying it are different acts (#79).
+  const concerns = bumpConcerns({
+    bump: 'patch',
+    bullets: [bullet('new', 'a new option')],
+    changedPaths: ['src/doc-system/site/dev-auth.ts'],
+  })
+  expect(concerns.some((c) => c.level === 'block')).toBe(true)
+  expect(concerns[0].evidence[0]).toContain('dev-auth')
+})
+
+test('a [change] in a patch warns rather than blocks', () => {
+  // Widening the `marked` peer range was a [change] and a perfectly good patch.
+  const concerns = bumpConcerns({
+    bump: 'patch',
+    bullets: [bullet('change', 'marked peer widened to 17/18')],
+    changedPaths: ['package.json'],
+  })
+  expect(concerns).toHaveLength(1)
+  expect(concerns[0].level).toBe('warn')
+})
+
+test('an ordinary additive patch is clean', () => {
+  // The rule is that additive non-breaking work SHIPS as a patch — this must not nag.
+  expect(
+    bumpConcerns({
+      bump: 'patch',
+      bullets: [bullet('new', 'a new property'), bullet('fix', 'a fix')],
+      changedPaths: ['src/data-table.ts', 'README.md'],
+    })
+  ).toEqual([])
+})
+
+test('minors and majors are not second-guessed', () => {
+  for (const bump of ['minor', 'major', 'prerelease'] as const) {
+    expect(
+      bumpConcerns({
+        bump,
+        bullets: [bullet('break', 'breaking')],
+        changedPaths: ['src/doc-system/site/dev-auth.ts'],
+      })
+    ).toEqual([])
+  }
+})
+
+test('the sensitive list is short, named, and covers what bit us', () => {
+  // A clever heuristic would be unexplainable when it fires. This must stay obvious.
+  expect(SENSITIVE_PATHS).toContain('dev-auth')
+  expect(SENSITIVE_PATHS).toContain('tunnel')
+  expect(SENSITIVE_PATHS.length).toBeLessThan(10)
+})

@@ -197,3 +197,85 @@ export function unsupportedClaims(records) {
     return records.filter((r) => r.bullets.some((b) => b.tag === 'fix' || b.tag === 'new') &&
         isDocsOnly(r.files));
 }
+/** Which component moved, comparing the version being cut to the last released one. */
+export function classifyBump(from, to) {
+    const parse = (v) => v.replace(/^v/, '').split('-')[0].split('.').map(Number);
+    const [fM, fm, fp] = parse(from);
+    const [tM, tm, tp] = parse(to);
+    if ([fM, fm, fp, tM, tm, tp].some((n) => Number.isNaN(n)))
+        return 'unknown';
+    if (to.includes('-'))
+        return 'prerelease';
+    if (tM !== fM)
+        return 'major';
+    if (tm !== fm)
+        return 'minor';
+    if (tp !== fp)
+        return 'patch';
+    return 'unknown';
+}
+/*
+Paths where a change is a SECURITY-POSTURE change until proven otherwise.
+
+Deliberately a small, named list rather than a clever heuristic: it has to be obvious why a
+release was flagged, and obvious how to add to it. Matched as substrings of repo-relative
+paths.
+*/
+export const SENSITIVE_PATHS = [
+    'dev-auth',
+    'build-lock',
+    'tunnel',
+    'caddy-install',
+    'deploy-preview',
+];
+/**
+ * Is the version being cut big enough for what changed?
+ *
+ * The project's rule is that minors are for breaking changes and feature rollouts, and
+ * additive non-breaking work ships as a patch. That rule is written down and was still
+ * mis-applied two releases after it was written — by the person who wrote it — because
+ * nothing checked it (#79). And the nine-lens review triggers on the version LETTER, so it
+ * only fires when the letter is already right, which is exactly the judgement most in need
+ * of review (#78).
+ *
+ * So this keys on what the diff and the annotations SAY, not on what the release was called.
+ * Two mechanical signals, both chosen because a false positive is cheap (read a message) and
+ * a false negative is what shipped last time:
+ *
+ * - a `[break]` bullet in a patch — the contract is "a patch never breaks you"
+ * - a touched security path in a patch — a loosened default reaches people who never read
+ *   the notes, and the ones who tightened their config deliberately are the ones harmed
+ *
+ * `[change]` only warns: widening a peer range is a `[change]` and is a perfectly good patch.
+ */
+export function bumpConcerns(opts) {
+    const { bump, bullets, changedPaths } = opts;
+    if (bump !== 'patch')
+        return [];
+    const out = [];
+    const breaks = bullets.filter((b) => b.tag === 'break');
+    if (breaks.length) {
+        out.push({
+            level: 'block',
+            reason: 'a [break] annotation in a PATCH — the contract adopters rely on is that a patch never breaks them',
+            evidence: breaks.map((b) => `${b.sha} ${b.text.slice(0, 90)}`),
+        });
+    }
+    const sensitive = changedPaths.filter((p) => SENSITIVE_PATHS.some((s) => p.includes(s)));
+    if (sensitive.length) {
+        out.push({
+            level: 'block',
+            reason: 'a security-relevant path changed in a PATCH — say what moved, under its own heading, in a release people will read',
+            evidence: sensitive.slice(0, 8),
+        });
+    }
+    const changes = bullets.filter((b) => b.tag === 'change');
+    if (changes.length) {
+        out.push({
+            level: 'warn',
+            reason: 'a [change] annotation in a patch — fine when it is additive (a widened peer range), wrong when behaviour moved',
+            evidence: changes.map((b) => `${b.sha} ${b.text.slice(0, 90)}`),
+        });
+    }
+    return out;
+}

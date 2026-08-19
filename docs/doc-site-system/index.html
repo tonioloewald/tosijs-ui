@@ -366,7 +366,40 @@ build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-m
 <td><code>/iife.js</code></td>
 <td>bundle URL pages load (fallback + output name)</td>
 </tr>
+<tr>
+<td><code>bundleOutDir</code></td>
+<td><code>outputDir</code></td>
+<td>where the bundle is BUILT; set only when it is itself a published artifact</td>
+</tr>
 </tbody></table>
+<h3>Example checking</h3>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>default</th>
+<th>purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>checkExamples</code></td>
+<td><code>true</code></td>
+<td>transpile every executable example at build time; <code>{ contextKeys: [...] }</code> extends the resolvable imports</td>
+</tr>
+</tbody></table>
+<p>Every <code>```js</code> / <code>```ts</code> / <code>```tjs</code> / <code>```test</code> block is compiled during the build, on
+every page, so a syntax error or a bad import is caught once rather than when a reader opens
+that page. Illustrative code mistakenly fenced as executable is the commonest catch.</p>
+<p><strong>An unresolvable import warns; it does not fail the build.</strong> The block is demoted to
+display-only and the build stays green — which matters when you read the next paragraph.</p>
+<p>Example imports resolve against the doc-system&#39;s example context, which is <code>tosijs</code> and
+<code>tosijs-ui</code> by default. A library that documents <strong>itself</strong> imports its own package name, so
+extend the context rather than turning the check off:</p>
+<pre><code class="language-typescript">checkExamples: { contextKeys: [&#39;my-lib&#39;] }   // ADDED to the defaults, not substituted
+</code></pre>
+<p><code>checkExamples: false</code> disables it entirely. Worth knowing what that costs: with the guard
+off, one adopter published a page teaching its own core contract with a hard <code>SyntaxError</code> in
+the example, plus ten pages importing a symbol their barrel did not export.</p>
 <h3>Static assets</h3>
 <table>
 <thead>

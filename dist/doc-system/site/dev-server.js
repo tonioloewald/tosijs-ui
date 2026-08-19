@@ -286,6 +286,32 @@ async function killStrayServer(port) {
                 `    dev server — leaving it alone. Free the port, or set PORT to another one.`);
             continue;
         }
+        /*
+        "A JS runtime" is not "OUR dev server", and only the second earns a signal (#77).
+    
+        The runtime check above passes for any `bun`/`node`/`deno` — a colleague's unrelated
+        dev server, a language server, a test runner that happened to bind the port. Killing one
+        of those is not a nuisance, it is destroying someone's work with a receipt in OUR log.
+    
+        So require the process to be working in THIS project. If the cwd cannot be read (denied,
+        or no lsof) we skip rather than guess: refusing to start with a clear message costs a
+        developer ten seconds, and shooting the wrong process costs them an afternoon.
+        */
+        const theirCwd = await $ `lsof -a -d cwd -p ${pid} -Fn`
+            .quiet()
+            .text()
+            .then((out) => out
+            .split('\n')
+            .find((l) => l.startsWith('n'))
+            ?.slice(1)
+            .trim())
+            .catch(() => undefined);
+        if (theirCwd !== process.cwd()) {
+            console.warn(`⚠️  port ${port} is held by pid ${pid} (${comm}) working in\n` +
+                `    ${theirCwd ?? 'an unreadable directory'} — not this project, so leaving it\n` +
+                `    alone. Stop it yourself, or set PORT to another one.`);
+            continue;
+        }
         try {
             process.kill(pid, 'SIGTERM');
         }

@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.10.2
+
+**The dev server no longer serves stale content after a rebuild.** This is the one that
+presented as random flakiness across several sessions: a served `/docs.json` disagreeing with
+the file on disk made the doc browser's route match fail, so live-example insertion silently
+skipped — the page rendered, hydration reported success, custom elements were defined, and
+**zero examples appeared, with no error anywhere**.
+
+The cause was a cache key of `path + lastModified`, with a comment asserting that a rebuild
+invalidates it naturally. It does not: `lastModified` is millisecond-granularity, and six
+rapid writes to one file report the same value. A rebuild that rewrote a file inside one
+millisecond kept serving the first compressed body until the process restarted — which is why
+a restart "fixed" it. The cache is now emptied on every completed rebuild, and the key carries
+the file size. (#50)
+
+**`killStrayServer` no longer shoots an unrelated process.** Reclaiming the port checked that
+the holder was a JS runtime (`bun`/`node`/`deno`) — but "a JS runtime" is not "our dev
+server", and a colleague's dev server, a language server or a test runner would all pass. It
+now requires the process to be working in **this project**, and skips with a message naming
+the directory when it is not. If the working directory cannot be read it skips too: refusing
+to start costs you ten seconds, shooting the wrong process costs you an afternoon. (#77)
+
+**`bun run release-check` now checks the version against what actually changed** — it blocks a
+patch that carries a `[break]` annotation or touches a security-relevant path, and warns on a
+`[change]`. The nine-lens review triggers on the version _letter_, so it only ever fired when
+the letter was already right; 1.9.9 was prepared, gated, tagged and pushed as a patch while
+relocating a build artifact and loosening a security default, and was caught only because a
+human asked for a review anyway. (#78, #79)
+
+**Docs:** `bundleOutDir` is in the Bundle config table it belongs in, and `checkExamples` —
+including `contextKeys`, which **extends** the default context rather than replacing it — is
+documented where adopters actually look. (#80, #81)
+
 ## 1.10.1
 
 Two fixes to 1.10.0's row grouping and scroll preservation, both reported by snowfox against

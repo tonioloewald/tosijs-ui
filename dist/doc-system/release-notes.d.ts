@@ -31,3 +31,37 @@ export declare function renderSection(version: string, records: CommitRecord[]):
 export declare function uncovered(records: CommitRecord[], changelog: string): Bullet[];
 /** Commits asserting a code change whose diff is markdown only. */
 export declare function unsupportedClaims(records: CommitRecord[]): CommitRecord[];
+export type BumpKind = 'major' | 'minor' | 'patch' | 'prerelease' | 'unknown';
+/** Which component moved, comparing the version being cut to the last released one. */
+export declare function classifyBump(from: string, to: string): BumpKind;
+export declare const SENSITIVE_PATHS: string[];
+export interface BumpConcern {
+    level: 'block' | 'warn';
+    reason: string;
+    evidence: string[];
+}
+/**
+ * Is the version being cut big enough for what changed?
+ *
+ * The project's rule is that minors are for breaking changes and feature rollouts, and
+ * additive non-breaking work ships as a patch. That rule is written down and was still
+ * mis-applied two releases after it was written — by the person who wrote it — because
+ * nothing checked it (#79). And the nine-lens review triggers on the version LETTER, so it
+ * only fires when the letter is already right, which is exactly the judgement most in need
+ * of review (#78).
+ *
+ * So this keys on what the diff and the annotations SAY, not on what the release was called.
+ * Two mechanical signals, both chosen because a false positive is cheap (read a message) and
+ * a false negative is what shipped last time:
+ *
+ * - a `[break]` bullet in a patch — the contract is "a patch never breaks you"
+ * - a touched security path in a patch — a loosened default reaches people who never read
+ *   the notes, and the ones who tightened their config deliberately are the ones harmed
+ *
+ * `[change]` only warns: widening a peer range is a `[change]` and is a perfectly good patch.
+ */
+export declare function bumpConcerns(opts: {
+    bump: BumpKind;
+    bullets: Bullet[];
+    changedPaths: string[];
+}): BumpConcern[];
