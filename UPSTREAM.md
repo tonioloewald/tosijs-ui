@@ -487,7 +487,7 @@ Filed while designing the schema-driven editing work (`SCHEMA-FORM-PLAN.md`, bra
 `schema-form`), against **tosijs-schema 1.4.0** (what `tjs-lang` pulls in transitively;
 npm is at 1.5.1).
 
-### Open (waiting on tosijs-schema)
+### ✅ Delivered in 1.6.0
 
 - **[#6](https://github.com/tonioloewald/tosijs-schema/issues/6) — `inferSchema(sample)`:
   derive a schema from example data.** `Infer<S>` goes schema → TS type; this is the
@@ -514,6 +514,14 @@ npm is at 1.5.1).
   learning from rebuilds output from a schema-shaped view and silently discards timestamps
   and provenance on every save (its `SF-2`). Closed-by-default inference would build that
   same failure in.
+
+- **[#7](https://github.com/tonioloewald/tosijs-schema/issues/7) — `inferSchema` labels a
+  date-only string `format: 'date-time'`** (confirmed against 1.6.1; to be patched in 1.6.2).
+  Self-consistent — their validator accepts it, so the "never rejects its own sample"
+  guarantee holds — but `2020-01-01` is not an RFC 3339 `date-time`, so the emitted schema is
+  one Ajv and friends would reject against the very data it came from. Only bites when the
+  schema **travels**, which is the whole point of emitting plain JSON Schema. Not a blocker
+  for us: we use their validator.
 
 ### Watching
 
