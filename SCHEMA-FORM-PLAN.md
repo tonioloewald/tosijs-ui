@@ -75,6 +75,32 @@ Inference rules to settle (all lossy, so all need an override):
 - conservative `format` sniffing (date/email/uri) — wrong guesses are worse than none
 - emit a real editable schema the caller can keep, not a hidden internal one
 
+## 3a. Dependency floor: `tosijs-schema` `^1.7.0` — verified, not assumed
+
+`inferSchema` landed in 1.6.0 and the floor is **1.7.0**, because 1.6.x labels a date-only
+string `format: 'date-time'` — self-consistent with its own validator, but a schema that
+Ajv rejects against the data it came from (tosijs-schema#7, fixed in 1.7.0; breaking, hence
+the minor).
+
+Verified with `bin/verify-schema-dep.ts`, which is kept **because** that defect got past a
+guarantee that was self-referential: "a sniffed format never rejects its own sample" is true
+from inside the library and still emitted an unportable schema. Only a consumer checking at
+the boundary sees that, so the consumer keeps the probe.
+
+```bash
+bun bin/verify-schema-dep.ts --version=1.7.0   # 17/17, exit 0
+bun bin/verify-schema-dep.ts                   # against whatever is installed
+```
+
+It asserts #7 in both directions and re-checks all twelve #6 requirements as a regression
+guard — a breaking release is exactly when the other guarantees are most likely to move. It
+exits non-zero on any failure (checked both ways: 1.7.0 → 0, 1.6.1 → 1).
+
+**Peer, not dependency, and scoped to the subpath.** `tosijs-schema` becomes an _optional_
+peer of `tosijs-ui/schema-form`, not of the core: a consumer who only wants `<tosi-select>`
+should not have to install a schema library. `data-table` may use it to replace its
+row-0-only column inference when present, and must keep working when it is not.
+
 ## 4. The CRUD wrapper
 
 filter + table + form is a genuine product: query → list → detail/edit. Two rules so it
