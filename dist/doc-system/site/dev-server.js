@@ -398,12 +398,19 @@ A BOUNDED cache, because this process lives for days.
 Recompressing a 10MB bundle per request would cost more than it saves, so the bytes have
 to be kept — but an unbounded cache in a long-lived dev server is precisely the failure
 that took this machine down twice, and it is invisible to the JS heap until it is not.
-Keyed on path + mtime so a rebuild invalidates naturally; capped in total bytes with
+Keyed on path + mtime + SIZE, and emptied outright on every completed rebuild — mtime
+alone does NOT invalidate naturally, because its resolution is coarser than a rebuild
+(#50). Capped in total bytes with
 oldest-out eviction.
 */
 const COMPRESS_CACHE_MAX_BYTES = 64 * 1024 * 1024;
 const compressCache = new Map();
 let compressCacheBytes = 0;
+/** Drop everything. Called on every completed rebuild — see the note at its call site. */
+function clearCompressCache() {
+    compressCache.clear();
+    compressCacheBytes = 0;
+}
 function cacheCompressed(key, bytes) {
     // A single asset bigger than the whole budget is not worth evicting everything for.
     if (bytes.byteLength > COMPRESS_CACHE_MAX_BYTES / 2)
@@ -751,7 +758,7 @@ export async function devServer(config, opts = {}) {
         }
         if (encoding && isCompressible(filePath)) {
             const file = Bun.file(filePath);
-            const key = `${encoding}:${filePath}:${file.lastModified}`;
+            const key = `${encoding}:${filePath}:${file.lastModified}:${file.size}`;
             let bytes = compressCache.get(key);
             if (!bytes) {
                 bytes = compressBytes(new Uint8Array(await file.arrayBuffer()), encoding);
@@ -923,6 +930,22 @@ export async function devServer(config, opts = {}) {
                 const result = await runBuild();
                 if (result === false)
                     throw new Error('build reported failure');
+                /*
+                Drop every compressed body a rebuild may have invalidated.
+        
+                The cache was keyed on `path + lastModified`, and `lastModified` is MILLISECOND
+                granularity — six rapid writes to one file report the same value (measured). So a
+                rebuild that rewrote a file inside one millisecond kept serving the FIRST compressed
+                body until the process restarted: served `/docs.json` disagreed with the file on
+                disk, the doc browser's route match failed, and live examples silently stopped
+                appearing with no error anywhere. It presented as random flakiness across several
+                sessions (#50).
+        
+                A completed rebuild is a definite signal and clearing is O(1) — far better than
+                guessing from timestamps. The key also carries `size` now, for anything that writes
+                outside a rebuild.
+                */
+                clearCompressCache();
                 if (!buildStatus.ok)
                     console.log('✅ build recovered — serving fresh output');
                 buildStatus = { ok: true, at: Date.now() };

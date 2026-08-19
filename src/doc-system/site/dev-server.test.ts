@@ -369,3 +369,43 @@ test('an absolute docPath collapses against its relative form', () => {
   const watched = resolveWatchPaths({ docPaths: ['/proj/src'] }, '/proj')
   expect(timesResolvingTo(watched, '/proj/src', '/proj')).toBe(1)
 })
+
+// ── the compression cache key (tosijs-ui#50) ─────────────────────────────────
+
+test('REGRESSION: mtime alone does not distinguish two rapid writes', async () => {
+  /*
+  The dev server cached compressed bodies under `encoding:path:lastModified`, on the stated
+  assumption that "a rebuild invalidates naturally". It does not: `lastModified` is
+  MILLISECOND granularity, so a rebuild that rewrote a file inside one millisecond reused the
+  previous compressed body until the process restarted.
+
+  What that looked like: served `/docs.json` disagreed with the file on disk, the doc
+  browser's route match failed, and live examples silently stopped being inserted — no error
+  anywhere. It read as random flakiness across several sessions before being pinned.
+
+  This asserts the PREMISE rather than the fix, because the premise is the part that was
+  wrong and the part a future refactor would re-assume.
+  */
+  const { mkdtempSync } = await import('fs')
+  const { tmpdir } = await import('os')
+  const { join } = await import('path')
+  const file = join(mkdtempSync(join(tmpdir(), 'mtime-')), 'f.json')
+
+  const stamps: number[] = []
+  for (let i = 0; i < 6; i++) {
+    await Bun.write(file, `content-${i}`)
+    stamps.push(Bun.file(file).lastModified)
+  }
+  // If this ever starts failing, mtime resolution improved and the ORIGINAL key would be
+  // safe — but the fix (size in the key + clearing on rebuild) stays correct either way.
+  expect(new Set(stamps).size).toBeLessThan(stamps.length)
+})
+
+test('size in the key separates same-millisecond writes of different content', async () => {
+  const key = (path: string, mtime: number, size: number) =>
+    `br:${path}:${mtime}:${size}`
+  // Same path, same millisecond, different content — the case that served staleness.
+  expect(key('/docs.json', 1000, 400)).not.toBe(key('/docs.json', 1000, 402))
+  // …and identical inputs still hit, or the cache would be pointless.
+  expect(key('/docs.json', 1000, 400)).toBe(key('/docs.json', 1000, 400))
+})
