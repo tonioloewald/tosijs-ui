@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- NB: the body is NOT hidden until hydration. It used to be (body opacity 0 +
+       a 4s safety-net timeout), because an undefined custom element is
+       display:inline, so the pre-rendered page stacked as bare text and hydration
+       reflowed the whole thing. The cost was a blank screen for as long as the
+       bundle took — ~4.5s on a cheap phone, for content already in the HTML. The
+       tosi-doc-system:not(:defined) rules in the stylesheet now lay the static page
+       out as though the chrome were there, so hydration only ADDS the chrome and
+       nothing moves. Paint immediately; don't hide readable content. -->
+  <!-- Theme, applied BEFORE first paint. Now that we paint the static page rather
+       than hiding it, a dark-mode reader would otherwise get a flash of the light
+       theme until the bundle lands and sets body.darkmode. CSS alone can't do this:
+       an explicit theme choice lives in localStorage. Mirrors applyThemePrefs()
+       (doc-system.ts) — keep the two in step. Fails safe: any error leaves the
+       light default, exactly as before. -->
+  <script>
+    try {
+      var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
+      var t = p.theme || 'system'
+      if (t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
+        document.documentElement.classList.add('darkmode')
+      if (p.highContrast) document.documentElement.classList.add('high-contrast')
+    } catch (e) {}
+  </script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="../doc-system.css" data-tosi-doc-system />
+  <title>crud — tosijs-ui</title>
+  <meta name="description" content="Search, list, edit — &lt;tosi-table&gt; and &lt;tosi-schema-form&gt; over a store you supply." />
+  <link rel="canonical" href="https://ui.tosijs.net/crud/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="tosijs-ui" />
+  <meta property="og:title" content="crud — tosijs-ui" />
+  <meta property="og:description" content="Search, list, edit — &lt;tosi-table&gt; and &lt;tosi-schema-form&gt; over a store you supply." />
+  <meta property="og:url" content="https://ui.tosijs.net/crud/" />
+  <meta name="twitter:card" content="summary" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"crud","description":"Search, list, edit — \u003ctosi-table> and \u003ctosi-schema-form> over a store you supply.","url":"https://ui.tosijs.net/crud/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <link rel="icon" href="../favicon.svg" />
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
+</head>
+<body>
+  <tosi-doc-system docs="../docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <article class="doc-content">
+<h1>crud</h1>
+<!--{ "parent": "Components" }-->
+
+<p>Search, list, edit — <a href="/data-table/"><code>&lt;tosi-table&gt;</code></a> and
+<a href="/schema-form/"><code>&lt;tosi-schema-form&gt;</code></a> over a store you supply.</p>
+<pre><code class="language-js">import { tosiCrud } from &#39;tosijs-ui&#39;
+
+// A store is three promise-returning methods. This one is an array in a closure; yours
+// might be `fetch`, a DocStore, or IndexedDB — the component neither knows nor cares.
+let records = [
+  { id: 1, name: &#39;Ada Lovelace&#39;, role: &#39;admin&#39;, active: true },
+  { id: 2, name: &#39;Grace Hopper&#39;, role: &#39;admin&#39;, active: true },
+  { id: 3, name: &#39;Katherine Johnson&#39;, role: &#39;editor&#39;, active: false },
+]
+
+preview.append(
+  tosiCrud({
+    hashNamespace: &#39;people&#39;,
+    schema: {
+      type: &#39;object&#39;,
+      properties: {
+        id: { type: &#39;integer&#39;, title: &#39;ID&#39; },
+        name: { type: &#39;string&#39; },
+        role: { type: &#39;string&#39;, enum: [&#39;admin&#39;, &#39;editor&#39;, &#39;viewer&#39;] },
+        active: { type: &#39;boolean&#39; },
+      },
+      required: [&#39;name&#39;],
+    },
+    store: {
+      async list({ search }) {
+        const term = (search ?? &#39;&#39;).toLowerCase()
+        return records.filter((r) =&gt; r.name.toLowerCase().includes(term))
+      },
+      async save(record) {
+        const id = record.id ?? Math.max(0, ...records.map((r) =&gt; r.id)) + 1
+        const saved = { ...record, id }
+        records = records.some((r) =&gt; r.id === id)
+          ? records.map((r) =&gt; (r.id === id ? saved : r))
+          : [...records, saved]
+        return saved
+      },
+      async delete(record) {
+        records = records.filter((r) =&gt; r.id !== record.id)
+      },
+    },
+  })
+)
+</code></pre>
+<pre><code class="language-test">const crud = await waitFor(&#39;tosi-crud&#39;)
+await crud.whenIdle()
+
+test(&#39;search, select, edit, save — and the URL remembers where you were&#39;, async () =&gt; {
+  // One test: every step shares this component, and test() bodies run concurrently.
+  expect(crud.rows.length).toBe(3)
+
+  // Selecting a row loads it into the form and records it in the hash.
+  crud.select(crud.rows[1])
+  await crud.whenIdle()
+  expect(crud.value.name).toBe(&#39;Grace Hopper&#39;)
+  expect(location.hash).toContain(&#39;people.id=2&#39;)
+
+  // Editing writes the form&#39;s model; saving sends it to the store and re-lists.
+  const name = crud.form.querySelector(&#39;[data-path=&quot;name&quot;]&#39;)
+  name.value = &#39;Grace B. Hopper&#39;
+  name.dispatchEvent(new Event(&#39;input&#39;, { bubbles: true }))
+  await crud.save()
+  expect(crud.rows.find((r) =&gt; r.id === 2).name).toBe(&#39;Grace B. Hopper&#39;)
+
+  // Searching re-queries the store.
+  crud.search = &#39;ada&#39;
+  await crud.whenIdle()
+  expect(crud.rows.length).toBe(1)
+})
+</code></pre>
+<h2>The store is the only thing you have to write</h2>
+<pre><code class="language-typescript">interface CrudStore {
+  list(query: { search?: string }): Promise&lt;any[]&gt;
+  save?(record: any): Promise&lt;any&gt;     // returns the saved record
+  delete?(record: any): Promise&lt;void&gt;
+}
+</code></pre>
+<p>There is <strong>no transport in here</strong> — no <code>fetch</code>, no URL convention, no envelope format. REST,
+a DocStore, IndexedDB, an array in a closure and a mock in a test all satisfy the same three
+methods. Omit <code>save</code> and the form is read-only; omit <code>delete</code> and its button is not shown.</p>
+<p><code>save</code> returns the saved record because the server usually knows things the client does not:
+the id of a new record, a timestamp, a computed field. That returned record is what the form
+then holds.</p>
+<h2>The parts stay usable on their own</h2>
+<p><code>&lt;tosi-crud&gt;</code> composes public components and exposes them — <code>.table</code> and <code>.form</code> are the real
+elements, so anything you can do to a <code>&lt;tosi-table&gt;</code> you can do here:</p>
+<pre><code class="language-typescript">crud.table.columns = [{ prop: &#39;name&#39;, width: 200 }, { prop: &#39;role&#39;, width: 100 }]
+crud.form.readOnly = true
+</code></pre>
+<p>It is a convenience, never the only way to reach them. Compose the three yourself when your
+layout wants something else — that is a supported thing to do, not a fallback.</p>
+<h2>Schema: give one, or let it infer</h2>
+<p>With a <code>schema</code>, the form renders it and the table takes its columns <strong>from the schema</strong> —
+which is better than the table&#39;s own inference, because that reads <code>Object.keys(array[0])</code> and
+so loses the column for any property the first row happens not to have.</p>
+<p>Without one, the form infers a schema from the record it edits (see
+<a href="/schema-form/">schema-form</a>) and the table falls back to inferring its own columns. That
+works, and it costs a lazy import of <code>tosijs-schema</code> before the first field appears — so give
+a schema when you have one.</p>
+<pre><code class="language-js">import { tosiCrud } from &#39;tosijs-ui&#39;
+
+let rows = [
+  { sku: &#39;W-1&#39;, qty: 2, price: 9.99 },
+  { sku: &#39;G-9&#39;, qty: 5, price: 1.5 },
+]
+
+preview.append(
+  tosiCrud({
+    hashNamespace: &#39;stock&#39;,
+    idPath: &#39;sku&#39;,
+    schema: {
+      type: &#39;object&#39;,
+      properties: {
+        sku: { type: &#39;string&#39;, title: &#39;SKU&#39; },
+        qty: { type: &#39;integer&#39;, title: &#39;Quantity&#39; },
+        price: { type: &#39;number&#39; },
+      },
+      required: [&#39;sku&#39;],
+    },
+    store: {
+      async list() {
+        return rows
+      },
+      async save(record) {
+        rows = rows.map((r) =&gt; (r.sku === record.sku ? record : r))
+        return record
+      },
+    },
+  })
+)
+</code></pre>
+<pre><code class="language-test">const stock = await waitFor(&#39;tosi-crud&#39;)
+await stock.whenIdle()
+
+test(&#39;columns come from the schema, titles and all&#39;, () =&gt; {
+  expect(stock.table.columns.map((c) =&gt; c.prop)).toEqual([&#39;sku&#39;, &#39;qty&#39;, &#39;price&#39;])
+  expect(stock.table.columns[0].name).toBe(&#39;SKU&#39;)
+  // No `delete` on the store, so no delete button is shown — a disabled or dead button
+  // advertises an affordance that does not exist.
+  expect(stock.querySelector(&#39;.crud-delete&#39;).hidden).toBe(true)
+  expect(stock.querySelector(&#39;.crud-save&#39;).hidden).toBe(false)
+})
+</code></pre>
+<h2>The URL remembers where you were</h2>
+<p>The search term and the selected record&#39;s id live in the page hash via
+<a href="/hash-state/"><code>hashState</code></a>, so a filtered list with a record open is a link you can send
+someone. Set <code>hashNamespace</code> to keep two of them from colliding, or <code>hashMode=&quot;memory&quot;</code> to
+keep the URL out of it entirely.</p>
+<p>Typing <strong>replaces</strong> the current history entry; selecting a record <strong>pushes</strong> one — so back
+takes you out of the record you opened rather than un-typing your search one letter at a time.</p>
+<h2>Failures are shown, never swallowed</h2>
+<p>If <code>list</code>, <code>save</code> or <code>delete</code> rejects, the message is displayed and an <code>error</code> event is
+dispatched with <code>{ operation, error }</code>. Nothing is retried behind your back and nothing
+reports success on a failure.</p>
+<p>Out-of-order responses are dropped: every <code>list</code> carries a sequence number and a late reply
+from a slower earlier query is discarded rather than overwriting newer results. That is the
+classic search-as-you-type bug — you stop typing and the list flips back to the results for a
+prefix.</p>
+<pre><code class="language-js">import { tosiCrud } from &#39;tosijs-ui&#39;
+
+const wait = (ms) =&gt; new Promise((r) =&gt; setTimeout(r, ms))
+const all = [&#39;alpha&#39;, &#39;alps&#39;, &#39;alphabet&#39;].map((name, id) =&gt; ({ id, name }))
+
+preview.append(
+  tosiCrud({
+    hashNamespace: &#39;slow&#39;,
+    store: {
+      async list({ search }) {
+        // A short term is SLOWER, so a stale reply is guaranteed to land last — which is
+        // exactly the race a real network produces by accident.
+        await wait(search &amp;&amp; search.length &gt; 2 ? 0 : 150)
+        return all.filter((r) =&gt; r.name.startsWith(search ?? &#39;&#39;))
+      },
+      async save() {
+        throw new Error(&#39;the server said no&#39;)
+      },
+    },
+  })
+)
+</code></pre>
+<pre><code class="language-test">const slow = await waitFor(&#39;tosi-crud&#39;)
+await slow.whenIdle()
+
+test(&#39;a stale reply is dropped, and a failed save is reported not swallowed&#39;, async () =&gt; {
+  // Fire the slow query, then the fast one, without waiting in between.
+  slow.search = &#39;al&#39;
+  slow.search = &#39;alph&#39;
+  await slow.whenIdle()
+  // &#39;alph&#39; matches alpha + alphabet; &#39;al&#39; would have matched all three. The late reply from
+  // the earlier query must not put the list back to a prefix the user has finished typing.
+  expect(slow.rows.map((r) =&gt; r.name)).toEqual([&#39;alpha&#39;, &#39;alphabet&#39;])
+
+  // A rejecting save reports the failure three ways and claims success none of them.
+  slow.select(slow.rows[0])
+  let event = null
+  slow.addEventListener(&#39;error&#39;, (e) =&gt; (event = e.detail), { once: true })
+  let threw = false
+  try {
+    await slow.save()
+  } catch (e) {
+    threw = true
+  }
+  await slow.whenIdle()
+  expect(threw).toBe(true)
+  expect(event.operation).toBe(&#39;save&#39;)
+  expect(slow.querySelector(&#39;.crud-status&#39;).textContent).toBe(&#39;the server said no&#39;)
+})
+</code></pre>
+<h2>Properties, methods, events</h2>
+<ul>
+<li><code>store</code> — the adapter. Setting it re-lists.</li>
+<li><code>schema</code> — optional JSON Schema for the form and the table&#39;s columns.</li>
+<li><code>idPath</code> — which property identifies a record (default <code>&#39;id&#39;</code>).</li>
+<li><code>search</code> — the current search term.</li>
+<li><code>rows</code> — the records currently listed.</li>
+<li><code>value</code> — the selected record (the form&#39;s live model).</li>
+<li><code>table</code> / <code>form</code> — the composed elements.</li>
+<li><code>refresh()</code> / <code>select(record)</code> / <code>save()</code> / <code>remove()</code> / <code>createNew()</code></li>
+<li><code>whenIdle()</code> — resolves when no store operation is in flight; for tests, mostly.</li>
+<li><code>change</code> — the selection or the saved record changed.</li>
+<li><code>error</code> — a store operation failed.</li>
+</ul>
+
+  </article>
+  <nav class="doc-nav" aria-label="Documentation">
+  <ul>
+    <li><a class="doc-link" href="../">tosijs-ui</a></li>
+    <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
+    <li><a class="doc-link" href="../icons/">icons</a></li>
+    <li><a class="doc-link" href="../natural-compare/">naturalCompare</a></li>
+    <li><a class="doc-link" href="../utilities/">Utilities</a></li>
+    <li><details open><summary><a class="doc-link" href="../components/">Components</a></summary>
+    <ul>
+      <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
+      <li><a class="doc-link" href="../carousel/">carousel</a></li>
+      <li><a class="doc-link" href="../code-editor/">code</a></li>
+      <li><a class="doc-link current" href="../crud/" aria-current="page">crud</a></li>
+      <li><a class="doc-link" href="../dialog/">dialog</a></li>
+      <li><a class="doc-link" href="../diff/">diff</a></li>
+      <li><a class="doc-link" href="../editable-rect/">editable-rect</a></li>
+      <li><a class="doc-link" href="../component/">example</a></li>
+      <li><a class="doc-link" href="../float/">float</a></li>
+      <li><a class="doc-link" href="../gamepad/">gamepads</a></li>
+      <li><a class="doc-link" href="../header/">header</a></li>
+      <li><a class="doc-link" href="../layout/">layout</a></li>
+      <li><a class="doc-link" href="../bodymovin-player/">lottie / bodymovin</a></li>
+      <li><a class="doc-link" href="../mapbox/">map</a></li>
+      <li><a class="doc-link" href="../markdown-viewer/">markdown</a></li>
+      <li><a class="doc-link" href="../menu/">menu</a></li>
+      <li><a class="doc-link" href="../notifications/">notifications</a></li>
+      <li><a class="doc-link" href="../pocket-bar/">pocket bar</a></li>
+      <li><a class="doc-link" href="../pop-float/">popFloat</a></li>
+      <li><a class="doc-link" href="../schema-form/">schema-form</a></li>
+      <li><a class="doc-link" href="../side-nav/">sidebar</a></li>
+      <li><a class="doc-link" href="../size-break/">size-break</a></li>
+      <li><a class="doc-link" href="../sizer/">sizer</a></li>
+      <li><a class="doc-link" href="../data-table/">table</a></li>
+      <li><a class="doc-link" href="../tab-selector/">tabs</a></li>
+      <li><a class="doc-link" href="../tooltip/">tooltip</a></li>
+    </ul>
+    </details></li>
+    <li><details><summary><a class="doc-link" href="../form-components/">Form Components</a></summary>
+    <ul>
+      <li><a class="doc-link" href="../color-input/">color input field</a></li>
+      <li><a class="doc-link" href="../filter-builder/">filter</a></li>
+      <li><a class="doc-link" href="../form/">forms</a></li>
+      <li><a class="doc-link" href="../month/">month</a></li>
+      <li><a class="doc-link" href="../password-strength/">password strength</a></li>
+      <li><a class="doc-link" href="../rating/">rating</a></li>
+      <li><a class="doc-link" href="../rich-text/">rich text</a></li>
+      <li><a class="doc-link" href="../segmented/">segmented select</a></li>
+      <li><a class="doc-link" href="../select/">select</a></li>
+      <li><a class="doc-link" href="../tag-list/">tag-list</a></li>
+    </ul>
+    </details></li>
+    <li><details><summary><a class="doc-link" href="../helper-libraries/">Helper Libraries</a></summary>
+    <ul>
+      <li><a class="doc-link" href="../ab-test/">ab-test</a></li>
+      <li><a class="doc-link" href="../drag-and-drop/">drag &amp; drop</a></li>
+      <li><a class="doc-link" href="../hash-state/">hash-state</a></li>
+      <li><a class="doc-link" href="../live-theme/">live-theme</a></li>
+      <li><a class="doc-link" href="../localize/">localize</a></li>
+      <li><a class="doc-link" href="../make-sorter/">makeSorter</a></li>
+      <li><a class="doc-link" href="../router/">router</a></li>
+      <li><a class="doc-link" href="../via-tag/">scriptTag &amp; styleSheet</a></li>
+      <li><a class="doc-link" href="../theme/">theme</a></li>
+      <li><a class="doc-link" href="../track-drag/">trackDrag</a></li>
+      <li><a class="doc-link" href="../value-renderer/">valueRenderer</a></li>
+    </ul>
+    </details></li>
+    <li><details><summary><a class="doc-link" href="../appendices/">Appendices</a></summary>
+    <ul>
+      <li><a class="doc-link" href="../doc-system/">doc-system</a></li>
+      <li><a class="doc-link" href="../kitchen-sink/">kitchen sink</a></li>
+      <li><a class="doc-link" href="../make-icon-data/">make-icon-data</a></li>
+      <li><a class="doc-link" href="../release-notes/">release-notes</a></li>
+      <li><a class="doc-link" href="../icon-svg/">iconSvg — icon markup without a DOM</a></li>
+      <li><a class="doc-link" href="../migrating/">Migrating from older versions</a></li>
+      <li><a class="doc-link" href="../doc-browser/">doc-browser</a></li>
+      <li><a class="doc-link" href="../doc-site-system/">Doc-Site System</a></li>
+      <li><a class="doc-link" href="../docs/">docs</a></li>
+      <li><a class="doc-link" href="../icon-composition/">Icon Composition</a></li>
+    </ul>
+    </details></li>
+  </ul>
+  </nav>
+  <ul class="doc-navbar">
+    <li><a href="https://tosijs.net" data-icon="tosi">tosijs</a></li>
+    <li><a href="https://discord.com/invite/ramJ9rgky5" data-icon="discord">discord</a></li>
+    <li><a href="https://loewald.com" data-icon="blog">blog</a></li>
+    <li><a href="https://github.com/tonioloewald/tosijs-ui" data-icon="github">github</a></li>
+    <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
+  </ul>
+  </tosi-doc-system>
+  <script type="module" src="../hydrate.js"></script>
+</body>
+</html>

@@ -11,6 +11,7 @@ tables, menus, layout, media, and more.
 - [3d](/babylon-3d/)
 - [carousel](/carousel/)
 - [code](/code-editor/)
+- [crud](/crud/)
 - [dialog](/dialog/)
 - [diff](/diff/)
 - [editable-rect](/editable-rect/)

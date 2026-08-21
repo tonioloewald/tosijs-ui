@@ -40,6 +40,8 @@ use it to inspect STATE; a painted-output check needs a real test lane.
   This is a color input field that supports opacity
 - https://ui.tosijs.net/components/ — Components
   The goal of this library is not to replace HTML elements that already work very well, such as `<input>`, `<textarea>`...
+- https://ui.tosijs.net/crud/ — crud
+  Search, list, edit — [`<tosi-table>`](/data-table/) and
 - https://ui.tosijs.net/dialog/ — dialog
   `<tosi-dialog>` is a simple wrapper around the standard HTML `<dialog>` element designed
 - https://ui.tosijs.net/diff/ — diff
