@@ -26,6 +26,7 @@ tables, menus, layout, media, and more.
 - [notifications](/notifications/)
 - [pocket bar](/pocket-bar/)
 - [popFloat](/pop-float/)
+- [schema-form](/schema-form/)
 - [sidebar](/side-nav/)
 - [size-break](/size-break/)
 - [sizer](/sizer/)

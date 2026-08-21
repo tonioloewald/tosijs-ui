@@ -122,6 +122,8 @@ use it to inspect STATE; a painted-output check needs a real test lane.
   `<tosi-rich-text>` is a simple and easily extensible `document.execCommand` WYSIWYG editor with some conveniences.
 - https://ui.tosijs.net/router/ — router
   A lightweight client-side router for single-page applications. Supports
+- https://ui.tosijs.net/schema-form/ — schema-form
+  A form generated from a [JSON Schema](https://json-schema.org/), with validation.
 - https://ui.tosijs.net/via-tag/ — scriptTag & styleSheet
   If you need to load an old school (cjs) javascript or css library via cdn then use these two functions.
 - https://ui.tosijs.net/segmented/ — segmented select

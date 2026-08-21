@@ -29,72 +29,165 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="../doc-system.css" data-tosi-doc-system />
-  <title>carousel — tosijs-ui</title>
-  <meta name="description" content="Minimalist carousel component that supports the usual stuff." />
-  <link rel="canonical" href="https://ui.tosijs.net/carousel/" />
+  <title>schema-form — tosijs-ui</title>
+  <meta name="description" content="A form generated from a JSON Schema, with validation." />
+  <link rel="canonical" href="https://ui.tosijs.net/schema-form/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="carousel — tosijs-ui" />
-  <meta property="og:description" content="Minimalist carousel component that supports the usual stuff." />
-  <meta property="og:url" content="https://ui.tosijs.net/carousel/" />
+  <meta property="og:title" content="schema-form — tosijs-ui" />
+  <meta property="og:description" content="A form generated from a JSON Schema, with validation." />
+  <meta property="og:url" content="https://ui.tosijs.net/schema-form/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"carousel","description":"Minimalist carousel component that supports the usual stuff.","url":"https://ui.tosijs.net/carousel/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"schema-form","description":"A form generated from a JSON Schema, with validation.","url":"https://ui.tosijs.net/schema-form/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
   <tosi-doc-system docs="../docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>carousel</h1>
-<pre><code class="language-html">&lt;tosi-carousel arrows dots max-visible-items=2 auto=2 snap-delay=4 snap-duration=0.5 loop&gt;
-  &lt;tosi-icon icon=&quot;tosiFavicon&quot; class=&quot;thing&quot;&gt;&lt;/tosi-icon&gt;
-  &lt;tosi-icon icon=&quot;tosi&quot; class=&quot;thing&quot;&gt;&lt;/tosi-icon&gt;
-  &lt;tosi-icon icon=&quot;tosiUi&quot; class=&quot;thing&quot;&gt;&lt;/tosi-icon&gt;
-  &lt;tosi-icon icon=&quot;tosiPlatform&quot; class=&quot;thing&quot;&gt;&lt;/tosi-icon&gt;
-  &lt;tosi-icon icon=&quot;tosiXr&quot; class=&quot;thing&quot;&gt;&lt;/tosi-icon&gt;
-  &lt;tosi-icon icon=&quot;blueprint&quot; class=&quot;thing&quot;&gt;&lt;/tosi-icon&gt;
-  &lt;tosi-icon icon=&quot;cmy&quot; class=&quot;thing&quot;&gt;&lt;/tosi-icon&gt;
-  &lt;tosi-icon icon=&quot;rgb&quot; class=&quot;thing&quot;&gt;&lt;/tosi-icon&gt;
-&lt;/tosi-carousel&gt;
-</code></pre>
-<pre><code class="language-css">.thing {
-  --tosi-icon-size: 160px;
-  height: 160px;
-  margin: 30px 0 70px;
-  position: relative;
-}
+<h1>schema-form</h1>
+<!--{ "parent": "Components" }-->
 
-.thing::after {
-  content: attr(icon);
-  color: white;
-  position: absolute;
-  bottom: -50px;
-  left: 50%;
-  padding: 5px 15px;
-  transform: translateX(-50%);
-  filter: drop-shadow(0 1px 1px #0008);
-  background: #0004;
-  border-radius: 5px;
-}
+<p>A form generated from a <a href="https://json-schema.org/">JSON Schema</a>, with validation.</p>
+<pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
 
-.preview tosi-carousel {
-  background: #8883;
-  margin: 10px;
-  border-radius: 10px;
-}
+const schemaForm = tosiSchemaForm({
+  schema: {
+    type: &#39;object&#39;,
+    properties: {
+      name: { type: &#39;string&#39;, title: &#39;Full name&#39; },
+      email: { type: &#39;string&#39;, format: &#39;email&#39; },
+      age: { type: &#39;integer&#39; },
+      role: { type: &#39;string&#39;, enum: [&#39;admin&#39;, &#39;editor&#39;, &#39;viewer&#39;] },
+      active: { type: &#39;boolean&#39; },
+    },
+    required: [&#39;name&#39;, &#39;email&#39;],
+  },
+  value: { name: &#39;Ada&#39;, email: &#39;ada@example.com&#39;, role: &#39;admin&#39;, active: true },
+})
+
+const shown = document.createElement(&#39;pre&#39;)
+schemaForm.addEventListener(&#39;change&#39;, () =&gt; {
+  shown.textContent = JSON.stringify(schemaForm.value, null, 2)
+})
+shown.textContent = JSON.stringify(schemaForm.value, null, 2)
+
+preview.append(schemaForm, shown)
 </code></pre>
-<p>This is a minimalist carousel component that supports the usual stuff.</p>
-<h2>Attributes</h2>
+<h2>The model owns the data</h2>
+<p><code>value</code> is the state and <code>change</code> fires when it changes — the same contract as every other
+component here. The inputs are a <strong>view</strong> of <code>value</code>; they are never the source of truth.</p>
+<p>That is not a stylistic preference. Reading data back out of rendered inputs, as most
+schema-form libraries do, means a field your schema does not describe is <strong>dropped on save</strong> —
+so editing one field can discard timestamps, provenance, or anything else added since the
+schema was written. Here <code>value</code> is a plain object that is copied, never rebuilt:</p>
+<pre><code class="language-typescript">schemaForm.value = { name: &#39;Ada&#39;, _id: &#39;abc&#39;, updatedAt: &#39;2020-01-01&#39; }
+// edit `name` in the UI …
+schemaForm.value // → { name: &#39;Grace&#39;, _id: &#39;abc&#39;, updatedAt: &#39;2020-01-01&#39; }
+</code></pre>
+<p>Editing also never mutates the object you handed in — you get a new one, so
+<code>diff(original, schemaForm.value)</code> is a usable dirty check.</p>
+<h2>Validation</h2>
+<p>Errors come from <a href="https://www.npmjs.com/package/tosijs-schema"><code>tosijs-schema</code></a> and appear
+under the field they belong to. <code>validate()</code> returns whether the current value conforms, and
+<code>errors</code> is the list.</p>
+<pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
+
+const schemaForm = tosiSchemaForm({
+  schema: {
+    type: &#39;object&#39;,
+    properties: {
+      name: { type: &#39;string&#39; },
+      email: { type: &#39;string&#39;, format: &#39;email&#39; },
+    },
+    required: [&#39;name&#39;, &#39;email&#39;],
+  },
+  value: { name: &#39;Ada&#39;, email: &#39;not-an-email&#39; },
+})
+
+const report = document.createElement(&#39;pre&#39;)
+const update = () =&gt; {
+  report.textContent = schemaForm.validate()
+    ? &#39;conforms ✅&#39;
+    : schemaForm.errors.map((e) =&gt; `${e.path || &#39;(form)&#39;}: ${e.message}`).join(&#39;\n&#39;)
+}
+schemaForm.addEventListener(&#39;change&#39;, update)
+update()
+
+preview.append(schemaForm, report)
+</code></pre>
+<p><code>tosijs-schema</code> is an <strong>optional peer</strong>: install it to get validation. Without it the form
+still renders and edits — it simply reports no errors.</p>
+<h2>What it renders today</h2>
+<p>Scalars and enums: <code>string</code> (with <code>format</code> picking the input type), <code>number</code>, <code>integer</code>,
+<code>boolean</code>, <code>enum</code>, and <code>const</code>. <strong>Nested objects, arrays and unions are not supported yet</strong> —
+a property using one is shown as a disabled placeholder saying so, rather than being silently
+omitted. A field that vanishes is indistinguishable from a schema that never mentioned it,
+which is how an editor loses data without anyone noticing.</p>
+<h2>Properties, methods, events</h2>
 <ul>
-<li><code>arrows</code> (boolean, false by default) shows/hides the arrow paging controls</li>
-<li><code>dots</code> (boolean, false by default) shows/hides the dot progress indicators</li>
-<li><code>max-visible-items</code> (number, 1 by default) determines how many items are shown at once.</li>
-<li><code>snap-duration</code> (number, 0.25 [seconds] by default) determines the time taken to scroll / snap scroll.</li>
-<li><code>snap-delay</code> (number, 0.1 [seconds] by default)</li>
-<li><code>loop</code> (boolean, false by default) causes next/previous buttons to loop</li>
-<li><code>auto</code> (number, 0 [seconds] by default) if &gt; 0, automatically advances after that many seconds (always loops!)</li>
+<li><code>schema</code> — the JSON Schema. Setting it rebuilds the fields.</li>
+<li><code>value</code> — the data. Setting it updates the inputs; it does <strong>not</strong> fire <code>change</code>.</li>
+<li><code>readOnly</code> — disables the inputs.</li>
+<li><code>errors</code> — <code>{ path, message }[]</code> for the current value.</li>
+<li><code>validate()</code> — <code>true</code> when the value conforms.</li>
+<li><code>change</code> — fires when the user edits a field.</li>
 </ul>
-<p><tosi-css-var-editor element-selector="tosi-carousel"></tosi-css-var-editor></p>
+<pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
+
+preview.append(
+  tosiSchemaForm({
+    schema: {
+      type: &#39;object&#39;,
+      properties: {
+        name: { type: &#39;string&#39; },
+        email: { type: &#39;string&#39;, format: &#39;email&#39; },
+        age: { type: &#39;integer&#39; },
+        active: { type: &#39;boolean&#39; },
+      },
+      required: [&#39;name&#39;],
+    },
+    value: { name: &#39;Ada&#39; },
+  })
+)
+</code></pre>
+<pre><code class="language-test">const schemaForm = await waitFor(&#39;tosi-schema-form&#39;)
+
+test(&#39;renders one control per schema property&#39;, () =&gt; {
+  expect(schemaForm.querySelectorAll(&#39;[data-path]&#39;).length).toBeGreaterThan(3)
+})
+
+test(&#39;editing keeps unknown keys, fires change, and does not rebuild under the user&#39;, async () =&gt; {
+  // ONE test, because these steps share the form. Splitting them made the third read the
+  // second&#39;s value — the concurrency hazard the live-example docs warn about, hit while
+  // writing the component that documents it. (Line comments, not a block: a `*` `/` inside
+  // a doc comment closes it early — see #70.)
+  schemaForm.value = { name: &#39;Ada&#39;, _id: &#39;keep-me&#39; }
+  await new Promise((r) =&gt; requestAnimationFrame(r))
+  let fired = 0
+  schemaForm.addEventListener(&#39;change&#39;, () =&gt; fired++)
+
+  const input = schemaForm.querySelector(&#39;[data-path=&quot;name&quot;]&#39;)
+  input.value = &#39;Grace&#39;
+  input.dispatchEvent(new Event(&#39;input&#39;, { bubbles: true }))
+
+  // The model owns the data — and a key the schema never mentioned survives the edit,
+  // which is the whole reason output is not rebuilt from the inputs.
+  expect(schemaForm.value.name).toBe(&#39;Grace&#39;)
+  expect(schemaForm.value._id).toBe(&#39;keep-me&#39;)
+  expect(fired).toBe(1)
+
+  // Now type into it while focused. A render must NOT replace the element or clobber what
+  // is being typed — the failure mode of every &quot;the DOM is the model&quot; schema form.
+  input.focus()
+  input.value = &#39;Ada Lovelace&#39;
+  input.dispatchEvent(new Event(&#39;input&#39;, { bubbles: true }))
+  await new Promise((r) =&gt; requestAnimationFrame(r))
+  expect(schemaForm.querySelector(&#39;[data-path=&quot;name&quot;]&#39;)).toBe(input)
+  expect(input.value).toBe(&#39;Ada Lovelace&#39;)
+  expect(schemaForm.value.name).toBe(&#39;Ada Lovelace&#39;)
+})
+</code></pre>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -106,7 +199,7 @@
     <li><details open><summary><a class="doc-link" href="../components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
-      <li><a class="doc-link current" href="../carousel/" aria-current="page">carousel</a></li>
+      <li><a class="doc-link" href="../carousel/">carousel</a></li>
       <li><a class="doc-link" href="../code-editor/">code</a></li>
       <li><a class="doc-link" href="../dialog/">dialog</a></li>
       <li><a class="doc-link" href="../diff/">diff</a></li>
@@ -123,7 +216,7 @@
       <li><a class="doc-link" href="../notifications/">notifications</a></li>
       <li><a class="doc-link" href="../pocket-bar/">pocket bar</a></li>
       <li><a class="doc-link" href="../pop-float/">popFloat</a></li>
-      <li><a class="doc-link" href="../schema-form/">schema-form</a></li>
+      <li><a class="doc-link current" href="../schema-form/" aria-current="page">schema-form</a></li>
       <li><a class="doc-link" href="../side-nav/">sidebar</a></li>
       <li><a class="doc-link" href="../size-break/">size-break</a></li>
       <li><a class="doc-link" href="../sizer/">sizer</a></li>
