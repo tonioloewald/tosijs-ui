@@ -35,6 +35,7 @@ export interface FieldGroup {
   path: string
   label: string
   required: boolean
+  schema: JSONSchema
   children: Node[]
 }
 
@@ -44,6 +45,7 @@ export interface FieldArray {
   path: string
   label: string
   required: boolean
+  schema: JSONSchema
   itemSchema: JSONSchema
 }
 
@@ -61,6 +63,7 @@ export interface FieldUnion {
   path: string
   label: string
   required: boolean
+  schema: JSONSchema
   branches: UnionBranch[]
   /** the property whose `const` distinguishes the branches, when there is one */
   discriminator?: string
@@ -318,6 +321,7 @@ export function fieldsFor(schema: JSONSchema, prefix = ''): Node[] {
           path,
           label,
           required: isRequired,
+          schema: rawSchema,
           branches: union.branches,
         }
         if (union.discriminator) node.discriminator = union.discriminator
@@ -358,6 +362,7 @@ export function fieldsFor(schema: JSONSchema, prefix = ''): Node[] {
         path,
         label,
         required: isRequired,
+        schema: propSchema,
         children: fieldsFor(propSchema, path),
       }
     }
@@ -376,6 +381,7 @@ export function fieldsFor(schema: JSONSchema, prefix = ''): Node[] {
         path,
         label,
         required: isRequired,
+        schema: propSchema,
         itemSchema: propSchema.items as JSONSchema,
       }
     }

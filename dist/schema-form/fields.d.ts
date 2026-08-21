@@ -7,6 +7,7 @@ export interface FieldGroup {
     path: string;
     label: string;
     required: boolean;
+    schema: JSONSchema;
     children: Node[];
 }
 /** An array property: its item schema, and the fields for each current element. */
@@ -15,6 +16,7 @@ export interface FieldArray {
     path: string;
     label: string;
     required: boolean;
+    schema: JSONSchema;
     itemSchema: JSONSchema;
 }
 /** One branch of a variant union — a shape the value may take. */
@@ -30,6 +32,7 @@ export interface FieldUnion {
     path: string;
     label: string;
     required: boolean;
+    schema: JSONSchema;
     branches: UnionBranch[];
     /** the property whose `const` distinguishes the branches, when there is one */
     discriminator?: string;

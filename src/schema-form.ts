@@ -406,6 +406,123 @@ test('a oneOf union renders, and says it is not validated', () => {
 })
 ```
 
+## Format plugins
+
+`registerFieldPlugin(format, plugin)` claims a schema `format` and renders it yourself. The
+plugin owns the **control**; the form still owns the label and the error slot, so a plugin
+does not have to re-implement either and cannot drift from the rest of the form.
+
+```typescript
+registerFieldPlugin('percent', {
+  // build the control element
+  render({ value, set, elements }) { return elements.div() },
+  // put a value back into it
+  sync(element, value) {},
+  // injected into its own stylesheet when the plugin registers
+  styles: { '.my-widget': { display: 'flex' } },
+})
+```
+
+`sync` is **required**. A control that cannot take a value back is not compatible with a form
+whose model owns the data, and finding that out while writing the plugin beats finding it out
+when a save silently reverts. The form calls it whenever `value` changes underneath — never by
+replacing your element, which would ruin a slider mid-drag.
+
+**Register whenever you like — there is no "too late".** Styles are injected when the plugin
+registers, into their own stylesheet, and any form on screen that uses the format rebuilds.
+(Forms that do not use it are left alone.) The component this design learned from merged
+plugin styles into its style spec *once, when the component was defined*, so a plugin
+registered a moment later rendered correctly and completely unstyled — with no error. Its
+workaround was a bare `import './plugin'` placed above the component definition: load-bearing,
+invisible, and unavailable to anyone registering from application code.
+
+```js
+import { tosiSchemaForm, registerFieldPlugin } from 'tosijs-ui'
+
+const pluginForm = tosiSchemaForm({
+  schema: {
+    type: 'object',
+    properties: {
+      label: { type: 'string' },
+      confidence: { type: 'number', format: 'percent', title: 'Confidence' },
+    },
+  },
+  value: { label: 'match', confidence: 0.85 },
+})
+const shown = document.createElement('pre')
+const show = () => {
+  shown.textContent = JSON.stringify(pluginForm.value)
+}
+pluginForm.addEventListener('change', show)
+show()
+preview.append(pluginForm, shown)
+
+// Let the form render FIRST, with no plugin for `percent` — otherwise this example would
+// quietly be testing early registration, which was never the hard case.
+await new Promise((r) => requestAnimationFrame(r))
+
+// Registered AFTER the form is already on screen — which is the normal case, and works.
+registerFieldPlugin('percent', {
+  render({ value, set, elements: { div, input, span } }) {
+    const readout = span({ class: 'percent-readout' })
+    const slider = input({
+      type: 'range',
+      min: 0,
+      max: 1,
+      step: 0.01,
+      onInput(event) {
+        const next = Number(event.target.value)
+        readout.textContent = `${Math.round(next * 100)}%`
+        set(next)
+      },
+    })
+    const control = div({ class: 'percent-control' }, slider, readout)
+    slider.value = String(value ?? 0)
+    readout.textContent = `${Math.round((value ?? 0) * 100)}%`
+    return control
+  },
+  sync(element, value) {
+    const slider = element.querySelector('input')
+    slider.value = String(value ?? 0)
+    element.querySelector('.percent-readout').textContent = `${Math.round(
+      (value ?? 0) * 100
+    )}%`
+  },
+  styles: {
+    '.percent-control': { display: 'flex', gap: '8px', alignItems: 'center' },
+    '.percent-readout': { minWidth: '3em', fontVariantNumeric: 'tabular-nums' },
+  },
+})
+```
+```test
+const pluginForm = await waitFor('tosi-schema-form')
+
+test('a plugin registered after the form renders takes effect, styles and all', async () => {
+  await new Promise((r) => requestAnimationFrame(r))
+  const control = pluginForm.querySelector('[data-plugin="confidence"]')
+  expect(control.querySelector('input').type).toBe('range')
+  expect(control.querySelector('.percent-readout').textContent).toBe('85%')
+
+  // The styles went in on registration, not when the component was defined — the whole
+  // point. A silently unstyled plugin is the defect this seam exists to make impossible.
+  expect(getComputedStyle(control).display).toBe('flex')
+
+  // Dragging the slider writes the MODEL, through the plugin's `set`.
+  const slider = control.querySelector('input')
+  slider.value = '0.4'
+  slider.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(pluginForm.value.confidence).toBe(0.4)
+  // …and the field the plugin does not own is untouched.
+  expect(pluginForm.value.label).toBe('match')
+
+  // Setting `value` syncs THROUGH the plugin rather than replacing its element.
+  pluginForm.value = { label: 'match', confidence: 0.6 }
+  await new Promise((r) => requestAnimationFrame(r))
+  expect(pluginForm.querySelector('[data-plugin="confidence"]')).toBe(control)
+  expect(control.querySelector('.percent-readout').textContent).toBe('60%')
+})
+```
+
 ## Read-only
 
 `readOnly` disables the inputs and **hides** the add, remove and reorder controls rather than
@@ -514,6 +631,17 @@ import {
   type FieldError,
 } from './schema-form/fields.js'
 import { unenforcedNote } from './schema-form/unenforced.js'
+import {
+  fieldPlugin,
+  onFieldPluginsChanged,
+  schemaUsesFormat,
+  type FieldPlugin,
+} from './schema-form/plugins.js'
+export {
+  registerFieldPlugin,
+  type FieldPlugin,
+  type FieldPluginContext,
+} from './schema-form/plugins.js'
 
 const {
   div,
@@ -705,6 +833,13 @@ export class TosiSchemaForm extends WebComponent {
   decides once a part is done — it is not a sensible initial state for an editor.
   */
   private buildNode(node: Node): HTMLElement {
+    /*
+    A plugin is tried FIRST, and for every kind of node — a registered `format` claims the
+    property whatever shape it is, so a plugin can render something the form has no control
+    for at all (its own `unsupported` placeholder is the fallback, not the ceiling).
+    */
+    const plugin = fieldPlugin(node.schema?.format)
+    if (plugin) return this.buildPluginField(node, plugin)
     if (node.kind === 'array') return this.buildArray(node)
     if (node.kind === 'union') return this.buildUnion(node)
     if ('children' in node) {
@@ -892,6 +1027,7 @@ export class TosiSchemaForm extends WebComponent {
     this._fields = this.allFields()
     this.applyReadOnly()
     this.syncValues()
+    this.syncPlugins()
     this.refreshErrors()
     this.syncErrors()
     this.dispatchEvent(new Event('change', { bubbles: true }))
@@ -936,6 +1072,9 @@ export class TosiSchemaForm extends WebComponent {
   private expanded(): Node[] {
     const expand = (nodes: Node[]): Node[] =>
       nodes.flatMap((node) => {
+        // A plugin-claimed node is a LEAF whatever its shape — the plugin renders it whole,
+        // so the form must not also expand its children into fields nobody rendered.
+        if (fieldPlugin(node.schema?.format)) return [node]
         if (node.kind === 'union')
           return [node, ...expand(branchFields(node, this._value))]
         if (node.kind === 'array') {
@@ -952,7 +1091,17 @@ export class TosiSchemaForm extends WebComponent {
 
   /** Every leaf that carries a value — the union pickers are structure, not data. */
   private allFields(): Field[] {
-    return this.expanded().filter((node) => node.kind !== 'union') as Field[]
+    return this.expanded().filter(
+      (node) => node.kind !== 'union' && !fieldPlugin(node.schema?.format)
+    ) as Field[]
+  }
+
+  /** The plugin-rendered fields, which sync through the plugin rather than the DOM. */
+  private pluginFields(): Array<{ node: Node; plugin: FieldPlugin }> {
+    return this.expanded().flatMap((node) => {
+      const plugin = fieldPlugin(node.schema?.format)
+      return plugin ? [{ node, plugin }] : []
+    })
   }
 
   /*
@@ -972,6 +1121,39 @@ export class TosiSchemaForm extends WebComponent {
     )) {
       ;(el as HTMLElement).hidden = this.readOnly
     }
+  }
+
+  /*
+  A plugin owns the CONTROL; the form still owns the label and the error slot.
+
+  That split is deliberate. A plugin that had to render its own label and error would have to
+  re-implement them to match, and every plugin would drift a little — and the error is the
+  form's knowledge, not the plugin's.
+  */
+  private buildPluginField(node: Node, plugin: FieldPlugin): HTMLElement {
+    const control = plugin.render({
+      schema: node.schema,
+      path: node.path,
+      label: node.label,
+      required: node.required,
+      value: getByPath(this._value, node.path),
+      set: (value: unknown) => {
+        this._value = setByPath(this._value, node.path, value)
+        this.refreshErrors()
+        this.syncErrors()
+        this.dispatchEvent(new Event('change', { bubbles: true }))
+      },
+      elements,
+    })
+    control.dataset.plugin = node.path
+    const wrapper = div(
+      { class: 'schema-field' },
+      label(node.label),
+      control,
+      span({ class: 'schema-error', hidden: true })
+    )
+    wrapper.dataset.field = node.path
+    return wrapper
   }
 
   private buildField(field: Field): HTMLElement {
@@ -1044,6 +1226,21 @@ export class TosiSchemaForm extends WebComponent {
     }
   }
 
+  /*
+  Plugin controls take their value through the plugin's own `sync`, never by having their
+  element replaced — the form has no idea what is inside one, and a slider being dragged is
+  exactly the thing a rebuild would ruin.
+  */
+  private syncPlugins(): void {
+    for (const { node, plugin } of this.pluginFields()) {
+      const el = this.querySelector(
+        `[data-plugin="${CSS.escape(node.path)}"]`
+      ) as HTMLElement | null
+      if (!el || el.contains(document.activeElement)) continue
+      plugin.sync(el, getByPath(this._value, node.path))
+    }
+  }
+
   private syncErrors(): void {
     for (const field of this._fields) {
       const wrapper = this.querySelector(
@@ -1064,8 +1261,20 @@ export class TosiSchemaForm extends WebComponent {
 
   connectedCallback(): void {
     super.connectedCallback()
+    live.add(this)
     // Validation is optional and lazily resolved; re-render once it is known either way.
     void loadValidator().then(() => this.queueRender())
+  }
+
+  disconnectedCallback(): void {
+    live.delete(this)
+    super.disconnectedCallback()
+  }
+
+  /** Throw away the DOM and build it again — a schema change, or a new plugin. */
+  rebuild(): void {
+    this._builtFor = null
+    this.queueRender()
   }
 
   /*
@@ -1092,10 +1301,28 @@ export class TosiSchemaForm extends WebComponent {
     this._fields = this.allFields()
     this.applyReadOnly()
     this.syncValues()
+    this.syncPlugins()
     this.refreshErrors()
     this.syncErrors()
   }
 }
+
+/*
+Forms currently on screen, so registering a plugin can reach them.
+
+Without this, a plugin registered from application code — after the page has rendered, which
+is the normal case — would take effect only on the NEXT form. That asymmetry is what made the
+component this design learned from need a load-bearing bare import above its component
+definition (its SF-4), and it is a trap because everything looks fine until it doesn't.
+*/
+const live = new Set<TosiSchemaForm>()
+onFieldPluginsChanged((format) => {
+  // Only the forms that actually use the format — a registration is not an excuse to throw
+  // away the DOM of every unrelated form on the page.
+  for (const form of live) {
+    if (schemaUsesFormat(form.schema, format)) form.rebuild()
+  }
+})
 
 export const tosiSchemaForm =
   TosiSchemaForm.elementCreator() as ElementCreator<TosiSchemaForm>

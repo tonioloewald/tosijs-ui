@@ -1,6 +1,7 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 import type { JSONSchema } from 'tosijs-schema';
 import { type FieldError } from './schema-form/fields.js';
+export { registerFieldPlugin, type FieldPlugin, type FieldPluginContext, } from './schema-form/plugins.js';
 export declare class TosiSchemaForm extends WebComponent {
     static preferredTagName: string;
     static lightStyleSpec: {
@@ -119,12 +120,19 @@ export declare class TosiSchemaForm extends WebComponent {
     private expanded;
     /** Every leaf that carries a value — the union pickers are structure, not data. */
     private allFields;
+    /** The plugin-rendered fields, which sync through the plugin rather than the DOM. */
+    private pluginFields;
     private applyReadOnly;
+    private buildPluginField;
     private buildField;
     private syncValues;
+    private syncPlugins;
     private syncErrors;
     content: null;
     connectedCallback(): void;
+    disconnectedCallback(): void;
+    /** Throw away the DOM and build it again — a schema change, or a new plugin. */
+    rebuild(): void;
     render(): void;
 }
 export declare const tosiSchemaForm: ElementCreator<TosiSchemaForm>;

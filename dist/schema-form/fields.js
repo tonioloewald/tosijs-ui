@@ -226,6 +226,7 @@ export function fieldsFor(schema, prefix = '') {
                     path,
                     label,
                     required: isRequired,
+                    schema: rawSchema,
                     branches: union.branches,
                 };
                 if (union.discriminator)
@@ -267,6 +268,7 @@ export function fieldsFor(schema, prefix = '') {
                 path,
                 label,
                 required: isRequired,
+                schema: propSchema,
                 children: fieldsFor(propSchema, path),
             };
         }
@@ -283,6 +285,7 @@ export function fieldsFor(schema, prefix = '') {
                 path,
                 label,
                 required: isRequired,
+                schema: propSchema,
                 itemSchema: propSchema.items,
             };
         }
