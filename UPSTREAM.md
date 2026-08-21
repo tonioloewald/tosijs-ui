@@ -19,6 +19,39 @@ session-only + expire in 7 days — this line is the durable reminder.)
 
 ## bun
 
+### ✅ `Bun.build()` native leak (#34053) — FIXED as of bun 1.4.0
+
+Re-measured 2026-08-21 on the real iife entrypoint, 60 sequential in-process builds:
+
+| builds | RSS    | marginal         |
+| ------ | ------ | ---------------- |
+| 10     | 288 MB | 27.6 MB/build    |
+| 30     | 385 MB | 3.3 MB/build     |
+| 60     | 425 MB | **0.7 MB/build** |
+
+Asymptotic, settling ~425 MB. The old signature was ~5 MB/build **still climbing** at build
+40 with no plateau; this converges. A warm cache, not an unreturned arena.
+
+**We are NOT reverting the architecture.** Shelling out to the `bun build` CLI stays, and so
+do `memoryLimitMb`, `idleTimeoutHours` and `preflight`. Reasons, so this is a decision rather
+than inertia:
+
+- 425 MB of steady-state RSS in a process that lives for days is still worth handing back,
+  and a child hands back all of it on exit.
+- The guards are not `Bun.build`-specific — happy-dom and `@resvg/resvg-js` retain too, which
+  is why the ePub and example-check steps are also children.
+- The failure mode was catastrophic twice (136 GB once; three stale servers at 210 GB), and
+  the cost of keeping the guards is a subprocess spawn per rebuild.
+- **A running dev server keeps the code it loaded at launch** — so a fix in the toolchain does
+  nothing for the server someone started yesterday.
+
+Revisit if the subprocess spawn ever shows up as a real cost in the edit loop. Until then the
+guards are cheap insurance against the next leak, not just this one.
+
+**Measuring note for anyone re-checking:** a small entrypoint plateaus almost immediately
+(~27 MB over 40 builds) and shows neither the old behaviour nor a useful confirmation. The
+growth scales with the module graph — measure with a real bundle.
+
 - **[oven-sh/bun#36788](https://github.com/oven-sh/bun/issues/36788)** — `Bun.serve()`
   `.stop()` **segfaults** during shutdown of a long-lived server (~8h), faulting on an
   address that decodes to ASCII text (`0x632D656475616C63` → `"claude-c"`) — a string
