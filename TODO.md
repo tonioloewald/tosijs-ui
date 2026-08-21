@@ -661,18 +661,40 @@ live site** (independently useful). See roadmap "From book to live."
   - `<tosi-tag-list>`
   - `<tosi-filter>`
 
-- **`<tosi-table>` builds captions by concatenating localized words** —
-  `${localize('Sort')} ${localize('Ascending')}`, and the same for
-  `Hide`/`Show` + `Column`. This is the defect `localize(pattern, values)` was added to fix:
-  it hard-codes English word order and gives the translator two fragments instead of a
-  sentence, so no translation can put the words in the right order. Should become
-  `localize('Sort ascending by {column}', { column })` and friends.
+- **`<tosi-table>`'s COLUMN HEADER MENU (`popColumnMenu`) localizes word by word.** All ten
+  captions are in that one menu — the sort items, the hide/show items, and the pin submenu —
+  and nothing else in the library uses those keys, so they are effectively private to it.
+  Only tables with `localized` set are affected; by default the menu is literal English.
 
-  **Not done yet because it moves the translation keys.** An adopter's TSV has rows for
-  `Sort` and `Ascending`; after the change those rows match nothing and their menu silently
-  reverts to English. So it needs either a release note telling adopters which keys to add,
-  or a fallback that tries the old fragments when the new key is missing. Decide which
-  before doing it — and do it in a minor, not a patch.
+  Two distinct problems, and the second is worse than the first:
+
+  1. **Concatenation** (`src/data-table.ts:2529, 2538, 2554, 2565`) —
+     `${localize('Sort')} ${localize('Ascending')}`, and the same for `Hide`/`Show` +
+     `Column`. Hard-codes English word order and hands the translator two fragments instead
+     of a sentence. This is what `localize(pattern, values)` was added to fix.
+
+  2. **Bare single-word keys are already mistranslated, in our own shipped data.** The pin
+     submenu (`:2592–2614`) is not concatenated — `Pin`/`Left`/`Right`/`Unpin` are separate
+     `localize()` calls — but a lone word gives a translator no context, and
+     `demo/src/localized-strings.ts` (served by the doc site at `/localized-strings.txt`)
+     shows the result. `Right` is translated in the **correct/正确** sense, not the
+     direction, in **4 of 9 languages**: sv `Rätt` (should be `Höger`), zh `正确的` (`右`),
+     es `Bien` (`Derecha`), it `Giusto` (`Destra`). `Show` is the theatrical kind in es
+     `Espectáculo` and it `Spettacolo`, and untranslated in fi. So the pin submenu on the
+     demo site is visibly wrong in several locales right now.
+
+  **The fix is smaller than it looks: it is mostly a deletion.** `popMenu({localized})`
+  already runs `localize()` over every caption, and propagates `localized` to submenus via
+  `Object.assign({}, options, …)` — so these captions are localized **twice** today. Passing
+  the plain English sentence (`caption: 'Sort Ascending'`) and letting `popMenu` localize it
+  removes both the conditional and the concatenation, and makes the whole phrase the key.
+
+  **Still not done, because it moves the translation keys.** An adopter's TSV has rows for
+  `Sort` and `Ascending`; afterwards those match nothing and their menu silently reverts to
+  English. Needs either a release note naming the new keys, or a fallback to the old
+  fragments when the new key is missing. Decide which — and ship it in a minor, not a patch.
+  The `demo/src/localized-strings.ts` corrections are separate and can go any time: fixing
+  data moves no keys.
 
 ## Components
 
