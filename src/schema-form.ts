@@ -232,13 +232,193 @@ test('an array edit does not disturb the rest of the form', () => {
 })
 ```
 
+## Unions
+
+`anyOf` and `oneOf` describe several shapes a value may take, and most of them are not
+"pick a variant" at all. Each is rendered as what it actually is:
+
+| the union | what you get |
+| --- | --- |
+| `[X, {type: 'null'}]` | just an X, not required — this is what an optional field looks like |
+| all branches `const` | a `<select>`; a branch `title` is its label |
+| all branches objects | a variant picker plus the fields of the matching branch |
+| anything else | a placeholder naming the shapes, e.g. *a union of string \| object* |
+
+A variant union finds its **discriminator** — the property every branch pins to a different
+`const` — and uses it both to tell which branch the value matches and to label the choices.
+An OpenAPI-style `discriminator: {propertyName}` is honoured when present, but plain JSON
+Schema needs no extra ceremony. The discriminator is **not** rendered as a field of its own:
+the picker is that control, and two controls for one value is an invitation to set them
+differently.
+
+Switching branch writes the new branch's `const` marks and **deletes nothing** — switch back
+and your data is still there. `filter()` is what strips a value to a schema; a form is an
+editor.
+
+```js
+import { tosiSchemaForm } from 'tosijs-ui'
+
+const unionForm = tosiSchemaForm({
+  schema: {
+    type: 'object',
+    properties: {
+      nickname: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+      notify: {
+        title: 'Notify',
+        anyOf: [
+          { const: 'all', title: 'Everything' },
+          { const: 'mentions', title: 'Mentions only' },
+          { const: 'none', title: 'Nothing' },
+        ],
+      },
+      shape: {
+        anyOf: [
+          {
+            type: 'object',
+            title: 'Circle',
+            properties: { kind: { const: 'circle' }, r: { type: 'number' } },
+            required: ['kind', 'r'],
+          },
+          {
+            type: 'object',
+            title: 'Rectangle',
+            properties: {
+              kind: { const: 'rect' },
+              w: { type: 'number' },
+              h: { type: 'number' },
+            },
+            required: ['kind', 'w', 'h'],
+          },
+        ],
+      },
+    },
+    required: ['nickname'],
+  },
+  value: { notify: 'mentions', shape: { kind: 'circle', r: 3 } },
+})
+
+const shown = document.createElement('pre')
+const show = () => {
+  shown.textContent = JSON.stringify(unionForm.value, null, 2)
+}
+unionForm.addEventListener('change', show)
+show()
+
+preview.append(unionForm, shown)
+```
+```test
+const unionForm = await waitFor('tosi-schema-form')
+const picker = unionForm.querySelector('[data-union="shape"] .schema-variant')
+
+test('unions render as what they actually are', async () => {
+  // ONE test: every step below shares this form, and test() bodies run concurrently.
+
+  // A nullable union is just the field — and `required` in the schema does not make an
+  // empty value invalid when null is a branch.
+  expect(unionForm.querySelector('[data-path="nickname"]').type).toBe('text')
+
+  // An all-const union is a select, labelled by branch titles.
+  const notify = unionForm.querySelector('[data-path="notify"]')
+  expect(notify.tagName).toBe('SELECT')
+  // `notify` is not required, so the first option is the empty one — an optional field has
+  // to offer a way back to "not set".
+  expect([...notify.options].map((o) => o.textContent)).toEqual([
+    '—',
+    'Everything',
+    'Mentions only',
+    'Nothing',
+  ])
+  expect(notify.value).toBe('mentions')
+
+  // The variant picker shows the matching branch's fields — and NOT the discriminator,
+  // which the picker itself is.
+  expect(picker.value).toBe('0')
+  expect(unionForm.querySelector('[data-path="shape.r"]').value).toBe('3')
+  expect(unionForm.querySelector('[data-path="shape.kind"]')).toBe(null)
+
+  // Switching branch swaps the fields, writes the new mark, and keeps the old data.
+  picker.value = '1'
+  picker.dispatchEvent(new Event('change', { bubbles: true }))
+  expect(unionForm.value.shape.kind).toBe('rect')
+  expect(unionForm.value.shape.r).toBe(3)
+  expect(unionForm.querySelector('[data-path="shape.w"]')).toBeTruthy()
+  expect(unionForm.querySelector('[data-path="shape.r"]')).toBe(null)
+
+  // Setting `value` to a different variant re-renders the branch, without a schema change.
+  unionForm.value = { shape: { kind: 'circle', r: 9 } }
+  await new Promise((r) => requestAnimationFrame(r))
+  expect(picker.value).toBe('0')
+  expect(unionForm.querySelector('[data-path="shape.r"]').value).toBe('9')
+
+  // Through all of that the picker itself was never replaced — switching variant with the
+  // keyboard must not take focus off the control you are operating.
+  expect(unionForm.querySelector('[data-union="shape"] .schema-variant')).toBe(
+    picker
+  )
+})
+```
+
+### `oneOf` is rendered, but it is not validated
+
+`tosijs-schema` enforces `anyOf` and **silently ignores `oneOf`** — `validate` returns `true`
+for a value no branch accepts ([#8](https://github.com/tonioloewald/tosijs-schema/issues/8)).
+Since `oneOf` is how nearly every real schema spells a variant union, refusing it would refuse
+most schemas; instead the field says so, because a green form over an unchecked value is worse
+than an honest note. The same note appears for any other keyword the validator ignores, such
+as `exclusiveMinimum`.
+
+```js
+import { tosiSchemaForm } from 'tosijs-ui'
+
+preview.append(
+  tosiSchemaForm({
+    schema: {
+      type: 'object',
+      properties: {
+        shape: {
+          oneOf: [
+            {
+              type: 'object',
+              title: 'Circle',
+              properties: { kind: { const: 'circle' }, r: { type: 'number' } },
+            },
+            {
+              type: 'object',
+              title: 'Square',
+              properties: { kind: { const: 'square' }, side: { type: 'number' } },
+            },
+          ],
+        },
+      },
+    },
+    value: { shape: { kind: 'square', side: 2 } },
+  })
+)
+```
+```test
+const oneOfForm = await waitFor('tosi-schema-form')
+
+test('a oneOf union renders, and says it is not validated', () => {
+  expect(oneOfForm.querySelector('[data-path="shape.side"]').value).toBe('2')
+  expect(oneOfForm.querySelector('.schema-unvalidated').textContent).toBe(
+    'oneOf is not validated'
+  )
+})
+```
+
+## Read-only
+
+`readOnly` disables the inputs and **hides** the add, remove and reorder controls rather than
+grey them out. A dead row of buttons is a form advertising affordances it will not honour;
+there is nothing to explain if they are not there.
+
 ## What it renders today
 
 Scalars and enums: `string` (with `format` picking the input type), `number`, `integer`,
-`boolean`, `enum`, `const`, **nested objects** and **arrays**. **Unions and tuple arrays
-(`prefixItems`) are not supported yet** — a property using one is shown as a placeholder saying so, rather than being silently
-omitted. A field that vanishes is indistinguishable from a schema that never mentioned it,
-which is how an editor loses data without anyone noticing.
+`boolean`, `enum`, `const`, **nested objects**, **arrays** and **unions**. **Tuple arrays
+(`prefixItems`) are not supported yet** — a property using one is shown as a placeholder
+saying so, rather than being silently omitted. A field that vanishes is indistinguishable from
+a schema that never mentioned it, which is how an editor loses data without anyone noticing.
 
 ## Properties, methods, events
 
@@ -316,6 +496,9 @@ import type { JSONSchema } from 'tosijs-schema'
 import {
   fieldsFor,
   itemFields,
+  branchFields,
+  matchBranch,
+  selectBranch,
   insertAt,
   removeAt,
   moveItem,
@@ -327,8 +510,10 @@ import {
   type Field,
   type Node,
   type FieldArray,
+  type FieldUnion,
   type FieldError,
 } from './schema-form/fields.js'
+import { unenforcedNote } from './schema-form/unenforced.js'
 
 const {
   div,
@@ -395,6 +580,20 @@ export class TosiSchemaForm extends WebComponent {
       paddingTop: 'var(--tosi-spacing-50, 5px)',
     },
     ':host .schema-item-controls': { display: 'flex', gap: '2px' },
+    ':host .schema-item-controls[hidden], :host .schema-add[hidden]': {
+      display: 'none',
+    },
+    ':host .schema-union': { display: 'grid', gap: '2px' },
+    ':host .schema-variant-fields': {
+      display: 'grid',
+      gap: 'var(--tosi-spacing, 10px)',
+      paddingTop: 'var(--tosi-spacing-50, 5px)',
+    },
+    ':host .schema-unvalidated': {
+      fontSize: '0.85em',
+      opacity: '0.7',
+      fontStyle: 'italic',
+    },
     ':host .schema-add': { justifySelf: 'start' },
     ':host .schema-unsupported': {
       fontSize: '0.85em',
@@ -507,6 +706,7 @@ export class TosiSchemaForm extends WebComponent {
   */
   private buildNode(node: Node): HTMLElement {
     if (node.kind === 'array') return this.buildArray(node)
+    if (node.kind === 'union') return this.buildUnion(node)
     if ('children' in node) {
       return details(
         { class: 'schema-group', open: true },
@@ -586,22 +786,123 @@ export class TosiSchemaForm extends WebComponent {
         `Add ${node.label}`
       )
     )
-    for (const el of container.querySelectorAll('input, select, button')) {
-      ;(el as HTMLInputElement).disabled =
-        this.readOnly || (el as HTMLInputElement).disabled
+  }
+
+  /*
+  A variant union renders as a picker plus the fields of the branch it currently matches.
+
+  The picker is the discriminator — that field is deliberately not rendered a second time
+  underneath, because two controls for one value is an invitation to set them differently.
+  */
+  private buildUnion(node: FieldUnion): HTMLElement {
+    const picker = select(
+      {
+        class: 'schema-variant',
+        onChange: (event: Event) => this.onVariantChange(node, event),
+      },
+      /*
+      A hidden empty option, so a value matching NO branch shows as "—" rather than silently
+      claiming to be the first variant. Hidden rather than absent because the picker element
+      is reused: adding and removing an option would change the control under the user, and
+      "no variant" is not something they can choose — only something the data can be.
+      */
+      option({ value: '', hidden: true }, '—'),
+      ...node.branches.map((branch, i) =>
+        option({ value: String(i) }, branch.label)
+      )
+    )
+    const container = div(
+      { class: 'schema-field schema-union' },
+      label(node.label),
+      picker,
+      ...(node.unvalidated?.length
+        ? [
+            span(
+              { class: 'schema-unvalidated' },
+              unenforcedNote(node.unvalidated)
+            ),
+          ]
+        : []),
+      div({ class: 'schema-variant-fields' })
+    )
+    container.dataset.union = node.path
+    this.fillUnion(container, node)
+    return container
+  }
+
+  /*
+  Only the branch's FIELDS are rebuilt — the picker itself is left alone.
+
+  Replacing it would take focus off the control the user just operated, which is the exact
+  failure this component exists to avoid; changing variant with the keyboard would drop you
+  back to the top of the form on every keystroke.
+  */
+  private fillUnion(container: HTMLElement, node: FieldUnion): void {
+    const index = matchBranch(node.branches, getByPath(this._value, node.path))
+    const picker = container.querySelector(
+      '.schema-variant'
+    ) as HTMLSelectElement
+    const next = index === -1 ? '' : String(index)
+    if (picker && picker.value !== next) picker.value = next
+    const body = container.querySelector(
+      '.schema-variant-fields'
+    ) as HTMLElement
+    body.replaceChildren(
+      ...branchFields(node, this._value).map((child) => this.buildNode(child))
+    )
+    container.dataset.branch = String(index)
+  }
+
+  private onVariantChange(node: FieldUnion, event: Event): void {
+    const index = Number((event.target as HTMLSelectElement).value)
+    if (!Number.isInteger(index)) return
+    this._value = selectBranch(this._value, node, index)
+    const container = this.querySelector(
+      `[data-union="${CSS.escape(node.path)}"]`
+    ) as HTMLElement | null
+    if (container) this.fillUnion(container, node)
+    this.afterStructuralEdit()
+  }
+
+  /*
+  Re-fill any union whose value no longer matches the branch on screen.
+
+  This is what makes `form.value = {...}` work for variants: the schema did not change, so
+  the form is not rebuilt, but the fields a union shows are a function of the VALUE. Unions
+  nested inside a re-filled union are handled by the outer refill and then simply agree.
+  */
+  private syncVariants(): void {
+    for (const node of this.expanded()) {
+      if (node.kind !== 'union') continue
+      const container = this.querySelector(
+        `[data-union="${CSS.escape(node.path)}"]`
+      ) as HTMLElement | null
+      if (!container) continue
+      const index = matchBranch(
+        node.branches,
+        getByPath(this._value, node.path)
+      )
+      if (container.dataset.branch !== String(index))
+        this.fillUnion(container, node)
     }
   }
 
-  private afterArrayEdit(node: FieldArray): void {
+  /** The shared tail of every edit that changes WHICH fields exist. */
+  private afterStructuralEdit(): void {
     this._fields = this.allFields()
-    const container = this.querySelector(
-      `[data-array="${CSS.escape(node.path)}"]`
-    ) as HTMLElement | null
-    if (container) this.fillArray(container, node)
+    this.applyReadOnly()
     this.syncValues()
     this.refreshErrors()
     this.syncErrors()
     this.dispatchEvent(new Event('change', { bubbles: true }))
+  }
+
+  private afterArrayEdit(node: FieldArray): void {
+    const container = this.querySelector(
+      `[data-array="${CSS.escape(node.path)}"]`
+    ) as HTMLElement | null
+    if (container) this.fillArray(container, node)
+    this.afterStructuralEdit()
   }
 
   private addArrayItem(node: FieldArray): void {
@@ -626,14 +927,17 @@ export class TosiSchemaForm extends WebComponent {
   }
 
   /*
-  Every leaf currently on screen, arrays expanded against the CURRENT value.
+  Everything currently on screen — leaves and unions — with arrays expanded to the elements
+  the CURRENT value has and unions to the branch it currently matches.
 
-  Recomputed after any array edit because the field set genuinely changed — which is exactly
-  why `leafFields` refuses to guess at array leaves from the schema alone.
+  Recomputed after any structural edit because the field set genuinely changed, which is
+  exactly why `leafFields` refuses to guess at array or union leaves from the schema alone.
   */
-  private allFields(): Field[] {
-    const expand = (nodes: Node[]): Field[] =>
+  private expanded(): Node[] {
+    const expand = (nodes: Node[]): Node[] =>
       nodes.flatMap((node) => {
+        if (node.kind === 'union')
+          return [node, ...expand(branchFields(node, this._value))]
         if (node.kind === 'array') {
           const list = (getByPath(this._value, node.path) as unknown[]) ?? []
           return list.flatMap((_x, i) =>
@@ -644,6 +948,30 @@ export class TosiSchemaForm extends WebComponent {
         return [node]
       })
     return expand(this._nodes)
+  }
+
+  /** Every leaf that carries a value — the union pickers are structure, not data. */
+  private allFields(): Field[] {
+    return this.expanded().filter((node) => node.kind !== 'union') as Field[]
+  }
+
+  /*
+  Read-only DISABLES the inputs and HIDES the structural controls.
+
+  Hiding rather than disabling is deliberate: a greyed-out "Add" and a row of dead ↑ ↓ ✕
+  buttons is a form telling the user about affordances it will not honour. There is nothing
+  to explain if they are not there. (The component this design learned from disabled them —
+  its SF-5.) Whole-form and idempotent, so it can run after any partial refill.
+  */
+  private applyReadOnly(): void {
+    for (const el of this.querySelectorAll('input, select')) {
+      ;(el as HTMLInputElement).disabled = this.readOnly
+    }
+    for (const el of this.querySelectorAll(
+      '.schema-item-controls, .schema-add'
+    )) {
+      ;(el as HTMLElement).hidden = this.readOnly
+    }
   }
 
   private buildField(field: Field): HTMLElement {
@@ -751,8 +1079,6 @@ export class TosiSchemaForm extends WebComponent {
     super.render()
     if (this._builtFor !== this._schema) {
       this._nodes = fieldsFor(this._schema)
-      // Leaves are what carry values and errors; groups are structure only.
-      this._fields = this.allFields()
       this.textContent = ''
       this.append(
         formElement(
@@ -762,9 +1088,9 @@ export class TosiSchemaForm extends WebComponent {
       )
       this._builtFor = this._schema
     }
-    for (const el of this.querySelectorAll('input, select')) {
-      ;(el as HTMLInputElement).disabled = this.readOnly
-    }
+    this.syncVariants()
+    this._fields = this.allFields()
+    this.applyReadOnly()
     this.syncValues()
     this.refreshErrors()
     this.syncErrors()

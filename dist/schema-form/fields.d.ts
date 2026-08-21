@@ -17,10 +17,31 @@ export interface FieldArray {
     required: boolean;
     itemSchema: JSONSchema;
 }
-export type Node = Field | FieldGroup | FieldArray;
+/** One branch of a variant union — a shape the value may take. */
+export interface UnionBranch {
+    label: string;
+    schema: JSONSchema;
+    /** the `const`-valued properties that identify this branch, e.g. `{kind: 'circle'}` */
+    marks: Record<string, unknown>;
+}
+/** A property whose value may take one of several object shapes. */
+export interface FieldUnion {
+    kind: 'union';
+    path: string;
+    label: string;
+    required: boolean;
+    branches: UnionBranch[];
+    /** the property whose `const` distinguishes the branches, when there is one */
+    discriminator?: string;
+    /** keywords in this property's schema that the validator ignores — see `unenforced.ts` */
+    unvalidated?: string[];
+}
+export type Node = Field | FieldGroup | FieldArray | FieldUnion;
 export interface Field {
     /** dotted path into the value object, e.g. `email` or `address.city` */
     path: string;
+    /** keywords in this field's schema that the validator ignores — see `unenforced.ts` */
+    unvalidated?: string[];
     /** the label a human sees — `title`, else the last path segment, humanised */
     label: string;
     kind: FieldKind;
@@ -39,6 +60,15 @@ export interface Field {
 /** `firstName` / `first_name` / `first-name` → `first name`. */
 export declare function humanise(key: string): string;
 /**
+ * Which branch does `value` currently look like? `-1` when nothing matches.
+ *
+ * Marks first: a discriminator is an exact answer, and it is the reason schemas carry one.
+ * Otherwise score by how many of the branch's own required keys are present — the component
+ * this design learned from demanded that **every** key match (its SF-10), so a
+ * half-filled object matched no branch at all and the editor showed the user nothing.
+ */
+export declare function matchBranch(branches: UnionBranch[], value: any): number;
+/**
  * The fields a schema describes, in declaration order.
  *
  * Slice 1 handles a flat object of scalars. Anything else — nested objects, arrays, unions —
@@ -49,6 +79,21 @@ export declare function humanise(key: string): string;
 export declare function fieldsFor(schema: JSONSchema, prefix?: string): Node[];
 /** Every leaf field in a tree, depth-first — what the component syncs values and errors for. */
 export declare function leafFields(nodes: Node[]): Field[];
+/**
+ * The fields of the branch `value` currently matches, at the union's own path.
+ *
+ * The discriminator is dropped: the variant `<select>` **is** that control, and rendering it
+ * twice invites the user to set them to different things.
+ */
+export declare function branchFields(node: FieldUnion, value: any): Node[];
+/**
+ * Switch a union to another branch, keeping what the two shapes have in common.
+ *
+ * Only the branch marks are written. Nothing is deleted — a key the new branch does not
+ * describe stays in the model, for the same reason output is never rebuilt from the inputs:
+ * the form is an editor, not a filter, and `filter()` is what strips a value to a schema.
+ */
+export declare function selectBranch(value: any, node: FieldUnion, index: number): any;
 /**
  * The fields for one array element, at `path.<index>`.
  *

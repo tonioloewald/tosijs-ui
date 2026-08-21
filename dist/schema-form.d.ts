@@ -55,6 +55,23 @@ export declare class TosiSchemaForm extends WebComponent {
             display: string;
             gap: string;
         };
+        ':host .schema-item-controls[hidden], :host .schema-add[hidden]': {
+            display: string;
+        };
+        ':host .schema-union': {
+            display: string;
+            gap: string;
+        };
+        ':host .schema-variant-fields': {
+            display: string;
+            gap: string;
+            paddingTop: string;
+        };
+        ':host .schema-unvalidated': {
+            fontSize: string;
+            opacity: string;
+            fontStyle: string;
+        };
         ':host .schema-add': {
             justifySelf: string;
         };
@@ -89,11 +106,20 @@ export declare class TosiSchemaForm extends WebComponent {
     private buildNode;
     private buildArray;
     private fillArray;
+    private buildUnion;
+    private fillUnion;
+    private onVariantChange;
+    private syncVariants;
+    /** The shared tail of every edit that changes WHICH fields exist. */
+    private afterStructuralEdit;
     private afterArrayEdit;
     private addArrayItem;
     private removeArrayItem;
     private moveArrayItem;
+    private expanded;
+    /** Every leaf that carries a value — the union pickers are structure, not data. */
     private allFields;
+    private applyReadOnly;
     private buildField;
     private syncValues;
     private syncErrors;

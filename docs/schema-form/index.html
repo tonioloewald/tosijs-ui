@@ -251,12 +251,195 @@ test(&#39;an array edit does not disturb the rest of the form&#39;, () =&gt; {
   expect(arrayForm.value.tags).toEqual([&#39;urgent&#39;, &#39;paid&#39;])
 })
 </code></pre>
+<h2>Unions</h2>
+<p><code>anyOf</code> and <code>oneOf</code> describe several shapes a value may take, and most of them are not
+&quot;pick a variant&quot; at all. Each is rendered as what it actually is:</p>
+<table>
+<thead>
+<tr>
+<th>the union</th>
+<th>what you get</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>[X, {type: &#39;null&#39;}]</code></td>
+<td>just an X, not required — this is what an optional field looks like</td>
+</tr>
+<tr>
+<td>all branches <code>const</code></td>
+<td>a <code>&lt;select&gt;</code>; a branch <code>title</code> is its label</td>
+</tr>
+<tr>
+<td>all branches objects</td>
+<td>a variant picker plus the fields of the matching branch</td>
+</tr>
+<tr>
+<td>anything else</td>
+<td>a placeholder naming the shapes, e.g. <em>a union of string | object</em></td>
+</tr>
+</tbody></table>
+<p>A variant union finds its <strong>discriminator</strong> — the property every branch pins to a different
+<code>const</code> — and uses it both to tell which branch the value matches and to label the choices.
+An OpenAPI-style <code>discriminator: {propertyName}</code> is honoured when present, but plain JSON
+Schema needs no extra ceremony. The discriminator is <strong>not</strong> rendered as a field of its own:
+the picker is that control, and two controls for one value is an invitation to set them
+differently.</p>
+<p>Switching branch writes the new branch&#39;s <code>const</code> marks and <strong>deletes nothing</strong> — switch back
+and your data is still there. <code>filter()</code> is what strips a value to a schema; a form is an
+editor.</p>
+<pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
+
+const unionForm = tosiSchemaForm({
+  schema: {
+    type: &#39;object&#39;,
+    properties: {
+      nickname: { anyOf: [{ type: &#39;string&#39; }, { type: &#39;null&#39; }] },
+      notify: {
+        title: &#39;Notify&#39;,
+        anyOf: [
+          { const: &#39;all&#39;, title: &#39;Everything&#39; },
+          { const: &#39;mentions&#39;, title: &#39;Mentions only&#39; },
+          { const: &#39;none&#39;, title: &#39;Nothing&#39; },
+        ],
+      },
+      shape: {
+        anyOf: [
+          {
+            type: &#39;object&#39;,
+            title: &#39;Circle&#39;,
+            properties: { kind: { const: &#39;circle&#39; }, r: { type: &#39;number&#39; } },
+            required: [&#39;kind&#39;, &#39;r&#39;],
+          },
+          {
+            type: &#39;object&#39;,
+            title: &#39;Rectangle&#39;,
+            properties: {
+              kind: { const: &#39;rect&#39; },
+              w: { type: &#39;number&#39; },
+              h: { type: &#39;number&#39; },
+            },
+            required: [&#39;kind&#39;, &#39;w&#39;, &#39;h&#39;],
+          },
+        ],
+      },
+    },
+    required: [&#39;nickname&#39;],
+  },
+  value: { notify: &#39;mentions&#39;, shape: { kind: &#39;circle&#39;, r: 3 } },
+})
+
+const shown = document.createElement(&#39;pre&#39;)
+const show = () =&gt; {
+  shown.textContent = JSON.stringify(unionForm.value, null, 2)
+}
+unionForm.addEventListener(&#39;change&#39;, show)
+show()
+
+preview.append(unionForm, shown)
+</code></pre>
+<pre><code class="language-test">const unionForm = await waitFor(&#39;tosi-schema-form&#39;)
+const picker = unionForm.querySelector(&#39;[data-union=&quot;shape&quot;] .schema-variant&#39;)
+
+test(&#39;unions render as what they actually are&#39;, async () =&gt; {
+  // ONE test: every step below shares this form, and test() bodies run concurrently.
+
+  // A nullable union is just the field — and `required` in the schema does not make an
+  // empty value invalid when null is a branch.
+  expect(unionForm.querySelector(&#39;[data-path=&quot;nickname&quot;]&#39;).type).toBe(&#39;text&#39;)
+
+  // An all-const union is a select, labelled by branch titles.
+  const notify = unionForm.querySelector(&#39;[data-path=&quot;notify&quot;]&#39;)
+  expect(notify.tagName).toBe(&#39;SELECT&#39;)
+  // `notify` is not required, so the first option is the empty one — an optional field has
+  // to offer a way back to &quot;not set&quot;.
+  expect([...notify.options].map((o) =&gt; o.textContent)).toEqual([
+    &#39;—&#39;,
+    &#39;Everything&#39;,
+    &#39;Mentions only&#39;,
+    &#39;Nothing&#39;,
+  ])
+  expect(notify.value).toBe(&#39;mentions&#39;)
+
+  // The variant picker shows the matching branch&#39;s fields — and NOT the discriminator,
+  // which the picker itself is.
+  expect(picker.value).toBe(&#39;0&#39;)
+  expect(unionForm.querySelector(&#39;[data-path=&quot;shape.r&quot;]&#39;).value).toBe(&#39;3&#39;)
+  expect(unionForm.querySelector(&#39;[data-path=&quot;shape.kind&quot;]&#39;)).toBe(null)
+
+  // Switching branch swaps the fields, writes the new mark, and keeps the old data.
+  picker.value = &#39;1&#39;
+  picker.dispatchEvent(new Event(&#39;change&#39;, { bubbles: true }))
+  expect(unionForm.value.shape.kind).toBe(&#39;rect&#39;)
+  expect(unionForm.value.shape.r).toBe(3)
+  expect(unionForm.querySelector(&#39;[data-path=&quot;shape.w&quot;]&#39;)).toBeTruthy()
+  expect(unionForm.querySelector(&#39;[data-path=&quot;shape.r&quot;]&#39;)).toBe(null)
+
+  // Setting `value` to a different variant re-renders the branch, without a schema change.
+  unionForm.value = { shape: { kind: &#39;circle&#39;, r: 9 } }
+  await new Promise((r) =&gt; requestAnimationFrame(r))
+  expect(picker.value).toBe(&#39;0&#39;)
+  expect(unionForm.querySelector(&#39;[data-path=&quot;shape.r&quot;]&#39;).value).toBe(&#39;9&#39;)
+
+  // Through all of that the picker itself was never replaced — switching variant with the
+  // keyboard must not take focus off the control you are operating.
+  expect(unionForm.querySelector(&#39;[data-union=&quot;shape&quot;] .schema-variant&#39;)).toBe(
+    picker
+  )
+})
+</code></pre>
+<h3><code>oneOf</code> is rendered, but it is not validated</h3>
+<p><code>tosijs-schema</code> enforces <code>anyOf</code> and <strong>silently ignores <code>oneOf</code></strong> — <code>validate</code> returns <code>true</code>
+for a value no branch accepts (<a href="https://github.com/tonioloewald/tosijs-schema/issues/8">#8</a>).
+Since <code>oneOf</code> is how nearly every real schema spells a variant union, refusing it would refuse
+most schemas; instead the field says so, because a green form over an unchecked value is worse
+than an honest note. The same note appears for any other keyword the validator ignores, such
+as <code>exclusiveMinimum</code>.</p>
+<pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
+
+preview.append(
+  tosiSchemaForm({
+    schema: {
+      type: &#39;object&#39;,
+      properties: {
+        shape: {
+          oneOf: [
+            {
+              type: &#39;object&#39;,
+              title: &#39;Circle&#39;,
+              properties: { kind: { const: &#39;circle&#39; }, r: { type: &#39;number&#39; } },
+            },
+            {
+              type: &#39;object&#39;,
+              title: &#39;Square&#39;,
+              properties: { kind: { const: &#39;square&#39; }, side: { type: &#39;number&#39; } },
+            },
+          ],
+        },
+      },
+    },
+    value: { shape: { kind: &#39;square&#39;, side: 2 } },
+  })
+)
+</code></pre>
+<pre><code class="language-test">const oneOfForm = await waitFor(&#39;tosi-schema-form&#39;)
+
+test(&#39;a oneOf union renders, and says it is not validated&#39;, () =&gt; {
+  expect(oneOfForm.querySelector(&#39;[data-path=&quot;shape.side&quot;]&#39;).value).toBe(&#39;2&#39;)
+  expect(oneOfForm.querySelector(&#39;.schema-unvalidated&#39;).textContent).toBe(
+    &#39;oneOf is not validated&#39;
+  )
+})
+</code></pre>
+<h2>Read-only</h2>
+<p><code>readOnly</code> disables the inputs and <strong>hides</strong> the add, remove and reorder controls rather than
+grey them out. A dead row of buttons is a form advertising affordances it will not honour;
+there is nothing to explain if they are not there.</p>
 <h2>What it renders today</h2>
 <p>Scalars and enums: <code>string</code> (with <code>format</code> picking the input type), <code>number</code>, <code>integer</code>,
-<code>boolean</code>, <code>enum</code>, <code>const</code>, <strong>nested objects</strong> and <strong>arrays</strong>. <strong>Unions and tuple arrays
-(<code>prefixItems</code>) are not supported yet</strong> — a property using one is shown as a placeholder saying so, rather than being silently
-omitted. A field that vanishes is indistinguishable from a schema that never mentioned it,
-which is how an editor loses data without anyone noticing.</p>
+<code>boolean</code>, <code>enum</code>, <code>const</code>, <strong>nested objects</strong>, <strong>arrays</strong> and <strong>unions</strong>. <strong>Tuple arrays
+(<code>prefixItems</code>) are not supported yet</strong> — a property using one is shown as a placeholder
+saying so, rather than being silently omitted. A field that vanishes is indistinguishable from
+a schema that never mentioned it, which is how an editor loses data without anyone noticing.</p>
 <h2>Properties, methods, events</h2>
 <ul>
 <li><code>schema</code> — the JSON Schema. Setting it rebuilds the fields.</li>

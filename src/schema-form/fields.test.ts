@@ -13,6 +13,9 @@ import {
   collectErrors,
   errorFor,
   humanise,
+  branchFields,
+  matchBranch,
+  selectBranch,
 } from './fields'
 
 const contact: any = {
@@ -93,7 +96,7 @@ test('title wins over the humanised key', () => {
   expect(humanise('first_name')).toBe('first name')
 })
 
-test('REGRESSION: what slice 1 cannot render is reported, never skipped', () => {
+test('REGRESSION: what it cannot render is reported, never skipped', () => {
   /*
   A field that silently vanishes is indistinguishable from a schema that never mentioned it —
   and that is exactly how an editor loses data: the user never sees the field, so they never
@@ -110,7 +113,9 @@ test('REGRESSION: what slice 1 cannot render is reported, never skipped', () => 
   )
   expect(fields.map((f) => f.path)).toEqual(['either', 'pair'])
   expect(fields.every((f) => f.kind === 'unsupported')).toBe(true)
-  expect(fields[0].reason).toContain('unions')
+  expect(fields[0].reason).toBe(
+    'a union of string | number is not supported yet'
+  )
   expect(fields[1].reason).toContain('tuple')
 })
 
@@ -435,4 +440,183 @@ test('a missing required inside an array element lands on that element field', (
     ['items.0.sku']
   )
   expect(errorFor(errors, 'items.0.sku')).toBe('Missing sku')
+})
+
+/*
+Unions. The measured behaviour that shapes these: tosijs-schema 1.7.0 enforces `anyOf` and
+**silently ignores `oneOf`** (upstream #8), so a `oneOf` schema must still render — refusing
+it would refuse most real-world variant schemas — while saying that it is not validated.
+*/
+const shapes: any = {
+  type: 'object',
+  properties: {
+    shape: {
+      oneOf: [
+        {
+          type: 'object',
+          title: 'Circle',
+          properties: { kind: { const: 'circle' }, r: { type: 'number' } },
+          required: ['kind', 'r'],
+        },
+        {
+          type: 'object',
+          properties: {
+            kind: { const: 'rect' },
+            w: { type: 'number' },
+            h: { type: 'number' },
+          },
+          required: ['kind', 'w', 'h'],
+        },
+      ],
+    },
+  },
+}
+
+test('a nullable union is just the field, and not required', () => {
+  const [field]: any = fieldsFor({
+    type: 'object',
+    properties: {
+      nickname: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+    },
+    required: ['nickname'],
+  } as any)
+  expect(field.kind).toBe('string')
+  // `required` in the parent plus a null branch means "you may leave it empty".
+  expect(field.required).toBe(false)
+})
+
+test('a union of consts collapses to a select, with branch titles as labels', () => {
+  const [field]: any = fieldsFor({
+    type: 'object',
+    properties: {
+      mode: {
+        title: 'Mode',
+        anyOf: [{ const: 'a', title: 'Alpha' }, { const: 'b' }],
+      },
+    },
+  } as any)
+  expect(field.kind).toBe('enum')
+  expect(field.label).toBe('Mode')
+  expect(field.options).toEqual([
+    { value: 'a', label: 'Alpha' },
+    { value: 'b', label: 'b' },
+  ])
+})
+
+test('a union of objects becomes a variant node with a derived discriminator', () => {
+  const [node]: any = fieldsFor(shapes)
+  expect(node.kind).toBe('union')
+  expect(node.discriminator).toBe('kind')
+  // A branch with no title is named for its discriminator value, not "option 2".
+  expect(node.branches.map((b: any) => b.label)).toEqual(['Circle', 'rect'])
+  expect(node.branches[0].marks).toEqual({ kind: 'circle' })
+  // oneOf is not enforced by the validator, and the field says so rather than implying a
+  // green form means a conforming value.
+  expect(node.unvalidated).toEqual(['oneOf'])
+})
+
+test('an explicit discriminator wins over the derived one', () => {
+  const [node]: any = fieldsFor({
+    type: 'object',
+    properties: {
+      thing: {
+        discriminator: { propertyName: 'flavour' },
+        anyOf: [
+          {
+            type: 'object',
+            properties: { kind: { const: 'x' }, flavour: { const: 'sweet' } },
+          },
+          {
+            type: 'object',
+            properties: { kind: { const: 'x' }, flavour: { const: 'sour' } },
+          },
+        ],
+      },
+    },
+  } as any)
+  expect(node.discriminator).toBe('flavour')
+})
+
+test('a union of mixed shapes is unsupported WITH a reason, never dropped', () => {
+  const [field]: any = fieldsFor({
+    type: 'object',
+    properties: {
+      id: { anyOf: [{ type: 'string' }, { type: 'object', properties: {} }] },
+    },
+  } as any)
+  expect(field.kind).toBe('unsupported')
+  expect(field.reason).toMatch(/union/)
+})
+
+test('matchBranch identifies a branch by its marks', () => {
+  const [node]: any = fieldsFor(shapes)
+  expect(matchBranch(node.branches, { kind: 'rect', w: 1, h: 2 })).toBe(1)
+  expect(matchBranch(node.branches, { kind: 'circle' })).toBe(0)
+  expect(matchBranch(node.branches, undefined)).toBe(-1)
+})
+
+test('matchBranch scores a partly-filled object rather than demanding every key', () => {
+  // The component this design learned from required EVERY key to be present (its SF-10), so
+  // a half-filled variant matched nothing and the editor showed the user an empty box.
+  const branches = [
+    {
+      label: 'a',
+      marks: {},
+      schema: {
+        type: 'object',
+        properties: { p: {}, q: {} },
+        required: ['p', 'q'],
+      },
+    },
+    {
+      label: 'b',
+      marks: {},
+      schema: { type: 'object', properties: { z: {} }, required: ['z'] },
+    },
+  ] as any
+  expect(matchBranch(branches, { p: 1 })).toBe(0)
+  expect(matchBranch(branches, { z: 1 })).toBe(1)
+  expect(matchBranch(branches, {})).toBe(-1)
+})
+
+test('branchFields renders the matched branch and hides the discriminator', () => {
+  const [node]: any = fieldsFor(shapes)
+  const fields = branchFields(node, { shape: { kind: 'rect' } })
+  expect(fields.map((f: any) => f.path)).toEqual(['shape.w', 'shape.h'])
+})
+
+test('switching branch writes the new marks and keeps overlapping data', () => {
+  const [node]: any = fieldsFor(shapes)
+  const before = { shape: { kind: 'circle', r: 3 }, _id: 'keep' }
+  const after = selectBranch(before, node, 1)
+  expect(after.shape.kind).toBe('rect')
+  // Nothing is deleted: the form is an editor, not a filter. `r` is still there if the user
+  // switches back, and `_id` was never the form's business.
+  expect(after.shape.r).toBe(3)
+  expect(after._id).toBe('keep')
+  expect(before.shape.kind).toBe('circle')
+})
+
+test('leafFields leaves union leaves to the component, like array leaves', () => {
+  // They depend on the VALUE (which branch matches), which this function never sees.
+  expect(leafFields(fieldsFor(shapes))).toEqual([])
+})
+
+test('anyOf variants ARE validated, and errors key to the branch field', () => {
+  const anyOfShapes = {
+    ...shapes,
+    properties: { shape: { anyOf: shapes.properties.shape.oneOf } },
+  }
+  const [node]: any = fieldsFor(anyOfShapes as any)
+  expect(node.unvalidated).toBeUndefined()
+  const paths = branchFields(node, { shape: { kind: 'circle' } }).map(
+    (f: any) => f.path
+  )
+  const errors = collectErrors(
+    (onError) => validate({ shape: { kind: 'circle' } }, anyOfShapes, onError),
+    paths
+  )
+  // The validator collapses a branch failure to "Union mismatch" at the union's own path —
+  // measured, not assumed — so that is where the form shows it.
+  expect(errors.map((e) => e.path)).toEqual(['shape'])
 })

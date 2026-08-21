@@ -556,6 +556,32 @@ npm is at 1.5.1).
   schema **travels**, which is the whole point of emitting plain JSON Schema. Not a blocker
   for us: we use their validator.
 
+### Open
+
+- **[#8](https://github.com/tonioloewald/tosijs-schema/issues/8) — `validate` silently
+  ignores `oneOf`, `exclusiveMinimum`, and 11 other keywords**, returning `true` for values
+  the schema forbids. Found while building slice 4 of `<tosi-schema-form>` (unions) by
+  measuring the validator's behaviour before writing against it — the same
+  measure-first habit that turned up #7.
+
+  It is a **documented** subset (`ENFORCED_KEYWORDS` is exported, and `agentContract`
+  refuses schemas that step outside it, reasoning that "a gate must not fail open"). The
+  issue is that plain `validate` fails open on exactly those keywords, with no signal.
+
+  Two of them are not corners. **`oneOf` is how discriminated unions are written in
+  practice** — every generator and tutorial emits it, `anyOf` is the unusual spelling — so
+  the single most common variant shape is the one where validation is a no-op. And
+  `exclusiveMinimum` is an ordinary bound: "strictly positive" accepts `0`.
+
+  The ask, in priority order: enforce `oneOf`; enforce `exclusiveMin/Max`; and **export the
+  unenforced-keyword lint** `agentContract` already computes, so a consumer can _warn_
+  rather than silently imply a field is checked. Detectability is worth more than coverage.
+
+  **What we do meanwhile:** `<tosi-schema-form>` renders `oneOf` unions (refusing them
+  would refuse most real schemas) and carries its own `unenforced.ts` walker so a field
+  under an unvalidated keyword says so, instead of showing a green form over an unchecked
+  value. Delete that file when (3) lands.
+
 ### Watching
 
 - **[#4](https://github.com/tonioloewald/tosijs-schema/issues/4)** — 1.5.0 tightened

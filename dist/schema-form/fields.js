@@ -15,6 +15,7 @@ impossible rather than merely fixed:
 - output is never rebuilt from the rendered inputs, so a field the schema does not describe
   cannot be dropped on save.
 */
+import { unenforcedKeywords } from './unenforced.js';
 /*
 `format` → `<input type>`.
 
@@ -61,6 +62,140 @@ function kindOf(schema) {
             return 'unsupported';
     }
 }
+/** Build the leaf field for a scalar / enum / const schema. Shared by objects and array items. */
+function scalarField(schema, path, label, required) {
+    const kind = kindOf(schema);
+    const field = { path, label, kind, schema, required };
+    const unvalidated = unenforcedKeywords(schema);
+    if (unvalidated.length)
+        field.unvalidated = unvalidated;
+    if (kind === 'string') {
+        field.inputType = INPUT_TYPE[schema.format ?? ''] ?? 'text';
+    }
+    if (kind === 'enum') {
+        field.options = (schema.enum ?? []).map((value) => ({
+            value,
+            label: String(value),
+        }));
+    }
+    if (kind === 'unsupported') {
+        const t = Array.isArray(schema.type) ? schema.type.join('|') : schema.type;
+        field.reason = schema.prefixItems
+            ? 'tuple arrays (prefixItems) are not supported yet'
+            : `no control for type ${t ?? 'unknown'}`;
+    }
+    return field;
+}
+/** Is this branch the `{type: 'null'}` half of a nullable union? */
+const isNullBranch = (branch) => branch?.type === 'null' ||
+    (Array.isArray(branch?.type) &&
+        branch.type.length === 1 &&
+        branch.type[0] === 'null');
+/**
+ * Turn a union property into something renderable.
+ *
+ * Four outcomes, in the order they are tried — a union is a shape *description*, and most of
+ * the shapes real schemas use are not "pick a variant" at all:
+ *
+ * - **nullable** (`[X, null]`, which is what `s.optional` emits) — one real branch, so it is
+ *   simply that field, not required;
+ * - **all-`const`** — an enum in disguise, so a `<select>`, not a variant picker;
+ * - **all-object** — a genuine variant union;
+ * - anything else — unsupported *with a reason*, never dropped.
+ */
+function resolveUnion(schema) {
+    const raw = (schema.anyOf ?? schema.oneOf);
+    const branches = raw.filter((b) => !isNullBranch(b));
+    const nullable = branches.length < raw.length;
+    if (branches.length === 0)
+        return { kind: 'single', schema: { type: 'null' }, nullable };
+    if (branches.length === 1)
+        return { kind: 'single', schema: branches[0], nullable };
+    if (branches.every((b) => b.const !== undefined)) {
+        return {
+            kind: 'consts',
+            options: branches.map((b) => ({
+                value: b.const,
+                label: b.title || String(b.const),
+            })),
+        };
+    }
+    if (branches.every((b) => b.properties)) {
+        /*
+        The discriminator is the property that every branch pins to a different `const` — `kind`,
+        `type`, `@type`, whatever the schema calls it. An OpenAPI-style
+        `discriminator: {propertyName}` wins when given; otherwise it is derived, so ordinary
+        JSON Schema works without extra ceremony.
+        */
+        const declared = schema.discriminator?.propertyName;
+        const candidates = Object.keys(branches[0].properties ?? {}).filter((key) => branches.every((b) => b.properties?.[key]?.const !== undefined));
+        const discriminator = candidates.includes(declared)
+            ? declared
+            : candidates[0];
+        return {
+            kind: 'variants',
+            discriminator,
+            branches: branches.map((b, i) => {
+                const marks = {};
+                for (const [key, prop] of Object.entries(b.properties ?? {})) {
+                    if (prop.const !== undefined)
+                        marks[key] = prop.const;
+                }
+                const mark = discriminator ? marks[discriminator] : undefined;
+                return {
+                    label: b.title ||
+                        (mark !== undefined ? String(mark) : `option ${i + 1}`),
+                    schema: b,
+                    marks,
+                };
+            }),
+        };
+    }
+    /*
+    Everything else: a union of unlike scalars, or scalars mixed with objects. Naming the
+    shapes matters — "unsupported" tells a schema author nothing, `a union of string | object`
+    tells them exactly which property to go and look at.
+    */
+    const describe = (b) => b.const !== undefined
+        ? 'const'
+        : b.properties
+            ? 'object'
+            : Array.isArray(b.type)
+                ? b.type.join('|')
+                : b.type ?? 'unknown';
+    const shapes = [...new Set(branches.map(describe))].join(' | ');
+    return {
+        kind: 'unsupported',
+        reason: `a union of ${shapes} is not supported yet`,
+    };
+}
+/**
+ * Which branch does `value` currently look like? `-1` when nothing matches.
+ *
+ * Marks first: a discriminator is an exact answer, and it is the reason schemas carry one.
+ * Otherwise score by how many of the branch's own required keys are present — the component
+ * this design learned from demanded that **every** key match (its SF-10), so a
+ * half-filled object matched no branch at all and the editor showed the user nothing.
+ */
+export function matchBranch(branches, value) {
+    if (value == null || typeof value !== 'object')
+        return -1;
+    const marked = branches.findIndex((b) => Object.keys(b.marks).length > 0 &&
+        Object.entries(b.marks).every(([key, mark]) => value[key] === mark));
+    if (marked !== -1)
+        return marked;
+    let best = -1;
+    let bestScore = 0;
+    branches.forEach((b, i) => {
+        const keys = b.schema.required ?? Object.keys(b.schema.properties ?? {});
+        const score = keys.filter((k) => value[k] !== undefined).length;
+        if (score > bestScore) {
+            bestScore = score;
+            best = i;
+        }
+    });
+    return best;
+}
 /**
  * The fields a schema describes, in declaration order.
  *
@@ -73,8 +208,52 @@ export function fieldsFor(schema, prefix = '') {
     if (!schema?.properties)
         return [];
     const required = new Set(schema.required ?? []);
-    return Object.entries(schema.properties).map(([key, propSchema]) => {
+    return Object.entries(schema.properties).map(([key, rawSchema]) => {
         const path = prefix ? `${prefix}.${key}` : key;
+        const label = rawSchema.title || humanise(key);
+        let propSchema = rawSchema;
+        let isRequired = required.has(key);
+        /*
+        A union is resolved FIRST, because most unions are not variant pickers: `[X, null]` is
+        just an optional X, and an all-`const` union is an enum wearing a hat. Only what is left
+        after those becomes a variant control.
+        */
+        if (rawSchema.anyOf || rawSchema.oneOf) {
+            const union = resolveUnion(rawSchema);
+            if (union.kind === 'variants') {
+                const node = {
+                    kind: 'union',
+                    path,
+                    label,
+                    required: isRequired,
+                    branches: union.branches,
+                };
+                if (union.discriminator)
+                    node.discriminator = union.discriminator;
+                const unvalidated = unenforcedKeywords(rawSchema);
+                if (unvalidated.length)
+                    node.unvalidated = unvalidated;
+                return node;
+            }
+            if (union.kind === 'consts') {
+                const field = scalarField(rawSchema, path, label, isRequired);
+                field.kind = 'enum';
+                field.options = union.options;
+                delete field.reason;
+                return field;
+            }
+            if (union.kind === 'unsupported') {
+                const field = scalarField(rawSchema, path, label, isRequired);
+                field.kind = 'unsupported';
+                field.reason = union.reason;
+                return field;
+            }
+            // A single real branch: render THAT, carrying the property's own title, and treat a
+            // nullable union as optional however the parent's `required` list reads.
+            propSchema = { ...union.schema, title: rawSchema.title };
+            if (union.nullable)
+                isRequired = false;
+        }
         /*
         A nested object becomes a GROUP, and its own `required` list governs its children —
         `required` is scoped to the object that declares it, so a required `city` inside an
@@ -86,8 +265,8 @@ export function fieldsFor(schema, prefix = '') {
             return {
                 kind: 'group',
                 path,
-                label: propSchema.title || humanise(key),
-                required: required.has(key),
+                label,
+                required: isRequired,
                 children: fieldsFor(propSchema, path),
             };
         }
@@ -102,39 +281,12 @@ export function fieldsFor(schema, prefix = '') {
             return {
                 kind: 'array',
                 path,
-                label: propSchema.title || humanise(key),
-                required: required.has(key),
+                label,
+                required: isRequired,
                 itemSchema: propSchema.items,
             };
         }
-        const kind = kindOf(propSchema);
-        const field = {
-            path,
-            label: propSchema.title || humanise(key),
-            kind,
-            schema: propSchema,
-            required: required.has(key),
-        };
-        if (kind === 'string') {
-            field.inputType = INPUT_TYPE[propSchema.format ?? ''] ?? 'text';
-        }
-        if (kind === 'enum') {
-            field.options = (propSchema.enum ?? []).map((value) => ({
-                value,
-                label: String(value),
-            }));
-        }
-        if (kind === 'unsupported') {
-            const t = Array.isArray(propSchema.type)
-                ? propSchema.type.join('|')
-                : propSchema.type;
-            field.reason = propSchema.prefixItems
-                ? 'tuple arrays (prefixItems) are not supported yet'
-                : propSchema.anyOf || propSchema.oneOf
-                    ? 'unions are not supported yet'
-                    : `no control for type ${t ?? 'unknown'}`;
-        }
-        return field;
+        return scalarField(propSchema, path, label, isRequired);
     });
 }
 /** Every leaf field in a tree, depth-first — what the component syncs values and errors for. */
@@ -142,12 +294,45 @@ export function leafFields(nodes) {
     return nodes.flatMap((node) => {
         if ('children' in node)
             return leafFields(node.children);
-        // An array's leaves depend on how many elements the VALUE has, so the component
-        // contributes them per render rather than this function inventing them.
-        if (node.kind === 'array')
+        // An array's leaves depend on how many elements the VALUE has, and a union's on which
+        // branch it currently matches, so the component contributes those per render rather than
+        // this function inventing them.
+        if (node.kind === 'array' || node.kind === 'union')
             return [];
         return [node];
     });
+}
+/**
+ * The fields of the branch `value` currently matches, at the union's own path.
+ *
+ * The discriminator is dropped: the variant `<select>` **is** that control, and rendering it
+ * twice invites the user to set them to different things.
+ */
+export function branchFields(node, value) {
+    const index = matchBranch(node.branches, getByPath(value, node.path));
+    if (index === -1)
+        return [];
+    const fields = fieldsFor(node.branches[index].schema, node.path);
+    return node.discriminator
+        ? fields.filter((f) => f.path !== `${node.path}.${node.discriminator}`)
+        : fields;
+}
+/**
+ * Switch a union to another branch, keeping what the two shapes have in common.
+ *
+ * Only the branch marks are written. Nothing is deleted — a key the new branch does not
+ * describe stays in the model, for the same reason output is never rebuilt from the inputs:
+ * the form is an editor, not a filter, and `filter()` is what strips a value to a schema.
+ */
+export function selectBranch(value, node, index) {
+    const branch = node.branches[index];
+    if (!branch)
+        return value;
+    const current = getByPath(value, node.path);
+    const base = current && typeof current === 'object' && !Array.isArray(current)
+        ? current
+        : {};
+    return setByPath(value, node.path, { ...base, ...branch.marks });
 }
 /**
  * The fields for one array element, at `path.<index>`.
@@ -160,24 +345,7 @@ export function itemFields(itemSchema, path, index) {
     const base = `${path}.${index}`;
     if (itemSchema?.properties)
         return fieldsFor(itemSchema, base);
-    const kind = kindOf(itemSchema);
-    const field = {
-        path: base,
-        label: `${index + 1}`,
-        kind,
-        schema: itemSchema,
-        required: false,
-    };
-    if (kind === 'string') {
-        field.inputType = INPUT_TYPE[itemSchema.format ?? ''] ?? 'text';
-    }
-    if (kind === 'enum') {
-        field.options = (itemSchema.enum ?? []).map((value) => ({
-            value,
-            label: String(value),
-        }));
-    }
-    return [field];
+    return [scalarField(itemSchema, base, `${index + 1}`, false)];
 }
 /** Read a dotted path out of a value object. */
 export function getByPath(value, path) {
