@@ -282,7 +282,23 @@ try {
       said
     )
   }
-  for (const entry of ['tosijs-ui', 'tosijs-ui/site', 'tosijs-ui/icon-svg']) {
+  /*
+  The named subpaths, plus two the `./*` wildcard has to get right on its own:
+  `tosijs-ui/schema-form` where a same-named DIRECTORY also exists in `dist/`, and a file
+  inside that directory. Both resolve through the wildcard, and neither is covered by the
+  named export map — so a change to that map, or to the build's output layout, breaks them
+  silently and only for someone who has installed the package.
+  */
+  for (const entry of [
+    'tosijs-ui',
+    'tosijs-ui/site',
+    'tosijs-ui/icon-svg',
+    'tosijs-ui/schema-form',
+    'tosijs-ui/schema-form/fields',
+    'tosijs-ui/schema-form/fields.js',
+    'tosijs-ui/hash-state',
+    'tosijs-ui/crud',
+  ]) {
     check(
       `node resolves ${entry} (no missing-module error)`,
       await nodeResolves(entry)

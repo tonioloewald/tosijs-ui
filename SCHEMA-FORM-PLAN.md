@@ -1,8 +1,28 @@
 # Schema-driven editing — design note
 
-Status: **design, nothing built.** Written after reading the snowfox `schema-form`
-handover (`schema-form.md`, 3,365 lines including full source and a ten-item defect
-report). Records the decisions worth making before code exists, and why.
+Status: **built, on branch `schema-form-impl`.** Written first, as a design note, after
+reading the snowfox `schema-form` handover (`schema-form.md`, 3,365 lines including full
+source and a ten-item defect report); kept because the reasoning is the durable part.
+
+What landed, in the order it was built:
+
+| §                     | what shipped                                                                                        |
+| --------------------- | --------------------------------------------------------------------------------------------------- |
+| 1 model owns the data | `src/schema-form/fields.ts` (pure) + `src/schema-form.ts` — scalars, nested objects, arrays, unions |
+| 2 validation          | `tosijs-schema` as an optional peer; per-field errors re-keyed at the boundary                      |
+| 3 inference           | filed as tosijs-schema#6/#7, shipped by them; consumed here, with `required` relaxed                |
+| 4 CRUD wrapper        | `src/crud.ts` — `<tosi-crud>` over a `list`/`save`/`delete` store adapter                           |
+| 5 hash filter         | `src/hash-state.ts` — namespaced, memory mode, composes with the hash router                        |
+| 6 supported subset    | named in the docs; anything unsupported renders a placeholder saying so                             |
+
+Two things were found by measuring rather than reading, and both are recorded where they
+bite: `validate` silently ignores `oneOf` and 12 other keywords
+([tosijs-schema#8](https://github.com/tonioloewald/tosijs-schema/issues/8), see `UPSTREAM.md`),
+and happy-dom's `history.replaceState` does not update `location.hash`, so `hashState`'s URL
+half is tested in a real browser.
+
+Still open: **#44 (editable data-table)** — §4's last paragraph, the same model pointed at
+cells instead of fields.
 
 ## 1. The one architectural decision
 

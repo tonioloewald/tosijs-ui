@@ -300,6 +300,8 @@ Public surface (this is the contract; the pre-1.7 ACE `theme`/`options` props we
 
 `package.json` `exports` expose stable subpaths — `tosijs-ui/site`, `/icons`, `/code-editor`, `/live-example`, `/doc-browser`, `/diff`, `/theme` — plus a `./*` wildcard so `import 'tosijs-ui/rating'` resolves to `dist/rating.js` and registers just that element.
 
+There is a **second `./*.js` wildcard** beside it, because `./*` alone maps `tosijs-ui/foo.js` to `dist/foo.js.js` — so the extension-ful spelling, which is exactly what an adopter copying this repo's own ESM import style would write, failed to resolve. `bin/smoke-consumer.ts` checks both spellings for a nested path (`tosijs-ui/schema-form/fields` and `…/fields.js`); nested paths only exist through the wildcards, so nothing else covers them.
+
 **Do NOT set a blanket `sideEffects: false`.** `elementCreator()` registers custom elements _eagerly at import time_, so a bare `import 'tosijs-ui'` tree-shakes to zero registrations under it. Per-component entry points (the Lit/Shoelace model) are the correct tree-shaking path. Components that inject global styles/listeners (menu/tooltip/float) do so on **first use** (`ensureMenu`/`ensureTooltipStyles`/`ensureFloatListeners`), not at import, to keep imports side-effect-light.
 
 **Never add a `browser` export condition pointing at the iife.** The iife (`dist/iife.js`) inlines tosijs + marked and is not ESM — it is for CDN `<script>` tags and naive doc-sites only, never reachable via `import`.
