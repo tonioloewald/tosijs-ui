@@ -2,6 +2,7 @@ import { test, expect } from 'bun:test'
 import { validate } from 'tosijs-schema'
 import {
   fieldsFor,
+  leafFields,
   getByPath,
   setByPath,
   collectErrors,
@@ -93,19 +94,19 @@ test('REGRESSION: what slice 1 cannot render is reported, never skipped', () => 
   and that is exactly how an editor loses data: the user never sees the field, so they never
   notice it is not being saved.
   */
-  const fields = fieldsFor({
-    type: 'object',
-    properties: {
-      address: { type: 'object', properties: { city: { type: 'string' } } },
-      tags: { type: 'array', items: { type: 'string' } },
-      either: { anyOf: [{ type: 'string' }, { type: 'number' }] },
-    },
-  } as any)
-  expect(fields.map((f) => f.path)).toEqual(['address', 'tags', 'either'])
+  const fields = leafFields(
+    fieldsFor({
+      type: 'object',
+      properties: {
+        tags: { type: 'array', items: { type: 'string' } },
+        either: { anyOf: [{ type: 'string' }, { type: 'number' }] },
+      },
+    } as any)
+  )
+  expect(fields.map((f) => f.path)).toEqual(['tags', 'either'])
   expect(fields.every((f) => f.kind === 'unsupported')).toBe(true)
-  expect(fields[0].reason).toContain('nested objects')
-  expect(fields[1].reason).toContain('arrays')
-  expect(fields[2].reason).toContain('unions')
+  expect(fields[0].reason).toContain('arrays')
+  expect(fields[1].reason).toContain('unions')
 })
 
 test('a schema with no properties yields no fields rather than throwing', () => {
@@ -213,4 +214,85 @@ test('errorFor returns undefined for a clean field', () => {
     paths()
   )
   expect(errorFor(errors, 'name')).toBeUndefined()
+})
+
+// ── nested objects (slice 2) ─────────────────────────────────────────────────
+
+const nested: any = {
+  type: 'object',
+  properties: {
+    name: { type: 'string' },
+    address: {
+      type: 'object',
+      title: 'Postal address',
+      properties: {
+        city: { type: 'string' },
+        zip: { type: 'integer' },
+        geo: {
+          type: 'object',
+          properties: { lat: { type: 'number' }, lon: { type: 'number' } },
+        },
+      },
+      required: ['city'],
+    },
+  },
+  required: ['name', 'address'],
+}
+
+test('a nested object becomes a group, not a field', () => {
+  const [, address] = fieldsFor(nested)
+  expect('children' in address).toBe(true)
+  expect((address as any).label).toBe('Postal address')
+})
+
+test('leaf paths are fully qualified, at any depth', () => {
+  expect(leafFields(fieldsFor(nested)).map((f) => f.path)).toEqual([
+    'name',
+    'address.city',
+    'address.zip',
+    'address.geo.lat',
+    'address.geo.lon',
+  ])
+})
+
+test('required is scoped to the object that declares it', () => {
+  // `required: ['city']` inside an optional address means "if you give an address, it needs
+  // a city" — not that every form must have one.
+  const byPath = Object.fromEntries(
+    leafFields(fieldsFor(nested)).map((f) => [f.path, f])
+  )
+  expect(byPath['address.city'].required).toBe(true)
+  expect(byPath['address.zip'].required).toBe(false)
+})
+
+test('values round-trip through nested paths', () => {
+  const written = setByPath({}, 'address.geo.lat', 51.5)
+  expect(getByPath(written, 'address.geo.lat')).toBe(51.5)
+  expect(written).toEqual({ address: { geo: { lat: 51.5 } } })
+})
+
+test('REGRESSION: a nested missing-required error lands on the nested FIELD', () => {
+  // Measured: the validator reports `path: "address", message: "Missing city"` — the object
+  // that owns the `required` list, at whatever depth. The field it belongs to is that path
+  // plus the key, or the user sees "Missing city" attached to the address section as a whole.
+  const paths = leafFields(fieldsFor(nested)).map((f) => f.path)
+  const errors = collectErrors(
+    (onError) => validate({ name: 'a', address: {} }, nested, onError),
+    paths
+  )
+  expect(errorFor(errors, 'address.city')).toBeTruthy()
+})
+
+test('a nested type error keeps the path the validator gave it', () => {
+  const paths = leafFields(fieldsFor(nested)).map((f) => f.path)
+  const errors = collectErrors(
+    (onError) =>
+      validate(
+        { name: 'a', address: { city: 'X', zip: 'nope' } },
+        nested,
+        onError
+      ),
+    paths
+  )
+  expect(errorFor(errors, 'address.zip')).toContain('integer')
 })

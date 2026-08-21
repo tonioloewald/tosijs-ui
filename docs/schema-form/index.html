@@ -118,10 +118,65 @@ preview.append(schemaForm, report)
 </code></pre>
 <p><code>tosijs-schema</code> is an <strong>optional peer</strong>: install it to get validation. Without it the form
 still renders and edits — it simply reports no errors.</p>
+<h2>Nested objects</h2>
+<p>An object property becomes a <code>&lt;details&gt;</code> section, to any depth. Sections start <strong>open</strong> — a
+form whose fields are hidden looks empty, and a user who does not know a section exists cannot
+fill it in.</p>
+<p><code>required</code> is scoped to the object that declares it, which is what JSON Schema means: a
+required <code>city</code> inside an optional <code>address</code> says <em>if you give an address, it needs a city</em>.</p>
+<pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
+
+preview.append(
+  tosiSchemaForm({
+    schema: {
+      type: &#39;object&#39;,
+      properties: {
+        name: { type: &#39;string&#39; },
+        address: {
+          type: &#39;object&#39;,
+          title: &#39;Postal address&#39;,
+          properties: {
+            city: { type: &#39;string&#39; },
+            postcode: { type: &#39;string&#39; },
+            geo: {
+              type: &#39;object&#39;,
+              properties: {
+                lat: { type: &#39;number&#39; },
+                lon: { type: &#39;number&#39; },
+              },
+            },
+          },
+          required: [&#39;city&#39;],
+        },
+      },
+      required: [&#39;name&#39;],
+    },
+    value: { name: &#39;Ada&#39;, address: { city: &#39;London&#39;, geo: { lat: 51.5 } } },
+  })
+)
+</code></pre>
+<pre><code class="language-test">const nestedForm = await waitFor(&#39;tosi-schema-form&#39;)
+
+test(&#39;nested objects render as sections, with fully-qualified paths&#39;, () =&gt; {
+  expect(nestedForm.querySelectorAll(&#39;details.schema-group&#39;).length).toBe(2)
+  expect(nestedForm.querySelector(&#39;[data-path=&quot;address.geo.lat&quot;]&#39;)).toBeTruthy()
+  // Sections start open, or the form reads as empty.
+  expect([...nestedForm.querySelectorAll(&#39;details&#39;)].every((d) =&gt; d.open)).toBe(true)
+})
+
+test(&#39;editing a nested field writes the nested path and keeps its siblings&#39;, () =&gt; {
+  const lat = nestedForm.querySelector(&#39;[data-path=&quot;address.geo.lat&quot;]&#39;)
+  lat.value = &#39;48.9&#39;
+  lat.dispatchEvent(new Event(&#39;input&#39;, { bubbles: true }))
+  expect(nestedForm.value.address.geo.lat).toBe(48.9)
+  expect(nestedForm.value.address.city).toBe(&#39;London&#39;)
+  expect(nestedForm.value.name).toBe(&#39;Ada&#39;)
+})
+</code></pre>
 <h2>What it renders today</h2>
 <p>Scalars and enums: <code>string</code> (with <code>format</code> picking the input type), <code>number</code>, <code>integer</code>,
-<code>boolean</code>, <code>enum</code>, and <code>const</code>. <strong>Nested objects, arrays and unions are not supported yet</strong> —
-a property using one is shown as a disabled placeholder saying so, rather than being silently
+<code>boolean</code>, <code>enum</code>, <code>const</code>, and <strong>nested objects</strong>. <strong>Arrays and unions are not supported
+yet</strong> — a property using one is shown as a placeholder saying so, rather than being silently
 omitted. A field that vanishes is indistinguishable from a schema that never mentioned it,
 which is how an editor loses data without anyone noticing.</p>
 <h2>Properties, methods, events</h2>

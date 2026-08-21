@@ -1,6 +1,15 @@
 import type { JSONSchema } from 'tosijs-schema';
 /** What kind of control a field wants. The component maps this to elements. */
 export type FieldKind = 'string' | 'number' | 'integer' | 'boolean' | 'enum' | 'const' | 'unsupported';
+/** A nested object: its own label, and the fields inside it. */
+export interface FieldGroup {
+    kind: 'group';
+    path: string;
+    label: string;
+    required: boolean;
+    children: Node[];
+}
+export type Node = Field | FieldGroup;
 export interface Field {
     /** dotted path into the value object, e.g. `email` or `address.city` */
     path: string;
@@ -29,7 +38,9 @@ export declare function humanise(key: string): string;
  * that silently vanishes is indistinguishable from a schema that never mentioned it, and
  * that is precisely how an editor loses data.
  */
-export declare function fieldsFor(schema: JSONSchema, prefix?: string): Field[];
+export declare function fieldsFor(schema: JSONSchema, prefix?: string): Node[];
+/** Every leaf field in a tree, depth-first — what the component syncs values and errors for. */
+export declare function leafFields(nodes: Node[]): Field[];
 /** Read a dotted path out of a value object. */
 export declare function getByPath(value: any, path: string): unknown;
 /**

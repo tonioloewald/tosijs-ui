@@ -75,6 +75,22 @@ export function fieldsFor(schema, prefix = '') {
     const required = new Set(schema.required ?? []);
     return Object.entries(schema.properties).map(([key, propSchema]) => {
         const path = prefix ? `${prefix}.${key}` : key;
+        /*
+        A nested object becomes a GROUP, and its own `required` list governs its children —
+        `required` is scoped to the object that declares it, so a required `city` inside an
+        optional `address` means "if you give an address, it needs a city".
+        */
+        if (propSchema.properties &&
+            !propSchema.enum &&
+            propSchema.const === undefined) {
+            return {
+                kind: 'group',
+                path,
+                label: propSchema.title || humanise(key),
+                required: required.has(key),
+                children: fieldsFor(propSchema, path),
+            };
+        }
         const kind = kindOf(propSchema);
         const field = {
             path,
@@ -96,9 +112,8 @@ export function fieldsFor(schema, prefix = '') {
             const t = Array.isArray(propSchema.type)
                 ? propSchema.type.join('|')
                 : propSchema.type;
-            field.reason = propSchema.properties
-                ? 'nested objects are not supported yet'
-                : propSchema.items || propSchema.prefixItems
+            field.reason =
+                propSchema.items || propSchema.prefixItems
                     ? 'arrays are not supported yet'
                     : propSchema.anyOf || propSchema.oneOf
                         ? 'unions are not supported yet'
@@ -106,6 +121,10 @@ export function fieldsFor(schema, prefix = '') {
         }
         return field;
     });
+}
+/** Every leaf field in a tree, depth-first — what the component syncs values and errors for. */
+export function leafFields(nodes) {
+    return nodes.flatMap((node) => 'children' in node ? leafFields(node.children) : [node]);
 }
 /** Read a dotted path out of a value object. */
 export function getByPath(value, path) {
@@ -133,9 +152,11 @@ A missing required property is reported against the OBJECT, not the field.
 
 Measured against tosijs-schema 1.7.0:
 
-    missing required  →  path "root",   message "Missing email"
-    wrong type        →  path "age",    message "Expected integer"
-    bad format        →  path "email",  message "Format invalid"
+    missing required   →  path "root",         message "Missing email"
+    wrong type         →  path "age",          message "Expected integer"
+    bad format         →  path "email",        message "Format invalid"
+    nested wrong type  →  path "address.zip",  message "Expected integer"
+    nested missing     →  path "address",      message "Missing city"
 
 That is reasonable for a validator — the object is what failed its `required` contract — and
 wrong for a form, where "Missing email" belongs on the email input. Shown at the top instead,
@@ -158,8 +179,18 @@ export function collectErrors(validateFn, known = []) {
     const errors = [];
     validateFn((rawPath, message) => {
         const path = rawPath === 'root' ? '' : rawPath.replace(/^\./, '');
-        const missing = path === '' ? MISSING.exec(message) : null;
-        const target = missing && fields.has(missing[1]) ? missing[1] : path;
+        /*
+        A `Missing x` is reported against the OBJECT that required it, at whatever depth — `root`
+        for a top-level key, `address` for one inside `address`. So the field it belongs to is
+        that path plus the key.
+        */
+        const missing = MISSING.exec(message);
+        const candidate = missing
+            ? path
+                ? `${path}.${missing[1]}`
+                : missing[1]
+            : '';
+        const target = candidate && fields.has(candidate) ? candidate : path;
         errors.push({ path: target, message });
     });
     return errors;

@@ -87,11 +87,72 @@ preview.append(schemaForm, report)
 `tosijs-schema` is an **optional peer**: install it to get validation. Without it the form
 still renders and edits — it simply reports no errors.
 
+## Nested objects
+
+An object property becomes a `<details>` section, to any depth. Sections start **open** — a
+form whose fields are hidden looks empty, and a user who does not know a section exists cannot
+fill it in.
+
+`required` is scoped to the object that declares it, which is what JSON Schema means: a
+required `city` inside an optional `address` says *if you give an address, it needs a city*.
+
+```js
+import { tosiSchemaForm } from 'tosijs-ui'
+
+preview.append(
+  tosiSchemaForm({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        address: {
+          type: 'object',
+          title: 'Postal address',
+          properties: {
+            city: { type: 'string' },
+            postcode: { type: 'string' },
+            geo: {
+              type: 'object',
+              properties: {
+                lat: { type: 'number' },
+                lon: { type: 'number' },
+              },
+            },
+          },
+          required: ['city'],
+        },
+      },
+      required: ['name'],
+    },
+    value: { name: 'Ada', address: { city: 'London', geo: { lat: 51.5 } } },
+  })
+)
+```
+```test
+const nestedForm = await waitFor('tosi-schema-form')
+
+test('nested objects render as sections, with fully-qualified paths', () => {
+  expect(nestedForm.querySelectorAll('details.schema-group').length).toBe(2)
+  expect(nestedForm.querySelector('[data-path="address.geo.lat"]')).toBeTruthy()
+  // Sections start open, or the form reads as empty.
+  expect([...nestedForm.querySelectorAll('details')].every((d) => d.open)).toBe(true)
+})
+
+test('editing a nested field writes the nested path and keeps its siblings', () => {
+  const lat = nestedForm.querySelector('[data-path="address.geo.lat"]')
+  lat.value = '48.9'
+  lat.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(nestedForm.value.address.geo.lat).toBe(48.9)
+  expect(nestedForm.value.address.city).toBe('London')
+  expect(nestedForm.value.name).toBe('Ada')
+})
+```
+
 ## What it renders today
 
 Scalars and enums: `string` (with `format` picking the input type), `number`, `integer`,
-`boolean`, `enum`, and `const`. **Nested objects, arrays and unions are not supported yet** —
-a property using one is shown as a disabled placeholder saying so, rather than being silently
+`boolean`, `enum`, `const`, and **nested objects**. **Arrays and unions are not supported
+yet** — a property using one is shown as a placeholder saying so, rather than being silently
 omitted. A field that vanishes is indistinguishable from a schema that never mentioned it,
 which is how an editor loses data without anyone noticing.
 
@@ -165,8 +226,8 @@ test('editing keeps unknown keys, fires change, and does not rebuild under the u
 */
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements } from 'tosijs';
-import { fieldsFor, getByPath, setByPath, collectErrors, errorFor, } from './schema-form/fields.js';
-const { div, label, input, select, option, span, form: formElement } = elements;
+import { fieldsFor, leafFields, getByPath, setByPath, collectErrors, errorFor, } from './schema-form/fields.js';
+const { div, label, input, select, option, span, details, summary, form: formElement, } = elements;
 /*
 Validation is OPTIONAL.
 
@@ -199,6 +260,16 @@ export class TosiSchemaForm extends WebComponent {
             color: 'var(--tosi-error, #c00)',
         },
         ':host .schema-error[hidden]': { display: 'none' },
+        ':host .schema-group': {
+            border: '1px solid var(--tosi-border, #0002)',
+            borderRadius: 'var(--tosi-border-radius, 4px)',
+            padding: 'var(--tosi-spacing-50, 5px)',
+        },
+        ':host .schema-group[open]': {
+            display: 'grid',
+            gap: 'var(--tosi-spacing, 10px)',
+        },
+        ':host .schema-group > summary': { cursor: 'pointer', opacity: '0.8' },
         ':host .schema-unsupported': {
             fontSize: '0.85em',
             opacity: '0.7',
@@ -210,6 +281,7 @@ export class TosiSchemaForm extends WebComponent {
     };
     _schema = {};
     _value = {};
+    _nodes = [];
     _fields = [];
     /** The schema the current DOM was built for — see `render`. */
     _builtFor = null;
@@ -283,6 +355,19 @@ export class TosiSchemaForm extends WebComponent {
         this.syncErrors();
         this.dispatchEvent(new Event('change', { bubbles: true }));
     };
+    /*
+    A nested object renders as an OPEN `<details>`.
+  
+    Open by default: a form whose fields are hidden behind closed sections looks empty, and a
+    user who does not know a section exists cannot fill it in. Collapsing is something the user
+    decides once a part is done — it is not a sensible initial state for an editor.
+    */
+    buildNode(node) {
+        if ('children' in node) {
+            return details({ class: 'schema-group', open: true }, summary(node.label), ...node.children.map((child) => this.buildNode(child)));
+        }
+        return this.buildField(node);
+    }
     buildField(field) {
         if (field.kind === 'unsupported') {
             return div({ class: 'schema-field' }, label(field.label), span({ class: 'schema-unsupported' }, `${field.reason}`));
@@ -364,9 +449,11 @@ export class TosiSchemaForm extends WebComponent {
     render() {
         super.render();
         if (this._builtFor !== this._schema) {
-            this._fields = fieldsFor(this._schema);
+            this._nodes = fieldsFor(this._schema);
+            // Leaves are what carry values and errors; groups are structure only.
+            this._fields = leafFields(this._nodes);
             this.textContent = '';
-            this.append(formElement({ class: 'schema-form', onSubmit: (e) => e.preventDefault() }, ...this._fields.map((f) => this.buildField(f))));
+            this.append(formElement({ class: 'schema-form', onSubmit: (e) => e.preventDefault() }, ...this._nodes.map((n) => this.buildNode(n))));
             this._builtFor = this._schema;
         }
         for (const el of this.querySelectorAll('input, select')) {

@@ -30,6 +30,19 @@ export declare class TosiSchemaForm extends WebComponent {
         ':host .schema-error[hidden]': {
             display: string;
         };
+        ':host .schema-group': {
+            border: string;
+            borderRadius: string;
+            padding: string;
+        };
+        ':host .schema-group[open]': {
+            display: string;
+            gap: string;
+        };
+        ':host .schema-group > summary': {
+            cursor: string;
+            opacity: string;
+        };
         ':host .schema-unsupported': {
             fontSize: string;
             opacity: string;
@@ -41,6 +54,7 @@ export declare class TosiSchemaForm extends WebComponent {
     };
     private _schema;
     private _value;
+    private _nodes;
     private _fields;
     /** The schema the current DOM was built for — see `render`. */
     private _builtFor;
@@ -57,6 +71,7 @@ export declare class TosiSchemaForm extends WebComponent {
     private refreshErrors;
     private coerce;
     private onFieldInput;
+    private buildNode;
     private buildField;
     private syncValues;
     private syncErrors;
