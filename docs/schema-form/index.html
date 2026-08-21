@@ -173,10 +173,88 @@ test(&#39;editing a nested field writes the nested path and keeps its siblings&#
   expect(nestedForm.value.name).toBe(&#39;Ada&#39;)
 })
 </code></pre>
+<h2>Arrays</h2>
+<p>An array property renders its elements with add, remove and reorder controls. Items can be
+scalars or objects, and objects can contain further arrays.</p>
+<p>Editing an array <strong>splices the model</strong>. That is worth stating because the usual approach —
+rewriting the DOM path strings of every following element — is where these components
+famously corrupt data: reindexing a nested array with an unanchored pattern rewrites the
+<em>outer</em> index, so moving <code>items[2].variants[1]</code> puts its data on <code>items[0]</code>. There are no
+path strings here, so there is nothing to rewrite wrongly. The indices are wherever the
+elements now are.</p>
+<pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
+
+preview.append(
+  tosiSchemaForm({
+    schema: {
+      type: &#39;object&#39;,
+      properties: {
+        tags: { type: &#39;array&#39;, title: &#39;Tag&#39;, items: { type: &#39;string&#39; } },
+        items: {
+          type: &#39;array&#39;,
+          title: &#39;Line item&#39;,
+          items: {
+            type: &#39;object&#39;,
+            properties: {
+              sku: { type: &#39;string&#39; },
+              qty: { type: &#39;integer&#39; },
+            },
+            required: [&#39;sku&#39;],
+          },
+        },
+      },
+    },
+    value: {
+      tags: [&#39;urgent&#39;, &#39;paid&#39;],
+      items: [
+        { sku: &#39;WIDGET-1&#39;, qty: 2 },
+        { sku: &#39;GASKET-9&#39;, qty: 5 },
+      ],
+    },
+  })
+)
+</code></pre>
+<pre><code class="language-test">const arrayForm = await waitFor(&#39;tosi-schema-form&#39;)
+const skus = () =&gt; arrayForm.value.items.map((i) =&gt; i.sku)
+
+test(&#39;array elements render with their own paths&#39;, () =&gt; {
+  expect(arrayForm.querySelector(&#39;[data-path=&quot;tags.0&quot;]&#39;).value).toBe(&#39;urgent&#39;)
+  expect(arrayForm.querySelector(&#39;[data-path=&quot;items.1.sku&quot;]&#39;).value).toBe(&#39;GASKET-9&#39;)
+})
+
+test(&#39;add, reorder and remove all edit the model&#39;, () =&gt; {
+  // One test: these steps share the form, and the live-example docs are explicit that
+  // test() bodies run concurrently.
+  const container = arrayForm.querySelector(&#39;[data-array=&quot;items&quot;]&#39;)
+
+  container.querySelector(&#39;.schema-add&#39;).click()
+  expect(arrayForm.value.items.length).toBe(3)
+
+  // Reorder the first two.
+  const controls = container.querySelectorAll(&#39;.schema-item-controls&#39;)
+  controls[1].querySelector(&#39;[title=&quot;move up&quot;]&#39;).click()
+  expect(skus().slice(0, 2)).toEqual([&#39;GASKET-9&#39;, &#39;WIDGET-1&#39;])
+
+  // Remove the one we added.
+  const after = arrayForm.querySelectorAll(&#39;[data-array=&quot;items&quot;] .schema-item&#39;)
+  after[2].querySelector(&#39;[title=&quot;remove&quot;]&#39;).click()
+  expect(arrayForm.value.items.length).toBe(2)
+  expect(skus()).toEqual([&#39;GASKET-9&#39;, &#39;WIDGET-1&#39;])
+})
+
+test(&#39;an array edit does not disturb the rest of the form&#39;, () =&gt; {
+  // Only the edited array is rebuilt. A form that rebuilt everything would throw away focus,
+  // scroll and every open section elsewhere on the page.
+  const tag = arrayForm.querySelector(&#39;[data-path=&quot;tags.0&quot;]&#39;)
+  arrayForm.querySelector(&#39;[data-array=&quot;items&quot;] .schema-add&#39;).click()
+  expect(arrayForm.querySelector(&#39;[data-path=&quot;tags.0&quot;]&#39;)).toBe(tag)
+  expect(arrayForm.value.tags).toEqual([&#39;urgent&#39;, &#39;paid&#39;])
+})
+</code></pre>
 <h2>What it renders today</h2>
 <p>Scalars and enums: <code>string</code> (with <code>format</code> picking the input type), <code>number</code>, <code>integer</code>,
-<code>boolean</code>, <code>enum</code>, <code>const</code>, and <strong>nested objects</strong>. <strong>Arrays and unions are not supported
-yet</strong> — a property using one is shown as a placeholder saying so, rather than being silently
+<code>boolean</code>, <code>enum</code>, <code>const</code>, <strong>nested objects</strong> and <strong>arrays</strong>. <strong>Unions and tuple arrays
+(<code>prefixItems</code>) are not supported yet</strong> — a property using one is shown as a placeholder saying so, rather than being silently
 omitted. A field that vanishes is indistinguishable from a schema that never mentioned it,
 which is how an editor loses data without anyone noticing.</p>
 <h2>Properties, methods, events</h2>

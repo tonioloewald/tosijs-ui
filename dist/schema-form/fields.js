@@ -91,6 +91,22 @@ export function fieldsFor(schema, prefix = '') {
                 children: fieldsFor(propSchema, path),
             };
         }
+        /*
+        An array becomes an ARRAY node. Its per-item fields are not built here: how many there
+        are is a fact about the VALUE, not the schema, and this function only sees the schema.
+        The component expands each element against `itemSchema` when it renders.
+        */
+        if (propSchema.items &&
+            !propSchema.enum &&
+            propSchema.const === undefined) {
+            return {
+                kind: 'array',
+                path,
+                label: propSchema.title || humanise(key),
+                required: required.has(key),
+                itemSchema: propSchema.items,
+            };
+        }
         const kind = kindOf(propSchema);
         const field = {
             path,
@@ -112,19 +128,56 @@ export function fieldsFor(schema, prefix = '') {
             const t = Array.isArray(propSchema.type)
                 ? propSchema.type.join('|')
                 : propSchema.type;
-            field.reason =
-                propSchema.items || propSchema.prefixItems
-                    ? 'arrays are not supported yet'
-                    : propSchema.anyOf || propSchema.oneOf
-                        ? 'unions are not supported yet'
-                        : `no control for type ${t ?? 'unknown'}`;
+            field.reason = propSchema.prefixItems
+                ? 'tuple arrays (prefixItems) are not supported yet'
+                : propSchema.anyOf || propSchema.oneOf
+                    ? 'unions are not supported yet'
+                    : `no control for type ${t ?? 'unknown'}`;
         }
         return field;
     });
 }
 /** Every leaf field in a tree, depth-first — what the component syncs values and errors for. */
 export function leafFields(nodes) {
-    return nodes.flatMap((node) => 'children' in node ? leafFields(node.children) : [node]);
+    return nodes.flatMap((node) => {
+        if ('children' in node)
+            return leafFields(node.children);
+        // An array's leaves depend on how many elements the VALUE has, so the component
+        // contributes them per render rather than this function inventing them.
+        if (node.kind === 'array')
+            return [];
+        return [node];
+    });
+}
+/**
+ * The fields for one array element, at `path.<index>`.
+ *
+ * A scalar item is a single field at the index itself (`tags.0`); an object item expands to
+ * its properties (`items.0.sku`). Either way the paths are ordinary dotted paths, so value
+ * sync, error keying and `setByPath` need no array-specific handling.
+ */
+export function itemFields(itemSchema, path, index) {
+    const base = `${path}.${index}`;
+    if (itemSchema?.properties)
+        return fieldsFor(itemSchema, base);
+    const kind = kindOf(itemSchema);
+    const field = {
+        path: base,
+        label: `${index + 1}`,
+        kind,
+        schema: itemSchema,
+        required: false,
+    };
+    if (kind === 'string') {
+        field.inputType = INPUT_TYPE[itemSchema.format ?? ''] ?? 'text';
+    }
+    if (kind === 'enum') {
+        field.options = (itemSchema.enum ?? []).map((value) => ({
+            value,
+            label: String(value),
+        }));
+    }
+    return [field];
 }
 /** Read a dotted path out of a value object. */
 export function getByPath(value, path) {
@@ -141,11 +194,72 @@ export function getByPath(value, path) {
  */
 export function setByPath(value, path, next) {
     const [head, ...rest] = path.split('.');
-    const base = value && typeof value === 'object' ? value : {};
+    /*
+    A numeric segment means an ARRAY, not an object with a "0" key.
+  
+    Without this, `setByPath({}, 'items.0.sku', 'x')` produced `{items: {0: {sku: 'x'}}}` —
+    which looks right in a debugger, serialises to the wrong JSON, and fails validation against
+    any `type: 'array'` schema. Measured before the array work went in.
+    */
+    const isIndex = /^\d+$/.test(head);
+    if (isIndex) {
+        const base = Array.isArray(value) ? value.slice() : [];
+        base[Number(head)] = rest.length
+            ? setByPath(base[Number(head)], rest.join('.'), next)
+            : next;
+        return base;
+    }
+    const base = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
     return {
         ...base,
         [head]: rest.length ? setByPath(base[head], rest.join('.'), next) : next,
     };
+}
+/*
+Array edits operate on the MODEL, and that is the whole point.
+
+The component this design learned from rewrote DOM path strings to reindex after a move, with
+`currentPath.replace(/\[\d+\]/, ...)` — unanchored and non-global, so it rewrote the
+OUTERMOST index. `items[2].variants[1].sku` moving to index 0 became
+`items[0].variants[1].sku`: the parent index clobbered, the child index untouched, and it
+corrupted on every pass even when nothing had moved (its SF-1).
+
+Splicing an array cannot do that. There are no path strings; the indices are wherever the
+elements now are, because the array IS the order.
+*/
+export function insertAt(value, path, index, item) {
+    const list = getByPath(value, path) ?? [];
+    const next = list.slice();
+    next.splice(index, 0, item);
+    return setByPath(value, path, next);
+}
+export function removeAt(value, path, index) {
+    const list = getByPath(value, path) ?? [];
+    const next = list.slice();
+    next.splice(index, 1);
+    return setByPath(value, path, next);
+}
+/** Move an item. A no-op when either end is out of range, rather than creating holes. */
+export function moveItem(value, path, from, to) {
+    const list = getByPath(value, path) ?? [];
+    if (from < 0 || to < 0 || from >= list.length || to >= list.length)
+        return value;
+    const next = list.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    return setByPath(value, path, next);
+}
+/** A sensible empty item for an `items` schema — what "Add" inserts. */
+export function blankFor(schema) {
+    if (schema?.properties)
+        return {};
+    const types = Array.isArray(schema?.type) ? schema.type : [schema?.type];
+    const type = types.find((t) => t && t !== 'null');
+    if (type === 'boolean')
+        return false;
+    if (type === 'number' || type === 'integer')
+        return undefined;
+    return '';
 }
 /*
 A missing required property is reported against the OBJECT, not the field.

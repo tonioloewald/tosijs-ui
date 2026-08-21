@@ -43,6 +43,21 @@ export declare class TosiSchemaForm extends WebComponent {
             cursor: string;
             opacity: string;
         };
+        ':host .schema-item': {
+            display: string;
+            gap: string;
+            gridTemplateColumns: string;
+            alignItems: string;
+            borderTop: string;
+            paddingTop: string;
+        };
+        ':host .schema-item-controls': {
+            display: string;
+            gap: string;
+        };
+        ':host .schema-add': {
+            justifySelf: string;
+        };
         ':host .schema-unsupported': {
             fontSize: string;
             opacity: string;
@@ -72,6 +87,13 @@ export declare class TosiSchemaForm extends WebComponent {
     private coerce;
     private onFieldInput;
     private buildNode;
+    private buildArray;
+    private fillArray;
+    private afterArrayEdit;
+    private addArrayItem;
+    private removeArrayItem;
+    private moveArrayItem;
+    private allFields;
     private buildField;
     private syncValues;
     private syncErrors;

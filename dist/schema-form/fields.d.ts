@@ -9,7 +9,15 @@ export interface FieldGroup {
     required: boolean;
     children: Node[];
 }
-export type Node = Field | FieldGroup;
+/** An array property: its item schema, and the fields for each current element. */
+export interface FieldArray {
+    kind: 'array';
+    path: string;
+    label: string;
+    required: boolean;
+    itemSchema: JSONSchema;
+}
+export type Node = Field | FieldGroup | FieldArray;
 export interface Field {
     /** dotted path into the value object, e.g. `email` or `address.city` */
     path: string;
@@ -41,6 +49,14 @@ export declare function humanise(key: string): string;
 export declare function fieldsFor(schema: JSONSchema, prefix?: string): Node[];
 /** Every leaf field in a tree, depth-first — what the component syncs values and errors for. */
 export declare function leafFields(nodes: Node[]): Field[];
+/**
+ * The fields for one array element, at `path.<index>`.
+ *
+ * A scalar item is a single field at the index itself (`tags.0`); an object item expands to
+ * its properties (`items.0.sku`). Either way the paths are ordinary dotted paths, so value
+ * sync, error keying and `setByPath` need no array-specific handling.
+ */
+export declare function itemFields(itemSchema: JSONSchema, path: string, index: number): Node[];
 /** Read a dotted path out of a value object. */
 export declare function getByPath(value: any, path: string): unknown;
 /**
@@ -51,6 +67,12 @@ export declare function getByPath(value: any, path: string): unknown;
  * event's value gets a stable snapshot rather than an object that keeps moving underneath it.
  */
 export declare function setByPath(value: any, path: string, next: unknown): any;
+export declare function insertAt(value: any, path: string, index: number, item: unknown): any;
+export declare function removeAt(value: any, path: string, index: number): any;
+/** Move an item. A no-op when either end is out of range, rather than creating holes. */
+export declare function moveItem(value: any, path: string, from: number, to: number): any;
+/** A sensible empty item for an `items` schema — what "Add" inserts. */
+export declare function blankFor(schema: JSONSchema): unknown;
 export interface FieldError {
     path: string;
     message: string;

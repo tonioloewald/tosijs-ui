@@ -3,6 +3,11 @@ import { validate } from 'tosijs-schema'
 import {
   fieldsFor,
   leafFields,
+  itemFields,
+  insertAt,
+  removeAt,
+  moveItem,
+  blankFor,
   getByPath,
   setByPath,
   collectErrors,
@@ -98,15 +103,15 @@ test('REGRESSION: what slice 1 cannot render is reported, never skipped', () => 
     fieldsFor({
       type: 'object',
       properties: {
-        tags: { type: 'array', items: { type: 'string' } },
         either: { anyOf: [{ type: 'string' }, { type: 'number' }] },
+        pair: { type: 'array', prefixItems: [{ type: 'string' }] },
       },
     } as any)
   )
-  expect(fields.map((f) => f.path)).toEqual(['tags', 'either'])
+  expect(fields.map((f) => f.path)).toEqual(['either', 'pair'])
   expect(fields.every((f) => f.kind === 'unsupported')).toBe(true)
-  expect(fields[0].reason).toContain('arrays')
-  expect(fields[1].reason).toContain('unions')
+  expect(fields[0].reason).toContain('unions')
+  expect(fields[1].reason).toContain('tuple')
 })
 
 test('a schema with no properties yields no fields rather than throwing', () => {
@@ -295,4 +300,139 @@ test('a nested type error keeps the path the validator gave it', () => {
     paths
   )
   expect(errorFor(errors, 'address.zip')).toContain('integer')
+})
+
+// ── arrays (slice 3) ─────────────────────────────────────────────────────────
+
+const order: any = {
+  type: 'object',
+  properties: {
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          sku: { type: 'string' },
+          variants: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                size: { type: 'string' },
+                qty: { type: 'integer' },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+}
+
+test('REGRESSION: setByPath creates an ARRAY for a numeric segment', () => {
+  // It built `{items: {0: {...}}}` — looks right in a debugger, serialises to the wrong JSON,
+  // and fails validation against any `type: "array"` schema. Found by probing before writing
+  // the array code.
+  const written = setByPath({}, 'items.0.sku', 'x')
+  expect(Array.isArray(written.items)).toBe(true)
+  expect(written).toEqual({ items: [{ sku: 'x' }] })
+})
+
+test('array items expand against the VALUE, not the schema', () => {
+  // The schema says nothing about how many elements there are, so `leafFields` must not
+  // invent any — the component expands them per render.
+  expect(leafFields(fieldsFor(order))).toEqual([])
+  expect(
+    itemFields(order.properties.items.items, 'items', 1).map(
+      (n: any) => n.path ?? n
+    )
+  ).toBeTruthy()
+})
+
+test('a scalar item is one field at the index; an object item expands', () => {
+  const scalars = itemFields({ type: 'string' } as any, 'tags', 2) as any[]
+  expect(scalars[0].path).toBe('tags.2')
+  const objects = itemFields(order.properties.items.items, 'items', 0) as any[]
+  expect(objects.map((n) => n.path)).toEqual([
+    'items.0.sku',
+    'items.0.variants',
+  ])
+})
+
+test('REGRESSION: reordering a NESTED array cannot corrupt its parent index', () => {
+  /*
+  This is snowfox SF-1, reproduced as data rather than as paths. Their reindexer ran
+  `currentPath.replace(/\[\d+\]/, '[' + index + ']')` — unanchored and non-global — so moving
+  `items[2].variants[1]` to index 0 produced `items[0].variants[1]`: the PARENT index
+  clobbered with the child's position, the child index never updated, corrupting on every
+  pass even when nothing had moved.
+
+  Splicing the model has nowhere to put that bug. There are no path strings; the indices are
+  wherever the elements now are.
+  */
+  const value = {
+    items: [
+      { sku: 'a', variants: [] },
+      { sku: 'b', variants: [] },
+      { sku: 'c', variants: [{ size: 'S' }, { size: 'M' }] },
+    ],
+  }
+  const moved = moveItem(value, 'items.2.variants', 1, 0)
+  // The child moved…
+  expect(moved.items[2].variants.map((v: any) => v.size)).toEqual(['M', 'S'])
+  // …and every parent is exactly where it was.
+  expect(moved.items.map((i: any) => i.sku)).toEqual(['a', 'b', 'c'])
+  expect(moved.items[0].variants).toEqual([])
+})
+
+test('insert, remove and move do not mutate the value they were given', () => {
+  const value = { items: [{ sku: 'a' }, { sku: 'b' }] }
+  const snapshot = JSON.stringify(value)
+  insertAt(value, 'items', 1, { sku: 'x' })
+  removeAt(value, 'items', 0)
+  moveItem(value, 'items', 0, 1)
+  expect(JSON.stringify(value)).toBe(snapshot)
+})
+
+test('insert and remove land where they say', () => {
+  const value = { items: [{ sku: 'a' }, { sku: 'b' }] }
+  expect(
+    insertAt(value, 'items', 1, { sku: 'x' }).items.map((i: any) => i.sku)
+  ).toEqual(['a', 'x', 'b'])
+  expect(removeAt(value, 'items', 0).items.map((i: any) => i.sku)).toEqual([
+    'b',
+  ])
+  expect(insertAt({}, 'tags', 0, 'first').tags).toEqual(['first'])
+})
+
+test('moving out of range is a no-op rather than a hole', () => {
+  const value = { items: [{ sku: 'a' }] }
+  expect(moveItem(value, 'items', 0, 5)).toBe(value)
+  expect(moveItem(value, 'items', -1, 0)).toBe(value)
+})
+
+test('blankFor gives an item the right empty shape', () => {
+  expect(blankFor({ type: 'object', properties: {} } as any)).toEqual({})
+  expect(blankFor({ type: 'string' } as any)).toBe('')
+  expect(blankFor({ type: 'boolean' } as any)).toBe(false)
+  // A number starts EMPTY, not 0 — "not filled in" and "zero" are different states.
+  expect(blankFor({ type: 'integer' } as any)).toBeUndefined()
+})
+
+test('array errors key to the element field the validator named', () => {
+  const paths = ['items.1.sku', 'items.1.qty']
+  const errors = collectErrors(
+    (onError) => onError('items.1.qty', 'Expected integer'),
+    paths
+  )
+  expect(errorFor(errors, 'items.1.qty')).toBe('Expected integer')
+})
+
+test('a missing required inside an array element lands on that element field', () => {
+  // Measured: the validator reports `path: "items.0", message: "Missing sku"`.
+  const errors = collectErrors(
+    (onError) => onError('items.0', 'Missing sku'),
+    ['items.0.sku']
+  )
+  expect(errorFor(errors, 'items.0.sku')).toBe('Missing sku')
 })

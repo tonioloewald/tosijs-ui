@@ -148,11 +148,95 @@ test('editing a nested field writes the nested path and keeps its siblings', () 
 })
 ```
 
+## Arrays
+
+An array property renders its elements with add, remove and reorder controls. Items can be
+scalars or objects, and objects can contain further arrays.
+
+Editing an array **splices the model**. That is worth stating because the usual approach —
+rewriting the DOM path strings of every following element — is where these components
+famously corrupt data: reindexing a nested array with an unanchored pattern rewrites the
+*outer* index, so moving `items[2].variants[1]` puts its data on `items[0]`. There are no
+path strings here, so there is nothing to rewrite wrongly. The indices are wherever the
+elements now are.
+
+```js
+import { tosiSchemaForm } from 'tosijs-ui'
+
+preview.append(
+  tosiSchemaForm({
+    schema: {
+      type: 'object',
+      properties: {
+        tags: { type: 'array', title: 'Tag', items: { type: 'string' } },
+        items: {
+          type: 'array',
+          title: 'Line item',
+          items: {
+            type: 'object',
+            properties: {
+              sku: { type: 'string' },
+              qty: { type: 'integer' },
+            },
+            required: ['sku'],
+          },
+        },
+      },
+    },
+    value: {
+      tags: ['urgent', 'paid'],
+      items: [
+        { sku: 'WIDGET-1', qty: 2 },
+        { sku: 'GASKET-9', qty: 5 },
+      ],
+    },
+  })
+)
+```
+```test
+const arrayForm = await waitFor('tosi-schema-form')
+const skus = () => arrayForm.value.items.map((i) => i.sku)
+
+test('array elements render with their own paths', () => {
+  expect(arrayForm.querySelector('[data-path="tags.0"]').value).toBe('urgent')
+  expect(arrayForm.querySelector('[data-path="items.1.sku"]').value).toBe('GASKET-9')
+})
+
+test('add, reorder and remove all edit the model', () => {
+  // One test: these steps share the form, and the live-example docs are explicit that
+  // test() bodies run concurrently.
+  const container = arrayForm.querySelector('[data-array="items"]')
+
+  container.querySelector('.schema-add').click()
+  expect(arrayForm.value.items.length).toBe(3)
+
+  // Reorder the first two.
+  const controls = container.querySelectorAll('.schema-item-controls')
+  controls[1].querySelector('[title="move up"]').click()
+  expect(skus().slice(0, 2)).toEqual(['GASKET-9', 'WIDGET-1'])
+
+  // Remove the one we added.
+  const after = arrayForm.querySelectorAll('[data-array="items"] .schema-item')
+  after[2].querySelector('[title="remove"]').click()
+  expect(arrayForm.value.items.length).toBe(2)
+  expect(skus()).toEqual(['GASKET-9', 'WIDGET-1'])
+})
+
+test('an array edit does not disturb the rest of the form', () => {
+  // Only the edited array is rebuilt. A form that rebuilt everything would throw away focus,
+  // scroll and every open section elsewhere on the page.
+  const tag = arrayForm.querySelector('[data-path="tags.0"]')
+  arrayForm.querySelector('[data-array="items"] .schema-add').click()
+  expect(arrayForm.querySelector('[data-path="tags.0"]')).toBe(tag)
+  expect(arrayForm.value.tags).toEqual(['urgent', 'paid'])
+})
+```
+
 ## What it renders today
 
 Scalars and enums: `string` (with `format` picking the input type), `number`, `integer`,
-`boolean`, `enum`, `const`, and **nested objects**. **Arrays and unions are not supported
-yet** — a property using one is shown as a placeholder saying so, rather than being silently
+`boolean`, `enum`, `const`, **nested objects** and **arrays**. **Unions and tuple arrays
+(`prefixItems`) are not supported yet** — a property using one is shown as a placeholder saying so, rather than being silently
 omitted. A field that vanishes is indistinguishable from a schema that never mentioned it,
 which is how an editor loses data without anyone noticing.
 
@@ -226,8 +310,8 @@ test('editing keeps unknown keys, fires change, and does not rebuild under the u
 */
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements } from 'tosijs';
-import { fieldsFor, leafFields, getByPath, setByPath, collectErrors, errorFor, } from './schema-form/fields.js';
-const { div, label, input, select, option, span, details, summary, form: formElement, } = elements;
+import { fieldsFor, itemFields, insertAt, removeAt, moveItem, blankFor, getByPath, setByPath, collectErrors, errorFor, } from './schema-form/fields.js';
+const { div, label, input, select, option, span, details, summary, button, form: formElement, } = elements;
 /*
 Validation is OPTIONAL.
 
@@ -270,6 +354,16 @@ export class TosiSchemaForm extends WebComponent {
             gap: 'var(--tosi-spacing, 10px)',
         },
         ':host .schema-group > summary': { cursor: 'pointer', opacity: '0.8' },
+        ':host .schema-item': {
+            display: 'grid',
+            gap: 'var(--tosi-spacing-50, 5px)',
+            gridTemplateColumns: '1fr auto',
+            alignItems: 'end',
+            borderTop: '1px solid var(--tosi-border, #0001)',
+            paddingTop: 'var(--tosi-spacing-50, 5px)',
+        },
+        ':host .schema-item-controls': { display: 'flex', gap: '2px' },
+        ':host .schema-add': { justifySelf: 'start' },
         ':host .schema-unsupported': {
             fontSize: '0.85em',
             opacity: '0.7',
@@ -363,10 +457,104 @@ export class TosiSchemaForm extends WebComponent {
     decides once a part is done — it is not a sensible initial state for an editor.
     */
     buildNode(node) {
+        if (node.kind === 'array')
+            return this.buildArray(node);
         if ('children' in node) {
             return details({ class: 'schema-group', open: true }, summary(node.label), ...node.children.map((child) => this.buildNode(child)));
         }
         return this.buildField(node);
+    }
+    /*
+    An array renders as its current elements plus an Add button.
+  
+    Add / remove / move edit the MODEL and then rebuild only THIS array's container — not the
+    whole form. Rebuilding everything would throw away focus, scroll and every open `<details>`
+    elsewhere on the page, which is the failure this component exists to avoid; the array's own
+    items genuinely did change, so rebuilding those is honest.
+    */
+    buildArray(node) {
+        const container = details({ class: 'schema-group schema-array', open: true }, summary(node.label));
+        container.dataset.array = node.path;
+        this.fillArray(container, node);
+        return container;
+    }
+    fillArray(container, node) {
+        const list = getByPath(this._value, node.path) ?? [];
+        // Keep the summary; replace the items.
+        while (container.children.length > 1)
+            container.lastElementChild.remove();
+        list.forEach((_item, index) => {
+            const row = div({ class: 'schema-item' });
+            const fields = itemFields(node.itemSchema, node.path, index);
+            row.append(...fields.map((f) => this.buildNode(f)));
+            row.append(div({ class: 'schema-item-controls' }, button({
+                type: 'button',
+                title: 'move up',
+                disabled: index === 0,
+                onClick: () => this.moveArrayItem(node, index, index - 1),
+            }, '↑'), button({
+                type: 'button',
+                title: 'move down',
+                disabled: index === list.length - 1,
+                onClick: () => this.moveArrayItem(node, index, index + 1),
+            }, '↓'), button({
+                type: 'button',
+                title: 'remove',
+                onClick: () => this.removeArrayItem(node, index),
+            }, '✕')));
+            container.append(row);
+        });
+        container.append(button({
+            type: 'button',
+            class: 'schema-add',
+            onClick: () => this.addArrayItem(node),
+        }, `Add ${node.label}`));
+        for (const el of container.querySelectorAll('input, select, button')) {
+            ;
+            el.disabled =
+                this.readOnly || el.disabled;
+        }
+    }
+    afterArrayEdit(node) {
+        this._fields = this.allFields();
+        const container = this.querySelector(`[data-array="${CSS.escape(node.path)}"]`);
+        if (container)
+            this.fillArray(container, node);
+        this.syncValues();
+        this.refreshErrors();
+        this.syncErrors();
+        this.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    addArrayItem(node) {
+        const list = getByPath(this._value, node.path) ?? [];
+        this._value = insertAt(this._value, node.path, list.length, blankFor(node.itemSchema));
+        this.afterArrayEdit(node);
+    }
+    removeArrayItem(node, index) {
+        this._value = removeAt(this._value, node.path, index);
+        this.afterArrayEdit(node);
+    }
+    moveArrayItem(node, from, to) {
+        this._value = moveItem(this._value, node.path, from, to);
+        this.afterArrayEdit(node);
+    }
+    /*
+    Every leaf currently on screen, arrays expanded against the CURRENT value.
+  
+    Recomputed after any array edit because the field set genuinely changed — which is exactly
+    why `leafFields` refuses to guess at array leaves from the schema alone.
+    */
+    allFields() {
+        const expand = (nodes) => nodes.flatMap((node) => {
+            if (node.kind === 'array') {
+                const list = getByPath(this._value, node.path) ?? [];
+                return list.flatMap((_x, i) => expand(itemFields(node.itemSchema, node.path, i)));
+            }
+            if ('children' in node)
+                return expand(node.children);
+            return [node];
+        });
+        return expand(this._nodes);
     }
     buildField(field) {
         if (field.kind === 'unsupported') {
@@ -451,7 +639,7 @@ export class TosiSchemaForm extends WebComponent {
         if (this._builtFor !== this._schema) {
             this._nodes = fieldsFor(this._schema);
             // Leaves are what carry values and errors; groups are structure only.
-            this._fields = leafFields(this._nodes);
+            this._fields = this.allFields();
             this.textContent = '';
             this.append(formElement({ class: 'schema-form', onSubmit: (e) => e.preventDefault() }, ...this._nodes.map((n) => this.buildNode(n))));
             this._builtFor = this._schema;
