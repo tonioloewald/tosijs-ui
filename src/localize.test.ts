@@ -271,3 +271,42 @@ test('the ellipsis path keeps literal # too', () => {
   // `…` recurses before annotation handling, so it has to survive the same treatment.
   expect(localize('C# Tutorial…')).toBe('C# Tutorial…')
 })
+
+const patternTSV = [
+  'en-US\tfr',
+  'English\tFrench',
+  'English\tFrançais',
+  '🇺🇸\t🇫🇷',
+  // French puts the noun before the adjective — which is the whole reason the KEY has to be
+  // the sentence rather than two words a caller sticks together.
+  'Add {item}\tAjouter {item}',
+  'Sort ascending by {column}\tTrier par {column} par ordre croissant',
+].join('\n')
+
+test('placeholders are filled AFTER translation', () => {
+  initLocalization(patternTSV)
+  i18n.locale.value = 'fr'
+  expect(localize('Add {item}', { item: 'ligne' })).toBe('Ajouter ligne')
+  // The translation moved the placeholder to the middle. Concatenation could not have.
+  expect(localize('Sort ascending by {column}', { column: 'prix' })).toBe(
+    'Trier par prix par ordre croissant'
+  )
+})
+
+test('an untranslated pattern still interpolates', () => {
+  initLocalization(patternTSV)
+  i18n.locale.value = 'en-US'
+  expect(localize('Remove {item}', { item: 'tag' })).toBe('Remove tag')
+})
+
+test('an unknown placeholder is left visible, not blanked', () => {
+  // A typo in a translation should look like a typo, not like missing data.
+  expect(localize('Add {itme}', { item: 'x' })).toBe('Add {itme}')
+})
+
+test('no values argument means no interpolation at all', () => {
+  // Braces in an ordinary string are not placeholders.
+  expect(localize('use {} for an empty object')).toBe(
+    'use {} for an empty object'
+  )
+})

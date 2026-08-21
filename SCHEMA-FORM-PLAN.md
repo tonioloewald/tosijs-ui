@@ -139,18 +139,18 @@ build must **name what it handles and fail loudly on the rest**, rather than imp
 
 ## 7. Defect disposition
 
-| id                                          | fate                                                                |
-| ------------------------------------------- | ------------------------------------------------------------------- |
-| SF-1 nested-array reindex corruption        | **gone by construction** (no DOM paths to rewrite)                  |
-| SF-2 `getData()` drops undescribed fields   | **gone by construction** (model retains them)                       |
-| focus / scroll / `<details>` loss           | **gone by construction** (targeted updates)                         |
-| SF-3 `schema-change` has no detail          | fix: one `change` event carrying value, per house contract          |
+| id                                          | fate                                                                         |
+| ------------------------------------------- | ---------------------------------------------------------------------------- |
+| SF-1 nested-array reindex corruption        | **gone by construction** (no DOM paths to rewrite)                           |
+| SF-2 `getData()` drops undescribed fields   | **gone by construction** (model retains them)                                |
+| focus / scroll / `<details>` loss           | **gone by construction** (targeted updates)                                  |
+| SF-3 `schema-change` has no detail          | fix: one `change` event carrying value, per house contract                   |
 | SF-4 plugin `styles` need pre-registration  | **gone by construction** — styles inject on registration, live forms rebuild |
-| SF-5 `readOnly` disables add/remove buttons | **done** — hidden, not disabled                                     |
-| SF-6 `Item ${n}` untranslatable             | fix: localize the pattern, interpolate after                        |
-| SF-9 `discriminator` unimplemented          | **done** — derived from branch `const`s, or declared OpenAPI-style  |
-| SF-10 `detectVariant` needs every key       | **done** — marks first, then scored on required keys present        |
-| SF-7 / SF-8 dead files                      | not ours — snowfox cleanup                                          |
+| SF-5 `readOnly` disables add/remove buttons | **done** — hidden, not disabled                                              |
+| SF-6 `Item ${n}` untranslatable             | fix: localize the pattern, interpolate after                                 |
+| SF-9 `discriminator` unimplemented          | **done** — derived from branch `const`s, or declared OpenAPI-style           |
+| SF-10 `detectVariant` needs every key       | **done** — marks first, then scored on required keys present                 |
+| SF-7 / SF-8 dead files                      | not ours — snowfox cleanup                                                   |
 
 **Verification status:** SF-1 and SF-2 confirmed here. SF-3…SF-10 are read from source
 and not browser-verified — reproduce before fixing.

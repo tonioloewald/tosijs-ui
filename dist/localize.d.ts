@@ -50,7 +50,7 @@ export declare const updateLocalized: () => void;
  */
 export declare function applyLocalized(el: Element): void;
 export declare function initLocalization(localizedStrings: string): void;
-export declare function localize(ref: string): string;
+export declare function localize(ref: string, values?: Record<string, unknown>): string;
 export declare class TosiLocalePicker extends Component {
     static preferredTagName: string;
     static initAttributes: {

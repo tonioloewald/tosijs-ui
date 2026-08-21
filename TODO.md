@@ -656,9 +656,23 @@ live site** (independently useful). See roadmap "From book to live."
 ## Localization
 
 - Adding automatic localization where appropriate:
+
   - `<tosi-password-strength>`
   - `<tosi-tag-list>`
   - `<tosi-filter>`
+
+- **`<tosi-table>` builds captions by concatenating localized words** —
+  `${localize('Sort')} ${localize('Ascending')}`, and the same for
+  `Hide`/`Show` + `Column`. This is the defect `localize(pattern, values)` was added to fix:
+  it hard-codes English word order and gives the translator two fragments instead of a
+  sentence, so no translation can put the words in the right order. Should become
+  `localize('Sort ascending by {column}', { column })` and friends.
+
+  **Not done yet because it moves the translation keys.** An adopter's TSV has rows for
+  `Sort` and `Ascending`; after the change those rows match nothing and their menu silently
+  reverts to English. So it needs either a release note telling adopters which keys to add,
+  or a fallback that tries the old fragments when the new key is missing. Decide which
+  before doing it — and do it in a minor, not a patch.
 
 ## Components
 

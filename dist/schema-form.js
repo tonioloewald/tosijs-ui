@@ -212,12 +212,12 @@ test('add, reorder and remove all edit the model', () => {
 
   // Reorder the first two.
   const controls = container.querySelectorAll('.schema-item-controls')
-  controls[1].querySelector('[title="move up"]').click()
+  controls[1].querySelector('.schema-move-up').click()
   expect(skus().slice(0, 2)).toEqual(['GASKET-9', 'WIDGET-1'])
 
   // Remove the one we added.
   const after = arrayForm.querySelectorAll('[data-array="items"] .schema-item')
-  after[2].querySelector('[title="remove"]').click()
+  after[2].querySelector('.schema-remove').click()
   expect(arrayForm.value.items.length).toBe(2)
   expect(skus()).toEqual(['GASKET-9', 'WIDGET-1'])
 })
@@ -498,8 +498,9 @@ registerFieldPlugin('percent', {
 const pluginForm = await waitFor('tosi-schema-form')
 
 test('a plugin registered after the form renders takes effect, styles and all', async () => {
-  await new Promise((r) => requestAnimationFrame(r))
-  const control = pluginForm.querySelector('[data-plugin="confidence"]')
+  // The rebuild is queued for a frame, and under load one rAF is not reliably that frame —
+  // poll instead of racing it.
+  const control = await waitFor('[data-plugin="confidence"]')
   expect(control.querySelector('input').type).toBe('range')
   expect(control.querySelector('.percent-readout').textContent).toBe('85%')
 
@@ -528,6 +529,20 @@ test('a plugin registered after the form renders takes effect, styles and all', 
 `readOnly` disables the inputs and **hides** the add, remove and reorder controls rather than
 grey them out. A dead row of buttons is a form advertising affordances it will not honour;
 there is nothing to explain if they are not there.
+
+## Localization
+
+The form's own chrome — the *Add …* button and the reorder tooltips — goes through
+[`localize`](/localize/), and the form **rebuilds when the locale changes**, so switching
+language does not leave one form behind in the old one.
+
+The add button's key is the whole sentence, `Add {item}`, with the item name interpolated
+afterwards. Building it as `'Add ' + label` would leave a translator with a dangling fragment
+and no way to move the placeholder to where their language puts it.
+
+Labels that come from your **schema** are not localized — a `title` is your string, and a
+humanised property name is a data name rather than a UI string. Localize them in the schema if
+you need to.
 
 ## What it renders today
 
@@ -606,8 +621,9 @@ test('editing keeps unknown keys, fires change, and does not rebuild under the u
 ```
 */
 /*{ "parent": "Components" }*/
-import { Component as WebComponent, elements } from 'tosijs';
+import { Component as WebComponent, elements, unobserve, } from 'tosijs';
 import { fieldsFor, itemFields, branchFields, matchBranch, selectBranch, insertAt, removeAt, moveItem, blankFor, getByPath, setByPath, collectErrors, errorFor, } from './schema-form/fields.js';
+import { localize, i18n } from './localize.js';
 import { unenforcedNote } from './schema-form/unenforced.js';
 import { fieldPlugin, onFieldPluginsChanged, schemaUsesFormat, } from './schema-form/plugins.js';
 export { registerFieldPlugin, } from './schema-form/plugins.js';
@@ -813,17 +829,26 @@ export class TosiSchemaForm extends WebComponent {
             row.append(...fields.map((f) => this.buildNode(f)));
             row.append(div({ class: 'schema-item-controls' }, button({
                 type: 'button',
-                title: 'move up',
+                class: 'schema-move-up',
+                // The tooltip is localized, so it is NOT a selector — the class is.
+                title: localize('move up'),
+                ariaLabel: localize('move up'),
                 disabled: index === 0,
                 onClick: () => this.moveArrayItem(node, index, index - 1),
             }, '↑'), button({
                 type: 'button',
-                title: 'move down',
+                class: 'schema-move-down',
+                // The tooltip is localized, so it is NOT a selector — the class is.
+                title: localize('move down'),
+                ariaLabel: localize('move down'),
                 disabled: index === list.length - 1,
                 onClick: () => this.moveArrayItem(node, index, index + 1),
             }, '↓'), button({
                 type: 'button',
-                title: 'remove',
+                class: 'schema-remove',
+                // The tooltip is localized, so it is NOT a selector — the class is.
+                title: localize('remove'),
+                ariaLabel: localize('remove'),
                 onClick: () => this.removeArrayItem(node, index),
             }, '✕')));
             container.append(row);
@@ -832,7 +857,7 @@ export class TosiSchemaForm extends WebComponent {
             type: 'button',
             class: 'schema-add',
             onClick: () => this.addArrayItem(node),
-        }, `Add ${node.label}`));
+        }, localize('Add {item}', { item: node.label })));
     }
     /*
     A variant union renders as a picker plus the fields of the branch it currently matches.
@@ -1096,14 +1121,22 @@ export class TosiSchemaForm extends WebComponent {
         }
     }
     content = null;
+    _localeListener = null;
     connectedCallback() {
         super.connectedCallback();
         live.add(this);
+        // The chrome ("Add …", the reorder tooltips) is localized when it is built, so a locale
+        // change has to rebuild it — otherwise switching language leaves this form in the old
+        // one until something else happens to touch it.
+        this._localeListener = i18n.locale.observe(() => this.rebuild());
         // Validation is optional and lazily resolved; re-render once it is known either way.
         void loadValidator().then(() => this.queueRender());
     }
     disconnectedCallback() {
         live.delete(this);
+        if (this._localeListener)
+            unobserve(this._localeListener);
+        this._localeListener = null;
         super.disconnectedCallback();
     }
     /** Throw away the DOM and build it again — a schema change, or a new plugin. */

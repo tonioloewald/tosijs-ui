@@ -129,6 +129,7 @@ export declare class TosiSchemaForm extends WebComponent {
     private syncPlugins;
     private syncErrors;
     content: null;
+    private _localeListener;
     connectedCallback(): void;
     disconnectedCallback(): void;
     /** Throw away the DOM and build it again — a schema change, or a new plugin. */

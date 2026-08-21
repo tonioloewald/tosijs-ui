@@ -232,12 +232,12 @@ test(&#39;add, reorder and remove all edit the model&#39;, () =&gt; {
 
   // Reorder the first two.
   const controls = container.querySelectorAll(&#39;.schema-item-controls&#39;)
-  controls[1].querySelector(&#39;[title=&quot;move up&quot;]&#39;).click()
+  controls[1].querySelector(&#39;.schema-move-up&#39;).click()
   expect(skus().slice(0, 2)).toEqual([&#39;GASKET-9&#39;, &#39;WIDGET-1&#39;])
 
   // Remove the one we added.
   const after = arrayForm.querySelectorAll(&#39;[data-array=&quot;items&quot;] .schema-item&#39;)
-  after[2].querySelector(&#39;[title=&quot;remove&quot;]&#39;).click()
+  after[2].querySelector(&#39;.schema-remove&#39;).click()
   expect(arrayForm.value.items.length).toBe(2)
   expect(skus()).toEqual([&#39;GASKET-9&#39;, &#39;WIDGET-1&#39;])
 })
@@ -514,8 +514,9 @@ registerFieldPlugin(&#39;percent&#39;, {
 <pre><code class="language-test">const pluginForm = await waitFor(&#39;tosi-schema-form&#39;)
 
 test(&#39;a plugin registered after the form renders takes effect, styles and all&#39;, async () =&gt; {
-  await new Promise((r) =&gt; requestAnimationFrame(r))
-  const control = pluginForm.querySelector(&#39;[data-plugin=&quot;confidence&quot;]&#39;)
+  // The rebuild is queued for a frame, and under load one rAF is not reliably that frame —
+  // poll instead of racing it.
+  const control = await waitFor(&#39;[data-plugin=&quot;confidence&quot;]&#39;)
   expect(control.querySelector(&#39;input&#39;).type).toBe(&#39;range&#39;)
   expect(control.querySelector(&#39;.percent-readout&#39;).textContent).toBe(&#39;85%&#39;)
 
@@ -542,6 +543,16 @@ test(&#39;a plugin registered after the form renders takes effect, styles and al
 <p><code>readOnly</code> disables the inputs and <strong>hides</strong> the add, remove and reorder controls rather than
 grey them out. A dead row of buttons is a form advertising affordances it will not honour;
 there is nothing to explain if they are not there.</p>
+<h2>Localization</h2>
+<p>The form&#39;s own chrome — the <em>Add …</em> button and the reorder tooltips — goes through
+<a href="/localize/"><code>localize</code></a>, and the form <strong>rebuilds when the locale changes</strong>, so switching
+language does not leave one form behind in the old one.</p>
+<p>The add button&#39;s key is the whole sentence, <code>Add {item}</code>, with the item name interpolated
+afterwards. Building it as <code>&#39;Add &#39; + label</code> would leave a translator with a dangling fragment
+and no way to move the placeholder to where their language puts it.</p>
+<p>Labels that come from your <strong>schema</strong> are not localized — a <code>title</code> is your string, and a
+humanised property name is a data name rather than a UI string. Localize them in the schema if
+you need to.</p>
 <h2>What it renders today</h2>
 <p>Scalars and enums: <code>string</code> (with <code>format</code> picking the input type), <code>number</code>, <code>integer</code>,
 <code>boolean</code>, <code>enum</code>, <code>const</code>, <strong>nested objects</strong>, <strong>arrays</strong> and <strong>unions</strong>. <strong>Tuple arrays

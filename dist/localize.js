@@ -45,6 +45,26 @@ will output `annuler`.
 If you end a string with an ellipsis, `localize` will ignore the ellipsis,
 localize the string, and then append the ellipsis.
 
+### placeholders
+
+`localize(pattern, values)` fills `{name}` placeholders **after** translating, so the
+translation key is the whole sentence:
+
+```js
+import { localize } from 'tosijs-ui'
+
+preview.textContent = localize('Add {item}', { item: 'line item' })
+```
+
+Do this rather than building the sentence by concatenation. `localize('Add ') + item` makes
+the *pattern* untranslatable — a translator can only ever see a dangling fragment, and cannot
+move the placeholder to where their language puts it. Neither can they fix
+`localize('Sort') + ' ' + localize('Ascending')`, which assumes English word order and
+silently imposes it on every language.
+
+An unknown placeholder is left on screen as `{name}` rather than blanked, so a typo in a
+translation is visible instead of a hole.
+
 ## `setLocale(language: string)`
 
 ```js
@@ -531,7 +551,26 @@ function stripAnnotation(ref) {
     const at = annotationIndex(ref);
     return (at === -1 ? ref : ref.slice(0, at)).replace(/\\#/g, '#');
 }
-export function localize(ref) {
+/*
+`{name}` placeholders, filled AFTER translation.
+
+The point is that the KEY is the whole sentence — `'Add {item}'`, never `'Add ' + item` — so
+a translator sees the sentence and can put the placeholder where their language puts it.
+Concatenating translated fragments cannot express that: word order is not universal, and
+`localize('Sort') + ' ' + localize('Ascending')` is only correct in languages that happen to
+agree with English about which comes first.
+
+An unknown placeholder is left alone rather than blanked, so a typo in a translation shows up
+as `{itme}` on screen instead of a silent hole.
+*/
+function interpolate(text, values) {
+    return text.replace(/\{([A-Za-z0-9_]+)\}/g, (whole, name) => Object.prototype.hasOwnProperty.call(values, name)
+        ? String(values[name])
+        : whole);
+}
+export function localize(ref, values) {
+    if (values)
+        return interpolate(localize(ref), values);
     if (ref.endsWith('…')) {
         return localize(ref.substring(0, ref.length - 1)) + '…';
     }

@@ -75,6 +75,20 @@ lowercase, the output string will also be lowercase.</p>
 <h3>ellipses</h3>
 <p>If you end a string with an ellipsis, <code>localize</code> will ignore the ellipsis,
 localize the string, and then append the ellipsis.</p>
+<h3>placeholders</h3>
+<p><code>localize(pattern, values)</code> fills <code>{name}</code> placeholders <strong>after</strong> translating, so the
+translation key is the whole sentence:</p>
+<pre><code class="language-js">import { localize } from &#39;tosijs-ui&#39;
+
+preview.textContent = localize(&#39;Add {item}&#39;, { item: &#39;line item&#39; })
+</code></pre>
+<p>Do this rather than building the sentence by concatenation. <code>localize(&#39;Add &#39;) + item</code> makes
+the <em>pattern</em> untranslatable — a translator can only ever see a dangling fragment, and cannot
+move the placeholder to where their language puts it. Neither can they fix
+<code>localize(&#39;Sort&#39;) + &#39; &#39; + localize(&#39;Ascending&#39;)</code>, which assumes English word order and
+silently imposes it on every language.</p>
+<p>An unknown placeholder is left on screen as <code>{name}</code> rather than blanked, so a typo in a
+translation is visible instead of a hole.</p>
 <h2><code>setLocale(language: string)</code></h2>
 <pre><code class="language-js">import { button, p } from &#39;tosijs&#39;.elements
 import { setLocale } from &#39;tosijs-ui&#39;
