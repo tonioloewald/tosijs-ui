@@ -191,8 +191,16 @@ function matchRoute(path) {
 // Rendering
 // ============================================================================
 function renderRoute() {
+    /*
+    A `?…` in the hash is a QUERY, not part of the path.
+  
+    Without this, `#/invoices/42?q=widget` matches no route at all — and key-value state in the
+    hash (see [hash-state](/hash-state/)) is exactly what a filtered list wants next to a hash
+    router. Splitting here is what lets the two share one URL without either knowing about the
+    other. `window.location.search` is unaffected; this is only the hash's own query.
+    */
     const path = useHashRouting
-        ? window.location.hash.replace(/^#\/?/, '')
+        ? window.location.hash.replace(/^#\/?/, '').split('?')[0]
         : window.location.pathname;
     router.path.value = path;
     router.hash.value = window.location.hash;

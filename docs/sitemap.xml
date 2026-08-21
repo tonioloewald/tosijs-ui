@@ -17,6 +17,7 @@
   <url><loc>https://ui.tosijs.net/float/</loc></url>
   <url><loc>https://ui.tosijs.net/form/</loc></url>
   <url><loc>https://ui.tosijs.net/gamepad/</loc></url>
+  <url><loc>https://ui.tosijs.net/hash-state/</loc></url>
   <url><loc>https://ui.tosijs.net/header/</loc></url>
   <url><loc>https://ui.tosijs.net/icons/</loc></url>
   <url><loc>https://ui.tosijs.net/kitchen-sink/</loc></url>
@@ -52,6 +53,7 @@
   <url><loc>https://ui.tosijs.net/theme/</loc></url>
   <url><loc>https://ui.tosijs.net/tooltip/</loc></url>
   <url><loc>https://ui.tosijs.net/track-drag/</loc></url>
+  <url><loc>https://ui.tosijs.net/utilities/</loc></url>
   <url><loc>https://ui.tosijs.net/value-renderer/</loc></url>
   <url><loc>https://ui.tosijs.net/icon-svg/</loc></url>
   <url><loc>https://ui.tosijs.net/components/</loc></url>

@@ -68,6 +68,8 @@ use it to inspect STATE; a painted-output check needs a real test lane.
   `<tosi-form>` and `<tosi-field>` can be used to quickly create forms complete with
 - https://ui.tosijs.net/gamepad/ — gamepads
   A couple of utility functions for dealing with gamepads and XRInputs.
+- https://ui.tosijs.net/hash-state/ — hash-state
+  Key-value state in the page's URL hash: shareable, bookmarkable, and back/forward work
 - https://ui.tosijs.net/header/ — header
   A simple flex header. Compose it with `elastic()` and `spacer()` from
 - https://ui.tosijs.net/helper-libraries/ — Helper Libraries
@@ -150,5 +152,6 @@ use it to inspect STATE; a painted-output check needs a real test lane.
   A small, fast library of standards-based web components (data tables, dialogs, forms, rich text, carousels, and more) built on tosijs — smaller and faster than a React app, with no virtual DOM.
 - https://ui.tosijs.net/track-drag/ — trackDrag
   Sometimes you want to track a mouse-drag or touch-drag operation without messing around.
+- https://ui.tosijs.net/utilities/ — Utilities
 - https://ui.tosijs.net/value-renderer/ — valueRenderer
   `valueRenderer(type)` turns a compact **type string** into a reusable renderer for

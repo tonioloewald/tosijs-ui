@@ -29,93 +29,28 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="../doc-system.css" data-tosi-doc-system />
-  <title>ab-test — tosijs-ui</title>
-  <meta name="description" content="&lt;tosi-ab&gt; provides a simple method for implementing A|B-testing." />
-  <link rel="canonical" href="https://ui.tosijs.net/ab-test/" />
+  <title>Utilities — tosijs-ui</title>
+  <meta name="description" content="- hash-state" />
+  <link rel="canonical" href="https://ui.tosijs.net/utilities/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="ab-test — tosijs-ui" />
-  <meta property="og:description" content="&lt;tosi-ab&gt; provides a simple method for implementing A|B-testing." />
-  <meta property="og:url" content="https://ui.tosijs.net/ab-test/" />
+  <meta property="og:title" content="Utilities — tosijs-ui" />
+  <meta property="og:description" content="- hash-state" />
+  <meta property="og:url" content="https://ui.tosijs.net/utilities/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"ab-test","description":"\u003ctosi-ab> provides a simple method for implementing A|B-testing.","url":"https://ui.tosijs.net/ab-test/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Utilities","description":"- hash-state","url":"https://ui.tosijs.net/utilities/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
   <tosi-doc-system docs="../docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>ab-test</h1>
-<p><code>&lt;tosi-ab&gt;</code> provides a simple method for implementing A|B-testing.</p>
-<pre><code class="language-js">import { AbTest } from &#39;tosijs-ui&#39;
-
-function randomize() {
-  const conditions = {
-    testA: Math.random() &lt; 0.5,
-    testB: Math.random() &lt; 0.5,
-    testC: Math.random() &lt; 0.5
-  }
-
-  AbTest.conditions = conditions
-
-  preview.querySelector(&#39;pre&#39;).innerText = JSON.stringify(conditions, null, 2)
-}
-
-preview.querySelector(&#39;.randomize-conditions&#39;).addEventListener(&#39;click&#39;, randomize)
-
-randomize()
-</code></pre>
-<pre><code class="language-html">&lt;div style=&quot;display: flex; gap: 10px; align-items: center;&quot;&gt;
-  &lt;div style=&quot;display: flex; flex-direction: column; gap: 10px;&quot;&gt;
-    &lt;tosi-ab class=&quot;a&quot; condition=&quot;testA&quot;&gt;
-      &lt;p&gt;testA&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;not-a&quot; not condition=&quot;testA&quot;&gt;
-      &lt;p&gt;not testA&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;b&quot; condition=&quot;testB&quot;&gt;
-      &lt;p&gt;testB&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;not-b&quot; not condition=&quot;testB&quot;&gt;
-      &lt;p&gt;not testB&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;c&quot; condition=&quot;testC&quot;&gt;
-      &lt;p&gt;testC&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;not-c&quot; not condition=&quot;testC&quot;&gt;
-      &lt;p&gt;not testC&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-  &lt;/div&gt;
-  &lt;pre&gt;
-  &lt;/pre&gt;
-&lt;/div&gt;
-&lt;button class=&quot;randomize-conditions&quot;&gt;Randomize&lt;/button&gt;
-</code></pre>
-<pre><code class="language-css">.preview {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: flex-start;
-}
-.preview p {
-  background: #44c;
-  color: white;
-  display: block;
-  border-radius: 99px;
-  padding: 4px 10px;
-  margin: 0;
-}
-
-.preview tosi-ab[not] p {
-  background: red;
-}
-</code></pre>
+<h1>Utilities</h1>
+<!-- toc -->
 <ul>
-<li>Set <code>AbTest.conditions</code> to anything you like.</li>
-<li>Use <code>&lt;tosi-ab&gt;</code> elements to display conditional content.</li>
-<li><code>condition</code> attribute determines which value in <code>AbTest.conditions</code> controls the element</li>
-<li><code>not</code> reverses the condition (so <code>&lt;tosi-ab not condition=&quot;foo&quot;&gt;</code> will be visible if <code>conditions.foo</code> is <code>false</code>)</li>
+<li><a href="/hash-state/">hash-state</a></li>
 </ul>
+<!-- /toc -->
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -124,7 +59,7 @@ randomize()
     <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
     <li><a class="doc-link" href="../icons/">icons</a></li>
     <li><a class="doc-link" href="../natural-compare/">naturalCompare</a></li>
-    <li><a class="doc-link" href="../utilities/">Utilities</a></li>
+    <li><a class="doc-link current" href="../utilities/" aria-current="page">Utilities</a></li>
     <li><details><summary><a class="doc-link" href="../components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
@@ -168,9 +103,9 @@ randomize()
       <li><a class="doc-link" href="../tag-list/">tag-list</a></li>
     </ul>
     </details></li>
-    <li><details open><summary><a class="doc-link" href="../helper-libraries/">Helper Libraries</a></summary>
+    <li><details><summary><a class="doc-link" href="../helper-libraries/">Helper Libraries</a></summary>
     <ul>
-      <li><a class="doc-link current" href="../ab-test/" aria-current="page">ab-test</a></li>
+      <li><a class="doc-link" href="../ab-test/">ab-test</a></li>
       <li><a class="doc-link" href="../drag-and-drop/">drag &amp; drop</a></li>
       <li><a class="doc-link" href="../hash-state/">hash-state</a></li>
       <li><a class="doc-link" href="../live-theme/">live-theme</a></li>

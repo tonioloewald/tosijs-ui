@@ -14,6 +14,7 @@ export * from './editable-rect.js';
 export * from './filter-builder.js';
 export * from './float.js';
 export * from './form.js';
+export * from './hash-state.js';
 export * from './header.js';
 export * from './gamepad.js';
 export * from './icons.js';

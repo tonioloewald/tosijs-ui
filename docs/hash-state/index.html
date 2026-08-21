@@ -29,92 +29,98 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="../doc-system.css" data-tosi-doc-system />
-  <title>ab-test — tosijs-ui</title>
-  <meta name="description" content="&lt;tosi-ab&gt; provides a simple method for implementing A|B-testing." />
-  <link rel="canonical" href="https://ui.tosijs.net/ab-test/" />
+  <title>hash-state — tosijs-ui</title>
+  <meta name="description" content="Key-value state in the page&#39;s URL hash: shareable, bookmarkable, and back/forward work without you writing any of it." />
+  <link rel="canonical" href="https://ui.tosijs.net/hash-state/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="ab-test — tosijs-ui" />
-  <meta property="og:description" content="&lt;tosi-ab&gt; provides a simple method for implementing A|B-testing." />
-  <meta property="og:url" content="https://ui.tosijs.net/ab-test/" />
+  <meta property="og:title" content="hash-state — tosijs-ui" />
+  <meta property="og:description" content="Key-value state in the page&#39;s URL hash: shareable, bookmarkable, and back/forward work without you writing any of it." />
+  <meta property="og:url" content="https://ui.tosijs.net/hash-state/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"ab-test","description":"\u003ctosi-ab> provides a simple method for implementing A|B-testing.","url":"https://ui.tosijs.net/ab-test/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"hash-state","description":"Key-value state in the page's URL hash: shareable, bookmarkable, and back/forward work without you writing any of it.","url":"https://ui.tosijs.net/hash-state/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
   <tosi-doc-system docs="../docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>ab-test</h1>
-<p><code>&lt;tosi-ab&gt;</code> provides a simple method for implementing A|B-testing.</p>
-<pre><code class="language-js">import { AbTest } from &#39;tosijs-ui&#39;
+<h1>hash-state</h1>
+<!--{ "parent": "Helper Libraries" }-->
 
-function randomize() {
-  const conditions = {
-    testA: Math.random() &lt; 0.5,
-    testB: Math.random() &lt; 0.5,
-    testC: Math.random() &lt; 0.5
-  }
+<p>Key-value state in the page&#39;s URL hash: shareable, bookmarkable, and back/forward work
+without you writing any of it.</p>
+<pre><code class="language-js">import { hashState } from &#39;tosijs-ui&#39;
+import { elements } from &#39;tosijs&#39;
+const { div, input, button, pre } = elements
 
-  AbTest.conditions = conditions
+const filters = hashState({ namespace: &#39;demo&#39; })
 
-  preview.querySelector(&#39;pre&#39;).innerText = JSON.stringify(conditions, null, 2)
+const search = input({
+  placeholder: &#39;search…&#39;,
+  onInput(event) {
+    filters.set(&#39;q&#39;, event.target.value)
+  },
+})
+const shown = pre()
+const show = () =&gt; {
+  search.value = filters.get(&#39;q&#39;) ?? &#39;&#39;
+  shown.textContent = `${JSON.stringify(filters.values)}\n${location.hash || &#39;(no hash)&#39;}`
 }
+filters.observe(show)
+show()
 
-preview.querySelector(&#39;.randomize-conditions&#39;).addEventListener(&#39;click&#39;, randomize)
-
-randomize()
+preview.append(
+  div(search, button({ onClick: () =&gt; filters.set(&#39;q&#39;, undefined) }, &#39;clear&#39;)),
+  shown
+)
 </code></pre>
-<pre><code class="language-html">&lt;div style=&quot;display: flex; gap: 10px; align-items: center;&quot;&gt;
-  &lt;div style=&quot;display: flex; flex-direction: column; gap: 10px;&quot;&gt;
-    &lt;tosi-ab class=&quot;a&quot; condition=&quot;testA&quot;&gt;
-      &lt;p&gt;testA&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;not-a&quot; not condition=&quot;testA&quot;&gt;
-      &lt;p&gt;not testA&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;b&quot; condition=&quot;testB&quot;&gt;
-      &lt;p&gt;testB&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;not-b&quot; not condition=&quot;testB&quot;&gt;
-      &lt;p&gt;not testB&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;c&quot; condition=&quot;testC&quot;&gt;
-      &lt;p&gt;testC&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-    &lt;tosi-ab class=&quot;not-c&quot; not condition=&quot;testC&quot;&gt;
-      &lt;p&gt;not testC&lt;/p&gt;
-    &lt;/tosi-ab&gt;
-  &lt;/div&gt;
-  &lt;pre&gt;
-  &lt;/pre&gt;
-&lt;/div&gt;
-&lt;button class=&quot;randomize-conditions&quot;&gt;Randomize&lt;/button&gt;
-</code></pre>
-<pre><code class="language-css">.preview {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: flex-start;
-}
-.preview p {
-  background: #44c;
-  color: white;
-  display: block;
-  border-radius: 99px;
-  padding: 4px 10px;
-  margin: 0;
-}
+<pre><code class="language-test">const search = await waitFor(&#39;input&#39;)
 
-.preview tosi-ab[not] p {
-  background: red;
-}
+test(&#39;typing writes the hash, and the state reads it back&#39;, () =&gt; {
+  search.value = &#39;widget&#39;
+  search.dispatchEvent(new Event(&#39;input&#39;, { bubbles: true }))
+  const shown = preview.querySelector(&#39;pre&#39;).textContent
+  expect(shown).toContain(&#39;&quot;q&quot;:&quot;widget&quot;&#39;)
+  // Namespaced in the URL, bare in the API.
+  expect(shown).toContain(&#39;demo.q=widget&#39;)
+})
 </code></pre>
+<p>Type in the box and watch the address bar. Reload the page and the value is still there.</p>
+<h2>Two writers fight — so the keys are namespaced</h2>
+<p>Everything a <code>hashState</code> writes is prefixed with its <code>namespace</code>, and everything it does not
+recognise is <strong>left alone</strong> on write. Two instances on one page — or a <code>hashState</code> next to a
+hash router — can share the URL without deleting each other&#39;s keys.</p>
+<p>This is not hypothetical caution. <code>createDocBrowser</code> had to grow a <code>&#39;memory&#39;</code> routing mode
+because a doc-system embedded inside another one hijacked its host page&#39;s URL. So a
+<code>hashState</code> can also be told to keep its state in memory and never touch the URL at all:</p>
+<pre><code class="language-typescript">const embedded = hashState({ namespace: &#39;inner&#39;, mode: &#39;memory&#39; })
+</code></pre>
+<p>Same API, same events, no URL. Use it for anything embeddable, where the host page owns the
+address bar.</p>
+<h2>It composes with the router</h2>
+<p>The hash is split at the first <code>?</code>: the part before it is the <strong>path</strong> — which
+<a href="/router/"><code>defineRoutes({hashRouting: true})</code></a> matches on — and the part after is the query
+this reads and writes. Neither disturbs the other:</p>
+<pre><code>#/invoices/42?demo.q=widget&amp;demo.sort=date
+ └── router ──┘└─────── hashState ────────┘
+</code></pre>
+<h2>History: replace by default</h2>
+<p><code>set</code> and <code>update</code> <strong>replace</strong> the current history entry. A filter box that pushed an entry
+per keystroke would make the back button useless — thirty presses to undo one word.</p>
+<p>Pass <code>{ push: true }</code> when the change is a place the user should be able to come back from,
+such as opening a record:</p>
+<pre><code class="language-typescript">rows.set(&#39;editing&#39;, id, { push: true })
+</code></pre>
+<h2>API</h2>
 <ul>
-<li>Set <code>AbTest.conditions</code> to anything you like.</li>
-<li>Use <code>&lt;tosi-ab&gt;</code> elements to display conditional content.</li>
-<li><code>condition</code> attribute determines which value in <code>AbTest.conditions</code> controls the element</li>
-<li><code>not</code> reverses the condition (so <code>&lt;tosi-ab not condition=&quot;foo&quot;&gt;</code> will be visible if <code>conditions.foo</code> is <code>false</code>)</li>
+<li><code>hashState({ namespace, mode })</code> — <code>mode</code> is <code>&#39;hash&#39;</code> (default) or <code>&#39;memory&#39;</code></li>
+<li><code>.values</code> — a plain object of this namespace&#39;s current keys</li>
+<li><code>.get(key)</code> / <code>.set(key, value, options?)</code> — <code>undefined</code> removes the key</li>
+<li><code>.update(patch, options?)</code> — set several at once, in one history entry and one notification</li>
+<li><code>.observe(listener)</code> — called on any change, including the back button; returns an
+unsubscribe function</li>
+<li><code>.stop()</code> — detach from the URL entirely</li>
 </ul>
 
   </article>
@@ -170,9 +176,9 @@ randomize()
     </details></li>
     <li><details open><summary><a class="doc-link" href="../helper-libraries/">Helper Libraries</a></summary>
     <ul>
-      <li><a class="doc-link current" href="../ab-test/" aria-current="page">ab-test</a></li>
+      <li><a class="doc-link" href="../ab-test/">ab-test</a></li>
       <li><a class="doc-link" href="../drag-and-drop/">drag &amp; drop</a></li>
-      <li><a class="doc-link" href="../hash-state/">hash-state</a></li>
+      <li><a class="doc-link current" href="../hash-state/" aria-current="page">hash-state</a></li>
       <li><a class="doc-link" href="../live-theme/">live-theme</a></li>
       <li><a class="doc-link" href="../localize/">localize</a></li>
       <li><a class="doc-link" href="../make-sorter/">makeSorter</a></li>
