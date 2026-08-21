@@ -135,3 +135,16 @@ export interface FieldError {
 export declare function collectErrors(validateFn: (onError: (path: string, message: string) => void) => void, known?: Iterable<string>): FieldError[];
 /** The first error for a path, or undefined. */
 export declare function errorFor(errors: FieldError[], path: string): string | undefined;
+/**
+ * Strip `required` from a schema derived from a sample.
+ *
+ * `inferSchema` marks every key it saw as required, which is correct for describing a sample
+ * and wrong for editing one: it says *this data had these keys*, not *this data must have
+ * them*. Left in, every field in an inferred form is required because one example happened to
+ * fill it in — the same "a sample's extremes are not the domain's" error that keeps
+ * `minimum`/`maxLength` out of inference upstream.
+ *
+ * A consumer who does want required fields has the inferred schema in hand (`form.schema`),
+ * and can add them and set it back.
+ */
+export declare function relaxInferred(schema: JSONSchema): JSONSchema;

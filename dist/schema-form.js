@@ -87,6 +87,69 @@ preview.append(schemaForm, report)
 `tosijs-schema` is an **optional peer**: install it to get validation. Without it the form
 still renders and edits — it simply reports no errors.
 
+## No schema? It infers one
+
+Give it a `value` and no `schema` and it derives one with `inferSchema` from
+`tosijs-schema` — useful for editing a record whose shape you don't have written down.
+
+```js
+import { tosiSchemaForm } from 'tosijs-ui'
+
+const inferred = tosiSchemaForm({
+  value: {
+    title: 'Dorothea',
+    pages: 812,
+    inPrint: true,
+    author: { surname: 'Eliot' },
+  },
+})
+const shown = document.createElement('pre')
+const show = () => {
+  shown.textContent = JSON.stringify(inferred.schema, null, 2)
+}
+inferred.addEventListener('change', show)
+show()
+preview.append(inferred, shown)
+```
+```test
+const inferred = await waitFor('tosi-schema-form')
+
+test('a schema is derived from the value, and it is the one you can read back', async () => {
+  // `tosijs-schema` is an optional peer, so it is imported lazily — the fields appear once
+  // that resolves, not on the first frame. The generous timeout is because this waits on a
+  // module load, not a render: 1s was enough locally and not enough with three browser
+  // engines running the corpus at once.
+  const pages = await waitFor('[data-path="pages"]', 5000)
+
+  // Types come from the data: a whole number is an integer, a nested object is a section.
+  expect(pages.type).toBe('number')
+  expect(inferred.querySelector('[data-path="inPrint"]').type).toBe('checkbox')
+  expect(inferred.querySelector('[data-path="author.surname"]')).toBeTruthy()
+
+  // `$inferred` marks it as OBSERVED rather than authored, and nothing is required —
+  // one sample is evidence of what was there, not of what must be.
+  expect(inferred.schema.$inferred).toBe(true)
+  expect(inferred.schema.required).toBeUndefined()
+
+  // Inference happens ONCE. Editing must not re-derive the schema and rebuild the form
+  // out from under whoever is typing.
+  const built = inferred.schema
+  pages.value = '900'
+  pages.dispatchEvent(new Event('input', { bubbles: true }))
+  expect(inferred.value.pages).toBe(900)
+  expect(inferred.schema).toBe(built)
+})
+```
+
+An inferred schema describes **the sample you gave it** — nothing more. It carries
+`$inferred: true` so you can tell it from one you wrote, it is open
+(`additionalProperties: true`) so `filter()` cannot strip a key that happened to be absent,
+and it has **no `required`**: asserting that a field is mandatory because one example filled
+it in is exactly the guess that makes inferred schemas reject valid future data.
+
+It is inferred **once**, so typing never rebuilds the form. Read it back from `.schema`, edit
+it, and set it again if you want something different — that round trip is the point.
+
 ## Nested objects
 
 An object property becomes a `<details>` section, to any depth. Sections start **open** — a
@@ -622,7 +685,7 @@ test('editing keeps unknown keys, fires change, and does not rebuild under the u
 */
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements, unobserve, } from 'tosijs';
-import { fieldsFor, itemFields, branchFields, matchBranch, selectBranch, insertAt, removeAt, moveItem, blankFor, getByPath, setByPath, collectErrors, errorFor, } from './schema-form/fields.js';
+import { fieldsFor, itemFields, branchFields, matchBranch, selectBranch, insertAt, removeAt, moveItem, blankFor, getByPath, setByPath, collectErrors, errorFor, relaxInferred, } from './schema-form/fields.js';
 import { localize, i18n } from './localize.js';
 import { unenforcedNote } from './schema-form/unenforced.js';
 import { fieldPlugin, onFieldPluginsChanged, schemaUsesFormat, } from './schema-form/plugins.js';
@@ -637,14 +700,18 @@ as it otherwise would and simply reports no errors — which is a smaller failur
 to render at all.
 */
 let validateFn;
-async function loadValidator() {
+let inferFn;
+async function loadSchemaLib() {
     if (validateFn !== undefined)
         return;
     try {
-        validateFn = (await import('tosijs-schema')).validate;
+        const lib = await import('tosijs-schema');
+        validateFn = lib.validate;
+        inferFn = lib.inferSchema;
     }
     catch {
         validateFn = null;
+        inferFn = null;
     }
 }
 export class TosiSchemaForm extends WebComponent {
@@ -1130,7 +1197,7 @@ export class TosiSchemaForm extends WebComponent {
         // one until something else happens to touch it.
         this._localeListener = i18n.locale.observe(() => this.rebuild());
         // Validation is optional and lazily resolved; re-render once it is known either way.
-        void loadValidator().then(() => this.queueRender());
+        void loadSchemaLib().then(() => this.queueRender());
     }
     disconnectedCallback() {
         live.delete(this);
@@ -1153,6 +1220,19 @@ export class TosiSchemaForm extends WebComponent {
     */
     render() {
         super.render();
+        /*
+        No schema? Infer one from the value — ONCE.
+    
+        Re-inferring on every value change would rebuild the form under the user's hands the
+        moment they typed something that changed a type, which is the opposite of what this
+        component is for. The inferred schema is stored, so `form.schema` returns it and a
+        consumer can read it, edit it, and set it back. Set `.schema` explicitly to re-derive.
+        */
+        if (!this._schema?.properties && inferFn && this._value) {
+            const inferred = inferFn(this._value);
+            if (inferred?.properties)
+                this._schema = relaxInferred(inferred);
+        }
         if (this._builtFor !== this._schema) {
             this._nodes = fieldsFor(this._schema);
             this.textContent = '';

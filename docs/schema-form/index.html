@@ -118,6 +118,62 @@ preview.append(schemaForm, report)
 </code></pre>
 <p><code>tosijs-schema</code> is an <strong>optional peer</strong>: install it to get validation. Without it the form
 still renders and edits — it simply reports no errors.</p>
+<h2>No schema? It infers one</h2>
+<p>Give it a <code>value</code> and no <code>schema</code> and it derives one with <code>inferSchema</code> from
+<code>tosijs-schema</code> — useful for editing a record whose shape you don&#39;t have written down.</p>
+<pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
+
+const inferred = tosiSchemaForm({
+  value: {
+    title: &#39;Dorothea&#39;,
+    pages: 812,
+    inPrint: true,
+    author: { surname: &#39;Eliot&#39; },
+  },
+})
+const shown = document.createElement(&#39;pre&#39;)
+const show = () =&gt; {
+  shown.textContent = JSON.stringify(inferred.schema, null, 2)
+}
+inferred.addEventListener(&#39;change&#39;, show)
+show()
+preview.append(inferred, shown)
+</code></pre>
+<pre><code class="language-test">const inferred = await waitFor(&#39;tosi-schema-form&#39;)
+
+test(&#39;a schema is derived from the value, and it is the one you can read back&#39;, async () =&gt; {
+  // `tosijs-schema` is an optional peer, so it is imported lazily — the fields appear once
+  // that resolves, not on the first frame. The generous timeout is because this waits on a
+  // module load, not a render: 1s was enough locally and not enough with three browser
+  // engines running the corpus at once.
+  const pages = await waitFor(&#39;[data-path=&quot;pages&quot;]&#39;, 5000)
+
+  // Types come from the data: a whole number is an integer, a nested object is a section.
+  expect(pages.type).toBe(&#39;number&#39;)
+  expect(inferred.querySelector(&#39;[data-path=&quot;inPrint&quot;]&#39;).type).toBe(&#39;checkbox&#39;)
+  expect(inferred.querySelector(&#39;[data-path=&quot;author.surname&quot;]&#39;)).toBeTruthy()
+
+  // `$inferred` marks it as OBSERVED rather than authored, and nothing is required —
+  // one sample is evidence of what was there, not of what must be.
+  expect(inferred.schema.$inferred).toBe(true)
+  expect(inferred.schema.required).toBeUndefined()
+
+  // Inference happens ONCE. Editing must not re-derive the schema and rebuild the form
+  // out from under whoever is typing.
+  const built = inferred.schema
+  pages.value = &#39;900&#39;
+  pages.dispatchEvent(new Event(&#39;input&#39;, { bubbles: true }))
+  expect(inferred.value.pages).toBe(900)
+  expect(inferred.schema).toBe(built)
+})
+</code></pre>
+<p>An inferred schema describes <strong>the sample you gave it</strong> — nothing more. It carries
+<code>$inferred: true</code> so you can tell it from one you wrote, it is open
+(<code>additionalProperties: true</code>) so <code>filter()</code> cannot strip a key that happened to be absent,
+and it has <strong>no <code>required</code></strong>: asserting that a field is mandatory because one example filled
+it in is exactly the guess that makes inferred schemas reject valid future data.</p>
+<p>It is inferred <strong>once</strong>, so typing never rebuilds the form. Read it back from <code>.schema</code>, edit
+it, and set it again if you want something different — that round trip is the point.</p>
 <h2>Nested objects</h2>
 <p>An object property becomes a <code>&lt;details&gt;</code> section, to any depth. Sections start <strong>open</strong> — a
 form whose fields are hidden looks empty, and a user who does not know a section exists cannot

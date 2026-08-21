@@ -484,3 +484,29 @@ export function collectErrors(validateFn, known = []) {
 export function errorFor(errors, path) {
     return errors.find((e) => e.path === path)?.message;
 }
+/**
+ * Strip `required` from a schema derived from a sample.
+ *
+ * `inferSchema` marks every key it saw as required, which is correct for describing a sample
+ * and wrong for editing one: it says *this data had these keys*, not *this data must have
+ * them*. Left in, every field in an inferred form is required because one example happened to
+ * fill it in — the same "a sample's extremes are not the domain's" error that keeps
+ * `minimum`/`maxLength` out of inference upstream.
+ *
+ * A consumer who does want required fields has the inferred schema in hand (`form.schema`),
+ * and can add them and set it back.
+ */
+export function relaxInferred(schema) {
+    if (!schema || typeof schema !== 'object')
+        return schema;
+    const { required: _required, ...rest } = schema;
+    if (rest.properties) {
+        rest.properties = Object.fromEntries(Object.entries(rest.properties).map(([key, value]) => [
+            key,
+            relaxInferred(value),
+        ]));
+    }
+    if (rest.items)
+        rest.items = relaxInferred(rest.items);
+    return rest;
+}

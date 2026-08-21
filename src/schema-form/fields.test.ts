@@ -16,6 +16,7 @@ import {
   branchFields,
   matchBranch,
   selectBranch,
+  relaxInferred,
 } from './fields'
 
 const contact: any = {
@@ -619,4 +620,43 @@ test('anyOf variants ARE validated, and errors key to the branch field', () => {
   // The validator collapses a branch failure to "Union mismatch" at the union's own path —
   // measured, not assumed — so that is where the form shows it.
   expect(errors.map((e) => e.path)).toEqual(['shape'])
+})
+
+test('an inferred schema is relaxed: it described a sample, not a contract', () => {
+  // Measured: `inferSchema` marks every key it saw as required, at every depth.
+  const inferred: any = {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      address: {
+        type: 'object',
+        properties: { city: { type: 'string' } },
+        required: ['city'],
+        additionalProperties: true,
+      },
+      rows: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: { sku: { type: 'string' } },
+          required: ['sku'],
+        },
+      },
+    },
+    required: ['name', 'address', 'rows'],
+    additionalProperties: true,
+    $inferred: true,
+  }
+  const relaxed: any = relaxInferred(inferred)
+  expect(relaxed.required).toBeUndefined()
+  expect(relaxed.properties.address.required).toBeUndefined()
+  expect(relaxed.properties.rows.items.required).toBeUndefined()
+  // Everything else survives — including `$inferred`, which is how you tell an OBSERVED
+  // schema from an authored one, and `additionalProperties: true`, which is what stops
+  // `filter()` throwing away keys the sample happened not to have.
+  expect(relaxed.$inferred).toBe(true)
+  expect(relaxed.additionalProperties).toBe(true)
+  expect(Object.keys(relaxed.properties)).toEqual(['name', 'address', 'rows'])
+  // And the input is not mutated.
+  expect(inferred.required).toEqual(['name', 'address', 'rows'])
 })
