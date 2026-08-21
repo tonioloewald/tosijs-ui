@@ -310,3 +310,40 @@ test('no values argument means no interpolation at all', () => {
     'use {} for an empty object'
   )
 })
+
+test('REGRESSION: annotating a key does not orphan an un-annotated table', () => {
+  /*
+  The backward-compatibility guarantee that makes it safe for a LIBRARY to add annotations
+  to its keys — `<tosi-table>`'s column menu did exactly that. An adopter whose table
+  predates the annotation keeps their translation; they can add an annotated row later to
+  disambiguate, and it wins when they do.
+  */
+  const legacy = [
+    'en-US\tfr',
+    'English\tFrench',
+    'English\tFrançais',
+    '🇺🇸\t🇫🇷',
+    'Right\tDroite',
+    'Sort\tTrier',
+  ].join('\n')
+  initLocalization(legacy)
+  i18n.locale.value = 'fr'
+  expect(localize('Right#direction')).toBe('Droite')
+  expect(localize('Sort#order')).toBe('Trier')
+})
+
+test('an annotated row wins over the bare one — which is the point', () => {
+  // The bare row holds the WRONG sense here, exactly as the shipped table did for `Right`.
+  const both = [
+    'en-US\tfr',
+    'English\tFrench',
+    'English\tFrançais',
+    '🇺🇸\t🇫🇷',
+    'Right\tBien',
+    'Right#direction\tDroite',
+  ].join('\n')
+  initLocalization(both)
+  i18n.locale.value = 'fr'
+  expect(localize('Right#direction')).toBe('Droite')
+  expect(localize('Right')).toBe('Bien')
+})

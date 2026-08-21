@@ -281,6 +281,41 @@ Ellipsis and case handling work normally with annotations:
 - `localize('ok#confirm')` → `d'accord` (lowercase preserved)
 - `localize('OK#confirm…')` → `D'accord…`
 
+### A worked example, from our own table
+
+This is not a hypothetical. `<tosi-table>`'s column-header menu used to ask for the bare
+word `Right`, and the table shipped with this project had it translated in **the wrong
+sense in four of nine languages**:
+
+| language | was | means | should be |
+| --- | --- | --- | --- |
+| Swedish | `Rätt` | correct | `Höger` |
+| Chinese | `正确的` | correct | `右` |
+| Spanish | `Bien` | well, fine | `Derecha` |
+| Italian | `Giusto` | just, correct | `Destra` |
+
+It was not only `Right`. `Column` came back as `柱子` — a *pillar*. `Sort` became `种类`
+and `종류`, both meaning *a kind of thing*. `Show` became `Espectáculo` and `Spettacolo`,
+the kind with a stage.
+
+Every one of these is a competent translation of the word it was given. That is the whole
+point: **the translator was handed `Right` with no context, and half the time guessed
+wrong.** No amount of care downstream fixes a key that does not say which "right" it means
+— and nobody notices, because the menu still looks like a menu.
+
+So the menu now asks for `Right#direction`, `Column#table`, `Sort#order`, `Show#reveal`,
+and the table has rows to match. The annotation costs one word and is the only place the
+disambiguation *can* live: it travels with the key, into the spreadsheet, in front of the
+person doing the translating.
+
+**Annotating a key is backward compatible.** `localize('Right#direction')` falls back to a
+plain `Right` row when there is no annotated one, so adding an annotation to a library's
+key cannot orphan a translation table that predates it. Annotate freely.
+
+Name the annotation for the **sense**, not the call site. `Right#direction` tells a
+translator what to do; `Right#1` and `Right#table-menu` tell them where it appears, which
+is not the question they need answered.
+
 ## Creating Localized String Data
 
 You can create your own localization data using any spreadsheet and exporting TSV.

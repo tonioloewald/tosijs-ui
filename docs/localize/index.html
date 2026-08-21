@@ -291,6 +291,61 @@ OK#accept	Bien	&quot;	&quot;
 <li><code>localize(&#39;ok#confirm&#39;)</code> → <code>d&#39;accord</code> (lowercase preserved)</li>
 <li><code>localize(&#39;OK#confirm…&#39;)</code> → <code>D&#39;accord…</code></li>
 </ul>
+<h3>A worked example, from our own table</h3>
+<p>This is not a hypothetical. <code>&lt;tosi-table&gt;</code>&#39;s column-header menu used to ask for the bare
+word <code>Right</code>, and the table shipped with this project had it translated in <strong>the wrong
+sense in four of nine languages</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>language</th>
+<th>was</th>
+<th>means</th>
+<th>should be</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Swedish</td>
+<td><code>Rätt</code></td>
+<td>correct</td>
+<td><code>Höger</code></td>
+</tr>
+<tr>
+<td>Chinese</td>
+<td><code>正确的</code></td>
+<td>correct</td>
+<td><code>右</code></td>
+</tr>
+<tr>
+<td>Spanish</td>
+<td><code>Bien</code></td>
+<td>well, fine</td>
+<td><code>Derecha</code></td>
+</tr>
+<tr>
+<td>Italian</td>
+<td><code>Giusto</code></td>
+<td>just, correct</td>
+<td><code>Destra</code></td>
+</tr>
+</tbody></table>
+<p>It was not only <code>Right</code>. <code>Column</code> came back as <code>柱子</code> — a <em>pillar</em>. <code>Sort</code> became <code>种类</code>
+and <code>종류</code>, both meaning <em>a kind of thing</em>. <code>Show</code> became <code>Espectáculo</code> and <code>Spettacolo</code>,
+the kind with a stage.</p>
+<p>Every one of these is a competent translation of the word it was given. That is the whole
+point: <strong>the translator was handed <code>Right</code> with no context, and half the time guessed
+wrong.</strong> No amount of care downstream fixes a key that does not say which &quot;right&quot; it means
+— and nobody notices, because the menu still looks like a menu.</p>
+<p>So the menu now asks for <code>Right#direction</code>, <code>Column#table</code>, <code>Sort#order</code>, <code>Show#reveal</code>,
+and the table has rows to match. The annotation costs one word and is the only place the
+disambiguation <em>can</em> live: it travels with the key, into the spreadsheet, in front of the
+person doing the translating.</p>
+<p><strong>Annotating a key is backward compatible.</strong> <code>localize(&#39;Right#direction&#39;)</code> falls back to a
+plain <code>Right</code> row when there is no annotated one, so adding an annotation to a library&#39;s
+key cannot orphan a translation table that predates it. Annotate freely.</p>
+<p>Name the annotation for the <strong>sense</strong>, not the call site. <code>Right#direction</code> tells a
+translator what to do; <code>Right#1</code> and <code>Right#table-menu</code> tell them where it appears, which
+is not the question they need answered.</p>
 <h2>Creating Localized String Data</h2>
 <p>You can create your own localization data using any spreadsheet and exporting TSV.</p>
 <p>E.g. you can automatically create localization data

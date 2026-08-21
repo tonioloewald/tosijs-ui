@@ -661,40 +661,29 @@ live site** (independently useful). See roadmap "From book to live."
   - `<tosi-tag-list>`
   - `<tosi-filter>`
 
-- **`<tosi-table>`'s COLUMN HEADER MENU (`popColumnMenu`) localizes word by word.** All ten
-  captions are in that one menu — the sort items, the hide/show items, and the pin submenu —
-  and nothing else in the library uses those keys, so they are effectively private to it.
-  Only tables with `localized` set are affected; by default the menu is literal English.
+- **`<tosi-table>`'s column header menu: the CONCATENATION half is still open.** The
+  ambiguity half is fixed — the keys now carry `#annotation` disambiguators
+  (`Right#direction`, `Column#table`, `Sort#order`, …) and `demo/src/localized-strings.ts`
+  has matching rows. That part shipped in a patch because annotating a key falls back to the
+  bare row, so it cannot orphan an adopter's table.
 
-  Two distinct problems, and the second is worse than the first:
+  What remains is the word-order defect at `src/data-table.ts:2542, 2551, 2567, 2578`:
+  `${localize('Sort#order')} ${localize('Ascending#sort-order')}`, and the same for
+  hide/show + column. Two fragments, joined in English order, which no translation can
+  rearrange. It should become one key — `localize('Sort ascending')` — which is mostly a
+  DELETION, because `popMenu({localized})` already localizes every caption and propagates
+  `localized` into submenus, so these are being localized twice today.
 
-  1. **Concatenation** (`src/data-table.ts:2529, 2538, 2554, 2565`) —
-     `${localize('Sort')} ${localize('Ascending')}`, and the same for `Hide`/`Show` +
-     `Column`. Hard-codes English word order and hands the translator two fragments instead
-     of a sentence. This is what `localize(pattern, values)` was added to fix.
+  **Not done, because that one moves the keys.** An adopter's table has `Sort` and
+  `Ascending` rows; afterwards neither matches and the menu reverts to English. The
+  annotation fallback does not help here — it falls back on the annotation, not on
+  fragments. So it needs a release note naming the new keys, or a fragment fallback, and it
+  belongs in a minor.
 
-  2. **Bare single-word keys are already mistranslated, in our own shipped data.** The pin
-     submenu (`:2592–2614`) is not concatenated — `Pin`/`Left`/`Right`/`Unpin` are separate
-     `localize()` calls — but a lone word gives a translator no context, and
-     `demo/src/localized-strings.ts` (served by the doc site at `/localized-strings.txt`)
-     shows the result. `Right` is translated in the **correct/正确** sense, not the
-     direction, in **4 of 9 languages**: sv `Rätt` (should be `Höger`), zh `正确的` (`右`),
-     es `Bien` (`Derecha`), it `Giusto` (`Destra`). `Show` is the theatrical kind in es
-     `Espectáculo` and it `Spettacolo`, and untranslated in fi. So the pin submenu on the
-     demo site is visibly wrong in several locales right now.
-
-  **The fix is smaller than it looks: it is mostly a deletion.** `popMenu({localized})`
-  already runs `localize()` over every caption, and propagates `localized` to submenus via
-  `Object.assign({}, options, …)` — so these captions are localized **twice** today. Passing
-  the plain English sentence (`caption: 'Sort Ascending'`) and letting `popMenu` localize it
-  removes both the conditional and the concatenation, and makes the whole phrase the key.
-
-  **Still not done, because it moves the translation keys.** An adopter's TSV has rows for
-  `Sort` and `Ascending`; afterwards those match nothing and their menu silently reverts to
-  English. Needs either a release note naming the new keys, or a fallback to the old
-  fragments when the new key is missing. Decide which — and ship it in a minor, not a patch.
-  The `demo/src/localized-strings.ts` corrections are separate and can go any time: fixing
-  data moves no keys.
+  Worth knowing for the translations themselves: a native-speaker pass is still owed. The
+  corrections made were the ones where the SENSE was wrong; several entries are merely less
+  idiomatic than the local UI term (ja `選別` for sort, es `Clasificar`, zh `展示` for show)
+  and were deliberately left alone rather than asserting more than could be verified.
 
 ## Components
 

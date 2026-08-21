@@ -2275,6 +2275,19 @@ export class TosiTable extends WebComponent {
             }
         }
     };
+    /*
+    Menu captions carry `#annotation` disambiguators — `Right#direction`, not `Right`.
+  
+    A lone word gives a translator no context, and our own shipped table proves what that
+    costs: `Right` came back as the CORRECT sense rather than the direction in four of nine
+    languages (sv `Rätt`, zh `正确的`, es `Bien`, it `Giusto`), `Column` as `柱子` (a pillar),
+    and `Sort` as `种类` / `종류` (a kind of thing). The annotation is the disambiguator, and it
+    is a `localize` feature, not a convention: see the localize docs.
+  
+    Annotating the key is backward compatible — `localize('Right#direction')` falls back to a
+    bare `Right` row when there is no annotated one, so an existing translation table keeps
+    working untouched.
+    */
     popColumnMenu = (target, options) => {
         const { sortByColumn } = this;
         const hiddenColumns = this.columns.filter((column) => column.visible === false);
@@ -2283,7 +2296,7 @@ export class TosiTable extends WebComponent {
         if (!this.nosort && options.sort !== false) {
             menu.push({
                 caption: this.localized
-                    ? `${localize('Sort')} ${localize('Ascending')}`
+                    ? `${localize('Sort#order')} ${localize('Ascending#sort-order')}`
                     : 'Sort Ascending',
                 icon: 'sortAscending',
                 action() {
@@ -2291,7 +2304,7 @@ export class TosiTable extends WebComponent {
                 },
             }, {
                 caption: this.localized
-                    ? `${localize('Sort')} ${localize('Descending')}`
+                    ? `${localize('Sort#order')} ${localize('Descending#sort-order')}`
                     : 'Sort Descending',
                 icon: 'sortDescending',
                 action() {
@@ -2305,7 +2318,7 @@ export class TosiTable extends WebComponent {
             }
             menu.push({
                 caption: this.localized
-                    ? `${localize('Hide')} ${localize('Column')}`
+                    ? `${localize('Hide#conceal')} ${localize('Column#table')}`
                     : 'Hide Column',
                 icon: 'eyeOff',
                 enabled: () => options.visible !== true,
@@ -2315,7 +2328,7 @@ export class TosiTable extends WebComponent {
                 },
             }, {
                 caption: this.localized
-                    ? `${localize('Show')} ${localize('Column')}`
+                    ? `${localize('Show#reveal')} ${localize('Column#table')}`
                     : 'Show Column',
                 icon: 'eye',
                 enabled: () => hiddenColumns.length > 0,
@@ -2339,11 +2352,11 @@ export class TosiTable extends WebComponent {
                 ? 'pin0f'
                 : 'pin50o';
         menu.push({
-            caption: this.localized ? localize('Pin') : 'Pin',
+            caption: this.localized ? localize('Pin#fasten') : 'Pin',
             icon: pinIcon,
             menuItems: [
                 {
-                    caption: this.localized ? localize('Left') : 'Left',
+                    caption: this.localized ? localize('Left#direction') : 'Left',
                     icon: 'pin',
                     enabled: () => options.pinned !== 'left',
                     action() {
@@ -2352,7 +2365,7 @@ export class TosiTable extends WebComponent {
                     },
                 },
                 {
-                    caption: this.localized ? localize('Right') : 'Right',
+                    caption: this.localized ? localize('Right#direction') : 'Right',
                     icon: 'pin0f',
                     enabled: () => options.pinned !== 'right',
                     action() {
@@ -2361,7 +2374,7 @@ export class TosiTable extends WebComponent {
                     },
                 },
                 {
-                    caption: this.localized ? localize('Unpin') : 'Unpin',
+                    caption: this.localized ? localize('Unpin#unfasten') : 'Unpin',
                     icon: 'unPin',
                     enabled: () => !!options.pinned,
                     action() {
