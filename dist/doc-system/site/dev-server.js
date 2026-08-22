@@ -611,9 +611,15 @@ export async function devServer(config, opts = {}) {
         const base = config.preview?.tunnel?.url ?? `https://localhost:${PORT}`;
         const url = `${base}/?${LINK_PARAM}=${token}`;
         const minutes = Math.round(ttlMs / 60000);
+        /*
+        The CODE gets its own line, because on the device this feature exists for you are not
+        pasting a URL — you are reading seven characters off one screen and typing them into a
+        floating keyboard on another. Print what has to be transcribed, on its own, in the
+        largest visual unit the terminal has.
+        */
         console.log(policy === 'single-use'
-            ? `\n🔗 Single-use edit link (valid ${minutes} min, and spent once redeemed):\n   ${url}\n`
-            : `\n🔗 Edit link — usable on more than one device for ${minutes} min, then it expires:\n   ${url}\n`);
+            ? `\n🔗 Single-use edit link (valid ${minutes} min, and spent once redeemed):\n   ${url}\n\n   code:  ${token}\n`
+            : `\n🔗 Edit link — usable on more than one device for ${minutes} min, then it expires:\n   ${url}\n\n   code:  ${token}   (case-insensitive)\n`);
         return url;
     };
     /*

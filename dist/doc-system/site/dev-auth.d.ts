@@ -1,4 +1,10 @@
-/** How long a link is redeemable. Overridable per project — see `LinkPolicy`. */
+/**
+ * How long a link is redeemable. Overridable per project — see `LinkPolicy`.
+ *
+ * Five minutes, not fifteen: the window is what pays for the short token below. A link is
+ * redeemed within seconds of being typed, so the extra ten minutes bought nothing and
+ * widened the interval in which an observed URL is a live bearer token.
+ */
 export declare const LINK_TOKEN_TTL_MS: number;
 /**
  * How a magic link may be redeemed.
@@ -24,6 +30,18 @@ export declare const SESSION_TTL_MS: number;
 export declare const SESSION_COOKIE = "tosi_dev_session";
 /** 128 bits, base64url — long enough that guessing is not a threat model. */
 export declare function mintToken(): string;
+export declare function mintLinkToken(): string;
+/**
+ * Fold a typed token to canonical form: uppercase, and Crockford's alias mapping.
+ *
+ * Applied on REDEMPTION, not only when minting. Case-insensitivity that exists in the
+ * alphabet but not in the comparison is a claim rather than a behaviour, and the failure it
+ * produces is the worst kind: a correct human being told they typed it wrong.
+ *
+ * `I` and `L` read as `1`, `O` reads as `0` — so someone who transcribes what they think
+ * they saw still gets in. Hyphens are dropped, since people group long strings.
+ */
+export declare function normalizeLinkToken(token: string): string;
 /** Constant-time compare that tolerates unequal lengths without throwing. */
 export declare function safeEqual(a: string, b: string): boolean;
 export interface AuthState {

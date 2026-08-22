@@ -746,7 +746,7 @@ Two hostnames, because the postures genuinely differ:
 ```bash
 tosijs-tunnel            # open the tunnel (foreground; Ctrl-C closes it)
 tosijs-tunnel --status   # is one already up?
-tosijs-tunnel --link     # print a fresh edit link (redeemable for 15 min)
+tosijs-tunnel --link     # print a fresh edit link + its 7-character code (5 min)
 tosijs-tunnel --close    # close any tunnel this project opened
 ```
 
@@ -769,14 +769,47 @@ omits them.
 | `tunnel.url`            | —                             | the authenticated public URL fronting the workspace                                                        |
 | `tunnel.requireToken`   | `true`                        | require a session even to VIEW; set `false` for a live read-only audience                                  |
 | `tunnel.linkPolicy`     | `'window'`                    | `'window'` — a link is redeemable repeatedly until it ages out; `'single-use'` — spent on first redemption |
-| `tunnel.linkTtlMinutes` | `15`                          | how long a link stays redeemable                                                                           |
+| `tunnel.linkTtlMinutes` | `5`                           | how long a link stays redeemable                                                                           |
 | `tunnel.remotePort`     | derived from the project name | loopback port on the box; derived (FNV-1a into 9000-9899) so two projects can't collide                    |
 | `tunnel.localPort`      | `port + 1`                    | the loopback port the tunnel forwards to                                                                   |
 
+#### The token is seven characters, and you can type it
+
+`--link` prints the URL **and the code on its own line**, because on the device this exists
+for you are not pasting anything — you are reading characters off one screen and entering
+them on another:
+
+```
+🔗 Edit link — usable on more than one device for 5 min, then it expires:
+   https://myproject.edit.dev.example.com/?t=K7MQ2XZ
+
+   code:  K7MQ2XZ   (case-insensitive)
+```
+
+It is **Crockford base32** — no `I`, `L`, `O` or `U` — so the mistypes that hurt most on a
+headset's floating keyboard are impossible rather than merely unlikely: there is no `O` to
+confuse with `0` and no `l` to confuse with `1`. Case is folded on redemption, `I`/`L` are
+accepted as `1` and `O` as `0`, and hyphens are ignored, so someone who types what they
+_think_ they saw still gets in. The failure this designs out is a correct human being told
+they typed it wrong.
+
+Seven characters is ~35 bits, which is ample for what this actually is: an **online-only**
+guess against a `Map` lookup — there is no offline attack — for a token that is redeemed
+seconds after it is minted and which mints nothing but a write session that `mayWriteSource`
+still gates. At an absurd sustained 10⁴ guesses/sec across the whole five-minute window,
+P(hit) ≈ 0.01%.
+
+The **session** token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
+typed, and is the credential that actually authorises writes. That asymmetry is the design;
+only the half a human has to transcribe got shorter.
+
 #### Link security — pick your level
 
-A link is redeemable for **15 minutes**, as many times as you like, and hands over a session
-cookie. The cookie is the durable credential; the link only delivers it.
+A link is redeemable for **5 minutes**, as many times as you like, and hands over a session
+cookie. The cookie is the durable credential; the link only delivers it. For those five
+minutes the link is a bearer token — anyone who sees the URL can mint a session — which is a
+deliberate trade: a credential too painful to use is one people route around, and the
+measured alternative was developers abandoning the tunnel to type LAN IP addresses instead.
 
 ```typescript
 tunnel: {

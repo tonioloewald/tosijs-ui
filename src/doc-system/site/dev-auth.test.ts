@@ -11,6 +11,9 @@ import {
   LINK_TOKEN_TTL_MS,
   SESSION_TTL_MS,
   SESSION_COOKIE,
+  mintToken,
+  mintLinkToken,
+  normalizeLinkToken,
 } from './dev-auth.js'
 
 const NOW = 1_700_000_000_000
@@ -74,12 +77,54 @@ test('expired entries are pruned rather than accumulating', () => {
   expect(s.links.size).toBe(1)
 })
 
-test('tokens are long and distinct', () => {
+test('link tokens are SHORT and distinct; session tokens stay long', () => {
+  /*
+  The asymmetry, asserted rather than described. The link is typed by hand into a headset's
+  floating keyboard, so it is 7 characters; the session lives in an HttpOnly cookie, is never
+  typed, and is the credential that actually authorises writes — so it stays at 128 bits.
+  Blurring the two is the way this design fails.
+  */
   const s = createAuthState()
   const seen = new Set<string>()
-  for (let i = 0; i < 50; i++) seen.add(issueLink(s, NOW))
-  expect(seen.size).toBe(50)
-  for (const t of seen) expect(t.length).toBeGreaterThanOrEqual(20) // 128 bits b64url
+  for (let i = 0; i < 200; i++) seen.add(issueLink(s, NOW))
+  expect(seen.size).toBe(200)
+  for (const t of seen) expect(t).toMatch(/^[0-9A-HJKMNP-TV-Z]{7}$/)
+  expect(mintToken().length).toBeGreaterThanOrEqual(20) // 128 bits b64url
+})
+
+test('the alphabet excludes the characters people mistype', () => {
+  /*
+  Crockford base32. `I`/`L` look like `1` and `O` looks like `0` on a virtual keyboard, which
+  is where this token is entered; `U` is excluded so an unlucky token cannot spell an
+  obscenity. 2000 samples is enough to catch an alphabet edit that reintroduces one.
+  */
+  const all = Array.from({ length: 2000 }, () => mintLinkToken()).join('')
+  expect(all).not.toMatch(/[ILOU]/)
+  // …and every character it DOES use is in the intended set.
+  expect(all).toMatch(/^[0-9A-HJKMNP-TV-Z]+$/)
+})
+
+test('redemption is case-insensitive and forgives the lookalikes', () => {
+  // The failure being designed out is a correct human being told they typed it wrong.
+  expect(normalizeLinkToken('abc1234')).toBe('ABC1234')
+  // O 0 o → 0 0 0 ; I i L l → 1 1 1 1
+  expect(normalizeLinkToken('O0oIiLl')).toBe('0001111')
+  expect(normalizeLinkToken('ABC-1234')).toBe('ABC1234')
+
+  const s = createAuthState()
+  const token = issueLink(s, NOW)
+  // Type it in lowercase, with a hyphen for grouping, on a second device.
+  const typed =
+    token.toLowerCase().slice(0, 3) + '-' + token.toLowerCase().slice(3)
+  expect(redeemLink(s, typed, NOW + 1000)).toBeTruthy()
+})
+
+test('a wrong token is still refused', () => {
+  // The normalisation must widen what counts as the SAME token, not what counts as a token.
+  const s = createAuthState()
+  issueLink(s, NOW)
+  expect(redeemLink(s, 'ZZZZZZZ', NOW + 1000)).toBe(null)
+  expect(redeemLink(s, '', NOW + 1000)).toBe(null)
 })
 
 test('safeEqual is correct on equal, unequal and mismatched lengths', () => {
@@ -504,12 +549,14 @@ test('linkTtlMinutes widens the window, and bounds it', () => {
   expect(redeemLink(state, token, 61 * 60 * 1000)).toBe(null)
 })
 
-test('defaults are window/15min, and a nonsense TTL falls back rather than expiring instantly', () => {
-  expect(resolveLinkSettings()).toEqual({ policy: 'window', ttlMs: 900_000 })
+test('defaults are window/5min, and a nonsense TTL falls back rather than expiring instantly', () => {
+  // Five, not fifteen: the shorter window is what pays for the shorter token. A link is
+  // redeemed seconds after it is typed, so the extra ten minutes bought only exposure.
+  expect(resolveLinkSettings()).toEqual({ policy: 'window', ttlMs: 300_000 })
   expect(resolveLinkSettings({}).policy).toBe('window')
   for (const bad of [0, -5, NaN, Infinity]) {
     // A typo must not mint links that never work — that reads as "the tunnel is broken".
-    expect(resolveLinkSettings({ linkTtlMinutes: bad }).ttlMs).toBe(900_000)
+    expect(resolveLinkSettings({ linkTtlMinutes: bad }).ttlMs).toBe(300_000)
   }
 })
 

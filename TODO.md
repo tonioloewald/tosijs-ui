@@ -719,37 +719,18 @@ affords remote testing at all. The remaining friction is the credential, not the
       is worth doing only alongside the readable-token work below, where a short window is
       what pays for a short token.
 
-- [ ] **[#97](https://github.com/tonioloewald/tosijs-ui/issues/97) — shorten the LINK token
-      to 7 Crockford base32 characters.** It is typed by hand into a Quest floating keyboard;
-      22 characters of mixed-case base64url is genuinely painful and every mistype restarts.
-      The issue carries a concrete patch and the author has it staged.
+- [x] **DONE — [#97](https://github.com/tonioloewald/tosijs-ui/issues/97): the link token is
+      7 Crockford base32 characters.** Was 22 characters of mixed-case base64url, typed by
+      hand into a headset's floating keyboard — painful enough that people abandoned the
+      tunnel and typed LAN IP addresses instead, which is the feature failing rather than
+      the user. Crockford excludes `I L O U`, so the `0`/`O` and `1`/`l` mistypes cannot
+      happen; case is folded and the aliases accepted **on redemption**, and hyphens ignored,
+      so someone who types what they think they saw still gets in. `--link` prints the code
+      on its own line as well as in the URL. TTL 15 → 5 min, which is what pays for the
+      shorter token. The SESSION token is untouched at 128 bits.
 
-      **Crockford base32, not base36** — refined from the first sketch here. It excludes
-      `I L O U` and is case-insensitive by specification, so the `0`/`O` and `1`/`l` mistypes
-      — the ones that hurt most on a VR keyboard — cannot happen. Base36 buys ~0.5 bit per
-      character and costs exactly the typo-resistance the feature exists for.
-
-      Arithmetic, so it is a decision rather than a hope: 7 chars ≈ 35 bits ≈ 3.4 × 10¹⁰.
-      Against a live token at an absurd sustained 10⁴ guesses/sec across the whole window,
-      P(hit) ≈ 0.01% — and the real window is seconds, because a link is redeemed as soon as
-      it is typed. It is online-only (a `Map` lookup, no offline attack) and it mints nothing
-      but a *write session* that `mayWriteSource` still gates.
-
-      Use `randomInt` rather than `randomBytes % 32`: modulo skews the distribution.
-
-      **Only the LINK token shrinks.** The session token stays 128 bits — it lives in an
-      HttpOnly cookie, is never typed, and is the credential that actually authorises writes.
-      That asymmetry is `dev-auth.ts`'s whole design and must not blur.
-
-      **Normalise on redemption, not just when minting.** Uppercase the arriving `t` and map
-      the Crockford aliases before the `safeEqual` scan, or the case-insensitivity is a claim
-      rather than a behaviour. The failure to design out is a correct human being told they
-      typed it wrong.
-
-      Note for whoever picks this up: the issue says the link is single-use. **It is not** —
-      `linkPolicy` already defaults to `'window'` (reusable until it ages out). So the
-      comment's second patch is partly already in place; what remains from it is the TTL,
-      15 min → 5 min, which is the payment for the shorter token.
+      One correction to the issue for the record: it describes the link as single-use.
+      It had not been since 1.10.0 — `linkPolicy` already defaulted to `'window'`.
 
 - [ ] **Let the preview index build the edit URL for you.** `dev.tosijs.net` already knows
       every deployed project and its route (`deploy/build-index.sh` scans

@@ -440,6 +440,10 @@ export interface SiteConfig {
             /**
              * How long a link stays redeemable, in minutes. Default 15.
              *
+             * Defaults to 5 minutes — short, because the link is a bearer token for its lifetime
+             * and the 7-character code is what makes that acceptable. A link is redeemed seconds
+             * after it is typed, so a longer window buys exposure and nothing else.
+             *
              * Raise it for a long-lived share; lower it (or use `'single-use'`) to tighten. This
              * bounds the LINK, never the session it hands over — the session cookie is the
              * durable credential and has its own lifetime.

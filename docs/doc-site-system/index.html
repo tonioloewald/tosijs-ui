@@ -950,7 +950,7 @@ routes — which is what lets one small VPS front many projects.</p>
 </tbody></table>
 <pre><code class="language-bash">tosijs-tunnel            # open the tunnel (foreground; Ctrl-C closes it)
 tosijs-tunnel --status   # is one already up?
-tosijs-tunnel --link     # print a fresh edit link (redeemable for 15 min)
+tosijs-tunnel --link     # print a fresh edit link + its 7-character code (5 min)
 tosijs-tunnel --close    # close any tunnel this project opened
 </code></pre>
 <p><strong>How the gate works.</strong> <code>--link</code> prints a URL carrying a short-lived token (see <em>Link security</em> below). Opening it
@@ -990,7 +990,7 @@ omits them.</p>
 </tr>
 <tr>
 <td><code>tunnel.linkTtlMinutes</code></td>
-<td><code>15</code></td>
+<td><code>5</code></td>
 <td>how long a link stays redeemable</td>
 </tr>
 <tr>
@@ -1004,9 +1004,35 @@ omits them.</p>
 <td>the loopback port the tunnel forwards to</td>
 </tr>
 </tbody></table>
+<h4>The token is seven characters, and you can type it</h4>
+<p><code>--link</code> prints the URL <strong>and the code on its own line</strong>, because on the device this exists
+for you are not pasting anything — you are reading characters off one screen and entering
+them on another:</p>
+<pre><code>🔗 Edit link — usable on more than one device for 5 min, then it expires:
+   https://myproject.edit.dev.example.com/?t=K7MQ2XZ
+
+   code:  K7MQ2XZ   (case-insensitive)
+</code></pre>
+<p>It is <strong>Crockford base32</strong> — no <code>I</code>, <code>L</code>, <code>O</code> or <code>U</code> — so the mistypes that hurt most on a
+headset&#39;s floating keyboard are impossible rather than merely unlikely: there is no <code>O</code> to
+confuse with <code>0</code> and no <code>l</code> to confuse with <code>1</code>. Case is folded on redemption, <code>I</code>/<code>L</code> are
+accepted as <code>1</code> and <code>O</code> as <code>0</code>, and hyphens are ignored, so someone who types what they
+<em>think</em> they saw still gets in. The failure this designs out is a correct human being told
+they typed it wrong.</p>
+<p>Seven characters is ~35 bits, which is ample for what this actually is: an <strong>online-only</strong>
+guess against a <code>Map</code> lookup — there is no offline attack — for a token that is redeemed
+seconds after it is minted and which mints nothing but a write session that <code>mayWriteSource</code>
+still gates. At an absurd sustained 10⁴ guesses/sec across the whole five-minute window,
+P(hit) ≈ 0.01%.</p>
+<p>The <strong>session</strong> token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
+typed, and is the credential that actually authorises writes. That asymmetry is the design;
+only the half a human has to transcribe got shorter.</p>
 <h4>Link security — pick your level</h4>
-<p>A link is redeemable for <strong>15 minutes</strong>, as many times as you like, and hands over a session
-cookie. The cookie is the durable credential; the link only delivers it.</p>
+<p>A link is redeemable for <strong>5 minutes</strong>, as many times as you like, and hands over a session
+cookie. The cookie is the durable credential; the link only delivers it. For those five
+minutes the link is a bearer token — anyone who sees the URL can mint a session — which is a
+deliberate trade: a credential too painful to use is one people route around, and the
+measured alternative was developers abandoning the tunnel to type LAN IP addresses instead.</p>
 <pre><code class="language-typescript">tunnel: {
   linkPolicy: &#39;single-use&#39;,  // spend it on first redemption
   linkTtlMinutes: 2,         // …and narrow the window

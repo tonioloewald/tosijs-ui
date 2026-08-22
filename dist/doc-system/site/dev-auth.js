@@ -7,9 +7,25 @@ TWO TOKENS, ON PURPOSE.
   LINK token   — travels in a URL (`https://…/?t=…`). Therefore it is the one that
                  LEAKS: browser history, Referer headers, reverse-proxy access logs,
                  link previews in chat apps that fetch what you paste, and anyone
-                 reading over your shoulder. So it is SINGLE-USE and short-lived: the
-                 first request spends it, and a copy scraped out of a log later is
-                 worthless.
+                 reading over your shoulder. So it is SHORT-LIVED — five minutes — and
+                 it is short enough to type: 7 Crockford base32 characters.
+
+                 It is a BEARER token for those five minutes, and that is a deliberate
+                 reversal of the single-use rule this comment used to state. Two things
+                 bought the change. Single-use meant "glance at the link and close the
+                 tab, mint another" and "open it on the laptop, now your phone can't" —
+                 the workspace is the thing you read on a phone, so the rule collided
+                 with the feature's own purpose, and an adopter routed around it with a
+                 never-expiring token of their own. And a 22-character mixed-case string
+                 typed into a headset's floating keyboard was painful enough that people
+                 gave up and used LAN IP addresses instead. A credential nobody can face
+                 using is not protecting anything.
+
+                 ~35 bits is ample for what this is: an ONLINE-only guess against a Map
+                 lookup — no offline attack — for a token that is redeemed seconds after
+                 it is minted, and which mints nothing but a write session that
+                 `mayWriteSource` still gates. At an absurd sustained 10⁴ guesses/sec
+                 across the entire five-minute window, P(hit) ≈ 0.01%.
 
   SESSION token — never appears in a URL. Set as an HttpOnly cookie by the exchange
                  and sent automatically thereafter, so it can be durable without being
@@ -31,15 +47,66 @@ Cookie flags, and why each:
 
 Build-time only. Never import this from browser code.
 */
-import { randomBytes, timingSafeEqual } from 'node:crypto';
-/** How long a link is redeemable. Overridable per project — see `LinkPolicy`. */
-export const LINK_TOKEN_TTL_MS = 15 * 60 * 1000;
+import { randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+/**
+ * How long a link is redeemable. Overridable per project — see `LinkPolicy`.
+ *
+ * Five minutes, not fifteen: the window is what pays for the short token below. A link is
+ * redeemed within seconds of being typed, so the extra ten minutes bought nothing and
+ * widened the interval in which an observed URL is a live bearer token.
+ */
+export const LINK_TOKEN_TTL_MS = 5 * 60 * 1000;
 /** Sessions are the durable half — long enough that you are not re-linking daily. */
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 export const SESSION_COOKIE = 'tosi_dev_session';
 /** 128 bits, base64url — long enough that guessing is not a threat model. */
 export function mintToken() {
     return randomBytes(16).toString('base64url');
+}
+/*
+Crockford base32: no `I`, `L`, `O` or `U`, and case-insensitive.
+
+The link token is TYPED BY HAND, into a floating keyboard on a headset, and 22 characters of
+mixed-case base64url is brutal enough that people give up and type LAN IP addresses instead —
+which is the feature failing, not the user. The alphabet is chosen for the mistakes it makes
+impossible: `0`/`O` and `1`/`l` are the two that hurt most on a virtual keyboard, and here
+they cannot happen because `O` and `L` are not in it.
+
+Base36 would buy about half a bit per character and cost exactly that typo-resistance.
+`U` is excluded too — Crockford drops it so an unfortunate token cannot spell an obscenity.
+*/
+const LINK_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+const LINK_TOKEN_LEN = 7;
+/*
+`randomInt` rather than `randomBytes[i] % 32`.
+
+256 is a multiple of 32, so modulo happens to be unbiased HERE — but it stops being so the
+moment the alphabet length changes, and a bias introduced by editing a constant is the kind
+nobody sees. `randomInt` is unbiased by construction and says so.
+*/
+export function mintLinkToken() {
+    let token = '';
+    for (let i = 0; i < LINK_TOKEN_LEN; i++) {
+        token += LINK_ALPHABET[randomInt(LINK_ALPHABET.length)];
+    }
+    return token;
+}
+/**
+ * Fold a typed token to canonical form: uppercase, and Crockford's alias mapping.
+ *
+ * Applied on REDEMPTION, not only when minting. Case-insensitivity that exists in the
+ * alphabet but not in the comparison is a claim rather than a behaviour, and the failure it
+ * produces is the worst kind: a correct human being told they typed it wrong.
+ *
+ * `I` and `L` read as `1`, `O` reads as `0` — so someone who transcribes what they think
+ * they saw still gets in. Hyphens are dropped, since people group long strings.
+ */
+export function normalizeLinkToken(token) {
+    return token
+        .replace(/-/g, '')
+        .toUpperCase()
+        .replace(/[IL]/g, '1')
+        .replace(/O/g, '0');
 }
 /** Constant-time compare that tolerates unequal lengths without throwing. */
 export function safeEqual(a, b) {
@@ -64,7 +131,7 @@ export function prune(state, now) {
 /** Issue a link token to put in a URL. `ttlMs` overrides the 15-minute default. */
 export function issueLink(state, now, ttlMs = LINK_TOKEN_TTL_MS) {
     prune(state, now);
-    const token = mintToken();
+    const token = mintLinkToken();
     state.links.set(token, now + ttlMs);
     return token;
 }
@@ -96,9 +163,10 @@ export function redeemLink(state, token, now, policy = 'window') {
     prune(state, now);
     // Constant-time lookup over the (tiny) set rather than Map.get, so a timing signal
     // can't distinguish "no such token" from "wrong token".
+    const typed = normalizeLinkToken(token);
     let matched = null;
     for (const candidate of state.links.keys()) {
-        if (safeEqual(candidate, token))
+        if (safeEqual(normalizeLinkToken(candidate), typed))
             matched = candidate;
     }
     if (matched === null)
