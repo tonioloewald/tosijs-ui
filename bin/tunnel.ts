@@ -32,11 +32,12 @@ always requires a session.
 
 import { $ } from 'bun'
 import {
-  resolveSiteConfig,
-  resolveDevPort,
-  resolveTunnelLocalPort,
-  registerCaddyFragment,
   previewRootFor,
+  registerCaddyFragment,
+  resolveDevPort,
+  resolvePreviewHost,
+  resolveSiteConfig,
+  resolveTunnelLocalPort,
 } from './resolve-site-config'
 
 const siteConfig = await resolveSiteConfig()
@@ -49,14 +50,7 @@ const flag = (n: string) => {
 }
 
 const preview = siteConfig.preview
-const host =
-  flag('host') ??
-  process.env.PREVIEW_HOST ??
-  // Legacy alias. This repo's own `deploy:index` script still asks for PREVIEW_SSH,
-  // so someone who exported the only variable it ever mentioned would otherwise be
-  // told "No preview host" with nothing pointing at why.
-  process.env.PREVIEW_SSH ??
-  preview?.host
+const host = resolvePreviewHost(flag('host'), preview?.host)
 const localPort = Number(
   flag('port') ?? resolveDevPort(siteConfig, process.env)
 )

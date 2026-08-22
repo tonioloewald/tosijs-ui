@@ -768,10 +768,19 @@ screen capture landed ahead of <code>latest</code>.</p>
 <p>A doc site is a folder of static files, so sharing one is a copy, not a pipeline. Set a
 host and deploy:</p>
 <pre><code class="language-typescript">preview: {
-  host: &#39;root@203.0.113.10&#39;,        // ssh target
   url: &#39;https://ui.dev.example.com&#39;, // optional; also names the route to register
 }
 </code></pre>
+<p><strong>Do not put <code>host</code> in a committed config.</strong> The bins resolve
+<code>--host=</code> &gt; <code>PREVIEW_HOST</code> &gt; <code>PREVIEW_SSH</code> &gt; <code>~/local-secrets/tosijs-preview.env</code> &gt; config,
+and a committed address means any fork running <code>bun run tunnel</code> opens outbound SSH to your
+box. Keep it in <code>~/local-secrets/tosijs-preview.env</code> — a <code>700</code> directory beside your repos,
+never inside one, sourced from <code>~/.zshenv</code> so scripts and agents see it as well as you.
+A profile-only <code>export</code> is present for a human and absent for every tool.</p>
+<p>That is a <em>structural</em> guarantee rather than a rule, and it needed to be: this project
+documented &quot;keep it out of a committed config&quot; here while its own <code>tosijs-site.config.ts</code>
+published the address in a public repo&#39;s history for months. <strong>A credential that has ever
+been committed is public — rotate it.</strong> Rewriting history does not un-publish anything.</p>
 <pre><code class="language-bash">bun run deploy        # DRY RUN — shows exactly what would change
 bun run deploy --go   # sync, self-register, refresh the host&#39;s index
 </code></pre>

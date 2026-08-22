@@ -63,7 +63,7 @@ function kindOf(schema) {
     }
 }
 /** Build the leaf field for a scalar / enum / const schema. Shared by objects and array items. */
-function scalarField(schema, path, label, required) {
+export function scalarField(schema, path, label, required) {
     const kind = kindOf(schema);
     const field = { path, label, kind, schema, required };
     const unvalidated = unenforcedKeywords(schema);
@@ -349,6 +349,33 @@ export function itemFields(itemSchema, path, index) {
     if (itemSchema?.properties)
         return fieldsFor(itemSchema, base);
     return [scalarField(itemSchema, base, `${index + 1}`, false)];
+}
+/**
+ * The field for ONE property of an object schema — what an editable table cell needs.
+ *
+ * Same function the form uses per property, so a cell and a field agree about what a
+ * property is: same input type from `format`, same enum options, same `unsupported` verdict
+ * with the same reason. Two surfaces, one answer — which is the whole point of keeping the
+ * model DOM-free.
+ */
+export function fieldForProperty(schema, prop) {
+    const propSchema = schema?.properties?.[prop];
+    if (!propSchema)
+        return undefined;
+    const nodes = fieldsFor({
+        type: 'object',
+        properties: { [prop]: propSchema },
+        required: schema?.required,
+    }, '');
+    const node = nodes[0];
+    // A group, array or union has no single control, so a cell cannot render it — the caller
+    // falls back to read-only rather than guessing.
+    return node &&
+        !('children' in node) &&
+        node.kind !== 'array' &&
+        node.kind !== 'union'
+        ? node
+        : undefined;
 }
 /** Read a dotted path out of a value object. */
 export function getByPath(value, path) {

@@ -2,6 +2,7 @@ import { Component as WebComponent, ElementCreator } from 'tosijs';
 import { SortCallback } from './make-sorter.js';
 import { RowGroupIdFn, GroupCount } from './row-grouping.js';
 import { ValueRendererType } from './value-renderer.js';
+import type { JSONSchema } from 'tosijs-schema';
 export interface ColumnOptions {
     name?: string;
     prop: string;
@@ -28,6 +29,15 @@ export interface ColumnOptions {
      * else keyed on it.
      */
     sortValue?: (row: any) => unknown;
+    /**
+     * Whether this column's cells are editable. Defaults to the table's `editable`.
+     *
+     * Set `false` on a computed or identifying column of an otherwise-editable table, or
+     * `true` to make one column editable in a read-only one. A column with its own
+     * `dataCell` is never made editable — a custom cell builds and binds itself, and the
+     * table has no business reaching into it.
+     */
+    editable?: boolean;
     headerCell?: (options: ColumnOptions) => HTMLElement;
     dataCell?: (options: ColumnOptions) => HTMLElement;
 }
@@ -160,7 +170,19 @@ export declare class TosiTable extends WebComponent {
         noreorder: boolean;
         localized: boolean;
         nopreservescroll: boolean;
+        editable: boolean;
     };
+    /**
+     * Optional JSON Schema for the row shape. Drives editable cells and validates edits.
+     *
+     * The SAME model `<tosi-schema-form>` uses (`src/schema-form/fields.ts`), so a cell and a
+     * field agree about what a property is — one description of the data, two surfaces. That
+     * was the point of building the model DOM-free: #44 asked for an editable table, and the
+     * alternative was a second, drifting answer to "what control does this property want".
+     */
+    private _schema;
+    get schema(): JSONSchema | null;
+    set schema(schema: JSONSchema | null);
     selectionChanged: SelectCallback;
     rowRendered: ((item: any, cells: HTMLElement[]) => void) | null;
     private selectedKey;
@@ -270,6 +292,21 @@ export declare class TosiTable extends WebComponent {
     private tagPinnedTbody;
     private cellStyle;
     private applyGridCellAttrs;
+    /** Is this column editable? Table-level default, per-column override, `dataCell` wins. */
+    private columnEditable;
+    private _editStart;
+    private onCellFocus;
+    private onCellChange;
+    /** The model's answer for one column, cached per render pass. */
+    private fieldFor;
+    private coerceCell;
+    /**
+     * Validate one edited cell against the schema. `undefined` when it conforms — or when
+     * there is no schema, because a table with no description of its data cannot be wrong
+     * about it.
+     */
+    private validateCell;
+    private buildEditableCell;
     private buildCell;
     private tagClusterParity;
     /**

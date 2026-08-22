@@ -62,6 +62,8 @@ export interface Field {
 }
 /** `firstName` / `first_name` / `first-name` → `first name`. */
 export declare function humanise(key: string): string;
+/** Build the leaf field for a scalar / enum / const schema. Shared by objects and array items. */
+export declare function scalarField(schema: JSONSchema, path: string, label: string, required: boolean): Field;
 /**
  * Which branch does `value` currently look like? `-1` when nothing matches.
  *
@@ -105,6 +107,15 @@ export declare function selectBranch(value: any, node: FieldUnion, index: number
  * sync, error keying and `setByPath` need no array-specific handling.
  */
 export declare function itemFields(itemSchema: JSONSchema, path: string, index: number): Node[];
+/**
+ * The field for ONE property of an object schema — what an editable table cell needs.
+ *
+ * Same function the form uses per property, so a cell and a field agree about what a
+ * property is: same input type from `format`, same enum options, same `unsupported` verdict
+ * with the same reason. Two surfaces, one answer — which is the whole point of keeping the
+ * model DOM-free.
+ */
+export declare function fieldForProperty(schema: JSONSchema | null | undefined, prop: string): Field | undefined;
 /** Read a dotted path out of a value object. */
 export declare function getByPath(value: any, path: string): unknown;
 /**

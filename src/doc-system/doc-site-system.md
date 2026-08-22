@@ -555,10 +555,21 @@ host and deploy:
 
 ```typescript
 preview: {
-  host: 'root@203.0.113.10',        // ssh target
   url: 'https://ui.dev.example.com', // optional; also names the route to register
 }
 ```
+
+**Do not put `host` in a committed config.** The bins resolve
+`--host=` > `PREVIEW_HOST` > `PREVIEW_SSH` > `~/local-secrets/tosijs-preview.env` > config,
+and a committed address means any fork running `bun run tunnel` opens outbound SSH to your
+box. Keep it in `~/local-secrets/tosijs-preview.env` — a `700` directory beside your repos,
+never inside one, sourced from `~/.zshenv` so scripts and agents see it as well as you.
+A profile-only `export` is present for a human and absent for every tool.
+
+That is a _structural_ guarantee rather than a rule, and it needed to be: this project
+documented "keep it out of a committed config" here while its own `tosijs-site.config.ts`
+published the address in a public repo's history for months. **A credential that has ever
+been committed is public — rotate it.** Rewriting history does not un-publish anything.
 
 ```bash
 bun run deploy        # DRY RUN — shows exactly what would change

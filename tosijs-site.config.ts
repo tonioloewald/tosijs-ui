@@ -54,9 +54,20 @@ export default defineSiteConfig({
   // up tabs. macOS reuse is via AppleScript (one-time automation prompt). Override
   // the browser with BROWSER=<name>, or BROWSER=none to disable for a run.
   openBrowser: true,
-  // Preview host — `bun run deploy` (dry run) / `bun run deploy --go`.
+  /*
+  Preview host — `bun run deploy` (dry run) / `bun run deploy --go`.
+
+  `host` is deliberately ABSENT. It comes from `PREVIEW_HOST`, which lives in
+  `~/local-secrets/tosijs-preview.env` (mode 700, beside the repos, structurally
+  impossible to commit) and is sourced from `~/.zshenv` so non-interactive shells —
+  scripts, agents — see it too. See tosijs-coding-practices → deployment.md.
+
+  This config committed the address until 2026-08-22, and `site-config.ts` has documented
+  "keep it out of a committed config" the whole time: the rule was written and believed here
+  while the address stayed published in a public repo's history. That address is therefore
+  public and has been rotated. Redacting a file does not redact history — only rotation does.
+  */
   preview: {
-    host: 'root@212.147.248.15',
     url: 'https://ui.dev.tosijs.net',
     tunnel: {
       remotePort: 9787, // explicit: predates per-project allocation, and DNS points here

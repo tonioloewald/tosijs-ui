@@ -895,6 +895,12 @@ import {
   ValueRenderer,
   ValueRendererType,
 } from './value-renderer.js'
+import type { JSONSchema } from 'tosijs-schema'
+import {
+  fieldForProperty,
+  collectErrors,
+  type Field,
+} from './schema-form/fields.js'
 import { popMenu, MenuItem } from './menu.js'
 import * as dragAndDrop from './drag-and-drop.js'
 import { tosiLocalized, localize } from './localize.js'
@@ -931,7 +937,24 @@ function defaultWidth(
   return false
 }
 
-const { div, span, button } = elements
+const { div, span, button, input, select, option } = elements
+
+/*
+Validation is OPTIONAL, exactly as it is for `<tosi-schema-form>`.
+
+`tosijs-schema` is an optional peer, so a consumer who wants an editable table without a
+schema library gets one: edits work, and nothing is reported wrong because nothing described
+what right would be.
+*/
+let validateFn: ((v: any, s: any, onError: any) => boolean) | null | undefined
+async function loadValidator(): Promise<void> {
+  if (validateFn !== undefined) return
+  try {
+    validateFn = (await import('tosijs-schema')).validate as any
+  } catch {
+    validateFn = null
+  }
+}
 
 export interface ColumnOptions {
   name?: string
@@ -963,6 +986,15 @@ export interface ColumnOptions {
    * else keyed on it.
    */
   sortValue?: (row: any) => unknown
+  /**
+   * Whether this column's cells are editable. Defaults to the table's `editable`.
+   *
+   * Set `false` on a computed or identifying column of an otherwise-editable table, or
+   * `true` to make one column editable in a read-only one. A column with its own
+   * `dataCell` is never made editable — a custom cell builds and binds itself, and the
+   * table has no business reaching into it.
+   */
+  editable?: boolean
   headerCell?: (options: ColumnOptions) => HTMLElement
   dataCell?: (options: ColumnOptions) => HTMLElement
 }
@@ -1186,6 +1218,29 @@ export class TosiTable extends WebComponent {
     noreorder: false,
     localized: false,
     nopreservescroll: false,
+    editable: false,
+  }
+
+  /**
+   * Optional JSON Schema for the row shape. Drives editable cells and validates edits.
+   *
+   * The SAME model `<tosi-schema-form>` uses (`src/schema-form/fields.ts`), so a cell and a
+   * field agree about what a property is — one description of the data, two surfaces. That
+   * was the point of building the model DOM-free: #44 asked for an editable table, and the
+   * alternative was a second, drifting answer to "what control does this property want".
+   */
+  private _schema: JSONSchema | null = null
+
+  get schema(): JSONSchema | null {
+    return this._schema
+  }
+
+  set schema(schema: JSONSchema | null) {
+    this._schema = schema
+    // Resolving here rather than at import keeps `tosijs-schema` out of a page whose tables
+    // never describe their data.
+    if (schema) void loadValidator()
+    this.queueRender()
   }
 
   selectionChanged: SelectCallback = () => {
@@ -1706,6 +1761,172 @@ export class TosiTable extends WebComponent {
     Object.assign(cell.style, style)
   }
 
+  /** Is this column editable? Table-level default, per-column override, `dataCell` wins. */
+  private columnEditable(col: ColumnOptions): boolean {
+    if (col.dataCell !== undefined) return false
+    return col.editable ?? this.editable
+  }
+
+  /*
+  The value a cell had when the user started editing it.
+
+  Captured on focus rather than diffed after the fact: `bindValue` writes the model as the
+  user types, so by the time `change` fires the old value is already gone. Keyed by element
+  in a WeakMap so a recycled virtual-scroll row cannot leak an entry.
+  */
+  private _editStart = new WeakMap<Element, unknown>()
+
+  private onCellFocus = (event: Event): void => {
+    const el = (event.target as HTMLElement).closest(
+      '[data-edit-prop]'
+    ) as HTMLInputElement | null
+    if (!el) return
+    const item = this.getItem(el)
+    if (item) this._editStart.set(el, tosiValue(item[el.dataset.editProp!]))
+  }
+
+  /*
+  Commit on `change`, not on `input`.
+
+  `input` fires per keystroke, so an event per character would make "3" a legitimate
+  intermediate state of typing "35" — every listener, every validator and every save hook
+  would see values the user never meant to enter. `change` fires when they are done with the
+  cell.
+  */
+  private onCellChange = (event: Event): void => {
+    const el = (event.target as HTMLElement).closest(
+      '[data-edit-prop]'
+    ) as HTMLInputElement | null
+    if (!el) return
+    const prop = el.dataset.editProp!
+    const item = this.getItem(el)
+    if (!item) return
+    const field = this.fieldFor(prop)
+    const newValue = this.coerceCell(el, field)
+    const oldValue = this._editStart.get(el)
+    this._editStart.delete(el)
+    if (newValue === oldValue) return
+    item[prop] = newValue
+    const message = this.validateCell(item, prop, newValue)
+    el.classList.toggle('cell-invalid', Boolean(message))
+    if (message) el.title = message
+    else el.removeAttribute('title')
+    this.dispatchEvent(
+      new CustomEvent('change', {
+        bubbles: true,
+        detail: {
+          item: tosiValue(item),
+          field: prop,
+          oldValue,
+          newValue,
+          error: message ?? null,
+        },
+      })
+    )
+  }
+
+  /** The model's answer for one column, cached per render pass. */
+  private fieldFor(prop: string): Field | undefined {
+    return fieldForProperty(this.schema, prop)
+  }
+
+  /*
+  Coerce the DOM's string back to what the schema asked for.
+
+  Same rule the form uses: an emptied numeric cell becomes `undefined`, not `0` and not
+  `NaN`. "The user cleared it" and "the user typed zero" are different facts, and writing one
+  for the other puts a number in the data that nobody entered.
+  */
+  private coerceCell(el: HTMLInputElement, field?: Field): unknown {
+    if (el.type === 'checkbox') return el.checked
+    const raw = el.value
+    if (field?.kind === 'integer')
+      return raw === '' ? undefined : parseInt(raw, 10)
+    if (field?.kind === 'number') return raw === '' ? undefined : Number(raw)
+    if (field?.kind === 'enum') {
+      const hit = field.options?.find((o) => String(o.value) === raw)
+      return hit ? hit.value : raw
+    }
+    if (!field && el.type === 'number')
+      return raw === '' ? undefined : Number(raw)
+    return raw
+  }
+
+  /**
+   * Validate one edited cell against the schema. `undefined` when it conforms — or when
+   * there is no schema, because a table with no description of its data cannot be wrong
+   * about it.
+   */
+  private validateCell(
+    item: any,
+    prop: string,
+    _value: unknown
+  ): string | undefined {
+    if (!this.schema || !validateFn) return undefined
+    const errors = collectErrors(
+      (onError: (path: string, message: string) => void) =>
+        validateFn!(tosiValue(item), this.schema, onError),
+      [prop]
+    )
+    return errors.find((e: { path: string }) => e.path === prop)?.message
+  }
+
+  /*
+  An editable cell is an ordinary bound input.
+
+  `bindValue` is the established idiom here — it is what the doc example has always used for
+  a hand-rolled editable column — and it keeps the cell reactive to changes from elsewhere.
+  The pointer handlers stop the row-selection listener seeing a click that was aimed at the
+  input: without them, clicking into a cell to edit it also selects the row.
+  */
+  private buildEditableCell(
+    col: ColumnOptions,
+    colIndex: number,
+    si: StickyInfo,
+    style: Record<string, string>,
+    repeats: boolean
+  ): HTMLElement {
+    const field = this.fieldFor(col.prop)
+    const stop = (event: Event) => event.stopPropagation()
+    const shared: any = {
+      class: this.cellClasses('td', si, repeats) + ' cell-editable',
+      role: 'gridcell',
+      tabindex: -1,
+      ariaColindex: String(colIndex + 1),
+      style,
+      onMouseup: stop,
+      onTouchend: stop,
+      onFocus: this.onCellFocus,
+      onChange: this.onCellChange,
+    }
+    let cell: HTMLElement
+    if (field?.kind === 'enum') {
+      cell = select(
+        { ...shared, bindValue: `^.${col.prop}` },
+        ...(field.required ? [] : [option({ value: '' }, '—')]),
+        ...(field.options ?? []).map((o) =>
+          option({ value: String(o.value) }, o.label)
+        )
+      )
+    } else {
+      const isBool =
+        field?.kind === 'boolean' || col.type?.startsWith('boolean') === true
+      const isNum = field?.kind === 'number' || field?.kind === 'integer'
+      cell = input({
+        ...shared,
+        type: isBool
+          ? 'checkbox'
+          : isNum
+          ? 'number'
+          : field?.inputType ?? 'text',
+        ...(field?.kind === 'integer' ? { step: 1 } : {}),
+        bindValue: `^.${col.prop}`,
+      } as any)
+    }
+    cell.dataset.editProp = col.prop
+    return cell
+  }
+
   // Build a single data cell for a column. Cells live inside list-bound `.tr`
   // rows, so path-based bindings inside col.dataCell() (e.g. bindText:'^.prop')
   // resolve against the row's list-instance automatically.
@@ -1737,6 +1958,9 @@ export class TosiTable extends WebComponent {
       const cell = col.dataCell(col) as HTMLElement
       this.applyGridCellAttrs(cell, colIndex, si, style, repeats)
       return cell
+    }
+    if (this.columnEditable(col)) {
+      return this.buildEditableCell(col, colIndex, si, style, repeats)
     }
     // A `type` column formats through its cached ValueRenderer. The binding's toDOM
     // runs per stamped row, so it stays locale-reactive and works for icon cells
@@ -2468,6 +2692,12 @@ export class TosiTable extends WebComponent {
     this.addEventListener('mouseup', this.updateSelection)
     this.addEventListener('touchend', this.updateSelection)
     this.addEventListener('keydown', this.handleKeyNav)
+    /*
+    Resolve the optional validator only when this table might actually validate. A read-only
+    table with no schema is the common case and should not pull `tosijs-schema` into the
+    page for nothing.
+    */
+    if (this.schema) void loadValidator()
   }
 
   setColumnWidths() {

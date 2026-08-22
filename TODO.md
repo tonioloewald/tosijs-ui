@@ -719,45 +719,47 @@ affords remote testing at all. The remaining friction is the credential, not the
       is worth doing only alongside the readable-token work below, where a short window is
       what pays for a short token.
 
-- [ ] **Make the link token human-readable: ~7 case-insensitive base36 characters.**
-      Today `mintToken()` is 16 random bytes as base64url — 22 characters, mixed case,
-      `-` and `_` in the alphabet. Fine to click, miserable to read off a phone and type on
-      goggles, which is exactly the case the bridge exists to serve.
+- [ ] **[#97](https://github.com/tonioloewald/tosijs-ui/issues/97) — shorten the LINK token
+      to 7 Crockford base32 characters.** It is typed by hand into a Quest floating keyboard;
+      22 characters of mixed-case base64url is genuinely painful and every mistype restarts.
+      The issue carries a concrete patch and the author has it staged.
 
-      **The entropy is the whole design question.** 128 bits is not a threat model, it is a
-      default; a short token needs the numbers done properly rather than waved at:
+      **Crockford base32, not base36** — refined from the first sketch here. It excludes
+      `I L O U` and is case-insensitive by specification, so the `0`/`O` and `1`/`l` mistypes
+      — the ones that hurt most on a VR keyboard — cannot happen. Base36 buys ~0.5 bit per
+      character and costs exactly the typo-resistance the feature exists for.
 
-      | length | space | guesses to ~0.1% odds against one live token |
-      | --- | --- | --- |
-      | 6 chars | 36⁶ ≈ 2.2 × 10⁹ | ~2 million |
-      | 7 chars | 36⁷ ≈ 7.8 × 10¹⁰ | ~78 million |
+      Arithmetic, so it is a decision rather than a hope: 7 chars ≈ 35 bits ≈ 3.4 × 10¹⁰.
+      Against a live token at an absurd sustained 10⁴ guesses/sec across the whole window,
+      P(hit) ≈ 0.01% — and the real window is seconds, because a link is redeemed as soon as
+      it is typed. It is online-only (a `Map` lookup, no offline attack) and it mints nothing
+      but a *write session* that `mayWriteSource` still gates.
 
-      At an unthrottled 1000 req/s a 6-character token is ~4% per day of continuous
-      attack against an always-live link; 7 characters is ~0.1%. So **7, not 6** — and
-      **rate limiting stops being optional**, which is the real work here: there is none on
-      the redemption path today, and none is needed while the token has 128 bits. Add a
-      per-IP attempt cap plus a global one, and the arithmetic stops mattering. Shortening
-      the TTL to 5 minutes cuts the exposure window by 3× on top of that.
+      Use `randomInt` rather than `randomBytes % 32`: modulo skews the distribution.
 
-      **Only the LINK token shrinks.** The session cookie is never typed, never read aloud,
-      and is the credential that actually authorises writes — it stays 128 bits. The
-      asymmetry in `dev-auth.ts` is the point and this must not blur it.
+      **Only the LINK token shrinks.** The session token stays 128 bits — it lives in an
+      HttpOnly cookie, is never typed, and is the credential that actually authorises writes.
+      That asymmetry is `dev-auth.ts`'s whole design and must not blur.
 
-      **Confusable glyphs are the readability trap**, and they bite hardest in precisely the
-      stated use case — read off a phone screen, typed on goggles. In a lowercase base36
-      alphabet the collisions are `0`/`o` and `1`/`l` (and `i` in some faces). Two ways out,
-      pick one deliberately:
-      - drop `o`, `l`, `i` from the *generated* alphabet (33 chars, 33⁷ ≈ 4.3 × 10¹⁰ — no
-        meaningful entropy loss) and **normalise them on input** anyway, so a human who
-        types what they think they saw still gets in;
-      - or use Crockford base32, which was designed for this and specifies the same input
-        mapping (32⁷ ≈ 3.4 × 10¹⁰).
+      **Normalise on redemption, not just when minting.** Uppercase the arriving `t` and map
+      the Crockford aliases before the `safeEqual` scan, or the case-insensitivity is a claim
+      rather than a behaviour. The failure to design out is a correct human being told they
+      typed it wrong.
 
-      Either way: normalise case and confusables **on redemption**, not just on generation —
-      the failure mode to design out is a correct human being told the token is wrong.
+      Note for whoever picks this up: the issue says the link is single-use. **It is not** —
+      `linkPolicy` already defaults to `'window'` (reusable until it ages out). So the
+      comment's second patch is partly already in place; what remains from it is the TTL,
+      15 min → 5 min, which is the payment for the shorter token.
 
-      Print the code on its own line as well as inside the URL, so it can be typed without
-      transcribing a whole address.
+- [ ] **Let the preview index build the edit URL for you.** `dev.tosijs.net` already knows
+      every deployed project and its route (`deploy/build-index.sh` scans
+      `/srv/preview/*/version.json`). Add a picker plus a 7-character token box that
+      composes `https://<project>.edit.dev.tosijs.net/?t=<TOKEN>` and navigates on Enter.
+
+      Same motivation as #97 and the same measure of success: what a headset owner has to
+      type. Choosing a project from a list and entering seven characters is a different
+      activity from transcribing a full URL through a floating keyboard, and it is the
+      difference between testing on interesting devices and not bothering.
 
 ## Build System
 

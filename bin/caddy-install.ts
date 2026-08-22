@@ -34,7 +34,7 @@ Three deliberate properties:
 */
 
 import { existsSync, readFileSync } from 'fs'
-import { resolveSiteConfig } from './resolve-site-config'
+import { resolvePreviewHost, resolveSiteConfig } from './resolve-site-config'
 
 const siteConfig = await resolveSiteConfig()
 
@@ -69,21 +69,16 @@ if (unknown.length || has('help')) {
   process.exit(bad ? 1 : 0)
 }
 
-const host =
-  flag('host') ??
-  process.env.PREVIEW_HOST ??
-  // Legacy alias. This repo's own `deploy:index` script still asks for PREVIEW_SSH,
-  // so someone who exported the only variable it ever mentioned would otherwise be
-  // told "No preview host" with nothing pointing at why.
-  process.env.PREVIEW_SSH ??
-  siteConfig.preview?.host
+const host = resolvePreviewHost(flag('host'), siteConfig.preview?.host)
 const go = has('go')
 
 if (!host) {
   console.error(
     `\nNo preview host.\n\n` +
-      `  Set one once in your site config:\n` +
-      `      preview: { host: 'user@example.com' }\n\n` +
+      `  Put it where machine-local credentials live — a 700 directory beside the\n` +
+      `  repos, so it cannot be committed:\n` +
+      `      echo 'PREVIEW_HOST=user@example.com' >> ~/local-secrets/tosijs-preview.env\n` +
+      `      # and source that file from ~/.zshenv, so scripts and agents see it too\n\n` +
       `  ...or pass it per-run:\n` +
       `      tosijs-caddy-install --host=user@example.com --go\n` +
       `      PREVIEW_HOST=user@example.com tosijs-caddy-install\n`
