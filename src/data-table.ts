@@ -499,6 +499,104 @@ table.rowRendered = (item, cells) => {
 }
 ```
 
+## Editing
+
+Set `editable` and the cells become inputs. Give the table a `schema` and it knows what kind
+of input each column wants and whether an edit is valid.
+
+```js
+import { tosiTable } from 'tosijs-ui'
+
+const rows = [
+  { sku: 'W-1', name: 'Widget', qty: 12, price: 9.99, active: true },
+  { sku: 'G-9', name: 'Gasket', qty: 5, price: 1.5, active: false },
+  { sku: 'B-3', name: 'Bracket', qty: 0, price: 24, active: true },
+]
+
+const log = document.createElement('pre')
+const table = tosiTable({
+  editable: true,
+  style: { height: '160px' },
+  schema: {
+    type: 'object',
+    properties: {
+      sku: { type: 'string' },
+      name: { type: 'string' },
+      qty: { type: 'integer', minimum: 0 },
+      price: { type: 'number' },
+      active: { type: 'boolean' },
+    },
+  },
+  columns: [
+    { prop: 'sku', width: 80, editable: false },
+    { prop: 'name', width: 140 },
+    { prop: 'qty', width: 80 },
+    { prop: 'price', width: 90 },
+    { prop: 'active', width: 70 },
+  ],
+  array: rows,
+})
+
+table.addEventListener('change', (event) => {
+  const { field, oldValue, newValue, error } = event.detail
+  log.textContent =
+    `${field}: ${JSON.stringify(oldValue)} → ${JSON.stringify(newValue)}` +
+    (error ? `  ⚠️ ${error}` : '')
+})
+
+preview.append(table, log)
+```
+```test
+const table = await waitFor('tosi-table')
+// Rows are list-bound, so the cells arrive after the element does.
+await waitFor('[data-edit-prop="qty"]')
+const cell = (prop) => table.querySelector(`[data-edit-prop="${prop}"]`)
+
+test('the schema decides the control, and editable is per column', () => {
+  expect(cell('qty').type).toBe('number')
+  expect(cell('active').type).toBe('checkbox')
+  expect(cell('name').type).toBe('text')
+  // A column marked `editable: false` in an editable table stays read-only.
+  expect(cell('sku')).toBe(null)
+})
+
+test('editing a cell writes the row and reports what changed', () => {
+  const qty = cell('qty')
+  const item = table.getItem(qty)
+  let detail = null
+  table.addEventListener('change', (e) => (detail = e.detail), { once: true })
+
+  qty.focus()
+  qty.value = '20'
+  qty.dispatchEvent(new Event('change', { bubbles: true }))
+
+  expect(item.qty).toBe(20)
+  expect(detail.field).toBe('qty')
+  expect(detail.oldValue).toBe(12)
+  expect(detail.newValue).toBe(20)
+  expect(detail.error).toBe(null)
+})
+
+```
+
+**Commits on `change`, not on `input`.** An event per keystroke would make `3` a legitimate
+intermediate state of typing `35`, and every listener, validator and save hook would see
+values the user never meant to enter.
+
+**`dataCell` always wins.** A column with its own cell renderer is never made editable — it
+builds and binds itself, and the table has no business reaching into it. `editable: false` on
+a column opts one out of an editable table; `editable: true` opts one in to a read-only one.
+
+**Validation needs a `schema`**, and comes from [`tosijs-schema`](/schema-form/) — the same
+model `<tosi-schema-form>` uses, so a cell and a field agree about what a property is. Without
+a schema the cells are text inputs and nothing is reported wrong, because nothing described
+what right would be. An invalid edit is **still written**: the model holds what the user
+typed and the cell says it is wrong, rather than the table refusing input and leaving them
+guessing.
+
+The `change` event carries `{ item, field, oldValue, newValue, error }`. Persisting is yours
+to wire — see [`<tosi-crud>`](/crud/) for the same edits behind a `save()` store adapter.
+
 ## Sorting
 
 By default, the user can sort the table by any column which doesn't have a `sort === false`.
@@ -1798,6 +1896,19 @@ export class TosiTable extends WebComponent {
       '[data-edit-prop]'
     ) as HTMLInputElement | null
     if (!el) return
+    /*
+    The input's own `change` stops here; the table re-emits its own.
+
+    Native `change` bubbles, so without this a consumer listening on the table receives BOTH
+    — theirs with a `detail`, the input's with none — indistinguishable except by checking
+    for a property that should always be there. The doc example destructured `event.detail`
+    and the hydration lane caught it as a page error, which is the honest version of "our own
+    documentation could not use this API correctly".
+
+    The cell's native event is an implementation detail of an editable cell. The table's
+    `change` is the contract.
+    */
+    event.stopPropagation()
     const prop = el.dataset.editProp!
     const item = this.getItem(el)
     if (!item) return

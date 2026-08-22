@@ -504,6 +504,94 @@ you apply styling that survives virtualisation:</p>
   }
 }
 </code></pre>
+<h2>Editing</h2>
+<p>Set <code>editable</code> and the cells become inputs. Give the table a <code>schema</code> and it knows what kind
+of input each column wants and whether an edit is valid.</p>
+<pre><code class="language-js">import { tosiTable } from &#39;tosijs-ui&#39;
+
+const rows = [
+  { sku: &#39;W-1&#39;, name: &#39;Widget&#39;, qty: 12, price: 9.99, active: true },
+  { sku: &#39;G-9&#39;, name: &#39;Gasket&#39;, qty: 5, price: 1.5, active: false },
+  { sku: &#39;B-3&#39;, name: &#39;Bracket&#39;, qty: 0, price: 24, active: true },
+]
+
+const log = document.createElement(&#39;pre&#39;)
+const table = tosiTable({
+  editable: true,
+  style: { height: &#39;160px&#39; },
+  schema: {
+    type: &#39;object&#39;,
+    properties: {
+      sku: { type: &#39;string&#39; },
+      name: { type: &#39;string&#39; },
+      qty: { type: &#39;integer&#39;, minimum: 0 },
+      price: { type: &#39;number&#39; },
+      active: { type: &#39;boolean&#39; },
+    },
+  },
+  columns: [
+    { prop: &#39;sku&#39;, width: 80, editable: false },
+    { prop: &#39;name&#39;, width: 140 },
+    { prop: &#39;qty&#39;, width: 80 },
+    { prop: &#39;price&#39;, width: 90 },
+    { prop: &#39;active&#39;, width: 70 },
+  ],
+  array: rows,
+})
+
+table.addEventListener(&#39;change&#39;, (event) =&gt; {
+  const { field, oldValue, newValue, error } = event.detail
+  log.textContent =
+    `${field}: ${JSON.stringify(oldValue)} → ${JSON.stringify(newValue)}` +
+    (error ? `  ⚠️ ${error}` : &#39;&#39;)
+})
+
+preview.append(table, log)
+</code></pre>
+<pre><code class="language-test">const table = await waitFor(&#39;tosi-table&#39;)
+// Rows are list-bound, so the cells arrive after the element does.
+await waitFor(&#39;[data-edit-prop=&quot;qty&quot;]&#39;)
+const cell = (prop) =&gt; table.querySelector(`[data-edit-prop=&quot;${prop}&quot;]`)
+
+test(&#39;the schema decides the control, and editable is per column&#39;, () =&gt; {
+  expect(cell(&#39;qty&#39;).type).toBe(&#39;number&#39;)
+  expect(cell(&#39;active&#39;).type).toBe(&#39;checkbox&#39;)
+  expect(cell(&#39;name&#39;).type).toBe(&#39;text&#39;)
+  // A column marked `editable: false` in an editable table stays read-only.
+  expect(cell(&#39;sku&#39;)).toBe(null)
+})
+
+test(&#39;editing a cell writes the row and reports what changed&#39;, () =&gt; {
+  const qty = cell(&#39;qty&#39;)
+  const item = table.getItem(qty)
+  let detail = null
+  table.addEventListener(&#39;change&#39;, (e) =&gt; (detail = e.detail), { once: true })
+
+  qty.focus()
+  qty.value = &#39;20&#39;
+  qty.dispatchEvent(new Event(&#39;change&#39;, { bubbles: true }))
+
+  expect(item.qty).toBe(20)
+  expect(detail.field).toBe(&#39;qty&#39;)
+  expect(detail.oldValue).toBe(12)
+  expect(detail.newValue).toBe(20)
+  expect(detail.error).toBe(null)
+})
+</code></pre>
+<p><strong>Commits on <code>change</code>, not on <code>input</code>.</strong> An event per keystroke would make <code>3</code> a legitimate
+intermediate state of typing <code>35</code>, and every listener, validator and save hook would see
+values the user never meant to enter.</p>
+<p><strong><code>dataCell</code> always wins.</strong> A column with its own cell renderer is never made editable — it
+builds and binds itself, and the table has no business reaching into it. <code>editable: false</code> on
+a column opts one out of an editable table; <code>editable: true</code> opts one in to a read-only one.</p>
+<p><strong>Validation needs a <code>schema</code></strong>, and comes from <a href="/schema-form/"><code>tosijs-schema</code></a> — the same
+model <code>&lt;tosi-schema-form&gt;</code> uses, so a cell and a field agree about what a property is. Without
+a schema the cells are text inputs and nothing is reported wrong, because nothing described
+what right would be. An invalid edit is <strong>still written</strong>: the model holds what the user
+typed and the cell says it is wrong, rather than the table refusing input and leaving them
+guessing.</p>
+<p>The <code>change</code> event carries <code>{ item, field, oldValue, newValue, error }</code>. Persisting is yours
+to wire — see <a href="/crud/"><code>&lt;tosi-crud&gt;</code></a> for the same edits behind a <code>save()</code> store adapter.</p>
 <h2>Sorting</h2>
 <p>By default, the user can sort the table by any column which doesn&#39;t have a <code>sort === false</code>.</p>
 <p>You can set the initial sort by setting the <code>sort</code> value of a specific column to <code>ascending</code>
