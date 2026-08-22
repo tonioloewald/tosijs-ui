@@ -704,6 +704,61 @@ live site** (independently useful). See roadmap "From book to live."
 - Maybe show lines under locks indicating the parent
 - Support snapping to sibling boundaries and centers
 
+## Dev bridge (tunnel + magic link)
+
+From two weeks of using the bridge in anger. It is better than Bonjour or a LAN IP when it
+works — no address to find, no same-network requirement — and it is the only thing that
+affords remote testing at all. The remaining friction is the credential, not the transport.
+
+- [x] **Reusable link window — already shipped.** `linkPolicy` defaults to `'window'`:
+      a link is redeemable **repeatedly** until it ages out, and only then hands over the
+      durable session cookie (30 days). Try something in the Claude app, then open the same
+      link in Safari for a deeper dive — that already works today. TTL is currently
+      **15 minutes** (`LINK_TOKEN_TTL_MS`), configurable per project via
+      `preview.tunnel.linkTtlMinutes`. Note the direction: 15 → 5 would be _tightening_, and
+      is worth doing only alongside the readable-token work below, where a short window is
+      what pays for a short token.
+
+- [ ] **Make the link token human-readable: ~7 case-insensitive base36 characters.**
+      Today `mintToken()` is 16 random bytes as base64url — 22 characters, mixed case,
+      `-` and `_` in the alphabet. Fine to click, miserable to read off a phone and type on
+      goggles, which is exactly the case the bridge exists to serve.
+
+      **The entropy is the whole design question.** 128 bits is not a threat model, it is a
+      default; a short token needs the numbers done properly rather than waved at:
+
+      | length | space | guesses to ~0.1% odds against one live token |
+      | --- | --- | --- |
+      | 6 chars | 36⁶ ≈ 2.2 × 10⁹ | ~2 million |
+      | 7 chars | 36⁷ ≈ 7.8 × 10¹⁰ | ~78 million |
+
+      At an unthrottled 1000 req/s a 6-character token is ~4% per day of continuous
+      attack against an always-live link; 7 characters is ~0.1%. So **7, not 6** — and
+      **rate limiting stops being optional**, which is the real work here: there is none on
+      the redemption path today, and none is needed while the token has 128 bits. Add a
+      per-IP attempt cap plus a global one, and the arithmetic stops mattering. Shortening
+      the TTL to 5 minutes cuts the exposure window by 3× on top of that.
+
+      **Only the LINK token shrinks.** The session cookie is never typed, never read aloud,
+      and is the credential that actually authorises writes — it stays 128 bits. The
+      asymmetry in `dev-auth.ts` is the point and this must not blur it.
+
+      **Confusable glyphs are the readability trap**, and they bite hardest in precisely the
+      stated use case — read off a phone screen, typed on goggles. In a lowercase base36
+      alphabet the collisions are `0`/`o` and `1`/`l` (and `i` in some faces). Two ways out,
+      pick one deliberately:
+      - drop `o`, `l`, `i` from the *generated* alphabet (33 chars, 33⁷ ≈ 4.3 × 10¹⁰ — no
+        meaningful entropy loss) and **normalise them on input** anyway, so a human who
+        types what they think they saw still gets in;
+      - or use Crockford base32, which was designed for this and specifies the same input
+        mapping (32⁷ ≈ 3.4 × 10¹⁰).
+
+      Either way: normalise case and confusables **on redemption**, not just on generation —
+      the failure mode to design out is a correct human being told the token is wrong.
+
+      Print the code on its own line as well as inside the URL, so it can be typed without
+      transcribing a whole address.
+
 ## Build System
 
 - **Built-in custom icon generation for `tosijs-ui/site`** — currently a consumer
