@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.11.0 (unreleased)
+
+_Notes in progress — see `bun run release-notes`._
+
+### Housekeeping: we published a preview address, and rotated it
+
+Our own `tosijs-site.config.ts` committed the preview host as an ssh target
+(`user@address`) — an **address, not a credential**. Nothing an adopter installs is
+affected, and this is not a security advisory for anyone but us. Recording it because the
+practice it produced is worth adopting.
+
+Verified rather than assumed, since "we're sure there were no keys in there" is exactly the
+sort of claim that deserves checking:
+
+- **no private key material anywhere in the repo's history** — no `BEGIN … PRIVATE KEY`
+  block in any commit on any ref, and no `.pem`, `.key`, `id_rsa` or `id_ed25519` file ever
+  added. `*.pem` is gitignored; the only tracked files under `tls/` are a README and the
+  cert-generation script.
+- access to that box always required a key that was never published, so the exposure was an
+  address someone could try to connect to — not a way in.
+
+It has been **rotated regardless**, because a value that has ever been committed to a public
+repo is public: `git log -S` finds it in seconds, and rewriting history does not un-publish
+anything.
+
+The practice that came out of it, now in `tosijs-coding-practices` → `deployment.md`:
+machine-local credentials live in `~/local-secrets/` — a `700` directory beside the repos,
+never inside one, so committing them is structurally impossible rather than merely against
+the rules. `tosijs-ui`'s bins resolve `--host=` > `PREVIEW_HOST` > `PREVIEW_SSH` >
+`~/local-secrets/tosijs-preview.env` > site config, and a regression test now greps our own
+config for a `user@host` literal. The rule had been documented in `site-config.ts` the whole
+time and violated in the same repo — which is why the guarantee is now a directory.
+
 ## 1.10.2
 
 **The dev server no longer serves stale content after a rebuild.** This is the one that
