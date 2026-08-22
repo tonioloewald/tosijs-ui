@@ -18,7 +18,7 @@ import { auditDependencies, reportAudit } from './audit-guard.js';
 import { openDevBrowser } from './open-browser.js';
 import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, resolveLinkSettings, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemLink, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
 /**
  * Every path the dev server watches for changes.
  *
@@ -596,6 +596,13 @@ export async function devServer(config, opts = {}) {
     re-linking is one command.
     */
     const auth = createAuthState();
+    /*
+    Guess-rate control for the 7-character link token: one redemption at a time, each taking at
+    least 100ms. Ten attempts a second against 32^7 is ~108 years; a person does not notice
+    100ms. Global rather than per-IP because every request over the tunnel arrives from
+    loopback — see dev-auth.ts.
+    */
+    const redeemGate = createRedemptionGate();
     const LINK_PARAM = 't';
     /**
      * Print a fresh edit link. Called on demand (SIGUSR2) and by --link.
@@ -1259,7 +1266,13 @@ export async function devServer(config, opts = {}) {
             }
         }
         if (linkToken) {
-            const session = redeemLink(auth, linkToken, Date.now(), resolveLinkSettings(config.preview?.tunnel).policy);
+            /*
+            Through the gate: serialized, and floored at 100ms whether it succeeds or fails.
+      
+            Awaiting it here — rather than only on the failure branch — is what stops response time
+            answering "was that the right token?" for free.
+            */
+            const session = await redeemGate(() => redeemLink(auth, linkToken, Date.now(), resolveLinkSettings(config.preview?.tunnel).policy));
             const clean = urlWithoutToken(request.url, LINK_PARAM);
             const headers = {
                 Location: clean,

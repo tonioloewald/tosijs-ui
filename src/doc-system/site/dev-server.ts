@@ -32,6 +32,7 @@ import {
   issueLink,
   readCookie,
   redeemLink,
+  createRedemptionGate,
   resolveLinkSettings,
   sessionCookie,
   urlWithoutToken,
@@ -703,6 +704,13 @@ export async function devServer(
   re-linking is one command.
   */
   const auth = createAuthState()
+  /*
+  Guess-rate control for the 7-character link token: one redemption at a time, each taking at
+  least 100ms. Ten attempts a second against 32^7 is ~108 years; a person does not notice
+  100ms. Global rather than per-IP because every request over the tunnel arrives from
+  loopback — see dev-auth.ts.
+  */
+  const redeemGate = createRedemptionGate()
   const LINK_PARAM = 't'
 
   /**
@@ -1457,11 +1465,19 @@ export async function devServer(
       }
     }
     if (linkToken) {
-      const session = redeemLink(
-        auth,
-        linkToken,
-        Date.now(),
-        resolveLinkSettings(config.preview?.tunnel).policy
+      /*
+      Through the gate: serialized, and floored at 100ms whether it succeeds or fails.
+
+      Awaiting it here — rather than only on the failure branch — is what stops response time
+      answering "was that the right token?" for free.
+      */
+      const session = await redeemGate(() =>
+        redeemLink(
+          auth,
+          linkToken,
+          Date.now(),
+          resolveLinkSettings(config.preview?.tunnel).policy
+        )
       )
       const clean = urlWithoutToken(request.url, LINK_PARAM)
       const headers: Record<string, string> = {
@@ -1482,6 +1498,7 @@ export async function devServer(
         console.log('🔓 edit link redeemed — session issued')
         return new Response(null, { status: 302, headers })
       }
+
       /*
       A VALID SESSION TRUMPS A STALE LINK.
 

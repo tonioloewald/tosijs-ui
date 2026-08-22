@@ -177,6 +177,64 @@ export function redeemLink(state, token, now, policy = 'window') {
     state.sessions.set(session, now + SESSION_TTL_MS);
     return session;
 }
+/*
+Guess-rate control: redemption is SERIALIZED, and every attempt takes at least 100ms.
+
+Two lines of policy, and between them brute force stops being a thing that can happen.
+Concurrency of one means an attacker cannot parallelise across connections; a 100ms floor
+means the whole server answers at most ten redemption attempts per second no matter how many
+they open. Against 32⁷ ≈ 3.4 × 10¹⁰ that is ~108 years to exhaust, and within a single
+five-minute link window it is 3000 guesses — odds of about 1 in 11 million.
+
+**No lockout, deliberately.** An earlier version of this escalated the delay and then refused
+outright after N failures. Both were unnecessary once the rate is floored, and the lockout
+was actively worse: a lockout an attacker can trigger is a denial of service against the
+developer, on the one credential they need in order to work. There is no counter to reset, no
+threshold to tune, and no state that can be poisoned. What remains is a constant.
+
+**The floor applies to SUCCESS too**, which is the part worth not optimising away. Delaying
+only failures would leak the answer through response time and undo `safeEqual`'s constant-time
+comparison — the throttle would become the oracle. A uniform floor makes every attempt
+indistinguishable from the outside.
+
+**Global rather than per-IP, and that is not laziness.** Every request arriving over the
+tunnel comes from LOOPBACK — a reverse tunnel counterfeits "local" by construction, which is
+why `mayWriteSource` keys on the listener rather than the peer address. A per-IP limiter would
+bucket every remote attacker together with the legitimate user under `127.0.0.1`: it would not
+slow the attacker down, and it WOULD get in the developer's way. Global is also the honest
+unit, because legitimate redemptions are rare — you mint a link and type it once, maybe twice.
+
+100ms is below the threshold at which a person notices a page responding, so the cost lands
+entirely on the only party making thousands of attempts.
+*/
+export const REDEEM_MIN_MS = 100;
+/**
+ * Run redemptions one at a time, each occupying at least `minMs`.
+ *
+ * `minMs` is a parameter so tests can use a small one; nothing else should change it.
+ */
+export function createRedemptionGate(minMs = REDEEM_MIN_MS, now = Date.now) {
+    let tail = Promise.resolve();
+    return (work) => {
+        const result = tail.then(async () => {
+            const started = now();
+            try {
+                return work();
+            }
+            finally {
+                // In `finally`, so a throwing evaluation still occupies its slot — otherwise an
+                // input that reliably throws would be a way to run the gate at full speed.
+                const remaining = minMs - (now() - started);
+                if (remaining > 0) {
+                    await new Promise((resolve) => setTimeout(resolve, remaining));
+                }
+            }
+        });
+        // The queue must not stall on a rejection, and must not surface one as unhandled.
+        tail = result.then(() => undefined, () => undefined);
+        return result;
+    };
+}
 /** Is this session token live? */
 export function validSession(state, token, now) {
     if (!token)

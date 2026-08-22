@@ -14,6 +14,8 @@ import {
   mintToken,
   mintLinkToken,
   normalizeLinkToken,
+  createRedemptionGate,
+  REDEEM_MIN_MS,
 } from './dev-auth.js'
 
 const NOW = 1_700_000_000_000
@@ -567,4 +569,78 @@ test('a session outlives the link that issued it', () => {
   const session = redeemLink(state, token, 1000)!
   expect(redeemLink(state, token, 20 * 60 * 1000)).toBe(null) // link aged out
   expect(validSession(state, session, 20 * 60 * 1000)).toBe(true) // session did not
+})
+
+/*
+Guess-rate control: one redemption at a time, each occupying at least 100ms.
+
+Ten attempts a second against 32⁷ ≈ 3.4 × 10¹⁰ is roughly a century to exhaust, and 3000
+guesses inside a five-minute window — about 1 in 11 million. No lockout, so there is nothing
+an attacker can trigger to keep the developer out of their own workspace.
+*/
+
+test('attempts are serialized — concurrency is one', async () => {
+  const gate = createRedemptionGate(20)
+  let running = 0
+  let peak = 0
+  await Promise.all(
+    Array.from({ length: 6 }, () =>
+      gate(() => {
+        running += 1
+        peak = Math.max(peak, running)
+        running -= 1
+        return true
+      })
+    )
+  )
+  // The point: an attacker cannot buy throughput by opening more connections.
+  expect(peak).toBe(1)
+})
+
+test('each attempt occupies its slot, so throughput is capped', async () => {
+  const gate = createRedemptionGate(20)
+  const started = Date.now()
+  for (let i = 0; i < 5; i++) await gate(() => null)
+  // 5 attempts × 20ms; allow slop for timer granularity, but it cannot be near zero.
+  expect(Date.now() - started).toBeGreaterThanOrEqual(80)
+})
+
+test('the floor applies to SUCCESS as well as failure', async () => {
+  /*
+  Delaying only failures would leak the answer through response time and undo `safeEqual`'s
+  constant-time comparison — the throttle itself would become the oracle.
+  */
+  const gate = createRedemptionGate(30)
+  const time = async (result: unknown) => {
+    const t = Date.now()
+    await gate(() => result)
+    return Date.now() - t
+  }
+  expect(await time('a-session-token')).toBeGreaterThanOrEqual(25)
+  expect(await time(null)).toBeGreaterThanOrEqual(25)
+})
+
+test('a throwing attempt still occupies its slot, and does not stall the queue', async () => {
+  // Otherwise an input that reliably throws would be a way to run the gate at full speed —
+  // and one rejection would wedge every redemption after it.
+  const gate = createRedemptionGate(20)
+  const started = Date.now()
+  await expect(
+    gate(() => {
+      throw new Error('boom')
+    })
+  ).rejects.toThrow('boom')
+  expect(Date.now() - started).toBeGreaterThanOrEqual(15)
+  expect(await gate(() => 'still works')).toBe('still works')
+})
+
+test('the returned value is the work’s own', async () => {
+  const gate = createRedemptionGate(1)
+  expect(await gate(() => 42)).toBe(42)
+})
+
+test('the default floor is 100ms — a decision, not an accident', () => {
+  // Below what a person notices in a page response; ten attempts/sec for anyone brute
+  // forcing. If someone lowers this, the arithmetic in dev-auth.ts stops holding.
+  expect(REDEEM_MIN_MS).toBe(100)
 })

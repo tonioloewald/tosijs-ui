@@ -80,6 +80,14 @@ export declare function resolveLinkSettings(tunnel?: {
  * the set before the lookup. Widening reuse must not widen lifetime.
  */
 export declare function redeemLink(state: AuthState, token: string, now: number, policy?: LinkPolicy): string | null;
+export declare const REDEEM_MIN_MS = 100;
+export type RedemptionGate = <T>(work: () => T) => Promise<T>;
+/**
+ * Run redemptions one at a time, each occupying at least `minMs`.
+ *
+ * `minMs` is a parameter so tests can use a small one; nothing else should change it.
+ */
+export declare function createRedemptionGate(minMs?: number, now?: () => number): RedemptionGate;
 /** Is this session token live? */
 export declare function validSession(state: AuthState, token: string | undefined | null, now: number): boolean;
 /** Pull one cookie out of a Cookie header. */

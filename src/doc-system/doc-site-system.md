@@ -793,11 +793,20 @@ accepted as `1` and `O` as `0`, and hyphens are ignored, so someone who types wh
 _think_ they saw still gets in. The failure this designs out is a correct human being told
 they typed it wrong.
 
-Seven characters is ~35 bits, which is ample for what this actually is: an **online-only**
-guess against a `Map` lookup — there is no offline attack — for a token that is redeemed
-seconds after it is minted and which mints nothing but a write session that `mayWriteSource`
-still gates. At an absurd sustained 10⁴ guesses/sec across the whole five-minute window,
-P(hit) ≈ 0.01%.
+Seven characters is ~35 bits, and the server makes that plenty by capping how fast anyone
+can guess: **redemption is serialized, and every attempt takes at least 100ms** — success or
+failure alike. Ten attempts a second against 32⁷ ≈ 3.4 × 10¹⁰ is ~111 years to exhaust, and
+2,944 guesses inside a five-minute window: **about 1 in 11 million** (measured, not
+estimated — 20 concurrent attempts complete at 9.8/sec).
+
+Opening more connections buys nothing, because concurrency is one. The floor covers successes
+too, so response time cannot answer _was that the right token?_ — delaying only failures would
+turn the throttle into the oracle that `safeEqual`'s constant-time comparison exists to
+prevent.
+
+There is **no lockout**, on purpose: a lockout an attacker can trigger is a denial of service
+against you, on the one credential you need in order to work. Nothing to reset, nothing to
+tune, nothing to poison — just a constant.
 
 The **session** token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
 typed, and is the credential that actually authorises writes. That asymmetry is the design;
