@@ -1028,9 +1028,12 @@ estimated — 20 concurrent attempts complete at 9.8/sec).</p>
 too, so response time cannot answer <em>was that the right token?</em> — delaying only failures would
 turn the throttle into the oracle that <code>safeEqual</code>&#39;s constant-time comparison exists to
 prevent.</p>
+<p>After <strong>ten consecutive failures the slot widens to a second</strong> — another factor of ten
+against a guesser, and nothing at all against a human, who does not mistype seven characters
+ten times running and would wait a second if they did.</p>
 <p>There is <strong>no lockout</strong>, on purpose: a lockout an attacker can trigger is a denial of service
-against you, on the one credential you need in order to work. Nothing to reset, nothing to
-tune, nothing to poison — just a constant.</p>
+against you, on the one credential you need in order to work. The door never closes; it only
+gets slower to knock on.</p>
 <p>The <strong>session</strong> token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
 typed, and is the credential that actually authorises writes. That asymmetry is the design;
 only the half a human has to transcribe got shorter.</p>

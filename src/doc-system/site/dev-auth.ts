@@ -231,8 +231,13 @@ Guess-rate control: redemption is SERIALIZED, and every attempt takes at least 1
 Two lines of policy, and between them brute force stops being a thing that can happen.
 Concurrency of one means an attacker cannot parallelise across connections; a 100ms floor
 means the whole server answers at most ten redemption attempts per second no matter how many
-they open. Against 32⁷ ≈ 3.4 × 10¹⁰ that is ~108 years to exhaust, and within a single
-five-minute link window it is 3000 guesses — odds of about 1 in 11 million.
+they open. Against 32⁷ ≈ 3.4 × 10¹⁰ that is ~111 years to exhaust, and within a single
+five-minute link window it is ~2,900 guesses — odds of about 1 in 11 million.
+
+After **ten consecutive failures the slot widens to a second**, which costs a guesser another
+factor of ten and costs a human nothing: nobody mistypes seven characters ten times running,
+and if they somehow do, they wait a second. It is still not a lockout — the door never closes,
+it only gets slower to knock on.
 
 **No lockout, deliberately.** An earlier version of this escalated the delay and then refused
 outright after N failures. Both were unnecessary once the rate is floored, and the lockout
@@ -256,28 +261,64 @@ unit, because legitimate redemptions are rare — you mint a link and type it on
 entirely on the only party making thousands of attempts.
 */
 export const REDEEM_MIN_MS = 100
+/** Consecutive failures after which the slot widens. A human never reaches this. */
+export const SLOW_AFTER_FAILURES = 10
+/** The widened slot. Ten times slower for anyone guessing; unnoticed by anyone who is not. */
+export const REDEEM_SLOW_MS = 1000
 
 export type RedemptionGate = <T>(work: () => T) => Promise<T>
 
+export interface RedemptionGateOptions {
+  minMs?: number
+  slowMs?: number
+  slowAfter?: number
+  /** Did this evaluation succeed? Defaults to truthiness, which suits `string | null`. */
+  isSuccess?: (result: unknown) => boolean
+  now?: () => number
+}
+
 /**
- * Run redemptions one at a time, each occupying at least `minMs`.
+ * Run redemptions one at a time, each occupying a fixed slot.
  *
- * `minMs` is a parameter so tests can use a small one; nothing else should change it.
+ * The constants are parameters so tests can use small ones; nothing else should change them.
  */
 export function createRedemptionGate(
-  minMs: number = REDEEM_MIN_MS,
-  now: () => number = Date.now
+  options: RedemptionGateOptions = {}
 ): RedemptionGate {
+  const {
+    minMs = REDEEM_MIN_MS,
+    slowMs = REDEEM_SLOW_MS,
+    slowAfter = SLOW_AFTER_FAILURES,
+    isSuccess = (result: unknown) => Boolean(result),
+    now = Date.now,
+  } = options
   let tail: Promise<unknown> = Promise.resolve()
+  let failures = 0
   return <T>(work: () => T): Promise<T> => {
     const result = tail.then(async () => {
+      /*
+      The slot is decided BEFORE the work runs, from the failure count as it already stood.
+
+      This is the subtle half. If the duration were computed afterwards, a success would reset
+      the counter and return in 100ms while a failure returned in 1000ms — so the tenth
+      attempt would announce its own outcome by how long it took, which is precisely the
+      oracle `safeEqual`'s constant-time comparison exists to deny. Deciding up front makes
+      every attempt in a given state indistinguishable; the reset only affects what comes
+      after.
+      */
+      const slot = failures >= slowAfter ? slowMs : minMs
       const started = now()
       try {
-        return work()
+        const value = work()
+        failures = isSuccess(value) ? 0 : failures + 1
+        return value
+      } catch (error) {
+        // A throw is a failure, and still occupies its slot — otherwise an input that
+        // reliably throws would be a way to run the gate at full speed.
+        failures += 1
+        throw error
       } finally {
-        // In `finally`, so a throwing evaluation still occupies its slot — otherwise an
-        // input that reliably throws would be a way to run the gate at full speed.
-        const remaining = minMs - (now() - started)
+        const remaining = slot - (now() - started)
         if (remaining > 0) {
           await new Promise((resolve) => setTimeout(resolve, remaining))
         }

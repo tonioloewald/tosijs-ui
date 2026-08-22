@@ -81,13 +81,25 @@ export declare function resolveLinkSettings(tunnel?: {
  */
 export declare function redeemLink(state: AuthState, token: string, now: number, policy?: LinkPolicy): string | null;
 export declare const REDEEM_MIN_MS = 100;
+/** Consecutive failures after which the slot widens. A human never reaches this. */
+export declare const SLOW_AFTER_FAILURES = 10;
+/** The widened slot. Ten times slower for anyone guessing; unnoticed by anyone who is not. */
+export declare const REDEEM_SLOW_MS = 1000;
 export type RedemptionGate = <T>(work: () => T) => Promise<T>;
+export interface RedemptionGateOptions {
+    minMs?: number;
+    slowMs?: number;
+    slowAfter?: number;
+    /** Did this evaluation succeed? Defaults to truthiness, which suits `string | null`. */
+    isSuccess?: (result: unknown) => boolean;
+    now?: () => number;
+}
 /**
- * Run redemptions one at a time, each occupying at least `minMs`.
+ * Run redemptions one at a time, each occupying a fixed slot.
  *
- * `minMs` is a parameter so tests can use a small one; nothing else should change it.
+ * The constants are parameters so tests can use small ones; nothing else should change them.
  */
-export declare function createRedemptionGate(minMs?: number, now?: () => number): RedemptionGate;
+export declare function createRedemptionGate(options?: RedemptionGateOptions): RedemptionGate;
 /** Is this session token live? */
 export declare function validSession(state: AuthState, token: string | undefined | null, now: number): boolean;
 /** Pull one cookie out of a Cookie header. */

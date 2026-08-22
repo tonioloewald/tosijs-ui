@@ -804,9 +804,13 @@ too, so response time cannot answer _was that the right token?_ — delaying onl
 turn the throttle into the oracle that `safeEqual`'s constant-time comparison exists to
 prevent.
 
+After **ten consecutive failures the slot widens to a second** — another factor of ten
+against a guesser, and nothing at all against a human, who does not mistype seven characters
+ten times running and would wait a second if they did.
+
 There is **no lockout**, on purpose: a lockout an attacker can trigger is a denial of service
-against you, on the one credential you need in order to work. Nothing to reset, nothing to
-tune, nothing to poison — just a constant.
+against you, on the one credential you need in order to work. The door never closes; it only
+gets slower to knock on.
 
 The **session** token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
 typed, and is the credential that actually authorises writes. That asymmetry is the design;

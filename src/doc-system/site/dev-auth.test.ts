@@ -16,6 +16,8 @@ import {
   normalizeLinkToken,
   createRedemptionGate,
   REDEEM_MIN_MS,
+  REDEEM_SLOW_MS,
+  SLOW_AFTER_FAILURES,
 } from './dev-auth.js'
 
 const NOW = 1_700_000_000_000
@@ -580,7 +582,7 @@ an attacker can trigger to keep the developer out of their own workspace.
 */
 
 test('attempts are serialized — concurrency is one', async () => {
-  const gate = createRedemptionGate(20)
+  const gate = createRedemptionGate({ minMs: 20 })
   let running = 0
   let peak = 0
   await Promise.all(
@@ -598,7 +600,7 @@ test('attempts are serialized — concurrency is one', async () => {
 })
 
 test('each attempt occupies its slot, so throughput is capped', async () => {
-  const gate = createRedemptionGate(20)
+  const gate = createRedemptionGate({ minMs: 20 })
   const started = Date.now()
   for (let i = 0; i < 5; i++) await gate(() => null)
   // 5 attempts × 20ms; allow slop for timer granularity, but it cannot be near zero.
@@ -610,7 +612,7 @@ test('the floor applies to SUCCESS as well as failure', async () => {
   Delaying only failures would leak the answer through response time and undo `safeEqual`'s
   constant-time comparison — the throttle itself would become the oracle.
   */
-  const gate = createRedemptionGate(30)
+  const gate = createRedemptionGate({ minMs: 30 })
   const time = async (result: unknown) => {
     const t = Date.now()
     await gate(() => result)
@@ -623,7 +625,7 @@ test('the floor applies to SUCCESS as well as failure', async () => {
 test('a throwing attempt still occupies its slot, and does not stall the queue', async () => {
   // Otherwise an input that reliably throws would be a way to run the gate at full speed —
   // and one rejection would wedge every redemption after it.
-  const gate = createRedemptionGate(20)
+  const gate = createRedemptionGate({ minMs: 20 })
   const started = Date.now()
   await expect(
     gate(() => {
@@ -635,7 +637,7 @@ test('a throwing attempt still occupies its slot, and does not stall the queue',
 })
 
 test('the returned value is the work’s own', async () => {
-  const gate = createRedemptionGate(1)
+  const gate = createRedemptionGate({ minMs: 1 })
   expect(await gate(() => 42)).toBe(42)
 })
 
@@ -643,4 +645,67 @@ test('the default floor is 100ms — a decision, not an accident', () => {
   // Below what a person notices in a page response; ten attempts/sec for anyone brute
   // forcing. If someone lowers this, the arithmetic in dev-auth.ts stops holding.
   expect(REDEEM_MIN_MS).toBe(100)
+})
+
+test('after N consecutive failures the slot widens', async () => {
+  // Ten times slower for anyone guessing. Nobody mistypes seven characters ten times
+  // running, and if they somehow do, they wait a second.
+  const gate = createRedemptionGate({ minMs: 5, slowMs: 60, slowAfter: 3 })
+  const fail = () => gate(() => null).catch(() => null)
+  const time = async (fn: () => Promise<unknown>) => {
+    const t = Date.now()
+    await fn()
+    return Date.now() - t
+  }
+  expect(await time(fail)).toBeLessThan(40)
+  await fail()
+  await fail()
+  /*
+  The FOURTH attempt is the first slow one, with `slowAfter: 3`: the slot is chosen from the
+  count as it stands when the attempt begins, so three failures must have completed. That is
+  the literal reading of "after ten fails, start waiting a second", and it is forced by the
+  timing-safety rule below — the attempt that crosses the threshold must not be the one that
+  changes speed, or its duration would report its own outcome.
+  */
+  expect(await time(fail)).toBeGreaterThanOrEqual(50)
+})
+
+test('a success resets the widening', async () => {
+  const gate = createRedemptionGate({ minMs: 5, slowMs: 60, slowAfter: 2 })
+  await gate(() => null).catch(() => null)
+  await gate(() => null).catch(() => null)
+  await gate(() => 'a-session') // slow slot, but it resets the count
+  const t = Date.now()
+  await gate(() => 'a-session')
+  expect(Date.now() - t).toBeLessThan(40)
+})
+
+test('REGRESSION: the slot is decided BEFORE the work, so it cannot leak the outcome', async () => {
+  /*
+  The subtle half. If the duration were computed after the work, a success would reset the
+  counter and return fast while a failure returned slow — so the attempt that crosses the
+  threshold would announce its own outcome by how long it took. That is exactly the oracle
+  `safeEqual`'s constant-time comparison exists to deny.
+  */
+  const mk = () => createRedemptionGate({ minMs: 5, slowMs: 60, slowAfter: 2 })
+  const runTo = async (gate: ReturnType<typeof mk>, result: unknown) => {
+    await gate(() => null).catch(() => null)
+    await gate(() => null).catch(() => null)
+    const t = Date.now()
+    await gate(() => result).catch(() => null)
+    return Date.now() - t
+  }
+  const whenWrong = await runTo(mk(), null)
+  const whenRight = await runTo(mk(), 'a-session')
+  // Same state in, same time out — whatever the answer was.
+  expect(Math.abs(whenWrong - whenRight)).toBeLessThan(30)
+  expect(whenRight).toBeGreaterThanOrEqual(50)
+})
+
+test('the escalation constants are decisions, not accidents', () => {
+  expect(REDEEM_MIN_MS).toBe(100)
+  expect(SLOW_AFTER_FAILURES).toBe(10)
+  expect(REDEEM_SLOW_MS).toBe(1000)
+  // Still not a lockout: the door never closes, it only gets slower to knock on.
+  expect(REDEEM_SLOW_MS).toBeLessThan(5000)
 })
