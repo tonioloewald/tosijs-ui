@@ -15,6 +15,8 @@ import {
   mintLinkToken,
   normalizeLinkToken,
   createRedemptionGate,
+  RedemptionBusyError,
+  REDEEM_MAX_WAITING,
   REDEEM_MIN_MS,
   REDEEM_SLOW_MS,
   SLOW_AFTER_FAILURES,
@@ -708,4 +710,63 @@ test('the escalation constants are decisions, not accidents', () => {
   expect(REDEEM_SLOW_MS).toBe(1000)
   // Still not a lockout: the door never closes, it only gets slower to knock on.
   expect(REDEEM_SLOW_MS).toBeLessThan(5000)
+})
+
+test('the queue is BOUNDED — serialization must not become the weapon', async () => {
+  /*
+  Measured before the cap, at the real constants: 50 fire-and-forget junk requests delayed a
+  legitimate redemption by 42 seconds, and a 2/sec trickle grew the backlog faster than it
+  drained, so the denial outlasted the attack. The link's own TTL is evaluated when the work
+  finally runs, so a valid token could expire while queued — the exact denial of service the
+  no-lockout design exists to avoid, reintroduced by the anti-guessing mechanism.
+  */
+  const gate = createRedemptionGate({ minMs: 30, maxWaiting: 3 })
+  const accepted: Array<Promise<unknown>> = []
+  let refused = 0
+  for (let i = 0; i < 20; i++) {
+    const p = gate(() => null).catch((error) => {
+      if (error instanceof RedemptionBusyError) refused += 1
+      return null
+    })
+    accepted.push(p)
+  }
+  await Promise.all(accepted)
+  // 3 wait, the other 17 are turned away instantly rather than deepening the queue.
+  expect(refused).toBe(17)
+})
+
+test('overflow is refused INSTANTLY — it must cost the attacker, not us', async () => {
+  const gate = createRedemptionGate({ minMs: 200, maxWaiting: 1 })
+  const first = gate(() => null).catch(() => null)
+  const started = Date.now()
+  await expect(gate(() => null)).rejects.toBeInstanceOf(RedemptionBusyError)
+  // No slot paid, so a full queue cannot itself be used to hold connections open.
+  expect(Date.now() - started).toBeLessThan(50)
+  await first
+})
+
+test('the queue drains, so a refusal is momentary rather than sticky', async () => {
+  const gate = createRedemptionGate({ minMs: 10, maxWaiting: 2 })
+  await Promise.all([
+    gate(() => null).catch(() => null),
+    gate(() => null).catch(() => null),
+    gate(() => null).catch(() => null),
+  ])
+  // Once the burst clears, a legitimate attempt goes straight through.
+  expect(await gate(() => 'a-session')).toBe('a-session')
+})
+
+test('the rate limit is untouched by the cap', async () => {
+  // The bounded queue in front still pays the full slot: capping depth must not become a way
+  // to guess faster.
+  const gate = createRedemptionGate({ minMs: 25, maxWaiting: 8 })
+  const started = Date.now()
+  await Promise.all(
+    Array.from({ length: 4 }, () => gate(() => null).catch(() => null))
+  )
+  expect(Date.now() - started).toBeGreaterThanOrEqual(90)
+})
+
+test('the depth cap is a decision, not an accident', () => {
+  expect(REDEEM_MAX_WAITING).toBe(16)
 })

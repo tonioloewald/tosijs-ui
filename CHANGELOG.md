@@ -4,6 +4,16 @@
 
 _Notes in progress — see `bun run release-notes`._
 
+> **If you are on 1.10.0, this is a three-version jump.** 1.10.1 and 1.10.2 were tagged in
+> git but **never published to npm** — `latest` has been 1.10.0 the whole time. Nothing is
+> lost: every change in those two releases is in this one, and their notes are below where
+> they always were. They are simply not installable, so `npm i tosijs-ui@1.10.2` will fail
+> and the fixes you read about there arrive here instead.
+>
+> We are not back-publishing them. Version numbers are free, npm does not require
+> contiguity, and rebuilding two superseded tags with today's toolchain would be real work
+> for no adopter benefit — the only thing worth preserving is the notes, and those are kept.
+
 ### Housekeeping: we published a preview address, and rotated it
 
 Our own `tosijs-site.config.ts` committed the preview host as an ssh target

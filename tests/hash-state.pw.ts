@@ -9,6 +9,16 @@ component's own doc page, which loads the iife and therefore exposes `xinjsui`.
 */
 
 const setup = async (page: any) => {
+  /*
+  The page's own inline doc test writes `demo.q=widget` into the hash, asynchronously, and
+  can land AFTER this setup clears it — which made the round-trip assertion fail on WebKit
+  roughly one run in four with a hash containing both namespaces. Turning the background
+  runner off is the same fix `tests/table-edit.pw.ts` needed, for the same reason: a doc page
+  under test is also a page running tests.
+  */
+  await page.addInitScript(() =>
+    localStorage.setItem('tosijs-ui-tests-enabled', 'false')
+  )
   await page.goto('/hash-state/')
   await page.waitForFunction(() => (window as any).xinjsui?.hashState)
   // Start from a known hash; the doc-browser routes on the path, not the hash.

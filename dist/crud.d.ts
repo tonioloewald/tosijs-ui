@@ -90,6 +90,7 @@ export declare class TosiCrud extends WebComponent<CrudParts> {
     private _schema;
     private _rows;
     private _selected;
+    private _loaded;
     private _error;
     private _pending;
     private _listSeq;

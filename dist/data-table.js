@@ -2429,6 +2429,22 @@ export class TosiTable extends WebComponent {
     }
     handleKeyNav = (event) => {
         const el = event.target;
+        /*
+        Grid navigation must not steal keys from an editable cell.
+    
+        Arrows, Home and End belong to the CARET while you are typing. Swallowing them meant the
+        caret could not be moved and focus jumped to another cell mid-edit — committing a partial
+        edit through the blur — and on an enum `<select>` ArrowUp/Down meant the cell could not be
+        changed by keyboard at all.
+    
+        Escape and Tab are deliberately still ours: Escape leaves the cell, Tab moves on, and both
+        are what a keyboard user reaches for to GET OUT. Everything else is the input's.
+        */
+        if (el.closest('[data-edit-prop]') &&
+            event.key !== 'Escape' &&
+            event.key !== 'Tab') {
+            return;
+        }
         const target = el.closest('.td') || el.closest('.th');
         if (!target)
             return;

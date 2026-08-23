@@ -383,6 +383,17 @@ export class TosiCrud extends WebComponent<CrudParts> {
   private _schema: JSONSchema | null = null
   private _rows: any[] = []
   private _selected: any = null
+  /*
+  The exact object last pushed INTO the form.
+
+  Identity against `_selected` is what decides whether the form needs loading, and it has to
+  be tracked separately because editing produces a NEW object every keystroke: `setByPath` is
+  immutable, so `form.value !== _selected` is permanently true after the first character. The
+  previous guard used exactly that comparison and therefore wrote the stale record back over
+  the user's edit on the next render — roughly one frame later, with no other action, and
+  `save()` then posted the unedited record.
+  */
+  private _loaded: any = null
   private _error = ''
   private _pending = 0
   /*
@@ -545,6 +556,7 @@ export class TosiCrud extends WebComponent<CrudParts> {
     if (!this._store?.delete || !this._selected) return
     await this.run('delete', () => this._store!.delete!(this._selected))
     this._selected = null
+    this._loaded = null
     this._hash?.set('id', undefined)
     await this.refresh()
     this.queueRender()
@@ -607,7 +619,17 @@ export class TosiCrud extends WebComponent<CrudParts> {
     this.parts.newButton.onclick = () => this.createNew()
     this.parts.saveButton.onclick = () => void this.save()
     this.parts.deleteButton.onclick = () => void this.remove()
-    this.parts.form.addEventListener('change', () => this.queueRender())
+    /*
+    The form's model IS the edit in progress, so the selection follows it.
+
+    Without this, `_selected` stays at the record as loaded while the form moves on, and every
+    subsequent render has a stale object to put back.
+    */
+    this.parts.form.addEventListener('change', () => {
+      this._selected = this.parts.form.value
+      this._loaded = this._selected
+      this.queueRender()
+    })
     this.parts.search.value = this.search
 
     void this.refresh()
@@ -631,8 +653,20 @@ export class TosiCrud extends WebComponent<CrudParts> {
   private showSelected(): void {
     if (!this.hydrated) return
     this.parts.detail.hidden = !this._selected
-    if (this._selected && this.parts.form.value !== this._selected) {
+    /*
+    Load only when the SELECTION changed. A render must never push a record the user is in
+    the middle of editing.
+
+    This and the form's `change` listener below are INDEPENDENTLY SUFFICIENT — mutation
+    testing showed either alone fixes the revert, so removing one leaves every test green.
+    Both are kept because both are correct on their own terms: this is the right guard
+    (identity of what was loaded, not of some derived object), and the listener is required
+    regardless so that `crud.value` and `save()` see the edit. Deleting BOTH turns
+    `tests/crud.pw.ts` red, which is the behaviour that actually matters.
+    */
+    if (this._selected && this._loaded !== this._selected) {
       this.parts.form.value = this._selected
+      this._loaded = this._selected
     }
   }
 

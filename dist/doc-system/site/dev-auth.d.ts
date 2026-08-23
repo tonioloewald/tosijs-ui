@@ -85,11 +85,40 @@ export declare const REDEEM_MIN_MS = 100;
 export declare const SLOW_AFTER_FAILURES = 10;
 /** The widened slot. Ten times slower for anyone guessing; unnoticed by anyone who is not. */
 export declare const REDEEM_SLOW_MS = 1000;
+/**
+ * How many attempts may be WAITING at once before the rest are turned away.
+ *
+ * Without a cap, serialization is itself the weapon: the queue is unbounded and reachable
+ * unauthenticated, so junk requests accumulate and a legitimate redemption waits behind all
+ * of them. Measured at the real constants — 50 fire-and-forget requests delayed a valid link
+ * by **42 seconds**, and a 2/sec trickle grew the backlog faster than it drained, so the
+ * denial outlasted the attack. Worse, the link's own 5-minute TTL is evaluated when the work
+ * finally runs, so the valid token can EXPIRE while queued.
+ *
+ * This is the exact denial of service the no-lockout design was chosen to avoid, reintroduced
+ * by the mechanism meant to prevent guessing. A depth cap turns it back into what it should
+ * be: overflow is refused instantly and cheaply, while the ~16 in front still pay the full
+ * slot, so the rate limit is untouched.
+ *
+ * **What this does NOT fix, stated plainly:** under a sustained flood a legitimate redemption
+ * is *refused* (503, `Retry-After: 2`) rather than served. There is no way around that here —
+ * every request over the tunnel arrives from loopback, so there is no identity to prioritise
+ * on. What the cap buys is that the failure is immediate and honest instead of a 42-second
+ * wait, and that the caller can retry into a queue which drains in ~1.6s at depth 16. The
+ * caller also captures the clock on ARRIVAL, so time spent queued can no longer expire the
+ * very token being redeemed.
+ */
+export declare const REDEEM_MAX_WAITING = 16;
 export type RedemptionGate = <T>(work: () => T) => Promise<T>;
+/** Thrown when the queue is full. The caller answers 503 rather than waiting. */
+export declare class RedemptionBusyError extends Error {
+    constructor();
+}
 export interface RedemptionGateOptions {
     minMs?: number;
     slowMs?: number;
     slowAfter?: number;
+    maxWaiting?: number;
     /** Did this evaluation succeed? Defaults to truthiness, which suits `string | null`. */
     isSuccess?: (result: unknown) => boolean;
     now?: () => number;

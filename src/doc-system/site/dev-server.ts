@@ -33,6 +33,7 @@ import {
   readCookie,
   redeemLink,
   createRedemptionGate,
+  RedemptionBusyError,
   resolveLinkSettings,
   sessionCookie,
   urlWithoutToken,
@@ -1471,14 +1472,42 @@ export async function devServer(
       Awaiting it here — rather than only on the failure branch — is what stops response time
       answering "was that the right token?" for free.
       */
-      const session = await redeemGate(() =>
-        redeemLink(
-          auth,
-          linkToken,
-          Date.now(),
-          resolveLinkSettings(config.preview?.tunnel).policy
+      /*
+      The clock is read on ARRIVAL, not when the work runs.
+
+      `Date.now()` inside the closure meant a token that was valid when the user clicked
+      could EXPIRE while queued behind other attempts — the queue silently consuming the
+      credential's five-minute life. Capturing it here makes the wait cost latency and
+      nothing else.
+      */
+      const arrivedAt = Date.now()
+      let session: string | null
+      try {
+        session = await redeemGate(() =>
+          redeemLink(
+            auth,
+            linkToken,
+            arrivedAt,
+            resolveLinkSettings(config.preview?.tunnel).policy
+          )
         )
-      )
+      } catch (error) {
+        /*
+        The queue was full. Answer immediately and cheaply rather than joining it — an
+        unbounded queue on an unauthenticated path IS the denial of service, and the one it
+        would hit hardest is the developer holding a real link whose 5-minute TTL is ticking
+        while they wait behind junk.
+        */
+        if (!(error instanceof RedemptionBusyError)) throw error
+        return new Response('Busy — try that link again.', {
+          status: 503,
+          headers: {
+            'Retry-After': '2',
+            'Cache-Control': 'no-store',
+            'Referrer-Policy': 'no-referrer',
+          },
+        })
+      }
       const clean = urlWithoutToken(request.url, LINK_PARAM)
       const headers: Record<string, string> = {
         Location: clean,
