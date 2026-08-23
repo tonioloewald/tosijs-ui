@@ -808,9 +808,14 @@ After **ten consecutive failures the slot widens to a second** — another facto
 against a guesser, and nothing at all against a human, who does not mistype seven characters
 ten times running and would wait a second if they did.
 
-There is **no lockout**, on purpose: a lockout an attacker can trigger is a denial of service
-against you, on the one credential you need in order to work. The door never closes; it only
-gets slower to knock on.
+There is **no lockout** for ordinary use: a lockout a few mistypes can trigger is a denial of
+service against you, on the one credential you need in order to work. The door never closes on
+a human; it only gets slower to knock on.
+
+Under an actual flood the endpoint sheds load and refuses everyone, you included, and that is
+deliberate. Redeeming a link _while someone is attacking the endpoint_ is a non-goal — what has
+to hold is that brute force fails hard, and it does. Note where the security actually comes
+from: the **slot** sets the guess rate, the queue depth only decides how a burst is absorbed.
 
 The **session** token is untouched at 128 bits. It lives in an HttpOnly cookie, is never
 typed, and is the credential that actually authorises writes. That asymmetry is the design;

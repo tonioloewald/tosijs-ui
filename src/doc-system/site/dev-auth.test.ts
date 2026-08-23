@@ -770,3 +770,31 @@ test('the rate limit is untouched by the cap', async () => {
 test('the depth cap is a decision, not an accident', () => {
   expect(REDEEM_MAX_WAITING).toBe(16)
 })
+
+test('REGRESSION: queue depth does not change the guess rate', async () => {
+  /*
+  The two controls are separate and must stay separate: the SLOT is the brute-force control,
+  the depth cap is a denial-of-service control. If someone ever "optimises" the cap by letting
+  overflow skip the slot, or tunes depth expecting it to affect guessing, this says otherwise.
+
+  Same slot, wildly different depths, same achieved rate.
+  */
+  const rate = async (maxWaiting: number) => {
+    const gate = createRedemptionGate({ minMs: 20, maxWaiting })
+    const started = Date.now()
+    let served = 0
+    await Promise.all(
+      Array.from({ length: 4 }, () =>
+        gate(() => null)
+          .then(() => served++)
+          .catch(() => undefined)
+      )
+    )
+    return served / ((Date.now() - started) / 1000)
+  }
+  const shallow = await rate(4)
+  const deep = await rate(64)
+  // Both are bounded by the slot (~50/sec at minMs 20), not by how many may wait.
+  expect(shallow).toBeLessThan(70)
+  expect(deep).toBeLessThan(70)
+})

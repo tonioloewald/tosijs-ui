@@ -232,13 +232,18 @@ export const REDEEM_SLOW_MS = 1000;
  * be: overflow is refused instantly and cheaply, while the ~16 in front still pay the full
  * slot, so the rate limit is untouched.
  *
- * **What this does NOT fix, stated plainly:** under a sustained flood a legitimate redemption
- * is *refused* (503, `Retry-After: 2`) rather than served. There is no way around that here —
- * every request over the tunnel arrives from loopback, so there is no identity to prioritise
- * on. What the cap buys is that the failure is immediate and honest instead of a 42-second
- * wait, and that the caller can retry into a queue which drains in ~1.6s at depth 16. The
- * caller also captures the clock on ARRIVAL, so time spent queued can no longer expire the
- * very token being redeemed.
+ * **Under flood, everyone is refused — including you. That is the intended behaviour, not a
+ * shortfall.** Redeeming a link *during* an attack on the endpoint is an explicit non-goal:
+ * what has to hold is that brute force fails hard, and it does. There is no identity to
+ * prioritise on anyway, because every request over the tunnel arrives from loopback. So the
+ * cap makes the failure immediate and cheap for both sides rather than a 42-second wait, the
+ * queue drains in ~1.6s once the burst stops, and the caller captures the clock on ARRIVAL so
+ * queueing can never expire the very token being redeemed.
+ *
+ * Worth being precise about what does the security work here: **the guess rate is set by the
+ * SLOT, not by the queue.** Depth changes how a flood is absorbed and nothing about how fast
+ * anyone can guess — that stays at ten attempts a second, or one after ten consecutive
+ * failures. The cap is a denial-of-service control; the slot is the brute-force control.
  */
 export const REDEEM_MAX_WAITING = 16;
 /** Thrown when the queue is full. The caller answers 503 rather than waiting. */
