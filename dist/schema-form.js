@@ -699,6 +699,22 @@ install it. Resolved lazily and cached; when it is absent the form renders and e
 as it otherwise would and simply reports no errors — which is a smaller failure than refusing
 to render at all.
 */
+/*
+The specifier is LITERAL, and that is a live problem — see B2 in RELEASE-REVIEW-1.11.md.
+
+A literal specifier makes bundlers resolve `tosijs-schema` at build time: good for a consumer
+who installed it (their bundle contains the validator and it runs), fatal for one who did not
+(`failed to resolve import` from a package we told them was optional).
+
+Making the specifier a variable was tried and is WORSE, not better: bundlers then leave a bare
+`import('tosijs-schema')` in the output, which no browser can resolve, so validation dies
+silently for everyone INCLUDING consumers who installed the peer. Measured — the doc site's
+own iife stopped containing the validator and two lanes went red.
+
+A bare specifier is either bundled (must resolve) or not (cannot run in a browser); there is
+no middle. The real fix is a registration seam, and it is a decision about public API rather
+than a code tweak.
+*/
 let validateFn;
 let inferFn;
 async function loadSchemaLib() {

@@ -1,4 +1,4 @@
-import type { JSONSchema } from 'tosijs-schema';
+import type { JSONSchema } from './json-schema.js';
 export declare const ENFORCED: Set<string>;
 /**
  * The constraining keywords in `schema` that `validate` ignores, deduped and sorted.

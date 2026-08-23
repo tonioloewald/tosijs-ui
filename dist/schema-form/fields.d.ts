@@ -1,4 +1,4 @@
-import type { JSONSchema } from 'tosijs-schema';
+import type { JSONSchema } from './json-schema.js';
 /** What kind of control a field wants. The component maps this to elements. */
 export type FieldKind = 'string' | 'number' | 'integer' | 'boolean' | 'enum' | 'const' | 'unsupported';
 /** A nested object: its own label, and the fields inside it. */

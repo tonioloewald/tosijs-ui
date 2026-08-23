@@ -993,7 +993,7 @@ import {
   ValueRenderer,
   ValueRendererType,
 } from './value-renderer.js'
-import type { JSONSchema } from 'tosijs-schema'
+import type { JSONSchema } from './schema-form/json-schema.js'
 import {
   fieldForProperty,
   collectErrors,
@@ -1044,6 +1044,23 @@ Validation is OPTIONAL, exactly as it is for `<tosi-schema-form>`.
 schema library gets one: edits work, and nothing is reported wrong because nothing described
 what right would be.
 */
+/*
+The specifier is LITERAL, and that is a live problem — see B2 in RELEASE-REVIEW-1.11.md.
+
+A literal specifier makes bundlers resolve `tosijs-schema` at build time: good for a consumer
+who installed it (their bundle contains the validator and it runs), fatal for one who did not
+(`failed to resolve import` from a package we told them was optional).
+
+Making the specifier a variable was tried and is WORSE, not better: bundlers then leave a bare
+`import('tosijs-schema')` in the output, which no browser can resolve, so validation dies
+silently for everyone INCLUDING consumers who installed the peer. Measured — the doc site's
+own iife stopped containing the validator and two lanes went red.
+
+A bare specifier is either bundled (must resolve) or not (cannot run in a browser); there is
+no middle. The real fix is a registration seam, and it is a decision about public API rather
+than a code tweak.
+*/
+
 let validateFn: ((v: any, s: any, onError: any) => boolean) | null | undefined
 async function loadValidator(): Promise<void> {
   if (validateFn !== undefined) return

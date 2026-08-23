@@ -16,7 +16,7 @@ impossible rather than merely fixed:
   cannot be dropped on save.
 */
 
-import type { JSONSchema } from 'tosijs-schema'
+import type { JSONSchema } from './json-schema.js'
 import { unenforcedKeywords } from './unenforced.js'
 
 /** What kind of control a field wants. The component maps this to elements. */

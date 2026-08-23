@@ -1,5 +1,5 @@
 import { elements, type XinStyleSheet } from 'tosijs';
-import type { JSONSchema } from 'tosijs-schema';
+import type { JSONSchema } from './json-schema.js';
 /** What a plugin is handed. `set` writes the model — the plugin never owns the value. */
 export interface FieldPluginContext {
     schema: JSONSchema;

@@ -15,7 +15,7 @@ and for this walker to be exported (`agentContract` already computes it internal
 by throwing). **Delete this file when that lands.**
 */
 
-import type { JSONSchema } from 'tosijs-schema'
+import type { JSONSchema } from './json-schema.js'
 
 /*
 Mirrors `ENFORCED_KEYWORDS` from tosijs-schema 1.7.0.

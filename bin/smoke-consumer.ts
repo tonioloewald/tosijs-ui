@@ -118,7 +118,19 @@ try {
       `preview.textContent = hello\n` +
       '```\n'
   )
-  await Bun.write(`${proj}/src/entry.ts`, `export const hello = 'hi'\n`)
+  /*
+  The entry IMPORTS the library. It used to be a bare `export const`, so the bundle step
+  proved the pipeline ran and nothing whatever about what the package pulls in — which is how
+  a runtime `import('tosijs-schema')` for a package declared in no dependency field reached a
+  release. A build that never resolves our imports cannot fail on them.
+  */
+  await Bun.write(
+    `${proj}/src/entry.ts`,
+    `import { tosiTable } from 'tosijs-ui'\n` +
+      `import { tosiSchemaForm } from 'tosijs-ui/schema-form'\n` +
+      `export const hello = 'hi'\n` +
+      `export const used = [tosiTable, tosiSchemaForm].length\n`
+  )
   await Bun.write(
     `${proj}/build.ts`,
     `import { buildSite } from 'tosijs-ui/site'\n` +
@@ -137,6 +149,43 @@ try {
     'tarball installs',
     install.exitCode === 0,
     install.stderr.toString().slice(0, 300)
+  )
+
+  /*
+  TYPECHECK the installed package with `skipLibCheck: false` and the optional peers ABSENT.
+
+  This is the check that would have caught the `tosijs-schema` regression, and none of the
+  other lanes could: `import type { X } from 'an-optional-peer'` is erased from emitted JS but
+  NOT from emitted `.d.ts`, so it becomes a hard requirement for every consumer's `tsc` while
+  every in-repo lane stays green — the peer is installed here.
+
+  Declaring the peer optional does NOT fix it; TypeScript has no notion of an optional peer.
+  The fix is to not import the type at all (`src/schema-form/json-schema.ts`).
+  */
+  await Bun.write(
+    `${proj}/tsconfig.json`,
+    JSON.stringify(
+      {
+        compilerOptions: {
+          module: 'esnext',
+          moduleResolution: 'bundler',
+          target: 'es2022',
+          strict: true,
+          noEmit: true,
+          // The point of the check: a consumer who has NOT opted out of checking our types.
+          skipLibCheck: false,
+        },
+        include: ['src'],
+      },
+      null,
+      2
+    )
+  )
+  const typecheck = await $`bun x tsc@5.9 --noEmit`.cwd(proj).nothrow().quiet()
+  check(
+    'an installed consumer typechecks with skipLibCheck:false and no optional peers',
+    typecheck.exitCode === 0,
+    (typecheck.stdout.toString() + typecheck.stderr.toString()).slice(0, 400)
   )
 
   // ── the bins, through the .bin shims ──────────────────────────────────────

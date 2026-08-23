@@ -1,5 +1,5 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
-import type { JSONSchema } from 'tosijs-schema';
+import type { JSONSchema } from './schema-form/json-schema.js';
 import { type FieldError } from './schema-form/fields.js';
 export { registerFieldPlugin, type FieldPlugin, type FieldPluginContext, } from './schema-form/plugins.js';
 export declare class TosiSchemaForm extends WebComponent {

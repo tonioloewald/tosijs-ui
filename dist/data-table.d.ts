@@ -2,7 +2,7 @@ import { Component as WebComponent, ElementCreator } from 'tosijs';
 import { SortCallback } from './make-sorter.js';
 import { RowGroupIdFn, GroupCount } from './row-grouping.js';
 import { ValueRendererType } from './value-renderer.js';
-import type { JSONSchema } from 'tosijs-schema';
+import type { JSONSchema } from './schema-form/json-schema.js';
 export interface ColumnOptions {
     name?: string;
     prop: string;
