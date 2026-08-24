@@ -719,6 +719,12 @@ written**: the annotation escapes in both directions. Re-run it as the last thin
 `git tag`, and treat its exit code as the contract — the whole point of the tool is that it is
 the one thing that cannot be talked out of noticing.
 
+**The last commit before `git tag` must carry only `[note]` bullets, or the loop does not
+terminate.** Writing up commit N's annotations is itself commit N+1, which has annotations of
+its own. Fold the write-up into the CHANGELOG, then land it with `[note]` only — internal
+process detail is exactly what `[note]` is for, and it is the only tag the gate does not
+demand prose for.
+
 `release-check` fails when an annotation since the last tag appears nowhere in
 `CHANGELOG.md`, and separately reports any commit whose `[fix]`/`[new]` bullets are
 contradicted by a **markdown-only diff**. That second check is not pedantry: three entries

@@ -148,6 +148,19 @@ new subpaths from an installed tarball, a `tsc --noEmit` over an installed consu
 `skipLibCheck: false` and no optional peers, a bundle entry that actually imports the library,
 and both vendored types pinned by assignability tests in both directions.
 
+### Process
+
+- **`bun run release-check` must run AFTER the release commit, and it is the last thing before
+  `git tag`.** The range is `<last tag>..HEAD`, so a bullet written _in_ the release commit is
+  not in the range you checked a moment earlier — 1.11.0 shipped a commit whose body claimed
+  the gate was green while it exited 1 on the state that commit created. The range is also
+  exclusive of the since-commit, so tagging turns the gate green without the bullet ever being
+  written: the annotation escapes in both directions. Now documented in `CLAUDE.md`.
+- The `unenforced.ts` parity test is a **subset** check rather than equality. Upstream growing
+  the set of keywords it enforces is good news, and an equality assertion turned that into a
+  red build. Upstream _shrinking_ below our fallback is the dangerous direction — the fallback
+  would claim a keyword is checked when it is not — and that is still caught.
+
 ### Known issues
 
 - **[#102](https://github.com/tonioloewald/tosijs-ui/issues/102)** — `<tosi-table>`'s header
