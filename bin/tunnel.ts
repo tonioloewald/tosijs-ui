@@ -102,6 +102,25 @@ const publicUrl = flag('url') ?? preview?.tunnel?.url
 // Set by the registration step below; no public URL means there is no route to fail.
 let routed = true
 
+/*
+Say where this is going, and where the address came from, BEFORE acting on it.
+
+`tosijs-deploy` is dry-run by default and prints its target; this bin is not — it `ssh`s,
+`scp`s a Caddy fragment and reloads Caddy on the resolved host. Now that a machine-global
+`~/local-secrets/tosijs-preview.env` can supply the address, "which box is this?" has to be
+answerable without reading three files. The config outranks that file precisely so a project
+that names its own host cannot be redirected, but silence would still be wrong.
+*/
+const hostSource = flag('host')
+  ? '--host'
+  : process.env.PREVIEW_HOST
+  ? 'PREVIEW_HOST'
+  : process.env.PREVIEW_SSH
+  ? 'PREVIEW_SSH (legacy)'
+  : preview?.host
+  ? 'site config'
+  : '~/local-secrets/tosijs-preview.env'
+
 if (!host) {
   console.error(
     `\nNo tunnel host. Set \`preview.host\` in your site config, or pass --host=user@box.\n`
@@ -117,6 +136,8 @@ pgrep pattern that matches only OUR forward, so --close can't kill someone else'
 `*` change the pattern's meaning outright. Unescaped, `me@a.b` also matches `me@axb`.
 */
 const rx = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+console.log(`🔌 tunnel host: ${host}  (from ${hostSource})`)
+
 const pattern = `ssh .*-R ${remotePort}:localhost:${tunnelLocalPort} ${rx(
   String(host)
 )}`
@@ -154,7 +175,10 @@ if (has('link')) {
     )
     process.exit(1)
   }
-  console.log(`\n🔗 Single-use edit link (valid 15 min):\n   ${url}\n`)
+  // Wording derived from nothing is wording that goes stale: this said "single-use, 15 min"
+  // for a link that has been reusable for five minutes since 1.11.0. The server prints the
+  // authoritative version (with the code on its own line); this is the one-line echo.
+  console.log(`\n🔗 Edit link:\n   ${url}\n`)
   process.exit(0)
 }
 

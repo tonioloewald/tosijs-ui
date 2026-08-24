@@ -369,9 +369,17 @@ Filed during the 1.7 adoption (CodeMirror + first-class tjs + inline WASM), agai
 
 ### Open (waiting on tjs-lang)
 
-_**Status checked 2026-07-27: no movement.** #9, #11, #13, #14 all still OPEN; latest published
-tjs-lang is **0.12.0** (2026-07-20) — the version we ship — so no new release carries a fix. Our
-workarounds (documented per-issue below) stay._
+_**Status checked 2026-08-24.** Latest published tjs-lang is **0.13.2**, and we now ship
+`^0.13.1` / dev-pin `0.13.2` (`TJS_VERSION` in `code-transform.ts` moved in lockstep). Re-poll
+#9, #11, #13, #14 against 0.13.x — the note below that "no new release carries a fix" described
+0.12.0 and is stale by two minors._
+
+> **Why the upgrade was not optional.** `tjs-lang@0.12.0` is **deprecated on npm**, and the
+> deprecation text names our own combination: _"tosijs-schema >=1.5.0 breaks the battery atoms'
+> output validation in these versions. Upgrade to 0.13.1."_ — while 1.11.0 declares
+> `tosijs-schema` at `^1.7.0`. Worse for adopters, `^0.12.0` does not admit 0.13.x (caret pins
+> the minor on `0.x`), so anyone on current tjs-lang got a hard `ERESOLVE`. Found by the
+> 1.11.0 nine-lens review as M13; tracked as tosijs-ui#98.
 
 - **[#9](https://github.com/tonioloewald/tjs-lang/issues/9) — Passing a non-`wasmBuffer`
   typed array silently copies it on every call.** The wrapper only takes the zero-copy

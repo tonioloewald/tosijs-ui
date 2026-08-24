@@ -194,10 +194,18 @@ export function readLocalSecret(
 }
 
 /**
- * `--host=` > `PREVIEW_HOST` > `PREVIEW_SSH` (legacy) > `~/local-secrets` > site config.
+ * `--host=` > `PREVIEW_HOST` > `PREVIEW_SSH` (legacy) > **site config** > `~/local-secrets`.
  *
- * The site config is LAST and is expected to be empty in a public repo — a committed
- * address means any fork running `bun run tunnel` opens outbound SSH to your box.
+ * The project's own config outranks the machine-global file, and that ordering is the whole
+ * point of the file being last. `~/local-secrets/tosijs-preview.env` holds ONE host for the
+ * whole machine; if it outranked a project that names its own, then checking out someone
+ * else's repo and running `tosijs-tunnel` would quietly point it at YOUR box — and the tunnel
+ * does not merely print a target, it `ssh`s, `scp`s a Caddy fragment and reloads Caddy there.
+ * A machine-wide default must not silently redirect a project that was explicit.
+ *
+ * It still sits above nothing at all, which is what makes it useful: a repo following the
+ * practice has no host in its config, so the file is what supplies one — including for
+ * scripts and agents, which inherit no interactive shell profile.
  */
 export function resolvePreviewHost(
   flagHost?: string,
@@ -207,8 +215,8 @@ export function resolvePreviewHost(
     flagHost ??
     process.env.PREVIEW_HOST ??
     process.env.PREVIEW_SSH ??
-    readLocalSecret('PREVIEW_HOST') ??
-    configHost
+    configHost ??
+    readLocalSecret('PREVIEW_HOST')
   )
 }
 

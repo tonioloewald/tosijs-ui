@@ -352,8 +352,10 @@ export interface SiteConfig {
          * ssh target, e.g. `root@203.0.113.10` or `deploy@preview.example.com`.
          *
          * OPTIONAL, because the documented practice is to keep it out of a committed config and
-         * supply it from `PREVIEW_HOST` — which is also the bins' own resolution order
-         * (`--host=` > `PREVIEW_HOST` > this). Typing it as required made a config that followed
+         * supply it from `PREVIEW_HOST`. The bins resolve `--host=` > `PREVIEW_HOST` >
+         * `PREVIEW_SSH` (legacy) > **this** > `~/local-secrets/tosijs-preview.env` — the
+         * machine-global file is LAST on purpose, so a project that names its own host can never
+         * be silently redirected at someone else's box. Typing it as required made a config that followed
          * the practice fail typecheck, and the workaround (`host: process.env.PREVIEW_HOST ?? ''`)
          * is noise that means nothing at runtime. Every bin that needs a host already checks for
          * one and prints how to supply it, so absence is handled where it is felt (#72).

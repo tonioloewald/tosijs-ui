@@ -47,16 +47,28 @@ test('it is not a shell: a value that looks like code is read as text', () => {
   expect(readLocalSecret('PREVIEW_HOST', weird)).toBe('$(whoami)@box')
 })
 
-test('precedence: flag > env > legacy env > config', () => {
-  // `~/local-secrets` sits between the env vars and the config; it is not exercised here
-  // because its position is a fact about the developer's machine, and a test that reads the
-  // real file passes or fails depending on whose machine it runs on.
+test('precedence: flag > env > legacy env > config > ~/local-secrets', () => {
   expect(resolvePreviewHost('a@flag', 'c@config')).toBe('a@flag')
   process.env.PREVIEW_HOST = 'b@env'
   expect(resolvePreviewHost(undefined, 'c@config')).toBe('b@env')
   delete process.env.PREVIEW_HOST
   process.env.PREVIEW_SSH = 'l@legacy'
   expect(resolvePreviewHost(undefined, 'c@config')).toBe('l@legacy')
+})
+
+test('REGRESSION: a project that names its own host is never redirected', () => {
+  /*
+  `~/local-secrets/tosijs-preview.env` holds ONE host for the whole machine. When it
+  outranked the site config — which is how this shipped earlier today — checking out someone
+  else's repo and running `tosijs-tunnel` pointed it at YOUR box, and that bin does not merely
+  print a target: it ssh's, scp's a Caddy fragment and reloads Caddy there.
+
+  A machine-wide default must lose to a project that was explicit. It is still ahead of
+  nothing, which is what makes it useful for a repo that follows the practice and commits no
+  host at all.
+  */
+  const configWins = resolvePreviewHost(undefined, 'theirs@their-box')
+  expect(configWins).toBe('theirs@their-box')
 })
 
 test('REGRESSION: this repo does not commit a preview host', async () => {

@@ -772,7 +772,7 @@ host and deploy:</p>
 }
 </code></pre>
 <p><strong>Do not put <code>host</code> in a committed config.</strong> The bins resolve
-<code>--host=</code> &gt; <code>PREVIEW_HOST</code> &gt; <code>PREVIEW_SSH</code> &gt; <code>~/local-secrets/tosijs-preview.env</code> &gt; config,
+<code>--host=</code> &gt; <code>PREVIEW_HOST</code> &gt; <code>PREVIEW_SSH</code> &gt; config &gt; <code>~/local-secrets/tosijs-preview.env</code>,
 and a committed address means any fork running <code>bun run tunnel</code> opens outbound SSH to your
 box. Keep it in <code>~/local-secrets/tosijs-preview.env</code> — a <code>700</code> directory beside your repos,
 never inside one, sourced from <code>~/.zshenv</code> so scripts and agents see it as well as you.

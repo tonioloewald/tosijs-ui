@@ -560,7 +560,7 @@ preview: {
 ```
 
 **Do not put `host` in a committed config.** The bins resolve
-`--host=` > `PREVIEW_HOST` > `PREVIEW_SSH` > `~/local-secrets/tosijs-preview.env` > config,
+`--host=` > `PREVIEW_HOST` > `PREVIEW_SSH` > config > `~/local-secrets/tosijs-preview.env`,
 and a committed address means any fork running `bun run tunnel` opens outbound SSH to your
 box. Keep it in `~/local-secrets/tosijs-preview.env` — a `700` directory beside your repos,
 never inside one, sourced from `~/.zshenv` so scripts and agents see it as well as you.
