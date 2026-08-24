@@ -685,6 +685,39 @@ live site** (independently useful). See roadmap "From book to live."
   idiomatic than the local UI term (ja `選別` for sort, es `Clasificar`, zh `展示` for show)
   and were deliberately left alone rather than asserting more than could be verified.
 
+## From the 1.11.0 nine-lens review (deferred)
+
+Full report: [RELEASE-REVIEW-1.11.md](RELEASE-REVIEW-1.11.md). All three blockers and eight
+majors were fixed before tagging. What is left is performance and process:
+
+- [ ] **M8 — one keystroke rebuilds the whole table.** `crud.render()` unconditionally
+      reassigns `table.array`, and `TosiTable.render()` is a full teardown (`textContent = ''`).
+      Measured: 3 search keystrokes → 3 full rebuilds inside the debounce window. Any
+      in-progress cell edit loses focus and caret. Fix: identity-guard the assignment
+      (`if (this.parts.table.array !== this._rows)`), likewise `form.schema`.
+- [ ] **M9 — schema-form is O(N²) per keystroke.** One root-scoped attribute `querySelector`
+      per field (×2), and `render()` walks the tree three times. Measured under 4× CPU
+      throttle: 1000 fields ≈ 145ms per keystroke inside crud, 2000 ≈ 540ms. Validation itself
+      is ~0.1ms — the cost is the selector passes. Fix: a `Map<path, {wrapper, control,
+errorSlot}>` populated in `buildField`, and memoize `expanded()` once per render.
+- [ ] **M14 — no open issue has a disposition.** #97 and #95 are fully implemented and still
+      open; #44's Part A shipped whole and Part B (generalized source write-back) needs
+      splitting out; #85 and #3 are half-delivered; #87/#88/#89 were filed against the very
+      feature this release ships and have no reply. Systemic: #50 and #77 are still open
+      despite the 1.10.2 notes claiming both fixed.
+- [ ] **M15/M16 — write-backs to `tosijs-coding-practices`.** The shared KB still states the
+      `Bun.build()` arena leak as live (this release measured it fixed in bun 1.4.0), still
+      says bun#34053's fixes "sit as open PRs", and `review.md` tells you to file review
+      reports into `docs/` — which `buildSite` `rm -rf`s on every build, as `deployment.md`
+      says 180 lines away. Also: a `./*` exports wildcard does not cover `./*.js`; and the
+      localization lesson (a bare word is a question the translator answers wrong about half
+      the time) belongs in `web-components.md`.
+- [ ] **[#102](https://github.com/tonioloewald/tosijs-ui/issues/102) — `<tosi-table>` header
+      and body widths can disagree** after a resize followed by a programmatic `columns`
+      assignment. Not reproduced yet; the mechanism is narrowed in the issue. The invariant to
+      assert is that header and body derive geometry from ONE source — anything computing a
+      width per element is a second source and is where this class of bug lives.
+
 ## Components
 
 ### `<tosi-b3d>`

@@ -1,18 +1,235 @@
 # Changelog
 
-## 1.11.0 (unreleased)
+## 1.11.0
 
-_Notes in progress — see `bun run release-notes`._
+**Schema-driven editing.** Three new pieces that compose: `<tosi-schema-form>` renders a form
+from a JSON Schema, `<tosi-crud>` puts search, list and edit over a store you supply, and
+`hashState` keeps filter and selection in the URL so a filtered list with a record open is a
+link you can send.
 
-> **If you are on 1.10.0, this is a three-version jump.** 1.10.1 and 1.10.2 were tagged in
-> git but **never published to npm** — `latest` has been 1.10.0 the whole time. Nothing is
-> lost: every change in those two releases is in this one, and their notes are below where
-> they always were. They are simply not installable, so `npm i tosijs-ui@1.10.2` will fail
-> and the fixes you read about there arrive here instead.
->
-> We are not back-publishing them. Version numbers are free, npm does not require
-> contiguity, and rebuilding two superseded tags with today's toolchain would be real work
-> for no adopter benefit — the only thing worth preserving is the notes, and those are kept.
+**The dev bridge is usable on a headset.** The edit-link token is now **seven characters** you
+can read off one screen and type on another, instead of twenty-two of mixed-case base64url.
+That change came from watching the feature fail in practice: people gave up and typed LAN IP
+addresses instead, and a credential too painful to use is not protecting anything.
+
+> **If you are on 1.10.0, this is a three-version jump.** 1.10.1 and 1.10.2 were tagged in git
+> but **never published to npm** — `latest` has been 1.10.0 throughout. Nothing is lost: every
+> change in those releases is in this one, and their notes are below where they always were.
+> They are simply not installable, so `npm i tosijs-ui@1.10.2` will fail.
+
+### Breaking
+
+- **Validation is supplied, not imported.** `setSchemaValidator({ validate, inferSchema })` —
+  one line, anywhere, before or after render. The CDN `<script>` build and any `tosijs-ui/site`
+  doc site register it themselves, so only an ESM consumer writes it.
+
+  The reason is worth knowing, because it is not a preference. A bare `import('tosijs-schema')`
+  in shipped code is either **resolved** by your bundler — which fails the build for anyone who
+  did not install it, including people using only `<tosi-table>` — or left **external**, which
+  cannot resolve in a browser and kills validation for everyone. Both were measured. There is
+  no third option, so the component asks for two functions instead of a package. The upside is
+  that they are just functions: an Ajv wrapper, a house validator or a test stub all work.
+
+- **`tjs-lang` moves to `^0.13.1`** (from `^0.12.0`), and `TJS_VERSION` in `code-transform.ts`
+  moves in lockstep. 0.12.0 is **deprecated on npm**, and the deprecation names this release's
+  own combination — _"tosijs-schema >=1.5.0 breaks the battery atoms' output validation in these
+  versions. Upgrade to 0.13.1."_ Worse for adopters, `^0.12.0` does not admit 0.13.x, so anyone
+  on current tjs-lang got a hard `ERESOLVE`. The tjs CodeMirror extension is still bundled
+  rather than externalized — the constraint that silently no-ops highlighting if it breaks.
+
+- **The edit-link token is 7 Crockford base32 characters**, and `linkTtlMinutes` defaults to
+  **5** (was 15). A link minted by an older server is not redeemable by a newer one; both are
+  in-memory and per-process, so this only matters across a restart mid-session.
+
+### New
+
+**`<tosi-schema-form>`** — a form from a JSON Schema. `value` is the state and `change` fires on
+edit, the same contract as every other component here.
+
+- Scalars, enums, `const`, and `format`-driven input types. Anything it cannot render is a
+  labelled placeholder saying so, never a silently omitted field — a field that vanishes is
+  indistinguishable from a schema that never mentioned it, which is how an editor loses data.
+- **Nested objects** become `<details>` sections to any depth, with fully-qualified leaf paths
+  (`address.geo.lat`), so value sync and error keying work at depth with no special cases.
+  `required` is scoped to the object that declares it, which is what JSON Schema means: a
+  required `city` inside an optional `address` says _if you give an address, it needs a city_.
+- **Arrays** with add, remove and reorder. Each element expands against `items`; scalar items
+  are a single field at the index (`tags.0`), object items expand to their properties
+  (`items.0.sku`).
+- **Unions** (`anyOf`/`oneOf`), each rendered as what it actually is: `[X, null]` is just an
+  optional X, an all-`const` union is a `<select>`, an all-object union is a variant picker plus
+  the matching branch's fields. Anything else names the shapes it saw ("a union of string |
+  object"). Discriminators are derived from the property every branch pins to a different
+  `const`, or declared as `x-discriminator`.
+- **Format plugins** — `registerFieldPlugin(format, plugin)` claims a schema `format`. The
+  plugin owns the control; the form keeps the label and the error slot. Plugins are dispatched
+  first and for every node kind, so `unsupported` is the fallback, not the ceiling. Register
+  whenever you like: styles are injected on registration and live forms rebuild.
+- **Validation is optional.** Without a validator the form still renders and edits and simply
+  reports no errors, which is a smaller failure than refusing to render.
+- **No schema? It infers one** from the value, via `inferSchema`. Read it back from `.schema`,
+  edit it, set it again — that round trip is the point.
+
+**`<tosi-crud>`** — search, list, edit over a `CrudStore` adapter (`list` / `save?` / `delete?`,
+promise-returning). There is **no transport in the component**: REST, a DocStore, IndexedDB, an
+array in a closure and a mock all satisfy the same three methods. Omit `save` and the form is
+read-only; omit `delete` and its button is not shown. `columnsFromSchema()` lets one description
+of the shape drive both surfaces — strictly better than the table's own inference, which reads
+`Object.keys(array[0])` and silently loses the column for a property the first row lacks. The
+search term and selected id live in the URL hash, so typing **replaces** the history entry while
+selecting a record **pushes** one: back leaves the record rather than un-typing your search a
+letter at a time.
+
+**`hashState({ namespace, mode })`** — key-value state in the page hash. Every key is namespaced
+in the URL and bare in the API, and a write never touches a key it did not put there, so two
+instances (or a hashState beside a hash router) share one URL without deleting each other. That
+is the failure that made `createDocBrowser` grow a `'memory'` routing mode, so `mode: 'memory'`
+is here from the start.
+
+**Editable `<tosi-table>`** — set `editable` and cells become inputs, per-column overridable
+either way; a column with its own `dataCell` is never made editable. A `schema` drives the
+control type and validates edits, using the same model the form uses. A `change` event carries
+`{ item, field, oldValue, newValue, error }` and commits on `change`, not `input`: an event per
+keystroke would make `3` a legitimate intermediate state of typing `35`.
+
+**Localization** — `localize(pattern, values)` fills `{name}` placeholders **after** translating,
+so the key is the whole sentence (`'Add {item}'`, never `'Add ' + item`). A concatenated
+sentence is untranslatable in principle: the translator sees a dangling fragment and cannot move
+the placeholder to where their language puts it. An unknown placeholder stays visible as
+`{name}` rather than blanked. `<tosi-schema-form>` localizes its own chrome and rebuilds on
+locale change.
+
+**The dev bridge.** `mintLinkToken()` / `normalizeLinkToken()`: Crockford base32 excludes `I`,
+`L`, `O` and `U`, so the `0`/`O` and `1`/`l` mistypes that hurt most on a floating keyboard are
+impossible rather than merely unlikely. `randomInt`, not `randomBytes % 32`. Redemption folds
+case, accepts `I`/`L` as `1` and `O` as `0`, and ignores hyphens — normalising on **redemption**
+rather than only when minting, because case-insensitivity that exists in the alphabet but not in
+the comparison is a claim rather than a behaviour, and the failure it produces is a correct human
+being told they typed it wrong. `--link` prints the code on its own line as well as in the URL.
+
+The TTL is 5 minutes because the link is a **bearer token** for its lifetime — which the
+`dev-auth` header comment now says plainly instead of describing the single-use rule it stopped
+following in 1.10.0. About 35 bits is ample for what this actually is: an online-only guess
+against a `Map` lookup, for a token redeemed seconds after minting, that mints only a write
+session `mayWriteSource` still gates.
+
+Guess-rate control: redemption runs **one at a time** and every attempt occupies at least 100ms,
+so ten attempts a second against 32⁷ is ~111 years to exhaust and about 1 in 11 million inside a
+five-minute window (measured — 20 concurrent attempts complete at 9.8/sec). After ten
+consecutive failures the slot widens to a second. Not a lockout: the door never closes on a
+human, it only gets slower to knock on. An earlier draft of this used escalating delays plus a
+lockout, and replacing it was the right call — that version had two tunable constants, a counter
+needing reset, and a lockout an attacker could trigger, which is a denial of service against the
+developer on the one credential they need in order to work.
+
+`tosijs-tunnel` prints the host **and where the address came from** before it acts —
+`tosijs-deploy` is dry-run by default and shows its target, this one is not.
+
+**Tooling.** `bin/verify-schema-dep.ts` runs the twelve requirements from tosijs-schema#6 plus
+both directions of #7 against a candidate release and exits non-zero on any failure.
+`PREVIEW_HOST` now also resolves from `~/local-secrets/tosijs-preview.env`, because the previous
+advice — export it from your shell profile — is present for a human and **absent for every
+tool**: non-interactive shells inherit no interactive profile, so an agent or CI step sees
+nothing and reports a missing credential rather than a missing `export`. `readLocalSecret` parses
+`KEY=value` only and never evaluates; a credentials file that needs a shell to read is one that
+can run code. `bin/preview-host.test.ts` includes a guard that greps the committed config for a `user@host`
+literal — and asserts the pattern would have caught the real one, so it cannot pass by being
+wrong. `bin/smoke-consumer.ts` gained four things it could not previously see: resolution of the
+new subpaths from an installed tarball, a `tsc --noEmit` over an installed consumer with
+`skipLibCheck: false` and no optional peers, a bundle entry that actually imports the library,
+and both vendored types pinned by assignability tests in both directions.
+
+### Fixed
+
+**Packaging — this one affects existing `<tosi-table>` users.** `<tosi-table>` no longer reaches
+for a schema library at all: it is the component people use _without_ one, and it must never make
+anyone install something in order to build.
+
+`tosijs-schema` was imported by
+shipped `dist/` and declared in **no dependency field**, so a consumer's build failed on a
+package they were never told they needed. It is now a declared optional peer at `^1.7.0` — which
+is what the design note said from the start — and nothing we ship imports a type from an optional
+peer any more: `import type` is erased from emitted JS but **not** from emitted `.d.ts`, and
+declaring a peer optional does not help because TypeScript has no notion of an optional peer.
+A second instance had been shipping for a while: `dist/code-editor-cm.d.ts` imported a type from
+`tjs-lang/editors/codemirror`, a declared optional peer that TS2307s anyway (reported upstream as
+tjs-lang#28). Verified from a packed tarball in a clean project: `tsc` and `vite build` both exit
+0 with the peers absent.
+
+- The `./*` subpath wildcard mapped `tosijs-ui/schema-form/fields.js` to
+  `dist/schema-form/fields.js.js`, so the extension-ful spelling — what an adopter copying this
+  repo's own ESM import style would write — did not resolve at all. A second `./*.js` wildcard
+  fixes it, strictly additively.
+
+**Localization was wrong in shipped data, and the keys were why.** `<tosi-table>`'s column-header
+menu asked for bare words, and our own translation table shows the cost: `Right` came back in the
+_correct_ sense rather than the direction in four of nine languages (sv `Rätt`, zh `正确的`, es
+`Bien`, it `Giusto`), `Column` as `柱子` (a pillar), `Sort` as `种类` / `종류` (a kind of thing),
+`Show` as `Espectáculo` / `Spettacolo` (the kind with a stage). Every one is a competent
+translation of the word it was given — which is the point. The keys now carry sense annotations
+(`Right#direction`, `Column#table`, `Sort#order`, `Show#reveal`, `Hide#conceal`, `Pin#fasten`,
+`Ascending#sort-order`), and `demo/src/localized-strings.ts` has matching rows with the
+wrong-sense entries corrected, verified in a browser across sv/es/zh. Annotating a key is
+backward compatible, so this cannot orphan an existing table.
+
+**`<tosi-crud>` destroyed unsaved edits.** Four specs now cover delete, its rejection path and
+`createNew`→`save`; mutation testing confirms that restoring the defects turns two of them red.
+
+`showSelected()` compared `form.value !== _selected`,
+and `setByPath` is immutable, so after the first keystroke that was permanently true and every
+render wrote the record as loaded back over the edit — one frame later, with no user action, and
+`save()` then posted the unedited record. The fix keeps the load guard
+(`_loaded !== _selected`) — one invariant, one place — and drops a form-change listener that set
+`_selected = form.value`, which nothing needed: `value` and `save()` read `form.value` directly,
+and `remove()` is better with the record as opened than with a half-edited copy of it. Mutation
+testing settled that: the two were independently sufficient, so neither was pinned and either
+could have been removed without a single test failing.
+
+- `<tosi-crud>`'s destructive paths ran in no lane, and the gap hid two defects: `createNew()`
+  followed by `remove()` sent `store.delete({})`, and the Delete button raised an unhandled
+  rejection on a rejecting store.
+- Grid navigation swallowed arrows, Home and End inside editable cells, so the caret could not be
+  moved and focus jumped away mid-edit; on an enum `<select>` the cell could not be changed by
+  keyboard at all. Escape and Tab stay with the grid.
+- The cell's native `change` no longer escapes the cell. It bubbles, so a listener on the table
+  received both — theirs with a `detail`, the input's with none.
+- The "this keyword is not validated" note rendered **only for unions**, so the honesty it exists
+  for covered exactly one keyword while the docs promised otherwise.
+- `validate` is called with `strict: true`. Without it the validator samples: `maxProperties` is
+  skipped entirely and a bad element deep in a long array is stepped over.
+- The optional-peer degrade was silent. It now warns once naming the package and the seam, and
+  `validationAvailable` lets a Save handler tell _"this conforms"_ from _"nobody checked"_.
+- We read `x-discriminator` first. `discriminator` is an OpenAPI keyword that tosijs-schema's own
+  `agentContract` refuses, so a schema written to pass their check spells it `x-`.
+- The schema→control layer existed twice and had drifted: a `const` property was readonly in the
+  form and a freely editable text box in the table.
+- Variant detection scores branches on how many required keys are present, rather than demanding
+  every key — a half-filled variant used to match nothing and show an empty box.
+- `readOnly` hides the add/remove/reorder controls instead of disabling them.
+- The array controls carry stable classes (`.schema-move-up`, `.schema-move-down`,
+  `.schema-remove`) alongside their localized `title`/`aria-label`: a localized tooltip cannot
+  also be a selector.
+- The hash router treats `?…` in the hash as a query, not part of the path. `#/invoices/42?q=x`
+  previously matched no route at all.
+
+The intermittent Playwright failure was chased rather than re-run until green: `hash-state.pw.ts`
+on WebKit, about one run in four, because the page's own inline doc test writes into the hash
+asynchronously and could land after the spec cleared it. A doc page under test is also a page
+running tests.
+
+**The dev bridge's own guard was a denial of service.** Serialized redemption on an
+unauthenticated path with no depth cap meant 50 junk requests delayed a legitimate link by 42
+seconds, and a trickle outgrew the drain so the denial outlasted the attack. Depth is capped;
+overflow is refused instantly with 503 and `Retry-After`. The clock is also read on **arrival**,
+so a token valid when you clicked can no longer expire while queued.
+
+**Preview host handling.** A project's own `preview.host` outranks
+`~/local-secrets/tosijs-preview.env`; the machine-global file holds one host, and when it won,
+running `tosijs-tunnel` in someone else's checkout pointed it at your box — and that bin does not
+merely print a target. One `resolvePreviewHost()` now serves all three bins. The tunnel's link
+line no longer claims "Single-use edit link (valid 15 min)", and `doc-site-system.md` no longer
+shows `host:` in its example config. `UPSTREAM.md` claimed 0.12.0 was the latest tjs-lang; stale
+by two minors.
 
 ### Housekeeping: we published a preview address, and rotated it
 
