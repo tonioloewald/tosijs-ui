@@ -1,0 +1,15 @@
+{
+  "//": "Type-check the anti-drift guards, which tsconfig.json excludes along with every other *.test.ts. A compile-time assertion nothing compiles is decoration: both guards were inert for the whole of 1.11.0's development, and one of them was red. `bun run typecheck-guards` is cheap and runs in CI beside the main typecheck.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["bun-types"]
+  },
+  "include": [
+    "src/schema-form/json-schema.ts",
+    "src/schema-form/json-schema.test.ts",
+    "src/code-editor-cm.ts",
+    "src/code-editor-cm-types.test.ts"
+  ],
+  "exclude": ["node_modules"]
+}

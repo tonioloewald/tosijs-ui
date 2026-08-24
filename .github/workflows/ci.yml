@@ -29,6 +29,14 @@ jobs:
       - name: Type check bin/
         run: bunx tsc -p tsconfig.bin.json
 
+      # tsconfig.json EXCLUDES *.test.ts, so the vendored-type anti-drift guards — whose
+      # entire value is compile-time — were never compiled. Both were inert for all of
+      # 1.11.0's development and one was red. A compile-time assertion nothing compiles is
+      # decoration. (The suite at large has ~150 accumulated type errors; fixing those is a
+      # separate job, which is why this checks the two files that must not rot.)
+      - name: Type check the vendored-type guards
+        run: bun run typecheck-guards
+
       # `bun format` was manual and in no gate, so drift only ever accumulated: 24
       # unformatted files at v1.9.0, 40 by v1.9.7. Nobody sees it until someone runs
       # `bun format` and gets three dozen unrelated files mixed into their feature diff.

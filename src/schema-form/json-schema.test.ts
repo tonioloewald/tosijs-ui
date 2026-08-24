@@ -12,17 +12,36 @@ compile time and at the runtime boundary where the two actually meet.
 even though consumers may not.
 */
 
-test('our JSONSchema is assignable to theirs, and theirs to ours', () => {
-  // Compile-time: `bunx tsc --noEmit` fails here if either side gains a required member or
-  // an incompatible one. The runtime body is incidental.
-  const ours: Ours = { type: 'object', properties: { a: { type: 'string' } } }
-  const asTheirs: Theirs = ours
-  const backAgain: Ours = asTheirs
-  expect(backAgain.type).toBe('object')
+test('THEIR JSONSchema is assignable to ours — the direction we consume', () => {
+  /*
+  One direction, not two, and the honesty is the point.
+
+  `inferSchema` returns THEIR type and we store it in a field typed with OURS, so this is the
+  assignment the code actually performs. It is also the direction TypeScript can prove.
+
+  The reverse (ours → theirs) is NOT asserted, because TypeScript cannot decide it: both types
+  are recursive through `additionalProperties?: boolean | JSONSchema`, and the structural
+  comparison bails out rather than concluding. The member lists are byte-identical — verified
+  by diffing the interfaces — so the objects are interchangeable at runtime, which the next
+  test exercises directly. An earlier version of this file claimed both directions; that claim
+  was untrue AND unchecked, since `tsconfig.json` excludes `*.test.ts`.
+  */
+  const theirs: Theirs = {
+    type: 'object',
+    properties: { a: { type: 'string' } },
+  }
+  const asOurs: Ours = theirs
+  expect(asOurs.type).toBe('object')
 })
 
 test('a schema typed as OURS validates through THEIR validator', () => {
-  // The boundary that matters: we hand our-typed objects to their `validate`.
+  /*
+  The ours → theirs direction, checked where it can be: at RUNTIME.
+
+  This is the boundary the component actually crosses — our-typed objects handed to their
+  `validate` — and it is what makes the unprovable compile-time direction safe in practice. If
+  the two shapes ever genuinely diverge, this fails.
+  */
   const schema: Ours = {
     type: 'object',
     properties: {
