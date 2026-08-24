@@ -39,12 +39,28 @@ test('a schema typed as OURS validates through THEIR validator', () => {
   expect(validate({ age: -1 }, schema as Theirs)).toBe(false)
 })
 
-test('what THEIR inferSchema returns is assignable to ours', () => {
-  // The other direction of the same boundary: `<tosi-schema-form>` stores an inferred schema
-  // in a field typed with OUR interface.
+test('what THEIR inferSchema returns is assignable to ours — with NO cast', () => {
+  /*
+  The cast is the point. This assertion previously read `inferred as Ours`, which asserts
+  nothing: a cast compiles whether or not the types are compatible. It passed while the two
+  were genuinely incompatible (our index signature broke the recursive
+  `additionalProperties?: boolean | JSONSchema` branch), and the mismatch only surfaced when
+  real code tried to register `inferSchema` through the validator seam.
+
+  A test that casts its way to green is worse than no test: it reports a guarantee it never
+  checked.
+  */
   const inferred = inferSchema({ title: 'x', pages: 2 })
-  const asOurs: Ours = inferred as Ours
+  const asOurs: Ours = inferred
   expect(asOurs.properties?.pages?.type).toBe('integer')
+})
+
+test('a function typed against THEIRS satisfies the seam typed against OURS', () => {
+  // The exact shape `setSchemaValidator({ validate, inferSchema })` needs, checked here so a
+  // drift shows up in the unit lane rather than in the iife build.
+  const theirInfer: (sample: unknown) => Theirs = inferSchema
+  const asSeam: (sample: unknown) => Ours = theirInfer
+  expect(typeof asSeam).toBe('function')
 })
 
 test('the keyword set we model still matches theirs', () => {

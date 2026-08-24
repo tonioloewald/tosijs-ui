@@ -116,8 +116,27 @@ update()
 
 preview.append(schemaForm, report)
 </code></pre>
-<p><code>tosijs-schema</code> is an <strong>optional peer</strong>: install it to get validation. Without it the form
-still renders and edits — it simply reports no errors.</p>
+<h3>Give it a validator</h3>
+<p>The form does not import a validation library. It asks for two functions, and you supply
+them once, anywhere before or after the form renders:</p>
+<pre><code class="language-typescript">import { setSchemaValidator } from &#39;tosijs-ui&#39;
+import { validate, inferSchema } from &#39;tosijs-schema&#39;   // optional peer, ^1.7.0
+
+setSchemaValidator({ validate, inferSchema })
+</code></pre>
+<p><strong>Already done for you</strong> in the CDN <code>&lt;script&gt;</code> build and in a <code>tosijs-ui/site</code> doc site —
+those are bundles we build, so they register it themselves. Only an ESM consumer writes the
+line.</p>
+<p>Without a validator the form still renders and edits; it simply reports no errors, warns once
+in the console, and <code>validationAvailable</code> reads <code>false</code> — so a Save handler can tell <em>&quot;this
+conforms&quot;</em> from <em>&quot;nobody checked&quot;</em>, which <code>validate() === true</code> alone cannot.</p>
+<p>Why a seam rather than an import: a bare <code>import(&#39;tosijs-schema&#39;)</code> in shipped code is either
+resolved by your bundler — which <strong>fails the build</strong> for anyone who did not install it,
+including people using only <code>&lt;tosi-table&gt;</code> — or left external, which cannot resolve in a
+browser and kills validation for everyone. There is no third option, so the component asks
+for the functions instead of the package. The upside is that they are just functions: an Ajv
+wrapper, a house validator or a test stub all work. <code>tosijs-schema</code> is the one we ship docs
+for, not a requirement.</p>
 <h2>No schema? It infers one</h2>
 <p>Give it a <code>value</code> and no <code>schema</code> and it derives one with <code>inferSchema</code> from
 <code>tosijs-schema</code> — useful for editing a record whose shape you don&#39;t have written down.</p>

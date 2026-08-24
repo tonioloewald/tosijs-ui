@@ -84,8 +84,33 @@ update()
 preview.append(schemaForm, report)
 ```
 
-`tosijs-schema` is an **optional peer**: install it to get validation. Without it the form
-still renders and edits — it simply reports no errors.
+### Give it a validator
+
+The form does not import a validation library. It asks for two functions, and you supply
+them once, anywhere before or after the form renders:
+
+```typescript
+import { setSchemaValidator } from 'tosijs-ui'
+import { validate, inferSchema } from 'tosijs-schema'   // optional peer, ^1.7.0
+
+setSchemaValidator({ validate, inferSchema })
+```
+
+**Already done for you** in the CDN `<script>` build and in a `tosijs-ui/site` doc site —
+those are bundles we build, so they register it themselves. Only an ESM consumer writes the
+line.
+
+Without a validator the form still renders and edits; it simply reports no errors, warns once
+in the console, and `validationAvailable` reads `false` — so a Save handler can tell *"this
+conforms"* from *"nobody checked"*, which `validate() === true` alone cannot.
+
+Why a seam rather than an import: a bare `import('tosijs-schema')` in shipped code is either
+resolved by your bundler — which **fails the build** for anyone who did not install it,
+including people using only `<tosi-table>` — or left external, which cannot resolve in a
+browser and kills validation for everyone. There is no third option, so the component asks
+for the functions instead of the package. The upside is that they are just functions: an Ajv
+wrapper, a house validator or a test stub all work. `tosijs-schema` is the one we ship docs
+for, not a requirement.
 
 ## No schema? It infers one
 
@@ -717,6 +742,17 @@ import {
 import { localize, i18n } from './localize.js'
 import { unenforcedNote } from './schema-form/unenforced.js'
 import {
+  getSchemaValidator,
+  onSchemaValidatorChanged,
+  schemaValidationAvailable,
+  warnNoValidator,
+} from './schema-form/validator.js'
+export {
+  setSchemaValidator,
+  schemaValidationAvailable,
+  type SchemaValidator,
+} from './schema-form/validator.js'
+import {
   fieldPlugin,
   onFieldPluginsChanged,
   schemaUsesFormat,
@@ -740,45 +776,6 @@ const {
   button,
   form: formElement,
 } = elements
-
-/*
-Validation is OPTIONAL.
-
-`tosijs-schema` is an optional peer, so a consumer who only wants the form should not have to
-install it. Resolved lazily and cached; when it is absent the form renders and edits exactly
-as it otherwise would and simply reports no errors — which is a smaller failure than refusing
-to render at all.
-*/
-/*
-The specifier is LITERAL, and that is a live problem — see B2 in RELEASE-REVIEW-1.11.md.
-
-A literal specifier makes bundlers resolve `tosijs-schema` at build time: good for a consumer
-who installed it (their bundle contains the validator and it runs), fatal for one who did not
-(`failed to resolve import` from a package we told them was optional).
-
-Making the specifier a variable was tried and is WORSE, not better: bundlers then leave a bare
-`import('tosijs-schema')` in the output, which no browser can resolve, so validation dies
-silently for everyone INCLUDING consumers who installed the peer. Measured — the doc site's
-own iife stopped containing the validator and two lanes went red.
-
-A bare specifier is either bundled (must resolve) or not (cannot run in a browser); there is
-no middle. The real fix is a registration seam, and it is a decision about public API rather
-than a code tweak.
-*/
-
-let validateFn: ((v: any, s: any, onError: any) => boolean) | null | undefined
-let inferFn: ((sample: any) => JSONSchema) | null | undefined
-async function loadSchemaLib(): Promise<void> {
-  if (validateFn !== undefined) return
-  try {
-    const lib = await import('tosijs-schema')
-    validateFn = lib.validate as any
-    inferFn = lib.inferSchema as any
-  } catch {
-    validateFn = null
-    inferFn = null
-  }
-}
 
 export class TosiSchemaForm extends WebComponent {
   static preferredTagName = 'tosi-schema-form'
@@ -878,14 +875,30 @@ export class TosiSchemaForm extends WebComponent {
     return this._errors.length === 0
   }
 
+  /** Is anything actually checking this form? See `validate()`. */
+  get validationAvailable(): boolean {
+    return schemaValidationAvailable()
+  }
+
   private refreshErrors(): void {
-    if (!validateFn) {
+    const validator = getSchemaValidator()
+    if (!validator) {
+      warnNoValidator('<tosi-schema-form>')
       this._errors = []
       return
     }
     const paths = this._fields.map((f) => f.path)
     this._errors = collectErrors(
-      (onError) => validateFn!(this._value, this._schema, onError),
+      (onError) =>
+        validator.validate(this._value, this._schema, {
+          onError,
+          /*
+          Not sampling mode. Without `strict`, their validator samples: `maxProperties` is
+          skipped entirely and a bad element deep in a long array can be stepped over. The
+          form would say valid and the consumer's save path — or the server — would not.
+          */
+          strict: true,
+        }),
       paths
     )
   }
@@ -1383,8 +1396,6 @@ export class TosiSchemaForm extends WebComponent {
     // change has to rebuild it — otherwise switching language leaves this form in the old
     // one until something else happens to touch it.
     this._localeListener = i18n.locale.observe(() => this.rebuild())
-    // Validation is optional and lazily resolved; re-render once it is known either way.
-    void loadSchemaLib().then(() => this.queueRender())
   }
 
   disconnectedCallback(): void {
@@ -1417,8 +1428,9 @@ export class TosiSchemaForm extends WebComponent {
     component is for. The inferred schema is stored, so `form.schema` returns it and a
     consumer can read it, edit it, and set it back. Set `.schema` explicitly to re-derive.
     */
-    if (!this._schema?.properties && inferFn && this._value) {
-      const inferred = inferFn(this._value)
+    const inferSchema = getSchemaValidator()?.inferSchema
+    if (!this._schema?.properties && inferSchema && this._value) {
+      const inferred = inferSchema(this._value) as JSONSchema
       if (inferred?.properties) this._schema = relaxInferred(inferred)
     }
     if (this._builtFor !== this._schema) {
@@ -1451,6 +1463,12 @@ component this design learned from need a load-bearing bare import above its com
 definition (its SF-4), and it is a trap because everything looks fine until it doesn't.
 */
 const live = new Set<TosiSchemaForm>()
+// A validator registered after a form is on screen still takes effect — same reasoning as
+// the plugin registry: registration order is not something a consumer should have to think
+// about.
+onSchemaValidatorChanged(() => {
+  for (const form of live) form.rebuild()
+})
 onFieldPluginsChanged((format) => {
   // Only the forms that actually use the format — a registration is not an excuse to throw
   // away the DOM of every unrelated form on the page.

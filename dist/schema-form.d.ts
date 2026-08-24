@@ -1,6 +1,7 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
 import type { JSONSchema } from './schema-form/json-schema.js';
 import { type FieldError } from './schema-form/fields.js';
+export { setSchemaValidator, schemaValidationAvailable, type SchemaValidator, } from './schema-form/validator.js';
 export { registerFieldPlugin, type FieldPlugin, type FieldPluginContext, } from './schema-form/plugins.js';
 export declare class TosiSchemaForm extends WebComponent {
     static preferredTagName: string;
@@ -101,6 +102,8 @@ export declare class TosiSchemaForm extends WebComponent {
     get errors(): FieldError[];
     /** Does the current value conform? `true` when no validator is installed. */
     validate(): boolean;
+    /** Is anything actually checking this form? See `validate()`. */
+    get validationAvailable(): boolean;
     private refreshErrors;
     private coerce;
     private onFieldInput;

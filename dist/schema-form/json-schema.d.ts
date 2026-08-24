@@ -38,6 +38,4 @@ export interface JSONSchema {
     $counterexamples?: unknown[];
     /** marks a schema derived from a sample rather than authored */
     $inferred?: boolean;
-    /** anything else, including the `x-` extensions and keywords we do not model */
-    [key: string]: unknown;
 }

@@ -63,6 +63,13 @@ export interface JSONSchema {
   $counterexamples?: unknown[]
   /** marks a schema derived from a sample rather than authored */
   $inferred?: boolean
-  /** anything else, including the `x-` extensions and keywords we do not model */
-  [key: string]: unknown
+  /*
+  NO index signature, deliberately — it mirrors theirs exactly.
+
+  An `[key: string]: unknown` catch-all looks helpful and breaks assignability against the
+  real type in the recursive branches (`additionalProperties?: boolean | JSONSchema`), which
+  is precisely the interoperability this file exists to preserve. Extension keywords like
+  `x-discriminator` are read through a cast at the one place that wants them, as they were
+  before.
+  */
 }

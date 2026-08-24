@@ -584,10 +584,13 @@ values the user never meant to enter.</p>
 <p><strong><code>dataCell</code> always wins.</strong> A column with its own cell renderer is never made editable — it
 builds and binds itself, and the table has no business reaching into it. <code>editable: false</code> on
 a column opts one out of an editable table; <code>editable: true</code> opts one in to a read-only one.</p>
-<p><strong>Validation needs a <code>schema</code></strong>, and comes from <a href="/schema-form/"><code>tosijs-schema</code></a> — the same
-model <code>&lt;tosi-schema-form&gt;</code> uses, so a cell and a field agree about what a property is. Without
-a schema the cells are text inputs and nothing is reported wrong, because nothing described
-what right would be. An invalid edit is <strong>still written</strong>: the model holds what the user
+<p><strong>Validation needs a <code>schema</code> and a registered validator</strong> — see
+<a href="/schema-form/"><code>setSchemaValidator</code></a>. It is the same model <code>&lt;tosi-schema-form&gt;</code> uses, so a
+cell and a field agree about what a property is. <code>&lt;tosi-table&gt;</code> itself imports no schema
+library: a table is the component people use <em>without</em> one, and it must never make anyone
+install something to build.</p>
+<p>Without a schema the cells are text inputs and nothing is reported wrong, because nothing
+described what right would be. An invalid edit is <strong>still written</strong>: the model holds what the user
 typed and the cell says it is wrong, rather than the table refusing input and leaving them
 guessing.</p>
 <p>The <code>change</code> event carries <code>{ item, field, oldValue, newValue, error }</code>. Persisting is yours

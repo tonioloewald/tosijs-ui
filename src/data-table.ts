@@ -587,10 +587,14 @@ values the user never meant to enter.
 builds and binds itself, and the table has no business reaching into it. `editable: false` on
 a column opts one out of an editable table; `editable: true` opts one in to a read-only one.
 
-**Validation needs a `schema`**, and comes from [`tosijs-schema`](/schema-form/) — the same
-model `<tosi-schema-form>` uses, so a cell and a field agree about what a property is. Without
-a schema the cells are text inputs and nothing is reported wrong, because nothing described
-what right would be. An invalid edit is **still written**: the model holds what the user
+**Validation needs a `schema` and a registered validator** — see
+[`setSchemaValidator`](/schema-form/). It is the same model `<tosi-schema-form>` uses, so a
+cell and a field agree about what a property is. `<tosi-table>` itself imports no schema
+library: a table is the component people use *without* one, and it must never make anyone
+install something to build.
+
+Without a schema the cells are text inputs and nothing is reported wrong, because nothing
+described what right would be. An invalid edit is **still written**: the model holds what the user
 typed and the cell says it is wrong, rather than the table refusing input and leaving them
 guessing.
 
@@ -999,6 +1003,7 @@ import {
   collectErrors,
   type Field,
 } from './schema-form/fields.js'
+import { getSchemaValidator, warnNoValidator } from './schema-form/validator.js'
 import { popMenu, MenuItem } from './menu.js'
 import * as dragAndDrop from './drag-and-drop.js'
 import { tosiLocalized, localize } from './localize.js'
@@ -1036,40 +1041,6 @@ function defaultWidth(
 }
 
 const { div, span, button, input, select, option } = elements
-
-/*
-Validation is OPTIONAL, exactly as it is for `<tosi-schema-form>`.
-
-`tosijs-schema` is an optional peer, so a consumer who wants an editable table without a
-schema library gets one: edits work, and nothing is reported wrong because nothing described
-what right would be.
-*/
-/*
-The specifier is LITERAL, and that is a live problem — see B2 in RELEASE-REVIEW-1.11.md.
-
-A literal specifier makes bundlers resolve `tosijs-schema` at build time: good for a consumer
-who installed it (their bundle contains the validator and it runs), fatal for one who did not
-(`failed to resolve import` from a package we told them was optional).
-
-Making the specifier a variable was tried and is WORSE, not better: bundlers then leave a bare
-`import('tosijs-schema')` in the output, which no browser can resolve, so validation dies
-silently for everyone INCLUDING consumers who installed the peer. Measured — the doc site's
-own iife stopped containing the validator and two lanes went red.
-
-A bare specifier is either bundled (must resolve) or not (cannot run in a browser); there is
-no middle. The real fix is a registration seam, and it is a decision about public API rather
-than a code tweak.
-*/
-
-let validateFn: ((v: any, s: any, onError: any) => boolean) | null | undefined
-async function loadValidator(): Promise<void> {
-  if (validateFn !== undefined) return
-  try {
-    validateFn = (await import('tosijs-schema')).validate as any
-  } catch {
-    validateFn = null
-  }
-}
 
 export interface ColumnOptions {
   name?: string
@@ -1352,9 +1323,6 @@ export class TosiTable extends WebComponent {
 
   set schema(schema: JSONSchema | null) {
     this._schema = schema
-    // Resolving here rather than at import keeps `tosijs-schema` out of a page whose tables
-    // never describe their data.
-    if (schema) void loadValidator()
     this.queueRender()
   }
 
@@ -1990,10 +1958,19 @@ export class TosiTable extends WebComponent {
     prop: string,
     _value: unknown
   ): string | undefined {
-    if (!this.schema || !validateFn) return undefined
+    if (!this.schema) return undefined
+    const validator = getSchemaValidator()
+    if (!validator) {
+      warnNoValidator('an editable <tosi-table> with a schema')
+      return undefined
+    }
     const errors = collectErrors(
       (onError: (path: string, message: string) => void) =>
-        validateFn!(tosiValue(item), this.schema, onError),
+        validator.validate(tosiValue(item), this.schema!, {
+          onError,
+          // Not sampling mode: a table that says "valid" must have looked at every row.
+          strict: true,
+        }),
       [prop]
     )
     return errors.find((e: { path: string }) => e.path === prop)?.message
@@ -2838,12 +2815,6 @@ export class TosiTable extends WebComponent {
     this.addEventListener('mouseup', this.updateSelection)
     this.addEventListener('touchend', this.updateSelection)
     this.addEventListener('keydown', this.handleKeyNav)
-    /*
-    Resolve the optional validator only when this table might actually validate. A read-only
-    table with no schema is the common case and should not pull `tosijs-schema` into the
-    page for nothing.
-    */
-    if (this.schema) void loadValidator()
   }
 
   setColumnWidths() {
