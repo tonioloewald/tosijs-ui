@@ -86,3 +86,32 @@ test('REGRESSION: this repo does not commit a preview host', async () => {
     /host:\s*['"][^'"]*@[^'"]+['"]/
   )
 })
+
+test('every place that documents the precedence says the same thing', async () => {
+  /*
+  This sentence was written THREE different ways in one release — the code, four docs and a
+  shipped CHANGELOG disagreed about whether the machine-global file outranks a project's own
+  config. That is not cosmetic: `tosijs-tunnel` ssh's, scp's a Caddy fragment and reloads
+  Caddy on the resolved host, so an adopter who trusts the published order believes a
+  machine-wide file protects them from a committed project host.
+
+  The invariant: config BEFORE `~/local-secrets`, everywhere it is stated.
+  */
+  const sources = [
+    'bin/resolve-site-config.ts',
+    'src/doc-system/site/site-config.ts',
+    'src/doc-system/doc-site-system.md',
+    'CHANGELOG.md',
+  ]
+  for (const file of sources) {
+    const text = await Bun.file(new URL(`../${file}`, import.meta.url)).text()
+    for (const line of text.split('\n')) {
+      if (!line.includes('PREVIEW_SSH') || !line.includes('>')) continue
+      const cfg = line.search(/config|\*\*this\*\*/)
+      const secrets = line.indexOf('local-secrets')
+      // Only lines that mention both are making the ordering claim.
+      if (cfg === -1 || secrets === -1) continue
+      expect(cfg).toBeLessThan(secrets)
+    }
+  }
+})

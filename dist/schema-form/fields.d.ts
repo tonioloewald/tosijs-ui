@@ -3,6 +3,8 @@ import type { JSONSchema } from './json-schema.js';
 export type FieldKind = 'string' | 'number' | 'integer' | 'boolean' | 'enum' | 'const' | 'unsupported';
 /** A nested object: its own label, and the fields inside it. */
 export interface FieldGroup {
+    /** keywords in this property's schema the validator ignores — see `unenforced.ts` */
+    unvalidated?: string[];
     kind: 'group';
     path: string;
     label: string;
@@ -12,6 +14,8 @@ export interface FieldGroup {
 }
 /** An array property: its item schema, and the fields for each current element. */
 export interface FieldArray {
+    /** keywords in this property's schema the validator ignores — see `unenforced.ts` */
+    unvalidated?: string[];
     kind: 'array';
     path: string;
     label: string;

@@ -84,7 +84,16 @@ export function unenforcedKeywords(schema: JSONSchema | undefined): string[] {
   is that it does not.
   */
   const fromValidator = getSchemaValidator()?.unenforcedKeywords
-  if (fromValidator) return fromValidator(schema)
+  if (fromValidator) {
+    /*
+    Upstream answers with PATHS (`root.uniqueItems`, `root.properties.city.allOf`); the note
+    is already attached to the field it describes, so a leading `root.` is noise — it reads as
+    "root.uniqueItems is not validated" on a field called Tags. Deeper segments are kept,
+    because for a container the keyword may be several levels down and losing that loses the
+    only thing that would let you find it.
+    */
+    return fromValidator(schema).map((k) => k.replace(/^root\./, ''))
+  }
   const found = Object.keys(schema).filter(
     (key) =>
       !ENFORCED.has(key) && !ANNOTATIONS.has(key) && !key.startsWith('x-')

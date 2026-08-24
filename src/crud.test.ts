@@ -18,9 +18,37 @@ test('columns come from the schema, in declaration order, with titles', () => {
   } as any)
   expect(columns.map((c) => c.prop)).toEqual(['sku', 'qty', 'active'])
   expect(columns[0].name).toBe('SKU')
-  // No title, no name — the table humanises the prop itself rather than being handed a
-  // second, competing guess.
-  expect(columns[1].name).toBeUndefined()
+  /*
+  A title-less property gets a HUMANISED name, not the raw key.
+
+  This assertion previously required `undefined`, on the theory that the table would humanise
+  it. It does not — `data-table.ts:2232` renders `typeof col.name === 'string' ? col.name :
+  col.prop` — so a supplied `columns` array produced headers reading `firstName` and
+  `createdAt` while the form beside it showed "first name". The test was pinning the bug.
+  */
+  expect(columns[1].name).toBe('qty')
+})
+
+test('a camelCase property is humanised for the header', () => {
+  const columns = columnsFromSchema({
+    type: 'object',
+    properties: {
+      firstName: { type: 'string' },
+      createdAt: { type: 'string' },
+    },
+  } as any)
+  expect(columns.map((c) => c.name)).toEqual(['first name', 'created at'])
+})
+
+test('a nullable union column keeps its type', () => {
+  // `{anyOf: [{type:'boolean'}, {type:'null'}]}` is the common optional spelling, and reading
+  // `propSchema.type` directly missed it: a wide text column rendering raw true/false.
+  const columns = columnsFromSchema({
+    type: 'object',
+    properties: { active: { anyOf: [{ type: 'boolean' }, { type: 'null' }] } },
+  } as any)
+  expect(columns[0].type).toContain('boolean')
+  expect(columns[0].width).toBe(80)
 })
 
 test('a schema knows about a property no row has filled in', () => {

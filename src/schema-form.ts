@@ -476,6 +476,7 @@ preview.append(
       type: 'object',
       properties: {
         score: { type: 'number', exclusiveMinimum: 0 },
+        tags: { type: 'array', items: { type: 'string' }, uniqueItems: true },
         shape: {
           oneOf: [
             {
@@ -492,7 +493,7 @@ preview.append(
         },
       },
     },
-    value: { score: 0, shape: { kind: 'square', side: 2 } },
+    value: { score: 0, tags: ['a', 'a'], shape: { kind: 'square', side: 2 } },
   })
 )
 ```
@@ -510,7 +511,10 @@ test('the note tracks the VALIDATOR, not a hard-coded list', () => {
   // same form rendered two notes and reported the value as conforming — the assertion that
   // matters is that the notes agree with the validator in use, whichever it is.
   // (Line comments: a block comment's `*` `/` closes the doc block early — see #70.)
-  expect(notes).toEqual([])
+  // `uniqueItems` is on an ARRAY and is still not enforced by 1.8.0, so its note is the one
+  // that must appear — containers carried none until 1.11.0, which made the promise above
+  // false for exactly the keywords a validator is most likely to skip.
+  expect(notes).toEqual(['uniqueItems is not validated'])
   expect(oneOfForm.validate()).toBe(false)
   expect(oneOfForm.errors.some((e) => e.path === 'score')).toBe(true)
 })
@@ -937,6 +941,17 @@ export class TosiSchemaForm extends WebComponent {
     const el = event.target as HTMLInputElement | HTMLSelectElement
     const path = el.dataset?.path
     if (!path) return
+    /*
+    The input's own event stops here; the form re-emits its own.
+
+    Native `input` and `change` both bubble out of the light DOM, so a consumer listening on
+    the form received the control's events as well as ours — indistinguishable except by
+    checking for a property that should always be there. A checkbox click produced THREE:
+    two synthetic (this handler wired to both `onInput` and `onChange`) plus the native one.
+    `<tosi-table>` fixed exactly this hazard in the same release; the sibling shipped without
+    it because its doc test dispatched a bare `input` and never blurred.
+    */
+    event.stopPropagation()
     const field = this._fields.find((f) => f.path === path)
     if (!field) return
     this._value = setByPath(
@@ -969,7 +984,10 @@ export class TosiSchemaForm extends WebComponent {
     if ('children' in node) {
       return details(
         { class: 'schema-group', open: true },
-        summary(node.label),
+        // The note belongs in the SUMMARY for a container: `uniqueItems` on an array and
+        // `allOf` on an object are exactly the keywords a validator is most likely to skip,
+        // and a note only scalars could carry made the promise false for both.
+        summary(node.label, ...this.unvalidatedNote(node)),
         ...node.children.map((child) => this.buildNode(child))
       )
     }
@@ -987,7 +1005,7 @@ export class TosiSchemaForm extends WebComponent {
   private buildArray(node: FieldArray): HTMLElement {
     const container = details(
       { class: 'schema-group schema-array', open: true },
-      summary(node.label)
+      summary(node.label, ...this.unvalidatedNote(node))
     )
     container.dataset.array = node.path
     this.fillArray(container, node)
@@ -1326,7 +1344,9 @@ export class TosiSchemaForm extends WebComponent {
             )
           )
         : field.kind === 'boolean'
-        ? input({ ...shared, type: 'checkbox', onChange: this.onFieldInput })
+        ? // `onInput` from `shared` already covers a checkbox — a click fires both, so wiring
+          // `onChange` too dispatched the model write twice.
+          input({ ...shared, type: 'checkbox' })
         : input({
             ...shared,
             type:

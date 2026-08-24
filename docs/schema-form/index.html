@@ -488,6 +488,7 @@ preview.append(
       type: &#39;object&#39;,
       properties: {
         score: { type: &#39;number&#39;, exclusiveMinimum: 0 },
+        tags: { type: &#39;array&#39;, items: { type: &#39;string&#39; }, uniqueItems: true },
         shape: {
           oneOf: [
             {
@@ -504,7 +505,7 @@ preview.append(
         },
       },
     },
-    value: { score: 0, shape: { kind: &#39;square&#39;, side: 2 } },
+    value: { score: 0, tags: [&#39;a&#39;, &#39;a&#39;], shape: { kind: &#39;square&#39;, side: 2 } },
   })
 )
 </code></pre>
@@ -521,7 +522,10 @@ test(&#39;the note tracks the VALIDATOR, not a hard-coded list&#39;, () =&gt; {
   // same form rendered two notes and reported the value as conforming — the assertion that
   // matters is that the notes agree with the validator in use, whichever it is.
   // (Line comments: a block comment&#39;s `*` `/` closes the doc block early — see #70.)
-  expect(notes).toEqual([])
+  // `uniqueItems` is on an ARRAY and is still not enforced by 1.8.0, so its note is the one
+  // that must appear — containers carried none until 1.11.0, which made the promise above
+  // false for exactly the keywords a validator is most likely to skip.
+  expect(notes).toEqual([&#39;uniqueItems is not validated&#39;])
   expect(oneOfForm.validate()).toBe(false)
   expect(oneOfForm.errors.some((e) =&gt; e.path === &#39;score&#39;)).toBe(true)
 })

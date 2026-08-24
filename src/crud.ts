@@ -264,7 +264,7 @@ import { tosiTable, type ColumnOptions, type TosiTable } from './data-table.js'
 import { tosiSchemaForm, type TosiSchemaForm } from './schema-form.js'
 import { hashState, type HashState, type HashStateMode } from './hash-state.js'
 import { localize } from './localize.js'
-import { getByPath } from './schema-form/fields.js'
+import { getByPath, fieldForProperty } from './schema-form/fields.js'
 
 const { div, input, button } = elements
 
@@ -308,24 +308,31 @@ in.
 */
 export function columnsFromSchema(schema: JSONSchema): ColumnOptions[] {
   if (!schema?.properties) return []
-  return Object.entries(schema.properties).map(([prop, propSchema]) => {
-    const types = Array.isArray(propSchema.type)
-      ? propSchema.type
-      : [propSchema.type]
-    const type = types.find((t) => t && t !== 'null')
+  return Object.keys(schema.properties).map((prop) => {
+    /*
+    Ask the MODEL what this property is, rather than re-reading `type` here.
+
+    This used to unwrap `type` itself — a third copy of the nullable idiom — and got the
+    common `{anyOf: [{type:'boolean'}, {type:'null'}]}` spelling wrong: no `type` on the
+    column, so a wide text column rendering raw `true`/`false`. `enum` and `const` missed the
+    same way. `fieldForProperty` already answers this, and it is the same answer the form
+    uses, which is the entire point of the model being DOM-free.
+    */
+    const field = fieldForProperty(schema, prop)
     const column: ColumnOptions = {
       prop,
-      name: (propSchema as any).title,
-      // Narrow for a number, wide for prose — a starting point the consumer can override
-      // wholesale by setting `table.columns`.
+      // `field.label` is the schema's `title` when it has one and a humanised property name
+      // when it does not. Emitting only `title` left the table rendering `firstName` while
+      // the form showed "first name" — worse than the no-schema path, which humanises.
+      name: field?.label,
       width:
-        type === 'boolean'
+        field?.kind === 'boolean'
           ? 80
-          : type === 'integer' || type === 'number'
+          : field?.kind === 'integer' || field?.kind === 'number'
           ? 100
           : 180,
     }
-    if (type === 'boolean') column.type = 'boolean(✓,✗)' as any
+    if (field?.kind === 'boolean') column.type = 'boolean(✓,✗)' as any
     return column
   })
 }

@@ -273,12 +273,14 @@ export function fieldsFor(schema, prefix = '') {
         if (propSchema.properties &&
             !propSchema.enum &&
             propSchema.const === undefined) {
+            const groupUnvalidated = unenforcedKeywords(propSchema);
             return {
                 kind: 'group',
                 path,
                 label,
                 required: isRequired,
                 schema: propSchema,
+                ...(groupUnvalidated.length ? { unvalidated: groupUnvalidated } : {}),
                 children: fieldsFor(propSchema, path),
             };
         }
@@ -290,12 +292,14 @@ export function fieldsFor(schema, prefix = '') {
         if (propSchema.items &&
             !propSchema.enum &&
             propSchema.const === undefined) {
+            const arrayUnvalidated = unenforcedKeywords(propSchema);
             return {
                 kind: 'array',
                 path,
                 label,
                 required: isRequired,
                 schema: propSchema,
+                ...(arrayUnvalidated.length ? { unvalidated: arrayUnvalidated } : {}),
                 itemSchema: propSchema.items,
             };
         }

@@ -285,8 +285,10 @@ anything.
 The practice that came out of it, now in `tosijs-coding-practices` → `deployment.md`:
 machine-local credentials live in `~/local-secrets/` — a `700` directory beside the repos,
 never inside one, so committing them is structurally impossible rather than merely against
-the rules. `tosijs-ui`'s bins resolve `--host=` > `PREVIEW_HOST` > `PREVIEW_SSH` >
-`~/local-secrets/tosijs-preview.env` > site config, and a regression test now greps our own
+the rules. `tosijs-ui`'s bins resolve `--host=` > `PREVIEW_HOST` > `PREVIEW_SSH` > site config >
+`~/local-secrets/tosijs-preview.env` — the machine-global file is **last**, so a project that
+names its own host is never silently redirected at someone else's box — and a regression test
+now greps our own
 config for a `user@host` literal. The rule had been documented in `site-config.ts` the whole
 time and violated in the same repo — which is why the guarantee is now a directory.
 
