@@ -14,6 +14,7 @@ Filed upstream as tosijs-schema#8, asking for `oneOf` and `exclusiveMin/Max` to 
 and for this walker to be exported (`agentContract` already computes it internally, but only
 by throwing). **Delete this file when that lands.**
 */
+import { getSchemaValidator } from './validator.js';
 /*
 Mirrors `ENFORCED_KEYWORDS` from tosijs-schema 1.7.0.
 
@@ -69,6 +70,18 @@ const ANNOTATIONS = new Set([
 export function unenforcedKeywords(schema) {
     if (!schema || typeof schema !== 'object')
         return [];
+    /*
+    Ask the validator in use, when it can answer.
+  
+    It is the only thing that actually knows, and a local copy can only ever be right about the
+    version it was copied from. tosijs-schema 1.8.0 enforces `oneOf` and `exclusiveMin/Max` and
+    exports this function; against 1.8.0 our 1.7.0 list would render "oneOf is not validated"
+    over a field the validator IS checking — the note lying, in the component whose whole point
+    is that it does not.
+    */
+    const fromValidator = getSchemaValidator()?.unenforcedKeywords;
+    if (fromValidator)
+        return fromValidator(schema);
     const found = Object.keys(schema).filter((key) => !ENFORCED.has(key) && !ANNOTATIONS.has(key) && !key.startsWith('x-'));
     return [...new Set(found)].sort();
 }

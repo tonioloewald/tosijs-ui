@@ -19,6 +19,15 @@ addresses instead, and a credential too painful to use is not protecting anythin
 
 ### Breaking
 
+- **`tosijs-schema` floor is `^1.8.0`** (optional peer). 1.8.0 enforces `oneOf`,
+  `exclusiveMinimum` and `exclusiveMaximum` — which is what
+  [tosijs-schema#8](https://github.com/tonioloewald/tosijs-schema/issues/8), filed from this
+  work, asked for — and exports `unenforcedKeywords`. The form now asks the **registered
+  validator** which keywords it does not check, falling back to a local list only when a
+  validator cannot answer. Against 1.7.0 a `oneOf` field carried "oneOf is not validated";
+  against 1.8.0 it carries nothing and the value is genuinely checked. Verified with
+  `bun bin/verify-schema-dep.ts --version=1.8.0` (17/17).
+
 - **Validation is supplied, not imported.** `setSchemaValidator({ validate, inferSchema })` —
   one line, anywhere, before or after render. The CDN `<script>` build and any `tosijs-ui/site`
   doc site register it themselves, so only an ESM consumer writes it.
@@ -138,6 +147,14 @@ wrong. `bin/smoke-consumer.ts` gained four things it could not previously see: r
 new subpaths from an installed tarball, a `tsc --noEmit` over an installed consumer with
 `skipLibCheck: false` and no optional peers, a bundle entry that actually imports the library,
 and both vendored types pinned by assignability tests in both directions.
+
+### Known issues
+
+- **[#102](https://github.com/tonioloewald/tosijs-ui/issues/102)** — `<tosi-table>`'s header
+  and body column widths can disagree after a column resize followed by a programmatic
+  `columns` assignment. Reported from a host app during this release; not reproduced here, so
+  it is filed with the mechanism narrowed rather than fixed blind. The resize path predates
+  1.11.0.
 
 ### Fixed
 

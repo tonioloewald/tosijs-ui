@@ -10,9 +10,22 @@ never touches a schema never sees the package at all.
 */
 import * as xinjsui from './index.js'
 import * as xinjs from 'tosijs'
-import { validate, inferSchema } from 'tosijs-schema'
+import {
+  validate,
+  inferSchema,
+  unenforcedKeywords,
+  setWarnings,
+} from 'tosijs-schema'
 import { setSchemaValidator } from './schema-form/validator.js'
 
-setSchemaValidator({ validate, inferSchema })
+/*
+`oneOf` warns once per process in tosijs-schema 1.8.0 — it is validated by trying every
+branch, where `anyOf` short-circuits. That is worth knowing when you are AUTHORING a schema
+and noise when you are merely rendering someone else's, which is what a doc site and a CDN
+page are doing. The advice survives where it belongs: the schema-form docs say to prefer
+`anyOf` for a discriminated union.
+*/
+setWarnings(false)
+setSchemaValidator({ validate, inferSchema, unenforcedKeywords })
 
 Object.assign(globalThis, { xinjs, xinjsui })

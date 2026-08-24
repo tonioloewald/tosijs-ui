@@ -462,13 +462,24 @@ test(&#39;unions render as what they actually are&#39;, async () =&gt; {
   )
 })
 </code></pre>
-<h3><code>oneOf</code> is rendered, but it is not validated</h3>
-<p><code>tosijs-schema</code> enforces <code>anyOf</code> and <strong>silently ignores <code>oneOf</code></strong> — <code>validate</code> returns <code>true</code>
-for a value no branch accepts (<a href="https://github.com/tonioloewald/tosijs-schema/issues/8">#8</a>).
-Since <code>oneOf</code> is how nearly every real schema spells a variant union, refusing it would refuse
-most schemas; instead the field says so, because a green form over an unchecked value is worse
-than an honest note. The same note appears for any other keyword the validator ignores, such
-as <code>exclusiveMinimum</code>.</p>
+<h3>When a keyword is not validated, the field says so</h3>
+<p>A validator enforces a subset of JSON Schema, and the parts outside it are the dangerous ones:
+not an error, not a warning — a value the schema forbids, accepted, with <code>ok === true</code>. So any
+field whose schema uses a keyword the <strong>registered validator</strong> does not check carries a note
+saying which.</p>
+<p>The form asks the validator itself, whenever it can answer (<code>unenforcedKeywords</code>, which
+<code>tosijs-schema</code> exports from 1.8.0 — it was ask 3 of
+<a href="https://github.com/tonioloewald/tosijs-schema/issues/8">#8</a>, filed from here). Only a
+validator that cannot answer falls back to a local list, because the validator in use is the
+only thing that actually knows.</p>
+<p>That distinction is not academic: <code>tosijs-schema</code> <strong>used to ignore <code>oneOf</code></strong> — <code>validate</code>
+returned <code>true</code> for a value no branch accepted — and 1.8.0 enforces it. A hard-coded list
+would now be claiming &quot;oneOf is not validated&quot; over a field being checked, which is the note
+lying in the component whose whole point is that it does not.</p>
+<blockquote>
+<p><strong>Prefer <code>anyOf</code> for a discriminated union.</strong> 1.8.0 validates <code>oneOf</code> by trying every branch
+with no short-circuit, where <code>anyOf</code> stops at the first match. Same result, more work.</p>
+</blockquote>
 <pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
 
 preview.append(
@@ -499,20 +510,20 @@ preview.append(
 </code></pre>
 <pre><code class="language-test">const oneOfForm = await waitFor(&#39;tosi-schema-form&#39;)
 
-test(&#39;the note appears for ANY ignored keyword, not just unions&#39;, () =&gt; {
+test(&#39;the note tracks the VALIDATOR, not a hard-coded list&#39;, () =&gt; {
   expect(oneOfForm.querySelector(&#39;[data-path=&quot;shape.side&quot;]&#39;).value).toBe(&#39;2&#39;)
 
   const notes = [...oneOfForm.querySelectorAll(&#39;.schema-unvalidated&#39;)].map(
     (n) =&gt; n.textContent
   )
-  expect(notes).toContain(&#39;oneOf is not validated&#39;)
-  // `score: 0` violates `exclusiveMinimum: 0` and the validator does not check it, so the
-  // form says the value conforms. Until 1.11.0 the note rendered ONLY for unions — the
-  // honesty this feature exists for covered exactly one keyword, while the docs a paragraph
-  // above promised otherwise. (Line comments: a block comment&#39;s `*` `/` closes the doc
-  // block early — see #70.)
-  expect(notes).toContain(&#39;exclusiveMinimum is not validated&#39;)
-  expect(oneOfForm.validate()).toBe(true)
+  // Against tosijs-schema &gt;= 1.8.0 both `oneOf` and `exclusiveMinimum` ARE enforced, so
+  // there is nothing to warn about and `score: 0` is correctly rejected. Under 1.7.0 this
+  // same form rendered two notes and reported the value as conforming — the assertion that
+  // matters is that the notes agree with the validator in use, whichever it is.
+  // (Line comments: a block comment&#39;s `*` `/` closes the doc block early — see #70.)
+  expect(notes).toEqual([])
+  expect(oneOfForm.validate()).toBe(false)
+  expect(oneOfForm.errors.some((e) =&gt; e.path === &#39;score&#39;)).toBe(true)
 })
 </code></pre>
 <h2>Format plugins</h2>

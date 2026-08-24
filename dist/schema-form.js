@@ -446,14 +446,26 @@ test('unions render as what they actually are', async () => {
 })
 ```
 
-### `oneOf` is rendered, but it is not validated
+### When a keyword is not validated, the field says so
 
-`tosijs-schema` enforces `anyOf` and **silently ignores `oneOf`** — `validate` returns `true`
-for a value no branch accepts ([#8](https://github.com/tonioloewald/tosijs-schema/issues/8)).
-Since `oneOf` is how nearly every real schema spells a variant union, refusing it would refuse
-most schemas; instead the field says so, because a green form over an unchecked value is worse
-than an honest note. The same note appears for any other keyword the validator ignores, such
-as `exclusiveMinimum`.
+A validator enforces a subset of JSON Schema, and the parts outside it are the dangerous ones:
+not an error, not a warning — a value the schema forbids, accepted, with `ok === true`. So any
+field whose schema uses a keyword the **registered validator** does not check carries a note
+saying which.
+
+The form asks the validator itself, whenever it can answer (`unenforcedKeywords`, which
+`tosijs-schema` exports from 1.8.0 — it was ask 3 of
+[#8](https://github.com/tonioloewald/tosijs-schema/issues/8), filed from here). Only a
+validator that cannot answer falls back to a local list, because the validator in use is the
+only thing that actually knows.
+
+That distinction is not academic: `tosijs-schema` **used to ignore `oneOf`** — `validate`
+returned `true` for a value no branch accepted — and 1.8.0 enforces it. A hard-coded list
+would now be claiming "oneOf is not validated" over a field being checked, which is the note
+lying in the component whose whole point is that it does not.
+
+> **Prefer `anyOf` for a discriminated union.** 1.8.0 validates `oneOf` by trying every branch
+> with no short-circuit, where `anyOf` stops at the first match. Same result, more work.
 
 ```js
 import { tosiSchemaForm } from 'tosijs-ui'
@@ -487,20 +499,20 @@ preview.append(
 ```test
 const oneOfForm = await waitFor('tosi-schema-form')
 
-test('the note appears for ANY ignored keyword, not just unions', () => {
+test('the note tracks the VALIDATOR, not a hard-coded list', () => {
   expect(oneOfForm.querySelector('[data-path="shape.side"]').value).toBe('2')
 
   const notes = [...oneOfForm.querySelectorAll('.schema-unvalidated')].map(
     (n) => n.textContent
   )
-  expect(notes).toContain('oneOf is not validated')
-  // `score: 0` violates `exclusiveMinimum: 0` and the validator does not check it, so the
-  // form says the value conforms. Until 1.11.0 the note rendered ONLY for unions — the
-  // honesty this feature exists for covered exactly one keyword, while the docs a paragraph
-  // above promised otherwise. (Line comments: a block comment's `*` `/` closes the doc
-  // block early — see #70.)
-  expect(notes).toContain('exclusiveMinimum is not validated')
-  expect(oneOfForm.validate()).toBe(true)
+  // Against tosijs-schema >= 1.8.0 both `oneOf` and `exclusiveMinimum` ARE enforced, so
+  // there is nothing to warn about and `score: 0` is correctly rejected. Under 1.7.0 this
+  // same form rendered two notes and reported the value as conforming — the assertion that
+  // matters is that the notes agree with the validator in use, whichever it is.
+  // (Line comments: a block comment's `*` `/` closes the doc block early — see #70.)
+  expect(notes).toEqual([])
+  expect(oneOfForm.validate()).toBe(false)
+  expect(oneOfForm.errors.some((e) => e.path === 'score')).toBe(true)
 })
 ```
 

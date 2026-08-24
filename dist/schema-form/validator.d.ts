@@ -12,6 +12,15 @@ export interface SchemaValidator {
     }) => boolean;
     /** Derive a schema from a sample. Optional — without it, a form with no schema stays empty. */
     inferSchema?: (sample: unknown) => JSONSchema;
+    /**
+     * Which constraining keywords in this schema does `validate` NOT enforce?
+     *
+     * Optional, and preferred over our local copy whenever a validator supplies it — the
+     * validator in use is the only thing that actually knows. tosijs-schema 1.8.0 exports this
+     * (it was ask 3 of tosijs-ui's issue #8), which is why the local walker is now a fallback
+     * rather than the answer.
+     */
+    unenforcedKeywords?: (schema: JSONSchema) => string[];
 }
 /**
  * Supply the validator. Pass `null` to remove it.

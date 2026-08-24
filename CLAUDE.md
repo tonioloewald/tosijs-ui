@@ -283,7 +283,9 @@ To find form-associated components, grep `src/` for `formAssociated = true`.
 
 `<tosi-code>` (`src/code-editor.ts`) is a [CodeMirror 6](https://codemirror.net/) wrapper. The heavy CM code lives in `src/code-editor-cm.ts` and is loaded **lazily on first use** via a dynamic import.
 
-**Measured 2026-08-24 and no longer true as written:** CodeMirror is NOT in `dist/iife.js`. `lezer` appears zero times and there is no `code-editor-cm` reference; the iife is 1289KB raw / 403KB gzip without it. The paragraph below described 1.7 and went stale — re-measure before repeating a bundle claim, and count occurrences (`grep -o | wc -l`), not lines: the bundle is 275 minified lines, so `grep -c` reports 1 for everything and looks like an answer. Don't repeat the "a page with no `<tosi-code>` bundles none of it" claim without that caveat: the iife is the _most_-loaded artifact (every generated doc page, the CDN `<script>` path, and every `tosijs-ui/site` adopter that omits `bundleEntry`). `dist/code-editor-cm.js` _is_ a real ~9.5KB lazy chunk for bundler consumers.
+**Never grep a minified bundle to decide what is in it.** On 2026-08-24 this file briefly claimed CodeMirror was NOT in `dist/iife.js`, "measured" by `grep -o lezer | wc -l` returning 0. That is not evidence of absence: minification erases package paths and renames identifiers, so the strings you are searching for do not survive. **Read the sourcemap** — `JSON.parse(fs.readFileSync('dist/iife.js.map')).sources` — which lists every input file. It reports **21 of 110 sources** under `@codemirror/`, `@lezer/` and `code-editor-cm`. CodeMirror is in there, exactly as the paragraph below has always said.
+
+(The related trap, since both bit in one session: `grep -c` counts _lines_, and the bundle is 275 minified lines, so it reports 1 for everything and looks like an answer.) Don't repeat the "a page with no `<tosi-code>` bundles none of it" claim without that caveat: the iife is the _most_-loaded artifact (every generated doc page, the CDN `<script>` path, and every `tosijs-ui/site` adopter that omits `bundleEntry`). `dist/code-editor-cm.js` _is_ a real ~9.5KB lazy chunk for bundler consumers.
 
 Public surface (this is the contract; the pre-1.7 ACE `theme`/`options` props were **dropped** — breaking):
 
@@ -707,6 +709,15 @@ the two are complementary, not alternatives.
 bun run release-notes    # assemble the section for the current version
 bun run release-check    # gate: every annotation accounted for (exit 1 if not)
 ```
+
+**Run `release-check` AFTER the release commit, not before.** The range is
+`<last tag>..HEAD`, so a `[new]`/`[fix]` bullet written _in the release commit itself_ is not
+in the range you checked a moment earlier — 1.11.0 shipped a commit whose body claimed the
+gate was green while it exited 1 on the state that commit created. Worse, the range is
+exclusive of the since-commit, so **tagging turns the gate green without the bullet ever being
+written**: the annotation escapes in both directions. Re-run it as the last thing before
+`git tag`, and treat its exit code as the contract — the whole point of the tool is that it is
+the one thing that cannot be talked out of noticing.
 
 `release-check` fails when an annotation since the last tag appears nowhere in
 `CHANGELOG.md`, and separately reports any commit whose `[fix]`/`[new]` bullets are
