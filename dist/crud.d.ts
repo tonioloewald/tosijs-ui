@@ -90,6 +90,8 @@ export declare class TosiCrud extends WebComponent<CrudParts> {
     private _schema;
     private _rows;
     private _selected;
+    /** True between `createNew()` and the next save/select — see `syncSelectionFromHash`. */
+    private _creating;
     private _loaded;
     private _error;
     private _pending;
@@ -139,6 +141,9 @@ export declare class TosiCrud extends WebComponent<CrudParts> {
     content: () => HTMLDivElement[];
     connectedCallback(): void;
     disconnectedCallback(): void;
+    private _applyingSelection;
+    private _tableSelection;
+    private syncTableSelection;
     /** Put the selected record into the form. Idempotent, so render can call it too. */
     private showSelected;
     private syncSelectionFromHash;

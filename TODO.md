@@ -685,6 +685,16 @@ live site** (independently useful). See roadmap "From book to live."
   idiomatic than the local UI term (ja `選別` for sort, es `Clasificar`, zh `展示` for show)
   and were deliberately left alone rather than asserting more than could be verified.
 
+## Flaky: `doc-system.pw.ts` "a nested doc-system does not hijack the host browser state"
+
+- [ ] Fails roughly **1 full run in 6 on firefox**, and passes **4/4 in isolation** — so it is
+      cross-test interference or a timing assumption, not the component. Not mine: the spec
+      and the fix behind it predate 1.11.0 (`d749d281`). Recorded rather than waved away.
+      First thing to try is what fixed three of these in 1.11.0: poll for the CONDITION being
+      asserted rather than a proxy for it, and check whether the page's own inline doc tests
+      are racing the spec (`localStorage.setItem('tosijs-ui-tests-enabled','false')` in an
+      `addInitScript`).
+
 ## From the 1.11.0 nine-lens review (deferred)
 
 Full report: [RELEASE-REVIEW-1.11.md](RELEASE-REVIEW-1.11.md). All three blockers and eight

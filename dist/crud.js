@@ -352,6 +352,8 @@ export class TosiCrud extends WebComponent {
     _schema = null;
     _rows = [];
     _selected = null;
+    /** True between `createNew()` and the next save/select — see `syncSelectionFromHash`. */
+    _creating = false;
     /*
     The exact object last pushed INTO the form — the ONE thing that decides whether to load.
   
@@ -473,9 +475,12 @@ export class TosiCrud extends WebComponent {
         if (seq !== this._listSeq)
             return;
         this._rows = rows ?? [];
+        // A fresh list invalidates what we told the table about the old one.
+        this._tableSelection = null;
         this.queueRender();
     }
     select(record) {
+        this._creating = false;
         this._selected = record ?? null;
         // Into the form NOW, not at the next render: `crud.value` is the form's model, and a
         // caller that selects and then reads it back should not have to wait a frame.
@@ -488,6 +493,7 @@ export class TosiCrud extends WebComponent {
     }
     /** Start a blank record. Nothing is stored until `save()`. */
     createNew() {
+        this._creating = true;
         this._selected = {};
         this.showSelected();
         this._hash?.set('id', undefined);
@@ -500,7 +506,20 @@ export class TosiCrud extends WebComponent {
         const record = this.parts.form.value;
         const saved = await this.run('save', () => this._store.save(record));
         // The store's answer wins: it knows the new id, the timestamp, the computed fields.
+        this._creating = false;
         this._selected = saved ?? record;
+        /*
+        A saved record HAS an id now, so the URL should point at it.
+    
+        Without this the hash stays id-less after saving a new record, and once absence of `id`
+        means "deselect" (which is what makes Back work), the very next render threw the
+        just-saved record away. Writing it also makes the obvious thing true: save a new record
+        and the address bar is a link to it.
+        */
+        const savedId = getByPath(this._selected ?? {}, this.idPath);
+        if (savedId !== undefined && savedId !== null) {
+            this._hash?.set('id', String(savedId));
+        }
         this.showSelected();
         await this.refresh();
         this.queueRender();
@@ -594,6 +613,49 @@ export class TosiCrud extends WebComponent {
     one. It runs whenever the rows change too, so a record that was not in the list yet gets
     picked up once it is.
     */
+    /*
+    Keep the TABLE's selection in step with ours.
+  
+    `select()` loaded the form and wrote the hash and never told the table, so clicking a row
+    then selecting another programmatically left the first row highlighted while the form
+    showed the second — and a `#?people.id=2` deep link, the feature this release headlines,
+    opened the record with nothing highlighted at all. "A link you can send someone" produced a
+    list that did not show where you were.
+  
+    Guarded by `_applyingSelection` because the table's own `selectionChanged` calls back into
+    `select()`; without it a click would recurse.
+    */
+    _applyingSelection = false;
+    /*
+    What we last TOLD the table, which is not the same question as what the table reports.
+  
+    Reading `table.selectedRows` to decide whether to act looks equivalent and is not: before
+    the rows have stamped it is empty, so every render re-applied the selection, and
+    `selectRow`/`deSelect` mutate row objects and queue a table render — which rebuilt the
+    cells on every keystroke. Chromium stamped fast enough to hide it; WebKit did not, which is
+    the whole argument for running three engines.
+  
+    Same shape as `_loaded` for the form: remember what you sent, not what you can observe.
+    */
+    _tableSelection = null;
+    syncTableSelection() {
+        if (!this.hydrated || this._applyingSelection)
+            return;
+        if (this._tableSelection === this._selected)
+            return;
+        const table = this.parts.table;
+        this._applyingSelection = true;
+        try {
+            table.deSelect();
+            if (this._selected && this._rows.includes(this._selected)) {
+                table.selectRow(this._selected);
+            }
+            this._tableSelection = this._selected;
+        }
+        finally {
+            this._applyingSelection = false;
+        }
+    }
     /** Put the selected record into the form. Idempotent, so render can call it too. */
     showSelected() {
         if (!this.hydrated)
@@ -605,30 +667,63 @@ export class TosiCrud extends WebComponent {
             this.parts.form.value = this._selected;
             this._loaded = this._selected;
         }
+        this.syncTableSelection();
     }
     syncSelectionFromHash() {
         const id = this._hash?.get('id');
-        if (id === undefined)
+        /*
+        An ABSENT id means deselect — unless we are mid-`createNew()`.
+    
+        This used to return early whenever `id` was missing, which made it structurally unable to
+        ever deselect: after `history.back()` the hash was clean and the detail pane still showed
+        the record you had opened, while RELOADING that same URL showed nothing. Back-then-reload
+        changed what you saw, and the docs promise the opposite.
+    
+        `_creating` is what lets absence be unambiguous: a blank new record has no id and must
+        survive, a popped history entry has no id and must not.
+        */
+        if (id === undefined) {
+            if (this._creating || !this._selected)
+                return;
+            this._selected = null;
+            this._loaded = null;
+            this.dispatchEvent(new Event('change', { bubbles: true }));
             return;
+        }
         const current = this._selected && String(getByPath(this._selected, this.idPath));
         if (current === id)
             return;
         const match = this._rows.find((row) => String(getByPath(row, this.idPath)) === id);
-        if (match)
+        if (match) {
             this._selected = match;
+            // Documented as "the selection or the saved record changed" — a hash-driven selection
+            // is a selection change, and it fired nothing.
+            this.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
     render() {
         super.render();
         this.syncSelectionFromHash();
         if (this._schema) {
-            this.parts.form.schema = this._schema;
+            if (this.parts.form.schema !== this._schema) {
+                this.parts.form.schema = this._schema;
+            }
             // Set columns once: replacing them on every render would throw away a consumer's own
             // column widths and hidden/pinned state along with them.
             if (!this.parts.table.columns?.length) {
                 this.parts.table.columns = columnsFromSchema(this._schema);
             }
         }
-        this.parts.table.array = this._rows;
+        /*
+        Identity guards. `TosiTable.set array` always queues a render and `TosiTable.render()`
+        starts with `this.textContent = ''`, so an unconditional assignment tore the whole table
+        down — and crud queues a render on every form `change`, every hashState notification and
+        every pending transition. Measured: 8 keystrokes → 8 full table rebuilds. The search
+        debounce protects the network; nothing protected the DOM.
+        */
+        if (this.parts.table.array !== this._rows) {
+            this.parts.table.array = this._rows;
+        }
         this.showSelected();
         const canSave = Boolean(this._store?.save);
         const canDelete = Boolean(this._store?.delete);

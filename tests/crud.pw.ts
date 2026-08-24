@@ -224,3 +224,100 @@ test('createNew starts a blank record that saves as a new one', async ({
   // The store's answer wins: it assigned the id.
   expect(result.gotAnId).toBe(true)
 })
+
+test('the table highlights whatever the form is editing — including a deep link', async ({
+  page,
+}) => {
+  // "A link you can send someone" produced a list that did not show where you were: the
+  // record opened and nothing was highlighted.
+  const result = await page.evaluate(async () => {
+    const crud = document.querySelector('tosi-crud') as any
+    await crud.whenIdle()
+    crud.select(crud.rows[0])
+    await crud.whenIdle()
+    const first = crud.table.selectedRows.map((r: any) => r.name)
+    crud.select(crud.rows[2])
+    await crud.whenIdle()
+    return { first, second: crud.table.selectedRows.map((r: any) => r.name) }
+  })
+  expect(result.first).toEqual(['Ada Lovelace'])
+  // The previous row must not stay highlighted alongside it.
+  expect(result.second).toEqual(['Katherine Johnson'])
+})
+
+test('Back leaves the record, and says so', async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const crud = document.querySelector('tosi-crud') as any
+    await crud.whenIdle()
+    crud.select(crud.rows[1])
+    await crud.whenIdle()
+    return { opened: crud.value?.name, hash: location.hash }
+  })
+  expect(result.opened).toBe('Grace Hopper')
+  expect(result.hash).toContain('people.id=2')
+
+  await page.goBack()
+  // Wait for the URL to actually settle, then for the component to react. `goBack()` resolves
+  // on navigation, not on the popstate listeners having run and a render having happened —
+  // assuming otherwise passed in isolation and failed about one full run in six.
+  await page.waitForFunction(() => !location.hash.includes('people.id='))
+  const after = await page.evaluate(async () => {
+    const crud = document.querySelector('tosi-crud') as any
+    // Poll for the CONDITION being asserted, not a proxy for it. Waiting on `crud.value`
+    // and then reading `detail.hidden` assumes the two settle in the same frame; they do not
+    // always, and the assertion that mattered was the one not being waited for.
+    const detail = crud.querySelector('.crud-detail') as HTMLElement
+    for (let i = 0; i < 200 && !(crud.value === null && detail.hidden); i++) {
+      await new Promise((r) => requestAnimationFrame(r))
+    }
+    return {
+      value: crud.value,
+      detailHidden: (crud.querySelector('.crud-detail') as HTMLElement).hidden,
+      hash: location.hash,
+    }
+  })
+  // The detail pane used to stay open with the record loaded while the hash was clean — so
+  // reloading that same URL showed something different from what was on screen.
+  expect(after.hash).not.toContain('people.id=')
+  expect(after.value).toBe(null)
+  expect(after.detailHidden).toBe(true)
+})
+
+test('typing in the form does not tear down the table', async ({ page }) => {
+  /*
+  `TosiTable.set array` always queues a render and `render()` starts with
+  `textContent = ''`, so crud's unconditional `table.array = this._rows` rebuilt the entire
+  table on every form keystroke — and crud queues a render on every form `change`, every
+  hashState notification and every pending transition. The search debounce protects the
+  network, not the DOM. Element identity is the cheapest way to see it.
+  */
+  const survived = await page.evaluate(async () => {
+    const crud = document.querySelector('tosi-crud') as any
+    await crud.whenIdle()
+    crud.select(crud.rows[0])
+    await crud.whenIdle()
+    /*
+    Wait for a cell to EXIST before capturing it.
+
+    Rows are list-bound and stamp on their own schedule; on WebKit this captured `null` and
+    then compared it to a real element, reporting a teardown that never happened. The
+    component was measured at 0 table renders on both engines — the test was the thing that
+    was wrong, and it only showed up on the slower engine.
+    */
+    for (let i = 0; i < 200 && !crud.table.querySelector('.td'); i++) {
+      await new Promise((r) => requestAnimationFrame(r))
+    }
+    const cell = crud.table.querySelector('.td')
+    if (!cell) throw new Error('no cells stamped')
+    const name = crud.form.querySelector(
+      '[data-path="name"]'
+    ) as HTMLInputElement
+    for (const ch of ['a', 'b', 'c', 'd']) {
+      name.value += ch
+      name.dispatchEvent(new Event('input', { bubbles: true }))
+      await new Promise((r) => requestAnimationFrame(r))
+    }
+    return crud.table.querySelector('.td') === cell
+  })
+  expect(survived).toBe(true)
+})

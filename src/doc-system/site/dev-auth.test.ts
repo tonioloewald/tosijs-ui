@@ -15,6 +15,7 @@ import {
   mintLinkToken,
   normalizeLinkToken,
   createRedemptionGate,
+  resolveLinkSettings,
   RedemptionBusyError,
   REDEEM_MAX_WAITING,
   REDEEM_MIN_MS,
@@ -501,14 +502,6 @@ test('a fresh redemption wins even if a session is already held', () => {
 })
 
 // ── link redemption policy ───────────────────────────────────────────────────
-
-import {
-  issueLink,
-  redeemLink,
-  validSession,
-  resolveLinkSettings,
-  createAuthState,
-} from './dev-auth.js'
 
 test('REGRESSION: by default a link works on a SECOND device inside its window', () => {
   /*
