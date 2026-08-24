@@ -476,6 +476,7 @@ preview.append(
     schema: {
       type: &#39;object&#39;,
       properties: {
+        score: { type: &#39;number&#39;, exclusiveMinimum: 0 },
         shape: {
           oneOf: [
             {
@@ -492,17 +493,26 @@ preview.append(
         },
       },
     },
-    value: { shape: { kind: &#39;square&#39;, side: 2 } },
+    value: { score: 0, shape: { kind: &#39;square&#39;, side: 2 } },
   })
 )
 </code></pre>
 <pre><code class="language-test">const oneOfForm = await waitFor(&#39;tosi-schema-form&#39;)
 
-test(&#39;a oneOf union renders, and says it is not validated&#39;, () =&gt; {
+test(&#39;the note appears for ANY ignored keyword, not just unions&#39;, () =&gt; {
   expect(oneOfForm.querySelector(&#39;[data-path=&quot;shape.side&quot;]&#39;).value).toBe(&#39;2&#39;)
-  expect(oneOfForm.querySelector(&#39;.schema-unvalidated&#39;).textContent).toBe(
-    &#39;oneOf is not validated&#39;
+
+  const notes = [...oneOfForm.querySelectorAll(&#39;.schema-unvalidated&#39;)].map(
+    (n) =&gt; n.textContent
   )
+  expect(notes).toContain(&#39;oneOf is not validated&#39;)
+  // `score: 0` violates `exclusiveMinimum: 0` and the validator does not check it, so the
+  // form says the value conforms. Until 1.11.0 the note rendered ONLY for unions — the
+  // honesty this feature exists for covered exactly one keyword, while the docs a paragraph
+  // above promised otherwise. (Line comments: a block comment&#39;s `*` `/` closes the doc
+  // block early — see #70.)
+  expect(notes).toContain(&#39;exclusiveMinimum is not validated&#39;)
+  expect(oneOfForm.validate()).toBe(true)
 })
 </code></pre>
 <h2>Format plugins</h2>

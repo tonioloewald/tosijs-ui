@@ -123,6 +123,16 @@ export declare class TosiCrud extends WebComponent<CrudParts> {
     /** Start a blank record. Nothing is stored until `save()`. */
     createNew(): void;
     save(): Promise<any>;
+    /**
+     * Is the selected record something the store could delete?
+     *
+     * ONE rule, used by both the button and the method. They disagreed: `render()` disabled the
+     * button for a record with no id, while `remove()` only checked that *something* was
+     * selected — so `createNew()` followed by `remove()` sent `store.delete({})`, which for a
+     * REST adapter is `DELETE /records/undefined`. A guard the UI enforces and the API does not
+     * is not a guard.
+     */
+    private get deletable();
     remove(): Promise<void>;
     private onSearchInput;
     private onSelectionChanged;

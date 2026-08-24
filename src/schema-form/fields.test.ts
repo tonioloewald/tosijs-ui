@@ -17,6 +17,8 @@ import {
   matchBranch,
   selectBranch,
   relaxInferred,
+  coerceToSchema,
+  fieldEditable,
 } from './fields'
 
 const contact: any = {
@@ -516,6 +518,35 @@ test('a union of objects becomes a variant node with a derived discriminator', (
   expect(node.unvalidated).toEqual(['oneOf'])
 })
 
+test('x-discriminator is read — the spelling agentContract accepts', () => {
+  /*
+  `discriminator` is an OpenAPI keyword and tosijs-schema's `agentContract` refuses a schema
+  that uses it, so anything written to pass their contract check spells it `x-discriminator`.
+  Reading only the rejected spelling meant the declared property was silently ignored.
+  */
+  const [node]: any = fieldsFor({
+    type: 'object',
+    properties: {
+      thing: {
+        'x-discriminator': { propertyName: 'flavour' },
+        anyOf: [
+          {
+            type: 'object',
+            properties: { kind: { const: 'x' }, flavour: { const: 'sweet' } },
+          },
+          {
+            type: 'object',
+            properties: { kind: { const: 'x' }, flavour: { const: 'sour' } },
+          },
+        ],
+      },
+    },
+  } as any)
+  expect(node.discriminator).toBe('flavour')
+  // …and the branches are labelled from it, which is what the mislabelling looked like.
+  expect(node.branches.map((b: any) => b.label)).toEqual(['sweet', 'sour'])
+})
+
 test('an explicit discriminator wins over the derived one', () => {
   const [node]: any = fieldsFor({
     type: 'object',
@@ -659,4 +690,67 @@ test('an inferred schema is relaxed: it described a sample, not a contract', () 
   expect(Object.keys(relaxed.properties)).toEqual(['name', 'address', 'rows'])
   // And the input is not mutated.
   expect(inferred.required).toEqual(['name', 'address', 'rows'])
+})
+
+/*
+One schema→control layer, used by BOTH surfaces.
+
+These lived twice — once in `<tosi-schema-form>`, once in the editable `<tosi-table>` — and
+had already drifted: a `const` property was readonly in the form and a freely editable text
+box in the table. Two surfaces disagreeing about what a property IS is the exact failure the
+DOM-free model exists to prevent.
+*/
+
+test('coerceToSchema turns control state back into schema values', () => {
+  const field = (kind: string, options?: any): any => ({ kind, options })
+  expect(coerceToSchema(field('integer'), '42', false)).toBe(42)
+  expect(coerceToSchema(field('number'), '1.5', false)).toBe(1.5)
+  expect(coerceToSchema(field('boolean'), '', true)).toBe(true)
+  expect(coerceToSchema(field('string'), 'text', false)).toBe('text')
+})
+
+test('an emptied numeric field is UNDEFINED, not zero', () => {
+  // "The user cleared it" and "the user typed zero" are different facts; writing one for the
+  // other puts a number in the data that nobody entered.
+  const field = (kind: string): any => ({ kind })
+  expect(coerceToSchema(field('integer'), '', false)).toBeUndefined()
+  expect(coerceToSchema(field('number'), '', false)).toBeUndefined()
+  expect(coerceToSchema(field('integer'), '0', false)).toBe(0)
+})
+
+test('an enum recovers the schema’s own value, not the string the DOM held', () => {
+  const field: any = {
+    kind: 'enum',
+    options: [
+      { value: 1, label: 'one' },
+      { value: false, label: 'no' },
+    ],
+  }
+  expect(coerceToSchema(field, '1', false)).toBe(1)
+  expect(coerceToSchema(field, 'false', false)).toBe(false)
+  // An unknown selection falls through as the raw string rather than becoming undefined.
+  expect(coerceToSchema(field, 'other', false)).toBe('other')
+})
+
+test('with no field it trusts the control the browser gave us', () => {
+  // The table can render a cell before a schema arrives; guessing "text" would turn a number
+  // column into strings on the first edit.
+  expect(coerceToSchema(undefined, '7', false, 'number')).toBe(7)
+  expect(coerceToSchema(undefined, '', false, 'checkbox')).toBe(false)
+  expect(coerceToSchema(undefined, 'x', false, 'text')).toBe('x')
+})
+
+test('a const field is not editable on EITHER surface', () => {
+  const constField = fieldsFor({
+    type: 'object',
+    properties: { kind: { const: 'invoice' } },
+  } as any)[0] as any
+  expect(constField.kind).toBe('const')
+  expect(fieldEditable(constField)).toBe(false)
+
+  const stringField = fieldsFor({
+    type: 'object',
+    properties: { name: { type: 'string' } },
+  } as any)[0] as any
+  expect(fieldEditable(stringField)).toBe(true)
 })

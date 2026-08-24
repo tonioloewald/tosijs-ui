@@ -463,6 +463,7 @@ preview.append(
     schema: {
       type: 'object',
       properties: {
+        score: { type: 'number', exclusiveMinimum: 0 },
         shape: {
           oneOf: [
             {
@@ -479,18 +480,27 @@ preview.append(
         },
       },
     },
-    value: { shape: { kind: 'square', side: 2 } },
+    value: { score: 0, shape: { kind: 'square', side: 2 } },
   })
 )
 ```
 ```test
 const oneOfForm = await waitFor('tosi-schema-form')
 
-test('a oneOf union renders, and says it is not validated', () => {
+test('the note appears for ANY ignored keyword, not just unions', () => {
   expect(oneOfForm.querySelector('[data-path="shape.side"]').value).toBe('2')
-  expect(oneOfForm.querySelector('.schema-unvalidated').textContent).toBe(
-    'oneOf is not validated'
+
+  const notes = [...oneOfForm.querySelectorAll('.schema-unvalidated')].map(
+    (n) => n.textContent
   )
+  expect(notes).toContain('oneOf is not validated')
+  // `score: 0` violates `exclusiveMinimum: 0` and the validator does not check it, so the
+  // form says the value conforms. Until 1.11.0 the note rendered ONLY for unions — the
+  // honesty this feature exists for covered exactly one keyword, while the docs a paragraph
+  // above promised otherwise. (Line comments: a block comment's `*` `/` closes the doc
+  // block early — see #70.)
+  expect(notes).toContain('exclusiveMinimum is not validated')
+  expect(oneOfForm.validate()).toBe(true)
 })
 ```
 
@@ -731,6 +741,7 @@ import {
   getByPath,
   setByPath,
   collectErrors,
+  coerceToSchema,
   errorFor,
   relaxInferred,
   type Field,
@@ -910,24 +921,6 @@ export class TosiSchemaForm extends WebComponent {
   and "the user typed zero" are different states, and conflating them writes a value nobody
   entered.
   */
-  private coerce(field: Field, raw: string, checked: boolean): unknown {
-    switch (field.kind) {
-      case 'boolean':
-        return checked
-      case 'number':
-        return raw === '' ? undefined : Number(raw)
-      case 'integer':
-        return raw === '' ? undefined : parseInt(raw, 10)
-      case 'enum': {
-        // The DOM only holds strings; recover the schema's own value by identity.
-        const hit = field.options?.find((o) => String(o.value) === raw)
-        return hit ? hit.value : raw
-      }
-      default:
-        return raw
-    }
-  }
-
   private onFieldInput = (event: Event): void => {
     const el = event.target as HTMLInputElement | HTMLSelectElement
     const path = el.dataset?.path
@@ -937,7 +930,7 @@ export class TosiSchemaForm extends WebComponent {
     this._value = setByPath(
       this._value,
       path,
-      this.coerce(field, el.value, (el as HTMLInputElement).checked)
+      coerceToSchema(field, el.value, (el as HTMLInputElement).checked, el.type)
     )
     this.refreshErrors()
     this.syncErrors()
@@ -1078,14 +1071,7 @@ export class TosiSchemaForm extends WebComponent {
       { class: 'schema-field schema-union' },
       label(node.label),
       picker,
-      ...(node.unvalidated?.length
-        ? [
-            span(
-              { class: 'schema-unvalidated' },
-              unenforcedNote(node.unvalidated)
-            ),
-          ]
-        : []),
+      ...this.unvalidatedNote(node),
       div({ class: 'schema-variant-fields' })
     )
     container.dataset.union = node.path
@@ -1252,6 +1238,26 @@ export class TosiSchemaForm extends WebComponent {
   }
 
   /*
+  The "this keyword is not validated" note, for ANY field that needs it.
+
+  It used to render only for unions, which meant the honesty it exists for applied to exactly
+  one keyword. `{score: {type: 'number', exclusiveMinimum: 0}}` with `score: 0` rendered a
+  clean field and `validate()` returned true — a green, error-free form over a value the
+  schema forbids, which is precisely what `unenforced.ts` was written to prevent and what the
+  docs promise it prevents.
+  */
+  private unvalidatedNote(node: { unvalidated?: string[] }): HTMLElement[] {
+    return node.unvalidated?.length
+      ? [
+          span(
+            { class: 'schema-unvalidated' },
+            unenforcedNote(node.unvalidated)
+          ),
+        ]
+      : []
+  }
+
+  /*
   A plugin owns the CONTROL; the form still owns the label and the error slot.
 
   That split is deliberate. A plugin that had to render its own label and error would have to
@@ -1278,6 +1284,7 @@ export class TosiSchemaForm extends WebComponent {
       { class: 'schema-field' },
       label(node.label),
       control,
+      ...this.unvalidatedNote(node as { unvalidated?: string[] }),
       span({ class: 'schema-error', hidden: true })
     )
     wrapper.dataset.field = node.path
@@ -1323,6 +1330,7 @@ export class TosiSchemaForm extends WebComponent {
       { class: 'schema-field' },
       label(field.label),
       control,
+      ...this.unvalidatedNote(field),
       span({ class: 'schema-error', hidden: true })
     )
     wrapper.dataset.field = field.path

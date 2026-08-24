@@ -1001,6 +1001,8 @@ import type { JSONSchema } from './schema-form/json-schema.js'
 import {
   fieldForProperty,
   collectErrors,
+  coerceToSchema,
+  fieldEditable,
   type Field,
 } from './schema-form/fields.js'
 import { getSchemaValidator, warnNoValidator } from './schema-form/validator.js'
@@ -1847,7 +1849,16 @@ export class TosiTable extends WebComponent {
   /** Is this column editable? Table-level default, per-column override, `dataCell` wins. */
   private columnEditable(col: ColumnOptions): boolean {
     if (col.dataCell !== undefined) return false
-    return col.editable ?? this.editable
+    if (!(col.editable ?? this.editable)) return false
+    /*
+    A `const` column is not editable, whatever the table says.
+
+    The form has always rendered `const` readonly; the table rendered it as a freely editable
+    text box, so the same property was editable or not depending on which component you were
+    looking at. `fieldEditable` is now the one answer to that question.
+    */
+    const field = this.fieldFor(col.prop)
+    return field ? fieldEditable(field) : true
   }
 
   /*
@@ -1898,7 +1909,7 @@ export class TosiTable extends WebComponent {
     const item = this.getItem(el)
     if (!item) return
     const field = this.fieldFor(prop)
-    const newValue = this.coerceCell(el, field)
+    const newValue = coerceToSchema(field, el.value, el.checked, el.type)
     const oldValue = this._editStart.get(el)
     this._editStart.delete(el)
     if (newValue === oldValue) return
@@ -1933,21 +1944,6 @@ export class TosiTable extends WebComponent {
   `NaN`. "The user cleared it" and "the user typed zero" are different facts, and writing one
   for the other puts a number in the data that nobody entered.
   */
-  private coerceCell(el: HTMLInputElement, field?: Field): unknown {
-    if (el.type === 'checkbox') return el.checked
-    const raw = el.value
-    if (field?.kind === 'integer')
-      return raw === '' ? undefined : parseInt(raw, 10)
-    if (field?.kind === 'number') return raw === '' ? undefined : Number(raw)
-    if (field?.kind === 'enum') {
-      const hit = field.options?.find((o) => String(o.value) === raw)
-      return hit ? hit.value : raw
-    }
-    if (!field && el.type === 'number')
-      return raw === '' ? undefined : Number(raw)
-    return raw
-  }
-
   /**
    * Validate one edited cell against the schema. `undefined` when it conforms — or when
    * there is no schema, because a table with no description of its data cannot be wrong

@@ -116,6 +116,28 @@ export declare function itemFields(itemSchema: JSONSchema, path: string, index: 
  * model DOM-free.
  */
 export declare function fieldForProperty(schema: JSONSchema | null | undefined, prop: string): Field | undefined;
+/**
+ * Turn what a control holds back into what the schema asked for. ONE implementation.
+ *
+ * This existed twice — once in the form, once in the table — and had already drifted: the
+ * table's copy inferred from `el.type` when it had no field, the form's did not, and neither
+ * knew what the other did about `const`. Two surfaces disagreeing about what a property IS is
+ * the specific failure the DOM-free model exists to prevent, so the answer belongs here with
+ * the rest of it.
+ *
+ * An emptied numeric field becomes `undefined`, not `0` and not `NaN`: "the user cleared it"
+ * and "the user typed zero" are different facts, and writing one for the other puts a number
+ * in the data that nobody entered.
+ */
+export declare function coerceToSchema(field: Field | undefined, raw: string, checked: boolean, domType?: string): unknown;
+/**
+ * Is this field one a user may edit? `const` is not.
+ *
+ * A `const` is a value the schema FIXES. The form rendered it readonly and the table rendered
+ * it as a freely editable text box, so the same column was editable or not depending on which
+ * component you happened to be looking at.
+ */
+export declare function fieldEditable(field: Field): boolean;
 /** Read a dotted path out of a value object. */
 export declare function getByPath(value: any, path: string): unknown;
 /**

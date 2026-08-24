@@ -216,7 +216,18 @@ function resolveUnion(
     `discriminator: {propertyName}` wins when given; otherwise it is derived, so ordinary
     JSON Schema works without extra ceremony.
     */
-    const declared = (schema as any).discriminator?.propertyName
+    /*
+    `x-discriminator` first, bare `discriminator` as a deprecated alias.
+
+    `discriminator` is an OpenAPI keyword, not a JSON Schema one — and tosijs-schema's own
+    `agentContract` REFUSES a schema that uses it, on the grounds that a gate must not accept
+    keywords its validator ignores. So a schema written to pass their contract check spells it
+    `x-discriminator` (the `x-` prefix is explicitly allowed), and we read only the spelling
+    they reject: the declared property was silently ignored and branches got mislabelled.
+    */
+    const declared =
+      (schema as any)['x-discriminator']?.propertyName ??
+      (schema as any).discriminator?.propertyName
     const candidates = Object.keys(branches[0].properties ?? {}).filter((key) =>
       branches.every((b) => (b.properties as any)?.[key]?.const !== undefined)
     )
@@ -482,6 +493,51 @@ export function fieldForProperty(
     node.kind !== 'union'
     ? node
     : undefined
+}
+
+/**
+ * Turn what a control holds back into what the schema asked for. ONE implementation.
+ *
+ * This existed twice — once in the form, once in the table — and had already drifted: the
+ * table's copy inferred from `el.type` when it had no field, the form's did not, and neither
+ * knew what the other did about `const`. Two surfaces disagreeing about what a property IS is
+ * the specific failure the DOM-free model exists to prevent, so the answer belongs here with
+ * the rest of it.
+ *
+ * An emptied numeric field becomes `undefined`, not `0` and not `NaN`: "the user cleared it"
+ * and "the user typed zero" are different facts, and writing one for the other puts a number
+ * in the data that nobody entered.
+ */
+export function coerceToSchema(
+  field: Field | undefined,
+  raw: string,
+  checked: boolean,
+  domType?: string
+): unknown {
+  if (field?.kind === 'boolean' || domType === 'checkbox') return checked
+  if (field?.kind === 'integer')
+    return raw === '' ? undefined : parseInt(raw, 10)
+  if (field?.kind === 'number') return raw === '' ? undefined : Number(raw)
+  if (field?.kind === 'enum') {
+    // The DOM only holds strings; recover the schema's own value by identity.
+    const hit = field.options?.find((o) => String(o.value) === raw)
+    return hit ? hit.value : raw
+  }
+  // No field to go on — trust the control the browser gave us rather than guessing text.
+  if (!field && domType === 'number')
+    return raw === '' ? undefined : Number(raw)
+  return raw
+}
+
+/**
+ * Is this field one a user may edit? `const` is not.
+ *
+ * A `const` is a value the schema FIXES. The form rendered it readonly and the table rendered
+ * it as a freely editable text box, so the same column was editable or not depending on which
+ * component you happened to be looking at.
+ */
+export function fieldEditable(field: Field): boolean {
+  return field.kind !== 'const' && field.kind !== 'unsupported'
 }
 
 /** Read a dotted path out of a value object. */

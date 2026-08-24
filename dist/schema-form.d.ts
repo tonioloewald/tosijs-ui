@@ -105,7 +105,6 @@ export declare class TosiSchemaForm extends WebComponent {
     /** Is anything actually checking this form? See `validate()`. */
     get validationAvailable(): boolean;
     private refreshErrors;
-    private coerce;
     private onFieldInput;
     private buildNode;
     private buildArray;
@@ -126,6 +125,7 @@ export declare class TosiSchemaForm extends WebComponent {
     /** The plugin-rendered fields, which sync through the plugin rather than the DOM. */
     private pluginFields;
     private applyReadOnly;
+    private unvalidatedNote;
     private buildPluginField;
     private buildField;
     private syncValues;

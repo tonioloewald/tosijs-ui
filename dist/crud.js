@@ -500,8 +500,22 @@ export class TosiCrud extends WebComponent {
         this.dispatchEvent(new Event('change', { bubbles: true }));
         return this._selected;
     }
+    /**
+     * Is the selected record something the store could delete?
+     *
+     * ONE rule, used by both the button and the method. They disagreed: `render()` disabled the
+     * button for a record with no id, while `remove()` only checked that *something* was
+     * selected — so `createNew()` followed by `remove()` sent `store.delete({})`, which for a
+     * REST adapter is `DELETE /records/undefined`. A guard the UI enforces and the API does not
+     * is not a guard.
+     */
+    get deletable() {
+        return (Boolean(this._store?.delete) &&
+            Boolean(this._selected) &&
+            getByPath(this._selected ?? {}, this.idPath) !== undefined);
+    }
     async remove() {
-        if (!this._store?.delete || !this._selected)
+        if (!this.deletable)
             return;
         await this.run('delete', () => this._store.delete(this._selected));
         this._selected = null;
@@ -542,8 +556,20 @@ export class TosiCrud extends WebComponent {
         this._stopHash = this._hash.observe(() => this.queueRender());
         this.parts.table.selectionChanged = this.onSelectionChanged;
         this.parts.newButton.onclick = () => this.createNew();
-        this.parts.saveButton.onclick = () => void this.save();
-        this.parts.deleteButton.onclick = () => void this.remove();
+        /*
+        Swallow the rejection AT THE BUTTON, and only here.
+    
+        `run()` has already shown the message and dispatched `error`, so the user has been told;
+        what `void promise` added was an unhandled rejection in their console on top of it — and
+        in a page with a global handler, a spurious crash report. The methods still reject for a
+        programmatic caller, which is where a caller can actually do something about it.
+        */
+        this.parts.saveButton.onclick = () => {
+            this.save().catch(() => undefined);
+        };
+        this.parts.deleteButton.onclick = () => {
+            this.remove().catch(() => undefined);
+        };
         this.parts.form.addEventListener('change', () => this.queueRender());
         this.parts.search.value = this.search;
         void this.refresh();
@@ -596,7 +622,6 @@ export class TosiCrud extends WebComponent {
             }
         }
         this.parts.table.array = this._rows;
-        const selected = this._selected;
         this.showSelected();
         const canSave = Boolean(this._store?.save);
         const canDelete = Boolean(this._store?.delete);
@@ -607,8 +632,7 @@ export class TosiCrud extends WebComponent {
         this.parts.newButton.hidden = !canSave;
         this.parts.form.readOnly = !canSave;
         this.parts.saveButton.disabled = this._pending > 0;
-        this.parts.deleteButton.disabled =
-            this._pending > 0 || getByPath(selected ?? {}, this.idPath) === undefined;
+        this.parts.deleteButton.disabled = this._pending > 0 || !this.deletable;
         this.parts.status.classList.toggle('-error', Boolean(this._error));
         this.parts.status.textContent = this._error
             ? this._error

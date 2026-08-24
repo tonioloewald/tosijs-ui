@@ -299,7 +299,6 @@ export declare class TosiTable extends WebComponent {
     private onCellChange;
     /** The model's answer for one column, cached per render pass. */
     private fieldFor;
-    private coerceCell;
     /**
      * Validate one edited cell against the schema. `undefined` when it conforms — or when
      * there is no schema, because a table with no description of its data cannot be wrong
