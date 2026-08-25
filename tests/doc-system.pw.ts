@@ -3,6 +3,22 @@ import { test, expect } from '@playwright/test'
 // Paths are relative to playwright.config.ts's baseURL (the E2E lane's own server).
 const BASE = ''
 
+/*
+The pages' own inline doc tests are OFF for this whole file.
+
+A doc page under test is also a page RUNNING tests: the background runner executes every
+```test block on load, in hidden iframes, and that work competes with whatever the spec is
+waiting for. Four specs in 1.11.0 flaked for this reason and were fixed one at a time —
+`hash-state`, `table-edit`, `crud`, and the nested-doc-system test below — before it was
+obvious the fix belonged at the file level rather than per test. `page.goBack()` timing out
+after 30s is the same shape: the navigation is not slow, the page is busy.
+*/
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem('tosijs-ui-tests-enabled', 'false')
+  )
+})
+
 test('static page hydrates and navigates client-side', async ({ page }) => {
   // 1. Static page loads with correct SEO head + pre-rendered content
   await page.goto(`${BASE}/carousel/`)
@@ -82,18 +98,6 @@ test('a nested <tosi-doc-system> demo does not hijack the host browser state', a
   // browsers once collided on `app` — the nested one won, and the OUTER browser's
   // edit-source loaded the nested demo's doc (data-table) instead of this page.
   // Each browser now gets a unique registry key; this guards that isolation.
-  /*
-  The page's own inline doc tests are OFF for this spec.
-
-  This failed roughly one full run in six — on firefox, then on chromium — and passed 4/4 in
-  isolation, which is the signature of the page racing the spec rather than a component fault.
-  The background runner executes every ```test block on load, in hidden iframes, and this page
-  embeds a second `<tosi-doc-system>`; three other specs in 1.11.0 had exactly this cause
-  (`hash-state`, `table-edit`, `crud`) and exactly this fix.
-  */
-  await page.addInitScript(() =>
-    localStorage.setItem('tosijs-ui-tests-enabled', 'false')
-  )
   await page.goto(`${BASE}/one-source-every-artifact/`)
   await page.waitForFunction(
     () => document.querySelectorAll('tosi-doc-system').length >= 2

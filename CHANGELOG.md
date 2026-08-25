@@ -148,6 +148,15 @@ new subpaths from an installed tarball, a `tsc --noEmit` over an installed consu
 `skipLibCheck: false` and no optional peers, a bundle entry that actually imports the library,
 and both vendored types pinned by assignability tests in both directions.
 
+- **`<tosi-table>` gained `full-width-header`.** A table whose columns add up to less than its
+  container left a strip of blank space on the right for no reason; with the attribute the
+  leftover width goes to the last **unpinned** column. Right-pinned columns are skipped —
+  they sit against the right edge by definition, so stretching one would push the space back
+  into the middle. When the columns overflow, nothing changes: every column keeps its width
+  and the table scrolls, because the row width is `max(sum, 100%)` and `1fr` then resolves to
+  exactly the width it was given. Header and body share one `grid-template-columns`, so they
+  stretch together.
+
 ### Process
 
 - **`bun run release-check` must run AFTER the release commit, and it is the last thing before
@@ -299,13 +308,47 @@ fixed before tagging.
   and the edit-token change. It exists for "releases you may be upgrading past" and had no
   entry despite this release having a Breaking section.
 
+- `<tosi-table>`'s `change` event reported `oldValue: undefined` whenever no `focus` event had
+  fired on the cell — an unfocused browser window, or any consumer who sets `.value` and
+  dispatches `change`, which is what an adopter's test does. The old value came from a
+  `WeakMap` filled on focus, which existed because two-way `bindValue` used to overwrite the
+  model as the user typed. The one-way binding shipped earlier in this release ended that, so
+  the old value is now read from the model immediately before the write — no focus event
+  required, and one mechanism instead of two. Caught by the haltija lane, which the other
+  three lanes do not substitute for.
+
+- `crud.save()` threw away the record it sent when the store returned nothing. A 204-style
+  adapter satisfies `Promise<any>` by resolving `undefined`, which is a perfectly ordinary
+  thing for a REST store to do, and the row went blank. It now keeps what it sent when the
+  store has nothing to say.
+- The `doc-system.pw.ts` nested-doc-system flake — the **fourth** instance this release of a
+  spec racing the page's own inline doc tests. The runner is now disabled for that whole
+  spec file rather than per test, because after four the fix plainly belonged at the file
+  level. 6/6 clean since.
+
+- `<tosi-doc-system>` gave up on the first failed `docs.json` fetch, so a doc site rendered
+  nothing at all when one request lost — a real-user failure, not only the test flake that
+  surfaced it. It now retries three times with full-jitter backoff (250ms base, 4s cap) and
+  honours `Retry-After`. It retries **only 429, 5xx and network errors**: a 404 or a 403 is an
+  answer, and re-asking cannot change it — which is what stops a retry turning an overloaded
+  server into a self-inflicted DoS.
+
 ### Known issues
 
+- **firefox intermittently reports `no WebAssembly compiler available`** under the full
+  parallel test lane, which stops the inline-WASM example loading at all. Filed as
+  [tjs-lang#36](https://github.com/tonioloewald/tjs-lang/issues/36): a `wasm {} fallback {}`
+  block should take its fallback branch when the engine declines to compile, which is exactly
+  what that branch is for. Affects the test lane, not shipped behaviour — the example
+  degrades to not rendering rather than misreporting, and the doc-test guard against _silent_
+  fallback is unaffected.
+
 - **[#102](https://github.com/tonioloewald/tosijs-ui/issues/102)** — `<tosi-table>`'s header
-  and body column widths can disagree after a column resize followed by a programmatic
-  `columns` assignment. Reported from a host app during this release; not reproduced here, so
-  it is filed with the mechanism narrowed rather than fixed blind. The resize path predates
-  1.11.0.
+  and body columns can disagree when a programmatic `columns` assignment lands while a render
+  is already in flight. The reporting app changes column visibility on a page-size change,
+  which is what produces the timing. The host app arguably should not reassign columns
+  mid-render, but a torn header/body is ours either way. Targeted at **1.11.1**; the path
+  predates 1.11.0.
 
 ### Fixed
 

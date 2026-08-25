@@ -693,15 +693,70 @@ live site** (independently useful). See roadmap "From book to live."
       `docs.json` losing under 171 parallel specs against one dev server, and WebKit is the
       engine that gives up first.
 
-      Two things worth deciding rather than muting: whether `<tosi-doc-system>` should RETRY a
-      failed `docs.json` fetch (a doc site that renders nothing because one request lost is a
-      real-user failure too, not only a test one), and whether the lane's worker count is
-      simply too high for one server. The retry is the more valuable half — this is the same
-      class as the compression/idle-timeout work, where the test surfaced a genuine
-      robustness gap rather than a test bug.
+      **The retry half is DONE (1.11.0)** — `fetchCorpus` in `src/doc-system/doc-system.ts`.
+      It was the more valuable half exactly as expected: a doc site that renders nothing
+      because one request lost is a real-user failure, not only a test one. Three attempts,
+      full-jitter backoff (250ms base, 4s cap), `Retry-After` honoured; **only 429/5xx and
+      network errors retry** — a 404 or a 403 is an answer, and re-asking cannot change it.
+      That restraint is the anti-cascade property and it is what the tests actually pin: the
+      first version threw the permanent failure from inside the `try`, the `catch` retried it,
+      and the 404 test caught that.
+
+      What is left is the other half: whether the lane's worker count is simply too high for
+      one dev server. Retrying makes the client survive contention; it does not reduce it.
 
       **The nested-doc-system flake in the same lane WAS fixed** (1.11.0): it was the page's
       own inline doc tests racing the spec, the fourth instance of that cause in this release.
+
+## `<tosi-schema-form>` perf guards: two known gaps
+
+- [ ] `tests/schema-form-array.pw.ts` pins the **keystroke** path with a deterministic count of
+      `querySelector`/`querySelectorAll` calls (0, on all three engines, at any field count).
+      Two gaps it does not cover, both deliberate rather than overlooked:
+
+      1. **The structural-edit path is unguarded.** `syncValues` runs on add/remove-item, not on
+         keystrokes, so a root-scoped per-field scan reintroduced there passes the test. Mutation
+         confirmed. Same harness, different trigger — cheap to add.
+      2. **A quadratic regression that never calls `querySelector`** — an O(N) array walk per
+         field — is invisible to a call count. That needs wall-clock, and wall-clock is what was
+         removed: a `<10ms` ceiling and then a 4x-fields ratio both flaked on firefox under the
+         full 171-spec run (28ms -> 259ms loaded vs 21ms -> 56ms isolated; load does not scale
+         the two measurements together). A timing guard here needs a quiet lane, not a wider
+         threshold.
+
+## 1.11.1: `<tosi-table>` torn render on a mid-flight `columns` change
+
+- [ ] **[#102](https://github.com/tonioloewald/tosijs-ui/issues/102)** — header and body
+      columns disagree when a `columns` assignment arrives **during** a render. The reporting
+      app (snowfox) changes column visibility in response to a page-size change, which is what
+      produces the timing; header and body are written in separate passes and only one sees the
+      new column set.
+
+      The caller reassigning columns mid-render is questionable, but a table that can show a
+      header and a body describing different columns is our defect regardless of when the
+      assignment arrives. Fix by honouring the late change cleanly — coalesce it into the
+      pending render, or finish the current one and re-render — not by asking callers to time
+      their assignments.
+
+## Flaky: firefox, `no WebAssembly compiler available`
+
+- [ ] Roughly **1 full run in 6, firefox only**, under the same 171-spec parallel load as the
+      flake above. The inline-WASM example fails to load at all
+      (`✗ example loads without error: Error: no WebAssembly compiler available`), which fails
+      `example-bake.pw.ts` slice 2b and the whole doc-test tier in `doc-tests.pw.ts`.
+
+      **Filed upstream: [tjs-lang#36](https://github.com/tonioloewald/tjs-lang/issues/36).** A
+      `wasm {} fallback {}` block should take the fallback branch when the engine declines to
+      compile wasm — that branch exists for exactly this case. There is **no local fix**: our
+      doc-test guard could learn to state its precondition, but the example itself throws
+      before the guard runs, so patching the guard would fix nothing while adding a branch
+      that can never be exercised.
+
+      Verified before filing, so this is not written off as "the machine was busy": a probe of
+      `typeof WebAssembly`, `WebAssembly.validate()` and `new WebAssembly.Module()` run 12×
+      per engine **during a full-load run** came back available/valid/compiling **36/36**, and
+      the specs pass 3/3 in isolation on firefox. So wasm is normally fine in this lane and
+      this is an intermittent refusal under pressure, not a configuration.
 
 ## From the 1.11.0 nine-lens review (deferred)
 

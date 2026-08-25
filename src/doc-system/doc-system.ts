@@ -92,6 +92,80 @@ interface DocSystemConfig {
 
 const PREFS_KEY = 'tosi-doc-system-prefs'
 
+/*
+Fetch the corpus, retrying a TRANSIENT failure — without becoming the reason it stays down.
+
+A doc site whose `docs.json` request loses renders nothing: no nav, no content, one console
+error. That is a real-user failure, not only a flaky-test one — it showed up first as
+`hydration.pw.ts` failing about one run in six on WebKit under parallel load, which is exactly
+what a slow morning on a shared host looks like.
+
+The retry is deliberately timid, because the obvious version makes things worse. If a server
+is struggling and every client retries three times immediately, the retries ARE the outage:
+
+- **Only transient failures.** A network error or a 5xx/429 may fix itself; a 404 or a 403
+  will not, and re-asking is pure noise. A malformed body is not retried either — it arrived
+  intact and it is wrong.
+- **Two retries, not more.** Three total attempts bounds the amplification at 3×, which a
+  server can absorb; unbounded retry is a self-inflicted denial of service, and this file is
+  loaded by every page of every doc site.
+- **Exponential backoff with FULL JITTER.** Fixed delays synchronise clients into a
+  thundering herd — every tab that failed together retries together. Randomising the whole
+  interval spreads them out, which is the property that actually protects the server.
+- **`Retry-After` is honoured** when the server sends one, because a server saying "not yet"
+  knows more than our backoff does.
+*/
+export const CORPUS_ATTEMPTS = 3
+const CORPUS_BASE_DELAY_MS = 250
+const CORPUS_MAX_DELAY_MS = 4000
+
+function retryableStatus(status: number): boolean {
+  return status === 429 || status >= 500
+}
+
+export async function fetchCorpus(url: string): Promise<Doc[]> {
+  let lastError: unknown
+  for (let attempt = 0; attempt < CORPUS_ATTEMPTS; attempt++) {
+    if (attempt > 0) {
+      // Full jitter: a random point in [0, backoff), not backoff itself.
+      const ceiling = Math.min(
+        CORPUS_MAX_DELAY_MS,
+        CORPUS_BASE_DELAY_MS * 2 ** (attempt - 1)
+      )
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.random() * ceiling)
+      )
+    }
+    try {
+      const response = await fetch(url)
+      if (!response.ok) {
+        const failure = new Error(`${response.status} ${response.statusText}`)
+        /*
+        A permanent failure leaves the loop, and it must not do so by THROWING — the catch
+        below is what turns a transient error into a retry, so throwing here was caught and
+        retried, which is precisely what this branch exists to prevent. The first version of
+        this did exactly that and the 404 test caught it.
+        */
+        if (!retryableStatus(response.status)) return Promise.reject(failure)
+        lastError = failure
+        const after = Number(response.headers.get('retry-after'))
+        if (Number.isFinite(after) && after > 0) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, Math.min(after * 1000, CORPUS_MAX_DELAY_MS))
+          )
+        }
+        continue
+      }
+      return (await response.json()) as Doc[]
+    } catch (error) {
+      // A parse failure is not transient — the body arrived and it is wrong.
+      if (error instanceof SyntaxError) throw error
+      lastError = error
+    }
+  }
+  throw lastError
+}
+
 export class TosiDocSystem extends Component {
   static preferredTagName = 'tosi-doc-system'
 
@@ -402,8 +476,7 @@ export class TosiDocSystem extends Component {
     // Async data source: fetch once, then let the normal render pipeline mount.
     if (this.corpus === undefined) {
       const url = this.docs || '/docs.json'
-      fetch(url)
-        .then((response) => response.json())
+      fetchCorpus(url)
         .then((corpus: Doc[]) => {
           this.corpus = corpus
           // Redirect legacy ?filename query-param links (the old doc-browser's

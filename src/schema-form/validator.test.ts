@@ -116,7 +116,7 @@ test('REGRESSION: the documented recipe is the one that works', async () => {
   Our own doc site was correct only because `index-iife.ts` passed all three, which is the
   worst possible arrangement: the failure was visible ONLY to the audience the docs instruct.
   */
-  const schema = require('tosijs-schema')
+  const schema = await import('tosijs-schema')
   const { unenforcedKeywords } = await import('./unenforced')
   const subject: any = {
     type: 'object',

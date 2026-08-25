@@ -840,6 +840,18 @@ You can remove this option by adding the <code>nohide</code> attribute to the <c
 <h2>Reordering Columns</h2>
 <p>By default, the user can reorder columns by dragging them around. You can disable this
 by adding the <code>noreorder</code> attribute to the <code>&lt;tosi-table&gt;</code>.</p>
+<h2>Column Width</h2>
+<p>Columns are laid out at the widths you give them, so a table whose columns add up to less
+than its container leaves a strip of blank space on the right. Add the <code>full-width-header</code>
+attribute and the leftover space goes to the last <strong>unpinned</strong> column instead:</p>
+<pre><code class="language-html">&lt;tosi-table full-width-header&gt;&lt;/tosi-table&gt;
+</code></pre>
+<p>Right-pinned columns are skipped because they sit against the right edge by definition —
+stretching one would push the leftover space back into the middle of the table.</p>
+<p>When the columns are wider than the container nothing changes: the table overflows and
+scrolls horizontally exactly as it does without the attribute, and every column keeps the
+width it was given. Header and body stay in step either way; they share one
+<code>grid-template-columns</code>.</p>
 <h2>Row Height</h2>
 <p>If you set the <code>&lt;tosi-table&gt;</code>&#39;s <code>rowHeight</code> to <code>0</code> it will render all its elements (i.e. not be virtual). This is
 useful for smaller tables, or tables with variable row-heights.</p>

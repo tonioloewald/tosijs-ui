@@ -891,6 +891,24 @@ You can remove this option by adding the `nohide` attribute to the `<tosi-table>
 By default, the user can reorder columns by dragging them around. You can disable this
 by adding the `noreorder` attribute to the `<tosi-table>`.
 
+## Column Width
+
+Columns are laid out at the widths you give them, so a table whose columns add up to less
+than its container leaves a strip of blank space on the right. Add the `full-width-header`
+attribute and the leftover space goes to the last **unpinned** column instead:
+
+```html
+<tosi-table full-width-header></tosi-table>
+```
+
+Right-pinned columns are skipped because they sit against the right edge by definition —
+stretching one would push the leftover space back into the middle of the table.
+
+When the columns are wider than the container nothing changes: the table overflows and
+scrolls horizontally exactly as it does without the attribute, and every column keeps the
+width it was given. Header and body stay in step either way; they share one
+`grid-template-columns`.
+
 ## Row Height
 
 If you set the `<tosi-table>`'s `rowHeight` to `0` it will render all its elements (i.e. not be virtual). This is
@@ -1307,6 +1325,7 @@ export class TosiTable extends WebComponent {
     localized: false,
     nopreservescroll: false,
     editable: false,
+    fullWidthHeader: false,
   }
 
   /**
@@ -1862,24 +1881,6 @@ export class TosiTable extends WebComponent {
   }
 
   /*
-  The value a cell had when the user started editing it.
-
-  Captured on focus rather than diffed after the fact: `bindValue` writes the model as the
-  user types, so by the time `change` fires the old value is already gone. Keyed by element
-  in a WeakMap so a recycled virtual-scroll row cannot leak an entry.
-  */
-  private _editStart = new WeakMap<Element, unknown>()
-
-  private handleCellFocus = (event: Event): void => {
-    const el = (event.target as HTMLElement).closest(
-      '[data-edit-prop]'
-    ) as HTMLInputElement | null
-    if (!el) return
-    const item = this.getItem(el)
-    if (item) this._editStart.set(el, tosiValue(item[el.dataset.editProp!]))
-  }
-
-  /*
   Commit on `change`, not on `input`.
 
   `input` fires per keystroke, so an event per character would make "3" a legitimate
@@ -1911,24 +1912,24 @@ export class TosiTable extends WebComponent {
     const field = this.fieldFor(prop)
     const newValue = coerceToSchema(field, el.value, el.checked, el.type)
     /*
-    The baseline ROLLS FORWARD; it is not thrown away.
+    The old value is READ FROM THE MODEL, not remembered from a focus event.
 
-    `delete` here meant the baseline existed only for the first commit of a focus session, so
-    a checkbox clicked three times reported `oldValue: undefined` twice — the shipped demo
-    printed it. Two worse consequences hid behind that:
+    This used to be a `WeakMap` keyed on the cell, filled by an `onFocus` handler, because
+    two-way `bindValue` wrote the model as the user typed and the old value really was gone by
+    the time `change` fired. The one-way binding above ended that: `handleCellChange` is now
+    the sole model write, so `item[prop]` immediately before the assignment IS the value the
+    cell had when editing started. The WeakMap outlived its reason.
 
-      - the delete ran BEFORE the equality guard, so a no-op commit wiped the baseline for the
-        next real edit;
-      - clearing a numeric cell as the second commit gave `newValue === undefined` against a
-        stale `undefined` baseline, so the guard returned early — no `change` at all, and the
-        coercion write below skipped, leaving a schema-typed integer holding the raw `''`.
-
-    Setting it to the committed value fixes all three: the next edit's "before" is this
-    edit's "after", which is what a baseline means.
+    It was not merely redundant. A baseline that exists only if a `focus` event fired makes
+    `oldValue` depend on something that is not the edit: the haltija lane reported
+    `oldValue: undefined` for a cell whose value had plainly changed, because the browser
+    window was not focused, and any consumer who sets `.value` and dispatches `change` — every
+    adopter's test — hit the same hole. Reading the model has no such precondition, which is
+    also why the roll-forward bookkeeping the old comment described (a checkbox clicked three
+    times reporting `undefined` twice) simply cannot arise: there is no state to keep in step.
     */
-    const oldValue = this._editStart.get(el)
+    const oldValue = tosiValue(item[prop])
     if (newValue === oldValue) return
-    this._editStart.set(el, newValue)
     item[prop] = newValue
     const message = this.validateCell(item, prop, newValue)
     el.classList.toggle('cell-invalid', Boolean(message))
@@ -2070,7 +2071,6 @@ export class TosiTable extends WebComponent {
       style,
       onMouseup: stop,
       onTouchend: stop,
-      onFocus: this.handleCellFocus,
       onChange: this.handleCellChange,
     }
     let cell: HTMLElement
@@ -2888,8 +2888,33 @@ export class TosiTable extends WebComponent {
 
   setColumnWidths() {
     const cols = this.visibleColumns
-    const columns = cols.map((c) => c.width + 'px').join(' ')
-    const rowWidth = cols.reduce((w, c) => w + c.width, 0) + 'px'
+    const total = cols.reduce((w, c) => w + c.width, 0)
+    /*
+    `fullWidthHeader` lets ONE column absorb whatever width is left over, so a table narrower
+    than its container does not sit next to a strip of blank space for no reason.
+
+    The stretched column is the last UNPINNED one, not simply the last one. Right-pinned columns
+    sit against the right edge by definition, so growing one would push the leftover space back
+    into the middle of the table — the opposite of the point. With no unpinned columns there is
+    nothing sensible to stretch and this does nothing.
+
+    The row width carries the whole thing: `max(sum, 100%)`. Wider container, and the row
+    reaches it so `1fr` has something to divide up; narrower, and the row stays exactly as wide
+    as its columns, which leaves `1fr` resolving to precisely the width it was given. So the
+    set width is a floor for free, and horizontal scrolling still works.
+
+    That is ONE mechanism, deliberately. This started as `minmax(Wpx, 1fr)` — a second guarantee
+    of the same floor — and mutation testing showed the test could not tell the two apart:
+    replacing it with a bare `1fr` changed nothing anywhere. A redundant guard is a guard no
+    test pins, so it was removed and the row width left to do the job it was already doing.
+    */
+    const stretchAt = this.fullWidthHeader
+      ? cols.map((c) => !c.pinned).lastIndexOf(true)
+      : -1
+    const columns = cols
+      .map((c, i) => (i === stretchAt ? '1fr' : c.width + 'px'))
+      .join(' ')
+    const rowWidth = stretchAt === -1 ? total + 'px' : `max(${total}px, 100%)`
 
     // The CSS variable is consumed by every `.tr` (display:grid) and by .thead
     // / .tbody for explicit width — one var, all rows reflow.

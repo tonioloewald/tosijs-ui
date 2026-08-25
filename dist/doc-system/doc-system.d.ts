@@ -1,5 +1,8 @@
 import { Component, ElementCreator } from 'tosijs';
+import { Doc } from '../doc-browser.js';
 import './css-var-editor.js';
+export declare const CORPUS_ATTEMPTS = 3;
+export declare function fetchCorpus(url: string): Promise<Doc[]>;
 export declare class TosiDocSystem extends Component {
     static preferredTagName: string;
     static initAttributes: {

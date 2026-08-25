@@ -171,6 +171,7 @@ export declare class TosiTable extends WebComponent {
         localized: boolean;
         nopreservescroll: boolean;
         editable: boolean;
+        fullWidthHeader: boolean;
     };
     /**
      * Optional JSON Schema for the row shape. Drives editable cells and validates edits.
@@ -294,8 +295,6 @@ export declare class TosiTable extends WebComponent {
     private applyGridCellAttrs;
     /** Is this column editable? Table-level default, per-column override, `dataCell` wins. */
     private columnEditable;
-    private _editStart;
-    private handleCellFocus;
     private handleCellChange;
     private _fieldCache;
     private fieldFor;

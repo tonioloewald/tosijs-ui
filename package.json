@@ -14,7 +14,7 @@
     "tunnel": "bun bin/tunnel.ts",
     "test-browser": "bun bin/dev.ts --test",
     "test-consumer": "bun bin/smoke-consumer.ts",
-    "format": "bun eslint src demo --fix && bun prettier --write .",
+    "format": "bun prettier --write . && bun eslint src demo --fix",
     "format-check": "bun prettier --check .",
     "typecheck-guards": "bun tsc --noEmit -p tsconfig.guards.json",
     "tests": "bun test && bun playwright test",

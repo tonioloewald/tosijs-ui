@@ -1258,9 +1258,10 @@ export class TosiSchemaForm extends WebComponent {
             elements,
         });
         control.dataset.plugin = node.path;
-        const wrapper = div({ class: 'schema-field' }, label(node.label), control, ...this.unvalidatedNote(node), span({ class: 'schema-error', hidden: true }));
+        const errorSlot = span({ class: 'schema-error', hidden: true });
+        const wrapper = div({ class: 'schema-field' }, label(node.label), control, ...this.unvalidatedNote(node), errorSlot);
         wrapper.dataset.field = node.path;
-        this._index.set(node.path, { control, wrapper });
+        this._index.set(node.path, { control, wrapper, errorSlot });
         return wrapper;
     }
     buildField(field) {
@@ -1298,9 +1299,10 @@ export class TosiSchemaForm extends WebComponent {
         */
         control.addEventListener('change', (event) => event.stopPropagation());
         control.dataset.path = field.path;
-        const wrapper = div({ class: 'schema-field' }, label(field.label), control, ...this.unvalidatedNote(field), span({ class: 'schema-error', hidden: true }));
+        const errorSlot = span({ class: 'schema-error', hidden: true });
+        const wrapper = div({ class: 'schema-field' }, label(field.label), control, ...this.unvalidatedNote(field), errorSlot);
         wrapper.dataset.field = field.path;
-        this._index.set(field.path, { control, wrapper });
+        this._index.set(field.path, { control, wrapper, errorSlot });
         return wrapper;
     }
     /*
@@ -1342,16 +1344,20 @@ export class TosiSchemaForm extends WebComponent {
     }
     syncErrors() {
         for (const field of this._fields) {
-            const wrapper = this._index.get(field.path)?.wrapper;
-            if (!wrapper)
+            /*
+            The error span is held, not re-found. `wrapper.querySelector('.schema-error')` was the
+            LAST per-field selector call on the keystroke path — scoped to the wrapper, so linear
+            rather than the quadratic root scans this index replaced, but still one DOM query per
+            field per keystroke (1600 fields = 1600 queries, per keystroke, to set at most a handful
+            of messages). `errorSlot` was named in the review's fix and simply not carried through.
+            */
+            const entry = this._index.get(field.path);
+            if (!entry)
                 continue;
             const message = errorFor(this._errors, field.path);
-            const slot = wrapper.querySelector('.schema-error');
-            wrapper.classList.toggle('-invalid', Boolean(message));
-            if (slot) {
-                slot.textContent = message ?? '';
-                slot.hidden = !message;
-            }
+            entry.wrapper.classList.toggle('-invalid', Boolean(message));
+            entry.errorSlot.textContent = message ?? '';
+            entry.errorSlot.hidden = !message;
         }
     }
     content = null;
