@@ -178,7 +178,19 @@ if (has('link')) {
   // Wording derived from nothing is wording that goes stale: this said "single-use, 15 min"
   // for a link that has been reusable for five minutes since 1.11.0. The server prints the
   // authoritative version (with the code on its own line); this is the one-line echo.
-  console.log(`\n🔗 Edit link:\n   ${url}\n`)
+  /*
+  Print the CODE as well as the URL — the docs said so and the bin did not.
+
+  `doc-site-system.md` documents `tosijs-tunnel --link` printing the link and its
+  7-character code, with sample output; only the dev server's own banner did. On the device
+  this exists for you are not pasting a URL, you are reading characters off one screen and
+  typing them on another, so the code is the part that matters.
+  */
+  const code = new URL(url).searchParams.get('t')
+  console.log(
+    `\n🔗 Edit link:\n   ${url}\n` +
+      (code ? `\n   code:  ${code}   (case-insensitive)\n` : '')
+  )
   process.exit(0)
 }
 

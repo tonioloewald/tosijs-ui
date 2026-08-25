@@ -216,7 +216,7 @@ fixed before tagging.
   when the problem was that it had nothing to render. It says so on screen now, and the
   warning names the right problem.
 - **`change.detail.oldValue` was `undefined` for every cell edit after the first.** The
-  baseline was deleted on each commit rather than rolled forward, and the delete ran *before*
+  baseline was deleted on each commit rather than rolled forward, and the delete ran _before_
   the equality guard — so a no-op commit wiped it, and clearing a numeric cell as the second
   edit fired no `change` at all and skipped the coercion write, leaving a schema-typed integer
   holding a raw string.
@@ -224,7 +224,7 @@ fixed before tagging.
   written for. `{ validate, inferSchema }` omits `unenforcedKeywords`, so the form fell back
   to a keyword list frozen at tosijs-schema 1.7.0 and labelled every `oneOf` and
   `exclusiveMinimum` field "not validated" while 1.8.0 was checking it. Our own doc site was
-  correct because the iife passed all three — so the failure was visible *only* to the ESM
+  correct because the iife passed all three — so the failure was visible _only_ to the ESM
   adopters the docs instruct. Pass all three.
 - **`crud.table` and `crud.form` threw before hydration** — the only two accessors on the
   class without the guard the rest have — so the documented way to reach the composed parts
@@ -270,6 +270,34 @@ fixed before tagging.
   existing typecheck; mutation-verified that drifting the vendored type turns it red.
 - **`<tosi-table>`'s four column-menu captions** now use `localizePhrase`, so the docs and the
   docs' own worked example agree.
+
+### Also fixed in the review passes
+
+- `<tosi-schema-form>` let the control's native `change` escape to consumers, so a form edit
+  fired a duplicate event — the `input`-only handler's `stopPropagation()` never saw a
+  `change`. Three events per checkbox click became one.
+- `localizePhrase` asked "did the output differ from the input?" rather than "does a row
+  exist", so a locale that deliberately maps a phrase to itself fell back to joined fragments
+  — the behaviour the row was added to replace. It also re-implemented annotation stripping
+  with a weaker regex than the module's own, which already disagreed about `tag\#42`.
+- `--tosi-spacing-50` is not a variable — the scale is `-xs/-sm/-lg/-xl` — and the `var()`
+  fallback made the mistake invisible. The three genuinely-new customization points
+  (`--tosi-error`, `--tosi-border`, `--tosi-border-radius`) are documented on the schema-form
+  page rather than left accidental.
+- `<tosi-table>`'s `fieldFor` was documented as "cached per render pass" and cached nothing,
+  while allocating a schema and running the validator's keyword walker per editable cell per
+  render.
+- `SiteConfig.tunnel.linkTtlMinutes` said "Default 15" two lines above "Defaults to 5"; the
+  summary line is what an editor tooltip shows.
+- `tosijs-tunnel --link` now prints the 7-character code as well as the URL, which the docs
+  already described and only the dev server's own banner did.
+- The "No preview host" instructions promised a `700` credentials directory and gave a command
+  that neither created nor secured it — and failed outright on a machine that did not have it.
+- `src/docs/utilities.md` was a five-line stub duplicating a section `helper-libraries.md`
+  already provides. Removed.
+- `src/docs/migrating.md` has a **1.11.0 section** — the validator seam, the `tjs-lang` floor,
+  and the edit-token change. It exists for "releases you may be upgrading past" and had no
+  entry despite this release having a Breaking section.
 
 ### Known issues
 

@@ -741,11 +741,27 @@ export function localize(
  *     localizePhrase('Sort Ascending', ['Sort#order', 'Ascending#sort-order'])
  */
 export function localizePhrase(key: string, fragments: string[]): string {
-  const whole = localize(key)
-  // `localize` strips the annotation and returns the ref unchanged when nothing matched, so
-  // "did anyone translate this?" is exactly "did it come back different?".
-  const untranslated = whole === key.replace(/#[A-Za-z0-9_-]+$/, '')
-  return untranslated ? fragments.map((f) => localize(f)).join(' ') : whole
+  /*
+  Ask whether a ROW EXISTS, rather than whether the output differs from the input.
+
+  Comparing the result to the key was wrong twice. A locale that deliberately maps a phrase to
+  itself — an English variant, or a language that borrows the term — read as "nobody
+  translated this" and fell back to joined fragments, which is the behaviour the row was added
+  to replace. And it re-implemented annotation stripping with a weaker regex than this
+  module's own `stripAnnotation`, whose lookbehind and `\#` un-escaping exist because of
+  tosijs-ui#55 — so the two already disagreed about a key like `tag\#42`.
+  */
+  const index = i18n.locales.value.indexOf(i18n.locale.value)
+  if (index > -1) {
+    const map = tosiValue(i18n.stringMap) as unknown as TranslationMap
+    const lower = key.toLocaleLowerCase()
+    const row = map[lower] ?? map[stripAnnotation(key).toLocaleLowerCase()]
+    const cell = row && row[index]
+    // A ditto mark means "same as the base translation", which `localize` resolves — but it
+    // is still a row, so the sentence wins over the fragments.
+    if (cell) return localize(key)
+  }
+  return fragments.map((f) => localize(f)).join(' ')
 }
 
 export class TosiLocalePicker extends Component {

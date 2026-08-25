@@ -297,7 +297,7 @@ export declare class TosiTable extends WebComponent {
     private _editStart;
     private handleCellFocus;
     private handleCellChange;
-    /** The model's answer for one column, cached per render pass. */
+    private _fieldCache;
     private fieldFor;
     /**
      * Validate one edited cell against the schema. `undefined` when it conforms — or when

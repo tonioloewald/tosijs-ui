@@ -1,11 +1,59 @@
 # Migrating from older versions
 
-<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for older tosijs-ui releases — 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
+<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
 
 Notices for releases you may be upgrading *past*. If you are starting fresh, none of
 this applies — go to the [Quick Start](/) instead.
 
 Current releases are described in [CHANGELOG.md](https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md).
+
+## Validation is supplied, not imported — 1.11.0
+
+If you use `<tosi-schema-form>`, `<tosi-crud>` or an editable `<tosi-table>` **from ESM**, add
+one line. Nothing else changes, and nothing breaks silently — a form with no validator warns
+in the console and reports `validationAvailable === false`.
+
+```js
+import { setSchemaValidator } from 'tosijs-ui'
+import { validate, inferSchema, unenforcedKeywords } from 'tosijs-schema' // ^1.8.0
+
+setSchemaValidator({ validate, inferSchema, unenforcedKeywords })
+```
+
+**Pass all three.** `unenforcedKeywords` is what lets a field ask the validator *"do you
+actually check this keyword?"* — omit it and the form falls back to a list frozen at
+tosijs-schema 1.7.0 and labels every `oneOf` and `exclusiveMinimum` field "not validated"
+while it is being validated.
+
+Nothing to do if you load the CDN `<script>` build or use `tosijs-ui/site` — both register it
+themselves.
+
+**Why it changed.** A bare `import('tosijs-schema')` in shipped code is either resolved by
+your bundler — which fails the build for anyone who did not install it, including people using
+only `<tosi-table>` — or left external, which cannot resolve in a browser and kills validation
+for everyone. Both were measured; there is no third option. Asking for two functions instead
+of a package also means anything can supply them: an Ajv wrapper, a house validator, a stub.
+
+## `tjs-lang` peer moves to `^0.13.1` — 1.11.0
+
+Only affects you if you have `tjs-lang` installed (it is an optional peer, for live examples
+and `.tjs` sources). `^0.12.0` could not reach 0.13.x — caret pins the minor on `0.x` — so an
+adopter on current tjs-lang hit a hard `ERESOLVE`.
+
+**0.12.0 is deprecated on npm**, and the deprecation names this exact combination: *"tosijs-schema
+>=1.5.0 breaks the battery atoms' output validation in these versions. Upgrade to 0.13.1."*
+Since 1.11.0 also floors `tosijs-schema` at `^1.8.0`, staying on 0.12.0 is the pairing the
+upstream author deprecated it over.
+
+## Edit links are shorter and shorter-lived — 1.11.0
+
+Only affects `tosijs-ui/site` users running `bun run tunnel`. The token is now **7 Crockford
+base32 characters** instead of 22, and `linkTtlMinutes` defaults to **5** rather than 15. A
+link minted by an older dev server is not redeemable by a newer one; both live in memory, so
+this only matters across a restart mid-session.
+
+The token is case-insensitive and forgives the lookalikes — `I`/`L` read as `1`, `O` as `0`,
+hyphens ignored — because it is meant to be read off one screen and typed on another.
 
 ## `Cannot find module` under Node — fixed in 1.9.1
 

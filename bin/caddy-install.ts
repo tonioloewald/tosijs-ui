@@ -77,8 +77,11 @@ if (!host) {
     `\nNo preview host.\n\n` +
       `  Put it where machine-local credentials live — a 700 directory beside the\n` +
       `  repos, so it cannot be committed:\n` +
+      `      mkdir -p ~/local-secrets && chmod 700 ~/local-secrets\n` +
       `      echo 'PREVIEW_HOST=user@example.com' >> ~/local-secrets/tosijs-preview.env\n` +
-      `      # and source that file from ~/.zshenv, so scripts and agents see it too\n\n` +
+      `      chmod 600 ~/local-secrets/tosijs-preview.env\n` +
+      `      echo '[ -f ~/local-secrets/tosijs-preview.env ] && . ~/local-secrets/tosijs-preview.env' >> ~/.zshenv\n` +
+      `      # ~/.zshenv, not ~/.zshrc — scripts and agents get no interactive profile\n\n` +
       `  ...or pass it per-run:\n` +
       `      tosijs-caddy-install --host=user@example.com --go\n` +
       `      PREVIEW_HOST=user@example.com tosijs-caddy-install\n`

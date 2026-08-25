@@ -685,15 +685,23 @@ live site** (independently useful). See roadmap "From book to live."
   idiomatic than the local UI term (ja `選別` for sort, es `Clasificar`, zh `展示` for show)
   and were deliberately left alone rather than asserting more than could be verified.
 
-## Flaky: `doc-system.pw.ts` "a nested doc-system does not hijack the host browser state"
+## Flaky: `hydration.pw.ts` "doc pages hydrate with no console errors"
 
-- [ ] Fails roughly **1 full run in 6 on firefox**, and passes **4/4 in isolation** — so it is
-      cross-test interference or a timing assumption, not the component. Not mine: the spec
-      and the fix behind it predate 1.11.0 (`d749d281`). Recorded rather than waved away.
-      First thing to try is what fixed three of these in 1.11.0: poll for the CONDITION being
-      asserted rather than a proxy for it, and check whether the page's own inline doc tests
-      are racing the spec (`localStorage.setItem('tosijs-ui-tests-enabled','false')` in an
-      `addInitScript`).
+- [ ] Fails roughly **1 full run in 6, on WebKit only**, with
+      `<tosi-doc-system> could not load docs from ../docs.json TypeError: Load failed`. Passes
+      **5/5 in isolation**, so it is contention rather than logic: the failure is a `fetch` of
+      `docs.json` losing under 171 parallel specs against one dev server, and WebKit is the
+      engine that gives up first.
+
+      Two things worth deciding rather than muting: whether `<tosi-doc-system>` should RETRY a
+      failed `docs.json` fetch (a doc site that renders nothing because one request lost is a
+      real-user failure too, not only a test one), and whether the lane's worker count is
+      simply too high for one server. The retry is the more valuable half — this is the same
+      class as the compression/idle-timeout work, where the test surfaced a genuine
+      robustness gap rather than a test bug.
+
+      **The nested-doc-system flake in the same lane WAS fixed** (1.11.0): it was the page's
+      own inline doc tests racing the spec, the fourth instance of that cause in this release.
 
 ## From the 1.11.0 nine-lens review (deferred)
 
@@ -747,20 +755,30 @@ errorSlot}>` populated in `buildField`, and memoize `expanded()` once per render
 - Maybe show lines under locks indicating the parent
 - Support snapping to sibling boundaries and centers
 
+## CSS variables in the 1.11.0 components
+
+- [ ] `<tosi-schema-form>` and `<tosi-crud>` hand-roll raw `var()` strings (12 sites and 6
+      sites) rather than `vars.*` / `varDefault.*`, which CLAUDE.md's CSS rules call for. One
+      real bug came out of that and is fixed — `--tosi-spacing-50` is not a variable; the scale
+      is `-xs/-sm/-lg/-xl`, and the fallback made the mistake invisible. The remaining three
+      (`--tosi-error`, `--tosi-border`, `--tosi-border-radius`) are genuinely new customization
+      points, now documented on the schema-form page, but they should go through `varDefault`
+      like everything else so a typo cannot hide behind a fallback again.
+
 ## Dev bridge (tunnel + magic link)
 
 From two weeks of using the bridge in anger. It is better than Bonjour or a LAN IP when it
 works — no address to find, no same-network requirement — and it is the only thing that
 affords remote testing at all. The remaining friction is the credential, not the transport.
 
-- [x] **Reusable link window — already shipped.** `linkPolicy` defaults to `'window'`:
-      a link is redeemable **repeatedly** until it ages out, and only then hands over the
-      durable session cookie (30 days). Try something in the Claude app, then open the same
-      link in Safari for a deeper dive — that already works today. TTL is currently
-      **15 minutes** (`LINK_TOKEN_TTL_MS`), configurable per project via
-      `preview.tunnel.linkTtlMinutes`. Note the direction: 15 → 5 would be _tightening_, and
-      is worth doing only alongside the readable-token work below, where a short window is
-      what pays for a short token.
+- [x] **Reusable link window — shipped.** `linkPolicy` defaults to `'window'`: a link is
+      redeemable **repeatedly** until it ages out, and only then hands over the durable
+      session cookie (30 days). Try something in the Claude app, then open the same link in
+      Safari for a deeper dive. TTL is **5 minutes** as of 1.11.0 (`LINK_TOKEN_TTL_MS`),
+      configurable per project via `preview.tunnel.linkTtlMinutes` — tightened from 15
+      alongside the 7-character token, where the short window is what pays for the short code.
+      _(This bullet said "currently 15 minutes" for a while after the change landed one bullet
+      below it — a ticked item written in the present tense goes stale silently.)_
 
 - [x] **DONE — [#97](https://github.com/tonioloewald/tosijs-ui/issues/97): the link token is
       7 Crockford base32 characters.** Was 22 characters of mixed-case base64url, typed by

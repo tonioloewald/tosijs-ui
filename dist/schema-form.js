@@ -657,6 +657,19 @@ test('a plugin registered after the form renders takes effect, styles and all', 
 grey them out. A dead row of buttons is a form advertising affordances it will not honour;
 there is nothing to explain if they are not there.
 
+## Styling
+
+Three custom properties, each with a fallback so the component works unstyled:
+
+| variable | default | what it colours |
+| --- | --- | --- |
+| `--tosi-error` | `#c00` | the invalid-field outline and the error text |
+| `--tosi-border` | `#0002` | the border around a `<details>` section |
+| `--tosi-border-radius` | `4px` | that section's corners |
+
+Spacing comes from the theme's `--tosi-spacing` / `--tosi-spacing-sm`, so a form matches
+whatever scale the rest of your page is on.
+
 ## Localization
 
 The form's own chrome — the *Add …* button and the reorder tooltips — goes through
@@ -773,7 +786,7 @@ export class TosiSchemaForm extends WebComponent {
         ':host .schema-group': {
             border: '1px solid var(--tosi-border, #0002)',
             borderRadius: 'var(--tosi-border-radius, 4px)',
-            padding: 'var(--tosi-spacing-50, 5px)',
+            padding: 'var(--tosi-spacing-sm, 8px)',
         },
         ':host .schema-group[open]': {
             display: 'grid',
@@ -782,11 +795,11 @@ export class TosiSchemaForm extends WebComponent {
         ':host .schema-group > summary': { cursor: 'pointer', opacity: '0.8' },
         ':host .schema-item': {
             display: 'grid',
-            gap: 'var(--tosi-spacing-50, 5px)',
+            gap: 'var(--tosi-spacing-sm, 8px)',
             gridTemplateColumns: '1fr auto',
             alignItems: 'end',
             borderTop: '1px solid var(--tosi-border, #0001)',
-            paddingTop: 'var(--tosi-spacing-50, 5px)',
+            paddingTop: 'var(--tosi-spacing-sm, 8px)',
         },
         ':host .schema-item-controls': { display: 'flex', gap: '2px' },
         ':host .schema-item-controls[hidden], :host .schema-add[hidden]': {
@@ -796,7 +809,7 @@ export class TosiSchemaForm extends WebComponent {
         ':host .schema-variant-fields': {
             display: 'grid',
             gap: 'var(--tosi-spacing, 10px)',
-            paddingTop: 'var(--tosi-spacing-50, 5px)',
+            paddingTop: 'var(--tosi-spacing-sm, 8px)',
         },
         ':host .schema-unvalidated': {
             fontSize: '0.85em',
@@ -1274,6 +1287,16 @@ export class TosiSchemaForm extends WebComponent {
                     ...(field.required ? { required: true } : {}),
                     ...(field.kind === 'const' ? { readonly: true } : {}),
                 });
+        /*
+        The control's native `change` stops at the control.
+    
+        `handleFieldInput` is wired to `onInput` only, so `stopPropagation()` inside it never sees
+        a `change` event — and native `change` bubbles out of the light DOM, so a consumer
+        listening on the form still received the input's own event alongside ours. `<tosi-table>`
+        fixed the same hazard by stopping it in its `change` handler; the form needs an explicit
+        listener because it does not have one.
+        */
+        control.addEventListener('change', (event) => event.stopPropagation());
         control.dataset.path = field.path;
         const wrapper = div({ class: 'schema-field' }, label(field.label), control, ...this.unvalidatedNote(field), span({ class: 'schema-error', hidden: true }));
         wrapper.dataset.field = field.path;

@@ -411,3 +411,28 @@ test('with neither, it reads as English rather than as a key', () => {
     'Show Column'
   )
 })
+
+test('REGRESSION: a phrase translated to ITSELF still counts as translated', () => {
+  /*
+  The check used to be "did the output differ from the input?", which reads a deliberate
+  identity mapping — an English variant, or a language that borrows the term — as "nobody
+  translated this" and falls back to joined fragments. That is exactly the behaviour the row
+  was added to replace, so the row silently did nothing.
+  */
+  initLocalization(
+    [
+      'en-US\ten-GB',
+      'English\tBritish',
+      'English\tBritish',
+      '🇺🇸\t🇬🇧',
+      'Sort#order\tOrder',
+      'Ascending#sort-order\tRising',
+      'Sort Ascending\tSort Ascending',
+    ].join('\n')
+  )
+  i18n.locale.value = 'en-GB'
+  // The row says "Sort Ascending" on purpose; the fragments would give "Order Rising".
+  expect(
+    localizePhrase('Sort Ascending', ['Sort#order', 'Ascending#sort-order'])
+  ).toBe('Sort Ascending')
+})

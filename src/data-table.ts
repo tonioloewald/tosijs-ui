@@ -1948,9 +1948,30 @@ export class TosiTable extends WebComponent {
     )
   }
 
-  /** The model's answer for one column, cached per render pass. */
+  /*
+  The model's answer for one column — now actually cached, which the comment used to claim.
+
+  It was a bare passthrough, and not a cheap one: every call allocates a one-property schema,
+  runs `fieldsFor()` over it and calls the validator's `unenforcedKeywords` walker. It is
+  called per editable cell per render, and again in `columnEditable` for every column, so a
+  virtual-scrolled table paid it hundreds of times a frame for an answer that cannot change
+  unless the schema does.
+
+  Keyed on the schema OBJECT, so setting a new one invalidates by construction rather than by
+  remembering to clear anything.
+  */
+  private _fieldCache = new WeakMap<object, Map<string, Field | undefined>>()
+
   private fieldFor(prop: string): Field | undefined {
-    return fieldForProperty(this.schema, prop)
+    const schema = this.schema
+    if (!schema) return undefined
+    let byProp = this._fieldCache.get(schema)
+    if (!byProp) {
+      byProp = new Map()
+      this._fieldCache.set(schema, byProp)
+    }
+    if (!byProp.has(prop)) byProp.set(prop, fieldForProperty(schema, prop))
+    return byProp.get(prop)
   }
 
   /*

@@ -654,6 +654,34 @@ test(&#39;a plugin registered after the form renders takes effect, styles and al
 <p><code>readOnly</code> disables the inputs and <strong>hides</strong> the add, remove and reorder controls rather than
 grey them out. A dead row of buttons is a form advertising affordances it will not honour;
 there is nothing to explain if they are not there.</p>
+<h2>Styling</h2>
+<p>Three custom properties, each with a fallback so the component works unstyled:</p>
+<table>
+<thead>
+<tr>
+<th>variable</th>
+<th>default</th>
+<th>what it colours</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--tosi-error</code></td>
+<td><code>#c00</code></td>
+<td>the invalid-field outline and the error text</td>
+</tr>
+<tr>
+<td><code>--tosi-border</code></td>
+<td><code>#0002</code></td>
+<td>the border around a <code>&lt;details&gt;</code> section</td>
+</tr>
+<tr>
+<td><code>--tosi-border-radius</code></td>
+<td><code>4px</code></td>
+<td>that section&#39;s corners</td>
+</tr>
+</tbody></table>
+<p>Spacing comes from the theme&#39;s <code>--tosi-spacing</code> / <code>--tosi-spacing-sm</code>, so a form matches
+whatever scale the rest of your page is on.</p>
 <h2>Localization</h2>
 <p>The form&#39;s own chrome — the <em>Add …</em> button and the reorder tooltips — goes through
 <a href="/localize/"><code>localize</code></a>, and the form <strong>rebuilds when the locale changes</strong>, so switching
@@ -742,7 +770,6 @@ test(&#39;editing keeps unknown keys, fires change, and does not rebuild under t
     <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
     <li><a class="doc-link" href="../icons/">icons</a></li>
     <li><a class="doc-link" href="../natural-compare/">naturalCompare</a></li>
-    <li><a class="doc-link" href="../utilities/">Utilities</a></li>
     <li><details open><summary><a class="doc-link" href="../components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>

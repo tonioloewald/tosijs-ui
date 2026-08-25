@@ -440,7 +440,7 @@ export interface SiteConfig {
              */
             linkPolicy?: 'window' | 'single-use';
             /**
-             * How long a link stays redeemable, in minutes. Default 15.
+             * How long a link stays redeemable, in minutes. Default 5.
              *
              * Defaults to 5 minutes — short, because the link is a bearer token for its lifetime
              * and the 7-character code is what makes that acceptable. A link is redeemed seconds

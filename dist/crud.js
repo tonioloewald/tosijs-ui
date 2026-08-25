@@ -344,7 +344,7 @@ export class TosiCrud extends WebComponent {
         },
         ':host .crud-toolbar': {
             display: 'flex',
-            gap: 'var(--tosi-spacing-50, 5px)',
+            gap: 'var(--tosi-spacing-sm, 8px)',
             alignItems: 'center',
         },
         ':host .crud-search': { flex: '1 1 auto', minWidth: '0' },
@@ -357,13 +357,13 @@ export class TosiCrud extends WebComponent {
         ':host .crud-detail': {
             display: 'grid',
             gridTemplateRows: 'minmax(0, 1fr) auto',
-            gap: 'var(--tosi-spacing-50, 5px)',
+            gap: 'var(--tosi-spacing-sm, 8px)',
             overflow: 'auto',
         },
         ':host .crud-detail[hidden]': { display: 'none' },
         ':host .crud-actions': {
             display: 'flex',
-            gap: 'var(--tosi-spacing-50, 5px)',
+            gap: 'var(--tosi-spacing-sm, 8px)',
         },
         ':host .crud-status': { fontSize: '0.85em', opacity: '0.8' },
         ':host .crud-status.-error': {
@@ -552,6 +552,13 @@ export class TosiCrud extends WebComponent {
         const saved = await this.run('save', () => this._store.save(record));
         // The store's answer wins: it knows the new id, the timestamp, the computed fields.
         this._creating = false;
+        /*
+        A store that returns nothing keeps the record it was given.
+    
+        `save` is typed `Promise<any>`, and `Promise<void>` satisfies that — a 204-style adapter
+        returning nothing is a perfectly ordinary implementation. `saved ?? record` already handled
+        it; what did not was everything downstream assuming the result carried an id.
+        */
         this._selected = saved ?? record;
         /*
         A saved record HAS an id now, so the URL should point at it.
