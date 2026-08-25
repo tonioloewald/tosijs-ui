@@ -1870,7 +1870,7 @@ export class TosiTable extends WebComponent {
   */
   private _editStart = new WeakMap<Element, unknown>()
 
-  private onCellFocus = (event: Event): void => {
+  private handleCellFocus = (event: Event): void => {
     const el = (event.target as HTMLElement).closest(
       '[data-edit-prop]'
     ) as HTMLInputElement | null
@@ -1887,7 +1887,7 @@ export class TosiTable extends WebComponent {
   would see values the user never meant to enter. `change` fires when they are done with the
   cell.
   */
-  private onCellChange = (event: Event): void => {
+  private handleCellChange = (event: Event): void => {
     const el = (event.target as HTMLElement).closest(
       '[data-edit-prop]'
     ) as HTMLInputElement | null
@@ -1997,8 +1997,8 @@ export class TosiTable extends WebComponent {
       style,
       onMouseup: stop,
       onTouchend: stop,
-      onFocus: this.onCellFocus,
-      onChange: this.onCellChange,
+      onFocus: this.handleCellFocus,
+      onChange: this.handleCellChange,
     }
     let cell: HTMLElement
     if (field?.kind === 'enum') {

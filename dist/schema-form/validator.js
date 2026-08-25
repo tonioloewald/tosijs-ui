@@ -27,7 +27,14 @@ Registered automatically in the iife and in the doc-site hydrate bundle, because
 bundles we build. ESM consumers write one line — see the schema-form docs.
 */
 let current = null;
-let warned = false;
+/*
+Once PER REASON, not once per process.
+
+A single flag meant the first component to say anything silenced every other message: on a
+page where an editable table warned about validation, a blank form warned about nothing at
+all — and a blank form is the more confusing of the two.
+*/
+const warned = new Set();
 /**
  * Supply the validator. Pass `null` to remove it.
  *
@@ -37,8 +44,12 @@ let warned = false;
  */
 export function setSchemaValidator(validator) {
     current = validator;
-    if (validator)
-        warned = false;
+    /*
+    Cleared on ANY change, including removal. Resetting only when a validator ARRIVES left the
+    warnings permanently suppressed after one was taken away — so the state in which the warning
+    matters most was the one state that could not produce it.
+    */
+    warned.clear();
     for (const listener of listeners)
         listener();
 }
@@ -62,14 +73,31 @@ A silent degrade is the worst version of an optional dependency: the form render
 errors, and looks like it validated. One warning naming the package and the seam turns that
 into a five-second fix.
 */
+const REGISTER = `  import { setSchemaValidator } from 'tosijs-ui'\n` +
+    `  import { validate, inferSchema } from 'tosijs-schema' // ^1.8.0\n` +
+    `  setSchemaValidator({ validate, inferSchema })`;
 export function warnNoValidator(what) {
-    if (warned || current)
+    if (current || warned.has('validate'))
         return;
-    warned = true;
+    warned.add('validate');
     console.warn(`tosijs-ui: ${what} needs a schema validator and none is registered — nothing is being ` +
-        `validated.\n  import { setSchemaValidator } from 'tosijs-ui'\n` +
-        `  import { validate, inferSchema } from 'tosijs-schema' // ^1.7.0\n` +
-        `  setSchemaValidator({ validate, inferSchema })`);
+        `validated.\n${REGISTER}`);
+}
+/**
+ * A different problem from "nothing is being validated", and a more confusing one.
+ *
+ * With no schema AND no validator there is nothing to infer a schema *from*, so the form has
+ * no fields to render at all. Warning about validation there describes the absence of error
+ * reporting while the user is looking at an empty box — it names the wrong thing at the exact
+ * moment they need the right one.
+ */
+export function warnCannotInfer() {
+    if (warned.has('infer'))
+        return;
+    warned.add('infer');
+    console.warn(`tosijs-ui: <tosi-schema-form> has no \`schema\` and no validator to infer one from, so ` +
+        `it has no fields to render.\n  Give it a \`schema\`, or register a validator whose ` +
+        `\`inferSchema\` can derive one:\n${REGISTER}`);
 }
 const listeners = new Set();
 /** Called when the validator changes, so a live form can pick up a late registration. */

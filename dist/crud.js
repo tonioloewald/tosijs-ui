@@ -117,8 +117,10 @@ so loses the column for any property the first row happens not to have.
 
 Without one, the form infers a schema from the record it edits (see
 [schema-form](/schema-form/)) and the table falls back to inferring its own columns. That
-works, and it costs a lazy import of `tosijs-schema` before the first field appears — so give
-a schema when you have one.
+works **provided a validator is registered** — inference is its `inferSchema`, not a lazy
+import (the seam replaced that). With no validator and no schema the table still lists rows
+from its own inference while the form has nothing to render, which is the most confusing
+combination there is, so give a schema when you have one.
 
 ```js
 import { tosiCrud } from 'tosijs-ui'
@@ -551,14 +553,14 @@ export class TosiCrud extends WebComponent {
         this.queueRender();
         this.dispatchEvent(new Event('change', { bubbles: true }));
     }
-    onSearchInput = (event) => {
+    handleSearchInput = (event) => {
         const term = event.target.value;
         this._hash?.set('q', term || undefined);
         // Debounced, because a remote store should not be queried per keystroke.
         clearTimeout(this._searchTimer);
         this._searchTimer = setTimeout(() => void this.refresh(), this.searchDelay);
     };
-    onSelectionChanged = (selected) => {
+    handleSelectionChanged = (selected) => {
         this.select(selected[0] ?? null);
     };
     content = () => [
@@ -567,7 +569,7 @@ export class TosiCrud extends WebComponent {
             class: 'crud-search',
             type: 'search',
             placeholder: localize('search…'),
-            onInput: this.onSearchInput,
+            onInput: this.handleSearchInput,
         }), button({ part: 'newButton', class: 'crud-new' }, localize('New'))),
         div({ class: 'crud-body' }, tosiTable({ part: 'table', select: true }), div({ part: 'detail', class: 'crud-detail' }, tosiSchemaForm({ part: 'form' }), div({ class: 'crud-actions' }, button({ part: 'saveButton', class: 'crud-save' }, localize('Save')), button({ part: 'deleteButton', class: 'crud-delete' }, localize('Delete'))))),
         div({ part: 'status', class: 'crud-status' }),
@@ -580,7 +582,7 @@ export class TosiCrud extends WebComponent {
         });
         // The back button changes the hash without going through us.
         this._stopHash = this._hash.observe(() => this.queueRender());
-        this.parts.table.selectionChanged = this.onSelectionChanged;
+        this.parts.table.selectionChanged = this.handleSelectionChanged;
         this.parts.newButton.onclick = () => this.createNew();
         /*
         Swallow the rejection AT THE BUTTON, and only here.

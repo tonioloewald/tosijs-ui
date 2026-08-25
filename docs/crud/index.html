@@ -146,8 +146,10 @@ which is better than the table&#39;s own inference, because that reads <code>Obj
 so loses the column for any property the first row happens not to have.</p>
 <p>Without one, the form infers a schema from the record it edits (see
 <a href="/schema-form/">schema-form</a>) and the table falls back to inferring its own columns. That
-works, and it costs a lazy import of <code>tosijs-schema</code> before the first field appears — so give
-a schema when you have one.</p>
+works <strong>provided a validator is registered</strong> — inference is its <code>inferSchema</code>, not a lazy
+import (the seam replaced that). With no validator and no schema the table still lists rows
+from its own inference while the form has nothing to render, which is the most confusing
+combination there is, so give a schema when you have one.</p>
 <pre><code class="language-js">import { tosiCrud } from &#39;tosijs-ui&#39;
 
 let rows = [

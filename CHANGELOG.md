@@ -161,6 +161,64 @@ and both vendored types pinned by assignability tests in both directions.
   red build. Upstream _shrinking_ below our fallback is the dangerous direction — the fallback
   would claim a keyword is checked when it is not — and that is still caught.
 
+### Fixed after the pre-release review
+
+The nine-lens review ran twice against this release. Everything below was found by it and
+fixed before tagging.
+
+- **`<tosi-crud>` destroyed unsaved edits** — one frame after any keystroke, with no user
+  action, and `save()` then posted the unedited record.
+- **`<tosi-crud>`'s table selection never followed the form**, so a `#?people.id=2` deep link
+  opened the record with nothing highlighted — the feature these notes headline, producing a
+  list that did not show where you were. **Back** also left the opened record on screen while
+  the URL said otherwise, so back-then-reload showed you two different things; and a
+  hash-driven selection change fired no `change` event. Saving a new record now writes its id
+  to the hash, which is both correct and what makes "absent id means deselect" safe.
+- **`<tosi-crud>` rebuilt the entire table on every keystroke.** Identity-guarded; measured at
+  zero table renders per keystroke afterwards.
+- **`<tosi-schema-form>` emitted duplicate `change` events** — a checkbox click produced
+  three. `<tosi-table>` fixed the identical hazard in this release; the sibling shipped
+  without it.
+- **The "not validated" note skipped containers**, so `uniqueItems` on an array and `allOf` on
+  an object — exactly the keywords a validator is most likely to skip — carried nothing.
+- **`columnsFromSchema` re-derived property types** and got `{anyOf:[{type:'boolean'},
+{type:'null'}]}` wrong, and emitted only `title` as the column name — so a title-less schema
+  gave headers reading `firstName` beside a form showing "first name".
+- **`<tosi-table>`'s column menu still concatenated localized words**, which the localize docs
+  in this same release condemn by name. All five languages checked rendered wrong:
+  `Sortieren Aufsteigend`, `숨기기 열`, `非表示 カラム`, `隐藏 列`, `Cacher Colonne`.
+  `localizePhrase(key, fragments)` asks for the whole sentence and joins the fragments only
+  when nobody has translated it — so an existing translation table keeps its behaviour exactly
+  and adding one row upgrades it. Nothing is orphaned.
+- **Six `on<Event>` members were shadowed by the element factory**, which warns about it in
+  the console. Renamed to `handle<Event>` per the framework's own guidance.
+- **The no-validator path had no coverage in any tier** — the default for every ESM adopter,
+  while every lane ran with a validator registered. It has its own test file now. Two real
+  defects were behind that gap: removing a validator left the warnings permanently
+  suppressed, and a single once-flag meant whichever component spoke first silenced the rest.
+- **A form with no schema and no validator rendered an empty box**, warning about validation
+  when the problem was that it had nothing to render. It says so on screen now, and the
+  warning names the right problem.
+- **Notes read `root.uniqueItems is not validated`** on a field called Tags — upstream's
+  `unenforcedKeywords` answers with paths. The leading `root.` is stripped and deeper segments
+  kept, since for a container the keyword may be several levels down.
+- **These notes themselves published the old preview-host precedence**, inverted against the
+  code and against another paragraph thirty lines earlier. Corrected, with a test asserting
+  all four places that state it agree — that sentence had been written three different ways.
+- **A duplicate mid-file import** in `dev-auth.test.ts`, found only because nothing had ever
+  type-checked the test suite. (~150 accumulated type errors remain; that is tracked, not
+  fixed here.)
+- **The two vendored-type anti-drift guards were never type-checked** — `tsconfig.json`
+  excludes `*.test.ts`, so both were inert and one was **red**: `json-schema.test.ts` asserted
+  our `JSONSchema` is assignable to theirs, which TypeScript cannot decide because both types
+  recurse through `additionalProperties`. The guard now asserts the direction it CAN decide —
+  theirs → ours, the assignment the code actually performs when storing an inferred schema —
+  and the reverse is exercised at runtime by validating an ours-typed schema through their
+  validator. `bun run typecheck-guards` (`tsconfig.guards.json`) runs in CI beside the
+  existing typecheck; mutation-verified that drifting the vendored type turns it red.
+- **`<tosi-table>`'s four column-menu captions** now use `localizePhrase`, so the docs and the
+  docs' own worked example agree.
+
 ### Known issues
 
 - **[#102](https://github.com/tonioloewald/tosijs-ui/issues/102)** — `<tosi-table>`'s header

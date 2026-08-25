@@ -100,9 +100,15 @@ setSchemaValidator({ validate, inferSchema })
 those are bundles we build, so they register it themselves. Only an ESM consumer writes the
 line.
 
-Without a validator the form still renders and edits; it simply reports no errors, warns once
-in the console, and `validationAvailable` reads `false` — so a Save handler can tell *"this
-conforms"* from *"nobody checked"*, which `validate() === true` alone cannot.
+Without a validator **and with a `schema`**, the form still renders and edits; it simply
+reports no errors, warns once in the console, and `validationAvailable` reads `false` — so a
+Save handler can tell *"this conforms"* from *"nobody checked"*, which `validate() === true`
+alone cannot.
+
+Without a validator **and without a `schema`** there is nothing to infer fields from, so the
+form has none. It says that on screen rather than rendering an empty box, and the console
+warning names *that* problem rather than the validation one — a message about error reporting
+is the wrong thing to read while looking at a blank form.
 
 Why a seam rather than an import: a bare `import('tosijs-schema')` in shipped code is either
 resolved by your bundler — which **fails the build** for anyone who did not install it,
@@ -115,7 +121,9 @@ for, not a requirement.
 ## No schema? It infers one
 
 Give it a `value` and no `schema` and it derives one with `inferSchema` from
-`tosijs-schema` — useful for editing a record whose shape you don't have written down.
+the registered validator's `inferSchema` — useful for editing a record whose shape you don't
+have written down. With no validator there is nothing to infer from, and the form says so
+rather than rendering an empty box.
 
 ```js
 import { tosiSchemaForm } from 'tosijs-ui'
@@ -140,10 +148,9 @@ preview.append(inferred, shown)
 const inferred = await waitFor('tosi-schema-form')
 
 test('a schema is derived from the value, and it is the one you can read back', async () => {
-  // `tosijs-schema` is an optional peer, so it is imported lazily — the fields appear once
-  // that resolves, not on the first frame. The generous timeout is because this waits on a
-  // module load, not a render: 1s was enough locally and not enough with three browser
-  // engines running the corpus at once.
+  // Inference needs a registered validator that can do it. On this doc site the iife
+  // registers one, so the fields arrive on a render rather than after a module load — there
+  // is no lazy import any more, the seam replaced it.
   const pages = await waitFor('[data-path="pages"]', 5000)
 
   // Types come from the data: a whole number is an integer, a nested object is a section.
@@ -773,6 +780,7 @@ import {
   onSchemaValidatorChanged,
   schemaValidationAvailable,
   warnNoValidator,
+  warnCannotInfer,
 } from './schema-form/validator.js'
 export {
   setSchemaValidator,
@@ -853,6 +861,11 @@ export class TosiSchemaForm extends WebComponent {
       fontStyle: 'italic',
     },
     ':host .schema-add': { justifySelf: 'start' },
+    ':host .schema-empty': {
+      fontSize: '0.9em',
+      opacity: '0.7',
+      fontStyle: 'italic',
+    },
     ':host .schema-unsupported': {
       fontSize: '0.85em',
       opacity: '0.7',
@@ -937,7 +950,15 @@ export class TosiSchemaForm extends WebComponent {
   and "the user typed zero" are different states, and conflating them writes a value nobody
   entered.
   */
-  private onFieldInput = (event: Event): void => {
+  /*
+  Named `handle…`, not `on…`, and that is a framework contract rather than taste.
+
+  tosijs's element factory treats an `on<Event>` property name as event-handler sugar —
+  `creator({ onClick })` attaches a listener rather than assigning the property — so a
+  component member called `onFieldInput` is shadowed and cannot be set or read through the
+  creator. It warned about exactly this in our own doc site's console.
+  */
+  private handleFieldInput = (event: Event): void => {
     const el = event.target as HTMLInputElement | HTMLSelectElement
     const path = el.dataset?.path
     if (!path) return
@@ -1084,7 +1105,7 @@ export class TosiSchemaForm extends WebComponent {
     const picker = select(
       {
         class: 'schema-variant',
-        onChange: (event: Event) => this.onVariantChange(node, event),
+        onChange: (event: Event) => this.handleVariantChange(node, event),
       },
       /*
       A hidden empty option, so a value matching NO branch shows as "—" rather than silently
@@ -1132,7 +1153,7 @@ export class TosiSchemaForm extends WebComponent {
     container.dataset.branch = String(index)
   }
 
-  private onVariantChange(node: FieldUnion, event: Event): void {
+  private handleVariantChange(node: FieldUnion, event: Event): void {
     const index = Number((event.target as HTMLSelectElement).value)
     if (!Number.isInteger(index)) return
     this._value = selectBranch(this._value, node, index)
@@ -1333,7 +1354,7 @@ export class TosiSchemaForm extends WebComponent {
     // `{ dataset: {...} }` makes tosijs assign to `element.dataset`, which is readonly, and
     // the resulting "Attempted to assign to readonly property" aborts the whole render with
     // no clue which prop caused it.
-    const shared: any = { onInput: this.onFieldInput }
+    const shared: any = { onInput: this.handleFieldInput }
     const control =
       field.kind === 'enum'
         ? select(
@@ -1469,17 +1490,45 @@ export class TosiSchemaForm extends WebComponent {
     consumer can read it, edit it, and set it back. Set `.schema` explicitly to re-derive.
     */
     const inferSchema = getSchemaValidator()?.inferSchema
-    if (!this._schema?.properties && inferSchema && this._value) {
-      const inferred = inferSchema(this._value) as JSONSchema
-      if (inferred?.properties) this._schema = relaxInferred(inferred)
+    if (!this._schema?.properties && this._value) {
+      if (inferSchema) {
+        const inferred = inferSchema(this._value) as JSONSchema
+        if (inferred?.properties) this._schema = relaxInferred(inferred)
+      } else {
+        // Nothing to render and no way to work out what to render. Say so where the user is
+        // looking, not only in the console.
+        warnCannotInfer()
+      }
     }
     if (this._builtFor !== this._schema) {
       this._nodes = fieldsFor(this._schema)
       this.textContent = ''
+      /*
+      A form with no fields explains itself.
+
+      With no `schema` and no validator to infer one from there is nothing to render, and an
+      empty `<form>` looks like a broken component rather than a missing argument. The
+      component's own rule everywhere else is that what it cannot render says so — this was
+      the one place that rendered nothing instead.
+      */
+      const empty = this._nodes.length === 0
       this.append(
         formElement(
           { class: 'schema-form', onSubmit: (e: Event) => e.preventDefault() },
-          ...this._nodes.map((n) => this.buildNode(n))
+          ...(empty
+            ? [
+                div(
+                  { class: 'schema-empty' },
+                  this._schema?.properties
+                    ? localize('This schema describes no properties.')
+                    : schemaValidationAvailable()
+                    ? localize('No schema, and nothing to infer one from.')
+                    : localize(
+                        'No schema — register a validator with inferSchema, or set one.'
+                      )
+                ),
+              ]
+            : this._nodes.map((n) => this.buildNode(n)))
         )
       )
       this._builtFor = this._schema

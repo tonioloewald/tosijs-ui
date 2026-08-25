@@ -295,8 +295,8 @@ export declare class TosiTable extends WebComponent {
     /** Is this column editable? Table-level default, per-column override, `dataCell` wins. */
     private columnEditable;
     private _editStart;
-    private onCellFocus;
-    private onCellChange;
+    private handleCellFocus;
+    private handleCellChange;
     /** The model's answer for one column, cached per render pass. */
     private fieldFor;
     /**

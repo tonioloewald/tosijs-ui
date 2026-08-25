@@ -127,9 +127,14 @@ setSchemaValidator({ validate, inferSchema })
 <p><strong>Already done for you</strong> in the CDN <code>&lt;script&gt;</code> build and in a <code>tosijs-ui/site</code> doc site —
 those are bundles we build, so they register it themselves. Only an ESM consumer writes the
 line.</p>
-<p>Without a validator the form still renders and edits; it simply reports no errors, warns once
-in the console, and <code>validationAvailable</code> reads <code>false</code> — so a Save handler can tell <em>&quot;this
-conforms&quot;</em> from <em>&quot;nobody checked&quot;</em>, which <code>validate() === true</code> alone cannot.</p>
+<p>Without a validator <strong>and with a <code>schema</code></strong>, the form still renders and edits; it simply
+reports no errors, warns once in the console, and <code>validationAvailable</code> reads <code>false</code> — so a
+Save handler can tell <em>&quot;this conforms&quot;</em> from <em>&quot;nobody checked&quot;</em>, which <code>validate() === true</code>
+alone cannot.</p>
+<p>Without a validator <strong>and without a <code>schema</code></strong> there is nothing to infer fields from, so the
+form has none. It says that on screen rather than rendering an empty box, and the console
+warning names <em>that</em> problem rather than the validation one — a message about error reporting
+is the wrong thing to read while looking at a blank form.</p>
 <p>Why a seam rather than an import: a bare <code>import(&#39;tosijs-schema&#39;)</code> in shipped code is either
 resolved by your bundler — which <strong>fails the build</strong> for anyone who did not install it,
 including people using only <code>&lt;tosi-table&gt;</code> — or left external, which cannot resolve in a
@@ -139,7 +144,9 @@ wrapper, a house validator or a test stub all work. <code>tosijs-schema</code> i
 for, not a requirement.</p>
 <h2>No schema? It infers one</h2>
 <p>Give it a <code>value</code> and no <code>schema</code> and it derives one with <code>inferSchema</code> from
-<code>tosijs-schema</code> — useful for editing a record whose shape you don&#39;t have written down.</p>
+the registered validator&#39;s <code>inferSchema</code> — useful for editing a record whose shape you don&#39;t
+have written down. With no validator there is nothing to infer from, and the form says so
+rather than rendering an empty box.</p>
 <pre><code class="language-js">import { tosiSchemaForm } from &#39;tosijs-ui&#39;
 
 const inferred = tosiSchemaForm({
@@ -161,10 +168,9 @@ preview.append(inferred, shown)
 <pre><code class="language-test">const inferred = await waitFor(&#39;tosi-schema-form&#39;)
 
 test(&#39;a schema is derived from the value, and it is the one you can read back&#39;, async () =&gt; {
-  // `tosijs-schema` is an optional peer, so it is imported lazily — the fields appear once
-  // that resolves, not on the first frame. The generous timeout is because this waits on a
-  // module load, not a render: 1s was enough locally and not enough with three browser
-  // engines running the corpus at once.
+  // Inference needs a registered validator that can do it. On this doc site the iife
+  // registers one, so the fields arrive on a render rather than after a module load — there
+  // is no lazy import any more, the seam replaced it.
   const pages = await waitFor(&#39;[data-path=&quot;pages&quot;]&#39;, 5000)
 
   // Types come from the data: a whole number is an integer, a nested object is a section.

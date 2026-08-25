@@ -1685,7 +1685,7 @@ export class TosiTable extends WebComponent {
     in a WeakMap so a recycled virtual-scroll row cannot leak an entry.
     */
     _editStart = new WeakMap();
-    onCellFocus = (event) => {
+    handleCellFocus = (event) => {
         const el = event.target.closest('[data-edit-prop]');
         if (!el)
             return;
@@ -1701,7 +1701,7 @@ export class TosiTable extends WebComponent {
     would see values the user never meant to enter. `change` fires when they are done with the
     cell.
     */
-    onCellChange = (event) => {
+    handleCellChange = (event) => {
         const el = event.target.closest('[data-edit-prop]');
         if (!el)
             return;
@@ -1796,8 +1796,8 @@ export class TosiTable extends WebComponent {
             style,
             onMouseup: stop,
             onTouchend: stop,
-            onFocus: this.onCellFocus,
-            onChange: this.onCellChange,
+            onFocus: this.handleCellFocus,
+            onChange: this.handleCellChange,
         };
         let cell;
         if (field?.kind === 'enum') {

@@ -40,5 +40,14 @@ export declare function getSchemaValidator(): SchemaValidator | null;
  */
 export declare function schemaValidationAvailable(): boolean;
 export declare function warnNoValidator(what: string): void;
+/**
+ * A different problem from "nothing is being validated", and a more confusing one.
+ *
+ * With no schema AND no validator there is nothing to infer a schema *from*, so the form has
+ * no fields to render at all. Warning about validation there describes the absence of error
+ * reporting while the user is looking at an empty box — it names the wrong thing at the exact
+ * moment they need the right one.
+ */
+export declare function warnCannotInfer(): void;
 /** Called when the validator changes, so a live form can pick up a late registration. */
 export declare function onSchemaValidatorChanged(listener: () => void): void;

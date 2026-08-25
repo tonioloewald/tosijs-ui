@@ -136,8 +136,8 @@ export declare class TosiCrud extends WebComponent<CrudParts> {
      */
     private get deletable();
     remove(): Promise<void>;
-    private onSearchInput;
-    private onSelectionChanged;
+    private handleSearchInput;
+    private handleSelectionChanged;
     content: () => HTMLDivElement[];
     connectedCallback(): void;
     disconnectedCallback(): void;

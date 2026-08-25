@@ -77,6 +77,11 @@ export declare class TosiSchemaForm extends WebComponent {
         ':host .schema-add': {
             justifySelf: string;
         };
+        ':host .schema-empty': {
+            fontSize: string;
+            opacity: string;
+            fontStyle: string;
+        };
         ':host .schema-unsupported': {
             fontSize: string;
             opacity: string;
@@ -105,13 +110,13 @@ export declare class TosiSchemaForm extends WebComponent {
     /** Is anything actually checking this form? See `validate()`. */
     get validationAvailable(): boolean;
     private refreshErrors;
-    private onFieldInput;
+    private handleFieldInput;
     private buildNode;
     private buildArray;
     private fillArray;
     private buildUnion;
     private fillUnion;
-    private onVariantChange;
+    private handleVariantChange;
     private syncVariants;
     /** The shared tail of every edit that changes WHICH fields exist. */
     private afterStructuralEdit;
