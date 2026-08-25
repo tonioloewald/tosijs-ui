@@ -28,7 +28,7 @@ addresses instead, and a credential too painful to use is not protecting anythin
   against 1.8.0 it carries nothing and the value is genuinely checked. Verified with
   `bun bin/verify-schema-dep.ts --version=1.8.0` (17/17).
 
-- **Validation is supplied, not imported.** `setSchemaValidator({ validate, inferSchema })` —
+- **Validation is supplied, not imported.** `setSchemaValidator({ validate, inferSchema, unenforcedKeywords })` —
   one line, anywhere, before or after render. The CDN `<script>` build and any `tosijs-ui/site`
   doc site register it themselves, so only an ESM consumer writes it.
 
@@ -163,6 +163,9 @@ and both vendored types pinned by assignability tests in both directions.
 
 ### Fixed after the pre-release review
 
+The nine-lens review ran **three times** against this release. Everything in this section was
+found by it and fixed before tagging.
+
 - **Editable numeric cells silently truncated what you typed.** Typing `19.95` into a
   `<tosi-table editable>` number cell committed **95**; `-4` committed **4** — and every
   commit fired `change` with `error: null`, so nothing reported that a digit had gone. Two-way
@@ -212,6 +215,42 @@ fixed before tagging.
 - **A form with no schema and no validator rendered an empty box**, warning about validation
   when the problem was that it had nothing to render. It says so on screen now, and the
   warning names the right problem.
+- **`change.detail.oldValue` was `undefined` for every cell edit after the first.** The
+  baseline was deleted on each commit rather than rolled forward, and the delete ran *before*
+  the equality guard — so a no-op commit wiped it, and clearing a numeric cell as the second
+  edit fired no `change` at all and skipped the coercion write, leaving a schema-typed integer
+  holding a raw string.
+- **The documented `setSchemaValidator` recipe was wrong**, and only for the people it was
+  written for. `{ validate, inferSchema }` omits `unenforcedKeywords`, so the form fell back
+  to a keyword list frozen at tosijs-schema 1.7.0 and labelled every `oneOf` and
+  `exclusiveMinimum` field "not validated" while 1.8.0 was checking it. Our own doc site was
+  correct because the iife passed all three — so the failure was visible *only* to the ESM
+  adopters the docs instruct. Pass all three.
+- **`crud.table` and `crud.form` threw before hydration** — the only two accessors on the
+  class without the guard the rest have — so the documented way to reach the composed parts
+  threw on the line the docs told you to write. They return `null` now. The snippet was also
+  in a display-only fence, so no lane ran it; it is executable and tested. And its second line
+  was wrong too: `crud.form.readOnly = true` was silently reverted on the next render.
+- **`<tosi-crud>` wrote `history.replaceState` on every search keystroke.** WebKit throws past
+  ~100 calls in 10s — a held key clearing a long term gets there — and the throw preceded the
+  debounce, so search silently stopped working with an uncaught error. The URL write moved
+  inside the debounce, where the store query already was.
+- **An empty `PREVIEW_HOST` swallowed the whole resolution chain.** `??` only skips
+  null/undefined, so `PREVIEW_HOST=''` — what a CI `env:` renders for a missing secret —
+  counted as "set" and hid both the site config and `~/local-secrets`, the exact symptom that
+  rung was added to abolish.
+- **Adding or moving an array item dropped focus.** Every row is rebuilt, so the button you
+  just clicked stopped existing: you could not press ↓ twice to move an item two places, or
+  add two rows from the keyboard. Focus is restored by role and index, skipping controls that
+  are disabled at the destination.
+- **`<tosi-schema-form>` was quadratic in the keystroke path** — one root-scoped
+  `querySelector` per field, twice, per keystroke. Measured on the built component: 800 fields
+  cost **240 ms** per keystroke before and **0.64 ms** after. An index built with the DOM
+  replaces the scans.
+- **The redemption gate had 21 tests and its wiring had none.** Reverting the dev server to a
+  bare `redeemLink()` call restored both the unbounded queue and the unthrottled guess rate
+  while leaving every lane green — a security control held in place by nothing but the diff.
+  The decision is an exported function now, like the others in that file, and is tested.
 - **Notes read `root.uniqueItems is not validated`** on a field called Tags — upstream's
   `unenforcedKeywords` answers with paths. The leading `root.` is stripped and deeper segments
   kept, since for a container the keyword may be several levels down.

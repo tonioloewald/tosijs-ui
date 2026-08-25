@@ -100,6 +100,8 @@ export declare class TosiCrud extends WebComponent<CrudParts> {
     private _hash;
     private _stopHash;
     private _searchTimer;
+    /** What the box says, before the debounce commits it to the URL. */
+    private _pendingSearch;
     get store(): CrudStore | null;
     set store(store: CrudStore | null);
     get schema(): JSONSchema | null;
@@ -107,8 +109,8 @@ export declare class TosiCrud extends WebComponent<CrudParts> {
     get rows(): any[];
     /** The selected record — the form's live model, so it includes unsaved edits. */
     get value(): any;
-    get table(): TosiTable;
-    get form(): TosiSchemaForm;
+    get table(): TosiTable | null;
+    get form(): TosiSchemaForm | null;
     get search(): string;
     set search(term: string);
     /**

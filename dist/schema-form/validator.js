@@ -39,8 +39,13 @@ const warned = new Set();
  * Supply the validator. Pass `null` to remove it.
  *
  *     import { setSchemaValidator } from 'tosijs-ui'
- *     import { validate, inferSchema } from 'tosijs-schema'
- *     setSchemaValidator({ validate, inferSchema })
+ *     import { validate, inferSchema, unenforcedKeywords } from 'tosijs-schema'
+ *     setSchemaValidator({ validate, inferSchema, unenforcedKeywords })
+ *
+ * Pass **all three**. Omitting `unenforcedKeywords` falls back to a local list that mirrors
+ * tosijs-schema 1.7.0, so every field using `oneOf` or `exclusiveMinimum` — enforced since
+ * 1.8.0 — is labelled "not validated" when it is being validated. The note exists to stop the
+ * form lying about what it checked; the wrong recipe makes it the thing lying.
  */
 export function setSchemaValidator(validator) {
     current = validator;
@@ -74,8 +79,8 @@ errors, and looks like it validated. One warning naming the package and the seam
 into a five-second fix.
 */
 const REGISTER = `  import { setSchemaValidator } from 'tosijs-ui'\n` +
-    `  import { validate, inferSchema } from 'tosijs-schema' // ^1.8.0\n` +
-    `  setSchemaValidator({ validate, inferSchema })`;
+    `  import { validate, inferSchema, unenforcedKeywords } from 'tosijs-schema' // ^1.8.0\n` +
+    `  setSchemaValidator({ validate, inferSchema, unenforcedKeywords })`;
 export function warnNoValidator(what) {
     if (current || warned.has('validate'))
         return;

@@ -26,8 +26,13 @@ export interface SchemaValidator {
  * Supply the validator. Pass `null` to remove it.
  *
  *     import { setSchemaValidator } from 'tosijs-ui'
- *     import { validate, inferSchema } from 'tosijs-schema'
- *     setSchemaValidator({ validate, inferSchema })
+ *     import { validate, inferSchema, unenforcedKeywords } from 'tosijs-schema'
+ *     setSchemaValidator({ validate, inferSchema, unenforcedKeywords })
+ *
+ * Pass **all three**. Omitting `unenforcedKeywords` falls back to a local list that mirrors
+ * tosijs-schema 1.7.0, so every field using `oneOf` or `exclusiveMinimum` — enforced since
+ * 1.8.0 — is labelled "not validated" when it is being validated. The note exists to stop the
+ * form lying about what it checked; the wrong recipe makes it the thing lying.
  */
 export declare function setSchemaValidator(validator: SchemaValidator | null): void;
 export declare function getSchemaValidator(): SchemaValidator | null;

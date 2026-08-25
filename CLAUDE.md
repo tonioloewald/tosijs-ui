@@ -384,6 +384,24 @@ See `package.json` for current versions. The notable ones:
   someone's build; extracting `<tosi-code>` into its own package is the exit, and it is a
   breaking change that needs a reason.
 
+- `tosijs-schema`: JSON Schema validation for `<tosi-schema-form>`, `<tosi-crud>` and an
+  editable `<tosi-table>` — an **optional peer** at `^1.8.0`. The floor is a probe result, not
+  a guess: `bin/verify-schema-dep.ts` runs 17 acceptance checks against a candidate release
+  (1.4.0–1.5.1 export no `inferSchema` at all; 1.8.0 is what enforces `oneOf` /
+  `exclusiveMin/Max` and exports `unenforcedKeywords`, both asked for in tosijs-schema#8).
+
+  **Nothing we ship imports it.** Validation is INJECTED — `setSchemaValidator({ validate,
+inferSchema, unenforcedKeywords })`, and all three matter (omitting the third makes the form
+  label validated keywords as unvalidated). Both alternatives were measured and rejected: a
+  literal `import('tosijs-schema')` fails a consumer's build when the package is absent, and a
+  variable specifier is left external and cannot resolve in a browser, killing validation for
+  everyone. There is no third option — see `src/schema-form/validator.ts`.
+
+  `src/schema-form/json-schema.ts` vendors the `JSONSchema` TYPE for the same reason
+  (`import type` survives into emitted `.d.ts`, and TypeScript has no notion of an optional
+  peer). `bun run typecheck-guards` is what stops it drifting; `tsconfig.json` excludes
+  `*.test.ts`, so a compile-time assertion in a test file is otherwise never compiled.
+
 - `tosijs`: Core component framework (peer + dev dep). The peer floor **encodes specific
   upstream fixes, not a date** — `^1.7.8` is required for tosijs#20 (the `this.parts` proxy
   crossing into nested component instances, which made "edit" on one live example open the
@@ -807,6 +825,10 @@ Root-level markdown that is _not_ published to the doc site — read the relevan
 - `codemirror-tjs-1.7-plan.md` — the ACE→CodeMirror 6 + first-class-tjs migration
 - `BUILD-TJS-HOOK.md` — the `libraryBuild` / preload seams in `SiteConfig` (shipped), for consumers with native `.tjs` sources
 - `UPSTREAM.md` — findings and asks filed against tjs-lang / tosijs
-- `RELEASE-REVIEW-1.7.md` — the 1.7 pre-release review (blockers + follow-ups)
+- `RELEASE-REVIEW-1.7.md`, `RELEASE-REVIEW-1.9.md`, `reviews-1.11-pass{1,2,3}.md` — pre-release reviews. **A finished review is a RECORD, not a gate**: mark it historical the moment its findings are dispositioned, and put the open items in `TODO.md`. 1.11.0 shipped a review file reading "Verdict: BLOCK" with 59 of 59 boxes unticked long after the blockers were fixed, which reads as an open gate and is exactly how this project twice claimed a fix a later review found still live.
+- `SCHEMA-FORM-PLAN.md` — the schema-driven editing design note (built; see its status header)
+- `schema-form.md` — the snowfox handover this work learned from (source + defect report)
+- `REMOTE-ACCESS-PLAN.md` — the tunnel / remote-editing plan
+- `import-resolver-plan.md`, `self-contained-examples-plan.md` — live-example infrastructure
 - `src/doc-system/doc-site-system.md` — the canonical reference for `tosijs-ui/site`
 - `icons/icon-composition.md` — the icon composition grammar

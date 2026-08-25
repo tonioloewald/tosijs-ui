@@ -135,9 +135,36 @@ then holds.</p>
 <h2>The parts stay usable on their own</h2>
 <p><code>&lt;tosi-crud&gt;</code> composes public components and exposes them — <code>.table</code> and <code>.form</code> are the real
 elements, so anything you can do to a <code>&lt;tosi-table&gt;</code> you can do here:</p>
-<pre><code class="language-typescript">crud.table.columns = [{ prop: &#39;name&#39;, width: 200 }, { prop: &#39;role&#39;, width: 100 }]
+<pre><code class="language-js">import { tosiCrud } from &#39;tosijs-ui&#39;
+
+const crud = tosiCrud({
+  store: { async list() { return [{ id: 1, name: &#39;Ada&#39;, role: &#39;admin&#39; }] } },
+})
+preview.append(crud)
+
+// `.table` and `.form` are the real elements — once the component has hydrated.
+await new Promise((r) =&gt; requestAnimationFrame(r))
+crud.table.columns = [
+  { prop: &#39;name&#39;, width: 200 },
+  { prop: &#39;role&#39;, width: 100 },
+]
 crud.form.readOnly = true
 </code></pre>
+<pre><code class="language-test">const crud = await waitFor(&#39;tosi-crud&#39;)
+await crud.whenIdle()
+
+test(&#39;the composed parts are reachable, and the wrapper does not undo you&#39;, async () =&gt; {
+  expect(crud.table.columns.map((c) =&gt; c.prop)).toEqual([&#39;name&#39;, &#39;role&#39;])
+  // `readOnly` used to be reassigned on every queued render, so this reverted a frame later
+  // — the second line of a two-line example, silently undone.
+  crud.form.readOnly = true
+  await new Promise((r) =&gt; requestAnimationFrame(r))
+  await new Promise((r) =&gt; requestAnimationFrame(r))
+  expect(crud.form.readOnly).toBe(true)
+})
+</code></pre>
+<p>Before it hydrates, <code>.table</code> and <code>.form</code> are <code>null</code> rather than throwing — so a guard reads
+as a guard:</p>
 <p>It is a convenience, never the only way to reach them. Compose the three yourself when your
 layout wants something else — that is a supported thing to do, not a fallback.</p>
 <h2>Schema: give one, or let it infer</h2>

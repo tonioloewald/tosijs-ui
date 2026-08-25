@@ -31,9 +31,8 @@ import {
   createAuthState,
   issueLink,
   readCookie,
-  redeemLink,
+  redeemThroughGate,
   createRedemptionGate,
-  RedemptionBusyError,
   resolveLinkSettings,
   sessionCookie,
   urlWithoutToken,
@@ -1481,24 +1480,20 @@ export async function devServer(
       nothing else.
       */
       const arrivedAt = Date.now()
-      let session: string | null
-      try {
-        session = await redeemGate(() =>
-          redeemLink(
-            auth,
-            linkToken,
-            arrivedAt,
-            resolveLinkSettings(config.preview?.tunnel).policy
-          )
-        )
-      } catch (error) {
+      const outcome = await redeemThroughGate({
+        gate: redeemGate,
+        state: auth,
+        token: linkToken,
+        arrivedAt,
+        policy: resolveLinkSettings(config.preview?.tunnel).policy,
+      })
+      if (outcome.busy) {
         /*
         The queue was full. Answer immediately and cheaply rather than joining it — an
         unbounded queue on an unauthenticated path IS the denial of service, and the one it
         would hit hardest is the developer holding a real link whose 5-minute TTL is ticking
         while they wait behind junk.
         */
-        if (!(error instanceof RedemptionBusyError)) throw error
         return new Response('Busy — try that link again.', {
           status: 503,
           headers: {
@@ -1508,6 +1503,7 @@ export async function devServer(
           },
         })
       }
+      const session = outcome.session
       const clean = urlWithoutToken(request.url, LINK_PARAM)
       const headers: Record<string, string> = {
         Location: clean,

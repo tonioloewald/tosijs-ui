@@ -1910,9 +1910,25 @@ export class TosiTable extends WebComponent {
     if (!item) return
     const field = this.fieldFor(prop)
     const newValue = coerceToSchema(field, el.value, el.checked, el.type)
+    /*
+    The baseline ROLLS FORWARD; it is not thrown away.
+
+    `delete` here meant the baseline existed only for the first commit of a focus session, so
+    a checkbox clicked three times reported `oldValue: undefined` twice — the shipped demo
+    printed it. Two worse consequences hid behind that:
+
+      - the delete ran BEFORE the equality guard, so a no-op commit wiped the baseline for the
+        next real edit;
+      - clearing a numeric cell as the second commit gave `newValue === undefined` against a
+        stale `undefined` baseline, so the guard returned early — no `change` at all, and the
+        coercion write below skipped, leaving a schema-typed integer holding the raw `''`.
+
+    Setting it to the committed value fixes all three: the next edit's "before" is this
+    edit's "after", which is what a baseline means.
+    */
     const oldValue = this._editStart.get(el)
-    this._editStart.delete(el)
     if (newValue === oldValue) return
+    this._editStart.set(el, newValue)
     item[prop] = newValue
     const message = this.validateCell(item, prop, newValue)
     el.classList.toggle('cell-invalid', Boolean(message))

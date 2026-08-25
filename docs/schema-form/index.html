@@ -120,10 +120,15 @@ preview.append(schemaForm, report)
 <p>The form does not import a validation library. It asks for two functions, and you supply
 them once, anywhere before or after the form renders:</p>
 <pre><code class="language-typescript">import { setSchemaValidator } from &#39;tosijs-ui&#39;
-import { validate, inferSchema } from &#39;tosijs-schema&#39;   // optional peer, ^1.7.0
+import { validate, inferSchema, unenforcedKeywords } from &#39;tosijs-schema&#39; // ^1.8.0
 
-setSchemaValidator({ validate, inferSchema })
+setSchemaValidator({ validate, inferSchema, unenforcedKeywords })
 </code></pre>
+<p>Pass <strong>all three</strong>. <code>unenforcedKeywords</code> is what lets the form ask the validator <em>&quot;which
+keywords do you not check?&quot;</em> — omit it and the form falls back to a built-in list frozen at
+tosijs-schema 1.7.0, so every <code>oneOf</code> and <code>exclusiveMinimum</code> field is labelled &quot;not validated&quot;
+while the validator is checking it. The note exists to stop the form lying; the two-argument
+recipe makes it the thing lying.</p>
 <p><strong>Already done for you</strong> in the CDN <code>&lt;script&gt;</code> build and in a <code>tosijs-ui/site</code> doc site —
 those are bundles we build, so they register it themselves. Only an ESM consumer writes the
 line.</p>

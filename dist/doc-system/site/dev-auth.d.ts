@@ -134,6 +134,34 @@ export interface RedemptionGateOptions {
  * The constants are parameters so tests can use small ones; nothing else should change them.
  */
 export declare function createRedemptionGate(options?: RedemptionGateOptions): RedemptionGate;
+/**
+ * Redeem a link the way the DEV SERVER must: through the gate, with the clock read on arrival.
+ *
+ * Extracted because the gate itself had 21 tests and the wiring that makes any of it real had
+ * none — `handleRequest` is an unexported closure, so nothing could reach it. Reverting to a
+ * bare `redeemLink(...)` call restored both the unbounded queue and the unthrottled guess rate
+ * while type-checking cleanly and leaving every lane green. That is the one security control
+ * on a path reachable unauthenticated over the tunnel, and it was held in place by nothing but
+ * the diff.
+ *
+ * This is the same shape as `mayWriteSource` / `shouldInterceptLinkToken` / `resolveLinkArrival`
+ * — the file's established answer to "the decision lives in a closure, so pull the decision
+ * out".
+ *
+ * `arrivedAt` is a PARAMETER because the caller must read the clock when the request lands,
+ * not when the queued work runs: `Date.now()` inside the closure let a token that was valid
+ * when the user clicked expire while it waited behind other attempts.
+ */
+export declare function redeemThroughGate(opts: {
+    gate: RedemptionGate;
+    state: AuthState;
+    token: string;
+    arrivedAt: number;
+    policy?: LinkPolicy;
+}): Promise<{
+    session: string | null;
+    busy: boolean;
+}>;
 /** Is this session token live? */
 export declare function validSession(state: AuthState, token: string | undefined | null, now: number): boolean;
 /** Pull one cookie out of a Cookie header. */

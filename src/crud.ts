@@ -101,10 +101,39 @@ then holds.
 `<tosi-crud>` composes public components and exposes them — `.table` and `.form` are the real
 elements, so anything you can do to a `<tosi-table>` you can do here:
 
-```typescript
-crud.table.columns = [{ prop: 'name', width: 200 }, { prop: 'role', width: 100 }]
+```js
+import { tosiCrud } from 'tosijs-ui'
+
+const crud = tosiCrud({
+  store: { async list() { return [{ id: 1, name: 'Ada', role: 'admin' }] } },
+})
+preview.append(crud)
+
+// `.table` and `.form` are the real elements — once the component has hydrated.
+await new Promise((r) => requestAnimationFrame(r))
+crud.table.columns = [
+  { prop: 'name', width: 200 },
+  { prop: 'role', width: 100 },
+]
 crud.form.readOnly = true
 ```
+```test
+const crud = await waitFor('tosi-crud')
+await crud.whenIdle()
+
+test('the composed parts are reachable, and the wrapper does not undo you', async () => {
+  expect(crud.table.columns.map((c) => c.prop)).toEqual(['name', 'role'])
+  // `readOnly` used to be reassigned on every queued render, so this reverted a frame later
+  // — the second line of a two-line example, silently undone.
+  crud.form.readOnly = true
+  await new Promise((r) => requestAnimationFrame(r))
+  await new Promise((r) => requestAnimationFrame(r))
+  expect(crud.form.readOnly).toBe(true)
+})
+```
+
+Before it hydrates, `.table` and `.form` are `null` rather than throwing — so a guard reads
+as a guard:
 
 It is a convenience, never the only way to reach them. Compose the three yourself when your
 layout wants something else — that is a supported thing to do, not a fallback.
@@ -422,6 +451,8 @@ export class TosiCrud extends WebComponent<CrudParts> {
   private _hash: HashState | null = null
   private _stopHash: (() => void) | null = null
   private _searchTimer: any = null
+  /** What the box says, before the debounce commits it to the URL. */
+  private _pendingSearch = ''
 
   get store(): CrudStore | null {
     return this._store
@@ -452,19 +483,31 @@ export class TosiCrud extends WebComponent<CrudParts> {
       : this._selected
   }
 
-  get table(): TosiTable {
-    return this.parts.table
+  /*
+  Guarded, like every other accessor on this class.
+
+  `this.parts.<name>` THROWS before hydration, and these two were the only accessors without
+  the `hydrated` check that `value`, `search`, `store` and `render` all have — so the
+  documented `tosiCrud({store}).table` threw `elementRef "table" does not exist!` on the line
+  the docs told you to write. `null` is the honest answer for "not built yet"; it is also what
+  makes the guard visible at the call site instead of at a stack trace.
+  */
+  get table(): TosiTable | null {
+    return this.hydrated ? this.parts.table : null
   }
 
-  get form(): TosiSchemaForm {
-    return this.parts.form
+  get form(): TosiSchemaForm | null {
+    return this.hydrated ? this.parts.form : null
   }
 
   get search(): string {
-    return this._hash?.get('q') ?? ''
+    // What the box says wins over what the URL has caught up to — otherwise reading `search`
+    // mid-debounce reports a stale term, which is what `refresh()` would then query for.
+    return this._pendingSearch || (this._hash?.get('q') ?? '')
   }
 
   set search(term: string) {
+    this._pendingSearch = term
     this._hash?.set('q', term || undefined)
     if (this.hydrated) this.parts.search.value = term
     void this.refresh()
@@ -611,12 +654,27 @@ export class TosiCrud extends WebComponent<CrudParts> {
     this.dispatchEvent(new Event('change', { bubbles: true }))
   }
 
+  /*
+  The URL write is INSIDE the debounce, with the query.
+
+  It used to be the first statement, so every keystroke called `history.replaceState`. WebKit
+  throws `SecurityError` past ~100 calls in 10s — ordinary typing does not reach that, but a
+  held key clearing a long term does in a few seconds, and the counter is shared with crud's
+  own `select()` pushes and any hash router on the page. When it threw, the throw preceded the
+  `setTimeout`, so NO query was scheduled either: search stopped working, with an uncaught
+  error, and `get search()` reads from the hash so crud's own idea of the term went stale too.
+
+  The debounce already exists because a remote store should not be queried per keystroke. A
+  URL that only a human reads has exactly the same argument.
+  */
   private handleSearchInput = (event: Event): void => {
     const term = (event.target as HTMLInputElement).value
-    this._hash?.set('q', term || undefined)
-    // Debounced, because a remote store should not be queried per keystroke.
+    this._pendingSearch = term
     clearTimeout(this._searchTimer)
-    this._searchTimer = setTimeout(() => void this.refresh(), this.searchDelay)
+    this._searchTimer = setTimeout(() => {
+      this._hash?.set('q', this._pendingSearch || undefined)
+      void this.refresh()
+    }, this.searchDelay)
   }
 
   private handleSelectionChanged = (selected: any[]): void => {
@@ -822,7 +880,15 @@ export class TosiCrud extends WebComponent<CrudParts> {
     // that does not exist.
     this.parts.deleteButton.hidden = !canDelete
     this.parts.newButton.hidden = !canSave
-    this.parts.form.readOnly = !canSave
+    /*
+    Only FORCE read-only when the store cannot save. Otherwise leave it alone.
+
+    This was unconditional, so a consumer setting `crud.form.readOnly = true` — which the docs
+    showed as the way to reach the composed parts — had it silently reverted on the very next
+    queued render. "The parts stay usable on their own" has to mean the wrapper does not
+    reach in and undo you.
+    */
+    if (!canSave) this.parts.form.readOnly = true
     this.parts.saveButton.disabled = this._pending > 0
     this.parts.deleteButton.disabled = this._pending > 0 || !this.deletable
 

@@ -98,6 +98,7 @@ export declare class TosiSchemaForm extends WebComponent {
     /** The schema the current DOM was built for — see `render`. */
     private _builtFor;
     private _errors;
+    private _index;
     get schema(): JSONSchema;
     set schema(schema: JSONSchema);
     get value(): any;

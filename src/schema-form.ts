@@ -91,10 +91,16 @@ them once, anywhere before or after the form renders:
 
 ```typescript
 import { setSchemaValidator } from 'tosijs-ui'
-import { validate, inferSchema } from 'tosijs-schema'   // optional peer, ^1.7.0
+import { validate, inferSchema, unenforcedKeywords } from 'tosijs-schema' // ^1.8.0
 
-setSchemaValidator({ validate, inferSchema })
+setSchemaValidator({ validate, inferSchema, unenforcedKeywords })
 ```
+
+Pass **all three**. `unenforcedKeywords` is what lets the form ask the validator *"which
+keywords do you not check?"* — omit it and the form falls back to a built-in list frozen at
+tosijs-schema 1.7.0, so every `oneOf` and `exclusiveMinimum` field is labelled "not validated"
+while the validator is checking it. The note exists to stop the form lying; the two-argument
+recipe makes it the thing lying.
 
 **Already done for you** in the CDN `<script>` build and in a `tosijs-ui/site` doc site —
 those are bundles we build, so they register it themselves. Only an ESM consumer writes the
@@ -884,6 +890,22 @@ export class TosiSchemaForm extends WebComponent {
   /** The schema the current DOM was built for — see `render`. */
   private _builtFor: JSONSchema | null = null
   private _errors: FieldError[] = []
+  /*
+  path → the elements that path owns, populated as the DOM is built.
+
+  `syncValues` and `syncErrors` each ran one root-scoped attribute `querySelector` PER FIELD,
+  on every keystroke — an O(fields) scan repeated O(fields) times. Measured on the built
+  component: 200 fields 9.8ms per keystroke, 400 → 40ms, 800 → 240ms; four doublings, each
+  quadrupling. At 3200 fields validation itself was 0.19ms against 315ms of lookup — a ratio
+  of 1600:1, so the cost was never the validating.
+
+  A Map turns both passes linear. It is rebuilt whenever the DOM is, which is the only time
+  the answers can change.
+  */
+  private _index = new Map<
+    string,
+    { control: HTMLElement; wrapper: HTMLElement }
+  >()
 
   get schema(): JSONSchema {
     return this._schema
@@ -1035,7 +1057,11 @@ export class TosiSchemaForm extends WebComponent {
 
   private fillArray(container: HTMLElement, node: FieldArray): void {
     const list = (getByPath(this._value, node.path) as unknown[]) ?? []
-    // Keep the summary; replace the items.
+    // Keep the summary; replace the items. Everything under this path is about to be
+    // recreated, so its index entries are stale by definition.
+    for (const path of [...this._index.keys()]) {
+      if (path.startsWith(`${node.path}.`)) this._index.delete(path)
+    }
     while (container.children.length > 1) container.lastElementChild!.remove()
     list.forEach((_item, index) => {
       const row = div({ class: 'schema-item' })
@@ -1052,7 +1078,8 @@ export class TosiSchemaForm extends WebComponent {
               title: localize('move up'),
               ariaLabel: localize('move up'),
               disabled: index === 0,
-              onClick: () => this.moveArrayItem(node, index, index - 1),
+              onClick: () =>
+                this.moveArrayItem(node, index, index - 1, 'schema-move-up'),
             },
             '↑'
           ),
@@ -1064,7 +1091,8 @@ export class TosiSchemaForm extends WebComponent {
               title: localize('move down'),
               ariaLabel: localize('move down'),
               disabled: index === list.length - 1,
-              onClick: () => this.moveArrayItem(node, index, index + 1),
+              onClick: () =>
+                this.moveArrayItem(node, index, index + 1, 'schema-move-down'),
             },
             '↓'
           ),
@@ -1198,12 +1226,57 @@ export class TosiSchemaForm extends WebComponent {
     this.dispatchEvent(new Event('change', { bubbles: true }))
   }
 
-  private afterArrayEdit(node: FieldArray): void {
+  /*
+  Rebuild the array, then put focus back where the user left it.
+
+  `fillArray` destroys and recreates every row — the comments elsewhere claimed only the
+  edited one was rebuilt, which was true one level too coarse: clicking ↓ on a five-item array
+  left `document.activeElement === document.body` and none of the five row elements survived.
+  You could not press ↓ twice to move an item two places, or add two rows from the keyboard,
+  because the button you had just clicked no longer existed.
+
+  Restoring focus by ROLE AND INDEX rather than reconciling the DOM is the cheap fix and it is
+  the one that matches what the user is doing: they clicked "move down" on row 3, so afterwards
+  they want "move down" on row 4. Reconciliation would also preserve scroll and any open
+  `<details>`, and it is the right answer eventually — filed rather than rushed, because it
+  changes how every array row is built.
+  */
+  private afterArrayEdit(
+    node: FieldArray,
+    focusTo?: { role?: string; index: number }
+  ): void {
     const container = this.querySelector(
       `[data-array="${CSS.escape(node.path)}"]`
     ) as HTMLElement | null
     if (container) this.fillArray(container, node)
     this.afterStructuralEdit()
+    if (!container || !focusTo) return
+    const rows = container.querySelectorAll('.schema-item')
+    const row = rows[Math.min(focusTo.index, rows.length - 1)]
+    /*
+    The intended control may not be focusable where the item landed.
+
+    Move an item to the last position and its "move down" is disabled — and a disabled button
+    cannot take focus, so aiming at it put focus on `<body>`, which is the bug this restore
+    exists to fix. Prefer the control you clicked, fall back to anything focusable in the row
+    it moved to, and only then to Add (which is where a delete of the last item belongs).
+    */
+    const FOCUSABLE = 'INPUT SELECT BUTTON TEXTAREA'
+    const usable = (el: Element | null | undefined): HTMLElement | null =>
+      el &&
+      FOCUSABLE.includes(el.tagName) &&
+      !(el as HTMLButtonElement).disabled
+        ? (el as HTMLElement)
+        : null
+    const target =
+      usable(focusTo.role ? row?.querySelector(`.${focusTo.role}`) : null) ??
+      usable(
+        row?.querySelector(
+          'input:not([disabled]), select:not([disabled]), button:not([disabled])'
+        )
+      ) ??
+      usable(container.querySelector('.schema-add'))
+    target?.focus()
   }
 
   private addArrayItem(node: FieldArray): void {
@@ -1214,17 +1287,27 @@ export class TosiSchemaForm extends WebComponent {
       list.length,
       blankFor(node.itemSchema)
     )
-    this.afterArrayEdit(node)
+    // Land in the new row's first control — no role, because "Add" has no button to return
+    // to; what you want is to start typing in what you just made.
+    this.afterArrayEdit(node, { index: list.length })
   }
 
   private removeArrayItem(node: FieldArray, index: number): void {
     this._value = removeAt(this._value, node.path, index)
-    this.afterArrayEdit(node)
+    // Removing row N leaves the cursor on what is now row N — the next item down, which is
+    // where a repeated delete should land.
+    this.afterArrayEdit(node, { role: 'schema-remove', index })
   }
 
-  private moveArrayItem(node: FieldArray, from: number, to: number): void {
+  private moveArrayItem(
+    node: FieldArray,
+    from: number,
+    to: number,
+    role = 'schema-move-down'
+  ): void {
     this._value = moveItem(this._value, node.path, from, to)
-    this.afterArrayEdit(node)
+    // Follow the item: you moved row 3 down, so the button you want next is on row 4.
+    this.afterArrayEdit(node, { role, index: to })
   }
 
   /*
@@ -1339,6 +1422,7 @@ export class TosiSchemaForm extends WebComponent {
       span({ class: 'schema-error', hidden: true })
     )
     wrapper.dataset.field = node.path
+    this._index.set(node.path, { control, wrapper })
     return wrapper
   }
 
@@ -1387,6 +1471,7 @@ export class TosiSchemaForm extends WebComponent {
       span({ class: 'schema-error', hidden: true })
     )
     wrapper.dataset.field = field.path
+    this._index.set(field.path, { control, wrapper })
     return wrapper
   }
 
@@ -1400,9 +1485,10 @@ export class TosiSchemaForm extends WebComponent {
   */
   private syncValues(): void {
     for (const field of this._fields) {
-      const el = this.querySelector(
-        `[data-path="${CSS.escape(field.path)}"]`
-      ) as HTMLInputElement | HTMLSelectElement | null
+      const el = this._index.get(field.path)?.control as
+        | HTMLInputElement
+        | HTMLSelectElement
+        | undefined
       if (!el || el === document.activeElement) continue
       const current = getByPath(this._value, field.path)
       if (field.kind === 'boolean') {
@@ -1432,9 +1518,7 @@ export class TosiSchemaForm extends WebComponent {
 
   private syncErrors(): void {
     for (const field of this._fields) {
-      const wrapper = this.querySelector(
-        `[data-field="${CSS.escape(field.path)}"]`
-      )
+      const wrapper = this._index.get(field.path)?.wrapper
       if (!wrapper) continue
       const message = errorFor(this._errors, field.path)
       const slot = wrapper.querySelector('.schema-error') as HTMLElement | null
@@ -1502,6 +1586,7 @@ export class TosiSchemaForm extends WebComponent {
     }
     if (this._builtFor !== this._schema) {
       this._nodes = fieldsFor(this._schema)
+      this._index.clear()
       this.textContent = ''
       /*
       A form with no fields explains itself.

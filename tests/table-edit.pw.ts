@@ -159,3 +159,43 @@ test('a value typed one character at a time is not partially committed', async (
   await editableTableReady(page)
   expect(await typeInto(page, 'price', '0.25')).toBe(0.25)
 })
+
+test('every edit in one focus session reports a real oldValue', async ({
+  page,
+}) => {
+  /*
+  `_editStart` was seeded on focus and DELETED on every commit, so only the first edit of a
+  session had a baseline — the shipped demo printed `undefined → true`. And because the delete
+  ran before the equality guard, clearing a numeric cell as the second commit compared
+  `undefined` to `undefined`, returned early, and skipped the coercion write entirely: a
+  schema-typed integer left holding the raw string.
+  */
+  await page.goto('/data-table/')
+  await editableTableReady(page)
+  const result = await page.evaluate(async () => {
+    const table = [...document.querySelectorAll('tosi-table')].find(
+      (t: any) => t.editable
+    ) as any
+    const cell = table.querySelector(
+      '[data-edit-prop="qty"]'
+    ) as HTMLInputElement
+    const item = table.getItem(cell)
+    const seen: any[] = []
+    table.addEventListener('change', (e: any) =>
+      seen.push({ old: e.detail.oldValue, new: e.detail.newValue })
+    )
+    cell.focus()
+    for (const v of ['5', '6', '7']) {
+      cell.value = v
+      cell.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+    // …then clear it, which used to fire nothing and leave the raw string behind.
+    cell.value = ''
+    cell.dispatchEvent(new Event('change', { bubbles: true }))
+    return { seen, stored: item.qty }
+  })
+  expect(result.seen.map((s: any) => s.new)).toEqual([5, 6, 7, undefined])
+  // Each edit's "before" is the previous edit's "after" — that is what a baseline means.
+  expect(result.seen.map((s: any) => s.old)).toEqual([12, 5, 6, 7])
+  expect(result.stored).toBeUndefined()
+})

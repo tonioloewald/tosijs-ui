@@ -211,13 +211,26 @@ export function resolvePreviewHost(
   flagHost?: string,
   configHost?: string
 ): string | undefined {
-  return (
-    flagHost ??
-    process.env.PREVIEW_HOST ??
-    process.env.PREVIEW_SSH ??
-    configHost ??
-    readLocalSecret('PREVIEW_HOST')
-  )
+  /*
+  Truthiness, not `??` — an EMPTY value must fall through.
+
+  `??` only skips null/undefined, so `PREVIEW_HOST=''` counted as "set" and swallowed the site
+  config AND the `~/local-secrets` rung below it. That is not a hypothetical spelling: a GitHub
+  Actions `env: PREVIEW_HOST: ${{ secrets.X }}` renders `''` when the secret is missing, and
+  the result was "No preview host" with remediation text telling you to create a file that
+  already existed and worked. Precisely the symptom the local-secrets rung was added to
+  abolish. `bin/tunnel.ts` already used truthiness for its `hostSource` label, so one file
+  disagreed with itself about what "set" means.
+  */
+  return [
+    flagHost,
+    process.env.PREVIEW_HOST,
+    process.env.PREVIEW_SSH,
+    configHost,
+    readLocalSecret('PREVIEW_HOST'),
+  ]
+    .map((value) => value?.trim())
+    .find(Boolean)
 }
 
 /*

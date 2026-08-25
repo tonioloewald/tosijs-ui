@@ -321,3 +321,34 @@ test('typing in the form does not tear down the table', async ({ page }) => {
   })
   expect(survived).toBe(true)
 })
+
+test('typing writes the URL once, not once per keystroke', async ({ page }) => {
+  /*
+  `history.replaceState` used to run as the FIRST statement of the input handler. WebKit
+  throws `SecurityError` past ~100 calls in 10s — a held key clearing a long search term
+  reaches that in seconds — and because the throw preceded the `setTimeout`, no query was
+  scheduled either: search silently stopped working, with an uncaught error.
+  */
+  const calls = await page.evaluate(async () => {
+    const crud = document.querySelector('tosi-crud') as any
+    await crud.whenIdle()
+    let n = 0
+    const real = history.replaceState.bind(history)
+    history.replaceState = (...args: any[]) => {
+      n++
+      return (real as any)(...args)
+    }
+    const box = crud.querySelector('.crud-search') as HTMLInputElement
+    for (const ch of 'widget') {
+      box.value += ch
+      box.dispatchEvent(new Event('input', { bubbles: true }))
+    }
+    await new Promise((r) => setTimeout(r, 400))
+    await crud.whenIdle()
+    history.replaceState = real
+    return { n, search: crud.search }
+  })
+  // Six keystrokes, one URL write.
+  expect(calls.n).toBeLessThanOrEqual(2)
+  expect(calls.search).toBe('widget')
+})

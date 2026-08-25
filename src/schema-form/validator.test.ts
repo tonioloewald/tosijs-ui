@@ -105,3 +105,40 @@ test('listeners are told when the validator changes', () => {
   setSchemaValidator(null)
   expect(calls).toBe(2)
 })
+
+test('REGRESSION: the documented recipe is the one that works', async () => {
+  /*
+  The two-argument form — `{ validate, inferSchema }` — was what every doc, the jsdoc and the
+  console warning told an ESM adopter to write, and it makes the form LIE: without
+  `unenforcedKeywords` the note falls back to a list frozen at tosijs-schema 1.7.0, so every
+  `oneOf` and `exclusiveMinimum` field is labelled "not validated" while 1.8.0 is checking it.
+
+  Our own doc site was correct only because `index-iife.ts` passed all three, which is the
+  worst possible arrangement: the failure was visible ONLY to the audience the docs instruct.
+  */
+  const schema = require('tosijs-schema')
+  const { unenforcedKeywords } = await import('./unenforced')
+  const subject: any = {
+    type: 'object',
+    properties: { score: { type: 'number', exclusiveMinimum: 0 } },
+  }
+
+  setSchemaValidator({
+    validate: schema.validate,
+    inferSchema: schema.inferSchema,
+  })
+  const withoutIt = unenforcedKeywords(subject.properties.score)
+
+  setSchemaValidator({
+    validate: schema.validate,
+    inferSchema: schema.inferSchema,
+    unenforcedKeywords: schema.unenforcedKeywords,
+  })
+  const withIt = unenforcedKeywords(subject.properties.score)
+
+  // 1.8.0 enforces it, so the honest answer is "nothing to warn about".
+  expect(schema.validate(0, subject.properties.score)).toBe(false)
+  expect(withIt).toEqual([])
+  // …and the incomplete recipe says the opposite, which is why it is no longer documented.
+  expect(withoutIt).toContain('exclusiveMinimum')
+})

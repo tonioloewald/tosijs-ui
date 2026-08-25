@@ -1,3 +1,21 @@
+# Pre-release review — tosijs-ui 1.11.0, **pass 1 of 3** (HISTORICAL)
+
+> **This document is a record, not a gate.** Its verdict and its unticked boxes describe the
+> state of the branch on 2026-08-23, before any of it was acted on. Read
+> `reviews-1.11-pass3.md` for the current position.
+>
+> **Everything below marked BLOCKER was fixed.** So were ten of the majors. The three headline
+> evidence claims here are all stale by design: `release-check` now exits 0, `package.json`
+> reads 1.11.0, and `peerDependencies` declares `tosijs-schema ^1.8.0`.
+>
+> The checkboxes were never ticked, and that is the finding pass 3 raised against this file:
+> a document that says "Verdict: BLOCK" with 59 of 59 boxes empty reads as an open gate long
+> after it stopped being one, and this project has twice claimed a fix that a later review
+> found still live. Dispositions belong in `TODO.md` and in the CHANGELOG, which is where they
+> now are — this file is kept for its reasoning, not as a worklist.
+
+---
+
 # Pre-release review triage — tosijs-ui 1.11.0 (base `v1.10.2`, 25 commits)
 
 **Verdict: BLOCK.** Three confirmed blockers — one silent data-loss defect in the release's flagship new component, one packaging regression that breaks existing consumers' builds, and a release gate (`bun run release-check`) that is currently red.

@@ -15,6 +15,7 @@ import {
   mintLinkToken,
   normalizeLinkToken,
   createRedemptionGate,
+  redeemThroughGate,
   resolveLinkSettings,
   RedemptionBusyError,
   REDEEM_MAX_WAITING,
@@ -790,4 +791,71 @@ test('REGRESSION: queue depth does not change the guess rate', async () => {
   // Both are bounded by the slot (~50/sec at minMs 20), not by how many may wait.
   expect(shallow).toBeLessThan(70)
   expect(deep).toBeLessThan(70)
+})
+
+/*
+The WIRING, not just the gate.
+
+`createRedemptionGate` had 21 tests and the thing that makes any of them real — that the dev
+server actually redeems THROUGH the gate, with the clock read on arrival — had none, because
+`handleRequest` is an unexported closure. Reverting the server to a bare `redeemLink(...)`
+call restored both the unbounded queue and the unthrottled guess rate, type-checked cleanly,
+and left every lane green. A security control held in place by nothing but the diff.
+*/
+
+test('redemption goes through the gate — the rate limit is not bypassable', async () => {
+  const state = createAuthState()
+  const gate = createRedemptionGate({ minMs: 25 })
+  const token = issueLink(state, NOW)
+  const started = Date.now()
+  const { session, busy } = await redeemThroughGate({
+    gate,
+    state,
+    token,
+    arrivedAt: NOW,
+  })
+  expect(busy).toBe(false)
+  expect(session).toBeTruthy()
+  // It paid the slot, which is what "through the gate" means.
+  expect(Date.now() - started).toBeGreaterThanOrEqual(20)
+})
+
+test('a full queue surfaces as busy, not as a thrown error', async () => {
+  // The server answers 503 on this; it must be a value it can branch on, not an exception
+  // that escapes into the request handler.
+  const state = createAuthState()
+  const gate = createRedemptionGate({ minMs: 40, maxWaiting: 1 })
+  const token = issueLink(state, NOW)
+  const first = redeemThroughGate({ gate, state, token, arrivedAt: NOW })
+  const second = await redeemThroughGate({ gate, state, token, arrivedAt: NOW })
+  expect(second.busy).toBe(true)
+  expect(second.session).toBe(null)
+  await first
+})
+
+test('REGRESSION: the clock is the ARRIVAL time, not the time the work ran', async () => {
+  /*
+  `Date.now()` inside the queued closure let a token that was valid when the user clicked
+  expire while it waited behind other attempts — the queue silently consuming the credential's
+  five-minute life. Passing the arrival time makes queueing cost latency and nothing else.
+  */
+  const state = createAuthState()
+  const gate = createRedemptionGate({ minMs: 1 })
+  const { ttlMs } = resolveLinkSettings(undefined)
+  const token = issueLink(state, NOW, ttlMs)
+  // The work runs long after the token would have aged out, but it arrived in time.
+  const { session } = await redeemThroughGate({
+    gate,
+    state,
+    token,
+    arrivedAt: NOW + ttlMs - 1000,
+  })
+  expect(session).toBeTruthy()
+})
+
+test('an expired token is still refused — arrival time widens nothing', () => {
+  const state = createAuthState()
+  const { ttlMs } = resolveLinkSettings(undefined)
+  const token = issueLink(state, NOW, ttlMs)
+  expect(redeemLink(state, token, NOW + ttlMs + 1)).toBe(null)
 })

@@ -115,3 +115,25 @@ test('every place that documents the precedence says the same thing', async () =
     }
   }
 })
+
+test('REGRESSION: an EMPTY value falls through instead of swallowing the chain', () => {
+  /*
+  `??` only skips null/undefined, so `PREVIEW_HOST=''` counted as set and hid both the site
+  config and `~/local-secrets`. A CI `env: PREVIEW_HOST: ${{ secrets.MISSING }}` renders
+  exactly that, and the bin then told you to create a secrets file that already existed and
+  worked — the symptom that rung was added to abolish.
+  */
+  process.env.PREVIEW_HOST = ''
+  expect(resolvePreviewHost(undefined, 'c@config')).toBe('c@config')
+  process.env.PREVIEW_HOST = '   '
+  expect(resolvePreviewHost(undefined, 'c@config')).toBe('c@config')
+  delete process.env.PREVIEW_HOST
+  process.env.PREVIEW_SSH = ''
+  expect(resolvePreviewHost(undefined, 'c@config')).toBe('c@config')
+  // …and a bare `--host=` likewise.
+  expect(resolvePreviewHost('', 'c@config')).toBe('c@config')
+})
+
+test('surrounding whitespace is trimmed, not preserved into an ssh target', () => {
+  expect(resolvePreviewHost('  deploy@box  ', undefined)).toBe('deploy@box')
+})
