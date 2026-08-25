@@ -89,6 +89,59 @@ move the placeholder to where their language puts it. Neither can they fix
 silently imposes it on every language.</p>
 <p>An unknown placeholder is left on screen as <code>{name}</code> rather than blanked, so a typo in a
 translation is visible instead of a hole.</p>
+<h3>whole sentences, with a fallback</h3>
+<p>When a caption is built from parts, <code>localizePhrase(key, fragments)</code> asks for the <strong>sentence</strong>
+first and joins the fragments only if nobody has translated it:</p>
+<pre><code class="language-js">import { localizePhrase } from &#39;tosijs-ui&#39;
+
+preview.textContent = localizePhrase(&#39;Sort Ascending&#39;, [
+  &#39;Sort#order&#39;,
+  &#39;Ascending#sort-order&#39;,
+])
+</code></pre>
+<p>The sentence key needs <strong>no <code>#</code></strong> — an annotation answers <em>&quot;which sense?&quot;</em>, and a whole
+sentence has already answered it.</p>
+<p>This is not a style preference; it is the only form that can be right. Measured against this
+project&#39;s own table, <code>localize(&#39;Sort&#39;) + &#39; &#39; + localize(&#39;Ascending&#39;)</code> was wrong in every
+language checked, in three different ways:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>joined fragments</th>
+<th>correct</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>German</td>
+<td><code>Sortieren Aufsteigend</code></td>
+<td><code>Aufsteigend sortieren</code> — verb goes last</td>
+</tr>
+<tr>
+<td>Korean</td>
+<td><code>정렬 오름차순</code></td>
+<td><code>오름차순 정렬</code> — modifier first</td>
+</tr>
+<tr>
+<td>Japanese</td>
+<td><code>非表示 カラム</code></td>
+<td><code>列を非表示</code> — particle, and no space</td>
+</tr>
+<tr>
+<td>Chinese</td>
+<td><code>隐藏 列</code></td>
+<td><code>隐藏列</code> — no space between words</td>
+</tr>
+<tr>
+<td>French</td>
+<td><code>Cacher Colonne</code></td>
+<td><code>Masquer la colonne</code> — article</td>
+</tr>
+</tbody></table>
+<p><strong>The fallback is what makes adopting it safe.</strong> A translation table that predates the
+sentence key keeps exactly the behaviour it has, because <code>localize</code> returns its input when
+nothing matches; add one row and it upgrades. No existing translation is orphaned, so moving
+to sentence keys does not have to wait for a major version.</p>
 <h2><code>setLocale(language: string)</code></h2>
 <pre><code class="language-js">import { button, p } from &#39;tosijs&#39;.elements
 import { setLocale } from &#39;tosijs-ui&#39;

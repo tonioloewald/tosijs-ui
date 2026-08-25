@@ -1,5 +1,11 @@
 import { test, expect, beforeEach } from 'bun:test'
-import { initLocalization, localize, i18n, applyLocalized } from './localize.js'
+import {
+  initLocalization,
+  localize,
+  localizePhrase,
+  i18n,
+  applyLocalized,
+} from './localize.js'
 
 // Wait long enough for the MutationObserver to flush its records.
 const flushMutations = (): Promise<void> =>
@@ -346,4 +352,62 @@ test('an annotated row wins over the bare one — which is the point', () => {
   i18n.locale.value = 'fr'
   expect(localize('Right#direction')).toBe('Droite')
   expect(localize('Right')).toBe('Bien')
+})
+
+const phraseTSV = [
+  'en-US\tde\tko',
+  'English\tGerman\tKorean',
+  'English\tDeutsch\t한국인',
+  '🇺🇸\t🇩🇪\t🇰🇷',
+  'Sort#order\tSortieren\t정렬',
+  'Ascending#sort-order\tAufsteigend\t오름차순',
+  'Sort Ascending\tAufsteigend sortieren\t오름차순 정렬',
+].join('\n')
+
+test('a whole-sentence key beats joined fragments, in both word orders', () => {
+  /*
+  The reason the key must be the sentence. German puts the verb last and Korean puts the
+  modifier first, so `localize('Sort') + ' ' + localize('Ascending')` is wrong in BOTH — and
+  no translator can fix it, because neither fragment can move.
+
+  Measured against this project's own shipped table before this landed: all five languages
+  checked produced wrong output — de and ko reversed, ja needed a particle and no space, zh
+  needed no space, fr needed an article.
+  */
+  initLocalization(phraseTSV)
+  const parts = ['Sort#order', 'Ascending#sort-order']
+  i18n.locale.value = 'de'
+  expect(localizePhrase('Sort Ascending', parts)).toBe('Aufsteigend sortieren')
+  i18n.locale.value = 'ko'
+  expect(localizePhrase('Sort Ascending', parts)).toBe('오름차순 정렬')
+})
+
+test('REGRESSION: no sentence row means todays behaviour, unchanged', () => {
+  /*
+  This is what makes adopting a sentence key safe in a MINOR rather than a major: a table
+  whose translations predate it keeps exactly what it has, and adding one row upgrades it.
+  Without the fallback, moving these four keys would silently drop every adopter's menu back
+  to English.
+  */
+  const noSentence = [
+    'en-US\tde',
+    'English\tGerman',
+    'English\tDeutsch',
+    '🇺🇸\t🇩🇪',
+    'Hide#conceal\tVerstecken',
+    'Column#table\tSpalte',
+  ].join('\n')
+  initLocalization(noSentence)
+  i18n.locale.value = 'de'
+  expect(localizePhrase('Hide Column', ['Hide#conceal', 'Column#table'])).toBe(
+    'Verstecken Spalte'
+  )
+})
+
+test('with neither, it reads as English rather than as a key', () => {
+  initLocalization(phraseTSV)
+  i18n.locale.value = 'en-US'
+  expect(localizePhrase('Show Column', ['Show#reveal', 'Column#table'])).toBe(
+    'Show Column'
+  )
 })

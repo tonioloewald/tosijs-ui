@@ -51,6 +51,24 @@ export declare const updateLocalized: () => void;
 export declare function applyLocalized(el: Element): void;
 export declare function initLocalization(localizedStrings: string): void;
 export declare function localize(ref: string, values?: Record<string, unknown>): string;
+/**
+ * A whole-sentence key, falling back to joined fragments when nobody has translated it yet.
+ *
+ * The key is the sentence, which is the only form a translator can actually work with: word
+ * order is not universal, so `localize('Sort') + ' ' + localize('Ascending')` can only ever
+ * be right in languages that agree with English about which comes first. Measured against
+ * this project's own shipped table, all five languages checked were wrong — German and
+ * Korean reverse the pair, Japanese needs a particle and no space, Chinese needs no space,
+ * French needs an article.
+ *
+ * The fallback is what makes adopting this **safe**: `localize` returns its input when there
+ * is no row, so a table whose translations predate the sentence key keeps exactly the
+ * behaviour it has today, and adding one row upgrades it. No translation is orphaned, so this
+ * does not have to wait for a major.
+ *
+ *     localizePhrase('Sort Ascending', ['Sort#order', 'Ascending#sort-order'])
+ */
+export declare function localizePhrase(key: string, fragments: string[]): string;
 export declare class TosiLocalePicker extends Component {
     static preferredTagName: string;
     static initAttributes: {

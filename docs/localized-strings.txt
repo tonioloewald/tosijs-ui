@@ -28,6 +28,7 @@ Filter	Filtre	Suodattaa	Filtrera	筛选	フィルター	필터	Filtrar	Filter	Fi
 Float	Flotter	Kellua	Flyta	漂浮	フロート	뜨다	Flotar	Schweben	Galleggiante
 Forms	Formulaires	Lomakkeet	Formulär	表格	フォーム	양식	Formularios	Formulare	Forme
 Heading	Titre	Otsikko	Rubrik	标题	見出し	표제	Título	Überschrift	Intestazione
+Hide Column	Masquer la colonne	Piilota sarake	Dölj kolumn	隐藏列	列を非表示	열 숨기기	Ocultar columna	Spalte ausblenden	Nascondi colonna
 Hide#conceal	Cacher	Piilottaa	Dölja	隐藏	非表示	숨기기	Esconder	Verstecken	Nascondere
 High Contrast	Contraste élevé	Korkea kontrasti	Hög kontrast	高对比度	高コントラスト	고대비	Alto contraste	Hoher Kontrast	Contrasto elevato
 Icon	Icône	Kuvake	Ikon	图标	アイコン	상	Icono	Symbol	Icona
@@ -59,9 +60,12 @@ Redo	Refaire	Tee uudelleen	Göra om	重做	やり直す	다시 하다	Rehacer	Wi
 Right#direction	Droite	Oikea	Höger	右	右	오른쪽	Derecha	Rechts	Destra
 Save	Sauvegarder	Tallentaa	Spara	节省	保存	구하다	Ahorrar	Speichern	Salva
 Select	Sélectionner	Valitse	Välja	选择	選択	선택하다	Seleccionar	Wählen	Selezionare
+Show Column	Afficher la colonne	Näytä sarake	Visa kolumn	显示列	列を表示	열 표시	Mostrar columna	Spalte einblenden	Mostra colonna
 Show#reveal	Montrer	Näytä	Visa	展示	表示	표시	Mostrar	Zeigen	Mostra
 Sidebar	barre latérale	Sivupalkki	Sidofält	侧边栏	サイドバー	사이드바	Barra lateral	Seitenleiste	Barra laterale
 Sizer	Calibreur	Mitoitus	Storleksmätare	尺寸	サイザー	사이저	Medidor de tamaño	Größenmesser	Misuratore
+Sort Ascending	Trier par ordre croissant	Lajittele nousevasti	Sortera stigande	升序排序	昇順で並べ替え	오름차순 정렬	Ordenar ascendente	Aufsteigend sortieren	Ordina crescente
+Sort Descending	Trier par ordre décroissant	Lajittele laskevasti	Sortera fallande	降序排序	降順で並べ替え	내림차순 정렬	Ordenar descendente	Absteigend sortieren	Ordina decrescente
 Sort#order	Trier	Järjestellä	Sortera	排序	選別	정렬	Clasificar	Sortieren	Ordinare
 Strong	Fort	Vahva	Stark	强的	強い	강한	Fuerte	Stark	Forte
 Subcategory	Sous-catégorie	Alaluokka	Underkategori	子类别	サブカテゴリ	하위 카테고리	Subcategoría	Unterkategorie	Sottocategoria

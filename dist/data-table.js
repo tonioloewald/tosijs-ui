@@ -975,7 +975,7 @@ import { fieldForProperty, collectErrors, coerceToSchema, fieldEditable, } from 
 import { getSchemaValidator, warnNoValidator } from './schema-form/validator.js';
 import { popMenu } from './menu.js';
 import * as dragAndDrop from './drag-and-drop.js';
-import { tosiLocalized, localize } from './localize.js';
+import { tosiLocalized, localize, localizePhrase } from './localize.js';
 function defaultWidth(array, prop, charWidth) {
     const example = array.find((item) => item[prop] !== undefined && item[prop] !== null);
     if (example !== undefined) {
@@ -2595,7 +2595,10 @@ export class TosiTable extends WebComponent {
         if (!this.nosort && options.sort !== false) {
             menu.push({
                 caption: this.localized
-                    ? `${localize('Sort#order')} ${localize('Ascending#sort-order')}`
+                    ? localizePhrase('Sort Ascending', [
+                        'Sort#order',
+                        'Ascending#sort-order',
+                    ])
                     : 'Sort Ascending',
                 icon: 'sortAscending',
                 action() {
@@ -2603,7 +2606,10 @@ export class TosiTable extends WebComponent {
                 },
             }, {
                 caption: this.localized
-                    ? `${localize('Sort#order')} ${localize('Descending#sort-order')}`
+                    ? localizePhrase('Sort Descending', [
+                        'Sort#order',
+                        'Descending#sort-order',
+                    ])
                     : 'Sort Descending',
                 icon: 'sortDescending',
                 action() {
@@ -2617,7 +2623,7 @@ export class TosiTable extends WebComponent {
             }
             menu.push({
                 caption: this.localized
-                    ? `${localize('Hide#conceal')} ${localize('Column#table')}`
+                    ? localizePhrase('Hide Column', ['Hide#conceal', 'Column#table'])
                     : 'Hide Column',
                 icon: 'eyeOff',
                 enabled: () => options.visible !== true,
@@ -2627,7 +2633,7 @@ export class TosiTable extends WebComponent {
                 },
             }, {
                 caption: this.localized
-                    ? `${localize('Show#reveal')} ${localize('Column#table')}`
+                    ? localizePhrase('Show Column', ['Show#reveal', 'Column#table'])
                     : 'Show Column',
                 icon: 'eye',
                 enabled: () => hiddenColumns.length > 0,

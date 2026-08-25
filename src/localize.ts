@@ -65,6 +65,40 @@ silently imposes it on every language.
 An unknown placeholder is left on screen as `{name}` rather than blanked, so a typo in a
 translation is visible instead of a hole.
 
+### whole sentences, with a fallback
+
+When a caption is built from parts, `localizePhrase(key, fragments)` asks for the **sentence**
+first and joins the fragments only if nobody has translated it:
+
+```js
+import { localizePhrase } from 'tosijs-ui'
+
+preview.textContent = localizePhrase('Sort Ascending', [
+  'Sort#order',
+  'Ascending#sort-order',
+])
+```
+
+The sentence key needs **no `#`** — an annotation answers *"which sense?"*, and a whole
+sentence has already answered it.
+
+This is not a style preference; it is the only form that can be right. Measured against this
+project's own table, `localize('Sort') + ' ' + localize('Ascending')` was wrong in every
+language checked, in three different ways:
+
+| | joined fragments | correct |
+| --- | --- | --- |
+| German | `Sortieren Aufsteigend` | `Aufsteigend sortieren` — verb goes last |
+| Korean | `정렬 오름차순` | `오름차순 정렬` — modifier first |
+| Japanese | `非表示 カラム` | `列を非表示` — particle, and no space |
+| Chinese | `隐藏 列` | `隐藏列` — no space between words |
+| French | `Cacher Colonne` | `Masquer la colonne` — article |
+
+**The fallback is what makes adopting it safe.** A translation table that predates the
+sentence key keeps exactly the behaviour it has, because `localize` returns its input when
+nothing matches; add one row and it upgrades. No existing translation is orphaned, so moving
+to sentence keys does not have to wait for a major version.
+
 ## `setLocale(language: string)`
 
 ```js
@@ -687,6 +721,31 @@ export function localize(
     ref = stripAnnotation(ref)
   }
   return ref
+}
+
+/**
+ * A whole-sentence key, falling back to joined fragments when nobody has translated it yet.
+ *
+ * The key is the sentence, which is the only form a translator can actually work with: word
+ * order is not universal, so `localize('Sort') + ' ' + localize('Ascending')` can only ever
+ * be right in languages that agree with English about which comes first. Measured against
+ * this project's own shipped table, all five languages checked were wrong — German and
+ * Korean reverse the pair, Japanese needs a particle and no space, Chinese needs no space,
+ * French needs an article.
+ *
+ * The fallback is what makes adopting this **safe**: `localize` returns its input when there
+ * is no row, so a table whose translations predate the sentence key keeps exactly the
+ * behaviour it has today, and adding one row upgrades it. No translation is orphaned, so this
+ * does not have to wait for a major.
+ *
+ *     localizePhrase('Sort Ascending', ['Sort#order', 'Ascending#sort-order'])
+ */
+export function localizePhrase(key: string, fragments: string[]): string {
+  const whole = localize(key)
+  // `localize` strips the annotation and returns the ref unchanged when nothing matched, so
+  // "did anyone translate this?" is exactly "did it come back different?".
+  const untranslated = whole === key.replace(/#[A-Za-z0-9_-]+$/, '')
+  return untranslated ? fragments.map((f) => localize(f)).join(' ') : whole
 }
 
 export class TosiLocalePicker extends Component {
