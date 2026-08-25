@@ -475,6 +475,12 @@ time and violated in the same repo — which is why the guarantee is now a direc
 
 ## 1.10.2
 
+> **Never released.** This version was tagged but never published, and the tag has since been
+> deleted. Everything below shipped in **1.11.0** instead — including the `killStrayServer`
+> fix, which is why the withdrawal is safe rather than a dropped security patch. npm went
+> straight from 1.10.0 to 1.11.0. Kept here because these changes are real and a reader
+> tracing when something landed needs to find them. ([#101](https://github.com/tonioloewald/tosijs-ui/issues/101))
+
 **The dev server no longer serves stale content after a rebuild.** This is the one that
 presented as random flakiness across several sessions: a served `/docs.json` disagreeing with
 the file on disk made the doc browser's route match fail, so live-example insertion silently
@@ -507,6 +513,12 @@ including `contextKeys`, which **extends** the default context rather than repla
 documented where adopters actually look. (#80, #81)
 
 ## 1.10.1
+
+> **Never released.** This version was tagged but never published, and the tag has since been
+> deleted. Everything below shipped in **1.11.0** instead — including the `killStrayServer`
+> fix, which is why the withdrawal is safe rather than a dropped security patch. npm went
+> straight from 1.10.0 to 1.11.0. Kept here because these changes are real and a reader
+> tracing when something landed needs to find them. ([#101](https://github.com/tonioloewald/tosijs-ui/issues/101))
 
 Two fixes to 1.10.0's row grouping and scroll preservation, both reported by snowfox against
 a real wide, grouped, pinned table.
