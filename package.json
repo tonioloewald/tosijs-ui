@@ -42,20 +42,20 @@
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.62.0",
     "@resvg/resvg-js": "^2.6.2",
-    "@types/jsdom": "^21.1.7",
-    "@types/node": "^22.20.1",
+    "@types/jsdom": "^30.0.0",
+    "@types/node": "^26.2.0",
     "@types/react": "^19.2.17",
     "bun-types": "latest",
-    "chokidar": "^4.0.3",
+    "chokidar": "^5.0.0",
     "eslint": "^10.8.0",
     "globals": "^17.8.0",
     "happy-dom": "^20.11.1",
     "playwright": "^1.62.0",
-    "prettier": "^2.8.8",
+    "prettier": "^3.9.6",
     "tjs-lang": "0.13.2",
-    "tosijs": "1.7.8",
+    "tosijs": "1.7.9",
     "tosijs-schema": "1.8.0",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.65.0"
   },
   "peerDependencies": {
@@ -65,7 +65,7 @@
     "tjs-lang": "^0.13.1",
     "tosijs": "^1.7.8",
     "tosijs-schema": "^1.8.0",
-    "chokidar": "^4.0.3"
+    "chokidar": "^5.0.0"
   },
   "peerDependenciesMeta": {
     "@resvg/resvg-js": {
