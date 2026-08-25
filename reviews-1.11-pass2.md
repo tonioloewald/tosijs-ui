@@ -3,6 +3,10 @@
 > Run at `a8687a75`. Its blocker (`release-check` red) and both gating majors were fixed;
 > see `reviews-1.11-pass3.md` for the current position. Kept for the reasoning.
 
+> **Note (2026-08-25):** the `v1.10.2` tag this review diffs against was deleted when that
+> unpublished version was withdrawn ([#101](https://github.com/tonioloewald/tosijs-ui/issues/101)).
+> The commit is still there — use `51cead41` where the text says `v1.10.2`.
+
 ---
 
 # Pre-release review — tosijs-ui 1.11.0 (base `v1.10.2`)

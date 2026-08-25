@@ -100,3 +100,4 @@ docs/.epub-build/
 # Transient copy of the previous good build, kept only while a rebuild runs so a
 # failed build cannot destroy the site being served (see dev-server.ts).
 *.last-good/
+.metadata_never_index

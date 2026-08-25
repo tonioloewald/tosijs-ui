@@ -6,6 +6,10 @@
 >
 > Kept for the reasoning and the measurements, not as a worklist.
 
+> **Note (2026-08-25):** the `v1.10.2` tag this review diffs against was deleted when that
+> unpublished version was withdrawn ([#101](https://github.com/tonioloewald/tosijs-ui/issues/101)).
+> The commit is still there — use `51cead41` where the text says `v1.10.2`.
+
 ---
 
 # Pre-release review triage — tosijs-ui **1.11.0** (base `v1.10.2`, HEAD `be0087e5`)
