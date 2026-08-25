@@ -163,6 +163,19 @@ and both vendored types pinned by assignability tests in both directions.
 
 ### Fixed after the pre-release review
 
+- **Editable numeric cells silently truncated what you typed.** Typing `19.95` into a
+  `<tosi-table editable>` number cell committed **95**; `-4` committed **4** — and every
+  commit fired `change` with `error: null`, so nothing reported that a digit had gone. Two-way
+  `bindValue` wrote the model on every `input`, and `<input type=number>` sanitizes an
+  intermediate `"19."` to `""` under the HTML value-sanitization algorithm, so the binding
+  wrote `""` straight back into the focused input. The binding is one-way now and
+  `handleCellChange` is the sole model write — which also makes "commits on `change`, not on
+  `input`" true of the _model_ and not only of the event.
+
+  It was invisible to every lane because every test assigned `.value` programmatically or
+  typed with no delay, and neither ever lets a frame run between keystrokes. There are three
+  tests that genuinely **type**, with a per-character delay, across all three engines.
+
 The nine-lens review ran twice against this release. Everything below was found by it and
 fixed before tagging.
 

@@ -1788,6 +1788,42 @@ export class TosiTable extends WebComponent {
     buildEditableCell(col, colIndex, si, style, repeats) {
         const field = this.fieldFor(col.prop);
         const stop = (event) => event.stopPropagation();
+        /*
+        ONE-WAY binding, and it must never write into the control being typed in.
+    
+        Two-way `bindValue` corrupted numbers silently. tosijs's delegated listener writes the
+        model on every `input`, and for `<input type=number>` an intermediate `"19."` sanitizes to
+        `""` under the HTML value-sanitization algorithm — so the binding wrote `""` straight back
+        into the focused input and the digits already typed were gone. Typing `19.95` committed
+        **95**; `-4` committed **4**; and every commit fired `change` with `error: null`, so
+        nothing reported that a digit had been dropped.
+    
+        `<tosi-schema-form>.syncValues()` has always skipped `document.activeElement` for exactly
+        this reason, which is why the form was immune and its sibling was not. `handleCellChange`
+        is the sole model write, which also makes the documented "commits on `change`, not on
+        `input`" true of the MODEL and not only of the event.
+    
+        There is deliberately NO `document.activeElement` guard here to go with it. One was added
+        and then removed: the one-way binding is the whole fix, and no test could reach a state
+        where the guard mattered — in this component any model change that would reach `toDOM`
+        rebuilds the row anyway. An unpinned second mechanism for one bug is a spare that rots,
+        not defence in depth. If someone finds the case, add it back WITH the test.
+        */
+        const displayBinding = {
+            value: `^.${col.prop}`,
+            binding: {
+                toDOM(el, value) {
+                    const control = el;
+                    if (control.type === 'checkbox') {
+                        control.checked = value === true;
+                        return;
+                    }
+                    const next = value === undefined || value === null ? '' : String(value);
+                    if (control.value !== next)
+                        control.value = next;
+                },
+            },
+        };
         const shared = {
             class: this.cellClasses('td', si, repeats) + ' cell-editable',
             role: 'gridcell',
@@ -1801,7 +1837,7 @@ export class TosiTable extends WebComponent {
         };
         let cell;
         if (field?.kind === 'enum') {
-            cell = select({ ...shared, bindValue: `^.${col.prop}` }, ...(field.required ? [] : [option({ value: '' }, '—')]), ...(field.options ?? []).map((o) => option({ value: String(o.value) }, o.label)));
+            cell = select({ ...shared, bind: displayBinding }, ...(field.required ? [] : [option({ value: '' }, '—')]), ...(field.options ?? []).map((o) => option({ value: String(o.value) }, o.label)));
         }
         else {
             const isBool = field?.kind === 'boolean' || col.type?.startsWith('boolean') === true;
@@ -1814,7 +1850,7 @@ export class TosiTable extends WebComponent {
                         ? 'number'
                         : field?.inputType ?? 'text',
                 ...(field?.kind === 'integer' ? { step: 1 } : {}),
-                bindValue: `^.${col.prop}`,
+                bind: displayBinding,
             });
         }
         cell.dataset.editProp = col.prop;

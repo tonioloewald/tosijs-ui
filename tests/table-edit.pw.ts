@@ -109,3 +109,53 @@ test('a valid edit reports no error and clears the flag', async ({ page }) => {
   expect(result.error).toBe(null)
   expect(result.flagged).toBe(false)
 })
+
+/*
+TYPE, with a per-character delay. This is the gap that let silent numeric corruption ship.
+
+Every other test in this file — and the inline doc test — assigns `.value` programmatically
+and dispatches a synthetic `change`. So does `page.keyboard.type()` with no delay: it never
+lets a frame run between keystrokes. Neither can observe what happens when a BINDING reacts
+to an intermediate value.
+
+The defect: two-way `bindValue` wrote the model on every `input`, and `<input type=number>`
+sanitizes an intermediate `"19."` to `""` per the HTML value-sanitization algorithm — so the
+binding wrote `""` back into the focused input and the digits already typed vanished.
+`19.95` committed as **95**, `-4` as **4**, both with `error: null`.
+*/
+
+const typeInto = async (page: any, prop: string, text: string) => {
+  const cell = page.locator(`[data-edit-prop="${prop}"]`).first()
+  await cell.click()
+  await cell.fill('')
+  await page.keyboard.type(text, { delay: 80 })
+  await cell.blur()
+  return page.evaluate((p: string) => {
+    const table = [...document.querySelectorAll('tosi-table')].find(
+      (t: any) => t.editable
+    ) as any
+    return table.getItem(table.querySelector(`[data-edit-prop="${p}"]`))[p]
+  }, prop)
+}
+
+test('a decimal typed at human speed survives', async ({ page }) => {
+  await page.goto('/data-table/')
+  await editableTableReady(page)
+  expect(await typeInto(page, 'price', '19.95')).toBe(19.95)
+})
+
+test('a leading minus sign survives', async ({ page }) => {
+  await page.goto('/data-table/')
+  await editableTableReady(page)
+  expect(await typeInto(page, 'qty', '-4')).toBe(-4)
+})
+
+test('a value typed one character at a time is not partially committed', async ({
+  page,
+}) => {
+  // `1.5` used to commit `5`: the `.` wiped the field and the binding put the empty string
+  // back, so only what came after survived.
+  await page.goto('/data-table/')
+  await editableTableReady(page)
+  expect(await typeInto(page, 'price', '0.25')).toBe(0.25)
+})
