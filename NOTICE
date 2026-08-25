@@ -1,0 +1,79 @@
+tosijs-ui
+Copyright 2023-2026 Tonio Loewald
+
+This product includes software developed by Tonio Loewald.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy
+of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations
+under the License.
+
+tosijs-ui was licensed under the MIT License through version 1.11.1, and is
+Apache-2.0 from 1.12.0 onward. Nothing already released changes licence:
+1.11.1 and everything before it remain MIT under the terms they shipped with.
+
+==========================================================================
+THIRD-PARTY NOTICES
+==========================================================================
+
+`dist/iife.js` inlines its dependencies so a page can use the components from
+a single <script> tag. The ESM build does NOT — tosijs and marked are peer
+dependencies there, resolved from the consumer's own node_modules — so the
+attribution below travels with the iife and with anything built from it.
+
+--------------------------------------------------------------------------
+tosijs — https://github.com/tonioloewald/tosijs
+Apache-2.0 as of 1.8.0 (BSD-3-Clause through 1.7.x).
+Reproduced from the tosijs package's own NOTICE:
+--------------------------------------------------------------------------
+
+tosijs
+Copyright 2022-2026 Tonio Loewald
+
+This product includes software developed by Tonio Loewald.
+
+Portions of the published bundles (dist/module.js, dist/main.js,
+dist/index.js, dist/module.debug.js and dist/module.safe.js) are generated
+from tosijs-floorplan (https://github.com/tonioloewald/tosijs-floorplan),
+Copyright 2026 Tonio Loewald, licensed under the Apache License, Version 2.0
+— vendored at build time so tosijs ships with zero runtime dependencies.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy
+of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations
+under the License.
+
+--------------------------------------------------------------------------
+marked — https://github.com/markedjs/marked
+MIT. Ships no NOTICE; its copyright and permission notice travel in the
+bundle's own header.
+--------------------------------------------------------------------------
+
+--------------------------------------------------------------------------
+Feather Icons — https://github.com/feathericons/feather
+Copyright (c) 2013-2023 Cole Bemis. MIT.
+Some icons in `icons/` and the generated `src/icon-data.ts` derive from
+Feather. The full permission notice is reproduced in `src/icons.ts` and on
+the icons documentation page.
+--------------------------------------------------------------------------
+
+--------------------------------------------------------------------------
+CodeMirror — https://codemirror.net/
+Copyright (c) by Marijn Haverbeke and others. MIT.
+The @codemirror/* and @lezer/* packages are runtime dependencies, bundled
+into `dist/iife.js` and into the lazy `dist/code-editor-cm.js` chunk.
+--------------------------------------------------------------------------

@@ -402,12 +402,22 @@ inferSchema, unenforcedKeywords })`, and all three matter (omitting the third ma
   peer). `bun run typecheck-guards` is what stops it drifting; `tsconfig.json` excludes
   `*.test.ts`, so a compile-time assertion in a test file is otherwise never compiled.
 
-- `tosijs`: Core component framework (peer + dev dep). The peer floor **encodes specific
+- `tosijs`: Core component framework (peer + dev dep). **Apache-2.0 as of its 1.8.0**
+  (BSD-3-Clause through 1.7.x). **tosijs-ui followed in 1.12.0** — MIT through 1.11.1, and
+  everything published under MIT stays MIT. `dist/iife.js` inlines tosijs, so this package
+  redistributes Apache-2.0 code and must carry its NOTICE under §4(d) regardless of our own
+  licence; matching it removes the mismatch and adds the patent grant MIT does not address.
+  The root `NOTICE` is shipped in `files` and covers tosijs, marked, Feather Icons and
+  CodeMirror. The ESM build bundles none of them, so the redistribution obligation attaches to
+  the iife and to anything built from it.
+
+  The peer floor **encodes specific
   upstream fixes, not a date** — `^1.7.8` is required for tosijs#20 (the `this.parts` proxy
   crossing into nested component instances, which made "edit" on one live example open the
   editor in another) and tosijs#21 (change-handler value staleness). Raise it only with a
   reason recorded here; `bun run test-consumer` asserts the devDep satisfies the declared
   peer range, so the two cannot drift apart silently (#57).
+
 - `marked`: Markdown parsing (peer dep). Range is `^16.4.2 || ^17.0.0 || ^18.0.0` — an
   explicit union of majors that were **actually tested**, not a `>=` that would claim majors
   nobody has run. The consumed surface is three things (`marked(text, options)`,

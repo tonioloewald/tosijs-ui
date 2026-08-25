@@ -1,5 +1,75 @@
 # Changelog
 
+## 1.12.0
+
+### tosijs-ui is Apache-2.0 as of this release (MIT through 1.11.1)
+
+**Nothing already published changes licence.** 1.11.1 and everything before it stay MIT under
+the terms they shipped with — a licence grant already made cannot be withdrawn, and this is not
+an attempt to. The change applies from 1.12.0 forward.
+
+**Why.** tosijs went Apache-2.0 in its 1.8.0, and `dist/iife.js` inlines tosijs, so this package
+already redistributes Apache-2.0 code and already had to carry its NOTICE. Matching the licence
+of the thing we are built on removes the mismatch rather than papering over it, and it is the
+right direction on its own terms: Apache-2.0 adds an explicit **patent grant** and a
+patent-retaliation clause that MIT simply does not address.
+
+**What it means for you, concretely:**
+
+- **Using tosijs-ui in an app, or hosting what you build with it — unaffected.** No new
+  obligation.
+- **Redistributing it** (vendoring, forking, shipping a bundle that contains it) — §4(d) asks
+  you to carry the attribution text from `NOTICE`, and §4(b) to mark files you modified.
+- **GPLv2-only projects can no longer use it.** This is the one real loss and it is worth
+  stating plainly rather than burying: Apache-2.0 is incompatible with GPLv2-only. GPLv3+ is
+  fine. If you are on GPLv2-only, 1.11.1 remains MIT and remains available.
+- **You gain a patent grant** you did not have under MIT.
+
+The root `NOTICE` now carries our own attribution plus tosijs, marked, Feather Icons and
+CodeMirror. It ships in the package (`files`), so a redistributor has it without hunting.
+
+### Upstreams: verified against tosijs 1.8.0 and tjs-lang 0.13.4
+
+Both are admitted by our existing peer ranges (`^1.7.8`, `^0.13.1`) — so adopters of 1.11.0 resolve to them today whether or
+not we bump. All six lanes pass against both: unit (1118), Playwright ×2, haltija (60),
+consumer (44 checks), typecheck, format.
+
+The peer floors are **unchanged**. Nothing here needs anything new in either release, and the
+floor encodes required fixes rather than a date. `TJS_VERSION` in
+`src/live-example/code-transform.ts` moved to 0.13.4 in lockstep with the dep — it is the CDN
+pin used when an adopter has no tjs-lang peer installed, and the two silently diverging would
+mean testing one transpiler and shipping another. Both CDN assets verified reachable at that
+version.
+
+### Licence: a NOTICE file, because the iife redistributes Apache-2.0 code
+
+**tosijs is Apache-2.0 as of 1.8.0** (BSD-3-Clause through 1.7.x). `dist/iife.js` inlines
+tosijs and marked so a page can use the components from a single `<script>` tag, which makes
+this package a redistributor, and Apache-2.0 §4(d) asks redistributors to carry the NOTICE
+text of what they redistribute. There is now a `NOTICE` file at the root, shipped in the
+package, reproducing tosijs's verbatim.
+
+**This does not travel with `import 'tosijs-ui'`.** The ESM build bundles neither — tosijs and
+marked are peer dependencies there, resolved from the consumer's own `node_modules`. The
+obligation attaches to the iife and to anything built from it. tosijs-ui itself remains MIT.
+
+### Known: the iife grew
+
+`dist/iife.js` is **419.1 KB gzipped, up from 402.3 KB** — +16.8 KB (+4.2%) — entirely from
+tosijs 1.8.0, whose own notes measure +2.9 kB on an app bundle that touches no new API (the
+contract seam, path-segment guard and binding bookkeeping sit on the ordinary path). Ours is
+larger because the iife bundles more of tosijs than a typical app does. Recorded rather than
+absorbed silently: the gate on weight here has always been the printed gzip delta.
+
+### Note for anyone on tosijs 1.7.x
+
+tosijs 1.8.0 **deviates from semver and says so** — it removes `data-ref` and `<xin-slot>`
+markup handling, reduces `<xin-blueprint>`/`<xin-loader>` to warning tombstones, and flips
+`on<Event>` member precedence and type-contradicting attribute writes. A consumer on
+`^1.7.9` receives all of it on a routine update. **tosijs-ui uses none of them** — verified by
+grep and by the full lane run, which is why our peer range still spans both. If your own app
+uses any, read tosijs's 1.8.0 notes before updating.
+
 ## 1.11.0
 
 **Schema-driven editing.** Three new pieces that compose: `<tosi-schema-form>` renders a form
