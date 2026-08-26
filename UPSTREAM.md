@@ -595,3 +595,34 @@ npm is at 1.5.1).
 - **[#4](https://github.com/tonioloewald/tosijs-schema/issues/4)** — 1.5.0 tightened
   validation in a MINOR and broke published consumers on install. Relevant when we take a
   version floor: decide deliberately rather than inheriting whatever `tjs-lang` resolves.
+
+## haltija — page → agent push (filed 2026-08-26)
+
+- **[haltija#37](https://github.com/tonioloewald/haltija/issues/37) — no page→agent push.**
+  Everything in haltija is agent-initiated; the page cannot tell the agent anything unless the
+  agent asks first. The only page-originated flow is `POST /select` (human points at elements),
+  which is **poll-based and narrow**. `hj send <agent> <message>` is a different feature — it
+  targets an _agent tab_ (`"No agents available - open an agent tab first"`), not the CLI-side
+  agent driving the session.
+
+  **Why we care.** `haltijaDev: 'tunnel'` (#104, shipped 1.13.0) gives the agent's half for a
+  remote device — `hj eval`/`hj navigate` work against a headset. The human's half is missing,
+  and in a headset it is the harder one: you cannot see a terminal or take the headset off,
+  because the bug is usually _about_ being in it. Also the GDPR case: a message channel to the
+  already-running agent is remote agent interaction with **no third-party routing** — device →
+  own tunnel → own machine → own in-region model endpoint.
+
+  **Why a channel, not "let the page spawn an agent":** a web page that can start a process
+  with filesystem access is a much bigger grant than a pipe to the agent the user is already
+  supervising. Strictly the safer design, which is why it is what we asked for.
+
+  Asked for: a page-side post, and an agent-side `hj messages --wait` that **blocks** rather
+  than polls — the blocking form is what makes it one tool call instead of a polling loop.
+  We supply the widget once the primitive exists; the transport already works.
+
+- **[haltija#38](https://github.com/tonioloewald/haltija/issues/38) — `component.js` recording
+  is broken for every `wss://` config.** `serverUrl.replace("ws:", "http:")` is a no-op on
+  `"wss://…"` (the substring is `"wss:"`), so the derived HTTP base is `wss://host` and every
+  server-side recording fetch fails. Hits the standard localhost HTTPS path too, since
+  `inject.js` sets `wss://localhost:8701/ws/browser`. Found while reading the file for #104;
+  does not block it.
