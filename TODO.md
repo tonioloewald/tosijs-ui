@@ -764,8 +764,15 @@ live site** (independently useful). See roadmap "From book to live."
       terms; it should land behind a clean measurement rather than behind a number that was
       wrong.
 
-      **To finish:** on a quiet machine, time the full Playwright lane three times on `main`,
-      then three times on the branch. Merge if revalidation is not slower — and if the honest
+      **Baseline taken (quiet machine, load ~5, 18GB free): 149s / 161s / 183s on `main`.**
+      Which kills the premise a second time — the "1.3m before" figure I compared against was a
+      run of a SMALLER suite (233 tests; it is 239 now, after the Back and cache tests were
+      added). So the original claim was confounded by machine load AND by suite growth. Two
+      independent reasons the number meant nothing, neither of which I checked before asserting
+      it.
+
+      **To finish:** time the branch three times on an equally quiet machine, and account for the
+      fact that the branch's own cache tests differ in count from main's. Merge if revalidation is not slower — and if the honest
       answer is that `no-store` never cost anything measurable, say so and merge it anyway for
       being the accurate header, or drop it and keep the simpler code. Either is fine; guessing
       is not.
