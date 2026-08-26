@@ -855,6 +855,31 @@ export async function devServer(config, opts = {}) {
         Pragma: 'no-cache',
         Expires: '0',
     };
+    /*
+    Assets REVALIDATE rather than being re-fetched whole.
+  
+    `no-store` on everything was the first attempt and it was too blunt: it forbids storing, so a
+    browser re-downloads the bundle on every page load. Measured on this repo's own Playwright
+    lane, that took a full run from ~1.3 minutes to 1.9-2.7 and made firefox flake — the fix for
+    stale bytes should not tax every load forever.
+  
+    `no-cache` is the accurate header for what is wanted here. It does not mean "do not cache", it
+    means "cache, but revalidate before every use" — which is exactly the promise a dev server
+    should make. With an ETag the revalidation is a 304 with no body instead of a re-download.
+  
+    The tag is `mtime-size`, not a hash of the contents: a rebuild rewrites the file and moves
+    both, so it is sufficient here and costs nothing, where hashing megabytes per request would.
+    Encoding is in the tag too — the brotli and gzip bodies differ, and serving one against the
+    other's validator would hand the client the wrong bytes.
+  
+    HTML keeps `no-store`. It is small, and it is INJECTED per request (dev-channel loader, build
+    status, and whether the requester has a session), so a validator derived from the file on disk
+    would be a lie.
+    */
+    const assetTag = (file, encoding) => `W/"${file.lastModified.toString(36)}-${file.size.toString(36)}-${encoding ?? 'id'}"`;
+    const REVALIDATE = { 'Cache-Control': 'no-cache' };
+    /** 304 when the client already has this exact version — same freshness, no body. */
+    const notModified = (request, etag) => request?.headers.get('if-none-match') === etag;
     async function respondFile(filePath, request, viaTunnel = false) {
         /*
         WHICH loader, decided per request rather than once at boot.
@@ -902,19 +927,35 @@ export async function devServer(config, opts = {}) {
                 bytes = compressBytes(new Uint8Array(await file.arrayBuffer()), encoding);
                 cacheCompressed(key, bytes);
             }
+            const etag = assetTag(file, encoding);
+            if (notModified(request, etag)) {
+                return new Response(null, {
+                    status: 304,
+                    headers: { ETag: etag, ...REVALIDATE, Vary: 'Accept-Encoding' },
+                });
+            }
             return new Response(bytes, {
                 headers: {
                     'Content-Type': file.type || 'application/octet-stream',
-                    ...NO_CACHE,
+                    ETag: etag,
+                    ...REVALIDATE,
                     'Content-Encoding': encoding,
                     Vary: 'Accept-Encoding',
                 },
             });
         }
         // Everything else streams untouched — images, fonts, epubs and glb are already
-        // compressed, and re-encoding them only makes them bigger. Still uncacheable: an icon or a
+        // compressed, and re-encoding them only makes them bigger. Still revalidated: an icon or a
         // font you just changed is no more welcome stale than a script is.
-        return new Response(Bun.file(filePath), { headers: { ...NO_CACHE } });
+        const raw = Bun.file(filePath);
+        const rawTag = assetTag(raw, null);
+        if (notModified(request, rawTag)) {
+            return new Response(null, {
+                status: 304,
+                headers: { ETag: rawTag, ...REVALIDATE },
+            });
+        }
+        return new Response(raw, { headers: { ETag: rawTag, ...REVALIDATE } });
     }
     async function handleTestReport(request) {
         try {
