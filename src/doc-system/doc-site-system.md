@@ -515,6 +515,21 @@ thrash for twenty minutes until it was power-cycled.
   20 times in a minute: past that, the server names the files that keep firing — which _is_
   the diagnosis — and stops.
 
+#### Nothing the dev server serves is cacheable
+
+Every response carries `Cache-Control: no-store`. That is not paranoia — sending no
+`Cache-Control` is not neutral, because a browser is free to invent a freshness lifetime when
+you decline to state one, and Safari is the most willing to. The failure mode is a dev server
+that rebuilds correctly while the browser keeps showing the previous build, which presents as
+"my fix did not work" and is only escaped by emptying the cache by hand.
+
+It applies to the **dev server only**. The built site in `docs/` carries no such header — that
+is a static site for a real host, and telling a CDN never to store it would be actively wrong.
+
+> If a page looks stale anyway, the other suspect is the **server**, not the browser: a running
+> dev server keeps executing the code it loaded at launch, so a change to the server itself
+> needs a restart, not a reload.
+
 #### `haltijaDev` — Claude eyes on your running dev page
 
 Set `haltijaDev: true` (or run with `HALTIJA_DEV=1`) and `bun start` gives a coding

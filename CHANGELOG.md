@@ -2,6 +2,22 @@
 
 ## 1.12.3
 
+### The dev server sends `Cache-Control: no-store` on everything
+
+It previously sent no `Cache-Control` at all, and that is not neutral: a browser may invent a
+freshness lifetime when you decline to state one, and Safari is the most willing to. So the dev
+server would rebuild correctly while the browser kept serving the previous build — which
+presents as "my fix did not work", and is only escaped by emptying the cache by hand. It cost
+exactly that here: a bug was reported against code that had already been fixed.
+
+All three of the file-server's exits are covered — injected HTML, compressed assets, and
+binaries that stream untouched — because they are separate responses and adding the header to
+the obvious one is precisely how the other two get missed. Each is independently
+mutation-verified.
+
+**Dev server only.** The built site in `docs/` is unaffected; it is a static site for a real
+host, and telling a CDN never to store it would be actively wrong.
+
 ### `layout: "full-screen"` — and `<tosi-sidenav alwaysCompact>` underneath it
 
 `full-width` shipped in 1.12.2 and `full-screen` did not, because it needed something from the

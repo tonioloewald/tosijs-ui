@@ -832,6 +832,29 @@ export async function devServer(config, opts = {}) {
         });
     }
     // disk, and non-HTML assets are streamed untouched.
+    /*
+    NOTHING the dev server serves may be cached. Ever.
+  
+    None of the file paths below sent `Cache-Control`, so browsers applied HEURISTIC caching —
+    they are free to invent a freshness lifetime when you decline to state one, and Safari is the
+    most willing to. The result is a dev server that rebuilds correctly while the browser keeps
+    showing the previous build, which presents as "the fix did not work" and costs whoever is
+    looking at it far more than a re-download. It cost exactly that here: a bug was reported
+    against code that had already been fixed.
+  
+    `no-store` rather than `no-cache`: no-cache still stores and revalidates, which needs
+    validators we do not emit, and a dev server has nothing to gain from the round trip. The cost
+    is re-fetching the bundle on a full page load — a doc site navigates client-side after that,
+    and the responses are brotli/gzip compressed anyway.
+  
+    Deliberately NOT applied to the built output: `docs/` is a static site for a real host, and
+    telling a CDN never to store it would be actively wrong. This is the dev server only.
+    */
+    const NO_CACHE = {
+        'Cache-Control': 'no-store, must-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+    };
     async function respondFile(filePath, request, viaTunnel = false) {
         /*
         WHICH loader, decided per request rather than once at boot.
@@ -864,6 +887,7 @@ export async function devServer(config, opts = {}) {
             return new Response(body, {
                 headers: {
                     'Content-Type': 'text/html; charset=utf-8',
+                    ...NO_CACHE,
                     ...(encoding
                         ? { 'Content-Encoding': encoding, Vary: 'Accept-Encoding' }
                         : {}),
@@ -881,14 +905,16 @@ export async function devServer(config, opts = {}) {
             return new Response(bytes, {
                 headers: {
                     'Content-Type': file.type || 'application/octet-stream',
+                    ...NO_CACHE,
                     'Content-Encoding': encoding,
                     Vary: 'Accept-Encoding',
                 },
             });
         }
         // Everything else streams untouched — images, fonts, epubs and glb are already
-        // compressed, and re-encoding them only makes them bigger.
-        return new Response(Bun.file(filePath));
+        // compressed, and re-encoding them only makes them bigger. Still uncacheable: an icon or a
+        // font you just changed is no more welcome stale than a script is.
+        return new Response(Bun.file(filePath), { headers: { ...NO_CACHE } });
     }
     async function handleTestReport(request) {
         try {

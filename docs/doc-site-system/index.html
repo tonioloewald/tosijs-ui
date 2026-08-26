@@ -734,6 +734,19 @@ arbitrary consumer code</strong>, and anything it writes into a watched path loo
 20 times in a minute: past that, the server names the files that keep firing — which <em>is</em>
 the diagnosis — and stops.</li>
 </ul>
+<h4>Nothing the dev server serves is cacheable</h4>
+<p>Every response carries <code>Cache-Control: no-store</code>. That is not paranoia — sending no
+<code>Cache-Control</code> is not neutral, because a browser is free to invent a freshness lifetime when
+you decline to state one, and Safari is the most willing to. The failure mode is a dev server
+that rebuilds correctly while the browser keeps showing the previous build, which presents as
+&quot;my fix did not work&quot; and is only escaped by emptying the cache by hand.</p>
+<p>It applies to the <strong>dev server only</strong>. The built site in <code>docs/</code> carries no such header — that
+is a static site for a real host, and telling a CDN never to store it would be actively wrong.</p>
+<blockquote>
+<p>If a page looks stale anyway, the other suspect is the <strong>server</strong>, not the browser: a running
+dev server keeps executing the code it loaded at launch, so a change to the server itself
+needs a restart, not a reload.</p>
+</blockquote>
 <h4><code>haltijaDev</code> — Claude eyes on your running dev page</h4>
 <p>Set <code>haltijaDev: true</code> (or run with <code>HALTIJA_DEV=1</code>) and <code>bun start</code> gives a coding
 agent (Claude) eyes <strong>and hands</strong> on your actual running page via
