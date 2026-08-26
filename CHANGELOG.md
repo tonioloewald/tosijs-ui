@@ -56,7 +56,10 @@ height instead of filling. `padding` now routes through `--doc-content-padding`,
 measure already did.
 
 Navigating away restores the nav, and a reader's override lasts until they navigate rather than
-beyond it. Both directions are mutation-verified, which caught a test that _looked_ like it
+beyond it — **including Back**, so a full-screen page is full-screen whenever you arrive at it.
+That is predictable, but it does mean leaving a page with the nav open and returning finds it
+closed; whether Back should instead restore what you left is noted in `TODO.md` as a decision
+rather than left to whatever fell out of the implementation. Both directions are mutation-verified, which caught a test that _looked_ like it
 covered the second one and did not: it routed through a prose page, which reset the state as a
 side effect.
 

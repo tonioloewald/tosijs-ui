@@ -738,6 +738,32 @@ live site** (independently useful). See roadmap "From book to live."
       changing side-nav's behavior slightly"). Doing it as `!important` from the doc-system
       would work and would be the wrong layer.
 
+## Decide: should a nav-toggle override survive Back?
+
+- [ ] Reported as "sometimes it treats the full-screen page and the full-screen page with nav
+      visible as different history entries". Measured, and it is neither history nor
+      inconsistent — the toggle creates **no** history entry at all (`history.length` is
+      unchanged across repeated toggles, URL unchanged). What happens is that **Back re-asserts
+      the page's declared layout**, discarding the override:
+
+      | step | history.length | nav |
+      | --- | --- | --- |
+      | land on full-screen | 2 | hidden |
+      | toggle nav on | 2 | visible |
+      | navigate to a prose page | 3 | visible |
+      | Back | 3 | hidden again |
+
+      That falls out of `showDoc` resetting `appliedFullScreen` on every navigation, which
+      popstate goes through too. It is defensible — a full-screen page is full-screen whenever
+      you arrive, which is predictable — but leaving a page with the nav open and returning to
+      find it closed reads as the page forgetting, and "reads as forgetting" is what got
+      reported.
+
+      The alternative is to remember the override per-entry in history state so Back restores
+      what you left. That is more faithful to the reader and more machinery. Worth deciding
+      deliberately rather than defaulting to whichever fell out of the implementation, which is
+      what is shipping today.
+
 ## Sub-frame flash of unmeasured prose between `:defined` and hydration
 
 - [ ] Two things constrain `.doc-content`, and there is a gap between them.
