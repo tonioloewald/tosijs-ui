@@ -47,26 +47,42 @@
   <article class="doc-content">
 <!--{ "layout": "full-screen", "parent": "Appendices", "order": 900, "title": "Full-screen layout", "description": "A page using layout: full-screen — no reading measure, no nav, the content is the viewport." }-->
 
-<h1>Full-screen layout</h1>
-<p>This page sets <code>layout: &quot;full-screen&quot;</code> in its metadata, so it has <strong>no reading measure and no
-navigation chrome</strong> — the content area is the whole viewport. Navigate away and the nav comes
-straight back.</p>
-<p>That is what makes an <em>apps-and-manuals</em> site one site: prose pages keep the measure that makes
-them readable, and a demo, a canvas or an embedded app gets the room it needs.</p>
-<pre><code class="language-html">&lt;div style=&quot;height:60vh;display:grid;place-items:center;background:linear-gradient(135deg,#0064d233,#00d2a033);border-radius:8px&quot;&gt;
-  &lt;p style=&quot;font:600 clamp(1rem,4vw,2rem)/1.4 system-ui;text-align:center;margin:0;padding:1rem&quot;&gt;
-    This box is as wide as your window.&lt;br&gt;
-    &lt;small style=&quot;font-weight:400;opacity:.75&quot;&gt;No 44em column, no sidebar.&lt;/small&gt;
-  &lt;/p&gt;
-&lt;/div&gt;
-</code></pre>
-<h2>How it works</h2>
-<p><code>full-screen</code> puts <code>&lt;tosi-sidenav&gt;</code> into <code>alwaysCompact</code> with the content showing. Compact mode
-already shows the nav <em>or</em> the content and takes turns between them — which is exactly what a
-full-screen page wants — so this reuses that rather than adding a second layout.</p>
-<p>Before the page hydrates there is no sidenav yet, just static markup, so a stylesheet rule
-handles the same effect for the first paint. Two rules for two genuinely different DOMs.</p>
-<p>See <a href="/doc-site-system/">the doc-site system</a> for the metadata reference.</p>
+<div class="fs-demo">
+  <p>
+    This box is the whole window.
+    <small>No 44&nbsp;em column, no sidebar. Press <b>☰</b> for the navigation.</small>
+  </p>
+</div>
+
+<style>
+  /* Fill the content area. `layout: "full-screen"` gives .doc-content the full height, so a
+     child can take 100% of it — in the reading column this would just be a tall box. */
+  .fs-demo {
+    height: 100%;
+    /* Edge to edge — prose block margins would otherwise inset it by a rem each side, which
+       reads as a gap around a thing whose whole point is filling the window. */
+    margin: 0;
+    width: 100%;
+    min-height: 20rem;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #0064d233, #00d2a033);
+    box-sizing: border-box;
+    padding: 2rem;
+  }
+  .fs-demo p {
+    margin: 0;
+    text-align: center;
+    font: 600 clamp(1.25rem, 4vw, 2.5rem) / 1.3 system-ui, sans-serif;
+  }
+  .fs-demo small {
+    display: block;
+    margin-top: 0.75em;
+    font-weight: 400;
+    font-size: clamp(0.9rem, 1.6vw, 1.1rem);
+    opacity: 0.75;
+  }
+</style>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">

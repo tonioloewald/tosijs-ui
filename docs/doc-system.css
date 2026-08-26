@@ -55,6 +55,9 @@ tosi-doc-system[data-layout="full-screen"] {
 
 tosi-doc-system[data-layout="full-screen"] .doc-content {
   padding: 0;
+  height: 100%;
+  overflow: auto;
+  --doc-content-padding: 0;
 }
 
 tosi-doc-system[data-layout="full-screen"] > .doc-nav.doc-nav, tosi-doc-system[data-layout="full-screen"] > .doc-navbar.doc-navbar {
@@ -140,7 +143,7 @@ tosi-doc-system:not(:defined) .doc-content {
   display: block;
   max-width: var(--doc-content-max-width);
   margin: auto;
-  padding: 0 1em;
+  padding: var(--doc-content-padding, 0 1em);
   overflow: hidden;
 }
 

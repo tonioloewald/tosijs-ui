@@ -282,6 +282,81 @@ test('the navigation button works on a full-screen page', async ({ page }) => {
     false
   )
   expect(after.value).toBe('normal')
+
+  /*
+  And the button is STILL offered — the whole round trip.
+
+  It used to ride `compact` directly. That is right for a responsive page (wide enough to show
+  both, nothing to toggle), but opening the nav on a full-screen page leaves compact mode by
+  design, so the button vanished with it and stranded the reader in the normal layout with no
+  way back to full screen.
+  */
+  expect(
+    after.toggleVisible,
+    `the button must survive its own click: ${JSON.stringify(after)}`
+  ).toBe(true)
+
+  await page.evaluate(() =>
+    (
+      document.querySelector('button.iconic[title="navigation"]') as HTMLElement
+    )?.click()
+  )
+  await expect
+    .poll(async () => (await navState(page)).navRight, { timeout: 10_000 })
+    .toBeLessThanOrEqual(0)
+})
+
+test('the full-screen demo fills the content area, edge to edge', async ({
+  page,
+}) => {
+  /*
+  "The content is the viewport" is the promise, and two inline styles were quietly breaking it.
+  `.doc-content` gets its `max-width` AND its `padding` as inline styles from the doc-browser,
+  so a stylesheet cannot override either — the page rendered as a demo inset by 32px, in a box
+  that collapsed to its own content height instead of filling. Both now route through variables,
+  the way the measure already did.
+  */
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/full-screen-demo/')
+  await page.waitForFunction(
+    () => !!document.querySelector('tosi-sidenav'),
+    undefined,
+    { timeout: 15_000 }
+  )
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(() => {
+          const box = document.querySelector('.fs-demo') as HTMLElement | null
+          const el = document.querySelector('.doc-content') as HTMLElement
+          if (!box) return null
+          const b = box.getBoundingClientRect()
+          const c = el.getBoundingClientRect()
+          return Math.round(b.width) === Math.round(c.width) &&
+            Math.round(b.height) === Math.round(c.height)
+            ? 'fills'
+            : `${Math.round(b.width)}x${Math.round(b.height)} in ${Math.round(
+                c.width
+              )}x${Math.round(c.height)}`
+        }),
+      { timeout: 15_000 }
+    )
+    .toBe('fills')
+
+  // and the text is actually rendered inside it, not clipped or collapsed away
+  const text = await page.evaluate(() => {
+    const p = document.querySelector('.fs-demo p') as HTMLElement | null
+    const box = document.querySelector('.fs-demo') as HTMLElement
+    if (!p) return null
+    const pr = p.getBoundingClientRect()
+    const br = box.getBoundingClientRect()
+    return {
+      visible: pr.width > 0 && pr.height > 0,
+      inside: pr.top >= br.top && pr.bottom <= br.bottom,
+    }
+  })
+  expect(text?.visible, 'the caption renders').toBe(true)
+  expect(text?.inside, 'and sits inside the box').toBe(true)
 })
 
 test('the next full-screen page is full-screen again after an override', async ({

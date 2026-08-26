@@ -26,9 +26,18 @@ removes the width test rather than adding a second way to lay out. It is a named
 `minSize` no viewport can reach, because the second one works and reads as a bug to the next
 person.
 
-**`layout: "full-screen"`** then means: no reading measure, no nav, content is the viewport.
-There is a [demo page](/full-screen-demo/), and the navigation button works there — it returns
-you to the normal layout rather than replacing the content with a full-screen nav.
+**`layout: "full-screen"`** then means: no reading measure, no nav, no gutter, and a content area
+with a real height — so a demo, a canvas or an embedded app can ask for `height: 100%` and get
+it. There is a [demo page](/full-screen-demo/), and the navigation button works there: it
+returns you to the normal layout rather than replacing the content with a full-screen nav, and
+it **stays offered** so you can go back. Riding `compact` directly, as it used to, meant the
+button vanished on its own click and stranded you in the normal layout.
+
+Two inline styles were quietly breaking the promise. `.doc-content` receives both its
+`max-width` and its `padding` inline from the doc-browser, so no stylesheet could override
+either — a full-screen page rendered inset by 32px, in a box that collapsed to its content
+height instead of filling. `padding` now routes through `--doc-content-padding`, the way the
+measure already did.
 
 Navigating away restores the nav, and a reader's override lasts until they navigate rather than
 beyond it. Both directions are mutation-verified, which caught a test that _looked_ like it

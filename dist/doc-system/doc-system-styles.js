@@ -123,6 +123,22 @@ export function docSystemStyleSpec(theme = {}) {
         },
         'tosi-doc-system[data-layout="full-screen"] .doc-content': {
             padding: '0',
+            /*
+            A definite height, so a child asking for `height: 100%` gets one.
+      
+            "The content is the viewport" is the promise this layout makes, and a demo, a canvas or an
+            embedded app is the reason to use it — all of which want to FILL, not to sit in a tall
+            box. Without a height here `100%` on a child resolves against `auto` and collapses to its
+            content.
+            */
+            height: '100%',
+            overflow: 'auto',
+            /*
+            The gutter goes too. `.doc-content`'s padding is an INLINE style set by the doc-browser,
+            so this is set through the variable it reads rather than declared here, where it would
+            simply lose.
+            */
+            _docContentPadding: '0',
         },
         /*
         `.doc-nav.doc-nav` — the class twice, on purpose.
@@ -219,7 +235,7 @@ export function docSystemStyleSpec(theme = {}) {
             display: 'block',
             maxWidth: vars.docContentMaxWidth,
             margin: 'auto',
-            padding: '0 1em',
+            padding: 'var(--doc-content-padding, 0 1em)',
             // Must match doc-browser's inline style EXACTLY, `overflow` included: it
             // establishes a block formatting context, which stops the <h1>'s top margin
             // collapsing out of the box. Without it the static content sits 10px lower

@@ -594,6 +594,16 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       docs,
       currentDoc,
       compact: false,
+      /*
+      Whether to OFFER the navigation button — deliberately not the same thing as `compact`.
+
+      The button used to ride `compact` directly, which is right for a responsive page: wide
+      enough to show the nav beside the content, and there is nothing to toggle. But opening the
+      nav on a full-screen page leaves compact mode by design, and the button would vanish with
+      it — stranding the reader in the normal layout with no way back to full screen. So it is
+      offered whenever the layout is compact OR the page asked to be full-screen.
+      */
+      navToggle: false,
     },
   })
   const app = state[stateKey]
@@ -801,6 +811,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   and then leaves the reader alone.
   */
   let appliedFullScreen: boolean | null = null
+  /** Offer the button when there is something to toggle: a compact layout, or a full-screen page. */
+  const refreshNavToggle = () => {
+    app.navToggle = (Boolean(sidenav?.compact) || wantsFullScreen) as any
+  }
   const applyFullScreen = () => {
     /*
     Resolved from THIS browser's own container when the change event has not introduced it yet.
@@ -818,6 +832,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     // away, and the sidenav decides how that is achieved.
     sidenav.navVisible = !wantsFullScreen
     appliedFullScreen = wantsFullScreen
+    refreshNavToggle()
   }
 
   const headerContent: any[] = [
@@ -827,7 +842,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         style: { color: vars.linkColor },
         title: 'navigation',
         bind: {
-          value: app.compact,
+          value: app.navToggle,
           binding: {
             toDOM(element, compact) {
               element.style.display = compact ? '' : 'none'
@@ -911,7 +926,13 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     // doc-browser (no doc-system stylesheet) working.
     maxWidth: 'var(--doc-content-max-width, 44em)',
     margin: 'auto',
-    padding: '0 1em',
+    /*
+    Through a variable, for the same reason `maxWidth` is: this is an INLINE style, so a
+    stylesheet cannot override it, and `layout: "full-screen"` needs to. A full-screen page that
+    keeps a 1em gutter is not full screen — it is a demo inset by 32px, which is exactly what it
+    looked like.
+    */
+    padding: 'var(--doc-content-padding, 0 1em)',
     overflow: 'hidden',
   })
 
@@ -1015,6 +1036,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       */
       appliedFullScreen = null
       applyFullScreen()
+      // applyFullScreen returns early when there is no sidenav yet; the button state still has
+      // to follow the doc, so this does not ride on that path succeeding.
+      refreshNavToggle()
     }
     rewriteContentLinks()
     // Stamp each example with its source file (for the source↔doc map). doc.path
@@ -1604,6 +1628,7 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
             TosiSidenav.tagName!
           ) as TosiSidenav | null
           if (sidenav) app.compact = sidenav.compact as any
+          refreshNavToggle()
           // The sidenav has just introduced itself; give it the layout the doc asked for.
           applyFullScreen()
         },
