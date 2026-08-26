@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.12.4
+## 1.12.3
 
 ### Back now has layout coverage, because a reader noticed before the tests did
 
@@ -22,8 +22,6 @@ they actually do, since one is a genuine regression test (dropping `removeAttrib
 on navigation fails it) and the other is a contract tripwire that survives every mutation tried
 against it. A test that cannot fail is usually decoration; that one is deliberate, and saying so
 is the difference.
-
-## 1.12.3
 
 ### The dev server sends `Cache-Control: no-store` on everything
 
