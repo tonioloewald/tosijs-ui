@@ -10,6 +10,16 @@ export declare class TosiSidenav extends Component {
         alwaysCompact: boolean;
     };
     value: NavState;
+    /**
+     * Is the navigation on screen — and set it to put it there, or take it away.
+     *
+     * The one control a "show me the navigation" button needs: read it, flip it, done. No caller
+     * should have to know that hiding the nav on a wide screen means forcing compact mode while
+     * on a narrow one it only means showing the content, which is exactly the kind of knowledge
+     * that ends up copy-pasted into every consumer and then drifts.
+     */
+    get navVisible(): boolean;
+    set navVisible(visible: boolean);
     content: HTMLSlotElement[];
     static shadowStyleSpec: {
         ':host': {

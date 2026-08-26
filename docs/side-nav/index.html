@@ -53,11 +53,17 @@ the sidebar if so desired). <code>&lt;tosi-sidenav&gt;</code> provides this func
 <p><code>&lt;tosi-sidenav&gt;</code>&#39;s behavior is controlled by two attributes, <code>minSize</code> is the point at which it will toggle between showing the navigation
 sidebar and content, while <code>navSize</code> is the width of the sidebar. You can interrogate its <code>compact</code> property to find out if it&#39;s
 currently in <code>compact</code> form.</p>
-<p>Set <code>alwaysCompact</code> to stay compact at any width — the nav and the content take turns regardless
-of how much room there is, and <code>contentVisible</code> picks which one you see. That is how the
-doc-system&#39;s <code>layout: &quot;full-screen&quot;</code> pages give the content the whole viewport. It is a named
-state rather than a <code>minSize</code> no viewport can reach, because the second one works and reads as a
-bug.</p>
+<p><code>navVisible</code> is the control you want for a &quot;show me the navigation&quot; button: read it, flip it.
+It resolves what hiding the nav actually means at the current width — forcing compact mode on a
+wide screen, simply showing the content on a narrow one — so a caller never has to. A toggle
+button is one line:</p>
+<pre><code class="language-js">sidenav.navVisible = !sidenav.navVisible
+</code></pre>
+<p>Underneath it, <code>alwaysCompact</code> keeps the sidenav compact at any width: nav and content take
+turns regardless of how much room there is, and <code>contentVisible</code> picks which you see. That is
+how the doc-system&#39;s <code>layout: &quot;full-screen&quot;</code> pages give the content the whole viewport. It is a
+named state rather than a <code>minSize</code> no viewport can reach, because the second one works and
+reads as a bug.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">

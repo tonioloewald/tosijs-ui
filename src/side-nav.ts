@@ -11,11 +11,20 @@ the sidebar if so desired). `<tosi-sidenav>` provides this functionality.
 sidebar and content, while `navSize` is the width of the sidebar. You can interrogate its `compact` property to find out if it's
 currently in `compact` form.
 
-Set `alwaysCompact` to stay compact at any width — the nav and the content take turns regardless
-of how much room there is, and `contentVisible` picks which one you see. That is how the
-doc-system's `layout: "full-screen"` pages give the content the whole viewport. It is a named
-state rather than a `minSize` no viewport can reach, because the second one works and reads as a
-bug.
+`navVisible` is the control you want for a "show me the navigation" button: read it, flip it.
+It resolves what hiding the nav actually means at the current width — forcing compact mode on a
+wide screen, simply showing the content on a narrow one — so a caller never has to. A toggle
+button is one line:
+
+```js
+sidenav.navVisible = !sidenav.navVisible
+```
+
+Underneath it, `alwaysCompact` keeps the sidenav compact at any width: nav and content take
+turns regardless of how much room there is, and `contentVisible` picks which you see. That is
+how the doc-system's `layout: "full-screen"` pages give the content the whole viewport. It is a
+named state rather than a `minSize` no viewport can reach, because the second one works and
+reads as a bug.
 */
 
 /*{ "parent": "Components" }*/
@@ -46,6 +55,47 @@ export class TosiSidenav extends Component {
   }
 
   value: NavState = 'normal'
+
+  /**
+   * Is the navigation on screen — and set it to put it there, or take it away.
+   *
+   * The one control a "show me the navigation" button needs: read it, flip it, done. No caller
+   * should have to know that hiding the nav on a wide screen means forcing compact mode while
+   * on a narrow one it only means showing the content, which is exactly the kind of knowledge
+   * that ends up copy-pasted into every consumer and then drifts.
+   */
+  get navVisible(): boolean {
+    // In normal mode both are on screen; only compact mode makes them take turns.
+    return !this.compact || !this.contentVisible
+  }
+
+  set navVisible(visible: boolean) {
+    if (visible) {
+      this.alwaysCompact = false
+      this.contentVisible = false
+      return
+    }
+    /*
+    Only FORCE compact when the WIDTH would not have produced it anyway.
+
+    Setting `alwaysCompact` unconditionally would quietly make a narrow-screen "show me the
+    content" tap permanent: the nav would stay away after the window was widened, because
+    nothing would ever clear the flag. Honouring the request without outstaying it means a
+    narrow viewport keeps its responsive behaviour.
+
+    Measured from the parent rather than read off `this.compact`, and that distinction is not
+    academic — `compact` is written during render, so immediately after a caller flips this
+    property it still describes the PREVIOUS layout. Trusting it meant that hiding the nav right
+    after showing it did nothing at all: the stale flag said "already compact", so nothing forced
+    it, and the nav stayed. Every engine, consistently.
+    */
+    const parent = this.offsetParent as HTMLElement | null
+    const widthAloneWouldCompact = parent
+      ? parent.offsetWidth < this.minSize
+      : false
+    if (!widthAloneWouldCompact) this.alwaysCompact = true
+    this.contentVisible = true
+  }
 
   content = [slot({ name: 'nav', part: 'nav' }), slot({ part: 'content' })]
 

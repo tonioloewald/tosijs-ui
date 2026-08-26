@@ -223,3 +223,152 @@ test('navigating away from full-screen brings the nav back', async ({
     `the measure is back: ${JSON.stringify(back)}`
   ).toBeLessThan(900)
 })
+
+const navState = (page: any) =>
+  page.evaluate(() => {
+    const sn = document.querySelector('tosi-sidenav') as any
+    const nav = document.querySelector('.doc-nav') as HTMLElement | null
+    const btn = document.querySelector(
+      'button.iconic[title="navigation"]'
+    ) as HTMLElement | null
+    return {
+      alwaysCompact: sn?.alwaysCompact ?? null,
+      value: sn?.value ?? null,
+      toggleVisible: btn ? btn.getBoundingClientRect().width > 0 : false,
+      navRight: nav ? Math.round(nav.getBoundingClientRect().right) : -1,
+    }
+  })
+
+test('the navigation button works on a full-screen page', async ({ page }) => {
+  /*
+  It did not, and it looked like it did — which is the worst combination. The button was
+  visible and its handler ran, but `applyFullScreen` was also wired to the sidenav's change
+  event: the click flipped the state, the sidenav changed, the handler fired, and the layout
+  was re-applied over the top. So the nav could not be opened at all on a full-screen page.
+  */
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/full-screen-demo/')
+  await expect
+    .poll(async () => (await navState(page)).value, { timeout: 15_000 })
+    .toBe('compact/content')
+
+  /*
+  Polled, not read once. The button's visibility rides a separate binding from the sidenav's
+  state, so it lands on its own schedule — asserting it the instant the state poll returned
+  failed on webkit while passing elsewhere, which is a race in the test rather than a defect.
+  */
+  await expect
+    .poll(async () => (await navState(page)).toggleVisible, { timeout: 10_000 })
+    .toBe(true)
+  const before = await navState(page)
+  expect(before.navRight, 'the nav starts off-screen').toBeLessThanOrEqual(0)
+
+  await page.evaluate(() =>
+    (
+      document.querySelector('button.iconic[title="navigation"]') as HTMLElement
+    )?.click()
+  )
+
+  /*
+  It returns to the NORMAL layout rather than taking the nav full-screen: at this width that
+  means nav beside content, which is what someone reaching for "navigation" wants. On a narrow
+  viewport the same click lands in compact/nav instead.
+  */
+  await expect
+    .poll(async () => (await navState(page)).navRight, { timeout: 10_000 })
+    .toBeGreaterThan(0)
+  const after = await navState(page)
+  expect(after.alwaysCompact, 'the full-screen presentation is left').toBe(
+    false
+  )
+  expect(after.value).toBe('normal')
+})
+
+test('the next full-screen page is full-screen again after an override', async ({
+  page,
+}) => {
+  /*
+  A reader's override lasts until they navigate, not beyond it. Applying the layout only on
+  transition — which is what stopped the button being undone — would otherwise leave the NEXT
+  full-screen page un-full-screened, because the wish never changed.
+  */
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/full-screen-demo/')
+  await expect
+    .poll(async () => (await navState(page)).value, { timeout: 15_000 })
+    .toBe('compact/content')
+
+  await page.evaluate(() =>
+    (
+      document.querySelector('button.iconic[title="navigation"]') as HTMLElement
+    )?.click()
+  )
+  await expect
+    .poll(async () => (await navState(page)).alwaysCompact, { timeout: 10_000 })
+    .toBe(false)
+
+  /*
+  Navigating to a full-screen page WITHOUT passing through a prose one, which is the path the
+  reset actually protects. Going via prose resets the flag as a side effect, so a test that took
+  that route passed even with the reset removed — mutation testing caught that, and this is the
+  version that fails without it.
+  */
+  await page.evaluate(() =>
+    (
+      document.querySelector(
+        'a.doc-link[href="/full-screen-demo/"]'
+      ) as HTMLElement
+    )?.click()
+  )
+  await expect
+    .poll(async () => (await navState(page)).navRight, { timeout: 15_000 })
+    .toBeLessThanOrEqual(0)
+  await expect
+    .poll(async () => (await navState(page)).alwaysCompact, { timeout: 15_000 })
+    .toBe(true)
+})
+
+test('hiding the nav on a NARROW screen does not outstay the request', async ({
+  page,
+}) => {
+  /*
+  The subtle half of `navVisible`. On a wide screen, hiding the nav has to force compact mode —
+  nothing else would take it off screen. On a narrow one the width already produces compact, so
+  forcing it as well would make the request permanent: the nav would stay away after the window
+  was widened, because nothing would ever clear the flag.
+
+  So the setter forces compact only when the width would not have. This asserts the consequence
+  rather than the flag: hide the nav while narrow, widen, and the normal layout comes back.
+  */
+  await page.setViewportSize({ width: 500, height: 900 })
+  await page.goto('/data-table/')
+  await page.waitForFunction(
+    () => !!document.querySelector('tosi-sidenav'),
+    undefined,
+    { timeout: 15_000 }
+  )
+  await expect
+    .poll(async () => (await navState(page)).value, { timeout: 10_000 })
+    .toMatch(/^compact\//)
+
+  await page.evaluate(() => {
+    const sn = document.querySelector('tosi-sidenav') as any
+    sn.navVisible = false
+  })
+  await expect
+    .poll(async () => (await navState(page)).value, { timeout: 10_000 })
+    .toBe('compact/content')
+
+  // Widen: the responsive behaviour must be intact, not overridden for good.
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await expect
+    .poll(async () => (await navState(page)).value, { timeout: 10_000 })
+    .toBe('normal')
+  const m = await navState(page)
+  expect(
+    m.alwaysCompact,
+    `a narrow-screen request must not have been made permanent: ${JSON.stringify(
+      m
+    )}`
+  ).toBe(false)
+})

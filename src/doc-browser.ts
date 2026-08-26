@@ -791,6 +791,16 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   and so may never fire at all on a normal-width page.
   */
   let wantsFullScreen = false
+  /*
+  What we last PUSHED onto the sidenav, so the user's own toggle is not overwritten.
+
+  The first version applied the layout on every call, and `applyFullScreen` is called from the
+  sidenav's change handler — so clicking "navigation" flipped `contentVisible`, the sidenav
+  changed state, the handler fired, and the layout was re-applied on top. The nav button looked
+  live and did nothing. Applying only on TRANSITION means a full-screen page sets itself up once
+  and then leaves the reader alone.
+  */
+  let appliedFullScreen: boolean | null = null
   const applyFullScreen = () => {
     /*
     Resolved from THIS browser's own container when the change event has not introduced it yet.
@@ -803,8 +813,11 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       ) as TosiSidenav | null
     }
     if (!sidenav) return
-    sidenav.alwaysCompact = wantsFullScreen
-    if (wantsFullScreen) sidenav.contentVisible = true
+    if (appliedFullScreen === wantsFullScreen) return
+    // The same one control the nav button uses — the layout is just asking for the nav to be
+    // away, and the sidenav decides how that is achieved.
+    sidenav.navVisible = !wantsFullScreen
+    appliedFullScreen = wantsFullScreen
   }
 
   const headerContent: any[] = [
@@ -825,7 +838,9 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
           },
         },
         onClick() {
-          if (sidenav) sidenav.contentVisible = !sidenav.contentVisible
+          // Read it, flip it. `<tosi-sidenav>` resolves what that means at this width; a
+          // button should not have to know, and this one used to.
+          if (sidenav) sidenav.navVisible = !sidenav.navVisible
         },
       },
       icons.menu()
@@ -992,6 +1007,13 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       rules for two genuinely different DOMs, not two fixes for one bug.
       */
       wantsFullScreen = doc.layout === 'full-screen'
+      /*
+      Forced on every navigation. Without this, opening the nav on one full-screen page (which
+      turns `alwaysCompact` off) would leave the NEXT full-screen page not full-screen, because
+      the wish had not changed and the transition check would skip it. A reader's override is
+      meant to last until they navigate, not beyond it.
+      */
+      appliedFullScreen = null
       applyFullScreen()
     }
     rewriteContentLinks()
