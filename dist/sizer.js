@@ -85,7 +85,14 @@ export class TosiSizer extends XinComponent {
             this.target = this.parentElement;
         }
         const PASSIVE = { passive: true };
-        this.addEventListener('mousedown', this.resizeTarget, PASSIVE);
+        /*
+        `mousedown` is deliberately NOT passive — `trackDrag` calls `preventDefault()` on it, and a
+        passive listener makes that a silent no-op. See track-drag.ts for what Firefox does without
+        it. `passive` costs nothing to drop here: its practical value is silencing the console
+        warning about handlers that delay scrolling, and that warning only ever applied to touch and
+        wheel. `touchstart` stays passive for exactly that reason.
+        */
+        this.addEventListener('mousedown', this.resizeTarget);
         this.addEventListener('touchstart', this.resizeTarget, PASSIVE);
     }
 }

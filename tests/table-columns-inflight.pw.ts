@@ -149,20 +149,7 @@ test('a resize still moves widths after the column set is pinned to the DOM', as
 
 test('an in-progress column drag survives the columns being reassigned under it', async ({
   page,
-  browserName,
 }) => {
-  /*
-  Skipped on firefox because column resizing does not work there AT ALL — see #107. A plain
-  drag with no reassignment anywhere near it applies one step and then freezes (+60px -> 162,
-  +120px -> still 162, against 210 then 270 on the other two engines), because firefox stops
-  delivering mousemove after the first event. Asserting the mid-drag behaviour there would
-  fail on a defect this test is not about, and skipping is honest where a lowered expectation
-  would quietly bless it.
-  */
-  test.skip(
-    browserName === 'firefox',
-    'column resize is broken on firefox independently of this — #107'
-  )
   /*
   The OTHER half of the reporting app's "resize funkiness", and a different defect from the
   torn grid above — this one is not a mismatch at all, it is a drag that silently stops working.

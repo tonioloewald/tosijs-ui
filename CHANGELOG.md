@@ -40,6 +40,32 @@ session, receives the loader, resolves `serverUrl` to its own origin (not `local
 attaches the widget, opens the relayed socket, appears in `hj windows`, and answers `hj eval`
 and `hj navigate`.
 
+### Dragging works on Firefox now — every draggable, not just table columns ([#107](https://github.com/tonioloewald/tosijs-ui/issues/107))
+
+**The first drag on a freshly-loaded page did not work in Firefox.** The thing you grabbed
+stayed put and random text highlighted instead; it only started behaving once you had clicked
+somewhere — anywhere — to settle Firefox's selection state. Land on a page and drag a column
+edge, which is an entirely ordinary thing to do, and the first attempt failed.
+
+This affected **every** `trackDrag` consumer — `<tosi-sizer>`, `<tosi-float>`,
+`<tosi-editable-rect>` and `<tosi-table>` column resizing — and had done since the drag tracker
+landed in **v0.5.1**. Measured with no prior click: `<tosi-sizer>` did not move at all, a table
+column applied one 12px step and froze. All three engines now behave identically (150 → 210 →
+270 on the same gesture, and nothing selected).
+
+Two parts, because either alone does nothing. `trackDrag` calls `preventDefault()` on the
+initiating mousedown, which is narrow rather than blunt — it only ever runs once a component has
+already decided a drag is starting, so ordinary clicks, focus and selection are untouched. And
+`<tosi-sizer>`, `<tosi-float>` and `<tosi-editable-rect>` had to stop registering their
+**mousedown** listeners as `passive`, because a passive listener makes `preventDefault` a silent
+no-op — which is exactly why the table (whose listener was never passive) improved first while
+the others stayed dead. Nothing is lost: `passive`'s practical value is silencing the console
+warning about handlers that delay scrolling, and that warning only ever applied to touch and
+wheel. `touchstart` stays passive.
+
+It is Firefox behaving badly, and that is a diagnosis rather than an excuse — the workaround is
+cheap and users do not care whose bug it is.
+
 ### Page metadata: `layout: full-width`, so a route can leave the reading column ([#105](https://github.com/tonioloewald/tosijs-ui/issues/105))
 
 Prose wants a measure — 44em is roughly what people read comfortably, and it stays the default.

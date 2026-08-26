@@ -2437,11 +2437,8 @@ export class TosiTable extends WebComponent {
       continues, rebased on the new width — `origWidth + dx` against a width the caller has
       since changed would make the column jump by the difference.
 
-      NOTE: this cannot help firefox, where column resizing is independently broken (#107) —
-      firefox applies one drag step and then stops delivering mousemove at all, with or without
-      any reassignment. Deferring the render to keep the grabbed element alive was tried and
-      does not help either, because the events stop for a reason unrelated to the DOM; it also
-      risks wedging `_resizing` on forever when the mouseup never arrives.
+      (Firefox needed a separate fix before any of this was observable there — it turned the
+      first drag on a fresh page into a text selection. See track-drag.ts, and #107.)
       */
       const prop = grabbed.prop
       let anchor = grabbed

@@ -421,15 +421,22 @@ export class EditableRect extends Component {
         const { left, right, top, bottom, lockLeft, lockRight, lockTop, lockBottom, move, resize, rotate, } = this.parts;
         const PASSIVE = { passive: true };
         [left, right, top, bottom].forEach((elt) => {
-            elt.addEventListener('mousedown', this.adjustSize, PASSIVE);
+            /*
+            `mousedown` is deliberately NOT passive — `trackDrag` calls `preventDefault()` on it, and a
+            passive listener makes that a silent no-op. See track-drag.ts for what Firefox does without
+            it. `passive` costs nothing to drop here: its practical value is silencing the console
+            warning about handlers that delay scrolling, and that warning only ever applied to touch and
+            wheel. `touchstart` stays passive for exactly that reason.
+            */
+            elt.addEventListener('mousedown', this.adjustSize);
             elt.addEventListener('touchstart', this.adjustSize, PASSIVE);
         });
         [lockLeft, lockRight, lockTop, lockBottom].forEach((elt) => {
             elt.addEventListener('click', this.toggleLock);
         });
-        resize.addEventListener('mousedown', this.resize, PASSIVE);
-        move.addEventListener('mousedown', this.adjustPosition, PASSIVE);
-        rotate.addEventListener('mousedown', this.adjustRotation, PASSIVE);
+        resize.addEventListener('mousedown', this.resize);
+        move.addEventListener('mousedown', this.adjustPosition);
+        rotate.addEventListener('mousedown', this.adjustRotation);
         resize.addEventListener('touchstart', this.resize, PASSIVE);
         move.addEventListener('touchstart', this.adjustPosition, PASSIVE);
         rotate.addEventListener('touchstart', this.adjustRotation, PASSIVE);

@@ -105,6 +105,33 @@ export const trackDrag = (
   const isTouchEvent = event.type.startsWith('touch')
 
   if (!isTouchEvent) {
+    /*
+    Stop the browser starting a TEXT SELECTION out of this mousedown.
+
+    Firefox otherwise treats the first drag on a freshly-loaded page as a selection gesture: the
+    thing you grabbed does not move, random text highlights instead, and the drag only starts
+    behaving once you have clicked somewhere — anywhere — to settle Firefox's selection state.
+    Land on a page and drag a column edge, which is an entirely ordinary thing to do, and the
+    first attempt fails. Measured across `trackDrag`'s consumers with no prior click:
+    `<tosi-sizer>` did not move at all, and a `<tosi-table>` column applied one 12px step and
+    froze. Chromium and webkit were unaffected. It has been this way since the TRACKER overlay
+    landed in v0.5.1.
+
+    `preventDefault` here is narrow, not blunt, and that is why it is the right place for it:
+    `trackDrag` is only ever called by a component that has ALREADY decided a drag is starting —
+    the pointer is on a column boundary, a sizer, a float's handle. It is not attached to
+    mousedown generally, so ordinary clicks, focus and text selection everywhere else are
+    untouched.
+
+    It only works if the caller's `mousedown` listener is NOT passive — a passive listener makes
+    `preventDefault` a silent no-op, which is why `<tosi-sizer>`, `<tosi-float>` and
+    `<tosi-editable-rect>` had to drop `PASSIVE` from theirs. Nothing is lost by that: passive's
+    practical value is silencing the console warning about handlers that delay scrolling, and
+    that warning only ever applied to touch and wheel.
+
+    The touch branch below already does the equivalent on `touchmove`.
+    */
+    event.preventDefault()
     const origX = event.clientX
     const origY = event.clientY
 
