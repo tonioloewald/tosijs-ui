@@ -79,6 +79,11 @@ export default defineSiteConfig({
   // Inject the haltija dev-channel so a coding agent (Claude) can drive the live
   // dev page via `hj`. Dev-only, serve-time inject, never bundled / never in the
   // built output. Spins up a server-only HTTPS channel on 8701 (mkcert-trusted).
+  //
+  // `'tunnel'` instead of `true` additionally bridges the channel same-origin over the
+  // tunnel, so an agent can drive a page running on a headset or a phone (#104). Left OFF
+  // here deliberately: it is a per-machine decision, not a property of the project, and a
+  // committed `'tunnel'` would enable it for everyone who clones.
   haltijaDev: true,
 
   // EXPERIMENTAL (import-resolver-plan.md): the import-resolver service worker, so live

@@ -1,6 +1,9 @@
 import { test, expect } from 'bun:test'
 import {
   haltijaLoaderSnippet,
+  haltijaTunnelLoaderSnippet,
+  HALTIJA_BRIDGE_WS,
+  HALTIJA_BRIDGE_COMPONENT,
   isLoopbackAddress,
   resolveIdleMs,
   resolveLimitMb,
@@ -408,4 +411,41 @@ test('size in the key separates same-millisecond writes of different content', a
   expect(key('/docs.json', 1000, 400)).not.toBe(key('/docs.json', 1000, 402))
   // …and identical inputs still hit, or the cache would be pointless.
   expect(key('/docs.json', 1000, 400)).toBe(key('/docs.json', 1000, 400))
+})
+
+test('the tunnel loader derives its socket URL from the page origin, not localhost', () => {
+  const s = haltijaTunnelLoaderSnippet()
+  /*
+  The entire point of the tunnel bridge. Over the tunnel `localhost` is the HEADSET, so a
+  hardcoded `localhost:8701` — which is what every file in the upstream loader chain contains
+  — resolves on the wrong machine. Anything that reintroduces one here silently breaks the
+  remote case while still passing on the developer's own laptop, where it happens to work.
+  */
+  expect(s).not.toContain('localhost')
+  expect(s).not.toContain('8701')
+  expect(s).toContain('location.origin')
+})
+
+test('the tunnel loader upgrades the scheme rather than assuming one', () => {
+  const s = haltijaTunnelLoaderSnippet()
+  // http -> ws and https -> wss both fall out of replacing the `http` prefix. The tunnel
+  // listener is plain HTTP and the public origin is HTTPS, so BOTH occur in practice.
+  expect(s).toContain("replace(/^http/,'ws')")
+  expect(s).toContain(HALTIJA_BRIDGE_WS)
+  expect(s).toContain(HALTIJA_BRIDGE_COMPONENT)
+})
+
+test('the tunnel loader does not attach inside an iframe', () => {
+  // Same reason as the localhost loader: the doc-test runner executes pages in hidden
+  // iframes, and a second widget per frame is both wrong and noisy.
+  expect(haltijaTunnelLoaderSnippet()).toContain('self===top')
+})
+
+test('the two loaders are different mechanisms and neither leaks into the other', () => {
+  const local = haltijaLoaderSnippet(8701)
+  const tunnel = haltijaTunnelLoaderSnippet()
+  // The localhost loader must keep its hostname gate — it is what makes `haltijaDev: true`
+  // safe to leave on. The tunnel loader must NOT carry it, since it exists to run elsewhere.
+  expect(local).toContain('location.hostname')
+  expect(tunnel).not.toContain('location.hostname')
 })

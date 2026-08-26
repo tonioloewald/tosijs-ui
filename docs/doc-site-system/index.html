@@ -512,7 +512,7 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <tr>
 <td><code>haltijaDev</code></td>
 <td><code>false</code></td>
-<td>give a coding agent eyes on your running dev page (see below); also <code>HALTIJA_DEV=1</code></td>
+<td>give a coding agent eyes on your running dev page (see below); also <code>HALTIJA_DEV=1</code>. <code>&#39;tunnel&#39;</code> additionally bridges it over the tunnel so a headset/phone can be driven (session-gated)</td>
 </tr>
 <tr>
 <td><code>openBrowser</code></td>
@@ -764,6 +764,43 @@ agent&#39;s context (add <code>--format webp --scale 0.5</code> for a compact ca
 <p>The channel tracks haltija&#39;s <strong><code>@beta</code></strong> dist-tag, where the in-browser WebRTC
 screen capture landed ahead of <code>latest</code>.</p>
 </blockquote>
+<h5><code>haltijaDev: &#39;tunnel&#39;</code> — drive a page that is NOT on this machine</h5>
+<p><code>true</code> is localhost-gated, and that gate is exactly what stops the feature working where
+it is worth the most: a <strong>VR headset</strong>, or a phone. Debugging in a headset is close to
+blind — no readable console, no devtools, no way to inspect the DOM without taking it off,
+and taking it off is the thing you cannot do, because the bug is usually <em>about</em> being in
+it: viewport, pose, input, stereo layout.</p>
+<p>Set <code>haltijaDev: &#39;tunnel&#39;</code> and the channel is also served <strong>same-origin over the tunnel</strong>,
+so the page in the headset attaches to the haltija running on your machine and <code>hj</code> drives
+it exactly as it drives a local page:</p>
+<pre><code class="language-typescript">export default defineSiteConfig({
+  haltijaDev: &#39;tunnel&#39;,
+  preview: { tunnel: { url: &#39;https://myproject.edit.dev.example.com&#39; } },
+})
+</code></pre>
+<p>Redeem an edit link on the device (<code>tosijs-tunnel --link</code> gives you a 7-character code),
+load the page, and it appears in <code>hj windows</code> like any other.</p>
+<p><strong>Why it is a separate opt-in, not part of <code>true</code>.</strong> <code>true</code> means &quot;an agent may drive the
+page on this machine&quot;, and the localhost gate is what makes that safe to leave on.
+Upgrading must never silently turn that into &quot;an agent may drive the page wherever it is
+reachable&quot;. <code>HALTIJA_DEV=1</code> deliberately does <strong>not</strong> enable it either — that variable is a
+convenience toggle, and this is not a convenience.</p>
+<p><strong>What authorizes it.</strong> Every piece — the loader, the component, and the socket — requires
+a <strong>live dev session cookie</strong>, the same credential that gates source writes, decided by the
+same predicate (<code>mayDriveWithAgent</code>, which delegates to <code>mayWriteSource</code>). Driving a page
+with an agent is at least as powerful as writing source, so it gets no weaker a gate. As
+everywhere else in this server, what authorizes is the <strong>listener</strong>, not the peer address —
+a reverse tunnel counterfeits &quot;local&quot; by construction. Unauthorized requests get a <strong>404</strong>,
+not a 403: whether this project enabled the bridge is nobody&#39;s business but the session
+holder&#39;s.</p>
+<p><strong>Why same-origin.</strong> Over the tunnel, <code>localhost</code> is the <strong>headset</strong>. Every hardcoded
+<code>https://localhost:8701</code> in the upstream loader chain resolves on the wrong machine. So the
+dev server serves the two things the page actually needs — the component and the socket —
+from the page&#39;s own origin under <code>/__haltija/</code>, and relays the socket to the local channel.
+Nothing has to reach <em>into</em> the device: the page dials <strong>out</strong>, which is what makes this a
+relay rather than a hole.</p>
+<p><strong>Requires haltija to be running</strong> on your machine (<code>bun start</code> starts the channel). If it
+is not, the component proxy answers <code>502</code> and says so rather than failing silently.</p>
 <h4><code>preview</code> — deploy the built site to a host you control</h4>
 <p>A doc site is a folder of static files, so sharing one is a copy, not a pipeline. Set a
 host and deploy:</p>

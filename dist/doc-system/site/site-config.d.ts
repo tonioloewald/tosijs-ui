@@ -471,8 +471,26 @@ export interface SiteConfig {
      * it never touches the built output. Local dev only; off by default. Can also
      * be toggled with `HALTIJA_DEV=1`. Requires mkcert (already needed for the dev
      * server's HTTPS) so the 8701 cert is trusted with no browser warning.
+     *
+     * ### `'tunnel'` — drive a page that is NOT on this machine
+     *
+     * `haltijaDev: 'tunnel'` additionally serves the channel **same-origin over the tunnel**, so
+     * an agent can drive a page running on a headset or a phone. This is the case the localhost
+     * gate above exists to prevent, so it is a separate opt-in rather than part of `true`:
+     * upgrading must never hand anyone an agent-drivable page on the internet.
+     *
+     * Over the tunnel every piece of it — the loader, the component, and the socket — requires a
+     * **live dev session cookie**, the same credential that gates source writes, decided by the
+     * same predicate (`mayDriveWithAgent`, which delegates to `mayWriteSource`). Driving a page
+     * with an agent is at least as powerful as writing source, so it gets no weaker a gate.
+     * Redeem a link (`tosijs-tunnel --link`) on the device first, exactly as you do to edit.
+     *
+     * Why same-origin: over the tunnel, `localhost` is the HEADSET. Every hardcoded
+     * `https://localhost:8701` in the upstream loader points at the wrong machine, so the dev
+     * server proxies the component and the WebSocket under `/__haltija/` on the page's own
+     * origin instead.
      */
-    haltijaDev?: boolean;
+    haltijaDev?: boolean | 'tunnel';
 }
 /** Identity helper that gives a site config module full type-checking + IDE help. */
 export declare function defineSiteConfig(config: SiteConfig): SiteConfig;

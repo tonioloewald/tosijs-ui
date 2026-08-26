@@ -18,7 +18,7 @@ import { auditDependencies, reportAudit } from './audit-guard.js';
 import { openDevBrowser } from './open-browser.js';
 import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, validSession, mayWriteSource, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, validSession, mayWriteSource, mayDriveWithAgent, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
 /**
  * Every path the dev server watches for changes.
  *
@@ -240,6 +240,33 @@ export function haltijaLoaderSnippet(httpsPort) {
     return (`<script>self===top&&/^localhost$|^127\\./.test(location.hostname)` +
         `&&import('https://localhost:${httpsPort}/dev.js')</script>`);
 }
+/**
+ * The SAME-ORIGIN loader, for a page reached over the tunnel (`haltijaDev: 'tunnel'`).
+ *
+ * Over the tunnel `localhost` is the HEADSET, so every hardcoded `https://localhost:8701` in
+ * the upstream chain points at the wrong machine. This skips that chain entirely rather than
+ * asking haltija to change: `dev.js` and `inject.js` exist only to set `__haltija_config__`
+ * and load `component.js`, and both carry their own localhost gates. `component.js` has NO
+ * such gate — it reads `__haltija_config__.serverUrl` and falls back to localhost only when
+ * the config is absent — so setting the config ourselves and loading the component directly
+ * is both sufficient and the only part that can work remotely.
+ *
+ * `serverUrl` is derived from the page's own origin at runtime, not baked in, because the
+ * tunnel hostname is not known when this string is built and can differ per request.
+ *
+ * `self===top` is kept from the localhost loader: an iframe should not attach a second widget,
+ * and the doc-test runner executes pages in hidden iframes.
+ */
+export function haltijaTunnelLoaderSnippet() {
+    return (`<script>self===top&&(function(){` +
+        `window.__haltija_config__={serverUrl:location.origin.replace(/^http/,'ws')+'${HALTIJA_BRIDGE_WS}'};` +
+        `var s=document.createElement('script');s.src='${HALTIJA_BRIDGE_COMPONENT}';` +
+        `document.head.appendChild(s)})()</script>`);
+}
+/** Same-origin paths the tunnel bridge serves. One place, so the loader and the routes agree. */
+export const HALTIJA_BRIDGE_PREFIX = '/__haltija/';
+export const HALTIJA_BRIDGE_WS = '/__haltija/ws';
+export const HALTIJA_BRIDGE_COMPONENT = '/__haltija/component.js';
 /**
  * Reclaim the port we are about to bind, from the process LISTENING on it.
  *
@@ -574,9 +601,20 @@ export async function devServer(config, opts = {}) {
     const haltijaDev = !testMode &&
         !haltijaOff &&
         (config.haltijaDev === true ||
+            config.haltijaDev === 'tunnel' ||
             process.env.HALTIJA_DEV === '1' ||
             process.env.HALTIJA_DEV === 'true');
+    /*
+    Serving the channel over the TUNNEL is a second, narrower opt-in — `haltijaDev: 'tunnel'`,
+    never `true` and never the env var. `true` means "an agent may drive the page on THIS
+    machine", and the localhost gate is what makes that safe to leave on; turning it into "an
+    agent may drive the page wherever it is reachable" on a config upgrade would be the sort of
+    silent privilege escalation nobody asks for. The env var is deliberately excluded too: it is
+    a convenience toggle, and this is not a convenience.
+    */
+    const haltijaTunnel = haltijaDev && config.haltijaDev === 'tunnel';
     const HALTIJA_SNIPPET = haltijaLoaderSnippet(HALTIJA_HTTPS_PORT);
+    const HALTIJA_TUNNEL_SNIPPET = haltijaTunnelLoaderSnippet();
     /*
     What the far end has to tell you. `ok: true` means nothing to report and nothing
     is injected into served pages. A failed rebuild sets it; the next good build
@@ -771,10 +809,47 @@ export async function devServer(config, opts = {}) {
     }
     // Serve a resolved file, injecting the haltija dev-channel loader and/or a build
     // status into HTML pages. Serve-time only — neither touches the built output on
+    /*
+    MAY THIS REQUEST ATTACH THE HALTIJA BRIDGE?
+  
+    One predicate, used by all three pieces — the injected loader, the component proxy, and the
+    socket upgrade — because a gate that covers two of the three is not a gate. `mayDriveWithAgent`
+    delegates to `mayWriteSource`, so this is the same rule that decides source writes: driving a
+    page with an agent is at least as powerful as writing to it.
+  
+    `peer` is only consulted for the direct case; over the tunnel the session is the whole answer,
+    because "looks local" is exactly what a reverse tunnel counterfeits.
+    */
+    function haltijaBridgeAllowed(request, srv, viaTunnel) {
+        // No request, no cookie, no session — and respondFile can legitimately be called without
+        // one (the build's own reads). Refusing is the only safe reading of "cannot tell".
+        if (!haltijaTunnel || !request)
+            return false;
+        return mayDriveWithAgent({
+            viaTunnel,
+            peer: srv?.requestIP?.(request)?.address,
+            hasValidSession: validSession(auth, readCookie(request.headers.get('cookie'), SESSION_COOKIE), Date.now()),
+        });
+    }
     // disk, and non-HTML assets are streamed untouched.
     async function respondFile(filePath, request, viaTunnel = false) {
-        const extras = (haltijaDev ? HALTIJA_SNIPPET : '') +
-            (testMode ? '' : statusSnippet(request, viaTunnel));
+        /*
+        WHICH loader, decided per request rather than once at boot.
+    
+        Direct requests get the localhost loader, whose own hostname test makes it inert anywhere
+        else. Tunnel requests get the same-origin bridge, and ONLY with a live session — the same
+        credential and the same predicate that gate source writes. A tunnel request without one
+        gets no loader at all rather than a broken one, so an unauthenticated reader cannot even
+        tell the bridge is configured.
+        */
+        const haltijaExtra = !haltijaDev
+            ? ''
+            : viaTunnel
+                ? haltijaTunnel && haltijaBridgeAllowed(request, undefined, viaTunnel)
+                    ? HALTIJA_TUNNEL_SNIPPET
+                    : ''
+                : HALTIJA_SNIPPET;
+        const extras = haltijaExtra + (testMode ? '' : statusSnippet(request, viaTunnel));
         const encoding = negotiateEncoding(request?.headers.get('accept-encoding') ?? null);
         if (extras && filePath.endsWith('.html')) {
             const html = await Bun.file(filePath).text();
@@ -1391,6 +1466,52 @@ export async function devServer(config, opts = {}) {
         // Source read/write for in-browser "edit page source" (opt-in, dev only).
         // A write lands in the repo file; the chokidar watcher then rebuilds and
         // the page refreshes — the build itself is the preview.
+        /*
+        THE HALTIJA TUNNEL BRIDGE — two routes, both gated by `haltijaBridgeAllowed`.
+    
+        Over the tunnel, `localhost` is the remote device, so the upstream chain's hardcoded
+        `https://localhost:8701` URLs all point at the wrong machine. These re-serve the two things
+        the page actually needs from the page's OWN origin: the component, and the socket.
+    
+        404 rather than 403 when the bridge is off or unauthorized. A reader with no session should
+        not be able to distinguish "this project enabled the bridge" from "this path means nothing
+        here" — the paths are guessable and the answer is nobody's business but the session holder's.
+        */
+        if (reqPath.startsWith(HALTIJA_BRIDGE_PREFIX)) {
+            if (!haltijaBridgeAllowed(request, srv, viaTunnel)) {
+                return new Response('not found', { status: 404 });
+            }
+            if (reqPath === HALTIJA_BRIDGE_COMPONENT) {
+                /*
+                Proxied, not redirected. A redirect would send the DEVICE to `https://localhost:8701`,
+                which is the device's own loopback — the exact confusion this bridge exists to remove.
+                The fetch happens here, on the machine where that URL means something.
+                */
+                try {
+                    const upstream = await fetch(`https://localhost:${HALTIJA_HTTPS_PORT}/component.js`, { tls: { rejectUnauthorized: false } });
+                    if (!upstream.ok) {
+                        return new Response(`haltija channel returned ${upstream.status} — is it running?`, { status: 502, headers: { 'Content-Type': 'text/plain' } });
+                    }
+                    return new Response(await upstream.arrayBuffer(), {
+                        headers: {
+                            'Content-Type': 'application/javascript; charset=utf-8',
+                            'Cache-Control': 'no-store',
+                        },
+                    });
+                }
+                catch (e) {
+                    return new Response(`haltija channel unreachable on ${HALTIJA_HTTPS_PORT}: ${e.message}`, { status: 502, headers: { 'Content-Type': 'text/plain' } });
+                }
+            }
+            if (reqPath === HALTIJA_BRIDGE_WS) {
+                if (srv?.upgrade?.(request, { data: { kind: 'haltija-bridge' } })) {
+                    // Upgraded — Bun takes the socket from here; returning a Response would be an error.
+                    return undefined;
+                }
+                return new Response('expected a websocket upgrade', { status: 400 });
+            }
+            return new Response('not found', { status: 404 });
+        }
         if (reqPath === '/__docstore/source') {
             // Handle this endpoint UNCONDITIONALLY so it never falls through to the SPA
             // index.html fallback below. A 200-with-HTML there is silently corrupting:
@@ -1477,6 +1598,88 @@ export async function devServer(config, opts = {}) {
     over the LAN is exactly what the mkcert cert covers `<host>.local` FOR, so the default
     is wrong for this server specifically.
     */
+    /*
+    THE SOCKET PUMP: page <-> dev server <-> haltija.
+  
+    The page dials OUT (that is what makes this work at all — nothing has to reach INTO a headset),
+    so the bridge is a plain bidirectional relay between the socket the device opened and a socket
+    we open to the local haltija channel. `hj` then talks to that same channel exactly as it does
+    for a localhost page; it never learns the page is remote.
+  
+    The queue is not optional. The device's socket is open the moment `open()` fires, while the
+    upstream connection is still being established, and a widget that says hello immediately would
+    otherwise have that first frame dropped — which presents as "it attached but the agent sees
+    nothing", the least debuggable possible symptom.
+  
+    `rejectUnauthorized: false` is scoped to this one hop: it is loopback, to a cert this machine
+    minted, and the alternative is making the bridge fail on any machine whose mkcert CA is not
+    installed for Bun specifically. It grants nothing a local process could not already do.
+    */
+    const haltijaSockets = new WeakMap();
+    const haltijaWebSocketHandlers = {
+        open(ws) {
+            const upstream = new WebSocket(`wss://localhost:${HALTIJA_HTTPS_PORT}/ws/browser`, { tls: { rejectUnauthorized: false } });
+            const state = {
+                upstream,
+                queue: [],
+                ready: false,
+            };
+            haltijaSockets.set(ws, state);
+            upstream.onopen = () => {
+                state.ready = true;
+                for (const frame of state.queue)
+                    upstream.send(frame);
+                state.queue.length = 0;
+            };
+            upstream.onmessage = (event) => {
+                try {
+                    ws.send(event.data);
+                }
+                catch {
+                    // The device went away mid-frame; close() will tidy up.
+                }
+            };
+            upstream.onclose = () => {
+                try {
+                    ws.close();
+                }
+                catch {
+                    /* already gone */
+                }
+            };
+            upstream.onerror = () => {
+                console.warn(`⚠️  haltija bridge: could not reach the channel on ${HALTIJA_HTTPS_PORT}. ` +
+                    `Is haltija running?`);
+                try {
+                    ws.close();
+                }
+                catch {
+                    /* already gone */
+                }
+            };
+        },
+        message(ws, message) {
+            const state = haltijaSockets.get(ws);
+            if (!state)
+                return;
+            if (state.ready)
+                state.upstream.send(message);
+            else
+                state.queue.push(message);
+        },
+        close(ws) {
+            const state = haltijaSockets.get(ws);
+            if (!state)
+                return;
+            haltijaSockets.delete(ws);
+            try {
+                state.upstream.close();
+            }
+            catch {
+                /* already gone */
+            }
+        },
+    };
     Bun.serve({
         port: PORT,
         idleTimeout: DEV_IDLE_TIMEOUT_SECONDS,
@@ -1485,6 +1688,7 @@ export async function devServer(config, opts = {}) {
             cert: Bun.file('./tls/certificate.pem'),
         },
         fetch: (request, srv) => handleRequest(request, srv, false),
+        websocket: haltijaWebSocketHandlers,
     });
     /*
     The TUNNEL listener: plain HTTP, bound to loopback, and the ONLY thing `ssh -R`
@@ -1522,6 +1726,7 @@ export async function devServer(config, opts = {}) {
                 idleTimeout: DEV_IDLE_TIMEOUT_SECONDS,
                 hostname: '127.0.0.1',
                 fetch: (request, srv) => handleRequest(request, srv, true),
+                websocket: haltijaWebSocketHandlers,
             });
             console.log(`Tunnel listener on http://127.0.0.1:${tunnelPort} (loopback only; writes require a session)`);
         }

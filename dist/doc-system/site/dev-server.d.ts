@@ -85,6 +85,28 @@ export declare function resolveLimitMb(configMb: number | undefined, envMb: stri
 export { isLoopbackAddress };
 export declare function haltijaIsDrivable(stdout: string): boolean;
 export declare function haltijaLoaderSnippet(httpsPort: number): string;
+/**
+ * The SAME-ORIGIN loader, for a page reached over the tunnel (`haltijaDev: 'tunnel'`).
+ *
+ * Over the tunnel `localhost` is the HEADSET, so every hardcoded `https://localhost:8701` in
+ * the upstream chain points at the wrong machine. This skips that chain entirely rather than
+ * asking haltija to change: `dev.js` and `inject.js` exist only to set `__haltija_config__`
+ * and load `component.js`, and both carry their own localhost gates. `component.js` has NO
+ * such gate — it reads `__haltija_config__.serverUrl` and falls back to localhost only when
+ * the config is absent — so setting the config ourselves and loading the component directly
+ * is both sufficient and the only part that can work remotely.
+ *
+ * `serverUrl` is derived from the page's own origin at runtime, not baked in, because the
+ * tunnel hostname is not known when this string is built and can differ per request.
+ *
+ * `self===top` is kept from the localhost loader: an iframe should not attach a second widget,
+ * and the doc-test runner executes pages in hidden iframes.
+ */
+export declare function haltijaTunnelLoaderSnippet(): string;
+/** Same-origin paths the tunnel bridge serves. One place, so the loader and the routes agree. */
+export declare const HALTIJA_BRIDGE_PREFIX = "/__haltija/";
+export declare const HALTIJA_BRIDGE_WS = "/__haltija/ws";
+export declare const HALTIJA_BRIDGE_COMPONENT = "/__haltija/component.js";
 /** br if the client takes it, else gzip, else nothing. */
 export declare function negotiateEncoding(accept: string | null): 'br' | 'gzip' | null;
 /** Is this worth compressing? Already-compressed formats only get bigger. */

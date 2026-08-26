@@ -182,6 +182,7 @@ test('the redirect target has the token stripped', () => {
 import { isLoopbackAddress as serverSideLoopback } from './dev-server.js'
 import {
   mayWriteSource,
+  mayDriveWithAgent,
   isLoopbackAddressForAuth,
   isProxiedRequest,
 } from './dev-auth.js'
@@ -858,4 +859,57 @@ test('an expired token is still refused — arrival time widens nothing', () => 
   const { ttlMs } = resolveLinkSettings(undefined)
   const token = issueLink(state, NOW, ttlMs)
   expect(redeemLink(state, token, NOW + ttlMs + 1)).toBe(null)
+})
+
+/*
+Driving a page with an agent is at least as powerful as writing source: an agent that can
+evaluate script in the page reads whatever the page reads and acts as the logged-in user.
+So the rule is not merely SIMILAR to `mayWriteSource`, it is the same rule, and these assert
+that rather than trusting the delegation to stay put.
+*/
+test('mayDriveWithAgent: over the tunnel a session is required, and sufficient', () => {
+  expect(
+    mayDriveWithAgent({ viaTunnel: true, peer: '::1', hasValidSession: false })
+  ).toBe(false)
+  expect(
+    mayDriveWithAgent({ viaTunnel: true, peer: '::1', hasValidSession: true })
+  ).toBe(true)
+})
+
+test('mayDriveWithAgent: a loopback peer address does NOT authorize over the tunnel', () => {
+  // The whole reason the listener decides: a reverse tunnel makes every peer look local.
+  for (const peer of ['127.0.0.1', '::1', '::ffff:127.0.0.1', 'localhost']) {
+    expect(
+      mayDriveWithAgent({ viaTunnel: true, peer, hasValidSession: false })
+    ).toBe(false)
+  }
+})
+
+test('mayDriveWithAgent: direct requests follow the loopback rule, session or not', () => {
+  expect(
+    mayDriveWithAgent({
+      viaTunnel: false,
+      peer: '127.0.0.1',
+      hasValidSession: false,
+    })
+  ).toBe(true)
+  expect(
+    mayDriveWithAgent({
+      viaTunnel: false,
+      peer: '192.168.1.50',
+      hasValidSession: true,
+    })
+  ).toBe(false)
+})
+
+test('mayDriveWithAgent: it agrees with mayWriteSource on every combination', () => {
+  // One rule, two names. If they ever diverge it must be a deliberate edit here, not drift.
+  for (const viaTunnel of [true, false]) {
+    for (const hasValidSession of [true, false]) {
+      for (const peer of ['127.0.0.1', '::1', '10.0.0.4', undefined, null]) {
+        const opts = { viaTunnel, peer, hasValidSession }
+        expect(mayDriveWithAgent(opts)).toBe(mayWriteSource(opts))
+      }
+    }
+  }
 })

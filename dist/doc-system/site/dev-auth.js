@@ -418,6 +418,21 @@ export function mayWriteSource(opts) {
     return isLoopbackAddressForAuth(opts.peer);
 }
 /**
+ * Who may attach the haltija dev channel — i.e. let an agent DRIVE this page.
+ *
+ * Deliberately the same rule as `mayWriteSource`, delegating rather than restating it, because
+ * driving a page with an agent is at least as powerful as writing source: an agent that can
+ * evaluate script in the page can read whatever the page can read and act as the logged-in
+ * user. A weaker gate here would quietly become the weakest link, and a *parallel* copy of the
+ * rule would be a second thing to keep in step — which is how the two drift.
+ *
+ * It is a separate NAME because the capability is separate: if the policies ever need to
+ * diverge, this is the one place to change, and every caller already says which it means.
+ */
+export function mayDriveWithAgent(opts) {
+    return mayWriteSource(opts);
+}
+/**
  * THE loopback test. dev-server re-exports this as `isLoopbackAddress`; it used to
  * carry its own byte-identical copy.
  *

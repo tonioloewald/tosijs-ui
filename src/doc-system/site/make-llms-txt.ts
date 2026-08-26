@@ -69,8 +69,12 @@ export interface LlmsTxtMeta {
    * running page rather than reason about it from source — which is the single most useful
    * thing an agent can know about a project it is working on, and was previously discoverable
    * only by reading the doc-site-system page in full.
+   *
+   * `'tunnel'` also carries that meaning — it is `true` plus a remote path — so the note is
+   * written on truthiness, not on `=== true`. Getting that wrong would silently drop the note
+   * for exactly the projects that enabled the MORE capable mode.
    */
-  haltijaDev?: boolean
+  haltijaDev?: boolean | 'tunnel'
 }
 
 /**

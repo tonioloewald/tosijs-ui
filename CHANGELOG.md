@@ -1,5 +1,45 @@
 # Changelog
 
+## 1.13.0
+
+### `haltijaDev: 'tunnel'` — let an agent drive a page running in a headset (#104)
+
+`haltijaDev: true` is localhost-gated, and that gate is exactly what stopped the feature
+working where it is worth the most. Debugging in a VR headset is close to blind: no readable
+console, no devtools, no way to inspect the DOM without taking it off — and taking it off is
+the thing you cannot do, because the bug is usually _about_ being in it.
+
+Set `haltijaDev: 'tunnel'` and the channel is also served **same-origin over the tunnel**.
+Redeem an edit link on the device, load the page, and it shows up in `hj windows` like any
+other — `hj eval`, `hj navigate`, `hj tree` all work against it, and `hj` never learns the
+page is remote.
+
+**Why it works at all, and why it needed no change from haltija.** The page **dials out**:
+`component.js` reads `window.__haltija_config__.serverUrl` and falls back to localhost only
+when that config is absent. So nothing has to reach _into_ a headset — the dev server sets
+the config itself, serves the component from the page's own origin, and relays the WebSocket
+to the local channel. The upstream `dev.js`/`inject.js` chain is skipped entirely; both files
+carry their own localhost gates and all three of their hardcoded `https://localhost:8701`
+URLs would resolve on the **headset** rather than on your machine.
+
+**A separate opt-in, deliberately.** `true` means "an agent may drive the page on this
+machine". Upgrading must never silently turn that into "wherever it is reachable", so
+`'tunnel'` is its own value — and `HALTIJA_DEV=1` does **not** enable it, because that
+variable is a convenience toggle and this is not a convenience.
+
+**What authorizes it:** a live dev session cookie — the same credential that gates source
+writes, via the same predicate (`mayDriveWithAgent` delegates to `mayWriteSource`, and a test
+asserts they agree on every input). Driving a page with an agent is at least as powerful as
+writing source, so it gets no weaker a gate. What authorizes is the **listener**, never the
+peer address: a reverse tunnel counterfeits "local" by construction. Unauthorized requests
+get **404**, not 403 — whether a project enabled the bridge is nobody's business but the
+session holder's.
+
+Verified end to end rather than by inspection: a real browser on the tunnel origin stores the
+session, receives the loader, resolves `serverUrl` to its own origin (not `localhost:8701`),
+attaches the widget, opens the relayed socket, appears in `hj windows`, and answers `hj eval`
+and `hj navigate`.
+
 ## 1.12.1
 
 ### The Playwright lane no longer fights itself
