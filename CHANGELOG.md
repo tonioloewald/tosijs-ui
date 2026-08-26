@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.13.0
+## 1.12.2
 
 ### `haltijaDev: 'tunnel'` — let an agent drive a page running in a headset (#104)
 
@@ -39,6 +39,11 @@ Verified end to end rather than by inspection: a real browser on the tunnel orig
 session, receives the loader, resolves `serverUrl` to its own origin (not `localhost:8701`),
 attaches the widget, opens the relayed socket, appears in `hj windows`, and answers `hj eval`
 and `hj navigate`.
+
+**A patch, not a minor**, despite reading like a feature: it is a new optional _value_ on an
+existing config field, plus routes that exist only under it. `haltijaDev: true` behaves exactly
+as before and nothing is removed or renamed, so the contract a patch carries — it does not
+break you — holds.
 
 ## 1.12.1
 
