@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.12.1
+
+### `<tosi-table>`: the header and body can no longer describe different columns (#102)
+
+Reported from a host app that changes column visibility when the page size changes. `set
+columns` updates the column list **synchronously** but defers the rebuild to the next frame,
+so between the assignment and that frame anything recomputing widths — a resize drag, a scroll
+handler, or the host's own page-size code — wrote a grid template for the NEW columns over the
+cells the OLD ones had built.
+
+Why that reads as _disagreement_ rather than a missing column, which is what made it confusing
+to report: with fewer tracks than cells, CSS Grid auto-places the surplus into **implicit**
+tracks, and implicit tracks size to content. Header text and body text differ, so the two rows
+resolve them to different widths and the columns visibly step apart.
+
+`setColumnWidths()` now describes the column set the DOM was actually built from, refreshed by
+`render()` on the frame that installs those cells. A column change is therefore **deferred, not
+dropped** — and because column objects are shared by reference, a resize drag still moves
+widths immediately: it is the shape that is pinned to the DOM, not the widths. All three
+properties have tests, and the fix is mutation-verified (reverting it fails with
+`tracks: 3, headerCells: 4`).
+
+The caller arguably should not reassign columns mid-render. It does not matter — a table that
+can show a header and a body describing different columns is our defect whenever the
+assignment lands.
+
 ## 1.12.0
 
 ### tosijs-ui is Apache-2.0 as of this release (MIT through 1.11.1)

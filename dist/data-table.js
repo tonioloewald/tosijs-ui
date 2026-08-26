@@ -1311,6 +1311,11 @@ export class TosiTable extends WebComponent {
     };
     _array = [];
     _columns = null;
+    /*
+    The columns the CURRENT DOM was built from — see `setColumnWidths`. Not `_columns`: that one
+    changes the instant a caller assigns it, which is exactly the window this exists to cover.
+    */
+    _renderedCols = [];
     _filter = passThru;
     _sort;
     _rowGroupId = null;
@@ -2611,7 +2616,30 @@ export class TosiTable extends WebComponent {
         this.addEventListener('keydown', this.handleKeyNav);
     }
     setColumnWidths() {
-        const cols = this.visibleColumns;
+        /*
+        The widths describe the columns the DOM ACTUALLY HAS, not the ones it is about to get.
+    
+        `set columns` updates `_columns` synchronously but defers the rebuild to `queueRender()`,
+        so between the assignment and the frame, `visibleColumns` already answers for a column set
+        no cell in the document belongs to. Anything that recomputes widths in that window — a
+        resize drag, a scroll handler, a host reacting to a page-size change — used to write a
+        template for the NEW columns over the OLD cells.
+    
+        That reads as the header disagreeing with the body (#102), and the reason it looks like
+        disagreement rather than simple breakage is worth knowing: with fewer tracks than cells,
+        CSS Grid auto-places the surplus into IMPLICIT tracks, which size to content. Header text
+        and body text differ, so the two rows resolve those tracks to different widths and the
+        columns visibly step apart.
+    
+        `_renderedCols` is the set the last render built the cells from; `render()` refreshes it
+        immediately before calling here, so a legitimate column change still takes effect on the
+        very frame that installs its cells. Column objects are shared by reference, so a resize
+        drag that mutates `column.width` is still reflected — it is the SHAPE that is pinned to
+        the DOM, not the widths.
+        */
+        const cols = this._renderedCols.length
+            ? this._renderedCols
+            : this.visibleColumns;
         const total = cols.reduce((w, c) => w + c.width, 0);
         /*
         `fullWidthHeader` lets ONE column absorb whatever width is left over, so a table narrower
@@ -2886,6 +2914,8 @@ export class TosiTable extends WebComponent {
         if (cols.length === 0)
             return;
         const stickyInfo = this.computeStickyInfo(cols);
+        // Before setColumnWidths, so the widths describe the cells this render is about to build.
+        this._renderedCols = cols;
         this.style.setProperty('--tosi-table-row-height', this.rowHeight > 0 ? `${this.rowHeight}px` : 'auto');
         this.setColumnWidths();
         // Build the regions. Header + optional pinned tbodies are siblings

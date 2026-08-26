@@ -202,6 +202,7 @@ export declare class TosiTable extends WebComponent {
     private rowData;
     private _array;
     private _columns;
+    private _renderedCols;
     private _filter;
     private _sort?;
     private _rowGroupId;
