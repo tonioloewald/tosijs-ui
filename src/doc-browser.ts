@@ -350,6 +350,8 @@ export interface Doc {
   path: string
   pin?: string
   hidden?: boolean
+  /** `'full-width'` drops the reading measure. See `Doc.layout` in docs.ts. */
+  layout?: 'full-width'
   testStatus?: 'passed' | 'failed' | 'pending'
   // Build-time transpiled JS for this doc's `tjs` examples ([source, {dialect, js}]
   // entries), attached to docs.json by generate-site so client-side navigation runs
@@ -924,6 +926,37 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
       docContent.innerHTML = renderDocMarkdown(doc.text, {
         bakes: doc.bakes ? new Map(doc.bakes) : undefined,
       })
+    }
+    /*
+    Keep the page's layout in step with the doc on SPA navigation.
+
+    The static generator stamps `data-layout` so the first paint is already right without JS;
+    this is the other half — navigating from a full-width page to a prose one must put the
+    reading column back, and vice versa. Written on every showDoc rather than only on change,
+    because the adopted first page also arrives here and the attribute it was served with must
+    survive rather than be assumed.
+    */
+    /*
+    On the SAME element the static generator stamps — `<tosi-doc-system>` — not on
+    `docContent.parentElement`.
+
+    Those are not the same node, which cost a debugging round: hydration wraps the adopted
+    `<article class="doc-content">` in a div, so the parent is that div while the generator's
+    attribute sits on the custom element above it. Writing to the div left the real host still
+    reading `full-width`, so navigating from the wide page to a prose one silently stayed wide —
+    and the test that only checked the wide direction would have passed.
+
+    A memory-routed browser is EXCLUDED deliberately. That mode exists so an embedded or nested
+    browser cannot reach out and change the page hosting it, and `closest()` from inside one
+    finds the OUTER doc-system — the host's, not its own. Same reasoning as its history/location
+    ban; a nested doc-browser rewriting its host's layout is the same bug wearing a hat.
+    */
+    if (!memoryRouting) {
+      const layoutHost = docContent.closest('tosi-doc-system')
+      if (layoutHost) {
+        if (doc.layout) layoutHost.setAttribute('data-layout', doc.layout)
+        else layoutHost.removeAttribute('data-layout')
+      }
     }
     rewriteContentLinks()
     // Stamp each example with its source file (for the source↔doc map). doc.path

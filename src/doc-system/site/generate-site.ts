@@ -239,6 +239,17 @@ function pageHtml(
   const localizedAttr = config.localizedStrings
     ? ` localized="${escapeAttr(relativeUrl(depth, localizedUrl))}"`
     : ''
+  /*
+  Stamped on the static HTML, not applied by script after load.
+
+  The whole point of pre-rendering is that the page is right before any JS runs; a layout
+  applied on hydration would show the reading column first and snap wide — the same class of
+  flicker the nav-hydration fix chased in 1.7.3. An attribute in the served markup means the
+  first paint is already correct, and the doc-browser keeps it in step on SPA navigation.
+  */
+  const layoutAttr = doc.layout
+    ? ` data-layout="${escapeAttr(doc.layout)}"`
+    : ''
 
   // ONE rule, shared with the doc-browser's hydration path — see doc-title.ts. Writing
   // it twice is what made the title change on hydration (issue #6).
@@ -362,7 +373,7 @@ ${head}
 <body>
   <tosi-doc-system docs="${escapeAttr(
     relativeUrl(depth, docsUrl)
-  )}" config="${configAttr}"${localizedAttr}>
+  )}" config="${configAttr}"${localizedAttr}${layoutAttr}>
   <article class="doc-content">
 ${body}
   </article>

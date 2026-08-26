@@ -45,6 +45,10 @@
   --doc-content-max-width: 44em;
 }
 
+tosi-doc-system[data-layout="full-width"] {
+  --doc-content-max-width: none;
+}
+
 .darkmode {
   --text-color: #dddddd;
   --brand-color: #e04a8a;

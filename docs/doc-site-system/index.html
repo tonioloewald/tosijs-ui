@@ -801,6 +801,30 @@ Nothing has to reach <em>into</em> the device: the page dials <strong>out</stron
 relay rather than a hole.</p>
 <p><strong>Requires haltija to be running</strong> on your machine (<code>bun start</code> starts the channel). If it
 is not, the component proxy answers <code>502</code> and says so rather than failing silently.</p>
+<h4><code>layout</code> — let a page opt out of the reading column</h4>
+<p>Prose wants a measure. 44em is roughly the line length people read comfortably, and it is the
+default for good reason. But a doc site is not only prose: a demo, a dashboard, a wide table or
+a canvas is <em>worse</em> squeezed into a column, and having to pick one habit for the whole site is
+what makes people build a second site.</p>
+<p>Set <code>layout</code> in a page&#39;s metadata — the same place as <code>pin</code>, <code>order</code> or <code>parent</code>:</p>
+<pre><code class="language-markdown">&lt;!--{ &quot;layout&quot;: &quot;full-width&quot; }--&gt;
+</code></pre>
+<pre><code class="language-yaml">---
+layout: full-width
+---
+</code></pre>
+<p>The nav and the chrome stay; only the measure goes. Unset means the reading column, so nothing
+changes for a corpus that never asks.</p>
+<p>It is stamped into the <strong>served HTML</strong>, not applied on load, so the first paint is already
+right — a layout applied by script would show the reading column and snap wide, which is the
+flicker pre-rendering exists to prevent. Client-side navigation keeps it in step in both
+directions.</p>
+<blockquote>
+<p><code>layout: &quot;full-screen&quot;</code> (chrome out of the way entirely) is <strong>not implemented yet</strong>. It is
+rejected with a message rather than half-honoured, because it needs a collapsed state on
+<code>&lt;tosi-side-nav&gt;</code> — the nav&#39;s <code>display</code> and the nav width are both inline styles, which a
+stylesheet cannot override cleanly. See <code>TODO.md</code>.</p>
+</blockquote>
 <h4><code>preview</code> — deploy the built site to a host you control</h4>
 <p>A doc site is a folder of static files, so sharing one is a copy, not a pipeline. Set a
 host and deploy:</p>

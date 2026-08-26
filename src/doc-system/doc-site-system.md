@@ -595,6 +595,38 @@ relay rather than a hole.
 **Requires haltija to be running** on your machine (`bun start` starts the channel). If it
 is not, the component proxy answers `502` and says so rather than failing silently.
 
+#### `layout` — let a page opt out of the reading column
+
+Prose wants a measure. 44em is roughly the line length people read comfortably, and it is the
+default for good reason. But a doc site is not only prose: a demo, a dashboard, a wide table or
+a canvas is _worse_ squeezed into a column, and having to pick one habit for the whole site is
+what makes people build a second site.
+
+Set `layout` in a page's metadata — the same place as `pin`, `order` or `parent`:
+
+```markdown
+<!--{ "layout": "full-width" }-->
+```
+
+```yaml
+---
+layout: full-width
+---
+```
+
+The nav and the chrome stay; only the measure goes. Unset means the reading column, so nothing
+changes for a corpus that never asks.
+
+It is stamped into the **served HTML**, not applied on load, so the first paint is already
+right — a layout applied by script would show the reading column and snap wide, which is the
+flicker pre-rendering exists to prevent. Client-side navigation keeps it in step in both
+directions.
+
+> `layout: "full-screen"` (chrome out of the way entirely) is **not implemented yet**. It is
+> rejected with a message rather than half-honoured, because it needs a collapsed state on
+> `<tosi-side-nav>` — the nav's `display` and the nav width are both inline styles, which a
+> stylesheet cannot override cleanly. See `TODO.md`.
+
 #### `preview` — deploy the built site to a host you control
 
 A doc site is a folder of static files, so sharing one is a copy, not a pipeline. Set a

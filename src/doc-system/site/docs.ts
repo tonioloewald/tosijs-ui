@@ -144,6 +144,27 @@ export interface Doc {
   //   <!--{ "headTitle": "...", "description": "...", "keywords": "a, b", "image": "/og/x.webp" }-->
   // `title` (if provided) also renames the nav item + heading; `headTitle` sets only
   // the <title> tag (verbatim, no project suffix). The rest override head metadata.
+  /**
+   * Opt this page out of the reading column.
+   *
+   * Prose wants a measure — 44em is roughly the line length people read comfortably, and it is
+   * the default for good reason. But a doc site is not only prose: a demo, a dashboard, a wide
+   * table or a canvas is *worse* squeezed into a column, and having to choose one habit for the
+   * whole site is what makes people build a second site.
+   *
+   * `'full-width'` keeps the nav and the chrome and drops the measure. Set it the same way as
+   * `pin` or `order`: the JSON metadata block in code or markdown, or `layout:` in YAML
+   * frontmatter. Unset means the reading column, so nothing changes for a corpus that does not
+   * ask.
+   *
+   * `'full-screen'` — chrome out of the way entirely — is NOT implemented yet and is rejected
+   * rather than half-honoured. It needs `<tosi-side-nav>` to expose a collapsed state: the nav
+   * width and the nav's own `display` are both set as INLINE styles, which a stylesheet cannot
+   * override without `!important`, and a value that drops the measure while leaving the chrome
+   * exactly where it was is the kind of partial success that gets reported as a bug. Tracked in
+   * TODO.md.
+   */
+  layout?: 'full-width'
   headTitle?: string
   description?: string
   keywords?: string | string[]
@@ -203,6 +224,20 @@ export function parseFrontmatter(content: string): {
       if (val) data.date = val
     } else if (key === 'draft') {
       if (/^(true|yes|1)$/i.test(val)) data.hidden = true // drafts don't ship
+    } else if (key === 'layout') {
+      /*
+      Only the two known values. An unrecognised layout is a typo — `full width`, `fullwidth`,
+      `wide` — and silently keeping the reading column is the behaviour that gets reported as
+      "the metadata does nothing", so say so instead.
+      */
+      if (val === 'full-width') data.layout = val
+      else if (val === 'full-screen')
+        console.error(
+          `layout: full-screen is not implemented yet (see TODO.md) — ignoring it rather than ` +
+            `dropping the measure and leaving the chrome in place`
+        )
+      else if (val)
+        console.error(`unknown layout ${JSON.stringify(val)} in frontmatter`)
     }
   }
   if (!matched) return { data: {}, body: content } // a bare `---`, not frontmatter

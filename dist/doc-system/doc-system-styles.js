@@ -98,6 +98,16 @@ export function docSystemStyleSpec(theme = {}) {
             // below — if these two ever disagree, the page jumps on hydration.
             _docContentMaxWidth: '44em',
         },
+        /*
+        Per-page layout, driven by `layout:` in a doc's metadata (see `Doc.layout`).
+    
+        Both are variable overrides rather than new layout rules, which is what keeps them cheap
+        and non-invasive: the measure is already `--doc-content-max-width`, so a page opts out by
+        changing one value. Nothing here runs for a corpus that never sets `layout`.
+        */
+        'tosi-doc-system[data-layout="full-width"]': {
+            _docContentMaxWidth: 'none',
+        },
         '.darkmode': {
             ...invertLuminance(colors),
             /*

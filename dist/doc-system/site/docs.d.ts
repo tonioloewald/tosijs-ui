@@ -32,6 +32,27 @@ export interface Doc {
      * individual chapter can still divert, join several volumes, or opt out.
      */
     book?: string | string[];
+    /**
+     * Opt this page out of the reading column.
+     *
+     * Prose wants a measure — 44em is roughly the line length people read comfortably, and it is
+     * the default for good reason. But a doc site is not only prose: a demo, a dashboard, a wide
+     * table or a canvas is *worse* squeezed into a column, and having to choose one habit for the
+     * whole site is what makes people build a second site.
+     *
+     * `'full-width'` keeps the nav and the chrome and drops the measure. Set it the same way as
+     * `pin` or `order`: the JSON metadata block in code or markdown, or `layout:` in YAML
+     * frontmatter. Unset means the reading column, so nothing changes for a corpus that does not
+     * ask.
+     *
+     * `'full-screen'` — chrome out of the way entirely — is NOT implemented yet and is rejected
+     * rather than half-honoured. It needs `<tosi-side-nav>` to expose a collapsed state: the nav
+     * width and the nav's own `display` are both set as INLINE styles, which a stylesheet cannot
+     * override without `!important`, and a value that drops the measure while leaving the chrome
+     * exactly where it was is the kind of partial success that gets reported as a bug. Tracked in
+     * TODO.md.
+     */
+    layout?: 'full-width';
     headTitle?: string;
     description?: string;
     keywords?: string | string[];

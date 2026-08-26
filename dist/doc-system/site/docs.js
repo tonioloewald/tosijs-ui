@@ -144,6 +144,20 @@ export function parseFrontmatter(content) {
             if (/^(true|yes|1)$/i.test(val))
                 data.hidden = true; // drafts don't ship
         }
+        else if (key === 'layout') {
+            /*
+            Only the two known values. An unrecognised layout is a typo — `full width`, `fullwidth`,
+            `wide` — and silently keeping the reading column is the behaviour that gets reported as
+            "the metadata does nothing", so say so instead.
+            */
+            if (val === 'full-width')
+                data.layout = val;
+            else if (val === 'full-screen')
+                console.error(`layout: full-screen is not implemented yet (see TODO.md) — ignoring it rather than ` +
+                    `dropping the measure and leaving the chrome in place`);
+            else if (val)
+                console.error(`unknown layout ${JSON.stringify(val)} in frontmatter`);
+        }
     }
     if (!matched)
         return { data: {}, body: content }; // a bare `---`, not frontmatter

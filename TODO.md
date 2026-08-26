@@ -722,6 +722,22 @@ live site** (independently useful). See roadmap "From book to live."
       lane tested a stale bundle. And never grep `dist/iife.js` to check a mutation landed:
       minification renames locals, so the string is absent whether or not the code is.
 
+## `layout: full-screen` — needs a collapsed state on `<tosi-side-nav>`
+
+- [ ] `layout: 'full-width'` shipped (#105); `'full-screen'` did not, and is **rejected with a
+      message** rather than half-honoured.
+
+      Why it does not work as CSS: after hydration the nav is a `div.doc-nav` inside
+      `<tosi-side-nav>` carrying an INLINE `display: flex`, and side-nav sets `--nav-width` as
+      an inline property too. A stylesheet cannot override either without `!important`.
+      Hiding `<tosi-side-nav>` itself is not the answer — it wraps the content as well as the
+      nav, so that hides the page.
+
+      The fix belongs in the component: a collapsed/hidden state on `<tosi-side-nav>` that
+      `full-screen` can set, which is what the original request anticipated ("would also entail
+      changing side-nav's behavior slightly"). Doing it as `!important` from the doc-system
+      would work and would be the wrong layer.
+
 ## DONE (1.12.1): `<tosi-table>` torn render on a mid-flight `columns` change
 
 - [x] **[#102](https://github.com/tonioloewald/tosijs-ui/issues/102)** — fixed. Not the

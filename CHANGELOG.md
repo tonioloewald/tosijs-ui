@@ -40,6 +40,33 @@ session, receives the loader, resolves `serverUrl` to its own origin (not `local
 attaches the widget, opens the relayed socket, appears in `hj windows`, and answers `hj eval`
 and `hj navigate`.
 
+### Page metadata: `layout: full-width`, so a route can leave the reading column ([#105](https://github.com/tonioloewald/tosijs-ui/issues/105))
+
+Prose wants a measure — 44em is roughly what people read comfortably, and it stays the default.
+But a demo, a dashboard, a wide table or a canvas is _worse_ squeezed into a column, and having
+to pick one habit for the whole site is what makes people build a second site. Now a page can
+opt out, the same way it sets `pin` or `order`:
+
+```markdown
+<!--{ "layout": "full-width" }-->
+```
+
+or `layout: full-width` in YAML frontmatter. **This project's own README uses it.**
+
+Stamped into the served HTML rather than applied on load, so the first paint is already right —
+a layout applied by script would show the reading column and snap wide, the flicker
+pre-rendering exists to prevent. Client-side navigation keeps it in step **in both directions**;
+that second direction is the one a naive implementation forgets, and it has its own test
+(mutation-verified: dropping the clear-on-navigate fails it, dropping the static stamp fails
+three more including first paint).
+
+**`layout: "full-screen"` is not implemented and is rejected with a message rather than
+half-honoured.** It needs a collapsed state on `<tosi-side-nav>`: after hydration the nav
+carries an inline `display`, and side-nav sets its width as an inline property, so a stylesheet
+cannot override either without `!important` — and hiding side-nav itself hides the content too,
+since it wraps both. A value that dropped the measure while leaving the chrome exactly where it
+was would be reported as a bug, correctly. Tracked in `TODO.md`.
+
 ### `<tosi-table>`: a column drag no longer dies when `columns` is reassigned under it
 
 The other half of the reporting app's "resize funkiness", and a different defect from #102's

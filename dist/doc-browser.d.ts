@@ -22,6 +22,8 @@ export interface Doc {
     path: string;
     pin?: string;
     hidden?: boolean;
+    /** `'full-width'` drops the reading measure. See `Doc.layout` in docs.ts. */
+    layout?: 'full-width';
     testStatus?: 'passed' | 'failed' | 'pending';
     bakes?: Array<[string, {
         dialect: string;
