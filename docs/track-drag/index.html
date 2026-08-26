@@ -101,6 +101,25 @@ preview.addEventListener(&#39;touchstart&#39;, dragItem, { passive: true } )
 <p>For <code>touch</code> events, <code>dx</code> and <code>dy</code> are based on tracking <code>event.changedTouches[0]</code> which
 is almost certainly what you want.</p>
 <p>To handle multi-touch gestures you will need to track the touches yourself.</p>
+<h2>Do not register your <code>mousedown</code> listener as <code>passive</code></h2>
+<p>Note the example above: <code>mousedown</code> is added <strong>without</strong> options, <code>touchstart</code> <strong>with</strong>
+<code>{ passive: true }</code>. That asymmetry is load-bearing, not an oversight.</p>
+<p><code>trackDrag</code> calls <code>preventDefault()</code> on the mousedown that starts a drag, and <strong>a passive
+listener makes that a silent no-op</strong> — no error, no warning, it simply does nothing. Without it,
+Firefox treats the first drag on a freshly-loaded page as a text selection: what you grabbed
+stays put, text highlights instead, and it only behaves after you have clicked somewhere to
+settle Firefox&#39;s selection state. Landing on a page and immediately dragging something is an
+entirely ordinary thing to do, so in practice the first attempt fails.</p>
+<p>This bit every draggable in this library — <code>&lt;tosi-sizer&gt;</code>, <code>&lt;tosi-float&gt;</code>,
+<code>&lt;tosi-editable-rect&gt;</code> and <code>&lt;tosi-table&gt;</code>&#39;s column resize — from v0.5.1 until 1.12.2. Three of
+them had passive <code>mousedown</code> listeners, so fixing <code>trackDrag</code> alone changed nothing for them;
+<code>&lt;tosi-table&gt;</code>, whose listener was never passive, was fixed by the same change. If you use
+<code>trackDrag</code> in your own component and dragging misbehaves on Firefox, this is the first thing
+to check.</p>
+<p>Nothing is lost by dropping <code>passive</code> on <code>mousedown</code>. Its practical value is silencing the
+console warning about handlers that delay scrolling, and that warning only ever applied to
+<code>touch</code> and <code>wheel</code> — keep it on <code>touchstart</code>, where <code>trackDrag</code> handles the equivalent on
+<code>touchmove</code>.</p>
 <h2>bringToFront</h2>
 <p><code>bringToFront(element: HTMLElement, selector = &#39;body *&#39;)</code>  gives the element the highest
 <code>z-index</code> of any element matching the selector (which is passed to findHighestZ).</p>
