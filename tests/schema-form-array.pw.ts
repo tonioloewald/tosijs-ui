@@ -254,3 +254,91 @@ test('the structural-edit path does no per-field DOM lookup either', async ({
     )}`
   ).toBeLessThanOrEqual(lookups.at200 + 4)
 })
+
+test('keystroke cost grows with field count linearly, not quadratically', async ({
+  page,
+}) => {
+  /*
+  The COMPANION to the two lookup-count guards, and it exists because a call count has one
+  blind spot they cannot cover: a quadratic path that never calls `querySelector` at all — an
+  O(N) array walk per field, say — is invisible to counting. This measures time, so it sees any
+  shape of regression, and sees none of the constant-factor waste the counts are good at. They
+  are complementary, and the mutations below demonstrate that rather than asserting it.
+
+  Wall-clock was REMOVED from this file once, for flaking, so it is worth recording what
+  changed. At Playwright's default 9 workers the same 4x-fields measurement gave firefox 2.67x
+  in isolation and 9.25x under the full run — load and regression were indistinguishable, and
+  no threshold could separate them. The lane now runs at 6 workers (see playwright.config.ts,
+  where the 82s-vs-81s measurement lives), and the two distributions overlap:
+
+      isolated, n=9:     3.20 - 4.57   (all three engines)
+      under full load:   2.64 - 4.14   (all three engines)
+
+  Linear predicts 4.0 for 4x the fields; quadratic predicts 16. The threshold is 8, the
+  geometric midpoint — 1.75x above the worst measurement seen and 2x below quadratic.
+
+  Mutation-tested in both directions, which is what makes "complementary" a claim rather than a
+  hope:
+
+    - an O(N) scan per field in `syncErrors` using NO selector at all -> 9.63x
+      (44.5ms -> 428.6ms). Fails HERE; both lookup-count guards pass, because there is nothing
+      to count. This is the case that justifies keeping a timing test at all.
+    - re-finding the error slot per field -> stays linear at ~4x and passes here, while the
+      keystroke count guard fails at 400 -> 1600 lookups. Constant-factor waste is exactly what
+      timing is bad at.
+
+  (A caution for whoever runs the next mutation: build with its output visible. A first attempt
+  at the mutation above "passed" because the rebuild had been silenced with `>/dev/null 2>&1`
+  and the lane tested a stale bundle. And do not grep `dist/iife.js` to check a mutation landed
+  — minification renames locals, so the string is gone whether or not the code is there.)
+  */
+  const measure = await page.evaluate(async () => {
+    const { tosiSchemaForm } = (window as any).xinjsui
+    const KEYSTROKES = 40
+    const totalFor = async (fields: number) => {
+      const props: Record<string, unknown> = {}
+      for (let i = 0; i < fields; i++) props['f' + i] = { type: 'string' }
+      const form = tosiSchemaForm({
+        schema: { type: 'object', properties: props },
+        value: {},
+      })
+      document.body.append(form)
+      await new Promise((r) => requestAnimationFrame(r))
+      await new Promise((r) => requestAnimationFrame(r))
+      const el = form.querySelector('[data-path="f0"]') as HTMLInputElement
+      const started = performance.now()
+      for (let k = 0; k < KEYSTROKES; k++) {
+        el.value = 'x'.repeat((k % 8) + 1)
+        el.dispatchEvent(new Event('input', { bubbles: true }))
+      }
+      const total = performance.now() - started
+      form.remove()
+      return total
+    }
+    // Best of three. Contention can only ADD time, so the minimum is the least contaminated
+    // measurement available — and 40 keystrokes keeps both totals clear of firefox's clamped
+    // `performance.now()`, which quantised the 10-keystroke version onto 0.5ms and 1.0ms.
+    const best = async (fields: number) =>
+      Math.min(
+        await totalFor(fields),
+        await totalFor(fields),
+        await totalFor(fields)
+      )
+    const small = await best(400)
+    const large = await best(1600)
+    return { small, large }
+  })
+
+  // A zero denominator makes the ratio Infinity or NaN and the assertion meaningless either
+  // way; if the small case is unmeasurable, say so rather than divide by it.
+  expect(
+    measure.small,
+    `400-field total was unmeasurable: ${JSON.stringify(measure)}`
+  ).toBeGreaterThan(1)
+  expect(
+    measure.large / measure.small,
+    `4x the fields (400 -> 1600) should cost ~4x, not ~16x: ${JSON.stringify(
+      measure
+    )}`
+  ).toBeLessThan(8)
+})

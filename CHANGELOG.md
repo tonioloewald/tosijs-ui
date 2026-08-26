@@ -14,13 +14,19 @@ Measured, not guessed: 9 workers ran the suite in 82s and 6 in 81s, so the lane 
 CPU-bound at 9 and a third of the load is free; 4 workers costs 106s and buys nothing further.
 6/6 clean afterwards. Contributor-facing only — CI already runs at 1 worker.
 
-### `<tosi-schema-form>`: the structural-edit path is now guarded too
+### `<tosi-schema-form>`: all three perf guards, and they cover different things
 
 The keystroke perf guard counts DOM lookups, and provably could not see `syncValues` — which
 runs on add/remove-item, not on keystrokes. A root-scoped per-field scan reintroduced there
 passed the existing test. There is now a sibling test on that path; mutation-testing takes it
 from 1 lookup per add to 41 → 161 as field count grows, while the keystroke test stays green
 under the same mutation.
+
+Wall-clock is back alongside them, too. It was removed in 1.11.0 for flaking; with the lane
+quiet the isolated and loaded distributions now overlap (3.20-4.57 vs 2.64-4.14 across all
+three engines, against 4.0 for linear and 16 for quadratic), so a threshold of 8 separates
+them. It earns its place by catching what counting cannot: an O(N) scan per field that uses no
+selector at all fails it at 9.63x while both count guards pass.
 
 ### `<tosi-table>`: the header and body can no longer describe different columns (#102)
 

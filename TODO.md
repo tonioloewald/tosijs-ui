@@ -700,26 +700,27 @@ live site** (independently useful). See roadmap "From book to live."
       Suggestive, not proof — 6 runs cannot demonstrate a 1-in-5 rate is gone. If it recurs,
       re-measure rather than dropping workers further on instinct.
 
-## `<tosi-schema-form>` perf guards: one gap left of two
+## DONE (1.12.1): `<tosi-schema-form>` perf guards, both gaps closed
 
-- [x] **The structural-edit path is now guarded** (`syncValues`, run on add/remove-item rather
-      than on keystrokes). Mutation-verified both ways: a root-scoped per-field scan there
-      takes the new test from 1 call per add to 41 → 161 as fields grow, while the keystroke
-      test stays green under the same mutation — which is exactly why the gap existed.
+- [x] **The structural-edit path is guarded** (`syncValues`, run on add/remove-item rather than
+      on keystrokes). A root-scoped per-field scan there passed the keystroke test; the new
+      sibling takes it from 1 lookup per add to 41 -> 161 as fields grow.
 
-- [ ] **A quadratic regression that never calls `querySelector`** — an O(N) array walk per
-      field, say — is still invisible to a call count, and that is what a call count buys you
-      in exchange for never flaking.
+- [x] **Wall-clock is back, and now it holds.** It had been removed for flaking at 9 workers
+      (firefox: 2.67x isolated vs 9.25x loaded for the same 4x-fields measurement — load and
+      regression indistinguishable). At 6 workers the distributions overlap — isolated 3.20-4.57
+      across all three engines, under full load 2.64-4.14 — so the threshold of 8 sits 1.75x
+      above the worst measurement and 2x below quadratic's 16.
 
-      Worth re-attempting now, with numbers to beat. Wall-clock was removed because it flaked
-      under 9 workers: firefox measured 4x-fields at 2.67x isolated and 9.25x loaded, so the
-      threshold could not separate load from regression. The lane now runs at **6 workers** and
-      went 6/6 clean, so re-measure the spread before concluding it is impossible — if the
-      loaded and isolated ratios now agree, a timing guard can rejoin the main lane.
+      The three guards are complementary and the mutations prove it rather than assert it: an
+      O(N) scan per field using no selector at all fails the timing guard at 9.63x while both
+      count guards pass, and re-finding the error slot per field fails the count guard while
+      timing stays linear at ~4x.
 
-      Do NOT solve this with a separate perf lane that the release gate does not run. This repo
-      has already learned that lesson twice: a lane nobody runs rots, and the Playwright lane
-      sat red for a month.
+      Two traps worth not re-learning. Build with output VISIBLE when mutation testing — a
+      first attempt "passed" because the rebuild was silenced with `>/dev/null 2>&1` and the
+      lane tested a stale bundle. And never grep `dist/iife.js` to check a mutation landed:
+      minification renames locals, so the string is absent whether or not the code is.
 
 ## DONE (1.12.1): `<tosi-table>` torn render on a mid-flight `columns` change
 
