@@ -131,6 +131,36 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
     'tosi-doc-system[data-layout="full-width"]': {
       _docContentMaxWidth: 'none',
     },
+    /*
+    `full-screen` — no measure, and no chrome.
+
+    These rules are for the PRE-HYDRATION page, whose markup is a plain `<nav class="doc-nav">`
+    with no inline styles, so hiding it here works and works on first paint. Once the bundle
+    loads, the nav becomes a slotted node inside `<tosi-sidenav>` carrying its own inline
+    `display`, and CSS can no longer touch it — the doc-browser sets `sidenav.navHidden`
+    instead. Different DOM before and after hydration, so genuinely two rules rather than a
+    belt-and-braces duplicate.
+    */
+    'tosi-doc-system[data-layout="full-screen"]': {
+      _docContentMaxWidth: 'none',
+    },
+    'tosi-doc-system[data-layout="full-screen"] .doc-content': {
+      padding: '0',
+    },
+    /*
+    `.doc-nav.doc-nav` — the class twice, on purpose.
+
+    `tosi-doc-system:not(:defined) .doc-nav` (the pre-hydration layout, further down this same
+    sheet) has IDENTICAL specificity to the single-class form, so which one wins is decided by
+    source order, and it sits later. Winning on position works until someone reorders the spec,
+    at which point the nav quietly comes back on full-screen pages with nothing to point at.
+    Repeating the class costs one selector token and settles it on specificity, wherever these
+    rules end up living.
+    */
+    'tosi-doc-system[data-layout="full-screen"] > .doc-nav.doc-nav, tosi-doc-system[data-layout="full-screen"] > .doc-navbar.doc-navbar':
+      {
+        display: 'none',
+      },
     '.darkmode': {
       ...invertLuminance(colors),
       /*

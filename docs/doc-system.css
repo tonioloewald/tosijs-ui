@@ -49,6 +49,18 @@ tosi-doc-system[data-layout="full-width"] {
   --doc-content-max-width: none;
 }
 
+tosi-doc-system[data-layout="full-screen"] {
+  --doc-content-max-width: none;
+}
+
+tosi-doc-system[data-layout="full-screen"] .doc-content {
+  padding: 0;
+}
+
+tosi-doc-system[data-layout="full-screen"] > .doc-nav.doc-nav, tosi-doc-system[data-layout="full-screen"] > .doc-navbar.doc-navbar {
+  display: none;
+}
+
 .darkmode {
   --text-color: #dddddd;
   --brand-color: #e04a8a;

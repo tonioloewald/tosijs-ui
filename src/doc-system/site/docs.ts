@@ -157,14 +157,12 @@ export interface Doc {
    * frontmatter. Unset means the reading column, so nothing changes for a corpus that does not
    * ask.
    *
-   * `'full-screen'` — chrome out of the way entirely — is NOT implemented yet and is rejected
-   * rather than half-honoured. It needs `<tosi-side-nav>` to expose a collapsed state: the nav
-   * width and the nav's own `display` are both set as INLINE styles, which a stylesheet cannot
-   * override without `!important`, and a value that drops the measure while leaving the chrome
-   * exactly where it was is the kind of partial success that gets reported as a bug. Tracked in
-   * TODO.md.
+   * `'full-screen'` drops the measure AND puts the nav away, so the page is the whole viewport —
+   * for a demo, a canvas, an embedded app. It needed `<tosi-sidenav navHidden>` to exist first:
+   * the nav width and the nav's own `display` are both INLINE styles, so no stylesheet could
+   * reach them from out here.
    */
-  layout?: 'full-width'
+  layout?: 'full-width' | 'full-screen'
   headTitle?: string
   description?: string
   keywords?: string | string[]
@@ -230,12 +228,7 @@ export function parseFrontmatter(content: string): {
       `wide` — and silently keeping the reading column is the behaviour that gets reported as
       "the metadata does nothing", so say so instead.
       */
-      if (val === 'full-width') data.layout = val
-      else if (val === 'full-screen')
-        console.error(
-          `layout: full-screen is not implemented yet (see TODO.md) — ignoring it rather than ` +
-            `dropping the measure and leaving the chrome in place`
-        )
+      if (val === 'full-width' || val === 'full-screen') data.layout = val
       else if (val)
         console.error(`unknown layout ${JSON.stringify(val)} in frontmatter`)
     }

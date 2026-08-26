@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.12.3
+
+### `layout: "full-screen"` — and `<tosi-sidenav alwaysCompact>` underneath it
+
+`full-width` shipped in 1.12.2 and `full-screen` did not, because it needed something from the
+sidenav that did not exist. It exists now, and it is one line rather than a new layout.
+
+**`<tosi-sidenav>` gained `alwaysCompact`.** Compact mode already shows the nav _or_ the content
+and takes turns between them — which is precisely what a full-screen page wants — so this just
+removes the width test rather than adding a second way to lay out. It is a named state and not a
+`minSize` no viewport can reach, because the second one works and reads as a bug to the next
+person.
+
+**`layout: "full-screen"`** then means: no reading measure, no nav, content is the viewport.
+There is a [demo page](/full-screen-demo/). Navigating away restores the nav — `alwaysCompact`
+is sticky by nature, so leaving has to put it back explicitly, and that direction has its own
+mutation-verified test.
+
+Before hydration there is no sidenav at all, just static markup, so a stylesheet rule covers the
+first paint. Those rules select `.doc-nav.doc-nav` — the class deliberately repeated — because
+the pre-hydration layout further down the same sheet has identical specificity, and winning on
+source order works right up until someone reorders the spec.
+
 ## 1.12.2
 
 ### `haltijaDev: 'tunnel'` — let an agent drive a page running in a headset (#104)

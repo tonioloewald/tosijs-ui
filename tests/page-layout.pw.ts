@@ -60,6 +60,23 @@ test('a page with layout: full-width fills the available width', async ({
 test('a page without it keeps the reading column', async ({ page }) => {
   await page.setViewportSize({ width: 1400, height: 900 })
   await page.goto('/data-table/')
+  /*
+  Wait for hydration before measuring, and the reason is worth knowing.
+
+  Two things constrain the content and neither covers the whole load. The stylesheet's
+  `tosi-doc-system:not(:defined) .doc-content` rule holds until the custom element is defined;
+  the doc-browser's inline `max-width` takes over after it runs. Between those two moments
+  nothing applies, and a measurement landing there reads full width — which is exactly how this
+  test failed once on webkit while passing everywhere else.
+
+  (That gap is also a real, if sub-frame, flash of unmeasured prose on every load. Pre-existing,
+  not introduced here, and noted in TODO.md rather than fixed under cover of this change.)
+  */
+  await page.waitForFunction(
+    () => !!document.querySelector('tosi-sidenav'),
+    undefined,
+    { timeout: 15_000 }
+  )
   const m = await contentWidth(page)
   expect(m.layout).toBe(null)
   // 44em at a normal root size is well under 900px; the host at this viewport is far wider.
@@ -110,4 +127,99 @@ test('SPA navigation moves the layout with the page, both ways', async ({
   await expect
     .poll(async () => (await contentWidth(page)).layout, { timeout: 15_000 })
     .toBe('full-width')
+})
+
+const fullScreenShape = (page: any) =>
+  page.evaluate(() => {
+    const nav = document.querySelector('.doc-nav') as HTMLElement | null
+    const el = document.querySelector('.doc-content') as HTMLElement
+    const host = document.querySelector('tosi-doc-system') as HTMLElement
+    const nr = nav?.getBoundingClientRect()
+    const er = el.getBoundingClientRect()
+    return {
+      // The nav is moved OFF-SCREEN rather than shrunk — compact mode slides it out with a
+      // negative margin — so its width says nothing and its right edge says everything.
+      navRight: nr ? Math.round(nr.right) : -1,
+      contentLeft: Math.round(er.left),
+      content: Math.round(er.width),
+      host: Math.round(host.getBoundingClientRect().width),
+    }
+  })
+
+test('full-screen gives the content the whole viewport and puts the nav away', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/full-screen-demo/')
+  await page.waitForFunction(
+    () => !!document.querySelector('tosi-sidenav'),
+    undefined,
+    {
+      timeout: 15_000,
+    }
+  )
+  await expect
+    .poll(async () => (await fullScreenShape(page)).content, {
+      timeout: 15_000,
+    })
+    .toBe(1400)
+
+  const m = await fullScreenShape(page)
+  expect(m.content, `content is the viewport: ${JSON.stringify(m)}`).toBe(
+    m.host
+  )
+  expect(m.contentLeft).toBe(0)
+  expect(
+    m.navRight,
+    `the nav must be entirely off-screen: ${JSON.stringify(m)}`
+  ).toBeLessThanOrEqual(0)
+})
+
+test('full-screen is right before hydration too', async ({ page }) => {
+  /*
+  With the bundle blocked there is no `<tosi-sidenav>` at all — the markup is a plain `<nav>` —
+  so this is the stylesheet's half of the job, and the half that decides the FIRST paint.
+  */
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.route('**/hydrate.js*', (r: any) => r.abort())
+  await page.goto('/full-screen-demo/')
+  const navWidth = await page.evaluate(() => {
+    const nav = document.querySelector('.doc-nav') as HTMLElement | null
+    return nav ? Math.round(nav.getBoundingClientRect().width) : -1
+  })
+  expect(navWidth, 'no nav before hydration either').toBe(0)
+})
+
+test('navigating away from full-screen brings the nav back', async ({
+  page,
+}) => {
+  /*
+  The direction that gets forgotten. `alwaysCompact` is sticky by nature — nothing resets it on
+  its own — so leaving a full-screen page has to explicitly put the sidenav back, or every page
+  after it inherits a layout it never asked for.
+  */
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/full-screen-demo/')
+  await expect
+    .poll(async () => (await fullScreenShape(page)).content, {
+      timeout: 15_000,
+    })
+    .toBe(1400)
+
+  await page.evaluate(() =>
+    (
+      document.querySelector('a.doc-link[href="/data-table/"]') as HTMLElement
+    )?.click()
+  )
+  await expect
+    .poll(async () => (await fullScreenShape(page)).navRight, {
+      timeout: 15_000,
+    })
+    .toBeGreaterThan(0)
+  const back = await contentWidth(page)
+  expect(back.layout).toBe(null)
+  expect(
+    back.content,
+    `the measure is back: ${JSON.stringify(back)}`
+  ).toBeLessThan(900)
 })

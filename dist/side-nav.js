@@ -10,6 +10,12 @@ the sidebar if so desired). `<tosi-sidenav>` provides this functionality.
 `<tosi-sidenav>`'s behavior is controlled by two attributes, `minSize` is the point at which it will toggle between showing the navigation
 sidebar and content, while `navSize` is the width of the sidebar. You can interrogate its `compact` property to find out if it's
 currently in `compact` form.
+
+Set `alwaysCompact` to stay compact at any width — the nav and the content take turns regardless
+of how much room there is, and `contentVisible` picks which one you see. That is how the
+doc-system's `layout: "full-screen"` pages give the content the whole viewport. It is a named
+state rather than a `minSize` no viewport can reach, because the second one works and reads as a
+bug.
 */
 /*{ "parent": "Components" }*/
 import { Component, elements, varDefault } from 'tosijs';
@@ -21,6 +27,15 @@ export class TosiSidenav extends Component {
         navSize: 200,
         compact: false,
         contentVisible: false,
+        /*
+        Stay compact at ANY width, instead of below `minSize`.
+    
+        Compact mode already does what a full-screen page wants — nav and content take turns, and
+        `contentVisible` picks which — so this just removes the width test rather than adding a
+        layout. It exists as a named state because the alternative is setting `minSize` to a number
+        no viewport can reach, which works and reads as a bug to the next person.
+        */
+        alwaysCompact: false,
     };
     value = 'normal';
     content = [slot({ name: 'nav', part: 'nav' }), slot({ part: 'content' })];
@@ -50,7 +65,7 @@ export class TosiSidenav extends Component {
             return;
         }
         let navState;
-        this.compact = parent.offsetWidth < this.minSize;
+        this.compact = this.alwaysCompact || parent.offsetWidth < this.minSize;
         const empty = [...this.childNodes].find((node) => node instanceof Element ? node.getAttribute('slot') !== 'nav' : true) === undefined;
         if (empty) {
             navState = 'compact/nav';

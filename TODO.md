@@ -738,6 +738,23 @@ live site** (independently useful). See roadmap "From book to live."
       changing side-nav's behavior slightly"). Doing it as `!important` from the doc-system
       would work and would be the wrong layer.
 
+## Sub-frame flash of unmeasured prose between `:defined` and hydration
+
+- [ ] Two things constrain `.doc-content`, and there is a gap between them.
+      `tosi-doc-system:not(:defined) .doc-content { max-width: var(--doc-content-max-width) }`
+      applies until the custom element is defined; the doc-browser's inline `max-width` applies
+      once it runs. In between, neither does, and the content is full width.
+
+      Surfaced as a one-off webkit test failure (`content: 1400` on a prose page) while adding
+      the `layout` tests — the measurement landed in the gap. The test now waits for hydration,
+      which is right for the test and does nothing for the page.
+
+      Likely invisible in practice, but it is the same class as the nav-hydration flicker fixed
+      in 1.7.3, and that one was also "probably too fast to see" until someone saw it. Cheapest
+      fix is probably for the pre-hydration rule not to depend on `:not(:defined)` — the
+      variable is what carries the measure, so a plain `.doc-content` rule would hold across
+      the whole load.
+
 ## DONE (1.12.1): `<tosi-table>` torn render on a mid-flight `columns` change
 
 - [x] **[#102](https://github.com/tonioloewald/tosijs-ui/issues/102)** — fixed. Not the

@@ -350,8 +350,8 @@ export interface Doc {
   path: string
   pin?: string
   hidden?: boolean
-  /** `'full-width'` drops the reading measure. See `Doc.layout` in docs.ts. */
-  layout?: 'full-width'
+  /** `'full-width'` drops the reading measure; `'full-screen'` also puts the nav away. */
+  layout?: 'full-width' | 'full-screen'
   testStatus?: 'passed' | 'failed' | 'pending'
   // Build-time transpiled JS for this doc's `tjs` examples ([source, {dialect, js}]
   // entries), attached to docs.json by generate-site so client-side navigation runs
@@ -779,6 +779,33 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
   // sidenav')`, which returns the FIRST sidenav in the document (an OUTER instance
   // when this one is an embedded, memory-routed browser).
   let sidenav: TosiSidenav | null = null
+  /*
+  `full-screen` uses the sidenav's OWN compact behaviour rather than a new state.
+
+  `<tosi-sidenav>` already does exactly what full-screen wants: compact mode shows the nav OR the
+  content, with `contentVisible` picking which. `alwaysCompact` keeps it in that mode at any
+  width, and `contentVisible` gives the page the whole box.
+
+  Remembered rather than applied directly, because the sidenav is not there yet when the first
+  doc renders — `sidenav` is captured from its own change event, which fires on a state CHANGE
+  and so may never fire at all on a normal-width page.
+  */
+  let wantsFullScreen = false
+  const applyFullScreen = () => {
+    /*
+    Resolved from THIS browser's own container when the change event has not introduced it yet.
+    Scoped rather than `document.querySelector('tosi-sidenav')`, which returns the first in the
+    document — for a nested doc-browser, the HOST's.
+    */
+    if (!sidenav && typeof container !== 'undefined' && container) {
+      sidenav = container.querySelector(
+        TosiSidenav.tagName!
+      ) as TosiSidenav | null
+    }
+    if (!sidenav) return
+    sidenav.alwaysCompact = wantsFullScreen
+    if (wantsFullScreen) sidenav.contentVisible = true
+  }
 
   const headerContent: any[] = [
     button(
@@ -957,6 +984,15 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
         if (doc.layout) layoutHost.setAttribute('data-layout', doc.layout)
         else layoutHost.removeAttribute('data-layout')
       }
+      /*
+      `full-screen` also collapses the nav, and that has to go through the COMPONENT rather than
+      CSS: `<tosi-sidenav>` writes its column widths as inline properties, so a stylesheet has
+      nothing to override. The pre-hydration rule in doc-system-styles.ts handles the static
+      markup, which has a plain `<nav>` and no sidenav yet; this handles the hydrated page. Two
+      rules for two genuinely different DOMs, not two fixes for one bug.
+      */
+      wantsFullScreen = doc.layout === 'full-screen'
+      applyFullScreen()
     }
     rewriteContentLinks()
     // Stamp each example with its source file (for the source↔doc map). doc.path
@@ -1546,6 +1582,8 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
             TosiSidenav.tagName!
           ) as TosiSidenav | null
           if (sidenav) app.compact = sidenav.compact as any
+          // The sidenav has just introduced itself; give it the layout the doc asked for.
+          applyFullScreen()
         },
       },
       searchField,

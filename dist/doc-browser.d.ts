@@ -22,8 +22,8 @@ export interface Doc {
     path: string;
     pin?: string;
     hidden?: boolean;
-    /** `'full-width'` drops the reading measure. See `Doc.layout` in docs.ts. */
-    layout?: 'full-width';
+    /** `'full-width'` drops the reading measure; `'full-screen'` also puts the nav away. */
+    layout?: 'full-width' | 'full-screen';
     testStatus?: 'passed' | 'failed' | 'pending';
     bakes?: Array<[string, {
         dialect: string;

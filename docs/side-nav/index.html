@@ -53,6 +53,11 @@ the sidebar if so desired). <code>&lt;tosi-sidenav&gt;</code> provides this func
 <p><code>&lt;tosi-sidenav&gt;</code>&#39;s behavior is controlled by two attributes, <code>minSize</code> is the point at which it will toggle between showing the navigation
 sidebar and content, while <code>navSize</code> is the width of the sidebar. You can interrogate its <code>compact</code> property to find out if it&#39;s
 currently in <code>compact</code> form.</p>
+<p>Set <code>alwaysCompact</code> to stay compact at any width — the nav and the content take turns regardless
+of how much room there is, and <code>contentVisible</code> picks which one you see. That is how the
+doc-system&#39;s <code>layout: &quot;full-screen&quot;</code> pages give the content the whole viewport. It is a named
+state rather than a <code>minSize</code> no viewport can reach, because the second one works and reads as a
+bug.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -127,6 +132,7 @@ currently in <code>compact</code> form.</p>
       <li><a class="doc-link" href="../make-icon-data/">make-icon-data</a></li>
       <li><a class="doc-link" href="../release-notes/">release-notes</a></li>
       <li><a class="doc-link" href="../icon-svg/">iconSvg — icon markup without a DOM</a></li>
+      <li><a class="doc-link" href="../full-screen-demo/">Full-screen layout</a></li>
       <li><a class="doc-link" href="../migrating/">Migrating from older versions</a></li>
       <li><a class="doc-link" href="../doc-browser/">doc-browser</a></li>
       <li><a class="doc-link" href="../doc-site-system/">Doc-Site System</a></li>

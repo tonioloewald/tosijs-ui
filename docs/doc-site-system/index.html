@@ -819,12 +819,13 @@ changes for a corpus that never asks.</p>
 right — a layout applied by script would show the reading column and snap wide, which is the
 flicker pre-rendering exists to prevent. Client-side navigation keeps it in step in both
 directions.</p>
-<blockquote>
-<p><code>layout: &quot;full-screen&quot;</code> (chrome out of the way entirely) is <strong>not implemented yet</strong>. It is
-rejected with a message rather than half-honoured, because it needs a collapsed state on
-<code>&lt;tosi-side-nav&gt;</code> — the nav&#39;s <code>display</code> and the nav width are both inline styles, which a
-stylesheet cannot override cleanly. See <code>TODO.md</code>.</p>
-</blockquote>
+<p><code>layout: &quot;full-screen&quot;</code> goes further: no measure <strong>and</strong> no nav, so the content is the whole
+viewport — for a demo, a canvas, an embedded app. See <a href="/full-screen-demo/">the demo page</a>.</p>
+<p>It works by putting <code>&lt;tosi-sidenav&gt;</code> into <code>alwaysCompact</code> with the content showing. Compact mode
+already shows the nav <em>or</em> the content and takes turns between them, which is exactly what a
+full-screen page wants, so this reuses that behaviour rather than adding a second layout. Before
+hydration there is no sidenav yet — just static markup — so a stylesheet rule covers the first
+paint.</p>
 <h4><code>preview</code> — deploy the built site to a host you control</h4>
 <p>A doc site is a folder of static files, so sharing one is a copy, not a pipeline. Set a
 host and deploy:</p>
@@ -1587,6 +1588,7 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
       <li><a class="doc-link" href="../make-icon-data/">make-icon-data</a></li>
       <li><a class="doc-link" href="../release-notes/">release-notes</a></li>
       <li><a class="doc-link" href="../icon-svg/">iconSvg — icon markup without a DOM</a></li>
+      <li><a class="doc-link" href="../full-screen-demo/">Full-screen layout</a></li>
       <li><a class="doc-link" href="../migrating/">Migrating from older versions</a></li>
       <li><a class="doc-link" href="../doc-browser/">doc-browser</a></li>
       <li><a class="doc-link current" href="../doc-site-system/" aria-current="page">Doc-Site System</a></li>

@@ -1,4 +1,4 @@
-# tosijs-ui v1.12.2
+# tosijs-ui v1.12.3
 
 Simple, robust web-components for use with tosijs or anything else.
 
@@ -68,6 +68,8 @@ use it to inspect STATE; a painted-output check needs a real test lane.
   Form-associated custom elements — inputs, selects, and editors that participate
 - https://ui.tosijs.net/form/ — forms
   `<tosi-form>` and `<tosi-field>` can be used to quickly create forms complete with
+- https://ui.tosijs.net/full-screen-demo/ — Full-screen layout
+  A page using layout: full-screen — no reading measure, no nav, the content is the viewport.
 - https://ui.tosijs.net/gamepad/ — gamepads
   A couple of utility functions for dealing with gamepads and XRInputs.
 - https://ui.tosijs.net/hash-state/ — hash-state

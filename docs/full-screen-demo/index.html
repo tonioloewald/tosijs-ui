@@ -29,133 +29,44 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="../doc-system.css" data-tosi-doc-system />
-  <title>router — tosijs-ui</title>
-  <meta name="description" content="A lightweight client-side router for single-page applications. Supports pattern matching with named parameters, hash-based routing, and multiple named route…" />
-  <link rel="canonical" href="https://ui.tosijs.net/router/" />
+  <title>Full-screen layout — tosijs-ui</title>
+  <meta name="description" content="A page using layout: full-screen — no reading measure, no nav, the content is the viewport." />
+  <link rel="canonical" href="https://ui.tosijs.net/full-screen-demo/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="router — tosijs-ui" />
-  <meta property="og:description" content="A lightweight client-side router for single-page applications. Supports pattern matching with named parameters, hash-based routing, and multiple named route…" />
-  <meta property="og:url" content="https://ui.tosijs.net/router/" />
+  <meta property="og:title" content="Full-screen layout — tosijs-ui" />
+  <meta property="og:description" content="A page using layout: full-screen — no reading measure, no nav, the content is the viewport." />
+  <meta property="og:url" content="https://ui.tosijs.net/full-screen-demo/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"router","description":"A lightweight client-side router for single-page applications. Supports pattern matching with named parameters, hash-based routing, and multiple named route…","url":"https://ui.tosijs.net/router/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Full-screen layout","description":"A page using layout: full-screen — no reading measure, no nav, the content is the viewport.","url":"https://ui.tosijs.net/full-screen-demo/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt" data-layout="full-screen">
   <article class="doc-content">
-<h1>router</h1>
-<p>A lightweight client-side router for single-page applications. Supports
-pattern matching with named parameters, hash-based routing, and multiple
-named route views (slots).</p>
-<h2>Basic Usage</h2>
-<pre><code class="language-js">import { defineRoutes, navigate, router, tosiRouteView } from &#39;tosijs-ui&#39;
+<!--{ "layout": "full-screen", "parent": "Appendices", "order": 900, "title": "Full-screen layout", "description": "A page using layout: full-screen — no reading measure, no nav, the content is the viewport." }-->
 
-const home = () =&gt; {
-  const el = document.createElement(&#39;div&#39;)
-  el.textContent = &#39;Home page&#39;
-  return el
-}
-
-const about = () =&gt; {
-  const el = document.createElement(&#39;div&#39;)
-  el.textContent = &#39;About page&#39;
-  return el
-}
-
-const greeting = (params) =&gt; {
-  const el = document.createElement(&#39;div&#39;)
-  el.textContent = `Hello, ${params.name}!`
-  return el
-}
-
-defineRoutes(
-  [
-    { pattern: &#39;&#39;, targets: [{ component: home }] },
-    { pattern: &#39;about&#39;, targets: [{ component: about }] },
-    { pattern: &#39;greet/:name&#39;, targets: [{ component: greeting }] },
-  ],
-  { hashRouting: true }
-)
-
-preview.append(
-  tosiRouteView(),
-)
-
-// Navigate programmatically
-navigate(&#39;greet/World&#39;)
+<h1>Full-screen layout</h1>
+<p>This page sets <code>layout: &quot;full-screen&quot;</code> in its metadata, so it has <strong>no reading measure and no
+navigation chrome</strong> — the content area is the whole viewport. Navigate away and the nav comes
+straight back.</p>
+<p>That is what makes an <em>apps-and-manuals</em> site one site: prose pages keep the measure that makes
+them readable, and a demo, a canvas or an embedded app gets the room it needs.</p>
+<pre><code class="language-html">&lt;div style=&quot;height:60vh;display:grid;place-items:center;background:linear-gradient(135deg,#0064d233,#00d2a033);border-radius:8px&quot;&gt;
+  &lt;p style=&quot;font:600 clamp(1rem,4vw,2rem)/1.4 system-ui;text-align:center;margin:0;padding:1rem&quot;&gt;
+    This box is as wide as your window.&lt;br&gt;
+    &lt;small style=&quot;font-weight:400;opacity:.75&quot;&gt;No 44em column, no sidebar.&lt;/small&gt;
+  &lt;/p&gt;
+&lt;/div&gt;
 </code></pre>
-<h2>Named Views</h2>
-<p>Routes can target multiple named views simultaneously. This is useful
-for layouts where a route change should update several areas of the page.</p>
-<pre><code class="language-js">import { defineRoutes, navigate, tosiRouteView } from &#39;tosijs-ui&#39;
-
-const mainContent = (params) =&gt; {
-  const el = document.createElement(&#39;div&#39;)
-  el.textContent = `Editing photo ${params.id}`
-  el.style.padding = &#39;12px&#39;
-  el.style.background = &#39;#f0f0f0&#39;
-  return el
-}
-
-const sidebar = () =&gt; {
-  const el = document.createElement(&#39;div&#39;)
-  el.textContent = &#39;Color palette tools&#39;
-  el.style.padding = &#39;12px&#39;
-  el.style.background = &#39;#e0e0ff&#39;
-  return el
-}
-
-defineRoutes(
-  [
-    {
-      pattern: &#39;photos/:id/edit&#39;,
-      targets: [
-        { view: &#39;main&#39;, component: mainContent },
-        { view: &#39;tools&#39;, component: sidebar },
-      ],
-    },
-  ],
-  { hashRouting: true }
-)
-
-const container = document.createElement(&#39;div&#39;)
-container.style.display = &#39;flex&#39;
-container.style.gap = &#39;8px&#39;
-container.append(
-  tosiRouteView({ name: &#39;main&#39;, style: { flex: &#39;1&#39; } }),
-  tosiRouteView({ name: &#39;tools&#39;, style: { width: &#39;200px&#39; } }),
-)
-preview.append(container)
-
-navigate(&#39;photos/42/edit&#39;)
-</code></pre>
-<h2>Hash Routing</h2>
-<p>Set <code>hashRouting: true</code> when defining routes to use hash-based URLs
-(<code>#/path</code>) instead of History API paths. This is useful when your app
-is served from a static file server that doesn&#39;t support URL rewriting.</p>
-<pre><code class="language-js">import { defineRoutes, navigate, tosiRouteView } from &#39;tosijs-ui&#39;
-
-defineRoutes(
-  [
-    {
-      pattern: &#39;page/:id&#39;,
-      targets: [{
-        component: (p) =&gt; {
-          const el = document.createElement(&#39;div&#39;)
-          el.textContent = `Page ${p.id}`
-          return el
-        },
-      }],
-    },
-  ],
-  { hashRouting: true }
-)
-
-preview.append(tosiRouteView())
-navigate(&#39;page/1&#39;)
-</code></pre>
+<h2>How it works</h2>
+<p><code>full-screen</code> puts <code>&lt;tosi-sidenav&gt;</code> into <code>alwaysCompact</code> with the content showing. Compact mode
+already shows the nav <em>or</em> the content and takes turns between them — which is exactly what a
+full-screen page wants — so this reuses that rather than adding a second layout.</p>
+<p>Before the page hydrates there is no sidenav yet, just static markup, so a stylesheet rule
+handles the same effect for the first paint. Two rules for two genuinely different DOMs.</p>
+<p>See <a href="/doc-site-system/">the doc-site system</a> for the metadata reference.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -208,7 +119,7 @@ navigate(&#39;page/1&#39;)
       <li><a class="doc-link" href="../tag-list/">tag-list</a></li>
     </ul>
     </details></li>
-    <li><details open><summary><a class="doc-link" href="../helper-libraries/">Helper Libraries</a></summary>
+    <li><details><summary><a class="doc-link" href="../helper-libraries/">Helper Libraries</a></summary>
     <ul>
       <li><a class="doc-link" href="../ab-test/">ab-test</a></li>
       <li><a class="doc-link" href="../drag-and-drop/">drag &amp; drop</a></li>
@@ -216,21 +127,21 @@ navigate(&#39;page/1&#39;)
       <li><a class="doc-link" href="../live-theme/">live-theme</a></li>
       <li><a class="doc-link" href="../localize/">localize</a></li>
       <li><a class="doc-link" href="../make-sorter/">makeSorter</a></li>
-      <li><a class="doc-link current" href="../router/" aria-current="page">router</a></li>
+      <li><a class="doc-link" href="../router/">router</a></li>
       <li><a class="doc-link" href="../via-tag/">scriptTag &amp; styleSheet</a></li>
       <li><a class="doc-link" href="../theme/">theme</a></li>
       <li><a class="doc-link" href="../track-drag/">trackDrag</a></li>
       <li><a class="doc-link" href="../value-renderer/">valueRenderer</a></li>
     </ul>
     </details></li>
-    <li><details><summary><a class="doc-link" href="../appendices/">Appendices</a></summary>
+    <li><details open><summary><a class="doc-link" href="../appendices/">Appendices</a></summary>
     <ul>
       <li><a class="doc-link" href="../doc-system/">doc-system</a></li>
       <li><a class="doc-link" href="../kitchen-sink/">kitchen sink</a></li>
       <li><a class="doc-link" href="../make-icon-data/">make-icon-data</a></li>
       <li><a class="doc-link" href="../release-notes/">release-notes</a></li>
       <li><a class="doc-link" href="../icon-svg/">iconSvg — icon markup without a DOM</a></li>
-      <li><a class="doc-link" href="../full-screen-demo/">Full-screen layout</a></li>
+      <li><a class="doc-link current" href="../full-screen-demo/" aria-current="page">Full-screen layout</a></li>
       <li><a class="doc-link" href="../migrating/">Migrating from older versions</a></li>
       <li><a class="doc-link" href="../doc-browser/">doc-browser</a></li>
       <li><a class="doc-link" href="../doc-site-system/">Doc-Site System</a></li>

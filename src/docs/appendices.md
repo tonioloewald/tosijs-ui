@@ -11,6 +11,7 @@ doc-site build system, doc extraction, and icon tooling.
 - [make-icon-data](/make-icon-data/)
 - [release-notes](/release-notes/)
 - [iconSvg — icon markup without a DOM](/icon-svg/)
+- [Full-screen layout](/full-screen-demo/)
 - [Migrating from older versions](/migrating/)
 - [doc-browser](/doc-browser/)
 - [Doc-Site System](/doc-site-system/)

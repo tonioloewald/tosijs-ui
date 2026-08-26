@@ -7,6 +7,7 @@ export declare class TosiSidenav extends Component {
         navSize: number;
         compact: boolean;
         contentVisible: boolean;
+        alwaysCompact: boolean;
     };
     value: NavState;
     content: HTMLSlotElement[];

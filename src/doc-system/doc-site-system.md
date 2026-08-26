@@ -622,10 +622,14 @@ right — a layout applied by script would show the reading column and snap wide
 flicker pre-rendering exists to prevent. Client-side navigation keeps it in step in both
 directions.
 
-> `layout: "full-screen"` (chrome out of the way entirely) is **not implemented yet**. It is
-> rejected with a message rather than half-honoured, because it needs a collapsed state on
-> `<tosi-side-nav>` — the nav's `display` and the nav width are both inline styles, which a
-> stylesheet cannot override cleanly. See `TODO.md`.
+`layout: "full-screen"` goes further: no measure **and** no nav, so the content is the whole
+viewport — for a demo, a canvas, an embedded app. See [the demo page](/full-screen-demo/).
+
+It works by putting `<tosi-sidenav>` into `alwaysCompact` with the content showing. Compact mode
+already shows the nav _or_ the content and takes turns between them, which is exactly what a
+full-screen page wants, so this reuses that behaviour rather than adding a second layout. Before
+hydration there is no sidenav yet — just static markup — so a stylesheet rule covers the first
+paint.
 
 #### `preview` — deploy the built site to a host you control
 
