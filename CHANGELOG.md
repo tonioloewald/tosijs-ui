@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.12.4
+
+### `.tjs` source files are documented again ([#108](https://github.com/tonioloewald/tosijs-ui/issues/108))
+
+Converting a source file from `.ts` to native `.tjs` **silently deleted its documentation page**,
+and its `llms.txt` entry with it. Reported from tosijs, mid-port: one page lost per converted
+module.
+
+The silence was the real defect. The build exited 0, and the internal-link check passed —
+a page that was never generated is linked from nowhere, so "41 slugs, no 404s" is a _pass_. The
+only signal was a slug count nothing asserts on. `'x.tjs'.endsWith('.ts')` is `false`, so the
+`llms.txt` filter excluded it too, without even the mercy of an accidental match.
+
+`.tjs` is now scraped, in both places. The doc-block syntax is identical across these languages —
+a doc block is just a comment — so there is nothing language-specific to support. The list _is_
+the feature, which is exactly why an omission from it is invisible.
+
+**And a guard for the next one.** A file carrying what looks like a doc block, in an extension we
+do not scrape, is now **named** in the build output rather than passed over:
+
+```
+⚠️  1 file(s) look documented but are not scraped, so they have no page:
+    src/thing.vue
+    Scraped extensions: .ts, .js, .tjs, .css. Add one to SCRAPED_SOURCE_EXTENSIONS if it should be documented.
+```
+
+It warns rather than fails: a file may legitimately contain the sequence without wanting to be
+documentation, and a doc site that refused to build over a comment would be worse than the bug.
+But whatever the next extension turns out to be, its absence can no longer happen quietly.
+
 ## 1.12.3
 
 ### Back now has layout coverage, because a reader noticed before the tests did

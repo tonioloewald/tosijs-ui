@@ -108,7 +108,14 @@ function entriesFromSrcScan(): LlmsEntry[] {
   const entries: LlmsEntry[] = []
   let files: string[]
   try {
-    files = fs.readdirSync(SRC).filter((f) => f.endsWith('.ts'))
+    /*
+    `.tjs` too — and note `'x.tjs'.endsWith('.ts')` is FALSE, so the old test excluded it
+    silently rather than catching it by accident. Same root as tosijs-ui#108: a module ported
+    from `.ts` to `.tjs` dropped out of both the doc corpus and this index at once.
+    */
+    files = fs
+      .readdirSync(SRC)
+      .filter((f) => f.endsWith('.ts') || f.endsWith('.tjs'))
   } catch {
     return entries
   }

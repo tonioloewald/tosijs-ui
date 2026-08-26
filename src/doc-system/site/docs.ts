@@ -258,6 +258,53 @@ function metadata(content: string, filePath: string): Partial<Doc> {
   return data
 }
 
+/*
+Source extensions whose doc-comment blocks become documentation.
+
+`.tjs` earns its place for a reason worth recording: converting `more-math.ts` to `more-math.tjs`
+in tosijs SILENTLY deleted its documentation page (tosijs-ui#108). The build stayed green, and so
+did the internal-link check — a page that was never generated is linked from nowhere, so "41
+slugs, no 404s" is a pass. The only signal was a slug count nobody asserts on. A project mid-port
+loses one page per converted module and hears about it from a reader.
+
+The block syntax is identical across all of these, because a doc block is just a comment. There
+is nothing language-specific to support; the list IS the whole feature, which is exactly why
+forgetting an entry is silent.
+
+(Written without the closing-delimiter characters spelled out, because putting them in a comment
+ends it — the same trap tosijs-ui#70 records for doc blocks, hit again while writing this.)
+
+See `warnUnscrapedDocBlocks` below: a missing extension should never again be invisible.
+*/
+export const SCRAPED_SOURCE_EXTENSIONS = ['.ts', '.js', '.tjs', '.css']
+
+/** Files that look documented but are not scraped — reported once at the end of a walk. */
+const unscrapedDocBlocks: string[] = []
+
+/**
+ * Does an UNSCRAPED file appear to carry a doc block?
+ *
+ * Deliberately cheap and deliberately narrow: only files we are not already reading, only
+ * plausible source extensions, and only the same line-starting pattern the scraper itself uses,
+ * so this cannot disagree with it about what a doc block is. Binary files and anything large are
+ * skipped — this is a safety net, not a search.
+ */
+function hasDocBlock(filePath: string): boolean {
+  const ext = path.extname(filePath)
+  if (SCRAPED_SOURCE_EXTENSIONS.includes(ext) || ext === '.md') return false
+  // Extensions worth checking: source-shaped, and not the ones we already read.
+  if (!/^\.[cm]?[jt]sx?$|^\.(tjs|ajs|svelte|vue|scss|sass|less)$/.test(ext)) {
+    return false
+  }
+  try {
+    const stat = fs.statSync(filePath)
+    if (stat.size > 2_000_000) return false
+    return /^[ \t]*\/\*#/m.test(fs.readFileSync(filePath, 'utf8'))
+  } catch {
+    return false // unreadable is not our business here
+  }
+}
+
 function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
   const markdownFiles: Doc[] = []
   const truncationFound: TruncationWarning[] = []
@@ -303,7 +350,21 @@ function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
           ...metadata(content, filePath),
           ...fm, // frontmatter wins over JSON-comment metadata + the H1
         })
-      } else if (['.ts', '.js', '.css'].includes(path.extname(file))) {
+      } else if (hasDocBlock(filePath)) {
+        /*
+        A file we do NOT scrape, carrying what looks like a doc block.
+
+        This is the guard for the whole class, not just for `.tjs`. The extension list is the
+        entire feature, so an omission from it is invisible by construction: the page is simply
+        never generated, nothing links to it, and the link check passes. tosijs lost a page per
+        ported module this way and found out from a reader (tosijs-ui#108).
+
+        Warn rather than fail. A file may legitimately contain the sequence without wanting to be
+        documentation, and a doc site that refuses to build over a comment would be worse than
+        the bug. But it can no longer happen in silence.
+        */
+        unscrapedDocBlocks.push(path.relative(process.cwd(), filePath))
+      } else if (SCRAPED_SOURCE_EXTENSIONS.includes(path.extname(file))) {
         const content = fs.readFileSync(filePath, 'utf8')
         // A /*# … */ block is only a doc when it STARTS a line (whitespace-only
         // before the slash). This keeps a `/*#` that appears inside a // comment,
@@ -364,6 +425,24 @@ function findMarkdownFiles(paths: string[], ignore: string[]): Doc[] {
   // the message and fixes it in the same minute.
   if (truncationFound.length) {
     console.warn('\n' + formatTruncationWarnings(truncationFound))
+  }
+
+  /*
+  Same policy, different failure: a file that looks documented and is not being read.
+
+  Named individually rather than counted, because the useful version of this message is one you
+  can act on without going looking. The fix is nearly always one entry in
+  SCRAPED_SOURCE_EXTENSIONS.
+  */
+  if (unscrapedDocBlocks.length) {
+    const list = unscrapedDocBlocks.map((f) => `    ${f}`).join('\n')
+    console.warn(
+      `\n⚠️  ${unscrapedDocBlocks.length} file(s) look documented but are not scraped, so ` +
+        `they have no page:\n${list}\n` +
+        `    Scraped extensions: ${SCRAPED_SOURCE_EXTENSIONS.join(', ')}. ` +
+        `Add one to SCRAPED_SOURCE_EXTENSIONS if it should be documented.\n`
+    )
+    unscrapedDocBlocks.length = 0 // a walk reports its own findings, not the previous one's
   }
 
   return markdownFiles.sort(pinnedSort)

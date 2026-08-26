@@ -82,5 +82,6 @@ export declare function parseFrontmatter(content: string): {
     data: Partial<Doc>;
     body: string;
 };
+export declare const SCRAPED_SOURCE_EXTENSIONS: string[];
 export declare function extractDocs(options: ExtractDocsOptions): Doc[];
 export declare function saveDocsJSON(docs: Doc[], outputPath: string): void;
