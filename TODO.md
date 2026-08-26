@@ -738,6 +738,38 @@ live site** (independently useful). See roadmap "From book to live."
       changing side-nav's behavior slightly"). Doing it as `!important` from the doc-system
       would work and would be the wrong layer.
 
+## Dev-server caching: revalidate instead of forbidding storage (parked on a branch)
+
+- [ ] **Parked at `dev-cache-revalidate` (`56dcb03a`) — not merged.** 1.12.3 ships the blunt
+      version: `Cache-Control: no-store` on everything the dev server serves. That is correct —
+      nothing can be used stale, which is what the Safari incident needed — but it forbids
+      _storing_, so a browser re-downloads the whole bundle on every page load, forever.
+
+      The parked branch is the better shape: `no-cache` (keep it, but revalidate before every
+      use) plus an ETag of `mtime-size-encoding`, with `If-None-Match` answered by a 304 and no
+      body. Encoding is in the tag because the brotli and gzip bodies differ and honouring one
+      against the other's validator hands the client bytes it cannot decode. HTML keeps
+      `no-store` **when it is injected per request** — the dev-channel loader, the build-status
+      widget and session-dependent content mean a validator derived from disk would be a lie;
+      when nothing is injected it takes the ordinary asset path, which is why the test asserts
+      "unusable without revalidation" rather than one header spelling.
+
+      Already verified on the branch: assets revalidate to 304, and touching a file yields a new
+      tag and fresh bytes. Tests are written (`tests/dev-no-cache.pw.ts`, 12 passing).
+
+      **Why it is not merged.** I justified it with a measurement I cannot support: the lane at
+      1.3m before `no-store` and 1.9-2.7m after, blamed on the change — while an orphaned
+      haltija Electron from another project sat at 5.7GB and ~150% CPU with the machine at load
+      **212** (see haltija#39). That comparison is confounded. The design stands on its own
+      terms; it should land behind a clean measurement rather than behind a number that was
+      wrong.
+
+      **To finish:** on a quiet machine, time the full Playwright lane three times on `main`,
+      then three times on the branch. Merge if revalidation is not slower — and if the honest
+      answer is that `no-store` never cost anything measurable, say so and merge it anyway for
+      being the accurate header, or drop it and keep the simpler code. Either is fine; guessing
+      is not.
+
 ## Decide: should a nav-toggle override survive Back?
 
 - [ ] Reported as "sometimes it treats the full-screen page and the full-screen page with nav
