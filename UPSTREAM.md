@@ -616,9 +616,26 @@ npm is at 1.5.1).
   with filesystem access is a much bigger grant than a pipe to the agent the user is already
   supervising. Strictly the safer design, which is why it is what we asked for.
 
-  Asked for: a page-side post, and an agent-side `hj messages --wait` that **blocks** rather
-  than polls — the blocking form is what makes it one tool call instead of a polling loop.
-  We supply the widget once the primitive exists; the transport already works.
+  **Refined to a session MIRROR, not a mailbox** (2026-08-26): anything the agent says goes to
+  the pipe and is readable from the page; anything the user types on the page goes into the
+  session as if typed. Strictly more useful — the person in the headset watches the agent
+  _work_, not just its replies — and it is the self-hosted equivalent of a vendor
+  remote-control feature, which is the GDPR argument made concrete rather than approximated.
+
+  **The agent needs no API for this**, which is what makes it buildable: a pty wrapper
+  (`hj session -- claude`) sees every byte and can inject input by writing the master side —
+  indistinguishable from typing, which is how `expect` and `tmux` work — and **tmux**
+  (`pipe-pane` / `send-keys`) does both for a session that is _already running_, which a
+  wrapper cannot. Suggested tmux first for the headset case specifically: a raw pty mirror is
+  ANSI from a full-screen TUI and needs xterm.js to render, while `capture-pane -p` yields
+  already-rendered text.
+
+  Flagged for design: a mirror carries everything the agent prints, so it needs its own opt-in
+  (same trust boundary as the edit session, which can already write source — consistent, not
+  novel, but not something `haltijaDev: true` should imply); and two writers on one pty wants
+  line-at-a-time remote input rather than per-character.
+
+  We supply the page-side view once the primitive exists; the transport already works.
 
 - **[haltija#38](https://github.com/tonioloewald/haltija/issues/38) — `component.js` recording
   is broken for every `wss://` config.** `serverUrl.replace("ws:", "http:")` is a no-op on
