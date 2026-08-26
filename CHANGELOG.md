@@ -40,6 +40,34 @@ session, receives the loader, resolves `serverUrl` to its own origin (not `local
 attaches the widget, opens the relayed socket, appears in `hj windows`, and answers `hj eval`
 and `hj navigate`.
 
+### `<tosi-table>`: a column drag no longer dies when `columns` is reassigned under it
+
+The other half of the reporting app's "resize funkiness", and a different defect from #102's
+torn grid — this one is not a mismatch at all. `resizeColumn` captured the `ColumnOptions`
+object and mutated it for the whole drag, and that object stops being the table's the instant a
+caller assigns a new `columns` array. Which the app does on a page-size change, and a page-size
+change is a very likely thing to happen while someone is dragging a column edge. From then on
+the drag wrote widths into an orphan: pointer moving, column not moving, nothing reported.
+
+The drag now re-resolves the column by `prop` each step — ending cleanly if it is gone, and
+rebasing on the new width if the object was merely replaced. Confirmed pre-existing rather than
+introduced by 1.12.1: reverting that fix leaves the drag equally dead.
+
+### Known: column resize does not work on Firefox at all ([#107](https://github.com/tonioloewald/tosijs-ui/issues/107))
+
+Found while investigating the above, and it is the bigger problem. On Firefox a **plain** column
+drag — no reassignment anywhere near it — applies one step and freezes: +60px reaches 162 and
++120px still reads 162, against 210 then 270 on chromium and webkit. A document-level capture
+listener shows Firefox stops delivering `mousemove` to the page entirely after the first event,
+so no callback can run.
+
+The cause looks to be `trackDrag` listening on a full-screen overlay while Firefox keeps
+implicit mouse capture on the element that received the `mousedown`. The fix is Pointer Events
+with explicit capture, and `trackDrag` is shared by every draggable affordance — so it wants
+doing deliberately, with the others re-tested on Firefox at the same time, rather than as a
+footnote to this release. Ruled out first: it is not the DOM being rebuilt under the drag
+(deferring renders changes nothing) and not #102 (reverting that changes nothing).
+
 ### `tosijs-release-notes`: the bump gate stops blocking on dev tooling
 
 Two fixes, both hit while cutting this release — which is the only way anyone finds them.

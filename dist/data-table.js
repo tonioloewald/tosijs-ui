@@ -2149,9 +2149,32 @@ export class TosiTable extends WebComponent {
         this.style.cursor = column !== undefined ? 'col-resize' : '';
     };
     resizeColumn = (event) => {
-        const column = this.getColumn(event);
-        if (column !== undefined) {
-            const origWidth = Number(column.width);
+        const grabbed = this.getColumn(event);
+        if (grabbed !== undefined) {
+            /*
+            The drag follows the column BY PROP, not by holding the object it started on.
+      
+            A drag used to capture the `ColumnOptions` object and mutate it for its whole life. That
+            object stops being the table's the moment a caller assigns a new `columns` array — which
+            the reporting app does on a page-size change, and a page-size change is a very likely
+            thing to happen while someone is dragging a column edge. From then on the drag wrote
+            widths into an orphan: pointer moving, column not moving, nothing reported anywhere.
+      
+            Each step re-resolves from the current set instead. If the column is gone the drag ends
+            (its premise went with it); if the object was replaced but the prop survives, the drag
+            continues, rebased on the new width — `origWidth + dx` against a width the caller has
+            since changed would make the column jump by the difference.
+      
+            NOTE: this cannot help firefox, where column resizing is independently broken (#107) —
+            firefox applies one drag step and then stops delivering mousemove at all, with or without
+            any reassignment. Deferring the render to keep the grabbed element alive was tried and
+            does not help either, because the events stop for a reason unrelated to the DOM; it also
+            risks wedging `_resizing` on forever when the mouseup never arrives.
+            */
+            const prop = grabbed.prop;
+            let anchor = grabbed;
+            let anchorWidth = Number(grabbed.width);
+            let anchorDx = 0;
             const isTouchEvent = event.touches !== undefined;
             const touchIdentifier = isTouchEvent
                 ? event.touches[0].identifier
@@ -2163,9 +2186,16 @@ export class TosiTable extends WebComponent {
                 if (touch === undefined) {
                     return true;
                 }
-                const width = origWidth + dx;
-                column.width =
-                    width > this.minColumnWidth ? width : this.minColumnWidth;
+                const live = this.columns.find((c) => c.prop === prop);
+                if (!live)
+                    return true;
+                if (live !== anchor) {
+                    anchor = live;
+                    anchorWidth = Number(live.width);
+                    anchorDx = dx;
+                }
+                const width = anchorWidth + (dx - anchorDx);
+                live.width = width > this.minColumnWidth ? width : this.minColumnWidth;
                 this.setColumnWidths();
                 if (event.type === 'mouseup') {
                     return true;

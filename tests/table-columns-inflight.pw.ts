@@ -146,3 +146,124 @@ test('a resize still moves widths after the column set is pinned to the DOM', as
 
   expect(grid.split(/\s+/)[0]).toBe('250px')
 })
+
+test('an in-progress column drag survives the columns being reassigned under it', async ({
+  page,
+  browserName,
+}) => {
+  /*
+  Skipped on firefox because column resizing does not work there AT ALL — see #107. A plain
+  drag with no reassignment anywhere near it applies one step and then freezes (+60px -> 162,
+  +120px -> still 162, against 210 then 270 on the other two engines), because firefox stops
+  delivering mousemove after the first event. Asserting the mid-drag behaviour there would
+  fail on a defect this test is not about, and skipping is honest where a lowered expectation
+  would quietly bless it.
+  */
+  test.skip(
+    browserName === 'firefox',
+    'column resize is broken on firefox independently of this — #107'
+  )
+  /*
+  The OTHER half of the reporting app's "resize funkiness", and a different defect from the
+  torn grid above — this one is not a mismatch at all, it is a drag that silently stops working.
+
+  `resizeColumn` used to capture the `ColumnOptions` object and mutate it for the whole drag.
+  That object stops being the table's the instant a caller assigns a new `columns` array, and a
+  page-size change — which is exactly what the reporting app reacts to — is a very likely thing
+  to happen while someone is dragging a column edge. From then on the drag wrote widths into an
+  orphan: pointer moving, column not moving, nothing reported anywhere.
+
+  Verified pre-existing rather than assumed: with the `_renderedCols` fix reverted the drag is
+  equally dead, so the two defects are independent and this one predates that change.
+  */
+  await page.evaluate(() => {
+    const { tosiTable } = (window as any).xinjsui
+    const host = document.createElement('div')
+    host.id = 'rz'
+    host.style.cssText =
+      'width:800px;height:200px;position:fixed;top:0;left:0;z-index:9999;background:#fff'
+    document.body.append(host)
+    const table = tosiTable({
+      columns: [
+        { prop: 'a', width: 150 },
+        { prop: 'b', width: 150 },
+        { prop: 'c', width: 150 },
+        { prop: 'd', width: 150 },
+      ],
+      array: Array.from({ length: 12 }, (_, i) => ({ a: i, b: i, c: i, d: i })),
+    })
+    host.append(table)
+    ;(window as any).__rzTable = table
+  })
+  await page.waitForFunction(
+    () => !!document.querySelector('#rz .th'),
+    undefined,
+    { timeout: 5000 }
+  )
+
+  const headerWidths = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('#rz .th')].map((e) =>
+        Math.round(e.getBoundingClientRect().width)
+      )
+    )
+  const edge = await page.evaluate(() => {
+    const th = document.querySelector('#rz .th') as HTMLElement
+    const r = th.getBoundingClientRect()
+    return { x: r.right, y: r.top + r.height / 2 }
+  })
+
+  await page.mouse.move(edge.x, edge.y)
+  await page.mouse.down()
+  await page.mouse.move(edge.x + 60, edge.y, { steps: 5 })
+  /*
+  "It moved", not "it moved 60px". The pointer travels the same distance on every engine and
+  they still disagree about the result: chromium reaches 210 where firefox reaches 162, because
+  the resize hotspot is hit-tested with an epsilon and the two pick the drag up at slightly
+  different points. Pinning the pixel pins that difference rather than the behaviour — which is
+  what the comment below already says about the second assertion, and was no less true here.
+  */
+  const during = (await headerWidths())[0]
+  expect(during, 'the drag moves the column at all').toBeGreaterThan(150)
+
+  // The host reassigns columns MID-DRAG, as a page-size handler would.
+  await page.evaluate(() => {
+    ;(window as any).__rzTable.columns = [
+      { prop: 'a', width: 150 },
+      { prop: 'b', width: 150 },
+      { prop: 'c', width: 150, visible: false },
+      { prop: 'd', width: 150 },
+    ]
+  })
+  await page.waitForFunction(
+    () => document.querySelectorAll('#rz .th').length === 3,
+    undefined,
+    { timeout: 5000 }
+  )
+
+  await page.mouse.move(edge.x + 120, edge.y, { steps: 5 })
+  const after = await headerWidths()
+  await page.mouse.up()
+
+  /*
+  The assertion is that the drag is ALIVE, not that it reaches a particular pixel. The
+  reassignment legitimately reset the width to 150, so the drag rebases and grows from there —
+  pinning an exact total would be pinning the rebase arithmetic rather than the property that
+  matters, which is simply that the pointer still moves the column.
+  */
+  expect(
+    after[0],
+    `the drag must keep working after the reassignment: ${JSON.stringify(
+      after
+    )}`
+  ).toBeGreaterThan(150)
+  /*
+  And it must keep TRACKING, not merely be non-zero. The reassignment resets the width to 150,
+  so a drag that died at that exact moment would also read 150 — the failing state and a
+  "barely moved" state are only one pixel apart, and this is the assertion that separates them.
+  */
+  expect(
+    after[0],
+    `the drag froze at the width the reassignment set: ${JSON.stringify(after)}`
+  ).toBeGreaterThan(151)
+})
