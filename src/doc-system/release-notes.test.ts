@@ -227,15 +227,26 @@ test('REGRESSION: a [break] in a patch is blocked', () => {
   expect(concern.reason).toContain('never breaks')
 })
 
-test('REGRESSION: touching a security path in a patch is blocked', () => {
-  // The rule was written down two releases before it was mis-applied, by its author.
-  // Knowing a rule and applying it are different acts (#79).
+test('REGRESSION: touching a dev-tooling security path in a patch WARNS', () => {
+  /*
+  The rule was written down two releases before it was mis-applied, by its author. Knowing a
+  rule and applying it are different acts (#79) — hence the check.
+
+  It used to BLOCK, and that was wrong. Every path on this list is development tooling — a dev
+  server, a tunnel, a deploy script — none of which runs in an end user's browser as part of an
+  adopter's app. Halting a release over it spends the maintainer's attention on the release with
+  the least at stake, and a guard that cries wolf gets overridden or deleted, taking the case it
+  was RIGHT about with it. Warning keeps the signal without charging for it.
+
+  A blocking gate here would need to key on code an adopter SHIPS, which none of these are.
+  */
   const concerns = bumpConcerns({
     bump: 'patch',
     bullets: [bullet('new', 'a new option')],
     changedPaths: ['src/doc-system/site/dev-auth.ts'],
   })
-  expect(concerns.some((c) => c.level === 'block')).toBe(true)
+  expect(concerns.some((c) => c.level === 'warn')).toBe(true)
+  expect(concerns.some((c) => c.level === 'block')).toBe(false)
   expect(concerns[0].evidence[0]).toContain('dev-auth')
 })
 

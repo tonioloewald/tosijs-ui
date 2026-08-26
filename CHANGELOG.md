@@ -40,6 +40,48 @@ session, receives the loader, resolves `serverUrl` to its own origin (not `local
 attaches the widget, opens the relayed socket, appears in `hj windows`, and answers `hj eval`
 and `hj navigate`.
 
+### `tosijs-release-notes`: the bump gate stops blocking on dev tooling
+
+Two fixes, both hit while cutting this release — which is the only way anyone finds them.
+
+**A dev-tooling path with a security surface now WARNS instead of blocking a patch.** Every
+path on that list is development tooling — a dev server, a tunnel, a deploy script — and none
+of it runs in an end user's browser as part of an adopter's app. Halting a release over it
+spends the maintainer's attention on the release with the least at stake, and a guard that
+cries wolf gets overridden or deleted, taking the case it was _right_ about with it (#79, a
+loosened dev-server default shipped as a patch). The warning keeps that signal and stops
+charging for it. A gate that genuinely should block would have to key on code an adopter
+**ships**, which none of these are.
+
+**The blocking branch offered advice it could not honour.** It said "explain in the notes why
+this does not reach anyone" — but `bumpConcerns` never sees the notes, so nothing you wrote
+could satisfy it, and the only way forward was to work that out by reading the tool's own
+source. Same defect this project already fixed in the tunnel's 401 page. It now says "cut a
+minor", which is the only thing that ever worked.
+
+### Security-relevant paths that changed, and why this is still a patch
+
+`dev-auth.ts` — the module that decides who may do privileged things — changed in this
+release, and a patch touching it deserves a heading rather than a footnote.
+
+**The change is purely additive, and that is checkable rather than asserted.** The diff against
+1.12.1 removes **zero lines**, and `mayWriteSource` is **byte-identical** to 1.12.1. What was
+added is one new exported function, `mayDriveWithAgent`, whose entire body delegates to
+`mayWriteSource` — with a test asserting the two agree on every combination of `viaTunnel`,
+`hasValidSession` and peer address, so they cannot drift apart later without that test going
+red.
+
+**Nothing reaches an existing adopter.** The new predicate is consulted only by the
+`/__haltija/` routes, which exist only when `haltijaDev: 'tunnel'` is set. Every existing
+authorization decision — source writes, link minting, session validation — is executed by the
+same bytes as in 1.12.1. If you have not opted in, the reachable behaviour of this release is
+identical to 1.12.1.
+
+**What it would mean if you do opt in:** a live dev session cookie becomes sufficient to let an
+agent drive your page over the tunnel, in addition to editing source. That is a real widening
+of what a session can do, which is why it is a distinct config value and not implied by
+`haltijaDev: true`.
+
 **A patch, not a minor**, despite reading like a feature: it is a new optional _value_ on an
 existing config field, plus routes that exist only under it. `haltijaDev: true` behaves exactly
 as before and nothing is removed or renamed, so the contract a patch carries — it does not

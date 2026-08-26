@@ -159,9 +159,16 @@ if (has('check')) {
     )
     for (const e of c.evidence) console.error(`   ${e}`)
     console.error(
+      /*
+      Advice you can actually follow. The blocking branch used to offer "explain in the notes
+      why this does not reach anyone" — which `bumpConcerns` cannot honour, because it never
+      sees the notes. A gate whose stated remedy is unrunnable leaves you re-reading your own
+      tool to find out what it wants, which is the same defect this repo fixed in the tunnel's
+      401 page.
+      */
       blocking
-        ? `\n   Cut a minor, or explain in the notes why this does not reach anyone.\n`
-        : `\n   Check it is genuinely additive.\n`
+        ? `\n   Cut a minor — this is not something the notes can talk you out of.\n`
+        : `\n   Check it is genuinely additive, and say what moved in the notes.\n`
     )
   }
 

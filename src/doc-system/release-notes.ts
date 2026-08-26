@@ -268,6 +268,21 @@ Deliberately a small, named list rather than a clever heuristic: it has to be ob
 release was flagged, and obvious how to add to it. Matched as substrings of repo-relative
 paths.
 */
+/*
+Paths where a change is worth a second look before it ships as a patch.
+
+These are all DEVELOPMENT tooling — a dev server, a tunnel, a deploy script. None of it runs in
+an end user's browser as part of an adopter's app, which is why touching them WARNS rather than
+blocks. The distinction is the point: a security-relevant change to code an adopter ships to
+their users deserves a gate that stops the release, and a change to a tool a developer chooses
+to run on their own machine deserves a sentence in the notes.
+
+It blocked, briefly, and that was wrong in a way worth recording. A gate that halts a release
+over dev-only tooling spends the maintainer's attention on the release with the least at stake,
+and the reliable outcome of a guard that cries wolf is that it gets overridden or deleted —
+taking the case it was RIGHT about (#79, a loosened dev-server default shipped as a patch) with
+it. Warning keeps that signal and stops charging for it.
+*/
 export const SENSITIVE_PATHS = [
   'dev-auth',
   'build-lock',
@@ -326,9 +341,9 @@ export function bumpConcerns(opts: {
   )
   if (sensitive.length) {
     out.push({
-      level: 'block',
+      level: 'warn',
       reason:
-        'a security-relevant path changed in a PATCH — say what moved, under its own heading, in a release people will read',
+        'a dev-tooling path with a security surface changed in a PATCH — say what moved, under its own heading, in a release people will read',
       evidence: sensitive.slice(0, 8),
     })
   }
