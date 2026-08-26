@@ -2,6 +2,26 @@
 
 ## 1.12.1
 
+### The Playwright lane no longer fights itself
+
+Local workers are pinned to **6** rather than Playwright's default (~half the cores, 9 here).
+Every engine had taken a turn producing a `page.goto` timeout or a `docs.json` load failure —
+roughly one full run in five, always passing in isolation — because 9 browsers were hitting one
+dev server. 1.11.0 fixed the client half (`fetchCorpus` retries); this reduces the contention
+instead of surviving it.
+
+Measured, not guessed: 9 workers ran the suite in 82s and 6 in 81s, so the lane is not
+CPU-bound at 9 and a third of the load is free; 4 workers costs 106s and buys nothing further.
+6/6 clean afterwards. Contributor-facing only — CI already runs at 1 worker.
+
+### `<tosi-schema-form>`: the structural-edit path is now guarded too
+
+The keystroke perf guard counts DOM lookups, and provably could not see `syncValues` — which
+runs on add/remove-item, not on keystrokes. A root-scoped per-field scan reintroduced there
+passed the existing test. There is now a sibling test on that path; mutation-testing takes it
+from 1 lookup per add to 41 → 161 as field count grows, while the keystroke test stays green
+under the same mutation.
+
 ### `<tosi-table>`: the header and body can no longer describe different columns (#102)
 
 Reported from a host app that changes column visibility when the page size changes. `set

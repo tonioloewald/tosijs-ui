@@ -176,3 +176,81 @@ test('the keystroke path does no per-field DOM lookup, at any field count', asyn
     )}`
   ).toBeLessThanOrEqual(lookups.at400 + 4)
 })
+
+test('the structural-edit path does no per-field DOM lookup either', async ({
+  page,
+}) => {
+  /*
+  The sibling of the keystroke guard above, covering the path that one provably cannot see.
+
+  A keystroke runs `refreshErrors()` and `syncErrors()`. Adding or removing an array item runs
+  `afterStructuralEdit()`, and that DOES call `syncValues()` — which the keystroke path
+  deliberately skips, because writing values back into the control the user is typing in is the
+  bug it would cause. So a root-scoped per-field scan reintroduced in `syncValues` is invisible
+  to the keystroke test; mutation-testing it there passes, which is how this gap was found
+  rather than assumed.
+
+  Measured: **1** call per add at 200 fields and 1 at 800 — flat, because `syncValues` goes
+  through `_index` like everything else. The assertion is again about growth, not the constant.
+  */
+  const lookups = await page.evaluate(async () => {
+    const { tosiSchemaForm } = (window as any).xinjsui
+    const countFor = async (fields: number) => {
+      const props: Record<string, unknown> = {}
+      for (let i = 0; i < fields; i++) props['f' + i] = { type: 'string' }
+      props.tags = { type: 'array', items: { type: 'string' } }
+      const form = tosiSchemaForm({
+        schema: { type: 'object', properties: props },
+        value: { tags: ['x'] },
+      })
+      document.body.append(form)
+      await new Promise((r) => requestAnimationFrame(r))
+      await new Promise((r) => requestAnimationFrame(r))
+      const add = form.querySelector(
+        '[data-array="tags"] .schema-add'
+      ) as HTMLButtonElement
+      if (!add)
+        throw new Error('no add button — the harness, not the component')
+
+      const protos: any[] = [
+        Element.prototype,
+        Document.prototype,
+        DocumentFragment.prototype,
+      ]
+      const saved = protos.map((proto) => [
+        proto,
+        proto.querySelector,
+        proto.querySelectorAll,
+      ])
+      let calls = 0
+      for (const proto of protos) {
+        const qs = proto.querySelector
+        const qsa = proto.querySelectorAll
+        proto.querySelector = function (...a: any[]) {
+          calls++
+          return qs.apply(this, a)
+        }
+        proto.querySelectorAll = function (...a: any[]) {
+          calls++
+          return qsa.apply(this, a)
+        }
+      }
+      const ADDS = 5
+      for (let k = 0; k < ADDS; k++) add.click()
+      for (const [proto, qs, qsa] of saved as any[]) {
+        proto.querySelector = qs
+        proto.querySelectorAll = qsa
+      }
+      form.remove()
+      return calls / ADDS
+    }
+    return { at200: await countFor(200), at800: await countFor(800) }
+  })
+
+  expect(
+    lookups.at800,
+    `per-add DOM lookups must not scale with field count: ${JSON.stringify(
+      lookups
+    )}`
+  ).toBeLessThanOrEqual(lookups.at200 + 4)
+})

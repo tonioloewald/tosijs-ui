@@ -29,8 +29,21 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /*
+  Opt out of parallel tests on CI. Locally, SIX — not Playwright's default.
+
+  The default is roughly half the cores (9 on an 18-core box) and it was costing runs: every
+  engine took a turn producing a `page.goto` timeout or a `docs.json` load failure, roughly one
+  full run in five, always passing in isolation. The cause is 9 browsers against ONE dev
+  server, not any component. The client half of that was fixed in 1.11.0 (`fetchCorpus` retries
+  429/5xx/network); this is the other half — reducing the contention rather than surviving it.
+
+  Six is measured, not picked: 9 workers ran the suite in 82s and 6 workers in 81s, so the lane
+  is not CPU-bound at 9 and a third of the concurrent load on the server is free. 4 workers
+  costs 106s (+30%) and buys nothing further. 6/6 full runs clean afterwards, against a prior
+  rate near 1 in 5 — suggestive rather than proof, and worth re-measuring if it recurs.
+  */
+  workers: process.env.CI ? 1 : 6,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

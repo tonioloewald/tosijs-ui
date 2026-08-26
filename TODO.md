@@ -685,58 +685,55 @@ live site** (independently useful). See roadmap "From book to live."
   idiomatic than the local UI term (ja `選別` for sort, es `Clasificar`, zh `展示` for show)
   and were deliberately left alone rather than asserting more than could be verified.
 
-## Flaky: `hydration.pw.ts` "doc pages hydrate with no console errors"
+## DONE (1.12.1): the Playwright lane's worker contention
 
-- [ ] Fails roughly **1 full run in 6, on WebKit only**, with
-      `<tosi-doc-system> could not load docs from ../docs.json TypeError: Load failed`. Passes
-      **5/5 in isolation**, so it is contention rather than logic: the failure is a `fetch` of
-      `docs.json` losing under 171 parallel specs against one dev server, and WebKit is the
-      engine that gives up first.
+- [x] Both halves of the `hydration.pw.ts` / `docs.json` flake are now addressed. The client
+      half shipped in 1.11.0 (`fetchCorpus` retries 429/5xx/network with full-jitter backoff).
+      The server half is here: local workers are pinned to **6** instead of Playwright's
+      default ~half-the-cores (9 on this box).
 
-      **The retry half is DONE (1.11.0)** — `fetchCorpus` in `src/doc-system/doc-system.ts`.
-      It was the more valuable half exactly as expected: a doc site that renders nothing
-      because one request lost is a real-user failure, not only a test one. Three attempts,
-      full-jitter backoff (250ms base, 4s cap), `Retry-After` honoured; **only 429/5xx and
-      network errors retry** — a 404 or a 403 is an answer, and re-asking cannot change it.
-      That restraint is the anti-cascade property and it is what the tests actually pin: the
-      first version threw the permanent failure from inside the `try`, the `catch` retried it,
-      and the 404 test caught that.
+      Measured rather than guessed — 9 workers ran the suite in 82s, 6 in 81s, so the lane is
+      not CPU-bound at 9 and a third of the concurrent load on the single dev server is free.
+      4 workers costs 106s (+30%) and buys nothing further. 6/6 full runs clean afterwards
+      against a prior rate near 1 in 5.
 
-      What is left is the other half: whether the lane's worker count is simply too high for
-      one dev server. Retrying makes the client survive contention; it does not reduce it.
+      Suggestive, not proof — 6 runs cannot demonstrate a 1-in-5 rate is gone. If it recurs,
+      re-measure rather than dropping workers further on instinct.
 
-      **The nested-doc-system flake in the same lane WAS fixed** (1.11.0): it was the page's
-      own inline doc tests racing the spec, the fourth instance of that cause in this release.
+## `<tosi-schema-form>` perf guards: one gap left of two
 
-## `<tosi-schema-form>` perf guards: two known gaps
+- [x] **The structural-edit path is now guarded** (`syncValues`, run on add/remove-item rather
+      than on keystrokes). Mutation-verified both ways: a root-scoped per-field scan there
+      takes the new test from 1 call per add to 41 → 161 as fields grow, while the keystroke
+      test stays green under the same mutation — which is exactly why the gap existed.
 
-- [ ] `tests/schema-form-array.pw.ts` pins the **keystroke** path with a deterministic count of
-      `querySelector`/`querySelectorAll` calls (0, on all three engines, at any field count).
-      Two gaps it does not cover, both deliberate rather than overlooked:
+- [ ] **A quadratic regression that never calls `querySelector`** — an O(N) array walk per
+      field, say — is still invisible to a call count, and that is what a call count buys you
+      in exchange for never flaking.
 
-      1. **The structural-edit path is unguarded.** `syncValues` runs on add/remove-item, not on
-         keystrokes, so a root-scoped per-field scan reintroduced there passes the test. Mutation
-         confirmed. Same harness, different trigger — cheap to add.
-      2. **A quadratic regression that never calls `querySelector`** — an O(N) array walk per
-         field — is invisible to a call count. That needs wall-clock, and wall-clock is what was
-         removed: a `<10ms` ceiling and then a 4x-fields ratio both flaked on firefox under the
-         full 171-spec run (28ms -> 259ms loaded vs 21ms -> 56ms isolated; load does not scale
-         the two measurements together). A timing guard here needs a quiet lane, not a wider
-         threshold.
+      Worth re-attempting now, with numbers to beat. Wall-clock was removed because it flaked
+      under 9 workers: firefox measured 4x-fields at 2.67x isolated and 9.25x loaded, so the
+      threshold could not separate load from regression. The lane now runs at **6 workers** and
+      went 6/6 clean, so re-measure the spread before concluding it is impossible — if the
+      loaded and isolated ratios now agree, a timing guard can rejoin the main lane.
 
-## 1.11.1: `<tosi-table>` torn render on a mid-flight `columns` change
+      Do NOT solve this with a separate perf lane that the release gate does not run. This repo
+      has already learned that lesson twice: a lane nobody runs rots, and the Playwright lane
+      sat red for a month.
 
-- [ ] **[#102](https://github.com/tonioloewald/tosijs-ui/issues/102)** — header and body
-      columns disagree when a `columns` assignment arrives **during** a render. The reporting
-      app (snowfox) changes column visibility in response to a page-size change, which is what
-      produces the timing; header and body are written in separate passes and only one sees the
-      new column set.
+## DONE (1.12.1): `<tosi-table>` torn render on a mid-flight `columns` change
 
-      The caller reassigning columns mid-render is questionable, but a table that can show a
-      header and a body describing different columns is our defect regardless of when the
-      assignment arrives. Fix by honouring the late change cleanly — coalesce it into the
-      pending render, or finish the current one and re-render — not by asking callers to time
-      their assignments.
+- [x] **[#102](https://github.com/tonioloewald/tosijs-ui/issues/102)** — fixed. Not the
+      mechanism first assumed: `render()` already passes one `cols` array to both the header
+      and the row template, so a render cannot tear itself. The break was `setColumnWidths()`
+      reading LIVE `visibleColumns` while a render was in flight, writing a grid template for
+      the new columns over the old cells. Fewer tracks than cells means CSS Grid auto-places
+      the surplus into implicit tracks, which size to content — so header and body resolved
+      them differently and stepped apart.
+
+      Found by fuzzing an invariant, not by reasoning: four plausible mechanisms were
+      reproduced first and all four held. The invariant — grid track count equals cell count
+      in the header and every body row — is now `tests/table-columns-inflight.pw.ts`.
 
 ## Flaky: firefox, `no WebAssembly compiler available`
 
