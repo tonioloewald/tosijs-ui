@@ -211,6 +211,18 @@ test('navigating away from full-screen brings the nav back', async ({
       document.querySelector('a.doc-link[href="/data-table/"]') as HTMLElement
     )?.click()
   )
+  /*
+  Wait for the NAVIGATION first, then for the nav to return — two waits, not one budget covering
+  both. Polling `navRight` alone conflates "the click did not navigate" with "the layout did not
+  update", and under a loaded lane the single budget expired on firefox with no way to tell which
+  had happened. Splitting them means the failure names itself; 6/6 in isolation said the logic
+  was fine and only the test's phrasing was not.
+  */
+  await page.waitForFunction(
+    () => location.pathname === '/data-table/',
+    undefined,
+    { timeout: 15_000 }
+  )
   await expect
     .poll(async () => (await fullScreenShape(page)).navRight, {
       timeout: 15_000,
