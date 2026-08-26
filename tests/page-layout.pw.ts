@@ -447,3 +447,120 @@ test('hiding the nav on a NARROW screen does not outstay the request', async ({
     )}`
   ).toBe(false)
 })
+
+/*
+BACK, which this suite navigated past entirely until a reader noticed.
+
+`doc-system.pw.ts` already covers Back for URL, title and content, so popstate was not
+untested — but nothing checked what it does to a page's LAYOUT, and every test here reached its
+pages by clicking links. The gap was reported from the keyboard as "sometimes the full-screen
+page and the full-screen page with the nav open look like different history entries", which is
+the kind of thing only someone actually using it can see: the mechanism turned out to be
+different from the guess, but the observation was correct.
+
+These pin what Back does today so that changing it has to be deliberate. Whether it SHOULD work
+this way is an open decision in TODO.md — the alternative is remembering a reader's override per
+history entry — and these are written to fail loudly if someone implements that, rather than to
+argue it is right.
+
+They earn their keep differently, and it is worth saying which is which. The second one is a
+REGRESSION test: dropping the `removeAttribute('data-layout')` on navigation fails it, so the
+popstate path is genuinely covered. The first is a CONTRACT tripwire — it survives every
+mutation tried against it, because the paths it walks are already covered elsewhere. Its job is
+to make the open decision visible when someone acts on it, not to catch a bug today. A test that
+cannot fail is usually decoration; this one is deliberate, and labelling it is the difference.
+*/
+
+test('Back to a full-screen page re-asserts full-screen', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/full-screen-demo/')
+  await expect
+    .poll(async () => (await navState(page)).value, { timeout: 15_000 })
+    .toBe('compact/content')
+
+  // Open the nav, so there is an override for Back to discard.
+  await page.evaluate(() =>
+    (
+      document.querySelector('button.iconic[title="navigation"]') as HTMLElement
+    )?.click()
+  )
+  await expect
+    .poll(async () => (await navState(page)).navRight, { timeout: 10_000 })
+    .toBeGreaterThan(0)
+
+  await page.evaluate(() =>
+    (
+      document.querySelector('a.doc-link[href="/data-table/"]') as HTMLElement
+    )?.click()
+  )
+  await page.waitForFunction(
+    () => location.pathname === '/data-table/',
+    undefined,
+    { timeout: 15_000 }
+  )
+
+  await page.goBack()
+  await page.waitForFunction(
+    () => location.pathname === '/full-screen-demo/',
+    undefined,
+    { timeout: 15_000 }
+  )
+  /*
+  The page's declared layout wins over the override you left. Predictable — a full-screen page
+  is full-screen whenever you arrive at it — and also the thing that reads as the page
+  forgetting. Measured, not asserted from the code: the toggle creates no history entry, so this
+  is Back restoring metadata rather than replaying a state.
+  */
+  await expect
+    .poll(async () => (await navState(page)).navRight, { timeout: 15_000 })
+    .toBeLessThanOrEqual(0)
+  expect((await navState(page)).alwaysCompact).toBe(true)
+})
+
+test('Back from full-screen to prose restores the reading column', async ({
+  page,
+}) => {
+  /*
+  The direction that would break silently. Arriving at a prose page by Back rather than by a
+  link is the same code path in principle and a different one in practice — popstate — and a
+  full-screen page leaves state behind it that has to be undone.
+  */
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/data-table/')
+  await page.waitForFunction(
+    () => !!document.querySelector('tosi-sidenav'),
+    undefined,
+    { timeout: 15_000 }
+  )
+  const prose = await contentWidth(page)
+  expect(prose.content, 'starts in the measure').toBeLessThan(900)
+
+  await page.evaluate(() =>
+    (
+      document.querySelector(
+        'a.doc-link[href="/full-screen-demo/"]'
+      ) as HTMLElement
+    )?.click()
+  )
+  await expect
+    .poll(async () => (await contentWidth(page)).layout, { timeout: 15_000 })
+    .toBe('full-screen')
+
+  await page.goBack()
+  await page.waitForFunction(
+    () => location.pathname === '/data-table/',
+    undefined,
+    { timeout: 15_000 }
+  )
+  await expect
+    .poll(async () => (await contentWidth(page)).layout, { timeout: 15_000 })
+    .toBe(null)
+  const back = await contentWidth(page)
+  expect(
+    back.content,
+    `the measure must come back on popstate too: ${JSON.stringify(back)}`
+  ).toBeLessThan(900)
+  await expect
+    .poll(async () => (await navState(page)).navRight, { timeout: 10_000 })
+    .toBeGreaterThan(0)
+})

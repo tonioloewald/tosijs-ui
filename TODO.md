@@ -764,6 +764,13 @@ live site** (independently useful). See roadmap "From book to live."
       deliberately rather than defaulting to whichever fell out of the implementation, which is
       what is shipping today.
 
+      **Both directions now have Back tests** (`tests/page-layout.pw.ts`), so acting on this
+      decision will fail them and have to be deliberate. Note which is which: the
+      full-screen -> prose one is a real regression test (dropping `removeAttribute` on
+      navigation fails it); the Back-to-full-screen one is a contract tripwire that survives
+      every mutation tried, because the paths it walks are covered elsewhere. It is there to
+      make this decision visible, not to catch a bug.
+
 ## Sub-frame flash of unmeasured prose between `:defined` and hydration
 
 - [ ] Two things constrain `.doc-content`, and there is a gap between them.

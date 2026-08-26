@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.12.4
+
+### Back now has layout coverage, because a reader noticed before the tests did
+
+Reported from the keyboard as "sometimes the full-screen page and the full-screen page with the
+nav open look like different history entries". Measured, it is neither history nor
+inconsistent: the nav toggle creates **no** history entry (`history.length` unchanged across
+repeated toggles, URL unchanged). What happens is that **Back re-asserts the page's declared
+layout** and discards the override — so leaving a page with the nav open and returning finds it
+closed.
+
+That is defensible and it is what ships: a full-screen page is full-screen whenever you arrive
+at it. Whether Back should instead restore what you left is now an open decision in `TODO.md`,
+with the measurements attached, rather than whatever fell out of the implementation.
+
+The gap the report exposed was in the tests, not the feature: `doc-system.pw.ts` already covered
+Back for URL, title and content, but nothing checked its effect on **layout**, and every layout
+test reached its pages by clicking links. Both directions are covered now — and labelled by what
+they actually do, since one is a genuine regression test (dropping `removeAttribute('data-layout')`
+on navigation fails it) and the other is a contract tripwire that survives every mutation tried
+against it. A test that cannot fail is usually decoration; that one is deliberate, and saying so
+is the difference.
+
 ## 1.12.3
 
 ### The dev server sends `Cache-Control: no-store` on everything
