@@ -625,9 +625,28 @@ export function createDocBrowser(options) {
             return;
         if (appliedFullScreen === wantsFullScreen)
             return;
-        // The same one control the nav button uses — the layout is just asking for the nav to be
-        // away, and the sidenav decides how that is achieved.
-        sidenav.navVisible = !wantsFullScreen;
+        /*
+        ASYMMETRIC on purpose, and the symmetric version was a real regression.
+    
+        Entering full-screen asks for the nav to be away, and `navVisible` is the right control:
+        the sidenav decides how that is achieved at the current width.
+    
+        LEAVING it must only undo `alwaysCompact`. Writing `navVisible = true` looks like the tidy
+        mirror image, and it clobbers `contentVisible` — which on a narrow screen is owned by the
+        person reading. Tapping a nav link there is supposed to switch you to the content; the nav
+        click handler sets `contentVisible = true` to do exactly that, and this ran afterwards on
+        the same navigation and set it straight back to false. The nav stayed up and the article
+        never appeared: reported as "touching a link in the sidebar doesn't switch to content
+        anymore", and correctly blamed on the full-screen work.
+    
+        So: full-screen states what it needs, and stepping out of it states only what it is
+        releasing. Whether the nav or the content is showing at a narrow width is not this code's
+        business.
+        */
+        if (wantsFullScreen)
+            sidenav.navVisible = false;
+        else
+            sidenav.alwaysCompact = false;
         appliedFullScreen = wantsFullScreen;
         refreshNavToggle();
     };

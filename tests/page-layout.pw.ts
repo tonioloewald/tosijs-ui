@@ -576,3 +576,78 @@ test('Back from full-screen to prose restores the reading column', async ({
     .poll(async () => (await navState(page)).navRight, { timeout: 10_000 })
     .toBeGreaterThan(0)
 })
+
+test('on a narrow screen, tapping a nav link switches to the content', async ({
+  page,
+}) => {
+  /*
+  A regression from the full-screen work, reported from a phone-width window: the sidebar fills
+  the screen, you tap a link, and the nav stays up — the article you asked for never appears.
+
+  Cause: leaving full-screen was written as the tidy mirror of entering it, `navVisible = true`.
+  That setter's show-the-nav branch writes `contentVisible = false`, and it ran on every
+  navigation to a non-full-screen page — after the nav click handler had set `contentVisible =
+  true` to do precisely this. The layout code was overwriting a decision that belongs to the
+  reader.
+
+  Nothing in this suite could catch it. Every layout test ran at 1400px, where normal mode shows
+  the nav and the content together and `contentVisible` has no visible effect. The bug was
+  invisible at every width the tests used.
+  */
+  await page.setViewportSize({ width: 500, height: 900 })
+  await page.goto('/data-table/')
+  await page.waitForFunction(
+    () => !!document.querySelector('tosi-sidenav'),
+    undefined,
+    { timeout: 15_000 }
+  )
+  await expect
+    .poll(async () => (await navState(page)).value, { timeout: 15_000 })
+    .toMatch(/^compact\//)
+
+  // Open the nav, the way a reader does to reach the links at this width.
+  await page.evaluate(() => {
+    const sn = document.querySelector('tosi-sidenav') as any
+    sn.navVisible = true
+  })
+  await expect
+    .poll(async () => (await navState(page)).value, { timeout: 10_000 })
+    .toBe('compact/nav')
+
+  await page.evaluate(() =>
+    (
+      document.querySelector('a.doc-link[href="/carousel/"]') as HTMLElement
+    )?.click()
+  )
+  await page.waitForFunction(
+    () => location.pathname === '/carousel/',
+    undefined,
+    { timeout: 15_000 }
+  )
+
+  /*
+  The whole point: having navigated, you are looking at what you navigated TO. Asserted on the
+  sidenav's own state rather than on a pixel, because at this width the two panes take turns and
+  "which one is showing" is exactly what `value` reports.
+  */
+  await expect
+    .poll(async () => (await navState(page)).value, { timeout: 15_000 })
+    .toBe('compact/content')
+})
+
+test('a full-screen page still hides the nav at a narrow width', async ({
+  page,
+}) => {
+  // The other side of the asymmetry: entering full-screen must still state what it needs, and
+  // the fix above must not have turned that into a no-op at narrow widths.
+  await page.setViewportSize({ width: 500, height: 900 })
+  await page.goto('/full-screen-demo/')
+  await page.waitForFunction(
+    () => !!document.querySelector('tosi-sidenav'),
+    undefined,
+    { timeout: 15_000 }
+  )
+  await expect
+    .poll(async () => (await navState(page)).value, { timeout: 15_000 })
+    .toBe('compact/content')
+})

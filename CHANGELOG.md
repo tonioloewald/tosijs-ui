@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.12.5
+
+### Fixed: on a narrow screen, tapping a nav link left you looking at the nav
+
+A regression from 1.12.3's full-screen work, reported from a phone-width window. The sidebar
+fills the screen, you tap a link, the URL changes — and the nav stays up. The article you asked
+for never appears.
+
+Leaving full-screen had been written as the tidy mirror of entering it: `navVisible = true`. But
+that setter's show-the-nav branch writes `contentVisible = false`, and it ran on **every**
+navigation to a non-full-screen page — immediately after the nav click handler had set
+`contentVisible = true` to do precisely the thing the reader asked for. The layout code was
+overwriting a decision that belongs to the person reading.
+
+The two directions are asymmetric now, and that is the point rather than an oversight: entering
+full-screen states what it needs, and stepping out of it releases only what it claimed
+(`alwaysCompact`). Which pane is showing at a narrow width is not the layout's business.
+
+**Nothing in the test suite could have caught this.** Every layout test ran at 1400px, where
+normal mode shows the nav and the content together and `contentVisible` has no visible effect —
+the bug was invisible at every width the tests used. There are now narrow-viewport tests for
+both directions, and the mutation that restores the old line fails them.
+
 ## 1.12.4
 
 ### `.tjs` source files are documented again ([#108](https://github.com/tonioloewald/tosijs-ui/issues/108))
