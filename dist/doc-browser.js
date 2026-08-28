@@ -1700,14 +1700,30 @@ export function createDocBrowser(options) {
             return;
         }
         const currentFilename = String(app.currentDoc.filename);
-        // Create a hidden iframe that loads the full page. Keep its real 800x600
-        // layout size (layout-dependent example tests need it) but park it
-        // off-screen rather than rely on opacity:0 over the visible page — Chromium
-        // (and haltija on top of it) still composites a 0-opacity layer at 0,0,
-        // which flashes as the frame navigates page to page.
+        /*
+        Create a hidden iframe that loads the full page. Keep a real layout size — layout-dependent
+        example tests need one — but park it off-screen rather than rely on opacity:0 over the
+        visible page: Chromium (and haltija on top of it) still composites a 0-opacity layer at 0,0,
+        which flashes as the frame navigates page to page.
+    
+        THE SIZE IS OVERRIDABLE, because 800x600 was the only width the inline tier had ever run at.
+        A doc-system layout regression at phone width shipped in 1.12.3 and was found by a reader,
+        not by the suite: every test ran wide, where the two panes show together and the bug is
+        invisible. An iframe is a real viewport — `matchMedia` and element sizing answer to its
+        dimensions, verified — so re-running the tier narrow costs nothing but the size.
+    
+        Only dimensions, deliberately. Touch cannot be faked from inside a page: an iframe inherits
+        the host's input characteristics, so `(pointer: coarse)` stays false and `maxTouchPoints`
+        stays 0 however small the frame is. `navigator.maxTouchPoints` can be redefined, and doing so
+        would be worse than useless — it lies to code that reads the property while the media queries
+        still say fine-pointer, so tests would pass on a page behaving as desktop. Touch emulation
+        belongs to the Playwright lane, which can set it per context.
+        */
+        const vp = globalThis.__tosiTestViewport;
+        const vpWidth = Number(vp?.width) > 0 ? Number(vp?.width) : 800;
+        const vpHeight = Number(vp?.height) > 0 ? Number(vp?.height) : 600;
         const testFrame = document.createElement('iframe');
-        testFrame.style.cssText =
-            'position: fixed; left: -10000px; top: 0; width: 800px; height: 600px; opacity: 0; pointer-events: none;';
+        testFrame.style.cssText = `position: fixed; left: -10000px; top: 0; width: ${vpWidth}px; height: ${vpHeight}px; opacity: 0; pointer-events: none;`;
         document.body.appendChild(testFrame);
         // Listen for test results posted from the iframe
         const messageHandler = (event) => {

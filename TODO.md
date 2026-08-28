@@ -777,6 +777,27 @@ live site** (independently useful). See roadmap "From book to live."
       being the accurate header, or drop it and keep the simpler code. Either is fine; guessing
       is not.
 
+## Responsive testing: widths are covered, touch is not
+
+- [x] **The inline doc tier now runs at two widths.** The runner's test iframe was hardcoded
+      800x600, so every inline test had only ever run wide — which is why 1.12.3's narrow-layout
+      regression was invisible to it and a reader found it instead. The size is now overridable
+      via `globalThis.__tosiTestViewport`, and `tests/doc-tests.pw.ts` runs the whole tier a
+      second time at 390x844. Verified the override actually reaches the runner: 390px frame
+      (386 inner) with it, 800px (796) without.
+
+- [ ] **Touch/pointer emulation is NOT possible from inside a page**, and should not be faked.
+      Measured: an iframe inherits the host's input characteristics, so `(pointer: coarse)` is
+      false and `maxTouchPoints` is 0 however small the frame is. `navigator.maxTouchPoints` can
+      be redefined with `Object.defineProperty`, and doing that would be worse than skipping it —
+      the property would lie while `matchMedia` told the truth, so a test could pass on a page
+      behaving as desktop.
+
+      Where it belongs: a Playwright **context**, which can set `hasTouch`, `isMobile` and a full
+      device profile (`devices['iPhone 13']`). That is a separate spec against real components —
+      menus, tooltips, drag handles, `<tosi-sidenav>` — not something the doc tier can host.
+      Worth doing: everything touch-shaped in this library is currently tested only with a mouse.
+
 ## Decide: should a nav-toggle override survive Back?
 
 - [ ] Reported as "sometimes it treats the full-screen page and the full-screen page with nav

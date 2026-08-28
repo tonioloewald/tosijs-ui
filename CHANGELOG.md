@@ -23,6 +23,24 @@ normal mode shows the nav and the content together and `contentVisible` has no v
 the bug was invisible at every width the tests used. There are now narrow-viewport tests for
 both directions, and the mutation that restores the old line fails them.
 
+### The inline doc tier runs at two widths now
+
+The same gap, one level down: the doc-test runner's iframe was hardcoded to 800x600, so **every
+inline `test` block had only ever run wide**. Its size is now overridable, and the Playwright
+doc-test spec runs the whole tier a second time at 390x844.
+
+An iframe is a real viewport, so this is not a simulation — verified that
+`matchMedia('(max-width: 600px)')` matches inside a 390px frame and not a 1200px one, and that
+the override reaches the runner (390px frame, 386 inner; 800/796 without it).
+
+**Widths only, deliberately.** Touch cannot be emulated from inside a page: an iframe inherits
+the host's input characteristics, so `(pointer: coarse)` stays false and `maxTouchPoints` stays 0
+however small the frame is. `navigator.maxTouchPoints` _can_ be redefined, and doing so would be
+worse than skipping it — the property would lie while the media queries told the truth, so a test
+could pass against a page behaving as desktop. Touch belongs to a Playwright context
+(`hasTouch`, `devices[…]`); noted in `TODO.md` as worth its own spec, since everything
+touch-shaped here is currently tested only with a mouse.
+
 ## 1.12.4
 
 ### `.tjs` source files are documented again ([#108](https://github.com/tonioloewald/tosijs-ui/issues/108))

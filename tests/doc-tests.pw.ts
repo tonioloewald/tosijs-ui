@@ -25,10 +25,33 @@ interface DocTestResults {
   pages: Record<string, PageResult>
 }
 
-test('every inline doc test passes (the whole ```test tier)', async ({
-  page,
-  browserName,
-}) => {
+/*
+Run the whole tier at a given viewport.
+
+Factored because the second call is the point: the tier had only ever run at the runner's
+hardcoded 800x600, and a doc-system layout regression at phone width shipped in 1.12.3 and was
+found by a reader rather than the suite. Every test ran wide, where the nav and the content show
+together and the bug is invisible.
+
+An iframe is a real viewport — verified that `matchMedia('(max-width: 600px)')` matches inside a
+390px frame and not a 1200px one — so a narrow pass exercises real layout, not a simulation.
+
+What it does NOT give is touch: an iframe inherits the host's input characteristics, so
+`(pointer: coarse)` stays false and `maxTouchPoints` stays 0 whatever the size. Faking those by
+redefining `navigator.maxTouchPoints` would be worse than skipping it — the property would lie
+while the media queries told the truth. Touch belongs to a Playwright context (`hasTouch`,
+`devices[…]`), not to this runner.
+*/
+async function runTierAt(
+  page: any,
+  viewport: { width: number; height: number } | null
+) {
+  if (viewport) {
+    // Read by the doc-browser before it creates the test iframe. Must be set before load.
+    await page.addInitScript((vp: unknown) => {
+      ;(globalThis as any).__tosiTestViewport = vp
+    }, viewport)
+  }
   // Chromium + Firefox only. On WebKit the runner's per-page iframes never post their
   // `tosi-tests-done` signal, so every page-with-tests waits out the runner's 30s
   // per-page timeout — the corpus still finishes, but at ~30s × pages it blows past any
@@ -37,15 +60,6 @@ test('every inline doc test passes (the whole ```test tier)', async ({
   // never ran at all); it does NOT indicate a broken example — chromium+firefox run all
   // of them green. Tracked in TODO.md. Two engines, including the inline-WASM guard, is
   // a real gate; letting WebKit's runner quirk block it would be the tail wagging the dog.
-  test.skip(
-    browserName === 'webkit',
-    'WebKit: iframe test-runner does not signal per-page completion — see TODO.md'
-  )
-
-  // The background runner iframes each page-with-tests in turn; on a cold corpus that
-  // is a lot of heavy pages, so give it room. It still resolves in well under this.
-  test.setTimeout(180_000)
-
   await page.goto('/')
   // The runner is localhost-gated and starts ~1s after load; `__docTestResults` is a
   // Promise that resolves once pagesTested >= pagesWithTests. Playwright awaits the
@@ -81,4 +95,33 @@ test('every inline doc test passes (the whole ```test tier)', async ({
   }
 
   expect(results.failed).toBe(0)
+}
+
+test('every inline doc test passes (the whole ```test tier)', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(
+    browserName === 'webkit',
+    'WebKit: iframe test-runner does not signal per-page completion — see TODO.md'
+  )
+  test.setTimeout(180_000)
+  await runTierAt(page, null) // the runner's own default, 800x600
+})
+
+test('the whole tier passes at phone width too', async ({
+  page,
+  browserName,
+}) => {
+  /*
+  The pass that would have caught 1.12.3's narrow-layout regression, and the reason the runner's
+  viewport became overridable at all. 390x844 is a common phone logical size; the point is not
+  the exact number but that it is below every breakpoint the doc system uses.
+  */
+  test.skip(
+    browserName === 'webkit',
+    'WebKit: iframe test-runner does not signal per-page completion — see TODO.md'
+  )
+  test.setTimeout(180_000)
+  await runTierAt(page, { width: 390, height: 844 })
 })
