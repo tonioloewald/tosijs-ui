@@ -177,13 +177,43 @@ docMarked.use({
 })
 
 /** Render a doc's markdown text to HTML (synchronous, default marked options). */
+/*
+Markdown wraps a lone CUSTOM ELEMENT in a paragraph, and that paragraph is the bug.
+
+marked classifies raw HTML by tag name, and it cannot know whether an unknown tag is block or
+inline — so `<my-thing></my-thing>` alone on a line comes out as `<p><my-thing></my-thing></p>`.
+The paragraph is auto-height, so a page whose whole content is one embedded app gets an element
+whose `height: 100%` resolves against a 33px box (tosijs-ui#115, measured: `p` 33px inside a
+842px `.doc-content`). `layout: "full-screen"` exists precisely for that page, and the promise it
+makes was not being kept.
+
+The unwrap is deliberately NARROW, because a heuristic here earns its own bugs. It fires only
+when a paragraph's entire content is a single element whose tag name contains a hyphen — i.e. a
+custom element, the one case marked provably cannot classify. `<p><img></p>` and
+`<p><em>text</em></p>` are left exactly alone: those are real paragraphs, and a `<p>` around them
+is what the author asked for.
+*/
+const LONE_CUSTOM_ELEMENT =
+  /<p>\s*(<([a-z][a-z0-9]*-[a-z0-9-]*)\b[\s\S]*?<\/\2>)\s*<\/p>/gi
+
+export function unwrapLoneCustomElements(html: string): string {
+  return html.replace(LONE_CUSTOM_ELEMENT, (whole, inner: string) => {
+    /*
+    Only when the element is the paragraph's WHOLE content. The regex already anchors both ends,
+    but a nested same-tag structure could let the lazy match close early and leave a tail — so
+    the result is checked for a stray closing tag rather than trusted.
+    */
+    return inner.includes('</p>') ? whole : inner
+  })
+}
+
 export function renderDocMarkdown(
   text: string,
   opts: { bakes?: ExampleBakes } = {}
 ): string {
   currentBakes = opts.bakes
   try {
-    return docMarked.parse(text) as string
+    return unwrapLoneCustomElements(docMarked.parse(text) as string)
   } finally {
     currentBakes = undefined
   }

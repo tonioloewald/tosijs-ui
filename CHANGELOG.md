@@ -23,6 +23,26 @@ normal mode shows the nav and the content together and `contentVisible` has no v
 the bug was invisible at every width the tests used. There are now narrow-viewport tests for
 both directions, and the mutation that restores the old line fails them.
 
+### A lone custom element is no longer wrapped in a paragraph ([#115](https://github.com/tonioloewald/tosijs-ui/issues/115))
+
+Reported by tosijs-3d: a doc page whose entire content is one custom element — the case
+`layout: "full-screen"` exists for — got an element that would not fill. marked classifies raw
+HTML by tag name and cannot know whether an unknown tag is block or inline, so
+`<my-editor></my-editor>` alone on a line came out as `<p><my-editor></my-editor></p>`. That
+paragraph is auto-height, so `height: 100%` resolved against a **33px** box inside an 842px
+content area.
+
+Measured before and after on the same page: 33px, then **842 of 842** on all three engines. The
+comment promising "a definite height, so a child asking for `height: 100%` gets one" is finally
+true rather than aspirational.
+
+The unwrap is deliberately narrow, since a heuristic here earns its own bugs: it fires only when
+a paragraph's entire content is a single element whose tag name contains a hyphen — a custom
+element, the one case marked provably cannot classify. `<p><img></p>`, `<p><em>text</em></p>`
+and `<p>see <my-thing></my-thing> here</p>` are all left exactly as they are, and mutation
+testing covers both directions — unwrapping everything fails three tests, unwrapping nothing
+fails one.
+
 ### The inline doc tier runs at two widths now
 
 The same gap, one level down: the doc-test runner's iframe was hardcoded to 800x600, so **every

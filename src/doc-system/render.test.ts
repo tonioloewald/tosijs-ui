@@ -1,5 +1,5 @@
 import { test, expect } from 'bun:test'
-import { renderDocMarkdown } from './render.js'
+import { renderDocMarkdown, unwrapLoneCustomElements } from './render.js'
 
 test('a ```lang#id fence stamps data-example-id and keeps the language clean', () => {
   const html = renderDocMarkdown('```js#my-demo\nconst x = 1\n```')
@@ -103,4 +103,53 @@ test('```lang#id:mode works too — mode and id are order-free', () => {
   expect(html).toContain('data-example-id="demo"')
   expect(html).toContain('data-example-mode="ide"')
   expect(html).toContain('class="language-ts"')
+})
+
+/*
+marked classifies raw HTML by tag name and cannot know whether an unknown tag is block or
+inline, so a custom element alone on a line comes out inside a `<p>`. That paragraph is
+auto-height, which defeats the one thing `layout: "full-screen"` exists to do: a page whose
+whole content is an embedded app got an element whose `height: 100%` resolved against a 33px
+box. Measured on the rendered page before the fix; 842 of 842 after.
+*/
+test('#115: unwraps a paragraph whose entire content is one custom element', () => {
+  const html = renderDocMarkdown('<my-editor></my-editor>')
+  expect(html).toContain('<my-editor></my-editor>')
+  expect(html).not.toMatch(/<p>\s*<my-editor/)
+})
+
+test('#115: leaves real paragraphs alone', () => {
+  /*
+  The narrowness is the point — a heuristic here earns its own bugs. Only a tag name with a
+  hyphen qualifies, because that is the one case marked provably cannot classify. An image or
+  emphasis inside a paragraph is a paragraph the author asked for.
+  */
+  expect(unwrapLoneCustomElements('<p><img src="x.png"></p>')).toBe(
+    '<p><img src="x.png"></p>'
+  )
+  expect(unwrapLoneCustomElements('<p><em>hi</em></p>')).toBe(
+    '<p><em>hi</em></p>'
+  )
+})
+
+test('#115: leaves a paragraph with surrounding text alone', () => {
+  // Text beside the element means it IS prose, and the paragraph belongs there.
+  const mixed = '<p>see <my-thing></my-thing> here</p>'
+  expect(unwrapLoneCustomElements(mixed)).toBe(mixed)
+})
+
+test('#115: does not swallow a following paragraph', () => {
+  // The lazy match could otherwise close on a later `</p>` and eat the text between.
+  const two = '<p><my-thing></my-thing></p>\n<p>after</p>'
+  const out = unwrapLoneCustomElements(two)
+  expect(out).toContain('<p>after</p>')
+  expect(out).toContain('<my-thing></my-thing>')
+})
+
+test('#115: handles attributes and whitespace', () => {
+  const out = unwrapLoneCustomElements(
+    '<p>\n  <my-app data-x="1" style="height:100%"></my-app>\n</p>'
+  )
+  expect(out).not.toContain('<p>')
+  expect(out).toContain('data-x="1"')
 })

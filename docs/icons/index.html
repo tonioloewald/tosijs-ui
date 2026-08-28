@@ -350,11 +350,11 @@ very convoluted way, but in practice this isn&#39;t terribly useful as SVG prope
 be animated by CSS, so this functionality has been stripped out.</p>
 </blockquote>
 <h2>Icon Composition &amp; Math</h2>
-<p><tosi-icon icon="tosi$map50o_brandColorS" size=128></tosi-icon>
+<tosi-icon icon="tosi$map50o_brandColorS" size=128></tosi-icon>
 <tosi-icon icon="lock50s75o_10y$shield_brandColorS" size=128></tosi-icon>
 <tosi-icon icon="unLock_brandColorS" size=128></tosi-icon>
 <tosi-icon icon="checkFile" size=128></tosi-icon>
-<tosi-icon icon="spin120Loader40s_30x_brandColorS$cloud" size=128></tosi-icon></p>
+<tosi-icon icon="spin120Loader40s_30x_brandColorS$cloud" size=128></tosi-icon>
 <h3>Why?</h3>
 <p>I needed a pin icon for column pinning in the data table. The only pin
 in the feather set is a map pin, so I created a push-pin icon
@@ -366,13 +366,13 @@ needs 2–4 variants, every action needs a negation, every status needs
 an overlay.</p>
 <p>Why not fix it once and also eliminate the need to maintain trivial
 variations on every icon?</p>
-<p><tosi-icon icon="pin_brandColorS" size=64></tosi-icon>
+<tosi-icon icon="pin_brandColorS" size=64></tosi-icon>
 <tosi-icon icon="pin0f_brandColorS" size=64></tosi-icon>
-<tosi-icon icon="unPin_brandColorS" size=64></tosi-icon></p>
+<tosi-icon icon="unPin_brandColorS" size=64></tosi-icon>
 <p>And now we can just create icon languages…</p>
-<p><tosi-icon icon="checkUsers" size=64></tosi-icon>
+<tosi-icon icon="checkUsers" size=64></tosi-icon>
 <tosi-icon icon="searchMap" size=64></tosi-icon>
-<tosi-icon icon="cancelHeart" size=64></tosi-icon></p>
+<tosi-icon icon="cancelHeart" size=64></tosi-icon>
 <h3>Icon modifier suffixes</h3>
 <p>The suffix system is inspired by tosijs&#39;s CSS variable math, where
 <code>borderRadius50</code> becomes <code>calc(var(--border-radius) * 0.5)</code> and

@@ -3,7 +3,7 @@ export interface ExampleBake {
     js: string;
 }
 export type ExampleBakes = Map<string, ExampleBake>;
-/** Render a doc's markdown text to HTML (synchronous, default marked options). */
+export declare function unwrapLoneCustomElements(html: string): string;
 export declare function renderDocMarkdown(text: string, opts?: {
     bakes?: ExampleBakes;
 }): string;
