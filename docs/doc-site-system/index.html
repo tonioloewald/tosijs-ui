@@ -747,6 +747,28 @@ is a static site for a real host, and telling a CDN never to store it would be a
 dev server keeps executing the code it loaded at launch, so a change to the server itself
 needs a restart, not a reload.</p>
 </blockquote>
+<h4><code>debugSink</code> — telemetry back from a page that is not on this machine</h4>
+<p><code>haltijaDev</code> is localhost-gated for good reason: an injected drive-my-browser channel reachable
+from the network is RCE-adjacent. But that leaves a page served to a headset or a phone with no
+way to say anything at all — and in a WebXR session there is no console and
+<code>requestAnimationFrame</code> is suspended, so every usual readback path is gone at once. The
+remaining channel is a human reading an in-scene panel aloud.</p>
+<p>Set <code>debugSink: true</code> and the dev server accepts <code>POST /__debug-sink</code>, appending one line per
+event to a JSONL file whose path it prints at startup:</p>
+<pre><code class="language-javascript">// page side — fire-and-forget, and survives rAF suspension
+navigator.sendBeacon(&#39;/__debug-sink&#39;, JSON.stringify({ t: Date.now(), tag, ...event }))
+</code></pre>
+<pre><code>Debug sink: POST /__debug-sink  -&gt;  tail -f /tmp/tosijs-debug-6fe6a9b0.jsonl
+</code></pre>
+<p><code>debugSink: &#39;logs/xr.jsonl&#39;</code> chooses the path instead.</p>
+<p><strong>Why this is reachable off-loopback when <code>/__docstore/source</code> is not.</strong> It appends opaque bytes
+to a scratch file, outside the repo, that the build never reads and nothing serves back. No code
+runs and nothing is reconfigured. The source endpoint is remote code execution by design and
+stays gated; this is a log. It is still <strong>off by default</strong>, because an unauthenticated write
+endpoint on a LAN-reachable server should be a decision you made rather than one you inherited.</p>
+<p>Bounded so a looping page cannot fill a disk: bodies over 64 KB are refused (413) and the file
+stops growing at 32 MB (507). Newlines in a payload are escaped, so one event is always one line
+— otherwise <code>tail -f</code> would show a split event and the reader could not tell.</p>
 <h4><code>haltijaDev</code> — Claude eyes on your running dev page</h4>
 <p>Set <code>haltijaDev: true</code> (or run with <code>HALTIJA_DEV=1</code>) and <code>bun start</code> gives a coding
 agent (Claude) eyes <strong>and hands</strong> on your actual running page via
@@ -1533,6 +1555,7 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
   <ul>
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
     <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
+    <li><a class="doc-link" href="../debug-sink/">An append-only telemetry sink for pages that are not on this machine.</a></li>
     <li><a class="doc-link" href="../sourcemap-check/">Does this bundle point at a sourcemap nobody will serve?</a></li>
     <li><a class="doc-link" href="../icons/">icons</a></li>
     <li><a class="doc-link" href="../natural-compare/">naturalCompare</a></li>

@@ -86,6 +86,11 @@ export default defineSiteConfig({
   // committed `'tunnel'` would enable it for everyone who clones.
   haltijaDev: true,
 
+  // Append-only telemetry sink (#99), so a page on a headset or a phone can report back when
+  // there is no console to read. Off-loopback safe: it appends to a scratch file outside the
+  // repo that the build never reads and nothing serves back. Path is printed at startup.
+  debugSink: true,
+
   // EXPERIMENTAL (import-resolver-plan.md): the import-resolver service worker, so live
   // examples can import real npm packages from anywhere. Off for 1.7.0; enabled here to
   // exercise the spike on this repo's own doc site.

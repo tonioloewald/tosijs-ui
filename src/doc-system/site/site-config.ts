@@ -524,6 +524,34 @@ export interface SiteConfig {
    * server proxies the component and the WebSocket under `/__haltija/` on the page's own
    * origin instead.
    */
+  /**
+   * An append-only telemetry sink, so a page that is NOT on this machine can send diagnostics
+   * back to whoever is driving it.
+   *
+   * `haltijaDev` is localhost-gated for good reason — an injected drive-my-browser channel
+   * reachable from the network is RCE-adjacent — but that leaves a page served to a headset or a
+   * phone with no way to say anything at all. In a WebXR session there is no console and
+   * `requestAnimationFrame` is suspended, so every usual readback path is gone at once, and the
+   * remaining channel is a human reading an in-scene panel aloud.
+   *
+   * With this on, the page POSTs to `/__debug-sink` and the server appends one line to a JSONL
+   * file you can `tail -f`. The path is printed at startup.
+   *
+   * ```js
+   * // fire-and-forget, and survives rAF suspension
+   * navigator.sendBeacon('/__debug-sink', JSON.stringify({ t: Date.now(), tag, ...event }))
+   * ```
+   *
+   * **Why this is safe off-loopback when the source endpoint is not.** It appends opaque bytes
+   * to a scratch file the build never reads, outside the repo. No code runs, nothing is
+   * reconfigured, and nothing it writes is ever served back. `POST /__docstore/source` is
+   * remote code execution by design and stays loopback-or-session gated; this is a log.
+   *
+   * Bounded on purpose: bodies over 64 KB are refused and the file stops growing at 32 MB, so a
+   * looping page cannot fill a disk. Off by default — `true` for the default path, or a string
+   * to choose one.
+   */
+  debugSink?: boolean | string
   haltijaDev?: boolean | 'tunnel'
 }
 

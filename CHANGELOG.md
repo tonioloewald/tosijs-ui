@@ -23,6 +23,50 @@ normal mode shows the nav and the content together and `contentVisible` has no v
 the bug was invisible at every width the tests used. There are now narrow-viewport tests for
 both directions, and the mutation that restores the old line fails them.
 
+### `debugSink` — telemetry back from a page that is not on this machine ([#99](https://github.com/tonioloewald/tosijs-ui/issues/99))
+
+`haltijaDev` is localhost-gated for good reason: an injected drive-my-browser channel reachable
+from the network is RCE-adjacent. But that leaves a page served to a headset or a phone with no
+way to say **anything** — and in a WebXR session there is no console and `requestAnimationFrame`
+is suspended, so every usual readback path is gone at once. The remaining channel is a human
+reading an in-scene panel aloud.
+
+`debugSink: true` accepts `POST /__debug-sink` and appends one line per event to a JSONL file
+whose path it prints at startup, so an agent can `tail -f` it:
+
+```javascript
+navigator.sendBeacon('/__debug-sink', JSON.stringify({ t: Date.now(), tag, ...event }))
+```
+
+`sendBeacon` is the point — it needs no headers, reads no response, and survives the page going
+away.
+
+**Why this is reachable off-loopback when `/__docstore/source` is not.** It appends opaque bytes
+to a scratch file, outside the repo, that the build never reads and nothing serves back. No code
+runs; nothing is reconfigured. The source endpoint is remote code execution by design and stays
+gated. This is a log.
+
+Still **off by default**: an unauthenticated write endpoint on a LAN-reachable server should be a
+decision you made rather than one you inherited. Bounded so a looping page cannot fill a disk —
+bodies over 64 KB refused (413), the file stops at 32 MB (507). Newlines in a payload are
+escaped, because one event must be one line or `tail -f` shows a split event and the reader
+cannot tell.
+
+### The dev cert covers the machine's LAN IP ([#92](https://github.com/tonioloewald/tosijs-ui/issues/92))
+
+Every name the cert carried was useful only _on_ this machine, except `<host>.local` — which is
+precisely the one another device is most likely to fail to resolve. Reported from a Quest:
+`tosi.local` resolved to **IPv6 only**, including a link-local `fe80::…` a headset gets and
+cannot route, while the LAN IP worked. The host never sees it, because it resolves mDNS
+natively, so it fails only on the devices the name was added for.
+
+Private ranges only (10/8, 172.16/12, 192.168/16) — a public address on a dev cert would be a
+name this machine has no business claiming. A DHCP lease change moves the address and the cert
+does not follow; the script says so, and prints the URLs another device can use.
+
+Note this fixes the **name mismatch**, not the untrusted CA: mkcert's root still is not on the
+headset, so you either install it there or use the tunnel, which has a real certificate.
+
 ### A dropped session says the server restarted, instead of blaming your cookies ([#114](https://github.com/tonioloewald/tosijs-ui/issues/114))
 
 Sessions live in memory and die with the process. That is the design, not an oversight: a

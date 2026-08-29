@@ -57,7 +57,7 @@ currently in <code>compact</code> form.</p>
 It resolves what hiding the nav actually means at the current width — forcing compact mode on a
 wide screen, simply showing the content on a narrow one — so a caller never has to. A toggle
 button is one line:</p>
-<pre><code class="language-js">sidenav.navVisible = !sidenav.navVisible
+<pre><code class="language-javascript">sidenav.navVisible = !sidenav.navVisible
 </code></pre>
 <p>Underneath it, <code>alwaysCompact</code> keeps the sidenav compact at any width: nav and content take
 turns regardless of how much room there is, and <code>contentVisible</code> picks which you see. That is
@@ -70,6 +70,7 @@ reads as a bug.</p>
   <ul>
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
     <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
+    <li><a class="doc-link" href="../debug-sink/">An append-only telemetry sink for pages that are not on this machine.</a></li>
     <li><a class="doc-link" href="../sourcemap-check/">Does this bundle point at a sourcemap nobody will serve?</a></li>
     <li><a class="doc-link" href="../icons/">icons</a></li>
     <li><a class="doc-link" href="../natural-compare/">naturalCompare</a></li>

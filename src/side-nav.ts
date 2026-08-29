@@ -16,7 +16,7 @@ It resolves what hiding the nav actually means at the current width — forcing 
 wide screen, simply showing the content on a narrow one — so a caller never has to. A toggle
 button is one line:
 
-```js
+```javascript
 sidenav.navVisible = !sidenav.navVisible
 ```
 

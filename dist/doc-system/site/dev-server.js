@@ -18,6 +18,7 @@ import { auditDependencies, reportAudit } from './audit-guard.js';
 import { openDevBrowser } from './open-browser.js';
 import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
+import { sinkPathFor, appendToSink } from './debug-sink.js';
 import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, mayWriteSource, validSessionCookie, sessionRejection, mayDriveWithAgent, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
 /**
  * Every path the dev server watches for changes.
@@ -637,6 +638,15 @@ export async function devServer(config, opts = {}) {
     a convenience toggle, and this is not a convenience.
     */
     const haltijaTunnel = haltijaDev && config.haltijaDev === 'tunnel';
+    /*
+    The debug sink (#99): telemetry FROM a page that is not on this machine.
+  
+    Off unless asked for. It is safe off-loopback in a way the source endpoint is not — it appends
+    opaque bytes to a scratch file outside the repo that the build never reads and nothing serves
+    back — but an unauthenticated write endpoint on a LAN-reachable server should still be a
+    decision somebody made rather than a default they inherited.
+    */
+    const SINK_PATH = testMode ? null : sinkPathFor(config.debugSink, '.');
     const HALTIJA_SNIPPET = haltijaLoaderSnippet(HALTIJA_HTTPS_PORT);
     const HALTIJA_TUNNEL_SNIPPET = haltijaTunnelLoaderSnippet();
     /*
@@ -1609,6 +1619,32 @@ export async function devServer(config, opts = {}) {
             }
             return new Response('not found', { status: 404 });
         }
+        if (reqPath === '/__debug-sink') {
+            /*
+            Append-only, and answered before auth deliberately.
+      
+            The case is a headset over the tunnel or the LAN, mid-WebXR, where there is no console, no
+            devtools, and `requestAnimationFrame` is suspended — every usual way of saying anything is
+            gone at once. Requiring a session here would mean the page that most needs to report a
+            problem is the one that cannot, and what it can write is a line in a scratch file nobody
+            serves back.
+      
+            `sendBeacon` sends POST with no way to set headers or read the response, which is what
+            makes it survive a page going away — so this takes the body as-is and answers 204.
+            */
+            if (!SINK_PATH)
+                return new Response('debug sink is not enabled', { status: 404 });
+            if (request.method !== 'POST') {
+                return new Response('POST only', { status: 405 });
+            }
+            const body = await request.text();
+            const result = appendToSink(SINK_PATH, body);
+            if (!result.ok) {
+                console.warn(`⚠️  ${result.reason}`);
+                return new Response(result.reason, { status: result.status });
+            }
+            return new Response(null, { status: 204, headers: { ...NO_CACHE } });
+        }
         if (reqPath === '/__docstore/source') {
             // Handle this endpoint UNCONDITIONALLY so it never falls through to the SPA
             // index.html fallback below. A 200-with-HTML there is silently corrupting:
@@ -1888,6 +1924,9 @@ export async function devServer(config, opts = {}) {
         process.exit(code);
     };
     console.log(`Listening on https://localhost:${PORT}`);
+    if (SINK_PATH) {
+        console.log(`Debug sink: POST /__debug-sink  ->  tail -f ${SINK_PATH}`);
+    }
     // ── open (or bring to front) this project's browser tab ─────────────────────
     //
     // create-react-app's "open the tab" trick: reuse the project's existing tab

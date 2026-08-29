@@ -30,6 +30,8 @@ use it to inspect STATE; a painted-output check needs a real test lane.
   A [babylonjs](https://www.babylonjs.com/) wrapper.
 - https://ui.tosijs.net/ab-test/ — ab-test
   `<tosi-ab>` provides a simple method for implementing A|B-testing.
+- https://ui.tosijs.net/debug-sink/ — An append-only telemetry sink for pages that are not on this machine.
+  An append-only telemetry sink for pages that are not on this machine.
 - https://ui.tosijs.net/appendices/ — Appendices
   Reference material on the library's own systems — the doc browser, the
 - https://ui.tosijs.net/carousel/ — carousel

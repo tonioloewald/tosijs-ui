@@ -530,6 +530,38 @@ is a static site for a real host, and telling a CDN never to store it would be a
 > dev server keeps executing the code it loaded at launch, so a change to the server itself
 > needs a restart, not a reload.
 
+#### `debugSink` — telemetry back from a page that is not on this machine
+
+`haltijaDev` is localhost-gated for good reason: an injected drive-my-browser channel reachable
+from the network is RCE-adjacent. But that leaves a page served to a headset or a phone with no
+way to say anything at all — and in a WebXR session there is no console and
+`requestAnimationFrame` is suspended, so every usual readback path is gone at once. The
+remaining channel is a human reading an in-scene panel aloud.
+
+Set `debugSink: true` and the dev server accepts `POST /__debug-sink`, appending one line per
+event to a JSONL file whose path it prints at startup:
+
+```javascript
+// page side — fire-and-forget, and survives rAF suspension
+navigator.sendBeacon('/__debug-sink', JSON.stringify({ t: Date.now(), tag, ...event }))
+```
+
+```
+Debug sink: POST /__debug-sink  ->  tail -f /tmp/tosijs-debug-6fe6a9b0.jsonl
+```
+
+`debugSink: 'logs/xr.jsonl'` chooses the path instead.
+
+**Why this is reachable off-loopback when `/__docstore/source` is not.** It appends opaque bytes
+to a scratch file, outside the repo, that the build never reads and nothing serves back. No code
+runs and nothing is reconfigured. The source endpoint is remote code execution by design and
+stays gated; this is a log. It is still **off by default**, because an unauthenticated write
+endpoint on a LAN-reachable server should be a decision you made rather than one you inherited.
+
+Bounded so a looping page cannot fill a disk: bodies over 64 KB are refused (413) and the file
+stops growing at 32 MB (507). Newlines in a payload are escaped, so one event is always one line
+— otherwise `tail -f` would show a split event and the reader could not tell.
+
 #### `haltijaDev` — Claude eyes on your running dev page
 
 Set `haltijaDev: true` (or run with `HALTIJA_DEV=1`) and `bun start` gives a coding
