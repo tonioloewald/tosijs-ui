@@ -38,6 +38,8 @@ import {
   urlWithoutToken,
   validSession,
   mayWriteSource,
+  validSessionCookie,
+  sessionRejection,
   mayDriveWithAgent,
   isProxiedRequest,
   SESSION_COOKIE,
@@ -973,7 +975,7 @@ export async function devServer(
     */
     const trusted =
       !viaTunnel ||
-      validSession(
+      validSessionCookie(
         auth,
         readCookie(request?.headers.get('cookie'), SESSION_COOKIE),
         Date.now()
@@ -1011,7 +1013,7 @@ export async function devServer(
     return mayDriveWithAgent({
       viaTunnel,
       peer: srv?.requestIP?.(request)?.address,
-      hasValidSession: validSession(
+      hasValidSession: validSessionCookie(
         auth,
         readCookie(request.headers.get('cookie'), SESSION_COOKIE),
         Date.now()
@@ -1621,9 +1623,32 @@ export async function devServer(
           viaTunnel,
           proxied: isProxiedRequest(request.headers),
           hasLinkToken: Boolean(linkToken),
-          hasValidSession: validSession(auth, cookie, Date.now()),
+          hasValidSession: validSessionCookie(auth, cookie, Date.now()),
         })
       ) {
+        /*
+        SAY WHICH of the two happened.
+
+        Sessions live in memory and die with the process, deliberately: a credential should not
+        outlive the thing that granted it, and nothing about a session is ever written to disk.
+        What was wrong is that a cookie from a previous run and a cookie we have never seen
+        produced the identical screen — so a reader whose server had restarted was told "invite
+        links expire" and reasonably concluded their COOKIE was expiring, which was the one
+        explanation the evidence ruled out (#114). They are still refused identically; only the
+        sentence differs, and that sentence was the entire report.
+        */
+        const rejection = sessionRejection(
+          readCookie(request.headers.get('cookie'), SESSION_COOKIE),
+          Date.now()
+        )
+        const explanation =
+          rejection === 'stale'
+            ? `<p><b>The dev server restarted, so your session ended with it.</b> ` +
+              `Sessions are held in memory on purpose — they never outlive the process that ` +
+              `issued them, and they are never written to disk. Your browser still holds the ` +
+              `cookie; there is simply nothing on this side to match it to.</p>` +
+              `<p>Ask for a fresh link:</p>`
+            : `<p>Ask for a fresh one — invite links expire.</p>`
         return new Response(
           `<!doctype html><meta charset=utf-8>` +
             `<title>Link required</title>` +
@@ -1631,7 +1656,7 @@ export async function devServer(
             `@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}` +
             `code{background:#8881;padding:.1em .4em;border-radius:4px}</style>` +
             `<h1>This workspace needs an invite link</h1>` +
-            `<p>Ask for a fresh one — invite links expire.</p>` +
+            explanation +
             `<p><code>${TUNNEL_LINK_CMD}</code></p>`,
           {
             status: 401,
@@ -1696,7 +1721,7 @@ export async function devServer(
       )
       const arrival = resolveLinkArrival({
         redeemed: session,
-        hasValidSession: validSession(auth, heldCookie, Date.now()),
+        hasValidSession: validSessionCookie(auth, heldCookie, Date.now()),
       })
       if (arrival === 'issue-session') {
         headers['Set-Cookie'] = sessionCookie(session!)
@@ -1867,7 +1892,7 @@ export async function devServer(
       const authorized = mayWriteSource({
         viaTunnel,
         peer,
-        hasValidSession: validSession(auth, session, Date.now()),
+        hasValidSession: validSessionCookie(auth, session, Date.now()),
       })
       if (!authorized) {
         console.warn(

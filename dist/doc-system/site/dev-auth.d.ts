@@ -25,8 +25,37 @@ export declare const LINK_TOKEN_TTL_MS: number;
  * thing that hands one over.
  */
 export type LinkPolicy = 'window' | 'single-use';
-/** Sessions are the durable half — long enough that you are not re-linking daily. */
+/**
+ * Sessions are the durable half — long enough that you are not re-linking daily.
+ *
+ * Durable WITHIN a process, which is the whole design and not an oversight: the credential's
+ * lifetime should not outlive the process that granted it, and nothing about a session is ever
+ * written to disk. What was wrong is that a stale cookie was indistinguishable from a forged
+ * one, so a reader whose server had restarted was told "link required" and reasonably concluded
+ * their cookies were expiring — the one explanation the evidence ruled out (tosijs-ui#114).
+ */
 export declare const SESSION_TTL_MS: number;
+/**
+ * Identifies THIS run of the server, so a cookie from a previous run is recognisable as stale
+ * rather than merely unknown.
+ *
+ * Not a secret and not a credential — it is prefixed to the cookie value purely so the server
+ * can tell "you had a session and I restarted" from "I have never seen this". Both are refused
+ * identically; only the message differs, and the message was the entire complaint.
+ */
+export declare const BOOT_ID: string;
+/** Split a presented cookie into the run that issued it and the token itself. */
+export declare function parseSessionCookie(value: string | undefined | null): {
+    bootId: string;
+    token: string;
+} | null;
+/**
+ * Why a presented cookie was refused — so the page can say something true.
+ *
+ * `'stale'` means it was issued by an earlier run of this server. That is the common case after
+ * any restart (a config edit, a dependency bump, a crash), and it is the one worth naming.
+ */
+export declare function sessionRejection(cookieValue: string | undefined | null, _now?: number): 'none' | 'stale' | 'unknown';
 export declare const SESSION_COOKIE = "tosi_dev_session";
 /** 128 bits, base64url — long enough that guessing is not a threat model. */
 export declare function mintToken(): string;
@@ -164,9 +193,25 @@ export declare function redeemThroughGate(opts: {
 }>;
 /** Is this session token live? */
 export declare function validSession(state: AuthState, token: string | undefined | null, now: number): boolean;
+/**
+ * Validate a presented COOKIE (as opposed to a bare token).
+ *
+ * The cookie carries `<bootId>.<token>`, so this is where the two halves meet: a cookie from a
+ * previous run fails on the boot id without ever touching the session map, and a cookie from
+ * this run is checked against it in constant time as before.
+ */
+export declare function validSessionCookie(state: AuthState, cookieValue: string | undefined | null, now: number): boolean;
 /** Pull one cookie out of a Cookie header. */
 export declare function readCookie(header: string | null | undefined, name: string): string | undefined;
-/** The Set-Cookie value for a freshly minted session. See the header comment. */
+/**
+ * The Set-Cookie value for a freshly minted session. See the header comment.
+ *
+ * The value is `<bootId>.<token>`. The prefix is not a secret and adds no security — it exists
+ * so that when this process is gone, the next one can tell a cookie it ISSUED from a cookie it
+ * has simply never seen. Both are refused; only the message differs, and the missing message was
+ * the whole of #114: a reader whose server had restarted was told "link required" and reasonably
+ * concluded their cookies were expiring.
+ */
 export declare function sessionCookie(token: string, maxAgeMs?: number): string;
 /**
  * Strip the link token from a URL so the redirect target is clean.

@@ -23,6 +23,30 @@ normal mode shows the nav and the content together and `contentVisible` has no v
 the bug was invisible at every width the tests used. There are now narrow-viewport tests for
 both directions, and the mutation that restores the old line fails them.
 
+### A dropped session says the server restarted, instead of blaming your cookies ([#114](https://github.com/tonioloewald/tosijs-ui/issues/114))
+
+Sessions live in memory and die with the process. That is the design, not an oversight: a
+credential should not outlive the thing that granted it, and nothing about a session — or the
+token exchanged for it — is ever written to disk. **That has not changed and will not.**
+
+What was wrong is that a cookie from a previous run and a cookie the server had never seen
+produced the _identical_ screen. So a reader whose dev server had restarted was told "invite
+links expire", and reasonably concluded their cookie was expiring — the one explanation the
+evidence ruled out. The reporter's own words: the misleading failure "is the part I would most
+want fixed".
+
+The cookie now carries a per-process boot id (`<bootId>.<token>`), so the next process can tell a
+cookie it _issued_ from one it has never seen. Both are still refused, identically; only the
+sentence differs:
+
+> **The dev server restarted, so your session ended with it.** Sessions are held in memory on
+> purpose — they never outlive the process that issued them, and they are never written to disk.
+> Your browser still holds the cookie; there is simply nothing on this side to match it to.
+
+The prefix is not a credential and admits nobody: a cookie with the right run id and a wrong
+token is refused exactly as before, and there is a test asserting that. An absent or malformed
+cookie is _not_ reported as a restart — claiming one we cannot evidence would be its own lie.
+
 ### A bundle that references an unserved sourcemap now says so at build time ([#103](https://github.com/tonioloewald/tosijs-ui/issues/103))
 
 `--sourcemap=linked` appends a `sourceMappingURL` comment, so devtools fetches that file on every

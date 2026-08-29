@@ -79,8 +79,58 @@ export const LINK_TOKEN_TTL_MS = 5 * 60 * 1000
  */
 export type LinkPolicy = 'window' | 'single-use'
 
-/** Sessions are the durable half — long enough that you are not re-linking daily. */
+/**
+ * Sessions are the durable half — long enough that you are not re-linking daily.
+ *
+ * Durable WITHIN a process, which is the whole design and not an oversight: the credential's
+ * lifetime should not outlive the process that granted it, and nothing about a session is ever
+ * written to disk. What was wrong is that a stale cookie was indistinguishable from a forged
+ * one, so a reader whose server had restarted was told "link required" and reasonably concluded
+ * their cookies were expiring — the one explanation the evidence ruled out (tosijs-ui#114).
+ */
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
+
+/**
+ * Identifies THIS run of the server, so a cookie from a previous run is recognisable as stale
+ * rather than merely unknown.
+ *
+ * Not a secret and not a credential — it is prefixed to the cookie value purely so the server
+ * can tell "you had a session and I restarted" from "I have never seen this". Both are refused
+ * identically; only the message differs, and the message was the entire complaint.
+ */
+export const BOOT_ID = randomBytes(4).toString('base64url')
+
+/** Split a presented cookie into the run that issued it and the token itself. */
+export function parseSessionCookie(value: string | undefined | null): {
+  bootId: string
+  token: string
+} | null {
+  if (!value) return null
+  const dot = value.indexOf('.')
+  if (dot < 1) return null
+  return { bootId: value.slice(0, dot), token: value.slice(dot + 1) }
+}
+
+/**
+ * Why a presented cookie was refused — so the page can say something true.
+ *
+ * `'stale'` means it was issued by an earlier run of this server. That is the common case after
+ * any restart (a config edit, a dependency bump, a crash), and it is the one worth naming.
+ */
+export function sessionRejection(
+  cookieValue: string | undefined | null,
+  _now?: number
+): 'none' | 'stale' | 'unknown' {
+  if (!cookieValue) return 'none'
+  const parsed = parseSessionCookie(cookieValue)
+  if (!parsed) return 'unknown'
+  /*
+  Only the boot id is consulted. Whether the token is still in the map is a different question
+  and not the one being asked: a cookie from a previous run is stale whatever its token said,
+  and saying so does not depend on state we no longer have.
+  */
+  return parsed.bootId === BOOT_ID ? 'none' : 'stale'
+}
 
 export const SESSION_COOKIE = 'tosi_dev_session'
 
@@ -436,6 +486,23 @@ export function validSession(
   return false
 }
 
+/**
+ * Validate a presented COOKIE (as opposed to a bare token).
+ *
+ * The cookie carries `<bootId>.<token>`, so this is where the two halves meet: a cookie from a
+ * previous run fails on the boot id without ever touching the session map, and a cookie from
+ * this run is checked against it in constant time as before.
+ */
+export function validSessionCookie(
+  state: AuthState,
+  cookieValue: string | undefined | null,
+  now: number
+): boolean {
+  const parsed = parseSessionCookie(cookieValue)
+  if (!parsed || parsed.bootId !== BOOT_ID) return false
+  return validSession(state, parsed.token, now)
+}
+
 /** Pull one cookie out of a Cookie header. */
 export function readCookie(
   header: string | null | undefined,
@@ -450,13 +517,22 @@ export function readCookie(
   return undefined
 }
 
-/** The Set-Cookie value for a freshly minted session. See the header comment. */
+/**
+ * The Set-Cookie value for a freshly minted session. See the header comment.
+ *
+ * The value is `<bootId>.<token>`. The prefix is not a secret and adds no security — it exists
+ * so that when this process is gone, the next one can tell a cookie it ISSUED from a cookie it
+ * has simply never seen. Both are refused; only the message differs, and the missing message was
+ * the whole of #114: a reader whose server had restarted was told "link required" and reasonably
+ * concluded their cookies were expiring.
+ */
 export function sessionCookie(
   token: string,
   maxAgeMs = SESSION_TTL_MS
 ): string {
   return (
-    `${SESSION_COOKIE}=${token}; Max-Age=${Math.floor(maxAgeMs / 1000)}; ` +
+    `${SESSION_COOKIE}=${BOOT_ID}.${token}; ` +
+    `Max-Age=${Math.floor(maxAgeMs / 1000)}; ` +
     `Path=/; HttpOnly; Secure; SameSite=Lax`
   )
 }

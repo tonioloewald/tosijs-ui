@@ -18,7 +18,7 @@ import { auditDependencies, reportAudit } from './audit-guard.js';
 import { openDevBrowser } from './open-browser.js';
 import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
-import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, validSession, mayWriteSource, mayDriveWithAgent, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
+import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, mayWriteSource, validSessionCookie, sessionRejection, mayDriveWithAgent, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
 /**
  * Every path the dev server watches for changes.
  *
@@ -838,7 +838,7 @@ export async function devServer(config, opts = {}) {
         sitting at the keyboard, gets the text they actually need.
         */
         const trusted = !viaTunnel ||
-            validSession(auth, readCookie(request?.headers.get('cookie'), SESSION_COOKIE), Date.now());
+            validSessionCookie(auth, readCookie(request?.headers.get('cookie'), SESSION_COOKIE), Date.now());
         const payload = JSON.stringify({
             ok: false,
             label: buildStatus.label,
@@ -868,7 +868,7 @@ export async function devServer(config, opts = {}) {
         return mayDriveWithAgent({
             viaTunnel,
             peer: srv?.requestIP?.(request)?.address,
-            hasValidSession: validSession(auth, readCookie(request.headers.get('cookie'), SESSION_COOKIE), Date.now()),
+            hasValidSession: validSessionCookie(auth, readCookie(request.headers.get('cookie'), SESSION_COOKIE), Date.now()),
         });
     }
     // disk, and non-HTML assets are streamed untouched.
@@ -1399,15 +1399,34 @@ export async function devServer(config, opts = {}) {
                 viaTunnel,
                 proxied: isProxiedRequest(request.headers),
                 hasLinkToken: Boolean(linkToken),
-                hasValidSession: validSession(auth, cookie, Date.now()),
+                hasValidSession: validSessionCookie(auth, cookie, Date.now()),
             })) {
+                /*
+                SAY WHICH of the two happened.
+        
+                Sessions live in memory and die with the process, deliberately: a credential should not
+                outlive the thing that granted it, and nothing about a session is ever written to disk.
+                What was wrong is that a cookie from a previous run and a cookie we have never seen
+                produced the identical screen — so a reader whose server had restarted was told "invite
+                links expire" and reasonably concluded their COOKIE was expiring, which was the one
+                explanation the evidence ruled out (#114). They are still refused identically; only the
+                sentence differs, and that sentence was the entire report.
+                */
+                const rejection = sessionRejection(readCookie(request.headers.get('cookie'), SESSION_COOKIE), Date.now());
+                const explanation = rejection === 'stale'
+                    ? `<p><b>The dev server restarted, so your session ended with it.</b> ` +
+                        `Sessions are held in memory on purpose — they never outlive the process that ` +
+                        `issued them, and they are never written to disk. Your browser still holds the ` +
+                        `cookie; there is simply nothing on this side to match it to.</p>` +
+                        `<p>Ask for a fresh link:</p>`
+                    : `<p>Ask for a fresh one — invite links expire.</p>`;
                 return new Response(`<!doctype html><meta charset=utf-8>` +
                     `<title>Link required</title>` +
                     `<style>body{font:16px/1.6 system-ui;margin:15vh auto;max-width:30rem;padding:0 1.5rem;color:#222}` +
                     `@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}` +
                     `code{background:#8881;padding:.1em .4em;border-radius:4px}</style>` +
                     `<h1>This workspace needs an invite link</h1>` +
-                    `<p>Ask for a fresh one — invite links expire.</p>` +
+                    explanation +
                     `<p><code>${TUNNEL_LINK_CMD}</code></p>`, {
                     status: 401,
                     headers: {
@@ -1467,7 +1486,7 @@ export async function devServer(config, opts = {}) {
             const heldCookie = readCookie(request.headers.get('cookie'), SESSION_COOKIE);
             const arrival = resolveLinkArrival({
                 redeemed: session,
-                hasValidSession: validSession(auth, heldCookie, Date.now()),
+                hasValidSession: validSessionCookie(auth, heldCookie, Date.now()),
             });
             if (arrival === 'issue-session') {
                 headers['Set-Cookie'] = sessionCookie(session);
@@ -1614,7 +1633,7 @@ export async function devServer(config, opts = {}) {
             const authorized = mayWriteSource({
                 viaTunnel,
                 peer,
-                hasValidSession: validSession(auth, session, Date.now()),
+                hasValidSession: validSessionCookie(auth, session, Date.now()),
             });
             if (!authorized) {
                 console.warn(`⚠️  refused ${request.method} /__docstore/source from ${peer ?? 'unknown'} — ` + `no session (use \`${TUNNEL_LINK_CMD}\` for an edit link).`);

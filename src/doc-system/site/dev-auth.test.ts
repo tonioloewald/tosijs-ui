@@ -144,7 +144,13 @@ test('safeEqual is correct on equal, unequal and mismatched lengths', () => {
 
 test('the session cookie carries the flags the design depends on', () => {
   const c = sessionCookie('tok123')
-  expect(c).toContain(`${SESSION_COOKIE}=tok123`)
+  /*
+  The value is `<bootId>.<token>`, not the bare token. The prefix is not a secret and grants
+  nothing — it exists so a cookie issued by a PREVIOUS run of the server is recognisable as
+  stale rather than merely unknown, which is what lets the invite page say "the server
+  restarted" instead of "invite links expire" (#114). The token still has to match.
+  */
+  expect(c).toContain(`${SESSION_COOKIE}=${BOOT_ID}.tok123`)
   expect(c).toContain('HttpOnly') // an XSS in a doc cannot read it
   expect(c).toContain('Secure') // never sent in the clear
   // Lax, NOT None: cross-site POST does not carry it, which is free CSRF protection
@@ -183,6 +189,11 @@ import { isLoopbackAddress as serverSideLoopback } from './dev-server.js'
 import {
   mayWriteSource,
   mayDriveWithAgent,
+  sessionRejection,
+  validSessionCookie,
+  sessionCookie,
+  parseSessionCookie,
+  BOOT_ID,
   isLoopbackAddressForAuth,
   isProxiedRequest,
 } from './dev-auth.js'
@@ -912,4 +923,52 @@ test('mayDriveWithAgent: it agrees with mayWriteSource on every combination', ()
       }
     }
   }
+})
+
+test('#114: a cookie from a previous run is identifiably STALE, not merely unknown', () => {
+  /*
+  Sessions live in memory and die with the process by design — a credential should not outlive
+  the thing that granted it, and nothing is written to disk. What was wrong is that a cookie
+  from a previous run and a cookie never seen produced the identical screen, so a reader whose
+  server had restarted was told "invite links expire" and concluded their cookie was expiring —
+  the one explanation the evidence ruled out.
+  */
+  const mine = sessionCookie('abc')
+  const value = mine.split('=')[1].split(';')[0]
+  expect(sessionRejection(value)).toBe('none')
+
+  // Same token, different run.
+  expect(sessionRejection(`OTHERRUN.abc`)).toBe('stale')
+})
+
+test('#114: a malformed or absent cookie is not reported as a restart', () => {
+  // Claiming a restart we cannot evidence would be its own lie.
+  expect(sessionRejection(undefined)).toBe('none')
+  expect(sessionRejection('')).toBe('none')
+  expect(sessionRejection('no-dot-here')).toBe('unknown')
+})
+
+test('#114: the boot prefix is not a credential — it does not admit anyone', () => {
+  /*
+  It exists only so the message can be true. A cookie carrying the right run id and a wrong
+  token is refused exactly as before.
+  */
+  const state = createAuthState()
+  expect(
+    validSessionCookie(state, `${BOOT_ID}.not-a-real-token`, Date.now())
+  ).toBe(false)
+  expect(validSessionCookie(state, `${BOOT_ID}.`, Date.now())).toBe(false)
+  expect(validSessionCookie(state, 'anything', Date.now())).toBe(false)
+})
+
+test('#114: a session issued this run still validates through the cookie', () => {
+  // The round trip: the prefix must not break the thing it annotates.
+  const state = createAuthState()
+  const now = Date.now()
+  const token = issueLink(state, now)
+  const session = redeemLink(state, token, now)
+  expect(session).toBeTruthy()
+  const value = sessionCookie(session!).split('=')[1].split(';')[0]
+  expect(parseSessionCookie(value)?.bootId).toBe(BOOT_ID)
+  expect(validSessionCookie(state, value, now)).toBe(true)
 })
