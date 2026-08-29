@@ -1,7 +1,7 @@
 import path from 'path';
 import { tmpdir } from 'os';
 import { appendFileSync, existsSync, mkdirSync, statSync } from 'fs';
-/*#
+/*
 An append-only telemetry sink for pages that are not on this machine.
 */
 /** Bodies larger than this are refused. A diagnostic line is small; a payload is not. */

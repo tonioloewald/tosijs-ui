@@ -23,6 +23,22 @@ normal mode shows the nav and the content together and `contentVisible` has no v
 the bug was invisible at every width the tests used. There are now narrow-viewport tests for
 both directions, and the mutation that restores the old line fails them.
 
+### A leading metadata comment is no longer the page title ([#100](https://github.com/tonioloewald/tosijs-ui/issues/100))
+
+The title came from line one, literally. A file opening with its metadata block — the documented
+way to set `order` or `parent` — published under the title `<!--{ "order": 2 }-->`, while `order`
+itself parsed correctly. So the metadata visibly worked and the title visibly did not, which is a
+confusing pair to be handed. Hit while adding `CHANGELOG.md` and `Migration.md` to a doc site,
+which is precisely where a leading metadata comment is most natural.
+
+Leading HTML comments are skipped now, including ones that wrap across lines, and an
+unterminated comment yields no title rather than lifting text out of it — publishing something
+the author had deliberately hidden would be worse than an empty string. One rule, used by both
+call sites that previously had their own copy of the line.
+
+**The other half of that issue was already fixed**: `docPaths` entries have been in the dev
+server's watch set since #49, so editing a root `Migration.md` does trigger a rebuild.
+
 ### `debugSink` — telemetry back from a page that is not on this machine ([#99](https://github.com/tonioloewald/tosijs-ui/issues/99))
 
 `haltijaDev` is localhost-gated for good reason: an injected drive-my-browser channel reachable

@@ -3,6 +3,7 @@ import {
   parseFrontmatter,
   extractDocs,
   SCRAPED_SOURCE_EXTENSIONS,
+  titleFromMarkdown,
 } from './docs.js'
 import fs from 'fs'
 import os from 'os'
@@ -145,4 +146,50 @@ describe('which source extensions are scraped (#108)', () => {
     }
     expect(warnings.join('\n')).not.toContain('not scraped')
   })
+})
+
+test('#100: a leading metadata comment is not the title', () => {
+  /*
+  The title came from line one, literally. A file opening with its metadata block — the
+  documented way to set `order` or `parent` — published under the title
+  `<!--{ "order": 2 }-->`, while `order` itself parsed correctly. So the metadata visibly worked
+  and the title visibly did not, which is a confusing pair to be handed. Hit while adding
+  CHANGELOG.md and Migration.md to a doc site, exactly where a leading metadata comment is most
+  natural.
+  */
+  expect(titleFromMarkdown('<!--{ "order": 2 }-->\n\n# Migration\n')).toBe(
+    'Migration'
+  )
+})
+
+test('#100: a metadata block that wraps across lines is still skipped', () => {
+  // Prettier or a human will wrap a long block; the title must not depend on it fitting.
+  expect(
+    titleFromMarkdown(
+      '<!--{\n  "order": 2,\n  "parent": "Guides"\n}-->\n\n# Wrapped\n'
+    )
+  ).toBe('Wrapped')
+})
+
+test('#100: several leading comments are all skipped', () => {
+  expect(
+    titleFromMarkdown('<!-- a note -->\n<!--{ "pin": "top" }-->\n\n# Two\n')
+  ).toBe('Two')
+})
+
+test('#100: ordinary files are unaffected', () => {
+  // The regression risk: every page that has no leading comment must keep its title.
+  expect(titleFromMarkdown('# Plain\n\nbody')).toBe('Plain')
+  expect(titleFromMarkdown('\n\n# After blanks\n')).toBe('After blanks')
+  expect(titleFromMarkdown('Just prose\n')).toBe('Just prose')
+  expect(titleFromMarkdown('# With `code`\n')).toBe('With code')
+})
+
+test('#100: an unterminated comment yields no title rather than a fake one', () => {
+  /*
+  The rest of the file is commented out, so there is no title to find. Reading one from INSIDE
+  the comment would be worse than an empty string — it would publish text the author had
+  deliberately hidden.
+  */
+  expect(titleFromMarkdown('<!-- oops\n# Not a title\n')).toBe('')
 })

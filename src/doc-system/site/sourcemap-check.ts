@@ -1,6 +1,6 @@
 import path from 'path'
 
-/*#
+/*
 Does this bundle point at a sourcemap nobody will serve?
 */
 

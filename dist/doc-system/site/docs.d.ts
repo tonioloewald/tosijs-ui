@@ -69,6 +69,28 @@ export interface ExtractDocsOptions {
     output?: string;
 }
 /**
+ * The title a markdown file implies, when nothing declares one.
+ *
+ * It used to be `content.split('\n')[0]` — literally line one. A file that opens with its
+ * metadata block, which is the documented way to set `order` or `parent`:
+ *
+ * ```md
+ * <!--{ "order": 2 }-->
+ *
+ * # Migration
+ * ```
+ *
+ * published under the title `<!--{ "order": 2 }-->` — while `order` itself parsed correctly, so
+ * the metadata visibly worked and the title visibly did not (tosijs-ui#100). Hit while adding
+ * `CHANGELOG.md` and `Migration.md` to a doc site, which is exactly when a leading metadata
+ * comment is most natural.
+ *
+ * Skips blank lines and leading HTML comments — including multi-line ones, since a metadata
+ * block can wrap — and returns the first line with content, heading markers and backticks
+ * stripped as before.
+ */
+export declare function titleFromMarkdown(content: string): string;
+/**
  * Parse & strip a leading YAML frontmatter block (`---\n…\n---`). Every prose
  * toolchain (Jekyll/Hugo/Astro/Obsidian/Pandoc) uses it, so authors paste it in;
  * without this the `---` was rendered as content (and became the doc title).

@@ -101,6 +101,47 @@ import { buildSlugMap } from '../routing.js';
 import { withoutHidden } from '../book-target.js';
 const TRIM_REGEX = /^#+ |`/g;
 /**
+ * The title a markdown file implies, when nothing declares one.
+ *
+ * It used to be `content.split('\n')[0]` — literally line one. A file that opens with its
+ * metadata block, which is the documented way to set `order` or `parent`:
+ *
+ * ```md
+ * <!--{ "order": 2 }-->
+ *
+ * # Migration
+ * ```
+ *
+ * published under the title `<!--{ "order": 2 }-->` — while `order` itself parsed correctly, so
+ * the metadata visibly worked and the title visibly did not (tosijs-ui#100). Hit while adding
+ * `CHANGELOG.md` and `Migration.md` to a doc site, which is exactly when a leading metadata
+ * comment is most natural.
+ *
+ * Skips blank lines and leading HTML comments — including multi-line ones, since a metadata
+ * block can wrap — and returns the first line with content, heading markers and backticks
+ * stripped as before.
+ */
+export function titleFromMarkdown(content) {
+    // Remove leading HTML comments (and the whitespace around them) from the front only. A
+    // comment LATER in the document is prose the author wrote and none of our business.
+    let rest = content;
+    for (;;) {
+        const trimmed = rest.replace(/^\s+/, '');
+        if (!trimmed.startsWith('<!--')) {
+            rest = trimmed;
+            break;
+        }
+        const end = trimmed.indexOf('-->');
+        // An unterminated comment means the rest of the file is commented out; there is no title
+        // to find, and inventing one from inside a comment would be worse than an empty string.
+        if (end < 0)
+            return '';
+        rest = trimmed.slice(end + 3);
+    }
+    const first = rest.split('\n').find((line) => line.trim() !== '') ?? '';
+    return first.trim().replace(TRIM_REGEX, '');
+}
+/**
  * Parse & strip a leading YAML frontmatter block (`---\n…\n---`). Every prose
  * toolchain (Jekyll/Hugo/Astro/Obsidian/Pandoc) uses it, so authors paste it in;
  * without this the `---` was rendered as content (and became the doc title).
@@ -263,7 +304,7 @@ function findMarkdownFiles(paths, ignore) {
                 const { data: fm, body: content } = parseFrontmatter(fs.readFileSync(filePath, 'utf8'));
                 markdownFiles.push({
                     text: content,
-                    title: content.split('\n')[0].replace(TRIM_REGEX, ''),
+                    title: titleFromMarkdown(content),
                     filename: file,
                     path: filePath,
                     ...metadata(content, filePath),
@@ -324,7 +365,7 @@ function findMarkdownFiles(paths, ignore) {
                     const { data: fm, body: content } = parseFrontmatter(fs.readFileSync(dir, 'utf8'));
                     markdownFiles.push({
                         text: content,
-                        title: content.split('\n')[0].replace(TRIM_REGEX, ''),
+                        title: titleFromMarkdown(content),
                         filename: file,
                         path: dir,
                         ...metadata(content, dir),
