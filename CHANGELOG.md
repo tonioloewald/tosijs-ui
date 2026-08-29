@@ -23,6 +23,39 @@ normal mode shows the nav and the content together and `contentVisible` has no v
 the bug was invisible at every width the tests used. There are now narrow-viewport tests for
 both directions, and the mutation that restores the old line fails them.
 
+### A bundle that references an unserved sourcemap now says so at build time ([#103](https://github.com/tonioloewald/tosijs-ui/issues/103))
+
+`--sourcemap=linked` appends a `sourceMappingURL` comment, so devtools fetches that file on every
+load. When the map is not in the served root the fetch fails — in exactly the session where
+someone is reading the console carefully for something else. It cost the reporter a wrong
+hypothesis while chasing a slow load.
+
+The uglier half was already fixed by #116 in this same release: the SPA fallback used to answer
+`.map` requests with the **HTML shell**, so devtools received a web page where a JSON map should
+be. Missing assets 404 now.
+
+The remaining half is a build-time warning naming the file and where it was expected. It checks
+what is **served**, not what was built — those differ whenever `bundleOutDir` is set, and the
+copy across is best-effort by design, so trusting the step is what let this ship. It warns rather
+than fails: a map is a debugging convenience and no site should fail to build without one.
+
+The check is a pure, tested function rather than an inline block, because the branch it lives in
+is one **this repo's own build never takes** — our bundle comes from `bin/dev.ts`, not from
+`buildSite`. That is exactly why the bug reached an adopter instead of us.
+
+### `resolveUnder` asserts path containment instead of inheriting it ([#96](https://github.com/tonioloewald/tosijs-ui/issues/96))
+
+Defence in depth: there is no live traversal, and the reporter checked the classes carefully —
+`/../../../etc/passwd`, percent-encoded and double-encoded forms all stay inside the served root
+today. But they stay inside for two reasons the static handler does not own: the WHATWG URL
+parser collapses `../` before `.pathname` is read, and `.pathname` is never the raw request line.
+Both are properties of the **caller**, so a future call with a path from a config value, a
+manifest entry or a header inherits nothing. The asserted version already lived ten lines away
+in the same file.
+
+Now an exported, tested predicate — a test that went through the server would prove nothing,
+since the URL parser makes a violation unreachable from outside.
+
 ### `bun run stop` — stop THIS project's dev server, not every one on the machine ([#117](https://github.com/tonioloewald/tosijs-ui/issues/117))
 
 There was no way to stop a dev server, so what everyone reached for was

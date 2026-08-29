@@ -323,7 +323,7 @@ test('only text-shaped assets are compressed', () => {
 
 // ── what the dev server watches (tosijs-ui#49) ───────────────────────────────
 
-import { resolveWatchPaths } from './dev-server.js'
+import { resolveWatchPaths, isUnderRoot } from './dev-server.js'
 import * as nodePath from 'path'
 
 /** How many watched entries resolve to the same directory — `./demo/src` also ends in
@@ -472,4 +472,36 @@ test('the two loaders are different mechanisms and neither leaks into the other'
   // safe to leave on. The tunnel loader must NOT carry it, since it exists to run elsewhere.
   expect(local).toContain('location.hostname')
   expect(tunnel).not.toContain('location.hostname')
+})
+
+test('#96: a path outside the served root is refused', () => {
+  /*
+  Defence in depth — there is no live traversal. The reporter checked the classes carefully and
+  all of them stay contained today: `/../../../etc/passwd`, percent-encoded and double-encoded
+  forms alike. But they stay contained for two reasons the static handler does not own — the
+  WHATWG URL parser collapses `../` before `.pathname` is read, and `.pathname` is never the raw
+  request line. Both are properties of the CALLER, so a future call with a path from a config
+  value, a manifest or a header inherits nothing.
+  */
+  expect(isUnderRoot('/srv/docs', '/srv/docs/index.html')).toBe(true)
+  expect(isUnderRoot('/srv/docs', '/srv/docs')).toBe(true)
+  expect(isUnderRoot('/srv/docs', '/srv/docs/a/b/c.png')).toBe(true)
+
+  expect(isUnderRoot('/srv/docs', '/etc/passwd')).toBe(false)
+  expect(isUnderRoot('/srv/docs', '/srv/docs/../secrets')).toBe(false)
+  expect(isUnderRoot('/srv/docs', '/srv')).toBe(false)
+})
+
+test('#96: a sibling with the root as a prefix is not inside it', () => {
+  // The reason for `root + sep` rather than a bare startsWith — `/srv/docs-evil` shares the
+  // prefix and is a different directory entirely.
+  expect(isUnderRoot('/srv/docs', '/srv/docs-evil/x')).toBe(false)
+  expect(isUnderRoot('/srv/docs', '/srv/docsomething')).toBe(false)
+})
+
+test('#96: relative roots resolve before comparison', () => {
+  // The dev server passes a relative directory; comparing unresolved strings would be a
+  // guarantee about text rather than about the filesystem.
+  expect(isUnderRoot('.', './docs/index.html')).toBe(true)
+  expect(isUnderRoot('./docs', './docs/../package.json')).toBe(false)
 })

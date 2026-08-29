@@ -25,6 +25,7 @@ import { generateLlmsTxt } from './make-llms-txt.js';
 import { generateSite } from './generate-site.js';
 import { findOutputDirOverlap, resolveBundleDir } from './output-guard.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
+import { sourcemapWarning } from './sourcemap-check.js';
 import { preflight } from './preflight.js';
 import { auditDependencies, reportAudit } from './audit-guard.js';
 import { gatherBuildStamp, serializeBuildStamp } from './build-stamp.js';
@@ -554,6 +555,9 @@ export async function buildSite(config, opts = {}) {
                 }
                 const bundleFile = await Bun.file(`${BUNDLE_DIR}/${scriptName}`).arrayBuffer();
                 const bundleJs = Buffer.from(bundleFile).toString('utf8');
+                const mapWarning = sourcemapWarning(bundleJs, PUBLIC, existsSync);
+                if (mapWarning)
+                    console.warn(mapWarning);
                 // Warn only when an external actually compiled to a synchronous require()
                 // shim, which throws at module-eval ("Dynamic require of … is not
                 // supported"). That only happens for a *static* `import x from 'ext'`. A

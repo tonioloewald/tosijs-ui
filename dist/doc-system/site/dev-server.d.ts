@@ -21,6 +21,17 @@ import { isLoopbackAddressForAuth as isLoopbackAddress } from './dev-auth.js';
  * the additive override. Deduped by RESOLVED path, so `src`, `./src` and an absolute form
  * collapse to one watcher rather than three firing three rebuilds for one keystroke.
  */
+/**
+ * Is `candidate` inside `root` — the same directory, or below it?
+ *
+ * Exported so it can be tested directly. The dev server's static handler cannot reach a
+ * containment violation over HTTP, because the WHATWG URL parser collapses `../` before
+ * `.pathname` is read — which is exactly the problem: the guarantee belongs to the CALLER, so a
+ * test that goes through the server proves nothing about this rule (tosijs-ui#96).
+ *
+ * `root + sep` rather than a bare `startsWith`, or `/srv/docs-evil` counts as inside `/srv/docs`.
+ */
+export declare function isUnderRoot(root: string, candidate: string): boolean;
 export declare function resolveWatchPaths(config: {
     docPaths?: string[];
     watchPaths?: string[];

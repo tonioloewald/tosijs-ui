@@ -64,6 +64,22 @@ import {
  * the additive override. Deduped by RESOLVED path, so `src`, `./src` and an absolute form
  * collapse to one watcher rather than three firing three rebuilds for one keystroke.
  */
+/**
+ * Is `candidate` inside `root` — the same directory, or below it?
+ *
+ * Exported so it can be tested directly. The dev server's static handler cannot reach a
+ * containment violation over HTTP, because the WHATWG URL parser collapses `../` before
+ * `.pathname` is read — which is exactly the problem: the guarantee belongs to the CALLER, so a
+ * test that goes through the server proves nothing about this rule (tosijs-ui#96).
+ *
+ * `root + sep` rather than a bare `startsWith`, or `/srv/docs-evil` counts as inside `/srv/docs`.
+ */
+export function isUnderRoot(root: string, candidate: string): boolean {
+  const base = path.resolve(root)
+  const target = path.resolve(candidate)
+  return target === base || target.startsWith(base + path.sep)
+}
+
 export function resolveWatchPaths(
   config: {
     docPaths?: string[]
@@ -868,6 +884,21 @@ export async function devServer(
 
   function resolveUnder(directory: string, reqPath: string): string | null {
     const basePath = path.join(directory, reqPath)
+    /*
+    ASSERT containment; do not inherit it.
+
+    There is no live traversal here, and the reporter checked the classes carefully
+    (tosijs-ui#96): `/../../../etc/passwd`, percent-encoded, and double-encoded forms all stay
+    inside the root today. But they stay inside for two reasons this function does not own —
+    the WHATWG URL parser collapses `../` before `.pathname` is read, and `.pathname` is never
+    the raw request line. Both are properties of the CALLER. A future call with a path from
+    anywhere else — a config value, a manifest entry, a header — inherits nothing.
+
+    The asserted version already lived ten lines away in this same file for another purpose,
+    which is the argument for making this one match: a rule enforced in one place and assumed
+    in another is the shape of a bug that has not happened yet.
+    */
+    if (!isUnderRoot(directory, basePath)) return null
     const suffixes = ['', '.html', 'index.html']
     for (const suffix of suffixes) {
       try {
