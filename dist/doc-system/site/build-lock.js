@@ -78,6 +78,26 @@ export function isProcessAlive(pid) {
         return e.code === 'EPERM';
     }
 }
+/**
+ * Who, if anyone, holds this project's lock right now — or `null` if nobody live does.
+ *
+ * Exported so a `--stop` can target THIS project's dev server by pid instead of by argv
+ * pattern. `pkill -f 'bun bin/site.ts'` matches every dev server on the machine, because every
+ * project on this pipeline runs an identical command line — so a sibling checkout, a worktree
+ * or another agent's session dies to a command that reads as "restart mine" (tosijs-ui#117).
+ * Observed five times in one working day, twice while a tunnel link was in use by a remote
+ * reviewer.
+ *
+ * The record already existed for the build lock; only a reader and a command were missing.
+ */
+export function currentHolder(root = '.', opts = {}) {
+    const holder = readLock(lockPathFor(root, opts.dir));
+    if (!holder)
+        return null;
+    const alive = opts.isAlive ?? isProcessAlive;
+    // Staleness is decided by liveness, never by age — a crashed server must not wedge a project.
+    return alive(holder.pid) ? holder : null;
+}
 function readLock(file) {
     try {
         if (!existsSync(file))

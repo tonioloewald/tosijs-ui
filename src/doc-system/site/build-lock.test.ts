@@ -7,6 +7,7 @@ import {
   lockPathFor,
   acquireBuildLock,
   describeHolder,
+  currentHolder,
   type LockHolder,
 } from './build-lock'
 
@@ -156,4 +157,69 @@ test('the refusal names the holder and what to do', () => {
   expect(msg).toContain('8030')
   expect(msg).toContain('/proj')
   expect(msg.toLowerCase()).toContain('stale')
+})
+
+test("currentHolder reports this project's live dev server (#117)", () => {
+  /*
+  What `--stop` uses instead of `pkill -f 'bun bin/dev.ts'`, which matches EVERY dev server on
+  the machine because every project on this pipeline runs an identical command line. A sibling
+  checkout dies to a command that reads as "restart mine", and the victim's symptoms — live pid,
+  no listener — are indistinguishable from #91's zombie, so it costs a fresh diagnosis each time.
+  */
+  const dir = mkdtempSync(join(tmpdir(), 'holder-'))
+  try {
+    const lock = acquireBuildLock('/proj/a', 'dev-server', {
+      dir,
+      pid: 4242,
+      port: 8030,
+      isAlive: () => true,
+    })
+    expect(lock.ok).toBe(true)
+    const held = currentHolder('/proj/a', { dir, isAlive: () => true })
+    expect(held?.pid).toBe(4242)
+    expect(held?.port).toBe(8030)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('currentHolder ignores a dead holder rather than reporting a stale pid', () => {
+  // Staleness is decided by liveness, never by age — otherwise a crashed server wedges the
+  // project, and `--stop` would signal a pid that has since been reused by something else.
+  const dir = mkdtempSync(join(tmpdir(), 'holder-'))
+  try {
+    acquireBuildLock('/proj/b', 'dev-server', {
+      dir,
+      pid: 999999,
+      isAlive: () => true,
+    })
+    expect(currentHolder('/proj/b', { dir, isAlive: () => false })).toBe(null)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('two checkouts of one project hold independently', () => {
+  // The whole point: stopping one must not touch the other.
+  const dir = mkdtempSync(join(tmpdir(), 'holder-'))
+  try {
+    acquireBuildLock('/checkout/one', 'dev-server', {
+      dir,
+      pid: 111,
+      isAlive: () => true,
+    })
+    acquireBuildLock('/checkout/two', 'dev-server', {
+      dir,
+      pid: 222,
+      isAlive: () => true,
+    })
+    expect(
+      currentHolder('/checkout/one', { dir, isAlive: () => true })?.pid
+    ).toBe(111)
+    expect(
+      currentHolder('/checkout/two', { dir, isAlive: () => true })?.pid
+    ).toBe(222)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
 })

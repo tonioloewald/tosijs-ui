@@ -1263,6 +1263,18 @@ export async function devServer(config, opts = {}) {
         BUILD. Someone reading the tunnelled workspace all day got the server killed under
         them, with a message ("no requests, no rebuilds") that was flatly untrue.
         */
+        /*
+        THE LIVENESS PROBE, answered before anything else and WITHOUT touching activity.
+    
+        A self-check that counted as activity would hold the idle timer open forever, so the very
+        guard meant to bound a server's life would be what makes it immortal. It also exits early so
+        a probe can never be affected by auth, routing or the SPA fallback — the question is only
+        "is this listener answering", and any additional machinery in the answer is a way for the
+        answer to be wrong.
+        */
+        if (new URL(request.url).pathname === '/__alive') {
+            return new Response(null, { status: 204, headers: { ...NO_CACHE } });
+        }
         touch();
         /*
           TWO POSTURES, because projects differ.
@@ -1867,8 +1879,56 @@ export async function devServer(config, opts = {}) {
         // disk, macOS will thrash for a very long time before it gives up, which is more
         // rope to hang the machine with, not less. A `ps` + `vm_stat` per minute is free.
         const TICK_MS = 60_000;
+        /*
+        A dead listener in a live process is the worst failure this server has had.
+    
+        Reported after a ~9.4h run (#91): `pgrep` said running, `curl` got nothing, the last log line
+        was a SUCCESSFUL build, and there was no error, signal or exit anywhere. Every diagnostic a
+        person would reach for answered "fine". It was found the next day because a human said the
+        site was down.
+    
+        Worth being precise about the cause, because the report's own diagnosis does not survive the
+        evidence: the idle path ANNOUNCES itself ("💤 dev server exiting") before it exits, and no
+        such line was logged — so the idle timeout is not what stopped that listener. What did remains
+        unknown, and that is exactly why this checks the SYMPTOM rather than any particular cause.
+    
+        Two consecutive failures before acting, so one blip during a heavy rebuild cannot evict a
+        healthy server. Exits non-zero and says why: a process that cannot serve has no value, and
+        the one thing it can still do is stop lying about being alive.
+        */
+        let missedProbes = 0;
+        const listenerAnswers = async () => {
+            try {
+                const res = await fetch(`https://localhost:${PORT}/__alive`, {
+                    signal: AbortSignal.timeout(5000),
+                    // The dev cert is ours and this never leaves loopback.
+                    tls: { rejectUnauthorized: false },
+                });
+                return res.status === 204;
+            }
+            catch {
+                return false;
+            }
+        };
         const timer = setInterval(async () => {
             checkMemory(false); // exits if we are over the ceiling
+            if (!(await listenerAnswers())) {
+                missedProbes += 1;
+                if (missedProbes >= 2) {
+                    console.error(`\n🛑 dev server exiting: the listener stopped answering on port ${PORT}, ` +
+                        `but the process is still alive.\n\n` +
+                        `   Two consecutive loopback probes to /__alive failed. A process that cannot\n` +
+                        `   serve is worse than one that has exited: \`pgrep\` still says "running", so\n` +
+                        `   every check you would run answers "fine" while the site is down.\n\n` +
+                        `   Restart it. If this recurs, please report it with the last ~50 log lines —\n` +
+                        `   the cause of the original sighting (tosijs-ui#91) was never established.\n`);
+                    clearInterval(timer);
+                    shutdown(1);
+                }
+            }
+            else {
+                missedProbes = 0;
+            }
             const idleFor = Date.now() - lastActivity;
             if (idleMs > 0 && idleFor >= idleMs) {
                 console.log(`\n💤 dev server exiting: idle for ${Math.round(idleFor / 3600_000)}h — no requests, no rebuilds.\n\n` +

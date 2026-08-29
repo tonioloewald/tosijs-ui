@@ -20,7 +20,8 @@
     "tests": "bun test && bun playwright test",
     "latest": "rm -rf node_modules bun.lock && bun update",
     "release-notes": "bun bin/release-notes.ts",
-    "release-check": "bun bin/release-notes.ts --check"
+    "release-check": "bun bin/release-notes.ts --check",
+    "stop": "bun bin/dev.ts --stop"
   },
   "keywords": [
     "tosijs",

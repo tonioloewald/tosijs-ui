@@ -23,6 +23,46 @@ normal mode shows the nav and the content together and `contentVisible` has no v
 the bug was invisible at every width the tests used. There are now narrow-viewport tests for
 both directions, and the mutation that restores the old line fails them.
 
+### `bun run stop` — stop THIS project's dev server, not every one on the machine ([#117](https://github.com/tonioloewald/tosijs-ui/issues/117))
+
+There was no way to stop a dev server, so what everyone reached for was
+`pkill -f 'bun bin/dev.ts'` — which matches **every** dev server on the machine, because every
+project on this pipeline runs an identical command line. A sibling checkout, a worktree or
+another agent's session died to a command that reads as "restart mine". Observed five times in
+one working day, twice while a tunnel link was in use by a remote reviewer.
+
+The record needed for this already existed: the build lock stores `pid`, `port` and `root`,
+per-project, with staleness decided by liveness rather than age. It needed a reader and a
+command. `bun run stop` (or `bun bin/dev.ts --stop`) signals that pid and nothing else, and says
+plainly when nothing is running.
+
+### The dev server can no longer die silently ([#91](https://github.com/tonioloewald/tosijs-ui/issues/91))
+
+Reported after a ~9.4h run: `pgrep` said running, `curl` got nothing, the last log line was a
+**successful** build, and there was no error, signal or exit anywhere. Every diagnostic a person
+would reach for answered "fine"; it was found the next day because a human said the site was
+down.
+
+Worth correcting the report's own diagnosis, because it does not survive the evidence: the idle
+path **announces itself** before exiting, and no such line was logged — so the idle timeout is
+not what stopped that listener. What did is still unknown, which is exactly why the fix targets
+the symptom rather than a cause.
+
+The health tick now probes the server's own listener (`GET /__alive`, a bare 204 that
+deliberately does **not** count as activity — a self-check that did would hold the idle timer
+open forever). Two consecutive failures and it exits non-zero with an explanation. A process that
+cannot serve has no value, and the one useful thing left to it is to stop claiming to be alive.
+
+### `tosijs-tunnel --link` stops printing links that cannot work ([#94](https://github.com/tonioloewald/tosijs-ui/issues/94))
+
+`--link` asks the dev server for a token, which succeeds whether or not a tunnel exists. The URL
+is well-formed and the token is real — it just answers 503, because nothing is listening
+upstream. Printed with exit 0 and no comment, that is indistinguishable from the far side being
+down.
+
+It still prints the link, since you may be about to start the tunnel, but it now says so and
+exits non-zero, so a script treating 0 as "a usable link was produced" is telling the truth.
+
 ### Doc tests survive a context key with a slash in it ([#111](https://github.com/tonioloewald/tosijs-ui/issues/111), [#112](https://github.com/tonioloewald/tosijs-ui/issues/112), [#109](https://github.com/tonioloewald/tosijs-ui/issues/109))
 
 Context keys become **function parameter names** — the runner builds each block as

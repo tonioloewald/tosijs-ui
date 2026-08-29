@@ -31,6 +31,22 @@ export declare function lockDecision(existing: LockHolder | null, self: {
 /** The message the refused build prints. Names the holder, and what to do about it. */
 export declare function describeHolder(holder: LockHolder): string;
 export declare function isProcessAlive(pid: number): boolean;
+/**
+ * Who, if anyone, holds this project's lock right now — or `null` if nobody live does.
+ *
+ * Exported so a `--stop` can target THIS project's dev server by pid instead of by argv
+ * pattern. `pkill -f 'bun bin/site.ts'` matches every dev server on the machine, because every
+ * project on this pipeline runs an identical command line — so a sibling checkout, a worktree
+ * or another agent's session dies to a command that reads as "restart mine" (tosijs-ui#117).
+ * Observed five times in one working day, twice while a tunnel link was in use by a remote
+ * reviewer.
+ *
+ * The record already existed for the build lock; only a reader and a command were missing.
+ */
+export declare function currentHolder(root?: string, opts?: {
+    dir?: string;
+    isAlive?: (pid: number) => boolean;
+}): LockHolder | null;
 export interface AcquiredLock {
     ok: boolean;
     holder?: LockHolder;

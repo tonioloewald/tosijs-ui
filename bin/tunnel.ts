@@ -191,6 +191,32 @@ if (has('link')) {
     `\n🔗 Edit link:\n   ${url}\n` +
       (code ? `\n   code:  ${code}   (case-insensitive)\n` : '')
   )
+
+  /*
+  A link nobody can reach is worse than no link.
+
+  `--link` asks the dev server for a token, which succeeds whether or not a tunnel exists — the
+  URL is well-formed and the token is real, it just resolves to a 503 from the reverse proxy
+  because nothing is listening upstream. Printed with exit 0 and no comment, that is
+  indistinguishable from the far side being down, and the reporter lost a chunk of an afternoon
+  to the difference (#94).
+
+  Checked AFTER printing, deliberately: the link is still the thing you asked for, and you may
+  be about to start the tunnel. What changes is that the output says so and the exit code agrees
+  — a script that treats 0 as "a usable link was produced" is now telling the truth.
+
+  `running()` is the same predicate `--status` uses, matching this project's own forward by its
+  exact ports and host rather than by an argv substring.
+  */
+  const forwards = await running()
+  if (forwards.length === 0) {
+    console.error(
+      `⚠️  No tunnel is running, so that link will answer 503.\n` +
+        `    The token is real — nothing is listening on the far side yet.\n` +
+        `    Start one with \`tosijs-tunnel\` (or \`bun run tunnel\`), then use the link.\n`
+    )
+    process.exit(1)
+  }
   process.exit(0)
 }
 

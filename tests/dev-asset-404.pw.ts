@@ -63,3 +63,21 @@ test('real assets are unaffected', async ({ request }) => {
     expect(res.headers()['content-type'] ?? '').not.toContain('text/html')
   }
 })
+
+test('the liveness probe answers 204 and is not a page', async ({
+  request,
+}) => {
+  /*
+  The dev server's own health tick probes this every minute. Two consecutive failures and it
+  exits non-zero rather than sitting there as a live process with a dead listener — the state
+  reported in #91, where `pgrep` said running, `curl` got nothing, the last log line was a
+  successful build, and nothing was logged at the moment of death. Every diagnostic a person
+  reaches for answered "fine".
+
+  It must stay a bare 204: the question is only "is this listener answering", and any extra
+  machinery in the answer is a way for the answer to be wrong.
+  */
+  const res = await request.get('/__alive')
+  expect(res.status()).toBe(204)
+  expect((await res.body()).length, 'no body — it is not a page').toBe(0)
+})

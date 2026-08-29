@@ -17,6 +17,41 @@ declare global {
   var Bun: any
 }
 
+/*
+STOP THIS PROJECT'S dev server — by pid, from the lock it already writes.
+
+The thing people reach for is `pkill -f 'bun bin/dev.ts'`, which matches every dev server on the
+machine because every project on this pipeline runs an identical command line. A sibling
+checkout or another agent's session dies to a command that reads as "restart mine", and the
+victim's symptoms — a live pid with no listener — are indistinguishable from the zombie in #91,
+so it costs a fresh diagnosis every time (#117).
+
+The lock record already carried pid, port and root; it needed a reader and a command.
+*/
+if (process.argv.includes('--stop')) {
+  const { currentHolder } = await import('../src/doc-system/site/build-lock.js')
+  const holder = currentHolder('.')
+  if (!holder) {
+    console.log('No dev server is running for this project.')
+    process.exit(0)
+  }
+  try {
+    process.kill(holder.pid, 'SIGTERM')
+    console.log(
+      `Stopped this project's dev server (pid ${holder.pid}` +
+        (holder.port ? `, port ${holder.port}` : '') +
+        `).`
+    )
+    process.exit(0)
+  } catch (e) {
+    console.error(
+      `Could not signal pid ${holder.pid}: ${(e as Error).message}\n` +
+        `  It may have exited already; the lock is cleared on the next start.\n`
+    )
+    process.exit(1)
+  }
+}
+
 const buildOnly = process.argv.includes('--build-only')
 const testMode = process.argv.includes('--test')
 
