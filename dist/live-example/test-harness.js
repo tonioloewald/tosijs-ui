@@ -1,4 +1,4 @@
-import { rewriteImports, AsyncFunction } from './code-transform.js';
+import { rewriteImports, AsyncFunction, contextParamNames, } from './code-transform.js';
 class AssertionError extends Error {
     constructor(message) {
         super(message);
@@ -262,7 +262,14 @@ export async function runTests(testCode, preview, context, transform) {
     try {
         const code = rewriteImports(testCode, Object.keys(context));
         const transformedCode = (await transform(code, { transforms: ['typescript'] })).code;
-        const contextKeys = Object.keys(fullContext).map((key) => key.replace(/-/g, ''));
+        /*
+        THE SHARED sanitiser. This used to be `key.replace(/-/g, '')` — its own copy of the rule,
+        which stripped hyphens and left slashes and `@`, so `'tosijs-3d/demo-utils'` became the
+        parameter name `tosijs3d/demoutils` and every test in the file died before any of them ran
+        (#111/#112). The examples on the same page were fine, because they went through the real
+        one. A second copy of a rule is a rule that will be maintained once.
+        */
+        const contextKeys = contextParamNames(Object.keys(fullContext));
         const contextValues = Object.values(fullContext);
         // Tag the AsyncFunction body with a sourceURL so stack traces report
         // line numbers relative to the test source (not a position inside the

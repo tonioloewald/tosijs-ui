@@ -450,7 +450,7 @@ import { icons } from '../icons.js';
 import { tosiPocketBar } from '../pocket-bar.js';
 import { postNotification } from '../notifications.js';
 import { popMenu } from '../menu.js';
-import { loadTransform, loadTjsTestApi, rewriteImports, contextVarName, AsyncFunction, } from './code-transform.js';
+import { loadTransform, loadTjsTestApi, rewriteImports, contextVarName, contextParamNames, AsyncFunction, } from './code-transform.js';
 import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } from './remote-sync.js';
 import { executeInline, executeInIframe } from './execution.js';
 import { insertExamples } from './insert-examples.js';
@@ -697,7 +697,7 @@ export class LiveExample extends Component {
                 preview: div({ class: 'preview' }),
                 ...this.context,
             };
-            const keys = Object.keys(fullContext).map(contextVarName);
+            const keys = contextParamNames(Object.keys(fullContext));
             const values = Object.values(fullContext);
             // @ts-expect-error AsyncFunction constructor typing
             const fn = new AsyncFunction(...keys, body);

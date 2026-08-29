@@ -19,13 +19,69 @@ export class UnsupportedImportError extends Error {
     }
 }
 /**
- * Sanitize a context module key into a JS identifier used as the binding name
- * in rewritten imports and as the AsyncFunction parameter. Must be applied
- * consistently on both sides. e.g. 'tosijs-ui' -> 'tosijsui',
- * '@babylonjs/core' -> 'babylonjscore'.
+ * Sanitize a context module key into a JS identifier used as the binding name in rewritten
+ * imports and as the AsyncFunction parameter. Must be applied consistently on both sides —
+ * e.g. `'tosijs-ui'` -> `tosijsui`, `'@babylonjs/core'` -> `babylonjscore`.
+ *
+ * THE ONE COPY. `test-harness.ts` carried its own `key.replace(/-/g, '')`, which stripped
+ * hyphens and left slashes and `@` — so a perfectly ordinary specifier like
+ * `'tosijs-3d/demo-utils'` became the parameter name `tosijs3d/demoutils` and every test in
+ * that file died with V8's "Arg string terminates parameters early" (tosijs-ui#111/#112).
+ * The examples on the same page rendered fine, because THEY used this function. Two copies of
+ * one rule, and only one of them maintained.
+ *
+ * A context key is an import specifier — a string. Nothing about `'@scope/pkg'` suggests it
+ * must also be a valid identifier, so this makes one rather than demanding one.
  */
 export function contextVarName(key) {
-    return key.replace(/[^a-zA-Z0-9_$]/g, '');
+    const stripped = key.replace(/[^a-zA-Z0-9_$]/g, '');
+    /*
+    A leading digit is still not an identifier, and `'3d-tools'` is a name someone will pick.
+    Reserved words are the same problem wearing a different hat — `'class'`, `'new'`, `'import'`
+    are all plausible package names. Prefixing is enough for both, and keeps the result readable
+    in a stack trace, which a hash would not.
+    */
+    if (!stripped)
+        return '_ctx';
+    if (/^[0-9]/.test(stripped) || RESERVED.has(stripped))
+        return `_${stripped}`;
+    return stripped;
+}
+/*
+Parameter names, not general JS: only words that cannot appear in a parameter list matter here.
+`await` is included because a doc test body is async.
+*/
+const RESERVED = new Set(('break case catch class const continue debugger default delete do else enum export extends ' +
+    'false finally for function if implements import in instanceof interface let new null ' +
+    'package private protected public return static super switch this throw true try typeof ' +
+    'var void while with yield await').split(' '));
+/**
+ * Turn context keys into a parameter list a Function constructor will accept.
+ *
+ * Sanitizing each key independently is not sufficient: `'tosijs-3d'` and `'tosijs/3d'` both
+ * reduce to `tosijs3d`, and duplicate parameter names are a SyntaxError in a strict body — which
+ * a doc test is.
+ *
+ * A collision THROWS, and deliberately does not quietly rename. `rewriteImports` derives its
+ * binding from the same rule, so a suffixed parameter (`tosijs3d2`) would leave one of the two
+ * modules bound to a name no rewritten import ever references — importing from it would return
+ * undefined, at runtime, with nothing to read. Two specifiers that reduce to one identifier is a
+ * genuine ambiguity in the configuration, and the only useful thing to do with an ambiguity is
+ * name it. The message is the whole point: "Arg string terminates parameters early" is what this
+ * replaces.
+ */
+export function contextParamNames(keys) {
+    const byName = new Map();
+    return keys.map((key) => {
+        const name = contextVarName(key);
+        const already = byName.get(name);
+        if (already !== undefined) {
+            throw new Error(`example context keys ${JSON.stringify(already)} and ${JSON.stringify(key)} both reduce to the identifier "${name}", so an import from one of them could not be ` +
+                `told from the other. Rename one of the context keys.`);
+        }
+        byName.set(name, key);
+        return name;
+    });
 }
 /**
  * Rewrite import statements (from the example context) to const bindings:
@@ -125,7 +181,7 @@ export async function executeCode(code, context, transform) {
     const transformedCode = (await transform(rewrittenCode, {
         transforms: ['typescript'],
     })).code;
-    const contextKeys = Object.keys(context).map(contextVarName);
+    const contextKeys = contextParamNames(Object.keys(context));
     const contextValues = Object.values(context);
     // @ts-expect-error AsyncFunction constructor typing
     const func = new AsyncFunction(...contextKeys, transformedCode);

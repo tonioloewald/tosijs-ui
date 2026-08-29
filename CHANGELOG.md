@@ -23,6 +23,34 @@ normal mode shows the nav and the content together and `contentVisible` has no v
 the bug was invisible at every width the tests used. There are now narrow-viewport tests for
 both directions, and the mutation that restores the old line fails them.
 
+### Doc tests survive a context key with a slash in it ([#111](https://github.com/tonioloewald/tosijs-ui/issues/111), [#112](https://github.com/tonioloewald/tosijs-ui/issues/112), [#109](https://github.com/tonioloewald/tosijs-ui/issues/109))
+
+Context keys become **function parameter names** — the runner builds each block as
+`new Fn(...contextKeys, body)`. `test-harness.ts` carried its own copy of the rule that turns a
+key into an identifier, `key.replace(/-/g, '')`, which strips hyphens and leaves slashes and
+`@`. So an ordinary specifier like `'tosijs-3d/demo-utils'` became the parameter name
+`tosijs3d/demoutils`, and **every test in that file died before one of them ran** with V8's
+`Arg string terminates parameters early`. The examples on the same page rendered fine, because
+they went through the shared sanitiser — so nothing looked wrong except a red badge.
+
+One implementation now, in `code-transform.ts`, used by all five call sites. It also handles
+what the shared version had never needed to: a leading digit (`'3d-tools'`), a reserved word
+(`'class'`), and a key that reduces to nothing.
+
+**Two keys that reduce to the same identifier now throw, by name.** Quietly suffixing the second
+would leave one module bound to a name no rewritten import references — undefined at runtime with
+nothing to read. The message says which two keys and what to do:
+
+```
+example context keys "tosijs-3d" and "tosijs/3d" both reduce to the identifier "tosijs3d",
+so an import from one of them could not be told from the other. Rename one of the context keys.
+```
+
+There is also a structural test asserting **nothing outside `code-transform.ts` sanitises a
+context key**. That is the one that would have caught this: every unit test of the shared helper
+passes with the divergent copy restored, because they exercise the helper rather than the call
+site — which is exactly how the bug survived.
+
 ### A missing asset 404s instead of impersonating a page ([#116](https://github.com/tonioloewald/tosijs-ui/issues/116))
 
 The dev server fell back to the SPA shell for **any** unknown path, so a missing

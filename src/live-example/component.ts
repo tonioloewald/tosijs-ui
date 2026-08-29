@@ -459,6 +459,7 @@ import {
   loadTjsTestApi,
   rewriteImports,
   contextVarName,
+  contextParamNames,
   AsyncFunction,
   TjsTestResult,
 } from './code-transform.js'
@@ -764,7 +765,7 @@ export class LiveExample extends Component<ExampleParts> {
         preview: div({ class: 'preview' }),
         ...this.context,
       }
-      const keys = Object.keys(fullContext).map(contextVarName)
+      const keys = contextParamNames(Object.keys(fullContext))
       const values = Object.values(fullContext)
       // @ts-expect-error AsyncFunction constructor typing
       const fn = new AsyncFunction(...keys, body)

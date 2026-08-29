@@ -4,6 +4,7 @@ import {
   rewriteImports,
   AsyncFunction,
   contextVarName,
+  contextParamNames,
 } from './code-transform.js'
 
 // Injected context name for the scope-capture callback (see `onScope`). Chosen to
@@ -172,7 +173,7 @@ export async function executeInline(
     )
     const fullContext = { preview, ...context, ...extraContext }
 
-    const contextKeys = Object.keys(fullContext).map(contextVarName)
+    const contextKeys = contextParamNames(Object.keys(fullContext))
     const contextValues = Object.values(fullContext)
 
     // @ts-expect-error AsyncFunction constructor typing
@@ -295,7 +296,7 @@ export async function executeInIframe(
       iframeWindow as Window & { eval: typeof eval }
     ).eval('(async () => {}).constructor')
 
-    const contextKeys = Object.keys(fullContext).map(contextVarName)
+    const contextKeys = contextParamNames(Object.keys(fullContext))
     const contextValues = Object.values(fullContext)
 
     const func = new IframeAsyncFunction(...contextKeys, finalCode)

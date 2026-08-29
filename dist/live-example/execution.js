@@ -1,5 +1,5 @@
 import { elements } from 'tosijs';
-import { rewriteImports, AsyncFunction, contextVarName, } from './code-transform.js';
+import { rewriteImports, AsyncFunction, contextParamNames, } from './code-transform.js';
 // Injected context name for the scope-capture callback (see `onScope`). Chosen to
 // not collide with anything an example would plausibly declare.
 const SCOPE_CAPTURE_VAR = '__tosiCaptureScope';
@@ -104,7 +104,7 @@ export async function executeInline(options) {
             })).code;
         const { code: finalCode, extraContext } = await withScopeCapture(transformedCode, onScope);
         const fullContext = { preview, ...context, ...extraContext };
-        const contextKeys = Object.keys(fullContext).map(contextVarName);
+        const contextKeys = contextParamNames(Object.keys(fullContext));
         const contextValues = Object.values(fullContext);
         // @ts-expect-error AsyncFunction constructor typing
         const func = new AsyncFunction(...contextKeys, finalCode);
@@ -185,7 +185,7 @@ export async function executeInIframe(options) {
         const fullContext = { preview, ...context, ...extraContext };
         // Create AsyncFunction in iframe's context
         const IframeAsyncFunction = iframeWindow.eval('(async () => {}).constructor');
-        const contextKeys = Object.keys(fullContext).map(contextVarName);
+        const contextKeys = contextParamNames(Object.keys(fullContext));
         const contextValues = Object.values(fullContext);
         const func = new IframeAsyncFunction(...contextKeys, finalCode);
         await func(...contextValues);
