@@ -52,12 +52,24 @@ import {
  * is indistinguishable from the other stale-page causes (bunx cache, browser cache, a
  * restored last-good build), which is what made it cost several sessions to pin (#49).
  *
+ * `staticDirs` is included for exactly the same reason, one bug later (#110). `buildSite`
+ * COPIES those directories into the output on every build, so a replaced asset is only picked
+ * up when something else happens to trigger a rebuild — re-export a GLB over `static/model.glb`
+ * and the dev server keeps serving the previous copy indefinitely, with no error and no hint.
+ * Both files exist and only their contents differ, which is the hardest version of stale to
+ * see. The workaround people find is touching a source file to provoke a rebuild, which is a
+ * strong signal the tool should be doing it.
+ *
  * The built-in defaults stay for projects that declare no `docPaths`. `watchPaths` remains
  * the additive override. Deduped by RESOLVED path, so `src`, `./src` and an absolute form
  * collapse to one watcher rather than three firing three rebuilds for one keystroke.
  */
 export function resolveWatchPaths(
-  config: { docPaths?: string[]; watchPaths?: string[] },
+  config: {
+    docPaths?: string[]
+    watchPaths?: string[]
+    staticDirs?: string[]
+  },
   root = '.'
 ): string[] {
   const seen = new Set<string>()
@@ -68,6 +80,7 @@ export function resolveWatchPaths(
     './demo/src',
     './icons',
     ...(config.docPaths ?? []),
+    ...(config.staticDirs ?? []),
     ...(config.watchPaths ?? []),
   ]) {
     const key = path.resolve(root, p)
@@ -1851,9 +1864,34 @@ export async function devServer(
     const buildFile = resolveFile({ directory: PUBLIC, path: reqPath })
     if (buildFile) return await respondFile(buildFile, request, viaTunnel)
 
-    if (isSPA) {
+    /*
+    The SPA shell answers unknown ROUTES, never unknown ASSETS.
+
+    Falling back for everything meant a missing `waterbump.png` came back `200 text/html`.
+    Babylon's `Texture` fetched it, failed to decode a web page as an image, and substituted its
+    checkerboard — so a missing asset presented as a styling choice, and was complimented before
+    it was diagnosed (tosijs-ui#116). The same fallback made a page that had just been DELETED
+    still appear to exist. A 404 shows red in the network panel in seconds; a 200 of the wrong
+    type can hide for days.
+
+    The test is the last path segment: a dot in it means a file extension was asked for, and a
+    file extension means an asset. `/data-table/` and `/some/route` are routes; `/thing.png` and
+    `/app.js` are not. A dot EARLIER in the path is not a signal — `/v1.2/guide` is a route — so
+    only the final segment is examined.
+    */
+    const lastSegment = reqPath.slice(reqPath.lastIndexOf('/') + 1)
+    const looksLikeAsset = lastSegment.includes('.')
+    if (isSPA && !looksLikeAsset) {
       const spaFile = resolveFile({ directory: PUBLIC, path: '/index.html' })
       if (spaFile) return await respondFile(spaFile, request, viaTunnel)
+    }
+    if (looksLikeAsset) {
+      // Say what was asked for. "File not found" alone sends people to the wrong layer —
+      // the reporter spent time on their texture pipeline before suspecting the server.
+      return new Response(`No such file: ${reqPath}\n`, {
+        status: 404,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8', ...NO_CACHE },
+      })
     }
     return new Response('File not found', { status: 404 })
   }

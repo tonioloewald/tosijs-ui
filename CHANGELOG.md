@@ -23,6 +23,29 @@ normal mode shows the nav and the content together and `contentVisible` has no v
 the bug was invisible at every width the tests used. There are now narrow-viewport tests for
 both directions, and the mutation that restores the old line fails them.
 
+### A missing asset 404s instead of impersonating a page ([#116](https://github.com/tonioloewald/tosijs-ui/issues/116))
+
+The dev server fell back to the SPA shell for **any** unknown path, so a missing
+`waterbump.png` answered `200 text/html`. Babylon's `Texture` fetched it, failed to decode a web
+page as an image, and substituted its checkerboard — a missing asset presented as a _styling
+choice_, and was complimented before it was diagnosed.
+
+Unknown **routes** still get the shell, because client-side routing depends on it. The
+distinguishing signal is a dot in the last path segment: an extension was asked for, so a file
+was meant. `/v1.2/guide` is still a route; `/thing.png` is not. The 404 names the path, because
+a bare "File not found" sends people to the wrong layer — the reporter went through their
+texture pipeline before suspecting the server.
+
+### `staticDirs` are watched, so a replaced asset is not served stale ([#110](https://github.com/tonioloewald/tosijs-ui/issues/110))
+
+`buildSite` copies `staticDirs` into the output on every build, but nothing watched them — so
+re-exporting a GLB over `static/model.glb` left the previous copy served indefinitely, with no
+error and no hint. Both files exist and only their contents differ, which is the hardest version
+of stale to see, and the workaround people find is touching a source file to provoke a rebuild.
+
+Same shape as #49, where `docPaths` was the omission. Verified end to end: a replaced static file
+is now picked up in about half a second.
+
 ### A lone custom element is no longer wrapped in a paragraph ([#115](https://github.com/tonioloewald/tosijs-ui/issues/115))
 
 Reported by tosijs-3d: a doc page whose entire content is one custom element — the case

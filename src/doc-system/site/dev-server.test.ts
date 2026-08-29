@@ -358,6 +358,30 @@ test('watchPaths remains an additive override', () => {
   expect(watched).toContain('README.md')
 })
 
+test('staticDirs are watched, so a replaced asset is not served stale (#110)', () => {
+  /*
+  `buildSite` COPIES staticDirs into the output on every build, so without a watcher a replaced
+  asset is only picked up when something else happens to rebuild. Re-export a GLB over
+  `static/model.glb` and the previous copy is served indefinitely — no error, no hint, and both
+  files exist so only their contents differ. The workaround people find is touching a source
+  file to provoke a rebuild, which is the tool asking to be fixed.
+
+  Same shape as #49, where `docPaths` was the omission.
+  */
+  const watched = resolveWatchPaths({ staticDirs: ['static', 'assets'] })
+  expect(watched).toContain('static')
+  expect(watched).toContain('assets')
+})
+
+test('a directory named in two roles is watched once', () => {
+  // Deduped by resolved path — otherwise one keystroke fires two rebuilds.
+  const watched = resolveWatchPaths({
+    staticDirs: ['./static'],
+    watchPaths: ['static'],
+  })
+  expect(watched.filter((p) => p.replace('./', '') === 'static').length).toBe(1)
+})
+
 test('paths are deduped by RESOLVED path, so one keystroke is one rebuild', () => {
   // `src` and `./src` are the same directory. Watching it twice means two change events
   // and two rebuilds for one save — on a build that already does `rm -rf` on its output.

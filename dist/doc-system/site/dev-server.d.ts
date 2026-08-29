@@ -9,6 +9,14 @@ import { isLoopbackAddressForAuth as isLoopbackAddress } from './dev-auth.js';
  * is indistinguishable from the other stale-page causes (bunx cache, browser cache, a
  * restored last-good build), which is what made it cost several sessions to pin (#49).
  *
+ * `staticDirs` is included for exactly the same reason, one bug later (#110). `buildSite`
+ * COPIES those directories into the output on every build, so a replaced asset is only picked
+ * up when something else happens to trigger a rebuild — re-export a GLB over `static/model.glb`
+ * and the dev server keeps serving the previous copy indefinitely, with no error and no hint.
+ * Both files exist and only their contents differ, which is the hardest version of stale to
+ * see. The workaround people find is touching a source file to provoke a rebuild, which is a
+ * strong signal the tool should be doing it.
+ *
  * The built-in defaults stay for projects that declare no `docPaths`. `watchPaths` remains
  * the additive override. Deduped by RESOLVED path, so `src`, `./src` and an absolute form
  * collapse to one watcher rather than three firing three rebuilds for one keystroke.
@@ -16,6 +24,7 @@ import { isLoopbackAddressForAuth as isLoopbackAddress } from './dev-auth.js';
 export declare function resolveWatchPaths(config: {
     docPaths?: string[];
     watchPaths?: string[];
+    staticDirs?: string[];
 }, root?: string): string[];
 declare global {
     var Bun: any;
