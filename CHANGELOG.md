@@ -95,6 +95,9 @@ unterminated comment yields no title rather than lifting text out of it — publ
 the author had deliberately hidden would be worse than an empty string. One rule, used by both
 call sites that previously had their own copy of the line.
 
+No URLs move: slugs derive from the filename, not the title, so an affected page gets a correct
+title at the address it already had.
+
 **The other half of that issue was already fixed**: `docPaths` entries have been in the dev
 server's watch set since #49, so editing a root `Migration.md` does trigger a rebuild.
 

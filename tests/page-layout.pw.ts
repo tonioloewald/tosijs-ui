@@ -20,6 +20,57 @@ doc-browser put it — and specifically not off `.doc-content`'s parent, which i
 that hydration inserts. An earlier version of this helper read the div and reported a layout
 the styles were not using, which made a broken navigation look fine.
 */
+/*
+Click a nav link, and FAIL if it is not there.
+
+`document.querySelector(sel)?.click()` silently does nothing when the element is absent — so a
+click that never happened presents as a navigation that never completed, and the test blames the
+wrong thing fifteen seconds later. That is exactly how this suite failed intermittently on
+webkit: under load the nav had not been populated yet, the optional chain swallowed it, and the
+error pointed at the URL wait.
+
+Waits for the link, then clicks it, then waits for the URL — three steps that each say which one
+broke.
+*/
+async function clickNavLink(page: any, href: string) {
+  await page.waitForFunction(
+    (h: string) => !!document.querySelector(`a.doc-link[href="${h}"]`),
+    href,
+    { timeout: 15_000 }
+  )
+  await page.evaluate((h: string) => {
+    const a = document.querySelector(
+      `a.doc-link[href="${h}"]`
+    ) as HTMLElement | null
+    if (!a) throw new Error(`nav link ${h} vanished between wait and click`)
+    a.click()
+  }, href)
+  await page.waitForFunction((h: string) => location.pathname === h, href, {
+    timeout: 15_000,
+  })
+}
+
+/** Click the nav toggle, failing if it is not offered rather than silently doing nothing. */
+async function clickNavButton(page: any) {
+  await page.waitForFunction(
+    () => {
+      const b = document.querySelector(
+        'button.iconic[title="navigation"]'
+      ) as HTMLElement | null
+      return !!b && b.getBoundingClientRect().width > 0
+    },
+    undefined,
+    { timeout: 15_000 }
+  )
+  await page.evaluate(() => {
+    const b = document.querySelector(
+      'button.iconic[title="navigation"]'
+    ) as HTMLElement | null
+    if (!b) throw new Error('nav button vanished between wait and click')
+    b.click()
+  })
+}
+
 const contentWidth = (page: any) =>
   page.evaluate(() => {
     const el = document.querySelector('.doc-content') as HTMLElement
@@ -109,11 +160,7 @@ test('SPA navigation moves the layout with the page, both ways', async ({
 
   // full-width -> prose: the measure must come BACK, which is the direction a naive
   // "set the attribute when the doc asks for it" implementation forgets.
-  await page.evaluate(() =>
-    (
-      document.querySelector('a.doc-link[href="/data-table/"]') as HTMLElement
-    )?.click()
-  )
+  await clickNavLink(page, '/data-table/')
   await expect
     .poll(async () => (await contentWidth(page)).layout, { timeout: 15_000 })
     .toBe(null)
@@ -121,9 +168,8 @@ test('SPA navigation moves the layout with the page, both ways', async ({
   expect(prose.content).toBeLessThan(prose.available * 0.9)
 
   // prose -> full-width again
-  await page.evaluate(() =>
-    (document.querySelector('a.doc-link[href="/"]') as HTMLElement)?.click()
-  )
+  await clickNavLink(page, '/')
+
   await expect
     .poll(async () => (await contentWidth(page)).layout, { timeout: 15_000 })
     .toBe('full-width')
@@ -206,11 +252,7 @@ test('navigating away from full-screen brings the nav back', async ({
     })
     .toBe(1400)
 
-  await page.evaluate(() =>
-    (
-      document.querySelector('a.doc-link[href="/data-table/"]') as HTMLElement
-    )?.click()
-  )
+  await clickNavLink(page, '/data-table/')
   /*
   Wait for the NAVIGATION first, then for the nav to return — two waits, not one budget covering
   both. Polling `navRight` alone conflates "the click did not navigate" with "the layout did not
@@ -275,11 +317,7 @@ test('the navigation button works on a full-screen page', async ({ page }) => {
   const before = await navState(page)
   expect(before.navRight, 'the nav starts off-screen').toBeLessThanOrEqual(0)
 
-  await page.evaluate(() =>
-    (
-      document.querySelector('button.iconic[title="navigation"]') as HTMLElement
-    )?.click()
-  )
+  await clickNavButton(page)
 
   /*
   It returns to the NORMAL layout rather than taking the nav full-screen: at this width that
@@ -308,11 +346,7 @@ test('the navigation button works on a full-screen page', async ({ page }) => {
     `the button must survive its own click: ${JSON.stringify(after)}`
   ).toBe(true)
 
-  await page.evaluate(() =>
-    (
-      document.querySelector('button.iconic[title="navigation"]') as HTMLElement
-    )?.click()
-  )
+  await clickNavButton(page)
   await expect
     .poll(async () => (await navState(page)).navRight, { timeout: 10_000 })
     .toBeLessThanOrEqual(0)
@@ -385,11 +419,7 @@ test('the next full-screen page is full-screen again after an override', async (
     .poll(async () => (await navState(page)).value, { timeout: 15_000 })
     .toBe('compact/content')
 
-  await page.evaluate(() =>
-    (
-      document.querySelector('button.iconic[title="navigation"]') as HTMLElement
-    )?.click()
-  )
+  await clickNavButton(page)
   await expect
     .poll(async () => (await navState(page)).alwaysCompact, { timeout: 10_000 })
     .toBe(false)
@@ -400,13 +430,7 @@ test('the next full-screen page is full-screen again after an override', async (
   that route passed even with the reset removed — mutation testing caught that, and this is the
   version that fails without it.
   */
-  await page.evaluate(() =>
-    (
-      document.querySelector(
-        'a.doc-link[href="/full-screen-demo/"]'
-      ) as HTMLElement
-    )?.click()
-  )
+  await clickNavLink(page, '/full-screen-demo/')
   await expect
     .poll(async () => (await navState(page)).navRight, { timeout: 15_000 })
     .toBeLessThanOrEqual(0)
@@ -496,20 +520,12 @@ test('Back to a full-screen page re-asserts full-screen', async ({ page }) => {
     .toBe('compact/content')
 
   // Open the nav, so there is an override for Back to discard.
-  await page.evaluate(() =>
-    (
-      document.querySelector('button.iconic[title="navigation"]') as HTMLElement
-    )?.click()
-  )
+  await clickNavButton(page)
   await expect
     .poll(async () => (await navState(page)).navRight, { timeout: 10_000 })
     .toBeGreaterThan(0)
 
-  await page.evaluate(() =>
-    (
-      document.querySelector('a.doc-link[href="/data-table/"]') as HTMLElement
-    )?.click()
-  )
+  await clickNavLink(page, '/data-table/')
   await page.waitForFunction(
     () => location.pathname === '/data-table/',
     undefined,
@@ -552,13 +568,7 @@ test('Back from full-screen to prose restores the reading column', async ({
   const prose = await contentWidth(page)
   expect(prose.content, 'starts in the measure').toBeLessThan(900)
 
-  await page.evaluate(() =>
-    (
-      document.querySelector(
-        'a.doc-link[href="/full-screen-demo/"]'
-      ) as HTMLElement
-    )?.click()
-  )
+  await clickNavLink(page, '/full-screen-demo/')
   await expect
     .poll(async () => (await contentWidth(page)).layout, { timeout: 15_000 })
     .toBe('full-screen')
@@ -619,11 +629,7 @@ test('on a narrow screen, tapping a nav link switches to the content', async ({
     .poll(async () => (await navState(page)).value, { timeout: 10_000 })
     .toBe('compact/nav')
 
-  await page.evaluate(() =>
-    (
-      document.querySelector('a.doc-link[href="/carousel/"]') as HTMLElement
-    )?.click()
-  )
+  await clickNavLink(page, '/carousel/')
   await page.waitForFunction(
     () => location.pathname === '/carousel/',
     undefined,

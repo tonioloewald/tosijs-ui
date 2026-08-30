@@ -246,6 +246,20 @@ test('the table highlights whatever the form is editing — including a deep lin
 })
 
 test('Back leaves the record, and says so', async ({ page }) => {
+  /*
+  Wait for the element before touching it.
+
+  This read `document.querySelector('tosi-crud')` and used the result immediately, which fails as
+  `crud is null` when the page has not finished hydrating — about one full run in six under the
+  parallel lane, 4/4 clean in isolation. The null then surfaces from inside `page.evaluate`, so
+  the error names a property access rather than the missing wait, and reads like a component
+  fault.
+  */
+  await page.waitForFunction(
+    () => !!(document.querySelector('tosi-crud') as any)?.whenIdle,
+    undefined,
+    { timeout: 15_000 }
+  )
   const result = await page.evaluate(async () => {
     const crud = document.querySelector('tosi-crud') as any
     await crud.whenIdle()
@@ -261,6 +275,12 @@ test('Back leaves the record, and says so', async ({ page }) => {
   // on navigation, not on the popstate listeners having run and a render having happened —
   // assuming otherwise passed in isolation and failed about one full run in six.
   await page.waitForFunction(() => !location.hash.includes('people.id='))
+  // Same reason as above: popstate can land before the element is back.
+  await page.waitForFunction(
+    () => !!document.querySelector('tosi-crud')?.querySelector('.crud-detail'),
+    undefined,
+    { timeout: 15_000 }
+  )
   const after = await page.evaluate(async () => {
     const crud = document.querySelector('tosi-crud') as any
     // Poll for the CONDITION being asserted, not a proxy for it. Waiting on `crud.value`
