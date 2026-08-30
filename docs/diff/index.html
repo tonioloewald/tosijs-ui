@@ -67,6 +67,58 @@ preview.append(
 unchanged lines are shown as context and only genuine insertions/deletions are
 highlighted. The pure <code>diffLines(before, after)</code> function is exported too, if you
 just want the data.</p>
+<h2>Resolving a diff — &quot;do I want to accept this?&quot;</h2>
+<p>Set <code>resolvable</code> and each change gets a pair of buttons: keep the original, or take the
+modified. <code>value</code> is the text those choices imply, and a <code>change</code> event fires whenever one
+moves. That makes it a review surface for a <em>proposed</em> edit — an AI suggestion, a
+collaborator&#39;s revision, a file that moved under you while you were editing it.</p>
+<p>The <strong>labels are yours</strong>. &quot;Mine&quot;/&quot;Theirs&quot; is git&#39;s framing, &quot;Current&quot;/&quot;Proposed&quot; suits
+reviewing a suggestion, and the component&#39;s own vocabulary is original/modified — so nothing
+is hardcoded. Pass already-localized strings; the host owns that choice.</p>
+<pre><code class="language-js">const { tosiDiff } = tosijsui
+
+const diff = tosiDiff({
+  original: &#39;The cat sat on the mat.\nIt was a sunny day.\nThe end.&#39;,
+  modified: &#39;The cat sprawled across the mat.\nIt was a sunny day.\nFin.&#39;,
+  resolvable: true,
+  originalLabel: &#39;Mine&#39;,
+  modifiedLabel: &#39;Theirs&#39;,
+  style: { width: &#39;100%&#39; },
+})
+diff.addEventListener(&#39;change&#39;, () =&gt; {
+  result.textContent = JSON.stringify(diff.value)
+})
+const result = document.createElement(&#39;pre&#39;)
+result.textContent = JSON.stringify(diff.value)
+preview.append(diff, result)
+</code></pre>
+<p>The unit of decision is a <strong>change block</strong>, not a line: a multi-line edit is one choice,
+because accepting half of one produces text neither side wrote. Two more exports give you
+the same model without the DOM — <code>diffBlocks(diffLines(a, b))</code> for the blocks, and
+<code>resolveDiff(blocks, choices)</code> to turn choices back into text.</p>
+<p><code>acceptAll()</code> and <code>rejectAll()</code> do the obvious thing, <code>changeCount</code> tells you how many
+decisions the diff is asking for (<code>0</code> means the texts agree), and <code>resolutions</code> is readable
+and writable if you want to drive it yourself. Resolutions <strong>reset when either text
+changes</strong> — decisions belong to the diff they were made about.</p>
+<pre><code class="language-test">const { tosiDiff } = tosijsui
+const el = tosiDiff({
+  original: &#39;a\nKEEP\nc\nDROP\ne&#39;,
+  modified: &#39;a\nNEW1\nc\nNEW2\ne&#39;,
+  resolvable: true,
+})
+document.body.append(el)
+
+test(&#39;accepting everything yields the modified text&#39;, () =&gt; {
+  expect(el.changeCount).toBe(2)
+  expect(el.value).toBe(&#39;a\nNEW1\nc\nNEW2\ne&#39;)
+})
+
+test(&#39;rejecting everything yields the original text exactly&#39;, () =&gt; {
+  el.rejectAll()
+  expect(el.value).toBe(&#39;a\nKEEP\nc\nDROP\ne&#39;)
+  el.remove()
+})
+</code></pre>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
