@@ -366,6 +366,31 @@ try {
     iconRun.stderr.toString().slice(0, 200)
   )
 
+  /*
+  Reading the build lock has to work from OUTSIDE the package (#117).
+
+  Resolving `tosijs-ui/site` is not the same as reaching what is in it: the reporter got
+  `currentHolder is undefined` from a clean import, and the deep path
+  (`tosijs-ui/dist/doc-system/site/build-lock.js`) is blocked by the exports map — so a
+  consumer's `stop` command had no supported route to the answer. Asserting the NAMED export
+  from an installed tarball is the only lane that sees this; every in-repo import resolves
+  through the source tree and would pass regardless.
+
+  Run under BUN, not node: `tosijs-ui/site` imports `bun` at module load, so node cannot
+  import it at all — which is why the checks above only assert that it RESOLVES. That is also
+  the runtime a consumer's `stop` script actually uses.
+  */
+  const lockRead =
+    await $`bun -e ${"import('tosijs-ui/site').then(m=>{for(const n of ['currentHolder','describeHolder'])if(typeof m[n]!=='function')throw new Error('missing '+n);console.log('OK')})"}`
+      .cwd(proj)
+      .nothrow()
+      .quiet()
+  check(
+    'tosijs-ui/site exposes the build-lock reader (currentHolder/describeHolder)',
+    lockRead.stdout.toString().includes('OK'),
+    lockRead.stderr.toString().slice(0, 200)
+  )
+
   // ── the manifest's own consistency ────────────────────────────────────────
   //
   // A peer floor the library is not itself developed against is a contract nobody tests.

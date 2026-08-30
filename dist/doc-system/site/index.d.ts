@@ -15,3 +15,5 @@ export type { BuildEpubOptions, BookMeta } from './epub.js';
 export { selectBookDocs } from '../book-manifest.js';
 export type { BookManifest } from '../book-manifest.js';
 export { listEpubVolumes, epubVolumeIdentity, renderEpubDownloads, type EpubVolume, } from './epub-volumes.js';
+export { currentHolder, describeHolder, lockPathFor, lockDecision, isProcessAlive, } from './build-lock.js';
+export type { LockHolder, LockDecision } from './build-lock.js';
