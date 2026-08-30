@@ -369,7 +369,11 @@ export class TosiDiff extends Component {
             const choice = this.resolutions[index] ?? 'modified';
             const pick = (label, value) => button({
                 type: 'button',
-                dataset: { hunk: String(index), choice: value },
+                // Dashed attribute props, NOT `dataset: {…}` — the creator assigns what it is
+                // given, and `dataset` is a read-only accessor, so that throws inside render
+                // and the element silently produces nothing. Reading `.dataset` is fine.
+                'data-hunk': String(index),
+                'data-choice': value,
                 ariaPressed: String(choice === value),
             }, label);
             return div({ class: 'diff-hunk', onClick: this.choose }, div({ class: 'diff-choices' }, pick(this.originalLabel, 'original'), pick(this.modifiedLabel, 'modified')), ...block.removed.map((text) => this.lineElement('remove', text, choice === 'original')), ...block.added.map((text) => this.lineElement('add', text, choice === 'modified')));

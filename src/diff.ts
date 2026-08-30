@@ -449,7 +449,11 @@ export class TosiDiff extends Component<DiffParts> {
           button(
             {
               type: 'button',
-              dataset: { hunk: String(index), choice: value },
+              // Dashed attribute props, NOT `dataset: {…}` — the creator assigns what it is
+              // given, and `dataset` is a read-only accessor, so that throws inside render
+              // and the element silently produces nothing. Reading `.dataset` is fine.
+              'data-hunk': String(index),
+              'data-choice': value,
               ariaPressed: String(choice === value),
             },
             label

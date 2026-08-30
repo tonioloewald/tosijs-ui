@@ -199,3 +199,81 @@ describe('<tosi-diff> resolution', () => {
     el.remove()
   })
 })
+
+describe('<tosi-diff> actually renders its controls', () => {
+  /*
+  These exist because the model tests above ALL PASSED against a component that rendered
+  nothing at all. `value` is computed from the blocks, so it is correct whether or not a
+  single element reaches the DOM — and the first version of the resolvable path threw
+  `Cannot set property dataset` inside render, which produced an empty shadow root and a
+  perfectly good `value`. A component you can only interact with through its DOM needs at
+  least one test that goes through its DOM.
+  */
+  /*
+  Appending hydrates; `render()` must then be called explicitly. tosijs renders on an
+  animation frame and happy-dom does not run one, so a unit test that merely mounts an
+  element is asserting against an EMPTY shadow root — which is exactly how the `dataset`
+  crash reached a browser with 26 green tests behind it.
+  */
+  const mount = (props: Record<string, unknown>) => {
+    const el = tosiDiff(props as any) as any
+    document.body.append(el)
+    el.render()
+    return el
+  }
+  const shadow = (el: any, sel: string) => [
+    ...(el.shadowRoot?.querySelectorAll(sel) ?? []),
+  ]
+
+  test('one hunk per change, each with both labelled buttons', () => {
+    const el = mount({
+      original: 'a\nKEEP\nc\nDROP\ne',
+      modified: 'a\nNEW1\nc\nNEW2\ne',
+      resolvable: true,
+      originalLabel: 'Mine',
+      modifiedLabel: 'Theirs',
+    })
+    expect(shadow(el, '.diff-hunk').length).toBe(el.changeCount)
+    expect(
+      shadow(el, '.diff-choices button').map((b: any) => b.textContent)
+    ).toEqual(['Mine', 'Theirs', 'Mine', 'Theirs'])
+    el.remove()
+  })
+
+  test('clicking a button resolves that change and only that change', () => {
+    // The whole interaction path — delegation, the data-* round trip, and the value.
+    const el = mount({
+      original: 'a\nKEEP\nc\nDROP\ne',
+      modified: 'a\nNEW1\nc\nNEW2\ne',
+      resolvable: true,
+    })
+    const mine = shadow(el, 'button[data-choice="original"]') as any[]
+    expect(mine.length).toBe(2)
+    mine[1].click()
+    el.render()
+    expect(el.value).toBe('a\nNEW1\nc\nDROP\ne')
+    el.remove()
+  })
+
+  test('the chosen button is marked pressed, and the losing lines are marked', () => {
+    const el = mount({ original: 'a\nb', modified: 'a\nB', resolvable: true })
+    const pressed = () =>
+      shadow(el, '.diff-choices button')
+        .filter((b: any) => b.getAttribute('aria-pressed') === 'true')
+        .map((b: any) => b.getAttribute('data-choice'))
+    expect(pressed()).toEqual(['modified'])
+    el.rejectAll()
+    el.render()
+    expect(pressed()).toEqual(['original'])
+    // Not colour alone: the side that lost is struck through.
+    expect(shadow(el, '.diff-line.not-chosen').length).toBeGreaterThan(0)
+    el.remove()
+  })
+
+  test('a read-only diff renders lines and no controls', () => {
+    const el = mount({ original: 'a\nb', modified: 'a\nB' })
+    expect(shadow(el, '.diff-line').length).toBeGreaterThan(0)
+    expect(shadow(el, '.diff-choices').length).toBe(0)
+    el.remove()
+  })
+})
