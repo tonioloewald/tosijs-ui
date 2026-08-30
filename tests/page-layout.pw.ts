@@ -470,10 +470,15 @@ page and the full-screen page with the nav open look like different history entr
 the kind of thing only someone actually using it can see: the mechanism turned out to be
 different from the guess, but the observation was correct.
 
-These pin what Back does today so that changing it has to be deliberate. Whether it SHOULD work
-this way is an open decision in TODO.md — the alternative is remembering a reader's override per
-history entry — and these are written to fail loudly if someone implements that, rather than to
-argue it is right.
+These pin what Back does, and it is now a DECIDED behaviour rather than an open question:
+metadata wins on arrival. A full-screen page is full-screen however you reach it — link, Back, or
+a fresh load — because the override is a transient viewing choice, not a property of the
+document, and the nav button is always offered on such a page so restoring it is one tap.
+
+The alternative was weighed and rejected: storing the override in `history.state` would make the
+same URL behave differently arrived-at-by-Back than clicked, trading one surprise for another,
+and adding state to a path that has none. Scroll restoration was the argument for it, and it did
+not carry the day.
 
 They earn their keep differently, and it is worth saying which is which. The second one is a
 REGRESSION test: dropping the `removeAttribute('data-layout')` on navigation fails it, so the

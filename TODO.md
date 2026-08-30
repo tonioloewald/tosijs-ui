@@ -798,38 +798,29 @@ live site** (independently useful). See roadmap "From book to live."
       menus, tooltips, drag handles, `<tosi-sidenav>` — not something the doc tier can host.
       Worth doing: everything touch-shaped in this library is currently tested only with a mouse.
 
-## Decide: should a nav-toggle override survive Back?
+## DECIDED: a nav-toggle override does not survive Back
 
-- [ ] Reported as "sometimes it treats the full-screen page and the full-screen page with nav
-      visible as different history entries". Measured, and it is neither history nor
-      inconsistent — the toggle creates **no** history entry at all (`history.length` is
-      unchanged across repeated toggles, URL unchanged). What happens is that **Back re-asserts
-      the page's declared layout**, discarding the override:
+- [x] **Settled 2026-08-30: metadata wins on arrival.** A full-screen page is full-screen
+      whenever you arrive at it, by any route — link, Back, or a fresh load. The override is a
+      transient viewing choice, not a property of the document, and the nav button is now always
+      offered on such a page, so restoring it is one tap.
 
-      | step | history.length | nav |
-      | --- | --- | --- |
-      | land on full-screen | 2 | hidden |
-      | toggle nav on | 2 | visible |
-      | navigate to a prose page | 3 | visible |
-      | Back | 3 | hidden again |
+      Reported as "sometimes the full-screen page and the full-screen page with nav visible look
+      like different history entries". Measured, it is neither history nor inconsistent: the
+      toggle creates **no** history entry (`history.length` unchanged across repeated toggles,
+      URL unchanged). Back simply re-applies the page's declared layout, because `showDoc` resets
+      the applied state on every navigation and popstate goes through it.
 
-      That falls out of `showDoc` resetting `appliedFullScreen` on every navigation, which
-      popstate goes through too. It is defensible — a full-screen page is full-screen whenever
-      you arrive, which is predictable — but leaving a page with the nav open and returning to
-      find it closed reads as the page forgetting, and "reads as forgetting" is what got
-      reported.
+      **The alternative was real and was weighed.** Browsers restore scroll position on Back, so
+      "put the view back how I left it" is an established expectation rather than an exotic one.
+      It was rejected because the state would live in `history.state`, which means the same URL
+      behaves differently arrived-at-by-Back than clicked — trading the current surprise for a
+      new one — and it adds state to a path that has none.
 
-      The alternative is to remember the override per-entry in history state so Back restores
-      what you left. That is more faithful to the reader and more machinery. Worth deciding
-      deliberately rather than defaulting to whichever fell out of the implementation, which is
-      what is shipping today.
-
-      **Both directions now have Back tests** (`tests/page-layout.pw.ts`), so acting on this
-      decision will fail them and have to be deliberate. Note which is which: the
-      full-screen -> prose one is a real regression test (dropping `removeAttribute` on
-      navigation fails it); the Back-to-full-screen one is a contract tripwire that survives
-      every mutation tried, because the paths it walks are covered elsewhere. It is there to
-      make this decision visible, not to catch a bug.
+      Both directions have tests (`tests/page-layout.pw.ts`). The Back-to-full-screen one is a
+      contract tripwire rather than a regression test: it survives every mutation tried, because
+      the paths it walks are covered elsewhere. Its job is to make this decision visible if
+      someone reverses it.
 
 ## Sub-frame flash of unmeasured prose between `:defined` and hydration
 

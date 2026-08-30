@@ -23,6 +23,21 @@ normal mode shows the nav and the content together and `contentVisible` has no v
 the bug was invisible at every width the tests used. There are now narrow-viewport tests for
 both directions, and the mutation that restores the old line fails them.
 
+### Decided: a nav-toggle override does not survive Back
+
+Left open in 1.12.3 and now settled — **metadata wins on arrival**. A page declaring
+`layout: "full-screen"` is full-screen however you reach it: a link, Back, or a fresh load. The
+override is a transient viewing choice rather than a property of the document, and since the nav
+button is always offered on such a page, restoring it is one tap.
+
+Worth recording that the alternative was real. Browsers restore scroll position on Back, so "put
+the view back how I left it" is an established expectation, not an exotic one. It was rejected
+because the state would have to live in `history.state`, which makes the same URL behave
+differently arrived-at-by-Back than clicked — trading the current surprise for a new one — and
+adds state to a path that has none.
+
+No behaviour change; the tests that pinned it now say it is settled rather than pending.
+
 ### The invite screen has a code box, so an installed PWA can let itself back in ([#75](https://github.com/tonioloewald/tosijs-ui/issues/75))
 
 The screen offered only a command to run _on the machine hosting the server_. The devices a
