@@ -147,9 +147,32 @@ const DEFAULT_IDLE_HOURS = 8
 /*
 The FALLBACK channel, used only when the project has no haltija of its own.
 
-`^1.11.2` because that is where the agent-facing fixes people upgrade for currently live;
-the floor's practical job is to make bunx re-resolve rather than to express a minimum. The
-floor before this was `^1.6.1`, and an adopter with `haltija@^1.11.2` in their own
+`^1.12.6` because that is where the agent-facing fixes people upgrade for currently live;
+the floor's practical job is to make bunx re-resolve rather than to express a minimum.
+
+What 1.12.6 specifically buys a lane that spawns Electron — this floor encodes fixes, not a
+date, so each of these is the reason it moved off `^1.11.2`:
+
+  - **a `--private` instance finally has a lifetime bound** (haltija#39, filed from here). A
+    SIGKILLed session, a slept laptop or a crashed harness leaves teardown un-run, and the
+    only previous bound was spawner-pid polling, which cannot help when nothing runs. The
+    report was a 12-day-old instance at 5.7 GB and ~150% CPU on a machine at load average
+    212 — which is the incident that confounded a timing measurement here and got blamed on
+    unrelated local code. It exits after 8h idle and says why; `HALTIJA_IDLE_TIMEOUT_HOURS`
+    overrides. This is the single best reason to be on 1.12.6.
+  - **LAN and Bonjour access work at all.** `/inject.js` handed the browser URLs built as
+    `localhost:<port>`, and `localhost` in a served script means the BROWSER's machine — a
+    page opened from a phone was told to connect to itself. The host is now derived from the
+    request. Our TLS certs already cover `<hostname>.local` for exactly this.
+  - **the widget sends `X-Haltija-Token`**, so a `--token` server and a page that can talk
+    back stopped being mutually exclusive — which matters most over a tunnel.
+  - **results carry `paintAgeMs`**, so "this tab says visible but is not compositing" is now
+    something a caller can DETECT rather than a rule it has to remember. `visibilityState`
+    means "is this tab selected", not "is it painting".
+  - Electron 40.6.1 → 43.4.1, clearing two context-isolation bypasses (haltija#35). Context
+    isolation is haltija's security boundary, and we spawn it.
+
+The floor before `^1.11.2` was `^1.6.1`, and an adopter with `haltija@^1.11.2` in their own
 devDependencies still got **1.11.0** — new enough to look current, old enough to lack the
 fix they had just upgraded for (tosijs-ui#48).
 
@@ -176,7 +199,7 @@ const DEV_IDLE_TIMEOUT_SECONDS = Math.min(
   Number(process.env.DEV_REQUEST_TIMEOUT_SECONDS) || 120
 )
 
-const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.11.2'
+const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.12.6'
 
 /*
 Which haltija do we actually run, and can we say so out loud?

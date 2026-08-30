@@ -643,3 +643,37 @@ npm is at 1.5.1).
   server-side recording fetch fails. Hits the standard localhost HTTPS path too, since
   `inject.js` sets `wss://localhost:8701/ws/browser`. Found while reading the file for #104;
   does not block it.
+
+### ✅ RESOLVED (fixed in haltija@1.12.6) — our floor moved to `^1.12.6`
+
+_Status checked 2026-08-30._
+
+Closed upstream and shipped. Recorded here because the floor in `dev-server.ts` encodes these
+fixes rather than a date, so anyone wondering why it moved has the list:
+
+- **#39 — a `--private` instance now has a lifetime bound.** Exits after 8h idle saying why;
+  `HALTIJA_IDLE_TIMEOUT_HOURS` overrides. Polling deliberately does not count as activity, or a
+  `--private --app` instance would refresh its own clock from its own UI — which was exactly the
+  configuration we reported. This is the one that matters most to us: the instance we found was
+  12 days old at 5.7 GB on a box at load 212, and it silently confounded a timing measurement
+  here that got blamed on local code.
+- **#38 — the `wss://` no-op replace.** One function derives the HTTP base now.
+- **#35 / #36 — Electron 40.6.1 → 43.4.1 (two context-isolation bypasses) and the MCP SDK
+  re-lock.** We spawn Electron, and context isolation is haltija's security boundary.
+- **#33 — HTTPS mixed-content embedding** now documented with a transport-picking loader.
+- **Not filed by us but load-bearing for LAN/tunnel work:** served scripts had been handing the
+  browser `localhost:<port>`, which in a served script means the BROWSER's machine, so a page
+  opened from another device was told to connect to itself. Host is derived from the request
+  now — our mkcert certs already cover `<hostname>.local` for exactly this.
+
+Still open, and both still shape how we work:
+
+- **#37 (page → agent push) — the PRIMITIVE now exists.** 1.12.6 ships `hj session
+attach/read/write`, the tmux session mirror we refined the ask to, with read and write as
+  separate grants. What we said we would supply — the page-side view — is now unblocked, and is
+  the remaining half of the headset story alongside `haltijaDev: 'tunnel'`.
+- **#41 (foreground window).** Partly mitigated, not fixed: results now carry `paintAgeMs` and
+  warn when stale, so a rAF-starved tab is DETECTABLE rather than silently wrong. Getting a
+  foreground window cheaply — what the issue actually asks for — is still open upstream.
+- **#40 (unauthenticated `/terminal/*` and `/files/write`)** and **#32 (open both transports by
+  default)** are untouched. #40 is the one to weigh before exposing a channel beyond localhost.
