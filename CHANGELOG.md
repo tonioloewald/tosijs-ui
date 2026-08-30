@@ -16,12 +16,15 @@ The controls now carry a name: `title` on the column-options button, where the t
 genuine win for sighted mouse users too, and `aria-label` on the cells and the search field,
 where a tooltip on every hover would just repeat the column header as noise.
 
-To be precise about what `title` does and does not buy, because the two halves land on different
-people: the **accessible name** is real and works — `title` feeds the accessible name
-computation, so VoiceOver on iOS/iPadOS announces these controls, as do NVDA and JAWS. It is the
-**visible tooltip** that is mouse-only, and a blind user was never relying on it. The people
-still left with nothing are sighted keyboard and touch users, who get no visible label; that is
-a smaller gap than the one just closed, and it is not closed here.
+To be precise about what `title` buys, because its two halves land on different people: the
+**accessible name** is real and works — `title` feeds the accessible name computation, so
+VoiceOver on iOS/iPadOS announces these controls, as do NVDA and JAWS. The **visible tooltip** is
+mouse-only, and a screen-reader user was never relying on it.
+
+No visible label is added, deliberately. The vertical-more glyph is the standard overflow
+affordance and reads as one; spelling it out on every column header would be clutter that makes
+the header worse for everyone in order to restate what the icon already says. The defect was that
+the control had no name in the accessibility tree, and that is what is fixed.
 
 Localized tables get this through the existing `data-tosi-localized` directive rather than a
 `<tosi-localized>` child, because an `<input>` cannot contain a child element. Add
