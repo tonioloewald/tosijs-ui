@@ -817,12 +817,31 @@ live site** (independently useful). See roadmap "From book to live."
       them. Measured at ~70ms here, and invisible, but it is a real interval during which the
       element is painted wrong rather than not painted.
 
-      The principled fix is for the defaults to BE the common case: set `--nav-width` /
-      `--content-width` / `--margin` to the normal-mode values in `connectedCallback`, which
-      needs `navSize` but not `offsetParent`, so it can run before any layout. Then a wide screen
-      is correct from the first frame and only a narrow one corrects. Not done here because the
-      flash does not reproduce on this machine, and changing paint defaults blind is how you
-      trade a flash you cannot see for one you can.
+      **The constraint that decides this: do not break existing users.** That matters more than
+      optimising the common case, and it rules the obvious option out.
+
+      *Option A — make the defaults the normal layout.* Set `--nav-width` / `--content-width` /
+      `--margin` to normal-mode values in `connectedCallback`; it needs `navSize` but not
+      `offsetParent`, so it runs before any layout. A wide screen is then right from the first
+      frame. **But it is not non-breaking.** Today's defaults are the COMPACT arrangement, so a
+      consumer whose sidenav is genuinely narrow — or whose `offsetParent` stays null a while, or
+      who has CSS keyed to that initial state — currently paints compact-then-compact and would
+      start painting normal-then-compact. That is a new flash for them, traded for one we cannot
+      reproduce.
+
+      *Option B — do not paint the guess at all.* Keep every layout value exactly as it is and
+      withhold visibility until the first pass has computed. Non-breaking by construction: the
+      only observable change is WHEN the element becomes visible, not what it lays out as.
+
+      B's failure mode is the thing to design for: if `handleResize` never succeeds — an
+      `offsetParent` that stays null, a `display:none` ancestor, a detached container — the
+      sidenav is invisible forever. So it needs a failsafe reveal, and a failsafe IS a timer.
+      That is acceptable where the primary mechanism was not, because the worst case becomes
+      today's behaviour rather than a component nobody can see.
+
+      Neither is attempted here: the flash does not reproduce on this machine, so any change
+      would be unverifiable, and B in particular needs a real reproduction to confirm it improves
+      anything rather than just moving the artifact.
 
 ## DECIDED: a nav-toggle override does not survive Back
 
