@@ -23,6 +23,25 @@ normal mode shows the nav and the content together and `contentVisible` has no v
 the bug was invisible at every width the tests used. There are now narrow-viewport tests for
 both directions, and the mutation that restores the old line fails them.
 
+### The invite screen has a code box, so an installed PWA can let itself back in ([#75](https://github.com/tonioloewald/tosijs-ui/issues/75))
+
+The screen offered only a command to run _on the machine hosting the server_. The devices a
+tunnel exists for have no such keyboard — and an installed PWA has no address bar either, because
+iOS gives a Home Screen app its own cookie jar and its own launch URL. An unauthenticated launch
+was a black rectangle with no way out of it.
+
+It now offers the 7-character code box directly: the same affordance as the `dev.tosijs.net`
+landing page, moved to where it is actually needed. A plain GET form produces `/?t=CODE`, which is
+the path the link already takes, so this needed no new server code. The input disables
+autocapitalize, autocorrect and spellcheck, because the code is case-insensitive and a phone
+keyboard's help is noise; there is a viewport meta, because a code box you cannot hit is not much
+better than none.
+
+**What this deliberately does not attempt** is carrying a session across the install. The
+separate cookie jar is a privacy feature rather than a bug, and the issue's suggested "don't
+redirect" fix would bake a live credential into a home-screen icon — working once, then failing
+forever with no address bar to correct it. Seven characters is the better trade.
+
 ### A leading metadata comment is no longer the page title ([#100](https://github.com/tonioloewald/tosijs-ui/issues/100))
 
 The title came from line one, literally. A file opening with its metadata block — the documented

@@ -19,6 +19,7 @@ import { openDevBrowser } from './open-browser.js';
 import { resolveTunnelLocalPort } from './site-config.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sinkPathFor, appendToSink } from './debug-sink.js';
+import { invitePageHtml } from './invite-page.js';
 import { TUNNEL_LINK_CMD, resolveLinkArrival, isLockedDown, hasTunnel, isLoopbackAddressForAuth as isLoopbackAddress, mayReadSite, shouldInterceptLinkToken, createAuthState, issueLink, readCookie, redeemThroughGate, createRedemptionGate, resolveLinkSettings, sessionCookie, urlWithoutToken, mayWriteSource, validSessionCookie, sessionRejection, mayDriveWithAgent, isProxiedRequest, SESSION_COOKIE, } from './dev-auth.js';
 /**
  * Every path the dev server watches for changes.
@@ -1430,14 +1431,7 @@ export async function devServer(config, opts = {}) {
                         `cookie; there is simply nothing on this side to match it to.</p>` +
                         `<p>Ask for a fresh link:</p>`
                     : `<p>Ask for a fresh one — invite links expire.</p>`;
-                return new Response(`<!doctype html><meta charset=utf-8>` +
-                    `<title>Link required</title>` +
-                    `<style>body{font:16px/1.6 system-ui;margin:15vh auto;max-width:30rem;padding:0 1.5rem;color:#222}` +
-                    `@media(prefers-color-scheme:dark){body{background:#16171a;color:#e8e8ea}}` +
-                    `code{background:#8881;padding:.1em .4em;border-radius:4px}</style>` +
-                    `<h1>This workspace needs an invite link</h1>` +
-                    explanation +
-                    `<p><code>${TUNNEL_LINK_CMD}</code></p>`, {
+                return new Response(invitePageHtml(rejection, TUNNEL_LINK_CMD), {
                     status: 401,
                     headers: {
                         'Content-Type': 'text/html; charset=utf-8',
