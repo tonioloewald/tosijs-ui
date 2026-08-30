@@ -656,3 +656,67 @@ test('a full-screen page still hides the nav at a narrow width', async ({
     .poll(async () => (await navState(page)).value, { timeout: 15_000 })
     .toBe('compact/content')
 })
+
+test('the sidenav does not animate into its initial layout', async ({
+  page,
+}) => {
+  /*
+  `<tosi-sidenav>`'s own defaults are the COMPACT arrangement — 50/50 columns, margin -100% — so
+  the first `handleResize` moves it to wherever it actually belongs. With a transition live, that
+  move animates and the sidebar visibly slides into place on load.
+
+  Suppression used to be `setTimeout(…, 250)`, which is a race rather than a rule: it assumes the
+  first successful layout pass lands within 250ms of the element upgrading. Measured here it
+  lands ~70ms after, so the window has ~175ms spare and nothing shows — which is why this
+  resisted being pinned down. On a larger corpus, a cold cache or a slower device that margin is
+  not guaranteed, and `handleResize` returns early while `offsetParent` is null, so the first
+  pass can be deferred arbitrarily. There is no duration that is correct for every page.
+
+  It is released on the first pass that actually computed something, one frame later so the
+  corrected values paint before transitions come back.
+
+  WHAT THIS TEST DOES AND DOES NOT COVER, since the difference matters here. It pins the RELEASE:
+  removing it fails this test, so the transition cannot be suppressed forever — which would trade
+  a load-time flash for a permanently janky toggle, the obvious way to fix this wrongly. It does
+  NOT pin the suppression: removing that entirely leaves the settled state identical and this
+  test passes. Catching the flash itself needs frame-by-frame sampling during load, and the flash
+  did not reproduce on this machine at all — the same two facts that made it resist diagnosis for
+  so long. Stated plainly rather than left to be discovered by whoever trusts this test next.
+  */
+  await page.goto('/data-table/')
+  await page.waitForFunction(
+    () => !!document.querySelector('tosi-sidenav'),
+    undefined,
+    { timeout: 15_000 }
+  )
+
+  // Settled: the suppression is gone and the layout is the real one, not the 50/50 default.
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(
+          () =>
+            (
+              document.querySelector('tosi-sidenav') as HTMLElement
+            ).style.getPropertyValue('--side-nav-transition') || '(released)'
+        ),
+      { timeout: 10_000 }
+    )
+    .toBe('(released)')
+
+  const settled = await page.evaluate(() => {
+    const sn = document.querySelector('tosi-sidenav') as HTMLElement
+    return {
+      cols: getComputedStyle(sn).gridTemplateColumns,
+      duration: getComputedStyle(sn).transitionDuration,
+    }
+  })
+  expect(settled.cols, 'the real layout, not the 50/50 default').not.toContain(
+    '50%'
+  )
+  /*
+  And the transition is genuinely BACK — suppressing it forever would trade a load-time flash for
+  a permanently janky toggle, which is the obvious way to "fix" this wrongly.
+  */
+  expect(settled.duration).not.toBe('0s')
+})

@@ -43,6 +43,15 @@ export declare class TosiSidenav extends Component {
     handleResize: () => void;
     private observer;
     connectedCallback(): void;
+    /**
+     * Let transitions run again, once the layout has been settled at least once.
+     *
+     * Deferred a frame so the correcting values are painted BEFORE the transition property comes
+     * back — releasing in the same task would let that first correction animate, which is the
+     * thing being prevented.
+     */
+    private releaseTransition;
+    private transitionSuppressed;
     disconnectedCallback(): void;
     render(): void;
 }

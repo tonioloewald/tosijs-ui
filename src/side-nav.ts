@@ -166,6 +166,7 @@ export class TosiSidenav extends Component {
     if (this.value !== navState) {
       this.value = navState
     }
+    this.releaseTransition()
   }
 
   private observer: any
@@ -176,11 +177,43 @@ export class TosiSidenav extends Component {
 
     this.observer = new MutationObserver(this.handleResize)
     this.observer.observe(this, { childList: true })
+    /*
+    Suppress the transition until the layout is RIGHT, not for a fixed 250ms.
+
+    The element's own defaults are the compact arrangement (50/50 columns, margin -100%), so the
+    first `handleResize` moves it to wherever it actually belongs. With a transition live, that
+    move animates — the sidebar visibly slides into place on load.
+
+    This was a `setTimeout(…, 250)`, which is a race rather than a rule: it assumes the first
+    successful layout pass happens within 250ms of the element upgrading. Measured on this
+    machine it lands ~70ms after, so the window has ~175ms to spare and the bug does not appear.
+    On a bigger corpus, a cold cache or a slower device that margin is not guaranteed, and losing
+    it produces exactly the reported "it animates into its state" — intermittent, load-dependent,
+    and very hard to pin down, which matches how long it resisted being fixed.
+
+    `handleResize` returns early when `offsetParent` is null, so the first pass can be deferred
+    arbitrarily; there is no duration that is correct for every page. Releasing on the first pass
+    that actually computed something is a rule and needs no number.
+    */
     this.style.setProperty('--side-nav-transition', '0s')
-    setTimeout(() => {
-      this.style.removeProperty('--side-nav-transition')
-    }, 250)
   }
+
+  /**
+   * Let transitions run again, once the layout has been settled at least once.
+   *
+   * Deferred a frame so the correcting values are painted BEFORE the transition property comes
+   * back — releasing in the same task would let that first correction animate, which is the
+   * thing being prevented.
+   */
+  private releaseTransition = () => {
+    if (!this.transitionSuppressed) return
+    this.transitionSuppressed = false
+    requestAnimationFrame(() => {
+      this.style.removeProperty('--side-nav-transition')
+    })
+  }
+
+  private transitionSuppressed = true
 
   disconnectedCallback() {
     super.disconnectedCallback()

@@ -23,6 +23,31 @@ normal mode shows the nav and the content together and `contentVisible` has no v
 the bug was invisible at every width the tests used. There are now narrow-viewport tests for
 both directions, and the mutation that restores the old line fails them.
 
+### `<tosi-sidenav>` no longer races a timer to hide its own load-time animation
+
+Its defaults are the compact arrangement — 50/50 columns, margin -100% — so the first layout pass
+moves it to wherever it actually belongs. With a transition live, that move _animates_: the
+sidebar visibly slides into place on load.
+
+The suppression was `setTimeout(…, 250)`, which is a race rather than a rule — it assumes the
+first successful layout pass lands within 250ms of the element upgrading. Measured here it lands
+~70ms after (chromium 236→297ms, webkit 213→291, firefox 229→304), leaving ~175ms spare, which
+is exactly why this never reproduced locally. But `handleResize` returns early while
+`offsetParent` is null, so on a bigger corpus or a slower device the first pass can be deferred
+past the window, and then the animation is visible.
+
+It now releases on the first pass that actually computes something, one frame later so the
+corrected values paint before transitions come back. No duration is correct for every page; a
+rule needs no number.
+
+**This does not eliminate the hydration flash, and it is worth being honest about the limit.** It
+removes one race. What remains is the interval between the element upgrading — at which point its
+shadow defaults apply — and the first layout pass correcting them: ~70ms here, invisible, but a
+real window in which the element is painted wrong rather than not painted. The principled next
+step is for the defaults to _be_ the common case, and it is written up in `TODO.md` rather than
+attempted blind, since the flash does not reproduce on this machine and changing paint defaults
+you cannot observe is how you trade a flash you cannot see for one you can.
+
 ### Decided: a nav-toggle override does not survive Back
 
 Left open in 1.12.3 and now settled — **metadata wins on arrival**. A page declaring

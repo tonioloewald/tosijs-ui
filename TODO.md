@@ -798,6 +798,32 @@ live site** (independently useful). See roadmap "From book to live."
       menus, tooltips, drag handles, `<tosi-sidenav>` — not something the doc tier can host.
       Worth doing: everything touch-shaped in this library is currently tested only with a mouse.
 
+## Hydration flash: the sidenav's transition suppression is no longer a race
+
+- [x] `<tosi-sidenav>` suppressed its transition for a fixed `setTimeout(…, 250)` while the first
+      `handleResize` moved it off its compact defaults. That is a race, not a rule: it assumes
+      the first successful layout pass lands within 250ms of the element upgrading. Measured
+      here it lands ~70ms after (chromium 236->297, webkit 213->291, firefox 229->304), leaving
+      ~175ms spare — which is why it does not reproduce locally. `handleResize` returns early
+      while `offsetParent` is null, so on a bigger corpus or a slower device the first pass can
+      be deferred past the window and the sidebar visibly animates into place.
+
+      Now released on the first pass that actually computes, one frame later so the corrected
+      values paint first. No duration is correct for every page; a rule needs no number.
+
+- [ ] **The flash is not fully eliminated and probably cannot be.** This removes one race. The
+      remaining exposure is the window between the custom element upgrading — at which point its
+      shadow defaults (50/50 columns, margin -100%) apply — and the first layout pass correcting
+      them. Measured at ~70ms here, and invisible, but it is a real interval during which the
+      element is painted wrong rather than not painted.
+
+      The principled fix is for the defaults to BE the common case: set `--nav-width` /
+      `--content-width` / `--margin` to the normal-mode values in `connectedCallback`, which
+      needs `navSize` but not `offsetParent`, so it can run before any layout. Then a wide screen
+      is correct from the first frame and only a narrow one corrects. Not done here because the
+      flash does not reproduce on this machine, and changing paint defaults blind is how you
+      trade a flash you cannot see for one you can.
+
 ## DECIDED: a nav-toggle override does not survive Back
 
 - [x] **Settled 2026-08-30: metadata wins on arrival.** A full-screen page is full-screen
