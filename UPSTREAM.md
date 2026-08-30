@@ -675,5 +675,35 @@ attach/read/write`, the tmux session mirror we refined the ask to, with read and
 - **#41 (foreground window).** Partly mitigated, not fixed: results now carry `paintAgeMs` and
   warn when stale, so a rAF-starved tab is DETECTABLE rather than silently wrong. Getting a
   foreground window cheaply — what the issue actually asks for — is still open upstream.
-- **#40 (unauthenticated `/terminal/*` and `/files/write`)** and **#32 (open both transports by
-  default)** are untouched. #40 is the one to weigh before exposing a channel beyond localhost.
+- **#40 (unauthenticated `/terminal/*` and `/files/write`) — still open, and do not confuse it
+  with the fix that DID land.** 1.12.6 fixed `/session/write` ("write is a capability, not a
+  mode: reach no longer equals authority") — attach mints an unguessable 48-char handle when
+  `allowInput` is granted, returns it once, re-mints on re-attach, and compares it in a
+  constant-time-ish loop, so holding the token no longer means holding permission to type into
+  the agent. Same word, different endpoint. **`/files/write` is unchanged** — verified in the
+  shipped v1.12.6 source, the containment guard is still skipped for absolute paths:
+
+  ```js
+  const resolved = body.path.startsWith('/') ? body.path : resolve(baseCwd, body.path)
+  const rel = relative(baseCwd, resolved)
+  if (rel.startsWith('..') && !body.path.startsWith('/'))   // ← bypassed when absolute
+  ```
+
+  The two remaining review recommendations were considered and rejected for stated reasons, so
+  the gap is deliberate rather than forgotten: requiring `Content-Type: application/json` (to
+  stop these being CORS-simple) breaks 44 of 109 e2e POSTs and haltija's own documented `curl`
+  examples, and rejecting cross-site `Sec-Fetch-Site` breaks the widget calling `:8700` from a
+  page on `:3000` — which is legitimately cross-site and IS the tunnel case. Both need #40's
+  posture decision (loopback default bind + explicit LAN opt-in).
+
+  **What this means for us, at the boundary.** Our `haltijaDev: 'tunnel'` relay is NOT exposed
+  by this: it is gated on a live dev session cookie (`mayDriveWithAgent` → `mayWriteSource`),
+  relays through our own listener, and 404s unauthorized callers. What is not covered is that
+  enabling `haltijaDev` at all means **haltija's own port is running**, and that port is the
+  ungated one — a default `bunx haltija` binds beyond loopback with `Access-Control-Allow-Origin:
+*` and no token, where `POST /terminal/command` reaches `spawn('sh', ['-c', cmd])`. Our gate
+  protects our relay, not the channel underneath it. `HALTIJA_TOKEN` is the mitigation and only
+  became genuinely usable in 1.12.6 (before it, the widget never sent the token, so requiring one
+  broke every page-side feature).
+
+- **#32 (open both transports by default)** untouched.

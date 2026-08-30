@@ -642,6 +642,21 @@ relay rather than a hole.
 **Requires haltija to be running** on your machine (`bun start` starts the channel). If it
 is not, the component proxy answers `502` and says so rather than failing silently.
 
+**What the session gate does NOT cover.** Everything above is about _our_ relay, and the relay
+is gated. But enabling `haltijaDev` at all means haltija itself is running, and **its own port
+is a separate surface we do not gate**. A default haltija binds beyond loopback, answers
+`Access-Control-Allow-Origin: *`, and with no token set an unauthenticated caller — script on
+any origin in a browser on the same machine, or anything on your LAN — can reach
+`POST /terminal/command`, which spawns a shell. That is
+[haltija#40](https://github.com/tonioloewald/haltija/issues/40), it is open, and it is a
+deliberate posture question upstream rather than an oversight (the obvious per-endpoint patches
+break the tunnel case itself).
+
+So: set **`HALTIJA_TOKEN`** if you enable this on a network you do not control. It only became
+genuinely usable in haltija 1.12.6 — before that the widget never sent the token, so requiring
+one broke every page-side feature, which is why older advice said to skip it. Do not read our
+404-on-unauthorized as covering the channel underneath; it covers the bridge, not the port.
+
 #### `layout` — let a page opt out of the reading column
 
 Prose wants a measure. 44em is roughly the line length people read comfortably, and it is the
