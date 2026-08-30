@@ -3164,8 +3164,13 @@ export class TosiTable extends WebComponent {
   `title` for the menu button rather than `aria-label`, because title counts toward the
   accessible name AND shows a tooltip, so it serves sighted mouse users too. The cells get
   `aria-label` instead: a tooltip on every cell hover, repeating the column name the header
-  already displays, is noise. Neither is a complete answer — a title tooltip is unreachable by
-  keyboard and touch — but both beat the nothing that was here.
+  already displays, is noise.
+
+  The two halves of `title` reach different people and only one of them is limited. The
+  accessible NAME works — it is part of the accessible name computation, so VoiceOver on
+  iOS/iPadOS announces it, as do NVDA and JAWS. It is the VISIBLE tooltip that is mouse-only,
+  and a screen-reader user was never relying on that. What remains uncovered is a sighted
+  keyboard or touch user, who gets no visible label for the icon.
 
   The `data-tosi-localized` directive, rather than a `<tosi-localized>` child, because it
   re-applies on locale change and needs no child element — an `<input>` cannot contain one.
