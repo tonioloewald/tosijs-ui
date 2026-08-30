@@ -547,6 +547,11 @@ export function createDocBrowser(options) {
     const searchField = input({
         slot: 'nav',
         placeholder: 'search',
+        // A placeholder is not a label: it is not a reliable accessible name, and it
+        // disappears the moment anything is typed. This is the only text input in the
+        // doc-browser chrome, so it was the one unnamed field on every page of every
+        // site built with `tosijs-ui/site`.
+        'aria-label': 'Search documentation',
         type: 'search',
         style: {
             width: 'calc(100% - 10px)',

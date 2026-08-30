@@ -341,6 +341,7 @@ export declare class TosiTable extends WebComponent {
     sortByColumn: (columnOptions: ColumnOptions, direction?: "ascending" | "descending" | "auto") => void;
     popColumnMenu: (target: HTMLElement, options: ColumnOptions) => void;
     get captionSpan(): ElementCreator;
+    labelAttrs(key: string, attr?: string): Record<string, string>;
     get visibleRows(): any[];
     get visibleSelectedRows(): any[];
     get selectedRows(): any[];

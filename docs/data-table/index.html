@@ -364,6 +364,7 @@ const table = tosiTable({
         return button(
           {
             class: &#39;td actions-btn&#39;,
+            title: &#39;Row actions&#39;,
             onClick(e) { e.stopPropagation() },
             onMouseup(e) { e.stopPropagation() },
           },
@@ -910,8 +911,11 @@ popup menu.</p>
 <li>Unpin</li>
 <li>Left</li>
 <li>Right</li>
+<li>Column Options</li>
 </ul>
-<p>As well as any column names you want localized.</p>
+<p>As well as any column names you want localized — these are also used as the accessible name
+(<code>aria-label</code>) of each editable cell, so an editable table wants them present even if you are
+happy with the untranslated headers.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">

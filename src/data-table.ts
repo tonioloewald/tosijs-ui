@@ -343,6 +343,7 @@ const table = tosiTable({
         return button(
           {
             class: 'td actions-btn',
+            title: 'Row actions',
             onClick(e) { e.stopPropagation() },
             onMouseup(e) { e.stopPropagation() },
           },
@@ -979,8 +980,11 @@ You'll need to make sure your localized strings include:
 - Unpin
 - Left
 - Right
+- Column Options
 
-As well as any column names you want localized.
+As well as any column names you want localized — these are also used as the accessible name
+(`aria-label`) of each editable cell, so an editable table wants them present even if you are
+happy with the untranslated headers.
 */
 
 /*{ "parent": "Components" }*/
@@ -2073,6 +2077,10 @@ export class TosiTable extends WebComponent {
       role: 'gridcell',
       tabindex: -1,
       ariaColindex: String(colIndex + 1),
+      ...this.labelAttrs(
+        typeof col.name === 'string' ? col.name : col.prop || '',
+        'aria-label'
+      ),
       style,
       onMouseup: stop,
       onTouchend: stop,
@@ -2283,6 +2291,7 @@ export class TosiTable extends WebComponent {
       ? button(
           {
             class: 'menu-trigger',
+            ...this.labelAttrs('Column Options'),
             onClick(event: Event) {
               popColumnMenu(event.target as HTMLElement, col)
               event.stopPropagation()
@@ -3145,6 +3154,32 @@ export class TosiTable extends WebComponent {
 
   get captionSpan(): ElementCreator {
     return this.localized ? tosiLocalized : span
+  }
+
+  /*
+  An accessible NAME for a control whose visible content carries none: the column menu is an
+  icon alone, and an editable cell is an empty input. A screen reader announced them as bare
+  "button" and "edit text" — 49 of them on the data-table doc page.
+
+  `title` for the menu button rather than `aria-label`, because title counts toward the
+  accessible name AND shows a tooltip, so it serves sighted mouse users too. The cells get
+  `aria-label` instead: a tooltip on every cell hover, repeating the column name the header
+  already displays, is noise. Neither is a complete answer — a title tooltip is unreachable by
+  keyboard and touch — but both beat the nothing that was here.
+
+  The `data-tosi-localized` directive, rather than a `<tosi-localized>` child, because it
+  re-applies on locale change and needs no child element — an `<input>` cannot contain one.
+  It is filtered to mutations of the data attribute itself, so writing the target attribute
+  here does not re-enter the observer.
+  */
+  labelAttrs(key: string, attr = 'title'): Record<string, string> {
+    if (!key) return {}
+    return this.localized
+      ? {
+          [attr]: localize(key),
+          'data-tosi-localized': JSON.stringify({ [attr]: key }),
+        }
+      : { [attr]: key }
   }
 
   get visibleRows(): any[] {

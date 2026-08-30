@@ -2,6 +2,38 @@
 
 ## 1.12.5
 
+### Fixed: 49 controls a screen reader announced as "button" and "edit text"
+
+Lighthouse scored the doc site 91 on accessibility, and the cause was entirely mechanical.
+`<tosi-table>` builds a column-options button that contains only an icon, and an editable cell
+that is an empty `<input>` — neither has any text to derive an accessible name from. On the
+data-table page alone that is 37 unnamed buttons and 12 unnamed fields. The doc-browser's search
+box made it worse in a quieter way: it had a `placeholder` and nothing else, on **every page of
+every site built with `tosijs-ui/site`**. A placeholder is not a label — it is an unreliable
+accessible name and it vanishes the moment anything is typed.
+
+The controls now carry a name: `title` on the column-options button, where the tooltip is a
+genuine win for sighted mouse users too, and `aria-label` on the cells and the search field,
+where a tooltip on every hover would just repeat the column header as noise. Neither is a
+complete answer — a `title` tooltip is unreachable by keyboard and by touch — but both beat the
+nothing that was there.
+
+Localized tables get this through the existing `data-tosi-localized` directive rather than a
+`<tosi-localized>` child, because an `<input>` cannot contain a child element. Add
+**`Column Options`** to your localized strings; the editable cells reuse the column names you
+already localize, so an editable table wants those present even if you are happy with
+untranslated headers.
+
+The regression test is in `tests/a11y-names.pw.ts`, and its first version **passed with both
+fixes reverted** — it waited for `buttons.length > 2`, which the nav chrome satisfies on its own,
+and then asserted an empty list against a page that had not built the controls yet. `toEqual([])`
+is trivially true when there is nothing to check. Every assertion there now has a positive
+precondition that the things under test exist, and the mutation that removes the fixes fails it
+by name.
+
+Not fixed, and not ours: the two images without `alt` on the 3D page come from Babylon's own
+default loading screen.
+
 ### Fixed: on a narrow screen, tapping a nav link left you looking at the nav
 
 A regression from 1.12.3's full-screen work, reported from a phone-width window. The sidebar
