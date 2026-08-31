@@ -23,15 +23,28 @@ The read-only path is deliberately unchanged: grouping reorders interleaved edit
 better to resolve and a **different rendering** for the two components already shipping this
 one. Additive means additive.
 
-One note on how this was tested, because the bug that nearly shipped is instructive. The first
-version of the resolvable path rendered **nothing** — `dataset: {…}` in an element creator
-assigns `el.dataset`, which is a read-only accessor, so `render()` threw and produced an empty
-shadow root. Twenty-six green tests were behind it, every one asserting `value`, which is
-computed from the model and is correct whether or not a single element reaches the DOM. tosijs
-renders on an animation frame and happy-dom runs none, so a unit test that merely _mounts_ an
-element is asserting against an empty shadow root: appending hydrates, `render()` has to be
-called explicitly. There are render-level tests now, and reinstating `dataset` fails three of
-them. It was found by looking at the page before cutting the release, not by a lane.
+Two notes on how this was tested, because **both** bugs that nearly shipped were invisible to
+the unit lane, and for the same underlying reason.
+
+The first version rendered **nothing**: `dataset: {…}` in an element creator assigns
+`el.dataset`, a read-only accessor, so `render()` threw and left an empty shadow root.
+Twenty-six green tests sat behind it, every one asserting `value` — which is computed from the
+model and is correct whether or not a single element reaches the DOM. tosijs renders on an
+animation frame and happy-dom runs none, so a unit test that merely _mounts_ an element asserts
+against an empty shadow root; appending hydrates, and `render()` must be called explicitly.
+
+The second was worse, because the render-level tests added for the first one _also_ passed. The
+buttons did nothing when clicked, in every browser. `<tosi-diff>` is a shadow-DOM component and
+tosijs delegates `on*` handlers from above the shadow boundary, so a real click is
+**retargeted**: `event.target` is the host, not the button, and `event.target.closest(…)` — the
+idiom this project documents, and which is correct for a light-DOM component — is `null` every
+time. The fix is `composedPath()`, the only one of the two that survives the boundary.
+
+The happy-dom test could not see it: it called `.click()` on a node it had already looked up and
+then asserted the value moved. Measured against a deliberately broken build, **30 unit tests
+pass and all 3 browser tests fail** — so `tests/diff-resolve.pw.ts` now clicks what a person
+clicks and reads what a host reads. The rule this leaves behind: **shadow-DOM interaction needs
+a browser test**, not a DOM-shaped unit test.
 
 ### Fixed: `<tosi-diff>` and notifications ignored dark mode
 

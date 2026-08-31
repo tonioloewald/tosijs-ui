@@ -344,9 +344,23 @@ export class TosiDiff extends Component {
         this._resolutions = new Array(this.changeCount).fill('modified');
     }
     choose = (event) => {
-        // Delegated: `closest`, never `currentTarget` — the click lands on the button's text.
-        const button = event.target.closest('button[data-hunk]');
-        if (button === null)
+        /*
+        `composedPath()`, NOT `event.target` — this is a shadow-DOM component.
+    
+        tosijs delegates `on*` handlers from above the shadow boundary, so by the time this runs
+        the event has been RETARGETED: `event.target` is the `<tosi-diff>` host, not the button,
+        and `target.closest('button[data-hunk]')` is therefore null for every click. Every button
+        on the page did nothing, silently.
+    
+        Measured rather than assumed — a listener attached on the hunk sees `target=BUTTON`, one on
+        the host sees `target=TOSI-DIFF` with `composedPath()[0]=BUTTON`. The composed path is the
+        only one of the two that survives the boundary, which makes it the right tool here even
+        though `target.closest()` is the correct idiom for a light-DOM component.
+        */
+        const button = event
+            .composedPath()
+            .find((node) => node instanceof HTMLElement && node.matches('button[data-hunk]'));
+        if (button === undefined)
             return;
         const index = Number(button.dataset.hunk);
         const choice = button.dataset.choice;
