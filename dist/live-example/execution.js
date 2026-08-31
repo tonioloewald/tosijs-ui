@@ -1,5 +1,12 @@
 import { elements } from 'tosijs';
+import { describeError, diagnoseConstruction, EXAMPLE_SOURCE_URL, } from './error-location.js';
 import { rewriteImports, AsyncFunction, contextParamNames, } from './code-transform.js';
+/*
+Source of the example currently being run, so `describeError` can lift the offending line out
+of it. Module-level and reset per run, mirroring the doc-test harness — an example runs to
+completion (or throws) before the next one starts.
+*/
+let exampleSource = null;
 // Injected context name for the scope-capture callback (see `onScope`). Chosen to
 // not collide with anything an example would plausibly declare.
 const SCOPE_CAPTURE_VAR = '__tosiCaptureScope';
@@ -106,17 +113,35 @@ export async function executeInline(options) {
         const fullContext = { preview, ...context, ...extraContext };
         const contextKeys = contextParamNames(Object.keys(fullContext));
         const contextValues = Object.values(fullContext);
-        // @ts-expect-error AsyncFunction constructor typing
-        const func = new AsyncFunction(...contextKeys, finalCode);
+        /*
+        Tag the body so a thrown error's stack names the EXAMPLE rather than the bundle it is
+        running inside. The doc-test path has always done this; the example path never did, which
+        is why an example that threw reported a message with no line and a stack pointing at
+        minified harness code.
+        */
+        const taggedCode = `${finalCode}\n//# sourceURL=${EXAMPLE_SOURCE_URL}`;
+        exampleSource = finalCode;
+        let func;
+        try {
+            // @ts-expect-error AsyncFunction constructor typing
+            func = new AsyncFunction(...contextKeys, taggedCode);
+        }
+        catch (err) {
+            // Construction failed, so no user frame exists — say what was rejected instead.
+            throw new Error(diagnoseConstruction(err, contextKeys, taggedCode, 
+            // @ts-expect-error AsyncFunction constructor typing
+            (...args) => new AsyncFunction(...args)));
+        }
         await func(...contextValues);
     }
     catch (e) {
         console.error(e);
-        preview.append(div({ class: 'preview-error' }, String(e.message || e)));
+        const described = describeError(e, exampleSource);
+        preview.append(div({ class: 'preview-error' }, described));
         if (onError)
             onError(e);
         else
-            window.alert(`Error: ${e}, the console may have more information…`);
+            window.alert(`Error: ${described}, the console may have more information…`);
     }
     return preview;
 }

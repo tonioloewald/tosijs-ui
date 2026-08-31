@@ -1,46 +1,16 @@
 import { rewriteImports, AsyncFunction, contextParamNames, } from './code-transform.js';
+import { firstUserStackFrame, authorLine, sourceLineAt, describeError, diagnoseConstruction, TEST_SOURCE_URL, } from './error-location.js';
 class AssertionError extends Error {
     constructor(message) {
         super(message);
         this.name = 'AssertionError';
     }
 }
-// Parse an Error.stack and return the first frame that isn't from inside
-// the bundled harness itself — that's the user's test code. The harness is
-// minified into a single bundle (index.js / module.js / iife.js), so we
-// skip frames whose URL ends in those filenames and pick the next one.
-// Stack-frame format varies across browsers (Chrome: " at fn (url:line:col)";
-// Safari/FF: "fn@url:line:col") — the trailing "url:line:col" capture handles
-// both.
-const BUNDLE_FILES = /\/(index|module|iife|module\.debug|module\.safe)\.js$/;
-function firstUserStackFrame(stack) {
-    if (!stack)
-        return null;
-    for (const raw of stack.split('\n')) {
-        const line = raw.trim();
-        if (!line)
-            continue;
-        // Skip the "AssertionError: ..." header line.
-        if (/^\w*Error[:\s]/.test(line))
-            continue;
-        const match = line.match(/[(@\s]([^()\s]+):(\d+):(\d+)\)?$/);
-        if (!match)
-            continue;
-        const [, url, ln, col] = match;
-        if (BUNDLE_FILES.test(url))
-            continue;
-        return { url, line: Number(ln), col: Number(col) };
-    }
-    return null;
-}
 // Source of the currently-running test block, set by runTests so matchers
 // can lift the failing line out of it for inclusion in the error message.
 let currentTestSource = null;
 function getSourceLine(lineNum) {
-    if (!currentTestSource || lineNum < 1)
-        return null;
-    const lines = currentTestSource.split('\n');
-    return lines[lineNum - 1]?.trim() || null;
+    return sourceLineAt(currentTestSource, lineNum);
 }
 function deepEqual(a, b) {
     if (a === b)
@@ -90,13 +60,19 @@ function createMatchers(value, negated = false) {
         const result = negated ? !condition : condition;
         if (!result) {
             const err = new AssertionError(negated ? `not: ${message}` : message);
-            const frame = firstUserStackFrame(err.stack);
-            if (frame) {
-                const src = getSourceLine(frame.line);
-                const loc = `line ${frame.line}`;
+            /*
+            `authorLine`, not `frame.line`. The Function constructor's synthesized header offsets
+            every reported line, so this path had been naming the line TWO BELOW the failing
+            assertion — and quoting that line's source with it — since it was written. A confidently
+            wrong location is worse than none, and it is the kind of error that reads as correct
+            because the quoted text is real code from the same file.
+            */
+            const line = authorLine(firstUserStackFrame(err.stack));
+            if (line !== null) {
+                const src = getSourceLine(line);
                 err.message = src
-                    ? `${err.message} | ${src} (${loc})`
-                    : `${err.message} (${loc})`;
+                    ? `${err.message} | ${src} (line ${line})`
+                    : `${err.message} (line ${line})`;
             }
             throw err;
         }
@@ -275,21 +251,47 @@ export async function runTests(testCode, preview, context, transform) {
         // line numbers relative to the test source (not a position inside the
         // bundled harness). `firstUserStackFrame` uses this to skip our own
         // frames and surface the assertion's actual location to the user.
-        const taggedCode = `${transformedCode}\n//# sourceURL=inline-test`;
+        const taggedCode = `${transformedCode}\n//# sourceURL=${TEST_SOURCE_URL}`;
         // Capture the source so matchers can lift the failing line into the
         // error message. rewriteImports + tjs (dialect: 'js') leave plain JS
         // untouched, preserving line breaks so stack line numbers match this source.
         currentTestSource = transformedCode;
-        // @ts-expect-error AsyncFunction constructor typing
-        const func = new AsyncFunction(...contextKeys, taggedCode);
+        /*
+        Construction and execution are caught SEPARATELY because they fail differently.
+    
+        A constructor failure happens before any user code runs, so there is no frame to point at
+        and a stack cannot help — the useful information is which parameter list was rejected.
+        An execution failure has a real stack, tagged above, and can name a line.
+        */
+        let func;
+        try {
+            // @ts-expect-error AsyncFunction constructor typing
+            func = new AsyncFunction(...contextKeys, taggedCode);
+        }
+        catch (err) {
+            results.push({
+                name: 'Test execution',
+                passed: false,
+                error: diagnoseConstruction(err, contextKeys, taggedCode, 
+                // @ts-expect-error AsyncFunction constructor typing
+                (...args) => new AsyncFunction(...args)),
+            });
+            currentTestSource = null;
+            return summarize(results);
+        }
         await func(...contextValues);
     }
     catch (err) {
-        // If the test code itself throws (not an assertion), add it as a failed test
+        /*
+        Was `error: (err as Error).message`, which discarded the stack — and with it the only
+        thing that made the failure findable. The sourceURL tag exists precisely so this stack
+        carries usable line numbers; throwing it away meant a whole file's tests reported as one
+        locationless line (#111).
+        */
         results.push({
             name: 'Test execution',
             passed: false,
-            error: err.message,
+            error: describeError(err, currentTestSource),
         });
     }
     // Wait for any async tests to settle
@@ -297,6 +299,13 @@ export async function runTests(testCode, preview, context, transform) {
         await Promise.all(testContext.pending);
     }
     currentTestSource = null;
+    return summarize(results);
+}
+/*
+The one place that counts results. The construction-failure path returns early — nothing ran,
+so there is nothing pending to await — and must still produce the same shape.
+*/
+function summarize(results) {
     return {
         passed: results.filter((r) => r.passed).length,
         failed: results.filter((r) => !r.passed).length,
