@@ -23,6 +23,16 @@ The read-only path is deliberately unchanged: grouping reorders interleaved edit
 better to resolve and a **different rendering** for the two components already shipping this
 one. Additive means additive.
 
+One note on how this was tested, because the bug that nearly shipped is instructive. The first
+version of the resolvable path rendered **nothing** — `dataset: {…}` in an element creator
+assigns `el.dataset`, which is a read-only accessor, so `render()` threw and produced an empty
+shadow root. Twenty-six green tests were behind it, every one asserting `value`, which is
+computed from the model and is correct whether or not a single element reaches the DOM. tosijs
+renders on an animation frame and happy-dom runs none, so a unit test that merely _mounts_ an
+element is asserting against an empty shadow root: appending hydrates, `render()` has to be
+called explicitly. There are render-level tests now, and reinstating `dataset` fails three of
+them. It was found by looking at the page before cutting the release, not by a lane.
+
 ### Fixed: `<tosi-diff>` and notifications ignored dark mode
 
 Both hardcoded a light palette — `#fff`/`#222` for the diff, `#fafafa`/`#444` for
@@ -66,6 +76,10 @@ means the _browser's_ machine, so a phone was told to connect to itself); where 
 exclusive; where results carry `paintAgeMs`, making a rAF-starved tab detectable rather than
 silently wrong; and where Electron went 40.6.1 → 43.4.1, clearing two context-isolation
 bypasses in the thing we spawn.
+
+(Internal, but worth recording: our own `CLAUDE.md` documented this pin as `^1.6.1` long after
+the code had moved to `^1.11.2` — a stale number in the one place a reader would trust for it.
+Corrected.)
 
 ### Docs: our haltija gate covers the bridge, not the port
 
