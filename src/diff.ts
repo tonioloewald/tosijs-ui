@@ -254,12 +254,24 @@ export class TosiDiff extends Component<DiffParts> {
   }
 
   static shadowStyleSpec = {
+    /*
+    Surface follows the THEME, tints are translucent.
+
+    These were `#fff`/`#222` and solid pastels, which made the component light-only: on a dark
+    page you got a white block, and simply darkening the surface would have been worse than
+    leaving it — light text on a solid `#e6ffed` row is unreadable. Both halves have to move
+    together, which is why this is one change and not two.
+
+    `color-mix` with `transparent` means the tint reads as a wash over whatever surface it
+    lands on, so one value works on both. Every `--tosi-diff-*` override still wins, so anyone
+    who themed this (as `<tosi-code>` does for its review overlay) is unaffected.
+    */
     ':host': {
       display: 'block',
       overflow: 'auto',
       font: 'var(--tosi-code-font, 12px/1.5 monospace)',
-      background: 'var(--tosi-diff-bg, #fff)',
-      color: 'var(--tosi-diff-color, #222)',
+      background: varDefault.tosiDiffBg(varDefault.background('#fff')),
+      color: varDefault.tosiDiffColor(varDefault.textColor('#222')),
     },
     // `:host{display:block}` would otherwise beat the UA `[hidden]` rule, so the
     // element couldn't be hidden via the attribute — restore that.
@@ -278,13 +290,21 @@ export class TosiDiff extends Component<DiffParts> {
       opacity: '0.5',
     },
     '.diff-add': {
-      background: 'var(--tosi-diff-add-bg, #e6ffed)',
+      background: varDefault.tosiDiffAddBg(
+        'color-mix(in srgb, #22c55e 18%, transparent)'
+      ),
     },
-    '.diff-add .marker': { color: 'var(--tosi-diff-add-color, #22863a)' },
+    '.diff-add .marker': {
+      color: varDefault.tosiDiffAddColor('#16a34a'),
+    },
     '.diff-remove': {
-      background: 'var(--tosi-diff-remove-bg, #ffeef0)',
+      background: varDefault.tosiDiffRemoveBg(
+        'color-mix(in srgb, #ef4444 18%, transparent)'
+      ),
     },
-    '.diff-remove .marker': { color: 'var(--tosi-diff-remove-color, #cb2431)' },
+    '.diff-remove .marker': {
+      color: varDefault.tosiDiffRemoveColor('#ef4444'),
+    },
 
     // --- resolution UI (only rendered when `resolvable`) ---
     '.diff-hunk': {

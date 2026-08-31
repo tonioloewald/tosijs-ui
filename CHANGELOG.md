@@ -1,5 +1,82 @@
 # Changelog
 
+## 1.12.6
+
+### `<tosi-diff resolvable>` — "do I want to accept this?"
+
+The diff viewer can now be operated, not just read. Set `resolvable` and every change gets a
+pair of buttons; `value` is the text those choices imply and `change` fires when one moves. It
+is a review surface for a **proposed** edit — an AI suggestion, a collaborator's revision, a
+file that moved under you while you were editing it.
+
+The labels are yours: `originalLabel`/`modifiedLabel`. "Mine"/"Theirs" is git's framing,
+"Current"/"Proposed" suits reviewing a suggestion, and this component's own vocabulary is
+original/modified — none of which is right for everyone, so none of it is hardcoded. Also
+`acceptAll()`, `rejectAll()`, `changeCount`, and a `resolutions` array you can read and write.
+`diffBlocks()` and `resolveDiff()` are exported too, if you want the model without the DOM.
+
+The unit of decision is a change **block**, not a line. The LCS walk can emit
+remove/add/remove/add for a single multi-line edit, and offering four independent choices there
+lets a reviewer accept half an edit — producing text neither side wrote.
+
+The read-only path is deliberately unchanged: grouping reorders interleaved edits, which is
+better to resolve and a **different rendering** for the two components already shipping this
+one. Additive means additive.
+
+### Fixed: `<tosi-diff>` and notifications ignored dark mode
+
+Both hardcoded a light palette — `#fff`/`#222` for the diff, `#fafafa`/`#444` for
+notifications — so on a dark page you got a white block, and in the notification's case the one
+element in the library that appears unbidden over whatever you are looking at was also the one
+that ignored your theme.
+
+Both now fall back to the theme (`--background`/`--text-color`) with the old literals as the
+final fallback, so an unthemed page is unchanged and every `--tosi-diff-*` /
+`--notification-*` override still wins exactly as before.
+
+The diff needed both halves at once: darkening the surface alone would have been **worse** than
+leaving it, because light text on a solid `#e6ffed` row is unreadable. The add/remove tints are
+now translucent (`color-mix` with `transparent`), so one value reads correctly as a wash over
+either surface.
+
+### Fixed: a consumer could not use the build lock ([#117](https://github.com/tonioloewald/tosijs-ui/issues/117), [#118](https://github.com/tonioloewald/tosijs-ui/issues/118))
+
+1.12.5 added a build lock that records `pid`, `role`, `root` and `port` per project, so a
+`stop` command can identify what is running instead of `pkill`-ing sibling checkouts. It worked
+— and none of it was reachable from outside the package. `import('tosijs-ui/site')` gave
+`currentHolder === undefined`, and the deep path is blocked by the exports map.
+
+`currentHolder`, `describeHolder`, `lockPathFor`, `lockDecision`, `isProcessAlive` and the
+`LockHolder`/`LockDecision` types are now re-exported from `tosijs-ui/site`.
+
+The reporter deliberately did **not** re-derive the lock path locally, and was right not to:
+that means copying the FNV-1a hash of the resolved root, and if the hash ever changed the
+consumer would report "nothing running" _while a server runs_. Silently-wrong is the exact
+failure this whole area exists to eliminate; duplicating the algorithm reintroduces it one
+layer out.
+
+### haltija floor raised to `^1.12.6`
+
+The floor encodes fixes, not a date. 1.12.6 is where a `--private` instance finally gained a
+**lifetime bound** (haltija#39, filed from here after one was found 12 days old at 5.7 GB and
+~150% CPU on a machine at load average 212); where **LAN and Bonjour access started working at
+all** (served scripts handed the browser `localhost:<port>`, and `localhost` in a served script
+means the _browser's_ machine, so a phone was told to connect to itself); where the widget sends
+`X-Haltija-Token`, so a `--token` server and a page that can talk back stopped being mutually
+exclusive; where results carry `paintAgeMs`, making a rAF-starved tab detectable rather than
+silently wrong; and where Electron went 40.6.1 → 43.4.1, clearing two context-isolation
+bypasses in the thing we spawn.
+
+### Docs: our haltija gate covers the bridge, not the port
+
+The `haltijaDev: 'tunnel'` documentation read as a complete security story — session cookie,
+404-on-unauthorized, relay rather than hole — and a reader could reasonably conclude the whole
+surface was gated. It is not. Enabling `haltijaDev` at all means haltija's **own** port is
+running, and a default instance binds beyond loopback with `Access-Control-Allow-Origin: *` and
+no token, where `POST /terminal/command` reaches a shell. Set `HALTIJA_TOKEN` on a network you
+do not control; it only became genuinely usable in haltija 1.12.6, which is why older advice
+said to skip it.
+
 ## 1.12.5
 
 ### Fixed: 49 controls a screen reader announced as "button" and "edit text"

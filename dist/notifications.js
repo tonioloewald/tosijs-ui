@@ -141,7 +141,7 @@ test('form renders', () => {
 This is simply a wrapper for `TosiNotification.post()`.
 */
 /*{ "parent": "Components" }*/
-import { Component, elements, vars } from 'tosijs';
+import { Component, elements, vars, varDefault } from 'tosijs';
 import { icons } from './icons.js';
 import { findHighestZ } from './track-drag.js';
 const { div, button } = elements;
@@ -161,9 +161,19 @@ export class TosiNotification extends Component {
             _notificationSpacing: 8,
             _notificationWidth: 360,
             _notificationPadding: `${vars.notificationSpacing} ${vars.notificationSpacing50} ${vars.notificationSpacing} ${vars.notificationSpacing200}`,
-            _notificationBg: '#fafafa',
+            /*
+            Follow the THEME, do not hardcode a light palette.
+      
+            These were `#fafafa` and `#444`, so a notification on a dark page arrived as a bright
+            white card with dark text — the one element in the library that appears unbidden, over
+            whatever the user is looking at, was also the one that ignored their theme.
+      
+            The literals stay as the FALLBACK, so a page that sets no theme looks exactly as before,
+            and `--notification-bg`/`--notification-text-color` still override as they always did.
+            */
+            _notificationBg: varDefault.background('#fafafa'),
             _notificationAccentColor: '#aaa',
-            _notificationTextColor: '#444',
+            _notificationTextColor: varDefault.textColor('#444'),
             _notificationIconSize: vars.notificationSpacing300,
             _notificationButtonSize: 48,
             _notificationBorderWidth: '3px 0 0',
