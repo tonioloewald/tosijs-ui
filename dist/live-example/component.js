@@ -1271,7 +1271,27 @@ export class LiveExample extends Component {
             // Set the diff baseline (the source) right before showing the diff, now
             // that the editors are hydrated.
             this.parts[tab].original = originals[tab] ?? '';
+            /*
+            Viewing changes is also how you UNDO some of them.
+      
+            Revert has always been all-or-nothing, which is the wrong shape for the common case:
+            you tried four things, three worked. Each change now carries keep/revert buttons,
+            defaulting to KEEP, so doing nothing here leaves your edit exactly as it was and the
+            feature costs nothing to ignore. The editors apply the choices when the diff closes.
+      
+            "Source" and "Yours" rather than the component's own original/modified, which is
+            accurate but says nothing about which side is the file and which side is you.
+            */
+            this.parts[tab].diffResolvable = true;
+            this.parts[tab].diffOriginalLabel = 'Source';
+            this.parts[tab].diffModifiedLabel = 'Yours';
             this.parts[tab].showDiff(this.viewingChanges);
+        }
+        // Closing the diff may have partially reverted the code, so the edited
+        // indicator and the running example both need to catch up.
+        if (!this.viewingChanges) {
+            this.updateEditedIndicator();
+            this.refresh();
         }
     };
     // The example's overflow menu. Stable item set — actions stay put and toggle

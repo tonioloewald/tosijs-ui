@@ -30,6 +30,9 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
     private diffOverlay;
     private _pendingDiff;
     get showingDiff(): boolean;
+    diffResolvable: boolean;
+    diffOriginalLabel: string;
+    diffModifiedLabel: string;
     showDiff(on: boolean): void;
     static initAttributes: {
         mode: string;

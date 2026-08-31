@@ -46,6 +46,21 @@ pass and all 3 browser tests fail** — so `tests/diff-resolve.pw.ts` now clicks
 clicks and reads what a host reads. The rule this leaves behind: **shadow-DOM interaction needs
 a browser test**, not a DOM-shaped unit test.
 
+### Selective revert in live examples
+
+The diff resolver is wired into `<tosi-example>`'s **View changes**, and into `<tosi-code>`
+generally via a new `diffResolvable` (plus `diffOriginalLabel`/`diffModifiedLabel`).
+
+Revert was all-or-nothing, which is the wrong shape for what actually happens: you tried four
+things and three worked. Each change in the diff now carries keep/revert buttons — labelled
+**Source** and **Yours** in an example — defaulting to _keep_, so the feature costs nothing to
+ignore and doing nothing leaves your edit exactly as it was.
+
+Choices are applied when the diff **closes**, not as you click, and a `change` event fires if
+the text moved. Writing each choice straight back into `value` would feed the new text into the
+overlay's `modified`, and `<tosi-diff>` resets its decisions when either input changes — so live
+application would wipe the choices making it and renumber the hunks under the pointer.
+
 ### Fixed: `<tosi-diff>` and notifications ignored dark mode
 
 Both hardcoded a light palette — `#fff`/`#222` for the diff, `#fafafa`/`#444` for

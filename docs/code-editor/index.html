@@ -81,6 +81,14 @@ body {
 <td>diff the current <code>value</code> against a baseline, as an overlay</td>
 </tr>
 <tr>
+<td><code>diffResolvable</code></td>
+<td>make that overlay <strong>resolvable</strong>: each change gets keep/revert buttons, and the choices are applied to <code>value</code> when the diff closes</td>
+</tr>
+<tr>
+<td><code>diffOriginalLabel</code> / <code>diffModifiedLabel</code></td>
+<td>what the two buttons say (default <code>Original</code>/<code>Modified</code>)</td>
+</tr>
+<tr>
 <td><code>editor</code></td>
 <td>the underlying CodeMirror <a href="https://codemirror.net/docs/ref/#view.EditorView"><code>EditorView</code></a> (<code>undefined</code> until loaded)</td>
 </tr>
@@ -102,6 +110,24 @@ source (if <code>tjs-lang</code> is installed — it&#39;s an optional peer). Se
 to a <code>TjsAutocompleteConfig</code> and completion will suggest the <strong>real members of live
 runtime values</strong> — including proxy members no static analysis can see:</p>
 <pre><code class="language-typescript">codeEl.tjsAutocomplete = { getLiveBindings: () =&gt; ({ app, elements }) }
+</code></pre>
+<h2>Selective revert</h2>
+<p><code>showDiff(on)</code> shows a read-only diff. Set <code>diffResolvable</code> first and the overlay becomes a
+review surface instead: every change carries keep/revert buttons, defaulting to <strong>keep</strong>, and
+whatever you leave alone survives. This is what <code>&lt;tosi-example&gt;</code>&#39;s <strong>View changes</strong> uses — you
+tried four things and three worked, so revert the one you regret rather than all four.</p>
+<p>The choices are applied when the diff <strong>closes</strong>, not as you click, and a <code>change</code> event fires
+if the text moved. That is deliberate: writing each choice straight back into <code>value</code> would
+feed the new text into the overlay&#39;s <code>modified</code>, and <code>&lt;tosi-diff&gt;</code> resets its decisions when
+either input changes — so live application would wipe the choices making it and renumber the
+hunks under the pointer.</p>
+<pre><code class="language-typescript">codeEl.original = savedSource
+codeEl.diffResolvable = true
+codeEl.diffOriginalLabel = &#39;Source&#39;
+codeEl.diffModifiedLabel = &#39;Yours&#39;
+codeEl.showDiff(true)
+// …user reverts a hunk or two…
+codeEl.showDiff(false)   // codeEl.value now reflects their choices
 </code></pre>
 <h2>Bundling</h2>
 <p>CodeMirror is a <strong>lazy chunk</strong>: with a bundler (ESM), a page that never uses

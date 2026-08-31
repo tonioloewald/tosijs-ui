@@ -24,6 +24,8 @@ body {
 | `mode` | `javascript`, `typescript`, `tjs`, `ajs`, `css`, `html`, `markdown` |
 | `disabled` | makes the editor read-only |
 | `original` + `showDiff(on)` | diff the current `value` against a baseline, as an overlay |
+| `diffResolvable` | make that overlay **resolvable**: each change gets keep/revert buttons, and the choices are applied to `value` when the diff closes |
+| `diffOriginalLabel` / `diffModifiedLabel` | what the two buttons say (default `Original`/`Modified`) |
 | `editor` | the underlying CodeMirror [`EditorView`](https://codemirror.net/docs/ref/#view.EditorView) (`undefined` until loaded) |
 | `undo()` / `redo()` / `canUndo()` / `canRedo()` | history control |
 | `tjsAutocomplete` | runtime-value autocomplete hooks (tjs mode) — see below |
@@ -36,6 +38,29 @@ runtime values** — including proxy members no static analysis can see:
 
 ```typescript
 codeEl.tjsAutocomplete = { getLiveBindings: () => ({ app, elements }) }
+```
+
+## Selective revert
+
+`showDiff(on)` shows a read-only diff. Set `diffResolvable` first and the overlay becomes a
+review surface instead: every change carries keep/revert buttons, defaulting to **keep**, and
+whatever you leave alone survives. This is what `<tosi-example>`'s **View changes** uses — you
+tried four things and three worked, so revert the one you regret rather than all four.
+
+The choices are applied when the diff **closes**, not as you click, and a `change` event fires
+if the text moved. That is deliberate: writing each choice straight back into `value` would
+feed the new text into the overlay's `modified`, and `<tosi-diff>` resets its decisions when
+either input changes — so live application would wipe the choices making it and renumber the
+hunks under the pointer.
+
+```typescript
+codeEl.original = savedSource
+codeEl.diffResolvable = true
+codeEl.diffOriginalLabel = 'Source'
+codeEl.diffModifiedLabel = 'Yours'
+codeEl.showDiff(true)
+// …user reverts a hunk or two…
+codeEl.showDiff(false)   // codeEl.value now reflects their choices
 ```
 
 ## Bundling
@@ -154,6 +179,17 @@ export class CodeEditor extends WebComponent {
             return this._pendingDiff ?? false;
         return !this.parts.diffHost.hidden;
     }
+    /*
+    Make the diff overlay RESOLVABLE, turning it from a review into selective revert.
+  
+    Off by default, so `showDiff()` stays exactly what it was. With it on, every change gets
+    keep/revert buttons and the ones you leave alone are kept — which is the useful default when
+    the "modified" side is your own edit: you are reverting the two lines you regret, not
+    re-accepting the twenty you meant.
+    */
+    diffResolvable = false;
+    diffOriginalLabel = 'Original';
+    diffModifiedLabel = 'Modified';
     showDiff(on) {
         if (!this.hydrated) {
             this._pendingDiff = on;
@@ -165,8 +201,31 @@ export class CodeEditor extends WebComponent {
                 this.diffOverlay = tosiDiff();
                 diffHost.append(this.diffOverlay);
             }
+            this.diffOverlay.resolvable = this.diffResolvable;
+            this.diffOverlay.originalLabel = this.diffOriginalLabel;
+            this.diffOverlay.modifiedLabel = this.diffModifiedLabel;
             this.diffOverlay.original = this.original;
             this.diffOverlay.modified = this.value;
+        }
+        else if (this.diffOverlay !== undefined && this.diffResolvable) {
+            /*
+            Resolutions land on the way OUT, not as you click.
+      
+            Writing each choice straight back into `value` would feed the editor's new text into the
+            overlay's `modified`, and `<tosi-diff>` resets its decisions when either input changes —
+            by design, because choice #2 of the old diff is not choice #2 of the new one. Live
+            application would therefore wipe the very choices making it, and the hunks would
+            renumber under the pointer. Applying once, when the diff closes, sidesteps that
+            completely and matches how a reviewer thinks: decide, then commit.
+      
+            The `change` event matters as much as the value: it is how a host recomputes "does this
+            still differ from the source" after a partial revert.
+            */
+            const resolved = this.diffOverlay.value;
+            if (resolved !== this.value) {
+                this.value = resolved;
+                this.dispatchEvent(new CustomEvent('change', { detail: { value: resolved } }));
+            }
         }
         diffHost.hidden = !on;
     }
