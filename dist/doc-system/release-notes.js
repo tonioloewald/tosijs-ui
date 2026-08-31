@@ -193,8 +193,26 @@ export function uncovered(records, changelog) {
     });
 }
 /** Commits asserting a code change whose diff is markdown only. */
+/*
+A `docs(...)` commit is EXEMPT, because for it a markdown-only diff is the evidence, not the
+absence of it.
+
+The check exists because three entries in the 1.9.0 notes described fixes that were never
+written — a `fix(auth)` whose diff never touched the file it named. That hazard is a commit
+claiming to change BEHAVIOUR while touching only prose. A commit that says `docs(...)` and
+then fixes prose is coherent, and this repo's published documentation is a real artifact:
+`doc-site-system.md` is a page on the site, so correcting a misleading security claim in it is
+a `[fix]` an adopter should see in the notes.
+
+Without this exemption every documentation fix blocks a release, and a gate that fires on
+correct work is one someone eventually routes around — which is the failure mode this project
+has already written down about its other guards. The check still fires on `fix(...)` and
+`feat(...)` with a docs-only diff, which is the case it was built for.
+*/
+const DOCS_COMMIT = /^docs(\([^)]*\))?!?:/;
 export function unsupportedClaims(records) {
-    return records.filter((r) => r.bullets.some((b) => b.tag === 'fix' || b.tag === 'new') &&
+    return records.filter((r) => !DOCS_COMMIT.test(r.subject) &&
+        r.bullets.some((b) => b.tag === 'fix' || b.tag === 'new') &&
         isDocsOnly(r.files));
 }
 /** Which component moved, comparing the version being cut to the last released one. */

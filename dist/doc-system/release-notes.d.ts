@@ -29,7 +29,6 @@ export declare function lastVersionTag(): Promise<string>;
 export declare function collect(since: string): Promise<CommitRecord[]>;
 export declare function renderSection(version: string, records: CommitRecord[]): string;
 export declare function uncovered(records: CommitRecord[], changelog: string): Bullet[];
-/** Commits asserting a code change whose diff is markdown only. */
 export declare function unsupportedClaims(records: CommitRecord[]): CommitRecord[];
 export type BumpKind = 'major' | 'minor' | 'patch' | 'prerelease' | 'unknown';
 /** Which component moved, comparing the version being cut to the last released one. */

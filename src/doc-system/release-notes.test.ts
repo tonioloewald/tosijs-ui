@@ -127,6 +127,43 @@ test('REGRESSION: a [fix] whose diff is markdown-only is flagged', () => {
   expect(flagged).toHaveLength(1)
 })
 
+test('a docs(...) commit fixing DOCS is not flagged', () => {
+  /*
+  `doc-site-system.md` is a published page on this site, so correcting a misleading security
+  claim in it is a `[fix]` an adopter should see — and its diff is markdown by definition.
+  Without this exemption every documentation fix blocks a release, and a gate that fires on
+  correct work is one someone eventually routes around.
+  */
+  const withSubject = (subject: string, msg: string, files: string[]) => [
+    {
+      sha: 'c'.repeat(40),
+      subject,
+      files,
+      bullets: parseBullets(msg, 'c'),
+    },
+  ]
+  expect(
+    unsupportedClaims(
+      withSubject(
+        'docs(security): our haltija gate covers the bridge, not the port',
+        '[fix] the tunnel docs read as a complete security story; they are not',
+        ['src/doc-system/doc-site-system.md', 'UPSTREAM.md']
+      )
+    )
+  ).toHaveLength(0)
+
+  // But the hazard it was built for still fires: a commit claiming a CODE fix.
+  expect(
+    unsupportedClaims(
+      withSubject(
+        'fix(auth): gate `?t=` on preview.tunnel',
+        '[fix] `?t=` is now gated on preview.tunnel and GET',
+        ['CHANGELOG.md']
+      )
+    )
+  ).toHaveLength(1)
+})
+
 test('a real code change is not flagged', () => {
   expect(
     unsupportedClaims(
