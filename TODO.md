@@ -661,6 +661,34 @@ live site** (independently useful). See roadmap "From book to live."
   - `<tosi-tag-list>`
   - `<tosi-filter>`
 
+- **`<tosi-example>` / `<tosi-code>` / `<tosi-diff>` are not localizable AT ALL** — parked
+  deliberately (2026-08-31): real, but below other work. Audited at 1.12.6, so nobody has to
+  re-derive it:
+
+  | component        | `localized` attr | imports `localize` | visible strings                                               |
+  | ---------------- | ---------------- | ------------------ | ------------------------------------------------------------- |
+  | `<tosi-example>` | no               | no                 | **18** (7 button `title`s, 11 menu captions) + 1 notification |
+  | `<tosi-code>`    | no               | no                 | none of its own — only the diff labels it forwards            |
+  | `<tosi-diff>`    | no               | no                 | 2 (`originalLabel`/`modifiedLabel`)                           |
+
+  **The cheapest win is already sitting there**: live-example's overflow menu goes through
+  `popMenu`, which localizes every caption and propagates into submenus — `<tosi-table>` passes
+  `localized: this.localized` to it — but `src/live-example/component.ts:1499` never passes the
+  flag. So "Refresh", "View changes", "Revert to original", "Save to source" are English-only
+  inside a component that could translate them for free. That is one option, not eleven strings.
+
+  The rest: a `localized` attribute on `<tosi-example>` wrapping its 18 literals, and one on
+  `<tosi-diff>` running the two labels through `localize()` the way `captionSpan` does. The
+  labels are host-supplied props, so a host CAN pass pre-localized strings today — that is
+  documented, and is why this is a gap rather than a defect.
+
+  **Generate the required-strings list, do not hand-write it.** `<tosi-table>` documents its
+  set ("Sort / Show / Hide / Column / …") by hand and that list is exactly the kind of thing
+  that drifts from the source. Whatever ships here should extract the keys from the components.
+
+  Note `Source`/`Yours` (the selective-revert labels added in 1.12.6) are two more English
+  literals on this pile — not a regression, since nothing in this subtree was ever localizable.
+
 - **`<tosi-table>`'s column header menu: the CONCATENATION half is still open.** The
   ambiguity half is fixed — the keys now carry `#annotation` disambiguators
   (`Right#direction`, `Column#table`, `Sort#order`, …) and `demo/src/localized-strings.ts`
