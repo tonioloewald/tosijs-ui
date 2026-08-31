@@ -78,3 +78,37 @@ function pressedFor(el: ReturnType<typeof diff>) {
         .map((b: any) => b.dataset.choice)
     )
 }
+
+test('the selected label clears WCAG AA against the accent fill', async ({
+  page,
+}) => {
+  /*
+  A measured ratio, not "is the colour set". `--tosi-accent-text` is DERIVED by `createTheme`,
+  so it does not exist on a page that never applied a theme — and a bare `var()` with no
+  fallback is invalid at computed-value time, which for `color` silently inherits. That gave
+  `#222` on the `#d92270` accent: 3.3:1, comfortably under AA, and it looked deliberate.
+
+  Asserting the ratio catches any future change to the accent, the fallback, or the theme
+  that quietly makes the selected state unreadable again.
+  */
+  const ratio = await diff(page).evaluate((el: any) => {
+    const btn = el.shadowRoot.querySelector('button[aria-pressed="true"]')
+    const s = getComputedStyle(btn)
+    const parse = (c: string) =>
+      c
+        .match(/[\d.]+/g)!
+        .slice(0, 3)
+        .map(Number)
+    const lum = (rgb: number[]) => {
+      const [r, g, b] = rgb.map((v) => {
+        const c = v / 255
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+      })
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+    const a = lum(parse(s.color))
+    const b = lum(parse(s.backgroundColor))
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+  })
+  expect(ratio).toBeGreaterThanOrEqual(4.5)
+})

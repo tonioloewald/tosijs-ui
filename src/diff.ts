@@ -57,16 +57,6 @@ result.textContent = JSON.stringify(diff.value)
 preview.append(diff, result)
 ```
 
-The unit of decision is a **change block**, not a line: a multi-line edit is one choice,
-because accepting half of one produces text neither side wrote. Two more exports give you
-the same model without the DOM — `diffBlocks(diffLines(a, b))` for the blocks, and
-`resolveDiff(blocks, choices)` to turn choices back into text.
-
-`acceptAll()` and `rejectAll()` do the obvious thing, `changeCount` tells you how many
-decisions the diff is asking for (`0` means the texts agree), and `resolutions` is readable
-and writable if you want to drive it yourself. Resolutions **reset when either text
-changes** — decisions belong to the diff they were made about.
-
 ```test
 const { tosiDiff } = tosijsui
 const el = tosiDiff({
@@ -87,6 +77,17 @@ test('rejecting everything yields the original text exactly', () => {
   el.remove()
 })
 ```
+
+The unit of decision is a **change block**, not a line: a multi-line edit is one choice,
+because accepting half of one produces text neither side wrote. Two more exports give you
+the same model without the DOM — `diffBlocks(diffLines(a, b))` for the blocks, and
+`resolveDiff(blocks, choices)` to turn choices back into text.
+
+`acceptAll()` and `rejectAll()` do the obvious thing, `changeCount` tells you how many
+decisions the diff is asking for (`0` means the texts agree), and `resolutions` is readable
+and writable if you want to drive it yourself. Resolutions **reset when either text
+changes** — decisions belong to the diff they were made about.
+
 */
 
 /*{ "parent": "Components" }*/
@@ -333,7 +334,22 @@ export class TosiDiff extends Component<DiffParts> {
     // unchosen lines also go translucent below.
     '.diff-choices button[aria-pressed="true"]': {
       background: varDefault.tosiDiffChoiceSelectedBg(vars.tosiAccent),
-      color: varDefault.tosiDiffChoiceSelectedColor(vars.tosiAccentText),
+      /*
+      `--tosi-accent-text` needs a FALLBACK, or the selected label is unreadable.
+
+      It is derived by `createTheme` (`accent.contrasting()`), so it only exists on a page that
+      applied a theme — and a bare `var(--tosi-accent-text)` on a page that did not is invalid
+      at computed-value time, which for an inherited property like `color` silently falls back
+      to the INHERITED value. Measured on the doc site: `#222` on the `#d92270` accent, a
+      contrast ratio of 3.3:1, under AA.
+
+      White is the right default rather than an arbitrary one: the accent was darkened 9% in
+      1.9.2 specifically so it clears AA as a fill carrying white text, which this measures at
+      4.8:1. A theme that sets the variable still wins, and so does `--tosi-diff-choice-*`.
+      */
+      color: varDefault.tosiDiffChoiceSelectedColor(
+        varDefault.tosiAccentText('#fff')
+      ),
     },
     '.diff-line.not-chosen': {
       opacity: '0.4',

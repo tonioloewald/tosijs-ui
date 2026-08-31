@@ -92,14 +92,6 @@ const result = document.createElement(&#39;pre&#39;)
 result.textContent = JSON.stringify(diff.value)
 preview.append(diff, result)
 </code></pre>
-<p>The unit of decision is a <strong>change block</strong>, not a line: a multi-line edit is one choice,
-because accepting half of one produces text neither side wrote. Two more exports give you
-the same model without the DOM — <code>diffBlocks(diffLines(a, b))</code> for the blocks, and
-<code>resolveDiff(blocks, choices)</code> to turn choices back into text.</p>
-<p><code>acceptAll()</code> and <code>rejectAll()</code> do the obvious thing, <code>changeCount</code> tells you how many
-decisions the diff is asking for (<code>0</code> means the texts agree), and <code>resolutions</code> is readable
-and writable if you want to drive it yourself. Resolutions <strong>reset when either text
-changes</strong> — decisions belong to the diff they were made about.</p>
 <pre><code class="language-test">const { tosiDiff } = tosijsui
 const el = tosiDiff({
   original: &#39;a\nKEEP\nc\nDROP\ne&#39;,
@@ -119,6 +111,14 @@ test(&#39;rejecting everything yields the original text exactly&#39;, () =&gt; {
   el.remove()
 })
 </code></pre>
+<p>The unit of decision is a <strong>change block</strong>, not a line: a multi-line edit is one choice,
+because accepting half of one produces text neither side wrote. Two more exports give you
+the same model without the DOM — <code>diffBlocks(diffLines(a, b))</code> for the blocks, and
+<code>resolveDiff(blocks, choices)</code> to turn choices back into text.</p>
+<p><code>acceptAll()</code> and <code>rejectAll()</code> do the obvious thing, <code>changeCount</code> tells you how many
+decisions the diff is asking for (<code>0</code> means the texts agree), and <code>resolutions</code> is readable
+and writable if you want to drive it yourself. Resolutions <strong>reset when either text
+changes</strong> — decisions belong to the diff they were made about.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
