@@ -45,7 +45,17 @@ turning out to be a cached bundle, with a hard reload as the fix nobody thinks t
 
 A query rather than content-hashed filenames, deliberately: `docs/` is committed in this repo
 and its siblings, so hashing would add and delete a file on every build and put churn in every
-diff. The stamp is commit-derived, so rebuilding the same source twice is byte-identical.
+diff.
+
+**The stamp is the project's own version**, so it moves once per release — the granularity at
+which a published site actually changes — and a rebuild between releases is byte-identical. The
+first attempt derived it from the commit, which was precise and unusable: it re-stamped all 68
+generated pages on every commit, and because the test lanes build too, it did not terminate
+(commit → build → 68 dirty → commit → build). The honest tradeoff of the version, stated rather
+than left to be discovered: two builds of the same version with different code share a stamp, so
+a mid-version redeploy can still serve a cached bundle. That is exactly the previous state — no
+worse — and it closes the case that actually bit, a cached bundle surviving _across_ releases.
+
 Cross-origin URLs are left alone — `scriptUrl` may point at a CDN, and busting someone else's
 cache was never the point — as are URLs that already carry a query or fragment.
 
