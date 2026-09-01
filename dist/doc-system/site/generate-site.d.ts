@@ -39,6 +39,20 @@ export interface GenerateSiteConfig {
     /** path to the IIFE bundle script (default /iife.js) — the CDN/classic-script path */
     scriptUrl?: string;
     /**
+     * Cache-busting stamp appended to generated asset URLs as `?v=`.
+     *
+     * Stable filenames go stale: a CDN or browser cache can serve yesterday's `hydrate.js`
+     * against today's HTML, and the site then looks broken in a way that reproduces nowhere
+     * else — the fix being a hard reload nobody thinks to try. Content-hashed FILENAMES would
+     * also solve it, and are the wrong trade here: `docs/` is committed in this repo and its
+     * siblings, so hashing would add and delete a file on every build and put churn in every
+     * diff. A query keeps the filenames stable.
+     *
+     * Must be DETERMINISTIC per commit, not per build, for the same reason — see build-stamp.ts.
+     * Left unset, nothing is appended and the output is exactly as before.
+     */
+    assetStamp?: string;
+    /**
      * path to an ESM hydration bundle. When set, pages load THIS as a
      * `<script type="module">` instead of the classic IIFE `scriptUrl`, so
      * code-split chunks (the CodeMirror editor) load lazily instead of on every page.
@@ -76,4 +90,5 @@ export declare function pageDepth(slug: string): number;
  * origin.) See issue #25; the runtime/SPA-navigation half is issue #16.
  */
 export declare function relativeUrl(depth: number, p: string): string;
+export declare function withStamp(url: string, stamp?: string): string;
 export declare function generateSite(config: GenerateSiteConfig): Promise<number>;

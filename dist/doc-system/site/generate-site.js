@@ -114,7 +114,7 @@ export function relativeUrl(depth, p) {
     return rel === '' ? './' : rel;
 }
 function pageHtml(doc, config, slugMap, configAttr) {
-    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', localizedUrl = '/localized-strings.txt', basePath, headExtra = '', bakes, } = config;
+    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', assetStamp, localizedUrl = '/localized-strings.txt', basePath, headExtra = '', bakes, } = config;
     // Functional URLs are emitted relative to THIS page's depth so the build is
     // mount-agnostic (issue #25); metadata URLs below stay absolute via withBase.
     const depth = pageDepth(slugMap[doc.filename] ?? '');
@@ -169,7 +169,7 @@ function pageHtml(doc, config, slugMap, configAttr) {
         '  <link rel="preconnect" href="https://fonts.googleapis.com" />',
         '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
         // Burned-in theme: styles the page with no JS and with zero flash on hydration.
-        `  <link rel="stylesheet" href="${escapeAttr(relativeUrl(depth, stylesUrl))}" data-tosi-doc-system />`,
+        `  <link rel="stylesheet" href="${escapeAttr(withStamp(relativeUrl(depth, stylesUrl), assetStamp))}" data-tosi-doc-system />`,
         `  <title>${escapeText(title)}</title>`,
         description
             ? `  <meta name="description" content="${escapeAttr(description)}" />`
@@ -240,11 +240,27 @@ ${nav}
 ${navbar}
   </tosi-doc-system>
   ${hydrateUrl
-        ? `<script type="module" src="${escapeAttr(relativeUrl(depth, hydrateUrl))}"></script>`
-        : `<script src="${escapeAttr(relativeUrl(depth, scriptUrl))}"></script>`}
+        ? `<script type="module" src="${escapeAttr(withStamp(relativeUrl(depth, hydrateUrl), assetStamp))}"></script>`
+        : `<script src="${escapeAttr(withStamp(relativeUrl(depth, scriptUrl), assetStamp))}"></script>`}
 </body>
 </html>
 `;
+}
+/*
+Append the build stamp to a SAME-ORIGIN asset URL.
+
+Only same-origin: `scriptUrl` may legitimately point at a CDN, and appending a query to
+someone else's URL can miss their cache key or, worse, be rejected. A URL that already carries
+a query is left alone — the caller has said something deliberate about it.
+*/
+export function withStamp(url, stamp) {
+    if (!stamp)
+        return url;
+    if (url.includes('?') || url.includes('#'))
+        return url;
+    if (/^[a-z][a-z0-9+.-]*:|^\/\//i.test(url))
+        return url;
+    return `${url}?v=${encodeURIComponent(stamp)}`;
 }
 export async function generateSite(config) {
     const { docs, outputDir } = config;

@@ -789,6 +789,42 @@ export async function buildSite(config, opts = {}) {
             // Generate the static, pre-rendered doc site (one /slug/index.html per doc).
             // Runs after the static-asset copy so the generated index.html (README) wins,
             // and after the bundle copy so every page's <script src> resolves.
+            // Build identity at /version.json — "what am I looking at?" for any deployed copy.
+            // Deterministic (commit-derived, no wall clock) so a committed outputDir doesn't
+            // churn on every build. See build-stamp.ts.
+            const buildStamp = await gatherBuildStamp({
+                // Read package.json rather than importing the generated src/version.ts —
+                // that import put a generated file in `bun --watch`'s module graph while
+                // prebuild rewrote it every build, i.e. a rebuild loop (899 restarts in
+                // ~40s). But resolve it from THIS MODULE, not the cwd: cwd is the ADOPTER's
+                // repo, so a cwd-relative read stamped THEIR version as the generator —
+                // the one field whose job is answering "which tosijs-ui built this?"
+                // (tosijs-ui#37, and caught for real by the consumer smoke test).
+                //
+                // That import put a GENERATED file into bin/dev.ts's module graph, and
+                // `bun --watch` restarts the process when any graph file changes — while
+                // prebuild rewrites version.ts on every build. Result: build → rewrite →
+                // restart → build, forever. Observed at 899 restarts in ~40 seconds, and it
+                // makes `bun start` (the documented dev command) completely unusable.
+                //
+                // Never import generated source from the build. Read the data instead.
+                // Resolved from THIS module, never the cwd — see the note above.
+                generator: await Bun.file(`${import.meta.dir}/../../../package.json`)
+                    .json()
+                    .then((p) => p.version ?? 'unknown')
+                    .catch(() => 'unknown'),
+                site: config.name,
+            });
+            /*
+            One stamp, two uses: `/version.json` answers "what am I looking at?", and the same value
+            busts asset caches as `?v=`. Derived once so they cannot disagree — a page claiming one
+            build while loading another's bundle is the exact confusion this is meant to end.
+      
+            Commit-derived, so a rebuild at the same commit produces byte-identical output and a
+            committed `docs/` does not churn. Falls back to the generator version when git is
+            unavailable (a consumer may not be in a repo at all), which still busts on upgrade.
+            */
+            const assetStamp = buildStamp.commit ?? buildStamp.generator;
             const docs = JSON.parse(await Bun.file(DOCS_JSON).text());
             const pageCount = await generateSite({
                 docs,
@@ -812,33 +848,9 @@ export async function buildSite(config, opts = {}) {
                     .join('') || undefined,
                 scriptUrl: config.scriptUrl,
                 basePath: config.basePath,
+                assetStamp,
             });
-            // Build identity at /version.json — "what am I looking at?" for any deployed copy.
-            // Deterministic (commit-derived, no wall clock) so a committed outputDir doesn't
-            // churn on every build. See build-stamp.ts.
-            await Bun.write(`${PUBLIC}/version.json`, serializeBuildStamp(await gatherBuildStamp({
-                // Read package.json rather than importing the generated src/version.ts —
-                // that import put a generated file in `bun --watch`'s module graph while
-                // prebuild rewrote it every build, i.e. a rebuild loop (899 restarts in
-                // ~40s). But resolve it from THIS MODULE, not the cwd: cwd is the ADOPTER's
-                // repo, so a cwd-relative read stamped THEIR version as the generator —
-                // the one field whose job is answering "which tosijs-ui built this?"
-                // (tosijs-ui#37, and caught for real by the consumer smoke test).
-                //
-                // That import put a GENERATED file into bin/dev.ts's module graph, and
-                // `bun --watch` restarts the process when any graph file changes — while
-                // prebuild rewrites version.ts on every build. Result: build → rewrite →
-                // restart → build, forever. Observed at 899 restarts in ~40 seconds, and it
-                // makes `bun start` (the documented dev command) completely unusable.
-                //
-                // Never import generated source from the build. Read the data instead.
-                // Resolved from THIS module, never the cwd — see the note above.
-                generator: await Bun.file(`${import.meta.dir}/../../../package.json`)
-                    .json()
-                    .then((p) => p.version ?? 'unknown')
-                    .catch(() => 'unknown'),
-                site: config.name,
-            })));
+            await Bun.write(`${PUBLIC}/version.json`, serializeBuildStamp(buildStamp));
             // Burn the theme into a static stylesheet (separate subprocess — see
             // generate-css.ts). Resolve the sibling relative to THIS module so it works
             // both in-repo (.ts) and when shipped (compiled .js).

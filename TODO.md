@@ -713,6 +713,18 @@ live site** (independently useful). See roadmap "From book to live."
   idiomatic than the local UI term (ja `選別` for sort, es `Clasificar`, zh `展示` for show)
   and were deliberately left alone rather than asserting more than could be verified.
 
+## Playwright: a Firefox flake under full-suite load (2026-09-01)
+
+`tests/table-pinned-repeat.pw.ts:56` ("a repeated cell in a pinned column stays opaque and
+stays hit-testable") failed once on **firefox** in a full-suite run, and passed both in
+isolation and on an immediate full re-run. So: load-dependent, Firefox-only, not a regression
+from the change under test.
+
+Recorded rather than dropped, per the practice that a red test is never waved through as
+"unrelated". It is not scheduled as urgent because it has been seen once — but if it recurs,
+start from the worker-contention work below (1.12.1), which addressed the same class, and
+check whether the pinned-cell opacity assertion is racing a paint rather than a state.
+
 ## DONE (1.12.1): the Playwright lane's worker contention
 
 - [x] Both halves of the `hydration.pw.ts` / `docs.json` flake are now addressed. The client

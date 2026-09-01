@@ -66,6 +66,20 @@ export interface GenerateSiteConfig {
   /** path to the IIFE bundle script (default /iife.js) — the CDN/classic-script path */
   scriptUrl?: string
   /**
+   * Cache-busting stamp appended to generated asset URLs as `?v=`.
+   *
+   * Stable filenames go stale: a CDN or browser cache can serve yesterday's `hydrate.js`
+   * against today's HTML, and the site then looks broken in a way that reproduces nowhere
+   * else — the fix being a hard reload nobody thinks to try. Content-hashed FILENAMES would
+   * also solve it, and are the wrong trade here: `docs/` is committed in this repo and its
+   * siblings, so hashing would add and delete a file on every build and put churn in every
+   * diff. A query keeps the filenames stable.
+   *
+   * Must be DETERMINISTIC per commit, not per build, for the same reason — see build-stamp.ts.
+   * Left unset, nothing is appended and the output is exactly as before.
+   */
+  assetStamp?: string
+  /**
    * path to an ESM hydration bundle. When set, pages load THIS as a
    * `<script type="module">` instead of the classic IIFE `scriptUrl`, so
    * code-split chunks (the CodeMirror editor) load lazily instead of on every page.
@@ -228,6 +242,7 @@ function pageHtml(
     scriptUrl = '/iife.js',
     hydrateUrl,
     stylesUrl = '/doc-system.css',
+    assetStamp,
     localizedUrl = '/localized-strings.txt',
     basePath,
     headExtra = '',
@@ -300,7 +315,7 @@ function pageHtml(
     '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
     // Burned-in theme: styles the page with no JS and with zero flash on hydration.
     `  <link rel="stylesheet" href="${escapeAttr(
-      relativeUrl(depth, stylesUrl)
+      withStamp(relativeUrl(depth, stylesUrl), assetStamp)
     )}" data-tosi-doc-system />`,
     `  <title>${escapeText(title)}</title>`,
     description
@@ -383,13 +398,29 @@ ${navbar}
   ${
     hydrateUrl
       ? `<script type="module" src="${escapeAttr(
-          relativeUrl(depth, hydrateUrl)
+          withStamp(relativeUrl(depth, hydrateUrl), assetStamp)
         )}"></script>`
-      : `<script src="${escapeAttr(relativeUrl(depth, scriptUrl))}"></script>`
+      : `<script src="${escapeAttr(
+          withStamp(relativeUrl(depth, scriptUrl), assetStamp)
+        )}"></script>`
   }
 </body>
 </html>
 `
+}
+
+/*
+Append the build stamp to a SAME-ORIGIN asset URL.
+
+Only same-origin: `scriptUrl` may legitimately point at a CDN, and appending a query to
+someone else's URL can miss their cache key or, worse, be rejected. A URL that already carries
+a query is left alone — the caller has said something deliberate about it.
+*/
+export function withStamp(url: string, stamp?: string): string {
+  if (!stamp) return url
+  if (url.includes('?') || url.includes('#')) return url
+  if (/^[a-z][a-z0-9+.-]*:|^\/\//i.test(url)) return url
+  return `${url}?v=${encodeURIComponent(stamp)}`
 }
 
 export async function generateSite(
