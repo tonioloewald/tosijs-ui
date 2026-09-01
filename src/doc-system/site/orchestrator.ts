@@ -962,7 +962,35 @@ export async function buildSite(
       committed `docs/` does not churn. Falls back to the generator version when git is
       unavailable (a consumer may not be in a repo at all), which still busts on upgrade.
       */
-      const assetStamp = buildStamp.commit ?? buildStamp.generator
+      /*
+      Stamp from the PROJECT'S VERSION, not its commit.
+
+      A commit-derived stamp re-stamps every generated page on every commit, and `docs/` is
+      committed here and in the sibling projects — so a 68-file diff appeared on each build,
+      and it did not terminate: the test lanes build too, so commit → build → dirty → commit.
+      That is the same non-terminating loop this repo already documents for release
+      annotations, and it is worse than the staleness it was added to fix.
+
+      A version changes once per release, which is the granularity a published site actually
+      changes at, and it leaves a rebuild byte-identical between releases.
+
+      The tradeoff, stated rather than discovered later: two builds of the SAME version with
+      different code carry the same stamp, so a mid-version redeploy can still serve a cached
+      bundle. That is no worse than having no stamp at all, which was the previous state, and
+      it closes the case that actually bit — a cached bundle surviving across releases.
+
+      Read from the CONSUMER's cwd, deliberately: this must be the version of the site being
+      built, not tosijs-ui's. (`generator` is read from this module's own package.json for the
+      opposite reason — see the note below.) Falls back to the generator version, then the
+      commit, so a project without a version still gets something that moves.
+      */
+      const assetStamp =
+        (await Bun.file(`${process.cwd()}/package.json`)
+          .json()
+          .then((p: { version?: string }) => p.version)
+          .catch(() => undefined)) ??
+        buildStamp.generator ??
+        buildStamp.commit
 
       const docs = JSON.parse(await Bun.file(DOCS_JSON).text())
       const pageCount = await generateSite({
