@@ -1,5 +1,53 @@
 # Changelog
 
+## 1.12.7
+
+### Live-example and doc-test failures now tell you where
+
+A failing doc test used to report one entry for the whole block, with no file, no line and no
+stack:
+
+```
+✗ Test execution: Arg string terminates parameters early
+```
+
+The only way to narrow that is to bisect the file by hand, which is what it cost the person who
+reported it ([#111](https://github.com/tonioloewald/tosijs-ui/issues/111)) — and both theories
+the bisection bought were wrong, because the message named nothing that was actually involved.
+
+Three things were wrong, and none of them were the transpiler:
+
+- **The stack was discarded.** The catch kept `err.message` only — fifteen lines below the code
+  that tags the body `//# sourceURL=inline-test` precisely so that stack would carry usable line
+  numbers. Failures now read `message | the offending source (line N)`.
+- **Live examples never tagged a sourceURL at all**, so a broken example's stack pointed into
+  the minified bundle. Now tagged, and the preview error carries the same location.
+  `notDefinedAnywhere is not defined` became
+  `notDefinedAnywhere is not defined | notDefinedAnywhere() (line 3)`.
+- **The line numbers were off by two, and always had been.** The `Function` constructor
+  synthesizes a header, so every line an engine reports is shifted from the line the author
+  wrote — measured at **+2** in Chromium and Firefox, for `Function` and `AsyncFunction` alike,
+  regardless of parameter count, and additive. So assertion failures have been naming the line
+  _two below_ the failing assertion for as long as that feature has existed, and quoting that
+  line's source alongside it. That is worse than saying nothing: it reads as correct, because
+  the quoted text is real code from the same file.
+
+The offset is **calibrated at runtime** by one cached probe rather than hardcoded to 2 — it is
+an unspecified detail of whichever engine is running, and a stale constant would reintroduce
+the defect it fixes. If the correction would produce a line below 1, no line is reported rather
+than a false one. WebKit produces no locatable frame for constructed functions, so it falls back
+to the bare message, exactly as before.
+
+### A constructor failure now names the context keys
+
+The remaining case has no line to report at all, because nothing ran: the `AsyncFunction`
+constructor rejected the code before executing it. That was #111's actual failure.
+
+If the same body compiles with **no** parameters, the body is fine and the caller's `context`
+keys are at fault — so the message now says that and lists the parameter list they became. A key
+that cannot be an identifier (a subpath like `pkg/sub`, a scoped name, a leading digit) is the
+usual cause, and none of that was inferable from `Arg string terminates parameters early`.
+
 ## 1.12.6
 
 ### `<tosi-diff resolvable>` — "do I want to accept this?"
