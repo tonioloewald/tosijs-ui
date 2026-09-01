@@ -3,6 +3,7 @@ import {
   diffLines,
   diffBlocks,
   resolveDiff,
+  diffTokens,
   tosiDiff,
   DiffResolution,
 } from './diff.js'
@@ -275,5 +276,69 @@ describe('<tosi-diff> actually renders its controls', () => {
     expect(shadow(el, '.diff-line').length).toBeGreaterThan(0)
     expect(shadow(el, '.diff-choices').length).toBe(0)
     el.remove()
+  })
+})
+
+describe('diffTokens — what ACTUALLY changed inside a line', () => {
+  const join = (runs: { text: string }[]) => runs.map((r) => r.text).join('')
+  const changed = (runs: { text: string; changed: boolean }[]) =>
+    runs.filter((r) => r.changed).map((r) => r.text)
+
+  test('marks only the differing words, keeping the shared ones plain', () => {
+    const { removed, added } = diffTokens(
+      'The cat sat on the mat.',
+      'The cat sprawled across the mat.'
+    )
+    expect(changed(removed)).toEqual(['sat on'])
+    expect(changed(added)).toEqual(['sprawled across'])
+  })
+
+  test('RECONSTRUCTION: the runs reassemble each input exactly', () => {
+    /*
+    The load-bearing property. A diff viewer that silently drops a space — or doubles one, or
+    reorders punctuation — is worse than one that highlights nothing, because it misrepresents
+    the text it exists to show. Whitespace and punctuation are tokens for this reason.
+    */
+    const cases: Array<[string, string]> = [
+      ['The cat sat on the mat.', 'The cat sprawled across the mat.'],
+      ['  indented(a, b)  ', 'indented(a,b)'],
+      ['a\tb  c', 'a b\tc'],
+      ['', 'added'],
+      ['removed', ''],
+      ['same', 'same'],
+      ['const x = 1', 'const x = 2'],
+      ['你好 世界', '你好 世界!'],
+    ]
+    for (const [before, after] of cases) {
+      const { removed, added } = diffTokens(before, after)
+      expect(join(removed)).toBe(before)
+      expect(join(added)).toBe(after)
+    }
+  })
+
+  test('identical lines have nothing marked', () => {
+    const { removed, added } = diffTokens('same text', 'same text')
+    expect(changed(removed)).toEqual([])
+    expect(changed(added)).toEqual([])
+  })
+
+  test('adjacent tokens of the same kind coalesce into one run', () => {
+    // Otherwise every word is its own span and the DOM is confetti.
+    const { added } = diffTokens('a', 'a b c d')
+    expect(added.filter((r) => r.changed).length).toBe(1)
+  })
+
+  test('a pathologically long line bails to whole-line marking', () => {
+    /*
+    The LCS is O(n·m); a minified bundle pasted into a diff is one line with tens of thousands
+    of tokens. Bailing keeps the previous whole-line rendering — it degrades, not breaks — and
+    the reconstruction property still has to hold.
+    */
+    const long = Array.from({ length: 900 }, (_, i) => `t${i}`).join(' ')
+    const other = long + ' extra'
+    const { removed, added } = diffTokens(long, other)
+    expect(join(removed)).toBe(long)
+    expect(join(added)).toBe(other)
+    expect(removed.every((r) => r.changed)).toBe(true)
   })
 })

@@ -112,3 +112,64 @@ test('the selected label clears WCAG AA against the accent fill', async ({
   })
   expect(ratio).toBeGreaterThanOrEqual(4.5)
 })
+
+test('clicking the coloured line picks that side, like its button', async ({
+  page,
+}) => {
+  /*
+  The line is the affordance: it is what the reader is already looking at and pointing at.
+  Asserted through a real click on the TEXT, which is also the path that crosses the shadow
+  boundary — the place this component has broken before.
+  */
+  const el = diff(page)
+  const before = await el.evaluate((e: any) => e.value)
+
+  await el.locator('.diff-line[data-choice="original"]').first().click()
+  await expect
+    .poll(async () => el.evaluate((e: any) => e.value))
+    .not.toBe(before)
+  await expect.poll(pressedFor(el)).toEqual(['original', 'modified'])
+
+  // And clicking the green side puts it back — the line is a picker, not a toggle.
+  await el.locator('.diff-line[data-choice="modified"]').first().click()
+  await expect.poll(async () => el.evaluate((e: any) => e.value)).toBe(before)
+})
+
+test('selecting text on a line does NOT change the resolution', async ({
+  page,
+}) => {
+  /*
+  The coloured lines are also the text you drag across to copy. Without a guard, selecting a
+  line to copy it silently flips the resolution and rewrites the value — a destructive side
+  effect of an action that should have none.
+  */
+  const el = diff(page)
+  const before = await el.evaluate((e: any) => e.value)
+  const line = el.locator('.diff-line[data-choice="original"]').first()
+  const box = await line.boundingBox()
+  if (!box) test.skip(true, 'line not visible')
+
+  // Drag across the line: press, move, release — a selection, not a click.
+  await page.mouse.move(box!.x + 6, box!.y + box!.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(box!.x + box!.width - 6, box!.y + box!.height / 2, {
+    steps: 8,
+  })
+  await page.mouse.up()
+  await page.waitForTimeout(250)
+
+  expect(await el.evaluate((e: any) => e.value)).toBe(before)
+})
+
+test('only the words that differ are marked inside a changed line', async ({
+  page,
+}) => {
+  const marked = await diff(page).evaluate((e: any) => {
+    const spans = [...e.shadowRoot.querySelectorAll('.diff-line .text.changed')]
+    const all = [...e.shadowRoot.querySelectorAll('.diff-line .text')]
+    return { changed: spans.length, total: all.length }
+  })
+  // Some runs are marked, but NOT every run — otherwise it is just the line highlight again.
+  expect(marked.changed).toBeGreaterThan(0)
+  expect(marked.changed).toBeLessThan(marked.total)
+})

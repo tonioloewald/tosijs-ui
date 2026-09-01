@@ -78,6 +78,18 @@ test('rejecting everything yields the original text exactly', () => {
 })
 ```
 
+**Click the coloured text itself** to pick a side — the line is the affordance, so reaching for
+a small button to say "this one" when the thing is right under the cursor is friction with
+nothing behind it. Dragging to select text does *not* change anything: those lines are also
+what you copy from.
+
+Within a changed line, **the words that actually differ** are marked more strongly than the line
+around them. A whole-line wash says "something here changed", which for a one-word edit throws
+away most of the signal — so the line colour tells you which side you are on, and the run tells
+you what moved. `diffTokens(before, after)` is exported if you want that data directly; its runs
+reassemble each input exactly, and it falls back to marking the whole line for lines too long to
+diff cheaply.
+
 The unit of decision is a **change block**, not a line: a multi-line edit is one choice,
 because accepting half of one produces text neither side wrote. Two more exports give you
 the same model without the DOM — `diffBlocks(diffLines(a, b))` for the blocks, and
@@ -184,6 +196,111 @@ export function diffLines(before, after) {
     }
     return out;
 }
+/*
+Tokens, not characters.
+
+A character-level diff of "sat" → "sprawled" marks the shared `s` and produces confetti; word
+runs give a highlight a reader can actually use. Whitespace and punctuation are their own
+tokens so the runs REASSEMBLE the original line exactly — a diff viewer that silently drops a
+space is worse than one that highlights nothing, and the tests assert that reconstruction.
+*/
+const TOKENS = /(\s+|[A-Za-z0-9_$]+|[^\sA-Za-z0-9_$]+)/g;
+/*
+Above this many tokens on either side, skip the intra-line pass and mark the whole line.
+
+The LCS below is O(n·m), and a minified bundle pasted into a diff is one line with tens of
+thousands of tokens — which would lock the tab to draw a highlight nobody can read at that
+size anyway. Bailing keeps the WHOLE-line rendering, which is the previous behaviour, so the
+cap degrades rather than breaks.
+*/
+const MAX_TOKENS = 400;
+/**
+ * Word-level diff of two lines, as runs that reassemble each input exactly.
+ *
+ * Returns everything flagged `changed` when the lines are too long to diff cheaply, or when
+ * they share nothing — in both cases the containing line highlight already says it.
+ */
+export function diffTokens(before, after) {
+    const a = before.match(TOKENS) ?? [];
+    const b = after.match(TOKENS) ?? [];
+    const whole = () => ({
+        removed: before ? [{ text: before, changed: true }] : [],
+        added: after ? [{ text: after, changed: true }] : [],
+    });
+    if (a.length > MAX_TOKENS || b.length > MAX_TOKENS)
+        return whole();
+    const m = a.length;
+    const n = b.length;
+    const lcs = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = m - 1; i >= 0; i -= 1) {
+        for (let j = n - 1; j >= 0; j -= 1) {
+            lcs[i][j] =
+                a[i] === b[j]
+                    ? lcs[i + 1][j + 1] + 1
+                    : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+        }
+    }
+    const removed = [];
+    const added = [];
+    // Coalesce adjacent tokens of the same kind so the DOM is runs, not one span per word.
+    const push = (out, text, changed) => {
+        const last = out[out.length - 1];
+        if (last && last.changed === changed)
+            last.text += text;
+        else
+            out.push({ text, changed });
+    };
+    let i = 0;
+    let j = 0;
+    while (i < m && j < n) {
+        if (a[i] === b[j]) {
+            push(removed, a[i], false);
+            push(added, b[j], false);
+            i += 1;
+            j += 1;
+        }
+        else if (lcs[i + 1][j] >= lcs[i][j + 1]) {
+            push(removed, a[i], true);
+            i += 1;
+        }
+        else {
+            push(added, b[j], true);
+            j += 1;
+        }
+    }
+    while (i < m)
+        push(removed, a[i++], true);
+    while (j < n)
+        push(added, b[j++], true);
+    return { removed: bridgeGaps(removed), added: bridgeGaps(added) };
+}
+/*
+A space BETWEEN two changed words belongs to the change.
+
+`sat on` → `sprawled across` shares its inner space, so the LCS calls it common and the
+highlight comes out as two boxes with a hole punched between them — which reads as two
+unrelated edits rather than one phrase. Whitespace flanked by changed runs on both sides is
+absorbed, and the runs re-coalesce so it renders as a single span.
+*/
+function bridgeGaps(runs) {
+    for (let k = 1; k < runs.length - 1; k += 1) {
+        if (!runs[k].changed &&
+            /^\s+$/.test(runs[k].text) &&
+            runs[k - 1].changed &&
+            runs[k + 1].changed) {
+            runs[k].changed = true;
+        }
+    }
+    const out = [];
+    for (const run of runs) {
+        const last = out[out.length - 1];
+        if (last && last.changed === run.changed)
+            last.text += run.text;
+        else
+            out.push({ ...run });
+    }
+    return out;
+}
 const MARKER = { context: ' ', add: '+', remove: '-' };
 export class TosiDiff extends Component {
     static preferredTagName = 'tosi-diff';
@@ -231,6 +348,11 @@ export class TosiDiff extends Component {
         '.diff-line': {
             display: 'grid',
             gridTemplateColumns: '1.5em 1fr',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+        },
+        '.diff-line .line-text': {
+            minWidth: '0',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word',
         },
@@ -292,6 +414,31 @@ export class TosiDiff extends Component {
             4.8:1. A theme that sets the variable still wins, and so does `--tosi-diff-choice-*`.
             */
             color: varDefault.tosiDiffChoiceSelectedColor(varDefault.tosiAccentText('#fff')),
+        },
+        /*
+        The runs that ACTUALLY differ, distinct from the line that contains them.
+    
+        A whole-line wash says "something here changed" — which for a one-word edit is most of the
+        signal thrown away. These are a second, stronger tint of the SAME hue, so the two read as
+        one system rather than two, and they sit on top of the line colour rather than replacing
+        it: the line still says which side you are on, the run says what moved.
+        */
+        '.diff-line .text.changed': {
+            borderRadius: varDefault.tosiDiffRunRadius('2px'),
+            padding: '0 1px',
+        },
+        '.diff-add .text.changed': {
+            background: varDefault.tosiDiffAddRunBg('color-mix(in srgb, #22c55e 38%, transparent)'),
+        },
+        '.diff-remove .text.changed': {
+            background: varDefault.tosiDiffRemoveRunBg('color-mix(in srgb, #ef4444 38%, transparent)'),
+        },
+        // The coloured lines pick a side, so say so on hover.
+        '.diff-line[data-choice]': {
+            cursor: 'pointer',
+        },
+        '.diff-line[data-choice]:hover': {
+            filter: 'brightness(1.06)',
         },
         '.diff-line.not-chosen': {
             opacity: '0.4',
@@ -371,13 +518,29 @@ export class TosiDiff extends Component {
         only one of the two that survives the boundary, which makes it the right tool here even
         though `target.closest()` is the correct idiom for a light-DOM component.
         */
-        const button = event
+        const picked = event
             .composedPath()
-            .find((node) => node instanceof HTMLElement && node.matches('button[data-hunk]'));
-        if (button === undefined)
+            .find((node) => node instanceof HTMLElement &&
+            node.matches('[data-hunk][data-choice]'));
+        if (picked === undefined)
             return;
-        const index = Number(button.dataset.hunk);
-        const choice = button.dataset.choice;
+        /*
+        A click that ENDS A SELECTION is not a choice.
+    
+        The coloured lines are now clickable, and they are also the text someone drags across to
+        copy — so without this, selecting a line to copy it silently flips the resolution and
+        rewrites the value. Checked against the shadow root's own selection where available:
+        `document.getSelection()` reports collapsed for a selection made inside a shadow tree.
+        */
+        const root = this.shadowRoot;
+        const selection = root?.getSelection?.() ?? document.getSelection();
+        if (selection &&
+            !selection.isCollapsed &&
+            selection.toString().length > 0) {
+            return;
+        }
+        const index = Number(picked.dataset.hunk);
+        const choice = picked.dataset.choice;
         const choices = this.resolutions;
         if (choices[index] === choice)
             return;
@@ -385,10 +548,36 @@ export class TosiDiff extends Component {
         this.queueRender();
         this.dispatchEvent(new Event('change'));
     };
-    lineElement(op, text, chosen = true) {
-        return div({ class: `diff-line diff-${op}${chosen ? '' : ' not-chosen'}` }, span({ class: 'marker' }, MARKER[op]), 
+    lineElement(op, text, chosen = true, runs, hunk) {
+        /*
+        `data-hunk`/`data-choice` on the LINE as well as the buttons, so clicking the coloured
+        text picks that side. The line IS the affordance — it is what the reader is already
+        looking at, and reaching for a small button to say "this one" when the thing is right
+        there under the cursor is friction with nothing behind it.
+        */
+        const pickable = hunk !== undefined && (op === 'add' || op === 'remove')
+            ? {
+                'data-hunk': String(hunk),
+                'data-choice': op === 'remove' ? 'original' : 'modified',
+            }
+            : {};
+        /*
+        ONE grid child for the text, always — the runs go INSIDE it.
+    
+        `.diff-line` is `grid-template-columns: 1.5em 1fr`, so emitting a span per run put the
+        surplus into implicit ROWS: every word stacked vertically down the 1.5em marker column,
+        one character wide. Same failure as #102, where a mismatch between track count and cell
+        count auto-placed the extras into content-sized implicit tracks. A wrapper pins the text
+        to column two no matter how many runs it contains.
+        */
         // Non-breaking fallback so empty lines keep their row height.
-        span({ class: 'text' }, text === '' ? ' ' : text));
+        const body = runs !== undefined && runs.length > 0
+            ? runs.map((run) => span({ class: run.changed ? 'text changed' : 'text' }, run.text))
+            : [span({ class: 'text' }, text === '' ? ' ' : text)];
+        return div({
+            class: `diff-line diff-${op}${chosen ? '' : ' not-chosen'}`,
+            ...pickable,
+        }, span({ class: 'marker' }, MARKER[op]), span({ class: 'line-text' }, ...body));
     }
     render() {
         super.render();
@@ -420,7 +609,18 @@ export class TosiDiff extends Component {
                 'data-choice': value,
                 ariaPressed: String(choice === value),
             }, label);
-            return div({ class: 'diff-hunk', onClick: this.choose }, div({ class: 'diff-choices' }, pick(this.originalLabel, 'original'), pick(this.modifiedLabel, 'modified')), ...block.removed.map((text) => this.lineElement('remove', text, choice === 'original')), ...block.added.map((text) => this.lineElement('add', text, choice === 'modified')));
+            return div({ class: 'diff-hunk', onClick: this.choose }, div({ class: 'diff-choices' }, pick(this.originalLabel, 'original'), pick(this.modifiedLabel, 'modified')), 
+            /*
+            Pair the two sides INDEX-WISE for the intra-line pass. An edit to one line is the
+            overwhelmingly common shape, and a pair is the only case where "what actually
+            changed" is a meaningful question — where the counts differ, the surplus lines are
+            wholly added or removed, which the line highlight already says.
+            */
+            ...block.removed.map((text, k) => this.lineElement('remove', text, choice === 'original', block.added[k] === undefined
+                ? undefined
+                : diffTokens(text, block.added[k]).removed, index)), ...block.added.map((text, k) => this.lineElement('add', text, choice === 'modified', block.removed[k] === undefined
+                ? undefined
+                : diffTokens(block.removed[k], text).added, index)));
         }));
     }
 }

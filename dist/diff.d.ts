@@ -39,6 +39,21 @@ export declare function resolveDiff(blocks: DiffBlock[], choices: DiffResolution
  * in `after`), in display order.
  */
 export declare function diffLines(before: string, after: string): DiffLine[];
+/** A run of text within a changed line, flagged if it is part of what actually differs. */
+export interface TokenRun {
+    text: string;
+    changed: boolean;
+}
+/**
+ * Word-level diff of two lines, as runs that reassemble each input exactly.
+ *
+ * Returns everything flagged `changed` when the lines are too long to diff cheaply, or when
+ * they share nothing — in both cases the containing line highlight already says it.
+ */
+export declare function diffTokens(before: string, after: string): {
+    removed: TokenRun[];
+    added: TokenRun[];
+};
 interface DiffParts extends PartsMap {
     body: HTMLElement;
 }
@@ -65,6 +80,11 @@ export declare class TosiDiff extends Component<DiffParts> {
         '.diff-line': {
             display: string;
             gridTemplateColumns: string;
+            whiteSpace: string;
+            wordBreak: string;
+        };
+        '.diff-line .line-text': {
+            minWidth: string;
             whiteSpace: string;
             wordBreak: string;
         };
@@ -110,6 +130,22 @@ export declare class TosiDiff extends Component<DiffParts> {
         '.diff-choices button[aria-pressed="true"]': {
             background: string;
             color: string;
+        };
+        '.diff-line .text.changed': {
+            borderRadius: string;
+            padding: string;
+        };
+        '.diff-add .text.changed': {
+            background: string;
+        };
+        '.diff-remove .text.changed': {
+            background: string;
+        };
+        '.diff-line[data-choice]': {
+            cursor: string;
+        };
+        '.diff-line[data-choice]:hover': {
+            filter: string;
         };
         '.diff-line.not-chosen': {
             opacity: string;

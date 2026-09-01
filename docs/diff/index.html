@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=951798df" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=a7876fa3" data-tosi-doc-system />
   <title>diff — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-diff&gt; renders a unified, line-by-line diff between two strings — the kind of view you&#39;d see in a code review, with removed lines marked - and added lines…" />
   <link rel="canonical" href="https://ui.tosijs.net/diff/" />
@@ -111,6 +111,16 @@ test(&#39;rejecting everything yields the original text exactly&#39;, () =&gt; {
   el.remove()
 })
 </code></pre>
+<p><strong>Click the coloured text itself</strong> to pick a side — the line is the affordance, so reaching for
+a small button to say &quot;this one&quot; when the thing is right under the cursor is friction with
+nothing behind it. Dragging to select text does <em>not</em> change anything: those lines are also
+what you copy from.</p>
+<p>Within a changed line, <strong>the words that actually differ</strong> are marked more strongly than the line
+around them. A whole-line wash says &quot;something here changed&quot;, which for a one-word edit throws
+away most of the signal — so the line colour tells you which side you are on, and the run tells
+you what moved. <code>diffTokens(before, after)</code> is exported if you want that data directly; its runs
+reassemble each input exactly, and it falls back to marking the whole line for lines too long to
+diff cheaply.</p>
 <p>The unit of decision is a <strong>change block</strong>, not a line: a multi-line edit is one choice,
 because accepting half of one produces text neither side wrote. Two more exports give you
 the same model without the DOM — <code>diffBlocks(diffLines(a, b))</code> for the blocks, and
@@ -211,6 +221,6 @@ changes</strong> — decisions belong to the diff they were made about.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate.js?v=951798df"></script>
+  <script type="module" src="../hydrate.js?v=a7876fa3"></script>
 </body>
 </html>
