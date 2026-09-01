@@ -30,6 +30,11 @@ The read-only view keeps its line order exactly. Pairing is computed per run of 
 changed lines, so an interleaved edit is marked correctly without the reordering that the
 resolvable view's block grouping does.
 
+`tokenRunsForLines` returns a **dense** array — one entry per input line, `undefined` where a
+line has no runs. Worth stating because the obvious implementation (`new Array(n)`) is sparse,
+and `map`/`forEach` silently skip holes: fine for the indexed read it was written for, a trap
+for anyone iterating it.
+
 ### Generated asset URLs are build-stamped
 
 `/doc-system.css` and the hydration bundle are now emitted with a `?v=` stamp taken from the
