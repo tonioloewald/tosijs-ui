@@ -54,6 +54,17 @@ export declare function diffTokens(before: string, after: string): {
     removed: TokenRun[];
     added: TokenRun[];
 };
+/**
+ * Token runs for each line of a FLAT line diff, pairing within each run of changed lines
+ * without reordering anything.
+ *
+ * The resolvable view groups changes into blocks, which reorders an interleaved edit
+ * (`-a +A -b +B` becomes `-a -b +A +B`) — better to resolve, but a changed rendering. The
+ * read-only view must keep its order exactly, and it turns out it does not have to give
+ * anything up for that: pairing is computed per run of consecutive non-context lines, and the
+ * lines are still emitted where they already were. Same marking, same order.
+ */
+export declare function tokenRunsForLines(lines: DiffLine[]): Array<TokenRun[] | undefined>;
 interface DiffParts extends PartsMap {
     body: HTMLElement;
 }

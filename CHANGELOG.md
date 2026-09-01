@@ -1,5 +1,52 @@
 # Changelog
 
+## 1.12.8
+
+### Diffs: pick a side by clicking it, and see what actually changed
+
+Two things, and they apply to **both** diff views — the resolvable one and the read-only one
+used by `<tosi-code>`'s review overlay and the doc-browser's before-save screen.
+
+**Clicking a coloured line picks that side**, equivalent to its button. The line is what a
+reader is already looking at and pointing at; reaching for a small button to say "this one"
+when the thing is under the cursor was friction with nothing behind it. Dragging to select
+text does **not** change anything — those lines are also what you copy from, and without that
+guard, selecting a line to copy it would silently flip the resolution and rewrite the value.
+
+**Within a changed line, the words that actually differ are marked** more strongly than the
+line around them. A whole-line wash says "something here changed", which for a one-word edit
+throws away most of the signal — so the line colour tells you which side you are on, and the
+run tells you what moved. `diffTokens(before, after)` and `tokenRunsForLines(lines)` are
+exported if you want that data without the DOM.
+
+Word runs, not characters: a character diff of `sat` → `sprawled` marks the shared `s` and
+produces confetti. Whitespace and punctuation are tokens so the runs **reassemble each input
+exactly** — a diff viewer that silently drops a space misrepresents the text it exists to show
+— and whitespace between two changed words is absorbed into the change, or `sat on` renders as
+two boxes with a hole punched between them. Lines over 400 tokens fall back to whole-line
+marking rather than locking a tab on a minified bundle pasted into a diff.
+
+The read-only view keeps its line order exactly. Pairing is computed per run of consecutive
+changed lines, so an interleaved edit is marked correctly without the reordering that the
+resolvable view's block grouping does.
+
+### Generated asset URLs are build-stamped
+
+`/doc-system.css` and the hydration bundle are now emitted with a `?v=` stamp taken from the
+same build identity that writes `/version.json`, so a page cannot claim one build while
+loading another's cached bundle. Stale filenames going stale is not hypothetical — it happened
+on this project's own doc site and cost a round of "is this a layout regression?" before
+turning out to be a cached bundle, with a hard reload as the fix nobody thinks to try.
+
+A query rather than content-hashed filenames, deliberately: `docs/` is committed in this repo
+and its siblings, so hashing would add and delete a file on every build and put churn in every
+diff. The stamp is commit-derived, so rebuilding the same source twice is byte-identical.
+Cross-origin URLs are left alone — `scriptUrl` may point at a CDN, and busting someone else's
+cache was never the point — as are URLs that already carry a query or fragment.
+
+Consumers of `tosijs-ui/site` get this automatically; `generateSite` also takes an explicit
+`assetStamp` if you are driving it directly. Leave it unset and the output is unchanged.
+
 ## 1.12.7
 
 ### Live-example and doc-test failures now tell you where

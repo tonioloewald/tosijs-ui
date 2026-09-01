@@ -355,6 +355,54 @@ function bridgeGaps(runs: TokenRun[]): TokenRun[] {
   return out
 }
 
+/**
+ * Token runs for each line of a FLAT line diff, pairing within each run of changed lines
+ * without reordering anything.
+ *
+ * The resolvable view groups changes into blocks, which reorders an interleaved edit
+ * (`-a +A -b +B` becomes `-a -b +A +B`) — better to resolve, but a changed rendering. The
+ * read-only view must keep its order exactly, and it turns out it does not have to give
+ * anything up for that: pairing is computed per run of consecutive non-context lines, and the
+ * lines are still emitted where they already were. Same marking, same order.
+ */
+export function tokenRunsForLines(
+  lines: DiffLine[]
+): Array<TokenRun[] | undefined> {
+  /*
+  `.fill(undefined)` makes this DENSE. A bare `new Array(n)` is sparse, and `map`/`forEach`
+  silently skip holes — fine for the indexed read this function was written for, a trap for
+  anyone who iterates the result, which an exported function invites.
+  */
+  const out: Array<TokenRun[] | undefined> = new Array(lines.length).fill(
+    undefined
+  )
+  let i = 0
+  while (i < lines.length) {
+    if (lines[i].op === 'context') {
+      i += 1
+      continue
+    }
+    let j = i
+    while (j < lines.length && lines[j].op !== 'context') j += 1
+    const removes: number[] = []
+    const adds: number[] = []
+    for (let k = i; k < j; k += 1) {
+      ;(lines[k].op === 'remove' ? removes : adds).push(k)
+    }
+    // k-th removed line against the k-th added line; surplus on either side is wholly
+    // added or removed, which the line highlight already says.
+    for (let k = 0; k < Math.min(removes.length, adds.length); k += 1) {
+      const before = lines[removes[k]].text
+      const after = lines[adds[k]].text
+      const { removed, added } = diffTokens(before, after)
+      out[removes[k]] = removed
+      out[adds[k]] = added
+    }
+    i = j
+  }
+  return out
+}
+
 interface DiffParts extends PartsMap {
   body: HTMLElement
 }
@@ -700,8 +748,17 @@ export class TosiDiff extends Component<DiffParts> {
     */
     if (!this.resolvable) {
       const lines = diffLines(this.original, this.modified)
+      /*
+      Intra-line marking applies here too. It was withheld at first on the "additive means
+      additive" rule, but that rule was about the BLOCK GROUPING, which reorders an interleaved
+      edit — marking reorders nothing. The lines, their order and their count are untouched;
+      the only difference is that the words which actually differ are now marked inside them.
+      */
+      const runs = tokenRunsForLines(lines)
       this.parts.body.replaceChildren(
-        ...lines.map((line) => this.lineElement(line.op, line.text))
+        ...lines.map((line, k) =>
+          this.lineElement(line.op, line.text, true, runs[k])
+        )
       )
       return
     }

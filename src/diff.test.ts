@@ -4,6 +4,7 @@ import {
   diffBlocks,
   resolveDiff,
   diffTokens,
+  tokenRunsForLines,
   tosiDiff,
   DiffResolution,
 } from './diff.js'
@@ -340,5 +341,51 @@ describe('diffTokens — what ACTUALLY changed inside a line', () => {
     expect(join(removed)).toBe(long)
     expect(join(added)).toBe(other)
     expect(removed.every((r) => r.changed)).toBe(true)
+  })
+})
+
+describe('tokenRunsForLines — marking without reordering', () => {
+  test('pairs the k-th removed line with the k-th added line, in place', () => {
+    const lines = diffLines('a\nKEEP\nb', 'a\nCHANGED\nb')
+    const runs = tokenRunsForLines(lines)
+    // Only the two changed lines get runs; context lines get none.
+    expect(runs.map((r) => (r ? 'runs' : '-'))).toEqual(
+      lines.map((l) => (l.op === 'context' ? '-' : 'runs'))
+    )
+  })
+
+  test('an INTERLEAVED edit pairs correctly without moving anything', () => {
+    /*
+    The reason this exists rather than reusing the block path: `diffBlocks` groups
+    `-a +A -b +B` into `-a -b / +A +B`, which is better to resolve and a CHANGED rendering.
+    The read-only view keeps its order and still gets correct pairing.
+    */
+    const lines = diffLines('one\ntwo', 'ONE\nTWO')
+    const runs = tokenRunsForLines(lines)
+    expect(runs.length).toBe(lines.length)
+    // Every non-context line is marked, and nothing about `lines` was mutated.
+    expect(lines.map((l) => l.text)).toEqual(
+      diffLines('one\ntwo', 'ONE\nTWO').map((l) => l.text)
+    )
+    expect(runs.filter(Boolean).length).toBe(
+      lines.filter((l) => l.op !== 'context').length
+    )
+  })
+
+  test('a surplus line on one side gets no runs', () => {
+    // Wholly added or removed — the line highlight already says so.
+    const lines = diffLines('a', 'A\nB\nC')
+    const runs = tokenRunsForLines(lines)
+    const addIdx = lines
+      .map((l, i) => (l.op === 'add' ? i : -1))
+      .filter((i) => i >= 0)
+    expect(runs[addIdx[0]]).toBeDefined()
+    expect(runs[addIdx[addIdx.length - 1]]).toBeUndefined()
+  })
+
+  test('identical text produces no runs at all', () => {
+    expect(
+      tokenRunsForLines(diffLines('a\nb', 'a\nb')).filter(Boolean)
+    ).toHaveLength(0)
   })
 })
