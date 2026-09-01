@@ -86,7 +86,29 @@ The load-bearing fact: **a running dev server keeps executing the code it loaded
 
 - **Never call `Bun.build()` — or any native-heavy API — in a long-lived process.** Its native arena is never returned (~30MB/call, monotonic, invisible to the JS heap and to `Bun.gc()`; [oven-sh/bun#34053](https://github.com/oven-sh/bun/issues/34053), fix still unmerged). Shell out to the `bun build` CLI; the OS reclaims a child's memory on exit. Same rule for `new Bun.Transpiler()` (~40KB per _construction_ — build it once and reuse), happy-dom, and `@resvg/resvg-js`. **Measure, don't reason**: while hunting this, the leak guard I added was itself leaking twice, and the two cancelled out so the before/after numbers looked fine while nothing had improved.
 - Three guards now enforce this, all in `src/doc-system/site/` — `memoryLimitMb` (RSS ceiling, exits with growth-per-rebuild), `idleTimeoutHours` (exits after 8 idle hours — bounds _how many_ servers exist, not just how big one gets), and `preflight.ts` (every build and launch reads the process table and refuses to start on a machine that is already dying). See "Not taking the machine down with you" in `src/doc-system/doc-site-system.md`.
-- **Kill background dev servers before release git surgery** (`pkill -f bin/dev.ts`, free :8787) — otherwise one rebuilds mid-operation and races your greps and git commands.
+- **Kill background dev servers before release git surgery** — otherwise one rebuilds
+  mid-operation and races your greps and git commands. `pkill -f bin/dev.ts` is safe because
+  it names OUR entry point; sibling projects use their own (tosijs-3d runs `bin/site.ts`), so
+  it cannot reach them.
+
+  **Do NOT "free the port" with `lsof -ti:PORT | xargs kill -9`.** `lsof -i:PORT` matches
+  sockets whose LOCAL _or REMOTE_ port is PORT, so it returns every process merely CONNECTED —
+  the browser reading the page, Playwright's browsers, a sibling project's server that happens
+  to have a connection open. `killStrayServer` was rewritten to target listeners only for
+  exactly this reason (see the comment in `dev-server.ts`), and that reasoning applies to
+  anything you type by hand just as much as to the code.
+
+  To find out what is actually running, ask the **build lock**, which answers by PROJECT:
+
+  ```ts
+  import { currentHolder, describeHolder } from 'tosijs-ui/site'
+  currentHolder('/path/to/project') // → { pid, role, root, port } or null
+  ```
+
+  This was learned the hard way on 2026-09-01: `lsof -ti:8787` returned a sibling's
+  `bun bin/site.ts`, which was concluded to be squatting our port and SIGKILLed. The lock said
+  that project was on **8030** all along, exactly where its config put it. An lsof pid is not
+  evidence of listening.
 
 ### Dev server compression
 
@@ -819,7 +841,7 @@ A bare publish makes the prerelease **`latest`**, so everyone doing a fresh
 on the last stable. (`npm dist-tag ls tosijs-ui` shows the current state.) When the
 final ships, publish it normally so `latest` moves.
 
-Kill any background `bun start` before doing release git surgery (`pkill -f bin/dev.ts`, free :8787) — otherwise it rebuilds mid-operation and races the greps and git commands.
+Kill any background `bun start` before doing release git surgery (`pkill -f bin/dev.ts`) — otherwise it rebuilds mid-operation and races the greps and git commands. Do **not** reach for `lsof -ti:PORT | xargs kill -9` to free the port; see the warning under "Dev servers are the most dangerous thing in this repo" for why that command kills bystanders, and use `currentHolder()` to find out what is really running.
 
 ## Task Tracking
 
