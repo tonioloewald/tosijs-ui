@@ -987,13 +987,32 @@ export class LiveExample extends Component {
         // The example toolbar: a pocket bar whose collapsed `<>` handle carries the
         // test-status colour (via --widget-color). Pinned top-right, growing left, so
         // it never covers the editor in side-by-side mode.
-        tosiPocketBar({ part: 'exampleWidgets', icon: 'code', direction: 'w' }, button({ title: 'view/edit code', onClick: this.showCode }, icons.edit2()), button({
-            title: 'view/edit code in a new window',
-            onClick: this.openEditorWindow,
-        }, icons.edit()), button({ title: 'toggle preview size', onClick: this.toggleMaximize }, 
+        /*
+        ORDER IS REVERSED from reading order, deliberately.
+  
+        The bar grows WEST from a handle pinned top-right, so DOM order lays out left to
+        right and the LAST child ends up nearest the handle — which is the shortest travel
+        for the pointer that just opened it. Measured: handle at x=853, children at 694,
+        738, 781, 825. So the list below is written farthest-first, and reads
+        maximize → edit → edit-in-new-window → tests from the far end, i.e. tests is
+        closest to hand and maximize is furthest.
+  
+        The owl rather than `<>`: the handle is the one piece of this UI on every example
+        of every doc site built with this, which makes it the one place branding costs
+        nothing and is seen everywhere.
+        */
+        tosiPocketBar({
+            part: 'exampleWidgets',
+            icon: 'tosi',
+            direction: 'w',
+            onClick: this.collapseWidgetsAfterAction,
+        }, button({ title: 'toggle preview size', onClick: this.toggleMaximize }, 
         // Both icons render; the existing .hide-if-maximized / .show-if-maximized
         // CSS shows the right one for the current state — no JS icon swap.
-        icons.maximize({ class: 'hide-if-maximized' }), icons.minimize({ class: 'show-if-maximized' })), label({ class: 'tests-toggle', title: 'run tests' }, input({
+        icons.maximize({ class: 'hide-if-maximized' }), icons.minimize({ class: 'show-if-maximized' })), button({ title: 'view/edit code', onClick: this.showCode }, icons.edit2()), button({
+            title: 'view/edit code in a new window',
+            onClick: this.openEditorWindow,
+        }, icons.edit()), label({ class: 'tests-toggle', title: 'run tests' }, input({
             type: 'checkbox',
             part: 'testsCheckbox',
             onChange: this.handleTestsToggle,
@@ -1405,6 +1424,30 @@ export class LiveExample extends Component {
                     : []),
             ],
         });
+    };
+    /*
+    Collapse the bar once the user has actually done something.
+  
+    It used to stay open over the example after every action — you clicked "maximize" and
+    the bar sat there covering the corner of the thing you had just maximised, until you
+    remembered to click the handle again.
+  
+    Only the SLOTTED controls count. The handle lives in the bar's own shadow root, so
+    closing on any click would close it the instant you opened it. `composedPath` because
+    the click lands on an icon INSIDE a button, and a direct child of the bar is exactly
+    the set of affordances we put there.
+    */
+    collapseWidgetsAfterAction = (event) => {
+        if (!this.hydrated)
+            return;
+        const bar = this.parts.exampleWidgets;
+        if (bar === undefined || bar === null)
+            return;
+        const acted = event
+            .composedPath()
+            .some((node) => node instanceof HTMLElement && node.parentElement === bar);
+        if (acted)
+            bar.open = false;
     };
     toggleMaximize = () => {
         this.classList.toggle('-maximize');

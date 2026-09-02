@@ -288,6 +288,7 @@ export declare class LiveExample extends Component<ExampleParts> {
     viewChanges: () => void;
     doRefresh: () => void;
     sourceMenu: (event: Event) => void;
+    collapseWidgetsAfterAction: (event: Event) => void;
     toggleMaximize: () => void;
     showCode: () => void;
     closeCode: () => void;
