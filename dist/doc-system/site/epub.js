@@ -368,6 +368,20 @@ ${renderNavPoints(roots, hrefFor, { n: 0 })}
 async function zipEpub(buildDir, outputAbs) {
     const $ = Bun.$;
     await $ `rm -f ${outputAbs}`.quiet();
+    /*
+    Fix every entry's mtime before zipping, or the archive is never reproducible.
+  
+    A zip stores each file's modification time, and these files were just written — so two
+    builds of identical content produced different bytes, and a committed `docs/*.epub`
+    was dirty in every diff. `zip` has no flag for this; normalising the inputs is the
+    standard fix.
+  
+    A constant, not the commit time: the timestamps here are archive plumbing that nothing
+    reads, while the date a reader actually sees is `dcterms:modified` in the OPF, which
+    IS set from the commit. Tying these to the commit too would make the bytes change on
+    every commit for no visible gain — which is the churn this is removing.
+    */
+    await $ `find . -exec touch -t 202001010000 {} +`.cwd(buildDir).quiet();
     // 1) mimetype first, stored (-0), no extra fields (-X)
     await $ `zip -X0 ${outputAbs} mimetype`.cwd(buildDir).quiet();
     // 2) everything else, deflated (-9), recursive (-r), no extra fields, no dir entries (-D)

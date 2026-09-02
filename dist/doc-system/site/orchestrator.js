@@ -170,6 +170,40 @@ async function gzipSizeInChild(file) {
         return 0;
     }
 }
+/*
+A date that moves when the PUBLICATION does, not when a build runs.
+
+`dcterms:modified` is baked into the ePub, so whatever it is decides whether a rebuild
+produces identical bytes. Three candidates, and only the third terminates:
+
+  - `new Date()` — differs every build. This was the original, and it made a committed
+    `docs/*.epub` dirty in every single diff.
+  - the HEAD commit time — reproducible for one commit, but still moves on every commit,
+    so commit → build → dirty → commit never settles.
+  - the commit time of the last change to `package.json` — constant between releases, and
+    it moves when the version does, which is exactly when a publication has changed.
+
+Falls back to the HEAD commit time, then to a fixed epoch, so a consumer outside a git
+repo still gets something stable rather than a clock.
+*/
+async function versionAnchoredDate() {
+    const iso = await Bun.$ `git log -1 --format=%cI -- package.json`
+        .quiet()
+        .nothrow()
+        .text()
+        .then((t) => t.trim())
+        .catch(() => '');
+    const stamp = iso ||
+        (await Bun.$ `git log -1 --format=%cI`
+            .quiet()
+            .nothrow()
+            .text()
+            .then((t) => t.trim())
+            .catch(() => ''));
+    if (!stamp)
+        return '2020-01-01T00:00:00Z';
+    return new Date(stamp).toISOString().replace(/\.\d+Z$/, 'Z');
+}
 export async function buildSite(config, opts = {}) {
     // Look at the machine before adding load to it. Runs on every build, including each
     // watch rebuild, because the danger is not present at launch and then absent — it
@@ -948,7 +982,20 @@ export async function buildSite(config, opts = {}) {
                     console.warn(`⚠️  epub: no documents in any volume — skipping. (Every doc is hidden or \`book: "none"\`.)`);
                 }
                 for (const bookTarget of volumes) {
-                    await buildEpubInChild(config, { ...epubOpts, bookTarget });
+                    await buildEpubInChild(config, {
+                        /*
+                        A DETERMINISTIC `modified`, or the ePub differs on every build.
+            
+                        It defaults to `new Date()`, which is baked into the OPF as
+                        `dcterms:modified` — so a rebuild from identical source produced different
+                        bytes, and `docs/tosijs-ui.epub` showed up dirty in every diff forever. The
+                        commit time is the honest answer anyway: what a reader wants to know is when
+                        the content last changed, not when someone happened to run a build.
+                        */
+                        modified: await versionAnchoredDate(),
+                        ...epubOpts,
+                        bookTarget,
+                    });
                 }
             }
             console.timeEnd('build');
