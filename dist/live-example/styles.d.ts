@@ -82,6 +82,9 @@ export declare const liveExampleStyleSpec: {
         color: string;
         '--widget-color': string;
         '--tosi-pocket-handle-color': string;
+        '--tosi-pocket-handle-bg': string;
+        '--tosi-pocket-handle-radius': string;
+        '--tosi-pocket-handle-size': string;
     };
     ':host [part="exampleWidgets"] button': {
         '--text-color': string;

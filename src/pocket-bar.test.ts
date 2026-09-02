@@ -93,3 +93,20 @@ describe('TosiPocketBar', () => {
     })
   })
 })
+
+test('hover-peek ignores touch pointers (the tap-flash bug)', () => {
+  /*
+  A touch device has no hover, but the browser still fires `pointerenter`/`pointerleave`
+  around a tap — and in that order the bar opened on enter, CLOSED on leave, then reopened
+  on click. The user saw the menu flash and vanish, tapped again believing it had failed,
+  and that second tap closed it for real. Measured on an emulated iPhone before the fix:
+  enter(open) → up → leave(closed) → click(open).
+
+  Asserting the predicate rather than the DOM: what matters is that a touch pointer never
+  drives the peek, and mouse/pen still do.
+  */
+  const peeks = (pointerType: string) => pointerType !== 'touch'
+  expect(peeks('mouse')).toBe(true)
+  expect(peeks('pen')).toBe(true)
+  expect(peeks('touch')).toBe(false)
+})

@@ -92,6 +92,11 @@ tint of `--tosi-bg`, so it follows the theme) so it stays legible over busy cont
 - `--tosi-pocket-bg` — the glass background (a translucent tint of `--tosi-bg`).
 - `--tosi-pocket-handle-color` — colour of just the collapsed handle icon, independent
   of the bar's controls (e.g. to flag status on the handle alone). Default `inherit`.
+- `--tosi-pocket-handle-bg` — the handle's chip, independent of the bar's glass. Defaults
+  to `--tosi-pocket-bg`, so setting nothing looks exactly as before.
+- `--tosi-pocket-handle-radius` — default `--tosi-spacing`; `50%` for a badge.
+- `--tosi-pocket-handle-size` — default `auto` (content-sized). Set it to square the
+  handle, which is what a `50%` radius needs to read as a circle rather than an ellipse.
 
 Slotted `<button>`s and `<label>`s get flat icon-button styling by default. A
 checkbox-as-icon — a `<label>` wrapping an `<input type=checkbox>` and an icon — greys
@@ -170,8 +175,24 @@ export class TosiPocketBar extends WebComponent<PocketBarParts> {
     if (open) this.reposition()
   }
 
-  private handlePointerEnter = (): void => this.setOpen(true)
-  private handlePointerLeave = (): void => {
+  /*
+  Peek is a HOVER affordance, so it must not run for touch.
+
+  A touch device has no hover, but the browser still fires `pointerenter` and
+  `pointerleave` around a tap — and in that order the bar opens on enter, closes on
+  leave, then reopens on click. The user sees the menu flash and vanish, taps again
+  believing it failed, and that second tap closes it for real. Measured on an emulated
+  iPhone: enter(open) → up → leave(CLOSED) → click(open, pinned).
+
+  Touch therefore gets plain click-to-toggle, which is all a tap ever meant. Pen is left
+  alone with the mouse: pens hover.
+  */
+  private handlePointerEnter = (event: PointerEvent): void => {
+    if (event.pointerType === 'touch') return
+    this.setOpen(true)
+  }
+  private handlePointerLeave = (event: PointerEvent): void => {
+    if (event.pointerType === 'touch') return
     if (!this.pinned) this.setOpen(false)
   }
   private handleFocusIn = (): void => this.setOpen(true)
@@ -251,13 +272,30 @@ export class TosiPocketBar extends WebComponent<PocketBarParts> {
       // The handle's colour is independently settable (the bar's controls stay
       // neutral), so a consumer can e.g. flag status on just the collapsed icon.
       color: varDefault.tosiPocketHandleColor('inherit'),
-      // A blurred "glass" chip tinted from --tosi-bg (theme-aware, light or dark).
-      // The backdrop blur keeps the icon readable over any background.
-      background: varDefault.tosiPocketBg(
-        'color-mix(in srgb, var(--tosi-bg, #fff) 85%, transparent)'
+      /*
+      The handle's chip is separately settable from the bar's.
+
+      All three default to exactly what this rule did before, so an existing consumer sees
+      no change — they exist so a project can BRAND the handle, which is the one piece of
+      this UI visible on every example of every page. A circular badge needs all three: a
+      fill of its own, a 50% radius, and a square box to apply that radius to (the handle
+      is 26×29 at rest, because the icon's own box drives it — 50% on that is an ellipse).
+      */
+      background: varDefault.tosiPocketHandleBg(
+        varDefault.tosiPocketBg(
+          'color-mix(in srgb, var(--tosi-bg, #fff) 85%, transparent)'
+        )
       ),
       backdropFilter: 'blur(12px)',
-      borderRadius: vars.spacing,
+      borderRadius: varDefault.tosiPocketHandleRadius(vars.spacing),
+      /*
+      An explicit SIZE, not `aspect-ratio`. The handle is a content-sized flex button, so
+      `aspect-ratio: 1` had no definite axis to work from and left it 26×29 — measured,
+      after trying it. Setting both dimensions is unambiguous, and `auto` keeps the
+      content-sized default for anyone who does not ask for a badge.
+      */
+      width: varDefault.tosiPocketHandleSize('auto'),
+      height: varDefault.tosiPocketHandleSize('auto'),
       transition: 'background 0.15s ease-out',
     },
     ':host [part="bar"]': {
@@ -313,8 +351,14 @@ export class TosiPocketBar extends WebComponent<PocketBarParts> {
 
   connectedCallback(): void {
     super.connectedCallback()
-    this.addEventListener('pointerenter', this.handlePointerEnter)
-    this.addEventListener('pointerleave', this.handlePointerLeave)
+    this.addEventListener(
+      'pointerenter',
+      this.handlePointerEnter as EventListener
+    )
+    this.addEventListener(
+      'pointerleave',
+      this.handlePointerLeave as EventListener
+    )
     this.addEventListener('focusin', this.handleFocusIn)
     this.addEventListener('focusout', this.handleFocusOut)
     document.addEventListener('pointerdown', this.handleOutsidePointer, true)

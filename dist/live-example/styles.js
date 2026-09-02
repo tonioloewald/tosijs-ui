@@ -104,7 +104,21 @@ export const liveExampleStyleSpec = {
         // Action controls are neutral (text colour); only the handle carries status.
         color: 'var(--text-color)',
         '--widget-color': 'var(--brand-color)',
+        /*
+        STATUS MOVED FROM THE ICON TO THE BADGE, because the owl is a colour icon.
+    
+        The handle used to be `<>`, a stroked glyph that took `--tosi-pocket-handle-color`
+        and so turned green or red with the test status. The owl is a multi-colour drawing
+        and ignores `color` entirely — switching to it would have silently dropped that
+        signal. The circular badge behind it carries the status now, which is more visible
+        than a thin glyph was, and the brand colour is the resting state.
+        */
         '--tosi-pocket-handle-color': 'var(--widget-color)',
+        '--tosi-pocket-handle-bg': 'var(--widget-color)',
+        // A circle needs both: 50% of a non-square box is an ellipse, and the handle is
+        // content-sized (26×29) unless given a size.
+        '--tosi-pocket-handle-radius': '50%',
+        '--tosi-pocket-handle-size': '32px',
     },
     // The doc site brand-colours bare <button>s by overriding --text-color ON the
     // button (a link affordance). Revert it here so the toolbar's icon buttons are

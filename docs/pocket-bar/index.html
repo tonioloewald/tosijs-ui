@@ -129,6 +129,11 @@ tint of <code>--tosi-bg</code>, so it follows the theme) so it stays legible ove
 <li><code>--tosi-pocket-bg</code> — the glass background (a translucent tint of <code>--tosi-bg</code>).</li>
 <li><code>--tosi-pocket-handle-color</code> — colour of just the collapsed handle icon, independent
 of the bar&#39;s controls (e.g. to flag status on the handle alone). Default <code>inherit</code>.</li>
+<li><code>--tosi-pocket-handle-bg</code> — the handle&#39;s chip, independent of the bar&#39;s glass. Defaults
+to <code>--tosi-pocket-bg</code>, so setting nothing looks exactly as before.</li>
+<li><code>--tosi-pocket-handle-radius</code> — default <code>--tosi-spacing</code>; <code>50%</code> for a badge.</li>
+<li><code>--tosi-pocket-handle-size</code> — default <code>auto</code> (content-sized). Set it to square the
+handle, which is what a <code>50%</code> radius needs to read as a circle rather than an ellipse.</li>
 </ul>
 <p>Slotted <code>&lt;button&gt;</code>s and <code>&lt;label&gt;</code>s get flat icon-button styling by default. A
 checkbox-as-icon — a <code>&lt;label&gt;</code> wrapping an <code>&lt;input type=checkbox&gt;</code> and an icon — greys

@@ -48,6 +48,8 @@ export declare class TosiPocketBar extends WebComponent<PocketBarParts> {
             background: string;
             backdropFilter: string;
             borderRadius: string;
+            width: string;
+            height: string;
             transition: string;
         };
         ':host [part="bar"]': {
