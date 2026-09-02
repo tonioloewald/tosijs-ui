@@ -653,26 +653,6 @@ live site** (independently useful). See roadmap "From book to live."
 - **Vector similarity search for doc-browser** - Replace current search with vector-based approach
 - **Focus management and focus-visible styling** - Improve keyboard navigation and focus indicators
 
-## Migrate off `bindText` / `bindList` (tosijs 1.8 deprecations) — [#126](https://github.com/tonioloewald/tosijs-ui/issues/126)
-
-Both warn on every doc page, and unlike [tosijs#31](https://github.com/tonioloewald/tosijs/issues/31)
-these ARE our call sites — 6 `bindText`, 2 `bindList`. The typings give the replacements:
-`bindText` → `{ textContent: proxy }`, `bindList` → `.tosi.listBinding()`.
-
-**Not a rename, which is why this is written down rather than done in passing.** The
-replacement takes a **proxy**; several of ours pass a relative PATH STRING resolved per list
-item (`bindText: '^.' + options.prop` in `data-table.ts:303`, `'^.color'` in
-`drag-and-drop.ts`). Those need the `listBinding((elements, item) => …)` callback form, where
-the item proxy is handed to the template — a real change to `<tosi-table>`'s row rendering,
-which is the most performance- and regression-sensitive code in the repo.
-
-The drop-in subset is the ones already passing a proxy (e.g. `bindText: item[col.prop]`,
-`data-table.ts:2179`). Splitting the two would leave the file in mixed idiom for no gain, so
-do it in one pass with the table's scroll/focus/pinning tests watched closely.
-
-CLAUDE.md documents the OLD form in "List Binding Syntax Sugar" — update it in the same pass,
-or the docs will teach the deprecated API.
-
 ## Localization
 
 - Adding automatic localization where appropriate:

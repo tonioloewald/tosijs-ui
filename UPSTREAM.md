@@ -611,9 +611,14 @@ xinPath, tosiPath, etc. are deprecated`, and nothing in the consumer's code caus
   Also flagged there: the runtime message calls `tosiValue` deprecated while `metadata.d.ts`
   marks only `xinValue`/`xinPath` and recommends `tosiValue`. We followed the typings.
 
-  **Ours to fix separately:** `bindText` and `bindList` warn too, and those ARE our call sites
-  — tracked as [#126](https://github.com/tonioloewald/tosijs-ui/issues/126). Not the same
-  problem, and not upstream's.
+  **`bindText`/`bindList` — RESOLVED by un-deprecating both**, which is the right call: they
+  are a pair (one supplies the per-item template, the other fills it), and `{ textContent:
+  proxy }` was never a replacement for the path form. Measured: `textContent: '^.name'` inside
+  a template renders the LITERAL string while `bindText: '^.name'` binds. Raised as
+  [tosijs#33](https://github.com/tonioloewald/tosijs/issues/33); our
+  [#126](https://github.com/tonioloewald/tosijs-ui/issues/126) is closed with nothing to
+  migrate. Not yet in a published version — 1.8.2 still marks both — so verify the console is
+  clean when we take the upgrade rather than assuming.
 
 ## haltija — page → agent push (filed 2026-08-26)
 

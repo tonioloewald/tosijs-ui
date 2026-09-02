@@ -1961,14 +1961,7 @@ export class TosiTable extends WebComponent {
             tabindex: -1,
             ariaColindex: String(colIndex + 1),
             style,
-            /*
-            `textContent` with a PROXY is the non-deprecated form. It only works here because
-            `item[col.prop]` is a proxy — the other `bindText` sites in this file pass a relative
-            path string (`'^.' + prop`) inside a list template, and `textContent` has no path form
-            (measured: it renders the literal `"^.name"`). Those stay on `bindText` until upstream
-            provides one; see tosijs-ui#126.
-            */
-            textContent: item[col.prop],
+            bindText: item[col.prop],
         });
     }
     /*
