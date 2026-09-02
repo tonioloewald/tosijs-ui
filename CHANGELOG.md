@@ -27,8 +27,9 @@ overlay — now let you **click a coloured line** to take that side, and mark **
 actually differ** more strongly than the line containing them. Dragging to select text does not
 change anything; those lines are also what you copy from.
 
-`<tosi-example>`'s widget bar **collapses after an action** instead of sitting over the thing you
-just did, its controls are ordered by reach (maximize nearest the handle), and the handle is the
+`<tosi-example>`'s widget bar used to stay **open after every action** — you clicked "maximize"
+and it sat there covering the corner of the thing you had just maximised, until you remembered
+to click the handle again. It now closes once you have actually done something, its controls are ordered by reach (maximize nearest the handle), and the handle is the
 tosi owl on a status-coloured badge — orange running, green passed, red failed.
 
 **Tapping that handle on a touch device no longer flashes the menu open and shut.** A touch
@@ -63,8 +64,12 @@ whatever holds it. Both produced the same workflow — kill the server, build, f
 it — and the second twice took a live tunnel offline, where the symptom is a page reporting
 "offline" with no hint which half died.
 
-The generated ePub is **reproducible** now, so a rebuild no longer dirties the tree: its
-`dcterms:modified` was a wall clock and its zip stored the just-written files' mtimes. After
+The generated ePub is **reproducible** now. It differed on every build, so it landed in every
+diff and made a clean tree impossible after building — two independent causes:
+`dcterms:modified` defaulted to `new Date()`, and the zip stored each file's mtime, and those
+files had just been written. Entry mtimes are normalised to a constant before zipping (zip has
+no flag for it; normalising the inputs is the standard fix), and the date is anchored to the
+last commit that touched `package.json` rather than to a clock or to HEAD. After
 commit-then-rebuild the tree carries one changed file (`docs/version.json`, which records the
 commit by design) where it used to carry 68 plus a binary.
 
@@ -91,10 +96,10 @@ everything except caps-lock.
   maximize sits nearest the handle and tests furthest.
 - The dead `.view-source` CSS went with the button it styled, rather than leaving rules for an
   element nothing creates.
-- **`bindText` in `<tosi-table>` briefly moved to `textContent` and moved back.** It was the one
-  call site holding a proxy — the only shape that replacement accepts — but with the deprecation
-  withdrawn upstream, keeping it would have left the file using two idioms for one job. Net
-  change: zero lines.
+- **`bindText` in `<tosi-table>` briefly moved to `textContent`, then reverted back to
+  `bindText`.** `data-table.ts:2179` holds a proxy, which is the only shape the replacement
+  accepts — but with the deprecation withdrawn upstream, keeping it would have left the file
+  using two idioms for the same job with nothing gained. Net change: zero lines.
 
 ## 1.12.8
 
