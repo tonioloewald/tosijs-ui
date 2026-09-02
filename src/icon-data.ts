@@ -530,6 +530,7 @@ export default {
     '<svg class="stroked" viewBox="0 0 24 24"><g><path d="M16.5,10.5 C16.5,10.5,7.5,10.5,7.5,10.5"/><path d="M14.5,6.5 C14.5,6.5,9.5,6.5,9.5,6.5"/><path d="M18.5,14.5 C18.5,14.5,5.5,14.5,5.5,14.5"/><path d="M20.5,18.5 C20.5,18.5,3.5,18.5,3.5,18.5"/></g></svg> ',
   sortDescending:
     '<svg class="stroked" viewBox="0 0 24 24"><g><path d="M16.5,14.5 C16.5,14.5,7.5,14.5,7.5,14.5"/><path d="M14.5,18.5 C14.5,18.5,9.5,18.5,9.5,18.5"/><path d="M18.5,10.5 C18.5,10.5,5.5,10.5,5.5,10.5"/><path d="M20.5,6.5 C20.5,6.5,3.5,6.5,3.5,6.5"/></g></svg> ',
+  tab: '<svg class="stroked" viewBox="0 0 24 24"><line x1="3" y1="12" x2="16" y2="12"></line><polyline points="10 6 16 12 10 18"></polyline><line x1="20" y1="5" x2="20" y2="19"></line></svg> ',
   cornerDownLeft: 'cornerDownRight0f',
   cornerLeftDown: 'cornerRightDown0f',
   cornerLeftUp: 'cornerRightUp0f',

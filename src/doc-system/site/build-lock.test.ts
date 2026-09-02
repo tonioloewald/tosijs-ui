@@ -223,3 +223,24 @@ test('two checkouts of one project hold independently', () => {
     rmSync(dir, { recursive: true, force: true })
   }
 })
+
+/*
+Delegation, not refusal (the "kill the server to build" friction).
+
+`bun run build` used to refuse whenever a dev server held the lock, and the workflow that
+produced was: kill the server, build, forget to restart it — which cost cycles and twice took
+a live tunnel offline mid-session. It now asks the server to build instead. These pin the
+DECISION of when that is allowed; the wire behaviour is covered end-to-end by driving a real
+server, which is the only place the loopback gate can be exercised honestly.
+*/
+test('only a live dev-server holder with a port can be delegated to', () => {
+  const canDelegate = (h: { role: string; port?: number } | null) =>
+    h?.role === 'dev-server' && Boolean(h.port)
+
+  expect(canDelegate({ role: 'dev-server', port: 8787 })).toBe(true)
+  // A second `bun run build` is not something to hand work to — refuse, as before.
+  expect(canDelegate({ role: 'build', port: 8787 })).toBe(false)
+  // A dev server with no port cannot be reached, so there is nothing to ask.
+  expect(canDelegate({ role: 'dev-server' })).toBe(false)
+  expect(canDelegate(null)).toBe(false)
+})

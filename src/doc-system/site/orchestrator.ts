@@ -226,6 +226,49 @@ produces identical bytes. Three candidates, and only the third terminates:
 Falls back to the HEAD commit time, then to a fixed epoch, so a consumer outside a git
 repo still gets something stable rather than a clock.
 */
+/**
+ * Ask a running dev server to build, and report what it said.
+ *
+ * `null` means "could not delegate" — the server did not answer, or answered something
+ * this does not understand — so the caller falls back to refusing rather than silently
+ * reporting a success nobody performed.
+ */
+async function delegateBuild(port: number): Promise<boolean | null> {
+  console.log(
+    `\n🔁 A dev server is building this tree — asking it to build instead of racing it.\n`
+  )
+  try {
+    const res = await fetch(`https://localhost:${port}/__build`, {
+      method: 'POST',
+      // Our own dev cert, and this never leaves loopback.
+      tls: { rejectUnauthorized: false },
+      // A cold build with the ePub and every bundle can take a while; a timeout here
+      // must not be mistaken for a failed build.
+      signal: AbortSignal.timeout(10 * 60 * 1000),
+    } as RequestInit)
+    if (res.status === 404 || res.status === 409) return null
+    const body = (await res.json().catch(() => ({}))) as {
+      ok?: boolean
+      detail?: string
+    }
+    if (body.ok === true) {
+      console.log('✅ dev server rebuilt this tree\n')
+      return true
+    }
+    console.error(
+      `🛑 the dev server's build FAILED${
+        body.detail ? `: ${body.detail}` : ''
+      }\n`
+    )
+    return false
+  } catch (err) {
+    console.error(
+      `   could not reach the dev server on ${port} (${(err as Error).message})`
+    )
+    return null
+  }
+}
+
 async function versionAnchoredDate(): Promise<string> {
   const iso = await Bun.$`git log -1 --format=%cI -- package.json`
     .quiet()
@@ -294,7 +337,26 @@ export async function buildSite(
       ? { ok: true, release: () => {} }
       : acquireBuildLock('.', 'build')
   if (!lock.ok) {
-    console.error(describeHolder(lock.holder!))
+    /*
+    DELEGATE to a running dev server instead of refusing.
+
+    The lock exists because two builders `rm -rf` one output tree. Refusing is correct as
+    far as it goes, but the workflow it produced was "kill the server, build, forget to
+    restart it" — which cost real cycles and, more than once, silently took a live tunnel
+    offline. The dev server is already the thing that builds this tree, so asking it for
+    one more build is strictly safer than a second process racing it, and it is what the
+    caller wanted.
+
+    Only a dev-server holder, and only when it answers on loopback. Anything else — a
+    second `bun run build`, or a dev server that is gone but left a lock — falls through
+    to the message, which is still the right answer there.
+    */
+    const holder = lock.holder!
+    if (holder.role === 'dev-server' && holder.port) {
+      const delegated = await delegateBuild(holder.port)
+      if (delegated !== null) return delegated
+    }
+    console.error(describeHolder(holder))
     return false
   }
   try {

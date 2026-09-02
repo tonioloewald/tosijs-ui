@@ -794,6 +794,15 @@ export async function devServer(
   clears it. Surfaced through the page's existing floating widget — see
   statusSnippet() below and the `__tosiDevStatus` reader in doc-browser.ts.
   */
+  /*
+  Set once the watch machinery exists, so `/__build` can reach it. The handler is
+  declared in an outer scope than `rebuild`, and a build endpoint that only works in
+  watch mode is correct: with no watcher there is no server to delegate to.
+  */
+  let requestBuild:
+    | (() => Promise<{ ok: boolean; detail?: string }>)
+    | undefined
+
   let buildStatus: {
     ok: boolean
     label?: string
@@ -1403,6 +1412,27 @@ export async function devServer(
 
     let building = false
     let pending = false
+    /*
+    Let an out-of-process build ASK this server to build, instead of being refused.
+
+    The build lock exists because two builders `rm -rf` the same output tree, so
+    `bun run build` refuses while a dev server is up — and the workflow that fell out of
+    that was "kill the server, build, forget to restart it". The server is already the
+    thing that builds this tree; having it do one more build is strictly safer than a
+    second process racing it, and it is what the caller wanted anyway.
+
+    Waiters resolve when the CURRENT build finishes. If a watch rebuild is already in
+    flight, the request joins it rather than queueing another.
+    */
+    const buildWaiters: Array<() => void> = []
+    const buildNow = async (): Promise<{ ok: boolean; detail?: string }> => {
+      const done = new Promise<void>((resolve) => buildWaiters.push(resolve))
+      void rebuild()
+      await done
+      return { ok: buildStatus.ok, detail: buildStatus.detail }
+    }
+    requestBuild = buildNow
+
     const rebuild = async () => {
       if (building) {
         pending = true
@@ -1422,6 +1452,8 @@ export async function devServer(
       } finally {
         building = false
         lastBuildEnd = Date.now()
+        // Release anyone waiting on /__build. Splice so a later build gets a fresh set.
+        buildWaiters.splice(0).forEach((resolve) => resolve())
         streak = immediate ? streak + 1 : 0
         touch()
         checkMemory()
@@ -1967,6 +1999,31 @@ export async function devServer(
       keyboard to hand out access. Reachable over the tunnel it would be a privilege
       escalation — a read-only visitor minting themselves a write session.
       */
+    /*
+      Build on request. Same gate as `/__devlink` — loopback and NOT via the tunnel: a
+      remote visitor triggering builds is a denial-of-service at best, and this runs the
+      project's own build code at worst.
+      */
+    if (reqPath === '/__build' && request.method === 'POST') {
+      const peer = srv?.requestIP?.(request)?.address
+      if (viaTunnel || !isLoopbackAddress(peer)) {
+        return new Response('not available', { status: 404 })
+      }
+      if (requestBuild === undefined) {
+        return new Response('no watcher — nothing to delegate to', {
+          status: 409,
+        })
+      }
+      const result = await requestBuild()
+      return new Response(JSON.stringify(result), {
+        status: result.ok ? 200 : 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+        },
+      })
+    }
+
     if (reqPath === '/__devlink') {
       const peer = srv?.requestIP?.(request)?.address
       if (viaTunnel || !isLoopbackAddress(peer)) {
