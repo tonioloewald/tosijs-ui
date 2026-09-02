@@ -41,6 +41,20 @@ again believing it had failed, and that second tap closed it for real.
 The floating `<> Source` chip that sat over the content is gone; Source is a submenu of the app
 menu beside Language and Color Theme, and it disappears entirely on a page with no source file.
 
+### New dev-server endpoint: `POST /__build` (loopback only)
+
+Called out under its own heading because it is a new HTTP surface on a tool people run all day.
+
+It exists so `bun run build` can ask a running dev server to build instead of refusing (below).
+It is gated exactly like `/__devlink`: **loopback and NOT via the tunnel**. Verified against a
+real server rather than reasoned about — an anonymous tunnel request gets `401` from the session
+gate, and an **authenticated** one gets `404` from this gate, which is the case that matters. A
+remote visitor triggering builds would be a denial of service at best, and runs the project's own
+build code at worst. `GET` does nothing.
+
+Nothing else about the build lock changed: two builders racing `rm -rf` on one output tree is
+still refused, and a stale lock still gets the old message.
+
 ### Builds stopped fighting the dev server
 
 `bun run build` with a dev server running now **asks it to build** instead of refusing, and
@@ -56,8 +70,31 @@ commit by design) where it used to carry 68 plus a binary.
 
 ### Icons
 
-`shift` (⇧), `tab` (⇥), and `fatArrowUp`/`Right`/`Down`/`Left` — one drawing, four rotations,
-via the same redirect mechanism the arrow and chevron families use.
+`shift` (⇧) — the standard shift-key outline, asked for by tosijs-3d and general enough to live
+here rather than in one consumer. `tab` (⇥) — an arrow pointing at a vertical bar, built on
+`arrowRight`'s proportions. And `fatArrowUp`/`fatArrowRight`/`fatArrowDown`/`fatArrowLeft`: one
+drawing and four rotations via the same redirect mechanism the arrow and chevron families use.
+
+The shift glyph is centred on 12,12 (apex y=4, base y=20; it was 3..20, half a pixel high) —
+invisible head-on, and what makes each rotation land square instead of drifting off-centre.
+
+With `delete`, `cornerDownLeft` and `command` already present, an on-screen keyboard now has
+everything except caps-lock.
+
+### Smaller things
+
+- **`<tosi-pocket-bar>` handles are brandable**: `--tosi-pocket-handle-bg`,
+  `--tosi-pocket-handle-radius` and `--tosi-pocket-handle-size`, all defaulting to exactly their
+  previous values, so nothing changes for an existing consumer. A circle needs all three —
+  `border-radius: 50%` on a content-sized flex button is an ellipse.
+- The live-example handle uses them for the owl badge, and its **controls were reordered** so
+  maximize sits nearest the handle and tests furthest.
+- The dead `.view-source` CSS went with the button it styled, rather than leaving rules for an
+  element nothing creates.
+- **`bindText` in `<tosi-table>` briefly moved to `textContent` and moved back.** It was the one
+  call site holding a proxy — the only shape that replacement accepts — but with the deprecation
+  withdrawn upstream, keeping it would have left the file using two idioms for one job. Net
+  change: zero lines.
 
 ## 1.12.8
 
