@@ -659,7 +659,21 @@ export async function devServer(
   // killStrayServer, whose `lsof -ti:0` matches sockets with an unbound port (system
   // daemons, on this machine). An env var set to empty is the most ordinary shell
   // accident there is; it must not become a kill list.
-  const PORT = Number(process.env.PORT || config.port || 8787)
+  /*
+  THE TEST LANE GETS ITS OWN PORT, so it cannot evict an interactive server.
+
+  `--test` used to default to 8787 like everything else, and then `killStrayServer(PORT)`
+  below reclaimed that port — by killing whatever was listening, which is routinely the
+  `bun start` someone is looking at. Twice in one session that silently took a live tunnel
+  offline: the tunnel survives, the dev server behind it does not, and the page just reports
+  "offline" with no hint which half died.
+
+  Two dev servers in one tree are already tolerated (see the lock warning above), so the
+  only real conflict was the PORT. Playwright solved this the same way with 8799; this is
+  8798. An explicit `PORT` or a configured `port` still wins, so nothing is taken away.
+  */
+  const DEFAULT_PORT = opts.test ? 8798 : 8787
+  const PORT = Number(process.env.PORT || config.port || DEFAULT_PORT)
 
   /*
   Own the output tree for this server's lifetime (#51).
