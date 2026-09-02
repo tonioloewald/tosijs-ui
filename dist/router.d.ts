@@ -18,7 +18,7 @@ export declare const router: {
     path: import("tosijs").BoxedScalar<string>;
     hash: import("tosijs").BoxedScalar<string>;
     pattern: import("tosijs").BoxedScalar<string>;
-} & import("tosijs").XinProps<{
+} & import("tosijs").TosiProps<{
     path: string;
     hash: string;
     pattern: string;

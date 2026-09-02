@@ -29,8 +29,8 @@ export declare function createDarkTheme(colors: ThemeColors): XinStyleSheet;
  * @param id - Optional ID for the style element (default: 'tosi-theme')
  */
 export declare function applyTheme(theme: XinStyleSheet, id?: string): void;
-export declare const baseTheme: XinStyleSheet;
-export declare const baseDarkTheme: XinStyleSheet;
+export declare const baseTheme: import("tosijs").TosiStyleSheet;
+export declare const baseDarkTheme: import("tosijs").TosiStyleSheet;
 /**
  * Creates CSS variable aliases for backward compatibility with --xin- prefix
  * Add this to your theme if migrating from older xinjs-ui versions

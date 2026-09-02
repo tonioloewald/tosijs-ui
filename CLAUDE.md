@@ -434,10 +434,15 @@ inferSchema, unenforcedKeywords })`, and all three matter (omitting the third ma
   the iife and to anything built from it.
 
   The peer floor **encodes specific
-  upstream fixes, not a date** — `^1.7.8` is required for tosijs#20 (the `this.parts` proxy
-  crossing into nested component instances, which made "edit" on one live example open the
-  editor in another) and tosijs#21 (change-handler value staleness). Raise it only with a
-  reason recorded here; `bun run test-consumer` asserts the devDep satisfies the declared
+  upstream fixes, not a date** — `^1.9.1` is required for the **agent-surface security fix**
+  (1.9.0) plus the runtime deprecation cleanup that lands only in 1.9.1: before it, every page
+  of every doc site logged deprecations a consumer could not act on — `xinValue…` from tosijs
+  reading its own deprecated proxy property (tosijs#31), and `bindText`, whose deprecation was
+  withdrawn as a category error (tosijs#33) but whose RUNTIME warning survived 1.9.0 while the
+  typings already said otherwise. Verified on a from-scratch build: zero console warnings.
+  Earlier floors: `^1.7.8` for tosijs#20 (the `this.parts` proxy crossing into nested component
+  instances, which made "edit" on one live example open the editor in another) and tosijs#21
+  (change-handler value staleness). Raise it only with a reason recorded here; `bun run test-consumer` asserts the devDep satisfies the declared
   peer range, so the two cannot drift apart silently (#57).
 
 - `marked`: Markdown parsing (peer dep). Range is `^16.4.2 || ^17.0.0 || ^18.0.0` — an

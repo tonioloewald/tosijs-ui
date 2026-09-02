@@ -1,5 +1,64 @@
 # Changelog
 
+## 1.12.9
+
+### tosijs `^1.9.1` — and a console with nothing in it
+
+The peer floor moves to `^1.9.1`, which carries tosijs's **agent-surface security fix** and the
+deprecation cleanup. Before it, every page of every doc site logged warnings a consumer could
+not act on:
+
+- `xinValue, tosiValue, xinPath…` — tosijs reading its own deprecated proxy property
+  ([tosijs#31](https://github.com/tonioloewald/tosijs/issues/31)). Nothing in any consumer's
+  code caused it.
+- `bindText` / `bindList` — deprecated in 1.8, then **withdrawn as a category error**
+  ([tosijs#33](https://github.com/tonioloewald/tosijs/issues/33)). They are a pair: `bindList`
+  supplies the per-item template and `bindText` fills it, and `{ textContent: proxy }` was
+  never a replacement for the path form (measured: `textContent: '^.name'` inside a template
+  renders the literal string, `bindText: '^.name'` binds). `bindText`'s runtime warning
+  outlived its typings by one release and is gone in 1.9.1.
+
+Verified on a from-scratch build rather than assumed: **zero console warnings.**
+
+### Live examples: pick a side by clicking, and see what actually changed
+
+Both diff views — the resolvable one and the read-only one behind `<tosi-code>`'s review
+overlay — now let you **click a coloured line** to take that side, and mark **the words that
+actually differ** more strongly than the line containing them. Dragging to select text does not
+change anything; those lines are also what you copy from.
+
+`<tosi-example>`'s widget bar **collapses after an action** instead of sitting over the thing you
+just did, its controls are ordered by reach (maximize nearest the handle), and the handle is the
+tosi owl on a status-coloured badge — orange running, green passed, red failed.
+
+**Tapping that handle on a touch device no longer flashes the menu open and shut.** A touch
+device has no hover, but the browser still fires `pointerenter`/`pointerleave` around a tap, so
+the hover _peek_ opened the bar and then undid itself before the click pinned it — you tapped
+again believing it had failed, and that second tap closed it for real.
+
+### Source moved into the app menu
+
+The floating `<> Source` chip that sat over the content is gone; Source is a submenu of the app
+menu beside Language and Color Theme, and it disappears entirely on a page with no source file.
+
+### Builds stopped fighting the dev server
+
+`bun run build` with a dev server running now **asks it to build** instead of refusing, and
+`bun run test-browser` uses its **own port (8798)** instead of reclaiming 8787 by killing
+whatever holds it. Both produced the same workflow — kill the server, build, forget to restart
+it — and the second twice took a live tunnel offline, where the symptom is a page reporting
+"offline" with no hint which half died.
+
+The generated ePub is **reproducible** now, so a rebuild no longer dirties the tree: its
+`dcterms:modified` was a wall clock and its zip stored the just-written files' mtimes. After
+commit-then-rebuild the tree carries one changed file (`docs/version.json`, which records the
+commit by design) where it used to carry 68 plus a binary.
+
+### Icons
+
+`shift` (⇧), `tab` (⇥), and `fatArrowUp`/`Right`/`Down`/`Left` — one drawing, four rotations,
+via the same redirect mechanism the arrow and chevron families use.
+
 ## 1.12.8
 
 ### Diffs: pick a side by clicking it, and see what actually changed

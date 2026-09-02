@@ -5,21 +5,21 @@ interface TranslationMap {
 }
 export declare const i18n: {
     locale: import("tosijs").BoxedScalar<string>;
-    locales: import("tosijs").BoxedScalar<string>[] & import("tosijs").XinProps<string[]> & import("tosijs").BoxedArrayProps<string>;
-    languages: import("tosijs").BoxedScalar<string>[] & import("tosijs").XinProps<string[]> & import("tosijs").BoxedArrayProps<string>;
-    emoji: import("tosijs").BoxedScalar<string>[] & import("tosijs").XinProps<string[]> & import("tosijs").BoxedArrayProps<string>;
+    locales: import("tosijs").BoxedScalar<string>[] & import("tosijs").TosiProps<string[]> & import("tosijs").BoxedArrayProps<string>;
+    languages: import("tosijs").BoxedScalar<string>[] & import("tosijs").TosiProps<string[]> & import("tosijs").BoxedArrayProps<string>;
+    emoji: import("tosijs").BoxedScalar<string>[] & import("tosijs").TosiProps<string[]> & import("tosijs").BoxedArrayProps<string>;
     stringMap: {
-        [x: string]: import("tosijs").BoxedScalar<string>[] & import("tosijs").XinProps<string[]> & import("tosijs").BoxedArrayProps<string>;
-    } & import("tosijs").XinProps<TranslationMap>;
+        [x: string]: import("tosijs").BoxedScalar<string>[] & import("tosijs").TosiProps<string[]> & import("tosijs").BoxedArrayProps<string>;
+    } & import("tosijs").TosiProps<TranslationMap>;
     localeOptions: ({
         icon: any;
         caption: import("tosijs").BoxedScalar<string>;
         value: import("tosijs").BoxedScalar<string>;
-    } & import("tosijs").XinProps<{
+    } & import("tosijs").TosiProps<{
         icon: any;
         caption: string;
         value: string;
-    }>)[] & import("tosijs").XinProps<{
+    }>)[] & import("tosijs").TosiProps<{
         icon: any;
         caption: string;
         value: string;
@@ -28,7 +28,7 @@ export declare const i18n: {
         caption: string;
         value: string;
     }>;
-} & import("tosijs").XinProps<{
+} & import("tosijs").TosiProps<{
     locale: string;
     locales: string[];
     languages: string[];

@@ -4,7 +4,7 @@ export declare const liveTheme: {
     background: import("tosijs").BoxedScalar<string>;
     text: import("tosijs").BoxedScalar<string>;
     dark: import("tosijs").BoxedScalar<boolean>;
-} & import("tosijs").XinProps<{
+} & import("tosijs").TosiProps<{
     accent: string;
     background: string;
     text: string;
