@@ -653,7 +653,7 @@ live site** (independently useful). See roadmap "From book to live."
 - **Vector similarity search for doc-browser** - Replace current search with vector-based approach
 - **Focus management and focus-visible styling** - Improve keyboard navigation and focus indicators
 
-## Migrate off `bindText` / `bindList` (tosijs 1.8 deprecations)
+## Migrate off `bindText` / `bindList` (tosijs 1.8 deprecations) — [#126](https://github.com/tonioloewald/tosijs-ui/issues/126)
 
 Both warn on every doc page, and unlike [tosijs#31](https://github.com/tonioloewald/tosijs/issues/31)
 these ARE our call sites — 6 `bindText`, 2 `bindList`. The typings give the replacements:

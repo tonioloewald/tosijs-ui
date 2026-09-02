@@ -612,7 +612,8 @@ xinPath, tosiPath, etc. are deprecated`, and nothing in the consumer's code caus
   marks only `xinValue`/`xinPath` and recommends `tosiValue`. We followed the typings.
 
   **Ours to fix separately:** `bindText` and `bindList` warn too, and those ARE our call sites
-  — see TODO.md. Not the same problem, and not upstream's.
+  — tracked as [#126](https://github.com/tonioloewald/tosijs-ui/issues/126). Not the same
+  problem, and not upstream's.
 
 ## haltija — page → agent push (filed 2026-08-26)
 
