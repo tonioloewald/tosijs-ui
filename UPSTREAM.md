@@ -596,6 +596,24 @@ npm is at 1.5.1).
   validation in a MINOR and broke published consumers on install. Relevant when we take a
   version floor: decide deliberately rather than inheriting whatever `tjs-lang` resolves.
 
+## tosijs — deprecation spam nobody can fix (filed 2026-09-02)
+
+- **[tosijs#31](https://github.com/tonioloewald/tosijs/issues/31) — tosijs warns about its
+  own deprecated proxy property.** Every page of every doc site logs `xinValue, tosiValue,
+xinPath, tosiPath, etc. are deprecated`, and nothing in the consumer's code causes it.
+
+  **Evidence, so this is not re-derived:** the stack's `Object.get` frame says it is a
+  property READ on a proxy, not a call to the standalone function — and all three frames map
+  through the sourcemap into `tosijs/dist/module.js`. Ruled out on our side: zero `xinValue`
+  in `src`, `demo/src` or the extracted corpus; and measured in-page, `tosiValue(proxy)`,
+  `.value` and `.tosi.value` are all SILENT while only `xinValue(proxy)` warns.
+
+  Also flagged there: the runtime message calls `tosiValue` deprecated while `metadata.d.ts`
+  marks only `xinValue`/`xinPath` and recommends `tosiValue`. We followed the typings.
+
+  **Ours to fix separately:** `bindText` and `bindList` warn too, and those ARE our call sites
+  — see TODO.md. Not the same problem, and not upstream's.
+
 ## haltija — page → agent push (filed 2026-08-26)
 
 - **[haltija#37](https://github.com/tonioloewald/haltija/issues/37) — no page→agent push.**
