@@ -525,7 +525,7 @@ export default {
   resize:
     '<svg class="stroked" version="1.1" viewBox="0, 0, 24, 24"><g><path d="M9,3 L3,3 L3,9"/><path d="M15,21 L21,21 L21,15"/><path d="M3,3 L10,10"/><path d="M21,21 L14,14"/></g></svg> ',
   shift:
-    '<svg class="stroked" viewBox="0 0 24 24"><path d="M12 3 4 11h4v9h8v-9h4z"></path></svg> ',
+    '<svg class="stroked" viewBox="0 0 24 24"><path d="M12 4 4 12h4v8h8v-8h4z"></path></svg> ',
   sortAscending:
     '<svg class="stroked" viewBox="0 0 24 24"><g><path d="M16.5,10.5 C16.5,10.5,7.5,10.5,7.5,10.5"/><path d="M14.5,6.5 C14.5,6.5,9.5,6.5,9.5,6.5"/><path d="M18.5,14.5 C18.5,14.5,5.5,14.5,5.5,14.5"/><path d="M20.5,18.5 C20.5,18.5,3.5,18.5,3.5,18.5"/></g></svg> ',
   sortDescending:
@@ -554,4 +554,8 @@ export default {
   arrowDownRight: 'arrowUpRight90r',
   arrowDownLeft: 'arrowUpRight180r',
   arrowUpLeft: 'arrowUpRight270r',
+  fatArrowUp: 'shift',
+  fatArrowRight: 'shift90r',
+  fatArrowDown: 'shift180r',
+  fatArrowLeft: 'shift270r',
 } as IconData

@@ -334,6 +334,17 @@ const manualRedirects = {
   arrowDownRight: 'arrowUpRight90r',
   arrowDownLeft: 'arrowUpRight180r',
   arrowUpLeft: 'arrowUpRight270r',
+
+  // `shift` is the ⇧ key glyph and points UP, which is the wrong base for the
+  // `up-down-right-left/` folder convention (that expects a RIGHT-pointing base).
+  // Rather than redraw it sideways and make the keyboard glyph a rotation of an
+  // arrow nobody asked for, the four directions are declared here — the escape
+  // hatch this block exists for. The drawing is centred on 12,12 so each rotation
+  // lands square.
+  fatArrowUp: 'shift',
+  fatArrowRight: 'shift90r',
+  fatArrowDown: 'shift180r',
+  fatArrowLeft: 'shift270r',
 }
 Object.assign(iconRedirects, manualRedirects)
 

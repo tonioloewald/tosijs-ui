@@ -22,6 +22,29 @@ describe('icons', () => {
       expect(checkIcon.tagName.toLowerCase()).toBe('svg')
     })
 
+    test('the fatArrow family resolves through shift, in all four directions', () => {
+      /*
+      These are redirects, not drawings: `fatArrowUp` is `shift`, and the other three are
+      rotations of it. A redirect chain fails SILENTLY — an unknown name falls back to a
+      square rather than throwing — so renaming `shift` would leave four icons quietly
+      rendering a box. Asserting each one produces a real path is what makes that loud.
+      */
+      for (const name of [
+        'shift',
+        'fatArrowUp',
+        'fatArrowRight',
+        'fatArrowDown',
+        'fatArrowLeft',
+      ]) {
+        const svg = (icons as unknown as Record<string, () => SVGElement>)[
+          name
+        ]()
+        expect(svg).toBeInstanceOf(SVGElement)
+        // The fallback square has no <path>; the shift glyph is a single path.
+        expect(svg.querySelector('path')).not.toBeNull()
+      }
+    })
+
     test('falls back to square for unknown icons (no throw)', () => {
       // The proxy warns but doesn't throw - it falls back to square icon
       const unknownIcon = (
