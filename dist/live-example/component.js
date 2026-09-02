@@ -988,14 +988,12 @@ export class LiveExample extends Component {
         // test-status colour (via --widget-color). Pinned top-right, growing left, so
         // it never covers the editor in side-by-side mode.
         /*
-        ORDER IS REVERSED from reading order, deliberately.
+        ORDERED BY REACH, and the order below IS the left-to-right order.
   
-        The bar grows WEST from a handle pinned top-right, so DOM order lays out left to
-        right and the LAST child ends up nearest the handle — which is the shortest travel
-        for the pointer that just opened it. Measured: handle at x=853, children at 694,
-        738, 781, 825. So the list below is written farthest-first, and reads
-        maximize → edit → edit-in-new-window → tests from the far end, i.e. tests is
-        closest to hand and maximize is furthest.
+        The bar grows WEST from a handle pinned top-right, so the LAST child sits nearest
+        the handle — the shortest travel for the pointer that just opened it. Maximize goes
+        there because it is the one you reach for repeatedly while reading; tests, which you
+        toggle once, sits furthest. Measured: handle at x=853, children at 694/738/781/825.
   
         The owl rather than `<>`: the handle is the one piece of this UI on every example
         of every doc site built with this, which makes it the one place branding costs
@@ -1006,17 +1004,17 @@ export class LiveExample extends Component {
             icon: 'tosi',
             direction: 'w',
             onClick: this.collapseWidgetsAfterAction,
-        }, button({ title: 'toggle preview size', onClick: this.toggleMaximize }, 
-        // Both icons render; the existing .hide-if-maximized / .show-if-maximized
-        // CSS shows the right one for the current state — no JS icon swap.
-        icons.maximize({ class: 'hide-if-maximized' }), icons.minimize({ class: 'show-if-maximized' })), button({ title: 'view/edit code', onClick: this.showCode }, icons.edit2()), button({
-            title: 'view/edit code in a new window',
-            onClick: this.openEditorWindow,
-        }, icons.edit()), label({ class: 'tests-toggle', title: 'run tests' }, input({
+        }, label({ class: 'tests-toggle', title: 'run tests' }, input({
             type: 'checkbox',
             part: 'testsCheckbox',
             onChange: this.handleTestsToggle,
-        }), icons.check()))),
+        }), icons.check()), button({
+            title: 'view/edit code in a new window',
+            onClick: this.openEditorWindow,
+        }, icons.edit()), button({ title: 'view/edit code', onClick: this.showCode }, icons.edit2()), button({ title: 'toggle preview size', onClick: this.toggleMaximize }, 
+        // Both icons render; the existing .hide-if-maximized / .show-if-maximized
+        // CSS shows the right one for the current state — no JS icon swap.
+        icons.maximize({ class: 'hide-if-maximized' }), icons.minimize({ class: 'show-if-maximized' })))),
         // Empty until first showCode. buildEditorPanel() fills it lazily so a reader
         // who never opens a panel never constructs a <tosi-code> (and never pulls the
         // CodeMirror chunk). See ensureEditors().
