@@ -102,11 +102,22 @@ test('a nested <tosi-doc-system> demo does not hijack the host browser state', a
   await page.waitForFunction(
     () => document.querySelectorAll('tosi-doc-system').length >= 2
   )
-  // Open the OUTER browser's Source menu → Edit page source.
+  /*
+  Open the OUTER browser's Source menu → Edit page source.
+
+  This used to click a floating `.view-source` chip; that button is gone and Source is a
+  submenu of the app menu now. The OUTER one is what matters — the nested demo has its own
+  header — so target the app-menu button in the page header (top of the viewport) rather
+  than the first match in the DOM.
+  */
   await page.evaluate(() => {
-    const outer = document.querySelector('.view-source') as HTMLElement
-    outer.click()
+    const header = [...document.querySelectorAll('button')].filter((b) => {
+      const r = b.getBoundingClientRect()
+      return r.top < 60 && r.width > 0
+    })
+    header[header.length - 1].click()
   })
+  await page.getByText('Source', { exact: true }).first().click()
   await page.getByText('Edit page source', { exact: true }).last().click()
 
   // The editor must hold THIS page's markdown, not the nested demo's data-table.

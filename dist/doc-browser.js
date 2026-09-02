@@ -190,8 +190,6 @@ const testTextColor = {
 };
 // Test indicator styles - widget inherits button styles from base stylesheet
 const testIndicatorStyleSpec = {
-    '.view-source': { opacity: '0.9' },
-    '.view-source:hover': { opacity: '1' },
     '@keyframes test-pulse': {
         '0%, 100%': { opacity: '1' },
         '50%': { opacity: '0.7' },
@@ -1116,10 +1114,18 @@ export function createDocBrowser(options) {
         editUI = { editor, doc, view: 'edit', original: content };
         setSourceView('edit');
     };
-    const openSourceMenu = (target) => {
+    /*
+    The Source items, separated from the popup that used to be their only home.
+  
+    They now hang off the app menu as a submenu, so this returns the ITEMS and lets the
+    caller decide where they appear — an empty array when the current doc has no source
+    file, which is how the host knows to omit the submenu entirely rather than showing an
+    empty one.
+    */
+    const sourceMenuItems = () => {
         const doc = docs.find((d) => String(d.filename) === String(app.currentDoc.filename));
-        if (!doc)
-            return;
+        if (!doc || !doc.path)
+            return [];
         const fileName = (path) => path.split('/').pop() || path;
         // While editing, the Source menu becomes the editor's controls (no separate
         // toolbar). Otherwise it offers entry points: edit, view on GitHub, download.
@@ -1189,13 +1195,7 @@ export function createDocBrowser(options) {
                     }),
                 },
             ];
-        popMenu({
-            target,
-            // The trigger is position:fixed at the top-right; `auto` placement opens
-            // upward into zero space and collapses the menu, so open below-left.
-            position: 'sw',
-            menuItems,
-        });
+        return menuItems;
     };
     // ── Hierarchical nav (path routing) ───────────────────────────────────────
     // Build nested <details> from the doc tree; current-highlight, test status,
@@ -1365,47 +1365,7 @@ export function createDocBrowser(options) {
             overflowY: 'scroll',
             height: '100%',
         },
-    }, button({
-        class: 'view-source',
-        style: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            position: 'fixed',
-            top: 'calc(var(--xin-header-height, 60px) + 5px)',
-            right: '5px',
-            // Above the code editor (which fills the content area); below the
-            // popped menu (z 1002).
-            zIndex: '100',
-            fontSize: '0.875em',
-            color: 'var(--brand-color, inherit)',
-            // Solid, theme-aware chip so it stays legible over the editor.
-            background: 'var(--background, white)',
-            border: 'none',
-            borderRadius: '4px',
-            padding: '3px 8px',
-            boxShadow: '0 1px 4px #0003',
-            cursor: 'pointer',
-            transition: 'opacity 0.2s ease',
-        },
-        // Opacity + :hover live in CSS (.view-source) — a JS hover handler
-        // here would fade the delegation root (the whole page), not the button.
-        onClick(event) {
-            // tosijs delegates clicks, so event.currentTarget is the delegation
-            // root, not the button — resolve the real trigger for menu anchoring.
-            const btn = event.target.closest('.view-source');
-            if (btn)
-                openSourceMenu(btn);
-        },
-        bind: {
-            value: app.currentDoc,
-            binding(element, doc) {
-                // Show when there's a source file to edit/view (any doc with a
-                // path); the menu handles dev-vs-GitHub availability per item.
-                element.style.display = doc.path ? 'flex' : 'none';
-            },
-        },
-    }, icons.code({ style: { _xinIconSize: 16 } }), 'Source'), docContent)));
+    }, docContent)));
     // Render the landing doc (adopts pre-rendered HTML when hydrating).
     showDoc(currentDoc);
     // Inject test indicator styles
@@ -1813,6 +1773,19 @@ export function createDocBrowser(options) {
         startBackgroundTests();
         testManager.enabled.observe(startBackgroundTests);
     }
+    /*
+    The host assembles the Source submenu from these.
+  
+    It used to be a floating `<> Source` chip pinned over the content — a second, separate
+    affordance for something the app menu was already the home of. Handing the ITEMS to the
+    host instead means one menu, and the host decides placement; an empty array (a doc with
+    no source file) tells it to omit the submenu rather than show an empty one.
+  
+    Same seam `navigate` uses below: a property on the returned element, because the host is
+    a different component that already holds this reference.
+    */
+    ;
+    container.sourceMenuItems = sourceMenuItems;
     // Memory routing: let the host drive navigation programmatically (by slug) and
     // read the current slug back, so the browser can live in a floating panel etc.
     if (memoryRouting) {

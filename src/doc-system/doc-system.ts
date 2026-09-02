@@ -400,6 +400,24 @@ export class TosiDocSystem extends Component {
               })),
             })
           }
+          /*
+          The Source submenu, contributed by the doc browser.
+
+          It replaces a floating `<> Source` chip that sat over the content — a second
+          affordance for something this menu was already the natural home of. The browser
+          returns an empty array when the current doc has no source file, and an empty
+          submenu is worse than none, so this omits it entirely in that case.
+          */
+          const sourceItems = (this.browser as any)?.sourceMenuItems?.() ?? []
+          if (sourceItems.length > 0) {
+            menuItems.push({
+              caption: 'Source',
+              icon: 'code',
+              menuItems: sourceItems,
+            })
+            menuItems.push(null)
+          }
+
           menuItems.push({
             caption: 'Color Theme',
             icon: 'rgb',
