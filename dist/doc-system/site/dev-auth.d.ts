@@ -222,6 +222,7 @@ export declare function sessionCookie(token: string, maxAgeMs?: number): string;
  */
 export declare function urlWithoutToken(rawUrl: string, param: string): string;
 export declare function isSameOriginRequest(request: {
+    url?: string;
     headers: {
         get(name: string): string | null;
     };

@@ -1,4 +1,4 @@
-import { test, expect } from 'bun:test'
+import { test, expect, describe } from 'bun:test'
 import {
   haltijaLoaderSnippet,
   haltijaTunnelLoaderSnippet,
@@ -7,6 +7,7 @@ import {
   isLoopbackAddress,
   resolveIdleMs,
   resolveLimitMb,
+  nextBuildStep,
 } from './dev-server.js'
 
 const HOUR = 3600_000
@@ -504,4 +505,51 @@ test('#96: relative roots resolve before comparison', () => {
   // guarantee about text rather than about the filesystem.
   expect(isUnderRoot('.', './docs/index.html')).toBe(true)
   expect(isUnderRoot('./docs', './docs/../package.json')).toBe(false)
+})
+
+describe('nextBuildStep — the delegated-build queue (the loop that spun forever)', () => {
+  /*
+  The bug this exists to prevent: the first version called `rebuild()` on EVERY pass. When a
+  watch rebuild was already in flight, `rebuild()` only set `pending`, so the next pass failed
+  the settled check and re-armed again — an unbounded build storm that ended when the loop
+  detector called `process.exit(1)` on the developer's dev server, blaming their watcher config.
+
+  It hid because it is correct when idle (one pass, one build) and only diverges under
+  contention — which is the exact case delegation exists for. Zero tests reached it.
+  */
+  const step = (
+    attempt: number,
+    building: boolean,
+    pending: boolean,
+    maxAttempts = 5
+  ) => nextBuildStep({ attempt, building, pending, maxAttempts })
+
+  test('starts exactly one build, on the first pass only', () => {
+    expect(step(0, false, false)).toBe('start')
+    // Idle: the build we started has finished and nothing queued behind it.
+    expect(step(1, false, false)).toBe('settled')
+  })
+
+  test('CONTENDED: waits instead of re-arming — never "start" after the first pass', () => {
+    // A build is running (ours, or a watcher's) with another queued behind it.
+    expect(step(1, true, true)).toBe('wait')
+    expect(step(2, true, true)).toBe('wait')
+    expect(step(3, false, true)).toBe('wait')
+    // The regression in one assertion: a second 'start' is what caused the storm.
+    for (let attempt = 1; attempt < 5; attempt += 1) {
+      expect(step(attempt, true, true)).not.toBe('start')
+    }
+  })
+
+  test('gives up with a message rather than parking forever', () => {
+    // A watcher that keeps firing must degrade to a sentence, not an unbounded wait.
+    expect(step(5, true, true)).toBe('gave-up')
+    expect(step(9, true, true)).toBe('gave-up')
+  })
+
+  test('settles as soon as the queue is empty, whatever the attempt', () => {
+    expect(step(4, false, false)).toBe('settled')
+    // Settled wins over gave-up: reaching the cap on the very pass that quiesces is a success.
+    expect(step(5, false, false)).toBe('settled')
+  })
 })

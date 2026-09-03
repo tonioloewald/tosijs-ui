@@ -505,15 +505,49 @@ breaks the tunnel case, where the widget legitimately calls :8700 from a page on
 path is gated by a session cookie instead.
 */
 export function isSameOriginRequest(request) {
+    /*
+    TWO signals, because neither alone covers the population.
+  
+    `Sec-Fetch-Site` is the strong one — unforgeable by script, sent on every request by any
+    engine that has it. But Safari < 16.4, Firefox < 90 and older WKWebViews send NO fetch
+    metadata, and an earlier version of this function allowed absence outright with a comment
+    claiming "a browser always sends it". That was false for exactly the browsers a developer
+    might have open, leaving them in the pre-fix position: a forged simple request writing
+    `.git/hooks/pre-commit`.
+  
+    `Origin` closes that gap, because those same browsers DO send it on cross-origin POSTs. So:
+    refuse a cross-site `Sec-Fetch-Site`, and independently refuse an `Origin` that is not ours.
+  
+    Absence of BOTH is still allowed, and that is deliberate rather than an oversight: our own
+    CLI and `curl` send neither, and the threat model here is a browser being induced to make
+    the request. A request carrying no browser fingerprint at all is not that.
+    */
     const site = request.headers.get('sec-fetch-site');
     if (site !== null && site !== 'same-origin' && site !== 'none')
         return false;
-    const mode = request.headers.get('sec-fetch-mode');
-    // `no-cors` is how a forged simple request is made; a real same-origin fetch is `cors`,
-    // `navigate` or `same-origin`. Only refuse when the browser told us it was no-cors AND
-    // gave us no site to check.
-    if (mode === 'no-cors' && site === null)
-        return false;
+    const origin = request.headers.get('origin');
+    if (origin !== null && origin !== 'null') {
+        // Compare against the origin the request was actually addressed to, which is what the
+        // browser would have had to match. `Host` is what the client dialled.
+        const host = request.headers.get('host');
+        let ours = null;
+        try {
+            ours = request.url !== undefined ? new URL(request.url).host : null;
+        }
+        catch {
+            ours = null;
+        }
+        const expected = ours ?? host;
+        let originHost = null;
+        try {
+            originHost = new URL(origin).host;
+        }
+        catch {
+            return false; // an Origin we cannot parse is not one we can accept
+        }
+        if (expected === null || originHost !== expected)
+            return false;
+    }
     return true;
 }
 export function mayWriteSource(opts) {

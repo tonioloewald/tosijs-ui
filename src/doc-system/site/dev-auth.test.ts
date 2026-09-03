@@ -1006,20 +1006,40 @@ describe('isSameOriginRequest — CSRF gate for the loopback path (#90)', () => 
     expect(isSameOriginRequest(req({ 'sec-fetch-site': 'none' }))).toBe(true)
   })
 
-  test('allows a non-browser caller, which sends no fetch metadata at all', () => {
+  test('allows a caller carrying no browser fingerprint at all (CLI, curl)', () => {
     /*
-    Load-bearing: our own CLI delegating a build, and curl, send neither header. A rule that
-    required the header would fail closed against every legitimate tool while doing nothing
-    extra for security — the threat is a BROWSER being induced to make the request, and a
-    browser always sends it.
+    Load-bearing: our own CLI delegating a build, and curl, send neither header. A rule
+    requiring fetch metadata would fail closed against every legitimate tool.
+
+    The earlier version of this comment claimed "a browser always sends it". That was FALSE —
+    Safari < 16.4, Firefox < 90 and older WKWebViews send no fetch metadata, and the review
+    caught that it left exactly those browsers in the pre-fix position. Hence the Origin cases
+    below: those browsers DO send Origin, so what is allowed is the absence of BOTH signals,
+    not of one.
     */
     expect(isSameOriginRequest(req({}))).toBe(true)
   })
 
-  test('refuses a no-cors request that declines to say where it came from', () => {
-    expect(isSameOriginRequest(req({ 'sec-fetch-mode': 'no-cors' }))).toBe(
-      false
-    )
+  test('refuses a cross-origin POST with NO fetch metadata (the old-browser gap)', () => {
+    expect(
+      isSameOriginRequest(
+        req({ origin: 'https://evil.example', host: 'localhost:8787' })
+      )
+    ).toBe(false)
+  })
+
+  test('allows a same-origin POST identified only by Origin', () => {
+    expect(
+      isSameOriginRequest(
+        req({ origin: 'https://localhost:8787', host: 'localhost:8787' })
+      )
+    ).toBe(true)
+  })
+
+  test('refuses an Origin it cannot parse rather than shrugging', () => {
+    expect(
+      isSameOriginRequest(req({ origin: 'not a url', host: 'localhost:8787' }))
+    ).toBe(false)
   })
 
   test('FAILS CLOSED on an odd or unrecognised site value', () => {

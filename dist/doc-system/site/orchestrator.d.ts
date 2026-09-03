@@ -17,6 +17,7 @@ export declare function canDelegateTo(holder: {
     role?: string;
     port?: number;
 }): boolean;
+export declare function versionAnchoredDate(version: string, override?: string): string;
 export declare function buildSite(config: SiteConfig, opts?: {
     skipAudit?: boolean;
     lock?: boolean;

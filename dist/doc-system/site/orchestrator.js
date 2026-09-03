@@ -290,18 +290,37 @@ is identical for every build of a version, and it changes exactly when a release
 mapping is arbitrary but must be STABLE and monotonic — the version's own digits, as a date —
 so two builds of 1.13.0 agree and 1.13.1 differs.
 */
-function versionAnchoredDate(version) {
+export function versionAnchoredDate(version, override) {
+    /*
+    An explicit `epub.modified` always wins — a real publication date beats anything synthetic,
+    and without this an adopter had no way to set one.
+    */
+    if (override !== undefined && !Number.isNaN(Date.parse(override))) {
+        return new Date(override).toISOString().replace(/\.\d+Z$/, 'Z');
+    }
     const [major = 0, minor = 0, patch = 0] = version
         .split('-')[0]
         .split('.')
         .map((n) => Number(n) || 0);
     /*
-    A synthetic but deterministic instant. Epoch + (major, minor, patch) as days/hours/minutes
-    keeps it inside a sane range, strictly increasing with the version, and free of any clock.
-    Readers see a plausible date; what matters is that it never changes for a given version.
+    Pack the version into MINUTES so the components cannot overlap.
+  
+    The first attempt used days/days/hours, which wrapped: `1.13.24` and `1.14.0` produced the
+    SAME instant, `1.13.25` came out later than `1.14.0`, and `2.0.0` landed before `1.400.0` —
+    while the docblock claimed the mapping was "strictly increasing". Multiplying a positional
+    encoding by a fixed unit cannot collide, because the encoding is just a number.
+  
+    It is still synthetic, and it is not a real date. That is the tradeoff for a reproducible
+    build with no clock in it; `epub.modified` above is the exit for anyone who wants the truth.
     */
-    const ms = Date.UTC(2020, 0, 1) + major * 365 * 864e5 + minor * 864e5 + patch * 36e5;
-    return new Date(ms).toISOString().replace(/\.\d+Z$/, 'Z');
+    let ordinal = major * 1_000_000 + minor * 1_000 + patch;
+    // A prerelease is a DIFFERENT publication from its final, so it must not share an instant.
+    // One minute earlier also sorts it correctly: 1.13.0-beta.1 precedes 1.13.0.
+    if (version.includes('-'))
+        ordinal -= 1;
+    return new Date(Date.UTC(2020, 0, 1) + ordinal * 60_000)
+        .toISOString()
+        .replace(/\.\d+Z$/, 'Z');
 }
 export async function buildSite(config, opts = {}) {
     // Look at the machine before adding load to it. Runs on every build, including each
@@ -1114,7 +1133,7 @@ export async function buildSite(config, opts = {}) {
                         modified: versionAnchoredDate((await Bun.file(`${process.cwd()}/package.json`)
                             .json()
                             .then((p) => p.version)
-                            .catch(() => undefined)) ?? '0.0.0'),
+                            .catch(() => undefined)) ?? '0.0.0', epubOpts.modified),
                         ...epubOpts,
                         bookTarget,
                     });

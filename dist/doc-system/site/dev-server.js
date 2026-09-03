@@ -155,6 +155,32 @@ overrides everything.
  * `DEV_REQUEST_TIMEOUT_SECONDS`; Bun caps this at 255.
  */
 const DEV_IDLE_TIMEOUT_SECONDS = Math.min(255, Number(process.env.DEV_REQUEST_TIMEOUT_SECONDS) || 120);
+/*
+How many settle-waits a delegated build will sit through before giving up.
+
+A watcher that keeps firing (a build writing a file it also watches, a `prebuild` copying into
+`staticDirs`) would otherwise keep the caller parked indefinitely. Five is generous — each pass
+is a whole build — and failing with a sentence beats hanging.
+*/
+const MAX_SETTLE_ATTEMPTS = 5;
+/**
+ * What a delegated build should do next, given the queue's state.
+ *
+ * Extracted and exported because the loop that used to be inline shipped an unbounded rebuild
+ * storm — `rebuild()` on every iteration re-queued the very build being waited on — and no test
+ * could reach it. This is the whole decision, and it is pure.
+ */
+export function nextBuildStep(state) {
+    // Nothing running and nothing queued: the tree reflects the latest change.
+    if (state.attempt > 0 && !state.building && !state.pending)
+        return 'settled';
+    // Kick exactly one build, on the first pass only.
+    if (state.attempt === 0)
+        return 'start';
+    if (state.attempt >= state.maxAttempts)
+        return 'gave-up';
+    return 'wait';
+}
 const HALTIJA_PKG = process.env.HALTIJA_VERSION ?? 'haltija@^1.12.6';
 /*
 Which haltija do we actually run, and can we say so out loud?
@@ -1258,12 +1284,29 @@ export async function devServer(config, opts = {}) {
             Waiting for quiescence is what the caller actually asked: "the tree reflects the latest
             change." The loop re-arms because a watcher event during our build queues another.
             */
-            for (;;) {
-                const done = new Promise((resolve) => buildWaiters.push(resolve));
-                void rebuild();
-                await done;
-                if (!building && !pending)
+            for (let attempt = 0;; attempt += 1) {
+                const step = nextBuildStep({
+                    attempt,
+                    building,
+                    pending,
+                    maxAttempts: MAX_SETTLE_ATTEMPTS,
+                });
+                if (step === 'settled')
                     break;
+                if (step === 'gave-up') {
+                    return {
+                        ok: false,
+                        detail: 'the tree never settled — something is rewriting watched files faster than it can build',
+                    };
+                }
+                const done = new Promise((resolve) => buildWaiters.push(resolve));
+                // START ONCE. Re-arming on every pass is what made this spin: `rebuild()` sets
+                // `pending` when a build is in flight, which guarantees the next pass fails the
+                // settled check, which re-armed again — an unbounded build storm ending only at the
+                // loop detector's process.exit(1). After the first, we just park and wait.
+                if (step === 'start')
+                    void rebuild();
+                await done;
             }
             return { ok: buildStatus.ok, detail: buildStatus.detail };
         };
@@ -1381,6 +1424,17 @@ export async function devServer(config, opts = {}) {
     omit) any header. The previous design inferred "local" from the ABSENCE of
     X-Forwarded-*, which fails OPEN for every forwarder that doesn't set it.
     */
+    /*
+    ONE CSRF gate for every state-changing endpoint (#90, MAJ-3).
+  
+    The first fix spliced `isSameOriginRequest(request)` into two call sites by hand and missed
+    `POST /report` entirely — and the next endpoint added would inherit nothing, because there
+    was nothing to inherit. A named predicate is the thing a new handler can be pointed at.
+  
+    Non-tunnel only: the tunnel path is legitimately cross-site (a page on :3000 calling :8700)
+    and is gated by a session cookie instead.
+    */
+    const csrfOk = (request, viaTunnel) => viaTunnel || isSameOriginRequest(request);
     const handleRequest = async (request, srv, viaTunnel) => {
         /*
         A REQUEST is activity. This was lost in the two-listener refactor, leaving the only
@@ -1641,7 +1695,11 @@ export async function devServer(config, opts = {}) {
         */
         if (request.method === 'POST' && reqPath === '/report') {
             const peer = srv?.requestIP?.(request)?.address;
-            if (viaTunnel || !isLoopbackAddress(peer)) {
+            // Same CSRF gate as the other state-changing endpoints — this one was missed on the
+            // first pass, which is the argument for a named predicate over an inline term.
+            if (viaTunnel ||
+                !isLoopbackAddress(peer) ||
+                !csrfOk(request, viaTunnel)) {
                 console.warn(`⚠️  refused POST /report from ${peer ?? 'unknown'} — test results are local-only.`);
                 return new Response('not authorized', { status: 403 });
             }
@@ -1754,7 +1812,7 @@ export async function devServer(config, opts = {}) {
                 Non-tunnel only: the tunnel path is legitimately cross-site and is gated by the
                 session cookie instead.
                 */
-                (viaTunnel || isSameOriginRequest(request));
+                csrfOk(request, viaTunnel);
             if (!authorized) {
                 console.warn(`⚠️  refused ${request.method} /__docstore/source from ${peer ?? 'unknown'} — ` + `no session (use \`${TUNNEL_LINK_CMD}\` for an edit link).`);
                 return new Response('not authorized to edit source', {
@@ -1784,7 +1842,7 @@ export async function devServer(config, opts = {}) {
             // forged simple request from any page would be a denial of service at best.
             if (viaTunnel ||
                 !isLoopbackAddress(peer) ||
-                !isSameOriginRequest(request)) {
+                !csrfOk(request, viaTunnel)) {
                 return new Response('not available', { status: 404 });
             }
             if (requestBuild === undefined) {

@@ -64,8 +64,12 @@ Any page you happened to visit while `bun start` was running could write any fil
 root, `.git/hooks/*` included — code execution at your next git operation
 ([#90](https://github.com/tonioloewald/tosijs-ui/issues/90)).
 
-Both now also require the request to be same-origin, decided by fetch metadata
-(`Sec-Fetch-Site`), **on the non-tunnel path only** — the tunnel is legitimately cross-site and
+All three state-changing endpoints — `/__docstore/source`, `/__build` and `/report` — now
+require the request to be same-origin, via one shared predicate rather than a term repeated per
+call site. It checks **both** `Sec-Fetch-Site` **and** `Origin`: the first is unforgeable but
+absent on Safari < 16.4, Firefox < 90 and older WKWebViews, and those browsers send the second.
+An earlier pass checked only the first and left exactly that population unprotected. Applied
+**on the non-tunnel path only** — the tunnel is legitimately cross-site and
 is gated by a session cookie instead. Non-browser callers (the CLI, `curl`) send no fetch
 metadata and are unaffected; the attack this closes is specifically a _browser_ being induced to
 make the request, and a browser always tells us.
@@ -112,7 +116,12 @@ rely on:
   lock and the tree you asked for. A planted lock plus any listener answering `{"ok":true}`
   previously printed "rebuilt this tree" and exited 0 over an untouched tree — stale locks from
   other projects are ordinary on a dev machine, one of them usually on the shared default port.
-- **It waits for the tree to settle**, not for whichever build finishes next. A reply used to be
+- **It waits for the tree to settle**, not for whichever build finishes next — starting one
+  build and then parking, with a cap so a watcher that keeps firing degrades to a message
+  instead of a build storm. (The first attempt re-queued on every pass, which spun the dev
+  server into ~30 builds and a `process.exit(1)` blaming the user's watcher config. A
+  re-review caught it; the decision is now a pure function with tests for the contended
+  orderings, which had no coverage at all.) A reply used to be
   released by an already-running build one line before a queued rebuild began wiping the output
   directory — success reported while the tree was being emptied, right before the documented
   `git add`.

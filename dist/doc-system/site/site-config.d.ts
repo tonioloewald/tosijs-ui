@@ -180,6 +180,15 @@ export interface SiteConfig {
      * Default false. Requires `happy-dom` (dev dep) + the `zip` CLI.
      */
     epub?: boolean | {
+        /**
+         * `dcterms:modified` for the generated ePub — the only date a reader can surface, since
+         * the OPF carries no `dc:date`.
+         *
+         * Unset, it is derived from the project VERSION, deterministically and with no clock, so
+         * a rebuild produces identical bytes. That is synthetic and looks like a date without
+         * being one; set this to publish the truth.
+         */
+        modified?: string;
         author?: string;
         /** base title; a named volume becomes "<title> — <volume>" unless overridden */
         title?: string;

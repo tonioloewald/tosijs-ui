@@ -40,6 +40,19 @@ export declare function resolveWatchPaths(config: {
 declare global {
     var Bun: any;
 }
+/**
+ * What a delegated build should do next, given the queue's state.
+ *
+ * Extracted and exported because the loop that used to be inline shipped an unbounded rebuild
+ * storm — `rebuild()` on every iteration re-queued the very build being waited on — and no test
+ * could reach it. This is the whole decision, and it is pure.
+ */
+export declare function nextBuildStep(state: {
+    attempt: number;
+    building: boolean;
+    pending: boolean;
+    maxAttempts: number;
+}): 'start' | 'wait' | 'settled' | 'gave-up';
 export declare function resolveHaltijaChannel(cwd?: string, env?: Record<string, string | undefined>): {
     argv: string[];
     describe: string;
