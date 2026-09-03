@@ -620,6 +620,20 @@ xinPath, tosiPath, etc. are deprecated`, and nothing in the consumer's code caus
   migrate. Not yet in a published version — 1.8.2 still marks both — so verify the console is
   clean when we take the upgrade rather than assuming.
 
+## tosijs — `on<Event>` sugar collides with `on*`-shaped members (recorded 2026-09-03)
+
+Not filed as an issue: it is a **constraint to have on record**, not a defect to ask them to fix.
+
+Since tosijs 1.8.0 the elements factory treats any `on<Event>`-shaped property as event-handler
+sugar, so a component that legitimately defines such a member gets a warning the reader cannot
+act on. Ours is `<tosi-tabs>`'s deprecated `onCloseTab` alias, kept for compatibility — so both
+of upstream's suggested exits (initialise it to a no-op, or rename it) cost us a **breaking
+change**, and it waits for our next major.
+
+Worth knowing before that major: this is the one remaining console warning on a doc site, and
+the 1.13.0 notes say so plainly rather than claiming a clean console. Related: the CSRF work in
+1.13.0 (#90) and tosijs#31/#33 came out of the same "warnings a consumer cannot act on" thread.
+
 ## haltija — page → agent push (filed 2026-08-26)
 
 - **[haltija#37](https://github.com/tonioloewald/haltija/issues/37) — no page→agent push.**

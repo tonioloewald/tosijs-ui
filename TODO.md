@@ -653,6 +653,49 @@ live site** (independently useful). See roadmap "From book to live."
 - **Vector similarity search for doc-browser** - Replace current search with vector-based approach
 - **Focus management and focus-visible styling** - Improve keyboard navigation and focus indicators
 
+## From the 1.13.0 pre-release review (`reviews/1.13.0-pre-release.md`)
+
+Blockers and majors were fixed in the remediation pass. These are the deferred remainder —
+**none may be dropped**; the review file is the record of what was found and not fixed.
+
+- [ ] **M1 (partial)** `/__build` still answers only when the build finishes, so the budget is
+      capped by the server's 120s idle timeout rather than the build's real length. The client
+      now matches that number instead of promising ten minutes it cannot keep, and reports "did
+      not answer in time — the build may still be running". The real fix is a keepalive stream
+      or `202` + poll, which resets the idle clock and gives the CLI progress.
+- [ ] **M3 (partial)** Both tautological unit tests are replaced with ones that mount the real
+      component / import the shipped predicate, and mutation-tested. Still missing the **wire
+      test**: boot a dev server, POST `/__build`, assert the JSON shape and that a
+      non-loopback/tunnel/cross-site request is refused. `__build` currently appears in no
+      browser test.
+- [ ] **F2** Type the `doc-browser → doc-system` `sourceMenuItems` seam — a rename compiles
+      clean and silently drops the Source submenu. Give the app-menu button a stable `part`
+      hook and select on it in `tests/doc-system.pw.ts` instead of the `top < 60` geometry
+      heuristic, which can drive the _nested_ browser.
+- [ ] **F3** Standalone `createDocBrowser` consumers and nested `<tosi-doc-system>` lose
+      view/edit-source in 1.13.0 with no replacement — say so in the notes.
+- [ ] **F4** Move the test-lane `8798` default into the shared `resolveDevPort`; it was
+      extracted for #39 so two resolvers could not drift, and the inline default reintroduces
+      one. Harmless today only because the tunnel is skipped in `testMode`.
+- [ ] **F6** `makeIcon` reparses its spec on every call; the pocket-bar handle went from a
+      138-byte glyph to a 2857-byte 17-node owl on every live example. Cache the parsed
+      `<template>` per spec and `cloneNode(true)` — helps the whole icon system.
+- [ ] **F7** The `versionAnchoredDate` doc block sits two definitions from what it documents.
+- [ ] **F8** `epub.ts` runs `find . -exec touch -t … {} +` with no assertion that `buildDir` is
+      the staging dir. Safe today (derived, freshly created); add the precondition before a
+      recursive mtime rewrite.
+- [ ] **F9** The owl handle is hardcoded on every live example of every adopter's site. The new
+      `--tosi-pocket-handle-*` vars make the chip brandable but not the glyph — add a var, or
+      decide it is deliberate and say so.
+- [ ] **F10** Add a delegation opt-out (`opts.delegate: false` / env) for CI and release scripts
+      that need an in-process build with their own config.
+- [ ] **F1 (recorded, not fixable now)** `<tosi-tabs>` logs an `on<Event>`-collision warning
+      because of our deprecated `onCloseTab` alias. Removing it is breaking → next major. The
+      1.13.0 notes now say so instead of claiming a clean console.
+- [x] **F5 — REFUTED.** `--tosi-pocket-handle-size` was said to overshoot by 2×padding on a
+      content-box button. Measured: with `size: 32px` the handle computes to exactly **32×32**,
+      so `border-box` is already in effect. No change needed.
+
 ## Localization
 
 - Adding automatic localization where appropriate:

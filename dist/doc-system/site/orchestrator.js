@@ -170,44 +170,93 @@ async function gzipSizeInChild(file) {
         return 0;
     }
 }
-/*
-A date that moves when the PUBLICATION does, not when a build runs.
-
-`dcterms:modified` is baked into the ePub, so whatever it is decides whether a rebuild
-produces identical bytes. Three candidates, and only the third terminates:
-
-  - `new Date()` — differs every build. This was the original, and it made a committed
-    `docs/*.epub` dirty in every single diff.
-  - the HEAD commit time — reproducible for one commit, but still moves on every commit,
-    so commit → build → dirty → commit never settles.
-  - the commit time of the last change to `package.json` — constant between releases, and
-    it moves when the version does, which is exactly when a publication has changed.
-
-Falls back to the HEAD commit time, then to a fixed epoch, so a consumer outside a git
-repo still gets something stable rather than a clock.
-*/
 /**
- * Ask a running dev server to build, and report what it said.
+ * Is this lock holder something we can hand work to?
  *
- * `null` means "could not delegate" — the server did not answer, or answered something
- * this does not understand — so the caller falls back to refusing rather than silently
- * reporting a success nobody performed.
+ * Exported so the test can import the SHIPPED predicate. The previous test retyped this
+ * condition inside the test file and asserted on the copy, which passed forever and stayed
+ * green when the real one was broadened — the 1.13.0 review caught it by mutation.
+ *
+ * Only a live dev server with a port that can safely reach a URL: a second `bun run build` is
+ * not something to hand work to, and an out-of-range or non-integer port is a value that has
+ * no business being interpolated (`https://localhost:1@evil/` parses to another host).
  */
-async function delegateBuild(port) {
+export function canDelegateTo(holder) {
+    return (holder.role === 'dev-server' &&
+        Number.isInteger(holder.port) &&
+        holder.port >= 1 &&
+        holder.port <= 65535);
+}
+async function delegateBuild(holder, outputDir) {
+    const port = holder.port;
+    // `canDelegateTo` already validated this; re-assert so the URL below can never be fed junk.
+    if (!Number.isInteger(port) || port < 1 || port > 65535)
+        return null;
     console.log(`\n🔁 A dev server is building this tree — asking it to build instead of racing it.\n`);
+    const here = path.resolve('./');
     try {
-        const res = await fetch(`https://localhost:${port}/__build`, {
+        const url = new URL(`https://localhost:${port}/__build`);
+        // The server answers 409 if it builds a different root, rather than silently building
+        // something else and reporting success for a tree nothing touched.
+        url.searchParams.set('root', here);
+        const res = await fetch(url, {
             method: 'POST',
             // Our own dev cert, and this never leaves loopback.
             tls: { rejectUnauthorized: false },
-            // A cold build with the ePub and every bundle can take a while; a timeout here
-            // must not be mistaken for a failed build.
-            signal: AbortSignal.timeout(10 * 60 * 1000),
+            /*
+            Match the SERVER's idle timeout rather than a wish. This was 10 minutes, but `Bun.serve`
+            idles connections out at 120s and the handler emits nothing until the build finishes —
+            so the socket died at ~120s and a SUCCESSFUL build was reported as a failure telling the
+            user to kill a dev server that was mid-rebuild.
+            */
+            signal: AbortSignal.timeout(115 * 1000),
         });
-        if (res.status === 404 || res.status === 409)
+        if (res.status === 404)
             return null;
-        const body = (await res.json().catch(() => ({})));
-        if (body.ok === true) {
+        if (res.status === 409) {
+            const why = (await res.json().catch(() => ({})));
+            console.error(`   ${why.detail ?? 'the dev server builds a different tree'}\n`);
+            return null;
+        }
+        /*
+        Believe the reply only if it is recognisably ours.
+    
+        A dev server predating this endpoint answers the POST with the SPA fallback — 200 and
+        index.html — so `res.json()` rejected and every adopter's first build after upgrading
+        printed "the dev server's build FAILED". Dev servers here live for days running the code
+        they loaded, so that is the NORMAL upgrade path, not an edge case.
+        */
+        const contentType = res.headers.get('content-type') ?? '';
+        if (!contentType.includes('application/json')) {
+            console.error(`   the dev server on ${port} predates this endpoint — restart it to pick up this version.\n`);
+            return null;
+        }
+        const body = (await res.json().catch(() => null));
+        if (body === null || typeof body.ok !== 'boolean') {
+            console.error(`   unrecognised reply from the dev server on ${port} — restart it.\n`);
+            return null;
+        }
+        /*
+        Prove the build was OURS before reporting it.
+    
+        The lock records a pid and a port; it cannot say the process still owns them. A planted
+        lock plus any listener answering `{"ok":true}` made this print "rebuilt this tree" and exit
+        0 with the output tree untouched — and stale locks from other projects are the ordinary
+        state of a dev machine, including on the shared default port. `outputDir` is checked for
+        the same reason: `buildSite` is a public export and the server builds the config it was
+        LAUNCHED with, so a caller wanting a different tree would be told about a build it never got.
+        */
+        if (body.pid !== holder.pid || body.root !== here) {
+            console.error(`   the server on ${port} is not the one this project's lock names ` +
+                `(pid ${body.pid ?? '?'} building ${body.root ?? '?'}) — not trusting it.\n`);
+            return null;
+        }
+        const wanted = path.resolve(outputDir);
+        if (body.outputDir !== undefined && body.outputDir !== wanted) {
+            console.error(`   the dev server writes ${body.outputDir}, this build wants ${wanted} — refusing.\n`);
+            return null;
+        }
+        if (body.ok) {
             console.log('✅ dev server rebuilt this tree\n');
             return true;
         }
@@ -215,27 +264,44 @@ async function delegateBuild(port) {
         return false;
     }
     catch (err) {
-        console.error(`   could not reach the dev server on ${port} (${err.message})`);
+        const why = err.name === 'TimeoutError'
+            ? 'it did not answer in time — the build may still be running'
+            : err.message;
+        console.error(`   could not reach the dev server on ${port} (${why})`);
         return null;
     }
 }
-async function versionAnchoredDate() {
-    const iso = await Bun.$ `git log -1 --format=%cI -- package.json`
-        .quiet()
-        .nothrow()
-        .text()
-        .then((t) => t.trim())
-        .catch(() => '');
-    const stamp = iso ||
-        (await Bun.$ `git log -1 --format=%cI`
-            .quiet()
-            .nothrow()
-            .text()
-            .then((t) => t.trim())
-            .catch(() => ''));
-    if (!stamp)
-        return '2020-01-01T00:00:00Z';
-    return new Date(stamp).toISOString().replace(/\.\d+Z$/, 'Z');
+/*
+A date derived from the VERSION STRING, not from git.
+
+`dcterms:modified` is baked into the ePub, so whatever it is decides whether a rebuild
+produces identical bytes. Three candidates were tried and only the third settles:
+
+  - `new Date()` — differs every build; a committed `docs/*.epub` was dirty in every diff.
+  - the HEAD commit time — reproducible for one commit, but moves on every commit.
+  - the commit that last touched `package.json` — better, and STILL cannot reach a fixed
+    point on the commits that matter: a release always touches `package.json`, so at build
+    time the anchor still names the PREVIOUS release and the first rebuild after the release
+    commit re-dirties `docs/`. The 1.13.0 review caught this as the direct cause of a dirty
+    tree at the tag.
+
+Deriving it from the version string closes the loop: it is known before the commit exists, it
+is identical for every build of a version, and it changes exactly when a release does. The
+mapping is arbitrary but must be STABLE and monotonic — the version's own digits, as a date —
+so two builds of 1.13.0 agree and 1.13.1 differs.
+*/
+function versionAnchoredDate(version) {
+    const [major = 0, minor = 0, patch = 0] = version
+        .split('-')[0]
+        .split('.')
+        .map((n) => Number(n) || 0);
+    /*
+    A synthetic but deterministic instant. Epoch + (major, minor, patch) as days/hours/minutes
+    keeps it inside a sane range, strictly increasing with the version, and free of any clock.
+    Readers see a plausible date; what matters is that it never changes for a given version.
+    */
+    const ms = Date.UTC(2020, 0, 1) + major * 365 * 864e5 + minor * 864e5 + patch * 36e5;
+    return new Date(ms).toISOString().replace(/\.\d+Z$/, 'Z');
 }
 export async function buildSite(config, opts = {}) {
     // Look at the machine before adding load to it. Runs on every build, including each
@@ -295,8 +361,8 @@ export async function buildSite(config, opts = {}) {
         to the message, which is still the right answer there.
         */
         const holder = lock.holder;
-        if (holder.role === 'dev-server' && holder.port) {
-            const delegated = await delegateBuild(holder.port);
+        if (canDelegateTo(holder)) {
+            const delegated = await delegateBuild(holder, config.outputDir ?? 'docs');
             if (delegated !== null)
                 return delegated;
         }
@@ -1045,7 +1111,10 @@ export async function buildSite(config, opts = {}) {
                         commit time is the honest answer anyway: what a reader wants to know is when
                         the content last changed, not when someone happened to run a build.
                         */
-                        modified: await versionAnchoredDate(),
+                        modified: versionAnchoredDate((await Bun.file(`${process.cwd()}/package.json`)
+                            .json()
+                            .then((p) => p.version)
+                            .catch(() => undefined)) ?? '0.0.0'),
                         ...epubOpts,
                         bookTarget,
                     });

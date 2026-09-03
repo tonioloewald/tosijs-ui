@@ -4,9 +4,17 @@
 
 ### tosijs `^1.9.1` — and a console with nothing in it
 
-The peer floor moves to `^1.9.1`, which carries tosijs's **agent-surface security fix** and the
-deprecation cleanup. Before it, every page of every doc site logged warnings a consumer could
-not act on:
+The peer floor moves to `^1.9.1`. **The binding reason is a type-surface change, not the console
+cleanup** — our emitted declarations now reference `TosiProps` and `TosiStyleSheet` (renamed
+upstream from `XinProps`/`XinStyleSheet`), so `dist/*.d.ts` _hard-requires_ a tosijs that exports
+them. An adopter on an older tosijs gets type errors, not warnings. The floor also carries
+tosijs's **agent-surface security fix**, and the deprecation cleanup below.
+
+**Migration note if you are on tosijs 1.7.x:** this floor takes you through **tosijs 1.8.0**,
+which its own notes describe as deviating from semver — it removed `data-ref` and `<xin-slot>`.
+Read tosijs's 1.8.0 entry before upgrading; that step is not automatic.
+
+Before 1.9.1, every page of every doc site logged warnings a consumer could not act on:
 
 - `xinValue, tosiValue, xinPath…` — tosijs reading its own deprecated proxy property
   ([tosijs#31](https://github.com/tonioloewald/tosijs/issues/31)). Nothing in any consumer's
@@ -18,7 +26,11 @@ not act on:
   renders the literal string, `bindText: '^.name'` binds). `bindText`'s runtime warning
   outlived its typings by one release and is gone in 1.9.1.
 
-Verified on a from-scratch build rather than assumed: **zero console warnings.**
+Verified on a from-scratch build rather than assumed: **the three deprecation warnings above are
+gone.** One warning remains and is ours, not tosijs's — instantiating `<tosi-tabs>` logs that
+`onCloseTab` is an `on<Event>`-shaped member colliding with the elements factory's handler sugar.
+`onCloseTab` is a deprecated alias we keep for compatibility, so removing it is a breaking change
+and waits for the next major. Stating it rather than claiming a clean console we do not have.
 
 ### Live examples: pick a side by clicking, and see what actually changed
 
@@ -41,6 +53,25 @@ again believing it had failed, and that second tap closed it for real.
 
 The floating `<> Source` chip that sat over the content is gone; Source is a submenu of the app
 menu beside Language and Color Theme, and it disappears entirely on a page with no source file.
+
+### Security: cross-site requests can no longer reach the dev server's write endpoints
+
+`POST /__docstore/source` and `POST /__build` were gated on the **peer address alone** — no
+credential — and the handlers parse JSON regardless of `Content-Type`. That made a cross-site
+`fetch(…, {mode:'no-cors'})` a _simple_ request: no preflight, peer is `127.0.0.1`, gate passes.
+Any page you happened to visit while `bun start` was running could write any file under the repo
+root, `.git/hooks/*` included — code execution at your next git operation
+([#90](https://github.com/tonioloewald/tosijs-ui/issues/90)).
+
+Both now also require the request to be same-origin, decided by fetch metadata
+(`Sec-Fetch-Site`), **on the non-tunnel path only** — the tunnel is legitimately cross-site and
+is gated by a session cookie instead. Non-browser callers (the CLI, `curl`) send no fetch
+metadata and are unaffected; the attack this closes is specifically a _browser_ being induced to
+make the request, and a browser always tells us.
+
+The prose in `dev-auth.ts` had claimed `SameSite=Lax` gave "free CSRF protection". That was true
+only of the tunnel path, which needs a cookie — the default loopback path needed nothing, so the
+stated defence never covered its own primary case.
 
 ### New dev-server endpoint: `POST /__build` (loopback only)
 

@@ -10,6 +10,7 @@ import {
   currentHolder,
   type LockHolder,
 } from './build-lock'
+import { canDelegateTo } from './orchestrator.js'
 
 const holder = (over: Partial<LockHolder> = {}): LockHolder => ({
   pid: 4242,
@@ -233,14 +234,19 @@ a live tunnel offline mid-session. It now asks the server to build instead. Thes
 DECISION of when that is allowed; the wire behaviour is covered end-to-end by driving a real
 server, which is the only place the loopback gate can be exercised honestly.
 */
-test('only a live dev-server holder with a port can be delegated to', () => {
-  const canDelegate = (h: { role: string; port?: number } | null) =>
-    h?.role === 'dev-server' && Boolean(h.port)
-
-  expect(canDelegate({ role: 'dev-server', port: 8787 })).toBe(true)
+test('only a live dev-server holder with a usable port can be delegated to', () => {
+  /*
+  Imports the SHIPPED predicate. The previous version declared its own `canDelegate` inside
+  this file — a verbatim copy of the production condition — so it passed forever and stayed
+  green when the real one was broadened to accept `role: 'build'`. Mutation-tested by the
+  1.13.0 review, which is how it was found.
+  */
+  expect(canDelegateTo({ role: 'dev-server', port: 8787 })).toBe(true)
   // A second `bun run build` is not something to hand work to — refuse, as before.
-  expect(canDelegate({ role: 'build', port: 8787 })).toBe(false)
-  // A dev server with no port cannot be reached, so there is nothing to ask.
-  expect(canDelegate({ role: 'dev-server' })).toBe(false)
-  expect(canDelegate(null)).toBe(false)
+  expect(canDelegateTo({ role: 'build', port: 8787 })).toBe(false)
+  // Unreachable, or a value that has no business being interpolated into a URL.
+  expect(canDelegateTo({ role: 'dev-server' })).toBe(false)
+  expect(canDelegateTo({ role: 'dev-server', port: 0 })).toBe(false)
+  expect(canDelegateTo({ role: 'dev-server', port: 99999 })).toBe(false)
+  expect(canDelegateTo({ role: 'dev-server', port: 1.5 })).toBe(false)
 })

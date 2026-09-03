@@ -177,6 +177,20 @@ export class TosiPocketBar extends WebComponent {
                 this.setOpen(false);
         });
     };
+    /**
+     * Close the bar and clear the pin — the supported way for a host to dismiss it.
+     *
+     * A host that wrote `bar.open = false` directly left `pinned` true, and then
+     * `handlePointerLeave`'s `!this.pinned` guard never fired: the bar re-opened on hover and
+     * STAYED open, and the next handle click was dead (it flipped `pinned` false and closed an
+     * already-closed bar). On touch, where this release removed the hover path entirely, that
+     * left no way back at all. `open` alone was never sufficient state; `pinned` is what the
+     * pointer/focus handlers actually consult.
+     */
+    close = () => {
+        this.pinned = false;
+        this.setOpen(false);
+    };
     toggle = (event) => {
         event?.preventDefault();
         this.pinned = !this.pinned;

@@ -221,6 +221,11 @@ export declare function sessionCookie(token: string, maxAgeMs?: number): string;
  * defeat the entire design.
  */
 export declare function urlWithoutToken(rawUrl: string, param: string): string;
+export declare function isSameOriginRequest(request: {
+    headers: {
+        get(name: string): string | null;
+    };
+}): boolean;
 export declare function mayWriteSource(opts: {
     /** did this arrive on the loopback listener dedicated to the tunnel? */
     viaTunnel: boolean;

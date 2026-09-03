@@ -40,6 +40,7 @@ import {
   urlWithoutToken,
   validSession,
   mayWriteSource,
+  isSameOriginRequest,
   validSessionCookie,
   sessionRejection,
   mayDriveWithAgent,
@@ -1440,9 +1441,26 @@ export async function devServer(
     */
     const buildWaiters: Array<() => void> = []
     const buildNow = async (): Promise<{ ok: boolean; detail?: string }> => {
-      const done = new Promise<void>((resolve) => buildWaiters.push(resolve))
-      void rebuild()
-      await done
+      /*
+      Resolve only when the tree is SETTLED — nothing building and nothing queued.
+
+      The first version pushed a waiter and released it from whichever build's `finally` ran
+      next. If a watch rebuild was already in flight, `rebuild()` merely set `pending`, the
+      RUNNING build released the waiter, and the queued one then started `mv docs
+      docs.last-good` one line later — so `bun run build` printed success and exited while
+      the output tree was being wiped, immediately before the documented `git add`. It got
+      both halves wrong at once: it paid for the extra build and answered from the earlier
+      one.
+
+      Waiting for quiescence is what the caller actually asked: "the tree reflects the latest
+      change." The loop re-arms because a watcher event during our build queues another.
+      */
+      for (;;) {
+        const done = new Promise<void>((resolve) => buildWaiters.push(resolve))
+        void rebuild()
+        await done
+        if (!building && !pending) break
+      }
       return { ok: buildStatus.ok, detail: buildStatus.detail }
     }
     requestBuild = buildNow
@@ -1987,11 +2005,19 @@ export async function devServer(
         */
       const peer = srv?.requestIP?.(request)?.address
       const session = readCookie(request.headers.get('cookie'), SESSION_COOKIE)
-      const authorized = mayWriteSource({
-        viaTunnel,
-        peer,
-        hasValidSession: validSessionCookie(auth, session, Date.now()),
-      })
+      const authorized =
+        mayWriteSource({
+          viaTunnel,
+          peer,
+          hasValidSession: validSessionCookie(auth, session, Date.now()),
+        }) &&
+        /*
+        CSRF (#90). The direct path is peer-address-only, so without this any page the
+        developer visits can write any file under the repo root — `.git/hooks/*` included.
+        Non-tunnel only: the tunnel path is legitimately cross-site and is gated by the
+        session cookie instead.
+        */
+        (viaTunnel || isSameOriginRequest(request))
       if (!authorized) {
         console.warn(
           `⚠️  refused ${request.method} /__docstore/source from ${
@@ -2020,7 +2046,13 @@ export async function devServer(
       */
     if (reqPath === '/__build' && request.method === 'POST') {
       const peer = srv?.requestIP?.(request)?.address
-      if (viaTunnel || !isLoopbackAddress(peer)) {
+      // Cross-site callers refused too (#90): this triggers a destructive rebuild, so a
+      // forged simple request from any page would be a denial of service at best.
+      if (
+        viaTunnel ||
+        !isLoopbackAddress(peer) ||
+        !isSameOriginRequest(request)
+      ) {
         return new Response('not available', { status: 404 })
       }
       if (requestBuild === undefined) {
@@ -2028,14 +2060,49 @@ export async function devServer(
           status: 409,
         })
       }
+      /*
+      Identify OURSELVES in the reply (#M4/#M6).
+
+      The caller reads a lock file from a shared tmpdir to find us, and this machine already
+      carries stale locks from six project roots — one recording the ecosystem-default 8787.
+      Without this, `bun run build` in project A could drive a rebuild of project B and report
+      success for a tree nothing touched; a planted lock plus any listener answering
+      `{"ok":true}` reproduced exactly that, exit 0 with docs/ and dist/ untouched.
+
+      `outputDir` travels for the same reason: `buildSite` is a public export, and a delegated
+      build writes the config the SERVER launched with, not the caller's. The caller compares
+      and refuses rather than accepting a build of something else.
+      */
+      const requestedRoot = new URL(request.url).searchParams.get('root')
+      if (requestedRoot !== null && requestedRoot !== path.resolve('./')) {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            detail: `this server builds ${path.resolve(
+              './'
+            )}, not ${requestedRoot}`,
+            pid: process.pid,
+            root: path.resolve('./'),
+          }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } }
+        )
+      }
       const result = await requestBuild()
-      return new Response(JSON.stringify(result), {
-        status: result.ok ? 200 : 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
-        },
-      })
+      return new Response(
+        JSON.stringify({
+          ...result,
+          pid: process.pid,
+          root: path.resolve('./'),
+          outputDir: PUBLIC,
+        }),
+        {
+          status: result.ok ? 200 : 500,
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+          },
+        }
+      )
     }
 
     if (reqPath === '/__devlink') {

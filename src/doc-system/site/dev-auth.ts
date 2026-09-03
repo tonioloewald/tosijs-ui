@@ -580,6 +580,44 @@ anything arriving there is treated as remote no matter what it claims.
                because "local" is exactly what a tunnel counterfeits.
   direct     → a loopback peer is sufficient; you are at this keyboard.
 */
+/*
+CSRF: a loopback peer is not a same-origin caller (#90).
+
+`mayWriteSource`'s direct path is peer-address-only — no credential — and the handlers parse
+JSON regardless of `Content-Type`. That makes a cross-site `fetch(…, {mode:'no-cors'})` with a
+CORS-safelisted type a SIMPLE request: no preflight, peer is 127.0.0.1, gate passes. Any page
+the developer happens to visit could therefore write any file under the repo root — including
+`.git/hooks/*`, i.e. code execution at the next git operation. `POST /__build` then turns that
+into "and run it now".
+
+The file already claimed CSRF protection from `SameSite=Lax`, and that is true only of the
+TUNNEL path, which needs a cookie. The default loopback path needs nothing, so the stated
+defence never covered the primary case.
+
+Fetch metadata is the fix, and it is cheap: browsers send `Sec-Fetch-Site` on every request and
+scripts cannot forge it. A same-origin page sends `same-origin`; a page on evil.example sends
+`cross-site`. Non-browser callers (our own CLI, curl) send neither header — so the rule must
+accept ABSENCE, or it breaks every legitimate tool. That is not a hole: the attack this closes
+is specifically "a browser the developer is using is induced to make the request", and a
+browser always tells us.
+
+Applied ONLY on the non-tunnel branch. UPSTREAM.md records that rejecting cross-site outright
+breaks the tunnel case, where the widget legitimately calls :8700 from a page on :3000 — that
+path is gated by a session cookie instead.
+*/
+export function isSameOriginRequest(request: {
+  headers: { get(name: string): string | null }
+}): boolean {
+  const site = request.headers.get('sec-fetch-site')
+  if (site !== null && site !== 'same-origin' && site !== 'none') return false
+  const mode = request.headers.get('sec-fetch-mode')
+  // `no-cors` is how a forged simple request is made; a real same-origin fetch is `cors`,
+  // `navigate` or `same-origin`. Only refuse when the browser told us it was no-cors AND
+  // gave us no site to check.
+  if (mode === 'no-cors' && site === null) return false
+  return true
+}
+
 export function mayWriteSource(opts: {
   /** did this arrive on the loopback listener dedicated to the tunnel? */
   viaTunnel: boolean

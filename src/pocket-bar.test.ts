@@ -94,19 +94,76 @@ describe('TosiPocketBar', () => {
   })
 })
 
-test('hover-peek ignores touch pointers (the tap-flash bug)', () => {
+test('hover-peek ignores touch pointers, and a tap does not flash it open (real element)', () => {
   /*
-  A touch device has no hover, but the browser still fires `pointerenter`/`pointerleave`
-  around a tap — and in that order the bar opened on enter, CLOSED on leave, then reopened
-  on click. The user saw the menu flash and vanish, tapped again believing it had failed,
-  and that second tap closed it for real. Measured on an emulated iPhone before the fix:
-  enter(open) → up → leave(closed) → click(open).
+  Mounts the SHIPPED component and dispatches real PointerEvents. The previous version of this
+  test declared `const peeks = (t) => t !== 'touch'` inside the file and asserted on that copy —
+  it never mounted anything, and deleting the production guard left it green. That is the exact
+  pattern this repo now bans: import the symbol or mount the component, never retype the
+  condition.
 
-  Asserting the predicate rather than the DOM: what matters is that a touch pointer never
-  drives the peek, and mouse/pen still do.
+  The bug: a touch device has no hover, but the browser still fires pointerenter/leave around a
+  tap, so the peek opened the bar and the leave closed it before the click could pin it.
   */
-  const peeks = (pointerType: string) => pointerType !== 'touch'
-  expect(peeks('mouse')).toBe(true)
-  expect(peeks('pen')).toBe(true)
-  expect(peeks('touch')).toBe(false)
+  const bar = tosiPocketBar({ direction: 'w' }) as any
+  document.body.append(bar)
+
+  /*
+  happy-dom has no `PointerEvent`, so synthesise the one property the handler reads. This
+  still exercises the SHIPPED handler rather than a retyped condition — and the genuine
+  pointer sequence a browser produces around a tap is covered in `tests/pocket-bar.pw.ts`,
+  which is where it belongs.
+  */
+  const fire = (type: string, pointerType: string) => {
+    const event = new Event(type, {
+      bubbles: true,
+      composed: true,
+    }) as Event & {
+      pointerType?: string
+    }
+    event.pointerType = pointerType
+    bar.dispatchEvent(event)
+  }
+
+  fire('pointerenter', 'touch')
+  expect(bar.open).toBe(false) // a tap must NOT peek
+
+  fire('pointerenter', 'mouse')
+  expect(bar.open).toBe(true) // hover still peeks
+  fire('pointerleave', 'mouse')
+  expect(bar.open).toBe(false)
+
+  bar.remove()
+})
+
+test('close() clears the pin, so the bar does not re-open on the next hover', () => {
+  /*
+  The regression this misses when `open` is written directly: `pinned` stays true, so
+  `handlePointerLeave`'s `!pinned` guard never fires, the bar sticks open over the content, and
+  the next handle click is dead. Found by the 1.13.0 review; this is the test that would have
+  caught it.
+  */
+  const bar = tosiPocketBar({ direction: 'w' }) as any
+  document.body.append(bar)
+
+  bar.toggle() // as clicking the handle does: pinned = true, open = true
+  expect(bar.open).toBe(true)
+
+  bar.close()
+  expect(bar.open).toBe(false)
+
+  // With the pin cleared, hover-out closes again instead of leaving it stuck open.
+  const mouse = (type: string) => {
+    const event = new Event(type, { bubbles: true }) as Event & {
+      pointerType?: string
+    }
+    event.pointerType = 'mouse'
+    bar.dispatchEvent(event)
+  }
+  mouse('pointerenter')
+  expect(bar.open).toBe(true)
+  mouse('pointerleave')
+  expect(bar.open).toBe(false)
+
+  bar.remove()
 })

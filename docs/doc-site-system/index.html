@@ -769,6 +769,21 @@ endpoint on a LAN-reachable server should be a decision you made rather than one
 <p>Bounded so a looping page cannot fill a disk: bodies over 64 KB are refused (413) and the file
 stops growing at 32 MB (507). Newlines in a payload are escaped, so one event is always one line
 — otherwise <code>tail -f</code> would show a split event and the reader could not tell.</p>
+<h4><code>POST /__build</code> — let a build delegate to a running dev server</h4>
+<p><code>bun run build</code> used to refuse while a dev server held the build lock, and the workflow that
+produced was &quot;kill the server, build, forget to restart it&quot;. It now asks the server to build and
+reports what it says.</p>
+<p>The endpoint is <strong>loopback-only, not via the tunnel, and same-origin</strong> (see the security note in
+the CHANGELOG for why the last one matters). It answers JSON identifying itself — <code>pid</code>, <code>root</code>
+and <code>outputDir</code> — and the caller refuses the result unless those match the lock it read and the
+tree it asked for. A <code>?root=</code> that names a different project gets <code>409</code>. A dev server predating
+this endpoint answers with the SPA shell, which the caller detects and reports as &quot;restart your
+dev server&quot; rather than as a failed build.</p>
+<p>The lock is unchanged otherwise: two builders racing <code>rm -rf</code> on one output tree is still
+refused, and a stale lock still names its holder.</p>
+<p><strong><code>devServer(config, { test: true })</code> now defaults to port 8798</strong> (Playwright&#39;s lane uses 8799),
+so a test run no longer reclaims 8787 by killing the dev server you are looking at. An explicit
+<code>PORT</code> or <code>config.port</code> still wins.</p>
 <h4><code>haltijaDev</code> — Claude eyes on your running dev page</h4>
 <p>Set <code>haltijaDev: true</code> (or run with <code>HALTIJA_DEV=1</code>) and <code>bun start</code> gives a coding
 agent (Claude) eyes <strong>and hands</strong> on your actual running page via

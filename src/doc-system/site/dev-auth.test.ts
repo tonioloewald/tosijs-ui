@@ -1,4 +1,4 @@
-import { test, expect } from 'bun:test'
+import { test, expect, describe } from 'bun:test'
 import {
   createAuthState,
   issueLink,
@@ -22,6 +22,7 @@ import {
   REDEEM_MIN_MS,
   REDEEM_SLOW_MS,
   SLOW_AFTER_FAILURES,
+  isSameOriginRequest,
 } from './dev-auth.js'
 
 const NOW = 1_700_000_000_000
@@ -971,4 +972,59 @@ test('#114: a session issued this run still validates through the cookie', () =>
   const value = sessionCookie(session!).split('=')[1].split(';')[0]
   expect(parseSessionCookie(value)?.bootId).toBe(BOOT_ID)
   expect(validSessionCookie(state, value, now)).toBe(true)
+})
+
+describe('isSameOriginRequest — CSRF gate for the loopback path (#90)', () => {
+  /*
+  The attack: `mayWriteSource`'s direct path is peer-address-only, and the handlers parse
+  JSON regardless of Content-Type — so a cross-site `fetch(…, {mode:'no-cors'})` with a
+  CORS-safelisted type is a SIMPLE request that reaches the handler from 127.0.0.1 with no
+  credential. Any page the developer visits could write `.git/hooks/pre-commit`.
+
+  These assert the SHIPPED function, not a retyped copy of its condition — the failure mode
+  this release's own review caught twice elsewhere.
+  */
+  const req = (headers: Record<string, string>) => ({
+    headers: {
+      get: (n: string) => headers[n.toLowerCase()] ?? null,
+    },
+  })
+
+  test('refuses a cross-site request', () => {
+    expect(isSameOriginRequest(req({ 'sec-fetch-site': 'cross-site' }))).toBe(
+      false
+    )
+    expect(isSameOriginRequest(req({ 'sec-fetch-site': 'same-site' }))).toBe(
+      false
+    )
+  })
+
+  test('allows a same-origin page and a direct navigation', () => {
+    expect(isSameOriginRequest(req({ 'sec-fetch-site': 'same-origin' }))).toBe(
+      true
+    )
+    expect(isSameOriginRequest(req({ 'sec-fetch-site': 'none' }))).toBe(true)
+  })
+
+  test('allows a non-browser caller, which sends no fetch metadata at all', () => {
+    /*
+    Load-bearing: our own CLI delegating a build, and curl, send neither header. A rule that
+    required the header would fail closed against every legitimate tool while doing nothing
+    extra for security — the threat is a BROWSER being induced to make the request, and a
+    browser always sends it.
+    */
+    expect(isSameOriginRequest(req({}))).toBe(true)
+  })
+
+  test('refuses a no-cors request that declines to say where it came from', () => {
+    expect(isSameOriginRequest(req({ 'sec-fetch-mode': 'no-cors' }))).toBe(
+      false
+    )
+  })
+
+  test('FAILS CLOSED on an odd or unrecognised site value', () => {
+    // Anything that is not explicitly same-origin/none is refused, including junk.
+    expect(isSameOriginRequest(req({ 'sec-fetch-site': '' }))).toBe(false)
+    expect(isSameOriginRequest(req({ 'sec-fetch-site': 'weird' }))).toBe(false)
+  })
 })

@@ -1618,12 +1618,17 @@ export class LiveExample extends Component<ExampleParts> {
   */
   collapseWidgetsAfterAction = (event: Event): void => {
     if (!this.hydrated) return
-    const bar = this.parts.exampleWidgets as HTMLElement & { open?: boolean }
-    if (bar === undefined || bar === null) return
+    // `close()`, not `open = false`: writing `open` behind the component's back leaves its
+    // private `pinned` flag set, and then the bar re-opens on hover and stays open — the very
+    // thing this handler exists to stop. (`this.parts` throws rather than returning nullish,
+    // so the old undefined/null guard here was dead code.)
+    const bar = this.parts.exampleWidgets as HTMLElement & {
+      close?: () => void
+    }
     const acted = event
       .composedPath()
       .some((node) => node instanceof HTMLElement && node.parentElement === bar)
-    if (acted) bar.open = false
+    if (acted) bar.close?.()
   }
 
   toggleMaximize = () => {

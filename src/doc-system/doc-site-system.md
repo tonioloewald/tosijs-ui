@@ -562,6 +562,26 @@ Bounded so a looping page cannot fill a disk: bodies over 64 KB are refused (413
 stops growing at 32 MB (507). Newlines in a payload are escaped, so one event is always one line
 — otherwise `tail -f` would show a split event and the reader could not tell.
 
+#### `POST /__build` — let a build delegate to a running dev server
+
+`bun run build` used to refuse while a dev server held the build lock, and the workflow that
+produced was "kill the server, build, forget to restart it". It now asks the server to build and
+reports what it says.
+
+The endpoint is **loopback-only, not via the tunnel, and same-origin** (see the security note in
+the CHANGELOG for why the last one matters). It answers JSON identifying itself — `pid`, `root`
+and `outputDir` — and the caller refuses the result unless those match the lock it read and the
+tree it asked for. A `?root=` that names a different project gets `409`. A dev server predating
+this endpoint answers with the SPA shell, which the caller detects and reports as "restart your
+dev server" rather than as a failed build.
+
+The lock is unchanged otherwise: two builders racing `rm -rf` on one output tree is still
+refused, and a stale lock still names its holder.
+
+**`devServer(config, { test: true })` now defaults to port 8798** (Playwright's lane uses 8799),
+so a test run no longer reclaims 8787 by killing the dev server you are looking at. An explicit
+`PORT` or `config.port` still wins.
+
 #### `haltijaDev` — Claude eyes on your running dev page
 
 Set `haltijaDev: true` (or run with `HALTIJA_DEV=1`) and `bun start` gives a coding
