@@ -67,6 +67,38 @@ outside a git repo.
 Also: `deploy:index` now asks for `PREVIEW_HOST` like the bins, instead of the `PREVIEW_SSH`
 they moved off.
 
+### `/version.json` stops restamping a site that did not change (#122)
+
+`docs/` is committed here and in the sibling projects, and the stamp named
+`git rev-parse HEAD` — so **every commit's `version.json` named its own parent, forever**, and
+no build→commit cycle converged:
+
+```
+build at A → version.json says A
+commit     → B contains a version.json saying A
+rebuild    → version.json says B → dirty
+commit     → C contains a version.json saying B → …
+```
+
+`build-stamp.ts` already argued against a wall-clock stamp for exactly this reason and missed
+that the argument applies one level up: `HEAD` is not a clock, but in a repo that commits its
+own output it moves on the same cadence. Small, and it cost something real — a false positive
+on `git status` at the moment you are trying to confirm a release tree is clean, so it gets
+checked, re-checked, and eventually ignored.
+
+The fix is the reporter's: if nothing else in the output changed, leave the stamp alone. A new
+`contentHash` field records what the rest of the output hashed to, so the next build can tell
+"changed" from "unchanged" without keeping a copy of the old tree — though as it happens the
+previous build is still on disk (the build moves it aside as `<outputDir>.last-good` rather
+than deleting it, and drops it only on success), so the comparison costs no extra bookkeeping.
+
+Verified end-to-end, which is the only way to check a convergence claim: build → commit →
+rebuild now leaves a **clean tree**.
+
+The stamp is also more honest for it. It now names the last build that actually changed the
+site, rather than the last one that happened to run. **Deleting `version.json` still forces a
+fresh stamp** — the escape hatch for re-identifying an unchanged build, at no extra flag.
+
 ### `describeHolder(null)` says nothing is building (#123)
 
 `describeHolder(currentHolder(root))` is the natural spelling, and `currentHolder` returns

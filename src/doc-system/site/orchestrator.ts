@@ -36,7 +36,12 @@ import { acquireBuildLock, describeHolder } from './build-lock.js'
 import { sourcemapWarning } from './sourcemap-check.js'
 import { preflight } from './preflight.js'
 import { auditDependencies, reportAudit } from './audit-guard.js'
-import { gatherBuildStamp, serializeBuildStamp } from './build-stamp.js'
+import {
+  gatherBuildStamp,
+  hashOutput,
+  stampToWrite,
+  type BuildStamp,
+} from './build-stamp.js'
 import {
   tjsEditorExternal,
   tjsEditorLeakedAsExternal,
@@ -196,6 +201,51 @@ async function checkExamplesInChild(
  * steps — see the Bun.build note). Returns the gzipped byte count, or 0 if it couldn't
  * measure — a size log must never fail a build.
  */
+/*
+Write `/version.json`, preserving the previous stamp when nothing else changed (#122).
+
+The filesystem half of `stampToWrite` — the decision itself is pure and unit-tested. The
+previous stamp is read from LAST_GOOD (the build moves the old output aside rather than
+deleting it) rather than from the live output, which this build has already repopulated.
+
+Never fatal: a stamp is diagnostic, and failing a completed build over one would be a worse
+outcome than a slightly stale identity.
+*/
+async function finalizeStamp(
+  publicDir: string,
+  lastGoodDir: string | null,
+  fresh: BuildStamp
+): Promise<void> {
+  const target = `${publicDir}/version.json`
+  try {
+    const listFiles = async (d: string): Promise<string[]> => {
+      const out = await $`find ${d} -type f`.nothrow().quiet().text()
+      return out
+        .split('\n')
+        .filter(Boolean)
+        .map((p) => p.slice(d.length + 1))
+    }
+    const readBytes = async (p: string): Promise<Uint8Array | null> => {
+      try {
+        return new Uint8Array(await Bun.file(p).arrayBuffer())
+      } catch {
+        return null
+      }
+    }
+    const contentHash = await hashOutput(publicDir, listFiles, readBytes)
+    const previousJson = lastGoodDir
+      ? await Bun.file(`${lastGoodDir}/version.json`)
+          .text()
+          .catch(() => null)
+      : null
+    await Bun.write(target, stampToWrite(previousJson, fresh, contentHash))
+  } catch {
+    await Bun.write(target, JSON.stringify(fresh, null, 2) + '\n').catch(
+      () => {}
+    )
+  }
+}
+
 async function gzipSizeInChild(file: string): Promise<number> {
   try {
     const out =
@@ -1176,7 +1226,10 @@ export async function buildSite(
         assetStamp,
       })
 
-      await Bun.write(`${PUBLIC}/version.json`, serializeBuildStamp(buildStamp))
+      // NOTE: /version.json is written at the END of the build (see `finalizeStamp`
+      // below), because deciding whether to restamp means hashing everything else in
+      // the output — and the ePub, the burnt CSS and the host preset files are all
+      // still to come.
 
       // Burn the theme into a static stylesheet (separate subprocess — see
       // generate-css.ts). Resolve the sibling relative to THIS module so it works
@@ -1281,6 +1334,18 @@ export async function buildSite(
       console.timeEnd('build')
       // A failed library typecheck (above) marks the whole build failed so a one-shot
       // `--build` exits non-zero and never publishes declarations from a red tsc.
+      /*
+      Build identity at /version.json — "what am I looking at?" for any deployed copy.
+
+      LAST, because the decision needs every other output file to exist: if nothing else
+      changed, the previous stamp is preserved verbatim so a committed `docs/` stops going
+      dirty on every build (tosijs-ui#122 — see build-stamp.ts for the loop it broke).
+
+      The previous build is still on disk as LAST_GOOD (moved aside, not deleted, and
+      dropped only once this build succeeds), so the comparison costs no extra bookkeeping.
+      */
+      await finalizeStamp(PUBLIC, hadPrevious ? LAST_GOOD : null, buildStamp)
+
       // Reaching here means the site generated. The typecheck only gates the exit code.
       siteOk = true
       return !libraryBuildFailed

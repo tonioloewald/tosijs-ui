@@ -63,3 +63,80 @@ export async function gatherBuildStamp(opts = {
 export function serializeBuildStamp(stamp) {
     return JSON.stringify(stamp, null, 2) + '\n';
 }
+/*
+Do not restamp a site that did not change (tosijs-ui#122).
+
+The header above argues against a wall-clock stamp because `docs/` is committed and anything
+changing per build churns the tree. That reasoning applies one level up, and this file missed
+it: `HEAD` is not a clock, but in a repo that commits its own output it moves on exactly the
+same cadence.
+
+The loop, from the report — five consecutive commits in `tosijs-product`, no exceptions:
+
+    build at A → version.json says A
+    commit     → B contains a version.json saying A
+    rebuild    → version.json says B → dirty
+    commit     → C contains a version.json saying B → forever
+
+So every commit's stamp named its own PARENT, and no build→commit cycle converged. It is a
+small thing that costs something real: a false positive on `git status` at exactly the moment
+you are trying to confirm a release tree is clean, so it gets checked, re-checked, and
+eventually ignored.
+
+The fix is the reporter's: if nothing else in the output changed, leave the stamp alone. That
+converges — the rebuild after a commit produces identical content, so the file stays put and
+the tree stays clean — and it makes the stamp MORE honest, since it then names the last build
+that actually changed the site rather than the last one that happened to run.
+
+`contentHash` records what the rest of the output hashed to, so the next build can answer
+"did anything change?" without keeping a copy of the old tree.
+
+Deleting `version.json` always forces a fresh stamp: no previous file, nothing to preserve.
+That is the escape hatch for re-identifying an unchanged build, and it costs no extra flag.
+*/
+export function stampToWrite(previousJson, fresh, contentHash) {
+    const next = serializeBuildStamp({ ...fresh, contentHash });
+    if (!previousJson)
+        return next;
+    let previous;
+    try {
+        previous = JSON.parse(previousJson);
+    }
+    catch {
+        return next; // unparseable — replace it rather than preserve nonsense
+    }
+    // A previous stamp with no contentHash predates this mechanism: restamp once, then it
+    // has one and converges from there.
+    if (!previous.contentHash)
+        return next;
+    if (previous.contentHash !== contentHash)
+        return next;
+    // Identity fields still win over the preserved stamp — a generator upgrade or a rename
+    // must show up even if the bytes happened to land identically.
+    if (previous.generator !== fresh.generator)
+        return next;
+    if (previous.site !== fresh.site)
+        return next;
+    return previousJson;
+}
+/**
+ * Hash every file under `dir` except `version.json`, path-sensitively.
+ *
+ * Paths are sorted so the digest does not depend on directory iteration order, and each
+ * path is fed in beside its bytes so that MOVING a file changes the hash — content-only
+ * hashing would call a renamed page an unchanged site.
+ *
+ * Best-effort like the rest of this module: an unreadable file contributes its path alone
+ * rather than failing a build over a stamp.
+ */
+export async function hashOutput(dir, readdir, readFile) {
+    const paths = (await readdir(dir)).filter((p) => p !== 'version.json').sort();
+    const hasher = new Bun.CryptoHasher('sha256');
+    for (const rel of paths) {
+        hasher.update(rel);
+        const bytes = await readFile(`${dir}/${rel}`);
+        if (bytes)
+            hasher.update(bytes);
+    }
+    return hasher.digest('hex').slice(0, 16);
+}
