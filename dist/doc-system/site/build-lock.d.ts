@@ -28,8 +28,17 @@ export type LockDecision = {
 export declare function lockDecision(existing: LockHolder | null, self: {
     pid: number;
 }, isAlive: (pid: number) => boolean): LockDecision;
-/** The message the refused build prints. Names the holder, and what to do about it. */
-export declare function describeHolder(holder: LockHolder): string;
+/**
+ * The message the refused build prints. Names the holder, and what to do about it.
+ *
+ * Accepts `null`/`undefined` because the natural way to use this is
+ * `describeHolder(currentHolder(root))`, and `currentHolder` returns `null` when nothing
+ * holds the lock — which is the ordinary, healthy case. Rendering the alarm template with
+ * the fields unfilled ("pid undefined … building in undefined") reported a scary problem
+ * that did not exist, in a reader whose entire purpose is answering "who holds this?"
+ * (tosijs-ui#123).
+ */
+export declare function describeHolder(holder: LockHolder | null | undefined): string;
 export declare function isProcessAlive(pid: number): boolean;
 /**
  * Who, if anyone, holds this project's lock right now — or `null` if nobody live does.

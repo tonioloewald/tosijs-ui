@@ -32,6 +32,7 @@ import {
   previewRootFor,
   registerCaddyFragment,
   resolvePreviewHost,
+  parseArgv,
 } from './resolve-site-config'
 import {
   resolveSiteConfig,
@@ -39,14 +40,20 @@ import {
   safeRemoteRoots,
 } from './resolve-site-config'
 
-const siteConfig = await resolveSiteConfig()
+const { has, flag } = parseArgv(process.argv.slice(2), {
+  bin: 'tosijs-deploy',
+  summary: 'rsync the built site to the preview host',
+  flags: ['go'],
+  values: ['host', 'path', 'url'],
+  usage:
+    `  tosijs-deploy                        DRY RUN — shows what would transfer\n` +
+    `  tosijs-deploy --go                   actually transfer\n` +
+    `  --host=user@box                      override the configured preview host\n` +
+    `  --path=/srv/site                     override the remote path\n` +
+    `  --url=https://…                      override the reported URL`,
+})
 
-const args = process.argv.slice(2)
-const flag = (name: string): string | undefined => {
-  const hit = args.find((a) => a.startsWith(`--${name}=`))
-  return hit ? hit.slice(name.length + 3) : undefined
-}
-const has = (name: string): boolean => args.includes(`--${name}`)
+const siteConfig = await resolveSiteConfig()
 
 const OUT = siteConfig.outputDir ?? 'docs'
 const PROJECT = siteConfig.name ?? 'site'

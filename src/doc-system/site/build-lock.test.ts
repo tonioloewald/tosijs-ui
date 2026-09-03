@@ -250,3 +250,26 @@ test('only a live dev-server holder with a usable port can be delegated to', () 
   expect(canDelegateTo({ role: 'dev-server', port: 99999 })).toBe(false)
   expect(canDelegateTo({ role: 'dev-server', port: 1.5 })).toBe(false)
 })
+
+/*
+`describeHolder(currentHolder(root))` is the natural spelling, and `currentHolder` returns
+null whenever nothing is building — the ordinary case. Rendering the alarm template with
+unfilled fields reported a problem that did not exist (#123).
+*/
+test('#123: no holder says so, instead of rendering "pid undefined"', () => {
+  const free = describeHolder(null)
+  expect(free).not.toContain('undefined')
+  expect(free).not.toContain('🛑')
+  expect(free.toLowerCase()).toContain('nothing is building')
+  // and the populated case still names the holder
+  const held = describeHolder({
+    pid: 4242,
+    role: 'dev-server',
+    startedAt: 0,
+    root: '/tmp/p',
+    port: 8787,
+  })
+  expect(held).toContain('4242')
+  expect(held).toContain('8787')
+  expect(held).toContain('/tmp/p')
+})

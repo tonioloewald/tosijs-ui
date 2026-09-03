@@ -10,7 +10,7 @@
     "og": "bun bin/generate-og.ts",
     "deploy": "bun bin/deploy-preview.ts",
     "deploy:caddy": "bun bin/caddy-install.ts",
-    "deploy:index": "ssh $PREVIEW_SSH 'bash -s' < deploy/build-index.sh",
+    "deploy:index": "ssh $PREVIEW_HOST 'bash -s' < deploy/build-index.sh",
     "tunnel": "bun bin/tunnel.ts",
     "test-browser": "bun bin/dev.ts --test",
     "test-consumer": "bun bin/smoke-consumer.ts",

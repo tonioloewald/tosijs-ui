@@ -73,12 +73,23 @@ import {
   lastVersionTag,
 } from '../dist/doc-system/release-notes.js'
 
+import { parseArgv } from './resolve-site-config'
+
 // ── CLI ──────────────────────────────────────────────────────────────────────
 
-const args = process.argv.slice(2)
-const flag = (n: string) =>
-  args.find((a) => a.startsWith(`--${n}=`))?.slice(n.length + 3)
-const has = (n: string) => args.includes(`--${n}`)
+const { has, flag } = parseArgv(process.argv.slice(2), {
+  bin: 'tosijs-release-notes',
+  summary: 'assemble the CHANGELOG section from commit annotations',
+  flags: ['check', 'write'],
+  values: ['since', 'version'],
+  usage:
+    `  tosijs-release-notes                 print the section for the current version\n` +
+    `  --check                              exit 1 if any annotation is unwritten\n` +
+    `  --write                              write the section into CHANGELOG.md\n` +
+    `  --since=v1.2.3                       start from this tag (default: last tag)\n` +
+    `  --version=1.3.0                      label the section (default: package.json)\n\n` +
+    `Reads git history, so it must run inside a repository.`,
+})
 
 const since = flag('since') ?? (await lastVersionTag())
 const pkg = await Bun.file('package.json')

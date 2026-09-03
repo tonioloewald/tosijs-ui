@@ -357,3 +357,80 @@ export function previewRootFor(
   }
   return DEFAULT_CADDY_ROOT
 }
+
+/*
+ONE argv parser for every bin.
+
+`caddy-install`, `deploy-preview`, `tunnel` and `release-notes` each carried their own
+`flag()`/`has()` pair — four copies of a parser, which is how three of them drifted into
+resolving `--host=` differently and only ONE of them ever rejected an unknown flag
+(tosijs-ui#85).
+
+Rejecting the unknown is the load-bearing part. An ignored flag is not a harmless typo in a
+tool that contacts a machine: `tosijs-caddy-install --status` — a flag it has never had —
+read as "no flags at all", and the bin proceeded to ssh into the configured host. `--status`
+is still ignored by `tosijs-deploy` today, where it reaches the host with an `rsync
+--dry-run`. Nothing destructive there, but a tool that touches someone's server must not
+read an instruction it does not understand as consent to proceed.
+
+`--help` comes free with it, and that is not incidental: NO test lane runs a shipped bin's
+argument handling (`smoke-consumer.ts` checks shebangs, and deliberately does not execute
+the bins that reach the network), so `tosijs-release-notes --help` shipped unrecognised and
+died on a raw `ShellError` in any directory that was not a git repo. A parser that has to be
+told its own flags can answer `--help` without anyone remembering to write one.
+*/
+export interface ArgvSpec {
+  /** the installed command name, for the usage banner */
+  bin: string
+  /** one line: what the command is for */
+  summary: string
+  /** valueless flags, without dashes — `--go`, `--status` */
+  flags?: string[]
+  /** `--name=value` flags, without dashes — `--host=…` */
+  values?: string[]
+  /** the usage body, printed verbatim under the banner */
+  usage: string
+}
+
+export interface Argv {
+  has(name: string): boolean
+  flag(name: string): string | undefined
+  /** everything that was not a recognised `--flag` */
+  rest: string[]
+}
+
+/**
+ * Parse `argv` against `spec`. Prints usage and exits on `--help` (0) or on an
+ * unrecognised flag (1); returns a reader otherwise.
+ */
+export function parseArgv(argv: string[], spec: ArgvSpec): Argv {
+  const flags = new Set([...(spec.flags ?? []), 'help'])
+  const values = new Set(spec.values ?? [])
+
+  const unknown = argv.filter((a) => {
+    if (!a.startsWith('--')) return false
+    const name = a.slice(2).split('=')[0]
+    return a.includes('=') ? !values.has(name) : !flags.has(name)
+  })
+
+  if (unknown.length || argv.includes('--help')) {
+    const bad = unknown.length > 0
+    const banner =
+      (bad ? `\nUnknown option(s): ${unknown.join(' ')}\n` : '') +
+      `\n${spec.bin} — ${spec.summary}\n\n${spec.usage}\n`
+    // Usage goes to stderr when it is a complaint and stdout when it was asked for, so
+    // `cmd --help | less` works and a misuse still shows up in a redirected log.
+    if (bad) console.error(banner)
+    else console.log(banner)
+    process.exit(bad ? 1 : 0)
+  }
+
+  return {
+    has: (name: string) => argv.includes(`--${name}`),
+    flag: (name: string) => {
+      const hit = argv.find((a) => a.startsWith(`--${name}=`))
+      return hit ? hit.slice(name.length + 3) : undefined
+    },
+    rest: argv.filter((a) => !a.startsWith('--')),
+  }
+}

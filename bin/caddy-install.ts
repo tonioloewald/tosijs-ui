@@ -34,40 +34,25 @@ Three deliberate properties:
 */
 
 import { existsSync, readFileSync } from 'fs'
-import { resolvePreviewHost, resolveSiteConfig } from './resolve-site-config'
+import {
+  parseArgv,
+  resolvePreviewHost,
+  resolveSiteConfig,
+} from './resolve-site-config'
+
+const { has, flag } = parseArgv(process.argv.slice(2), {
+  bin: 'tosijs-caddy-install',
+  summary: 'install the Caddy snippets the deploy/tunnel bins need',
+  flags: ['go'],
+  values: ['host', 'template'],
+  usage:
+    `  tosijs-caddy-install                 DRY RUN — shows the diff, changes nothing\n` +
+    `  tosijs-caddy-install --go            substitute, validate, install, reload\n` +
+    `  --host=user@box                      override the configured preview host\n` +
+    `  --template=./path/to/Caddyfile       use your own template`,
+})
 
 const siteConfig = await resolveSiteConfig()
-
-const args = process.argv.slice(2)
-const flag = (name: string): string | undefined => {
-  const hit = args.find((a) => a.startsWith(`--${name}=`))
-  return hit ? hit.slice(name.length + 3) : undefined
-}
-const has = (name: string): boolean => args.includes(`--${name}`)
-
-/*
-Reject anything we do not understand, BEFORE reaching the network.
-
-An unrecognised flag used to be ignored, so `--status` — which this bin has never had — read
-as "no flags at all" and the bin went straight on to ssh into the configured host. A tool
-that contacts someone's server must not treat an unknown instruction as consent to proceed.
-*/
-const KNOWN = ['--go', '--help']
-const unknown = args.filter(
-  (a) => !KNOWN.includes(a) && !/^--(host|template)=/.test(a)
-)
-if (unknown.length || has('help')) {
-  const bad = unknown.length
-  console.error(
-    (bad ? `\nUnknown option(s): ${unknown.join(' ')}\n` : '') +
-      `\ntosijs-caddy-install — install the Caddy snippets the deploy/tunnel bins need\n\n` +
-      `  tosijs-caddy-install                 DRY RUN — shows the diff, changes nothing\n` +
-      `  tosijs-caddy-install --go            substitute, validate, install, reload\n` +
-      `  --host=user@box                      override the configured preview host\n` +
-      `  --template=./path/to/Caddyfile       use your own template\n`
-  )
-  process.exit(bad ? 1 : 0)
-}
 
 const host = resolvePreviewHost(flag('host'), siteConfig.preview?.host)
 const go = has('go')

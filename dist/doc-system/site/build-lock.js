@@ -55,8 +55,19 @@ export function lockDecision(existing, self, isAlive) {
         return { action: 'take' };
     return { action: 'refuse', holder: existing };
 }
-/** The message the refused build prints. Names the holder, and what to do about it. */
+/**
+ * The message the refused build prints. Names the holder, and what to do about it.
+ *
+ * Accepts `null`/`undefined` because the natural way to use this is
+ * `describeHolder(currentHolder(root))`, and `currentHolder` returns `null` when nothing
+ * holds the lock — which is the ordinary, healthy case. Rendering the alarm template with
+ * the fields unfilled ("pid undefined … building in undefined") reported a scary problem
+ * that did not exist, in a reader whose entire purpose is answering "who holds this?"
+ * (tosijs-ui#123).
+ */
 export function describeHolder(holder) {
+    if (!holder)
+        return 'Nothing is building here — the lock is free.\n';
     const what = holder.role === 'dev-server'
         ? `A dev server (pid ${holder.pid}${holder.port ? `, port ${holder.port}` : ''})`
         : `Another build (pid ${holder.pid})`;

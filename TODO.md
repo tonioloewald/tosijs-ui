@@ -659,18 +659,17 @@ Found by installing the **published** tarball from the registry and running a bi
 not by any lane, because no lane runs a shipped bin's argument handling (see `CLAUDE.md`,
 `SAFE_TO_RUN`).
 
-- [ ] **`tosijs-release-notes` does not recognise `--help`.** It parses no help flag at all,
-      so `--help` falls through to `collect()` and the bin dies on the first `git log` with a
-      raw Bun `ShellError` + stack trace. Outside a git repo that is the _only_ thing an
-      adopter sees. It does exit non-zero (1), so the gate contract holds — this is output
-      hygiene and DX, not a correctness bug. Fix: handle `--help`/`-h` before touching git,
-      and catch the not-a-git-repository case into one clean line. This bin ships to adopters
-      precisely so they get the same workflow, so it is the surface most likely to be a
-      newcomer's first contact.
+- [x] **`tosijs-release-notes` does not recognise `--help`.** DONE — fixed with #85, which
+      replaced all four bins' hand-rolled `flag()`/`has()` pairs with one `parseArgv`. Every
+      bin now answers `--help` (exit 0) and refuses an unknown flag (exit 1), verified from a
+      directory with no project. The parse happens **before** the site config is read, which
+      is what makes `--help` work outside a project at all.
 - [ ] **No lane executes a shipped bin's CLI surface.** `bin/smoke-consumer.ts` checks
       shebangs only, for a good reason (running `tosijs-deploy` would write to `/etc` on the
-      real preview box). Consider a `--help`-only execution pass: any bin that must answer
-      `--help` without side effects can be run safely, which is exactly the gap above.
+      real preview box). Still worth a `--help`-only execution pass: `--help` now provably
+      exits 0 before any config read or network contact in all four bins, so running just
+      that flag is safe, and it is the one assertion that would have caught the above.
+      `bin/argv.test.ts` covers the parser directly, but not the bins' own wiring of it.
 
 ## From the 1.13.0 pre-release review (`reviews/1.13.0-pre-release.md`)
 

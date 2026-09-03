@@ -1,5 +1,79 @@
 # Changelog
 
+## 1.14.0 (unreleased)
+
+### `icons.*` was typed `SVGElement`, and composites are spans
+
+**This is why the release is a minor.** `SVGIconMap` declared every icon as
+`ElementCreator<SVGElement>`. A **composite** icon — any name containing `$`, the stacking
+syntax `icon-composition.md` documents and the demos use throughout — returns an
+`HTMLSpanElement`.
+
+Measured rather than reasoned about:
+
+```
+icons['tosiHat$tosi']()  → SPAN, instanceof SVGElement === false
+icons.lock()             → svg,  instanceof SVGElement === true
+```
+
+`resolveIcon` has always returned the honest `Element`; only the cast on the exported proxy
+disagreed. It is now `ElementCreator<IconElement>`, and **`IconElement` is exported from
+`icon-types.ts` for consumers holding an icon** — defined as `SVGElement | HTMLSpanElement`.
+Both members carry `.style` and `.dataset`,
+which is what callers actually reach for — widening all the way to `Element` would break
+working code to no purpose.
+
+**Why a minor rather than a patch.** Nothing about the runtime changed; a composite has always
+been a span. But code that annotated an icon as `SVGElement` compiled before and does not now,
+and "a patch never breaks you" is the contract. This breaks you out of a false belief, which is
+still breaking.
+
+**The lie was load-bearing.** Correcting it surfaced **14 sites in this repo** — `data-table`,
+`notifications`, `rich-text`, `segmented` — that stored or passed an icon as `SVGElement`. Any
+consumer doing the same has the same latent bug, which is the argument for fixing the type
+rather than the tests. If your build newly complains, that is the bug being shown to you: the
+fix is `IconElement`, or `as SVGElement` at a site you know is not a composite.
+
+### The test suite is type-checked now (#73)
+
+`tsconfig.json` excludes `*.test.ts` — right for emit, and it meant nothing ever compiled them.
+**48 errors had accumulated unseen** (the issue counted 40 when it was filed; it grows).
+`tsconfig.tests.json` plus a CI step brings it to zero and holds it there.
+
+The icons defect above is what that gate found on its first run. Two test files carried
+duplicate imports — `sessionCookie` and `nodePath` — which is invalid ESM that the runtime
+tolerated and nothing checked. The other 46 were genuine test-side noise, fixed honestly
+rather than with blanket `any`.
+
+A type-level test asserts nothing if nothing compiles it — which was already the argument for
+`typecheck-guards`, applied to everything else.
+
+### Every bin answers `--help`, and refuses what it does not understand (#85)
+
+`caddy-install`, `deploy-preview`, `tunnel` and `release-notes` each carried their own
+`flag()`/`has()` pair. One shared `parseArgv` replaces all four.
+
+**Refusing unknown flags is the load-bearing part.** `tosijs-caddy-install --status` — a flag it
+never had — used to read as "no flags at all", and the bin went on to ssh into the configured
+host. The same shape was still live in `tosijs-deploy`. A tool that contacts a machine must not
+read an instruction it does not understand as consent to proceed.
+
+`--help` comes with it, and is parsed **before** the site config is read, so it works from any
+directory. That matters because no lane runs a shipped bin's argument handling —
+`smoke-consumer.ts` checks shebangs and deliberately does not execute the bins that reach the
+network — so `tosijs-release-notes --help` shipped unrecognised and died on a raw `ShellError`
+outside a git repo.
+
+Also: `deploy:index` now asks for `PREVIEW_HOST` like the bins, instead of the `PREVIEW_SSH`
+they moved off.
+
+### `describeHolder(null)` says nothing is building (#123)
+
+`describeHolder(currentHolder(root))` is the natural spelling, and `currentHolder` returns
+`null` whenever nothing holds the lock — the ordinary, healthy case. It rendered the alarm
+template with the fields unfilled (`pid undefined … building in undefined`), reporting a scary
+problem that did not exist, in a reader whose whole purpose is answering "who holds this?".
+
 ## 1.13.0
 
 ### tosijs `^1.9.1` — and a console with nothing in it

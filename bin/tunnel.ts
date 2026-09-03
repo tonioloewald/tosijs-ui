@@ -38,16 +38,24 @@ import {
   resolvePreviewHost,
   resolveSiteConfig,
   resolveTunnelLocalPort,
+  parseArgv,
 } from './resolve-site-config'
 
-const siteConfig = await resolveSiteConfig()
+const { has, flag } = parseArgv(process.argv.slice(2), {
+  bin: 'tosijs-tunnel',
+  summary: 'expose the local dev server through the preview host',
+  flags: ['close', 'link', 'status'],
+  values: ['host', 'port', 'local-port', 'remote-port', 'url'],
+  usage:
+    `  tosijs-tunnel                        open the tunnel (foreground)\n` +
+    `  --status                             report whether a tunnel is up\n` +
+    `  --close                              close a running tunnel\n` +
+    `  --link                               print a magic edit link\n` +
+    `  --host=user@box                      override the configured preview host\n` +
+    `  --port= --local-port= --remote-port= override the resolved ports`,
+})
 
-const args = process.argv.slice(2)
-const has = (n: string) => args.includes(`--${n}`)
-const flag = (n: string) => {
-  const hit = args.find((a) => a.startsWith(`--${n}=`))
-  return hit ? hit.slice(n.length + 3) : undefined
-}
+const siteConfig = await resolveSiteConfig()
 
 const preview = siteConfig.preview
 const host = resolvePreviewHost(flag('host'), preview?.host)
