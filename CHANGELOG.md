@@ -116,7 +116,7 @@ That option shipped broken for a few hours and is worth recording: `modified` wa
 overwrote the sanitised one. `'2026-09-03'` reached the OPF unnormalised and `'not a date'`
 reached it verbatim, and EPUB 3 requires exactly `CCYY-MM-DDThh:mm:ssZ`, so the obvious spelling
 of the new option produced a file EPUBCheck rejects. The option assembly is now an exported
-`epubOptionsFor()` with tests that drive **the call site**, not just the date function beside it
+**`epubOptionsFor()`** with tests that drive **the call site**, not just the date function beside it
 — the third time in this release that a green test asserted a pure function whose only consumer
 threw the result away.
 
