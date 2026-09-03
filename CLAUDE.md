@@ -39,8 +39,8 @@ The test lanes are distinct: **`bun test`** is the fast happy-dom unit lane (hun
 **`bun run test-browser`** is the _interactive_ haltija lane: it drives a real haltija Electron over the same inline tests. It brings up its **own** dev server on **8798** (Playwright uses 8799), so it neither adopts nor evicts the `bun start` you have on 8787 — it used to default to 8787 and then `killStrayServer` reclaimed the port by killing whatever held it, which twice took a live tunnel offline mid-session (the tunnel survives, the server behind it does not, and the page just reports "offline"). It **reuses a running haltija if one is up — which navigates whatever window you have open** (a different project's session included), so prefer `tests/doc-tests.pw.ts` for a clean, isolated run and reach for `test-browser` only when you specifically want eyes on the real page. It is **not** the CI gate anymore; `doc-tests.pw.ts` is.
 
 **`bun run test-consumer` is the lane that tests the package as an ADOPTER sees it** — it
-`npm pack`s, installs the tarball into a throwaway project, runs every bin through the
-`node_modules/.bin` shims, and builds a site from that project's cwd. It exists because
+`npm pack`s, installs the tarball into a throwaway project, checks every bin's shim resolves
+to a file starting with a shebang, and builds a site from that project's cwd. It exists because
 every other lane runs _in this repo, from this repo, with one dev server_, and four
 regressions shipped from outside exactly that envelope: bins with no shebang (needs an
 install), `/version.json` stamping the consumer's version (needs a foreign cwd), a
@@ -49,6 +49,14 @@ hydrate bundle shipping to everyone (needs to read `npm pack`). Two consumers fo
 of them within minutes of a release. More unit tests would have caught none — the gap was
 never depth, it was context. It is slow (pack + install + build), so it is not part of
 `bun test`; run it before every release.
+
+**It does not execute most bins, deliberately** — only the two read-only ones in
+`SAFE_TO_RUN` (`tosijs-tunnel`, `tosijs-deploy`, with `PREVIEW_HOST` scrubbed). The
+regression the loop exists for is a missing shebang, which is read from the first two bytes;
+running the rest would have a mandatory release lane `ssh` to the maintainer's real preview
+box and `cat > /etc/caddy/Caddyfile.tpl`. The cost of that choice is that **no lane ever runs
+a shipped bin's argument handling**, which is how `tosijs-release-notes --help` shipped
+unrecognised (see `TODO.md`). Verify a bin's CLI surface by hand, not by assuming this lane did.
 
 **Run every lane before a release.** CI covers only the unit lane, so any lane the release gate doesn't run _will_ rot silently — the Playwright lane sat red for ~a month before 1.7. Never scope the unit lane with a `src/*.test.ts` glob: it matches only the top-level test files and silently skips the ones in subdirectories (`src/doc-system/`, `src/live-example/`, `src/icons/`, …) — about 126 tests, including whole features' entire coverage. Bare `bun test` recurses; keep it bare.
 
