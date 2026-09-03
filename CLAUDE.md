@@ -892,5 +892,9 @@ Root-level markdown that is _not_ published to the doc site — read the relevan
 - `schema-form.md` — the snowfox handover this work learned from (source + defect report)
 - `REMOTE-ACCESS-PLAN.md` — the tunnel / remote-editing plan
 - `import-resolver-plan.md`, `self-contained-examples-plan.md` — live-example infrastructure
-- `src/doc-system/doc-site-system.md` — the canonical reference for `tosijs-ui/site`
+- `src/doc-system/doc-site-system.md` — the canonical reference for `tosijs-ui/site`.
+  **This one IS published** (it lives under `src/`, which is in `docPaths`), and renders at
+  `/doc-site-system/`. It is listed here because you must read it before touching that
+  subsystem — not because it is internal. Write it for adopters: anything you put in it goes
+  to the open web, the ePub and `llms.txt`, exactly like a `/*#` doc comment.
 - `icons/icon-composition.md` — the icon composition grammar
