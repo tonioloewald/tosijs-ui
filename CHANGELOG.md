@@ -27,8 +27,9 @@ Before 1.9.1, every page of every doc site logged warnings a consumer could not 
   outlived its typings by one release and is gone in 1.9.1.
 
 Verified on a from-scratch build rather than assumed: **the three deprecation warnings above are
-gone.** One warning remains and is ours, not tosijs's — instantiating `<tosi-tabs>` logs that
-`onCloseTab` is an `on<Event>`-shaped member colliding with the elements factory's handler sugar.
+gone.** An earlier draft of these notes claimed _zero console warnings_, and that was false — one warning remains and it is ours, not tosijs's. Instantiating `<tosi-tabs>` still logs an
+on-event collision from our deprecated `onCloseTab` alias, which the elements factory reads as
+event-handler sugar.
 `onCloseTab` is a deprecated alias we keep for compatibility, so removing it is a breaking change
 and waits for the next major. Stating it rather than claiming a clean console we do not have.
 
