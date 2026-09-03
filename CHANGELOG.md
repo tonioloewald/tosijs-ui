@@ -96,10 +96,17 @@ still refused, and a stale lock still gets the old message.
 
 `dcterms:modified` is the only date an ePub reader can surface, and it is baked into a
 committed, redistributed file — so it has to be deterministic _and_ coherent. The
-version-derived encoding introduced in this release **wrapped**: `1.13.24` and `1.14.0` produced
-the same instant, `1.13.25` sorted after `1.14.0`, and `2.0.0` before `1.400.0`, while the code's
-own docblock claimed it was strictly increasing. It is a non-wrapping ordinal now, prereleases
-sort before their finals, and there is a test asserting the ordering that used to break.
+version-derived encoding introduced in this release **wrapped** — twice. First `1.13.24` and
+`1.14.0` produced the same instant; the repack then made `1.13.1-beta.1` byte-identical to
+`1.13.0`, collided `1.0.1000` with `1.1.0`, and sent a CalVer `2026.9.3` to the year 5872. Each
+attempt shipped a docblock asserting the ordering that execution disproved.
+
+So the promise is narrowed to what is actually needed and can actually be held: **the same
+version always yields the same instant, and different versions yield different ones.** It is no
+longer ordered, because nothing reads these dates as a sequence — a reader sees one date on one
+book — and a claim nobody needs, made three times and false three times, is worse than no claim.
+The test sweep is generated rather than hand-picked, which is what would have caught the
+adjacent-version collision.
 
 New: **`epub.modified`** in the site config. The derived date is synthetic — it looks like a
 date without being one — and until now an adopter had no way to publish the real one.

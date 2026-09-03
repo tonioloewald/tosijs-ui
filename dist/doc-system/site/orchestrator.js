@@ -290,35 +290,56 @@ is identical for every build of a version, and it changes exactly when a release
 mapping is arbitrary but must be STABLE and monotonic — the version's own digits, as a date —
 so two builds of 1.13.0 agree and 1.13.1 differs.
 */
+/**
+ * Assemble the options handed to the ePub builder.
+ *
+ * Exported and separated from `buildSite` because the bug this prevents lived in the
+ * ASSEMBLY, not in the date function: `modified` sat above a `...epubOpts` spread, so the
+ * adopter's raw value overwrote the sanitised one and an unnormalised string reached the OPF.
+ * `epub-date.test.ts` was green throughout, because it called the date function directly and
+ * never crossed the wiring that threw its result away.
+ */
+export function epubOptionsFor(epubOpts, version, bookTarget) {
+    return {
+        ...epubOpts,
+        modified: versionAnchoredDate(version, epubOpts.modified),
+        ...(bookTarget === undefined ? {} : { bookTarget }),
+    };
+}
 export function versionAnchoredDate(version, override) {
     /*
     An explicit `epub.modified` always wins — a real publication date beats anything synthetic,
-    and without this an adopter had no way to set one.
+    and it is the supported way to publish the truth.
     */
     if (override !== undefined && !Number.isNaN(Date.parse(override))) {
         return new Date(override).toISOString().replace(/\.\d+Z$/, 'Z');
     }
-    const [major = 0, minor = 0, patch = 0] = version
-        .split('-')[0]
-        .split('.')
-        .map((n) => Number(n) || 0);
     /*
-    Pack the version into MINUTES so the components cannot overlap.
+    DETERMINISTIC AND DISTINCT. Not ordered — and this comment no longer claims otherwise.
   
-    The first attempt used days/days/hours, which wrapped: `1.13.24` and `1.14.0` produced the
-    SAME instant, `1.13.25` came out later than `1.14.0`, and `2.0.0` landed before `1.400.0` —
-    while the docblock claimed the mapping was "strictly increasing". Multiplying a positional
-    encoding by a fixed unit cannot collide, because the encoding is just a number.
+    `dcterms:modified` must not contain a clock, or a committed ePub differs on every build. Three
+    previous attempts tried to encode the version as an ORDERED date and each shipped a docblock
+    asserting monotonicity that execution disproved: days/days/hours wrapped so `1.13.24` equalled
+    `1.14.0`; a positional base-1000 ordinal made `1.13.1-beta.1` byte-identical to `1.13.0`,
+    collided `1.0.1000` with `1.1.0`, and sent a CalVer `2026.9.3` to the year 5872.
   
-    It is still synthetic, and it is not a real date. That is the tradeoff for a reproducible
-    build with no clock in it; `epub.modified` above is the exit for anyone who wants the truth.
+    Ordering was never needed — nothing reads these dates as a sequence; a reader sees one date on
+    one book. So the promise is narrowed to the two properties that are actually required and can
+    actually be held: the same version always yields the same instant, and different version
+    STRINGS (prerelease tags included) yield different ones. A hash gives both for any input,
+    including CalVer and tags this scheme has never seen.
+  
+    The date is synthetic and looks like a date without being one. `epub.modified` is the exit.
     */
-    let ordinal = major * 1_000_000 + minor * 1_000 + patch;
-    // A prerelease is a DIFFERENT publication from its final, so it must not share an instant.
-    // One minute earlier also sorts it correctly: 1.13.0-beta.1 precedes 1.13.0.
-    if (version.includes('-'))
-        ordinal -= 1;
-    return new Date(Date.UTC(2020, 0, 1) + ordinal * 60_000)
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < version.length; i += 1) {
+        hash ^= version.charCodeAt(i);
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+    // A fixed ~30-year window at minute resolution: plausible to a reader, and far from any
+    // boundary that could overflow or render as a nonsense year.
+    const WINDOW_MINUTES = 30 * 365 * 24 * 60;
+    return new Date(Date.UTC(1995, 0, 1) + (hash % WINDOW_MINUTES) * 60_000)
         .toISOString()
         .replace(/\.\d+Z$/, 'Z');
 }
@@ -1120,23 +1141,13 @@ export async function buildSite(config, opts = {}) {
                     console.warn(`⚠️  epub: no documents in any volume — skipping. (Every doc is hidden or \`book: "none"\`.)`);
                 }
                 for (const bookTarget of volumes) {
-                    await buildEpubInChild(config, {
-                        /*
-                        A DETERMINISTIC `modified`, or the ePub differs on every build.
-            
-                        It defaults to `new Date()`, which is baked into the OPF as
-                        `dcterms:modified` — so a rebuild from identical source produced different
-                        bytes, and `docs/tosijs-ui.epub` showed up dirty in every diff forever. The
-                        commit time is the honest answer anyway: what a reader wants to know is when
-                        the content last changed, not when someone happened to run a build.
-                        */
-                        modified: versionAnchoredDate((await Bun.file(`${process.cwd()}/package.json`)
-                            .json()
-                            .then((p) => p.version)
-                            .catch(() => undefined)) ?? '0.0.0', epubOpts.modified),
-                        ...epubOpts,
-                        bookTarget,
-                    });
+                    await buildEpubInChild(config, 
+                    // The tested assembly — see `epubOptionsFor`. Inlining this again is what put
+                    // `modified` above the spread and let a raw value reach the OPF.
+                    epubOptionsFor(epubOpts, (await Bun.file(`${process.cwd()}/package.json`)
+                        .json()
+                        .then((p) => p.version)
+                        .catch(() => undefined)) ?? '0.0.0', bookTarget));
                 }
             }
             console.timeEnd('build');

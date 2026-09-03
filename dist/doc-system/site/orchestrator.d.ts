@@ -17,6 +17,16 @@ export declare function canDelegateTo(holder: {
     role?: string;
     port?: number;
 }): boolean;
+/**
+ * Assemble the options handed to the ePub builder.
+ *
+ * Exported and separated from `buildSite` because the bug this prevents lived in the
+ * ASSEMBLY, not in the date function: `modified` sat above a `...epubOpts` spread, so the
+ * adopter's raw value overwrote the sanitised one and an unnormalised string reached the OPF.
+ * `epub-date.test.ts` was green throughout, because it called the date function directly and
+ * never crossed the wiring that threw its result away.
+ */
+export declare function epubOptionsFor(epubOpts: Record<string, unknown>, version: string, bookTarget?: unknown): Record<string, unknown>;
 export declare function versionAnchoredDate(version: string, override?: string): string;
 export declare function buildSite(config: SiteConfig, opts?: {
     skipAudit?: boolean;

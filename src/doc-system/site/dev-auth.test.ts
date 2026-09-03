@@ -1036,6 +1036,19 @@ describe('isSameOriginRequest — CSRF gate for the loopback path (#90)', () => 
     ).toBe(true)
   })
 
+  test('refuses an OPAQUE origin — the one an attacker can choose', () => {
+    /*
+    `Origin: null` is what a sandboxed iframe, `srcdoc`, a `data:` document and a
+    cross-origin-redirected POST send. An earlier version exempted it explicitly, which left
+    exactly the old-browser population this Origin check exists for unprotected — modern
+    engines were saved only by also sending `Sec-Fetch-Site: cross-site`. Nothing this project
+    ships requests from an opaque origin, so there is nothing to exempt.
+    */
+    expect(
+      isSameOriginRequest(req({ origin: 'null', host: 'localhost:8787' }))
+    ).toBe(false)
+  })
+
   test('refuses an Origin it cannot parse rather than shrugging', () => {
     expect(
       isSameOriginRequest(req({ origin: 'not a url', host: 'localhost:8787' }))

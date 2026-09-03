@@ -526,7 +526,18 @@ export function isSameOriginRequest(request) {
     if (site !== null && site !== 'same-origin' && site !== 'none')
         return false;
     const origin = request.headers.get('origin');
-    if (origin !== null && origin !== 'null') {
+    /*
+    NOTE there is no `origin !== 'null'` exemption, deliberately.
+  
+    An earlier version had one, and it was the single worst value to allow: `Origin: null` is
+    exactly what a sandboxed iframe, `srcdoc`, a `data:` document and a cross-origin-redirected
+    POST send — i.e. the one Origin an attacker can choose. Modern engines stayed protected only
+    because they ALSO send `Sec-Fetch-Site: cross-site`; the unprotected set was precisely the
+    old-browser population this Origin check exists for. Nothing we ship requests from an opaque
+    origin, so the exemption bought nothing. It now falls through to the unparseable-origin
+    refusal below.
+    */
+    if (origin !== null) {
         // Compare against the origin the request was actually addressed to, which is what the
         // browser would have had to match. `Host` is what the client dialled.
         const host = request.headers.get('host');
