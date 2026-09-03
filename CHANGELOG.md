@@ -139,10 +139,12 @@ rely on:
   other projects are ordinary on a dev machine, one of them usually on the shared default port.
 - **It waits for the tree to settle**, not for whichever build finishes next — starting one
   build and then parking, with a cap so a watcher that keeps firing degrades to a message
-  instead of a build storm. (The first attempt re-queued on every pass, which spun the dev
-  server into ~30 builds and a `process.exit(1)` blaming the user's watcher config. A
-  re-review caught it; the decision is now a pure function with tests for the contended
-  orderings, which had no coverage at all.) A reply used to be
+  instead of a build storm. (The first attempt called `rebuild()` on **every pass**, and
+  `rebuild()` sets `pending` when a build is in flight — so the settled check could never pass
+  under contention and it re-armed forever, spinning the dev server into ~30 builds and a
+  `process.exit(1)` blaming the user's watcher config. It was correct when idle, which is why
+  it looked fine. A re-review caught it; the decision is now a pure function with tests for
+  the contended orderings, which had no coverage at all.) A reply used to be
   released by an already-running build one line before a queued rebuild began wiping the output
   directory — success reported while the tree was being emptied, right before the documented
   `git add`.
