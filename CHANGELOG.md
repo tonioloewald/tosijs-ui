@@ -87,6 +87,19 @@ build code at worst. `GET` does nothing.
 Nothing else about the build lock changed: two builders racing `rm -rf` on one output tree is
 still refused, and a stale lock still gets the old message.
 
+### Tests that can actually fail
+
+Two "regression tests" added earlier in this release were **tautologies**: each re-declared the
+production predicate inside the test file and asserted on the copy, so both passed forever and
+stayed green when the real code was broken. A mutation test in the pre-release review killed
+zero of them. They now mount the real `<tosi-pocket-bar>` and import the exported delegation
+predicate, and were re-mutated to confirm the opposite — deleting the touch guards and the
+pin-clear turns two tests red.
+
+Recorded here rather than buried because it is the same failure this project's notes already
+describe from 1.9.0: work asserted in prose that the code did not do. A test that retypes the
+condition it is testing is that failure wearing a lab coat.
+
 ### What delegation guarantees (and what it refuses)
 
 The delegation path above was hardened after a pre-release review found several ways it could
