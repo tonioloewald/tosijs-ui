@@ -92,6 +92,18 @@ build code at worst. `GET` does nothing.
 Nothing else about the build lock changed: two builders racing `rm -rf` on one output tree is
 still refused, and a stale lock still gets the old message.
 
+### ePub dates, and an `epub.modified` option
+
+`dcterms:modified` is the only date an ePub reader can surface, and it is baked into a
+committed, redistributed file — so it has to be deterministic _and_ coherent. The
+version-derived encoding introduced in this release **wrapped**: `1.13.24` and `1.14.0` produced
+the same instant, `1.13.25` sorted after `1.14.0`, and `2.0.0` before `1.400.0`, while the code's
+own docblock claimed it was strictly increasing. It is a non-wrapping ordinal now, prereleases
+sort before their finals, and there is a test asserting the ordering that used to break.
+
+New: **`epub.modified`** in the site config. The derived date is synthetic — it looks like a
+date without being one — and until now an adopter had no way to publish the real one.
+
 ### Tests that can actually fail
 
 Two "regression tests" added earlier in this release were **tautologies**: each re-declared the
@@ -100,6 +112,15 @@ stayed green when the real code was broken. A mutation test in the pre-release r
 zero of them. They now mount the real `<tosi-pocket-bar>` and import the exported delegation
 predicate, and were re-mutated to confirm the opposite — deleting the touch guards and the
 pin-clear turns two tests red.
+
+A re-review then found the same shape one layer down: the delegated-build queue —
+`buildNow`/`buildWaiters` — had **zero** coverage, and an unconditional infinite loop passed the
+whole green suite. The loop is fixed (it started a build on every pass instead of once, spinning
+the dev server into ~30 builds and a `process.exit(1)` that blamed the user's watcher config),
+and the decision is now a pure exported function, `nextBuildStep()`, with tests for the
+contended orderings. `POST /report` was also found never to have received the CSRF gate — the
+term had been spliced into two call sites by hand and the third missed, which is why all three
+now share one named predicate.
 
 Recorded here rather than buried because it is the same failure this project's notes already
 describe from 1.9.0: work asserted in prose that the code did not do. A test that retypes the
