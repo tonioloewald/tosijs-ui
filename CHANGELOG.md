@@ -111,6 +111,15 @@ adjacent-version collision.
 New: **`epub.modified`** in the site config. The derived date is synthetic — it looks like a
 date without being one — and until now an adopter had no way to publish the real one.
 
+That option shipped broken for a few hours and is worth recording: `modified` was written
+**above** a `...epubOpts` spread, and `epubOpts` _is_ `config.epub` — so the adopter's raw value
+overwrote the sanitised one. `'2026-09-03'` reached the OPF unnormalised and `'not a date'`
+reached it verbatim, and EPUB 3 requires exactly `CCYY-MM-DDThh:mm:ssZ`, so the obvious spelling
+of the new option produced a file EPUBCheck rejects. The option assembly is now an exported
+`epubOptionsFor()` with tests that drive **the call site**, not just the date function beside it
+— the third time in this release that a green test asserted a pure function whose only consumer
+threw the result away.
+
 ### Tests that can actually fail
 
 Two "regression tests" added earlier in this release were **tautologies**: each re-declared the
