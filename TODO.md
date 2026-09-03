@@ -661,7 +661,7 @@ not by any lane, because no lane runs a shipped bin's argument handling (see `CL
 
 - [ ] **`tosijs-release-notes` does not recognise `--help`.** It parses no help flag at all,
       so `--help` falls through to `collect()` and the bin dies on the first `git log` with a
-      raw Bun `ShellError` + stack trace. Outside a git repo that is the *only* thing an
+      raw Bun `ShellError` + stack trace. Outside a git repo that is the _only_ thing an
       adopter sees. It does exit non-zero (1), so the gate contract holds — this is output
       hygiene and DX, not a correctness bug. Fix: handle `--help`/`-h` before touching git,
       and catch the not-a-git-repository case into one clean line. This bin ships to adopters
