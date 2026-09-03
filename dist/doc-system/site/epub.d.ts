@@ -73,4 +73,5 @@ export declare function rewriteInBookLinks(html: string, bookFiles: Map<string, 
 /**
  * Build an EPUB 3 book from the extracted corpus. Returns the output path.
  */
+export declare function versionAnchoredDate(version: string, override?: string): string;
 export declare function buildEpub(config: SiteConfig, opts?: BuildEpubOptions): Promise<string>;

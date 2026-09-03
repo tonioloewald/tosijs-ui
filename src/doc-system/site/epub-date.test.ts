@@ -1,5 +1,5 @@
 import { test, expect, describe } from 'bun:test'
-import { versionAnchoredDate, epubOptionsFor } from './orchestrator.js'
+import { versionAnchoredDate } from './epub.js'
 
 /*
 `dcterms:modified` is the only date a reader can surface (the OPF carries no `dc:date`), and it
@@ -70,42 +70,5 @@ describe('versionAnchoredDate', () => {
     for (const v of ['', 'x', '1', '1.2', '99.99.99']) {
       expect(Number.isNaN(Date.parse(versionAnchoredDate(v)))).toBe(false)
     }
-  })
-})
-
-describe('epubOptionsFor — the ASSEMBLY, which is where the bug actually was', () => {
-  /*
-  Every assertion in the block above passed while the product was broken: `modified` was
-  written above a `...epubOpts` spread, so the adopter's raw value overwrote the sanitised one
-  and reached the OPF unnormalised. EPUB 3 requires exactly `CCYY-MM-DDThh:mm:ssZ`, so the
-  obvious spelling of a brand-new option produced an artifact EPUBCheck rejects.
-
-  Testing a pure function while the only call site discards its result is the failure this
-  release's notes already describe twice. These drive the call site.
-  */
-  test('a date-only override is NORMALISED, not passed through raw', () => {
-    const opts = epubOptionsFor({ modified: '2026-09-03' }, '1.13.0')
-    expect(opts.modified).toBe('2026-09-03T00:00:00Z')
-  })
-
-  test('an unparseable override falls back instead of reaching the OPF verbatim', () => {
-    const opts = epubOptionsFor({ modified: 'not a date' }, '1.13.0')
-    expect(opts.modified).toBe(versionAnchoredDate('1.13.0'))
-  })
-
-  test('the spread cannot win — key order is the whole bug', () => {
-    // If `modified` is ever moved back above the spread, this is what goes red.
-    const opts = epubOptionsFor(
-      { modified: 'not a date', title: 'x' },
-      '1.13.0'
-    )
-    expect(opts.modified).not.toBe('not a date')
-    expect(opts.title).toBe('x') // other options still pass through
-  })
-
-  test('no override still yields the deterministic version-derived date', () => {
-    expect(epubOptionsFor({}, '1.13.0').modified).toBe(
-      versionAnchoredDate('1.13.0')
-    )
   })
 })

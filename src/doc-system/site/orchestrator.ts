@@ -348,91 +348,6 @@ async function delegateBuild(
   }
 }
 
-/*
-A date derived from the VERSION STRING, not from git.
-
-`dcterms:modified` is baked into the ePub, so whatever it is decides whether a rebuild
-produces identical bytes. Three candidates were tried and only the third settles:
-
-  - `new Date()` — differs every build; a committed `docs/*.epub` was dirty in every diff.
-  - the HEAD commit time — reproducible for one commit, but moves on every commit.
-  - the commit that last touched `package.json` — better, and STILL cannot reach a fixed
-    point on the commits that matter: a release always touches `package.json`, so at build
-    time the anchor still names the PREVIOUS release and the first rebuild after the release
-    commit re-dirties `docs/`. The 1.13.0 review caught this as the direct cause of a dirty
-    tree at the tag.
-
-Deriving it from the version string closes the loop: it is known before the commit exists, it
-is identical for every build of a version, and it changes exactly when a release does. The
-mapping is arbitrary but must be STABLE and monotonic — the version's own digits, as a date —
-so two builds of 1.13.0 agree and 1.13.1 differs.
-*/
-/**
- * Assemble the options handed to the ePub builder.
- *
- * Exported and separated from `buildSite` because the bug this prevents lived in the
- * ASSEMBLY, not in the date function: `modified` sat above a `...epubOpts` spread, so the
- * adopter's raw value overwrote the sanitised one and an unnormalised string reached the OPF.
- * `epub-date.test.ts` was green throughout, because it called the date function directly and
- * never crossed the wiring that threw its result away.
- */
-export function epubOptionsFor(
-  epubOpts: Record<string, unknown>,
-  version: string,
-  bookTarget?: unknown
-): Record<string, unknown> {
-  return {
-    ...epubOpts,
-    modified: versionAnchoredDate(
-      version,
-      (epubOpts as { modified?: string }).modified
-    ),
-    ...(bookTarget === undefined ? {} : { bookTarget }),
-  }
-}
-
-export function versionAnchoredDate(
-  version: string,
-  override?: string
-): string {
-  /*
-  An explicit `epub.modified` always wins — a real publication date beats anything synthetic,
-  and it is the supported way to publish the truth.
-  */
-  if (override !== undefined && !Number.isNaN(Date.parse(override))) {
-    return new Date(override).toISOString().replace(/\.\d+Z$/, 'Z')
-  }
-
-  /*
-  DETERMINISTIC AND DISTINCT. Not ordered — and this comment no longer claims otherwise.
-
-  `dcterms:modified` must not contain a clock, or a committed ePub differs on every build. Three
-  previous attempts tried to encode the version as an ORDERED date and each shipped a docblock
-  asserting monotonicity that execution disproved: days/days/hours wrapped so `1.13.24` equalled
-  `1.14.0`; a positional base-1000 ordinal made `1.13.1-beta.1` byte-identical to `1.13.0`,
-  collided `1.0.1000` with `1.1.0`, and sent a CalVer `2026.9.3` to the year 5872.
-
-  Ordering was never needed — nothing reads these dates as a sequence; a reader sees one date on
-  one book. So the promise is narrowed to the two properties that are actually required and can
-  actually be held: the same version always yields the same instant, and different version
-  STRINGS (prerelease tags included) yield different ones. A hash gives both for any input,
-  including CalVer and tags this scheme has never seen.
-
-  The date is synthetic and looks like a date without being one. `epub.modified` is the exit.
-  */
-  let hash = 0x811c9dc5
-  for (let i = 0; i < version.length; i += 1) {
-    hash ^= version.charCodeAt(i)
-    hash = Math.imul(hash, 0x01000193) >>> 0
-  }
-  // A fixed ~30-year window at minute resolution: plausible to a reader, and far from any
-  // boundary that could overflow or render as a nonsense year.
-  const WINDOW_MINUTES = 30 * 365 * 24 * 60
-  return new Date(Date.UTC(1995, 0, 1) + (hash % WINDOW_MINUTES) * 60_000)
-    .toISOString()
-    .replace(/\.\d+Z$/, 'Z')
-}
-
 export async function buildSite(
   config: SiteConfig,
   opts: { skipAudit?: boolean; lock?: boolean } = {}
@@ -1353,19 +1268,13 @@ export async function buildSite(
           )
         }
         for (const bookTarget of volumes) {
-          await buildEpubInChild(
-            config,
-            // The tested assembly — see `epubOptionsFor`. Inlining this again is what put
-            // `modified` above the spread and let a raw value reach the OPF.
-            epubOptionsFor(
-              epubOpts as Record<string, unknown>,
-              (await Bun.file(`${process.cwd()}/package.json`)
-                .json()
-                .then((p: { version?: string }) => p.version)
-                .catch(() => undefined)) ?? '0.0.0',
-              bookTarget
-            ) as Parameters<typeof buildEpubInChild>[1]
-          )
+          await buildEpubInChild(config, {
+            // `modified` is NOT set here. `buildEpub` defaults and validates it, so every
+            // path — this one, `bun book`, and any adopter calling the public export —
+            // gets the same behaviour. A second assembly here is what made them differ.
+            ...epubOpts,
+            bookTarget,
+          })
         }
       }
 

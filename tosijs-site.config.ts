@@ -43,7 +43,22 @@ export default defineSiteConfig({
 
   // Build + ship the ePub (the settings menu's "Download ePub" links to it).
   // coverIcon is embedded into the generated cover (served from demo/static).
-  epub: { author: 'Tonio Loewald', coverIcon: '/tosi-book.svg' },
+  epub: {
+    /*
+    A REAL publication date for the book we actually ship.
+
+    Without this the date is derived from the version — deterministic, which is what a
+    committed artifact needs, but synthetic: 1.13.0 hashed to 2012, fourteen years adrift, and
+    the OPF has no `dc:date` so it is the only date a reader sees. v1.12.8's book carried a
+    correct contemporary date and this would have regressed it.
+
+    Update on a release that changes the book's contents. It must stay a literal, not a clock,
+    or `docs/tosijs-ui.epub` is dirty in every diff again.
+    */
+    modified: '2026-09-03T00:00:00Z',
+    author: 'Tonio Loewald',
+    coverIcon: '/tosi-book.svg',
+  },
 
   // Enable the dev-server source read/write endpoints for in-browser
   // "edit page source" (local dev only).

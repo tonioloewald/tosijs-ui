@@ -120,16 +120,22 @@ of the new option produced a file EPUBCheck rejects. The option assembly is now 
 — the third time in this release that a green test asserted a pure function whose only consumer
 threw the result away.
 
-### `epubOptionsFor()` — testing the call site, not the function beside it
+### One place decides the ePub date
 
-The option assembly is exported and tested in its own right, because three separate defects in
-this release shared one shape: **a green test asserting a pure function whose only call site
-discarded the result.** The date function was correct and tested; the assembly threw its return
-value away. The predicate was correct and tested; two of three endpoints used it. The touch
-guard was correct; the test retyped it.
+`buildEpub` — the public export, and what `bun book` calls — now defaults and validates
+`dcterms:modified` itself. It previously used `new Date()` with no validation, so the
+determinism fix and the `epub.modified` handling lived at a single `buildSite` call site that
+`bun book` never executed: that path still stamped a wall clock, re-dirtying the committed ePub,
+and still passed a date-only string into an OPF that EPUBCheck rejects.
 
-Exporting the assembly means the shipped path and the tested path are the same object rather
-than two things that agree until they don't.
+That is the fourth instance in this release of one shape: **a green test asserting a function
+whose only consumer discards the result.** The date function was correct and tested; the
+assembly threw its return value away. The predicate was correct and tested; two of three
+endpoints used it. The touch guard was correct; the test retyped it. And the fix for the
+_first_ three introduced the fourth, by testing a helper that one of two shipped paths called.
+
+The answer is not another helper — it is a single choke point every path already goes through,
+tested from the public entry point by asserting the OPF text.
 
 ### Tests that can actually fail
 

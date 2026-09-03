@@ -187,3 +187,52 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     fs.rmSync(dir, { recursive: true, force: true })
   }
 })
+
+test('buildEpub normalises and defaults dcterms:modified for EVERY caller', async () => {
+  /*
+  The public export is what `bun book` calls, and it defaulted `modified` to `new Date()` with
+  no validation — so the determinism fix and the `epub.modified` validation lived at a single
+  `buildSite` call site this path never executed. `bun book` stamped a wall clock (re-dirtying
+  the committed ePub) and passed `'2026-09-03'` straight into an OPF that EPUBCheck rejects.
+
+  Asserts the OPF TEXT from the public entry point, because that is what was wrong while a
+  green test on a helper said otherwise.
+  */
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'epub-modified-'))
+  const corpus = path.join(dir, 'docs.json')
+  fs.writeFileSync(
+    corpus,
+    JSON.stringify([
+      { filename: 'a.ts', title: 'A', text: '# A', path: 'a.ts' },
+    ])
+  )
+  const read = async (modified?: string) => {
+    const out = path.join(dir, `book-${modified ?? 'default'}.epub`)
+    await buildEpub(
+      {
+        name: 'Date Book',
+        outputDir: dir,
+        docsJson: corpus,
+        baseUrl: 'https://example.test',
+      } as any,
+      {
+        output: out,
+        author: 'Tester',
+        ...(modified === undefined ? {} : { modified }),
+      }
+    )
+    const opf = await Bun.$`unzip -p ${out} OEBPS/package.opf`.quiet().text()
+    return opf.match(/dcterms:modified">([^<]*)</)?.[1] ?? ''
+  }
+
+  // A date-only override is normalised to the form EPUB 3 requires.
+  expect(await read('2026-09-03')).toBe('2026-09-03T00:00:00Z')
+  // Junk does not reach the OPF verbatim.
+  expect(await read('not a date')).not.toBe('not a date')
+  // Deterministic, not a clock: the same inputs give the same instant.
+  expect(await read()).toBe(await read())
+  // And it is always the shape a validator accepts.
+  expect(await read()).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/)
+
+  fs.rmSync(dir, { recursive: true, force: true })
+}, 60000)

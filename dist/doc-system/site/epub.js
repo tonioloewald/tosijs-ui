@@ -530,7 +530,52 @@ async function makeCover(config, opts, meta) {
 /**
  * Build an EPUB 3 book from the extracted corpus. Returns the output path.
  */
+export function versionAnchoredDate(version, override) {
+    /*
+    An explicit `epub.modified` always wins — a real publication date beats anything synthetic,
+    and it is the supported way to publish the truth.
+    */
+    if (override !== undefined && !Number.isNaN(Date.parse(override))) {
+        return new Date(override).toISOString().replace(/\.\d+Z$/, 'Z');
+    }
+    /*
+    DETERMINISTIC AND DISTINCT. Not ordered — and this comment no longer claims otherwise.
+  
+    (A fourth docblock asserting monotonicity survived three rewrites of this function by sitting
+    40 lines above it in another file, and shipped in `dist/`. It is gone; this is the only place
+    the behaviour is described.)
+  
+    `dcterms:modified` must not contain a clock, or a committed ePub differs on every build. Three
+    previous attempts tried to encode the version as an ORDERED date and each shipped a docblock
+    asserting monotonicity that execution disproved: days/days/hours wrapped so `1.13.24` equalled
+    `1.14.0`; a positional base-1000 ordinal made `1.13.1-beta.1` byte-identical to `1.13.0`,
+    collided `1.0.1000` with `1.1.0`, and sent a CalVer `2026.9.3` to the year 5872.
+  
+    Ordering was never needed — nothing reads these dates as a sequence; a reader sees one date on
+    one book. So the promise is narrowed to the two properties that are actually required and can
+    actually be held: the same version always yields the same instant, and different version
+    STRINGS (prerelease tags included) yield different ones. A hash gives both for any input,
+    including CalVer and tags this scheme has never seen.
+  
+    The date is synthetic and looks like a date without being one. `epub.modified` is the exit.
+    */
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < version.length; i += 1) {
+        hash ^= version.charCodeAt(i);
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+    // A fixed ~30-year window at minute resolution: plausible to a reader, and far from any
+    // boundary that could overflow or render as a nonsense year.
+    const WINDOW_MINUTES = 30 * 365 * 24 * 60;
+    return new Date(Date.UTC(1995, 0, 1) + (hash % WINDOW_MINUTES) * 60_000)
+        .toISOString()
+        .replace(/\.\d+Z$/, 'Z');
+}
 export async function buildEpub(config, opts = {}) {
+    const projectVersion = await Bun.file(`${process.cwd()}/package.json`)
+        .json()
+        .then((p) => p.version ?? '0.0.0')
+        .catch(() => '0.0.0');
     const docsJson = opts.docsJson ?? config.docsJson ?? 'demo/docs.json';
     const corpus = JSON.parse(fs.readFileSync(docsJson, 'utf8'));
     /*
@@ -590,7 +635,20 @@ export async function buildEpub(config, opts = {}) {
         identifier: volumeLabel
             ? `${baseIdentifier}#${slugify(volumeLabel)}`
             : baseIdentifier,
-        modified: (opts.modified ?? new Date().toISOString()).replace(/\.\d+Z$/, 'Z'),
+        /*
+        Defaulted HERE, not at one caller.
+    
+        This used to be `opts.modified ?? new Date().toISOString()` with no validation, and
+        `buildEpub` is a PUBLIC export — it is what `bun book` calls directly. So the determinism
+        fix and the `epub.modified` validation both lived at a single `buildSite` call site that
+        this path never executes: `bun book` still stamped a wall clock (re-dirtying the committed
+        ePub) and still passed `'2026-09-03'` through to an OPF that EPUBCheck rejects.
+    
+        That is the same shape this release names three times — a tested helper whose only consumer
+        is one of two shipped paths. Putting it at the choke point every path goes through is the
+        actual fix.
+        */
+        modified: versionAnchoredDate(projectVersion, opts.modified),
     };
     const css = opts.css ?? DEFAULT_BOOK_CSS + (opts.extraCss ? '\n' + opts.extraCss : '');
     // Stage the book in a temp dir, then zip it.
