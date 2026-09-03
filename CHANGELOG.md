@@ -120,6 +120,18 @@ of the new option produced a file EPUBCheck rejects. The option assembly is now 
 — the third time in this release that a green test asserted a pure function whose only consumer
 threw the result away.
 
+### The book this project ships carries a real date again
+
+`docs/tosijs-ui.epub` is redistributed, and its OPF has no `dc:date` — so `dcterms:modified` is
+the only date a reader ever sees. The version-derived scheme hashed 1.13.0 to **2012**, fourteen
+years adrift, where v1.12.8's book carried a correct contemporary date. This repo now sets
+`epub.modified` explicitly, which is exactly what that new option is for; adopters who care
+about the date should do the same, and adopters who don't still get a deterministic one.
+
+A related tidy: a docblock asserting the monotonicity this function does not have had survived
+three rewrites by sitting forty lines above it in a different file, and was shipping in `dist/`.
+The behaviour is described in one place now.
+
 ### One place decides the ePub date
 
 `buildEpub` — the public export, and what `bun book` calls — now defaults and validates
