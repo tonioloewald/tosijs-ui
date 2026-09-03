@@ -145,7 +145,6 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       _docContentMaxWidth: 'none',
     },
     'tosi-doc-system[data-layout="full-screen"] .doc-content': {
-      padding: '0',
       /*
       A definite height, so a child asking for `height: 100%` gets one.
 
@@ -155,13 +154,19 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       content.
       */
       height: '100%',
-      overflow: 'auto',
       /*
-      The gutter goes too. `.doc-content`'s padding is an INLINE style set by the doc-browser,
-      so this is set through the variable it reads rather than declared here, where it would
-      simply lose.
+      The gutter and the scroller both go through VARIABLES, because `.doc-content`'s `padding`
+      and `overflow` are INLINE styles set by the doc-browser — declared here they would simply
+      lose.
+
+      `overflow` used to be declared directly, so this layout's scroller never existed: the
+      `height: 100%` landed and the `overflow: auto` did not, giving a full-screen page whose
+      content is taller than the box a clipped, unscrollable article rather than the scroll
+      container the layout promises (tosijs-ui#119). `padding` had the note and `overflow` did
+      not, one line apart.
       */
       _docContentPadding: '0',
+      _docContentOverflow: 'auto',
     },
     /*
     `.doc-nav.doc-nav` — the class twice, on purpose.
@@ -265,7 +270,10 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
       // establishes a block formatting context, which stops the <h1>'s top margin
       // collapsing out of the box. Without it the static content sits 10px lower
       // than the hydrated content, and the page nudges as it comes alive.
-      overflow: 'hidden',
+      // Same variable as the inline style, so a page that overrides one overrides
+      // both — otherwise the override would land only after hydration and the page
+      // would visibly change shape (#119).
+      overflow: 'var(--doc-content-overflow, hidden)',
     },
     // The header-bar links are icon links; without the icon font they'd render as
     // stray text in the bar. They arrive with hydration.

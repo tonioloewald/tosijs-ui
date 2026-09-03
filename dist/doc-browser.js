@@ -737,7 +737,16 @@ export function createDocBrowser(options) {
         looked like.
         */
         padding: 'var(--doc-content-padding, 0 1em)',
-        overflow: 'hidden',
+        /*
+        Also through a variable, and for a second reason beyond `layout: "full-screen"` needing
+        `auto` (tosijs-ui#119).
+    
+        `overflow: hidden` on an ancestor kills `position: sticky` in its subtree. A page whose
+        whole point is a sticky viewport-sized window inside the article — a scroll engine, a
+        landing hero — could only get one with `.doc-content { overflow: visible !important }`,
+        and an `!important` in a consumer's stylesheet is this component failing to offer a seam.
+        */
+        overflow: 'var(--doc-content-overflow, hidden)',
     });
     // Adoption is zero-flash hydration of a statically pre-rendered page: it only
     // holds for the page's own path-routed instance, whose static `.doc-content`

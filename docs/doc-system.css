@@ -54,10 +54,9 @@ tosi-doc-system[data-layout="full-screen"] {
 }
 
 tosi-doc-system[data-layout="full-screen"] .doc-content {
-  padding: 0;
   height: 100%;
-  overflow: auto;
   --doc-content-padding: 0;
+  --doc-content-overflow: auto;
 }
 
 tosi-doc-system[data-layout="full-screen"] > .doc-nav.doc-nav, tosi-doc-system[data-layout="full-screen"] > .doc-navbar.doc-navbar {
@@ -144,7 +143,7 @@ tosi-doc-system:not(:defined) .doc-content {
   max-width: var(--doc-content-max-width);
   margin: auto;
   padding: var(--doc-content-padding, 0 1em);
-  overflow: hidden;
+  overflow: var(--doc-content-overflow, hidden);
 }
 
 tosi-doc-system:not(:defined) .doc-navbar {

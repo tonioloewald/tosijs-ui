@@ -653,6 +653,49 @@ live site** (independently useful). See roadmap "From book to live."
 - **Vector similarity search for doc-browser** - Replace current search with vector-based approach
 - **Focus management and focus-visible styling** - Improve keyboard navigation and focus indicators
 
+## 1.14.0 is GATED on the next tosijs minor — do not publish before it
+
+**Decision (2026-09-04): hold 1.14.0 until tosijs ships its next minor, then adopt it and
+release together.** That release is a **breaking minor**: a large DX win in exchange for a
+small change to how components are declared. Every component in `src/` declares itself the
+current way, so adoption is a mechanical sweep across all of them plus the doc corpus'
+examples — which is exactly the kind of change that should ride one release, not two.
+
+**What the DX win is: element creators will know their component's attributes.** So
+`tosiWidget({ … })` becomes type-checked against that component's `initAttributes` instead of
+accepting anything. Consequences to plan for:
+
+- The sweep is **type-level, not behavioural** — expect the compiler, not the test suite, to
+  find the work. Budget for a pass where nothing runs differently and a lot of signatures move.
+- **Expect it to surface real defects**, the way typechecking the tests did in this same
+  cycle (#73 found `SVGIconMap` claiming `SVGElement` for composites that are spans). An
+  attribute typo in a creator call is exactly the class of bug that has been invisible until
+  now, and there are ~40 components' worth of call sites plus every doc example.
+- The `bun run typecheck` gate added for #73 now covers library, `bin/` and tests, so the
+  sweep gets checked everywhere in one command. Landing that gate BEFORE this adoption was
+  luckier than planned.
+- Doc examples are executed, not just compiled (`checkExamples` + the inline `test` tier), so
+  a creator-call change has to be swept through the corpus too, not only `src/`.
+
+What this means for the version:
+
+- **1.14.0 is confirmed as a minor**, and its headline is the tosijs adoption. The icons
+  type correction (composites are spans, not `SVGElement`) was already forcing a minor on
+  its own; it now rides along rather than justifying the bump by itself.
+- The peer floor moves to the new tosijs. Record the REASON here when it lands, per the
+  standing rule that the floor encodes specific upstream fixes and not a date.
+- The CHANGELOG's `## 1.14.0 (unreleased)` section is already open. Add the adoption section
+  at its top when the sweep happens — the entries below it (icons, #73, #85, #122, #123)
+  are done and need no rework.
+
+Do not cut a 1.13.1 from the work already on `main` to "get it out sooner": the icons change
+breaks type-level code, and a patch that breaks you is the one thing the version contract
+promises never happens.
+
+Current state: tosijs `latest` is **1.9.2** (a patch — our `^1.9.1` floor already admits it;
+we have 1.9.1 installed). The `beta` and `rc` dist-tags are stale (1.7.0-beta.2, 1.8.0-rc.3),
+so they are not previews of this work.
+
 ## From the 1.13.0 post-publish verification (2026-09-03)
 
 Found by installing the **published** tarball from the registry and running a bin by hand —

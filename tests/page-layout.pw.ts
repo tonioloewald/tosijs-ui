@@ -726,3 +726,80 @@ test('the sidenav does not animate into its initial layout', async ({
   */
   expect(settled.duration).not.toBe('0s')
 })
+
+/*
+#119: `layout: "full-screen"` promises a scroll container, and did not deliver one.
+
+`.doc-content`'s `overflow` is an INLINE style set by the doc-browser, so the layout's
+`overflow: auto` — declared in the stylesheet, one line below a `padding` that correctly went
+through a variable — was competing with an inline style and never applied. The `height: 100%`
+landed, the scroller did not: content taller than the box was clipped and unscrollable.
+
+Asserted as the COMPUTED style rather than by reading the CSS, because the whole defect was a
+rule that existed and lost. A test that greps the stylesheet would have passed throughout.
+
+Both directions, so a fix that made every page scroll would not pass either.
+*/
+const contentOverflow = (page: any) =>
+  page.evaluate(() => {
+    const el = document.querySelector('.doc-content') as HTMLElement
+    const host = el.closest('tosi-doc-system') as HTMLElement
+    return {
+      overflowY: getComputedStyle(el).overflowY,
+      layout: host.getAttribute('data-layout') ?? null,
+      scrollable: el.scrollHeight > el.clientHeight,
+    }
+  })
+
+test('#119: a full-screen page gets a real scroll container', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1200, height: 700 })
+  await page.goto('/full-screen-demo/')
+  await page.waitForFunction(
+    () => !!customElements.get('tosi-doc-system'),
+    undefined,
+    { timeout: 15_000 }
+  )
+  const m = await contentOverflow(page)
+  expect(m.layout).toBe('full-screen')
+  expect(
+    m.overflowY,
+    `full-screen must scroll its own content, not clip it: ${JSON.stringify(m)}`
+  ).toBe('auto')
+
+  // And it must actually scroll when the content is taller than the box — `overflow: auto`
+  // on a box with no definite height is a scroller that never scrolls, which is the failure
+  // this layout's `height: 100%` exists to prevent.
+  const moved = await page.evaluate(() => {
+    const el = document.querySelector('.doc-content') as HTMLElement
+    const filler = document.createElement('div')
+    filler.style.height = '4000px'
+    el.appendChild(filler)
+    el.scrollTop = 500
+    const top = el.scrollTop
+    filler.remove()
+    return top
+  })
+  expect(moved, 'the full-screen content box should scroll').toBeGreaterThan(0)
+})
+
+test('#119: an ordinary page still clips, so the default is unchanged', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1200, height: 700 })
+  await page.goto('/data-table/')
+  await page.waitForFunction(
+    () => !!customElements.get('tosi-doc-system'),
+    undefined,
+    { timeout: 15_000 }
+  )
+  const m = await contentOverflow(page)
+  expect(m.layout).not.toBe('full-screen')
+  /*
+  `hidden` is load-bearing, not incidental: it establishes a block formatting context so the
+  <h1>'s top margin cannot collapse out of the box. Without it the static content sits ~10px
+  lower than the hydrated content and the page nudges as it comes alive.
+  */
+  expect(m.overflowY).toBe('hidden')
+})
