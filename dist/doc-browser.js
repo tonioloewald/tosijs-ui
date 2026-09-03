@@ -157,7 +157,7 @@ import { buildNavTree } from './doc-system/nav-tree.js';
 import { renderDocMarkdown } from './doc-system/render.js';
 import { pageTitle } from './doc-system/doc-title.js';
 import { unsettledExamples } from './doc-system/test-completion.js';
-import { LiveExample, testManager } from './live-example.js';
+import { LiveExample, testManager, pageTestCount, enableTests, disableTests, } from './live-example.js';
 import { tosiSidenav, TosiSidenav } from './side-nav.js';
 import { icons } from './icons.js';
 import { tosiLocalized } from './localize.js';
@@ -1131,6 +1131,34 @@ export function createDocBrowser(options) {
     file, which is how the host knows to omit the submenu entirely rather than showing an
     empty one.
     */
+    /*
+    A Tests toggle, offered only on a page that HAS tests (tosijs-ui#113).
+  
+    Tests default to on for localhost and off everywhere else, and when they are off the whole
+    widget is hidden — so a page with failing tests looked identical to a page with no tests.
+    There was an override (`localStorage['tosijs-ui-tests-enabled']`), but you had to know the
+    key, which means you had to already suspect there was something to see.
+  
+    The default is right: nobody wants a test widget on a published doc site. It was the
+    SILENCE that cost — and it cost most down the path we recommend, since `tosijs-tunnel`
+    necessarily serves from a non-localhost hostname, so the sanctioned way to view a dev site
+    remotely is exactly where test state goes invisible.
+  
+    Gating on the count rather than showing it always is what keeps the published-site default
+    honest: a page with no tests offers nothing, and a page with tests says so.
+    */
+    const testsMenuItem = () => {
+        const count = pageTestCount();
+        if (count === 0)
+            return null;
+        const on = testManager.enabled.value;
+        return {
+            caption: on ? 'Tests' : `Tests (${count} not run)`,
+            icon: on ? 'checkCircle' : 'circle',
+            checked: () => testManager.enabled.value,
+            action: () => testManager.enabled.value ? disableTests() : enableTests(),
+        };
+    };
     const sourceMenuItems = () => {
         const doc = docs.find((d) => String(d.filename) === String(app.currentDoc.filename));
         if (!doc || !doc.path)
@@ -1795,6 +1823,7 @@ export function createDocBrowser(options) {
     */
     ;
     container.sourceMenuItems = sourceMenuItems;
+    container.testsMenuItem = testsMenuItem;
     // Memory routing: let the host drive navigation programmatically (by slug) and
     // read the current slug back, so the browser can live in a floating panel etc.
     if (memoryRouting) {

@@ -418,6 +418,22 @@ export class TosiDocSystem extends Component {
             menuItems.push(null)
           }
 
+          /*
+          Tests, contributed by the doc browser and present only on a page that HAS tests.
+
+          Tests are off by default anywhere but localhost, and when off the widget is hidden
+          — so a page with failing tests was indistinguishable from a page with none. The
+          `localStorage` override existed but required knowing the key, i.e. already
+          suspecting there was something to see (tosijs-ui#113). This is that suspicion made
+          visible, and it costs nothing on a published page with no tests, where the browser
+          returns null.
+          */
+          const testsItem = (this.browser as any)?.testsMenuItem?.() ?? null
+          if (testsItem) {
+            menuItems.push(testsItem)
+            menuItems.push(null)
+          }
+
           menuItems.push({
             caption: 'Color Theme',
             icon: 'rgb',

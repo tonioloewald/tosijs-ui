@@ -1,5 +1,5 @@
 // Main exports
-export { LiveExample, liveExample, enableTests, disableTests, testManager, } from './component.js';
+export { LiveExample, liveExample, enableTests, disableTests, pageTestCount, testManager, } from './component.js';
 // Test harness (for doc-browser integration)
 export { runTests, createTestContext, expect } from './test-harness.js';
 // Utilities (for advanced usage)

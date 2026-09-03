@@ -505,6 +505,25 @@ export function enableTests() {
         el.refresh();
     });
 }
+/**
+ * How many examples on this page carry tests — regardless of whether tests are ENABLED.
+ *
+ * "Off" and "none exist" rendered identically: the widget is hidden when tests are
+ * disabled, and they are disabled by default anywhere but localhost, so a page with
+ * failing tests looked exactly like a page with no tests (tosijs-ui#113). That bites
+ * hardest down the sanctioned remote-viewing path — `tosijs-tunnel` necessarily serves
+ * from a non-localhost hostname — where a maintainer read a clean page as "the failure is
+ * localhost-specific" and lost the thread.
+ *
+ * The `localStorage` override always existed, but you had to know the key, which means you
+ * had to already suspect there was something to see. This is the number that lets the UI
+ * say a runner exists here without turning it on.
+ */
+export function pageTestCount() {
+    if (typeof document === 'undefined')
+        return 0;
+    return Array.from(document.querySelectorAll('tosi-example')).filter((el) => !!el.test).length;
+}
 /** Disable test mode */
 export function disableTests() {
     localStorage.setItem(TESTS_ENABLED_KEY, 'false');

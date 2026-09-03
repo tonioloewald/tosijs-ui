@@ -67,6 +67,40 @@ outside a git repo.
 Also: `deploy:index` now asks for `PREVIEW_HOST` like the bins, instead of the `PREVIEW_SSH`
 they moved off.
 
+### `layout: "full-screen"` finally gets its scroll container (#119)
+
+`.doc-content`'s `overflow` is an **inline** style set by the doc-browser, so the full-screen
+layout's stylesheet `overflow: auto` was competing with an inline style and always lost. The
+`height: 100%` landed and the scroller did not — a full-screen page taller than its box was
+clipped and unscrollable. It sat one line below a `padding` that correctly went through a
+variable, with a comment explaining exactly why it had to.
+
+Both now go through `--doc-content-overflow` (default `hidden`), on the inline style **and**
+the pre-hydration rule — they have to match, or an override would take effect only after
+hydration and the page would visibly change shape.
+
+The second consequence is the one worth knowing about: `overflow: hidden` on an ancestor
+kills `position: sticky` in its subtree, so a page wanting a sticky viewport-sized window
+inside the article previously needed `.doc-content { overflow: visible !important }`. An
+`!important` in a consumer's stylesheet is this component failing to offer a seam.
+
+### A page with tests says so, even when tests are off (#113)
+
+Tests default to on for localhost and off everywhere else, and when they are off the widget is
+hidden — so **a page with failing tests looked identical to a page with no tests**. There was
+an override, `localStorage['tosijs-ui-tests-enabled']`, but you had to know the key, which
+means you had to already suspect there was something to see.
+
+That bit hardest down the path we recommend: `tosijs-tunnel` necessarily serves from a
+non-localhost hostname, so the sanctioned way to view a dev site remotely is exactly where test
+state went invisible. A maintainer read a clean tunnelled page as "the failure must be
+localhost-specific" and lost the thread.
+
+The app menu now offers a **Tests** toggle — but only on a page that has tests, where it reads
+`Tests (N not run)` while they are off. A published page with no tests offers nothing, so the
+default stays as quiet as it should be. The default itself was never the problem; the silence
+was.
+
 ### `/version.json` stops restamping a site that did not change (#122)
 
 `docs/` is committed here and in the sibling projects, and the stamp named

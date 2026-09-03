@@ -7,6 +7,21 @@ export declare const testManager: {
 }>;
 /** Enable test mode (runs tests and shows indicators) */
 export declare function enableTests(): void;
+/**
+ * How many examples on this page carry tests — regardless of whether tests are ENABLED.
+ *
+ * "Off" and "none exist" rendered identically: the widget is hidden when tests are
+ * disabled, and they are disabled by default anywhere but localhost, so a page with
+ * failing tests looked exactly like a page with no tests (tosijs-ui#113). That bites
+ * hardest down the sanctioned remote-viewing path — `tosijs-tunnel` necessarily serves
+ * from a non-localhost hostname — where a maintainer read a clean page as "the failure is
+ * localhost-specific" and lost the thread.
+ *
+ * The `localStorage` override always existed, but you had to know the key, which means you
+ * had to already suspect there was something to see. This is the number that lets the UI
+ * say a runner exists here without turning it on.
+ */
+export declare function pageTestCount(): number;
 /** Disable test mode */
 export declare function disableTests(): void;
 export declare class LiveExample extends Component<ExampleParts> {

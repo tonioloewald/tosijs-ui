@@ -4,6 +4,7 @@ export {
   liveExample,
   enableTests,
   disableTests,
+  pageTestCount,
   testManager,
 } from './component.js'
 

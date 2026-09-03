@@ -803,3 +803,89 @@ test('#119: an ordinary page still clips, so the default is unchanged', async ({
   */
   expect(m.overflowY).toBe('hidden')
 })
+
+/*
+#113: "tests are off" and "this page has no tests" must not render identically.
+
+Tests default off anywhere but localhost, and the widget is hidden when they are off — so a
+page with FAILING tests looked exactly like a page with none. There was a localStorage
+override, but you had to know the key, which means you had to already suspect there was
+something to see. That bites hardest down the sanctioned remote path: `tosijs-tunnel` serves
+from a non-localhost hostname, so the recommended way to view a dev site remotely is exactly
+where test state went invisible.
+
+These run with tests DISABLED (the suite's beforeEach sets the flag false), which is the
+state the issue is about — asserting this with tests enabled would prove nothing.
+*/
+async function openAppMenu(page: any) {
+  await page.waitForFunction(
+    () =>
+      [...document.querySelectorAll('button')].some((b) => {
+        const r = b.getBoundingClientRect()
+        return r.top < 60 && r.width > 0
+      }),
+    undefined,
+    { timeout: 15_000 }
+  )
+  await page.evaluate(() => {
+    const header = [...document.querySelectorAll('button')].filter((b) => {
+      const r = b.getBoundingClientRect()
+      return r.top < 60 && r.width > 0
+    })
+    header[header.length - 1].click()
+  })
+}
+
+test('#113: a page WITH tests offers a Tests toggle even when tests are off', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/data-table/')
+  await page.waitForFunction(
+    () =>
+      !!customElements.get('tosi-doc-system') &&
+      document.querySelectorAll('tosi-example').length > 0,
+    undefined,
+    { timeout: 15_000 }
+  )
+  // Precondition: tests really are disabled here, or the assertion below is vacuous.
+  const enabled = await page.evaluate(() =>
+    document.body.classList.contains('tests-enabled')
+  )
+  expect(enabled, 'this test must run with tests DISABLED').toBe(false)
+
+  await openAppMenu(page)
+  /*
+  Scoped to the menu popup. A bare text match picks up page furniture — the full-screen
+  fixture renders its own <span>Tests</span> — which made the negative case below pass for
+  the wrong reason and then fail for the right one.
+  */
+  const item = page.locator('.tosi-menu').getByText(/^Tests \(\d+ not run\)$/)
+  await expect(
+    item,
+    'a page with tests must say so even when they are off'
+  ).toBeVisible({ timeout: 5000 })
+})
+
+test('#113: a page with NO tests offers nothing, so the default stays quiet', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1400, height: 900 })
+  await page.goto('/full-screen-demo/')
+  await page.waitForFunction(
+    () => !!customElements.get('tosi-doc-system'),
+    undefined,
+    { timeout: 15_000 }
+  )
+  const count = await page.evaluate(
+    () =>
+      [...document.querySelectorAll('tosi-example')].filter(
+        (el: any) => !!el.test
+      ).length
+  )
+  expect(count, 'fixture must have no tests for this to mean anything').toBe(0)
+
+  await openAppMenu(page)
+  await expect(page.locator('.tosi-menu')).toBeVisible({ timeout: 5000 })
+  await expect(page.locator('.tosi-menu').getByText(/^Tests\b/)).toHaveCount(0)
+})
