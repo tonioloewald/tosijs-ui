@@ -133,6 +133,7 @@ import {
   XinStyleSheet,
 } from 'tosijs'
 import { icons } from './icons.js'
+import type { IconElement } from './icon-types.js'
 
 import { tosiSelect, TosiSelect } from './select.js'
 import { spacer as layoutSpacer } from './layout.js'
@@ -183,7 +184,7 @@ const spacer = () => layoutSpacer({ slot: 'toolbar' })
 export function commandButton(
   title: string,
   dataCommand: string,
-  icon: SVGElement
+  icon: IconElement
 ) {
   return button({ slot: 'toolbar', dataCommand, title }, icon)
 }

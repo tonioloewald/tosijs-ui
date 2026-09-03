@@ -32,10 +32,17 @@ jobs:
       # tsconfig.json EXCLUDES *.test.ts, so the vendored-type anti-drift guards — whose
       # entire value is compile-time — were never compiled. Both were inert for all of
       # 1.11.0's development and one was red. A compile-time assertion nothing compiles is
-      # decoration. (The suite at large has ~150 accumulated type errors; fixing those is a
-      # separate job, which is why this checks the two files that must not rot.)
+      # decoration.
       - name: Type check the vendored-type guards
         run: bun run typecheck-guards
+
+      # The rest of the test suite, for the same reason (#73). The backlog was 48 errors,
+      # now zero, and two were real defects rather than test noise: `SVGIconMap` typed
+      # every icon `SVGElement` when composites return `HTMLSpanElement`, and two files
+      # carried duplicate imports. Gated so it cannot silently regrow — that is the whole
+      # point; the count only ever went up while nothing was watching.
+      - name: Type check the test suite
+        run: bunx tsc -p tsconfig.tests.json --noEmit
 
       # `bun format` was manual and in no gate, so drift only ever accumulated: 24
       # unformatted files at v1.9.0, 40 by v1.9.7. Nobody sees it until someone runs

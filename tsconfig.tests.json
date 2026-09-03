@@ -1,0 +1,19 @@
+{
+  // Typecheck the TEST files, which `tsconfig.json` excludes.
+  //
+  // That exclusion is right for EMIT — test files must not produce declarations or reach
+  // `dist/` — but it also meant nothing ever type-checked them, and 48 errors accumulated
+  // unseen (tosijs-ui#73). Two of them were real defects rather than test noise:
+  //
+  //   - `SVGIconMap` declared every icon as `ElementCreator<SVGElement>`, but a COMPOSITE
+  //     icon (any name with `$`) returns an `HTMLSpanElement`. Measured, not inferred:
+  //     `icons['tosiHat$tosi']()` returns SPAN and `instanceof SVGElement` is false. The
+  //     lie was load-bearing — correcting it surfaced 14 library sites relying on it.
+  //   - duplicate `import`s in two test files: invalid ESM that the runtime tolerated.
+  //
+  // A type-level test asserts nothing if nothing compiles it, which is the other half of
+  // why this exists.
+  "extends": "./tsconfig.json",
+  "include": ["src/**/*.ts", "bin/**/*.ts"],
+  "exclude": ["node_modules"]
+}

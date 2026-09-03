@@ -20,6 +20,7 @@ import {
   coerceToSchema,
   fieldEditable,
 } from './fields'
+import type { Field } from './fields'
 
 const contact: any = {
   type: 'object',
@@ -73,16 +74,16 @@ test('a nullable type uses the non-null control', () => {
 
 test('format picks the input type, and an unknown format stays text', () => {
   const byPath = Object.fromEntries(fieldsFor(contact).map((f) => [f.path, f]))
-  expect(byPath.email.inputType).toBe('email')
-  expect(byPath.homepage.inputType).toBe('url')
-  expect(byPath.name.inputType).toBe('text')
+  expect((byPath.email as Field).inputType).toBe('email')
+  expect((byPath.homepage as Field).inputType).toBe('url')
+  expect((byPath.name as Field).inputType).toBe('text')
   // A wrong input type silently refuses valid values — `type=date` will not accept
   // "circa 1920" — so an unrecognised format must fall back rather than guess.
   const odd = fieldsFor({
     type: 'object',
     properties: { when: { type: 'string', format: 'fuzzy-era' } },
   } as any)
-  expect(odd[0].inputType).toBe('text')
+  expect((odd[0] as Field).inputType).toBe('text')
 })
 
 test('required comes from the schema, not from presence', () => {

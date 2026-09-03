@@ -24,7 +24,7 @@ export declare class TosiSizer extends XinComponent {
             stroke: string;
         };
     };
-    content: SVGElement;
+    content: import("./icon-types.js").IconElement;
     get minSize(): {
         width: number;
         height: number;

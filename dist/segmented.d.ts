@@ -1,6 +1,7 @@
 import { Component as WebComponent, ElementCreator } from 'tosijs';
+import type { IconElement } from './icon-types.js';
 interface Choice {
-    icon?: string | SVGElement;
+    icon?: string | IconElement;
     value: string;
     caption: string;
 }

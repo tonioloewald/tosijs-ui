@@ -145,6 +145,7 @@ This is simply a wrapper for `TosiNotification.post()`.
 
 import { Component, elements, vars, varDefault } from 'tosijs'
 import { icons } from './icons.js'
+import type { IconElement } from './icon-types.js'
 import { findHighestZ } from './track-drag.js'
 const { div, button } = elements
 
@@ -302,7 +303,7 @@ export class TosiNotification extends Component {
       }
       TosiNotification.removeNote(note)
     }
-    const iconElement: SVGElement =
+    const iconElement: IconElement =
       icon instanceof SVGElement ? icon : icon ? icons[icon]() : icons.info()
     // Use assertive for errors/warnings, polite for info/success
     const isUrgent = type === 'error' || type === 'warn'

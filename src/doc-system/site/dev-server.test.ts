@@ -325,7 +325,6 @@ test('only text-shaped assets are compressed', () => {
 // ── what the dev server watches (tosijs-ui#49) ───────────────────────────────
 
 import { resolveWatchPaths, isUnderRoot } from './dev-server.js'
-import * as nodePath from 'path'
 
 /** How many watched entries resolve to the same directory — `./demo/src` also ends in
  * 'src', so a suffix test counts the wrong things. */

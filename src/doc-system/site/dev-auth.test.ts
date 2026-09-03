@@ -192,7 +192,6 @@ import {
   mayDriveWithAgent,
   sessionRejection,
   validSessionCookie,
-  sessionCookie,
   parseSessionCookie,
   BOOT_ID,
   isLoopbackAddressForAuth,

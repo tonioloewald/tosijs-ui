@@ -1014,6 +1014,7 @@ import {
   groupCounts,
 } from './row-grouping.js'
 import { icons } from './icons.js'
+import type { IconElement } from './icon-types.js'
 import {
   valueRenderer,
   ValueRenderer,
@@ -2275,7 +2276,7 @@ export class TosiTable extends WebComponent {
   ): HTMLElement {
     const { popColumnMenu } = this
     let ariaSort = 'none'
-    let sortIcon: SVGElement | undefined
+    let sortIcon: IconElement | undefined
     switch (col.sort) {
       case 'ascending':
         sortIcon = icons.sortAscending()

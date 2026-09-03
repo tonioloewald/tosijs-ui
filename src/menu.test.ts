@@ -14,6 +14,7 @@ import {
   MenuAction,
   SubMenu,
   PopMenuOptions,
+  resolveMenuItems,
 } from './menu.js'
 
 const noop = () => {}
@@ -510,8 +511,10 @@ describe('menu', () => {
       const result = filterForDrop(items, ['text/plain'], true)
       expect(result.length).toBe(1)
       const sub = result[0] as SubMenu
-      expect(sub.menuItems.length).toBe(1)
-      expect((sub.menuItems[0] as MenuAction).caption).toBe('Accepts text')
+      expect(resolveMenuItems(sub.menuItems).length).toBe(1)
+      expect((resolveMenuItems(sub.menuItems)[0] as MenuAction).caption).toBe(
+        'Accepts text'
+      )
     })
 
     test('removes empty submenus when hideDisabled', () => {
@@ -621,7 +624,7 @@ describe('menu', () => {
           caption: 'Drop only',
           acceptsDrop: ['text/plain'],
           dropAction: () => {},
-        } as MenuItem,
+        } as unknown as MenuItem,
       ]
       const result = filterForClick(items, true)
       expect(result.length).toBe(1)
@@ -635,7 +638,7 @@ describe('menu', () => {
           caption: 'Drop only',
           acceptsDrop: ['text/plain'],
           dropAction: () => {},
-        } as MenuItem,
+        } as unknown as MenuItem,
       ]
       const result = filterForClick(items)
       expect(result.length).toBe(2)
@@ -662,7 +665,7 @@ describe('menu', () => {
               caption: 'Drop only',
               acceptsDrop: ['text/plain'],
               dropAction: () => {},
-            } as MenuItem,
+            } as unknown as MenuItem,
           ],
         },
       ]
@@ -679,7 +682,7 @@ describe('menu', () => {
               caption: 'Drop only',
               acceptsDrop: ['text/plain'],
               dropAction: () => {},
-            } as MenuItem,
+            } as unknown as MenuItem,
           ],
         },
       ]

@@ -111,7 +111,7 @@ describe('TosiDialog', () => {
     test('calls dialogWillClose callback', () => {
       let closedWith: string | undefined
       const dialog = tosiDialog({
-        dialogWillClose(reason) {
+        dialogWillClose(reason?: string) {
           closedWith = reason
         },
       })
@@ -123,7 +123,7 @@ describe('TosiDialog', () => {
     test('uses "cancel" as default reason', () => {
       let closedWith: string | undefined
       const dialog = tosiDialog({
-        dialogWillClose(reason) {
+        dialogWillClose(reason?: string) {
           closedWith = reason
         },
       })
@@ -137,7 +137,7 @@ describe('TosiDialog', () => {
     test('closes with "confirm" reason', () => {
       let closedWith: string | undefined
       const dialog = tosiDialog({
-        dialogWillClose(reason) {
+        dialogWillClose(reason?: string) {
           closedWith = reason
         },
       })

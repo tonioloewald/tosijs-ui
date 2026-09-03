@@ -99,7 +99,7 @@ form.addEventListener('submit', (e) => {
 You can set `choices` programmatically to an array of `Choice` objects:
 
     interface Choice {
-      icon?: string | SVGElement
+      icon?: string | IconElement
       value: string
       caption: string
     }
@@ -145,12 +145,13 @@ import {
   deprecated,
 } from 'tosijs'
 import { icons } from './icons.js'
+import type { IconElement } from './icon-types.js'
 import { tosiLocalized } from './localize.js'
 
 const { div, slot, label, span, input } = elements
 
 interface Choice {
-  icon?: string | SVGElement
+  icon?: string | IconElement
   value: string
   caption: string
 }

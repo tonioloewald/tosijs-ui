@@ -3,7 +3,11 @@ import { buildSlugMap } from './routing.js'
 import { buildNavTree, navOpenPath, pinnedSort } from './nav-tree.js'
 
 // filename + the fields nav cares about
-const mk = (filename: string, title: string, extra: Partial<any> = {}) => ({
+const mk = (
+  filename: string,
+  title: string,
+  extra: { order?: number; parent?: string; pin?: 'top' | 'bottom' } = {}
+) => ({
   filename,
   title,
   ...extra,

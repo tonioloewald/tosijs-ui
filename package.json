@@ -17,7 +17,7 @@
     "format": "bun prettier --write . && bun eslint src demo --fix",
     "format-check": "bun prettier --check .",
     "typecheck-guards": "bun tsc --noEmit -p tsconfig.guards.json",
-    "typecheck": "bunx tsc --noEmit && bunx tsc -p tsconfig.bin.json --noEmit",
+    "typecheck": "bunx tsc --noEmit && bunx tsc -p tsconfig.bin.json --noEmit && bunx tsc -p tsconfig.tests.json --noEmit",
     "tests": "bun test && bun playwright test",
     "latest": "rm -rf node_modules bun.lock && bun update",
     "release-notes": "bun bin/release-notes.ts",

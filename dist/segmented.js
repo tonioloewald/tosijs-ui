@@ -99,7 +99,7 @@ form.addEventListener('submit', (e) => {
 You can set `choices` programmatically to an array of `Choice` objects:
 
     interface Choice {
-      icon?: string | SVGElement
+      icon?: string | IconElement
       value: string
       caption: string
     }

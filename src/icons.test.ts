@@ -175,47 +175,47 @@ describe('icons', () => {
     test('opacity suffix', () => {
       const icon = icons.lock50o()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.opacity).toBe('0.5')
+      expect(icon.style.opacity).toBe('0.5')
     })
 
     test('scale suffix', () => {
       const icon = icons.star75s()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.transform).toContain('scale(0.75)')
+      expect(icon.style.transform).toContain('scale(0.75)')
     })
 
     test('rotation suffix', () => {
       const icon = icons.chevronRight90r()
       expect(icon).toBeDefined()
       const el = icon.querySelector('svg') || icon
-      expect((el as HTMLElement).style.transform).toContain('rotate(90deg)')
+      expect((el as SVGElement).style.transform).toContain('rotate(90deg)')
     })
 
     test('negative rotation suffix', () => {
       const icon = icons.chevronRight_90r()
       expect(icon).toBeDefined()
       const el = icon.querySelector('svg') || icon
-      expect((el as HTMLElement).style.transform).toContain('rotate(-90deg)')
+      expect((el as SVGElement).style.transform).toContain('rotate(-90deg)')
     })
 
     test('flip horizontal suffix', () => {
       const icon = icons.sidebar0f()
       expect(icon).toBeDefined()
       const el = icon.querySelector('svg') || icon
-      expect((el as HTMLElement).style.transform).toContain('scaleX(-1)')
+      expect((el as SVGElement).style.transform).toContain('scaleX(-1)')
     })
 
     test('flip vertical suffix', () => {
       const icon = icons.sidebar1f()
       expect(icon).toBeDefined()
       const el = icon.querySelector('svg') || icon
-      expect((el as HTMLElement).style.transform).toContain('scaleY(-1)')
+      expect((el as SVGElement).style.transform).toContain('scaleY(-1)')
     })
 
     test('translate suffixes', () => {
       const icon = icons.plus20x_10y()
       expect(icon).toBeDefined()
-      const style = (icon as HTMLElement).style.transform
+      const style = icon.style.transform
       expect(style).toContain('translateX(20%)')
       expect(style).toContain('translateY(-10%)')
     })
@@ -223,44 +223,44 @@ describe('icons', () => {
     test('fill hex color suffix', () => {
       const icon = icons.star_FF0000F()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.fill).toBe('#FF0000')
+      expect(icon.style.fill).toBe('#FF0000')
     })
 
     test('fill CSS variable suffix', () => {
       const icon = icons.star_brandColorF()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.fill).toBe('var(--brand-color)')
+      expect(icon.style.fill).toBe('var(--brand-color)')
     })
 
     test('stroke CSS variable suffix', () => {
       const icon = icons.lock_accentS()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.stroke).toContain('var(--accent)')
+      expect(icon.style.stroke).toContain('var(--accent)')
     })
 
     test('CSS color math in fill suffix', () => {
       const icon = icons.star_brandColor40oF()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.fill).toContain('brand-color')
+      expect(icon.style.fill).toContain('brand-color')
     })
 
     test('stroke color suffix', () => {
       const icon = icons.lock_00fS()
       expect(icon).toBeDefined()
       // stroke is set via Object.assign after makeIcon sets the default
-      expect((icon as HTMLElement).style.cssText).toContain('#00f')
+      expect(icon.style.cssText).toContain('#00f')
     })
 
     test('stroke width suffix', () => {
       const icon = icons.lock4W()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.strokeWidth).toBe('4')
+      expect(icon.style.strokeWidth).toBe('4')
     })
 
     test('combined suffixes', () => {
       const icon = icons.plus50o75s20x20y()
       expect(icon).toBeDefined()
-      const style = (icon as HTMLElement).style
+      const style = icon.style
       expect(style.opacity).toBe('0.5')
       expect(style.transform).toContain('scale(0.75)')
       expect(style.transform).toContain('translateX(20%)')
@@ -276,19 +276,19 @@ describe('icons', () => {
     test('digit-ending icon with _ separator suffix', () => {
       const icon = icons['edit2_50o']()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.opacity).toBe('0.5')
+      expect(icon.style.opacity).toBe('0.5')
     })
 
     test('digit-ending icon with _F suffix', () => {
       const icon = icons['volume2_FF0000F']()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.fill).toBe('#FF0000')
+      expect(icon.style.fill).toBe('#FF0000')
     })
 
     test('digit-ending icon with _S CSS variable suffix', () => {
       const icon = icons['volume2_brandColorS']()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.stroke).toContain('brand-color')
+      expect(icon.style.stroke).toContain('brand-color')
     })
   })
 
@@ -338,12 +338,12 @@ describe('icons', () => {
 
     test('composite has pointer-events none', () => {
       const icon = icons.unLock()
-      expect((icon as HTMLElement).style.pointerEvents).toBe('none')
+      expect(icon.style.pointerEvents).toBe('none')
     })
 
     test('composite has data-icon attribute', () => {
       const icon = icons.unLock()
-      expect((icon as HTMLElement).dataset.icon).toBeDefined()
+      expect(icon.dataset.icon).toBeDefined()
     })
   })
 
@@ -374,7 +374,7 @@ describe('icons', () => {
 
     test('triple stack z-order: first segment on top', () => {
       const icon = icons['star$lock$shield']()
-      const children = Array.from(icon.children) as HTMLElement[]
+      const children = Array.from(icon.children) as SVGElement[]
       // DOM order: shield (base, first), lock (middle), star (top, last)
       // Last child = highest z = the first segment in the name
       expect(children.length).toBe(3)
@@ -460,23 +460,23 @@ describe('icons', () => {
       // arrowUpLeft redirects to arrowUpRight270r
       const icon = icons.arrowUpLeft50o()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.opacity).toBe('0.5')
+      expect(icon.style.opacity).toBe('0.5')
     })
 
     test('multiple suffixes on digit-ending icon', () => {
       // Only first _ is separator, suffixes chain normally after
       const icon = icons['edit2_50o75s']()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.opacity).toBe('0.5')
-      expect((icon as HTMLElement).style.transform).toContain('scale(0.75)')
+      expect(icon.style.opacity).toBe('0.5')
+      expect(icon.style.transform).toContain('scale(0.75)')
     })
 
     test('rotation + opacity + fill on digit-ending icon', () => {
       const icon = icons['trash2_90r50o_FF0000F']()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.opacity).toBe('0.5')
-      expect((icon as HTMLElement).style.transform).toContain('rotate(90deg)')
-      expect((icon as HTMLElement).style.fill).toBe('#FF0000')
+      expect(icon.style.opacity).toBe('0.5')
+      expect(icon.style.transform).toContain('rotate(90deg)')
+      expect(icon.style.fill).toBe('#FF0000')
     })
 
     test('prefix + multiple suffixes on digit-ending icon', () => {
@@ -505,15 +505,15 @@ describe('icons', () => {
       // chevronDown redirects to chevronRight90r
       const icon = icons.chevronDown50o_FF0000F()
       expect(icon).toBeDefined()
-      expect((icon as HTMLElement).style.opacity).toBe('0.5')
-      expect((icon as HTMLElement).style.fill).toBe('#FF0000')
+      expect(icon.style.opacity).toBe('0.5')
+      expect(icon.style.fill).toBe('#FF0000')
     })
 
     test('redirected icon with negative suffix', () => {
       const icon = icons.arrowUpLeft_50o()
       expect(icon).toBeDefined()
       // _50o is negative opacity (-0.5)
-      expect((icon as HTMLElement).style.opacity).toBe('-0.5')
+      expect(icon.style.opacity).toBe('-0.5')
     })
   })
 
@@ -523,7 +523,7 @@ describe('icons', () => {
       expect(icon.classList.contains('tosi-icon-composite')).toBe(true)
       // Suffixes apply to the resolved icon inside the spin wrapper
       const inner = icon.querySelector('svg') || icon.children[0]
-      expect((inner as HTMLElement).style.transform).toContain('scale(0.4)')
+      expect((inner as SVGElement).style.transform).toContain('scale(0.4)')
     })
 
     test('suffixes on overlay in stacked icon', () => {
@@ -566,7 +566,7 @@ describe('icons', () => {
 
     test('resolves suffixes', () => {
       const icon = resolveIcon('lock50o', [])
-      expect((icon as HTMLElement).style.opacity).toBe('0.5')
+      expect((icon as SVGElement).style.opacity).toBe('0.5')
     })
 
     test('resolves stacking', () => {

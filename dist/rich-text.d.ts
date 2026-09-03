@@ -1,10 +1,11 @@
 import { Component as WebComponent, ElementCreator, PartsMap, XinStyleSheet } from 'tosijs';
+import type { IconElement } from './icon-types.js';
 import { TosiSelect } from './select.js';
 export declare function blockStyle(options?: {
     caption: string;
     tagType: string;
 }[]): TosiSelect;
-export declare function commandButton(title: string, dataCommand: string, icon: SVGElement): HTMLButtonElement;
+export declare function commandButton(title: string, dataCommand: string, icon: IconElement): HTMLButtonElement;
 export declare const richTextWidgets: () => HTMLSpanElement[];
 interface EditorParts extends PartsMap {
     toolbar: HTMLElement;

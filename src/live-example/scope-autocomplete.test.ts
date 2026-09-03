@@ -36,7 +36,11 @@ async function runAndCapture(
   const fullContext = { ...extraContext, ...context }
   const keys = Object.keys(fullContext).map(contextVarName)
   const values = Object.values(fullContext)
-  const fn = new AsyncFunction(...keys, code)
+  // AsyncFunction is derived at runtime, so TS sees a plain Function — the source
+  // carries the same workaround at its own call site.
+  const fn = new (AsyncFunction as unknown as new (...a: string[]) => (
+    ...a: unknown[]
+  ) => Promise<void>)(...keys, code)
   await fn(...values)
   return scope
 }
