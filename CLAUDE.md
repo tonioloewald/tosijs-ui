@@ -810,7 +810,24 @@ Ships as `tosijs-release-notes` so adopters get the same workflow.
 6. Build: `bun run build` (this also runs the dependency-audit gate — a high+ advisory here fails the build; fix or time-box it before releasing, don't `TOSIJS_AUDIT=off` past it)
 7. Commit changes including `dist/` and `docs/`
 8. Tag release: `git tag v1.x.x`
-9. Push: `git push --tags` (the user publishes to npm)
+9. Push: `git push origin main` **and** `git push origin v1.x.x` (the user publishes to npm)
+10. **After the user says "published", verify the git side — npm and git diverge silently.**
+    The publish is the user's action and succeeds whether or not steps 8–9 ever happened.
+    1.13.0 sat on npm as `latest` with **no tag at HEAD and 21 unpushed commits** — the whole
+    release line including all three remediation passes, on one machine only. Nothing
+    surfaced it; it was found by chance while checking something else.
+
+    ```bash
+    npm view tosijs-ui version              # what is actually latest
+    git tag --points-at HEAD; git status -sb # tagged? ahead of origin?
+    npm pack tosijs-ui@<version>            # then: diff -rq <tgz>/package/dist dist
+    ```
+
+    That last check is the one that matters and it is cheap: it proves the **remediated**
+    code shipped rather than an earlier build. Diff the tree — do **not** grep for a specific
+    fix. Grepping `"!== 'null'"` for the CSRF exemption matched an ordinary `origin !== null`
+    guard _and_ the comment recording the exemption's absence, and read as a failure against
+    code that was correct.
 
 ### Prereleases — iterate on betas, gate the final
 
