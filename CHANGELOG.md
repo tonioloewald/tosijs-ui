@@ -87,6 +87,34 @@ build code at worst. `GET` does nothing.
 Nothing else about the build lock changed: two builders racing `rm -rf` on one output tree is
 still refused, and a stale lock still gets the old message.
 
+### What delegation guarantees (and what it refuses)
+
+The delegation path above was hardened after a pre-release review found several ways it could
+report a success nobody got. Worth stating, because "my build tool said it built" is a claim you
+rely on:
+
+- **It proves the build was yours.** `holder.port` is validated before it reaches a URL, the
+  request carries `?root=`, and the reply carries `pid`/`root`/`outputDir` which must match the
+  lock and the tree you asked for. A planted lock plus any listener answering `{"ok":true}`
+  previously printed "rebuilt this tree" and exited 0 over an untouched tree — stale locks from
+  other projects are ordinary on a dev machine, one of them usually on the shared default port.
+- **It waits for the tree to settle**, not for whichever build finishes next. A reply used to be
+  released by an already-running build one line before a queued rebuild began wiping the output
+  directory — success reported while the tree was being emptied, right before the documented
+  `git add`.
+- **It does not believe a reply it does not recognise.** A dev server predating this endpoint
+  answers the POST with the SPA shell; that now reports "restart your dev server" instead of
+  accusing your build of failing. Dev servers here live for days running the code they loaded,
+  so that is the normal upgrade path.
+- **Its timeout is the server's real one.** The client promised ten minutes while `Bun.serve`
+  idles connections at 120s, so a _successful_ long build was reported as a failure. "Did not
+  answer in time — the build may still be running" is now distinguished from "unreachable".
+
+`<tosi-pocket-bar>` also gained a public `close()`. The live-example bar was setting `open =
+false` directly, which left the component's internal pin set — so it re-opened on hover, stuck
+open over the content, and the next handle tap did nothing. On touch, where this release removes
+the hover path, there was no way back at all.
+
 ### Builds stopped fighting the dev server
 
 `bun run build` with a dev server running now **asks it to build** instead of refusing, and
