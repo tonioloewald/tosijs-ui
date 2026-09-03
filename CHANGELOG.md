@@ -120,6 +120,17 @@ of the new option produced a file EPUBCheck rejects. The option assembly is now 
 — the third time in this release that a green test asserted a pure function whose only consumer
 threw the result away.
 
+### `epubOptionsFor()` — testing the call site, not the function beside it
+
+The option assembly is exported and tested in its own right, because three separate defects in
+this release shared one shape: **a green test asserting a pure function whose only call site
+discarded the result.** The date function was correct and tested; the assembly threw its return
+value away. The predicate was correct and tested; two of three endpoints used it. The touch
+guard was correct; the test retyped it.
+
+Exporting the assembly means the shipped path and the tested path are the same object rather
+than two things that agree until they don't.
+
 ### Tests that can actually fail
 
 Two "regression tests" added earlier in this release were **tautologies**: each re-declared the
