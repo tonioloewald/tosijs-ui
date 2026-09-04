@@ -124,7 +124,9 @@ state went invisible. A maintainer read a clean tunnelled page as "the failure m
 localhost-specific" and lost the thread.
 
 The app menu now offers a **Tests** toggle — but only on a page that has tests, where it reads
-`Tests (N not run)` while they are off. A published page with no tests offers nothing, so the
+`Tests (N not run)` while they are off. `pageTestCount()` is exported from live-example for
+this: how many examples carry tests, regardless of whether tests are enabled — the number that
+lets a UI say a runner exists here without turning it on. A published page with no tests offers nothing, so the
 default stays as quiet as it should be. The default itself was never the problem; the silence
 was.
 
