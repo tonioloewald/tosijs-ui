@@ -67,6 +67,26 @@ outside a git repo.
 Also: `deploy:index` now asks for `PREVIEW_HOST` like the bins, instead of the `PREVIEW_SSH`
 they moved off.
 
+### `<tosi-3d>` is deprecated — use `tosijs-3d`
+
+Nothing breaks: it still works, still ships, and stays until a future major. But new work
+should use **[`tosijs-3d`](https://www.npmjs.com/package/tosijs-3d)**.
+
+It is a much better library, and maintaining both is duplicated effort spent against the
+weaker one. `<tosi-3d>` is a thin Babylon wrapper that grew inside a general-purpose UI
+library; `tosijs-3d` is a project actually about 3D and XR, with the declarative component
+set and XR support that implies. Every hour spent here is an hour not spent there, and the
+result would still be the lesser of the two.
+
+`tosijs-3d` grew out of this component, so migration is mostly a rename.
+
+The deprecation appears in three places, deliberately: the doc page (what people read), the
+`@deprecated` tags on `B3d`/`b3d` (what editors surface), and a console notice printed **once
+per page on first use** — not at import, since `elementCreator()` registers eagerly and a bare
+`import 'tosijs-ui'` is not evidence anyone is using this; and not per instance, because a page
+with several scenes would spam its own console, which is how a deprecation notice teaches
+people to filter warnings rather than act on them.
+
 ### The machine-health guard stopped exempting 13GB of orphans (#93)
 
 `isDevProcess` decided what was even a _candidate_ for the runaway check, and excluded

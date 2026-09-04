@@ -46,6 +46,19 @@
   <tosi-doc-system docs="../docs.json" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>3d</h1>
+<blockquote>
+<h2>⚠️ Deprecated — use <a href="https://www.npmjs.com/package/tosijs-3d"><code>tosijs-3d</code></a></h2>
+<p><code>&lt;tosi-3d&gt;</code> still works and is not going anywhere before a major release, but new work
+should use <strong><code>tosijs-3d</code></strong>.</p>
+<p><strong>Why:</strong> it is a much better library, and maintaining both is duplicated effort spent
+against the weaker one. This component is a thin Babylon wrapper that grew inside a
+general-purpose UI library; <code>tosijs-3d</code> is a project actually about 3D and XR, with the
+declarative component set, the scene tooling and the XR support that implies. Every hour
+spent here is an hour not spent there, and the result would still be the lesser of the
+two.</p>
+<p>Migration is mostly a rename — <code>tosijs-3d</code> grew out of this component, so the concepts
+carry over.</p>
+</blockquote>
 <p>A <a href="https://www.babylonjs.com/">babylonjs</a> wrapper.</p>
 <p>A <code>&lt;tosi-3d&gt;</code> element is initialized with an <code>engine</code>, <code>canvas</code>, <code>scene</code>, and an update-loop.</p>
 <p>If you view this example with an XR-enabled device, such as the

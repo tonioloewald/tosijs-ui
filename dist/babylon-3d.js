@@ -1,6 +1,21 @@
 /*#
 # 3d
 
+> ## ⚠️ Deprecated — use [`tosijs-3d`](https://www.npmjs.com/package/tosijs-3d)
+>
+> `<tosi-3d>` still works and is not going anywhere before a major release, but new work
+> should use **`tosijs-3d`**.
+>
+> **Why:** it is a much better library, and maintaining both is duplicated effort spent
+> against the weaker one. This component is a thin Babylon wrapper that grew inside a
+> general-purpose UI library; `tosijs-3d` is a project actually about 3D and XR, with the
+> declarative component set, the scene tooling and the XR support that implies. Every hour
+> spent here is an hour not spent there, and the result would still be the lesser of the
+> two.
+>
+> Migration is mostly a rename — `tosijs-3d` grew out of this component, so the concepts
+> carry over.
+
 A [babylonjs](https://www.babylonjs.com/) wrapper.
 
 A `<tosi-3d>` element is initialized with an `engine`, `canvas`, `scene`, and an update-loop.
@@ -230,6 +245,38 @@ function toColor4(BABYLON, css) {
         return new BABYLON.Color4(0, 0, 0, 1);
     return new BABYLON.Color4(((n >>> 24) & 255) / 255, ((n >>> 16) & 255) / 255, ((n >>> 8) & 255) / 255, (n & 255) / 255);
 }
+/*
+Warned ONCE per page, on first use — not at import.
+
+Two rules this project already holds, applied together. Warning at import would fire for
+anyone doing a bare `import 'tosijs-ui'`, i.e. people not using this component at all;
+`elementCreator()` registers eagerly, so import is not evidence of use. And a warning per
+INSTANCE would spam a page with several scenes, which is how a deprecation notice trains
+people to filter the console — the failure mode tosijs#31 was filed about.
+
+The consumer can act on this one, which is what makes it worth printing at all: there is a
+named successor package and a migration that is mostly a rename.
+*/
+let deprecationWarned = false;
+const warnDeprecated = () => {
+    if (deprecationWarned)
+        return;
+    deprecationWarned = true;
+    console.warn(`<tosi-3d> is deprecated — use tosijs-3d instead (https://www.npmjs.com/package/tosijs-3d).\n` +
+        `  It is a much better library, and maintaining both is duplicated effort spent against\n` +
+        `  the weaker one. tosijs-3d grew out of this component, so migrating is mostly a rename.\n` +
+        `  This still works, and stays until a future major.`);
+};
+/**
+ * @deprecated Use [`tosijs-3d`](https://www.npmjs.com/package/tosijs-3d) instead.
+ *
+ * It is a much better library, and maintaining both is duplicated effort spent against
+ * the weaker one. This is a thin Babylon wrapper that grew inside a general-purpose UI
+ * library; `tosijs-3d` is a project actually about 3D and XR, and `tosijs-3d` grew out of
+ * this component, so migration is mostly a rename.
+ *
+ * Still exported and still works. It will be removed in a future major.
+ */
 export class B3d extends WebComponent {
     static preferredTagName = 'tosi-3d';
     // Declarative config so a scene can be assembled purely in HTML (no JS):
@@ -340,6 +387,7 @@ export class B3d extends WebComponent {
     };
     connectedCallback() {
         super.connectedCallback();
+        warnDeprecated();
         const { canvas } = this.parts;
         this.babylonReady.then(async (BABYLON) => {
             this.BABYLON = BABYLON;
@@ -390,4 +438,8 @@ export class B3d extends WebComponent {
         });
     }
 }
+/**
+ * @deprecated Use [`tosijs-3d`](https://www.npmjs.com/package/tosijs-3d) instead.
+ * See {@link B3d} for why.
+ */
 export const b3d = B3d.elementCreator();

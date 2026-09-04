@@ -7,6 +7,16 @@ interface B3dUIOptions {
     size?: number;
 }
 type MeshProcessCallback = (meshes: any[]) => void;
+/**
+ * @deprecated Use [`tosijs-3d`](https://www.npmjs.com/package/tosijs-3d) instead.
+ *
+ * It is a much better library, and maintaining both is duplicated effort spent against
+ * the weaker one. This is a thin Babylon wrapper that grew inside a general-purpose UI
+ * library; `tosijs-3d` is a project actually about 3D and XR, and `tosijs-3d` grew out of
+ * this component, so migration is mostly a rename.
+ *
+ * Still exported and still works. It will be removed in a future major.
+ */
 export declare class B3d extends WebComponent {
     static preferredTagName: string;
     static initAttributes: {
@@ -56,5 +66,9 @@ export declare class B3d extends WebComponent {
     loadUI: (options: B3dUIOptions) => Promise<any>;
     connectedCallback(): void;
 }
+/**
+ * @deprecated Use [`tosijs-3d`](https://www.npmjs.com/package/tosijs-3d) instead.
+ * See {@link B3d} for why.
+ */
 export declare const b3d: ElementCreator<B3d>;
 export {};

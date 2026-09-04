@@ -677,6 +677,14 @@ accepting anything. Consequences to plan for:
 - Doc examples are executed, not just compiled (`checkExamples` + the inline `test` tier), so
   a creator-call change has to be swept through the corpus too, not only `src/`.
 
+**Also landing in 1.14.0: `<tosi-3d>` is deprecated in favour of `tosijs-3d`** (done —
+doc page, `@deprecated` tags, and a once-per-page console notice on first use). Nothing is
+removed; the reason is duplicated effort, not a defect. `tosijs-3d` is the better library and
+grew out of this component, so migration is mostly a rename. Removal is a future major, and
+worth pairing with whatever else that major carries — see below for what a `tosijs-3d`-shaped
+successor implies for `src/babylon-3d.ts` and its `via-tag.ts` `scriptTag` dependency, which
+has a known latent onload-after-append race that is not worth fixing in deprecated code.
+
 What this means for the version:
 
 - **1.14.0 is confirmed as a minor**, and its headline is the tosijs adoption. The icons
