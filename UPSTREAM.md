@@ -175,6 +175,33 @@ growth scales with the module graph — measure with a real bundle.
 > project friction against tosijs was silently absorbed into hand-rolls instead of being filed;
 > #20 (below) is the first real bug filed upstream. Keep the habit: file, don't hand-roll around.
 
+### 🚧 BLOCKING — `withAttributes()` makes downstream `.d.ts` emit impossible (filed 2026-09-04)
+
+**[tosijs#38](https://github.com/tonioloewald/tosijs/issues/38)** · Status checked 2026-09-04 · **blocks the 1.10.0 adoption entirely**
+
+`tsc --noEmit` is clean after migrating; `tsc --declaration` fails **TS2742** on every class
+built with `withAttributes` — 34 files, 38 errors, exactly the migrated set. No `.d.ts` is
+written for any of them, so we would ship JS with no types for every component.
+
+The mixin returns an anonymous intersection declared in `tosijs/dist/component.d.ts`, and
+tosijs's `exports` map (`.`, `./debug`, `./safe`, `./core`, `./state`, `./agent`) has no path
+that reaches it — so TypeScript cannot write a portable reference into our declarations.
+
+**Not fixable here.** A named exported base moves the error to the const, verbatim. A `paths`
+mapping would emit `import("tosijs/dist/component")` into our `.d.ts`, which our consumers
+cannot resolve. Asked for either a named type alias exported from `'tosijs'` (preferred — keeps
+`dist/` private) or a `./dist/*` subpath.
+
+The adoption is complete and parked on the **`tosijs-1.10-adoption`** branch: 418 → 0 type
+errors, 1300 tests green. Merge it when the upstream fix lands, then raise the peer floor and
+record the reason.
+
+**Worth saying plainly: the release itself is good.** 416 of the 418 errors were the mechanical
+`static initAttributes` → `withAttributes` move, and **2 were genuine defects the old
+`[key: string]: any` index signature had hidden** — one of them a `filter-builder` helper that
+had been returning the empty string on every call since it was written (fixed separately on
+`main`). Removing that index signature does exactly what it promised.
+
 ### Open (waiting on tosijs)
 
 - **[tonioloewald/tosijs#20](https://github.com/tonioloewald/tosijs/issues/20)** — a **light-DOM

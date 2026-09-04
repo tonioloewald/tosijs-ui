@@ -780,7 +780,21 @@ doc test currently prints in colour among 37 lines and is simply missed by the m
 of this output. Failure needs to be structural — a non-zero exit, a final summary block, or a
 machine-readable artifact — not a colour.
 
-## 1.14.0 is GATED on the next tosijs minor — do not publish before it
+## 1.14.0 is GATED on tosijs — the minor SHIPPED, but adoption is blocked (updated 2026-09-04)
+
+**tosijs 1.10.0 is out and adopted on the `tosijs-1.10-adoption` branch — 418 type errors → 0,
+1300 tests green — but it CANNOT MERGE.** `tsc --declaration` fails TS2742 on all 34 migrated
+files, so no `.d.ts` is emitted for any component. Filed as
+[tosijs#38](https://github.com/tonioloewald/tosijs/issues/38); see `UPSTREAM.md`.
+
+When the fix lands: `git checkout tosijs-1.10-adoption`, bump tosijs, re-run
+`bunx tsc --declaration` to confirm, merge, raise the peer floor to `^1.10.x` **recording the
+reason**, and run all four lanes.
+
+Already landed on `main` from the attempt: the `filter-builder` defect the migration exposed
+(`getSelectText` returned `''` on every call). It predates the adoption and did not wait on it.
+
+## Original note: 1.14.0 is GATED on the next tosijs minor — do not publish before it
 
 **Decision (2026-09-04): hold 1.14.0 until tosijs ships its next minor, then adopt it and
 release together.** That release is a **breaking minor**: a large DX win in exchange for a
