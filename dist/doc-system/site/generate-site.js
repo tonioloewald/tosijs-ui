@@ -114,7 +114,7 @@ export function relativeUrl(depth, p) {
     return rel === '' ? './' : rel;
 }
 function pageHtml(doc, config, slugMap, configAttr) {
-    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', assetStamp, localizedUrl = '/localized-strings.txt', basePath, headExtra = '', bakes, } = config;
+    const { projectName = '', baseUrl = '', lang = 'en', favicon = '/favicon.svg', docsUrl = '/docs.json', scriptUrl = '/iife.js', hydrateUrl, stylesUrl = '/doc-system.css', assetStamp, docsStamp, localizedUrl = '/localized-strings.txt', basePath, headExtra = '', bakes, } = config;
     // Functional URLs are emitted relative to THIS page's depth so the build is
     // mount-agnostic (issue #25); metadata URLs below stay absolute via withBase.
     const depth = pageDepth(slugMap[doc.filename] ?? '');
@@ -232,7 +232,15 @@ function pageHtml(doc, config, slugMap, configAttr) {
 ${head}
 </head>
 <body>
-  <tosi-doc-system docs="${escapeAttr(relativeUrl(depth, docsUrl))}" config="${configAttr}"${localizedAttr}${layoutAttr}>
+  <tosi-doc-system docs="${escapeAttr(
+    // STAMPED, like the stylesheet and the bundles below. `docs.json` is the whole corpus
+    // — nav, routes, every page's content — and it was the one generated URL emitted bare.
+    // A static host sends no `Cache-Control` for it, so browsers apply HEURISTIC caching
+    // and are free to invent a freshness lifetime: the site then renders a previous
+    // deploy's corpus against the current bundle, with nothing in the console to say so.
+    // That cost a maintainer "a ton of time debugging" before it was traced to a Chrome
+    // cache entry. The dev server already sends `no-store`; this is the built site.
+    withStamp(relativeUrl(depth, docsUrl), docsStamp ?? assetStamp))}" config="${configAttr}"${localizedAttr}${layoutAttr}>
   <article class="doc-content">
 ${body}
   </article>

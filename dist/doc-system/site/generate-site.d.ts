@@ -52,6 +52,8 @@ export interface GenerateSiteConfig {
      * Left unset, nothing is appended and the output is exactly as before.
      */
     assetStamp?: string;
+    /** cache-buster for `docs.json`, keyed to the corpus itself (see orchestrator) */
+    docsStamp?: string;
     /**
      * path to an ESM hydration bundle. When set, pages load THIS as a
      * `<script type="module">` instead of the classic IIFE `scriptUrl`, so

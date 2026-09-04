@@ -1231,7 +1231,23 @@ export async function buildSite(
         buildStamp.generator ??
         buildStamp.commit
 
-      const docs = JSON.parse(await Bun.file(DOCS_JSON).text())
+      /*
+      `docs.json` gets its OWN stamp, keyed to its own bytes.
+
+      The version stamp is right for the bundles — it moves once per release, which is when
+      they change. The corpus does not work that way: it changes whenever anyone edits a doc,
+      including many times within one version, and a preview host redeployed mid-version is
+      the normal way this project looks at its own site. A version-keyed corpus URL would be
+      stale for exactly that workflow.
+
+      Cheap, and available here because the file is already being read.
+      */
+      const docsJsonText = await Bun.file(DOCS_JSON).text()
+      const docsStamp = new Bun.CryptoHasher('sha256')
+        .update(docsJsonText)
+        .digest('hex')
+        .slice(0, 12)
+      const docs = JSON.parse(docsJsonText)
       const pageCount = await generateSite({
         docs,
         outputDir: PUBLIC,
@@ -1256,6 +1272,7 @@ export async function buildSite(
         scriptUrl: config.scriptUrl,
         basePath: config.basePath,
         assetStamp,
+        docsStamp,
       })
 
       // NOTE: /version.json is written at the END of the build (see `finalizeStamp`

@@ -79,6 +79,8 @@ export interface GenerateSiteConfig {
    * Left unset, nothing is appended and the output is exactly as before.
    */
   assetStamp?: string
+  /** cache-buster for `docs.json`, keyed to the corpus itself (see orchestrator) */
+  docsStamp?: string
   /**
    * path to an ESM hydration bundle. When set, pages load THIS as a
    * `<script type="module">` instead of the classic IIFE `scriptUrl`, so
@@ -243,6 +245,7 @@ function pageHtml(
     hydrateUrl,
     stylesUrl = '/doc-system.css',
     assetStamp,
+    docsStamp,
     localizedUrl = '/localized-strings.txt',
     basePath,
     headExtra = '',
@@ -387,7 +390,14 @@ ${head}
 </head>
 <body>
   <tosi-doc-system docs="${escapeAttr(
-    relativeUrl(depth, docsUrl)
+    // STAMPED, like the stylesheet and the bundles below. `docs.json` is the whole corpus
+    // — nav, routes, every page's content — and it was the one generated URL emitted bare.
+    // A static host sends no `Cache-Control` for it, so browsers apply HEURISTIC caching
+    // and are free to invent a freshness lifetime: the site then renders a previous
+    // deploy's corpus against the current bundle, with nothing in the console to say so.
+    // That cost a maintainer "a ton of time debugging" before it was traced to a Chrome
+    // cache entry. The dev server already sends `no-store`; this is the built site.
+    withStamp(relativeUrl(depth, docsUrl), docsStamp ?? assetStamp)
   )}" config="${configAttr}"${localizedAttr}${layoutAttr}>
   <article class="doc-content">
 ${body}

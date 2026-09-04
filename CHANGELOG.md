@@ -67,6 +67,27 @@ outside a git repo.
 Also: `deploy:index` now asks for `PREVIEW_HOST` like the bins, instead of the `PREVIEW_SSH`
 they moved off.
 
+### `docs.json` is cache-busted, so a stale corpus stops surviving a deploy
+
+Every generated URL went through the asset stamp — the stylesheet, the hydration bundle, the
+IIFE — **except the one that matters most**. `docs.json` is the entire corpus: nav, routes and
+every page's content, and it was emitted bare.
+
+A static host sends no `Cache-Control` for it, so browsers apply **heuristic** caching — free
+to invent a freshness lifetime when you decline to state one. The site then renders a previous
+deploy's corpus against the current bundle, and nothing in the console says so. It presents as
+pages that will not update, and the fix is a hard reload nobody thinks to try. It cost a
+maintainer a long debugging session before it was traced to a Chrome cache entry.
+
+The corpus gets **its own stamp**, hashed from `docs.json`'s own bytes rather than the project
+version. The version is right for the bundles — it moves once per release, which is when they
+change. The corpus does not work that way: it changes whenever anyone edits a doc, many times
+within one version, and a preview host redeployed mid-version is the normal way this project
+reads its own site. A version-keyed corpus URL would have been stale for exactly that workflow.
+
+The dev server was already correct here — it sends `no-store, must-revalidate` on everything,
+verified. This was only ever the built static site.
+
 ### `<tosi-table>` stops silently capping at 10,000 rows (#82)
 
 `maxVisibleRows` defaulted to a flat `10000` and `slice`d everything past it **without a

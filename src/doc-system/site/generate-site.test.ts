@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { pageDepth, relativeUrl } from './generate-site.js'
+import { pageDepth, relativeUrl, generateSite } from './generate-site.js'
 
 describe('pageDepth', () => {
   test('root index is depth 0, every /slug/ page is depth 1', () => {
@@ -72,4 +72,63 @@ describe('mount-agnostic resolution', () => {
       expect(resolve(rootPageUrl, 0, '/')).toBe(mount)
     })
   }
+})
+
+/*
+The corpus URL must be cache-busted like every other generated URL.
+
+`docs.json` was the one emitted bare. A static host sends no `Cache-Control` for it, so
+browsers apply HEURISTIC caching — free to invent a freshness lifetime — and the site renders
+a previous deploy's corpus against the current bundle, with nothing in the console to say so.
+That cost a maintainer a long debugging session before it was traced to a Chrome cache entry.
+
+Stamped with `docsStamp` (hashed from docs.json's own bytes) rather than `assetStamp` (the
+project version): the corpus changes whenever anyone edits a doc, many times within one
+version, and a preview host redeployed mid-version is the normal way this project reads its
+own site. A version-keyed corpus URL would be stale for exactly that workflow.
+*/
+describe('docs.json cache-busting', () => {
+  const page = async (over: Record<string, unknown> = {}) => {
+    const dir = `${require('os').tmpdir()}/tosi-gs-${Math.floor(
+      performance.now() * 1000
+    )}`
+    await generateSite({
+      docs: [
+        {
+          filename: 'README.md',
+          title: 'Home',
+          path: 'README.md',
+          text: '# Home\n\nHello.',
+        },
+      ] as any,
+      outputDir: dir,
+      projectName: 'T',
+      ...over,
+    } as any)
+    const html = await Bun.file(`${dir}/index.html`).text()
+    await Bun.$`rm -rf ${dir}`.nothrow().quiet()
+    return html
+  }
+
+  test('docsStamp is applied to the corpus URL', async () => {
+    const html = await page({ docsStamp: 'deadbeef', assetStamp: '9.9.9' })
+    expect(html).toContain('docs.json?v=deadbeef')
+  })
+
+  test('it prefers docsStamp over the version stamp', async () => {
+    const html = await page({ docsStamp: 'corpus1', assetStamp: '9.9.9' })
+    // The bundles still carry the version stamp; only the corpus uses its own.
+    expect(html).toContain('docs.json?v=corpus1')
+    expect(html).not.toContain('docs.json?v=9.9.9')
+  })
+
+  test('with no docsStamp it falls back to the version stamp rather than going bare', async () => {
+    const html = await page({ assetStamp: '9.9.9' })
+    expect(html).toContain('docs.json?v=9.9.9')
+  })
+
+  test('with no stamps at all the URL is unchanged (adopters who set neither)', async () => {
+    const html = await page()
+    expect(html).toContain('docs.json"')
+  })
 })
