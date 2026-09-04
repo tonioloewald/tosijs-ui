@@ -134,6 +134,11 @@
       "import": "./dist/code-editor.js",
       "default": "./dist/code-editor.js"
     },
+    "./codemirror": {
+      "types": "./dist/codemirror.d.ts",
+      "import": "./dist/codemirror.js",
+      "default": "./dist/codemirror.js"
+    },
     "./live-example": {
       "types": "./dist/live-example/index.d.ts",
       "import": "./dist/live-example/index.js",

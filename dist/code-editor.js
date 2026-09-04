@@ -26,7 +26,7 @@ body {
 | `original` + `showDiff(on)` | diff the current `value` against a baseline, as an overlay |
 | `diffResolvable` | make that overlay **resolvable**: each change gets keep/revert buttons, and the choices are applied to `value` when the diff closes |
 | `diffOriginalLabel` / `diffModifiedLabel` | what the two buttons say (default `Original`/`Modified`) |
-| `editor` | the underlying CodeMirror [`EditorView`](https://codemirror.net/docs/ref/#view.EditorView) (`undefined` until loaded) |
+| `editor` | the underlying CodeMirror [`EditorView`](https://codemirror.net/docs/ref/#view.EditorView) (`undefined` until loaded) — see **Extending the editor** below |
 | `undo()` / `redo()` / `canUndo()` / `canRedo()` | history control |
 | `tjsAutocomplete` | runtime-value autocomplete hooks (tjs mode) — see below |
 | `change` event | fires when the text changes; `event.detail.value` is the new text |
@@ -87,6 +87,30 @@ point of the IIFE, so it carries the editor. It costs ~376KB gzipped, up from
 `editor` **changed type in place** — it was an ACE `Editor`, it is now a CodeMirror
 `EditorView`. Code that reached into it needs revisiting; a grep for removed names
 won't catch this one.
+
+## Extending the editor
+
+Import CodeMirror from **`tosijs-ui/codemirror`**, not from `@codemirror/*` directly:
+
+```typescript
+import { gutter, GutterMarker, StateField, StateEffect } from 'tosijs-ui/codemirror'
+
+const view = codeEl.editor // undefined until the editor has loaded
+view?.dispatch({ effects: StateEffect.appendConfig.of([myField, myGutter]) })
+```
+
+**This matters more than it looks.** CodeMirror 6 keys facets, `StateField`s and gutters by
+**object identity**, not by module name. If your `@codemirror/view` resolves to a different
+copy than the one `<tosi-code>` uses — which a package manager will happily arrange when the
+versions don't dedupe — the view **silently ignores** your extension. No error, no warning;
+the gutter simply never renders, and every reading of your code says it should.
+
+The re-export removes that failure by construction: there is only ever one copy, because it is
+the one this package resolves. Nothing to pin, no `overrides` to write.
+
+Only `@codemirror/state` and `@codemirror/view` are re-exported — the two you need to extend a
+view. The language, lint and search packages are internal composition details; ask if you need
+one exposed.
 */
 /*{ "parent": "Components" }*/
 import { Component as WebComponent, elements, varDefault, } from 'tosijs';

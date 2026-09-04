@@ -67,6 +67,33 @@ outside a git repo.
 Also: `deploy:index` now asks for `PREVIEW_HOST` like the bins, instead of the `PREVIEW_SSH`
 they moved off.
 
+### New: `tosijs-ui/codemirror` — extend `<tosi-code>.editor` without a silent no-op (#131)
+
+`<tosi-code>` exposes the raw `EditorView` and the 1.7 notes invite you to configure CodeMirror
+through it. But CodeMirror 6 keys facets, `StateField`s and gutters by **object identity**, so
+an extension built from a _second copy_ of `@codemirror/state` or `@codemirror/view` is not
+mismatched — it is **silently ignored**. No error, no warning; the gutter never renders.
+
+Reported with a real repro: a consumer's `@codemirror/view` resolved to `6.43.6` while ours
+hoisted to a nested `6.43.10`, so their `gutter()` and `GutterMarker` came from a different
+instance than the view. `@codemirror/state` happened to dedupe, which made it worse — enough
+worked that the failure looked like a bug in their gutter code.
+
+```typescript
+import { gutter, GutterMarker, StateField, StateEffect } from 'tosijs-ui/codemirror'
+```
+
+Only `@codemirror/state` and `@codemirror/view` are re-exported — the two needed to extend a
+view, exactly as the report identified.
+
+**Why not peer dependencies**, which the issue proposed and is the obvious fix: a required peer
+would make every consumer install two CodeMirror packages including the overwhelming majority
+who never render an editor (`elementCreator()` registers eagerly, so importing tosijs-ui is not
+evidence of using it), and an _optional_ peer is worse than either — the component silently
+does nothing until you discover you needed 12 packages. Re-exporting removes the failure by
+construction rather than policing it: there is no version to match and no `overrides` to write,
+because there is only ever one copy.
+
 ### `buildSite` no longer wipes `dist/` — it is your package output, not a site artifact (#130)
 
 The prebuild ran `rm -rf dist/` on **every** `buildSite`, including from `devServer` and

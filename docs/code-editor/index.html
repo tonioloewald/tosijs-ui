@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=b492cad72dd5" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=ad817c2c52b3" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>code</h1>
 <p>A <a href="https://codemirror.net/">CodeMirror 6</a> wrapper.</p>
@@ -90,7 +90,7 @@ body {
 </tr>
 <tr>
 <td><code>editor</code></td>
-<td>the underlying CodeMirror <a href="https://codemirror.net/docs/ref/#view.EditorView"><code>EditorView</code></a> (<code>undefined</code> until loaded)</td>
+<td>the underlying CodeMirror <a href="https://codemirror.net/docs/ref/#view.EditorView"><code>EditorView</code></a> (<code>undefined</code> until loaded) — see <strong>Extending the editor</strong> below</td>
 </tr>
 <tr>
 <td><code>undo()</code> / <code>redo()</code> / <code>canUndo()</code> / <code>canRedo()</code></td>
@@ -166,6 +166,23 @@ point of the IIFE, so it carries the editor. It costs ~376KB gzipped, up from
 <p><code>editor</code> <strong>changed type in place</strong> — it was an ACE <code>Editor</code>, it is now a CodeMirror
 <code>EditorView</code>. Code that reached into it needs revisiting; a grep for removed names
 won&#39;t catch this one.</p>
+<h2>Extending the editor</h2>
+<p>Import CodeMirror from <strong><code>tosijs-ui/codemirror</code></strong>, not from <code>@codemirror/*</code> directly:</p>
+<pre><code class="language-typescript">import { gutter, GutterMarker, StateField, StateEffect } from &#39;tosijs-ui/codemirror&#39;
+
+const view = codeEl.editor // undefined until the editor has loaded
+view?.dispatch({ effects: StateEffect.appendConfig.of([myField, myGutter]) })
+</code></pre>
+<p><strong>This matters more than it looks.</strong> CodeMirror 6 keys facets, <code>StateField</code>s and gutters by
+<strong>object identity</strong>, not by module name. If your <code>@codemirror/view</code> resolves to a different
+copy than the one <code>&lt;tosi-code&gt;</code> uses — which a package manager will happily arrange when the
+versions don&#39;t dedupe — the view <strong>silently ignores</strong> your extension. No error, no warning;
+the gutter simply never renders, and every reading of your code says it should.</p>
+<p>The re-export removes that failure by construction: there is only ever one copy, because it is
+the one this package resolves. Nothing to pin, no <code>overrides</code> to write.</p>
+<p>Only <code>@codemirror/state</code> and <code>@codemirror/view</code> are re-exported — the two you need to extend a
+view. The language, lint and search packages are internal composition details; ask if you need
+one exposed.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
