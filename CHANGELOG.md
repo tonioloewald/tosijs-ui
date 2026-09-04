@@ -67,6 +67,36 @@ outside a git repo.
 Also: `deploy:index` now asks for `PREVIEW_HOST` like the bins, instead of the `PREVIEW_SSH`
 they moved off.
 
+### Magic-link codes are eight letters, no digits (#132)
+
+```
+🔗 code:  JCYGCCVX   (case-insensitive)
+```
+
+The code is typed by hand into a floating keyboard on a headset. Crockford base32 was already
+chosen for typo-resistance and that was right as far as it went — but it contained **digits**,
+and on a headset the letter↔number switch is a trip to a different keyboard page. A reported XR
+session minted `A70MDCD` and `X9Q3Z53`: three digits each in seven characters, so three round
+trips for a code being gaze-and-pinched one glyph at a time.
+
+**The extra character is free; the mode switch is not.** Eight letters of a 22-letter alphabet
+is **35.7 bits against the old seven-of-32's 35.0** — slightly _stronger_, while never leaving
+the alphabetic keyboard.
+
+`I`, `L`, `O` and `U` stay excluded. `I`/`L` are indistinguishable across case, which matters
+_more_ now that there are no digits, because the code is case-insensitive so the reader cannot
+use case to tell them apart. Redemption also maps back the digits someone might type for a
+letter they misread (`5`→`S`, `2`→`Z`, `8`→`B`, `6`→`G`) — pure upside, since a digit can never
+be part of a real code — and ignores hyphens and spaces.
+
+Rate limiting is unchanged and still does the heavy lifting: redemption is serialized at ~10
+attempts/second, so 22⁸ takes ~174 years to exhaust and a five-minute window is about 1 in 18
+million.
+
+The invite page's code box (shipped for #75) covers most of the rest of the ask: bookmark the
+host once, then each session is eight letters into a text field. The `dev.tosijs.net/<code>`
+short URL needs host-side infrastructure and is tracked in `TODO.md`.
+
 ### BREAKING (narrow): the root barrel no longer re-exports the doc system (#133)
 
 `import { … } from 'tosijs-ui'` no longer gives you `code-editor`, `doc-browser`,

@@ -31,14 +31,14 @@ function explain(rejection: SessionRejection): string {
  * unauthenticated launch was a black rectangle with no way out (tosijs-ui#75).
  *
  * A plain GET form needs no new server code: it produces `/?t=CODE`, the same path the link
- * takes. The 7-character Crockford-base32 code exists precisely because it is typeable on a
+ * takes. The 8-character LETTERS-ONLY code exists precisely because it is typeable on a
  * floating keyboard, and it is case-insensitive — so the input disables every "helpful"
  * transformation a phone keyboard would otherwise apply.
  *
  * What this deliberately does NOT attempt: carrying a session across a PWA install. The separate
  * cookie jar is a privacy feature rather than a bug, and keeping the token in the URL so the
  * installed app captures it would bake a credential into a home-screen icon that works once and
- * then fails forever, with no address bar to correct it. Seven characters is the better trade.
+ * then fails forever, with no address bar to correct it. Eight characters is the better trade.
  */
 export function invitePageHtml(
   rejection: SessionRejection,
@@ -55,8 +55,15 @@ export function invitePageHtml(
     explain(rejection) +
     `<form method="GET" action="/" style="margin:1.5em 0">` +
     `<label for="t" style="display:block;margin-bottom:.4em">Have a code? Type it here:</label>` +
+    /*
+    `inputmode="latin"` asks for the alphabetic keyboard, which is now the ONLY page a code
+    needs — the alphabet is letters-only precisely so a headset user never makes the trip to
+    the number pad (tosijs-ui#132). `autocapitalize="off"` matters more than it looks: a
+    keyboard that capitalises the first character would otherwise burn an attempt on its own
+    behaviour, even though redemption is case-insensitive.
+    */
     `<input id="t" name="t" inputmode="latin" autocapitalize="off" autocorrect="off" ` +
-    `spellcheck="false" autocomplete="off" placeholder="ABC1234" ` +
+    `spellcheck="false" autocomplete="off" placeholder="ABCDEFGH" ` +
     `style="font:inherit;font-family:ui-monospace,monospace;letter-spacing:.15em;` +
     `padding:.6em .7em;min-width:9em;border:1px solid #8886;border-radius:6px;background:#8881;color:inherit">` +
     `<button type="submit" style="font:inherit;padding:.6em 1.1em;margin-left:.5em;` +

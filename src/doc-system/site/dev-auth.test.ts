@@ -97,28 +97,52 @@ test('link tokens are SHORT and distinct; session tokens stay long', () => {
   const seen = new Set<string>()
   for (let i = 0; i < 200; i++) seen.add(issueLink(s, NOW))
   expect(seen.size).toBe(200)
-  for (const t of seen) expect(t).toMatch(/^[0-9A-HJKMNP-TV-Z]{7}$/)
+  for (const t of seen) expect(t).toMatch(/^[A-HJKMNP-TV-Z]{8}$/)
   expect(mintToken().length).toBeGreaterThanOrEqual(20) // 128 bits b64url
 })
 
-test('the alphabet excludes the characters people mistype', () => {
+test('the alphabet excludes the characters people mistype — and every digit (#132)', () => {
   /*
-  Crockford base32. `I`/`L` look like `1` and `O` looks like `0` on a virtual keyboard, which
-  is where this token is entered; `U` is excluded so an unlucky token cannot spell an
-  obscenity. 2000 samples is enough to catch an alphabet edit that reintroduces one.
+  LETTERS ONLY. On a headset the letter↔number switch is a trip to a different keyboard page,
+  and a reported session minted `A70MDCD` and `X9Q3Z53` — three digits each in seven
+  characters, so three round trips for a code being gaze-and-pinched one glyph at a time.
+
+  `I`/`L` remain excluded because they are indistinguishable from each other across case, and
+  the token is case-insensitive so the reader cannot use case to tell them apart. `O` stays
+  out for `O`/`Q` at headset resolution; `U` so an unlucky token cannot spell an obscenity.
+
+  2000 samples is enough to catch an alphabet edit that reintroduces one.
   */
   const all = Array.from({ length: 2000 }, () => mintLinkToken()).join('')
   expect(all).not.toMatch(/[ILOU]/)
-  // …and every character it DOES use is in the intended set.
-  expect(all).toMatch(/^[0-9A-HJKMNP-TV-Z]+$/)
+  expect(all, 'a digit costs a keyboard mode switch').not.toMatch(/[0-9]/)
+  expect(all).toMatch(/^[A-HJKMNP-TV-Z]+$/)
+})
+
+test('#132: eight letters is not weaker than the seven base32 characters it replaced', () => {
+  /*
+  The extra character is free; the mode switch is not. Asserted rather than asserted-in-prose
+  because the whole argument for dropping digits rests on it.
+  */
+  const bitsBefore = 7 * Math.log2(32) // 35.0
+  const bitsNow = 8 * Math.log2(22) // 35.7
+  expect(bitsNow).toBeGreaterThan(bitsBefore)
 })
 
 test('redemption is case-insensitive and forgives the lookalikes', () => {
   // The failure being designed out is a correct human being told they typed it wrong.
-  expect(normalizeLinkToken('abc1234')).toBe('ABC1234')
-  // O 0 o → 0 0 0 ; I i L l → 1 1 1 1
-  expect(normalizeLinkToken('O0oIiLl')).toBe('0001111')
-  expect(normalizeLinkToken('ABC-1234')).toBe('ABC1234')
+  expect(normalizeLinkToken('abcdefgh')).toBe('ABCDEFGH')
+  /*
+  Digits map back to the letters they are misread AS. The alphabet is letters-only, so a digit
+  can never be part of a real token — every mapping is pure upside: it can rescue a
+  transcription error and cannot collide with a valid code. `0` and `1` are left alone because
+  `O`, `I` and `L` are excluded, so there is nothing honest to map them to.
+  */
+  expect(normalizeLinkToken('5286')).toBe('SZBG')
+  expect(normalizeLinkToken('01')).toBe('01')
+  // Grouping survives, and so does a headset keyboard's enthusiasm for spaces.
+  expect(normalizeLinkToken('ABCD-EFGH')).toBe('ABCDEFGH')
+  expect(normalizeLinkToken('ABCD EFGH')).toBe('ABCDEFGH')
 
   const s = createAuthState()
   const token = issueLink(s, NOW)

@@ -8,7 +8,7 @@ TWO TOKENS, ON PURPOSE.
                  LEAKS: browser history, Referer headers, reverse-proxy access logs,
                  link previews in chat apps that fetch what you paste, and anyone
                  reading over your shoulder. So it is SHORT-LIVED — five minutes — and
-                 it is short enough to type: 7 Crockford base32 characters.
+                 it is short enough to type: 8 letters, no digits.
 
                  It is a BEARER token for those five minutes, and that is a deliberate
                  reversal of the single-use rule this comment used to state. Two things
@@ -140,19 +140,36 @@ export function mintToken(): string {
 }
 
 /*
-Crockford base32: no `I`, `L`, `O` or `U`, and case-insensitive.
+LETTERS ONLY — no digits — and case-insensitive.
 
-The link token is TYPED BY HAND, into a floating keyboard on a headset, and 22 characters of
-mixed-case base64url is brutal enough that people give up and type LAN IP addresses instead —
-which is the feature failing, not the user. The alphabet is chosen for the mistakes it makes
-impossible: `0`/`O` and `1`/`l` are the two that hurt most on a virtual keyboard, and here
-they cannot happen because `O` and `L` are not in it.
+The link token is TYPED BY HAND, into a floating keyboard on a headset. Crockford base32 (the
+previous alphabet) was already chosen for typo-resistance, and that reasoning was right as far
+as it went — but it still contained digits, and **on a headset the letter↔number switch is a
+trip to a different keyboard page**. Reported from an XR test session (tosijs-ui#132): two of
+the four codes minted that day were `A70MDCD` and `X9Q3Z53` — three digits each in seven
+characters, so three round trips to the number page for a code you are gaze-and-pinching one
+glyph at a time.
 
-Base36 would buy about half a bit per character and cost exactly that typo-resistance.
-`U` is excluded too — Crockford drops it so an unfortunate token cannot spell an obscenity.
+THE EXTRA CHARACTER IS FREE; THE MODE SWITCH IS NOT. Eight characters of a 22-letter alphabet
+is 35.7 bits against the previous seven-of-32's 35.0 — so this is very slightly STRONGER while
+never leaving the alphabetic keyboard. (The report suggested all 26 letters at 37.6 bits; the
+four exclusions below are worth the 1.9 bits, and length is the cheap axis anyway.)
+
+Exclusions, all inherited from Crockford and all still earning their place with digits gone:
+
+  I, L  mutually confusable, and uppercase `I` versus lowercase `l` is indistinguishable in
+        most keyboard fonts — which matters MORE here, not less, because the token is
+        case-insensitive so the reader cannot use case to tell them apart.
+  O     kept out although `0` no longer exists to confuse it with: `O`/`Q` is a real misread
+        at headset rendering resolution, and dropping one of the pair is cheaper than a
+        support conversation.
+  U     Crockford drops it so an unfortunate token cannot spell an obscenity.
+
+Case-insensitivity is not a nicety here either: a headset keyboard that auto-capitalises the
+first character would otherwise burn an attempt on its own behaviour.
 */
-const LINK_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
-const LINK_TOKEN_LEN = 7
+const LINK_ALPHABET = 'ABCDEFGHJKMNPQRSTVWXYZ'
+const LINK_TOKEN_LEN = 8
 
 /*
 `randomInt` rather than `randomBytes[i] % 32`.
@@ -170,21 +187,29 @@ export function mintLinkToken(): string {
 }
 
 /**
- * Fold a typed token to canonical form: uppercase, and Crockford's alias mapping.
+ * Fold a typed token to canonical form.
  *
  * Applied on REDEMPTION, not only when minting. Case-insensitivity that exists in the
  * alphabet but not in the comparison is a claim rather than a behaviour, and the failure it
  * produces is the worst kind: a correct human being told they typed it wrong.
  *
- * `I` and `L` read as `1`, `O` reads as `0` — so someone who transcribes what they think
- * they saw still gets in. Hyphens are dropped, since people group long strings.
+ * Hyphens and whitespace go, since people group long strings and a headset keyboard is
+ * generous with spaces.
+ *
+ * Digits map back to the letters they are misread AS. The alphabet is letters-only, so a
+ * digit can never be part of a real token — which makes every one of these mappings pure
+ * upside: it can rescue a transcription error and cannot collide with a valid code. Only
+ * digits whose letter is actually IN the alphabet are mapped; `0` and `1` are left alone
+ * because `O`, `I` and `L` are excluded, so there is nothing honest to map them to.
  */
 export function normalizeLinkToken(token: string): string {
   return token
-    .replace(/-/g, '')
+    .replace(/[\s-]/g, '')
     .toUpperCase()
-    .replace(/[IL]/g, '1')
-    .replace(/O/g, '0')
+    .replace(/5/g, 'S')
+    .replace(/2/g, 'Z')
+    .replace(/8/g, 'B')
+    .replace(/6/g, 'G')
 }
 
 /** Constant-time compare that tolerates unequal lengths without throwing. */
@@ -285,7 +310,7 @@ they open. Against 32⁷ ≈ 3.4 × 10¹⁰ that is ~111 years to exhaust, and w
 five-minute link window it is ~2,900 guesses — odds of about 1 in 11 million.
 
 After **ten consecutive failures the slot widens to a second**, which costs a guesser another
-factor of ten and costs a human nothing: nobody mistypes seven characters ten times running,
+factor of ten and costs a human nothing: nobody mistypes eight characters ten times running,
 and if they somehow do, they wait a second. It is still not a lockout — the door never closes,
 it only gets slower to knock on.
 

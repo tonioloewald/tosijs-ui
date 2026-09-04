@@ -762,7 +762,7 @@ export async function devServer(config, opts = {}) {
         const minutes = Math.round(ttlMs / 60000);
         /*
         The CODE gets its own line, because on the device this feature exists for you are not
-        pasting a URL — you are reading seven characters off one screen and typing them into a
+        pasting a URL — you are reading eight letters off one screen and typing them into a
         floating keyboard on another. Print what has to be transcribed, on its own, in the
         largest visual unit the terminal has.
         */

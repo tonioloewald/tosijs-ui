@@ -653,6 +653,28 @@ live site** (independently useful). See roadmap "From book to live."
 - **Vector similarity search for doc-browser** - Replace current search with vector-based approach
 - **Focus management and focus-visible styling** - Improve keyboard navigation and focus indicators
 
+## `dev.tosijs.net/<code>` short URL — host-side, not shipped (#132)
+
+Two of #132's three asks landed in 1.14.0: the code is **8 letters, no digits**, and the
+invite page already had a code box (from #75) so a bookmarked host plus eight letters is the
+whole entry flow. The third needs infrastructure this repo does not own:
+
+- **`dev.tosijs.net/<code>` → 302 to the tunnel.** Saves ~18 characters and, more to the
+  point, every piece of punctuation: no scheme, no `?`, no `=`, no four-dots-and-a-hyphen
+  host. It needs a service at the apex that maps a code to a subdomain, which means the
+  preview box's Caddy config, and it needs the code→tunnel map to live somewhere both the
+  redirector and the dev server can see. Today the map is per-process, in memory, and dies
+  with the server (#114, deliberately) — so the redirector cannot consult it without either
+  a shared store or a call back into the tunnel.
+- Worth pairing with **#75** (PWA cookie jar) if it happens: the reporter notes a code field
+  would let an installed PWA carry its own entry point rather than depending on a redirect
+  that happens in Safari.
+
+The reason this is worth more than the character count: **sessions die with the process
+(#114), so the typing cost is paid on every restart, not once.** The reporter minted four
+links in one session, three of them because of release-build restarts. Cheap re-entry is what
+makes the #114 decision comfortable rather than a tax.
+
 ## Startup budget and output budget — two standing policies (2026-09-04)
 
 Written down because both were violated silently and gradually, which is the only way this

@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=ad817c2c52b3" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=1cb8416b8603" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -1160,26 +1160,34 @@ omits them.</p>
 <td>the loopback port the tunnel forwards to</td>
 </tr>
 </tbody></table>
-<h4>The token is seven characters, and you can type it</h4>
+<h4>The token is eight letters, and you can type it</h4>
 <p><code>--link</code> prints the URL <strong>and the code on its own line</strong>, because on the device this exists
 for you are not pasting anything — you are reading characters off one screen and entering
 them on another:</p>
 <pre><code>🔗 Edit link — usable on more than one device for 5 min, then it expires:
-   https://myproject.edit.dev.example.com/?t=K7MQ2XZ
+   https://myproject.edit.dev.example.com/?t=JCYGCCVX
 
-   code:  K7MQ2XZ   (case-insensitive)
+   code:  JCYGCCVX   (case-insensitive)
 </code></pre>
-<p>It is <strong>Crockford base32</strong> — no <code>I</code>, <code>L</code>, <code>O</code> or <code>U</code> — so the mistypes that hurt most on a
-headset&#39;s floating keyboard are impossible rather than merely unlikely: there is no <code>O</code> to
-confuse with <code>0</code> and no <code>l</code> to confuse with <code>1</code>. Case is folded on redemption, <code>I</code>/<code>L</code> are
-accepted as <code>1</code> and <code>O</code> as <code>0</code>, and hyphens are ignored, so someone who types what they
-<em>think</em> they saw still gets in. The failure this designs out is a correct human being told
-they typed it wrong.</p>
-<p>Seven characters is ~35 bits, and the server makes that plenty by capping how fast anyone
-can guess: <strong>redemption is serialized, and every attempt takes at least 100ms</strong> — success or
-failure alike. Ten attempts a second against 32⁷ ≈ 3.4 × 10¹⁰ is ~111 years to exhaust, and
-2,944 guesses inside a five-minute window: <strong>about 1 in 11 million</strong> (measured, not
-estimated — 20 concurrent attempts complete at 9.8/sec).</p>
+<p>It is <strong>letters only, no digits</strong> — and that last part is the point. On a headset the
+letter↔number switch is a trip to a different keyboard page, and a reported XR session minted
+<code>A70MDCD</code> and <code>X9Q3Z53</code>: three digits each in seven characters, so three round trips for a
+code being gaze-and-pinched one glyph at a time. <strong>The extra character is free; the mode
+switch is not.</strong></p>
+<p><code>I</code>, <code>L</code>, <code>O</code> and <code>U</code> are still excluded. <code>I</code>/<code>L</code> are indistinguishable across case — which
+matters <em>more</em> now, not less, because the code is case-insensitive so the reader cannot use
+case to tell them apart. <code>O</code> stays out for <code>O</code>/<code>Q</code> at headset rendering resolution, and <code>U</code> so
+an unlucky token cannot spell an obscenity.</p>
+<p>Case is folded on redemption, hyphens and spaces are ignored, and the digits people might type
+for a letter they misread (<code>5</code>→<code>S</code>, <code>2</code>→<code>Z</code>, <code>8</code>→<code>B</code>, <code>6</code>→<code>G</code>) are mapped back — pure upside,
+since a digit can never be part of a real code. The failure this designs out is a correct human
+being told they typed it wrong.</p>
+<p>Eight letters is ~35.7 bits — slightly <em>more</em> than the seven base32 characters it replaced
+(35.0) — and the server makes that plenty by capping how fast anyone can guess: <strong>redemption is
+serialized, and every attempt takes at least 100ms</strong>, success or failure alike. Ten attempts a
+second against 22⁸ ≈ 5.5 × 10¹⁰ is ~174 years to exhaust, and 2,944 guesses inside a five-minute
+window: <strong>about 1 in 18 million</strong> (the throughput measured, not estimated — 20 concurrent
+attempts complete at 9.8/sec).</p>
 <p>Opening more connections buys nothing, because concurrency is one. The floor covers successes
 too, so response time cannot answer <em>was that the right token?</em> — delaying only failures would
 turn the throttle into the oracle that <code>safeEqual</code>&#39;s constant-time comparison exists to

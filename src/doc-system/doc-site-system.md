@@ -969,7 +969,7 @@ omits them.
 | `tunnel.remotePort`     | derived from the project name | loopback port on the box; derived (FNV-1a into 9000-9899) so two projects can't collide                    |
 | `tunnel.localPort`      | `port + 1`                    | the loopback port the tunnel forwards to                                                                   |
 
-#### The token is seven characters, and you can type it
+#### The token is eight letters, and you can type it
 
 `--link` prints the URL **and the code on its own line**, because on the device this exists
 for you are not pasting anything — you are reading characters off one screen and entering
@@ -977,23 +977,33 @@ them on another:
 
 ```
 🔗 Edit link — usable on more than one device for 5 min, then it expires:
-   https://myproject.edit.dev.example.com/?t=K7MQ2XZ
+   https://myproject.edit.dev.example.com/?t=JCYGCCVX
 
-   code:  K7MQ2XZ   (case-insensitive)
+   code:  JCYGCCVX   (case-insensitive)
 ```
 
-It is **Crockford base32** — no `I`, `L`, `O` or `U` — so the mistypes that hurt most on a
-headset's floating keyboard are impossible rather than merely unlikely: there is no `O` to
-confuse with `0` and no `l` to confuse with `1`. Case is folded on redemption, `I`/`L` are
-accepted as `1` and `O` as `0`, and hyphens are ignored, so someone who types what they
-_think_ they saw still gets in. The failure this designs out is a correct human being told
-they typed it wrong.
+It is **letters only, no digits** — and that last part is the point. On a headset the
+letter↔number switch is a trip to a different keyboard page, and a reported XR session minted
+`A70MDCD` and `X9Q3Z53`: three digits each in seven characters, so three round trips for a
+code being gaze-and-pinched one glyph at a time. **The extra character is free; the mode
+switch is not.**
 
-Seven characters is ~35 bits, and the server makes that plenty by capping how fast anyone
-can guess: **redemption is serialized, and every attempt takes at least 100ms** — success or
-failure alike. Ten attempts a second against 32⁷ ≈ 3.4 × 10¹⁰ is ~111 years to exhaust, and
-2,944 guesses inside a five-minute window: **about 1 in 11 million** (measured, not
-estimated — 20 concurrent attempts complete at 9.8/sec).
+`I`, `L`, `O` and `U` are still excluded. `I`/`L` are indistinguishable across case — which
+matters _more_ now, not less, because the code is case-insensitive so the reader cannot use
+case to tell them apart. `O` stays out for `O`/`Q` at headset rendering resolution, and `U` so
+an unlucky token cannot spell an obscenity.
+
+Case is folded on redemption, hyphens and spaces are ignored, and the digits people might type
+for a letter they misread (`5`→`S`, `2`→`Z`, `8`→`B`, `6`→`G`) are mapped back — pure upside,
+since a digit can never be part of a real code. The failure this designs out is a correct human
+being told they typed it wrong.
+
+Eight letters is ~35.7 bits — slightly _more_ than the seven base32 characters it replaced
+(35.0) — and the server makes that plenty by capping how fast anyone can guess: **redemption is
+serialized, and every attempt takes at least 100ms**, success or failure alike. Ten attempts a
+second against 22⁸ ≈ 5.5 × 10¹⁰ is ~174 years to exhaust, and 2,944 guesses inside a five-minute
+window: **about 1 in 18 million** (the throughput measured, not estimated — 20 concurrent
+attempts complete at 9.8/sec).
 
 Opening more connections buys nothing, because concurrency is one. The floor covers successes
 too, so response time cannot answer _was that the right token?_ — delaying only failures would

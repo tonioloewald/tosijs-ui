@@ -61,14 +61,20 @@ export declare const SESSION_COOKIE = "tosi_dev_session";
 export declare function mintToken(): string;
 export declare function mintLinkToken(): string;
 /**
- * Fold a typed token to canonical form: uppercase, and Crockford's alias mapping.
+ * Fold a typed token to canonical form.
  *
  * Applied on REDEMPTION, not only when minting. Case-insensitivity that exists in the
  * alphabet but not in the comparison is a claim rather than a behaviour, and the failure it
  * produces is the worst kind: a correct human being told they typed it wrong.
  *
- * `I` and `L` read as `1`, `O` reads as `0` — so someone who transcribes what they think
- * they saw still gets in. Hyphens are dropped, since people group long strings.
+ * Hyphens and whitespace go, since people group long strings and a headset keyboard is
+ * generous with spaces.
+ *
+ * Digits map back to the letters they are misread AS. The alphabet is letters-only, so a
+ * digit can never be part of a real token — which makes every one of these mappings pure
+ * upside: it can rescue a transcription error and cannot collide with a valid code. Only
+ * digits whose letter is actually IN the alphabet are mapped; `0` and `1` are left alone
+ * because `O`, `I` and `L` are excluded, so there is nothing honest to map them to.
  */
 export declare function normalizeLinkToken(token: string): string;
 /** Constant-time compare that tolerates unequal lengths without throwing. */
