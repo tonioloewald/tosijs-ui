@@ -263,8 +263,42 @@ const passAnything = {
   test: () => true,
 }
 
+/*
+Look the caption up by VALUE, because `<tosi-select>` has no `selectedIndex`.
+
+This read `select.options[select.selectedIndex]`, and `selectedIndex` has never existed on
+`TosiSelect` — it selects by value, like the rest of this library's `value`/`change` contract.
+So the expression was `options[undefined]` → `undefined` → `?.caption` → `''`, and this
+function returned the empty string **every time it was called**.
+
+The visible symptom was a filter chip labelled ` "needle"` — two blanks where the field and
+the condition should read — which looks like a styling problem rather than a lookup returning
+nothing.
+
+It was invisible because `Component` carried a `[key: string]: any` index signature, so
+`this.anythingAtAll` and `select.anythingAtAll` type-checked as `any` on every component in
+the codebase. tosijs 1.10.0 removes it (tosijs#36); adopting that surfaced this immediately,
+as one of exactly two genuine defects among 418 compiler errors — the rest were the mechanical
+`withAttributes` migration. Fixed here on its own, because the bug predates the adoption and
+should not wait on it.
+
+Options are a mix: `SelectOption` objects and bare strings (a string option is its own value
+AND its own caption).
+*/
 function getSelectText(select: TosiSelect): string {
-  return (select.options[select.selectedIndex] as SelectOption)?.caption || ''
+  const selected = select.value
+  for (const option of select.options) {
+    if (typeof option === 'string') {
+      if (option === selected) return option
+    } else if (
+      option !== null &&
+      'value' in option &&
+      option.value === selected
+    ) {
+      return (option as SelectOption).caption
+    }
+  }
+  return typeof selected === 'string' ? selected : ''
 }
 
 type Fields = Array<{ name?: string; prop: string }>
