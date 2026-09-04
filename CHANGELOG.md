@@ -67,6 +67,31 @@ outside a git repo.
 Also: `deploy:index` now asks for `PREVIEW_HOST` like the bins, instead of the `PREVIEW_SSH`
 they moved off.
 
+### `bun start` serves in ~3.6s instead of ~23s, and prints 13 lines instead of 37
+
+**20.1 of those 23 seconds were the dependency audit**, running synchronously before the port
+was bound — where it hit its own 20s timeout, gave up, and **failed open**. So the stall
+bought nothing on that run: it was the cost of a check that did not happen. Measured against
+the live registry, `bun audit` takes **79.5s**.
+
+The code justified blocking on the grounds that "the audit is sub-second… a gate you wait for
+cannot be raced". The premise was false, so the conclusion was buying a twenty-second stall on
+every start. It now runs after the server is up and reports when it lands, prefixed loudly
+enough that a late advisory cannot be mistaken for part of the startup banner — non-blocking
+must not mean easy to miss. **Release builds still block**: `buildSite` audits synchronously,
+and `--test` gates there too, which is where waiting is the right trade.
+
+**Build output is 13 lines, down from 37.** Eighteen of them were `bun build` listing every
+chunk and every sourcemap — the same size information the build already summarises, only
+longer. Captured now, and replayed **in full** on failure; verified by deliberately breaking
+the bundle entry, which still prints the errors, exits 1, and restores the last good build.
+
+Spam is not free: it trains people — and agents — to stop reading build output, which is
+exactly what lets a real failure through.
+
+The ePub was the assumed culprit and is innocent: 0.34s of the 23. Measuring first is the only
+reason the actual cause was found.
+
 ### `docs.json` is cache-busted, so a stale corpus stops surviving a deploy
 
 Every generated URL went through the asset stamp — the stylesheet, the hydration bundle, the
