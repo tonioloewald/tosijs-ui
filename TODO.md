@@ -700,13 +700,34 @@ kind of thing ever happens.
   every chunk and sourcemap. Replayed in full on failure, verified by breaking the entry:
   errors still print, exit is still 1, last-good is still restored.
 
-**Still to do.** 5.7s is fine — the ~5s figure is a target, not a gate, and nobody should
-fail a build over 700ms. It exists to catch the next 23s regression, not to be optimised
-against:
+**Still to do.** ~3.6s is fine — the ~5s figure is a target, not a gate. It exists to catch
+the next 23s regression, not to be optimised against.
 
-- The remaining time is the build itself — `[2.9s] build` plus bundling. The ePub (0.34s) is
-  not worth touching. Neither, probably, is anything else here: the win was a 20s stall, and
-  what is left is roughly the cost of actually building the thing.
+Where the remaining 3.6s actually goes, measured per phase:
+
+| phase                                        | time      | share   |
+| -------------------------------------------- | --------- | ------- |
+| prebuild (version + doc extraction)          | 0.42s     | 12%     |
+| **bundling — iife then hydrate, sequential** | **2.27s** | **64%** |
+| static pre-render (66 pages)                 | 0.20s     | 6%      |
+| ePub (66 chapters)                           | 0.33s     | 9%      |
+| bind + listeners                             | 0.27s     | 8%      |
+
+- **Static pre-render + ePub are 0.53s together**, not the bulk. They _are_ both
+  post-dates-the-1–2s-era additions, which is why they feel like the cause — but the
+  arithmetic says otherwise today.
+- **The reason to defer them anyway is SCALING, not today's half-second.** Both are O(corpus):
+  0.20s and 0.33s at 66 docs. A book-sized corpus (the prose/novel adoption this system is
+  explicitly for) pays that per `bun start`, and neither is needed to serve the page you are
+  looking at. The SPA fallback already answers un-pre-rendered routes — that is exactly what
+  #116 established — so binding first and pre-rendering behind it degrades gracefully rather
+  than 404ing.
+- **The dominant cost is bundling, and the two bundles are independent.** iife → `BUNDLE_DIR`,
+  hydrate → a temp dir; the checks between them only read the iife output. Starting both
+  children and awaiting the second after the iife post-processing would overlap ~1.1s. Not
+  done: it restructures a delicate path, doubles peak bundler memory in a repo with a
+  documented history of exactly that, and buys ~1s against a budget already met. Worth
+  revisiting only if bundling grows.
 - **Live-example / doc-test failures still escape notice** — the item below. Nothing has
   been done there yet, and it is the part that actually costs correctness rather than
   patience.
