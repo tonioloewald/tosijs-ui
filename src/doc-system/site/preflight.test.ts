@@ -1,6 +1,7 @@
-import { test, expect } from 'bun:test'
+import { test, expect, describe } from 'bun:test'
 import {
   memoryBudgetMb,
+  isDevProcess,
   parsePs,
   etimeHours,
   assessProcesses,
@@ -338,4 +339,62 @@ test('"bun" inside a PATH does not make a process a dev server', () => {
 test('a real stale dev server is still caught — the fixes did not defang it', () => {
   const procs = parsePs('  4242 6291456  08:00:00 bun --watch bin/dev.ts\n')
   expect(assessProcesses(procs, { totalRamMb: RAM }).level).toBe('fail')
+})
+
+/*
+#93: an orphaned `--watch` bundler is a server, not a one-shot build.
+
+The reported machine had 69 of these holding 13.09GB — ~55 spawned inside one 61-minute
+window — on a box running these very dev servers, while the guard skipped every one. The
+exemption said "our bundler" but meant "every `bun build` on the machine, forever, regardless
+of owner or age".
+
+The command lines below are the reporter's, verbatim.
+*/
+describe('isDevProcess (#93)', () => {
+  const ORPHAN =
+    'bun build src/main.ts --outdir dist --target browser --sourcemap=linked --watch'
+
+  test('an orphaned --watch bundler is visible to the guard', () => {
+    expect(isDevProcess(ORPHAN)).toBe(true)
+  })
+
+  test('a one-shot build is still exempt, so a mid-build peak is not a runaway', () => {
+    expect(
+      isDevProcess('bun build src/main.ts --outdir dist --target browser')
+    ).toBe(false)
+  })
+
+  test('`bun run <server>` with --watch counts; without it does not', () => {
+    // Four of these were on the machine, up to 18 days old and permanently invisible.
+    expect(isDevProcess('bun run --watch dist/server.js')).toBe(true)
+    expect(isDevProcess('bun run build')).toBe(false)
+  })
+
+  test('other one-shots stay exempt', () => {
+    for (const c of ['bun install', 'bun test src/x.test.ts', 'bun x cowsay']) {
+      expect(isDevProcess(c)).toBe(false)
+    }
+  })
+
+  test('a dev server is still a dev process', () => {
+    expect(isDevProcess('bun --watch bin/dev.ts')).toBe(true)
+    expect(isDevProcess('bun bin/site.ts')).toBe(true)
+  })
+
+  test('--watch must be its own argument, not a substring', () => {
+    // `--watchdog` or a path containing "--watch" must not promote a one-shot build.
+    expect(isDevProcess('bun build src/main.ts --outdir dist-watch')).toBe(
+      false
+    )
+    expect(isDevProcess('bun build src/main.ts --watchdog')).toBe(false)
+  })
+
+  test('still bun/deno only — a fat editor must not fail every build', () => {
+    expect(isDevProcess('node --watch server.js')).toBe(false)
+    // The real line from the reported process table: a word boundary lands inside a path.
+    expect(
+      isDevProcess('node /Users/x/.bun/install/global/node_modules/foo/cli.js')
+    ).toBe(false)
+  })
 })

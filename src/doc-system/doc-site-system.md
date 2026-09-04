@@ -488,6 +488,37 @@ thrash for twenty minutes until it was power-cycled.
   The build shells out to the `bun build` CLI instead, and the ePub step (happy-dom +
   `@resvg/resvg-js`, also native) runs in a child. The OS reclaims a child's memory on
   exit; the same 15 bundles cost **+0.5MB** in-parent instead of **+192MB**.
+
+  **"On exit" is the load-bearing clause, so reap what you spawn.** Shelling out only
+  helps if the child actually exits. The failure this omission produced, reported against
+  a consumer that followed the advice above (tosijs-ui#93): a `dev.ts` that spawns
+  `bun build --watch`, itself run under `bun --watch dev.ts`. Every source edit restarts
+  the parent, which spawns a **fresh** watch bundler while the previous one is never
+  signalled — one leaked bundler per edit, ~200MB each. Observed: **69 orphans holding
+  13.09GB**, ~55 of them from a single 61-minute window, on a 128GB machine left with
+  116MB free.
+
+  A long-lived child needs both halves:
+
+  ```ts
+  let child: ReturnType<typeof Bun.spawn> | undefined
+  const spawnBundler = () => {
+    child?.kill() // kill the PREVIOUS one before starting another
+    child = Bun.spawn(['bun', 'build', ...args, '--watch'], { stdout: 'inherit' })
+  }
+  for (const sig of ['SIGINT', 'SIGTERM'] as const)
+    process.on(sig, () => {
+      child?.kill()
+      process.exit(0)
+    })
+  process.on('beforeExit', () => child?.kill())
+  ```
+
+  A one-shot `bun build` needs none of this — it exits on its own, which is why this
+  project's own builds are unaffected. It is `--watch` that turns a child into something
+  you own for as long as you live, and `bun --watch` on the parent that makes "as long as
+  you live" mean "until the next keystroke".
+
 - **`memoryLimitMb`** — the dev server samples its own RSS after every rebuild and, past
   the ceiling, prints the growth-per-rebuild and exits. Growth per rebuild should be ~0;
   sustained growth is a leak, not a ceiling that is too low.

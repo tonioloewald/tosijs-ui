@@ -61,7 +61,7 @@ export function etimeHours(etime) {
  *
  * `bun install`/`test`/`x` and friends are one-shot commands, not servers.
  */
-const isDevProcess = (command) => {
+export const isDevProcess = (command) => {
     // Match the EXECUTABLE, not any occurrence of "bun" in the command line. `/\b(bun|deno)\b/`
     // matched `node ~/.bun/install/global/…/cli.js` — a real line from this machine's process
     // table — because the word boundary happily lands inside a path.
@@ -69,11 +69,32 @@ const isDevProcess = (command) => {
     const exe = argv0.split('/').pop() ?? '';
     if (!/^(bun|deno)$/.test(exe))
         return false;
-    // One-shot subcommands are not servers. `build` is here because WE spawn it: the
-    // bundler child is a `bun build`, and a build peaking mid-run must never look like a
-    // runaway dev server — least of all to its own parent.
+    /*
+    One-shot subcommands are not servers. `build` was here because WE spawn it: the bundler
+    child is a `bun build`, and a build peaking mid-run must never look like a runaway dev
+    server — least of all to its own parent.
+  
+    BUT `--watch` makes any of them long-lived, and the exemption did not say "our bundler",
+    it said every `bun build` on the machine, forever, regardless of owner or age. An orphan
+    whose parent died a week ago was exactly as exempt as a bundler that started 200ms ago.
+  
+    Measured, on a 128GB box running these dev servers (tosijs-ui#93): **69 orphaned
+    `bun build --watch` processes holding 13.09GB**, ~55 of them spawned in one 61-minute
+    window, roughly one per edit. The machine sat at 116MB free of 128GB. The guard looked,
+    and deliberately skipped every one of them — while resting on the premise that "nothing
+    noticed the runaways because nothing ever looked".
+  
+    The mid-rebuild false positive this exemption existed for is ALREADY handled, and handled
+    precisely, by parentage: the assessor filters `process.pid` plus `descendantsOf(process.pid)`
+    before looking at anything. That is the exact test — "did we start it?" — where a subcommand
+    name is a blunt proxy for it. So dropping the exemption for `--watch` costs no false
+    positives, because our own in-flight bundler is excluded by a better rule one layer up.
+    */
     const sub = command.trim().split(/\s+/)[1] ?? '';
-    return !/^(test|install|add|remove|update|pm|x|create|init|link|outdated|publish|upgrade|build|run)$/.test(sub);
+    const oneShot = /^(test|install|add|remove|update|pm|x|create|init|link|outdated|publish|upgrade|build|run)$/.test(sub);
+    // A watcher is a server whoever started it — including `bun run dist/server.js`, of which
+    // this machine had four, up to 18 days old and permanently invisible.
+    return !oneShot || /(^|\s)--watch(\s|$)/.test(command);
 };
 /**
  * Processes whose enormous RSS is the POINT of the machine, not a symptom.

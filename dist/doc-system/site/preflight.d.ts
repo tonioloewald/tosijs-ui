@@ -20,6 +20,20 @@ export declare function parsePs(output: string): ProcInfo[];
 /** `ps` etime — `[[dd-]hh:]mm:ss` — as hours. */
 export declare function etimeHours(etime: string): number;
 /**
+ * A local dev server / build script — the thing we know should never be sitting on
+ * gigabytes for hours.
+ *
+ * Deliberately `bun` (and `deno`) only, NOT `node`. Plenty of legitimate,
+ * long-lived node processes routinely exceed the ceiling — Claude Code, VS Code's
+ * extension host, a TypeScript server on a large project — and hard-failing every
+ * build because the editor is fat would be a guard nobody keeps. A runaway node
+ * process is still caught, by the >50%-of-RAM trigger, which is not a judgement
+ * call about what the process is for.
+ *
+ * `bun install`/`test`/`x` and friends are one-shot commands, not servers.
+ */
+export declare const isDevProcess: (command: string) => boolean;
+/**
  * How much RAM is actually available to *dev work* — the denominator every
  * percentage below is taken against.
  *

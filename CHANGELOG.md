@@ -67,6 +67,33 @@ outside a git repo.
 Also: `deploy:index` now asks for `PREVIEW_HOST` like the bins, instead of the `PREVIEW_SSH`
 they moved off.
 
+### The machine-health guard stopped exempting 13GB of orphans (#93)
+
+`isDevProcess` decided what was even a _candidate_ for the runaway check, and excluded
+`build` — because we spawn the bundler ourselves and a build peaking mid-run must not look
+like a runaway to its own parent. But the exemption did not say "our bundler". It said
+**every `bun build` on the machine, forever, regardless of owner or age**, so an orphan whose
+parent died a week ago was exactly as exempt as one that started 200ms ago.
+
+Reported with measurements: **69 orphaned `bun build --watch` processes holding 13.09GB**, ~55
+of them spawned inside a single 61-minute window, on a 128GB box running these very dev servers
+and sitting at 116MB free. The guard looked, and skipped every one — while resting on the
+premise that "nothing noticed the runaways because nothing ever looked".
+
+`--watch` is the distinguishing signal, and it was right there in the argv: a watcher is a
+server whoever started it. The mid-rebuild false positive the exemption existed for is already
+handled, and handled _precisely_, by parentage — the assessor filters `process.pid` plus
+`descendantsOf(process.pid)` before assessing anything. That is the exact test where a
+subcommand name was a blunt proxy for it, so this costs no false positives. `bun run` with
+`--watch` is caught too; the reported machine had four such servers up to 18 days old.
+
+**And the other half, in `doc-site-system.md`:** "shell out so the OS reclaims the memory on
+exit" is only true if the child _exits_. A `dev.ts` that spawns `bun build --watch`, itself run
+under `bun --watch dev.ts`, leaks one bundler per keystroke — the previous child is never
+signalled. The doc now carries the reaping idiom (kill the previous child; reap on
+`SIGINT`/`SIGTERM`/`beforeExit`) beside the advice that produced the leak. This project's own
+builds are one-shot and were never affected.
+
 ### `layout: "full-screen"` finally gets its scroll container (#119)
 
 `.doc-content`'s `overflow` is an **inline** style set by the doc-browser, so the full-screen
