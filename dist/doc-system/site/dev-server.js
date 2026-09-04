@@ -962,6 +962,20 @@ export async function devServer(config, opts = {}) {
     looking at it far more than a re-download. It cost exactly that here: a bug was reported
     against code that had already been fixed.
   
+    WHY THIS IS WORSE THAN STALE PROSE, from a second sighting (tosijs-ui#129, on 1.12.0, before
+    this landed): live examples are EXECUTABLE, so a stale `docs.json` runs OLD CODE against the
+    NEW library. That failure is indistinguishable from a genuine library regression, and it
+    survives the reload that would normally rule staleness out. It produced a confident, false
+    "the library has a security bug" conclusion: a cached example fence calling a bare
+    `enableAgentInterface()` was refused by the current bundle, and the refusal was correct,
+    precisely worded, and described a file that no longer existed on disk. Every reading of the
+    source contradicted the running page. A stale paragraph is obvious; a stale example that
+    throws is a false bug report, and it cost a full working session.
+  
+    The intended workflow is EXPLICIT reload rather than hot reload — automatic reloads fire
+    mid-thought and cost you your context. That model only works if a reload is authoritative,
+    which is precisely what heuristic caching takes away.
+  
     `no-store` rather than `no-cache`: no-cache still stores and revalidates, which needs
     validators we do not emit, and a dev server has nothing to gain from the round trip. The cost
     is re-fetching the bundle on a full page load — a doc site navigates client-side after that,

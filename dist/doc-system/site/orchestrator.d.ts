@@ -17,6 +17,18 @@ export declare function canDelegateTo(holder: {
     role?: string;
     port?: number;
 }): boolean;
+/**
+ * May `buildSite` wipe `dist/` on this run? Only if this run regenerates all of it.
+ *
+ * See the long note at the call site (tosijs-ui#130). Pure and exported so the rule is
+ * testable without running a build — the bug it prevents is a `rm -rf` of somebody's
+ * published package output, which is not something to discover empirically.
+ */
+export declare function shouldCleanDist(config: {
+    emitLibrary?: boolean;
+    libraryTsconfig?: string;
+    libraryBuild?: unknown;
+}): boolean;
 export declare function buildSite(config: SiteConfig, opts?: {
     skipAudit?: boolean;
     lock?: boolean;

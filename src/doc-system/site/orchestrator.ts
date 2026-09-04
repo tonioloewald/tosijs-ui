@@ -416,6 +416,24 @@ async function delegateBuild(
   }
 }
 
+/**
+ * May `buildSite` wipe `dist/` on this run? Only if this run regenerates all of it.
+ *
+ * See the long note at the call site (tosijs-ui#130). Pure and exported so the rule is
+ * testable without running a build — the bug it prevents is a `rm -rf` of somebody's
+ * published package output, which is not something to discover empirically.
+ */
+export function shouldCleanDist(config: {
+  emitLibrary?: boolean
+  libraryTsconfig?: string
+  libraryBuild?: unknown
+}): boolean {
+  // A consumer-supplied build owns the directory and may emit a subset. Never clean it,
+  // even alongside the other flags — the consumer's function is the authority.
+  if (config.libraryBuild) return false
+  return config.emitLibrary === true || Boolean(config.libraryTsconfig)
+}
+
 export async function buildSite(
   config: SiteConfig,
   opts: { skipAudit?: boolean; lock?: boolean } = {}
@@ -717,8 +735,43 @@ export async function buildSite(
         if (existsSync(dir)) await $`cp -R ${dir}/. ${PUBLIC}`.text()
       }
 
-      await $`rm -rf ${DIST}`.text()
-      await $`mkdir ${DIST}`.text()
+      /*
+      Clean `dist/` only when THIS run regenerates all of it (tosijs-ui#130).
+
+      This used to be unconditional, on every `buildSite` — including from `devServer`, and
+      including for projects that configure no library build at all. `dist/` is not a site
+      artifact: for the repos this API exists to serve, it is the **published package
+      output**, an input to `npm publish`. Wiping it destroys build products the current run
+      does not rebuild.
+
+      What it cost, reported from tosijs: two bundles (`module.debug.js`, `module.safe.js`,
+      exposed as the `./debug` and `./safe` subpath exports) are produced only under
+      `--build`, because they need a 53-file transpile too slow for the dev loop. So
+      `bun start` — or Playwright's `webServer`, which runs it — wiped `dist/` and rebuilt
+      only five of seven. A publish from that tree ships two subpaths that throw
+      `ERR_MODULE_NOT_FOUND`, and their release checklist walks straight into it: build at
+      step 3, browser tests at step 4, publish at step 8. It reached a commit once already.
+
+      Nothing local could catch it: size and smoke gates iterate the bundles the current run
+      BUILT, so a bundle that was deleted rather than skipped is invisible to both.
+
+      The doc `outputDir` wipe is fine and stays — that directory is wholly generated and the
+      build announces it. `dist/` is different, so the rule is now "clean only what you
+      wholly generate":
+
+        - `emitLibrary` / `libraryTsconfig` — tsc emits the complete set, so a clean is safe
+          and keeps stale artifacts from surviving a rename.
+        - `libraryBuild` (a consumer function) — NOT cleaned. The consumer owns the
+          directory and may legitimately emit a subset, which is exactly the reported case.
+        - nothing configured — NOT cleaned. Nothing here owns it.
+
+      Incidental win: `emitLibrary` runs `tsc --incremental`, whose `.tsbuildinfo` lives in
+      `dist/`. Wiping it every run meant incremental compilation never once did anything.
+      */
+      if (shouldCleanDist(config)) {
+        await $`rm -rf ${DIST}`.text()
+      }
+      await $`mkdir -p ${DIST}`.text()
       console.timeEnd('prebuild')
 
       // ── build ───────────────────────────────────────────────────────────────

@@ -67,6 +67,35 @@ outside a git repo.
 Also: `deploy:index` now asks for `PREVIEW_HOST` like the bins, instead of the `PREVIEW_SSH`
 they moved off.
 
+### `buildSite` no longer wipes `dist/` — it is your package output, not a site artifact (#130)
+
+The prebuild ran `rm -rf dist/` on **every** `buildSite`, including from `devServer` and
+including for projects that configure no library build at all. For the repos this API exists to
+serve, `dist/` is the **published package output** — an input to `npm publish` — so the wipe
+destroyed build products the current run does not rebuild.
+
+Reported from tosijs with the full chain: two bundles (`module.debug.js`, `module.safe.js`,
+exposed as the `./debug` and `./safe` subpath exports) are produced only under `--build`,
+because they need a 53-file transpile too slow for the dev loop. `bun start` — or Playwright's
+`webServer`, which runs it — wiped `dist/` and rebuilt five of seven. A publish from that tree
+ships two subpaths that throw `ERR_MODULE_NOT_FOUND`, and it reached a commit once already.
+Nothing local could catch it: size and smoke gates iterate the bundles the current run _built_,
+so a bundle that was **deleted rather than skipped** is invisible to all of them.
+
+The rule is now "clean only what you wholly generate":
+
+| configuration                                                  | `dist/` cleaned? |
+| -------------------------------------------------------------- | ---------------- |
+| `emitLibrary` / `libraryTsconfig` (tsc emits the complete set) | yes              |
+| `libraryBuild` — a consumer function that may emit a subset    | **no**           |
+| none configured — nothing here owns it                         | **no**           |
+
+The doc `outputDir` wipe is unchanged and stays: that directory is wholly generated, and the
+build announces it. `dist/` is different.
+
+Incidental: `emitLibrary` runs `tsc --incremental`, whose `.tsbuildinfo` lives in `dist/`.
+Wiping it every run meant incremental compilation had never once done anything.
+
 ### `bun start` serves in ~3.6s instead of ~23s, and prints 13 lines instead of 37
 
 **20.1 of those 23 seconds were the dependency audit**, running synchronously before the port
