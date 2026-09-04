@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'bun:test'
 import { pageDepth, relativeUrl, generateSite } from './generate-site.js'
+import { tmpdir } from 'os'
 
 describe('pageDepth', () => {
   test('root index is depth 0, every /slug/ page is depth 1', () => {
@@ -89,9 +90,7 @@ own site. A version-keyed corpus URL would be stale for exactly that workflow.
 */
 describe('docs.json cache-busting', () => {
   const page = async (over: Record<string, unknown> = {}) => {
-    const dir = `${require('os').tmpdir()}/tosi-gs-${Math.floor(
-      performance.now() * 1000
-    )}`
+    const dir = `${tmpdir()}/tosi-gs-${Math.floor(performance.now() * 1000)}`
     await generateSite({
       docs: [
         {

@@ -1594,13 +1594,6 @@ export async function devServer(config, opts = {}) {
                 sentence differs, and that sentence was the entire report.
                 */
                 const rejection = sessionRejection(readCookie(request.headers.get('cookie'), SESSION_COOKIE), Date.now());
-                const explanation = rejection === 'stale'
-                    ? `<p><b>The dev server restarted, so your session ended with it.</b> ` +
-                        `Sessions are held in memory on purpose — they never outlive the process that ` +
-                        `issued them, and they are never written to disk. Your browser still holds the ` +
-                        `cookie; there is simply nothing on this side to match it to.</p>` +
-                        `<p>Ask for a fresh link:</p>`
-                    : `<p>Ask for a fresh one — invite links expire.</p>`;
                 return new Response(invitePageHtml(rejection, TUNNEL_LINK_CMD), {
                     status: 401,
                     headers: {

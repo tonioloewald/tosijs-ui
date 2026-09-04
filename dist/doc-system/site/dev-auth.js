@@ -566,7 +566,7 @@ export function isSameOriginRequest(request) {
         // Compare against the origin the request was actually addressed to, which is what the
         // browser would have had to match. `Host` is what the client dialled.
         const host = request.headers.get('host');
-        let ours = null;
+        let ours;
         try {
             ours = request.url !== undefined ? new URL(request.url).host : null;
         }
@@ -574,7 +574,7 @@ export function isSameOriginRequest(request) {
             ours = null;
         }
         const expected = ours ?? host;
-        let originHost = null;
+        let originHost;
         try {
             originHost = new URL(origin).host;
         }

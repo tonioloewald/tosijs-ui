@@ -670,14 +670,14 @@ export function isSameOriginRequest(request: {
     // Compare against the origin the request was actually addressed to, which is what the
     // browser would have had to match. `Host` is what the client dialled.
     const host = request.headers.get('host')
-    let ours: string | null = null
+    let ours: string | null
     try {
       ours = request.url !== undefined ? new URL(request.url).host : null
     } catch {
       ours = null
     }
     const expected = ours ?? host
-    let originHost: string | null = null
+    let originHost: string | null
     try {
       originHost = new URL(origin).host
     } catch {

@@ -149,6 +149,15 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push/PR to `main`, in two jo
 
 - **test** — `bun install` → `bunx tsc --noEmit` → `bunx tsc -p tsconfig.bin.json` → `bun run format-check` → `bun test` (the unit lane; `bunfig.toml` roots it at the repo, so `bin/` tests are collected too).
 
+  **Markdown is NOT formatted** (`*.md` is in `.prettierignore`, by request from tosijs).
+  `proseWrap` is already `preserve`, so the only things prettier changed in a `.md` file were
+  escaping literal characters (`a * literal` → `a \* literal`), padding table cells, and
+  rewriting `*` bullets as `-`. The first edits the CONTENT of a document, and markdown is
+  **the product** here — `src/docs/` ships as a site, an ePub and `llms.txt`. Measured before
+  removing it, because it qualifies the case: the escaping is idempotent and renders
+  identically through `renderDocMarkdown`, so this was churn and unwanted authority over
+  prose rather than progressive corruption.
+
   **Why formatting is gated.** `bun format` was manual and named in no gate, so drift only ever grew — 24 unformatted files at v1.9.0, 39 by v1.9.3, 40 by v1.9.7. The cost lands on whoever runs `bun format` next: three dozen unrelated files land in their feature diff, and either they ship the churn or they spend the time separating it. Prettier is the sole formatter (ESLint carries no stylistic rules) and reaches a fixed point in one pass, so the check is deterministic and cheap. Run `bun format` before committing.
 
 - **e2e** — generates a throwaway self-signed cert (the dev server refuses to start without one; mkcert would want sudo, and the tests already set `ignoreHTTPSErrors`), installs chromium, and runs `bunx playwright test --project=chromium`. Playwright brings up its own dev server.

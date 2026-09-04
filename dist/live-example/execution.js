@@ -127,10 +127,17 @@ export async function executeInline(options) {
             func = new AsyncFunction(...contextKeys, taggedCode);
         }
         catch (err) {
-            // Construction failed, so no user frame exists — say what was rejected instead.
+            /*
+            Construction failed, so no user frame exists — say what was rejected instead.
+      
+            `cause` carries the original. `diagnoseConstruction` renders a readable message, but the
+            engine's own error is the thing that names WHICH parameter it choked on, and dropping it
+            is how a construction failure becomes "one synthetic test failure with a message nobody
+            can grep for" — the shape reported in tosijs-ui#109.
+            */
             throw new Error(diagnoseConstruction(err, contextKeys, taggedCode, 
             // @ts-expect-error AsyncFunction constructor typing
-            (...args) => new AsyncFunction(...args)));
+            (...args) => new AsyncFunction(...args)), { cause: err });
         }
         await func(...contextValues);
     }

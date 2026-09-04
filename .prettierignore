@@ -29,3 +29,25 @@ demo/xinjs-icon-font/
 
 # editor state
 .nova/
+
+# MARKDOWN — prettier does not format it, by request from tosijs.
+#
+# It buys nothing here and it rewrites authored prose. `proseWrap` is already `preserve`,
+# so the only things prettier changes in a .md file are: escaping literal characters
+# (`a * literal` becomes `a \* literal`), padding table cells to align, and rewriting `*`
+# bullets as `-`. None of that is a formatting decision anyone needs made for them, and the
+# first one edits the CONTENT of a document rather than its layout.
+#
+# That matters more here than in most repos because **markdown is the product**: `src/docs/`
+# is the doc corpus, and it is published as a site, an ePub and `llms.txt`. An author's
+# deliberate character is not ours to normalise.
+#
+# Measured before doing this, and worth recording because it qualifies the case: the
+# escaping is IDEMPOTENT (three further passes changed nothing) and renders identically
+# through `renderDocMarkdown`, so this is churn and unwanted authority over prose — not the
+# progressive corruption it is easy to assume. The reason to stop is that it has no upside,
+# not that it is destroying files.
+#
+# The `*.md` override in .prettierrc.json (embeddedLanguageFormatting: off) is now redundant
+# but harmless; it stays as the record of an earlier round of the same problem.
+*.md
