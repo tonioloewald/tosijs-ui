@@ -199,6 +199,20 @@ async function finalizeStamp(publicDir, lastGoodDir, fresh) {
         await Bun.write(target, JSON.stringify(fresh, null, 2) + '\n').catch(() => { });
     }
 }
+/*
+Read a child's stdout+stderr to completion, concurrently.
+
+Draining BOTH pipes matters: an undrained pipe fills its buffer, the child blocks writing to
+it, and we wait forever for an exit that cannot come — the same deadlock `checkExamplesInChild`
+documents. Concurrently, for the same reason.
+*/
+async function drainChild(child) {
+    const [out, err] = await Promise.all([
+        child.stdout ? new Response(child.stdout).text() : Promise.resolve(''),
+        child.stderr ? new Response(child.stderr).text() : Promise.resolve(''),
+    ]);
+    return [out, err].filter((s) => s.trim()).join('\n');
+}
 async function gzipSizeInChild(file) {
     try {
         const out = await $ `bun -e ${`const {gzipSync}=require('zlib');const b=await Bun.file(${JSON.stringify(file)}).arrayBuffer();process.stdout.write(String(gzipSync(Buffer.from(b)).length))`}`
@@ -698,8 +712,20 @@ export async function buildSite(config, opts = {}) {
                     '--entry-naming',
                     scriptName,
                     ...externals.flatMap((ext) => ['--external', ext]),
-                ], { stdout: 'inherit', stderr: 'inherit' });
+                ], 
+                /*
+                CAPTURED, not inherited — `bun build` lists every chunk and every sourcemap, which
+                was 18 of a 37-line build. Build output has a budget (~20 lines): spam trains
+                people and agents to stop reading it, which is exactly what lets a real failure
+                through. The sizes that matter are summarised a few lines below; the listing is
+                not information, it is the same information again, longer.
+      
+                Replayed in full on FAILURE, where it is the only thing you want.
+                */
+                { stdout: 'pipe', stderr: 'pipe' });
+                const bundleOut = await drainChild(bundle);
                 if ((await bundle.exited) !== 0) {
+                    console.error(bundleOut);
                     console.error('bundle build failed');
                     return false;
                 }
@@ -833,8 +859,12 @@ export async function buildSite(config, opts = {}) {
                     '--asset-naming',
                     '_assets/[name]-[hash].[ext]',
                     ...externals.flatMap((ext) => ['--external', ext]),
-                ], { stdout: 'inherit', stderr: 'inherit' });
+                ], 
+                // Captured for the same reason as the iife bundle above; replayed on failure.
+                { stdout: 'pipe', stderr: 'pipe' });
+                const esmOut = await drainChild(esm);
                 if ((await esm.exited) !== 0) {
+                    console.error(esmOut);
                     console.error('ESM hydration bundle build failed');
                     return false;
                 }

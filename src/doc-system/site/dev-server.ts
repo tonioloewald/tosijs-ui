@@ -1603,30 +1603,51 @@ export async function devServer(
     )
   }
 
-  // ── dependency audit (synchronous, before we bind the port) ─────────────────
-  //
-  // Runs BEFORE the server comes up, not after. The audit is sub-second (local
-  // resolution + one registry round-trip, bounded by AUDIT_TIMEOUT_MS and failing
-  // open on timeout), so the wait costs nothing next to the alternative: an async
-  // audit spikes a server that is already listening and possibly already in use,
-  // which reads as a crash and races whatever the developer started doing in the
-  // meantime. A gate you wait for cannot be raced.
-  //
-  // THROWS rather than exits: `devServer` is a public export of `tosijs-ui/site`,
-  // and refusing to start is the caller's business to handle — same contract as the
-  // launch-time preflight above. (The health tick below still exits, because by then
-  // we own a running server and stopping it IS the guard.)
-  // Interactive only — `--test` gates synchronously in buildSite().
+  /*
+  ── dependency audit (NON-BLOCKING — the port comes up first) ─────────────────
+
+  This used to run synchronously before binding, on the argument that "the audit is
+  sub-second … a gate you wait for cannot be raced."
+
+  The premise was false, and measuring it is the whole story. `bun audit` against the live
+  registry measured **79.5 seconds**; the guard's own `AUDIT_TIMEOUT_MS` capped that at
+  **20.1s**, then gave up and failed OPEN. So the twenty-second stall on every `bun start`
+  bought exactly nothing on that run — it was the cost of a check that did not happen. It
+  was 20 of the 23 seconds a full build took, against a startup budget of ~5s.
+
+  The race the old comment worried about is real but small, and it is bounded by reporting
+  rather than by waiting: the audit result cannot retroactively un-serve a page, so the
+  honest thing is to let the server come up and say something loud when the answer lands.
+
+  What is deliberately NOT quieter: the finding itself. `reportAudit` stays exactly as loud
+  as it was, and an advisory arriving late is prefixed so it cannot be mistaken for part of
+  the startup banner it now comes after. Non-blocking must not mean easy to miss.
+
+  RELEASE BUILDS STILL BLOCK. `buildSite` audits synchronously (and `--test` gates there
+  too), which is where waiting is the right trade: nobody is watching a release build with
+  a five-second budget, and a gate that ships is worth twenty seconds.
+  */
   if (!testMode) {
-    const audit = await auditDependencies(config.audit)
-    if (audit.mode !== 'off') reportAudit(audit, 'Dev server')
-    if (!audit.ok && audit.mode === 'fail') {
-      throw new Error(
-        'dev server: refusing to start — unaddressed dependency advisory (see above). ' +
-          "Fix it, gate it with a reason + expiry in `audit.allow`, set `audit: { mode: 'warn' }`, " +
-          'or TOSIJS_AUDIT=off.'
-      )
-    }
+    void auditDependencies(config.audit)
+      .then((audit) => {
+        if (audit.mode === 'off') return
+        if (!audit.ok) {
+          console.warn(
+            `\n🚨 DEPENDENCY ADVISORY — reported after startup, so it is easy to miss.\n` +
+              `   The server is already running; this does not stop it.`
+          )
+        }
+        reportAudit(audit, 'Dev server')
+        if (!audit.ok && audit.mode === 'fail') {
+          console.warn(
+            `   This would have REFUSED to start a release build. Fix it, gate it with a\n` +
+              `   reason + expiry in \`audit.allow\`, or set \`audit: { mode: 'warn' }\`.\n`
+          )
+        }
+      })
+      .catch(() => {
+        // Never let a diagnostic take down a running server.
+      })
   }
 
   await ensureDevCerts()

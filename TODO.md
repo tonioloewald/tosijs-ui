@@ -653,6 +653,86 @@ live site** (independently useful). See roadmap "From book to live."
 - **Vector similarity search for doc-browser** - Replace current search with vector-based approach
 - **Focus management and focus-visible styling** - Improve keyboard navigation and focus indicators
 
+## Startup budget and output budget — two standing policies (2026-09-04)
+
+Written down because both were violated silently and gradually, which is the only way this
+kind of thing ever happens.
+
+- **`bun start` must have a server listening in ~5 seconds.** Longer means something is
+  wrong, not that the project got bigger. It was 1–2s and is now ~23s.
+- **A build must not print more than ~20 lines.** Currently **37**, of which **18** are the
+  bundler listing every chunk and sourcemap. Spam trains people — and agents — to stop
+  reading, which is what lets a real failure through.
+- **Nothing outside code quality and DX belongs in the blocking path.**
+
+### Measured, 2026-09-04 — and the obvious suspect was innocent
+
+```
+  0.00s  $ bun bin/dev.ts --build-only
+ 20.13s  ⚠️  could not run `bun audit` … Skipping the dependency gate
+ 20.43s  [298.75ms] prebuild
+ 22.63s  iife bundle
+ 22.99s  generated 66 static pages
+ 23.33s  epub (66 chapters)
+ 23.34s  [2.89s] build     ← the build's own timer, vs 23.35s wall clock
+```
+
+- **The ePub is 0.34s.** It was the assumed cause and it is nearly free. Do not "fix" it.
+- **The audit gate is 20.13s of the 23.** It hits `AUDIT_TIMEOUT_MS = 20_000`, gives up, and
+  **fails open** — so the twenty seconds buys literally nothing on that run. `bun audit`
+  standalone measured **79.5s** against the live registry.
+- **The build's self-reported `[2.89s]` is off by 8x.** It times `buildSite` only. That
+  mis-measurement is a large part of why this was never noticed: the number on the screen
+  said everything was fine.
+
+### Done so far (2026-09-04)
+
+|                         | before   | after        |
+| ----------------------- | -------- | ------------ |
+| `bun start` → listening | ~23s     | **5.7s**     |
+| `bun start` output      | 40 lines | **16 lines** |
+| `bun run build` output  | 37 lines | **13 lines** |
+
+- **Audit gate is non-blocking on `bun start`** (below). Still synchronous in `buildSite`,
+  which is where release builds and `--test` pay it — the right trade there.
+- **Bundler listings captured, not inherited.** 18 of the 37 lines were `bun build` naming
+  every chunk and sourcemap. Replayed in full on failure, verified by breaking the entry:
+  errors still print, exit is still 1, last-good is still restored.
+
+**Still to do**, and 5.7s is not yet inside the 5s budget:
+
+- The remaining time is the build itself — `[2.9s] build` plus bundling. The ePub (0.34s) is
+  not worth touching.
+- **Live-example / doc-test failures still escape notice** — the item below. Nothing has
+  been done there yet, and it is the part that actually costs correctness rather than
+  patience.
+- The build's self-reported timer still measures only `buildSite`, so it will keep
+  understating wall clock. Either widen it or drop it.
+
+### The audit gate specifically
+
+`CLAUDE.md` claims "the audit is sub-second, and a gate you wait for can't be raced". The
+first half is false — it is 79.5s when the registry is slow — so the second half is buying a
+20s stall on every `bun start` and every build.
+
+**Make it non-blocking but hard to miss.** Decided direction:
+
+- Never block `bun start`. Bind the port first; run the audit after, and report when it
+  lands.
+- Report loudly enough that a finding cannot scroll past — this is the one thing that must
+  not get quieter as part of the spam cleanup.
+- Keep it blocking for **release** builds, where waiting is the correct trade.
+- We are too belt-and-suspenders here generally, especially for a library whose runtime
+  dependency set is nearly empty (the 12 CodeMirror packages are the whole of it, and #58
+  already records that cost as accepted).
+
+### Live-example / test failures must not escape notice
+
+Related and the reason the spam budget matters: **agents do not notice red text.** A failing
+doc test currently prints in colour among 37 lines and is simply missed by the main consumer
+of this output. Failure needs to be structural — a non-zero exit, a final summary block, or a
+machine-readable artifact — not a colour.
+
 ## 1.14.0 is GATED on the next tosijs minor — do not publish before it
 
 **Decision (2026-09-04): hold 1.14.0 until tosijs ships its next minor, then adopt it and
