@@ -946,6 +946,19 @@ width it was given. Header and body stay in step either way; they share one
 If you set the `<tosi-table>`'s `rowHeight` to `0` it will render all its elements (i.e. not be virtual). This is
 useful for smaller tables, or tables with variable row-heights.
 
+**Do not do this with a large table.** `rowHeight: 0` switches virtualisation off, so every
+row becomes a real DOM node and sorting, filtering and group toggles walk all of them on
+every render. Past 1,000 rows the table **warns on every render** until you set a
+`rowHeight`, because there is no good reason to be in that configuration: if a table is big
+enough for the cost to matter, it is big enough to virtualise, and virtual tables are O(1)
+in row count.
+
+The fix is one line:
+
+```typescript
+table.rowHeight = 30 // any non-zero height virtualises
+```
+
 ## Scroll Stability
 
 Sorting, filtering, or toggling `visibleGroupedRowIds` re-renders the table — and the reader
@@ -1226,6 +1239,15 @@ export function derivedMaxVisibleRows(
   if (!(maxElementHeightPx > 0) || !(rowHeight > 0)) return fallback
   return Math.max(1, Math.floor(maxElementHeightPx / rowHeight))
 }
+
+/**
+ * Rows past which `rowHeight: 0` is worth mentioning (#84).
+ *
+ * The docs recommend that mode for "smaller tables, or tables with variable row-heights",
+ * so this sits well above any table anyone chose it for deliberately and well below the
+ * point where the O(n) costs become the thing you notice.
+ */
+const NON_VIRTUAL_ROW_ADVICE = 1000
 
 export class TosiTable extends WebComponent {
   static preferredTagName = 'tosi-table'
@@ -3392,6 +3414,36 @@ export class TosiTable extends WebComponent {
           }\n` +
           `  Raise it with \`table.maxVisibleRows = n\`. Beyond the layout ceiling the\n` +
           `  spacer stops growing, so the far end simply cannot be scrolled to.`
+      )
+    }
+    /*
+    A big table with no `rowHeight` is a misconfiguration, not a use case (#84).
+
+    `rowHeight: 0` turns virtualisation OFF — every row becomes a real DOM node — and the
+    docs recommend it for "smaller tables, or tables with variable row-heights". Nobody
+    chooses it for thousands of rows on purpose; they arrive there by not setting a
+    rowHeight and not knowing that is what it means.
+
+    The costs are all O(n) and all invisible until the table feels wrong: n row elements,
+    and a `captureScrollAnchor` walk on every sort/filter/group-toggle that reads a
+    bounding rect per row above the viewport. Optimising that walk was the obvious fix and
+    is the wrong one — it makes a configuration you should not be in slightly less bad.
+    Saying so costs one line and fixes it properly.
+
+    WARNS ON EVERY RENDER, deliberately, unlike everything else in this file. The others
+    warn once because they describe a state the developer may not be able to change; this
+    one is a one-line fix that persists until made, and a single notice scrolls out of the
+    console and is gone. Loud is the point: the table should be annoying until it is
+    configured correctly.
+    */
+    if (this.rowHeight === 0 && baseData.length > NON_VIRTUAL_ROW_ADVICE) {
+      console.warn(
+        `🚨 <tosi-table>: ${baseData.length.toLocaleString()} rows with rowHeight 0 — NOT VIRTUAL.\n` +
+          `  Every row is a real DOM node. Sorting, filtering and group toggles walk all of\n` +
+          `  them, on every render, and the scroll anchor reads a bounding rect per row.\n` +
+          `  FIX: set a rowHeight (e.g. \`table.rowHeight = 30\`). The UI cost then stops\n` +
+          `  depending on row count at all — virtual tables are O(1) in rows.\n` +
+          `  rowHeight 0 is for SMALL tables and for variable row heights.`
       )
     }
     const scope = baseData.slice(0, cap)

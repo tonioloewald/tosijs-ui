@@ -130,3 +130,79 @@ test('#82: an explicit maxVisibleRows still wins', () => {
   expect(table.maxVisibleRows).toBe(25)
   table.remove()
 })
+
+/*
+#84: a big table with rowHeight 0 is a misconfiguration, so say so.
+
+The issue proposed binary-searching `captureScrollAnchor`'s walk. That optimises a
+configuration you should not be in — `rowHeight: 0` turns virtualisation off, and the docs
+recommend it for "smaller tables, or tables with variable row-heights". Nobody picks it for
+thousands of rows deliberately; they arrive there by not setting a rowHeight.
+*/
+test('#84: a large non-virtual table warns on EVERY render, not once', () => {
+  const warnings: string[] = []
+  const realWarn = console.warn
+  console.warn = (m?: unknown) => void warnings.push(String(m))
+  try {
+    const table = tosiTable({ rowHeight: 0 }) as any
+    document.body.append(table)
+    table.array = Array.from({ length: 1500 }, (_, i) => ({
+      id: i,
+      name: `r${i}`,
+    }))
+    table.render()
+    table.render()
+    table.render()
+    /*
+    Deliberately NOT once-per-table. This is a misconfiguration the developer can fix in one
+    line, and it persists until they do — a single notice scrolls out of the console and is
+    gone. Everything else in this file warns once precisely because it is NOT actionable
+    that way; this one is.
+    */
+    const hits = warnings.filter((w) => w.includes('NOT VIRTUAL'))
+    expect(hits.length).toBe(3)
+    expect(hits[0]).toContain('1,500')
+    expect(hits[0]).toContain('rowHeight')
+    table.remove()
+  } finally {
+    console.warn = realWarn
+  }
+})
+
+test('#84: a small non-virtual table is a legitimate choice and stays quiet', () => {
+  const warnings: string[] = []
+  const realWarn = console.warn
+  console.warn = (m?: unknown) => void warnings.push(String(m))
+  try {
+    const table = tosiTable({ rowHeight: 0 }) as any
+    document.body.append(table)
+    table.array = Array.from({ length: 50 }, (_, i) => ({
+      id: i,
+      name: `r${i}`,
+    }))
+    table.render()
+    expect(warnings.filter((w) => w.includes('NOT VIRTUAL')).length).toBe(0)
+    table.remove()
+  } finally {
+    console.warn = realWarn
+  }
+})
+
+test('#84: a virtual table never gets the advice, however many rows', () => {
+  const warnings: string[] = []
+  const realWarn = console.warn
+  console.warn = (m?: unknown) => void warnings.push(String(m))
+  try {
+    const table = tosiTable({ rowHeight: 30 }) as any
+    document.body.append(table)
+    table.array = Array.from({ length: 5000 }, (_, i) => ({
+      id: i,
+      name: `r${i}`,
+    }))
+    table.render()
+    expect(warnings.filter((w) => w.includes('NOT VIRTUAL')).length).toBe(0)
+    table.remove()
+  } finally {
+    console.warn = realWarn
+  }
+})

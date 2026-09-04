@@ -878,6 +878,15 @@ width it was given. Header and body stay in step either way; they share one
 <h2>Row Height</h2>
 <p>If you set the <code>&lt;tosi-table&gt;</code>&#39;s <code>rowHeight</code> to <code>0</code> it will render all its elements (i.e. not be virtual). This is
 useful for smaller tables, or tables with variable row-heights.</p>
+<p><strong>Do not do this with a large table.</strong> <code>rowHeight: 0</code> switches virtualisation off, so every
+row becomes a real DOM node and sorting, filtering and group toggles walk all of them on
+every render. Past 1,000 rows the table <strong>warns on every render</strong> until you set a
+<code>rowHeight</code>, because there is no good reason to be in that configuration: if a table is big
+enough for the cost to matter, it is big enough to virtualise, and virtual tables are O(1)
+in row count.</p>
+<p>The fix is one line:</p>
+<pre><code class="language-typescript">table.rowHeight = 30 // any non-zero height virtualises
+</code></pre>
 <h2>Scroll Stability</h2>
 <p>Sorting, filtering, or toggling <code>visibleGroupedRowIds</code> re-renders the table — and the reader
 stays where they were. The table anchors on the <strong>topmost visible row</strong>, not on <code>scrollTop</code>,

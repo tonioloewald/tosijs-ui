@@ -91,6 +91,22 @@ virtualisation, every row is a real DOM node, and the cost genuinely is O(n).
 
 Set `table.maxVisibleRows = n` to override, exactly as before.
 
+### A large `rowHeight: 0` table now complains, loudly (#84)
+
+`rowHeight: 0` turns virtualisation off — every row becomes a real DOM node, and sorting,
+filtering and group toggles walk all of them on every render. It is documented for "smaller
+tables, or tables with variable row-heights", and that is the only thing it is for.
+
+Past **1,000 rows** the table now warns **on every render** until a `rowHeight` is set. That
+is deliberate, and deliberately unlike every other notice in this codebase, which fire once:
+those describe states a developer may not be able to change, whereas this is a one-line fix
+that persists until made, and a single notice scrolls out of the console and is gone.
+
+The originally suggested fix was to binary-search the scroll-anchor walk. That was declined:
+it optimises a configuration nobody should be in, and makes a misconfiguration marginally
+less bad instead of surfacing it. A table big enough for the cost to matter is big enough to
+virtualise, and virtual tables are O(1) in row count.
+
 ### `<tosi-3d>` is deprecated — use `tosijs-3d`
 
 Nothing breaks: it still works, still ships, and stays until a future major. But new work
