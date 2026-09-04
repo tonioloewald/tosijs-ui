@@ -67,6 +67,40 @@ outside a git repo.
 Also: `deploy:index` now asks for `PREVIEW_HOST` like the bins, instead of the `PREVIEW_SSH`
 they moved off.
 
+### BREAKING (narrow): the root barrel no longer re-exports the doc system (#133)
+
+`import { … } from 'tosijs-ui'` no longer gives you `code-editor`, `doc-browser`,
+`doc-system/doc-system` or `live-example`. **Import them by subpath instead** — they were
+already reachable that way, and nothing else changes:
+
+```typescript
+import { tosiCode } from 'tosijs-ui/code-editor'
+import { createDocBrowser } from 'tosijs-ui/doc-browser'
+```
+
+**Why.** `code-editor` pulls CodeMirror; `live-example` and `doc-system/doc-system` each pull
+`tjs-lang` independently. This package has no `sideEffects` field — correctly, since
+`elementCreator()` registers elements at import time and a blanket `sideEffects: false` shakes
+a bare `import 'tosijs-ui'` down to zero registrations — so a bundler must treat every
+`export *` target as side-effectful and cannot drop it. All four were therefore eager in any
+app that imported _anything_ from the barrel.
+
+Measured by snowfox-app moving a 15MB React bundle to the bun bundler, and reproduced here:
+
+|                         | size                                 |
+| ----------------------- | ------------------------------------ |
+| barrel as shipped       | 1.68 MB                              |
+| barrel without the four | 0.38 MB                              |
+| real app bundle         | 15.21 → 13.86 MB (**1.35 MB, 8.9%**) |
+
+The doc cluster was **77% of the barrel**. For contrast the 3D, map and lottie components —
+the ones you would expect to be the heavy tail — cost about 10kB, because they already
+lazy-load properly.
+
+The doc site and CDN `<script>` users are unaffected: `index-iife.ts` imports all four
+explicitly, so the weight lands on the bundle built _for_ the doc site rather than on an app
+that imports a button.
+
 ### New: `tosijs-ui/codemirror` — extend `<tosi-code>.editor` without a silent no-op (#131)
 
 `<tosi-code>` exposes the raw `EditorView` and the 1.7 notes invite you to configure CodeMirror

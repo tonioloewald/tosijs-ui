@@ -336,6 +336,10 @@ There is a **second `./*.js` wildcard** beside it, because `./*` alone maps `tos
 
 **Do NOT set a blanket `sideEffects: false`.** `elementCreator()` registers custom elements _eagerly at import time_, so a bare `import 'tosijs-ui'` tree-shakes to zero registrations under it. Per-component entry points (the Lit/Shoelace model) are the correct tree-shaking path. Components that inject global styles/listeners (menu/tooltip/float) do so on **first use** (`ensureMenu`/`ensureTooltipStyles`/`ensureFloatListeners`), not at import, to keep imports side-effect-light.
 
+**The root barrel deliberately excludes the doc-system cluster** — `code-editor`, `doc-browser`, `doc-system/doc-system`, `live-example` (#133). Because there is no `sideEffects` field (see above), a bundler must assume every `export *` target is side-effectful and cannot drop it, so those four were unconditionally eager in any app importing anything from `tosijs-ui`. Measured: the barrel alone went **1.68MB → 0.38MB** (the cluster was 77% of it), and a real 15MB React bundle saved **1.35MB / 8.9%**. They stay importable by subpath, and `src/index-iife.ts` pulls them explicitly so the doc site and CDN `<script>` users are unaffected — the weight lands on the bundle built _for_ the doc site, not on an app that imports a button. `src/index.test.ts` enforces both halves. Do not "tidy" them back into `src/index.ts`.
+
+The trap when re-measuring, from the report: stripping `code-editor` + `live-example` + `doc-browser` measures **exactly zero change**, because `doc-system/doc-system` is an independent second door into `tjs-lang` — and it is the only one of the four not named in the `exports` map, so it is the easy one to miss.
+
 **Never add a `browser` export condition pointing at the iife.** The iife (`dist/iife.js`) inlines tosijs + marked and is not ESM — it is for CDN `<script>` tags and naive doc-sites only, never reachable via `import`.
 
 ### Documentation System

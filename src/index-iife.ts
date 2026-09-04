@@ -8,7 +8,27 @@ never touches a schema never sees the package at all.
 
 ~8KB gzip against a bundle already north of 400KB.
 */
-import * as xinjsui from './index.js'
+import * as xinjsuiCore from './index.js'
+/*
+The iife/hydrate bundle DOES want the doc system — it is what every generated doc page runs,
+and what a CDN `<script>` user expects on `window.xinjsui`. The root barrel no longer carries
+it (see index.ts / tosijs-ui#133), so pull it in explicitly here.
+
+This is the right split: the cost lands on the bundle built FOR the doc site, and not on an
+app that imports a button.
+*/
+import * as codeEditor from './code-editor.js'
+import * as docBrowser from './doc-browser.js'
+import * as docSystem from './doc-system/doc-system.js'
+import * as liveExample from './live-example.js'
+
+const xinjsui = {
+  ...xinjsuiCore,
+  ...codeEditor,
+  ...docBrowser,
+  ...docSystem,
+  ...liveExample,
+}
 import * as xinjs from 'tosijs'
 import {
   validate,
