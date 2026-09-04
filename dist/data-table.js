@@ -465,6 +465,37 @@ These are rather fine-grained but they're used internally by the selection code 
 
 ## Row Access
 
+## How many rows can it show? (`maxVisibleRows`)
+
+More than you are likely to have. The virtual `listBinding` renders only the visible window,
+so **the UI cost is O(1) in row count** — 300,000 rows cost the same to scroll as 300. The
+size of the array is simply not what binds.
+
+What binds is *layout*: the spacer element that gives the scroll area its height, and the
+maximum height a browser will lay out. So `maxVisibleRows` is derived at runtime from
+`maxElementHeight / rowHeight` rather than being a number someone picked. At the default
+30px rows that is on the order of **half a million to a million rows**, depending on the
+engine — it is probed, because the ceiling is engine- and version-specific (two Chromium
+measurements in this project sit a factor of two apart).
+
+Set it yourself to override:
+
+```typescript
+table.maxVisibleRows = 50000
+```
+
+If a table ever does have more rows than the cap, it **says so in the console** with both
+numbers, rather than truncating in silence — the older behaviour was a flat `10000` that
+`slice`d the rest without a word, so counts, filters and sorts all ran on the truncated set
+and agreed with each other while disagreeing with the data.
+
+Past the layout ceiling the spacer stops growing, so the failure mode is "the far end cannot
+be scrolled to", not an exception.
+
+**`rowHeight: 0` is a different regime.** With no fixed row height there is no
+virtualisation: every row becomes a real DOM node, the cost genuinely is O(n), and the cap
+stays conservative on purpose.
+
 Because the table uses a flat CSS grid (no `.tr` row elements), two methods
 provide O(1) access between items and their cells:
 
@@ -1041,6 +1072,57 @@ function columnRenderer(col) {
     }
     return renderer;
 }
+/*
+How tall an element this browser will actually lay out (tosijs-ui#82).
+
+Probed rather than hardcoded, because the number is engine- AND VERSION-specific. Two
+measurements from this project, both real:
+
+  Chrome 151 (Electron), reported in #82   16777214px  (2^24 − 2)
+  Playwright Chromium, measured here       33554428px  (2^25 − 4)
+
+A factor of two apart, in the same engine family. Any constant we picked would be wrong for
+somebody, and wrong in the direction that silently drops their rows — so ask the browser.
+
+**Ask far above any plausible clamp.** An earlier version of this probe asked for exactly
+2^25 and, in the engine above, got 33554428 back — four pixels under the request, which is
+indistinguishable from ordinary sub-pixel rounding. It returned the true ceiling only by
+luck; had the clamp been higher it would have reported the REQUEST as the ceiling and
+under-capped every table. 1e9 is unambiguous: measured, every engine tried clamps it, and an
+engine that does not simply gets no effective cap, which is harmless.
+
+Cached per page: it cannot change, and a forced layout per table would be a silly price for
+a constant. Returns 0 where there is no layout to probe (SSR, happy-dom), and callers fall
+back rather than deriving a cap from a zero.
+*/
+let maxElementHeightCache = 0;
+export function probeMaxElementHeight() {
+    if (maxElementHeightCache)
+        return maxElementHeightCache;
+    if (typeof document === 'undefined' || !document.body)
+        return 0;
+    const probe = document.createElement('div');
+    probe.style.cssText =
+        'position:absolute;top:0;left:0;width:0;visibility:hidden;pointer-events:none;height:1000000000px';
+    document.body.appendChild(probe);
+    const laidOut = Math.floor(probe.getBoundingClientRect().height);
+    probe.remove();
+    maxElementHeightCache = laidOut > 0 ? laidOut : 0;
+    return maxElementHeightCache;
+}
+/**
+ * Rows that fit inside the browser's layout ceiling.
+ *
+ * `fallback` covers the two cases where the ceiling tells us nothing: no DOM to probe, and
+ * `rowHeight: 0`. The second is not a measurement failure but a different regime — with no
+ * fixed row height there is no virtualisation, so every row becomes a real DOM node and the
+ * cost genuinely is O(n). A cap earns its keep there; in virtual mode it does not.
+ */
+export function derivedMaxVisibleRows(maxElementHeightPx, rowHeight, fallback = 10000) {
+    if (!(maxElementHeightPx > 0) || !(rowHeight > 0))
+        return fallback;
+    return Math.max(1, Math.floor(maxElementHeightPx / rowHeight));
+}
 export class TosiTable extends WebComponent {
     static preferredTagName = 'tosi-table';
     // Layout: a single .scroll-area inside :host is the only scroll container
@@ -1247,7 +1329,33 @@ export class TosiTable extends WebComponent {
             return;
         elt.toggleAttribute('aria-selected', obj[this.selectedKey] === true);
     };
-    maxVisibleRows = 10000;
+    /**
+     * Most rows the table will lay out. Set it to override; leave it alone and it is
+     * DERIVED from what the browser can actually lay out (see `derivedMaxVisibleRows`).
+     *
+     * **This is a LAYOUT limit, not a rendering-cost limit** — which is where the old flat
+     * `10000` went wrong. A virtual `listBinding` renders only the visible window, so the UI
+     * side is O(1) in row count and the size of the array is irrelevant to render cost. The
+     * one thing that grows is the spacer element's height, and the one hard failure is the
+     * browser refusing to lay out an element that tall. So the cap belongs at
+     * `maxElementHeight / rowHeight`, not at a number someone picked.
+     *
+     * The old value was ~42x more conservative than that, and it silently `slice`d
+     * everything past it — a 25,000-row table showed 10,000, said nothing, and every count,
+     * filter and sort ran on the truncated set (tosijs-ui#82). Consumers routinely load
+     * 300k+ rows with no UI cost at all, so the number was wrong in the direction that loses
+     * data, and it was documented nowhere.
+     */
+    get maxVisibleRows() {
+        return (this._maxVisibleRows ??
+            derivedMaxVisibleRows(probeMaxElementHeight(), this.rowHeight));
+    }
+    set maxVisibleRows(rows) {
+        this._maxVisibleRows = rows;
+    }
+    _maxVisibleRows;
+    /** So the truncation notice is printed once per table, not once per render. */
+    _warnedTruncation = false;
     // Region elements rendered in render(). The visible-rows listBinding lives
     // on _scrollArea (the single scroll container); pinned tbodies are
     // display:contents wrappers each holding their own listBinding.
@@ -2944,7 +3052,25 @@ export class TosiTable extends WebComponent {
         const pinnedTopData = this.effectivePinnedTopData;
         const pinnedBottomData = this.effectivePinnedBottomData;
         const baseData = this.effectiveBaseData;
-        const cap = Math.min(baseData.length, this.maxVisibleRows);
+        const limit = this.maxVisibleRows;
+        const cap = Math.min(baseData.length, limit);
+        /*
+        Say so when rows are dropped. Truncating in silence meant the table disagreed with the
+        data and nothing anywhere said why — every count, filter and sort then ran on the
+        truncated set, so the numbers were self-consistent and wrong (#82).
+    
+        Once per table, and only when it actually bites: a notice on every render of every table
+        is how a warning becomes something people filter.
+        */
+        if (cap < baseData.length && !this._warnedTruncation) {
+            this._warnedTruncation = true;
+            console.warn(`<tosi-table> is showing ${cap.toLocaleString()} of ${baseData.length.toLocaleString()} rows.\n` +
+                `  maxVisibleRows is ${limit.toLocaleString()}${this._maxVisibleRows === undefined
+                    ? ` — derived from this browser's maximum element height (${probeMaxElementHeight().toLocaleString() || 'unknown'}px) at rowHeight ${this.rowHeight}.`
+                    : ' — set explicitly on this element.'}\n` +
+                `  Raise it with \`table.maxVisibleRows = n\`. Beyond the layout ceiling the\n` +
+                `  spacer stops growing, so the far end simply cannot be scrolled to.`);
+        }
         const scope = baseData.slice(0, cap);
         // Fresh per render — see `_groupIdMemo`. Must happen before `groupIdFn` is read.
         this._groupIdMemo = new WeakMap();

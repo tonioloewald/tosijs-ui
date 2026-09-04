@@ -477,6 +477,28 @@ in the selection, and also <code>selectedRows</code> and <code>visibleSelectedRo
 </ul>
 <p>These are rather fine-grained but they&#39;re used internally by the selection code so they may as well be documented.</p>
 <h2>Row Access</h2>
+<h2>How many rows can it show? (<code>maxVisibleRows</code>)</h2>
+<p>More than you are likely to have. The virtual <code>listBinding</code> renders only the visible window,
+so <strong>the UI cost is O(1) in row count</strong> — 300,000 rows cost the same to scroll as 300. The
+size of the array is simply not what binds.</p>
+<p>What binds is <em>layout</em>: the spacer element that gives the scroll area its height, and the
+maximum height a browser will lay out. So <code>maxVisibleRows</code> is derived at runtime from
+<code>maxElementHeight / rowHeight</code> rather than being a number someone picked. At the default
+30px rows that is on the order of <strong>half a million to a million rows</strong>, depending on the
+engine — it is probed, because the ceiling is engine- and version-specific (two Chromium
+measurements in this project sit a factor of two apart).</p>
+<p>Set it yourself to override:</p>
+<pre><code class="language-typescript">table.maxVisibleRows = 50000
+</code></pre>
+<p>If a table ever does have more rows than the cap, it <strong>says so in the console</strong> with both
+numbers, rather than truncating in silence — the older behaviour was a flat <code>10000</code> that
+<code>slice</code>d the rest without a word, so counts, filters and sorts all ran on the truncated set
+and agreed with each other while disagreeing with the data.</p>
+<p>Past the layout ceiling the spacer stops growing, so the failure mode is &quot;the far end cannot
+be scrolled to&quot;, not an exception.</p>
+<p><strong><code>rowHeight: 0</code> is a different regime.</strong> With no fixed row height there is no
+virtualisation: every row becomes a real DOM node, the cost genuinely is O(n), and the cap
+stays conservative on purpose.</p>
 <p>Because the table uses a flat CSS grid (no <code>.tr</code> row elements), two methods
 provide O(1) access between items and their cells:</p>
 <ul>

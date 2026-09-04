@@ -1,5 +1,5 @@
 import { test, expect, afterEach } from 'bun:test'
-import { tosiTable } from './data-table.js'
+import { tosiTable, derivedMaxVisibleRows } from './data-table.js'
 import { initLocalization, i18n } from './localize.js'
 
 /*
@@ -80,4 +80,53 @@ test('an empty key contributes no attributes at all', () => {
   */
   expect(makeTable().labelAttrs('')).toEqual({})
   expect(makeTable({ localized: true }).labelAttrs('')).toEqual({})
+})
+
+/*
+#82: the row cap is a LAYOUT limit, not a rendering-cost limit.
+
+A virtual `listBinding` renders only the visible window, so the UI side is O(1) in row count
+and the array size is irrelevant to render cost. The one thing that scales is the spacer's
+height, and the one hard failure is the browser refusing to lay out an element that tall — so
+the cap belongs at `maxElementHeight / rowHeight`.
+
+The old flat `10000` was ~42x under that AND silently `slice`d the rest, so a 25,000-row table
+showed 10,000 and every count, filter and sort ran on the truncated set, self-consistently and
+wrongly. Consumers routinely load 300k+ rows with no UI cost.
+*/
+test('#82: the cap derives from the layout ceiling, not a picked number', () => {
+  // Chromium's real clamp, 2^24 - 2. At the default 30px rows that is ~559k, not 10k.
+  expect(derivedMaxVisibleRows(16777214, 30)).toBe(559240)
+  expect(derivedMaxVisibleRows(16777214, 40)).toBe(419430)
+  // The number the reporter measured against a real table: 39.98px/row → ~419k at 40px.
+  expect(derivedMaxVisibleRows(16777214, 40)).toBeGreaterThan(400000)
+})
+
+test('#82: it far exceeds the old flat cap, which is the whole point', () => {
+  expect(derivedMaxVisibleRows(16777214, 30)).toBeGreaterThan(10000 * 40)
+})
+
+test('#82: no ceiling to probe, or no fixed row height, falls back rather than deriving from zero', () => {
+  // No DOM to probe (SSR / happy-dom): a cap of 0 would render an empty table.
+  expect(derivedMaxVisibleRows(0, 30)).toBe(10000)
+  /*
+  `rowHeight: 0` is not a failed measurement, it is a different regime: no fixed height means
+  no virtualisation, so every row becomes a real DOM node and the cost genuinely is O(n).
+  A cap earns its keep there; in virtual mode it does not.
+  */
+  expect(derivedMaxVisibleRows(16777214, 0)).toBe(10000)
+})
+
+test('#82: never derives a cap below one row', () => {
+  expect(derivedMaxVisibleRows(10, 1000)).toBe(1)
+})
+
+test('#82: an explicit maxVisibleRows still wins', () => {
+  const table = tosiTable({ rowHeight: 30 }) as any
+  document.body.append(table)
+  const derived = table.maxVisibleRows
+  expect(derived).toBeGreaterThan(0)
+  table.maxVisibleRows = 25
+  expect(table.maxVisibleRows).toBe(25)
+  table.remove()
 })

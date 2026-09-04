@@ -67,6 +67,30 @@ outside a git repo.
 Also: `deploy:index` now asks for `PREVIEW_HOST` like the bins, instead of the `PREVIEW_SSH`
 they moved off.
 
+### `<tosi-table>` stops silently capping at 10,000 rows (#82)
+
+`maxVisibleRows` defaulted to a flat `10000` and `slice`d everything past it **without a
+word**. A 25,000-row table showed 10,000, and every count, filter and sort then ran on the
+truncated set — self-consistent, and disagreeing with the data. The property was documented
+nowhere, so the only way to find it was to lose rows and go looking.
+
+The number was wrong because it was sized as a _rendering-cost_ limit. It is a **layout**
+limit. A virtual `listBinding` renders only the visible window, so the UI cost is O(1) in row
+count — 300,000 rows scroll like 300 — and the array size is irrelevant. What binds is the
+spacer element's height against the maximum height a browser will lay out.
+
+So the cap is now derived at runtime: `maxElementHeight / rowHeight`, which at the default
+30px rows is on the order of half a million to a million rows. **Probed, not hardcoded**,
+because the ceiling is engine- _and version_-specific — two Chromium measurements in this
+project sit a factor of two apart (Chrome 151 clamps at 16777214px, the Playwright Chromium
+at 33554428px). Any constant would be wrong for somebody, in the direction that loses rows.
+
+And when a cap does bite, it now **says so in the console** with both numbers and how to
+raise it. `rowHeight: 0` stays conservative on purpose: with no fixed row height there is no
+virtualisation, every row is a real DOM node, and the cost genuinely is O(n).
+
+Set `table.maxVisibleRows = n` to override, exactly as before.
+
 ### `<tosi-3d>` is deprecated — use `tosijs-3d`
 
 Nothing breaks: it still works, still ships, and stays until a future major. But new work

@@ -48,6 +48,16 @@ export interface TableData {
 }
 export type ArrayFilter = (array: any[]) => any[];
 export type SelectCallback = (selected: any[]) => void;
+export declare function probeMaxElementHeight(): number;
+/**
+ * Rows that fit inside the browser's layout ceiling.
+ *
+ * `fallback` covers the two cases where the ceiling tells us nothing: no DOM to probe, and
+ * `rowHeight: 0`. The second is not a measurement failure but a different regime — with no
+ * fixed row height there is no virtualisation, so every row becomes a real DOM node and the
+ * cost genuinely is O(n). A cap earns its keep there; in virtual mode it does not.
+ */
+export declare function derivedMaxVisibleRows(maxElementHeightPx: number, rowHeight: number, fallback?: number): number;
 export declare class TosiTable extends WebComponent {
     static preferredTagName: string;
     static lightStyleSpec: {
@@ -188,7 +198,28 @@ export declare class TosiTable extends WebComponent {
     rowRendered: ((item: any, cells: HTMLElement[]) => void) | null;
     private selectedKey;
     private selectBinding;
-    maxVisibleRows: number;
+    /**
+     * Most rows the table will lay out. Set it to override; leave it alone and it is
+     * DERIVED from what the browser can actually lay out (see `derivedMaxVisibleRows`).
+     *
+     * **This is a LAYOUT limit, not a rendering-cost limit** — which is where the old flat
+     * `10000` went wrong. A virtual `listBinding` renders only the visible window, so the UI
+     * side is O(1) in row count and the size of the array is irrelevant to render cost. The
+     * one thing that grows is the spacer element's height, and the one hard failure is the
+     * browser refusing to lay out an element that tall. So the cap belongs at
+     * `maxElementHeight / rowHeight`, not at a number someone picked.
+     *
+     * The old value was ~42x more conservative than that, and it silently `slice`d
+     * everything past it — a 25,000-row table showed 10,000, said nothing, and every count,
+     * filter and sort ran on the truncated set (tosijs-ui#82). Consumers routinely load
+     * 300k+ rows with no UI cost at all, so the number was wrong in the direction that loses
+     * data, and it was documented nowhere.
+     */
+    get maxVisibleRows(): number;
+    set maxVisibleRows(rows: number);
+    private _maxVisibleRows;
+    /** So the truncation notice is printed once per table, not once per render. */
+    private _warnedTruncation;
     private _head;
     private _scrollArea;
     private _tbodyTop;
