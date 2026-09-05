@@ -8,6 +8,7 @@ headless browser through the inline doc tests and exits with their pass/fail.
 Build-time only (Bun APIs). Never import this from browser code.
 */
 import * as path from 'path';
+import { editableSourcePaths, mayEditSource } from './editable-sources.js';
 import { statSync, existsSync, readFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { $, spawn, gzipSync } from 'bun';
@@ -808,10 +809,34 @@ export async function devServer(config, opts = {}) {
             headers: { 'Content-Type': 'text/plain; charset=utf-8' },
         });
     }
+    /*
+    The set of files the editor may touch, derived from the corpus (tosijs-ui#128).
+  
+    Read per request rather than cached: a rebuild rewrites the corpus, writes are
+    human-frequency, and a stale allow-list would refuse a page the author is looking at —
+    which is the one failure that would make someone turn this off.
+    */
+    const allowedSources = async () => {
+        const corpus = await Bun.file(config.docsJson ?? 'demo/docs.json')
+            .json()
+            .catch(() => null);
+        return editableSourcePaths(corpus, PROJECT_ROOT);
+    };
     async function handleWriteSource(request) {
         try {
             const { file, content } = (await request.json());
             const resolved = resolveInRepo(file ?? '');
+            /*
+            Second gate: root containment is not enough. `resolveInRepo` permits `.git/hooks/*`,
+            `bunfig.toml`, `package.json` and `bin/` — every one of which executes on the next
+            ordinary command. The editor only ever needs the source of a page (#128).
+            */
+            if (resolved && !mayEditSource(resolved, await allowedSources())) {
+                return new Response(JSON.stringify({
+                    error: 'not an editable doc source — this endpoint only writes files the doc ' +
+                        'extractor scraped',
+                }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+            }
             if (!resolved || typeof content !== 'string') {
                 return new Response(JSON.stringify({ error: 'bad request' }), {
                     status: 400,
