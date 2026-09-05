@@ -780,6 +780,31 @@ doc test currently prints in colour among 37 lines and is simply missed by the m
 of this output. Failure needs to be structural — a non-zero exit, a final summary block, or a
 machine-readable artifact — not a colour.
 
+## tjs-lang: bump again when 0.13.12 lands (#135)
+
+We are on **0.13.11** (was a deprecated 0.13.4). **0.13.12 is not published yet** and carries
+the fix that matters for a doc site: a `test '…' { }` written inside a template literal or a
+double-quoted string was mistaken for a real test block on ≤0.13.11 — the body executed at
+transpile time **in the host page**, outside the iframe sandbox, and the text was deleted from
+the output. Both silent.
+
+It does not bite us today (no example of ours quotes a test block) but it would the moment we
+documented tjs the way tjs-lang does — it cost them 52 of 99 failures in their own gate.
+
+Two pins to move, and a test now enforces they agree: `TJS_VERSION` in
+`src/live-example/code-transform.ts` and the exact `tjs-lang` devDependency.
+
+## Playwright: a standalone doc-tests run can be a FALSE GREEN (2026-09-05)
+
+`bunx playwright test tests/doc-tests.pw.ts --project=chromium` reported **62 passed** against
+a build containing a broken example (an executable ```ts fence calling `process.on`), and the
+**same spec failed inside the full-suite run** with the real error. Fixed the example; did not
+diagnose the discrepancy.
+
+Until it is understood, **the full suite is the gate** — a green standalone doc-tests run is
+not evidence. Related to, but distinct from, the Firefox flake noted further down: that one is
+load-dependent flakiness, this one silently passed something that was genuinely broken.
+
 ## RFC (practices): site release branch + version release branches — open for discussion
 
 [tosijs-coding-practices#10](https://github.com/tonioloewald/tosijs-coding-practices/issues/10).
