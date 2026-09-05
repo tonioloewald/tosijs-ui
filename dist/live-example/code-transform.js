@@ -192,8 +192,14 @@ export async function executeCode(code, context, transform) {
 // needed. The TypeScript path lives behind tjs-lang/browser/from-ts (also
 // self-contained) and is loaded only for `ts` examples; from-ts in turn fetches
 // the TypeScript compiler lazily at runtime, so tsc is never pulled in until a TS
-// example actually transforms. Pinned to match the dev dep.
-const TJS_VERSION = '0.13.4';
+// example actually transforms.
+//
+// PINNED TO MATCH THE DEV DEP, and the two live in different files — this constant and
+// package.json's exact `tjs-lang` entry. `code-transform.test.ts` asserts they agree, because
+// a CDN version that drifts from the installed one is invisible until it isn't: the tests run
+// against the local bundle and the published site runs against whatever this string says.
+// Flagged by tjs-lang in tosijs-ui#135, alongside noticing we had sat on a deprecated 0.13.4.
+export const TJS_VERSION = '0.13.11';
 // Where to fetch a tjs-lang browser bundle from, in priority order:
 //  1. SAME-ORIGIN — the doc-site build copies the bundles next to the iife and
 //     sets `__TJS_LOCAL_BASE`, so the transpiler ships in lockstep with the page,

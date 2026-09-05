@@ -500,7 +500,7 @@ thrash for twenty minutes until it was power-cycled.
 
   A long-lived child needs both halves:
 
-  ```ts
+  ```typescript
   let child: ReturnType<typeof Bun.spawn> | undefined
   const spawnBundler = () => {
     child?.kill() // kill the PREVIOUS one before starting another

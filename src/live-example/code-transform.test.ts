@@ -3,6 +3,7 @@ import {
   rewriteImports,
   AsyncFunction,
   loadTransform,
+  TJS_VERSION,
 } from './code-transform.js'
 
 describe("loadTransform('js')", () => {
@@ -153,4 +154,27 @@ describe('rewriteImports → import-resolver (non-context imports)', () => {
       /unsupported import/
     )
   })
+})
+
+/*
+The CDN pin and the dev dep must not drift (#135).
+
+`TJS_VERSION` is what the PUBLISHED site fetches from jsdelivr/unpkg; the devDependency is what
+the tests and the local build run against. They live in different files, so nothing stops them
+diverging — and the failure is invisible in exactly the place it matters: every lane here would
+stay green while the deployed site transpiled with a different version of tjs-lang.
+
+Found because we had sat on `0.13.4` long enough for it to be deprecated.
+*/
+test('#135: the CDN pin matches the installed tjs-lang', async () => {
+  const pkg = await Bun.file(`${import.meta.dir}/../../package.json`).json()
+  const declared = pkg.devDependencies['tjs-lang']
+  expect(
+    declared,
+    'the dev dep should be an EXACT version — a range would make this check meaningless'
+  ).toMatch(/^\d+\.\d+\.\d+$/)
+  expect(
+    TJS_VERSION,
+    `TJS_VERSION (${TJS_VERSION}) is what the published site fetches; package.json says ${declared}`
+  ).toBe(declared)
 })

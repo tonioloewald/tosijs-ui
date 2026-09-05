@@ -51,6 +51,7 @@ export declare function rewriteImports(code: string, contextKeys: string[], impo
  * Execute code as an async function with injected context
  */
 export declare function executeCode(code: string, context: ExampleContext, transform: TransformFn): Promise<void>;
+export declare const TJS_VERSION = "0.13.11";
 /**
  * tjs inline-test API (from tjs-lang/lang):
  *   extractTests(src) → { code (test-stripped), tests, testRunner }
