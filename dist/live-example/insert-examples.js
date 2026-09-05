@@ -91,6 +91,32 @@ sourceFile) {
         ordinal += 1;
         const parent = exampleSources[0].block.parentElement;
         parent.insertBefore(example, exampleSources[0].block);
+        /*
+        One executable block per example — say so when an author writes two (tosijs-ui#139).
+    
+        `js`/`tjs`/`ts` all write the same single-valued slot, so a second executable fence
+        silently overwrote the first: the earlier block vanished from the rendered page, the
+        example ran as the later dialect, and nothing anywhere said so. Silent content loss in
+        the direction the author cannot see — the page renders, the example works, and only the
+        source shows what was meant.
+    
+        Warning rather than refusing: the page is still usable, and failing a doc build over a
+        fence would be worse than the loss it prevents. It names the file so the author can find
+        it, which the console alone would not.
+    
+        A dialect SELECTOR — the same example offered as TJS/TS/AJS — is the feature this
+        limitation is standing in front of; see #139 for the shape.
+        */
+        const executable = exampleSources.filter((s) => s.language !== undefined && ['js', 'tjs', 'ts'].includes(s.language));
+        if (executable.length > 1) {
+            const kept = executable[executable.length - 1];
+            console.warn(`⚠️  ${sourceFile ?? 'doc'}: example ${example.id} has ${executable.length} executable blocks ` +
+                `(${executable
+                    .map((s) => s.language)
+                    .join(', ')}) — only the LAST is used.\n` +
+                `   The others are discarded and will not appear on the page. Keeping: ${kept.language}.\n` +
+                `   Separate them with prose to make separate examples.`);
+        }
         exampleSources.forEach((source) => {
             switch (source.language) {
                 case 'js':

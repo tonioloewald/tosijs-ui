@@ -1,94 +1,72 @@
-import { describe, expect, test } from 'bun:test'
+import { test, expect, describe } from 'bun:test'
 import { insertExamples } from './insert-examples.js'
+import { liveExample } from '../live-example.js'
 
-// A minimal stand-in for the live-example element: insertExamples only sets
-// js/html/css/test/dialect + id on it and calls two lifecycle no-ops, so a plain
-// element with those methods faithfully exercises the grouping logic.
-function makeCreator() {
-  const created: any[] = []
-  const creator: any = () => {
-    const el: any = document.createElement('div')
-    el.showDefaultTab = () => {}
-    el.snapshotAndRestoreLocalEdit = () => {}
-    created.push(el)
-    return el
+/*
+#139: `js`/`tjs`/`ts` all write the same single-valued slot, so a second executable fence
+silently overwrote the first — the earlier block vanished from the page, the example ran as the
+later dialect, and nothing said so.
+
+Silent content loss in the direction the author cannot see: the page renders and the example
+works, so only the source shows what was meant. Warning, not refusing — the page is still
+usable and failing a doc build over a fence would cost more than the loss it prevents.
+*/
+const mount = (html: string) => {
+  const host = document.createElement('div')
+  host.innerHTML = html
+  document.body.append(host)
+  const warnings: string[] = []
+  const real = console.warn
+  console.warn = (m?: unknown) => void warnings.push(String(m))
+  try {
+    insertExamples(
+      host,
+      {} as any,
+      liveExample as any,
+      'tosi-example',
+      'probe.md'
+    )
+  } finally {
+    console.warn = real
   }
-  return { creator, created }
+  const examples = [...host.querySelectorAll('tosi-example')] as any[]
+  host.remove()
+  return { examples, warnings: warnings.join('\n') }
 }
+const fence = (lang: string, code: string) =>
+  `<pre><code class="language-${lang}">${code}</code></pre>`
 
-function pre(lang: string, code: string, mode?: string): string {
-  const attr = mode ? ` data-example-mode="${mode}"` : ''
-  return `<pre${attr}><code class="language-${lang}">${code}</code></pre>`
-}
-
-function run(inner: string) {
-  const root = document.createElement('div')
-  root.innerHTML = inner
-  const { creator, created } = makeCreator()
-  insertExamples(root, {} as any, creator, 'live-example')
-  return created
-}
-
-const TRANSPILED =
-  '<script type="application/tosi-transpiled" data-dialect="tjs">"x"</script>'
-
-describe('insertExamples grouping across the baked <script>', () => {
-  test('a tjs+test pair groups into ONE example when a transpiled script sits between them', () => {
-    const created = run(pre('tjs', 'SRC') + TRANSPILED + pre('test', 'TST'))
-    expect(created).toHaveLength(1)
-    expect(created[0].js).toBe('SRC')
-    expect(created[0].dialect).toBe('tjs')
-    expect(created[0].test).toBe('TST')
-    // The baked <script> (JSON "x") is read onto the example as compiledJs.
-    expect(created[0].compiledJs).toBe('x')
-  })
-
-  test('same pair groups identically with no script present (behavior unchanged)', () => {
-    const created = run(pre('tjs', 'SRC') + pre('test', 'TST'))
-    expect(created).toHaveLength(1)
-    expect(created[0].js).toBe('SRC')
-    expect(created[0].test).toBe('TST')
-    // No bake present → compiledJs stays unset (SPA-nav / older-build fallback).
-    expect(created[0].compiledJs).toBeUndefined()
-  })
-
-  test('the skip is narrow: a plain <script> or prose between blocks still SPLITS them', () => {
-    const withPlainScript = run(
-      pre('tjs', 'SRC') + '<script>void 0</script>' + pre('test', 'TST')
+describe('executable fence collisions (#139)', () => {
+  test('two executable blocks warn, and name the file and what was kept', () => {
+    const { examples, warnings } = mount(
+      fence('tjs', 'TJS') + fence('ts', 'TS')
     )
-    expect(withPlainScript).toHaveLength(2)
-    const withProse = run(
-      pre('tjs', 'SRC') + '<p>note</p>' + pre('test', 'TST')
+    expect(examples.length).toBe(1)
+    // The pre-existing behaviour is unchanged — last one still wins.
+    expect(examples[0].js).toBe('TS')
+    expect(warnings).toContain('probe.md')
+    expect(warnings).toContain('2 executable blocks')
+    expect(warnings).toContain('Keeping: ts')
+  })
+
+  test('ONE executable block is silent — the normal case must not warn', () => {
+    const { examples, warnings } = mount(fence('js', 'JS'))
+    expect(examples[0].js).toBe('JS')
+    expect(warnings).toBe('')
+  })
+
+  test('html + css + one executable is the documented shape, and stays silent', () => {
+    const { warnings } = mount(
+      fence('html', '<b>x</b>') + fence('js', 'JS') + fence('css', 'b{}')
     )
-    expect(withProse).toHaveLength(2)
-  })
-})
-
-describe('insertExamples fenced execution mode (:mode)', () => {
-  test('the group takes the first fenced mode', () => {
-    const created = run(pre('css', '.x{}', 'iframe') + pre('js', 'SRC'))
-    expect(created).toHaveLength(1)
-    expect(created[0].getAttribute('mode')).toBe('iframe')
+    expect(warnings).toBe('')
   })
 
-  test('no mode → the example gets no mode attribute (inline default)', () => {
-    const created = run(pre('js', 'SRC'))
-    expect(created[0].getAttribute('mode')).toBe(null)
-  })
-
-  test('contradictory modes: console.error, but obey the FIRST', () => {
-    const orig = console.error
-    let msg = ''
-    console.error = (m: string) => {
-      msg = String(m)
-    }
-    try {
-      const created = run(pre('js', 'SRC', 'iframe') + pre('test', 'T', 'ide'))
-      expect(created[0].getAttribute('mode')).toBe('iframe') // first wins
-      expect(msg).toMatch(/contradictory modes/)
-      expect(msg).toMatch(/iframe/)
-    } finally {
-      console.error = orig
-    }
+  test('a display-only ```typescript fence is not executable and does not collide', () => {
+    const { examples, warnings } = mount(
+      fence('js', 'JS') + fence('typescript', 'SHOWN')
+    )
+    expect(examples[0].js).toBe('JS')
+    expect(warnings).toBe('')
   })
 })
