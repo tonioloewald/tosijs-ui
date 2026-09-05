@@ -55,6 +55,20 @@ export interface AuditConfig {
     level?: AuditSeverity;
     /** time-boxed exceptions */
     allow?: AuditGate[];
+    /**
+     * What a finding must be to BLOCK. Default `'severity'` — today's behaviour, unchanged.
+     *
+     * `'runtime'` additionally requires the package to be reachable from a runtime edge
+     * (tosijs-ui#56). A consumer running `buildSite` inside an app monorepo reported 18
+     * high/critical advisories of which the runtime-reachable subset was a small fraction;
+     * blocking on the rest would have bricked local dev over risk they do not carry.
+     *
+     * NOT the default, deliberately. Switching it silently would be weakening a security gate
+     * on someone else's behalf, and `runtimeReachable` is conservative but still a heuristic.
+     * Build-only findings are LABELLED either way, which is the cheap half of the ask and the
+     * half that needs no policy decision.
+     */
+    blockOn?: 'severity' | 'runtime';
 }
 export interface GatedFinding {
     advisory: AuditAdvisory;

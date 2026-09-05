@@ -467,6 +467,19 @@ export function reportAudit(result, label = 'Build') {
         return;
     }
     if (result.gated.length) {
+        /*
+        A build riding on a waiver must not look like a clean build (#56).
+    
+        The reporter's words: "Passing because someone signed a waiver should not look identical
+        to passing." Only marked when the waiver is actually load-bearing — a gate suppressing
+        something BELOW the blocking threshold would have passed anyway, and shouting about it
+        would train people to ignore the marker.
+        */
+        const loadBearing = result.gated.filter((g) => SEVERITY_RANK[g.advisory.severity] >= SEVERITY_RANK[result.level]);
+        if (loadBearing.length) {
+            console.warn(`\n🟡 ${label}: PASSING ON A WAIVER — ${loadBearing.length} finding(s) at or above ` +
+                `${result.level} are suppressed by an active gate. This is not a clean audit.`);
+        }
         console.warn(`\n🔓 ${label}: ${result.gated.length} audit finding(s) allowed by an ` +
             `active gate:\n` +
             result.gated

@@ -192,6 +192,20 @@ export interface AuditConfig {
   level?: AuditSeverity
   /** time-boxed exceptions */
   allow?: AuditGate[]
+  /**
+   * What a finding must be to BLOCK. Default `'severity'` — today's behaviour, unchanged.
+   *
+   * `'runtime'` additionally requires the package to be reachable from a runtime edge
+   * (tosijs-ui#56). A consumer running `buildSite` inside an app monorepo reported 18
+   * high/critical advisories of which the runtime-reachable subset was a small fraction;
+   * blocking on the rest would have bricked local dev over risk they do not carry.
+   *
+   * NOT the default, deliberately. Switching it silently would be weakening a security gate
+   * on someone else's behalf, and `runtimeReachable` is conservative but still a heuristic.
+   * Build-only findings are LABELLED either way, which is the cheap half of the ask and the
+   * half that needs no policy decision.
+   */
+  blockOn?: 'severity' | 'runtime'
 }
 
 export interface GatedFinding {
@@ -632,6 +646,23 @@ export function reportAudit(result: AuditResult, label = 'Build'): void {
   }
 
   if (result.gated.length) {
+    /*
+    A build riding on a waiver must not look like a clean build (#56).
+
+    The reporter's words: "Passing because someone signed a waiver should not look identical
+    to passing." Only marked when the waiver is actually load-bearing — a gate suppressing
+    something BELOW the blocking threshold would have passed anyway, and shouting about it
+    would train people to ignore the marker.
+    */
+    const loadBearing = result.gated.filter(
+      (g) => SEVERITY_RANK[g.advisory.severity] >= SEVERITY_RANK[result.level]
+    )
+    if (loadBearing.length) {
+      console.warn(
+        `\n🟡 ${label}: PASSING ON A WAIVER — ${loadBearing.length} finding(s) at or above ` +
+          `${result.level} are suppressed by an active gate. This is not a clean audit.`
+      )
+    }
     console.warn(
       `\n🔓 ${label}: ${result.gated.length} audit finding(s) allowed by an ` +
         `active gate:\n` +

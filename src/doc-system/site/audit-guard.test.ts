@@ -1,9 +1,10 @@
-import { test, expect } from 'bun:test'
+import { test, expect, describe } from 'bun:test'
 import {
   auditDependencies,
   classifyRisk,
   groupAdvisories,
   parseAuditJson,
+  reportAudit,
   resetAuditMemo,
   resolveAuditMode,
   type AuditRunner,
@@ -482,4 +483,54 @@ test('resetAuditMemo clears the memo', async () => {
   const r = await auditDependencies(true, { now: NOW, runAudit: runner('{}') })
   expect(r.ran).toBe(true)
   resetAuditMemo() // must not throw, and leaves a clean slate for other tests
+})
+
+/*
+#56: "Passing because someone signed a waiver should not look identical to passing."
+
+Only marked when the waiver is LOAD-BEARING — a gate suppressing something below the blocking
+threshold would have passed anyway, and shouting about that would train people to ignore the
+marker, which is the failure mode the reporter warned about in the same breath.
+*/
+describe('waiver marker (#56)', () => {
+  const capture = (result: any) => {
+    const lines: string[] = []
+    const real = console.warn
+    console.warn = (m?: unknown) => void lines.push(String(m))
+    try {
+      reportAudit(result, 'Build')
+    } finally {
+      console.warn = real
+    }
+    return lines.join('\n')
+  }
+  const base = {
+    ran: true,
+    ok: true,
+    mode: 'fail' as const,
+    level: 'high' as const,
+    blocking: [],
+    expired: [],
+    invalid: [],
+    stale: [],
+    belowThreshold: [],
+  }
+  const gate = (severity: string) => ({
+    advisory: { package: 'p', id: '1', severity, title: 't' },
+    reason: 'tracked upstream',
+    daysLeft: 5,
+  })
+
+  test('a suppressed HIGH says the build is not clean', () => {
+    const out = capture({ ...base, gated: [gate('high')] })
+    expect(out).toContain('PASSING ON A WAIVER')
+    expect(out).toContain('not a clean audit')
+  })
+
+  test('a suppressed LOW does not — it would have passed anyway', () => {
+    const out = capture({ ...base, gated: [gate('low')] })
+    expect(out).not.toContain('PASSING ON A WAIVER')
+    // …but the gate itself is still reported, as before.
+    expect(out).toContain('allowed by an')
+  })
 })
