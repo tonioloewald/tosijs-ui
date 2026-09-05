@@ -26,6 +26,7 @@ import { generateSite } from './generate-site.js';
 import { findOutputDirOverlap, resolveBundleDir } from './output-guard.js';
 import { acquireBuildLock, describeHolder } from './build-lock.js';
 import { sourcemapWarning } from './sourcemap-check.js';
+import { firebasePublicMismatch } from './host-preset.js';
 import { preflight } from './preflight.js';
 import { auditDependencies, reportAudit } from './audit-guard.js';
 import { gatherBuildStamp, hashOutput, stampToWrite, } from './build-stamp.js';
@@ -1161,6 +1162,25 @@ export async function buildSite(config, opts = {}) {
                     (config.baseUrl ? new URL(config.baseUrl).hostname : undefined);
                 if (domain && !existsSync(`${PUBLIC}/CNAME`)) {
                     await Bun.write(`${PUBLIC}/CNAME`, `${domain}\n`);
+                }
+            }
+            else if (config.host === 'firebase' && existsSync('firebase.json')) {
+                /*
+                An EXISTING firebase.json is not ours to rewrite — but it is worth reading (#134).
+                If `hosting.public` names a different directory than we just built into, `buildSite`
+                writes one place and `firebase deploy` publishes another, both succeed, and the site
+                serves whatever was in that directory last.
+                */
+                const mismatch = firebasePublicMismatch(await Bun.file('firebase.json')
+                    .text()
+                    .catch(() => ''), config.outputDir ?? 'docs');
+                if (mismatch) {
+                    console.warn(`\n⚠️  firebase.json serves ${mismatch.declared
+                        .map((d) => `"${d}"`)
+                        .join(' / ')}, but this build wrote "${mismatch.built}".\n` +
+                        `   \`firebase deploy\` will publish the other directory — whatever was left in\n` +
+                        `   it — and both commands will succeed. Point \`hosting.public\` at\n` +
+                        `   "${mismatch.built}", or set \`outputDir\` to match.\n`);
                 }
             }
             else if (config.host === 'firebase' && !existsSync('firebase.json')) {
