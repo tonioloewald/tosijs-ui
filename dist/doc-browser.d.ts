@@ -1,4 +1,5 @@
 import { TestResults } from './live-example/test-harness.js';
+export declare const hasTestBlock: (text: string | undefined) => boolean;
 export interface PageTestResults {
     passed: boolean;
     tests: TestResults['tests'];

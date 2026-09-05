@@ -188,6 +188,27 @@ import { popMenu } from './menu.js'
 import { codeEditor, CodeEditor } from './code-editor.js'
 import { tosiDiff } from './diff.js'
 
+/*
+Does this doc contain a REAL ` ```test ` block, as opposed to mentioning one?
+
+This was `doc.text.includes('```test')` — a substring match anywhere in the document — so a
+page that merely WRITES ABOUT the test tier qualified. `doc-site-system.md` documents this very
+runner, so it was the one page in the corpus qualifying on prose alone: 17 counted, 16 with
+actual tests.
+
+Not merely wasteful. That page was rendered in a background iframe and its `js`/`ts` examples
+were EXECUTED, so a failure in an example on a page with no tests surfaced through the doc-test
+tier — and only sometimes, because whether the failure arrived before the page's deadline
+depended on how quickly the TypeScript compiler happened to load. That is what produced a
+standalone run reporting "62 passed" against a build the full suite failed on.
+
+A fence is only a fence at the start of a line, which is the rule the doc extractor already
+applies to `/*#`. `[ \t]*` allows the indented fences that appear inside list items.
+*/
+const TEST_FENCE = /^[ \t]*```test[ \t]*$/m
+export const hasTestBlock = (text: string | undefined): boolean =>
+  typeof text === 'string' && TEST_FENCE.test(text)
+
 // Types for global test results
 export interface PageTestResults {
   passed: boolean
@@ -2057,12 +2078,20 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     if (isTestFrame) return // Don't run background tests in test iframe
     backgroundTestsStarted = true
 
-    // Find all docs that have test blocks. (Pages with examples but no explicit
-    // tests are covered cheaply at BUILD time by the transpile check —
-    // src/doc-system/site/check-examples.ts — without loading them in a browser,
-    // so the runner doesn't have to render every heavy page just to notice a
-    // build error.)
-    const docsWithTests = docs.filter((doc) => doc.text.includes('```test'))
+    /*
+    Find all docs that have test blocks.
+
+    Pages with examples but no explicit tests are covered at BUILD time by
+    `src/doc-system/site/check-examples.ts`, so the runner does not have to render every heavy
+    page just to notice a build error.
+
+    That check is a TRANSPILE check, though, and the comment here used to imply more. It
+    catches an example that will not COMPILE; it cannot catch one that compiles and then throws
+    — `process is not defined` from a Node-flavoured snippet in a `ts` fence builds clean and
+    exits 0. So a runtime error in an example on a page with no ` ```test ` block is caught by
+    nothing. Tracked as its own issue rather than papered over by making this predicate loose.
+    */
+    const docsWithTests = docs.filter((doc) => hasTestBlock(doc.text))
     pagesWithTests = docsWithTests.length
 
     if (pagesWithTests > 0) {
