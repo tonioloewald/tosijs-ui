@@ -780,6 +780,24 @@ doc test currently prints in colour among 37 lines and is simply missed by the m
 of this output. Failure needs to be structural — a non-zero exit, a final summary block, or a
 machine-readable artifact — not a colour.
 
+## RFC (practices): site release branch + version release branches — open for discussion
+
+[tosijs-coding-practices#10](https://github.com/tonioloewald/tosijs-coding-practices/issues/10).
+**Discussion only — do not implement.** Two separable practices:
+
+- **Site release branch** — generated output moves off the source branch. Reads as the clear
+  win: `main` here tracks **969** generated files, which is the direct cause of the
+  `merge=ours` driver, #122's restamping, and the standing "don't commit `docs/` from a
+  feature push" hazard. Adoptable at any maturity because it changes where build output lands,
+  not how anyone works. Cost to name: this repo serves Pages from `docs/` on `main`, so
+  migration means repointing Pages.
+- **Version release branches** — needs argument, and presupposes a release process. Suggested
+  shape is "branch late, receive only, delete after tag", not one per minor.
+
+If a `release/1.14` branch happens here it is a **trial**, reported as such, not an adopted
+practice — and the RFC notes a project *on the cusp* of deliberate versioning may be the more
+informative place to trial it than one that already has the discipline.
+
 ## 1.14.0 is GATED on tosijs — the minor SHIPPED, but adoption is blocked (updated 2026-09-04)
 
 **tosijs 1.10.0 is out and adopted on the `tosijs-1.10-adoption` branch — 418 type errors → 0,
