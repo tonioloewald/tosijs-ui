@@ -811,7 +811,10 @@ load-dependent flakiness, this one silently passed something that was genuinely 
 **Discussion only — do not implement.** Two separable practices:
 
 - **Site release branch** — generated output moves off the source branch. Reads as the clear
-  win: `main` here tracks **969** generated files, which is the direct cause of the
+  win: `main` here tracks 969 generated files — **but only 106 of those are site output**;
+  863 are `dist/`, the published package, which a site branch cannot address (correction from
+  tjs-lang on the RFC, who separated "site output" from "derived artifacts that are also
+  inputs"). Even at 106 it is the direct cause of the
   `merge=ours` driver, #122's restamping, and the standing "don't commit `docs/` from a
   feature push" hazard. Adoptable at any maturity because it changes where build output lands,
   not how anyone works. Cost to name: this repo serves Pages from `docs/` on `main`, so
