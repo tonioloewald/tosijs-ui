@@ -18,12 +18,21 @@ This is the right split: the cost lands on the bundle built FOR the doc site, an
 app that imports a button.
 */
 import * as codeEditor from './code-editor.js';
+/*
+Explicit, because the root barrel excludes it (see index.ts): its import chain reaches the
+static Prism grammar map, which a bundler must emit as chunks. Bundling grammars is RIGHT
+here — an iife cannot code-split, and its consumers are CDN script tags and doc sites, which
+want highlighting — and wrong in the barrel, where an app importing a button paid 357kb of
+grammar chunks for a feature it never used.
+*/
+import * as highlightBlock from './highlight-block.js';
 import * as docBrowser from './doc-browser.js';
 import * as docSystem from './doc-system/doc-system.js';
 import * as liveExample from './live-example.js';
 const xinjsui = {
     ...xinjsuiCore,
     ...codeEditor,
+    ...highlightBlock,
     ...docBrowser,
     ...docSystem,
     ...liveExample,

@@ -171,7 +171,17 @@ question through one shared predicate (`doc-system/example-policy.ts`), because 
 they disagreed and seven doc tests failed as "Expected 0 to be 4": an example that rendered
 nothing, reported as a broken component rather than a broken pipeline.
 
-### New: `<tosi-highlight>` for code that arrives at runtime
+### New: `<tosi-highlight>` — by subpath, not from the root barrel
+
+**Import it as `tosijs-ui/highlight-block`.** It is deliberately *not* re-exported from the
+root barrel, for the same reason the doc-system cluster is not (#133): its import chain
+reaches the static Prism grammar map, and a bundler emitted **15 grammar chunks / 357kb** for
+an app that imported a rating and a select. Measured before and after — 30 chunks / 373kb → 1
+chunk / 287kb.
+
+The iife pulls it explicitly, so CDN `<script>` and doc-site users are unaffected. Bundling
+grammars is right there and wrong in the barrel: an iife cannot code-split, and its consumers
+want highlighting.
 
 A tree-shakeable component for a fetched snippet, a generated example, an API response — the
 cases the build cannot know about. Renders readable plain text synchronously and upgrades when

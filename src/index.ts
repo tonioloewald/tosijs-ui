@@ -1,5 +1,15 @@
 /*
-The DOC-SYSTEM cluster is deliberately NOT re-exported here (tosijs-ui#133).
+The DOC-SYSTEM cluster is deliberately NOT re-exported here (tosijs-ui#133), and neither is
+`highlight-block` — for the same reason, learned the same way twice.
+
+`<tosi-highlight>` was added to this barrel in 1.15.0 and its import chain reaches the static
+Prism grammar map, so a bundler emitted **15 grammar chunks / 357kb** for an app that imported
+a rating and a select and never highlighted anything. Measured, not assumed. That is precisely
+the regression #133 removed, reintroduced by the author of the fix within the same release.
+
+It stays importable as `tosijs-ui/highlight-block`, and `index-iife.ts` pulls it explicitly so
+CDN and doc-site users are unaffected — where bundling grammars is right, because an iife
+cannot code-split and a doc site wants highlighting.
 
 `code-editor` pulls CodeMirror; `live-example` and `doc-system/doc-system` each pull
 `tjs-lang` independently. This package has no `sideEffects` field — correctly, because
@@ -46,7 +56,6 @@ export * from './color-input.js'
 export * from './crud.js'
 export * from './data-table.js'
 export * from './diff.js'
-export * from './highlight-block.js'
 export * from './dialog.js'
 export * as dragAndDrop from './drag-and-drop.js'
 export * from './editable-rect.js'
