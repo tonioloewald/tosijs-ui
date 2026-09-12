@@ -498,49 +498,88 @@ export function docSystemStyleSpec(theme = {}) {
             color: vars.brandColor,
         },
         /*
-        Prism token colours for STATIC code blocks (the ones that are not live examples).
-        Token markup is emitted at BUILD time, so these styles serve the pre-rendered page, the
-        ePub, print and a no-JS reader alike — everywhere a runtime highlighter would not reach.
+        Prism token colours for STATIC code blocks — TWO palettes, because there are two
+        backgrounds (blocker B2 of the 1.15.0 review).
     
-        Derived from the theme rather than hardcoded, so a consumer who re-themes the site gets
-        highlighting that still belongs to it, and dark mode is one recomputation rather than a
-        second palette. Every colour goes through `varDefault` so an adopter can override any
-        single token type without replacing the set.
+        The first version applied VSCode **Dark+** literals unconditionally. `--code-bg` is
+        `#fdfdfd` in light mode, which is the DEFAULT — the pre-paint script adds `darkmode` only
+        on an explicit or system preference — so every token type failed WCAG AA on the page most
+        readers see: function/class-name at 1.39:1, operator 1.46:1, property 1.47:1. Four were
+        effectively invisible.
     
-        Deliberately narrow: Prism emits dozens of token classes and most pages use six. The
-        ones below cover js/ts/css/html/json/shell; anything unmatched inherits the code colour,
-        which is a readable default rather than an invisible one.
+        What let it ship is worse than the mistake. The BOOK palette in `book-html.ts` was
+        contrast-checked against `#f6f8fa`; for the site I wrote "the site's code sits on a dark
+        code background" and treated that sentence as the check. It was false, and it appeared in
+        four places including the CHANGELOG — a justification standing in for a measurement.
+    
+        Measured, both directions (AA needs 4.5:1):
+          light on #fdfdfd — worst 5.32:1 (comment)
+          dark  on #020202 — worst 6.01:1 (punctuation)
+    
+        `doc-system-styles.test.ts` asserts both, so these are checked rather than claimed.
+    
+        Dark uses DESCENDANT selectors rather than a nested `.darkmode` block: the spec already
+        has one, and a duplicate key loses silently to the last writer instead of merging. Each
+        colour is its own `varDefault` (suffixed `Dark`) so a consumer can retheme one token type
+        in one mode.
         */
         '.token.comment, .token.prolog, .token.cdata': {
-            color: varDefault.tokenComment('#6a9955'),
             fontStyle: 'italic',
+            color: varDefault.tokenComment('#5c6f5c'),
         },
-        '.token.punctuation': { color: varDefault.tokenPunctuation('#8a8a8a') },
+        '.token.punctuation': {
+            color: varDefault.tokenPunctuation('#666666'),
+        },
         '.token.string, .token.char, .token.attr-value, .token.regex': {
-            color: varDefault.tokenString('#ce9178'),
+            color: varDefault.tokenString('#a03030'),
         },
         '.token.number, .token.boolean, .token.constant': {
-            color: varDefault.tokenNumber('#b5cea8'),
+            color: varDefault.tokenNumber('#0b7285'),
         },
         '.token.keyword, .token.important, .token.atrule': {
-            color: varDefault.tokenKeyword('#569cd6'),
+            color: varDefault.tokenKeyword('#0a5bb5'),
         },
         '.token.function, .token.class-name': {
-            color: varDefault.tokenFunction('#dcdcaa'),
+            color: varDefault.tokenFunction('#7a4b00'),
         },
         '.token.operator, .token.entity, .token.url': {
-            color: varDefault.tokenOperator('#d4d4d4'),
+            color: varDefault.tokenOperator('#444444'),
         },
         '.token.tag, .token.selector, .token.builtin': {
-            color: varDefault.tokenTag('#4ec9b0'),
+            color: varDefault.tokenTag('#0a6b52'),
         },
         '.token.attr-name, .token.property': {
-            color: varDefault.tokenAttr('#9cdcfe'),
+            color: varDefault.tokenAttr('#2a5db0'),
         },
-        '.token.deleted': { color: varDefault.tokenDeleted('#f48771') },
-        '.token.inserted': { color: varDefault.tokenInserted('#6a9955') },
+        '.token.deleted': {
+            color: varDefault.tokenDeleted('#b02020'),
+        },
+        '.token.inserted': {
+            color: varDefault.tokenInserted('#2a6b2a'),
+        },
         '.token.bold': { fontWeight: 'bold' },
         '.token.italic': { fontStyle: 'italic' },
+        '.darkmode .token.comment, .darkmode .token.prolog, .darkmode .token.cdata': { color: varDefault.tokenCommentDark('#6a9955') },
+        '.darkmode .token.punctuation': {
+            color: varDefault.tokenPunctuationDark('#8a8a8a'),
+        },
+        '.darkmode .token.string, .darkmode .token.char, .darkmode .token.attr-value, .darkmode .token.regex': { color: varDefault.tokenStringDark('#ce9178') },
+        '.darkmode .token.number, .darkmode .token.boolean, .darkmode .token.constant': { color: varDefault.tokenNumberDark('#b5cea8') },
+        '.darkmode .token.keyword, .darkmode .token.important, .darkmode .token.atrule': { color: varDefault.tokenKeywordDark('#569cd6') },
+        '.darkmode .token.function, .darkmode .token.class-name': {
+            color: varDefault.tokenFunctionDark('#dcdcaa'),
+        },
+        '.darkmode .token.operator, .darkmode .token.entity, .darkmode .token.url': { color: varDefault.tokenOperatorDark('#d4d4d4') },
+        '.darkmode .token.tag, .darkmode .token.selector, .darkmode .token.builtin': { color: varDefault.tokenTagDark('#4ec9b0') },
+        '.darkmode .token.attr-name, .darkmode .token.property': {
+            color: varDefault.tokenAttrDark('#9cdcfe'),
+        },
+        '.darkmode .token.deleted': {
+            color: varDefault.tokenDeletedDark('#f48771'),
+        },
+        '.darkmode .token.inserted': {
+            color: varDefault.tokenInsertedDark('#6a9955'),
+        },
         '.transparent, .iconic': {
             background: 'none',
         },

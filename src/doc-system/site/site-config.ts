@@ -85,9 +85,10 @@ export interface SiteConfig {
    * ecosystem's own practices doc tells you to put review reports in `reviews/`, so the safe
    * thing is now the default rather than the informed choice.
    *
-   * Pass `reviews: false`-style exceptions by naming your own paths; to publish a directory
-   * called `reviews` deliberately, list it in `docPaths` explicitly — an explicit path always
-   * wins over the default exclusion.
+   * To publish a directory called `reviews` deliberately, name it in `docPaths` — the
+   * basename exclusion is skipped for paths you ask for by name, and applies only to
+   * directories found while walking. When a default exclusion does withhold files, the build
+   * prints the directory, the count, and how to publish it.
    */
   ignoreDocPaths?: string[]
   /**

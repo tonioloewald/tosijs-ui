@@ -297,10 +297,40 @@ function hasDocBlock(filePath) {
         return false; // unreadable is not our business here
     }
 }
-function findMarkdownFiles(paths, ignore) {
+function findMarkdownFiles(paths, ignore, defaultIgnores = new Set()) {
     const markdownFiles = [];
     const truncationFound = [];
-    function traverseDirectory(dir, ignore) {
+    const withheld = [];
+    /** How many files in `dir` would have been scraped — the size of what was withheld. */
+    function countScrapable(dir) {
+        let n = 0;
+        const walk = (d) => {
+            for (const f of fs.readdirSync(d)) {
+                if (f.startsWith('_'))
+                    continue;
+                const fp = path.join(d, f);
+                try {
+                    const st = fs.statSync(fp);
+                    if (st.isDirectory())
+                        walk(fp);
+                    else if (f.endsWith('.md') ||
+                        SCRAPED_SOURCE_EXTENSIONS.includes(path.extname(f)))
+                        n += 1;
+                }
+                catch {
+                    // unreadable entry — not our business while counting
+                }
+            }
+        };
+        try {
+            walk(dir);
+        }
+        catch {
+            return 0;
+        }
+        return n;
+    }
+    function traverseDirectory(dir, ignore, isRoot = false) {
         const files = fs.readdirSync(dir);
         const baseName = path.basename(dir);
         // Each ignore entry matches either by basename (node_modules, dist, build —
@@ -308,7 +338,32 @@ function findMarkdownFiles(paths, ignore) {
         // output dir — skipped only at that exact location, so a source dir that
         // happens to share the name, like src/docs, is still scanned).
         const resolved = path.resolve(dir);
-        if (ignore.some((ig) => ig === baseName || path.resolve(ig) === resolved)) {
+        /*
+        A path named EXPLICITLY in `docPaths` is never ignored by basename (blocker B3 of the
+        1.15.0 review).
+    
+        The basename test ran on the roots too, so `docPaths: ['docs/reviews']` — the documented
+        escape from the new default `reviews/` exclusion — silently produced nothing. Three
+        shipped places claimed that escape worked, including the CHANGELOG and a comment in the
+        orchestrator that named basename matching as the reason it WOULD work, when basename
+        matching is exactly why it did not.
+    
+        Asking for a directory by name is an unambiguous instruction. A basename rule is a
+        default for things found while walking, and defaults must lose to explicit requests.
+        A path-exact ignore still applies at the root, because that names this exact directory
+        rather than a name pattern.
+        */
+        if (ignore.some((ig) => (!isRoot && ig === baseName) || path.resolve(ig) === resolved)) {
+            /*
+            Say what a DEFAULT exclusion withheld. An adopter with `docs/reviews/`, a reviews
+            chapter or a `src/reviews/` module loses those pages from the site, sitemap, llms.txt
+            and ePub on upgrade — and the only way to notice was diffing the output file list.
+            */
+            if (!isRoot && defaultIgnores.has(baseName)) {
+                const n = countScrapable(dir);
+                if (n > 0)
+                    withheld.push({ dir, count: n });
+            }
             return;
         }
         files.forEach((file) => {
@@ -385,7 +440,7 @@ function findMarkdownFiles(paths, ignore) {
         try {
             const stats = fs.statSync(dir);
             if (stats.isDirectory()) {
-                traverseDirectory(dir, ignore);
+                traverseDirectory(dir, ignore, true);
             }
             else if (stats.isFile()) {
                 const file = path.basename(dir);
@@ -427,11 +482,23 @@ function findMarkdownFiles(paths, ignore) {
             `Add one to SCRAPED_SOURCE_EXTENSIONS if it should be documented.\n`);
         unscrapedDocBlocks.length = 0; // a walk reports its own findings, not the previous one's
     }
+    /*
+    One line per directory a DEFAULT exclusion withheld, with the count and the way to publish
+    it. Consumer-supplied ignores are silent — those were asked for.
+  
+    "The build succeeds and something is quietly missing" is the defect class this whole release
+    is about; a new default exclusion that drops pages with no receipt would have been another
+    instance of it.
+    */
+    for (const { dir, count } of withheld) {
+        console.warn(`⚠️  ${count} doc file(s) in "${dir}" were NOT published — "${path.basename(dir)}" is excluded by default.\n` +
+            `   To publish them, name the directory in docPaths: docPaths: ['${dir}', …]`);
+    }
     return markdownFiles.sort(pinnedSort);
 }
 export function extractDocs(options) {
     const { paths, ignore = ['node_modules', 'dist', 'build'], output } = options;
-    const found = findMarkdownFiles(paths, ignore);
+    const found = findMarkdownFiles(paths, ignore, new Set(DEFAULT_DOC_IGNORES));
     /*
     Drop hidden docs HERE, before anything else sees them.
   

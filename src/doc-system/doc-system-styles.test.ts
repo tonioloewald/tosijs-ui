@@ -41,3 +41,88 @@ describe('#150: no rule POISONS a global palette token', () => {
     ).toEqual([])
   })
 })
+
+/*
+Token colours must actually be READABLE, in BOTH modes (blocker B2 of the 1.15.0 review).
+
+VSCode Dark+ literals were applied unconditionally to a site whose default `--code-bg` is
+`#fdfdfd`. Every token type failed AA on the page most readers see — function at 1.39:1,
+operator 1.46:1, property 1.47:1, four effectively invisible.
+
+The failure was not the colour choice, it was the method: the BOOK palette was contrast-checked
+against its background, and for the site a sentence ("the site's code sits on a dark code
+background") stood in for the measurement. It was false and it shipped in four places.
+
+So this measures. A justification cannot pass it.
+*/
+const relLuminance = (hex: string): number => {
+  let h = hex.replace('#', '')
+  if (h.length === 3) h = [...h].map((c) => c + c).join('')
+  const ch = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
+  const lin = ch.map((c) =>
+    c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  )
+  return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+}
+const contrast = (a: string, b: string): number => {
+  const [hi, lo] = [relLuminance(a), relLuminance(b)].sort((x, y) => y - x)
+  return (hi + 0.05) / (lo + 0.05)
+}
+
+describe('#B2: syntax-highlighting contrast', () => {
+  // The two backgrounds `--code-bg` actually takes. Light is the DEFAULT.
+  const LIGHT_BG = '#fdfdfd'
+  const DARK_BG = '#020202'
+  const AA = 4.5
+
+  const colourOf = (rule: unknown): string | null => {
+    const v = (rule as Record<string, string>)?.color
+    const m = typeof v === 'string' ? v.match(/#[0-9a-fA-F]{3,8}/) : null
+    return m ? m[0] : null
+  }
+
+  const spec = docSystemStyleSpec() as Record<string, unknown>
+  const tokenRules = Object.entries(spec).filter(([sel]) =>
+    sel.includes('.token.')
+  )
+
+  test('every LIGHT-mode token colour clears WCAG AA on #fdfdfd', () => {
+    const fails: string[] = []
+    for (const [sel, rule] of tokenRules) {
+      if (sel.includes('.darkmode')) continue
+      const c = colourOf(rule)
+      if (!c) continue
+      const r = contrast(c, LIGHT_BG)
+      if (r < AA) fails.push(`${sel} ${c} = ${r.toFixed(2)}:1`)
+    }
+    expect(
+      fails,
+      `below AA on the DEFAULT background:\n${fails.join('\n')}`
+    ).toEqual([])
+  })
+
+  test('every DARK-mode token colour clears WCAG AA on #020202', () => {
+    const fails: string[] = []
+    for (const [sel, rule] of tokenRules) {
+      if (!sel.includes('.darkmode')) continue
+      const c = colourOf(rule)
+      if (!c) continue
+      const r = contrast(c, DARK_BG)
+      if (r < AA) fails.push(`${sel} ${c} = ${r.toFixed(2)}:1`)
+    }
+    expect(fails, `below AA in dark mode:\n${fails.join('\n')}`).toEqual([])
+  })
+
+  test('both modes are actually covered — neither list is empty', () => {
+    // A rename that emptied either list would make the assertions above pass vacuously,
+    // which is precisely how the original defect survived its own test suite.
+    const light = tokenRules.filter(
+      ([s]) => !s.includes('.darkmode') && colourOf(spec[s])
+    )
+    const dark = tokenRules.filter(
+      ([s]) => s.includes('.darkmode') && colourOf(spec[s])
+    )
+    expect(light.length).toBeGreaterThan(8)
+    expect(dark.length).toBeGreaterThan(8)
+  })
+})

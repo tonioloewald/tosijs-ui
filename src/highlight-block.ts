@@ -27,9 +27,11 @@ and an unknown language renders as plain, readable code rather than failing.
 
 ## Styling
 
-Token colours come from the doc-system stylesheet's `.token.*` rules, which derive from the
-theme — so highlighting follows a re-themed site and dark mode is a recomputation rather than
-a second palette. Outside a doc site, style `.token.keyword`, `.token.string` and friends
+Token colours come from the doc-system stylesheet's `.token.*` rules. There are **two
+palettes** — a light set (the default) and a dark set under `.darkmode` — each contrast-checked
+against the `--code-bg` it actually sits on. Not a recomputation of one palette: a light-mode
+default derived from dark-mode literals is unreadable, which is how this shipped failing WCAG
+AA on every token type. Outside a doc site, style `.token.keyword`, `.token.string` and friends
 yourself, or import the doc-system CSS.
 
 This element renders in the LIGHT DOM deliberately: token styling has to be reachable from a

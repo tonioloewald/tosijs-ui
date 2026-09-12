@@ -279,3 +279,100 @@ describe('#156: a doc that DOCUMENTS the metadata format', () => {
     }
   })
 })
+
+describe('#B3: the reviews/ exclusion has a working escape, and is accountable', () => {
+  const build = () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'b3-'))
+    fs.mkdirSync(path.join(dir, 'reviews'), { recursive: true })
+    fs.writeFileSync(path.join(dir, 'public.md'), '# Public\n\ntext\n')
+    fs.writeFileSync(path.join(dir, 'reviews', 'r1.md'), '# R1\n\nverdict\n')
+    fs.writeFileSync(path.join(dir, 'reviews', 'r2.md'), '# R2\n\nverdict\n')
+    return {
+      dir,
+      cleanup: () => fs.rmSync(dir, { recursive: true, force: true }),
+    }
+  }
+
+  test('naming the directory in docPaths PUBLISHES it — the documented escape', () => {
+    /*
+    The basename test ran on the roots too, so `docPaths: ['docs/reviews']` produced nothing,
+    silently, while three shipped places claimed it worked — including an orchestrator comment
+    naming basename matching as the REASON it would work, when that is why it did not.
+    */
+    const { dir, cleanup } = build()
+    try {
+      const docs = extractDocs({
+        paths: [path.join(dir, 'reviews')],
+        ignore: [...DEFAULT_DOC_IGNORES],
+      })
+      expect(docs.map((d) => d.title).sort()).toEqual(['R1', 'R2'])
+    } finally {
+      cleanup()
+    }
+  })
+
+  test.each([
+    ['trailing slash', '/'],
+    ['dot suffix', '/.'],
+  ])('the escape works with a %s spelling too', (_label, suffix) => {
+    const { dir, cleanup } = build()
+    try {
+      const docs = extractDocs({
+        paths: [path.join(dir, 'reviews') + suffix],
+        ignore: [...DEFAULT_DOC_IGNORES],
+      })
+      expect(docs.length).toBe(2)
+    } finally {
+      cleanup()
+    }
+  })
+
+  test('scanning a PARENT still excludes it — the default is intact', () => {
+    const { dir, cleanup } = build()
+    try {
+      const titles = extractDocs({
+        paths: [dir],
+        ignore: [...DEFAULT_DOC_IGNORES],
+      }).map((d) => d.title)
+      expect(titles).toContain('Public')
+      expect(titles).not.toContain('R1')
+    } finally {
+      cleanup()
+    }
+  })
+
+  test('and it SAYS what it withheld — a silent drop is the defect class, not the fix', () => {
+    const { dir, cleanup } = build()
+    const warnings: string[] = []
+    const real = console.warn
+    console.warn = (...a: unknown[]) => warnings.push(a.join(' '))
+    try {
+      extractDocs({ paths: [dir], ignore: [...DEFAULT_DOC_IGNORES] })
+    } finally {
+      console.warn = real
+      cleanup()
+    }
+    const line = warnings.find((w) => w.includes('NOT published'))
+    expect(
+      line,
+      'a default exclusion must report what it withheld'
+    ).toBeTruthy()
+    expect(line).toContain('2 doc file(s)')
+    expect(line).toContain('docPaths')
+  })
+
+  test('a path-exact ignore still applies at the root — that names THIS directory', () => {
+    // Basename defaults lose to an explicit docPaths entry; a path-exact ignore does not,
+    // because it is not a name pattern.
+    const { dir, cleanup } = build()
+    try {
+      const docs = extractDocs({
+        paths: [path.join(dir, 'reviews')],
+        ignore: [path.join(dir, 'reviews')],
+      })
+      expect(docs).toEqual([])
+    } finally {
+      cleanup()
+    }
+  })
+})

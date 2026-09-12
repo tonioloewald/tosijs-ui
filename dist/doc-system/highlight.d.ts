@@ -7,6 +7,8 @@ export declare function registerGrammar(fenceLang: string, grammar: unknown): vo
 /** Registered grammars, for tests and diagnostics. */
 export declare function registeredGrammars(): string[];
 export declare function grammarFor(fenceLang: string): string;
+/** Grammars this build can load — for tests, diagnostics, and the docs. */
+export declare function loadableGrammars(): string[];
 /**
  * Load Prism and the grammar for `lang`. Returns false when the grammar does not exist —
  * an unknown language is not an error, it is a code block that stays plain.

@@ -15,5 +15,9 @@
   // naming src/ here would also drag in the *.test.ts files the parent config excludes.
   "extends": "./tsconfig.json",
   "compilerOptions": { "noEmit": true },
-  "include": ["bin/**/*.ts"]
+  // The prismjs grammar modules have no types (`@types/prismjs` covers the main module
+  // only), and `src/doc-system/highlight.ts` names 27 of them. bin code imports that module
+  // transitively, so this project needs the ambient declaration too. Safe here in a way the
+  // note above forbids for tsconfig.json: this project is noEmit, so nothing relocates.
+  "include": ["bin/**/*.ts", "src/prismjs-components.d.ts"]
 }

@@ -682,8 +682,11 @@ export async function buildSite(
           `reviews` is excluded BY DEFAULT (#153): a doc site that scans a directory
           containing review reports publishes them, silently, and the practices doc that
           tells you to write those reports is the same one that warns publishing them is the
-          bad outcome. An explicit entry in `docPaths` still wins — the exclusion is by
-          basename during traversal, so naming a path directly opts back in.
+          bad outcome. An explicit entry in `docPaths` still wins, because the basename
+          test is SKIPPED for the roots. It did not originally, and this comment named
+          basename matching as the reason it would work — which was exactly why it did not
+          (review blocker B3). A default exclusion that does withhold files now prints the
+          directory, the count, and how to publish them.
           */
           ignore: [
             'node_modules',

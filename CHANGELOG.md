@@ -110,7 +110,10 @@ in four more instances.
 verdicts naming an adopter. `extractDocs` already had `ignore`; it simply was not reachable
 from the config. The practices doc that tells you to write review reports is the same one
 warning that publishing them is the bad outcome, so the safe thing is now the default rather
-than the informed choice. An explicit `docPaths` entry still wins.
+than the informed choice. An explicit `docPaths` entry still wins — naming a directory skips the basename exclusion,
+which applies only to directories found while walking. And when a default exclusion withholds
+files it now prints the directory, the count and how to publish them, rather than dropping
+pages with no receipt.
 
 **The build says which files outside `outputDir` it will overwrite (#154).** `outputDir` reads
 as a box the build stays inside and is not one: `docsJson` defaults to `demo/docs.json` and
@@ -152,9 +155,10 @@ Highlighting now happens at **build time**, which is the only thing that reaches
 (readers may run no JavaScript), print, a no-JS reader, or a crawler. Token markup is in the
 HTML; all it needs is CSS.
 
-- **Site**: colours derive from the theme, so a re-themed site gets highlighting that belongs
-  to it and dark mode is a recomputation rather than a second palette. Every colour is a
-  `varDefault`, so a single token type can be overridden without replacing the set.
+- **Site**: **two palettes**, light (the default) and dark under `.darkmode`, each
+  contrast-checked against the `--code-bg` it sits on — worst case 5.32:1 light, 6.01:1 dark,
+  against WCAG AA's 4.5:1. Every colour is a `varDefault`, so a single token type can be
+  overridden in one mode without replacing the set.
 - **Book and print**: a separate LIGHT palette, contrast-checked against the `#f6f8fa` code
   background (the weakest is ~4.6:1, above WCAG AA). Reusing the site's dark-background
   palette here would have been light-on-light — the same invisible-text failure as #143.

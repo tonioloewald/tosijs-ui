@@ -114,6 +114,62 @@ export function grammarFor(fenceLang: string): string {
   return ALIASES[l] ?? l
 }
 
+/*
+A STATIC map of grammar loaders (blocker B1 of the 1.15.0 review).
+
+This was `import(<template>)` — a bare specifier computed at runtime — and **no browser can
+resolve it.** Measured in headless chromium against the built site: `<tosi-highlight
+language="rust">` rendered 0 token spans with no console output, and a page showing 531 tokens
+on a hard load showed 23 after one client-side navigation, because only Prism's seven builtins
+were reachable. Every language named as the REASON for choosing Prism — typescript, json,
+bash, python, rust, yaml — was unavailable in the one environment the component runs in. Under
+webpack the same specifier fails the other way, pulling a context module over all ~600 grammar
+files.
+
+The unit test asserted `ensureGrammar('rust') === true` and passed, because BUN resolves what
+a browser cannot. A test that can only agree with you is worse than none — it is why this
+shipped. The browser assertion now lives in the Playwright lane, where the claim is about.
+
+Static thunks are what a bundler can see. The list is CAPPED deliberately: a map over every
+grammar Prism ships would flatten ~290 files into the iife entry, which is the bundle-weight
+problem #120 exists to avoid. These are the languages a doc or book corpus actually uses;
+anything else stays plain, and `registerGrammar` covers a language that ships its own.
+*/
+const GRAMMARS: Record<string, () => Promise<unknown>> = {
+  bash: () => import('prismjs/components/prism-bash.js'),
+  c: () => import('prismjs/components/prism-c.js'),
+  cpp: () => import('prismjs/components/prism-cpp.js'),
+  csharp: () => import('prismjs/components/prism-csharp.js'),
+  diff: () => import('prismjs/components/prism-diff.js'),
+  docker: () => import('prismjs/components/prism-docker.js'),
+  go: () => import('prismjs/components/prism-go.js'),
+  graphql: () => import('prismjs/components/prism-graphql.js'),
+  ini: () => import('prismjs/components/prism-ini.js'),
+  java: () => import('prismjs/components/prism-java.js'),
+  json: () => import('prismjs/components/prism-json.js'),
+  jsx: () => import('prismjs/components/prism-jsx.js'),
+  kotlin: () => import('prismjs/components/prism-kotlin.js'),
+  less: () => import('prismjs/components/prism-less.js'),
+  makefile: () => import('prismjs/components/prism-makefile.js'),
+  markdown: () => import('prismjs/components/prism-markdown.js'),
+  php: () => import('prismjs/components/prism-php.js'),
+  python: () => import('prismjs/components/prism-python.js'),
+  ruby: () => import('prismjs/components/prism-ruby.js'),
+  rust: () => import('prismjs/components/prism-rust.js'),
+  scss: () => import('prismjs/components/prism-scss.js'),
+  sql: () => import('prismjs/components/prism-sql.js'),
+  swift: () => import('prismjs/components/prism-swift.js'),
+  toml: () => import('prismjs/components/prism-toml.js'),
+  tsx: () => import('prismjs/components/prism-tsx.js'),
+  typescript: () => import('prismjs/components/prism-typescript.js'),
+  yaml: () => import('prismjs/components/prism-yaml.js'),
+}
+
+/** Grammars this build can load — for tests, diagnostics, and the docs. */
+export function loadableGrammars(): string[] {
+  return Object.keys(GRAMMARS).sort()
+}
+
 type PrismLike = {
   languages: Record<string, unknown>
   highlight: (code: string, grammar: unknown, lang: string) => string
@@ -213,12 +269,21 @@ export async function ensureGrammar(lang: string): Promise<boolean> {
   let load = grammarLoads.get(grammar)
   if (!load) {
     load = (async () => {
+      const thunk = GRAMMARS[grammar]
+      /*
+      Not in the map: a plain code block, not an error — distinct from a LOAD FAILURE below,
+      which is a real problem and says so. Conflating the two is what let B1 ship silently.
+      */
+      if (!thunk) return false
       try {
-        await import(
-          /* @vite-ignore */ `prismjs/components/prism-${grammar}.js`
+        await thunk()
+      } catch (err) {
+        console.warn(
+          `prismjs grammar "${grammar}" failed to load — code blocks in that language ` +
+            `will not be highlighted.`,
+          err
         )
-      } catch {
-        return false // no such grammar — a plain code block, not an error
+        return false
       }
       return Boolean(prism!.languages[grammar])
     })()

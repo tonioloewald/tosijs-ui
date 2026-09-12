@@ -71,7 +71,7 @@ pre code { background: none; padding: 0; }
 /*
 Prism token colours for the book — a LIGHT palette, deliberately distinct from the site's.
 
-The site's code sits on a dark code background, so its tokens are light. A book does not: the
+The site has TWO palettes, one per mode. A book has one background and it is light: the
 pre rule above is #f6f8fa, an ePub reader may impose white or sepia, and paper is paper.
 Reusing the site palette here would be light-on-light — invisible body text dressed as syntax
 highlighting, which is the exact failure a nested diff hit in tosijs-ui#143.
