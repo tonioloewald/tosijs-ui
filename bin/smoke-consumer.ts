@@ -412,6 +412,77 @@ try {
     )
   }
 
+  /*
+  Every bare specifier SHIPPED code imports must be DECLARED (tosijs-ui, 1.15.0).
+
+  `prismjs` shipped as a devDependency while `dist/doc-system/highlight.js` imported it.
+  An adopter's build would resolve it only by hoisting luck; without it, `highlightHtml`
+  caught, returned the HTML unchanged, and their doc site had no syntax highlighting at
+  all — on the page, in the ePub and in print — with nothing saying why. Identical in shape
+  to the `chokidar` regression this repo already records, and to `#61`'s thesis.
+
+  The existing peer check above cannot catch this: it verifies declared peers have a
+  matching devDep, which says nothing about an import nobody declared. `release-doctor` has
+  a check for exactly this and it regexes the MINIFIED iife, so it reported `,6:PO+` as a
+  package name and missed the real one in the same run (practices#11).
+
+  Reads the ESM output instead, where specifiers survive intact.
+  */
+  {
+    const { builtinModules } = await import('module')
+    const declared = new Set([
+      ...Object.keys(manifest.dependencies ?? {}),
+      ...Object.keys(manifest.peerDependencies ?? {}),
+      ...Object.keys(manifest.optionalDependencies ?? {}),
+      // Node builtins are importable bare (`fs`, not just `node:fs`), and `bun` is the
+      // runtime's own module. Neither is a package anyone can declare.
+      ...builtinModules,
+      'bun',
+    ])
+    const distDir = path.join(proj, 'node_modules', pkg.name, 'dist')
+    const undeclared = new Map<string, string>()
+    const glob = new Bun.Glob('**/*.js')
+    for await (const rel of glob.scan({ cwd: distDir })) {
+      // The iife bundles everything and is minified — specifiers do not survive it.
+      if (rel === 'iife.js' || rel.endsWith('.min.js')) continue
+      /*
+      Strip comments first. `dist/` is compiled TS, not minified, so the `/*# … *\/` doc
+      blocks survive — and they are full of prose like "import { x } from 'mylib'" as
+      EXAMPLES. A naive scan reported `mylib`, `no such group` and `https:` as undeclared
+      packages, which is the same false-positive failure that makes release-doctor's version
+      of this check unusable.
+      */
+      const code = (await Bun.file(path.join(distDir, rel)).text())
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/(^|[^:])\/\/[^\n]*/g, '$1')
+      for (const m of code.matchAll(
+        /(?:^|[\s;}])import\s*\(\s*['"]([^'"]+)['"]|(?:^|[\s;}])(?:import|export)\b[^;'"]*\sfrom\s*['"]([^'"]+)['"]/gm
+      )) {
+        const spec = m[1] ?? m[2]
+        if (!spec) continue
+        if (
+          spec.startsWith('.') ||
+          spec.startsWith('/') ||
+          spec.startsWith('node:')
+        )
+          continue
+        // `pkg/sub` resolves through `pkg`; scoped names keep two segments.
+        const root = spec.startsWith('@')
+          ? spec.split('/').slice(0, 2).join('/')
+          : spec.split('/')[0]
+        if (declared.has(root) || root === pkg.name) continue
+        if (!undeclared.has(root)) undeclared.set(root, rel)
+      }
+    }
+    check(
+      'every bare import in shipped dist/ is a declared dependency or peer',
+      undeclared.size === 0,
+      [...undeclared]
+        .map(([spec, where]) => `${spec} (dist/${where})`)
+        .join(', ') || undefined
+    )
+  }
+
   // ── a build, from the consumer's cwd ──────────────────────────────────────
   console.log('🔨 building as the consumer …')
   const build = await $`bun build.ts`.cwd(proj).nothrow().quiet()

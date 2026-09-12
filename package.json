@@ -69,7 +69,8 @@
     "tjs-lang": "^0.13.1",
     "tosijs": "^1.9.1",
     "tosijs-schema": "^1.8.0",
-    "chokidar": "^4.0.3"
+    "chokidar": "^4.0.3",
+    "prismjs": "^1.30.0"
   },
   "peerDependenciesMeta": {
     "@resvg/resvg-js": {
@@ -85,6 +86,9 @@
       "optional": true
     },
     "tosijs-schema": {
+      "optional": true
+    },
+    "prismjs": {
       "optional": true
     }
   },

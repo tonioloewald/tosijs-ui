@@ -120,6 +120,7 @@ type PrismLike = {
 }
 
 let prism: PrismLike | undefined
+let warnedNoPrism = false
 /*
 Memoize the PROMISE, not an "attempted" flag.
 
@@ -176,7 +177,24 @@ export async function ensureGrammar(lang: string): Promise<boolean> {
       prism = ((await import('prismjs')) as { default?: PrismLike })
         .default as PrismLike
     } catch {
-      return false // Prism not installed — highlighting is optional, not required
+      /*
+      Prism is an OPTIONAL PEER — absent it, code blocks stay plain. That is a real
+      degradation (no highlighting on the site, in the ePub or in print), so it says so ONCE
+      rather than returning a quiet false.
+
+      It shipped as a devDependency in the first cut of this feature, which meant an
+      adopter's build imported it from `dist/` and it resolved only by hoisting luck: their
+      doc site would have had no highlighting at all and nothing would have said why. Same
+      shape as the `chokidar` regression this project already records.
+      */
+      if (!warnedNoPrism) {
+        warnedNoPrism = true
+        console.warn(
+          'prismjs not found — static code blocks will not be syntax-highlighted ' +
+            '(site, ePub and print alike). Install it: bun add -d prismjs'
+        )
+      }
+      return false
     }
   }
   /*
