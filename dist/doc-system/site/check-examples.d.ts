@@ -1,4 +1,5 @@
 import type { Doc } from './docs.js';
+import { type ExamplePolicy } from '../example-policy.js';
 import type { ExampleBakes } from '../render.js';
 export interface ExampleProblem {
     filename: string;
@@ -45,6 +46,8 @@ export interface ExampleCheck {
 export declare function checkExamples(docs: Doc[], opts?: {
     contextKeys?: string[];
     importPrefix?: string;
+    /** Mirrors `SiteConfig.liveExamples`. A fence that will never run must not fail a build. */
+    liveExamples?: ExamplePolicy;
 }): Promise<ExampleCheck>;
 /** Format problems for a build log. */
 export declare function formatExampleProblems(problems: ExampleProblem[]): string;

@@ -692,7 +692,15 @@ export async function buildEpub(config, opts = {}) {
         is the same `highlightHtml` the static pages use, so a code block looks the same on the
         site, in the book and in print.
         */
-        const html = rewriteInBookLinks(await highlightHtml(renderDocMarkdown(stripDocMeta(doc.text))), bookFiles, slugMap, config.basePath);
+        const html = rewriteInBookLinks(
+        /*
+        `'none'` — an ePub has no live examples, so the live-fence skip that protects the web
+        page buys nothing here and cost the reader 237 of 284 code blocks (js, html, css and
+        test all plain, which is most of the corpus). Verified the skip was not load-bearing:
+        `injectExampleLinks` matches on the `language-*` class, never on the code text, so
+        highlighting cannot break the "Run this example live" links.
+        */
+        await highlightHtml(renderDocMarkdown(stripDocMeta(doc.text)), 'none'), bookFiles, slugMap, config.basePath);
         // happy-dom occasionally throws on exotic content (e.g. an internal selector
         // bug); fall back to the regex pass for that doc rather than aborting.
         let bodyHtml;

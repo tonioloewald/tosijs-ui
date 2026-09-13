@@ -101,9 +101,30 @@ describe('the DOM path', () => {
 
   test('highlights static blocks and reports the count', async () => {
     const root = doc()
+    // A display-only language: `ts` is EXECUTABLE and is live-example source on the web.
     root.innerHTML =
-      '<pre><code class="language-ts">const x: number = 1</code></pre>'
+      '<pre><code class="language-rust">fn main() {}</code></pre>'
     expect(await highlightBlocks(root)).toBe(1)
+    expect(root.querySelector('.token')).toBeTruthy()
+  })
+
+  test('an executable fence is skipped on the web — it is live-example SOURCE', async () => {
+    /*
+    Previously this held only by ORDERING: `insertExamples` wraps live blocks first, so the
+    tag check caught them. Nothing enforced that order, and tokenizing example source is what
+    cost seven doc tests earlier this cycle.
+    */
+    const root = doc()
+    root.innerHTML = '<pre><code class="language-js">const x = 1</code></pre>'
+    expect(await highlightBlocks(root)).toBe(0)
+  })
+
+  test("policy 'none' highlights everything — print and ePub have no live examples", async () => {
+    // Major M1: the ePub defaulted to 'auto' and left 237 of 284 blocks plain, skipping
+    // fences to protect live examples that cannot exist in a book.
+    const root = doc()
+    root.innerHTML = '<pre><code class="language-js">const x = 1</code></pre>'
+    expect(await highlightBlocks(root, { policy: 'none' })).toBe(1)
     expect(root.querySelector('.token')).toBeTruthy()
   })
 

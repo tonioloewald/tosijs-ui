@@ -31,6 +31,7 @@ import {
   UnsupportedImportError,
 } from '../../live-example/code-transform.js'
 import type { Doc } from './docs.js'
+import { isLiveFence, type ExamplePolicy } from '../example-policy.js'
 import type { ExampleBakes } from '../render.js'
 
 declare const Bun: {
@@ -72,13 +73,29 @@ function dialectOf(info: string | undefined): string {
 }
 
 /** Collect every fenced code block in a doc (recursing into lists/quotes). */
+/** The `:<mode>` suffix of a fence info string, if any — `js:static` -> `static`. */
+function modeOf(info: string | undefined): string | undefined {
+  return String(info ?? '').match(/:([a-z]+)/)?.[1]
+}
+
 function collectCodeTokens(
   text: string
-): Array<{ lang: string; text: string }> {
-  const out: Array<{ lang: string; text: string }> = []
+): Array<{ lang: string; text: string; mode?: string }> {
+  const out: Array<{ lang: string; text: string; mode?: string }> = []
   const walk = (tokens: any[]): void => {
     for (const t of tokens) {
-      if (t.type === 'code') out.push({ lang: dialectOf(t.lang), text: t.text })
+      /*
+      Keep the MODE. `dialectOf` reduced `js:static` to `js`, so the checker could not tell a
+      block that will never run from one that will — and hard-failed a build over the syntax
+      of illustrative code, advising the author to retag it as `typescript`, which is exactly
+      the mislabelling this release exists to abolish (review major M2).
+      */
+      if (t.type === 'code')
+        out.push({
+          lang: dialectOf(t.lang),
+          text: t.text,
+          mode: modeOf(t.lang),
+        })
       if (Array.isArray(t.tokens)) walk(t.tokens)
       if (Array.isArray(t.items)) walk(t.items) // list items
     }
@@ -125,8 +142,14 @@ export interface ExampleCheck {
  */
 export async function checkExamples(
   docs: Doc[],
-  opts: { contextKeys?: string[]; importPrefix?: string } = {}
+  opts: {
+    contextKeys?: string[]
+    importPrefix?: string
+    /** Mirrors `SiteConfig.liveExamples`. A fence that will never run must not fail a build. */
+    liveExamples?: ExamplePolicy
+  } = {}
 ): Promise<ExampleCheck> {
+  const policy: ExamplePolicy = opts.liveExamples ?? 'auto'
   /*
   ADDITIVE, not replacing.
 
@@ -162,7 +185,22 @@ export async function checkExamples(
 
   for (const doc of docs) {
     for (const block of collectCodeTokens(doc.text)) {
+      /*
+      TWO questions, and they are not the same one (review major M2).
+
+      `EXECUTABLE` here is "can this be syntax-checked as JavaScript" — js/tjs/ts/test.
+      `isLiveFence` is "will this become a live example" — which also covers html and css,
+      because those are live-example SLOTS. Gating only on the second made the checker try to
+      parse `<tosi-widget></tosi-widget>` and `.x { color: red }` as JS; an existing test
+      caught it, which is the argument for not deleting a gate while adding one.
+
+      So: checkable AND actually going to run. A `:static` fence, or any fence under
+      `liveExamples: 'opt-in'` that never asked to run, is illustration and must not fail a
+      build — that was failing over the syntax of correct code and advising the author to
+      retag it as `typescript`, the mislabelling this release exists to abolish.
+      */
       if (!EXECUTABLE.has(block.lang)) continue
+      if (!isLiveFence(block.lang, block.mode, policy)) continue
       // `test` blocks are conventional JS/TS, transpiled as plain js.
       const dialect = block.lang === 'test' ? 'js' : block.lang
       if (unavailable.has(dialect)) {

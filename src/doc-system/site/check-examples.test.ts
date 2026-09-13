@@ -141,3 +141,48 @@ test('the default context is still tosijs / tosijs-ui', async () => {
   const out = await checkExamples(corpus as any)
   expect(out.problems).toEqual([])
 })
+
+/*
+A fence that will never run must not fail a build (review major M2).
+
+`collectCodeTokens` reduced the info string with `dialectOf`, so ` ```js:static ` became `js`
+and the only gate was "is the language executable". A block marked illustrative — or any block
+under `liveExamples: 'opt-in'` that never asked to run — hard-failed the build over its syntax,
+and the failure message advised retagging it as `typescript`: exactly the mislabelling this
+release exists to abolish.
+
+Now gated on the SAME `isLiveFence` the highlighter and `insertExamples` use, which is what
+`example-policy.ts` exists to guarantee.
+*/
+describe('#M2: checkExamples honours the example policy', () => {
+  // Valid TJS, invalid JS — so it fails only when actually checked as JS.
+  const SRC = 'function foo(! a: 0) { }'
+  const docs = (fence: string) =>
+    [
+      {
+        filename: 'a.md',
+        title: 'A',
+        text: '# A\n\n```' + fence + '\n' + SRC + '\n```\n',
+      },
+    ] as never
+
+  test('a plain executable fence is still checked — the gate did not go away', async () => {
+    const r = await checkExamples(docs('js'), {})
+    expect(r.problems.length).toBe(1)
+  })
+
+  test('`:static` is illustration — not checked, not failed', async () => {
+    const r = await checkExamples(docs('js:static'), {})
+    expect(r.problems).toEqual([])
+  })
+
+  test("under 'opt-in', an unmarked fence is illustration too", async () => {
+    const r = await checkExamples(docs('js'), { liveExamples: 'opt-in' })
+    expect(r.problems).toEqual([])
+  })
+
+  test("under 'opt-in', a fence that ASKS to run is still checked", async () => {
+    const r = await checkExamples(docs('js:inline'), { liveExamples: 'opt-in' })
+    expect(r.problems.length).toBe(1)
+  })
+})

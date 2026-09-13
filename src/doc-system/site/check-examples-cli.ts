@@ -38,11 +38,21 @@ const contextKeys = process.argv.slice(3)
 // When the site enables the import-resolver, the parent passes its prefix so
 // non-context imports validate as dynamic `<prefix><spec>` imports rather than failing.
 const importPrefix = process.env.TOSI_IMPORT_PREFIX || undefined
+/*
+The example policy crosses the process boundary by env, like `importPrefix`. Without it the
+child always assumed 'auto', so a `:static` fence — or any fence under `liveExamples:
+'opt-in'` that never runs — could still hard-fail the build (review major M2).
+*/
+const liveExamples = (process.env.TOSI_LIVE_EXAMPLES || 'auto') as
+  | 'auto'
+  | 'opt-in'
+  | 'none'
 
 const corpus = JSON.parse(await Bun.file(docsJson).text())
 const { problems, warnings, bakes } = await checkExamples(corpus, {
   ...(contextKeys.length ? { contextKeys } : {}),
   ...(importPrefix ? { importPrefix } : {}),
+  liveExamples,
 })
 
 // stdout is the channel — the parent parses this. Anything else this process prints

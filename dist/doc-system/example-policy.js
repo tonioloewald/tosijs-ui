@@ -33,9 +33,13 @@ export const EXECUTABLE_LANGS = new Set([
  * @param policy `'auto'` (executables run) or `'opt-in'` (only fences that ask)
  */
 export function isLiveFence(lang, mode, policy = 'auto') {
+    // Nothing is live in a book or on paper — skipping a fence there protects nothing and
+    // costs the reader the highlighting.
+    if (policy === 'none')
+        return false;
     if (!EXECUTABLE_LANGS.has(lang.toLowerCase()))
         return false;
-    // `:static` opts out under either policy, so one corpus can target both.
+    // `:static` opts out under any policy, so one corpus can target all of them.
     if (mode === 'static')
         return false;
     return policy === 'opt-in' ? mode !== undefined : true;

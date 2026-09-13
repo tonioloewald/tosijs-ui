@@ -60,6 +60,7 @@ import { Component, StyleSheet, elements, tosi, vars, } from 'tosijs';
 import { createDocBrowser, } from '../doc-browser.js';
 import { buildSlugMap, legacyQueryPath } from './routing.js';
 import { buildBookHtml, slugify } from './book-html.js';
+import { highlightBlocks } from './highlight.js';
 import { docSystemStyleSpec } from './doc-system-styles.js';
 import { icons } from '../icons.js';
 import { popMenu } from '../menu.js';
@@ -303,11 +304,28 @@ export class TosiDocSystem extends Component {
                             return;
                         }
                         win.document.open();
+                        /*
+                        `autoPrint: false` — highlight BEFORE printing (review major M1).
+          
+                        This printed immediately, and `buildBookHtml` is synchronous and never
+                        highlighted, so the 13 `.token.*` rules in `DEFAULT_BOOK_CSS` matched nothing on
+                        this path while the CHANGELOG said "highlighted on the page, in the ePub, and in
+                        print". Print was the one of the three that never was.
+          
+                        `highlightBlocks` is the same DOM pass the doc-browser uses, run over the popup's
+                        document; `'none'` because a printed page has no live examples. If a grammar
+                        fails to load we print anyway — plain code beats a print dialog that never opens.
+                        */
                         win.document.write(buildBookHtml(this.corpus, {
                             title: bookTitle,
-                            autoPrint: true,
+                            autoPrint: false,
                         }));
                         win.document.close();
+                        void highlightBlocks(win.document, { policy: 'none' })
+                            .catch(() => { })
+                            .then(() => {
+                            setTimeout(() => win.print(), 300);
+                        });
                     },
                 });
                 menuItems.push({

@@ -326,12 +326,40 @@ const isPlain = (code: Element) =>
  */
 export async function highlightBlocks(
   root: ParentNode,
-  opts: { liveExampleTag?: string } = {}
+  opts: { liveExampleTag?: string; policy?: ExamplePolicy } = {}
 ): Promise<number> {
   const liveTag = opts.liveExampleTag ?? 'tosi-example'
+  /*
+  `policy` matters for targets with no live examples — the PRINT path passes `'none'`, so an
+  executable fence is highlighted rather than skipped. On the web the default is right: those
+  blocks are live-example source and tokenizing them hands the example markup where it
+  expected code.
+  */
+  const policy: ExamplePolicy = opts.policy ?? 'auto'
   const blocks = [...root.querySelectorAll('pre > code[class*="language-"]')]
     .filter((code) => isPlain(code))
     .filter((code) => !(code as Element).closest(liveTag))
+    /*
+    Also ask the shared predicate, not only "is it already inside a live example".
+    
+    The tag check alone works by ORDERING — `insertExamples` runs first, so live blocks are
+    already wrapped by the time this runs. That is true today and is not a property anything
+    enforces; if the two ever swapped, this would tokenize live-example SOURCE and the example
+    would read markup where it expected code, which is the defect that cost seven doc tests
+    earlier this cycle. Asking `isLiveFence` makes it true by construction — and makes
+    `policy` load-bearing, so the print path's `'none'` actually means something.
+    */
+    .filter((code) => {
+      const el = code as Element
+      const mode =
+        (el.parentElement as HTMLElement | null)?.getAttribute(
+          'data-example-mode'
+        ) ?? undefined
+      const lang =
+        el.className.match(/language-([A-Za-z0-9_+#-]+)/)?.[1]?.toLowerCase() ??
+        ''
+      return !isLiveFence(lang, mode, policy)
+    })
 
   if (blocks.length === 0) return 0
 

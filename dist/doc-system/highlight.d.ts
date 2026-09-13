@@ -40,6 +40,7 @@ export declare function highlight(code: string, lang: string): string | null;
  */
 export declare function highlightBlocks(root: ParentNode, opts?: {
     liveExampleTag?: string;
+    policy?: ExamplePolicy;
 }): Promise<number>;
 /** Every fence language present in rendered markdown — what grammars a page needs. */
 export declare function languagesIn(html: string): string[];

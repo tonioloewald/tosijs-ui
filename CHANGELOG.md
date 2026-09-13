@@ -160,8 +160,12 @@ HTML; all it needs is CSS.
   against WCAG AA's 4.5:1. Every colour is a `varDefault`, so a single token type can be
   overridden in one mode without replacing the set.
 - **Book and print**: a separate LIGHT palette, contrast-checked against the `#f6f8fa` code
-  background (the weakest is ~4.6:1, above WCAG AA). Reusing the site's dark-background
-  palette here would have been light-on-light — the same invisible-text failure as #143.
+  background (the weakest is ~4.6:1, above WCAG AA).
+- Both the ePub and the **Print** path pass a `'none'` example policy, because neither can run
+  a live example — so an executable fence is highlighted there rather than skipped. Without it
+  the ePub left **237 of 284 code blocks plain** (every `js`, `html`, `css` and `test` block,
+  which is most of the corpus) while this entry claimed otherwise, and the print path never
+  highlighted at all, so the book stylesheet's token rules matched nothing.
 - **Client**: the same pass runs after client-side navigation, and skips anything already
   highlighted, which is what keeps the pre-rendered page and its hydrated self identical.
 

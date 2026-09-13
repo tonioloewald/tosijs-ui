@@ -23,6 +23,7 @@ Build-time only (bun). Never import from browser code.
 */
 import { marked } from 'marked';
 import { rewriteImports, AsyncFunction, loadTransform, transformAvailable, UnsupportedImportError, } from '../../live-example/code-transform.js';
+import { isLiveFence } from '../example-policy.js';
 // The default live-example context (matches the IIFE globals the pages provide).
 // A project that sets a custom `context` on its <tosi-doc-system> can pass its
 // own keys; these are the tosijs-ui defaults.
@@ -44,12 +45,26 @@ function dialectOf(info) {
     return (info ?? '').match(/^[a-z]+/)?.[0] ?? '';
 }
 /** Collect every fenced code block in a doc (recursing into lists/quotes). */
+/** The `:<mode>` suffix of a fence info string, if any — `js:static` -> `static`. */
+function modeOf(info) {
+    return String(info ?? '').match(/:([a-z]+)/)?.[1];
+}
 function collectCodeTokens(text) {
     const out = [];
     const walk = (tokens) => {
         for (const t of tokens) {
+            /*
+            Keep the MODE. `dialectOf` reduced `js:static` to `js`, so the checker could not tell a
+            block that will never run from one that will — and hard-failed a build over the syntax
+            of illustrative code, advising the author to retag it as `typescript`, which is exactly
+            the mislabelling this release exists to abolish (review major M2).
+            */
             if (t.type === 'code')
-                out.push({ lang: dialectOf(t.lang), text: t.text });
+                out.push({
+                    lang: dialectOf(t.lang),
+                    text: t.text,
+                    mode: modeOf(t.lang),
+                });
             if (Array.isArray(t.tokens))
                 walk(t.tokens);
             if (Array.isArray(t.items))
@@ -64,6 +79,7 @@ function collectCodeTokens(text) {
  * the `tjs` bakes (which it computes anyway while checking — no double transpile).
  */
 export async function checkExamples(docs, opts = {}) {
+    const policy = opts.liveExamples ?? 'auto';
     /*
     ADDITIVE, not replacing.
   
@@ -98,7 +114,23 @@ export async function checkExamples(docs, opts = {}) {
     const skipped = new Map();
     for (const doc of docs) {
         for (const block of collectCodeTokens(doc.text)) {
+            /*
+            TWO questions, and they are not the same one (review major M2).
+      
+            `EXECUTABLE` here is "can this be syntax-checked as JavaScript" — js/tjs/ts/test.
+            `isLiveFence` is "will this become a live example" — which also covers html and css,
+            because those are live-example SLOTS. Gating only on the second made the checker try to
+            parse `<tosi-widget></tosi-widget>` and `.x { color: red }` as JS; an existing test
+            caught it, which is the argument for not deleting a gate while adding one.
+      
+            So: checkable AND actually going to run. A `:static` fence, or any fence under
+            `liveExamples: 'opt-in'` that never asked to run, is illustration and must not fail a
+            build — that was failing over the syntax of correct code and advising the author to
+            retag it as `typescript`, the mislabelling this release exists to abolish.
+            */
             if (!EXECUTABLE.has(block.lang))
+                continue;
+            if (!isLiveFence(block.lang, block.mode, policy))
                 continue;
             // `test` blocks are conventional JS/TS, transpiled as plain js.
             const dialect = block.lang === 'test' ? 'js' : block.lang;

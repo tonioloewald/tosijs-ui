@@ -151,7 +151,8 @@ const escapeRegExp = (s: string): string =>
 async function checkExamplesInChild(
   docsJson: string,
   importPrefix?: string,
-  contextKeys: string[] = []
+  contextKeys: string[] = [],
+  liveExamples: 'auto' | 'opt-in' | 'none' = 'auto'
 ): Promise<ExampleCheck> {
   const cliTs = `${import.meta.dir}/check-examples-cli.ts`
   const cli = existsSync(cliTs)
@@ -163,9 +164,12 @@ async function checkExamplesInChild(
       stderr: 'pipe',
       // When the resolver's on, let the check accept non-context imports (they validate
       // as dynamic `<prefix><spec>` imports rather than throwing "unsupported").
-      env: importPrefix
-        ? { ...process.env, TOSI_IMPORT_PREFIX: importPrefix }
-        : process.env,
+      env: {
+        ...process.env,
+        ...(importPrefix ? { TOSI_IMPORT_PREFIX: importPrefix } : {}),
+        // A fence that will never run must not fail a build (major M2).
+        TOSI_LIVE_EXAMPLES: liveExamples,
+      },
     })
     // Drain BOTH pipes while awaiting exit. An undrained pipe fills its buffer, the
     // child blocks writing to it, and we deadlock waiting for an exit that can't come
@@ -765,7 +769,8 @@ export async function buildSite(
           resolverPrefix,
           typeof config.checkExamples === 'object'
             ? config.checkExamples.contextKeys ?? []
-            : []
+            : [],
+          config.liveExamples ?? 'auto'
         )
         exampleBakes = bakes
         // Unsupported imports don't fail the build — the code isn't broken, it just
@@ -1408,6 +1413,31 @@ export async function buildSite(
       commit, so a project without a version still gets something that moves.
       */
       /*
+      The stylesheet is generated HERE, before the asset stamp is computed (review major M3).
+
+      It used to run ~80 lines later, after `generateSite` had already consumed the stamp —
+      and the hash loop silently `continue`s on a missing file, so `doc-system.css` was NAMED
+      in `stampInputs` and never actually hashed. Reproduced: the `?v=` on every page equalled
+      sha256(hydrate.js + iife.js) exactly. A `theme`-only change (passed to generate-css as
+      argv, never entering a bundle) therefore deployed new CSS under an UNCHANGED URL, and
+      returning visitors kept the old stylesheet — a regression against the version stamp,
+      which at least moved on every release, and notable because #151 was reported by someone
+      editing CSS that was already being served.
+      */
+      const genCssTs = `${import.meta.dir}/generate-css.ts`
+      const genCss = existsSync(genCssTs)
+        ? genCssTs
+        : `${import.meta.dir}/generate-css.js`
+      // generate-css imports the consumer's library to burn the theme; when that graph
+      // reaches non-`.ts` sources (e.g. `.tjs`), `--preload` a module that registers the
+      // Bun loader plugin so those modules evaluate. (See BUILD-TJS-HOOK.md.)
+      const themeArg = JSON.stringify(config.theme || {})
+      await (config.generateCssPreload
+        ? $`bun --preload ${config.generateCssPreload} ${genCss} ${PUBLIC}/doc-system.css ${themeArg}`
+        : $`bun ${genCss} ${PUBLIC}/doc-system.css ${themeArg}`
+      ).text()
+
+      /*
       In DEV the stamp must move on every build; in a RELEASE it must be stable (#151).
 
       The version alone is right for a published site — every visitor with a cached bundle
@@ -1441,23 +1471,33 @@ export async function buildSite(
         `${PUBLIC}/${scriptName}`,
         `${PUBLIC}/doc-system.css`,
       ].filter(Boolean) as string[]
-      const assetStamp = opts.lock
-        ? releaseStamp
-        : await (async () => {
-            const hasher = new Bun.CryptoHasher('sha256')
-            let sawAny = false
-            for (const f of stampInputs) {
-              const file = Bun.file(f)
-              if (!(await file.exists())) continue
-              sawAny = true
-              hasher.update(new Uint8Array(await file.arrayBuffer()))
-            }
-            // No assets to hash yet — fall back to something that always moves, rather
-            // than to the version, which is the bug this replaces.
-            return sawAny
-              ? hasher.digest('hex').slice(0, 12)
-              : `${releaseStamp}-${buildStamp.commit ?? 'dev'}`
-          })()
+      /*
+      Always a CONTENT HASH — the `opts.lock ? version : hash` branch is gone (major M3).
+
+      No shipped caller passed `lock: true` (`bin/dev.ts`, `dev-server.ts` and
+      `smoke-consumer.ts` all pass `skipAudit` or nothing), so "release builds keep the
+      version" never happened — and `lock` means "acquire the build lock", so an adopter
+      passing it for its documented purpose would have silently flipped stamping mode.
+
+      A hash is what a stamp is FOR: it moves exactly when the bytes move, which a version
+      does not (dev) and over-does (a release with identical output). `releaseStamp` survives
+      only as the fallback when there is nothing to hash yet.
+      */
+      const assetStamp = await (async () => {
+        const hasher = new Bun.CryptoHasher('sha256')
+        let sawAny = false
+        for (const f of stampInputs) {
+          const file = Bun.file(f)
+          if (!(await file.exists())) continue
+          sawAny = true
+          hasher.update(new Uint8Array(await file.arrayBuffer()))
+        }
+        // No assets to hash yet — fall back to something that always moves, rather
+        // than to the version, which is the bug this replaces.
+        return sawAny
+          ? hasher.digest('hex').slice(0, 12)
+          : `${releaseStamp}-${buildStamp.commit ?? 'dev'}`
+      })()
 
       /*
       `docs.json` gets its OWN stamp, keyed to its own bytes.
@@ -1512,18 +1552,6 @@ export async function buildSite(
       // Burn the theme into a static stylesheet (separate subprocess — see
       // generate-css.ts). Resolve the sibling relative to THIS module so it works
       // both in-repo (.ts) and when shipped (compiled .js).
-      const genCssTs = `${import.meta.dir}/generate-css.ts`
-      const genCss = existsSync(genCssTs)
-        ? genCssTs
-        : `${import.meta.dir}/generate-css.js`
-      // generate-css imports the consumer's library to burn the theme; when that graph
-      // reaches non-`.ts` sources (e.g. `.tjs`), `--preload` a module that registers the
-      // Bun loader plugin so those modules evaluate. (See BUILD-TJS-HOOK.md.)
-      const themeArg = JSON.stringify(config.theme || {})
-      await (config.generateCssPreload
-        ? $`bun --preload ${config.generateCssPreload} ${genCss} ${PUBLIC}/doc-system.css ${themeArg}`
-        : $`bun ${genCss} ${PUBLIC}/doc-system.css ${themeArg}`
-      ).text()
       console.log(`generated ${pageCount} static pages`)
 
       // ── host preset files ──

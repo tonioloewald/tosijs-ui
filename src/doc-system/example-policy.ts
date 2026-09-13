@@ -27,7 +27,16 @@ export const EXECUTABLE_LANGS = new Set([
   'test',
 ])
 
-export type ExamplePolicy = 'auto' | 'opt-in'
+/**
+ * - `'auto'` — the six executable languages become live examples (the web default).
+ * - `'opt-in'` — only a fence that asks, via `:inline` / `:iframe` / `:ide`.
+ * - `'none'` — **nothing here is live.** For a target that cannot run examples at all: an
+ *   ePub, a printed page, a PDF. Without it, `buildEpub` defaulted to `'auto'` and skipped
+ *   every `js`/`ts`/`tjs`/`html`/`css`/`test` fence — buying nothing, because a book has no
+ *   live examples to protect — and left **237 of 284 code blocks unhighlighted** in our own
+ *   ePub while the CHANGELOG said "highlighted in the ePub and in print".
+ */
+export type ExamplePolicy = 'auto' | 'opt-in' | 'none'
 
 /**
  * Will this fence become a live example?
@@ -41,8 +50,11 @@ export function isLiveFence(
   mode: string | undefined,
   policy: ExamplePolicy = 'auto'
 ): boolean {
+  // Nothing is live in a book or on paper — skipping a fence there protects nothing and
+  // costs the reader the highlighting.
+  if (policy === 'none') return false
   if (!EXECUTABLE_LANGS.has(lang.toLowerCase())) return false
-  // `:static` opts out under either policy, so one corpus can target both.
+  // `:static` opts out under any policy, so one corpus can target all of them.
   if (mode === 'static') return false
   return policy === 'opt-in' ? mode !== undefined : true
 }
