@@ -206,6 +206,27 @@ export const liveExampleStyleSpec = {
     ':host [part="testResults"][hidden]': {
         display: 'none',
     },
+    /*
+    A TEST-ONLY example: the results are the body, not an overlay.
+  
+    A ` ```test ` fence with no js/html/css beside it has nothing to render, so the preview was
+    an empty box — which reads as a broken example rather than a passing suite, and hid the one
+    thing the block exists to show. Two of these are in this project's own corpus.
+  
+    So the floating panel becomes in-flow content filling the example, and the empty preview
+    stops reserving space.
+    */
+    ':host(.-test-only) [part="testResults"]': {
+        position: 'static',
+        maxWidth: 'none',
+        maxHeight: 'none',
+        background: 'transparent',
+        padding: 'var(--spacing, 10px)',
+        fontSize: 'inherit',
+    },
+    ':host(.-test-only) .preview': {
+        display: 'none',
+    },
     ':host .test-pass': {
         color: '#0a0',
     },

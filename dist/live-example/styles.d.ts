@@ -165,6 +165,17 @@ export declare const liveExampleStyleSpec: {
     ':host [part="testResults"][hidden]': {
         display: string;
     };
+    ':host(.-test-only) [part="testResults"]': {
+        position: string;
+        maxWidth: string;
+        maxHeight: string;
+        background: string;
+        padding: string;
+        fontSize: string;
+    };
+    ':host(.-test-only) .preview': {
+        display: string;
+    };
     ':host .test-pass': {
         color: string;
     };

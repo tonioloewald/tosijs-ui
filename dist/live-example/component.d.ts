@@ -193,6 +193,17 @@ export declare class LiveExample extends Component<ExampleParts> {
         ':host [part="testResults"][hidden]': {
             display: string;
         };
+        ':host(.-test-only) [part="testResults"]': {
+            position: string;
+            maxWidth: string;
+            maxHeight: string;
+            background: string;
+            padding: string;
+            fontSize: string;
+        };
+        ':host(.-test-only) .preview': {
+            display: string;
+        };
         ':host .test-pass': {
             color: string;
         };
@@ -275,6 +286,15 @@ export declare class LiveExample extends Component<ExampleParts> {
      */
     private liveBindings;
     updateUndo: () => void;
+    /**
+     * Does this example consist ONLY of tests?
+     *
+     * A ` ```test ` fence with no `js`/`html`/`css` beside it has nothing to render, so the
+     * preview was an empty box — which reads as a broken example rather than as a passing test
+     * suite, and hid the one thing the block was there to show. For these, the results ARE the
+     * content.
+     */
+    private get isTestOnly();
     private updateTestResultsVisibility;
     undo: () => void;
     redo: () => void;

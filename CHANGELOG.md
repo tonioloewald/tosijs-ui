@@ -99,6 +99,20 @@ redefine the token **only if it owns a background** — `header` is brand-colour
 contents genuinely need the matching text colour and should inherit it. A rule that only wants
 to colour itself sets `color`.
 
+### A test-only example shows its results instead of an empty box
+
+A ` ```test ` fence with no `js`/`html`/`css` beside it has nothing to render. The preview came
+up empty and the results panel stayed hidden unless a test **failed** — so a passing suite
+looked like a broken example, and hid the one thing the block existed to show.
+
+Now the results are the example's body: always visible, in flow, with the empty preview taking
+no space. Ordinary examples are unchanged — their results stay a floating panel, shown on the
+test tab or on failure.
+
+Useful for documenting a pure function, an invariant, or any behaviour with no visual output.
+There is a worked example in the `example` docs, which is also what the Playwright test asserts
+against — the corpus had none when this was written.
+
 ### Four adoption defects from tjs-lang (#151, #153, #154, #156)
 
 All four are silent — the build succeeds and something is quietly wrong, which is #61's thesis

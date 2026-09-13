@@ -427,6 +427,25 @@ test('waitMs delays execution', async () => {
 })
 ```
 
+### A test-only example shows its results
+
+A ` ```test ` fence with nothing beside it has no preview to render. Rather than an empty box
+— which reads as a broken example and hides the one thing the block is there to show — the
+results become the example's body:
+
+```test
+test('a test-only example renders its own results', () => {
+  expect(1 + 1).toBe(2)
+})
+
+test('…including several of them', () => {
+  expect('tosijs-ui'.length).toBeGreaterThan(3)
+})
+```
+
+Useful for documenting a pure function, an invariant, or a behaviour that has no visual
+output. The example above is a real one — it runs on every build of this page.
+
 ## `context`
 
 A `<tosi-example>` is given a `context` object which is the set of values available
@@ -842,6 +861,18 @@ export class LiveExample extends Component {
         this.updateEditedIndicator();
         this.updateTestResultsVisibility();
     };
+    /**
+     * Does this example consist ONLY of tests?
+     *
+     * A ` ```test ` fence with no `js`/`html`/`css` beside it has nothing to render, so the
+     * preview was an empty box — which reads as a broken example rather than as a passing test
+     * suite, and hid the one thing the block was there to show. For these, the results ARE the
+     * content.
+     */
+    get isTestOnly() {
+        const blank = (v) => !v || v.trim() === '';
+        return (!blank(this.test) && blank(this.js) && blank(this.html) && blank(this.css));
+    }
     updateTestResultsVisibility() {
         const { testResults: resultsEl } = this.parts;
         const results = this.testResults;
@@ -849,9 +880,17 @@ export class LiveExample extends Component {
         // even though the tab label changed). No tab is active until the panel exists.
         const isTestTabActive = this.editorsBuilt && this.activeTab === this.parts.test;
         const hasFailed = results && results.failed > 0;
-        // Show results if: has results AND (test tab is active OR there are failures)
+        /*
+        A test-only example ALWAYS shows its results — they are its only output. Otherwise:
+        results when the test tab is active, or when something failed.
+        */
         resultsEl.hidden =
-            !results || results.tests.length === 0 || (!isTestTabActive && !hasFailed);
+            !results ||
+                results.tests.length === 0 ||
+                (!this.isTestOnly && !isTestTabActive && !hasFailed);
+        // Lets the stylesheet present the results as the example's body rather than as an
+        // annotation under an empty preview.
+        this.classList.toggle('-test-only', this.isTestOnly);
     }
     undo = () => {
         const { activeTab } = this;
