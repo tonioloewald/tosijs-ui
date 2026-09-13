@@ -427,7 +427,17 @@ working one.
       direction.
 - [x] **#147: `tosi-table` filter/sort/window order** — done, filter → sort → window, memoized.
 
-## Cap the Prism grammar map (1.15.0 re-review, blast-radius major)
+## Prism weight in the iife — a STOPGAP, superseded by blueprints
+
+⚠️ **Do not spend real effort tuning the grammar list.** The direction (owner, 2026-09-13) is
+to turn tosijs-ui inside out and make it blueprint-based by nature, so nothing pays for Prism
+until a highlighted code block is actually displayed. That deletes this problem rather than
+shrinking it, and it also routes around the thing that causes it: the iife is the ONE artifact
+that cannot code-split, which is why ESM consumers already pay nothing and CDN consumers pay
+everything. A blueprint loads on demand in both.
+
+So treat the numbers below as a measurement of a temporary condition, not a backlog item
+someone should optimise.
 
 `dist/iife.js` grew **435.7kb → 467.5kb gzip (+31.8kb, +7.3%)** in 1.15.0, because an iife
 cannot code-split and inlines Prism core plus all 27 grammar modules. That is **above the
@@ -436,7 +446,18 @@ gzip-delta gate** CLAUDE.md sets for a new runtime dependency, and it lands on e
 It compounds [#120](https://github.com/tonioloewald/tosijs-ui/issues/120), where CodeMirror is
 already ~94% of that bundle.
 
-- [ ] Measure a capped map. The build already knows which grammars a corpus uses, so the
+- [x] **Measured** (2026-09-13), so nobody re-derives it. Differential builds, iife gzip:
+      v1.14.1 **425.5kb** → minus grammars and core **428.3** → minus grammars **436.2** →
+      HEAD **456.6**. So: 27 grammars = **20.4kb**, Prism core = **7.9kb**, and *everything
+      else in the entire 1.15.0 release* = **2.8kb**. A 12-grammar cap measures **446.2kb**,
+      returning 10.4kb.
+
+      The three biggest languages by fence count — `javascript` (127), `markup` (63), `css`
+      (51) — are Prism CORE BUILTINS and cost nothing extra. The 20.4kb is entirely the long
+      tail. This corpus needs 6 of the 27, and one of those (`scss`) exists only because a
+      display-only tag was chosen for one menu example.
+
+- [ ] If the blueprint work is far off and the 10.4kb starts mattering, cap the map. The build already knows which grammars a corpus uses, so the
       realistic set is far smaller than 27. **A capped map must not silently stop highlighting
       a language a corpus uses** — that is the failure mode to test for, and it is the same
       silent-degradation class as the defect the map replaced.
