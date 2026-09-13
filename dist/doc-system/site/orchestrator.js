@@ -147,6 +147,9 @@ async function checkExamplesInChild(docsJson, importPrefix, contextKeys = [], li
             problems: payload.problems,
             warnings: payload.warnings ?? [],
             bakes: new Map(payload.bakes.map(([file, e]) => [file, new Map(e)])),
+            // Reconstructed, or the field silently reads "nothing was skipped" on the path the
+            // build actually uses — which is the whole point of having it.
+            skipped: new Map(payload.skipped ?? []),
         };
     }
     catch (e) {
@@ -345,6 +348,14 @@ export function shouldCleanDist(config) {
         return false;
     return config.emitLibrary === true || Boolean(config.libraryTsconfig);
 }
+/*
+Announce-once state for the "writes outside outputDir" warning.
+
+Module-level, so a watch rebuild does not repeat it, and so it fires on the FIRST build
+whether or not the dependency audit ran — it was gated on `!opts.skipAudit`, which means
+"interactive", so it never appeared under `bun start`: the workflow the report came from.
+*/
+let announcedClobber = false;
 export async function buildSite(config, opts = {}) {
     // Look at the machine before adding load to it. Runs on every build, including each
     // watch rebuild, because the danger is not present at launch and then absent — it
@@ -461,7 +472,15 @@ export async function buildSite(config, opts = {}) {
         warning it every build would be noise of the kind that teaches people to stop reading
         warnings.
         */
-        if (!opts.skipAudit && (config.outputDir ?? 'docs') !== 'docs') {
+        /*
+        Announce ONCE, on the first build of this process — not `!opts.skipAudit`.
+    
+        `skipAudit` means "do not run the dependency audit", which `bun start` passes. So the
+        warning never fired under the dev server: the exact workflow the report came from. Only
+        `--build-only` and `--test` saw it (1.15.0 review).
+        */
+        if (!announcedClobber && (config.outputDir ?? 'docs') !== 'docs') {
+            announcedClobber = true;
             const clobbered = writesOutsideOutputDir({
                 docsJson: DOCS_JSON,
                 llmsTxt: config.llmsTxt === false ? null : 'llms.txt',

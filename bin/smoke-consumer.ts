@@ -347,6 +347,7 @@ try {
     'tosijs-ui/schema-form/fields.js',
     'tosijs-ui/hash-state',
     'tosijs-ui/crud',
+    'tosijs-ui/highlight-block',
   ]) {
     check(
       `node resolves ${entry} (no missing-module error)`,
@@ -409,6 +410,34 @@ try {
       `devDependency ${dep}@${dev} satisfies its own peer range "${range}"`,
       Bun.semver.satisfies(dev.replace(/^[\^~]/, ''), range),
       `the library declares a floor it does not build against`
+    )
+  }
+
+  /*
+  Every NAMED subpath must carry `types`, `import` AND `default`.
+
+  `./highlight-block` shipped with only `types` + `import` while all ten siblings had three
+  (1.15.0 review). An exact key beats the `./*` wildcard, and a subpath whose conditions do
+  not match errors with ERR_PACKAGE_PATH_NOT_EXPORTED rather than falling through — so a
+  resolver under `['require','default']` (Jest's default, a CJS-targeting webpack/rollup
+  build, Vite SSR externalisation) hard-failed on that one subpath while `tosijs-ui/diff`
+  beside it resolved. Structural, because the next new subpath will be written by copying a
+  neighbour and the neighbour might be the wrong one.
+  */
+  {
+    const incomplete = Object.entries(
+      (manifest.exports ?? {}) as Record<string, unknown>
+    )
+      .filter(([k, v]) => !k.includes('*') && v && typeof v === 'object')
+      .filter(([, v]) => {
+        const c = v as Record<string, unknown>
+        return !('types' in c && 'import' in c && 'default' in c)
+      })
+      .map(([k]) => k)
+    check(
+      'every named subpath export carries types + import + default',
+      incomplete.length === 0,
+      incomplete.join(', ') || undefined
     )
   }
 

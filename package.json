@@ -158,7 +158,8 @@
     },
     "./highlight-block": {
       "types": "./dist/highlight-block.d.ts",
-      "import": "./dist/highlight-block.js"
+      "import": "./dist/highlight-block.js",
+      "default": "./dist/highlight-block.js"
     },
     "./theme": {
       "types": "./dist/theme.d.ts",

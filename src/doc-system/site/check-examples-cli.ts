@@ -49,7 +49,7 @@ const liveExamples = (process.env.TOSI_LIVE_EXAMPLES || 'auto') as
   | 'none'
 
 const corpus = JSON.parse(await Bun.file(docsJson).text())
-const { problems, warnings, bakes } = await checkExamples(corpus, {
+const { problems, warnings, bakes, skipped } = await checkExamples(corpus, {
   ...(contextKeys.length ? { contextKeys } : {}),
   ...(importPrefix ? { importPrefix } : {}),
   liveExamples,
@@ -66,5 +66,9 @@ process.stdout.write(
       filename,
       Array.from(docBakes.entries()),
     ]),
+    // Maps can't JSON-roundtrip either. Without this the field always read "nothing was
+    // skipped" on the path the BUILD uses, while its JSDoc told callers to distinguish it
+    // from `problems` — a public type that could not be true (1.15.0 review).
+    skipped: skipped ? Array.from(skipped.entries()) : [],
   })
 )
