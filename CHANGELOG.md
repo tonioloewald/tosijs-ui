@@ -99,6 +99,84 @@ redefine the token **only if it owns a background** — `header` is brand-colour
 contents genuinely need the matching text colour and should inherit it. A rule that only wants
 to colour itself sets `color`.
 
+### Packaging and API corrections
+
+**`tosijs-ui/highlight-block` resolves under every condition.** It shipped as the only named
+subpath without a `default` export condition — its ten siblings all had one. An exact key beats
+the `./*` wildcard and *errors* (`ERR_PACKAGE_PATH_NOT_EXPORTED`) rather than falling through,
+so a resolver under `['require','default']` — Jest's default, a CJS-targeting webpack/rollup
+build, Vite SSR externalisation — hard-failed on that one subpath while `tosijs-ui/diff` beside
+it resolved. `bun run test-consumer` now asserts **structurally** that every named subpath
+carries `types` + `import` + `default`.
+
+**`prismjs` is a real dependency, not an optional peer.** It first shipped declared *only* as
+a devDependency while `dist/doc-system/highlight.js` imported it, so an adopter's build
+resolved it by hoisting luck — and without it their doc site, ePub and print output had no
+syntax highlighting at all, silently. Making it an optional peer then broke the build outright:
+the grammar loaders are static imports a bundler must resolve, so an adopter without the
+package could not build. This
+is the fork already recorded for `tosijs-schema`: a literal import fails a consumer's build
+when the package is absent, and a variable specifier cannot resolve in a browser. It costs one
+lockfile entry and one audit surface; it costs **no bytes** unless something highlights, since
+`<tosi-highlight>` is excluded from the root barrel and the grammars are lazy chunks. The iife
+is the exception and pays **+31.8kb gzip** — see below.
+
+**`ExamplePolicy` gained `'none'`** — "nothing here is live" — for targets that cannot run an
+example at all. The ePub and the Print path pass it.
+
+**`transformAvailable(dialect)`** is exported: the question a diagnostic must ask before it
+accuses a document. `checkExamples` uses it to **skip** dialects whose transpiler could not be
+resolved and report them as *unchecked*, instead of parsing them as JavaScript and blaming the
+author (#154). `ExampleCheck.skipped` now survives the child-process boundary, so that field is
+true on the path the build actually uses rather than always reading "nothing was skipped".
+
+**The "writes outside `outputDir`" warning fires under `bun start`.** It was gated on
+`!opts.skipAudit`, which means *interactive* — so it never appeared in the dev server, the
+exact workflow the report came from.
+
+### The iife is +31.8kb gzip — and that is above our own gate
+
+`dist/iife.js` went **435.7kb → 467.5kb gzip (+7.3%)** between 1.14.1 and 1.15.0. An iife
+cannot code-split, so it inlines Prism core and all 27 grammar modules. This lands on every CDN
+`<script>` user and every `tosijs-ui/site` adopter without `bundleEntry`, on every page load,
+and it compounds #120 where CodeMirror is already most of that bundle.
+
+`CLAUDE.md` sets the gate for a new runtime dependency as the printed gzip delta, and this
+exceeds it. It ships anyway because the alternative was a highlighter that did not work in a
+browser — but the number is stated here rather than left in a commit body, and the unexplored
+remedy (capping the grammar map, or marking prism external for the iife specifically) is
+tracked in `TODO.md` so tagging cannot evaporate it.
+
+**The ESM path is unaffected**: an app importing a button ships no prism at all.
+
+### Need more icons?
+
+The icons page now points at [lucide](https://lucide.dev) — a maintained fork of Feather in the
+same style with far more options, ISC licensed. It emits the same geometry Feather does
+(`24×24`, `fill="none"`, `stroke="currentColor"`, width 2, round caps), so a downloaded SVG
+drops into `defineIcons()` and inherits colour and sizing like a built-in.
+
+### Smaller corrections from the pre-release review
+
+- **`checkExamples` no longer hard-fails on a fence that will never run.** It reduced
+  ` ```js:static ` to `js`, so a block marked illustrative — or any block under
+  `liveExamples: 'opt-in'` that never asked to run — failed the build over its syntax, advising
+  the author to retag it `typescript`: exactly the mislabelling this release abolishes. It now
+  keeps the fence mode and gates on the same predicate the highlighter and `insertExamples` use.
+- **`highlightBlocks` asks that predicate too**, rather than relying on `insertExamples` having
+  already wrapped live blocks. That held only by ordering, which nothing enforced, and
+  tokenizing live-example source is what cost seven doc tests mid-cycle.
+- **`ensureGrammar` distinguishes "no such grammar" from "failed to load".** The first is a
+  plain code block; the second is a real problem and now says so. Conflating them is why a
+  browser-side failure shipped silently.
+- **The `docPaths` escape from the default `reviews/` exclusion actually works** — the basename
+  test ran on the roots too, so naming the directory produced nothing while three shipped
+  places said otherwise.
+- **The `-test-only` class** lets a stylesheet present a test-only example's results as its
+  body rather than as an annotation under an empty preview.
+- **The barrel guard checks two properties**: a plain component build ships zero prism, and
+  every grammar import lives inside a thunk.
+
 ### A test-only example shows its results instead of an empty box
 
 A ` ```test ` fence with no `js`/`html`/`css` beside it has nothing to render. The preview came
@@ -150,8 +228,17 @@ which does not change while you work — so `hydrate.js?v=0.2.0` was byte-identi
 rebuild and the browser kept executing the bundle it cached hours ago, through edits and
 reloads. It looks exactly like "my change had no effect": the reporter spent a long session
 editing CSS that was already correct and already being served. Dev builds now stamp with a
-**content hash** of the bundle and stylesheet, so it moves when the output moves and *only*
-then; release builds keep the version.
+**content hash** of the bundle, the iife and the stylesheet, so it moves when the output moves
+and *only* then. **Every** build does — there is no separate release mode.
+
+Two defects in the first cut, both caught by the 1.15.0 review. `doc-system.css` was named in
+the hash inputs but generated ~80 lines after the stamp was consumed, and the hash loop skips a
+missing file silently — so a `theme`-only change deployed new CSS under an unchanged URL, a
+regression against the version stamp it replaced. And the "release builds keep the version"
+branch keyed on `opts.lock`, which no shipped caller passes and which means *acquire the build
+lock*: it never ran, and an adopter using `lock` for its documented purpose would have silently
+changed stamping mode. The stylesheet is now generated before the stamp, and the branch is
+gone.
 
 **A doc that documents the metadata format is no longer classified by its own example
 (#156).** `<!--{…}-->` matched anywhere in the file, so a page teaching the convention was

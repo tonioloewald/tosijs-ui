@@ -1255,8 +1255,10 @@ export async function buildSite(config, opts = {}) {
             that was already correct and already being served. `curl` showed the new bundle; the
             page was running the old one.
       
-            So: a content hash in dev (moves precisely when the output does, and NOT when it
-            doesn't), the version in a release build.
+            So: a content hash, always — it moves precisely when the output does, and not when it
+            doesn't. (This said "the version in a release build" until the 1.15.0 review pointed out
+            that the branch below had already been deleted, twenty lines further down, leaving two
+            contradictory accounts on one screen.)
             */
             const releaseStamp = (await Bun.file(`${process.cwd()}/package.json`)
                 .json()

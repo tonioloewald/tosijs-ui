@@ -235,3 +235,22 @@ describe('#155: a language can supply its own grammar', () => {
     expect(out).toContain('data-highlighted')
   })
 })
+
+test('opt-in: executable fences ARE highlighted client-side (re-review)', async () => {
+  /*
+  `highlightBlocks` gained an `isLiveFence` filter, and the doc-browser called it without a
+  policy — so it defaulted to 'auto' and skipped all six executable languages on an `opt-in`
+  site. Those pages hard-load highlighted (the build passes the policy correctly) and lost
+  every token on client-side navigation: B1's symptom, reintroduced for exactly the prose and
+  book audience `opt-in` exists for.
+  */
+  const root = document.createElement('div')
+  root.innerHTML = '<pre><code class="language-js">const x = 1</code></pre>'
+  expect(await highlightBlocks(root, { policy: 'opt-in' })).toBe(1)
+
+  // …and a fence that DOES ask to run is still skipped, even under opt-in.
+  const live = document.createElement('div')
+  live.innerHTML =
+    '<pre data-example-mode="inline"><code class="language-js">const y = 2</code></pre>'
+  expect(await highlightBlocks(live, { policy: 'opt-in' })).toBe(0)
+})

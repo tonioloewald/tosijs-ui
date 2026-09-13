@@ -234,20 +234,22 @@ export async function ensureGrammar(lang: string): Promise<boolean> {
         .default as PrismLike
     } catch {
       /*
-      Prism is an OPTIONAL PEER — absent it, code blocks stay plain. That is a real
-      degradation (no highlighting on the site, in the ePub or in print), so it says so ONCE
-      rather than returning a quiet false.
+      Prism is a real DEPENDENCY, so reaching here means something is genuinely wrong —
+      a broken install, a bundler that dropped it, a sandbox without node_modules. Not the
+      ordinary "you did not install the optional extra" case it used to be.
 
-      It shipped as a devDependency in the first cut of this feature, which meant an
-      adopter's build imported it from `dist/` and it resolved only by hoisting luck: their
-      doc site would have had no highlighting at all and nothing would have said why. Same
-      shape as the `chokidar` regression this project already records.
+      It shipped as a devDependency first (an adopter's build resolved it only by hoisting
+      luck), then as an optional peer — which broke a consumer's build outright, because the
+      static grammar map must resolve at bundle time. CLAUDE.md records the same fork for
+      tosijs-schema: a literal import fails without the package, a variable specifier cannot
+      resolve in a browser. There is no third option, so it is a dependency.
       */
       if (!warnedNoPrism) {
         warnedNoPrism = true
         console.warn(
-          'prismjs not found — static code blocks will not be syntax-highlighted ' +
-            '(site, ePub and print alike). Install it: bun add -d prismjs'
+          'prismjs could not be loaded — static code blocks will not be syntax-highlighted ' +
+            '(site, ePub and print alike). It is a dependency of tosijs-ui, so this usually ' +
+            'means a broken install: try reinstalling.'
         )
       }
       return false

@@ -427,6 +427,25 @@ working one.
       direction.
 - [x] **#147: `tosi-table` filter/sort/window order** — done, filter → sort → window, memoized.
 
+## Cap the Prism grammar map (1.15.0 re-review, blast-radius major)
+
+`dist/iife.js` grew **435.7kb → 467.5kb gzip (+31.8kb, +7.3%)** in 1.15.0, because an iife
+cannot code-split and inlines Prism core plus all 27 grammar modules. That is **above the
+gzip-delta gate** CLAUDE.md sets for a new runtime dependency, and it lands on every CDN
+`<script>` user and every `tosijs-ui/site` adopter without `bundleEntry` — on every page load.
+It compounds [#120](https://github.com/tonioloewald/tosijs-ui/issues/120), where CodeMirror is
+already ~94% of that bundle.
+
+- [ ] Measure a capped map. The build already knows which grammars a corpus uses, so the
+      realistic set is far smaller than 27. **A capped map must not silently stop highlighting
+      a language a corpus uses** — that is the failure mode to test for, and it is the same
+      silent-degradation class as the defect the map replaced.
+- [ ] Or mark `prismjs` external for the iife build specifically. The build-time pass already
+      puts tokens in the pre-rendered HTML, so those pages lose nothing; only runtime
+      highlighting (`<tosi-highlight>`, client-side nav) would need it.
+- [ ] Either way the ESM path is already free — the barrel excludes `<tosi-highlight>` and the
+      grammars are lazy chunks.
+
 ## Doc-System Roadmap
 
 See [doc-system-roadmap.md](doc-system-roadmap.md) for the full plan. North star:

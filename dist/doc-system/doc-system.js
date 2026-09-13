@@ -321,11 +321,26 @@ export class TosiDocSystem extends Component {
                             autoPrint: false,
                         }));
                         win.document.close();
-                        void highlightBlocks(win.document, { policy: 'none' })
-                            .catch(() => { })
-                            .then(() => {
-                            setTimeout(() => win.print(), 300);
-                        });
+                        /*
+                        Wait for the popup's LOAD event, then highlight, then print.
+          
+                        `autoPrint: true` used to inject a `load` listener into the book document, so
+                        printing waited for its subresources. Switching to `autoPrint: false` to get
+                        highlighting in first dropped that wait and printed on a fixed timer — which can
+                        fire before fonts and images are ready (1.15.0 re-review). Restored explicitly,
+                        and highlighting hangs off the same event rather than racing it.
+                        */
+                        const printWhenReady = () => {
+                            void highlightBlocks(win.document, { policy: 'none' })
+                                .catch(() => {
+                                // Plain code beats a print dialog that never opens.
+                            })
+                                .then(() => setTimeout(() => win.print(), 300));
+                        };
+                        if (win.document.readyState === 'complete')
+                            printWhenReady();
+                        else
+                            win.addEventListener('load', printWhenReady, { once: true });
                     },
                 });
                 menuItems.push({

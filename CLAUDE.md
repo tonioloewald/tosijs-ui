@@ -414,7 +414,22 @@ How grouping works (`insert-examples.ts`):
 
 See `package.json` for current versions. The notable ones:
 
-- `@codemirror/*` (12 packages): the **only hard runtime `dependencies`** — everything else is a peer or dev dep. This is a deliberate 1.7 divergence from the shared practices' "zero runtime dependencies in core libraries" rule (CodeMirror can't be a naive optional peer: the editor, its language modes, and the tjs extension must all share one `@codemirror/state` instance). Don't "fix" it by demoting them to peers. The gate on a new runtime dep here is the printed gzip delta, not the dependency count.
+- `@codemirror/*` (12 packages) **and `prismjs`**: the hard runtime `dependencies` — everything else is a peer or dev dep. This is a deliberate 1.7 divergence from the shared practices' "zero runtime dependencies in core libraries" rule (CodeMirror can't be a naive optional peer: the editor, its language modes, and the tjs extension must all share one `@codemirror/state` instance). Don't "fix" it by demoting them to peers. The gate on a new runtime dep here is the printed gzip delta, not the dependency count.
+
+  **`prismjs` (added 1.15.0).** Syntax highlighting for static code blocks, on the page, in
+  the ePub and in print. It is a DEPENDENCY rather than an optional peer because the grammar
+  loaders are static imports a bundler must resolve — the same fork recorded for
+  `tosijs-schema` below: a literal import fails a consumer's build when the package is absent,
+  a variable specifier is left external and cannot resolve in a browser. The first cut used a
+  computed specifier and no browser could load a grammar at all.
+
+  **Measured cost, which is above the gzip gate this paragraph sets:** `dist/iife.js` went
+  **435.7kb → 467.5kb gzip (+31.8kb, +7.3%)** between v1.14.1 and 1.15.0, because an iife
+  cannot code-split and so inlines Prism core plus 27 grammar modules. It lands on every CDN
+  `<script>` user and every `tosijs-ui/site` adopter without `bundleEntry`, and it compounds
+  #120. The ESM path pays nothing: `<tosi-highlight>` is excluded from the root barrel and the
+  grammars are lazy chunks, so an app importing a button ships none of it. Capping the map
+  below 27 languages is the unexplored remedy — see `TODO.md`.
 
   **The known cost, so it is not rediscovered as a bug (#58):** those 12 packages enter every
   consumer's lockfile and therefore their audit surface, even though the editor is lazy at the

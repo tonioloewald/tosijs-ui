@@ -159,6 +159,7 @@ import { pageTitle } from './doc-system/doc-title.js';
 import { unsettledExamples } from './doc-system/test-completion.js';
 import { LiveExample, testManager, pageTestCount, enableTests, disableTests, } from './live-example.js';
 import { highlightBlocks } from './doc-system/highlight.js';
+import { examplePolicy } from './live-example/insert-examples.js';
 import { tosiSidenav, TosiSidenav } from './side-nav.js';
 import { icons } from './icons.js';
 import { tosiLocalized } from './localize.js';
@@ -913,6 +914,18 @@ export function createDocBrowser(options) {
         */
         void highlightBlocks(docContent, {
             liveExampleTag: LiveExample.tagName || undefined,
+            /*
+            The policy the CLIENT actually has — read from the global the build stamps, the same
+            source `insertExamples` consults.
+      
+            This defaulted to `'auto'`, and the new `isLiveFence` filter in `highlightBlocks` then
+            skipped all six executable languages on an `opt-in` site. Such a page hard-loads
+            highlighted (the build passes `config.liveExamples` correctly) and lost every token the
+            moment a reader navigated in-page: B1's exact symptom — 531 tokens down to 23 — brought
+            back for the prose/book audience the opt-in setting exists for. Uncaught because this
+            repo's own site is `'auto'`.
+            */
+            policy: examplePolicy(),
         }).catch(() => { });
         scrollToHashExample();
         if (routing === 'path') {
