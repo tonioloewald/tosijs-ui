@@ -28,6 +28,7 @@ never import this from browser code.
 */
 
 import { $ } from 'bun'
+import { readFileSync } from 'node:fs'
 import { runtimeReachable, classifyReach, type Reach } from './audit-reach.js'
 
 export type AuditSeverity = 'info' | 'low' | 'moderate' | 'high' | 'critical'
@@ -507,7 +508,7 @@ export async function auditDependencies(
   silently excusing everything.
   */
   let reach: Record<string, Reach> = {}
-  let reachUsable = false
+  let reachUsable: boolean
   try {
     const rootManifest = JSON.parse(
       await Bun.file(`${process.cwd()}/package.json`).text()
@@ -515,7 +516,7 @@ export async function auditDependencies(
     const reachable = runtimeReachable(rootManifest, (pkg) => {
       try {
         return JSON.parse(
-          require('fs').readFileSync(
+          readFileSync(
             `${process.cwd()}/node_modules/${pkg}/package.json`,
             'utf8'
           )

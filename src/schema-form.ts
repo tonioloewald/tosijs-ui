@@ -124,6 +124,42 @@ for the functions instead of the package. The upside is that they are just funct
 wrapper, a house validator or a test stub all work. `tosijs-schema` is the one we ship docs
 for, not a requirement.
 
+## Non-conforming data
+
+The form is an **editor, not a gate**. Give it a value that violates its schema and it renders
+that value, validates on load, and marks the offending fields. It does not coerce the data,
+strip it, refuse it, or stop you saving it.
+
+Enforcement is yours, deliberately. The form has no validator of its own, so a save gate built
+in here would pass silently for every consumer who never registered one — a gate that opens
+when nothing checked is worse than no gate, because it reads as enforcement. `validate()` and
+`validationAvailable` are the seam instead, and they are three lines in your save handler:
+
+```typescript
+if (form.validationAvailable && !form.validate()) {
+  // your call: refuse, warn, save a draft
+}
+```
+
+**Known limitation, tracked as
+[#162](https://github.com/tonioloewald/tosijs-ui/issues/162).** In three cases the offending
+value is kept in `value` but cannot be seen on screen:
+
+- **A value the typed control cannot hold shows as empty.** `age: "abc"` against
+  `{ type: 'integer' }` renders an empty `number` input, because the browser discards a value
+  it cannot parse; an enum value not in the list leaves the `select` blank. `value.age` is
+  still `"abc"` — but the field looks unset, and typing into it overwrites something you were
+  never shown.
+- **A union value matching no branch renders no fields** for that subtree. It survives in
+  `value` and is uneditable.
+- **An error whose path has no rendered field is invisible** — an extra property, or an error
+  against the object as a whole. It is in `errors`, so `validate()` returns `false` over a form
+  that looks clean.
+
+The fix being built for the first two is a panel listing what could not be displayed, with the
+option to purge it. Until then, treat `errors` as the authority on what is wrong and the fields
+as a partial view of it.
+
 ## No schema? It infers one
 
 Give it a `value` and no `schema` and it derives one with `inferSchema` from

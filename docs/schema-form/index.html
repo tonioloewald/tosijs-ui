@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=4e0300952738" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=6ed3ee10a673" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>schema-form</h1>
 <!--{ "parent": "Components" }-->
@@ -147,6 +147,36 @@ browser and kills validation for everyone. There is no third option, so the comp
 for the functions instead of the package. The upside is that they are just functions: an Ajv
 wrapper, a house validator or a test stub all work. <code>tosijs-schema</code> is the one we ship docs
 for, not a requirement.</p>
+<h2>Non-conforming data</h2>
+<p>The form is an <strong>editor, not a gate</strong>. Give it a value that violates its schema and it renders
+that value, validates on load, and marks the offending fields. It does not coerce the data,
+strip it, refuse it, or stop you saving it.</p>
+<p>Enforcement is yours, deliberately. The form has no validator of its own, so a save gate built
+in here would pass silently for every consumer who never registered one — a gate that opens
+when nothing checked is worse than no gate, because it reads as enforcement. <code>validate()</code> and
+<code>validationAvailable</code> are the seam instead, and they are three lines in your save handler:</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">if</span> <span class="token punctuation">(</span>form<span class="token punctuation">.</span>validationAvailable <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span>form<span class="token punctuation">.</span><span class="token function">validate</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token comment">// your call: refuse, warn, save a draft</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>Known limitation, tracked as
+<a href="https://github.com/tonioloewald/tosijs-ui/issues/162">#162</a>.</strong> In three cases the offending
+value is kept in <code>value</code> but cannot be seen on screen:</p>
+<ul>
+<li><strong>A value the typed control cannot hold shows as empty.</strong> <code>age: &quot;abc&quot;</code> against
+<code>{ type: &#39;integer&#39; }</code> renders an empty <code>number</code> input, because the browser discards a value
+it cannot parse; an enum value not in the list leaves the <code>select</code> blank. <code>value.age</code> is
+still <code>&quot;abc&quot;</code> — but the field looks unset, and typing into it overwrites something you were
+never shown.</li>
+<li><strong>A union value matching no branch renders no fields</strong> for that subtree. It survives in
+<code>value</code> and is uneditable.</li>
+<li><strong>An error whose path has no rendered field is invisible</strong> — an extra property, or an error
+against the object as a whole. It is in <code>errors</code>, so <code>validate()</code> returns <code>false</code> over a form
+that looks clean.</li>
+</ul>
+<p>The fix being built for the first two is a panel listing what could not be displayed, with the
+option to purge it. Until then, treat <code>errors</code> as the authority on what is wrong and the fields
+as a partial view of it.</p>
 <h2>No schema? It infers one</h2>
 <p>Give it a <code>value</code> and no <code>schema</code> and it derives one with <code>inferSchema</code> from
 the registered validator&#39;s <code>inferSchema</code> — useful for editing a record whose shape you don&#39;t

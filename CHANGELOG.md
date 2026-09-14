@@ -2,6 +2,50 @@
 
 ## 1.15.0 (unreleased)
 
+### Client-side navigation lost syntax highlighting on an `opt-in` site
+
+The doc-browser called `highlightBlocks` without a policy, so the new `isLiveFence` filter
+defaulted to `'auto'` and skipped all six executable languages — leaving them for a live
+example that an `opt-in` site never creates. Measured on client-side navigation: **531
+highlighted tokens down to 23.**
+
+The symptom lands on exactly the audience `liveExamples: 'opt-in'` exists for — prose and book
+sites, where nearly every fence is illustration. It now passes `examplePolicy()`, the same
+global `insertExamples` reads, so the two cannot disagree.
+
+### Print waited on a fixed timer instead of `load`
+
+`autoPrint: true` used to inject a `load` wait; switching it off so the page could be
+highlighted first dropped the wait with it, and printing raced the render. Restored.
+
+### `<tosi-schema-form>`: non-conforming data is documented, not silently absorbed (#162)
+
+The form is an editor, not a gate — a value that violates the schema is rendered, validated on
+load and marked, never coerced, stripped or refused. That is deliberate, and it is now written
+down, along with why there is no built-in save gate: with no validator registered `validate()`
+returns `true`, so a gate here would open silently for every consumer who never installed one,
+which reads as enforcement while enforcing nothing.
+
+Three known limitations are documented with it, because the value is preserved but **cannot be
+seen**: a value the typed control cannot hold renders empty (`age: "abc"` in a `number` input),
+a union value matching no branch renders no fields at all, and an error whose path has no
+rendered field is invisible while `validate()` returns `false`. Tracked as #162; the fix is a
+panel listing what could not be displayed.
+
+### `bun format` was red on two lint errors no gate ever ran
+
+CI runs `format-check`, which is **prettier only** — so the ESLint half of `bun format`, the
+command the docs tell you to run before committing, had gone red without failing anything.
+Two errors in `audit-guard.ts` (a dead initializer and a `require()`), both fixed. Worth
+knowing the shape: a documented command and the gate that checks it were not the same command.
+
+The annotation gate had the mirror-image problem, and it is worth recording for anyone using
+`tosijs-release-notes`: the commit that wrote up the last batch left `release-check` missing
+three more, because a write-up is itself an annotation. Two were real user-visible fixes,
+written up above. The third was internal and should have carried `[note]` — which is exactly
+what CLAUDE.md means by "the last commit before `git tag` must carry only `[note]` bullets, or
+the loop does not terminate."
+
 ### ePub NCX `playOrder` was duplicated and non-monotonic
 
 `playOrder` is the NCX's **linear reading position**, and the spec requires it unique and

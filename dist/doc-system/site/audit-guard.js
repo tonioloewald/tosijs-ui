@@ -27,6 +27,7 @@ native-heavy API in a long-lived process" rule. Build-time only (Bun/Node APIs);
 never import this from browser code.
 */
 import { $ } from 'bun';
+import { readFileSync } from 'node:fs';
 import { runtimeReachable, classifyReach } from './audit-reach.js';
 const SEVERITY_RANK = {
     info: 0,
@@ -354,12 +355,12 @@ export async function auditDependencies(config, opts = {}) {
     silently excusing everything.
     */
     let reach = {};
-    let reachUsable = false;
+    let reachUsable;
     try {
         const rootManifest = JSON.parse(await Bun.file(`${process.cwd()}/package.json`).text());
         const reachable = runtimeReachable(rootManifest, (pkg) => {
             try {
-                return JSON.parse(require('fs').readFileSync(`${process.cwd()}/node_modules/${pkg}/package.json`, 'utf8')).dependencies;
+                return JSON.parse(readFileSync(`${process.cwd()}/node_modules/${pkg}/package.json`, 'utf8')).dependencies;
             }
             catch {
                 return undefined;

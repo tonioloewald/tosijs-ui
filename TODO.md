@@ -501,6 +501,36 @@ migration under time pressure. Tracked so they are chosen, not discovered.
 
 ## High Priority
 
+### [#162](https://github.com/tonioloewald/tosijs-ui/issues/162) — schema-form keeps non-conforming data and cannot show it
+
+- [ ] **A "we can't display this" panel, with a purge button.** Three cases where the value is
+      preserved in the model but invisible on screen: a value the typed control cannot hold
+      (`age: "abc"` in a `number` input renders EMPTY, an out-of-list enum leaves the `select`
+      blank), a union value matching no branch (zero fields rendered for that subtree), and an
+      error whose path has no rendered field.
+
+      The hazard is not that a bad value is unfixable — an empty number input is perfectly
+      fixable, you type over it. It is that you overwrite something you were never shown.
+      Showing it removes the hazard, which is why the panel replaces the per-case fixes
+      originally proposed (text-input fallback, editable dead branch) rather than joining them.
+
+      **The boundary that must hold: purge means "values that VIOLATE the schema", never "keys
+      the schema does not mention."** With `additionalProperties` unspecified — the default —
+      `_id` and `updatedAt` are undescribed, not non-conforming. A button that strips the value
+      to the schema deletes exactly the keys the model-owns-the-data design exists to protect,
+      under a label that reads as cleanup. List undescribed keys in the same panel as
+      *preserved, not shown*, with no purge affordance.
+
+      Detection is **local and needs no validator**, which keeps this consistent with
+      enforcement being the consumer's job: a round-trip check after
+      `el.value = String(current)` catches every sanitizing control in one test without
+      per-type special-casing, and `matchBranch` already returns `-1`. The third case (errors
+      at unrendered paths) is NOT covered by a purge — an object-level error is not a piece of
+      data you can delete — and stays open for a form-level error list.
+
+      Documented as a known limitation under "Non-conforming data" in `src/schema-form.ts`.
+      1.16 work; do not start before 1.15.0 is tagged.
+
 ### `<tosi-table>` loses FOCUS on re-render (same class as #67)
 
 - [ ] **Focus does not survive a re-render, and it should.** Verified 2026-08-14: focus a
