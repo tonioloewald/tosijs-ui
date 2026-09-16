@@ -1,5 +1,41 @@
 # Changelog
 
+## 1.14.2
+
+A single-fix patch, cut from `v1.14.1` rather than from `main`, so it carries none of the
+in-progress 1.15.0 work.
+
+### `import 'tosijs-ui/doc-browser'` now actually defines `<tosi-doc-system>` (#158, #159)
+
+**If you are building a doc site with `tosijs-ui/site`, upgrade.** The one import every
+adoption doc tells you to write did not register the doc system.
+
+`doc-browser.ts` is a library module — types, helpers, `createDocBrowser()` — while the element
+lives in `doc-system/doc-system.ts`, which imports *from* doc-browser. The dependency arrow ran
+the wrong way, so that import could never have reached the registrar however it was written.
+
+What let it survive several releases is that it was a **partial** success. The leaf components
+(`tosi-sidenav`, `tosi-example`, …) registered fine, so your bundle looked healthy, your own
+elements worked, pages served 200 — and `<tosi-doc-system>` sat in the markup inert. The
+expensive half was quieter: no doc system means no `window.__docTestResults`, so an entire
+inline doc-test corpus **silently stopped existing**. Not a red suite; a suite reporting
+nothing. Two projects hit this independently, one of them reaching a release candidate first.
+
+`tosijs-ui/doc-browser` now resolves to an entry that imports the registrar and re-exports the
+whole documented API. **No code changes** — the line you already wrote starts working.
+
+A more precise spelling, a named `tosijs-ui/doc-system` export, is coming in a later release.
+**This one keeps working**; it is an addition, not a deprecation.
+
+Two sentences were separately false and are corrected: `import 'tosijs-ui'` does **not** also
+register the doc system. The root barrel deliberately excludes that cluster (#133 — it was 77%
+of the barrel's weight, landing on every app that imported a button), so the root import gives
+you buttons and an undefined doc system. That text shipped in the emitted `.d.ts`, the adoption
+page and the adopter reference.
+
+A test now imports the built entry in a subprocess and fails if the element is undefined.
+Verified by mutation: strip the side-effect import and it goes red.
+
 ## 1.14.1
 
 ### The doc-test gate can tell a dropped page from a passing one

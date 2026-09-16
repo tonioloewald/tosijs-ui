@@ -1,6 +1,6 @@
 {
   "name": "tosijs-ui",
-  "version": "1.14.1",
+  "version": "1.14.2",
   "description": "simple robust web-components for use with tosijs or anything else",
   "scripts": {
     "start": "bun --watch bin/dev.ts",
@@ -145,9 +145,9 @@
       "default": "./dist/live-example/index.js"
     },
     "./doc-browser": {
-      "types": "./dist/doc-browser.d.ts",
-      "import": "./dist/doc-browser.js",
-      "default": "./dist/doc-browser.js"
+      "types": "./dist/doc-browser-entry.d.ts",
+      "import": "./dist/doc-browser-entry.js",
+      "default": "./dist/doc-browser-entry.js"
     },
     "./diff": {
       "types": "./dist/diff.d.ts",

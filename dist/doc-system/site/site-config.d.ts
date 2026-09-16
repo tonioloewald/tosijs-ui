@@ -85,8 +85,10 @@ export interface SiteConfig {
      * (tosijs-ui#145). The build now warns when it can tell, but the warning is a safety net,
      * not the contract.
      *
-     * Importing the package ROOT (`import 'tosijs-ui'`) also works and registers everything,
-     * but pulls in every component. Prefer the subpaths above.
+     * Importing the package ROOT (`import 'tosijs-ui'`) does **NOT** cover this. The root
+     * barrel deliberately excludes the doc-system cluster (tosijs-ui#133 — it was 77% of the
+     * barrel's weight, landing on every app that imported a button), so it registers your
+     * buttons and leaves `<tosi-doc-system>` undefined. Use the subpaths above.
      *
      * If omitted, pages fall back to `scriptUrl` (tosijs-ui's published iife.js), which
      * already contains the doc system.
