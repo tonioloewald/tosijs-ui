@@ -101,8 +101,11 @@ it. Meanwhile your own elements register fine.
 The build now warns when it can see this, but treat the warning as a safety net rather than the
 contract — write the imports.
 
-> Importing the package root (`import 'tosijs-ui'`) also works and registers everything, but
-> pulls in every component. Prefer the subpaths.
+> Importing the package root (`import 'tosijs-ui'`) does **not** cover this. The root barrel
+> deliberately excludes the doc-system cluster ([#133](https://github.com/tonioloewald/tosijs-ui/issues/133)
+> — it was 77% of the barrel's weight, and it was landing on every app that imported a button),
+> so the root import registers your buttons and leaves `<tosi-doc-system>` undefined. Write the
+> subpaths.
 
 ### `baseUrl` is the origin. `basePath` is the mount path.
 

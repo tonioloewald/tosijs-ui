@@ -145,7 +145,12 @@ modes:
 
   ```typescript
   // demo/site.ts
-  import 'tosijs-ui' // registers tosi-* elements + the doc-system component
+  // REQUIRED — this is what defines <tosi-doc-system>. The package ROOT
+  // (`import 'tosijs-ui'`) does NOT: the root barrel deliberately excludes the
+  // doc-system cluster (#133), so it registers your buttons and leaves the doc
+  // system undefined — a site that serves 200s and shows nothing.
+  import 'tosijs-ui/doc-browser'
+  import 'tosijs-ui/live-example' // only if your docs have executable fences
   import * as mylib from '../src/index' // your own components/exports
 
   // Expose your library to live examples. tosijs / tosijs-ui are provided by
