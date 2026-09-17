@@ -256,7 +256,37 @@ fair, and worth writing down so the answer does not have to be re-derived:
   a fact about which listener accepted the connection rather than a forgeable header. Put
   Tailscale funnel in front and that is unchanged — and still required.
 
-**The real competition is `ssh` + `tmux`, not a nicer tunnel.** A session that outlives
+### They were never competing — it is a DEVICE-CLASS split (2026-09-17)
+
+The framing below ("what replaces what") is the wrong axis, and the thing that shows it is
+the Quest 3: **typing a nine-digit code into a headset beats every ssh-shaped answer, and
+always will.**
+
+`ssh` assumes a general-purpose computer — a filesystem to hold keys, a config file,
+`known_hosts`, and a real keyboard to repair it when something is wrong. A headset has none
+of those. Neither does a phone, a client's laptop, or a borrowed machine. What they all DO
+have is a browser and a text field, so a short code typed into a URL is the only auth
+ceremony that survives contact with them. That is a property of the hardware, not a taste in
+ergonomics, and making ssh nicer does not touch it.
+
+So the split is by **what the device can authenticate with**, and frequency follows from
+that rather than the other way round:
+
+| | daily, any device with a browser | worst case, needs a real shell |
+| --- | --- | --- |
+| path | preview host + magic link | `ssh` + `tmux` |
+| auth | short code → URL | keypair + `known_hosts` |
+| device | headset, phone, client laptop, kiosk | a computer you control |
+| laptop on? | no | yes |
+
+Note what this implies about the reusable piece: it is not the tunnel and not the preview
+host, it is the **code-to-URL handoff**, which is equally useful in front of a static
+preview, a live one, or the dev server itself. And it is *only* viable because the auth
+fails hard — a nine-digit bearer token typed by a human is safe when brute force is fatal
+and pointless otherwise, which is why "able to log in during an attack" is an explicit
+non-goal rather than an oversight.
+
+**The real competition for the TUNNEL is `ssh` + `tmux`, not a nicer tunnel.** A session that outlives
 the connection (`tmux new -As main`, `ssh -t … tmux a`, `mosh` when the link roams) gets
 you into the machine rather than just onto one of its ports — terminals, long-running
 work, and anything you run *inside* the session running *on that box*. The tunnel exposes
@@ -265,6 +295,9 @@ a port; ssh exposes the machine. Only one of those composes.
 So: **tunnel = personal convenience, reasonably replaceable. Preview host + endpoint = the
 architecture, not replaceable.** Given the CitC framing above, the tunnel was always the
 aside — this just says so out loud.
+
+And the ssh path is for the **worst case**, not the daily one. Daily is already solved, and
+solved well: the magic link works on hardware ssh cannot reach at all.
 
 ### Data residency, if any of this touches work under an EU constraint
 
