@@ -6,7 +6,10 @@ isn't the machine it lives on.
 > **Revision history.** > **v1** proposed an SSH reverse tunnel (`sish`) exposing the local dev server.
 > **v2** corrected it against the actual dev server (Bun.serve, HTTPS-only, ships a
 > source-write endpoint).
-> **v3 — this one** — reverses the priority. A **preview host** is the primary path;
+> **v4** adds an appendix section on what the tunnel is really competing with (`ssh` +
+> `tmux`, not a nicer tunnel) and on data residency, after the question was put directly.
+> It does not change the phases.
+> **v3** reverses the priority. A **preview host** is the primary path;
 > the tunnel is demoted to a specialist tool. The reason is not that the tunnel is
 > badly designed: it's that **it never composes into anything bigger.** It gets you
 > "look at my laptop remotely" and then stops. A host is a step toward the endpoint
@@ -231,6 +234,65 @@ live editing, view-source, watching a change land without a rebuild. Not for "sh
 client the current state" or "check this on my phone," which Phase 1 does better and
 without your laptop.
 
+### What the tunnel is actually competing with (2026-09-17)
+
+Asked directly whether this is an overcomplicated stunt next to ssh and Tailscale. Mostly
+fair, and worth writing down so the answer does not have to be re-derived:
+
+- **`bin/tunnel.ts` already IS ssh** — `ssh -R`, at `:149`. It is a wrapper, not a
+  transport. What the wrapper adds is one port resolver shared with the server (they
+  silently disagreed, #39), Caddy fragment registration for public TLS, and
+  `--status`/`--close`/`--link`.
+- **Tailscale would replace most of that ceremony** for personal reach: no VPS, no Caddy,
+  no fragment registration, no `PREVIEW_HOST` in a secrets file, and none of the
+  `GatewayPorts no` footgun this command documents but does **not** check. It would also
+  dissolve the mkcert `<host>.local` dance for real-device testing.
+- **It replaces nothing in Phases 1–3.** Look at the "needs the laptop on?" column.
+  Tailscale is a reachability layer; it cannot make a sleeping machine serve, and
+  "travelling" is precisely when the machine is asleep. The VPS does not go away, so once
+  it exists, ssh riding on it is cheap.
+- **The security boundary is not in the tunnel and survives any transport choice.** The
+  dev server binds a *separate loopback port* for remote traffic, so "is this remote?" is
+  a fact about which listener accepted the connection rather than a forgeable header. Put
+  Tailscale funnel in front and that is unchanged — and still required.
+
+**The real competition is `ssh` + `tmux`, not a nicer tunnel.** A session that outlives
+the connection (`tmux new -As main`, `ssh -t … tmux a`, `mosh` when the link roams) gets
+you into the machine rather than just onto one of its ports — terminals, long-running
+work, and anything you run *inside* the session running *on that box*. The tunnel exposes
+a port; ssh exposes the machine. Only one of those composes.
+
+So: **tunnel = personal convenience, reasonably replaceable. Preview host + endpoint = the
+architecture, not replaceable.** Given the CitC framing above, the tunnel was always the
+aside — this just says so out loud.
+
+### Data residency, if any of this touches work under an EU constraint
+
+Stated as "traffic cannot be routed out of the EU," which — taken literally — **nobody can
+satisfy.** BGP is not yours to choose; an ssh session to the machine beside you may transit
+anywhere today and somewhere else tomorrow. A policy worded that way almost always means
+*processing and storage*, with encrypted transit assumed. That turns an impossible
+constraint into three checkable ones:
+
+1. **Where does compute happen** — the model endpoint's region, and the machine itself.
+2. **Who holds the keys.**
+3. **Who sees plaintext or metadata in between.**
+
+ssh and WireGuard pass 1 and 2 trivially. It is only ever 3 that produces a real finding,
+and the trap is which part of 3:
+
+- **Tailscale DERP relays are NOT the problem.** They forward WireGuard packets they
+  cannot decrypt, so a relay hop through a US box is encrypted transit, not a transfer.
+  (This was got backwards first time round, which is why it is written down.)
+- **The control plane IS.** Tailscale sees coordination metadata — node identities,
+  addresses, who connects to whom — in the clear, necessarily. That is a processor
+  relationship with a US company and wants a DPA, or Headscale, or not using it for work.
+
+The same lens applies to running an agent remotely: over `ssh` + `tmux` the agent runs **on
+that machine**, so with an in-region model endpoint the inference traffic goes machine →
+endpoint directly and the terminal link only carries keystrokes and text. That is a
+different topology from a remote-control service, not a workaround for one.
+
 If you build it, these corrections from v2 all still apply:
 
 - **It cannot connect as originally drawn.** The tunnel forwards **plain HTTP** to
@@ -274,4 +336,6 @@ If you build it, these corrections from v2 all still apply:
 3. **Write the Phase 3 scope statement** before writing Phase 3 code.
 4. **Phase 3** when the authoring story needs writes — by then you will know the write
    shape instead of guessing it.
-5. **The tunnel** only if a workflow genuinely needs the live dev server remotely.
+5. **The tunnel** only if a workflow genuinely needs the live dev server remotely — and try
+   `ssh` + `tmux` first, which reaches the machine rather than one of its ports. See the
+   appendix.
