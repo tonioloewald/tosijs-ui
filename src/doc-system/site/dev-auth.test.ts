@@ -1084,3 +1084,121 @@ describe('isSameOriginRequest — CSRF gate for the loopback path (#90)', () => 
     expect(isSameOriginRequest(req({ 'sec-fetch-site': 'weird' }))).toBe(false)
   })
 })
+
+/*
+Share links (read-only, long-lived) — the HUMAN-handoff half.
+
+The device-handoff link above is short and write-capable: you read a code off one screen and
+type it into the headset in your hands, seconds later, and you want to edit. A link you TEXT to
+a colleague is a different animal — she opens it after her next meeting, possibly twice, and she
+only needs to look. The capability is what makes the long life safe, so the two assertions that
+matter here are "it still cannot write" and "the session does not outlive the link's promise".
+*/
+import {
+  READONLY_SESSION_TTL_MS,
+  SHARE_LINK_TTL_MS,
+  resolveShareTtlMs,
+  sessionMayWrite,
+  cookieMayWrite,
+  prune,
+} from './dev-auth'
+
+test('a share link mints a session that may NOT write', () => {
+  const state = createAuthState()
+  const token = issueLink(state, 0, SHARE_LINK_TTL_MS, { readOnly: true })
+  const session = redeemLink(state, token, 1000)
+  expect(session).toBeTruthy()
+  // It is a real session — it reads.
+  expect(validSession(state, session, 1000)).toBe(true)
+  // It is a narrowed one — it does not write.
+  expect(sessionMayWrite(state, session)).toBe(false)
+  expect(
+    mayWriteSource({
+      viaTunnel: true,
+      hasValidSession: true,
+      sessionMayWrite: sessionMayWrite(state, session),
+    })
+  ).toBe(false)
+})
+
+test('an ORDINARY link is unchanged — it still writes', () => {
+  const state = createAuthState()
+  const token = issueLink(state, 0)
+  const session = redeemLink(state, token, 1000)
+  expect(sessionMayWrite(state, session)).toBe(true)
+  expect(
+    mayWriteSource({
+      viaTunnel: true,
+      hasValidSession: true,
+      sessionMayWrite: sessionMayWrite(state, session),
+    })
+  ).toBe(true)
+})
+
+test('an omitted sessionMayWrite is permissive — the narrowing cannot break old callers', () => {
+  // Every pre-existing call site passes three fields. If the absent narrowing read as
+  // "may not write", adding this feature would have silently disabled editing for everyone.
+  expect(mayWriteSource({ viaTunnel: true, hasValidSession: true })).toBe(true)
+})
+
+test('a share session expires at the READ-ONLY horizon, not the 30-day one', () => {
+  const state = createAuthState()
+  const token = issueLink(state, 0, SHARE_LINK_TTL_MS, { readOnly: true })
+  const session = redeemLink(state, token, 0)
+  expect(validSession(state, session, READONLY_SESSION_TTL_MS - 1)).toBe(true)
+  expect(validSession(state, session, READONLY_SESSION_TTL_MS + 1)).toBe(false)
+  // …and the ordinary one still gets the long horizon.
+  const ordinary = redeemLink(state, issueLink(state, 0), 0)
+  expect(validSession(state, ordinary, READONLY_SESSION_TTL_MS + 1)).toBe(true)
+})
+
+test('redeeming a share link TWICE still yields read-only sessions', () => {
+  // The default policy is `window`, and a texted link gets opened more than once — on her
+  // laptop, then forwarded to the colleague who actually needed it. Both must be narrowed.
+  const state = createAuthState()
+  const token = issueLink(state, 0, SHARE_LINK_TTL_MS, { readOnly: true })
+  const first = redeemLink(state, token, 1000)
+  const second = redeemLink(state, token, 2000)
+  expect(first).not.toBe(second)
+  expect(sessionMayWrite(state, first)).toBe(false)
+  expect(sessionMayWrite(state, second)).toBe(false)
+})
+
+test('prune drops the read-only mark with the token, so the set cannot grow forever', () => {
+  const state = createAuthState()
+  issueLink(state, 0, 1000, { readOnly: true })
+  expect(state.readOnly.size).toBe(1)
+  prune(state, 2000)
+  expect(state.links.size).toBe(0)
+  expect(state.readOnly.size).toBe(0)
+})
+
+test('cookieMayWrite reads the token out of a <bootId>.<token> cookie', () => {
+  const state = createAuthState()
+  const shared = redeemLink(
+    state,
+    issueLink(state, 0, SHARE_LINK_TTL_MS, { readOnly: true }),
+    0
+  )
+  const full = redeemLink(state, issueLink(state, 0), 0)
+  expect(cookieMayWrite(state, `${BOOT_ID}.${shared}`)).toBe(false)
+  expect(cookieMayWrite(state, `${BOOT_ID}.${full}`)).toBe(true)
+  // An absent or unparseable cookie is "not narrowed" — validity is a different question,
+  // asked first by validSessionCookie. Conflating them would make a typo look read-only.
+  expect(cookieMayWrite(state, undefined)).toBe(true)
+})
+
+test('resolveShareTtlMs: default, override, config, and the cap', () => {
+  expect(resolveShareTtlMs()).toBe(SHARE_LINK_TTL_MS)
+  expect(resolveShareTtlMs({ shareTtlMinutes: 60 })).toBe(60 * 60 * 1000)
+  // an explicit --share-ttl beats the config
+  expect(resolveShareTtlMs({ shareTtlMinutes: 60 }, 120)).toBe(120 * 60 * 1000)
+  // a bad value falls back rather than minting an already-dead link
+  expect(resolveShareTtlMs({ shareTtlMinutes: -5 })).toBe(SHARE_LINK_TTL_MS)
+  expect(resolveShareTtlMs({ shareTtlMinutes: NaN })).toBe(SHARE_LINK_TTL_MS)
+  // capped at the session horizon: past it the link outlives the credential it can mint,
+  // so its last hours would hand over something already expired.
+  expect(resolveShareTtlMs(undefined, 60 * 24 * 365)).toBe(
+    READONLY_SESSION_TTL_MS
+  )
+})

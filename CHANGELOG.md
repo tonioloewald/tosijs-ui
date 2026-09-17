@@ -2,6 +2,44 @@
 
 ## 1.15.0 (unreleased)
 
+### Share a link with a PERSON: `tosijs-tunnel --link --share`
+
+The magic link was tuned for **device** handoff — you read a seven-character code off one
+screen and type it into the headset in your hands, seconds later, and you want to edit. Five
+minutes is right for that, and the short window is exactly what pays for a token short enough
+to type.
+
+**Human** handoff is a different shape and had nothing. You text a URL to a colleague, she
+opens it after her next meeting, and she gets a dead link — which reads as *your feature is
+broken*, not *your link expired*. The alternative, in one real case, was building a Tauri app
+and shipping her an installer so she could look at something.
+
+```bash
+tosijs-tunnel --link --share                 # read-only, 24 hours
+tosijs-tunnel --link --share --share-ttl=120 # …or two
+```
+
+A share link is **read-only** — it browses and cannot save source — and that capability is
+what makes the long life safe. It is deliberately **one flag rather than `--ttl` plus
+`--read-only`**: two orthogonal knobs would let you construct a week-long *write-capable*
+token sitting in a chat log, and nothing would stop you. For the same reason, raising
+`linkTtlMinutes` is not the answer; that produces a long link that can still write.
+
+The session it mints is narrowed to match and expires after **7 days** instead of the usual 30
+— it belongs to someone else, so its horizon should be the demo rather than your dev server's
+uptime. `--share-ttl` is capped there, because past it the link would outlive the credential it
+can hand over. Share links also ignore `linkPolicy: 'single-use'`: a texted link gets opened
+when the recipient gets to it, sometimes twice, sometimes after being forwarded — and spending
+it on first redemption is the friction that led an adopter to replace the mechanism with a
+permanent token of their own.
+
+Configurable as `tunnel.shareTtlMinutes` (default 1440). Nothing about the existing edit link
+changes: still 5 minutes, still write-capable, and `mayWriteSource` treats an omitted
+capability as permissive so no existing caller behaves differently.
+
+It still fronts the running dev server, so it needs your machine on. For a demo that has to
+survive your laptop sleeping, use the static preview.
+
 ### `import 'tosijs-ui/doc-browser'` now actually defines `<tosi-doc-system>` (#158, #159)
 
 **Also shipped as 1.14.2** — if you are on 1.14.x, upgrade to that; you do not need this

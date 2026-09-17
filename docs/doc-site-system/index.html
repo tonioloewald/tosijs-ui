@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=9c723d9eaef6" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=d3318f71be9c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -1166,7 +1166,12 @@ omits them.</p>
 <tr>
 <td><code>tunnel.linkTtlMinutes</code></td>
 <td><code>5</code></td>
-<td>how long a link stays redeemable</td>
+<td>how long an EDIT link stays redeemable (write-capable, so keep it short)</td>
+</tr>
+<tr>
+<td><code>tunnel.shareTtlMinutes</code></td>
+<td><code>1440</code></td>
+<td>how long a <code>--share</code> link stays redeemable; read-only, capped at 7 days</td>
 </tr>
 <tr>
 <td><code>tunnel.remotePort</code></td>
@@ -1248,6 +1253,33 @@ window is short and configurable.</p>
 control (pasted into a shared channel, say), and shorten <code>linkTtlMinutes</code>. <strong>Ratchet down</strong>
 with a longer TTL for a link you want to keep working across a session. Widening reuse never
 widens lifetime: an expired link is refused under either policy.</p>
+<h4>Sending a link to a PERSON: <code>--link --share</code></h4>
+<p>Everything above is tuned for <strong>device</strong> handoff — you read a code off one screen and type it
+into the headset in your hands, seconds later, and you want to edit. <strong>Human</strong> handoff is a
+different shape and has its own flag:</p>
+<pre><code class="language-bash" data-highlighted>tosijs-tunnel <span class="token parameter variable">--link</span> <span class="token parameter variable">--share</span>                 <span class="token comment"># read-only, 24 hours</span>
+tosijs-tunnel <span class="token parameter variable">--link</span> <span class="token parameter variable">--share</span> --share-ttl<span class="token operator">=</span><span class="token number">120</span> <span class="token comment"># …or two</span>
+</code></pre>
+<p>A share link is <strong>read-only</strong>: whoever opens it can browse the workspace and cannot save
+source. That capability is exactly what pays for the long life, which is why it is one flag
+rather than <code>--ttl</code> plus <code>--read-only</code> — two orthogonal knobs would let you build the thing
+nobody should have, a week-long write-capable token sitting in a chat log, and nothing would
+stop you. For the same reason <code>linkTtlMinutes</code> is the wrong place to solve this: raising it
+gives you a long-lived link that can still write.</p>
+<p>The session it mints is narrowed to match, and expires after <strong>7 days</strong> rather than the usual
+30 — it belongs to someone else, so its horizon should be the demo rather than your dev
+server&#39;s uptime. A <code>--share-ttl</code> beyond that is capped, because past it the link would outlive
+the credential it can hand over.</p>
+<p>It also ignores <code>linkPolicy: &#39;single-use&#39;</code>. A link you text gets opened when the recipient
+gets to it, sometimes twice, sometimes after being forwarded to the person who actually needed
+it — and spending it on first redemption is the friction that led one adopter to replace the
+whole mechanism with a permanent token of their own.</p>
+<blockquote>
+<p><strong>This still needs your machine on.</strong> A share link fronts the <em>running dev server</em>. If you
+text one at 17:00 and your laptop sleeps, it is dead by the time they click it — which reads
+as <em>your feature is broken</em>, not <em>your link expired</em>. For a demo that has to survive your
+laptop, use the static preview.</p>
+</blockquote>
 <p><code>requireToken</code> defaults to <strong><code>true</code></strong>: a workspace mirrors an uncommitted tree, and the
 hostname is not a secret — Let&#39;s Encrypt publishes every certificate it issues to public
 Certificate Transparency logs, so the URL is discoverable by construction. If you want to

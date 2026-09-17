@@ -36,6 +36,18 @@ export type LinkPolicy = 'window' | 'single-use';
  */
 export declare const SESSION_TTL_MS: number;
 /**
+ * A READ-ONLY session is shorter, because it belongs to someone else.
+ *
+ * A normal session is yours and dies with the process anyway — 30 days is really "until you
+ * restart the dev server". A read-only session was handed to a colleague from a link in a chat
+ * log, so its horizon should be the demo, not the dev server's uptime. Seven days is long
+ * enough that "look at this when you get a minute" works across a weekend and short enough
+ * that it is not a standing grant nobody remembers issuing.
+ */
+export declare const READONLY_SESSION_TTL_MS: number;
+/** Default lifetime of a SHARED (read-only) link — long enough to survive being texted. */
+export declare const SHARE_LINK_TTL_MS: number;
+/**
  * Identifies THIS run of the server, so a cookie from a previous run is recognisable as stale
  * rather than merely unknown.
  *
@@ -84,12 +96,30 @@ export interface AuthState {
     links: Map<string, number>;
     /** live session tokens → when they expire */
     sessions: Map<string, number>;
+    /**
+     * Tokens — link OR session — that grant READ ONLY. Absence means full access, so every
+     * pre-existing token keeps the capability it already had and nothing has to be migrated.
+     *
+     * One set for both kinds because the tokens are distinct random values and the question
+     * asked of it is the same either way: "may whoever holds this write?"
+     */
+    readOnly: Set<string>;
 }
 export declare function createAuthState(): AuthState;
 /** Drop anything expired. Called on every use so the maps cannot grow without bound. */
 export declare function prune(state: AuthState, now: number): void;
-/** Issue a link token to put in a URL. `ttlMs` overrides the 15-minute default. */
-export declare function issueLink(state: AuthState, now: number, ttlMs?: number): string;
+/**
+ * Issue a link token to put in a URL. `ttlMs` overrides the default.
+ *
+ * `readOnly` marks the token — and, through `redeemLink`, the session it becomes — as unable
+ * to write source. That is what makes a LONG-lived link safe to hand to another person: the
+ * short default window is what pays for a write-capable token, and stretching it without
+ * dropping the capability would put a month of write access to the working tree into whatever
+ * chat log the URL lands in.
+ */
+export declare function issueLink(state: AuthState, now: number, ttlMs?: number, opts?: {
+    readOnly?: boolean;
+}): string;
 /**
  * Read the link settings off a site config, with the defaults applied.
  *
@@ -104,6 +134,17 @@ export declare function resolveLinkSettings(tunnel?: {
     policy: LinkPolicy;
     ttlMs: number;
 };
+/**
+ * How long a SHARED (read-only) link lives: the `--share=<minutes>` argument, else
+ * `tunnel.shareTtlMinutes`, else 24 hours.
+ *
+ * Capped at the read-only session horizon. Beyond that the link would outlive the session it
+ * can mint, so the last hour of its advertised life would hand over a credential that expires
+ * immediately — a link that is "valid" and does not work, which is the worst of both.
+ */
+export declare function resolveShareTtlMs(tunnel?: {
+    shareTtlMinutes?: number;
+}, override?: number): number;
 /**
  * Redeem a link token for a session token, or return null.
  *
@@ -240,7 +281,29 @@ export declare function mayWriteSource(opts: {
     peer?: string | null;
     /** does the request carry a live session cookie? */
     hasValidSession: boolean;
+    /**
+     * May that session write? Defaults to `true`, so a caller that predates read-only links
+     * behaves exactly as before — the capability is a NARROWING, and an omitted narrowing must
+     * never be the permissive-by-accident case for anything but the status quo.
+     */
+    sessionMayWrite?: boolean;
 }): boolean;
+/**
+ * May the holder of this session token write?
+ *
+ * `true` for an unknown token as well as a full one — this answers only "is this session
+ * NARROWED?", never "is it valid", which is `validSession`'s job. Conflating them would make
+ * a typo in the cookie look like a read-only session instead of no session at all.
+ */
+export declare function sessionMayWrite(state: AuthState, token: string | null | undefined): boolean;
+/**
+ * The cookie-level counterpart, mirroring `validSession` / `validSessionCookie`.
+ *
+ * MUST be asked only about a cookie that already passed `validSessionCookie`. A plain `Set.has`
+ * is right here and `safeEqual` is not, because the token is no longer a guess by the time this
+ * runs — but that is a property of the CALL ORDER, so keep the two together at every call site.
+ */
+export declare function cookieMayWrite(state: AuthState, cookieValue: string | undefined | null): boolean;
 /**
  * Who may attach the haltija dev channel — i.e. let an agent DRIVE this page.
  *

@@ -44,13 +44,15 @@ import {
 const { has, flag } = parseArgv(process.argv.slice(2), {
   bin: 'tosijs-tunnel',
   summary: 'expose the local dev server through the preview host',
-  flags: ['close', 'link', 'status'],
-  values: ['host', 'port', 'local-port', 'remote-port', 'url'],
+  flags: ['close', 'link', 'status', 'share'],
+  values: ['host', 'port', 'local-port', 'remote-port', 'url', 'share-ttl'],
   usage:
     `  tosijs-tunnel                        open the tunnel (foreground)\n` +
     `  --status                             report whether a tunnel is up\n` +
     `  --close                              close a running tunnel\n` +
     `  --link                               print a magic edit link\n` +
+    `  --link --share                       print a READ-ONLY link to send to a person\n` +
+    `  --share-ttl=<minutes>                how long that share link lives (default 1440)\n` +
     `  --host=user@box                      override the configured preview host\n` +
     `  --port= --local-port= --remote-port= override the resolved ports`,
 })
@@ -165,8 +167,19 @@ if (has('link')) {
   process by argv substring was the mistake; an HTTP request to a known port is not a
   guess.
   */
+  /*
+  `--share` asks for the OTHER kind of link: read-only, and long enough to survive being
+  texted to someone. Deliberately one flag rather than `--ttl` + `--read-only`, because two
+  orthogonal knobs let you build the combination nobody should have — a week-long
+  write-capable token sitting in a chat log.
+  */
+  const share = has('share')
+  const shareTtl = flag('share-ttl')
+  const query = share
+    ? `?share=1${shareTtl ? `&ttl=${encodeURIComponent(shareTtl)}` : ''}`
+    : ''
   const res =
-    await $`curl -sk --max-time 5 https://localhost:${localPort}/__devlink`
+    await $`curl -sk --max-time 5 https://localhost:${localPort}/__devlink${query}`
       .nothrow()
       .quiet()
   let url = ''
@@ -196,7 +209,7 @@ if (has('link')) {
   */
   const code = new URL(url).searchParams.get('t')
   console.log(
-    `\n🔗 Edit link:\n   ${url}\n` +
+    `\n🔗 ${share ? 'Share link (READ ONLY)' : 'Edit link'}:\n   ${url}\n` +
       (code ? `\n   code:  ${code}   (case-insensitive)\n` : '')
   )
 

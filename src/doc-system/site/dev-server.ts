@@ -33,6 +33,8 @@ import {
   shouldInterceptLinkToken,
   createAuthState,
   issueLink,
+  resolveShareTtlMs,
+  cookieMayWrite,
   readCookie,
   redeemThroughGate,
   createRedemptionGate,
@@ -884,12 +886,38 @@ export async function devServer(
    * a false statement printed at the exact moment someone decides who to share a link with,
    * which is the worst possible place to be wrong about a credential.
    */
-  const printLink = (): string => {
-    const { policy, ttlMs } = resolveLinkSettings(config.preview?.tunnel)
-    const token = issueLink(auth, Date.now(), ttlMs)
+  const printLink = (
+    opts: { share?: boolean; ttlMinutes?: number } = {}
+  ): string => {
+    const settings = resolveLinkSettings(config.preview?.tunnel)
+    const policy = opts.share ? 'window' : settings.policy
+    /*
+    A SHARED link is read-only and long-lived; an edit link is write-capable and short. The two
+    are one flag rather than two knobs on purpose — orthogonal `--ttl` and `--read-only` would
+    let you build the dangerous combination (a week of write access to the working tree, sitting
+    in whatever chat log the URL lands in), and nothing would stop you.
+
+    `single-use` is also overridden for a share: a link you text to someone is opened when they
+    get to it, possibly twice, possibly after forwarding it to the colleague who actually needed
+    it. Spending it on first redemption is the behaviour that made an adopter build a permanent
+    token instead.
+    */
+    const ttlMs = opts.share
+      ? resolveShareTtlMs(config.preview?.tunnel, opts.ttlMinutes)
+      : settings.ttlMs
+    const token = issueLink(auth, Date.now(), ttlMs, { readOnly: opts.share })
     const base = config.preview?.tunnel?.url ?? `https://localhost:${PORT}`
     const url = `${base}/?${LINK_PARAM}=${token}`
     const minutes = Math.round(ttlMs / 60000)
+    if (opts.share) {
+      const hours = Math.round(ttlMs / 3600000)
+      const span = hours >= 2 ? `${hours} hours` : `${minutes} min`
+      console.log(
+        `\n🔗 Share link — READ ONLY, usable by anyone you send it to for ${span}:\n   ${url}\n\n   code:  ${token}   (case-insensitive)\n` +
+          `   They can browse. They cannot save source.\n`
+      )
+      return url
+    }
     /*
     The CODE gets its own line, because on the device this feature exists for you are not
     pasting a URL — you are reading eight letters off one screen and typing them into a
@@ -2145,6 +2173,9 @@ export async function devServer(
           viaTunnel,
           peer,
           hasValidSession: validSessionCookie(auth, session, Date.now()),
+          // A share link's session may browse and may not save (asked AFTER validity, which
+          // is the call-order `cookieMayWrite` documents).
+          sessionMayWrite: cookieMayWrite(auth, session),
         }) &&
         /*
         CSRF (#90). The direct path is peer-address-only, so without this any page the
@@ -2245,12 +2276,26 @@ export async function devServer(
       if (viaTunnel || !isLoopbackAddress(peer)) {
         return new Response('not available', { status: 404 })
       }
-      return new Response(JSON.stringify({ url: printLink() }), {
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
-        },
-      })
+      /*
+      Parameters, not a new route: the gate above (loopback AND not via the tunnel) is the
+      thing that matters and it is already right here. A second route would be a second copy
+      of that gate — see the note at the top of this file about exactly that kind of
+      duplication silently guarding a different door.
+      */
+      const params = new URL(request.url).searchParams
+      const share = params.get('share') === '1'
+      const rawTtl = Number(params.get('ttl'))
+      const ttlMinutes =
+        Number.isFinite(rawTtl) && rawTtl > 0 ? rawTtl : undefined
+      return new Response(
+        JSON.stringify({ url: printLink({ share, ttlMinutes }) }),
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+          },
+        }
+      )
     }
 
     if (reqPath === '/') reqPath = '/index.html'

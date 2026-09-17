@@ -67,6 +67,18 @@ export const LINK_TOKEN_TTL_MS = 5 * 60 * 1000;
  */
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 /**
+ * A READ-ONLY session is shorter, because it belongs to someone else.
+ *
+ * A normal session is yours and dies with the process anyway — 30 days is really "until you
+ * restart the dev server". A read-only session was handed to a colleague from a link in a chat
+ * log, so its horizon should be the demo, not the dev server's uptime. Seven days is long
+ * enough that "look at this when you get a minute" works across a weekend and short enough
+ * that it is not a standing grant nobody remembers issuing.
+ */
+export const READONLY_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+/** Default lifetime of a SHARED (read-only) link — long enough to survive being texted. */
+export const SHARE_LINK_TTL_MS = 24 * 60 * 60 * 1000;
+/**
  * Identifies THIS run of the server, so a cookie from a previous run is recognisable as stale
  * rather than merely unknown.
  *
@@ -187,22 +199,36 @@ export function safeEqual(a, b) {
     return timingSafeEqual(ab, bb);
 }
 export function createAuthState() {
-    return { links: new Map(), sessions: new Map() };
+    return { links: new Map(), sessions: new Map(), readOnly: new Set() };
 }
 /** Drop anything expired. Called on every use so the maps cannot grow without bound. */
 export function prune(state, now) {
     for (const [t, exp] of state.links)
-        if (exp <= now)
+        if (exp <= now) {
             state.links.delete(t);
+            state.readOnly.delete(t);
+        }
     for (const [t, exp] of state.sessions)
-        if (exp <= now)
+        if (exp <= now) {
             state.sessions.delete(t);
+            state.readOnly.delete(t);
+        }
 }
-/** Issue a link token to put in a URL. `ttlMs` overrides the 15-minute default. */
-export function issueLink(state, now, ttlMs = LINK_TOKEN_TTL_MS) {
+/**
+ * Issue a link token to put in a URL. `ttlMs` overrides the default.
+ *
+ * `readOnly` marks the token — and, through `redeemLink`, the session it becomes — as unable
+ * to write source. That is what makes a LONG-lived link safe to hand to another person: the
+ * short default window is what pays for a write-capable token, and stretching it without
+ * dropping the capability would put a month of write access to the working tree into whatever
+ * chat log the URL lands in.
+ */
+export function issueLink(state, now, ttlMs = LINK_TOKEN_TTL_MS, opts = {}) {
     prune(state, now);
     const token = mintLinkToken();
     state.links.set(token, now + ttlMs);
+    if (opts.readOnly)
+        state.readOnly.add(token);
     return token;
 }
 /**
@@ -218,6 +244,21 @@ export function resolveLinkSettings(tunnel) {
         ? minutes * 60 * 1000
         : LINK_TOKEN_TTL_MS;
     return { policy: tunnel?.linkPolicy ?? 'window', ttlMs };
+}
+/**
+ * How long a SHARED (read-only) link lives: the `--share=<minutes>` argument, else
+ * `tunnel.shareTtlMinutes`, else 24 hours.
+ *
+ * Capped at the read-only session horizon. Beyond that the link would outlive the session it
+ * can mint, so the last hour of its advertised life would hand over a credential that expires
+ * immediately — a link that is "valid" and does not work, which is the worst of both.
+ */
+export function resolveShareTtlMs(tunnel, override) {
+    const minutes = override ?? tunnel?.shareTtlMinutes;
+    const wanted = typeof minutes === 'number' && Number.isFinite(minutes) && minutes > 0
+        ? minutes * 60 * 1000
+        : SHARE_LINK_TTL_MS;
+    return Math.min(wanted, READONLY_SESSION_TTL_MS);
 }
 /**
  * Redeem a link token for a session token, or return null.
@@ -241,10 +282,21 @@ export function redeemLink(state, token, now, policy = 'window') {
     }
     if (matched === null)
         return null;
-    if (policy === 'single-use')
+    const readOnly = state.readOnly.has(matched);
+    if (policy === 'single-use') {
         state.links.delete(matched);
+        state.readOnly.delete(matched);
+    }
     const session = mintToken();
-    state.sessions.set(session, now + SESSION_TTL_MS);
+    /*
+    The capability rides from the link to the session it mints, and so does the shorter horizon.
+    Minting a full 30-day session from a read-only link would make the capability true and the
+    LIFETIME a lie — the link said "for the next day"; the session it handed over would outlive
+    that by a month.
+    */
+    state.sessions.set(session, now + (readOnly ? READONLY_SESSION_TTL_MS : SESSION_TTL_MS));
+    if (readOnly)
+        state.readOnly.add(session);
     return session;
 }
 /*
@@ -593,8 +645,29 @@ export function isSameOriginRequest(request) {
 }
 export function mayWriteSource(opts) {
     if (opts.viaTunnel)
-        return opts.hasValidSession;
+        return opts.hasValidSession && opts.sessionMayWrite !== false;
     return isLoopbackAddressForAuth(opts.peer);
+}
+/**
+ * May the holder of this session token write?
+ *
+ * `true` for an unknown token as well as a full one — this answers only "is this session
+ * NARROWED?", never "is it valid", which is `validSession`'s job. Conflating them would make
+ * a typo in the cookie look like a read-only session instead of no session at all.
+ */
+export function sessionMayWrite(state, token) {
+    return !token || !state.readOnly.has(token);
+}
+/**
+ * The cookie-level counterpart, mirroring `validSession` / `validSessionCookie`.
+ *
+ * MUST be asked only about a cookie that already passed `validSessionCookie`. A plain `Set.has`
+ * is right here and `safeEqual` is not, because the token is no longer a guess by the time this
+ * runs — but that is a property of the CALL ORDER, so keep the two together at every call site.
+ */
+export function cookieMayWrite(state, cookieValue) {
+    const parsed = parseSessionCookie(cookieValue);
+    return sessionMayWrite(state, parsed?.token);
 }
 /**
  * Who may attach the haltija dev channel — i.e. let an agent DRIVE this page.

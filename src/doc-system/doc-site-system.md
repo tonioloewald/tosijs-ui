@@ -981,7 +981,8 @@ omits them.
 | `tunnel.url`            | —                             | the authenticated public URL fronting the workspace                                                        |
 | `tunnel.requireToken`   | `true`                        | require a session even to VIEW; set `false` for a live read-only audience                                  |
 | `tunnel.linkPolicy`     | `'window'`                    | `'window'` — a link is redeemable repeatedly until it ages out; `'single-use'` — spent on first redemption |
-| `tunnel.linkTtlMinutes` | `5`                           | how long a link stays redeemable                                                                           |
+| `tunnel.linkTtlMinutes` | `5`                           | how long an EDIT link stays redeemable (write-capable, so keep it short)                                    |
+| `tunnel.shareTtlMinutes`| `1440`                        | how long a `--share` link stays redeemable; read-only, capped at 7 days                                     |
 | `tunnel.remotePort`     | derived from the project name | loopback port on the box; derived (FNV-1a into 9000-9899) so two projects can't collide                    |
 | `tunnel.localPort`      | `port + 1`                    | the loopback port the tunnel forwards to                                                                   |
 
@@ -1073,6 +1074,39 @@ window is short and configurable.
 control (pasted into a shared channel, say), and shorten `linkTtlMinutes`. **Ratchet down**
 with a longer TTL for a link you want to keep working across a session. Widening reuse never
 widens lifetime: an expired link is refused under either policy.
+
+#### Sending a link to a PERSON: `--link --share`
+
+Everything above is tuned for **device** handoff — you read a code off one screen and type it
+into the headset in your hands, seconds later, and you want to edit. **Human** handoff is a
+different shape and has its own flag:
+
+```bash
+tosijs-tunnel --link --share                 # read-only, 24 hours
+tosijs-tunnel --link --share --share-ttl=120 # …or two
+```
+
+A share link is **read-only**: whoever opens it can browse the workspace and cannot save
+source. That capability is exactly what pays for the long life, which is why it is one flag
+rather than `--ttl` plus `--read-only` — two orthogonal knobs would let you build the thing
+nobody should have, a week-long write-capable token sitting in a chat log, and nothing would
+stop you. For the same reason `linkTtlMinutes` is the wrong place to solve this: raising it
+gives you a long-lived link that can still write.
+
+The session it mints is narrowed to match, and expires after **7 days** rather than the usual
+30 — it belongs to someone else, so its horizon should be the demo rather than your dev
+server's uptime. A `--share-ttl` beyond that is capped, because past it the link would outlive
+the credential it can hand over.
+
+It also ignores `linkPolicy: 'single-use'`. A link you text gets opened when the recipient
+gets to it, sometimes twice, sometimes after being forwarded to the person who actually needed
+it — and spending it on first redemption is the friction that led one adopter to replace the
+whole mechanism with a permanent token of their own.
+
+> **This still needs your machine on.** A share link fronts the *running dev server*. If you
+> text one at 17:00 and your laptop sleeps, it is dead by the time they click it — which reads
+> as *your feature is broken*, not *your link expired*. For a demo that has to survive your
+> laptop, use the static preview.
 
 `requireToken` defaults to **`true`**: a workspace mirrors an uncommitted tree, and the
 hostname is not a secret — Let's Encrypt publishes every certificate it issues to public

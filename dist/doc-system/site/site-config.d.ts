@@ -513,11 +513,30 @@ export interface SiteConfig {
              * and the 7-character code is what makes that acceptable. A link is redeemed seconds
              * after it is typed, so a longer window buys exposure and nothing else.
              *
-             * Raise it for a long-lived share; lower it (or use `'single-use'`) to tighten. This
+             * Do NOT raise it to share with a person — use `tosijs-tunnel --link --share`, which
+             * is read-only, and `shareTtlMinutes` below. Raising this one produces a long-lived
+             * link that can still WRITE source. Lower it (or use `'single-use'`) to tighten. This
              * bounds the LINK, never the session it hands over — the session cookie is the
              * durable credential and has its own lifetime.
              */
             linkTtlMinutes?: number;
+            /**
+             * How long a SHARE link stays redeemable, in minutes. Default 1440 (24 hours), capped
+             * at 7 days (the read-only session horizon).
+             *
+             * A share link is the one you send to another person — `tosijs-tunnel --link --share`.
+             * It is READ ONLY: it browses and cannot save source. That capability is what makes a
+             * long life safe, and it is why this is a separate setting rather than a bigger number
+             * for `linkTtlMinutes`.
+             *
+             * The two answer different questions. `linkTtlMinutes` is DEVICE handoff: you type a
+             * code off one screen into the headset in your hands, seconds later, and you want to
+             * edit. `shareTtlMinutes` is HUMAN handoff: you text a URL to a colleague who opens it
+             * after her next meeting, and she only needs to look. Conflating them means either a
+             * dead link for her or a month of write access to your working tree living in a chat
+             * log.
+             */
+            shareTtlMinutes?: number;
         };
     };
     /**
