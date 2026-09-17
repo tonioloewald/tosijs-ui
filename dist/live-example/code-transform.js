@@ -216,7 +216,7 @@ export async function executeCode(code, context, transform) {
 // a CDN version that drifts from the installed one is invisible until it isn't: the tests run
 // against the local bundle and the published site runs against whatever this string says.
 // Flagged by tjs-lang in tosijs-ui#135, alongside noticing we had sat on a deprecated 0.13.4.
-export const TJS_VERSION = '0.13.11';
+export const TJS_VERSION = '0.13.13';
 /*
 The TypeScript compiler a live `ts` example is transpiled with.
 

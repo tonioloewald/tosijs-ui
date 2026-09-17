@@ -2,6 +2,34 @@
 
 ## 1.15.0 (unreleased)
 
+### tjs-lang 0.13.13 — a quoted test block was executed in the HOST page (#135)
+
+On tjs-lang ≤ 0.13.11, a `test '…' { … }` written inside a template literal or a
+double-quoted string was mistaken for a real test block: the body ran at transpile time and
+the text was **deleted from the output**. Both silent.
+
+That is the bad case for a doc site specifically, because documentation about a language
+quotes the language. `transform()` is called from the component — the **host page** — and its
+output is then injected into the iframe, so anything the transpiler executes at transpile time
+runs outside the sandbox that exists for exactly this. Any tjs example *showing* a test block
+had it deleted from the rendered example and executed in the host page. Upstream lost 52 of 99
+failures in their own conversion gate to it before finding the cause.
+
+Fixed in 0.13.12; this moves to **0.13.13** (latest), verified across all four lanes rather
+than on the release note alone: 1475 unit, 113 Playwright, 64 haltija doc-tests, 48 consumer
+checks. 0.13.5–0.13.13 also carry the AJS/TJS parser split, a prototype-chain lookup fix in
+the VM, a source-size cap on `Eval`/`SafeFunction`, and further literal-blindness fixes.
+
+The pin lives in **two** places by design — `package.json` and `TJS_VERSION` in
+`code-transform.ts`, which governs the CDN bundle a doc site actually loads — and both moved
+together. The peer floor is unchanged at `^0.13.1`: raising it would warn on install for
+people whose own pin is older, and the CDN pin is what fixes the behaviour for anyone using
+the default path. **If you install tjs-lang yourself, upgrade to ≥0.13.12** — your copy wins
+over ours.
+
+Reported by tjs-lang, which was blocked on this while moving its playground onto the doc-site
+system.
+
 ### Share a link with a PERSON: `tosijs-tunnel --link --share`
 
 The magic link was tuned for **device** handoff — you read a seven-character code off one
@@ -32,6 +60,15 @@ can hand over. Share links also ignore `linkPolicy: 'single-use'`: a texted link
 when the recipient gets to it, sometimes twice, sometimes after being forwarded — and spending
 it on first redemption is the friction that led an adopter to replace the mechanism with a
 permanent token of their own.
+
+**New in the security surface, since this is a dev-tooling path people audit.** Read-only
+sessions are the mechanism: `AuthState` gains a `readOnly` set marking a token, `redeemLink`
+carries the capability from link to session, and `sessionMayWrite` / `cookieMayWrite` answer
+it. `mayWriteSource` gains an optional `sessionMayWrite` — **optional, defaulting to
+permissive**, so every existing three-field caller behaves exactly as before; a narrowing that
+defaulted the other way would have silently disabled editing for everyone. Also exported:
+`resolveShareTtlMs`, `READONLY_SESSION_TTL_MS`, `SHARE_LINK_TTL_MS`. The loopback-listener rule
+that decides what counts as remote is untouched.
 
 Configurable as `tunnel.shareTtlMinutes` (default 1440). Nothing about the existing edit link
 changes: still 5 minutes, still write-capable, and `mayWriteSource` treats an omitted
