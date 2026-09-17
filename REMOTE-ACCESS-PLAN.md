@@ -279,6 +279,39 @@ that rather than the other way round:
 | device | headset, phone, client laptop, kiosk | a computer you control |
 | laptop on? | no | yes |
 
+#### Device handoff and HUMAN handoff are not the same problem
+
+The magic link is tuned for the first and there is nothing for the second yet.
+`LINK_TOKEN_TTL_MS` is **5 minutes**, justified in `dev-auth.ts` with *"a link is redeemed
+within seconds of being typed"* — true when you generate a link and type it into a headset
+you are holding, false the moment you **text it to a colleague** who opens it after her next
+meeting. She gets a dead link, which reads as *your feature is broken*, not *your link
+expired*. Worst possible failure for a demo.
+
+Stretching the TTL is not the fix. Long enough to survive being texted means hours, and that
+turns the URL into a durable bearer token living in an SMS or Slack log, forwardable by
+anyone who scrolls past it. The short window is exactly what pays for a token short enough to
+type. Short-and-typable or long-and-shareable — not both from one mechanism.
+
+The seam is already evidenced in the source: an adopter (manta) replaced the link with a
+never-expiring one of their own, and the code records why that matters — *"security that
+people route around is not security — it is friction plus a worse system built next to it."*
+They hit human handoff and solved it badly, because the device-handoff tool was the only one
+on offer.
+
+**The motivating story, worth keeping because it prices the alternative.** Owner needed to
+demo complex work to a non-technical colleague at a previous company, and ended up building
+a **Tauri app and shipping her an installer** — a native application, code signing, and a
+colleague willing to install a binary, all so someone could look at something. One-way, too:
+no comment-in-context, and every iteration is another installer. That is the true cost of
+having no shareable URL, and it is the strongest adopter-facing argument in this document.
+Note it argues for **Phase 1, not the tunnel**: a link texted at 17:00 is dead by the time
+she clicks it at 21:00 if it needs your laptop awake.
+
+So: **device handoff** = short-lived typable code, correct as built. **Human handoff** = a
+preview URL that outlives your laptop, with revocable, read-only access of its own. Do not
+solve the second by loosening the first.
+
 Note what this implies about the reusable piece: it is not the tunnel and not the preview
 host, it is the **code-to-URL handoff**, which is equally useful in front of a static
 preview, a live one, or the dev server itself. And it is *only* viable because the auth
