@@ -510,6 +510,52 @@ _Original per-issue notes:_
 
 ---
 
+## prismjs
+
+Added 1.15.0 for static syntax highlighting. Zero entries here until the 1.15.0 quarterly
+review, which is itself the finding: a new hard runtime dependency that takes a **global** went
+un-recorded in the file whose job is to record exactly that.
+
+### It owns `window.Prism`, and so do we (no issue filed — this is ours, not theirs)
+
+Prism is a free-global library by design: its grammar component files end with `…})(Prism)` and
+register against whatever is on the global at load time. That is not a defect in prismjs and
+there is nothing to file — but it means **load order decides who wins, and neither side is
+told.**
+
+What we were doing, reproduced rather than reasoned about (host Prism with one custom language
+and one plugin, then `ensureGrammar('rust')`):
+
+```
+ensureGrammar(rust)           = true
+globalThis.Prism is host?     = false
+host custom lang reachable?   = false
+host plugins reachable?       = false
+host object itself intact?    = true      ← their captured reference points at an orphan
+we leaked manual onto global? = true
+```
+
+Two mechanisms, the second worse than the first:
+
+1. **We orphaned the host's instance.** Their languages and plugins became unreachable through
+   `window.Prism`; anything they had captured addressed an object no longer wired to anything.
+2. **We leaked `manual: true` onto a global we do not own.** Prism reads that flag at load, so a
+   host Prism core loading *after* us computes `manual === true` and silently never runs
+   `highlightAll()`. That is us breaking their page, not merely losing a global.
+
+**Fixed in 1.15.0** by adopting a host instance when one is present (`adoptHostPrism`), never
+writing `manual` onto an instance we did not create, and restoring the prior global if our own
+import fails. Mutation-verified both halves.
+
+This is the **#131 hazard class** — the `@codemirror/state` identity problem — in a worse
+container, since CodeMirror at least fails by identity mismatch rather than by load order. That
+case got a real remedy (`tosijs-ui/codemirror`, a re-export so there is only ever one copy);
+this one had none, which is why it sat unrecorded.
+
+**Still open on our side:** a consumer who wants OUR Prism instance has no seam. `registerGrammar`
+supplies grammars, not instance access, and there is no `./prism` key in `exports`. Tracked in
+`TODO.md`; the adopt fix removes the harm, not the asymmetry.
+
 ## haltija
 
 - **[tosijs-ui#21](https://github.com/tonioloewald/tosijs-ui/issues/21)** (consumer-side tracker;

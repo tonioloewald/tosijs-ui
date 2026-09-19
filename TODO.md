@@ -501,6 +501,24 @@ migration under time pressure. Tracked so they are chosen, not discovered.
 
 ## High Priority
 
+### A `tosijs-ui/prism` seam — the asymmetry the M3 fix did not close
+
+- [ ] **A consumer has no way to reach OUR Prism instance.** `registerGrammar` supplies
+      grammars, not instance access, and there is no `./prism` key in `exports`. 1.15.0 fixed
+      the *harm* (we adopt a host Prism, never write `manual` onto one we did not create, and
+      restore the global if our import fails) but not the asymmetry: we can use theirs, they
+      cannot use ours.
+
+      `tosijs-ui/codemirror` is the precedent and the argument is identical — re-exporting
+      removes the failure by construction instead of policing it, because there is only ever
+      one copy: the one the module resolves. See `src/codemirror.ts`'s header for why a peer
+      dependency is the wrong shape here.
+
+      Cheap (a module and an exports key). Not done in 1.15.0 because the harm was the part
+      that mattered and a new public export deserves its own consideration rather than riding
+      a remediation commit. Recorded in `UPSTREAM.md` under `## prismjs`.
+
+
 ### [#162](https://github.com/tonioloewald/tosijs-ui/issues/162) — schema-form keeps non-conforming data and cannot show it
 
 - [ ] **A "we can't display this" panel, with a purge button.** Three cases where the value is

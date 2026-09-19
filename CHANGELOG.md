@@ -28,6 +28,38 @@ predicate; a third divergence has nowhere to live.
 
 Mutation-verified — restoring either half of the old behaviour turns the regression tests red.
 
+### tosijs-ui no longer steals a `Prism` the page already owns
+
+Prism is a free-global library — its grammar files register against `window.Prism` at load
+time — so load order decides who owns it and neither side is told. We were importing our copy
+over the top of a host's. Reproduced rather than reasoned about, with a host Prism carrying one
+custom language and one plugin:
+
+```
+ensureGrammar(rust)           = true
+globalThis.Prism is host?     = false
+host custom lang reachable?   = false
+host plugins reachable?       = false
+host object itself intact?    = true     ← their captured reference points at an orphan
+we leaked manual onto global? = true
+```
+
+Nothing errored. Their languages and plugins were simply unreachable, and anything they had
+captured addressed an orphan. The `manual` leak is the worse half: Prism reads that flag at
+load, so a host Prism core loading *after* us computed `manual === true` and **silently never
+ran `highlightAll()`** — us breaking their page, not merely losing a global.
+
+Now: we **adopt** a host instance when one exists, never write `manual` onto an instance we did
+not create, and restore the prior global if our own import fails. Every line of that
+reproduction flips. Mutation-verified — deleting the adopt branch or leaking `manual` each
+turns the tests red.
+
+This is the #131 hazard class (`@codemirror/state` identity) in a worse container. That one got
+a real remedy — `tosijs-ui/codemirror`, a re-export so only one copy exists — and this one still
+has no equivalent: `registerGrammar` supplies grammars, not instance access. The harm is fixed;
+the asymmetry is recorded in `UPSTREAM.md` and `TODO.md`. **From 1.15.0, if your page has no
+Prism, the one it ends up with is ours** — that is now stated in the adopter reference.
+
 ### Published-surface corrections
 
 - **`bundleEntry` lost its documentation in the emitted `.d.ts`.** `liveExamples` was added

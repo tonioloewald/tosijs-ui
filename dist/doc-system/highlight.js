@@ -175,6 +175,8 @@ Caching the promise makes concurrent callers await the same load and get the sam
 which is what "ensure" should have meant.
 */
 const grammarLoads = new Map();
+/** What sat on each global before we wrote our `manual` marker, so a failed import can undo it. */
+const priorGlobals = new WeakMap();
 /**
  * Load Prism and the grammar for `lang`. Returns false when the grammar does not exist —
  * an unknown language is not an error, it is a code block that stays plain.
@@ -182,8 +184,65 @@ const grammarLoads = new Map();
  * Grammar files are loaded by dynamic import so a bundler can code-split them and a build
  * only pays for the languages its corpus actually uses.
  */
+/**
+ * Is `candidate` a real, usable Prism instance rather than our own config marker?
+ *
+ * A host page that already uses Prism has one on the global before we ever run. Importing our
+ * own copy on top of it orphans everything they registered — see `adoptHostPrism` below.
+ */
+function looksLikePrism(candidate) {
+    const p = candidate;
+    return (!!p && typeof p.highlight === 'function' && typeof p.languages === 'object');
+}
+/**
+ * Adopt a Prism the PAGE already owns, in preference to importing ours over the top.
+ *
+ * Reproduced before fixing, with a host Prism carrying one custom language and one plugin:
+ *
+ *     globalThis.Prism is host?     false
+ *     host custom lang reachable?   false
+ *     host plugins reachable?       false
+ *     host object itself intact?    true      ← their reference points at an orphan
+ *     we leaked manual onto global? true
+ *
+ * Nothing errors. Their languages and plugins are simply unreachable through `window.Prism`,
+ * and any reference they captured earlier addresses an object no longer wired to anything.
+ *
+ * This is the #131 hazard class — the `@codemirror/state` identity problem — in a worse
+ * container, because Prism's grammar files register against a *free* global, so load order
+ * decides who wins and neither side is told. That case got a real remedy
+ * (`tosijs-ui/codemirror`); this one had none.
+ *
+ * Adopting is strictly better than winning: their grammars keep working, ours are added to
+ * the instance the page already uses, and `highlight()` gives the same answer either way.
+ */
+function adoptHostPrism() {
+    for (const scope of [
+        globalThis,
+        typeof window !== 'undefined' ? window : undefined,
+    ]) {
+        if (!scope)
+            continue;
+        const candidate = scope.Prism;
+        if (looksLikePrism(candidate))
+            return candidate;
+    }
+    return null;
+}
 export async function ensureGrammar(lang) {
     const grammar = grammarFor(lang);
+    if (!prism) {
+        /*
+        ADOPT FIRST. If the page brought its own Prism we use it, and in particular we do NOT
+        write `manual` onto it: that flag is ours to want, not theirs to inherit, and setting it
+        on a host instance stops THEIR `highlightAll()` from ever running. Us breaking their page,
+        rather than merely losing the global.
+        */
+        const host = adoptHostPrism();
+        if (host) {
+            prism = host;
+        }
+    }
     if (!prism) {
         /*
         `Prism.manual = true` BEFORE the import, or Prism highlights the entire document by
@@ -212,6 +271,8 @@ export async function ensureGrammar(lang) {
             if (!scope)
                 continue;
             const sc = scope;
+            // Remember what was there, so a failed import can put it back (see the catch below).
+            priorGlobals.set(scope, sc.Prism);
             sc.Prism = { ...(sc.Prism ?? {}), manual: true };
         }
         try {
@@ -219,6 +280,25 @@ export async function ensureGrammar(lang) {
                 .default;
         }
         catch {
+            /*
+            Put back whatever was on the global before our `manual` marker. Leaving `{manual: true}`
+            behind means a host Prism core loading LATER reads it and silently never runs
+            `highlightAll()` — so a failed import of ours would disable highlighting on a page that
+            has nothing to do with us.
+            */
+            for (const scope of [
+                globalThis,
+                typeof window !== 'undefined' ? window : undefined,
+            ]) {
+                if (!scope)
+                    continue;
+                const sc = scope;
+                const saved = priorGlobals.get(scope);
+                if (saved === undefined)
+                    delete sc.Prism;
+                else
+                    sc.Prism = saved;
+            }
             /*
             Prism is a real DEPENDENCY, so reaching here means something is genuinely wrong —
             a broken install, a bundler that dropped it, a sandbox without node_modules. Not the
@@ -425,4 +505,20 @@ export async function highlightHtml(html, policy = 'auto') {
             return whole;
         return `${preTag}<code class="language-${lang}" data-highlighted>${out}</code>`;
     });
+}
+/**
+ * Clear every piece of module state this file caches — for TESTS only.
+ *
+ * `prism`, the in-flight `grammarLoads` promises and the `registered` grammar map are all
+ * module-scoped, and Bun shares module state across every test file in a process. So a test
+ * that seeds a fake Prism or registers a fake grammar leaks it into whatever runs next, and
+ * the symptom surfaces somewhere unrelated. Two tests in this repo were already doing exactly
+ * that with no cleanup.
+ *
+ * Not part of the public API and not exported from `tosijs-ui/site`.
+ */
+export function resetHighlightStateForTest() {
+    prism = undefined;
+    grammarLoads.clear();
+    registered.clear();
 }

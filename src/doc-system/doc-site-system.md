@@ -1461,6 +1461,22 @@ this is also how you override a grammar you disagree with.
 > consumer, import `tosijs-ui/doc-system/highlight` in your `bundleEntry` and register there
 > too. A CDN `<script>` consumer has no seam for this yet.
 
+### tosijs-ui and the `Prism` global
+
+From 1.15.0 this package uses [Prism](https://prismjs.com/) for highlighting, and Prism is a
+free-global library: its grammar files register against `window.Prism` at load time, so load
+order decides who owns it.
+
+**If your page already has a Prism, we adopt it** rather than importing our own over the top —
+your languages and plugins keep working and our grammars are added to your instance. We also
+never set `Prism.manual` on an instance we did not create, because that flag stops *your*
+`highlightAll()` from running.
+
+**If it does not, we create it**, and from that point the page's `Prism` is ours. If you load
+your own Prism afterwards it will win, and our highlighting stops — that is Prism's model, not
+a bug we can fix from here. Load yours first, or use `registerGrammar` to add a language to
+ours instead of bringing a second copy.
+
 ### Highlighting code at runtime
 
 If code arrives *after* the build — a fetched snippet, an API response, a chat message — use

@@ -1,4 +1,4 @@
-import { test, expect, describe } from 'bun:test'
+import { test, expect, describe, afterEach, beforeEach } from 'bun:test'
 import {
   grammarFor,
   ensureGrammar,
@@ -253,4 +253,74 @@ test('opt-in: executable fences ARE highlighted client-side (re-review)', async 
   live.innerHTML =
     '<pre data-example-mode="inline"><code class="language-js">const y = 2</code></pre>'
   expect(await highlightBlocks(live, { policy: 'opt-in' })).toBe(0)
+})
+
+/*
+We must not steal a Prism the page already owns (quarterly review M3).
+
+Prism lives on a free global and its grammar files register against whatever is there, so
+load order decides the winner and neither side is told. Importing our copy over a host's
+orphaned everything they had registered:
+
+    globalThis.Prism is host?     false
+    host custom lang reachable?   false
+    host plugins reachable?       false
+    host object itself intact?    true      ← their captured reference points at an orphan
+
+Nothing errors. This is the #131 hazard class (`@codemirror/state` identity) in a worse
+container — that one got `tosijs-ui/codemirror` as a real remedy; this had none.
+
+The `manual` flag is the sharper half. We set it so Prism does not walk the whole document on
+load, which is right for us — but writing it onto a HOST instance stops their `highlightAll()`
+from ever running, and leaving it behind after a failed import does the same to a page that
+never used us.
+*/
+describe('host Prism ownership (M3)', () => {
+  const realPrism = (globalThis as any).Prism
+
+  /*
+  Reset BEFORE as well as after — this is what makes the test mean anything.
+
+  `prism` is module-scoped and earlier tests in this file populate it, so `ensureGrammar`
+  short-circuits on `if (!prism)` and never reaches the adopt path at all. The first version
+  of this test asserted on a global that nothing had touched, and BOTH mutants survived:
+  deleting the adopt branch, and leaking `manual` onto the host. A test that cannot fail is
+  worse than no test, because it reads as coverage.
+  */
+  beforeEach(async () => {
+    const { resetHighlightStateForTest } = await import('./highlight')
+    resetHighlightStateForTest()
+  })
+
+  afterEach(async () => {
+    if (realPrism === undefined) delete (globalThis as any).Prism
+    else (globalThis as any).Prism = realPrism
+    /*
+    Clear the module cache too. `prism` is module-scoped and Bun shares module state across
+    the whole process, so adopting a FAKE host here would otherwise leak into every later
+    test — highlighting would silently use a stub with no grammars.
+    */
+    const { resetHighlightStateForTest } = await import('./highlight')
+    resetHighlightStateForTest()
+  })
+
+  test('a host instance is adopted, not replaced, and keeps its languages and plugins', async () => {
+    const host: any = {
+      languages: { mylang: { keyword: /\bfoo\b/ } },
+      plugins: { lineNumbers: {} },
+      highlight: () => 'host',
+      highlightAll: () => {},
+    }
+    ;(globalThis as any).Prism = host
+
+    const { ensureGrammar } = await import('./highlight')
+    await ensureGrammar('javascript')
+
+    expect((globalThis as any).Prism).toBe(host)
+    expect((globalThis as any).Prism.languages.mylang).toBeTruthy()
+    expect((globalThis as any).Prism.plugins.lineNumbers).toBeTruthy()
+    // And we did NOT impose our `manual` preference on an instance we do not own —
+    // that would stop the host's own highlightAll() from ever running.
+    expect((globalThis as any).Prism.manual).not.toBe(true)
+  })
 })

@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=6e2f2b2c8263" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=d021bf5a2444" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=120392df9fa6" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=4ec18bb4bc4c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -1658,6 +1658,18 @@ client-side (rather than hard-loaded) highlights with whatever the browser knows
 consumer, import <code>tosijs-ui/doc-system/highlight</code> in your <code>bundleEntry</code> and register there
 too. A CDN <code>&lt;script&gt;</code> consumer has no seam for this yet.</p>
 </blockquote>
+<h3>tosijs-ui and the <code>Prism</code> global</h3>
+<p>From 1.15.0 this package uses <a href="https://prismjs.com/">Prism</a> for highlighting, and Prism is a
+free-global library: its grammar files register against <code>window.Prism</code> at load time, so load
+order decides who owns it.</p>
+<p><strong>If your page already has a Prism, we adopt it</strong> rather than importing our own over the top —
+your languages and plugins keep working and our grammars are added to your instance. We also
+never set <code>Prism.manual</code> on an instance we did not create, because that flag stops <em>your</em>
+<code>highlightAll()</code> from running.</p>
+<p><strong>If it does not, we create it</strong>, and from that point the page&#39;s <code>Prism</code> is ours. If you load
+your own Prism afterwards it will win, and our highlighting stops — that is Prism&#39;s model, not
+a bug we can fix from here. Load yours first, or use <code>registerGrammar</code> to add a language to
+ours instead of bringing a second copy.</p>
 <h3>Highlighting code at runtime</h3>
 <p>If code arrives <em>after</em> the build — a fetched snippet, an API response, a chat message — use
 <a href="/highlight-block/"><code>&lt;tosi-highlight&gt;</code></a>, which is a separate subpath import and not in the root
@@ -1890,6 +1902,6 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate.js?v=6e2f2b2c8263"></script>
+  <script type="module" src="../hydrate.js?v=d021bf5a2444"></script>
 </body>
 </html>

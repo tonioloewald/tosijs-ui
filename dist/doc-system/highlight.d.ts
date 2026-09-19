@@ -9,13 +9,6 @@ export declare function registeredGrammars(): string[];
 export declare function grammarFor(fenceLang: string): string;
 /** Grammars this build can load — for tests, diagnostics, and the docs. */
 export declare function loadableGrammars(): string[];
-/**
- * Load Prism and the grammar for `lang`. Returns false when the grammar does not exist —
- * an unknown language is not an error, it is a code block that stays plain.
- *
- * Grammar files are loaded by dynamic import so a bundler can code-split them and a build
- * only pays for the languages its corpus actually uses.
- */
 export declare function ensureGrammar(lang: string): Promise<boolean>;
 /**
  * Highlight `code` as `lang`, returning HTML with `<span class="token …">` markup.
@@ -52,3 +45,15 @@ export declare function languagesIn(html: string): string[];
  * `data-highlighted` marker the DOM pass uses, so running both is safe.
  */
 export declare function highlightHtml(html: string, policy?: ExamplePolicy): Promise<string>;
+/**
+ * Clear every piece of module state this file caches — for TESTS only.
+ *
+ * `prism`, the in-flight `grammarLoads` promises and the `registered` grammar map are all
+ * module-scoped, and Bun shares module state across every test file in a process. So a test
+ * that seeds a fake Prism or registers a fake grammar leaks it into whatever runs next, and
+ * the symptom surfaces somewhere unrelated. Two tests in this repo were already doing exactly
+ * that with no cleanup.
+ *
+ * Not part of the public API and not exported from `tosijs-ui/site`.
+ */
+export declare function resetHighlightStateForTest(): void;
