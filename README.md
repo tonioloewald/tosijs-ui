@@ -53,11 +53,17 @@ The `tosijs-ui` iife build bundles `tosijs`, `tosijs-ui`, `marked` and — as of
 **CodeMirror** into a single minified javascript source file. You can access `xinjs` and
 `xinjsui` as globals which contain all the things exported by `tosijs` and `tosijs-ui`.
 
-> **Size (1.7):** ~385KB gzip, up from ~120KB in 1.6. `bun build --format iife` cannot
+> **Size (1.15):** ~468KB gzip, up from ~120KB in 1.6. Two things dominate it, and
+> `bun build --format iife` cannot
 > code-split, so `<tosi-code>`'s lazy CodeMirror import is flattened into this bundle
 > whether or not the page uses an editor. **If you don't need `<tosi-code>`, use the ESM
 > build** (`import 'tosijs-ui'` via a bundler), where CodeMirror stays a separate lazy
 > chunk and a page with no editor never downloads it.
+>
+> The second contributor, since 1.15, is **Prism plus 27 syntax grammars** (+31.8KB gzip,
+> measured). Same shape and the same remedy: an iife cannot code-split, so it inlines every
+> grammar, while the ESM build keeps them as lazy chunks and `<tosi-highlight>` is not even
+> in the root barrel. A page that imports a button ships none of it.
 
 ```
 <script src="https://ui.tosijs.net/iife.js"></script>

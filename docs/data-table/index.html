@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=76af16164440" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=120392df9fa6" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>table</h1>
 <p>A virtual data-table, configurable via a <code>columns</code> array (which will automatically be generated if not provided),
@@ -475,7 +475,26 @@ in the selection, and also <code>selectedRows</code> and <code>visibleSelectedRo
 <li><code>&lt;tosi-table&gt;.selectRows(rows?: any[], select = true)</code> (de)selects specified rows</li>
 <li><code>&lt;tosi-table&gt;.deSelect(rows?: any[])</code> deselects all or specified rows.</li>
 </ul>
-<p>These are rather fine-grained but they&#39;re used internally by the selection code so they may as well be documented.</p>
+<p>As of 1.15 these are a <strong>supported programmatic surface</strong>, not just internals:</p>
+<ul>
+<li>They <strong>enforce the table&#39;s cardinality.</strong> On a single-select table <code>selectRows([a, b, c], true)</code>
+no longer leaves three rows selected — a state no amount of clicking can produce. It keeps the
+last row and warns.</li>
+<li>They <strong>fire <code>selectionChanged</code></strong>, unconditionally. Previously they did not, so a consumer
+keeping its own UI in step silently missed every programmatic selection — including
+&quot;restore the selection after a data refresh&quot;, which is what these methods are documented for.</li>
+</ul>
+<p>If your code both <em>drives</em> selection and <em>listens</em> for it, guard the feedback loop.
+<code>&lt;tosi-crud&gt;</code> needed exactly this (<code>_applyingSelection</code>): the deselect half of a
+replace-selection reported an empty selection, and the listener cleared the record mid-edit.</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">this</span><span class="token punctuation">.</span>applying <span class="token operator">=</span> <span class="token boolean">true</span>
+<span class="token keyword">try</span> <span class="token punctuation">{</span>
+  table<span class="token punctuation">.</span><span class="token function">selectRows</span><span class="token punctuation">(</span>rows<span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span> <span class="token keyword">finally</span> <span class="token punctuation">{</span>
+  <span class="token keyword">this</span><span class="token punctuation">.</span>applying <span class="token operator">=</span> <span class="token boolean">false</span>
+<span class="token punctuation">}</span>
+<span class="token comment">// …and in the handler:  if (this.applying) return</span>
+</code></pre>
 <h2>Row Access</h2>
 <h2>How many rows can it show? (<code>maxVisibleRows</code>)</h2>
 <p>More than you are likely to have. The virtual <code>listBinding</code> renders only the visible window,

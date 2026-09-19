@@ -134,6 +134,16 @@ export interface SiteConfig {
    * If omitted, pages fall back to `scriptUrl` (tosijs-ui's published iife.js), which
    * already contains the doc system.
    */
+  /*
+  `bundleEntry` MUST stay immediately under its own JSDoc.
+
+  `liveExamples` was inserted between them, which silently detached the block above from the
+  field it documents: TypeScript attaches a doc comment to the declaration that FOLLOWS it, so
+  the emitted `site-config.d.ts` shipped `bundleEntry?: string;` with no comment at all. What
+  it lost is the #145 warning — the one that explains why omitting the doc-system import gives
+  you a site that serves 200s and shows nothing. Guarded by a test in `site-config.test.ts`.
+  */
+  bundleEntry?: string
   /**
    * Whether fenced code runs by default (tosijs-ui#140).
    *
@@ -150,7 +160,6 @@ export interface SiteConfig {
    * Per-fence, ` ```js:static ` opts a single block out under either policy.
    */
   liveExamples?: 'auto' | 'opt-in'
-  bundleEntry?: string
   /** modules to leave external in the bundle, e.g. ['jolt-physics'] */
   bundleExternals?: string[]
   /**

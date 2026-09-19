@@ -111,6 +111,7 @@ export interface SiteConfig {
      * If omitted, pages fall back to `scriptUrl` (tosijs-ui's published iife.js), which
      * already contains the doc system.
      */
+    bundleEntry?: string;
     /**
      * Whether fenced code runs by default (tosijs-ui#140).
      *
@@ -127,7 +128,6 @@ export interface SiteConfig {
      * Per-fence, ` ```js:static ` opts a single block out under either policy.
      */
     liveExamples?: 'auto' | 'opt-in';
-    bundleEntry?: string;
     /** modules to leave external in the bundle, e.g. ['jolt-physics'] */
     bundleExternals?: string[];
     /**

@@ -28,6 +28,23 @@ predicate; a third divergence has nowhere to live.
 
 Mutation-verified — restoring either half of the old behaviour turns the regression tests red.
 
+### Published-surface corrections
+
+- **`bundleEntry` lost its documentation in the emitted `.d.ts`.** `liveExamples` was added
+  between that field's JSDoc and the field itself, and TypeScript attaches a doc comment to
+  whatever declaration follows it — so `bundleEntry?: string;` shipped with no comment at all,
+  taking the #145 warning with it (the one explaining why omitting the doc-system import gives
+  you a site that serves 200s and shows nothing). Reordered, and guarded by a test that reads
+  the **emitted** `.d.ts` rather than the source, because the source looked fine throughout.
+- **`<tosi-table>`'s selection docs described pre-1.15 behaviour**, calling `selectRow` /
+  `selectRows` internals "documented because they may as well be". They are now a supported
+  surface that enforces cardinality and fires `selectionChanged` — and the published page said
+  neither. It now also carries the feedback-loop guard `<tosi-crud>` needed, since any consumer
+  that both drives and observes selection will hit the same thing.
+- **The README understated the iife by 21%** — "~385KB gzip" against a measured 468KB — and
+  named CodeMirror as the only contributor. Prism and its 27 grammars (+31.8KB) are the second,
+  with the same cause and the same remedy.
+
 ### `<tosi-highlight>` renders in colour anywhere, not only inside a doc site
 
 The component shipped without the palette it needs. This package contains **no CSS files at
@@ -404,6 +421,13 @@ than the informed choice. An explicit `docPaths` entry still wins — naming a d
 which applies only to directories found while walking. And when a default exclusion withholds
 files it now prints the directory, the count and how to publish them, rather than dropping
 pages with no receipt.
+
+> **If you built a site on 1.14.1 or earlier, upgrading is not enough.** The default only
+> protects the *next* build. Scraped review pages carry no `noindex` and are listed in
+> `sitemap.xml` and `llms.txt`, so anything already deployed stays public and indexable until
+> you replace it. Check your **deployed** output — not your working tree — for pages derived
+> from a `reviews/` directory, then rebuild on 1.15.0 and redeploy. If they were indexed, the
+> rebuild removes the pages but you may also want a removal request.
 
 **The build says which files outside `outputDir` it will overwrite (#154).** `outputDir` reads
 as a box the build stays inside and is not one: `docsJson` defaults to `demo/docs.json` and

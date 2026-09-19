@@ -461,7 +461,28 @@ The following methods are also provided:
 - `<tosi-table>.selectRows(rows?: any[], select = true)` (de)selects specified rows
 - `<tosi-table>.deSelect(rows?: any[])` deselects all or specified rows.
 
-These are rather fine-grained but they're used internally by the selection code so they may as well be documented.
+As of 1.15 these are a **supported programmatic surface**, not just internals:
+
+- They **enforce the table's cardinality.** On a single-select table `selectRows([a, b, c], true)`
+  no longer leaves three rows selected — a state no amount of clicking can produce. It keeps the
+  last row and warns.
+- They **fire `selectionChanged`**, unconditionally. Previously they did not, so a consumer
+  keeping its own UI in step silently missed every programmatic selection — including
+  "restore the selection after a data refresh", which is what these methods are documented for.
+
+If your code both *drives* selection and *listens* for it, guard the feedback loop.
+`<tosi-crud>` needed exactly this (`_applyingSelection`): the deselect half of a
+replace-selection reported an empty selection, and the listener cleared the record mid-edit.
+
+```typescript
+this.applying = true
+try {
+  table.selectRows(rows, true)
+} finally {
+  this.applying = false
+}
+// …and in the handler:  if (this.applying) return
+```
 
 ## Row Access
 
