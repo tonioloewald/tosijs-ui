@@ -62,6 +62,35 @@ try {
   // A size ceiling catches the NEXT dist/hydrate, whatever it gets called. 5.2MB of
   // hydrate bundle shipped to every consumer behind an exact-path guard that would not
   // have seen it under a different name.
+  /*
+  Nothing in the tarball that git never saw.
+
+  `files` includes `/dist` wholesale, and when `files` is present npm consults NEITHER
+  .gitignore NOR .npmignore for the paths it selects. So a gitignored file sitting in dist/
+  ships, and being gitignored makes it LESS visible rather than more — every check that reads
+  the repo is blind to it by construction.
+
+  Verified the hard way: an `.npmignore` naming the file was added first and changed nothing,
+  which is why this is a test rather than a config line. There is no declarative fix; the
+  packed listing is the only place the truth exists.
+
+  1.14.2 shipped a zero-byte `dist/.metadata_never_index` (a macOS Spotlight marker). Harmless
+  itself — but the same path carries a stray debug dump or a scratch `.env` just as readily,
+  and `reviews-1.11-pass2.md` flagged the identical file in `bin/dist/` two releases earlier,
+  so it recurs. Found by diffing the published tarball against the tag, which is the only
+  check that reads the ARTIFACT rather than the repo.
+  */
+  const strays = listing.filter((f) =>
+    /(^|\/)(\.DS_Store|\.metadata_never_index|\.env(\..*)?|npm-debug\.log.*)$/.test(
+      f
+    )
+  )
+  check(
+    'no local cruft in the tarball (.DS_Store, Spotlight markers, .env, debug logs)',
+    strays.length === 0,
+    strays.join(', ')
+  )
+
   const bytes = Bun.file(tarball).size
   check(
     `tarball is under 3MB (is ${(bytes / 1e6).toFixed(2)}MB, ${

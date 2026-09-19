@@ -2,6 +2,30 @@
 
 ## 1.15.0 (unreleased)
 
+### A gitignored file shipped to npm, and no repo-reading check could have seen it
+
+1.14.2's tarball contained `dist/.metadata_never_index` — a zero-byte macOS Spotlight marker
+that is gitignored and untracked. Harmless in itself. The mechanism is not.
+
+`files` includes `/dist` wholesale, and **when `files` is present npm consults neither
+`.gitignore` nor `.npmignore`** for the paths it selects. So anything sitting in `dist/` ships,
+and being gitignored makes it *less* visible rather than more: every guard that reads the repo
+is blind to it by construction. A stray debug dump or a scratch `.env` would ship exactly as
+readily.
+
+Verified the hard way — an `.npmignore` naming the file was added first and changed nothing,
+so there is no declarative fix and the config line was removed again. `bin/smoke-consumer.ts`
+now asserts on the **packed listing**, the only place the truth exists, and fails on
+`.DS_Store`, Spotlight markers, `.env*` and debug logs.
+
+Found by diffing the published tarball against the tag — the post-publish check that reads the
+artifact instead of the repo. All 871 built files were byte-identical; this was the only delta.
+
+Also removed: **`bin/dist/`**, 1.6MB of tracked build output last rebuilt in August, not in
+`files`, and referenced by nothing. `reviews-1.11-pass2.md` flagged it — and the identical
+Spotlight marker inside it — two releases ago and left the box unticked. Every clone was paying
+for it, and anyone grepping for `iife.js` found a stale copy.
+
 ### tjs-lang 0.13.13 — a quoted test block was executed in the HOST page (#135)
 
 On tjs-lang ≤ 0.13.11, a `test '…' { … }` written inside a template literal or a
