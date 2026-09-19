@@ -110,7 +110,14 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
         {
           filename: 'a.ts',
           title: 'A',
-          text: '# A\n\n```js\nconst x = 1\n```',
+          /*
+          A `:static` fence AHEAD of the live one, because that ordering is what broke.
+          This file used to carry its own copy of the six-language set and never looked at
+          `:mode`, so the illustration counted as an example: the book grew a spurious
+          "Run this example live" link above a block that has none, and every later link slid
+          by one — `#example-2` pointing at an anchor the page never emits.
+          */
+          text: '# A\n\n```js:static\nconst illustration = 0\n```\n\nProse.\n\n```js\nconst x = 1\n```',
           path: 'a.ts',
         },
         {
@@ -177,6 +184,16 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     const chA = fs.readFileSync(path.join(dir, 'OEBPS/a.xhtml'), 'utf8')
     expect(chA).toContain('class="example-live-link"')
     expect(chA).toContain('href="https://example.test/a/#example-1"') // auto id
+    /*
+    EXACTLY ONE link in this chapter, and it is `#example-1`.
+
+    The `:static` block ahead of it is display-only, so the page never makes an example of it.
+    Under the old local six-language set the book emitted TWO links here and numbered the real
+    example `#example-2` — a dead anchor, in the one medium where a broken link cannot be
+    corrected after publication.
+    */
+    expect(chA.match(/class="example-live-link"/g)?.length).toBe(1)
+    expect(chA).not.toContain('#example-2')
     const chB = fs.readFileSync(path.join(dir, 'OEBPS/b.xhtml'), 'utf8')
     expect(chB).toContain('href="https://example.test/b/#cool"') // ```js#cool override
     // the home doc (README) lives at the site root '/', NOT '/index/'

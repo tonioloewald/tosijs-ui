@@ -25,6 +25,8 @@ import type { Doc } from './docs.js'
 import { partitionByBook, DEFAULT_BOOK } from '../book-target.js'
 import { epubVolumeIdentity } from './epub-volumes.js'
 import type { SiteConfig } from './site-config.js'
+import { isLiveFence } from '../example-policy.js'
+import type { ExamplePolicy } from '../example-policy.js'
 import {
   DEFAULT_BOOK_CSS,
   stripDocMeta,
@@ -214,13 +216,26 @@ function htmlToXhtml(
 // links line up: consecutive example-language <pre> siblings form one example;
 // id = an author `data-example-id` override (```js#my-id) or the 1-based `example-N`.
 
-const EXAMPLE_LANGS = new Set(['js', 'tjs', 'ts', 'html', 'css', 'test'])
+/*
+NOT a local set. `isLiveFence` is the shared predicate — see `doc-system/example-policy.ts`.
+
+This file used to carry a verbatim third copy of the six-language set and re-implement the
+grouping rule, consulting neither the predicate nor `config.liveExamples`. The consequence was
+worst for exactly the audience that builds an ePub: under `liveExamples: 'opt-in'` — the
+setting the config docs recommend for book and prose sites — the PAGE produces no live
+examples while the book injected "Run this example live" links to all of them, so every link
+in the shipped book was dead. With a single `:static` fence the ordinals also slid, putting
+`#example-3` on an anchor that does not exist.
+
+A book is the medium where a broken link cannot be corrected after the fact, which is why this
+was worth fixing rather than noting.
+*/
 
 // NB: traverse the DOM by hand (children / tagName / nextElementSibling) rather
 // than querySelector — happy-dom's selector engine throws an internal error on a
 // reused build-time window, even for a trivial selector like `pre`.
 
-function exampleLangOf(pre: any): string | null {
+function exampleLangOf(pre: any, policy: ExamplePolicy): string | null {
   let code: any = null
   for (const c of Array.from(pre.children || [])) {
     if ((c as any).tagName === 'CODE') {
@@ -229,17 +244,23 @@ function exampleLangOf(pre: any): string | null {
     }
   }
   const cls = (code && code.getAttribute('class')) || ''
-  const m = cls.match(/language-([\w-]+)/)
-  return m && EXAMPLE_LANGS.has(m[1]) ? m[1] : null
+  // `[A-Za-z0-9_+#-]` not `[\w-]`: a `c++` / `c#` fence is a language name too, and the two
+  // character classes disagreeing is how the same block gets read differently in two places.
+  const m = cls.match(/language-([A-Za-z0-9_+#-]+)/)
+  if (!m) return null
+  // The `:mode` suffix rides on the <pre> as `data-example-mode` — the same place
+  // `insertExamples` reads it from.
+  const mode = pre.getAttribute('data-example-mode') || undefined
+  return isLiveFence(m[1], mode, policy) ? m[1] : null
 }
 
 /** Collect example <pre> blocks in document order (any depth), no selectors. */
-function collectExamplePres(el: any, out: any[]): void {
+function collectExamplePres(el: any, out: any[], policy: ExamplePolicy): void {
   for (const child of Array.from(el.children || []) as any[]) {
     if (child.tagName === 'PRE') {
-      if (exampleLangOf(child)) out.push(child)
+      if (exampleLangOf(child, policy)) out.push(child)
     } else {
-      collectExamplePres(child, out)
+      collectExamplePres(child, out, policy)
     }
   }
 }
@@ -283,9 +304,13 @@ export function rewriteInBookLinks(
 
 // `pageUrl` is the live-site URL of THIS doc (already including baseUrl, basePath
 // and the correct root for README → '/'); each example link just appends `#id`.
-function injectExampleLinks(doc: any, pageUrl: string): void {
+function injectExampleLinks(
+  doc: any,
+  pageUrl: string,
+  policy: ExamplePolicy = 'auto'
+): void {
   const pres: any[] = []
-  collectExamplePres(doc.body, pres)
+  collectExamplePres(doc.body, pres, policy)
   let ordinal = 0
   for (let i = 0; i < pres.length; i += 1) {
     const group: any[] = [pres[i]]
@@ -776,6 +801,11 @@ export async function buildEpub(
     .json()
     .then((p: { version?: string }) => p.version ?? '0.0.0')
     .catch(() => '0.0.0')
+  /*
+  The SAME policy the site build used. An ePub's "Run this example live" link points at an
+  anchor on the web page, so it is only correct if both agree which fences became examples.
+  */
+  const livePolicy: ExamplePolicy = config.liveExamples ?? 'auto'
   const docsJson = opts.docsJson ?? config.docsJson ?? 'demo/docs.json'
   const corpus: Doc[] = JSON.parse(fs.readFileSync(docsJson, 'utf8'))
   /*
@@ -920,7 +950,9 @@ export async function buildEpub(
     let bodyHtml: string
     try {
       const transform =
-        win && baseUrl ? (d: any) => injectExampleLinks(d, pageUrl) : undefined
+        win && baseUrl
+          ? (d: any) => injectExampleLinks(d, pageUrl, livePolicy)
+          : undefined
       bodyHtml = win ? htmlToXhtml(html, win, transform) : toXhtml(html)
     } catch {
       bodyHtml = toXhtml(html)

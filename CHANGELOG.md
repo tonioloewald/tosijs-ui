@@ -28,6 +28,30 @@ predicate; a third divergence has nowhere to live.
 
 Mutation-verified — restoring either half of the old behaviour turns the regression tests red.
 
+### Every "Run this example live" link in an `opt-in` book was dead
+
+The ePub generator carried a **third** verbatim copy of the six-language set and
+re-implemented example grouping without consulting `isLiveFence` or `config.liveExamples`.
+
+The consequence landed hardest on exactly the people who build ePubs. Under
+`liveExamples: 'opt-in'` — the setting the config docs recommend for book and prose sites —
+the page produces no live examples at all, while the book went on injecting "▶ Run this example
+live ↗" links to every one of them. Every link in the shipped book pointed at an anchor that
+does not exist. With a single `:static` fence the ordinals also slid, so `#example-3` addressed
+a block the page never anchored.
+
+A book is the medium where a broken link cannot be corrected after publication, which is what
+moved this from a note to a fix.
+
+The ePub now uses the same predicate and the site's own policy, and reads the `:mode` off the
+`<pre>` exactly where `insertExamples` reads it. Its language-class pattern also matched
+`[\w-]+` while the highlighter matched `[A-Za-z0-9_+#-]+`, so a `c++` or `c#` fence was read
+differently by the two; both now use the wider one.
+
+The existing test asserted only that the link class was present. It now builds a chapter with a
+`:static` fence ahead of a live one and asserts there is exactly **one** link and no
+`#example-2`. Mutation-verified.
+
 ### A gitignored file shipped to npm, and no repo-reading check could have seen it
 
 1.14.2's tarball contained `dist/.metadata_never_index` — a zero-byte macOS Spotlight marker
