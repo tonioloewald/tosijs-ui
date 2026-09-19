@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=d3318f71be9c" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=b51b101118f7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -343,6 +343,11 @@ build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-m
 <td>dirs scanned for <code>/*#</code> + <code>.md</code> files (list root <code>.md</code> files explicitly)</td>
 </tr>
 <tr>
+<td><code>ignoreDocPaths</code></td>
+<td><code>[&#39;reviews&#39;]</code></td>
+<td>directory basenames skipped while scanning. <strong><code>reviews/</code> is excluded by default</strong> — an adopter listing a docPath whose tree contained one published their internal pre-release review reports, BLOCK verdicts and all, to the open web (#153). Name a directory in <code>docPaths</code> explicitly to publish it anyway</td>
+</tr>
+<tr>
 <td><code>sectionsDir</code></td>
 <td><code>&#39;src/docs&#39;</code></td>
 <td>where auto-created section docs + their <code>&lt;!-- toc --&gt;</code> blocks are written (must be inside a <code>docPath</code>, not named <code>docs</code>)</td>
@@ -366,6 +371,11 @@ build: <code>--tosi-logo-mark-size</code> (default 32px) and <code>--tosi-logo-m
 <td><code>bundleEntry</code></td>
 <td>—</td>
 <td>your IIFE entrypoint; omit to use the fallback bundle</td>
+</tr>
+<tr>
+<td><code>liveExamples</code></td>
+<td><code>&#39;auto&#39;</code></td>
+<td><code>&#39;auto&#39;</code> — the six executable fence languages run; <code>&#39;opt-in&#39;</code> — nothing runs unless the fence asks with <code>:inline</code>/<code>:iframe</code>/<code>:ide</code>. See &quot;Marking a fence display-only&quot;</td>
 </tr>
 <tr>
 <td><code>bundleExternals</code></td>
@@ -1576,9 +1586,32 @@ own theme and is a white slab in dark mode.</li>
 typically unstyled, because the rules live in a component&#39;s shadow DOM and there is no
 component around it. It reads as a broken demo rather than an illustration.</li>
 </ul>
-<p><strong>Display-only alternatives</strong>: <code>typescript</code> for TS, <strong><code>xml</code> for markup</strong>, and any
-non-executing name for styles (<code>less</code> and <code>scss</code> both highlight fine). The rule is simply
-that the fence&#39;s language must not be one of the six.</p>
+<h4>Marking a fence display-only: <code>:static</code></h4>
+<p>Add <code>:static</code> to the fence and it is highlighted, never run — <strong>whatever its language</strong>:</p>
+<pre><code>```html:static
+&lt;tosi-widget&gt;&lt;/tosi-widget&gt;
+```
+</code></pre>
+<p>This is the thing to reach for. Before it existed the only escape was to lie about the
+language — <code>```typescript</code> for TS, <code>```xml</code> for markup — which worked, and which this
+document recommended, but costs you correct highlighting for the language you are actually
+writing. tjs-lang made the argument that settled it (#155): a TJS colon example,
+<code>function greet(name: &#39;Alice&#39;)</code>, is a **value**, and rendered with TypeScript&#39;s token model
+<code>&#39;Alice&#39;</code> takes the <em>type</em> colour — so the page visually asserts the exact confusion the
+document exists to correct. On the web that is cosmetic. In a printed book it is permanent.</p>
+<p>So tag the fence with its real language and add <code>:static</code>. The old alternatives still work and
+nothing has been removed; they are simply no longer the price of not running something.</p>
+<h4>Making display-only the DEFAULT: <code>liveExamples: &#39;opt-in&#39;</code></h4>
+<p>For a corpus that is mostly illustration — a book, a prose site, an API reference — invert it:</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineSiteConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  liveExamples<span class="token operator">:</span> <span class="token string">'opt-in'</span><span class="token punctuation">,</span> <span class="token comment">// nothing runs unless the fence asks</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<p>Under <code>&#39;opt-in&#39;</code> a fence has to ask, with <code>:inline</code>, <code>:iframe</code> or <code>:ide</code>. The default is
+<code>&#39;auto&#39;</code>, where the six languages above run and <code>:static</code> opts an individual fence out.</p>
+<p><strong>If you build an ePub, set this deliberately.</strong> The book&#39;s &quot;▶ Run this example live&quot; links
+point at anchors on the web page, so the two only agree if they were built under the same
+policy.</p>
 <p>If you want the styles to be real <em>and</em> scoped, write them against the doc system&#39;s theme
 variables (<code>--tosi-bg</code>, <code>--tosi-text</code>, …) rather than literal colours, and scope the selector
 to your example&#39;s own markup.</p>
@@ -1596,10 +1629,39 @@ test(&#39;it renders&#39;, () =&gt; { … })
 ```
 </code></pre>
 <p>…and moving that <code>test</code> block under its own <code>## Testing</code> heading silently detaches it from
-the demo it was written against, giving it a second, empty editor. The tests still run; they
-just no longer run against that example&#39;s DOM.</p>
+the demo it was written against. The tests still run; they just no longer run against that
+example&#39;s DOM. A detached <code>```test</code> block renders its <strong>results</strong> rather than an empty
+editor, so a test-only example looks like what it is instead of looking broken — but it is
+still not testing the demo you wrote it for.</p>
 <p>One executable script block per example: <code>js</code>, <code>ts</code> and <code>tjs</code> are the same slot, so
 consecutive ones discard all but the last (#139).</p>
+<h2>Syntax highlighting</h2>
+<p>Static code blocks are highlighted <strong>at build time</strong>, so the tokens are in the pre-rendered
+HTML, the ePub and the printed page — places a runtime highlighter could never reach. There is
+nothing to configure; it happens.</p>
+<p>Token colours come from the doc-system stylesheet, which ships two contrast-checked palettes (a
+light default and a dark one under <code>.darkmode</code>).</p>
+<h3>A language that ships its own grammar</h3>
+<p>27 languages are built in. If yours is not one of them — a DSL, or a language too young for
+Prism — supply a grammar rather than waiting for us:</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> registerGrammar <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/site'</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> tjsGrammar <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tjs-lang/prism'</span>
+
+<span class="token function">registerGrammar</span><span class="token punctuation">(</span><span class="token string">'tjs'</span><span class="token punctuation">,</span> tjsGrammar<span class="token punctuation">)</span>
+</code></pre>
+<p>Call it before <code>buildSite</code>. A registered grammar wins over a built-in one of the same name, so
+this is also how you override a grammar you disagree with.</p>
+<blockquote>
+<p><strong>Register in both places if you also want it client-side.</strong> The build-time registry lives in
+the build process and does not cross into the browser, so a page that is navigated to
+client-side (rather than hard-loaded) highlights with whatever the browser knows. For an ESM
+consumer, import <code>tosijs-ui/doc-system/highlight</code> in your <code>bundleEntry</code> and register there
+too. A CDN <code>&lt;script&gt;</code> consumer has no seam for this yet.</p>
+</blockquote>
+<h3>Highlighting code at runtime</h3>
+<p>If code arrives <em>after</em> the build — a fetched snippet, an API response, a chat message — use
+<a href="/highlight-block/"><code>&lt;tosi-highlight&gt;</code></a>, which is a separate subpath import and not in the root
+barrel. If the code is in your markdown you do not need it.</p>
 <h2>Notes &amp; gotchas</h2>
 <ul>
 <li><strong>Build-time only.</strong> The orchestrator and generators run under Bun and never

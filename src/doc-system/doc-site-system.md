@@ -271,6 +271,7 @@ build: `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (defaul
 | field         | default                | purpose                                                                                                                                       |
 | ------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `docPaths`    | `['src', 'README.md']` | dirs scanned for `/*#` + `.md` files (list root `.md` files explicitly)                                                                       |
+| `ignoreDocPaths` | `['reviews']`       | directory basenames skipped while scanning. **`reviews/` is excluded by default** — an adopter listing a docPath whose tree contained one published their internal pre-release review reports, BLOCK verdicts and all, to the open web (#153). Name a directory in `docPaths` explicitly to publish it anyway |
 | `sectionsDir` | `'src/docs'`           | where auto-created section docs + their `<!-- toc -->` blocks are written (must be inside a `docPath`, not named `docs`)                      |
 | `docsJson`    | `'demo/docs.json'`     | path of the intermediate doc corpus the build writes and re-reads; its directory is created automatically, so you don't need a `demo/` folder |
 
@@ -279,6 +280,7 @@ build: `--tosi-logo-mark-size` (default 32px) and `--tosi-logo-mark-gap` (defaul
 | field             | default     | purpose                                                                    |
 | ----------------- | ----------- | -------------------------------------------------------------------------- |
 | `bundleEntry`     | —           | your IIFE entrypoint; omit to use the fallback bundle                      |
+| `liveExamples`    | `'auto'`    | `'auto'` — the six executable fence languages run; `'opt-in'` — nothing runs unless the fence asks with `:inline`/`:iframe`/`:ide`. See "Marking a fence display-only" |
 | `bundleExternals` | —           | modules left external, e.g. `['jolt-physics']`                             |
 | `scriptUrl`       | `/iife.js`  | bundle URL pages load (fallback + output name)                             |
 | `bundleOutDir`    | `outputDir` | where the bundle is BUILT; set only when it is itself a published artifact |
@@ -1364,9 +1366,41 @@ The two in bold turn ordinary API documentation into live bugs, and neither fail
   typically unstyled, because the rules live in a component's shadow DOM and there is no
   component around it. It reads as a broken demo rather than an illustration.
 
-**Display-only alternatives**: `typescript` for TS, **`xml` for markup**, and any
-non-executing name for styles (`less` and `scss` both highlight fine). The rule is simply
-that the fence's language must not be one of the six.
+#### Marking a fence display-only: `:static`
+
+Add `:static` to the fence and it is highlighted, never run — **whatever its language**:
+
+    ```html:static
+    <tosi-widget></tosi-widget>
+    ```
+
+This is the thing to reach for. Before it existed the only escape was to lie about the
+language — ` ```typescript ` for TS, ` ```xml ` for markup — which worked, and which this
+document recommended, but costs you correct highlighting for the language you are actually
+writing. tjs-lang made the argument that settled it (#155): a TJS colon example,
+`function greet(name: 'Alice')`, is a **value**, and rendered with TypeScript's token model
+`'Alice'` takes the *type* colour — so the page visually asserts the exact confusion the
+document exists to correct. On the web that is cosmetic. In a printed book it is permanent.
+
+So tag the fence with its real language and add `:static`. The old alternatives still work and
+nothing has been removed; they are simply no longer the price of not running something.
+
+#### Making display-only the DEFAULT: `liveExamples: 'opt-in'`
+
+For a corpus that is mostly illustration — a book, a prose site, an API reference — invert it:
+
+```typescript
+export default defineSiteConfig({
+  liveExamples: 'opt-in', // nothing runs unless the fence asks
+})
+```
+
+Under `'opt-in'` a fence has to ask, with `:inline`, `:iframe` or `:ide`. The default is
+`'auto'`, where the six languages above run and `:static` opts an individual fence out.
+
+**If you build an ePub, set this deliberately.** The book's "▶ Run this example live" links
+point at anchors on the web page, so the two only agree if they were built under the same
+policy.
 
 If you want the styles to be real *and* scoped, write them against the doc system's theme
 variables (`--tosi-bg`, `--tosi-text`, …) rather than literal colours, and scope the selector
@@ -1389,11 +1423,49 @@ So this is one example with three tabs:
     ```
 
 …and moving that `test` block under its own `## Testing` heading silently detaches it from
-the demo it was written against, giving it a second, empty editor. The tests still run; they
-just no longer run against that example's DOM.
+the demo it was written against. The tests still run; they just no longer run against that
+example's DOM. A detached ` ```test ` block renders its **results** rather than an empty
+editor, so a test-only example looks like what it is instead of looking broken — but it is
+still not testing the demo you wrote it for.
 
 One executable script block per example: `js`, `ts` and `tjs` are the same slot, so
 consecutive ones discard all but the last (#139).
+
+## Syntax highlighting
+
+Static code blocks are highlighted **at build time**, so the tokens are in the pre-rendered
+HTML, the ePub and the printed page — places a runtime highlighter could never reach. There is
+nothing to configure; it happens.
+
+Token colours come from the doc-system stylesheet, which ships two contrast-checked palettes (a
+light default and a dark one under `.darkmode`).
+
+### A language that ships its own grammar
+
+27 languages are built in. If yours is not one of them — a DSL, or a language too young for
+Prism — supply a grammar rather than waiting for us:
+
+```typescript
+import { registerGrammar } from 'tosijs-ui/site'
+import { tjsGrammar } from 'tjs-lang/prism'
+
+registerGrammar('tjs', tjsGrammar)
+```
+
+Call it before `buildSite`. A registered grammar wins over a built-in one of the same name, so
+this is also how you override a grammar you disagree with.
+
+> **Register in both places if you also want it client-side.** The build-time registry lives in
+> the build process and does not cross into the browser, so a page that is navigated to
+> client-side (rather than hard-loaded) highlights with whatever the browser knows. For an ESM
+> consumer, import `tosijs-ui/doc-system/highlight` in your `bundleEntry` and register there
+> too. A CDN `<script>` consumer has no seam for this yet.
+
+### Highlighting code at runtime
+
+If code arrives *after* the build — a fetched snippet, an API response, a chat message — use
+[`<tosi-highlight>`](/highlight-block/), which is a separate subpath import and not in the root
+barrel. If the code is in your markdown you do not need it.
 
 ## Notes & gotchas
 

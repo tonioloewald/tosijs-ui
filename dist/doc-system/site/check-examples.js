@@ -28,6 +28,20 @@ import { isLiveFence } from '../example-policy.js';
 // A project that sets a custom `context` on its <tosi-doc-system> can pass its
 // own keys; these are the tosijs-ui defaults.
 const DEFAULT_CONTEXT_KEYS = ['tosijs', 'tosijs-ui'];
+/*
+FOUR languages, deliberately — NOT the six that `isLiveFence` accepts, and not a stale copy
+of them.
+
+These two sets answer different questions. `isLiveFence` asks "does this fence become a live
+example?", which is true of `html` and `css`. This asks "do we PARSE this fence as
+JavaScript?", which is false of both: `<tosi-widget>` and `.x { color: red }` are not JS, and
+feeding them to the parser reports syntax errors in perfectly good markup.
+
+Both gates are needed, in that order — this one AND `isLiveFence`. Replacing this set with the
+predicate was tried during the 1.15.0 review, shipped as a "fix", and caught by an existing
+test that had been written for exactly this mistake. Narrowing it to the predicate alone is a
+regression; widening it to six is a different one.
+*/
 const EXECUTABLE = new Set(['js', 'tjs', 'ts', 'test']);
 // ONE transpiler for the whole PROCESS, not one per corpus and certainly not one per
 // example. It's stateless, and it's a native object that strands ~40KB of RSS per
