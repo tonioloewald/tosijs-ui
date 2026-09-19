@@ -11,11 +11,11 @@ palette can eventually be driven entirely by a few attributes on the element
 (accent/background/text) — most of the palette is derived from `accent`.
 */
 
+import { highlightStyleSpec } from './highlight-styles.js'
 import {
   XinStyleSheet,
   XinStyleRule,
   vars,
-  varDefault,
   Color,
   invertLuminance,
 } from 'tosijs'
@@ -527,6 +527,9 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
     Prism token colours for STATIC code blocks — TWO palettes, because there are two
     backgrounds (blocker B2 of the 1.15.0 review).
 
+    The rules themselves now live in `highlight-styles.ts` — see there for the palette and
+    the measured contrast figures. What is worth keeping HERE is why it shipped broken.
+
     The first version applied VSCode **Dark+** literals unconditionally. `--code-bg` is
     `#fdfdfd` in light mode, which is the DEFAULT — the pre-paint script adds `darkmode` only
     on an explicit or system preference — so every token type failed WCAG AA on the page most
@@ -537,81 +540,13 @@ export function docSystemStyleSpec(theme: DocSystemTheme = {}): XinStyleSheet {
     contrast-checked against `#f6f8fa`; for the site I wrote "the site's code sits on a dark
     code background" and treated that sentence as the check. It was false, and it appeared in
     four places including the CHANGELOG — a justification standing in for a measurement.
-
-    Measured, both directions (AA needs 4.5:1):
-      light on #fdfdfd — worst 5.32:1 (comment)
-      dark  on #020202 — worst 6.01:1 (punctuation)
-
-    `doc-system-styles.test.ts` asserts both, so these are checked rather than claimed.
-
-    Dark uses DESCENDANT selectors rather than a nested `.darkmode` block: the spec already
-    has one, and a duplicate key loses silently to the last writer instead of merging. Each
-    colour is its own `varDefault` (suffixed `Dark`) so a consumer can retheme one token type
-    in one mode.
     */
-    '.token.comment, .token.prolog, .token.cdata': {
-      fontStyle: 'italic',
-      color: varDefault.tokenComment('#5c6f5c'),
-    },
-    '.token.punctuation': {
-      color: varDefault.tokenPunctuation('#666666'),
-    },
-    '.token.string, .token.char, .token.attr-value, .token.regex': {
-      color: varDefault.tokenString('#a03030'),
-    },
-    '.token.number, .token.boolean, .token.constant': {
-      color: varDefault.tokenNumber('#0b7285'),
-    },
-    '.token.keyword, .token.important, .token.atrule': {
-      color: varDefault.tokenKeyword('#0a5bb5'),
-    },
-    '.token.function, .token.class-name': {
-      color: varDefault.tokenFunction('#7a4b00'),
-    },
-    '.token.operator, .token.entity, .token.url': {
-      color: varDefault.tokenOperator('#444444'),
-    },
-    '.token.tag, .token.selector, .token.builtin': {
-      color: varDefault.tokenTag('#0a6b52'),
-    },
-    '.token.attr-name, .token.property': {
-      color: varDefault.tokenAttr('#2a5db0'),
-    },
-    '.token.deleted': {
-      color: varDefault.tokenDeleted('#b02020'),
-    },
-    '.token.inserted': {
-      color: varDefault.tokenInserted('#2a6b2a'),
-    },
-    '.token.bold': { fontWeight: 'bold' },
-    '.token.italic': { fontStyle: 'italic' },
-    '.darkmode .token.comment, .darkmode .token.prolog, .darkmode .token.cdata':
-      { color: varDefault.tokenCommentDark('#6a9955') },
-    '.darkmode .token.punctuation': {
-      color: varDefault.tokenPunctuationDark('#8a8a8a'),
-    },
-    '.darkmode .token.string, .darkmode .token.char, .darkmode .token.attr-value, .darkmode .token.regex':
-      { color: varDefault.tokenStringDark('#ce9178') },
-    '.darkmode .token.number, .darkmode .token.boolean, .darkmode .token.constant':
-      { color: varDefault.tokenNumberDark('#b5cea8') },
-    '.darkmode .token.keyword, .darkmode .token.important, .darkmode .token.atrule':
-      { color: varDefault.tokenKeywordDark('#569cd6') },
-    '.darkmode .token.function, .darkmode .token.class-name': {
-      color: varDefault.tokenFunctionDark('#dcdcaa'),
-    },
-    '.darkmode .token.operator, .darkmode .token.entity, .darkmode .token.url':
-      { color: varDefault.tokenOperatorDark('#d4d4d4') },
-    '.darkmode .token.tag, .darkmode .token.selector, .darkmode .token.builtin':
-      { color: varDefault.tokenTagDark('#4ec9b0') },
-    '.darkmode .token.attr-name, .darkmode .token.property': {
-      color: varDefault.tokenAttrDark('#9cdcfe'),
-    },
-    '.darkmode .token.deleted': {
-      color: varDefault.tokenDeletedDark('#f48771'),
-    },
-    '.darkmode .token.inserted': {
-      color: varDefault.tokenInsertedDark('#6a9955'),
-    },
+    /*
+    ONE copy, in `highlight-styles.ts`. It used to live inline here, which meant the token
+    palette was reachable only by importing the entire doc-site chrome — so a standalone
+    `<tosi-highlight>` rendered correct token markup in flat black. Spread, not duplicated.
+    */
+    ...highlightStyleSpec,
     '.transparent, .iconic': {
       background: 'none',
     },

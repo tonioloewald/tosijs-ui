@@ -29,133 +29,48 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="../doc-system.css?v=6e2f2b2c8263" data-tosi-doc-system />
-  <title>tabs — tosijs-ui</title>
-  <meta name="description" content="&lt;tosi-tabs&gt; creates a tabpanel for its children, creating a tab for each based on its name attribute." />
-  <link rel="canonical" href="https://ui.tosijs.net/tab-selector/" />
+  <title>highlight-styles — tosijs-ui</title>
+  <meta name="description" content="The syntax-highlighting token palette, on its own." />
+  <link rel="canonical" href="https://ui.tosijs.net/highlight-styles/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
-  <meta property="og:title" content="tabs — tosijs-ui" />
-  <meta property="og:description" content="&lt;tosi-tabs&gt; creates a tabpanel for its children, creating a tab for each based on its name attribute." />
-  <meta property="og:url" content="https://ui.tosijs.net/tab-selector/" />
+  <meta property="og:title" content="highlight-styles — tosijs-ui" />
+  <meta property="og:description" content="The syntax-highlighting token palette, on its own." />
+  <meta property="og:url" content="https://ui.tosijs.net/highlight-styles/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"tabs","description":"\u003ctosi-tabs> creates a tabpanel for its children, creating a tab for each based on its name attribute.","url":"https://ui.tosijs.net/tab-selector/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"highlight-styles","description":"The syntax-highlighting token palette, on its own.","url":"https://ui.tosijs.net/highlight-styles/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
   <tosi-doc-system docs="../docs.json?v=76af16164440" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
-<h1>tabs</h1>
-<p><code>&lt;tosi-tabs&gt;</code> creates a <code>tabpanel</code> for its children, creating a <code>tab</code> for each based on its
-<code>name</code> attribute.</p>
-<pre><code class="language-js">[...preview.querySelectorAll(&#39;div[name]&#39;)].forEach(div =&gt; {
-  div.style.color = `hsl(${(Math.random() * 360).toFixed(0)} 50% 50%)`
-})
+<h1>highlight-styles</h1>
+<p>The syntax-highlighting token palette, on its own.</p>
+<p>It lives here rather than inside <code>docSystemStyleSpec</code> because the package ships <strong>no CSS
+files at all</strong> — every style is a <code>StyleSheet()</code> call — so before this existed, the only way
+to get token colours was to import the whole doc-site chrome. A standalone
+<a href="/highlight-block/"><code>&lt;tosi-highlight&gt;</code></a> on an ordinary page therefore produced perfectly
+correct <code>&lt;span class=&quot;token …&quot;&gt;</code> markup rendering in flat black, which is the one thing that
+component is for. The doc block even told you to &quot;import the doc-system CSS&quot;, naming an
+import that did not exist.</p>
+<p><code>&lt;tosi-highlight&gt;</code> now injects this itself on first use, so the standalone case needs nothing.
+Import it directly only if you are highlighting markup you produced some other way:</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> ensureHighlightStyles <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/doc-system/highlight-styles'</span>
 
-import { div, button } from &#39;tosijs&#39;.elements
-const tabSelector = preview.querySelector(&#39;tosi-tabs&#39;)
-
-tabSelector.handleCloseTab = body =&gt; {
-  if (!confirm(`Are you sure you want to close the ${body.getAttribute(&#39;name&#39;)} tab?`)) {
-    return false
-  }
-}
-
-let bodycount = 0
-preview.querySelector(&#39;.add&#39;).addEventListener(&#39;click&#39;, () =&gt; {
-  const name = `new tab ${++bodycount}`
-  const body = div(
-    {name, dataClose: true},
-    name,
-  )
-  tabSelector.addTabBody(body, true)
-})
+<span class="token function">ensureHighlightStyles</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 </code></pre>
-<pre><code class="language-html">&lt;tosi-tabs&gt;
-  &lt;div name=&quot;first&quot;&gt;first body&lt;/div&gt;
-  &lt;div name=&quot;second&quot; data-close&gt;
-    &lt;template role=&quot;tab&quot;&gt;
-      &lt;tosi-icon
-        style=&quot;
-          display: inline-block;
-          width: 16px;
-          height: 16px;
-          transform: translateY(2px);
-          margin-right: 4px;
-          stroke: var(--brand-color);
-        &quot;
-        icon=&quot;eye&quot;
-      &gt;&lt;/tosi-icon&gt;
-      &lt;span&gt;Ooooh!!!&lt;/span&gt;
-    &lt;/template&gt;
-    look at the html…
-  &lt;/div&gt;
-  &lt;div name=&quot;third&quot;&gt;third body&lt;/div&gt;
-  &lt;button class=&quot;add&quot; slot=&quot;after-tabs&quot;&gt;
-    &lt;tosi-icon icon=&quot;plus&quot;&gt;&lt;/tosi-icon&gt;
-  &lt;/button&gt;
-&lt;/tosi-tabs&gt;
+<p>Every colour is a <code>varDefault</code>, so retheme any single token type — in either mode —
+by setting its variable:</p>
+<pre><code class="language-css">:root { --token-keyword: rebeccapurple; }
 </code></pre>
-<pre><code class="language-css">  .preview tosi-tabs {
-    height: 100%;
-  }
-
-  .preview div[name] {
-    padding: 20px;
-    text-align: center;
-    height: 100%;
-    font-size: 200%;
-  }
-
-  .preview .add {
-    width: 38px;
-    line-height: 38px;
-    height: 38px;
-    padding: 0;
-  }
-</code></pre>
-<p>The <code>&lt;tosi-tabs&gt;</code>s <code>value</code> is the index of its active body.</p>
-<p>A <code>&lt;tosi-tabs&gt;</code> has <code>addTabBody(body: HTMLElement, select?: boolean)</code> and
-<code>removeTabBody(body: number | HTMLElement)</code> methods for updating its content.</p>
-<p>You can also just insert or remove tab bodies directly and call <code>setupTabs()</code>.</p>
-<h2>Closeable Tabs</h2>
-<p>Adding the <code>data-close</code> attribute to a tab will make it closeable.</p>
-<p>When a tab is closed, the <code>&lt;tosi-tabs&gt;</code> element&#39;s <code>handleCloseTab: (tabBody: Element) =&gt; boolean | undefined | void</code>
-will be called (the old <code>onCloseTab</code> name still works but is deprecated). If you set this and return <code>false</code>, the tab will
-not be closed (e.g. if you want to implement save/cancel behavior).</p>
-<h2>Custom Tab Content</h2>
-<p>You can specify the exact content of the tab for a given body by
-adding a <code>&lt;template role=&quot;tab&quot;&gt;</code> to that body. The contents of that
-template will be cloned into the tab.</p>
-<h2>Localized Support</h2>
-<pre><code class="language-html">&lt;tosi-tabs localized&gt;
-  &lt;div name=&quot;localize&quot;&gt;&lt;h2&gt;localize!&lt;/h2&gt;&lt;/div&gt;
-  &lt;div name=&quot;tabs&quot;&gt;&lt;h2&gt;tabs&lt;/h2&gt;&lt;/div&gt;
-&lt;/tosi-tabs&gt;
-</code></pre>
-<p><code>&lt;tosi-tabs&gt;</code> supports the <code>localized</code> attribute. It will automatically localize
-tab names (but it won&#39;t override custom tab content, so localizing that is on you).</p>
-<h2>Tab Tooltips</h2>
-<p>Add <code>data-tooltip</code> to a tab body and it will be shown on its tab button
-(requires <code>initTooltips()</code>).</p>
-<pre><code class="language-js">import { initTooltips } from &#39;tosijs-ui&#39;
-
-initTooltips()
-</code></pre>
-<pre><code class="language-html">&lt;tosi-tabs&gt;
-  &lt;div name=&quot;Overview&quot; data-tooltip=&quot;Project summary and status&quot;&gt;Overview content&lt;/div&gt;
-  &lt;div name=&quot;Details&quot; data-tooltip=&quot;Configuration and **advanced** settings&quot;&gt;Details content&lt;/div&gt;
-  &lt;div name=&quot;Log&quot; data-tooltip=&quot;Recent activity and events&quot;&gt;Log content&lt;/div&gt;
-&lt;/tosi-tabs&gt;
-</code></pre>
-<pre><code class="language-css">.preview tosi-tabs {
-  height: 100%;
-}
-.preview div[name] {
-  padding: 20px;
-  text-align: center;
-}
-</code></pre>
+<p>Two palettes, not one recomputed from the other: a light default and a dark set under
+<code>.darkmode</code>. Deriving light from dark literals is how this shipped failing WCAG AA on every
+token type. Measured, both directions (AA needs 4.5:1): light on <code>#fdfdfd</code> worst <strong>5.32:1</strong>
+(comment); dark on <code>#020202</code> worst <strong>6.01:1</strong> (punctuation). <code>doc-system-styles.test.ts</code>
+asserts both, so they are checked rather than claimed.</p>
+<p>Dark uses DESCENDANT selectors rather than a nested <code>.darkmode</code> block, because the doc-system
+spec already has one and a duplicate key loses silently to the last writer instead of merging.</p>
 
   </article>
   <nav class="doc-nav" aria-label="Documentation">
@@ -164,10 +79,10 @@ initTooltips()
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
     <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
     <li><a class="doc-link" href="../highlight-block/">highlight-block</a></li>
-    <li><a class="doc-link" href="../highlight-styles/">highlight-styles</a></li>
+    <li><a class="doc-link current" href="../highlight-styles/" aria-current="page">highlight-styles</a></li>
     <li><a class="doc-link" href="../icons/">icons</a></li>
     <li><a class="doc-link" href="../natural-compare/">naturalCompare</a></li>
-    <li><details open><summary><a class="doc-link" href="../components/">Components</a></summary>
+    <li><details><summary><a class="doc-link" href="../components/">Components</a></summary>
     <ul>
       <li><a class="doc-link" href="../babylon-3d/">3d</a></li>
       <li><a class="doc-link" href="../carousel/">carousel</a></li>
@@ -193,7 +108,7 @@ initTooltips()
       <li><a class="doc-link" href="../size-break/">size-break</a></li>
       <li><a class="doc-link" href="../sizer/">sizer</a></li>
       <li><a class="doc-link" href="../data-table/">table</a></li>
-      <li><a class="doc-link current" href="../tab-selector/" aria-current="page">tabs</a></li>
+      <li><a class="doc-link" href="../tab-selector/">tabs</a></li>
       <li><a class="doc-link" href="../tooltip/">tooltip</a></li>
     </ul>
     </details></li>

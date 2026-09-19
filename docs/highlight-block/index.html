@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=c8f83cb1703c" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=6e2f2b2c8263" data-tosi-doc-system />
   <title>highlight-block — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-highlight&gt; pretty-prints a static code sample. It is not an editor — for that use &lt;tosi-code&gt;, which wraps CodeMirror and weighs accordingly." />
   <link rel="canonical" href="https://ui.tosijs.net/highlight-block/" />
@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=b51b101118f7" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=76af16164440" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>highlight-block</h1>
 <p><code>&lt;tosi-highlight&gt;</code> pretty-prints a static code sample. It is <strong>not</strong> an editor — for that
@@ -65,12 +65,22 @@ block.value = `fn main() {
 <code>bash</code>, <code>yaml</code>, …). Grammars load on demand, so a page pays only for the languages it shows,
 and an unknown language renders as plain, readable code rather than failing.</p>
 <h2>Styling</h2>
-<p>Token colours come from the doc-system stylesheet&#39;s <code>.token.*</code> rules. There are <strong>two
-palettes</strong> — a light set (the default) and a dark set under <code>.darkmode</code> — each contrast-checked
-against the <code>--code-bg</code> it actually sits on. Not a recomputation of one palette: a light-mode
-default derived from dark-mode literals is unreadable, which is how this shipped failing WCAG
-AA on every token type. Outside a doc site, style <code>.token.keyword</code>, <code>.token.string</code> and friends
-yourself, or import the doc-system CSS.</p>
+<p><strong>Colours work out of the box, anywhere.</strong> The element injects its token palette on first use,
+so a <code>&lt;tosi-highlight&gt;</code> on an ordinary page is coloured without importing anything.</p>
+<p>That was not always true, and the way it failed is worth knowing if you are debugging
+something similar: this package ships <strong>no CSS files at all</strong> — every style is a <code>StyleSheet()</code>
+call — and the palette used to live inside the doc-system stylesheet. So a standalone element
+produced perfectly correct <code>&lt;span class=&quot;token …&quot;&gt;</code> markup rendering in flat black, and this
+very paragraph told you to &quot;import the doc-system CSS&quot;, which was not an import that existed.</p>
+<p>There are <strong>two palettes</strong> — a light set (the default) and a dark set under <code>.darkmode</code> — each
+contrast-checked against the <code>--code-bg</code> it actually sits on. Not one recomputed from the
+other: a light-mode default derived from dark-mode literals is unreadable, which is how this
+shipped failing WCAG AA on every token type.</p>
+<p>Every colour is a <code>varDefault</code>, so retheme one token type without touching the rest:</p>
+<pre><code class="language-css">:root { --token-keyword: rebeccapurple; }
+</code></pre>
+<p>The spec is also exported, if you want it somewhere this element is not:
+<code>import { highlightStyleSpec, ensureHighlightStyles } from &#39;tosijs-ui/doc-system/highlight-styles&#39;</code>.</p>
 <p>This element renders in the LIGHT DOM deliberately: token styling has to be reachable from a
 page stylesheet, and a shadow root would make every consumer re-declare the palette.</p>
 
@@ -81,6 +91,7 @@ page stylesheet, and a shadow root would make every consumer re-declare the pale
     <li><a class="doc-link" href="../">tosijs-ui</a></li>
     <li><a class="doc-link" href="../one-source-every-artifact/">One Source</a></li>
     <li><a class="doc-link current" href="../highlight-block/" aria-current="page">highlight-block</a></li>
+    <li><a class="doc-link" href="../highlight-styles/">highlight-styles</a></li>
     <li><a class="doc-link" href="../icons/">icons</a></li>
     <li><a class="doc-link" href="../natural-compare/">naturalCompare</a></li>
     <li><details><summary><a class="doc-link" href="../components/">Components</a></summary>
@@ -167,6 +178,6 @@ page stylesheet, and a shadow root would make every consumer re-declare the pale
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate.js?v=c8f83cb1703c"></script>
+  <script type="module" src="../hydrate.js?v=6e2f2b2c8263"></script>
 </body>
 </html>

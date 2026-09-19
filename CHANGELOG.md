@@ -28,6 +28,28 @@ predicate; a third divergence has nowhere to live.
 
 Mutation-verified — restoring either half of the old behaviour turns the regression tests red.
 
+### `<tosi-highlight>` renders in colour anywhere, not only inside a doc site
+
+The component shipped without the palette it needs. This package contains **no CSS files at
+all** — every style is a `StyleSheet()` call — and the `.token.*` rules lived inside the
+doc-system stylesheet. So a `<tosi-highlight>` on an ordinary page produced perfectly correct
+`<span class="token …">` markup and rendered it in flat black: 17 token spans, every one
+computing to `rgb(0,0,0)`. That is the single thing the component exists to do.
+
+The doc block compounded it by telling you to "import the doc-system CSS" — naming an import
+that did not exist.
+
+The palette now lives in `doc-system/highlight-styles.ts` as an exported `highlightStyleSpec`,
+the doc-system spreads that one copy rather than holding its own, and the element **injects it
+on first use** — so the standalone case needs no import and no configuration. Every colour is
+still a `varDefault`, so `:root { --token-keyword: rebeccapurple }` retunes one token type
+without touching the rest.
+
+> Writing the test for this found a second defect before it shipped: `StyleSheet()` does not
+> dedupe by id on its own, and `render()` runs many times per element, so the first version
+> injected a `<style>` per render — nine in a single test file. It now carries the same
+> module-level guard as `ensureTooltipStyles`.
+
 ### Every "Run this example live" link in an `opt-in` book was dead
 
 The ePub generator carried a **third** verbatim copy of the six-language set and
