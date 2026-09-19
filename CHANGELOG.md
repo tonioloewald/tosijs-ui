@@ -26,33 +26,11 @@ Also removed: **`bin/dist/`**, 1.6MB of tracked build output last rebuilt in Aug
 Spotlight marker inside it — two releases ago and left the box unticked. Every clone was paying
 for it, and anyone grepping for `iife.js` found a stale copy.
 
-### tjs-lang 0.13.13 — a quoted test block was executed in the HOST page (#135)
+### tjs-lang 0.13.13 (#135) — **already shipped in 1.14.3**
 
-On tjs-lang ≤ 0.13.11, a `test '…' { … }` written inside a template literal or a
-double-quoted string was mistaken for a real test block: the body ran at transpile time and
-the text was **deleted from the output**. Both silent.
-
-That is the bad case for a doc site specifically, because documentation about a language
-quotes the language. `transform()` is called from the component — the **host page** — and its
-output is then injected into the iframe, so anything the transpiler executes at transpile time
-runs outside the sandbox that exists for exactly this. Any tjs example *showing* a test block
-had it deleted from the rendered example and executed in the host page. Upstream lost 52 of 99
-failures in their own conversion gate to it before finding the cause.
-
-Fixed in 0.13.12; this moves to **0.13.13** (latest), verified across all four lanes rather
-than on the release note alone: 1475 unit, 113 Playwright, 64 haltija doc-tests, 48 consumer
-checks. 0.13.5–0.13.13 also carry the AJS/TJS parser split, a prototype-chain lookup fix in
-the VM, a source-size cap on `Eval`/`SafeFunction`, and further literal-blindness fixes.
-
-The pin lives in **two** places by design — `package.json` and `TJS_VERSION` in
-`code-transform.ts`, which governs the CDN bundle a doc site actually loads — and both moved
-together. The peer floor is unchanged at `^0.13.1`: raising it would warn on install for
-people whose own pin is older, and the CDN pin is what fixes the behaviour for anyone using
-the default path. **If you install tjs-lang yourself, upgrade to ≥0.13.12** — your copy wins
-over ours.
-
-Reported by tjs-lang, which was blocked on this while moving its playground onto the doc-site
-system.
+Carried here so a 1.13.x upgrader gets it too. Full notes under 1.14.3 below: on tjs-lang
+<=0.13.11 a `test '…' { … }` inside a quoted string executed at transpile time, in the host
+page, outside the iframe sandbox. If you are on 1.14.3 you already have this.
 
 ### Share a link with a PERSON: `tosijs-tunnel --link --share`
 
@@ -101,34 +79,10 @@ capability as permissive so no existing caller behaves differently.
 It still fronts the running dev server, so it needs your machine on. For a demo that has to
 survive your laptop sleeping, use the static preview.
 
-### `import 'tosijs-ui/doc-browser'` now actually defines `<tosi-doc-system>` (#158, #159)
+### `import 'tosijs-ui/doc-browser'` defines `<tosi-doc-system>` (#158, #159) — **already shipped in 1.14.2**
 
-**Also shipped as 1.14.2** — if you are on 1.14.x, upgrade to that; you do not need this
-release to get the fix.
-
-The one import every adoption doc tells you to write did not register the doc system.
-`doc-browser.ts` is a library module — types, helpers, `createDocBrowser()` — while the element
-lives in `doc-system/doc-system.ts`, which imports *from* doc-browser. The dependency arrow ran
-the wrong way, so that import could never have reached the registrar however it was written.
-
-What made it survive several releases is that it was a **partial** success: the leaf components
-(`tosi-sidenav`, `tosi-example`, …) registered fine, so the bundle looked healthy, pages served
-200, and `<tosi-doc-system>` sat in the markup inert — the exact failure mode the adoption page
-warns about. The expensive half was quieter: no doc system means no `window.__docTestResults`,
-so an adopter's entire inline doc-test corpus **silently stopped existing**. Not a red suite; a
-suite reporting nothing. Two projects hit it independently, one reaching a release candidate
-first.
-
-`tosijs-ui/doc-browser` now resolves to an entry that imports the registrar and re-exports the
-whole documented API, so no code changes. A more precise spelling — a named `tosijs-ui/doc-system`
-export — is coming in a later release; **this one keeps working**, it is not a deprecation.
-
-Two sentences were separately false and are corrected: `import 'tosijs-ui'` does **not** also
-register the doc system. The root barrel deliberately excludes that cluster (#133, 77% of the
-barrel's weight), so the root import gives you buttons and an undefined doc system.
-
-A test now imports the built entry in a subprocess and fails if the element is not defined.
-Verified by mutation: strip the side-effect import and it goes red.
+Carried here so a 1.13.x upgrader gets it too. Full notes under 1.14.2 below. If you are on
+1.14.2 or later you already have this.
 
 ### Client-side navigation lost syntax highlighting on an `opt-in` site
 
@@ -498,6 +452,72 @@ The policy reaches the client the same way `__TJS_LOCAL_BASE` does, and is **onl
 it differs from the default**, so an `auto` site's HTML is byte-identical to before.
 
 `:static` is honoured under both policies, so one corpus can be written to work either way.
+## 1.14.3
+
+A single-fix patch cut from `v1.14.2`. Carries no 1.15.0 work.
+
+### tjs-lang 0.13.13 — a quoted test block was executed in the HOST page (#135)
+
+On tjs-lang ≤ 0.13.11, a `test '…' { … }` written inside a template literal or a
+double-quoted string was mistaken for a real test block: the body ran at transpile time and
+the text was **deleted from the output**. Both silent.
+
+That is the bad case for a doc site specifically, because documentation about a language
+quotes the language. `transform()` is called from the component — the **host page** — and its
+output is then injected into the iframe, so anything the transpiler executes at transpile time
+runs outside the sandbox that exists for exactly this. Any tjs example *showing* a test block
+had it deleted from the rendered example and executed in the host page. Upstream lost 52 of 99
+failures in their own conversion gate to it before finding the cause.
+
+Fixed in 0.13.12; this moves to **0.13.13** (latest), verified across all four lanes rather
+than on the release note alone. 0.13.5–0.13.13 also carry the AJS/TJS parser split, a
+prototype-chain lookup fix in the VM, a source-size cap on `Eval`/`SafeFunction`, and further
+literal-blindness fixes.
+
+The pin lives in **two** places by design — `package.json` and `TJS_VERSION` in
+`code-transform.ts`, which governs the CDN bundle a doc site actually loads — and both moved
+together. The peer floor is unchanged at `^0.13.1`: raising it would warn on install for
+people whose own pin is older, and the CDN pin is what fixes the behaviour on the default
+path. **If you install tjs-lang yourself, upgrade to ≥0.13.12** — your copy wins over ours.
+
+Reported by tjs-lang, which was blocked on this while moving its playground onto the doc-site
+system. Released as a patch so nobody waits for 1.15.0 for it.
+
+## 1.14.2
+
+A single-fix patch, cut from `v1.14.1` rather than from `main`, so it carries none of the
+in-progress 1.15.0 work.
+
+### `import 'tosijs-ui/doc-browser'` now actually defines `<tosi-doc-system>` (#158, #159)
+
+**If you are building a doc site with `tosijs-ui/site`, upgrade.** The one import every
+adoption doc tells you to write did not register the doc system.
+
+`doc-browser.ts` is a library module — types, helpers, `createDocBrowser()` — while the element
+lives in `doc-system/doc-system.ts`, which imports *from* doc-browser. The dependency arrow ran
+the wrong way, so that import could never have reached the registrar however it was written.
+
+What let it survive several releases is that it was a **partial** success. The leaf components
+(`tosi-sidenav`, `tosi-example`, …) registered fine, so your bundle looked healthy, your own
+elements worked, pages served 200 — and `<tosi-doc-system>` sat in the markup inert. The
+expensive half was quieter: no doc system means no `window.__docTestResults`, so an entire
+inline doc-test corpus **silently stopped existing**. Not a red suite; a suite reporting
+nothing. Two projects hit this independently, one of them reaching a release candidate first.
+
+`tosijs-ui/doc-browser` now resolves to an entry that imports the registrar and re-exports the
+whole documented API. **No code changes** — the line you already wrote starts working.
+
+A more precise spelling, a named `tosijs-ui/doc-system` export, is coming in a later release.
+**This one keeps working**; it is an addition, not a deprecation.
+
+Two sentences were separately false and are corrected: `import 'tosijs-ui'` does **not** also
+register the doc system. The root barrel deliberately excludes that cluster (#133 — it was 77%
+of the barrel's weight, landing on every app that imported a button), so the root import gives
+you buttons and an undefined doc system. That text shipped in the emitted `.d.ts`, the adoption
+page and the adopter reference.
+
+A test now imports the built entry in a subprocess and fails if the element is undefined.
+Verified by mutation: strip the side-effect import and it goes red.
 
 ## 1.14.1
 
