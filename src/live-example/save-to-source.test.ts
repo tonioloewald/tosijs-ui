@@ -170,3 +170,83 @@ describe('save-to-source dialects (tjs/ts)', () => {
     ).toBe(null)
   })
 })
+
+/*
+Ordinals are a SHARED COORDINATE SYSTEM with `insert-examples`, and they agree only if both
+modules ask the same question about which fences are live examples.
+
+They stopped agreeing when `:static` shipped. This module carried its own flat six-language
+set and its own fence-info regex that captured the language as `[\w-]*` — which stops at the
+colon, so `js:static` read as plain `js` and the mode was invisible here while being
+load-bearing in `insert-examples`. Every ordinal after a `:static` fence pointed one group too
+far, and an edit was written into a different block than the one edited.
+
+Silently, which is the part that makes it a blocker rather than a bug: the "couldn't locate
+this example" guard only fires on an out-of-range ordinal, and here a group existed at that
+index — the wrong one. Under `liveExamples: 'opt-in'` every ordinal on a prose site shifts.
+*/
+describe('ordinals agree with insert-examples (#dx-B1)', () => {
+  const doc = [
+    '# Doc',
+    '',
+    '```js:static',
+    'const illustration = 1',
+    '```',
+    '',
+    'Prose, so these are separate examples.',
+    '',
+    '```js',
+    'const live = 2',
+    '```',
+    '',
+  ].join('\n')
+
+  test('a `:static` fence is not counted as an example', () => {
+    const groups = groupExamples(doc, findFencedBlocks(doc))
+    expect(groups.length).toBe(1)
+    const only = groups[0][0]
+    expect(doc.slice(only.codeStart, only.codeEnd)).toBe('const live = 2')
+  })
+
+  test('the fence MODE survives parsing — it used to be swallowed by the language regex', () => {
+    const blocks = findFencedBlocks(doc)
+    expect(blocks.map((b) => b.lang)).toEqual(['js', 'js'])
+    expect(blocks.map((b) => b.mode)).toEqual(['static', undefined])
+  })
+
+  test('editing ordinal 0 writes the LIVE block, not the illustration ahead of it', () => {
+    const out = rewriteExampleBlocks(doc, 0, { js: 'const EDITED = 99' })
+    expect(out).not.toBe(null)
+    // The live block was updated …
+    expect(out).toContain('const EDITED = 99')
+    // … and the display-only one was NOT touched. This is the assertion that fails under
+    // the defect: it used to be the illustration that got overwritten.
+    expect(out).toContain('const illustration = 1')
+    expect(out).not.toContain('const live = 2')
+  })
+
+  test('under `opt-in`, a bare fence is not an example and ordinals shift accordingly', () => {
+    // `opt-in` is the prose/book setting, where nearly every fence is illustration. A fence
+    // has to ASK to run, so the bare ```js above is display-only and there is no example 0.
+    const optIn = groupExamples(doc, findFencedBlocks(doc), 'opt-in')
+    expect(optIn.length).toBe(0)
+    expect(rewriteExampleBlocks(doc, 0, { js: 'x' }, 'opt-in')).toBe(null)
+  })
+
+  test('`#id` and `:mode` in either order, and neither swallows the language', () => {
+    const src = [
+      '```ts:ide#demo',
+      'const a = 1',
+      '```',
+      '',
+      'prose',
+      '',
+      '```css#anchor',
+      '.x { color: red }',
+      '```',
+    ].join('\n')
+    const blocks = findFencedBlocks(src)
+    expect(blocks.map((b) => b.lang)).toEqual(['ts', 'css'])
+    expect(blocks.map((b) => b.mode)).toEqual(['ide', undefined])
+  })
+})

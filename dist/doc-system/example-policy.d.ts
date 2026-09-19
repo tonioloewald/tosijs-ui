@@ -18,3 +18,25 @@ export type ExamplePolicy = 'auto' | 'opt-in' | 'none';
  * @param policy `'auto'` (executables run) or `'opt-in'` (only fences that ask)
  */
 export declare function isLiveFence(lang: string, mode: string | undefined, policy?: ExamplePolicy): boolean;
+/**
+ * THE fence-info parser. `js`, `css#anchor`, `js:iframe`, `ts:ide#demo`, `ts#demo:ide`.
+ *
+ * `:mode` (inline | iframe | ide | static) sets the live example's execution mode; `#id` gives
+ * it a stable anchor. `#id` is `[A-Za-z0-9_-]+` and `:mode` is `[a-z]+`, so the two cannot
+ * overlap and each is parsed independently, order-free.
+ *
+ * Extracted because a SECOND, worse copy existed in `save-to-source.ts` — a regex that
+ * captured the language as `[\w-]*` and therefore stopped dead at the colon, so it could not
+ * see `:static` at all. With a `:static` fence in a document, its example ordinals diverged
+ * from the ones `insert-examples` assigns, and an edit saved over a DIFFERENT block than the
+ * one edited. Silently: the "couldn't locate this example" guard only fires when the ordinal
+ * is out of range, and here a group existed at that index — the wrong one.
+ *
+ * This is the same failure the `isLiveFence` docblock above describes, one layer down: the
+ * rule was stated twice and the copies disagreed. Parse fence info here or not at all.
+ */
+export declare function parseFenceInfo(info: string): {
+    lang: string;
+    mode?: string;
+    id?: string;
+};

@@ -2,6 +2,32 @@
 
 ## 1.15.0 (unreleased)
 
+### `save-to-source` wrote edits into the wrong fence, silently
+
+Found by this release's own pre-release review, and it is caused by a feature this release
+introduces — so it could not have shipped ahead of `:static`, and `:static` must not ship
+ahead of it.
+
+`example-policy.ts` was added this cycle as **the one rule** for "does this fence become a
+live example", and `insert-examples` was converted to it. Its structural twin was not:
+`save-to-source` kept a flat six-language set *and* its own fence-info regex that captured the
+language as `[\w-]*` — which stops at the colon, so `js:static` read as plain `js` and the
+mode was invisible there while being load-bearing everywhere else.
+
+Example ordinals are a **shared coordinate system** between those two modules. They agree only
+if both ask the same question, and after `:static` they did not: every ordinal following a
+display-only fence pointed one group too far, so editing an example saved over a *different*
+block. Silently — the "couldn't locate this example" guard only fires on an out-of-range
+ordinal, and here a group existed at that index, just the wrong one. Under `liveExamples:
+'opt-in'`, which is the prose and book setting, every ordinal on the page shifts.
+
+Fixed at the class rather than the instance: `parseFenceInfo` now joins `isLiveFence` in
+`example-policy.ts`, `render.ts` uses it instead of its own inline copy, and `save-to-source`
+groups with `isLiveFence` and takes the policy from the caller. There is one parser and one
+predicate; a third divergence has nowhere to live.
+
+Mutation-verified — restoring either half of the old behaviour turns the regression tests red.
+
 ### A gitignored file shipped to npm, and no repo-reading check could have seen it
 
 1.14.2's tarball contained `dist/.metadata_never_index` — a zero-byte macOS Spotlight marker

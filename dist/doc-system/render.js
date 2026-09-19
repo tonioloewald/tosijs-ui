@@ -9,6 +9,7 @@ via insertExamples(). A fence info string may carry a `#id` (```js#my-example) t
 give that example a stable anchor — see the docMarked renderer below.
 */
 import { Marked, Renderer } from 'marked';
+import { parseFenceInfo } from './example-policy.js';
 const baseRenderer = new Renderer();
 let currentBakes;
 const docMarked = new Marked();
@@ -21,10 +22,12 @@ docMarked.use({
             // gives it a stable anchor. `#id` is `[A-Za-z0-9_-]+` and `:mode` is `[a-z]+`, so
             // the two can't overlap — parse each independently, order-free. Both are stripped
             // so the language stays clean (`language-js`) for grouping/highlighting.
-            const info = String(token.lang || '');
-            const lang = info.match(/^[a-z]+/)?.[0] ?? '';
-            const id = info.match(/#([A-Za-z0-9_-]+)/)?.[1] ?? '';
-            const mode = info.match(/:([a-z]+)/)?.[1] ?? '';
+            // Parsed by `parseFenceInfo` — the ONE copy of this grammar. It used to live here and
+            // `save-to-source.ts` had a second, worse one; see the note on that function.
+            const parsed = parseFenceInfo(String(token.lang || ''));
+            const lang = parsed.lang;
+            const id = parsed.id ?? '';
+            const mode = parsed.mode ?? '';
             const bake = currentBakes?.get(token.text);
             if (!id && !mode && !bake)
                 return false; // default rendering — byte-identical

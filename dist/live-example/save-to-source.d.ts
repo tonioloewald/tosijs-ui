@@ -1,5 +1,8 @@
+import type { ExamplePolicy } from '../doc-system/example-policy.js';
 interface FencedBlock {
     lang: string;
+    /** the `:<mode>` suffix (`inline` | `iframe` | `ide` | `static`), if the fence carried one */
+    mode?: string;
     indent: string;
     start: number;
     end: number;
@@ -19,7 +22,7 @@ interface FencedBlock {
  */
 export declare function findFencedBlocks(src: string): FencedBlock[];
 /** Group executable blocks into examples, mirroring insert-examples. */
-export declare function groupExamples(src: string, blocks: FencedBlock[]): FencedBlock[][];
+export declare function groupExamples(src: string, blocks: FencedBlock[], policy?: ExamplePolicy): FencedBlock[][];
 export type ExampleEdits = {
     js?: string;
     html?: string;
@@ -30,5 +33,5 @@ export type ExampleEdits = {
  * Return `src` with the `ordinal`-th example's edited blocks replaced, or `null`
  * if that example or none of the edited blocks exist in the source.
  */
-export declare function rewriteExampleBlocks(src: string, ordinal: number, edits: ExampleEdits): string | null;
+export declare function rewriteExampleBlocks(src: string, ordinal: number, edits: ExampleEdits, policy?: ExamplePolicy): string | null;
 export {};

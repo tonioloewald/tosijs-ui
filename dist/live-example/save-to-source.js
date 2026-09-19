@@ -15,10 +15,21 @@ new block type to an example isn't persisted. Replaces by block position, so it
 never depends on the rendered/entity-decoded text matching the source.
 */
 // `js`/`tjs`/`ts` are interchangeable "source" blocks (the example's executable
-// code); html/css/test are the rest. All count toward grouping so example
-// ordinals stay aligned with insert-examples.
+// code); html/css/test are the rest.
 const SOURCE_LANGS = new Set(['js', 'tjs', 'ts']);
-const EXECUTABLE = new Set(['js', 'tjs', 'ts', 'html', 'css', 'test']);
+/*
+Which fences count toward grouping is NOT decided here — `isLiveFence` decides it, the same
+predicate `insert-examples` filters with. This module used to carry its own flat six-language
+set, and the two diverged the moment `:static` shipped: `insert-examples` skipped a
+`js:static` fence while this counted it, so every ordinal after it pointed one group too far
+and an edit was written into a DIFFERENT block than the one edited. Silently — the
+"couldn't locate this example" guard only fires on an out-of-range ordinal, and here a group
+existed at that index.
+
+Ordinals are a shared coordinate system between two modules. They agree only if both ask the
+same question, so ask the shared one.
+*/
+import { isLiveFence, parseFenceInfo } from '../doc-system/example-policy.js';
 /**
  * Find every ```lang …``` fenced block in document order, with positions.
  *
@@ -31,13 +42,18 @@ const EXECUTABLE = new Set(['js', 'tjs', 'ts', 'html', 'css', 'test']);
  * ZERO blocks → save-to-source always failed with "no matching block".
  */
 export function findFencedBlocks(src) {
-    const re = /^([ \t]*)```([\w-]*)[^\n]*\n([\s\S]*?)\n[ \t]*```/gm;
+    // Capture the WHOLE info string and let `parseFenceInfo` split it. The previous regex
+    // captured the language as `[\w-]*`, which stops at the colon — so `js:static` read as
+    // plain `js` and the mode was invisible here while being load-bearing everywhere else.
+    const re = /^([ \t]*)```([^\n]*)\n([\s\S]*?)\n[ \t]*```/gm;
     const blocks = [];
     let m;
     while ((m = re.exec(src)) !== null) {
         const codeStart = m.index + m[0].indexOf('\n') + 1;
+        const info = parseFenceInfo(m[2]);
         blocks.push({
-            lang: m[2] || '',
+            lang: info.lang,
+            mode: info.mode,
             indent: m[1],
             start: m.index,
             end: m.index + m[0].length,
@@ -66,19 +82,20 @@ function dedentBy(text, indent) {
         .join('\n');
 }
 /** Group executable blocks into examples, mirroring insert-examples. */
-export function groupExamples(src, blocks) {
+export function groupExamples(src, blocks, policy = 'auto') {
+    const live = (b) => b !== undefined && isLiveFence(b.lang, b.mode, policy);
     const groups = [];
     let current = null;
     for (let i = 0; i < blocks.length; i += 1) {
         const block = blocks[i];
-        if (!EXECUTABLE.has(block.lang)) {
-            current = null; // a non-executable block breaks the run
+        if (!live(block)) {
+            current = null; // a fence that is not a live example breaks the run
             continue;
         }
         const prev = blocks[i - 1];
         const adjacent = current !== null &&
             prev !== undefined &&
-            EXECUTABLE.has(prev.lang) &&
+            live(prev) &&
             src.slice(prev.end, block.start).trim() === '';
         if (adjacent && current) {
             current.push(block);
@@ -94,8 +111,11 @@ export function groupExamples(src, blocks) {
  * Return `src` with the `ordinal`-th example's edited blocks replaced, or `null`
  * if that example or none of the edited blocks exist in the source.
  */
-export function rewriteExampleBlocks(src, ordinal, edits) {
-    const group = groupExamples(src, findFencedBlocks(src))[ordinal];
+export function rewriteExampleBlocks(src, ordinal, edits, 
+/* Which fences are live examples — MUST match what `insert-examples` used, or the
+   ordinal means something different here than it did there. */
+policy = 'auto') {
+    const group = groupExamples(src, findFencedBlocks(src), policy)[ordinal];
     if (!group)
         return null;
     // Code editors normalize trailing whitespace (e.g. add a trailing newline), so

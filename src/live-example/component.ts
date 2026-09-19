@@ -489,7 +489,7 @@ import {
   openEditorWindow,
 } from './remote-sync.js'
 import { executeInline, executeInIframe } from './execution.js'
-import { insertExamples } from './insert-examples.js'
+import { insertExamples, examplePolicy } from './insert-examples.js'
 import {
   rewriteExampleBlocks,
   groupExamples,
@@ -1041,12 +1041,23 @@ export class LiveExample extends Component<ExampleParts> {
       )
       return
     }
-    const updated = rewriteExampleBlocks(content, Number(ordinalAttr), {
-      js: this.js,
-      html: this.html,
-      css: this.css,
-      test: this.test,
-    })
+    /*
+    Pass the SAME policy `insert-examples` used to assign this ordinal. The ordinal is a
+    shared coordinate system between the two modules; if they disagree about which fences
+    are live examples, it indexes a different group here and the edit lands in the wrong
+    block — silently, because a group exists at that index.
+    */
+    const updated = rewriteExampleBlocks(
+      content,
+      Number(ordinalAttr),
+      {
+        js: this.js,
+        html: this.html,
+        css: this.css,
+        test: this.test,
+      },
+      examplePolicy()
+    )
     if (updated === null) {
       // Distinguish the two failure modes so a source↔doc mismatch is diagnosable
       // (vs. a genuine no-op). An ordinal past the source's group count means the
