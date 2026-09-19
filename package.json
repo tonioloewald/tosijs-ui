@@ -1,6 +1,6 @@
 {
   "name": "tosijs-ui",
-  "version": "1.14.2",
+  "version": "1.14.3",
   "description": "simple robust web-components for use with tosijs or anything else",
   "scripts": {
     "start": "bun --watch bin/dev.ts",
@@ -54,7 +54,7 @@
     "happy-dom": "^20.11.1",
     "playwright": "^1.62.0",
     "prettier": "^2.8.8",
-    "tjs-lang": "0.13.11",
+    "tjs-lang": "0.13.13",
     "tosijs": "1.9.1",
     "tosijs-schema": "1.8.0",
     "typescript": "^5.9.3",

@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.14.3
+
+A single-fix patch cut from `v1.14.2`. Carries no 1.15.0 work.
+
+### tjs-lang 0.13.13 — a quoted test block was executed in the HOST page (#135)
+
+On tjs-lang ≤ 0.13.11, a `test '…' { … }` written inside a template literal or a
+double-quoted string was mistaken for a real test block: the body ran at transpile time and
+the text was **deleted from the output**. Both silent.
+
+That is the bad case for a doc site specifically, because documentation about a language
+quotes the language. `transform()` is called from the component — the **host page** — and its
+output is then injected into the iframe, so anything the transpiler executes at transpile time
+runs outside the sandbox that exists for exactly this. Any tjs example *showing* a test block
+had it deleted from the rendered example and executed in the host page. Upstream lost 52 of 99
+failures in their own conversion gate to it before finding the cause.
+
+Fixed in 0.13.12; this moves to **0.13.13** (latest), verified across all four lanes rather
+than on the release note alone. 0.13.5–0.13.13 also carry the AJS/TJS parser split, a
+prototype-chain lookup fix in the VM, a source-size cap on `Eval`/`SafeFunction`, and further
+literal-blindness fixes.
+
+The pin lives in **two** places by design — `package.json` and `TJS_VERSION` in
+`code-transform.ts`, which governs the CDN bundle a doc site actually loads — and both moved
+together. The peer floor is unchanged at `^0.13.1`: raising it would warn on install for
+people whose own pin is older, and the CDN pin is what fixes the behaviour on the default
+path. **If you install tjs-lang yourself, upgrade to ≥0.13.12** — your copy wins over ours.
+
+Reported by tjs-lang, which was blocked on this while moving its playground onto the doc-site
+system. Released as a patch so nobody waits for 1.15.0 for it.
+
 ## 1.14.2
 
 A single-fix patch, cut from `v1.14.1` rather than from `main`, so it carries none of the

@@ -51,7 +51,7 @@ export declare function rewriteImports(code: string, contextKeys: string[], impo
  * Execute code as an async function with injected context
  */
 export declare function executeCode(code: string, context: ExampleContext, transform: TransformFn): Promise<void>;
-export declare const TJS_VERSION = "0.13.11";
+export declare const TJS_VERSION = "0.13.13";
 export declare const TYPESCRIPT_VERSION = "5.9.3";
 export declare const TYPESCRIPT_URL = "https://esm.sh/typescript@5.9.3";
 /**
