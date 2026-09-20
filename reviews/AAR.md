@@ -62,7 +62,7 @@ gap, recorded rather than hidden.
   wrong — it is a correctness fix, and the four lanes exercise the whole corpus through the
   transpiler. Prompted by the reporter saying they were blocked.
 
-## 1.15.0 (in progress)
+## 1.15.0 (2026-09-20)
 
 - **Cost:** four review passes (pre-release, re-review, dx lens, quarterly lens). The two lens
   tiers had never run for this release and produced **five blockers between them**, including
@@ -90,4 +90,22 @@ gap, recorded rather than hidden.
   what caught all three**; without it each would have shipped as coverage.
 - **Recurrence — `release-check` red at tag time, third consecutive release.** The shape is
   documented in CLAUDE.md and it keeps happening because the write-up commit introduces its own
-  annotations. Recorded in the practices repo as a worked example this cycle.
+  annotations. Recorded in the practices repo as a worked example this cycle, with the argument
+  that it needs a **mechanical** partner rather than more emphasis — three releases of the rule
+  being written down is the evidence.
+- **The multi-engine Playwright run paid for itself, once.** CI is chromium-only, and running
+  all three engines surfaced a defect that capped every Firefox `<tosi-table>` at 10,000 rows:
+  `probeMaxElementHeight` asks for a 1e9-pixel element assuming engines clamp, and Firefox
+  returns **0** instead — indistinguishable from "no layout to probe", so it fell back to the
+  flat cap #82 exists to replace. Present since the feature shipped; verified pre-existing in a
+  worktree at v1.14.3 before touching it. Firefox now gets 520,833 rows. **Nothing was broken,
+  it was just quietly 52× smaller** — which is exactly why a lane the gate does not run rots
+  without anyone noticing.
+- **Shape of the whole cycle: one rule, N copies — four times.** The live-fence rule (three
+  copies), the fence-info parser, the `language-*` class pattern, and the height probe. The
+  duplicate was consistently in a TEST or an adjacent subsystem, where it reads as independent
+  verification while being the same assumption written twice. The grep that finds them is for
+  the **literal value**, not for the shared symbol.
+- **Two patches shipped mid-cycle** (1.14.2, 1.14.3), both cut from tags rather than `main`, so
+  adopters were not blocked behind a large release. That worked — and the adopter-facing cost
+  was closing issues at *merge* rather than at *publish*, which is now changed.
