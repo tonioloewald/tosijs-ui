@@ -89,6 +89,13 @@ export function basePathDoubling(config) {
         `  baseUrl must be the ORIGIN ONLY — drop "${urlPath}" from it and keep basePath, ` +
         `or drop basePath. The site will still work either way; only its metadata is wrong.`);
 }
+function registersTag(bundleSource, tag) {
+    // `preferredTagName="tag"` (tosijs elementCreator) or `define("tag"` (direct), in any
+    // quote style, with optional whitespace a minifier might or might not have removed.
+    const q = `["'\`]${tag}["'\`]`;
+    return (new RegExp(`preferredTagName\\s*[=:]\\s*${q}`).test(bundleSource) ||
+        new RegExp(`define\\s*\\(\\s*${q}`).test(bundleSource));
+}
 /**
  * Does a custom `bundleEntry` bundle actually contain the doc system?
  *
@@ -100,18 +107,39 @@ export function basePathDoubling(config) {
  * true, so the bundle looks healthy. It is inert because nothing defined `tosi-doc-system`
  * (tosijs-ui#145; cost the reporter more than any other onboarding problem).
  *
- * Checked by looking for the tag names in the built output, which survives minification
- * because `customElements.define` needs the literal string. This is the one case where
- * grepping a bundle is sound — we are looking for a STRING the runtime must contain, not for
- * a package path that minification erases.
+ * HOW it is checked, and why the obvious version was wrong.
+ *
+ * This used to test `bundleSource.includes('tosi-doc-system')`, described as "the one case
+ * where grepping a bundle is sound". It is not: the tag string being present is **necessary
+ * and not sufficient**, and our own API invites the counter-example. A bundle whose only
+ * mention is the context-map loop we document —
+ * `document.querySelectorAll('tosi-doc-system')` — reported healthy while registering nothing
+ * (tosijs-ui#159, with a reproduction: one `customElements.define` in the bundle, none of it
+ * the doc system). The caller then fell through to warn about a *different* component,
+ * pointing the maintainer away from the defect.
+ *
+ * The obvious repair is wrong in the other direction. Matching `define(` next to the quoted
+ * tag false-negatives on **our own bundle**: `elementCreator()` registers with a variable, so
+ * the minified output reads `customElements.define(i,this,r)` and the literal lives in a
+ * `closest()` call and some CSS selectors, nowhere near a `define`.
+ *
+ * So look for evidence of a REGISTRATION rather than a mention, by either route:
+ *
+ *   - `preferredTagName="tosi-doc-system"` — the tosijs `elementCreator` path. Verified to
+ *     survive minification in both `dist/iife.js` and a built `hydrate.js`.
+ *   - `define("tosi-doc-system"` — a direct `customElements.define` with a literal.
+ *
+ * Neither matches a `querySelectorAll`, an attribute selector or prose. This is still a
+ * static heuristic over a bundle and it cannot be sound — the honest claim is that it now
+ * fails closed on the shape that was reported, which the substring check did not.
  *
  * `liveExample` is reported separately: a corpus with no executable fences legitimately does
  * not need it, so the caller decides whether its absence is worth mentioning.
  */
 export function bundleRegistrations(bundleSource) {
     return {
-        docSystem: bundleSource.includes('tosi-doc-system'),
-        liveExample: bundleSource.includes('tosi-example'),
+        docSystem: registersTag(bundleSource, 'tosi-doc-system'),
+        liveExample: registersTag(bundleSource, 'tosi-example'),
     };
 }
 /**

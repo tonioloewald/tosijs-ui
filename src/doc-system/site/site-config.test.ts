@@ -43,6 +43,46 @@ describe('emitted site-config.d.ts keeps its documentation (F13)', () => {
     expect(comment).toContain('145')
   })
 
+  /*
+  This happened TWICE in one release, which is why it is a loop over a list rather than a
+  second bespoke test.
+
+  The second instance was introduced while FIXING the first: a non-exported helper was added
+  between `bundleRegistrations`'s JSDoc and the exported function, and the comment — which had
+  just been rewritten to correct a false soundness claim — disappeared from
+  `host-preset.d.ts` entirely. Source looked perfect both times. Only the artifact shows it.
+
+  Add a symbol here whenever an exported declaration's doc comment is load-bearing for an
+  adopter.
+  */
+  const DOCUMENTED: Array<{ file: string; decl: string; must: string }> = [
+    {
+      file: 'doc-system/site/host-preset.d.ts',
+      decl: 'export declare function bundleRegistrations',
+      must: 'necessary',
+    },
+  ]
+
+  for (const { file, decl, must } of DOCUMENTED) {
+    test(`${file} documents ${decl.split(' ').pop()}`, async () => {
+      const dts = await Bun.file(
+        `${import.meta.dir}/../../../dist/${file}`
+      ).text()
+      const at = dts.indexOf(decl)
+      expect(at, `${decl} not found in ${file}`).toBeGreaterThan(-1)
+      expect(
+        dts.slice(0, at).trimEnd().endsWith('*/'),
+        `${decl} lost its JSDoc in the emitted .d.ts — something was inserted between the ` +
+          `comment and the declaration.`
+      ).toBe(true)
+      const comment = dts
+        .slice(dts.lastIndexOf('/**', at), at)
+        .replace(/^\s*\*/gm, ' ')
+        .replace(/\s+/g, ' ')
+      expect(comment).toContain(must)
+    })
+  }
+
   test('liveExamples still carries its own documentation', async () => {
     const dts = await Bun.file(DTS).text()
     const at = dts.indexOf("liveExamples?: 'auto' | 'opt-in';")

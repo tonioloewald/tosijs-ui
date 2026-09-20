@@ -136,12 +136,46 @@ describe('#145: a bundleEntry that forgets the doc system', () => {
     })
   })
 
-  test('the tag string survives minification — which is why grepping is sound HERE', () => {
-    // `customElements.define` needs the literal tag name, so it cannot be mangled. This is
-    // the exception to "never grep a minified bundle": we look for a string the runtime
-    // must contain, not a package path minification erases.
+  test('a direct minified `define` with a literal tag is a registration', () => {
     const minified = `var a=1;customElements.define("tosi-doc-system",class extends a{});`
     expect(bundleRegistrations(minified).docSystem).toBe(true)
+  })
+
+  /*
+  #159 — the direction the old check could not see.
+
+  It tested `bundleSource.includes('tosi-doc-system')` and called that "the one case where
+  grepping a bundle is sound". It is not: the tag being present is necessary and NOT
+  sufficient, and our own documented API supplies the counter-example — the context-map loop
+  `document.querySelectorAll('tosi-doc-system')` puts the string in a bundle that registers
+  nothing. The reporter's build reported healthy with exactly one `customElements.define` in
+  it, none of it the doc system, and the caller then warned about a different component
+  entirely.
+  */
+  test('a bundle that only MENTIONS the tag is not a registration (#159)', () => {
+    const inert =
+      `customElements.define("their-el",class{});` +
+      `document.querySelectorAll("tosi-doc-system").forEach(e=>e.context={});`
+    expect(bundleRegistrations(inert).docSystem).toBe(false)
+    // …and the same for the other tag, via an attribute selector rather than a loop.
+    expect(
+      bundleRegistrations(`const s='tosi-example[data-mode]';`).liveExample
+    ).toBe(false)
+  })
+
+  /*
+  The obvious repair is wrong in the OTHER direction, and this is the test that stops it
+  being reintroduced. Matching `define(` beside the quoted tag false-negatives on our own
+  output: `elementCreator()` registers with a variable, so the minified bundle reads
+  `customElements.define(i,this,r)` and the literal sits in a `closest()` call and some CSS
+  selectors, nowhere near a `define`.
+  */
+  test('the tosijs elementCreator path counts, where the tag is a VARIABLE at define()', () => {
+    const real =
+      `class D extends C{static preferredTagName="tosi-doc-system";}` +
+      `customElements.define(i,this,r);` +
+      `let _=be.closest("tosi-doc-system");`
+    expect(bundleRegistrations(real).docSystem).toBe(true)
   })
 })
 

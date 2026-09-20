@@ -28,6 +28,29 @@ predicate; a third divergence has nowhere to live.
 
 Mutation-verified — restoring either half of the old behaviour turns the regression tests red.
 
+### The doc-system registration guard reported green on an inert bundle (#159)
+
+`bundleRegistrations` tested `bundleSource.includes('tosi-doc-system')` and its own
+documentation called that *"the one case where grepping a bundle is sound"*. It is not. The tag
+being present is **necessary and not sufficient**, and our own documented API supplies the
+counter-example: the context-map loop `document.querySelectorAll('tosi-doc-system')` puts the
+string into a bundle that registers nothing. The reporter's build reported healthy with exactly
+one `customElements.define` in it, none of it the doc system — and the caller then fell through
+to warn about a *different* component, pointing them away from the defect.
+
+The obvious repair is wrong in the other direction, and is worth recording because it looks
+right: matching `define(` beside the quoted tag **false-negatives on our own bundle**.
+`elementCreator()` registers with a variable, so the minified output reads
+`customElements.define(i,this,r)` while the literal sits in a `closest()` call and some CSS
+selectors, nowhere near a `define`.
+
+It now looks for evidence of a registration by either route — `preferredTagName="<tag>"` (the
+tosijs path, verified to survive minification in both `dist/iife.js` and a built `hydrate.js`)
+or `define("<tag>"` (a direct call). Checked in both directions against real bundles and
+against the #159 reproduction. The false soundness claim is gone from the shipped `.d.ts`; what
+replaces it says plainly that this is a heuristic which now fails closed on the reported shape,
+rather than claiming to be sound.
+
 ### tosijs-ui no longer steals a `Prism` the page already owns
 
 Prism is a free-global library — its grammar files register against `window.Prism` at load
