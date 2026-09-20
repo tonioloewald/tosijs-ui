@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.15.0 (unreleased)
+## 1.15.0
 
 ### `save-to-source` wrote edits into the wrong fence, silently
 
@@ -27,6 +27,38 @@ groups with `isLiveFence` and takes the policy from the caller. There is one par
 predicate; a third divergence has nowhere to live.
 
 Mutation-verified — restoring either half of the old behaviour turns the regression tests red.
+
+### `<tosi-table>` was silently capped at 10,000 rows in Firefox
+
+Found by the release gate, and pre-existing — it fails identically at v1.14.3, verified in a
+worktree rather than assumed.
+
+`probeMaxElementHeight` asks for a 1e9-pixel element and measures what the engine gives back,
+on the stated reasoning that *"every engine tried clamps it"*. Firefox does not: above its
+ceiling it returns **0**, which is indistinguishable here from "no layout to probe". So
+`derivedMaxVisibleRows` fell back to the flat 10,000 that #82 exists to replace — on every
+Firefox page, silently, while the feature reported working everywhere else. Measured:
+
+```
+1e9 → 0      1e8 → 0      1e7 → 10000000      1e6 → 1000000
+```
+
+The probe now halves until the element lays out, which converges on the real ceiling within a
+factor of two on any engine, clamping or not, in at most a dozen forced layouts — once per
+page and cached. Result:
+
+| engine | before | after |
+| --- | ---: | ---: |
+| Firefox | 10,000 rows | **520,833** |
+| Chromium | 1,118,480 | 1,118,480 |
+| WebKit | 1,118,480 | 1,118,480 |
+
+The test had reimplemented the probe inline — the same single ask, carrying the same wrong
+assumption — so it was testing a copy rather than the component. It now calls the shipped
+function, which is why it caught this at all once the real one was fixed.
+
+**Why it hid for so long:** CI runs Chromium only, and the fallback is graceful. Nothing was
+broken, just quietly 52× smaller.
 
 ### Guards that could not fail, and a scope that was never stated
 

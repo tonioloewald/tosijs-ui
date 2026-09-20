@@ -25,15 +25,18 @@ test('#82: the layout ceiling is probed, and yields far more than the old flat c
     }
   )
 
-  const probed = await page.evaluate(() => {
-    const probe = document.createElement('div')
-    probe.style.cssText =
-      'position:absolute;top:0;left:0;width:0;visibility:hidden;height:1000000000px'
-    document.body.appendChild(probe)
-    const h = Math.floor(probe.getBoundingClientRect().height)
-    probe.remove()
-    return h
-  })
+  /*
+  Call the SHIPPED probe, not a copy of it.
+
+  This used to reimplement the probe inline — one ask at 1e9 — which made it a test of the
+  test rather than of the component, and the copies disagreed the moment the real one was
+  fixed. Worse, both carried the same wrong assumption: that every engine CLAMPS an
+  over-large height. Firefox returns 0 instead, so `probeMaxElementHeight` fell back to the
+  flat 10000 that this very issue exists to replace, on every Firefox page, silently.
+  */
+  const probed = await page.evaluate(() =>
+    (window as any).xinjsui.probeMaxElementHeight()
+  )
 
   // Actually clamped — if the engine laid out all 1e9 the probe measured the request.
   expect(probed).toBeLessThan(1_000_000_000)

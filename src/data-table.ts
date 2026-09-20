@@ -1234,11 +1234,41 @@ let maxElementHeightCache = 0
 export function probeMaxElementHeight(): number {
   if (maxElementHeightCache) return maxElementHeightCache
   if (typeof document === 'undefined' || !document.body) return 0
+
   const probe = document.createElement('div')
   probe.style.cssText =
-    'position:absolute;top:0;left:0;width:0;visibility:hidden;pointer-events:none;height:1000000000px'
+    'position:absolute;top:0;left:0;width:0;visibility:hidden;pointer-events:none'
   document.body.appendChild(probe)
-  const laidOut = Math.floor(probe.getBoundingClientRect().height)
+  const heightAt = (px: number): number => {
+    probe.style.height = `${px}px`
+    return Math.floor(probe.getBoundingClientRect().height)
+  }
+
+  /*
+  HALVE UNTIL IT LAYS OUT. Not a single ask, because engines disagree about what happens
+  above the ceiling — and the disagreement is silent.
+
+  The original probe asked for 1e9 once and took the answer, on the reasoning (recorded above)
+  that "every engine tried clamps it". Firefox does not: it returns **0**, and 0 is
+  indistinguishable here from "no layout to probe". So `derivedMaxVisibleRows` fell back to
+  the flat 10000 that #82 exists to replace, and every Firefox user quietly got the old cap
+  while the feature reported working everywhere else. Measured:
+
+      1e9 → 0        1e8 → 0        1e7 → 10000000        1e6 → 1000000
+
+  Halving converges on the real ceiling within a factor of two on any engine, clamping or
+  not, in at most a dozen forced layouts — once per page, cached. A decade ladder would
+  answer 1e7 for Firefox and leave most of the real ceiling unused.
+  */
+  let laidOut = 0
+  let ask = 1_000_000_000
+  // 1e9 halved 12 times is ~244k px — still ~8000 rows at 30px, well past any useful table,
+  // so a floor here costs nothing and guarantees termination.
+  for (let i = 0; i < 12 && ask >= 100_000; i += 1) {
+    laidOut = heightAt(ask)
+    if (laidOut > 0) break
+    ask = Math.floor(ask / 2)
+  }
   probe.remove()
   maxElementHeightCache = laidOut > 0 ? laidOut : 0
   return maxElementHeightCache
