@@ -28,9 +28,16 @@ test('a test-only example renders its results as the body', async ({
   // It ran, and it says so.
   await expect(results).toContainText(/pass|✓|✗|fail/i)
 
-  // The empty preview must not be reserving space beside it.
+  /*
+  The empty preview must not be reserving space beside it.
+
+  Assert the COUNT first. `if (await preview.count()) await expect(...)` passes vacuously the
+  day the selector stops matching — a renamed class turns this from a real check into a no-op
+  and nothing goes red. Naming the expected count means a rename fails loudly instead.
+  */
   const preview = example.locator('.preview')
-  if (await preview.count()) await expect(preview).toBeHidden()
+  expect(await preview.count()).toBe(1)
+  await expect(preview).toBeHidden()
 })
 
 test('an ordinary example is UNCHANGED — results stay an overlay', async ({

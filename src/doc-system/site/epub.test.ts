@@ -123,7 +123,7 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
         {
           filename: 'b.ts',
           title: 'B',
-          text: '# B\n\n```js#cool\nconst y = 2\n```',
+          text: '# B\n\n```js#cool\nconst y = 2\n```\n\nProse.\n\n```zzz\nnot a language\n```',
           path: 'b.ts',
         },
       ])
@@ -180,6 +180,21 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     expect(contents).toContain('<ol class="toc">')
     expect(contents).toContain('>Home</a>') // links to a chapter
 
+    /*
+    The book is HIGHLIGHTED (F10).
+
+    The fix for this was a single argument — `highlightHtml(…, 'none')` — with nothing
+    asserting it. Flip that argument back and the book silently reverts to 237 of 284 code
+    blocks plain, with every lane green: an ePub renders fine either way, it is just
+    unreadable as documentation. `'none'` is what tells the highlighter that a book has no
+    live examples to protect, so it may tokenize the executable fences too.
+    */
+    const chB = fs.readFileSync(path.join(dir, 'OEBPS/b.xhtml'), 'utf8')
+    expect(chB).toContain('class="token')
+    // Negative control: an unknown language stays plain rather than being mangled, so the
+    // assertion above is about highlighting working and not about the string appearing.
+    expect(chB).not.toContain('language-zzz"><span class="token')
+
     // each example links back to its anchor on the live site
     const chA = fs.readFileSync(path.join(dir, 'OEBPS/a.xhtml'), 'utf8')
     expect(chA).toContain('class="example-live-link"')
@@ -194,7 +209,6 @@ test('buildEpub emits a mimetype-first, STORED zip with well-formed chapters', a
     */
     expect(chA.match(/class="example-live-link"/g)?.length).toBe(1)
     expect(chA).not.toContain('#example-2')
-    const chB = fs.readFileSync(path.join(dir, 'OEBPS/b.xhtml'), 'utf8')
     expect(chB).toContain('href="https://example.test/b/#cool"') // ```js#cool override
     // the home doc (README) lives at the site root '/', NOT '/index/'
     const homeCh = fs.readFileSync(path.join(dir, 'OEBPS/index.xhtml'), 'utf8')
