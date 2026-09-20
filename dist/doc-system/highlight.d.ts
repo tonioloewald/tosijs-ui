@@ -21,6 +21,8 @@ export declare function registeredGrammars(): string[];
 export declare function grammarFor(fenceLang: string): string;
 /** Grammars this build can load — for tests, diagnostics, and the docs. */
 export declare function loadableGrammars(): string[];
+/** The fence language of a `<code class="language-…">`, lowercased, or `''`. */
+export declare function langOfClass(className: string | null | undefined): string;
 export declare function ensureGrammar(lang: string): Promise<boolean>;
 /**
  * Highlight `code` as `lang`, returning HTML with `<span class="token …">` markup.

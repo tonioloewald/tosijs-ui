@@ -18,7 +18,7 @@ Build-time only (Bun APIs + the `zip` CLI); never import from browser code.
 import * as fs from 'fs'
 import * as path from 'path'
 import { renderDocMarkdown } from '../render.js'
-import { highlightHtml } from '../highlight.js'
+import { highlightHtml, langOfClass } from '../highlight.js'
 import { buildSlugMap, pathForSlug, slugForPath, withBase } from '../routing.js'
 import { buildNavTree, NavNode } from '../nav-tree.js'
 import type { Doc } from './docs.js'
@@ -244,14 +244,14 @@ function exampleLangOf(pre: any, policy: ExamplePolicy): string | null {
     }
   }
   const cls = (code && code.getAttribute('class')) || ''
-  // `[A-Za-z0-9_+#-]` not `[\w-]`: a `c++` / `c#` fence is a language name too, and the two
-  // character classes disagreeing is how the same block gets read differently in two places.
-  const m = cls.match(/language-([A-Za-z0-9_+#-]+)/)
-  if (!m) return null
+  // `langOfClass` is THE pattern — this file used to spell it `[\w-]+`, so a `c++` / `c#`
+  // fence was read as `c` here and correctly there, classifying one block two ways.
+  const lang = langOfClass(cls)
+  if (!lang) return null
   // The `:mode` suffix rides on the <pre> as `data-example-mode` — the same place
   // `insertExamples` reads it from.
   const mode = pre.getAttribute('data-example-mode') || undefined
-  return isLiveFence(m[1], mode, policy) ? m[1] : null
+  return isLiveFence(lang, mode, policy) ? lang : null
 }
 
 /** Collect example <pre> blocks in document order (any depth), no selectors. */

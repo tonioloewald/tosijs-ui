@@ -15,6 +15,7 @@ import * as path from 'path';
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js';
 import { listEpubVolumes, renderEpubDownloads } from './epub-volumes.js';
 import { buildSlugMap } from '../routing.js';
+import { computeAssetStamp, missingStampInputWarning, } from './asset-stamp.js';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { tmpdir } from 'os';
 import { $, spawn } from 'bun';
@@ -1288,22 +1289,18 @@ export async function buildSite(config, opts = {}) {
             does not (dev) and over-does (a release with identical output). `releaseStamp` survives
             only as the fallback when there is nothing to hash yet.
             */
-            const assetStamp = await (async () => {
-                const hasher = new Bun.CryptoHasher('sha256');
-                let sawAny = false;
-                for (const f of stampInputs) {
-                    const file = Bun.file(f);
-                    if (!(await file.exists()))
-                        continue;
-                    sawAny = true;
-                    hasher.update(new Uint8Array(await file.arrayBuffer()));
-                }
-                // No assets to hash yet — fall back to something that always moves, rather
-                // than to the version, which is the bug this replaces.
-                return sawAny
-                    ? hasher.digest('hex').slice(0, 12)
-                    : `${releaseStamp}-${buildStamp.commit ?? 'dev'}`;
-            })();
+            /*
+            `computeAssetStamp` lives in its own module and is unit-tested (review F11). This used
+            to be inline, and it `continue`d silently past a missing input — which is how
+            `doc-system.css` sat NAMED in the list and unhashed for the life of the feature. The
+            fix was to move one statement earlier with nothing asserting the ordering, so the same
+            reorder could undo it invisibly.
+            */
+            const stampResult = await computeAssetStamp(stampInputs, `${releaseStamp}-${buildStamp.commit ?? 'dev'}`);
+            if (stampResult.missing.length) {
+                console.warn(missingStampInputWarning(stampResult.missing));
+            }
+            const assetStamp = stampResult.stamp;
             /*
             `docs.json` gets its OWN stamp, keyed to its own bytes.
       
@@ -1347,10 +1344,6 @@ export async function buildSite(config, opts = {}) {
                 assetStamp,
                 docsStamp,
             });
-            // NOTE: /version.json is written at the END of the build (see `finalizeStamp`
-            // below), because deciding whether to restamp means hashing everything else in
-            // the output — and the ePub, the burnt CSS and the host preset files are all
-            // still to come.
             // Burn the theme into a static stylesheet (separate subprocess — see
             // generate-css.ts). Resolve the sibling relative to THIS module so it works
             // both in-repo (.ts) and when shipped (compiled .js).

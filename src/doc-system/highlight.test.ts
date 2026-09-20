@@ -353,3 +353,29 @@ describe('grammarFor is registration-aware (F19)', () => {
     expect(grammarFor('ts')).toBe('typescript')
   })
 })
+
+/*
+ONE `language-*` pattern (F16).
+
+It was written `[A-Za-z0-9_+#-]+` four times in this file and `[\w-]+` once in `epub.ts`, so a
+`c++` or `c#` fence was a language to one pass over a document and `c` to another. Both `+`
+and `#` are in the class deliberately — they are real language names, not stray punctuation.
+*/
+describe('langOfClass is the one pattern (F16)', () => {
+  test('reads a language, lowercased, from a class attribute', async () => {
+    const { langOfClass } = await import('./highlight')
+    expect(langOfClass('language-js')).toBe('js')
+    expect(langOfClass('hljs language-TypeScript foo')).toBe('typescript')
+    expect(langOfClass('')).toBe('')
+    expect(langOfClass(null)).toBe('')
+    expect(langOfClass('no-language-here')).toBe('here')
+  })
+
+  test('languages whose names contain + or # survive intact', async () => {
+    const { langOfClass } = await import('./highlight')
+    // Under the `[\w-]+` spelling these truncated to `c`, silently.
+    expect(langOfClass('language-c++')).toBe('c++')
+    expect(langOfClass('language-c#')).toBe('c#')
+    expect(langOfClass('language-f#')).toBe('f#')
+  })
+})

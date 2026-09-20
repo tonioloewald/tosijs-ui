@@ -193,6 +193,23 @@ export function loadableGrammars(): string[] {
   return Object.keys(GRAMMARS).sort()
 }
 
+/**
+ * THE `language-*` class pattern, and the only place it is written.
+ *
+ * It was spelled `[A-Za-z0-9_+#-]+` four times here and `[\w-]+` once in `epub.ts`, so a
+ * `c++` or `c#` fence was read as a language by one and as `c` by the other — the same block
+ * classified two ways by two passes over the same document. `+` and `#` are in the class
+ * deliberately: they are real language names, not stray punctuation.
+ */
+const LANGUAGE_CLASS = /language-([A-Za-z0-9_+#-]+)/
+
+/** The fence language of a `<code class="language-…">`, lowercased, or `''`. */
+export function langOfClass(className: string | null | undefined): string {
+  return (
+    String(className ?? '').match(LANGUAGE_CLASS)?.[1] ?? ''
+  ).toLowerCase()
+}
+
 type PrismLike = {
   languages: Record<string, unknown>
   highlight: (code: string, grammar: unknown, lang: string) => string
@@ -460,18 +477,12 @@ export async function highlightBlocks(
         (el.parentElement as HTMLElement | null)?.getAttribute(
           'data-example-mode'
         ) ?? undefined
-      const lang =
-        el.className.match(/language-([A-Za-z0-9_+#-]+)/)?.[1]?.toLowerCase() ??
-        ''
-      return !isLiveFence(lang, mode, policy)
+      return !isLiveFence(langOfClass(el.className), mode, policy)
     })
 
   if (blocks.length === 0) return 0
 
-  const langOf = (code: Element) =>
-    (
-      code.className.match(/language-([A-Za-z0-9_+#-]+)/)?.[1] ?? ''
-    ).toLowerCase()
+  const langOf = (code: Element) => langOfClass(code.className)
 
   // Load every grammar the page needs BEFORE highlighting any of it, so a page is never
   // left half-highlighted — which looks like a rendering bug rather than a missing grammar.

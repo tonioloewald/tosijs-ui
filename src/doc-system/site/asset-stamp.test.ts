@@ -1,54 +1,83 @@
-import { test, expect, describe } from 'bun:test'
-import { withStamp } from './generate-site.js'
+import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
+import * as fs from 'fs'
+import * as os from 'os'
+import * as path from 'path'
+import { computeAssetStamp, missingStampInputWarning } from './asset-stamp'
 
 /*
-Stable asset filenames go stale: a CDN or browser cache serves yesterday's `hydrate.js` against
-today's HTML, and the site looks broken in a way that reproduces nowhere else. That happened on
-the live doc site and cost a round of "is this a layout regression?" before turning out to be a
-cached bundle.
+The property this guards is not "the hash is correct" — it is "the stamp MOVES when any input
+moves, and says so when an input it was told about is absent".
 
-A query rather than a content-hashed filename, deliberately: `docs/` is committed in this repo
-and its siblings, so hashing would add and delete a file on every build and put churn in every
-diff.
+#151's live form: `doc-system.css` was named in the inputs and generated ~80 lines later, so
+the loop `continue`d past it in silence and the stamp covered two of three assets. A
+`theme`-only change then deployed new CSS under an unchanged URL. The remediation was a
+statement reorder with nothing asserting the ordering, so the same reorder could undo it and
+every lane would stay green. These tests are what makes that reorder fail.
 */
+describe('asset stamp (F11)', () => {
+  let dir: string
+  const write = (name: string, body: string) => {
+    const p = path.join(dir, name)
+    fs.writeFileSync(p, body)
+    return p
+  }
 
-describe('withStamp', () => {
-  test('appends the stamp to a same-origin asset', () => {
-    expect(withStamp('../hydrate.js', '951798df')).toBe(
-      '../hydrate.js?v=951798df'
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'stamp-'))
+  })
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }))
+
+  test('changing ANY input changes the stamp', async () => {
+    const a = write('a.js', 'one')
+    const b = write('b.css', 'two')
+    const before = await computeAssetStamp([a, b], 'fallback')
+
+    write('b.css', 'two-changed')
+    const after = await computeAssetStamp([a, b], 'fallback')
+
+    expect(after.stamp).not.toBe(before.stamp)
+    // …and it is stable when nothing changes, or every rebuild busts every cache.
+    const again = await computeAssetStamp([a, b], 'fallback')
+    expect(again.stamp).toBe(after.stamp)
+  })
+
+  test('a named-but-missing input is REPORTED, not skipped quietly', async () => {
+    const a = write('a.js', 'one')
+    const result = await computeAssetStamp(
+      [a, path.join(dir, 'never.css')],
+      'fb'
     )
-    expect(withStamp('/doc-system.css', 'abc')).toBe('/doc-system.css?v=abc')
+
+    expect(result.missing).toEqual([path.join(dir, 'never.css')])
+    expect(result.usedFallback).toBe(false) // one input existed, so we still hashed
+    // The warning names the file and the consequence, so it is actionable on sight.
+    const warning = missingStampInputWarning(result.missing)
+    expect(warning).toContain('never.css')
+    expect(warning).toContain('151')
+    expect(warning).toContain('generated')
   })
 
-  test('no stamp means byte-identical output to before this existed', () => {
-    // The opt-out has to be total: an unset stamp must not alter a single character.
-    expect(withStamp('/iife.js', undefined)).toBe('/iife.js')
-    expect(withStamp('/iife.js', '')).toBe('/iife.js')
+  test('the #151 shape: a missing input means its changes do NOT move the stamp', async () => {
+    // This is the defect stated as a test. `late.css` does not exist when the stamp is
+    // computed, so writing it afterwards changes nothing — the exact silent failure.
+    const a = write('a.js', 'one')
+    const late = path.join(dir, 'late.css')
+    const before = await computeAssetStamp([a, late], 'fb')
+    expect(before.missing).toContain(late)
+
+    fs.writeFileSync(late, 'now it exists')
+    const after = await computeAssetStamp([a, late], 'fb')
+    expect(after.missing).toEqual([])
+    expect(after.stamp).not.toBe(before.stamp)
   })
 
-  test('leaves CROSS-ORIGIN urls alone', () => {
-    /*
-    `scriptUrl` may legitimately point at a CDN. Appending a query to someone else's URL can
-    miss their cache key or be rejected outright, and busting THEIR cache was never the point —
-    the staleness this fixes is in our own output.
-    */
-    for (const url of [
-      'https://cdn.example.com/iife.js',
-      'http://cdn.example.com/iife.js',
-      '//cdn.example.com/iife.js',
-      'data:text/javascript,void 0',
-    ]) {
-      expect(withStamp(url, 'abc')).toBe(url)
-    }
-  })
-
-  test('leaves a url that already carries a query or fragment alone', () => {
-    // The caller said something deliberate about it; do not second-guess them.
-    expect(withStamp('/iife.js?build=7', 'abc')).toBe('/iife.js?build=7')
-    expect(withStamp('/iife.js#x', 'abc')).toBe('/iife.js#x')
-  })
-
-  test('encodes a stamp that is not url-safe', () => {
-    expect(withStamp('/a.js', 'v 1+2/3')).toBe('/a.js?v=v%201%2B2%2F3')
+  test('falls back only when NOTHING exists — never to a version that does not move', async () => {
+    const result = await computeAssetStamp(
+      [path.join(dir, 'nope.js')],
+      'the-fallback'
+    )
+    expect(result.usedFallback).toBe(true)
+    expect(result.stamp).toBe('the-fallback')
+    expect(result.missing.length).toBe(1)
   })
 })

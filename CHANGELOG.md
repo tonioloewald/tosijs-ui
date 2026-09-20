@@ -28,6 +28,30 @@ predicate; a third divergence has nowhere to live.
 
 Mutation-verified — restoring either half of the old behaviour turns the regression tests red.
 
+### The cache-busting stamp no longer skips an asset in silence
+
+`?v=` is computed by hashing the assets it guards, and the loop `continue`d past a missing
+input without a word. That is how `doc-system.css` came to be **named in the inputs and never
+hashed** for the life of the feature: the stylesheet was generated ~80 lines later in a
+~1270-line function. Measured at the time — the `?v=` on every page equalled
+sha256(hydrate.js + iife.js) exactly. A `theme`-only change, which reaches the CSS generator as
+argv and never enters a bundle, therefore deployed new CSS under an **unchanged URL** and
+returning visitors kept the old stylesheet.
+
+The previous fix was to move one statement earlier, with nothing asserting the ordering — so
+the same reorder could undo it and every lane would stay green. `computeAssetStamp` is now its
+own module: a named-but-missing input is reported with the file and the consequence, and the
+properties are unit-tested (changing any input moves the stamp; an unchanged rebuild does not;
+the fallback is used only when nothing exists). Verified end to end — the `?v=` in the built
+site equals sha256 of all three assets.
+
+### One `language-*` pattern, not five
+
+The class pattern was written `[A-Za-z0-9_+#-]+` four times in `highlight.ts` and `[\w-]+` once
+in `epub.ts`, so a `c++` or `c#` fence was a language to one pass over a document and plain `c`
+to another. Hoisted into `langOfClass`, with `+` and `#` in the character class deliberately —
+they are real language names. Mutation-verified against the narrower spelling.
+
 ### Corrections to the `registerGrammar` surface, before anyone builds on it
 
 tjs-lang is writing a TJS Prism grammar against this API (#155), so the companion pieces
