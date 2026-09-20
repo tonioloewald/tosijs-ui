@@ -6,6 +6,18 @@ import { type ExamplePolicy } from './example-policy.js';
 export declare function registerGrammar(fenceLang: string, grammar: unknown): void;
 /** Registered grammars, for tests and diagnostics. */
 export declare function registeredGrammars(): string[];
+/**
+ * The Prism grammar NAME a fence language resolves to — `ts` → `typescript`, `sh` → `bash`.
+ *
+ * Registration-aware: once `registerGrammar('tjs', …)` has run, `grammarFor('tjs')` is
+ * `'tjs'`, not the `javascript` alias. It used to consult `ALIASES` only, so it disagreed
+ * with `highlight()` — which installs a registered grammar under the fence name and uses it —
+ * for exactly the language a consumer had just gone to the trouble of supplying. A companion
+ * function that contradicts the main one on the one case you care about is worse than no
+ * companion function.
+ *
+ * Returns a grammar NAME, not a grammar.
+ */
 export declare function grammarFor(fenceLang: string): string;
 /** Grammars this build can load — for tests, diagnostics, and the docs. */
 export declare function loadableGrammars(): string[];

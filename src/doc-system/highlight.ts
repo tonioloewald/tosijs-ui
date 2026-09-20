@@ -82,8 +82,17 @@ the same source that already emits their TextMate grammars (tosijs-ui#155), and 
 here would put their grammar behind our release cadence.
 
 Registered grammars WIN over the alias table, and are used by the build-time pass as well as
-the browser — so a registered language reaches the pre-rendered page, the ePub and print, not
-just a hydrated tab.
+the browser — so a registered language reaches the pre-rendered page and the ePub.
+
+**Register in the browser too if your site is navigated client-side.** This registry is
+module state in the BUILD process; only `__TOSI_EXAMPLE_POLICY` is stamped into the page, not
+the grammar map. So a hard-loaded page shows your language correctly (the tokens are already
+in the HTML) while the same page reached by client-side navigation re-highlights with an empty
+registry and falls back to `javascript`. The in-app **Print** path highlights client-side too,
+so it has the same gap. An ESM consumer can import `tosijs-ui/doc-system/highlight` in their
+`bundleEntry` and call `registerGrammar` there as well; a CDN `<script>` consumer has no seam
+for this yet (tracked in TODO.md). This paragraph replaces a claim that a registered grammar
+reached "the pre-rendered page, the ePub and print", which was false for the third.
 
   import { registerGrammar } from 'tosijs-ui/site'
   import { tjsGrammar } from 'tjs-lang/prism'
@@ -109,8 +118,22 @@ export function registeredGrammars(): string[] {
   return [...registered.keys()]
 }
 
+/**
+ * The Prism grammar NAME a fence language resolves to — `ts` → `typescript`, `sh` → `bash`.
+ *
+ * Registration-aware: once `registerGrammar('tjs', …)` has run, `grammarFor('tjs')` is
+ * `'tjs'`, not the `javascript` alias. It used to consult `ALIASES` only, so it disagreed
+ * with `highlight()` — which installs a registered grammar under the fence name and uses it —
+ * for exactly the language a consumer had just gone to the trouble of supplying. A companion
+ * function that contradicts the main one on the one case you care about is worse than no
+ * companion function.
+ *
+ * Returns a grammar NAME, not a grammar.
+ */
 export function grammarFor(fenceLang: string): string {
   const l = fenceLang.toLowerCase()
+  // A supplied grammar is installed under the fence name, so it IS the grammar name.
+  if (registered.has(l)) return l
   return ALIASES[l] ?? l
 }
 

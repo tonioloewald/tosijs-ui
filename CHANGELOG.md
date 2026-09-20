@@ -28,6 +28,28 @@ predicate; a third divergence has nowhere to live.
 
 Mutation-verified — restoring either half of the old behaviour turns the regression tests red.
 
+### Corrections to the `registerGrammar` surface, before anyone builds on it
+
+tjs-lang is writing a TJS Prism grammar against this API (#155), so the companion pieces
+mattered more than their severity suggested.
+
+- **`grammarFor` contradicted `highlight()` on registered languages.** It consulted the alias
+  table only, so after `registerGrammar('tjs', …)` — the one thing a language author does — it
+  still answered `javascript` while `highlight()` correctly used the supplied grammar. It is
+  now registration-aware, and documented as returning a grammar *name*.
+- **A false guarantee about print.** The docs said a registered grammar reaches "the
+  pre-rendered page, the ePub **and print**". The first two are true; print is not. The
+  registry is module state in the *build* process and only `__TOSI_EXAMPLE_POLICY` is stamped
+  into the page — so a hard-loaded page is correct (the tokens are already in the HTML) while
+  client-side navigation and the in-app Print path re-highlight with an empty registry and fall
+  back to `javascript`. Now stated plainly, with the workaround (an ESM consumer can register
+  in their `bundleEntry` too) and the remaining gap (a CDN `<script>` consumer cannot).
+- **Two exported types named `ExamplePolicy`** with different value sets — `'auto' | 'opt-in'`
+  and `'auto' | 'opt-in' | 'none'` — both reachable through the `./*` wildcard, so which one
+  you got depended on the import path. One type now, with `SiteExamplePolicy` expressing the
+  site-valid subset as `Exclude<ExamplePolicy, 'none'>` rather than as a second declaration
+  that can drift.
+
 ### The doc-system registration guard reported green on an inert bundle (#159)
 
 `bundleRegistrations` tested `bundleSource.includes('tosi-doc-system')` and its own

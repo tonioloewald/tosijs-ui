@@ -59,7 +59,21 @@ function bakedJsForBlock(block: Element): string | undefined {
  * before 1.15 and stays correct for a component library's docs.
  * `'opt-in'` — nothing runs unless its fence asks, via `:inline` / `:iframe` / `:ide`.
  */
-export type ExamplePolicy = 'auto' | 'opt-in'
+/*
+Re-exported from `doc-system/example-policy.ts`, NOT redeclared.
+
+There were two exported types with this name and different value sets — `'auto' | 'opt-in'`
+here, `'auto' | 'opt-in' | 'none'` there — both reachable through the `./*` wildcard, so which
+one an adopter got depended on which path they imported. `'none'` is a build-target concept
+(an ePub, a printed page: nothing there can be live), so it is meaningless as a SITE setting,
+which is why the narrow one existed. Express that as a subtraction from the real type rather
+than as a second declaration that can drift.
+*/
+import type { ExamplePolicy } from '../doc-system/example-policy.js'
+export type { ExamplePolicy }
+
+/** The subset valid for `SiteConfig.liveExamples` — `'none'` is a build target, not a site. */
+export type SiteExamplePolicy = Exclude<ExamplePolicy, 'none'>
 
 /*
 Read at insert time rather than captured, so the page can set it before hydration without

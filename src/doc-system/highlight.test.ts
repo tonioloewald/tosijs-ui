@@ -324,3 +324,32 @@ describe('host Prism ownership (M3)', () => {
     expect((globalThis as any).Prism.manual).not.toBe(true)
   })
 })
+
+/*
+`grammarFor` must agree with `highlight()` about a REGISTERED language (F19).
+
+It consulted `ALIASES` only, so after `registerGrammar('tjs', …)` — the one thing a language
+author does — it still answered `javascript` while `highlight()` used the supplied grammar.
+A companion function that contradicts the main one on exactly the case you care about is worse
+than no companion function, and this is the surface tjs-lang is about to build on.
+*/
+describe('grammarFor is registration-aware (F19)', () => {
+  afterEach(async () => {
+    const { resetHighlightStateForTest } = await import('./highlight')
+    resetHighlightStateForTest()
+  })
+
+  test('an alias still resolves when nothing is registered', async () => {
+    const { grammarFor } = await import('./highlight')
+    expect(grammarFor('tjs')).toBe('javascript')
+    expect(grammarFor('ts')).toBe('typescript')
+  })
+
+  test('a registered grammar wins over its alias', async () => {
+    const { grammarFor, registerGrammar } = await import('./highlight')
+    registerGrammar('tjs', { keyword: /\bgiven\b/ })
+    expect(grammarFor('tjs')).toBe('tjs')
+    // Unrelated languages are unaffected.
+    expect(grammarFor('ts')).toBe('typescript')
+  })
+})
