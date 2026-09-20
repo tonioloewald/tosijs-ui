@@ -383,7 +383,11 @@ Extraction rules (learn these to avoid surprises):
 
 #### Live example code blocks
 
-**Consecutive** code blocks with languages `js`, `tjs`, `ts`, `html`, `css`, or `test` are grouped into a single live example by `src/live-example/insert-examples.ts`. Any non-code-block content (headings, paragraphs, etc.) between blocks breaks the group — the blocks become separate examples. (` ```typescript ` is the _display-only_ fence; ` ```ts ` is executable and goes through the tjs-lang transpiler.)
+**Consecutive** code blocks with languages `js`, `tjs`, `ts`, `html`, `css`, or `test` are grouped into a single live example by `src/live-example/insert-examples.ts`. Any non-code-block content (headings, paragraphs, etc.) between blocks breaks the group — the blocks become separate examples. (` ```ts ` is executable and goes through the tjs-lang transpiler.)
+
+**As of 1.15, display-only is orthogonal to language.** Add `:static` to any fence and it is highlighted but never run — ` ```tjs:static `, ` ```html:static `. Prefer that to the old trick of lying about the language (` ```typescript `, ` ```xml `), which still works but costs you correct highlighting for what you are actually writing; tjs-lang made the argument in #155 and print is where it stops being cosmetic. Site-wide, `liveExamples: 'opt-in'` inverts the default so a fence must ask with `:inline`/`:iframe`/`:ide` — for a prose or book corpus.
+
+`isLiveFence(lang, mode, policy)` in `src/doc-system/example-policy.ts` is **THE** predicate and `parseFenceInfo` is **THE** fence-info parser. Do not write a second copy of either: that rule was stated three times during 1.15 development (`insert-examples`, `save-to-source`, `epub.ts`), the copies disagreed the moment `:static` shipped, and an edit saved over the wrong fenced block while every test stayed green. When hunting for further copies, grep for the **literal six-language set**, not for `isLiveFence` — searching for the shared symbol only finds the places already converted. Note `check-examples.ts`'s FOUR-language set is deliberately different (it asks "do we parse this as JavaScript?", which is false of `html`/`css`); both gates are needed.
 
 How grouping works (`insert-examples.ts`):
 
@@ -856,6 +860,19 @@ Ships as `tosijs-release-notes` so adopters get the same workflow.
     fix. Grepping `"!== 'null'"` for the CSRF exemption matched an ordinary `origin !== null`
     guard _and_ the comment recording the exemption's absence, and read as a failure against
     code that was correct.
+
+11. **Refresh the ecosystem scoreboard** — `practices/releasing.md` step 9. Commit directly
+    to the practices repo (its no-signoff carve-out), pulling with `git pull --no-rebase`.
+12. **Write the after-action report** — append 3–6 factual bullets to `reviews/AAR.md`
+    (newest first). `practices/releasing.md` step 10.
+
+> **Steps 11–12 come from `practices/releasing.md` and are listed here because omitting them
+> is what actually happened.** This section used to enumerate 1–10 and stop, which reads as a
+> complete checklist — so an agent following it did the shared steps 9 and 10 exactly never.
+> `reviews/AAR.md` did not exist for two releases after the mandate landed, and the cost was
+> paid by the 1.15.0 quarterly lens, which had to reconstruct cross-release patterns by hand
+> from seven review reports. A locally-enumerated list that silently omits shared steps is the
+> fork this file's own preamble warns about.
 
 ### Prereleases — iterate on betas, gate the final
 
