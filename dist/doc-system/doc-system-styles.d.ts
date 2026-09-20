@@ -9,6 +9,17 @@ export interface DocSystemTheme {
     buttonBg?: string;
     inputBg?: string;
     /** code-editor surface (`--code-bg`); neutral off-white by default, not brand-tinted. */
+    /**
+     * Background behind code blocks. Default `#fdfdfd` (light) — dark mode inverts it.
+     *
+     * **The syntax-highlighting palette does not track this.** Those eleven token colours are
+     * fixed literals, contrast-checked against the DEFAULT background in both modes; there is
+     * no recomputation that keeps hand-chosen colours legible against an arbitrary one. Set a
+     * dark `codeBg` for light mode and the worst token measures **1.71:1** against WCAG AA's
+     * 4.5. Override it and you own the contrast — retheme the tokens too, via the
+     * `--token-*` variables (each is a `varDefault`). Scoped by a test in
+     * `doc-system-styles.test.ts`.
+     */
     codeBg?: string;
 }
 /** Compute the full set of `:root` color variables from a few base colors. */

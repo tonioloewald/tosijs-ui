@@ -15,7 +15,7 @@ import * as path from 'path';
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js';
 import { listEpubVolumes, renderEpubDownloads } from './epub-volumes.js';
 import { buildSlugMap } from '../routing.js';
-import { computeAssetStamp, missingStampInputWarning, } from './asset-stamp.js';
+import { computeAssetStamp, missingStampInputWarning } from './asset-stamp.js';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
 import { tmpdir } from 'os';
 import { $, spawn } from 'bun';

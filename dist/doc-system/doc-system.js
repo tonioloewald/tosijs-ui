@@ -61,6 +61,7 @@ import { createDocBrowser, } from '../doc-browser.js';
 import { buildSlugMap, legacyQueryPath } from './routing.js';
 import { buildBookHtml, slugify } from './book-html.js';
 import { highlightBlocks } from './highlight.js';
+import { printWhenReady } from './print-window.js';
 import { docSystemStyleSpec } from './doc-system-styles.js';
 import { icons } from '../icons.js';
 import { popMenu } from '../menu.js';
@@ -330,17 +331,10 @@ export class TosiDocSystem extends Component {
                         fire before fonts and images are ready (1.15.0 re-review). Restored explicitly,
                         and highlighting hangs off the same event rather than racing it.
                         */
-                        const printWhenReady = () => {
-                            void highlightBlocks(win.document, { policy: 'none' })
-                                .catch(() => {
-                                // Plain code beats a print dialog that never opens.
-                            })
-                                .then(() => setTimeout(() => win.print(), 300));
-                        };
-                        if (win.document.readyState === 'complete')
-                            printWhenReady();
-                        else
-                            win.addEventListener('load', printWhenReady, { once: true });
+                        // Extracted and unit-tested — see `print-window.ts`. This path changed twice
+                        // in one cycle and both failure modes are silent: a dialog over a half-rendered
+                        // page, or one that never opens.
+                        void printWhenReady(win, () => highlightBlocks(win.document, { policy: 'none' }));
                     },
                 });
                 menuItems.push({

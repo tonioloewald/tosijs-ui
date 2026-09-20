@@ -28,6 +28,27 @@ predicate; a third divergence has nowhere to live.
 
 Mutation-verified — restoring either half of the old behaviour turns the regression tests red.
 
+### Guards that could not fail, and a scope that was never stated
+
+- **`theme.codeBg` was unguarded.** The WCAG contrast test hardcoded `#fdfdfd`, so it could
+  not see the public knob at all — with `codeBg: '#1e1e1e'` the worst light-mode token measures
+  **1.71:1** against AA's 4.5, all eleven light rules fail and all eleven dark ones too, and
+  the test stayed green throughout. It now reads the background out of the spec, so it asserts
+  against what ships. The limit is also stated rather than implied: the palette is eleven fixed,
+  contrast-checked literals and **does not track `codeBg`** — override it and you own the
+  contrast (retheme the tokens via the `--token-*` variables). There is now a test asserting
+  that limit, so a change in scope has to be a deliberate edit rather than a silent one.
+- **The `checkExamples` process boundary had no test.** The example policy crosses it through
+  `TOSI_LIVE_EXAMPLES`, and every build we run sends `'auto'` — so `'opt-in'` had never crossed
+  a process boundary anywhere, which is precisely where the earlier M2 defect lived. Now covered
+  by an integration test that spawns the CLI: the env key, the clean-JSON stdout contract, and
+  the default. Mutation-verified against a child that ignores the env value.
+- **The Print path changed twice in one cycle with no test at any tier.** Extracted as
+  `printWhenReady` and covered: an already-`complete` window prints without waiting for a `load`
+  that will never fire again, a loading one waits, a failing highlight still prints (plain code
+  beats a dialog that never opens), and highlighting happens *before* print rather than racing
+  it.
+
 ### The cache-busting stamp no longer skips an asset in silence
 
 `?v=` is computed by hashing the assets it guards, and the loop `continue`d past a missing

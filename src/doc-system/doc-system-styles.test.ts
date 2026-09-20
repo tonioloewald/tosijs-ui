@@ -70,8 +70,32 @@ const contrast = (a: string, b: string): number => {
 }
 
 describe('#B2: syntax-highlighting contrast', () => {
-  // The two backgrounds `--code-bg` actually takes. Light is the DEFAULT.
-  const LIGHT_BG = '#fdfdfd'
+  /*
+  Read the background OUT OF THE SPEC rather than hardcoding it (review F9).
+
+  These were literals, so the assertion could not see the public `theme.codeBg` knob at all.
+  Measured with `codeBg: '#1e1e1e'`: the worst light-mode token drops to **1.71:1** against
+  AA's 4.5 — all eleven light rules fail, and all eleven dark ones too — while this test
+  stayed green because it was still comparing against `#fdfdfd`.
+
+  Taking the value from `spec[':root']._codeBg` means the test asserts against what actually
+  ships. The scope of the guarantee is then stated explicitly by the last test in this block,
+  rather than being implied by a literal.
+  */
+  const bgOf = (theme?: Parameters<typeof docSystemStyleSpec>[0]): string => {
+    const spec = docSystemStyleSpec(theme) as Record<string, any>
+    const bg = spec[':root']?._codeBg
+    if (typeof bg !== 'string' || !bg.startsWith('#')) {
+      throw new Error(
+        `could not read _codeBg from the spec (got ${String(
+          bg
+        )}) — this test is ` +
+          `asserting against nothing if that happens silently`
+      )
+    }
+    return bg
+  }
+  const LIGHT_BG = bgOf()
   const DARK_BG = '#020202'
   const AA = 4.5
 
@@ -124,5 +148,55 @@ describe('#B2: syntax-highlighting contrast', () => {
     )
     expect(light.length).toBeGreaterThan(8)
     expect(dark.length).toBeGreaterThan(8)
+  })
+})
+
+/*
+The scope of the contrast guarantee, stated rather than implied (F9).
+
+The token palette is a set of fixed literals; `theme.codeBg` is an arbitrary colour an adopter
+can set. The palette does NOT track it, and cannot — there is no recomputation that keeps
+eleven hand-chosen, contrast-checked colours legible against any background someone picks.
+
+So the guarantee is: **the DEFAULT background clears AA in both modes.** Override `codeBg`
+and you own the contrast. This test exists so that limit is discovered here rather than by a
+reader, and so nobody "fixes" the palette to chase a knob it was never tracking.
+*/
+describe('theme.codeBg is not tracked by the token palette (F9)', () => {
+  const relLum = (hex: string): number => {
+    let h = hex.replace('#', '')
+    if (h.length === 3) h = [...h].map((c) => c + c).join('')
+    const ch = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
+    const lin = ch.map((c) =>
+      c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+    )
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+  }
+  const contrastOf = (a: string, b: string): number => {
+    const [hi, lo] = [relLum(a), relLum(b)].sort((x, y) => y - x)
+    return (hi + 0.05) / (lo + 0.05)
+  }
+
+  test('a dark custom codeBg DOES break light-mode AA — known and scoped', () => {
+    const spec = docSystemStyleSpec({ codeBg: '#1e1e1e' }) as Record<
+      string,
+      any
+    >
+    expect(spec[':root']._codeBg).toBe('#1e1e1e')
+
+    let worst = Infinity
+    for (const [sel, rule] of Object.entries(spec)) {
+      if (!sel.includes('.token.') || sel.includes('.darkmode')) continue
+      const m = (rule as any)?.color?.match?.(/#[0-9a-fA-F]{3,8}/)
+      if (!m) continue
+      worst = Math.min(worst, contrastOf(m[0], '#1e1e1e'))
+    }
+    /*
+    Asserted as a FACT, not aspirationally. If someone makes the palette adaptive this test
+    goes red and should be replaced by one asserting the new guarantee — which is the point:
+    a change in scope should be a deliberate edit here, not a silent improvement nobody
+    records.
+    */
+    expect(worst).toBeLessThan(4.5)
   })
 })
