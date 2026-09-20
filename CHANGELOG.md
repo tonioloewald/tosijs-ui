@@ -80,8 +80,12 @@ turns the tests red.
 This is the #131 hazard class (`@codemirror/state` identity) in a worse container. That one got
 a real remedy — `tosijs-ui/codemirror`, a re-export so only one copy exists — and this one still
 has no equivalent: `registerGrammar` supplies grammars, not instance access. The harm is fixed;
-the asymmetry is recorded in `UPSTREAM.md` and `TODO.md`. **From 1.15.0, if your page has no
-Prism, the one it ends up with is ours** — that is now stated in the adopter reference.
+the asymmetry is recorded in `UPSTREAM.md` and `TODO.md`.
+
+The adopter reference states that a page which brought no Prism of its own ends up with ours,
+and that loading your own afterwards wins and stops our highlighting — that is Prism's model,
+not something we can fix from here. Load yours first, or use `registerGrammar` to add a
+language to ours instead of bringing a second copy.
 
 ### Published-surface corrections
 
