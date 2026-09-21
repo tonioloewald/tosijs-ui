@@ -604,7 +604,32 @@ defect (`<tosi-table>` loses focus on re-render): focus is where our quality bar
 would become fast-lane tests, and a dimension we do not currently test at all becomes testable
 where people actually write tests.
 
-No ask of us outstanding; this is input on their design.
+**The case, after three rounds of sharpening (all on #51):** both existing options fail, and
+`testInBrowser` is the only one that does not also cost a second test system.
+
+- **Playwright is a parallel apparatus, not a lane** — 167-line config, 29 specs in a different
+  idiom, its own dev-server boot, assertion vocabulary, runner and CI job. You cannot call one
+  from a unit test. Adding a browser assertion means switching systems, so it does not get
+  written. This week's case: the `popstate` guard is ONE line (`String(...)` coercion, whose
+  omission silently destroys every live example on the page) and the unit tier could not take
+  it — our own review recorded "needs `location` added to test-setup.ts first" — so it got a
+  whole Playwright spec.
+- **happy-dom's failure mode is wrong answers, not missing ones.** `globalThis !== window`;
+  `replaceState` leaves `location.hash` untouched; `getBoundingClientRect` returns 0, which is
+  a number, so the assertion runs and passes or fails for the wrong reason. A missing API
+  throws and you learn; a wrong answer is indistinguishable from a right one until it ships.
+  **Three pieces of our shipped product are workarounds for it** — the dual-global Prism write,
+  epub.ts's hand-rolled DOM traversal (the selector engine throws), and a regex fallback — plus
+  `hashState`'s URL half being untestable at the unit tier.
+
+The pitch we argued for: *"the same test system you already use, with a DOM that tells the
+truth."* Which is why "a bridge, not a runner" deserves defending against scope creep — the
+moment it grows its own describe/reporter/config it becomes the third parallel apparatus and
+inherits the very cost that stops these tests being written.
+
+No ask of us outstanding; this is input on their design. If it ships, revisit #142 (promoting
+test fences to the primary component-test tier) — the two are aimed at the same gap from
+opposite ends.
 
 ## haltija
 
