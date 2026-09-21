@@ -67,7 +67,7 @@ function createMatchers(value, negated = false) {
             wrong location is worse than none, and it is the kind of error that reads as correct
             because the quoted text is real code from the same file.
             */
-            const line = authorLine(firstUserStackFrame(err.stack));
+            const line = authorLine(firstUserStackFrame(err.stack, TEST_SOURCE_URL));
             if (line !== null) {
                 const src = getSourceLine(line);
                 err.message = src
@@ -120,8 +120,25 @@ function createMatchers(value, negated = false) {
         toBeGreaterThan(n) {
             assert(value > n, `Expected ${value} to be greater than ${n}`);
         },
+        toBeGreaterThanOrEqual(n) {
+            assert(value >= n, `Expected ${value} to be greater than or equal to ${n}`);
+        },
         toBeLessThan(n) {
             assert(value < n, `Expected ${value} to be less than ${n}`);
+        },
+        toBeLessThanOrEqual(n) {
+            assert(value <= n, `Expected ${value} to be less than or equal to ${n}`);
+        },
+        /*
+        Asked for by tosijs-3d-ensemble (#142): everything renderer-shaped is floats — intensities,
+        densities, bounding boxes — and without this they were writing
+        `Math.round(x * 1e6) / 1e6` at every assertion. Jest's semantics exactly, so the habit
+        transfers: `digits` is DECIMAL PLACES and the tolerance is half a unit in the last one.
+        */
+        toBeCloseTo(n, digits = 2) {
+            const diff = Math.abs(value - n);
+            const tolerance = 10 ** -digits / 2;
+            assert(diff < tolerance, `Expected ${value} to be close to ${n} (${digits} digits; differs by ${diff})`);
         },
         toBeInstanceOf(cls) {
             assert(value instanceof cls, `Expected value to be instance of ${cls.name}`);

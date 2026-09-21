@@ -51,7 +51,11 @@ interface Matchers {
   toHaveLength: (length: number) => void
   toMatch: (pattern: RegExp) => void
   toBeGreaterThan: (n: number) => void
+  toBeGreaterThanOrEqual: (n: number) => void
   toBeLessThan: (n: number) => void
+  toBeLessThanOrEqual: (n: number) => void
+  /** Floating-point comparison. `digits` is decimal places, default 2 — jest's semantics. */
+  toBeCloseTo: (n: number, digits?: number) => void
   toBeInstanceOf: (cls: new (...args: unknown[]) => unknown) => void
   not: Matchers
 }
@@ -110,7 +114,7 @@ function createMatchers(value: unknown, negated = false): Matchers {
       wrong location is worse than none, and it is the kind of error that reads as correct
       because the quoted text is real code from the same file.
       */
-      const line = authorLine(firstUserStackFrame(err.stack))
+      const line = authorLine(firstUserStackFrame(err.stack, TEST_SOURCE_URL))
       if (line !== null) {
         const src = getSourceLine(line)
         err.message = src
@@ -180,8 +184,34 @@ function createMatchers(value: unknown, negated = false): Matchers {
     toBeGreaterThan(n: number) {
       assert((value as number) > n, `Expected ${value} to be greater than ${n}`)
     },
+    toBeGreaterThanOrEqual(n: number) {
+      assert(
+        (value as number) >= n,
+        `Expected ${value} to be greater than or equal to ${n}`
+      )
+    },
     toBeLessThan(n: number) {
       assert((value as number) < n, `Expected ${value} to be less than ${n}`)
+    },
+    toBeLessThanOrEqual(n: number) {
+      assert(
+        (value as number) <= n,
+        `Expected ${value} to be less than or equal to ${n}`
+      )
+    },
+    /*
+    Asked for by tosijs-3d-ensemble (#142): everything renderer-shaped is floats — intensities,
+    densities, bounding boxes — and without this they were writing
+    `Math.round(x * 1e6) / 1e6` at every assertion. Jest's semantics exactly, so the habit
+    transfers: `digits` is DECIMAL PLACES and the tolerance is half a unit in the last one.
+    */
+    toBeCloseTo(n: number, digits = 2) {
+      const diff = Math.abs((value as number) - n)
+      const tolerance = 10 ** -digits / 2
+      assert(
+        diff < tolerance,
+        `Expected ${value} to be close to ${n} (${digits} digits; differs by ${diff})`
+      )
     },
     toBeInstanceOf(cls: new (...args: unknown[]) => unknown) {
       assert(

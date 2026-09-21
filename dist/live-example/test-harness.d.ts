@@ -21,7 +21,11 @@ interface Matchers {
     toHaveLength: (length: number) => void;
     toMatch: (pattern: RegExp) => void;
     toBeGreaterThan: (n: number) => void;
+    toBeGreaterThanOrEqual: (n: number) => void;
     toBeLessThan: (n: number) => void;
+    toBeLessThanOrEqual: (n: number) => void;
+    /** Floating-point comparison. `digits` is decimal places, default 2 — jest's semantics. */
+    toBeCloseTo: (n: number, digits?: number) => void;
     toBeInstanceOf: (cls: new (...args: unknown[]) => unknown) => void;
     not: Matchers;
 }

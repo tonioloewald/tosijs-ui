@@ -162,3 +162,66 @@ describe('TEST_TIMEOUT', () => {
     expect(TEST_TIMEOUT).toBe(5000)
   })
 })
+
+/*
+Matchers requested by an adopter converting a WebGL project to test fences (#142 point 1).
+
+Everything renderer-shaped is floats — intensities, densities, bounding boxes — and without
+`toBeCloseTo` they were writing `Math.round(x * 1e6) / 1e6` at every assertion. Jest's
+semantics deliberately, so the habit transfers: `digits` is DECIMAL PLACES, tolerance is half a
+unit in the last one.
+*/
+describe('float and bound matchers (#142)', () => {
+  /** Does this assertion throw? The harness signals failure by throwing AssertionError. */
+  const fails = (fn: () => void): string | null => {
+    try {
+      fn()
+      return null
+    } catch (err) {
+      return (err as Error).message
+    }
+  }
+
+  test('toBeCloseTo passes within tolerance and fails outside it', () => {
+    expect(fails(() => testExpect(0.1 + 0.2).toBeCloseTo(0.3))).toBe(null)
+    expect(fails(() => testExpect(1.0).toBeCloseTo(1.5))).not.toBe(null)
+  })
+
+  test('digits is decimal places, as in jest', () => {
+    // 0.01 apart: inside 1 digit (tolerance 0.05), outside 3 (tolerance 0.0005).
+    expect(fails(() => testExpect(1.01).toBeCloseTo(1.0, 1))).toBe(null)
+    expect(fails(() => testExpect(1.01).toBeCloseTo(1.0, 3))).not.toBe(null)
+  })
+
+  test('the tolerance is HALF a unit in the last digit, as jest defines it', () => {
+    /*
+    The boundary case, and the one that makes the others mean something. At `digits: 2` the
+    tolerance is 0.005, not 0.01 — so a difference of 0.007 must FAIL. Without this, dropping
+    the `/ 2` passes every test above, because none of them straddles the two values.
+    */
+    expect(fails(() => testExpect(1.007).toBeCloseTo(1.0, 2))).not.toBe(null)
+    expect(fails(() => testExpect(1.004).toBeCloseTo(1.0, 2))).toBe(null)
+  })
+
+  test('the message names the actual difference, not just a failure', () => {
+    const msg = fails(() => testExpect(2.5).toBeCloseTo(1.0)) ?? ''
+    expect(msg).toContain('close to')
+    expect(msg).toContain('differs by')
+  })
+
+  test('toBeGreaterThanOrEqual / toBeLessThanOrEqual include the boundary', () => {
+    expect(fails(() => testExpect(5).toBeGreaterThanOrEqual(5))).toBe(null)
+    expect(fails(() => testExpect(5).toBeLessThanOrEqual(5))).toBe(null)
+    expect(fails(() => testExpect(5).toBeGreaterThanOrEqual(6))).not.toBe(null)
+    expect(fails(() => testExpect(5).toBeLessThanOrEqual(4))).not.toBe(null)
+  })
+
+  test('they compose with .not, because they ride the shared assert', () => {
+    expect(fails(() => testExpect(1.0).not.toBeCloseTo(9.9))).toBe(null)
+    expect(fails(() => testExpect(4).not.toBeGreaterThanOrEqual(5))).toBe(null)
+    // …and .not fails when the positive case would have passed.
+    expect(fails(() => testExpect(5).not.toBeGreaterThanOrEqual(5))).not.toBe(
+      null
+    )
+  })
+})

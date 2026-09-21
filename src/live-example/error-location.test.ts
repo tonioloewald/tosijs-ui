@@ -5,6 +5,7 @@ import {
   describeError,
   diagnoseConstruction,
   stackLineOffset,
+  TEST_SOURCE_URL,
 } from './error-location.js'
 
 /*
@@ -127,5 +128,74 @@ describe('diagnoseConstruction', () => {
     const msg = diagnoseConstruction(err, ['preview'], 'const a = (', construct)
     expect(msg).toContain('could not be compiled')
     expect(msg).not.toContain('CONTEXT KEYS')
+  })
+})
+
+/*
+The user frame is identified POSITIVELY by its tag (#142 point 5).
+
+An adopter reported two failures in two different blocks both naming the same line, and it
+reproduced in Chromium: blocks failing at lines 2 and 10 BOTH reported 131. Nothing was
+recognised as the user's frame, so the first bundle frame won and every failure named one
+constant wrong line.
+
+The cause was that the exclusion list was the only mechanism. It matches a bare `/iife.js`,
+and a doc site serves `/iife.js?v=<hash>` — the cache-busting stamp — which the `$` anchor
+rejects. It also never listed `hydrate.js`, the bundle an adopter's site actually loads.
+*/
+describe('user-frame identification (#142)', () => {
+  const stack = [
+    'AssertionError: Expected 1 to be 2',
+    '    at assert (https://site.test/iife.js?v=2e84ce044eac:131:9)',
+    '    at toBe (https://site.test/iife.js?v=2e84ce044eac:140:7)',
+    '    at https://site.test/inline-test:2:3',
+  ].join('\n')
+
+  test('a stamped bundle frame is not mistaken for the user (the reported defect)', () => {
+    expect(firstUserStackFrame(stack, TEST_SOURCE_URL)?.line).toBe(2)
+  })
+
+  test('…and the fallback path strips the query before matching', () => {
+    // No tag supplied: the exclusion heuristic must still see through `?v=`.
+    expect(firstUserStackFrame(stack)?.line).toBe(2)
+  })
+
+  test('hydrate.js counts as a bundle — it is what an ADOPTER site loads', () => {
+    const adopter = [
+      'Error: boom',
+      '    at x (https://their.site/hydrate.js?v=abc:99:1)',
+      '    at https://their.site/inline-test:7:5',
+    ].join('\n')
+    expect(firstUserStackFrame(adopter)?.line).toBe(7)
+    expect(firstUserStackFrame(adopter, TEST_SOURCE_URL)?.line).toBe(7)
+  })
+
+  test('an UNKNOWN bundle name — only the tag can save you here', () => {
+    /*
+    The decisive case, and the reason the tag exists rather than a longer exclusion list.
+
+    An adopter names their bundle whatever they like. No list we maintain can anticipate
+    `app.bundle.js`, and every name we fail to anticipate returns a bundle frame as if it were
+    the author's line. Extending the list is chasing; identifying the user's frame positively
+    ends it.
+    */
+    const unknownBundle = [
+      'AssertionError: nope',
+      '    at assert (https://their.site/app.bundle.js:912:9)',
+      '    at https://their.site/inline-test:4:3',
+    ].join('\n')
+    expect(firstUserStackFrame(unknownBundle, TEST_SOURCE_URL)?.line).toBe(4)
+    // …and without the tag it is wrong, which is what this repo shipped.
+    expect(firstUserStackFrame(unknownBundle)?.line).toBe(912)
+  })
+
+  test('a tag that appears in NO frame reports nothing rather than guessing', () => {
+    // WebKit reaches here routinely — it produces no locatable frame at all. Naming a bundle
+    // frame here is precisely the defect: a wrong line sends you somewhere with confidence.
+    const untagged = [
+      'Error: boom',
+      '    at x (https://site.test/iife.js?v=abc:131:9)',
+    ].join('\n')
+    expect(firstUserStackFrame(untagged, TEST_SOURCE_URL)).toBe(null)
   })
 })

@@ -143,7 +143,8 @@ export async function executeInline(options) {
     }
     catch (e) {
         console.error(e);
-        const described = describeError(e, exampleSource);
+        // The EXAMPLE tag — this path runs example code, not a test block.
+        const described = describeError(e, exampleSource, EXAMPLE_SOURCE_URL);
         preview.append(div({ class: 'preview-error' }, described));
         if (onError)
             onError(e);

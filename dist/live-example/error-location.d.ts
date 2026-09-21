@@ -7,7 +7,9 @@ export interface UserFrame {
     line: number;
     col: number;
 }
-export declare function firstUserStackFrame(stack: string | undefined): UserFrame | null;
+export declare function firstUserStackFrame(stack: string | undefined, 
+/** The `sourceURL` the code was tagged with, when the caller knows it. */
+tag?: string): UserFrame | null;
 export declare function stackLineOffset(): number;
 /** The author's line number for a reported frame, or null if it cannot be trusted. */
 export declare function authorLine(frame: UserFrame | null): number | null;
@@ -17,7 +19,7 @@ export declare function sourceLineAt(source: string | null, lineNum: number): st
  * `message | the offending source (line N)` when the error can be located, and the plain
  * message when it cannot — never a worse message than before.
  */
-export declare function describeError(err: unknown, source: string | null): string;
+export declare function describeError(err: unknown, source: string | null, tag?: string): string;
 /**
  * Explain a failure of the `AsyncFunction` CONSTRUCTOR, which throws before any user code runs
  * and therefore produces no locatable frame.

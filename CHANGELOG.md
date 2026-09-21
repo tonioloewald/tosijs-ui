@@ -1,5 +1,36 @@
 # Changelog
 
+## 1.15.1 (unreleased)
+
+### Doc-test failures reported the wrong line — the same wrong line, every time (#142)
+
+Reported by an adopter converting a WebGL project to test fences: two failures in two
+*different* blocks both named `(line 114)`. Reproduced in Chromium — blocks failing at lines 2
+and 10 both reported **131**.
+
+Nothing was being recognised as the user's frame, so the first bundle frame won and every
+failure named one constant wrong line. The cause is narrow and unlucky: the only mechanism was
+a list of bundle filenames to skip, it matched a bare `/iife.js`, and a doc site serves
+`/iife.js?v=<hash>` — the cache-busting stamp — which the `$` anchor rejects. It also never
+listed `hydrate.js`, which is the bundle an *adopter's* site actually loads. So on a real doc
+site nothing was skipped at all.
+
+The user's frame is now identified **positively**, by the `sourceURL` the code was tagged with,
+which is immune to query strings, to bundle names we did not anticipate, and to whatever an
+adopter calls theirs. The exclusion list survives as a fallback for untagged stacks, now
+matching on the path with any query or fragment stripped. When a tag is expected and no tagged
+frame exists — WebKit routinely produces none — it reports **nothing** rather than guessing.
+
+The reporter's framing was right and is worth keeping: *a wrong line is worse than none,
+because it sends you confidently to the wrong place.*
+
+### `toBeCloseTo`, `toBeGreaterThanOrEqual`, `toBeLessThanOrEqual` in doc tests (#142)
+
+Also from that report. Everything renderer-shaped is floats — intensities, densities, bounding
+boxes — and without `toBeCloseTo` they were writing `Math.round(x * 1e6) / 1e6` at every
+assertion. Jest's semantics exactly, so the habit transfers: `digits` is decimal places and the
+tolerance is half a unit in the last one. All three compose with `.not`.
+
 ## 1.15.0
 
 ### `save-to-source` wrote edits into the wrong fence, silently

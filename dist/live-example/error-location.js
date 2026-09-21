@@ -31,14 +31,38 @@ export const EXAMPLE_SOURCE_URL = 'inline-example';
 /** Tag for code run as a doc test. */
 export const TEST_SOURCE_URL = 'inline-test';
 /*
-The harness is minified into one bundle, so a stack's first frames are ours. Skip them and the
-next frame is the user's code. Frame syntax differs by engine (Chrome `at fn (url:line:col)`,
-Safari/Firefox `fn@url:line:col`); the trailing `url:line:col` capture covers both.
+Find the USER's frame in a stack.
+
+Frame syntax differs by engine (Chrome `at fn (url:line:col)`, Safari/Firefox
+`fn@url:line:col`); the trailing `url:line:col` capture covers both.
+
+PREFER THE TAG. Code we run is tagged with a `sourceURL` (`inline-test`, `inline-example`), so
+the user's frame can be identified POSITIVELY. That is the whole fix for tosijs-ui#142's fifth
+point, reported by an adopter and reproduced here in Chromium: two failures in two different
+blocks, at genuinely different lines, both reported the SAME line — because no frame was ever
+recognised as the user's and the first bundle frame won instead.
+
+The cause is the exclusion list below, which was the only mechanism. It matches a bare
+`/iife.js`, and a doc site serves `/iife.js?v=<hash>` — the cache-busting stamp — which the `$`
+anchor rejects. It also never listed `hydrate.js`, the bundle an ADOPTER's site actually loads.
+So on a real doc site nothing was skipped, the harness's own frame was returned, and every
+failure reported one constant wrong line. A wrong line is worse than none: it sends you
+somewhere with confidence. The reporter said exactly that and was right.
+
+The exclusion list survives as a FALLBACK for untagged stacks, now matching on the path with
+any query or fragment stripped.
 */
-const BUNDLE_FILES = /\/(index|module|iife|module\.debug|module\.safe)\.js$/;
-export function firstUserStackFrame(stack) {
+const BUNDLE_FILES = /\/(index|module|iife|hydrate|module\.debug|module\.safe)\.js$/;
+/** URL without `?query` or `#fragment` — a stamped bundle is still that bundle. */
+function pathOf(url) {
+    return url.split(/[?#]/)[0];
+}
+export function firstUserStackFrame(stack, 
+/** The `sourceURL` the code was tagged with, when the caller knows it. */
+tag) {
     if (!stack)
         return null;
+    const frames = [];
     for (const raw of stack.split('\n')) {
         const line = raw.trim();
         if (!line)
@@ -50,11 +74,22 @@ export function firstUserStackFrame(stack) {
         if (!match)
             continue;
         const [, url, ln, col] = match;
-        if (BUNDLE_FILES.test(url))
-            continue;
-        return { url, line: Number(ln), col: Number(col) };
+        frames.push({ url, line: Number(ln), col: Number(col) });
     }
-    return null;
+    // Positive identification first — immune to query strings, new bundle names and whatever
+    // an adopter happens to call their bundle.
+    if (tag) {
+        const tagged = frames.find((f) => f.url.includes(tag));
+        if (tagged)
+            return tagged;
+        /*
+        Tagged code was expected and no tagged frame exists. Report NOTHING rather than guess: a
+        frame from the bundle is not the author's line, and naming it is the defect this fix
+        removes. WebKit reaches here routinely — it produces no locatable frame at all.
+        */
+        return null;
+    }
+    return frames.find((f) => !BUNDLE_FILES.test(pathOf(f.url))) ?? null;
 }
 /*
 The `Function` constructor synthesizes a header — `function anonymous(a,b\n) {\n` — so every
@@ -82,7 +117,7 @@ export function stackLineOffset() {
         new Function(`throw new Error('probe')\n//# sourceURL=${OFFSET_PROBE_URL}`)();
     }
     catch (err) {
-        const frame = firstUserStackFrame(err.stack);
+        const frame = firstUserStackFrame(err.stack, OFFSET_PROBE_URL);
         if (frame?.url.includes(OFFSET_PROBE_URL))
             cachedOffset = frame.line - 1;
     }
@@ -106,10 +141,14 @@ export function sourceLineAt(source, lineNum) {
  * `message | the offending source (line N)` when the error can be located, and the plain
  * message when it cannot — never a worse message than before.
  */
-export function describeError(err, source) {
+export function describeError(err, source, tag = TEST_SOURCE_URL) {
     const error = err;
     const message = String(error?.message ?? err);
-    const line = authorLine(firstUserStackFrame(error?.stack));
+    /*
+    `describeError` serves BOTH tagged paths (a doc test and a live example), so it takes the tag
+    from the caller. Without it the old exclusion heuristic runs and can name a bundle frame.
+    */
+    const line = authorLine(firstUserStackFrame(error?.stack, tag));
     if (line === null)
         return message;
     const src = sourceLineAt(source, line);
