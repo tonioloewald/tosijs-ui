@@ -556,6 +556,32 @@ this one had none, which is why it sat unrecorded.
 supplies grammars, not instance access, and there is no `./prism` key in `exports`. Tracked in
 `TODO.md`; the adopt fix removes the harm, not the asymmetry.
 
+## haltija — testInBrowser (commented 2026-09-21)
+
+**[#51](https://github.com/tonioloewald/haltija/issues/51) — jest-shaped tests running in a real
+browser.** Design review requested; commented with evidence from our ` ```test ` doc tier, which
+has been running that exact pattern in production (32 blocks / 64 tests through haltija).
+
+What we contributed that they could not see from inside haltija:
+
+- **Offered our in-page `expect`** — 12.7KB, thirteen matchers, each added because a test needed
+  it. Their prototype ships two. Marshalling assertions back to the host instead does not scale,
+  because the interesting arguments are DOM nodes and those do not serialize.
+- **Their stack-trace constraint is solved here, with a trap.** We map failures to author source
+  and append `(line N)`; the `Function` constructor's synthesized header offsets every reported
+  line, so ours named the line TWO BELOW the failing assertion from the day it was written.
+  Confidently wrong output that looks authoritative.
+- **The risk the proposal understates:** a backgrounded/occluded tab is rAF-starved, so renders
+  never paint and a correct component measures 0×0 — indistinguishable from the happy-dom
+  failure the feature exists to fix. Argued it should FAIL on stale `paintAgeMs`, not warn.
+- **"Real layout", not "real browsers".** haltija is Chromium-only. Gave them the #82 numbers —
+  the row-cap probe returns 33554428 on Chromium and WebKit and **0** on Firefox, which capped
+  every Firefox table at 10,000 rows for months behind Chromium-only CI. A single-engine
+  real-browser tier is blind to that class, and the docs should say so before someone retires a
+  Playwright lane over it.
+
+No ask of us outstanding; this is input on their design.
+
 ## haltija
 
 - **[tosijs-ui#21](https://github.com/tonioloewald/tosijs-ui/issues/21)** (consumer-side tracker;
