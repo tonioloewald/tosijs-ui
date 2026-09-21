@@ -580,6 +580,30 @@ What we contributed that they could not see from inside haltija:
   real-browser tier is blind to that class, and the docs should say so before someone retires a
   Playwright lane over it.
 
+**Follow-up (same day), correcting the emphasis.** The first comment led with two edge cases
+and buried the reason this matters. Measured our own repo instead:
+
+| what a test needs | our Playwright specs | our unit-lane files |
+|---|---:|---:|
+| `getBoundingClientRect` | 10 | **0** |
+| computed styles | 6 | **0** |
+| focus / `activeElement` | 3 | 0 |
+
+**1,499 unit tests and not one measures anything** — an entire dimension absent from the fast
+lane, so we stopped attempting it. And **23 of 29 Playwright specs need no multi-page
+navigation**: they are single-page assertions paying full orchestration cost for a real DOM.
+
+The case that settled it is ours: the WCAG contrast test written during the 1.15.0 review
+computes luminance by hand **from the style spec object**, because happy-dom will not resolve a
+cascade. It asserts that the literals we wrote are the literals we wrote — a correct-but-
+overridden rule, or a variable that never reaches the element, passes. Same for the top open UX
+defect (`<tosi-table>` loses focus on re-render): focus is where our quality bar lives, and
+`activeElement` under happy-dom is not evidence about a browser.
+
+**So this is an adoption interest, not distant review.** A large part of that 23-spec middle
+would become fast-lane tests, and a dimension we do not currently test at all becomes testable
+where people actually write tests.
+
 No ask of us outstanding; this is input on their design.
 
 ## haltija
