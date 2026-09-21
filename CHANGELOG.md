@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.15.1 (unreleased)
+## 1.15.1
 
 ### Doc-test failures reported the wrong line — the same wrong line, every time (#142)
 
