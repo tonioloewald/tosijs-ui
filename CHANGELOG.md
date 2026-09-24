@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.15.2
+
+### The `tjs-lang` peer admits 0.14.x (#182)
+
+**Upgrade before, or together with, tjs-lang 0.14.0** — if you install with npm and have
+`tjs-lang` installed.
+
+The optional peer was `^0.13.1`, and a caret on a `0.x` version admits patches only, so it
+could not reach 0.14.0. An optional peer is only optional when it is *absent*: when it is
+present and out of range, npm 7+ fails the install with `ERESOLVE`. It is now
+`^0.13.1 || ^0.14.0`. bun resolves either way, which is why nothing here surfaced it; tjs-lang's
+own pre-release review found it (the same defect as #98, one minor later).
+
+Verified against `tjs-lang@0.14.0-rc.0` before widening: typecheck, build, unit, Playwright on
+all three engines (the whole doc-test tier included) and the haltija lane all pass against it.
+The one break 0.14.0 names, runtime types becoming callable, touches nothing here: no tosijs-ui
+code handles a tjs runtime type.
+
+The live-example CDN pin and the dev dependency stay on 0.13.13 until 0.14.0 is final, so a
+published doc site keeps fetching the version it was built and tested against.
+
 ## 1.15.1
 
 ### Doc-test failures reported the wrong line — the same wrong line, every time (#142)
