@@ -11,4 +11,7 @@
 // It must point into dist/, not src/: src/ is not in package.json#files, so the src path
 // resolved only inside this repo and the shim was broken for every consumer from the move
 // (2026-06-14) until 1.15.2. Found by release-doctor's shipped-relative-specifier check.
+// Note the bare `'tosijs-ui/bin/docs'` spelling above does NOT resolve: the exports map's
+// `./*` wildcard sends it to dist/bin/docs.js. Only a file path or `bun bin/docs.ts` reaches
+// this file. See TODO.md.
 export * from '../dist/doc-system/site/docs.js'

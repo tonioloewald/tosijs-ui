@@ -1,5 +1,15 @@
 # TODO
 
+## Open
+
+- [ ] **`bin/docs.ts` is unreachable by its documented bare specifier.** Its comment promises
+      `import { extractDocs } from 'tosijs-ui/bin/docs'`, but the `./*` export maps that to
+      `dist/bin/docs.js`, which does not exist — measured in a packed 1.15.2 install, and
+      true since the exports map landed. (Its re-export was ALSO broken until 1.15.2, pointing
+      at unshipped `src/`.) Nobody can be depending on the bare spelling. Decide: retire the
+      shim at the next minor (it is a `[break]` only on paper), or add an explicit
+      `"./bin/docs"` export — which points an export at a `.ts` file, so weigh that first.
+
 ## From the 1.9.0 nine-lens review (deferred — the blockers and easy fixes are done)
 
 Full report: [RELEASE-REVIEW-1.9.md](RELEASE-REVIEW-1.9.md). Fixed already: 3 blockers,

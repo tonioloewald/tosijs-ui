@@ -21,6 +21,20 @@ code handles a tjs runtime type.
 The live-example CDN pin and the dev dependency stay on 0.13.13 until 0.14.0 is final, so a
 published doc site keeps fetching the version it was built and tested against.
 
+### The installed `bin/docs.ts` shim resolves its import
+
+The back-compat shim for `extractDocs` importers re-exported from `../src/…`, and `src/` is not
+in the published package, so since the doc-site system moved into `tosijs-ui/site` (June) it
+threw `Cannot find module` for every installed consumer. It now re-exports from `dist/`, so
+running it with `bun` or importing it by file path works. The bare specifier
+`'tosijs-ui/bin/docs'` still does not resolve (the `exports` map sends it to `dist/`), and never
+has since that map was added. **Use `tosijs-ui/site`** — it was never affected.
+
+Shipped bins' relative imports also now carry their `.ts` extension, so each specifier names a
+file that is actually in the package.
+
+Both were found by a release check that had been silently skipping; it runs now.
+
 ## 1.15.1
 
 ### Doc-test failures reported the wrong line — the same wrong line, every time (#142)
