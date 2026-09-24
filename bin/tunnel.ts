@@ -39,7 +39,7 @@ import {
   resolveSiteConfig,
   resolveTunnelLocalPort,
   parseArgv,
-} from './resolve-site-config'
+} from './resolve-site-config.ts'
 
 const { has, flag } = parseArgv(process.argv.slice(2), {
   bin: 'tosijs-tunnel',

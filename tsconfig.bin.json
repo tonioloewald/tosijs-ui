@@ -14,7 +14,11 @@
   // Listing only bin/ is deliberate: tsc follows the imports into src/ by itself, while
   // naming src/ here would also drag in the *.test.ts files the parent config excludes.
   "extends": "./tsconfig.json",
-  "compilerOptions": { "noEmit": true },
+  // Shipped bins' relative imports carry the `.ts` extension, so the specifier names a file
+  // that is actually packed rather than relying on Bun's extension probing. (Not for Node: it
+  // refuses to strip types under node_modules at all, so installed bins are Bun-only either
+  // way — measured on Node 22.) Legal here because this project is noEmit.
+  "compilerOptions": { "noEmit": true, "allowImportingTsExtensions": true },
   // The prismjs grammar modules have no types (`@types/prismjs` covers the main module
   // only), and `src/doc-system/highlight.ts` names 27 of them. bin code imports that module
   // transitively, so this project needs the ambient declaration too. Safe here in a way the

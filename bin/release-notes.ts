@@ -73,7 +73,7 @@ import {
   lastVersionTag,
 } from '../dist/doc-system/release-notes.js'
 
-import { parseArgv } from './resolve-site-config'
+import { parseArgv } from './resolve-site-config.ts'
 
 // ── CLI ──────────────────────────────────────────────────────────────────────
 

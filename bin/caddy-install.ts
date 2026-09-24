@@ -38,7 +38,7 @@ import {
   parseArgv,
   resolvePreviewHost,
   resolveSiteConfig,
-} from './resolve-site-config'
+} from './resolve-site-config.ts'
 
 const { has, flag } = parseArgv(process.argv.slice(2), {
   bin: 'tosijs-caddy-install',

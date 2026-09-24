@@ -33,12 +33,12 @@ import {
   registerCaddyFragment,
   resolvePreviewHost,
   parseArgv,
-} from './resolve-site-config'
+} from './resolve-site-config.ts'
 import {
   resolveSiteConfig,
   isSafeRemotePath,
   safeRemoteRoots,
-} from './resolve-site-config'
+} from './resolve-site-config.ts'
 
 const { has, flag } = parseArgv(process.argv.slice(2), {
   bin: 'tosijs-deploy',

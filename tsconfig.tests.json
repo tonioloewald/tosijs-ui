@@ -14,6 +14,8 @@
   // A type-level test asserts nothing if nothing compiles it, which is the other half of
   // why this exists.
   "extends": "./tsconfig.json",
+  // Covers bin/ too, whose shipped files import with a `.ts` extension (see tsconfig.bin.json).
+  "compilerOptions": { "noEmit": true, "allowImportingTsExtensions": true },
   "include": ["src/**/*.ts", "bin/**/*.ts", "tests/**/*.ts"],
   "exclude": ["node_modules"]
 }

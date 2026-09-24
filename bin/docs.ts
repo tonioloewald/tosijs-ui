@@ -7,4 +7,8 @@
 //
 // No `/*#` doc block here on purpose: the documented copy lives in the real
 // module, so the doc extractor surfaces it once (avoiding a slug collision).
-export * from '../src/doc-system/site/docs'
+//
+// It must point into dist/, not src/: src/ is not in package.json#files, so the src path
+// resolved only inside this repo and the shim was broken for every consumer from the move
+// (2026-06-14) until 1.15.2. Found by release-doctor's shipped-relative-specifier check.
+export * from '../dist/doc-system/site/docs.js'
