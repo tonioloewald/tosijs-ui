@@ -109,3 +109,26 @@ gap, recorded rather than hidden.
 - **Two patches shipped mid-cycle** (1.14.2, 1.14.3), both cut from tags rather than `main`, so
   adopters were not blocked behind a large release. That worked — and the adopter-facing cost
   was closing issues at *merge* rather than at *publish*, which is now changed.
+
+## 1.15.1 (2026-09-21, published 2026-09-24)
+
+- **The finding came from the aside the reporter said they did not chase.** Point 5 of #142
+  ("two failures both say line 114 — may be an artifact of how I built the fence") was a live
+  defect in every published version: the user's stack frame was found by *excluding* known
+  bundle names, and that list missed `/iife.js?v=<hash>` (the cache-busting stamp defeats the
+  `$` anchor) and `hydrate.js` (the bundle adopters actually load). Fixed by identifying the
+  frame positively by its `sourceURL` tag. A 1.12.7 fix for a different line-number bug had
+  made this one look handled.
+- **Mutation testing caught two tests that could not fail.** Fixing both mechanisms meant the
+  old fallback also handled the stamped URL, so the positive-identification path had no test
+  that distinguished it; `toBeCloseTo`'s half-unit tolerance had no case straddling the
+  boundary. Both mutants survived until the cases were added.
+- **`release-check` was green at tag time** — the `[note]`-only release commit ended the
+  annotation loop, breaking the three-release red streak recorded under 1.15.0.
+- **Attribution checked against the source:** the working assumption was that tjs-lang
+  reported #142; the RFC's first line names tosijs-3d-ensemble. Corrected before any reply,
+  which matters under the 1.14.3 rule (close on publish, naming the version, to the right
+  party).
+- **Friction:** tag-to-publish took three days and spanned two sessions. The post-publish
+  obligations (tarball verify, #142 reply, scoreboard, this entry) were recorded only in the
+  ending session's last message and had to be recovered from its transcript.
