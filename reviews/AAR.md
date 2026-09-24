@@ -132,3 +132,27 @@ gap, recorded rather than hidden.
 - **Friction:** tag-to-publish took three days and spanned two sessions. The post-publish
   obligations (tarball verify, #142 reply, scoreboard, this entry) were recorded only in the
   ending session's last message and had to be recovered from its transcript.
+
+## 1.15.2 (2026-09-25)
+
+- **Cut to unblock an upstream release.** tjs-lang's own pre-release review found our
+  `^0.13.1` peer would ERESOLVE npm consumers the moment 0.14.0 published (#182; the same defect
+  as #98, one minor later). We verified against `0.14.0-rc.0` with every lane before widening,
+  and shipped the widened range with the pins still on 0.13.13, so the release does not depend
+  on the rc. **Recurrence:** a caret on `0.x` has now bitten twice; the fix each time came from
+  the upstream side, never from a lane here, because bun resolves what npm rejects.
+- **A gate that had been silently skipping caught a four-month-old break.** `release-doctor`'s
+  shipped-relative-specifier check had reported SKIP until the practices repo fixed its
+  npm-pack parsing the same day. First real run: `bin/docs.ts`, a shipped back-compat shim,
+  re-exported from unshipped `src/` and had thrown `Cannot find module` for every installed
+  consumer since 2026-06-14. Reproduced against the packed 1.15.1 tarball before fixing.
+- **Checking the fix at the boundary found that it was incomplete.** In a packed install the
+  shim now loads by path, but its documented bare specifier `'tosijs-ui/bin/docs'` has never
+  resolved, because the exports map sends it to `dist/`. The CHANGELOG was rewritten to say so
+  instead of claiming the shim "works"; the disposition is in TODO.md.
+- **A justification that turned out false was corrected before shipping.** The `.ts`-extension
+  change was first commented as being "for Node"; measured, Node 22 refuses to strip types under
+  `node_modules` at all. The comment now says what was measured.
+- **`release-check` was red once, correctly:** a `[change]` bullet was unwritten and the
+  security-surface bins had no heading of their own. Fixed with a `[note]`-only commit; exit 0
+  at tag time.
