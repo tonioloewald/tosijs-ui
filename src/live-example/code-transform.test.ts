@@ -168,6 +168,9 @@ diverging — and the failure is invisible in exactly the place it matters: ever
 stay green while the deployed site transpiled with a different version of tjs-lang.
 
 Found because we had sat on `0.13.4` long enough for it to be deprecated.
+
+An exact PRERELEASE (`0.14.0-rc.0`) is still an exact version, and verifying a tjs-lang rc means
+pinning one — so the check admits a prerelease suffix and rejects only ranges.
 */
 test('#135: the CDN pin matches the installed tjs-lang', async () => {
   const pkg = await Bun.file(`${import.meta.dir}/../../package.json`).json()
@@ -175,7 +178,7 @@ test('#135: the CDN pin matches the installed tjs-lang', async () => {
   expect(
     declared,
     'the dev dep should be an EXACT version — a range would make this check meaningless'
-  ).toMatch(/^\d+\.\d+\.\d+$/)
+  ).toMatch(/^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$/)
   expect(
     TJS_VERSION,
     `TJS_VERSION (${TJS_VERSION}) is what the published site fetches; package.json says ${declared}`
