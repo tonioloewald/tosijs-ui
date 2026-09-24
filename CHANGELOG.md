@@ -30,10 +30,15 @@ running it with `bun` or importing it by file path works. The bare specifier
 `'tosijs-ui/bin/docs'` still does not resolve (the `exports` map sends it to `dist/`), and never
 has since that map was added. **Use `tosijs-ui/site`** — it was never affected.
 
-Shipped bins' relative imports also now carry their `.ts` extension, so each specifier names a
-file that is actually in the package.
+Found by a release check that had been silently skipping; it runs now.
 
-Both were found by a release check that had been silently skipping; it runs now.
+### `tosijs-tunnel`, `tosijs-deploy`, `tosijs-caddy-install`, `tosijs-release-notes`: import spelling only
+
+These bins now import `./resolve-site-config.ts` with its extension instead of relying on Bun's
+extension probing, so each relative specifier names a file that is in the package. **No
+behaviour moved:** the same module is loaded, and nothing in argument handling, ports, hosts,
+secrets or what they write was touched. The diff is the import line in each file. Found by the
+same check.
 
 ## 1.15.1
 
