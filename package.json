@@ -38,7 +38,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tonioloewald/xinjs-ui.git"
+    "url": "git+https://github.com/tonioloewald/tosijs-ui.git"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
