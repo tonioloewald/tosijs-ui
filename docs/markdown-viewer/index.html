@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=dd8d277b708a" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=ef16a7c73ed1" data-tosi-doc-system />
   <title>markdown — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-md&gt; renders markdown using marked." />
   <link rel="canonical" href="https://ui.tosijs.net/markdown-viewer/" />
@@ -43,13 +43,13 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=cd4fdd9085c1" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=cb4efe8111f9" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>markdown</h1>
 <p><code>&lt;tosi-md&gt;</code> renders markdown using <a href="https://www.npmjs.com/package/marked">marked</a>.</p>
 <p><code>&lt;tosi-md&gt;</code> renders <a href="https://www.markdownguide.org/">markdown</a> anywhere, either using the
 <code>src</code> attribute to load the file asynchronously, or rendering the text inside it.</p>
-<pre><code class="language-html">&lt;tosi-md&gt;
+<pre><code class="language-html">&lt;tosi-md sanitize=&quot;on&quot;&gt;
 ## hello
 world
 
@@ -67,6 +67,20 @@ world
 }
 </code></pre>
 <p>Note that, by default, <code>&lt;tosi-md&gt;</code> will use its <code>textContent</code> (not its <code>innerHTML</code>) as its source.</p>
+<h2><code>sanitize</code> — set it</h2>
+<p>Markdown can contain raw HTML, and <code>&lt;tosi-md&gt;</code> renders whatever the markdown produces. If you
+show text <strong>you did not write</strong> (issue bodies, comments, anything from a user or an API),
+unsanitized rendering is a stored XSS: <code>&lt;img src=x onerror=…&gt;</code> or a <code>javascript:</code> link runs
+in your page.</p>
+<ul>
+<li><code>sanitize=&quot;on&quot;</code> strips executable content (script, event-handler attributes, unsafe URL
+schemes) with <a href="https://www.npmjs.com/package/tosijs-kilpi">kilpi</a>, and drops any link that
+is not safe to navigate to. Ordinary elements, including custom elements, survive.</li>
+<li><code>sanitize=&quot;off&quot;</code> renders the HTML as-is. Use it only for markdown you control.</li>
+</ul>
+<p><strong>Leaving <code>sanitize</code> unset renders unsanitized and logs a one-time warning: in tosijs-ui 1.16
+the default becomes <code>on</code>.</strong> Set it explicitly now, either way, and the upgrade changes nothing
+for you.</p>
 <h2>rendering markdown from a url</h2>
 <p>Again, like an <code>&lt;img&gt;</code> tag, you can simply set a <code>&lt;tosi-md&gt;</code>&#39;s <code>src</code> attribute to a URL pointing
 to markdown source and it will load it asynchronously and render it.</p>
@@ -82,7 +96,7 @@ this in the console, e.g.</p>
 rendering, so that you can embed specific elements while retaining markdown. You need to explicitly set
 the <code>elements</code> property, and for markdown rendering not to be blocked, the html elements need to
 start on a new line and not be indented. E.g.</p>
-<pre><code class="language-html">&lt;tosi-md elements&gt;
+<pre><code class="language-html">&lt;tosi-md elements sanitize=&quot;on&quot;&gt;
 &lt;form&gt;
 ### this is a form
 &lt;label&gt;
@@ -103,6 +117,7 @@ handlebars-style doubled curly braces, e.g. <code>{{path.to.value}}</code>.</p>
 pass context data through to HTML elements.</p>
 <pre><code class="language-html">&lt;tosi-md
   elements
+  sanitize=&quot;on&quot;
   context=&#39;{&quot;title&quot;: &quot;template example&quot;, &quot;foo&quot;: {&quot;bar&quot;: 17}, &quot;nested&quot;: &quot;*work*: {{foo.bar}}&quot;}&#39;
 &gt;
 ## {{title}}
@@ -207,6 +222,6 @@ Oh, and nested templates {{nested}}.
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate.js?v=dd8d277b708a"></script>
+  <script type="module" src="../hydrate.js?v=ef16a7c73ed1"></script>
 </body>
 </html>

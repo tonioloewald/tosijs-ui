@@ -1,5 +1,6 @@
 import { Component, ElementCreator, xin } from 'tosijs'
 import { marked, MarkedOptions } from 'marked'
+import { sanitizeInPlace, isSafeNavigationUrl } from 'tosijs-kilpi'
 
 /*#
 # markdown
@@ -10,7 +11,7 @@ import { marked, MarkedOptions } from 'marked'
 `src` attribute to load the file asynchronously, or rendering the text inside it.
 
 ```html
-<tosi-md>
+<tosi-md sanitize="on">
 ## hello
 world
 
@@ -30,6 +31,22 @@ tosi-md {
 ```
 
 Note that, by default, `<tosi-md>` will use its `textContent` (not its `innerHTML`) as its source.
+
+## `sanitize` — set it
+
+Markdown can contain raw HTML, and `<tosi-md>` renders whatever the markdown produces. If you
+show text **you did not write** (issue bodies, comments, anything from a user or an API),
+unsanitized rendering is a stored XSS: `<img src=x onerror=…>` or a `javascript:` link runs
+in your page.
+
+- `sanitize="on"` strips executable content (script, event-handler attributes, unsafe URL
+  schemes) with [kilpi](https://www.npmjs.com/package/tosijs-kilpi), and drops any link that
+  is not safe to navigate to. Ordinary elements, including custom elements, survive.
+- `sanitize="off"` renders the HTML as-is. Use it only for markdown you control.
+
+**Leaving `sanitize` unset renders unsanitized and logs a one-time warning: in tosijs-ui 1.16
+the default becomes `on`.** Set it explicitly now, either way, and the upgrade changes nothing
+for you.
 
 ## rendering markdown from a url
 
@@ -57,7 +74,7 @@ the `elements` property, and for markdown rendering not to be blocked, the html 
 start on a new line and not be indented. E.g.
 
 ```html
-<tosi-md elements>
+<tosi-md elements sanitize="on">
 <form>
 ### this is a form
 <label>
@@ -85,6 +102,7 @@ pass context data through to HTML elements.
 ```html
 <tosi-md
   elements
+  sanitize="on"
   context='{"title": "template example", "foo": {"bar": 17}, "nested": "*work*: {{foo.bar}}"}'
 >
 ## {{title}}
@@ -118,9 +136,17 @@ function populate(basePath: string, source?: any): string {
 export class TosiMd extends Component {
   static preferredTagName = 'tosi-md'
 
+  /**
+  Whether the unsanitized-render warning has been shown on this page. It is shown once per page,
+  not per element — fifty `<tosi-md>` would otherwise log fifty identical lines.
+  */
+  static warnedUnsanitized = false
+
   static initAttributes = {
     src: '',
     elements: false,
+    // 'on' | 'off'. Unset renders unsanitized and warns once, until 1.16 makes 'on' the default.
+    sanitize: '',
   }
 
   context: { [key: string]: any } = {}
@@ -142,6 +168,48 @@ export class TosiMd extends Component {
       }
     }
   }
+  /** The effective setting. A bare `<tosi-md sanitize>` means on. */
+  get #sanitizeMode(): 'on' | 'off' | 'unset' {
+    const mode = String(this.sanitize).trim().toLowerCase()
+    if (mode === 'on' || (mode === '' && this.hasAttribute('sanitize'))) {
+      return 'on'
+    }
+    return mode === 'off' ? 'off' : 'unset'
+  }
+
+  #show(html: string) {
+    const mode = this.#sanitizeMode
+    if (mode !== 'on') {
+      if (mode === 'unset' && !TosiMd.warnedUnsanitized) {
+        TosiMd.warnedUnsanitized = true
+        console.warn(
+          '<tosi-md> is rendering markdown WITHOUT sanitizing it. In tosijs-ui 1.16 sanitize ' +
+            'becomes the default. Set sanitize="on" for any text you did not write, or ' +
+            'sanitize="off" to keep raw HTML and silence this warning. (tosijs-ui#179)'
+        )
+      }
+      this.innerHTML = html
+      return
+    }
+    /*
+    Parsed into an inert <template>, NOT into the element: assigning innerHTML to a live
+    element starts image loads, so an `<img onerror>` would fire before any cleanup ran.
+    */
+    const template = document.createElement('template')
+    template.innerHTML = html
+    sanitizeInPlace(template.content)
+    /*
+    kilpi's URL check admits raster `data:image/*` (fine for an <img src>); a link must never
+    carry a data: URL, so hold every href to the navigation rule. What virta did (#179).
+    */
+    for (const el of template.content.querySelectorAll('[href]')) {
+      if (!isSafeNavigationUrl(el.getAttribute('href') || '')) {
+        el.removeAttribute('href')
+      }
+    }
+    this.replaceChildren(template.content)
+  }
+
   didRender: (() => void) | (() => Promise<void>) = (): void => {
     /* do not care */
   }
@@ -168,15 +236,17 @@ export class TosiMd extends Component {
           }
           return chunks
         }, [] as string[])
-      this.innerHTML = chunks
-        .map((chunk) =>
-          chunk.startsWith('<') && chunk.endsWith('>')
-            ? chunk
-            : marked(chunk, this.options)
-        )
-        .join('')
+      this.#show(
+        chunks
+          .map((chunk) =>
+            chunk.startsWith('<') && chunk.endsWith('>')
+              ? chunk
+              : marked(chunk, this.options)
+          )
+          .join('')
+      )
     } else {
-      this.innerHTML = marked(source, this.options) as string
+      this.#show(marked(source, this.options) as string)
     }
     this.didRender()
   }

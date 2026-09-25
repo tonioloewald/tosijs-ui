@@ -2,6 +2,13 @@
 
 ## Open
 
+- [ ] **1.16: make `<tosi-md sanitize>` default to `on` (#179).** 1.15.3 shipped it opt-in, with a
+      once-per-page warning on unset elements that names 1.16 as the switch. At 1.16: treat unset
+      as `on` in `#sanitizeMode` (`src/markdown-viewer.ts`), delete the warning and
+      `TosiMd.warnedUnsanitized`, flip the "unset warns" tests to "unset sanitizes", reword the
+      doc section, and write it up as a `[break]` in the CHANGELOG (raw HTML from a markdown
+      source stops rendering unless the element says `sanitize="off"`).
+
 - [ ] **`bin/docs.ts` is unreachable by its documented bare specifier.** Its comment promises
       `import { extractDocs } from 'tosijs-ui/bin/docs'`, but the `./*` export maps that to
       `dist/bin/docs.js`, which does not exist — measured in a packed 1.15.2 install, and

@@ -38,6 +38,8 @@ const windowProps = [
   'customElements',
   'Element',
   'Node',
+  // kilpi's sanitizer walks with createTreeWalker(root, NodeFilter.SHOW_ELEMENT) (#179)
+  'NodeFilter',
   'Text',
   'DocumentFragment',
   'Event',

@@ -1,10 +1,17 @@
 import { Component, ElementCreator } from 'tosijs';
 import { MarkedOptions } from 'marked';
 export declare class TosiMd extends Component {
+    #private;
     static preferredTagName: string;
+    /**
+    Whether the unsanitized-render warning has been shown on this page. It is shown once per page,
+    not per element — fifty `<tosi-md>` would otherwise log fifty identical lines.
+    */
+    static warnedUnsanitized: boolean;
     static initAttributes: {
         src: string;
         elements: boolean;
+        sanitize: string;
     };
     context: {
         [key: string]: any;
