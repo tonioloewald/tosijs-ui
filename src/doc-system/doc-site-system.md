@@ -1201,13 +1201,26 @@ Every build writes a small build-identity file to the web root:
   "generator": "1.8.0",
   "site": "tosijs-ui",
   "commit": "66fbc589",
-  "commitTime": "2026-07-30T09:10:52+03:00"
+  "commitTime": "2026-07-30T09:10:52+03:00",
+  "contentHash": "5a416e4c7fd54d1e"
 }
 ```
 
 `generator` is the `tosijs-ui` version that produced the site; `commit` /`commitTime`
 identify **your project's** source. Nothing exposed this before — `src/version.ts` is
 the library version and says nothing about which commit built a given deploy.
+
+**`commit` is the last commit whose build _changed the site_, not necessarily the commit
+you just built at.** When a rebuild produces output identical to what is already there
+(same `contentHash`, which hashes everything except this file), the stamp is left alone.
+Without that, every build→commit cycle would restamp the file with its own parent commit
+and leave the tree dirty forever (#122). So a content-identical rebuild at `HEAD` keeps
+reporting an older commit, and that is correct: the site you are serving is byte-for-byte
+the one that commit built.
+
+To check that committed output matches `HEAD`, don't compare `commit` to `HEAD`. Rebuild
+and check that `git status` is clean. Delete `version.json` before building to force a
+fresh stamp.
 
 It matters most where a deploy is a _snapshot_: a preview host serves whatever was
 last pushed to it, so a reviewer can report a bug you fixed this morning with no way to

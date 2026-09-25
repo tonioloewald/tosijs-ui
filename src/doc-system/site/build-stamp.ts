@@ -37,7 +37,12 @@ export interface BuildStamp {
   generator: string
   /** the project's name, from site config */
   site?: string
-  /** short commit hash the site was built from, when available */
+  /**
+   * Short hash of the last commit whose build CHANGED the site's content, when available.
+   * A content-identical rebuild keeps the previous value (see `stampToWrite`, #122), so this
+   * can be older than HEAD — to check committed output matches HEAD, rebuild and check the
+   * tree is clean instead (#180).
+   */
   commit?: string
   /** ISO-8601 commit timestamp, when available */
   commitTime?: string
