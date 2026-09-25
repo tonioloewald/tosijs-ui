@@ -59,6 +59,16 @@ The documented "replace this method" hook only worked if you replaced it before 
 connected, which `tosiTagList({...})` never allows: the button captured the original function.
 It now looks the method up on every click.
 
+### Doc-site sourcemaps no longer expose the build machine's paths
+
+A doc site built with `bundleEntry` published sourcemaps whose sources climbed to the
+filesystem root and into the builder's home directory (`../../../../../../Users/<name>/…`),
+because the hydration bundle was built in the OS temp directory. The deployed site revealed
+the build machine's directory layout, and two machines could not produce the same site. The
+bundle is now built under your project's `node_modules/.cache`, and its maps are rewritten to
+point at the sources from where they are served, so devtools find them and every machine
+builds identical output. Rebuild your site to replace the old maps.
+
 ### `/version.json`: what `commit` means (#180)
 
 Documentation only. Since #122, a content-identical rebuild keeps the previous stamp, so `commit`
