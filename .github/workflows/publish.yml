@@ -141,26 +141,14 @@ jobs:
             || { echo "::error::test-consumer ignored SMOKE_TARBALL — this tag predates the hook"; exit 1; }
 
       # Tier 0: tests, typecheck, build, changelog entry, packaged exports, bin shebangs, …
+      # Its "artifact freshness" check is THE rebuild gate: it rebuilds and requires the
+      # committed code artifacts to reproduce (it knows tsbuildinfo is cache, not code). A
+      # second rebuild step here duplicated it and failed on exactly that file (#178).
       - name: release-doctor
         env:
           # This tag is ahead of npm by definition — it is the one being published.
           RELEASE_DOCTOR_PUBLISHING: ${{ inputs.tag }}
         run: bun .practices/tools/release-doctor.ts
-
-      # CI rebuilding the tag must reproduce the committed build that was packed above. A
-      # difference means the tag's build is stale OR dependency resolution drifted since it was
-      # made (bun.lock is not committed) — either way, not publishing it. Scoped to shipped paths:
-      # the ePub under docs/ is not reproducible and does not ship.
-      - name: Shipped artifacts match the tag
-        run: |
-          set -euo pipefail
-          bun run build
-          if [ -n "$(git status --porcelain -- dist llms.txt)" ]; then
-            echo "::error::rebuilding at $TAG changed shipped files — the tag's committed build is stale"
-            git status --porcelain -- dist llms.txt
-            git diff --stat -- dist llms.txt
-            exit 1
-          fi
 
       # ---- nothing above this line has touched the registry ----
 
