@@ -1,5 +1,71 @@
 # Changelog
 
+## 1.15.3
+
+### `<tosi-md sanitize="on">`, and a heads-up: it becomes the default in 1.16 (#179)
+
+`<tosi-md>` assigns rendered markdown to the page, and markdown can carry raw HTML. For text you
+did not write (issue bodies, comments, anything from a user or an API), that is a **stored
+XSS**: tosijs-virta's pre-release review demonstrated reading a token out of `localStorage`
+through an issue body with `<img onerror>`.
+
+`sanitize="on"` strips executable content (scripts, event-handler attributes, unsafe URL
+schemes) with [kilpi](https://www.npmjs.com/package/tosijs-kilpi), and drops any link that is
+not safe to navigate to. It **removes some elements together with everything inside them**:
+`script`, `style`, `iframe`, `object`, `embed`, `form`, `link`, `meta`, `base`, `noscript`,
+`template` and SVG animation elements. So markdown that embeds a `<form>` needs `sanitize="off"`.
+Markdown, ordinary links (relative, `#anchor`, `mailto:`), inputs and custom elements survive. A
+bare `<tosi-md sanitize>` also means on.
+
+**If you leave `sanitize` unset, nothing changes in this release** except one console warning
+per page. **In 1.16 the default becomes `on`.** Set `sanitize="on"` or `sanitize="off"` now and
+the upgrade will not affect you; `off` keeps raw HTML and is silent.
+
+`tosijs-kilpi` is a new runtime dependency: +865 bytes gzip on `dist/iife.js`.
+
+### Escape closes a `<tosi-dialog>` properly — `confirm`/`alert`/`prompt` no longer hang (#183)
+
+Escape let the browser close the native `<dialog>` directly, bypassing `close()`. So
+`await TosiDialog.confirm(...)` (and `alert`, `prompt`) **never settled**, the `showModal()`
+promise never resolved, and a `removeOnClose` dialog stayed in the DOM, one leaked element per
+Escape. Escape now closes with `'cancel'` through the same path as the Cancel button. So does
+the browser closing the element on its own (a `<form method="dialog">`, or Chrome refusing a
+repeated Escape), so nothing waits forever.
+
+**New: `dialogWillClose` can refuse a close.** Return `false`, or a Promise of `false`, and the
+dialog stays open, e.g. while an async save is in flight. `close()` now returns whether it
+closed. Reported by snowfox-app, which carried a workaround at nine sites.
+
+The default `dialogWillClose` no longer `console.log`s on every close, and the docs now say that
+the built-in **OK** button sits beside footer buttons rather than being replaced by them.
+
+### Icon types: `IconElement` is importable, and `icons.x()` needs no `!` (#176, #181)
+
+- `IconElement`, `IconName` and `SVGIconMap` are exported from `tosijs-ui/icons`:
+  `import { icons, type IconElement } from 'tosijs-ui/icons'`. 1.15 widened the icon return
+  type from `SVGElement` to `SVGElement | HTMLSpanElement` (a composite icon is a span), and
+  there was no importable name for the new union.
+- Under `noUncheckedIndexedAccess`, every `icons.user()` read as possibly undefined, forcing
+  `icons.user!()` everywhere. Built-in icon names are now explicit keys of the type, so the `!`
+  can go, and a misspelled `IconName` is a type error. Composites and `defineIcons()` names
+  still go through the index signature.
+- `tosijs-make-icons` now generates `satisfies IconData` rather than `as IconData`, which keeps
+  icon names in the type system. **It needs TypeScript 4.9 or later** in the project that runs
+  it.
+
+### `tagList.popSelectMenu` can be replaced after the element is on the page (#172)
+
+The documented "replace this method" hook only worked if you replaced it before the element
+connected, which `tosiTagList({...})` never allows: the button captured the original function.
+It now looks the method up on every click.
+
+### `/version.json`: what `commit` means (#180)
+
+Documentation only. Since #122, a content-identical rebuild keeps the previous stamp, so `commit`
+is the last commit whose build *changed the site*, and can be older than `HEAD`. To check that
+committed output matches `HEAD`, rebuild and confirm the tree is clean. `doc-site-system.md` now
+says so and shows `contentHash`.
+
 ## 1.15.2
 
 ### The `tjs-lang` peer admits 0.14.x (#182)

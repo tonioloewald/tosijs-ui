@@ -39,9 +39,11 @@ show text **you did not write** (issue bodies, comments, anything from a user or
 unsanitized rendering is a stored XSS: `<img src=x onerror=…>` or a `javascript:` link runs
 in your page.
 
-- `sanitize="on"` strips executable content (script, event-handler attributes, unsafe URL
-  schemes) with [kilpi](https://www.npmjs.com/package/tosijs-kilpi), and drops any link that
-  is not safe to navigate to. Ordinary elements, including custom elements, survive.
+- `sanitize="on"` strips executable content with [kilpi](https://www.npmjs.com/package/tosijs-kilpi):
+  event-handler attributes, unsafe URL schemes, and any link that is not safe to navigate to.
+  It **removes these elements together with everything inside them**: `script`, `style`,
+  `iframe`, `object`, `embed`, `form`, `link`, `meta`, `base`, `noscript`, `template`, and SVG
+  animation elements. Everything else survives, including inputs and custom elements.
 - `sanitize="off"` renders the HTML as-is. Use it only for markdown you control.
 
 **Leaving `sanitize` unset renders unsanitized and logs a one-time warning: in tosijs-ui 1.16
@@ -73,8 +75,11 @@ rendering, so that you can embed specific elements while retaining markdown. You
 the `elements` property, and for markdown rendering not to be blocked, the html elements need to
 start on a new line and not be indented. E.g.
 
+This example uses `sanitize="off"`: it is markup the page's author wrote, and `sanitize="on"`
+removes a `<form>` together with everything inside it.
+
 ```html
-<tosi-md elements sanitize="on">
+<tosi-md elements sanitize="off">
 <form>
 ### this is a form
 <label>
@@ -84,6 +89,14 @@ fill in this field.
 </label>
 </form>
 </tosi-md>
+```
+```test
+test('the embedded form renders, with markdown inside it', () => {
+  const md = preview.querySelector('tosi-md[elements]')
+  expect(md.querySelector('form input')).toBeTruthy()
+  expect(md.querySelector('form h3').textContent).toBe('this is a form')
+  expect(md.querySelector('form strong').textContent).toBe("It's important!")
+})
 ```
 
 In this case `<tosi-md>` uses its `innerHTML` and not its `textContent`.

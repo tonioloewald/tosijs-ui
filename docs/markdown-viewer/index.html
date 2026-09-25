@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=ef16a7c73ed1" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=3896679ceef4" data-tosi-doc-system />
   <title>markdown — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-md&gt; renders markdown using marked." />
   <link rel="canonical" href="https://ui.tosijs.net/markdown-viewer/" />
@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=e7bef0ad9b02" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=ff1ad0e3c48f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>markdown</h1>
 <p><code>&lt;tosi-md&gt;</code> renders markdown using <a href="https://www.npmjs.com/package/marked">marked</a>.</p>
@@ -73,9 +73,11 @@ show text <strong>you did not write</strong> (issue bodies, comments, anything f
 unsanitized rendering is a stored XSS: <code>&lt;img src=x onerror=…&gt;</code> or a <code>javascript:</code> link runs
 in your page.</p>
 <ul>
-<li><code>sanitize=&quot;on&quot;</code> strips executable content (script, event-handler attributes, unsafe URL
-schemes) with <a href="https://www.npmjs.com/package/tosijs-kilpi">kilpi</a>, and drops any link that
-is not safe to navigate to. Ordinary elements, including custom elements, survive.</li>
+<li><code>sanitize=&quot;on&quot;</code> strips executable content with <a href="https://www.npmjs.com/package/tosijs-kilpi">kilpi</a>:
+event-handler attributes, unsafe URL schemes, and any link that is not safe to navigate to.
+It <strong>removes these elements together with everything inside them</strong>: <code>script</code>, <code>style</code>,
+<code>iframe</code>, <code>object</code>, <code>embed</code>, <code>form</code>, <code>link</code>, <code>meta</code>, <code>base</code>, <code>noscript</code>, <code>template</code>, and SVG
+animation elements. Everything else survives, including inputs and custom elements.</li>
 <li><code>sanitize=&quot;off&quot;</code> renders the HTML as-is. Use it only for markdown you control.</li>
 </ul>
 <p><strong>Leaving <code>sanitize</code> unset renders unsanitized and logs a one-time warning: in tosijs-ui 1.16
@@ -96,7 +98,9 @@ this in the console, e.g.</p>
 rendering, so that you can embed specific elements while retaining markdown. You need to explicitly set
 the <code>elements</code> property, and for markdown rendering not to be blocked, the html elements need to
 start on a new line and not be indented. E.g.</p>
-<pre><code class="language-html">&lt;tosi-md elements sanitize=&quot;on&quot;&gt;
+<p>This example uses <code>sanitize=&quot;off&quot;</code>: it is markup the page&#39;s author wrote, and <code>sanitize=&quot;on&quot;</code>
+removes a <code>&lt;form&gt;</code> together with everything inside it.</p>
+<pre><code class="language-html">&lt;tosi-md elements sanitize=&quot;off&quot;&gt;
 &lt;form&gt;
 ### this is a form
 &lt;label&gt;
@@ -106,6 +110,13 @@ fill in this field.
 &lt;/label&gt;
 &lt;/form&gt;
 &lt;/tosi-md&gt;
+</code></pre>
+<pre><code class="language-test">test(&#39;the embedded form renders, with markdown inside it&#39;, () =&gt; {
+  const md = preview.querySelector(&#39;tosi-md[elements]&#39;)
+  expect(md.querySelector(&#39;form input&#39;)).toBeTruthy()
+  expect(md.querySelector(&#39;form h3&#39;).textContent).toBe(&#39;this is a form&#39;)
+  expect(md.querySelector(&#39;form strong&#39;).textContent).toBe(&quot;It&#39;s important!&quot;)
+})
 </code></pre>
 <p>In this case <code>&lt;tosi-md&gt;</code> uses its <code>innerHTML</code> and not its <code>textContent</code>.</p>
 <h2>context and template variables</h2>
@@ -222,6 +233,6 @@ Oh, and nested templates {{nested}}.
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate.js?v=ef16a7c73ed1"></script>
+  <script type="module" src="../hydrate.js?v=3896679ceef4"></script>
 </body>
 </html>
