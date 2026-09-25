@@ -14,9 +14,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          # Pinned: the bundler's output differs between Bun versions (1.4.0 and 1.4.2
+          # built different dist/iife.js from the same lockfile), so CI must build with
+          # the version releases are built with locally.
+          bun-version-file: .bun-version
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -65,9 +68,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          # Pinned: the bundler's output differs between Bun versions (1.4.0 and 1.4.2
+          # built different dist/iife.js from the same lockfile), so CI must build with
+          # the version releases are built with locally.
+          bun-version-file: .bun-version
 
       - name: Install dependencies
         run: bun install --frozen-lockfile

@@ -18,6 +18,31 @@ declare global {
 }
 
 /*
+The committed dist/ must be reproducible by the publish workflow, and Bun's bundler output
+differs between versions (1.4.0 and 1.4.2 built different dist/iife.js from one lockfile). CI
+builds with `.bun-version`, so a build here on any other Bun produces a dist/ the publish
+workflow will reject — refuse it now rather than at publish time. The dev server only warns.
+*/
+{
+  const pinned = (
+    await Bun.file(new URL('../.bun-version', import.meta.url)).text()
+  ).trim()
+  if (Bun.version !== pinned) {
+    const message = `Bun ${Bun.version} is not the pinned ${pinned} (.bun-version): the build would differ from what CI reproduces.`
+    if (
+      process.argv.includes('--build-only') ||
+      process.argv.includes('--test')
+    ) {
+      console.error(
+        `🛑 ${message} Run \`bun upgrade --version ${pinned}\`, or update .bun-version deliberately and rebuild.`
+      )
+      process.exit(1)
+    }
+    console.warn(`⚠️  ${message}`)
+  }
+}
+
+/*
 STOP THIS PROJECT'S dev server — by pid, from the lock it already writes.
 
 The thing people reach for is `pkill -f 'bun bin/dev.ts'`, which matches every dev server on the

@@ -55,7 +55,10 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          # Pinned: the bundler's output differs between Bun versions (1.4.0 and 1.4.2
+          # built different dist/iife.js from the same lockfile), so CI must build with
+          # the version releases are built with locally.
+          bun-version-file: .bun-version
 
       - uses: actions/setup-node@v4
         with:
@@ -139,6 +142,9 @@ jobs:
 
       # Tier 0: tests, typecheck, build, changelog entry, packaged exports, bin shebangs, …
       - name: release-doctor
+        env:
+          # This tag is ahead of npm by definition — it is the one being published.
+          RELEASE_DOCTOR_PUBLISHING: ${{ inputs.tag }}
         run: bun .practices/tools/release-doctor.ts
 
       # CI rebuilding the tag must reproduce the committed build that was packed above. A

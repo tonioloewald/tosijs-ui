@@ -151,6 +151,13 @@ the change: a fresh clone without the lockfile rebuilt a different `dist/iife.js
 CodeMirror patches, `marked` 18); with it, the rebuild is byte-identical. Commit lockfile
 changes alongside the `package.json` change that caused them.
 
+**Bun is pinned too, in `.bun-version`.** The bundler's output differs between Bun versions —
+measured, 1.4.0 and 1.4.2 built different `dist/iife.js` from the same lockfile — so the
+lockfile alone does not make the build reproducible. CI and the publish workflow install the
+pinned version, and `bun run build` / `--test` **refuse** to run on any other (`bun start` only
+warns). To move Bun: upgrade locally, update `.bun-version`, rebuild, and commit the `dist/`
+change with it.
+
 **Publishing is `.github/workflows/publish.yml`** (#178): npm trusted publishing (OIDC) plus
 **staged publishing**. The npm Trusted Publisher entry names `publish.yml` and has direct
 `npm publish` disabled, so the workflow can only *stage*; the maintainer approves with 2FA. The
