@@ -24,7 +24,7 @@ Slow (pack + install + build), so it is NOT part of `bun test`. Run it before a 
 */
 
 import { $ } from 'bun'
-import { mkdtempSync, rmSync, existsSync } from 'fs'
+import { mkdtempSync, rmSync, existsSync, copyFileSync } from 'fs'
 import { tmpdir } from 'os'
 import * as path from 'path'
 
@@ -44,13 +44,29 @@ const pkg = await Bun.file(`${repo}/package.json`).json()
 const work = mkdtempSync(path.join(tmpdir(), 'tosijs-consumer-'))
 
 try {
-  console.log(`\n📦 packing ${pkg.name}@${pkg.version} …`)
-  const packed = await $`npm pack --pack-destination ${work}`.cwd(repo).quiet()
-  const tarball = path.join(
-    work,
-    packed.stdout.toString().trim().split('\n').pop()!
-  )
-  check('npm pack produced a tarball', existsSync(tarball))
+  /*
+  SMOKE_TARBALL tests a tarball that already exists instead of packing this tree. The publish
+  workflow points it at the tarball DOWNLOADED FROM THE REGISTRY, so the smoke test runs against
+  what adopters actually install, not a local stand-in for it (#178).
+  */
+  const given = process.env.SMOKE_TARBALL
+  let tarball: string
+  if (given) {
+    console.log(`\n📦 testing the given tarball ${given} …`)
+    tarball = path.join(work, path.basename(given))
+    copyFileSync(path.resolve(repo, given), tarball)
+    check('the given tarball exists', existsSync(tarball))
+  } else {
+    console.log(`\n📦 packing ${pkg.name}@${pkg.version} …`)
+    const packed = await $`npm pack --pack-destination ${work}`
+      .cwd(repo)
+      .quiet()
+    tarball = path.join(
+      work,
+      packed.stdout.toString().trim().split('\n').pop()!
+    )
+    check('npm pack produced a tarball', existsSync(tarball))
+  }
 
   // ── tarball contents ──────────────────────────────────────────────────────
   const listing = (await $`tar -tzf ${tarball}`.quiet().text()).split('\n')

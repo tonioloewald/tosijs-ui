@@ -26,7 +26,7 @@ bun run test-browser   # Build, launch haltija, run browser tests, exit with 0/1
 bun run test-consumer  # Pack, install into a scratch project, run the bins, build from a foreign cwd
 bun tests              # `bun test && bun playwright test` — see caveat below
 bun format             # ESLint + Prettier
-bun latest             # Clean install (removes node_modules + bun.lock, then bun update)
+bun latest             # Clean install (removes node_modules + bun.lock, then bun update) — then COMMIT bun.lock
 bunx tsc --noEmit      # Type check without emitting (used in CI)
 bun book               # Build ePub of the doc corpus (run AFTER `bun run build`)
 bun run og             # Regenerate Open Graph cards — manual, needs a RUNNING dev server (see below)
@@ -142,6 +142,25 @@ tunnel gets it automatically — both listeners share one request handler.
 ### Dev Server TLS
 
 The dev server runs HTTPS using certs in `tls/` (`key.pem` + `certificate.pem`, both gitignored). If they're missing (e.g. a fresh clone), `bin/dev.ts` exits with a message telling you to run `bun tls` (`tls/create-dev-certs.sh`) — it doesn't auto-generate, because the script runs `mkcert -install` which prompts for sudo. The script uses [mkcert](https://github.com/FiloSottile/mkcert) to install a locally-trusted CA, so browsers show **no** certificate warnings (unlike a bare self-signed cert). If mkcert isn't installed the script prints platform-specific install instructions and exits; install it, then re-run. Certs cover `localhost`, `127.0.0.1`, `::1`, and `<hostname>.local` (for LAN device testing).
+
+### `bun.lock` is committed, and publishing goes through GitHub Actions
+
+**`bun.lock` is committed** (it was gitignored until 1.15.3). CI and the publish workflow
+install with `--frozen-lockfile`, so they build exactly what was tested here. Measured before
+the change: a fresh clone without the lockfile rebuilt a different `dist/iife.js` (newer
+CodeMirror patches, `marked` 18); with it, the rebuild is byte-identical. Commit lockfile
+changes alongside the `package.json` change that caused them.
+
+**Publishing is `.github/workflows/publish.yml`** (#178): npm trusted publishing (OIDC) plus
+**staged publishing**. The npm Trusted Publisher entry names `publish.yml` and has direct
+`npm publish` disabled, so the workflow can only *stage*; the maintainer approves with 2FA. The
+flow: tag and push as before → the maintainer runs **Actions → Publish** with the tag → the
+workflow checks the tag against the version, packs the COMMITTED build, smoke-tests that
+tarball, runs `release-doctor`, confirms a rebuild reproduces `dist/`, and stages with a
+dist-tag derived from the version (`-beta.N` → `beta`, `-rc.N` → `rc`, else `latest`) → the
+maintainer approves on npmjs.com → the workflow checks the published `integrity` matches its
+tarball, the dist-tags (a prerelease must not move `latest`), and smoke-tests the registry copy.
+**A green run is the "published and verified" signal**; do not re-derive it by polling npm.
 
 ### CI
 
@@ -850,7 +869,7 @@ Ships as `tosijs-release-notes` so adopters get the same workflow.
 6. Build: `bun run build` (this also runs the dependency-audit gate — a high+ advisory here fails the build; fix or time-box it before releasing, don't `TOSIJS_AUDIT=off` past it)
 7. Commit changes including `dist/` and `docs/`
 8. Tag release: `git tag v1.x.x`
-9. Push: `git push origin main` **and** `git push origin v1.x.x` (the user publishes to npm)
+9. Push: `git push origin main` **and** `git push origin v1.x.x`. The maintainer then runs **Actions → Publish** with the tag and approves the staged version (see "`bun.lock` is committed, and publishing goes through GitHub Actions"). The workflow's green run replaces the manual checks in step 10's code block; step 10's git-side check still applies.
 10. **After the user says "published", verify the git side — npm and git diverge silently.**
     The publish is the user's action and succeeds whether or not steps 8–9 ever happened.
     1.13.0 sat on npm as `latest` with **no tag at HEAD and 21 unpushed commits** — the whole

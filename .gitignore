@@ -86,7 +86,9 @@ www/
 /blob-report/
 /playwright/.cache/
 bun.lockb
-bun.lock
+# bun.lock IS committed (1.15.3): without it CI resolves dependencies afresh and cannot
+# reproduce the build that was tested — measured, a fresh install bundled newer CodeMirror
+# patches and marked 18 into dist/iife.js. The publish workflow requires a reproducible build.
 *.pem
 *.csr
 .browser-tests.json
@@ -101,3 +103,6 @@ docs/.epub-build/
 # failed build cannot destroy the site being served (see dev-server.ts).
 *.last-good/
 .metadata_never_index
+
+# the publish workflow's checkout of tosijs-coding-practices
+.practices/
