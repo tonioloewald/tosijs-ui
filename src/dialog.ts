@@ -43,6 +43,10 @@ test('dialog has header slot content', () => {
 })
 ```
 
+The dialog always supplies its own **OK** button (`part="ok"`, which closes with
+`'confirm'`). Buttons you put in the `footer` slot appear **beside** it, not instead of it, so
+add a Cancel button there, not a second OK.
+
 ## Closing
 
 Every way a dialog closes — the OK button, `close(reason)`, a background click when
