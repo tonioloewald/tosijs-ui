@@ -265,3 +265,23 @@ describe('TosiTagList', () => {
     })
   })
 })
+
+describe('TosiTagList popSelectMenu hook (#172)', () => {
+  test('a replacement made AFTER the element is connected is what the button calls', () => {
+    const tagList = tosiTagList({ availableTags: ['a', 'b'], editable: true })
+    document.body.appendChild(tagList)
+    try {
+      let called = 0
+      tagList.popSelectMenu = () => {
+        called += 1
+      }
+      const button = tagList.querySelector(
+        '[part="tagMenu"]'
+      ) as HTMLButtonElement
+      button.click()
+      expect(called).toBe(1)
+    } finally {
+      tagList.remove()
+    }
+  })
+})

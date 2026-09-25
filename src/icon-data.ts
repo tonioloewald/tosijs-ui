@@ -559,4 +559,4 @@ export default {
   fatArrowRight: 'shift90r',
   fatArrowDown: 'shift180r',
   fatArrowLeft: 'shift270r',
-} as IconData
+} satisfies IconData

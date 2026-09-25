@@ -414,7 +414,10 @@ let source =
   (typeDeclaration ? typeDeclaration + '\n\n' : '') +
   'export default ' +
   emitObject(iconData) +
-  (isTypescript ? ' as IconData\n' : '\n')
+  // `satisfies`, not `as`: `as IconData` widened the keys to `string`, so the icon NAMES were
+  // lost to the type system and `icons.user` read as possibly-undefined under
+  // noUncheckedIndexedAccess (#181). `satisfies` checks the shape and keeps the names.
+  (isTypescript ? ' satisfies IconData\n' : '\n')
 
 /*
 If prettier is resolvable, let it have the last word — it picks up the CONSUMER's own

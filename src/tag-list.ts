@@ -103,12 +103,13 @@ escape it as `\,` — e.g. `value="New York\, NY,Boston"` is two tags. The
 
 ### `tags`: string[]
 
+A read-only property giving the value as an array.
+
 ## `popSelectMenu`: () => void
 
-This is the method called when the user clicks the menu button. By default is displays a
-pick list of tags, but if you wish to customize the behavior, just replace this method.
-
-A read-only property giving the value as an array.
+This is the method called when the user clicks the menu button. By default it displays a
+pick list of tags, but if you wish to customize the behavior, just replace this method — at
+any time, including after the element is on the page.
 
 ### `available-tags`: string | string[]
 
@@ -460,7 +461,10 @@ export class TosiTagList extends WebComponent {
         ariaLabel: 'Select tags from list',
         ariaHaspopup: 'listbox',
         part: 'tagMenu',
-        onClick: this.popSelectMenu,
+        // Deliberately a wrapper, the exception to the arrow-property rule: popSelectMenu is a
+        // documented "replace this method" hook, and passing the property captured the ORIGINAL
+        // function at hydration, so a replacement made after connection did nothing (#172).
+        onClick: () => this.popSelectMenu(),
       },
       icons.chevronDown()
     ),

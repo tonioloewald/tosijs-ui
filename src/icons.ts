@@ -563,6 +563,10 @@ export const defineIcons = (newIcons: { [key: string]: string }): void => {
 
 // Raw-markup accessors live in ./icon-svg (DOM-free) and are re-exported here.
 export { iconSvg, iconNames } from './icon-svg.js'
+// The icon return type and the built-in name union, beside the value import people already
+// write: `import { icons, type IconElement } from 'tosijs-ui/icons'` (#176). IconElement widened
+// from SVGElement in 1.15, and with no importable name adopters had to restate the union.
+export type { IconElement, IconName, SVGIconMap } from './icon-types.js'
 
 export const svg2DataUrl = (
   icon: Element,

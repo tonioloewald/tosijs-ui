@@ -4,6 +4,7 @@ export declare const defineIcons: (newIcons: {
     [key: string]: string;
 }) => void;
 export { iconSvg, iconNames } from './icon-svg.js';
+export type { IconElement, IconName, SVGIconMap } from './icon-types.js';
 export declare const svg2DataUrl: (icon: Element, fill?: string, stroke?: string, strokeWidth?: number) => string;
 export interface IconRule {
     prefix: string | RegExp;

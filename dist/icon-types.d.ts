@@ -1,4 +1,5 @@
 import { ElementCreator } from 'tosijs';
+import type builtInIcons from './icon-data.js';
 export type IconData = {
     [key: string]: string;
 };
@@ -17,6 +18,19 @@ export type IconData = {
  * `Element` would break working code to no purpose.
  */
 export type IconElement = SVGElement | HTMLSpanElement;
+/** The name of every icon that ships with tosijs-ui. */
+export type IconName = keyof typeof builtInIcons;
+/**
+ * The `icons` proxy. Built-in names are explicit keys, so `icons.user()` type-checks even under
+ * `noUncheckedIndexedAccess` — which adds `undefined` to every index-signature read, and so made
+ * adopters write `icons.user!()` at every call (#181). The runtime has always returned a creator
+ * for ANY name (an unknown one draws a placeholder), so the `!` guarded nothing.
+ *
+ * The index signature stays for names the type system cannot know: composites
+ * (`tosiHat$tosi`), rule forms (`spin90Loader`) and icons added with `defineIcons()`.
+ */
 export type SVGIconMap = {
+    [K in IconName]: ElementCreator<IconElement>;
+} & {
     [key: string]: ElementCreator<IconElement>;
 };
