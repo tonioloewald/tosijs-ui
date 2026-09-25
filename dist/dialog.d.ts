@@ -51,10 +51,22 @@ export declare class TosiDialog extends Component<DialogParts> {
     removeOnClose: boolean;
     closeOnBackgroundClick: boolean;
     constructor();
-    dialogWillClose: (reason?: string) => void;
+    /**
+    Called before the dialog closes, with the reason (`'confirm'`, `'cancel'`, or whatever was
+    passed to `close()`). Return `false` — or a Promise resolving to `false` — to refuse the
+    close, e.g. while an async save is in flight: a dialog that cannot be cancelled must not
+    look as though it was.
+    */
+    dialogWillClose: (_reason?: string) => void | boolean | Promise<void | boolean>;
     initialFocus(): void;
     showModal: () => Promise<string | null>;
-    close: (reason?: string) => void;
+    /**
+    Close the dialog unless `dialogWillClose` vetoes it. Returns whether it closed — a Promise
+    of that when `dialogWillClose` is async.
+    */
+    close: (reason?: string) => boolean | Promise<boolean>;
+    onCancel: (event: Event) => void;
+    onNativeClose: () => void;
     ok: () => void;
     content: () => HTMLDialogElement;
 }

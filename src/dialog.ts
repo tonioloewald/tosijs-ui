@@ -43,6 +43,28 @@ test('dialog has header slot content', () => {
 })
 ```
 
+## Closing
+
+Every way a dialog closes — the OK button, `close(reason)`, a background click when
+`closeOnBackgroundClick` is set, **Escape**, or a `<form method="dialog">` — goes through the
+same path: `dialogWillClose(reason)` is called, the `showModal()` promise resolves with the
+reason, and a `removeOnClose` dialog removes itself. Escape closes with `'cancel'`.
+
+`dialogWillClose` can **refuse** a close by returning `false`, or a Promise resolving to
+`false`. Use it for a dialog that must not be dismissed while it is busy, such as an async save
+in flight. `close()` returns whether the dialog closed, or a Promise of that when
+`dialogWillClose` is async.
+
+```typescript
+const editor = tosiDialog({
+  dialogWillClose: () => !saving, // Escape and Cancel do nothing mid-save
+})
+```
+
+The browser can close a `<dialog>` without asking (a `<form method="dialog">` submission, or a
+repeated Escape without fresh user interaction in Chrome). Those cannot be refused; the dialog
+still calls `dialogWillClose` and resolves, so nothing waits forever.
+
 ## Static Functions
 
 `TosiDialog` provides static async functions to replace the built-in dialogs provided by
@@ -281,8 +303,16 @@ export class TosiDialog extends Component<DialogParts> {
     })
   }
 
-  dialogWillClose = (reason = 'cancel') => {
-    console.log('dialog will close with', reason)
+  /**
+  Called before the dialog closes, with the reason (`'confirm'`, `'cancel'`, or whatever was
+  passed to `close()`). Return `false` — or a Promise resolving to `false` — to refuse the
+  close, e.g. while an async save is in flight: a dialog that cannot be cancelled must not
+  look as though it was.
+  */
+  dialogWillClose = (
+    _reason = 'cancel'
+  ): void | boolean | Promise<void | boolean> => {
+    /* override to observe or veto */
   }
 
   initialFocus() {
@@ -293,8 +323,17 @@ export class TosiDialog extends Component<DialogParts> {
     /* noop */
   }
 
+  /*
+  True once this showing's close side effects have run — resolution, removal — so that no path
+  runs them twice. Every route to "closed" funnels into #finish, and there are three: close()
+  (buttons, background click, callers), Escape (the native `cancel`), and the browser closing
+  the element on its own (the native `close` event, below).
+  */
+  #settled = false
+
   showModal = (): Promise<string | null> => {
     this.style.zIndex = String(findHighestZ())
+    this.#settled = false
     return new Promise((resolve) => {
       this.#modalResolution = resolve
       this.parts.dialog.showModal()
@@ -304,13 +343,58 @@ export class TosiDialog extends Component<DialogParts> {
     })
   }
 
-  close = (reason = 'cancel') => {
-    this.dialogWillClose(reason)
+  /**
+  Close the dialog unless `dialogWillClose` vetoes it. Returns whether it closed — a Promise
+  of that when `dialogWillClose` is async.
+  */
+  close = (reason = 'cancel'): boolean | Promise<boolean> => {
+    if (this.#settled) {
+      return true
+    }
+    const verdict = this.dialogWillClose(reason)
+    if (verdict instanceof Promise) {
+      return verdict.then((v) => (v === false ? false : this.#finish(reason)))
+    }
+    return verdict === false ? false : this.#finish(reason)
+  }
+
+  #finish(reason: string): true {
+    if (this.#settled) {
+      return true
+    }
+    this.#settled = true
     this.#modalResolution(reason)
-    this.parts.dialog.close()
+    if (this.parts.dialog.open) {
+      this.parts.dialog.close()
+    }
     if (this.removeOnClose) {
       this.remove()
     }
+    return true
+  }
+
+  /*
+  Escape (#183). The browser would close the <dialog> itself and bypass close(), so the static
+  helpers never resolved and removeOnClose leaked the element. Take the close over instead,
+  which is also what lets dialogWillClose veto it.
+  */
+  onCancel = (event: Event) => {
+    event.preventDefault()
+    this.close('cancel')
+  }
+
+  /*
+  The browser can still close the element without asking: Chrome's close-watcher makes a repeat
+  `cancel` non-cancelable without fresh user activation, and `<form method="dialog">` closes it
+  directly. Too late to veto, so tell dialogWillClose and settle, rather than hang the caller.
+  */
+  onNativeClose = () => {
+    if (this.#settled) {
+      return
+    }
+    const reason = this.parts.dialog.returnValue || 'cancel'
+    this.dialogWillClose(reason)
+    this.#finish(reason)
   }
 
   ok = () => {
@@ -319,7 +403,7 @@ export class TosiDialog extends Component<DialogParts> {
 
   content = () =>
     dialog(
-      { part: 'dialog' },
+      { part: 'dialog', onCancel: this.onCancel, onClose: this.onNativeClose },
       header(tosiSlot({ name: 'header' })),
       tosiSlot(),
       footer(

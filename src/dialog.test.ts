@@ -133,6 +133,76 @@ describe('TosiDialog', () => {
     })
   })
 
+  describe('every route to closed settles exactly once (#183)', () => {
+    test('a native close event (form method=dialog, forced Escape) settles and removes', () => {
+      const reasons: string[] = []
+      const dialog = tosiDialog({
+        removeOnClose: true,
+        dialogWillClose(reason?: string) {
+          reasons.push(reason!)
+        },
+      })
+      container.appendChild(dialog)
+      const native = dialog.querySelector('dialog')!
+      native.returnValue = 'confirm'
+      native.dispatchEvent(new Event('close'))
+      expect(reasons).toEqual(['confirm'])
+      expect(dialog.isConnected).toBe(false)
+    })
+
+    test('close() then the native close event it causes: side effects run once', () => {
+      const reasons: string[] = []
+      const dialog = tosiDialog({
+        dialogWillClose(reason?: string) {
+          reasons.push(reason!)
+        },
+      })
+      container.appendChild(dialog)
+      dialog.close('confirm')
+      dialog.querySelector('dialog')!.dispatchEvent(new Event('close'))
+      dialog.close('cancel')
+      expect(reasons).toEqual(['confirm'])
+    })
+
+    test('dialogWillClose returning false vetoes close()', () => {
+      const dialog = tosiDialog({
+        removeOnClose: true,
+        dialogWillClose: () => false,
+      })
+      container.appendChild(dialog)
+      expect(dialog.close()).toBe(false)
+      expect(dialog.isConnected).toBe(true)
+    })
+
+    test('an async veto is honoured, and an async yes closes', async () => {
+      let allow = false
+      const dialog = tosiDialog({
+        removeOnClose: true,
+        dialogWillClose: async () => allow,
+      })
+      container.appendChild(dialog)
+      expect(await dialog.close()).toBe(false)
+      expect(dialog.isConnected).toBe(true)
+      allow = true
+      expect(await dialog.close()).toBe(true)
+      expect(dialog.isConnected).toBe(false)
+    })
+
+    test('the default dialogWillClose does not log', () => {
+      const original = console.log
+      const logged: unknown[] = []
+      console.log = (...args: unknown[]) => logged.push(args)
+      try {
+        const dialog = tosiDialog()
+        container.appendChild(dialog)
+        dialog.close()
+      } finally {
+        console.log = original
+      }
+      expect(logged).toEqual([])
+    })
+  })
+
   describe('ok method', () => {
     test('closes with "confirm" reason', () => {
       let closedWith: string | undefined
