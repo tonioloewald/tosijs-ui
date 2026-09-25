@@ -22,6 +22,7 @@ import { tmpdir } from 'os'
 import { $, spawn } from 'bun'
 import type { SiteConfig } from './site-config.js'
 import { extractDocs } from './docs.js'
+import { relocateSourcemaps } from './sourcemap-relocate.js'
 import {
   checkExamples,
   formatExampleProblems,
@@ -1131,8 +1132,21 @@ export async function buildSite(
       Build it in a temp dir instead. The only consumer is the copy into PUBLIC on the
       next line, so nothing needs it to persist — and a temp dir cannot be swept into a
       published tarball by a broad `files` entry.
+
+      Not the OS temp dir, though. `bun build` writes each sourcemap `sources` entry relative
+      to the OUTPUT dir, so from /tmp every path climbed to `/` and back down into the builder's
+      home — `../../../../../../Users/<name>/<project>/node_modules/…`. That published the
+      build machine's layout in every chunk map, and made docs/ differ between any two
+      machines, which failed the publish workflow's rebuild check (#178). Under the project's
+      own node_modules/.cache the paths are project-relative, so identical everywhere, and it
+      is equally out of reach of a `files` entry.
       */
-        const HYDRATE_DIR = `${tmpdir()}/tosijs-hydrate-${process.pid}`
+        const HYDRATE_DIR = path.resolve(
+          PROJECT_ROOT,
+          'node_modules/.cache',
+          `tosijs-hydrate-${process.pid}`
+        )
+        mkdirSync(path.dirname(HYDRATE_DIR), { recursive: true })
         await $`rm -rf ${HYDRATE_DIR}`.text().catch(() => {})
         const esm = spawn(
           [
@@ -1180,6 +1194,8 @@ export async function buildSite(
         // Copy the whole ESM output (entry + hashed chunks) to the served root — the entry
         // imports its chunks by RELATIVE path, so they must sit right beside it.
         await $`cp -R ${HYDRATE_DIR}/. ${PUBLIC}/`.text()
+        // The copy moved every map; re-point their sources from where they now sit (#178).
+        relocateSourcemaps(HYDRATE_DIR, PUBLIC)
         hydrateName = 'hydrate.js'
 
         /*
