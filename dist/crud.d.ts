@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 import type { JSONSchema } from './schema-form/json-schema.js';
 import { type ColumnOptions, type TosiTable } from './data-table.js';
 import { type TosiSchemaForm } from './schema-form.js';
@@ -30,7 +30,14 @@ interface CrudParts {
     newButton: HTMLButtonElement;
 }
 export declare function columnsFromSchema(schema: JSONSchema): ColumnOptions[];
-export declare class TosiCrud extends WebComponent<CrudParts> {
+declare const TosiCrud_base: import("tosijs").WithAttributes<{
+    idPath: string;
+    hashNamespace: string;
+    hashMode: string;
+    /** ms to wait after a keystroke before querying — a remote store is not free */
+    searchDelay: number;
+}>;
+export declare class TosiCrud extends TosiCrud_base<CrudParts> {
     static preferredTagName: string;
     static lightStyleSpec: {
         ':host': {
@@ -78,13 +85,6 @@ export declare class TosiCrud extends WebComponent<CrudParts> {
         ':host tosi-table': {
             minHeight: string;
         };
-    };
-    static initAttributes: {
-        idPath: string;
-        hashNamespace: string;
-        hashMode: string;
-        /** ms to wait after a keystroke before querying — a remote store is not free */
-        searchDelay: number;
     };
     private _store;
     private _schema;

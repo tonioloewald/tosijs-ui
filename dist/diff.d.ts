@@ -1,4 +1,4 @@
-import { Component, ElementCreator, PartsMap } from 'tosijs';
+import { ElementCreator, PartsMap } from 'tosijs';
 export type DiffOp = 'context' | 'add' | 'remove';
 export interface DiffLine {
     op: DiffOp;
@@ -68,15 +68,15 @@ export declare function tokenRunsForLines(lines: DiffLine[]): Array<TokenRun[] |
 interface DiffParts extends PartsMap {
     body: HTMLElement;
 }
-export declare class TosiDiff extends Component<DiffParts> {
+declare const TosiDiff_base: import("tosijs").WithAttributes<{
+    original: string;
+    modified: string;
+    resolvable: boolean;
+    originalLabel: string;
+    modifiedLabel: string;
+}>;
+export declare class TosiDiff extends TosiDiff_base<DiffParts> {
     static preferredTagName: string;
-    static initAttributes: {
-        original: string;
-        modified: string;
-        resolvable: boolean;
-        originalLabel: string;
-        modifiedLabel: string;
-    };
     static shadowStyleSpec: {
         ':host': {
             display: string;

@@ -89,17 +89,16 @@ To prevent dragging for an interior element (e.g. if you want a floating palette
 just add the `no-drag` class to an element or its container.
 */
 /*{ "parent": "Components" }*/
-import { Component as WebComponent, elements } from 'tosijs';
+import { elements, withAttributes, } from 'tosijs';
 import { trackDrag, bringToFront } from './track-drag.js';
 const { slot } = elements;
-export class TosiFloat extends WebComponent {
+export class TosiFloat extends withAttributes({
+    drag: false,
+    remainOnResize: 'remove',
+    remainOnScroll: 'remain',
+}) {
     static preferredTagName = 'tosi-float';
     static floats = new Set();
-    static initAttributes = {
-        drag: false,
-        remainOnResize: 'remove',
-        remainOnScroll: 'remain',
-    };
     content = slot();
     static shadowStyleSpec = {
         ':host': {

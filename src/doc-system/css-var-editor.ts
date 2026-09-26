@@ -11,6 +11,7 @@ import {
   ElementCreator,
   elements,
   Color,
+  withAttributes,
 } from 'tosijs'
 import { tosiForm, TosiForm, tosiField } from '../form.js'
 
@@ -22,13 +23,11 @@ const { h2, code } = elements
 // functional color fell through to a plain text field.
 const COLOR_RE = /^(#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([^)]*\))$/i
 
-class TosiCssVarEditor extends WebComponent {
+class TosiCssVarEditor extends withAttributes({
+  elementSelector: '',
+  targetSelector: '',
+}) {
   static preferredTagName = 'tosi-css-var-editor'
-
-  static initAttributes = {
-    elementSelector: '',
-    targetSelector: '',
-  }
 
   content = () => [
     h2({ part: 'title' }, 'CSS variables'),

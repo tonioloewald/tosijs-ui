@@ -1,7 +1,11 @@
-import { Component } from 'tosijs';
 export declare const digest: (s: string, method?: string) => Promise<string>;
 export declare const isBreached: (password: string) => Promise<boolean>;
-export declare class TosiPasswordStrength extends Component {
+declare const TosiPasswordStrength_base: import("tosijs").WithAttributes<{
+    minLength: number;
+    goodLength: number;
+    indicatorColors: string;
+}>;
+export declare class TosiPasswordStrength extends TosiPasswordStrength_base {
     static preferredTagName: string;
     static lightStyleSpec: {
         ':host': {
@@ -40,11 +44,6 @@ export declare class TosiPasswordStrength extends Component {
             textAlign: string;
         };
     };
-    static initAttributes: {
-        minLength: number;
-        goodLength: number;
-        indicatorColors: string;
-    };
     descriptionColors: string;
     issues: {
         tooShort: boolean;
@@ -78,3 +77,4 @@ export declare const XinPasswordStrength: typeof TosiPasswordStrength;
 export declare const tosiPasswordStrength: import("tosijs").ElementCreator<TosiPasswordStrength>;
 /** @deprecated Use tosiPasswordStrength instead */
 export declare const xinPasswordStrength: import("tosijs").ElementCreator<TosiPasswordStrength>;
+export {};

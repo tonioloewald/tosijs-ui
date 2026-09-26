@@ -1,13 +1,13 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
-export declare class MapBox extends WebComponent {
+import { ElementCreator } from 'tosijs';
+declare const MapBox_base: import("tosijs").WithAttributes<{
+    coords: string;
+    token: string;
+    mapStyle: string;
+    name: string;
+}>;
+export declare class MapBox extends MapBox_base {
     static preferredTagName: string;
     static formAssociated: boolean;
-    static initAttributes: {
-        coords: string;
-        token: string;
-        mapStyle: string;
-        name: string;
-    };
     value: string;
     formDisabledCallback(disabled: boolean): void;
     formResetCallback(): void;
@@ -33,3 +33,4 @@ export declare class MapBox extends WebComponent {
     render(): void;
 }
 export declare const mapBox: ElementCreator<MapBox>;
+export {};

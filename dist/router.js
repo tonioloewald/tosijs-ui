@@ -124,7 +124,7 @@ navigate('page/1')
 ```
 */
 /*{ "parent": "Helper Libraries" }*/
-import { Component, tosi } from 'tosijs';
+import { tosi, withAttributes } from 'tosijs';
 // ============================================================================
 // Router State
 // ============================================================================
@@ -269,11 +269,10 @@ export function navigate(path) {
 // ============================================================================
 // Route View Component
 // ============================================================================
-export class TosiRouteView extends Component {
+export class TosiRouteView extends withAttributes({
+    name: 'default',
+}) {
     static preferredTagName = 'tosi-route-view';
-    static initAttributes = {
-        name: 'default',
-    };
     content = null;
     connectedCallback() {
         super.connectedCallback();

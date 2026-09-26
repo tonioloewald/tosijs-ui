@@ -53,16 +53,15 @@ The spec is also exported, if you want it somewhere this element is not:
 This element renders in the LIGHT DOM deliberately: token styling has to be reachable from a
 page stylesheet, and a shadow root would make every consumer re-declare the palette.
 */
-import { Component as WebComponent, elements } from 'tosijs';
+import { elements, withAttributes } from 'tosijs';
 import { ensureGrammar, highlight } from './doc-system/highlight.js';
 import { ensureHighlightStyles } from './doc-system/highlight-styles.js';
 const { pre, code } = elements;
-export class HighlightBlock extends WebComponent {
+export class HighlightBlock extends withAttributes({
+    /** Fence-style language name — `js`, `ts`, `rust`, `bash`, … */
+    language: '',
+}) {
     static preferredTagName = 'tosi-highlight';
-    static initAttributes = {
-        /** Fence-style language name — `js`, `ts`, `rust`, `bash`, … */
-        language: '',
-    };
     _value = '';
     /** `lang\0source` of the last DOM write — see the idempotence note in `render`. */
     _rendered = '';

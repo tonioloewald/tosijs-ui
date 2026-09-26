@@ -144,7 +144,7 @@ interface FilterMaker {
 ```
 */
 /*{ "parent": "Form Components" }*/
-import { Component as WebComponent, elements, } from 'tosijs';
+import { Component as WebComponent, elements, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
 import { tosiSelect } from './select.js';
 const { div, input, button, span } = elements;
@@ -271,7 +271,11 @@ function getSelectText(select) {
     }
     return typeof selected === 'string' ? selected : '';
 }
-export class FilterPart extends WebComponent {
+export class FilterPart extends withAttributes({
+    haystack: '*',
+    condition: 'contains',
+    needle: '',
+}) {
     static preferredTagName = 'tosi-filter-part';
     static lightStyleSpec = {
         ':host': {
@@ -292,11 +296,6 @@ export class FilterPart extends WebComponent {
             content: ' ',
             flex: '1 1 auto',
         },
-    };
-    static initAttributes = {
-        haystack: '*',
-        condition: 'contains',
-        needle: '',
     };
     fields = [];
     filters = availableFilters;

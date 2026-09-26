@@ -1,11 +1,11 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 import { TosiForm } from '../form.js';
-declare class TosiCssVarEditor extends WebComponent {
+declare const TosiCssVarEditor_base: import("tosijs").WithAttributes<{
+    elementSelector: string;
+    targetSelector: string;
+}>;
+declare class TosiCssVarEditor extends TosiCssVarEditor_base {
     static preferredTagName: string;
-    static initAttributes: {
-        elementSelector: string;
-        targetSelector: string;
-    };
     content: () => (HTMLHeadingElement | TosiForm)[];
     private retryTimer?;
     private retries;

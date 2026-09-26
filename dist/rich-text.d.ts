@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator, PartsMap, XinStyleSheet } from 'tosijs';
+import { ElementCreator, PartsMap, XinStyleSheet } from 'tosijs';
 import type { IconElement } from './icon-types.js';
 import { TosiSelect } from './select.js';
 export declare function blockStyle(options?: {
@@ -12,15 +12,15 @@ interface EditorParts extends PartsMap {
     doc: HTMLElement;
     content: HTMLElement;
 }
-export declare class RichText extends WebComponent<EditorParts> {
+declare const RichText_base: import("tosijs").WithAttributes<{
+    widgets: "none" | "minimal" | "default";
+    name: string;
+    required: boolean;
+}>;
+export declare class RichText extends RichText_base<EditorParts> {
     static preferredTagName: string;
     static lightStyleSpec: XinStyleSheet;
     static formAssociated: boolean;
-    static initAttributes: {
-        widgets: "none" | "minimal" | "default";
-        name: string;
-        required: boolean;
-    };
     private isInitialized;
     private savedValue;
     formDisabledCallback(disabled: boolean): void;

@@ -1,10 +1,10 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 type TabCloseHandler = (tabBody: Element) => boolean | undefined | void;
-export declare class TosiTabs extends WebComponent {
+declare const TosiTabs_base: import("tosijs").WithAttributes<{
+    localized: boolean;
+}>;
+export declare class TosiTabs extends TosiTabs_base {
     static preferredTagName: string;
-    static initAttributes: {
-        localized: boolean;
-    };
     value: number;
     makeTab(tabs: TosiTabs, tabBody: HTMLElement, bodyId: string): HTMLElement;
     static shadowStyleSpec: {
@@ -88,7 +88,7 @@ export declare class TosiTabs extends WebComponent {
      */
     get onCloseTab(): TabCloseHandler | null;
     set onCloseTab(handler: TabCloseHandler | null);
-    content: (HTMLSlotElement | HTMLDivElement)[];
+    content: (HTMLDivElement | HTMLSlotElement)[];
     addTabBody(body: HTMLElement, selectTab?: boolean): void;
     removeTabBody(body: HTMLElement): void;
     keyTab: (event: Event) => void;

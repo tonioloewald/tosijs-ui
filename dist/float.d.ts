@@ -1,12 +1,12 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
-export declare class TosiFloat extends WebComponent {
+import { ElementCreator } from 'tosijs';
+declare const TosiFloat_base: import("tosijs").WithAttributes<{
+    drag: boolean;
+    remainOnResize: "hide" | "remove" | "remain";
+    remainOnScroll: "hide" | "remove" | "remain";
+}>;
+export declare class TosiFloat extends TosiFloat_base {
     static preferredTagName: string;
     static floats: Set<TosiFloat>;
-    static initAttributes: {
-        drag: boolean;
-        remainOnResize: "hide" | "remove" | "remain";
-        remainOnScroll: "hide" | "remove" | "remain";
-    };
     content: HTMLSlotElement;
     static shadowStyleSpec: {
         ':host': {
@@ -24,3 +24,4 @@ export declare const XinFloat: typeof TosiFloat;
 export declare const tosiFloat: ElementCreator<TosiFloat>;
 /** @deprecated Use tosiFloat instead */
 export declare const xinFloat: ElementCreator<TosiFloat>;
+export {};

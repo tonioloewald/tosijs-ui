@@ -43,19 +43,18 @@ A CSS grid container.
 ```
 */
 /*{ "parent": "Components" }*/
-import { Component, elements, varDefault, } from 'tosijs';
+import { elements, varDefault, withAttributes, } from 'tosijs';
 const { slot } = elements;
 // ============================================================================
 // TosiRow
 // ============================================================================
-export class TosiRow extends Component {
+export class TosiRow extends withAttributes({
+    gap: '',
+    wrap: false,
+    align: '',
+    justify: '',
+}) {
     static preferredTagName = 'tosi-row';
-    static initAttributes = {
-        gap: '',
-        wrap: false,
-        align: '',
-        justify: '',
-    };
     content = [slot()];
     static shadowStyleSpec = {
         ':host': {
@@ -93,14 +92,13 @@ export const tosiRow = TosiRow.elementCreator();
 // ============================================================================
 // TosiColumn
 // ============================================================================
-export class TosiColumn extends Component {
+export class TosiColumn extends withAttributes({
+    gap: '',
+    wrap: false,
+    align: '',
+    justify: '',
+}) {
     static preferredTagName = 'tosi-column';
-    static initAttributes = {
-        gap: '',
-        wrap: false,
-        align: '',
-        justify: '',
-    };
     content = [slot()];
     static shadowStyleSpec = {
         ':host': {
@@ -138,13 +136,12 @@ export const tosiColumn = TosiColumn.elementCreator();
 // ============================================================================
 // TosiGrid
 // ============================================================================
-export class TosiGrid extends Component {
+export class TosiGrid extends withAttributes({
+    columns: '',
+    rows: '',
+    gap: '',
+}) {
     static preferredTagName = 'tosi-grid';
-    static initAttributes = {
-        columns: '',
-        rows: '',
-        gap: '',
-    };
     content = [slot()];
     static shadowStyleSpec = {
         ':host': {

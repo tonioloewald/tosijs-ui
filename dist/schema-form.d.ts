@@ -1,9 +1,12 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 import type { JSONSchema } from './schema-form/json-schema.js';
 import { type FieldError } from './schema-form/fields.js';
 export { setSchemaValidator, schemaValidationAvailable, type SchemaValidator, } from './schema-form/validator.js';
 export { registerFieldPlugin, type FieldPlugin, type FieldPluginContext, } from './schema-form/plugins.js';
-export declare class TosiSchemaForm extends WebComponent {
+declare const TosiSchemaForm_base: import("tosijs").WithAttributes<{
+    readOnly: boolean;
+}>;
+export declare class TosiSchemaForm extends TosiSchemaForm_base {
     static preferredTagName: string;
     static lightStyleSpec: {
         ':host': {
@@ -87,9 +90,6 @@ export declare class TosiSchemaForm extends WebComponent {
             opacity: string;
             fontStyle: string;
         };
-    };
-    static initAttributes: {
-        readOnly: boolean;
     };
     private _schema;
     private _value;

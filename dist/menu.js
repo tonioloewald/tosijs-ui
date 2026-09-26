@@ -793,7 +793,7 @@ preview.append(btn)
 
 */
 /*{ "parent": "Components" }*/
-import { elements, varDefault, vars, StyleSheet, Component, } from 'tosijs';
+import { elements, varDefault, vars, StyleSheet, withAttributes, } from 'tosijs';
 import { popFloat } from './pop-float.js';
 import { icons } from './icons.js';
 import { localize } from './localize.js';
@@ -1462,7 +1462,21 @@ export function findShortcutAction(items, event, path = []) {
     }
     return undefined;
 }
-export class TosiMenu extends Component {
+export class TosiMenu extends withAttributes({
+    menuWidth: 'auto',
+    localized: false,
+    icon: '',
+    acceptsDrop: '',
+    disclosureDelay: 0,
+    hideDisabled: false,
+    /*
+    Extra class for the popup, so one component's dropdowns can be themed without a `:root`
+    rule that restyles every menu on the page (#148). `menuWidth` was already a per-menu
+    attribute, so per-menu styling is not foreign here — this is the same idea for the rest
+    of the knobs.
+    */
+    menuClass: '',
+}) {
     static preferredTagName = 'tosi-menu';
     static lightStyleSpec = {
         ':host': {
@@ -1482,21 +1496,6 @@ export class TosiMenu extends Component {
             alignItems: 'center',
             gap: varDefault.tosiMenuTriggerGap('10px'),
         },
-    };
-    static initAttributes = {
-        menuWidth: 'auto',
-        localized: false,
-        icon: '',
-        acceptsDrop: '',
-        disclosureDelay: 0,
-        hideDisabled: false,
-        /*
-        Extra class for the popup, so one component's dropdowns can be themed without a `:root`
-        rule that restyles every menu on the page (#148). `menuWidth` was already a per-menu
-        attribute, so per-menu styling is not foreign here — this is the same idea for the rest
-        of the knobs.
-        */
-        menuClass: '',
     };
     menuItems = [];
     dropAction = null;

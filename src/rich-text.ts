@@ -131,6 +131,7 @@ import {
   elements,
   deprecated,
   XinStyleSheet,
+  withAttributes,
 } from 'tosijs'
 import { icons } from './icons.js'
 import type { IconElement } from './icon-types.js'
@@ -227,7 +228,11 @@ interface EditorParts extends PartsMap {
   content: HTMLElement
 }
 
-export class RichText extends WebComponent<EditorParts> {
+export class RichText extends withAttributes({
+  widgets: 'default' as 'none' | 'minimal' | 'default',
+  name: '',
+  required: false,
+})<EditorParts> {
   static preferredTagName = 'tosi-rich-text'
 
   static lightStyleSpec: XinStyleSheet = {
@@ -249,12 +254,6 @@ export class RichText extends WebComponent<EditorParts> {
   }
 
   static formAssociated = true
-
-  static initAttributes = {
-    widgets: 'default' as 'none' | 'minimal' | 'default',
-    name: '',
-    required: false,
-  }
 
   private isInitialized = false
   private savedValue = ''

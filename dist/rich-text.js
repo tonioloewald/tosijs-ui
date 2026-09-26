@@ -122,7 +122,7 @@ form.addEventListener('submit', (e) => {
 ```
 */
 /*{ "parent": "Form Components" }*/
-import { Component as WebComponent, elements, deprecated, } from 'tosijs';
+import { elements, deprecated, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
 import { tosiSelect, TosiSelect } from './select.js';
 import { spacer as layoutSpacer } from './layout.js';
@@ -196,7 +196,11 @@ export const richTextWidgets = () => [
     spacer(),
     ...characterStyleWidgets(),
 ];
-export class RichText extends WebComponent {
+export class RichText extends withAttributes({
+    widgets: 'default',
+    name: '',
+    required: false,
+}) {
     static preferredTagName = 'tosi-rich-text';
     static lightStyleSpec = {
         ':host': {
@@ -216,11 +220,6 @@ export class RichText extends WebComponent {
         },
     };
     static formAssociated = true;
-    static initAttributes = {
-        widgets: 'default',
-        name: '',
-        required: false,
-    };
     isInitialized = false;
     savedValue = '';
     // Form lifecycle callbacks

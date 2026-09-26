@@ -27,25 +27,24 @@ named state rather than a `minSize` no viewport can reach, because the second on
 reads as a bug.
 */
 /*{ "parent": "Components" }*/
-import { Component, elements, varDefault } from 'tosijs';
+import { elements, varDefault, withAttributes, } from 'tosijs';
 const { slot } = elements;
-export class TosiSidenav extends Component {
+export class TosiSidenav extends withAttributes({
+    minSize: 800,
+    navSize: 200,
+    compact: false,
+    contentVisible: false,
+    /*
+      Stay compact at ANY width, instead of below `minSize`.
+  
+      Compact mode already does what a full-screen page wants — nav and content take turns, and
+      `contentVisible` picks which — so this just removes the width test rather than adding a
+      layout. It exists as a named state because the alternative is setting `minSize` to a number
+      no viewport can reach, which works and reads as a bug to the next person.
+      */
+    alwaysCompact: false,
+}) {
     static preferredTagName = 'tosi-sidenav';
-    static initAttributes = {
-        minSize: 800,
-        navSize: 200,
-        compact: false,
-        contentVisible: false,
-        /*
-        Stay compact at ANY width, instead of below `minSize`.
-    
-        Compact mode already does what a full-screen page wants — nav and content take turns, and
-        `contentVisible` picks which — so this just removes the width test rather than adding a
-        layout. It exists as a named state because the alternative is setting `minSize` to a number
-        no viewport can reach, which works and reads as a bug to the next person.
-        */
-        alwaysCompact: false,
-    };
     value = 'normal';
     /**
      * Is the navigation on screen — and set it to put it there, or take it away.

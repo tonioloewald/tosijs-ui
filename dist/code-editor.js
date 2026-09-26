@@ -113,7 +113,7 @@ view. The language, lint and search packages are internal composition details; a
 one exposed.
 */
 /*{ "parent": "Components" }*/
-import { Component as WebComponent, elements, varDefault, } from 'tosijs';
+import { elements, varDefault, withAttributes, } from 'tosijs';
 import { tosiDiff } from './diff.js';
 const { div } = elements;
 // Warn once per removed member, not once per access — a live-example page holds
@@ -128,7 +128,10 @@ const warnRemoved = (member, advice) => {
 // One warning per page, not per element — see the `editor` getter.
 let warnedEditor = false;
 let warnedTjs = false;
-export class CodeEditor extends WebComponent {
+export class CodeEditor extends withAttributes({
+    mode: 'javascript',
+    disabled: false,
+}) {
     static preferredTagName = 'tosi-code';
     source = '';
     _handle;
@@ -253,10 +256,6 @@ export class CodeEditor extends WebComponent {
         }
         diffHost.hidden = !on;
     }
-    static initAttributes = {
-        mode: 'javascript',
-        disabled: false,
-    };
     role = 'code editor';
     /**
      * The underlying CodeMirror `EditorView` (undefined until loaded).

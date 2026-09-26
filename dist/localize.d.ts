@@ -1,4 +1,3 @@
-import { Component } from 'tosijs';
 import { TosiSelect } from './select.js';
 interface TranslationMap {
     [key: string]: string[];
@@ -69,11 +68,11 @@ export declare function localize(ref: string, values?: Record<string, unknown>):
  *     localizePhrase('Sort Ascending', ['Sort#order', 'Ascending#sort-order'])
  */
 export declare function localizePhrase(key: string, fragments: string[]): string;
-export declare class TosiLocalePicker extends Component {
+declare const TosiLocalePicker_base: import("tosijs").WithAttributes<{
+    hideCaption: boolean;
+}>;
+export declare class TosiLocalePicker extends TosiLocalePicker_base {
     static preferredTagName: string;
-    static initAttributes: {
-        hideCaption: boolean;
-    };
     content: () => TosiSelect;
     render(): void;
 }
@@ -89,7 +88,10 @@ interface AbstractLocalized {
     connectedCallback: () => void;
     disconnectedCallback: () => void;
 }
-export declare class TosiLocalized extends Component {
+declare const TosiLocalized_base: import("tosijs").WithAttributes<{
+    refString: string;
+}>;
+export declare class TosiLocalized extends TosiLocalized_base {
     static preferredTagName: string;
     static lightStyleSpec: {
         ':host': {
@@ -97,9 +99,6 @@ export declare class TosiLocalized extends Component {
         };
     };
     static allInstances: Set<AbstractLocalized>;
-    static initAttributes: {
-        refString: string;
-    };
     contents: () => any;
     connectedCallback(): void;
     disconnectedCallback(): void;

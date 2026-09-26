@@ -146,7 +146,7 @@ form.addEventListener('reset', () => {
 
 */
 /*{ "parent": "Form Components" }*/
-import { Component, elements, varDefault } from 'tosijs';
+import { elements, varDefault, withAttributes, } from 'tosijs';
 import { tosiSelect } from './select.js';
 import { icons } from './icons.js';
 import { popMenu } from './menu.js';
@@ -157,7 +157,24 @@ const MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 // Note this is because Safari is super strict about leading zeros
 const padLeft = (value, length = 2, padding = '0') => String(value).padStart(length, padding);
 const dateFromYMD = (year, month, date) => new Date(`${year}-${padLeft(month)}-${padLeft(date)}`);
-export class TosiMonth extends Component {
+export class TosiMonth extends withAttributes({
+    month: NaN,
+    year: NaN,
+    weekStart: 0, // Sunday, 1 = Monday
+    minDate: dateFromYMD(new Date().getFullYear() - 100, 1, 1)
+        .toISOString()
+        .split('T')[0],
+    maxDate: dateFromYMD(new Date().getFullYear() + 10, 12, 31)
+        .toISOString()
+        .split('T')[0],
+    selectable: false,
+    multiple: false,
+    range: false,
+    disabled: false,
+    readonly: false,
+    required: false,
+    name: '',
+}) {
     static preferredTagName = 'tosi-month';
     static lightStyleSpec = {
         ':host': {
@@ -224,24 +241,6 @@ export class TosiMonth extends Component {
         },
     };
     static formAssociated = true;
-    static initAttributes = {
-        month: NaN,
-        year: NaN,
-        weekStart: 0, // Sunday, 1 = Monday
-        minDate: dateFromYMD(new Date().getFullYear() - 100, 1, 1)
-            .toISOString()
-            .split('T')[0],
-        maxDate: dateFromYMD(new Date().getFullYear() + 10, 12, 31)
-            .toISOString()
-            .split('T')[0],
-        selectable: false,
-        multiple: false,
-        range: false,
-        disabled: false,
-        readonly: false,
-        required: false,
-        name: '',
-    };
     selectedDays = [];
     value = '';
     formDisabledCallback(disabled) {

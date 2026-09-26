@@ -1,12 +1,12 @@
-import { Component, ElementCreator, ElementPart } from 'tosijs';
-export declare class TosiRow extends Component {
+import { ElementCreator, ElementPart } from 'tosijs';
+declare const TosiRow_base: import("tosijs").WithAttributes<{
+    gap: string;
+    wrap: boolean;
+    align: string;
+    justify: string;
+}>;
+export declare class TosiRow extends TosiRow_base {
     static preferredTagName: string;
-    static initAttributes: {
-        gap: string;
-        wrap: boolean;
-        align: string;
-        justify: string;
-    };
     content: HTMLSlotElement[];
     static shadowStyleSpec: {
         ':host': {
@@ -20,14 +20,14 @@ export declare class TosiRow extends Component {
     render(): void;
 }
 export declare const tosiRow: ElementCreator<TosiRow>;
-export declare class TosiColumn extends Component {
+declare const TosiColumn_base: import("tosijs").WithAttributes<{
+    gap: string;
+    wrap: boolean;
+    align: string;
+    justify: string;
+}>;
+export declare class TosiColumn extends TosiColumn_base {
     static preferredTagName: string;
-    static initAttributes: {
-        gap: string;
-        wrap: boolean;
-        align: string;
-        justify: string;
-    };
     content: HTMLSlotElement[];
     static shadowStyleSpec: {
         ':host': {
@@ -41,13 +41,13 @@ export declare class TosiColumn extends Component {
     render(): void;
 }
 export declare const tosiColumn: ElementCreator<TosiColumn>;
-export declare class TosiGrid extends Component {
+declare const TosiGrid_base: import("tosijs").WithAttributes<{
+    columns: string;
+    rows: string;
+    gap: string;
+}>;
+export declare class TosiGrid extends TosiGrid_base {
     static preferredTagName: string;
-    static initAttributes: {
-        columns: string;
-        rows: string;
-        gap: string;
-    };
     content: HTMLSlotElement[];
     static shadowStyleSpec: {
         ':host': {
@@ -62,3 +62,4 @@ export declare class TosiGrid extends Component {
 export declare const tosiGrid: ElementCreator<TosiGrid>;
 export declare const elastic: (...parts: ElementPart<HTMLSpanElement>[]) => HTMLSpanElement;
 export declare const spacer: (...parts: ElementPart<HTMLSpanElement>[]) => HTMLSpanElement;
+export {};

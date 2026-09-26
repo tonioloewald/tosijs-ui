@@ -78,11 +78,14 @@ randomize()
 
 /*{ "parent": "Helper Libraries" }*/
 
-import { Component } from 'tosijs'
+import { Component, withAttributes } from 'tosijs'
 
 const abTestConditions = {} as { [key: string]: any }
 
-export class AbTest extends Component {
+export class AbTest extends withAttributes({
+  condition: '',
+  not: false,
+}) {
   static preferredTagName = 'tosi-ab'
 
   static set conditions(context: { [key: string]: any }) {
@@ -91,11 +94,6 @@ export class AbTest extends Component {
     for (const abTest of [...AbTest.instances]) {
       abTest.queueRender()
     }
-  }
-
-  static initAttributes = {
-    condition: '',
-    not: false,
   }
 
   static instances: Set<AbTest> = new Set()

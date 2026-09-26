@@ -68,16 +68,15 @@ Similarly `EditableRect.snapAngle === true` or the shift-key will snap rotation 
 After an element's position, size, or rotation are adjusted a `change` event is triggered on the element.
 */
 /*{ "parent": "Components" }*/
-import { Component, elements, vars } from 'tosijs';
+import { elements, vars, withAttributes } from 'tosijs';
 import { icons } from './icons.js';
 import { trackDrag } from './track-drag.js';
 const { div, slot } = elements;
-export class EditableRect extends Component {
+export class EditableRect extends withAttributes({
+    rotationSnap: 0,
+    positionSnap: 0,
+}) {
     static preferredTagName = 'tosi-editable';
-    static initAttributes = {
-        rotationSnap: 0,
-        positionSnap: 0,
-    };
     static angleSize = 15;
     static gridSize = 8;
     static snapAngle = false;

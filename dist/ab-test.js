@@ -76,9 +76,12 @@ randomize()
 - `not` reverses the condition (so `<tosi-ab not condition="foo">` will be visible if `conditions.foo` is `false`)
 */
 /*{ "parent": "Helper Libraries" }*/
-import { Component } from 'tosijs';
+import { withAttributes } from 'tosijs';
 const abTestConditions = {};
-export class AbTest extends Component {
+export class AbTest extends withAttributes({
+    condition: '',
+    not: false,
+}) {
     static preferredTagName = 'tosi-ab';
     static set conditions(context) {
         Object.assign(abTestConditions, context);
@@ -86,10 +89,6 @@ export class AbTest extends Component {
             abTest.queueRender();
         }
     }
-    static initAttributes = {
-        condition: '',
-        not: false,
-    };
     static instances = new Set();
     connectedCallback() {
         super.connectedCallback();

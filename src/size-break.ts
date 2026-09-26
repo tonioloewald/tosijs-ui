@@ -1,4 +1,9 @@
-import { Component as WebComponent, ElementCreator, elements } from 'tosijs'
+import {
+  Component as WebComponent,
+  ElementCreator,
+  elements,
+  withAttributes,
+} from 'tosijs'
 
 const { slot } = elements
 
@@ -74,13 +79,11 @@ of the slots if you like. The demo site uses them to hide the
 
 /*{ "parent": "Components" }*/
 
-export class SizeBreak extends WebComponent {
+export class SizeBreak extends withAttributes({
+  minWidth: 0,
+  minHeight: 0,
+}) {
   static preferredTagName = 'tosi-sizebreak'
-
-  static initAttributes = {
-    minWidth: 0,
-    minHeight: 0,
-  }
 
   value: 'normal' | 'small' = 'normal'
 

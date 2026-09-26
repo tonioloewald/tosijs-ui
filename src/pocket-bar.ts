@@ -112,6 +112,7 @@ import {
   PartsMap,
   vars,
   varDefault,
+  withAttributes,
 } from 'tosijs'
 import { svgIcon, SvgIcon } from './icons.js'
 import { positionFloat, FloatPosition } from './pop-float.js'
@@ -124,14 +125,12 @@ interface PocketBarParts extends PartsMap {
   bar: HTMLDivElement
 }
 
-export class TosiPocketBar extends WebComponent<PocketBarParts> {
+export class TosiPocketBar extends withAttributes({
+  icon: '',
+  direction: 'auto',
+  open: false,
+})<PocketBarParts> {
   static preferredTagName = 'tosi-pocket-bar'
-
-  static initAttributes = {
-    icon: '',
-    direction: 'auto',
-    open: false,
-  }
 
   // Whether the bar is *pinned* open by a click (vs. a transient hover/focus peek).
   private pinned = false

@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 import { SortCallback } from './make-sorter.js';
 import { RowGroupIdFn, GroupCount } from './row-grouping.js';
 import { ValueRendererType } from './value-renderer.js';
@@ -58,7 +58,23 @@ export declare function probeMaxElementHeight(): number;
  * cost genuinely is O(n). A cap earns its keep there; in virtual mode it does not.
  */
 export declare function derivedMaxVisibleRows(maxElementHeightPx: number, rowHeight: number, fallback?: number): number;
-export declare class TosiTable extends WebComponent {
+declare const TosiTable_base: import("tosijs").WithAttributes<{
+    rowHeight: number;
+    charWidth: number;
+    minColumnWidth: number;
+    select: boolean;
+    multiple: boolean;
+    pinnedTop: number;
+    pinnedBottom: number;
+    nosort: boolean;
+    nohide: boolean;
+    noreorder: boolean;
+    localized: boolean;
+    nopreservescroll: boolean;
+    editable: boolean;
+    fullWidthHeader: boolean;
+}>;
+export declare class TosiTable extends TosiTable_base {
     static preferredTagName: string;
     static lightStyleSpec: {
         ':host': {
@@ -166,22 +182,6 @@ export declare class TosiTable extends WebComponent {
         ':host .drag-over': {
             background: string;
         };
-    };
-    static initAttributes: {
-        rowHeight: number;
-        charWidth: number;
-        minColumnWidth: number;
-        select: boolean;
-        multiple: boolean;
-        pinnedTop: number;
-        pinnedBottom: number;
-        nosort: boolean;
-        nohide: boolean;
-        noreorder: boolean;
-        localized: boolean;
-        nopreservescroll: boolean;
-        editable: boolean;
-        fullWidthHeader: boolean;
     };
     /**
      * Optional JSON Schema for the row shape. Drives editable cells and validates edits.
@@ -396,3 +396,4 @@ export declare const tosiTable: ElementCreator<TosiTable>;
 export declare const dataTable: ElementCreator<TosiTable>;
 /** @deprecated Use tosiTable instead */
 export declare const xinTable: ElementCreator<TosiTable>;
+export {};

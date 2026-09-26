@@ -135,22 +135,21 @@ The following CSS variables can be used to control customize the `<tosi-segmente
     --segmented-placeholder-opacity
 */
 /*{ "parent": "Form Components" }*/
-import { Component as WebComponent, elements, varDefault, deprecated, } from 'tosijs';
+import { elements, varDefault, deprecated, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
 import { tosiLocalized } from './localize.js';
 const { div, slot, label, span, input } = elements;
-export class TosiSegmented extends WebComponent {
+export class TosiSegmented extends withAttributes({
+    direction: 'row',
+    other: '',
+    multiple: false,
+    name: '',
+    placeholder: 'Please specify…',
+    localized: false,
+    required: false,
+}) {
     static preferredTagName = 'tosi-segmented';
     static formAssociated = true;
-    static initAttributes = {
-        direction: 'row',
-        other: '',
-        multiple: false,
-        name: '',
-        placeholder: 'Please specify…',
-        localized: false,
-        required: false,
-    };
     _choices = [];
     get choices() {
         return this._choices;

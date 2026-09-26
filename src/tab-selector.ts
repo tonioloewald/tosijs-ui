@@ -143,6 +143,7 @@ import {
   elements,
   vars,
   PartsMap,
+  withAttributes,
 } from 'tosijs'
 
 import { tosiLocalized, TosiLocalized } from './localize.js'
@@ -158,12 +159,10 @@ interface TabsParts extends PartsMap {
   selected: HTMLElement
 }
 
-export class TosiTabs extends WebComponent {
+export class TosiTabs extends withAttributes({
+  localized: false,
+}) {
   static preferredTagName = 'tosi-tabs'
-
-  static initAttributes = {
-    localized: false,
-  }
 
   value = 0
 

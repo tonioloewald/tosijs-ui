@@ -174,18 +174,17 @@ form.addEventListener('submit', (e) => {
 ```
 */
 /*{ "parent": "Components" }*/
-import { Component as WebComponent, elements } from 'tosijs';
+import { elements, withAttributes, } from 'tosijs';
 import { styleSheet, scriptTag } from './via-tag.js';
 const { div } = elements;
-export class MapBox extends WebComponent {
+export class MapBox extends withAttributes({
+    coords: '65.01715565258993,25.48081004203459,12',
+    token: '',
+    mapStyle: 'mapbox://styles/mapbox/streets-v12',
+    name: '',
+}) {
     static preferredTagName = 'tosi-map';
     static formAssociated = true;
-    static initAttributes = {
-        coords: '65.01715565258993,25.48081004203459,12',
-        token: '',
-        mapStyle: 'mapbox://styles/mapbox/streets-v12',
-        name: '',
-    };
     // value is the coordinates string for form submission
     value = '';
     // Form lifecycle callbacks

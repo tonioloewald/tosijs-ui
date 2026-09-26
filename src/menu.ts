@@ -803,6 +803,7 @@ import {
   StyleSheet,
   Component,
   PartsMap,
+  withAttributes,
 } from 'tosijs'
 import { popFloat, FloatPosition } from './pop-float.js'
 import { icons, SvgIcon } from './icons.js'
@@ -1675,7 +1676,21 @@ interface TosiMenuParts extends PartsMap {
   icon: SvgIcon
 }
 
-export class TosiMenu extends Component<TosiMenuParts> {
+export class TosiMenu extends withAttributes({
+  menuWidth: 'auto',
+  localized: false,
+  icon: '',
+  acceptsDrop: '',
+  disclosureDelay: 0,
+  hideDisabled: false,
+  /*
+  Extra class for the popup, so one component's dropdowns can be themed without a `:root`
+  rule that restyles every menu on the page (#148). `menuWidth` was already a per-menu
+  attribute, so per-menu styling is not foreign here — this is the same idea for the rest
+  of the knobs.
+  */
+  menuClass: '',
+})<TosiMenuParts> {
   static preferredTagName = 'tosi-menu'
   static lightStyleSpec = {
     ':host': {
@@ -1695,22 +1710,6 @@ export class TosiMenu extends Component<TosiMenuParts> {
       alignItems: 'center',
       gap: varDefault.tosiMenuTriggerGap('10px'),
     },
-  }
-
-  static initAttributes = {
-    menuWidth: 'auto',
-    localized: false,
-    icon: '',
-    acceptsDrop: '',
-    disclosureDelay: 0,
-    hideDisabled: false,
-    /*
-    Extra class for the popup, so one component's dropdowns can be themed without a `:root`
-    rule that restyles every menu on the page (#148). `menuWidth` was already a per-menu
-    attribute, so per-menu styling is not foreign here — this is the same idea for the rest
-    of the knobs.
-    */
-    menuClass: '',
   }
 
   menuItems: MenuItem[] = []

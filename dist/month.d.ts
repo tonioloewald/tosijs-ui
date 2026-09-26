@@ -1,4 +1,4 @@
-import { Component, PartsMap } from 'tosijs';
+import { PartsMap } from 'tosijs';
 import { TosiSelect } from './select.js';
 import { MenuItem } from './menu.js';
 interface MonthParts extends PartsMap {
@@ -8,7 +8,21 @@ interface MonthParts extends PartsMap {
     previous: HTMLButtonElement;
     next: HTMLButtonElement;
 }
-export declare class TosiMonth extends Component<MonthParts> {
+declare const TosiMonth_base: import("tosijs").WithAttributes<{
+    month: number;
+    year: number;
+    weekStart: number;
+    minDate: string;
+    maxDate: string;
+    selectable: boolean;
+    multiple: boolean;
+    range: boolean;
+    disabled: boolean;
+    readonly: boolean;
+    required: boolean;
+    name: string;
+}>;
+export declare class TosiMonth extends TosiMonth_base<MonthParts> {
     #private;
     static preferredTagName: string;
     static lightStyleSpec: {
@@ -76,20 +90,6 @@ export declare class TosiMonth extends Component<MonthParts> {
         };
     };
     static formAssociated: boolean;
-    static initAttributes: {
-        month: number;
-        year: number;
-        weekStart: number;
-        minDate: string;
-        maxDate: string;
-        selectable: boolean;
-        multiple: boolean;
-        range: boolean;
-        disabled: boolean;
-        readonly: boolean;
-        required: boolean;
-        name: string;
-    };
     selectedDays: string[];
     value: string;
     formDisabledCallback(disabled: boolean): void;

@@ -289,7 +289,12 @@ test('a stale reply is dropped, and a failed save is reported not swallowed', as
 
 /*{ "parent": "Components" }*/
 
-import { Component as WebComponent, ElementCreator, elements } from 'tosijs'
+import {
+  Component as WebComponent,
+  ElementCreator,
+  elements,
+  withAttributes,
+} from 'tosijs'
 import type { JSONSchema } from './schema-form/json-schema.js'
 import { tosiTable, type ColumnOptions, type TosiTable } from './data-table.js'
 import { tosiSchemaForm, type TosiSchemaForm } from './schema-form.js'
@@ -368,7 +373,13 @@ export function columnsFromSchema(schema: JSONSchema): ColumnOptions[] {
   })
 }
 
-export class TosiCrud extends WebComponent<CrudParts> {
+export class TosiCrud extends withAttributes({
+  idPath: 'id',
+  hashNamespace: 'crud',
+  hashMode: 'hash',
+  /** ms to wait after a keystroke before querying — a remote store is not free */
+  searchDelay: 200,
+})<CrudParts> {
   static preferredTagName = 'tosi-crud'
 
   static lightStyleSpec = {
@@ -407,14 +418,6 @@ export class TosiCrud extends WebComponent<CrudParts> {
       opacity: '1',
     },
     ':host tosi-table': { minHeight: '200px' },
-  }
-
-  static initAttributes = {
-    idPath: 'id',
-    hashNamespace: 'crud',
-    hashMode: 'hash',
-    /** ms to wait after a keystroke before querying — a remote store is not free */
-    searchDelay: 200,
   }
 
   private _store: CrudStore | null = null

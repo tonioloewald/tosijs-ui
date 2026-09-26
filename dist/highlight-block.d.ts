@@ -1,14 +1,14 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 interface HighlightParts {
     pre: HTMLPreElement;
     code: HTMLElement;
 }
-export declare class HighlightBlock extends WebComponent<HighlightParts> {
+declare const HighlightBlock_base: import("tosijs").WithAttributes<{
+    /** Fence-style language name — `js`, `ts`, `rust`, `bash`, … */
+    language: string;
+}>;
+export declare class HighlightBlock extends HighlightBlock_base<HighlightParts> {
     static preferredTagName: string;
-    static initAttributes: {
-        /** Fence-style language name — `js`, `ts`, `rust`, `bash`, … */
-        language: string;
-    };
     private _value;
     /** `lang\0source` of the last DOM write — see the idempotence note in `render`. */
     private _rendered;

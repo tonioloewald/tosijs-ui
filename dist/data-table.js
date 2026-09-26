@@ -1052,7 +1052,7 @@ As well as any column names you want localized — these are also used as the ac
 happy with the untranslated headers.
 */
 /*{ "parent": "Components" }*/
-import { Component as WebComponent, elements, vars, varDefault, tosiValue, getListItem, getListBinding, tosi, } from 'tosijs';
+import { elements, vars, varDefault, tosiValue, getListItem, getListBinding, tosi, withAttributes, } from 'tosijs';
 import { trackDrag } from './track-drag.js';
 import { naturalSorter } from './natural-compare.js';
 import { resolveRowGroupId, withForcedGroups, clusterByGroup, groupRenderMeta, groupCounts, } from './row-grouping.js';
@@ -1194,7 +1194,22 @@ export function derivedMaxVisibleRows(maxElementHeightPx, rowHeight, fallback = 
  * point where the O(n) costs become the thing you notice.
  */
 const NON_VIRTUAL_ROW_ADVICE = 1000;
-export class TosiTable extends WebComponent {
+export class TosiTable extends withAttributes({
+    rowHeight: 30,
+    charWidth: 15,
+    minColumnWidth: 30,
+    select: false,
+    multiple: false,
+    pinnedTop: 0,
+    pinnedBottom: 0,
+    nosort: false,
+    nohide: false,
+    noreorder: false,
+    localized: false,
+    nopreservescroll: false,
+    editable: false,
+    fullWidthHeader: false,
+}) {
     static preferredTagName = 'tosi-table';
     // Layout: a single .scroll-area inside :host is the only scroll container
     // (both axes). It also hosts the virtualised visible-rows listBinding, so
@@ -1357,22 +1372,6 @@ export class TosiTable extends WebComponent {
         ':host .drag-over': {
             background: vars.tosiTableDropHeaderBg,
         },
-    };
-    static initAttributes = {
-        rowHeight: 30,
-        charWidth: 15,
-        minColumnWidth: 30,
-        select: false,
-        multiple: false,
-        pinnedTop: 0,
-        pinnedBottom: 0,
-        nosort: false,
-        nohide: false,
-        noreorder: false,
-        localized: false,
-        nopreservescroll: false,
-        editable: false,
-        fullWidthHeader: false,
     };
     /**
      * Optional JSON Schema for the row shape. Drives editable cells and validates edits.

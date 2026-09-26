@@ -804,6 +804,7 @@ import {
   ElementCreator,
   elements,
   unobserve,
+  withAttributes,
 } from 'tosijs'
 import type { JSONSchema } from './schema-form/json-schema.js'
 import {
@@ -867,7 +868,9 @@ const {
   form: formElement,
 } = elements
 
-export class TosiSchemaForm extends WebComponent {
+export class TosiSchemaForm extends withAttributes({
+  readOnly: false,
+}) {
   static preferredTagName = 'tosi-schema-form'
 
   static lightStyleSpec = {
@@ -926,10 +929,6 @@ export class TosiSchemaForm extends WebComponent {
       opacity: '0.7',
       fontStyle: 'italic',
     },
-  }
-
-  static initAttributes = {
-    readOnly: false,
   }
 
   private _schema: JSONSchema = {} as JSONSchema

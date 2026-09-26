@@ -56,7 +56,7 @@ A self-contained, controllable embed (e.g. docs in a floating panel):
 ```
 */
 /*{ "parent": "Appendices" }*/
-import { Component, StyleSheet, elements, tosi, vars, } from 'tosijs';
+import { StyleSheet, elements, tosi, vars, withAttributes, } from 'tosijs';
 import { createDocBrowser, } from '../doc-browser.js';
 import { buildSlugMap, legacyQueryPath } from './routing.js';
 import { buildBookHtml, slugify } from './book-html.js';
@@ -138,26 +138,25 @@ export async function fetchCorpus(url) {
     }
     throw lastError;
 }
-export class TosiDocSystem extends Component {
+export class TosiDocSystem extends withAttributes({
+    docs: '/docs.json',
+    config: '',
+    localized: '',
+    // Routing mode. '' (default) → clean `/slug/` URLs that drive the page. Set
+    // 'memory' (or 'internal') for a self-contained instance that never touches
+    // the page URL — for embedding the docs in a panel, dialog, etc. A nested
+    // <tosi-doc-system> (inside a live example) is forced to 'memory' too.
+    routing: '',
+    // Memory routing only: the current doc slug. Set it to navigate the embedded
+    // browser; it's reflected back here as the user clicks around, so a host can
+    // bind/observe it (e.g. docs in a floating element).
+    route: '',
+    // Base theme colors — most of the palette is derived from `accent`.
+    accent: '',
+    background: '',
+    text: '',
+}) {
     static preferredTagName = 'tosi-doc-system';
-    static initAttributes = {
-        docs: '/docs.json',
-        config: '',
-        localized: '',
-        // Routing mode. '' (default) → clean `/slug/` URLs that drive the page. Set
-        // 'memory' (or 'internal') for a self-contained instance that never touches
-        // the page URL — for embedding the docs in a panel, dialog, etc. A nested
-        // <tosi-doc-system> (inside a live example) is forced to 'memory' too.
-        routing: '',
-        // Memory routing only: the current doc slug. Set it to navigate the embedded
-        // browser; it's reflected back here as the user clicks around, so a host can
-        // bind/observe it (e.g. docs in a floating element).
-        route: '',
-        // Base theme colors — most of the palette is derived from `accent`.
-        accent: '',
-        background: '',
-        text: '',
-    };
     // Modules exposed to live examples. Defaults to the IIFE globals on connect.
     context;
     // Light DOM: leave the pre-rendered children in place until render() swaps in

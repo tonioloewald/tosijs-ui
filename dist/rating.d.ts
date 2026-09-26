@@ -1,22 +1,22 @@
-import { Component, ElementCreator } from 'tosijs';
-export declare class TosiRating extends Component {
+import { ElementCreator } from 'tosijs';
+declare const TosiRating_base: import("tosijs").WithAttributes<{
+    max: number;
+    min: 0 | 1;
+    icon: string;
+    step: number;
+    ratingStroke: string;
+    ratingFill: string;
+    emptyStroke: string;
+    emptyFill: string;
+    readonly: boolean;
+    iconSize: number;
+    hollow: boolean;
+    required: boolean;
+    name: string;
+}>;
+export declare class TosiRating extends TosiRating_base {
     static preferredTagName: string;
     static formAssociated: boolean;
-    static initAttributes: {
-        max: number;
-        min: 0 | 1;
-        icon: string;
-        step: number;
-        ratingStroke: string;
-        ratingFill: string;
-        emptyStroke: string;
-        emptyFill: string;
-        readonly: boolean;
-        iconSize: number;
-        hollow: boolean;
-        required: boolean;
-        name: string;
-    };
     value: number | string;
     formDisabledCallback(disabled: boolean): void;
     formResetCallback(): void;
@@ -70,3 +70,4 @@ export declare const XinRating: typeof TosiRating;
 export declare const tosiRating: ElementCreator<TosiRating>;
 /** @deprecated Use tosiRating instead (tag is now tosi-rating) */
 export declare const xinRating: ElementCreator<TosiRating>;
+export {};

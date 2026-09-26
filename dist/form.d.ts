@@ -1,5 +1,19 @@
 import { Component as XinComponent, ElementCreator } from 'tosijs';
-export declare class TosiField extends XinComponent {
+declare const TosiField_base: import("tosijs").WithAttributes<{
+    caption: string;
+    key: string;
+    type: "" | "checkbox" | "number" | "range" | "date" | "text" | "color";
+    optional: boolean;
+    pattern: string;
+    placeholder: string;
+    min: string;
+    max: string;
+    step: string;
+    fixedPrecision: number;
+    prefix: string;
+    suffix: string;
+}>;
+export declare class TosiField extends TosiField_base {
     static preferredTagName: string;
     static lightStyleSpec: {
         ':host [part="field"]': {
@@ -28,20 +42,6 @@ export declare class TosiField extends XinComponent {
             pointerEvents: string;
             opacity: number;
         };
-    };
-    static initAttributes: {
-        caption: string;
-        key: string;
-        type: "" | "checkbox" | "number" | "range" | "date" | "text" | "color";
-        optional: boolean;
-        pattern: string;
-        placeholder: string;
-        min: string;
-        max: string;
-        step: string;
-        fixedPrecision: number;
-        prefix: string;
-        suffix: string;
     };
     value: any;
     content: HTMLLabelElement;
@@ -82,7 +82,7 @@ export declare class TosiForm extends XinComponent {
             overflow: string;
         };
     };
-    content: (HTMLSlotElement | HTMLFormElement)[];
+    content: (HTMLFormElement | HTMLSlotElement)[];
     getField: (key: string) => TosiField | null;
     get fields(): any;
     set fields(values: {
@@ -112,3 +112,4 @@ export declare const tosiForm: ElementCreator<TosiForm>;
 export declare const xinField: ElementCreator<TosiField>;
 /** @deprecated Use tosiForm instead (tag is now tosi-form) */
 export declare const xinForm: ElementCreator<TosiForm>;
+export {};

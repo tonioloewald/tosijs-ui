@@ -1,4 +1,4 @@
-import { ElementProps, Component, PartsMap } from 'tosijs';
+import { ElementProps, PartsMap } from 'tosijs';
 import { FloatPosition } from './pop-float.js';
 import { SvgIcon } from './icons.js';
 export type ActionCallback = () => void | Promise<void>;
@@ -109,7 +109,16 @@ interface TosiMenuParts extends PartsMap {
     trigger: HTMLButtonElement;
     icon: SvgIcon;
 }
-export declare class TosiMenu extends Component<TosiMenuParts> {
+declare const TosiMenu_base: import("tosijs").WithAttributes<{
+    menuWidth: string;
+    localized: boolean;
+    icon: string;
+    acceptsDrop: string;
+    disclosureDelay: number;
+    hideDisabled: boolean;
+    menuClass: string;
+}>;
+export declare class TosiMenu extends TosiMenu_base<TosiMenuParts> {
     static preferredTagName: string;
     static lightStyleSpec: {
         ':host': {
@@ -129,15 +138,6 @@ export declare class TosiMenu extends Component<TosiMenuParts> {
             alignItems: string;
             gap: string;
         };
-    };
-    static initAttributes: {
-        menuWidth: string;
-        localized: boolean;
-        icon: string;
-        acceptsDrop: string;
-        disclosureDelay: number;
-        hideDisabled: boolean;
-        menuClass: string;
     };
     menuItems: MenuItem[];
     dropAction: ((dataTransfer: DataTransfer) => void) | null;

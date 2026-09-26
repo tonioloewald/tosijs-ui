@@ -1,14 +1,14 @@
-import { Component, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 type NavState = 'normal' | 'compact/nav' | 'compact/content';
-export declare class TosiSidenav extends Component {
+declare const TosiSidenav_base: import("tosijs").WithAttributes<{
+    minSize: number;
+    navSize: number;
+    compact: boolean;
+    contentVisible: boolean;
+    alwaysCompact: boolean;
+}>;
+export declare class TosiSidenav extends TosiSidenav_base {
     static preferredTagName: string;
-    static initAttributes: {
-        minSize: number;
-        navSize: number;
-        compact: boolean;
-        contentVisible: boolean;
-        alwaysCompact: boolean;
-    };
     value: NavState;
     /**
      * Is the navigation on screen — and set it to put it there, or take it away.

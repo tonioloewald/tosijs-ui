@@ -104,7 +104,11 @@ Also see the [documentation for advanced interactions](https://lottiefiles.githu
 
 /*{ "parent": "Components" }*/
 
-import { Component as WebComponent, ElementCreator } from 'tosijs'
+import {
+  Component as WebComponent,
+  ElementCreator,
+  withAttributes,
+} from 'tosijs'
 import { scriptTag } from './via-tag.js'
 
 export interface LottieConfig {
@@ -117,13 +121,11 @@ export interface LottieConfig {
   [key: string]: any
 }
 
-export class BodymovinPlayer extends WebComponent {
+export class BodymovinPlayer extends withAttributes({
+  src: '',
+  json: '',
+}) {
   static preferredTagName = 'tosi-lottie'
-
-  static initAttributes = {
-    src: '',
-    json: '',
-  }
 
   content = null
   config: LottieConfig = {

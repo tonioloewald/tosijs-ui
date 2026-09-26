@@ -159,7 +159,7 @@ found in Weakpass's database (and spit out extra info to the console).
 
 /*{ "parent": "Form Components" }*/
 
-import { Component, elements, vars, varDefault } from 'tosijs'
+import { Component, elements, vars, varDefault, withAttributes } from 'tosijs'
 
 export const digest = async (s: string, method = 'SHA-1'): Promise<string> => {
   // Convert password to an ArrayBuffer
@@ -189,7 +189,11 @@ export const isBreached = async (password: string): Promise<boolean> => {
 }
 
 const { span, tosiSlot } = elements
-export class TosiPasswordStrength extends Component {
+export class TosiPasswordStrength extends withAttributes({
+  minLength: 8,
+  goodLength: 12,
+  indicatorColors: '#f00,#f40,#f80,#ef0,#8f0,#0a2',
+}) {
   static preferredTagName = 'tosi-password-strength'
 
   static lightStyleSpec = {
@@ -230,12 +234,6 @@ export class TosiPasswordStrength extends Component {
       lineHeight: varDefault.meterHeight('24px'),
       textAlign: 'center',
     },
-  }
-
-  static initAttributes = {
-    minLength: 8,
-    goodLength: 12,
-    indicatorColors: '#f00,#f40,#f80,#ef0,#8f0,#0a2',
   }
 
   descriptionColors = '#000,#000,#000,#000,#000,#fff'

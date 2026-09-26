@@ -207,7 +207,7 @@ preview.append(
 ```
 */
 /*{ "parent": "Form Components" }*/
-import { Component, elements, vars, throttle, deprecated, } from 'tosijs';
+import { elements, vars, throttle, deprecated, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
 import { popMenu, removeLastMenu, resolveMenuItems, findShortcutAction, } from './menu.js';
 import { localize, XinLocalized } from './localize.js';
@@ -225,7 +225,22 @@ const hasValue = (options, value) => {
         }
     });
 };
-export class TosiSelect extends Component {
+export class TosiSelect extends withAttributes({
+    editable: false,
+    placeholder: '',
+    showIcon: false,
+    hideCaption: false,
+    localized: false,
+    disabled: false,
+    required: false,
+    name: '',
+    /*
+    Extra class for the popped listbox. Same reasoning as `<tosi-menu>`'s (#148): the popup
+    mounts in a body-level `<tosi-float>`, so it is not a descendant of this element and
+    custom properties set here never reach it.
+    */
+    menuClass: '',
+}) {
     static preferredTagName = 'tosi-select';
     static formAssociated = true;
     static lightStyleSpec = {
@@ -280,22 +295,6 @@ export class TosiSelect extends Component {
             textOverflow: 'ellipsis',
             background: 'transparent',
         },
-    };
-    static initAttributes = {
-        editable: false,
-        placeholder: '',
-        showIcon: false,
-        hideCaption: false,
-        localized: false,
-        disabled: false,
-        required: false,
-        name: '',
-        /*
-        Extra class for the popped listbox. Same reasoning as `<tosi-menu>`'s (#148): the popup
-        mounts in a body-level `<tosi-float>`, so it is not a descendant of this element and
-        custom properties set here never reach it.
-        */
-        menuClass: '',
     };
     _options = [];
     get options() {

@@ -91,20 +91,23 @@ just add the `no-drag` class to an element or its container.
 
 /*{ "parent": "Components" }*/
 
-import { Component as WebComponent, elements, ElementCreator } from 'tosijs'
+import {
+  Component as WebComponent,
+  elements,
+  ElementCreator,
+  withAttributes,
+} from 'tosijs'
 import { trackDrag, bringToFront } from './track-drag.js'
 
 const { slot } = elements
 
-export class TosiFloat extends WebComponent {
+export class TosiFloat extends withAttributes({
+  drag: false,
+  remainOnResize: 'remove' as 'hide' | 'remove' | 'remain',
+  remainOnScroll: 'remain' as 'hide' | 'remove' | 'remain',
+}) {
   static preferredTagName = 'tosi-float'
   static floats: Set<TosiFloat> = new Set()
-
-  static initAttributes = {
-    drag: false,
-    remainOnResize: 'remove' as 'hide' | 'remove' | 'remain',
-    remainOnScroll: 'remain' as 'hide' | 'remove' | 'remain',
-  }
 
   content = slot()
 

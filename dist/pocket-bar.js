@@ -103,17 +103,16 @@ checkbox-as-icon — a `<label>` wrapping an `<input type=checkbox>` and an icon
 and desaturates until checked, so a toggle needs no extra CSS.
 */
 /*{ "parent": "Components" }*/
-import { Component as WebComponent, elements, vars, varDefault, } from 'tosijs';
+import { elements, vars, varDefault, withAttributes, } from 'tosijs';
 import { svgIcon } from './icons.js';
 import { positionFloat } from './pop-float.js';
 const { button, div, slot } = elements;
-export class TosiPocketBar extends WebComponent {
+export class TosiPocketBar extends withAttributes({
+    icon: '',
+    direction: 'auto',
+    open: false,
+}) {
     static preferredTagName = 'tosi-pocket-bar';
-    static initAttributes = {
-        icon: '',
-        direction: 'auto',
-        open: false,
-    };
     // Whether the bar is *pinned* open by a click (vs. a transient hover/focus peek).
     pinned = false;
     // n/s grow a vertical bar; everything else (auto, e/w, side) is horizontal.

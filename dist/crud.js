@@ -287,7 +287,7 @@ test('a stale reply is dropped, and a failed save is reported not swallowed', as
 - `error` — a store operation failed.
 */
 /*{ "parent": "Components" }*/
-import { Component as WebComponent, elements } from 'tosijs';
+import { elements, withAttributes, } from 'tosijs';
 import { tosiTable } from './data-table.js';
 import { tosiSchemaForm } from './schema-form.js';
 import { hashState } from './hash-state.js';
@@ -333,7 +333,13 @@ export function columnsFromSchema(schema) {
         return column;
     });
 }
-export class TosiCrud extends WebComponent {
+export class TosiCrud extends withAttributes({
+    idPath: 'id',
+    hashNamespace: 'crud',
+    hashMode: 'hash',
+    /** ms to wait after a keystroke before querying — a remote store is not free */
+    searchDelay: 200,
+}) {
     static preferredTagName = 'tosi-crud';
     static lightStyleSpec = {
         ':host': {
@@ -371,13 +377,6 @@ export class TosiCrud extends WebComponent {
             opacity: '1',
         },
         ':host tosi-table': { minHeight: '200px' },
-    };
-    static initAttributes = {
-        idPath: 'id',
-        hashNamespace: 'crud',
-        hashMode: 'hash',
-        /** ms to wait after a keystroke before querying — a remote store is not free */
-        searchDelay: 200,
     };
     _store = null;
     _schema = null;

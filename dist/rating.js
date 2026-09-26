@@ -75,27 +75,26 @@ as the behavior of `<input type="number">`, [Shoelace's rating widget](https://s
 and (in my opinion) common sense, but  not like [MUI's rating widget](https://mui.com/material-ui/react-rating/).
 */
 /*{ "parent": "Form Components" }*/
-import { Component, elements, deprecated, } from 'tosijs';
+import { elements, deprecated, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
 const { span } = elements;
-export class TosiRating extends Component {
+export class TosiRating extends withAttributes({
+    max: 5,
+    min: 1,
+    icon: 'star',
+    step: 1,
+    ratingStroke: '#e81',
+    ratingFill: '#f91',
+    emptyStroke: '#ccc',
+    emptyFill: '#ccc',
+    readonly: false,
+    iconSize: 24,
+    hollow: false,
+    required: false,
+    name: '',
+}) {
     static preferredTagName = 'tosi-rating';
     static formAssociated = true;
-    static initAttributes = {
-        max: 5,
-        min: 1,
-        icon: 'star',
-        step: 1,
-        ratingStroke: '#e81',
-        ratingFill: '#f91',
-        emptyStroke: '#ccc',
-        emptyFill: '#ccc',
-        readonly: false,
-        iconSize: 24,
-        hollow: false,
-        required: false,
-        name: '',
-    };
     value = '';
     // Form-associated lifecycle callbacks
     formDisabledCallback(disabled) {

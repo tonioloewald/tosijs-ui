@@ -1,4 +1,4 @@
-import { ElementCreator, ElementPart, Component as WebComponent } from 'tosijs';
+import { ElementCreator, ElementPart } from 'tosijs';
 import { SVGIconMap } from './icon-types.js';
 export declare const defineIcons: (newIcons: {
     [key: string]: string;
@@ -16,7 +16,14 @@ export declare function wrapIcon(prop: string, parts: ElementPart[], ...children
 /** Resolve an icon name through the full pipeline (redirects, suffixes, rules, stacking) */
 export declare function resolveIcon(prop: string, parts: ElementPart[]): Element;
 export declare const icons: SVGIconMap;
-export declare class SvgIcon extends WebComponent {
+declare const SvgIcon_base: import("tosijs").WithAttributes<{
+    icon: string;
+    size: number;
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
+}>;
+export declare class SvgIcon extends SvgIcon_base {
     static preferredTagName: string;
     static lightStyleSpec: {
         ':host': {
@@ -37,13 +44,6 @@ export declare class SvgIcon extends WebComponent {
         ':host svg, :host .tosi-icon-composite': {
             height: string;
         };
-    };
-    static initAttributes: {
-        icon: string;
-        size: number;
-        fill: string;
-        stroke: string;
-        strokeWidth: number;
     };
     render(): void;
 }

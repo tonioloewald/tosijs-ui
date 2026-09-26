@@ -54,7 +54,7 @@ This element renders in the LIGHT DOM deliberately: token styling has to be reac
 page stylesheet, and a shadow root would make every consumer re-declare the palette.
 */
 
-import { Component as WebComponent, ElementCreator, elements } from 'tosijs'
+import { ElementCreator, elements, withAttributes } from 'tosijs'
 import { ensureGrammar, highlight } from './doc-system/highlight.js'
 import { ensureHighlightStyles } from './doc-system/highlight-styles.js'
 
@@ -65,13 +65,11 @@ interface HighlightParts {
   code: HTMLElement
 }
 
-export class HighlightBlock extends WebComponent<HighlightParts> {
+export class HighlightBlock extends withAttributes({
+  /** Fence-style language name — `js`, `ts`, `rust`, `bash`, … */
+  language: '',
+})<HighlightParts> {
   static preferredTagName = 'tosi-highlight'
-
-  static initAttributes = {
-    /** Fence-style language name — `js`, `ts`, `rust`, `bash`, … */
-    language: '',
-  }
 
   private _value = ''
 

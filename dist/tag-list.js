@@ -162,7 +162,7 @@ If `editable`, an input field is provided for entering tags directly.
 Placeholder shown on input field.
 */
 /*{ "parent": "Form Components" }*/
-import { Component as WebComponent, elements, vars, varDefault, deprecated, StyleSheet, Color, contrastRatio, } from 'tosijs';
+import { elements, vars, varDefault, deprecated, StyleSheet, Color, contrastRatio, withAttributes, } from 'tosijs';
 import { popMenu } from './menu.js';
 import { icons } from './icons.js';
 const { div, input, span, button } = elements;
@@ -172,7 +172,10 @@ const { div, input, span, button } = elements;
 // `value` / `available-tags` HTML attributes.
 const splitTags = (str) => str.split(/(?<!\\),/).map((tag) => tag.trim().replace(/\\,/g, ','));
 const joinTags = (tags) => tags.map((tag) => tag.replace(/,/g, '\\,')).join(',');
-export class TosiTag extends WebComponent {
+export class TosiTag extends withAttributes({
+    caption: '',
+    removeable: false,
+}) {
     static preferredTagName = 'tosi-tag';
     static lightStyleSpec = {
         ':host': {
@@ -218,10 +221,6 @@ export class TosiTag extends WebComponent {
             background: vars.tagCloseButtonBg,
             opacity: vars.tagButtonHoverOpacity,
         },
-    };
-    static initAttributes = {
-        caption: '',
-        removeable: false,
     };
     removeCallback = () => {
         this.remove();
@@ -287,7 +286,14 @@ function ensureTagMenuStyles() {
         },
     });
 }
-export class TosiTagList extends WebComponent {
+export class TosiTagList extends withAttributes({
+    name: '',
+    textEntry: false,
+    editable: false,
+    placeholder: 'enter tags',
+    disabled: false,
+    required: false,
+}) {
     static preferredTagName = 'tosi-tag-list';
     static lightStyleSpec = {
         ':host': {
@@ -338,14 +344,6 @@ export class TosiTagList extends WebComponent {
         },
     };
     static formAssociated = true;
-    static initAttributes = {
-        name: '',
-        textEntry: false,
-        editable: false,
-        placeholder: 'enter tags',
-        disabled: false,
-        required: false,
-    };
     // value is the source of truth (Component watches this for form handling)
     value = '';
     // tags parses value into array

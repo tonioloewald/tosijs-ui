@@ -1,15 +1,15 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
-export declare class TosiCarousel extends WebComponent {
+import { ElementCreator } from 'tosijs';
+declare const TosiCarousel_base: import("tosijs").WithAttributes<{
+    dots: boolean;
+    arrows: boolean;
+    maxVisibleItems: number;
+    snapDuration: number;
+    snapDelay: number;
+    loop: boolean;
+    auto: number;
+}>;
+export declare class TosiCarousel extends TosiCarousel_base {
     static preferredTagName: string;
-    static initAttributes: {
-        dots: boolean;
-        arrows: boolean;
-        maxVisibleItems: number;
-        snapDuration: number;
-        snapDelay: number;
-        loop: boolean;
-        auto: number;
-    };
     private lastAutoAdvance;
     private interval?;
     private autoAdvance;
@@ -133,3 +133,4 @@ export declare const XinCarousel: typeof TosiCarousel;
 export declare const tosiCarousel: ElementCreator<TosiCarousel>;
 /** @deprecated Use tosiCarousel instead */
 export declare const xinCarousel: ElementCreator<TosiCarousel>;
+export {};

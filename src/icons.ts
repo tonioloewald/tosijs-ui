@@ -553,6 +553,7 @@ import {
   Color,
   vars,
   varDefault,
+  withAttributes,
 } from 'tosijs'
 import { SVGIconMap } from './icon-types.js'
 import iconData from './icon-data.js'
@@ -977,7 +978,13 @@ export const icons = new Proxy(iconData, {
   },
 }) as unknown as SVGIconMap
 
-export class SvgIcon extends WebComponent {
+export class SvgIcon extends withAttributes({
+  icon: '',
+  size: 0,
+  fill: '',
+  stroke: '',
+  strokeWidth: 1,
+}) {
   static preferredTagName = 'tosi-icon'
   static lightStyleSpec = {
     ':host': {
@@ -1000,14 +1007,6 @@ export class SvgIcon extends WebComponent {
     ':host svg, :host .tosi-icon-composite': {
       height: varDefault.tosiIconSize('16px'),
     },
-  }
-
-  static initAttributes = {
-    icon: '',
-    size: 0,
-    fill: '',
-    stroke: '',
-    strokeWidth: 1,
   }
 
   render(): void {

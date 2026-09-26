@@ -148,7 +148,13 @@ form.addEventListener('reset', () => {
 
 /*{ "parent": "Form Components" }*/
 
-import { Component, PartsMap, elements, varDefault } from 'tosijs'
+import {
+  Component,
+  PartsMap,
+  elements,
+  varDefault,
+  withAttributes,
+} from 'tosijs'
 import { tosiSelect, TosiSelect } from './select.js'
 import { icons } from './icons.js'
 import { popMenu, MenuItem } from './menu.js'
@@ -173,7 +179,24 @@ interface MonthParts extends PartsMap {
   next: HTMLButtonElement
 }
 
-export class TosiMonth extends Component<MonthParts> {
+export class TosiMonth extends withAttributes({
+  month: NaN,
+  year: NaN,
+  weekStart: 0, // Sunday, 1 = Monday
+  minDate: dateFromYMD(new Date().getFullYear() - 100, 1, 1)
+    .toISOString()
+    .split('T')[0],
+  maxDate: dateFromYMD(new Date().getFullYear() + 10, 12, 31)
+    .toISOString()
+    .split('T')[0],
+  selectable: false,
+  multiple: false,
+  range: false,
+  disabled: false,
+  readonly: false,
+  required: false,
+  name: '',
+})<MonthParts> {
   static preferredTagName = 'tosi-month'
 
   static lightStyleSpec = {
@@ -242,25 +265,6 @@ export class TosiMonth extends Component<MonthParts> {
   }
 
   static formAssociated = true
-
-  static initAttributes = {
-    month: NaN,
-    year: NaN,
-    weekStart: 0, // Sunday, 1 = Monday
-    minDate: dateFromYMD(new Date().getFullYear() - 100, 1, 1)
-      .toISOString()
-      .split('T')[0],
-    maxDate: dateFromYMD(new Date().getFullYear() + 10, 12, 31)
-      .toISOString()
-      .split('T')[0],
-    selectable: false,
-    multiple: false,
-    range: false,
-    disabled: false,
-    readonly: false,
-    required: false,
-    name: '',
-  }
 
   selectedDays = [] as string[]
   value = ''

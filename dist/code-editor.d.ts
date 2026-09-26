@@ -1,11 +1,15 @@
-import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
+import { ElementCreator, PartsMap } from 'tosijs';
 import type { CmHandle, TjsAutocompleteConfig } from './code-editor-cm.js';
 export type { TjsAutocompleteConfig } from './code-editor-cm.js';
 interface CodeEditorParts extends PartsMap {
     host: HTMLDivElement;
     diffHost: HTMLDivElement;
 }
-export declare class CodeEditor extends WebComponent<CodeEditorParts> {
+declare const CodeEditor_base: import("tosijs").WithAttributes<{
+    mode: string;
+    disabled: boolean;
+}>;
+export declare class CodeEditor extends CodeEditor_base<CodeEditorParts> {
     static preferredTagName: string;
     private source;
     private _handle;
@@ -34,10 +38,6 @@ export declare class CodeEditor extends WebComponent<CodeEditorParts> {
     diffOriginalLabel: string;
     diffModifiedLabel: string;
     showDiff(on: boolean): void;
-    static initAttributes: {
-        mode: string;
-        disabled: boolean;
-    };
     role: string;
     /**
      * The underlying CodeMirror `EditorView` (undefined until loaded).

@@ -432,7 +432,14 @@ class MyLocalizedComponent extends Component {
 
 /*{ "parent": "Helper Libraries" }*/
 
-import { Component, tosi, tosiValue, elements, bindings } from 'tosijs'
+import {
+  Component,
+  tosi,
+  tosiValue,
+  elements,
+  bindings,
+  withAttributes,
+} from 'tosijs'
 import { makeSorter } from './make-sorter.js'
 import { tosiSelect, TosiSelect } from './select.js'
 
@@ -764,12 +771,10 @@ export function localizePhrase(key: string, fragments: string[]): string {
   return fragments.map((f) => localize(f)).join(' ')
 }
 
-export class TosiLocalePicker extends Component {
+export class TosiLocalePicker extends withAttributes({
+  hideCaption: false,
+}) {
   static preferredTagName = 'tosi-locale-picker'
-
-  static initAttributes = {
-    hideCaption: false,
-  }
 
   content = () => {
     return tosiSelect({
@@ -804,7 +809,9 @@ interface AbstractLocalized {
   disconnectedCallback: () => void
 }
 
-export class TosiLocalized extends Component {
+export class TosiLocalized extends withAttributes({
+  refString: '',
+}) {
   static preferredTagName = 'tosi-localized'
   static lightStyleSpec = {
     ':host': {
@@ -813,9 +820,6 @@ export class TosiLocalized extends Component {
   }
 
   static allInstances = new Set<AbstractLocalized>()
-  static initAttributes = {
-    refString: '',
-  }
 
   contents = () => elements.tosiSlot()
 

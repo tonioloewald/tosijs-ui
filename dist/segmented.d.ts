@@ -1,22 +1,22 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 import type { IconElement } from './icon-types.js';
 interface Choice {
     icon?: string | IconElement;
     value: string;
     caption: string;
 }
-export declare class TosiSegmented extends WebComponent {
+declare const TosiSegmented_base: import("tosijs").WithAttributes<{
+    direction: string;
+    other: string;
+    multiple: boolean;
+    name: string;
+    placeholder: string;
+    localized: boolean;
+    required: boolean;
+}>;
+export declare class TosiSegmented extends TosiSegmented_base {
     static preferredTagName: string;
     static formAssociated: boolean;
-    static initAttributes: {
-        direction: string;
-        other: string;
-        multiple: boolean;
-        name: string;
-        placeholder: string;
-        localized: boolean;
-        required: boolean;
-    };
     private _choices;
     get choices(): Choice[];
     set choices(v: Choice[] | string);
@@ -25,7 +25,7 @@ export declare class TosiSegmented extends WebComponent {
     formDisabledCallback(disabled: boolean): void;
     formResetCallback(): void;
     get values(): string[];
-    content: () => (HTMLSlotElement | HTMLDivElement)[];
+    content: () => (HTMLDivElement | HTMLSlotElement)[];
     static shadowStyleSpec: {
         ':host': {
             display: string;

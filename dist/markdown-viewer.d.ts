@@ -1,6 +1,11 @@
-import { Component, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 import { MarkedOptions } from 'marked';
-export declare class TosiMd extends Component {
+declare const TosiMd_base: import("tosijs").WithAttributes<{
+    src: string;
+    elements: boolean;
+    sanitize: string;
+}>;
+export declare class TosiMd extends TosiMd_base {
     #private;
     static preferredTagName: string;
     /**
@@ -8,11 +13,6 @@ export declare class TosiMd extends Component {
     not per element — fifty `<tosi-md>` would otherwise log fifty identical lines.
     */
     static warnedUnsanitized: boolean;
-    static initAttributes: {
-        src: string;
-        elements: boolean;
-        sanitize: string;
-    };
     context: {
         [key: string]: any;
     };
@@ -32,3 +32,4 @@ export declare const tosiMd: ElementCreator<TosiMd>;
 export declare const markdownViewer: ElementCreator<TosiMd>;
 /** @deprecated Use tosiMd instead */
 export declare const xinMd: ElementCreator<TosiMd>;
+export {};

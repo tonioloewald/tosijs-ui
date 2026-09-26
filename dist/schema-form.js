@@ -797,7 +797,7 @@ test('editing keeps unknown keys, fires change, and does not rebuild under the u
 ```
 */
 /*{ "parent": "Components" }*/
-import { Component as WebComponent, elements, unobserve, } from 'tosijs';
+import { elements, unobserve, withAttributes, } from 'tosijs';
 import { fieldsFor, itemFields, branchFields, matchBranch, selectBranch, insertAt, removeAt, moveItem, blankFor, getByPath, setByPath, collectErrors, coerceToSchema, errorFor, relaxInferred, } from './schema-form/fields.js';
 import { localize, i18n } from './localize.js';
 import { unenforcedNote } from './schema-form/unenforced.js';
@@ -806,7 +806,9 @@ export { setSchemaValidator, schemaValidationAvailable, } from './schema-form/va
 import { fieldPlugin, onFieldPluginsChanged, schemaUsesFormat, } from './schema-form/plugins.js';
 export { registerFieldPlugin, } from './schema-form/plugins.js';
 const { div, label, input, select, option, span, details, summary, button, form: formElement, } = elements;
-export class TosiSchemaForm extends WebComponent {
+export class TosiSchemaForm extends withAttributes({
+    readOnly: false,
+}) {
     static preferredTagName = 'tosi-schema-form';
     static lightStyleSpec = {
         ':host': { display: 'block' },
@@ -863,9 +865,6 @@ export class TosiSchemaForm extends WebComponent {
             opacity: '0.7',
             fontStyle: 'italic',
         },
-    };
-    static initAttributes = {
-        readOnly: false,
     };
     _schema = {};
     _value = {};

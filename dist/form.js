@@ -402,7 +402,7 @@ preview.querySelector('.set-values-btn').addEventListener('click', () => {
 ```
 */
 /*{ "parent": "Form Components" }*/
-import { Component as XinComponent, elements, varDefault, } from 'tosijs';
+import { Component as XinComponent, elements, varDefault, withAttributes, } from 'tosijs';
 import { colorInput } from './color-input.js';
 const { form, slot, tosiSlot, label, input, span } = elements;
 function attr(element, name, value) {
@@ -463,7 +463,20 @@ function setElementValue(input, value) {
             input.value = v;
     }
 }
-export class TosiField extends XinComponent {
+export class TosiField extends withAttributes({
+    caption: '',
+    key: '',
+    type: '',
+    optional: false,
+    pattern: '',
+    placeholder: '',
+    min: '',
+    max: '',
+    step: '',
+    fixedPrecision: -1,
+    prefix: '',
+    suffix: '',
+}) {
     static preferredTagName = 'tosi-field';
     static lightStyleSpec = {
         ':host [part="field"]': {
@@ -492,20 +505,6 @@ export class TosiField extends XinComponent {
             pointerEvents: 'none',
             opacity: 0,
         },
-    };
-    static initAttributes = {
-        caption: '',
-        key: '',
-        type: '',
-        optional: false,
-        pattern: '',
-        placeholder: '',
-        min: '',
-        max: '',
-        step: '',
-        fixedPrecision: -1,
-        prefix: '',
-        suffix: '',
     };
     value = null;
     content = label(tosiSlot({ part: 'caption' }), span({ part: 'field' }, tosiSlot({ part: 'input', name: 'input' }), input({ part: 'valueHolder' })));

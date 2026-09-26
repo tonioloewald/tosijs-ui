@@ -221,7 +221,7 @@ be used to load `.glb` files. Setting `src` calls this for you on connect.
 `<tosi-3d>.loadUI(options: B3dUIOptions)` loads babylonjs guis, which you can create programmatically or using the [babylonjs gui tool](https://gui.babylonjs.com/).
 */
 /*{ "parent": "Components" }*/
-import { Component as WebComponent, elements } from 'tosijs';
+import { elements, withAttributes, } from 'tosijs';
 import { scriptTag } from './via-tag.js';
 import { icons, svg2DataUrl } from './icons.js';
 const noop = () => {
@@ -277,24 +277,23 @@ const warnDeprecated = () => {
  *
  * Still exported and still works. It will be removed in a future major.
  */
-export class B3d extends WebComponent {
+export class B3d extends withAttributes({
+    // `src` (a .glb URL) makes <tosi-3d> work like <img>: the scene loads on connect.
+    src: '',
+    // scene background: a css hex color, or `transparent` to composite the 3D
+    // over the page (e.g. themed narrative pages). Empty = Babylon default.
+    clearColor: '',
+    // field-of-view MULTIPLIER on the camera's natural lens. 1 = unchanged,
+    // <1 = longer lens / less perspective distortion, >1 = wider. Author-friendly:
+    // no need to know Babylon's default fov in radians.
+    fov: 1,
+    // add a directional key light (front-upper-left) for a product-photography
+    // look, on top of the soft hemispheric fill.
+    heroLight: false,
+}) {
     static preferredTagName = 'tosi-3d';
     // Declarative config so a scene can be assembled purely in HTML (no JS):
     //   <tosi-3d src="/model.glb" hero-light fov="0.5" clear-color="transparent">
-    static initAttributes = {
-        // `src` (a .glb URL) makes <tosi-3d> work like <img>: the scene loads on connect.
-        src: '',
-        // scene background: a css hex color, or `transparent` to composite the 3D
-        // over the page (e.g. themed narrative pages). Empty = Babylon default.
-        clearColor: '',
-        // field-of-view MULTIPLIER on the camera's natural lens. 1 = unchanged,
-        // <1 = longer lens / less perspective distortion, >1 = wider. Author-friendly:
-        // no need to know Babylon's default fov in radians.
-        fov: 1,
-        // add a directional key light (front-upper-left) for a product-photography
-        // look, on top of the soft hemispheric fill.
-        heroLight: false,
-    };
     babylonReady;
     BABYLON;
     static shadowStyleSpec = {

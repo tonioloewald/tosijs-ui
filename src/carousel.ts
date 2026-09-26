@@ -63,6 +63,7 @@ import {
   ElementCreator,
   elements,
   vars,
+  withAttributes,
 } from 'tosijs'
 import { icons } from './icons.js'
 
@@ -74,18 +75,16 @@ interface CarouselParts {
   forward: HTMLButtonElement
 }
 
-export class TosiCarousel extends WebComponent {
+export class TosiCarousel extends withAttributes({
+  dots: false,
+  arrows: false,
+  maxVisibleItems: 1,
+  snapDuration: 0.25,
+  snapDelay: 0.1,
+  loop: false,
+  auto: 0,
+}) {
   static preferredTagName = 'tosi-carousel'
-
-  static initAttributes = {
-    dots: false,
-    arrows: false,
-    maxVisibleItems: 1,
-    snapDuration: 0.25,
-    snapDelay: 0.1,
-    loop: false,
-    auto: 0,
-  }
 
   private lastAutoAdvance = Date.now()
   private interval?: Timer

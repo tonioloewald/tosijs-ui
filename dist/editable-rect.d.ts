@@ -1,16 +1,15 @@
-import { Component } from 'tosijs';
 interface Locks {
     left: boolean;
     right: boolean;
     top: boolean;
     bottom: boolean;
 }
-export declare class EditableRect extends Component {
+declare const EditableRect_base: import("tosijs").WithAttributes<{
+    rotationSnap: number;
+    positionSnap: number;
+}>;
+export declare class EditableRect extends EditableRect_base {
     static preferredTagName: string;
-    static initAttributes: {
-        rotationSnap: number;
-        positionSnap: number;
-    };
     static angleSize: number;
     static gridSize: number;
     static snapAngle: boolean;
@@ -93,7 +92,7 @@ export declare class EditableRect extends Component {
     get element(): HTMLElement;
     adjustRotation: (event: Event) => void;
     toggleLock: (event: Event) => void;
-    content: () => (HTMLSlotElement | HTMLDivElement)[];
+    content: () => (HTMLDivElement | HTMLSlotElement)[];
     connectedCallback(): void;
     render(): void;
 }

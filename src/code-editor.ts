@@ -121,6 +121,7 @@ import {
   elements,
   PartsMap,
   varDefault,
+  withAttributes,
 } from 'tosijs'
 import { tosiDiff, TosiDiff } from './diff.js'
 import type { CmHandle, TjsAutocompleteConfig } from './code-editor-cm.js'
@@ -148,7 +149,10 @@ interface CodeEditorParts extends PartsMap {
 let warnedEditor = false
 let warnedTjs = false
 
-export class CodeEditor extends WebComponent<CodeEditorParts> {
+export class CodeEditor extends withAttributes({
+  mode: 'javascript',
+  disabled: false,
+})<CodeEditorParts> {
   static preferredTagName = 'tosi-code'
 
   private source = ''
@@ -281,11 +285,6 @@ export class CodeEditor extends WebComponent<CodeEditorParts> {
       }
     }
     diffHost.hidden = !on
-  }
-
-  static initAttributes = {
-    mode: 'javascript',
-    disabled: false,
   }
 
   role = 'code editor'

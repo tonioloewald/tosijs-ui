@@ -175,6 +175,7 @@ import {
   StyleSheet,
   Color,
   contrastRatio,
+  withAttributes,
 } from 'tosijs'
 import { popMenu, MenuItem, MenuAction } from './menu.js'
 import { icons } from './icons.js'
@@ -191,7 +192,10 @@ const splitTags = (str: string): string[] =>
 const joinTags = (tags: string[]): string =>
   tags.map((tag) => tag.replace(/,/g, '\\,')).join(',')
 
-export class TosiTag extends WebComponent {
+export class TosiTag extends withAttributes({
+  caption: '',
+  removeable: false,
+}) {
   static preferredTagName = 'tosi-tag'
 
   static lightStyleSpec = {
@@ -238,11 +242,6 @@ export class TosiTag extends WebComponent {
       background: vars.tagCloseButtonBg,
       opacity: vars.tagButtonHoverOpacity,
     },
-  }
-
-  static initAttributes = {
-    caption: '',
-    removeable: false,
   }
 
   removeCallback: (event: Event) => void = () => {
@@ -335,7 +334,14 @@ function ensureTagMenuStyles(): void {
   })
 }
 
-export class TosiTagList extends WebComponent {
+export class TosiTagList extends withAttributes({
+  name: '',
+  textEntry: false,
+  editable: false,
+  placeholder: 'enter tags',
+  disabled: false,
+  required: false,
+}) {
   static preferredTagName = 'tosi-tag-list'
 
   static lightStyleSpec: XinStyleSheet = {
@@ -388,15 +394,6 @@ export class TosiTagList extends WebComponent {
   }
 
   static formAssociated = true
-
-  static initAttributes = {
-    name: '',
-    textEntry: false,
-    editable: false,
-    placeholder: 'enter tags',
-    disabled: false,
-    required: false,
-  }
 
   // value is the source of truth (Component watches this for form handling)
   value = ''

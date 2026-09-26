@@ -56,20 +56,19 @@ This is a minimalist carousel component that supports the usual stuff.
 <tosi-css-var-editor element-selector="tosi-carousel"></tosi-css-var-editor>
 */
 /*{ "parent": "Components" }*/
-import { Component as WebComponent, elements, vars, } from 'tosijs';
+import { elements, vars, withAttributes, } from 'tosijs';
 import { icons } from './icons.js';
 const { button, slot, div } = elements;
-export class TosiCarousel extends WebComponent {
+export class TosiCarousel extends withAttributes({
+    dots: false,
+    arrows: false,
+    maxVisibleItems: 1,
+    snapDuration: 0.25,
+    snapDelay: 0.1,
+    loop: false,
+    auto: 0,
+}) {
     static preferredTagName = 'tosi-carousel';
-    static initAttributes = {
-        dots: false,
-        arrows: false,
-        maxVisibleItems: 1,
-        snapDuration: 0.25,
-        snapDelay: 0.1,
-        loop: false,
-        auto: 0,
-    };
     lastAutoAdvance = Date.now();
     interval;
     autoAdvance = () => {

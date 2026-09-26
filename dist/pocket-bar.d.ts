@@ -1,17 +1,17 @@
-import { Component as WebComponent, ElementCreator, PartsMap } from 'tosijs';
+import { ElementCreator, PartsMap } from 'tosijs';
 import { SvgIcon } from './icons.js';
 interface PocketBarParts extends PartsMap {
     handle: HTMLButtonElement;
     handleIcon: SvgIcon;
     bar: HTMLDivElement;
 }
-export declare class TosiPocketBar extends WebComponent<PocketBarParts> {
+declare const TosiPocketBar_base: import("tosijs").WithAttributes<{
+    icon: string;
+    direction: string;
+    open: boolean;
+}>;
+export declare class TosiPocketBar extends TosiPocketBar_base<PocketBarParts> {
     static preferredTagName: string;
-    static initAttributes: {
-        icon: string;
-        direction: string;
-        open: boolean;
-    };
     private pinned;
     private get vertical();
     private get resolvedIcon();

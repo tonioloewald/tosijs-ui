@@ -135,15 +135,14 @@ initTooltips()
 ```
 */
 /*{ "parent": "Components" }*/
-import { Component as WebComponent, elements, vars, } from 'tosijs';
+import { elements, vars, withAttributes, } from 'tosijs';
 import { tosiLocalized, TosiLocalized } from './localize.js';
 import { icons } from './icons.js';
 const { div, slot, span, button } = elements;
-export class TosiTabs extends WebComponent {
+export class TosiTabs extends withAttributes({
+    localized: false,
+}) {
     static preferredTagName = 'tosi-tabs';
-    static initAttributes = {
-        localized: false,
-    };
     value = 0;
     makeTab(tabs, tabBody, bodyId) {
         const tabName = tabBody.getAttribute('name');

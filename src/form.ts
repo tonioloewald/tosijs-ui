@@ -409,6 +409,7 @@ import {
   ElementCreator,
   elements,
   varDefault,
+  withAttributes,
 } from 'tosijs'
 
 import { colorInput } from './color-input.js'
@@ -472,7 +473,20 @@ function setElementValue(input: HTMLElement | null | undefined, value: any) {
   }
 }
 
-export class TosiField extends XinComponent {
+export class TosiField extends withAttributes({
+  caption: '',
+  key: '',
+  type: '' as '' | 'checkbox' | 'number' | 'range' | 'date' | 'text' | 'color',
+  optional: false,
+  pattern: '',
+  placeholder: '',
+  min: '',
+  max: '',
+  step: '',
+  fixedPrecision: -1,
+  prefix: '',
+  suffix: '',
+}) {
   static preferredTagName = 'tosi-field'
 
   static lightStyleSpec = {
@@ -502,28 +516,6 @@ export class TosiField extends XinComponent {
       pointerEvents: 'none',
       opacity: 0,
     },
-  }
-
-  static initAttributes = {
-    caption: '',
-    key: '',
-    type: '' as
-      | ''
-      | 'checkbox'
-      | 'number'
-      | 'range'
-      | 'date'
-      | 'text'
-      | 'color',
-    optional: false,
-    pattern: '',
-    placeholder: '',
-    min: '',
-    max: '',
-    step: '',
-    fixedPrecision: -1,
-    prefix: '',
-    suffix: '',
   }
 
   value: any = null

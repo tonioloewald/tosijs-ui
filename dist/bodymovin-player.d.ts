@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 export interface LottieConfig {
     container?: HTMLElement | ShadowRoot;
     renderer: 'svg' | 'canvas' | 'html';
@@ -8,12 +8,12 @@ export interface LottieConfig {
     path?: string;
     [key: string]: any;
 }
-export declare class BodymovinPlayer extends WebComponent {
+declare const BodymovinPlayer_base: import("tosijs").WithAttributes<{
+    src: string;
+    json: string;
+}>;
+export declare class BodymovinPlayer extends BodymovinPlayer_base {
     static preferredTagName: string;
-    static initAttributes: {
-        src: string;
-        json: string;
-    };
     content: null;
     config: LottieConfig;
     static bodymovinAvailable?: Promise<any>;
@@ -33,3 +33,4 @@ export declare class BodymovinPlayer extends WebComponent {
     render(): void;
 }
 export declare const bodymovinPlayer: ElementCreator<BodymovinPlayer>;
+export {};

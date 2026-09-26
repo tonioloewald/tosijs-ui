@@ -83,6 +83,7 @@ import {
   ElementCreator,
   PartsMap,
   deprecated,
+  withAttributes,
 } from 'tosijs'
 import { icons } from './icons.js'
 
@@ -94,25 +95,23 @@ interface RatingParts extends PartsMap {
   container: HTMLElement
 }
 
-export class TosiRating extends Component {
+export class TosiRating extends withAttributes({
+  max: 5,
+  min: 1 as 0 | 1,
+  icon: 'star',
+  step: 1,
+  ratingStroke: '#e81',
+  ratingFill: '#f91',
+  emptyStroke: '#ccc',
+  emptyFill: '#ccc',
+  readonly: false,
+  iconSize: 24,
+  hollow: false,
+  required: false,
+  name: '',
+}) {
   static preferredTagName = 'tosi-rating'
   static formAssociated = true
-
-  static initAttributes = {
-    max: 5,
-    min: 1 as 0 | 1,
-    icon: 'star',
-    step: 1,
-    ratingStroke: '#e81',
-    ratingFill: '#f91',
-    emptyStroke: '#ccc',
-    emptyFill: '#ccc',
-    readonly: false,
-    iconSize: 24,
-    hollow: false,
-    required: false,
-    name: '',
-  }
 
   value: number | string = ''
 

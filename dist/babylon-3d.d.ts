@@ -1,4 +1,4 @@
-import { Component as WebComponent, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 type B3dCallback = ((element: B3d, BABYLON: any) => void) | ((element: B3d, BABYLON: any) => Promise<void>);
 interface B3dUIOptions {
     snippetId?: string;
@@ -7,6 +7,12 @@ interface B3dUIOptions {
     size?: number;
 }
 type MeshProcessCallback = (meshes: any[]) => void;
+declare const B3d_base: import("tosijs").WithAttributes<{
+    src: string;
+    clearColor: string;
+    fov: number;
+    heroLight: boolean;
+}>;
 /**
  * @deprecated Use [`tosijs-3d`](https://www.npmjs.com/package/tosijs-3d) instead.
  *
@@ -17,14 +23,8 @@ type MeshProcessCallback = (meshes: any[]) => void;
  *
  * Still exported and still works. It will be removed in a future major.
  */
-export declare class B3d extends WebComponent {
+export declare class B3d extends B3d_base {
     static preferredTagName: string;
-    static initAttributes: {
-        src: string;
-        clearColor: string;
-        fov: number;
-        heroLight: boolean;
-    };
     babylonReady: Promise<any>;
     BABYLON?: any;
     static shadowStyleSpec: {

@@ -29,21 +29,24 @@ reads as a bug.
 
 /*{ "parent": "Components" }*/
 
-import { Component, ElementCreator, elements, varDefault } from 'tosijs'
+import {
+  Component,
+  ElementCreator,
+  elements,
+  varDefault,
+  withAttributes,
+} from 'tosijs'
 
 const { slot } = elements
 
 type NavState = 'normal' | 'compact/nav' | 'compact/content'
 
-export class TosiSidenav extends Component {
-  static preferredTagName = 'tosi-sidenav'
-
-  static initAttributes = {
-    minSize: 800,
-    navSize: 200,
-    compact: false,
-    contentVisible: false,
-    /*
+export class TosiSidenav extends withAttributes({
+  minSize: 800,
+  navSize: 200,
+  compact: false,
+  contentVisible: false,
+  /*
     Stay compact at ANY width, instead of below `minSize`.
 
     Compact mode already does what a full-screen page wants — nav and content take turns, and
@@ -51,8 +54,9 @@ export class TosiSidenav extends Component {
     layout. It exists as a named state because the alternative is setting `minSize` to a number
     no viewport can reach, which works and reads as a bug to the next person.
     */
-    alwaysCompact: false,
-  }
+  alwaysCompact: false,
+}) {
+  static preferredTagName = 'tosi-sidenav'
 
   value: NavState = 'normal'
 

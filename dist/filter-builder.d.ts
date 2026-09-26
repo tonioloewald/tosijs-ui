@@ -30,7 +30,12 @@ interface FilterPartParts extends PartsMap {
     needle: HTMLInputElement;
     remove: HTMLButtonElement;
 }
-export declare class FilterPart extends WebComponent<FilterPartParts> {
+declare const FilterPart_base: import("tosijs").WithAttributes<{
+    haystack: string;
+    condition: string;
+    needle: string;
+}>;
+export declare class FilterPart extends FilterPart_base<FilterPartParts> {
     static preferredTagName: string;
     static lightStyleSpec: {
         ':host': {
@@ -51,11 +56,6 @@ export declare class FilterPart extends WebComponent<FilterPartParts> {
             content: string;
             flex: string;
         };
-    };
-    static initAttributes: {
-        haystack: string;
-        condition: string;
-        needle: string;
     };
     fields: Fields;
     filters: {

@@ -111,6 +111,7 @@ import {
   elements,
   vars,
   varDefault,
+  withAttributes,
 } from 'tosijs'
 
 const { div, span, button } = elements
@@ -409,25 +410,24 @@ interface DiffParts extends PartsMap {
 
 const MARKER: Record<DiffOp, string> = { context: ' ', add: '+', remove: '-' }
 
-export class TosiDiff extends Component<DiffParts> {
+export class TosiDiff extends withAttributes({
+  original: '',
+  modified: '',
+  // Opt-in, because it changes the element from something you READ into something you
+  // OPERATE, and the two existing consumers (the code editor's review overlay and the
+  // doc-browser's before-save view) want the reading one.
+  resolvable: false,
+  // The reviewer's words, not ours. "mine"/"theirs" is git's framing, "current"/"proposed"
+  // is a suggestion-review framing, and this component's own vocabulary is
+  // original/modified — none of which is right for everyone, so none of it is hardcoded.
+  // Pass already-localized strings; the host owns that choice.
+  originalLabel: 'Original',
+  modifiedLabel: 'Modified',
+})<DiffParts> {
   static preferredTagName = 'tosi-diff'
 
   // `before`/`after` would collide with the native Element.before()/after()
   // methods, so the component props are `original`/`modified`.
-  static initAttributes = {
-    original: '',
-    modified: '',
-    // Opt-in, because it changes the element from something you READ into something you
-    // OPERATE, and the two existing consumers (the code editor's review overlay and the
-    // doc-browser's before-save view) want the reading one.
-    resolvable: false,
-    // The reviewer's words, not ours. "mine"/"theirs" is git's framing, "current"/"proposed"
-    // is a suggestion-review framing, and this component's own vocabulary is
-    // original/modified — none of which is right for everyone, so none of it is hardcoded.
-    // Pass already-localized strings; the host owns that choice.
-    originalLabel: 'Original',
-    modifiedLabel: 'Modified',
-  }
 
   static shadowStyleSpec = {
     /*

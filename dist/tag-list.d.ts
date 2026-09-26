@@ -1,5 +1,9 @@
-import { Component as WebComponent, ElementCreator, XinStyleSheet } from 'tosijs';
-export declare class TosiTag extends WebComponent {
+import { ElementCreator, XinStyleSheet } from 'tosijs';
+declare const TosiTag_base: import("tosijs").WithAttributes<{
+    caption: string;
+    removeable: boolean;
+}>;
+export declare class TosiTag extends TosiTag_base {
     static preferredTagName: string;
     static lightStyleSpec: {
         ':host': {
@@ -46,10 +50,6 @@ export declare class TosiTag extends WebComponent {
             opacity: string;
         };
     };
-    static initAttributes: {
-        caption: string;
-        removeable: boolean;
-    };
     removeCallback: (event: Event) => void;
     content: () => HTMLSpanElement[];
 }
@@ -68,19 +68,19 @@ interface Tag {
     icon?: string | HTMLElement;
 }
 type TagList = (string | Tag | null)[];
-export declare class TosiTagList extends WebComponent {
+declare const TosiTagList_base: import("tosijs").WithAttributes<{
+    name: string;
+    textEntry: boolean;
+    editable: boolean;
+    placeholder: string;
+    disabled: boolean;
+    required: boolean;
+}>;
+export declare class TosiTagList extends TosiTagList_base {
     #private;
     static preferredTagName: string;
     static lightStyleSpec: XinStyleSheet;
     static formAssociated: boolean;
-    static initAttributes: {
-        name: string;
-        textEntry: boolean;
-        editable: boolean;
-        placeholder: string;
-        disabled: boolean;
-        required: boolean;
-    };
     value: string;
     get tags(): string[];
     set tags(v: string[]);

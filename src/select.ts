@@ -218,6 +218,7 @@ import {
   vars,
   throttle,
   deprecated,
+  withAttributes,
 } from 'tosijs'
 import { icons } from './icons.js'
 import {
@@ -273,7 +274,22 @@ interface SelectParts extends PartsMap {
   value: HTMLInputElement
 }
 
-export class TosiSelect extends Component<SelectParts> {
+export class TosiSelect extends withAttributes({
+  editable: false,
+  placeholder: '',
+  showIcon: false,
+  hideCaption: false,
+  localized: false,
+  disabled: false,
+  required: false,
+  name: '',
+  /*
+  Extra class for the popped listbox. Same reasoning as `<tosi-menu>`'s (#148): the popup
+  mounts in a body-level `<tosi-float>`, so it is not a descendant of this element and
+  custom properties set here never reach it.
+  */
+  menuClass: '',
+})<SelectParts> {
   static preferredTagName = 'tosi-select'
   static formAssociated = true
 
@@ -329,23 +345,6 @@ export class TosiSelect extends Component<SelectParts> {
       textOverflow: 'ellipsis',
       background: 'transparent',
     },
-  }
-
-  static initAttributes = {
-    editable: false,
-    placeholder: '',
-    showIcon: false,
-    hideCaption: false,
-    localized: false,
-    disabled: false,
-    required: false,
-    name: '',
-    /*
-    Extra class for the popped listbox. Same reasoning as `<tosi-menu>`'s (#148): the popup
-    mounts in a body-level `<tosi-float>`, so it is not a descendant of this element and
-    custom properties set here never reach it.
-    */
-    menuClass: '',
   }
 
   private _options: SelectOptions = []

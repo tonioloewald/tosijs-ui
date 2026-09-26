@@ -464,7 +464,13 @@ context = {
 
 /*{ "parent": "Components" }*/
 
-import { Component, ElementCreator, elements, tosi } from 'tosijs'
+import {
+  Component,
+  ElementCreator,
+  elements,
+  tosi,
+  withAttributes,
+} from 'tosijs'
 import { codeEditor, CodeEditor } from '../code-editor.js'
 import { tosiTabs } from '../tab-selector.js'
 import { icons } from '../icons.js'
@@ -589,19 +595,17 @@ export function disableTests(): void {
   updateTestsEnabledClass()
 }
 
-export class LiveExample extends Component<ExampleParts> {
+export class LiveExample extends withAttributes({
+  persistToDom: false,
+  iframe: false,
+  // Execution mode: 'inline' (default — runs in the page against your working
+  // library), 'iframe' (DOM/CSS isolation, still your working library), or 'ide'
+  // (fully sandboxed, real published deps — the standalone-app mode). Set from a
+  // `<lang>:<mode>` fence by insert-examples; `iframe` boolean is a back-compat alias.
+  mode: '',
+})<ExampleParts> {
   static preferredTagName = 'tosi-example'
   static lightStyleSpec = liveExampleStyleSpec
-
-  static initAttributes = {
-    persistToDom: false,
-    iframe: false,
-    // Execution mode: 'inline' (default — runs in the page against your working
-    // library), 'iframe' (DOM/CSS isolation, still your working library), or 'ide'
-    // (fully sandboxed, real published deps — the standalone-app mode). Set from a
-    // `<lang>:<mode>` fence by insert-examples; `iframe` boolean is a back-compat alias.
-    mode: '',
-  }
 
   /** Resolved execution mode — `mode` attribute wins; `iframe` boolean is the alias. */
   get effectiveMode(): 'inline' | 'iframe' | 'ide' {

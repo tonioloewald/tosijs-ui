@@ -151,6 +151,7 @@ import {
   ElementCreator,
   elements,
   PartsMap,
+  withAttributes,
 } from 'tosijs'
 import { icons } from './icons.js'
 import { tosiSelect, TosiSelect, SelectOption } from './select.js'
@@ -316,7 +317,11 @@ interface FilterPartParts extends PartsMap {
   remove: HTMLButtonElement
 }
 
-export class FilterPart extends WebComponent<FilterPartParts> {
+export class FilterPart extends withAttributes({
+  haystack: '*',
+  condition: 'contains',
+  needle: '',
+})<FilterPartParts> {
   static preferredTagName = 'tosi-filter-part'
 
   static lightStyleSpec = {
@@ -342,12 +347,6 @@ export class FilterPart extends WebComponent<FilterPartParts> {
       content: ' ',
       flex: '1 1 auto',
     },
-  }
-
-  static initAttributes = {
-    haystack: '*',
-    condition: 'contains',
-    needle: '',
   }
 
   fields: Fields = []

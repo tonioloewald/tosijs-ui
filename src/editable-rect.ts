@@ -70,7 +70,7 @@ After an element's position, size, or rotation are adjusted a `change` event is 
 
 /*{ "parent": "Components" }*/
 
-import { Component, elements, vars } from 'tosijs'
+import { Component, elements, vars, withAttributes } from 'tosijs'
 import { icons } from './icons.js'
 import { trackDrag } from './track-drag.js'
 
@@ -85,13 +85,11 @@ interface Locks {
 
 type Side = keyof Locks
 
-export class EditableRect extends Component {
+export class EditableRect extends withAttributes({
+  rotationSnap: 0,
+  positionSnap: 0,
+}) {
   static preferredTagName = 'tosi-editable'
-
-  static initAttributes = {
-    rotationSnap: 0,
-    positionSnap: 0,
-  }
 
   static angleSize = 15
   static gridSize = 8

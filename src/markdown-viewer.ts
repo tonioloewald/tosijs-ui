@@ -1,4 +1,4 @@
-import { Component, ElementCreator, xin } from 'tosijs'
+import { Component, ElementCreator, xin, withAttributes } from 'tosijs'
 import { marked, MarkedOptions } from 'marked'
 import { sanitizeInPlace, isSafeNavigationUrl } from 'tosijs-kilpi'
 
@@ -146,7 +146,12 @@ function populate(basePath: string, source?: any): string {
   )
 }
 
-export class TosiMd extends Component {
+export class TosiMd extends withAttributes({
+  src: '',
+  elements: false,
+  // 'on' | 'off'. Unset renders unsanitized and warns once, until 1.16 makes 'on' the default.
+  sanitize: '',
+}) {
   static preferredTagName = 'tosi-md'
 
   /**
@@ -154,13 +159,6 @@ export class TosiMd extends Component {
   not per element — fifty `<tosi-md>` would otherwise log fifty identical lines.
   */
   static warnedUnsanitized = false
-
-  static initAttributes = {
-    src: '',
-    elements: false,
-    // 'on' | 'off'. Unset renders unsanitized and warns once, until 1.16 makes 'on' the default.
-    sanitize: '',
-  }
 
   context: { [key: string]: any } = {}
   value = ''

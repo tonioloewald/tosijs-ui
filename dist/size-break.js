@@ -1,4 +1,4 @@
-import { Component as WebComponent, elements } from 'tosijs';
+import { elements, withAttributes, } from 'tosijs';
 const { slot } = elements;
 /*#
 # size-break
@@ -70,12 +70,11 @@ of the slots if you like. The demo site uses them to hide the
 [jsdelivr](https://www.jsdelivr.com/) badge when space is tight.
 */
 /*{ "parent": "Components" }*/
-export class SizeBreak extends WebComponent {
+export class SizeBreak extends withAttributes({
+    minWidth: 0,
+    minHeight: 0,
+}) {
     static preferredTagName = 'tosi-sizebreak';
-    static initAttributes = {
-        minWidth: 0,
-        minHeight: 0,
-    };
     value = 'normal';
     content = [slot({ part: 'normal' }), slot({ part: 'small', name: 'small' })];
     static shadowStyleSpec = {

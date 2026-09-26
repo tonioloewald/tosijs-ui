@@ -143,6 +143,7 @@ import {
   elements,
   varDefault,
   deprecated,
+  withAttributes,
 } from 'tosijs'
 import { icons } from './icons.js'
 import type { IconElement } from './icon-types.js'
@@ -162,19 +163,17 @@ interface SegmentParts {
   options: HTMLElement
 }
 
-export class TosiSegmented extends WebComponent {
+export class TosiSegmented extends withAttributes({
+  direction: 'row',
+  other: '',
+  multiple: false,
+  name: '',
+  placeholder: 'Please specify…',
+  localized: false,
+  required: false,
+}) {
   static preferredTagName = 'tosi-segmented'
   static formAssociated = true
-
-  static initAttributes = {
-    direction: 'row',
-    other: '',
-    multiple: false,
-    name: '',
-    placeholder: 'Please specify…',
-    localized: false,
-    required: false,
-  }
 
   private _choices: Choice[] = []
 

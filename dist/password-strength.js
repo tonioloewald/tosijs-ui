@@ -157,7 +157,7 @@ found in Weakpass's database (and spit out extra info to the console).
 `digest(s: string, method="sha-1"): Promise<string>` is just a nice wrapper for `crypto.digest`.
 */
 /*{ "parent": "Form Components" }*/
-import { Component, elements, vars, varDefault } from 'tosijs';
+import { elements, vars, varDefault, withAttributes } from 'tosijs';
 export const digest = async (s, method = 'SHA-1') => {
     // Convert password to an ArrayBuffer
     const encoder = new TextEncoder();
@@ -179,7 +179,11 @@ export const isBreached = async (password) => {
     return response.status !== 404;
 };
 const { span, tosiSlot } = elements;
-export class TosiPasswordStrength extends Component {
+export class TosiPasswordStrength extends withAttributes({
+    minLength: 8,
+    goodLength: 12,
+    indicatorColors: '#f00,#f40,#f80,#ef0,#8f0,#0a2',
+}) {
     static preferredTagName = 'tosi-password-strength';
     static lightStyleSpec = {
         ':host': {
@@ -217,11 +221,6 @@ export class TosiPasswordStrength extends Component {
             lineHeight: varDefault.meterHeight('24px'),
             textAlign: 'center',
         },
-    };
-    static initAttributes = {
-        minLength: 8,
-        goodLength: 12,
-        indicatorColors: '#f00,#f40,#f80,#ef0,#8f0,#0a2',
     };
     descriptionColors = '#000,#000,#000,#000,#000,#fff';
     issues = {

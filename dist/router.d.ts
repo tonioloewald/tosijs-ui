@@ -1,4 +1,4 @@
-import { Component, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 export interface RouteParams {
     [key: string]: string;
 }
@@ -26,13 +26,14 @@ export declare const router: {
 export declare function getRouterParams(): RouteParams;
 export declare function defineRoutes(routes: RouteDefinition[], options?: RouterOptions): void;
 export declare function navigate(path: string): void;
-export declare class TosiRouteView extends Component {
+declare const TosiRouteView_base: import("tosijs").WithAttributes<{
+    name: string;
+}>;
+export declare class TosiRouteView extends TosiRouteView_base {
     static preferredTagName: string;
-    static initAttributes: {
-        name: string;
-    };
     content: null;
     connectedCallback(): void;
     disconnectedCallback(): void;
 }
 export declare const tosiRouteView: ElementCreator<TosiRouteView>;
+export {};

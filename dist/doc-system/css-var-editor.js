@@ -6,7 +6,7 @@ is registered as a side effect of loading the doc-system (see doc-system.ts) so 
 can drop `<tosi-css-var-editor element-selector="tosi-widget">` under an example; it is
 deliberately not exported from `tosijs-ui`.
 */
-import { Component as WebComponent, elements, Color, } from 'tosijs';
+import { elements, Color, withAttributes, } from 'tosijs';
 import { tosiForm, tosiField } from '../form.js';
 const { h2, code } = elements;
 // A value is a color if it's a hex literal or an rgb()/hsl() (with or without alpha)
@@ -14,12 +14,11 @@ const { h2, code } = elements;
 // regex (`[\d()a-fA-F]+`) rejected the commas and spaces in `rgb(255, 0, 0)`, so every
 // functional color fell through to a plain text field.
 const COLOR_RE = /^(#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([^)]*\))$/i;
-class TosiCssVarEditor extends WebComponent {
+class TosiCssVarEditor extends withAttributes({
+    elementSelector: '',
+    targetSelector: '',
+}) {
     static preferredTagName = 'tosi-css-var-editor';
-    static initAttributes = {
-        elementSelector: '',
-        targetSelector: '',
-    };
     content = () => [
         h2({ part: 'title' }, 'CSS variables'),
         tosiForm({ part: 'variables', changeCallback: this.update }),

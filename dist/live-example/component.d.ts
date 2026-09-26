@@ -1,4 +1,4 @@
-import { Component, ElementCreator } from 'tosijs';
+import { ElementCreator } from 'tosijs';
 import { Dialect, ExampleContext, ExampleParts } from './types.js';
 export declare const testManager: {
     enabled: import("tosijs").BoxedScalar<boolean>;
@@ -24,7 +24,12 @@ export declare function enableTests(): void;
 export declare function pageTestCount(): number;
 /** Disable test mode */
 export declare function disableTests(): void;
-export declare class LiveExample extends Component<ExampleParts> {
+declare const LiveExample_base: import("tosijs").WithAttributes<{
+    persistToDom: boolean;
+    iframe: boolean;
+    mode: string;
+}>;
+export declare class LiveExample extends LiveExample_base<ExampleParts> {
     static preferredTagName: string;
     static lightStyleSpec: {
         ':host': {
@@ -228,11 +233,6 @@ export declare class LiveExample extends Component<ExampleParts> {
             opacity: string;
         };
     };
-    static initAttributes: {
-        persistToDom: boolean;
-        iframe: boolean;
-        mode: string;
-    };
     /** Resolved execution mode — `mode` attribute wins; `iframe` boolean is the alias. */
     get effectiveMode(): 'inline' | 'iframe' | 'ide';
     prefix: string;
@@ -340,3 +340,4 @@ export declare class LiveExample extends Component<ExampleParts> {
     render(): void;
 }
 export declare const liveExample: ElementCreator<LiveExample>;
+export {};
