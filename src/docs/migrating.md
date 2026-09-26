@@ -1,11 +1,42 @@
 # Migrating from older versions
 
-<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
+<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0's tosijs 1.10 typing, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
 
 Notices for releases you may be upgrading *past*. If you are starting fresh, none of
 this applies — go to the [Quick Start](/) instead.
 
 Current releases are described in [CHANGELOG.md](https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md).
+
+## tosijs 1.10: components are typed from their attributes — 1.16.0
+
+tosijs-ui now needs **tosijs `^1.10.3`**; upgrade it alongside. Nothing changes at runtime. What
+changes is what TypeScript knows about a component instance:
+
+```typescript
+const rating = tosiRating()
+rating.max        // number — was unknown to TypeScript on tosijs 1.9
+rating.maxx       // now a type error (a typo)
+rating.readonly = 'yes' // now a type error (wrong type)
+```
+
+So TypeScript code that read or wrote a property a component does not have, or with the wrong
+type, stops compiling. That is the point: those were bugs the old typing hid. (Our own
+migration found one: filter-builder read a `selectedIndex` that `<tosi-select>` never had, and
+returned an empty string every time.)
+
+**Your own components** built on tosijs `Component` get the same benefit by moving
+`static initAttributes` into the class header, as tosijs's migration notes describe:
+
+```typescript
+// before
+class MyWidget extends Component<MyParts> {
+  static initAttributes = { size: 3, label: '' }
+}
+// after
+class MyWidget extends withAttributes({ size: 3, label: '' })<MyParts> {}
+```
+
+Element-creator arguments are not typed by this: `tosiRating({ maxx: 1 })` still compiles.
 
 ## The doc-system cluster moved off the root barrel — 1.14.0
 

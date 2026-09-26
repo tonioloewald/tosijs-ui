@@ -508,7 +508,13 @@ inferSchema, unenforcedKeywords })`, and all three matter (omitting the third ma
   the iife and to anything built from it.
 
   The peer floor **encodes specific
-  upstream fixes, not a date** — `^1.9.1` is required for the **agent-surface security fix**
+  upstream fixes, not a date** — `^1.10.3` (1.16.0) is required because every component now
+  declares its attributes with `withAttributes()`, which types a component INSTANCE from its
+  attribute values once `Component`'s `[key: string]: any` index signature is gone (tosijs#36,
+  1.10.0), and whose declarations only EMIT from 1.10.1 on (tosijs#38, TS2742 — it blocked this
+  adoption from 2026-09-04 to 09-26). Creator ARGUMENTS stay untyped (tosijs's `ElementProps`
+  keeps an index signature); don't claim otherwise. Before that, `^1.9.1` was required for the
+  **agent-surface security fix**
   (1.9.0) plus the runtime deprecation cleanup that lands only in 1.9.1: before it, every page
   of every doc site logged deprecations a consumer could not act on — `xinValue…` from tosijs
   reading its own deprecated proxy property (tosijs#31), and `bindText`, whose deprecation was

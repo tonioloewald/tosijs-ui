@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.16.0 (unreleased)
+
+### tosijs 1.10: components are typed from their attributes
+
+**Breaking, type-level only: the tosijs peer is now `^1.10.3`.** Every component declares its
+attributes with tosijs's `withAttributes()`, so a component instance is typed from its attribute
+values: `tosiRating().max` is a `number`, a misspelt property is a type error, and so is
+assigning the wrong type. On tosijs 1.9 TypeScript did not know `max` existed at all, because
+`Component` carried an any-index signature that tosijs 1.10 removed (tosijs#36). Nothing changes
+at runtime. Element-creator *arguments* are not typed by this. See
+[Migrating](/migrating/) for your own components.
+
 ## 1.15.5
 
 ### `<tosi-select>` options can have keyboard shortcuts (#188)

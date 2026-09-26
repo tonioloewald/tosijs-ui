@@ -30,27 +30,49 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="../doc-system.css?v=58fb9d9e9160" data-tosi-doc-system />
   <title>Migrating from older versions — tosijs-ui</title>
-  <meta name="description" content="Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.11.0&#39;s validator seam, 1.9.1&#39;s Node resolution fix, 1.7.0&#39;s editor change and the 1.3.0 xinjs-ui rename." />
+  <meta name="description" content="Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0&#39;s tosijs 1.10 typing, 1.11.0&#39;s validator seam, 1.9.1&#39;s Node resolution fix, 1.7.0&#39;s editor change and the 1.3.0 xinjs-ui rename." />
   <link rel="canonical" href="https://ui.tosijs.net/migrating/" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="Migrating from older versions — tosijs-ui" />
-  <meta property="og:description" content="Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.11.0&#39;s validator seam, 1.9.1&#39;s Node resolution fix, 1.7.0&#39;s editor change and the 1.3.0 xinjs-ui rename." />
+  <meta property="og:description" content="Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0&#39;s tosijs 1.10 typing, 1.11.0&#39;s validator seam, 1.9.1&#39;s Node resolution fix, 1.7.0&#39;s editor change and the 1.3.0 xinjs-ui rename." />
   <meta property="og:url" content="https://ui.tosijs.net/migrating/" />
   <meta name="twitter:card" content="summary" />
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Migrating from older versions","description":"Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename.","url":"https://ui.tosijs.net/migrating/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Migrating from older versions","description":"Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0's tosijs 1.10 typing, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename.","url":"https://ui.tosijs.net/migrating/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"tosijs-ui","url":"https://ui.tosijs.net"}}</script>
   <link rel="icon" href="../favicon.svg" />
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=6bb6dbda626f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=3d6ed3f8fd95" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>Migrating from older versions</h1>
-<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
+<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0's tosijs 1.10 typing, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
 
 <p>Notices for releases you may be upgrading <em>past</em>. If you are starting fresh, none of
 this applies — go to the <a href="/">Quick Start</a> instead.</p>
 <p>Current releases are described in <a href="https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
+<h2>tosijs 1.10: components are typed from their attributes — 1.16.0</h2>
+<p>tosijs-ui now needs <strong>tosijs <code>^1.10.3</code></strong>; upgrade it alongside. Nothing changes at runtime. What
+changes is what TypeScript knows about a component instance:</p>
+<pre><code class="language-typescript" data-highlighted><span class="token keyword">const</span> rating <span class="token operator">=</span> <span class="token function">tosiRating</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+rating<span class="token punctuation">.</span>max        <span class="token comment">// number — was unknown to TypeScript on tosijs 1.9</span>
+rating<span class="token punctuation">.</span>maxx       <span class="token comment">// now a type error (a typo)</span>
+rating<span class="token punctuation">.</span><span class="token keyword">readonly</span> <span class="token operator">=</span> <span class="token string">'yes'</span> <span class="token comment">// now a type error (wrong type)</span>
+</code></pre>
+<p>So TypeScript code that read or wrote a property a component does not have, or with the wrong
+type, stops compiling. That is the point: those were bugs the old typing hid. (Our own
+migration found one: filter-builder read a <code>selectedIndex</code> that <code>&lt;tosi-select&gt;</code> never had, and
+returned an empty string every time.)</p>
+<p><strong>Your own components</strong> built on tosijs <code>Component</code> get the same benefit by moving
+<code>static initAttributes</code> into the class header, as tosijs&#39;s migration notes describe:</p>
+<pre><code class="language-typescript" data-highlighted><span class="token comment">// before</span>
+<span class="token keyword">class</span> <span class="token class-name">MyWidget</span> <span class="token keyword">extends</span> <span class="token class-name">Component<span class="token operator">&lt;</span>MyParts<span class="token operator">></span></span> <span class="token punctuation">{</span>
+  <span class="token keyword">static</span> initAttributes <span class="token operator">=</span> <span class="token punctuation">{</span> size<span class="token operator">:</span> <span class="token number">3</span><span class="token punctuation">,</span> label<span class="token operator">:</span> <span class="token string">''</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token comment">// after</span>
+<span class="token keyword">class</span> <span class="token class-name">MyWidget</span> <span class="token keyword">extends</span> <span class="token class-name">withAttributes</span><span class="token punctuation">(</span><span class="token punctuation">{</span> size<span class="token operator">:</span> <span class="token number">3</span><span class="token punctuation">,</span> label<span class="token operator">:</span> <span class="token string">''</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token operator">&lt;</span>MyParts<span class="token operator">></span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+</code></pre>
+<p>Element-creator arguments are not typed by this: <code>tosiRating({ maxx: 1 })</code> still compiles.</p>
 <h2>The doc-system cluster moved off the root barrel — 1.14.0</h2>
 <p>If you import <code>&lt;tosi-code&gt;</code>, the doc browser, <code>&lt;tosi-doc-system&gt;</code> or <code>&lt;live-example&gt;</code> from the
 package root, change the import. Everything else is unaffected.</p>
