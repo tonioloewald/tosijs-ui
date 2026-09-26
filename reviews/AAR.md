@@ -156,3 +156,25 @@ gap, recorded rather than hidden.
 - **`release-check` was red once, correctly:** a `[change]` bullet was unwritten and the
   security-surface bins had no heading of their own. Fixed with a `[note]`-only commit; exit 0
   at tag time.
+
+## 1.15.3 (2026-09-26) — first release through the staged-publish workflow
+
+- **The workflow's first run found four defects before anything reached npm**, each a clean
+  red before staging: Bun 1.4.0 vs 1.4.2 bundle differently (now pinned in `.bun-version`, and
+  local builds refuse a mismatch); `release-doctor`'s "tags ahead of npm" check could never pass
+  while publishing (exemption added upstream); doc-site sourcemaps leaked the builder's home
+  directory, for adopters too (fixed, tested, in the CHANGELOG); and `repository.url` still
+  named the pre-rename `xinjs-ui`, which provenance rejects. **None of the four lanes could have
+  found any of them**: each needed a different machine, a different Bun, or the registry.
+- **Reproducibility was assumed, not true.** `bun.lock` had been gitignored since 2025-11 with no
+  recorded reason; a fresh clone bundled newer CodeMirror and marked 18. It is now committed.
+- **The approval came from a phone, four hours after staging.** The 60-minute wait failed and its
+  advice ("re-run failed jobs") was wrong, since a re-run starts over. `verify_only` fixes that,
+  and its first run found a latent `Argument list too long` in the verification step that a
+  full run would have hit after approval. Verified: published shasum identical to the staged
+  tarball, provenance attached, smoke test green on the registry's copy.
+- **Caught at the release gate, not by any lane:** `sanitize="on"` rendered the markdown
+  component's own form example empty (kilpi removes `<form>` and its subtree). That example had
+  no assertions; it has one now.
+- **Friction:** the unpublished tag moved five times. Fine while nothing is published, but the
+  pre-staging checks should run BEFORE tagging next time, as a dry run of the workflow.
