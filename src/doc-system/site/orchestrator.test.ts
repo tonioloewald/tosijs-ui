@@ -18,6 +18,18 @@ current run BUILT, so a deleted bundle is invisible to all of them.
 The doc `outputDir` wipe is fine and stays: that directory is wholly generated and announced.
 */
 describe('shouldCleanDist (#130)', () => {
+  test('libraryBundle owns dist (#169) — cleaned, unless a libraryBuild function overrides', () => {
+    expect(
+      shouldCleanDist({ libraryBundle: { entries: ['src/index.ts'] } })
+    ).toBe(true)
+    expect(
+      shouldCleanDist({
+        libraryBundle: { entries: [] },
+        libraryBuild: () => {},
+      })
+    ).toBe(false)
+  })
+
   test('a consumer-supplied libraryBuild owns dist — never cleaned', () => {
     expect(shouldCleanDist({ libraryBuild: () => {} })).toBe(false)
   })

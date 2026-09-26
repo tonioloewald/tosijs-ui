@@ -28,6 +28,7 @@ export declare function shouldCleanDist(config: {
     emitLibrary?: boolean;
     libraryTsconfig?: string;
     libraryBuild?: unknown;
+    libraryBundle?: unknown;
 }): boolean;
 export declare function buildSite(config: SiteConfig, opts?: {
     skipAudit?: boolean;

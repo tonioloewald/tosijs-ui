@@ -11,6 +11,7 @@ Imports here are type-only so this module stays free of runtime/DOM dependencies
 (it is loaded by the build, which has no DOM).
 */
 
+import type { LibraryBundle } from './library-bundle.js'
 import type { ProjectLinks, LinkItem } from '../../doc-browser.js'
 import type { DocSystemTheme } from '../doc-system-styles.js'
 import type { Doc } from './docs.js'
@@ -230,10 +231,23 @@ export interface SiteConfig {
    */
   prebuild?: () => void | Promise<void>
   /**
-   * Also build the library: `tsc --declaration --incremental --outDir dist`
-   * (ESM + types). Default false. Repos whose single build publishes BOTH an
-   * npm package and its doc site (the tosijs-* libs) set this true; a pure docs
-   * site omits it. Ignored when `libraryTsconfig` is set.
+   * Build the library as a BUNDLE — the recommended library build (#169). `bun build` bundles
+   * `entries` with splitting into `dist/` (declared dependencies and peers stay imports), then
+   * `tsc` emits declarations only. The output is checked for relative imports without a file
+   * extension, which Node cannot load, and the build fails on any. Owns `dist/` (cleaned each
+   * build). Takes precedence over `libraryTsconfig` / `emitLibrary`; a `libraryBuild`
+   * function takes precedence over it.
+   *
+   * ```ts
+   * libraryBundle: { entries: ['src/index.ts', 'src/core.ts'] }
+   * ```
+   */
+  libraryBundle?: LibraryBundle
+  /**
+   * Also build the library: `tsc --declaration --outDir dist` (ESM + types). Default false.
+   * **Prefer `libraryBundle`:** a bare tsc copies bundler-style specifiers (`from './model'`)
+   * into `dist/` unchanged, and Node cannot load that; the build warns when it happens.
+   * Ignored when `libraryTsconfig` is set.
    */
   emitLibrary?: boolean
   /**

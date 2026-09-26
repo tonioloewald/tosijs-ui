@@ -151,6 +151,7 @@ try {
       // which is not in the default tosijs/tosijs-ui context. Without contextKeys reaching
       // the checker the build fails — and that plumbing is invisible to unit tests (#71).
       `  checkExamples: { contextKeys: ['tosijs', 'tosijs-ui', 'consumer-smoke'] },\n` +
+      `  libraryBundle: { entries: ['src/lib.ts'], tsconfig: 'tsconfig.lib.json' },\n` +
       `  port: 8018,\n` +
       `  preview: { host: 'nobody@example.invalid', tunnel: {} },\n` +
       `})\n`
@@ -176,6 +177,27 @@ try {
       `export const hello = 'hi'\n` +
       `export const used = [tosiTable, tosiSchemaForm].length\n`
   )
+  /*
+  A library in bundler style — `export * from './model'`, no extension — built by
+  `libraryBundle` (#169). A bare tsc copies that specifier into dist/ and Node cannot load it;
+  the bundle must, and this is the only lane that drives it through the INSTALLED buildSite.
+  */
+  await Bun.write(`${proj}/src/lib.ts`, `export * from './model'\n`)
+  await Bun.write(`${proj}/src/model.ts`, `export const answer: number = 42\n`)
+  await Bun.write(
+    `${proj}/tsconfig.lib.json`,
+    JSON.stringify({
+      compilerOptions: {
+        target: 'es2022',
+        module: 'esnext',
+        moduleResolution: 'bundler',
+        strict: true,
+        rootDir: 'src',
+        skipLibCheck: true,
+      },
+      files: ['src/lib.ts', 'src/model.ts'],
+    })
+  )
   await Bun.write(
     `${proj}/build.ts`,
     `import { buildSite } from 'tosijs-ui/site'\n` +
@@ -185,8 +207,9 @@ try {
 
   console.log('📥 installing the tarball …')
   // marked + happy-dom are documented build-time peers. chokidar is deliberately NOT
-  // installed: a plain build must not need a file watcher (#32).
-  const install = await $`bun add ${tarball} marked happy-dom`
+  // installed: a plain build must not need a file watcher (#32). typescript, because this
+  // consumer is a library: libraryBundle's declaration pass runs its tsc, as any TS library has.
+  const install = await $`bun add ${tarball} marked happy-dom typescript`
     .cwd(proj)
     .nothrow()
     .quiet()
@@ -591,6 +614,22 @@ try {
   packed blob store, committed and published forever (#69). This project has no
   `bundleOutDir`, so it must get the default.
   */
+  {
+    const node =
+      await $`node -e ${"import('./dist/lib.js').then(m => console.log('answer=' + m.answer))"}`
+        .cwd(proj)
+        .nothrow()
+        .quiet()
+    check(
+      'libraryBundle builds a dist/ that NODE can import (#169)',
+      node.stdout.toString().includes('answer=42'),
+      (node.stdout.toString() + node.stderr.toString()).slice(0, 300)
+    )
+    check(
+      'libraryBundle emits declarations',
+      existsSync(path.join(proj, 'dist', 'lib.d.ts'))
+    )
+  }
   check(
     'the hydration bundle lands in the site output',
     existsSync(path.join(proj, 'docs', 'iife.js'))

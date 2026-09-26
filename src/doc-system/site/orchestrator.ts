@@ -17,12 +17,17 @@ import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js'
 import { listEpubVolumes, renderEpubDownloads } from './epub-volumes.js'
 import { buildSlugMap } from '../routing.js'
 import { computeAssetStamp, missingStampInputWarning } from './asset-stamp.js'
-import { existsSync, mkdirSync, unlinkSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync, unlinkSync } from 'fs'
 import { tmpdir } from 'os'
 import { $, spawn } from 'bun'
 import type { SiteConfig } from './site-config.js'
 import { extractDocs } from './docs.js'
 import { relocateSourcemaps } from './sourcemap-relocate.js'
+import {
+  bundleBuildArgs,
+  bundleDeclarationArgs,
+  extensionlessImports,
+} from './library-bundle.js'
 import {
   checkExamples,
   formatExampleProblems,
@@ -444,11 +449,16 @@ export function shouldCleanDist(config: {
   emitLibrary?: boolean
   libraryTsconfig?: string
   libraryBuild?: unknown
+  libraryBundle?: unknown
 }): boolean {
   // A consumer-supplied build owns the directory and may emit a subset. Never clean it,
   // even alongside the other flags — the consumer's function is the authority.
   if (config.libraryBuild) return false
-  return config.emitLibrary === true || Boolean(config.libraryTsconfig)
+  return (
+    config.emitLibrary === true ||
+    Boolean(config.libraryTsconfig) ||
+    Boolean(config.libraryBundle)
+  )
 }
 
 /*
@@ -896,6 +906,43 @@ export async function buildSite(
           root: path.resolve(PROJECT_ROOT),
           tsconfig: config.libraryTsconfig,
         })
+      } else if (config.libraryBundle) {
+        // The bundled library build (#169): child processes only, never Bun.build() here.
+        const pkg = JSON.parse(
+          readFileSync(path.resolve(PROJECT_ROOT, 'package.json'), 'utf8')
+        )
+        for (const [what, argv] of [
+          ['bun build', bundleBuildArgs(config.libraryBundle, pkg, DIST)],
+          [
+            'tsc --emitDeclarationOnly',
+            bundleDeclarationArgs(config.libraryBundle, DIST),
+          ],
+        ] as const) {
+          const child = spawn([...argv], { stdout: 'pipe', stderr: 'pipe' })
+          const output = await drainChild(child)
+          if ((await child.exited) !== 0) {
+            console.error(output)
+            console.error(
+              `❌ libraryBundle: ${what} FAILED — dist/ is incomplete. Build marked failed.` +
+                (/Script not found "tsc"/.test(output)
+                  ? ' TypeScript is not installed in this project: `bun add -d typescript`.'
+                  : '')
+            )
+            libraryBuildFailed = true
+            break
+          }
+        }
+        if (!libraryBuildFailed) {
+          const bad = extensionlessImports(DIST)
+          if (bad.length) {
+            console.error(
+              `❌ libraryBundle: dist/ has relative imports without a file extension, which Node cannot load:\n  ${bad.join(
+                '\n  '
+              )}`
+            )
+            libraryBuildFailed = true
+          }
+        }
       } else if (config.libraryTsconfig) {
         // Consumer-controlled library build (handles root noEmit, removeComments,
         // outDir, etc.). tsc output is left visible so the errors are readable.
@@ -923,6 +970,30 @@ export async function buildSite(
               `be stale or contain type errors. Build marked failed.`
           )
           libraryBuildFailed = true
+        }
+      }
+
+      /*
+      A bare tsc copies bundler-style specifiers into dist/ unchanged, and Node cannot load the
+      result (#169). Say so loudly on those two paths. Not a failure: it would break working
+      builds for consumers who only ever bundle, on a patch upgrade. libraryBundle fails on it.
+      */
+      if (
+        !libraryBuildFailed &&
+        !config.libraryBuild &&
+        !config.libraryBundle &&
+        (config.libraryTsconfig || config.emitLibrary) &&
+        existsSync(DIST)
+      ) {
+        const bad = extensionlessImports(DIST)
+        if (bad.length) {
+          console.warn(
+            `⚠️  dist/ has ${bad.length} relative import(s) without a file extension — Node rejects them ` +
+              `(ERR_MODULE_NOT_FOUND), even though Bun and bundlers resolve them. Use \`libraryBundle\` ` +
+              `instead of ${
+                config.libraryTsconfig ? 'libraryTsconfig' : 'emitLibrary'
+              } (tosijs-ui#169). First: ${bad[0]}`
+          )
         }
       }
 

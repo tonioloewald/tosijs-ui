@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=2f9fbb40e568" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=154507161c62" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -478,12 +478,17 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <tbody><tr>
 <td><code>prebuild</code></td>
 <td>—</td>
-<td><code>() =&gt; void | Promise&lt;void&gt;</code> run first, for source-tree codegen (version stamp, icon data, …). The output dir is reset after it runs — don&#39;t write there. <code>dist/</code> is reset only when <code>emitLibrary</code>/<code>libraryTsconfig</code> own it (#130)</td>
+<td><code>() =&gt; void | Promise&lt;void&gt;</code> run first, for source-tree codegen (version stamp, icon data, …). The output dir is reset after it runs — don&#39;t write there. <code>dist/</code> is reset only when <code>libraryBundle</code>/<code>emitLibrary</code>/<code>libraryTsconfig</code> own it (#130)</td>
+</tr>
+<tr>
+<td><code>libraryBundle</code></td>
+<td>—</td>
+<td><strong>the recommended library build (#169).</strong> <code>{ entries, externals?, tsconfig?, target? }</code>: <code>bun build</code> bundles the entries with splitting into <code>dist/</code> (every declared dependency and peer stays an import), then <code>tsc --emitDeclarationOnly</code>. Fails the build if <code>dist/</code> has a relative import without a file extension, which Node cannot load. Needs <code>typescript</code> installed. Supersedes <code>libraryTsconfig</code>/<code>emitLibrary</code>; <code>libraryBuild</code> supersedes it</td>
 </tr>
 <tr>
 <td><code>emitLibrary</code></td>
 <td><code>false</code></td>
-<td>also build the library: <code>tsc --declaration --incremental --outDir dist</code> (for repos publishing a package + their docs)</td>
+<td>also build the library: <code>tsc --declaration --outDir dist</code>. <strong>Prefer <code>libraryBundle</code></strong> — a bare tsc copies bundler-style specifiers into a <code>dist/</code> Node cannot load, and the build warns when it does (#169)</td>
 </tr>
 <tr>
 <td><code>libraryTsconfig</code></td>
@@ -1705,7 +1710,7 @@ resolves under that slug, not the site root. Use <strong>root-absolute</strong> 
 <li><strong><code>prebuild</code> runs before <code>outputDir</code> is wiped.</strong> Use it for source-tree codegen
 (version stamp, icon data, …) and write assets into a <code>staticDirs</code> folder — not the
 output dir, which the build resets immediately after.</li>
-<li><strong><code>dist/</code> is reset only when this build owns it (#130).</strong> <code>emitLibrary</code> or
+<li><strong><code>dist/</code> is reset only when this build owns it (#130).</strong> <code>libraryBundle</code>, <code>emitLibrary</code> or
 <code>libraryTsconfig</code> means the build produces <code>dist/</code>, so it clears it first. A
 <code>libraryBuild</code> function owns the directory and may deliberately emit a subset, so it is
 never cleared — and with no library configured, the doc build writes nothing into <code>dist/</code>
