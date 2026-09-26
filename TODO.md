@@ -2,12 +2,6 @@
 
 ## Open
 
-- [ ] **Stop shipping `dist/tsconfig.tsbuildinfo`.** It is TypeScript's incremental-build cache:
-      committed, packed into every tarball, useful to no consumer, and it differs between a
-      first and a second build. Found when the publish workflow's (since removed) duplicate
-      rebuild step failed on it. Point `tsBuildInfoFile` outside `dist/` (e.g.
-      `node_modules/.cache/`), delete the committed copy, and check the tarball listing.
-
 - [ ] **1.16: make `<tosi-md sanitize>` default to `on` (#179).** 1.15.3 shipped it opt-in, with a
       once-per-page warning on unset elements that names 1.16 as the switch. At 1.16: treat unset
       as `on` in `#sanitizeMode` (`src/markdown-viewer.ts`), delete the warning and

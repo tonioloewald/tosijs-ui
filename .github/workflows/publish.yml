@@ -9,6 +9,8 @@
 #   4. (human)  approve with 2FA: npmjs.com → package → Staged Packages (works from a phone)
 #   5. (this)   wait for the registry, then prove what shipped is what was built and tested
 #
+# Before tagging, run it with `dry_run` on the branch: every check, no staging, no tag to move.
+#
 # Approved after the 60-minute wait? Run it again with `verify_only` — a re-run starts over and
 # stops at "already published". npm pack is deterministic, so verify_only re-packs the tag.
 #
@@ -24,9 +26,14 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to publish, e.g. v1.15.3 or v1.16.0-beta.1'
+        description: 'Tag to publish, e.g. v1.15.3 or v1.16.0-beta.1 (a branch, with dry_run)'
         required: true
         type: string
+      dry_run:
+        description: 'Run every check up to staging and stop. `tag` may be a branch (e.g. main) — use it BEFORE tagging'
+        required: false
+        type: boolean
+        default: false
       verify_only:
         description: 'Only verify an already-approved publish (use when approval came after the 60-minute wait)'
         required: false
@@ -52,7 +59,7 @@ jobs:
       - name: Check out the tag
         uses: actions/checkout@v4
         with:
-          ref: refs/tags/${{ inputs.tag }}
+          ref: ${{ inputs.dry_run && inputs.tag || format('refs/tags/{0}', inputs.tag) }}
 
       # release-doctor lives in the shared practices repo (public).
       - name: Check out tosijs-coding-practices
@@ -85,7 +92,9 @@ jobs:
           set -euo pipefail
           VERSION=$(node -p "require('./package.json').version")
           NAME=$(node -p "require('./package.json').name")
-          if [ "$TAG" != "v$VERSION" ]; then
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "dry run at $TAG: the tag/version match is not checked"
+          elif [ "$TAG" != "v$VERSION" ]; then
             echo "::error::tag $TAG does not match package.json version $VERSION"
             exit 1
           fi
@@ -109,7 +118,7 @@ jobs:
           # Straight from the registry, not npm's cache (which has served stale versions
           # minutes after a publish).
           LATEST_BEFORE=$(curl -fsS -H 'Cache-Control: no-cache' "https://registry.npmjs.org/$NAME" \
-            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const d=JSON.parse(s);const has=!!(d.versions&&d.versions[process.argv[1]]);const verify=process.argv[2]==='true';if(has&&!verify){console.error('::error::'+process.argv[1]+' is already published — to verify it, run with verify_only');process.exit(1)}if(!has&&verify){console.error('::error::'+process.argv[1]+' is not published — nothing to verify');process.exit(1)}console.log(d['dist-tags'].latest)})" "$VERSION" "${{ inputs.verify_only }}")
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const d=JSON.parse(s);const has=!!(d.versions&&d.versions[process.argv[1]]);const verify=process.argv[2]==='true';const dry=process.argv[3]==='true';if(has&&dry){console.error('::warning::'+process.argv[1]+' is already published — fine for a dry run, not for a real one')}else if(has&&!verify){console.error('::error::'+process.argv[1]+' is already published — to verify it, run with verify_only');process.exit(1)}if(!has&&verify){console.error('::error::'+process.argv[1]+' is not published — nothing to verify');process.exit(1)}console.log(d['dist-tags'].latest)})" "$VERSION" "${{ inputs.verify_only }}" "${{ inputs.dry_run }}")
           {
             echo "version=$VERSION"
             echo "name=$NAME"
@@ -121,20 +130,29 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      # Build, then require every TRACKED file unchanged. A repo that commits its build output
-      # must reproduce it exactly (so what ships is what was tested locally); a repo that does
-      # not gets its output built here from the frozen lockfile and pinned Bun.
+      # Build, then require every tracked file THAT SHIPS to be unchanged. A repo that commits its
+      # build output must reproduce it exactly, so what ships is what was tested locally; a repo
+      # that does not gets it built here from the frozen lockfile and pinned Bun. Files that do
+      # not ship (a site's ePub, a version stamp) are not this check's business.
       - name: Build
         run: |
           set -euo pipefail
           if node -e "process.exit(require('./package.json').scripts?.build ? 0 : 1)"; then
             bun run build
           fi
-          if ! git diff --quiet; then
-            echo "::error::building at $TAG changed tracked files — the committed build output is stale, or Bun/dependencies differ from the release machine"
-            git diff --stat
-            exit 1
-          fi
+          npm pack --dry-run --json 2>/dev/null > "$RUNNER_TEMP/files.json"
+          git diff --name-only > "$RUNNER_TEMP/changed.txt"
+          node -e '
+            const fs = require("fs")
+            const shipped = new Set(JSON.parse(fs.readFileSync(process.argv[1], "utf8"))[0].files.map((f) => f.path))
+            const changed = fs.readFileSync(process.argv[2], "utf8").split("\n").filter(Boolean)
+            const bad = changed.filter((f) => shipped.has(f))
+            if (bad.length) {
+              console.error("::error::building changed files that SHIP — the committed build is stale, or Bun/dependencies differ from the release machine:\n  " + bad.join("\n  "))
+              process.exit(1)
+            }
+            console.log(`✅ build reproduces every shipped tracked file (${changed.length} unshipped file(s) differ, ignored)`)
+          ' "$RUNNER_TEMP/files.json" "$RUNNER_TEMP/changed.txt"
 
       - name: Pack
         id: pack
@@ -161,13 +179,13 @@ jobs:
         if: ${{ !inputs.verify_only }}
         env:
           # This tag is ahead of npm by definition — it is the one being published.
-          RELEASE_DOCTOR_PUBLISHING: ${{ inputs.tag }}
+          RELEASE_DOCTOR_PUBLISHING: ${{ !inputs.dry_run && inputs.tag || '' }}
         run: bun .practices/tools/release-doctor.ts
 
       # ---- nothing above this line has touched the registry ----
 
       - name: Stage
-        if: ${{ !inputs.verify_only }}
+        if: ${{ !inputs.verify_only && !inputs.dry_run }}
         id: stage
         run: |
           set -euo pipefail
@@ -187,7 +205,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Wait for approval
-        if: ${{ !inputs.verify_only }}
+        if: ${{ !inputs.verify_only && !inputs.dry_run }}
         run: |
           set -euo pipefail
           for i in $(seq 1 120); do
@@ -202,6 +220,7 @@ jobs:
           exit 1
 
       - name: Verify what shipped
+        if: ${{ !inputs.dry_run }}
         env:
           VERIFY_ONLY: ${{ inputs.verify_only }}
         run: |
@@ -232,6 +251,7 @@ jobs:
 
       # The smoke test once more, against the tarball adopters actually download.
       - name: Consumer smoke test (from the registry)
+        if: ${{ !inputs.dry_run }}
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/registry"
@@ -239,6 +259,7 @@ jobs:
           bun .practices/tools/publish-smoke.ts "$(ls "$RUNNER_TEMP"/registry/*.tgz)"
 
       - name: Summary
+        if: ${{ !inputs.dry_run }}
         run: |
           {
             echo "## ✅ ${{ steps.meta.outputs.name }}@${{ steps.meta.outputs.version }} is published and verified"

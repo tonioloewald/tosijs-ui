@@ -860,8 +860,9 @@ export async function buildSite(
           directory and may legitimately emit a subset, which is exactly the reported case.
         - nothing configured — NOT cleaned. Nothing here owns it.
 
-      Incidental win: `emitLibrary` runs `tsc --incremental`, whose `.tsbuildinfo` lives in
-      `dist/`. Wiping it every run meant incremental compilation never once did anything.
+      `emitLibrary` used to run `tsc --incremental`, whose `.tsbuildinfo` lived in `dist/`; wiping
+      it every run meant incremental compilation never once did anything. It no longer runs
+      incrementally at all — see the tsc call below for why moving the cache is not the fix.
       */
       if (shouldCleanDist(config)) {
         await $`rm -rf ${DIST}`.text()
@@ -907,8 +908,15 @@ export async function buildSite(
           libraryBuildFailed = true
         }
       } else if (config.emitLibrary) {
-        const r =
-          await $`bun tsc --declaration --incremental --outDir dist`.nothrow()
+        /*
+        NOT --incremental. Its .tsbuildinfo lived in dist/, so it shipped in every adopter's
+        tarball (and ours), and it differs between a first and a second build — which the publish
+        workflow's "shipped files reproduce" check rightly rejects. Moving the cache elsewhere is
+        WORSE: dist/ is wiped every build (above), and tsc trusts the cache, sees nothing changed,
+        and emits nothing — measured, the second build deleted 883 files from dist/. Since dist/
+        is always clean, incremental compilation could never help here anyway.
+        */
+        const r = await $`bun tsc --declaration --outDir dist`.nothrow()
         if (r.exitCode !== 0) {
           console.error(
             `❌ tsc --declaration FAILED (exit ${r.exitCode}) — emitted dist/*.d.ts may ` +
