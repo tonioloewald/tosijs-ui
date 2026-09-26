@@ -1,5 +1,52 @@
 # Changelog
 
+## 1.15.4
+
+### `libraryBundle`: a library build Node can actually load (#169)
+
+`emitLibrary` and `libraryTsconfig` run a bare `tsc`, which copies each import specifier through
+unchanged. Written in the usual bundler style (`export * from './model'`), that produces a
+`dist/` **Node refuses** (`ERR_MODULE_NOT_FOUND`), though Bun and bundlers resolve it, so it
+tends to ship unnoticed. Three projects had each written their own guard for it.
+
+The new `libraryBundle` option is the paved road:
+
+```ts
+libraryBundle: { entries: ['src/index.ts', 'src/core.ts'] }
+```
+
+`bun build` bundles the entries with code-splitting (every declared dependency and peer stays an
+import), `tsc` emits declarations only, and the build **fails** if `dist/` still has a relative
+import without a file extension. Options: `externals` (default: all declared dependencies and
+peers), `tsconfig` for the declaration pass, `target` (default `browser`). It needs `typescript`
+installed, as any TypeScript library has.
+
+`emitLibrary` and `libraryTsconfig` keep working, and now **warn** when their output has that
+problem.
+
+### Tag colours on chips and in the pick menu (#173)
+
+A Tag in `<tosi-tag-list>`'s `availableTags` can carry `background` and `color`. Chips now use
+them (they were ignored), and the pick menu shows each coloured tag's caption as a lozenge in
+those colours, with the checkmark beside it. Without a `color`, the text is black or white,
+whichever contrasts more.
+
+### Tag list fixes (#189)
+
+- A Tag object without a `caption` (the obvious way to colour chips: `{ value, color, background }`)
+  showed as a **blank row** in the pick menu; on a phone, a tall empty column. It now shows its
+  value.
+- A selected tag that was also in `availableTags` as an object appeared in the menu **twice**:
+  string tags were compared against Tag objects with `includes`. It now compares by value.
+- `<tosi-tag-list>`'s `value` is documented as `string | string[]`, but an array threw
+  `split is not a function` on render.
+
+### `emitLibrary` no longer ships `tsconfig.tsbuildinfo`
+
+Libraries built with `emitLibrary` shipped TypeScript's incremental-build cache in `dist/`: no
+use to consumers, and different on every rebuild. It is gone; rebuild and republish to drop it
+from your package.
+
 ## 1.15.3
 
 ### `<tosi-md sanitize="on">`, and a heads-up: it becomes the default in 1.16 (#179)
