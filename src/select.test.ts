@@ -194,3 +194,48 @@ describe('TosiSelect', () => {
     })
   })
 })
+
+describe('option shortcuts (#188)', () => {
+  const press = (key: string) =>
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key, ctrlKey: true, bubbles: true })
+    )
+  const options = [
+    { caption: 'One', value: 'one', shortcut: 'ctrl-1' },
+    { caption: 'Two', value: 'two', shortcut: 'ctrl-2' },
+  ]
+
+  test('a shortcut picks the option: value set, change fired once, as a click would', async () => {
+    const select = tosiSelect({ options, value: 'one' })
+    document.body.append(select)
+    let changes = 0
+    select.addEventListener('change', () => changes++)
+    try {
+      press('2')
+      await new Promise((r) => setTimeout(r, 50))
+      expect(select.value).toBe('two')
+      expect(changes).toBe(1)
+    } finally {
+      select.remove()
+    }
+  })
+
+  test('a disabled select ignores its shortcuts', () => {
+    const select = tosiSelect({ options, value: 'one', disabled: true })
+    document.body.append(select)
+    try {
+      press('2')
+      expect(select.value).toBe('one')
+    } finally {
+      select.remove()
+    }
+  })
+
+  test('a removed select stops listening', () => {
+    const select = tosiSelect({ options, value: 'one' })
+    document.body.append(select)
+    select.remove()
+    press('2')
+    expect(select.value).toBe('one')
+  })
+})

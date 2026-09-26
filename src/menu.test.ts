@@ -977,3 +977,16 @@ describe('#148: menuClass scopes menu theming to one component', () => {
     expect(menu(spawned).classList.contains('mine')).toBe(true)
   })
 })
+
+test('a removed <tosi-menu> stops handling its shortcuts (the listener was never removed)', () => {
+  let fired = 0
+  const menu = xinMenu({
+    menuItems: [{ caption: 'Go', shortcut: 'ctrl-g', action: () => fired++ }],
+  })
+  document.body.append(menu)
+  menu.remove()
+  document.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'g', ctrlKey: true, bubbles: true })
+  )
+  expect(fired).toBe(0)
+})

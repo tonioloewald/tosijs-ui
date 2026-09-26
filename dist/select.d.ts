@@ -5,6 +5,8 @@ export interface SelectOption {
     icon?: string | HTMLElement;
     caption: string;
     value: string | OptionRequest;
+    /** A keyboard shortcut (menu syntax, e.g. `^1`), shown in the popup; picks the option (#188). */
+    shortcut?: string;
     tooltip?: string;
     properties?: ElementProps;
 }
@@ -109,6 +111,7 @@ export declare class TosiSelect extends Component<SelectParts> {
     get allOptions(): SelectOption[];
     findOption(): SelectOption;
     localeChanged: () => void;
+    handleShortcut: (event: KeyboardEvent) => void;
     connectedCallback(): void;
     disconnectedCallback(): void;
     render(): void;

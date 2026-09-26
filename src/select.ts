@@ -144,6 +144,7 @@ test('captions select has value', () => {
       icon?: string | HTMLElement
       caption: string
       value: string | OptionRequest
+      shortcut?: string
     }
 
     export interface SelectOptionSubmenu {
@@ -157,6 +158,10 @@ test('captions select has value', () => {
 A `<tosi-select>` can be assigned `options` as a string of comma-delimited choices
 in the format `value=caption:icon` (where caption and icon are optional),
 or be provided a `SelectOptions` array (which allows for submenus, separators, etc.).
+
+An option's `shortcut` (menu syntax, e.g. `'ctrl-1'` or `'meta-shift-p'`) is shown in the popup
+and picks that option from the keyboard, even while the popup is closed. A pick by shortcut sets
+`value` and dispatches `change` exactly as a click does. A disabled select ignores its shortcuts.
 
 Examples:
 - `"apple,banana,cherry"` - simple values (value equals caption)
@@ -221,6 +226,7 @@ import {
   SubMenu,
   removeLastMenu,
   resolveMenuItems,
+  findShortcutAction,
 } from './menu.js'
 import { localize, XinLocalized } from './localize.js'
 
@@ -232,6 +238,8 @@ export interface SelectOption {
   icon?: string | HTMLElement
   caption: string
   value: string | OptionRequest
+  /** A keyboard shortcut (menu syntax, e.g. `^1`), shown in the popup; picks the option (#188). */
+  shortcut?: string
   tooltip?: string
   properties?: ElementProps
 }
@@ -414,14 +422,12 @@ export class TosiSelect extends Component<SelectParts> {
     let value: string | OptionRequest
     let tooltip: string | undefined
     let properties: ElementProps | undefined
+    let shortcut: string | undefined
     if (typeof option === 'string') {
       caption = value = option
     } else {
-      ;({ icon, caption, value, tooltip, properties } =
-        option as SelectOption & {
-          tooltip?: string
-          properties?: ElementProps
-        })
+      ;({ icon, caption, value, tooltip, properties, shortcut } =
+        option as SelectOption)
     }
     if (this.localized) {
       caption = localize(caption)
@@ -442,6 +448,7 @@ export class TosiSelect extends Component<SelectParts> {
       caption,
       tooltip,
       properties,
+      shortcut,
       checked: () => getValue() === value,
       action:
         typeof value === 'function'
@@ -583,8 +590,30 @@ export class TosiSelect extends Component<SelectParts> {
     this.queueRender()
   }
 
+  /*
+  Option shortcuts (#188). The popup is a menu, so an option's `shortcut` shows there; this also
+  makes it work while the popup is closed, as a <tosi-menu>'s shortcuts do. A pick by shortcut
+  runs the option's own menu action, so it sets `value` and dispatches `change` exactly as a
+  click does: one code path for consumers.
+  */
+  handleShortcut = (event: KeyboardEvent) => {
+    if (this.disabled) return
+    const match = findShortcutAction(
+      this.selectOptions.map(this.buildOptionMenuItem),
+      event
+    )
+    if (!match) return
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    const { action } = match.action
+    if (action instanceof Function) {
+      action()
+    }
+  }
+
   connectedCallback() {
     super.connectedCallback()
+    document.addEventListener('keydown', this.handleShortcut, true)
 
     // Parse options from HTML attribute if present and not already set programmatically
     const optionsAttr = this.getAttribute('options')
@@ -599,6 +628,9 @@ export class TosiSelect extends Component<SelectParts> {
 
   disconnectedCallback() {
     super.disconnectedCallback()
+    // `true` must match the add: removeEventListener only removes a capture listener when
+    // told it is one.
+    document.removeEventListener('keydown', this.handleShortcut, true)
 
     if (this.localized) {
       XinLocalized.allInstances.delete(this)

@@ -1664,7 +1664,9 @@ export class TosiMenu extends Component {
     }
     disconnectedCallback() {
         super.disconnectedCallback();
-        document.removeEventListener('keydown', this.handleShortcut);
+        // `true` must match the add in connectedCallback: without it this removed nothing, so every
+        // <tosi-menu> ever disconnected kept its shortcut listener (and its shortcuts) forever.
+        document.removeEventListener('keydown', this.handleShortcut, true);
     }
 }
 export const tosiMenu = TosiMenu.elementCreator();

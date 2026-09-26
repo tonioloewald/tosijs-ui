@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=74c96a086417" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=fc447d88b970" data-tosi-doc-system />
   <title>select — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-select&gt; (tosiSelect is the ElementCreator) is a replacement for the lamentable built in &lt;select&gt; element that addresses its various shortcomings." />
   <link rel="canonical" href="https://ui.tosijs.net/select/" />
@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=154507161c62" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=6bb6dbda626f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>select</h1>
 <p><code>&lt;tosi-select&gt;</code> (<code>tosiSelect</code> is the <code>ElementCreator</code>) is a replacement for the lamentable
@@ -181,6 +181,7 @@ export interface SelectOption {
   icon?: string | HTMLElement
   caption: string
   value: string | OptionRequest
+  shortcut?: string
 }
 
 export interface SelectOptionSubmenu {
@@ -194,6 +195,9 @@ export type SelectOptions = Array&lt;string | null | SelectOption | SelectOption
 <p>A <code>&lt;tosi-select&gt;</code> can be assigned <code>options</code> as a string of comma-delimited choices
 in the format <code>value=caption:icon</code> (where caption and icon are optional),
 or be provided a <code>SelectOptions</code> array (which allows for submenus, separators, etc.).</p>
+<p>An option&#39;s <code>shortcut</code> (menu syntax, e.g. <code>&#39;ctrl-1&#39;</code> or <code>&#39;meta-shift-p&#39;</code>) is shown in the popup
+and picks that option from the keyboard, even while the popup is closed. A pick by shortcut sets
+<code>value</code> and dispatches <code>change</code> exactly as a click does. A disabled select ignores its shortcuts.</p>
 <p>Examples:</p>
 <ul>
 <li><code>&quot;apple,banana,cherry&quot;</code> - simple values (value equals caption)</li>
@@ -324,6 +328,6 @@ preview.append(
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate.js?v=74c96a086417"></script>
+  <script type="module" src="../hydrate.js?v=fc447d88b970"></script>
 </body>
 </html>
