@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=b8d900947191" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=d46ef43fbb49" data-tosi-doc-system />
   <title>tag-list — tosijs-ui</title>
   <meta name="description" content="Building a tag-list from standard HTML elements is a bit of a nightmare." />
   <link rel="canonical" href="https://ui.tosijs.net/tag-list/" />
@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=ff1ad0e3c48f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=2f9fbb40e568" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>tag-list</h1>
 <p>Building a tag-list from standard HTML elements is a bit of a nightmare.</p>
@@ -146,6 +146,34 @@ any time, including after the element is on the page.</p>
 <p>A list of tags that will be displayed in the popup menu by default. The popup menu
 will always display custom tags (allowing their removal). As with <code>value</code>, a
 comma inside a tag must be escaped as <code>\,</code> when set via the attribute string.</p>
+<p>Set as a property, entries may also be <strong>Tag objects</strong>: <code>{ value, caption?, background?, color? }</code>.
+A tag with a <code>background</code> gets it on its chip and as a lozenge behind its caption in the pick
+menu (the checkmark keeps its own place). Without a <code>color</code>, the text is black or white,
+whichever contrasts more with the background.</p>
+<pre><code class="language-js">import { tosiTagList } from &#39;tosijs-ui&#39;
+
+preview.append(
+  tosiTagList({
+    editable: true,
+    value: [&#39;bug&#39;, &#39;docs&#39;],
+    availableTags: [
+      { value: &#39;bug&#39;, background: &#39;#d32f2f&#39; },
+      { value: &#39;feature&#39;, background: &#39;#2e7d32&#39; },
+      { value: &#39;docs&#39;, background: &#39;#1565c0&#39;, color: &#39;#ffeb3b&#39; },
+      &#39;question&#39;,
+    ],
+  })
+)
+</code></pre>
+<pre><code class="language-test">test(&#39;coloured tags colour their chips&#39;, () =&gt; {
+  // render now rather than wait for a frame: a background test tab may never paint
+  preview.querySelector(&#39;tosi-tag-list&#39;).render()
+  const chips = [...preview.querySelectorAll(&#39;tosi-tag-list tosi-tag&#39;)]
+  expect(chips.length).toBe(2)
+  expect(chips[0].style.getPropertyValue(&#39;--tag-bg&#39;)).toBe(&#39;#d32f2f&#39;)
+  expect(getComputedStyle(chips[1]).color).toBe(&#39;rgb(255, 235, 59)&#39;)
+})
+</code></pre>
 <h3><code>editable</code>: boolean</h3>
 <p>Allows the tag list to be modified via menu and removing tags.</p>
 <h3><code>text-entry</code>: boolean</h3>
@@ -247,6 +275,6 @@ comma inside a tag must be escaped as <code>\,</code> when set via the attribute
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate.js?v=b8d900947191"></script>
+  <script type="module" src="../hydrate.js?v=d46ef43fbb49"></script>
 </body>
 </html>

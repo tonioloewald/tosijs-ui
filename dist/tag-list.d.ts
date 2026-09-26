@@ -69,6 +69,7 @@ interface Tag {
 }
 type TagList = (string | Tag | null)[];
 export declare class TosiTagList extends WebComponent {
+    #private;
     static preferredTagName: string;
     static lightStyleSpec: XinStyleSheet;
     static formAssociated: boolean;

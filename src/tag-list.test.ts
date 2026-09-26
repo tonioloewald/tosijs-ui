@@ -311,3 +311,71 @@ describe('TosiTagList pick menu with Tag objects (#189)', () => {
     }
   })
 })
+
+describe('Tag colours on chips and in the pick menu (#173)', () => {
+  const availableTags = [
+    { value: 'bug', background: '#ff0000' },
+    { value: 'docs', background: '#1565c0', color: '#ffeb3b' },
+    'plain',
+  ]
+
+  test('chips take their Tag colours; text contrast is automatic unless given', () => {
+    const tagList = tosiTagList({ availableTags, value: 'bug,docs,plain' })
+    document.body.appendChild(tagList)
+    tagList.render()
+    try {
+      const chips = [...tagList.querySelectorAll('tosi-tag')] as HTMLElement[]
+      const colours = chips.map((c) => [
+        c.style.getPropertyValue('--tag-bg'),
+        c.style.getPropertyValue('--tag-text-color'),
+      ])
+      expect(colours).toEqual([
+        ['#ff0000', '#000000'], // black beats white on pure red (5.25 vs 4.0)
+        ['#1565c0', '#ffeb3b'], // an explicit color wins
+        ['', ''], // no Tag, no colours: the theme's defaults apply
+      ])
+    } finally {
+      tagList.remove()
+    }
+  })
+
+  test('coloured menu rows carry the lozenge class and the colours; plain rows do not', () => {
+    const tagList = tosiTagList({ availableTags, value: 'bug', editable: true })
+    document.body.appendChild(tagList)
+    try {
+      tagList.popSelectMenu()
+      const rows = [
+        ...document.querySelectorAll('[role="menuitem"]'),
+      ] as HTMLElement[]
+      expect(
+        rows.map((r) => [
+          r.textContent!.trim(),
+          r.classList.contains('tosi-tag-menu-colored'),
+          r.style.getPropertyValue('--tag-bg'),
+        ])
+      ).toEqual([
+        ['bug', true, '#ff0000'],
+        ['docs', true, '#1565c0'],
+        ['plain', false, ''],
+      ])
+      expect(document.getElementById('tosi-tag-menu')).not.toBeNull()
+    } finally {
+      document
+        .querySelectorAll('[role="menuitem"]')
+        .forEach((el) => el.closest('body > *')?.remove())
+      tagList.remove()
+    }
+  })
+})
+
+test('value may be an array, as documented', () => {
+  const tagList = tosiTagList({ value: ['a', 'b, c'] as unknown as string })
+  document.body.appendChild(tagList)
+  try {
+    tagList.render()
+    expect(tagList.tags).toEqual(['a', 'b, c'])
+    expect(tagList.querySelectorAll('tosi-tag').length).toBe(2)
+  } finally {
+    tagList.remove()
+  }
+})

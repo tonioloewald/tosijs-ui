@@ -117,6 +117,38 @@ A list of tags that will be displayed in the popup menu by default. The popup me
 will always display custom tags (allowing their removal). As with `value`, a
 comma inside a tag must be escaped as `\,` when set via the attribute string.
 
+Set as a property, entries may also be **Tag objects**: `{ value, caption?, background?, color? }`.
+A tag with a `background` gets it on its chip and as a lozenge behind its caption in the pick
+menu (the checkmark keeps its own place). Without a `color`, the text is black or white,
+whichever contrasts more with the background.
+
+```js
+import { tosiTagList } from 'tosijs-ui'
+
+preview.append(
+  tosiTagList({
+    editable: true,
+    value: ['bug', 'docs'],
+    availableTags: [
+      { value: 'bug', background: '#d32f2f' },
+      { value: 'feature', background: '#2e7d32' },
+      { value: 'docs', background: '#1565c0', color: '#ffeb3b' },
+      'question',
+    ],
+  })
+)
+```
+```test
+test('coloured tags colour their chips', () => {
+  // render now rather than wait for a frame: a background test tab may never paint
+  preview.querySelector('tosi-tag-list').render()
+  const chips = [...preview.querySelectorAll('tosi-tag-list tosi-tag')]
+  expect(chips.length).toBe(2)
+  expect(chips[0].style.getPropertyValue('--tag-bg')).toBe('#d32f2f')
+  expect(getComputedStyle(chips[1]).color).toBe('rgb(255, 235, 59)')
+})
+```
+
 ### `editable`: boolean
 
 Allows the tag list to be modified via menu and removing tags.
@@ -140,8 +172,11 @@ import {
   ElementCreator,
   deprecated,
   XinStyleSheet,
+  StyleSheet,
+  Color,
+  contrastRatio,
 } from 'tosijs'
-import { popMenu, MenuItem } from './menu.js'
+import { popMenu, MenuItem, MenuAction } from './menu.js'
 import { icons } from './icons.js'
 
 const { div, input, span, button } = elements
@@ -249,6 +284,57 @@ interface Tag {
 
 type TagList = (string | Tag | null)[]
 
+/*
+Tag colours (#173). A Tag in `availableTags` may carry `background` and `color`; they colour the
+tag's chip and its row in the pick menu. Given only a background, the text is whichever of black
+or white contrasts more with it — `Color.contrasting()` alone picks white on pure red at 4.0:1
+where black gives 5.25:1.
+*/
+function textColorFor(background: string): string {
+  const onBlack = contrastRatio('#000000', background)
+  const onWhite = contrastRatio('#ffffff', background)
+  if (onBlack == null || onWhite == null) {
+    return Color.fromCss(background).contrasting().html
+  }
+  return onBlack >= onWhite ? '#000000' : '#ffffff'
+}
+
+/** The `--tag-bg` / `--tag-text-color` values for a tag, or null if it has no colours. */
+function tagColors(
+  tag: Partial<Tag> | undefined
+): { background?: string; color?: string } | null {
+  const background = tag?.background
+  const color =
+    tag?.color ?? (background ? textColorFor(background) : undefined)
+  return background || color ? { background, color } : null
+}
+
+/*
+The pick menu lives outside the tag list (menus float in <body>), so its lozenge style is a
+global sheet, injected on first use. A coloured row's CAPTION becomes a lozenge in the tag's
+colours; the checkmark keeps its own slot, so selection stays visible.
+*/
+let tagMenuStylesInjected = false
+function ensureTagMenuStyles(): void {
+  if (tagMenuStylesInjected) {
+    return
+  }
+  tagMenuStylesInjected = true
+  StyleSheet('tosi-tag-menu', {
+    '.tosi-tag-menu-colored > :nth-child(2)': {
+      background: vars.tagBg,
+      color: vars.tagTextColor,
+      borderRadius: varDefault.tagRoundedRadius(vars.spacing50),
+      padding: `0 ${vars.spacing75}`,
+      justifySelf: 'start',
+      // the same height as a chip, centred, rather than stretched to the row
+      alignSelf: 'center',
+      height: `calc(${vars.lineHeight} + ${vars.spacing50})`,
+      lineHeight: `calc(${vars.lineHeight} + ${vars.spacing50})`,
+    },
+  })
+}
+
 export class TosiTagList extends WebComponent {
   static preferredTagName = 'tosi-tag-list'
 
@@ -317,7 +403,12 @@ export class TosiTagList extends WebComponent {
 
   // tags parses value into array
   get tags(): string[] {
-    return splitTags(this.value).filter((tag) => tag !== '')
+    // `value` is documented as `string | string[]`, but only a string was handled: an array
+    // threw `split is not a function` on render. Found by the #173 doc example.
+    const value = this.value as string | string[]
+    return (Array.isArray(value) ? value : splitTags(value)).filter(
+      (tag) => tag !== ''
+    )
   }
 
   set tags(v: string[]) {
@@ -402,6 +493,14 @@ export class TosiTagList extends WebComponent {
     }
   }
 
+  /** The Tag object in availableTags for this value, if there is one. */
+  #tagFor(value: string): Tag | undefined {
+    return this.availableTags.find(
+      (tag): tag is Tag =>
+        tag !== null && typeof tag === 'object' && tag.value === value
+    )
+  }
+
   popSelectMenu = () => {
     const { toggleTag } = this
     const { tagMenu } = this.parts
@@ -419,15 +518,29 @@ export class TosiTagList extends WebComponent {
       if (tag === '' || tag === null) {
         return null
       } else if (typeof tag === 'object') {
-        return {
+        const colors = tagColors(tag)
+        const item: MenuItem = {
           checked: () => this.tags.includes(tag.value),
           // caption is optional on Tag; without the fallback a Tag built as { value, color }
           // rendered a blank row (#189).
           caption: tag.caption ?? tag.value,
+          ...(colors
+            ? {
+                properties: {
+                  class: 'tosi-tag-menu-colored',
+                  // `_tagBg` sets the custom property --tag-bg
+                  style: {
+                    _tagBg: colors.background,
+                    _tagTextColor: colors.color,
+                  },
+                } as MenuAction['properties'],
+              }
+            : {}),
           action() {
             toggleTag(tag.value)
           },
         }
+        return item
       } else {
         return {
           checked: () => this.tags.includes(tag),
@@ -439,6 +552,7 @@ export class TosiTagList extends WebComponent {
       }
     })
 
+    ensureTagMenuStyles()
     popMenu({
       target: tagMenu as HTMLElement,
       width: 'auto',
@@ -512,13 +626,18 @@ export class TosiTagList extends WebComponent {
 
     tagContainer.textContent = ''
     for (const tag of this.tags) {
-      tagContainer.append(
-        tosiTag({
-          caption: tag,
-          removeable: this.editable && !this.disabled,
-          removeCallback: this.removeTag,
-        })
-      )
+      const chip = tosiTag({
+        caption: tag,
+        removeable: this.editable && !this.disabled,
+        removeCallback: this.removeTag,
+      })
+      // Chips take their colours from the matching Tag in availableTags (#173).
+      const colors = tagColors(this.#tagFor(tag))
+      if (colors?.background)
+        chip.style.setProperty('--tag-bg', colors.background)
+      if (colors?.color)
+        chip.style.setProperty('--tag-text-color', colors.color)
+      tagContainer.append(chip)
     }
   }
 }
