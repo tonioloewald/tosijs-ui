@@ -1,23 +1,22 @@
-# Publish a tagged release to npm through OIDC trusted publishing + staged publishing (#178).
+# Publish a tagged release to npm: OIDC trusted publishing + npm STAGED publishing.
 #
-# The flow, and who does what:
-#   1. (agent)  tag the release commit and push the tag — as before
-#   2. (human)  Actions → Publish → Run workflow, entering the tag (e.g. v1.15.3)
+# TEMPLATE from tosijs-coding-practices/templates/publish.yml — copy it unchanged; fixes land
+# there. Reference: practices/publishing-via-oidc.md. Proven on tosijs-ui 1.15.3 (tosijs-ui#178).
+#
+#   1. (agent)  release commit, tag, push the tag
+#   2. (anyone) Actions → Publish → Run workflow with the tag, or `gh workflow run publish.yml -f tag=vX.Y.Z`
 #   3. (this)   verify everything, then `npm stage publish` — nothing is public yet
-#   4. (human)  approve the staged version with 2FA: npmjs.com → Staged Packages, or
-#               `npm stage approve <stage-id>` (the id is in this run's summary)
-#   5. (this)   wait for the registry to serve it, then prove what shipped is what was built
+#   4. (human)  approve with 2FA: npmjs.com → package → Staged Packages (works from a phone)
+#   5. (this)   wait for the registry, then prove what shipped is what was built and tested
 #
-# Approved after the 60-minute wait? Run it again with `verify_only` ticked: it skips staging,
-# re-packs the tag (npm pack is deterministic — measured, the re-pack of v1.15.3 matched the
-# published shasum) and runs every post-publish check.
+# Approved after the 60-minute wait? Run it again with `verify_only` — a re-run starts over and
+# stops at "already published". npm pack is deterministic, so verify_only re-packs the tag.
 #
-# A green run is the canonical "published AND verified" statement. Every check that can fail
-# runs BEFORE staging, because a staged version burns its version number exactly as a publish
-# does — a red run before step 3 costs nothing.
+# Every check runs BEFORE staging: a staged version burns its number exactly as a publish does.
+# The npm Trusted Publisher entry names this file (publish.yml) with direct `npm publish`
+# DISABLED, so this can only stage; the maintainer's approval is the go.
 #
-# npm's Trusted Publisher entry for this package names THIS FILE (publish.yml) and has direct
-# `npm publish` DISABLED, so this workflow can only stage; a human approval is the go.
+# Requires: bun.lock committed, .bun-version, package.json repository.url naming this repo.
 
 name: Publish
 
@@ -122,10 +121,21 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      # Pack the tree AS COMMITTED — the build every lane was run against before tagging —
-      # BEFORE anything below rebuilds it. bun.lock is not committed, so CI resolves
-      # dependencies afresh, and a CI rebuild is a check on the committed build, never a
-      # replacement for it.
+      # Build, then require every TRACKED file unchanged. A repo that commits its build output
+      # must reproduce it exactly (so what ships is what was tested locally); a repo that does
+      # not gets its output built here from the frozen lockfile and pinned Bun.
+      - name: Build
+        run: |
+          set -euo pipefail
+          if node -e "process.exit(require('./package.json').scripts?.build ? 0 : 1)"; then
+            bun run build
+          fi
+          if ! git diff --quiet; then
+            echo "::error::building at $TAG changed tracked files — the committed build output is stale, or Bun/dependencies differ from the release machine"
+            git diff --stat
+            exit 1
+          fi
+
       - name: Pack
         id: pack
         run: |
@@ -137,23 +147,16 @@ jobs:
           echo "tarball=$RUNNER_TEMP/pack/$FILE" >> "$GITHUB_OUTPUT"
           echo "integrity=$INTEGRITY" >> "$GITHUB_OUTPUT"
 
-      # The same checks an adopter's install exercises, against the exact bytes about to ship.
+      # What an adopter's install exercises, against the exact bytes about to ship. Uses the
+      # repo's own `test-consumer` if it has one (it must print the tarball path), else a
+      # generic install + entry-point + typecheck.
       - name: Consumer smoke test (packed tarball)
         if: ${{ !inputs.verify_only }}
-        env:
-          SMOKE_TARBALL: ${{ steps.pack.outputs.tarball }}
-        run: |
-          set -euo pipefail
-          bun run test-consumer | tee "$RUNNER_TEMP/smoke.txt"
-          # A tree older than the SMOKE_TARBALL hook ignores it and packs its own tarball,
-          # which would pass while testing the wrong bytes.
-          grep -q 'testing the given tarball' "$RUNNER_TEMP/smoke.txt" \
-            || { echo "::error::test-consumer ignored SMOKE_TARBALL — this tag predates the hook"; exit 1; }
+        run: bun .practices/tools/publish-smoke.ts "${{ steps.pack.outputs.tarball }}"
 
       # Tier 0: tests, typecheck, build, changelog entry, packaged exports, bin shebangs, …
-      # Its "artifact freshness" check is THE rebuild gate: it rebuilds and requires the
-      # committed code artifacts to reproduce (it knows tsbuildinfo is cache, not code). A
-      # second rebuild step here duplicated it and failed on exactly that file (#178).
+      # Lanes CI cannot run (e.g. live-LLM suites) are declared in package.json
+      # releaseDoctor.attestedLanes and covered by release-attestation.json (tools/attest.ts).
       - name: release-doctor
         if: ${{ !inputs.verify_only }}
         env:
@@ -233,8 +236,7 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/registry"
           npm pack "${{ steps.meta.outputs.name }}@${{ steps.meta.outputs.version }}" --pack-destination "$RUNNER_TEMP/registry"
-          SMOKE_TARBALL=$(ls "$RUNNER_TEMP"/registry/*.tgz) bun run test-consumer | tee "$RUNNER_TEMP/smoke2.txt"
-          grep -q 'testing the given tarball' "$RUNNER_TEMP/smoke2.txt"
+          bun .practices/tools/publish-smoke.ts "$(ls "$RUNNER_TEMP"/registry/*.tgz)"
 
       - name: Summary
         run: |
