@@ -22,10 +22,16 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     # Security fixes flow regardless of these; this bounds routine version bumps.
+    # Majors are NOT grouped: each arrives as its own PR, because each is a decision (prettier 3
+    # reformats the repo, TypeScript 7 removed a compiler option we set, chokidar 5 is the dev
+    # server's watcher). One group mixing four majors with ten patches (#193) could only be
+    # merged whole or not at all.
     groups:
       codemirror:
         patterns:
           - '@codemirror/*'
           - '@lezer/*'
+        update-types: [minor, patch]
       dev-dependencies:
         dependency-type: development
+        update-types: [minor, patch]
