@@ -3,8 +3,10 @@
 Live, actionable work only: one or two lines per item, with an issue or a pointer to the detail.
 Measurements, evidence, design reasoning, decisions and finished work live in
 [`reviews/TODO-archive-2026-09-26.md`](reviews/TODO-archive-2026-09-26.md) ("archive" below);
-look there before re-deriving anything. Pruned 2026-09-26 ahead of moving tasks onto the virta
-board, which is where this list goes next.
+look there before re-deriving anything. Work that has an open GitHub issue is tracked THERE, not
+repeated here (#179 1.16 sanitize default, #177 sign-in UI, #162 schema-form, #142 WebGL
+concurrency, #40 icon modules, and the rest of the open issues). Pruned 2026-09-26 ahead of
+moving tasks onto the virta board.
 
 ## Scheduled
 
@@ -13,16 +15,10 @@ board, which is where this list goes next.
       2026-09-06; tosijs is at 1.10.3 and we are still on 1.9.1. Rebase the branch, confirm
       `tsc --declaration`, raise the peer floor with the reason recorded, all four lanes. A
       breaking minor (element creators become attribute-typed): pairs with the 1.16 items.
-- [ ] **1.16: `<tosi-md sanitize>` defaults to `on` (#179).** Treat unset as `on` in
-      `#sanitizeMode`, drop the warning and `TosiMd.warnedUnsanitized`, flip the "unset warns"
-      tests, reword the docs, `[break]` in the CHANGELOG.
 - [ ] **tjs-lang 0.14.0 final:** move the devDependency and `TJS_VERSION` from 0.13.13 (the
       peer already admits 0.14; the rc passed every lane, #182).
 - [ ] **TypeScript 7 / Dependabot #167:** the new tsc removed `downlevelIteration`, which
       `tsconfig.json` still sets, so dev-dependency updates are stuck. Its own change, all lanes.
-- [ ] **#177 sign-in UI** once service-compris has a real release: tree-shakeable
-      `tosijs-ui/auth`, a provider adapter interface (Firebase and service-compris adapters as
-      optional-peer subpaths). Design the adapter contract first.
 - [ ] **#169, second half:** `buildSite` resolves `PROJECT_ROOT` from cwd, so run from another
       directory a library build can clean the wrong `dist/`. Resolve it from the config file.
 - [ ] **`bin/docs.ts` shim:** its documented `'tosijs-ui/bin/docs'` specifier has never
@@ -37,9 +33,6 @@ board, which is where this list goes next.
       (archive: `<tosi-table>` loses FOCUS / scroll preservation).
 - [ ] **`<tosi-crud>`: one keystroke rebuilds the whole table** (1.11.0 review M8); identity-guard
       the `table.array` / `form.schema` assignments.
-- [ ] **#162 schema-form: show non-conforming data** in a "can't display this" panel with purge.
-      Purge means *violates the schema*, never *keys the schema doesn't mention* (archive has
-      the design).
 - [ ] **`<tosi-side-nav>` needs a collapsed state** so `layout: 'full-screen'` can exist (it is
       rejected today rather than half-honoured).
 - [ ] **A `tosijs-ui/prism` export** so a consumer can reach our Prism instance, as
@@ -90,10 +83,6 @@ board, which is where this list goes next.
       tooltips, drag handles and the sidenav. (It cannot be faked from inside a page.)
 - [ ] **CI e2e is Chromium-only.** Firefox is load-bearing locally; add it to CI, or make the
       release checklist fail when the all-engine run was skipped.
-- [ ] **#142 WebGL context cap vs concurrent test bodies**: waiting on tosijs-3d-ensemble to
-      choose per-page serial mode or an opt-in marker. The structural-diff ideas from that
-      thread are in the archive; the cheap ones (zero-area vs absent, settle asymmetry,
-      hydration bounds-diff) stand on their own.
 
 ## Tooling and infrastructure
 
@@ -107,9 +96,6 @@ board, which is where this list goes next.
       meant nothing).
 - [ ] **Preview index builds the edit URL** (a project picker plus a token box), and the
       `dev.tosijs.net/<code>` redirect (#132). Both cut what a headset owner has to type.
-- [ ] **#56: label build-only advisories** in the audit verdict (labelling, not policy).
-- [ ] **#40: generate the per-icon modules** from canonical data (47 have drifted), resolving
-      redirects when emitting.
 - [ ] **haltija adoption:** expose `globalThis.tosiAgent`; replace the hand-rolled wait loop
       with `hj doctor`; drive live examples with `hj map` rather than `hj tree`.
 - [ ] Fold the six `server.stop(); process.exit(…)` sites into one `shutdown()`.
