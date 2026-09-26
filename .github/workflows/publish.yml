@@ -60,6 +60,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.dry_run && inputs.tag || format('refs/tags/{0}', inputs.tag) }}
+          # Full history and tags: release-doctor reads both (tag/publish reconciliation, release
+          # identity, changelog freshness), and a shallow clone has neither.
+          fetch-depth: 0
 
       # release-doctor lives in the shared practices repo (public).
       - name: Check out tosijs-coding-practices
