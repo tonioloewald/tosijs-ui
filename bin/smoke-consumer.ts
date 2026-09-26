@@ -630,6 +630,34 @@ try {
       existsSync(path.join(proj, 'dist', 'lib.d.ts'))
     )
   }
+  /*
+  `tosijs-ui/test-setup` as an adopter uses it (#170): a bunfig preload by package specifier,
+  and a unit test that needs a DOM and a real component. It replaces the hand-copied
+  test-setup.ts files that had drifted three ways across repos.
+  */
+  {
+    await Bun.write(
+      `${proj}/bunfig.toml`,
+      `[test]\npreload = ["tosijs-ui/test-setup"]\nroot = "./unit"\n`
+    )
+    await Bun.write(
+      `${proj}/unit/dom.test.ts`,
+      `import { test, expect } from 'bun:test'\n` +
+        `import { tosiTag } from 'tosijs-ui/tag-list'\n` +
+        `test('the preload gives a DOM that runs a tosijs-ui component', () => {\n` +
+        `  const tag = tosiTag({ caption: 'hi' })\n` +
+        `  document.body.append(tag)\n` +
+        `  expect(tag.caption).toBe('hi')\n` +
+        `  expect(customElements.get('tosi-tag')).toBeDefined()\n` +
+        `})\n`
+    )
+    const unit = await $`bun test`.cwd(proj).nothrow().quiet()
+    check(
+      'tosijs-ui/test-setup works as a bunfig preload (#170)',
+      unit.exitCode === 0,
+      (unit.stdout.toString() + unit.stderr.toString()).slice(-400)
+    )
+  }
   check(
     'the hydration bundle lands in the site output',
     existsSync(path.join(proj, 'docs', 'iife.js'))

@@ -1,3 +1,22 @@
+/*
+tosijs-ui/test-setup — the happy-dom preload for `bun test` (#170).
+
+    # bunfig.toml
+    [test]
+    preload = ["tosijs-ui/test-setup"]
+
+It gives Bun's test runner a DOM: a happy-dom Window whose globals (document, HTMLElement,
+customElements, events, observers, …) are copied onto globalThis, so web components and tosijs
+code run in unit tests. Requires `happy-dom` (an optional peer of tosijs-ui).
+
+It is a published export rather than a file to copy because the copies drifted: tosijs-virta's
+was a byte copy of tosijs-editor's, which was already six lines behind this one, each adding or
+dropping globals (Range, NodeFilter), and a fix to one reached none of the others. This file is
+also tosijs-ui's OWN preload (bunfig.toml), so it is exercised by every unit test here.
+
+Side-effecting by design, and not in the root barrel: importing it installs globals.
+*/
+
 import { Window } from 'happy-dom'
 
 const window = new Window()

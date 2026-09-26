@@ -166,6 +166,11 @@
       "import": "./dist/theme.js",
       "default": "./dist/theme.js"
     },
+    "./test-setup": {
+      "types": "./dist/test-setup.d.ts",
+      "import": "./dist/test-setup.js",
+      "default": "./dist/test-setup.js"
+    },
     "./*": {
       "types": "./dist/*.d.ts",
       "import": "./dist/*.js",

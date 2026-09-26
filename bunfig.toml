@@ -1,5 +1,5 @@
 [test]
-preload = ["./test-setup.ts"]
+preload = ["./src/test-setup.ts"]
 # Root is the REPO, not `src`, so `bin/` is inside the unit lane.
 #
 # It was `./src`, which meant a test file added anywhere else — `bin/`, most obviously —

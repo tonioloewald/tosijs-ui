@@ -58,7 +58,7 @@ describe('tosijs-ui/doc-browser registers the doc system (#158, #159)', () => {
       }))
     `
     const proc = Bun.spawnSync(
-      ['bun', '--preload', `${ROOT}/test-setup.ts`, '-e', probe],
+      ['bun', '--preload', `${ROOT}/src/test-setup.ts`, '-e', probe],
       {
         cwd: ROOT,
       }
