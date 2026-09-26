@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.15.5
+
+### `<tosi-select>` options can have keyboard shortcuts (#188)
+
+`SelectOption` accepts `shortcut` (menu syntax, e.g. `'ctrl-1'`). It is shown in the popup, and
+picks the option from the keyboard even while the popup is closed. A pick by shortcut sets
+`value` and dispatches `change` exactly as a click does, so there is one code path. A disabled
+select ignores its shortcuts.
+
+### Removed `<tosi-menu>`s no longer fire their shortcuts
+
+`<tosi-menu>` added its document keydown listener with `capture: true` and removed it without,
+which in a real browser removes nothing. Every menu ever taken off the page kept its listener,
+and its keyboard shortcuts kept working. Only a real browser shows this (happy-dom removes the
+listener anyway), so it is covered by a Playwright test in all three engines.
+
+### `tosijs-ui/test-setup`: the happy-dom preload, published (#170)
+
+```toml
+[test]
+preload = ["tosijs-ui/test-setup"]
+```
+
+gives `bun test` a DOM that runs tosijs and tosijs-ui components. It needs `happy-dom` (an
+optional peer). Use it instead of copying a `test-setup.ts` from another repo; the copies had
+drifted three ways. It is also tosijs-ui's own preload, so every unit test here exercises it.
+
 ## 1.15.4
 
 ### `libraryBundle`: a library build Node can actually load (#169)
