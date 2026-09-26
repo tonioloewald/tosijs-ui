@@ -17,6 +17,16 @@ session-only + expire in 7 days — this line is the durable reminder.)
 
 ---
 
+## tosijs-virta — /start/ onboarding gaps (filed 2026-09-26)
+
+[tosijs-virta#5](https://github.com/tonioloewald/tosijs-virta/issues/5). Three things an
+onboarding agent could not tell from <https://virta.tosijs.net/start/>: whether a repo is
+already onboarded (`virta brief` prints nothing and exits 0 when it isn't); what to do with
+big dry-run numbers (ours: 431 tasks, 230 open, much of TODO.md stale evidence), which depends
+on whether an import can be undone and whether `onboard` dedupes; and what happens to
+TODO.md/UPSTREAM.md afterwards. **tosijs-ui is holding off on `virta onboard` until the second
+is answered.**
+
 ## bun
 
 ### ✅ `Bun.build()` native leak (#34053) — FIXED as of bun 1.4.0
