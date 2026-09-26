@@ -48,7 +48,7 @@ import {
 import { setSchemaValidator } from './schema-form/validator.js'
 
 /*
-`oneOf` warns once per process in tosijs-schema 1.8.0 — it is validated by trying every
+`oneOf` warns once per process in tosijs-schema (1.8.0 on) — it is validated by trying every
 branch, where `anyOf` short-circuits. That is worth knowing when you are AUTHORING a schema
 and noise when you are merely rendering someone else's, which is what a doc site and a CDN
 page are doing. The advice survives where it belongs: the schema-form docs say to prefer

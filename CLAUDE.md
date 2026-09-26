@@ -486,7 +486,10 @@ See `package.json` for current versions. The notable ones:
   (1.4.0–1.5.1 export no `inferSchema` at all; 1.8.0 is what enforces `oneOf` /
   `exclusiveMin/Max` and exports `unenforcedKeywords`, both asked for in tosijs-schema#8).
 
-  **Nothing we ship imports it.** Validation is INJECTED — `setSchemaValidator({ validate,
+  **No ESM module we ship imports it.** The one exception is deliberate: `dist/iife.js`
+  (`src/index-iife.ts`, the batteries-included CDN bundle) imports and injects it, so the
+  tosijs-schema **devDependency** version is what CDN users run, and bumping it changes
+  `iife.js` (seen with Dependabot's 1.8.0 → 1.10.2). Elsewhere validation is INJECTED — `setSchemaValidator({ validate,
 inferSchema, unenforcedKeywords })`, and all three matter (omitting the third makes the form
   label validated keywords as unvalidated). Both alternatives were measured and rejected: a
   literal `import('tosijs-schema')` fails a consumer's build when the package is absent, and a

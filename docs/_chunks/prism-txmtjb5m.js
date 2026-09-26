@@ -2,4 +2,4 @@ import{qe}from"../hydrate.js";var K=qe(function(Q,R){var N=typeof window<"u"?win
 `),!c.hasAttribute("data-start"))c.setAttribute("data-start",String(u+1))}p.textContent=r,i.highlightElement(p)},function(r){c.setAttribute(s,L),p.textContent=r})}}),i.plugins.fileHighlight={highlight:function(c){var p=(c||document).querySelectorAll(_);for(var a=0,e;e=p[a++];)i.highlightElement(e)}};var I=!1;i.fileHighlight=function(){if(!I)console.warn("Prism.fileHighlight is deprecated. Use `Prism.plugins.fileHighlight.highlight` instead."),I=!0;i.plugins.fileHighlight.highlight.apply(this,arguments)}})()});export default K();
 
 //# debugId=4E8FFB7F84D591E564756E2164756E21
-//# sourceMappingURL=prism-vatw2md5.js.map
+//# sourceMappingURL=prism-txmtjb5m.js.map
