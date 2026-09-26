@@ -178,3 +178,22 @@ gap, recorded rather than hidden.
   no assertions; it has one now.
 - **Friction:** the unpublished tag moved five times. Fine while nothing is published, but the
   pre-staging checks should run BEFORE tagging next time, as a dry run of the workflow.
+
+## 1.15.4 (2026-09-26) — the staged-publish flow, end to end in one pass
+
+- **The pre-tag dry run earned its place on its first use.** It failed on `main` before any tag
+  existed: a false positive in the shared `release-doctor` (a doc comment quoting
+  `export * from './model'` read as a re-export). Fixed upstream in the practices repo, the
+  second dry run was clean, and the tag was made once and never moved (1.15.3 moved its five
+  times).
+- **Staged → approved → verified in one run**, approval inside the one-hour window: published
+  bytes identical to the staged tarball, `latest` correct, 51 consumer checks on the registry copy.
+- **The same false-positive class twice in one day.** My own extensionless-import scan matched
+  specifiers in comments (four hits in our dist, one in its own doc comment); release-doctor's
+  re-export scan did the same. Mine now uses Bun's parser; release-doctor strips comments (the
+  parser drops type-only imports, which a .d.ts scan needs).
+- **A doc example found a real bug:** `<tosi-tag-list>`'s documented array `value` threw on render.
+  Examples with test blocks keep finding things unit tests don't.
+- **Tested the obvious fix before trusting it:** moving tsc's incremental cache out of `dist/`
+  would have emptied `dist/` on every second build (883 files). Dropping `--incremental` was the
+  fix.
