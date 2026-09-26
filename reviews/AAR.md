@@ -197,3 +197,17 @@ gap, recorded rather than hidden.
 - **Tested the obvious fix before trusting it:** moving tsc's incremental cache out of `dist/`
   would have emptied `dist/` on every second build (883 files). Dropping `--incremental` was the
   fix.
+
+## 1.15.5 (2026-09-26)
+
+- **Routine, which is the point:** dry run on `main` clean, tag made once, staged, approved about
+  53 minutes later (inside the one-hour window), verified in the same run. No tag moved, no
+  re-run needed.
+- **A real-browser-only bug:** `<tosi-menu>` removed its capture-phase shortcut listener without
+  the capture flag, so it was never removed. happy-dom removes it regardless (both mutants
+  survived the unit tests); a Playwright spec catches it in all three engines.
+- **A test that raced, caught by repetition:** the select-shortcut spec failed about one run in
+  three because `change` arrives a frame after `value`. `--repeat-each=10` exposed it before it
+  shipped as a flake.
+- **Also this cycle, outside the release:** TODO.md pruned (199 items → 39), nine stale issues
+  closed with versions, and tosijs-ui onboarded onto the virta board (88 open tasks).
