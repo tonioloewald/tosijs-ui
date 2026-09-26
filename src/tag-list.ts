@@ -406,7 +406,12 @@ export class TosiTagList extends WebComponent {
     const { toggleTag } = this
     const { tagMenu } = this.parts
     const tags: TagList = [...this.availableTags]
-    const extraTags = this.tags.filter((tag) => !tags.includes(tag))
+    // Compare by VALUE: availableTags may hold Tag objects, and `includes` on those never
+    // matches a string, so a tag that IS available was listed a second time as an extra (#189).
+    const available = new Set(
+      tags.map((tag) => (tag && typeof tag === 'object' ? tag.value : tag))
+    )
+    const extraTags = this.tags.filter((tag) => !available.has(tag))
     if (extraTags.length) {
       tags.push(null, ...extraTags)
     }
@@ -416,7 +421,9 @@ export class TosiTagList extends WebComponent {
       } else if (typeof tag === 'object') {
         return {
           checked: () => this.tags.includes(tag.value),
-          caption: tag.caption!,
+          // caption is optional on Tag; without the fallback a Tag built as { value, color }
+          // rendered a blank row (#189).
+          caption: tag.caption ?? tag.value,
           action() {
             toggleTag(tag.value)
           },

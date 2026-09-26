@@ -285,3 +285,29 @@ describe('TosiTagList popSelectMenu hook (#172)', () => {
     }
   })
 })
+
+describe('TosiTagList pick menu with Tag objects (#189)', () => {
+  test('a Tag without a caption shows its value, and is not listed twice', () => {
+    const tagList = tosiTagList({
+      availableTags: [
+        { value: 'bug', color: 'white', background: 'red' },
+        'docs',
+      ],
+      value: 'bug',
+      editable: true,
+    })
+    document.body.appendChild(tagList)
+    try {
+      tagList.popSelectMenu()
+      const captions = [...document.querySelectorAll('[role="menuitem"]')].map(
+        (item) => item.textContent!.trim()
+      )
+      expect(captions).toEqual(['bug', 'docs'])
+    } finally {
+      document
+        .querySelectorAll('[role="menuitem"]')
+        .forEach((el) => el.closest('body > *')?.remove())
+      tagList.remove()
+    }
+  })
+})
