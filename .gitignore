@@ -106,3 +106,6 @@ docs/.epub-build/
 
 # the publish workflow's checkout of tosijs-coding-practices
 .practices/
+
+# personal Claude Code settings
+.claude/settings.local.json

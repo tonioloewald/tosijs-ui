@@ -1,5 +1,10 @@
 # Upstream
 
+> **New asks go on the virta board** as tasks in the target project (or as a GitHub issue for a
+> repo not on the board): <https://virta.tosijs.net/host/#?virta.scope=tosijs-ui>. This file stays
+> as the record of past asks and their evidence; its open items were imported onto the board on
+> 2026-09-26.
+
 Rough edges hit in in-house dependencies, mirrored here so the context stays where we
 work. **This file is not a channel** — the GitHub issue on the target repo is. Every
 entry below links to its filed issue; an entry without one is a complaint nobody will

@@ -954,13 +954,17 @@ Kill any background `bun start` before doing release git surgery (`pkill -f bin/
 
 ## Task Tracking
 
-Open tasks and planned work are tracked in `TODO.md` at the project root.
+**Tasks live on the virta board**: <https://virta.tosijs.net/host/#?virta.scope=tosijs-ui>
+(onboarded 2026-09-26). Use the `virta` CLI / MCP; the SessionStart hook runs `virta brief`, and
+each message runs `virta brief --changes`. `TODO.md` and `UPSTREAM.md` are pointers and records now:
+don't add tasks to them. Asks of another project on the board are tasks in THAT project; GitHub
+issues remain for external reporters and repos not on the board.
 
 ## Where the design docs live
 
 Root-level markdown that is _not_ published to the doc site — read the relevant one before touching its subsystem, and add findings to it rather than starting a parallel document:
 
-- `TODO.md` — open tasks and planned work (the index; start here)
+- `TODO.md` — a pointer to the virta board, where tasks live; the pre-board backlog is archived in `reviews/TODO-archive-2026-09-26.md`
 - `Using-Components.md` — consumer-facing mental model for using the components
 - `doc-system-roadmap.md` — north star for the doc system (library-as-endpoint)
 - `codemirror-tjs-1.7-plan.md` — the ACE→CodeMirror 6 + first-class-tjs migration
