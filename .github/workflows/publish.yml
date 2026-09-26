@@ -205,9 +205,11 @@ jobs:
           set -euo pipefail
           NAME=${{ steps.meta.outputs.name }}
           VERSION=${{ steps.meta.outputs.version }}
-          DOC=$(curl -fsS -H 'Cache-Control: no-cache' "https://registry.npmjs.org/$NAME")
+          # To a FILE: the packument lists every version ever published, and passed as an
+          # argument it exceeds the OS limit ("Argument list too long").
+          curl -fsS -H 'Cache-Control: no-cache' -o "$RUNNER_TEMP/packument.json" "https://registry.npmjs.org/$NAME"
           node -e '
-            const d = JSON.parse(process.argv[1])
+            const d = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))
             const [version, distTag, latestBefore, integrity] = process.argv.slice(2)
             const fail = (m) => { console.error("::error::" + m); process.exitCode = 1 }
             const published = d.versions[version].dist.integrity
@@ -223,7 +225,7 @@ jobs:
                 fail(`a ${distTag} publish MOVED latest: ${latestBefore} → ${tags.latest}`)
               else console.log(`✅ latest is not the prerelease (${tags.latest})`)
             }
-          ' "$DOC" "$VERSION" "${{ steps.meta.outputs.dist_tag }}" "${{ steps.meta.outputs.latest_before }}" "${{ steps.pack.outputs.integrity }}"
+          ' "$RUNNER_TEMP/packument.json" "$VERSION" "${{ steps.meta.outputs.dist_tag }}" "${{ steps.meta.outputs.latest_before }}" "${{ steps.pack.outputs.integrity }}"
 
       # The smoke test once more, against the tarball adopters actually download.
       - name: Consumer smoke test (from the registry)
