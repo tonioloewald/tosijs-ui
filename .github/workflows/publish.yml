@@ -8,6 +8,10 @@
 #               `npm stage approve <stage-id>` (the id is in this run's summary)
 #   5. (this)   wait for the registry to serve it, then prove what shipped is what was built
 #
+# Approved after the 60-minute wait? Run it again with `verify_only` ticked: it skips staging,
+# re-packs the tag (npm pack is deterministic — measured, the re-pack of v1.15.3 matched the
+# published shasum) and runs every post-publish check.
+#
 # A green run is the canonical "published AND verified" statement. Every check that can fail
 # runs BEFORE staging, because a staged version burns its version number exactly as a publish
 # does — a red run before step 3 costs nothing.
@@ -24,6 +28,11 @@ on:
         description: 'Tag to publish, e.g. v1.15.3 or v1.16.0-beta.1'
         required: true
         type: string
+      verify_only:
+        description: 'Only verify an already-approved publish (use when approval came after the 60-minute wait)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -101,7 +110,7 @@ jobs:
           # Straight from the registry, not npm's cache (which has served stale versions
           # minutes after a publish).
           LATEST_BEFORE=$(curl -fsS -H 'Cache-Control: no-cache' "https://registry.npmjs.org/$NAME" \
-            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const d=JSON.parse(s);if(d.versions&&d.versions[process.argv[1]]){console.error('::error::'+process.argv[1]+' is already published');process.exit(1)}console.log(d['dist-tags'].latest)})" "$VERSION")
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const d=JSON.parse(s);const has=!!(d.versions&&d.versions[process.argv[1]]);const verify=process.argv[2]==='true';if(has&&!verify){console.error('::error::'+process.argv[1]+' is already published — to verify it, run with verify_only');process.exit(1)}if(!has&&verify){console.error('::error::'+process.argv[1]+' is not published — nothing to verify');process.exit(1)}console.log(d['dist-tags'].latest)})" "$VERSION" "${{ inputs.verify_only }}")
           {
             echo "version=$VERSION"
             echo "name=$NAME"
@@ -130,6 +139,7 @@ jobs:
 
       # The same checks an adopter's install exercises, against the exact bytes about to ship.
       - name: Consumer smoke test (packed tarball)
+        if: ${{ !inputs.verify_only }}
         env:
           SMOKE_TARBALL: ${{ steps.pack.outputs.tarball }}
         run: |
@@ -145,6 +155,7 @@ jobs:
       # committed code artifacts to reproduce (it knows tsbuildinfo is cache, not code). A
       # second rebuild step here duplicated it and failed on exactly that file (#178).
       - name: release-doctor
+        if: ${{ !inputs.verify_only }}
         env:
           # This tag is ahead of npm by definition — it is the one being published.
           RELEASE_DOCTOR_PUBLISHING: ${{ inputs.tag }}
@@ -153,6 +164,7 @@ jobs:
       # ---- nothing above this line has touched the registry ----
 
       - name: Stage
+        if: ${{ !inputs.verify_only }}
         id: stage
         run: |
           set -euo pipefail
@@ -172,6 +184,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Wait for approval
+        if: ${{ !inputs.verify_only }}
         run: |
           set -euo pipefail
           for i in $(seq 1 120); do
@@ -182,10 +195,12 @@ jobs:
             fi
             sleep 30
           done
-          echo "::error::not approved within 60 minutes. Approve it, then re-run this workflow's failed jobs to verify."
+          echo "::error::not approved within 60 minutes. Approve it, then run this workflow again for the same tag with verify_only ticked — a re-run would start over and stop at 'already published'."
           exit 1
 
       - name: Verify what shipped
+        env:
+          VERIFY_ONLY: ${{ inputs.verify_only }}
         run: |
           set -euo pipefail
           NAME=${{ steps.meta.outputs.name }}
@@ -202,9 +217,12 @@ jobs:
             const tags = d["dist-tags"]
             if (tags[distTag] !== version) fail(`dist-tag ${distTag} is ${tags[distTag]}, expected ${version}`)
             else console.log(`✅ ${distTag} → ${version}`)
-            if (distTag !== "latest" && tags.latest !== latestBefore)
-              fail(`a ${distTag} publish MOVED latest: ${latestBefore} → ${tags.latest}`)
-            else if (distTag !== "latest") console.log(`✅ latest untouched (${tags.latest})`)
+            if (distTag !== "latest") {
+              if (tags.latest === version) fail(`a ${distTag} publish is \`latest\``)
+              else if (process.env.VERIFY_ONLY !== "true" && tags.latest !== latestBefore)
+                fail(`a ${distTag} publish MOVED latest: ${latestBefore} → ${tags.latest}`)
+              else console.log(`✅ latest is not the prerelease (${tags.latest})`)
+            }
           ' "$DOC" "$VERSION" "${{ steps.meta.outputs.dist_tag }}" "${{ steps.meta.outputs.latest_before }}" "${{ steps.pack.outputs.integrity }}"
 
       # The smoke test once more, against the tarball adopters actually download.
