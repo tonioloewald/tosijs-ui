@@ -17,7 +17,13 @@ import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js'
 import { listEpubVolumes, renderEpubDownloads } from './epub-volumes.js'
 import { buildSlugMap } from '../routing.js'
 import { computeAssetStamp, missingStampInputWarning } from './asset-stamp.js'
-import { existsSync, mkdirSync, readFileSync, unlinkSync } from 'fs'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  unlinkSync,
+} from 'fs'
 import { tmpdir } from 'os'
 import { $, spawn } from 'bun'
 import type { SiteConfig } from './site-config.js'
@@ -1238,8 +1244,17 @@ export async function buildSite(
             '--format=esm',
             '--splitting',
             '--minify',
+            /*
+          The entry's FILENAME carries the content hash (#191). It used to be a fixed
+          `hydrate.js` loaded as `hydrate.js?v=<hash>`, while code-split chunks import the entry
+          back by its plain name (`from "../hydrate.js"`). Different URLs, so the browser made
+          TWO module instances of the entry in one page: everything in it evaluated twice, and a
+          module patching a prototype in a shared chunk (Babylon's engine) threw on the second
+          pass. With the hash in the name, the page and every chunk name the same URL, and a
+          rebuild still busts caches.
+          */
             '--entry-naming',
-            'hydrate.js',
+            'hydrate-[hash].[ext]',
             /*
           Code-split chunks go in a SUBDIRECTORY, not the web root.
 
@@ -1275,7 +1290,14 @@ export async function buildSite(
         await $`cp -R ${HYDRATE_DIR}/. ${PUBLIC}/`.text()
         // The copy moved every map; re-point their sources from where they now sit (#178).
         relocateSourcemaps(HYDRATE_DIR, PUBLIC)
-        hydrateName = 'hydrate.js'
+        hydrateName = readdirSync(HYDRATE_DIR).find((f) =>
+          /^hydrate-[a-z0-9]+\.js$/.test(f)
+        )
+        if (!hydrateName) {
+          throw new Error(
+            `the hydration bundle built, but no hydrate-<hash>.js entry is in ${HYDRATE_DIR}`
+          )
+        }
 
         /*
         `bundleEntry` REPLACES our bundle rather than extending it, and an entry that forgets
@@ -1333,13 +1355,15 @@ export async function buildSite(
         // Report the always-loaded weight (entry, not the lazy editor chunks) so a
         // regression that pulls CodeMirror back into the entry is visible.
         {
-          const entryBytes = await gzipSizeInChild(`${HYDRATE_DIR}/hydrate.js`)
+          const entryBytes = await gzipSizeInChild(
+            `${HYDRATE_DIR}/${hydrateName}`
+          )
           await $`rm -rf ${HYDRATE_DIR}`.nothrow().quiet()
           if (entryBytes > 0)
             console.log(
-              `hydrate.js (module, editor lazy): ${(entryBytes / 1024).toFixed(
-                1
-              )}kb gzip entry`
+              `${hydrateName} (module, editor lazy): ${(
+                entryBytes / 1024
+              ).toFixed(1)}kb gzip entry`
             )
         }
       } else if (!/^(https?:)?\/\//.test(config.scriptUrl ?? '/iife.js')) {

@@ -248,7 +248,9 @@ ${nav}
 ${navbar}
   </tosi-doc-system>
   ${hydrateUrl
-        ? `<script type="module" src="${escapeAttr(withStamp(relativeUrl(depth, hydrateUrl), assetStamp))}"></script>`
+        ? // NOT stamped (#191): its filename already carries a content hash, and chunks import it
+            // by that bare name, so a `?v=` would make the page load a second module instance.
+            `<script type="module" src="${escapeAttr(relativeUrl(depth, hydrateUrl))}"></script>`
         : `<script src="${escapeAttr(withStamp(relativeUrl(depth, scriptUrl), assetStamp))}"></script>`}
 </body>
 </html>

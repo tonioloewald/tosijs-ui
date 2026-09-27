@@ -160,6 +160,15 @@ describe('user-frame identification (#142)', () => {
     expect(firstUserStackFrame(stack)?.line).toBe(2)
   })
 
+  test('the content-hashed entry hydrate-<hash>.js counts as a bundle too (#191)', () => {
+    const adopter = [
+      'Error: boom',
+      '    at x (https://their.site/hydrate-5a9b309d.js:99:1)',
+      '    at https://their.site/inline-test:7:5',
+    ].join('\n')
+    expect(firstUserStackFrame(adopter)?.line).toBe(7)
+  })
+
   test('hydrate.js counts as a bundle — it is what an ADOPTER site loads', () => {
     const adopter = [
       'Error: boom',

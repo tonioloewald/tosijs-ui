@@ -52,7 +52,8 @@ somewhere with confidence. The reporter said exactly that and was right.
 The exclusion list survives as a FALLBACK for untagged stacks, now matching on the path with
 any query or fragment stripped.
 */
-const BUNDLE_FILES = /\/(index|module|iife|hydrate|module\.debug|module\.safe)\.js$/;
+// `hydrate-<hash>.js` since #191 made the doc-site entry's filename carry its content hash.
+const BUNDLE_FILES = /\/(index|module|iife|hydrate(?:-[a-z0-9]+)?|module\.debug|module\.safe)\.js$/;
 /** URL without `?query` or `#fragment` — a stamped bundle is still that bundle. */
 function pathOf(url) {
     return url.split(/[?#]/)[0];

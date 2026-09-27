@@ -227,7 +227,7 @@ test('full-screen is right before hydration too', async ({ page }) => {
   so this is the stylesheet's half of the job, and the half that decides the FIRST paint.
   */
   await page.setViewportSize({ width: 1400, height: 900 })
-  await page.route('**/hydrate.js*', (r: any) => r.abort())
+  await page.route('**/hydrate*.js*', (r: any) => r.abort())
   await page.goto('/full-screen-demo/')
   const navWidth = await page.evaluate(() => {
     const nav = document.querySelector('.doc-nav') as HTMLElement | null
