@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.16.0 (unreleased)
+## 1.16.0
 
 ### `<tosi-md>` sanitizes by default (#179)
 
