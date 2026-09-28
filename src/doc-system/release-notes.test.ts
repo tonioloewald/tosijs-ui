@@ -5,6 +5,7 @@ import {
   renderSection,
   uncovered,
   changelogSection,
+  alreadyTagged,
   unsupportedClaims,
   isPrereleaseTag,
 } from './release-notes.js'
@@ -377,4 +378,11 @@ describe('changelogSection (1.16.0 review, B2)', () => {
       uncovered(records, changelogSection(changelog, '1.16.0'))
     ).toHaveLength(1)
   })
+})
+
+test('alreadyTagged: an un-bumped version is caught, v-prefix either side', () => {
+  expect(alreadyTagged('v1.15.5', '1.15.5')).toBe(true)
+  expect(alreadyTagged('1.15.5', 'v1.15.5')).toBe(true)
+  expect(alreadyTagged('v1.15.5', '1.16.0')).toBe(false)
+  expect(alreadyTagged('', '1.16.0')).toBe(false) // no tag yet
 })

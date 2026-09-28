@@ -213,6 +213,15 @@ export function changelogSection(changelog, version) {
     const next = rest.slice(3).search(/^## /m);
     return next < 0 ? rest : rest.slice(0, next + 3);
 }
+/**
+ * Is `version` the version the `since` tag already names? Then `--check` would read the section
+ * that was already RELEASED and report every new bullet as unwritten; the caller should say
+ * "bump the version" instead.
+ */
+export function alreadyTagged(since, version) {
+    const strip = (v) => String(v).trim().replace(/^v/, '');
+    return Boolean(since) && strip(since) === strip(version);
+}
 /** Commits asserting a code change whose diff is markdown only. */
 /*
 A `docs(...)` commit is EXEMPT, because for it a markdown-only diff is the evidence, not the

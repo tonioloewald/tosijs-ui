@@ -51,3 +51,6 @@ demo/xinjs-icon-font/
 # The `*.md` override in .prettierrc.json (embeddedLanguageFormatting: off) is now redundant
 # but harmless; it stays as the record of an earlier round of the same problem.
 *.md
+
+*.markdown
+*.mdx

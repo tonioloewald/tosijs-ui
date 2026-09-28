@@ -68,6 +68,7 @@ import {
   renderSection,
   uncovered,
   changelogSection,
+  alreadyTagged,
   classifyBump,
   bumpConcerns,
   unsupportedClaims,
@@ -110,7 +111,7 @@ if (has('check')) {
   const changelog = changelogSection(fullChangelog, version)
   // An un-bumped version checks the section that was already RELEASED, and every new bullet
   // then looks unwritten. Say that, instead of asking for prose that already exists.
-  if (since && since.replace(/^v/, '') === String(version).replace(/^v/, '')) {
+  if (alreadyTagged(since, version)) {
     console.error(
       `\n🛑 package.json is ${version}, which is already tagged ${since}. Bump the version ` +
         `before running --check (or pass --version=X.Y.Z).`

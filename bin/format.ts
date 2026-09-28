@@ -5,11 +5,15 @@ tosijs-format — the house format step, shipped as a command (#187).
     tosijs-format           eslint --fix, then prettier --write (markdown excluded)
     tosijs-format --check   eslint, then prettier --check (markdown excluded); exit 1 on any finding
 
-Why a command, not a shared config: **Prettier never touches markdown** in this stack, and Prettier
-2 (pinned across the stack) cannot share an ignore file through a config package — `.prettierignore`
-is per-repo and a v2 config cannot exclude a glob. So every repo had to rediscover the rule, and
-several didn't: tosijs-3d's `bun format` rewrote every `.md` file until the owner noticed a
-hand-written TODO flattened and `*n*` turned into `_n_`. A command can pass the exclusion itself.
+**Prettier never touches markdown** in this stack. The rule itself lives in the Prettier
+CONFIG, where every entry point reads it (editors, lint-staged, a bare `prettier --write`):
+
+    "overrides": [{ "files": ["*.md", "*.markdown", "*.mdx"], "options": { "requirePragma": true } }]
+
+This command is a convenience on top: the house sequence in one step, excluding markdown on the
+command line as well, so it holds even in a repo whose config hasn't got the override yet.
+(1.16.0 first shipped this believing a v2 config could not exclude markdown; the pre-release
+review showed `requirePragma` does, verified on 2.8.8 including editors' `--stdin-filepath`.)
 
 Why markdown is excluded: markdown here is the PRODUCT (docs, a book, llms.txt). With
 `proseWrap: preserve`, all Prettier did to it was escape literal characters, pad tables and
@@ -79,7 +83,12 @@ if (hasEslintConfig) {
 
 // The exclusion is the point of this command: prettier never touches markdown.
 if (
-  run([bin('prettier'), check ? '--check' : '--write', '.', '!**/*.md']) !== 0
+  run([
+    bin('prettier'),
+    check ? '--check' : '--write',
+    '.',
+    '!**/*.{md,markdown,mdx}',
+  ]) !== 0
 ) {
   failed = true
 }

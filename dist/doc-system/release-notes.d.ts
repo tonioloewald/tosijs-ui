@@ -38,6 +38,12 @@ export declare function uncovered(records: CommitRecord[], changelog: string): B
  * no entry at all, and the gate still said "all accounted for" (1.16.0 pre-release review, B2).
  */
 export declare function changelogSection(changelog: string, version: string): string;
+/**
+ * Is `version` the version the `since` tag already names? Then `--check` would read the section
+ * that was already RELEASED and report every new bullet as unwritten; the caller should say
+ * "bump the version" instead.
+ */
+export declare function alreadyTagged(since: string, version: string): boolean;
 export declare function unsupportedClaims(records: CommitRecord[]): CommitRecord[];
 export type BumpKind = 'major' | 'minor' | 'patch' | 'prerelease' | 'unknown';
 /** Which component moved, comparing the version being cut to the last released one. */

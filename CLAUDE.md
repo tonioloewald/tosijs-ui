@@ -175,7 +175,10 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on push/PR to `main`, in two jo
 
 - **test** — `bun install` → `bunx tsc --noEmit` → `bunx tsc -p tsconfig.bin.json` → `bun run format-check` → `bun test` (the unit lane; `bunfig.toml` roots it at the repo, so `bin/` tests are collected too).
 
-  **Markdown is NOT formatted** (`*.md` is in `.prettierignore`, by request from tosijs).
+  **Markdown is NOT formatted.** Enforced three ways since 1.16: the `requirePragma` override for
+  `*.md`/`*.markdown`/`*.mdx` in `.prettierrc.json` (which editors and hooks read too), the
+  same globs in `.prettierignore`, and `tosijs-format`'s own exclusion (`bun format` runs it;
+  `bin/format.test.ts` proves the exclusion where nothing else masks it).
   `proseWrap` is already `preserve`, so the only things prettier changed in a `.md` file were
   escaping literal characters (`a * literal` → `a \* literal`), padding table cells, and
   rewriting `*` bullets as `-`. The first edits the CONTENT of a document, and markdown is

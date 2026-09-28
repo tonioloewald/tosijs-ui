@@ -28,5 +28,23 @@ export default tseslint.config(
       ],
     },
   },
-  { ignores: ['**/dist/', 'docs/', 'node_modules/'] }
+  // Mirrors .prettierignore's non-markdown entries: format-check now runs ESLint over `.`, and
+  // `eslint --fix` must not rewrite what Prettier deliberately leaves alone (vendored or
+  // generated files). 1.16.0 re-review 3.
+  {
+    ignores: [
+      '**/dist/',
+      'docs/',
+      'node_modules/',
+      'www/',
+      'cdn/',
+      'src/icons/data/',
+      'src/icon-data.ts',
+      'src/version.ts',
+      'playwright-report/',
+      'test-results/',
+      'demo/xinjs-icon-font/',
+      '.nova/',
+    ],
+  }
 )
