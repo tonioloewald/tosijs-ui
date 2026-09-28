@@ -140,8 +140,20 @@ jobs:
       - name: Build
         run: |
           set -euo pipefail
-          if node -e "process.exit(require('./package.json').scripts?.build ? 0 : 1)"; then
-            bun run build
+          # The full build is not always called `build`: tjs-lang's is `make`, because `bun build`
+          # is a Bun BUILTIN and a `build` script makes `bun build` and `bun run build` diverge.
+          # Resolved exactly as release-doctor resolves it (build, make, build:all), so the two
+          # can never build different things.
+          # A repo whose PACKAGE is not its main build declares it: releaseDoctor.build (e.g.
+          # tosijs-platform, whose `build` is a site bundle and whose package is `build:lib`).
+          BUILD=$(node -p "const p=require('./package.json'),s=p.scripts||{},d=(p.releaseDoctor||{}).build; d||(s.build?'build':s.make?'make':s['build:all']?'build:all':'')")
+          if [ -n "$BUILD" ] && ! node -e "process.exit((require('./package.json').scripts||{})[process.argv[1]]?0:1)" "$BUILD"; then
+            echo "::error::releaseDoctor.build names '$BUILD', which is not a script"
+            exit 1
+          fi
+          if [ -n "$BUILD" ]; then
+            echo "building with: bun run $BUILD"
+            bun run "$BUILD"
           fi
           npm pack --dry-run --json 2>/dev/null > "$RUNNER_TEMP/files.json"
           git diff --name-only > "$RUNNER_TEMP/changed.txt"
@@ -168,12 +180,37 @@ jobs:
           echo "tarball=$RUNNER_TEMP/pack/$FILE" >> "$GITHUB_OUTPUT"
           echo "integrity=$INTEGRITY" >> "$GITHUB_OUTPUT"
 
+      # A tag carrying release-attestation.json vouches for a build made and tested LOCALLY
+      # (tools/attest.ts). The tarball just packed must contain exactly the files recorded
+      # there, so what is staged is what was signed off, and the suite never runs here.
+      - name: Tarball matches the attested build
+        if: ${{ !inputs.verify_only && hashFiles('release-attestation.json') != '' }}
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: bun .practices/tools/attest.ts --verify-shipped "${{ steps.pack.outputs.tarball }}"
+
       # What an adopter's install exercises, against the exact bytes about to ship. Uses the
       # repo's own `test-consumer` if it has one (it must print the tarball path), else a
       # generic install + entry-point + typecheck.
       - name: Consumer smoke test (packed tarball)
         if: ${{ !inputs.verify_only }}
         run: bun .practices/tools/publish-smoke.ts "${{ steps.pack.outputs.tarball }}"
+
+      # A repo with a second package tree (tosijs-platform's npm-managed functions/) names the
+      # script that installs it for its test lane: package.json releaseDoctor.install.
+      # Deliberately AFTER Pack: the tarball is sealed (its integrity recorded) before any
+      # extra install runs, so an unlocked install's dependencies cannot touch what ships.
+      # It still runs in the job holding id-token: write — keep it `--ignore-scripts`.
+      - name: Extra install (releaseDoctor.install)
+        if: ${{ !inputs.verify_only }}
+        run: |
+          set -euo pipefail
+          SETUP=$(node -p "(require('./package.json').releaseDoctor||{}).install||''")
+          if [ -z "$SETUP" ]; then echo "none declared"; exit 0; fi
+          node -e "process.exit((require('./package.json').scripts||{})[process.argv[1]]?0:1)" "$SETUP" \
+            || { echo "::error::releaseDoctor.install names '$SETUP', which is not a script"; exit 1; }
+          echo "extra install: bun run $SETUP"
+          bun run "$SETUP"
 
       # Tier 0: tests, typecheck, build, changelog entry, packaged exports, bin shebangs, …
       # Lanes CI cannot run (e.g. live-LLM suites) are declared in package.json
@@ -207,7 +244,12 @@ jobs:
             echo "This run waits up to 60 minutes for the approval, then verifies."
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # A timeout is NOT a failure: the version is staged and simply not approved yet (approval
+      # often comes later, from a phone). It ends green with a warning and a summary saying
+      # "run verify_only after approving"; the verification steps then skip. A red run here
+      # emailed the maintainer a CI failure for something that had gone exactly right.
       - name: Wait for approval
+        id: wait
         if: ${{ !inputs.verify_only && !inputs.dry_run }}
         run: |
           set -euo pipefail
@@ -215,15 +257,25 @@ jobs:
             if curl -fsS -H 'Cache-Control: no-cache' "https://registry.npmjs.org/${{ steps.meta.outputs.name }}" \
               | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.exit(JSON.parse(s).versions?.[process.argv[1]]?0:1))" "${{ steps.meta.outputs.version }}"; then
               echo "served by the registry after ~$((i * 30))s"
+              echo "approved=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
             sleep 30
           done
-          echo "::error::not approved within 60 minutes. Approve it, then run this workflow again for the same tag with verify_only ticked — a re-run would start over and stop at 'already published'."
-          exit 1
+          echo "approved=false" >> "$GITHUB_OUTPUT"
+          echo "::warning::staged but not approved within 60 minutes. Approve it, then run this workflow again for the same tag with verify_only ticked (a re-run would start over and stop at 'already published')."
+          {
+            echo "## ⏸ ${{ steps.meta.outputs.name }}@${{ steps.meta.outputs.version }} is staged, awaiting approval"
+            echo
+            echo "Nothing is published yet and nothing has been verified. After approving on npmjs.com, run:"
+            echo
+            echo '```'
+            echo "gh workflow run publish.yml -f tag=${{ inputs.tag }} -f verify_only=true"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify what shipped
-        if: ${{ !inputs.dry_run }}
+        if: ${{ !inputs.dry_run && (inputs.verify_only || steps.wait.outputs.approved == 'true') }}
         env:
           VERIFY_ONLY: ${{ inputs.verify_only }}
         run: |
@@ -254,7 +306,7 @@ jobs:
 
       # The smoke test once more, against the tarball adopters actually download.
       - name: Consumer smoke test (from the registry)
-        if: ${{ !inputs.dry_run }}
+        if: ${{ !inputs.dry_run && (inputs.verify_only || steps.wait.outputs.approved == 'true') }}
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/registry"
@@ -262,7 +314,7 @@ jobs:
           bun .practices/tools/publish-smoke.ts "$(ls "$RUNNER_TEMP"/registry/*.tgz)"
 
       - name: Summary
-        if: ${{ !inputs.dry_run }}
+        if: ${{ !inputs.dry_run && (inputs.verify_only || steps.wait.outputs.approved == 'true') }}
         run: |
           {
             echo "## ✅ ${{ steps.meta.outputs.name }}@${{ steps.meta.outputs.version }} is published and verified"
