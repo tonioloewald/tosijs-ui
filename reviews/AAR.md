@@ -211,3 +211,25 @@ gap, recorded rather than hidden.
   shipped as a flake.
 - **Also this cycle, outside the release:** TODO.md pruned (199 items → 39), nine stale issues
   closed with versions, and tosijs-ui onboarded onto the virta board (88 open tasks).
+
+## 1.16.0 (2026-09-28) — a breaking minor, four review passes
+
+- **The review earned its cost.** Pass 1 (pre-minor) found a security bypass of the release's
+  headline change: sanitized `<tosi-md>` kept custom elements, so a nested
+  `<tosi-md sanitize="off">` rendered raw HTML. Fixed as a class (custom elements unwrapped unless
+  allowed), not an instance. It also found that `release-check` had been matching against the
+  whole CHANGELOG, a false green that hid a missing #191 entry.
+- **Fixes introduced their own findings, twice.** Pass 2 found the new `allowedElements` was a
+  plain field (not reactive, so the documented migration did nothing) and that the corrected gate
+  now caught my own unwritten entry. Pass 4 found the `tosijs-format` rationale was wrong: a
+  Prettier 2 config CAN exclude markdown (`requirePragma`), which I had repeated from the issue
+  without testing. Verified, corrected in the bin, CHANGELOG and practices.
+- **CI never ran ESLint.** The tosijs 1.10 migration left 32 unused imports that only surfaced when
+  `tosijs-format --check` put ESLint in CI. The migration had passed every lane.
+- **Mutation testing and "measure before shipping" caught two of my own premises:** a
+  "vendored package inlined" build check that Bun already made impossible (deleted, not shipped),
+  and a claim that tosijs 1.10 types element-creator arguments (it types instances).
+- **Friction:** the one-hour approval wait failed red and emailed a CI failure while the release
+  was fine (approval came later; 2FA had been skipped the first time). The template now ends that
+  case green with a "run verify_only" summary. A near miss: uncommitted work stashed across a
+  build of generated files; recovered, and committed before comparisons since.
