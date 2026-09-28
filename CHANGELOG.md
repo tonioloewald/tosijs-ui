@@ -11,15 +11,18 @@ script in your page: tosijs-virta's review read a login token out of `localStora
 
 If your markdown deliberately embeds HTML that sanitizing removes (`script`, `style`, `iframe`,
 `form`, event-handler attributes, `javascript:` or `data:` links, and a few more), set
-`sanitize="off"` on that element, and only for markdown you control. Everything else (ordinary
-markdown, links, inputs, custom elements) renders exactly as before. Only the exact value `off`
+`sanitize="off"` on that element, and only for markdown you control. Ordinary markdown, links
+and inputs render exactly as before; custom elements do not (see the next paragraph). Only the exact value `off`
 opts out; anything else, a typo included, sanitizes. The once-per-page warning is gone.
 
 **Custom elements are unwrapped when sanitizing** (their sanitized content is kept, the element
 is not): a component is code, and some render raw HTML or run code of their own, so untrusted
 markdown must not be able to instantiate them. The pre-release review showed a nested
-`<tosi-md sanitize="off">` escaping the sanitizer. Allow trusted ones by name with the new
-`allowedElements` property, e.g. `el.allowedElements = ['tosi-icon']`.
+`<tosi-md sanitize="off">` escaping the sanitizer. Allow trusted display components by name
+with the new `allowed-elements` attribute (space- or comma-separated), e.g.
+`<tosi-md allowed-elements="tosi-icon tosi-tag">`, or the `allowedElements` property; changing it
+re-renders. `tosi-md`, `tosi-example` and `tosi-doc-system` are never allowed, because they render
+raw HTML or run code.
 
 ### ESM doc sites no longer load their entry bundle twice (#191)
 
@@ -34,6 +37,16 @@ The entry is now built as **`hydrate-<hash>.js`** and loaded with no query strin
 and every chunk name one URL, and a rebuild still busts caches. **Rebuild your site to pick it
 up.** Anything that refers to `hydrate.js` by name must follow the rename: CSP or SRI entries,
 `<link rel="modulepreload">`, host cache rules, service workers, smoke checks.
+
+### `tosijs-release-notes --check` reads only the section being released
+
+It matched annotations against the whole CHANGELOG, so wording from OLDER releases could count a
+new bullet as written up: this release's #191 fix had no entry and the gate still said "all
+accounted for". It now reads only the section for the version being released and fails when that
+section is missing. **Heading formats it recognises:** `## 1.16.0`, `## v1.16.0`, and Keep a
+Changelog's `## [1.16.0]` / `## [v1.16.0]`, each with any suffix (a date, "(unreleased)"). The
+section lookup is exported as `changelogSection`. If your gate goes red after upgrading, check
+that the section heading names the exact version.
 
 ### tosijs 1.10: components are typed from their attributes
 

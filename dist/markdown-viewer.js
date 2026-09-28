@@ -46,7 +46,10 @@ survives, including inputs.
 
 **Custom elements are unwrapped** when sanitizing (their content is kept, the element is not),
 because a component is code: some render raw HTML or run code of their own. Allow the ones you
-trust by name with the `allowedElements` property, e.g. `el.allowedElements = ['tosi-icon']`.
+trust by name with the `allowed-elements` attribute (space- or comma-separated), e.g.
+`<tosi-md allowed-elements="tosi-icon tosi-tag">`, or the `allowedElements` property. An allowed
+element keeps whatever attributes the markdown's author gave it, so allow only display components.
+`tosi-md`, `tosi-example` and `tosi-doc-system` are never allowed: they render raw HTML or run code.
 
 `sanitize="off"` renders the HTML as-is. Use it only for markdown you control, for example
 markup that embeds a `<form>` (see `elements` below).
@@ -140,20 +143,28 @@ function populate(basePath, source) {
         return value === undefined ? original : populate(basePath, String(value));
     });
 }
+/*
+Components that render raw HTML or run code of their own. Unwrapped from sanitized markdown even
+when listed in `allowed-elements`: allowing `tosi-md` would reopen B1 through `sanitize="off"`, and
+`tosi-example` runs its code. Fail closed rather than trust the allow-list to be written carefully.
+*/
+const ALWAYS_UNWRAPPED = new Set(['tosi-md', 'tosi-example', 'tosi-doc-system']);
 export class TosiMd extends withAttributes({
     src: '',
     elements: false,
     // 'on' (the default since 1.16, #179) | 'off' to render raw HTML from markdown you control.
     sanitize: '',
+    /*
+    Custom elements sanitized markdown may create, as a space- or comma-separated list of tag
+    names (`allowed-elements="tosi-icon tosi-tag"`). An ATTRIBUTE, so setting it re-renders and it
+    can be written in HTML: as a plain field, assigning it after the first render did nothing,
+    which was the documented migration path (1.16.0 re-review, M1). An array assigned to the
+    property works too (it stringifies with commas).
+    */
+    allowedElements: '',
 }) {
     static preferredTagName = 'tosi-md';
     context = {};
-    /**
-     * Custom elements (tag names with a hyphen) that sanitized markdown may create, e.g.
-     * `['tosi-icon']`. Empty by default: every other custom element is unwrapped, because a
-     * component can run code or render raw HTML of its own. Irrelevant with `sanitize="off"`.
-     */
-    allowedElements = [];
     value = '';
     content = null;
     options = {};
@@ -201,7 +212,10 @@ export class TosiMd extends withAttributes({
         host names it in `allowedElements`. `is="…"` is the other way to make an element a
         component, so it goes too.
         */
-        const allowed = new Set(this.allowedElements.map((tag) => tag.toLowerCase()));
+        const allowed = new Set(String(this.allowedElements)
+            .toLowerCase()
+            .split(/[\s,]+/)
+            .filter((tag) => tag && !ALWAYS_UNWRAPPED.has(tag)));
         for (const el of [...template.content.querySelectorAll('*')]) {
             el.removeAttribute('is');
             if (el.localName.includes('-') && !allowed.has(el.localName)) {

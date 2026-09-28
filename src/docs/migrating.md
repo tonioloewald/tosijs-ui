@@ -1,11 +1,27 @@
 # Migrating from older versions
 
-<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0's tosijs 1.10 typing, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
+<!--{ "pin": "bottom", "parent": "Appendices", "order": 60, "description": "Breaking changes and migration checklists for tosijs-ui releases you may be upgrading past — 1.16.0's tosijs 1.10 typing and sanitize-by-default, 1.11.0's validator seam, 1.9.1's Node resolution fix, 1.7.0's editor change and the 1.3.0 xinjs-ui rename." }-->
 
 Notices for releases you may be upgrading *past*. If you are starting fresh, none of
 this applies — go to the [Quick Start](/) instead.
 
 Current releases are described in [CHANGELOG.md](https://github.com/tonioloewald/tosijs-ui/blob/main/CHANGELOG.md).
+
+## `<tosi-md>` sanitizes by default — 1.16.0
+
+A `<tosi-md>` with no `sanitize` attribute now strips executable content from the rendered
+markdown, and **unwraps custom elements** (their content stays, the element goes). 1.15.3 logged a
+console warning announcing this.
+
+- **Markdown you control** (your own docs, posts you wrote) that embeds HTML such as a `<form>`,
+  `<iframe>`, `<style>` or `<script>`: set `sanitize="off"` on that element to keep the old
+  behaviour.
+- **Markdown that embeds your own display components** (`<tosi-icon>`, a tag chip): keep
+  sanitizing and allow them by name, `allowed-elements="tosi-icon tosi-tag"`.
+- **Markdown from anyone else** (comments, issue bodies, API data): leave it sanitized. That is
+  the point of the change: unsanitized, such text can run script in your page.
+
+`tosi-md`, `tosi-example` and `tosi-doc-system` can't be allowed; they render raw HTML or run code.
 
 ## tosijs 1.10: components are typed from their attributes — 1.16.0
 

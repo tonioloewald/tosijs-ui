@@ -1,4 +1,5 @@
 import { test, expect, describe, beforeEach, afterEach } from 'bun:test'
+import { updates } from 'tosijs'
 import { TosiMd, tosiMd } from './markdown-viewer.js'
 
 /*
@@ -85,7 +86,7 @@ describe('<tosi-md sanitize> (#179)', () => {
 
   test('markdown, safe links and ALLOWED custom elements survive', () => {
     const el = render(
-      { sanitize: 'on', allowedElements: ['tosi-icon'] },
+      { sanitize: 'on', allowedElements: 'tosi-icon' },
       '## title\n\n**bold** [site](https://example.com)\n\n<tosi-icon icon="user"></tosi-icon>'
     )
     expect(el.querySelector('h2')?.textContent).toBe('title')
@@ -180,11 +181,44 @@ describe('sanitized <tosi-md> cannot be escaped through a custom element (B1)', 
 
   test('a custom element the host allows by name survives', () => {
     const el = render(
-      { allowedElements: ['tosi-tag'] },
+      { allowedElements: 'tosi-tag' },
       '<tosi-tag caption="ok"></tosi-tag> <tosi-example>x</tosi-example>'
     )
     expect(el.querySelector('tosi-tag')).not.toBeNull()
     expect(el.querySelector('tosi-example')).toBeNull()
+  })
+
+  test('allowedElements set AFTER the first render re-renders by itself (re-review M1)', async () => {
+    const el = tosiMd()
+    document.body.append(el)
+    el.value = '<tosi-tag caption="ok"></tosi-tag>'
+    el.render()
+    expect(el.querySelector('tosi-tag')).toBeNull()
+    el.allowedElements = 'tosi-tag' // the documented migration: no manual render()
+    await updates()
+    await new Promise((r) => setTimeout(r, 50))
+    expect(el.querySelector('tosi-tag')).not.toBeNull()
+  })
+
+  test('the allowed-elements ATTRIBUTE works, space- or comma-separated', () => {
+    const el = tosiMd()
+    el.setAttribute('allowed-elements', 'tosi-tag, tosi-icon')
+    document.body.append(el)
+    el.value =
+      '<tosi-tag caption="a"></tosi-tag><tosi-icon icon="user"></tosi-icon>'
+    el.render()
+    expect(el.querySelector('tosi-tag')).not.toBeNull()
+    expect(el.querySelector('tosi-icon')).not.toBeNull()
+  })
+
+  test('tosi-md and tosi-example stay unwrapped even when allowed (fail closed)', () => {
+    const el = render(
+      { allowedElements: 'tosi-md tosi-example' },
+      '<tosi-md sanitize="off">&lt;img src=x onerror="window.__pwned=1"&gt;</tosi-md><tosi-example>x</tosi-example>'
+    )
+    expect(el.querySelector('tosi-md')).toBeNull()
+    expect(el.querySelector('tosi-example')).toBeNull()
+    expect(residue(el)).toEqual([])
   })
 
   test('sanitize="off" (trusted markdown) keeps custom elements, as before', () => {

@@ -246,7 +246,8 @@ export function changelogSection(changelog: string, version: string): string {
   const escaped = version
     .replace(/^v/, '')
     .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const heading = new RegExp(`^## v?${escaped}(?![\\w.-])[^\\n]*$`, 'm')
+  // `## 1.2.3`, `## v1.2.3`, and Keep a Changelog's `## [1.2.3]` / `## [v1.2.3]`, any suffix.
+  const heading = new RegExp(`^## \\[?v?${escaped}(?![\\w.-])[^\\n]*$`, 'm')
   const start = changelog.search(heading)
   if (start < 0) return ''
   const rest = changelog.slice(start)

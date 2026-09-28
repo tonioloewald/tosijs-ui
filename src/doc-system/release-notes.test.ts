@@ -358,6 +358,14 @@ describe('changelogSection (1.16.0 review, B2)', () => {
     expect(changelogSection(changelog, '1.15')).toBe('')
   })
 
+  test('Keep a Changelog headings match too', () => {
+    const kac =
+      '# Changelog\n\n## [1.16.0] - 2026-09-28\n\nNew.\n\n## [v1.15.5]\n\nOld.'
+    expect(changelogSection(kac, '1.16.0')).toContain('New.')
+    expect(changelogSection(kac, '1.16.0')).not.toContain('Old.')
+    expect(changelogSection(kac, '1.15.5')).toContain('Old.')
+  })
+
   test('a bullet covered only by an OLDER section is reported uncovered', () => {
     const records = rec(
       '[fix] rebuild your site to pick up the code split chunks fix'
