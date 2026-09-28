@@ -105,7 +105,6 @@ changes** — decisions belong to the diff they were made about.
 /*{ "parent": "Components" }*/
 
 import {
-  Component,
   ElementCreator,
   PartsMap,
   elements,

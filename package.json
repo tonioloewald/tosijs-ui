@@ -14,8 +14,8 @@
     "tunnel": "bun bin/tunnel.ts",
     "test-browser": "bun bin/dev.ts --test",
     "test-consumer": "bun bin/smoke-consumer.ts",
-    "format": "bun prettier --write . && bun eslint src demo --fix",
-    "format-check": "bun prettier --check .",
+    "format": "bun bin/format.ts",
+    "format-check": "bun bin/format.ts --check",
     "typecheck-guards": "bun tsc --noEmit -p tsconfig.guards.json",
     "typecheck": "bunx tsc --noEmit && bunx tsc -p tsconfig.bin.json --noEmit && bunx tsc -p tsconfig.tests.json --noEmit",
     "tests": "bun test && bun playwright test",
@@ -96,6 +96,7 @@
     "/bin/caddy-install.ts",
     "/bin/deploy-preview.ts",
     "/bin/docs.ts",
+    "/bin/format.ts",
     "/bin/make-icon-data.js",
     "/bin/release-notes.ts",
     "/bin/resolve-site-config.ts",
@@ -111,7 +112,8 @@
     "tosijs-tunnel": "bin/tunnel.ts",
     "tosijs-deploy": "bin/deploy-preview.ts",
     "tosijs-release-notes": "bin/release-notes.ts",
-    "tosijs-caddy-install": "bin/caddy-install.ts"
+    "tosijs-caddy-install": "bin/caddy-install.ts",
+    "tosijs-format": "bin/format.ts"
   },
   "source": "src/index.ts",
   "types": "dist/index.d.ts",

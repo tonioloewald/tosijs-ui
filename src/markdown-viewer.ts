@@ -1,4 +1,4 @@
-import { Component, ElementCreator, xin, withAttributes } from 'tosijs'
+import { ElementCreator, xin, withAttributes } from 'tosijs'
 import { marked, MarkedOptions } from 'marked'
 import { sanitizeInPlace, isSafeNavigationUrl } from 'tosijs-kilpi'
 
@@ -167,8 +167,8 @@ export class TosiMd extends withAttributes({
   Custom elements sanitized markdown may create, as a space- or comma-separated list of tag
   names (`allowed-elements="tosi-icon tosi-tag"`). An ATTRIBUTE, so setting it re-renders and it
   can be written in HTML: as a plain field, assigning it after the first render did nothing,
-  which was the documented migration path (1.16.0 re-review, M1). An array assigned to the
-  property works too (it stringifies with commas).
+  which was the documented migration path (1.16.0 re-review, M1). The contract is a STRING; an
+  array happens to work at runtime, but tosijs warns on it and TypeScript rejects it.
   */
   allowedElements: '',
 }) {

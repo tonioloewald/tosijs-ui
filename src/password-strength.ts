@@ -159,7 +159,7 @@ found in Weakpass's database (and spit out extra info to the console).
 
 /*{ "parent": "Form Components" }*/
 
-import { Component, elements, vars, varDefault, withAttributes } from 'tosijs'
+import { elements, vars, varDefault, withAttributes } from 'tosijs'
 
 export const digest = async (s: string, method = 'SHA-1'): Promise<string> => {
   // Convert password to an ArrayBuffer

@@ -797,7 +797,7 @@ test('editing keeps unknown keys, fires change, and does not rebuild under the u
 ```
 */
 /*{ "parent": "Components" }*/
-import { elements, unobserve, withAttributes, } from 'tosijs';
+import { elements, unobserve, withAttributes } from 'tosijs';
 import { fieldsFor, itemFields, branchFields, matchBranch, selectBranch, insertAt, removeAt, moveItem, blankFor, getByPath, setByPath, collectErrors, coerceToSchema, errorFor, relaxInferred, } from './schema-form/fields.js';
 import { localize, i18n } from './localize.js';
 import { unenforcedNote } from './schema-form/unenforced.js';

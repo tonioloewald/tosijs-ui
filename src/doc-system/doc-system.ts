@@ -59,7 +59,6 @@ A self-contained, controllable embed (e.g. docs in a floating panel):
 /*{ "parent": "Appendices" }*/
 
 import {
-  Component,
   ElementCreator,
   StyleSheet,
   elements,

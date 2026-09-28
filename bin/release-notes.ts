@@ -108,6 +108,15 @@ if (has('check')) {
     .catch(() => '')
   // Only the section being released counts: older prose must not cover a new bullet (B2).
   const changelog = changelogSection(fullChangelog, version)
+  // An un-bumped version checks the section that was already RELEASED, and every new bullet
+  // then looks unwritten. Say that, instead of asking for prose that already exists.
+  if (since && since.replace(/^v/, '') === String(version).replace(/^v/, '')) {
+    console.error(
+      `\n🛑 package.json is ${version}, which is already tagged ${since}. Bump the version ` +
+        `before running --check (or pass --version=X.Y.Z).`
+    )
+    process.exit(1)
+  }
   if (!changelog && publishable.length) {
     console.error(
       `\n🛑 CHANGELOG.md has no \`## ${version}\` section to check against.`
@@ -122,7 +131,7 @@ if (has('check')) {
     console.error(
       `\n🛑 ${missed.length} annotation(s) since ${
         since || 'the start'
-      } are not mentioned in CHANGELOG.md:\n`
+      } are not mentioned in the \`## ${version}\` section of CHANGELOG.md:\n`
     )
     for (const b of missed)
       console.error(`   [${b.tag}] ${b.text}  (${b.sha.slice(0, 8)})`)

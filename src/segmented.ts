@@ -138,7 +138,6 @@ The following CSS variables can be used to control customize the `<tosi-segmente
 /*{ "parent": "Form Components" }*/
 
 import {
-  Component as WebComponent,
   ElementCreator,
   elements,
   varDefault,

@@ -1,4 +1,4 @@
-import { elements, withAttributes, } from 'tosijs';
+import { elements, withAttributes } from 'tosijs';
 const { slot } = elements;
 /*#
 # size-break

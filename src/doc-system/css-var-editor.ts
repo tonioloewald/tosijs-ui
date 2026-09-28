@@ -6,13 +6,7 @@ is registered as a side effect of loading the doc-system (see doc-system.ts) so 
 can drop `<tosi-css-var-editor element-selector="tosi-widget">` under an example; it is
 deliberately not exported from `tosijs-ui`.
 */
-import {
-  Component as WebComponent,
-  ElementCreator,
-  elements,
-  Color,
-  withAttributes,
-} from 'tosijs'
+import { ElementCreator, elements, Color, withAttributes } from 'tosijs'
 import { tosiForm, TosiForm, tosiField } from '../form.js'
 
 const { h2, code } = elements

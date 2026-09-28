@@ -72,7 +72,6 @@ test('width recomputation during an in-flight columns change cannot tear the gri
   page,
 }) => {
   const shape = await page.evaluate(async (harness) => {
-    // eslint-disable-next-line no-new-func
     new Function(harness)()
     const { host, table } = (window as any).__mk()
     await (window as any).__settle(host)
@@ -102,7 +101,6 @@ test('the grid still agrees after the deferred render lands', async ({
   page,
 }) => {
   const shape = await page.evaluate(async (harness) => {
-    // eslint-disable-next-line no-new-func
     new Function(harness)()
     const { host, table } = (window as any).__mk()
     await (window as any).__settle(host)
@@ -126,7 +124,6 @@ test('a resize still moves widths after the column set is pinned to the DOM', as
   page,
 }) => {
   const grid = await page.evaluate(async (harness) => {
-    // eslint-disable-next-line no-new-func
     new Function(harness)()
     const { host, table } = (window as any).__mk()
     await (window as any).__settle(host)

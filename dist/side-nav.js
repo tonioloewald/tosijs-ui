@@ -27,7 +27,7 @@ named state rather than a `minSize` no viewport can reach, because the second on
 reads as a bug.
 */
 /*{ "parent": "Components" }*/
-import { elements, varDefault, withAttributes, } from 'tosijs';
+import { elements, varDefault, withAttributes } from 'tosijs';
 const { slot } = elements;
 export class TosiSidenav extends withAttributes({
     minSize: 800,

@@ -56,7 +56,7 @@ This is a minimalist carousel component that supports the usual stuff.
 <tosi-css-var-editor element-selector="tosi-carousel"></tosi-css-var-editor>
 */
 /*{ "parent": "Components" }*/
-import { elements, vars, withAttributes, } from 'tosijs';
+import { elements, vars, withAttributes } from 'tosijs';
 import { icons } from './icons.js';
 const { button, slot, div } = elements;
 export class TosiCarousel extends withAttributes({

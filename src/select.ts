@@ -210,7 +210,6 @@ preview.append(
 /*{ "parent": "Form Components" }*/
 
 import {
-  Component,
   ElementCreator,
   ElementProps,
   PartsMap,

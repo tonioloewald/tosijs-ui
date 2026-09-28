@@ -102,7 +102,7 @@ And of course just access the element's `animation` property to [use the bodymov
 Also see the [documentation for advanced interactions](https://lottiefiles.github.io/lottie-docs/advanced_interactions/)
 */
 /*{ "parent": "Components" }*/
-import { withAttributes, } from 'tosijs';
+import { withAttributes } from 'tosijs';
 import { scriptTag } from './via-tag.js';
 export class BodymovinPlayer extends withAttributes({
     src: '',

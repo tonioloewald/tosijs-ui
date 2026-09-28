@@ -464,13 +464,7 @@ context = {
 
 /*{ "parent": "Components" }*/
 
-import {
-  Component,
-  ElementCreator,
-  elements,
-  tosi,
-  withAttributes,
-} from 'tosijs'
+import { ElementCreator, elements, tosi, withAttributes } from 'tosijs'
 import { codeEditor, CodeEditor } from '../code-editor.js'
 import { tosiTabs } from '../tab-selector.js'
 import { icons } from '../icons.js'

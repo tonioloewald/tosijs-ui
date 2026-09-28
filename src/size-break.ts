@@ -1,9 +1,4 @@
-import {
-  Component as WebComponent,
-  ElementCreator,
-  elements,
-  withAttributes,
-} from 'tosijs'
+import { ElementCreator, elements, withAttributes } from 'tosijs'
 
 const { slot } = elements
 

@@ -222,12 +222,7 @@ be used to load `.glb` files. Setting `src` calls this for you on connect.
 */
 
 /*{ "parent": "Components" }*/
-import {
-  Component as WebComponent,
-  ElementCreator,
-  elements,
-  withAttributes,
-} from 'tosijs'
+import { ElementCreator, elements, withAttributes } from 'tosijs'
 import { scriptTag } from './via-tag.js'
 import { icons, svg2DataUrl } from './icons.js'
 

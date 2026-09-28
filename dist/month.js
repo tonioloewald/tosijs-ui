@@ -146,7 +146,7 @@ form.addEventListener('reset', () => {
 
 */
 /*{ "parent": "Form Components" }*/
-import { elements, varDefault, withAttributes, } from 'tosijs';
+import { elements, varDefault, withAttributes } from 'tosijs';
 import { tosiSelect } from './select.js';
 import { icons } from './icons.js';
 import { popMenu } from './menu.js';

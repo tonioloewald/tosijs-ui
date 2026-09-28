@@ -58,13 +58,7 @@ This is a minimalist carousel component that supports the usual stuff.
 
 /*{ "parent": "Components" }*/
 
-import {
-  Component as WebComponent,
-  ElementCreator,
-  elements,
-  vars,
-  withAttributes,
-} from 'tosijs'
+import { ElementCreator, elements, vars, withAttributes } from 'tosijs'
 import { icons } from './icons.js'
 
 const { button, slot, div } = elements

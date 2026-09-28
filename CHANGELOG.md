@@ -38,6 +38,18 @@ and every chunk name one URL, and a rebuild still busts caches. **Rebuild your s
 up.** Anything that refers to `hydrate.js` by name must follow the rename: CSP or SRI entries,
 `<link rel="modulepreload">`, host cache rules, service workers, smoke checks.
 
+### `tosijs-format`: the house format step, and Prettier never touches markdown (#187)
+
+A new bin that runs `eslint --fix` (when the project has an `eslint.config.*`) and then
+`prettier --write . '!**/*.md'`, using the project's own Prettier and ESLint. `tosijs-format --check`
+checks instead of writing and exits 1 on anything unformatted or any lint error, for CI.
+
+**Markdown is excluded because it's authored prose**, and in this stack the product: all Prettier
+did to it was escape literal characters, pad tables and rewrite bullets and emphasis (`*n*` →
+`_n_`). A command rather than a shared config, because Prettier 2 can't share an ignore file
+through a config package, so every repo had to rediscover the rule and several didn't. Point your
+`format` script at `tosijs-format` and `format-check` at `tosijs-format --check`.
+
 ### `tosijs-release-notes --check` reads only the section being released
 
 It matched annotations against the whole CHANGELOG, so wording from OLDER releases could count a
@@ -46,7 +58,9 @@ accounted for". It now reads only the section for the version being released and
 section is missing. **Heading formats it recognises:** `## 1.16.0`, `## v1.16.0`, and Keep a
 Changelog's `## [1.16.0]` / `## [v1.16.0]`, each with any suffix (a date, "(unreleased)"). The
 section lookup is exported as `changelogSection`. If your gate goes red after upgrading, check
-that the section heading names the exact version.
+that the section heading names the exact version. When `package.json` still names the version that
+is already tagged, it now says so ("bump the version before running --check") instead of
+reporting every new bullet as unwritten.
 
 ### tosijs 1.10: components are typed from their attributes
 

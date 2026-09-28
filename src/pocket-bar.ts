@@ -106,7 +106,6 @@ and desaturates until checked, so a toggle needs no extra CSS.
 /*{ "parent": "Components" }*/
 
 import {
-  Component as WebComponent,
   elements,
   ElementCreator,
   PartsMap,

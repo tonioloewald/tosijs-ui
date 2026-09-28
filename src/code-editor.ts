@@ -116,7 +116,6 @@ one exposed.
 /*{ "parent": "Components" }*/
 
 import {
-  Component as WebComponent,
   ElementCreator,
   elements,
   PartsMap,

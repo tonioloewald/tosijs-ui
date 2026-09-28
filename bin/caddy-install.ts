@@ -121,9 +121,9 @@ set -a; . /etc/caddy/preview.env; set +a
 : "\${ACME_EMAIL:?set ACME_EMAIL in /etc/caddy/preview.env}"
 : "\${PREVIEW_DOMAIN:?set PREVIEW_DOMAIN in /etc/caddy/preview.env}"
 
-sed -e "s|__PREVIEW_TOKEN__|\$PREVIEW_TOKEN|g" \\
-    -e "s|{{ACME_EMAIL}}|\$ACME_EMAIL|g" \\
-    -e "s|{{PREVIEW_DOMAIN}}|\$PREVIEW_DOMAIN|g" \\
+sed -e "s|__PREVIEW_TOKEN__|$PREVIEW_TOKEN|g" \\
+    -e "s|{{ACME_EMAIL}}|$ACME_EMAIL|g" \\
+    -e "s|{{PREVIEW_DOMAIN}}|$PREVIEW_DOMAIN|g" \\
     /etc/caddy/Caddyfile.tpl > /etc/caddy/Caddyfile.new
 
 if grep -qE '\\{\\{|__PREVIEW_TOKEN__' /etc/caddy/Caddyfile.new; then
@@ -150,7 +150,7 @@ else
   echo "--- would change /etc/caddy/Caddyfile (token redacted) ---"
   if [ -f /etc/caddy/Caddyfile ]; then
     diff -u /etc/caddy/Caddyfile /etc/caddy/Caddyfile.new \\
-      | sed "s|\$PREVIEW_TOKEN|***REDACTED***|g" || true
+      | sed "s|$PREVIEW_TOKEN|***REDACTED***|g" || true
   else
     echo "(no existing /etc/caddy/Caddyfile — this would create it)"
   fi

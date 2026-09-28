@@ -78,7 +78,6 @@ and (in my opinion) common sense, but  not like [MUI's rating widget](https://mu
 /*{ "parent": "Form Components" }*/
 
 import {
-  Component,
   elements,
   ElementCreator,
   PartsMap,

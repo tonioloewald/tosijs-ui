@@ -23,7 +23,7 @@ function run(args: string[], spec: Partial<ArgvSpec> = {}) {
   const realLog = console.log
   const realErr = console.error
   let code: number | undefined
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   process.exit = ((c?: number) => {
     code = c
     throw new Error('__exit__')

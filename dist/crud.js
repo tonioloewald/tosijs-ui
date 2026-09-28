@@ -287,7 +287,7 @@ test('a stale reply is dropped, and a failed save is reported not swallowed', as
 - `error` — a store operation failed.
 */
 /*{ "parent": "Components" }*/
-import { elements, withAttributes, } from 'tosijs';
+import { elements, withAttributes } from 'tosijs';
 import { tosiTable } from './data-table.js';
 import { tosiSchemaForm } from './schema-form.js';
 import { hashState } from './hash-state.js';

@@ -104,11 +104,7 @@ Also see the [documentation for advanced interactions](https://lottiefiles.githu
 
 /*{ "parent": "Components" }*/
 
-import {
-  Component as WebComponent,
-  ElementCreator,
-  withAttributes,
-} from 'tosijs'
+import { ElementCreator, withAttributes } from 'tosijs'
 import { scriptTag } from './via-tag.js'
 
 export interface LottieConfig {

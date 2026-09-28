@@ -548,7 +548,6 @@ import {
   svgElements,
   ElementCreator,
   ElementPart,
-  Component as WebComponent,
   XinStyleRule,
   Color,
   vars,

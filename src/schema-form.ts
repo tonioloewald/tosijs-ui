@@ -799,13 +799,7 @@ test('editing keeps unknown keys, fires change, and does not rebuild under the u
 
 /*{ "parent": "Components" }*/
 
-import {
-  Component as WebComponent,
-  ElementCreator,
-  elements,
-  unobserve,
-  withAttributes,
-} from 'tosijs'
+import { ElementCreator, elements, unobserve, withAttributes } from 'tosijs'
 import type { JSONSchema } from './schema-form/json-schema.js'
 import {
   fieldsFor,

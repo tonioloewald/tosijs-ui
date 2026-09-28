@@ -213,11 +213,12 @@ describe('sanitized <tosi-md> cannot be escaped through a custom element (B1)', 
 
   test('tosi-md and tosi-example stay unwrapped even when allowed (fail closed)', () => {
     const el = render(
-      { allowedElements: 'tosi-md tosi-example' },
-      '<tosi-md sanitize="off">&lt;img src=x onerror="window.__pwned=1"&gt;</tosi-md><tosi-example>x</tosi-example>'
+      { allowedElements: 'tosi-md tosi-example tosi-doc-system' },
+      '<tosi-md sanitize="off">&lt;img src=x onerror="window.__pwned=1"&gt;</tosi-md><tosi-example>x</tosi-example><tosi-doc-system></tosi-doc-system>'
     )
     expect(el.querySelector('tosi-md')).toBeNull()
     expect(el.querySelector('tosi-example')).toBeNull()
+    expect(el.querySelector('tosi-doc-system')).toBeNull()
     expect(residue(el)).toEqual([])
   })
 

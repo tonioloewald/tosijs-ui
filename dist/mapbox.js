@@ -174,7 +174,7 @@ form.addEventListener('submit', (e) => {
 ```
 */
 /*{ "parent": "Components" }*/
-import { elements, withAttributes, } from 'tosijs';
+import { elements, withAttributes } from 'tosijs';
 import { styleSheet, scriptTag } from './via-tag.js';
 const { div } = elements;
 export class MapBox extends withAttributes({

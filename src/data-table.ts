@@ -1055,7 +1055,6 @@ happy with the untranslated headers.
 /*{ "parent": "Components" }*/
 
 import {
-  Component as WebComponent,
   ElementCreator,
   elements,
   vars,

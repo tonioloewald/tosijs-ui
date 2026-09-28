@@ -78,7 +78,7 @@ randomize()
 
 /*{ "parent": "Helper Libraries" }*/
 
-import { Component, withAttributes } from 'tosijs'
+import { withAttributes } from 'tosijs'
 
 const abTestConditions = {} as { [key: string]: any }
 

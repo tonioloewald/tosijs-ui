@@ -801,7 +801,6 @@ import {
   varDefault,
   vars,
   StyleSheet,
-  Component,
   PartsMap,
   withAttributes,
 } from 'tosijs'

@@ -432,14 +432,7 @@ class MyLocalizedComponent extends Component {
 
 /*{ "parent": "Helper Libraries" }*/
 
-import {
-  Component,
-  tosi,
-  tosiValue,
-  elements,
-  bindings,
-  withAttributes,
-} from 'tosijs'
+import { tosi, tosiValue, elements, bindings, withAttributes } from 'tosijs'
 import { makeSorter } from './make-sorter.js'
 import { tosiSelect, TosiSelect } from './select.js'
 

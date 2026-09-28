@@ -70,7 +70,7 @@ After an element's position, size, or rotation are adjusted a `change` event is 
 
 /*{ "parent": "Components" }*/
 
-import { Component, elements, vars, withAttributes } from 'tosijs'
+import { elements, vars, withAttributes } from 'tosijs'
 import { icons } from './icons.js'
 import { trackDrag } from './track-drag.js'
 

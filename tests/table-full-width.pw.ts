@@ -31,7 +31,7 @@ async function measure(
   return page.evaluate(
     async ({ width, full, columns, build }: any) => {
       document.querySelector('#fw-host')?.remove()
-      // eslint-disable-next-line no-new-func
+
       new Function(
         build
           .replace('WIDTH', JSON.stringify(width))

@@ -29,13 +29,7 @@ reads as a bug.
 
 /*{ "parent": "Components" }*/
 
-import {
-  Component,
-  ElementCreator,
-  elements,
-  varDefault,
-  withAttributes,
-} from 'tosijs'
+import { ElementCreator, elements, varDefault, withAttributes } from 'tosijs'
 
 const { slot } = elements
 

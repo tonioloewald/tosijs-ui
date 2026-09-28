@@ -126,7 +126,7 @@ navigate('page/1')
 
 /*{ "parent": "Helper Libraries" }*/
 
-import { Component, ElementCreator, tosi, withAttributes } from 'tosijs'
+import { ElementCreator, tosi, withAttributes } from 'tosijs'
 
 // ============================================================================
 // Types
