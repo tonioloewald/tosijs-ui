@@ -22,6 +22,15 @@ session-only + expire in 7 days — this line is the durable reminder.)
 
 ---
 
+## dependabot — bun updater nested stale CodeMirror copies (commented 2026-09-28)
+
+[dependabot-core#15897](https://github.com/dependabot/dependabot-core/issues/15897#issuecomment-5875033803)
+(per-repository Bun versions in the updater). Our #192 update added 19 nested copies of the OLD
+`@codemirror/view`/`state` under each CodeMirror package; the same `bun update` of the same six
+packages with Bun 1.4.2 produces none. Fixed by hand in `de4077a7a`; guarded by
+`src/codemirror-single-instance.test.ts`. Also recorded: the `npm` ecosystem can't run against a
+committed `bun.lock` at all, hence `package-ecosystem: bun`.
+
 ## tosijs-virta — /start/ onboarding gaps (filed 2026-09-26)
 
 [tosijs-virta#5](https://github.com/tonioloewald/tosijs-virta/issues/5). Three things an
