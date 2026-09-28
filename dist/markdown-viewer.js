@@ -42,7 +42,11 @@ So `<tosi-md>` **sanitizes by default** (since 1.16) with
 and links that are not safe to navigate to are stripped, and these elements are **removed
 together with everything inside them**: `script`, `style`, `iframe`, `object`, `embed`, `form`,
 `link`, `meta`, `base`, `noscript`, `template`, and SVG animation elements. Everything else
-survives, including inputs and custom elements.
+survives, including inputs.
+
+**Custom elements are unwrapped** when sanitizing (their content is kept, the element is not),
+because a component is code: some render raw HTML or run code of their own. Allow the ones you
+trust by name with the `allowedElements` property, e.g. `el.allowedElements = ['tosi-icon']`.
 
 `sanitize="off"` renders the HTML as-is. Use it only for markdown you control, for example
 markup that embeds a `<form>` (see `elements` below).
@@ -144,6 +148,12 @@ export class TosiMd extends withAttributes({
 }) {
     static preferredTagName = 'tosi-md';
     context = {};
+    /**
+     * Custom elements (tag names with a hyphen) that sanitized markdown may create, e.g.
+     * `['tosi-icon']`. Empty by default: every other custom element is unwrapped, because a
+     * component can run code or render raw HTML of its own. Irrelevant with `sanitize="off"`.
+     */
+    allowedElements = [];
     value = '';
     content = null;
     options = {};
@@ -182,6 +192,22 @@ export class TosiMd extends withAttributes({
         const template = document.createElement('template');
         template.innerHTML = html;
         sanitizeInPlace(template.content);
+        /*
+        Custom elements are code, not markup (B1, 1.16.0 review). kilpi keeps unknown elements by
+        design, so untrusted markdown could instantiate ANY registered component, and some execute
+        or inject their own content: a nested `<tosi-md sanitize="off">` rendered its text as raw
+        HTML; `<tosi-example>` runs its code. Rather than denylist the ones we know about, a custom
+        element is unwrapped (its already-sanitized content kept, the element dropped) unless the
+        host names it in `allowedElements`. `is="…"` is the other way to make an element a
+        component, so it goes too.
+        */
+        const allowed = new Set(this.allowedElements.map((tag) => tag.toLowerCase()));
+        for (const el of [...template.content.querySelectorAll('*')]) {
+            el.removeAttribute('is');
+            if (el.localName.includes('-') && !allowed.has(el.localName)) {
+                el.replaceWith(...el.childNodes);
+            }
+        }
         /*
         kilpi's URL check admits raster `data:image/*` (fine for an <img src>); a link must never
         carry a data: URL, so hold every href to the navigation rule. What virta did (#179).

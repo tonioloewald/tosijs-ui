@@ -1,9 +1,10 @@
-import { test, expect } from 'bun:test'
+import { test, expect, describe } from 'bun:test'
 import {
   parseBullets,
   isDocsOnly,
   renderSection,
   uncovered,
+  changelogSection,
   unsupportedClaims,
   isPrereleaseTag,
 } from './release-notes.js'
@@ -326,4 +327,46 @@ test('the sensitive list is short, named, and covers what bit us', () => {
   expect(SENSITIVE_PATHS).toContain('dev-auth')
   expect(SENSITIVE_PATHS).toContain('tunnel')
   expect(SENSITIVE_PATHS.length).toBeLessThan(10)
+})
+
+describe('changelogSection (1.16.0 review, B2)', () => {
+  const changelog = [
+    '# Changelog',
+    '',
+    '## 1.16.0 (unreleased)',
+    '',
+    'New things.',
+    '',
+    '## 1.15.5',
+    '',
+    'Rebuild your site to pick up the code split chunks fix.',
+    '',
+    '## 1.15.0',
+    '',
+    'Older.',
+  ].join('\n')
+
+  test('returns only the named version, any heading suffix allowed', () => {
+    const section = changelogSection(changelog, '1.16.0')
+    expect(section).toContain('New things.')
+    expect(section).not.toContain('Rebuild your site')
+    expect(changelogSection(changelog, 'v1.15.5')).toContain(
+      'Rebuild your site'
+    )
+    // 1.15.0 must not match the 1.15.5 heading, nor 1.15 match 1.15.0
+    expect(changelogSection(changelog, '1.15.0')).toBe('## 1.15.0\n\nOlder.')
+    expect(changelogSection(changelog, '1.15')).toBe('')
+  })
+
+  test('a bullet covered only by an OLDER section is reported uncovered', () => {
+    const records = rec(
+      '[fix] rebuild your site to pick up the code split chunks fix'
+    )
+    // against the whole file it looks covered: the false green B2 found
+    expect(uncovered(records, changelog)).toHaveLength(0)
+    // against the section being released it is not
+    expect(
+      uncovered(records, changelogSection(changelog, '1.16.0'))
+    ).toHaveLength(1)
+  })
 })

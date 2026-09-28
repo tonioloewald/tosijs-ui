@@ -15,15 +15,44 @@ If your markdown deliberately embeds HTML that sanitizing removes (`script`, `st
 markdown, links, inputs, custom elements) renders exactly as before. Only the exact value `off`
 opts out; anything else, a typo included, sanitizes. The once-per-page warning is gone.
 
+**Custom elements are unwrapped when sanitizing** (their sanitized content is kept, the element
+is not): a component is code, and some render raw HTML or run code of their own, so untrusted
+markdown must not be able to instantiate them. The pre-release review showed a nested
+`<tosi-md sanitize="off">` escaping the sanitizer. Allow trusted ones by name with the new
+`allowedElements` property, e.g. `el.allowedElements = ['tosi-icon']`.
+
+### ESM doc sites no longer load their entry bundle twice (#191)
+
+A doc site built with `bundleEntry` loaded its entry as `hydrate.js?v=<hash>`, while its
+code-split chunks import the entry back as `../hydrate.js`. Those are different URLs, so the
+browser created **two module instances of the entry** on every page: everything in it ran twice,
+and a module that patches a prototype in a shared chunk threw on the second pass (Babylon's
+`Cannot redefine property: onBeforeViewRenderObservable`, which also broke its shaders). Reported
+with a clean before/after measurement by tosijs-3d-ensemble.
+
+The entry is now built as **`hydrate-<hash>.js`** and loaded with no query string, so the page
+and every chunk name one URL, and a rebuild still busts caches. **Rebuild your site to pick it
+up.** Anything that refers to `hydrate.js` by name must follow the rename: CSP or SRI entries,
+`<link rel="modulepreload">`, host cache rules, service workers, smoke checks.
+
 ### tosijs 1.10: components are typed from their attributes
 
-**Breaking, type-level only: the tosijs peer is now `^1.10.3`.** Every component declares its
+**Breaking, type-level only: the tosijs peer floor is now `^1.10.3`.** 1.10.0 removed
+`Component`'s `[key: string]: any` index signature (tosijs#36), and 1.10.1 fixed the declaration
+emit (TS2742, tosijs#38) that had blocked this adoption since 2026-09-04. Every component declares its
 attributes with tosijs's `withAttributes()`, so a component instance is typed from its attribute
 values: `tosiRating().max` is a `number`, a misspelt property is a type error, and so is
 assigning the wrong type. On tosijs 1.9 TypeScript did not know `max` existed at all, because
 `Component` carried an any-index signature that tosijs 1.10 removed (tosijs#36). Nothing changes
 at runtime. Element-creator *arguments* are not typed by this. See
 [Migrating](/migrating/) for your own components.
+
+### The CDN bundle updates tosijs-schema and grows 2.8kB
+
+`dist/iife.js` (the single-`<script>` bundle) inlines tosijs-schema as the `<tosi-schema-form>`
+validator; it moves from 1.8.0 to 1.10.2. It also carries tosijs 1.10 and the CodeMirror updates:
+**+2.8kB gzip (+0.6%, 466,942 → 469,753 bytes)**. The ESM build is unaffected (tosijs-schema is an
+optional peer there). `NOTICE` now attributes tosijs-schema and tosijs-kilpi, both bundled.
 
 ## 1.15.5
 

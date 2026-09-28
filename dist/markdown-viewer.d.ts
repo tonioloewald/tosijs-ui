@@ -11,6 +11,12 @@ export declare class TosiMd extends TosiMd_base {
     context: {
         [key: string]: any;
     };
+    /**
+     * Custom elements (tag names with a hyphen) that sanitized markdown may create, e.g.
+     * `['tosi-icon']`. Empty by default: every other custom element is unwrapped, because a
+     * component can run code or render raw HTML of its own. Irrelevant with `sanitize="off"`.
+     */
+    allowedElements: string[];
     value: string;
     content: null;
     options: MarkedOptions;

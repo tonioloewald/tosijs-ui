@@ -67,6 +67,7 @@ import {
   collect,
   renderSection,
   uncovered,
+  changelogSection,
   classifyBump,
   bumpConcerns,
   unsupportedClaims,
@@ -102,9 +103,16 @@ const total = records.flatMap((r) => r.bullets)
 const publishable = total.filter((b) => b.tag !== 'note')
 
 if (has('check')) {
-  const changelog = await Bun.file('CHANGELOG.md')
+  const fullChangelog = await Bun.file('CHANGELOG.md')
     .text()
     .catch(() => '')
+  // Only the section being released counts: older prose must not cover a new bullet (B2).
+  const changelog = changelogSection(fullChangelog, version)
+  if (!changelog && publishable.length) {
+    console.error(
+      `\n🛑 CHANGELOG.md has no \`## ${version}\` section to check against.`
+    )
+  }
   const missed = uncovered(records, changelog)
   const unsupported = unsupportedClaims(records)
   let bad = 0
@@ -146,7 +154,9 @@ if (has('check')) {
 
   So this keys on the diff and the annotations rather than on what the release was called.
   */
-  const version = (await Bun.file('package.json').json()).version as string
+  // Named apart from the outer `version` (the --version flag): shadowing it put the CHANGELOG
+  // section lookup above in the temporal dead zone.
+  const pkgVersion = (await Bun.file('package.json').json()).version as string
   const changedPaths = since
     ? (await $`git diff --name-only ${since}...HEAD`.nothrow().quiet().text())
         .split('\n')
@@ -154,7 +164,7 @@ if (has('check')) {
     : []
   const concerns = since
     ? bumpConcerns({
-        bump: classifyBump(since, version),
+        bump: classifyBump(since, pkgVersion),
         bullets: total,
         changedPaths,
       })

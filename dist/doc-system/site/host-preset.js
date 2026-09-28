@@ -102,7 +102,7 @@ function registersTag(bundleSource, tag) {
  * `bundleEntry` REPLACES tosijs-ui's bundle rather than extending it, so an entry that
  * imports only the adopter's own library produces a site where every page renders its
  * prerendered markup and nothing else: no header, no nav, no menu, no live examples. Nothing
- * fails — `docs.json`, `hydrate.js` and the HTML all serve 200, `<tosi-doc-system>` is
+ * fails — `docs.json`, `hydrate-<hash>.js` and the HTML all serve 200, `<tosi-doc-system>` is
  * present in the markup, and the adopter's own `customElements.get('their-element')` returns
  * true, so the bundle looks healthy. It is inert because nothing defined `tosi-doc-system`
  * (tosijs-ui#145; cost the reporter more than any other onboarding problem).
@@ -126,7 +126,7 @@ function registersTag(bundleSource, tag) {
  * So look for evidence of a REGISTRATION rather than a mention, by either route:
  *
  *   - `preferredTagName="tosi-doc-system"` — the tosijs `elementCreator` path. Verified to
- *     survive minification in both `dist/iife.js` and a built `hydrate.js`.
+ *     survive minification in both `dist/iife.js` and a built `hydrate-<hash>.js`.
  *   - `define("tosi-doc-system"` — a direct `customElements.define` with a literal.
  *
  * Neither matches a `querySelectorAll`, an attribute selector or prose. This is still a

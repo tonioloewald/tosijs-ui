@@ -72,6 +72,34 @@ the icons documentation page.
 --------------------------------------------------------------------------
 
 --------------------------------------------------------------------------
+tosijs-kilpi — https://www.npmjs.com/package/tosijs-kilpi
+Apache License 2.0. Bundled into `dist/iife.js` (the sanitizer behind
+<tosi-md>). Reproduced from the tosijs-kilpi package's own NOTICE:
+
+kilpi
+Copyright 2026 Tonio Loewald
+
+This product includes software developed as part of DOMPurify.
+
+  test/dompurify-fixtures.mjs is vendored verbatim from DOMPurify
+  (https://github.com/cure53/DOMPurify), test/fixtures/expect.mjs
+  Copyright (c) 2015 Mario Heiderich
+  Licensed under (MPL-2.0 OR Apache-2.0); used here under Apache-2.0.
+
+That file is DOMPurify's published XSS payload corpus, used as kilpi's
+verification gate. No DOMPurify source code is included or distributed in the
+published package — the corpus is a test fixture only, and is not part of the
+npm tarball.
+--------------------------------------------------------------------------
+
+--------------------------------------------------------------------------
+tosijs-schema — https://github.com/tonioloewald/tosijs-schema
+MIT. Bundled into `dist/iife.js`, which wires it in as the <tosi-schema-form>
+validator for CDN users. The ESM build does not bundle it (it is an optional
+peer there).
+--------------------------------------------------------------------------
+
+--------------------------------------------------------------------------
 CodeMirror — https://codemirror.net/
 Copyright (c) by Marijn Haverbeke and others. MIT.
 The @codemirror/* and @lezer/* packages are runtime dependencies, bundled

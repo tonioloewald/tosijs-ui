@@ -78,14 +78,14 @@ export interface GenerateSiteConfig {
   /** path to the IIFE bundle script (default /iife.js) — the CDN/classic-script path */
   scriptUrl?: string
   /**
-   * Cache-busting stamp appended to generated asset URLs as `?v=`.
+   * Cache-busting stamp appended as `?v=` to the CLASSIC assets: the IIFE `<script>` and the
+   * stylesheet. Stable filenames go stale — a CDN or browser cache can serve yesterday's bundle
+   * against today's HTML — and a query fixes that while keeping those filenames stable.
    *
-   * Stable filenames go stale: a CDN or browser cache can serve yesterday's `hydrate.js`
-   * against today's HTML, and the site then looks broken in a way that reproduces nowhere
-   * else — the fix being a hard reload nobody thinks to try. Content-hashed FILENAMES would
-   * also solve it, and are the wrong trade here: `docs/` is committed in this repo and its
-   * siblings, so hashing would add and delete a file on every build and put churn in every
-   * diff. A query keeps the filenames stable.
+   * **Never applied to the ESM entry** (`hydrateUrl`). That entry is `hydrate-<hash>.js`,
+   * cache-busted by its filename, and it MUST be loaded with no query: code-split chunks import
+   * it back by its bare name, so a `?v=` made the browser create a second module instance of
+   * the entry on every page (#191 — everything ran twice, and Babylon's prototype patch threw).
    *
    * Must be DETERMINISTIC per commit, not per build, for the same reason — see build-stamp.ts.
    * Left unset, nothing is appended and the output is exactly as before.

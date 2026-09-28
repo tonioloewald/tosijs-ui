@@ -29,6 +29,15 @@ export declare function lastVersionTag(): Promise<string>;
 export declare function collect(since: string): Promise<CommitRecord[]>;
 export declare function renderSection(version: string, records: CommitRecord[]): string;
 export declare function uncovered(records: CommitRecord[], changelog: string): Bullet[];
+/**
+ * The CHANGELOG section for one version: from its `## <version>` heading (any suffix, such as a
+ * date or "(unreleased)") to the next `## ` heading. Empty when there is no such section.
+ *
+ * The coverage gate must read ONLY this. Matching against the whole file let prose from OLDER
+ * releases cover a new bullet: 1.16.0's #191 fix ("rebuild your site", "code split chunks") had
+ * no entry at all, and the gate still said "all accounted for" (1.16.0 pre-release review, B2).
+ */
+export declare function changelogSection(changelog: string, version: string): string;
 export declare function unsupportedClaims(records: CommitRecord[]): CommitRecord[];
 export type BumpKind = 'major' | 'minor' | 'patch' | 'prerelease' | 'unknown';
 /** Which component moved, comparing the version being cut to the last released one. */

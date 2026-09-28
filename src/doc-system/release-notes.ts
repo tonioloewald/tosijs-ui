@@ -234,6 +234,26 @@ export function uncovered(
     })
 }
 
+/**
+ * The CHANGELOG section for one version: from its `## <version>` heading (any suffix, such as a
+ * date or "(unreleased)") to the next `## ` heading. Empty when there is no such section.
+ *
+ * The coverage gate must read ONLY this. Matching against the whole file let prose from OLDER
+ * releases cover a new bullet: 1.16.0's #191 fix ("rebuild your site", "code split chunks") had
+ * no entry at all, and the gate still said "all accounted for" (1.16.0 pre-release review, B2).
+ */
+export function changelogSection(changelog: string, version: string): string {
+  const escaped = version
+    .replace(/^v/, '')
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const heading = new RegExp(`^## v?${escaped}(?![\\w.-])[^\\n]*$`, 'm')
+  const start = changelog.search(heading)
+  if (start < 0) return ''
+  const rest = changelog.slice(start)
+  const next = rest.slice(3).search(/^## /m)
+  return next < 0 ? rest : rest.slice(0, next + 3)
+}
+
 /** Commits asserting a code change whose diff is markdown only. */
 /*
 A `docs(...)` commit is EXEMPT, because for it a markdown-only diff is the evidence, not the

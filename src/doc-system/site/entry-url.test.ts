@@ -57,6 +57,8 @@ test('the page and every chunk import the ESM entry by one identical URL', () =>
   }
 
   expect(pageRefs.size).toBeGreaterThan(0)
+  // chunks DO import the entry back; if none did, this test would check nothing on that side
+  expect(chunkRefs.size).toBeGreaterThan(0)
   expect([...pageRefs]).toEqual([entryUrl]) // no query string, no second spelling
   // chunks that import the entry at all must use exactly the page's URL
   expect([...chunkRefs].filter((u) => u !== entryUrl)).toEqual([])

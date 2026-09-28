@@ -83,9 +83,9 @@ describe('<tosi-md sanitize> (#179)', () => {
     expect(el.querySelector('h2')?.textContent).toBe('heading')
   })
 
-  test('markdown, safe links and custom elements survive', () => {
+  test('markdown, safe links and ALLOWED custom elements survive', () => {
     const el = render(
-      { sanitize: 'on' },
+      { sanitize: 'on', allowedElements: ['tosi-icon'] },
       '## title\n\n**bold** [site](https://example.com)\n\n<tosi-icon icon="user"></tosi-icon>'
     )
     expect(el.querySelector('h2')?.textContent).toBe('title')
@@ -134,5 +134,61 @@ describe('<tosi-md sanitize> (#179)', () => {
     render({ sanitize: 'on' }, '# on')
     render({ sanitize: 'off' }, '# off')
     expect(warnings).toEqual([])
+  })
+})
+
+/*
+B1 of the 1.16.0 pre-release review: sanitizing kept UNKNOWN CUSTOM ELEMENTS (kilpi keeps them
+by design), and some of ours execute or inject their own content. A nested
+`<tosi-md sanitize="off">` survived, connected, decoded its textContent and assigned it as raw
+innerHTML — a live `<img onerror>` in a "sanitized" render. The class, not the instance: in
+sanitized mode a custom element is unwrapped (its sanitized content kept, the element dropped)
+unless the host allows it by name.
+*/
+describe('sanitized <tosi-md> cannot be escaped through a custom element (B1)', () => {
+  afterEach(() => {
+    document.querySelectorAll('tosi-md').forEach((el) => el.remove())
+  })
+
+  /** Render, then let any nested <tosi-md> render too — that is when it would inject. */
+  function renderDeep(props: Record<string, unknown>, value: string): TosiMd {
+    const el = render(props, value)
+    el.querySelectorAll('tosi-md').forEach((inner) =>
+      (inner as TosiMd).render()
+    )
+    return el
+  }
+
+  test('a nested <tosi-md sanitize="off"> leaves no executable residue', () => {
+    const el = renderDeep(
+      {},
+      'hello\n\n<tosi-md sanitize="off">&lt;img src=x onerror="window.__pwned=1"&gt;</tosi-md>'
+    )
+    expect(residue(el)).toEqual([])
+    expect(el.querySelector('tosi-md')).toBeNull()
+  })
+
+  test('a <tosi-example> cannot be instantiated from untrusted markdown', () => {
+    const el = render(
+      {},
+      '<tosi-example><pre><code class="language-js">window.__pwned = 9</code></pre></tosi-example>'
+    )
+    expect(el.querySelector('tosi-example')).toBeNull()
+    // its content survives as inert text
+    expect(el.textContent).toContain('window.__pwned = 9')
+  })
+
+  test('a custom element the host allows by name survives', () => {
+    const el = render(
+      { allowedElements: ['tosi-tag'] },
+      '<tosi-tag caption="ok"></tosi-tag> <tosi-example>x</tosi-example>'
+    )
+    expect(el.querySelector('tosi-tag')).not.toBeNull()
+    expect(el.querySelector('tosi-example')).toBeNull()
+  })
+
+  test('sanitize="off" (trusted markdown) keeps custom elements, as before', () => {
+    const el = render({ sanitize: 'off' }, '<tosi-tag caption="ok"></tosi-tag>')
+    expect(el.querySelector('tosi-tag')).not.toBeNull()
   })
 })
