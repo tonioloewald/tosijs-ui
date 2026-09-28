@@ -2,6 +2,19 @@
 
 ## 1.16.0 (unreleased)
 
+### `<tosi-md>` sanitizes by default (#179)
+
+**Breaking, as announced by 1.15.3's console warning.** A `<tosi-md>` with no `sanitize`
+attribute now strips executable content, where it used to render raw HTML from the markdown.
+Markdown from anyone other than you (issue bodies, comments, API data) could otherwise run
+script in your page: tosijs-virta's review read a login token out of `localStorage` that way.
+
+If your markdown deliberately embeds HTML that sanitizing removes (`script`, `style`, `iframe`,
+`form`, event-handler attributes, `javascript:` or `data:` links, and a few more), set
+`sanitize="off"` on that element, and only for markdown you control. Everything else (ordinary
+markdown, links, inputs, custom elements) renders exactly as before. Only the exact value `off`
+opts out; anything else, a typo included, sanitizes. The once-per-page warning is gone.
+
 ### tosijs 1.10: components are typed from their attributes
 
 **Breaking, type-level only: the tosijs peer is now `^1.10.3`.** Every component declares its

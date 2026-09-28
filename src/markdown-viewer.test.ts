@@ -4,8 +4,8 @@ import { TosiMd, tosiMd } from './markdown-viewer.js'
 /*
 `sanitize` (#179). virta's pre-release review found <tosi-md> assigned marked() output straight
 to innerHTML — a stored XSS for any consumer rendering text it did not write, with a token in
-localStorage as the payoff. `sanitize="on"` is opt-in in 1.15.x and becomes the default in 1.16;
-until then an unset element renders as before and warns once per page.
+localStorage as the payoff. `sanitize="on"` was opt-in in 1.15.x (unset warned once per page);
+since 1.16 it is the default, and only `sanitize="off"` renders raw HTML.
 */
 
 const HOSTILE = [
@@ -55,7 +55,6 @@ describe('<tosi-md sanitize> (#179)', () => {
   const originalWarn = console.warn
 
   beforeEach(() => {
-    TosiMd.warnedUnsanitized = false
     warnings = []
     console.warn = (...args: unknown[]) => warnings.push(args)
   })
@@ -117,14 +116,18 @@ describe('<tosi-md sanitize> (#179)', () => {
     expect(warnings).toEqual([])
   })
 
-  test('unset warns exactly once per page, naming 1.16 and both settings', () => {
-    render({}, '# one')
-    render({}, '# two')
-    expect(warnings.length).toBe(1)
-    const message = String(warnings[0][0])
-    expect(message).toContain('1.16')
-    expect(message).toContain('sanitize="on"')
-    expect(message).toContain('sanitize="off"')
+  test('unset SANITIZES (the default since 1.16), silently', () => {
+    const el = render({}, HOSTILE)
+    expect(residue(el)).toEqual([])
+    expect(warnings).toEqual([])
+  })
+
+  test('only an explicit sanitize="off" renders raw HTML', () => {
+    expect(
+      residue(render({ sanitize: 'off' }, HOSTILE)).length
+    ).toBeGreaterThan(0)
+    // anything that is not exactly "off" sanitizes, typos included
+    expect(residue(render({ sanitize: 'of' }, HOSTILE))).toEqual([])
   })
 
   test('sanitize="on" and sanitize="off" are both silent', () => {

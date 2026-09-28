@@ -1,4 +1,3 @@
-var _a;
 import { xin, withAttributes } from 'tosijs';
 import { marked } from 'marked';
 import { sanitizeInPlace, isSafeNavigationUrl } from 'tosijs-kilpi';
@@ -32,23 +31,21 @@ tosi-md {
 
 Note that, by default, `<tosi-md>` will use its `textContent` (not its `innerHTML`) as its source.
 
-## `sanitize` — set it
+## `sanitize` — on by default
 
-Markdown can contain raw HTML, and `<tosi-md>` renders whatever the markdown produces. If you
-show text **you did not write** (issue bodies, comments, anything from a user or an API),
-unsanitized rendering is a stored XSS: `<img src=x onerror=…>` or a `javascript:` link runs
-in your page.
+Markdown can contain raw HTML, and `<tosi-md>` renders whatever the markdown produces. For text
+**you did not write** (issue bodies, comments, anything from a user or an API), unsanitized
+rendering is a stored XSS: `<img src=x onerror=…>` or a `javascript:` link runs in your page.
 
-- `sanitize="on"` strips executable content with [kilpi](https://www.npmjs.com/package/tosijs-kilpi):
-  event-handler attributes, unsafe URL schemes, and any link that is not safe to navigate to.
-  It **removes these elements together with everything inside them**: `script`, `style`,
-  `iframe`, `object`, `embed`, `form`, `link`, `meta`, `base`, `noscript`, `template`, and SVG
-  animation elements. Everything else survives, including inputs and custom elements.
-- `sanitize="off"` renders the HTML as-is. Use it only for markdown you control.
+So `<tosi-md>` **sanitizes by default** (since 1.16) with
+[kilpi](https://www.npmjs.com/package/tosijs-kilpi): event-handler attributes, unsafe URL schemes
+and links that are not safe to navigate to are stripped, and these elements are **removed
+together with everything inside them**: `script`, `style`, `iframe`, `object`, `embed`, `form`,
+`link`, `meta`, `base`, `noscript`, `template`, and SVG animation elements. Everything else
+survives, including inputs and custom elements.
 
-**Leaving `sanitize` unset renders unsanitized and logs a one-time warning: in tosijs-ui 1.16
-the default becomes `on`.** Set it explicitly now, either way, and the upgrade changes nothing
-for you.
+`sanitize="off"` renders the HTML as-is. Use it only for markdown you control, for example
+markup that embeds a `<form>` (see `elements` below).
 
 ## rendering markdown from a url
 
@@ -142,15 +139,10 @@ function populate(basePath, source) {
 export class TosiMd extends withAttributes({
     src: '',
     elements: false,
-    // 'on' | 'off'. Unset renders unsanitized and warns once, until 1.16 makes 'on' the default.
+    // 'on' (the default since 1.16, #179) | 'off' to render raw HTML from markdown you control.
     sanitize: '',
 }) {
     static preferredTagName = 'tosi-md';
-    /**
-    Whether the unsanitized-render warning has been shown on this page. It is shown once per page,
-    not per element — fifty `<tosi-md>` would otherwise log fifty identical lines.
-    */
-    static warnedUnsanitized = false;
     context = {};
     value = '';
     content = null;
@@ -173,23 +165,13 @@ export class TosiMd extends withAttributes({
             }
         }
     }
-    /** The effective setting. A bare `<tosi-md sanitize>` means on. */
+    /** The effective setting: sanitized unless the element explicitly says `sanitize="off"`. */
     get #sanitizeMode() {
-        const mode = String(this.sanitize).trim().toLowerCase();
-        if (mode === 'on' || (mode === '' && this.hasAttribute('sanitize'))) {
-            return 'on';
-        }
-        return mode === 'off' ? 'off' : 'unset';
+        return String(this.sanitize).trim().toLowerCase() === 'off' ? 'off' : 'on';
     }
     #show(html) {
         const mode = this.#sanitizeMode;
-        if (mode !== 'on') {
-            if (mode === 'unset' && !_a.warnedUnsanitized) {
-                _a.warnedUnsanitized = true;
-                console.warn('<tosi-md> is rendering markdown WITHOUT sanitizing it. In tosijs-ui 1.16 sanitize ' +
-                    'becomes the default. Set sanitize="on" for any text you did not write, or ' +
-                    'sanitize="off" to keep raw HTML and silence this warning. (tosijs-ui#179)');
-            }
+        if (mode === 'off') {
             this.innerHTML = html;
             return;
         }
@@ -249,7 +231,6 @@ export class TosiMd extends withAttributes({
         this.didRender();
     }
 }
-_a = TosiMd;
 /** @deprecated Use TosiMd instead */
 export const MarkdownViewer = TosiMd;
 export const tosiMd = TosiMd.elementCreator();

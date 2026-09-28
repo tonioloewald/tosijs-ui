@@ -8,11 +8,6 @@ declare const TosiMd_base: import("tosijs").WithAttributes<{
 export declare class TosiMd extends TosiMd_base {
     #private;
     static preferredTagName: string;
-    /**
-    Whether the unsanitized-render warning has been shown on this page. It is shown once per page,
-    not per element — fifty `<tosi-md>` would otherwise log fifty identical lines.
-    */
-    static warnedUnsanitized: boolean;
     context: {
         [key: string]: any;
     };

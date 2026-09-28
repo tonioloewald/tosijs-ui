@@ -472,9 +472,9 @@ See `package.json` for current versions. The notable ones:
   someone's build; extracting `<tosi-code>` into its own package is the exit, and it is a
   breaking change that needs a reason.
 
-- `tosijs-kilpi` (added 1.15.3): the HTML sanitizer behind `<tosi-md sanitize="on">` (#179). A
-  real dependency, not an optional peer, because 1.16 makes sanitizing the default and a default
-  cannot depend on something the consumer may not have installed. Chosen over DOMPurify because
+- `tosijs-kilpi` (added 1.15.3): the HTML sanitizer behind `<tosi-md>`, which sanitizes BY
+  DEFAULT since 1.16 (#179; only `sanitize="off"` opts out). A real dependency, not an optional
+  peer, because a default cannot depend on something the consumer may not have installed. Chosen over DOMPurify because
   it keeps unknown custom elements, which markdown here routinely contains. **Measured cost:**
   `dist/iife.js` +865 bytes gzip, `dist/markdown-viewer.js` 2.1 kB → 3.3 kB. It reads
   `Element.prototype` at import, which adds no new constraint: every component module already
