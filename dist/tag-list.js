@@ -162,7 +162,8 @@ If `editable`, an input field is provided for entering tags directly.
 Placeholder shown on input field.
 */
 /*{ "parent": "Form Components" }*/
-import { elements, vars, varDefault, deprecated, StyleSheet, Color, contrastRatio, withAttributes, } from 'tosijs';
+import { elements, vars, varDefault, deprecated, StyleSheet, withAttributes, } from 'tosijs';
+import { tagColors } from './tag-colors.js';
 import { popMenu } from './menu.js';
 import { icons } from './icons.js';
 const { div, input, span, button } = elements;
@@ -241,26 +242,6 @@ export const XinTag = TosiTag;
 export const tosiTag = TosiTag.elementCreator();
 /** @deprecated Use tosiTag instead */
 export const xinTag = deprecated((...args) => tosiTag(...args), 'xinTag is deprecated, use tosiTag instead (tag is now <tosi-tag>)');
-/*
-Tag colours (#173). A Tag in `availableTags` may carry `background` and `color`; they colour the
-tag's chip and its row in the pick menu. Given only a background, the text is whichever of black
-or white contrasts more with it — `Color.contrasting()` alone picks white on pure red at 4.0:1
-where black gives 5.25:1.
-*/
-function textColorFor(background) {
-    const onBlack = contrastRatio('#000000', background);
-    const onWhite = contrastRatio('#ffffff', background);
-    if (onBlack == null || onWhite == null) {
-        return Color.fromCss(background).contrasting().html;
-    }
-    return onBlack >= onWhite ? '#000000' : '#ffffff';
-}
-/** The `--tag-bg` / `--tag-text-color` values for a tag, or null if it has no colours. */
-function tagColors(tag) {
-    const background = tag?.background;
-    const color = tag?.color ?? (background ? textColorFor(background) : undefined);
-    return background || color ? { background, color } : null;
-}
 /*
 The pick menu lives outside the tag list (menus float in <body>), so its lozenge style is a
 global sheet, injected on first use. A coloured row's CAPTION becomes a lozenge in the tag's

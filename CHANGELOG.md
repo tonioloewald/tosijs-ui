@@ -2,6 +2,19 @@
 
 ## 1.17.0 (unreleased)
 
+### `<tosi-search-field>`: a search box that suggests refinements (snowfox, virta #2459)
+
+A new component in the spirit of Finder's search field. As you type, it lists **hints** from
+rules you supply: type `doc` and it can offer *name contains "doc"* or *Word documents*.
+Picking one turns it into a **tag** in the query and consumes the text, and you can keep
+typing. `value` is `{ tags, text }`.
+
+- A tag is `{ caption, background?, color?, …your data }`, with chips coloured like
+  `<tosi-tag-list>`'s.
+- It fires `change` when the tags change, and `action` on Enter when no hint is highlighted.
+- It is a real combobox: focus stays in the field, ↓/↑ move through the hints, Escape closes
+  them, and Backspace in an empty field removes the last tag.
+
 ### Pluggable dialects for live examples (#184)
 
 Live examples can now be written in languages tosijs-ui doesn't know about. `registerDialect`

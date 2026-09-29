@@ -138,6 +138,8 @@ use it to inspect STATE; a painted-output check needs a real test lane.
   A form generated from a [JSON Schema](https://json-schema.org/), with validation.
 - https://ui.tosijs.net/via-tag/ — scriptTag & styleSheet
   If you need to load an old school (cjs) javascript or css library via cdn then use these two functions.
+- https://ui.tosijs.net/search-field/ — search-field
+  `<tosi-search-field>` is a search box that suggests **refinements** as you type, in the
 - https://ui.tosijs.net/segmented/ — segmented select
   This is a fairly general-purpose segmented select control.
 - https://ui.tosijs.net/select/ — select

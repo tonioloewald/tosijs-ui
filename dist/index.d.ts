@@ -40,6 +40,7 @@ export * from './size-break.js';
 export * from './sizer.js';
 export * from './tab-selector.js';
 export * from './tag-list.js';
+export * from './search-field.js';
 export { trackDrag, bringToFront, findHighestZ } from './track-drag.js';
 export { version } from './version.js';
 export { scriptTag, styleSheet } from './via-tag.js';

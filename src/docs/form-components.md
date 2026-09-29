@@ -13,6 +13,7 @@ in native `<form>` (and `<tosi-form>`) submission and validation.
 - [password strength](/password-strength/)
 - [rating](/rating/)
 - [rich text](/rich-text/)
+- [search-field](/search-field/)
 - [segmented select](/segmented/)
 - [select](/select/)
 - [tag-list](/tag-list/)
