@@ -1,5 +1,5 @@
 import { ElementCreator } from 'tosijs';
-import { Dialect, ExampleContext, ExampleParts } from './types.js';
+import { ExampleContext, ExampleParts } from './types.js';
 export declare const testManager: {
     enabled: import("tosijs").BoxedScalar<boolean>;
 } & import("tosijs").TosiProps<{
@@ -262,8 +262,11 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     get test(): string;
     set test(code: string);
     get remoteKey(): string;
-    get dialect(): Dialect;
-    set dialect(value: Dialect);
+    get dialect(): string;
+    set dialect(value: string);
+    get options(): Record<string, unknown>;
+    set options(value: Record<string, unknown>);
+    private runAbort?;
     compiledJs?: string;
     compiledJsSource?: string;
     private jsOutEditor?;

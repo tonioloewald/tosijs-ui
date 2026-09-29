@@ -23,7 +23,7 @@ Build-time only (bun). Never import from browser code.
 */
 import { marked } from 'marked';
 import { rewriteImports, AsyncFunction, loadTransform, transformAvailable, UnsupportedImportError, } from '../../live-example/code-transform.js';
-import { isLiveFence } from '../example-policy.js';
+import { isLiveFence, parseFenceInfo, } from '../example-policy.js';
 // The default live-example context (matches the IIFE globals the pages provide).
 // A project that sets a custom `context` on its <tosi-doc-system> can pass its
 // own keys; these are the tosijs-ui defaults.
@@ -54,15 +54,11 @@ const EXECUTABLE = new Set(['js', 'tjs', 'ts', 'test']);
 // scope is the difference between "once" and "once per rebuild". Lazily created, so a
 // corpus with no `ts` examples never makes one at all.
 let tsTranspiler;
-/** The bare dialect from a fence info string ('js#my-id' → 'js'); '' if none. */
-function dialectOf(info) {
-    return (info ?? '').match(/^[a-z]+/)?.[0] ?? '';
-}
-/** Collect every fenced code block in a doc (recursing into lists/quotes). */
-/** The `:<mode>` suffix of a fence info string, if any — `js:static` -> `static`. */
-function modeOf(info) {
-    return String(info ?? '').match(/:([a-z]+)/)?.[1];
-}
+/*
+Fence info is parsed by `parseFenceInfo`, the one copy of that grammar. This file had its own
+`dialectOf`/`modeOf` pair; once fences could carry JSON options (#184) `modeOf` would have read
+`{"debug":true}` as the mode `true`.
+*/
 function collectCodeTokens(text) {
     const out = [];
     const walk = (tokens) => {
@@ -75,9 +71,9 @@ function collectCodeTokens(text) {
             */
             if (t.type === 'code')
                 out.push({
-                    lang: dialectOf(t.lang),
+                    lang: parseFenceInfo(t.lang ?? '').lang,
                     text: t.text,
-                    mode: modeOf(t.lang),
+                    mode: parseFenceInfo(t.lang ?? '').mode,
                 });
             if (Array.isArray(t.tokens))
                 walk(t.tokens);

@@ -108,6 +108,76 @@ example the equivalent is written inside a comment (so it survives `tsc`) — bu
 that comment form can't appear inside a doc comment like this one, since the
 test's own closing delimiter would end the doc comment.
 
+## Adding a dialect
+
+`js`, `tjs` and `ts` are the built-in entries of a **dialect registry**, and a site can add
+its own with `registerDialect` from `tosijs-ui/live-example`. A fence in a registered
+language then becomes a live example like any other: it groups with `html`, `css` and
+`test` blocks, honours `:static` and the site's example policy, and saves back to source.
+
+A dialect gives exactly one of:
+
+- **`transform(source, options)`** — returns `{ code }`, JavaScript the example then runs
+  exactly as it runs a `js` block. Imports from the page's modules are already rewritten.
+- **`run(source, context)`** — executes the source itself (a VM, a fuel budget, whatever
+  capabilities your registration closes over). `context` carries the example's `preview`
+  element, its `options`, the page's `context` modules, an `AbortSignal` that fires when the
+  example re-runs, and `report(value)`. A non-`undefined` return value is reported too: it is
+  shown below the preview.
+
+Optional `label` names the source tab and `editorMode` picks the code editor's language.
+Replacing a built-in is allowed: `registerDialect('tjs', { transform })` runs `tjs` examples
+through your own tjs-lang build instead of the pinned copy.
+
+Register in your site's bundle entry, **before the doc system starts**: examples take their
+dialect when they are created, and until then a fence in the new language is plain code.
+
+```js:static
+import { registerDialect } from 'tosijs-ui/live-example'
+
+registerDialect('ajs', {
+  label: 'AJS',
+  run: async (source, { options, signal }) => myVm.run(source, { ...options, signal }),
+})
+```
+
+**Options.** Any fence can carry a JSON object after its language —
+`` ```ajs {"fuel": 1000} `` — which arrives as the dialect's `options`. Malformed JSON is
+reported in the console with the example it belongs to, rather than silently ignored.
+(CommonMark unescapes backslashes in a fence's info string, so avoid `\"` inside values.)
+
+If your dialect's name is also a syntax-highlighting grammar, call `registerLiveLanguage`
+(from `tosijs-ui/site`) in your site config too: the static highlighter runs at build time,
+where your page's registrations don't, and would otherwise tokenize the source the example
+reads.
+
+Here a tiny `run` dialect is registered and an example is created in it:
+
+```js
+import { registerDialect, liveExample } from 'tosijs-ui'
+
+registerDialect('reverse', {
+  label: 'Reverse',
+  run: (source, { options }) =>
+    (options.shout ? source.toUpperCase() : source).split('').reverse().join(''),
+})
+
+const example = liveExample()
+example.dialect = 'reverse'
+example.options = { shout: true }
+example.js = 'stressed'
+preview.append(example)
+await example.whenHydrated
+await example.refresh()
+```
+```test
+test('a run dialect runs its source and reports the result', () => {
+  const results = [...preview.querySelectorAll('.dialect-result')]
+  expect(results.length).toBe(1)
+  expect(results[0].textContent).toBe('DESSERTS')
+})
+```
+
 ## Inline WebAssembly (SIMD)
 
 A `tjs` example can drop a hot loop into **WebAssembly** with a `wasm { … } fallback
@@ -469,6 +539,7 @@ import { icons } from '../icons.js';
 import { tosiPocketBar } from '../pocket-bar.js';
 import { postNotification } from '../notifications.js';
 import { popMenu } from '../menu.js';
+import { dialectTransform, getDialect, showDialectResult } from './dialects.js';
 import { loadTransform, loadTjsTestApi, rewriteImports, contextVarName, contextParamNames, AsyncFunction, } from './code-transform.js';
 import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } from './remote-sync.js';
 import { executeInline, executeInIframe } from './execution.js';
@@ -662,15 +733,38 @@ export class LiveExample extends withAttributes({
     get remoteKey() {
         return createRemoteKey(this.prefix, this.uuid, this.remoteId);
     }
-    // The source block's dialect (js | tjs | ts). Set by insert-examples from the
-    // fenced-block language; persisted as an attribute so it survives a re-render.
-    // `js` is the default and keeps the original pass-through behavior.
+    // The source block's dialect: `js`, `tjs`, `ts`, or any name a site registered with
+    // `registerDialect` (dialects.ts). Set by insert-examples from the fenced-block language;
+    // persisted as an attribute so it survives a re-render. `js` is the default and keeps the
+    // original pass-through behavior.
     get dialect() {
         return this.getAttribute('data-dialect') || 'js';
     }
     set dialect(value) {
         this.setAttribute('data-dialect', value);
     }
+    // The fence's JSON options (```tjs {"debug": true}), handed to the dialect's `transform`
+    // or `run` (#184). Set by insert-examples; an attribute, like `dialect`, so it survives a
+    // re-render. Malformed JSON never reaches here — the fence parser reports it.
+    get options() {
+        const raw = this.getAttribute('data-options');
+        if (!raw)
+            return {};
+        try {
+            return JSON.parse(raw);
+        }
+        catch {
+            return {};
+        }
+    }
+    set options(value) {
+        if (Object.keys(value).length === 0)
+            this.removeAttribute('data-options');
+        else
+            this.setAttribute('data-options', JSON.stringify(value));
+    }
+    // Stops a `run` dialect's previous run when the example re-runs or leaves the page.
+    runAbort;
     // Build-time transpiled JS for the source block, set by insert-examples from the
     // page's baked `<script type="application/tosi-transpiled">` (see
     // self-contained-examples-plan.md). When present AND tests are off (the deployed
@@ -701,7 +795,8 @@ export class LiveExample extends withAttributes({
     // strip the tests, transpile the rest the same way execution does, then run
     // `execJs + testUtils + return testRunner` with the example context injected.
     async runInlineTjsTests(transform) {
-        if (this.dialect === 'js') {
+        // Inline `/*test*/` comments are tjs-lang syntax: only tjs and ts sources carry them.
+        if (this.dialect !== 'tjs' && this.dialect !== 'ts') {
             this.inlineTjsTestCount = 0;
             return;
         }
@@ -792,7 +887,8 @@ export class LiveExample extends withAttributes({
         // `js`, so everything referencing this.parts.js / this.js is unaffected), and
         // put the source editor in the dialect's mode — so a `tjs` example gets
         // first-class tjs editing (highlighting + autocomplete), `ts` gets TypeScript.
-        this.parts.js.setAttribute('name', this.dialect);
+        const spec = getDialect(this.dialect);
+        this.parts.js.setAttribute('name', spec?.label ?? this.dialect);
         // Runtime-value autocomplete: give the tjs completion source the example's live
         // bindings (context modules + the rendered preview) so it can suggest their REAL
         // members — including tosijs proxy members that static analysis can't see. Set
@@ -800,7 +896,12 @@ export class LiveExample extends withAttributes({
         this.parts.js.tjsAutocomplete = {
             getLiveBindings: () => this.liveBindings(),
         };
-        this.parts.js.mode = this.dialect;
+        this.parts.js.mode = spec?.editorMode ?? this.dialect;
+        // A `run` dialect executes its source itself: there is no generated JavaScript to show.
+        if (spec?.run) {
+            editors.setupTabs();
+            return;
+        }
         this.jsOutEditor = codeEditor({
             name: 'JS',
             mode: 'javascript',
@@ -1188,6 +1289,7 @@ export class LiveExample extends withAttributes({
     }
     disconnectedCallback() {
         super.disconnectedCallback();
+        this.runAbort?.abort();
         this.remoteSync?.sendClose();
         this.remoteSync?.stopListening();
         if (this.undoInterval) {
@@ -1583,18 +1685,26 @@ export class LiveExample extends withAttributes({
         // transform would produce (it IS `transform(rewriteImports(js))`).
         // ...and only while the bake still matches the current source — an edit drops the
         // stale original bake and transpiles the edit on demand (slice 4).
-        const bake = this.dialect !== 'js' &&
+        // A `run` dialect (registerDialect) executes the source itself, so it has no transform and
+        // no bake: the example sets up its HTML and CSS as usual, then hands the source over.
+        const runner = getDialect(this.dialect)?.run;
+        this.runAbort?.abort();
+        const runAbort = (this.runAbort = new AbortController());
+        const bake = !runner &&
+            this.dialect !== 'js' &&
             !testManager.enabled.value &&
             this.compiledJs !== undefined &&
             this.compiledJsSource === this.js
             ? this.compiledJs
             : undefined;
-        const transform = bake === undefined ? await loadTransform(this.dialect) : undefined;
+        const transform = bake === undefined && !runner
+            ? await dialectTransform(this.dialect, this.options)
+            : undefined;
         const { example, style: styleEl, exampleWidgets } = this.parts;
         // Keep the read-only generated-JS tab (tjs/ts) in sync with the source, and
         // re-run any inline tjs tests for the "tjs tests" results tab. With the bake we
         // already have the generated JS and skip the transpiler-bound inline-test run.
-        if (this.dialect !== 'js') {
+        if (this.dialect !== 'js' && !runner) {
             this.lastGeneratedJs = bake ?? (await this.computeGeneratedJs(transform));
             if (this.jsOutEditor)
                 this.jsOutEditor.value = this.lastGeneratedJs;
@@ -1617,7 +1727,9 @@ export class LiveExample extends withAttributes({
         // for tjs/ts examples once a code panel is open. Gating it here keeps the optional
         // tjs-lang/editors bundle (and its AST parse) off the reader path — it loads only
         // when someone actually edits a tjs/ts example. `js` never needs it.
-        const onScope = this.dialect !== 'js' && this.editorsBuilt ? this.captureScope : undefined;
+        const onScope = this.dialect !== 'js' && !runner && this.editorsBuilt
+            ? this.captureScope
+            : undefined;
         // 'iframe' and (for now) 'ide' both run in an isolated iframe. 'ide' — the fully
         // sandboxed real-published-deps mode — is a recognized flag; its distinct
         // real-module execution is a follow-up (import-resolver-plan.md phase 2), so it
@@ -1630,7 +1742,7 @@ export class LiveExample extends withAttributes({
                 js: this.js,
                 context: this.context,
                 transform,
-                compiledJs: bake,
+                compiledJs: runner ? '' : bake,
                 exampleElement: example,
                 widgetsElement: exampleWidgets,
                 onError,
@@ -1644,13 +1756,32 @@ export class LiveExample extends withAttributes({
                 js: this.js,
                 context: this.context,
                 transform,
-                compiledJs: bake,
+                compiledJs: runner ? '' : bake,
                 exampleElement: example,
                 styleElement: styleEl,
                 widgetsElement: exampleWidgets,
                 onError,
                 onScope,
             });
+        }
+        if (runner && preview) {
+            const target = preview;
+            try {
+                const result = await runner(this.js, {
+                    preview: target,
+                    options: this.options,
+                    signal: runAbort.signal,
+                    context: this.context,
+                    report: (value) => showDialectResult(target, value),
+                });
+                if (result !== undefined && !runAbort.signal.aborted)
+                    showDialectResult(target, result);
+            }
+            catch (error) {
+                // A run superseded by a newer one is not a failure of the newer one.
+                if (!runAbort.signal.aborted)
+                    onError(error);
+            }
         }
         if (this.persistToDom) {
             this.updateSources();
@@ -1665,9 +1796,7 @@ export class LiveExample extends withAttributes({
             this.classList.remove('-test-passed', '-test-failed');
             // `test` blocks are conventional JS/TS regardless of the example's dialect,
             // so they're transpiled as plain js — never lowered through tjs/ts.
-            // This block only runs when tests are enabled, and `bake` only exists when
-            // they're off — so `transform` was loaded above and is defined here.
-            const testTransform = this.dialect === 'js' ? transform : await loadTransform('js');
+            const testTransform = await loadTransform('js');
             // Only run `test` blocks if the example actually produced a preview to
             // assert against; a failed build has nothing to test but still fails below.
             this.testResults =

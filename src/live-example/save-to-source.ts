@@ -15,10 +15,6 @@ new block type to an example isn't persisted. Replaces by block position, so it
 never depends on the rendered/entity-decoded text matching the source.
 */
 
-// `js`/`tjs`/`ts` are interchangeable "source" blocks (the example's executable
-// code); html/css/test are the rest.
-const SOURCE_LANGS = new Set(['js', 'tjs', 'ts'])
-
 /*
 Which fences count toward grouping is NOT decided here — `isLiveFence` decides it, the same
 predicate `insert-examples` filters with. This module used to carry its own flat six-language
@@ -31,7 +27,13 @@ existed at that index.
 Ordinals are a shared coordinate system between two modules. They agree only if both ask the
 same question, so ask the shared one.
 */
-import { isLiveFence, parseFenceInfo } from '../doc-system/example-policy.js'
+// `js`/`tjs`/`ts` and any registered dialect are interchangeable "source" blocks (the
+// example's executable code) — `isDialectLanguage` is the list; html/css/test are the rest.
+import {
+  isDialectLanguage,
+  isLiveFence,
+  parseFenceInfo,
+} from '../doc-system/example-policy.js'
 import type { ExamplePolicy } from '../doc-system/example-policy.js'
 
 interface FencedBlock {
@@ -161,7 +163,7 @@ export function rewriteExampleBlocks(
   // to whichever js/tjs/ts block the group actually has.
   const blockFor = (lang: 'js' | 'html' | 'css' | 'test') =>
     lang === 'js'
-      ? group.find((b) => SOURCE_LANGS.has(b.lang))
+      ? group.find((b) => isDialectLanguage(b.lang))
       : group.find((b) => b.lang === lang)
   for (const lang of ['js', 'html', 'css', 'test'] as const) {
     const next = edits[lang]

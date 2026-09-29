@@ -38,3 +38,6 @@ the ePub and print — not just a hydrated browser tab. That matters more than u
 wrong token colour is cosmetic on the web and permanent in a printed book.
 */
 export { registerGrammar, registeredGrammars, highlightHtml, highlightBlocks, grammarFor, } from '../highlight.js';
+// For a site whose registered dialect (#184) shares its name with a highlighter grammar: call
+// this in the site config so the build treats those fences as live examples too.
+export { registerLiveLanguage } from '../example-policy.js';

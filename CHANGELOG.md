@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.17.0 (unreleased)
+
+### Pluggable dialects for live examples (#184)
+
+Live examples can now be written in languages tosijs-ui doesn't know about. `registerDialect`
+from `tosijs-ui/live-example` adds one, and a fence in that language becomes a live example
+like `js`, `tjs` and `ts`: it groups with `html`/`css`/`test` blocks, honours `:static` and the
+site's example policy, and saves back to source. `js`, `tjs` and `ts` are now built-in entries
+of the same registry.
+
+A dialect either **transforms** its source to JavaScript that the example runs as usual, or
+**runs** it itself — given the example's preview, its options, the page's modules, an
+`AbortSignal` for when the example re-runs, and `report()` for showing a result. Registering
+over a built-in (`registerDialect('tjs', { transform })`) swaps in your own tjs-lang build.
+This is what tjs-lang asked for to move AJS into doc pages; see the live-example page, "Adding
+a dialect".
+
+**Fence options.** Any fence can carry a JSON object after its language,
+`` ```tjs {"runTests": "report"} ``, passed to its dialect as `options`. Malformed options are
+reported in the console with the example they belong to.
+
+Two more copies of "which languages run" were found while doing this, a hard-coded selector in
+`insertExamples` and a private fence parser in the example checker, which would have read
+`{"debug":true}` as the mode `true`. Both now use the shared rule.
+
 ## 1.16.0
 
 ### `<tosi-md>` sanitizes by default (#179)

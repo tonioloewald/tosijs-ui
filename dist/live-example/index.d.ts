@@ -6,3 +6,5 @@ export { insertExamples } from './insert-examples.js';
 export { loadTransform, rewriteImports, executeCode } from './code-transform.js';
 export { executeInline, executeInIframe } from './execution.js';
 export { RemoteSyncManager, STORAGE_KEY } from './remote-sync.js';
+export { registerDialect, getDialect } from './dialects.js';
+export type { DialectSpec, DialectOptions, DialectRunContext, } from './dialects.js';

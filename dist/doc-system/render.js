@@ -29,12 +29,18 @@ docMarked.use({
             const id = parsed.id ?? '';
             const mode = parsed.mode ?? '';
             const bake = currentBakes?.get(token.text);
-            if (!id && !mode && !bake)
+            // Fence options (#184) ride to the page as JSON in an attribute; a parse error rides
+            // too, so the page can say which example it belongs to (the build does not know).
+            const options = parsed.options && escapeAttr(JSON.stringify(parsed.options));
+            const optionsError = parsed.optionsError && escapeAttr(parsed.optionsError);
+            if (!id && !mode && !bake && !options && !optionsError)
                 return false; // default rendering — byte-identical
             let html = baseRenderer.code({ ...token, lang });
             const attrs = [
                 id && `data-example-id="${id}"`,
                 mode && `data-example-mode="${mode}"`,
+                options && `data-example-options="${options}"`,
+                optionsError && `data-example-options-error="${optionsError}"`,
             ]
                 .filter(Boolean)
                 .join(' ');
@@ -62,6 +68,9 @@ function slugify(s) {
 }
 function escapeHtml(s) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function escapeAttr(s) {
+    return escapeHtml(s).replace(/"/g, '&quot;');
 }
 // Per-parse footnote state. `parse()` is synchronous and Marked tokenizes fully
 // before rendering, so a module-level object is safe: preprocess resets it, the

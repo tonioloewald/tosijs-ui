@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=001b1cc113f7" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=5d68c096ec94" data-tosi-doc-system />
   <title>example — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-example&gt; makes it easy to insert interactive code examples in a web page. It started life as a super lightweight, easier-to-embed implementation of…" />
   <link rel="canonical" href="https://ui.tosijs.net/component/" />
@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=439e5eea4cde" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=59b6963fac96" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>example</h1>
 <p><code>&lt;tosi-example&gt;</code> makes it easy to insert interactive code examples in a web page. It
@@ -138,6 +138,64 @@ preview.append(div({ class: &#39;badge&#39; }, badge(&#39;count&#39;, 42)))
 example the equivalent is written inside a comment (so it survives <code>tsc</code>) — but
 that comment form can&#39;t appear inside a doc comment like this one, since the
 test&#39;s own closing delimiter would end the doc comment.</p>
+<h2>Adding a dialect</h2>
+<p><code>js</code>, <code>tjs</code> and <code>ts</code> are the built-in entries of a <strong>dialect registry</strong>, and a site can add
+its own with <code>registerDialect</code> from <code>tosijs-ui/live-example</code>. A fence in a registered
+language then becomes a live example like any other: it groups with <code>html</code>, <code>css</code> and
+<code>test</code> blocks, honours <code>:static</code> and the site&#39;s example policy, and saves back to source.</p>
+<p>A dialect gives exactly one of:</p>
+<ul>
+<li><strong><code>transform(source, options)</code></strong> — returns <code>{ code }</code>, JavaScript the example then runs
+exactly as it runs a <code>js</code> block. Imports from the page&#39;s modules are already rewritten.</li>
+<li><strong><code>run(source, context)</code></strong> — executes the source itself (a VM, a fuel budget, whatever
+capabilities your registration closes over). <code>context</code> carries the example&#39;s <code>preview</code>
+element, its <code>options</code>, the page&#39;s <code>context</code> modules, an <code>AbortSignal</code> that fires when the
+example re-runs, and <code>report(value)</code>. A non-<code>undefined</code> return value is reported too: it is
+shown below the preview.</li>
+</ul>
+<p>Optional <code>label</code> names the source tab and <code>editorMode</code> picks the code editor&#39;s language.
+Replacing a built-in is allowed: <code>registerDialect(&#39;tjs&#39;, { transform })</code> runs <code>tjs</code> examples
+through your own tjs-lang build instead of the pinned copy.</p>
+<p>Register in your site&#39;s bundle entry, <strong>before the doc system starts</strong>: examples take their
+dialect when they are created, and until then a fence in the new language is plain code.</p>
+<pre data-example-mode="static"><code class="language-js" data-highlighted><span class="token keyword">import</span> <span class="token punctuation">{</span> registerDialect <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'tosijs-ui/live-example'</span>
+
+<span class="token function">registerDialect</span><span class="token punctuation">(</span><span class="token string">'ajs'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+  <span class="token literal-property property">label</span><span class="token operator">:</span> <span class="token string">'AJS'</span><span class="token punctuation">,</span>
+  <span class="token function-variable function">run</span><span class="token operator">:</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token parameter">source<span class="token punctuation">,</span> <span class="token punctuation">{</span> options<span class="token punctuation">,</span> signal <span class="token punctuation">}</span></span><span class="token punctuation">)</span> <span class="token operator">=></span> myVm<span class="token punctuation">.</span><span class="token function">run</span><span class="token punctuation">(</span>source<span class="token punctuation">,</span> <span class="token punctuation">{</span> <span class="token operator">...</span>options<span class="token punctuation">,</span> signal <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<p><strong>Options.</strong> Any fence can carry a JSON object after its language —
+<code>```ajs {&quot;fuel&quot;: 1000}</code> — which arrives as the dialect&#39;s <code>options</code>. Malformed JSON is
+reported in the console with the example it belongs to, rather than silently ignored.
+(CommonMark unescapes backslashes in a fence&#39;s info string, so avoid <code>\&quot;</code> inside values.)</p>
+<p>If your dialect&#39;s name is also a syntax-highlighting grammar, call <code>registerLiveLanguage</code>
+(from <code>tosijs-ui/site</code>) in your site config too: the static highlighter runs at build time,
+where your page&#39;s registrations don&#39;t, and would otherwise tokenize the source the example
+reads.</p>
+<p>Here a tiny <code>run</code> dialect is registered and an example is created in it:</p>
+<pre><code class="language-js">import { registerDialect, liveExample } from &#39;tosijs-ui&#39;
+
+registerDialect(&#39;reverse&#39;, {
+  label: &#39;Reverse&#39;,
+  run: (source, { options }) =&gt;
+    (options.shout ? source.toUpperCase() : source).split(&#39;&#39;).reverse().join(&#39;&#39;),
+})
+
+const example = liveExample()
+example.dialect = &#39;reverse&#39;
+example.options = { shout: true }
+example.js = &#39;stressed&#39;
+preview.append(example)
+await example.whenHydrated
+await example.refresh()
+</code></pre>
+<pre><code class="language-test">test(&#39;a run dialect runs its source and reports the result&#39;, () =&gt; {
+  const results = [...preview.querySelectorAll(&#39;.dialect-result&#39;)]
+  expect(results.length).toBe(1)
+  expect(results[0].textContent).toBe(&#39;DESSERTS&#39;)
+})
+</code></pre>
 <h2>Inline WebAssembly (SIMD)</h2>
 <p>A <code>tjs</code> example can drop a hot loop into <strong>WebAssembly</strong> with a <code>wasm { … } fallback { … }</code> block — compiled to bytecode <em>at transpile time</em>, embedded as base64, and run
 in your browser. No Emscripten, no <code>.wasm</code> file, no build step, no server.</p>
@@ -549,6 +607,6 @@ context = {
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-g6vgkdjq.js"></script>
+  <script type="module" src="../hydrate-zb1bq13e.js"></script>
 </body>
 </html>

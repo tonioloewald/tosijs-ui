@@ -26,6 +26,39 @@ export const EXECUTABLE_LANGS = new Set([
     'test',
 ]);
 /**
+ * The languages that are an example's SOURCE block (its one executable slot). `js`, `tjs` and
+ * `ts` are built in; `registerLiveLanguage` adds more (`registerDialect` in
+ * `tosijs-ui/live-example` calls it, so a registered dialect's fences run).
+ *
+ * Kept here, beside `EXECUTABLE_LANGS`, because the same fence is judged in four places
+ * (grouping, save-to-source, the highlighter, the ePub) and they must all see a registered
+ * dialect or none of them may.
+ */
+const SOURCE_LANGS = new Set(['js', 'ts', 'tjs']);
+/**
+ * Make fences in `lang` live examples, as an example's source block.
+ *
+ * You normally call `registerDialect` (which calls this). Call it directly only in a BUILD
+ * process that must agree with the page: the static highlighter runs at build time, where the
+ * page's `registerDialect` calls never happen, so a dialect named like a highlighter grammar
+ * (`python`, say) would be tokenized there and the example would read markup instead of code.
+ * Registering the name in your site config avoids that.
+ */
+export function registerLiveLanguage(lang) {
+    const name = lang.toLowerCase();
+    if (!/^[a-z]+$/.test(name)) {
+        throw new Error(`registerLiveLanguage: "${lang}" is not a fence language (lowercase letters only, since the fence parser reads \`[a-z]+\`)`);
+    }
+    if (EXECUTABLE_LANGS.has(name) && !SOURCE_LANGS.has(name)) {
+        throw new Error(`registerLiveLanguage: "${name}" is already an example block (html/css/test) and cannot be a dialect`);
+    }
+    SOURCE_LANGS.add(name);
+}
+/** Is `lang` an example's source language — `js`, `tjs`, `ts`, or a registered dialect? */
+export function isDialectLanguage(lang) {
+    return SOURCE_LANGS.has(lang.toLowerCase());
+}
+/**
  * Will this fence become a live example?
  *
  * @param lang  the fence language, lowercased (`js`, `html`, `typescript`, …)
@@ -37,7 +70,8 @@ export function isLiveFence(lang, mode, policy = 'auto') {
     // costs the reader the highlighting.
     if (policy === 'none')
         return false;
-    if (!EXECUTABLE_LANGS.has(lang.toLowerCase()))
+    const name = lang.toLowerCase();
+    if (!EXECUTABLE_LANGS.has(name) && !SOURCE_LANGS.has(name))
         return false;
     // `:static` opts out under any policy, so one corpus can target all of them.
     if (mode === 'static')
@@ -45,27 +79,51 @@ export function isLiveFence(lang, mode, policy = 'auto') {
     return policy === 'opt-in' ? mode !== undefined : true;
 }
 /**
- * THE fence-info parser. `js`, `css#anchor`, `js:iframe`, `ts:ide#demo`, `ts#demo:ide`.
+ * THE fence-info parser. `js`, `css#anchor`, `js:iframe`, `ts:ide#demo`, `ts#demo:ide`,
+ * `tjs {"runTests": "report"}`.
  *
  * `:mode` (inline | iframe | ide | static) sets the live example's execution mode; `#id` gives
  * it a stable anchor. `#id` is `[A-Za-z0-9_-]+` and `:mode` is `[a-z]+`, so the two cannot
  * overlap and each is parsed independently, order-free.
+ *
+ * A JSON object after the head is the example's **options**, passed to its dialect (#184). It
+ * is split off FIRST: `{"debug":true}` contains `:true`, which the mode pattern would
+ * otherwise read as a mode. Options that are not a JSON object are reported in
+ * `optionsError` rather than dropped, so an author sees why their options did nothing.
  *
  * Extracted because a SECOND, worse copy existed in `save-to-source.ts` — a regex that
  * captured the language as `[\w-]*` and therefore stopped dead at the colon, so it could not
  * see `:static` at all. With a `:static` fence in a document, its example ordinals diverged
  * from the ones `insert-examples` assigns, and an edit saved over a DIFFERENT block than the
  * one edited. Silently: the "couldn't locate this example" guard only fires when the ordinal
- * is out of range, and here a group existed at that index — the wrong one.
+ * is out of range, and here a group existed at that index.
  *
  * This is the same failure the `isLiveFence` docblock above describes, one layer down: the
  * rule was stated twice and the copies disagreed. Parse fence info here or not at all.
  */
 export function parseFenceInfo(info) {
     const text = String(info || '');
-    return {
-        lang: text.match(/^[a-z]+/)?.[0] ?? '',
-        mode: text.match(/:([a-z]+)/)?.[1],
-        id: text.match(/#([A-Za-z0-9_-]+)/)?.[1],
+    const brace = text.indexOf('{');
+    const head = brace === -1 ? text : text.slice(0, brace);
+    const parsed = {
+        lang: head.match(/^[a-z]+/)?.[0] ?? '',
+        mode: head.match(/:([a-z]+)/)?.[1],
+        id: head.match(/#([A-Za-z0-9_-]+)/)?.[1],
     };
+    if (brace !== -1) {
+        const json = text.slice(brace).trim();
+        try {
+            const value = JSON.parse(json);
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+                parsed.options = value;
+            }
+            else {
+                parsed.optionsError = `fence options must be a JSON object, got ${json}`;
+            }
+        }
+        catch (error) {
+            parsed.optionsError = `fence options are not valid JSON (${error.message}): ${json}`;
+        }
+    }
+    return parsed;
 }

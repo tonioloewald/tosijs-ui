@@ -83,3 +83,6 @@ export {
   highlightBlocks,
   grammarFor,
 } from '../highlight.js'
+// For a site whose registered dialect (#184) shares its name with a highlighter grammar: call
+// this in the site config so the build treats those fences as live examples too.
+export { registerLiveLanguage } from '../example-policy.js'

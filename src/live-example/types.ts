@@ -10,6 +10,8 @@ export interface ExampleContext {
 //   js  — plain JavaScript, run as-is (tjs `dialect: 'js'` leaves it untouched)
 //   tjs — tjs-lang source, transpiled to JS (structural ==, type guards, etc.)
 //   ts  — TypeScript, lowered to tjs (via from-ts) and then to JS
+// These are the BUILT-IN dialects; a site registers more with `registerDialect`
+// (dialects.ts), so an example's own `dialect` is any registered name.
 export type Dialect = 'js' | 'tjs' | 'ts'
 
 export interface ExampleParts extends PartsMap {

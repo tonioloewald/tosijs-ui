@@ -1369,7 +1369,15 @@ of the six do not look like code you are asking to be *run* (#146):
 | `html` | **rendered as the example's markup** |
 | `css` | **injected as a `<style>` on the page** |
 | `test` | executed as assertions, in its own scope |
+| a registered dialect | executed as the example's script, by that dialect |
 | anything else | display-only — highlighted, never run |
+
+A site can add languages to the first row with `registerDialect` from `tosijs-ui/live-example`
+(called in your `bundleEntry`, before the doc system starts), and any fence can pass JSON
+options to its dialect: `` ```tjs {"runTests": "report"} ``. See the live-example page,
+"Adding a dialect". If a registered name is also a highlighter grammar, call
+`registerLiveLanguage` (from `tosijs-ui/site`) in your site config as well, so the build-time
+highlighter leaves those fences alone.
 
 The two in bold turn ordinary API documentation into live bugs, and neither fails the build:
 

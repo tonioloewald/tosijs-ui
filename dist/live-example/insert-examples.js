@@ -1,4 +1,4 @@
-import { isLiveFence } from '../doc-system/example-policy.js';
+import { isDialectLanguage, isLiveFence } from '../doc-system/example-policy.js';
 // A block's `<pre>` may be followed by a hidden `<script type="application/tosi-
 // transpiled">` carrying its build-time transpiled JS (see
 // self-contained-examples-plan.md). It sits BETWEEN consecutive code blocks, so the
@@ -45,6 +45,21 @@ export function setExamplePolicy(policy) {
     globalThis.__TOSI_EXAMPLE_POLICY =
         policy;
 }
+/*
+A fence's JSON options (#184), as the renderer left them on the `<pre>`. A malformed options
+object is an authoring error the author cannot otherwise see — the example just runs without
+them — so it is reported with the file and example it came from. `console.error`, so the
+doc-tests' console-clean check fails on it too.
+*/
+function fenceOptions(block, exampleId, sourceFile) {
+    const error = block.getAttribute('data-example-options-error');
+    if (error) {
+        console.error(`${sourceFile ?? 'doc'}: example ${exampleId}: ${error}`);
+        return {};
+    }
+    const raw = block.getAttribute('data-example-options');
+    return raw ? JSON.parse(raw) : {};
+}
 export function insertExamples(element, context, liveExampleCreator, liveExampleTagName, 
 // The source file this doc was extracted from (a `.md`, or a `.ts`/`.js`/`.css`
 // with extracted doc comments). Stamped onto each example as
@@ -73,12 +88,17 @@ sourceFile) {
     */
     const optIn = examplePolicy() === 'opt-in';
     const sources = [
-        ...element.querySelectorAll('.language-html,.language-js,.language-tjs,.language-ts,.language-css,.language-test'),
+        /*
+        Any `language-*` block; `isLiveFence` below decides which run. This was a selector
+        naming the six built-in languages — a copy of the rule that the dialect registry (#184)
+        would have made wrong the moment a site registered a seventh.
+        */
+        ...element.querySelectorAll('[class*="language-"]'),
     ]
         .filter((el) => !el.closest(liveExampleTagName))
         .map((code) => ({
         block: code.parentElement,
-        language: code.classList[0].split('-').pop(),
+        language: code.className.match(/(?:^|\s)language-(\S+)/)?.[1],
         code: code.innerText,
         compiled: bakedJsForBlock(code.parentElement),
         mode: code.parentElement.getAttribute('data-example-mode') ||
@@ -144,7 +164,7 @@ sourceFile) {
         A dialect SELECTOR — the same example offered as TJS/TS/AJS — is the feature this
         limitation is standing in front of; see #139 for the shape.
         */
-        const executable = exampleSources.filter((s) => s.language !== undefined && ['js', 'tjs', 'ts'].includes(s.language));
+        const executable = exampleSources.filter((s) => s.language !== undefined && isDialectLanguage(s.language));
         if (executable.length > 1) {
             const kept = executable[executable.length - 1];
             console.warn(`⚠️  ${sourceFile ?? 'doc'}: example ${example.id} has ${executable.length} executable blocks ` +
@@ -156,22 +176,6 @@ sourceFile) {
         }
         exampleSources.forEach((source) => {
             switch (source.language) {
-                case 'js':
-                case 'tjs':
-                case 'ts':
-                    // All three are the example's executable "source" block; they land in
-                    // the same editor and the dialect drives how it's transpiled/run.
-                    example.js = source.code;
-                    example.dialect = source.language;
-                    // The build-time bake (tjs only today) lets refresh() run the preview
-                    // without loading the transpiler — see self-contained-examples-plan.md.
-                    // Pair it with the source it was transpiled from so refresh() drops it the
-                    // moment the example is edited.
-                    if (source.compiled !== undefined) {
-                        example.compiledJs = source.compiled;
-                        example.compiledJsSource = source.code;
-                    }
-                    break;
                 case 'html':
                     example.html = source.code;
                     break;
@@ -180,6 +184,24 @@ sourceFile) {
                     break;
                 case 'test':
                     example.test = source.code;
+                    break;
+                default:
+                    if (!isDialectLanguage(source.language ?? ''))
+                        break;
+                    // `js`, `tjs`, `ts` or a registered dialect: the example's one executable
+                    // "source" block. They land in the same editor and the dialect drives how
+                    // it's transpiled or run (dialects.ts).
+                    example.js = source.code;
+                    example.dialect = source.language;
+                    example.options = fenceOptions(source.block, example.id, sourceFile);
+                    // The build-time bake (tjs only today) lets refresh() run the preview
+                    // without loading the transpiler — see self-contained-examples-plan.md.
+                    // Pair it with the source it was transpiled from so refresh() drops it the
+                    // moment the example is edited.
+                    if (source.compiled !== undefined) {
+                        example.compiledJs = source.compiled;
+                        example.compiledJsSource = source.code;
+                    }
                     break;
             }
             source.block.remove();

@@ -19,3 +19,4 @@ export { listEpubVolumes, epubVolumeIdentity, renderEpubDownloads, type EpubVolu
 export { currentHolder, describeHolder, lockPathFor, lockDecision, isProcessAlive, } from './build-lock.js';
 export type { LockHolder, LockDecision } from './build-lock.js';
 export { registerGrammar, registeredGrammars, highlightHtml, highlightBlocks, grammarFor, } from '../highlight.js';
+export { registerLiveLanguage } from '../example-policy.js';
