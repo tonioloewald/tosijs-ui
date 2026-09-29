@@ -76,7 +76,8 @@ export function isDialectLanguage(lang: string): boolean {
  * in `highlight.ts`, because live examples need it too and must not import the highlighter's
  * grammar map to get it.
  */
-const LANGUAGE_CLASS = /language-([A-Za-z0-9_+#-]+)/
+export const LANGUAGE_NAME = '[A-Za-z0-9_+#-]+'
+const LANGUAGE_CLASS = new RegExp(`language-(${LANGUAGE_NAME})`)
 
 /**
  * The fence language of a `<code class="language-…">`, **as written** (case preserved), or `''`.

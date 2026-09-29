@@ -77,6 +77,8 @@ export function showDialectResult(preview, value) {
     preview.append(pre({ class: 'dialect-result' }, text));
 }
 /**
+ * @internal Not supported API: it discards a site's own overrides of the built-ins.
+ *
  * Put the built-ins back — for TESTS only. The registry is module state, and Bun shares
  * module state across every test file in a process, so a test that overrides `tjs` must undo
  * it or every later file inherits the override.

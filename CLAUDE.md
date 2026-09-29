@@ -328,6 +328,8 @@ content = () => [button({ onClick: this.showSettingsMenu })]  // `this` is wrong
 content = () => [button({ onClick: () => this.showSettingsMenu() })]
 ```
 
+**Object- and function-valued props need a non-`undefined` default (use `null`).** tosijs's element creator assigns a prop as a PROPERTY only when the instance's current value is not `undefined`; otherwise it calls `setAttribute`, which stringifies a function. `textTest?: fn` with no initializer made `tosiSearchField({ textTest })` store `text-test="() => …"` and filter nothing (1.16.1; filed on tosijs's board). A unit test that assigns the property directly does not catch it: test through the creator.
+
 **Declaration order matters**: class fields initialize top-to-bottom. Arrow property handlers referenced in `content` must be declared **before** `content`, or they will be `undefined` when `content()` runs.
 
 #### Content function pitfalls

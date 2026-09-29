@@ -54,10 +54,16 @@ If your dialect's name is also a syntax-highlighting grammar, call `registerLive
 `tosijs-ui/site` in your site config too: the build-time highlighter never sees page
 registrations, and would otherwise tokenize the source the example reads.
 
-A replaced built-in runs everywhere: the build pre-transpiles `tjs` examples with the pinned
-tjs-lang (so readers don't load the transpiler), and that pre-transpiled code is skipped once
-the site registers its own `tjs`. Fence languages are case-sensitive, as they were in 1.16.0:
-```` ```JS ```` is plain code, not a live example.
+A replaced built-in is what runs in the browser, in dev and on the deployed site alike: the
+build pre-transpiles `tjs` examples with the installed tjs-lang (so readers don't load the
+transpiler), and the page skips that pre-transpiled code once the site registers its own `tjs`.
+The build-time example check still transpiles `tjs` fences with the installed tjs-lang, so an
+override that accepts newer syntax can fail that check; `checkExamples: false` is the escape
+until the site config can say `tjs` is overridden.
+
+Fence languages are case-sensitive, as they were in 1.16.0: ```` ```JS ```` is not a live
+example. One visible difference: 1.16.0 also left such a fence unhighlighted, and it is now
+highlighted as ordinary static code, on the page and in the ePub.
 
 **Fence options.** Any fence can carry a JSON object after its language,
 `` ```tjs {"runTests": "report"} ``, passed to its dialect as `options`. Malformed options are

@@ -13,6 +13,16 @@ export declare function registerLiveLanguage(lang: string): void;
 /** Is `lang` an example's source language — `js`, `tjs`, `ts`, or a registered dialect? */
 export declare function isDialectLanguage(lang: string): boolean;
 /**
+ * THE `language-*` class pattern, and the only place it is written.
+ *
+ * It was spelled `[A-Za-z0-9_+#-]+` four times in `highlight.ts` and `[\w-]+` once in
+ * `epub.ts`, so a `c++` or `c#` fence was read as a language by one and as `c` by the other.
+ * `+` and `#` are in the class deliberately: they are real language names. It lives here, not
+ * in `highlight.ts`, because live examples need it too and must not import the highlighter's
+ * grammar map to get it.
+ */
+export declare const LANGUAGE_NAME = "[A-Za-z0-9_+#-]+";
+/**
  * The fence language of a `<code class="language-…">`, **as written** (case preserved), or `''`.
  *
  * Case matters: fence languages are lowercase (`parseFenceInfo` reads `[a-z]+`), so ```` ```JS ````

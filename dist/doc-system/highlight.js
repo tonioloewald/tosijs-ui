@@ -24,7 +24,7 @@ it would deepen exactly the dependency that issue wants to escape. Prism's core 
 grammars load per language, which also covers the languages a prose or book corpus uses and
 CodeMirror does not bundle (shell, python, rust, json, yaml, diff).
 */
-import { isLiveFence, languageOfClass, } from './example-policy.js';
+import { isLiveFence, languageOfClass, LANGUAGE_NAME, } from './example-policy.js';
 /** Languages Prism has built in — no grammar file to load. */
 const BUILTIN = new Set([
     'markup',
@@ -494,7 +494,9 @@ function decodeEntities(s) {
 /** Every fence language present in rendered markdown — what grammars a page needs. */
 export function languagesIn(html) {
     return [
-        ...new Set([...html.matchAll(/<code class="language-([A-Za-z0-9_+#-]+)"/g)].map((m) => m[1].toLowerCase())),
+        ...new Set([
+            ...html.matchAll(new RegExp(`<code class="language-(${LANGUAGE_NAME})"`, 'g')),
+        ].map((m) => m[1].toLowerCase())),
     ];
 }
 /**
@@ -521,7 +523,7 @@ export async function highlightHtml(html, policy = 'auto') {
     example reads its SOURCE out of this element, and tokenizing it hands the example markup
     where it expected code.
     */
-    return html.replace(/(<pre([^>]*)>)<code class="language-([A-Za-z0-9_+#-]+)">([\s\S]*?)<\/code>/g, (whole, preTag, preAttrs, lang, body) => {
+    return html.replace(new RegExp(`(<pre([^>]*)>)<code class="language-(${LANGUAGE_NAME})">([\\s\\S]*?)</code>`, 'g'), (whole, preTag, preAttrs, lang, body) => {
         const l = lang.toLowerCase();
         const mode = preAttrs.match(/data-example-mode="([a-z]+)"/)?.[1];
         if (isLiveFence(lang, mode, policy))

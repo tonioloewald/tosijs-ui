@@ -195,6 +195,17 @@ describe('executable fences are NOT highlighted — they are live-example source
     )
   })
 
+  test('an UPPERCASE fence is not live (case-sensitive, like insertExamples), so it highlights', async () => {
+    // 1.16.1 review F2: insertExamples and this pass must answer the same question. ```JS is
+    // static there, so it must be highlighted here — on both the string and the DOM path.
+    const html = '<pre><code class="language-JS">const x = 1</code></pre>'
+    expect(await highlightHtml(html)).toContain('class="token keyword"')
+    const root = document.createElement('div')
+    root.innerHTML = html
+    await highlightBlocks(root)
+    expect(root.querySelector('.token.keyword')).not.toBe(null)
+  })
+
   test('under opt-in, a fence that ASKS to run is still left alone', async () => {
     const html =
       '<pre data-example-mode="inline"><code class="language-js">const x = 1</code></pre>'

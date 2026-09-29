@@ -28,6 +28,7 @@ CodeMirror does not bundle (shell, python, rust, json, yaml, diff).
 import {
   isLiveFence,
   languageOfClass,
+  LANGUAGE_NAME,
   type ExamplePolicy,
 } from './example-policy.js'
 
@@ -530,9 +531,11 @@ function decodeEntities(s: string): string {
 export function languagesIn(html: string): string[] {
   return [
     ...new Set(
-      [...html.matchAll(/<code class="language-([A-Za-z0-9_+#-]+)"/g)].map(
-        (m) => m[1].toLowerCase()
-      )
+      [
+        ...html.matchAll(
+          new RegExp(`<code class="language-(${LANGUAGE_NAME})"`, 'g')
+        ),
+      ].map((m) => m[1].toLowerCase())
     ),
   ]
 }
@@ -565,7 +568,10 @@ export async function highlightHtml(
   where it expected code.
   */
   return html.replace(
-    /(<pre([^>]*)>)<code class="language-([A-Za-z0-9_+#-]+)">([\s\S]*?)<\/code>/g,
+    new RegExp(
+      `(<pre([^>]*)>)<code class="language-(${LANGUAGE_NAME})">([\\s\\S]*?)</code>`,
+      'g'
+    ),
     (whole, preTag: string, preAttrs: string, lang: string, body: string) => {
       const l = lang.toLowerCase()
       const mode = preAttrs.match(/data-example-mode="([a-z]+)"/)?.[1]
