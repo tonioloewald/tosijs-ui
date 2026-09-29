@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=4a2fcc7f41ad" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=23407ca727cb" data-tosi-doc-system />
   <title>search-field — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-search-field&gt; is a search box that suggests refinements as you type, in the spirit of Finder&#39;s search field and a search engine&#39;s power-search operators." />
   <link rel="canonical" href="https://ui.tosijs.net/search-field/" />
@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=d3d310ff134b" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=158edd723633" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>search-field</h1>
 <p><code>&lt;tosi-search-field&gt;</code> is a search box that suggests <strong>refinements</strong> as you type, in the
@@ -101,6 +101,10 @@ field.addEventListener(&#39;action&#39;, () =&gt; {
 show()
 preview.append(field, output)
 </code></pre>
+<pre><code class="language-css">.preview tosi-search-field {
+  margin-right: var(--touch-size, 44px);
+}
+</code></pre>
 <pre><code class="language-test">test(&#39;typing discloses hints; picking one makes a tag and consumes the text&#39;, async () =&gt; {
   const field = preview.querySelector(&#39;tosi-search-field&#39;)
   await field.whenHydrated
@@ -129,6 +133,16 @@ preview.append(field, output)
   expect(changes).toBe(3)
   field.value = { tags: [], text: &#39;&#39; }
 })
+test(&#39;the clear button clears tags and text&#39;, async () =&gt; {
+  const field = preview.querySelector(&#39;tosi-search-field&#39;)
+  await field.whenHydrated
+  field.value = { tags: [{ caption: &#39;PDFs&#39;, kind: &#39;type&#39;, value: &#39;pdf&#39; }], text: &#39;q&#39; }
+  field.render()
+  const clear = field.querySelector(&#39;[part=&quot;clear&quot;]&#39;)
+  expect(clear.hidden).toBe(false)
+  clear.click()
+  expect(field.value).toEqual({ tags: [], text: &#39;&#39; })
+})
 test(&#39;Enter with no hint highlighted is an action, not a tag&#39;, async () =&gt; {
   const field = preview.querySelector(&#39;tosi-search-field&#39;)
   await field.whenHydrated
@@ -143,6 +157,111 @@ test(&#39;Enter with no hint highlighted is an action, not a tag&#39;, async () 
   field.value = { tags: [], text: &#39;&#39; }
 })
 </code></pre>
+<h2>As a filter</h2>
+<p>Give each tag a <code>test(item)</code>, and a <code>textTest</code> for the text left in the field, and the
+field&#39;s <code>filter</code> is ready to hand to a <code>&lt;tosi-table&gt;</code>. Here it filters 3,655 emoji: type
+<code>food</code>, <code>flag</code> or <code>cat</code>, and pick a category or subcategory, or just keep typing to match
+names.</p>
+<p>(Both examples leave room at the field&#39;s right end, where the example&#39;s own toolbar floats;
+otherwise it covers the clear button.)</p>
+<pre><code class="language-js">import { tosiSearchField, tosiTable } from &#39;tosijs-ui&#39;
+import { div } from &#39;tosijs&#39;.elements
+
+const emojiRequest = await fetch(&#39;https://raw.githubusercontent.com/tonioloewald/emoji-metadata/master/emoji-metadata.json&#39;)
+const emojiData = await emojiRequest.json()
+
+const unique = (prop) =&gt; [...new Set(emojiData.map((emoji) =&gt; emoji[prop]))]
+const categories = unique(&#39;category&#39;)
+const subcategories = unique(&#39;subcategory&#39;)
+// does `text` start any word of `label`? (&quot;dri&quot; matches &quot;Food &amp; Drink&quot;)
+const startsAWord = (label, text) =&gt;
+  label.toLowerCase().split(/[^a-z0-9]+/).some((word) =&gt; word.startsWith(text.toLowerCase()))
+
+const field = tosiSearchField({
+  placeholder: &#39;Filter emoji&#39;,
+  textTest: (emoji, text) =&gt; emoji.name.includes(text.toLowerCase()),
+  hints: [
+    (text) =&gt; ({
+      caption: `Name contains “${text}”`,
+      tag: { caption: `“${text}”`, test: (emoji) =&gt; emoji.name.includes(text.toLowerCase()) },
+    }),
+    (text) =&gt;
+      categories
+        .filter((category) =&gt; startsAWord(category, text))
+        .map((category) =&gt; ({
+          caption: `Category: ${category}`,
+          tag: { caption: category, background: &#39;#1565c0&#39;, test: (emoji) =&gt; emoji.category === category },
+        })),
+    (text) =&gt;
+      subcategories
+        .filter((subcategory) =&gt; startsAWord(subcategory, text))
+        .slice(0, 6)
+        .map((subcategory) =&gt; ({
+          caption: `Subcategory: ${subcategory}`,
+          tag: { caption: subcategory, background: &#39;#2e7d32&#39;, test: (emoji) =&gt; emoji.subcategory === subcategory },
+        })),
+  ],
+})
+
+const table = tosiTable({
+  array: emojiData,
+  rowHeight: 40,
+  columns: [
+    { prop: &#39;chars&#39;, name: &#39;emoji&#39;, width: 80, align: &#39;center&#39;, sort: false },
+    { prop: &#39;name&#39;, width: 300 },
+    { prop: &#39;category&#39;, width: 150 },
+    { prop: &#39;subcategory&#39;, width: 150 },
+  ],
+})
+
+const applyFilter = () =&gt; {
+  table.filter = field.filter
+}
+field.addEventListener(&#39;change&#39;, applyFilter)
+field.addEventListener(&#39;input&#39;, applyFilter)
+
+preview.append(div({ class: &#39;emoji-search&#39; }, field, table))
+</code></pre>
+<pre><code class="language-css">.preview .emoji-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing, 8px);
+  height: 100%;
+}
+
+.preview .emoji-search tosi-search-field {
+  margin-right: var(--touch-size, 44px);
+}
+
+.preview .emoji-search tosi-table {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+</code></pre>
+<pre><code class="language-test">test(&#39;the field filters the table&#39;, async () =&gt; {
+  const field = preview.querySelector(&#39;tosi-search-field&#39;)
+  const table = preview.querySelector(&#39;.emoji-search tosi-table&#39;)
+  await field.whenHydrated
+  const all = table.array.length
+  field.typeText(&#39;food&#39;)
+  const input = field.querySelector(&#39;input&#39;)
+  const key = (k) =&gt; input.dispatchEvent(new KeyboardEvent(&#39;keydown&#39;, { key: k, bubbles: true }))
+  key(&#39;ArrowDown&#39;)
+  key(&#39;ArrowDown&#39;)
+  key(&#39;Enter&#39;)
+  expect(field.value.tags.map((t) =&gt; t.caption)).toEqual([&#39;Food &amp; Drink&#39;])
+  const food = field.filter(table.array)
+  expect(food.length).toBeGreaterThan(0)
+  expect(food.length).toBeLessThan(all)
+  expect(food.every((emoji) =&gt; emoji.category === &#39;Food &amp; Drink&#39;)).toBe(true)
+  field.typeText(&#39;apple&#39;)
+  const apples = field.filter(table.array)
+  expect(apples.length).toBeGreaterThan(0)
+  expect(apples.every((emoji) =&gt; emoji.name.includes(&#39;apple&#39;))).toBe(true)
+  field.clear()
+  expect(field.filter(table.array).length).toBe(all)
+})
+</code></pre>
 <h2>Properties</h2>
 <h3><code>hints</code>: SearchHintRule[]</h3>
 <p>The rules. A rule is <code>(text, tags) =&gt; SearchHint | SearchHint[] | null | undefined</code>, called
@@ -153,13 +272,20 @@ it adds to the query.</p>
 <p>The query. A <code>SearchTag</code> is <code>{ caption, background?, color?, …anything }</code>: the chip shows
 <code>caption</code>, coloured like <code>&lt;tosi-tag-list&gt;</code> chips (given only a <code>background</code>, the text is
 black or white, whichever contrasts more), and everything else is yours to interpret —
-<code>kind</code>, <code>value</code>, a field name, an operator.</p>
+<code>kind</code>, <code>value</code>, a field name, an operator. A tag may carry a <code>test(item)</code> predicate, which
+is what <code>filter</code> uses.</p>
+<h3><code>filter</code>: <code>(items) =&gt; items</code></h3>
+<p>The query as an array filter, for filtering a list or a <code>&lt;tosi-table&gt;</code>: an item passes when
+every tag&#39;s <code>test</code> passes and, if there is text left in the field, <code>textTest(item, text)</code>.
+Tags without a <code>test</code>, and text without a <code>textTest</code>, don&#39;t filter anything.</p>
+<h3><code>textTest</code>: <code>(item, text) =&gt; boolean</code></h3>
+<p>How the typed text matches an item, for <code>filter</code>.</p>
 <h3><code>placeholder</code>: string = &#39;search&#39;</h3>
 <p>Shown while the field has no tags and no text.</p>
 <h3><code>disabled</code>: boolean</h3>
 <h2>Events</h2>
 <ul>
-<li><code>change</code> — the tags changed (a hint was picked, or a tag removed).</li>
+<li><code>change</code> — the tags changed (a hint was picked, a tag removed, or the field cleared).</li>
 <li><code>input</code> — the text changed (the native event from the inner <code>&lt;input&gt;</code>).</li>
 <li><code>action</code> — Enter was pressed with no hint highlighted: &quot;search now&quot;.</li>
 </ul>
@@ -190,6 +316,9 @@ black or white, whichever contrasts more), and everything else is yours to inter
 </tr>
 </tbody></table>
 <h2>Methods</h2>
+<h3><code>clear()</code></h3>
+<p>Remove every tag and the text, as the field&#39;s ✕ button does. The button appears whenever
+there is something to clear.</p>
 <h3><code>typeText(text: string)</code></h3>
 <p>Put <code>text</code> in the field as if it had been typed, and update the hints. For tests and
 scripted demos.</p>
@@ -291,6 +420,6 @@ scripted demos.</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-esrvemhp.js"></script>
+  <script type="module" src="../hydrate-e9yh1kvz.js"></script>
 </body>
 </html>

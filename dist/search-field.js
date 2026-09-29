@@ -59,6 +59,11 @@ field.addEventListener('action', () => {
 show()
 preview.append(field, output)
 ```
+```css
+.preview tosi-search-field {
+  margin-right: var(--touch-size, 44px);
+}
+```
 ```test
 test('typing discloses hints; picking one makes a tag and consumes the text', async () => {
   const field = preview.querySelector('tosi-search-field')
@@ -88,6 +93,16 @@ test('typing discloses hints; picking one makes a tag and consumes the text', as
   expect(changes).toBe(3)
   field.value = { tags: [], text: '' }
 })
+test('the clear button clears tags and text', async () => {
+  const field = preview.querySelector('tosi-search-field')
+  await field.whenHydrated
+  field.value = { tags: [{ caption: 'PDFs', kind: 'type', value: 'pdf' }], text: 'q' }
+  field.render()
+  const clear = field.querySelector('[part="clear"]')
+  expect(clear.hidden).toBe(false)
+  clear.click()
+  expect(field.value).toEqual({ tags: [], text: '' })
+})
 test('Enter with no hint highlighted is an action, not a tag', async () => {
   const field = preview.querySelector('tosi-search-field')
   await field.whenHydrated
@@ -100,6 +115,118 @@ test('Enter with no hint highlighted is an action, not a tag', async () => {
   expect(actions).toBe(1)
   expect(field.value).toEqual({ tags: [], text: 'report' })
   field.value = { tags: [], text: '' }
+})
+```
+
+## As a filter
+
+Give each tag a `test(item)`, and a `textTest` for the text left in the field, and the
+field's `filter` is ready to hand to a `<tosi-table>`. Here it filters 3,655 emoji: type
+`food`, `flag` or `cat`, and pick a category or subcategory, or just keep typing to match
+names.
+
+(Both examples leave room at the field's right end, where the example's own toolbar floats;
+otherwise it covers the clear button.)
+
+```js
+import { tosiSearchField, tosiTable } from 'tosijs-ui'
+import { div } from 'tosijs'.elements
+
+const emojiRequest = await fetch('https://raw.githubusercontent.com/tonioloewald/emoji-metadata/master/emoji-metadata.json')
+const emojiData = await emojiRequest.json()
+
+const unique = (prop) => [...new Set(emojiData.map((emoji) => emoji[prop]))]
+const categories = unique('category')
+const subcategories = unique('subcategory')
+// does `text` start any word of `label`? ("dri" matches "Food & Drink")
+const startsAWord = (label, text) =>
+  label.toLowerCase().split(/[^a-z0-9]+/).some((word) => word.startsWith(text.toLowerCase()))
+
+const field = tosiSearchField({
+  placeholder: 'Filter emoji',
+  textTest: (emoji, text) => emoji.name.includes(text.toLowerCase()),
+  hints: [
+    (text) => ({
+      caption: `Name contains “${text}”`,
+      tag: { caption: `“${text}”`, test: (emoji) => emoji.name.includes(text.toLowerCase()) },
+    }),
+    (text) =>
+      categories
+        .filter((category) => startsAWord(category, text))
+        .map((category) => ({
+          caption: `Category: ${category}`,
+          tag: { caption: category, background: '#1565c0', test: (emoji) => emoji.category === category },
+        })),
+    (text) =>
+      subcategories
+        .filter((subcategory) => startsAWord(subcategory, text))
+        .slice(0, 6)
+        .map((subcategory) => ({
+          caption: `Subcategory: ${subcategory}`,
+          tag: { caption: subcategory, background: '#2e7d32', test: (emoji) => emoji.subcategory === subcategory },
+        })),
+  ],
+})
+
+const table = tosiTable({
+  array: emojiData,
+  rowHeight: 40,
+  columns: [
+    { prop: 'chars', name: 'emoji', width: 80, align: 'center', sort: false },
+    { prop: 'name', width: 300 },
+    { prop: 'category', width: 150 },
+    { prop: 'subcategory', width: 150 },
+  ],
+})
+
+const applyFilter = () => {
+  table.filter = field.filter
+}
+field.addEventListener('change', applyFilter)
+field.addEventListener('input', applyFilter)
+
+preview.append(div({ class: 'emoji-search' }, field, table))
+```
+```css
+.preview .emoji-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing, 8px);
+  height: 100%;
+}
+
+.preview .emoji-search tosi-search-field {
+  margin-right: var(--touch-size, 44px);
+}
+
+.preview .emoji-search tosi-table {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+```
+```test
+test('the field filters the table', async () => {
+  const field = preview.querySelector('tosi-search-field')
+  const table = preview.querySelector('.emoji-search tosi-table')
+  await field.whenHydrated
+  const all = table.array.length
+  field.typeText('food')
+  const input = field.querySelector('input')
+  const key = (k) => input.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }))
+  key('ArrowDown')
+  key('ArrowDown')
+  key('Enter')
+  expect(field.value.tags.map((t) => t.caption)).toEqual(['Food & Drink'])
+  const food = field.filter(table.array)
+  expect(food.length).toBeGreaterThan(0)
+  expect(food.length).toBeLessThan(all)
+  expect(food.every((emoji) => emoji.category === 'Food & Drink')).toBe(true)
+  field.typeText('apple')
+  const apples = field.filter(table.array)
+  expect(apples.length).toBeGreaterThan(0)
+  expect(apples.every((emoji) => emoji.name.includes('apple'))).toBe(true)
+  field.clear()
+  expect(field.filter(table.array).length).toBe(all)
 })
 ```
 
@@ -117,7 +244,18 @@ it adds to the query.
 The query. A `SearchTag` is `{ caption, background?, color?, …anything }`: the chip shows
 `caption`, coloured like `<tosi-tag-list>` chips (given only a `background`, the text is
 black or white, whichever contrasts more), and everything else is yours to interpret —
-`kind`, `value`, a field name, an operator.
+`kind`, `value`, a field name, an operator. A tag may carry a `test(item)` predicate, which
+is what `filter` uses.
+
+### `filter`: `(items) => items`
+
+The query as an array filter, for filtering a list or a `<tosi-table>`: an item passes when
+every tag's `test` passes and, if there is text left in the field, `textTest(item, text)`.
+Tags without a `test`, and text without a `textTest`, don't filter anything.
+
+### `textTest`: `(item, text) => boolean`
+
+How the typed text matches an item, for `filter`.
 
 ### `placeholder`: string = 'search'
 
@@ -127,7 +265,7 @@ Shown while the field has no tags and no text.
 
 ## Events
 
-- `change` — the tags changed (a hint was picked, or a tag removed).
+- `change` — the tags changed (a hint was picked, a tag removed, or the field cleared).
 - `input` — the text changed (the native event from the inner `<input>`).
 - `action` — Enter was pressed with no hint highlighted: "search now".
 
@@ -144,6 +282,11 @@ Focus stays in the text field throughout; the hints are a listbox it controls.
 
 ## Methods
 
+### `clear()`
+
+Remove every tag and the text, as the field's ✕ button does. The button appears whenever
+there is something to clear.
+
 ### `typeText(text: string)`
 
 Put `text` in the field as if it had been typed, and update the hints. For tests and
@@ -157,8 +300,9 @@ How many hints are currently listed (0 when the list is closed).
 import { elements, vars, varDefault, StyleSheet, withAttributes, } from 'tosijs';
 import { popFloat } from './pop-float.js';
 import { tosiTag, TosiTag } from './tag.js';
+import { icons } from './icons.js';
 import { tagColors } from './tag-colors.js';
-const { div, input } = elements;
+const { div, input, button } = elements;
 /*
 The hint list floats in <body> (so an overflow:hidden ancestor cannot clip it), which puts it
 outside the component and its style sheet. So its styles are a global sheet, injected on first
@@ -195,6 +339,7 @@ function ensureHintStyles() {
     });
 }
 let instanceCount = 0;
+const SCROLL_OPTIONS = { capture: true, passive: true };
 const sameTag = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 export class TosiSearchField extends withAttributes({
     placeholder: 'search',
@@ -229,8 +374,51 @@ export class TosiSearchField extends withAttributes({
             background: 'transparent',
             padding: `0 ${vars.spacing25}`,
         },
+        // The field has its own clear button, which clears tags AND text; the browser's ✕ on a
+        // search input would clear only the text, and two ✕s that differ is worse than one.
+        ':host [part="input"]::-webkit-search-cancel-button': {
+            display: 'none',
+        },
+        ':host [part="clear"]': {
+            flex: '0 0 auto',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: vars.spacing25,
+            border: 'none',
+            boxShadow: 'none',
+            background: 'transparent',
+            color: 'inherit',
+            opacity: varDefault.searchFieldClearOpacity('0.5'),
+            cursor: 'default',
+        },
+        ':host [part="clear"]:hover, :host [part="clear"]:focus-visible': {
+            opacity: 1,
+        },
+        ':host [part="clear"][hidden]': {
+            display: 'none',
+        },
     };
     hints = [];
+    /** How the text left in the field matches an item, for `filter`. Without it, text is ignored. */
+    // `null`, not `undefined`: tosijs's element creator sets a prop as a PROPERTY only when the
+    // instance's current value is not `undefined`, and otherwise as an attribute — which made
+    // `tosiSearchField({ textTest })` store a stringified function and filter nothing.
+    textTest = null;
+    /**
+     * The query as an array filter: an item passes if every tag's `test` passes and, when there
+     * is text and a `textTest`, the text matches too. Tags without a `test` do not filter.
+     * A new function each time the query changes, so hand it to a `<tosi-table>` as it is.
+     */
+    get filter() {
+        const tests = this.tagList
+            .map((tag) => tag.test)
+            .filter((test) => test !== undefined);
+        const text = this.textValue.trim();
+        const textTest = text !== '' ? this.textTest : null;
+        return (items) => items.filter((item) => tests.every((test) => test(item)) &&
+            (textTest === null || textTest(item, text)));
+    }
     tagList = [];
     textValue = '';
     listed = [];
@@ -259,12 +447,37 @@ export class TosiSearchField extends withAttributes({
         field.value = text;
         this.textValue = text;
         this.updateHints();
+        this.syncClear();
+    };
+    /** Remove every tag and the text. Fires `change` if there was anything to remove. */
+    clear = () => {
+        const hadAnything = this.tagList.length > 0 || this.textValue !== '';
+        this.tagList = [];
+        this.textValue = '';
+        if (this.hydrated)
+            this.input().value = '';
+        this.closeHints();
+        if (hadAnything)
+            this.tagsChanged();
     };
     input = () => this.parts.input;
     handleInput = () => {
         this.textValue = this.input().value;
         this.updateHints();
+        this.syncClear();
     };
+    handleClear = () => {
+        this.clear();
+        this.input().focus();
+    };
+    // Shown only when there is something to clear. Called on every text change as well as from
+    // render(), because typing does not re-render the component.
+    syncClear() {
+        if (!this.hydrated)
+            return;
+        this.parts.clear.hidden =
+            this.disabled || (this.tagList.length === 0 && this.textValue === '');
+    }
     handleKeydown = (event) => {
         const open = this.float !== undefined;
         switch (event.key) {
@@ -357,6 +570,14 @@ export class TosiSearchField extends withAttributes({
             onKeydown: this.handleKeydown,
             onBlur: this.handleBlur,
         }),
+        button({
+            part: 'clear',
+            type: 'button',
+            title: 'Clear search',
+            ariaLabel: 'Clear search',
+            hidden: true,
+            onClick: this.handleClear,
+        }, icons.x()),
     ];
     constructor() {
         super();
@@ -409,13 +630,27 @@ export class TosiSearchField extends withAttributes({
                 content: this.hintList,
                 target: this,
                 position: 's',
-                remainOnScroll: 'remove',
+                remainOnScroll: 'remain',
                 remainOnResize: 'remove',
             });
+            document.addEventListener('scroll', this.handleScroll, SCROLL_OPTIONS);
         }
         this.input().setAttribute('aria-expanded', 'true');
     }
+    /*
+    Close for a scroll that MOVES the field (the page, or an ancestor), not for any scroll at
+    all. A float's own `remainOnScroll: 'remove'` reacts to every scroll in the document, and in
+    the obvious use of this component — filtering a table — every keystroke re-filters the table,
+    which scrolls it, which closed the hints the moment they opened.
+    */
+    handleScroll = (event) => {
+        const target = event.target;
+        if (target === document ||
+            (target instanceof Node && target.contains(this)))
+            this.closeHints();
+    };
     closeHints() {
+        document.removeEventListener('scroll', this.handleScroll, SCROLL_OPTIONS);
         this.float?.remove();
         this.float = undefined;
         this.active = -1;
@@ -464,6 +699,7 @@ export class TosiSearchField extends withAttributes({
             field.value = this.textValue;
         field.placeholder = this.tagList.length ? '' : this.placeholder;
         field.disabled = this.disabled;
+        this.syncClear();
         this.parts.tags.replaceChildren(...this.tagList.map((tag) => {
             const chip = tosiTag({
                 caption: tag.caption,

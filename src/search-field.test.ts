@@ -171,6 +171,87 @@ describe('TosiSearchField', () => {
     expect(input.placeholder).toBe('')
   })
 
+  test('the clear button shows only when there is something to clear, and clears it all', () => {
+    const clear = field.querySelector('[part="clear"]') as HTMLButtonElement
+    field.render()
+    expect(clear.hidden).toBe(true)
+    field.typeText('doc')
+    expect(clear.hidden).toBe(false)
+    key(field, 'ArrowDown')
+    key(field, 'Enter')
+    field.typeText('more')
+    field.render()
+    expect(clear.hidden).toBe(false)
+    let changes = 0
+    field.addEventListener('change', () => (changes += 1))
+    clear.click()
+    expect(field.value).toEqual({ tags: [], text: '' })
+    expect(field.querySelector('input')!.value).toBe('')
+    expect(field.hintCount).toBe(0)
+    expect(changes).toBe(1)
+    field.render()
+    expect(clear.hidden).toBe(true)
+  })
+
+  test('clear() on an empty field fires nothing', () => {
+    let changes = 0
+    field.addEventListener('change', () => (changes += 1))
+    field.clear()
+    expect(changes).toBe(0)
+  })
+
+  test('a disabled field hides its clear button', () => {
+    field.value = { tags: [{ caption: 'x' }], text: '' }
+    field.disabled = true
+    field.render()
+    expect(
+      (field.querySelector('[part="clear"]') as HTMLButtonElement).hidden
+    ).toBe(true)
+  })
+
+  test("filter ANDs the tags' tests with textTest; untested tags and text do not filter", () => {
+    const items = [
+      { name: 'red apple', kind: 'fruit' },
+      { name: 'green apple', kind: 'fruit' },
+      { name: 'carrot', kind: 'vegetable' },
+    ]
+    expect(field.filter(items)).toEqual(items)
+    field.value = {
+      tags: [
+        { caption: 'fruit', test: (item: any) => item.kind === 'fruit' },
+        { caption: 'no test' },
+      ],
+      text: 'red',
+    }
+    // no textTest yet: the text does not filter
+    expect(field.filter(items).length).toBe(2)
+    field.textTest = (item, text) => item.name.includes(text)
+    expect(field.filter(items)).toEqual([items[0]])
+    field.value = { tags: [], text: '  ' }
+    expect(field.filter(items)).toEqual(items)
+  })
+
+  test('hints and textTest can be passed to the element creator', () => {
+    const made = tosiSearchField({
+      hints: [textRule],
+      textTest: (item: any, text: string) => item === text,
+    })
+    expect(typeof made.textTest).toBe('function')
+    expect(made.hints).toEqual([textRule])
+    expect(made.hasAttribute('text-test')).toBe(false)
+  })
+
+  test('a scroll elsewhere keeps the hints open; a scroll that moves the field closes them', () => {
+    const elsewhere = document.createElement('div')
+    document.body.append(elsewhere)
+    field.typeText('doc')
+    elsewhere.dispatchEvent(new Event('scroll'))
+    expect(field.hintCount).toBe(2)
+    document.dispatchEvent(new Event('scroll'))
+    expect(field.hintCount).toBe(0)
+    elsewhere.remove()
+  })
+
   test('removing the element closes its hint list', () => {
     field.typeText('doc')
     expect(options().length).toBe(2)
