@@ -353,6 +353,8 @@ function ensureHintStyles(): void {
   StyleSheet('tosi-search-hints', {
     '.tosi-search-hints': {
       overflow: 'hidden auto',
+      // Scrolling past the end of the list must not scroll the page (and close the list).
+      overscrollBehavior: 'contain',
       maxHeight: `calc(${vars.maxHeight} - ${varDefault.menuInset('8px')})`,
       borderRadius: vars.spacing50,
       background: varDefault.menuBg('#fafafa'),
@@ -459,17 +461,47 @@ export class TosiSearchField extends withAttributes({
    * A new function each time the query changes, so hand it to a `<tosi-table>` as it is.
    */
   get filter(): <T>(items: T[]) => T[] {
+    // Memoized on the query, so reading `filter` twice without a change hands a table the SAME
+    // function and its filter memo holds (#147); a changed query gives a new one.
+    const text = this.textValue.trim()
+    const memo = this.filterMemo
+    if (
+      memo &&
+      memo.tags === this.tagList &&
+      memo.text === text &&
+      memo.textTest === this.textTest
+    )
+      return memo.filter
     const tests = this.tagList
       .map((tag) => tag.test)
       .filter((test): test is (item: any) => boolean => test !== undefined)
-    const text = this.textValue.trim()
     const textTest = text !== '' ? this.textTest : null
-    return (items) =>
+    const filter = <T>(items: T[]): T[] =>
       items.filter(
         (item) =>
           tests.every((test) => test(item)) &&
           (textTest === null || textTest(item, text))
       )
+    this.filterMemo = {
+      tags: this.tagList,
+      text,
+      textTest: this.textTest,
+      filter,
+    }
+    return filter
+  }
+
+  private filterMemo?: {
+    tags: SearchTag[]
+    text: string
+    textTest: TosiSearchField['textTest']
+    filter: <T>(items: T[]) => T[]
+  }
+
+  // The float can be removed without us (a resize: rotation, the iOS URL bar), so "open" is
+  // "our float is still on the page", never merely "we have a reference to one".
+  private get hintsOpen(): boolean {
+    return this.float?.isConnected === true
   }
 
   private tagList: SearchTag[] = []
@@ -495,7 +527,7 @@ export class TosiSearchField extends withAttributes({
   }
 
   get hintCount(): number {
-    return this.float ? this.listed.length : 0
+    return this.hintsOpen ? this.listed.length : 0
   }
 
   typeText = (text: string): void => {
@@ -538,7 +570,7 @@ export class TosiSearchField extends withAttributes({
   }
 
   private handleKeydown = (event: KeyboardEvent): void => {
-    const open = this.float !== undefined
+    const open = this.hintsOpen
     switch (event.key) {
       case 'ArrowDown':
         if (!open) this.updateHints()
@@ -694,7 +726,7 @@ export class TosiSearchField extends withAttributes({
   private openHints(): void {
     ensureHintStyles()
     this.hintList.style.minWidth = `${this.offsetWidth}px`
-    if (!this.float || !this.float.isConnected) {
+    if (!this.hintsOpen) {
       this.float = popFloat({
         content: this.hintList,
         target: this,

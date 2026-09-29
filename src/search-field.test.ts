@@ -257,6 +257,31 @@ describe('TosiSearchField', () => {
     elsewhere.remove()
   })
 
+  test('filter is the same function until the query changes', () => {
+    const first = field.filter
+    expect(field.filter).toBe(first)
+    field.typeText('doc')
+    const second = field.filter
+    expect(second).not.toBe(first)
+    expect(field.filter).toBe(second)
+    field.textTest = () => true
+    expect(field.filter).not.toBe(second)
+  })
+
+  test('if the float is removed from outside (a resize), the field knows the hints are closed', () => {
+    field.typeText('doc')
+    expect(field.hintCount).toBe(2)
+    document
+      .querySelector('.tosi-search-hints')!
+      .closest('tosi-float')!
+      .remove()
+    expect(field.hintCount).toBe(0)
+    let actions = 0
+    field.addEventListener('action', () => (actions += 1))
+    key(field, 'Enter') // nothing is highlighted in a closed list: this is "search now"
+    expect(actions).toBe(1)
+  })
+
   test('removing the element closes its hint list', () => {
     field.typeText('doc')
     expect(options().length).toBe(2)

@@ -76,3 +76,12 @@ export function showDialectResult(preview, value) {
     }
     preview.append(pre({ class: 'dialect-result' }, text));
 }
+/**
+ * Put the built-ins back — for TESTS only. The registry is module state, and Bun shares
+ * module state across every test file in a process, so a test that overrides `tjs` must undo
+ * it or every later file inherits the override.
+ */
+export function resetBuiltInDialectsForTests() {
+    for (const [name, spec] of Object.entries(BUILT_IN))
+        registry.set(name, spec);
+}

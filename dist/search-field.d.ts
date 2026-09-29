@@ -32,6 +32,8 @@ export declare class TosiSearchField extends TosiSearchField_base {
      * A new function each time the query changes, so hand it to a `<tosi-table>` as it is.
      */
     get filter(): <T>(items: T[]) => T[];
+    private filterMemo?;
+    private get hintsOpen();
     private tagList;
     private textValue;
     private listed;

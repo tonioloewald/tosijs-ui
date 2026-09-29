@@ -56,12 +56,34 @@ export function registerLiveLanguage(lang) {
 }
 /** Is `lang` an example's source language — `js`, `tjs`, `ts`, or a registered dialect? */
 export function isDialectLanguage(lang) {
-    return SOURCE_LANGS.has(lang.toLowerCase());
+    return SOURCE_LANGS.has(lang);
+}
+/**
+ * THE `language-*` class pattern, and the only place it is written.
+ *
+ * It was spelled `[A-Za-z0-9_+#-]+` four times in `highlight.ts` and `[\w-]+` once in
+ * `epub.ts`, so a `c++` or `c#` fence was read as a language by one and as `c` by the other.
+ * `+` and `#` are in the class deliberately: they are real language names. It lives here, not
+ * in `highlight.ts`, because live examples need it too and must not import the highlighter's
+ * grammar map to get it.
+ */
+const LANGUAGE_CLASS = /language-([A-Za-z0-9_+#-]+)/;
+/**
+ * The fence language of a `<code class="language-…">`, **as written** (case preserved), or `''`.
+ *
+ * Case matters: fence languages are lowercase (`parseFenceInfo` reads `[a-z]+`), so ```` ```JS ````
+ * is not a live example. 1.16.1's first cut matched classes case-insensitively in one place
+ * and not the others, and an uppercase fence became live in `insertExamples` but not in
+ * save-to-source's scan — its content vanished from the page and every later save landed
+ * on the wrong block. Use `langOfClass` (lowercased) only for grammar lookups.
+ */
+export function languageOfClass(className) {
+    return String(className ?? '').match(LANGUAGE_CLASS)?.[1] ?? '';
 }
 /**
  * Will this fence become a live example?
  *
- * @param lang  the fence language, lowercased (`js`, `html`, `typescript`, …)
+ * @param lang  the fence language as written (`js`, `html`, `typescript`, …); case-sensitive
  * @param mode  the `:<mode>` suffix, if any (`inline` | `iframe` | `ide` | `static`)
  * @param policy `'auto'` (executables run) or `'opt-in'` (only fences that ask)
  */
@@ -70,8 +92,8 @@ export function isLiveFence(lang, mode, policy = 'auto') {
     // costs the reader the highlighting.
     if (policy === 'none')
         return false;
-    const name = lang.toLowerCase();
-    if (!EXECUTABLE_LANGS.has(name) && !SOURCE_LANGS.has(name))
+    // Case-sensitive, like `parseFenceInfo`: see `languageOfClass`.
+    if (!EXECUTABLE_LANGS.has(lang) && !SOURCE_LANGS.has(lang))
         return false;
     // `:static` opts out under any policy, so one corpus can target all of them.
     if (mode === 'static')

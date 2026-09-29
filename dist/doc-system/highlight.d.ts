@@ -21,7 +21,11 @@ export declare function registeredGrammars(): string[];
 export declare function grammarFor(fenceLang: string): string;
 /** Grammars this build can load — for tests, diagnostics, and the docs. */
 export declare function loadableGrammars(): string[];
-/** The fence language of a `<code class="language-…">`, lowercased, or `''`. */
+/**
+ * The fence language of a `<code class="language-…">`, lowercased, or `''` — for GRAMMAR
+ * lookups. The pattern itself is `languageOfClass` in `example-policy.ts`, the only place it
+ * is written; ask `isLiveFence` with the case-preserved `languageOfClass`, not with this.
+ */
 export declare function langOfClass(className: string | null | undefined): string;
 export declare function ensureGrammar(lang: string): Promise<boolean>;
 /**

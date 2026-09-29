@@ -539,7 +539,7 @@ import { icons } from '../icons.js';
 import { tosiPocketBar } from '../pocket-bar.js';
 import { postNotification } from '../notifications.js';
 import { popMenu } from '../menu.js';
-import { dialectTransform, getDialect, showDialectResult } from './dialects.js';
+import { dialectTransform, getDialect, isBuiltInDialect, showDialectResult, } from './dialects.js';
 import { loadTransform, loadTjsTestApi, rewriteImports, contextVarName, contextParamNames, AsyncFunction, } from './code-transform.js';
 import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } from './remote-sync.js';
 import { executeInline, executeInIframe } from './execution.js';
@@ -1690,7 +1690,11 @@ export class LiveExample extends withAttributes({
         const runner = getDialect(this.dialect)?.run;
         this.runAbort?.abort();
         const runAbort = (this.runAbort = new AbortController());
+        // The bake was made at build time by the PINNED transpiler, so it is only valid for a
+        // built-in dialect. A site that registered its own `tjs` would otherwise get its override
+        // in dev (tests on, no bake) and the pinned output in production (tests off).
         const bake = !runner &&
+            isBuiltInDialect(this.dialect) &&
             this.dialect !== 'js' &&
             !testManager.enabled.value &&
             this.compiledJs !== undefined &&

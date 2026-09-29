@@ -18,14 +18,14 @@ Build-time only (Bun APIs + the `zip` CLI); never import from browser code.
 import * as fs from 'fs'
 import * as path from 'path'
 import { renderDocMarkdown } from '../render.js'
-import { highlightHtml, langOfClass } from '../highlight.js'
+import { highlightHtml } from '../highlight.js'
 import { buildSlugMap, pathForSlug, slugForPath, withBase } from '../routing.js'
 import { buildNavTree, NavNode } from '../nav-tree.js'
 import type { Doc } from './docs.js'
 import { partitionByBook, DEFAULT_BOOK } from '../book-target.js'
 import { epubVolumeIdentity } from './epub-volumes.js'
 import type { SiteConfig } from './site-config.js'
-import { isLiveFence } from '../example-policy.js'
+import { isLiveFence, languageOfClass } from '../example-policy.js'
 import type { ExamplePolicy } from '../example-policy.js'
 import {
   DEFAULT_BOOK_CSS,
@@ -244,9 +244,10 @@ function exampleLangOf(pre: any, policy: ExamplePolicy): string | null {
     }
   }
   const cls = (code && code.getAttribute('class')) || ''
-  // `langOfClass` is THE pattern — this file used to spell it `[\w-]+`, so a `c++` / `c#`
-  // fence was read as `c` here and correctly there, classifying one block two ways.
-  const lang = langOfClass(cls)
+  // `languageOfClass` is THE pattern — this file used to spell it `[\w-]+`, so a `c++` / `c#`
+  // fence was read as `c` here and correctly there, classifying one block two ways. Case
+  // preserved, because the live-fence rule is case-sensitive.
+  const lang = languageOfClass(cls)
   if (!lang) return null
   // The `:mode` suffix rides on the <pre> as `data-example-mode` — the same place
   // `insertExamples` reads it from.

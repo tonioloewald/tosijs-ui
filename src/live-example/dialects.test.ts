@@ -213,3 +213,57 @@ test('showDialectResult shows strings as written and values as JSON', () => {
   )
   expect(shown).toEqual(['plain', '{\n  "a": [\n    1\n  ]\n}', '10'])
 })
+
+describe('1.16.1 review regressions', () => {
+  function runInsert(inner: string) {
+    const root = document.createElement('div')
+    root.innerHTML = inner
+    const created: any[] = []
+    const creator: any = () => {
+      const el: any = document.createElement('div')
+      el.showDefaultTab = () => {}
+      el.snapshotAndRestoreLocalEdit = () => {}
+      created.push(el)
+      return el
+    }
+    insertExamples(root, {} as any, creator, 'live-example', 'doc.md')
+    return { root, created }
+  }
+
+  test('B1: an uppercase fence stays static, keeps its content, and ordinals agree with save-to-source', () => {
+    const { root, created } = runInsert(
+      `<pre><code class="language-js">a</code></pre>` +
+        `<p>prose</p>` +
+        `<pre><code class="language-HTML">&lt;b&gt;kept&lt;/b&gt;</code></pre>` +
+        `<p>prose</p>` +
+        `<pre><code class="language-JS">static</code></pre>` +
+        `<p>prose</p>` +
+        `<pre><code class="language-js">b</code></pre>`
+    )
+    // 1.16.0 behaviour: uppercase fences are not live examples
+    expect(created.map((e) => e.js)).toEqual(['a', 'b'])
+    expect(root.querySelector('.language-HTML')?.textContent).toBe(
+      '<b>kept</b>'
+    )
+    expect(root.querySelector('.language-JS')?.textContent).toBe('static')
+    // save-to-source scans the raw markdown the same way: 2 groups, same order
+    const src =
+      '```js\na\n```\n\nprose\n\n```HTML\n<b>kept</b>\n```\n\nprose\n\n```JS\nstatic\n```\n\nprose\n\n```js\nb\n```\n'
+    expect(
+      rewriteExampleBlocks(src, 1, { js: 'B' })?.endsWith('```js\nB\n```\n')
+    ).toBe(true)
+    expect(isLiveFence('JS', undefined)).toBe(false)
+    expect(isDialectLanguage('JS')).toBe(false)
+  })
+
+  test('a fence with trailing non-JSON info behaves as in 1.16.0', () => {
+    const info = parseFenceInfo('js something else')
+    expect(info.lang).toBe('js')
+    expect(info.mode).toBeUndefined()
+    expect(info.options).toBeUndefined()
+    expect(info.optionsError).toBeUndefined()
+    expect(renderDocMarkdown('```js something\nx\n```')).not.toContain(
+      'data-example'
+    )
+  })
+})

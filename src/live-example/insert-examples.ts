@@ -1,11 +1,15 @@
 import { ElementCreator } from 'tosijs'
-import { isDialectLanguage, isLiveFence } from '../doc-system/example-policy.js'
+import {
+  isDialectLanguage,
+  isLiveFence,
+  languageOfClass,
+} from '../doc-system/example-policy.js'
 import { ExampleContext } from './types.js'
 import type { LiveExample } from './component.js'
 
 interface SourceBlock {
   block: HTMLPreElement
-  language: string | undefined
+  language: string
   code: string
   // Build-time transpiled JS from the block's baked `<script>` sibling, if any.
   compiled?: string
@@ -147,16 +151,16 @@ export function insertExamples(
     /*
     Any `language-*` block; `isLiveFence` below decides which run. This was a selector
     naming the six built-in languages — a copy of the rule that the dialect registry (#184)
-    would have made wrong the moment a site registered a seventh.
+    would have made wrong the moment a site registered a seventh. The language is read with
+    `languageOfClass`, THE class grammar, case preserved: see its note on ```` ```JS ````.
     */
     ...element.querySelectorAll('[class*="language-"]'),
   ]
     .filter((el) => !el.closest(liveExampleTagName))
     .map((code) => ({
+      code: code as HTMLElement,
       block: code.parentElement as HTMLPreElement,
-      language: code.className.match(/(?:^|\s)language-(\S+)/)?.[1],
-      code: (code as HTMLElement).innerText,
-      compiled: bakedJsForBlock(code.parentElement as HTMLPreElement),
+      language: languageOfClass(code.className),
       mode:
         (code.parentElement as HTMLElement).getAttribute('data-example-mode') ||
         undefined,
@@ -164,9 +168,13 @@ export function insertExamples(
     // THE shared rule — see doc-system/example-policy.ts. The static highlighter asks the
     // same question, and for one build the two disagreed: it tokenized the `html` fence of
     // every grouped example, and this read spans instead of markup.
-    .filter((s) =>
-      isLiveFence(s.language ?? '', s.mode, optIn ? 'opt-in' : 'auto')
-    )
+    .filter((s) => isLiveFence(s.language, s.mode, optIn ? 'opt-in' : 'auto'))
+    // Only now read the text (a layout-dependent `innerText`) and the bake, for live blocks.
+    .map(({ code, ...rest }) => ({
+      ...rest,
+      code: code.innerText,
+      compiled: bakedJsForBlock(rest.block),
+    }))
 
   // Per-doc ordinal: the Nth live example on the page. Combined with sourceFile
   // it's the key back to the originating fenced-block group in the source.
@@ -264,12 +272,14 @@ export function insertExamples(
           example.test = source.code
           break
         default:
-          if (!isDialectLanguage(source.language ?? '')) break
+          // Unreachable while the filter above asks `isLiveFence`, and kept that way: a block
+          // this switch did not consume must stay on the page, never be removed below.
+          if (!isDialectLanguage(source.language)) return
           // `js`, `tjs`, `ts` or a registered dialect: the example's one executable
           // "source" block. They land in the same editor and the dialect drives how
           // it's transpiled or run (dialects.ts).
           example.js = source.code
-          example.dialect = source.language!
+          example.dialect = source.language
           example.options = fenceOptions(source.block, example.id, sourceFile)
           // The build-time bake (tjs only today) lets refresh() run the preview
           // without loading the transpiler — see self-contained-examples-plan.md.

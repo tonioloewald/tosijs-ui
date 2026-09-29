@@ -2,6 +2,11 @@
 
 ## 1.16.1
 
+A patch: everything here is additive. Two features, a search field that suggests refinements
+and pluggable live-example dialects, and nothing that changes how existing code behaves.
+`dist/iife.js` grows by 2.9 kB gzip (469.9 → 472.8 kB), which is both features going through
+the batteries-included bundle; the ESM path pays only for what it imports.
+
 ### `<tosi-search-field>`: a search box that suggests refinements (snowfox, virta #2459)
 
 A new component in the spirit of Finder's search field. As you type, it lists **hints** from
@@ -13,12 +18,19 @@ typing. `value` is `{ tags, text }`.
   `<tosi-tag-list>`'s.
 - It fires `change` when the tags change, and `action` on Enter when no hint is highlighted.
 - It is a real combobox: focus stays in the field, ↓/↑ move through the hints, Escape closes
-  them, and Backspace in an empty field removes the last tag.
+  them, and Backspace in an empty field removes the last tag. The hints close only for a
+  scroll that moves the field itself, so a table re-filtering on every keystroke (which
+  scrolls it) doesn't close them the instant they open, and scrolling past the end of the list
+  doesn't scroll the page.
 - A clear (✕) button, shown when there's anything to clear, removes the tags and the text
   (also `clear()`).
 - **As a filter:** give each tag a `test(item)` and the field a `textTest(item, text)`, and
   `field.filter` is an array filter to hand straight to `<tosi-table>.filter`. The docs filter
-  the 3,655-row emoji table this way.
+  the 3,655-row emoji table this way. `hints` and `textTest` can be passed to the element
+  creator like any other property; `textTest` defaults to `null`, because tosijs sets a creator
+  prop as a property only when its default is not `undefined` (otherwise it was stored as an
+  attribute, a stringified function). `filter` returns the same function until the query
+  changes, so a table's filter memo holds.
 - Importing it on its own (`tosijs-ui/search-field`) costs 25.5 kB gzip: `<tosi-tag>` moved
   into its own module (still exported from `tag-list`), so it no longer pulls in the menu
   system.
@@ -37,6 +49,15 @@ A dialect either **transforms** its source to JavaScript that the example runs a
 over a built-in (`registerDialect('tjs', { transform })`) swaps in your own tjs-lang build.
 This is what tjs-lang asked for to move AJS into doc pages; see the live-example page, "Adding
 a dialect".
+
+If your dialect's name is also a syntax-highlighting grammar, call `registerLiveLanguage` from
+`tosijs-ui/site` in your site config too: the build-time highlighter never sees page
+registrations, and would otherwise tokenize the source the example reads.
+
+A replaced built-in runs everywhere: the build pre-transpiles `tjs` examples with the pinned
+tjs-lang (so readers don't load the transpiler), and that pre-transpiled code is skipped once
+the site registers its own `tjs`. Fence languages are case-sensitive, as they were in 1.16.0:
+```` ```JS ```` is plain code, not a live example.
 
 **Fence options.** Any fence can carry a JSON object after its language,
 `` ```tjs {"runTests": "report"} ``, passed to its dialect as `options`. Malformed options are

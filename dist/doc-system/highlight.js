@@ -24,7 +24,7 @@ it would deepen exactly the dependency that issue wants to escape. Prism's core 
 grammars load per language, which also covers the languages a prose or book corpus uses and
 CodeMirror does not bundle (shell, python, rust, json, yaml, diff).
 */
-import { isLiveFence } from './example-policy.js';
+import { isLiveFence, languageOfClass, } from './example-policy.js';
 /** Languages Prism has built in — no grammar file to load. */
 const BUILTIN = new Set([
     'markup',
@@ -185,17 +185,12 @@ export function loadableGrammars() {
     return Object.keys(GRAMMARS).sort();
 }
 /**
- * THE `language-*` class pattern, and the only place it is written.
- *
- * It was spelled `[A-Za-z0-9_+#-]+` four times here and `[\w-]+` once in `epub.ts`, so a
- * `c++` or `c#` fence was read as a language by one and as `c` by the other — the same block
- * classified two ways by two passes over the same document. `+` and `#` are in the class
- * deliberately: they are real language names, not stray punctuation.
+ * The fence language of a `<code class="language-…">`, lowercased, or `''` — for GRAMMAR
+ * lookups. The pattern itself is `languageOfClass` in `example-policy.ts`, the only place it
+ * is written; ask `isLiveFence` with the case-preserved `languageOfClass`, not with this.
  */
-const LANGUAGE_CLASS = /language-([A-Za-z0-9_+#-]+)/;
-/** The fence language of a `<code class="language-…">`, lowercased, or `''`. */
 export function langOfClass(className) {
-    return (String(className ?? '').match(LANGUAGE_CLASS)?.[1] ?? '').toLowerCase();
+    return languageOfClass(className).toLowerCase();
 }
 let prism;
 let warnedNoPrism = false;
@@ -449,7 +444,7 @@ export async function highlightBlocks(root, opts = {}) {
         .filter((code) => {
         const el = code;
         const mode = el.parentElement?.getAttribute('data-example-mode') ?? undefined;
-        return !isLiveFence(langOfClass(el.className), mode, policy);
+        return !isLiveFence(languageOfClass(el.className), mode, policy);
     });
     if (blocks.length === 0)
         return 0;
@@ -529,7 +524,7 @@ export async function highlightHtml(html, policy = 'auto') {
     return html.replace(/(<pre([^>]*)>)<code class="language-([A-Za-z0-9_+#-]+)">([\s\S]*?)<\/code>/g, (whole, preTag, preAttrs, lang, body) => {
         const l = lang.toLowerCase();
         const mode = preAttrs.match(/data-example-mode="([a-z]+)"/)?.[1];
-        if (isLiveFence(l, mode, policy))
+        if (isLiveFence(lang, mode, policy))
             return whole;
         if (!available.has(l))
             return whole;

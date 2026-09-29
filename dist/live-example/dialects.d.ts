@@ -56,3 +56,9 @@ export declare function dialectTransform(name: string, options?: DialectOptions)
  * else as JSON (falling back to `String()` for what JSON cannot represent).
  */
 export declare function showDialectResult(preview: HTMLElement, value: unknown): void;
+/**
+ * Put the built-ins back — for TESTS only. The registry is module state, and Bun shares
+ * module state across every test file in a process, so a test that overrides `tjs` must undo
+ * it or every later file inherits the override.
+ */
+export declare function resetBuiltInDialectsForTests(): void;

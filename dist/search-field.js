@@ -317,6 +317,8 @@ function ensureHintStyles() {
     StyleSheet('tosi-search-hints', {
         '.tosi-search-hints': {
             overflow: 'hidden auto',
+            // Scrolling past the end of the list must not scroll the page (and close the list).
+            overscrollBehavior: 'contain',
             maxHeight: `calc(${vars.maxHeight} - ${varDefault.menuInset('8px')})`,
             borderRadius: vars.spacing50,
             background: varDefault.menuBg('#fafafa'),
@@ -411,13 +413,34 @@ export class TosiSearchField extends withAttributes({
      * A new function each time the query changes, so hand it to a `<tosi-table>` as it is.
      */
     get filter() {
+        // Memoized on the query, so reading `filter` twice without a change hands a table the SAME
+        // function and its filter memo holds (#147); a changed query gives a new one.
+        const text = this.textValue.trim();
+        const memo = this.filterMemo;
+        if (memo &&
+            memo.tags === this.tagList &&
+            memo.text === text &&
+            memo.textTest === this.textTest)
+            return memo.filter;
         const tests = this.tagList
             .map((tag) => tag.test)
             .filter((test) => test !== undefined);
-        const text = this.textValue.trim();
         const textTest = text !== '' ? this.textTest : null;
-        return (items) => items.filter((item) => tests.every((test) => test(item)) &&
+        const filter = (items) => items.filter((item) => tests.every((test) => test(item)) &&
             (textTest === null || textTest(item, text)));
+        this.filterMemo = {
+            tags: this.tagList,
+            text,
+            textTest: this.textTest,
+            filter,
+        };
+        return filter;
+    }
+    filterMemo;
+    // The float can be removed without us (a resize: rotation, the iOS URL bar), so "open" is
+    // "our float is still on the page", never merely "we have a reference to one".
+    get hintsOpen() {
+        return this.float?.isConnected === true;
     }
     tagList = [];
     textValue = '';
@@ -440,7 +463,7 @@ export class TosiSearchField extends withAttributes({
         this.queueRender();
     }
     get hintCount() {
-        return this.float ? this.listed.length : 0;
+        return this.hintsOpen ? this.listed.length : 0;
     }
     typeText = (text) => {
         const field = this.parts.input;
@@ -479,7 +502,7 @@ export class TosiSearchField extends withAttributes({
             this.disabled || (this.tagList.length === 0 && this.textValue === '');
     }
     handleKeydown = (event) => {
-        const open = this.float !== undefined;
+        const open = this.hintsOpen;
         switch (event.key) {
             case 'ArrowDown':
                 if (!open)
@@ -625,7 +648,7 @@ export class TosiSearchField extends withAttributes({
     openHints() {
         ensureHintStyles();
         this.hintList.style.minWidth = `${this.offsetWidth}px`;
-        if (!this.float || !this.float.isConnected) {
+        if (!this.hintsOpen) {
             this.float = popFloat({
                 content: this.hintList,
                 target: this,
