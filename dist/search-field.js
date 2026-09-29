@@ -156,7 +156,7 @@ How many hints are currently listed (0 when the list is closed).
 /*{ "parent": "Form Components" }*/
 import { elements, vars, varDefault, StyleSheet, withAttributes, } from 'tosijs';
 import { popFloat } from './pop-float.js';
-import { tosiTag, TosiTag } from './tag-list.js';
+import { tosiTag, TosiTag } from './tag.js';
 import { tagColors } from './tag-colors.js';
 const { div, input } = elements;
 /*

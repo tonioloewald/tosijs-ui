@@ -167,7 +167,7 @@ import {
 } from 'tosijs'
 import { popFloat } from './pop-float.js'
 import type { TosiFloat } from './float.js'
-import { tosiTag, TosiTag } from './tag-list.js'
+import { tosiTag, TosiTag } from './tag.js'
 import { tagColors } from './tag-colors.js'
 
 const { div, input } = elements
