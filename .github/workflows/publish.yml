@@ -270,7 +270,10 @@ jobs:
             echo "Nothing is published yet and nothing has been verified. After approving on npmjs.com, run:"
             echo
             echo '```'
-            echo "gh workflow run publish.yml -f tag=${{ inputs.tag }} -f verify_only=true"
+            # $TAG (job env), never the inputs.tag EXPRESSION inline: an expression is pasted
+            # into the script before bash runs it (comments included), so a crafted tag would
+            # be code, not text.
+            echo "gh workflow run publish.yml -f tag=$TAG -f verify_only=true"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
