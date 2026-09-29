@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.17.0 (unreleased)
+## 1.16.1
 
 ### `<tosi-search-field>`: a search box that suggests refinements (snowfox, virta #2459)
 
@@ -14,6 +14,14 @@ typing. `value` is `{ tags, text }`.
 - It fires `change` when the tags change, and `action` on Enter when no hint is highlighted.
 - It is a real combobox: focus stays in the field, ↓/↑ move through the hints, Escape closes
   them, and Backspace in an empty field removes the last tag.
+- A clear (✕) button, shown when there's anything to clear, removes the tags and the text
+  (also `clear()`).
+- **As a filter:** give each tag a `test(item)` and the field a `textTest(item, text)`, and
+  `field.filter` is an array filter to hand straight to `<tosi-table>.filter`. The docs filter
+  the 3,655-row emoji table this way.
+- Importing it on its own (`tosijs-ui/search-field`) costs 25.5 kB gzip: `<tosi-tag>` moved
+  into its own module (still exported from `tag-list`), so it no longer pulls in the menu
+  system.
 
 ### Pluggable dialects for live examples (#184)
 

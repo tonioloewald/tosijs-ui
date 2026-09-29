@@ -49,7 +49,12 @@ describe('TosiSearchField', () => {
 
   test('rules are not called for empty or blank text, and the list closes', () => {
     let calls = 0
-    field.hints = [() => (calls += 1) && null]
+    field.hints = [
+      () => {
+        calls += 1
+        return null
+      },
+    ]
     field.typeText('   ')
     expect(calls).toBe(0)
     field.hints = [textRule]
