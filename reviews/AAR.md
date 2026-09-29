@@ -233,3 +233,27 @@ gap, recorded rather than hidden.
   was fine (approval came later; 2FA had been skipped the first time). The template now ends that
   case green with a "run verify_only" summary. A near miss: uncommitted work stashed across a
   build of generated files; recovered, and committed before comparisons since.
+
+## 1.16.1 (2026-09-29) — two features as a patch, one BLOCK and a scoped re-review
+
+- **The gate caught two regressions in code written that day.** The pre-tag review (pre-minor
+  tier, run on a patch because the skill says patches aren't exempt) found an uppercase fence
+  becoming live, losing its content and shifting save-to-source ordinals, and a registered `tjs`
+  override bypassed by the build-time bake on deployed sites. Both came from a SECOND copy of a
+  rule (the `language-*` class grammar, case handling), four days after 1.15's lesson on exactly
+  that; the class fix single-sourced it as `languageOfClass`. The scoped re-review (remediation
+  diff only) returned GO_WITH_FOLLOWUPS with two CHANGELOG overclaims.
+- **The doc tests caught what unit tests couldn't, twice.** The new emoji-table example exposed
+  `textTest` being stored as an attribute (tosijs sets creator props as properties only over a
+  non-`undefined` default); the unit tests assigned the property directly and passed. And the
+  maintainer, using the example over the tunnel, found the hints closing instantly after a clear:
+  every document scroll removes a float. Filed on tosijs's board; recorded in CLAUDE.md.
+- **Missed until review:** `tsconfig.tests.json` isn't in my usual typecheck (release-doctor
+  caught a type error in a new test file), and the iife delta (+2.9 kB gzip) went unrecorded for
+  the second release running (board #2445).
+- **My own slip:** a comment warning against `${{ inputs.tag }}` in a `run:` block contained the
+  expression itself, which Actions substitutes inside comments too. Caught on re-read before
+  anything ran; fixed in the practices template.
+- **Process:** version by narrative, not letter — the maintainer chose a patch for additive work,
+  which CLAUDE.md's rule permits for the dialect registry and strains for a new component. Lane
+  times at load ~20: unit 12s, Playwright 1.6m, consumer and haltija a few minutes each.
