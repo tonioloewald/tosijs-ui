@@ -1,5 +1,6 @@
 import { elements } from 'tosijs';
 import { describeError, diagnoseConstruction, EXAMPLE_SOURCE_URL, } from './error-location.js';
+import { declaresConsole } from './example-console.js';
 import { rewriteImports, AsyncFunction, contextParamNames, } from './code-transform.js';
 /*
 Source of the example currently being run, so `describeError` can lift the offending line out
@@ -112,7 +113,10 @@ export async function executeInline(options) {
         const { code: finalCode, extraContext } = await withScopeCapture(transformedCode, onScope);
         const fullContext = {
             preview,
-            ...(exampleConsole ? { console: exampleConsole } : {}),
+            // not when the example declares its own `console` (see declaresConsole)
+            ...(exampleConsole && !declaresConsole(finalCode)
+                ? { console: exampleConsole }
+                : {}),
             ...context,
             ...extraContext,
         };
@@ -222,7 +226,10 @@ export async function executeInIframe(options) {
         // Execute JS in iframe context
         const fullContext = {
             preview,
-            ...(exampleConsole ? { console: exampleConsole } : {}),
+            // not when the example declares its own `console` (see declaresConsole)
+            ...(exampleConsole && !declaresConsole(finalCode)
+                ? { console: exampleConsole }
+                : {}),
             ...context,
             ...extraContext,
         };

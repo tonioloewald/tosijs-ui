@@ -37,8 +37,13 @@ a `tjs` example that logs its results showed a reader an empty box.
   it**; examples that don't look exactly as before.
 - A re-run starts a clean console, and a late log from the previous run (a timer it left
   behind) is not shown. The panel keeps 500 lines and counts the rest.
-- Turn it off for one example with the fence option `{"console": false}`, or for a page with
-  `setExampleConsole(false)` from `tosijs-ui/live-example`.
+- **To turn it off:** `exampleConsole: false` in a `tosijs-ui/site` config (site-wide, no
+  code needed), the fence option `{"console": false}` for one example, or
+  `setExampleConsole(false)` from `tosijs-ui/live-example` in your own bundle.
+- An example that declares its own top-level `console` (`const console = …`) keeps it and
+  isn't captured, rather than failing to run.
+- Values print readably: strings as written, data as JSON (Maps and Sets included), errors as
+  `Name: message`, also for errors and elements from an `:iframe` example.
 - A `run` dialect receives the same console as `context.console`, so a VM can forward its
   output to the panel.
 

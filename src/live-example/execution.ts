@@ -5,6 +5,7 @@ import {
   EXAMPLE_SOURCE_URL,
 } from './error-location.js'
 import { ExampleContext, TransformFn } from './types.js'
+import { declaresConsole } from './example-console.js'
 import {
   rewriteImports,
   AsyncFunction,
@@ -190,7 +191,10 @@ export async function executeInline(
     )
     const fullContext = {
       preview,
-      ...(exampleConsole ? { console: exampleConsole } : {}),
+      // not when the example declares its own `console` (see declaresConsole)
+      ...(exampleConsole && !declaresConsole(finalCode)
+        ? { console: exampleConsole }
+        : {}),
       ...context,
       ...extraContext,
     }
@@ -348,7 +352,10 @@ export async function executeInIframe(
     // Execute JS in iframe context
     const fullContext = {
       preview,
-      ...(exampleConsole ? { console: exampleConsole } : {}),
+      // not when the example declares its own `console` (see declaresConsole)
+      ...(exampleConsole && !declaresConsole(finalCode)
+        ? { console: exampleConsole }
+        : {}),
       ...context,
       ...extraContext,
     }

@@ -1207,6 +1207,10 @@ export async function buildSite(config, opts = {}) {
             const policyHead = config.liveExamples === 'opt-in'
                 ? `<script>globalThis.__TOSI_EXAMPLE_POLICY="opt-in"</script>`
                 : '';
+            // Likewise only when switched off, so a default site's HTML does not change.
+            const consoleHead = config.exampleConsole === false
+                ? `<script>globalThis.__TOSI_EXAMPLE_CONSOLE=false</script>`
+                : '';
             // Optional (tjs-lang 0.11+): the import-resolver service worker. Lets live examples
             // import real npm packages from anywhere — bare specifiers the doc-system doesn't
             // inject become `/<prefix>/<spec>` requests the worker resolves + caches. GATED behind
@@ -1419,7 +1423,13 @@ export async function buildSite(config, opts = {}) {
                 // instead of the classic IIFE. See the ESM hydration bundle above.
                 hydrateUrl: hydrateName ? `/${hydrateName}` : undefined,
                 bakes: exampleBakes,
-                headExtra: [config.headExtra, tjsHead, policyHead, importResolverHead]
+                headExtra: [
+                    config.headExtra,
+                    tjsHead,
+                    policyHead,
+                    consoleHead,
+                    importResolverHead,
+                ]
                     .filter(Boolean)
                     .join('') || undefined,
                 scriptUrl: config.scriptUrl,

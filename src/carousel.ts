@@ -73,12 +73,9 @@ This is a minimalist carousel component that supports the usual stuff.
 
 import { ElementCreator, elements, vars, withAttributes } from 'tosijs'
 import { icons } from './icons.js'
+import { prefersReducedMotion } from './reduced-motion.js'
 
 const { button, slot, div } = elements
-
-const prefersReducedMotion = (): boolean =>
-  typeof matchMedia === 'function' &&
-  matchMedia('(prefers-reduced-motion: reduce)').matches
 
 interface CarouselParts {
   [key: string]: HTMLElement
@@ -114,6 +111,7 @@ export class TosiCarousel extends withAttributes({
   }
 
   private autoAdvance = () => {
+    if (this.auto <= 0) return
     if (this.autoPaused) {
       this.lastAutoAdvance = Date.now()
       return

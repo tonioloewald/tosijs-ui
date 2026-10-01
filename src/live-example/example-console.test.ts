@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test'
+import vm from 'node:vm'
 import {
   createExampleConsole,
+  declaresConsole,
   formatConsoleArgs,
   formatConsoleValue,
   type ConsoleEntry,
@@ -45,6 +47,36 @@ describe('formatting', () => {
     expect(formatConsoleValue(a)).toContain('[Circular]')
   })
 
+  test('a value logged twice is NOT circular (only a real cycle is)', () => {
+    const shared = { n: 1 }
+    const out = formatConsoleValue({ a: shared, b: shared, list: [shared] })
+    expect(out).not.toContain('Circular')
+    expect(JSON.parse(out)).toEqual({
+      a: { n: 1 },
+      b: { n: 1 },
+      list: [{ n: 1 }],
+    })
+  })
+
+  test('Maps and Sets are readable, not {}', () => {
+    expect(JSON.parse(formatConsoleValue(new Map([['k', 1]])))).toEqual({
+      Map: { k: 1 },
+    })
+    expect(JSON.parse(formatConsoleValue(new Map([[1, 'one']])))).toEqual({
+      Map: [[1, 'one']],
+    })
+    expect(JSON.parse(formatConsoleValue(new Set([1, 2])))).toEqual({
+      Set: [1, 2],
+    })
+  })
+
+  test("an Error from another realm (an iframe example's) prints as an error, not {}", () => {
+    const foreign = vm.runInNewContext("new RangeError('far away')")
+    expect(foreign instanceof Error).toBe(false) // the trap
+    expect(formatConsoleValue(foreign)).toBe('RangeError: far away')
+    expect(formatConsoleValue({ e: foreign })).toContain('RangeError: far away')
+  })
+
   test('arguments are joined with spaces', () => {
     expect(formatConsoleArgs(['count', 2, true])).toBe('count 2 true')
   })
@@ -60,7 +92,9 @@ describe('createExampleConsole', () => {
     c.error('bad')
     c.dir({ b: 2 })
     expect(entries.map((e) => e.level)).toEqual(['log', 'warn', 'error', 'log'])
-    expect(entries[0].text).toBe('hi {\n  "a": 1\n}')
+    // entries carry the values; formatting waits until the panel keeps the line
+    expect(entries[0].args).toEqual(['hi', { a: 1 }])
+    expect(formatConsoleArgs(entries[0].args)).toBe('hi {\n  "a": 1\n}')
     expect(calls.map(([m]) => m)).toEqual(['log', 'warn', 'error', 'dir'])
     expect(calls[0][1]).toEqual(['hi', { a: 1 }])
   })
@@ -73,5 +107,19 @@ describe('createExampleConsole', () => {
     c.group('g')
     expect(entries.length).toBe(0)
     expect(calls.map(([m]) => m)).toEqual(['time', 'group'])
+  })
+})
+
+describe('declaresConsole', () => {
+  test('a top-level const/let/class/function console is a declaration', () => {
+    expect(declaresConsole('const console = makeLogger()')).toBe(true)
+    expect(declaresConsole('x()\nlet console = 1')).toBe(true)
+    expect(declaresConsole('function console() {}')).toBe(true)
+  })
+  test('using console, or var (which a parameter allows), is not', () => {
+    expect(declaresConsole("console.log('hi')")).toBe(false)
+    expect(declaresConsole('var console = 1')).toBe(false)
+    expect(declaresConsole('const consoleOutput = 1')).toBe(false)
+    expect(declaresConsole('obj.const console')).toBe(false)
   })
 })

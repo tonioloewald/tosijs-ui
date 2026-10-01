@@ -942,6 +942,13 @@ never breaks you.** Additive-only means additive-only — a new property, a new 
 export. The moment a change removes, renames, or alters existing behaviour it is a minor
 (or a major), regardless of how small it looks.
 
+**Ruled for 1.16.2 (the maintainer's call):** a new default that adds UI only where there was
+none, and can be switched off, counts as additive. The example console appears only under an
+example that logs, and `exampleConsole: false` / `{"console": false}` turn it off, so it shipped
+in a patch. The carousel's tappable dots, auto-pause and resize re-seat fixed defects (#204), so
+they are fixes, not behaviour changes. The test: does any adopter have to change anything to
+keep what they had? If the answer is "only to turn off something new", it is a patch.
+
 So a big in-progress feature still ships as `1.x.0-beta.N`, not as a patch pretending to be
 small. Cut betas freely — but a
 prerelease published under a dist-tag is something consumers _install_, so the gate is

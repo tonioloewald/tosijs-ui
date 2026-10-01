@@ -104,3 +104,49 @@ test('a logging loop is capped, with a count of what was dropped', async () => {
     example.remove()
   })
 })
+
+test('an example that declares its own console still runs (it keeps the real console)', async () => {
+  await quietly(async () => {
+    const example = await mount(
+      `const console = { log: (x) => (preview.textContent = 'own ' + x) }\nconsole.log(1)`
+    )
+    let failed: unknown
+    example.addEventListener('error', (e: unknown) => (failed = e))
+    await example.refresh()
+    expect(example.querySelector('.preview-error')).toBe(null)
+    expect(example.querySelector('.preview').textContent).toBe('own 1')
+    expect(lines(example)).toEqual([])
+    expect(failed).toBeUndefined()
+    example.remove()
+  })
+})
+
+test('logged markup is shown as text, never parsed', async () => {
+  await quietly(async () => {
+    const example = await mount(
+      `console.log('<img src=x onerror="window.__pwned = true">')`
+    )
+    await example.refresh()
+    const panel = example.querySelector('[part="console"]')
+    expect(panel.querySelector('img')).toBe(null)
+    expect(lines(example)).toEqual([
+      ['log', '<img src=x onerror="window.__pwned = true">'],
+    ])
+    expect((window as any).__pwned).toBeUndefined()
+    example.remove()
+  })
+})
+
+test('a site built with exampleConsole: false (the build stamps a global) shows no console', async () => {
+  await quietly(async () => {
+    ;(globalThis as any).__TOSI_EXAMPLE_CONSOLE = false // what the site build emits
+    try {
+      const example = await mount(`console.log('x')`)
+      await example.refresh()
+      expect(lines(example)).toEqual([])
+      example.remove()
+    } finally {
+      delete (globalThis as any).__TOSI_EXAMPLE_CONSOLE
+    }
+  })
+})

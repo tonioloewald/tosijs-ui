@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 import { tosiCarousel, TosiCarousel } from './carousel.js'
+import { resetReducedMotionForTests } from './reduced-motion.js'
 
 const realMatchMedia = globalThis.matchMedia
 
 afterEach(() => {
   globalThis.matchMedia = realMatchMedia
+  resetReducedMotionForTests()
   document.body.textContent = ''
 })
 
@@ -48,6 +50,7 @@ describe('auto-advance holds still while someone is looking (#204)', () => {
       matches: query.includes('reduce'),
       media: query,
     })) as any
+    resetReducedMotionForTests() // the query is cached; ask the stub
     expect(carousel.autoPaused).toBe(true)
   })
 

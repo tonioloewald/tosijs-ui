@@ -576,7 +576,8 @@ import { icons } from '../icons.js';
 import { tosiPocketBar } from '../pocket-bar.js';
 import { postNotification } from '../notifications.js';
 import { popMenu } from '../menu.js';
-import { createExampleConsole, exampleConsoleEnabled, } from './example-console.js';
+import { prefersReducedMotion } from '../reduced-motion.js';
+import { createExampleConsole, exampleConsoleEnabled, formatConsoleArgs, } from './example-console.js';
 import { dialectTransform, getDialect, isBuiltInDialect, showDialectResult, } from './dialects.js';
 import { loadTransform, loadTjsTestApi, rewriteImports, contextVarName, contextParamNames, AsyncFunction, } from './code-transform.js';
 import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } from './remote-sync.js';
@@ -587,8 +588,6 @@ import { exampleEditKey, saveExampleEdit, loadExampleEdit, clearExampleEdit, has
 import { liveExampleStyleSpec } from './styles.js';
 import { runTests } from './test-harness.js';
 const { div, tosiSlot, style, button, pre, span, label, input } = elements;
-const prefersReducedMotion = () => typeof matchMedia === 'function' &&
-    matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Test mode: controlled by localStorage, defaults to enabled on localhost
 const TESTS_ENABLED_KEY = 'tosijs-ui-tests-enabled';
 const isLocalhost = typeof window !== 'undefined' &&
@@ -835,8 +834,11 @@ export class LiveExample extends withAttributes({
         this.consoleDropped = undefined;
         this.classList.remove('-has-console');
     }
+    consoleScrollQueued = false;
     appendConsoleLine(entry) {
         const panel = this.parts.console;
+        // Past the cap only the count changes: nothing is formatted (formatting is lazy, so a
+        // logging loop costs no JSON.stringify per dropped line).
         if (this.consoleLines >= LiveExample.CONSOLE_LINES) {
             const dropped = Number(this.consoleDropped?.dataset.count ?? 0) + 1;
             if (!this.consoleDropped) {
@@ -848,10 +850,19 @@ export class LiveExample extends withAttributes({
             return;
         }
         this.consoleLines += 1;
-        panel.append(div({ class: `console-line console-${entry.level}` }, entry.text));
+        // A text node, never markup: logged `<img onerror=…>` is shown, not run.
+        panel.append(div({ class: `console-line console-${entry.level}` }, formatConsoleArgs(entry.args)));
         panel.hidden = false;
         this.classList.add('-has-console');
-        panel.scrollTop = panel.scrollHeight;
+        // Scroll to the newest line once per burst, not once per line (each read of scrollHeight
+        // forces a layout).
+        if (!this.consoleScrollQueued) {
+            this.consoleScrollQueued = true;
+            queueMicrotask(() => {
+                this.consoleScrollQueued = false;
+                panel.scrollTop = panel.scrollHeight;
+            });
+        }
     }
     // Build-time transpiled JS for the source block, set by insert-examples from the
     // page's baked `<script type="application/tosi-transpiled">` (see

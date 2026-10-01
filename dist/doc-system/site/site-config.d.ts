@@ -129,6 +129,13 @@ export interface SiteConfig {
      * Per-fence, ` ```js:static ` opts a single block out under either policy.
      */
     liveExamples?: 'auto' | 'opt-in';
+    /**
+     * Show what a live example logs in a console under its preview (default `true`, 1.16.2).
+     * The panel appears only once an example logs something. `false` turns it off site-wide;
+     * logs still reach the browser's devtools. One example opts out with the fence option
+     * `{"console": false}`.
+     */
+    exampleConsole?: boolean;
     /** modules to leave external in the bundle, e.g. ['jolt-physics'] */
     bundleExternals?: string[];
     /**

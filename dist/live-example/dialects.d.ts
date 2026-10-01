@@ -13,8 +13,10 @@ export interface DialectRunContext {
     /**
      * The example's console: what you log here appears under the preview (and in devtools).
      * Forward a VM's own output to it to show it the same way a `js` example's logs are shown.
+     * live-example always supplies it; it is optional only so a context built by hand (in a
+     * dialect's own tests) need not, as it could not before 1.16.2.
      */
-    console: Console;
+    console?: Console;
     /** Show a value as the example's result, below its preview. */
     report(result: unknown): void;
 }

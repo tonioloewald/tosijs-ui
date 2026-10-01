@@ -342,6 +342,7 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     private consoleDropped?;
     private consoleForRun;
     private clearConsole;
+    private consoleScrollQueued;
     private appendConsoleLine;
     compiledJs?: string;
     compiledJsSource?: string;
