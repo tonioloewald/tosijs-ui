@@ -17,13 +17,6 @@ export declare function formatConsoleArgs(args: unknown[]): string;
  */
 export declare function createExampleConsole(onEntry: (entry: ConsoleEntry) => void, target?: Console): Console;
 /**
- * Does this code declare its own top-level `console`? Then the example console is not
- * injected: it is passed as a parameter, and a parameter cannot be redeclared with `const`,
- * `let`, `class` or `function` — the example would throw a SyntaxError that ran fine before
- * 1.16.2. Such an example keeps the real console. (`var console` is legal and still gets it.)
- */
-export declare function declaresConsole(code: string): boolean;
-/**
  * Turn the example console off (or back on) for every example on the page. Logs still reach
  * devtools either way. A single example opts out with the fence option `{"console": false}`;
  * a whole `tosijs-ui/site` site with `exampleConsole: false` in its config.

@@ -121,6 +121,30 @@ test('an example that declares its own console still runs (it keeps the real con
   })
 })
 
+test('a nested or destructured console, or one in a comment, is handled by the engine, not guessed', async () => {
+  await quietly(async () => {
+    // a nested declaration is legal with the parameter: the example console still captures
+    const nested = await mount(
+      `// let console = 'a comment'\nfunction f() { const console = 1; return console }\nconsole.log(f())`
+    )
+    await nested.refresh()
+    expect(lines(nested)).toEqual([['log', '1']])
+    nested.remove()
+
+    // these redeclare the parameter: the example keeps its own and still runs
+    for (const code of [
+      `let a = 1, console = { log() {} }\npreview.textContent = 'ran'`,
+      `const { console } = { console: { log() {} } }\npreview.textContent = 'ran'`,
+    ]) {
+      const example = await mount(code)
+      await example.refresh()
+      expect(example.querySelector('.preview-error')).toBe(null)
+      expect(example.querySelector('.preview').textContent).toBe('ran')
+      example.remove()
+    }
+  })
+})
+
 test('logged markup is shown as text, never parsed', async () => {
   await quietly(async () => {
     const example = await mount(

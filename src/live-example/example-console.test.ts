@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test'
 import vm from 'node:vm'
 import {
   createExampleConsole,
-  declaresConsole,
   formatConsoleArgs,
   formatConsoleValue,
   type ConsoleEntry,
@@ -58,6 +57,25 @@ describe('formatting', () => {
     })
   })
 
+  test('a cycle THROUGH a Map or Set is still a cycle, not a crash', () => {
+    const node: any = { name: 'root', children: new Map() }
+    node.children.set('self', node)
+    const out = formatConsoleValue(node)
+    expect(JSON.parse(out)).toEqual({
+      name: 'root',
+      children: { Map: { self: '[Circular]' } },
+    })
+    const set: any = new Set()
+    set.add(set)
+    expect(JSON.parse(formatConsoleValue(set))).toEqual({ Set: ['[Circular]'] })
+  })
+
+  test('a Date prints as JSON would print it', () => {
+    expect(formatConsoleValue({ at: new Date(0) })).toContain(
+      '1970-01-01T00:00:00.000Z'
+    )
+  })
+
   test('Maps and Sets are readable, not {}', () => {
     expect(JSON.parse(formatConsoleValue(new Map([['k', 1]])))).toEqual({
       Map: { k: 1 },
@@ -107,19 +125,5 @@ describe('createExampleConsole', () => {
     c.group('g')
     expect(entries.length).toBe(0)
     expect(calls.map(([m]) => m)).toEqual(['time', 'group'])
-  })
-})
-
-describe('declaresConsole', () => {
-  test('a top-level const/let/class/function console is a declaration', () => {
-    expect(declaresConsole('const console = makeLogger()')).toBe(true)
-    expect(declaresConsole('x()\nlet console = 1')).toBe(true)
-    expect(declaresConsole('function console() {}')).toBe(true)
-  })
-  test('using console, or var (which a parameter allows), is not', () => {
-    expect(declaresConsole("console.log('hi')")).toBe(false)
-    expect(declaresConsole('var console = 1')).toBe(false)
-    expect(declaresConsole('const consoleOutput = 1')).toBe(false)
-    expect(declaresConsole('obj.const console')).toBe(false)
   })
 })

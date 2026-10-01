@@ -49,44 +49,57 @@ export function formatConsoleValue(value) {
     }
     if (value === null || typeof value !== 'object')
         return String(value);
-    /*
-    `[Circular]` only for a real cycle: an object that is its own ANCESTOR on the current path.
-    A set of everything already printed marked any value logged twice (`{ a: x, b: x }`) as
-    circular when nothing was. JSON.stringify calls the replacer with the holder as `this`, so
-    trimming the path back to the holder keeps it exactly the current ancestry.
-    */
-    const path = [];
     try {
-        return (JSON.stringify(value, function (_key, item) {
-            while (path.length > 0 && path[path.length - 1] !== this)
-                path.pop();
-            if (typeof item === 'bigint')
-                return `${item}n`;
-            if (typeof item === 'function')
-                return `ƒ ${item.name || 'anonymous'}()`;
-            if (item === null || typeof item !== 'object')
-                return item;
-            if (path.includes(item))
-                return '[Circular]';
-            if (isErrorLike(item))
-                return `${item.name}: ${item.message}`;
-            if (isElementLike(item))
-                return formatConsoleValue(item);
-            path.push(item);
-            if (tagOf(item) === '[object Map]') {
-                const entries = [...item];
-                return entries.every(([k]) => typeof k === 'string')
-                    ? { Map: Object.fromEntries(entries) }
-                    : { Map: entries };
-            }
-            if (tagOf(item) === '[object Set]')
-                return { Set: [...item] };
-            return item;
-        }, 2) ?? String(value));
+        return JSON.stringify(toPlain(value, []), null, 2) ?? String(value);
     }
     catch {
         return String(value);
     }
+}
+/*
+The value as plain data, built recursively with its ANCESTORS in hand, then stringified. A
+JSON.stringify replacer can't do this reliably: it re-enters with every new object it is
+handed (a Map's `{ Map: … }` wrapper, say) as `this`, so ancestry kept by "trim to the holder"
+was lost at the first wrapper and a cycle through a Map threw (1.16.2 re-review).
+
+`[Circular]` only for a real cycle, an object that is its own ancestor: a value logged twice
+(`{ a: x, b: x }`) is not one.
+*/
+function toPlain(value, ancestors) {
+    if (typeof value === 'bigint')
+        return `${value}n`;
+    if (typeof value === 'function')
+        return `ƒ ${value.name || 'anonymous'}()`;
+    if (value === null || typeof value !== 'object')
+        return value;
+    if (ancestors.includes(value))
+        return '[Circular]';
+    if (isErrorLike(value))
+        return `${value.name}: ${value.message}`;
+    if (isElementLike(value))
+        return formatConsoleValue(value);
+    const inner = [...ancestors, value];
+    if (tagOf(value) === '[object Map]') {
+        const entries = [...value].map(([key, item]) => [toPlain(key, inner), toPlain(item, inner)]);
+        return entries.every(([key]) => typeof key === 'string')
+            ? { Map: Object.fromEntries(entries) }
+            : { Map: entries };
+    }
+    if (tagOf(value) === '[object Set]')
+        return {
+            Set: [...value].map((item) => toPlain(item, inner)),
+        };
+    if (Array.isArray(value))
+        return value.map((item) => toPlain(item, inner));
+    // what JSON.stringify would have used: a Date prints as its ISO string
+    const toJSON = value.toJSON;
+    if (typeof toJSON === 'function')
+        return toPlain(toJSON.call(value), inner);
+    const out = {};
+    for (const key of Object.keys(value)) {
+        out[key] = toPlain(value[key], inner);
+    }
+    return out;
 }
 export function formatConsoleArgs(args) {
     return args.map(formatConsoleValue).join(' ');
@@ -110,15 +123,6 @@ export function createExampleConsole(onEntry, target = globalThis.console) {
             };
         },
     });
-}
-/**
- * Does this code declare its own top-level `console`? Then the example console is not
- * injected: it is passed as a parameter, and a parameter cannot be redeclared with `const`,
- * `let`, `class` or `function` — the example would throw a SyntaxError that ran fine before
- * 1.16.2. Such an example keeps the real console. (`var console` is legal and still gets it.)
- */
-export function declaresConsole(code) {
-    return /(?:^|[^\w$.])(?:const|let|class|function)\s+console\b/.test(code);
 }
 /**
  * Turn the example console off (or back on) for every example on the page. Logs still reach

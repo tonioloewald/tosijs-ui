@@ -1,6 +1,5 @@
 import { elements } from 'tosijs';
 import { describeError, diagnoseConstruction, EXAMPLE_SOURCE_URL, } from './error-location.js';
-import { declaresConsole } from './example-console.js';
 import { rewriteImports, AsyncFunction, contextParamNames, } from './code-transform.js';
 /*
 Source of the example currently being run, so `describeError` can lift the offending line out
@@ -91,6 +90,34 @@ export async function withScopeCapture(transformedCode, onScope) {
     };
 }
 /**
+ * Build the example's function from its context, as parameters.
+ *
+ * The example console is one of those parameters, and a parameter cannot be redeclared:
+ * an example with its own top-level `const console = …` (or `let a, console`, or
+ * `const { console } = …`) is a SyntaxError with it, and ran fine before 1.16.2. So when
+ * construction fails and `console` was injected, build again without it — the example keeps
+ * its own console, and anything else that is really wrong fails the second build too and is
+ * reported as before. The ENGINE decides what is a declaration; a regex got nested functions,
+ * comments and destructuring wrong (1.16.2 re-review).
+ */
+function buildExample(
+// the AsyncFunction constructor, of this realm or an iframe's (typed `Function` either way)
+Ctor, context, body) {
+    const build = (ctx) => ({
+        func: new Ctor(...contextParamNames(Object.keys(ctx)), body),
+        values: Object.values(ctx),
+    });
+    try {
+        return build(context);
+    }
+    catch (err) {
+        if (!('console' in context) || err?.name !== 'SyntaxError')
+            throw err;
+        const { console: _injected, ...withoutConsole } = context;
+        return build(withoutConsole);
+    }
+}
+/**
  * Execute code inline (directly in the page)
  */
 export async function executeInline(options) {
@@ -113,15 +140,10 @@ export async function executeInline(options) {
         const { code: finalCode, extraContext } = await withScopeCapture(transformedCode, onScope);
         const fullContext = {
             preview,
-            // not when the example declares its own `console` (see declaresConsole)
-            ...(exampleConsole && !declaresConsole(finalCode)
-                ? { console: exampleConsole }
-                : {}),
+            ...(exampleConsole ? { console: exampleConsole } : {}),
             ...context,
             ...extraContext,
         };
-        const contextKeys = contextParamNames(Object.keys(fullContext));
-        const contextValues = Object.values(fullContext);
         /*
         Tag the body so a thrown error's stack names the EXAMPLE rather than the bundle it is
         running inside. The doc-test path has always done this; the example path never did, which
@@ -130,10 +152,9 @@ export async function executeInline(options) {
         */
         const taggedCode = `${finalCode}\n//# sourceURL=${EXAMPLE_SOURCE_URL}`;
         exampleSource = finalCode;
-        let func;
+        let built;
         try {
-            // @ts-expect-error AsyncFunction constructor typing
-            func = new AsyncFunction(...contextKeys, taggedCode);
+            built = buildExample(AsyncFunction, fullContext, taggedCode);
         }
         catch (err) {
             /*
@@ -144,11 +165,11 @@ export async function executeInline(options) {
             is how a construction failure becomes "one synthetic test failure with a message nobody
             can grep for" — the shape reported in tosijs-ui#109.
             */
-            throw new Error(diagnoseConstruction(err, contextKeys, taggedCode, 
+            throw new Error(diagnoseConstruction(err, contextParamNames(Object.keys(fullContext)), taggedCode, 
             // @ts-expect-error AsyncFunction constructor typing
             (...args) => new AsyncFunction(...args)), { cause: err });
         }
-        await func(...contextValues);
+        await built.func(...built.values);
     }
     catch (e) {
         console.error(e);
@@ -226,19 +247,14 @@ export async function executeInIframe(options) {
         // Execute JS in iframe context
         const fullContext = {
             preview,
-            // not when the example declares its own `console` (see declaresConsole)
-            ...(exampleConsole && !declaresConsole(finalCode)
-                ? { console: exampleConsole }
-                : {}),
+            ...(exampleConsole ? { console: exampleConsole } : {}),
             ...context,
             ...extraContext,
         };
         // Create AsyncFunction in iframe's context
         const IframeAsyncFunction = iframeWindow.eval('(async () => {}).constructor');
-        const contextKeys = contextParamNames(Object.keys(fullContext));
-        const contextValues = Object.values(fullContext);
-        const func = new IframeAsyncFunction(...contextKeys, finalCode);
-        await func(...contextValues);
+        const built = buildExample(IframeAsyncFunction, fullContext, finalCode);
+        await built.func(...built.values);
     }
     catch (e) {
         console.error(e);
