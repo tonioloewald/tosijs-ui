@@ -7,6 +7,7 @@ import {
 } from '../doc-system/example-policy.js'
 import { renderDocMarkdown } from '../doc-system/render.js'
 import {
+  dialectDocs,
   dialectTransform,
   getDialect,
   registerDialect,
@@ -310,5 +311,23 @@ describe('SiteConfig.dialects on the page (#2463)', () => {
       delete (globalThis as any).__TOSI_DIALECTS
       error.mockRestore()
     }
+  })
+})
+
+describe('the Docs tab source (#184 part 3)', () => {
+  test("a dialect's docs hook supplies the markdown, with the fence options", async () => {
+    registerDialect('documented', {
+      run: () => undefined,
+      docs: (source, options) => `## ${source}\n\nfuel: ${options.fuel}`,
+    })
+    expect(await dialectDocs('documented', 'agent', { fuel: 10 })).toBe(
+      '## agent\n\nfuel: 10'
+    )
+  })
+
+  test('no hook, no docs: plain js, an unknown dialect, and a dialect without one', async () => {
+    expect(await dialectDocs('js', 'x')).toBe('')
+    expect(await dialectDocs('nosuch', 'x')).toBe('')
+    expect(await dialectDocs('shout', 'x')).toBe('')
   })
 })

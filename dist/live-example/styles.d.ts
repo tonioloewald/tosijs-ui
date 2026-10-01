@@ -251,6 +251,10 @@ export declare const liveExampleStyleSpec: {
     ':host .test-fail': {
         color: string;
     };
+    ':host .example-docs': {
+        padding: string;
+        overflow: string;
+    };
     ':host .tjs-test-results': {
         padding: string;
         fontSize: string;

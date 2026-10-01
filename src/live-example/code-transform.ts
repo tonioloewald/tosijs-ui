@@ -368,6 +368,46 @@ async function loadTjs(): Promise<TjsFn | null> {
 }
 
 /**
+ * Generated documentation for a `tjs` source (#184 part 3): tjs-lang's
+ * `generateDocsMarkdown(source, tjs(source).types)`, where the signature IS the docs.
+ *
+ * FEATURE-DETECTED: tjs-lang's browser bundle doesn't export the generator yet (0.13.13,
+ * 0.14.0-rc.1; asked upstream), so this resolves to null until it does, and the built-in `tjs`
+ * shows no Docs tab. A site with the full tjs-lang can supply docs itself through
+ * `registerDialect('tjs', { transform, docs })` today.
+ */
+export type DocsFn = (source: string) => string
+
+let tjsDocsOnce: Promise<DocsFn | null> | undefined
+export function loadTjsDocs(): Promise<DocsFn | null> {
+  return (tjsDocsOnce ??= (async () => {
+    const sources: Array<() => Promise<any>> = [
+      () => import('tjs-lang/browser'),
+      () => importFirstAvailable(bundleUrls('tjs-browser.js')),
+    ]
+    for (const load of sources) {
+      try {
+        const m = await load()
+        if (
+          m &&
+          typeof m.generateDocsMarkdown === 'function' &&
+          typeof m.tjs === 'function'
+        ) {
+          return (source: string) =>
+            m.generateDocsMarkdown(
+              source,
+              m.tjs(source, { dialect: 'tjs', runTests: false }).types
+            ) as string
+        }
+      } catch {
+        // try the next source
+      }
+    }
+    return null
+  })())
+}
+
+/**
  * tjs inline-test API (from tjs-lang/lang):
  *   extractTests(src) → { code (test-stripped), tests, testRunner }
  *   testUtils — a string defining `expect`/`assert` etc. for the runner

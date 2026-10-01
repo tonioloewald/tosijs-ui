@@ -13,7 +13,7 @@ never depends on what a `run` dialect uses: the site's registration closes over 
 
 import { elements } from 'tosijs'
 import { registerLiveLanguage } from '../doc-system/example-policy.js'
-import { loadTransform } from './code-transform.js'
+import { loadTjsDocs, loadTransform } from './code-transform.js'
 import type { Dialect, ExampleContext, TransformFn } from './types.js'
 
 /** Per-example options, from the JSON after the fence language: ```tjs {"debug": true} */
@@ -57,6 +57,15 @@ export interface DialectSpec {
    * result. Throwing fails the example, exactly as a throwing `js` block does.
    */
   run?: (source: string, context: DialectRunContext) => unknown
+  /**
+   * Documentation for the source, as markdown, shown in the example's **Docs** tab (#184).
+   * Called only when someone opens the code panel (and again as they edit), never on the
+   * reader's path. Return '' (or nothing) for no tab. Works for `transform` and `run` dialects.
+   */
+  docs?: (
+    source: string,
+    options: DialectOptions
+  ) => string | undefined | Promise<string | undefined>
 }
 
 // Empty specs: the built-ins' behaviour lives in `loadTransform`, and the tab label and editor
@@ -140,4 +149,22 @@ export function showDialectResult(preview: HTMLElement, value: unknown): void {
  */
 export function resetBuiltInDialectsForTests(): void {
   for (const [name, spec] of Object.entries(BUILT_IN)) registry.set(name, spec)
+}
+
+/**
+ * The Docs-tab markdown for a source in `name`: the dialect's own `docs`, or for the built-in
+ * `tjs`, tjs-lang's generated docs when its browser bundle provides them. '' for none.
+ */
+export async function dialectDocs(
+  name: string,
+  source: string,
+  options: DialectOptions = {}
+): Promise<string> {
+  const spec = getDialect(name)
+  if (spec?.docs) return (await spec.docs(source, options)) ?? ''
+  if (name === 'tjs' && isBuiltInDialect('tjs')) {
+    const generate = await loadTjsDocs()
+    return generate ? generate(source) : ''
+  }
+  return ''
 }

@@ -286,6 +286,29 @@ async function loadTjs() {
         return m.tjs;
     return null;
 }
+let tjsDocsOnce;
+export function loadTjsDocs() {
+    return (tjsDocsOnce ??= (async () => {
+        const sources = [
+            () => import('tjs-lang/browser'),
+            () => importFirstAvailable(bundleUrls('tjs-browser.js')),
+        ];
+        for (const load of sources) {
+            try {
+                const m = await load();
+                if (m &&
+                    typeof m.generateDocsMarkdown === 'function' &&
+                    typeof m.tjs === 'function') {
+                    return (source) => m.generateDocsMarkdown(source, m.tjs(source, { dialect: 'tjs', runTests: false }).types);
+                }
+            }
+            catch {
+                // try the next source
+            }
+        }
+        return null;
+    })());
+}
 let testApiOnce;
 async function loadTjsTestApiImpl() {
     const sources = [

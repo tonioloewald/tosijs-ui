@@ -12,7 +12,7 @@ never depends on what a `run` dialect uses: the site's registration closes over 
 */
 import { elements } from 'tosijs';
 import { registerLiveLanguage } from '../doc-system/example-policy.js';
-import { loadTransform } from './code-transform.js';
+import { loadTjsDocs, loadTransform } from './code-transform.js';
 // Empty specs: the built-ins' behaviour lives in `loadTransform`, and the tab label and editor
 // mode default to the name, which is what `tjs`/`ts` examples have always had.
 const BUILT_IN = { js: {}, tjs: {}, ts: {} };
@@ -86,4 +86,18 @@ export function showDialectResult(preview, value) {
 export function resetBuiltInDialectsForTests() {
     for (const [name, spec] of Object.entries(BUILT_IN))
         registry.set(name, spec);
+}
+/**
+ * The Docs-tab markdown for a source in `name`: the dialect's own `docs`, or for the built-in
+ * `tjs`, tjs-lang's generated docs when its browser bundle provides them. '' for none.
+ */
+export async function dialectDocs(name, source, options = {}) {
+    const spec = getDialect(name);
+    if (spec?.docs)
+        return (await spec.docs(source, options)) ?? '';
+    if (name === 'tjs' && isBuiltInDialect('tjs')) {
+        const generate = await loadTjsDocs();
+        return generate ? generate(source) : '';
+    }
+    return '';
 }

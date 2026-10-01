@@ -163,6 +163,9 @@ A dialect gives exactly one of:
   throw only for a broken example.
 
 Optional `label` names the source tab and `editorMode` picks the code editor's language.
+Optional `docs(source, options)` returns markdown for a **Docs** tab beside the code: the
+place for documentation generated from the source (in TJS the signature *is* the docs). It
+is called only when someone opens the code panel, and again as they edit.
 Replacing a built-in is allowed: `registerDialect('tjs', { transform })` runs `tjs` examples
 through your own tjs-lang build instead of the pinned copy.
 
@@ -200,6 +203,7 @@ registerDialect('reverse', {
   label: 'Reverse',
   run: (source, { options }) =>
     (options.shout ? source.toUpperCase() : source).split('').reverse().join(''),
+  docs: (source) => `## reverse\n\nReverses its source, so \`${source}\` becomes its mirror image.`,
 })
 
 const example = liveExample()
@@ -215,6 +219,23 @@ test('a run dialect runs its source and reports the result', () => {
   const results = [...preview.querySelectorAll('.dialect-result')]
   expect(results.length).toBe(1)
   expect(results[0].textContent).toBe('DESSERTS')
+})
+test('its docs appear in a Docs tab once the code panel is open', async () => {
+  const example = preview.querySelector('tosi-example')
+  example.showCode()
+  const docs = await new Promise((resolve) => {
+    const started = Date.now()
+    const check = () => {
+      const found = example.querySelector('.example-docs')
+      if (found?.textContent.includes('mirror image')) resolve(found)
+      else if (Date.now() - started > 5000) resolve(null)
+      else setTimeout(check, 50)
+    }
+    check()
+  })
+  expect(docs).not.toBe(null)
+  expect(docs.getAttribute('name')).toBe('Docs')
+  expect(docs.textContent).toContain('stressed')
 })
 ```
 
@@ -579,9 +600,10 @@ import { icons } from '../icons.js';
 import { tosiPocketBar } from '../pocket-bar.js';
 import { postNotification } from '../notifications.js';
 import { popMenu } from '../menu.js';
+import { tosiMd } from '../markdown-viewer.js';
 import { prefersReducedMotion } from '../reduced-motion.js';
 import { createExampleConsole, exampleConsoleEnabled, formatConsoleArgs, } from './example-console.js';
-import { dialectTransform, getDialect, isBuiltInDialect, showDialectResult, } from './dialects.js';
+import { dialectDocs, dialectTransform, getDialect, isBuiltInDialect, showDialectResult, } from './dialects.js';
 import { loadTransform, loadTjsTestApi, rewriteImports, contextVarName, contextParamNames, AsyncFunction, } from './code-transform.js';
 import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } from './remote-sync.js';
 import { executeInline, executeInIframe } from './execution.js';
@@ -1006,6 +1028,7 @@ export class LiveExample extends withAttributes({
         // A `run` dialect executes its source itself: there is no generated JavaScript to show.
         if (spec?.run) {
             editors.setupTabs();
+            void this.updateDocs();
             return;
         }
         this.jsOutEditor = codeEditor({
@@ -1023,7 +1046,45 @@ export class LiveExample extends withAttributes({
         editors.setupTabs();
         this.jsOutEditor.value = this.lastGeneratedJs;
         this.renderTjsTests();
+        void this.updateDocs();
     }
+    // ── The Docs tab (#184 part 3) ──────────────────────────────────────────────
+    // The dialect's generated documentation (its `docs` hook, or tjs-lang's for the built-in
+    // tjs). Fetched only once the code panel is open, and again as the source changes. The tab
+    // exists only while there are docs to show.
+    docsView;
+    docsRequest = 0;
+    updateDocs = async () => {
+        if (!this.productTabsReady)
+            return;
+        const request = ++this.docsRequest;
+        let markdown;
+        try {
+            markdown = await dialectDocs(this.dialect, this.js, this.options);
+        }
+        catch (error) {
+            markdown = `Docs could not be generated: ${error.message}`;
+        }
+        if (request !== this.docsRequest)
+            return; // a newer edit asked again; it wins
+        const { editors } = this.parts;
+        if (!markdown.trim()) {
+            if (this.docsView) {
+                this.docsView.remove();
+                this.docsView = undefined;
+                editors.setupTabs();
+            }
+            return;
+        }
+        if (!this.docsView) {
+            this.docsView = div({ name: 'Docs', class: 'example-docs' });
+            editors.append(this.docsView);
+            editors.setupTabs();
+        }
+        // <tosi-md> sanitizes by default: docs come from the example's source, so they render as
+        // documentation, never as markup that runs.
+        this.docsView.replaceChildren(tosiMd({ value: markdown }));
+    };
     // Capture the latest run's top-level locals (arrow property so `this` is bound
     // when passed as execution's `onScope`).
     captureScope = (scope) => {
@@ -1936,6 +1997,8 @@ export class LiveExample extends withAttributes({
         if (this.persistToDom) {
             this.updateSources();
         }
+        // the Docs tab follows the source, for every dialect (a no-op until the panel is open)
+        void this.updateDocs();
         // Run tests when there are any — but a build/exec failure is a test failure
         // in its own right, so surface it even when the example defines no `test`
         // blocks (and even if the failure was hard enough to produce no preview).

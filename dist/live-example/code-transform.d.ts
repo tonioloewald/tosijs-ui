@@ -55,6 +55,17 @@ export declare const TJS_VERSION = "0.13.13";
 export declare const TYPESCRIPT_VERSION = "5.9.3";
 export declare const TYPESCRIPT_URL = "https://esm.sh/typescript@5.9.3";
 /**
+ * Generated documentation for a `tjs` source (#184 part 3): tjs-lang's
+ * `generateDocsMarkdown(source, tjs(source).types)`, where the signature IS the docs.
+ *
+ * FEATURE-DETECTED: tjs-lang's browser bundle doesn't export the generator yet (0.13.13,
+ * 0.14.0-rc.1; asked upstream), so this resolves to null until it does, and the built-in `tjs`
+ * shows no Docs tab. A site with the full tjs-lang can supply docs itself through
+ * `registerDialect('tjs', { transform, docs })` today.
+ */
+export type DocsFn = (source: string) => string;
+export declare function loadTjsDocs(): Promise<DocsFn | null>;
+/**
  * tjs inline-test API (from tjs-lang/lang):
  *   extractTests(src) → { code (test-stripped), tests, testRunner }
  *   testUtils — a string defining `expect`/`assert` etc. for the runner

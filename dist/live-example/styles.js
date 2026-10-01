@@ -310,6 +310,11 @@ export const liveExampleStyleSpec = {
         color: '#f00',
     },
     // Read-only "tjs tests" results tab (inline /*test*/ results).
+    // The Docs tab (#184): generated documentation, read as prose, so the body font
+    ':host .example-docs': {
+        padding: `${vars.spacing50} ${vars.spacing}`,
+        overflow: 'auto',
+    },
     ':host .tjs-test-results': {
         padding: '8px 12px',
         fontSize: '14px',

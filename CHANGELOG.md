@@ -2,6 +2,17 @@
 
 ## 1.16.3 (unreleased)
 
+### A Docs tab for live examples (#184)
+
+A dialect can document its source: `registerDialect(name, { …, docs(source, options) })` returns
+markdown, shown in a **Docs** tab beside the code. tjs-lang asked for it: in TJS the signature
+*is* the documentation. It's called only when someone opens the code panel, and again as they
+edit, so readers pay nothing. It works for `run` dialects too.
+
+The built-in `tjs` fills the tab from tjs-lang's own generator (`generateDocsMarkdown`) as soon
+as tjs-lang's browser bundle exports it; it doesn't yet, as of 0.14.0-rc.1. Until then, a site
+with the full tjs-lang can supply `docs` through a `tjs` override.
+
 ### Declare your dialects once, in the site config (#2463)
 
 `dialects: ['ajs']` in a `tosijs-ui/site` config, plus any built-in you replace

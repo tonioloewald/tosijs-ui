@@ -284,6 +284,10 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
         ':host .test-fail': {
             color: string;
         };
+        ':host .example-docs': {
+            padding: string;
+            overflow: string;
+        };
         ':host .tjs-test-results': {
             padding: string;
             fontSize: string;
@@ -360,6 +364,9 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     private renderTjsTests;
     private computeGeneratedJs;
     private ensureProductTabs;
+    private docsView?;
+    private docsRequest;
+    private updateDocs;
     private captureScope;
     /**
      * Live bindings for tjs runtime-value autocomplete: the example's context modules
