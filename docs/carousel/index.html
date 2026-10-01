@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=a8adf8af7dc0" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=9c5e9b27cb0b" data-tosi-doc-system />
   <title>carousel — tosijs-ui</title>
   <meta name="description" content="Minimalist carousel component that supports the usual stuff." />
   <link rel="canonical" href="https://ui.tosijs.net/carousel/" />
@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=4a77aeb3457f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=095334cc19ac" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>carousel</h1>
 <pre><code class="language-html">&lt;tosi-carousel arrows dots max-visible-items=2 auto=2 snap-delay=4 snap-duration=0.5 loop&gt;
@@ -93,6 +93,19 @@
 <li><code>snap-delay</code> (number, 0.1 [seconds] by default)</li>
 <li><code>loop</code> (boolean, false by default) causes next/previous buttons to loop</li>
 <li><code>auto</code> (number, 0 [seconds] by default) if &gt; 0, automatically advances after that many seconds (always loops!)</li>
+</ul>
+<h2>Behaviour</h2>
+<ul>
+<li><strong><code>auto</code> holds still while someone is looking:</strong> while a mouse hovers over it, while keyboard
+focus is inside it, and always when the reader asks for reduced motion
+(<code>prefers-reduced-motion: reduce</code>, which also makes paging jump instead of animating). A swipe
+or a chosen slide restarts the countdown. A touch is never treated as a hover, since nothing
+would ever end it.</li>
+<li><strong>The dots are tappable:</strong> each draws a <code>--carousel-dot-size</code> dot (8px) but answers taps across
+its whole slot and <code>--carousel-dot-hit-size</code> (44px) tall, so a tap that just misses a dot
+doesn&#39;t open the slide underneath.</li>
+<li><strong>Resizing keeps the current slide in place</strong> (rotation, a window resize) instead of leaving
+it partway into the next one.</li>
 </ul>
 <tosi-css-var-editor element-selector="tosi-carousel"></tosi-css-var-editor>
 
@@ -191,6 +204,6 @@
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-j9r4nbn4.js"></script>
+  <script type="module" src="../hydrate-phj4y7zn.js"></script>
 </body>
 </html>

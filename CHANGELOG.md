@@ -2,6 +2,18 @@
 
 ## 1.16.2 (unreleased)
 
+### `<tosi-carousel>`: tappable dots, `auto` that waits, resize-safe (#204)
+
+Found by tosijs-virta using a carousel as a full-bleed hero on a phone.
+
+- **The dots are tappable.** Each still draws an 8px dot, but answers taps across its whole
+  slot and 44px tall (`--carousel-dot-hit-size`), so a tap that just misses a dot no longer
+  opens the slide underneath.
+- **`auto` holds still while someone is looking:** under a mouse hover, while keyboard focus is
+  inside it, and always under `prefers-reduced-motion: reduce` (which also makes paging jump
+  instead of animating). A touch is never treated as a hover.
+- **A resize keeps the current slide in place** instead of leaving it partway into the next.
+
 ### Live examples show what they log
 
 What an example logs (`console.log`, `info`, `warn`, `error`, `debug`, `dir`, `table`) now

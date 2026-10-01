@@ -12,7 +12,16 @@ export declare class TosiCarousel extends TosiCarousel_base {
     static preferredTagName: string;
     private lastAutoAdvance;
     private interval?;
+    private hovered;
+    private focusedVisibly;
+    private resizeObserver?;
+    get autoPaused(): boolean;
     private autoAdvance;
+    private handlePointerEnter;
+    private handlePointerLeave;
+    private handleFocusIn;
+    private handleFocusOut;
+    private realign;
     private _page;
     get page(): number;
     set page(p: number);
@@ -28,6 +37,7 @@ export declare class TosiCarousel extends TosiCarousel_base {
             _carouselDotCurrentColor: string;
             _carouselDotSize: number;
             _carouselDotSpacing: string;
+            _carouselDotHitSize: number;
             _carouselProgressPadding: number;
             _carouselDotTransition: string;
             display: string;
@@ -87,27 +97,42 @@ export declare class TosiCarousel extends TosiCarousel_base {
             display: string;
         };
         ':host .dot': {
+            position: string;
+            zIndex: number;
+            display: string;
+            placeItems: string;
+            flex: string;
+            width: string;
+            height: string;
+            margin: string;
+            background: string;
+        };
+        ':host .dot::before': {
+            content: string;
+            display: string;
             background: string;
             borderRadius: string;
             height: string;
             width: string;
             transition: string;
         };
-        ':host .dot:not(.current):hover': {
+        ':host .dot:not(.current):hover::before': {
             background: string;
             height: string;
             width: string;
-            margin: string;
         };
-        ':host .dot:not(.current):active': {
+        ':host .dot:not(.current):active::before': {
             background: string;
         };
-        ':host .dot.current': {
+        ':host .dot.current::before': {
             background: string;
+        };
+        ':host .dot:focus-visible::before': {
+            boxShadow: string;
         };
         ':host::part(progress)': {
             display: string;
-            gap: string;
+            gap: number;
             justifyContent: string;
             padding: string;
         };

@@ -53,6 +53,19 @@ This is a minimalist carousel component that supports the usual stuff.
 - `loop` (boolean, false by default) causes next/previous buttons to loop
 - `auto` (number, 0 [seconds] by default) if > 0, automatically advances after that many seconds (always loops!)
 
+## Behaviour
+
+- **`auto` holds still while someone is looking:** while a mouse hovers over it, while keyboard
+  focus is inside it, and always when the reader asks for reduced motion
+  (`prefers-reduced-motion: reduce`, which also makes paging jump instead of animating). A swipe
+  or a chosen slide restarts the countdown. A touch is never treated as a hover, since nothing
+  would ever end it.
+- **The dots are tappable:** each draws a `--carousel-dot-size` dot (8px) but answers taps across
+  its whole slot and `--carousel-dot-hit-size` (44px) tall, so a tap that just misses a dot
+  doesn't open the slide underneath.
+- **Resizing keeps the current slide in place** (rotation, a window resize) instead of leaving
+  it partway into the next one.
+
 <tosi-css-var-editor element-selector="tosi-carousel"></tosi-css-var-editor>
 */
 
@@ -62,6 +75,10 @@ import { ElementCreator, elements, vars, withAttributes } from 'tosijs'
 import { icons } from './icons.js'
 
 const { button, slot, div } = elements
+
+const prefersReducedMotion = (): boolean =>
+  typeof matchMedia === 'function' &&
+  matchMedia('(prefers-reduced-motion: reduce)').matches
 
 interface CarouselParts {
   [key: string]: HTMLElement
@@ -82,11 +99,59 @@ export class TosiCarousel extends withAttributes({
 
   private lastAutoAdvance = Date.now()
   private interval?: Timer
+  private hovered = false
+  private focusedVisibly = false
+  private resizeObserver?: ResizeObserver
+
+  /*
+  `auto` holds still while someone is looking at it (#204): under a mouse hover, while keyboard
+  focus is inside it, and always under `prefers-reduced-motion: reduce`. A swipe already
+  restarts the countdown (every scroll resets `lastAutoAdvance`), so a slide someone just chose
+  stays up for a full `auto` interval.
+  */
+  get autoPaused(): boolean {
+    return this.hovered || this.focusedVisibly || prefersReducedMotion()
+  }
 
   private autoAdvance = () => {
+    if (this.autoPaused) {
+      this.lastAutoAdvance = Date.now()
+      return
+    }
     if (this.auto > 0 && this.auto * 1000 < Date.now() - this.lastAutoAdvance) {
       this.forward()
     }
+  }
+
+  // Mouse only. A phone's tap also sends pointerenter (and focus), and nothing ever sends the
+  // matching leave, so treating a touch as "hover" would stop the carousel for good.
+  private handlePointerEnter = (event: PointerEvent) => {
+    if (event.pointerType === 'mouse') this.hovered = true
+  }
+
+  private handlePointerLeave = (event: PointerEvent) => {
+    if (event.pointerType === 'mouse') this.hovered = false
+  }
+
+  // Keyboard focus only (`:focus-visible`), for the same reason: a tap focuses too.
+  private handleFocusIn = (event: FocusEvent) => {
+    const target = event.composedPath()[0] as Element | undefined
+    this.focusedVisibly = target?.matches?.(':focus-visible') === true
+  }
+
+  private handleFocusOut = (event: FocusEvent) => {
+    const next = event.relatedTarget as Node | null
+    if (!next || !this.contains(next)) this.focusedVisibly = false
+  }
+
+  // A resize (rotation, a window drag) changes the slide width, so re-seat the current page
+  // without animating; otherwise it rests partway into the next slide until it next moves.
+  private realign = () => {
+    if (!this.hydrated) return
+    const { scroller } = this.parts as CarouselParts
+    cancelAnimationFrame(this.animationFrame)
+    this.animationFrame = null
+    scroller.scrollLeft = this.page * scroller.offsetWidth
   }
 
   private _page = 0
@@ -135,6 +200,8 @@ export class TosiCarousel extends withAttributes({
       _carouselDotCurrentColor: '#0008',
       _carouselDotSize: 8,
       _carouselDotSpacing: vars.carouselDotSize,
+      // The tappable area around each dot; the dot itself stays --carousel-dot-size (#204).
+      _carouselDotHitSize: 44,
       _carouselProgressPadding: 12,
       _carouselDotTransition: '0.125s ease-in-out',
       display: 'flex',
@@ -193,28 +260,55 @@ export class TosiCarousel extends withAttributes({
     ':host *::-webkit-scrollbar, *::-webkit-scrollbar-thumb': {
       display: 'none',
     },
+    /*
+    Each dot is a button drawing a --carousel-dot-size dot (#204). Its hit area is the dot's
+    whole PITCH across (dot + spacing, so the strip has no gaps and no two dots overlap) and
+    --carousel-dot-hit-size (44px, a touch target) tall. A negative vertical margin gives the
+    extra height back to the layout, so the strip is sized as before and the hit area reaches
+    past it — over the slide, where an overlaid dot strip sits, which is exactly where a tap
+    that just missed a dot used to open the slide instead.
+
+    Not 44px across: the first cut did that, and with dots 16px apart each dot's hit area
+    covered its neighbour's centre, so a tap dead on one dot selected the next.
+    */
     ':host .dot': {
+      position: 'relative',
+      zIndex: 3,
+      display: 'grid',
+      placeItems: 'center',
+      flex: `0 0 calc(${vars.carouselDotSize} + ${vars.carouselDotSpacing})`,
+      width: `calc(${vars.carouselDotSize} + ${vars.carouselDotSpacing})`,
+      height: vars.carouselDotHitSize,
+      margin: `calc((${vars.carouselDotSize} - ${vars.carouselDotHitSize}) / 2) 0`,
+      background: 'transparent',
+    },
+    ':host .dot::before': {
+      content: '""',
+      display: 'block',
       background: vars.carouselButtonColor,
       borderRadius: vars.carouselDotSize,
       height: vars.carouselDotSize,
       width: vars.carouselDotSize,
       transition: vars.carouselDotTransition,
     },
-    ':host .dot:not(.current):hover': {
+    ':host .dot:not(.current):hover::before': {
       background: vars.carouselButtonHoverColor,
       height: vars.carouselDotSize150,
       width: vars.carouselDotSize150,
-      margin: vars.carouselDotSize_25,
     },
-    ':host .dot:not(.current):active': {
+    ':host .dot:not(.current):active::before': {
       background: vars.carouselButtonActiveColor,
     },
-    ':host .dot.current': {
+    ':host .dot.current::before': {
       background: vars.carouselDotCurrentColor,
+    },
+    ':host .dot:focus-visible::before': {
+      boxShadow: `0 0 0 2px ${vars.carouselButtonActiveColor}`,
     },
     ':host::part(progress)': {
       display: 'flex',
-      gap: vars.carouselDotSpacing,
+      // the spacing is inside each dot's hit area (see .dot), so no gap between them
+      gap: 0,
       justifyContent: 'center',
       padding: vars.carouselProgressPadding,
     },
@@ -283,6 +377,7 @@ export class TosiCarousel extends withAttributes({
     }
     const elapsed = (Date.now() - timestamp) / 1000
     if (
+      prefersReducedMotion() ||
       elapsed >= this.snapDuration ||
       Math.abs(scroller.scrollLeft - position) < 2
     ) {
@@ -323,13 +418,26 @@ export class TosiCarousel extends withAttributes({
     forward.addEventListener('click', this.forward)
     scroller.addEventListener('scroll', this.indicateCurrent)
     progress.addEventListener('click', this.handleDotClick)
+    this.addEventListener('pointerenter', this.handlePointerEnter)
+    this.addEventListener('pointerleave', this.handlePointerLeave)
+    this.addEventListener('focusin', this.handleFocusIn)
+    this.addEventListener('focusout', this.handleFocusOut)
+
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver ??= new ResizeObserver(this.realign)
+      this.resizeObserver.observe(scroller)
+    }
 
     this.lastAutoAdvance = Date.now()
+    clearInterval(this.interval)
     this.interval = setInterval(this.autoAdvance, 100)
   }
 
   disconnectedCallback() {
+    super.disconnectedCallback()
     clearInterval(this.interval)
+    this.resizeObserver?.disconnect()
+    this.hovered = this.focusedVisibly = false
   }
 
   render() {
