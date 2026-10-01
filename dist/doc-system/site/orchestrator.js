@@ -11,6 +11,7 @@ runs as a SEPARATE subprocess on purpose — importing the full tosijs module or
 the icon system here would put src/icon-data.ts into `bun --watch`'s graph and
 cause an endless rebuild loop.
 */
+import { pageGlobalsHead } from './page-globals.js';
 import * as path from 'path';
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js';
 import { listEpubVolumes, renderEpubDownloads } from './epub-volumes.js';
@@ -1199,18 +1200,9 @@ export async function buildSite(config, opts = {}) {
             catch {
                 // tjs-lang not installed — live examples fall back to the CDN chain
             }
-            /*
-            The example policy, stamped for the client the same way `__TJS_LOCAL_BASE` is (#140).
-            Only emitted when it differs from the default, so an `auto` site's HTML is unchanged
-            byte-for-byte and no existing corpus moves.
-            */
-            const policyHead = config.liveExamples === 'opt-in'
-                ? `<script>globalThis.__TOSI_EXAMPLE_POLICY="opt-in"</script>`
-                : '';
-            // Likewise only when switched off, so a default site's HTML does not change.
-            const consoleHead = config.exampleConsole === false
-                ? `<script>globalThis.__TOSI_EXAMPLE_CONSOLE=false</script>`
-                : '';
+            // The site config's client-side switches (example policy, example console), stamped as
+            // globals in <head> — only when they differ from the default. See page-globals.ts.
+            const globalsHead = pageGlobalsHead(config);
             // Optional (tjs-lang 0.11+): the import-resolver service worker. Lets live examples
             // import real npm packages from anywhere — bare specifiers the doc-system doesn't
             // inject become `/<prefix>/<spec>` requests the worker resolves + caches. GATED behind
@@ -1423,13 +1415,7 @@ export async function buildSite(config, opts = {}) {
                 // instead of the classic IIFE. See the ESM hydration bundle above.
                 hydrateUrl: hydrateName ? `/${hydrateName}` : undefined,
                 bakes: exampleBakes,
-                headExtra: [
-                    config.headExtra,
-                    tjsHead,
-                    policyHead,
-                    consoleHead,
-                    importResolverHead,
-                ]
+                headExtra: [config.headExtra, tjsHead, globalsHead, importResolverHead]
                     .filter(Boolean)
                     .join('') || undefined,
                 scriptUrl: config.scriptUrl,

@@ -881,7 +881,11 @@ export class LiveExample extends withAttributes({
   // grow the page without bound. Past the cap one line says how many were dropped; devtools
   // still has them all.
   private static readonly CONSOLE_LINES = 500
-  private static readonly RUNNING_DELAY_MS = 250
+  /**
+   * How long a `run` dialect's run must take before its spinner appears, in ms. A faster run
+   * never shows one, so a quick example doesn't flash.
+   */
+  static runningDelayMs = 250
   private consoleLines = 0
   private consoleDropped?: HTMLElement
 
@@ -2128,7 +2132,7 @@ export class LiveExample extends withAttributes({
         if (runAbort.signal.aborted) return
         running.classList.toggle('still', prefersReducedMotion())
         running.hidden = false
-      }, LiveExample.RUNNING_DELAY_MS)
+      }, LiveExample.runningDelayMs)
       try {
         const result = await runner(this.js, {
           preview: target,

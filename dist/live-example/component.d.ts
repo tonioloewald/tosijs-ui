@@ -337,7 +337,11 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     set options(value: Record<string, unknown>);
     private runAbort?;
     private static readonly CONSOLE_LINES;
-    private static readonly RUNNING_DELAY_MS;
+    /**
+     * How long a `run` dialect's run must take before its spinner appears, in ms. A faster run
+     * never shows one, so a quick example doesn't flash.
+     */
+    static runningDelayMs: number;
     private consoleLines;
     private consoleDropped?;
     private consoleForRun;

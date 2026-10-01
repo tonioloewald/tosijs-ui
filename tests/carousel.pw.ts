@@ -63,3 +63,58 @@ test('a resize re-seats the current slide instead of resting between two', async
   })
   expect(Math.abs(scrollLeft - expected)).toBeLessThan(2)
 })
+
+test('keyboard focus inside pauses auto-advance; leaving resumes it', async ({
+  page,
+  browserName,
+}) => {
+  const carousel = page.locator('tosi-carousel').first()
+  await carousel.evaluate((c: any) => {
+    c.auto = 0.3
+    c.page = 0
+  })
+  // a keyboard user arrives: Tab from a button placed just before the carousel
+  await carousel.evaluate((c: any) => {
+    const before = document.createElement('button')
+    before.id = 'before-carousel'
+    before.textContent = 'before'
+    c.before(before)
+  })
+  await page.locator('#before-carousel').focus()
+  // WebKit, like Safari, skips buttons on a bare Tab; Option-Tab is how its keyboard users move
+  await page.keyboard.press(browserName === 'webkit' ? 'Alt+Tab' : 'Tab')
+  expect(await carousel.evaluate((c: any) => c.autoPaused)).toBe(true)
+  const start = await carousel.evaluate((c: any) => c.page)
+  await page.waitForTimeout(900) // three auto intervals
+  expect(await carousel.evaluate((c: any) => c.page)).toBe(start)
+
+  await page.locator('#before-carousel').focus() // focus leaves the carousel
+  expect(await carousel.evaluate((c: any) => c.autoPaused)).toBe(false)
+  await page.waitForTimeout(900)
+  expect(await carousel.evaluate((c: any) => c.page)).not.toBe(start)
+})
+
+test.describe('on a touch screen', () => {
+  test.use({ hasTouch: true })
+
+  test('a tap is not a hover: auto-advance keeps going', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName === 'firefox',
+      'Playwright has no touch emulation in Firefox'
+    )
+    const carousel = page.locator('tosi-carousel').first()
+    await carousel.evaluate((c: any) => {
+      c.auto = 0.3
+    })
+    // a tap mid-slide (the host is the hit target for its slotted content)
+    const box = (await carousel.boundingBox())!
+    await carousel.tap({ position: { x: box.width / 2, y: box.height / 3 } })
+    expect(await carousel.evaluate((c: any) => c.autoPaused)).toBe(false)
+    const start = await carousel.evaluate((c: any) => c.page)
+    await page.waitForTimeout(900)
+    expect(await carousel.evaluate((c: any) => c.page)).not.toBe(start)
+  })
+})
