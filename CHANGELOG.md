@@ -16,8 +16,8 @@ a `tjs` example that logs its results showed a reader an empty box.
   behind) is not shown. The panel keeps 500 lines and counts the rest.
 - Turn it off for one example with the fence option `{"console": false}`, or for a page with
   `setExampleConsole(false)` from `tosijs-ui/live-example`.
-- A `run` dialect receives it as `context.console`, so a VM can forward its output to the same
-  place.
+- A `run` dialect receives the same console as `context.console`, so a VM can forward its
+  output to the panel.
 
 ## 1.16.1
 
