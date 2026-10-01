@@ -6,7 +6,9 @@ A patch: iPhone menus that stay reachable, a Docs tab for live examples, and a w
 your dialects once in the site config. Nothing changes for existing code, with one behaviour
 fix to know about: menus and other popped floats no longer close when an unrelated scroller
 on the page scrolls, only when a scroll moves the element they came from. `dist/iife.js` grows
-by 0.7 kB gzip (474.9 → 475.6 kB).
+by 2.1 kB gzip (474.9 → 477.0 kB). 1.4 kB of that is the Docs tab loading its markdown renderer
+on first use: that keeps `marked` out of `tosijs-ui/live-example` for ESM apps, but the iife
+already contains the renderer, so there it only adds lazy-loading wrappers.
 
 ### A Docs tab for live examples (#184)
 
@@ -43,7 +45,7 @@ reach its last items dismissed it.
 - **A float closes only for a scroll that moves its anchor:** the page, or a scroller that
   contains the element it was popped from. Before, any scroll anywhere closed a menu or
   tooltip, such as a sidebar or a table re-rendering. `<tosi-float>` gained an `anchor`
-  property (`popFloat` sets it), and `<tosi-search-field>` now uses this rule rather than a
+  property (`positionFloat`, and so `popFloat`, sets it); a submenu closes with its parent, and `<tosi-search-field>` now uses this rule rather than a
   copy of its own.
 
 ## 1.16.2
