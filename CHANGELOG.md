@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.16.3 (unreleased)
+
+### Menus on iPhone stay reachable (#2460)
+
+A long menu popped low on an iPhone ran below the visible screen, and scrolling the page to
+reach its last items dismissed it.
+
+- **Floats are sized to what's visible.** `positionFloat` now measures against
+  `window.visualViewport` instead of `100vh`/`100vw`. On Mobile Safari `100vh` is the large
+  viewport (as if the URL bar were hidden). A long menu now fits and scrolls inside itself.
+  Desktop browsers, where the two agree, see no change.
+- **Scrolling past a menu's end doesn't scroll the page** (`overscroll-behavior: contain`).
+- **A float closes only for a scroll that moves its anchor:** the page, or a scroller that
+  contains the element it was popped from. Before, any scroll anywhere closed a menu or
+  tooltip, such as a sidebar or a table re-rendering. `<tosi-float>` gained an `anchor`
+  property (`popFloat` sets it), and `<tosi-search-field>` now uses this rule rather than a
+  copy of its own.
+
 ## 1.16.2
 
 A patch: live examples show what they log, a spinner while a `run` dialect works, and three

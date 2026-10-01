@@ -978,6 +978,9 @@ export const filterForClick = (
 // @deprecated xin-menu-* classes — use tosi-menu-* instead; remove in next major
 const menuStyles = {
   overflow: 'hidden auto',
+  // Scrolling past either end of a menu must not scroll (or rubber-band) the page under it:
+  // on iPhone that page scroll dismissed the menu mid-gesture (#2460).
+  overscrollBehavior: 'contain',
   maxHeight: `calc(${vars.maxHeight} - ${varDefault.menuInset('8px')})`,
   borderRadius: vars.spacing50,
   background: varDefault.menuBg('#fafafa'),

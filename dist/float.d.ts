@@ -7,6 +7,11 @@ declare const TosiFloat_base: import("tosijs").WithAttributes<{
 export declare class TosiFloat extends TosiFloat_base {
     static preferredTagName: string;
     static floats: Set<TosiFloat>;
+    /**
+     * The element this float was popped from (set by `popFloat`). Only a scroll that moves it
+     * (the page, or a scroller containing it) triggers `remainOnScroll`. `null`: any scroll does.
+     */
+    anchor: Element | null;
     content: HTMLSlotElement;
     static shadowStyleSpec: {
         ':host': {

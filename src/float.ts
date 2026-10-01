@@ -82,8 +82,10 @@ shadow and background and so on.
 - `remain-on-resize` 'remove' | 'hide' | 'remain' — by default, floats will hide if the window is resized
 - `remain-on-scroll` 'remain' | 'remove' | 'hide' — by default, floats will remain if the document is scrolled
 
-Note that `remain-on-scroll` behavior applies to any scrolling in the document (including within the float) so
-if you want finer-grained disappearing behavior triggered by scrolling, you might want to implement it yourself.
+A float made by `popFloat` (menus, tooltips) has an **anchor**, the element it was popped from, and only a
+scroll that MOVES the anchor (the page, or a scroller containing it) hides or removes it. Before 1.16.3 any
+scroll anywhere did, so filtering a table on every keystroke (which scrolls it) closed a menu or hint list the
+moment it opened. A float with no anchor still reacts to any scroll outside itself.
 
 To prevent dragging for an interior element (e.g. if you want a floating palette with buttons or input fields)
 just add the `no-drag` class to an element or its container.
@@ -103,6 +105,12 @@ export class TosiFloat extends withAttributes({
 }) {
   static preferredTagName = 'tosi-float'
   static floats: Set<TosiFloat> = new Set()
+
+  /**
+   * The element this float was popped from (set by `popFloat`). Only a scroll that moves it
+   * (the page, or a scroller containing it) triggers `remainOnScroll`. `null`: any scroll does.
+   */
+  anchor: Element | null = null
 
   content = slot()
 
@@ -179,6 +187,30 @@ export const tosiFloat = TosiFloat.elementCreator() as ElementCreator<TosiFloat>
 /** @deprecated Use tosiFloat instead */
 export const xinFloat = tosiFloat
 
+/*
+Does this scroll move the anchor? The page scrolling does; so does any scroller that contains it,
+across shadow roots (a menu popped from inside a component's shadow DOM is still moved by a
+scroller around the component). Any other scroller — a table re-filtering, a sidebar — doesn't.
+*/
+function scrollMovesAnchor(
+  scrolled: EventTarget | null,
+  anchor: Element | null
+): boolean {
+  if (anchor === null) return true
+  if (
+    scrolled === document ||
+    scrolled === document.documentElement ||
+    scrolled === document.body
+  )
+    return true
+  if (!(scrolled instanceof Node)) return true
+  for (let node: Node | null = anchor; node; ) {
+    if (node === scrolled) return true
+    node = node.parentNode ?? (node as ShadowRoot).host ?? null
+  }
+  return false
+}
+
 // Register the global reposition/dismiss handlers on first float connecting,
 // not at import (keeps the module side-effect-free for tree-shaking). They
 // iterate TosiFloat.floats, so they're no-ops until a float exists — registered
@@ -211,6 +243,7 @@ function ensureFloatListeners(): void {
         return
       }
       Array.from(TosiFloat.floats).forEach((float: TosiFloat) => {
+        if (!scrollMovesAnchor(event.target, float.anchor)) return
         if (float.remainOnScroll === 'hide') {
           float.hidden = true
         } else if (float.remainOnScroll === 'remove') {

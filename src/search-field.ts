@@ -380,7 +380,6 @@ function ensureHintStyles(): void {
 }
 
 let instanceCount = 0
-const SCROLL_OPTIONS = { capture: true, passive: true }
 
 const sameTag = (a: SearchTag, b: SearchTag): boolean =>
   JSON.stringify(a) === JSON.stringify(b)
@@ -731,31 +730,15 @@ export class TosiSearchField extends withAttributes({
         content: this.hintList,
         target: this,
         position: 's',
-        remainOnScroll: 'remain',
+        // closes only for a scroll that moves the field: <tosi-float>'s anchor rule (1.16.3)
+        remainOnScroll: 'remove',
         remainOnResize: 'remove',
       })
-      document.addEventListener('scroll', this.handleScroll, SCROLL_OPTIONS)
     }
     this.input().setAttribute('aria-expanded', 'true')
   }
 
-  /*
-  Close for a scroll that MOVES the field (the page, or an ancestor), not for any scroll at
-  all. A float's own `remainOnScroll: 'remove'` reacts to every scroll in the document, and in
-  the obvious use of this component — filtering a table — every keystroke re-filters the table,
-  which scrolls it, which closed the hints the moment they opened.
-  */
-  private handleScroll = (event: Event): void => {
-    const target = event.target
-    if (
-      target === document ||
-      (target instanceof Node && target.contains(this))
-    )
-      this.closeHints()
-  }
-
   private closeHints(): void {
-    document.removeEventListener('scroll', this.handleScroll, SCROLL_OPTIONS)
     this.float?.remove()
     this.float = undefined
     this.active = -1

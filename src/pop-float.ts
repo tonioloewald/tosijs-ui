@@ -287,6 +287,7 @@ export const popFloat = (options: PopFloatOptions): TosiFloat => {
     ? tosiFloat(...content)
     : tosiFloat(content)
 
+  float.anchor = target
   positionFloat(
     float,
     target,
@@ -392,12 +393,55 @@ export const positionFloat = (
     element.style.top = cy.toFixed(2) + 'px'
     element.style.transform = 'translateY(-50%)'
   }
-  element.style.setProperty(
-    '--max-height',
-    `calc(100vh - ${element.style.top || element.style.bottom})`
-  )
-  element.style.setProperty(
-    '--max-width',
-    `calc(100vw - ${element.style.left || element.style.right})`
-  )
+  /*
+  The room left on screen, measured against the VISUAL viewport — what is actually visible. It
+  used to be `calc(100vh - top)`, and on Mobile Safari `100vh` is the large viewport (as if the
+  URL bar were hidden), so a menu could run below the visible area; reaching its last items
+  meant scrolling the page, which dismissed it (#2460). Sized to the visible area, a long menu
+  scrolls inside itself instead. Desktop browsers, where the two agree, see no change.
+  */
+  const { maxWidth, maxHeight } = roomOnScreen(element, w, h)
+  element.style.setProperty('--max-height', `${maxHeight.toFixed(2)}px`)
+  element.style.setProperty('--max-width', `${maxWidth.toFixed(2)}px`)
+}
+
+/** The visible region, in the layout-viewport coordinates `position: fixed` uses. */
+function visibleArea(w: number, h: number) {
+  const vv = typeof window !== 'undefined' ? window.visualViewport : null
+  return vv
+    ? {
+        top: vv.offsetTop,
+        left: vv.offsetLeft,
+        bottom: vv.offsetTop + vv.height,
+        right: vv.offsetLeft + vv.width,
+      }
+    : { top: 0, left: 0, bottom: h, right: w }
+}
+
+/**
+ * How far a positioned float can extend before it leaves the visible area: the same geometry
+ * as before 1.16.3 (`100vh - top`, `100vw - left`, …), with the VISIBLE area in place of
+ * `100vh`/`100vw`. Deliberately not "fit a centred float on both sides": that would narrow
+ * every centred tooltip near a screen edge, which is not what #2460 was about. Exported for
+ * tests.
+ */
+export function roomOnScreen(
+  element: HTMLElement,
+  w: number,
+  h: number
+): { maxWidth: number; maxHeight: number } {
+  const vis = visibleArea(w, h)
+  const { top, bottom, left, right } = element.style
+  const px = (value: string) => parseFloat(value)
+  const maxHeight = top
+    ? vis.bottom - px(top)
+    : bottom
+    ? h - px(bottom) - vis.top
+    : vis.bottom - vis.top
+  const maxWidth = left
+    ? vis.right - px(left)
+    : right
+    ? w - px(right) - vis.left
+    : vis.right - vis.left
+  return { maxWidth: Math.max(0, maxWidth), maxHeight: Math.max(0, maxHeight) }
 }
