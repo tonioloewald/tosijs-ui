@@ -1,6 +1,12 @@
 # Changelog
 
-## 1.16.3 (unreleased)
+## 1.16.3
+
+A patch: iPhone menus that stay reachable, a Docs tab for live examples, and a way to declare
+your dialects once in the site config. Nothing changes for existing code, with one behaviour
+fix to know about: menus and other popped floats no longer close when an unrelated scroller
+on the page scrolls, only when a scroll moves the element they came from. `dist/iife.js` grows
+by 0.7 kB gzip (474.9 → 475.6 kB).
 
 ### A Docs tab for live examples (#184)
 
