@@ -107,6 +107,36 @@ export const liveExampleStyleSpec = {
   the example. With a console, the example becomes a column and the console takes up to
   40% of it, scrolling, below a preview that keeps the rest.
   */
+  // The pending-run spinner (a `run` dialect awaiting its result). A ring in the text colour;
+  // `.still` (prefers-reduced-motion, set from JS) keeps the ring and drops the spin.
+  ':host [part="running"]': {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: '32px',
+    height: '32px',
+    margin: '-16px 0 0 -16px',
+    borderRadius: '50%',
+    // a full translucent track with one coloured quarter: an even ring, not a crescent
+    // (border, not box-shadow, because only a border has per-side colours to animate)
+    border: '3px solid #8884',
+    borderTopColor: 'var(--text-color, #444)',
+    boxSizing: 'border-box',
+    animation: 'tosi-example-spin 0.8s linear infinite',
+    pointerEvents: 'none',
+    zIndex: '50',
+  },
+  ':host [part="running"].still': {
+    animation: 'none',
+  },
+  ':host [part="running"][hidden]': {
+    display: 'none',
+  },
+  '@keyframes tosi-example-spin': {
+    from: { transform: 'rotate(0deg)' },
+    to: { transform: 'rotate(360deg)' },
+  },
+
   ':host [part="console"][hidden]': {
     display: 'none',
   },

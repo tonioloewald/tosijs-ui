@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=9c5e9b27cb0b" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=74609e2ceb91" data-tosi-doc-system />
   <title>example — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-example&gt; makes it easy to insert interactive code examples in a web page. It started life as a super lightweight, easier-to-embed implementation of…" />
   <link rel="canonical" href="https://ui.tosijs.net/component/" />
@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=095334cc19ac" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=aaa29bb65dd1" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>example</h1>
 <p><code>&lt;tosi-example&gt;</code> makes it easy to insert interactive code examples in a web page. It
@@ -181,7 +181,10 @@ exactly as it runs a <code>js</code> block. Imports from the page&#39;s modules 
 capabilities your registration closes over). <code>context</code> carries the example&#39;s <code>preview</code>
 element, its <code>options</code>, the page&#39;s <code>context</code> modules, an <code>AbortSignal</code> that fires when the
 example re-runs, and <code>report(value)</code>. A non-<code>undefined</code> return value is reported too: it is
-shown below the preview.</li>
+shown below the preview. While a run is pending a spinner shows over the example (after a
+quarter-second, so a fast run never flashes it); a re-run replaces it. If your language treats
+errors as values (AJS does), a run that ENDS in one is a successful run: <code>report()</code> it, and
+throw only for a broken example.</li>
 </ul>
 <p>Optional <code>label</code> names the source tab and <code>editorMode</code> picks the code editor&#39;s language.
 Replacing a built-in is allowed: <code>registerDialect(&#39;tjs&#39;, { transform })</code> runs <code>tjs</code> examples
@@ -638,6 +641,6 @@ context = {
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-phj4y7zn.js"></script>
+  <script type="module" src="../hydrate-4xj9yv4f.js"></script>
 </body>
 </html>

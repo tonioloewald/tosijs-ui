@@ -157,7 +157,10 @@ A dialect gives exactly one of:
   capabilities your registration closes over). `context` carries the example's `preview`
   element, its `options`, the page's `context` modules, an `AbortSignal` that fires when the
   example re-runs, and `report(value)`. A non-`undefined` return value is reported too: it is
-  shown below the preview.
+  shown below the preview. While a run is pending a spinner shows over the example (after a
+  quarter-second, so a fast run never flashes it); a re-run replaces it. If your language treats
+  errors as values (AJS does), a run that ENDS in one is a successful run: `report()` it, and
+  throw only for a broken example.
 
 Optional `label` names the source tab and `editorMode` picks the code editor's language.
 Replacing a built-in is allowed: `registerDialect('tjs', { transform })` runs `tjs` examples
@@ -584,6 +587,8 @@ import { exampleEditKey, saveExampleEdit, loadExampleEdit, clearExampleEdit, has
 import { liveExampleStyleSpec } from './styles.js';
 import { runTests } from './test-harness.js';
 const { div, tosiSlot, style, button, pre, span, label, input } = elements;
+const prefersReducedMotion = () => typeof matchMedia === 'function' &&
+    matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Test mode: controlled by localStorage, defaults to enabled on localhost
 const TESTS_ENABLED_KEY = 'tosijs-ui-tests-enabled';
 const isLocalhost = typeof window !== 'undefined' &&
@@ -805,6 +810,7 @@ export class LiveExample extends withAttributes({
     // grow the page without bound. Past the cap one line says how many were dropped; devtools
     // still has them all.
     static CONSOLE_LINES = 500;
+    static RUNNING_DELAY_MS = 250;
     consoleLines = 0;
     consoleDropped;
     // A fresh console per run. A log arriving from a PREVIOUS run (a timer or listener it left
@@ -1267,6 +1273,13 @@ export class LiveExample extends withAttributes({
             part: 'console',
             role: 'log',
             ariaLabel: 'Example console',
+            hidden: true,
+        }), 
+        // Shown while a `run` dialect's run is pending (see refresh()).
+        div({
+            part: 'running',
+            role: 'status',
+            ariaLabel: 'Running',
             hidden: true,
         })),
         // Empty until first showCode. buildEditorPanel() fills it lazily so a reader
@@ -1780,6 +1793,8 @@ export class LiveExample extends withAttributes({
         const runner = getDialect(this.dialect)?.run;
         this.runAbort?.abort();
         const runAbort = (this.runAbort = new AbortController());
+        if (this.hydrated)
+            this.parts.running.hidden = true;
         this.clearConsole();
         const exampleConsole = this.consoleForRun();
         // The bake was made at build time by the PINNED transpiler, so it is only valid for a
@@ -1864,6 +1879,18 @@ export class LiveExample extends withAttributes({
         }
         if (runner && preview) {
             const target = preview;
+            /*
+            A slow run (a network call, an LLM) is an empty box until it resolves, which reads as
+            broken (tjs-lang, #184). So show a spinner — after a beat, so a fast run never flashes
+            it — until it resolves or a re-run supersedes it.
+            */
+            const running = this.parts.running;
+            const showRunning = setTimeout(() => {
+                if (runAbort.signal.aborted)
+                    return;
+                running.classList.toggle('still', prefersReducedMotion());
+                running.hidden = false;
+            }, LiveExample.RUNNING_DELAY_MS);
             try {
                 const result = await runner(this.js, {
                     preview: target,
@@ -1880,6 +1907,12 @@ export class LiveExample extends withAttributes({
                 // A run superseded by a newer one is not a failure of the newer one.
                 if (!runAbort.signal.aborted)
                     onError(error);
+            }
+            finally {
+                clearTimeout(showRunning);
+                // only if no newer run has taken over the spinner
+                if (this.runAbort === runAbort)
+                    running.hidden = true;
             }
         }
         if (this.persistToDom) {

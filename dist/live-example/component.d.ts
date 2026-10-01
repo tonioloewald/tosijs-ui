@@ -102,6 +102,35 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
             fontFamily: string;
             whiteSpace: string;
         };
+        ':host [part="running"]': {
+            position: string;
+            top: string;
+            left: string;
+            width: string;
+            height: string;
+            margin: string;
+            borderRadius: string;
+            border: string;
+            borderTopColor: string;
+            boxSizing: string;
+            animation: string;
+            pointerEvents: string;
+            zIndex: string;
+        };
+        ':host [part="running"].still': {
+            animation: string;
+        };
+        ':host [part="running"][hidden]': {
+            display: string;
+        };
+        '@keyframes tosi-example-spin': {
+            from: {
+                transform: string;
+            };
+            to: {
+                transform: string;
+            };
+        };
         ':host [part="console"][hidden]': {
             display: string;
         };
@@ -308,6 +337,7 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     set options(value: Record<string, unknown>);
     private runAbort?;
     private static readonly CONSOLE_LINES;
+    private static readonly RUNNING_DELAY_MS;
     private consoleLines;
     private consoleDropped?;
     private consoleForRun;

@@ -2,6 +2,13 @@
 
 ## 1.16.2 (unreleased)
 
+### A spinner while a `run` dialect is working (#184)
+
+A `run` that waits on the network or an LLM used to leave an empty box that looked broken.
+Now a spinner shows over the example while the run is pending, after a quarter-second so a
+fast run never flashes it, and a re-run replaces it. Under `prefers-reduced-motion` it is a
+still ring. Asked for by tjs-lang, whose weather and GitHub examples take 5 to 10 seconds.
+
 ### `<tosi-carousel>`: tappable dots, `auto` that waits, resize-safe (#204)
 
 Found by tosijs-virta using a carousel as a full-bleed hero on a phone.
@@ -12,7 +19,7 @@ Found by tosijs-virta using a carousel as a full-bleed hero on a phone.
 - **`auto` holds still while someone is looking:** under a mouse hover, while keyboard focus is
   inside it, and always under `prefers-reduced-motion: reduce` (which also makes paging jump
   instead of animating). A touch is never treated as a hover.
-- **A resize keeps the current slide in place** instead of leaving it partway into the next.
+- **A resize re-seats the current slide** instead of leaving it partway into the next.
 
 ### Live examples show what they log
 

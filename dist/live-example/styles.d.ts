@@ -69,6 +69,35 @@ export declare const liveExampleStyleSpec: {
         fontFamily: string;
         whiteSpace: string;
     };
+    ':host [part="running"]': {
+        position: string;
+        top: string;
+        left: string;
+        width: string;
+        height: string;
+        margin: string;
+        borderRadius: string;
+        border: string;
+        borderTopColor: string;
+        boxSizing: string;
+        animation: string;
+        pointerEvents: string;
+        zIndex: string;
+    };
+    ':host [part="running"].still': {
+        animation: string;
+    };
+    ':host [part="running"][hidden]': {
+        display: string;
+    };
+    '@keyframes tosi-example-spin': {
+        from: {
+            transform: string;
+        };
+        to: {
+            transform: string;
+        };
+    };
     ':host [part="console"][hidden]': {
         display: string;
     };
