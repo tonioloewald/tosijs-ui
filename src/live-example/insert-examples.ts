@@ -4,6 +4,7 @@ import {
   isLiveFence,
   languageOfClass,
 } from '../doc-system/example-policy.js'
+import { isBuiltInDialect } from './dialects.js'
 import { ExampleContext } from './types.js'
 import type { LiveExample } from './component.js'
 
@@ -96,6 +97,34 @@ export function setExamplePolicy(policy: ExamplePolicy): void {
 }
 
 /*
+The site config declares which dialects its bundle registers (`SiteConfig.dialects`, stamped as
+`__TOSI_DIALECTS`). The build trusts that list, so a declared dialect nobody registered would
+silently render as plain code (or, for a replaced built-in, run the pinned one). Say so, by
+name, once per page. `console.error`, so the doc-tests' console-clean check catches it too.
+*/
+const reportedDialects = new Set<string>()
+const BUILT_IN_NAMES = new Set(['js', 'tjs', 'ts'])
+function checkDeclaredDialects(): void {
+  const declared = (globalThis as { __TOSI_DIALECTS?: unknown }).__TOSI_DIALECTS
+  if (!Array.isArray(declared)) return
+  for (const name of declared) {
+    if (typeof name !== 'string' || reportedDialects.has(name)) continue
+    // A declared built-in means "the site replaces it": missing if the built-in is still
+    // the one registered. Any other name is missing if it is not a dialect at all.
+    const missing = BUILT_IN_NAMES.has(name)
+      ? isBuiltInDialect(name)
+      : !isDialectLanguage(name)
+    if (!missing) continue
+    reportedDialects.add(name)
+    console.error(
+      `live examples: the site config declares the dialect "${name}" (SiteConfig.dialects), ` +
+        `but no registerDialect('${name}', …) ran before the examples were inserted. ` +
+        `Register it in your bundleEntry, before the doc system starts.`
+    )
+  }
+}
+
+/*
 A fence's JSON options (#184), as the renderer left them on the `<pre>`. A malformed options
 object is an authoring error the author cannot otherwise see — the example just runs without
 them — so it is reported with the file and example it came from. `console.error`, so the
@@ -146,6 +175,7 @@ export function insertExamples(
   `opt-in` is the setting for a prose or book site, where code is overwhelmingly
   illustration and a runaway `css` fence is a restyled chapter.
   */
+  checkDeclaredDialects()
   const optIn = examplePolicy() === 'opt-in'
   const sources: SourceBlock[] = [
     /*

@@ -42,11 +42,16 @@ child always assumed 'auto', so a `:static` fence — or any fence under `liveEx
 'opt-in'` that never runs — could still hard-fail the build (review major M2).
 */
 const liveExamples = (process.env.TOSI_LIVE_EXAMPLES || 'auto');
+// Built-ins the site replaces (SiteConfig.dialects), comma-separated (#2463).
+const overriddenDialects = (process.env.TOSI_OVERRIDDEN_DIALECTS || '')
+    .split(',')
+    .filter(Boolean);
 const corpus = JSON.parse(await Bun.file(docsJson).text());
 const { problems, warnings, bakes, skipped } = await checkExamples(corpus, {
     ...(contextKeys.length ? { contextKeys } : {}),
     ...(importPrefix ? { importPrefix } : {}),
     liveExamples,
+    overriddenDialects,
 });
 // stdout is the channel — the parent parses this. Anything else this process prints
 // (warnings from the transform, say) goes to stderr so it can't corrupt the payload.

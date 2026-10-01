@@ -12,6 +12,9 @@ the icon system here would put src/icon-data.ts into `bun --watch`'s graph and
 cause an endless rebuild loop.
 */
 import { pageGlobalsHead } from './page-globals.js';
+import { registerLiveLanguage } from '../example-policy.js';
+// Dialects every page has without registering them (see live-example/dialects.ts).
+const BUILT_IN_DIALECTS = new Set(['js', 'tjs', 'ts']);
 import * as path from 'path';
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js';
 import { listEpubVolumes, renderEpubDownloads } from './epub-volumes.js';
@@ -114,7 +117,7 @@ const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
  * because the health-conscious path is unavailable. A child that runs and reports
  * problems is not a failure — that is the whole point of it.
  */
-async function checkExamplesInChild(docsJson, importPrefix, contextKeys = [], liveExamples = 'auto') {
+async function checkExamplesInChild(docsJson, importPrefix, contextKeys = [], liveExamples = 'auto', overriddenDialects = []) {
     const cliTs = `${import.meta.dir}/check-examples-cli.ts`;
     const cli = existsSync(cliTs)
         ? cliTs
@@ -130,6 +133,8 @@ async function checkExamplesInChild(docsJson, importPrefix, contextKeys = [], li
                 ...(importPrefix ? { TOSI_IMPORT_PREFIX: importPrefix } : {}),
                 // A fence that will never run must not fail a build (major M2).
                 TOSI_LIVE_EXAMPLES: liveExamples,
+                // Built-ins the site replaces: its transform runs them, not ours (#2463).
+                TOSI_OVERRIDDEN_DIALECTS: overriddenDialects.join(','),
             },
         });
         // Drain BOTH pipes while awaiting exit. An undrained pipe fills its buffer, the
@@ -658,7 +663,7 @@ export async function buildSite(config, opts = {}) {
             if (config.checkExamples !== false) {
                 const { problems, warnings, bakes } = await checkExamplesInChild(DOCS_JSON, resolverPrefix, typeof config.checkExamples === 'object'
                     ? config.checkExamples.contextKeys ?? []
-                    : [], config.liveExamples ?? 'auto');
+                    : [], config.liveExamples ?? 'auto', (config.dialects ?? []).filter((name) => BUILT_IN_DIALECTS.has(name)));
                 exampleBakes = bakes;
                 // Unsupported imports don't fail the build — the code isn't broken, it just
                 // can't run in the doc environment (almost always illustrative code that
@@ -1397,6 +1402,12 @@ export async function buildSite(config, opts = {}) {
                 .digest('hex')
                 .slice(0, 12);
             const docs = JSON.parse(docsJsonText);
+            // Declared dialects are live fences at build time too, so the static highlighter
+            // leaves their source alone (#2463). Idempotent: a watch rebuild re-adds the same names.
+            for (const name of config.dialects ?? []) {
+                if (!BUILT_IN_DIALECTS.has(name))
+                    registerLiveLanguage(name);
+            }
             const pageCount = await generateSite({
                 liveExamples: config.liveExamples,
                 docs,

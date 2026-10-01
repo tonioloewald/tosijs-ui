@@ -267,3 +267,48 @@ describe('1.16.1 review regressions', () => {
     )
   })
 })
+
+describe('SiteConfig.dialects on the page (#2463)', () => {
+  function insert() {
+    const root = document.createElement('div')
+    root.innerHTML = `<pre><code class="language-js">x</code></pre>`
+    const creator: any = () => {
+      const el: any = document.createElement('div')
+      el.showDefaultTab = () => {}
+      el.snapshotAndRestoreLocalEdit = () => {}
+      return el
+    }
+    insertExamples(root, {} as any, creator, 'live-example')
+  }
+
+  test('a declared dialect nobody registered is reported, by name, once', () => {
+    const error = spyOn(console, 'error').mockImplementation(() => {})
+    ;(globalThis as any).__TOSI_DIALECTS = ['neverregistered', 'shout']
+    try {
+      insert()
+      insert()
+      const messages = error.mock.calls.map((c) => String(c[0]))
+      expect(
+        messages.filter((m) => m.includes('"neverregistered"')).length
+      ).toBe(1)
+      expect(messages.some((m) => m.includes('"shout"'))).toBe(false) // registered above
+    } finally {
+      delete (globalThis as any).__TOSI_DIALECTS
+      error.mockRestore()
+    }
+  })
+
+  test('a declared built-in that was not replaced is reported', () => {
+    const error = spyOn(console, 'error').mockImplementation(() => {})
+    ;(globalThis as any).__TOSI_DIALECTS = ['ts']
+    try {
+      insert()
+      expect(error.mock.calls.some((c) => String(c[0]).includes('"ts"'))).toBe(
+        true
+      )
+    } finally {
+      delete (globalThis as any).__TOSI_DIALECTS
+      error.mockRestore()
+    }
+  })
+})

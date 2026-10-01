@@ -186,3 +186,30 @@ describe('#M2: checkExamples honours the example policy', () => {
     expect(r.problems.length).toBe(1)
   })
 })
+
+describe('overridden built-in dialects (#2463)', () => {
+  const doc = (lang: string, text: string) =>
+    [
+      {
+        filename: 'd.md',
+        title: 'D',
+        text: '```' + lang + '\n' + text + '\n```\n',
+      },
+    ] as any
+
+  test('a built-in the site replaces is not checked or baked: the site transform runs it', async () => {
+    // syntax the installed transpiler rejects, but the site's own tjs accepts
+    const r = await checkExamples(doc('tjs', 'this is (not valid js'), {
+      overriddenDialects: ['tjs'],
+    })
+    expect(r.problems).toEqual([])
+    expect(r.bakes.size).toBe(0)
+  })
+
+  test('test blocks are still checked: they are plain js whatever the site overrides', async () => {
+    const r = await checkExamples(doc('test', 'this is (not valid js'), {
+      overriddenDialects: ['js'],
+    })
+    expect(r.problems.length).toBe(1)
+  })
+})

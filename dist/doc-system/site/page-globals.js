@@ -16,5 +16,9 @@ export function pageGlobalsHead(config) {
         config.exampleConsole === false
             ? `<script>globalThis.__TOSI_EXAMPLE_CONSOLE=false</script>`
             : '',
+        // 1.16.3: the dialects the site says its bundle registers, so the page can check
+        config.dialects?.length
+            ? `<script>globalThis.__TOSI_DIALECTS=${JSON.stringify(config.dialects).replace(/</g, '\\u003c')}</script>`
+            : '',
     ].join('');
 }

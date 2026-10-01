@@ -13,6 +13,10 @@ cause an endless rebuild loop.
 */
 
 import { pageGlobalsHead } from './page-globals.js'
+import { registerLiveLanguage } from '../example-policy.js'
+
+// Dialects every page has without registering them (see live-example/dialects.ts).
+const BUILT_IN_DIALECTS = new Set(['js', 'tjs', 'ts'])
 import * as path from 'path'
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js'
 import { listEpubVolumes, renderEpubDownloads } from './epub-volumes.js'
@@ -166,7 +170,8 @@ async function checkExamplesInChild(
   docsJson: string,
   importPrefix?: string,
   contextKeys: string[] = [],
-  liveExamples: 'auto' | 'opt-in' | 'none' = 'auto'
+  liveExamples: 'auto' | 'opt-in' | 'none' = 'auto',
+  overriddenDialects: string[] = []
 ): Promise<ExampleCheck> {
   const cliTs = `${import.meta.dir}/check-examples-cli.ts`
   const cli = existsSync(cliTs)
@@ -183,6 +188,8 @@ async function checkExamplesInChild(
         ...(importPrefix ? { TOSI_IMPORT_PREFIX: importPrefix } : {}),
         // A fence that will never run must not fail a build (major M2).
         TOSI_LIVE_EXAMPLES: liveExamples,
+        // Built-ins the site replaces: its transform runs them, not ours (#2463).
+        TOSI_OVERRIDDEN_DIALECTS: overriddenDialects.join(','),
       },
     })
     // Drain BOTH pipes while awaiting exit. An undrained pipe fills its buffer, the
@@ -810,7 +817,8 @@ export async function buildSite(
           typeof config.checkExamples === 'object'
             ? config.checkExamples.contextKeys ?? []
             : [],
-          config.liveExamples ?? 'auto'
+          config.liveExamples ?? 'auto',
+          (config.dialects ?? []).filter((name) => BUILT_IN_DIALECTS.has(name))
         )
         exampleBakes = bakes
         // Unsupported imports don't fail the build — the code isn't broken, it just
@@ -1654,6 +1662,11 @@ export async function buildSite(
         .digest('hex')
         .slice(0, 12)
       const docs = JSON.parse(docsJsonText)
+      // Declared dialects are live fences at build time too, so the static highlighter
+      // leaves their source alone (#2463). Idempotent: a watch rebuild re-adds the same names.
+      for (const name of config.dialects ?? []) {
+        if (!BUILT_IN_DIALECTS.has(name)) registerLiveLanguage(name)
+      }
       const pageCount = await generateSite({
         liveExamples: config.liveExamples,
         docs,

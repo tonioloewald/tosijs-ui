@@ -159,6 +159,12 @@ export async function checkExamples(
     importPrefix?: string
     /** Mirrors `SiteConfig.liveExamples`. A fence that will never run must not fail a build. */
     liveExamples?: ExamplePolicy
+    /**
+     * Built-in dialects the site replaces with its own transform (`SiteConfig.dialects`):
+     * not checked and not pre-transpiled here, because the installed tjs-lang is not what
+     * runs them, and checking would fail correct examples written for the site's own (#2463).
+     */
+    overriddenDialects?: string[]
   } = {}
 ): Promise<ExampleCheck> {
   const policy: ExamplePolicy = opts.liveExamples ?? 'auto'
@@ -194,6 +200,7 @@ export async function checkExamples(
   for (const d of ['tjs', 'ts'] as const)
     if (!(await transformAvailable(d))) unavailable.add(d)
   const skipped = new Map<string, number>()
+  const overridden = new Set(opts.overriddenDialects ?? [])
 
   for (const doc of docs) {
     for (const block of collectCodeTokens(doc.text)) {
@@ -215,6 +222,7 @@ export async function checkExamples(
       if (!isLiveFence(block.lang, block.mode, policy)) continue
       // `test` blocks are conventional JS/TS, transpiled as plain js.
       const dialect = block.lang === 'test' ? 'js' : block.lang
+      if (block.lang !== 'test' && overridden.has(dialect)) continue
       if (unavailable.has(dialect)) {
         skipped.set(dialect, (skipped.get(dialect) ?? 0) + 1)
         continue

@@ -48,11 +48,17 @@ const liveExamples = (process.env.TOSI_LIVE_EXAMPLES || 'auto') as
   | 'opt-in'
   | 'none'
 
+// Built-ins the site replaces (SiteConfig.dialects), comma-separated (#2463).
+const overriddenDialects = (process.env.TOSI_OVERRIDDEN_DIALECTS || '')
+  .split(',')
+  .filter(Boolean)
+
 const corpus = JSON.parse(await Bun.file(docsJson).text())
 const { problems, warnings, bakes, skipped } = await checkExamples(corpus, {
   ...(contextKeys.length ? { contextKeys } : {}),
   ...(importPrefix ? { importPrefix } : {}),
   liveExamples,
+  overriddenDialects,
 })
 
 // stdout is the channel — the parent parses this. Anything else this process prints

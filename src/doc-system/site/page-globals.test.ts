@@ -47,3 +47,15 @@ test('the stamp lands BEFORE the bundle script, so the bundle sees it when it ru
   expect(bundle).toBeGreaterThan(-1)
   expect(stamp).toBeLessThan(bundle)
 })
+
+describe('dialects (#2463)', () => {
+  test('declared dialects are stamped for the page to check, escaped', () => {
+    expect(pageGlobalsHead({ dialects: ['ajs', 'tjs'] })).toBe(
+      '<script>globalThis.__TOSI_DIALECTS=["ajs","tjs"]</script>'
+    )
+    expect(pageGlobalsHead({ dialects: ['</script>'] })).not.toContain(
+      '</script></script>'
+    )
+    expect(pageGlobalsHead({ dialects: [] })).toBe('')
+  })
+})

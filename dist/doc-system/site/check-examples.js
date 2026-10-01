@@ -122,6 +122,7 @@ export async function checkExamples(docs, opts = {}) {
         if (!(await transformAvailable(d)))
             unavailable.add(d);
     const skipped = new Map();
+    const overridden = new Set(opts.overriddenDialects ?? []);
     for (const doc of docs) {
         for (const block of collectCodeTokens(doc.text)) {
             /*
@@ -144,6 +145,8 @@ export async function checkExamples(docs, opts = {}) {
                 continue;
             // `test` blocks are conventional JS/TS, transpiled as plain js.
             const dialect = block.lang === 'test' ? 'js' : block.lang;
+            if (block.lang !== 'test' && overridden.has(dialect))
+                continue;
             if (unavailable.has(dialect)) {
                 skipped.set(dialect, (skipped.get(dialect) ?? 0) + 1);
                 continue;

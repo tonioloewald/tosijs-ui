@@ -183,10 +183,13 @@ registerDialect('ajs', {
 reported in the console with the example it belongs to, rather than silently ignored.
 (CommonMark unescapes backslashes in a fence's info string, so avoid `\"` inside values.)
 
-If your dialect's name is also a syntax-highlighting grammar, call `registerLiveLanguage`
-(from `tosijs-ui/site`) in your site config too: the static highlighter runs at build time,
-where your page's registrations don't, and would otherwise tokenize the source the example
-reads.
+**On a `tosijs-ui/site` site, also list your dialects in the site config:**
+`dialects: ['ajs']`, and any built-in you replace (`dialects: ['ajs', 'tjs']`). The build runs
+where your page's registrations don't, so this is how it learns them:
+
+- the build-time highlighter leaves those fences alone, even when the name is also a grammar;
+- a replaced built-in isn't checked or pre-transpiled with the installed tjs-lang;
+- on the page, a declared dialect that nothing registered is reported in the console by name.
 
 Here a tiny `run` dialect is registered and an example is created in it:
 

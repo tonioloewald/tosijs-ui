@@ -213,6 +213,20 @@ describe('executable fences are NOT highlighted — they are live-example source
   })
 })
 
+describe('SiteConfig.dialects at build time (#2463)', () => {
+  // Placed BEFORE the host-Prism tests: they clear the module cache, after which a dynamic
+  // import is a different instance from the `highlightHtml` this file imported.
+  test('a declared dialect is left alone, even when its name is a grammar', async () => {
+    const { registerLiveLanguage } = await import('./example-policy.js')
+    const html = '<pre><code class="language-ruby">puts "hi"</code></pre>'
+    // undeclared, `ruby` is ordinary static code and gets highlighted
+    expect(await highlightHtml(html)).toContain('class="token')
+    // declared (what buildSite does with SiteConfig.dialects), it is live-example source
+    registerLiveLanguage('ruby')
+    expect(await highlightHtml(html)).toBe(html)
+  })
+})
+
 describe('#155: a language can supply its own grammar', () => {
   test('a registered grammar WINS over the alias table', async () => {
     /*

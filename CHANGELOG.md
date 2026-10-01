@@ -2,6 +2,17 @@
 
 ## 1.16.3 (unreleased)
 
+### Declare your dialects once, in the site config (#2463)
+
+`dialects: ['ajs']` in a `tosijs-ui/site` config, plus any built-in you replace
+(`dialects: ['ajs', 'tjs']`), tells the build what your bundle registers with `registerDialect`:
+
+- The build-time highlighter leaves those fences alone, even when the name is also a Prism
+  grammar. Before, this needed a separate `registerLiveLanguage` call.
+- A replaced built-in isn't checked or pre-transpiled with the installed tjs-lang. That check
+  used to fail correct examples written for the site's own build.
+- On the page, a declared dialect that nothing registered is reported in the console, by name.
+
 ### Menus on iPhone stay reachable (#2460)
 
 A long menu popped low on an iPhone ran below the visible screen, and scrolling the page to

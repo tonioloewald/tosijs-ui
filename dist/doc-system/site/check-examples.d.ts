@@ -48,6 +48,12 @@ export declare function checkExamples(docs: Doc[], opts?: {
     importPrefix?: string;
     /** Mirrors `SiteConfig.liveExamples`. A fence that will never run must not fail a build. */
     liveExamples?: ExamplePolicy;
+    /**
+     * Built-in dialects the site replaces with its own transform (`SiteConfig.dialects`):
+     * not checked and not pre-transpiled here, because the installed tjs-lang is not what
+     * runs them, and checking would fail correct examples written for the site's own (#2463).
+     */
+    overriddenDialects?: string[];
 }): Promise<ExampleCheck>;
 /** Format problems for a build log. */
 export declare function formatExampleProblems(problems: ExampleProblem[]): string;

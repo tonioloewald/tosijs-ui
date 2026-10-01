@@ -136,6 +136,18 @@ export interface SiteConfig {
      * `{"console": false}`.
      */
     exampleConsole?: boolean;
+    /**
+     * The live-example dialects your bundle registers with `registerDialect` (1.16.3, #2463):
+     * your own (`['ajs']`) and any built-in you replace (`['tjs']`). Declaring them here is
+     * what keeps the build and the page in agreement:
+     *
+     * - a declared language is a live example at build time too, so the static highlighter
+     *   leaves its source alone (otherwise a name that is also a Prism grammar is tokenized);
+     * - a declared BUILT-IN (`js`, `tjs`, `ts`) is not checked or pre-transpiled by the build,
+     *   because your transform is the one that runs;
+     * - on the page, a declared dialect nobody registered is reported in the console, by name.
+     */
+    dialects?: string[];
     /** modules to leave external in the bundle, e.g. ['jolt-physics'] */
     bundleExternals?: string[];
     /**

@@ -10,6 +10,7 @@ byte-for-byte when a new switch is added.
 export interface PageGlobalsConfig {
   liveExamples?: 'auto' | 'opt-in'
   exampleConsole?: boolean
+  dialects?: string[]
 }
 
 export function pageGlobalsHead(config: PageGlobalsConfig): string {
@@ -21,6 +22,12 @@ export function pageGlobalsHead(config: PageGlobalsConfig): string {
     // 1.16.2: the example console
     config.exampleConsole === false
       ? `<script>globalThis.__TOSI_EXAMPLE_CONSOLE=false</script>`
+      : '',
+    // 1.16.3: the dialects the site says its bundle registers, so the page can check
+    config.dialects?.length
+      ? `<script>globalThis.__TOSI_DIALECTS=${JSON.stringify(
+          config.dialects
+        ).replace(/</g, '\\u003c')}</script>`
       : '',
   ].join('')
 }

@@ -1375,9 +1375,11 @@ of the six do not look like code you are asking to be *run* (#146):
 A site can add languages to the first row with `registerDialect` from `tosijs-ui/live-example`
 (called in your `bundleEntry`, before the doc system starts), and any fence can pass JSON
 options to its dialect: `` ```tjs {"runTests": "report"} ``. See the live-example page,
-"Adding a dialect". If a registered name is also a highlighter grammar, call
-`registerLiveLanguage` (from `tosijs-ui/site`) in your site config as well, so the build-time
-highlighter leaves those fences alone.
+"Adding a dialect". **List them in the site config too**, `dialects: ['ajs']` (and any
+built-in you replace, `dialects: ['ajs', 'tjs']`): the build can't see your page's
+registrations, so this keeps the build-time highlighter off those fences, stops the build
+checking and pre-transpiling a built-in you've replaced, and lets the page report a declared
+dialect that nothing registered.
 
 The two in bold turn ordinary API documentation into live bugs, and neither fails the build:
 
