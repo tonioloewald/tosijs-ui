@@ -277,3 +277,21 @@ gap, recorded rather than hidden.
 - **Process:** the maintainer ruled that switch-off-able UI appearing only where there was none
   is a patch; recorded in CLAUDE.md. Test lanes this release: unit ~13s (the spinner tests add
   ~2s of real timers, board #2504), Playwright 1.6m, consumer and haltija a few minutes each.
+
+## 1.16.3 (2026-10-01) — first full run of the split publish workflow; a security BLOCK caught in it
+
+- **The review caught a security regression in a template I had copied verbatim:** the reworked
+  publish.yml uploaded the tarball after three post-Pack steps running unpinned code, and its
+  stage job never compared the bytes it staged with Pack's hash, so a swap would have been
+  staged and then "verified" as identical. Fixed at the source (practices template 890c0fc) and
+  filed as a re-copy task for every repo. Copying "unchanged" from a template is not a review.
+- **And a UX regression in my own #2460 fix:** the new anchor-scoped scroll rule left submenus
+  on screen (their anchor lives in the parent float, mounted on <body>). The class fix follows
+  chains of floats; a test fails without it.
+- **The new workflow's first full run went green**: build (no credential), stage (integrity
+  check, npm pinned), verify (published bytes = staged bytes, registry smoke test). Approval
+  took ~10 minutes to show in the registry; the 60-minute wait absorbed it.
+- **Process miss, found because the maintainer asked:** for 1.16.0–1.16.2 I hand-wrote the
+  scoreboard's Version and Activity cells. Since 2026-09-26 a board project's row is
+  tool-generated (Version) and points at the board (Activity). CLAUDE.md's step now says so.
+- **Not verified:** #2460 on a real iPhone (emulation has no URL bar). Still open on the board.
