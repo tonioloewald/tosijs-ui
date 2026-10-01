@@ -37,8 +37,8 @@
         "prettier": "^2.8.8",
         "prismjs": "^1.30.0",
         "tjs-lang": "0.13.13",
-        "tosijs": "1.10.3",
-        "tosijs-schema": "1.10.2",
+        "tosijs": "1.10.4",
+        "tosijs-schema": "1.12.0",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.65.0",
       },
@@ -355,11 +355,11 @@
 
     "tjs-lang": ["tjs-lang@0.13.13", "", { "dependencies": { "acorn": "^8.15.0", "acorn-loose": "^8.5.2", "acorn-walk": "^8.3.4", "tosijs-schema": "^1.5.1" }, "peerDependencies": { "@codemirror/autocomplete": "^6.0.0", "@codemirror/lang-javascript": "^6.0.0", "@codemirror/language": "^6.0.0", "@codemirror/state": "^6.0.0", "@codemirror/view": "^6.0.0" }, "optionalPeers": ["@codemirror/autocomplete", "@codemirror/lang-javascript", "@codemirror/language", "@codemirror/state", "@codemirror/view"], "bin": { "tjs": "src/cli/tjs.ts", "tjsx": "src/cli/tjsx.ts", "create-tjs-app": "src/cli/create-app.ts", "tjs-playground": "src/cli/playground.ts", "ajs-install-cursor": "bin/install-cursor.sh", "ajs-install-vscode": "bin/install-vscode.sh" } }, "sha512-U1a19eFyd8hCIrsKGyp16VQFMlH9S6Tq5iYKgzMEdV8ucF9lsdaSAB3TuDmS0dPybnw619WLj4w/ZTtMSTmxGw=="],
 
-    "tosijs": ["tosijs@1.10.3", "", { "bin": { "tosijs": "dist/cli.mjs" } }, "sha512-9VSwEM1UcEM0CnZ84KQL8sYJhzOoAs8BBfIPtGiuKGjgfKz/474ANRRtB4YHH64fTXdx5bYszz/Md+rXR9HuRQ=="],
+    "tosijs": ["tosijs@1.10.4", "", { "bin": { "tosijs": "dist/cli.mjs" } }, "sha512-DTQmiSVPvBMZ/ZfkLWDUtpuMbDzymNOQajF5HXlevC/YF9U1d44Dac0IhH4DLPyc631iey97x9FUHiUJ+jRcyw=="],
 
     "tosijs-kilpi": ["tosijs-kilpi@1.0.1", "", {}, "sha512-WaYFCXNt63OJWo+ZXNuVM1S5YEytwHplLYq7Ez+dD0TmzJhHJnvpGigAN+CrupjJYRQSgcixrVK0o5IwuFX+FQ=="],
 
-    "tosijs-schema": ["tosijs-schema@1.10.2", "", {}, "sha512-qD55unAQzsWwJoKr/83B4EF1Bww4U/mC/fnSzjEuaOQgqG+yo0fsH6WVvne+eVeKeuzOc8m9vbYmgzeYMVPVKw=="],
+    "tosijs-schema": ["tosijs-schema@1.12.0", "", {}, "sha512-wC6B/lMCSqr4/CMDej5puV8Wk7alwgUvL6pO2LUNQmEQvGQgeZdr3v8itUiuw+7u7jBIte6m12aGdRmBsFOznw=="],
 
     "ts-api-utils": ["ts-api-utils@2.5.0", "", { "peerDependencies": { "typescript": ">=4.8.4" } }, "sha512-OJ/ibxhPlqrMM0UiNHJ/0CKQkoKF243/AEmplt3qpRgkW8VG7IfOS41h7V8TjITqdByHzrjcS/2si+y4lIh8NA=="],
 
