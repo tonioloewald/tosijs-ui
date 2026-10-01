@@ -257,3 +257,23 @@ gap, recorded rather than hidden.
 - **Process:** version by narrative, not letter — the maintainer chose a patch for additive work,
   which CLAUDE.md's rule permits for the dialect registry and strains for a new component. Lane
   times at load ~20: unit 12s, Playwright 1.6m, consumer and haltija a few minutes each.
+
+## 1.16.2 (2026-10-01) — console, spinner, carousel; two GO_WITH_FOLLOWUPS passes
+
+- **The review found a regression of my own making that every lane missed:** injecting the
+  example console as a parameter made any example declaring its own `console` a SyntaxError.
+  Nothing in this repo does that, so no test could have failed. The first fix was a regex; the
+  scoped re-review showed it mis-read nested declarations, comments and destructuring. The
+  general fix let the engine decide (build, and on a SyntaxError build again without the
+  injected console). Lesson, again: when a rule can be asked of the runtime, don't restate it.
+- **A Playwright test caught a design error in a fix:** 44px-wide hit areas on dots 16px apart
+  made each dot's area cover its neighbour's centre, so a tap dead on dot 1 selected dot 2.
+  The test checked every dot, not one; checking one would have passed.
+- **The formatter's first two cuts were wrong in ways only adversarial review found:** a
+  WeakSet marked any repeated value `[Circular]`; a replacer tracking ancestry by holder lost it
+  at the first Map wrapper. Converting to plain data with an explicit ancestor list fixed both.
+- **External change mid-release:** new `brace-expansion` advisories (dev-only, high) would have
+  failed every build; the existing override's floor was raised. The audit gate did its job.
+- **Process:** the maintainer ruled that switch-off-able UI appearing only where there was none
+  is a patch; recorded in CLAUDE.md. Test lanes this release: unit ~13s (the spinner tests add
+  ~2s of real timers, board #2504), Playwright 1.6m, consumer and haltija a few minutes each.
