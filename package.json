@@ -202,7 +202,7 @@
   },
   "overrides": {
     "flatted": ">=3.4.2",
-    "brace-expansion": ">=5.0.9"
+    "brace-expansion": ">=5.0.12"
   },
   "engines": {
     "bun": ">=1.2"
