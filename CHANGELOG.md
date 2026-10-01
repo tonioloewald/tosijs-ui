@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.16.2 (unreleased)
+## 1.16.2
+
+A patch: live examples show what they log, a spinner while a `run` dialect works, and three
+carousel fixes. The one visible change to existing pages is the first: an example that logs
+now shows its output under the preview. `dist/iife.js` grows by 1.8 kB gzip (472.8 → 474.6 kB).
 
 ### A spinner while a `run` dialect is working (#184)
 
