@@ -28,6 +28,11 @@ export interface DialectRunContext {
   signal: AbortSignal
   /** What the page provides to examples (`tosijs`, `tosijs-ui`, …), keyed by module name. */
   context: ExampleContext
+  /**
+   * The example's console: what you log here appears under the preview (and in devtools).
+   * Forward a VM's own output to it to show it the same way a `js` example's logs are shown.
+   */
+  console: Console
   /** Show a value as the example's result, below its preview. */
   report(result: unknown): void
 }

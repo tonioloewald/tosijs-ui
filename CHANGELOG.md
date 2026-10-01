@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.16.2 (unreleased)
+
+### Live examples show what they log
+
+What an example logs (`console.log`, `info`, `warn`, `error`, `debug`, `dir`, `table`) now
+appears in a console under its preview, as well as in devtools. tjs-lang asked for it on #184:
+a `tjs` example that logs its results showed a reader an empty box.
+
+- Each example gets its own `console`, passed in the way `preview` is. The global console is
+  never patched, so examples never see each other's output.
+- The panel appears only when an example logs something. **Existing examples that log now show
+  it**; examples that don't look exactly as before.
+- A re-run starts a clean console, and a late log from the previous run (a timer it left
+  behind) is not shown. The panel keeps 500 lines and counts the rest.
+- Turn it off for one example with the fence option `{"console": false}`, or for a page with
+  `setExampleConsole(false)` from `tosijs-ui/live-example`.
+- A `run` dialect receives it as `context.console`, so a VM can forward its output to the same
+  place.
+
 ## 1.16.1
 
 A patch: everything here is additive. Two features, a search field that suggests refinements

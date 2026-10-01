@@ -101,6 +101,11 @@ export interface ExecutionOptions {
    * doubled side effects.
    */
   onScope?: (scope: Record<string, unknown>) => void
+  /**
+   * The `console` the example's code sees (see example-console.ts). Injected as a parameter,
+   * like `preview`, so it shadows the global for this run only. Omitted: the real console.
+   */
+  console?: Console
 }
 
 /**
@@ -156,6 +161,7 @@ export async function executeInline(
     widgetsElement,
     onError,
     onScope,
+    console: exampleConsole,
   } = options
 
   const preview = div({ class: 'preview' })
@@ -182,7 +188,12 @@ export async function executeInline(
       transformedCode,
       onScope
     )
-    const fullContext = { preview, ...context, ...extraContext }
+    const fullContext = {
+      preview,
+      ...(exampleConsole ? { console: exampleConsole } : {}),
+      ...context,
+      ...extraContext,
+    }
 
     const contextKeys = contextParamNames(Object.keys(fullContext))
     const contextValues = Object.values(fullContext)
@@ -256,6 +267,7 @@ export async function executeInIframe(
     widgetsElement,
     onError,
     onScope,
+    console: exampleConsole,
   } = options
 
   // Create or reuse iframe
@@ -334,7 +346,12 @@ export async function executeInIframe(
       onScope
     )
     // Execute JS in iframe context
-    const fullContext = { preview, ...context, ...extraContext }
+    const fullContext = {
+      preview,
+      ...(exampleConsole ? { console: exampleConsole } : {}),
+      ...context,
+      ...extraContext,
+    }
 
     // Create AsyncFunction in iframe's context
     const IframeAsyncFunction = (

@@ -69,6 +69,46 @@ export declare const liveExampleStyleSpec: {
         fontFamily: string;
         whiteSpace: string;
     };
+    ':host [part="console"][hidden]': {
+        display: string;
+    };
+    ':host(.-has-console) > [part="example"]': {
+        display: string;
+        flexDirection: string;
+    };
+    ':host(.-has-console) > [part="example"] > .preview, :host(.-has-console) > [part="example"] > .preview-iframe': {
+        flex: string;
+        height: string;
+        minHeight: string;
+    };
+    ':host [part="console"]': {
+        flex: string;
+        maxHeight: string;
+        overflow: string;
+        margin: string;
+        padding: string;
+        background: string;
+        boxShadow: string;
+        fontFamily: string;
+        fontSize: string;
+        lineHeight: string;
+    };
+    ':host [part="console"] .console-line': {
+        whiteSpace: string;
+        overflowWrap: string;
+        padding: string;
+    };
+    ':host [part="console"] .console-warn': {
+        color: string;
+        background: string;
+    };
+    ':host [part="console"] .console-error': {
+        color: string;
+        background: string;
+    };
+    ':host [part="console"] .console-debug, :host [part="console"] .console-dropped': {
+        opacity: string;
+    };
     ':host [part="editors"]': {
         flex: string;
         height: string;

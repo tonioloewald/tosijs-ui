@@ -93,7 +93,7 @@ export async function withScopeCapture(transformedCode, onScope) {
  * Execute code inline (directly in the page)
  */
 export async function executeInline(options) {
-    const { html, css, js, context, transform, compiledJs, exampleElement, styleElement, widgetsElement, onError, onScope, } = options;
+    const { html, css, js, context, transform, compiledJs, exampleElement, styleElement, widgetsElement, onError, onScope, console: exampleConsole, } = options;
     const preview = div({ class: 'preview' });
     preview.innerHTML = html;
     styleElement.innerText = css;
@@ -110,7 +110,12 @@ export async function executeInline(options) {
                 transforms: ['typescript'],
             })).code;
         const { code: finalCode, extraContext } = await withScopeCapture(transformedCode, onScope);
-        const fullContext = { preview, ...context, ...extraContext };
+        const fullContext = {
+            preview,
+            ...(exampleConsole ? { console: exampleConsole } : {}),
+            ...context,
+            ...extraContext,
+        };
         const contextKeys = contextParamNames(Object.keys(fullContext));
         const contextValues = Object.values(fullContext);
         /*
@@ -157,7 +162,7 @@ export async function executeInline(options) {
  * Execute code in an isolated iframe
  */
 export async function executeInIframe(options) {
-    const { html, css, js, context, transform, compiledJs, exampleElement, widgetsElement, onError, onScope, } = options;
+    const { html, css, js, context, transform, compiledJs, exampleElement, widgetsElement, onError, onScope, console: exampleConsole, } = options;
     // Create or reuse iframe
     let iframe = exampleElement.querySelector('iframe.preview-iframe');
     if (!iframe) {
@@ -215,7 +220,12 @@ export async function executeInIframe(options) {
             })).code;
         const { code: finalCode, extraContext } = await withScopeCapture(transformedCode, onScope);
         // Execute JS in iframe context
-        const fullContext = { preview, ...context, ...extraContext };
+        const fullContext = {
+            preview,
+            ...(exampleConsole ? { console: exampleConsole } : {}),
+            ...context,
+            ...extraContext,
+        };
         // Create AsyncFunction in iframe's context
         const IframeAsyncFunction = iframeWindow.eval('(async () => {}).constructor');
         const contextKeys = contextParamNames(Object.keys(fullContext));

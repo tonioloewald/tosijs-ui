@@ -87,6 +87,53 @@ export const liveExampleStyleSpec = {
         fontFamily: 'system-ui, sans-serif',
         whiteSpace: 'pre-wrap',
     },
+    /*
+    The example console (example-console.ts). Only an example that has LOGGED gets
+    `-has-console`, so every other example keeps exactly the layout it had: the preview fills
+    the example. With a console, the example becomes a column and the console takes up to
+    40% of it, scrolling, below a preview that keeps the rest.
+    */
+    ':host [part="console"][hidden]': {
+        display: 'none',
+    },
+    ':host(.-has-console) > [part="example"]': {
+        display: 'flex',
+        flexDirection: 'column',
+    },
+    ':host(.-has-console) > [part="example"] > .preview, :host(.-has-console) > [part="example"] > .preview-iframe': {
+        flex: '1 1 auto',
+        height: 'auto',
+        minHeight: '0',
+    },
+    ':host [part="console"]': {
+        flex: '0 1 auto',
+        maxHeight: '40%',
+        overflow: 'auto',
+        margin: '0',
+        // the preview's own padding, so console text lines up with what the example renders
+        padding: `${vars.spacing50} ${vars.spacing}`,
+        background: 'var(--code-bg, #fdfdfd)',
+        boxShadow: 'inset 0 1px 0 #0002',
+        fontFamily: 'var(--mono-font, monospace)',
+        fontSize: '13px',
+        lineHeight: '1.4',
+    },
+    ':host [part="console"] .console-line': {
+        whiteSpace: 'pre-wrap',
+        overflowWrap: 'anywhere',
+        padding: '1px 0',
+    },
+    ':host [part="console"] .console-warn': {
+        color: '#8a5a00',
+        background: '#fff8e1',
+    },
+    ':host [part="console"] .console-error': {
+        color: '#b00020',
+        background: '#fdecea',
+    },
+    ':host [part="console"] .console-debug, :host [part="console"] .console-dropped': {
+        opacity: '0.6',
+    },
     ':host [part="editors"]': {
         flex: '1 1 200px',
         height: '100%',

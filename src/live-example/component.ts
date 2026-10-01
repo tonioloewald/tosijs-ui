@@ -108,6 +108,40 @@ example the equivalent is written inside a comment (so it survives `tsc`) — bu
 that comment form can't appear inside a doc comment like this one, since the
 test's own closing delimiter would end the doc comment.
 
+## The console
+
+What an example logs is shown under its preview, so a reader sees what you'd see in devtools.
+Each example gets its own `console`, injected the way `preview` is, so its output is never
+mixed with another example's. Everything still reaches the browser's console too. The panel
+appears only once something is logged; an example that logs nothing looks exactly as it did.
+
+```js
+const words = ['tosijs', 'tjs', 'xinjs']
+console.log('words:', words)
+for (const word of words) console.log(word, word.length)
+console.warn('xinjs is the old name')
+preview.textContent = `${words.length} words logged`
+```
+```test
+test('logged lines appear under the preview', () => {
+  const example = preview.closest('tosi-example')
+  const lines = [...example.querySelectorAll('[part="console"] .console-line')]
+  expect(lines.length).toBe(5)
+  expect(lines[1].textContent).toBe('tosijs 6')
+  expect(lines[4].classList.contains('console-warn')).toBe(true)
+})
+```
+
+- It shows `log`, `info`, `warn`, `error`, `debug`, `dir` and `table`. Strings print as written,
+  data as JSON, errors as `Name: message`.
+- A re-run starts a clean console, and a log arriving late from the previous run (a timer it
+  left behind) is not shown.
+- It keeps 500 lines, then counts what it drops; devtools keeps everything.
+- Turn it off for one example with the fence option `{"console": false}`, or for the page with
+  `setExampleConsole(false)` from `tosijs-ui/live-example`.
+- A `run` dialect gets the same console as `context.console`, so a VM can forward its output
+  to it.
+
 ## Adding a dialect
 
 `js`, `tjs` and `ts` are the built-in entries of a **dialect registry**, and a site can add
@@ -544,6 +578,11 @@ import { popMenu } from '../menu.js'
 
 import { ExampleContext, ExampleParts, TransformFn } from './types.js'
 import {
+  createExampleConsole,
+  exampleConsoleEnabled,
+  type ConsoleEntry,
+} from './example-console.js'
+import {
   dialectTransform,
   getDialect,
   isBuiltInDialect,
@@ -831,6 +870,57 @@ export class LiveExample extends withAttributes({
 
   // Stops a `run` dialect's previous run when the example re-runs or leaves the page.
   private runAbort?: AbortController
+
+  // ── The example console ─────────────────────────────────────────────────────
+  // Lines are capped: an example that logs in a loop (or on every animation frame) must not
+  // grow the page without bound. Past the cap one line says how many were dropped; devtools
+  // still has them all.
+  private static readonly CONSOLE_LINES = 500
+  private consoleLines = 0
+  private consoleDropped?: HTMLElement
+
+  // A fresh console per run. A log arriving from a PREVIOUS run (a timer or listener it left
+  // behind) still reaches devtools but not the panel, which belongs to the current run.
+  private consoleForRun(): Console | undefined {
+    if (!exampleConsoleEnabled() || this.options.console === false)
+      return undefined
+    const signal = this.runAbort?.signal
+    return createExampleConsole((entry) => {
+      if (signal?.aborted || !this.hydrated) return
+      this.appendConsoleLine(entry)
+    })
+  }
+
+  private clearConsole(): void {
+    if (!this.hydrated) return
+    const panel = this.parts.console as HTMLElement
+    panel.replaceChildren()
+    panel.hidden = true
+    this.consoleLines = 0
+    this.consoleDropped = undefined
+    this.classList.remove('-has-console')
+  }
+
+  private appendConsoleLine(entry: ConsoleEntry): void {
+    const panel = this.parts.console as HTMLElement
+    if (this.consoleLines >= LiveExample.CONSOLE_LINES) {
+      const dropped = Number(this.consoleDropped?.dataset.count ?? 0) + 1
+      if (!this.consoleDropped) {
+        this.consoleDropped = div({ class: 'console-line console-dropped' })
+        panel.append(this.consoleDropped)
+      }
+      this.consoleDropped.dataset.count = String(dropped)
+      this.consoleDropped.textContent = `… ${dropped} more (see the browser console)`
+      return
+    }
+    this.consoleLines += 1
+    panel.append(
+      div({ class: `console-line console-${entry.level}` }, entry.text)
+    )
+    panel.hidden = false
+    this.classList.add('-has-console')
+    panel.scrollTop = panel.scrollHeight
+  }
 
   // Build-time transpiled JS for the source block, set by insert-examples from the
   // page's baked `<script type="application/tosi-transpiled">` (see
@@ -1319,7 +1409,15 @@ export class LiveExample extends withAttributes({
           icons.maximize({ class: 'hide-if-maximized' }),
           icons.minimize({ class: 'show-if-maximized' })
         )
-      )
+      ),
+      // What the example logged (example-console.ts). Last in the example so the preview,
+      // which execution inserts before the toolbar, sits above it. Hidden until a line arrives.
+      div({
+        part: 'console',
+        role: 'log',
+        ariaLabel: 'Example console',
+        hidden: true,
+      })
     ),
     // Empty until first showCode. buildEditorPanel() fills it lazily so a reader
     // who never opens a panel never constructs a <tosi-code> (and never pulls the
@@ -1899,6 +1997,8 @@ export class LiveExample extends withAttributes({
     const runner = getDialect(this.dialect)?.run
     this.runAbort?.abort()
     const runAbort = (this.runAbort = new AbortController())
+    this.clearConsole()
+    const exampleConsole = this.consoleForRun()
     // The bake was made at build time by the PINNED transpiler, so it is only valid for a
     // built-in dialect. A site that registered its own `tjs` would otherwise get its override
     // in dev (tests on, no bake) and the pinned output in production (tests off).
@@ -1967,6 +2067,7 @@ export class LiveExample extends withAttributes({
         widgetsElement: exampleWidgets,
         onError,
         onScope,
+        console: exampleConsole,
       })
     } else {
       preview = await executeInline({
@@ -1981,6 +2082,7 @@ export class LiveExample extends withAttributes({
         widgetsElement: exampleWidgets,
         onError,
         onScope,
+        console: exampleConsole,
       })
     }
 
@@ -1992,6 +2094,7 @@ export class LiveExample extends withAttributes({
           options: this.options,
           signal: runAbort.signal,
           context: this.context,
+          console: exampleConsole ?? globalThis.console,
           report: (value) => showDialectResult(target, value),
         })
         if (result !== undefined && !runAbort.signal.aborted)

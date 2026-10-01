@@ -17,6 +17,7 @@ export interface ExampleParts extends PartsMap {
     style: HTMLStyleElement;
     example: HTMLElement;
     testResults: HTMLElement;
+    console: HTMLElement;
     js: CodeEditor;
     html: CodeEditor;
     css: CodeEditor;

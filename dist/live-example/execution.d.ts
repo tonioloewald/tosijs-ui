@@ -34,6 +34,11 @@ export interface ExecutionOptions {
      * doubled side effects.
      */
     onScope?: (scope: Record<string, unknown>) => void;
+    /**
+     * The `console` the example's code sees (see example-console.ts). Injected as a parameter,
+     * like `preview`, so it shadows the global for this run only. Omitted: the real console.
+     */
+    console?: Console;
 }
 /**
  * Append a scope-capture epilogue to already-transformed example code when a
