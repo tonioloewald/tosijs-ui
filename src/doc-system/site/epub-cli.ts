@@ -15,6 +15,12 @@ Build-time only. Never import this from browser code.
 
 import { buildEpub } from './epub.js'
 
+import {
+  BUILT_IN_DIALECTS,
+  normalizeDialectNames,
+  registerLiveLanguage,
+} from '../example-policy.js'
+
 const payloadPath = process.argv[2]
 if (!payloadPath) {
   console.error('epub-cli: expected a payload file path')
@@ -22,4 +28,9 @@ if (!payloadPath) {
 }
 
 const { config, opts } = JSON.parse(await Bun.file(payloadPath).text())
+// Declared dialects are live examples here too, or the ePub's example numbering (and so its
+// "run this example live" links) drifts from the page's after the first one (review F3).
+for (const name of normalizeDialectNames(config.dialects)) {
+  if (!BUILT_IN_DIALECTS.has(name)) registerLiveLanguage(name)
+}
 await buildEpub(config, opts ?? {})

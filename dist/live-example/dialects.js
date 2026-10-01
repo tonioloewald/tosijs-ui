@@ -11,11 +11,11 @@ A dialect either TRANSFORMS (source → JavaScript that the example then runs as
 never depends on what a `run` dialect uses: the site's registration closes over it.
 */
 import { elements } from 'tosijs';
-import { registerLiveLanguage } from '../doc-system/example-policy.js';
+import { BUILT_IN_DIALECTS, registerLiveLanguage, } from '../doc-system/example-policy.js';
 import { loadTjsDocs, loadTransform } from './code-transform.js';
 // Empty specs: the built-ins' behaviour lives in `loadTransform`, and the tab label and editor
 // mode default to the name, which is what `tjs`/`ts` examples have always had.
-const BUILT_IN = { js: {}, tjs: {}, ts: {} };
+const BUILT_IN = Object.fromEntries([...BUILT_IN_DIALECTS].map((name) => [name, {}]));
 const registry = new Map(Object.entries(BUILT_IN));
 /**
  * Add a dialect, or replace a built-in one (`registerDialect('tjs', { transform })` runs tjs

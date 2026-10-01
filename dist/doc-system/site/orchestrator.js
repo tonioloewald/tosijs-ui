@@ -12,9 +12,7 @@ the icon system here would put src/icon-data.ts into `bun --watch`'s graph and
 cause an endless rebuild loop.
 */
 import { pageGlobalsHead } from './page-globals.js';
-import { registerLiveLanguage } from '../example-policy.js';
-// Dialects every page has without registering them (see live-example/dialects.ts).
-const BUILT_IN_DIALECTS = new Set(['js', 'tjs', 'ts']);
+import { BUILT_IN_DIALECTS, normalizeDialectNames, registerLiveLanguage, } from '../example-policy.js';
 import * as path from 'path';
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js';
 import { listEpubVolumes, renderEpubDownloads } from './epub-volumes.js';
@@ -71,6 +69,9 @@ async function buildEpubInChild(config, opts) {
             lang: config.lang,
             name: config.name,
             outputDir: config.outputDir,
+            // the ePub's "run this example live" links count examples the way the page does, so it
+            // must know the site's dialects too (1.16.3 review F3)
+            dialects: config.dialects,
         },
         opts,
     };
@@ -663,7 +664,7 @@ export async function buildSite(config, opts = {}) {
             if (config.checkExamples !== false) {
                 const { problems, warnings, bakes } = await checkExamplesInChild(DOCS_JSON, resolverPrefix, typeof config.checkExamples === 'object'
                     ? config.checkExamples.contextKeys ?? []
-                    : [], config.liveExamples ?? 'auto', (config.dialects ?? []).filter((name) => BUILT_IN_DIALECTS.has(name)));
+                    : [], config.liveExamples ?? 'auto', normalizeDialectNames(config.dialects).filter((name) => BUILT_IN_DIALECTS.has(name)));
                 exampleBakes = bakes;
                 // Unsupported imports don't fail the build — the code isn't broken, it just
                 // can't run in the doc environment (almost always illustrative code that
@@ -1404,7 +1405,7 @@ export async function buildSite(config, opts = {}) {
             const docs = JSON.parse(docsJsonText);
             // Declared dialects are live fences at build time too, so the static highlighter
             // leaves their source alone (#2463). Idempotent: a watch rebuild re-adds the same names.
-            for (const name of config.dialects ?? []) {
+            for (const name of normalizeDialectNames(config.dialects)) {
                 if (!BUILT_IN_DIALECTS.has(name))
                     registerLiveLanguage(name);
             }

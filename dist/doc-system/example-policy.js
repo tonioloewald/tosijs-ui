@@ -34,7 +34,19 @@ export const EXECUTABLE_LANGS = new Set([
  * (grouping, save-to-source, the highlighter, the ePub) and they must all see a registered
  * dialect or none of them may.
  */
-const SOURCE_LANGS = new Set(['js', 'ts', 'tjs']);
+export const BUILT_IN_DIALECTS = new Set([
+    'js',
+    'ts',
+    'tjs',
+]);
+const SOURCE_LANGS = new Set(BUILT_IN_DIALECTS);
+/**
+ * `SiteConfig.dialects` as the rest of the system compares it: lowercased (fence languages
+ * are lowercase), so `dialects: ['TJS']` means `tjs` everywhere, not in some places.
+ */
+export function normalizeDialectNames(names = []) {
+    return [...new Set(names.map((name) => name.toLowerCase()))];
+}
 /**
  * Make fences in `lang` live examples, as an example's source block.
  *

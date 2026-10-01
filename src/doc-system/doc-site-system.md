@@ -1379,7 +1379,8 @@ options to its dialect: `` ```tjs {"runTests": "report"} ``. See the live-exampl
 built-in you replace, `dialects: ['ajs', 'tjs']`): the build can't see your page's
 registrations, so this keeps the build-time highlighter off those fences, stops the build
 checking and pre-transpiling a built-in you've replaced, and lets the page report a declared
-dialect that nothing registered.
+dialect that nothing registered. Declared names stay registered for the life of the build process,
+so after removing one from a running dev server's config, restart the server.
 
 The two in bold turn ordinary API documentation into live bugs, and neither fails the build:
 

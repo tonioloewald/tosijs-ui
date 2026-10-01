@@ -1,4 +1,4 @@
-import { isDialectLanguage, isLiveFence, languageOfClass, } from '../doc-system/example-policy.js';
+import { BUILT_IN_DIALECTS, isDialectLanguage, isLiveFence, languageOfClass, } from '../doc-system/example-policy.js';
 import { isBuiltInDialect } from './dialects.js';
 // A block's `<pre>` may be followed by a hidden `<script type="application/tosi-
 // transpiled">` carrying its build-time transpiled JS (see
@@ -53,7 +53,6 @@ silently render as plain code (or, for a replaced built-in, run the pinned one).
 name, once per page. `console.error`, so the doc-tests' console-clean check catches it too.
 */
 const reportedDialects = new Set();
-const BUILT_IN_NAMES = new Set(['js', 'tjs', 'ts']);
 function checkDeclaredDialects() {
     const declared = globalThis.__TOSI_DIALECTS;
     if (!Array.isArray(declared))
@@ -63,7 +62,7 @@ function checkDeclaredDialects() {
             continue;
         // A declared built-in means "the site replaces it": missing if the built-in is still
         // the one registered. Any other name is missing if it is not a dialect at all.
-        const missing = BUILT_IN_NAMES.has(name)
+        const missing = BUILT_IN_DIALECTS.has(name)
             ? isBuiltInDialect(name)
             : !isDialectLanguage(name);
         if (!missing)

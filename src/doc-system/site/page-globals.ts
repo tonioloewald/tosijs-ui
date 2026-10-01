@@ -7,6 +7,8 @@ Each is emitted only when it differs from the default, so a default site's HTML 
 byte-for-byte when a new switch is added.
 */
 
+import { normalizeDialectNames } from '../example-policy.js'
+
 export interface PageGlobalsConfig {
   liveExamples?: 'auto' | 'opt-in'
   exampleConsole?: boolean
@@ -26,7 +28,7 @@ export function pageGlobalsHead(config: PageGlobalsConfig): string {
     // 1.16.3: the dialects the site says its bundle registers, so the page can check
     config.dialects?.length
       ? `<script>globalThis.__TOSI_DIALECTS=${JSON.stringify(
-          config.dialects
+          normalizeDialectNames(config.dialects)
         ).replace(/</g, '\\u003c')}</script>`
       : '',
   ].join('')

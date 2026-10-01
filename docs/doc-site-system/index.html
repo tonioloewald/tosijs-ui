@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=a109466c3a9d" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=1fa97958e8b6" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=17d8573183de" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=f8a916f66b8f" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -1604,7 +1604,8 @@ options to its dialect: <code>```tjs {&quot;runTests&quot;: &quot;report&quot;}<
 built-in you replace, <code>dialects: [&#39;ajs&#39;, &#39;tjs&#39;]</code>): the build can&#39;t see your page&#39;s
 registrations, so this keeps the build-time highlighter off those fences, stops the build
 checking and pre-transpiling a built-in you&#39;ve replaced, and lets the page report a declared
-dialect that nothing registered.</p>
+dialect that nothing registered. Declared names stay registered for the life of the build process,
+so after removing one from a running dev server&#39;s config, restart the server.</p>
 <p>The two in bold turn ordinary API documentation into live bugs, and neither fails the build:</p>
 <ul>
 <li>A <code>```css</code> fence showing *&quot;here is how you&#39;d style this in your app&quot;* is applied to the
@@ -1931,6 +1932,6 @@ wiring, plus one tool that hasn&#39;t been generalized:</p>
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-nqe6w2r2.js"></script>
+  <script type="module" src="../hydrate-fsxjwppj.js"></script>
 </body>
 </html>

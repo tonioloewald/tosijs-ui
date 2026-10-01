@@ -734,11 +734,25 @@ export class TosiSearchField extends withAttributes({
         remainOnScroll: 'remove',
         remainOnResize: 'remove',
       })
+      /*
+      The float can also remove ITSELF (a scroll that moves the field, a resize). Notice, and
+      close properly: otherwise the input kept aria-expanded="true" and an
+      aria-activedescendant naming an option no longer on the page (1.16.3 review F2).
+      */
+      this.floatWatcher?.disconnect()
+      this.floatWatcher = new MutationObserver(() => {
+        if (this.float && !this.float.isConnected) this.closeHints()
+      })
+      this.floatWatcher.observe(document.body, { childList: true })
     }
     this.input().setAttribute('aria-expanded', 'true')
   }
 
+  private floatWatcher?: MutationObserver
+
   private closeHints(): void {
+    this.floatWatcher?.disconnect()
+    this.floatWatcher = undefined
     this.float?.remove()
     this.float = undefined
     this.active = -1

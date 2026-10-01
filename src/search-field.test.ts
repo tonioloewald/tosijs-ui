@@ -246,14 +246,20 @@ describe('TosiSearchField', () => {
     expect(made.hasAttribute('text-test')).toBe(false)
   })
 
-  test('a scroll elsewhere keeps the hints open; a scroll that moves the field closes them', () => {
+  test('a scroll elsewhere keeps the hints open; a scroll that moves the field closes them', async () => {
     const elsewhere = document.createElement('div')
     document.body.append(elsewhere)
     field.typeText('doc')
     elsewhere.dispatchEvent(new Event('scroll'))
     expect(field.hintCount).toBe(2)
+    key(field, 'ArrowDown') // something highlighted: aria-activedescendant is set
     document.dispatchEvent(new Event('scroll'))
     expect(field.hintCount).toBe(0)
+    // the float removed itself; the input must not still claim an open list (review F2)
+    await new Promise((r) => setTimeout(r, 0)) // MutationObserver callbacks are microtasks
+    const input = field.querySelector('input')!
+    expect(input.getAttribute('aria-expanded')).toBe('false')
+    expect(input.hasAttribute('aria-activedescendant')).toBe(false)
     elsewhere.remove()
   })
 

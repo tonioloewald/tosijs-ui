@@ -358,3 +358,51 @@ test('NCX playOrder is unique and increasing through NESTED sections', async () 
     fs.rmSync(dir, { recursive: true, force: true })
   }
 })
+
+/*
+1.16.3 review F3: the ePub is built in a child process (epub-cli), and it numbers examples with
+`isLiveFence` to link each one back to its anchor on the page. Without the site's declared
+dialects that child didn't know an `ajsdemo` fence was an example, so every later link on the
+page pointed one example too early. Runs the real child entry point with a real payload.
+*/
+test('the ePub child counts declared dialects as examples, so live links match the page', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tosi-epub-dialects-'))
+  const corpus = path.join(dir, 'docs.json')
+  fs.writeFileSync(
+    corpus,
+    JSON.stringify([
+      {
+        filename: 'a.ts',
+        title: 'A',
+        text: '# A\n\n```ajsdemo\nagent()\n```\n\nProse.\n\n```js\nconst x = 1\n```',
+        path: 'a.ts',
+      },
+    ])
+  )
+  const out = path.join(dir, 'book.epub')
+  const payload = path.join(dir, 'payload.json')
+  fs.writeFileSync(
+    payload,
+    JSON.stringify({
+      config: {
+        name: 'Book',
+        outputDir: dir,
+        docsJson: corpus,
+        baseUrl: 'https://example.test',
+        dialects: ['ajsdemo'],
+      },
+      opts: { output: out, author: 'Tester' },
+    })
+  )
+  const run = Bun.spawnSync(
+    ['bun', path.join(import.meta.dir, 'epub-cli.ts'), payload],
+    { stdout: 'pipe', stderr: 'pipe' }
+  )
+  expect(run.exitCode).toBe(0)
+  Bun.spawnSync(['unzip', '-o', '-q', out, '-d', dir])
+  const chapter = fs.readFileSync(path.join(dir, 'OEBPS/a.xhtml'), 'utf8')
+  // the page numbers the ajsdemo example #example-1 and the js one #example-2
+  expect(chapter.match(/class="example-live-link"/g)?.length).toBe(2)
+  expect(chapter).toContain('href="https://example.test/a/#example-2"')
+  fs.rmSync(dir, { recursive: true, force: true })
+})

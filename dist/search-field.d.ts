@@ -62,6 +62,7 @@ export declare class TosiSearchField extends TosiSearchField_base {
     private tagsChanged;
     private updateHints;
     private openHints;
+    private floatWatcher?;
     private closeHints;
     private setActive;
     private syncActive;

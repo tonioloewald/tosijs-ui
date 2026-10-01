@@ -44,6 +44,50 @@ describe('a popped float closes only for a scroll that moves its anchor (#2460)'
     expect(float.isConnected).toBe(false)
   })
 
+  test('a submenu (anchored inside its parent float) closes with its parent', () => {
+    // 1.16.3 review B1: the parent closed and the submenu stayed, orphaned
+    const { scroller, float: parent } = setup()
+    const item = document.createElement('button')
+    parent.append(item)
+    const submenu = popFloat({
+      content: box(),
+      target: item,
+      remainOnScroll: 'remove',
+    })
+    scroller.dispatchEvent(new Event('scroll'))
+    expect(parent.isConnected).toBe(false)
+    expect(submenu.isConnected).toBe(false)
+  })
+
+  test('repositioning a float against a new target re-anchors it', async () => {
+    const { positionFloat } = await import('./pop-float.js')
+    const { scroller, elsewhere, float } = setup()
+    const other = document.createElement('button')
+    elsewhere.append(other)
+    positionFloat(float, other)
+    scroller.dispatchEvent(new Event('scroll')) // the OLD anchor's scroller: no longer relevant
+    expect(float.isConnected).toBe(true)
+    elsewhere.dispatchEvent(new Event('scroll')) // the new one's
+    expect(float.isConnected).toBe(false)
+  })
+
+  test('floats anchored inside each other do not loop', () => {
+    const { elsewhere, float: a } = setup()
+    const inA = document.createElement('button')
+    a.append(inA)
+    const b = popFloat({
+      content: box(),
+      target: inA,
+      remainOnScroll: 'remove',
+    })
+    const inB = document.createElement('button')
+    b.append(inB)
+    a.anchor = inB // a cycle
+    elsewhere.dispatchEvent(new Event('scroll')) // must return, and not close either
+    expect(a.isConnected).toBe(true)
+    expect(b.isConnected).toBe(true)
+  })
+
   test('an anchor inside a shadow root is still moved by a scroller around its host', () => {
     const scroller = document.createElement('div')
     const host = document.createElement('div')
@@ -119,10 +163,9 @@ describe('roomOnScreen measures against what is VISIBLE (#2460)', () => {
     ).toBe(244)
   })
 
-  test('never negative', () => {
-    viewport({ offsetTop: 0, height: 500 })
-    expect(
-      roomOnScreen(at({ top: '600px', left: '0px' }), 390, 844).maxHeight
-    ).toBe(0)
+  test('an anchor outside the visible area (zoomed in) falls back to the layout viewport, not 0', () => {
+    viewport({ offsetTop: 0, height: 500 }) // the anchor at 600 is below what is visible
+    const el = at({ top: '600px', left: '0px' })
+    expect(roomOnScreen(el, 390, 844).maxHeight).toBe(844 - 600)
   })
 })

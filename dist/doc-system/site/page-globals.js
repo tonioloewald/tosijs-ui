@@ -6,6 +6,7 @@ bundle reads when it runs (so they must come BEFORE the bundle script — genera
 Each is emitted only when it differs from the default, so a default site's HTML is unchanged
 byte-for-byte when a new switch is added.
 */
+import { normalizeDialectNames } from '../example-policy.js';
 export function pageGlobalsHead(config) {
     return [
         // #140: which fences run
@@ -18,7 +19,7 @@ export function pageGlobalsHead(config) {
             : '',
         // 1.16.3: the dialects the site says its bundle registers, so the page can check
         config.dialects?.length
-            ? `<script>globalThis.__TOSI_DIALECTS=${JSON.stringify(config.dialects).replace(/</g, '\\u003c')}</script>`
+            ? `<script>globalThis.__TOSI_DIALECTS=${JSON.stringify(normalizeDialectNames(config.dialects)).replace(/</g, '\\u003c')}</script>`
             : '',
     ].join('');
 }

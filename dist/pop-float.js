@@ -248,7 +248,6 @@ export const popFloat = (options) => {
     const float = Array.isArray(content)
         ? tosiFloat(...content)
         : tosiFloat(content);
-    float.anchor = target;
     positionFloat(float, target, position, remainOnScroll, remainOnResize, draggable);
     if (options.class) {
         float.setAttribute('class', options.class);
@@ -267,6 +266,8 @@ element, target, position, remainOnScroll, remainOnResize, draggable = false) =>
             element.style.position = 'fixed';
         }
         if (element instanceof TosiFloat) {
+            // whatever it is positioned against is what moves it (and what scrolling it closes it)
+            element.anchor = target;
             if (remainOnResize)
                 element.remainOnResize = remainOnResize;
             if (remainOnScroll)
@@ -370,6 +371,8 @@ function visibleArea(w, h) {
         : { top: 0, left: 0, bottom: h, right: w };
 }
 /**
+ * @internal Exported for tests; not supported API.
+ *
  * How far a positioned float can extend before it leaves the visible area: the same geometry
  * as before 1.16.3 (`100vh - top`, `100vw - left`, …), with the VISIBLE area in place of
  * `100vh`/`100vw`. Deliberately not "fit a centred float on both sides": that would narrow
@@ -378,17 +381,30 @@ function visibleArea(w, h) {
  */
 export function roomOnScreen(element, w, h) {
     const vis = visibleArea(w, h);
+    const layout = { top: 0, left: 0, bottom: h, right: w };
     const { top, bottom, left, right } = element.style;
     const px = (value) => parseFloat(value);
-    const maxHeight = top
-        ? vis.bottom - px(top)
-        : bottom
-            ? h - px(bottom) - vis.top
-            : vis.bottom - vis.top;
-    const maxWidth = left
-        ? vis.right - px(left)
-        : right
-            ? w - px(right) - vis.left
-            : vis.right - vis.left;
+    const room = (area) => ({
+        height: top
+            ? area.bottom - px(top)
+            : bottom
+                ? h - px(bottom) - area.top
+                : area.bottom - area.top,
+        width: left
+            ? area.right - px(left)
+            : right
+                ? w - px(right) - area.left
+                : area.right - area.left,
+    });
+    /*
+    The visible room, unless there is none: zoomed in on a desktop (or with the anchor scrolled
+    out of view), the anchor can sit outside the visible area, and a float sized to "no room"
+    would collapse to nothing. Then fall back to the layout viewport, which is what this always
+    used before 1.16.3 (review gap 5).
+    */
+    const visible = room(vis);
+    const fallback = room(layout);
+    const maxHeight = visible.height > 0 ? visible.height : fallback.height;
+    const maxWidth = visible.width > 0 ? visible.width : fallback.width;
     return { maxWidth: Math.max(0, maxWidth), maxHeight: Math.max(0, maxHeight) };
 }

@@ -1,6 +1,21 @@
 /** Fence languages that EXECUTE. Everything else is display-only. */
 export declare const EXECUTABLE_LANGS: Set<string>;
 /**
+ * The languages that are an example's SOURCE block (its one executable slot). `js`, `tjs` and
+ * `ts` are built in; `registerLiveLanguage` adds more (`registerDialect` in
+ * `tosijs-ui/live-example` calls it, so a registered dialect's fences run).
+ *
+ * Kept here, beside `EXECUTABLE_LANGS`, because the same fence is judged in four places
+ * (grouping, save-to-source, the highlighter, the ePub) and they must all see a registered
+ * dialect or none of them may.
+ */
+export declare const BUILT_IN_DIALECTS: ReadonlySet<string>;
+/**
+ * `SiteConfig.dialects` as the rest of the system compares it: lowercased (fence languages
+ * are lowercase), so `dialects: ['TJS']` means `tjs` everywhere, not in some places.
+ */
+export declare function normalizeDialectNames(names?: readonly string[]): string[];
+/**
  * Make fences in `lang` live examples, as an example's source block.
  *
  * You normally call `registerDialect` (which calls this). Call it directly only in a BUILD

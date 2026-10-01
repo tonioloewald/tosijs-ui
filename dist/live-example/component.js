@@ -600,7 +600,6 @@ import { icons } from '../icons.js';
 import { tosiPocketBar } from '../pocket-bar.js';
 import { postNotification } from '../notifications.js';
 import { popMenu } from '../menu.js';
-import { tosiMd } from '../markdown-viewer.js';
 import { prefersReducedMotion } from '../reduced-motion.js';
 import { createExampleConsole, exampleConsoleEnabled, formatConsoleArgs, } from './example-console.js';
 import { dialectDocs, dialectTransform, getDialect, isBuiltInDialect, showDialectResult, } from './dialects.js';
@@ -1004,7 +1003,8 @@ export class LiveExample extends withAttributes({
     }
     ensureProductTabs() {
         if (this.productTabsReady ||
-            this.dialect === 'js' ||
+            // plain js has no product tabs, unless the site replaced it (its `docs` gets a tab)
+            (this.dialect === 'js' && isBuiltInDialect('js')) ||
             !this.hydrated ||
             !this.editorsBuilt // the editors it relabels don't exist yet
         )
@@ -1082,7 +1082,11 @@ export class LiveExample extends withAttributes({
             editors.setupTabs();
         }
         // <tosi-md> sanitizes by default: docs come from the example's source, so they render as
-        // documentation, never as markup that runs.
+        // documentation, never as markup that runs. Imported here, on first use, so an app that
+        // imports tosijs-ui/live-example without docs doesn't carry marked and the sanitizer.
+        const { tosiMd } = await import('../markdown-viewer.js');
+        if (request !== this.docsRequest || !this.docsView)
+            return;
         this.docsView.replaceChildren(tosiMd({ value: markdown }));
     };
     // Capture the latest run's top-level locals (arrow property so `this` is bound

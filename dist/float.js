@@ -175,9 +175,22 @@ function scrollMovesAnchor(scrolled, anchor) {
         return true;
     if (!(scrolled instanceof Node))
         return true;
-    for (let node = anchor; node;) {
+    const visited = new Set(); // floats anchored inside each other must not loop
+    for (let node = anchor; node && !visited.has(node);) {
+        visited.add(node);
         if (node === scrolled)
             return true;
+        /*
+        A float's anchor can be INSIDE another float — a submenu's anchor is an item of its parent
+        menu, and the parent float is mounted on <body>, so walking up from it never meets the
+        scroller around the root menu button. Continue from the containing float's own anchor:
+        a chain of menus moves (and closes) together. Before this, scrolling that scroller closed
+        the parent and left the submenu on screen, orphaned (1.16.3 review B1).
+        */
+        if (node instanceof TosiFloat && node.anchor) {
+            node = node.anchor;
+            continue;
+        }
         node = node.parentNode ?? node.host ?? null;
     }
     return false;
