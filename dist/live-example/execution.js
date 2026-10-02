@@ -58,7 +58,12 @@ export function registerComponentsInIframe(iframeWindow, context) {
         }
     }
 }
-// Injected context name for the REPL hook (see withReplHook).
+/*
+Injected context name for the REPL hook (see withReplHook). The hook is a direct `eval` closure,
+and a direct eval in a function de-optimises that whole scope (measured 1.5x slower on V8, 2.6x
+on JSC for hot code) and keeps it alive until the next run. So the component asks for it only
+once someone has used the REPL (1.16.4 review E1), never for a reader who doesn't.
+*/
 const REPL_HOOK_VAR = '__tosiReplHook';
 /**
  * Give the Console tab's REPL the example's own scope.
@@ -74,14 +79,29 @@ const REPL_HOOK_VAR = '__tosiReplHook';
  * (Scope capture, the alternative, needs the optional tjs-lang and only saw runs made with the
  * code panel already open, so `words` in the obvious first REPL input was undefined.)
  */
+/** @internal */
 export function withReplHook(prepared, onRepl) {
     if (!onRepl)
         return prepared;
+    /*
+    AFTER the directive prologue: a statement in front of `'use strict'` stops it being a
+    directive, and the example silently ran sloppy (an undeclared assignment made a global
+    instead of throwing). Still on the first line of the code, so line numbers don't move; the
+    leading `;` ends a directive that has no semicolon of its own.
+    */
+    const prologue = prepared.code.match(DIRECTIVE_PROLOGUE)?.[0] ?? '';
+    const hook = `;${REPL_HOOK_VAR}((__tosiSrc) => eval(__tosiSrc));`;
     return {
-        code: `${REPL_HOOK_VAR}((__tosiSrc) => eval(__tosiSrc));${prepared.code}`,
+        code: prologue + hook + prepared.code.slice(prologue.length),
         extraContext: { ...prepared.extraContext, [REPL_HOOK_VAR]: onRepl },
     };
 }
+/*
+Leading string-literal statements: `'use strict'`, `"use asm"`, … each ended by `;` or a line
+break. A string followed by anything else (`'abc'.length`) is an expression, not a directive,
+so the lookahead stops there.
+*/
+const DIRECTIVE_PROLOGUE = /^(?:\s*(?:'[^'\n]*'|"[^"\n]*")[ \t]*(?:;|(?=\r?\n)))*/;
 /**
  * Append a scope-capture epilogue to already-transformed example code when a
  * consumer wants the run's locals. Returns the (possibly unchanged) code plus the

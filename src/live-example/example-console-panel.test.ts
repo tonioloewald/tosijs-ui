@@ -264,3 +264,45 @@ test('the error that stopped the example is in its console', async () => {
     example.remove()
   })
 })
+
+describe('1.16.4 review', () => {
+  test("C1: a 'use strict' example stays strict with the REPL hook installed", async () => {
+    await quietly(async () => {
+      const example = await mount(`'use strict'\nundeclaredStrictGlobal = 1`)
+      await example.refresh()
+      await example.consoleEval('1 + 1') // installs the hook and re-runs
+      expect((globalThis as any).undeclaredStrictGlobal).toBeUndefined()
+      expect(
+        lines(example).some(
+          ([level, text]: string[]) =>
+            level === 'error' && text.startsWith('ReferenceError')
+        )
+      ).toBe(true)
+      example.remove()
+    })
+  })
+
+  test('E1: no scope hook until someone uses the REPL', async () => {
+    await quietly(async () => {
+      const example = await mount(`const secret = 1\npreview.textContent = 'x'`)
+      await example.refresh()
+      expect(example.replEvaluate).toBeUndefined() // a reader's run: no direct-eval closure
+      expect(await example.consoleEval('secret')).toBe(1) // first use re-runs with it
+      expect(typeof example.replEvaluate).toBe('function')
+      example.remove()
+    })
+  })
+
+  test('E2: past the cap, lines are counted, not formatted', async () => {
+    await quietly(async () => {
+      ;(globalThis as any).__formatted = 0
+      const example = await mount(
+        `for (let i = 0; i < 520; i++) console.log({ toJSON() { globalThis.__formatted++; return i } })`
+      )
+      await example.refresh()
+      expect((globalThis as any).__formatted).toBe(500)
+      delete (globalThis as any).__formatted
+      example.remove()
+    })
+  })
+})

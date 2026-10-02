@@ -5,8 +5,10 @@
 A patch: the example console becomes a tab with a REPL, test-only examples render on deployed
 sites, and the doc nav search gets a clear button in every browser. The console's move from a
 panel under the preview to a tab changes how live examples look; it ships as a patch because
-live examples are a developer-facing tool and no API was removed. `dist/iife.js` grows by
-1.5 kB gzip (477.0 → 478.5 kB).
+live examples are a developer-facing tool. It does remove the panel's styling hooks: the
+`[part="console"]` element, the `-has-console` class, and `console` from the `ExampleParts`
+type. Nothing in tosijs-ui used them, and a site that styled the 1.16.2 panel should restyle
+`.example-console` in the tab instead. `dist/iife.js` grows by 1.7 kB gzip (477.0 → 478.7 kB).
 
 ### The example console is a tab, and a REPL
 
@@ -14,7 +16,9 @@ What an example logs now appears in a **Console** tab beside its code, instead o
 its preview, so the preview is never squeezed. The tab is also a REPL: type an expression and
 press Enter to evaluate it inside the example's own scope (its top-level variables and
 functions, `preview`, its `console`, the page's modules), as in the browser's console: input
-gives its value, `await` works, Shift+Enter adds a line, and ↑/↓ recall what you've entered. The error that stopped an
+gives its value, `await` works, Shift+Enter adds a line, and ↑/↓ recall what you've entered.
+The REPL costs nothing until it's used: the first input re-runs the example once to give it
+the example's scope. The error that stopped an
 example appears there too. `exampleConsole: false` and `{"console": false}` still turn it off.
 
 ### A test-only example shows its results on deployed sites too

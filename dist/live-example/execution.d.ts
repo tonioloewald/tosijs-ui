@@ -60,6 +60,7 @@ export interface ExecutionOptions {
  * (Scope capture, the alternative, needs the optional tjs-lang and only saw runs made with the
  * code panel already open, so `words` in the obvious first REPL input was undefined.)
  */
+/** @internal */
 export declare function withReplHook(prepared: {
     code: string;
     extraContext: Record<string, unknown>;

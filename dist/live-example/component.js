@@ -147,6 +147,10 @@ test('and evaluates in its scope', async () => {
   Input gives its value, as in a browser console (`const n = 2; n * 21` shows 42), and
   `await` works. Enter evaluates and Shift+Enter adds a line; ↑ and ↓ step through what you've
   entered.
+- Your first input re-runs the example once, to give the REPL its scope (it costs nothing
+  until you use it). Two differences from devtools: a `const` or `let` you declare lives only
+  for that one input (use `var`, or one input, to keep a value), and input that uses `await`
+  in statements, rather than as one expression, shows `undefined`.
 - A re-run starts a clean console, and a log arriving late from the previous run (a timer it
   left behind) is not shown.
 - It keeps 500 lines, then counts what it drops; devtools keeps everything.
@@ -879,8 +883,12 @@ export class LiveExample extends withAttributes({
     droppedText() {
         return `… ${this.consoleDroppedCount} more (see the browser console)`;
     }
+    // Not in the pop-out editor window: it never runs the example, so its console would be
+    // empty and its REPL would evaluate against the pop-out's own document (1.16.4 review).
     get consoleEnabled() {
-        return exampleConsoleEnabled() && this.options.console !== false;
+        return (exampleConsoleEnabled() &&
+            this.options.console !== false &&
+            this.remoteId === '');
     }
     // A fresh console per run. A log arriving from a PREVIOUS run (a timer or listener it left
     // behind) still reaches devtools but not the tab, which belongs to the current run.
@@ -891,7 +899,8 @@ export class LiveExample extends withAttributes({
         return createExampleConsole((entry) => {
             if (signal?.aborted)
                 return;
-            this.addConsoleLine(entry.level, formatConsoleArgs(entry.args));
+            // formatted only if the line is kept: past the cap, a logging loop costs a counter bump
+            this.addConsoleLine(entry.level, () => formatConsoleArgs(entry.args));
         });
     }
     clearConsole() {
@@ -905,7 +914,7 @@ export class LiveExample extends withAttributes({
             this.renderConsoleDropped();
             return;
         }
-        const line = { level, text };
+        const line = { level, text: typeof text === 'function' ? text() : text };
         this.consoleBuffer.push(line);
         if (this.consoleLinesEl) {
             this.consoleLinesEl.append(this.consoleLineElement(line));
@@ -916,16 +925,16 @@ export class LiveExample extends withAttributes({
     consoleLineElement(line) {
         return div({ class: `console-line console-${line.level}` }, line.text);
     }
+    consoleDroppedEl;
     renderConsoleDropped() {
         const lines = this.consoleLinesEl;
         if (!lines || this.consoleDroppedCount === 0)
             return;
-        let dropped = lines.querySelector('.console-dropped');
-        if (!dropped) {
-            dropped = div({ class: 'console-line console-dropped' });
-            lines.append(dropped);
+        if (!this.consoleDroppedEl || !lines.contains(this.consoleDroppedEl)) {
+            this.consoleDroppedEl = div({ class: 'console-line console-dropped' });
+            lines.append(this.consoleDroppedEl);
         }
-        dropped.textContent = this.droppedText();
+        this.consoleDroppedEl.textContent = this.droppedText();
     }
     // To the newest line once per burst, not once per line (reading scrollHeight forces layout).
     scrollConsole() {
@@ -995,14 +1004,24 @@ export class LiveExample extends withAttributes({
         }
     };
     /**
-     * Evaluate `source` in the example's scope, like a browser console: `preview`, the page's
-     * modules (`import { x } from 'tosijs'` works), the example's console, and its top-level
-     * variables once it has run with the code panel open. An expression shows its value;
-     * statements and `await` work too. The input and its result go into the Console tab.
+     * Evaluate `source` inside the example's own scope, like a browser console: its top-level
+     * variables and functions, `preview`, its console, and the page's modules (`import { x }
+     * from 'tosijs'` works). Input gives its completion value; `await` works. The first call
+     * re-runs the example once, to give the REPL that scope. A `run` dialect (whose source is
+     * not JavaScript) gets `preview`, the modules and the console only. The input and its result
+     * go into the Console tab.
      */
     consoleEval = async (source) => {
         this.consoleHistory.push(source);
         this.consoleHistoryIndex = this.consoleHistory.length;
+        // First use: re-run the example once WITH the scope hook (it is off until now, see
+        // refresh()), so this input — and every later one — sees the example's own variables.
+        if (!this.replWanted &&
+            this.consoleEnabled &&
+            !getDialect(this.dialect)?.run) {
+            this.replWanted = true;
+            await this.refresh();
+        }
         this.addConsoleLine('input', source);
         if (this.replEvaluate)
             return this.evalInExample(this.replEvaluate, source);
@@ -1052,6 +1071,8 @@ export class LiveExample extends withAttributes({
     over the example's scope.
     */
     replEvaluate;
+    // Set by the first REPL input; from then on each run installs the scope hook.
+    replWanted = false;
     async evalInExample(evaluate, source) {
         const code = rewriteImports(source, Object.keys(this.context));
         const attempts = /\bawait\b/.test(code)
@@ -2112,9 +2133,11 @@ export class LiveExample extends withAttributes({
         const onScope = this.dialect !== 'js' && !runner && this.editorsBuilt
             ? this.captureScope
             : undefined;
-        // The REPL's door into this run's scope; a superseded run's evaluator is dropped.
+        // The REPL's door into this run's scope; a superseded run's evaluator is dropped. Only
+        // once someone has used the REPL: the hook is a direct eval, which slows the whole example
+        // and keeps its scope alive, so readers who never open the console never pay for it.
         this.replEvaluate = undefined;
-        const onRepl = this.consoleEnabled && !runner
+        const onRepl = this.replWanted && this.consoleEnabled && !runner
             ? (evaluate) => {
                 if (!runAbort.signal.aborted)
                     this.replEvaluate = evaluate;

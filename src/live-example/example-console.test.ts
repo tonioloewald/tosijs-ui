@@ -127,3 +127,24 @@ describe('createExampleConsole', () => {
     expect(calls.map(([m]) => m)).toEqual(['time', 'group'])
   })
 })
+
+describe('withReplHook (1.16.4 review C1)', () => {
+  test('goes after the directive prologue, on the same line', async () => {
+    const { withReplHook } = await import('./execution.js')
+    const hooked = (code: string) =>
+      withReplHook({ code, extraContext: {} }, () => {}).code
+    expect(hooked(`'use strict'\nx = 1`)).toMatch(
+      /^'use strict';__tosiReplHook\(.*\);\nx = 1$/
+    )
+    expect(hooked(`"use strict";x = 1`)).toMatch(
+      /^"use strict";;__tosiReplHook/
+    )
+    expect(hooked(`x = 1`)).toMatch(/^;__tosiReplHook\(.*\);x = 1$/)
+    // a string that is an EXPRESSION is not a directive: the hook goes before it
+    expect(hooked(`'abc'.length`)).toMatch(
+      /^;__tosiReplHook\(.*\);'abc'\.length$/
+    )
+    // no line added
+    expect(hooked(`'use strict'\na\nb`).split('\n').length).toBe(3)
+  })
+})

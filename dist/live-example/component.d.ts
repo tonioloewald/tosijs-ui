@@ -389,6 +389,7 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     private clearConsole;
     private addConsoleLine;
     private consoleLineElement;
+    private consoleDroppedEl?;
     private renderConsoleDropped;
     private scrollConsole;
     private buildConsoleView;
@@ -396,13 +397,16 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     private sizeConsoleInput;
     private consoleKeydown;
     /**
-     * Evaluate `source` in the example's scope, like a browser console: `preview`, the page's
-     * modules (`import { x } from 'tosijs'` works), the example's console, and its top-level
-     * variables once it has run with the code panel open. An expression shows its value;
-     * statements and `await` work too. The input and its result go into the Console tab.
+     * Evaluate `source` inside the example's own scope, like a browser console: its top-level
+     * variables and functions, `preview`, its console, and the page's modules (`import { x }
+     * from 'tosijs'` works). Input gives its completion value; `await` works. The first call
+     * re-runs the example once, to give the REPL that scope. A `run` dialect (whose source is
+     * not JavaScript) gets `preview`, the modules and the console only. The input and its result
+     * go into the Console tab.
      */
     consoleEval: (source: string) => Promise<unknown>;
     private replEvaluate?;
+    private replWanted;
     private evalInExample;
     private currentPreview;
     compiledJs?: string;
