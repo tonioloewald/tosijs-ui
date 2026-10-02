@@ -194,7 +194,9 @@ where your page's registrations don't, so this is how it learns them:
 - a replaced built-in isn't checked or pre-transpiled with the installed tjs-lang;
 - on the page, a declared dialect that nothing registered is reported in the console by name.
 
-Here a tiny `run` dialect is registered and an example is created in it:
+Here a tiny `run` dialect is registered and an example is created in it. The example in the
+`reverse` dialect is the one INSIDE this example's preview, so it has its own toolbar: open
+its code with its `<>` button (not this example's) to see its **Docs** tab beside its source.
 
 ```js
 import { registerDialect, liveExample } from 'tosijs-ui'
@@ -223,6 +225,9 @@ test('a run dialect runs its source and reports the result', () => {
 test('its docs appear in a Docs tab once the code panel is open', async () => {
   const example = preview.querySelector('tosi-example')
   example.showCode()
+  // showCode() goes full-screen: close it again whatever happens, or (on localhost, where
+  // tests run on the page itself) the reader is left with a full-screen nested example
+  const close = () => example.closeCode()
   const docs = await new Promise((resolve) => {
     const started = Date.now()
     const check = () => {
@@ -233,6 +238,7 @@ test('its docs appear in a Docs tab once the code panel is open', async () => {
     }
     check()
   })
+  close()
   expect(docs).not.toBe(null)
   expect(docs.getAttribute('name')).toBe('Docs')
   expect(docs.textContent).toContain('stressed')
@@ -2006,7 +2012,13 @@ export class LiveExample extends withAttributes({
         // Run tests when there are any — but a build/exec failure is a test failure
         // in its own right, so surface it even when the example defines no `test`
         // blocks (and even if the failure was hard enough to produce no preview).
-        if ((this.test || executionError) && testManager.enabled.value) {
+        /*
+        A TEST-ONLY example always runs its tests: its results are its body, so with tests off (the
+        default anywhere but localhost) it rendered an empty box on every deployed site. For every
+        other example the page-wide toggle still decides, because there the results are an overlay.
+        */
+        if ((this.test || executionError) &&
+            (testManager.enabled.value || this.isTestOnly)) {
             // Let queued renders (rAF) settle before running tests
             await new Promise((resolve) => requestAnimationFrame(resolve));
             this.classList.add('-has-tests', '-test-running');

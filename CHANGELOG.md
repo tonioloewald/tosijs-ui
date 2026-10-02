@@ -2,6 +2,13 @@
 
 ## 1.16.4 (unreleased)
 
+### A test-only example shows its results on deployed sites too
+
+A ` ```test ` fence with nothing beside it shows its results as its body, but it ran its tests
+only when the page's test toggle was on. That toggle is off by default anywhere but localhost,
+so on every deployed site the example was an empty box. It now always runs its tests, because
+they are its content; ordinary examples still follow the toggle.
+
 ### The doc navigation search has a clear button in every browser
 
 The doc system's nav search relied on `type="search"` for its clear (✕) button, which browsers

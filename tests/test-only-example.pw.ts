@@ -40,6 +40,26 @@ test('a test-only example renders its results as the body', async ({
   await expect(preview).toBeHidden()
 })
 
+test('…even with tests OFF, as on every deployed site', async ({ page }) => {
+  /*
+  Tests are off by default anywhere but localhost. A test-only example's results are its body,
+  so it must run them anyway: before this it was a blank box on every deployed site, which the
+  lane above never saw because it runs on localhost, where tests default on.
+  */
+  await page.addInitScript(() =>
+    localStorage.setItem('tosijs-ui-tests-enabled', 'false')
+  )
+  await page.goto('/component/')
+  expect(
+    await page.evaluate(() => document.body.classList.contains('tests-enabled'))
+  ).toBe(false)
+  const example = page.locator('tosi-example.-test-only').first()
+  await expect(example).toBeAttached({ timeout: 15_000 })
+  const results = example.locator('[part="testResults"]')
+  await expect(results).toBeVisible({ timeout: 15_000 })
+  await expect(results).toContainText(/2\/2 tests passed/)
+})
+
 test('an ordinary example is UNCHANGED — results stay an overlay', async ({
   page,
 }) => {
