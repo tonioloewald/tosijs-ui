@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.16.4 (unreleased)
+
+### The doc navigation search has a clear button in every browser
+
+The doc system's nav search relied on `type="search"` for its clear (✕) button, which browsers
+draw inconsistently: Chromium only while the field is focused, Safari while it has text, and
+Firefox never. It now has its own ✕, shown whenever there's text, with the native one hidden so
+there's never two. Escape clears it as well.
+
 ## 1.16.3
 
 A patch: iPhone menus that stay reachable, a Docs tab for live examples, and a way to declare

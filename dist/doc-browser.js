@@ -344,6 +344,44 @@ function logoMark(logo, projectLinks) {
     mark.classList.add('logo-mark');
     return mark;
 }
+// The nav search box: the field, and its own clear button over the field's right end.
+const navSearchStyleSpec = {
+    '.nav-search': {
+        position: 'relative',
+        margin: '5px',
+    },
+    '.nav-search input[type="search"]': {
+        width: '100%',
+        boxSizing: 'border-box',
+        // room for the clear button, so text never runs under it
+        paddingRight: varDefault.touchSize('44px'),
+    },
+    '.nav-search input[type="search"]::-webkit-search-cancel-button': {
+        display: 'none',
+    },
+    '.nav-search .nav-search-clear': {
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        bottom: 0,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: varDefault.touchSize('44px'),
+        padding: 0,
+        border: 'none',
+        boxShadow: 'none',
+        background: 'transparent',
+        color: 'inherit',
+        opacity: '0.5',
+    },
+    '.nav-search .nav-search-clear:hover, .nav-search .nav-search-clear:focus-visible': {
+        opacity: '1',
+    },
+    '.nav-search .nav-search-clear[hidden]': {
+        display: 'none',
+    },
+};
 const logoMarkStyleSpec = {
     '.logo-mark': {
         height: 'var(--tosi-logo-mark-size, 32px)',
@@ -565,8 +603,32 @@ export function createDocBrowser(options) {
         // section; while typing, matching sections expand via the needle branch.
         refreshNav(true);
     });
+    /*
+    The nav search's clear (✕) button. `type="search"` alone gave a clear affordance only in
+    some browsers and some states: Chromium shows its ✕ only while the field is focused, Safari
+    while it has text, Firefox never. So the field has its own, shown whenever there is text,
+    and the native one is hidden so there is never two. Escape clears too.
+    */
+    const updateSearchClear = () => {
+        searchClear.hidden = searchField.value === '';
+    };
+    const clearSearch = () => {
+        searchField.value = '';
+        updateSearchClear();
+        filterDocs();
+        searchField.focus();
+    };
+    const searchInput = () => {
+        updateSearchClear();
+        filterDocs();
+    };
+    const searchKeydown = (event) => {
+        if (event.key === 'Escape' && searchField.value !== '') {
+            event.preventDefault();
+            clearSearch();
+        }
+    };
     const searchField = input({
-        slot: 'nav',
         placeholder: 'search',
         // A placeholder is not a label: it is not a reliable accessible name, and it
         // disappears the moment anything is typed. This is the only text input in the
@@ -574,12 +636,18 @@ export function createDocBrowser(options) {
         // site built with `tosijs-ui/site`.
         'aria-label': 'Search documentation',
         type: 'search',
-        style: {
-            width: 'calc(100% - 10px)',
-            margin: '5px',
-        },
-        onInput: filterDocs,
+        onInput: searchInput,
+        onKeydown: searchKeydown,
     });
+    const searchClear = button({
+        type: 'button',
+        class: 'nav-search-clear',
+        title: 'Clear search',
+        'aria-label': 'Clear search',
+        hidden: true,
+        onClick: clearSearch,
+    }, icons.x());
+    const searchBox = div({ slot: 'nav', class: 'nav-search' }, searchField, searchClear);
     // Memory routing is decoupled from the page URL, so it ignores browser
     // back/forward (the host owns history, if any).
     if (!memoryRouting) {
@@ -1462,7 +1530,7 @@ export function createDocBrowser(options) {
             // The sidenav has just introduced itself; give it the layout the doc asked for.
             applyFullScreen();
         },
-    }, searchField, navContent, div({
+    }, searchBox, navContent, div({
         style: {
             position: 'relative',
             overflowY: 'scroll',
@@ -1475,6 +1543,7 @@ export function createDocBrowser(options) {
     StyleSheet('test-indicators', testIndicatorStyleSpec);
     // Header brand-mark sizing (icon / <img> / inline-<svg>), one CSS var each.
     StyleSheet('doc-logo-mark', logoMarkStyleSpec);
+    StyleSheet('doc-nav-search', navSearchStyleSpec);
     // Floating widget for test status
     const testWidget = button({
         class: 'test-widget',
