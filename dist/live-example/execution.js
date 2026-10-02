@@ -58,6 +58,30 @@ export function registerComponentsInIframe(iframeWindow, context) {
         }
     }
 }
+// Injected context name for the REPL hook (see withReplHook).
+const REPL_HOOK_VAR = '__tosiReplHook';
+/**
+ * Give the Console tab's REPL the example's own scope.
+ *
+ * Prepends `__tosiReplHook((src) => eval(src));` to the example's body. A DIRECT `eval` inside
+ * the example's function runs in that function's scope, so the closure can reach every
+ * top-level binding — `const`, `let`, functions, rewritten imports — whenever the REPL calls
+ * it, and returns the completion value (`const n = 2; n * 21` → 42), like a browser console.
+ *
+ * At the START, not the end: an example that returns early or throws would never reach an
+ * epilogue. The closure is only CALLED later, after the bindings are initialised. On the same
+ * line as the first line of code, so error line numbers still match the example's source.
+ * (Scope capture, the alternative, needs the optional tjs-lang and only saw runs made with the
+ * code panel already open, so `words` in the obvious first REPL input was undefined.)
+ */
+export function withReplHook(prepared, onRepl) {
+    if (!onRepl)
+        return prepared;
+    return {
+        code: `${REPL_HOOK_VAR}((__tosiSrc) => eval(__tosiSrc));${prepared.code}`,
+        extraContext: { ...prepared.extraContext, [REPL_HOOK_VAR]: onRepl },
+    };
+}
 /**
  * Append a scope-capture epilogue to already-transformed example code when a
  * consumer wants the run's locals. Returns the (possibly unchanged) code plus the
@@ -121,7 +145,7 @@ Ctor, context, body) {
  * Execute code inline (directly in the page)
  */
 export async function executeInline(options) {
-    const { html, css, js, context, transform, compiledJs, exampleElement, styleElement, widgetsElement, onError, onScope, console: exampleConsole, } = options;
+    const { html, css, js, context, transform, compiledJs, exampleElement, styleElement, widgetsElement, onError, onScope, onRepl, console: exampleConsole, } = options;
     const preview = div({ class: 'preview' });
     preview.innerHTML = html;
     styleElement.innerText = css;
@@ -137,7 +161,8 @@ export async function executeInline(options) {
             (await transform(rewriteImports(js, Object.keys(context)), {
                 transforms: ['typescript'],
             })).code;
-        const { code: finalCode, extraContext } = await withScopeCapture(transformedCode, onScope);
+        const captured = await withScopeCapture(transformedCode, onScope);
+        const { code: finalCode, extraContext } = withReplHook(captured, onRepl);
         const fullContext = {
             preview,
             ...(exampleConsole ? { console: exampleConsole } : {}),
@@ -151,7 +176,7 @@ export async function executeInline(options) {
         minified harness code.
         */
         const taggedCode = `${finalCode}\n//# sourceURL=${EXAMPLE_SOURCE_URL}`;
-        exampleSource = finalCode;
+        exampleSource = captured.code; // the example as written: the REPL hook isn't its code
         let built;
         try {
             built = buildExample(AsyncFunction, fullContext, taggedCode);
@@ -187,7 +212,7 @@ export async function executeInline(options) {
  * Execute code in an isolated iframe
  */
 export async function executeInIframe(options) {
-    const { html, css, js, context, transform, compiledJs, exampleElement, widgetsElement, onError, onScope, console: exampleConsole, } = options;
+    const { html, css, js, context, transform, compiledJs, exampleElement, widgetsElement, onError, onScope, onRepl, console: exampleConsole, } = options;
     // Create or reuse iframe
     let iframe = exampleElement.querySelector('iframe.preview-iframe');
     if (!iframe) {
@@ -243,7 +268,8 @@ export async function executeInIframe(options) {
             (await transform(rewriteImports(js, Object.keys(context)), {
                 transforms: ['typescript'],
             })).code;
-        const { code: finalCode, extraContext } = await withScopeCapture(transformedCode, onScope);
+        const captured = await withScopeCapture(transformedCode, onScope);
+        const { code: finalCode, extraContext } = withReplHook(captured, onRepl);
         // Execute JS in iframe context
         const fullContext = {
             preview,

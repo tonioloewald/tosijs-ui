@@ -130,8 +130,8 @@ export interface SiteConfig {
      */
     liveExamples?: 'auto' | 'opt-in';
     /**
-     * Show what a live example logs in a console under its preview (default `true`, 1.16.2).
-     * The panel appears only once an example logs something. `false` turns it off site-wide;
+     * Give live examples a Console tab: what the example logs, and a REPL in its scope (default
+     * `true`; a tab since 1.16.4, a panel under the preview in 1.16.2–1.16.3). `false` turns it off site-wide;
      * logs still reach the browser's devtools. One example opts out with the fence option
      * `{"console": false}`.
      */

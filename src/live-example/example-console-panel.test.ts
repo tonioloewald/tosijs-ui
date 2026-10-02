@@ -1,4 +1,4 @@
-import { afterEach, expect, spyOn, test } from 'bun:test'
+import { afterEach, describe, expect, spyOn, test } from 'bun:test'
 import { liveExample, testManager } from './component.js'
 import { setExampleConsole } from './example-console.js'
 
@@ -13,13 +13,12 @@ async function mount(js: string, options?: Record<string, unknown>) {
   return example
 }
 
+// what the Console tab holds for the current run, as [level, text]
 const lines = (example: any) =>
-  [...example.querySelectorAll('[part="console"] .console-line')].map(
-    (el: Element) => [
-      el.className.replace('console-line console-', ''),
-      el.textContent,
-    ]
-  )
+  example.consoleOutput.map((line: { level: string; text: string }) => [
+    line.level,
+    line.text,
+  ])
 
 async function quietly<T>(fn: () => Promise<T>): Promise<T> {
   // the example console forwards to the real one; keep the test output clean
@@ -48,18 +47,16 @@ test('what an example logs appears under its preview, by level, and still reache
       ['warn', 'careful'],
       ['error', 'bad'],
     ])
-    expect(example.classList.contains('-has-console')).toBe(true)
     expect(spy).toHaveBeenCalledWith('hello', { n: 1 })
     example.remove()
   })
 })
 
-test('an example that logs nothing has no console and its layout is unchanged', async () => {
+test('an example that logs nothing has an empty console', async () => {
   await quietly(async () => {
     const example = await mount(`preview.textContent = 'quiet'`)
     await example.refresh()
-    expect(example.querySelector('[part="console"]').hidden).toBe(true)
-    expect(example.classList.contains('-has-console')).toBe(false)
+    expect(lines(example)).toEqual([])
     example.remove()
   })
 })
@@ -151,8 +148,9 @@ test('logged markup is shown as text, never parsed', async () => {
       `console.log('<img src=x onerror="window.__pwned = true">')`
     )
     await example.refresh()
-    const panel = example.querySelector('[part="console"]')
-    expect(panel.querySelector('img')).toBe(null)
+    // render the Console tab the way the code panel does
+    const view = example.buildConsoleView()
+    expect(view.querySelector('img')).toBe(null)
     expect(lines(example)).toEqual([
       ['log', '<img src=x onerror="window.__pwned = true">'],
     ])
@@ -172,5 +170,97 @@ test('a site built with exampleConsole: false (the build stamps a global) shows 
     } finally {
       delete (globalThis as any).__TOSI_EXAMPLE_CONSOLE
     }
+  })
+})
+
+describe('the REPL', () => {
+  test('an expression shows its value; the input is echoed', async () => {
+    await quietly(async () => {
+      const example = await mount(`preview.textContent = 'hello'`)
+      await example.refresh()
+      expect(await example.consoleEval('1 + 1')).toBe(2)
+      expect(await example.consoleEval('preview.textContent')).toBe('hello')
+      expect(lines(example)).toEqual([
+        ['input', '1 + 1'],
+        ['result', '2'],
+        ['input', 'preview.textContent'],
+        ['result', 'hello'],
+      ])
+      example.remove()
+    })
+  })
+
+  test("it sees the example's own top-level variables, whenever it ran", async () => {
+    await quietly(async () => {
+      // the case that failed first time: the example ran before the console was opened
+      const example = await mount(
+        `const words = ['tosijs', 'tjs']\nfunction shout(w) { return w.toUpperCase() }\npreview.textContent = 'ok'`
+      )
+      await example.refresh()
+      expect(await example.consoleEval('words.map(shout)')).toEqual([
+        'TOSIJS',
+        'TJS',
+      ])
+      // statements give their completion value, as a browser console does
+      expect(await example.consoleEval('const n = 2; n * 21')).toBe(42)
+      // and await works, still in the example's scope
+      expect(
+        await example.consoleEval('await Promise.resolve(words.length)')
+      ).toBe(2)
+      example.remove()
+    })
+  })
+
+  test('an example that throws partway still exposes what it defined first', async () => {
+    await quietly(async () => {
+      const example = await mount(
+        `const before = 'defined'\nthrow new Error('stop')`
+      )
+      await example.refresh()
+      expect(await example.consoleEval('before')).toBe('defined')
+      example.remove()
+    })
+  })
+
+  test('await works, and statements run', async () => {
+    await quietly(async () => {
+      const example = await mount(`preview.textContent = 'x'`)
+      await example.refresh()
+      expect(await example.consoleEval('await Promise.resolve(5)')).toBe(5)
+      await example.consoleEval("preview.dataset.touched = 'yes'; let n = 1")
+      expect(example.querySelector('.preview').dataset.touched).toBe('yes')
+      example.remove()
+    })
+  })
+
+  test("an error is shown in the console, and doesn't throw", async () => {
+    await quietly(async () => {
+      const example = await mount(`preview.textContent = 'x'`)
+      await example.refresh()
+      expect(await example.consoleEval('nope()')).toBeUndefined()
+      const [, last] = lines(example).at(-1)
+      expect(last).toContain('nope')
+      expect(lines(example).at(-1)[0]).toBe('error')
+      example.remove()
+    })
+  })
+
+  test("the REPL's console.log lands in the same console", async () => {
+    await quietly(async () => {
+      const example = await mount(`preview.textContent = 'x'`)
+      await example.refresh()
+      await example.consoleEval("console.log('from the repl')")
+      expect(lines(example)).toContainEqual(['log', 'from the repl'])
+      example.remove()
+    })
+  })
+})
+
+test('the error that stopped the example is in its console', async () => {
+  await quietly(async () => {
+    const example = await mount(`throw new TypeError('boom')`)
+    await example.refresh()
+    expect(lines(example)).toContainEqual(['error', 'TypeError: boom'])
+    example.remove()
   })
 })

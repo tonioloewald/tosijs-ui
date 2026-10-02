@@ -87,12 +87,6 @@ export const liveExampleStyleSpec = {
         fontFamily: 'system-ui, sans-serif',
         whiteSpace: 'pre-wrap',
     },
-    /*
-    The example console (example-console.ts). Only an example that has LOGGED gets
-    `-has-console`, so every other example keeps exactly the layout it had: the preview fills
-    the example. With a console, the example becomes a column and the console takes up to
-    40% of it, scrolling, below a preview that keeps the rest.
-    */
     // The pending-run spinner (a `run` dialect awaiting its result). A ring in the text colour;
     // `.still` (prefers-reduced-motion, set from JS) keeps the ring and drops the spin.
     ':host [part="running"]': {
@@ -122,46 +116,71 @@ export const liveExampleStyleSpec = {
         from: { transform: 'rotate(0deg)' },
         to: { transform: 'rotate(360deg)' },
     },
-    ':host [part="console"][hidden]': {
-        display: 'none',
-    },
-    ':host(.-has-console) > [part="example"]': {
+    /*
+    The Console tab (example-console.ts): the run's logs scrolling above a REPL prompt pinned to
+    the bottom, like a browser console. Lines are text nodes, so logged markup is shown, not run.
+    */
+    ':host .example-console': {
         display: 'flex',
         flexDirection: 'column',
-    },
-    ':host(.-has-console) > [part="example"] > .preview, :host(.-has-console) > [part="example"] > .preview-iframe': {
-        flex: '1 1 auto',
-        height: 'auto',
-        minHeight: '0',
-    },
-    ':host [part="console"]': {
-        flex: '0 1 auto',
-        maxHeight: '40%',
-        overflow: 'auto',
-        margin: '0',
-        // the preview's own padding, so console text lines up with what the example renders
-        padding: `${vars.spacing50} ${vars.spacing}`,
+        height: '100%',
         background: 'var(--code-bg, #fdfdfd)',
-        boxShadow: 'inset 0 1px 0 #0002',
         fontFamily: 'var(--mono-font, monospace)',
         fontSize: '13px',
         lineHeight: '1.4',
     },
-    ':host [part="console"] .console-line': {
+    ':host .example-console .console-lines': {
+        flex: '1 1 auto',
+        minHeight: '0',
+        overflow: 'auto',
+        padding: `${vars.spacing50} ${vars.spacing}`,
+    },
+    ':host .example-console .console-line': {
         whiteSpace: 'pre-wrap',
         overflowWrap: 'anywhere',
         padding: '1px 0',
     },
-    ':host [part="console"] .console-warn': {
+    ':host .example-console .console-warn': {
         color: '#8a5a00',
         background: '#fff8e1',
     },
-    ':host [part="console"] .console-error': {
+    ':host .example-console .console-error': {
         color: '#b00020',
         background: '#fdecea',
     },
-    ':host [part="console"] .console-debug, :host [part="console"] .console-dropped': {
+    ':host .example-console .console-debug, :host .example-console .console-dropped': {
         opacity: '0.6',
+    },
+    // the REPL's own lines: what you typed, and what it returned
+    ':host .example-console .console-input': {
+        opacity: '0.75',
+    },
+    ':host .example-console .console-input::before': {
+        content: '"› "',
+    },
+    ':host .example-console .console-result::before': {
+        content: '"← "',
+        opacity: '0.6',
+    },
+    ':host .example-console .console-prompt': {
+        flex: '0 0 auto',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: vars.spacing50,
+        padding: `${vars.spacing50} ${vars.spacing}`,
+        boxShadow: 'inset 0 1px 0 #0002',
+    },
+    ':host .example-console .console-field': {
+        flex: '1 1 auto',
+        resize: 'none',
+        border: 'none',
+        boxShadow: 'none',
+        outline: 'none',
+        padding: '0',
+        margin: '0',
+        background: 'transparent',
+        color: 'inherit',
+        font: 'inherit',
     },
     ':host [part="editors"]': {
         flex: '1 1 200px',

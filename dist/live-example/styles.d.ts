@@ -98,45 +98,66 @@ export declare const liveExampleStyleSpec: {
             transform: string;
         };
     };
-    ':host [part="console"][hidden]': {
-        display: string;
-    };
-    ':host(.-has-console) > [part="example"]': {
+    ':host .example-console': {
         display: string;
         flexDirection: string;
-    };
-    ':host(.-has-console) > [part="example"] > .preview, :host(.-has-console) > [part="example"] > .preview-iframe': {
-        flex: string;
         height: string;
-        minHeight: string;
-    };
-    ':host [part="console"]': {
-        flex: string;
-        maxHeight: string;
-        overflow: string;
-        margin: string;
-        padding: string;
         background: string;
-        boxShadow: string;
         fontFamily: string;
         fontSize: string;
         lineHeight: string;
     };
-    ':host [part="console"] .console-line': {
+    ':host .example-console .console-lines': {
+        flex: string;
+        minHeight: string;
+        overflow: string;
+        padding: string;
+    };
+    ':host .example-console .console-line': {
         whiteSpace: string;
         overflowWrap: string;
         padding: string;
     };
-    ':host [part="console"] .console-warn': {
+    ':host .example-console .console-warn': {
         color: string;
         background: string;
     };
-    ':host [part="console"] .console-error': {
+    ':host .example-console .console-error': {
         color: string;
         background: string;
     };
-    ':host [part="console"] .console-debug, :host [part="console"] .console-dropped': {
+    ':host .example-console .console-debug, :host .example-console .console-dropped': {
         opacity: string;
+    };
+    ':host .example-console .console-input': {
+        opacity: string;
+    };
+    ':host .example-console .console-input::before': {
+        content: string;
+    };
+    ':host .example-console .console-result::before': {
+        content: string;
+        opacity: string;
+    };
+    ':host .example-console .console-prompt': {
+        flex: string;
+        display: string;
+        alignItems: string;
+        gap: string;
+        padding: string;
+        boxShadow: string;
+    };
+    ':host .example-console .console-field': {
+        flex: string;
+        resize: string;
+        border: string;
+        boxShadow: string;
+        outline: string;
+        padding: string;
+        margin: string;
+        background: string;
+        color: string;
+        font: string;
     };
     ':host [part="editors"]': {
         flex: string;

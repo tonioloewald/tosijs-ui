@@ -28,7 +28,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="../doc-system.css?v=947439c2939d" data-tosi-doc-system />
+  <link rel="stylesheet" href="../doc-system.css?v=5787a0116046" data-tosi-doc-system />
   <title>example — tosijs-ui</title>
   <meta name="description" content="&lt;tosi-example&gt; makes it easy to insert interactive code examples in a web page. It started life as a super lightweight, easier-to-embed implementation of…" />
   <link rel="canonical" href="https://ui.tosijs.net/component/" />
@@ -43,7 +43,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=cfc245129e8a" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=75ac74423fb2" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <h1>example</h1>
 <p><code>&lt;tosi-example&gt;</code> makes it easy to insert interactive code examples in a web page. It
@@ -139,32 +139,45 @@ example the equivalent is written inside a comment (so it survives <code>tsc</co
 that comment form can&#39;t appear inside a doc comment like this one, since the
 test&#39;s own closing delimiter would end the doc comment.</p>
 <h2>The console</h2>
-<p>What an example logs is shown under its preview, so a reader sees what you&#39;d see in devtools.
-Each example gets its own <code>console</code>, injected the way <code>preview</code> is, so its output is never
-mixed with another example&#39;s. Everything still reaches the browser&#39;s console too. The panel
-appears only once something is logged; an example that logs nothing looks exactly as it did.</p>
+<p>Each example has a <strong>Console</strong> tab beside its code (open the code panel with the <code>&lt;&gt;</code> button).
+It shows what the example logged, and it is a REPL: type an expression and press Enter to
+evaluate it in the example&#39;s scope, as in the browser&#39;s console.</p>
+<p>Each example gets its own <code>console</code>, injected the way <code>preview</code> is, so its output is never mixed
+with another example&#39;s. Everything still reaches the browser&#39;s console too.</p>
 <pre><code class="language-js">const words = [&#39;tosijs&#39;, &#39;tjs&#39;, &#39;xinjs&#39;]
 console.log(&#39;words:&#39;, words)
 for (const word of words) console.log(word, word.length)
 console.warn(&#39;xinjs is the old name&#39;)
 preview.textContent = `${words.length} words logged`
 </code></pre>
-<pre><code class="language-test">test(&#39;logged lines appear under the preview&#39;, () =&gt; {
+<pre><code class="language-test">test(&#39;the console holds what the example logged&#39;, () =&gt; {
   const example = preview.closest(&#39;tosi-example&#39;)
-  const lines = [...example.querySelectorAll(&#39;[part=&quot;console&quot;] .console-line&#39;)]
+  const lines = example.consoleOutput
   expect(lines.length).toBe(5)
-  expect(lines[1].textContent).toBe(&#39;tosijs 6&#39;)
-  expect(lines[4].classList.contains(&#39;console-warn&#39;)).toBe(true)
+  expect(lines[1].text).toBe(&#39;tosijs 6&#39;)
+  expect(lines[4].level).toBe(&#39;warn&#39;)
+})
+test(&#39;and evaluates in its scope&#39;, async () =&gt; {
+  const example = preview.closest(&#39;tosi-example&#39;)
+  expect(await example.consoleEval(&#39;preview.textContent&#39;)).toBe(&#39;3 words logged&#39;)
+  expect(await example.consoleEval(&#39;words.length&#39;)).toBe(3) // its own variables
 })
 </code></pre>
 <ul>
-<li>It shows <code>log</code>, <code>info</code>, <code>warn</code>, <code>error</code>, <code>debug</code>, <code>dir</code> and <code>table</code>. Strings print as written,
-data as JSON, errors as <code>Name: message</code>.</li>
+<li>It shows <code>log</code>, <code>info</code>, <code>warn</code>, <code>error</code>, <code>debug</code>, <code>dir</code> and <code>table</code>, plus the error that
+stopped the example, if one did. Strings print as written, data as JSON, errors as
+<code>Name: message</code>.</li>
+<li><strong>The REPL</strong> runs inside the example&#39;s own scope: its top-level variables and functions,
+<code>preview</code>, its <code>console</code>, and the page&#39;s modules (<code>import { tosi } from &#39;tosijs&#39;</code> works).
+Input gives its value, as in a browser console (<code>const n = 2; n * 21</code> shows 42), and
+<code>await</code> works. Enter evaluates and Shift+Enter adds a line; ↑ and ↓ step through what you&#39;ve
+entered.</li>
 <li>A re-run starts a clean console, and a log arriving late from the previous run (a timer it
 left behind) is not shown.</li>
 <li>It keeps 500 lines, then counts what it drops; devtools keeps everything.</li>
-<li>Turn it off for one example with the fence option <code>{&quot;console&quot;: false}</code>, or for the page with
-<code>setExampleConsole(false)</code> from <code>tosijs-ui/live-example</code>.</li>
+<li>Turn it off for one example with the fence option <code>{&quot;console&quot;: false}</code>, for a site with
+<code>exampleConsole: false</code> in its config, or for a page with <code>setExampleConsole(false)</code> from
+<code>tosijs-ui/live-example</code>.</li>
 <li>A <code>run</code> dialect gets the same console as <code>context.console</code>, so a VM can forward its output
 to it.</li>
 </ul>
@@ -672,6 +685,6 @@ context = {
     <li><a href="https://www.npmjs.com/package/tosijs-ui" data-icon="npm">npmjs</a></li>
   </ul>
   </tosi-doc-system>
-  <script type="module" src="../hydrate-003fhqn6.js"></script>
+  <script type="module" src="../hydrate-93t5s6ye.js"></script>
 </body>
 </html>

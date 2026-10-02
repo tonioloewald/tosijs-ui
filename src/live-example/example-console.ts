@@ -1,5 +1,5 @@
 /*
-The example console: what an example logs, shown under its preview (tjs-lang's ask on #184 —
+The example console: what an example logs, shown in its Console tab with a REPL (tjs-lang's ask on #184 —
 "`tjs` examples that `console.log` show nothing on the page").
 
 Each run gets its OWN `console`, injected the way `preview` is: as a parameter of the function

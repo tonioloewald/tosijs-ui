@@ -2,6 +2,15 @@
 
 ## 1.16.4 (unreleased)
 
+### The example console is a tab, and a REPL
+
+What an example logs now appears in a **Console** tab beside its code, instead of a panel under
+its preview, so the preview is never squeezed. The tab is also a REPL: type an expression and
+press Enter to evaluate it inside the example's own scope (its top-level variables and
+functions, `preview`, its `console`, the page's modules), as in the browser's console: input
+gives its value, `await` works, Shift+Enter adds a line, and ↑/↓ recall what you've entered. The error that stopped an
+example appears there too. `exampleConsole: false` and `{"console": false}` still turn it off.
+
 ### A test-only example shows its results on deployed sites too
 
 A ` ```test ` fence with nothing beside it shows its results as its body, but it ran its tests

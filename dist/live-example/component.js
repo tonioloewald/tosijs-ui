@@ -110,10 +110,12 @@ test's own closing delimiter would end the doc comment.
 
 ## The console
 
-What an example logs is shown under its preview, so a reader sees what you'd see in devtools.
-Each example gets its own `console`, injected the way `preview` is, so its output is never
-mixed with another example's. Everything still reaches the browser's console too. The panel
-appears only once something is logged; an example that logs nothing looks exactly as it did.
+Each example has a **Console** tab beside its code (open the code panel with the `<>` button).
+It shows what the example logged, and it is a REPL: type an expression and press Enter to
+evaluate it in the example's scope, as in the browser's console.
+
+Each example gets its own `console`, injected the way `preview` is, so its output is never mixed
+with another example's. Everything still reaches the browser's console too.
 
 ```js
 const words = ['tosijs', 'tjs', 'xinjs']
@@ -123,22 +125,34 @@ console.warn('xinjs is the old name')
 preview.textContent = `${words.length} words logged`
 ```
 ```test
-test('logged lines appear under the preview', () => {
+test('the console holds what the example logged', () => {
   const example = preview.closest('tosi-example')
-  const lines = [...example.querySelectorAll('[part="console"] .console-line')]
+  const lines = example.consoleOutput
   expect(lines.length).toBe(5)
-  expect(lines[1].textContent).toBe('tosijs 6')
-  expect(lines[4].classList.contains('console-warn')).toBe(true)
+  expect(lines[1].text).toBe('tosijs 6')
+  expect(lines[4].level).toBe('warn')
+})
+test('and evaluates in its scope', async () => {
+  const example = preview.closest('tosi-example')
+  expect(await example.consoleEval('preview.textContent')).toBe('3 words logged')
+  expect(await example.consoleEval('words.length')).toBe(3) // its own variables
 })
 ```
 
-- It shows `log`, `info`, `warn`, `error`, `debug`, `dir` and `table`. Strings print as written,
-  data as JSON, errors as `Name: message`.
+- It shows `log`, `info`, `warn`, `error`, `debug`, `dir` and `table`, plus the error that
+  stopped the example, if one did. Strings print as written, data as JSON, errors as
+  `Name: message`.
+- **The REPL** runs inside the example's own scope: its top-level variables and functions,
+  `preview`, its `console`, and the page's modules (`import { tosi } from 'tosijs'` works).
+  Input gives its value, as in a browser console (`const n = 2; n * 21` shows 42), and
+  `await` works. Enter evaluates and Shift+Enter adds a line; ↑ and ↓ step through what you've
+  entered.
 - A re-run starts a clean console, and a log arriving late from the previous run (a timer it
   left behind) is not shown.
 - It keeps 500 lines, then counts what it drops; devtools keeps everything.
-- Turn it off for one example with the fence option `{"console": false}`, or for the page with
-  `setExampleConsole(false)` from `tosijs-ui/live-example`.
+- Turn it off for one example with the fence option `{"console": false}`, for a site with
+  `exampleConsole: false` in its config, or for a page with `setExampleConsole(false)` from
+  `tosijs-ui/live-example`.
 - A `run` dialect gets the same console as `context.console`, so a VM can forward its output
   to it.
 
@@ -607,7 +621,7 @@ import { tosiPocketBar } from '../pocket-bar.js';
 import { postNotification } from '../notifications.js';
 import { popMenu } from '../menu.js';
 import { prefersReducedMotion } from '../reduced-motion.js';
-import { createExampleConsole, exampleConsoleEnabled, formatConsoleArgs, } from './example-console.js';
+import { createExampleConsole, exampleConsoleEnabled, formatConsoleArgs, formatConsoleValue, } from './example-console.js';
 import { dialectDocs, dialectTransform, getDialect, isBuiltInDialect, showDialectResult, } from './dialects.js';
 import { loadTransform, loadTjsTestApi, rewriteImports, contextVarName, contextParamNames, AsyncFunction, } from './code-transform.js';
 import { STORAGE_KEY, createRemoteKey, RemoteSyncManager, openEditorWindow, } from './remote-sync.js';
@@ -617,7 +631,7 @@ import { rewriteExampleBlocks, groupExamples, findFencedBlocks, } from './save-t
 import { exampleEditKey, saveExampleEdit, loadExampleEdit, clearExampleEdit, hasExampleEdit, } from './example-store.js';
 import { liveExampleStyleSpec } from './styles.js';
 import { runTests } from './test-harness.js';
-const { div, tosiSlot, style, button, pre, span, label, input } = elements;
+const { div, tosiSlot, style, button, pre, span, label, input, textarea } = elements;
 // Test mode: controlled by localStorage, defaults to enabled on localhost
 const TESTS_ENABLED_KEY = 'tosijs-ui-tests-enabled';
 const isLocalhost = typeof window !== 'undefined' &&
@@ -834,69 +848,239 @@ export class LiveExample extends withAttributes({
     }
     // Stops a `run` dialect's previous run when the example re-runs or leaves the page.
     runAbort;
-    // ── The example console ─────────────────────────────────────────────────────
-    // Lines are capped: an example that logs in a loop (or on every animation frame) must not
-    // grow the page without bound. Past the cap one line says how many were dropped; devtools
-    // still has them all.
-    static CONSOLE_LINES = 500;
     /**
      * How long a `run` dialect's run must take before its spinner appears, in ms. A faster run
      * never shows one, so a quick example doesn't flash.
      */
     static runningDelayMs = 250;
-    consoleLines = 0;
-    consoleDropped;
+    // ── The Console tab ─────────────────────────────────────────────────────────
+    // What the current run logged, kept whether or not the code panel is open (the tab renders
+    // it when built), and a REPL evaluated in the example's scope. Lines are capped: an example
+    // that logs in a loop must not grow the page without bound. Past the cap one line counts
+    // what was dropped; devtools still has them all.
+    static CONSOLE_LINES = 500;
+    consoleBuffer = [];
+    consoleDroppedCount = 0;
+    consoleView;
+    consoleLinesEl;
+    consoleInputEl;
+    consoleHistory = [];
+    consoleHistoryIndex = 0;
+    consoleScrollQueued = false;
+    /**
+     * What the current run logged, as `{ level, text }` lines (and REPL input/results), ending
+     * with a `dropped` line when the cap was reached, so a reader of this sees the truncation.
+     */
+    get consoleOutput() {
+        return this.consoleDroppedCount === 0
+            ? [...this.consoleBuffer]
+            : [...this.consoleBuffer, { level: 'dropped', text: this.droppedText() }];
+    }
+    droppedText() {
+        return `… ${this.consoleDroppedCount} more (see the browser console)`;
+    }
+    get consoleEnabled() {
+        return exampleConsoleEnabled() && this.options.console !== false;
+    }
     // A fresh console per run. A log arriving from a PREVIOUS run (a timer or listener it left
-    // behind) still reaches devtools but not the panel, which belongs to the current run.
+    // behind) still reaches devtools but not the tab, which belongs to the current run.
     consoleForRun() {
-        if (!exampleConsoleEnabled() || this.options.console === false)
+        if (!this.consoleEnabled)
             return undefined;
         const signal = this.runAbort?.signal;
         return createExampleConsole((entry) => {
-            if (signal?.aborted || !this.hydrated)
+            if (signal?.aborted)
                 return;
-            this.appendConsoleLine(entry);
+            this.addConsoleLine(entry.level, formatConsoleArgs(entry.args));
         });
     }
     clearConsole() {
-        if (!this.hydrated)
-            return;
-        const panel = this.parts.console;
-        panel.replaceChildren();
-        panel.hidden = true;
-        this.consoleLines = 0;
-        this.consoleDropped = undefined;
-        this.classList.remove('-has-console');
+        this.consoleBuffer = [];
+        this.consoleDroppedCount = 0;
+        this.consoleLinesEl?.replaceChildren();
     }
-    consoleScrollQueued = false;
-    appendConsoleLine(entry) {
-        const panel = this.parts.console;
-        // Past the cap only the count changes: nothing is formatted (formatting is lazy, so a
-        // logging loop costs no JSON.stringify per dropped line).
-        if (this.consoleLines >= LiveExample.CONSOLE_LINES) {
-            const dropped = Number(this.consoleDropped?.dataset.count ?? 0) + 1;
-            if (!this.consoleDropped) {
-                this.consoleDropped = div({ class: 'console-line console-dropped' });
-                panel.append(this.consoleDropped);
-            }
-            this.consoleDropped.dataset.count = String(dropped);
-            this.consoleDropped.textContent = `… ${dropped} more (see the browser console)`;
+    addConsoleLine(level, text) {
+        if (this.consoleBuffer.length >= LiveExample.CONSOLE_LINES) {
+            this.consoleDroppedCount += 1;
+            this.renderConsoleDropped();
             return;
         }
-        this.consoleLines += 1;
-        // A text node, never markup: logged `<img onerror=…>` is shown, not run.
-        panel.append(div({ class: `console-line console-${entry.level}` }, formatConsoleArgs(entry.args)));
-        panel.hidden = false;
-        this.classList.add('-has-console');
-        // Scroll to the newest line once per burst, not once per line (each read of scrollHeight
-        // forces a layout).
-        if (!this.consoleScrollQueued) {
-            this.consoleScrollQueued = true;
-            queueMicrotask(() => {
-                this.consoleScrollQueued = false;
-                panel.scrollTop = panel.scrollHeight;
-            });
+        const line = { level, text };
+        this.consoleBuffer.push(line);
+        if (this.consoleLinesEl) {
+            this.consoleLinesEl.append(this.consoleLineElement(line));
+            this.scrollConsole();
         }
+    }
+    // A text node, never markup: logged `<img onerror=…>` is shown, not run.
+    consoleLineElement(line) {
+        return div({ class: `console-line console-${line.level}` }, line.text);
+    }
+    renderConsoleDropped() {
+        const lines = this.consoleLinesEl;
+        if (!lines || this.consoleDroppedCount === 0)
+            return;
+        let dropped = lines.querySelector('.console-dropped');
+        if (!dropped) {
+            dropped = div({ class: 'console-line console-dropped' });
+            lines.append(dropped);
+        }
+        dropped.textContent = this.droppedText();
+    }
+    // To the newest line once per burst, not once per line (reading scrollHeight forces layout).
+    scrollConsole() {
+        if (this.consoleScrollQueued)
+            return;
+        this.consoleScrollQueued = true;
+        queueMicrotask(() => {
+            this.consoleScrollQueued = false;
+            if (this.consoleLinesEl)
+                this.consoleLinesEl.scrollTop = this.consoleLinesEl.scrollHeight;
+        });
+    }
+    buildConsoleView() {
+        this.consoleLinesEl = div({ class: 'console-lines', role: 'log' });
+        // A textarea, one line tall until it needs more: Enter evaluates, Shift+Enter adds a line
+        // (as in browser consoles), and it grows with its content up to a few lines.
+        this.consoleInputEl = textarea({
+            class: 'console-field',
+            rows: 1,
+            spellcheck: false,
+            autocomplete: 'off',
+            ariaLabel: 'Evaluate in this example',
+            placeholder: 'evaluate in this example (Shift+Enter for a new line)',
+            onKeydown: this.consoleKeydown,
+            onInput: this.sizeConsoleInput,
+        });
+        this.consoleLinesEl.append(...this.consoleBuffer.map((line) => this.consoleLineElement(line)));
+        this.renderConsoleDropped();
+        this.consoleView = div({ name: 'Console', class: 'example-console' }, this.consoleLinesEl, div({ class: 'console-prompt' }, span('›'), this.consoleInputEl));
+        return this.consoleView;
+    }
+    static CONSOLE_INPUT_MAX_ROWS = 8;
+    sizeConsoleInput = () => {
+        const field = this.consoleInputEl;
+        if (!field)
+            return;
+        field.rows = Math.min(LiveExample.CONSOLE_INPUT_MAX_ROWS, Math.max(1, field.value.split('\n').length));
+    };
+    consoleKeydown = (event) => {
+        const field = event.target;
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            if (field.value.trim() === '')
+                return;
+            const source = field.value;
+            field.value = '';
+            this.sizeConsoleInput();
+            void this.consoleEval(source);
+        }
+        else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+            const history = this.consoleHistory;
+            if (history.length === 0)
+                return;
+            // Inside multi-line input the arrows move the caret; history only from the first line
+            // (up) or the last line (down), as in browser consoles.
+            const before = field.value.slice(0, field.selectionStart);
+            const after = field.value.slice(field.selectionEnd);
+            if (event.key === 'ArrowUp' && before.includes('\n'))
+                return;
+            if (event.key === 'ArrowDown' && after.includes('\n'))
+                return;
+            event.preventDefault();
+            const step = event.key === 'ArrowUp' ? -1 : 1;
+            this.consoleHistoryIndex = Math.max(0, Math.min(history.length, this.consoleHistoryIndex + step));
+            field.value = history[this.consoleHistoryIndex] ?? '';
+            this.sizeConsoleInput();
+        }
+    };
+    /**
+     * Evaluate `source` in the example's scope, like a browser console: `preview`, the page's
+     * modules (`import { x } from 'tosijs'` works), the example's console, and its top-level
+     * variables once it has run with the code panel open. An expression shows its value;
+     * statements and `await` work too. The input and its result go into the Console tab.
+     */
+    consoleEval = async (source) => {
+        this.consoleHistory.push(source);
+        this.consoleHistoryIndex = this.consoleHistory.length;
+        this.addConsoleLine('input', source);
+        if (this.replEvaluate)
+            return this.evalInExample(this.replEvaluate, source);
+        // one scope, keyed by the identifier each value is bound to; the example's own
+        // variables win over a module of the same name, as they would inside the example
+        const scope = new Map();
+        scope.set('preview', this.currentPreview());
+        for (const [key, value] of Object.entries(this.context))
+            scope.set(contextVarName(key), value);
+        const replConsole = this.consoleForRun();
+        if (replConsole)
+            scope.set('console', replConsole);
+        for (const [key, value] of Object.entries(this.capturedScope ?? {}))
+            scope.set(key, value);
+        const code = rewriteImports(source, Object.keys(this.context));
+        const names = [...scope.keys()];
+        let fn;
+        try {
+            // @ts-expect-error AsyncFunction constructor typing
+            fn = new AsyncFunction(...names, `return (${code}\n)`);
+        }
+        catch {
+            try {
+                // @ts-expect-error AsyncFunction constructor typing
+                fn = new AsyncFunction(...names, code);
+            }
+            catch (error) {
+                this.addConsoleLine('error', formatConsoleValue(error));
+                return undefined;
+            }
+        }
+        try {
+            const result = await fn(...scope.values());
+            this.addConsoleLine('result', formatConsoleValue(result));
+            return result;
+        }
+        catch (error) {
+            this.addConsoleLine('error', formatConsoleValue(error));
+            return undefined;
+        }
+    };
+    /*
+    Evaluate inside the example's own scope (execution's REPL hook: a direct eval in the
+    example's function). Plain input returns its completion value, as a browser console does.
+    `await` needs an async function, which eval's own code is not, so input that awaits is
+    wrapped in an async arrow (expression first, then as statements); the arrow still closes
+    over the example's scope.
+    */
+    replEvaluate;
+    async evalInExample(evaluate, source) {
+        const code = rewriteImports(source, Object.keys(this.context));
+        const attempts = /\bawait\b/.test(code)
+            ? [`(async () => (${code}\n))()`, `(async () => {${code}\n})()`]
+            : [code];
+        for (let i = 0; i < attempts.length; i++) {
+            try {
+                const result = await evaluate(attempts[i]);
+                this.addConsoleLine('result', formatConsoleValue(result));
+                return result;
+            }
+            catch (error) {
+                const syntax = error?.name === 'SyntaxError';
+                if (syntax && i < attempts.length - 1)
+                    continue;
+                this.addConsoleLine('error', formatConsoleValue(error));
+                return undefined;
+            }
+        }
+        return undefined;
+    }
+    // The element the example renders into (inline), or the iframe's.
+    currentPreview() {
+        const { example } = this.parts;
+        const inline = example.querySelector(':scope > .preview');
+        if (inline)
+            return inline;
+        const frame = example.querySelector('iframe.preview-iframe');
+        return (frame?.contentDocument?.querySelector('.preview') ?? null);
     }
     // Build-time transpiled JS for the source block, set by insert-examples from the
     // page's baked `<script type="application/tosi-transpiled">` (see
@@ -1356,14 +1540,6 @@ export class LiveExample extends withAttributes({
         // Both icons render; the existing .hide-if-maximized / .show-if-maximized
         // CSS shows the right one for the current state — no JS icon swap.
         icons.maximize({ class: 'hide-if-maximized' }), icons.minimize({ class: 'show-if-maximized' }))), 
-        // What the example logged (example-console.ts). Last in the example so the preview,
-        // which execution inserts before the toolbar, sits above it. Hidden until a line arrives.
-        div({
-            part: 'console',
-            role: 'log',
-            ariaLabel: 'Example console',
-            hidden: true,
-        }), 
         // Shown while a `run` dialect's run is pending (see refresh()).
         div({
             part: 'running',
@@ -1395,7 +1571,9 @@ export class LiveExample extends withAttributes({
         // The `test` block tests the rendered preview (DOM), so its tab is
         // labeled "DOM tests" to distinguish it from inline tjs unit tests. The
         // `part`/`name` stay `test`; only the displayed label differs.
-        codeEditor({ name: 'DOM tests', mode: 'javascript', part: 'test' }), div({ slot: 'after-tabs', class: 'row' }, button({
+        codeEditor({ name: 'DOM tests', mode: 'javascript', part: 'test' }), 
+        // the Console tab (logs + REPL), unless the site or the fence turned the console off
+        ...(this.consoleEnabled ? [this.buildConsoleView()] : []), div({ slot: 'after-tabs', class: 'row' }, button({
             title: 'undo',
             part: 'undo',
             class: 'transparent',
@@ -1922,13 +2100,25 @@ export class LiveExample extends withAttributes({
         let executionError;
         const onError = (error) => {
             executionError = error;
+            // the error that stopped the example belongs in its console, as in devtools
+            if (this.consoleEnabled)
+                this.addConsoleLine('error', formatConsoleValue(error));
         };
         // Scope capture feeds tjs autocomplete (getLiveBindings), which is only consulted
         // for tjs/ts examples once a code panel is open. Gating it here keeps the optional
         // tjs-lang/editors bundle (and its AST parse) off the reader path — it loads only
-        // when someone actually edits a tjs/ts example. `js` never needs it.
+        // when someone actually edits a tjs/ts example. `js` never needs it. (The Console
+        // tab's REPL doesn't use it: it evaluates inside the example's own scope, onRepl.)
         const onScope = this.dialect !== 'js' && !runner && this.editorsBuilt
             ? this.captureScope
+            : undefined;
+        // The REPL's door into this run's scope; a superseded run's evaluator is dropped.
+        this.replEvaluate = undefined;
+        const onRepl = this.consoleEnabled && !runner
+            ? (evaluate) => {
+                if (!runAbort.signal.aborted)
+                    this.replEvaluate = evaluate;
+            }
             : undefined;
         // 'iframe' and (for now) 'ide' both run in an isolated iframe. 'ide' — the fully
         // sandboxed real-published-deps mode — is a recognized flag; its distinct
@@ -1947,6 +2137,7 @@ export class LiveExample extends withAttributes({
                 widgetsElement: exampleWidgets,
                 onError,
                 onScope,
+                onRepl,
                 console: exampleConsole,
             });
         }
@@ -1963,6 +2154,7 @@ export class LiveExample extends withAttributes({
                 widgetsElement: exampleWidgets,
                 onError,
                 onScope,
+                onRepl,
                 console: exampleConsole,
             });
         }

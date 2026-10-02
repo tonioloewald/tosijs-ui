@@ -131,45 +131,66 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
                 transform: string;
             };
         };
-        ':host [part="console"][hidden]': {
-            display: string;
-        };
-        ':host(.-has-console) > [part="example"]': {
+        ':host .example-console': {
             display: string;
             flexDirection: string;
-        };
-        ':host(.-has-console) > [part="example"] > .preview, :host(.-has-console) > [part="example"] > .preview-iframe': {
-            flex: string;
             height: string;
-            minHeight: string;
-        };
-        ':host [part="console"]': {
-            flex: string;
-            maxHeight: string;
-            overflow: string;
-            margin: string;
-            padding: string;
             background: string;
-            boxShadow: string;
             fontFamily: string;
             fontSize: string;
             lineHeight: string;
         };
-        ':host [part="console"] .console-line': {
+        ':host .example-console .console-lines': {
+            flex: string;
+            minHeight: string;
+            overflow: string;
+            padding: string;
+        };
+        ':host .example-console .console-line': {
             whiteSpace: string;
             overflowWrap: string;
             padding: string;
         };
-        ':host [part="console"] .console-warn': {
+        ':host .example-console .console-warn': {
             color: string;
             background: string;
         };
-        ':host [part="console"] .console-error': {
+        ':host .example-console .console-error': {
             color: string;
             background: string;
         };
-        ':host [part="console"] .console-debug, :host [part="console"] .console-dropped': {
+        ':host .example-console .console-debug, :host .example-console .console-dropped': {
             opacity: string;
+        };
+        ':host .example-console .console-input': {
+            opacity: string;
+        };
+        ':host .example-console .console-input::before': {
+            content: string;
+        };
+        ':host .example-console .console-result::before': {
+            content: string;
+            opacity: string;
+        };
+        ':host .example-console .console-prompt': {
+            flex: string;
+            display: string;
+            alignItems: string;
+            gap: string;
+            padding: string;
+            boxShadow: string;
+        };
+        ':host .example-console .console-field': {
+            flex: string;
+            resize: string;
+            border: string;
+            boxShadow: string;
+            outline: string;
+            padding: string;
+            margin: string;
+            background: string;
+            color: string;
+            font: string;
         };
         ':host [part="editors"]': {
             flex: string;
@@ -340,18 +361,50 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     get options(): Record<string, unknown>;
     set options(value: Record<string, unknown>);
     private runAbort?;
-    private static readonly CONSOLE_LINES;
     /**
      * How long a `run` dialect's run must take before its spinner appears, in ms. A faster run
      * never shows one, so a quick example doesn't flash.
      */
     static runningDelayMs: number;
-    private consoleLines;
-    private consoleDropped?;
+    private static readonly CONSOLE_LINES;
+    private consoleBuffer;
+    private consoleDroppedCount;
+    private consoleView?;
+    private consoleLinesEl?;
+    private consoleInputEl?;
+    private consoleHistory;
+    private consoleHistoryIndex;
+    private consoleScrollQueued;
+    /**
+     * What the current run logged, as `{ level, text }` lines (and REPL input/results), ending
+     * with a `dropped` line when the cap was reached, so a reader of this sees the truncation.
+     */
+    get consoleOutput(): {
+        level: string;
+        text: string;
+    }[];
+    private droppedText;
+    private get consoleEnabled();
     private consoleForRun;
     private clearConsole;
-    private consoleScrollQueued;
-    private appendConsoleLine;
+    private addConsoleLine;
+    private consoleLineElement;
+    private renderConsoleDropped;
+    private scrollConsole;
+    private buildConsoleView;
+    private static readonly CONSOLE_INPUT_MAX_ROWS;
+    private sizeConsoleInput;
+    private consoleKeydown;
+    /**
+     * Evaluate `source` in the example's scope, like a browser console: `preview`, the page's
+     * modules (`import { x } from 'tosijs'` works), the example's console, and its top-level
+     * variables once it has run with the code panel open. An expression shows its value;
+     * statements and `await` work too. The input and its result go into the Console tab.
+     */
+    consoleEval: (source: string) => Promise<unknown>;
+    private replEvaluate?;
+    private evalInExample;
+    private currentPreview;
     compiledJs?: string;
     compiledJsSource?: string;
     private jsOutEditor?;
