@@ -1,6 +1,12 @@
 # Changelog
 
-## 1.16.4 (unreleased)
+## 1.16.4
+
+A patch: the example console becomes a tab with a REPL, test-only examples render on deployed
+sites, and the doc nav search gets a clear button in every browser. The console's move from a
+panel under the preview to a tab changes how live examples look; it ships as a patch because
+live examples are a developer-facing tool and no API was removed. `dist/iife.js` grows by
+1.5 kB gzip (477.0 → 478.5 kB).
 
 ### The example console is a tab, and a REPL
 
