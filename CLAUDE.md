@@ -953,6 +953,11 @@ in a patch. The carousel's tappable dots, auto-pause and resize re-seat fixed de
 they are fixes, not behaviour changes. The test: does any adopter have to change anything to
 keep what they had? If the answer is "only to turn off something new", it is a patch.
 
+**Ruled for 1.16.4 (the maintainer's call):** a cosmetic change in a developer-facing component
+is a patch, even though it alters behaviour. The example console moved from a panel under the
+preview to a tab (and gained a REPL): live examples are a tool for doc authors and readers of
+docs, nothing an adopter's own product UI depends on, and no API was removed.
+
 So a big in-progress feature still ships as `1.x.0-beta.N`, not as a patch pretending to be
 small. Cut betas freely — but a
 prerelease published under a dist-tag is something consumers _install_, so the gate is
