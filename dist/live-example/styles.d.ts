@@ -24,7 +24,7 @@ export declare const liveExampleStyleSpec: {
         left: string;
         top: string;
         height: string;
-        width: string;
+        right: string;
         margin: string;
     };
     '.-maximize': {

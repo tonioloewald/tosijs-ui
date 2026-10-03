@@ -57,7 +57,7 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
             left: string;
             top: string;
             height: string;
-            width: string;
+            right: string;
             margin: string;
         };
         '.-maximize': {

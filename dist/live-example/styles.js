@@ -35,8 +35,14 @@ export const liveExampleStyleSpec = {
         position: 'fixed',
         left: '0',
         top: '0',
-        height: '100vh',
-        width: '100vw',
+        /*
+        The VISIBLE viewport (dvh), not 100vh: on iPhone Safari 100vh is the height without the
+        browser toolbar, so the bottom of a full-screen example sat under it — hiding the Console
+        tab's REPL input, which lives at the very bottom. (Same class of bug as #2460's menus.)
+        right: 0 rather than width: 100vw, which also counts a desktop scrollbar.
+        */
+        height: '100dvh',
+        right: '0',
         margin: '0 !important',
     },
     '.-maximize': {

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.16.5 (unreleased)
+
+### The Console tab's REPL is reachable on iPhone
+
+A full-screen example (the code panel, or maximized) was sized `100vh`, which on iPhone Safari is
+the height without the browser toolbar, so the bottom of the panel sat under it, and that is
+where the Console tab's REPL input lives. It is now sized to the visible viewport (`100dvh`).
+
 ## 1.16.4
 
 A patch: the example console becomes a tab with a REPL, test-only examples render on deployed
