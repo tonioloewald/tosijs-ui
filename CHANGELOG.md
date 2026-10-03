@@ -1,6 +1,12 @@
 # Changelog
 
-## 1.16.5 (unreleased)
+## 1.16.5
+
+A patch, mostly found by using the doc site on an iPhone: menus that stay on screen as Safari's
+toolbars come and go, a code panel that fits the visible screen, and a REPL that completes as
+you type (touchably, case-insensitively, with `$` and `$$`). Also quiet under tosijs 1.10.7's
+long-list advice, and `pinnedTopRows` now works from the element creator. `dist/iife.js` grows
+by 3.6 kB gzip (478.7 → 482.2 kB), including the move to tosijs 1.10.7, which it bundles.
 
 ### `$` and `$$` in the REPL
 
