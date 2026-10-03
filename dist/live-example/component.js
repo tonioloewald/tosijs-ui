@@ -148,6 +148,9 @@ test('and evaluates in its scope', async () => {
   Input gives its value, as in a browser console (`const n = 2; n * 21` shows 42), and
   `await` works. Enter evaluates and Shift+Enter adds a line; ↑ and ↓ step through what you've
   entered.
+- **`$` and `$$`**, as in a browser console: `$('.thing')` is the first match and `$$('.thing')`
+  an array of all of them, **within this example's preview** (`document.querySelector` still
+  reaches the page). An example that declares its own `$`, or a page with jQuery, keeps it.
 - **Completion:** as you type a name, or after a dot, a list of suggestions appears above the
   prompt: the value's properties after a dot (prototype chain included), or what's in scope.
   Tap one, or use ↓/↑ and Enter; Tab takes the highlighted one (or the first), Escape closes it.
@@ -1162,6 +1165,8 @@ export class LiveExample extends withAttributes({
         // one scope, keyed by the identifier each value is bound to; the example's own
         // variables win over a module of the same name, as they would inside the example
         const scope = new Map();
+        for (const [name, helper] of Object.entries(this.replHelpers()))
+            scope.set(name, helper);
         scope.set('preview', this.currentPreview());
         for (const [key, value] of Object.entries(this.context))
             scope.set(contextVarName(key), value);
@@ -1205,6 +1210,14 @@ export class LiveExample extends withAttributes({
     over the example's scope.
     */
     replEvaluate;
+    replHelpers() {
+        return {
+            $: (selector) => this.currentPreview()?.querySelector(selector) ?? null,
+            $$: (selector) => [
+                ...(this.currentPreview()?.querySelectorAll(selector) ?? []),
+            ],
+        };
+    }
     // Set by the first REPL input; from then on each run installs the scope hook.
     replWanted = false;
     // ── REPL autocomplete (Tab) ────────────────────────────────────────────────
@@ -1258,6 +1271,8 @@ export class LiveExample extends withAttributes({
         return [
             'preview',
             'console',
+            '$',
+            '$$',
             ...Object.keys(this.context).map(contextVarName),
             ...declaredNames(this.js),
         ];
@@ -1366,12 +1381,24 @@ export class LiveExample extends withAttributes({
     }
     async evalInExample(evaluate, source) {
         const code = rewriteImports(source, Object.keys(this.context));
+        /*
+        `$` and `$$`, as in a browser console, unless something named `$` is already in scope (the
+        example's own, or a page's jQuery): then that wins. They query THIS example's preview: in
+        the REPL the example is "the document", and an :iframe example's document isn't the page.
+        */
+        const helpers = this.replHelpers();
+        const prefix = evaluate('typeof $') === 'undefined'
+            ? 'var $ = __tosiHelpers.$, $$ = __tosiHelpers.$$;'
+            : '';
         const attempts = /\bawait\b/.test(code)
-            ? [`(async () => (${code}\n))()`, `(async () => {${code}\n})()`]
-            : [code];
+            ? [
+                `${prefix}(async () => (${code}\n))()`,
+                `${prefix}(async () => {${code}\n})()`,
+            ]
+            : [prefix + code];
         for (let i = 0; i < attempts.length; i++) {
             try {
-                const result = await evaluate(attempts[i]);
+                const result = await evaluate(attempts[i], helpers);
                 this.addConsoleLine('result', formatConsoleValue(result));
                 return result;
             }

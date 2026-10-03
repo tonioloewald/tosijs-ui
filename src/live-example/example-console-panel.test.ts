@@ -222,6 +222,37 @@ describe('the REPL', () => {
     })
   })
 
+  test('$ and $$ query the example, as in a browser console', async () => {
+    await quietly(async () => {
+      const example = await mount(
+        `preview.innerHTML = '<b class="x">one</b><b class="x">two</b>'`
+      )
+      await example.refresh()
+      expect(await example.consoleEval("$('.x').textContent")).toBe('one')
+      expect(
+        await example.consoleEval("$$('.x').map((b) => b.textContent)")
+      ).toEqual(['one', 'two'])
+      // scoped to THIS example's preview, not the whole page
+      const outside = document.createElement('b')
+      outside.className = 'x'
+      document.body.prepend(outside)
+      expect(await example.consoleEval("$$('.x').length")).toBe(2)
+      outside.remove()
+      example.remove()
+    })
+  })
+
+  test("an example's own $ wins over the helper", async () => {
+    await quietly(async () => {
+      const example = await mount(
+        `const $ = (n) => n * 2\npreview.textContent = 'x'`
+      )
+      await example.refresh()
+      expect(await example.consoleEval('$(21)')).toBe(42)
+      example.remove()
+    })
+  })
+
   test('await works, and statements run', async () => {
     await quietly(async () => {
       const example = await mount(`preview.textContent = 'x'`)

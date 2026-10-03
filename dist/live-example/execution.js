@@ -90,7 +90,8 @@ export function withReplHook(prepared, onRepl) {
     leading `;` ends a directive that has no semicolon of its own.
     */
     const prologue = prepared.code.match(DIRECTIVE_PROLOGUE)?.[0] ?? '';
-    const hook = `;${REPL_HOOK_VAR}((__tosiSrc) => eval(__tosiSrc));`;
+    // the second parameter carries the REPL's helpers ($, $$) into the eval's scope
+    const hook = `;${REPL_HOOK_VAR}((__tosiSrc, __tosiHelpers) => eval(__tosiSrc));`;
     return {
         code: prologue + hook + prepared.code.slice(prologue.length),
         extraContext: { ...prepared.extraContext, [REPL_HOOK_VAR]: onRepl },

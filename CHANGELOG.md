@@ -2,6 +2,12 @@
 
 ## 1.16.5 (unreleased)
 
+### `$` and `$$` in the REPL
+
+As in a browser console: `$('.thing')` returns the first match and `$$('.thing')` an array of all
+of them, within the example's own preview. An example's own `$`, or a page's jQuery, takes
+precedence.
+
 ### The Console tab's REPL completes as you type
 
 Typing a name, or a dot after a value, opens a list of suggestions above the prompt: the

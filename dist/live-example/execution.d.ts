@@ -39,7 +39,7 @@ export interface ExecutionOptions {
      * REPL): its top-level `const`/`let`/functions/imports are all reachable, and it returns the
      * completion value, as a browser console does. See `withReplHook`.
      */
-    onRepl?: (evaluate: (source: string) => unknown) => void;
+    onRepl?: (evaluate: (source: string, helpers?: Record<string, unknown>) => unknown) => void;
     /**
      * The `console` the example's code sees (see example-console.ts). Injected as a parameter,
      * like `preview`, so it shadows the global for this run only. Omitted: the real console.
@@ -64,7 +64,7 @@ export interface ExecutionOptions {
 export declare function withReplHook(prepared: {
     code: string;
     extraContext: Record<string, unknown>;
-}, onRepl?: (evaluate: (source: string) => unknown) => void): {
+}, onRepl?: (evaluate: (source: string, helpers?: Record<string, unknown>) => unknown) => void): {
     code: string;
     extraContext: Record<string, unknown>;
 };

@@ -409,6 +409,7 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
      */
     consoleEval: (source: string) => Promise<unknown>;
     private replEvaluate?;
+    private replHelpers;
     private replWanted;
     /**
      * What could complete the text before the caret: after a dot, the properties of the value

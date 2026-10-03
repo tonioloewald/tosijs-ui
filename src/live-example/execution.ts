@@ -106,7 +106,9 @@ export interface ExecutionOptions {
    * REPL): its top-level `const`/`let`/functions/imports are all reachable, and it returns the
    * completion value, as a browser console does. See `withReplHook`.
    */
-  onRepl?: (evaluate: (source: string) => unknown) => void
+  onRepl?: (
+    evaluate: (source: string, helpers?: Record<string, unknown>) => unknown
+  ) => void
   /**
    * The `console` the example's code sees (see example-console.ts). Injected as a parameter,
    * like `preview`, so it shadows the global for this run only. Omitted: the real console.
@@ -139,7 +141,9 @@ const REPL_HOOK_VAR = '__tosiReplHook'
 /** @internal */
 export function withReplHook(
   prepared: { code: string; extraContext: Record<string, unknown> },
-  onRepl?: (evaluate: (source: string) => unknown) => void
+  onRepl?: (
+    evaluate: (source: string, helpers?: Record<string, unknown>) => unknown
+  ) => void
 ): { code: string; extraContext: Record<string, unknown> } {
   if (!onRepl) return prepared
   /*
@@ -149,7 +153,8 @@ export function withReplHook(
   leading `;` ends a directive that has no semicolon of its own.
   */
   const prologue = prepared.code.match(DIRECTIVE_PROLOGUE)?.[0] ?? ''
-  const hook = `;${REPL_HOOK_VAR}((__tosiSrc) => eval(__tosiSrc));`
+  // the second parameter carries the REPL's helpers ($, $$) into the eval's scope
+  const hook = `;${REPL_HOOK_VAR}((__tosiSrc, __tosiHelpers) => eval(__tosiSrc));`
   return {
     code: prologue + hook + prepared.code.slice(prologue.length),
     extraContext: { ...prepared.extraContext, [REPL_HOOK_VAR]: onRepl },
