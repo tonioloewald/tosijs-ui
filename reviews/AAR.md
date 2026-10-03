@@ -312,3 +312,22 @@ gap, recorded rather than hidden.
 - **Verification was owed once again:** approval came after the workflow's 60-minute wait, the
   run ended green with "verification owed", and `verify_only` completed it.
 - Lanes: unit 1663 tests in ~13s; Playwright 386 in ~1.7m; consumer and haltija a few minutes.
+
+## 1.16.5 (2026-10-04) — iPhone fixes; a "verified" fix that wasn't, caught by review
+
+- **A check only proves what it exercises.** The maintainer verified the menu re-fit on an
+  iPhone, and the unit test was green — while a shadowed `position` (a 2023 destructure inside
+  positionFloat) made every re-fit BLANK open floats. The test asserted only the computed room,
+  which is right whatever the coordinates; the device check didn't trigger the path. The
+  pre-tag review found it by reading the code. Fix + tests that fail without it, the type
+  narrowed so the compiler rejects the shape, and a re-check on the device after the fix.
+- **The class is a lint rule, deferred honestly:** `@typescript-eslint/no-shadow` reports 69
+  shadows repo-wide; filed with the plan rather than patched past in a release.
+- **The first Playwright run went red under load** (load average ~15 while the review agents
+  ran): 9 Firefox/WebKit timing failures, all green in isolation and in a full re-run at load
+  ~4. Run the lanes and the review agents apart, or expect noise.
+- **tosijs 1.10.7's long-list advice found a real bug on the way:** `tosiTable({ pinnedTopRows })`
+  was ignored from the creator (the same "undefined getter → attribute" trap as `textTest`).
+  Two more instances of the class are on the board; the fix belongs in tosijs (#2464).
+- Lanes: unit 1674 tests ~13s; Playwright 399 ~1.8m at normal load; consumer and haltija a few
+  minutes each.
