@@ -120,8 +120,13 @@ of the thing you want the menu to affect (a common anti-pattern of front-end fra
 ### Handling Overflow
 
 `positionFloat` automatically sets two css-variables `--max-height` and `--max-width` on
-the floating element to help you deal with overflow (e.g. in menus). E.g. if the float
-is positioned with `top: 125px` then it will set `--max-height: calc(100vh - 125px)`.
+the floating element to help you deal with overflow (e.g. in menus): the room between the
+float's anchored edge and the edge of what is **visible** (`window.visualViewport`). E.g. a
+float positioned with `top: 125px` on a screen showing 700px gets `--max-height: 575px`.
+
+An open float is re-fitted when the visible viewport changes (Mobile Safari's toolbars
+appearing or disappearing, an on-screen keyboard, pinch-zoom), so its room stays true;
+a draggable float is left where it is.
 
 ## FloatPosition
 
@@ -268,6 +273,8 @@ element, target, position, remainOnScroll, remainOnResize, draggable = false) =>
         if (element instanceof TosiFloat) {
             // whatever it is positioned against is what moves it (and what scrolling it closes it)
             element.anchor = target;
+            element.anchorPosition = position ?? null;
+            ensureRefitListener();
             if (remainOnResize)
                 element.remainOnResize = remainOnResize;
             if (remainOnScroll)
@@ -358,6 +365,39 @@ element, target, position, remainOnScroll, remainOnResize, draggable = false) =>
     element.style.setProperty('--max-height', `${maxHeight.toFixed(2)}px`);
     element.style.setProperty('--max-width', `${maxWidth.toFixed(2)}px`);
 };
+/*
+Keep open floats fitted to what is visible (#2460, its other shoe). A float's room is measured
+when it is positioned, but Mobile Safari shows and hides its toolbars — and the keyboard comes
+and goes — as you touch the page, changing the visible area WITHOUT a window resize. A menu
+measured a moment earlier then ran under the toolbar. So when the visual viewport resizes or
+scrolls, re-position every open float against its anchor, which recomputes its room.
+*/
+let refitListening = false;
+function ensureRefitListener() {
+    if (refitListening || typeof window === 'undefined')
+        return;
+    const viewport = window.visualViewport;
+    if (!viewport || typeof viewport.addEventListener !== 'function')
+        return;
+    refitListening = true;
+    viewport.addEventListener('resize', refitFloats, { passive: true });
+    viewport.addEventListener('scroll', refitFloats, { passive: true });
+}
+/**
+ * @internal Re-position every open float against its anchor (what the visual-viewport
+ * listener calls; exported for tests).
+ */
+export function refitFloats() {
+    for (const float of Array.from(TosiFloat.floats)) {
+        const anchor = float.anchor;
+        if (!float.isConnected || !anchor || !anchor.isConnected)
+            continue;
+        if (float.drag)
+            continue; // a palette someone may have moved stays where they put it
+        positionFloat(float, anchor, (float.anchorPosition ?? undefined), undefined, // keep its remain-on-* settings
+        undefined, float.drag);
+    }
+}
 /** The visible region, in the layout-viewport coordinates `position: fixed` uses. */
 function visibleArea(w, h) {
     const vv = typeof window !== 'undefined' ? window.visualViewport : null;

@@ -169,3 +169,44 @@ describe('roomOnScreen measures against what is VISIBLE (#2460)', () => {
     expect(roomOnScreen(el, 390, 844).maxHeight).toBe(844 - 600)
   })
 })
+
+describe('open floats stay fitted to the visible viewport (#2460)', () => {
+  const realViewport = Object.getOwnPropertyDescriptor(window, 'visualViewport')
+  afterEach(() => {
+    if (realViewport)
+      Object.defineProperty(window, 'visualViewport', realViewport)
+    else delete (window as any).visualViewport
+  })
+
+  test("when Safari's toolbar shrinks the visible area, an open menu's room shrinks with it", async () => {
+    const { refitFloats } = await import('./pop-float.js')
+    const viewport = { offsetTop: 0, offsetLeft: 0, width: 390, height: 750 }
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      value: viewport,
+    })
+    const target = document.createElement('button')
+    document.body.append(target)
+    const float = popFloat({ content: box(), target, position: 's' })
+    const before = parseFloat(float.style.getPropertyValue('--max-height'))
+    viewport.height = 650 // the toolbar came back
+    refitFloats()
+    const after = parseFloat(float.style.getPropertyValue('--max-height'))
+    expect(before - after).toBeCloseTo(100, 1)
+  })
+
+  test('a draggable float is left where it is', async () => {
+    const { refitFloats } = await import('./pop-float.js')
+    const target = document.createElement('button')
+    document.body.append(target)
+    const float = popFloat({
+      content: box(),
+      target,
+      position: 's',
+      draggable: true,
+    })
+    float.style.top = '300px' // moved by the user
+    refitFloats()
+    expect(float.style.top).toBe('300px')
+  })
+})

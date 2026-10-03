@@ -13,6 +13,11 @@ export interface PopFloatOptions {
 export declare const popFloat: (options: PopFloatOptions) => TosiFloat;
 export declare const positionFloat: (element: HTMLElement, target: HTMLElement, position?: FloatPosition, remainOnScroll?: "hide" | "remove" | "remain", remainOnResize?: "hide" | "remove" | "remain", draggable?: boolean) => void;
 /**
+ * @internal Re-position every open float against its anchor (what the visual-viewport
+ * listener calls; exported for tests).
+ */
+export declare function refitFloats(): void;
+/**
  * @internal Exported for tests; not supported API.
  *
  * How far a positioned float can extend before it leaves the visible area: the same geometry

@@ -112,6 +112,12 @@ export class TosiFloat extends withAttributes({
    */
   anchor: Element | null = null
 
+  /**
+   * The position it was asked for against its anchor (set by `positionFloat`), so it can be
+   * re-fitted when the visible viewport changes. `null`: never positioned against an anchor.
+   */
+  anchorPosition: string | null = null
+
   content = slot()
 
   static shadowStyleSpec = {

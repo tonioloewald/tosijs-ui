@@ -18,6 +18,15 @@ on a phone, where there is no Tab key and no browser console at all. Matching ig
 the field turns off iOS's auto-capitalisation and autocorrect; the example's own names rank
 above globals.
 
+### Menus stay inside the screen on iPhone as Safari's toolbars come and go
+
+A menu's room was measured once, when it opened. Mobile Safari then shows and hides its toolbars
+(and the keyboard comes and goes) as you touch the page, which changes the visible area without
+a window resize, so a menu measured a moment earlier ran under the toolbar. Open floats (menus,
+tooltips, hint lists) are now re-fitted to their anchor whenever the visible viewport changes.
+Draggable floats are left where they are. Reported by the maintainer on an iPhone (the other
+half of #2460).
+
 ### The Console tab's REPL is reachable on iPhone
 
 A full-screen example (the code panel, or maximized) was sized `100vh`, which on iPhone Safari is

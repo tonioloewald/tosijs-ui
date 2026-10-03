@@ -106,6 +106,11 @@ export class TosiFloat extends withAttributes({
      * (the page, or a scroller containing it) triggers `remainOnScroll`. `null`: any scroll does.
      */
     anchor = null;
+    /**
+     * The position it was asked for against its anchor (set by `positionFloat`), so it can be
+     * re-fitted when the visible viewport changes. `null`: never positioned against an anchor.
+     */
+    anchorPosition = null;
     content = slot();
     static shadowStyleSpec = {
         ':host': {
