@@ -59,7 +59,7 @@
     "tjs-lang": "0.13.13",
     "tosijs": "1.10.7",
     "tosijs-schema": "1.10.2",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.65.0"
   },
   "peerDependencies": {
