@@ -151,6 +151,8 @@ test('and evaluates in its scope', async () => {
 - **`$` and `$$`**, as in a browser console: `$('.thing')` is the first match and `$$('.thing')`
   an array of all of them, **within this example's preview** (`document.querySelector` still
   reaches the page). An example that declares its own `$`, or a page with jQuery, keeps it.
+- In an `:iframe` example the REPL runs inside the iframe, as the example does: `window` and
+  `document` are the iframe's.
 - **Completion:** as you type a name, or after a dot, a list of suggestions appears above the
   prompt: the value's properties after a dot (prototype chain included), or what's in scope.
   Tap one, or use ↓/↑ and Enter; Tab takes the highlighted one (or the first), Escape closes it.
