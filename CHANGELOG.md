@@ -8,6 +8,11 @@ you type (touchably, case-insensitively, with `$` and `$$`). Also quiet under to
 long-list advice, and `pinnedTopRows` now works from the element creator. `dist/iife.js` grows
 by 3.6 kB gzip (478.7 → 482.2 kB), including the move to tosijs 1.10.7, which it bundles.
 
+**One read-side change to check for:** `<tosi-table>`'s `pinnedTopRows` and `pinnedBottomRows`
+now read as `null` rather than `undefined` when unset (typed `any[] | null`). That is what makes
+them work when passed to the element creator. Code that tested `table.pinnedTopRows ===
+undefined` should test `== null` instead; truthiness checks are unaffected.
+
 ### `$` and `$$` in the REPL
 
 As in a browser console: `$('.thing')` returns the first match and `$$('.thing')` an array of all
@@ -38,8 +43,7 @@ gives the reason itself:
 While testing this, `tosiTable({ pinnedTopRows: [...] })` (and `pinnedBottomRows`) turned out to
 be silently ignored when passed to the element creator: the getter returned `undefined` when
 unset, so tosijs set an attribute instead. It now returns `null` when unset, and the creator
-works. **Reading it changes too:** the type is `any[] | null` rather than `any[] | undefined`,
-so code that checked `table.pinnedTopRows === undefined` should check `== null` instead. The dev dependency moves to tosijs 1.10.7; the peer range is unchanged (`^1.10.3`).
+works (see the note at the top of these notes). The dev dependency moves to tosijs 1.10.7; the peer range is unchanged (`^1.10.3`).
 
 ### Menus stay inside the screen on iPhone as Safari's toolbars come and go
 
