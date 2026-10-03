@@ -295,3 +295,20 @@ gap, recorded rather than hidden.
   scoreboard's Version and Activity cells. Since 2026-09-26 a board project's row is
   tool-generated (Version) and points at the board (Activity). CLAUDE.md's step now says so.
 - **Not verified:** #2460 on a real iPhone (emulation has no URL bar). Still open on the board.
+
+## 1.16.4 (2026-10-03) — console as a tab with a REPL; three fixes found by using the site
+
+- **The maintainer found all three shipped defects by using the live site over the tunnel**, not
+  by any lane: a test-only example blank on deployed sites (tests off by default off localhost,
+  and every lane runs on localhost), the doc nav search with no clear button in Firefox, and a
+  demo whose Docs tab was on a nested example nobody would open. A lane with tests OFF now covers
+  the first. "Run it as a reader would" belongs beside the four lanes.
+- **The REPL's first design failed its first real use**: scope capture only saw runs made with
+  the panel open, so `words` was undefined. A direct-eval closure prepended to the example
+  reached the real scope; the review then showed that closure cancelled `'use strict'` and
+  slowed hot examples 1.5–2.6x for every reader, so it is now installed only on first REPL use.
+- **A rework deleted styles it didn't own**: removing the console panel's CSS block took the
+  spinner's rules (nested inside it) with it. The real-browser spinner test from #2504 caught it.
+- **Verification was owed once again:** approval came after the workflow's 60-minute wait, the
+  run ended green with "verification owed", and `verify_only` completed it.
+- Lanes: unit 1663 tests in ~13s; Playwright 386 in ~1.7m; consumer and haltija a few minutes.
