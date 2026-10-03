@@ -1803,6 +1803,10 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
               idPath: 'filename',
               hiddenProp: 'hidden',
               value: app.docs,
+              // the flat nav (query routing) lists every doc so the search can filter it and a
+              // reader can scan it; the site's author can't reach this binding to say so
+              nonVirtualReason:
+                'doc navigation: every doc is listed so search can filter it',
             },
           },
           template(

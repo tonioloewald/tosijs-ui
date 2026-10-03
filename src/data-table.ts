@@ -1738,20 +1738,25 @@ export class TosiTable extends withAttributes({
   private _pinnedTopRows?: any[]
   private _pinnedBottomRows?: any[]
 
-  get pinnedTopRows(): any[] | undefined {
-    return this._pinnedTopRows
+  /*
+  `null`, not `undefined`, when unset: tosijs's element creator assigns a prop as a PROPERTY only
+  when the instance's current value isn't `undefined`, and otherwise as an attribute — so
+  `tosiTable({ pinnedTopRows: [...] })` was silently ignored (tosijs board #2464).
+  */
+  get pinnedTopRows(): any[] | null {
+    return this._pinnedTopRows ?? null
   }
 
-  set pinnedTopRows(rows: any[] | undefined) {
+  set pinnedTopRows(rows: any[] | null | undefined) {
     this._pinnedTopRows = rows ? tosiValue(rows) : undefined
     this.queueRender()
   }
 
-  get pinnedBottomRows(): any[] | undefined {
-    return this._pinnedBottomRows
+  get pinnedBottomRows(): any[] | null {
+    return this._pinnedBottomRows ?? null
   }
 
-  set pinnedBottomRows(rows: any[] | undefined) {
+  set pinnedBottomRows(rows: any[] | null | undefined) {
     this._pinnedBottomRows = rows ? tosiValue(rows) : undefined
     this.queueRender()
   }
@@ -2670,7 +2675,11 @@ export class TosiTable extends withAttributes({
       */
       (_elements: any, item: any) =>
         this.buildRow(item, cols, stickyInfo, rowClass, false),
-      {}
+      // tosijs warns about long unvirtualised lists (1.10.7); the author can't reach this one
+      {
+        nonVirtualReason:
+          'pinned rows are always on screen, so every one is rendered (a handful by design)',
+      }
     )
     return div(
       {
@@ -3709,7 +3718,18 @@ export class TosiTable extends withAttributes({
     // stick against.
     const visibleBinding = (this.rowData.visible as any).listBinding(
       (_elements: any, item: any) => this.buildRow(item, cols, stickyInfo),
-      this.rowHeight > 0 ? { virtual: { height: this.rowHeight } } : {}
+      this.rowHeight > 0
+        ? { virtual: { height: this.rowHeight } }
+        : /*
+          `rowHeight: 0` IS the author saying "render every row" (documented for small tables
+          and variable row heights), so say so to tosijs rather than have it warn about a choice
+          already made. A table big enough for that to hurt still gets <tosi-table>'s own
+          warning past NON_VIRTUAL_ROW_ADVICE rows (#84).
+          */
+          {
+            nonVirtualReason:
+              'rowHeight: 0 — the author chose to render every row (<tosi-table> warns past 1,000)',
+          }
     )
 
     this._scrollArea = div(

@@ -18,6 +18,22 @@ on a phone, where there is no Tab key and no browser console at all. Matching ig
 the field turns off iOS's auto-capitalisation and autocorrect; the example's own names rank
 above globals.
 
+### Quiet under tosijs 1.10.7's long-list advice; `pinnedTopRows` works from the creator
+
+tosijs 1.10.7 warns once about any list binding of more than 10 items that has neither
+`virtual` nor a `nonVirtualReason`. tosijs-ui builds some lists its users can't reach, so it now
+gives the reason itself:
+
+- `<tosi-table>`'s pinned rows, which are always on screen;
+- its body under `rowHeight: 0`, which is the author choosing to render every row (the table's
+  own warning still fires past 1,000 rows);
+- the doc browser's flat nav in `routing: 'query'`.
+
+While testing this, `tosiTable({ pinnedTopRows: [...] })` (and `pinnedBottomRows`) turned out to
+be silently ignored when passed to the element creator: the getter returned `undefined` when
+unset, so tosijs set an attribute instead. It now returns `null` when unset, and the creator
+works. The dev dependency moves to tosijs 1.10.7; the peer range is unchanged (`^1.10.3`).
+
 ### Menus stay inside the screen on iPhone as Safari's toolbars come and go
 
 A menu's room was measured once, when it opened. Mobile Safari then shows and hides its toolbars

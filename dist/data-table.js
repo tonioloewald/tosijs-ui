@@ -1578,15 +1578,20 @@ export class TosiTable extends withAttributes({
     // count-based slicing.
     _pinnedTopRows;
     _pinnedBottomRows;
+    /*
+    `null`, not `undefined`, when unset: tosijs's element creator assigns a prop as a PROPERTY only
+    when the instance's current value isn't `undefined`, and otherwise as an attribute — so
+    `tosiTable({ pinnedTopRows: [...] })` was silently ignored (tosijs board #2464).
+    */
     get pinnedTopRows() {
-        return this._pinnedTopRows;
+        return this._pinnedTopRows ?? null;
     }
     set pinnedTopRows(rows) {
         this._pinnedTopRows = rows ? tosiValue(rows) : undefined;
         this.queueRender();
     }
     get pinnedBottomRows() {
-        return this._pinnedBottomRows;
+        return this._pinnedBottomRows ?? null;
     }
     set pinnedBottomRows(rows) {
         this._pinnedBottomRows = rows ? tosiValue(rows) : undefined;
@@ -2364,7 +2369,11 @@ export class TosiTable extends withAttributes({
         the visible data, so they have no parity, and blanking their non-repeating cells
         would empty a pinned header/summary row purely because it is not in `firstRows`.
         */
-        (_elements, item) => this.buildRow(item, cols, stickyInfo, rowClass, false), {});
+        (_elements, item) => this.buildRow(item, cols, stickyInfo, rowClass, false), 
+        // tosijs warns about long unvirtualised lists (1.10.7); the author can't reach this one
+        {
+            nonVirtualReason: 'pinned rows are always on screen, so every one is rendered (a handful by design)',
+        });
         return div({
             class: `tbody tbody-${region}`,
             role: 'rowgroup',
@@ -3338,7 +3347,17 @@ export class TosiTable extends withAttributes({
         // The visible-rows listBinding is bound directly to .scroll-area so
         // virtualisation observes the same scroll container that sticky cells
         // stick against.
-        const visibleBinding = this.rowData.visible.listBinding((_elements, item) => this.buildRow(item, cols, stickyInfo), this.rowHeight > 0 ? { virtual: { height: this.rowHeight } } : {});
+        const visibleBinding = this.rowData.visible.listBinding((_elements, item) => this.buildRow(item, cols, stickyInfo), this.rowHeight > 0
+            ? { virtual: { height: this.rowHeight } }
+            : /*
+              `rowHeight: 0` IS the author saying "render every row" (documented for small tables
+              and variable row heights), so say so to tosijs rather than have it warn about a choice
+              already made. A table big enough for that to hurt still gets <tosi-table>'s own
+              warning past NON_VIRTUAL_ROW_ADVICE rows (#84).
+              */
+                {
+                    nonVirtualReason: 'rowHeight: 0 — the author chose to render every row (<tosi-table> warns past 1,000)',
+                });
         this._scrollArea = div({ class: 'scroll-area', part: 'visibleRows' }, ...[
             this._head,
             this._tbodyTop,

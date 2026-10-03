@@ -243,10 +243,10 @@ export declare class TosiTable extends TosiTable_base {
     private _nonRepeatingGroupedRowCells;
     private _pinnedTopRows?;
     private _pinnedBottomRows?;
-    get pinnedTopRows(): any[] | undefined;
-    set pinnedTopRows(rows: any[] | undefined);
-    get pinnedBottomRows(): any[] | undefined;
-    set pinnedBottomRows(rows: any[] | undefined);
+    get pinnedTopRows(): any[] | null;
+    set pinnedTopRows(rows: any[] | null | undefined);
+    get pinnedBottomRows(): any[] | null;
+    set pinnedBottomRows(rows: any[] | null | undefined);
     get effectivePinnedTopData(): any[];
     get effectivePinnedBottomData(): any[];
     private get effectiveBaseData();
