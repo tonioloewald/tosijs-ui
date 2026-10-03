@@ -1027,7 +1027,15 @@ export function createDocBrowser(options) {
         }
         else {
             const href = hrefFor(filename);
-            window.history.pushState({ href }, '', href);
+            /*
+            A link to the page you are already on REPLACES the entry rather than pushing one, as a
+            native same-URL navigation does. Pushing left a duplicate the reader had to Back
+            through, and Back then visibly did nothing — the symptom #174 reported.
+            */
+            const { pathname, search } = new URL(href, document.location.href);
+            const same = pathname === document.location.pathname &&
+                search === document.location.search;
+            window.history[same ? 'replaceState' : 'pushState']({ href }, '', href);
         }
         navigateTo(filename);
     };

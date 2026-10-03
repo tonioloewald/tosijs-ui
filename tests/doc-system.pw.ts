@@ -127,3 +127,37 @@ test('a nested <tosi-doc-system> demo does not hijack the host browser state', a
   expect(value).toContain('One Source') // the one-source page's frontmatter title
   expect(value).not.toContain('A virtual data-table') // the nested demo's doc
 })
+
+/*
+#174: one click must cost the reader exactly one Back.
+
+A link to the page you are already on used to PUSH a duplicate entry, so the next Back left
+the pathname where it was and looked like a dead button. It now replaces, as a native
+same-URL navigation does. Clicked with `el.click()` so the link need not be on screen —
+which nav item is visible depends on the viewport, and visibility is not what is under test.
+*/
+test('a doc-link click costs exactly one Back (#174)', async ({ page }) => {
+  await page.goto(`${BASE}/carousel/`)
+  await page.waitForFunction(() => !!customElements.get('tosi-doc-system'))
+  await expect(page.locator('a.doc-link[href="/menu/"]').first()).toBeAttached()
+  const click = (href: string) =>
+    page.evaluate((h) => {
+      ;(
+        document.querySelector(`a.doc-link[href="${h}"]`) as HTMLElement
+      ).click()
+    }, href)
+  const length = () => page.evaluate(() => history.length)
+
+  const start = await length()
+  await click('/carousel/')
+  expect(await length()).toBe(start)
+
+  await click('/menu/')
+  await page.waitForFunction(() => location.pathname === '/menu/')
+  expect(await length()).toBe(start + 1)
+
+  await page.goBack()
+  await page.waitForFunction(() => location.pathname === '/carousel/')
+  await page.goForward()
+  await page.waitForFunction(() => location.pathname === '/menu/')
+})

@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Clicking a link to the page you are on no longer costs an extra Back (#174)
+
+A doc link pointing at the current page pushed a duplicate history entry, so the next Back
+press left the page where it was. It now replaces the entry, as a native same-URL navigation
+does. The double push #174 measured on every link (ensemble on 1.14.1) does not reproduce on
+1.16.4 with the same direct import: one click, one entry, and Back and Forward both work, in
+Chromium and WebKit. The documented consumer entry point is `import 'tosijs-ui/doc-browser'`,
+which registers `<tosi-doc-system>` since 1.14.2. The deep `tosijs-ui/doc-system/doc-system.js`
+import loads the same module.
+
 ## 1.16.5
 
 A patch, mostly found by using the doc site on an iPhone: menus that stay on screen as Safari's
