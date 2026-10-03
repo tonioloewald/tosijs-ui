@@ -195,6 +195,33 @@ describe('open floats stay fitted to the visible viewport (#2460)', () => {
     expect(before - after).toBeCloseTo(100, 1)
   })
 
+  test('a re-fit keeps the float where it was asked to be (1.16.5 review B1)', async () => {
+    const { refitFloats } = await import('./pop-float.js')
+    const viewport = { offsetTop: 0, offsetLeft: 0, width: 390, height: 750 }
+    Object.defineProperty(window, 'visualViewport', {
+      configurable: true,
+      value: viewport,
+    })
+    const target = document.createElement('button')
+    document.body.append(target)
+    for (const position of ['s', 'n', 'e', 'w', 'se', 'nw'] as const) {
+      const float = popFloat({ content: box(), target, position })
+      expect(float.anchorPosition).toBe(position)
+      const placed = () => ({
+        top: float.style.top,
+        left: float.style.left,
+        right: float.style.right,
+        bottom: float.style.bottom,
+        transform: float.style.transform,
+      })
+      const before = placed()
+      expect(Object.values(before).some((v) => v !== '')).toBe(true)
+      refitFloats() // nothing changed: nothing moves
+      expect(placed()).toEqual(before)
+      float.remove()
+    }
+  })
+
   test('a draggable float is left where it is', async () => {
     const { refitFloats } = await import('./pop-float.js')
     const target = document.createElement('button')

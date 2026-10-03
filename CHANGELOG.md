@@ -38,7 +38,8 @@ gives the reason itself:
 While testing this, `tosiTable({ pinnedTopRows: [...] })` (and `pinnedBottomRows`) turned out to
 be silently ignored when passed to the element creator: the getter returned `undefined` when
 unset, so tosijs set an attribute instead. It now returns `null` when unset, and the creator
-works. The dev dependency moves to tosijs 1.10.7; the peer range is unchanged (`^1.10.3`).
+works. **Reading it changes too:** the type is `any[] | null` rather than `any[] | undefined`,
+so code that checked `table.pinnedTopRows === undefined` should check `== null` instead. The dev dependency moves to tosijs 1.10.7; the peer range is unchanged (`^1.10.3`).
 
 ### Menus stay inside the screen on iPhone as Safari's toolbars come and go
 

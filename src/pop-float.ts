@@ -319,8 +319,14 @@ export const positionFloat = (
   draggable = false
 ): void => {
   {
-    const { position } = getComputedStyle(element)
-    if (position !== 'fixed') {
+    /*
+    `cssPosition`, never `position`: this block used to destructure `position` from the
+    computed style, shadowing the FloatPosition parameter, and code added below it later read
+    the wrong one — `anchorPosition` stored '' or 'fixed', and every re-fit blanked the float's
+    coordinates (1.16.5 review B1).
+    */
+    const { position: cssPosition } = getComputedStyle(element)
+    if (cssPosition !== 'fixed') {
       element.style.position = 'fixed'
     }
     if (element instanceof TosiFloat) {
