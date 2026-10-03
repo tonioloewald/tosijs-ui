@@ -95,6 +95,7 @@ just add the `no-drag` class to an element or its container.
 
 import { elements, ElementCreator, withAttributes } from 'tosijs'
 import { trackDrag, bringToFront } from './track-drag.js'
+import type { FloatPosition } from './pop-float.js'
 
 const { slot } = elements
 
@@ -116,7 +117,9 @@ export class TosiFloat extends withAttributes({
    * The position it was asked for against its anchor (set by `positionFloat`), so it can be
    * re-fitted when the visible viewport changes. `null`: never positioned against an anchor.
    */
-  anchorPosition: string | null = null
+  // typed FloatPosition, not string: as `string` it accepted the CSS position '' / 'fixed'
+  // that a shadowed variable stored there (1.16.5 review B1), and the compiler said nothing
+  anchorPosition: FloatPosition | null = null
 
   content = slot()
 

@@ -448,7 +448,7 @@ export function refitFloats(): void {
     positionFloat(
       float,
       anchor,
-      (float.anchorPosition ?? undefined) as FloatPosition | undefined,
+      float.anchorPosition ?? undefined,
       undefined, // keep its remain-on-* settings
       undefined,
       float.drag

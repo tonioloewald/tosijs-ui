@@ -189,10 +189,16 @@ describe('open floats stay fitted to the visible viewport (#2460)', () => {
     document.body.append(target)
     const float = popFloat({ content: box(), target, position: 's' })
     const before = parseFloat(float.style.getPropertyValue('--max-height'))
+    const top = float.style.top
     viewport.height = 650 // the toolbar came back
     refitFloats()
     const after = parseFloat(float.style.getPropertyValue('--max-height'))
     expect(before - after).toBeCloseTo(100, 1)
+    // and it is still where it was: this test passed while a re-fit blanked the coordinates
+    // (1.16.5 review M3), because it only looked at the room
+    expect(float.anchorPosition).toBe('s')
+    expect(float.style.top).toBe(top)
+    expect(top).not.toBe('')
   })
 
   test('a re-fit keeps the float where it was asked to be (1.16.5 review B1)', async () => {

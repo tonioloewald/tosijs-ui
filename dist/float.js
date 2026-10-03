@@ -110,6 +110,8 @@ export class TosiFloat extends withAttributes({
      * The position it was asked for against its anchor (set by `positionFloat`), so it can be
      * re-fitted when the visible viewport changes. `null`: never positioned against an anchor.
      */
+    // typed FloatPosition, not string: as `string` it accepted the CSS position '' / 'fixed'
+    // that a shadowed variable stored there (1.16.5 review B1), and the compiler said nothing
     anchorPosition = null;
     content = slot();
     static shadowStyleSpec = {

@@ -1,4 +1,5 @@
 import { ElementCreator } from 'tosijs';
+import type { FloatPosition } from './pop-float.js';
 declare const TosiFloat_base: import("tosijs").WithAttributes<{
     drag: boolean;
     remainOnResize: "hide" | "remove" | "remain";
@@ -16,7 +17,7 @@ export declare class TosiFloat extends TosiFloat_base {
      * The position it was asked for against its anchor (set by `positionFloat`), so it can be
      * re-fitted when the visible viewport changes. `null`: never positioned against an anchor.
      */
-    anchorPosition: string | null;
+    anchorPosition: FloatPosition | null;
     content: HTMLSlotElement;
     static shadowStyleSpec: {
         ':host': {

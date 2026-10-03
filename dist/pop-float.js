@@ -400,7 +400,7 @@ export function refitFloats() {
             continue;
         if (float.drag)
             continue; // a palette someone may have moved stays where they put it
-        positionFloat(float, anchor, (float.anchorPosition ?? undefined), undefined, // keep its remain-on-* settings
+        positionFloat(float, anchor, float.anchorPosition ?? undefined, undefined, // keep its remain-on-* settings
         undefined, float.drag);
     }
 }
