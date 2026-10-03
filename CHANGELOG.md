@@ -8,7 +8,9 @@ Typing a name, or a dot after a value, opens a list of suggestions above the pro
 value's properties (prototype chain included) or the names in scope (the example's own,
 `preview`, `console`, the page's modules, globals). Tap one, or use ↓/↑ and Enter; Tab takes the
 highlighted or first suggestion, and Escape closes the list. Rows are touch-sized, so it works
-on a phone, where there is no Tab key.
+on a phone, where there is no Tab key and no browser console at all. Matching ignores case, and
+the field turns off iOS's auto-capitalisation and autocorrect; the example's own names rank
+above globals.
 
 ### The Console tab's REPL is reachable on iPhone
 

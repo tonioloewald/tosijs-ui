@@ -112,7 +112,8 @@ test's own closing delimiter would end the doc comment.
 
 Each example has a **Console** tab beside its code (open the code panel with the `<>` button).
 It shows what the example logged, and it is a REPL: type an expression and press Enter to
-evaluate it in the example's scope, as in the browser's console.
+evaluate it in the example's scope, as in the browser's console. On a phone, where browsers
+have no console at all, this is the console.
 
 Each example gets its own `console`, injected the way `preview` is, so its output is never mixed
 with another example's. Everything still reaches the browser's console too.
@@ -150,6 +151,8 @@ test('and evaluates in its scope', async () => {
 - **Completion:** as you type a name, or after a dot, a list of suggestions appears above the
   prompt: the value's properties after a dot (prototype chain included), or what's in scope.
   Tap one, or use ↓/↑ and Enter; Tab takes the highlighted one (or the first), Escape closes it.
+  Matching ignores case (a phone capitalises the first letter), and the example's own names
+  come first.
 - Your first input re-runs the example once, to give the REPL its scope (it costs nothing
   until you use it). Two differences from devtools: a `const` or `let` you declare lives only
   for that one input (use `var`, or one input, to keep a value), and input that uses `await`
@@ -1049,6 +1052,9 @@ export class LiveExample extends withAttributes({
             class: 'console-field',
             rows: 1,
             spellcheck: false,
+            // a code field: no capitalising the first letter, no "correcting" names (iOS does both)
+            autocapitalize: 'off',
+            autocorrect: 'off',
             autocomplete: 'off',
             ariaLabel: 'Evaluate in this example',
             placeholder: 'evaluate in this example (Shift+Enter for a new line)',
@@ -1214,6 +1220,8 @@ export class LiveExample extends withAttributes({
         const path = (match?.[1] ?? '').replace(/\s/g, '').replace(/\.$/, '');
         const start = text.length - partial.length;
         let names;
+        // the example's own names (and preview, console, modules) rank above globals
+        let local = new Set();
         if (path) {
             if (!this.replEvaluate)
                 await this.ensureReplScope();
@@ -1229,20 +1237,29 @@ export class LiveExample extends withAttributes({
         else {
             if (partial === '')
                 return { start, options: [] }; // not every global at once
-            names = this.namesInScope();
+            local = new Set(this.localNames());
+            names = [...local, ...Object.getOwnPropertyNames(globalThis)];
         }
+        /*
+        Case-insensitive: a phone capitalises the first letter you type (`Wor`), and what you meant
+        is still `words`. Picking a suggestion replaces the partial name, so the case comes out
+        right. Ranked: the example's own names first (so `Wor` offers `words` before the global
+        `Worker`), then exact-case matches, then alphabetical.
+        */
+        const lower = partial.toLowerCase();
+        const rank = (name) => (local.has(name) ? 0 : 2) + (name.startsWith(partial) ? 0 : 1);
         const options = [...new Set(names)]
-            .filter((name) => name.startsWith(partial) && name !== partial)
-            .sort();
+            .filter((name) => name !== partial && name.toLowerCase().startsWith(lower))
+            .sort((a, b) => rank(a) - rank(b) || (a < b ? -1 : a > b ? 1 : 0));
         return { start, options };
     };
-    namesInScope() {
+    // What the example itself brings into scope (globals are added separately, ranked lower).
+    localNames() {
         return [
             'preview',
             'console',
             ...Object.keys(this.context).map(contextVarName),
             ...declaredNames(this.js),
-            ...Object.getOwnPropertyNames(globalThis),
         ];
     }
     // The REPL's scope hook is installed on first use (see consoleEval); completion is a use.

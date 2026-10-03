@@ -332,12 +332,29 @@ describe('REPL autocomplete (Tab)', () => {
     })
   })
 
+  test("case doesn't matter (a phone capitalises the first letter); exact case sorts first", async () => {
+    await quietly(async () => {
+      const example = await ready()
+      // the example's own name first, though the global Worker matches the case exactly
+      expect((await example.consoleCompletions('Wor')).options).toEqual([
+        'words',
+        'Worker',
+      ])
+      expect((await example.consoleCompletions('words.LE')).options).toEqual([
+        'length',
+      ])
+      // the field asks the keyboard not to capitalise or correct in the first place
+      const field = example.buildConsoleView().querySelector('textarea')
+      expect(field.getAttribute('autocapitalize')).toBe('off')
+      expect(field.getAttribute('autocorrect')).toBe('off')
+      example.remove()
+    })
+  })
+
   test('a bare name: what the example declares, and what is in scope', async () => {
     await quietly(async () => {
       const example = await ready()
-      expect((await example.consoleCompletions('wor')).options).toEqual([
-        'words',
-      ])
+      expect((await example.consoleCompletions('wor')).options[0]).toBe('words')
       expect((await example.consoleCompletions('sho')).options).toEqual([
         'shout',
       ])

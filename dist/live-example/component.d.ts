@@ -420,7 +420,7 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
         start: number;
         options: string[];
     }>;
-    private namesInScope;
+    private localNames;
     private ensureReplScope;
     private static readonly COMPLETIONS_SHOWN;
     private completionOptions;
