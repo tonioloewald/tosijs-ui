@@ -2,6 +2,14 @@
 
 ## 1.16.5 (unreleased)
 
+### The Console tab's REPL completes as you type
+
+Typing a name, or a dot after a value, opens a list of suggestions above the prompt: the
+value's properties (prototype chain included) or the names in scope (the example's own,
+`preview`, `console`, the page's modules, globals). Tap one, or use ↓/↑ and Enter; Tab takes the
+highlighted or first suggestion, and Escape closes the list. Rows are touch-sized, so it works
+on a phone, where there is no Tab key.
+
 ### The Console tab's REPL is reachable on iPhone
 
 A full-screen example (the code panel, or maximized) was sized `100vh`, which on iPhone Safari is

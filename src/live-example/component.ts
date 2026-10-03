@@ -147,6 +147,9 @@ test('and evaluates in its scope', async () => {
   Input gives its value, as in a browser console (`const n = 2; n * 21` shows 42), and
   `await` works. Enter evaluates and Shift+Enter adds a line; ↑ and ↓ step through what you've
   entered.
+- **Completion:** as you type a name, or after a dot, a list of suggestions appears above the
+  prompt: the value's properties after a dot (prototype chain included), or what's in scope.
+  Tap one, or use ↓/↑ and Enter; Tab takes the highlighted one (or the first), Escape closes it.
 - Your first input re-runs the example once, to give the REPL its scope (it costs nothing
   until you use it). Two differences from devtools: a `const` or `let` you declare lives only
   for that one input (use `var`, or one input, to keep a value), and input that uses `await`
@@ -619,7 +622,15 @@ context = {
 
 /*{ "parent": "Components" }*/
 
-import { ElementCreator, elements, tosi, withAttributes } from 'tosijs'
+import {
+  ElementCreator,
+  elements,
+  StyleSheet,
+  tosi,
+  vars,
+  varDefault,
+  withAttributes,
+} from 'tosijs'
 import { codeEditor, CodeEditor } from '../code-editor.js'
 import { tosiTabs } from '../tab-selector.js'
 import { icons } from '../icons.js'
@@ -627,6 +638,8 @@ import { tosiPocketBar } from '../pocket-bar.js'
 import { postNotification } from '../notifications.js'
 import { popMenu } from '../menu.js'
 import { prefersReducedMotion } from '../reduced-motion.js'
+import { popFloat } from '../pop-float.js'
+import type { TosiFloat } from '../float.js'
 
 import { ExampleContext, ExampleParts, TransformFn } from './types.js'
 import {
@@ -677,6 +690,88 @@ import { runTests, TestResults } from './test-harness.js'
 
 const { div, tosiSlot, style, button, pre, span, label, input, textarea } =
   elements
+
+/** Every string property name reachable from a value, prototype chain included. */
+function propertyNamesOf(value: unknown): string[] {
+  if (value === null || value === undefined) return []
+  const names: string[] = []
+  for (
+    let object: object | null = Object(value);
+    object;
+    object = Object.getPrototypeOf(object)
+  ) {
+    try {
+      names.push(...Object.getOwnPropertyNames(object))
+    } catch {
+      break // a hostile proxy; what we have is enough
+    }
+  }
+  return names.filter((name) => /^[A-Za-z_$][\w$]*$/.test(name))
+}
+
+/*
+Names an example's source declares at any depth (good enough for completion, which only
+offers candidates): `const`/`let`/`var`/`function`/`class` names, destructured names, and the
+names an `import { a, b as c }` binds.
+*/
+function declaredNames(source: string): string[] {
+  const names: string[] = []
+  for (const m of source.matchAll(
+    /(?:^|[^\w$.])(?:const|let|var|function\*?|class)\s+([A-Za-z_$][\w$]*)/g
+  ))
+    names.push(m[1])
+  for (const m of source.matchAll(/(?:const|let|var|import)\s*\{([^}]*)\}/g))
+    for (const part of m[1].split(',')) {
+      const name = part
+        .split(/\s+as\s+|:/)
+        .pop()
+        ?.trim()
+        .split(/\s|=/)[0]
+      if (name && /^[A-Za-z_$][\w$]*$/.test(name)) names.push(name)
+    }
+  return names
+}
+
+/*
+The REPL's completion list floats in <body> (so the code panel can't clip it), outside the
+example's style sheet, so its styles are a global sheet injected on first use. The variables
+are the menu's, so a theme that restyles menus restyles this too.
+*/
+let completionStylesInjected = false
+function ensureCompletionStyles(): void {
+  if (completionStylesInjected) return
+  completionStylesInjected = true
+  StyleSheet('tosi-example-completions', {
+    '.tosi-example-completions': {
+      overflow: 'hidden auto',
+      overscrollBehavior: 'contain',
+      maxHeight: `min(40vh, calc(${vars.maxHeight} - 8px))`,
+      minWidth: '12em',
+      borderRadius: vars.spacing50,
+      background: varDefault.menuBg('#fafafa'),
+      boxShadow: varDefault.menuShadow(
+        `${vars.spacing13} ${vars.spacing50} ${vars.spacing} #0004`
+      ),
+      fontFamily: 'var(--mono-font, monospace)',
+      fontSize: '13px',
+    },
+    '.tosi-example-completions [role="option"]': {
+      // a touch-sized row: these are meant to be tapped
+      minHeight: varDefault.touchSize('44px'),
+      display: 'flex',
+      alignItems: 'center',
+      padding: `0 ${vars.spacing}`,
+      color: varDefault.menuItemColor('#222'),
+      cursor: 'default',
+    },
+    '.tosi-example-completions [role="option"]:hover': {
+      background: varDefault.menuItemHoverBg('#eee'),
+    },
+    '.tosi-example-completions [role="option"][aria-selected="true"]': {
+      background: varDefault.menuItemActiveBg('#aaa'),
+    },
+  })
+}
 
 // Test mode: controlled by localStorage, defaults to enabled on localhost
 const TESTS_ENABLED_KEY = 'tosijs-ui-tests-enabled'
@@ -947,6 +1042,22 @@ export class LiveExample extends withAttributes({
   private consoleHistoryIndex = 0
   private consoleScrollQueued = false
 
+  // the REPL's completion list (see updateCompletions); it floats in <body>, above the prompt
+  private static completionLists = 0
+  private readonly completionListId = `tosi-example-completions-${++LiveExample.completionLists}`
+  private readonly completionList = div({
+    id: this.completionListId,
+    role: 'listbox',
+    class: 'tosi-example-completions',
+    // keep focus (and a phone's keyboard) in the field when a suggestion is tapped
+    onMousedown: (event: Event) => event.preventDefault(),
+    onClick: (event: Event) => {
+      const option = (event.target as HTMLElement).closest('[role="option"]')
+      if (option)
+        this.applyCompletion(Number(option.getAttribute('data-index')))
+    },
+  })
+
   /**
    * What the current run logged, as `{ level, text }` lines (and REPL input/results), ending
    * with a `dropped` line when the cap was reached, so a reader of this sees the truncation.
@@ -1043,7 +1154,12 @@ export class LiveExample extends withAttributes({
       ariaLabel: 'Evaluate in this example',
       placeholder: 'evaluate in this example (Shift+Enter for a new line)',
       onKeydown: this.consoleKeydown,
-      onInput: this.sizeConsoleInput,
+      onInput: this.consoleInput,
+      onBlur: this.consoleBlur,
+      role: 'combobox',
+      ariaAutocomplete: 'list',
+      ariaExpanded: 'false',
+      ariaControls: this.completionListId,
     }) as HTMLTextAreaElement
     this.consoleLinesEl.append(
       ...this.consoleBuffer.map((line) => this.consoleLineElement(line))
@@ -1070,8 +1186,41 @@ export class LiveExample extends withAttributes({
 
   private consoleKeydown = (event: KeyboardEvent): void => {
     const field = event.target as HTMLTextAreaElement
+    // While the completion list is open, the arrows move through it and Enter/Tab insert;
+    // Tab is only taken when there is a list, so a keyboard user can always Tab out.
+    if (this.completionsOpen) {
+      const count = this.completionOptions.length
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault()
+        const step = event.key === 'ArrowDown' ? 1 : -1
+        this.setActiveCompletion(
+          Math.max(-1, Math.min(count - 1, this.activeCompletion + step))
+        )
+        return
+      }
+      if (event.key === 'Tab' && !event.shiftKey) {
+        event.preventDefault()
+        this.applyCompletion(Math.max(0, this.activeCompletion))
+        return
+      }
+      if (
+        event.key === 'Enter' &&
+        !event.shiftKey &&
+        this.activeCompletion >= 0
+      ) {
+        event.preventDefault()
+        this.applyCompletion(this.activeCompletion)
+        return
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        this.closeCompletions()
+        return
+      }
+    }
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault()
+      this.closeCompletions()
       if (field.value.trim() === '') return
       const source = field.value
       field.value = ''
@@ -1165,6 +1314,169 @@ export class LiveExample extends withAttributes({
   private replEvaluate?: (source: string) => unknown
   // Set by the first REPL input; from then on each run installs the scope hook.
   private replWanted = false
+
+  // ── REPL autocomplete (Tab) ────────────────────────────────────────────────
+
+  /**
+   * What could complete the text before the caret: after a dot, the properties of the value
+   * the path before it evaluates to (in the example's scope); otherwise the names in scope —
+   * `preview`, `console`, the page's modules, what the example declares, and globals.
+   * `start` is where the partial name begins.
+   */
+  consoleCompletions = async (
+    text: string
+  ): Promise<{ start: number; options: string[] }> => {
+    const match = text.match(
+      /((?:[A-Za-z_$][\w$]*\s*\.\s*)*)([A-Za-z_$][\w$]*)?$/
+    )
+    const partial = match?.[2] ?? ''
+    const path = (match?.[1] ?? '').replace(/\s/g, '').replace(/\.$/, '')
+    const start = text.length - partial.length
+    let names: string[]
+    if (path) {
+      if (!this.replEvaluate) await this.ensureReplScope()
+      let target: unknown
+      try {
+        target = this.replEvaluate ? await this.replEvaluate(path) : undefined
+      } catch {
+        return { start, options: [] }
+      }
+      names = propertyNamesOf(target)
+    } else {
+      if (partial === '') return { start, options: [] } // not every global at once
+      names = this.namesInScope()
+    }
+    const options = [...new Set(names)]
+      .filter((name) => name.startsWith(partial) && name !== partial)
+      .sort()
+    return { start, options }
+  }
+
+  private namesInScope(): string[] {
+    return [
+      'preview',
+      'console',
+      ...Object.keys(this.context).map(contextVarName),
+      ...declaredNames(this.js),
+      ...Object.getOwnPropertyNames(globalThis),
+    ]
+  }
+
+  // The REPL's scope hook is installed on first use (see consoleEval); completion is a use.
+  private async ensureReplScope(): Promise<void> {
+    if (
+      this.replWanted ||
+      !this.consoleEnabled ||
+      getDialect(this.dialect)?.run
+    )
+      return
+    this.replWanted = true
+    await this.refresh()
+  }
+
+  // The completion list: a touchable listbox floated above the prompt, updated as you type.
+  private static readonly COMPLETIONS_SHOWN = 50
+  private completionOptions: string[] = []
+  private completionStart = 0
+  private activeCompletion = -1
+  private completionFloat?: TosiFloat
+  private completionRequest = 0
+  private completionTimer?: ReturnType<typeof setTimeout>
+
+  private get completionsOpen(): boolean {
+    return this.completionFloat?.isConnected === true
+  }
+
+  private consoleInput = (): void => {
+    this.sizeConsoleInput()
+    clearTimeout(this.completionTimer)
+    this.completionTimer = setTimeout(() => void this.updateCompletions(), 80)
+  }
+
+  private consoleBlur = (): void => {
+    this.closeCompletions()
+  }
+
+  /** Recompute the completion list for the text before the caret, and show or close it. */
+  updateCompletions = async (): Promise<void> => {
+    const field = this.consoleInputEl
+    if (!field || field.selectionStart !== field.selectionEnd) return
+    const before = field.value.slice(0, field.selectionStart)
+    const request = ++this.completionRequest
+    if (!/[\w$.]$/.test(before)) return this.closeCompletions()
+    const { start, options } = await this.consoleCompletions(before)
+    if (request !== this.completionRequest) return // typed again meanwhile
+    if (options.length === 0) return this.closeCompletions()
+    this.completionStart = start
+    this.completionOptions = options.slice(0, LiveExample.COMPLETIONS_SHOWN)
+    this.activeCompletion = -1
+    this.completionList.replaceChildren(
+      ...this.completionOptions.map((name, index) =>
+        div(
+          {
+            id: `${this.completionListId}-${index}`,
+            role: 'option',
+            ariaSelected: 'false',
+            dataIndex: String(index),
+          },
+          name
+        )
+      )
+    )
+    if (!this.completionsOpen) {
+      ensureCompletionStyles()
+      this.completionFloat = popFloat({
+        content: this.completionList,
+        target: field,
+        // above the prompt (which sits at the panel's bottom), from its left edge
+        position: 'ne',
+        remainOnScroll: 'remove',
+        remainOnResize: 'remove',
+      })
+    }
+    field.setAttribute('aria-expanded', 'true')
+    field.removeAttribute('aria-activedescendant')
+  }
+
+  private setActiveCompletion(index: number): void {
+    this.activeCompletion = index
+    const options = [...this.completionList.children] as HTMLElement[]
+    options.forEach((option, i) =>
+      option.setAttribute('aria-selected', String(i === index))
+    )
+    const current = options[index]
+    if (current) {
+      this.consoleInputEl?.setAttribute('aria-activedescendant', current.id)
+      current.scrollIntoView({ block: 'nearest' })
+    } else {
+      this.consoleInputEl?.removeAttribute('aria-activedescendant')
+    }
+  }
+
+  private applyCompletion = (index: number): void => {
+    const field = this.consoleInputEl
+    const name = this.completionOptions[index]
+    if (!field || name === undefined) return
+    const caret = field.selectionStart
+    field.value =
+      field.value.slice(0, this.completionStart) +
+      name +
+      field.value.slice(caret)
+    const end = this.completionStart + name.length
+    field.setSelectionRange(end, end)
+    this.closeCompletions()
+    field.focus()
+  }
+
+  private closeCompletions(): void {
+    clearTimeout(this.completionTimer)
+    this.completionRequest += 1 // anything still computing is now stale
+    this.completionFloat?.remove()
+    this.completionFloat = undefined
+    this.activeCompletion = -1
+    this.consoleInputEl?.setAttribute('aria-expanded', 'false')
+    this.consoleInputEl?.removeAttribute('aria-activedescendant')
+  }
 
   private async evalInExample(
     evaluate: (source: string) => unknown,

@@ -306,3 +306,130 @@ describe('1.16.4 review', () => {
     })
   })
 })
+
+describe('REPL autocomplete (Tab)', () => {
+  async function ready() {
+    const example = await mount(
+      `const words = ['a', 'b']\nfunction shout(w) { return w }\nconst { tosi } = tosijs\npreview.textContent = 'x'`
+    )
+    await example.refresh()
+    return example
+  }
+
+  test("after a dot: the value's properties, prototype chain included", async () => {
+    await quietly(async () => {
+      const example = await ready()
+      const { start, options } = await example.consoleCompletions('words.le')
+      expect(options).toEqual(['length'])
+      expect(start).toBe('words.'.length)
+      expect(
+        (await example.consoleCompletions('preview.textCon')).options
+      ).toContain('textContent')
+      expect((await example.consoleCompletions('words.')).options).toContain(
+        'map'
+      )
+      example.remove()
+    })
+  })
+
+  test('a bare name: what the example declares, and what is in scope', async () => {
+    await quietly(async () => {
+      const example = await ready()
+      expect((await example.consoleCompletions('wor')).options).toEqual([
+        'words',
+      ])
+      expect((await example.consoleCompletions('sho')).options).toEqual([
+        'shout',
+      ])
+      expect((await example.consoleCompletions('pre')).options).toContain(
+        'preview'
+      )
+      // an empty name offers nothing, rather than every global
+      expect((await example.consoleCompletions('x = ')).options).toEqual([])
+      example.remove()
+    })
+  })
+
+  test('typing opens a touchable list; tapping a suggestion inserts it', async () => {
+    await quietly(async () => {
+      const example = await ready()
+      const view = example.buildConsoleView()
+      document.body.append(view) // the field needs to be on the page to anchor the list
+      const field = view.querySelector('textarea') as HTMLTextAreaElement
+      field.value = 'words.re'
+      field.setSelectionRange(8, 8)
+      await example.updateCompletions()
+      const options = [
+        ...document.querySelectorAll(
+          '.tosi-example-completions [role="option"]'
+        ),
+      ] as HTMLElement[]
+      expect(options.map((o) => o.textContent)).toEqual([
+        'reduce',
+        'reduceRight',
+        'reverse',
+      ])
+      expect(field.getAttribute('aria-expanded')).toBe('true')
+      options[2].click()
+      expect(field.value).toBe('words.reverse')
+      expect(field.getAttribute('aria-expanded')).toBe('false')
+      expect(
+        document.querySelectorAll('.tosi-example-completions [role="option"]')
+          .length
+      ).toBe(0)
+      view.remove()
+      example.remove()
+    })
+  })
+
+  test('keyboard: arrows move through the list, Enter inserts, Tab takes the first', async () => {
+    await quietly(async () => {
+      const example = await ready()
+      const view = example.buildConsoleView()
+      document.body.append(view)
+      const field = view.querySelector('textarea') as HTMLTextAreaElement
+      const key = (k: string) =>
+        field.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: k,
+            bubbles: true,
+            cancelable: true,
+          })
+        )
+      field.value = 'words.re'
+      field.setSelectionRange(8, 8)
+      await example.updateCompletions()
+      key('ArrowDown')
+      key('ArrowDown')
+      expect(field.getAttribute('aria-activedescendant')).toMatch(/-1$/)
+      key('Enter')
+      expect(field.value).toBe('words.reduceRight')
+
+      field.value = 'words.le'
+      field.setSelectionRange(8, 8)
+      await example.updateCompletions()
+      key('Tab')
+      expect(field.value).toBe('words.length')
+      view.remove()
+      example.remove()
+    })
+  })
+
+  test('Tab with nothing to complete is not intercepted (focus can move on)', async () => {
+    await quietly(async () => {
+      const example = await ready()
+      const view = example.buildConsoleView()
+      const field = view.querySelector('textarea') as HTMLTextAreaElement
+      field.value = 'words.length + '
+      field.setSelectionRange(field.value.length, field.value.length)
+      const event = new KeyboardEvent('keydown', {
+        key: 'Tab',
+        bubbles: true,
+        cancelable: true,
+      })
+      field.dispatchEvent(event)
+      expect(event.defaultPrevented).toBe(false)
+      example.remove()
+    })
+  })
+})

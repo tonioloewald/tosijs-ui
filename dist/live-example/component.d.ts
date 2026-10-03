@@ -375,6 +375,9 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     private consoleHistory;
     private consoleHistoryIndex;
     private consoleScrollQueued;
+    private static completionLists;
+    private readonly completionListId;
+    private readonly completionList;
     /**
      * What the current run logged, as `{ level, text }` lines (and REPL input/results), ending
      * with a `dropped` line when the cap was reached, so a reader of this sees the truncation.
@@ -407,6 +410,33 @@ export declare class LiveExample extends LiveExample_base<ExampleParts> {
     consoleEval: (source: string) => Promise<unknown>;
     private replEvaluate?;
     private replWanted;
+    /**
+     * What could complete the text before the caret: after a dot, the properties of the value
+     * the path before it evaluates to (in the example's scope); otherwise the names in scope —
+     * `preview`, `console`, the page's modules, what the example declares, and globals.
+     * `start` is where the partial name begins.
+     */
+    consoleCompletions: (text: string) => Promise<{
+        start: number;
+        options: string[];
+    }>;
+    private namesInScope;
+    private ensureReplScope;
+    private static readonly COMPLETIONS_SHOWN;
+    private completionOptions;
+    private completionStart;
+    private activeCompletion;
+    private completionFloat?;
+    private completionRequest;
+    private completionTimer?;
+    private get completionsOpen();
+    private consoleInput;
+    private consoleBlur;
+    /** Recompute the completion list for the text before the caret, and show or close it. */
+    updateCompletions: () => Promise<void>;
+    private setActiveCompletion;
+    private applyCompletion;
+    private closeCompletions;
     private evalInExample;
     private currentPreview;
     compiledJs?: string;
