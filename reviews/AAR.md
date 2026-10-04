@@ -331,3 +331,19 @@ gap, recorded rather than hidden.
   Two more instances of the class are on the board; the fix belongs in tosijs (#2464).
 - Lanes: unit 1674 tests ~13s; Playwright 399 ~1.8m at normal load; consumer and haltija a few
   minutes each.
+
+## 1.16.6 (2026-10-04) — one history fix; the review widened it to the router
+
+- **The reported bug did not reproduce; a neighbour did.** #174's per-link double push (ensemble
+  on 1.14.1) measured one entry per click on 1.16.4 with the same deep import. Measuring
+  ui.tosijs.net as the control turned up the real defect: a link to the page already showing
+  pushed a duplicate entry, the same "Back looks dead" symptom.
+- **The pre-tag review earned its cost on a 10-line fix:** it found the same defect in
+  `router.ts` `navigate()` and a hash case the first fix got wrong. Both fixed before tagging,
+  each with a test that fails with the fix reverted. The re-review's two minors (identity
+  coverage, one home for the policy) went to the board rather than another patch round.
+- **A lane passed while recording 7 of 19 pages:** `test-browser` reported 41 tests (vs 76) and
+  exited 0. An immediate re-run gave 76. Filed as a fail-open lane on the board; until fixed,
+  read the count, not just the tick.
+- **Approval landed after the 60-minute wait again:** `verify` skipped; `verify_only=true`
+  ran green.
