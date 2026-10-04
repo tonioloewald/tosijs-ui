@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.16.6
+
+A one-fix patch: a doc link to the page you are already on no longer adds a history entry
+that Back has to step through (#174). No API change; the bundle size is unchanged in effect.
 
 ### Clicking a link to the page you are on no longer costs an extra Back (#174)
 
