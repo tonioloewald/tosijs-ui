@@ -909,12 +909,11 @@ Ships as `tosijs-release-notes` so adopters get the same workflow.
     guard _and_ the comment recording the exemption's absence, and read as a failure against
     code that was correct.
 
-11. **Refresh the ecosystem scoreboard** — `practices/releasing.md` step 9: in the practices
-    repo, run `bun tools/scoreboard.ts` (it writes Version and "As of" from npm and GitHub; never
-    hand-edit those cells). tosijs-ui is on the virta board, so its **Activity cell stays
-    "on the task board"** — the board is its live scoreboard (owner, 2026-09-26). 1.16.0–1.16.2
-    hand-wrote both, against that rule, because this step didn't say so. Commit directly to the
-    practices repo (its no-signoff carve-out), pulling with `git pull --no-rebase`.
+11. **Showcase what shipped; don't touch the scoreboard.** tosijs-ui is on the virta board,
+    which tracks version and activity live, so the shared scoreboard refresh is obsolete here
+    (owner, 2026-10-04; `practices/releasing.md` step 9). For each closed task a reader can
+    SEE, post `virta showcase #n "what it does" --media ./shot.png --link <docs page>`.
+    Screenshots come from Playwright against the deployed site or a dev server.
 12. **Write the after-action report** — append 3–6 factual bullets to `reviews/AAR.md`
     (newest first). `practices/releasing.md` step 10.
 
