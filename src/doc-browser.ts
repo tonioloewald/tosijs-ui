@@ -1271,14 +1271,18 @@ export function createDocBrowser(options: DocBrowserOptions): HTMLElement {
     } else {
       const href = hrefFor(filename)
       /*
-      A link to the page you are already on REPLACES the entry rather than pushing one, as a
+      A link to the document already showing REPLACES the entry rather than pushing one, as a
       native same-URL navigation does. Pushing left a duplicate the reader had to Back
       through, and Back then visibly did nothing — the symptom #174 reported.
+
+      "Same" is the DOCUMENT, the identity the popstate guard uses, not the raw path: `/x`,
+      `/x/` and `/x/index.html`, or `?x` and `?x&_testMode=1`, are one page. A URL carrying a
+      hash still pushes, because leaving `/x/#example` for `/x/` is a navigation the reader
+      may want to come Back from.
       */
-      const { pathname, search } = new URL(href, document.location.href)
       const same =
-        pathname === document.location.pathname &&
-        search === document.location.search
+        filename === String(app.currentDoc.filename) &&
+        document.location.hash === ''
       window.history[same ? 'replaceState' : 'pushState']({ href }, '', href)
     }
     navigateTo(filename)

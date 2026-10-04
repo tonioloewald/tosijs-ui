@@ -2,17 +2,22 @@
 
 ## 1.16.6
 
-A one-fix patch: a doc link to the page you are already on no longer adds a history entry
-that Back has to step through (#174). No API change; the bundle size is unchanged in effect.
+A one-fix patch: a link to the page you are already on no longer adds a history entry that Back
+has to step through (#174). No API change.
 
 ### Clicking a link to the page you are on no longer costs an extra Back (#174)
 
-A doc link pointing at the current page pushed a duplicate history entry, so the next Back
-press left the page where it was. It now replaces the entry, as a native same-URL navigation
-does. The double push #174 measured on every link (ensemble on 1.14.1) does not reproduce on
-1.16.4 with the same direct import: one click, one entry, and Back and Forward both work, in
-Chromium and WebKit. The documented consumer entry point is `import 'tosijs-ui/doc-browser'`,
-which registers `<tosi-doc-system>` since 1.14.2. The deep `tosijs-ui/doc-system/doc-system.js`
+A doc link pointing at the document already showing pushed a duplicate history entry, so the
+next Back press left the page where it was. It now replaces the entry, as a native same-URL
+navigation does. "The same page" means the same document: `/x`, `/x/` and `/x/index.html`, or
+`?x` with extra query parameters, all count. A URL with a hash still pushes, so Back from
+`/x/` returns to `/x/#example`. The `router`'s `navigate()` had the same defect and gets the
+same rule: navigating to the current path (with no hash) replaces.
+
+The double push #174 measured on every link (ensemble on 1.14.1) does not reproduce on 1.16.4
+with the same direct import: one click, one entry, and Back and Forward both work, in Chromium
+and WebKit. The documented consumer entry point is `import 'tosijs-ui/doc-browser'`, which
+registers `<tosi-doc-system>` since 1.14.2. The deep `tosijs-ui/doc-system/doc-system.js`
 import loads the same module.
 
 ## 1.16.5

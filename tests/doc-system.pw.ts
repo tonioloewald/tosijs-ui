@@ -160,4 +160,12 @@ test('a doc-link click costs exactly one Back (#174)', async ({ page }) => {
   await page.waitForFunction(() => location.pathname === '/carousel/')
   await page.goForward()
   await page.waitForFunction(() => location.pathname === '/menu/')
+
+  // With a hash in the URL the same document is a real navigation (`/menu/#x` → `/menu/`),
+  // so it pushes, and Back returns to the anchored entry.
+  await page.evaluate(() => history.pushState({}, '', '/menu/#somewhere'))
+  const anchored = await length()
+  await click('/menu/')
+  await page.waitForFunction(() => location.hash === '')
+  expect(await length()).toBe(anchored + 1)
 })

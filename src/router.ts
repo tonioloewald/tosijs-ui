@@ -330,7 +330,13 @@ export function navigate(path: string): void {
   if (useHashRouting) {
     window.location.hash = '#/' + path.replace(/^\//, '')
   } else {
-    window.history.pushState({}, '', '/' + path.replace(/^\//, ''))
+    const href = '/' + path.replace(/^\//, '')
+    // The current URL again (no hash in play) REPLACES rather than pushes, as a native
+    // same-URL navigation does — a duplicate entry makes the next Back look dead (#174).
+    const same =
+      window.location.hash === '' &&
+      href === window.location.pathname + window.location.search
+    window.history[same ? 'replaceState' : 'pushState']({}, '', href)
   }
 
   renderRoute()
