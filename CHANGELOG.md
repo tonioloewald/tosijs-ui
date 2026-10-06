@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 1.16.7
+
+A patch for readers that are not browsers, and for builds that were too polite. Every doc page
+now also ships as markdown, for LLM fetchers that fail on ordinary HTML. Two misconfigurations
+tjs-lang found the hard way now say so, and `strict: true` turns the build's warnings into
+failures. Nothing to change on upgrade: `markdownPages` is on by default and adds files only;
+`strict` is off by default.
 
 ### Every doc page also ships as markdown
 
