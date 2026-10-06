@@ -303,6 +303,17 @@ export interface SiteConfig {
    */
   llmsTxt?: boolean | ((docs: Doc[]) => string)
   /**
+   * Make the build FAIL on misconfigurations it would otherwise only warn about. Default
+   * false. Each of these is a legitimate thing to do on purpose, which is why they warn; set
+   * this when your project never does them on purpose, so a green build means they are absent:
+   *
+   * - `bundleEntry` does not register `<tosi-doc-system>` (every page stays inert markup), or
+   *   the corpus has executable fences and it does not register `<tosi-example>`.
+   * - The corpus has live `tjs`/`ts` examples but `tjs-lang/browser` cannot be resolved, so
+   *   they would load a CDN copy at tosijs-ui's pinned version instead of yours.
+   */
+  strict?: boolean
+  /**
    * Write each page's markdown beside its HTML (`/slug/index.md`), linked from the page with
    * `<link rel="alternate" type="text/markdown">` and mentioned in `llms.txt`. Default true.
    * It is for readers that want the text and not the page — an LLM's URL fetcher, a script,

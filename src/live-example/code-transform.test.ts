@@ -1,6 +1,7 @@
 import { test, expect, describe } from 'bun:test'
 import {
   rewriteImports,
+  assertContextProvided,
   AsyncFunction,
   loadTransform,
   TJS_VERSION,
@@ -291,4 +292,43 @@ test('#154: transformAvailable reports what can actually be parsed', async () =>
   // tjs-lang IS installed here, so these are true; the point of the function is that it
   // returns FALSE rather than silently handing back an identity transform.
   expect(await transformAvailable('tjs')).toBe(true)
+})
+
+// #210 item 4: a context key with no value used to surface as a destructuring error.
+describe('assertContextProvided', () => {
+  test('an import from a listed-but-missing module fails with a sentence naming it', () => {
+    expect(() =>
+      assertContextProvided(`import { tosiTabs } from 'tosijs-ui'`, {
+        tosijs: {},
+        'tosijs-ui': undefined,
+      })
+    ).toThrow(/imports from 'tosijs-ui'.*bundleEntry/s)
+  })
+
+  test('either quote style counts', () => {
+    expect(() =>
+      assertContextProvided(`import * as ui from "tosijs-ui"`, {
+        'tosijs-ui': undefined,
+      })
+    ).toThrow(/tosijs-ui/)
+  })
+
+  test('a missing module nobody imports is not an error', () => {
+    expect(() =>
+      assertContextProvided(`import { elements } from 'tosijs'`, {
+        tosijs: {},
+        'tosijs-ui': undefined,
+      })
+    ).not.toThrow()
+  })
+
+  test("'tosijs' missing does not blame an import from 'tosijs-ui'", () => {
+    // The name is matched whole: 'tosijs' is a prefix of 'tosijs-ui'.
+    expect(() =>
+      assertContextProvided(`import { x } from 'tosijs-ui'`, {
+        tosijs: undefined,
+        'tosijs-ui': {},
+      })
+    ).not.toThrow()
+  })
 })

@@ -17,6 +17,32 @@ static HTML.
   `host: 'github-pages'`. Without it, GitHub Pages' Jekyll would render `index.md` over the
   real page. The file is empty and harmless on other hosts.
 
+### Misconfigurations the build and the page used to accept in silence (#210)
+
+Two reported by tjs-lang, whose site ran every example against the wrong tjs-lang for weeks
+without being told.
+
+- **The same-origin tjs-lang copy was skipped without a word.** When `tjs-lang/browser`
+  cannot be resolved, nothing is written to `/tjs/`, and `tjs`/`ts` examples load tjs-lang
+  from a CDN at the version tosijs-ui pins. The build now warns when the corpus has live
+  `tjs` or `ts` examples and that happens. A corpus with none stays quiet.
+- **A custom `bundleEntry` silently dropped what examples import.** It replaces the bundle
+  that set the `xinjs`/`xinjsui` globals, so `import { elements } from 'tosijs'` in an example
+  failed with "Cannot destructure property 'elements' of 'tosijs'". Examples now get `tosijs`
+  from the doc system's own copy. `tosijs-ui` still has to be supplied by the entry (importing
+  it here would put every component in every doc site's bundle), and an example that imports
+  it without one now fails with a message naming the module and the two lines that fix it.
+
+### `strict: true` makes the build fail on what it otherwise warns about
+
+A new site-config option, default `false`. With it, `buildSite` throws
+`SiteMisconfiguredError` when `bundleEntry` does not register `<tosi-doc-system>`, when the
+corpus has executable fences and `bundleEntry` does not register `<tosi-example>`, or when
+the tjs-lang copy above is skipped on a corpus that needs it. Warning stays the default
+because each is a legitimate thing to do on purpose; this is for a project that never does.
+Asked for by tosijs-product, whose inert-bundle blocker reached a release candidate under a
+green build.
+
 ### `<meta charset>` is back in the first 1024 bytes of every page
 
 Two explanatory HTML comments at the top of each generated page's `<head>` had pushed the

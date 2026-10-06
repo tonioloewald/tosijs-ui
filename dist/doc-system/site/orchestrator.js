@@ -12,6 +12,8 @@ the icon system here would put src/icon-data.ts into `bun --watch`'s graph and
 cause an endless rebuild loop.
 */
 import { pageGlobalsHead } from './page-globals.js';
+import { liveFenceLanguages, misconfigured } from './build-warnings.js';
+import { TJS_VERSION } from '../../live-example/code-transform.js';
 import { BUILT_IN_DIALECTS, normalizeDialectNames, registerLiveLanguage, } from '../example-policy.js';
 import * as path from 'path';
 import { namedBooks, partitionByBook, DEFAULT_BOOK } from '../book-target.js';
@@ -1096,8 +1098,9 @@ export async function buildSite(config, opts = {}) {
                 so it says so here rather than leaving it to be discovered in a browser.
         
                 Reads the ENTRY plus its chunks, since `--splitting` can move the registration into a
-                chunk. Warns rather than fails: a deliberately headless embedding is a legitimate,
-                if unusual, thing to build.
+                chunk. Warns rather than fails by default: a deliberately headless embedding is a
+                legitimate, if unusual, thing to build. A project that is never headless sets
+                `strict: true` and the build fails instead (board #2543).
                 */
                 {
                     /*
@@ -1119,7 +1122,7 @@ export async function buildSite(config, opts = {}) {
                     }
                     const reg = bundleRegistrations(bundled);
                     if (!reg.docSystem) {
-                        console.warn(`\n⚠️  ${config.bundleEntry} does not register <tosi-doc-system>, so every page\n` +
+                        misconfigured(config.strict, `\n⚠️  ${config.bundleEntry} does not register <tosi-doc-system>, so every page\n` +
                             `    will render its prerendered markup and nothing else — no header, no nav,\n` +
                             `    no menu, no live examples, and no error in the console.\n\n` +
                             `    bundleEntry REPLACES tosijs-ui's bundle; it does not extend it. Add:\n` +
@@ -1130,7 +1133,7 @@ export async function buildSite(config, opts = {}) {
                             `    to ${config.bundleEntry}.\n`);
                     }
                     else if (docsHaveExamples && !reg.liveExample) {
-                        console.warn(`\n⚠️  This corpus has executable fences but ${config.bundleEntry} does not\n` +
+                        misconfigured(config.strict, `\n⚠️  This corpus has executable fences but ${config.bundleEntry} does not\n` +
                             `    register <tosi-example>. Add \`import 'tosijs-ui/live-example'\` — the\n` +
                             `    code blocks will render as plain text otherwise.\n`);
                     }
@@ -1205,7 +1208,33 @@ export async function buildSite(config, opts = {}) {
                 console.log(`tjs-lang bundles served same-origin at ${base}`);
             }
             catch {
-                // tjs-lang not installed — live examples fall back to the CDN chain
+                /*
+                The copy was skipped, and that used to be the end of it (#210 item 6).
+        
+                With no `tjs`/`ts` examples that is the right amount of noise: nothing needs the
+                bundles. With them, every such example now loads tjs-lang from a CDN at the version
+                tosijs-ui pins — not the one this project has, or is. tjs-lang's own site ran its
+                examples against a released tjs-lang instead of the one being documented, from a
+                worktree with no `dist/`, and nothing said so.
+                */
+                let needed = [];
+                try {
+                    const corpus = JSON.parse(await Bun.file(DOCS_JSON).text());
+                    const live = liveFenceLanguages(corpus, config.liveExamples);
+                    needed = ['tjs', 'ts'].filter((lang) => live.has(lang));
+                }
+                catch {
+                    // corpus unreadable — the build fails on that elsewhere, with a better message
+                }
+                if (needed.length) {
+                    misconfigured(config.strict, `\n⚠️  This corpus has live ${needed
+                        .map((l) => '`' + l + '`')
+                        .join(' and ')} examples, but \`tjs-lang/browser\` could not be resolved from\n` +
+                        `    ${PROJECT_ROOT}, so no same-origin copy was written to /tjs/.\n` +
+                        `    Those examples will load tjs-lang ${TJS_VERSION} from a CDN at run time,\n` +
+                        `    not the version this project has installed (or is).\n\n` +
+                        `    Install tjs-lang, or build its browser bundles before the site build.\n`);
+                }
             }
             // The site config's client-side switches (example policy, example console), stamped as
             // globals in <head> — only when they differ from the default. See page-globals.ts.

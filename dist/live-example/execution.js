@@ -1,6 +1,6 @@
 import { elements } from 'tosijs';
 import { describeError, diagnoseConstruction, EXAMPLE_SOURCE_URL, } from './error-location.js';
-import { rewriteImports, AsyncFunction, contextParamNames, } from './code-transform.js';
+import { rewriteImports, assertContextProvided, AsyncFunction, contextParamNames, } from './code-transform.js';
 /*
 Source of the example currently being run, so `describeError` can lift the offending line out
 of it. Module-level and reset per run, mirroring the doc-test harness — an example runs to
@@ -178,6 +178,7 @@ export async function executeInline(options) {
         exampleElement.insertBefore(preview, widgetsElement);
     }
     try {
+        assertContextProvided(js, context);
         const transformedCode = compiledJs ??
             (await transform(rewriteImports(js, Object.keys(context)), {
                 transforms: ['typescript'],
@@ -285,6 +286,7 @@ export async function executeInIframe(options) {
         return null;
     }
     try {
+        assertContextProvided(js, context);
         const transformedCode = compiledJs ??
             (await transform(rewriteImports(js, Object.keys(context)), {
                 transforms: ['typescript'],

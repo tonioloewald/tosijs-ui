@@ -66,6 +66,7 @@ import {
   vars,
   withAttributes,
 } from 'tosijs'
+import * as tosijsModule from 'tosijs'
 import {
   createDocBrowser,
   Doc,
@@ -620,8 +621,19 @@ export class TosiDocSystem extends withAttributes({
             this.route = slug
           }
         : undefined,
+      /*
+      The iife sets `xinjs` / `xinjsui`; a site with its own `bundleEntry` has neither, and
+      examples there used to get `undefined` for both with no word said (#210 item 4).
+
+      `tosijs` falls back to the copy this module already imports — the same instance the
+      page's components use, which is the one an example should share state with.
+      `tosijs-ui` has no such fallback on purpose: importing the barrel here would put every
+      component in every doc site's bundle (#133). A site that wants it in examples supplies
+      it, and an example that imports it without one now fails with a sentence saying so
+      (`assertContextProvided`).
+      */
       context: this.context || {
-        tosijs: (globalThis as any).xinjs,
+        tosijs: (globalThis as any).xinjs ?? tosijsModule,
         'tosijs-ui': (globalThis as any).xinjsui,
       },
       projectName: config.projectName,

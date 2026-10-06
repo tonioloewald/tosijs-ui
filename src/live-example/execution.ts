@@ -7,6 +7,7 @@ import {
 import { ExampleContext, TransformFn } from './types.js'
 import {
   rewriteImports,
+  assertContextProvided,
   AsyncFunction,
   contextParamNames,
 } from './code-transform.js'
@@ -274,6 +275,7 @@ export async function executeInline(
   }
 
   try {
+    assertContextProvided(js, context)
     const transformedCode =
       compiledJs ??
       (
@@ -426,6 +428,7 @@ export async function executeInIframe(
   }
 
   try {
+    assertContextProvided(js, context)
     const transformedCode =
       compiledJs ??
       (

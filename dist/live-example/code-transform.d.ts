@@ -46,6 +46,17 @@ export declare function contextVarName(key: string): string;
  * replaces.
  */
 export declare function contextParamNames(keys: string[]): string[];
+/**
+ * Fail with a sentence, not a destructuring error, when an example imports a module the site
+ * listed in its context but never supplied (#210 item 4).
+ *
+ * `bundleEntry` REPLACES tosijs-ui's bundle, and with it the `xinjs` / `xinjsui` globals the
+ * doc system reads its default context from. The key is then present and its value
+ * `undefined`, so `import { elements } from 'tosijs-ui'` became `const { elements } =
+ * undefined` and the reader was told "Cannot destructure property 'elements' of 'tosijsui'"
+ * about a line they did not write.
+ */
+export declare function assertContextProvided(code: string, context: Record<string, unknown>): void;
 export declare function rewriteImports(code: string, contextKeys: string[], importPrefix?: string | undefined): string;
 /**
  * Execute code as an async function with injected context

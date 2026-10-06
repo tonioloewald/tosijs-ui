@@ -169,6 +169,34 @@ function resolverPrefix(): string | undefined {
   ).__TOSI_IMPORT_RESOLVER?.prefix
 }
 
+/**
+ * Fail with a sentence, not a destructuring error, when an example imports a module the site
+ * listed in its context but never supplied (#210 item 4).
+ *
+ * `bundleEntry` REPLACES tosijs-ui's bundle, and with it the `xinjs` / `xinjsui` globals the
+ * doc system reads its default context from. The key is then present and its value
+ * `undefined`, so `import { elements } from 'tosijs-ui'` became `const { elements } =
+ * undefined` and the reader was told "Cannot destructure property 'elements' of 'tosijsui'"
+ * about a line they did not write.
+ */
+export function assertContextProvided(
+  code: string,
+  context: Record<string, unknown>
+): void {
+  for (const [moduleName, value] of Object.entries(context)) {
+    if (value != null) continue
+    const m = moduleName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    if (!new RegExp(`\\bfrom\\s*['"]${m}['"]`).test(code)) continue
+    throw new Error(
+      `This example imports from '${moduleName}', but this site's bundle does not ` +
+        `provide '${moduleName}' to examples. A custom bundleEntry replaces the bundle ` +
+        `that used to supply it. In the bundle entry, import the module and hand it to ` +
+        `the doc system — for tosijs-ui: \`import * as tosijsUi from 'tosijs-ui'\` then ` +
+        `\`globalThis.xinjsui = tosijsUi\` (or set <tosi-doc-system>'s \`context\`).`
+    )
+  }
+}
+
 export function rewriteImports(
   code: string,
   contextKeys: string[],

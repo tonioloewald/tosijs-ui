@@ -337,6 +337,7 @@ the example, plus ten pages importing a symbol their barrel did not export.
 | `generateCssPreload` | —        | module to `bun --preload` into the CSS-extraction subprocess (`generate-css` imports your library to burn the theme); needed when that graph reaches non-`.ts` sources (`.tjs`) requiring a Bun loader plugin — point it at a module that registers it. Pairs with `libraryBuild`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `llmsTxt`            | `true`   | emit the `llms.txt` index — `true`, `false`, or `(docs) => string` for a custom one (see below)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `markdownPages`      | `true`   | write each page's markdown beside its HTML (`/slug/index.md`) and link it with `<link rel="alternate" type="text/markdown">`; `false` ships HTML only (see below) |
+| `strict`              | `false`  | fail the build on misconfigurations it otherwise only warns about (see "Strict builds" below) |
 | `epub`               | `false`  | build + ship an ePub of the corpus every build — `true` or `{ author, title, css, cover, coverColor }` (see below)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `book`               | —        | curate/reorder the book artifact without touching site nav (see below)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `outputDir`          | `'docs'` | served web-root output dir                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -1274,6 +1275,41 @@ with a `dist/*.js` pointer. It's written **both** to the project root (so you ca
 ship it in your package's `files`) **and** to the served output dir, so
 `{baseUrl}/llms.txt` resolves for crawlers/agents. Set `llmsTxt: false` to skip,
 or pass a function `(docs) => string` to generate your own from the corpus.
+
+#### Strict builds (`strict`)
+
+Some things the build can see are wrong are also things a project might do on purpose, so
+by default it warns and carries on. A warning in scrollback under a green build is easy to
+miss — one such reached a release candidate — so a project that never does these on purpose
+can say so:
+
+```typescript:static
+defineSiteConfig({ strict: true /* … */ })
+```
+
+With `strict: true` each of these fails `buildSite` (it throws `SiteMisconfiguredError`, and
+the previous build output is restored):
+
+- **`bundleEntry` does not register `<tosi-doc-system>`.** Every page would stay as inert
+  pre-rendered markup. Deliberate only for a headless embedding.
+- **The corpus has executable fences but `bundleEntry` does not register `<tosi-example>`.**
+  The code blocks would render as plain text.
+- **The corpus has live `tjs` / `ts` examples but `tjs-lang/browser` cannot be resolved.**
+  No same-origin copy is written to `/tjs/`, so those examples load tjs-lang from a CDN at
+  the version tosijs-ui pins, not the one your project has installed. Without `strict` this
+  now prints a warning; before 1.16.7 it was silent.
+
+One related failure shows up in the browser, not the build. `bundleEntry` replaces the bundle
+that supplied `tosijs` and `tosijs-ui` to live examples. Examples still get `tosijs` (the doc
+system hands them its own copy). They get `tosijs-ui` only if your entry supplies it:
+
+```typescript:static
+import * as tosijsUi from 'tosijs-ui'
+;(globalThis as any).xinjsui = tosijsUi
+```
+
+An example that imports `tosijs-ui` on a site that has not done this fails with a message
+saying exactly that, and the doc-test lane reports it as a failed example.
 
 #### Markdown copies of pages (`markdownPages`)
 

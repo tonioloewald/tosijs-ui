@@ -1,9 +1,10 @@
 import { ElementCreator } from 'tosijs';
+import * as tosijsModule from 'tosijs';
 import { Doc } from '../doc-browser.js';
 import './css-var-editor.js';
 export declare const CORPUS_ATTEMPTS = 3;
 export declare function fetchCorpus(url: string): Promise<Doc[]>;
-declare const TosiDocSystem_base: import("tosijs").WithAttributes<{
+declare const TosiDocSystem_base: tosijsModule.WithAttributes<{
     docs: string;
     config: string;
     localized: string;
