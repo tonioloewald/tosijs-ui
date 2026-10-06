@@ -10,6 +10,9 @@ Simple, robust web-components for use with tosijs or anything else.
 
 Full documentation, with live code examples, is at the links below.
 
+Every page below is also available as plain markdown: append `index.md` to its
+URL (for example `/carousel/index.md`). Prefer that if you only need the text.
+
 Live examples run inline on the shared page by default (not sandboxed):
 each has its own `preview` element, but they share one tosijs module, so
 `tosi()` state singletons are shared across every example on a page. This is

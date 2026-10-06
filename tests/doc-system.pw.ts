@@ -169,3 +169,19 @@ test('a doc-link click costs exactly one Back (#174)', async ({ page }) => {
   await page.waitForFunction(() => location.hash === '')
   expect(await length()).toBe(anchored + 1)
 })
+
+// The markdown copy is only useful if a fetcher gets it as text, at the URL the page names.
+test('a page links to its markdown copy, and the server sends it as markdown', async ({
+  page,
+  request,
+}) => {
+  await page.goto(`${BASE}/carousel/`)
+  const href = await page
+    .locator('link[rel="alternate"][type="text/markdown"]')
+    .getAttribute('href')
+  expect(href).toBe('index.md')
+  const res = await request.get(new URL(href!, page.url()).toString())
+  expect(res.status()).toBe(200)
+  expect(res.headers()['content-type']).toContain('text/markdown')
+  expect(await res.text()).toMatch(/^# carousel/)
+})

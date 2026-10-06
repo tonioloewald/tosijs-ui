@@ -265,6 +265,14 @@ export interface SiteConfig {
      */
     llmsTxt?: boolean | ((docs: Doc[]) => string);
     /**
+     * Write each page's markdown beside its HTML (`/slug/index.md`), linked from the page with
+     * `<link rel="alternate" type="text/markdown">` and mentioned in `llms.txt`. Default true.
+     * It is for readers that want the text and not the page — an LLM's URL fetcher, a script,
+     * `curl` — some of which fail to read perfectly ordinary HTML. `noindex` pages get no
+     * markdown copy. Set false to ship HTML only.
+     */
+    markdownPages?: boolean;
+    /**
      * Emit an ePub of the whole doc site into the output dir on every build (so it
      * stays in sync with the corpus and is served alongside the static pages, e.g.
      * for a "Download ePub" link). `true` uses defaults; pass options to customize.

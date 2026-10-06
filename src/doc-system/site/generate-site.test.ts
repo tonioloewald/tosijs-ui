@@ -131,3 +131,84 @@ describe('docs.json cache-busting', () => {
     expect(html).toContain('docs.json"')
   })
 })
+
+/*
+A page's markdown ships beside it, for readers that want the text and not the page.
+
+Prompted by an LLM's URL fetcher reporting "no <body>" for a page whose whole article was in
+the static HTML. We cannot fix that fetcher, but we can hand it something it cannot misread.
+*/
+describe('markdown copies of pages', () => {
+  const build = async (
+    over: Record<string, unknown> = {},
+    docOver: Record<string, unknown> = {}
+  ) => {
+    const dir = `${tmpdir()}/tosi-md-${Math.floor(performance.now() * 1000)}`
+    await generateSite({
+      docs: [
+        {
+          filename: 'README.md',
+          title: 'Home',
+          path: 'README.md',
+          text: '# Home\n\nHello.',
+        },
+        {
+          filename: 'guide.md',
+          title: 'Guide',
+          path: 'guide.md',
+          text: '# Guide\n\nRead **this**.\n\n',
+          ...docOver,
+        },
+      ] as any,
+      outputDir: dir,
+      projectName: 'T',
+      ...over,
+    } as any)
+    const read = async (f: string) =>
+      (await Bun.file(`${dir}/${f}`).exists())
+        ? await Bun.file(`${dir}/${f}`).text()
+        : null
+    const out = {
+      rootMd: await read('index.md'),
+      guideMd: await read('guide/index.md'),
+      guideHtml: (await read('guide/index.html')) as string,
+    }
+    await Bun.$`rm -rf ${dir}`.nothrow().quiet()
+    return out
+  }
+  const ALTERNATE = '<link rel="alternate" type="text/markdown" href="index.md"'
+
+  test('each page gets its source as index.md, and links to it', async () => {
+    const { rootMd, guideMd, guideHtml } = await build()
+    expect(rootMd).toBe('# Home\n\nHello.\n')
+    expect(guideMd).toBe('# Guide\n\nRead **this**.\n')
+    expect(guideHtml).toContain(ALTERNATE)
+  })
+
+  test('a noindex page gets neither the file nor the link', async () => {
+    const { rootMd, guideMd, guideHtml } = await build({}, { noindex: true })
+    expect(guideMd).toBeNull()
+    expect(guideHtml).not.toContain(ALTERNATE)
+    // …and the rule is per page, not per site.
+    expect(rootMd).not.toBeNull()
+  })
+
+  test('markdownPages: false ships HTML only', async () => {
+    const { rootMd, guideMd, guideHtml } = await build({ markdownPages: false })
+    expect(rootMd).toBeNull()
+    expect(guideMd).toBeNull()
+    expect(guideHtml).not.toContain(ALTERNATE)
+  })
+
+  test('charset is declared within the first 1024 bytes, ahead of any script', async () => {
+    const { guideHtml } = await build()
+    const charset = new TextEncoder().encode(
+      guideHtml.slice(0, guideHtml.indexOf('<meta charset'))
+    ).length
+    expect(guideHtml).toContain('<meta charset="utf-8" />')
+    expect(charset).toBeLessThan(1024)
+    expect(guideHtml.indexOf('<meta charset')).toBeLessThan(
+      guideHtml.indexOf('<script')
+    )
+  })
+})

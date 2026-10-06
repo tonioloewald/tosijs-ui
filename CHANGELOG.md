@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased
+
+### Every doc page also ships as markdown
+
+The site build now writes each page's markdown source beside its HTML, at
+`/{slug}/index.md`, links it from the page with
+`<link rel="alternate" type="text/markdown" href="index.md">`, and says so in `llms.txt`.
+It is for readers that want the text and not the page: an LLM's URL fetcher, a script, `curl`.
+Prompted by one such fetcher reporting "no `<body>`" for a page whose whole article was in the
+static HTML.
+
+- On by default; `markdownPages: false` in the site config ships HTML only.
+- A `noindex` page gets neither the file nor the link.
+- The build now writes `.nojekyll` whenever markdown pages are on, not only under
+  `host: 'github-pages'`. Without it, GitHub Pages' Jekyll would render `index.md` over the
+  real page. The file is empty and harmless on other hosts.
+
+### `<meta charset>` is back in the first 1024 bytes of every page
+
+Two explanatory HTML comments at the top of each generated page's `<head>` had pushed the
+charset declaration to about byte 1550; the HTML spec wants it within the first 1024. The
+comments now live in the generator's source, and charset and viewport lead the head. Every
+page is about 1.4 kB smaller.
+
 ## 1.16.6
 
 A one-fix patch: a link to the page you are already on no longer adds a history entry that Back

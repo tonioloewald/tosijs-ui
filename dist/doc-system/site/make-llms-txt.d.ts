@@ -39,6 +39,12 @@ export interface LlmsTxtMeta {
      * for exactly the projects that enabled the MORE capable mode.
      */
     haltijaDev?: boolean | 'tunnel';
+    /**
+     * Mirrors `SiteConfig.markdownPages` (default true): the build writes `index.md` beside
+     * every page, so the index says so. Pass false when the site ships HTML only — pointing a
+     * reader at a file that is not there costs more than not mentioning it.
+     */
+    markdownPages?: boolean;
 }
 /**
  * Build entries from the extracted corpus — every doc that was actually

@@ -108,6 +108,13 @@ export interface GenerateSiteConfig {
    * self-contained-examples-plan.md.
    */
   bakes?: Map<string, ExampleBakes>
+  /**
+   * Write each page's markdown beside its HTML (`/slug/index.md`) and point at it with
+   * `<link rel="alternate" type="text/markdown">`. Default true. For readers that want the
+   * text and not the page: an LLM's URL fetcher, a script, `curl`. `noindex` pages get
+   * neither, the same rule the sitemap applies.
+   */
+  markdownPages?: boolean
   /** URL of the burned-in theme stylesheet (written by ./generate-css.ts) */
   stylesUrl?: string
   /** extra lines injected into every <head> (favicon, analytics, etc.) */
@@ -325,8 +332,6 @@ async function pageHtml(
     : ''
 
   const head = [
-    '  <meta charset="utf-8" />',
-    '  <meta name="viewport" content="width=device-width, initial-scale=1" />',
     // Render-blocking @import of web fonts lives in the stylesheet; warm the connection.
     '  <link rel="preconnect" href="https://fonts.googleapis.com" />',
     '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
@@ -343,6 +348,12 @@ async function pageHtml(
       : '',
     doc.noindex ? '  <meta name="robots" content="noindex, follow" />' : '',
     baseUrl ? `  <link rel="canonical" href="${escapeAttr(canonical)}" />` : '',
+    // Relative to the page's own directory, so it holds at any mount (see relativeUrl).
+    hasMarkdownPage(doc, config)
+      ? `  <link rel="alternate" type="text/markdown" href="index.md" title="${escapeAttr(
+          title
+        )} (markdown)" />`
+      : '',
     '  <meta property="og:type" content="article" />',
     projectName
       ? `  <meta property="og:site_name" content="${escapeAttr(
@@ -374,23 +385,31 @@ async function pageHtml(
     .filter(Boolean)
     .join('\n')
 
+  /*
+  Two notes that used to ship as HTML comments at the top of every page's <head>. They are for
+  whoever edits this template, not for readers, and they pushed `<meta charset>` to byte ~1550
+  — the HTML spec wants it within the first 1024, and a byte-limited or strict fetcher may give
+  up before it gets there. So charset and viewport now lead, and the notes live here.
+
+  1. The body is NOT hidden until hydration. It used to be (body opacity 0 + a 4s safety-net
+     timeout), because an undefined custom element is display:inline, so the pre-rendered page
+     stacked as bare text and hydration reflowed the whole thing. The cost was a blank screen
+     for as long as the bundle took — ~4.5s on a cheap phone, for content already in the HTML.
+     The tosi-doc-system:not(:defined) rules in the stylesheet now lay the static page out as
+     though the chrome were there, so hydration only ADDS the chrome and nothing moves. Paint
+     immediately; don't hide readable content.
+
+  2. The inline script applies the theme BEFORE first paint. Now that we paint the static page
+     rather than hiding it, a dark-mode reader would otherwise get a flash of the light theme
+     until the bundle lands and sets body.darkmode. CSS alone can't do this: an explicit theme
+     choice lives in localStorage. Mirrors applyThemePrefs() (doc-system.ts) — keep the two in
+     step. Fails safe: any error leaves the light default.
+  */
   return `<!DOCTYPE html>
 <html lang="${escapeAttr(lang)}">
 <head>
-  <!-- NB: the body is NOT hidden until hydration. It used to be (body opacity 0 +
-       a 4s safety-net timeout), because an undefined custom element is
-       display:inline, so the pre-rendered page stacked as bare text and hydration
-       reflowed the whole thing. The cost was a blank screen for as long as the
-       bundle took — ~4.5s on a cheap phone, for content already in the HTML. The
-       tosi-doc-system:not(:defined) rules in the stylesheet now lay the static page
-       out as though the chrome were there, so hydration only ADDS the chrome and
-       nothing moves. Paint immediately; don't hide readable content. -->
-  <!-- Theme, applied BEFORE first paint. Now that we paint the static page rather
-       than hiding it, a dark-mode reader would otherwise get a flash of the light
-       theme until the bundle lands and sets body.darkmode. CSS alone can't do this:
-       an explicit theme choice lives in localStorage. Mirrors applyThemePrefs()
-       (doc-system.ts) — keep the two in step. Fails safe: any error leaves the
-       light default, exactly as before. -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script>
     try {
       var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
@@ -442,6 +461,14 @@ Only same-origin: `scriptUrl` may legitimately point at a CDN, and appending a q
 someone else's URL can miss their cache key or, worse, be rejected. A URL that already carries
 a query is left alone — the caller has said something deliberate about it.
 */
+/** A page gets a markdown copy unless the site opted out or the page is `noindex`. */
+function hasMarkdownPage(
+  doc: Doc,
+  config: Pick<GenerateSiteConfig, 'markdownPages'>
+): boolean {
+  return config.markdownPages !== false && !doc.noindex
+}
+
 export function withStamp(url: string, stamp?: string): string {
   if (!stamp) return url
   if (url.includes('?') || url.includes('#')) return url
@@ -489,6 +516,10 @@ export async function generateSite(
       `${dir}/index.html`,
       await pageHtml(doc, config, slugMap, configAttr)
     )
+    // The page's own source, for readers that want text rather than a page.
+    if (hasMarkdownPage(doc, config)) {
+      await Bun.write(`${dir}/index.md`, doc.text.trimEnd() + '\n')
+    }
     count += 1
   }
 

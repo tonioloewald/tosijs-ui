@@ -82,6 +82,12 @@ export interface LlmsTxtMeta {
    * for exactly the projects that enabled the MORE capable mode.
    */
   haltijaDev?: boolean | 'tunnel'
+  /**
+   * Mirrors `SiteConfig.markdownPages` (default true): the build writes `index.md` beside
+   * every page, so the index says so. Pass false when the site ships HTML only — pointing a
+   * reader at a file that is not there costs more than not mentioning it.
+   */
+  markdownPages?: boolean
 }
 
 /**
@@ -204,6 +210,16 @@ export function generateLlmsTxt(
       ]
     : []
 
+  // Only for a corpus-driven index: the legacy scan links to dist/ files, not pages.
+  const markdownNote =
+    corpus && meta.markdownPages !== false
+      ? [
+          'Every page below is also available as plain markdown: append `index.md` to its',
+          'URL (for example `/carousel/index.md`). Prefer that if you only need the text.',
+          '',
+        ]
+      : []
+
   const name = meta.name ?? pkg.name ?? ''
   const description = meta.description ?? pkg.description ?? ''
   const links: string[] = []
@@ -227,6 +243,7 @@ export function generateLlmsTxt(
     '',
     'Full documentation, with live code examples, is at the links below.',
     '',
+    ...markdownNote,
     ...liveExampleNote,
     ...haltijaNote,
     '## Pages',

@@ -142,6 +142,14 @@ export function generateLlmsTxt(outputPath, meta = {}, corpus) {
             '',
         ]
         : [];
+    // Only for a corpus-driven index: the legacy scan links to dist/ files, not pages.
+    const markdownNote = corpus && meta.markdownPages !== false
+        ? [
+            'Every page below is also available as plain markdown: append `index.md` to its',
+            'URL (for example `/carousel/index.md`). Prefer that if you only need the text.',
+            '',
+        ]
+        : [];
     const name = meta.name ?? pkg.name ?? '';
     const description = meta.description ?? pkg.description ?? '';
     const links = [];
@@ -165,6 +173,7 @@ export function generateLlmsTxt(outputPath, meta = {}, corpus) {
         '',
         'Full documentation, with live code examples, is at the links below.',
         '',
+        ...markdownNote,
         ...liveExampleNote,
         ...haltijaNote,
         '## Pages',

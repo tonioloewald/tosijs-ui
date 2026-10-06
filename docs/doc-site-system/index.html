@@ -1,20 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- NB: the body is NOT hidden until hydration. It used to be (body opacity 0 +
-       a 4s safety-net timeout), because an undefined custom element is
-       display:inline, so the pre-rendered page stacked as bare text and hydration
-       reflowed the whole thing. The cost was a blank screen for as long as the
-       bundle took — ~4.5s on a cheap phone, for content already in the HTML. The
-       tosi-doc-system:not(:defined) rules in the stylesheet now lay the static page
-       out as though the chrome were there, so hydration only ADDS the chrome and
-       nothing moves. Paint immediately; don't hide readable content. -->
-  <!-- Theme, applied BEFORE first paint. Now that we paint the static page rather
-       than hiding it, a dark-mode reader would otherwise get a flash of the light
-       theme until the bundle lands and sets body.darkmode. CSS alone can't do this:
-       an explicit theme choice lives in localStorage. Mirrors applyThemePrefs()
-       (doc-system.ts) — keep the two in step. Fails safe: any error leaves the
-       light default, exactly as before. -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script>
     try {
       var p = JSON.parse(localStorage.getItem('tosi-doc-system-prefs') || '{}')
@@ -24,14 +12,13 @@
       if (p.highContrast) document.documentElement.classList.add('high-contrast')
     } catch (e) {}
   </script>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="../doc-system.css?v=ce26d4b5a14d" data-tosi-doc-system />
   <title>Doc-Site System — tosijs-ui</title>
   <meta name="description" content="How tosijs-ui&#39;s static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project." />
   <link rel="canonical" href="https://ui.tosijs.net/doc-site-system/" />
+  <link rel="alternate" type="text/markdown" href="index.md" title="Doc-Site System — tosijs-ui (markdown)" />
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="tosijs-ui" />
   <meta property="og:title" content="Doc-Site System — tosijs-ui" />
@@ -43,7 +30,7 @@
 <script>if('serviceWorker'in navigator){navigator.serviceWorker.register('/module-cache-sw.js').catch(function(){})}</script><script>globalThis.__TJS_LOCAL_BASE="/tjs/"</script><script>globalThis.__TOSI_IMPORT_RESOLVER={"prefix":"/lib/","workerUrl":"/import-resolver-worker.js","reloadOnFirstInstall":false}</script>
 </head>
 <body>
-  <tosi-doc-system docs="../docs.json?v=68e2e1b792cd" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
+  <tosi-doc-system docs="../docs.json?v=5d6c365419d3" config="{&quot;projectName&quot;:&quot;tosijs-ui&quot;,&quot;projectLinks&quot;:{&quot;tosijs&quot;:&quot;https://tosijs.net&quot;,&quot;github&quot;:&quot;https://github.com/tonioloewald/tosijs-ui&quot;}}" localized="../localized-strings.txt">
   <article class="doc-content">
 <!--{"pin":"bottom","title":"Doc-Site System","description":"How tosijs-ui's static, pre-rendered, hydrating documentation-site system works — and how to adopt it (tosijs-ui/site) in your own project.","parent":"Appendices"}-->
 
@@ -509,6 +496,11 @@ the example, plus ten pages importing a symbol their barrel did not export.</p>
 <td><code>llmsTxt</code></td>
 <td><code>true</code></td>
 <td>emit the <code>llms.txt</code> index — <code>true</code>, <code>false</code>, or <code>(docs) =&gt; string</code> for a custom one (see below)</td>
+</tr>
+<tr>
+<td><code>markdownPages</code></td>
+<td><code>true</code></td>
+<td>write each page&#39;s markdown beside its HTML (<code>/slug/index.md</code>) and link it with <code>&lt;link rel=&quot;alternate&quot; type=&quot;text/markdown&quot;&gt;</code>; <code>false</code> ships HTML only (see below)</td>
 </tr>
 <tr>
 <td><code>epub</code></td>
@@ -1455,6 +1447,26 @@ with a <code>dist/*.js</code> pointer. It&#39;s written <strong>both</strong> to
 ship it in your package&#39;s <code>files</code>) <strong>and</strong> to the served output dir, so
 <code>{baseUrl}/llms.txt</code> resolves for crawlers/agents. Set <code>llmsTxt: false</code> to skip,
 or pass a function <code>(docs) =&gt; string</code> to generate your own from the corpus.</p>
+<h4>Markdown copies of pages (<code>markdownPages</code>)</h4>
+<p>Every page is written twice: <code>/{slug}/index.html</code>, and its markdown source as
+<code>/{slug}/index.md</code> beside it. The HTML carries
+<code>&lt;link rel=&quot;alternate&quot; type=&quot;text/markdown&quot; href=&quot;index.md&quot;&gt;</code>, and <code>llms.txt</code> tells a
+reader it can append <code>index.md</code> to any page URL.</p>
+<p>This is for readers that want the text and not the page: an LLM&#39;s URL fetcher, a script,
+<code>curl</code>. The static HTML already has the whole article in it with no JavaScript needed, but
+not every fetcher copes — one reported &quot;no <code>&lt;body&gt;</code>&quot; for a page that plainly had one — and
+markdown is something none of them can misread.</p>
+<ul>
+<li>The file is the doc&#39;s source as extracted: a <code>.md</code> file verbatim, or the joined <code>/*#</code>
+comment blocks of a source file. Wikilinks, footnotes and metadata comments are left as
+written.</li>
+<li>A <code>noindex</code> page gets neither the file nor the link, the same rule the sitemap applies.
+Hidden docs never reach the build at all.</li>
+<li>The build writes an empty <code>.nojekyll</code> whenever this is on, whatever <code>host</code> is. GitHub
+Pages otherwise runs Jekyll, which renders <code>guide/index.md</code> to <code>guide/index.html</code>, the
+path of the real page.</li>
+<li><code>markdownPages: false</code> turns all of it off.</li>
+</ul>
 <h4>The book (ePub) &amp; the <code>book</code> manifest</h4>
 <p>Set <code>epub: true</code> (or <code>{ author, title, css, cover, coverColor }</code>) and every build
 emits <code>{name}.epub</code> into the output dir, one chapter per doc in nav order, with a

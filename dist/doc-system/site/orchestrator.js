@@ -1179,6 +1179,7 @@ export async function buildSite(config, opts = {}) {
                         basePath: config.basePath,
                         projectLinks: config.projectLinks,
                         haltijaDev: config.haltijaDev,
+                        markdownPages: config.markdownPages,
                     }, corpus);
                 }
                 // Also place it at the served web root so {baseUrl}/llms.txt resolves (the
@@ -1434,6 +1435,7 @@ export async function buildSite(config, opts = {}) {
                 basePath: config.basePath,
                 assetStamp,
                 docsStamp,
+                markdownPages: config.markdownPages,
             });
             // Burn the theme into a static stylesheet (separate subprocess — see
             // generate-css.ts). Resolve the sibling relative to THIS module so it works
@@ -1441,8 +1443,18 @@ export async function buildSite(config, opts = {}) {
             console.log(`generated ${pageCount} static pages`);
             // ── host preset files ──
             // Idempotent, and an explicit static file (copied from staticDirs) always wins.
-            if (config.host === 'github-pages') {
+            /*
+            `.nojekyll` whenever pages have markdown copies, not only under the github-pages preset.
+      
+            GitHub Pages runs Jekyll unless this file exists, and Jekyll renders `guide/index.md` to
+            `guide/index.html` — the path of the real page. A site deployed there WITHOUT the preset
+            would have its pages contested by their own markdown. The file is empty and means nothing
+            to any other host, so writing it is cheaper than explaining the collision.
+            */
+            if (config.host === 'github-pages' || config.markdownPages !== false) {
                 await Bun.write(`${PUBLIC}/.nojekyll`, '');
+            }
+            if (config.host === 'github-pages') {
                 const domain = config.domain ??
                     (config.baseUrl ? new URL(config.baseUrl).hostname : undefined);
                 if (domain && !existsSync(`${PUBLIC}/CNAME`)) {

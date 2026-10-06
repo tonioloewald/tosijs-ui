@@ -138,3 +138,12 @@ describe('#144: llms.txt links respect basePath', () => {
     expect(home.link).toBe('https://ui.tosijs.net/')
   })
 })
+
+test('the index says pages are also available as markdown', () => {
+  expect(written({ name: 'x' })).toContain('append `index.md`')
+})
+
+test('…and does not when the site ships HTML only', () => {
+  // Pointing a reader at a file that is not there costs more than not mentioning it.
+  expect(written({ name: 'x', markdownPages: false })).not.toContain('index.md')
+})

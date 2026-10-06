@@ -75,6 +75,13 @@ export interface GenerateSiteConfig {
      * self-contained-examples-plan.md.
      */
     bakes?: Map<string, ExampleBakes>;
+    /**
+     * Write each page's markdown beside its HTML (`/slug/index.md`) and point at it with
+     * `<link rel="alternate" type="text/markdown">`. Default true. For readers that want the
+     * text and not the page: an LLM's URL fetcher, a script, `curl`. `noindex` pages get
+     * neither, the same rule the sitemap applies.
+     */
+    markdownPages?: boolean;
     /** URL of the burned-in theme stylesheet (written by ./generate-css.ts) */
     stylesUrl?: string;
     /** extra lines injected into every <head> (favicon, analytics, etc.) */
